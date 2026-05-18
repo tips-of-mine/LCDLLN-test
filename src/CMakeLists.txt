@@ -686,6 +686,13 @@ elseif(UNIX)
   lcdlln_add_simple_test(skinned_mesh_loader_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/SkinnedMeshLoaderTests.cpp)
 
+  # Sous-projet B.1 (locomotion state machine) etape 1/14 : Mat4 helpers.
+  # Identity / Translate / RotateY utilises par la state machine pour composer
+  # T(pos) * R_y(yaw) par frame (model matrix de l'avatar).
+  # Math.h est header-only, pas de .cpp a compiler.
+  lcdlln_add_simple_test(mat4_helpers_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/math/tests/Mat4HelpersTests.cpp)
+
   # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
   lcdlln_add_simple_test(vmap_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/vmap/VMapManagerTests.cpp

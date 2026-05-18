@@ -550,7 +550,11 @@ namespace engine::render::terrain
             dsCI.sType            = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
             dsCI.depthTestEnable  = VK_TRUE;
             dsCI.depthWriteEnable = VK_TRUE;
-            dsCI.depthCompareOp   = VK_COMPARE_OP_LESS;
+            // Audit 2026-05-18 : aligne avec GeometryPass.cpp, ShadowMapPass.cpp,
+            // SkyPass.cpp, TerrainChunkPipeline.cpp qui utilisent tous LESS_OR_EQUAL.
+            // LESS rejetait les triangles strictement coplanaires (z-fight sol au
+            // demarrage d'une frame ou le sol et un decal sont au meme Y).
+            dsCI.depthCompareOp   = VK_COMPARE_OP_LESS_OR_EQUAL;
 
             // 4 color attachments (A, B, C, Velocity) — no blending
             VkPipelineColorBlendAttachmentState blendAtts[4]{};

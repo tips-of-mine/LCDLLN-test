@@ -698,6 +698,14 @@ elseif(UNIX)
   lcdlln_add_simple_test(animation_crossfade_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AnimationCrossfadeTests.cpp)
 
+  # Sous-projet B.1 (locomotion state machine) etape 6/14 : TerrainCollider.
+  # Tests du fallback "no terrain bound" (GroundHeightAt = 0, SweepCapsule
+  # detection traversee Y=0) + edge cases (sweep ascendant, sweep horizontal).
+  # Le comportement "avec terrain" est valide au smoke test visuel (Task 13)
+  # car instancier un TerrainRenderer requiert un VkDevice.
+  lcdlln_add_simple_test(terrain_collider_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/TerrainColliderTests.cpp)
+
   # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
   lcdlln_add_simple_test(vmap_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/vmap/VMapManagerTests.cpp

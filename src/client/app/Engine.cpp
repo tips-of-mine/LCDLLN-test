@@ -3792,10 +3792,56 @@ namespace engine
 													{
 														m_playerSkinnedMesh = std::move(*loaded);
 														m_playerAnimStartTime = std::chrono::steady_clock::now();
+														m_avatarLocoStateEnterTime = m_playerAnimStartTime;
 														m_skinnedAvatarReady = true;
 														LOG_INFO(Render, "[Engine] Skinned avatar Y Bot loaded ({} bones, {} clips) -- cube placeholder remplace",
 															m_playerSkinnedMesh->skeleton.bones.size(),
 															m_playerSkinnedMesh->clips.size());
+
+														// Sous-projet A polish -- charge Idle + StartWalking et merge dans le mesh
+														// joue. Mixamo nomme chaque clip "mixamo.com" : on les renomme a l'insertion
+														// pour avoir des lookups non ambigus. Le clip "Standard Walk" deja charge
+														// est aussi renomme de "mixamo.com" en "Walking".
+														{
+															auto& clips = m_playerSkinnedMesh->clips;
+															// Renomme le clip de marche existant.
+															for (auto& c : clips) {
+																if (c.name == "mixamo.com") { c.name = "Walking"; break; }
+															}
+
+															const std::string idlePath = contentRoot + "/models/avatars/y_bot_idle/y_bot_idle.glb";
+															const std::string startWalkPath = contentRoot + "/models/avatars/y_bot_start_walking/y_bot_start_walking.glb";
+
+															auto idleClips = engine::render::skinned::SkinnedMeshLoader::LoadClipsRetargeted(
+																idlePath, m_playerSkinnedMesh->skeleton);
+															for (auto& c : idleClips) {
+																if (c.duration > 0.0f && c.name == "mixamo.com") {
+																	c.name = "Idle";
+																	clips.push_back(std::move(c));
+																	break;
+																}
+															}
+															if (m_playerSkinnedMesh->FindClip("Idle") == nullptr) {
+																LOG_WARN(Render, "[Engine] Idle clip not loaded from '{}'", idlePath);
+															} else {
+																LOG_INFO(Render, "[Engine] Idle clip loaded from '{}'", idlePath);
+															}
+
+															auto startWalkClips = engine::render::skinned::SkinnedMeshLoader::LoadClipsRetargeted(
+																startWalkPath, m_playerSkinnedMesh->skeleton);
+															for (auto& c : startWalkClips) {
+																if (c.duration > 0.0f && c.name == "mixamo.com") {
+																	c.name = "StartWalking";
+																	clips.push_back(std::move(c));
+																	break;
+																}
+															}
+															if (m_playerSkinnedMesh->FindClip("StartWalking") == nullptr) {
+																LOG_WARN(Render, "[Engine] StartWalking clip not loaded from '{}'", startWalkPath);
+															} else {
+																LOG_INFO(Render, "[Engine] StartWalking clip loaded from '{}'", startWalkPath);
+															}
+														}
 													}
 													else
 													{
@@ -3947,33 +3993,103 @@ namespace engine
 												{
 													using namespace std::chrono;
 													const auto now = steady_clock::now();
-													const float elapsed = duration<float>(now - m_playerAnimStartTime).count();
 
-													// Le clip Mixamo Y Bot est expose sous le nom "mixamo.com" par FBX2glTF.
-													// Fallback sur le premier clip non vide si le nom canonique a change.
-													const engine::render::skinned::AnimationClip* walkClip =
-														m_playerSkinnedMesh->FindClip("mixamo.com");
-													if (!walkClip || walkClip->duration <= 0.0f)
-													{
-														for (const auto& c : m_playerSkinnedMesh->clips)
-														{
-															if (c.duration > 0.0f) { walkClip = &c; break; }
+													// --- Détection de mouvement (sous-projet A polish) ---
+													// On compare la position courante (X/Z de la 4e colonne de la model matrix)
+													// avec celle de la frame précédente. Seuil : > 1e-4 m sur dx^2+dz^2.
+													// Y exclu car l'animation de marche le fait osciller (bobbing).
+													// Statics de lambda : OK pour ce MVP single-avatar. Sous-projet B
+													// devrait remplacer par un signal de gameplay (commande input) plutôt
+													// que d'inférer depuis la position.
+													static float s_prevX = 0.0f;
+													static float s_prevZ = 0.0f;
+													static bool  s_firstFrame = true;
+													const float curX = rs.objectModelMatrix[12];
+													const float curZ = rs.objectModelMatrix[14];
+													const float dx = curX - s_prevX;
+													const float dz = curZ - s_prevZ;
+													const bool movingNow = !s_firstFrame && (dx*dx + dz*dz) > (1e-4f * 1e-4f);
+													s_prevX = curX;
+													s_prevZ = curZ;
+													s_firstFrame = false;
+
+													// --- Transitions de la state machine ---
+													const engine::render::skinned::AnimationClip* startWalkClip =
+														m_playerSkinnedMesh->FindClip("StartWalking");
+													const float stateElapsed = duration<float>(now - m_avatarLocoStateEnterTime).count();
+
+													switch (m_avatarLocoState) {
+														case AvatarLocomotionState::Idle:
+															if (movingNow) {
+																m_avatarLocoState = AvatarLocomotionState::StartWalking;
+																m_avatarLocoStateEnterTime = now;
+															}
+															break;
+														case AvatarLocomotionState::StartWalking:
+															if (!movingNow) {
+																m_avatarLocoState = AvatarLocomotionState::Idle;
+																m_avatarLocoStateEnterTime = now;
+															} else if (startWalkClip && stateElapsed >= startWalkClip->duration) {
+																m_avatarLocoState = AvatarLocomotionState::Walking;
+																m_avatarLocoStateEnterTime = now;
+															}
+															break;
+														case AvatarLocomotionState::Walking:
+															if (!movingNow) {
+																m_avatarLocoState = AvatarLocomotionState::Idle;
+																m_avatarLocoStateEnterTime = now;
+															}
+															break;
+													}
+
+													// Recalcule stateElapsed après transition éventuelle (entrée d'un nouvel état => 0).
+													const float stateElapsedAfter = duration<float>(now - m_avatarLocoStateEnterTime).count();
+
+													// --- Sélection du clip selon l'état ---
+													const char* clipName = (m_avatarLocoState == AvatarLocomotionState::Idle) ? "Idle"
+																		 : (m_avatarLocoState == AvatarLocomotionState::StartWalking) ? "StartWalking"
+																		 : "Walking";
+													const engine::render::skinned::AnimationClip* selectedClip = m_playerSkinnedMesh->FindClip(clipName);
+													if (!selectedClip || selectedClip->duration <= 0.0f) {
+														// Fallback : tout clip non-zero, sinon le legacy "mixamo.com".
+														for (const auto& c : m_playerSkinnedMesh->clips) {
+															if (c.duration > 0.0f) { selectedClip = &c; break; }
 														}
 													}
 
-													if (walkClip && walkClip->duration > 0.0f)
+													if (selectedClip && selectedClip->duration > 0.0f)
 													{
-														const float t = std::fmod(elapsed, walkClip->duration);
+														// Temps dans le clip : looped pour Idle/Walking, clampé pour StartWalking
+														// (le clip ne se rejoue pas en boucle — il se joue une fois puis on transite).
+														const float t = (m_avatarLocoState == AvatarLocomotionState::StartWalking)
+																		? std::min(stateElapsedAfter, selectedClip->duration)
+																		: std::fmod(stateElapsedAfter, selectedClip->duration);
+
 														auto locals  = engine::render::skinned::AnimationSampler::SamplePose(
-															m_playerSkinnedMesh->skeleton, *walkClip, t);
+															m_playerSkinnedMesh->skeleton, *selectedClip, t);
 														auto globals = engine::render::skinned::AnimationSampler::ComputeGlobalMatrices(
 															m_playerSkinnedMesh->skeleton, locals);
 														auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
 															m_playerSkinnedMesh->skeleton, globals);
 
+														// --- Fix orientation 180° (sous-projet A polish) ---
+														// Mixamo Y Bot face +Z par défaut ; convention caméra 3e personne :
+														// l'avatar doit faire face A L'OPPOSE de la caméra (on voit son dos).
+														// On applique une rotation de 180° autour de Y à la model matrix
+														// AVANT de passer à Record. Cette transformation n'est appliquée
+														// qu'à l'avatar skinné — le cube fallback (drawn via Record/RecordIndirect
+														// plus haut) garde sa matrice d'origine.
+														engine::math::Mat4 baseModel;
+														std::memcpy(baseModel.m, rs.objectModelMatrix, sizeof(float) * 16);
+														const engine::math::Mat4 spinY180 =
+															engine::math::Quat::FromAxisAngle(
+																engine::math::Vec3{0.0f, 1.0f, 0.0f}, 3.14159265f).ToMat4();
+														const engine::math::Mat4 finalModelMat = baseModel * spinY180;
+
 														// La matrice modele rs.objectModelMatrix est celle du cube avatar (calculee
-														// dans Update via OrbitalCameraController). On la reuse telle quelle pour
-														// que l'avatar Y Bot soit a la meme position que le cube qu'il remplace.
+														// dans Update via OrbitalCameraController). On reuse sa position + on applique
+														// la rotation Y 180° pour que l'avatar Y Bot soit a la meme position que le
+														// cube qu'il remplace, mais oriente "dos a la camera".
 														// materialDescriptorSet + materialIndex : meme set/index que le cube draw.
 														const uint32_t skinnedMaterialIndex = (m_avatarMaterialId != 0u)
 															? m_avatarMaterialId
@@ -3983,7 +4099,7 @@ namespace engine
 															m_vkSwapchain.GetExtent(),
 															m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
 															m_fgGBufferVelocityId, m_fgDepthId,
-															[this, &rs, &finals, skinnedMaterialIndex, &materialCache](VkCommandBuffer innerCmd) {
+															[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat](VkCommandBuffer innerCmd) {
 																m_skinnedRenderer.Record(
 																	m_vkDeviceContext.GetDevice(), innerCmd,
 																	m_vkSwapchain.GetExtent(),
@@ -3993,7 +4109,7 @@ namespace engine
 																	*m_playerSkinnedMesh,
 																	finals,
 																	materialCache.GetDescriptorSet(),
-																	rs.objectModelMatrix,
+																	finalModelMat.m,
 																	skinnedMaterialIndex);
 															});
 													}

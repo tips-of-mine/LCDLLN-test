@@ -493,6 +493,17 @@ namespace engine
 		/// Sert de gate per-frame : si false, on dessine le cube placeholder.
 		bool                                                      m_skinnedAvatarReady = false;
 
+		/// Sous-projet A polish — state machine de locomotion de l'avatar.
+		/// 3 états : Idle (clip "Idle" looped), StartWalking (clip "StartWalking"
+		/// joué une fois puis transition vers Walking), Walking (clip "Walking" looped).
+		/// Sous-projet B raffinera (crossfade, vitesses, autres états).
+		enum class AvatarLocomotionState { Idle, StartWalking, Walking };
+		AvatarLocomotionState                                     m_avatarLocoState = AvatarLocomotionState::Idle;
+		/// Instant d'entrée dans l'état courant. Utilisé pour :
+		///   - boucler / clamper le temps écoulé dans le clip,
+		///   - détecter la fin de "StartWalking" (durée écoulée >= clip.duration).
+		std::chrono::steady_clock::time_point                     m_avatarLocoStateEnterTime;
+
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).
 		engine::render::terrain::TerrainRenderer m_terrain;
 		/// M100 — Task 12 : runtime mesh-terrain par chunk avec splat 8-layer.

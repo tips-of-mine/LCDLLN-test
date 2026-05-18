@@ -3735,6 +3735,77 @@ namespace engine
 											}
 										}
 
+										// Sous-projet A (Task 15) -- Init runtime skinned avatar (Y Bot Mixamo).
+										// Tente une seule fois au boot apres le materiel avatar. Si l'une
+										// des etapes echoue (shaders absents, mat cache pas pret, .glb introuvable,
+										// upload GPU KO), log warning + retombe sur le cube placeholder (cf. branche
+										// per-frame dans la lambda FrameGraph "Geometry" plus bas).
+										//
+										// Effet de bord : alloue 1 VkRenderPass + 1 VkPipelineLayout + 1
+										// VkPipeline + 1 VkDescriptorPool + 2 VkBuffer (bone SSBO + model
+										// instance) cote SkinnedRenderer + 2 VkBuffer/VkDeviceMemory cote mesh
+										// (vertex/index). Tout est libere au Shutdown (cf. bloc Destroy plus bas,
+										// juste avant m_pipeline->Destroy).
+										if (!m_skinnedAvatarReady && m_pipeline)
+										{
+											auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+											const std::vector<uint32_t> skinnedVertSpv = loadSpirv("shaders/skinned_gbuffer.vert.spv");
+											const std::vector<uint32_t> skinnedFragSpv = loadSpirv("shaders/gbuffer_geometry.frag.spv");
+											if (!skinnedVertSpv.empty() && !skinnedFragSpv.empty() && materialCache.IsValid())
+											{
+												// Memes formats GBuffer / depth que DeferredPipeline.cpp:135-140 :
+												// formatA = R8G8B8A8_SRGB (albedo), formatB = A2B10G10R10 (normal),
+												// formatC = R8G8B8A8_UNORM (ORM), formatVelocity = R16G16_SFLOAT,
+												// depthFormat = D32_SFLOAT. Necessaire pour que le pipeline skinne
+												// soit compatible avec le render pass LOAD de GeometryPass (que nous
+												// utiliserons via RecordTerrainChunkBatch pour eviter de nested-passer).
+												const bool skinnedInitOk = m_skinnedRenderer.Init(
+													m_vkDeviceContext.GetDevice(),
+													m_vkDeviceContext.GetPhysicalDevice(),
+													VK_FORMAT_R8G8B8A8_SRGB,
+													VK_FORMAT_A2B10G10R10_UNORM_PACK32,
+													VK_FORMAT_R8G8B8A8_UNORM,
+													VK_FORMAT_R16G16_SFLOAT,
+													VK_FORMAT_D32_SFLOAT,
+													skinnedVertSpv.data(), skinnedVertSpv.size(),
+													skinnedFragSpv.data(), skinnedFragSpv.size(),
+													materialCache.GetLayout(),
+													/*maxBonesPerSkeleton*/ 256u);
+												if (skinnedInitOk)
+												{
+													const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+													const std::string yBotPath = contentRoot + "/models/avatars/y_bot/y_bot.glb";
+													auto loaded = engine::render::skinned::SkinnedMeshLoader::Load(
+														m_vkDeviceContext.GetDevice(),
+														m_vkDeviceContext.GetPhysicalDevice(),
+														yBotPath);
+													if (loaded)
+													{
+														m_playerSkinnedMesh = std::move(*loaded);
+														m_playerAnimStartTime = std::chrono::steady_clock::now();
+														m_skinnedAvatarReady = true;
+														LOG_INFO(Render, "[Engine] Skinned avatar Y Bot loaded ({} bones, {} clips) -- cube placeholder remplace",
+															m_playerSkinnedMesh->skeleton.bones.size(),
+															m_playerSkinnedMesh->clips.size());
+													}
+													else
+													{
+														LOG_WARN(Render, "[Engine] Y Bot load failed ({}); fallback cube placeholder", yBotPath);
+														// Pipeline cree mais pas de mesh : libere le pipeline (Destroy idempotent).
+														m_skinnedRenderer.Destroy(m_vkDeviceContext.GetDevice());
+													}
+												}
+												else
+												{
+													LOG_WARN(Render, "[Engine] SkinnedRenderer::Init failed; fallback cube placeholder");
+												}
+											}
+											else
+											{
+												LOG_WARN(Render, "[Engine] Skinned shaders not loaded or material cache not ready; fallback cube placeholder");
+											}
+										}
+
 
 										m_frameGraph.addPass("GPU_Cull",
 											[](engine::render::PassBuilder&) {},
@@ -3745,7 +3816,12 @@ namespace engine
 
 												const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 												const engine::RenderState& rs = m_renderStates[readIdx];
-												engine::render::MeshAsset* mesh = rs.objectVisible ? m_geometryMeshHandle.Get() : nullptr;
+												// Sous-projet A (Task 15) : si le skinned avatar Y Bot est pret, on
+												// supprime le cube placeholder du GpuCulling pipeline (drawItemCount=0
+												// -> RecordIndirect ne dessinera pas le cube). L'avatar skinne sera
+												// dessine apres la Geometry par un RecordTerrainChunkBatch dedie.
+												engine::render::MeshAsset* mesh = (rs.objectVisible && !m_skinnedAvatarReady)
+													? m_geometryMeshHandle.Get() : nullptr;
 												uint32_t drawItemCount = 0;
 												engine::render::GpuDrawItem drawItem{};
 
@@ -3800,7 +3876,13 @@ namespace engine
 														rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
 														rs.camera.position, rs.frustum);
 												}
-												engine::render::MeshAsset* mesh = rs.objectVisible ? m_geometryMeshHandle.Get() : nullptr;
+												// Sous-projet A (Task 15) : meme regle que GPU_Cull -- si l'avatar skinne
+												// est pret, on passe mesh = nullptr pour que GeometryPass::Record/Indirect
+												// ouvre/ferme le render pass GBuffer (necessaire pour les layouts) sans
+												// dessiner le cube. L'avatar skinne est ajoute juste apres via
+												// RecordTerrainChunkBatch (meme render pass LOAD compatible).
+												engine::render::MeshAsset* mesh = (rs.objectVisible && !m_skinnedAvatarReady)
+													? m_geometryMeshHandle.Get() : nullptr;
 												const engine::world::GlobalChunkCoord chunk = engine::world::WorldToGlobalChunkCoord(rs.camera.position.x, rs.camera.position.z);
 												const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);
 												const uint32_t triCount = (mesh && mesh->indexCount > 0) ? (mesh->indexCount / 3) : 0;
@@ -3843,6 +3925,69 @@ namespace engine
 														rs.objectModelMatrix,
 														(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
 														terrainBeforeGeometry);
+												}
+
+												// Sous-projet A (Task 15) : draw call skinned Y Bot.
+												// Apres l'ouverture/fermeture de la passe Geometry par Record/RecordIndirect,
+												// on superpose la draw skinned via RecordTerrainChunkBatch qui (re)ouvre le
+												// render pass LOAD du GeometryPass (formats compatibles -- meme GBuffer A/B/C
+												// + Velocity + Depth). Idempotent : si m_skinnedAvatarReady reste false (init
+												// echouee ou .glb manquant), on saute et le cube placeholder a deja ete
+												// dessine par Record/RecordIndirect ci-dessus.
+												if (m_skinnedAvatarReady && m_playerSkinnedMesh && m_skinnedRenderer.IsValid())
+												{
+													using namespace std::chrono;
+													const auto now = steady_clock::now();
+													const float elapsed = duration<float>(now - m_playerAnimStartTime).count();
+
+													// Le clip Mixamo Y Bot est expose sous le nom "mixamo.com" par FBX2glTF.
+													// Fallback sur le premier clip non vide si le nom canonique a change.
+													const engine::render::skinned::AnimationClip* walkClip =
+														m_playerSkinnedMesh->FindClip("mixamo.com");
+													if (!walkClip || walkClip->duration <= 0.0f)
+													{
+														for (const auto& c : m_playerSkinnedMesh->clips)
+														{
+															if (c.duration > 0.0f) { walkClip = &c; break; }
+														}
+													}
+
+													if (walkClip && walkClip->duration > 0.0f)
+													{
+														const float t = std::fmod(elapsed, walkClip->duration);
+														auto locals  = engine::render::skinned::AnimationSampler::SamplePose(
+															m_playerSkinnedMesh->skeleton, *walkClip, t);
+														auto globals = engine::render::skinned::AnimationSampler::ComputeGlobalMatrices(
+															m_playerSkinnedMesh->skeleton, locals);
+														auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
+															m_playerSkinnedMesh->skeleton, globals);
+
+														// La matrice modele rs.objectModelMatrix est celle du cube avatar (calculee
+														// dans Update via OrbitalCameraController). On la reuse telle quelle pour
+														// que l'avatar Y Bot soit a la meme position que le cube qu'il remplace.
+														// materialDescriptorSet + materialIndex : meme set/index que le cube draw.
+														const uint32_t skinnedMaterialIndex = (m_avatarMaterialId != 0u)
+															? m_avatarMaterialId
+															: materialCache.GetDefaultMaterialIndex();
+														m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
+															m_vkDeviceContext.GetDevice(), cmd, reg,
+															m_vkSwapchain.GetExtent(),
+															m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
+															m_fgGBufferVelocityId, m_fgDepthId,
+															[this, &rs, &finals, skinnedMaterialIndex, &materialCache](VkCommandBuffer innerCmd) {
+																m_skinnedRenderer.Record(
+																	m_vkDeviceContext.GetDevice(), innerCmd,
+																	m_vkSwapchain.GetExtent(),
+																	m_pipeline->GetGeometryPass().GetRenderPassLoad(),
+																	VK_NULL_HANDLE,
+																	rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+																	*m_playerSkinnedMesh,
+																	finals,
+																	materialCache.GetDescriptorSet(),
+																	rs.objectModelMatrix,
+																	skinnedMaterialIndex);
+															});
+													}
 												}
 
 												// M100 — Task 12 : drawcall terrain chunk (post-Phase-3a).
@@ -5104,6 +5249,19 @@ namespace engine
 				vkDestroyCommandPool(m_vkDeviceContext.GetDevice(), m_waterTransferPool, nullptr);
 				m_waterTransferPool = VK_NULL_HANDLE;
 			}
+			// Sous-projet A (Task 15) : libere le mesh skinne puis le renderer.
+			// Doit etre fait apres vkDeviceWaitIdle (line ~5060) et AVANT
+			// m_pipeline->Destroy (le SkinnedRenderer reutilise le materialLayout du
+			// MaterialDescriptorCache mais possede son propre pipeline/render pass --
+			// l'ordre n'est pas critique entre eux, mais on respecte l'ordre LIFO).
+			// Idempotent : safe si Init a echoue (handles VK_NULL_HANDLE skippes).
+			if (m_playerSkinnedMesh)
+			{
+				m_playerSkinnedMesh->Destroy(m_vkDeviceContext.GetDevice());
+				m_playerSkinnedMesh.reset();
+			}
+			m_skinnedRenderer.Destroy(m_vkDeviceContext.GetDevice());
+			m_skinnedAvatarReady = false;
 			if (m_pipeline)
 			{
 				m_pipeline->Destroy(m_vkDeviceContext.GetDevice());

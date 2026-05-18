@@ -69,6 +69,11 @@
 #include "src/client/render/vk/StagingAllocator.h"
 #include "src/client/render/terrain/TerrainRenderer.h"
 #include "src/client/render/terrain_chunk/TerrainChunkRenderer.h"
+// Sous-projet A (Task 15) : skinned humanoid avatar runtime.
+#include "src/client/render/skinned/SkinnedRenderer.h"
+#include "src/client/render/skinned/SkinnedMesh.h"
+#include "src/client/render/skinned/SkinnedMeshLoader.h"
+#include "src/client/render/skinned/AnimationSampler.h"
 #if defined(_WIN32)
 #include "src/client/render/terrain/TerrainEditingTools.h"
 #include "src/world_editor/ui/TexturePreviewCache.h"
@@ -115,6 +120,7 @@ namespace engine::editor::world
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -465,6 +471,28 @@ namespace engine
 		/// Aligne sur HiZ/GpuDrivenCulling kDefaultFramesInFlight = 2.
 		static constexpr uint32_t kEditorTexCacheFramesInFlight = 2u;
 #endif
+		/// Sous-projet A (Task 15) — Runtime skinned avatar humanoide (Y Bot Mixamo).
+		/// Remplace le cube `avatar_placeholder.mesh` post-EnterWorld lorsque le glb
+		/// est chargeable et que le pipeline Vulkan s'initialise correctement.
+		/// Init lazy : tente une seule fois au boot apres la creation du materiel
+		/// avatar (cf. Engine.cpp ~ligne 3736). Si Init du renderer ou du mesh
+		/// echoue, m_skinnedAvatarReady reste a false et le draw retombe sur le
+		/// cube placeholder (preservation du chemin de fallback existant).
+		///
+		/// Cycle de vie :
+		///   - Init   : une fois au boot, dans le bloc de cration du DeferredPipeline.
+		///   - Record : chaque frame in-game, dans la lambda FrameGraph "Geometry"
+		///              via `GeometryPass::RecordTerrainChunkBatch` (passe LOAD
+		///              compatible — meme formats GBuffer + depth).
+		///   - Destroy: au Shutdown, juste avant `m_pipeline->Destroy` (les
+		///              ressources Vulkan dependent du device, pas du pipeline).
+		engine::render::skinned::SkinnedRenderer                  m_skinnedRenderer;
+		std::optional<engine::render::skinned::SkinnedMesh>       m_playerSkinnedMesh;
+		std::chrono::steady_clock::time_point                     m_playerAnimStartTime;
+		/// True une fois SkinnedRenderer::Init OK + SkinnedMeshLoader::Load OK.
+		/// Sert de gate per-frame : si false, on dessine le cube placeholder.
+		bool                                                      m_skinnedAvatarReady = false;
+
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).
 		engine::render::terrain::TerrainRenderer m_terrain;
 		/// M100 — Task 12 : runtime mesh-terrain par chunk avec splat 8-layer.

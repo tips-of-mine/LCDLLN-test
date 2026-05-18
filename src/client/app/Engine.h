@@ -74,6 +74,9 @@
 #include "src/client/render/skinned/SkinnedMesh.h"
 #include "src/client/render/skinned/SkinnedMeshLoader.h"
 #include "src/client/render/skinned/AnimationSampler.h"
+// Sous-projet B.1 (Task 9) : physics + collision pour l'avatar joueur.
+#include "src/client/gameplay/CharacterController.h"
+#include "src/client/gameplay/TerrainCollider.h"
 #if defined(_WIN32)
 #include "src/client/render/terrain/TerrainEditingTools.h"
 #include "src/world_editor/ui/TexturePreviewCache.h"
@@ -503,6 +506,28 @@ namespace engine
 		///   - boucler / clamper le temps écoulé dans le clip,
 		///   - détecter la fin de "StartWalking" (durée écoulée >= clip.duration).
 		std::chrono::steady_clock::time_point                     m_avatarLocoStateEnterTime;
+
+		/// Sous-projet B.1 (Task 9) — Physics et collision pour le joueur.
+		///
+		/// `m_characterController` integre la cinematique du joueur (deplacement
+		/// + gravite + saut + steps) ; sa position est lue chaque frame et
+		/// poussee vers `m_orbitalCameraController.SetTargetPosition` (la camera
+		/// suit le perso). `m_terrainCollider` est bind sur `m_terrain` au boot
+		/// (apres `m_terrain.Init`) ; il implemente l'interface IWorldCollider
+		/// consommee par `CharacterController::Update` pour les sweep capsule.
+		///
+		/// `m_avatarYaw` suit la direction de mouvement (snap immediat sur
+		/// `atan2(moveDirXZ.x, moveDirXZ.z)`) ; la model matrix de l'avatar
+		/// applique ensuite `R_y(yaw + pi)` pour orienter l'avatar dos a la
+		/// camera (convention 3eme personne MMO).
+		///
+		/// `m_lastMoveInput` memorise la derniere intention d'input clavier
+		/// pour que la state machine de locomotion (Task 11 etendra a 7 etats)
+		/// puisse decider Idle/Walk/Run/Jump sans avoir a reconstruire l'input.
+		engine::gameplay::CharacterController                     m_characterController;
+		engine::gameplay::TerrainCollider                         m_terrainCollider;
+		float                                                     m_avatarYaw = 0.0f;
+		engine::gameplay::MoveInput                               m_lastMoveInput{};
 
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).
 		engine::render::terrain::TerrainRenderer m_terrain;

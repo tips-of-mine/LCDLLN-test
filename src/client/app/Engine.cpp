@@ -92,6 +92,69 @@ namespace engine
 	{
 		constexpr float kWorldEditorPickPi = 3.14159265f;
 
+		/// Sous-projet B.1 (Task 9) — Projette l'input clavier WASD/ZQSD dans
+		/// le repere camera courant pour produire la `MoveInput` passee au
+		/// `CharacterController::Update`. Touche les directions XZ (Y ignore),
+		/// normalise pour eviter la diagonale rapide (1.41x), et capture aussi
+		/// le run (Shift) et le saut (Space, edge-triggered).
+		///
+		/// \param input  Input snapshot de la frame courante (clavier + souris).
+		/// \param camera Camera orbitale (utilise GetForwardXZ / GetRightXZ pour
+		///               le repere local au lieu d'un yaw monde fixe — les
+		///               touches restent "vers ce que je regarde" meme apres
+		///               rotation de la camera).
+		/// \return MoveInput pret a etre consomme par CharacterController.
+		///         `swim*/fly` sont hors-scope B.1 et restent false.
+		///
+		/// Effet de bord : aucun. Pure projection input -> intention.
+		engine::gameplay::MoveInput BuildMoveInput(
+			const engine::platform::Input& input,
+			const engine::render::OrbitalCameraController& camera)
+		{
+			engine::gameplay::MoveInput out{};
+
+			const engine::math::Vec3 forward = camera.GetForwardXZ();
+			const engine::math::Vec3 right   = camera.GetRightXZ();
+
+			engine::math::Vec3 dir{ 0.0f, 0.0f, 0.0f };
+			// Z (AZERTY) traite comme W : tous les claviers majoritaires (FR / BE / DE)
+			// mappent leur touche "avant" sur la position physique W -> Z. Idem A -> Q.
+			if (input.IsDown(engine::platform::Key::W) || input.IsDown(engine::platform::Key::Z))
+			{
+				dir.x += forward.x;
+				dir.z += forward.z;
+			}
+			if (input.IsDown(engine::platform::Key::S))
+			{
+				dir.x -= forward.x;
+				dir.z -= forward.z;
+			}
+			if (input.IsDown(engine::platform::Key::D))
+			{
+				dir.x += right.x;
+				dir.z += right.z;
+			}
+			if (input.IsDown(engine::platform::Key::A) || input.IsDown(engine::platform::Key::Q))
+			{
+				dir.x -= right.x;
+				dir.z -= right.z;
+			}
+
+			const float lenSq = dir.x * dir.x + dir.z * dir.z;
+			if (lenSq > 0.0f)
+			{
+				const float invLen = 1.0f / std::sqrt(lenSq);
+				out.moveDirXZ = engine::math::Vec3{ dir.x * invLen, 0.0f, dir.z * invLen };
+			}
+
+			out.run         = input.IsDown(engine::platform::Key::Shift);
+			out.jumpPressed = input.WasPressed(engine::platform::Key::Space);
+			// swim/fly hors-scope B.1 : restent false (consommes par les modes
+			// Water/Fly du CharacterController, inutiles tant que la query eau
+			// n'est pas branchee — IWorldCollider::QueryWater renvoie false).
+			return out;
+		}
+
 		engine::core::LogLevel ParseLogLevelConfig(std::string_view text)
 		{
 			if (text == "Trace" || text == "trace") return engine::core::LogLevel::Trace;
@@ -3852,6 +3915,48 @@ namespace engine
 											}
 										}
 
+										// Sous-projet B.1 (Task 9) — Bind TerrainCollider sur le TerrainRenderer
+										// et instancie le CharacterController du joueur. Doit imperativement
+										// arriver APRES `m_terrain.Init` (cf. ~ligne 3538 plus haut) pour que
+										// `GroundHeightAt` retourne une altitude reelle (sinon fallback 0.0,
+										// le perso spawn enterre / suspend selon le sol).
+										//
+										// Le CharacterController est lui-meme cree avec une Config lue depuis
+										// `config.json` (cle `player.movement.*`) avec des defaults sensibles
+										// si les cles manquent (cas du config.json par defaut). L'initialisation
+										// du membre se fait par move-assignment d'un temporaire — `CharacterController`
+										// n'a pas d'operations move/copy explicites mais ses membres sont tous
+										// trivialement assignables (Vec3 / float / enum / bool) donc l'operator=
+										// implicite est suffisant.
+										//
+										// La position de spawn est posee au centre du terrain (0,0 en monde) en
+										// echantillonnant le sol + half-capsule (0.9 m = height/2) pour eviter
+										// que la sphere du bas de la capsule traverse le sol au premier sweep.
+										{
+											m_terrainCollider.BindTerrain(&m_terrain);
+
+											engine::gameplay::CharacterController::Config ccCfg{};
+											ccCfg.walkSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.walk_speed",      5.0));
+											ccCfg.runSpeed      = static_cast<float>(m_cfg.GetDouble("player.movement.run_speed",       9.0));
+											ccCfg.gravity       = static_cast<float>(m_cfg.GetDouble("player.movement.gravity",       -20.0));
+											ccCfg.jumpSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.jump_speed",      9.0));
+											ccCfg.coyoteTimeSec = static_cast<float>(m_cfg.GetDouble("player.movement.coyote_time_s",   0.1));
+											ccCfg.jumpBufferSec = static_cast<float>(m_cfg.GetDouble("player.movement.jump_buffer_s",   0.1));
+											ccCfg.capsule.radius = 0.3f;
+											ccCfg.capsule.height = 1.8f;
+											m_characterController = engine::gameplay::CharacterController(ccCfg);
+
+											// Spawn au centre map (XZ = 0,0), pose au-dessus du sol echantillonne
+											// + halfHeight de capsule pour que le bas de la capsule effleure le sol.
+											const float spawnX = 0.0f;
+											const float spawnZ = 0.0f;
+											const float spawnY = m_terrainCollider.GroundHeightAt(spawnX, spawnZ) + 0.9f;
+											m_characterController.Init(engine::math::Vec3{ spawnX, spawnY, spawnZ });
+											LOG_INFO(Render,
+												"[Engine] B.1 CharacterController spawn=({:.2f}, {:.2f}, {:.2f}) capsule r={:.2f} h={:.2f}",
+												spawnX, spawnY, spawnZ, ccCfg.capsule.radius, ccCfg.capsule.height);
+										}
+
 										m_frameGraph.addPass("GPU_Cull",
 											[](engine::render::PassBuilder&) {},
 											[this](VkCommandBuffer cmd, engine::render::Registry&) {
@@ -4062,24 +4167,35 @@ namespace engine
 														auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
 															m_playerSkinnedMesh->skeleton, globals);
 
-														// --- Fix orientation 180° (sous-projet A polish) ---
-														// Mixamo Y Bot face +Z par défaut ; convention caméra 3e personne :
-														// l'avatar doit faire face A L'OPPOSE de la caméra (on voit son dos).
-														// On applique une rotation de 180° autour de Y à la model matrix
-														// AVANT de passer à Record. Cette transformation n'est appliquée
-														// qu'à l'avatar skinné — le cube fallback (drawn via Record/RecordIndirect
-														// plus haut) garde sa matrice d'origine.
-														engine::math::Mat4 baseModel;
-														std::memcpy(baseModel.m, rs.objectModelMatrix, sizeof(float) * 16);
-														const engine::math::Mat4 spinY180 =
-															engine::math::Quat::FromAxisAngle(
-																engine::math::Vec3{0.0f, 1.0f, 0.0f}, 3.14159265f).ToMat4();
-														const engine::math::Mat4 finalModelMat = baseModel * spinY180;
+														// --- B.1 / Task 9 : model matrix depuis CharacterController + m_avatarYaw ---
+														// Avant Task 9 : la matrice etait recopiee depuis rs.objectModelMatrix
+														// (calculee dans Update a partir du yaw camera + cible orbitale fixe)
+														// puis spinY180 appliquait la rotation 180°. Le perso etait fige a (0,0,0)
+														// parce qu'OrbitalCameraController etait camera-pure (Task 8) sans
+						 								// CharacterController branche.
+														//
+														// Apres Task 9 : on lit la position monde directement depuis le CC
+														// (deja appele dans Update *avant* OrbitalCameraController, cf. ligne ~6580),
+														// et on compose la matrice T(feetPos) * R_y(m_avatarYaw + pi).
+														//   - `feetPos.y = ccPos.y - 0.9` : la position du CC est le CENTRE de la
+														//     capsule ; le mesh Y Bot va de Y=0 (pieds) a Y=1.8 (tete) -> on
+														//     redescend de halfHeight (0.9 m) pour poser les pieds au sol.
+														//   - `+ pi` : convention 3e personne (avatar dos a la camera). Mixamo
+														//     Y Bot face +Z par defaut ; en composant avec atan2(dirX, dirZ) +
+														//     pi, l'avatar tourne face dans la direction de marche tout en
+														//     restant dos a la camera quand on avance.
+														//
+														// La matrice rs.objectModelMatrix reste utilisee par le cube fallback
+														// (RecordIndirect plus haut) ; chaque chemin a desormais sa propre source.
+														const engine::math::Vec3 ccPos = m_characterController.GetPosition();
+														const engine::math::Vec3 feetPos{ ccPos.x, ccPos.y - 0.9f, ccPos.z };
+														const engine::math::Mat4 finalModelMat =
+															engine::math::Mat4::Translate(feetPos) *
+															engine::math::Mat4::RotateY(m_avatarYaw + 3.14159265f);
 
-														// La matrice modele rs.objectModelMatrix est celle du cube avatar (calculee
-														// dans Update via OrbitalCameraController). On reuse sa position + on applique
-														// la rotation Y 180° pour que l'avatar Y Bot soit a la meme position que le
-														// cube qu'il remplace, mais oriente "dos a la camera".
+														// La matrice modele est desormais calculee a partir de cc.GetPosition()
+														// + m_avatarYaw ; le cube placeholder garde sa matrice d'origine (cf.
+														// rs.objectModelMatrix construit dans Update).
 														// materialDescriptorSet + materialIndex : meme set/index que le cube draw.
 														const uint32_t skinnedMaterialIndex = (m_avatarMaterialId != 0u)
 															? m_avatarMaterialId
@@ -6561,10 +6677,32 @@ namespace engine
 				// camera autour de la cible (yaw/pitch) ; molette = zoom.
 				//
 				// B.1 / Task 8 : OrbitalCameraController est devenu camera pure.
-				// Le mouvement de la cible (WASD/saut/accroupi/collision sol +
-				// race/terrain speed multipliers) est sorti d'ici et reviendra
-				// cote CharacterController (Task 9). Tant que celui-ci n'est pas
-				// branche, m_target reste fige (le perso ne bouge plus).
+				// B.1 / Task 9 : on tick d'abord le CharacterController (physics +
+				// collision sol) PUIS la camera suit la position resultante via
+				// `SetTargetPosition`. Ordre important : si la camera tournait
+				// avant le CC, son repere (Forward/Right XZ) servirait a projeter
+				// l'input du frame courant mais sa position cible utiliserait la
+				// position de la frame precedente -> 1-frame lag visible.
+				const auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController);
+				m_characterController.Update(static_cast<float>(dt), moveInput, m_terrainCollider);
+				const engine::math::Vec3 ccPos = m_characterController.GetPosition();
+				m_orbitalCameraController.SetTargetPosition(ccPos);
+
+				// Yaw avatar : suit la direction de mouvement (snap immediat).
+				// Convention monde : atan2(x, z) renvoie l'angle par rapport a
+				// l'axe +Z, dans le meme repere que `Mat4::RotateY` -> rotation
+				// directement applicable a la model matrix de l'avatar.
+				// Le lissage (slerp / damp) sera ajoute en polish ulterieur.
+				if (moveInput.moveDirXZ.x != 0.0f || moveInput.moveDirXZ.z != 0.0f)
+				{
+					m_avatarYaw = std::atan2(moveInput.moveDirXZ.x, moveInput.moveDirXZ.z);
+				}
+
+				// Memorise l'input pour la state machine de locomotion (Task 11
+				// l'etendra a 7 etats — Idle / Walk / Run / Jump / Fall / Land /
+				// Crouch — et lira `m_lastMoveInput` pour decider).
+				m_lastMoveInput = moveInput;
+
 				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
 				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, rmbLook, out.camera);
 			}

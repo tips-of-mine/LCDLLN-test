@@ -2,13 +2,17 @@
 
 // M33.3 — User-based rate limiter for in-game actions (chat 10 msg/min, skills 20/sec).
 // Token bucket for skills; sliding window for chat.
-// Thread-safe only if caller serialises access (single-worker v1).
+// Audit 2026-05-18 : ajout d'un mutex interne. Avant ce fix, le commentaire disait
+// "thread-safe only if caller serialises (single-worker v1)" et il n'y avait
+// aucune protection alors que NetServer dispatche les paquets via un pool de
+// workers -> data race UB sur m_byUser.
 
 #include "src/shared/core/Config.h"
 
 #include <chrono>
 #include <cstdint>
 #include <deque>
+#include <mutex>
 #include <unordered_map>
 
 namespace engine::server
@@ -82,6 +86,7 @@ namespace engine::server
 			Clock::time_point last_active{};
 		};
 
+		mutable std::mutex m_mutex;
 		UserRateLimiterConfig m_config;
 		mutable UserRateLimitCounters m_counters;
 		std::unordered_map<uint64_t, UserState> m_byUser;

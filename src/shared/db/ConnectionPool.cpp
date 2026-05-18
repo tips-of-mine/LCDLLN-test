@@ -144,50 +144,104 @@ namespace engine::server::db
 
 	ConnectionPool::Guard ConnectionPool::Acquire()
 	{
+		// Audit 2026-05-18 : avant ce fix, `mysql_ping` (round-trip reseau,
+		// plusieurs ms a plusieurs secondes en cas de timeout) etait appele SOUS
+		// m_mutex. Tous les autres workers DB etaient bloques pendant le ping
+		// d'une seule connexion -> sous charge avec un slot mort, tout le pool
+		// se serialisait sur la latence MySQL. Fix : extraire le slot sous
+		// verrou, faire le ping + reconnect HORS verrou, puis re-prendre le
+		// verrou seulement pour publier le resultat (mysql handle remplace).
 		auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(kAcquireTimeoutMs);
 		for (;;)
 		{
+			// Phase 1 (verrou) : reserver un slot libre.
+			size_t slot_index = static_cast<size_t>(-1);
+			MYSQL* mysql_handle = nullptr;
 			{
 				std::lock_guard<std::mutex> lock(m_mutex);
 				if (!m_initialized)
 					return Guard();
-
-				for (auto& e : m_connections)
+				for (size_t i = 0; i < m_connections.size(); ++i)
 				{
+					auto& e = m_connections[i];
 					if (!e.in_use && e.mysql)
 					{
-						if (mysql_ping(e.mysql) != 0)
-						{
-							mysql_close(e.mysql);
-							e.mysql = mysql_init(nullptr);
-							if (e.mysql)
-							{
-								bool reconnect = false;
-								mysql_options(e.mysql, MYSQL_OPT_RECONNECT, &reconnect);
-								if (!ConnectOne(e.mysql))
-								{
-									LOG_WARN(Core, "[ConnectionPool] Reconnect failed: {}", mysql_error(e.mysql));
-									mysql_close(e.mysql);
-									e.mysql = nullptr;
-									continue;
-								}
-								LOG_INFO(Core, "[ConnectionPool] Reconnected after ping failure");
-							}
-						}
-						if (e.mysql)
-						{
-							e.in_use = true;
-							return Guard(this, e.mysql);
-						}
+						e.in_use = true; // reservation immediate, meme si le ping va echouer
+						mysql_handle = e.mysql;
+						slot_index = i;
+						break;
 					}
 				}
 			}
+
+			if (mysql_handle == nullptr)
+			{
+				// Pas de slot libre : sleep court puis retry.
+				if (std::chrono::steady_clock::now() >= deadline)
+				{
+					LOG_ERROR(Core, "[ConnectionPool] Acquire timeout");
+					return Guard();
+				}
+				std::this_thread::sleep_for(std::chrono::milliseconds(kAcquireRetryMs));
+				continue;
+			}
+
+			// Phase 2 (HORS verrou) : ping. Si succes, on rend immediatement.
+			if (mysql_ping(mysql_handle) == 0)
+			{
+				return Guard(this, mysql_handle);
+			}
+
+			// Phase 3 (HORS verrou) : ping a echoue. Close + reconnect.
+			mysql_close(mysql_handle);
+			MYSQL* new_handle = mysql_init(nullptr);
+			bool reconnect_ok = false;
+			if (new_handle)
+			{
+				bool reconnect_flag = false;
+				mysql_options(new_handle, MYSQL_OPT_RECONNECT, &reconnect_flag);
+				reconnect_ok = ConnectOne(new_handle);
+				if (!reconnect_ok)
+				{
+					LOG_WARN(Core, "[ConnectionPool] Reconnect failed: {}", mysql_error(new_handle));
+					mysql_close(new_handle);
+					new_handle = nullptr;
+				}
+				else
+				{
+					LOG_INFO(Core, "[ConnectionPool] Reconnected after ping failure");
+				}
+			}
+
+			// Phase 4 (verrou) : publier le nouveau handle (ou marquer le slot mort).
+			{
+				std::lock_guard<std::mutex> lock(m_mutex);
+				if (slot_index < m_connections.size())
+				{
+					if (reconnect_ok && new_handle)
+					{
+						m_connections[slot_index].mysql = new_handle;
+						// in_use reste true : on remet la connexion au caller.
+					}
+					else
+					{
+						m_connections[slot_index].mysql = nullptr;
+						m_connections[slot_index].in_use = false;
+					}
+				}
+			}
+
+			if (reconnect_ok && new_handle)
+			{
+				return Guard(this, new_handle);
+			}
+
 			if (std::chrono::steady_clock::now() >= deadline)
 			{
-				LOG_ERROR(Core, "[ConnectionPool] Acquire timeout");
+				LOG_ERROR(Core, "[ConnectionPool] Acquire timeout after reconnect failure");
 				return Guard();
 			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(kAcquireRetryMs));
+			// On boucle pour essayer un autre slot.
 		}
 	}
 

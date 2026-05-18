@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <mutex>
 #include <numeric>
 
 namespace engine::server
@@ -14,6 +15,7 @@ namespace engine::server
 
 	void BotDetector::SetConfig(const BotDetectorConfig& config)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		m_config = config;
 		LOG_INFO(Net,
 			"[BotDetector] Config set: window={} min_interval_ms={} variance_threshold={} "
@@ -45,6 +47,7 @@ namespace engine::server
 	BotSignal BotDetector::RecordAction(uint64_t userId, BotActionType type,
 		std::chrono::steady_clock::time_point now)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		UserActionState& st = m_byUser[userId];
 		st.last_active = now;
 
@@ -137,22 +140,26 @@ namespace engine::server
 
 	bool BotDetector::IsSuspicious(uint64_t userId) const
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		return m_flagged.count(userId) > 0;
 	}
 
 	bool BotDetector::ShouldAutoBan(uint64_t userId) const
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		return m_autoban.count(userId) > 0;
 	}
 
 	void BotDetector::FlagForReview(uint64_t userId)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		m_flagged.insert(userId);
 		LOG_INFO(Net, "[BotDetector] User manually flagged for review: userId={}", userId);
 	}
 
 	void BotDetector::ClearFlag(uint64_t userId)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		m_flagged.erase(userId);
 		m_autoban.erase(userId);
 		auto it = m_byUser.find(userId);
@@ -161,12 +168,25 @@ namespace engine::server
 		LOG_INFO(Net, "[BotDetector] Flag cleared for userId={}", userId);
 	}
 
+	std::vector<uint64_t> BotDetector::GetFlaggedUsers() const
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		return std::vector<uint64_t>(m_flagged.begin(), m_flagged.end());
+	}
+
+	std::vector<uint64_t> BotDetector::GetAutoBanUsers() const
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		return std::vector<uint64_t>(m_autoban.begin(), m_autoban.end());
+	}
+
 	// -----------------------------------------------------------------------
 	// Maintenance
 	// -----------------------------------------------------------------------
 
 	void BotDetector::PurgeExpired()
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		const auto now    = std::chrono::steady_clock::now();
 		const auto cutoff = now - std::chrono::seconds(m_config.idle_purge_sec);
 

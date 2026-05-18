@@ -4,11 +4,13 @@
 
 #include <algorithm>
 #include <chrono>
+#include <mutex>
 
 namespace engine::server
 {
 	void UserRateLimiter::SetConfig(const UserRateLimiterConfig& config)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		m_config = config;
 		LOG_INFO(Net, "[UserRateLimiter] Config set: chat_per_minute={} skills_per_sec={} max_entries={}",
 			m_config.chat_per_minute, m_config.skills_per_sec, m_config.max_entries);
@@ -25,6 +27,7 @@ namespace engine::server
 
 	bool UserRateLimiter::TryConsumeChat(uint64_t userId)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		auto now = Clock::now();
 		UserState& st = m_byUser[userId];
 		st.last_active = now;
@@ -47,6 +50,7 @@ namespace engine::server
 
 	bool UserRateLimiter::TryConsumeSkill(uint64_t userId)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		auto now = Clock::now();
 		UserState& st = m_byUser[userId];
 		st.last_active = now;
@@ -79,6 +83,7 @@ namespace engine::server
 
 	void UserRateLimiter::PurgeExpired()
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		const auto now    = Clock::now();
 		const auto cutoff = now - std::chrono::minutes(5);
 
@@ -102,6 +107,7 @@ namespace engine::server
 
 	void UserRateLimiter::GetCounters(UserRateLimitCounters& out) const
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		out = m_counters;
 	}
 }

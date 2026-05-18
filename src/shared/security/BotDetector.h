@@ -3,13 +3,17 @@
 // M33.3 — Bot detection heuristics: track input timing, detect impossible actions.
 // Records per-user action timestamps and computes timing regularity.
 // Suspicious accounts are flagged for manual review or auto-banned.
-// Thread-safe only if caller serialises access (single-worker v1).
+// Audit 2026-05-18 : ajout d'un mutex interne. Avant ce fix, le commentaire
+// disait "thread-safe only if caller serialises (single-worker v1)" et il n'y
+// avait aucune protection. NetServer dispatche les paquets via un pool de
+// workers -> data race UB sur m_byUser / m_flagged / m_autoban.
 
 #include "src/shared/core/Config.h"
 
 #include <chrono>
 #include <cstdint>
 #include <deque>
+#include <mutex>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -86,11 +90,14 @@ namespace engine::server
 		/// Clear the flag for a user (after successful manual review).
 		void ClearFlag(uint64_t userId);
 
-		/// Read-only view of currently flagged user IDs.
-		const std::unordered_set<uint64_t>& GetFlaggedUsers() const { return m_flagged; }
+		/// Snapshot (par copie) des userIds actuellement flagges.
+		/// Audit 2026-05-18 : retournait une reference vers le set interne, ce
+		/// qui etait non thread-safe (la ref pouvait etre invalidee par RecordAction
+		/// concurrent). On retourne desormais une copie sous verrou.
+		std::vector<uint64_t> GetFlaggedUsers() const;
 
-		/// Read-only view of users that crossed the auto-ban threshold.
-		const std::unordered_set<uint64_t>& GetAutoBanUsers() const { return m_autoban; }
+		/// Snapshot (par copie) des userIds passes le threshold auto-ban.
+		std::vector<uint64_t> GetAutoBanUsers() const;
 
 		/// Purge stale user state. Call periodically (e.g., every few minutes).
 		void PurgeExpired();
@@ -112,6 +119,7 @@ namespace engine::server
 			std::chrono::steady_clock::time_point last_active{};
 		};
 
+		mutable std::mutex m_mutex;
 		BotDetectorConfig m_config;
 		std::unordered_map<uint64_t, UserActionState> m_byUser;
 		std::unordered_set<uint64_t> m_flagged;

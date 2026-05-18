@@ -4,13 +4,15 @@
 
 #include <chrono>
 #include <cstdint>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 
 namespace engine::server
 {
-	/// Counters exportables for observability (pre-M23). Thread-safe only if caller serialises access (v1).
+	/// Counters exportables for observability (pre-M23). Lecture/ecriture
+	/// proteges par le mutex de la classe parente RateLimitAndBan / autres.
 	struct SecurityCounters
 	{
 		uint64_t rate_limit_hits_auth = 0;
@@ -35,6 +37,12 @@ namespace engine::server
 	};
 
 	/// Token bucket + failure count + IP ban. Apply before costly auth/DB. In-memory + periodic purge.
+	///
+	/// Thread-safe : mutex interne protege m_by_ip / m_banned_until / m_counters.
+	/// Toutes les methodes publiques le prennent. Les workers NetServer peuvent
+	/// appeler TryConsume*/RecordAuthFailure/IsBanned en parallele.
+	/// Audit 2026-05-18 : avant ce fix, le commentaire disait "thread-safe only
+	/// if caller serialises" et il n'y avait aucune protection -> data race UB.
 	class RateLimitAndBan
 	{
 	public:
@@ -79,6 +87,7 @@ namespace engine::server
 			int failure_count = 0;
 		};
 
+		mutable std::mutex m_mutex;
 		RateLimitAndBanConfig m_config;
 		mutable SecurityCounters m_counters;
 		std::unordered_map<std::string, AuthState> m_by_ip;
@@ -86,5 +95,8 @@ namespace engine::server
 
 		bool tryConsume(TokenBucket& bucket, double capacity, double refill_per_sec);
 		void purgeOldEntries();
+		/// Variante sans verrou de IsBanned, a utiliser quand le caller detient
+		/// deja m_mutex (TryConsumeAuth, TryConsumeRegister). Evite un re-lock.
+		bool isBanned_NoLock(const std::string& ip_key) const;
 	};
 }

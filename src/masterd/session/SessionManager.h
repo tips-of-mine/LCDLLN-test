@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -66,7 +67,13 @@ namespace engine::server
 	};
 
 	/// Global session manager: one active session per account, 64-bit session_id, 24h expiry, reconnection window.
-	/// Lookup by session_id and by account_id. Uses monotonic clock for timeouts. Thread-safe if external mutex is used (v1 single-threaded server).
+	/// Lookup by session_id and by account_id. Uses monotonic clock for timeouts.
+	/// Thread-safe : un `std::mutex` interne (m_mutex) protege m_by_session_id /
+	/// m_by_account_id. Toutes les methodes publiques (mutables et const) le
+	/// prennent. NetServer dispatche les paquets via un pool de worker threads
+	/// donc plusieurs handlers peuvent appeler SessionManager en parallele.
+	/// Audit 2026-05-18 : avant ce fix, le commentaire disait "v1 single-threaded
+	/// server" et il n'y avait AUCUNE protection -> data race UB sur les maps.
 	class SessionManager
 	{
 	public:
@@ -133,6 +140,13 @@ namespace engine::server
 	private:
 		using Clock = std::chrono::steady_clock;
 
+		/// Mutex interne protegeant toutes les structures partagees. Mutable
+		/// pour permettre aux methodes const (Validate, GetAccountId, etc.) de
+		/// le prendre. Verrou non-recursif : les helpers privees ne le prennent
+		/// PAS (a appeler uniquement depuis une methode publique qui a deja
+		/// pris le verrou ; cf. closeInternal_NoLock).
+		mutable std::mutex m_mutex;
+
 		SessionManagerConfig m_config;
 		std::unordered_map<uint64_t, Session> m_by_session_id;
 		std::unordered_map<uint64_t, uint64_t> m_by_account_id;
@@ -141,6 +155,11 @@ namespace engine::server
 
 		bool isValid(const Session& s, Clock::time_point now) const;
 		uint64_t generateSessionId();
+
+		/// Variante non-locking de Close, a appeler uniquement quand le caller
+		/// detient deja m_mutex. Evite la deadlock dans CreateSession qui doit
+		/// fermer une session existante (KickExisting) tout en tenant le verrou.
+		void closeInternal_NoLock(uint64_t session_id, SessionCloseReason reason);
 	};
 
 	/// Returns a human-readable string for SessionCloseReason (logging).

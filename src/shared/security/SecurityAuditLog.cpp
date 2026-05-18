@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <cstring>
+#include <ctime>
 #include <format>
 #include <string>
 
@@ -18,10 +19,21 @@ namespace engine::server
 
 	std::string SecurityAuditLog::timestamp()
 	{
+		// Audit 2026-05-18 : `std::gmtime` retourne un pointeur vers une struct
+		// statique partagee non thread-safe. writeLine est appele depuis les
+		// workers NetServer (login fail, ban, session_closed) -> race UB,
+		// timestamps potentiellement corrompus. On bascule sur la variante
+		// reentrante : gmtime_s sous Windows, gmtime_r sous POSIX.
 		auto now = std::chrono::system_clock::now();
 		auto t = std::chrono::system_clock::to_time_t(now);
+		std::tm tm_buf{};
+#if defined(_WIN32)
+		gmtime_s(&tm_buf, &t);
+#else
+		gmtime_r(&t, &tm_buf);
+#endif
 		char buf[32];
-		std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", std::gmtime(&t));
+		std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &tm_buf);
 		return std::string(buf);
 	}
 

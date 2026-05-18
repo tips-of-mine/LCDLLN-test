@@ -196,10 +196,53 @@ namespace engine::server::db
 
 	bool SqlPreparedStatement::FetchRow()
 	{
+		// Audit 2026-05-18 : avant ce fix, on traitait `rc != 0` comme "fin de
+		// stream" indiscriminement. Or `mysql_stmt_fetch` peut retourner
+		// `MYSQL_DATA_TRUNCATED` (1) si une colonne STRING depasse les 256
+		// octets alloues par buffer (`SqlPreparedStatement.cpp:48`). Resultat :
+		// donnees silencieusement tronquees consideres comme "pas de row" ->
+		// terms_editions / mails / bodies disparaissent. Fix : detecter
+		// MYSQL_DATA_TRUNCATED, redimensionner le buffer de la colonne et
+		// refetch via mysql_stmt_fetch_column.
 		if (!m_stmt)
 			return false;
 		const int rc = mysql_stmt_fetch(m_stmt);
-		return rc == 0;  // 0 = OK, MYSQL_NO_DATA = fin, autres = erreur
+		if (rc == 0)
+			return true;
+		if (rc == MYSQL_NO_DATA)
+			return false;
+		if (rc == MYSQL_DATA_TRUNCATED)
+		{
+			bool any_refetch_failed = false;
+			for (size_t i = 0; i < m_resultColumnCount; ++i)
+			{
+				const unsigned long actual_len = m_resultLengths[i];
+				if (actual_len > m_resultBuffers[i].size())
+				{
+					LOG_WARN(Core, "[SqlPreparedStatement] Column {} truncated: actual={} buffer={}",
+						i, actual_len, m_resultBuffers[i].size());
+					m_resultBuffers[i].resize(actual_len + 1);
+					MYSQL_BIND rb;
+					std::memset(&rb, 0, sizeof(rb));
+					rb.buffer = m_resultBuffers[i].data();
+					rb.buffer_length = static_cast<unsigned long>(m_resultBuffers[i].size());
+					rb.length = &m_resultLengths[i];
+					rb.is_null = reinterpret_cast<bool*>(&m_resultIsNull[i]);
+					rb.buffer_type = MYSQL_TYPE_STRING;
+					if (mysql_stmt_fetch_column(m_stmt, &rb, static_cast<unsigned int>(i), 0) != 0)
+					{
+						LOG_ERROR(Core, "[SqlPreparedStatement] mysql_stmt_fetch_column failed for col {}: {}",
+							i, mysql_stmt_error(m_stmt));
+						any_refetch_failed = true;
+					}
+				}
+			}
+			return !any_refetch_failed;
+		}
+		// Autre erreur (rc == 1 = MYSQL_ERROR, etc.)
+		LOG_ERROR(Core, "[SqlPreparedStatement] mysql_stmt_fetch rc={} err={}",
+			rc, mysql_stmt_error(m_stmt));
+		return false;
 	}
 
 	int32_t SqlPreparedStatement::GetInt32(size_t col, int32_t fallback) const

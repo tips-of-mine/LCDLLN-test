@@ -811,7 +811,9 @@ Le shard est le binaire qui exécute le **gameplay temps réel** (combat, mouvem
 
 ### Point d'entrée shard
 
-`src/shardd/main_linux.cpp` (Linux) / `src/shardd/main_win.cpp` (Windows dev). Init ordonnée des runtimes :
+`src/shardd/main_linux.cpp` (Linux, **seule cible canonique** — la cible Windows
+`main_win.cpp` a été retirée 2026-05-18 car obsolète, cf. audit ; pour des
+tests Windows du shardd utiliser WSL ou Docker). Init ordonnée des runtimes :
 1. ConnectionPool, MigrationRunner.
 2. EventAI + PoolManager (Wave 6 #573).
 3. ThreatList + DBScripts (Wave 8 #576).

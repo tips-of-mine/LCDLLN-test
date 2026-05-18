@@ -14,54 +14,14 @@ set(CMAKE_CXX_STANDARD 20)
 #   include(LCDLLNHelpers)
 # Le helper est donc disponible ici sans redefinition.
 
-if(WIN32)
-  add_executable(server_app
-    ${CMAKE_SOURCE_DIR}/src/shardd/main_win.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/ServerProtocol.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildTabard.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildBank.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/net/ChatSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/net/ChatEmotes.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/CurrencyConfig.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/VendorCatalog.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/PlayerWalletService.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/trade/TradeSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/gathering/GatheringSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/crafting/CraftingSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/auction/AuctionHouse.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntime.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/event/EventRuntime.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/SpatialPartition.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/GridState.cpp
-    # Wave 18 : GridNotifier (foncteur Visitor + filter predicate).
-    # GridVisitor.h est header-only template, pas de .cpp.
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/GridNotifier.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/ZoneTransitions.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/core/Log.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/core/LogConfig.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/platform/FileSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/session/SessionManager.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/security/RateLimitAndBan.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/security/UserRateLimiter.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/security/CaptchaVerifier.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/security/BotDetector.cpp
-  )
-  # M32.1: no MySQL on WIN32 game shard — FriendSystem compiles in no-DB mode.
-  # Do NOT define ENGINE_HAS_MYSQL so #if ENGINE_HAS_MYSQL evaluates to false.
-  target_link_libraries(server_app PRIVATE ws2_32 engine_auth spdlog::spdlog)
-elseif(UNIX)
+# Audit 2026-05-18 : la cible `server_app` Windows utilisait
+# `src/shardd/main_win.cpp`, un sandbox dev combine master+shard qui n'avait
+# plus recu de feature commit depuis mars 2026 (cf. git log). Le serveur prod
+# tourne sur Linux uniquement (cf. CLAUDE.md) ; cette cible Windows etait
+# une source de confusion et de divergence (Waves 8-14 cote Linux jamais
+# portees). Retiree pour clarte. Pour des tests Windows du gameplay shardd,
+# utiliser `engine_app` (le client) ou bien WSL/Docker.
+if(UNIX)
   find_package(OpenSSL REQUIRED)
   find_path(MYSQL_INCLUDE_DIR NAMES mysql.h mysql/mysql.h PATH_SUFFIXES mysql)
   find_library(MYSQL_LIBRARY NAMES mysqlclient)

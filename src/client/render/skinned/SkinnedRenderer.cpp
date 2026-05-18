@@ -128,11 +128,6 @@ bool SkinnedRenderer::Init(VkDevice device,
         return false;
     }
 
-    LOG_INFO(Render, "[SkinnedRenderer::Init] start -- formats(A=0x{:x} B=0x{:x} C=0x{:x} V=0x{:x} D=0x{:x}) vertWords={} fragWords={} maxBones={}",
-             static_cast<uint32_t>(formatA), static_cast<uint32_t>(formatB), static_cast<uint32_t>(formatC),
-             static_cast<uint32_t>(formatVelocity), static_cast<uint32_t>(depthFormat),
-             vertWordCount, fragWordCount, maxBonesPerSkeleton);
-
     m_device = device;
     m_physicalDevice = physicalDevice;
     m_maxBones = maxBonesPerSkeleton;
@@ -228,7 +223,6 @@ bool SkinnedRenderer::Init(VkDevice device,
     rpInfo.dependencyCount = 1;
     rpInfo.pDependencies   = &dep;
 
-    LOG_INFO(Render, "[SkinnedRenderer::Init] vkCreateRenderPass...");
     if (vkCreateRenderPass(device, &rpInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
         LOG_ERROR(Render, "[SkinnedRenderer] vkCreateRenderPass failed");
         Destroy(device);
@@ -249,7 +243,6 @@ bool SkinnedRenderer::Init(VkDevice device,
     boneSetLayoutCi.bindingCount = 1;
     boneSetLayoutCi.pBindings    = &boneBinding;
 
-    LOG_INFO(Render, "[SkinnedRenderer::Init] vkCreateDescriptorSetLayout (bone set)...");
     if (vkCreateDescriptorSetLayout(device, &boneSetLayoutCi, nullptr, &m_boneSetLayout) != VK_SUCCESS) {
         LOG_ERROR(Render, "[SkinnedRenderer] bone set layout creation failed");
         Destroy(device);
@@ -274,7 +267,6 @@ bool SkinnedRenderer::Init(VkDevice device,
     layoutInfo.pushConstantRangeCount = 1;
     layoutInfo.pPushConstantRanges    = &pushRange;
 
-    LOG_INFO(Render, "[SkinnedRenderer::Init] vkCreatePipelineLayout...");
     if (vkCreatePipelineLayout(device, &layoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
         LOG_ERROR(Render, "[SkinnedRenderer] vkCreatePipelineLayout failed");
         Destroy(device);
@@ -291,7 +283,6 @@ bool SkinnedRenderer::Init(VkDevice device,
         modInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         modInfo.pCode    = vertSpirv;
         modInfo.codeSize = vertWordCount * sizeof(uint32_t);
-        LOG_INFO(Render, "[SkinnedRenderer::Init] vkCreateShaderModule (vert)...");
         if (vkCreateShaderModule(device, &modInfo, nullptr, &vertModule) != VK_SUCCESS) {
             LOG_ERROR(Render, "[SkinnedRenderer] vertex shader module creation failed");
             Destroy(device);
@@ -300,7 +291,6 @@ bool SkinnedRenderer::Init(VkDevice device,
 
         modInfo.pCode    = fragSpirv;
         modInfo.codeSize = fragWordCount * sizeof(uint32_t);
-        LOG_INFO(Render, "[SkinnedRenderer::Init] vkCreateShaderModule (frag)...");
         if (vkCreateShaderModule(device, &modInfo, nullptr, &fragModule) != VK_SUCCESS) {
             LOG_ERROR(Render, "[SkinnedRenderer] fragment shader module creation failed");
             vkDestroyShaderModule(device, vertModule, nullptr);
@@ -437,7 +427,6 @@ bool SkinnedRenderer::Init(VkDevice device,
     gpInfo.renderPass          = m_renderPass;
     gpInfo.subpass             = 0;
 
-    LOG_INFO(Render, "[SkinnedRenderer::Init] vkCreateGraphicsPipelines...");
     const VkResult pipelineResult = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1,
                                                               &gpInfo, nullptr, &m_pipeline);
 
@@ -458,8 +447,6 @@ bool SkinnedRenderer::Init(VkDevice device,
     // -------------------------------------------------------------------------
     const VkDeviceSize boneBufferSize =
         static_cast<VkDeviceSize>(maxBonesPerSkeleton) * sizeof(float) * 16;
-    LOG_INFO(Render, "[SkinnedRenderer::Init] vkCreateBuffer (bone SSBO, {} bytes)...",
-             static_cast<size_t>(boneBufferSize));
     if (!CreateEmptyHostVisibleBuffer(device, physicalDevice,
                                       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                       boneBufferSize, &m_boneSsbo, &m_boneSsboMemory)) {
@@ -472,7 +459,6 @@ bool SkinnedRenderer::Init(VkDevice device,
     // -------------------------------------------------------------------------
     // Model instance buffer (1 mat4 = 64 octets). Réécrit chaque Record.
     // -------------------------------------------------------------------------
-    LOG_INFO(Render, "[SkinnedRenderer::Init] vkCreateBuffer (model instance, 64 bytes)...");
     if (!CreateEmptyHostVisibleBuffer(device, physicalDevice,
                                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                                       64u, &m_modelInstanceBuffer, &m_modelInstanceMemory)) {
@@ -495,7 +481,6 @@ bool SkinnedRenderer::Init(VkDevice device,
     poolCi.poolSizeCount = 1;
     poolCi.pPoolSizes    = &poolSize;
 
-    LOG_INFO(Render, "[SkinnedRenderer::Init] vkCreateDescriptorPool...");
     if (vkCreateDescriptorPool(device, &poolCi, nullptr, &m_descriptorPool) != VK_SUCCESS) {
         LOG_ERROR(Render, "[SkinnedRenderer] descriptor pool creation failed");
         Destroy(device);
@@ -508,7 +493,6 @@ bool SkinnedRenderer::Init(VkDevice device,
     allocInfo.descriptorSetCount = 1;
     allocInfo.pSetLayouts        = &m_boneSetLayout;
 
-    LOG_INFO(Render, "[SkinnedRenderer::Init] vkAllocateDescriptorSets (bone set)...");
     if (vkAllocateDescriptorSets(device, &allocInfo, &m_boneDescriptorSet) != VK_SUCCESS) {
         LOG_ERROR(Render, "[SkinnedRenderer] bone descriptor set allocation failed");
         Destroy(device);

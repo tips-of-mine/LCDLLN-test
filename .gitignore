@@ -17,3 +17,7 @@ game/data/terrain/placeholders/*.png
 # M100.45 : prefs editeur locales par utilisateur (creees au premier lancement).
 game/data/editor/user_prefs.json
 game/data/editor/user_prefs.json.tmp
+
+# Asset pipeline binaries (downloaded by download_fbx2gltf.ps1)
+tools/asset_pipeline/bin/*
+!tools/asset_pipeline/bin/.gitignore

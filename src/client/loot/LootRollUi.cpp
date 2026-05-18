@@ -79,21 +79,24 @@ namespace engine::client
 			LOG_WARN(Net, "[LootRollUiPresenter] Choose: no send callback");
 			return;
 		}
-		// Audit 2026-05-18 : double-submit guard. Avant ce check, myChoice etait
-		// pose APRES m_send -> double-clic envoyait deux ChoiceRequest.
-		// On reserve le slot AVANT l'envoi pour fermer la fenetre de race.
-		uint8_t previousChoice = 0;
+		// Audit 2026-05-18 : double-submit guard. Avant ce check, `myChoice` etait
+		// pose APRES `m_send` -> double-clic envoyait deux ChoiceRequest.
+		// `myChoice` est `std::optional<uint8_t>` : empty = pas encore choisi,
+		// has_value() = choix deja envoye (Pass=0, Greed=1, Need=2). On bloque
+		// donc sur `has_value()` (et non sur `!= 0` qui collisionnerait avec Pass).
+		// On reserve l'optional AVANT l'envoi pour fermer la fenetre de race.
+		std::optional<uint8_t> previousChoice;
 		bool reserved = false;
 		for (auto& p : m_state.pendingRolls)
 		{
 			if (p.rollId == rollId)
 			{
-				if (p.myChoice != 0)
+				if (p.myChoice.has_value())
 				{
 					LOG_DEBUG(Net, "[LootRollUiPresenter] Choose: choix deja envoye rollId={}, ignore", rollId);
 					return;
 				}
-				previousChoice = p.myChoice;
+				previousChoice = p.myChoice; // toujours empty ici par la branche has_value() au-dessus
 				p.myChoice = choice;
 				reserved = true;
 				break;
@@ -104,7 +107,7 @@ namespace engine::client
 		{
 			m_state.lastErrorText = "Echec envoi (loot choice).";
 			LOG_WARN(Net, "[LootRollUiPresenter] Choose: send failed rollId={}", rollId);
-			if (reserved) // rollback du flag pour permettre un retry
+			if (reserved) // rollback de l'optional pour permettre un retry
 			{
 				for (auto& p : m_state.pendingRolls)
 				{

@@ -1,4 +1,5 @@
 #include "src/shared/db/SqlPreparedStatement.h"
+#include "src/shared/core/Log.h"
 
 #include <mysql.h>
 

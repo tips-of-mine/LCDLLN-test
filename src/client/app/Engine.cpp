@@ -6556,53 +6556,17 @@ namespace engine
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
-				// Etape 1 vue 3eme personne : controleur orbital (camera derriere une
-				// position cible, qui sera celle de l'avatar dans un PR ulterieur).
-				// Comportement : souris libre par defaut ; clic droit maintenu rotate
-				// la camera autour de la cible (yaw/pitch) ; molette zoom in/out ;
-				// WASD deplace la cible dans le plan XZ et la camera suit.
+				// Vue 3eme personne : controleur orbital pur (camera derriere la
+				// cible). Souris libre par defaut ; clic droit maintenu = rotate
+				// camera autour de la cible (yaw/pitch) ; molette = zoom.
 				//
-				// Chantier 2 : passe la hauteur sol terrain au controleur pour la
-				// collision camera-decor (plus seulement Y=0). 0 si pas de terrain.
-				//
-				// Convention MMORPG : la souris est LIBRE par defaut (curseur visible,
-				// utilisable pour cliquer sur l'UI HUD). Maintenir le CLIC DROIT pour
-				// faire pivoter la camera autour du personnage. Sans clic droit, la
-				// camera reste fixe par rapport au monde et le perso continue d'etre
-				// dans la vue (la camera est positionnee derriere lui via le yaw
-				// courant). L'avatar suit le yaw camera donc on voit toujours son dos.
+				// B.1 / Task 8 : OrbitalCameraController est devenu camera pure.
+				// Le mouvement de la cible (WASD/saut/accroupi/collision sol +
+				// race/terrain speed multipliers) est sorti d'ici et reviendra
+				// cote CharacterController (Task 9). Tant que celui-ci n'est pas
+				// branche, m_target reste fige (le perso ne bouge plus).
 				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
-				const auto& camTarget = m_orbitalCameraController.GetTargetPosition();
-				const float groundY = m_terrain.IsValid()
-					? m_terrain.SampleHeightAtWorldXZ(camTarget.x, camTarget.z)
-					: 0.0f;
-
-				// Modificateur de vitesse combine RACE x TERRAIN.
-				// RACE : table id->multiplicateur (placeholder, a tuner gameplay).
-				// L'identifiant race est stocke en string sur AuthUi (m_characterRaceId).
-				// TODO : eventuellement migrer vers la table races (DB) pour que les
-				// game-designers tunent sans recompiler.
-				auto raceMultiplier = [](const std::string& raceId) -> float {
-					if (raceId == "elfes")              return 1.10f; // legers, agiles.
-					if (raceId == "nains")              return 0.85f; // courts sur pattes.
-					if (raceId == "orcs")               return 0.95f;
-					if (raceId == "morts_vivants")      return 0.90f; // demarche raide.
-					if (raceId == "demons")             return 1.05f; // au sol ; vol = autre meca.
-					if (raceId == "chevaliers_dragons") return 1.00f; // monture = autre meca.
-					if (raceId == "humains" || raceId.empty() || raceId == "default") return 1.00f;
-					return 1.00f;
-				};
-				const float raceMul = raceMultiplier(m_authUi.GetSelectedCharacterRaceId());
-
-				// TERRAIN : pour l'instant 1.0, hook pour future query splatmap.
-				// TODO : ajouter TerrainRenderer::SampleSpeedMultiplierAtWorldXZ(x,z)
-				// qui lit le splat CPU (R=grass G=dirt B=rock A=snow) et retourne
-				// une moyenne ponderee (grass=1.0, dirt=0.95, rock=0.90, snow=0.65).
-				constexpr float terrainMul = 1.0f;
-
-				const float speedMul = raceMul * terrainMul;
-				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout,
-					rmbLook, true, out.camera, groundY, speedMul);
+				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, rmbLook, out.camera);
 			}
 
 			// Chat update : uniquement post-EnterWorld. Le rendu pre-game est desactive
@@ -6765,23 +6729,17 @@ namespace engine
 				const float yaw = out.camera.yaw;
 				const float c = std::cos(yaw);
 				const float s = std::sin(yaw);
-				// Etape 5 : bob vertical placeholder quand le perso marche / court.
-				// Idle : pas d'oscillation. L'amplitude est de 4 cm en walk, 7 cm
-				// en run -- visible sans etre desagreable. A remplacer par de
-				// vraies anims squelettiques quand un format anim sera cable.
-				float bobY = 0.0f;
-				const auto loco = m_orbitalCameraController.GetLocomotionState();
-				if (loco != engine::render::OrbitalCameraController::LocomotionState::Idle)
-				{
-					const float bobAmpM = (loco == engine::render::OrbitalCameraController::LocomotionState::Run) ? 0.07f : 0.04f;
-					bobY = std::sin(m_orbitalCameraController.GetWalkBobPhaseRad()) * bobAmpM;
-				}
-				// Le orbital target est a kTargetEyeHeight (1.7 m) au-dessus du sol :
-				// c'est la position des yeux du joueur. L'avatar (mesh feet at mesh-Y=0)
-				// doit etre translate de (target.y - kTargetEyeHeight) pour que ses
-				// pieds soient sur le sol et non flottent dans les airs. groundY ici
-				// est 0 (sol plat) ou la hauteur terrain echantillonnee plus haut.
-				const float feetY = target.y - engine::render::OrbitalCameraController::kTargetEyeHeight + bobY;
+				// B.1 / Task 8 : le bob synthetique (placeholder anim) est supprime
+				// avec la retrogradation d'OrbitalCameraController en camera pure.
+				// L'animation visuelle (walk-bob, vraies anims squelettiques) sera
+				// rebranchee plus tard depuis la state machine de locomotion.
+				//
+				// Plus de kTargetEyeHeight non plus : la cible orbitale n'est plus
+				// systematiquement "yeux a 1.7 m du sol". CharacterController
+				// (Task 9) decidera ou poser la cible (yeux, hanche, ou pieds) et
+				// poussera la position correspondante via SetTargetPosition. Pour
+				// l'instant target reste a (0,0,0) -> avatar pose les pieds en 0.
+				const float feetY = target.y;
 				// IMPORTANT : layout COLUMN-MAJOR. Le shader gbuffer_geometry.vert
 				// reconstruit la mat4 via 4 vec4 (instanceRow0..3), chacun lu en sequence
 				// dans le buffer d'instance ; GLSL mat4(c0,c1,c2,c3) place chaque vec4

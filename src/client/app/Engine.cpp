@@ -116,43 +116,59 @@ namespace engine
 		/// normalise pour eviter la diagonale rapide (1.41x), et capture aussi
 		/// le run (Shift) et le saut (Space, edge-triggered).
 		///
+		/// Le mapping des touches d'avant et de gauche depend de `layout`
+		/// (cf. `controls.movement_layout` dans config) :
+		/// - WASD : forward=W, left=A (clavier US par defaut)
+		/// - ZQSD : forward=Z, left=Q (clavier FR/BE AZERTY)
+		/// S et D sont identiques dans les deux layouts. L'ancien code mappait
+		/// W ET Z (ou A ET Q) en OR sans discriminer ; resultat sur AZERTY :
+		/// la touche W (qui devrait ne rien faire en ZQSD) faisait aussi
+		/// avancer parce qu'elle envoie VK_W (rapport user 2026-05-19).
+		///
 		/// \param input  Input snapshot de la frame courante (clavier + souris).
 		/// \param camera Camera orbitale (utilise GetForwardXZ / GetRightXZ pour
 		///               le repere local au lieu d'un yaw monde fixe — les
 		///               touches restent "vers ce que je regarde" meme apres
 		///               rotation de la camera).
+		/// \param layout Layout clavier (WASD ou ZQSD).
 		/// \return MoveInput pret a etre consomme par CharacterController.
 		///         `swim*/fly` sont hors-scope B.1 et restent false.
 		///
 		/// Effet de bord : aucun. Pure projection input -> intention.
 		engine::gameplay::MoveInput BuildMoveInput(
 			const engine::platform::Input& input,
-			const engine::render::OrbitalCameraController& camera)
+			const engine::render::OrbitalCameraController& camera,
+			engine::render::MovementLayout layout)
 		{
 			engine::gameplay::MoveInput out{};
 
 			const engine::math::Vec3 forward = camera.GetForwardXZ();
 			const engine::math::Vec3 right   = camera.GetRightXZ();
 
+			const engine::platform::Key forwardKey =
+				(layout == engine::render::MovementLayout::ZQSD) ? engine::platform::Key::Z : engine::platform::Key::W;
+			const engine::platform::Key leftKey =
+				(layout == engine::render::MovementLayout::ZQSD) ? engine::platform::Key::Q : engine::platform::Key::A;
+			const engine::platform::Key backKey  = engine::platform::Key::S;
+			const engine::platform::Key rightKey = engine::platform::Key::D;
+
 			engine::math::Vec3 dir{ 0.0f, 0.0f, 0.0f };
-			// Z (AZERTY) traite comme W : tous les claviers majoritaires (FR / BE / DE)
-			// mappent leur touche "avant" sur la position physique W -> Z. Idem A -> Q.
-			if (input.IsDown(engine::platform::Key::W) || input.IsDown(engine::platform::Key::Z))
+			if (input.IsDown(forwardKey))
 			{
 				dir.x += forward.x;
 				dir.z += forward.z;
 			}
-			if (input.IsDown(engine::platform::Key::S))
+			if (input.IsDown(backKey))
 			{
 				dir.x -= forward.x;
 				dir.z -= forward.z;
 			}
-			if (input.IsDown(engine::platform::Key::D))
+			if (input.IsDown(rightKey))
 			{
 				dir.x += right.x;
 				dir.z += right.z;
 			}
-			if (input.IsDown(engine::platform::Key::A) || input.IsDown(engine::platform::Key::Q))
+			if (input.IsDown(leftKey))
 			{
 				dir.x -= right.x;
 				dir.z -= right.z;
@@ -171,6 +187,23 @@ namespace engine
 			// Water/Fly du CharacterController, inutiles tant que la query eau
 			// n'est pas branchee — IWorldCollider::QueryWater renvoie false).
 			return out;
+		}
+
+		/// Sous-projet B.1 — Detecte "pure back step" : touche back enfoncee
+		/// seule, sans aucune autre direction de mouvement. La state machine
+		/// de locomotion utilise ce flag pour declencher l'etat WalkBack
+		/// (mesh inchange + anim Walking Backwards) ; tout autre input
+		/// (forward, strafe, diagonale) repasse en free-mover (pivot mesh +
+		/// Walk standard). On detecte les deux mappings AZERTY/QWERTY pour
+		/// rester robuste quel que soit `controls.movement_layout`.
+		bool IsPureBackInput(const engine::platform::Input& input)
+		{
+			const bool back = input.IsDown(engine::platform::Key::S);
+			if (!back) return false;
+			const bool anyForward = input.IsDown(engine::platform::Key::W) || input.IsDown(engine::platform::Key::Z);
+			const bool anyLeft    = input.IsDown(engine::platform::Key::A) || input.IsDown(engine::platform::Key::Q);
+			const bool anyRight   = input.IsDown(engine::platform::Key::D);
+			return !anyForward && !anyLeft && !anyRight;
 		}
 
 		/// Sous-projet B.1 (Task 11) — Mapping etat de locomotion -> nom du clip
@@ -6725,46 +6758,35 @@ namespace engine
 				// avant le CC, son repere (Forward/Right XZ) servirait a projeter
 				// l'input du frame courant mais sa position cible utiliserait la
 				// position de la frame precedente -> 1-frame lag visible.
-				const auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController);
+				const auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout);
 				m_characterController.Update(static_cast<float>(dt), moveInput, m_terrainCollider);
 				const engine::math::Vec3 ccPos = m_characterController.GetPosition();
 				m_orbitalCameraController.SetTargetPosition(ccPos);
 
-				// Yaw avatar : convention "back-step" (style MMO classique). On
-				// projette la direction de mouvement sur l'axe forward du mesh
-				// actuel (sin(yaw), 0, cos(yaw)). Si le mouvement a une composante
-				// forward (dot > 0), on update le yaw pour aligner le mesh sur
-				// la direction de marche. Sinon (mouvement back ou strafe pur),
-				// on garde le yaw inchange : le mesh continue de regarder dans la
-				// meme direction et glisse en arriere / lateralement. C'est ce
-				// qui permet a la touche S de jouer l'animation Walking Backwards
-				// (mesh dos cam, marchant a reculons) plutot que de pivoter face
-				// cam comme dans la convention free-mover.
+				// Yaw avatar : convention "back-step" simple. On declenche le
+				// mode WalkBack (mesh inchange + anim Walking Backwards)
+				// UNIQUEMENT si la touche back (S) est enfoncee seule, sans
+				// aucune autre direction. Tout autre input (forward, strafe,
+				// diagonale, S+autre direction) repasse en free-mover : le
+				// mesh pivote pour aligner sa face sur la direction de
+				// mouvement, et la state machine joue Walk/Run.
 				//
-				// `movingBack` est utilise par la state machine ci-dessous pour
-				// declencher l'etat WalkBack au lieu de Walk/StartWalking.
-				bool movingBack = false;
+				// L'ancienne heuristique basee sur dot(moveDir, mesh_forward)
+				// donnait Q/D = strafe pur (no pivot) quand le perso etait
+				// deja aligne (apres avoir avance avec W). Resultat : le
+				// mesh ne pivotait plus en Q/D et l'utilisateur ne voyait
+				// aucun mouvement visible (la camera suit, mesh reste centre).
+				// Le simple "pure S" est plus previsible et conforme a la
+				// convention MMO classique (Q/D = strafe avec pivot, S = back).
+				const bool movingBack = IsPureBackInput(m_input);
 				const bool hasMove = (moveInput.moveDirXZ.x != 0.0f || moveInput.moveDirXZ.z != 0.0f);
-				if (hasMove)
+				if (hasMove && !movingBack)
 				{
-					const float meshFx = std::sin(m_avatarYaw);
-					const float meshFz = std::cos(m_avatarYaw);
-					const float dotForward = moveInput.moveDirXZ.x * meshFx + moveInput.moveDirXZ.z * meshFz;
-					if (dotForward > 0.01f)
-					{
-						// Forward / diagonale : aligne le mesh sur la direction de marche.
-						m_avatarYaw = std::atan2(moveInput.moveDirXZ.x, moveInput.moveDirXZ.z);
-					}
-					else if (dotForward < -0.01f)
-					{
-						// Back step : mesh inchange, joue WalkBack (state machine).
-						movingBack = true;
-					}
-					// else : strafe pur (dotForward ≈ 0). Mesh inchange, joue Walk
-					// (anim forward appliquee sur mesh qui glisse lateralement —
-					// pas l'ideal mais acceptable B.1 ; ameliore en B.2 avec
-					// Walk Strafe Left/Right).
+					// Free-mover : aligne le mesh sur la direction de marche.
+					m_avatarYaw = std::atan2(moveInput.moveDirXZ.x, moveInput.moveDirXZ.z);
 				}
+				// Si movingBack : on garde m_avatarYaw, le mesh reste dos cam
+				// et la state machine bascule en WalkBack ci-dessous.
 
 				// Memorise l'input pour la state machine de locomotion (Task 11
 				// l'etendra a 7 etats — Idle / Walk / Run / Jump / Fall / Land /

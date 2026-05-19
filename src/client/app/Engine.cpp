@@ -3904,56 +3904,12 @@ namespace engine
 																if (c.name == "mixamo.com") { c.name = "Walk"; break; }
 															}
 
-															const std::string idlePath = contentRoot + "/models/avatars/y_bot_idle/y_bot_idle.glb";
-															const std::string startWalkPath = contentRoot + "/models/avatars/y_bot_start_walking/y_bot_start_walking.glb";
-
-															auto idleClips = engine::render::skinned::SkinnedMeshLoader::LoadClipsRetargeted(
-																idlePath, m_playerSkinnedMesh->skeleton);
-															for (auto& c : idleClips) {
-																if (c.duration > 0.0f && c.name == "mixamo.com") {
-																	c.name = "Idle";
-																	clips.push_back(std::move(c));
-																	break;
-																}
-															}
-															if (m_playerSkinnedMesh->FindClip("Idle") == nullptr) {
-																LOG_WARN(Render, "[Engine] Idle clip not loaded from '{}'", idlePath);
-															} else {
-																LOG_INFO(Render, "[Engine] Idle clip loaded from '{}'", idlePath);
-															}
-
-															auto startWalkClips = engine::render::skinned::SkinnedMeshLoader::LoadClipsRetargeted(
-																startWalkPath, m_playerSkinnedMesh->skeleton);
-															for (auto& c : startWalkClips) {
-																if (c.duration > 0.0f && c.name == "mixamo.com") {
-																	c.name = "StartWalking";
-																	clips.push_back(std::move(c));
-																	break;
-																}
-															}
-															if (m_playerSkinnedMesh->FindClip("StartWalking") == nullptr) {
-																LOG_WARN(Render, "[Engine] StartWalking clip not loaded from '{}'", startWalkPath);
-															} else {
-																LOG_INFO(Render, "[Engine] StartWalking clip loaded from '{}'", startWalkPath);
-															}
-
-															// B.1 (Task 12) : load 4 new clips (Run + Jump = with-skin via
-															// LoadClipsRetargeted, Fall + Land = animation-only via
-															// LoadClipsAnimOnly qui n'exige pas de cgltf_skin dans le .glb).
-															// Chacun est renomme depuis "mixamo.com" en "Run" / "Jump" /
-															// "Fall" / "Land" pour matcher StateToClipName (cf. anon ns).
-															auto loadWithSkin = [&](const std::string& path, const char* renameTo) -> bool {
-																auto clipsLoaded = engine::render::skinned::SkinnedMeshLoader::LoadClipsRetargeted(
-																	path, m_playerSkinnedMesh->skeleton);
-																for (auto& c : clipsLoaded) {
-																	if (c.duration > 0.0f && c.name == "mixamo.com") {
-																		c.name = renameTo;
-																		m_playerSkinnedMesh->clips.push_back(std::move(c));
-																		return true;
-																	}
-																}
-																return false;
-															};
+															// Convergence "No Skin" : Standard Walk.fbx (with-skin, charge plus haut)
+															// reste la source du mesh + skeleton ; tous les autres clips sont
+															// charges en animation-only depuis leur variante "*No Skin.fbx" et
+															// retargetes par nom de bone sur le squelette de Standard Walk. Ce
+															// path unique evite les pieges du melange with-skin/no-skin
+															// (notamment des bind poses divergentes entre fichiers source).
 
 															auto loadAnimOnly = [&](const std::string& path, const char* renameTo) -> bool {
 																auto clipsLoaded = engine::render::skinned::SkinnedMeshLoader::LoadClipsAnimOnly(
@@ -3968,25 +3924,28 @@ namespace engine
 																return false;
 															};
 
-															const std::string runPath  = contentRoot + "/models/avatars/y_bot_run/y_bot_run.glb";
-															const std::string jumpPath = contentRoot + "/models/avatars/y_bot_jump/y_bot_jump.glb";
-															const std::string fallPath = contentRoot + "/models/avatars/y_bot_fall/y_bot_fall.glb";
-															const std::string landPath = contentRoot + "/models/avatars/y_bot_land/y_bot_land.glb";
+															// Tous les clips d'animation sont des variantes "No Skin" Mixamo,
+															// retargetees par nom de bone via LoadClipsAnimOnly. Standard Walk
+															// est la seule source with-skin (mesh + skeleton, deja chargee).
+															const std::string idlePath      = contentRoot + "/models/avatars/y_bot_idle/y_bot_idle.glb";
+															const std::string startWalkPath = contentRoot + "/models/avatars/y_bot_start_walking/y_bot_start_walking.glb";
+															const std::string runPath       = contentRoot + "/models/avatars/y_bot_run/y_bot_run.glb";
+															const std::string jumpPath      = contentRoot + "/models/avatars/y_bot_jump/y_bot_jump.glb";
+															const std::string fallPath      = contentRoot + "/models/avatars/y_bot_fall/y_bot_fall.glb";
+															const std::string landPath      = contentRoot + "/models/avatars/y_bot_land/y_bot_land.glb";
 
-															// Tous les 4 clips bascules sur les variantes "No Skin" propres :
-															// - Run  : Fast Run No Skin.fbx (etait running.fbx lowercase)
-															// - Jump : Jump-noskin.fbx (etait Jump.fbx with-skin)
-															// - Fall : falling idle.fbx (pas de "Falling Idle No Skin" propre dans inbox, on garde)
-															// - Land : Hard Landing No Skin.fbx (etait hard landing.fbx lowercase)
-															// Tous animation-only -> loadAnimOnly (cf. Task 4 LoadClipsAnimOnly).
-															if (loadAnimOnly(runPath, "Run")) LOG_INFO(Render, "[Engine] Run clip loaded from '{}'", runPath);
-															else                              LOG_WARN(Render, "[Engine] Run clip not loaded from '{}'", runPath);
-															if (loadAnimOnly(jumpPath, "Jump")) LOG_INFO(Render, "[Engine] Jump clip loaded from '{}'", jumpPath);
-															else                                LOG_WARN(Render, "[Engine] Jump clip not loaded from '{}'", jumpPath);
-															if (loadAnimOnly(fallPath, "Fall")) LOG_INFO(Render, "[Engine] Fall clip loaded from '{}'", fallPath);
-															else                                LOG_WARN(Render, "[Engine] Fall clip not loaded from '{}'", fallPath);
-															if (loadAnimOnly(landPath, "Land")) LOG_INFO(Render, "[Engine] Land clip loaded from '{}'", landPath);
-															else                                LOG_WARN(Render, "[Engine] Land clip not loaded from '{}'", landPath);
+															if (loadAnimOnly(idlePath, "Idle"))              LOG_INFO(Render, "[Engine] Idle clip loaded from '{}'", idlePath);
+															else                                             LOG_WARN(Render, "[Engine] Idle clip not loaded from '{}'", idlePath);
+															if (loadAnimOnly(startWalkPath, "StartWalking")) LOG_INFO(Render, "[Engine] StartWalking clip loaded from '{}'", startWalkPath);
+															else                                             LOG_WARN(Render, "[Engine] StartWalking clip not loaded from '{}'", startWalkPath);
+															if (loadAnimOnly(runPath, "Run"))                LOG_INFO(Render, "[Engine] Run clip loaded from '{}'", runPath);
+															else                                             LOG_WARN(Render, "[Engine] Run clip not loaded from '{}'", runPath);
+															if (loadAnimOnly(jumpPath, "Jump"))              LOG_INFO(Render, "[Engine] Jump clip loaded from '{}'", jumpPath);
+															else                                             LOG_WARN(Render, "[Engine] Jump clip not loaded from '{}'", jumpPath);
+															if (loadAnimOnly(fallPath, "Fall"))              LOG_INFO(Render, "[Engine] Fall clip loaded from '{}'", fallPath);
+															else                                             LOG_WARN(Render, "[Engine] Fall clip not loaded from '{}'", fallPath);
+															if (loadAnimOnly(landPath, "Land"))              LOG_INFO(Render, "[Engine] Land clip loaded from '{}'", landPath);
+															else                                             LOG_WARN(Render, "[Engine] Land clip not loaded from '{}'", landPath);
 
 															// Etat initial : Idle. On lance la premiere animation explicitement
 															// pour eviter d'afficher la pose bind au tout premier frame avant

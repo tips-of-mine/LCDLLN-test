@@ -32,23 +32,25 @@ float TerrainCollider::GroundHeightAt(float worldX, float worldZ) const
 
 /// Sweep vertical approxime contre le sol terrain (MVP B.1).
 ///
-/// Strategie : on echantillonne le sol a l'XZ d'arrivee, et si le centre
-/// de la capsule passe d'au-dessus a en-dessous du sol pendant le sweep,
-/// on calcule la fraction du sweep ou la traversee a lieu (interpolation
-/// lineaire en supposant le sol plat entre start et end). Approximation
-/// valable pour pentes faibles et sweeps courts, ce qui est le cas
-/// typique du CharacterController (dt <= 16 ms, deplacement < 1 m).
+/// Strategie : on echantillonne le sol a l'XZ d'arrivee, et si la base
+/// de la capsule (centre - height/2) passe d'au-dessus a en-dessous du
+/// sol pendant le sweep, on calcule la fraction du sweep ou la traversee
+/// a lieu (interpolation lineaire en supposant le sol plat entre start
+/// et end). Approximation valable pour pentes faibles et sweeps courts,
+/// ce qui est le cas typique du CharacterController (dt <= 16 ms,
+/// deplacement < 1 m).
 ///
-/// Le radius / height de la capsule sont ignores en B.1 : le centre de la
-/// capsule est traite comme un point, donc l'altitude "au sol" est celle
-/// du sol nu (pas de demi-hauteur). Le CharacterController est cense
-/// positionner le centre de la capsule a sol + height/2 ; sa logique de
-/// snap au sol fonctionne correctement avec cette convention.
+/// La capsule est traitee comme une "boite verticale" : on suit la
+/// position de sa base (centerY - halfHeight) au lieu de son centre.
+/// Equivalent : on detecte la traversee quand centerY descend sous
+/// (groundHeight + halfHeight). Le CharacterController positionne le
+/// centre a sol + halfHeight au repos ; le centre = halfHeight de marge
+/// pour la collision descendante.
 ///
 /// outHit.normal est mis a (0,1,0) par defaut (sol horizontal). On
 /// pourrait derive la normale a partir du gradient du heightmap dans une
 /// version future, mais pour B.1 c'est suffisant.
-bool TerrainCollider::SweepCapsule(const Capsule& /*capsule*/,
+bool TerrainCollider::SweepCapsule(const Capsule& capsule,
                                    const engine::math::Vec3& startCenter,
                                    const engine::math::Vec3& endCenter,
                                    SweepHit& outHit) const
@@ -58,24 +60,31 @@ bool TerrainCollider::SweepCapsule(const Capsule& /*capsule*/,
     outHit.fraction = 1.0f;
     outHit.normal   = engine::math::Vec3{0.0f, 1.0f, 0.0f};
 
-    const float startY    = startCenter.y;
-    const float endY      = endCenter.y;
-    const float endGround = GroundHeightAt(endCenter.x, endCenter.z);
+    // Seuil de centre auquel la base de la capsule touche le sol.
+    // halfHeight = 0 pour une capsule par defaut (back-compat tests qui
+    // utilisent Capsule{} et comparent le centre au sol nu).
+    const float halfHeight = capsule.height * 0.5f;
 
-    // Le sweep traverse-t-il le sol ? On considere uniquement le cas
-    // "descend a travers le sol" (gravity-driven). Les remontees (start
-    // sous le sol) ne sont PAS traitees ici : si le centre commence deja
-    // sous le sol, on suppose que le CharacterController a deja corrige sa
-    // position au tick precedent (cas de bord rare).
-    if (endY < endGround && startY >= endGround)
+    const float startY       = startCenter.y;
+    const float endY         = endCenter.y;
+    const float endGround    = GroundHeightAt(endCenter.x, endCenter.z);
+    const float endThreshold = endGround + halfHeight;
+
+    // Le sweep traverse-t-il le seuil "base touche le sol" ? On considere
+    // uniquement le cas "descend a travers le sol" (gravity-driven). Les
+    // remontees (start sous le seuil) ne sont PAS traitees ici : si le
+    // centre commence deja sous le seuil, on suppose que le
+    // CharacterController a deja corrige sa position au tick precedent
+    // (cas de bord rare).
+    if (endY < endThreshold && startY >= endThreshold)
     {
         const float deltaY = endY - startY;  // < 0 (descente)
         if (std::fabs(deltaY) > 1e-6f)
         {
-            // Fraction lineaire du sweep ou l'on touche le sol :
+            // Fraction lineaire du sweep ou la base touche le sol :
             //   center(t) = start + t * (end - start) avec t in [0..1]
-            //   center(t).y == endGround  =>  t = (endGround - startY) / deltaY
-            const float t = (endGround - startY) / deltaY;
+            //   center(t).y == endThreshold  =>  t = (endThreshold - startY) / deltaY
+            const float t = (endThreshold - startY) / deltaY;
             outHit.fraction = std::clamp(t, 0.0f, 1.0f);
         }
         else

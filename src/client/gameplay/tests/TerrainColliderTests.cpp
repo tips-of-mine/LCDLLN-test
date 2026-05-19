@@ -83,6 +83,42 @@ namespace
         REQUIRE(!hitOccurred);
         REQUIRE(Approx(hit.fraction, 1.0f));
     }
+
+    /// Capsule reelle (r=0.3, h=1.8 -> halfHeight=0.9) au-dessus d'un sol
+    /// a Y=0 : la base de la capsule touche le sol quand centerY <= 0.9.
+    /// Sweep centerY 2.0 -> 0.5 : doit hit a la fraction ou centerY=0.9.
+    void Test_RealCapsule_BaseTouchesGround_NotCenter()
+    {
+        TerrainCollider c;
+        engine::gameplay::IWorldCollider::Capsule cap{};
+        cap.radius = 0.3f;
+        cap.height = 1.8f;
+        engine::gameplay::IWorldCollider::SweepHit hit{};
+        bool hitOccurred = c.SweepCapsule(cap, Vec3{0, 2, 0}, Vec3{0, 0.5f, 0}, hit);
+        // halfHeight=0.9. threshold=0+0.9=0.9. 2 >= 0.9 && 0.5 < 0.9 -> HIT.
+        // t = (0.9 - 2.0) / (0.5 - 2.0) = -1.1 / -1.5 = 0.7333...
+        REQUIRE(hitOccurred);
+        REQUIRE(Approx(hit.fraction, 0.7333f));
+    }
+
+    /// Capsule reelle posee : centre exactement a halfHeight au-dessus du
+    /// sol (centerY = 0.9, ground = 0). Sweep court vers le bas (5cm) doit
+    /// detecter le sol (la base est exactement au sol et passe en-dessous).
+    /// Ce test reproduit le sticky ground probe du CharacterController.
+    void Test_RealCapsule_StickyGroundProbe()
+    {
+        TerrainCollider c;
+        engine::gameplay::IWorldCollider::Capsule cap{};
+        cap.radius = 0.3f;
+        cap.height = 1.8f;
+        engine::gameplay::IWorldCollider::SweepHit hit{};
+        // Centre a halfHeight (0.9), probe vers le bas de 5 cm.
+        bool hitOccurred = c.SweepCapsule(cap, Vec3{0, 0.9f, 0}, Vec3{0, 0.85f, 0}, hit);
+        // threshold=0.9. 0.9 >= 0.9 (egal) && 0.85 < 0.9 -> HIT.
+        // t = (0.9 - 0.9) / (0.85 - 0.9) = 0 / -0.05 = 0.0
+        REQUIRE(hitOccurred);
+        REQUIRE(Approx(hit.fraction, 0.0f));
+    }
 }
 
 int main()
@@ -91,5 +127,7 @@ int main()
     Test_NoTerrainBound_SweepReportsNoHit();
     Test_NoTerrainBound_AscendingSweep_NoHit();
     Test_NoTerrainBound_BothAboveGround_NoHit();
+    Test_RealCapsule_BaseTouchesGround_NotCenter();
+    Test_RealCapsule_StickyGroundProbe();
     return g_failed == 0 ? 0 : 1;
 }

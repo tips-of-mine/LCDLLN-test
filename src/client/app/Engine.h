@@ -531,6 +531,7 @@ namespace engine
 			Idle,
 			StartWalking,
 			Walk,
+			WalkBack,
 			Run,
 			Jump,
 			Fall,

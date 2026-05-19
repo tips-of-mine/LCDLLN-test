@@ -187,6 +187,7 @@ namespace engine
 				case engine::Engine::AvatarLocomotionState::Idle:         return "Idle";
 				case engine::Engine::AvatarLocomotionState::StartWalking: return "StartWalking";
 				case engine::Engine::AvatarLocomotionState::Walk:         return "Walk";
+				case engine::Engine::AvatarLocomotionState::WalkBack:     return "WalkBack";
 				case engine::Engine::AvatarLocomotionState::Run:          return "Run";
 				case engine::Engine::AvatarLocomotionState::Jump:         return "Jump";
 				case engine::Engine::AvatarLocomotionState::Fall:         return "Fall";
@@ -207,6 +208,7 @@ namespace engine
 		{
 			return s == engine::Engine::AvatarLocomotionState::Idle
 				|| s == engine::Engine::AvatarLocomotionState::Walk
+				|| s == engine::Engine::AvatarLocomotionState::WalkBack
 				|| s == engine::Engine::AvatarLocomotionState::Run
 				|| s == engine::Engine::AvatarLocomotionState::Fall;
 		}
@@ -3947,6 +3949,7 @@ namespace engine
 															// est la seule source with-skin (mesh + skeleton, deja chargee).
 															const std::string idlePath      = contentRoot + "/models/avatars/y_bot_idle/y_bot_idle.glb";
 															const std::string startWalkPath = contentRoot + "/models/avatars/y_bot_start_walking/y_bot_start_walking.glb";
+															const std::string walkBackPath  = contentRoot + "/models/avatars/y_bot_walk_back/y_bot_walk_back.glb";
 															const std::string runPath       = contentRoot + "/models/avatars/y_bot_run/y_bot_run.glb";
 															const std::string jumpPath      = contentRoot + "/models/avatars/y_bot_jump/y_bot_jump.glb";
 															const std::string fallPath      = contentRoot + "/models/avatars/y_bot_fall/y_bot_fall.glb";
@@ -3956,6 +3959,8 @@ namespace engine
 															else                                             LOG_WARN(Render, "[Engine] Idle clip not loaded from '{}'", idlePath);
 															if (loadAnimOnly(startWalkPath, "StartWalking")) LOG_INFO(Render, "[Engine] StartWalking clip loaded from '{}'", startWalkPath);
 															else                                             LOG_WARN(Render, "[Engine] StartWalking clip not loaded from '{}'", startWalkPath);
+															if (loadAnimOnly(walkBackPath, "WalkBack"))      LOG_INFO(Render, "[Engine] WalkBack clip loaded from '{}'", walkBackPath);
+															else                                             LOG_WARN(Render, "[Engine] WalkBack clip not loaded from '{}'", walkBackPath);
 															if (loadAnimOnly(runPath, "Run"))                LOG_INFO(Render, "[Engine] Run clip loaded from '{}'", runPath);
 															else                                             LOG_WARN(Render, "[Engine] Run clip not loaded from '{}'", runPath);
 															if (loadAnimOnly(jumpPath, "Jump"))              LOG_INFO(Render, "[Engine] Jump clip loaded from '{}'", jumpPath);
@@ -6725,14 +6730,40 @@ namespace engine
 				const engine::math::Vec3 ccPos = m_characterController.GetPosition();
 				m_orbitalCameraController.SetTargetPosition(ccPos);
 
-				// Yaw avatar : suit la direction de mouvement (snap immediat).
-				// Convention monde : atan2(x, z) renvoie l'angle par rapport a
-				// l'axe +Z, dans le meme repere que `Mat4::RotateY` -> rotation
-				// directement applicable a la model matrix de l'avatar.
-				// Le lissage (slerp / damp) sera ajoute en polish ulterieur.
-				if (moveInput.moveDirXZ.x != 0.0f || moveInput.moveDirXZ.z != 0.0f)
+				// Yaw avatar : convention "back-step" (style MMO classique). On
+				// projette la direction de mouvement sur l'axe forward du mesh
+				// actuel (sin(yaw), 0, cos(yaw)). Si le mouvement a une composante
+				// forward (dot > 0), on update le yaw pour aligner le mesh sur
+				// la direction de marche. Sinon (mouvement back ou strafe pur),
+				// on garde le yaw inchange : le mesh continue de regarder dans la
+				// meme direction et glisse en arriere / lateralement. C'est ce
+				// qui permet a la touche S de jouer l'animation Walking Backwards
+				// (mesh dos cam, marchant a reculons) plutot que de pivoter face
+				// cam comme dans la convention free-mover.
+				//
+				// `movingBack` est utilise par la state machine ci-dessous pour
+				// declencher l'etat WalkBack au lieu de Walk/StartWalking.
+				bool movingBack = false;
+				const bool hasMove = (moveInput.moveDirXZ.x != 0.0f || moveInput.moveDirXZ.z != 0.0f);
+				if (hasMove)
 				{
-					m_avatarYaw = std::atan2(moveInput.moveDirXZ.x, moveInput.moveDirXZ.z);
+					const float meshFx = std::sin(m_avatarYaw);
+					const float meshFz = std::cos(m_avatarYaw);
+					const float dotForward = moveInput.moveDirXZ.x * meshFx + moveInput.moveDirXZ.z * meshFz;
+					if (dotForward > 0.01f)
+					{
+						// Forward / diagonale : aligne le mesh sur la direction de marche.
+						m_avatarYaw = std::atan2(moveInput.moveDirXZ.x, moveInput.moveDirXZ.z);
+					}
+					else if (dotForward < -0.01f)
+					{
+						// Back step : mesh inchange, joue WalkBack (state machine).
+						movingBack = true;
+					}
+					// else : strafe pur (dotForward ≈ 0). Mesh inchange, joue Walk
+					// (anim forward appliquee sur mesh qui glisse lateralement —
+					// pas l'ideal mais acceptable B.1 ; ameliore en B.2 avec
+					// Walk Strafe Left/Right).
 				}
 
 				// Memorise l'input pour la state machine de locomotion (Task 11
@@ -6785,22 +6816,31 @@ namespace engine
 						{
 							case AvatarLocomotionState::Idle:
 								if (moveInput.jumpPressed)        newState = AvatarLocomotionState::Jump;
+								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
 								else if (moving)                  newState = AvatarLocomotionState::StartWalking;
 								break;
 							case AvatarLocomotionState::StartWalking:
 								if (!moving)                      newState = AvatarLocomotionState::Idle;
 								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
+								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
 								else if (startWalkClip && stateElapsed >= startWalkClip->duration)
 									newState = (moveInput.run ? AvatarLocomotionState::Run : AvatarLocomotionState::Walk);
 								break;
 							case AvatarLocomotionState::Walk:
 								if (!moving)                      newState = AvatarLocomotionState::Idle;
 								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
+								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
 								else if (moveInput.run)           newState = AvatarLocomotionState::Run;
+								break;
+							case AvatarLocomotionState::WalkBack:
+								if (!moving)                      newState = AvatarLocomotionState::Idle;
+								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
+								else if (!movingBack)             newState = AvatarLocomotionState::Walk;
 								break;
 							case AvatarLocomotionState::Run:
 								if (!moving)                      newState = AvatarLocomotionState::Idle;
 								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
+								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
 								else if (!moveInput.run)          newState = AvatarLocomotionState::Walk;
 								break;
 							case AvatarLocomotionState::Jump:
@@ -6816,6 +6856,7 @@ namespace engine
 								if (landClip && stateElapsed >= landClip->duration)
 								{
 									if (!moving)                  newState = AvatarLocomotionState::Idle;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
 									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
 									else                          newState = AvatarLocomotionState::Walk;
 								}

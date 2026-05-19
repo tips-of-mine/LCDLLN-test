@@ -519,6 +519,13 @@ namespace engine
 		/// Transitions driven par `CharacterController::IsGrounded()`, `input.jumpPressed`,
 		/// `input.run` et `moveDirXZ` (cf. `Engine::Update`). Crossfade entre clips
 		/// par `m_avatarCrossfade.Play(...)` (kCrossfadeDuration = 0.15 s).
+		///
+		/// **Visibilite public** : l'enum est expose en public pour que les helpers
+		/// free-function `StateToClipName` / `ClipLoops` (anonymous namespace de
+		/// `Engine.cpp`) puissent y acceder depuis l'exterieur de la classe (C++
+		/// access control s'applique meme depuis le meme TU). Aucun client externe
+		/// d'Engine ne devrait s'en servir — c'est de l'interface interne render/anim.
+	public:
 		enum class AvatarLocomotionState
 		{
 			Idle,
@@ -529,6 +536,7 @@ namespace engine
 			Fall,
 			Land
 		};
+	private:
 		AvatarLocomotionState                                     m_avatarLocoState = AvatarLocomotionState::Idle;
 		/// Instant d'entrée dans l'état courant. Utilisé pour :
 		///   - détecter la fin de StartWalking / Jump / Land (durée écoulée >= clip.duration).

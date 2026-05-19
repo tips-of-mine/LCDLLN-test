@@ -6858,6 +6858,17 @@ namespace engine
 
 					if (newState != m_avatarLocoState)
 					{
+						// DEBUG B.1 : log chaque transition d'etat pour diagnostiquer
+						// "modèle qui saute toujours". Une fois le bug compris, retirer.
+						LOG_INFO(Render, "[Avatar SM] {} -> {} (grounded={} moving={} jumpPressed={} run={} stateElapsed={:.3f}s)",
+							StateToClipName(m_avatarLocoState),
+							StateToClipName(newState),
+							grounded ? 1 : 0,
+							moving ? 1 : 0,
+							moveInput.jumpPressed ? 1 : 0,
+							moveInput.run ? 1 : 0,
+							stateElapsed);
+
 						m_avatarLocoState = newState;
 						m_avatarLocoStateEnterTime = now;
 
@@ -6869,7 +6880,13 @@ namespace engine
 						const engine::render::skinned::AnimationClip* newClip = m_playerSkinnedMesh->FindClip(clipName);
 						if (newClip)
 						{
+							LOG_INFO(Render, "[Avatar SM] Play('{}') duration={:.3f}s loops={}",
+								clipName, newClip->duration, ClipLoops(newState) ? 1 : 0);
 							m_avatarCrossfade.Play(*newClip, ClipLoops(newState), nowSec);
+						}
+						else
+						{
+							LOG_WARN(Render, "[Avatar SM] FindClip('{}') returned nullptr — animation precedente continue", clipName);
 						}
 					}
 				}

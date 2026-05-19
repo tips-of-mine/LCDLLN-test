@@ -92,6 +92,24 @@ namespace engine
 	{
 		constexpr float kWorldEditorPickPi = 3.14159265f;
 
+		/// Retourne le temps ecoule en secondes depuis le premier appel a cette
+		/// fonction, en float 32 bits. Normalise par un temps de reference
+		/// capture au demarrage de l'application (static init).
+		///
+		/// Necessaire pour `AnimationCrossfade` : passer directement
+		/// `steady_clock::now().time_since_epoch()` en float donnerait des
+		/// valeurs ~10^8 - 10^9 (depuis boot machine), qui depassent la
+		/// precision de la mantissa float32 (~7 chiffres significatifs).
+		/// Resultat : (now - startTime) sautait par pas de plusieurs ms voire
+		/// des dizaines de ms entre frames -> mesh qui tremble. Avec cette
+		/// fonction, les valeurs restent < 10^4 secondes en pratique (uptime
+		/// session), precision microseconde -> animation lisse.
+		float EngineNowSec()
+		{
+			static const auto kStart = std::chrono::steady_clock::now();
+			return std::chrono::duration<float>(std::chrono::steady_clock::now() - kStart).count();
+		}
+
 		/// Sous-projet B.1 (Task 9) — Projette l'input clavier WASD/ZQSD dans
 		/// le repere camera courant pour produire la `MoveInput` passee au
 		/// `CharacterController::Update`. Touche les directions XZ (Y ignore),
@@ -3956,8 +3974,7 @@ namespace engine
 															// plus haut), la state machine fera son fallback (Task 11).
 															const engine::render::skinned::AnimationClip* idleClip = m_playerSkinnedMesh->FindClip("Idle");
 															if (idleClip) {
-																const float nowSec = std::chrono::duration<float>(
-																	std::chrono::steady_clock::now().time_since_epoch()).count();
+																const float nowSec = EngineNowSec();
 																m_avatarCrossfade.Play(*idleClip, /*loops=*/ true, nowSec);
 																m_avatarLocoStateEnterTime = std::chrono::steady_clock::now();
 																m_avatarLocoState = AvatarLocomotionState::Idle;
@@ -4160,12 +4177,12 @@ namespace engine
 													// courant et l'envoyer au SkinnedRenderer.
 													//
 													// nowSec doit utiliser la meme horloge que celle passee a
-													// `m_avatarCrossfade.Play(...)` dans Update (steady_clock + epoch
-													// duration en secondes). Sinon le t resolu par Sample serait decale
-													// par rapport au startTime stocke par Play -> pose initiale "snap"
-													// au lieu de demarrer a 0 du clip.
-													const float nowSec = std::chrono::duration<float>(
-														std::chrono::steady_clock::now().time_since_epoch()).count();
+													// `m_avatarCrossfade.Play(...)` dans Update : meme reference de temps
+													// via `EngineNowSec()` (normalise par le boot du jeu, evite la perte
+													// de precision float qui faisait trembler le mesh — anim.startTime
+													// stocke par Play etait < now mais la difference etait noyee dans la
+													// precision float 32, donc l'echantillonnage progressait par sauts).
+													const float nowSec = EngineNowSec();
 
 													auto locals  = m_avatarCrossfade.Sample(
 														m_playerSkinnedMesh->skeleton, nowSec);
@@ -6748,7 +6765,10 @@ namespace engine
 					const bool moving = (moveInput.moveDirXZ.x != 0.0f || moveInput.moveDirXZ.z != 0.0f);
 
 					const auto now = std::chrono::steady_clock::now();
-					const float nowSec = std::chrono::duration<float>(now.time_since_epoch()).count();
+					// nowSec via EngineNowSec : meme reference de temps que les sites de
+					// Sample/Play, evite la perte de precision float 32 quand on utilise
+					// time_since_epoch (~10^9 secondes depuis boot machine).
+					const float nowSec = EngineNowSec();
 					const float stateElapsed = std::chrono::duration<float>(now - m_avatarLocoStateEnterTime).count();
 
 					const engine::render::skinned::AnimationClip* startWalkClip =

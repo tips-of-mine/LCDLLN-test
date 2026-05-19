@@ -761,33 +761,217 @@ les frontFace entre pipelines** — vérifier le winding réel du mesh concerné
 - **Vertex binding 1** (stride 64, rate INSTANCE) : `instanceRow0..3 @ locations 3..6`
   → forme la `mat4` du modelMatrix (column-major).
 
-### Limites assumées (à enrichir dans sous-projets B/C+)
+### Limites assumées de A (statut mis à jour après B.1)
 
-- State machine **minimale** Idle / StartWalking / Walking (3 clips, hard cuts).
-  Le sous-projet B apportera : blend / crossfade entre clips, surface modulation
-  (eau / sable / neige), saut hauteur / longueur, état Run distinct, courrir/marcher slow,
-  vraie détection input/gameplay au lieu du delta XZ position.
+- ~~State machine minimale 3 états + hard cuts + delta XZ + Run absent~~ → **résolu par B.1** (cf. §14.6) : 7 états avec crossfade 0.15s, driven par CharacterController + input réel.
+- ~~Le bobY synthétique de OrbitalCameraController reste appliqué EN PLUS de l'animation~~ → **résolu par B.1** (refacto OrbitalCameraController en caméra pure, suppression du bobY).
+- ~~Sol supposé plat à Y=0~~ → **partiellement résolu par B.1** (TerrainCollider via heightmap query bilinéaire, le perso suit le relief).
 - Pas de variantes raciales — Y Bot affiché pour TOUS les personnages quelle que soit
-  la race choisie à la création (→ sous-projet C).
-- Pas de remote players visibles animés — seul l'avatar local est skinné (→ B + réseau).
+  la race choisie à la création (→ sous-projet C, non démarré).
+- Pas de remote players visibles animés — seul l'avatar local est skinné (→ sous-projet B.3,
+  redéploiement serveur requis pour UDP gameplay).
 - Pas de texture diffuse — couleur unie via `avatar_skin` placeholder.
 - Pas de skinned shadow casting — shadow map utilise toujours le cube, donc l'ombre
-  au sol reste cubique (→ futur, hors A).
+  au sol reste cubique (→ futur, hors A et B).
+- Pas de surface modulation (water/sand/snow) → walk speed × modifier (→ sous-projet B.2,
+  dépend de M100.11 SurfaceQuery).
 - Tests `quat_tests / skeleton_tests / animation_clip_tests / animation_sampler_tests
   / skinned_mesh_loader_tests` enregistrés via `lcdlln_add_simple_test`, **Linux-only**
   (gated `elseif(UNIX)` dans `src/CMakeLists.txt` — convention du repo, pas spécifique
   à ce sous-projet).
 - FIF race connue : bone SSBO et model instance buffer sont host-coherent rewrites
-  par frame, pas dupliqués par frame in-flight (acceptable pour A's single avatar ;
-  à fixer si FIF cause des glitches visuels).
-- Le bobY synthétique de `OrbitalCameraController` reste appliqué au modelMatrix
-  (en plus de l'animation de marche du clip) — Task B le nettoiera.
+  par frame, pas dupliqués par frame in-flight (acceptable single-avatar ; à fixer
+  si remote players ajoutent du multi-avatar — sous-projet B.3).
 
 ### Plan complet et état d'avancement
 
 Cf. [`docs/superpowers/plans/2026-05-18-skinning-animation-foundations.md`](docs/superpowers/plans/2026-05-18-skinning-animation-foundations.md)
 pour la décomposition en 17 tâches. Toutes complètes au moment du merge de la PR
 « sous-projet A — fondations skinning + runtime animation ».
+
+---
+
+## 14.6 Locomotion state machine (sous-projet B.1 — chantier 2026-05-18)
+
+Post-A : décomposition supplémentaire du sous-projet B (state machine de locomotion
+complète) en 3 morceaux indépendants pour cadrer l'effort :
+
+- **B.1** (ce chantier, en cours / mergeable) : locomotion fluide LOCALE — vraie
+  détection input/gameplay, crossfade, Run distinct, Jump+Fall+Land, sans surface
+  modulation ni remote players.
+- **B.2** (à venir) : surface modulation (water/sand/snow → walk speed × modifier).
+  Dépend de M100.11 (`SurfaceQuery::At(x, z)`), non encore livré.
+- **B.3** (à venir, **redéploiement serveur requis**) : remote players animés —
+  protocol UDP gameplay + GameplayUdpServer + sync animation state réseau.
+
+Voir [`docs/superpowers/specs/2026-05-18-locomotion-state-machine-design.md`](docs/superpowers/specs/2026-05-18-locomotion-state-machine-design.md)
+pour le contexte et [`docs/superpowers/plans/2026-05-18-locomotion-state-machine.md`](docs/superpowers/plans/2026-05-18-locomotion-state-machine.md)
+pour le plan d'implémentation en 14 tâches.
+
+### Découverte clé exploitée par B.1
+
+`src/client/gameplay/CharacterController.h/.cpp` **existait déjà** dans le repo
+(167 lignes, production-ready : `Config { walkSpeed, runSpeed, gravity, jumpSpeed,
+coyoteTimeSec, jumpBufferSec, maxSlopeDeg, ... }`, modes Ground/Air/Water/Fly,
+capsule sweep collision via interface `IWorldCollider`, walkable slope + step-up).
+**N'était branché nulle part.** B.1 le branche enfin via `TerrainCollider` (nouveau).
+
+### Fichiers clés (nouveaux et modifiés par B.1)
+
+| Fichier | Rôle |
+|---|---|
+| `src/shared/math/Math.h` | Ajouté : `Mat4::Identity()`, `Mat4::Translate(Vec3)`, `Mat4::RotateY(rad)` (statiques inline). Évite la duplication de la composition `T(pos) * R_y(yaw)` à chaque call site. |
+| `src/client/render/skinned/AnimationCrossfade.h/.cpp` | Blend TRS lerp/slerp entre 2 poses sur 0.15s. Démarré quand `Play(newClip)` est appelé alors qu'une autre clip est en cours. Recompose via `AnimationSampler::ComposeTRS`. |
+| `src/client/gameplay/TerrainCollider.h/.cpp` | Impl `IWorldCollider` via `TerrainRenderer::SampleHeightAtWorldXZ` (bilinéaire). `SweepCapsule` = raycast vertical approximé. `QueryWater` hérite de la default (toujours false — B.2/B.3 surchargera). |
+| `src/client/render/skinned/AnimationSampler.h/.cpp` | Modifié : `ComposeTRS` passé de l'anonymous namespace à static public — réutilisé par AnimationCrossfade. |
+| `src/client/render/skinned/SkinnedMeshLoader.h/.cpp` | Modifié : ajouté `LoadClipsAnimOnly(path, targetSkeleton)` pour fichiers Mixamo "without skin" (~50 KB au lieu de 2 MB). `LoadClipsRetargeted` bail si `skins_count == 0` — le nouveau helper parse les channels directement et retargete par `target_node->name`. |
+| `src/client/render/Camera.h/.cpp` | Refacto majeur : `OrbitalCameraController` rétrogradé en **caméra pure** (~211 lignes → ~58 lignes pour `Update`). Suppression des membres mouvement (`m_locomotion`, `m_walkBobPhase`, `m_verticalVelocityY`, `m_verticalOffsetY`, `m_isCrouching`), de l'enum `LocomotionState`, du paramétrage `applyKeyboardMove/groundYAtTarget/speedMultiplier`. Garde uniquement souris (yaw/pitch clic droit), molette (zoom), calcul `camera.position = m_target + offset_orbital(yaw,pitch,distance)`. Nouveaux getters `GetForwardXZ()`, `GetRightXZ()`, `GetYawRad()` pour projeter input clavier dans repère caméra. |
+| `src/client/app/Engine.h` | Étendu : enum `AvatarLocomotionState { Idle, StartWalking, Walk, Run, Jump, Fall, Land }` (7 états, renomme `Walking` → `Walk`). L'enum est passée en `public:` pour que les helpers free-function `StateToClipName` / `ClipLoops` de `Engine.cpp` puissent y accéder. Nouveaux membres : `m_characterController`, `m_terrainCollider`, `m_avatarYaw`, `m_lastMoveInput`, `m_avatarCrossfade`. |
+| `src/client/app/Engine.cpp` | Init au boot : instancie `TerrainCollider.BindTerrain(&m_terrain)` + `CharacterController(ccCfg).Init(spawnPos)`. Per-frame `Update` : `BuildMoveInput(m_input, m_orbitalCameraController)` → `cc.Update(dt, input, m_terrainCollider)` → `m_orbitalCameraController.SetTargetPosition(cc.GetPosition())` → state machine étendue → `m_avatarCrossfade.Play(*newClip, loops, nowSec)` si state change. Lambda Geometry simplifié : juste `m_avatarCrossfade.Sample` → `ComputeGlobalMatrices` → `ComputeFinalMatrices` → `Record` avec modelMatrix = `T(feetPos) * R_y(m_avatarYaw + π)`. Suppression définitive du bobY synthétique. |
+| `config.json` | Nouvelle section `player.movement` : `walk_speed`, `run_speed`, `gravity`, `jump_speed`, `coyote_time_s`, `jump_buffer_s`. Defaults dans `CharacterController::Config` font le boulot si absent. |
+| `game/data/models/avatars/y_bot_run/y_bot_run.glb` | Mixamo `running.fbx` (animation-only, ~43 KB) → renommé `Run` au load via `LoadClipsAnimOnly`. |
+| `game/data/models/avatars/y_bot_jump/y_bot_jump.glb` | Mixamo `Jump.fbx` (with-skin, ~2 MB, 65 frames) → renommé `Jump`. |
+| `game/data/models/avatars/y_bot_fall/y_bot_fall.glb` | Mixamo `falling idle.fbx` (animation-only, ~43 KB, 21 frames) → renommé `Fall`. |
+| `game/data/models/avatars/y_bot_land/y_bot_land.glb` | Mixamo `hard landing.fbx` (animation-only, ~70 KB, 60 frames) → renommé `Land`. |
+| `src/shared/math/tests/Mat4HelpersTests.cpp` | 5 tests : identity, translate, rotateY(π), rotateY(π/2), T*R compose. |
+| `src/client/render/skinned/tests/AnimationCrossfadeTests.cpp` | 5 tests : pas de blend, alpha=0/1/0.5, one-shot clamp. |
+| `src/client/gameplay/tests/TerrainColliderTests.cpp` | 4 tests : no-bound fallback Y=0, sweep descending hit, ascending no-hit, both-above no-hit. |
+
+### State machine 7 états (remplace celle minimale de §14.5)
+
+Enum dans `Engine.h` (`public:`) : `Idle, StartWalking, Walk, Run, Jump, Fall, Land`.
+
+Évaluée par frame dans `Engine::Update` (déménagement depuis le lambda Geometry d'A,
+qui ne voyait que le delta XZ). Driven par `CharacterController::IsGrounded()`,
+`input.jumpPressed`, `input.run` et `moveInput.moveDirXZ.LengthSq()`.
+
+#### Transitions
+
+| Depuis | Vers | Condition |
+|---|---|---|
+| Idle | StartWalking | `moving == true` (cf. note `moving`) |
+| Idle | Jump | `input.jumpPressed && grounded` |
+| StartWalking | Walk | `stateElapsed >= clip.duration` ET `!input.run` |
+| StartWalking | Run | `stateElapsed >= clip.duration` ET `input.run` |
+| StartWalking | Idle | `!moving` (interruption en cours de transition) |
+| StartWalking | Jump | `input.jumpPressed && grounded` |
+| Walk | Run | `input.run == true` (Shift maintenu) |
+| Walk | Idle | `!moving` |
+| Walk | Jump | `input.jumpPressed && grounded` |
+| Run | Walk | `input.run == false` (Shift relâché) |
+| Run | Idle | `!moving` |
+| Run | Jump | `input.jumpPressed && grounded` |
+| Jump | Fall | `stateElapsed >= clip.duration * 0.4f` (= takeoff terminé, ~0.4s) |
+| Fall | Land | `cc.IsGrounded()` redevient true (touch ground) |
+| Land | Idle / Walk / Run | `stateElapsed >= clip.duration`, choix selon input courant |
+
+Note `moving` : `moveInput.moveDirXZ.x != 0 || moveInput.moveDirXZ.z != 0` (vraie
+détection input, plus le delta XZ fragile d'A).
+
+#### Sélection de clip + crossfade
+
+À chaque changement d'état (`newState != m_avatarLocoState`) :
+1. `m_avatarLocoState = newState`
+2. `m_avatarLocoStateEnterTime = now`
+3. `clipName = StateToClipName(newState)` (helper anon-ns d'`Engine.cpp`)
+4. `m_avatarCrossfade.Play(*m_playerSkinnedMesh->FindClip(clipName), loops, nowSec)`
+
+`loops` = true pour Idle / Walk / Run / Fall, false pour StartWalking / Jump / Land
+(one-shot).
+
+Le lambda FrameGraph "Geometry" est désormais minimal :
+```
+nowSec = steady_clock_now_in_seconds
+locals = m_avatarCrossfade.Sample(skel, nowSec)   // gère blend si crossfade en cours
+globals = ComputeGlobalMatrices(skel, locals)
+finals = ComputeFinalMatrices(skel, globals)
+modelMat = Mat4::Translate(feetPos) * Mat4::RotateY(m_avatarYaw + π)
+m_skinnedRenderer.Record(..., finals, modelMat.m, ...)
+```
+
+### Architecture mouvement (refacto OrbitalCameraController)
+
+**Avant B.1** (A) : `OrbitalCameraController` était caméra ET mouvement. Lisait
+WASD, calculait `m_target`, gérait bobY synthétique, simulait gravité verticale.
+
+**Après B.1** : séparation des responsabilités.
+
+| Composant | Responsabilité |
+|---|---|
+| `OrbitalCameraController` | **Caméra pure** : yaw/pitch (souris clic droit) + zoom (molette) + suit `m_target` posé de l'extérieur via `SetTargetPosition(Vec3)`. |
+| `CharacterController` (existant, jamais branché jusqu'ici) | **Mouvement physique** : reçoit `MoveInput` par frame, applique gravité/jump, sweep capsule contre `IWorldCollider`, expose `GetPosition() / GetVelocity() / IsGrounded()`. |
+| `TerrainCollider` (nouveau B.1) | **Collision terrain** : impl `IWorldCollider::SweepCapsule` via heightmap query bilinéaire (`TerrainRenderer::SampleHeightAtWorldXZ`). MVP : pas de collision contre props/buildings (rien dans le monde encore). |
+| `Engine::Update` | **Orchestrateur** : `BuildMoveInput(input, camera)` → `cc.Update(dt, input, collider)` → `camera.SetTargetPosition(cc.GetPosition())` → state machine → `crossfade.Play` si état change. |
+
+### Input → MoveInput pipeline
+
+`BuildMoveInput` (anonymous ns d'`Engine.cpp`) projette WASD/ZQSD dans le repère
+caméra via les nouveaux getters `OrbitalCameraController::GetForwardXZ() /
+GetRightXZ()`. Yaw du modèle = `atan2(moveDirXZ.x, moveDirXZ.z)` (perso pivote
+pour faire face à la direction de mouvement — convention « free-look 3ᵉ personne
+classique » Diablo-like, pas de strafe distinct).
+
+```
+W / Z      → forward
+S          → backward
+A / Q      → -right
+D          → +right
+Shift      → input.run = true
+Space      → input.jumpPressed = true (edge: WasPressed)
+```
+
+### Asset pipeline (étendu de A)
+
+`SkinnedMeshLoader::LoadClipsAnimOnly(path, targetSkeleton)` ajouté pour les
+fichiers Mixamo exportés "without skin" (animation-only, ~50 KB au lieu de 2 MB).
+Parse les `cgltf_animation` channels directement, retargete par
+`target_node->name` contre les noms de bones du target skeleton. Bones absents
+du source = skip silencieux.
+
+Réutilisable pour tous les futurs imports animation-only (sous-projets E/F/G
+auront beaucoup de clips Mixamo).
+
+### Limites assumées de B.1 (à enrichir B.2/B.3+)
+
+- **Hard cut sur transition stop** : quand le perso passe Walk→Idle ou Run→Idle,
+  le crossfade fonctionne (0.15s vers Idle), mais ce n'est pas un clip "stop"
+  dédié. Mixamo a `run to stop.fbx` dans l'inbox, non utilisé en B.1 (option
+  "Riche : 9 états" écartée au brainstorm). À ajouter dans une extension B
+  ultérieure si visuellement gênant.
+- **Pas de turn-in-place** : `left turn.fbx` / `right turn.fbx` dans l'inbox,
+  non utilisés. Le perso tourne en pivotant le model matrix sur `m_avatarYaw`
+  (snap immédiat). À ajouter en B ultérieure si demandé.
+- **Pas de saut en longueur distinct** du saut vertical. `Running Jump.fbx`
+  dans l'inbox, non utilisé.
+- **Pas de strafe / walk backward distincts** : le perso pivote toujours pour
+  faire face à la direction de mouvement (convention free-look).
+- **First-frame** : à la première frame post-EnterWorld, `m_avatarYaw = 0` →
+  `R_y(0 + π) = R_y(π)` → perso affiché de face une frame avant que la première
+  touche d'input ne snap le yaw. Cosmétique mineur, snap au premier input.
+- **Threshold mouvement = `moveInput.moveDirXZ != 0`** : strict (toute pression
+  WASD compte). Plus robuste que le delta XZ d'A mais ne gère pas le cas
+  "input pressé mais perso bloqué par mur" (pas d'obstacles dans le monde
+  actuellement, problème théorique).
+- **Pas de collision contre props/buildings** : MVP TerrainCollider seul. Quand
+  le système d'objets dans le monde sera ajouté, il faudra un `WorldCollider`
+  composite (TerrainCollider + PropsCollider + ...).
+- **FIF race héritée d'A** : bone SSBO + model instance buffer host-coherent
+  rewrites par frame. Single avatar OK, à fixer pour B.3 multi-avatar.
+
+### Plan complet et état d'avancement
+
+Cf. [`docs/superpowers/plans/2026-05-18-locomotion-state-machine.md`](docs/superpowers/plans/2026-05-18-locomotion-state-machine.md)
+pour la décomposition en 14 tâches. Toutes complètes au moment du merge de la
+PR « sous-projet B.1 — locomotion state machine fluide locale ».
+
+### Suite (post-B.1)
+
+- **B.2** (surface modulation) — débloqué dès que M100.11 (SurfaceQuery) est livré.
+- **B.3** (remote players animés) — indépendant, peut démarrer dès B.1 mergé.
+  **Redéploiement serveur requis** (UDP gameplay protocol + GameplayUdpServer +
+  bump `kProtocolVersion`).
+- **C** (variantes raciales) — débloqué par A, indépendant de B. Peut être
+  traité en parallèle de B.2/B.3.
 
 ---
 

@@ -4175,22 +4175,19 @@ namespace engine
 														m_playerSkinnedMesh->skeleton, globals);
 
 													// --- B.1 / Task 9 : model matrix depuis CharacterController + m_avatarYaw ---
-													// Avant Task 9 : la matrice etait recopiee depuis rs.objectModelMatrix
-													// (calculee dans Update a partir du yaw camera + cible orbitale fixe)
-													// puis spinY180 appliquait la rotation 180°. Le perso etait fige a (0,0,0)
-													// parce qu'OrbitalCameraController etait camera-pure (Task 8) sans
-													// CharacterController branche.
-													//
-													// Apres Task 9 : on lit la position monde directement depuis le CC
-													// (deja appele dans Update *avant* OrbitalCameraController, cf. ligne ~6580),
-													// et on compose la matrice T(feetPos) * R_y(m_avatarYaw + pi).
+													// On lit la position monde directement depuis le CC (deja appele
+													// dans Update *avant* OrbitalCameraController, cf. ligne ~6580),
+													// et on compose la matrice T(feetPos) * R_y(m_avatarYaw).
 													//   - `feetPos.y = ccPos.y - 0.9` : la position du CC est le CENTRE de la
 													//     capsule ; le mesh Y Bot va de Y=0 (pieds) a Y=1.8 (tete) -> on
 													//     redescend de halfHeight (0.9 m) pour poser les pieds au sol.
-													//   - `+ pi` : convention 3e personne (avatar dos a la camera). Mixamo
-													//     Y Bot face +Z par defaut ; en composant avec atan2(dirX, dirZ) +
-													//     pi, l'avatar tourne face dans la direction de marche tout en
-													//     restant dos a la camera quand on avance.
+													//   - `m_avatarYaw` : aligne le mesh sur la direction de mouvement.
+													//     Init a pi pour que le spawn (avant tout input) ait le perso dos
+													//     a la camera (Mixamo Y Bot face +Z intrinseque ; cam yaw=0 forward
+													//     = -Z ; R_y(pi) tourne le mesh face -> -Z = loin de la camera).
+													//     Avant le fix d'orientation : on appliquait R_y(yaw + pi) avec un
+													//     `+ pi` redondant qui s'additionnait au pi deja contenu dans
+													//     atan2(forward.x, forward.z) -> inversion W/S et Q/D en jeu.
 													//
 													// La matrice rs.objectModelMatrix reste utilisee par le cube fallback
 													// (RecordIndirect plus haut) ; chaque chemin a desormais sa propre source.
@@ -4198,7 +4195,7 @@ namespace engine
 													const engine::math::Vec3 feetPos{ ccPos.x, ccPos.y - 0.9f, ccPos.z };
 													const engine::math::Mat4 finalModelMat =
 														engine::math::Mat4::Translate(feetPos) *
-														engine::math::Mat4::RotateY(m_avatarYaw + 3.14159265f);
+														engine::math::Mat4::RotateY(m_avatarYaw);
 
 													// La matrice modele est desormais calculee a partir de cc.GetPosition()
 													// + m_avatarYaw ; le cube placeholder garde sa matrice d'origine (cf.

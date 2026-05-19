@@ -566,15 +566,18 @@ namespace engine
 		///
 		/// `m_avatarYaw` suit la direction de mouvement (snap immediat sur
 		/// `atan2(moveDirXZ.x, moveDirXZ.z)`) ; la model matrix de l'avatar
-		/// applique ensuite `R_y(yaw + pi)` pour orienter l'avatar dos a la
-		/// camera (convention 3eme personne MMO).
+		/// applique directement `R_y(yaw)`. La direction de "face" intrinseque
+		/// du mesh Mixamo Y Bot est +Z dans son repere local. La valeur initiale
+		/// pi correspond a "dos a la camera" pour une camera a yaw=0 (forward
+		/// camera = -Z), de sorte que le perso au spawn (avant tout input) est
+		/// vu de dos.
 		///
 		/// `m_lastMoveInput` memorise la derniere intention d'input clavier
 		/// pour que la state machine de locomotion (Task 11 etendra a 7 etats)
 		/// puisse decider Idle/Walk/Run/Jump sans avoir a reconstruire l'input.
 		engine::gameplay::CharacterController                     m_characterController;
 		engine::gameplay::TerrainCollider                         m_terrainCollider;
-		float                                                     m_avatarYaw = 0.0f;
+		float                                                     m_avatarYaw = 3.14159265f;
 		engine::gameplay::MoveInput                               m_lastMoveInput{};
 
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).

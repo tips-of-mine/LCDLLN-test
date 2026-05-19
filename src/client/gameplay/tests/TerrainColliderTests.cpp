@@ -9,8 +9,10 @@
 //
 // Quand aucun terrain n'est bind :
 //   - GroundHeightAt(...) renvoie toujours 0.0.
-//   - SweepCapsule : hit ssi (startY >= 0 && endY < 0), fraction lineaire
-//     (0 - startY) / (endY - startY), normale (0,1,0).
+//   - SweepCapsule : hit ssi la base de la capsule (centerY - halfHeight)
+//     traverse le sol pendant le sweep, i.e. centerY descend sous
+//     (groundHeight + halfHeight). Avec Capsule{} par defaut (h=1.8 donc
+//     halfHeight=0.9) et ground=0, le seuil de centerY est 0.9.
 //   - Tout autre cas : pas de hit, fraction = 1.0.
 
 #include "src/client/gameplay/TerrainCollider.h"
@@ -42,20 +44,20 @@ namespace
         REQUIRE(Approx(c.GroundHeightAt(100.0f, -50.0f), 0.0f));
     }
 
-    /// Sweep descendant qui traverse Y=0 (sol fallback) : doit hit a 50% du
-    /// chemin (lineaire entre y=10 et y=-10, sol a y=0).
+    /// Sweep descendant qui traverse le seuil "base touche le sol" (avec
+    /// Capsule{} par defaut : halfHeight=0.9, ground=0, seuil centerY=0.9).
+    /// Le centre passe de 10 a -10 ; on touche quand centerY=0.9.
     void Test_NoTerrainBound_SweepReportsNoHit()
     {
         TerrainCollider c;
-        engine::gameplay::IWorldCollider::Capsule cap{};
+        engine::gameplay::IWorldCollider::Capsule cap{};  // r=0.3, h=1.8 -> halfHeight=0.9
         engine::gameplay::IWorldCollider::SweepHit hit{};
         bool hitOccurred = c.SweepCapsule(cap, Vec3{0, 10, 0}, Vec3{0, -10, 0}, hit);
-        // Sans terrain : GroundHeightAt = 0 ; depart y=10 ; arrivee y=-10.
-        // 10 >= 0 (depart au-dessus) && -10 < 0 (arrivee en-dessous) -> HIT.
+        // Seuil = 0 + 0.9 = 0.9. 10 >= 0.9 (depart au-dessus) && -10 < 0.9 -> HIT.
         REQUIRE(hitOccurred);
         REQUIRE(hit.hit);
-        // fraction = (0 - 10) / (-10 - 10) = 0.5
-        REQUIRE(Approx(hit.fraction, 0.5f));
+        // fraction = (0.9 - 10) / (-10 - 10) = -9.1 / -20 = 0.455
+        REQUIRE(Approx(hit.fraction, 0.455f));
     }
 
     /// Sweep ascendant (y=1 -> y=5) : startY >= 0 mais endY > 0, donc la

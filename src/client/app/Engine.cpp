@@ -6366,6 +6366,23 @@ namespace engine
 					// pour que la 1ere detection de mouvement soit correcte (sans cela
 					// le perso etait "deplace" depuis (0,0,0) au tout 1er tick).
 					m_lastSyncedPosition = out.camera.position;
+
+					// Sous-projet B.1 (post-review fix) : repositionne le CharacterController
+					// au spawn DB. Sans ca, le boot Init laisse le CC a (0, ground+0.9, 0)
+					// et a la 1ere frame post-EnterWorld, cc.Update tourne AVANT le code de
+					// teleport, donc cc.GetPosition() = (0,0,0) overwrite la position spawn
+					// via SetTargetPosition(cc.GetPosition()). SavePositionAsync persiste
+					// ensuite (0,0,0) en DB -> perte de la position spawn de l'utilisateur.
+					// Anti-embedded : max(spawnY, GroundHeightAt+0.9) au cas ou la DB ait
+					// une altitude trop basse pour la capsule (height/2 = 0.9 m).
+					{
+						const float groundY = m_terrainCollider.GroundHeightAt(spawnX, spawnZ);
+						const float ccY = std::max(spawnY, groundY + 0.9f);
+						m_characterController.Init(engine::math::Vec3{ spawnX, ccY, spawnZ });
+						LOG_INFO(Core, "[EnterWorld] CharacterController repositioned to ({:.2f}, {:.2f}, {:.2f}) (groundY={:.2f}, halfHeight=0.9)",
+							spawnX, ccY, spawnZ, groundY);
+					}
+
 					LOG_INFO(Core, "[EnterWorld] camera teleport ({}, {}, {}) yaw={}deg pitch={}deg",
 						spawnX, spawnY, spawnZ, yawDeg, pitchDeg);
 				}

@@ -3973,10 +3973,15 @@ namespace engine
 															const std::string fallPath = contentRoot + "/models/avatars/y_bot_fall/y_bot_fall.glb";
 															const std::string landPath = contentRoot + "/models/avatars/y_bot_land/y_bot_land.glb";
 
-															// Run = animation-only (running.fbx 338 KB), pas Fast Run.fbx with-skin.
+															// Tous les 4 clips bascules sur les variantes "No Skin" propres :
+															// - Run  : Fast Run No Skin.fbx (etait running.fbx lowercase)
+															// - Jump : Jump-noskin.fbx (etait Jump.fbx with-skin)
+															// - Fall : falling idle.fbx (pas de "Falling Idle No Skin" propre dans inbox, on garde)
+															// - Land : Hard Landing No Skin.fbx (etait hard landing.fbx lowercase)
+															// Tous animation-only -> loadAnimOnly (cf. Task 4 LoadClipsAnimOnly).
 															if (loadAnimOnly(runPath, "Run")) LOG_INFO(Render, "[Engine] Run clip loaded from '{}'", runPath);
 															else                              LOG_WARN(Render, "[Engine] Run clip not loaded from '{}'", runPath);
-															if (loadWithSkin(jumpPath, "Jump")) LOG_INFO(Render, "[Engine] Jump clip loaded from '{}'", jumpPath);
+															if (loadAnimOnly(jumpPath, "Jump")) LOG_INFO(Render, "[Engine] Jump clip loaded from '{}'", jumpPath);
 															else                                LOG_WARN(Render, "[Engine] Jump clip not loaded from '{}'", jumpPath);
 															if (loadAnimOnly(fallPath, "Fall")) LOG_INFO(Render, "[Engine] Fall clip loaded from '{}'", fallPath);
 															else                                LOG_WARN(Render, "[Engine] Fall clip not loaded from '{}'", fallPath);

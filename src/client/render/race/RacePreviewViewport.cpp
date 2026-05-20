@@ -233,28 +233,66 @@ namespace engine::render::race
 			return false;
 		}
 
-		// 4) Transition UNDEFINED → SHADER_READ_ONLY_OPTIMAL — sinon
-		//    ImGui::Image sample une image en layout invalide. Identique
-		//    a EditorViewportRenderTarget : on accepte que l'image soit
-		//    noire au demarrage (defaut implementation des drivers pour
-		//    UNDEFINED→SHADER_READ_ONLY).
+		// 4) Transition UNDEFINED → TRANSFER_DST → clear couleur explicite
+		//    → SHADER_READ_ONLY_OPTIMAL. Sans le clear explicite, le contenu
+		//    de l'image apres allocation est UNDEFINED cote Vulkan (souvent
+		//    rendu invisible/transparent par le driver), ce qui se traduit
+		//    par "rien du tout pas d'image" cote utilisateur dans
+		//    AuthImGuiCharacterCreate (Render() n'est pas hooke dans la
+		//    frame loop en MVP, donc l'image n'est jamais re-clearee apres
+		//    Init). Le clear donne un fond bleu sombre visible — l'overlay
+		//    ImGui::Text("Race : ...") par-dessus reste l'element informatif.
 		const bool transitionOk = RunOneShotCommands(device, queue, queueFamilyIndex,
 			[&](VkCommandBuffer c)
 			{
-				VkImageMemoryBarrier b{};
-				b.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-				b.oldLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
-				b.newLayout           = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				b.srcAccessMask       = 0;
-				b.dstAccessMask       = VK_ACCESS_SHADER_READ_BIT;
-				b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-				b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-				b.image               = m_image;
-				b.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-				vkCmdPipelineBarrier(c,
-					VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-					0, 0, nullptr, 0, nullptr, 1, &b);
+				// 4a) UNDEFINED → TRANSFER_DST pour pouvoir clear.
+				{
+					VkImageMemoryBarrier b{};
+					b.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+					b.oldLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
+					b.newLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+					b.srcAccessMask       = 0;
+					b.dstAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+					b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+					b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+					b.image               = m_image;
+					b.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+					vkCmdPipelineBarrier(c,
+						VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+						VK_PIPELINE_STAGE_TRANSFER_BIT,
+						0, 0, nullptr, 0, nullptr, 1, &b);
+				}
+
+				// 4b) Clear : bleu sombre (0.10, 0.12, 0.18, 1.0). Aligne sur la
+				//     couleur "mesh attache" de Render() pour coherence visuelle.
+				VkClearColorValue clearColor{};
+				clearColor.float32[0] = 0.10f;
+				clearColor.float32[1] = 0.12f;
+				clearColor.float32[2] = 0.18f;
+				clearColor.float32[3] = 1.00f;
+				VkImageSubresourceRange range{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+				vkCmdClearColorImage(c, m_image,
+					VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					&clearColor, 1, &range);
+
+				// 4c) TRANSFER_DST → SHADER_READ_ONLY_OPTIMAL pour que
+				//     ImGui::Image puisse sampler l'image.
+				{
+					VkImageMemoryBarrier b{};
+					b.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+					b.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+					b.newLayout           = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					b.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+					b.dstAccessMask       = VK_ACCESS_SHADER_READ_BIT;
+					b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+					b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+					b.image               = m_image;
+					b.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+					vkCmdPipelineBarrier(c,
+						VK_PIPELINE_STAGE_TRANSFER_BIT,
+						VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+						0, 0, nullptr, 0, nullptr, 1, &b);
+				}
 			});
 		if (!transitionOk)
 		{

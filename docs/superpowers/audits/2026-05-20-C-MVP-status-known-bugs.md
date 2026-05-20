@@ -45,18 +45,15 @@ Test effectué par l'utilisateur sur le build `cbbf955` (avant le fix `1bf83fc`)
 
 ## Bugs en suspens (renvoyés à C.2 ou session debug ultérieure)
 
-### 1. Preview viewport invisible dans l'écran de création
+### 1. ~~Preview viewport invisible dans l'écran de création~~ (FIXED)
 
-**Symptôme** : l'utilisateur rapporte "Rien du tout, pas d'image" pour la zone preview 256×384, alors que le log montre `[RacePreviewViewport] Init OK (512x512 R8G8B8A8_UNORM)`.
+**Symptôme initial** : "Rien du tout, pas d'image" pour la zone preview 256×384, alors que `[RacePreviewViewport] Init OK` était loggé.
 
-**Causes hypothétiques** :
-- Le wiring `AuthImGuiRenderer::SetRacePreview(&m_racePreviewViewport)` depuis `Engine::Init` n'est peut-être pas appelé au bon moment (avant que l'auth screen rende sa première frame).
-- Le `m_racePreview` membre du renderer reste `nullptr` → la branche `if (m_racePreview && m_racePreview->IsValid())` saute directement au fallback `(preview 3D indisponible)` (qui devrait afficher un texte mais peut-être stylé invisible).
-- Le `ImGui::Image(reinterpret_cast<ImTextureID>(GetImguiTextureId()), {256, 384})` pourrait échouer si `GetImguiTextureId()` retourne 0 (vérifié IsValid() avant mais peut-être race condition).
+**Cause racine identifiée** : `RacePreviewViewport::Init` transitionnait `UNDEFINED → SHADER_READ_ONLY_OPTIMAL` sans clear color explicite. Le contenu de l'image était donc UNDEFINED côté Vulkan (souvent rendu invisible/transparent par le driver). Et `Render()` n'étant jamais hooké dans la frame loop pour MVP, l'image n'était jamais re-clearée après Init.
 
-**Diagnostic next step** : ajouter un log dans `AuthImGuiCharacterCreate::RenderCharCreateScreen` qui affiche l'état de `m_racePreview` (nullptr ou non, IsValid()).
+**Fix appliqué** : Init fait désormais `UNDEFINED → TRANSFER_DST → vkCmdClearColorImage(bleu sombre 0.10/0.12/0.18) → SHADER_READ_ONLY`. La zone 256×384 affiche un fond bleu sombre visible + l'overlay `ImGui::Text("Race : <nom>")` par-dessus. C'est suffisant comme feedback MVP — le rendu mesh 3D réel reste C.2.
 
-**Workaround acceptable pour MVP** : le combo race + le fait que le mesh correct apparaisse au EnterWorld donnent un feedback utilisable. Le preview 3D est un nice-to-have, pas un must.
+**Note** : la couleur du fond ne change pas dynamiquement quand l'utilisateur change de race (Render() reste non-hooké). Le texte overlay est l'unique élément informatif. Suffisant pour MVP.
 
 ### 2. RacePreviewViewport::Tick/Render jamais appelés
 

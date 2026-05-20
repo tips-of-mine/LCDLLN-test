@@ -8046,6 +8046,32 @@ namespace engine
 		return nextIdx == 0u ? m_fgHistoryAId : m_fgHistoryBId;
 	}
 
+	/// Sous-projet C MVP — Resout race_str (string DB) en pointeur SkinnedMesh*
+	/// depuis m_raceMeshes. Si la race demandee n'est pas chargee (asset manquant
+	/// ou race hors-MVP), fallback sur "humains" avec un LOG_WARN. Si meme
+	/// "humains" est absent (boot rate : SkinnedMeshLoader::Load a echoue pour
+	/// toutes les races), retourne nullptr — le caller doit alors retomber sur
+	/// le cube placeholder via m_skinnedAvatarReady = false.
+	///
+	/// Effet de bord : aucun (lecture seule sur m_raceMeshes + log).
+	/// Thread : main thread uniquement (m_raceMeshes n'est ni mute ni protege).
+	engine::render::skinned::SkinnedMesh* Engine::GetRaceMesh(const std::string& raceId)
+	{
+		auto it = m_raceMeshes.find(raceId);
+		if (it != m_raceMeshes.end()) return &it->second;
+		// Fallback : si la race demandee n'est pas chargee (asset manquant
+		// ou race hors-MVP), on retourne le mesh humains. Si meme humains
+		// est absent (boot rate), on retourne nullptr -> caller fallback
+		// cube placeholder via m_skinnedAvatarReady = false.
+		auto humansIt = m_raceMeshes.find("humains");
+		if (humansIt != m_raceMeshes.end()) {
+			LOG_WARN(Render, "[Engine] GetRaceMesh('{}') fallback humains", raceId);
+			return &humansIt->second;
+		}
+		LOG_ERROR(Render, "[Engine] GetRaceMesh('{}') fallback humains ECHEC (humains absent)", raceId);
+		return nullptr;
+	}
+
 	void Engine::OnResize(int w, int h)
 	{
     	LOG_INFO(Platform, "[Resize] OnResize");

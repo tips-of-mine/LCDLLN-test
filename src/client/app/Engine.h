@@ -190,6 +190,14 @@ namespace engine
 		engine::render::ResourceId GetTaaHistoryPrevId() const;
 		engine::render::ResourceId GetTaaHistoryNextId() const;
 
+		/// Sous-projet C MVP — Retourne le mesh skinned pour la race `raceId`,
+		/// ou le mesh "humains" si la race est inconnue / pas chargee. Retourne
+		/// nullptr si meme "humains" est absent (cas pathologique : boot rate).
+		/// Utilise par EnterWorld pour resoudre le mesh du perso joueur, et
+		/// par RacePreviewViewport pour l'apercu race dans l'ecran de
+		/// creation de personnage.
+		engine::render::skinned::SkinnedMesh* GetRaceMesh(const std::string& raceId);
+
 	private:
 		void BeginFrame();
 		void Update();

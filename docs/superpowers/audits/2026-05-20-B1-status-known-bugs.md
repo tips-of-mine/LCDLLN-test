@@ -64,16 +64,37 @@ Locomotion state machine production-ready en local, qui transforme la state mach
 
 **Symptôme à valider** : que se passe-t-il quand l'utilisateur appuie en même temps S+Q, S+D, ou S+Q+D ? La logique actuelle (`IsPureBackInput` = S seul) bascule en free-mover dès qu'une autre touche est ajoutée — donc S+Q se comporte comme Q seul (pivot mesh vers gauche+arrière). À tester pour valider qu'il n'y a pas de glitch d'animation.
 
-### 3. Smoke test §11 du spec non complètement validé
+### 2bis. Direction backward incorrecte après strafe latéral
+
+**Symptôme rapporté lors du smoke test C MVP final (2026-05-20)** :
+- L'utilisateur appuie sur D (strafe droite) → le perso se déplace bien à droite ✅
+- Puis il relâche D et appuie sur S (recule) → le perso recule **mais à destination de la gauche** au lieu de reculer dans la direction logique (vers la caméra) ❌
+- Symétrique avec A puis S : le perso recule à destination de la droite.
+
+**Reproduction** : appuyer brièvement sur D, relâcher, puis appuyer sur S seul. Observer la direction de recul du personnage.
+
+**Hypothèse** : le `m_avatarYaw` (ou le vecteur forward) n'est pas correctement reset entre la sortie du free-mover (Q/D) et l'entrée dans WalkBack (S seul). Le back-step utilise probablement un yaw qui a dérivé pendant le strafe.
+
+**Fichiers à inspecter** :
+- `src/client/app/Engine.cpp` : grep `m_avatarYaw`, `WalkBack`, `movingBack`, `IsPureBackInput` (zone ~6846-6926).
+- Comprendre comment le yaw est calculé pendant strafe vs backward, et pourquoi la transition strafe→backward garde une orientation résiduelle.
+
+**Premier réflexe debug** : tracer `m_avatarYaw` chaque frame et vérifier sa valeur quand on relâche Q/D et quand on enfonce S.
+
+### 3. Caméra tracking (cf. §1 — confirmé à nouveau lors du smoke test C MVP final)
+
+Le bug §1 ci-dessus a été confirmé une seconde fois lors du smoke test C MVP : la caméra ne suit pas le perso en temps réel. À traiter en priorité dans la session debug B.1 dédiée.
+
+### 4. Smoke test §11 du spec non complètement validé
 
 Les 7 critères de validation visuelle (§11) doivent être re-déroulés sur le dernier commit (`91d7279`) une fois les bugs ci-dessus résolus :
 1. ☑ Spawn sur sol, pose Idle stable (sans oscillation)
 2. ☑ Z + relâche → StartWalking → Walk → relâche → Idle
 3. ☑ Shift+Z → Run, Shift relâché → Walk
-4. ☑ Espace en mouvement → Jump → Fall → Land → Walk
+4. ☑ Espace en mouvement → Jump → Fall → Land → Walk (mais asset Jump à remplacer, cf. C MVP audit §6)
 5. ☐ S seul → WalkBack avec mesh dos cam (animation Walking Backwards visible)
 6. ☐ Q et D → mesh pivote vers la direction et avance (free-mover, plus de strafe invisible)
-7. ☐ Aucun tremblement de mesh ; caméra collée au perso sans saccade
+7. ☐ Aucun tremblement de mesh ; caméra collée au perso sans saccade (cf. §2bis + §3)
 
 ## Limitations connues (hors-scope B.1, à traiter dans B.2 / B.3 / autres)
 

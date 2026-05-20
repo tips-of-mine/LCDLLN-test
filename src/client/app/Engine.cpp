@@ -6420,6 +6420,23 @@ namespace engine
 							spawnX, ccY, spawnZ, groundY);
 					}
 
+					// Sous-projet C MVP — Resout le mesh de la race du perso depuis le
+					// payload EnterWorld (race_str persistee en DB depuis migration 0033).
+					// Fallback humains si la race n'est pas chargee dans m_raceMeshes.
+					{
+						const std::string& raceId = enterCmd.raceId;
+						engine::render::skinned::SkinnedMesh* mesh = GetRaceMesh(raceId);
+						if (mesh) {
+							m_currentSkinnedMesh = mesh;
+							LOG_INFO(Core, "[EnterWorld] Avatar mesh selected for race '{}' ({} bones, {} clips)",
+								raceId, mesh->skeleton.bones.size(), mesh->clips.size());
+						} else {
+							m_skinnedAvatarReady = false;
+							LOG_WARN(Core, "[EnterWorld] No mesh available for race '{}' (humains also absent) -- cube fallback",
+								raceId);
+						}
+					}
+
 					LOG_INFO(Core, "[EnterWorld] camera teleport ({}, {}, {}) yaw={}deg pitch={}deg",
 						spawnX, spawnY, spawnZ, yawDeg, pitchDeg);
 				}

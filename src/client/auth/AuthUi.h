@@ -87,6 +87,12 @@ namespace engine::client
 			float spawnYawDeg   = 0.0f;
 			float spawnPitchDeg = 0.0f;
 			bool  hasSpawn      = false; ///< true = spawn renseigné depuis la liste de personnages.
+			/// Sous-projet C MVP — race_str du personnage activé, persistée en DB depuis
+			/// la migration 0033 et reçue via la payload CHARACTER_LIST. Vide = perso
+			/// pré-migration (cas legacy). Consommée par Engine::EnterWorld pour résoudre
+			/// `m_currentSkinnedMesh` via `Engine::GetRaceMesh(raceId)` (avec fallback
+			/// humains si la race n'est pas chargée dans `m_raceMeshes`).
+			std::string raceId;
 		};
 
 		struct AudioSettingsCommand

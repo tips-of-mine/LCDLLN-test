@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 
+#include "src/shared/Character/CustomizationCatalog.h"
+
 namespace engine::core
 {
 	class Config;
@@ -27,6 +29,7 @@ namespace engine::server
 		void SetConnectionSessionMap(ConnectionSessionMap* map);
 		void SetConnectionPool(engine::server::db::ConnectionPool* pool);
 		void SetConfig(const engine::core::Config* config);
+		void SetCustomizationCatalog(const engine::character::CustomizationCatalog* catalog);
 
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
@@ -43,5 +46,6 @@ namespace engine::server
 		ConnectionSessionMap* m_connMap = nullptr;
 		engine::server::db::ConnectionPool* m_pool = nullptr;
 		const engine::core::Config* m_config = nullptr;
+		const engine::character::CustomizationCatalog* m_catalog = nullptr;
 	};
 }

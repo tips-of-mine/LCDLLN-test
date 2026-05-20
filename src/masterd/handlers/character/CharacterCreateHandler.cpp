@@ -10,6 +10,10 @@
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
+#include "src/shared/Character/CustomizationValidator.h"
+#include "src/shared/Character/CustomizationJson.h"
+
+#include <vector>
 
 #include <mysql.h>
 
@@ -24,6 +28,7 @@ namespace engine::server
 	void CharacterCreateHandler::SetConnectionSessionMap(ConnectionSessionMap* map) { m_connMap = map; }
 	void CharacterCreateHandler::SetConnectionPool(engine::server::db::ConnectionPool* pool) { m_pool = pool; }
 	void CharacterCreateHandler::SetConfig(const engine::core::Config* config) { m_config = config; }
+	void CharacterCreateHandler::SetCustomizationCatalog(const engine::character::CustomizationCatalog* catalog) { m_catalog = catalog; }
 
 	bool CharacterCreateHandler::IsValidCharacterName(std::string_view name) const
 	{
@@ -210,6 +215,22 @@ namespace engine::server
 			return;
 		}
 
+		// Slice 1 — validation autoritaire de la customization contre le catalogue.
+		if (m_catalog)
+		{
+			auto validation = engine::character::ValidateCustomization(*m_catalog, parsed->raceId, parsed->customization);
+			if (!validation.ok)
+			{
+				const std::string reason = validation.errors.empty() ? "invalid customization" : validation.errors.front();
+				LOG_WARN(Auth, "[CharacterCreateHandler] customization rejected (account_id={}, race='{}'): {}",
+					*accountId, parsed->raceId, reason);
+				auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "invalid customization", requestId, sessionIdHeader);
+				if (!pkt.empty())
+					m_server->Send(connId, pkt);
+				return;
+			}
+		}
+
 		char escapedName[128]{};
 		mysql_real_escape_string(mysql, escapedName, parsed->name.c_str(), static_cast<unsigned long>(parsed->name.size()));
 
@@ -261,13 +282,19 @@ namespace engine::server
 		mysql_real_escape_string(mysql, escapedFaction,
 			factionStr.c_str(), static_cast<unsigned long>(factionStr.size()));
 
+		// Slice 1 — sérialise la customization validée en JSON pour appearance_json.
+		const std::string appearanceJson = engine::character::CustomizationToJson(parsed->customization);
+		std::vector<char> escapedAppearance(appearanceJson.size() * 2u + 1u, '\0');
+		mysql_real_escape_string(mysql, escapedAppearance.data(),
+			appearanceJson.c_str(), static_cast<unsigned long>(appearanceJson.size()));
+
 		std::string sql =
 			"INSERT INTO characters (account_id, slot, name, server_id, race_id, class_id, level, appearance_json,"
 			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg, race_str, class_str, faction_str) VALUES ("
 			+ std::to_string(*accountId) + ", "
 			+ std::to_string(slot) + ", '"
 			+ escapedName + "', "
-			+ std::to_string(serverId) + ", 0, 0, 1, '{}', "
+			+ std::to_string(serverId) + ", 0, 0, 1, '" + std::string(escapedAppearance.data()) + "', "
 			+ spawnBuf + ", '"
 			+ escapedRace + "', '"
 			+ escapedClass + "', '"

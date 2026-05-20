@@ -5,11 +5,13 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace engine::network
 {
 	/// M39.1 — Customization options chosen by the player during character creation.
+	/// Slice 1 (2026-05-20) — extended with discrete identity fields.
 	struct CharacterCustomization
 	{
 		uint8_t faceType     = 0; ///< Face type index [0, N).
@@ -17,6 +19,10 @@ namespace engine::network
 		uint8_t skinColorIdx = 0; ///< Skin colour palette index [0, N).
 		uint8_t hairColorIdx = 0; ///< Hair colour palette index [0, N).
 		uint8_t eyeColorIdx  = 0; ///< Eye colour palette index [0, N).
+		uint8_t bodyFrame    = 0; ///< Mesh frame index [0, N) (catalog.frames).
+		uint8_t bodyType     = 0; ///< Body type index [0, N) (modules[frame].bodyTypes).
+		uint8_t facialHair   = 0; ///< Facial hair index [0, N) (modules[frame].facialHair).
+		std::vector<std::pair<std::string, uint8_t>> racialFeatures; ///< featureKey -> index.
 	};
 
 	/// M39.1 — Extended character-create request payload (name + race + class + customization).
@@ -84,6 +90,8 @@ namespace engine::network
 		// Vides si character créé pré-migration 0033, ou si l'utilisateur n'a pas choisi.
 		std::string race_str;
 		std::string class_str;
+		// Slice 1 — appearance customization (depuis characters.appearance_json).
+		CharacterCustomization customization{};
 	};
 
 	struct CharacterListResponsePayload

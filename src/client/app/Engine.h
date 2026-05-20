@@ -492,7 +492,12 @@ namespace engine
 		///   - Destroy: au Shutdown, juste avant `m_pipeline->Destroy` (les
 		///              ressources Vulkan dependent du device, pas du pipeline).
 		engine::render::skinned::SkinnedRenderer                  m_skinnedRenderer;
-		std::optional<engine::render::skinned::SkinnedMesh>       m_playerSkinnedMesh;
+		/// Sous-projet C MVP — Pointeur vers le mesh skinned de la race du
+		/// perso courant. Assigne a EnterWorld depuis m_raceMeshes (cf.
+		/// Engine::GetRaceMesh, Task 7). Au boot : reste null tant qu'aucun
+		/// EnterWorld n'a eu lieu (l'avatar n'est pas dessine, le cube
+		/// placeholder prend le relais via m_skinnedAvatarReady = false).
+		engine::render::skinned::SkinnedMesh*                     m_currentSkinnedMesh = nullptr;
 		std::chrono::steady_clock::time_point                     m_playerAnimStartTime;
 		/// True une fois SkinnedRenderer::Init OK + SkinnedMeshLoader::Load OK.
 		/// Sert de gate per-frame : si false, on dessine le cube placeholder.

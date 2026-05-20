@@ -207,7 +207,7 @@ namespace engine
 		}
 
 		/// Sous-projet B.1 (Task 11) — Mapping etat de locomotion -> nom du clip
-		/// charge dans `m_playerSkinnedMesh->clips`. Le nom doit matcher exactement
+		/// charge dans `m_currentSkinnedMesh->clips`. Le nom doit matcher exactement
 		/// la cle utilisee a l'insertion (cf. boot ~ligne 3863 ou les clips Mixamo
 		/// "mixamo.com" sont renommes en "Idle" / "StartWalking" / "Walk").
 		///
@@ -3935,13 +3935,13 @@ namespace engine
 														yBotPath);
 													if (loaded)
 													{
-														m_playerSkinnedMesh = std::move(*loaded);
+														m_currentSkinnedMesh = std::move(*loaded);
 														m_playerAnimStartTime = std::chrono::steady_clock::now();
 														m_avatarLocoStateEnterTime = m_playerAnimStartTime;
 														m_skinnedAvatarReady = true;
 														LOG_INFO(Render, "[Engine] Skinned avatar Y Bot loaded ({} bones, {} clips) -- cube placeholder remplace",
-															m_playerSkinnedMesh->skeleton.bones.size(),
-															m_playerSkinnedMesh->clips.size());
+															m_currentSkinnedMesh->skeleton.bones.size(),
+															m_currentSkinnedMesh->clips.size());
 
 														// Sous-projet A polish -- charge Idle + StartWalking et merge dans le mesh
 														// joue. Mixamo nomme chaque clip "mixamo.com" : on les renomme a l'insertion
@@ -3951,7 +3951,7 @@ namespace engine
 														// B.1 (Task 11) : renomme de "Walking" -> "Walk" pour matcher
 														// `StateToClipName(AvatarLocomotionState::Walk)` (cf. anon ns Engine.cpp).
 														{
-															auto& clips = m_playerSkinnedMesh->clips;
+															auto& clips = m_currentSkinnedMesh->clips;
 															// Renomme le clip de marche existant.
 															for (auto& c : clips) {
 																if (c.name == "mixamo.com") { c.name = "Walk"; break; }
@@ -3966,11 +3966,11 @@ namespace engine
 
 															auto loadAnimOnly = [&](const std::string& path, const char* renameTo) -> bool {
 																auto clipsLoaded = engine::render::skinned::SkinnedMeshLoader::LoadClipsAnimOnly(
-																	path, m_playerSkinnedMesh->skeleton);
+																	path, m_currentSkinnedMesh->skeleton);
 																for (auto& c : clipsLoaded) {
 																	if (c.duration > 0.0f && c.name == "mixamo.com") {
 																		c.name = renameTo;
-																		m_playerSkinnedMesh->clips.push_back(std::move(c));
+																		m_currentSkinnedMesh->clips.push_back(std::move(c));
 																		return true;
 																	}
 																}
@@ -4010,7 +4010,7 @@ namespace engine
 															// Defensif : si Idle a echoue au load, on garde l'init existante
 															// (m_avatarLocoStateEnterTime / m_avatarLocoState = Idle deja faits
 															// plus haut), la state machine fera son fallback (Task 11).
-															const engine::render::skinned::AnimationClip* idleClip = m_playerSkinnedMesh->FindClip("Idle");
+															const engine::render::skinned::AnimationClip* idleClip = m_currentSkinnedMesh->FindClip("Idle");
 															if (idleClip) {
 																const float nowSec = EngineNowSec();
 																m_avatarCrossfade.Play(*idleClip, /*loops=*/ true, nowSec);
@@ -4206,7 +4206,7 @@ namespace engine
 												// + Velocity + Depth). Idempotent : si m_skinnedAvatarReady reste false (init
 												// echouee ou .glb manquant), on saute et le cube placeholder a deja ete
 												// dessine par Record/RecordIndirect ci-dessus.
-												if (m_skinnedAvatarReady && m_playerSkinnedMesh && m_skinnedRenderer.IsValid())
+												if (m_skinnedAvatarReady && m_currentSkinnedMesh && m_skinnedRenderer.IsValid())
 												{
 													// B.1 / Task 11 : la state machine 7 etats + le Play du crossfade
 													// vivent desormais dans Engine::Update (driven par signaux gameplay
@@ -4223,11 +4223,11 @@ namespace engine
 													const float nowSec = EngineNowSec();
 
 													auto locals  = m_avatarCrossfade.Sample(
-														m_playerSkinnedMesh->skeleton, nowSec);
+														m_currentSkinnedMesh->skeleton, nowSec);
 													auto globals = engine::render::skinned::AnimationSampler::ComputeGlobalMatrices(
-														m_playerSkinnedMesh->skeleton, locals);
+														m_currentSkinnedMesh->skeleton, locals);
 													auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
-														m_playerSkinnedMesh->skeleton, globals);
+														m_currentSkinnedMesh->skeleton, globals);
 
 													// --- B.1 / Task 9 : model matrix depuis CharacterController + m_avatarYaw ---
 													// On lit la position monde directement depuis le CC (deja appele
@@ -4271,7 +4271,7 @@ namespace engine
 																m_pipeline->GetGeometryPass().GetRenderPassLoad(),
 																VK_NULL_HANDLE,
 																rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
-																*m_playerSkinnedMesh,
+																*m_currentSkinnedMesh,
 																finals,
 																materialCache.GetDescriptorSet(),
 																finalModelMat.m,
@@ -5544,10 +5544,10 @@ namespace engine
 			// MaterialDescriptorCache mais possede son propre pipeline/render pass --
 			// l'ordre n'est pas critique entre eux, mais on respecte l'ordre LIFO).
 			// Idempotent : safe si Init a echoue (handles VK_NULL_HANDLE skippes).
-			if (m_playerSkinnedMesh)
+			if (m_currentSkinnedMesh)
 			{
-				m_playerSkinnedMesh->Destroy(m_vkDeviceContext.GetDevice());
-				m_playerSkinnedMesh.reset();
+				m_currentSkinnedMesh->Destroy(m_vkDeviceContext.GetDevice());
+				m_currentSkinnedMesh.reset();
 			}
 			m_skinnedRenderer.Destroy(m_vkDeviceContext.GetDevice());
 			m_skinnedAvatarReady = false;
@@ -6809,10 +6809,10 @@ namespace engine
 				//
 				// Trigger crossfade : a chaque transition, on appelle
 				// `m_avatarCrossfade.Play(clip, loops, nowSec)`. Le clip vit dans
-				// `m_playerSkinnedMesh->clips` (storage stable -> pointeur safe
+				// `m_currentSkinnedMesh->clips` (storage stable -> pointeur safe
 				// jusqu'au shutdown). Le sampling pleine pose se fait dans le
 				// lambda Geometry via `m_avatarCrossfade.Sample(skel, nowSec)`.
-				if (m_skinnedAvatarReady && m_playerSkinnedMesh)
+				if (m_skinnedAvatarReady && m_currentSkinnedMesh)
 				{
 					const bool grounded = m_characterController.IsGrounded();
 					const bool moving = (moveInput.moveDirXZ.x != 0.0f || moveInput.moveDirXZ.z != 0.0f);
@@ -6825,11 +6825,11 @@ namespace engine
 					const float stateElapsed = std::chrono::duration<float>(now - m_avatarLocoStateEnterTime).count();
 
 					const engine::render::skinned::AnimationClip* startWalkClip =
-						m_playerSkinnedMesh->FindClip("StartWalking");
+						m_currentSkinnedMesh->FindClip("StartWalking");
 					const engine::render::skinned::AnimationClip* jumpClip =
-						m_playerSkinnedMesh->FindClip("Jump");
+						m_currentSkinnedMesh->FindClip("Jump");
 					const engine::render::skinned::AnimationClip* landClip =
-						m_playerSkinnedMesh->FindClip("Land");
+						m_currentSkinnedMesh->FindClip("Land");
 
 					AvatarLocomotionState newState = m_avatarLocoState;
 					if (grounded)
@@ -6921,7 +6921,7 @@ namespace engine
 						// warn une seule fois et on laisse l'animation precedente continuer
 						// (Sample retombera dessus jusqu'a la prochaine transition reussie).
 						const char* clipName = StateToClipName(newState);
-						const engine::render::skinned::AnimationClip* newClip = m_playerSkinnedMesh->FindClip(clipName);
+						const engine::render::skinned::AnimationClip* newClip = m_currentSkinnedMesh->FindClip(clipName);
 						if (newClip)
 						{
 							LOG_INFO(Render, "[Avatar SM] Play('{}') duration={:.3f}s loops={}",

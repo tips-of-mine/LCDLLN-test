@@ -1389,3 +1389,86 @@ Inverse du boot : NetServer.Stop() → Phase 5 down → ... → Phase 1 (Connect
 
 - Pas encore de requête « liste des personnages d'un compte sur un shard ». Après `ShardPick`, le client ne sait pas si le compte a déjà des personnages ; le drapeau `m_postRegistrationCharacterCreatePending` est utilisé en proxy pour décider `ShardPick → CharacterCreate` vs `ShardPick → MasterFlow`. La sélection « jouer avec un personnage existant ou en créer un autre (max 5/shard) » n'a pas encore de protocole ni d'écran dédié.
 - Le drapeau `m_postRegistrationCharacterCreatePending` est en mémoire processus ; si l'utilisateur s'inscrit puis ferme l'application avant la création de personnage, il devra (au prochain lancement) s'authentifier puis le serveur devra fournir l'information « pas de personnage sur ce shard » pour rejouer la création (non implémenté).
+
+---
+
+## 24. Races multi-mesh (sous-projet C MVP — 2026-05-20)
+
+**Objectif** : afficher un mesh skinned différent par race de personnage (humain / nain / orc en MVP). Pas de différenciation gameplay (les `racials` de `races.json` restent du texte affiché — cf. §16 pour la sélection UI). Pas de redéploiement serveur (`race_str` déjà en DB depuis migration 0033). 5 autres races (elfes / morts_vivants / corrompus / divins / démons) renvoyées à C.2 plus tard.
+
+### Composants
+
+| Composant | Rôle |
+|---|---|
+| `engine::client::RaceDefinition::meshPath` | Champ ajouté à la struct (M39.1 originale). Chemin relatif vers le `.glb` par race, vide pour les races hors-MVP. Parsé depuis `races.json` par `CharacterCreationPresenter::LoadRaces`. |
+| `engine::Engine::m_raceMeshes` | `unordered_map<string, SkinnedMesh>` peuplée au boot par un `CharacterCreationPresenter` local. Stockage stable (pointeurs sûrs après remplissage, pas de modification après boot). |
+| `engine::Engine::GetRaceMesh(raceId)` | Accesseur avec fallback humains (et `nullptr` si humains absent → fallback cube placeholder). Utilisé par `EnterWorld` + `RacePreviewViewport`. |
+| `engine::Engine::m_currentSkinnedMesh` | `SkinnedMesh*` (pointe dans `m_raceMeshes`). Pointe vers humains par défaut au boot, réassigné par `EnterWorld` selon `enterCmd.raceId`. Consommé par la state machine de locomotion (B.1) + la lambda Geometry. |
+| `engine::render::race::RacePreviewViewport` | Offscreen RT Vulkan 512×512 RGBA8 exposé via `ImGui::Image` dans l'écran de création (pattern copié de `EditorViewportRenderTarget` M100.34). MVP : fallback clear color (rendu mesh 3D dans un RT standalone trop complexe — `SkinnedRenderer::Record` écrit dans le framegraph principal, pas RT-agnostic. Refactor renvoyé à C.2). |
+| `AuthImGuiCharacterCreate` (refactor) | Itère sur `CharacterCreationPresenter::GetRaces()` au lieu d'une liste hardcodée. Affiche `ImGui::Image(GetImguiTextureId(), {256, 384})` + overlay `ImGui::Text("Race : <displayName>")`. |
+
+### Pipeline asset par race
+
+```
+tools/asset_pipeline/inbox/
+├── (y_bot files à plat — Humain réutilise Y Bot)
+├── orc/<character>.fbx          ← user upload Mixamo
+└── nains/<character>.fbx        ← user upload Mixamo
+
+game/data/models/avatars/
+├── y_bot/y_bot.glb              (humain, hérité de A)
+├── y_bot_<clip>/...             (8 clips partagés, hérité de B.1)
+├── orc/orc.glb                  (généré par convert_race_meshes.py)
+└── nains/nains.glb              (idem)
+```
+
+`tools/asset_pipeline/convert_race_meshes.py` : itère sur `inbox/<race>/`, trouve le premier FBX with-skin (exclut "*No Skin.fbx"), appelle `FBX2glTF.exe --binary --khr-materials-unlit --skinning-weights 4`. Skip si `.glb` plus récent que le `.fbx` source. Les clips d'anim restent partagés depuis `y_bot_<clip>.glb`, retargetés par `LoadClipsAnimOnly` sur chaque squelette de race (convention Mixamo : bones nommés `mixamorig:*`).
+
+### Wiring runtime
+
+```
+Engine::Init (boot)
+├── CharacterCreationPresenter (local) Init → parse races.json
+├── pour chaque race MVP (humains, nains, orc) :
+│   ├── SkinnedMeshLoader::Load(meshPath) → SkinnedMesh
+│   ├── LoadClipsAnimOnly × 7 clips (Idle/StartWalking/WalkBack/Run/Jump/Fall/Land)
+│   └── m_raceMeshes.emplace(raceId, std::move(mesh))
+├── m_currentSkinnedMesh = &m_raceMeshes["humains"] (default)
+├── m_racePreviewViewport.Init (Vulkan RT + ImGui descriptor)
+├── m_authImGui.SetRacePreview(&m_racePreviewViewport)
+└── m_authUi.SetEngineForRaceMeshLookup(this)
+
+Engine::EnterWorld (à l'activation d'un perso)
+└── m_currentSkinnedMesh = GetRaceMesh(enterCmd.raceId)
+    (fallback humains si race inconnue)
+
+AuthImGuiCharacterCreate::RenderCharCreateScreen (per frame)
+├── races = m_authPresenter->GetCharacterCreationPresenter()->GetRaces()
+├── ImGui::Combo affiche les displayName
+├── Au changement de sélection :
+│   m_racePreview->SetMesh(m_authPresenter->GetRaceMeshForId(selectedRaceId))
+└── ImGui::Image + overlay "Race : <displayName>"
+```
+
+### Tests
+
+`race_definition_tests` (`src/client/character_creation/tests/RaceDefinitionTests.cpp`) — Linux CI uniquement, valide :
+- 3 races MVP exposent un `meshPath` non vide pointant vers le `.glb` attendu.
+- Les races hors-MVP exposent une string vide (fallback humains côté Engine).
+
+Pas de test unitaire pour `Engine::GetRaceMesh` ni `RacePreviewViewport` (les deux requièrent un VkDevice — validés au smoke test visuel).
+
+### Limitations / renvoyé à plus tard (C.2)
+
+- Les 5 races hors-MVP (elfes, morts_vivants, corrompus, divins, démons) n'ont pas de `meshPath` dans `races.json` → fallback humains à `EnterWorld`.
+- `RacePreviewViewport::Render` ne dessine pas le mesh 3D pour MVP (clear color uniquement, noir si pas de mesh / bleu sombre si mesh attaché). Refactor de `SkinnedRenderer` pour exposer une variante "draw into arbitrary RT" requis.
+- Tick/Render du viewport pas câblés dans la render loop principale → l'image reste au layout `SHADER_READ_ONLY_OPTIMAL` initial (clear noir). L'overlay `ImGui::Text` compense visuellement.
+- Pas de capsule différenciée par race (`r=0.3 h=1.8` partagés). Si on veut un nain plus petit ou un orc plus grand, il faut adapter `CharacterController::Init` selon `race_str` + ajuster les heuristiques sticky-ground.
+- Pas de personnalisation cheveux / peau / yeux (champs `defaultSkinColors`, `defaultHairColors`, `defaultEyeColors` existent en data mais ne sont pas câblés au mesh).
+- Pas de modificateurs gameplay des racials (Diplomatie, Furie, etc. restent du texte affiché — sous-projet futur).
+- Anims partagées via retargeting Mixamo : si les proportions sont très différentes, attendre des artefacts (pieds qui glissent, mains qui ne se rejoignent pas). Pas observé en pratique pour humain / nain / orc Mixamo standard.
+- `races.json` est parsé 2× au worst-case : une fois par le `CharacterCreationPresenter` local dans `Engine::Init`, une fois par `AuthUiPresenter::m_characterCreationPresenter`. Coût négligeable (small JSON, parsé une fois par process).
+
+### Bugs résiduels B.1 préservés
+
+Le wiring C MVP ne touche ni `CharacterController` ni `TerrainCollider` (sticky ground probe + half-height threshold restent intacts). Cf. `docs/superpowers/audits/2026-05-20-B1-status-known-bugs.md` pour la liste des bugs ouverts à reprendre dans une session debug ultérieure (caméra tracking, inputs combinés, smoke test §11).

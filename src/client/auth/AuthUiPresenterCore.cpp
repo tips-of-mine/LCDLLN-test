@@ -16,6 +16,12 @@
 
 #include "src/client/auth/AuthUi.h"
 
+// Sous-projet C MVP (Task 12) — Engine.h fournit la declaration complete
+// de \c engine::Engine pour le delegate \c GetRaceMeshForId. On l'inclut
+// uniquement dans le .cpp (AuthUi.h reste un forward declare pour
+// eviter la dependance circulaire Engine.h <-> AuthUi.h).
+#include "src/client/app/Engine.h"
+
 #include "src/client/render/AuthUiRenderer.h"
 
 #include "src/shared/core/DefaultClientEndpoints.h"
@@ -1008,6 +1014,23 @@ namespace engine::client
 		LOG_INFO(Core, "[AuthUiPresenter] Destroyed");
 	}
 
+	/// Sous-projet C MVP (Task 12) — Stub Linux : aucun rendu ImGui, mais
+	/// on garde l'API symetrique pour que le code partage (et eventuels
+	/// tests build Linux) compile. Le presenter est quand meme cree par
+	/// valeur dans la classe — son Init n'a juste pas ete appele.
+	const engine::client::CharacterCreationPresenter* AuthUiPresenter::GetCharacterCreationPresenter() const
+	{
+		return &m_characterCreationPresenter;
+	}
+
+	/// Sous-projet C MVP (Task 12) — Stub Linux : pas de gestion races
+	/// cote serveur Linux. Retourne nullptr (Engine n'est pas branche
+	/// sur Linux car le client est Windows-only).
+	engine::render::skinned::SkinnedMesh* AuthUiPresenter::GetRaceMeshForId(const std::string&)
+	{
+		return nullptr;
+	}
+
 	bool AuthUiPresenter::BlocksWorldInput() const
 	{
 		return false;
@@ -1264,6 +1287,19 @@ namespace engine::client
 			LOG_INFO(Core, "[AuthUiPresenter] Initial locale retained ({})", m_selectedLocale);
 		}
 
+		// Sous-projet C MVP (Task 12) — Charge en parallele la liste des
+		// races pour pouvoir l'exposer au renderer ImGui de l'ecran de
+		// creation de personnage. Init() parse races.json + classes.json
+		// sous le contentRoot defini par config (paths.content). Si l'init
+		// echoue (fichier absent / parse error), GetCharacterCreationPresenter()
+		// retournera quand meme un pointer non-null mais GetRaces() sera
+		// vide -> l'ecran ImGui retombera sur son fallback "(liste des
+		// races indisponible)".
+		if (!m_characterCreationPresenter.Init(cfg))
+		{
+			LOG_WARN(Core, "[AuthUiPresenter] CharacterCreationPresenter.Init FAIL -- ecran creation perso n'aura pas la liste des races");
+		}
+
 		m_initialized = true;
 		LOG_INFO(Core, "[AuthUiPresenter] Init OK (master host from client.master_host ou client.master_tcp_host / client.master_port, locale={})", m_localization.GetCurrentLocale());
 		return true;
@@ -1278,8 +1314,33 @@ namespace engine::client
 		SaveRememberPreference();
 		m_password.clear();
 		m_localization.Shutdown();
+		// Sous-projet C MVP (Task 12) — Libere les races/classes charges
+		// dans Init. Idempotent ; suit la symetrie Init/Shutdown du presenter
+		// pour pouvoir reinitialiser AuthUi sans fuite de RaceDefinition.
+		m_characterCreationPresenter.Shutdown();
+		m_engineForRaceLookup = nullptr;
 		m_initialized = false;
 		LOG_INFO(Core, "[AuthUiPresenter] Destroyed");
+	}
+
+	/// Sous-projet C MVP (Task 12) — Retourne l'adresse du presenter
+	/// charge dans \c Init. Toujours non-null tant que l'objet AuthUi
+	/// est en vie (membre par valeur). Le caller doit verifier
+	/// \c GetRaces().empty() pour gerer le cas "Init a rate / fichier
+	/// races.json absent".
+	const engine::client::CharacterCreationPresenter* AuthUiPresenter::GetCharacterCreationPresenter() const
+	{
+		return &m_characterCreationPresenter;
+	}
+
+	/// Sous-projet C MVP (Task 12) — Delegue le lookup race_str ->
+	/// SkinnedMesh* a \c Engine::GetRaceMesh (qui implemente le fallback
+	/// humains). Retourne nullptr si Engine n'est pas branche (cas test
+	/// unitaire sans Engine ou boot rate avant SetEngineForRaceMeshLookup).
+	engine::render::skinned::SkinnedMesh* AuthUiPresenter::GetRaceMeshForId(const std::string& raceId)
+	{
+		if (m_engineForRaceLookup == nullptr) return nullptr;
+		return m_engineForRaceLookup->GetRaceMesh(raceId);
 	}
 
 	void AuthUiPresenter::LoadRememberPreference()

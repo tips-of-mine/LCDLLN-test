@@ -7,6 +7,12 @@
 #include "src/shared/network/ServerListPayloads.h"
 #include "src/shared/platform/Input.h"
 #include "src/shared/platform/StableMutex.h"
+// Sous-projet C MVP (Task 12) — CharacterCreationPresenter est instancie
+// comme membre par valeur de AuthUiPresenter pour exposer la liste des
+// races au renderer ImGui (AuthImGuiCharacterCreate). Inclus en header
+// car member by-value (pas un unique_ptr). L'include est leger (juste
+// Config + CharacterPayloads que ce header inclut deja).
+#include "src/client/character_creation/CharacterCreationUi.h"
 
 #include <atomic>
 #include <chrono>
@@ -19,6 +25,20 @@
 #include <utility>
 #include <vector>
 
+namespace engine
+{
+	/// Sous-projet C MVP (Task 12) — forward declare pour GetRaceMeshForId
+	/// qui delegue a Engine::GetRaceMesh. Le ptr Engine est branche par
+	/// Engine::Init via SetEngineForRaceMeshLookup.
+	class Engine;
+}
+namespace engine::render::skinned
+{
+	/// Sous-projet C MVP (Task 12) — type de retour de GetRaceMeshForId.
+	/// Forward declare ; le caller (AuthImGuiCharacterCreate) inclut deja
+	/// le header complet pour appeler RacePreviewViewport::SetMesh.
+	struct SkinnedMesh;
+}
 namespace engine::platform
 {
 	class Window;
@@ -623,6 +643,29 @@ namespace engine::client
 		void ImGuiTermsDecline(engine::platform::Window& window);
 
 		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8 = "");
+
+		/// Sous-projet C MVP (Task 12) — Accesseur vers le presenter de
+		/// creation de personnage detenu par AuthUiPresenter. Permet a
+		/// AuthImGuiCharacterCreate d'iterer sur les races avec leur
+		/// meshPath (Task 1). Retourne nullptr si le presenter n'a pas
+		/// reussi a charger races.json (Init a rate).
+		const engine::client::CharacterCreationPresenter* GetCharacterCreationPresenter() const;
+
+		/// Sous-projet C MVP (Task 12) — Lookup race_str -> SkinnedMesh*
+		/// delegue a \c Engine::GetRaceMesh via le pointer branche par
+		/// SetEngineForRaceMeshLookup. AuthImGuiCharacterCreate l'utilise
+		/// pour notifier \c RacePreviewViewport::SetMesh quand l'utilisateur
+		/// change la race selectionnee dans le combo. Retourne nullptr si
+		/// Engine n'est pas branche (cas test unitaire / boot rate) ou si
+		/// meme la race fallback "humains" est absente de m_raceMeshes.
+		engine::render::skinned::SkinnedMesh* GetRaceMeshForId(const std::string& raceId);
+
+		/// Sous-projet C MVP (Task 12) — Branche le pointer Engine
+		/// utilise par \c GetRaceMeshForId. Appele une fois par
+		/// Engine::Init apres que m_raceMeshes a ete remplie. Non-owning ;
+		/// lifetime du Engine englobe celui du presenter (les deux sont
+		/// members de Engine).
+		void SetEngineForRaceMeshLookup(engine::Engine* engine) { m_engineForRaceLookup = engine; }
 		void ImGuiCancelCharacterCreateReturnToLogin();
 		/// Phase 2 — sélectionne le i-ème personnage de \ref m_characterList (mise en surbrillance, pas d'entrée dans le monde).
 		void ImGuiSelectCharacterEntry(int index);
@@ -1059,6 +1102,25 @@ namespace engine::client
 		/// le résultat (succès ou abandon).
 		std::atomic<bool> m_reconnectAsyncDone{ false };
 		bool m_reconnectAsyncSuccess = false;
+
+		// ---------------------------------------------------------------------
+		// Sous-projet C MVP (Task 12) — wiring vers Engine + presenter local.
+		// ---------------------------------------------------------------------
+
+		/// Presenter de creation de personnage charge en parallele dans
+		/// \c Init : sert uniquement a exposer la liste des races (avec
+		/// meshPath) au renderer ImGui via \c GetCharacterCreationPresenter.
+		/// Engine a son propre presenter local (scope du bloc skinned-pipeline)
+		/// qui sert juste a peupler m_raceMeshes au boot ; les deux parsings
+		/// de races.json restent independants. Plus tard, on pourra factoriser
+		/// en passant ce presenter directement a Engine (mais ca demande de
+		/// regler l'ordre d'init Engine vs AuthUi).
+		engine::client::CharacterCreationPresenter m_characterCreationPresenter;
+
+		/// Pointer non possede vers Engine, branche par \c SetEngineForRaceMeshLookup.
+		/// Utilise par \c GetRaceMeshForId pour resoudre race_str -> SkinnedMesh*
+		/// via \c Engine::GetRaceMesh (avec fallback humains).
+		engine::Engine* m_engineForRaceLookup = nullptr;
 	};
 
 }

@@ -84,6 +84,9 @@
 #include "src/world_editor/ui/TexturePreviewCache.h"
 #endif
 #include "src/world_editor/render/EditorViewportRenderTarget.h"
+// Sous-projet C MVP (Task 12) — viewport offscreen pour l'apercu race
+// dans l'ecran ImGui de creation de personnage.
+#include "src/client/render/race/RacePreviewViewport.h"
 
 struct GLFWwindow;
 
@@ -477,6 +480,15 @@ namespace engine
 		/// noire en PR 1 (rendu réel branché en PR 2 via passe FrameGraph
 		/// qui copie `SceneColor_LDR`).
 		engine::editor::world::EditorViewportRenderTarget m_editorViewportTarget;
+
+		/// Sous-projet C MVP (Task 12) — Viewport offscreen Vulkan dedie
+		/// a l'apercu 3D du mesh skinned d'une race dans l'ecran ImGui
+		/// AuthImGuiCharacterCreate. Init au boot apres ImGui_ImplVulkan_Init
+		/// (meme bloc que m_editorViewportTarget) puis passe au
+		/// AuthImGuiRenderer via SetRacePreview(). Shutdown avant le
+		/// EditorViewportRenderTarget pour respecter l'ordre LIFO de
+		/// liberation des descriptors ImGui (idem que m_editorViewportTarget).
+		engine::render::race::RacePreviewViewport m_racePreviewViewport;
 
 #if defined(_WIN32)
 		std::unique_ptr<engine::editor::TexturePreviewCache> m_texturePreviewCache;

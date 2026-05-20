@@ -5508,6 +5508,10 @@ namespace engine
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+			// Sous-projet C MVP (Task 12) — Detruit le viewport offscreen
+			// race AVANT m_editorViewportTarget (idem motif que celui-ci :
+			// ordre LIFO de liberation des descriptors ImGui).
+			m_racePreviewViewport.Shutdown(m_vkDeviceContext.GetDevice());
 			// M100.34 incrément 1 — détruit l'image offscreen viewport
 			// AVANT TexturePreviewCache (qui possède aussi des descriptors
 			// ImGui), pour respecter l'ordre LIFO de désallocation.
@@ -6026,12 +6030,43 @@ namespace engine
 						LOG_WARN(Render, "[Engine] EditorViewportRenderTarget init failed -- ScenePanel restera en mode placeholder");
 					}
 				}
+				// Sous-projet C MVP (Task 12) — Initialise le viewport
+				// offscreen 512x512 dedie a l'apercu race dans l'ecran
+				// ImGui AuthImGuiCharacterCreate. Doit etre fait apres
+				// ImGui_ImplVulkan_Init (couvert par m_worldEditorImGui->Init
+				// plus haut, qui appelle ImGui_ImplVulkan_Init dans tous les
+				// cas — meme en mode client/jeu, le contexte ImGui partage
+				// est utilise par AuthImGui). En cas d'echec, AuthImGui
+				// recevra nullptr -> l'ecran de creation perso retombera
+				// sur le fallback texte (cf. AuthImGuiCharacterCreate).
+				if (!m_racePreviewViewport.Init(
+					m_vkDeviceContext.GetDevice(),
+					m_vkDeviceContext.GetPhysicalDevice(),
+					m_vkDeviceContext.GetGraphicsQueue(),
+					m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+					/*width*/ 512u, /*height*/ 512u))
+				{
+					LOG_WARN(Render, "[Engine] RacePreviewViewport init failed -- ecran creation perso restera sans apercu 3D");
+				}
 				// Branche le DayNightCycle au panneau "Atmosphere" pour que l'utilisateur
 				// puisse regler time-of-day et timeScale en live depuis l'editeur monde.
 				m_worldEditorImGui->SetDayNightCycle(&m_dayNight);
 				m_worldEditorImGui->AttachPlatformWindow(m_window.GetNativeHandle(), m_window);
 				m_authImGui = std::make_unique<engine::render::AuthImGuiRenderer>();
 				m_authImGui->BindAuthUiBridge(&m_authUi, &m_cfg, &m_window);
+				// Sous-projet C MVP (Task 12) — passe le viewport offscreen
+				// race au renderer ImGui de l'ecran de creation perso. Le
+				// renderer accepte nullptr (IsValid() == false -> fallback
+				// texte) ; on transmet quand meme la reference pour que
+				// l'edit dynamique reste possible si on veut recreer le
+				// viewport apres un resize (pas le cas en MVP).
+				m_authImGui->SetRacePreview(&m_racePreviewViewport);
+				// Sous-projet C MVP (Task 12) — Donne au AuthUiPresenter une
+				// reference vers Engine pour la resolution race_str ->
+				// SkinnedMesh* (deleguee a Engine::GetRaceMesh) consommee
+				// par AuthImGuiCharacterCreate quand l'utilisateur change
+				// la race selectionnee dans le combo.
+				m_authUi.SetEngineForRaceMeshLookup(this);
 				// Phase 3.11.1 — partage du même contexte ImGui (NewFrame/Render gérés par m_worldEditorImGui).
 				m_chatImGui = std::make_unique<engine::render::ChatImGuiRenderer>();
 				m_chatImGui->BindChatUi(&m_chatUi, &m_cfg);

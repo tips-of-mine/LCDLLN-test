@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "raceId": "corrompus",
+  "frames": ["masculine", "feminine"],
+  "modules": {
+    "masculine": {
+      "bodyTypes":  ["base", "muscular"],
+      "faces":      ["face_01", "face_02", "face_03"],
+      "hair":       ["short_01", "medium_01", "long_01"],
+      "facialHair": ["none", "goatee"]
+    },
+    "feminine": {
+      "bodyTypes":  ["base", "athletic"],
+      "faces":      ["face_01", "face_02"],
+      "hair":       ["medium_01", "long_01"],
+      "facialHair": ["none"]
+    }
+  },
+  "racialFeatures": {
+    "corruption_marks": ["none", "veins", "spikes"]
+  }
+}

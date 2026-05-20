@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "raceId": "nains",
+  "frames": ["masculine", "feminine"],
+  "modules": {
+    "masculine": {
+      "bodyTypes":  ["base", "stout", "broad"],
+      "faces":      ["face_01", "face_02", "face_03"],
+      "hair":       ["short_01", "medium_01"],
+      "facialHair": ["beard_braided_long", "beard_braided_short", "beard_forked", "beard_full_massive", "beard_full_medium"]
+    },
+    "feminine": {
+      "bodyTypes":  ["base", "stout", "broad"],
+      "faces":      ["face_01", "face_02", "face_03"],
+      "hair":       ["short_01", "medium_01", "braided_01", "long_01"],
+      "facialHair": ["none"]
+    }
+  },
+  "racialFeatures": {}
+}

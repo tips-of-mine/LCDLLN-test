@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "raceId": "humains",
+  "frames": ["masculine", "feminine"],
+  "modules": {
+    "masculine": {
+      "bodyTypes":  ["base", "muscular", "lean"],
+      "faces":      ["face_01", "face_02", "face_03", "face_04", "face_05"],
+      "hair":       ["short_01", "short_02", "medium_01", "long_01", "bald"],
+      "facialHair": ["none", "beard_full", "goatee", "mustache"]
+    },
+    "feminine": {
+      "bodyTypes":  ["base", "athletic", "curvy"],
+      "faces":      ["face_01", "face_02", "face_03", "face_04", "face_05"],
+      "hair":       ["short_01", "medium_01", "long_01", "long_02", "braided_01", "ponytail_01"],
+      "facialHair": ["none"]
+    }
+  },
+  "racialFeatures": {}
+}

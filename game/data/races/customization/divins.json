@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "raceId": "divins",
+  "frames": ["masculine", "feminine"],
+  "modules": {
+    "masculine": {
+      "bodyTypes":  ["base", "muscular"],
+      "faces":      ["face_01", "face_02", "face_03"],
+      "hair":       ["short_01", "medium_01", "long_01"],
+      "facialHair": ["none", "beard_short"]
+    },
+    "feminine": {
+      "bodyTypes":  ["base", "athletic"],
+      "faces":      ["face_01", "face_02", "face_03"],
+      "hair":       ["medium_01", "long_01", "long_02"],
+      "facialHair": ["none"]
+    }
+  },
+  "racialFeatures": {
+    "halo": ["none", "ring", "radiant"]
+  }
+}

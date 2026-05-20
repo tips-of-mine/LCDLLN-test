@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "raceId": "elfes",
+  "frames": ["masculine", "feminine"],
+  "modules": {
+    "masculine": {
+      "bodyTypes":  ["base", "lean"],
+      "faces":      ["face_01", "face_02", "face_03"],
+      "hair":       ["long_01", "long_02", "braided_01"],
+      "facialHair": ["none", "beard_thin"]
+    },
+    "feminine": {
+      "bodyTypes":  ["base", "athletic"],
+      "faces":      ["face_01", "face_02", "face_03"],
+      "hair":       ["long_01", "long_02", "long_03", "braided_01"],
+      "facialHair": ["none"]
+    }
+  },
+  "racialFeatures": {
+    "ears": ["pointed_short", "pointed_medium", "pointed_long"]
+  }
+}

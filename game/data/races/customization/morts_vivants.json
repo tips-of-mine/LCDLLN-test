@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "raceId": "morts_vivants",
+  "frames": ["masculine", "feminine"],
+  "modules": {
+    "masculine": {
+      "bodyTypes":  ["base", "gaunt"],
+      "faces":      ["face_01", "face_02", "face_03"],
+      "hair":       ["short_01", "long_01", "bald"],
+      "facialHair": ["none"]
+    },
+    "feminine": {
+      "bodyTypes":  ["base", "gaunt"],
+      "faces":      ["face_01", "face_02", "face_03"],
+      "hair":       ["short_01", "long_01", "bald"],
+      "facialHair": ["none"]
+    }
+  },
+  "racialFeatures": {
+    "exposed_bone": ["none", "jaw", "ribs"]
+  }
+}

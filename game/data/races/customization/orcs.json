@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "raceId": "orcs",
+  "frames": ["masculine", "feminine"],
+  "modules": {
+    "masculine": {
+      "bodyTypes":  ["base", "massive", "hulking"],
+      "faces":      ["face_01", "face_02", "face_03"],
+      "hair":       ["mohawk_01", "topknot_01", "braids_01", "shaved"],
+      "facialHair": ["none", "beard_braided"]
+    },
+    "feminine": {
+      "bodyTypes":  ["base", "strong"],
+      "faces":      ["face_01", "face_02"],
+      "hair":       ["long_01", "braids_01"],
+      "facialHair": ["none"]
+    }
+  },
+  "racialFeatures": {
+    "tusks": ["small", "medium", "large", "broken"]
+  }
+}

@@ -30,6 +30,7 @@
 #include "src/masterd/handlers/terms/TermsRepository.h"
 #include "src/masterd/handlers/terms/TermsHandler.h"
 #include "src/masterd/handlers/character/CharacterCreateHandler.h"
+#include "src/shared/Character/CustomizationCatalog.h"
 #include "src/masterd/handlers/character/CharacterListHandler.h"
 #include "src/masterd/handlers/character/CharacterDeleteHandler.h"
 #include "src/masterd/handlers/character/CharacterSavePositionHandler.h"
@@ -334,12 +335,20 @@ int main(int argc, char** argv)
 	termsHandler.SetTermsRepository(&termsRepository);
 	termsHandler.SetSmtpConfig(&smtpConfig);
 
+	engine::character::CustomizationCatalog customizationCatalog;
+	{
+		const std::string racesDir = config.GetString("character_creation.races_dir", "game/data/races");
+		if (!customizationCatalog.LoadFromDir(racesDir))
+			LOG_WARN(Auth, "[main] customization catalog failed to load from {} (creation will reject all customization)", racesDir);
+	}
+
 	engine::server::CharacterCreateHandler characterCreateHandler;
 	characterCreateHandler.SetServer(&server);
 	characterCreateHandler.SetSessionManager(&sessionManager);
 	characterCreateHandler.SetConnectionSessionMap(&connSessionMap);
 	characterCreateHandler.SetConnectionPool(&dbPool);
 	characterCreateHandler.SetConfig(&config);
+	characterCreateHandler.SetCustomizationCatalog(&customizationCatalog);
 
 	engine::server::CharacterListHandler characterListHandler;
 	characterListHandler.SetServer(&server);

@@ -59,11 +59,16 @@ namespace engine::server
 		MYSQL* mysql = reinterpret_cast<MYSQL*>(mysqlPtr);
 		char escapedName[128]{};
 		mysql_real_escape_string(mysql, escapedName, std::string(name).c_str(), static_cast<unsigned long>(name.size()));
+		// Filtre 'deleted_at IS NULL' : sans cela, un nom de perso
+		// soft-delete reste reserve a vie et empeche l'utilisateur de
+		// recreer un perso avec le meme nom (meme s'il l'a lui-meme
+		// supprime). MVP : on libere le nom des la suppression. Une
+		// future evolution pourra ajouter un delai de carence anti-squat.
 		std::string sql = "SELECT id FROM characters WHERE server_id = ";
 		sql += std::to_string(serverId);
 		sql += " AND LOWER(name) = LOWER('";
 		sql += escapedName;
-		sql += "') LIMIT 1";
+		sql += "') AND deleted_at IS NULL LIMIT 1";
 		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
 		if (!res)
 			return false;

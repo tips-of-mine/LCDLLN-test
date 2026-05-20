@@ -23,6 +23,11 @@ namespace engine::client
 		std::vector<std::string> skinColorHex;     ///< Available skin colour hex strings.
 		std::vector<std::string> hairColorHex;     ///< Available hair colour hex strings.
 		std::vector<std::string> eyeColorHex;      ///< Available eye colour hex strings.
+		/// Sous-projet C MVP — Chemin relatif (depuis `paths.content`) vers le .glb
+		/// du mesh skinned de cette race. Vide si la race n'a pas de mesh assigné
+		/// (cas hors-MVP : elfes, morts_vivants, corrompus, divins, démons).
+		/// `Engine` fallback sur le mesh "humains" pour ces races à EnterWorld.
+		std::string              meshPath;
 	};
 
 	/// One class entry loaded from game/data/races/classes.json (M39.1).

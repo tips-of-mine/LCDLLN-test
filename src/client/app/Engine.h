@@ -84,6 +84,9 @@
 #include "src/world_editor/ui/TexturePreviewCache.h"
 #endif
 #include "src/world_editor/render/EditorViewportRenderTarget.h"
+// Sous-projet C MVP (Task 12) — viewport offscreen pour l'apercu race
+// dans l'ecran ImGui de creation de personnage.
+#include "src/client/render/race/RacePreviewViewport.h"
 
 struct GLFWwindow;
 
@@ -127,6 +130,7 @@ namespace engine::editor::world
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace engine
@@ -188,6 +192,14 @@ namespace engine
 		/// M07.2: TAA history ping-pong. next = write target this frame, prev = read (previous frame).
 		engine::render::ResourceId GetTaaHistoryPrevId() const;
 		engine::render::ResourceId GetTaaHistoryNextId() const;
+
+		/// Sous-projet C MVP — Retourne le mesh skinned pour la race `raceId`,
+		/// ou le mesh "humains" si la race est inconnue / pas chargee. Retourne
+		/// nullptr si meme "humains" est absent (cas pathologique : boot rate).
+		/// Utilise par EnterWorld pour resoudre le mesh du perso joueur, et
+		/// par RacePreviewViewport pour l'apercu race dans l'ecran de
+		/// creation de personnage.
+		engine::render::skinned::SkinnedMesh* GetRaceMesh(const std::string& raceId);
 
 	private:
 		void BeginFrame();
@@ -469,6 +481,15 @@ namespace engine
 		/// qui copie `SceneColor_LDR`).
 		engine::editor::world::EditorViewportRenderTarget m_editorViewportTarget;
 
+		/// Sous-projet C MVP (Task 12) — Viewport offscreen Vulkan dedie
+		/// a l'apercu 3D du mesh skinned d'une race dans l'ecran ImGui
+		/// AuthImGuiCharacterCreate. Init au boot apres ImGui_ImplVulkan_Init
+		/// (meme bloc que m_editorViewportTarget) puis passe au
+		/// AuthImGuiRenderer via SetRacePreview(). Shutdown avant le
+		/// EditorViewportRenderTarget pour respecter l'ordre LIFO de
+		/// liberation des descriptors ImGui (idem que m_editorViewportTarget).
+		engine::render::race::RacePreviewViewport m_racePreviewViewport;
+
 #if defined(_WIN32)
 		std::unique_ptr<engine::editor::TexturePreviewCache> m_texturePreviewCache;
 
@@ -492,7 +513,31 @@ namespace engine
 		///   - Destroy: au Shutdown, juste avant `m_pipeline->Destroy` (les
 		///              ressources Vulkan dependent du device, pas du pipeline).
 		engine::render::skinned::SkinnedRenderer                  m_skinnedRenderer;
-		std::optional<engine::render::skinned::SkinnedMesh>       m_playerSkinnedMesh;
+		/// Sous-projet C MVP — Pointeur vers le mesh skinned de la race du
+		/// perso courant. Pointe par defaut vers m_raceMeshes["humains"] au
+		/// boot (si le mesh humain a ete charge avec succes ; null sinon, et
+		/// l'avatar fallback sur le cube placeholder via m_skinnedAvatarReady
+		/// = false). Sera reassigne par EnterWorld (Task 8) depuis le race_str
+		/// du payload — cf. Engine::GetRaceMesh (Task 7) qui resout race_str
+		/// -> SkinnedMesh* via m_raceMeshes avec fallback humains.
+		engine::render::skinned::SkinnedMesh*                     m_currentSkinnedMesh = nullptr;
+		/// Sous-projet C MVP — Map race_str -> mesh skinned + clips charges
+		/// au boot. Remplit a partir d'un CharacterCreationPresenter local
+		/// (instancie dans le bloc skinned-pipeline d'Engine::Init, Init()
+		/// parse races.json synchronement, lifetime limitee au bloc). Engine
+		/// n'a pas (encore) de membre presenter permanent ; le parsing est
+		/// donc fait 2x au worst-case (ici au boot + une fois plus tard via
+		/// l'AuthUI quand l'utilisateur ouvre l'ecran de creation perso).
+		/// Seules les races avec meshPath non vide sont chargees ; les
+		/// autres sont silencieusement skip (l'utilisateur ne pourra pas
+		/// creer un perso avec cette race tant que le mesh n'est pas defini).
+		///
+		/// Cycle de vie : peuple au boot dans le bloc skinned-pipeline, libere
+		/// au Shutdown (boucle sur la map -> SkinnedMesh::Destroy avant
+		/// m_skinnedRenderer.Destroy). Les SkinnedMesh sont stockes par valeur :
+		/// les pointeurs `m_currentSkinnedMesh` restent stables tant que la map
+		/// n'est pas modifiee apres le boot (pas de rehash apres le remplissage).
+		std::unordered_map<std::string, engine::render::skinned::SkinnedMesh> m_raceMeshes;
 		std::chrono::steady_clock::time_point                     m_playerAnimStartTime;
 		/// True une fois SkinnedRenderer::Init OK + SkinnedMeshLoader::Load OK.
 		/// Sert de gate per-frame : si false, on dessine le cube placeholder.

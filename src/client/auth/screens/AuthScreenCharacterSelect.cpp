@@ -62,6 +62,11 @@ namespace engine::client
 		m_pendingEnterWorld.spawnZ        = chosen.spawn_z;
 		m_pendingEnterWorld.spawnYawDeg   = chosen.spawn_yaw_deg;
 		m_pendingEnterWorld.spawnPitchDeg = chosen.spawn_pitch_deg;
+		// Sous-projet C MVP — propage race_str (DB, migration 0033) vers
+		// EnterWorldCommand pour que l'engine resolve le mesh skinned de la
+		// race via Engine::GetRaceMesh(). Vide pour les persos pre-migration
+		// (Engine retombera sur le fallback humains).
+		m_pendingEnterWorld.raceId        = chosen.race_str;
 		const bool nonZero = (chosen.spawn_x != 0.0f) || (chosen.spawn_y != 0.0f)
 			|| (chosen.spawn_z != 0.0f) || (chosen.spawn_yaw_deg != 0.0f)
 			|| (chosen.spawn_pitch_deg != 0.0f);

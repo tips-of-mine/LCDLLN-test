@@ -465,13 +465,14 @@ namespace engine::client
 			def.skinColorHex = ReadStringArray(raceCfg, pfx + ".defaultSkinColors");
 			def.hairColorHex = ReadStringArray(raceCfg, pfx + ".defaultHairColors");
 			def.eyeColorHex  = ReadStringArray(raceCfg, pfx + ".defaultEyeColors");
+			def.meshPath     = raceCfg.GetString(pfx + ".meshPath", "");
 
 			if (!def.id.empty())
 			{
 				m_races.push_back(std::move(def));
-				LOG_INFO(Core, "[CharacterCreation] Loaded race '{}' (racials={} skinColors={})",
+				LOG_INFO(Core, "[CharacterCreation] Loaded race '{}' (racials={} skinColors={} meshPath='{}')",
 				         m_races.back().id, m_races.back().racials.size(),
-				         m_races.back().skinColorHex.size());
+				         m_races.back().skinColorHex.size(), m_races.back().meshPath);
 			}
 			++i;
 		}

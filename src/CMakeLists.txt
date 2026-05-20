@@ -706,6 +706,16 @@ elseif(UNIX)
   lcdlln_add_simple_test(terrain_collider_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/TerrainColliderTests.cpp)
 
+  # Sous-projet C MVP : RaceDefinition.meshPath parsing.
+  # Verifie que les 3 races MVP (humains, nains, orcs) exposent un meshPath
+  # non vide depuis races.json, et que les races hors-MVP exposent une
+  # string vide (fallback handle par Engine::GetRaceMesh a EnterWorld).
+  # Note : CharacterCreationUi.cpp est deja linke via engine_core (cf.
+  # CMakeLists racine ligne 241), donc ne pas le re-ajouter ici sous peine
+  # d'erreur "multiple definition" au link.
+  lcdlln_add_simple_test(race_definition_tests
+    ${CMAKE_SOURCE_DIR}/src/client/character_creation/tests/RaceDefinitionTests.cpp)
+
   # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
   lcdlln_add_simple_test(vmap_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/vmap/VMapManagerTests.cpp

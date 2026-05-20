@@ -16,6 +16,12 @@ namespace engine::platform
 {
 	class Window;
 }
+namespace engine::render::race
+{
+	/// Sous-projet C MVP (Task 12) — declare forward pour eviter d'inclure
+	/// le header complet (qui tire vulkan_core.h) ici.
+	class RacePreviewViewport;
+}
 
 namespace engine::render
 {
@@ -36,6 +42,14 @@ namespace engine::render
 		/// Pointeurs non possédés : définis une fois depuis \c Engine après init ImGui.
 		void BindAuthUiBridge(engine::client::AuthUiPresenter* presenter, const engine::core::Config* cfg,
 			engine::platform::Window* window);
+
+		/// Sous-projet C MVP (Task 12) — Branche le viewport offscreen
+		/// detenu par \c Engine pour l'apercu race dans l'ecran de
+		/// creation de personnage (\c AuthImGuiCharacterCreate). Pointer
+		/// non possede ; lifetime = Engine. Doit etre appele apres
+		/// \c RacePreviewViewport::Init et avant la 1ere frame qui rend
+		/// l'ecran de creation de perso.
+		void SetRacePreview(engine::render::race::RacePreviewViewport* preview) { m_racePreview = preview; }
 
 	private:
 		using VisualState = engine::client::AuthUiPresenter::VisualState;
@@ -113,6 +127,19 @@ namespace engine::render
 		engine::client::AuthUiPresenter* m_authPresenter = nullptr;
 		const engine::core::Config* m_authCfg = nullptr;
 		engine::platform::Window* m_authWindow = nullptr;
+		/// Sous-projet C MVP (Task 12) — Viewport offscreen pour
+		/// l'apercu race dans l'ecran de creation de perso. nullptr si
+		/// Engine n'a pas (ou n'a pas reussi) a initialiser le viewport.
+		/// Pointer non possede ; lifetime = Engine.
+		engine::render::race::RacePreviewViewport* m_racePreview = nullptr;
+		/// Sous-projet C MVP (Task 12) — Flag : "le mesh courant
+		/// du m_racePreview correspond a la race m_charRaceIdx". Mis a
+		/// false par defaut (Init du viewport laisse m_currentMesh
+		/// nullptr) : la 1ere frame de l'ecran de creation force un
+		/// SetMesh, puis flippe a true. Reset a false par AuthUi quand
+		/// l'utilisateur quitte / re-entre l'ecran (TODO si le repop
+		/// devient un cas reel ; pour MVP la session reste lineaire).
+		bool m_racePreviewInitialMeshSent = false;
 
 		void RenderLangScreen(const RenderModel& rm, float vpW, float vpH);
 		void RenderLoginScreen(const VisualState& vs, const RenderModel& rm, float vpW, float vpH);

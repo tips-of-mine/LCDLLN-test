@@ -1,7 +1,12 @@
 #include "src/client/render/race/RacePreviewViewport.h"
 
+#include "src/client/render/skinned/AnimationSampler.h"
+#include "src/client/render/skinned/SkinnedMesh.h"
 #include "src/shared/core/Log.h"
 
+#include <algorithm>
+#include <chrono>
+#include <cmath>
 #include <functional>
 #include <vulkan/vulkan.h>
 
@@ -351,38 +356,125 @@ namespace engine::render::race
 		m_height       = 0;
 		m_currentMesh  = nullptr;
 		m_orbitYawRad  = 0.0f;
+		m_localBoneMatrices.clear();
+		m_globalBoneMatrices.clear();
+		m_finalBoneMatrices.clear();
+		m_sampleStartSec = 0.0f;
 	}
 
 	void RacePreviewViewport::SetMesh(engine::render::skinned::SkinnedMesh* mesh)
 	{
 		// Pointer non-owning : on accepte nullptr (Render fera juste un
-		// clear noir dans ce cas).
+		// clear noir dans ce cas). On reinitialise l'etat de sampling pour
+		// eviter de melanger les matrices echantillonnees du mesh precedent
+		// avec le squelette du nouveau mesh (tailles potentiellement
+		// differentes). m_sampleStartSec est remis a 0 pour que Tick
+		// recalibre nowSec au prochain Tick avec mesh dispo : l'anim
+		// recommence proprement a t=0.
 		m_currentMesh = mesh;
+		m_localBoneMatrices.clear();
+		m_globalBoneMatrices.clear();
+		m_finalBoneMatrices.clear();
+		m_sampleStartSec = 0.0f;
 	}
 
 	void RacePreviewViewport::Tick(float dt)
 	{
 		// Accumule l'angle orbit, puis wrap mod 2pi pour eviter
-		// l'accumulation flottante sur de longues sessions. La valeur
-		// n'est pas encore utilisee en Task 9 (Render fait juste un
-		// clear noir) ; sera consommee par Render en Task 11.
+		// l'accumulation flottante sur de longues sessions.
 		constexpr float kDegToRad = 3.14159265358979323846f / 180.0f;
 		m_orbitYawRad += kOrbitDegPerSec * dt * kDegToRad;
 		while (m_orbitYawRad >= k2Pi) m_orbitYawRad -= k2Pi;
 		while (m_orbitYawRad <  0.0f) m_orbitYawRad += k2Pi;
+
+		// Pas de mesh attache ou aucun clip d'anim : on vide les buffers
+		// de matrices pour signaler "rien a rendre" a Render (qui choisira
+		// alors le clear noir au lieu du tint bleu sombre).
+		if (m_currentMesh == nullptr || m_currentMesh->clips.empty())
+		{
+			m_localBoneMatrices.clear();
+			m_globalBoneMatrices.clear();
+			m_finalBoneMatrices.clear();
+			return;
+		}
+
+		// Cherche le clip "Idle" (Mixamo : pose statique en bouclage). Si
+		// absent, fallback sur le premier clip disponible (probablement
+		// Walk ou Run) pour conserver un retour visuel anime meme si la
+		// race n'a pas exporte d'Idle.
+		const engine::render::skinned::AnimationClip* idleClip = nullptr;
+		for (const auto& c : m_currentMesh->clips)
+		{
+			if (c.name == "Idle")
+			{
+				idleClip = &c;
+				break;
+			}
+		}
+		if (idleClip == nullptr) idleClip = &m_currentMesh->clips.front();
+
+		// Clip vide / mal forme : on vide les buffers pour eviter une
+		// division par 0 dans fmod et signaler "pas d'anim" a Render.
+		if (idleClip->duration <= 0.0f)
+		{
+			m_localBoneMatrices.clear();
+			m_globalBoneMatrices.clear();
+			m_finalBoneMatrices.clear();
+			return;
+		}
+
+		// Init paresseuse du temps de reference : on capture nowSec au 1er
+		// Tick ou un mesh est dispo, pour que l'anim demarre a t=0 plutot
+		// que de "sauter" au milieu du clip si l'utilisateur entre dans
+		// l'ecran de creation longtemps apres le boot.
+		const float nowSec = static_cast<float>(
+			std::chrono::duration<double>(
+				std::chrono::steady_clock::now().time_since_epoch()).count());
+		if (m_sampleStartSec == 0.0f)
+		{
+			m_sampleStartSec = nowSec;
+		}
+		const float elapsed = nowSec - m_sampleStartSec;
+		const float t       = std::fmod(std::max(0.0f, elapsed), idleClip->duration);
+
+		// Pipeline en trois etapes (cf. AnimationSampler.h) :
+		//   1) Sample TRS locales depuis les keyframes.
+		//   2) Propage la hierarchie pour obtenir les globales.
+		//   3) Multiplie par inverseBindGlobal pour les matrices finales
+		//      consommables par un shader de skinning.
+		// Task 11 MVP n'envoie pas encore ces matrices au GPU (cf. Render),
+		// mais le pipeline est en place pour le futur refactor RT-agnostic.
+		m_localBoneMatrices = engine::render::skinned::AnimationSampler::SamplePose(
+			m_currentMesh->skeleton, *idleClip, t);
+		m_globalBoneMatrices = engine::render::skinned::AnimationSampler::ComputeGlobalMatrices(
+			m_currentMesh->skeleton, m_localBoneMatrices);
+		m_finalBoneMatrices = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
+			m_currentMesh->skeleton, m_globalBoneMatrices);
+
+		(void)dt;  // dt deja consomme par l'accumulation d'angle orbit ci-dessus.
 	}
 
 	void RacePreviewViewport::Render(VkCommandBuffer cmdBuf)
 	{
-		// Task 9 skeleton : clear noir uniquement. Pas de rendu skinned
-		// — Task 11 ajoutera un mini-pipeline graphique + camera orbit
-		// (utilisant m_orbitYawRad accumule par Tick) + sampling Idle.
+		// Task 11 MVP : pas de rendu mesh 3D. SkinnedRenderer::Record est
+		// ecrit pour ecrire dans le framegraph principal (SceneColor_LDR +
+		// GBuffer + depth), pas dans un VkImage standalone. Un refactor
+		// RT-agnostic est renvoye au sous-projet C.2.
+		//
+		// On garde la structure Task 9 (transitions de layout +
+		// vkCmdClearColorImage), mais on change la couleur du clear pour
+		// donner un feedback visuel :
+		//   - pas de mesh ou pas d'anim samplee : clear noir (0,0,0,1).
+		//   - mesh attache + anim OK : bleu sombre (0.1, 0.1, 0.15, 1).
+		// L'overlay ImGui::Text("Race : <name>") en Task 12 affichera le
+		// nom de la race par-dessus pour compenser visuellement l'absence
+		// de rendu 3D reel.
 		//
 		// Sequence : SHADER_READ_ONLY_OPTIMAL → TRANSFER_DST_OPTIMAL,
 		// vkCmdClearColorImage, TRANSFER_DST_OPTIMAL → SHADER_READ_ONLY_OPTIMAL.
-		// On laisse l'image en SHADER_READ_ONLY_OPTIMAL a la sortie
-		// pour que ImGui::Image puisse la sampler dans la passe suivante.
-		if (m_image == VK_NULL_HANDLE) return;
+		// On laisse l'image en SHADER_READ_ONLY_OPTIMAL a la sortie pour
+		// que ImGui::Image puisse la sampler dans la passe suivante.
+		if (!IsValid()) return;
 
 		// Barrier 1 : SHADER_READ_ONLY_OPTIMAL → TRANSFER_DST_OPTIMAL.
 		{
@@ -402,13 +494,24 @@ namespace engine::render::race
 				0, 0, nullptr, 0, nullptr, 1, &b);
 		}
 
-		// Clear color : noir opaque. Task 11 remplacera ce clear par
-		// un rendu skinned (vkCmdBeginRendering + bind pipeline + draw).
+		// Selection conditionnelle de la couleur du clear : feedback visuel
+		// "mesh attache" vs "rien a afficher". Sans rendu 3D, c'est le seul
+		// indice perceptible par l'utilisateur.
 		VkClearColorValue clearColor{};
-		clearColor.float32[0] = 0.0f;
-		clearColor.float32[1] = 0.0f;
-		clearColor.float32[2] = 0.0f;
-		clearColor.float32[3] = 1.0f;
+		if (m_currentMesh != nullptr && !m_finalBoneMatrices.empty())
+		{
+			clearColor.float32[0] = 0.10f;
+			clearColor.float32[1] = 0.10f;
+			clearColor.float32[2] = 0.15f;
+			clearColor.float32[3] = 1.00f;
+		}
+		else
+		{
+			clearColor.float32[0] = 0.0f;
+			clearColor.float32[1] = 0.0f;
+			clearColor.float32[2] = 0.0f;
+			clearColor.float32[3] = 1.0f;
+		}
 		VkImageSubresourceRange range{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 		vkCmdClearColorImage(cmdBuf, m_image,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -431,9 +534,5 @@ namespace engine::render::race
 				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 				0, 0, nullptr, 0, nullptr, 1, &b);
 		}
-
-		// m_currentMesh est volontairement non utilise en Task 9 — le
-		// rendu skinned arrive en Task 11.
-		(void)m_currentMesh;
 	}
 }

@@ -1,6 +1,9 @@
 #pragma once
 
+#include "src/shared/math/Math.h"
+
 #include <cstdint>
+#include <vector>
 #include <vulkan/vulkan_core.h>
 
 namespace engine::render::skinned
@@ -137,5 +140,22 @@ namespace engine::render::race
 		/// Angle de rotation orbit accumule depuis Init, en radians.
 		/// Wrap mod 2pi dans Tick pour eviter l'accumulation flottante.
 		float          m_orbitYawRad    = 0.0f;
+
+		/// Anim sampling state mis a jour par Tick, consomme par Render.
+		/// m_localBoneMatrices : matrices TRS locales echantillonnees du clip Idle.
+		/// m_globalBoneMatrices : matrices globales (parent * local) propagees par
+		///   la hierarchie du squelette.
+		/// m_finalBoneMatrices : matrices finales (global * inverseBindGlobal) pretes
+		///   a etre uploadees a un shader de skinning. Vides si pas de mesh / clip.
+		std::vector<engine::math::Mat4> m_localBoneMatrices;
+		std::vector<engine::math::Mat4> m_globalBoneMatrices;
+		std::vector<engine::math::Mat4> m_finalBoneMatrices;
+
+		/// Timestamp (steady_clock seconds) du 1er Tick ou un mesh etait
+		/// disponible. Sert d'origine au calcul de l'instant d'echantillonnage
+		/// `elapsed = nowSec - m_sampleStartSec`. Initialise paresseusement
+		/// dans Tick pour eviter qu'un long delai entre Init et l'apparition
+		/// du mesh fasse "sauter" l'anim au milieu du clip.
+		float          m_sampleStartSec = 0.0f;
 	};
 }

@@ -584,6 +584,7 @@ add_library(engine_core
   src/shared/network/AuthRegisterPayloads.cpp
   src/shared/network/CharacterPayloads.cpp
   src/shared/Character/Json.cpp
+  src/shared/Character/CustomizationJson.cpp
   src/shared/network/ChatPayloads.cpp
   src/shared/network/DungeonPayloads.cpp   # M100.43 — opcodes 197/198, réservés (handler M100.44)
   src/shared/network/IgnoreListPayloads.cpp
@@ -802,6 +803,10 @@ add_test(NAME protocol_v1_tests COMMAND protocol_v1_tests)
 add_executable(json_tests src/shared/Character/JsonTests.cpp)
 target_link_libraries(json_tests PRIVATE engine_core)
 add_test(NAME json_tests COMMAND json_tests)
+
+add_executable(customization_json_tests src/shared/Character/CustomizationJsonTests.cpp)
+target_link_libraries(customization_json_tests PRIVATE engine_core)
+add_test(NAME customization_json_tests COMMAND customization_json_tests)
 
 # Phase 1: CHARACTER_LIST request/response payload round-trip tests
 add_executable(character_list_payloads_tests src/shared/network/CharacterListPayloadsTests.cpp)

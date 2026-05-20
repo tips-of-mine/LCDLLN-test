@@ -586,6 +586,7 @@ add_library(engine_core
   src/shared/Character/Json.cpp
   src/shared/Character/CustomizationJson.cpp
   src/shared/Character/CustomizationCatalog.cpp
+  src/shared/Character/CustomizationValidator.cpp
   src/shared/network/ChatPayloads.cpp
   src/shared/network/DungeonPayloads.cpp   # M100.43 — opcodes 197/198, réservés (handler M100.44)
   src/shared/network/IgnoreListPayloads.cpp
@@ -813,6 +814,10 @@ add_executable(customization_catalog_tests src/shared/Character/CustomizationCat
 target_link_libraries(customization_catalog_tests PRIVATE engine_core)
 target_compile_definitions(customization_catalog_tests PRIVATE LCDLLN_DATA_DIR="${CMAKE_SOURCE_DIR}/game/data")
 add_test(NAME customization_catalog_tests COMMAND customization_catalog_tests)
+
+add_executable(customization_validator_tests src/shared/Character/CustomizationValidatorTests.cpp)
+target_link_libraries(customization_validator_tests PRIVATE engine_core)
+add_test(NAME customization_validator_tests COMMAND customization_validator_tests)
 
 # Phase 1: CHARACTER_LIST request/response payload round-trip tests
 add_executable(character_list_payloads_tests src/shared/network/CharacterListPayloadsTests.cpp)

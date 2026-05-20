@@ -52,6 +52,7 @@
 #include "src/client/render/ShaderCompiler.h"
 #include "src/client/render/terrain/HeightmapLoader.h"
 #include "src/client/render/terrain/TerrainEditingTools.h"
+#include "src/client/character_creation/CharacterCreationUi.h"
 #include "src/shared/network/ServerProtocol.h"
 
 #include <GLFW/glfw3.h>
@@ -3927,102 +3928,117 @@ namespace engine
 													/*maxBonesPerSkeleton*/ 256u);
 												if (skinnedInitOk)
 												{
+													// Sous-projet C MVP — Charge les 3 races MVP (humains, nains, orc)
+													// dans m_raceMeshes. Chaque race partage le meme jeu de 7 clips
+													// d'animation (Idle/StartWalking/WalkBack/Run/Jump/Fall/Land)
+													// charges en animation-only depuis y_bot_* et retargetes par nom
+													// de bone sur le squelette de la race.
+													//
+													// Lookup du meshPath via un CharacterCreationPresenter local
+													// (instanciation legere : juste un parse de races.json, pas de
+													// pipeline GPU). Cela evite d'ajouter une dependance permanente
+													// dans Engine entre Engine et CharacterCreationPresenter.
 													const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
-													const std::string yBotPath = contentRoot + "/models/avatars/y_bot/y_bot.glb";
-													auto loaded = engine::render::skinned::SkinnedMeshLoader::Load(
-														m_vkDeviceContext.GetDevice(),
-														m_vkDeviceContext.GetPhysicalDevice(),
-														yBotPath);
-													if (loaded)
-													{
-														m_currentSkinnedMesh = std::move(*loaded);
+													constexpr const char* kMvpRaces[] = { "humains", "nains", "orc" };
+
+													engine::client::CharacterCreationPresenter racesPresenter;
+													racesPresenter.Init(m_cfg);
+
+													auto loadOneRace = [&](const std::string& raceId, const std::string& meshPath) -> bool {
+														const std::string fullMeshPath = contentRoot + "/" + meshPath;
+														auto loaded = engine::render::skinned::SkinnedMeshLoader::Load(
+															m_vkDeviceContext.GetDevice(),
+															m_vkDeviceContext.GetPhysicalDevice(),
+															fullMeshPath);
+														if (!loaded) {
+															LOG_WARN(Render, "[Engine] Race '{}' : mesh load FAIL '{}'", raceId, fullMeshPath);
+															return false;
+														}
+														// Renomme le clip de marche embarque dans le mesh (Mixamo
+														// exporte tous ses clips sous le nom "mixamo.com") en "Walk".
+														for (auto& c : loaded->clips) {
+															if (c.name == "mixamo.com") { c.name = "Walk"; break; }
+														}
+														// Retarget les clips d'anim partages sur le squelette de cette
+														// race. Convention herite de B.1 (LoadClipsAnimOnly matche par
+														// nom de bone mixamorig:*). Si la race a un squelette
+														// non-Mixamo, ces calls renvoient des clips vides -> animation
+														// identite (la state machine fallback gracieusement).
+														auto loadAnimOnly = [&](const std::string& path, const char* renameTo) -> bool {
+															auto clipsLoaded = engine::render::skinned::SkinnedMeshLoader::LoadClipsAnimOnly(
+																path, loaded->skeleton);
+															for (auto& c : clipsLoaded) {
+																if (c.duration > 0.0f && c.name == "mixamo.com") {
+																	c.name = renameTo;
+																	loaded->clips.push_back(std::move(c));
+																	return true;
+																}
+															}
+															return false;
+														};
+														const std::string idlePath      = contentRoot + "/models/avatars/y_bot_idle/y_bot_idle.glb";
+														const std::string startWalkPath = contentRoot + "/models/avatars/y_bot_start_walking/y_bot_start_walking.glb";
+														const std::string walkBackPath  = contentRoot + "/models/avatars/y_bot_walk_back/y_bot_walk_back.glb";
+														const std::string runPath       = contentRoot + "/models/avatars/y_bot_run/y_bot_run.glb";
+														const std::string jumpPath      = contentRoot + "/models/avatars/y_bot_jump/y_bot_jump.glb";
+														const std::string fallPath      = contentRoot + "/models/avatars/y_bot_fall/y_bot_fall.glb";
+														const std::string landPath      = contentRoot + "/models/avatars/y_bot_land/y_bot_land.glb";
+														loadAnimOnly(idlePath, "Idle");
+														loadAnimOnly(startWalkPath, "StartWalking");
+														loadAnimOnly(walkBackPath, "WalkBack");
+														loadAnimOnly(runPath, "Run");
+														loadAnimOnly(jumpPath, "Jump");
+														loadAnimOnly(fallPath, "Fall");
+														loadAnimOnly(landPath, "Land");
+														LOG_INFO(Render, "[Engine] Race '{}' loaded ({} bones, {} clips) from '{}'",
+															raceId, loaded->skeleton.bones.size(), loaded->clips.size(), fullMeshPath);
+														m_raceMeshes.emplace(raceId, std::move(*loaded));
+														return true;
+													};
+
+													// Charge les 3 races MVP. Lookup meshPath via
+													// CharacterCreationPresenter local (Init() vient d'etre appele).
+													for (const char* raceId : kMvpRaces) {
+														const auto& races = racesPresenter.GetRaces();
+														const engine::client::RaceDefinition* def = nullptr;
+														for (const auto& r : races) if (r.id == raceId) { def = &r; break; }
+														if (!def || def->meshPath.empty()) {
+															LOG_WARN(Render, "[Engine] Race '{}' : RaceDefinition introuvable ou meshPath vide", raceId);
+															continue;
+														}
+														loadOneRace(raceId, def->meshPath);
+													}
+
+													// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le
+													// perso n'est pas encore "in world" avant EnterWorld, mais Engine
+													// peut etre questionne sur ce mesh pour des previews/tests).
+													auto humansIt = m_raceMeshes.find("humains");
+													if (humansIt != m_raceMeshes.end()) {
+														m_currentSkinnedMesh = &humansIt->second;
 														m_playerAnimStartTime = std::chrono::steady_clock::now();
 														m_avatarLocoStateEnterTime = m_playerAnimStartTime;
 														m_skinnedAvatarReady = true;
-														LOG_INFO(Render, "[Engine] Skinned avatar Y Bot loaded ({} bones, {} clips) -- cube placeholder remplace",
+														LOG_INFO(Render, "[Engine] Default avatar = humains ({} bones, {} clips)",
 															m_currentSkinnedMesh->skeleton.bones.size(),
 															m_currentSkinnedMesh->clips.size());
 
-														// Sous-projet A polish -- charge Idle + StartWalking et merge dans le mesh
-														// joue. Mixamo nomme chaque clip "mixamo.com" : on les renomme a l'insertion
-														// pour avoir des lookups non ambigus. Le clip "Standard Walk" deja charge
-														// est aussi renomme de "mixamo.com" en "Walk".
-														//
-														// B.1 (Task 11) : renomme de "Walking" -> "Walk" pour matcher
-														// `StateToClipName(AvatarLocomotionState::Walk)` (cf. anon ns Engine.cpp).
-														{
-															auto& clips = m_currentSkinnedMesh->clips;
-															// Renomme le clip de marche existant.
-															for (auto& c : clips) {
-																if (c.name == "mixamo.com") { c.name = "Walk"; break; }
-															}
-
-															// Convergence "No Skin" : Standard Walk.fbx (with-skin, charge plus haut)
-															// reste la source du mesh + skeleton ; tous les autres clips sont
-															// charges en animation-only depuis leur variante "*No Skin.fbx" et
-															// retargetes par nom de bone sur le squelette de Standard Walk. Ce
-															// path unique evite les pieges du melange with-skin/no-skin
-															// (notamment des bind poses divergentes entre fichiers source).
-
-															auto loadAnimOnly = [&](const std::string& path, const char* renameTo) -> bool {
-																auto clipsLoaded = engine::render::skinned::SkinnedMeshLoader::LoadClipsAnimOnly(
-																	path, m_currentSkinnedMesh->skeleton);
-																for (auto& c : clipsLoaded) {
-																	if (c.duration > 0.0f && c.name == "mixamo.com") {
-																		c.name = renameTo;
-																		m_currentSkinnedMesh->clips.push_back(std::move(c));
-																		return true;
-																	}
-																}
-																return false;
-															};
-
-															// Tous les clips d'animation sont des variantes "No Skin" Mixamo,
-															// retargetees par nom de bone via LoadClipsAnimOnly. Standard Walk
-															// est la seule source with-skin (mesh + skeleton, deja chargee).
-															const std::string idlePath      = contentRoot + "/models/avatars/y_bot_idle/y_bot_idle.glb";
-															const std::string startWalkPath = contentRoot + "/models/avatars/y_bot_start_walking/y_bot_start_walking.glb";
-															const std::string walkBackPath  = contentRoot + "/models/avatars/y_bot_walk_back/y_bot_walk_back.glb";
-															const std::string runPath       = contentRoot + "/models/avatars/y_bot_run/y_bot_run.glb";
-															const std::string jumpPath      = contentRoot + "/models/avatars/y_bot_jump/y_bot_jump.glb";
-															const std::string fallPath      = contentRoot + "/models/avatars/y_bot_fall/y_bot_fall.glb";
-															const std::string landPath      = contentRoot + "/models/avatars/y_bot_land/y_bot_land.glb";
-
-															if (loadAnimOnly(idlePath, "Idle"))              LOG_INFO(Render, "[Engine] Idle clip loaded from '{}'", idlePath);
-															else                                             LOG_WARN(Render, "[Engine] Idle clip not loaded from '{}'", idlePath);
-															if (loadAnimOnly(startWalkPath, "StartWalking")) LOG_INFO(Render, "[Engine] StartWalking clip loaded from '{}'", startWalkPath);
-															else                                             LOG_WARN(Render, "[Engine] StartWalking clip not loaded from '{}'", startWalkPath);
-															if (loadAnimOnly(walkBackPath, "WalkBack"))      LOG_INFO(Render, "[Engine] WalkBack clip loaded from '{}'", walkBackPath);
-															else                                             LOG_WARN(Render, "[Engine] WalkBack clip not loaded from '{}'", walkBackPath);
-															if (loadAnimOnly(runPath, "Run"))                LOG_INFO(Render, "[Engine] Run clip loaded from '{}'", runPath);
-															else                                             LOG_WARN(Render, "[Engine] Run clip not loaded from '{}'", runPath);
-															if (loadAnimOnly(jumpPath, "Jump"))              LOG_INFO(Render, "[Engine] Jump clip loaded from '{}'", jumpPath);
-															else                                             LOG_WARN(Render, "[Engine] Jump clip not loaded from '{}'", jumpPath);
-															if (loadAnimOnly(fallPath, "Fall"))              LOG_INFO(Render, "[Engine] Fall clip loaded from '{}'", fallPath);
-															else                                             LOG_WARN(Render, "[Engine] Fall clip not loaded from '{}'", fallPath);
-															if (loadAnimOnly(landPath, "Land"))              LOG_INFO(Render, "[Engine] Land clip loaded from '{}'", landPath);
-															else                                             LOG_WARN(Render, "[Engine] Land clip not loaded from '{}'", landPath);
-
-															// Etat initial : Idle. On lance la premiere animation explicitement
-															// pour eviter d'afficher la pose bind au tout premier frame avant
-															// que la state machine n'enclenche un Play (cf. lambda Geometry
-															// qui sample m_avatarCrossfade.Sample(skel, nowSec)).
-															// Defensif : si Idle a echoue au load, on garde l'init existante
-															// (m_avatarLocoStateEnterTime / m_avatarLocoState = Idle deja faits
-															// plus haut), la state machine fera son fallback (Task 11).
-															const engine::render::skinned::AnimationClip* idleClip = m_currentSkinnedMesh->FindClip("Idle");
-															if (idleClip) {
-																const float nowSec = EngineNowSec();
-																m_avatarCrossfade.Play(*idleClip, /*loops=*/ true, nowSec);
-																m_avatarLocoStateEnterTime = std::chrono::steady_clock::now();
-																m_avatarLocoState = AvatarLocomotionState::Idle;
-															}
+														// Etat initial : Idle. On lance la premiere animation explicitement
+														// pour eviter d'afficher la pose bind au tout premier frame avant
+														// que la state machine n'enclenche un Play (cf. lambda Geometry
+														// qui sample m_avatarCrossfade.Sample(skel, nowSec)).
+														// Defensif : si Idle a echoue au load, on garde l'init existante
+														// (m_avatarLocoStateEnterTime / m_avatarLocoState = Idle deja faits
+														// plus haut), la state machine fera son fallback (Task 11).
+														const engine::render::skinned::AnimationClip* idleClip = m_currentSkinnedMesh->FindClip("Idle");
+														if (idleClip) {
+															const float nowSec = EngineNowSec();
+															m_avatarCrossfade.Play(*idleClip, /*loops=*/ true, nowSec);
+															m_avatarLocoStateEnterTime = std::chrono::steady_clock::now();
+															m_avatarLocoState = AvatarLocomotionState::Idle;
 														}
-													}
-													else
-													{
-														LOG_WARN(Render, "[Engine] Y Bot load failed ({}); fallback cube placeholder", yBotPath);
-														// Pipeline cree mais pas de mesh : libere le pipeline (Destroy idempotent).
+													} else {
+														LOG_WARN(Render, "[Engine] Race humains absente du m_raceMeshes -- avatar fallback cube");
+														// Aucun mesh humain : libere le pipeline (Destroy idempotent).
 														m_skinnedRenderer.Destroy(m_vkDeviceContext.GetDevice());
 													}
 												}
@@ -5538,17 +5554,22 @@ namespace engine
 				vkDestroyCommandPool(m_vkDeviceContext.GetDevice(), m_waterTransferPool, nullptr);
 				m_waterTransferPool = VK_NULL_HANDLE;
 			}
-			// Sous-projet A (Task 15) : libere le mesh skinne puis le renderer.
-			// Doit etre fait apres vkDeviceWaitIdle (line ~5060) et AVANT
-			// m_pipeline->Destroy (le SkinnedRenderer reutilise le materialLayout du
-			// MaterialDescriptorCache mais possede son propre pipeline/render pass --
-			// l'ordre n'est pas critique entre eux, mais on respecte l'ordre LIFO).
-			// Idempotent : safe si Init a echoue (handles VK_NULL_HANDLE skippes).
-			if (m_currentSkinnedMesh)
+			// Sous-projet A (Task 15) + Sous-projet C MVP : libere les meshes
+			// skinnes (ownership = m_raceMeshes depuis C MVP, plus
+			// m_currentSkinnedMesh qui n'est plus qu'un pointeur dans la map),
+			// puis le renderer. Doit etre fait apres vkDeviceWaitIdle (line ~5060)
+			// et AVANT m_pipeline->Destroy (le SkinnedRenderer reutilise le
+			// materialLayout du MaterialDescriptorCache mais possede son propre
+			// pipeline/render pass -- l'ordre n'est pas critique entre eux, mais
+			// on respecte l'ordre LIFO).
+			// Idempotent : safe si Init a echoue (map vide -> boucle skippee,
+			// handles VK_NULL_HANDLE skippes par SkinnedMesh::Destroy).
+			for (auto& kv : m_raceMeshes)
 			{
-				m_currentSkinnedMesh->Destroy(m_vkDeviceContext.GetDevice());
-				m_currentSkinnedMesh.reset();
+				kv.second.Destroy(m_vkDeviceContext.GetDevice());
 			}
+			m_raceMeshes.clear();
+			m_currentSkinnedMesh = nullptr;
 			m_skinnedRenderer.Destroy(m_vkDeviceContext.GetDevice());
 			m_skinnedAvatarReady = false;
 			if (m_pipeline)

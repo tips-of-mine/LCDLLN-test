@@ -127,6 +127,7 @@ namespace engine::editor::world
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace engine
@@ -498,6 +499,20 @@ namespace engine
 		/// EnterWorld n'a eu lieu (l'avatar n'est pas dessine, le cube
 		/// placeholder prend le relais via m_skinnedAvatarReady = false).
 		engine::render::skinned::SkinnedMesh*                     m_currentSkinnedMesh = nullptr;
+		/// Sous-projet C MVP — Map race_str -> mesh skinned + clips charges
+		/// au boot. Remplit a partir de la liste retournee par
+		/// CharacterCreationPresenter::GetRaces() (chargee par
+		/// m_characterCreationPresenter.Init avant Engine::Init). Seules les
+		/// races avec meshPath non vide sont chargees ; les autres sont
+		/// silencieusement skip (l'utilisateur ne pourra pas creer un perso
+		/// avec cette race tant que le mesh n'est pas defini).
+		///
+		/// Cycle de vie : peuple au boot dans le bloc skinned-pipeline, libere
+		/// au Shutdown (boucle sur la map -> SkinnedMesh::Destroy avant
+		/// m_skinnedRenderer.Destroy). Les SkinnedMesh sont stockes par valeur :
+		/// les pointeurs `m_currentSkinnedMesh` restent stables tant que la map
+		/// n'est pas modifiee apres le boot (pas de rehash apres le remplissage).
+		std::unordered_map<std::string, engine::render::skinned::SkinnedMesh> m_raceMeshes;
 		std::chrono::steady_clock::time_point                     m_playerAnimStartTime;
 		/// True une fois SkinnedRenderer::Init OK + SkinnedMeshLoader::Load OK.
 		/// Sert de gate per-frame : si false, on dessine le cube placeholder.

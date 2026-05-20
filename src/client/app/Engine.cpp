@@ -3939,7 +3939,13 @@ namespace engine
 													// pipeline GPU). Cela evite d'ajouter une dependance permanente
 													// dans Engine entre Engine et CharacterCreationPresenter.
 													const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
-													constexpr const char* kMvpRaces[] = { "humains", "nains", "orc" };
+													// IDs doivent matcher exactement les race_str de races.json :
+													// "humains", "nains", "orcs" (au pluriel). Note : le dossier disk
+													// game/data/models/avatars/orc/orc.glb est singulier (heritage de
+													// l'upload utilisateur inbox/orc/), mais c'est OK car le meshPath
+													// dans races.json pointe vers le bon chemin singulier — seule la
+													// cle de map (race_str) doit etre pluriel pour matcher la DB.
+													constexpr const char* kMvpRaces[] = { "humains", "nains", "orcs" };
 
 													engine::client::CharacterCreationPresenter racesPresenter;
 													racesPresenter.Init(m_cfg);

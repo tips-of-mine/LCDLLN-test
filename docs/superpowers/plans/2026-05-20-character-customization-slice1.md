@@ -39,7 +39,7 @@
 - `src/masterd/main_linux.cpp` (construction/chargement/injection du catalogue)
 - `CMakeLists.txt` (sources `engine_core` + nouveaux exécutables de test)
 
-**Conventions de build :** les nouveaux `.cpp` partagés vont dans la liste de sources `add_library(engine_core …)` (root `CMakeLists.txt`, débute ligne 206 ; ancre : `src/shared/network/CharacterPayloads.cpp` ligne 585). Les nouveaux tests vont dans la section tests (root `CMakeLists.txt`, à partir de la ligne ~795) au format `add_executable(<n> <src>)` + `target_link_libraries(<n> PRIVATE engine_core)` + `add_test(NAME <n> COMMAND <n>)`. Les handlers/`main_linux.cpp` sont déjà compilés via `src/CMakeLists.txt` (lignes 112+) et linkent `engine_core` — aucune entrée CMake nouvelle pour eux.
+**Conventions de build :** les nouveaux `.cpp` partagés vont dans la liste de sources `add_library(engine_core …)` (root `CMakeLists.txt`, débute ligne 206 ; ancre : `src/shared/network/CharacterPayloads.cpp` ligne 585). Les nouveaux tests vont dans la section tests (root `CMakeLists.txt`, à partir de la ligne ~795) au format `add_executable(<n> <src>)` + `target_link_libraries(<n> PRIVATE engine_core)` + `add_test(NAME <n> COMMAND <n>)`. Les handlers/`main_linux.cpp` sont compilés via la cible `server_app` dans `src/CMakeLists.txt`. ⚠️ **`server_app` ne linke PAS `engine_core`** : il liste ses sources explicitement (cible `UNIX`, `add_executable(server_app …)` ligne 71+). Tout nouveau `.cpp` partagé utilisé par le serveur doit donc être **ajouté à la liste `server_app` (bloc UNIX)** EN PLUS de `engine_core` — sinon erreur d'édition de liens (undefined reference). Les 4 fichiers `src/shared/Character/*.cpp` y sont ajoutés après `CharacterPayloads.cpp`.
 
 ---
 

@@ -89,6 +89,12 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/ErrorPacket.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/AuthRegisterPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/CharacterPayloads.cpp
+    # Slice 1 customization — code partagé requis par les handlers master (le
+    # server_app ne linke pas engine_core, il compile ses sources explicitement).
+    ${CMAKE_SOURCE_DIR}/src/shared/Character/Json.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/Character/CustomizationJson.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/Character/CustomizationCatalog.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/Character/CustomizationValidator.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerListPayloads.cpp

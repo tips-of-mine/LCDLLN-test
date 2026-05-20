@@ -74,6 +74,11 @@
 #include "src/client/render/skinned/SkinnedMesh.h"
 #include "src/client/render/skinned/SkinnedMeshLoader.h"
 #include "src/client/render/skinned/AnimationSampler.h"
+// Sous-projet B.1 (Task 11) : crossfade entre clips de locomotion (7 etats).
+#include "src/client/render/skinned/AnimationCrossfade.h"
+// Sous-projet B.1 (Task 9) : physics + collision pour l'avatar joueur.
+#include "src/client/gameplay/CharacterController.h"
+#include "src/client/gameplay/TerrainCollider.h"
 #if defined(_WIN32)
 #include "src/client/render/terrain/TerrainEditingTools.h"
 #include "src/world_editor/ui/TexturePreviewCache.h"
@@ -493,16 +498,88 @@ namespace engine
 		/// Sert de gate per-frame : si false, on dessine le cube placeholder.
 		bool                                                      m_skinnedAvatarReady = false;
 
-		/// Sous-projet A polish — state machine de locomotion de l'avatar.
-		/// 3 états : Idle (clip "Idle" looped), StartWalking (clip "StartWalking"
-		/// joué une fois puis transition vers Walking), Walking (clip "Walking" looped).
-		/// Sous-projet B raffinera (crossfade, vitesses, autres états).
-		enum class AvatarLocomotionState { Idle, StartWalking, Walking };
+		/// Sous-projet B.1 (Task 11) — State machine de locomotion de l'avatar.
+		/// 7 etats :
+		///   - Idle           : clip "Idle" looped, perso immobile au sol.
+		///   - StartWalking   : clip "StartWalking" one-shot (lift-off de Idle vers
+		///                      la marche pleine vitesse). Transite vers Walk ou Run
+		///                      a la fin du clip.
+		///   - Walk           : clip "Walk" looped, marche normale (input.run = false).
+		///                      Renomme de "Walking" (A polish) -> "Walk" pour la
+		///                      coherence Mixamo + brievete.
+		///   - Run            : clip "Run" looped, course (input.run = true / Shift).
+		///   - Jump           : clip "Jump" one-shot, phase takeoff (les premiers 40%
+		///                      du clip), declenche par input.jumpPressed depuis Idle/
+		///                      Walk/Run/StartWalking.
+		///   - Fall           : clip "Fall" looped, en l'air apres la fin du takeoff
+		///                      ou si le CC perd le contact sol sans avoir saute.
+		///   - Land           : clip "Land" one-shot au touch ground depuis Fall.
+		///                      Transite vers Idle/Walk/Run selon input a la fin du clip.
+		///
+		/// Transitions driven par `CharacterController::IsGrounded()`, `input.jumpPressed`,
+		/// `input.run` et `moveDirXZ` (cf. `Engine::Update`). Crossfade entre clips
+		/// par `m_avatarCrossfade.Play(...)` (kCrossfadeDuration = 0.15 s).
+		///
+		/// **Visibilite public** : l'enum est expose en public pour que les helpers
+		/// free-function `StateToClipName` / `ClipLoops` (anonymous namespace de
+		/// `Engine.cpp`) puissent y acceder depuis l'exterieur de la classe (C++
+		/// access control s'applique meme depuis le meme TU). Aucun client externe
+		/// d'Engine ne devrait s'en servir — c'est de l'interface interne render/anim.
+	public:
+		enum class AvatarLocomotionState
+		{
+			Idle,
+			StartWalking,
+			Walk,
+			WalkBack,
+			Run,
+			Jump,
+			Fall,
+			Land
+		};
+	private:
 		AvatarLocomotionState                                     m_avatarLocoState = AvatarLocomotionState::Idle;
 		/// Instant d'entrée dans l'état courant. Utilisé pour :
-		///   - boucler / clamper le temps écoulé dans le clip,
-		///   - détecter la fin de "StartWalking" (durée écoulée >= clip.duration).
+		///   - détecter la fin de StartWalking / Jump / Land (durée écoulée >= clip.duration).
+		///   - tracer la transition Jump -> Fall après 40% du clip Jump (takeoff).
 		std::chrono::steady_clock::time_point                     m_avatarLocoStateEnterTime;
+		/// Sous-projet B.1 (Task 11) — Crossfade entre clips de locomotion.
+		///
+		/// `Play(clip, loops, nowSec)` est appele dans `Engine::Update` a chaque
+		/// transition d'etat (la state machine remplit `m_avatarLocoState` puis
+		/// declenche le crossfade vers le clip correspondant). `Sample(skel, nowSec)`
+		/// est appele dans le lambda Geometry pour produire la pose locale qui
+		/// alimente `ComputeGlobalMatrices` + `ComputeFinalMatrices` + `Record`.
+		///
+		/// La meme valeur de `now` (secondes depuis steady_clock::time_since_epoch())
+		/// doit etre utilisee dans Play et Sample : sinon le t reel applique au clip
+		/// est decale et la pose initiale "snap" au lieu de demarrer a 0.
+		engine::render::skinned::AnimationCrossfade               m_avatarCrossfade;
+
+		/// Sous-projet B.1 (Task 9) — Physics et collision pour le joueur.
+		///
+		/// `m_characterController` integre la cinematique du joueur (deplacement
+		/// + gravite + saut + steps) ; sa position est lue chaque frame et
+		/// poussee vers `m_orbitalCameraController.SetTargetPosition` (la camera
+		/// suit le perso). `m_terrainCollider` est bind sur `m_terrain` au boot
+		/// (apres `m_terrain.Init`) ; il implemente l'interface IWorldCollider
+		/// consommee par `CharacterController::Update` pour les sweep capsule.
+		///
+		/// `m_avatarYaw` suit la direction de mouvement (snap immediat sur
+		/// `atan2(moveDirXZ.x, moveDirXZ.z)`) ; la model matrix de l'avatar
+		/// applique directement `R_y(yaw)`. La direction de "face" intrinseque
+		/// du mesh Mixamo Y Bot est +Z dans son repere local. La valeur initiale
+		/// pi correspond a "dos a la camera" pour une camera a yaw=0 (forward
+		/// camera = -Z), de sorte que le perso au spawn (avant tout input) est
+		/// vu de dos.
+		///
+		/// `m_lastMoveInput` memorise la derniere intention d'input clavier
+		/// pour que la state machine de locomotion (Task 11 etendra a 7 etats)
+		/// puisse decider Idle/Walk/Run/Jump sans avoir a reconstruire l'input.
+		engine::gameplay::CharacterController                     m_characterController;
+		engine::gameplay::TerrainCollider                         m_terrainCollider;
+		float                                                     m_avatarYaw = 3.14159265f;
+		engine::gameplay::MoveInput                               m_lastMoveInput{};
 
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).
 		engine::render::terrain::TerrainRenderer m_terrain;

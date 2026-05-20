@@ -112,6 +112,14 @@ public:
     /// Effet de bord : aucun (CPU only — pas d'allocation Vulkan).
     static std::vector<AnimationClip> LoadClipsRetargeted(const std::string& path,
                                                             const Skeleton& targetSkeleton);
+
+    // Loads animation clips from a .glb that has no skin (animation-only export
+    // from Mixamo "without skin" option). Retargets channels by node name onto
+    // the target skeleton's bones. Bones absent from the source are silently
+    // skipped (animation simply doesn't drive those bones).
+    // Returns empty vector on parse failure or if no animations are present.
+    static std::vector<AnimationClip> LoadClipsAnimOnly(const std::string& path,
+                                                        const Skeleton& targetSkeleton);
 };
 
 }  // namespace engine::render::skinned

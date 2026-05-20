@@ -306,4 +306,84 @@ std::vector<AnimationClip> SkinnedMeshLoader::LoadClipsRetargeted(const std::str
     return retargeted;
 }
 
+/// Charge les clips d'un .glb sans skin (export Mixamo "without skin"). Parse
+/// directement les channels d'animation et retarget par target_node->name sur
+/// les bones du squelette cible. Bones absents = skip silencieux.
+///
+/// \param path           Chemin du .glb source (animation-only, typiquement < 500 KB).
+/// \param targetSkeleton Squelette cible (mesh joué).
+/// \return Vecteur de clips ; vide si parse échoue ou si aucune animation utile
+///         (filtre `duration > 0` pour éliminer les clips "Take 001" vides de Mixamo).
+/// Effet de bord : aucun (CPU only — pas d'allocation Vulkan).
+std::vector<AnimationClip> SkinnedMeshLoader::LoadClipsAnimOnly(const std::string& path,
+                                                                  const Skeleton& targetSkeleton)
+{
+    cgltf_options options = {};
+    cgltf_data* data = nullptr;
+    if (cgltf_parse_file(&options, path.c_str(), &data) != cgltf_result_success) {
+        LOG_WARN(Render, "[SkinnedMeshLoader] LoadClipsAnimOnly parse failed for '{}'", path);
+        if (data) cgltf_free(data);
+        return {};
+    }
+    if (cgltf_load_buffers(&options, data, path.c_str()) != cgltf_result_success) {
+        LOG_WARN(Render, "[SkinnedMeshLoader] LoadClipsAnimOnly buffer load failed for '{}'", path);
+        cgltf_free(data);
+        return {};
+    }
+
+    // Build a lookup : node name -> target bone index.
+    // Unlike LoadClipsRetargeted (which iterates skin->joints), here we have no skin —
+    // we use any node referenced as a channel target.
+    auto FindBoneByName = [&](const char* name) -> int {
+        if (!name) return -1;
+        const std::string n = name;
+        for (size_t i = 0; i < targetSkeleton.bones.size(); ++i) {
+            if (targetSkeleton.bones[i].name == n) return static_cast<int>(i);
+        }
+        return -1;
+    };
+
+    std::vector<AnimationClip> out;
+    out.reserve(data->animations_count);
+    for (cgltf_size ai = 0; ai < data->animations_count; ++ai) {
+        const cgltf_animation* anim = &data->animations[ai];
+        AnimationClip clip;
+        clip.name = anim->name ? anim->name : ("anim_" + std::to_string(ai));
+        clip.tracks.resize(targetSkeleton.bones.size());
+        float maxTime = 0.0f;
+
+        for (cgltf_size ci = 0; ci < anim->channels_count; ++ci) {
+            const cgltf_animation_channel* ch = &anim->channels[ci];
+            if (!ch->target_node) continue;
+
+            const int boneIdx = FindBoneByName(ch->target_node->name);
+            if (boneIdx < 0) continue;  // node absent from target skeleton -> skip
+
+            BoneTracks& trk = clip.tracks[boneIdx];
+            const cgltf_animation_sampler* s = ch->sampler;
+            if (!s) continue;
+            if (s->input && s->input->has_max && s->input->max[0] > maxTime) {
+                maxTime = s->input->max[0];
+            }
+            if (ch->target_path == cgltf_animation_path_type_translation) {
+                trk.translation = LoadKeyframes<engine::math::Vec3, 3>(s,
+                    [](const float* v){ return engine::math::Vec3{v[0], v[1], v[2]}; });
+            } else if (ch->target_path == cgltf_animation_path_type_rotation) {
+                trk.rotation = LoadKeyframes<engine::math::Quat, 4>(s,
+                    [](const float* v){ return engine::math::Quat{v[0], v[1], v[2], v[3]}; });
+            } else if (ch->target_path == cgltf_animation_path_type_scale) {
+                trk.scale = LoadKeyframes<engine::math::Vec3, 3>(s,
+                    [](const float* v){ return engine::math::Vec3{v[0], v[1], v[2]}; });
+            }
+        }
+        clip.duration = maxTime;
+        if (clip.duration > 0.0f) {
+            out.push_back(std::move(clip));
+        }
+    }
+
+    cgltf_free(data);
+    return out;
+}
+
 }  // namespace engine::render::skinned

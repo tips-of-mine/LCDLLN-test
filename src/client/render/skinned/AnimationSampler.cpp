@@ -3,32 +3,29 @@
 namespace engine::render::skinned
 {
 
-namespace
+/// Compose une matrice TRS (Translation * Rotation * Scale) column-major
+/// compatible Vulkan/OpenGL.
+///
+/// Le scale est applique sur les colonnes 0/1/2 de la matrice de rotation
+/// (chaque colonne represente l'axe transforme), la translation occupe
+/// la colonne 3 (m[12..14]) et m[15] = 1.
+///
+/// \param t Translation locale.
+/// \param r Rotation locale (quaternion unitaire ; ToMat4 produit une matrice avec colonne 3 nulle).
+/// \param s Scale local (applique par axe sur les colonnes de rotation).
+engine::math::Mat4 AnimationSampler::ComposeTRS(const engine::math::Vec3& t,
+                                                 const engine::math::Quat& r,
+                                                 const engine::math::Vec3& s)
 {
-    /// Compose une matrice TRS (Translation * Rotation * Scale) column-major
-    /// compatible Vulkan/OpenGL.
-    ///
-    /// Le scale est applique sur les colonnes 0/1/2 de la matrice de rotation
-    /// (chaque colonne represente l'axe transforme), la translation occupe
-    /// la colonne 3 (m[12..14]) et m[15] = 1.
-    ///
-    /// \param t Translation locale.
-    /// \param r Rotation locale (quaternion unitaire ; ToMat4 produit une matrice avec colonne 3 nulle).
-    /// \param s Scale local (applique par axe sur les colonnes de rotation).
-    engine::math::Mat4 ComposeTRS(const engine::math::Vec3& t,
-                                  const engine::math::Quat& r,
-                                  const engine::math::Vec3& s)
-    {
-        engine::math::Mat4 rot = r.ToMat4();
-        // Mat4 column-major : colonne k = m[k*4 .. k*4+3]. Scale par axe.
-        rot.m[0] *= s.x; rot.m[1] *= s.x; rot.m[2] *= s.x;
-        rot.m[4] *= s.y; rot.m[5] *= s.y; rot.m[6] *= s.y;
-        rot.m[8] *= s.z; rot.m[9] *= s.z; rot.m[10] *= s.z;
-        // Colonne 3 = translation.
-        rot.m[12] = t.x; rot.m[13] = t.y; rot.m[14] = t.z;
-        rot.m[15] = 1.0f;
-        return rot;
-    }
+    engine::math::Mat4 rot = r.ToMat4();
+    // Mat4 column-major : colonne k = m[k*4 .. k*4+3]. Scale par axe.
+    rot.m[0] *= s.x; rot.m[1] *= s.x; rot.m[2] *= s.x;
+    rot.m[4] *= s.y; rot.m[5] *= s.y; rot.m[6] *= s.y;
+    rot.m[8] *= s.z; rot.m[9] *= s.z; rot.m[10] *= s.z;
+    // Colonne 3 = translation.
+    rot.m[12] = t.x; rot.m[13] = t.y; rot.m[14] = t.z;
+    rot.m[15] = 1.0f;
+    return rot;
 }
 
 std::vector<engine::math::Mat4> AnimationSampler::SamplePose(const Skeleton& skeleton,

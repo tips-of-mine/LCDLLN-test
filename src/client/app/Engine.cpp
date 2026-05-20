@@ -92,6 +92,160 @@ namespace engine
 	{
 		constexpr float kWorldEditorPickPi = 3.14159265f;
 
+		/// Retourne le temps ecoule en secondes depuis le premier appel a cette
+		/// fonction, en float 32 bits. Normalise par un temps de reference
+		/// capture au demarrage de l'application (static init).
+		///
+		/// Necessaire pour `AnimationCrossfade` : passer directement
+		/// `steady_clock::now().time_since_epoch()` en float donnerait des
+		/// valeurs ~10^8 - 10^9 (depuis boot machine), qui depassent la
+		/// precision de la mantissa float32 (~7 chiffres significatifs).
+		/// Resultat : (now - startTime) sautait par pas de plusieurs ms voire
+		/// des dizaines de ms entre frames -> mesh qui tremble. Avec cette
+		/// fonction, les valeurs restent < 10^4 secondes en pratique (uptime
+		/// session), precision microseconde -> animation lisse.
+		float EngineNowSec()
+		{
+			static const auto kStart = std::chrono::steady_clock::now();
+			return std::chrono::duration<float>(std::chrono::steady_clock::now() - kStart).count();
+		}
+
+		/// Sous-projet B.1 (Task 9) — Projette l'input clavier WASD/ZQSD dans
+		/// le repere camera courant pour produire la `MoveInput` passee au
+		/// `CharacterController::Update`. Touche les directions XZ (Y ignore),
+		/// normalise pour eviter la diagonale rapide (1.41x), et capture aussi
+		/// le run (Shift) et le saut (Space, edge-triggered).
+		///
+		/// Le mapping des touches d'avant et de gauche depend de `layout`
+		/// (cf. `controls.movement_layout` dans config) :
+		/// - WASD : forward=W, left=A (clavier US par defaut)
+		/// - ZQSD : forward=Z, left=Q (clavier FR/BE AZERTY)
+		/// S et D sont identiques dans les deux layouts. L'ancien code mappait
+		/// W ET Z (ou A ET Q) en OR sans discriminer ; resultat sur AZERTY :
+		/// la touche W (qui devrait ne rien faire en ZQSD) faisait aussi
+		/// avancer parce qu'elle envoie VK_W (rapport user 2026-05-19).
+		///
+		/// \param input  Input snapshot de la frame courante (clavier + souris).
+		/// \param camera Camera orbitale (utilise GetForwardXZ / GetRightXZ pour
+		///               le repere local au lieu d'un yaw monde fixe — les
+		///               touches restent "vers ce que je regarde" meme apres
+		///               rotation de la camera).
+		/// \param layout Layout clavier (WASD ou ZQSD).
+		/// \return MoveInput pret a etre consomme par CharacterController.
+		///         `swim*/fly` sont hors-scope B.1 et restent false.
+		///
+		/// Effet de bord : aucun. Pure projection input -> intention.
+		engine::gameplay::MoveInput BuildMoveInput(
+			const engine::platform::Input& input,
+			const engine::render::OrbitalCameraController& camera,
+			engine::render::MovementLayout layout)
+		{
+			engine::gameplay::MoveInput out{};
+
+			const engine::math::Vec3 forward = camera.GetForwardXZ();
+			const engine::math::Vec3 right   = camera.GetRightXZ();
+
+			const engine::platform::Key forwardKey =
+				(layout == engine::render::MovementLayout::ZQSD) ? engine::platform::Key::Z : engine::platform::Key::W;
+			const engine::platform::Key leftKey =
+				(layout == engine::render::MovementLayout::ZQSD) ? engine::platform::Key::Q : engine::platform::Key::A;
+			const engine::platform::Key backKey  = engine::platform::Key::S;
+			const engine::platform::Key rightKey = engine::platform::Key::D;
+
+			engine::math::Vec3 dir{ 0.0f, 0.0f, 0.0f };
+			if (input.IsDown(forwardKey))
+			{
+				dir.x += forward.x;
+				dir.z += forward.z;
+			}
+			if (input.IsDown(backKey))
+			{
+				dir.x -= forward.x;
+				dir.z -= forward.z;
+			}
+			if (input.IsDown(rightKey))
+			{
+				dir.x += right.x;
+				dir.z += right.z;
+			}
+			if (input.IsDown(leftKey))
+			{
+				dir.x -= right.x;
+				dir.z -= right.z;
+			}
+
+			const float lenSq = dir.x * dir.x + dir.z * dir.z;
+			if (lenSq > 0.0f)
+			{
+				const float invLen = 1.0f / std::sqrt(lenSq);
+				out.moveDirXZ = engine::math::Vec3{ dir.x * invLen, 0.0f, dir.z * invLen };
+			}
+
+			out.run         = input.IsDown(engine::platform::Key::Shift);
+			out.jumpPressed = input.WasPressed(engine::platform::Key::Space);
+			// swim/fly hors-scope B.1 : restent false (consommes par les modes
+			// Water/Fly du CharacterController, inutiles tant que la query eau
+			// n'est pas branchee — IWorldCollider::QueryWater renvoie false).
+			return out;
+		}
+
+		/// Sous-projet B.1 — Detecte "pure back step" : touche back enfoncee
+		/// seule, sans aucune autre direction de mouvement. La state machine
+		/// de locomotion utilise ce flag pour declencher l'etat WalkBack
+		/// (mesh inchange + anim Walking Backwards) ; tout autre input
+		/// (forward, strafe, diagonale) repasse en free-mover (pivot mesh +
+		/// Walk standard). On detecte les deux mappings AZERTY/QWERTY pour
+		/// rester robuste quel que soit `controls.movement_layout`.
+		bool IsPureBackInput(const engine::platform::Input& input)
+		{
+			const bool back = input.IsDown(engine::platform::Key::S);
+			if (!back) return false;
+			const bool anyForward = input.IsDown(engine::platform::Key::W) || input.IsDown(engine::platform::Key::Z);
+			const bool anyLeft    = input.IsDown(engine::platform::Key::A) || input.IsDown(engine::platform::Key::Q);
+			const bool anyRight   = input.IsDown(engine::platform::Key::D);
+			return !anyForward && !anyLeft && !anyRight;
+		}
+
+		/// Sous-projet B.1 (Task 11) — Mapping etat de locomotion -> nom du clip
+		/// charge dans `m_playerSkinnedMesh->clips`. Le nom doit matcher exactement
+		/// la cle utilisee a l'insertion (cf. boot ~ligne 3863 ou les clips Mixamo
+		/// "mixamo.com" sont renommes en "Idle" / "StartWalking" / "Walk").
+		///
+		/// Retourne "Idle" en fallback si un nouvel etat est ajoute a l'enum sans
+		/// que ce switch soit mis a jour (defensif : evite un nullptr et un
+		/// comportement non defini en runtime).
+		const char* StateToClipName(engine::Engine::AvatarLocomotionState s)
+		{
+			switch (s) {
+				case engine::Engine::AvatarLocomotionState::Idle:         return "Idle";
+				case engine::Engine::AvatarLocomotionState::StartWalking: return "StartWalking";
+				case engine::Engine::AvatarLocomotionState::Walk:         return "Walk";
+				case engine::Engine::AvatarLocomotionState::WalkBack:     return "WalkBack";
+				case engine::Engine::AvatarLocomotionState::Run:          return "Run";
+				case engine::Engine::AvatarLocomotionState::Jump:         return "Jump";
+				case engine::Engine::AvatarLocomotionState::Fall:         return "Fall";
+				case engine::Engine::AvatarLocomotionState::Land:         return "Land";
+			}
+			return "Idle";
+		}
+
+		/// Sous-projet B.1 (Task 11) — Indique si le clip associe a un etat doit
+		/// looper ou s'arreter a sa derniere keyframe (clamp). Consomme par
+		/// `AnimationCrossfade::Play(clip, loops, now)`.
+		///
+		/// Idle / Walk / Run / Fall sont des etats "tenus" -> loop.
+		/// StartWalking / Jump / Land sont des transitions one-shot -> clamp (la
+		/// state machine transite hors de l'etat avant la fin du clip dans le cas
+		/// normal ; le clamp evite un wrap visuel si la transition tarde).
+		bool ClipLoops(engine::Engine::AvatarLocomotionState s)
+		{
+			return s == engine::Engine::AvatarLocomotionState::Idle
+				|| s == engine::Engine::AvatarLocomotionState::Walk
+				|| s == engine::Engine::AvatarLocomotionState::WalkBack
+				|| s == engine::Engine::AvatarLocomotionState::Run
+				|| s == engine::Engine::AvatarLocomotionState::Fall;
+		}
+
 		engine::core::LogLevel ParseLogLevelConfig(std::string_view text)
 		{
 			if (text == "Trace" || text == "trace") return engine::core::LogLevel::Trace;
@@ -3792,45 +3946,76 @@ namespace engine
 														// Sous-projet A polish -- charge Idle + StartWalking et merge dans le mesh
 														// joue. Mixamo nomme chaque clip "mixamo.com" : on les renomme a l'insertion
 														// pour avoir des lookups non ambigus. Le clip "Standard Walk" deja charge
-														// est aussi renomme de "mixamo.com" en "Walking".
+														// est aussi renomme de "mixamo.com" en "Walk".
+														//
+														// B.1 (Task 11) : renomme de "Walking" -> "Walk" pour matcher
+														// `StateToClipName(AvatarLocomotionState::Walk)` (cf. anon ns Engine.cpp).
 														{
 															auto& clips = m_playerSkinnedMesh->clips;
 															// Renomme le clip de marche existant.
 															for (auto& c : clips) {
-																if (c.name == "mixamo.com") { c.name = "Walking"; break; }
+																if (c.name == "mixamo.com") { c.name = "Walk"; break; }
 															}
 
-															const std::string idlePath = contentRoot + "/models/avatars/y_bot_idle/y_bot_idle.glb";
+															// Convergence "No Skin" : Standard Walk.fbx (with-skin, charge plus haut)
+															// reste la source du mesh + skeleton ; tous les autres clips sont
+															// charges en animation-only depuis leur variante "*No Skin.fbx" et
+															// retargetes par nom de bone sur le squelette de Standard Walk. Ce
+															// path unique evite les pieges du melange with-skin/no-skin
+															// (notamment des bind poses divergentes entre fichiers source).
+
+															auto loadAnimOnly = [&](const std::string& path, const char* renameTo) -> bool {
+																auto clipsLoaded = engine::render::skinned::SkinnedMeshLoader::LoadClipsAnimOnly(
+																	path, m_playerSkinnedMesh->skeleton);
+																for (auto& c : clipsLoaded) {
+																	if (c.duration > 0.0f && c.name == "mixamo.com") {
+																		c.name = renameTo;
+																		m_playerSkinnedMesh->clips.push_back(std::move(c));
+																		return true;
+																	}
+																}
+																return false;
+															};
+
+															// Tous les clips d'animation sont des variantes "No Skin" Mixamo,
+															// retargetees par nom de bone via LoadClipsAnimOnly. Standard Walk
+															// est la seule source with-skin (mesh + skeleton, deja chargee).
+															const std::string idlePath      = contentRoot + "/models/avatars/y_bot_idle/y_bot_idle.glb";
 															const std::string startWalkPath = contentRoot + "/models/avatars/y_bot_start_walking/y_bot_start_walking.glb";
+															const std::string walkBackPath  = contentRoot + "/models/avatars/y_bot_walk_back/y_bot_walk_back.glb";
+															const std::string runPath       = contentRoot + "/models/avatars/y_bot_run/y_bot_run.glb";
+															const std::string jumpPath      = contentRoot + "/models/avatars/y_bot_jump/y_bot_jump.glb";
+															const std::string fallPath      = contentRoot + "/models/avatars/y_bot_fall/y_bot_fall.glb";
+															const std::string landPath      = contentRoot + "/models/avatars/y_bot_land/y_bot_land.glb";
 
-															auto idleClips = engine::render::skinned::SkinnedMeshLoader::LoadClipsRetargeted(
-																idlePath, m_playerSkinnedMesh->skeleton);
-															for (auto& c : idleClips) {
-																if (c.duration > 0.0f && c.name == "mixamo.com") {
-																	c.name = "Idle";
-																	clips.push_back(std::move(c));
-																	break;
-																}
-															}
-															if (m_playerSkinnedMesh->FindClip("Idle") == nullptr) {
-																LOG_WARN(Render, "[Engine] Idle clip not loaded from '{}'", idlePath);
-															} else {
-																LOG_INFO(Render, "[Engine] Idle clip loaded from '{}'", idlePath);
-															}
+															if (loadAnimOnly(idlePath, "Idle"))              LOG_INFO(Render, "[Engine] Idle clip loaded from '{}'", idlePath);
+															else                                             LOG_WARN(Render, "[Engine] Idle clip not loaded from '{}'", idlePath);
+															if (loadAnimOnly(startWalkPath, "StartWalking")) LOG_INFO(Render, "[Engine] StartWalking clip loaded from '{}'", startWalkPath);
+															else                                             LOG_WARN(Render, "[Engine] StartWalking clip not loaded from '{}'", startWalkPath);
+															if (loadAnimOnly(walkBackPath, "WalkBack"))      LOG_INFO(Render, "[Engine] WalkBack clip loaded from '{}'", walkBackPath);
+															else                                             LOG_WARN(Render, "[Engine] WalkBack clip not loaded from '{}'", walkBackPath);
+															if (loadAnimOnly(runPath, "Run"))                LOG_INFO(Render, "[Engine] Run clip loaded from '{}'", runPath);
+															else                                             LOG_WARN(Render, "[Engine] Run clip not loaded from '{}'", runPath);
+															if (loadAnimOnly(jumpPath, "Jump"))              LOG_INFO(Render, "[Engine] Jump clip loaded from '{}'", jumpPath);
+															else                                             LOG_WARN(Render, "[Engine] Jump clip not loaded from '{}'", jumpPath);
+															if (loadAnimOnly(fallPath, "Fall"))              LOG_INFO(Render, "[Engine] Fall clip loaded from '{}'", fallPath);
+															else                                             LOG_WARN(Render, "[Engine] Fall clip not loaded from '{}'", fallPath);
+															if (loadAnimOnly(landPath, "Land"))              LOG_INFO(Render, "[Engine] Land clip loaded from '{}'", landPath);
+															else                                             LOG_WARN(Render, "[Engine] Land clip not loaded from '{}'", landPath);
 
-															auto startWalkClips = engine::render::skinned::SkinnedMeshLoader::LoadClipsRetargeted(
-																startWalkPath, m_playerSkinnedMesh->skeleton);
-															for (auto& c : startWalkClips) {
-																if (c.duration > 0.0f && c.name == "mixamo.com") {
-																	c.name = "StartWalking";
-																	clips.push_back(std::move(c));
-																	break;
-																}
-															}
-															if (m_playerSkinnedMesh->FindClip("StartWalking") == nullptr) {
-																LOG_WARN(Render, "[Engine] StartWalking clip not loaded from '{}'", startWalkPath);
-															} else {
-																LOG_INFO(Render, "[Engine] StartWalking clip loaded from '{}'", startWalkPath);
+															// Etat initial : Idle. On lance la premiere animation explicitement
+															// pour eviter d'afficher la pose bind au tout premier frame avant
+															// que la state machine n'enclenche un Play (cf. lambda Geometry
+															// qui sample m_avatarCrossfade.Sample(skel, nowSec)).
+															// Defensif : si Idle a echoue au load, on garde l'init existante
+															// (m_avatarLocoStateEnterTime / m_avatarLocoState = Idle deja faits
+															// plus haut), la state machine fera son fallback (Task 11).
+															const engine::render::skinned::AnimationClip* idleClip = m_playerSkinnedMesh->FindClip("Idle");
+															if (idleClip) {
+																const float nowSec = EngineNowSec();
+																m_avatarCrossfade.Play(*idleClip, /*loops=*/ true, nowSec);
+																m_avatarLocoStateEnterTime = std::chrono::steady_clock::now();
+																m_avatarLocoState = AvatarLocomotionState::Idle;
 															}
 														}
 													}
@@ -3850,6 +4035,48 @@ namespace engine
 											{
 												LOG_WARN(Render, "[Engine] Skinned shaders not loaded or material cache not ready; fallback cube placeholder");
 											}
+										}
+
+										// Sous-projet B.1 (Task 9) — Bind TerrainCollider sur le TerrainRenderer
+										// et instancie le CharacterController du joueur. Doit imperativement
+										// arriver APRES `m_terrain.Init` (cf. ~ligne 3538 plus haut) pour que
+										// `GroundHeightAt` retourne une altitude reelle (sinon fallback 0.0,
+										// le perso spawn enterre / suspend selon le sol).
+										//
+										// Le CharacterController est lui-meme cree avec une Config lue depuis
+										// `config.json` (cle `player.movement.*`) avec des defaults sensibles
+										// si les cles manquent (cas du config.json par defaut). L'initialisation
+										// du membre se fait par move-assignment d'un temporaire — `CharacterController`
+										// n'a pas d'operations move/copy explicites mais ses membres sont tous
+										// trivialement assignables (Vec3 / float / enum / bool) donc l'operator=
+										// implicite est suffisant.
+										//
+										// La position de spawn est posee au centre du terrain (0,0 en monde) en
+										// echantillonnant le sol + half-capsule (0.9 m = height/2) pour eviter
+										// que la sphere du bas de la capsule traverse le sol au premier sweep.
+										{
+											m_terrainCollider.BindTerrain(&m_terrain);
+
+											engine::gameplay::CharacterController::Config ccCfg{};
+											ccCfg.walkSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.walk_speed",      5.0));
+											ccCfg.runSpeed      = static_cast<float>(m_cfg.GetDouble("player.movement.run_speed",       9.0));
+											ccCfg.gravity       = static_cast<float>(m_cfg.GetDouble("player.movement.gravity",       -20.0));
+											ccCfg.jumpSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.jump_speed",      9.0));
+											ccCfg.coyoteTimeSec = static_cast<float>(m_cfg.GetDouble("player.movement.coyote_time_s",   0.1));
+											ccCfg.jumpBufferSec = static_cast<float>(m_cfg.GetDouble("player.movement.jump_buffer_s",   0.1));
+											ccCfg.capsule.radius = 0.3f;
+											ccCfg.capsule.height = 1.8f;
+											m_characterController = engine::gameplay::CharacterController(ccCfg);
+
+											// Spawn au centre map (XZ = 0,0), pose au-dessus du sol echantillonne
+											// + halfHeight de capsule pour que le bas de la capsule effleure le sol.
+											const float spawnX = 0.0f;
+											const float spawnZ = 0.0f;
+											const float spawnY = m_terrainCollider.GroundHeightAt(spawnX, spawnZ) + 0.9f;
+											m_characterController.Init(engine::math::Vec3{ spawnX, spawnY, spawnZ });
+											LOG_INFO(Render,
+												"[Engine] B.1 CharacterController spawn=({:.2f}, {:.2f}, {:.2f}) capsule r={:.2f} h={:.2f}",
+												spawnX, spawnY, spawnZ, ccCfg.capsule.radius, ccCfg.capsule.height);
 										}
 
 										m_frameGraph.addPass("GPU_Cull",
@@ -3981,128 +4208,75 @@ namespace engine
 												// dessine par Record/RecordIndirect ci-dessus.
 												if (m_skinnedAvatarReady && m_playerSkinnedMesh && m_skinnedRenderer.IsValid())
 												{
-													using namespace std::chrono;
-													const auto now = steady_clock::now();
+													// B.1 / Task 11 : la state machine 7 etats + le Play du crossfade
+													// vivent desormais dans Engine::Update (driven par signaux gameplay
+													// propres : grounded, jumpPressed, run, moveDirXZ). Le lambda
+													// Geometry ne fait plus que sampler la pose du crossfade au temps
+													// courant et l'envoyer au SkinnedRenderer.
+													//
+													// nowSec doit utiliser la meme horloge que celle passee a
+													// `m_avatarCrossfade.Play(...)` dans Update : meme reference de temps
+													// via `EngineNowSec()` (normalise par le boot du jeu, evite la perte
+													// de precision float qui faisait trembler le mesh — anim.startTime
+													// stocke par Play etait < now mais la difference etait noyee dans la
+													// precision float 32, donc l'echantillonnage progressait par sauts).
+													const float nowSec = EngineNowSec();
 
-													// --- Détection de mouvement (sous-projet A polish) ---
-													// On compare la position courante (X/Z de la 4e colonne de la model matrix)
-													// avec celle de la frame précédente. Seuil : > 1e-4 m sur dx^2+dz^2.
-													// Y exclu car l'animation de marche le fait osciller (bobbing).
-													// Statics de lambda : OK pour ce MVP single-avatar. Sous-projet B
-													// devrait remplacer par un signal de gameplay (commande input) plutôt
-													// que d'inférer depuis la position.
-													static float s_prevX = 0.0f;
-													static float s_prevZ = 0.0f;
-													static bool  s_firstFrame = true;
-													const float curX = rs.objectModelMatrix[12];
-													const float curZ = rs.objectModelMatrix[14];
-													const float dx = curX - s_prevX;
-													const float dz = curZ - s_prevZ;
-													const bool movingNow = !s_firstFrame && (dx*dx + dz*dz) > (1e-4f * 1e-4f);
-													s_prevX = curX;
-													s_prevZ = curZ;
-													s_firstFrame = false;
+													auto locals  = m_avatarCrossfade.Sample(
+														m_playerSkinnedMesh->skeleton, nowSec);
+													auto globals = engine::render::skinned::AnimationSampler::ComputeGlobalMatrices(
+														m_playerSkinnedMesh->skeleton, locals);
+													auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
+														m_playerSkinnedMesh->skeleton, globals);
 
-													// --- Transitions de la state machine ---
-													const engine::render::skinned::AnimationClip* startWalkClip =
-														m_playerSkinnedMesh->FindClip("StartWalking");
-													const float stateElapsed = duration<float>(now - m_avatarLocoStateEnterTime).count();
+													// --- B.1 / Task 9 : model matrix depuis CharacterController + m_avatarYaw ---
+													// On lit la position monde directement depuis le CC (deja appele
+													// dans Update *avant* OrbitalCameraController, cf. ligne ~6580),
+													// et on compose la matrice T(feetPos) * R_y(m_avatarYaw).
+													//   - `feetPos.y = ccPos.y - 0.9` : la position du CC est le CENTRE de la
+													//     capsule ; le mesh Y Bot va de Y=0 (pieds) a Y=1.8 (tete) -> on
+													//     redescend de halfHeight (0.9 m) pour poser les pieds au sol.
+													//   - `m_avatarYaw` : aligne le mesh sur la direction de mouvement.
+													//     Init a pi pour que le spawn (avant tout input) ait le perso dos
+													//     a la camera (Mixamo Y Bot face +Z intrinseque ; cam yaw=0 forward
+													//     = -Z ; R_y(pi) tourne le mesh face -> -Z = loin de la camera).
+													//     Avant le fix d'orientation : on appliquait R_y(yaw + pi) avec un
+													//     `+ pi` redondant qui s'additionnait au pi deja contenu dans
+													//     atan2(forward.x, forward.z) -> inversion W/S et Q/D en jeu.
+													//
+													// La matrice rs.objectModelMatrix reste utilisee par le cube fallback
+													// (RecordIndirect plus haut) ; chaque chemin a desormais sa propre source.
+													const engine::math::Vec3 ccPos = m_characterController.GetPosition();
+													const engine::math::Vec3 feetPos{ ccPos.x, ccPos.y - 0.9f, ccPos.z };
+													const engine::math::Mat4 finalModelMat =
+														engine::math::Mat4::Translate(feetPos) *
+														engine::math::Mat4::RotateY(m_avatarYaw);
 
-													switch (m_avatarLocoState) {
-														case AvatarLocomotionState::Idle:
-															if (movingNow) {
-																m_avatarLocoState = AvatarLocomotionState::StartWalking;
-																m_avatarLocoStateEnterTime = now;
-															}
-															break;
-														case AvatarLocomotionState::StartWalking:
-															if (!movingNow) {
-																m_avatarLocoState = AvatarLocomotionState::Idle;
-																m_avatarLocoStateEnterTime = now;
-															} else if (startWalkClip && stateElapsed >= startWalkClip->duration) {
-																m_avatarLocoState = AvatarLocomotionState::Walking;
-																m_avatarLocoStateEnterTime = now;
-															}
-															break;
-														case AvatarLocomotionState::Walking:
-															if (!movingNow) {
-																m_avatarLocoState = AvatarLocomotionState::Idle;
-																m_avatarLocoStateEnterTime = now;
-															}
-															break;
-													}
-
-													// Recalcule stateElapsed après transition éventuelle (entrée d'un nouvel état => 0).
-													const float stateElapsedAfter = duration<float>(now - m_avatarLocoStateEnterTime).count();
-
-													// --- Sélection du clip selon l'état ---
-													const char* clipName = (m_avatarLocoState == AvatarLocomotionState::Idle) ? "Idle"
-																		 : (m_avatarLocoState == AvatarLocomotionState::StartWalking) ? "StartWalking"
-																		 : "Walking";
-													const engine::render::skinned::AnimationClip* selectedClip = m_playerSkinnedMesh->FindClip(clipName);
-													if (!selectedClip || selectedClip->duration <= 0.0f) {
-														// Fallback : tout clip non-zero, sinon le legacy "mixamo.com".
-														for (const auto& c : m_playerSkinnedMesh->clips) {
-															if (c.duration > 0.0f) { selectedClip = &c; break; }
-														}
-													}
-
-													if (selectedClip && selectedClip->duration > 0.0f)
-													{
-														// Temps dans le clip : looped pour Idle/Walking, clampé pour StartWalking
-														// (le clip ne se rejoue pas en boucle — il se joue une fois puis on transite).
-														const float t = (m_avatarLocoState == AvatarLocomotionState::StartWalking)
-																		? std::min(stateElapsedAfter, selectedClip->duration)
-																		: std::fmod(stateElapsedAfter, selectedClip->duration);
-
-														auto locals  = engine::render::skinned::AnimationSampler::SamplePose(
-															m_playerSkinnedMesh->skeleton, *selectedClip, t);
-														auto globals = engine::render::skinned::AnimationSampler::ComputeGlobalMatrices(
-															m_playerSkinnedMesh->skeleton, locals);
-														auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
-															m_playerSkinnedMesh->skeleton, globals);
-
-														// --- Fix orientation 180° (sous-projet A polish) ---
-														// Mixamo Y Bot face +Z par défaut ; convention caméra 3e personne :
-														// l'avatar doit faire face A L'OPPOSE de la caméra (on voit son dos).
-														// On applique une rotation de 180° autour de Y à la model matrix
-														// AVANT de passer à Record. Cette transformation n'est appliquée
-														// qu'à l'avatar skinné — le cube fallback (drawn via Record/RecordIndirect
-														// plus haut) garde sa matrice d'origine.
-														engine::math::Mat4 baseModel;
-														std::memcpy(baseModel.m, rs.objectModelMatrix, sizeof(float) * 16);
-														const engine::math::Mat4 spinY180 =
-															engine::math::Quat::FromAxisAngle(
-																engine::math::Vec3{0.0f, 1.0f, 0.0f}, 3.14159265f).ToMat4();
-														const engine::math::Mat4 finalModelMat = baseModel * spinY180;
-
-														// La matrice modele rs.objectModelMatrix est celle du cube avatar (calculee
-														// dans Update via OrbitalCameraController). On reuse sa position + on applique
-														// la rotation Y 180° pour que l'avatar Y Bot soit a la meme position que le
-														// cube qu'il remplace, mais oriente "dos a la camera".
-														// materialDescriptorSet + materialIndex : meme set/index que le cube draw.
-														const uint32_t skinnedMaterialIndex = (m_avatarMaterialId != 0u)
-															? m_avatarMaterialId
-															: materialCache.GetDefaultMaterialIndex();
-														m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
-															m_vkDeviceContext.GetDevice(), cmd, reg,
-															m_vkSwapchain.GetExtent(),
-															m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
-															m_fgGBufferVelocityId, m_fgDepthId,
-															[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat](VkCommandBuffer innerCmd) {
-																m_skinnedRenderer.Record(
-																	m_vkDeviceContext.GetDevice(), innerCmd,
-																	m_vkSwapchain.GetExtent(),
-																	m_pipeline->GetGeometryPass().GetRenderPassLoad(),
-																	VK_NULL_HANDLE,
-																	rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
-																	*m_playerSkinnedMesh,
-																	finals,
-																	materialCache.GetDescriptorSet(),
-																	finalModelMat.m,
-																	skinnedMaterialIndex);
-															});
-													}
+													// La matrice modele est desormais calculee a partir de cc.GetPosition()
+													// + m_avatarYaw ; le cube placeholder garde sa matrice d'origine (cf.
+													// rs.objectModelMatrix construit dans Update).
+													// materialDescriptorSet + materialIndex : meme set/index que le cube draw.
+													const uint32_t skinnedMaterialIndex = (m_avatarMaterialId != 0u)
+														? m_avatarMaterialId
+														: materialCache.GetDefaultMaterialIndex();
+													m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
+														m_vkDeviceContext.GetDevice(), cmd, reg,
+														m_vkSwapchain.GetExtent(),
+														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
+														m_fgGBufferVelocityId, m_fgDepthId,
+														[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat](VkCommandBuffer innerCmd) {
+															m_skinnedRenderer.Record(
+																m_vkDeviceContext.GetDevice(), innerCmd,
+																m_vkSwapchain.GetExtent(),
+																m_pipeline->GetGeometryPass().GetRenderPassLoad(),
+																VK_NULL_HANDLE,
+																rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+																*m_playerSkinnedMesh,
+																finals,
+																materialCache.GetDescriptorSet(),
+																finalModelMat.m,
+																skinnedMaterialIndex);
+														});
 												}
 
 												// M100 — Task 12 : drawcall terrain chunk (post-Phase-3a).
@@ -6208,6 +6382,23 @@ namespace engine
 					// pour que la 1ere detection de mouvement soit correcte (sans cela
 					// le perso etait "deplace" depuis (0,0,0) au tout 1er tick).
 					m_lastSyncedPosition = out.camera.position;
+
+					// Sous-projet B.1 (post-review fix) : repositionne le CharacterController
+					// au spawn DB. Sans ca, le boot Init laisse le CC a (0, ground+0.9, 0)
+					// et a la 1ere frame post-EnterWorld, cc.Update tourne AVANT le code de
+					// teleport, donc cc.GetPosition() = (0,0,0) overwrite la position spawn
+					// via SetTargetPosition(cc.GetPosition()). SavePositionAsync persiste
+					// ensuite (0,0,0) en DB -> perte de la position spawn de l'utilisateur.
+					// Anti-embedded : max(spawnY, GroundHeightAt+0.9) au cas ou la DB ait
+					// une altitude trop basse pour la capsule (height/2 = 0.9 m).
+					{
+						const float groundY = m_terrainCollider.GroundHeightAt(spawnX, spawnZ);
+						const float ccY = std::max(spawnY, groundY + 0.9f);
+						m_characterController.Init(engine::math::Vec3{ spawnX, ccY, spawnZ });
+						LOG_INFO(Core, "[EnterWorld] CharacterController repositioned to ({:.2f}, {:.2f}, {:.2f}) (groundY={:.2f}, halfHeight=0.9)",
+							spawnX, ccY, spawnZ, groundY);
+					}
+
 					LOG_INFO(Core, "[EnterWorld] camera teleport ({}, {}, {}) yaw={}deg pitch={}deg",
 						spawnX, spawnY, spawnZ, yawDeg, pitchDeg);
 				}
@@ -6556,53 +6747,196 @@ namespace engine
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
-				// Etape 1 vue 3eme personne : controleur orbital (camera derriere une
-				// position cible, qui sera celle de l'avatar dans un PR ulterieur).
-				// Comportement : souris libre par defaut ; clic droit maintenu rotate
-				// la camera autour de la cible (yaw/pitch) ; molette zoom in/out ;
-				// WASD deplace la cible dans le plan XZ et la camera suit.
+				// Vue 3eme personne : controleur orbital pur (camera derriere la
+				// cible). Souris libre par defaut ; clic droit maintenu = rotate
+				// camera autour de la cible (yaw/pitch) ; molette = zoom.
 				//
-				// Chantier 2 : passe la hauteur sol terrain au controleur pour la
-				// collision camera-decor (plus seulement Y=0). 0 si pas de terrain.
+				// B.1 / Task 8 : OrbitalCameraController est devenu camera pure.
+				// B.1 / Task 9 : on tick d'abord le CharacterController (physics +
+				// collision sol) PUIS la camera suit la position resultante via
+				// `SetTargetPosition`. Ordre important : si la camera tournait
+				// avant le CC, son repere (Forward/Right XZ) servirait a projeter
+				// l'input du frame courant mais sa position cible utiliserait la
+				// position de la frame precedente -> 1-frame lag visible.
+				const auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout);
+				m_characterController.Update(static_cast<float>(dt), moveInput, m_terrainCollider);
+				const engine::math::Vec3 ccPos = m_characterController.GetPosition();
+				m_orbitalCameraController.SetTargetPosition(ccPos);
+
+				// Yaw avatar : convention "back-step" simple. On declenche le
+				// mode WalkBack (mesh inchange + anim Walking Backwards)
+				// UNIQUEMENT si la touche back (S) est enfoncee seule, sans
+				// aucune autre direction. Tout autre input (forward, strafe,
+				// diagonale, S+autre direction) repasse en free-mover : le
+				// mesh pivote pour aligner sa face sur la direction de
+				// mouvement, et la state machine joue Walk/Run.
 				//
-				// Convention MMORPG : la souris est LIBRE par defaut (curseur visible,
-				// utilisable pour cliquer sur l'UI HUD). Maintenir le CLIC DROIT pour
-				// faire pivoter la camera autour du personnage. Sans clic droit, la
-				// camera reste fixe par rapport au monde et le perso continue d'etre
-				// dans la vue (la camera est positionnee derriere lui via le yaw
-				// courant). L'avatar suit le yaw camera donc on voit toujours son dos.
+				// L'ancienne heuristique basee sur dot(moveDir, mesh_forward)
+				// donnait Q/D = strafe pur (no pivot) quand le perso etait
+				// deja aligne (apres avoir avance avec W). Resultat : le
+				// mesh ne pivotait plus en Q/D et l'utilisateur ne voyait
+				// aucun mouvement visible (la camera suit, mesh reste centre).
+				// Le simple "pure S" est plus previsible et conforme a la
+				// convention MMO classique (Q/D = strafe avec pivot, S = back).
+				const bool movingBack = IsPureBackInput(m_input);
+				const bool hasMove = (moveInput.moveDirXZ.x != 0.0f || moveInput.moveDirXZ.z != 0.0f);
+				if (hasMove && !movingBack)
+				{
+					// Free-mover : aligne le mesh sur la direction de marche.
+					m_avatarYaw = std::atan2(moveInput.moveDirXZ.x, moveInput.moveDirXZ.z);
+				}
+				// Si movingBack : on garde m_avatarYaw, le mesh reste dos cam
+				// et la state machine bascule en WalkBack ci-dessous.
+
+				// Memorise l'input pour la state machine de locomotion (Task 11
+				// l'etendra a 7 etats — Idle / Walk / Run / Jump / Fall / Land /
+				// Crouch — et lira `m_lastMoveInput` pour decider).
+				m_lastMoveInput = moveInput;
+
+				// --- B.1 / Task 11 : state machine 7 etats + crossfade ---
+				//
+				// Driven par CharacterController.IsGrounded + moveInput. Remplace la
+				// state machine A (qui vivait dans le lambda Geometry, basee sur le
+				// delta de la model matrix entre frames). On dispose ici de signaux
+				// gameplay propres : `grounded` (sol vs air), `moving` (intention
+				// d'input non-nulle), `jumpPressed` (edge sur Space), `run` (Shift).
+				//
+				// Transitions a portee de main :
+				//   - Idle <-> Walk/Run via StartWalking (transition lift-off one-shot).
+				//   - Jump -> Fall apres 40% du clip Jump (= takeoff termine).
+				//   - Fall -> Land au moment ou le CC retouche le sol.
+				//   - Land -> Idle/Walk/Run en fonction de l'input apres fin de Land.
+				//
+				// Trigger crossfade : a chaque transition, on appelle
+				// `m_avatarCrossfade.Play(clip, loops, nowSec)`. Le clip vit dans
+				// `m_playerSkinnedMesh->clips` (storage stable -> pointeur safe
+				// jusqu'au shutdown). Le sampling pleine pose se fait dans le
+				// lambda Geometry via `m_avatarCrossfade.Sample(skel, nowSec)`.
+				if (m_skinnedAvatarReady && m_playerSkinnedMesh)
+				{
+					const bool grounded = m_characterController.IsGrounded();
+					const bool moving = (moveInput.moveDirXZ.x != 0.0f || moveInput.moveDirXZ.z != 0.0f);
+
+					const auto now = std::chrono::steady_clock::now();
+					// nowSec via EngineNowSec : meme reference de temps que les sites de
+					// Sample/Play, evite la perte de precision float 32 quand on utilise
+					// time_since_epoch (~10^9 secondes depuis boot machine).
+					const float nowSec = EngineNowSec();
+					const float stateElapsed = std::chrono::duration<float>(now - m_avatarLocoStateEnterTime).count();
+
+					const engine::render::skinned::AnimationClip* startWalkClip =
+						m_playerSkinnedMesh->FindClip("StartWalking");
+					const engine::render::skinned::AnimationClip* jumpClip =
+						m_playerSkinnedMesh->FindClip("Jump");
+					const engine::render::skinned::AnimationClip* landClip =
+						m_playerSkinnedMesh->FindClip("Land");
+
+					AvatarLocomotionState newState = m_avatarLocoState;
+					if (grounded)
+					{
+						switch (m_avatarLocoState)
+						{
+							case AvatarLocomotionState::Idle:
+								if (moveInput.jumpPressed)        newState = AvatarLocomotionState::Jump;
+								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
+								else if (moving)                  newState = AvatarLocomotionState::StartWalking;
+								break;
+							case AvatarLocomotionState::StartWalking:
+								if (!moving)                      newState = AvatarLocomotionState::Idle;
+								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
+								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
+								else if (startWalkClip && stateElapsed >= startWalkClip->duration)
+									newState = (moveInput.run ? AvatarLocomotionState::Run : AvatarLocomotionState::Walk);
+								break;
+							case AvatarLocomotionState::Walk:
+								if (!moving)                      newState = AvatarLocomotionState::Idle;
+								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
+								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
+								else if (moveInput.run)           newState = AvatarLocomotionState::Run;
+								break;
+							case AvatarLocomotionState::WalkBack:
+								if (!moving)                      newState = AvatarLocomotionState::Idle;
+								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
+								else if (!movingBack)             newState = AvatarLocomotionState::Walk;
+								break;
+							case AvatarLocomotionState::Run:
+								if (!moving)                      newState = AvatarLocomotionState::Idle;
+								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
+								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
+								else if (!moveInput.run)          newState = AvatarLocomotionState::Walk;
+								break;
+							case AvatarLocomotionState::Jump:
+								// Takeoff = first 40% of Jump clip ; then Fall (until grounded).
+								if (jumpClip && stateElapsed >= jumpClip->duration * 0.4f)
+									newState = AvatarLocomotionState::Fall;
+								break;
+							case AvatarLocomotionState::Fall:
+								// Touched ground -> Land.
+								newState = AvatarLocomotionState::Land;
+								break;
+							case AvatarLocomotionState::Land:
+								if (landClip && stateElapsed >= landClip->duration)
+								{
+									if (!moving)                  newState = AvatarLocomotionState::Idle;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
+						}
+					}
+					else
+					{
+						// Not grounded : Jump (takeoff phase) -> Fall after takeoff duration ;
+						// sinon (Walk/Run/Land/Idle qui perdent le sol) -> Fall direct.
+						if (m_avatarLocoState == AvatarLocomotionState::Jump)
+						{
+							if (jumpClip && stateElapsed >= jumpClip->duration * 0.4f)
+								newState = AvatarLocomotionState::Fall;
+						}
+						else if (m_avatarLocoState != AvatarLocomotionState::Fall)
+						{
+							newState = AvatarLocomotionState::Fall;
+						}
+					}
+
+					if (newState != m_avatarLocoState)
+					{
+						// DEBUG B.1 : log chaque transition d'etat pour diagnostiquer
+						// "modèle qui saute toujours". Une fois le bug compris, retirer.
+						LOG_INFO(Render, "[Avatar SM] {} -> {} (grounded={} moving={} jumpPressed={} run={} stateElapsed={:.3f}s)",
+							StateToClipName(m_avatarLocoState),
+							StateToClipName(newState),
+							grounded ? 1 : 0,
+							moving ? 1 : 0,
+							moveInput.jumpPressed ? 1 : 0,
+							moveInput.run ? 1 : 0,
+							stateElapsed);
+
+						m_avatarLocoState = newState;
+						m_avatarLocoStateEnterTime = now;
+
+						// Trigger crossfade vers le clip du nouvel etat. Si le clip est
+						// introuvable (asset manquant -> FindClip == nullptr), on log un
+						// warn une seule fois et on laisse l'animation precedente continuer
+						// (Sample retombera dessus jusqu'a la prochaine transition reussie).
+						const char* clipName = StateToClipName(newState);
+						const engine::render::skinned::AnimationClip* newClip = m_playerSkinnedMesh->FindClip(clipName);
+						if (newClip)
+						{
+							LOG_INFO(Render, "[Avatar SM] Play('{}') duration={:.3f}s loops={}",
+								clipName, newClip->duration, ClipLoops(newState) ? 1 : 0);
+							m_avatarCrossfade.Play(*newClip, ClipLoops(newState), nowSec);
+						}
+						else
+						{
+							LOG_WARN(Render, "[Avatar SM] FindClip('{}') returned nullptr — animation precedente continue", clipName);
+						}
+					}
+				}
+
 				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
-				const auto& camTarget = m_orbitalCameraController.GetTargetPosition();
-				const float groundY = m_terrain.IsValid()
-					? m_terrain.SampleHeightAtWorldXZ(camTarget.x, camTarget.z)
-					: 0.0f;
-
-				// Modificateur de vitesse combine RACE x TERRAIN.
-				// RACE : table id->multiplicateur (placeholder, a tuner gameplay).
-				// L'identifiant race est stocke en string sur AuthUi (m_characterRaceId).
-				// TODO : eventuellement migrer vers la table races (DB) pour que les
-				// game-designers tunent sans recompiler.
-				auto raceMultiplier = [](const std::string& raceId) -> float {
-					if (raceId == "elfes")              return 1.10f; // legers, agiles.
-					if (raceId == "nains")              return 0.85f; // courts sur pattes.
-					if (raceId == "orcs")               return 0.95f;
-					if (raceId == "morts_vivants")      return 0.90f; // demarche raide.
-					if (raceId == "demons")             return 1.05f; // au sol ; vol = autre meca.
-					if (raceId == "chevaliers_dragons") return 1.00f; // monture = autre meca.
-					if (raceId == "humains" || raceId.empty() || raceId == "default") return 1.00f;
-					return 1.00f;
-				};
-				const float raceMul = raceMultiplier(m_authUi.GetSelectedCharacterRaceId());
-
-				// TERRAIN : pour l'instant 1.0, hook pour future query splatmap.
-				// TODO : ajouter TerrainRenderer::SampleSpeedMultiplierAtWorldXZ(x,z)
-				// qui lit le splat CPU (R=grass G=dirt B=rock A=snow) et retourne
-				// une moyenne ponderee (grass=1.0, dirt=0.95, rock=0.90, snow=0.65).
-				constexpr float terrainMul = 1.0f;
-
-				const float speedMul = raceMul * terrainMul;
-				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout,
-					rmbLook, true, out.camera, groundY, speedMul);
+				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, rmbLook, out.camera);
 			}
 
 			// Chat update : uniquement post-EnterWorld. Le rendu pre-game est desactive
@@ -6765,23 +7099,17 @@ namespace engine
 				const float yaw = out.camera.yaw;
 				const float c = std::cos(yaw);
 				const float s = std::sin(yaw);
-				// Etape 5 : bob vertical placeholder quand le perso marche / court.
-				// Idle : pas d'oscillation. L'amplitude est de 4 cm en walk, 7 cm
-				// en run -- visible sans etre desagreable. A remplacer par de
-				// vraies anims squelettiques quand un format anim sera cable.
-				float bobY = 0.0f;
-				const auto loco = m_orbitalCameraController.GetLocomotionState();
-				if (loco != engine::render::OrbitalCameraController::LocomotionState::Idle)
-				{
-					const float bobAmpM = (loco == engine::render::OrbitalCameraController::LocomotionState::Run) ? 0.07f : 0.04f;
-					bobY = std::sin(m_orbitalCameraController.GetWalkBobPhaseRad()) * bobAmpM;
-				}
-				// Le orbital target est a kTargetEyeHeight (1.7 m) au-dessus du sol :
-				// c'est la position des yeux du joueur. L'avatar (mesh feet at mesh-Y=0)
-				// doit etre translate de (target.y - kTargetEyeHeight) pour que ses
-				// pieds soient sur le sol et non flottent dans les airs. groundY ici
-				// est 0 (sol plat) ou la hauteur terrain echantillonnee plus haut.
-				const float feetY = target.y - engine::render::OrbitalCameraController::kTargetEyeHeight + bobY;
+				// B.1 / Task 8 : le bob synthetique (placeholder anim) est supprime
+				// avec la retrogradation d'OrbitalCameraController en camera pure.
+				// L'animation visuelle (walk-bob, vraies anims squelettiques) sera
+				// rebranchee plus tard depuis la state machine de locomotion.
+				//
+				// Plus de kTargetEyeHeight non plus : la cible orbitale n'est plus
+				// systematiquement "yeux a 1.7 m du sol". CharacterController
+				// (Task 9) decidera ou poser la cible (yeux, hanche, ou pieds) et
+				// poussera la position correspondante via SetTargetPosition. Pour
+				// l'instant target reste a (0,0,0) -> avatar pose les pieds en 0.
+				const float feetY = target.y;
 				// IMPORTANT : layout COLUMN-MAJOR. Le shader gbuffer_geometry.vert
 				// reconstruit la mat4 via 4 vec4 (instanceRow0..3), chacun lu en sequence
 				// dans le buffer d'instance ; GLSL mat4(c0,c1,c2,c3) place chaque vec4

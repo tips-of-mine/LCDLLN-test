@@ -81,26 +81,24 @@ namespace engine::render
 			float worldEditorTerrainWorldSizeM, Camera& camera, float extraSpeedMultiplier = 1.0f);
 	};
 
-	/// Controleur camera 3eme personne orbital (post-EnterWorld).
+	/// Controleur camera 3eme personne orbital (post-EnterWorld) -- CAMERA PURE.
 	///
-	/// Maintient un point cible (la position du joueur, future position d'un avatar
-	/// 3D) et calcule la position camera en orbite arriere derriere ce point :
+	/// Maintient un point cible (la position du joueur) et calcule la position
+	/// camera en orbite arriere derriere ce point :
 	///     camera.position = target - forwardDir(yaw, pitch) * distance
 	///
-	/// Inputs :
+	/// Inputs traites en interne :
 	///   * Clic droit + souris : rotation yaw/pitch autour de la cible.
 	///   * Molette : zoom in/out (modifie la distance).
-	///   * WASD/ZQSD : deplace le point cible dans le plan XZ selon l'orientation
-	///     yaw courante. La camera suit automatiquement.
 	///
-	/// La position cible est conservee entre les frames (membre m_target). Engine
-	/// peut la (re)setter explicitement via \ref SetTargetPosition (utilise au
-	/// spawn EnterWorld pour aligner sur la position du personnage).
+	/// Le mouvement de la cible (WASD/ZQSD, saut, accroupi, collision sol) n'est
+	/// plus gere ici : c'est la responsabilite de CharacterController, qui
+	/// pousse la position resultante via \ref SetTargetPosition chaque frame.
+	/// La camera expose GetForwardXZ/GetRightXZ pour que l'orchestrateur projette
+	/// l'input clavier dans le repere camera courant.
 	class OrbitalCameraController
 	{
 	public:
-		static constexpr float kWalkSpeed       = 5.0f;
-		static constexpr float kRunSpeed        = 10.0f;
 		static constexpr float kPitchMin        = -60.0f * 3.14159265f / 180.0f; ///< 3eme personne : pas de plongee verticale extreme.
 		static constexpr float kPitchMax        = +75.0f * 3.14159265f / 180.0f;
 		static constexpr float kDistanceMin     = 1.0f;
@@ -110,52 +108,43 @@ namespace engine::render
 		// Reglable via molette de 1m a 20m.
 		static constexpr float kDistanceDefault = 3.0f;
 		static constexpr float kZoomStep        = 1.0f;   ///< Increment molette.
-		/// Hauteur d'epaule par rapport au sol (1.7 m ~ taille humaine adulte).
-		static constexpr float kTargetEyeHeight = 1.7f;
 
+		/// Repositionne la cible orbitale (point regarde par la camera) en monde.
+		/// Marque aussi le controller comme initialise (cf. m_initialized).
 		void SetTargetPosition(const engine::math::Vec3& worldPos);
+		/// Renvoie la position cible courante (point regarde par la camera).
 		const engine::math::Vec3& GetTargetPosition() const { return m_target; }
+		/// Distance camera-cible courante (modifiee par la molette de souris).
 		float GetDistance() const { return m_distance; }
 
-		/// Etat de locomotion derive du dernier Update : 0=idle, 1=walk, 2=run.
-		enum class LocomotionState : uint8_t { Idle = 0, Walk = 1, Run = 2 };
-		LocomotionState GetLocomotionState() const { return m_locomotion; }
-		/// Phase d'animation de marche en radians, monotone croissante. Permet a
-		/// l'avatar visuel d'osciller verticalement (placeholder bob) pour suggerer
-		/// un mouvement avant de cabler de vraies animations.
-		float GetWalkBobPhaseRad() const { return m_walkBobPhase; }
+		/// Renvoie le vecteur "avant" camera projete sur le plan XZ (Y=0).
+		/// Utilise par Engine pour transformer l'input clavier (W/S) en direction
+		/// monde, dans le repere camera courant.
+		engine::math::Vec3 GetForwardXZ() const;
+		/// Renvoie le vecteur "droite" camera projete sur le plan XZ (Y=0).
+		/// Utilise par Engine pour transformer l'input clavier (A/D) en direction
+		/// monde, dans le repere camera courant.
+		engine::math::Vec3 GetRightXZ() const;
+		/// Yaw camera en radians (utile pour debug et orientation coherente entre
+		/// camera et avatar/character controller).
+		float GetYawRad() const;
 
-		/// Update logique a appeler chaque frame in-game. Met a jour m_target / yaw /
-		/// pitch / m_distance selon l'input, puis ecrit camera.position et
-		/// camera.yaw/pitch pour le rendu.
+		/// Update logique a appeler chaque frame in-game. Met uniquement a jour la
+		/// camera (yaw/pitch via souris, distance via molette) et derive
+		/// camera.position depuis m_target. Le mouvement de m_target est desormais
+		/// pilote a l'exterieur par CharacterController (via SetTargetPosition).
 		///
-		/// \p groundYAtTarget : hauteur du sol (en metres monde) sous la position
-		/// cible courante, calculee par le caller via TerrainRenderer::SampleHeightAtWorldXZ.
-		/// Sert a clamper la camera au-dessus du terrain quand l'utilisateur
-		/// regarde fortement vers le bas. Passer 0 pour un sol plat (sans terrain).
-		///
-		/// \p speedMultiplier : facteur multiplicatif applique a la vitesse de
-		/// marche/course/accroupi. Permet au caller de combiner :
-		///   * un modificateur de race (ex. elfes 1.10x, nains 0.85x)
-		///   * un modificateur de terrain (ex. sable 0.65x, neige 0.70x, herbe 1.0x)
-		///   * un modificateur d'etat (buff sprint, debuff slow...)
-		/// 1.0f = vitesse de base nominale (kWalkSpeed/kRunSpeed). Borne [0.05, 5.0].
-		void Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
-			MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera,
-			float groundYAtTarget = 0.0f, float speedMultiplier = 1.0f);
+		/// \p applyMouseLook : false coupe yaw/pitch (ex. quand le clic droit
+		/// est requis et absent, ou qu'ImGui capte la souris).
+		void Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel,
+		            bool invertY, bool applyMouseLook, Camera& camera);
 
 	private:
-		engine::math::Vec3 m_target{ 0.0f, kTargetEyeHeight, 0.0f };
+		engine::math::Vec3 m_target{ 0.0f, 0.0f, 0.0f };
 		float              m_distance = kDistanceDefault;
 		bool               m_initialized = false;
-		LocomotionState    m_locomotion = LocomotionState::Idle;
-		float              m_walkBobPhase = 0.0f;
-		// Saut : vitesse verticale (m/s) et offset Y (m) au-dessus du sol. A 0
-		// quand le perso est au sol. Space declenche un saut quand grounded.
-		float              m_verticalVelocityY = 0.0f;
-		float              m_verticalOffsetY   = 0.0f;
-		// Accroupi : maintenir Control. Reduit la hauteur cible et la vitesse
-		// horizontale.
-		bool               m_isCrouching = false;
+		/// Copie du dernier yaw camera, utilisee par les getters Forward/Right/Yaw.
+		/// Mise a jour en fin de Update.
+		float              m_lastYaw = 0.0f;
 	};
 }

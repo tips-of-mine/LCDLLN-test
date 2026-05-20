@@ -197,6 +197,31 @@ namespace engine::gameplay
 		bool grounded = false;
 		bool didJumpThisFrame = false;
 
+		// Sticky ground probe : sans ca, quand le perso est immobile
+		// (vel ~ 0 -> disp ~ 0), la boucle de sweep ne touche rien et
+		// laisse `grounded` a false. Frame suivante, m_isGrounded=false
+		// declenche la gravite, le sweep snape au sol, m_isGrounded=true.
+		// Cycle infini a 60 Hz qui fait flipper la state machine d'anim
+		// entre Land et Fall (visible dans le log d'exec). On probe donc
+		// d'abord un sweep court vers le bas pour detecter si le perso
+		// est encore pose sur un sol walkable, et on conserve grounded.
+		if (m_isGrounded && !isFlying && !inWater)
+		{
+			constexpr float kGroundProbeDist = 0.05f;  // 5 cm
+			const engine::math::Vec3 probeEnd =
+				pos - engine::math::Vec3(0.0f, kGroundProbeDist, 0.0f);
+			IWorldCollider::SweepHit probeHit{};
+			probeHit.hit = false;
+			probeHit.fraction = 1.0f;
+			probeHit.normal = engine::math::Vec3(0.0f, 1.0f, 0.0f);
+			if (world.SweepCapsule(m_capsule, pos, probeEnd, probeHit) &&
+				probeHit.hit && probeHit.fraction < 1.0f &&
+				IsWalkable(probeHit.normal, maxSlopeCos))
+			{
+				grounded = true;
+			}
+		}
+
 		// Water vertical control and surface breaching.
 		if (inWater)
 		{
@@ -226,6 +251,10 @@ namespace engine::gameplay
 			m_timeSinceJumpPressedSec = m_cfg.jumpBufferSec + 1.0f;
 			m_timeSinceLeftGroundSec = m_cfg.coyoteTimeSec + 1.0f;
 			m_isGrounded = false;
+			// Cancel the sticky-ground hit we may have detected just above :
+			// si on saute, on quitte explicitement le sol et on ne veut
+			// PAS que m_isGrounded reste true (sinon re-jump immediate).
+			grounded = false;
 			didJumpThisFrame = true;
 		}
 

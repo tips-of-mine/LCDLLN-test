@@ -62,6 +62,44 @@ namespace engine::math
 			return r;
 		}
 
+		/// Returns the 4x4 identity matrix.
+		/// Effet de bord : aucun.
+		static Mat4 Identity()
+		{
+			return Mat4{};  // default ctor already builds identity
+		}
+
+		/// Builds a pure translation matrix (column-major).
+		/// La translation vit dans la 4e colonne (m[12..14]).
+		/// \param t Vecteur de translation, en unites monde (metres).
+		/// Effet de bord : aucun.
+		static Mat4 Translate(const Vec3& t)
+		{
+			Mat4 m;
+			m.m[12] = t.x;
+			m.m[13] = t.y;
+			m.m[14] = t.z;
+			return m;
+		}
+
+		/// Builds a rotation matrix around the Y axis (yaw).
+		/// Convention column-major, repere main droite : RotateY(+pi/2) envoie
+		/// l'axe X local vers -Z monde et l'axe Z local vers +X monde.
+		/// \param radians Angle de rotation en radians (positif = sens trigo
+		///                vu de +Y vers l'origine).
+		/// Effet de bord : aucun.
+		static Mat4 RotateY(float radians)
+		{
+			const float c = std::cos(radians);
+			const float s = std::sin(radians);
+			Mat4 m;
+			m.m[0]  = c;
+			m.m[2]  = -s;
+			m.m[8]  = s;
+			m.m[10] = c;
+			return m;
+		}
+
 		/// Builds perspective matrix for Vulkan (Y down in NDC, Z in [0, 1]).
 		/// \param fovYRad Vertical FOV in radians.
 		/// \param aspect Width/height.

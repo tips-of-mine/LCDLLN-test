@@ -50,6 +50,12 @@ public:
     // Requires globals.size() == skeleton.bones.size().
     static std::vector<engine::math::Mat4> ComputeFinalMatrices(const Skeleton& skeleton,
                                                                  const std::vector<engine::math::Mat4>& globals);
+
+    // Composes a translation/rotation/scale triplet into a 4x4 matrix (column-major).
+    // Used by SamplePose internally and by AnimationCrossfade for pose interpolation.
+    static engine::math::Mat4 ComposeTRS(const engine::math::Vec3& translation,
+                                          const engine::math::Quat& rotation,
+                                          const engine::math::Vec3& scale);
 };
 
 }  // namespace engine::render::skinned

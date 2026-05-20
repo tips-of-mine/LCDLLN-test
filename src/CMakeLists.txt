@@ -686,6 +686,26 @@ elseif(UNIX)
   lcdlln_add_simple_test(skinned_mesh_loader_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/SkinnedMeshLoaderTests.cpp)
 
+  # Sous-projet B.1 (locomotion state machine) etape 1/14 : Mat4 helpers.
+  # Identity / Translate / RotateY utilises par la state machine pour composer
+  # T(pos) * R_y(yaw) par frame (model matrix de l'avatar).
+  # Math.h est header-only, pas de .cpp a compiler.
+  lcdlln_add_simple_test(mat4_helpers_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/math/tests/Mat4HelpersTests.cpp)
+
+  # Sous-projet B.1 (locomotion state machine) etape 3/14 : AnimationCrossfade.
+  # Tests du blend lineaire TRS entre 2 clips (lerp/slerp/lerp) sur 0.15s.
+  lcdlln_add_simple_test(animation_crossfade_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AnimationCrossfadeTests.cpp)
+
+  # Sous-projet B.1 (locomotion state machine) etape 6/14 : TerrainCollider.
+  # Tests du fallback "no terrain bound" (GroundHeightAt = 0, SweepCapsule
+  # detection traversee Y=0) + edge cases (sweep ascendant, sweep horizontal).
+  # Le comportement "avec terrain" est valide au smoke test visuel (Task 13)
+  # car instancier un TerrainRenderer requiert un VkDevice.
+  lcdlln_add_simple_test(terrain_collider_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/TerrainColliderTests.cpp)
+
   # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
   lcdlln_add_simple_test(vmap_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/vmap/VMapManagerTests.cpp

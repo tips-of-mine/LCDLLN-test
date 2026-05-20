@@ -1,0 +1,78 @@
+#pragma once
+
+#include "src/client/render/skinned/AnimationClip.h"
+#include "src/client/render/skinned/Skeleton.h"
+#include "src/shared/math/Math.h"
+
+#include <optional>
+#include <vector>
+
+namespace engine::render::skinned
+{
+
+/// Une clip en cours de lecture (current ou previous pendant un crossfade).
+///
+/// La duree de vie du AnimationClip pointe par `clip` doit etre superieure ou
+/// egale a celle de cette struct : ActiveAnimation ne possede pas le clip.
+struct ActiveAnimation
+{
+    const AnimationClip* clip = nullptr;  ///< Non-owning ; duree de vie >= cette struct.
+    float startTime = 0.0f;               ///< Temps absolu (secondes) au moment du Play.
+    bool  loops = true;                   ///< true = wrap (idle, walk) ; false = clamp (jump, land).
+};
+
+/// Crossfade entre deux animations.
+///
+/// Quand Play() est appele alors qu'une autre clip est en cours, l'ancienne est
+/// conservee comme "previous" et un blend lineaire commence sur
+/// kCrossfadeDuration secondes. Au-dela de cette duree, previous est libere et
+/// seul current reste actif.
+///
+/// Le blend est fait au niveau TRS (translation lerp, rotation slerp, scale
+/// lerp) puis recompose via AnimationSampler::ComposeTRS — un lerp naif sur les
+/// matrices serait faux pour la rotation.
+class AnimationCrossfade
+{
+public:
+    /// Duree (secondes) du blend declenche par Play() pendant qu'une clip joue
+    /// deja. 150 ms = compromis "imperceptible" / "snap perceptible" valide par
+    /// la litterature anim runtime.
+    static constexpr float kCrossfadeDuration = 0.15f;
+
+    /// Demarre une nouvelle clip. Si une clip est deja en cours et qu'elle est
+    /// differente de `newClip`, declenche un blend de kCrossfadeDuration secondes.
+    /// Si la meme clip est deja active : no-op (evite reset du temps + glitch
+    /// visuel quand un caller appelle Play() chaque frame).
+    ///
+    /// \param newClip Clip a jouer. Sa duree de vie doit couvrir tous les futurs
+    ///                appels a Sample() qui referencent cette clip.
+    /// \param loops   true = boucle (idle, walk, run) ; false = clamp a la fin
+    ///                (jump, land, attack one-shot).
+    /// \param now     Temps absolu (secondes) — usuellement Engine::time.
+    void Play(const AnimationClip& newClip, bool loops, float now);
+
+    /// Echantillonne la pose locale (matrice 4x4 par bone) au temps `now`.
+    ///
+    /// Si un crossfade est en cours (now - crossfadeStartTime < kCrossfadeDuration),
+    /// interpole entre les poses previous et current par TRS (lerp/slerp/lerp).
+    /// Sinon, renvoie la pose de current. Si aucune clip n'est active, renvoie
+    /// la bind pose (bindLocal de chaque bone).
+    ///
+    /// \param skeleton Squelette de reference (definit le nombre de bones et la bind pose).
+    /// \param now      Temps absolu (secondes) — meme horloge que Play().
+    /// \return Vecteur de matrices locales 4x4 (column-major), aligne sur skeleton.bones.
+    std::vector<engine::math::Mat4> Sample(const Skeleton& skeleton, float now) const;
+
+private:
+    ActiveAnimation                m_current;
+    std::optional<ActiveAnimation> m_previous;
+    float                          m_crossfadeStartTime = 0.0f;
+
+    /// Echantillonne une seule clip a `now` en respectant loops vs clamp.
+    /// Si anim.clip est null ou de duree nulle, renvoie un vecteur vide.
+    static std::vector<engine::math::Mat4> SampleSingle(const Skeleton& skel,
+                                                         const ActiveAnimation& anim,
+                                                         float now);
+};
+
+}  // namespace engine::render::skinned

@@ -494,18 +494,23 @@ namespace engine
 		///              ressources Vulkan dependent du device, pas du pipeline).
 		engine::render::skinned::SkinnedRenderer                  m_skinnedRenderer;
 		/// Sous-projet C MVP — Pointeur vers le mesh skinned de la race du
-		/// perso courant. Assigne a EnterWorld depuis m_raceMeshes (cf.
-		/// Engine::GetRaceMesh, Task 7). Au boot : reste null tant qu'aucun
-		/// EnterWorld n'a eu lieu (l'avatar n'est pas dessine, le cube
-		/// placeholder prend le relais via m_skinnedAvatarReady = false).
+		/// perso courant. Pointe par defaut vers m_raceMeshes["humains"] au
+		/// boot (si le mesh humain a ete charge avec succes ; null sinon, et
+		/// l'avatar fallback sur le cube placeholder via m_skinnedAvatarReady
+		/// = false). Sera reassigne par EnterWorld (Task 8) depuis le race_str
+		/// du payload — cf. Engine::GetRaceMesh (Task 7) qui resout race_str
+		/// -> SkinnedMesh* via m_raceMeshes avec fallback humains.
 		engine::render::skinned::SkinnedMesh*                     m_currentSkinnedMesh = nullptr;
 		/// Sous-projet C MVP — Map race_str -> mesh skinned + clips charges
-		/// au boot. Remplit a partir de la liste retournee par
-		/// CharacterCreationPresenter::GetRaces() (chargee par
-		/// m_characterCreationPresenter.Init avant Engine::Init). Seules les
-		/// races avec meshPath non vide sont chargees ; les autres sont
-		/// silencieusement skip (l'utilisateur ne pourra pas creer un perso
-		/// avec cette race tant que le mesh n'est pas defini).
+		/// au boot. Remplit a partir d'un CharacterCreationPresenter local
+		/// (instancie dans le bloc skinned-pipeline d'Engine::Init, Init()
+		/// parse races.json synchronement, lifetime limitee au bloc). Engine
+		/// n'a pas (encore) de membre presenter permanent ; le parsing est
+		/// donc fait 2x au worst-case (ici au boot + une fois plus tard via
+		/// l'AuthUI quand l'utilisateur ouvre l'ecran de creation perso).
+		/// Seules les races avec meshPath non vide sont chargees ; les
+		/// autres sont silencieusement skip (l'utilisateur ne pourra pas
+		/// creer un perso avec cette race tant que le mesh n'est pas defini).
 		///
 		/// Cycle de vie : peuple au boot dans le bloc skinned-pipeline, libere
 		/// au Shutdown (boucle sur la map -> SkinnedMesh::Destroy avant

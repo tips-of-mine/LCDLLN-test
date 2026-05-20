@@ -3,6 +3,7 @@
 #include "src/shared/Character/Json.h"
 
 #include <string>
+#include <utility>
 
 namespace engine::character
 {

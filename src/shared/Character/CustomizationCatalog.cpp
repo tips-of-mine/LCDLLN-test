@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <utility>
 
 namespace engine::character
 {

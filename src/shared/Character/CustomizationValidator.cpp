@@ -1,5 +1,7 @@
 #include "src/shared/Character/CustomizationValidator.h"
 
+#include <utility>
+
 namespace engine::character
 {
     ValidationResult ValidateCustomization(const CustomizationCatalog& catalog,

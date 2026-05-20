@@ -186,10 +186,15 @@ uint8   bodyType
 uint8   facialHair
 uint8   featureCount
 featureCount × {
-    uint8  keyLen ; keyLen bytes (featureKey UTF-8)
+    uint16 keyLen ; keyLen bytes (featureKey UTF-8)   // via le primitif WriteString/ReadString (protocole v1)
     uint8  index
 }
 ```
+
+> **Note d'implémentation (figé)** : les featureKeys sont sérialisées avec le primitif
+> `ByteWriter::WriteString` / `ByteReader::ReadString` (préfixe de longueur **uint16**, protocole v1),
+> et non un `uint8 keyLen` comme esquissé initialement. Build et Parse étant symétriques, le round-trip
+> est garanti (testé).
 
 - **Parsing tolérant** : un lecteur d'une version ≥ celle reçue lit les champs connus ; un
   `blockVersion` inconnu (plus récent) → rejet propre. L'ajout futur de champs (métriques continues

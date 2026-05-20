@@ -808,6 +808,11 @@ add_executable(character_list_payloads_tests src/shared/network/CharacterListPay
 target_link_libraries(character_list_payloads_tests PRIVATE engine_core)
 add_test(NAME character_list_payloads_tests COMMAND character_list_payloads_tests)
 
+# Slice 1 customization — CHARACTER_CREATE payload round-trip tests
+add_executable(character_create_payloads_tests src/shared/network/CharacterCreatePayloadsTests.cpp)
+target_link_libraries(character_create_payloads_tests PRIVATE engine_core)
+add_test(NAME character_create_payloads_tests COMMAND character_create_payloads_tests)
+
 # Phase 3.6.5: CHARACTER_SAVE_POSITION request/response payload round-trip tests
 add_executable(character_save_position_payloads_tests src/shared/network/CharacterSavePositionPayloadsTests.cpp)
 target_link_libraries(character_save_position_payloads_tests PRIVATE engine_core)

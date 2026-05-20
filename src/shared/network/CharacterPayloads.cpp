@@ -7,6 +7,68 @@
 
 namespace engine::network
 {
+	namespace
+	{
+		// Slice 1 — bloc customization versionné (wire). Version 1 :
+		// 9 octets fixes (version + 8 champs discrets) + featureCount + features.
+		constexpr uint8_t kCustomizationBlockVersion = 1u;
+
+		bool WriteCustomizationBlock(ByteWriter& w, const CharacterCustomization& c)
+		{
+			const uint8_t head[9] = {
+				kCustomizationBlockVersion,
+				c.faceType, c.hairStyle, c.skinColorIdx, c.hairColorIdx, c.eyeColorIdx,
+				c.bodyFrame, c.bodyType, c.facialHair
+			};
+			if (!w.WriteBytes(head, sizeof(head)))
+				return false;
+			const size_t n = c.racialFeatures.size() > 255u ? 255u : c.racialFeatures.size();
+			const uint8_t featureCount = static_cast<uint8_t>(n);
+			if (!w.WriteBytes(&featureCount, 1u))
+				return false;
+			for (size_t i = 0; i < n; ++i)
+			{
+				if (!w.WriteString(c.racialFeatures[i].first))
+					return false;
+				const uint8_t idx = c.racialFeatures[i].second;
+				if (!w.WriteBytes(&idx, 1u))
+					return false;
+			}
+			return true;
+		}
+
+		bool ReadCustomizationBlock(ByteReader& r, CharacterCustomization& c)
+		{
+			uint8_t head[9] = {0};
+			if (!r.ReadBytes(head, sizeof(head)))
+				return false;
+			if (head[0] != kCustomizationBlockVersion)
+				return false; // version inconnue / plus récente → rejet propre
+			c.faceType     = head[1];
+			c.hairStyle    = head[2];
+			c.skinColorIdx = head[3];
+			c.hairColorIdx = head[4];
+			c.eyeColorIdx  = head[5];
+			c.bodyFrame    = head[6];
+			c.bodyType     = head[7];
+			c.facialHair   = head[8];
+			uint8_t featureCount = 0;
+			if (!r.ReadBytes(&featureCount, 1u))
+				return false;
+			c.racialFeatures.clear();
+			c.racialFeatures.reserve(featureCount);
+			for (uint8_t i = 0; i < featureCount; ++i)
+			{
+				std::string key;
+				uint8_t idx = 0;
+				if (!r.ReadString(key) || !r.ReadBytes(&idx, 1u))
+					return false;
+				c.racialFeatures.emplace_back(std::move(key), idx);
+			}
+			return true;
+		}
+	}
+
 	// -------------------------------------------------------------------------
 	// ParseCharacterCreateRequestPayload
 	// M39.1: reads name (string) + raceId (string) + classId (string)
@@ -35,31 +97,11 @@ namespace engine::network
 			if (!r.ReadString(out.classId))
 				return std::nullopt;
 		}
-		// Customization: 5 bytes, all optional.
-		if (r.Remaining() >= 1u)
+		// Customization — bloc versionné (slice 1). Optionnel : absent → valeurs par défaut.
+		if (r.Remaining() > 0)
 		{
-			uint8_t b = 0;
-			if (r.ReadBytes(&b, 1u)) out.customization.faceType = b;
-		}
-		if (r.Remaining() >= 1u)
-		{
-			uint8_t b = 0;
-			if (r.ReadBytes(&b, 1u)) out.customization.hairStyle = b;
-		}
-		if (r.Remaining() >= 1u)
-		{
-			uint8_t b = 0;
-			if (r.ReadBytes(&b, 1u)) out.customization.skinColorIdx = b;
-		}
-		if (r.Remaining() >= 1u)
-		{
-			uint8_t b = 0;
-			if (r.ReadBytes(&b, 1u)) out.customization.hairColorIdx = b;
-		}
-		if (r.Remaining() >= 1u)
-		{
-			uint8_t b = 0;
-			if (r.ReadBytes(&b, 1u)) out.customization.eyeColorIdx = b;
+			if (!ReadCustomizationBlock(r, out.customization))
+				return std::nullopt;
 		}
 
 		return out;
@@ -86,15 +128,8 @@ namespace engine::network
 		if (!w.WriteString(classId))
 			return {};
 
-		// Customization (5 bytes).
-		const uint8_t customBytes[5] = {
-			customization.faceType,
-			customization.hairStyle,
-			customization.skinColorIdx,
-			customization.hairColorIdx,
-			customization.eyeColorIdx
-		};
-		if (!w.WriteBytes(customBytes, 5u))
+		// Customization — bloc versionné (slice 1). Wire-breaking vs le format 5 octets de M39.1.
+		if (!WriteCustomizationBlock(w, customization))
 			return {};
 
 		buf.resize(w.Offset());
@@ -211,6 +246,9 @@ namespace engine::network
 			// Phase 3.8 — race/class strings (length-prefixed UTF-8).
 			if (!r.ReadString(e.race_str) || !r.ReadString(e.class_str))
 				return std::nullopt;
+			// Slice 1 — bloc customization versionné.
+			if (!ReadCustomizationBlock(r, e.customization))
+				return std::nullopt;
 			out.entries.push_back(std::move(e));
 		}
 		return out;
@@ -254,6 +292,9 @@ namespace engine::network
 				}
 				// Phase 3.8 — race / class strings.
 				if (!w.WriteString(e.race_str) || !w.WriteString(e.class_str))
+					return {};
+				// Slice 1 — bloc customization versionné.
+				if (!WriteCustomizationBlock(w, e.customization))
 					return {};
 			}
 		}

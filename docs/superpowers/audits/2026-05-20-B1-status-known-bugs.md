@@ -48,7 +48,53 @@ Locomotion state machine production-ready en local, qui transforme la state mach
 - `e9f65a6` — **WalkBack + nouveau Jump** : chargement de `Walking Backwards No Skin.fbx` et remplacement du Jump par `Jumping No Skin.fbx`. Nouvel état `AvatarLocomotionState::WalkBack`. Logique back-step initiale basée sur `dot(moveDir, mesh_forward)`.
 - `91d7279` — **fix mapping AZERTY + Q/D pivot** : `BuildMoveInput` discrimine WASD vs ZQSD via `controls.movement_layout` (sinon les deux touches W et Z faisaient avancer en AZERTY). Back-step simplifié : détection directe « S enfoncée seule » (l'heuristique vectorielle précédente rendait Q/D = strafe pur invisible quand le perso était déjà aligné forward).
 
+## Corrections session debug (2026-05-21, branche `claude/review-bugs-status-9lkTj`)
+
+Les bugs §1/§3, §2bis et §2 ci-dessous ont été investigués et corrigés. Les
+corrections sont **client uniquement** (rendu / input / animation) — **pas de
+redéploiement serveur**.
+
+- **§1 / §3 — caméra qui « décroche » du modèle → root motion non strippé.**
+  Diagnostic : la boucle est mono-thread (`Update()` → `SwapRenderState()` →
+  `Render()`), donc pas de 1-frame lag réel entre mesh et caméra (les deux lisent
+  la même `ccPos` dans la frame). La vraie cause : les clips Mixamo importés ne
+  sont pas « In Place » ; leur Hips (root bone) translate horizontalement, et
+  `AnimationCrossfade::Sample` appliquait cette translation telle quelle. Comme la
+  position monde est déjà pilotée par `CharacterController`, le mesh glissait
+  par-dessus la position CC puis snappait au loop → la caméra (qui suit `ccPos`)
+  semblait décrocher.
+  Fix : `AnimationCrossfade::SetRootMotionLockXZ(true)` (nouveau flag, off par
+  défaut) verrouille la translation **X/Z** du/des bone(s) racine
+  (`parentIndex == -1`) sur leur bind pose, **en conservant Y** (bob naturel de la
+  marche). Appliqué sur les deux chemins de `Sample` (pose courante + blend
+  crossfade). Activé par l'Engine au boot de l'avatar.
+  Reste en suspens : le cadrage vertical (cause secondaire, l'axe optique vise
+  `ccPos + (0,1,0)` ≈ 1,9 m au-dessus des pieds) — laissé tel quel volontairement,
+  à réévaluer après validation visuelle du fix root motion.
+- **§2bis — recul de travers après strafe → `m_avatarYaw` non reset.**
+  Le `CharacterController` bouge bien en world-space (le déplacement physique en
+  `S` seul était déjà correct, vers la caméra) ; seul le **yaw visuel** dérivait.
+  Fix : en back-step (`movingBack`), on reforce `m_avatarYaw` sur le forward
+  caméra (`atan2(camFwd.x, camFwd.z)`) à chaque frame → le mesh reste « dos cam »
+  quel que soit le yaw résiduel d'un strafe précédent. Corrige aussi le critère
+  §11.5 (S seul dos cam après rotation caméra).
+- **§2 — inputs combinés.** Pas de bug fonctionnel : `S+autre direction` n'est pas
+  « pure back » → free-mover diagonal (pivot mesh + Walk), cohérent. Avec le fix
+  §2bis le comportement est prévisible. Risque mineur restant (polish) : toggle
+  rapide `S` ↔ `S+Q` → snap de yaw + crossfade WalkBack↔Walk.
+
+Tests : `animation_crossfade_tests` étendu (+4 cas : lock off = root motion
+appliqué, lock on = X/Z → bind & Y conservé, bone enfant intact, lock actif
+pendant un crossfade). Compilé + exécuté localement : 9/9 OK.
+
+⚠️ **Validation visuelle non effectuée** (environnement sans build Vulkan / GPU) :
+les 7 critères du smoke test §11 doivent être re-déroulés en jeu sur cette branche.
+
 ## Bugs en suspens (à traiter dans une session debug ultérieure)
+
+> NOTE 2026-05-21 : les §1, §2, §2bis et §3 ci-dessous ont été **corrigés** (cf.
+> section « Corrections session debug » plus haut). Ils restent décrits ici pour
+> l'historique du diagnostic ; à re-valider visuellement en jeu.
 
 ### 1. Caméra pas bien fixée au modèle pendant le mouvement
 

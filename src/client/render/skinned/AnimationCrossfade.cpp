@@ -7,6 +7,31 @@
 namespace engine::render::skinned
 {
 
+namespace
+{
+/// B.1 (fix audit §1/§3) — Verrouille la translation horizontale (X,Z) du/des
+/// bone(s) racine (parentIndex == -1, typiquement le Hips) sur leur bind pose.
+/// La composante verticale (Y) est conservee pour garder le bob naturel de la
+/// marche. Voir AnimationCrossfade::SetRootMotionLockXZ pour le pourquoi.
+///
+/// `pose` contient des matrices LOCALES (column-major) alignees sur
+/// skeleton.bones ; pour un bone racine, sa transform locale EST son offset
+/// global (ComputeGlobalMatrices : globals[root] = locals[root]).
+void LockRootMotionXZ(const Skeleton& skeleton, std::vector<engine::math::Mat4>& pose)
+{
+    const size_t n = std::min(pose.size(), skeleton.bones.size());
+    for (size_t i = 0; i < n; ++i)
+    {
+        if (skeleton.bones[i].parentIndex == -1)
+        {
+            // Translation en m[12]/m[13]/m[14] (cf. AnimationSampler::ComposeTRS).
+            pose[i].m[12] = skeleton.bones[i].bindLocal.m[12];
+            pose[i].m[14] = skeleton.bones[i].bindLocal.m[14];
+        }
+    }
+}
+}  // namespace
+
 /// Demarre une nouvelle clip. Voir AnimationCrossfade::Play (header) pour la
 /// semantique complete (no-op si meme clip, blend si une autre joue deja).
 void AnimationCrossfade::Play(const AnimationClip& newClip, bool loops, float now)
@@ -63,6 +88,7 @@ AnimationCrossfade::Sample(const Skeleton& skeleton, float now) const
     // Pas de previous OU crossfade termine : renvoie current.
     const float crossfadeElapsed = now - m_crossfadeStartTime;
     if (!m_previous.has_value() || crossfadeElapsed >= kCrossfadeDuration) {
+        if (m_lockRootMotionXZ) LockRootMotionXZ(skeleton, curPose);
         return curPose;
     }
 
@@ -115,6 +141,7 @@ AnimationCrossfade::Sample(const Skeleton& skeleton, float now) const
         };
         blended[i] = AnimationSampler::ComposeTRS(blendedT, blendedR, blendedS);
     }
+    if (m_lockRootMotionXZ) LockRootMotionXZ(skeleton, blended);
     return blended;
 }
 

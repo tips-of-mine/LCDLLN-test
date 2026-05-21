@@ -4024,6 +4024,11 @@ namespace engine
 														m_playerAnimStartTime = std::chrono::steady_clock::now();
 														m_avatarLocoStateEnterTime = m_playerAnimStartTime;
 														m_skinnedAvatarReady = true;
+														// B.1 (fix audit §1/§3) : les clips Mixamo ne sont pas "In Place" ;
+														// la position monde est pilotee par CharacterController. On verrouille
+														// donc le root motion horizontal (Hips) pour que le mesh reste colle a
+														// la position CC (et donc a la camera) au lieu de glisser/snapper.
+														m_avatarCrossfade.SetRootMotionLockXZ(true);
 														LOG_INFO(Render, "[Engine] Default avatar = humains ({} bones, {} clips)",
 															m_currentSkinnedMesh->skeleton.bones.size(),
 															m_currentSkinnedMesh->clips.size());
@@ -6864,8 +6869,22 @@ namespace engine
 					// Free-mover : aligne le mesh sur la direction de marche.
 					m_avatarYaw = std::atan2(moveInput.moveDirXZ.x, moveInput.moveDirXZ.z);
 				}
-				// Si movingBack : on garde m_avatarYaw, le mesh reste dos cam
-				// et la state machine bascule en WalkBack ci-dessous.
+				else if (movingBack)
+				{
+					// Back-step (S seul) : le mesh doit rester "dos camera", c.-a-d.
+					// face dans la direction regardee par la camera, quel que soit le
+					// yaw residuel d'un strafe Q/D precedent. Sans ce reseed, apres un
+					// strafe le mesh gardait son orientation laterale et reculait
+					// visuellement de travers (bug audit B.1 §2bis). On reforce donc
+					// le yaw sur le forward camera a chaque frame de back-step.
+					//
+					// Convention : R_y(m_avatarYaw) applique a la face intrinseque +Z
+					// du mesh Mixamo. atan2(fwd.x, fwd.z) donne le yaw tel que
+					// R_y(yaw)*(+Z) == camFwd (cf. init m_avatarYaw = pi au spawn,
+					// camFwd = (0,0,-1) -> atan2(0,-1) = pi).
+					const engine::math::Vec3 camFwd = m_orbitalCameraController.GetForwardXZ();
+					m_avatarYaw = std::atan2(camFwd.x, camFwd.z);
+				}
 
 				// Memorise l'input pour la state machine de locomotion (Task 11
 				// l'etendra a 7 etats — Idle / Walk / Run / Jump / Fall / Land /

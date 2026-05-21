@@ -63,10 +63,29 @@ public:
     /// \return Vecteur de matrices locales 4x4 (column-major), aligne sur skeleton.bones.
     std::vector<engine::math::Mat4> Sample(const Skeleton& skeleton, float now) const;
 
+    /// B.1 (fix audit §1/§3) — Active le verrouillage du root motion horizontal.
+    /// Quand `true`, la translation X/Z du/des bone(s) racine (parentIndex == -1,
+    /// typiquement le Hips) est reforcee sur sa bind pose a chaque Sample(), la
+    /// composante verticale (Y, bob de marche) etant conservee.
+    ///
+    /// Raison : les clips Mixamo importes ne sont pas "In Place" ; leur Hips
+    /// translate horizontalement (root motion). Or la position monde du perso est
+    /// pilotee par CharacterController. Sans ce lock, le mesh glissait par-dessus
+    /// la position CC puis snappait au loop -> impression que la camera "decroche"
+    /// du modele. Off par defaut (les autres usages / tests gardent le root motion
+    /// brut) ; l'Engine l'active pour l'avatar joueur.
+    void SetRootMotionLockXZ(bool enabled) { m_lockRootMotionXZ = enabled; }
+
+    /// Indique si le verrouillage du root motion horizontal est actif.
+    bool IsRootMotionLockXZ() const { return m_lockRootMotionXZ; }
+
 private:
     ActiveAnimation                m_current;
     std::optional<ActiveAnimation> m_previous;
     float                          m_crossfadeStartTime = 0.0f;
+    /// Cf. SetRootMotionLockXZ. Off par defaut pour ne pas changer le comportement
+    /// des usages generiques (et des tests qui observent la translation root brute).
+    bool                           m_lockRootMotionXZ = false;
 
     /// Echantillonne une seule clip a `now` en respectant loops vs clamp.
     /// Si anim.clip est null ou de duree nulle, renvoie un vecteur vide.

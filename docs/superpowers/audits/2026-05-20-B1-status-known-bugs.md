@@ -82,10 +82,30 @@ redéploiement serveur**.
   « pure back » → free-mover diagonal (pivot mesh + Walk), cohérent. Avec le fix
   §2bis le comportement est prévisible. Risque mineur restant (polish) : toggle
   rapide `S` ↔ `S+Q` → snap de yaw + crossfade WalkBack↔Walk.
+- **§7 / nouveau — tremblement du mesh en mouvement (toutes directions).**
+  Signalé après coup (d'abord cru gauche-only, puis confirmé dans toutes les
+  directions). Cause racine dans `CharacterController` + `TerrainCollider` :
+  `TerrainCollider::SweepCapsule` ne détecte le sol que sur une traversée
+  **descendante** (`endY < endThreshold && startY >= endThreshold`). En marche
+  **horizontale** sur un sol non plat, ce test échoue (en montée le seuil de
+  destination est plus haut que le centre de départ → le perso traverse le sol ;
+  à plat/descente il pénètre/flotte d'une frame puis la gravité rattrape) → dent
+  de scie verticale = tremblement. Caméra **et** mesh suivant la même `ccPos`,
+  toute la vue vibre ; stable en idle (XZ constant). Bug **pré-existant** (critère
+  §11.7 jamais validé), pas introduit par les fixes ci-dessus.
+  Fix : `CharacterController::Update` fait désormais un **ground snap** après le
+  déplacement horizontal — un sweep vertical ±`maxStep` qui recolle le centre de
+  la capsule sur `groundHeight + halfHeight` et (re)confirme `grounded`. Borné à
+  `maxStep` : marcher dans le vide (chute > `maxStep`) ne snappe pas → chute
+  normale. Désactivé en saut / montée balistique (`vel.y > 0`) / eau / vol. La
+  logique sticky-ground existante (anti-oscillation 60 Hz) est préservée.
 
 Tests : `animation_crossfade_tests` étendu (+4 cas : lock off = root motion
 appliqué, lock on = X/Z → bind & Y conservé, bone enfant intact, lock actif
-pendant un crossfade). Compilé + exécuté localement : 9/9 OK.
+pendant un crossfade) — 9/9 OK. Nouveau `character_controller_tests` (4 cas :
+collage au sol sur pente sans dent de scie, stabilité sol plat, le saut quitte
+bien le sol, pas de snap dans le vide au-delà de `maxStep`) — 4/4 OK. Compilés +
+exécutés localement.
 
 ⚠️ **Validation visuelle non effectuée** (environnement sans build Vulkan / GPU) :
 les 7 critères du smoke test §11 doivent être re-déroulés en jeu sur cette branche.

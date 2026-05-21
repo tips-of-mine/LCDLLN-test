@@ -706,6 +706,13 @@ elseif(UNIX)
   lcdlln_add_simple_test(terrain_collider_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/TerrainColliderTests.cpp)
 
+  # Sous-projet B.1 — CharacterController : ground snap (fix tremblement en
+  # mouvement). Collider analytique stub (meme semantique que TerrainCollider)
+  # pour verifier le collage au sol sur pente sans dent de scie, la stabilite
+  # sur sol plat, le saut qui quitte le sol et l'absence de snap dans le vide.
+  lcdlln_add_simple_test(character_controller_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CharacterControllerTests.cpp)
+
   # Sous-projet C MVP : RaceDefinition.meshPath parsing.
   # Verifie que les 3 races MVP (humains, nains, orcs) exposent un meshPath
   # non vide depuis races.json, et que les races hors-MVP exposent une

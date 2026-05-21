@@ -337,6 +337,42 @@ namespace engine::gameplay
 			grounded = false;
 		}
 
+		// --- Ground snap + detection (fix tremblement en mouvement) ---
+		// Tant qu'on n'est pas en train de sauter/monter, on recolle le centre de
+		// la capsule sur la surface du terrain a l'XZ COURANT et on (re)confirme
+		// l'etat "au sol". Indispensable car le sweep principal ne valide le sol
+		// que sur une traversee DESCENDANTE (`startY >= endThreshold`) : en MONTEE,
+		// le seuil de destination est plus haut que le centre de depart -> aucun
+		// hit -> le perso traverse le sol et tombe ; a plat/descente il penetre ou
+		// flotte d'une frame puis la gravite rattrape. Dans tous les cas, ca
+		// produit une dent de scie verticale = tremblement du mesh ET de la camera
+		// (qui suivent la meme position) dans toutes les directions de marche, des
+		// que le terrain n'est pas parfaitement plat.
+		//
+		// On sonde +/- maxStep autour de la position : SweepCapsule renvoie la
+		// fraction ou la base de la capsule touche le sol, dont on deduit le
+		// centre exact (= groundHeight + halfHeight). Borne a maxStep : marcher
+		// dans le vide (sol > maxStep plus bas, bord de falaise) ne donne pas de
+		// hit -> le perso tombe normalement. Desactive en saut (didJumpThisFrame),
+		// en montee balistique (vel.y > 0), en eau et en vol.
+		if (!didJumpThisFrame && !inWater && !isFlying && vel.y <= 0.0f)
+		{
+			const float snapRange = m_cfg.maxStep;
+			const engine::math::Vec3 snapStart = pos + engine::math::Vec3(0.0f, snapRange, 0.0f);
+			const engine::math::Vec3 snapEnd   = pos - engine::math::Vec3(0.0f, snapRange, 0.0f);
+			IWorldCollider::SweepHit snapHit{};
+			snapHit.hit = false;
+			snapHit.fraction = 1.0f;
+			snapHit.normal = engine::math::Vec3(0.0f, 1.0f, 0.0f);
+			if (world.SweepCapsule(m_capsule, snapStart, snapEnd, snapHit) &&
+				snapHit.hit && IsWalkable(snapHit.normal, maxSlopeCos))
+			{
+				pos.y = snapStart.y + (snapEnd.y - snapStart.y) * snapHit.fraction;
+				vel.y = 0.0f;
+				grounded = true;
+			}
+		}
+
 		m_positionCenter = pos;
 		m_velocity = vel;
 		m_isGrounded = grounded;

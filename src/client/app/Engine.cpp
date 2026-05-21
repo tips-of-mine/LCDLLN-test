@@ -5674,6 +5674,14 @@ namespace engine
 		m_input.BeginFrame();
 		m_window.PollEvents();
 
+		// Le menu Options EN JEU reutilise l'overlay Options de l'auth UI (un seul
+		// menu Options partout). Son etat ouvert/ferme est porte par le presenter
+		// (phase LanguageOptions) ; on derive ici le flag d'overlay in-game, utilise
+		// pour figer les inputs gameplay et router Echap. En jeu = flowComplete.
+		m_inGameOptionsPanelVisible = m_authUi.IsInitialized()
+			&& m_authUi.IsFlowComplete()
+			&& m_authUi.GetVisualState().languageOptions;
+
 		if (m_authUi.IsInitialized() && !m_authUi.IsFlowComplete())
 		{
 			if (m_input.WasPressed(engine::platform::Key::Escape))
@@ -5715,13 +5723,17 @@ namespace engine
 			m_pendingSellActive = false;
 			LOG_INFO(Core, "[GameplayNet] Shop closed (Escape)");
 		}
-		else if (!m_editorEnabled && m_input.WasPressed(engine::platform::Key::Escape))
+		else if (!m_editorEnabled && !m_inGameOptionsPanelVisible
+			&& m_input.WasPressed(engine::platform::Key::Escape))
 		{
 			// Echap in-game (post-auth, pas dans un menu chat/auction/shop) :
 			// toggle le menu pause au lieu de quitter directement le client.
 			// Demande utilisateur explicite : 'on quitte automatiquement le jeu,
 			// il ne faut surtout pas. Nous devons toujours passer par un menu
 			// intermediaire, qui propose de Quitter / Options / Se deconnecter'.
+			// Gate `!m_inGameOptionsPanelVisible` : quand l'overlay Options est
+			// ouvert, c'est lui qui gere Echap (retour sous-menu / fermeture), on
+			// ne doit donc pas toggler le menu pause par-dessus.
 			ToggleInGamePauseMenu();
 		}
 
@@ -6829,7 +6841,12 @@ namespace engine
 
 		if (!m_editorEnabled)
 		{
-			if (!authGateActive && !m_chatUi.IsChatFocusActive())
+			// On fige les inputs gameplay (deplacement + camera) quand un menu modal
+			// in-game est ouvert : menu pause OU overlay Options (reutilise l'auth UI).
+			// Sans ca, le perso continuerait a marcher derriere le menu (authGateActive
+			// est faux en jeu, il ne suffit donc pas a bloquer le mouvement).
+			if (!authGateActive && !m_chatUi.IsChatFocusActive()
+				&& !m_inGamePauseMenuVisible && !m_inGameOptionsPanelVisible)
 			{
 				// Vue 3eme personne : controleur orbital pur (camera derriere la
 				// cible). Souris libre par defaut ; clic droit maintenu = rotate
@@ -7625,8 +7642,13 @@ namespace engine
 				ImGui::Spacing();
 				if (ImGui::Button("Options", ImVec2(btnW, 32.f)))
 				{
+					// Ouvre le MEME menu Options que les ecrans initiaux : on entre
+					// dans la phase LanguageOptions de l'auth UI, dont l'overlay est
+					// desormais aussi rendu en jeu (cf. GetVisualState().active).
+					// `m_inGameOptionsPanelVisible` est resynchronise depuis cette
+					// phase en debut de frame (BeginFrame).
 					m_inGamePauseMenuVisible = false;
-					m_inGameOptionsPanelVisible = true;
+					m_authUi.OpenLanguageOptions();
 				}
 				ImGui::Spacing();
 				if (ImGui::Button("Se deconnecter", ImVec2(btnW, 32.f)))
@@ -7640,65 +7662,12 @@ namespace engine
 				}
 				ImGui::End();
 			}
-			// Mini-panel Options in-game (ouvert via le bouton Options du menu pause).
-			// Contient les controles essentiels qu'on veut pouvoir ajuster sans
-			// quitter le jeu : volume master, plein ecran, vsync, sensibilite souris.
-			// Le full panel auth Options reste accessible via Se deconnecter -> Login -> Options.
-			if (m_inGameOptionsPanelVisible)
-			{
-				const float optW = 420.f;
-				const float optH = 320.f;
-				ImGui::SetNextWindowPos(ImVec2((dw - optW) * 0.5f, (dh - optH) * 0.5f), ImGuiCond_Always);
-				ImGui::SetNextWindowSize(ImVec2(optW, optH), ImGuiCond_Always);
-				ImGui::SetNextWindowBgAlpha(0.95f);
-				ImGui::Begin("##ln_ingame_options", nullptr,
-					ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
-					| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse
-					| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav);
-				ImGui::SetWindowFontScale(1.15f);
-				const char* optTitle = "OPTIONS";
-				const float optTitleW = ImGui::CalcTextSize(optTitle).x;
-				ImGui::SetCursorPosX((optW - optTitleW) * 0.5f);
-				ImGui::TextUnformatted(optTitle);
-				ImGui::SetWindowFontScale(1.f);
-				ImGui::Separator();
-				ImGui::Spacing();
-
-				// Lecture des valeurs actuelles depuis la config et ecriture in-place.
-				float vol = static_cast<float>(m_cfg.GetDouble("audio.master_volume", 1.0));
-				bool fullscreen = m_cfg.GetBool("video.fullscreen", false);
-				bool vsync = m_cfg.GetBool("render.vsync", true);
-				float sens = static_cast<float>(m_cfg.GetDouble("controls.mouse_sensitivity", 0.002));
-
-				if (ImGui::SliderFloat("Volume general", &vol, 0.0f, 1.0f, "%.2f"))
-				{
-					m_cfg.SetValue("audio.master_volume", static_cast<double>(vol));
-					(void)m_audioEngine.SetMasterVolume(vol);
-				}
-				if (ImGui::Checkbox("Plein ecran", &fullscreen))
-				{
-					m_cfg.SetValue("video.fullscreen", fullscreen);
-					// Nota : changement effectif au prochain restart (toggle live = autre PR).
-				}
-				if (ImGui::Checkbox("VSync", &vsync))
-				{
-					m_cfg.SetValue("render.vsync", vsync);
-				}
-				if (ImGui::SliderFloat("Sensibilite souris", &sens, 0.0005f, 0.01f, "%.4f rad/px"))
-				{
-					m_cfg.SetValue("controls.mouse_sensitivity", static_cast<double>(sens));
-				}
-
-				ImGui::Spacing();
-				ImGui::Separator();
-				ImGui::Spacing();
-				const float optBtnW = optW - 40.f;
-				if (ImGui::Button("Fermer", ImVec2(optBtnW, 32.f)))
-				{
-					m_inGameOptionsPanelVisible = false;
-				}
-				ImGui::End();
-			}
+			// L'ancien mini-panneau Options in-game a ete supprime : le menu Options
+			// du jeu reutilise desormais l'overlay Options complet de l'auth UI (meme
+			// menu partout). Quand il est ouvert (phase LanguageOptions), GetVisualState()
+			// .active passe a true et c'est la branche de rendu auth (m_authImGui->Render)
+			// qui dessine l'overlay par-dessus le jeu en pause ; cette branche-ci (chat
+			// HUD) n'est alors pas prise.
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_editorHubImGui

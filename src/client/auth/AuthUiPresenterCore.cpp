@@ -4364,7 +4364,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	AuthUiPresenter::VisualState AuthUiPresenter::GetVisualState() const
 	{
 		VisualState state{};
-		state.active = m_initialized && !m_flowComplete && m_authEnabled;
+		// `active` pilote le rendu de l'overlay auth (ImGui) et l'appel a NewFrame.
+		// Normalement vrai uniquement pendant le flux pre-login (!flowComplete).
+		// Exception : la phase LanguageOptions est aussi rendue EN JEU (flowComplete)
+		// pour que le menu Options du jeu reutilise exactement le meme overlay que
+		// les ecrans initiaux (un seul menu Options dans tout le client).
+		state.active = m_initialized && m_authEnabled
+			&& (!m_flowComplete || m_phase == Phase::LanguageOptions);
 		state.login = m_phase == Phase::Login;
 		state.registerMode = m_phase == Phase::Register;
 		state.verifyEmail = m_phase == Phase::VerifyEmail || m_phase == Phase::EmailConfirmationPending;

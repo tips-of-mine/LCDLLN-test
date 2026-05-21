@@ -64,6 +64,18 @@ namespace engine::client
 			LOG_WARN(Core, "[CharacterCreation] Init: could not load classes from '{}' — using empty list", classesRel);
 		}
 
+		// Système de customisation (limites par race + presets de proportions),
+		// chargé depuis <paths.content>/configuration/. Non-fatal s'il échoue :
+		// l'écran reste utilisable, le panneau « Apparence physique » se masque.
+		{
+			const std::string contentRoot = config.GetString("paths.content", "game/data");
+			if (!m_customization.Initialize(contentRoot + "/configuration"))
+			{
+				LOG_WARN(Core, "[CharacterCreation] Init: customization configs not loaded "
+				               "(panneau proportions désactivé)");
+			}
+		}
+
 		// Reset creation state to sane defaults.
 		m_state = CharacterCreationState{};
 		m_selectedClassFiltered = 0;

@@ -298,8 +298,91 @@ namespace engine::client
 			}
 		}
 
-		LOG_INFO(CharCustom, "[Customization] Initialized with {} race(s)", m_raceConfigs.size());
+		// Presets de proportions (optionnels).
+		m_proportionPresets.clear();
+		const std::string presetsPath =
+		    (fs::path(configBasePath) / "customization" / "body_proportions.json").string();
+		engine::core::Config presetCfg;
+		if (presetCfg.LoadFromFile(presetsPath))
+		{
+			size_t i = 0;
+			while (presetCfg.Has("presets[" + std::to_string(i) + "].id"))
+			{
+				const std::string p = "presets[" + std::to_string(i) + "]";
+				ProportionPreset preset;
+				preset.id                 = presetCfg.GetString(p + ".id", "");
+				preset.displayName        = presetCfg.GetString(p + ".displayName", preset.id);
+				preset.description        = presetCfg.GetString(p + ".description", "");
+				preset.heightScale        = static_cast<float>(presetCfg.GetDouble(p + ".heightScale", 1.0));
+				preset.legLengthRatio     = static_cast<float>(presetCfg.GetDouble(p + ".legLengthRatio", 1.0));
+				preset.shoulderWidthRatio = static_cast<float>(presetCfg.GetDouble(p + ".shoulderWidthRatio", 1.0));
+				preset.torsoWidthRatio    = static_cast<float>(presetCfg.GetDouble(p + ".torsoWidthRatio", 1.0));
+				m_proportionPresets.push_back(std::move(preset));
+				++i;
+			}
+		}
+
+		LOG_INFO(CharCustom, "[Customization] Initialized with {} race(s), {} proportion preset(s)",
+		         m_raceConfigs.size(), m_proportionPresets.size());
 		return !m_raceConfigs.empty();
+	}
+
+	CharacterBodyMetrics CharacterCustomizationSystem::DefaultMetricsForRace(
+	    const std::string& raceId) const
+	{
+		CharacterBodyMetrics m;
+		const RaceConfiguration* race = GetRaceConfig(raceId);
+		if (!race)
+			return m;
+		const auto& lim          = race->physicalLimits;
+		m.heightScale            = static_cast<float>(lim.height.scaleDefault);
+		m.legLengthRatio         = static_cast<float>(lim.proportions.legLength.defaultValue);
+		m.shoulderWidthRatio     = static_cast<float>(lim.proportions.shoulderWidth.defaultValue);
+		m.torsoWidthRatio        = static_cast<float>(lim.proportions.torsoWidth.defaultValue);
+		m.bodyMassIndex          = static_cast<float>(lim.bodyMass.defaultValue);
+		return m;
+	}
+
+	void CharacterCustomizationSystem::ClampMetricsToRace(const std::string& raceId,
+	                                                      CharacterBodyMetrics& metrics) const
+	{
+		const RaceConfiguration* race = GetRaceConfig(raceId);
+		if (!race)
+			return;
+		const auto& lim = race->physicalLimits;
+		auto clamp      = [](float v, double lo, double hi) {
+            return static_cast<float>(std::min(std::max(static_cast<double>(v), lo), hi));
+		};
+		metrics.heightScale        = clamp(metrics.heightScale, lim.height.scaleMin, lim.height.scaleMax);
+		metrics.legLengthRatio     = clamp(metrics.legLengthRatio, lim.proportions.legLength.min, lim.proportions.legLength.max);
+		metrics.shoulderWidthRatio = clamp(metrics.shoulderWidthRatio, lim.proportions.shoulderWidth.min, lim.proportions.shoulderWidth.max);
+		metrics.torsoWidthRatio    = clamp(metrics.torsoWidthRatio, lim.proportions.torsoWidth.min, lim.proportions.torsoWidth.max);
+		metrics.bodyMassIndex      = clamp(metrics.bodyMassIndex, lim.bodyMass.min, lim.bodyMass.max);
+	}
+
+	bool CharacterCustomizationSystem::ApplyProportionPreset(const std::string& raceId,
+	                                                         const std::string& presetId,
+	                                                         CharacterBodyMetrics& metrics) const
+	{
+		if (!GetRaceConfig(raceId))
+			return false;
+		const ProportionPreset* preset = nullptr;
+		for (const auto& p : m_proportionPresets)
+			if (p.id == presetId)
+			{
+				preset = &p;
+				break;
+			}
+		if (!preset)
+			return false;
+
+		metrics.heightScale        = preset->heightScale;
+		metrics.legLengthRatio     = preset->legLengthRatio;
+		metrics.shoulderWidthRatio = preset->shoulderWidthRatio;
+		metrics.torsoWidthRatio    = preset->torsoWidthRatio;
+		// La corpulence n'est pas définie par les presets : on la conserve.
+		ClampMetricsToRace(raceId, metrics);
+		return true;
 	}
 
 	bool CharacterCustomizationSystem::InRange(double v, const ValueRange& r)
@@ -571,12 +654,7 @@ namespace engine::client
 		if (!race->eyeColors.empty())
 			c.eyeColorId = race->eyeColors[0].id;
 
-		const auto& lim                = race->physicalLimits;
-		c.bodyMetrics.heightScale      = static_cast<float>(lim.height.scaleDefault);
-		c.bodyMetrics.legLengthRatio   = static_cast<float>(lim.proportions.legLength.defaultValue);
-		c.bodyMetrics.shoulderWidthRatio = static_cast<float>(lim.proportions.shoulderWidth.defaultValue);
-		c.bodyMetrics.torsoWidthRatio  = static_cast<float>(lim.proportions.torsoWidth.defaultValue);
-		c.bodyMetrics.bodyMassIndex    = static_cast<float>(lim.bodyMass.defaultValue);
+		c.bodyMetrics = DefaultMetricsForRace(raceId);
 
 		for (const auto& m : race->faceMorphs)
 			c.morphWeights[m.name] = static_cast<float>(m.defaultValue);

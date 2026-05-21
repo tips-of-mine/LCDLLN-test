@@ -184,6 +184,46 @@ namespace
 		REQUIRE(effective(humain) < effective(orc));
 	}
 
+	void Test_ProportionPresets()
+	{
+		CharacterCustomizationSystem sys;
+		InitSystem(sys);
+
+		// Les presets de body_proportions.json sont chargés.
+		const auto& presets = sys.GetProportionPresets();
+		REQUIRE(presets.size() >= 6);
+		bool hasAverage = false;
+		for (const auto& p : presets)
+			if (p.id == "average")
+				hasAverage = true;
+		REQUIRE(hasAverage);
+
+		// Application sur une race aux limites larges (humains) : 'average'
+		// donne des ratios neutres dans les bornes.
+		engine::client::CharacterBodyMetrics mh = sys.DefaultMetricsForRace("humains");
+		REQUIRE(sys.ApplyProportionPreset("humains", "average", mh));
+		REQUIRE(std::fabs(mh.heightScale - 1.0f) < 1e-3f);
+
+		// Application sur les nains (taille max 0.85) : un preset 'grand'
+		// (heightScale 1.08) doit être CLAMPÉ aux limites de la race.
+		engine::client::CharacterBodyMetrics mn = sys.DefaultMetricsForRace("nains");
+		REQUIRE(sys.ApplyProportionPreset("nains", "tall_slender", mn));
+		const auto* nains = sys.GetRaceConfig("nains");
+		REQUIRE(nains != nullptr);
+		REQUIRE(mn.heightScale <= static_cast<float>(nains->physicalLimits.height.scaleMax) + 1e-4f);
+		REQUIRE(mn.heightScale >= static_cast<float>(nains->physicalLimits.height.scaleMin) - 1e-4f);
+
+		// Après application d'un preset, les métriques restent valides.
+		CharacterCustomization c = sys.MakeDefaultCustomization("nains", "male");
+		c.bodyMetrics = mn;
+		REQUIRE(sys.ValidateCustomization(c));
+
+		// Race ou preset inconnu -> false.
+		engine::client::CharacterBodyMetrics tmp;
+		REQUIRE(!sys.ApplyProportionPreset("nope", "average", tmp));
+		REQUIRE(!sys.ApplyProportionPreset("humains", "nope", tmp));
+	}
+
 	void Test_JsonRoundTrip()
 	{
 		CharacterCustomizationSystem sys;
@@ -219,6 +259,7 @@ int main()
 	Test_Resolve();
 	Test_RacialFeatureResolves();
 	Test_HeightOrderingByRace();
+	Test_ProportionPresets();
 	Test_JsonRoundTrip();
 
 	if (g_failed == 0)

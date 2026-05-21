@@ -1,5 +1,6 @@
 #pragma once
 
+#include "src/client/character_creation/CharacterCustomizationSystem.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/network/CharacterPayloads.h"
 
@@ -143,6 +144,16 @@ namespace engine::client
 		/// Currently selected race, or nullptr.
 		const RaceDefinition* GetSelectedRace() const;
 
+		/// Système de customisation (limites physiques par race + presets de
+		/// proportions). Chargé depuis game/data/configuration/ à l'Init.
+		/// Utilisé par l'UI pour le panneau « Apparence physique » (sliders de
+		/// proportions bornés par race + presets rapides). Aligné sur les ids
+		/// de race de races.json.
+		const CharacterCustomizationSystem& GetCustomizationSystem() const
+		{
+			return m_customization;
+		}
+
 		// ---- Class selection ----
 
 		/// Select the class at \p index within GetFilteredClasses().
@@ -226,6 +237,7 @@ namespace engine::client
 
 		std::vector<RaceDefinition>  m_races;
 		std::vector<ClassDefinition> m_classes;
+		CharacterCustomizationSystem m_customization; ///< Limites + presets (configuration/).
 		uint32_t m_selectedClassFiltered = 0; ///< Index within filtered class list.
 		CharacterCreationState m_state{};
 		bool m_initialized = false;

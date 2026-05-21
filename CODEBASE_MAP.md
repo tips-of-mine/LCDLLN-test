@@ -1490,6 +1490,10 @@ Le wiring C MVP ne touche ni `CharacterController` ni `TerrainCollider` (sticky 
 | `tools/asset_pipeline/{process_character_assets,validate_fbx}.py` | Pipeline inbox → `game/data/models/characters/<race>/...` + validation FBX (extension, taille, nommage). |
 | Tests : `character_customization_tests` (CTest) | Chargement des 8 races, validation, génération valide, résolution, ordre des tailles (nain<humain<orc), round-trip JSON. |
 
+### Intégration UI (Phase 3)
+
+`CharacterCreationPresenter` charge le système à l'`Init` (`<paths.content>/configuration`) et l'expose via `GetCustomizationSystem()`. L'écran `AuthImGuiRenderer::RenderCharCreateScreen` (`AuthImGuiCharacterCreate.cpp`, `#if _WIN32`) affiche le panneau **« Apparence physique »** : slider Taille + section « Proportions avancées » (jambes / épaules / corpulence) bornés aux limites de la race + boutons **Presets rapides** (data-driven depuis `body_proportions.json`, via `ApplyProportionPreset` clampé). État édité dans `AuthImGuiRenderer::m_charBodyMetrics`. Presets de proportions : `GetProportionPresets` / `DefaultMetricsForRace` / `ApplyProportionPreset` / `ClampMetricsToRace` (testés par `character_customization_tests`). **À brancher** : transmission serveur des métriques + application au mesh 3D.
+
 ### Limite d'intégration (stub assumé)
 
 `ApplyCustomization` est un **stub documenté** : le moteur n'a pas encore de scène `GameObject`/`Skeleton`/composants. La fonction résout les assets et trace le plan ; le câblage GPU réel (attachement aux sockets, scaling des os, upload textures) est renvoyé à un ticket ultérieur. La **résolution** (`ResolveCustomization`) est complète et testée.

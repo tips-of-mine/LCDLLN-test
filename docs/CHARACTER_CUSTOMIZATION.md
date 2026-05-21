@@ -51,8 +51,35 @@ if (sys.ValidateCustomization(c)) {
   (attachement GPU, scaling des os, upload textures) est laissé à un futur
   ticket. La *résolution* (`ResolveCustomization`), elle, est complète et testée.
 
+Proportions (presets `body_proportions.json`) :
+- `GetProportionPresets()` : liste des presets chargés.
+- `DefaultMetricsForRace(raceId)` : métriques par défaut de la race.
+- `ApplyProportionPreset(raceId, presetId, metrics)` : applique un preset puis
+  **clampe aux limites de la race** (renvoie false si race/preset inconnu).
+- `ClampMetricsToRace(raceId, metrics)` : borne des métriques arbitraires.
+
 Sérialisation : `CharacterCustomization::ToJson()` / `FromJson()` (round-trip,
 versionné `"1.0.0"`).
+
+## Intégration UI (écran de création de personnage)
+
+Le presenter `engine::client::CharacterCreationPresenter` charge le système à
+l'`Init` (`<paths.content>/configuration`) et l'expose via
+`GetCustomizationSystem()`. L'écran ImGui
+`AuthImGuiRenderer::RenderCharCreateScreen`
+(`src/client/render/auth/screens/AuthImGuiCharacterCreate.cpp`, `#if _WIN32`)
+affiche le panneau **« Apparence physique »** :
+- slider **Taille** (`heightScale`) borné à `[scaleMin, scaleMax]` de la race ;
+- section repliable **« Proportions avancées »** : Longueur des jambes, Largeur
+  des épaules, Corpulence — bornées aux plages de la race ;
+- **Presets rapides** : un bouton par preset de `body_proportions.json`
+  (`ApplyProportionPreset`, clampé à la race).
+
+Les valeurs éditées vivent dans l'état du renderer (`m_charBodyMetrics`) et sont
+réinitialisées aux défauts de la race quand la race change. **À brancher**
+(suivi) : transmission des métriques au serveur (le payload de création est
+encore `name + race` en MVP) et application au mesh 3D (cf. stub
+`ApplyCustomization`).
 
 Tests : `src/client/character_creation/tests/CharacterCustomizationTests.cpp`
 (cible CTest `character_customization_tests`).

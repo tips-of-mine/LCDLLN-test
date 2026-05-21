@@ -134,6 +134,76 @@ namespace engine::render
 			ImGui::TextDisabled("(liste des races indisponible)");
 			if (m_charRaceIdx < 0) m_charRaceIdx = 0;
 		}
+
+		// CHAR-MODEL.25 — Panneau "Apparence physique" : sliders de proportions
+		// bornes aux limites de la race + presets rapides. Pilote par
+		// CharacterCustomizationSystem (charge depuis game/data/configuration/).
+		// Les valeurs editees vivent dans m_charBodyMetrics (etat renderer) ;
+		// l'envoi serveur n'est pas encore branche (payload name+race en MVP).
+		const engine::client::CharacterCustomizationSystem* custSys =
+			ccPresenter ? &ccPresenter->GetCustomizationSystem() : nullptr;
+		if (custSys && races && !races->empty() &&
+		    m_charRaceIdx >= 0 && m_charRaceIdx < static_cast<int>(races->size()))
+		{
+			const std::string& curRaceId = (*races)[m_charRaceIdx].id;
+			const engine::client::RaceConfiguration* raceCfg = custSys->GetRaceConfig(curRaceId);
+			if (raceCfg)
+			{
+				// Reset des metriques sur changement de race (defauts de la race).
+				if (m_charMetricsRaceIdx != m_charRaceIdx)
+				{
+					m_charBodyMetrics    = custSys->DefaultMetricsForRace(curRaceId);
+					m_charMetricsRaceIdx = m_charRaceIdx;
+				}
+
+				ImGui::Spacing();
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::TextUnformatted("APPARENCE PHYSIQUE");
+				ImGui::PopStyleColor();
+
+				const auto& lim = raceCfg->physicalLimits;
+				ImGui::SetNextItemWidth(-FLT_MIN);
+				ImGui::SliderFloat("Taille", &m_charBodyMetrics.heightScale,
+				                   static_cast<float>(lim.height.scaleMin),
+				                   static_cast<float>(lim.height.scaleMax), "%.2f");
+
+				if (ImGui::CollapsingHeader("Proportions avancees"))
+				{
+					ImGui::SetNextItemWidth(-FLT_MIN);
+					ImGui::SliderFloat("Longueur des jambes", &m_charBodyMetrics.legLengthRatio,
+					                   static_cast<float>(lim.proportions.legLength.min),
+					                   static_cast<float>(lim.proportions.legLength.max), "%.2f");
+					ImGui::SetNextItemWidth(-FLT_MIN);
+					ImGui::SliderFloat("Largeur des epaules", &m_charBodyMetrics.shoulderWidthRatio,
+					                   static_cast<float>(lim.proportions.shoulderWidth.min),
+					                   static_cast<float>(lim.proportions.shoulderWidth.max), "%.2f");
+					ImGui::SetNextItemWidth(-FLT_MIN);
+					ImGui::SliderFloat("Corpulence", &m_charBodyMetrics.bodyMassIndex,
+					                   static_cast<float>(lim.bodyMass.min),
+					                   static_cast<float>(lim.bodyMass.max), "%.2f");
+				}
+
+				// Presets rapides (data-driven depuis body_proportions.json).
+				const auto& presets = custSys->GetProportionPresets();
+				if (!presets.empty())
+				{
+					ImGui::Spacing();
+					ImGui::TextUnformatted("Presets rapides :");
+					for (size_t pi = 0; pi < presets.size(); ++pi)
+					{
+						if (pi > 0) ImGui::SameLine();
+						// Label visible + id ImGui unique (##) pour eviter les collisions.
+						const std::string btnLabel =
+							presets[pi].displayName + "##preset_" + presets[pi].id;
+						if (ImGui::Button(btnLabel.c_str()))
+						{
+							custSys->ApplyProportionPreset(curRaceId, presets[pi].id, m_charBodyMetrics);
+						}
+					}
+				}
+			}
+		}
+
 		ImGui::Spacing();
 		// Largeurs finies pour eviter que Annuler (pleine largeur) ne capture les clics destines
 		// a Creer (cf. correctif AuthImGuiTerms.cpp pour la meme classe de bug).

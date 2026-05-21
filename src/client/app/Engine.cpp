@@ -7648,7 +7648,7 @@ namespace engine
 					// `m_inGameOptionsPanelVisible` est resynchronise depuis cette
 					// phase en debut de frame (BeginFrame).
 					m_inGamePauseMenuVisible = false;
-					m_authUi.OpenLanguageOptions();
+					m_authUi.ImGuiOpenLanguageOptionsMenu();
 				}
 				ImGui::Spacing();
 				if (ImGui::Button("Se deconnecter", ImVec2(btnW, 32.f)))

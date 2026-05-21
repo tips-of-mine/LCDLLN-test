@@ -204,6 +204,20 @@ namespace engine::client
 	// Système
 	// ------------------------------------------------------------------------
 
+	/// Preset de proportions corporelles (configuration/customization/body_proportions.json).
+	/// Les ratios s'appliquent aux `CharacterBodyMetrics` puis sont clampés aux
+	/// limites de la race sélectionnée.
+	struct ProportionPreset
+	{
+		std::string id;
+		std::string displayName;
+		std::string description;
+		float       heightScale        = 1.0f;
+		float       legLengthRatio     = 1.0f;
+		float       shoulderWidthRatio = 1.0f;
+		float       torsoWidthRatio    = 1.0f;
+	};
+
 	class CharacterCustomizationSystem
 	{
 	public:
@@ -237,6 +251,27 @@ namespace engine::client
 		std::vector<std::string> GetAvailableRaces() const;
 		size_t RaceCount() const { return m_raceConfigs.size(); }
 
+		// ---- Proportions (presets + bornes par race) ----
+
+		/// Presets de proportions chargés depuis body_proportions.json.
+		const std::vector<ProportionPreset>& GetProportionPresets() const
+		{
+			return m_proportionPresets;
+		}
+
+		/// Métriques par défaut de la race (valeurs `default` de physicalLimits).
+		/// Race inconnue -> métriques neutres.
+		CharacterBodyMetrics DefaultMetricsForRace(const std::string& raceId) const;
+
+		/// Clampe chaque métrique aux bornes de la race (no-op si race inconnue).
+		void ClampMetricsToRace(const std::string& raceId, CharacterBodyMetrics& metrics) const;
+
+		/// Applique un preset de proportions à `metrics` puis clampe aux limites
+		/// de la race. La corpulence (bodyMassIndex) n'est pas touchée par les
+		/// presets. Renvoie false si la race ou le preset est inconnu.
+		bool ApplyProportionPreset(const std::string& raceId, const std::string& presetId,
+		                           CharacterBodyMetrics& metrics) const;
+
 		// ---- Presets / génération ----
 
 		/// Customisation par défaut valide (premiers modules, métriques par
@@ -254,6 +289,7 @@ namespace engine::client
 		                                     const std::string& id);
 
 		std::unordered_map<std::string, std::shared_ptr<RaceConfiguration>> m_raceConfigs;
+		std::vector<ProportionPreset> m_proportionPresets;
 		std::mt19937 m_rng;
 	};
 

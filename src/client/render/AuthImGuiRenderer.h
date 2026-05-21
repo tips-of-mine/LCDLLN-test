@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "src/client/auth/AuthUi.h"
+#include "src/client/character_creation/CharacterCustomization.h"
 
 namespace engine::core
 {
@@ -79,6 +80,13 @@ namespace engine::render
 		/// Index dans la liste des races jouables (cf. RenderCharCreateScreen).
 		/// 0 = humains, 1 = elfes, 2 = orcs, 3 = nains, 4 = demons, 5 = chevaliers_dragons.
 		int m_charRaceIdx = 0;
+
+		/// Métriques de proportions éditées par le panneau « Apparence physique »
+		/// (CHAR-MODEL.25). Bornées aux limites de la race sélectionnée. Réinitialisées
+		/// aux valeurs par défaut de la race quand \c m_charMetricsRaceIdx diffère de
+		/// \c m_charRaceIdx.
+		engine::client::CharacterBodyMetrics m_charBodyMetrics{};
+		int m_charMetricsRaceIdx = -1; ///< Race pour laquelle m_charBodyMetrics a été initialisé.
 
 		bool m_optDirty = false;
 		bool m_optFullscreen = true;

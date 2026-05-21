@@ -29,6 +29,13 @@ namespace engine::client
 		/// (cas hors-MVP : elfes, morts_vivants, corrompus, divins, démons).
 		/// `Engine` fallback sur le mesh "humains" pour ces races à EnterWorld.
 		std::string              meshPath;
+		/// Migration UE5 — correction d'import du mesh (échelle/orientation).
+		/// `importScale` : facteur d'échelle uniforme appliqué à l'avatar
+		/// (1.0 = inchangé, ~95 pour un corps UE5 en cm). `importRotXDeg` :
+		/// rotation autour de X en degrés pour passer Z-up (Unreal) à Y-up
+		/// (moteur), typiquement -90. Réglables dans races.json sans recompiler.
+		float                    importScale    = 1.0f;
+		float                    importRotXDeg  = 0.0f;
 	};
 
 	/// One class entry loaded from game/data/races/classes.json (M39.1).

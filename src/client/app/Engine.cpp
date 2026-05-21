@@ -3950,7 +3950,8 @@ namespace engine
 													engine::client::CharacterCreationPresenter racesPresenter;
 													racesPresenter.Init(m_cfg);
 
-													auto loadOneRace = [&](const std::string& raceId, const std::string& meshPath) -> bool {
+													auto loadOneRace = [&](const std::string& raceId, const std::string& meshPath,
+													                       float importScale, float importRotXDeg) -> bool {
 														const std::string fullMeshPath = contentRoot + "/" + meshPath;
 														auto loaded = engine::render::skinned::SkinnedMeshLoader::Load(
 															m_vkDeviceContext.GetDevice(),
@@ -4034,6 +4035,19 @@ namespace engine
 														loadAnimOnly(fallPath, "Fall");
 														loadAnimOnly(landPath, "Land");
 														}
+														// Migration UE5 — transform d'import (echelle/orientation) reglable via races.json.
+														{
+															const float th = importRotXDeg * 3.14159265358979f / 180.0f;
+															const float cx = std::cos(th);
+															const float sx = std::sin(th);
+															engine::math::Mat4 imp;
+															imp.m[0]  = importScale;
+															imp.m[5]  = importScale * cx;
+															imp.m[6]  = importScale * sx;
+															imp.m[9]  = importScale * -sx;
+															imp.m[10] = importScale * cx;
+															loaded->importTransform = imp;
+														}
 														LOG_INFO(Render, "[Engine] Race '{}' loaded ({} bones, {} clips) from '{}'",
 															raceId, loaded->skeleton.bones.size(), loaded->clips.size(), fullMeshPath);
 														m_raceMeshes.emplace(raceId, std::move(*loaded));
@@ -4050,7 +4064,7 @@ namespace engine
 															LOG_WARN(Render, "[Engine] Race '{}' : RaceDefinition introuvable ou meshPath vide", raceId);
 															continue;
 														}
-														loadOneRace(raceId, def->meshPath);
+														loadOneRace(raceId, def->meshPath, def->importScale, def->importRotXDeg);
 													}
 
 													// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le
@@ -4310,7 +4324,8 @@ namespace engine
 													const engine::math::Vec3 feetPos{ ccPos.x, ccPos.y - 0.9f, ccPos.z };
 													const engine::math::Mat4 finalModelMat =
 														engine::math::Mat4::Translate(feetPos) *
-														engine::math::Mat4::RotateY(m_avatarYaw);
+														engine::math::Mat4::RotateY(m_avatarYaw) *
+														(m_currentSkinnedMesh ? m_currentSkinnedMesh->importTransform : engine::math::Mat4::Identity());
 
 													// La matrice modele est desormais calculee a partir de cc.GetPosition()
 													// + m_avatarYaw ; le cube placeholder garde sa matrice d'origine (cf.

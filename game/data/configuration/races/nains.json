@@ -1,0 +1,355 @@
+{
+  "version": "1.0.0",
+  "raceId": "nains",
+  "displayName": "Nains",
+  "description": "Maîtres artisans et guerriers tenaces, les Nains résistent à tout.",
+  "physicalLimits": {
+    "height": {
+      "baseMeters": 1.3,
+      "scaleRange": {
+        "min": 0.75,
+        "max": 0.85,
+        "default": 0.8
+      }
+    },
+    "bodyMass": {
+      "range": {
+        "min": 0.3,
+        "max": 0.7,
+        "default": 0.5
+      }
+    },
+    "proportions": {
+      "legLength": {
+        "range": {
+          "min": 0.85,
+          "max": 0.95
+        },
+        "default": 0.9
+      },
+      "shoulderWidth": {
+        "range": {
+          "min": 1.1,
+          "max": 1.2
+        },
+        "default": 1.15
+      },
+      "torsoWidth": {
+        "range": {
+          "min": 1.05,
+          "max": 1.15
+        },
+        "default": 1.1
+      }
+    }
+  },
+  "baseSkeleton": "humanoid_base",
+  "collisionDefaults": {
+    "radius": 0.4,
+    "height": 1.3
+  },
+  "genders": [
+    "male",
+    "female"
+  ],
+  "bodyTypes": {
+    "male": [
+      {
+        "id": "base",
+        "model": "models/characters/nains/base/male_body_base.fbx",
+        "displayName": "Robuste",
+        "description": "Carrure typique naine"
+      },
+      {
+        "id": "stout",
+        "model": "models/characters/nains/base/male_body_stout.fbx",
+        "displayName": "Trapu",
+        "description": "Corpulence solide"
+      },
+      {
+        "id": "broad",
+        "model": "models/characters/nains/base/male_body_broad.fbx",
+        "displayName": "Massif",
+        "description": "Épaules larges et puissantes"
+      }
+    ],
+    "female": [
+      {
+        "id": "base",
+        "model": "models/characters/nains/base/female_body_base.fbx",
+        "displayName": "Robuste",
+        "description": "Carrure typique naine"
+      },
+      {
+        "id": "stout",
+        "model": "models/characters/nains/base/female_body_stout.fbx",
+        "displayName": "Trapue",
+        "description": "Corpulence solide"
+      },
+      {
+        "id": "broad",
+        "model": "models/characters/nains/base/female_body_broad.fbx",
+        "displayName": "Massive",
+        "description": "Épaules larges et puissantes"
+      }
+    ]
+  },
+  "heads": {
+    "male": [
+      {
+        "id": "head_01",
+        "model": "models/characters/nains/heads/male/head_01.fbx",
+        "displayName": "Visage 1"
+      },
+      {
+        "id": "head_02",
+        "model": "models/characters/nains/heads/male/head_02.fbx",
+        "displayName": "Visage 2"
+      },
+      {
+        "id": "head_03",
+        "model": "models/characters/nains/heads/male/head_03.fbx",
+        "displayName": "Visage 3"
+      }
+    ],
+    "female": [
+      {
+        "id": "head_01",
+        "model": "models/characters/nains/heads/female/head_01.fbx",
+        "displayName": "Visage 1"
+      },
+      {
+        "id": "head_02",
+        "model": "models/characters/nains/heads/female/head_02.fbx",
+        "displayName": "Visage 2"
+      },
+      {
+        "id": "head_03",
+        "model": "models/characters/nains/heads/female/head_03.fbx",
+        "displayName": "Visage 3"
+      }
+    ]
+  },
+  "hairStyles": {
+    "male": [
+      {
+        "id": "short_01",
+        "model": "models/characters/nains/hair/male/short_01.fbx",
+        "displayName": "Court"
+      },
+      {
+        "id": "medium_01",
+        "model": "models/characters/nains/hair/male/medium_01.fbx",
+        "displayName": "Mi-long"
+      }
+    ],
+    "female": [
+      {
+        "id": "short_01",
+        "model": "models/characters/nains/hair/female/short_01.fbx",
+        "displayName": "Court"
+      },
+      {
+        "id": "medium_01",
+        "model": "models/characters/nains/hair/female/medium_01.fbx",
+        "displayName": "Mi-long"
+      },
+      {
+        "id": "braided_01",
+        "model": "models/characters/nains/hair/female/braided_01.fbx",
+        "displayName": "Tresses"
+      },
+      {
+        "id": "long_01",
+        "model": "models/characters/nains/hair/female/long_01.fbx",
+        "displayName": "Long"
+      }
+    ]
+  },
+  "facialHair": {
+    "male": [
+      {
+        "id": "beard_braided_long",
+        "model": "models/characters/nains/facial_hair/beard_braided_long.fbx",
+        "displayName": "Longue barbe tressée"
+      },
+      {
+        "id": "beard_braided_short",
+        "model": "models/characters/nains/facial_hair/beard_braided_short.fbx",
+        "displayName": "Barbe tressée courte"
+      },
+      {
+        "id": "beard_forked",
+        "model": "models/characters/nains/facial_hair/beard_forked.fbx",
+        "displayName": "Barbe fourchue"
+      },
+      {
+        "id": "beard_full_massive",
+        "model": "models/characters/nains/facial_hair/beard_full_massive.fbx",
+        "displayName": "Barbe massive"
+      },
+      {
+        "id": "beard_full_medium",
+        "model": "models/characters/nains/facial_hair/beard_full_medium.fbx",
+        "displayName": "Barbe fournie"
+      }
+    ]
+  },
+  "skinTones": [
+    {
+      "id": "skin_01",
+      "displayName": "Peau 1",
+      "hex": "#C68642",
+      "diffuse": "textures/characters/nains/skin/skin_01_diffuse.png",
+      "normal": "textures/characters/nains/skin/skin_01_normal.png",
+      "orm": "textures/characters/nains/skin/skin_01_orm.png"
+    },
+    {
+      "id": "skin_02",
+      "displayName": "Peau 2",
+      "hex": "#A0522D",
+      "diffuse": "textures/characters/nains/skin/skin_02_diffuse.png",
+      "normal": "textures/characters/nains/skin/skin_02_normal.png",
+      "orm": "textures/characters/nains/skin/skin_02_orm.png"
+    },
+    {
+      "id": "skin_03",
+      "displayName": "Peau 3",
+      "hex": "#8B4513",
+      "diffuse": "textures/characters/nains/skin/skin_03_diffuse.png",
+      "normal": "textures/characters/nains/skin/skin_03_normal.png",
+      "orm": "textures/characters/nains/skin/skin_03_orm.png"
+    },
+    {
+      "id": "skin_04",
+      "displayName": "Peau 4",
+      "hex": "#D2691E",
+      "diffuse": "textures/characters/nains/skin/skin_04_diffuse.png",
+      "normal": "textures/characters/nains/skin/skin_04_normal.png",
+      "orm": "textures/characters/nains/skin/skin_04_orm.png"
+    }
+  ],
+  "hairColors": [
+    {
+      "id": "hair_01",
+      "displayName": "Teinte 1",
+      "hex": "#8B0000",
+      "texture": "textures/characters/nains/hair/hair_01.png"
+    },
+    {
+      "id": "hair_02",
+      "displayName": "Teinte 2",
+      "hex": "#A52A2A",
+      "texture": "textures/characters/nains/hair/hair_02.png"
+    },
+    {
+      "id": "hair_03",
+      "displayName": "Teinte 3",
+      "hex": "#D2691E",
+      "texture": "textures/characters/nains/hair/hair_03.png"
+    },
+    {
+      "id": "hair_04",
+      "displayName": "Teinte 4",
+      "hex": "#CD853F",
+      "texture": "textures/characters/nains/hair/hair_04.png"
+    },
+    {
+      "id": "hair_05",
+      "displayName": "Teinte 5",
+      "hex": "#F4A460",
+      "texture": "textures/characters/nains/hair/hair_05.png"
+    },
+    {
+      "id": "hair_06",
+      "displayName": "Teinte 6",
+      "hex": "#808080",
+      "texture": "textures/characters/nains/hair/hair_06.png"
+    }
+  ],
+  "eyeColors": [
+    {
+      "id": "eye_01",
+      "displayName": "Teinte 1",
+      "hex": "#4169E1",
+      "texture": "textures/characters/nains/eyes/eye_01.png"
+    },
+    {
+      "id": "eye_02",
+      "displayName": "Teinte 2",
+      "hex": "#2E8B57",
+      "texture": "textures/characters/nains/eyes/eye_02.png"
+    },
+    {
+      "id": "eye_03",
+      "displayName": "Teinte 3",
+      "hex": "#B8860B",
+      "texture": "textures/characters/nains/eyes/eye_03.png"
+    },
+    {
+      "id": "eye_04",
+      "displayName": "Teinte 4",
+      "hex": "#696969",
+      "texture": "textures/characters/nains/eyes/eye_04.png"
+    }
+  ],
+  "morphTargets": {
+    "face": [
+      {
+        "name": "faceWidth",
+        "min": 0.0,
+        "max": 1.0,
+        "default": 0.6,
+        "displayName": "Largeur du visage"
+      },
+      {
+        "name": "noseSize",
+        "min": 0.0,
+        "max": 1.0,
+        "default": 0.5,
+        "displayName": "Taille du nez"
+      }
+    ],
+    "body": [
+      {
+        "name": "bodyMass",
+        "min": 0.3,
+        "max": 0.7,
+        "default": 0.5,
+        "displayName": "Corpulence"
+      }
+    ]
+  },
+  "animationSet": "humanoid_base",
+  "gameplay": {
+    "movementSpeed": {
+      "walk": 3.0,
+      "run": 6.0,
+      "sprint": 9.0
+    },
+    "combatStats": {
+      "baseHealth": 120,
+      "baseStamina": 130,
+      "baseMana": 80,
+      "bonusEndurance": 5,
+      "bonusStrength": 3,
+      "resistances": {
+        "poison": 10,
+        "physical": 5
+      }
+    }
+  },
+  "factionRestrictions": {
+    "allowed": [
+      "alliance_light",
+      "neutral"
+    ],
+    "forbidden": [
+      "demons_faction",
+      "dzorak_horde"
+    ]
+  },
+  "additionalAnimations": [
+    "nains_specific"
+  ]
+}

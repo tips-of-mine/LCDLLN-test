@@ -239,6 +239,7 @@ add_library(engine_core
   src/client/crafting/HarvestCastBar.cpp
   src/client/crafting/CraftingUi.cpp
   src/client/character_creation/CharacterCreationUi.cpp
+  src/client/character_creation/CharacterCustomizationSystem.cpp
   src/client/render/race/RacePreviewViewport.cpp
   src/client/settings/SettingsMenuUi.cpp
   src/client/hud/HudLayoutEditor.cpp

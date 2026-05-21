@@ -1,0 +1,111 @@
+{
+  "version": "1.0.0",
+  "description": "Ensembles d'animations partagés par race. Les races réutilisent humanoid_base ; les sets *_specific ajoutent (extends) des animations raciales. Les noms de races sont alignés sur races.json.",
+  "sets": {
+    "humanoid_base": {
+      "displayName": "Animations Humanoïdes Standard",
+      "description": "Ensemble d'animations partagé par toutes les races humanoïdes",
+      "skeleton": "humanoid_base",
+      "categories": {
+        "locomotion": {
+          "displayName": "Déplacements",
+          "animations": [
+            {"id": "idle", "file": "animations/humanoid_base/locomotion/idle.fbx", "loop": true, "blendable": true},
+            {"id": "idle_combat", "file": "animations/humanoid_base/locomotion/idle_combat.fbx", "loop": true, "blendable": true},
+            {"id": "walk_forward", "file": "animations/humanoid_base/locomotion/walk_forward.fbx", "loop": true, "blendable": true},
+            {"id": "walk_backward", "file": "animations/humanoid_base/locomotion/walk_backward.fbx", "loop": true, "blendable": true},
+            {"id": "run_forward", "file": "animations/humanoid_base/locomotion/run_forward.fbx", "loop": true, "blendable": true},
+            {"id": "sprint", "file": "animations/humanoid_base/locomotion/sprint.fbx", "loop": true, "blendable": true},
+            {"id": "jump_start", "file": "animations/humanoid_base/locomotion/jump_start.fbx", "loop": false},
+            {"id": "jump_loop", "file": "animations/humanoid_base/locomotion/jump_loop.fbx", "loop": true},
+            {"id": "jump_land", "file": "animations/humanoid_base/locomotion/jump_land.fbx", "loop": false}
+          ]
+        },
+        "combat": {
+          "displayName": "Combat",
+          "subcategories": {
+            "melee": {
+              "animations": [
+                {"id": "attack_1h_combo_01", "file": "animations/humanoid_base/combat/melee/attack_1h_combo_01.fbx", "loop": false},
+                {"id": "attack_2h_combo_01", "file": "animations/humanoid_base/combat/melee/attack_2h_combo_01.fbx", "loop": false}
+              ]
+            },
+            "ranged": {
+              "animations": [
+                {"id": "bow_draw", "file": "animations/humanoid_base/combat/ranged/bow_draw.fbx", "loop": false},
+                {"id": "bow_hold_aim", "file": "animations/humanoid_base/combat/ranged/bow_hold_aim.fbx", "loop": true}
+              ]
+            },
+            "magic": {
+              "animations": [
+                {"id": "cast_spell_instant", "file": "animations/humanoid_base/combat/magic/cast_spell_instant.fbx", "loop": false},
+                {"id": "cast_spell_channel", "file": "animations/humanoid_base/combat/magic/cast_spell_channel.fbx", "loop": true}
+              ]
+            }
+          }
+        },
+        "reactions": {
+          "displayName": "Réactions",
+          "animations": [
+            {"id": "hit_front_light", "file": "animations/humanoid_base/reactions/hit_front_light.fbx", "loop": false},
+            {"id": "death_forward", "file": "animations/humanoid_base/reactions/death_forward.fbx", "loop": false}
+          ]
+        },
+        "emotes": {
+          "displayName": "Emotes",
+          "animations": [
+            {"id": "wave", "file": "animations/humanoid_base/emotes/wave.fbx", "loop": false},
+            {"id": "dance_01", "file": "animations/humanoid_base/emotes/dance_01.fbx", "loop": true}
+          ]
+        }
+      }
+    },
+    "orcs_specific": {
+      "displayName": "Animations Spécifiques Orcs",
+      "description": "Animations uniques aux orcs",
+      "skeleton": "humanoid_base",
+      "extends": "humanoid_base",
+      "categories": {
+        "racial_abilities": {
+          "displayName": "Capacités raciales",
+          "animations": [
+            {"id": "roar_intimidate", "file": "animations/orcs_specific/roar_intimidate.fbx", "loop": false},
+            {"id": "berserker_rage", "file": "animations/orcs_specific/berserker_rage.fbx", "loop": false},
+            {"id": "ground_slam", "file": "animations/orcs_specific/ground_slam.fbx", "loop": false}
+          ]
+        }
+      }
+    },
+    "demons_specific": {
+      "displayName": "Animations Spécifiques Démons",
+      "description": "Animations uniques aux démons",
+      "skeleton": "humanoid_base",
+      "extends": "humanoid_base",
+      "categories": {
+        "racial_abilities": {
+          "displayName": "Capacités raciales",
+          "animations": [
+            {"id": "wing_flap", "file": "animations/demons_specific/wing_flap.fbx", "loop": true},
+            {"id": "infernal_idle", "file": "animations/demons_specific/infernal_idle.fbx", "loop": true},
+            {"id": "demonic_transformation", "file": "animations/demons_specific/demonic_transformation.fbx", "loop": false}
+          ]
+        }
+      }
+    },
+    "nains_specific": {
+      "displayName": "Animations Spécifiques Nains",
+      "description": "Animations uniques aux nains",
+      "skeleton": "humanoid_base",
+      "extends": "humanoid_base",
+      "categories": {
+        "racial_abilities": {
+          "displayName": "Capacités raciales",
+          "animations": [
+            {"id": "forge_stance", "file": "animations/nains_specific/forge_stance.fbx", "loop": true},
+            {"id": "shield_wall", "file": "animations/nains_specific/shield_wall.fbx", "loop": false}
+          ]
+        }
+      }
+    }
+  }
+}

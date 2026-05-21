@@ -1,0 +1,68 @@
+{
+  "version": "1.0.0",
+  "armorTypes": {
+    "cloth": {
+      "displayName": "Tissu",
+      "armorClass": "light",
+      "allowedClasses": ["mage", "warlock", "priest"],
+      "slots": ["head", "chest", "legs", "hands", "feet", "shoulders", "belt", "wrists"]
+    },
+    "leather": {
+      "displayName": "Cuir",
+      "armorClass": "medium",
+      "allowedClasses": ["rogue", "ranger", "monk"],
+      "slots": ["head", "chest", "legs", "hands", "feet", "shoulders", "belt", "wrists"]
+    },
+    "mail": {
+      "displayName": "Mailles",
+      "armorClass": "medium-heavy",
+      "allowedClasses": ["hunter", "shaman"],
+      "slots": ["head", "chest", "legs", "hands", "feet", "shoulders", "belt", "wrists"]
+    },
+    "plate": {
+      "displayName": "Plaques",
+      "armorClass": "heavy",
+      "allowedClasses": ["warrior", "paladin", "death_knight"],
+      "slots": ["head", "chest", "legs", "hands", "feet", "shoulders", "belt", "wrists"]
+    }
+  },
+  "sets": [
+    {
+      "setId": "apprentice_mage",
+      "displayName": "Équipement d'Apprenti Mage",
+      "armorType": "cloth",
+      "tier": 1,
+      "pieces": [
+        {"slot": "head", "itemId": "apprentice_hood", "model": "models/equipment/armor/cloth/sets/apprentice_mage/head.fbx"},
+        {"slot": "chest", "itemId": "apprentice_robe", "model": "models/equipment/armor/cloth/sets/apprentice_mage/chest.fbx"},
+        {"slot": "legs", "itemId": "apprentice_pants", "model": "models/equipment/armor/cloth/sets/apprentice_mage/legs.fbx"},
+        {"slot": "hands", "itemId": "apprentice_gloves", "model": "models/equipment/armor/cloth/sets/apprentice_mage/hands.fbx"},
+        {"slot": "feet", "itemId": "apprentice_boots", "model": "models/equipment/armor/cloth/sets/apprentice_mage/feet.fbx"}
+      ],
+      "setBonuses": [
+        {"piecesRequired": 2, "bonus": "+5 Intelligence"},
+        {"piecesRequired": 4, "bonus": "+10 Mana"},
+        {"piecesRequired": 5, "bonus": "+3% Vitesse de casting"}
+      ]
+    },
+    {
+      "setId": "knight_templar",
+      "displayName": "Armure du Templier",
+      "armorType": "mail",
+      "tier": 2,
+      "pieces": [
+        {"slot": "head", "itemId": "templar_helm", "model": "models/equipment/armor/mail/sets/knight_templar/head.fbx"},
+        {"slot": "chest", "itemId": "templar_hauberk", "model": "models/equipment/armor/mail/sets/knight_templar/chest.fbx"},
+        {"slot": "legs", "itemId": "templar_leggings", "model": "models/equipment/armor/mail/sets/knight_templar/legs.fbx"},
+        {"slot": "hands", "itemId": "templar_gauntlets", "model": "models/equipment/armor/mail/sets/knight_templar/hands.fbx"},
+        {"slot": "feet", "itemId": "templar_boots", "model": "models/equipment/armor/mail/sets/knight_templar/feet.fbx"},
+        {"slot": "shoulders", "itemId": "templar_pauldrons", "model": "models/equipment/armor/mail/sets/knight_templar/shoulders.fbx"}
+      ],
+      "setBonuses": [
+        {"piecesRequired": 2, "bonus": "+10 Armure"},
+        {"piecesRequired": 4, "bonus": "+5 Force"},
+        {"piecesRequired": 6, "bonus": "+5% Résistance sacrée"}
+      ]
+    }
+  ]
+}

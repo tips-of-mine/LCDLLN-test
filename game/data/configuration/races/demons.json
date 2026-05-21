@@ -1,0 +1,372 @@
+{
+  "version": "1.0.0",
+  "raceId": "demons",
+  "displayName": "Démons",
+  "description": "Entités infernales enchaînées dans la chair, les Démons brûlent d'une puissance destructrice.",
+  "physicalLimits": {
+    "height": {
+      "baseMeters": 1.85,
+      "scaleRange": {
+        "min": 0.95,
+        "max": 1.12,
+        "default": 1.03
+      }
+    },
+    "bodyMass": {
+      "range": {
+        "min": -0.2,
+        "max": 0.6,
+        "default": 0.2
+      }
+    },
+    "proportions": {
+      "legLength": {
+        "range": {
+          "min": 0.95,
+          "max": 1.05
+        },
+        "default": 1.0
+      },
+      "shoulderWidth": {
+        "range": {
+          "min": 0.95,
+          "max": 1.15
+        },
+        "default": 1.05
+      },
+      "torsoWidth": {
+        "range": {
+          "min": 0.95,
+          "max": 1.08
+        },
+        "default": 1.0
+      }
+    }
+  },
+  "baseSkeleton": "humanoid_base",
+  "collisionDefaults": {
+    "radius": 0.48,
+    "height": 1.85
+  },
+  "genders": [
+    "male",
+    "female"
+  ],
+  "bodyTypes": {
+    "male": [
+      {
+        "id": "base",
+        "model": "models/characters/demons/base/male_body_base.fbx",
+        "displayName": "Athlétique",
+        "description": "Silhouette élancée et musclée"
+      },
+      {
+        "id": "muscular",
+        "model": "models/characters/demons/base/male_body_muscular.fbx",
+        "displayName": "Musclé",
+        "description": "Musculature accentuée"
+      }
+    ],
+    "female": [
+      {
+        "id": "base",
+        "model": "models/characters/demons/base/female_body_base.fbx",
+        "displayName": "Athlétique",
+        "description": "Silhouette élancée"
+      },
+      {
+        "id": "athletic",
+        "model": "models/characters/demons/base/female_body_athletic.fbx",
+        "displayName": "Athlétique tonique",
+        "description": "Musculature définie"
+      }
+    ]
+  },
+  "heads": {
+    "male": [
+      {
+        "id": "head_01",
+        "model": "models/characters/demons/heads/male/head_01.fbx",
+        "displayName": "Visage 1"
+      },
+      {
+        "id": "head_02",
+        "model": "models/characters/demons/heads/male/head_02.fbx",
+        "displayName": "Visage 2"
+      },
+      {
+        "id": "head_03",
+        "model": "models/characters/demons/heads/male/head_03.fbx",
+        "displayName": "Visage 3"
+      }
+    ],
+    "female": [
+      {
+        "id": "head_01",
+        "model": "models/characters/demons/heads/female/head_01.fbx",
+        "displayName": "Visage 1"
+      },
+      {
+        "id": "head_02",
+        "model": "models/characters/demons/heads/female/head_02.fbx",
+        "displayName": "Visage 2"
+      }
+    ]
+  },
+  "hairStyles": {
+    "male": [
+      {
+        "id": "short_01",
+        "model": "models/characters/demons/hair/male/short_01.fbx",
+        "displayName": "Court"
+      },
+      {
+        "id": "medium_01",
+        "model": "models/characters/demons/hair/male/medium_01.fbx",
+        "displayName": "Mi-long"
+      }
+    ],
+    "female": [
+      {
+        "id": "long_01",
+        "model": "models/characters/demons/hair/female/long_01.fbx",
+        "displayName": "Long"
+      },
+      {
+        "id": "medium_01",
+        "model": "models/characters/demons/hair/female/medium_01.fbx",
+        "displayName": "Mi-long"
+      }
+    ]
+  },
+  "facialHair": {
+    "male": [
+      {
+        "id": "none",
+        "model": "models/characters/demons/facial_hair/none.fbx",
+        "displayName": "Aucune"
+      },
+      {
+        "id": "goatee_01",
+        "model": "models/characters/demons/facial_hair/goatee_01.fbx",
+        "displayName": "Bouc"
+      }
+    ]
+  },
+  "skinTones": [
+    {
+      "id": "skin_01",
+      "displayName": "Peau 1",
+      "hex": "#8B0000",
+      "diffuse": "textures/characters/demons/skin/skin_01_diffuse.png",
+      "normal": "textures/characters/demons/skin/skin_01_normal.png",
+      "orm": "textures/characters/demons/skin/skin_01_orm.png"
+    },
+    {
+      "id": "skin_02",
+      "displayName": "Peau 2",
+      "hex": "#B22222",
+      "diffuse": "textures/characters/demons/skin/skin_02_diffuse.png",
+      "normal": "textures/characters/demons/skin/skin_02_normal.png",
+      "orm": "textures/characters/demons/skin/skin_02_orm.png"
+    },
+    {
+      "id": "skin_03",
+      "displayName": "Peau 3",
+      "hex": "#CC2200",
+      "diffuse": "textures/characters/demons/skin/skin_03_diffuse.png",
+      "normal": "textures/characters/demons/skin/skin_03_normal.png",
+      "orm": "textures/characters/demons/skin/skin_03_orm.png"
+    },
+    {
+      "id": "skin_04",
+      "displayName": "Peau 4",
+      "hex": "#FF4500",
+      "diffuse": "textures/characters/demons/skin/skin_04_diffuse.png",
+      "normal": "textures/characters/demons/skin/skin_04_normal.png",
+      "orm": "textures/characters/demons/skin/skin_04_orm.png"
+    }
+  ],
+  "hairColors": [
+    {
+      "id": "hair_01",
+      "displayName": "Teinte 1",
+      "hex": "#000000",
+      "texture": "textures/characters/demons/hair/hair_01.png"
+    },
+    {
+      "id": "hair_02",
+      "displayName": "Teinte 2",
+      "hex": "#8B0000",
+      "texture": "textures/characters/demons/hair/hair_02.png"
+    },
+    {
+      "id": "hair_03",
+      "displayName": "Teinte 3",
+      "hex": "#B8860B",
+      "texture": "textures/characters/demons/hair/hair_03.png"
+    },
+    {
+      "id": "hair_04",
+      "displayName": "Teinte 4",
+      "hex": "#1C1C1C",
+      "texture": "textures/characters/demons/hair/hair_04.png"
+    }
+  ],
+  "eyeColors": [
+    {
+      "id": "eye_01",
+      "displayName": "Teinte 1",
+      "hex": "#FF4500",
+      "texture": "textures/characters/demons/eyes/eye_01.png",
+      "emissive": true
+    },
+    {
+      "id": "eye_02",
+      "displayName": "Teinte 2",
+      "hex": "#FFD700",
+      "texture": "textures/characters/demons/eyes/eye_02.png",
+      "emissive": true
+    },
+    {
+      "id": "eye_03",
+      "displayName": "Teinte 3",
+      "hex": "#FF6347",
+      "texture": "textures/characters/demons/eyes/eye_03.png",
+      "emissive": true
+    },
+    {
+      "id": "eye_04",
+      "displayName": "Teinte 4",
+      "hex": "#DC143C",
+      "texture": "textures/characters/demons/eyes/eye_04.png",
+      "emissive": true
+    }
+  ],
+  "morphTargets": {
+    "face": [
+      {
+        "name": "faceWidth",
+        "min": -0.5,
+        "max": 0.8,
+        "default": 0.2,
+        "displayName": "Largeur du visage"
+      },
+      {
+        "name": "jawWidth",
+        "min": -0.5,
+        "max": 1.0,
+        "default": 0.3,
+        "displayName": "Largeur de la mâchoire"
+      },
+      {
+        "name": "cheekbones",
+        "min": -0.5,
+        "max": 1.0,
+        "default": 0.4,
+        "displayName": "Pommettes"
+      }
+    ],
+    "body": [
+      {
+        "name": "bodyMass",
+        "min": -0.2,
+        "max": 0.6,
+        "default": 0.2,
+        "displayName": "Corpulence"
+      }
+    ]
+  },
+  "animationSet": "humanoid_base",
+  "gameplay": {
+    "movementSpeed": {
+      "walk": 3.7,
+      "run": 7.3,
+      "sprint": 11.0
+    },
+    "combatStats": {
+      "baseHealth": 110,
+      "baseStamina": 90,
+      "baseMana": 130,
+      "bonusIntelligence": 3,
+      "bonusStrength": 2,
+      "resistances": {
+        "fire": 20,
+        "shadow": 15
+      }
+    }
+  },
+  "factionRestrictions": {
+    "allowed": [
+      "demons_faction"
+    ],
+    "forbidden": [
+      "alliance_light",
+      "dzorak_horde"
+    ]
+  },
+  "racialFeatures": {
+    "horns": [
+      {
+        "id": "none",
+        "model": "models/characters/demons/horns/none.fbx",
+        "displayName": "Aucune"
+      },
+      {
+        "id": "curved_01",
+        "model": "models/characters/demons/horns/curved_01.fbx",
+        "displayName": "Cornes courbes"
+      },
+      {
+        "id": "curved_02",
+        "model": "models/characters/demons/horns/curved_02.fbx",
+        "displayName": "Cornes recourbées"
+      },
+      {
+        "id": "straight_01",
+        "model": "models/characters/demons/horns/straight_01.fbx",
+        "displayName": "Cornes droites"
+      },
+      {
+        "id": "straight_02",
+        "model": "models/characters/demons/horns/straight_02.fbx",
+        "displayName": "Cornes pointues"
+      },
+      {
+        "id": "broken_01",
+        "model": "models/characters/demons/horns/broken_01.fbx",
+        "displayName": "Cornes brisées"
+      },
+      {
+        "id": "ram_style",
+        "model": "models/characters/demons/horns/ram_style.fbx",
+        "displayName": "Cornes de bélier"
+      }
+    ],
+    "tails": [
+      {
+        "id": "none",
+        "model": "models/characters/demons/tails/none.fbx",
+        "displayName": "Aucune"
+      },
+      {
+        "id": "spaded_long",
+        "model": "models/characters/demons/tails/spaded_long.fbx",
+        "displayName": "Queue longue à pointe"
+      },
+      {
+        "id": "spaded_short",
+        "model": "models/characters/demons/tails/spaded_short.fbx",
+        "displayName": "Queue courte à pointe"
+      },
+      {
+        "id": "thin_long",
+        "model": "models/characters/demons/tails/thin_long.fbx",
+        "displayName": "Queue fine longue"
+      }
+    ]
+  },
+  "additionalAnimations": [
+    "demons_specific"
+  ]
+}

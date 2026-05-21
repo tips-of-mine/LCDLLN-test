@@ -1,0 +1,361 @@
+{
+  "version": "1.0.0",
+  "raceId": "divins",
+  "displayName": "Divins",
+  "description": "Bénis des dieux, les Divins canalisent une lumière purificatrice.",
+  "physicalLimits": {
+    "height": {
+      "baseMeters": 1.8,
+      "scaleRange": {
+        "min": 0.95,
+        "max": 1.1,
+        "default": 1.02
+      }
+    },
+    "bodyMass": {
+      "range": {
+        "min": -0.3,
+        "max": 0.3,
+        "default": 0.0
+      }
+    },
+    "proportions": {
+      "legLength": {
+        "range": {
+          "min": 0.95,
+          "max": 1.05
+        },
+        "default": 1.0
+      },
+      "shoulderWidth": {
+        "range": {
+          "min": 0.9,
+          "max": 1.1
+        },
+        "default": 1.0
+      },
+      "torsoWidth": {
+        "range": {
+          "min": 0.95,
+          "max": 1.05
+        },
+        "default": 1.0
+      }
+    }
+  },
+  "baseSkeleton": "humanoid_base",
+  "collisionDefaults": {
+    "radius": 0.45,
+    "height": 1.8
+  },
+  "genders": [
+    "male",
+    "female"
+  ],
+  "bodyTypes": {
+    "male": [
+      {
+        "id": "base",
+        "model": "models/characters/divins/base/male_body_base.fbx",
+        "displayName": "Élancé",
+        "description": "Silhouette noble et droite"
+      },
+      {
+        "id": "radiant",
+        "model": "models/characters/divins/base/male_body_radiant.fbx",
+        "displayName": "Rayonnant",
+        "description": "Carrure athlétique de champion"
+      }
+    ],
+    "female": [
+      {
+        "id": "base",
+        "model": "models/characters/divins/base/female_body_base.fbx",
+        "displayName": "Élancée",
+        "description": "Silhouette noble et droite"
+      },
+      {
+        "id": "radiant",
+        "model": "models/characters/divins/base/female_body_radiant.fbx",
+        "displayName": "Rayonnante",
+        "description": "Carrure athlétique de championne"
+      }
+    ]
+  },
+  "heads": {
+    "male": [
+      {
+        "id": "head_01",
+        "model": "models/characters/divins/heads/male/head_01.fbx",
+        "displayName": "Visage 1"
+      },
+      {
+        "id": "head_02",
+        "model": "models/characters/divins/heads/male/head_02.fbx",
+        "displayName": "Visage 2"
+      },
+      {
+        "id": "head_03",
+        "model": "models/characters/divins/heads/male/head_03.fbx",
+        "displayName": "Visage 3"
+      }
+    ],
+    "female": [
+      {
+        "id": "head_01",
+        "model": "models/characters/divins/heads/female/head_01.fbx",
+        "displayName": "Visage 1"
+      },
+      {
+        "id": "head_02",
+        "model": "models/characters/divins/heads/female/head_02.fbx",
+        "displayName": "Visage 2"
+      },
+      {
+        "id": "head_03",
+        "model": "models/characters/divins/heads/female/head_03.fbx",
+        "displayName": "Visage 3"
+      }
+    ]
+  },
+  "hairStyles": {
+    "male": [
+      {
+        "id": "short_01",
+        "model": "models/characters/divins/hair/male/short_01.fbx",
+        "displayName": "Court"
+      },
+      {
+        "id": "medium_01",
+        "model": "models/characters/divins/hair/male/medium_01.fbx",
+        "displayName": "Mi-long"
+      },
+      {
+        "id": "long_01",
+        "model": "models/characters/divins/hair/male/long_01.fbx",
+        "displayName": "Long"
+      }
+    ],
+    "female": [
+      {
+        "id": "long_01",
+        "model": "models/characters/divins/hair/female/long_01.fbx",
+        "displayName": "Long lisse"
+      },
+      {
+        "id": "long_02",
+        "model": "models/characters/divins/hair/female/long_02.fbx",
+        "displayName": "Long ondulé"
+      },
+      {
+        "id": "braided_01",
+        "model": "models/characters/divins/hair/female/braided_01.fbx",
+        "displayName": "Tresses"
+      }
+    ]
+  },
+  "facialHair": {
+    "male": [
+      {
+        "id": "none",
+        "model": "models/characters/divins/facial_hair/none.fbx",
+        "displayName": "Aucune"
+      },
+      {
+        "id": "beard_short_01",
+        "model": "models/characters/divins/facial_hair/beard_short_01.fbx",
+        "displayName": "Barbe courte"
+      }
+    ]
+  },
+  "skinTones": [
+    {
+      "id": "skin_01",
+      "displayName": "Peau 1",
+      "hex": "#FFEFD5",
+      "diffuse": "textures/characters/divins/skin/skin_01_diffuse.png",
+      "normal": "textures/characters/divins/skin/skin_01_normal.png",
+      "orm": "textures/characters/divins/skin/skin_01_orm.png"
+    },
+    {
+      "id": "skin_02",
+      "displayName": "Peau 2",
+      "hex": "#FFE4C4",
+      "diffuse": "textures/characters/divins/skin/skin_02_diffuse.png",
+      "normal": "textures/characters/divins/skin/skin_02_normal.png",
+      "orm": "textures/characters/divins/skin/skin_02_orm.png"
+    },
+    {
+      "id": "skin_03",
+      "displayName": "Peau 3",
+      "hex": "#FFDAB9",
+      "diffuse": "textures/characters/divins/skin/skin_03_diffuse.png",
+      "normal": "textures/characters/divins/skin/skin_03_normal.png",
+      "orm": "textures/characters/divins/skin/skin_03_orm.png"
+    },
+    {
+      "id": "skin_04",
+      "displayName": "Peau 4",
+      "hex": "#FFD700",
+      "diffuse": "textures/characters/divins/skin/skin_04_diffuse.png",
+      "normal": "textures/characters/divins/skin/skin_04_normal.png",
+      "orm": "textures/characters/divins/skin/skin_04_orm.png"
+    }
+  ],
+  "hairColors": [
+    {
+      "id": "hair_01",
+      "displayName": "Teinte 1",
+      "hex": "#FFD700",
+      "texture": "textures/characters/divins/hair/hair_01.png"
+    },
+    {
+      "id": "hair_02",
+      "displayName": "Teinte 2",
+      "hex": "#FFFACD",
+      "texture": "textures/characters/divins/hair/hair_02.png"
+    },
+    {
+      "id": "hair_03",
+      "displayName": "Teinte 3",
+      "hex": "#FFFFFF",
+      "texture": "textures/characters/divins/hair/hair_03.png"
+    },
+    {
+      "id": "hair_04",
+      "displayName": "Teinte 4",
+      "hex": "#F0E68C",
+      "texture": "textures/characters/divins/hair/hair_04.png"
+    }
+  ],
+  "eyeColors": [
+    {
+      "id": "eye_01",
+      "displayName": "Teinte 1",
+      "hex": "#87CEEB",
+      "texture": "textures/characters/divins/eyes/eye_01.png",
+      "emissive": true
+    },
+    {
+      "id": "eye_02",
+      "displayName": "Teinte 2",
+      "hex": "#FFD700",
+      "texture": "textures/characters/divins/eyes/eye_02.png",
+      "emissive": true
+    },
+    {
+      "id": "eye_03",
+      "displayName": "Teinte 3",
+      "hex": "#FFFFFF",
+      "texture": "textures/characters/divins/eyes/eye_03.png",
+      "emissive": true
+    },
+    {
+      "id": "eye_04",
+      "displayName": "Teinte 4",
+      "hex": "#87CEFA",
+      "texture": "textures/characters/divins/eyes/eye_04.png",
+      "emissive": true
+    }
+  ],
+  "morphTargets": {
+    "face": [
+      {
+        "name": "faceWidth",
+        "min": -1.0,
+        "max": 1.0,
+        "default": 0.0,
+        "displayName": "Largeur du visage"
+      },
+      {
+        "name": "jawWidth",
+        "min": -1.0,
+        "max": 1.0,
+        "default": 0.0,
+        "displayName": "Largeur de la mâchoire"
+      },
+      {
+        "name": "noseSize",
+        "min": -1.0,
+        "max": 1.0,
+        "default": 0.0,
+        "displayName": "Taille du nez"
+      },
+      {
+        "name": "cheekbones",
+        "min": -1.0,
+        "max": 1.0,
+        "default": 0.0,
+        "displayName": "Pommettes"
+      },
+      {
+        "name": "eyeSize",
+        "min": -0.5,
+        "max": 0.5,
+        "default": 0.0,
+        "displayName": "Taille des yeux"
+      },
+      {
+        "name": "lipThickness",
+        "min": -0.5,
+        "max": 0.5,
+        "default": 0.0,
+        "displayName": "Épaisseur des lèvres"
+      }
+    ],
+    "body": [
+      {
+        "name": "bodyMass",
+        "min": -0.3,
+        "max": 0.3,
+        "default": 0.0,
+        "displayName": "Corpulence"
+      }
+    ]
+  },
+  "animationSet": "humanoid_base",
+  "gameplay": {
+    "movementSpeed": {
+      "walk": 3.6,
+      "run": 7.2,
+      "sprint": 10.8
+    },
+    "combatStats": {
+      "baseHealth": 115,
+      "baseStamina": 100,
+      "baseMana": 125,
+      "bonusWisdom": 4,
+      "resistances": {
+        "shadow": 20
+      }
+    }
+  },
+  "factionRestrictions": {
+    "allowed": [
+      "alliance_light",
+      "neutral"
+    ],
+    "forbidden": [
+      "demons_faction"
+    ]
+  },
+  "racialFeatures": {
+    "halos": [
+      {
+        "id": "none",
+        "model": "models/characters/divins/halos/none.fbx",
+        "displayName": "Aucun"
+      },
+      {
+        "id": "thin",
+        "model": "models/characters/divins/halos/thin.fbx",
+        "displayName": "Halo discret"
+      },
+      {
+        "id": "radiant",
+        "model": "models/characters/divins/halos/radiant.fbx",
+        "displayName": "Halo rayonnant"
+      }
+    ]
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "version": "1.0.0",
+  "description": "Définitions des sockets d'attachement pour équipements sur le squelette humanoid_base. Les noms de bones suivent la convention du repo (cf. docs/CONVENTIONS_NAMING.md).",
+  "sockets": {
+    "head": {
+      "boneName": "head",
+      "displayName": "Tête",
+      "category": "armor",
+      "offset": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "chest": {
+      "boneName": "spine_02",
+      "displayName": "Torse",
+      "category": "armor",
+      "offset": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "legs": {
+      "boneName": "pelvis",
+      "displayName": "Jambes",
+      "category": "armor",
+      "offset": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "hand_left": {
+      "boneName": "hand_left",
+      "displayName": "Main gauche",
+      "category": "armor",
+      "offset": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "foot_left": {
+      "boneName": "foot_left",
+      "displayName": "Pied gauche",
+      "category": "armor",
+      "offset": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "shoulder_left": {
+      "boneName": "clavicle_left",
+      "displayName": "Épaule gauche",
+      "category": "armor",
+      "offset": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "shoulder_right": {
+      "boneName": "clavicle_right",
+      "displayName": "Épaule droite",
+      "category": "armor",
+      "offset": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "weapon_right_hand": {
+      "boneName": "hand_right",
+      "displayName": "Arme main droite",
+      "category": "weapon",
+      "offset": {"x": 0.05, "y": 0.0, "z": 0.0},
+      "rotation": {"x": -90.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "weapon_left_hand": {
+      "boneName": "hand_left",
+      "displayName": "Arme main gauche",
+      "category": "weapon",
+      "offset": {"x": -0.05, "y": 0.0, "z": 0.0},
+      "rotation": {"x": -90.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "shield_left_hand": {
+      "boneName": "forearm_left",
+      "displayName": "Bouclier avant-bras gauche",
+      "category": "shield",
+      "offset": {"x": 0.0, "y": 0.1, "z": 0.0},
+      "rotation": {"x": 0.0, "y": 90.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "back_weapon": {
+      "boneName": "spine_03",
+      "displayName": "Arme dans le dos",
+      "category": "weapon",
+      "offset": {"x": 0.0, "y": 0.15, "z": -0.1},
+      "rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "cape": {
+      "boneName": "spine_02",
+      "displayName": "Cape",
+      "category": "accessory",
+      "offset": {"x": 0.0, "y": 0.05, "z": -0.05},
+      "rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "belt": {
+      "boneName": "pelvis",
+      "displayName": "Ceinture",
+      "category": "armor",
+      "offset": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    },
+    "necklace": {
+      "boneName": "neck",
+      "displayName": "Collier",
+      "category": "jewelry",
+      "offset": {"x": 0.0, "y": -0.02, "z": 0.0},
+      "rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "scale": {"x": 1.0, "y": 1.0, "z": 1.0}
+    }
+  },
+  "scaleInheritance": {
+    "enabled": true,
+    "description": "Les équipements héritent du scale du bone parent pour s'adapter aux variations de taille et de proportions (cf. ResolvedCharacterAssets.boneScales)."
+  }
+}

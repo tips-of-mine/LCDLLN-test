@@ -1472,3 +1472,33 @@ Pas de test unitaire pour `Engine::GetRaceMesh` ni `RacePreviewViewport` (les de
 ### Bugs résiduels B.1 préservés
 
 Le wiring C MVP ne touche ni `CharacterController` ni `TerrainCollider` (sticky ground probe + half-height threshold restent intacts). Cf. `docs/superpowers/audits/2026-05-20-B1-status-known-bugs.md` pour la liste des bugs ouverts à reprendre dans une session debug ultérieure (caméra tracking, inputs combinés, smoke test §11).
+
+## 25. Système de personnalisation de personnages (CHAR-MODEL.25 — 2026-05-21)
+
+**Objectif** : couche *data-driven* de customisation (corps, tête, cheveux, pilosité, traits raciaux, couleurs, proportions, morph targets) par race et genre. **Aligné sur l'existant** : réutilise les `raceId` de `races.json` (humains, elfes, orcs, nains, morts_vivants, corrompus, divins, demons), pas de taxonomie parallèle. Purement client/data → **pas de redéploiement serveur**. Doc complète : `docs/CHARACTER_CUSTOMIZATION.md`.
+
+### Composants
+
+| Composant | Rôle |
+|---|---|
+| `game/data/configuration/races/<id>.json` | 1 fichier par race : limites physiques, types de corps, têtes/cheveux/pilosité, traits raciaux, palettes, morph targets, gameplay. **Générés** depuis `races.json`. |
+| `game/data/configuration/{customization,equipment,animations}/` | `body_proportions.json` (presets), `armor_sets.json`, `sockets_attachments.json` (sockets sur `humanoid_base`), `animation_sets.json`. |
+| `tools/asset_pipeline/gen_race_configs.py` | Dérive `configuration/races/*.json` depuis `races.json` + table `RACE_SPECS`. Idempotent. |
+| `engine::client::CharacterCustomization` (`src/client/character_creation/CharacterCustomization.h`) | État sérialisable d'un perso (race, genre, modules, couleurs, métriques, morphs, traits optionnels). `ToJson`/`FromJson` versionnés. |
+| `engine::client::CharacterCustomizationSystem` (`.h/.cpp`) | Charge `configuration/races/*.json` (`std::filesystem`, parser `engine::core::Config`), valide, génère (défaut/aléatoire), **résout** en `ResolvedCharacterAssets` (mesh, attachements socket+mesh, scaling d'os, collision, textures). |
+| `ResolvedCharacterAssets` | Plan d'instanciation concret consommable par un futur étage de rendu skinned. |
+| `tools/asset_pipeline/{process_character_assets,validate_fbx}.py` | Pipeline inbox → `game/data/models/characters/<race>/...` + validation FBX (extension, taille, nommage). |
+| Tests : `character_customization_tests` (CTest) | Chargement des 8 races, validation, génération valide, résolution, ordre des tailles (nain<humain<orc), round-trip JSON. |
+
+### Limite d'intégration (stub assumé)
+
+`ApplyCustomization` est un **stub documenté** : le moteur n'a pas encore de scène `GameObject`/`Skeleton`/composants. La fonction résout les assets et trace le plan ; le câblage GPU réel (attachement aux sockets, scaling des os, upload textures) est renvoyé à un ticket ultérieur. La **résolution** (`ResolveCustomization`) est complète et testée.
+
+### Câblage CMake
+
+- `CharacterCustomizationSystem.cpp` ajouté à `engine_core` (CMakeLists racine).
+- Test `character_customization_tests` ajouté dans `src/CMakeLists.txt` (lié via `engine_core`, ne pas re-ajouter le `.cpp`).
+
+### Extensibilité
+
+Ajouter une race = entrée dans `races.json` + `RACE_SPECS` du générateur → `gen_race_configs.py` → `Initialize()` découvre le fichier automatiquement (aucune recompilation). Nouvelles features raciales : synchroniser `kKnownRacialFeatures` (`.cpp`) et le générateur. Conventions assets : `docs/CONVENTIONS_NAMING.md`, exigences FBX : `docs/FBX_REQUIREMENTS.md`.

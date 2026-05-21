@@ -1,0 +1,357 @@
+{
+  "version": "1.0.0",
+  "raceId": "elfes",
+  "displayName": "Elfes",
+  "description": "Anciens et sages, les Elfes dominent la magie et l'agilité.",
+  "physicalLimits": {
+    "height": {
+      "baseMeters": 1.8,
+      "scaleRange": {
+        "min": 0.92,
+        "max": 1.08,
+        "default": 1.0
+      }
+    },
+    "bodyMass": {
+      "range": {
+        "min": -0.4,
+        "max": 0.2,
+        "default": -0.1
+      }
+    },
+    "proportions": {
+      "legLength": {
+        "range": {
+          "min": 0.98,
+          "max": 1.08
+        },
+        "default": 1.03
+      },
+      "shoulderWidth": {
+        "range": {
+          "min": 0.88,
+          "max": 1.02
+        },
+        "default": 0.95
+      },
+      "torsoWidth": {
+        "range": {
+          "min": 0.92,
+          "max": 1.02
+        },
+        "default": 0.97
+      }
+    }
+  },
+  "baseSkeleton": "humanoid_base",
+  "collisionDefaults": {
+    "radius": 0.42,
+    "height": 1.8
+  },
+  "genders": [
+    "male",
+    "female"
+  ],
+  "bodyTypes": {
+    "male": [
+      {
+        "id": "base",
+        "model": "models/characters/elfes/base/male_body_base.fbx",
+        "displayName": "Élancé",
+        "description": "Silhouette élégante et athlétique"
+      },
+      {
+        "id": "lean",
+        "model": "models/characters/elfes/base/male_body_lean.fbx",
+        "displayName": "Svelte",
+        "description": "Constitution fine et agile"
+      }
+    ],
+    "female": [
+      {
+        "id": "base",
+        "model": "models/characters/elfes/base/female_body_base.fbx",
+        "displayName": "Élancée",
+        "description": "Silhouette gracieuse"
+      },
+      {
+        "id": "athletic",
+        "model": "models/characters/elfes/base/female_body_athletic.fbx",
+        "displayName": "Athlétique",
+        "description": "Musculature tonique de chasseresse"
+      }
+    ]
+  },
+  "heads": {
+    "male": [
+      {
+        "id": "head_01",
+        "model": "models/characters/elfes/heads/male/head_01.fbx",
+        "displayName": "Visage 1"
+      },
+      {
+        "id": "head_02",
+        "model": "models/characters/elfes/heads/male/head_02.fbx",
+        "displayName": "Visage 2"
+      },
+      {
+        "id": "head_03",
+        "model": "models/characters/elfes/heads/male/head_03.fbx",
+        "displayName": "Visage 3"
+      }
+    ],
+    "female": [
+      {
+        "id": "head_01",
+        "model": "models/characters/elfes/heads/female/head_01.fbx",
+        "displayName": "Visage 1"
+      },
+      {
+        "id": "head_02",
+        "model": "models/characters/elfes/heads/female/head_02.fbx",
+        "displayName": "Visage 2"
+      },
+      {
+        "id": "head_03",
+        "model": "models/characters/elfes/heads/female/head_03.fbx",
+        "displayName": "Visage 3"
+      }
+    ]
+  },
+  "hairStyles": {
+    "male": [
+      {
+        "id": "long_01",
+        "model": "models/characters/elfes/hair/male/long_01.fbx",
+        "displayName": "Long lisse"
+      },
+      {
+        "id": "long_02",
+        "model": "models/characters/elfes/hair/male/long_02.fbx",
+        "displayName": "Long ondulé"
+      },
+      {
+        "id": "braided_01",
+        "model": "models/characters/elfes/hair/male/braided_01.fbx",
+        "displayName": "Tresses"
+      },
+      {
+        "id": "medium_01",
+        "model": "models/characters/elfes/hair/male/medium_01.fbx",
+        "displayName": "Mi-long"
+      }
+    ],
+    "female": [
+      {
+        "id": "long_01",
+        "model": "models/characters/elfes/hair/female/long_01.fbx",
+        "displayName": "Long lisse"
+      },
+      {
+        "id": "long_02",
+        "model": "models/characters/elfes/hair/female/long_02.fbx",
+        "displayName": "Long ondulé"
+      },
+      {
+        "id": "long_03",
+        "model": "models/characters/elfes/hair/female/long_03.fbx",
+        "displayName": "Très long"
+      },
+      {
+        "id": "braided_01",
+        "model": "models/characters/elfes/hair/female/braided_01.fbx",
+        "displayName": "Tresses"
+      }
+    ]
+  },
+  "facialHair": {
+    "male": [
+      {
+        "id": "none",
+        "model": "models/characters/elfes/facial_hair/none.fbx",
+        "displayName": "Aucune"
+      },
+      {
+        "id": "beard_thin_01",
+        "model": "models/characters/elfes/facial_hair/beard_thin_01.fbx",
+        "displayName": "Barbe fine"
+      }
+    ]
+  },
+  "skinTones": [
+    {
+      "id": "skin_01",
+      "displayName": "Peau 1",
+      "hex": "#F5DEB3",
+      "diffuse": "textures/characters/elfes/skin/skin_01_diffuse.png",
+      "normal": "textures/characters/elfes/skin/skin_01_normal.png",
+      "orm": "textures/characters/elfes/skin/skin_01_orm.png"
+    },
+    {
+      "id": "skin_02",
+      "displayName": "Peau 2",
+      "hex": "#E8D0AA",
+      "diffuse": "textures/characters/elfes/skin/skin_02_diffuse.png",
+      "normal": "textures/characters/elfes/skin/skin_02_normal.png",
+      "orm": "textures/characters/elfes/skin/skin_02_orm.png"
+    },
+    {
+      "id": "skin_03",
+      "displayName": "Peau 3",
+      "hex": "#C4A882",
+      "diffuse": "textures/characters/elfes/skin/skin_03_diffuse.png",
+      "normal": "textures/characters/elfes/skin/skin_03_normal.png",
+      "orm": "textures/characters/elfes/skin/skin_03_orm.png"
+    },
+    {
+      "id": "skin_04",
+      "displayName": "Peau 4",
+      "hex": "#B8946F",
+      "diffuse": "textures/characters/elfes/skin/skin_04_diffuse.png",
+      "normal": "textures/characters/elfes/skin/skin_04_normal.png",
+      "orm": "textures/characters/elfes/skin/skin_04_orm.png"
+    }
+  ],
+  "hairColors": [
+    {
+      "id": "hair_01",
+      "displayName": "Teinte 1",
+      "hex": "#F5F5DC",
+      "texture": "textures/characters/elfes/hair/hair_01.png"
+    },
+    {
+      "id": "hair_02",
+      "displayName": "Teinte 2",
+      "hex": "#C0C0C0",
+      "texture": "textures/characters/elfes/hair/hair_02.png"
+    },
+    {
+      "id": "hair_03",
+      "displayName": "Teinte 3",
+      "hex": "#D4AF37",
+      "texture": "textures/characters/elfes/hair/hair_03.png"
+    },
+    {
+      "id": "hair_04",
+      "displayName": "Teinte 4",
+      "hex": "#98FB98",
+      "texture": "textures/characters/elfes/hair/hair_04.png"
+    },
+    {
+      "id": "hair_05",
+      "displayName": "Teinte 5",
+      "hex": "#ADD8E6",
+      "texture": "textures/characters/elfes/hair/hair_05.png"
+    }
+  ],
+  "eyeColors": [
+    {
+      "id": "eye_01",
+      "displayName": "Teinte 1",
+      "hex": "#00CED1",
+      "texture": "textures/characters/elfes/eyes/eye_01.png"
+    },
+    {
+      "id": "eye_02",
+      "displayName": "Teinte 2",
+      "hex": "#32CD32",
+      "texture": "textures/characters/elfes/eyes/eye_02.png"
+    },
+    {
+      "id": "eye_03",
+      "displayName": "Teinte 3",
+      "hex": "#9370DB",
+      "texture": "textures/characters/elfes/eyes/eye_03.png"
+    },
+    {
+      "id": "eye_04",
+      "displayName": "Teinte 4",
+      "hex": "#F0E68C",
+      "texture": "textures/characters/elfes/eyes/eye_04.png"
+    }
+  ],
+  "morphTargets": {
+    "face": [
+      {
+        "name": "faceWidth",
+        "min": -0.8,
+        "max": 0.5,
+        "default": -0.2,
+        "displayName": "Largeur du visage"
+      },
+      {
+        "name": "jawWidth",
+        "min": -0.8,
+        "max": 0.3,
+        "default": -0.3,
+        "displayName": "Largeur de la mâchoire"
+      },
+      {
+        "name": "cheekbones",
+        "min": -0.5,
+        "max": 1.0,
+        "default": 0.5,
+        "displayName": "Pommettes"
+      },
+      {
+        "name": "eyeSize",
+        "min": -0.3,
+        "max": 0.6,
+        "default": 0.2,
+        "displayName": "Taille des yeux"
+      }
+    ],
+    "body": [
+      {
+        "name": "bodyMass",
+        "min": -0.4,
+        "max": 0.2,
+        "default": -0.1,
+        "displayName": "Corpulence"
+      }
+    ]
+  },
+  "animationSet": "humanoid_base",
+  "gameplay": {
+    "movementSpeed": {
+      "walk": 3.8,
+      "run": 7.5,
+      "sprint": 11.3
+    },
+    "combatStats": {
+      "baseHealth": 90,
+      "baseStamina": 110,
+      "baseMana": 120,
+      "bonusDexterity": 4,
+      "bonusPerception": 3
+    }
+  },
+  "factionRestrictions": {
+    "allowed": [
+      "alliance_light",
+      "neutral"
+    ],
+    "forbidden": [
+      "demons_faction"
+    ]
+  },
+  "racialFeatures": {
+    "ears": [
+      {
+        "id": "pointed_short",
+        "model": "models/characters/elfes/ears/pointed_short.fbx",
+        "displayName": "Oreilles courtes"
+      },
+      {
+        "id": "pointed_medium",
+        "model": "models/characters/elfes/ears/pointed_medium.fbx",
+        "displayName": "Oreilles moyennes"
+      },
+      {
+        "id": "pointed_long",
+        "model": "models/characters/elfes/ears/pointed_long.fbx",
+        "displayName": "Oreilles longues"
+      }
+    ]
+  }
+}

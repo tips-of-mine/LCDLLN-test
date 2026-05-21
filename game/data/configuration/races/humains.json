@@ -1,0 +1,418 @@
+{
+  "version": "1.0.0",
+  "raceId": "humains",
+  "displayName": "Humains",
+  "description": "Adaptables et ambitieux, les Humains excellent dans toutes les voies.",
+  "physicalLimits": {
+    "height": {
+      "baseMeters": 1.75,
+      "scaleRange": {
+        "min": 0.9,
+        "max": 1.1,
+        "default": 1.0
+      }
+    },
+    "bodyMass": {
+      "range": {
+        "min": -0.3,
+        "max": 0.5,
+        "default": 0.0
+      }
+    },
+    "proportions": {
+      "legLength": {
+        "range": {
+          "min": 0.95,
+          "max": 1.05
+        },
+        "default": 1.0
+      },
+      "shoulderWidth": {
+        "range": {
+          "min": 0.9,
+          "max": 1.1
+        },
+        "default": 1.0
+      },
+      "torsoWidth": {
+        "range": {
+          "min": 0.95,
+          "max": 1.05
+        },
+        "default": 1.0
+      }
+    }
+  },
+  "baseSkeleton": "humanoid_base",
+  "collisionDefaults": {
+    "radius": 0.45,
+    "height": 1.75
+  },
+  "genders": [
+    "male",
+    "female"
+  ],
+  "bodyTypes": {
+    "male": [
+      {
+        "id": "base",
+        "model": "models/characters/humains/base/male_body_base.fbx",
+        "displayName": "Normal",
+        "description": "Corpulence moyenne équilibrée"
+      },
+      {
+        "id": "muscular",
+        "model": "models/characters/humains/base/male_body_muscular.fbx",
+        "displayName": "Musclé",
+        "description": "Musculature développée"
+      },
+      {
+        "id": "lean",
+        "model": "models/characters/humains/base/male_body_lean.fbx",
+        "displayName": "Élancé",
+        "description": "Silhouette fine et athlétique"
+      }
+    ],
+    "female": [
+      {
+        "id": "base",
+        "model": "models/characters/humains/base/female_body_base.fbx",
+        "displayName": "Normal",
+        "description": "Corpulence moyenne équilibrée"
+      },
+      {
+        "id": "athletic",
+        "model": "models/characters/humains/base/female_body_athletic.fbx",
+        "displayName": "Athlétique",
+        "description": "Silhouette tonique et musclée"
+      },
+      {
+        "id": "curvy",
+        "model": "models/characters/humains/base/female_body_curvy.fbx",
+        "displayName": "Généreuse",
+        "description": "Formes accentuées"
+      }
+    ]
+  },
+  "heads": {
+    "male": [
+      {
+        "id": "head_01",
+        "model": "models/characters/humains/heads/male/head_01.fbx",
+        "displayName": "Visage 1"
+      },
+      {
+        "id": "head_02",
+        "model": "models/characters/humains/heads/male/head_02.fbx",
+        "displayName": "Visage 2"
+      },
+      {
+        "id": "head_03",
+        "model": "models/characters/humains/heads/male/head_03.fbx",
+        "displayName": "Visage 3"
+      },
+      {
+        "id": "head_04",
+        "model": "models/characters/humains/heads/male/head_04.fbx",
+        "displayName": "Visage 4"
+      },
+      {
+        "id": "head_05",
+        "model": "models/characters/humains/heads/male/head_05.fbx",
+        "displayName": "Visage 5"
+      }
+    ],
+    "female": [
+      {
+        "id": "head_01",
+        "model": "models/characters/humains/heads/female/head_01.fbx",
+        "displayName": "Visage 1"
+      },
+      {
+        "id": "head_02",
+        "model": "models/characters/humains/heads/female/head_02.fbx",
+        "displayName": "Visage 2"
+      },
+      {
+        "id": "head_03",
+        "model": "models/characters/humains/heads/female/head_03.fbx",
+        "displayName": "Visage 3"
+      },
+      {
+        "id": "head_04",
+        "model": "models/characters/humains/heads/female/head_04.fbx",
+        "displayName": "Visage 4"
+      },
+      {
+        "id": "head_05",
+        "model": "models/characters/humains/heads/female/head_05.fbx",
+        "displayName": "Visage 5"
+      }
+    ]
+  },
+  "hairStyles": {
+    "male": [
+      {
+        "id": "short_01",
+        "model": "models/characters/humains/hair/male/short_01.fbx",
+        "displayName": "Court classique"
+      },
+      {
+        "id": "short_02",
+        "model": "models/characters/humains/hair/male/short_02.fbx",
+        "displayName": "Court décoiffé"
+      },
+      {
+        "id": "medium_01",
+        "model": "models/characters/humains/hair/male/medium_01.fbx",
+        "displayName": "Mi-long"
+      },
+      {
+        "id": "long_01",
+        "model": "models/characters/humains/hair/male/long_01.fbx",
+        "displayName": "Long"
+      },
+      {
+        "id": "bald",
+        "model": "models/characters/humains/hair/male/bald.fbx",
+        "displayName": "Chauve"
+      }
+    ],
+    "female": [
+      {
+        "id": "short_01",
+        "model": "models/characters/humains/hair/female/short_01.fbx",
+        "displayName": "Court"
+      },
+      {
+        "id": "medium_01",
+        "model": "models/characters/humains/hair/female/medium_01.fbx",
+        "displayName": "Mi-long"
+      },
+      {
+        "id": "long_01",
+        "model": "models/characters/humains/hair/female/long_01.fbx",
+        "displayName": "Long lisse"
+      },
+      {
+        "id": "long_02",
+        "model": "models/characters/humains/hair/female/long_02.fbx",
+        "displayName": "Long ondulé"
+      },
+      {
+        "id": "braided_01",
+        "model": "models/characters/humains/hair/female/braided_01.fbx",
+        "displayName": "Tresse"
+      },
+      {
+        "id": "ponytail_01",
+        "model": "models/characters/humains/hair/female/ponytail_01.fbx",
+        "displayName": "Queue de cheval"
+      }
+    ]
+  },
+  "facialHair": {
+    "male": [
+      {
+        "id": "none",
+        "model": "models/characters/humains/facial_hair/none.fbx",
+        "displayName": "Aucune"
+      },
+      {
+        "id": "beard_full_01",
+        "model": "models/characters/humains/facial_hair/beard_full_01.fbx",
+        "displayName": "Barbe complète"
+      },
+      {
+        "id": "beard_goatee_01",
+        "model": "models/characters/humains/facial_hair/beard_goatee_01.fbx",
+        "displayName": "Bouc"
+      },
+      {
+        "id": "beard_short_01",
+        "model": "models/characters/humains/facial_hair/beard_short_01.fbx",
+        "displayName": "Barbe courte"
+      },
+      {
+        "id": "mustache_01",
+        "model": "models/characters/humains/facial_hair/mustache_01.fbx",
+        "displayName": "Moustache"
+      }
+    ]
+  },
+  "skinTones": [
+    {
+      "id": "skin_01",
+      "displayName": "Peau 1",
+      "hex": "#C68642",
+      "diffuse": "textures/characters/humains/skin/skin_01_diffuse.png",
+      "normal": "textures/characters/humains/skin/skin_01_normal.png",
+      "orm": "textures/characters/humains/skin/skin_01_orm.png"
+    },
+    {
+      "id": "skin_02",
+      "displayName": "Peau 2",
+      "hex": "#F1C27D",
+      "diffuse": "textures/characters/humains/skin/skin_02_diffuse.png",
+      "normal": "textures/characters/humains/skin/skin_02_normal.png",
+      "orm": "textures/characters/humains/skin/skin_02_orm.png"
+    },
+    {
+      "id": "skin_03",
+      "displayName": "Peau 3",
+      "hex": "#FDBCB4",
+      "diffuse": "textures/characters/humains/skin/skin_03_diffuse.png",
+      "normal": "textures/characters/humains/skin/skin_03_normal.png",
+      "orm": "textures/characters/humains/skin/skin_03_orm.png"
+    },
+    {
+      "id": "skin_04",
+      "displayName": "Peau 4",
+      "hex": "#8D5524",
+      "diffuse": "textures/characters/humains/skin/skin_04_diffuse.png",
+      "normal": "textures/characters/humains/skin/skin_04_normal.png",
+      "orm": "textures/characters/humains/skin/skin_04_orm.png"
+    }
+  ],
+  "hairColors": [
+    {
+      "id": "hair_01",
+      "displayName": "Teinte 1",
+      "hex": "#1A0A00",
+      "texture": "textures/characters/humains/hair/hair_01.png"
+    },
+    {
+      "id": "hair_02",
+      "displayName": "Teinte 2",
+      "hex": "#4E1A00",
+      "texture": "textures/characters/humains/hair/hair_02.png"
+    },
+    {
+      "id": "hair_03",
+      "displayName": "Teinte 3",
+      "hex": "#B5651D",
+      "texture": "textures/characters/humains/hair/hair_03.png"
+    },
+    {
+      "id": "hair_04",
+      "displayName": "Teinte 4",
+      "hex": "#D2B48C",
+      "texture": "textures/characters/humains/hair/hair_04.png"
+    },
+    {
+      "id": "hair_05",
+      "displayName": "Teinte 5",
+      "hex": "#FFD700",
+      "texture": "textures/characters/humains/hair/hair_05.png"
+    },
+    {
+      "id": "hair_06",
+      "displayName": "Teinte 6",
+      "hex": "#808080",
+      "texture": "textures/characters/humains/hair/hair_06.png"
+    }
+  ],
+  "eyeColors": [
+    {
+      "id": "eye_01",
+      "displayName": "Teinte 1",
+      "hex": "#3B5998",
+      "texture": "textures/characters/humains/eyes/eye_01.png"
+    },
+    {
+      "id": "eye_02",
+      "displayName": "Teinte 2",
+      "hex": "#228B22",
+      "texture": "textures/characters/humains/eyes/eye_02.png"
+    },
+    {
+      "id": "eye_03",
+      "displayName": "Teinte 3",
+      "hex": "#8B4513",
+      "texture": "textures/characters/humains/eyes/eye_03.png"
+    },
+    {
+      "id": "eye_04",
+      "displayName": "Teinte 4",
+      "hex": "#808080",
+      "texture": "textures/characters/humains/eyes/eye_04.png"
+    }
+  ],
+  "morphTargets": {
+    "face": [
+      {
+        "name": "faceWidth",
+        "min": -1.0,
+        "max": 1.0,
+        "default": 0.0,
+        "displayName": "Largeur du visage"
+      },
+      {
+        "name": "jawWidth",
+        "min": -1.0,
+        "max": 1.0,
+        "default": 0.0,
+        "displayName": "Largeur de la mâchoire"
+      },
+      {
+        "name": "noseSize",
+        "min": -1.0,
+        "max": 1.0,
+        "default": 0.0,
+        "displayName": "Taille du nez"
+      },
+      {
+        "name": "cheekbones",
+        "min": -1.0,
+        "max": 1.0,
+        "default": 0.0,
+        "displayName": "Pommettes"
+      },
+      {
+        "name": "eyeSize",
+        "min": -0.5,
+        "max": 0.5,
+        "default": 0.0,
+        "displayName": "Taille des yeux"
+      },
+      {
+        "name": "lipThickness",
+        "min": -0.5,
+        "max": 0.5,
+        "default": 0.0,
+        "displayName": "Épaisseur des lèvres"
+      }
+    ],
+    "body": [
+      {
+        "name": "bodyMass",
+        "min": -0.3,
+        "max": 0.5,
+        "default": 0.0,
+        "displayName": "Corpulence"
+      }
+    ]
+  },
+  "animationSet": "humanoid_base",
+  "gameplay": {
+    "movementSpeed": {
+      "walk": 3.5,
+      "run": 7.0,
+      "sprint": 10.5
+    },
+    "combatStats": {
+      "baseHealth": 100,
+      "baseStamina": 100,
+      "baseMana": 100
+    }
+  },
+  "factionRestrictions": {
+    "allowed": [
+      "alliance_light",
+      "neutral"
+    ],
+    "forbidden": [
+      "demons_faction"
+    ]
+  }
+}

@@ -716,6 +716,14 @@ elseif(UNIX)
   lcdlln_add_simple_test(race_definition_tests
     ${CMAKE_SOURCE_DIR}/src/client/character_creation/tests/RaceDefinitionTests.cpp)
 
+  # CHAR-MODEL.25 : systeme de customisation de personnage.
+  # Charge game/data/configuration/races/*.json (alignes sur races.json),
+  # valide/genere des customisations, resout en assets concrets.
+  # Note : CharacterCustomizationSystem.cpp est deja linke via engine_core
+  # (CMakeLists racine), donc ne pas le re-ajouter ici (multiple definition).
+  lcdlln_add_simple_test(character_customization_tests
+    ${CMAKE_SOURCE_DIR}/src/client/character_creation/tests/CharacterCustomizationTests.cpp)
+
   # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
   lcdlln_add_simple_test(vmap_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/vmap/VMapManagerTests.cpp

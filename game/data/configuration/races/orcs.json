@@ -1,0 +1,343 @@
+{
+  "version": "1.0.0",
+  "raceId": "orcs",
+  "displayName": "Orcs",
+  "description": "Robustes guerriers, les Orcs dominent la force brute au combat.",
+  "physicalLimits": {
+    "height": {
+      "baseMeters": 2.0,
+      "scaleRange": {
+        "min": 1.05,
+        "max": 1.15,
+        "default": 1.1
+      }
+    },
+    "bodyMass": {
+      "range": {
+        "min": 0.2,
+        "max": 0.8,
+        "default": 0.5
+      }
+    },
+    "proportions": {
+      "legLength": {
+        "range": {
+          "min": 0.95,
+          "max": 1.0
+        },
+        "default": 0.97
+      },
+      "shoulderWidth": {
+        "range": {
+          "min": 1.1,
+          "max": 1.25
+        },
+        "default": 1.15
+      },
+      "torsoWidth": {
+        "range": {
+          "min": 1.05,
+          "max": 1.15
+        },
+        "default": 1.1
+      }
+    }
+  },
+  "baseSkeleton": "humanoid_base",
+  "collisionDefaults": {
+    "radius": 0.55,
+    "height": 2.0
+  },
+  "genders": [
+    "male",
+    "female"
+  ],
+  "bodyTypes": {
+    "male": [
+      {
+        "id": "base",
+        "model": "models/characters/orcs/base/male_body_base.fbx",
+        "displayName": "Guerrier",
+        "description": "Musculature développée"
+      },
+      {
+        "id": "massive",
+        "model": "models/characters/orcs/base/male_body_massive.fbx",
+        "displayName": "Massif",
+        "description": "Corpulence imposante"
+      },
+      {
+        "id": "hulking",
+        "model": "models/characters/orcs/base/male_body_hulking.fbx",
+        "displayName": "Colosse",
+        "description": "Stature titanesque"
+      }
+    ],
+    "female": [
+      {
+        "id": "base",
+        "model": "models/characters/orcs/base/female_body_base.fbx",
+        "displayName": "Guerrière",
+        "description": "Musculature athlétique"
+      },
+      {
+        "id": "strong",
+        "model": "models/characters/orcs/base/female_body_strong.fbx",
+        "displayName": "Puissante",
+        "description": "Force brute accentuée"
+      }
+    ]
+  },
+  "heads": {
+    "male": [
+      {
+        "id": "head_01",
+        "model": "models/characters/orcs/heads/male/head_01.fbx",
+        "displayName": "Visage 1"
+      },
+      {
+        "id": "head_02",
+        "model": "models/characters/orcs/heads/male/head_02.fbx",
+        "displayName": "Visage 2"
+      },
+      {
+        "id": "head_03",
+        "model": "models/characters/orcs/heads/male/head_03.fbx",
+        "displayName": "Visage 3"
+      }
+    ],
+    "female": [
+      {
+        "id": "head_01",
+        "model": "models/characters/orcs/heads/female/head_01.fbx",
+        "displayName": "Visage 1"
+      },
+      {
+        "id": "head_02",
+        "model": "models/characters/orcs/heads/female/head_02.fbx",
+        "displayName": "Visage 2"
+      }
+    ]
+  },
+  "hairStyles": {
+    "male": [
+      {
+        "id": "mohawk_01",
+        "model": "models/characters/orcs/hair/male/mohawk_01.fbx",
+        "displayName": "Crête"
+      },
+      {
+        "id": "topknot_01",
+        "model": "models/characters/orcs/hair/male/topknot_01.fbx",
+        "displayName": "Chignon guerrier"
+      },
+      {
+        "id": "braids_01",
+        "model": "models/characters/orcs/hair/male/braids_01.fbx",
+        "displayName": "Tresses"
+      },
+      {
+        "id": "shaved",
+        "model": "models/characters/orcs/hair/male/shaved.fbx",
+        "displayName": "Rasé"
+      }
+    ],
+    "female": [
+      {
+        "id": "long_01",
+        "model": "models/characters/orcs/hair/female/long_01.fbx",
+        "displayName": "Long"
+      },
+      {
+        "id": "braids_01",
+        "model": "models/characters/orcs/hair/female/braids_01.fbx",
+        "displayName": "Tresses"
+      }
+    ]
+  },
+  "facialHair": {
+    "male": [
+      {
+        "id": "none",
+        "model": "models/characters/orcs/facial_hair/none.fbx",
+        "displayName": "Aucune"
+      },
+      {
+        "id": "beard_braided_01",
+        "model": "models/characters/orcs/facial_hair/beard_braided_01.fbx",
+        "displayName": "Barbe tressée"
+      }
+    ]
+  },
+  "skinTones": [
+    {
+      "id": "skin_01",
+      "displayName": "Peau 1",
+      "hex": "#355E3B",
+      "diffuse": "textures/characters/orcs/skin/skin_01_diffuse.png",
+      "normal": "textures/characters/orcs/skin/skin_01_normal.png",
+      "orm": "textures/characters/orcs/skin/skin_01_orm.png"
+    },
+    {
+      "id": "skin_02",
+      "displayName": "Peau 2",
+      "hex": "#556B2F",
+      "diffuse": "textures/characters/orcs/skin/skin_02_diffuse.png",
+      "normal": "textures/characters/orcs/skin/skin_02_normal.png",
+      "orm": "textures/characters/orcs/skin/skin_02_orm.png"
+    },
+    {
+      "id": "skin_03",
+      "displayName": "Peau 3",
+      "hex": "#4B5320",
+      "diffuse": "textures/characters/orcs/skin/skin_03_diffuse.png",
+      "normal": "textures/characters/orcs/skin/skin_03_normal.png",
+      "orm": "textures/characters/orcs/skin/skin_03_orm.png"
+    },
+    {
+      "id": "skin_04",
+      "displayName": "Peau 4",
+      "hex": "#228B22",
+      "diffuse": "textures/characters/orcs/skin/skin_04_diffuse.png",
+      "normal": "textures/characters/orcs/skin/skin_04_normal.png",
+      "orm": "textures/characters/orcs/skin/skin_04_orm.png"
+    }
+  ],
+  "hairColors": [
+    {
+      "id": "hair_01",
+      "displayName": "Teinte 1",
+      "hex": "#1C1C1C",
+      "texture": "textures/characters/orcs/hair/hair_01.png"
+    },
+    {
+      "id": "hair_02",
+      "displayName": "Teinte 2",
+      "hex": "#2F4F4F",
+      "texture": "textures/characters/orcs/hair/hair_02.png"
+    },
+    {
+      "id": "hair_03",
+      "displayName": "Teinte 3",
+      "hex": "#8B0000",
+      "texture": "textures/characters/orcs/hair/hair_03.png"
+    },
+    {
+      "id": "hair_04",
+      "displayName": "Teinte 4",
+      "hex": "#000000",
+      "texture": "textures/characters/orcs/hair/hair_04.png"
+    }
+  ],
+  "eyeColors": [
+    {
+      "id": "eye_01",
+      "displayName": "Teinte 1",
+      "hex": "#FF4500",
+      "texture": "textures/characters/orcs/eyes/eye_01.png"
+    },
+    {
+      "id": "eye_02",
+      "displayName": "Teinte 2",
+      "hex": "#FF6347",
+      "texture": "textures/characters/orcs/eyes/eye_02.png"
+    },
+    {
+      "id": "eye_03",
+      "displayName": "Teinte 3",
+      "hex": "#DC143C",
+      "texture": "textures/characters/orcs/eyes/eye_03.png"
+    },
+    {
+      "id": "eye_04",
+      "displayName": "Teinte 4",
+      "hex": "#8B0000",
+      "texture": "textures/characters/orcs/eyes/eye_04.png"
+    }
+  ],
+  "morphTargets": {
+    "face": [
+      {
+        "name": "faceWidth",
+        "min": 0.0,
+        "max": 1.0,
+        "default": 0.5,
+        "displayName": "Largeur du visage"
+      },
+      {
+        "name": "jawWidth",
+        "min": 0.3,
+        "max": 1.0,
+        "default": 0.7,
+        "displayName": "Largeur de la mâchoire"
+      },
+      {
+        "name": "browRidge",
+        "min": 0.0,
+        "max": 1.0,
+        "default": 0.5,
+        "displayName": "Arcade sourcilière"
+      }
+    ],
+    "body": [
+      {
+        "name": "bodyMass",
+        "min": 0.2,
+        "max": 0.8,
+        "default": 0.5,
+        "displayName": "Corpulence"
+      }
+    ]
+  },
+  "animationSet": "humanoid_base",
+  "gameplay": {
+    "movementSpeed": {
+      "walk": 3.2,
+      "run": 6.5,
+      "sprint": 9.8
+    },
+    "combatStats": {
+      "baseHealth": 130,
+      "baseStamina": 120,
+      "baseMana": 70,
+      "bonusStrength": 5,
+      "bonusEndurance": 3
+    }
+  },
+  "factionRestrictions": {
+    "allowed": [
+      "dzorak_horde",
+      "neutral"
+    ],
+    "forbidden": [
+      "alliance_light"
+    ]
+  },
+  "racialFeatures": {
+    "tusks": [
+      {
+        "id": "small",
+        "model": "models/characters/orcs/tusks/small.fbx",
+        "displayName": "Petites défenses"
+      },
+      {
+        "id": "medium",
+        "model": "models/characters/orcs/tusks/medium.fbx",
+        "displayName": "Défenses moyennes"
+      },
+      {
+        "id": "large",
+        "model": "models/characters/orcs/tusks/large.fbx",
+        "displayName": "Grandes défenses"
+      },
+      {
+        "id": "broken",
+        "model": "models/characters/orcs/tusks/broken.fbx",
+        "displayName": "Défenses brisées"
+      }
+    ]
+  },
+  "additionalAnimations": [
+    "orcs_specific"
+  ]
+}

@@ -55,9 +55,7 @@ namespace
 
         const RaceDefinition* humains = FindRace(races, "humains");
         REQUIRE(humains != nullptr);
-        // Migration UE5 : humains pointe desormais sur le corps modulaire UE5
-        // (Male_Ranger), plus l'ancien Y Bot Mixamo. nains/orcs restent Mixamo.
-        REQUIRE(humains->meshPath == "models/characters/humains/Male_Ranger/Male_Ranger.glb");
+        REQUIRE(humains->meshPath == "models/avatars/y_bot/y_bot.glb");
 
         const RaceDefinition* nains = FindRace(races, "nains");
         REQUIRE(nains != nullptr);

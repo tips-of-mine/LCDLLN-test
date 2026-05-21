@@ -3965,6 +3965,43 @@ namespace engine
 														for (auto& c : loaded->clips) {
 															if (c.name == "mixamo.com") { c.name = "Walk"; break; }
 														}
+														// Detection du rig : UE5 (pelvis, pas de mixamorig:*) vs Mixamo.
+														// Bascule la source d'animations sans casser les races Mixamo (additif + repli).
+														const bool isUe5Rig =
+															loaded->skeleton.FindBoneIndex("pelvis") >= 0 &&
+															loaded->skeleton.FindBoneIndex("mixamorig:Hips") < 0;
+														if (isUe5Rig)
+														{
+															// Migration UE5 — clips depuis la library UE5 (45 takes "Armature|<Clip>"),
+															// copies vers les noms de role attendus par la state machine. Retarget par
+															// nom d'os (memes os que le corps UE5, cf. SkinnedMeshLoaderTests).
+															const std::string ue5LibPath = contentRoot +
+																"/models/animations/humanoid_base/Humanoid_Base_Standard/Humanoid_Base_Standard.glb";
+															auto ue5Clips = engine::render::skinned::SkinnedMeshLoader::LoadClipsAnimOnly(
+																ue5LibPath, loaded->skeleton);
+															auto addRole = [&](const char* role, const char* ualName) {
+																const std::string want = std::string("Armature|") + ualName;
+																for (const auto& c : ue5Clips) {
+																	if (c.name == want && c.duration > 0.0f) {
+																		engine::render::skinned::AnimationClip copy = c;
+																		copy.name = role;
+																		loaded->clips.push_back(std::move(copy));
+																		return;
+																	}
+																}
+																LOG_WARN(Render, "[Engine] UE5 race '{}' : take '{}' introuvable (role '{}')", raceId, ualName, role);
+															};
+															addRole("Idle", "Idle_Loop");
+															addRole("Walk", "Walk_Loop");
+															addRole("StartWalking", "Walk_Loop");
+															addRole("WalkBack", "Walk_Loop");
+															addRole("Run", "Jog_Fwd_Loop");
+															addRole("Jump", "Jump_Start");
+															addRole("Fall", "Jump_Loop");
+															addRole("Land", "Jump_Land");
+														}
+														else
+														{
 														// Retarget les clips d'anim partages sur le squelette de cette
 														// race. Convention herite de B.1 (LoadClipsAnimOnly matche par
 														// nom de bone mixamorig:*). Si la race a un squelette
@@ -3996,6 +4033,7 @@ namespace engine
 														loadAnimOnly(jumpPath, "Jump");
 														loadAnimOnly(fallPath, "Fall");
 														loadAnimOnly(landPath, "Land");
+														}
 														LOG_INFO(Render, "[Engine] Race '{}' loaded ({} bones, {} clips) from '{}'",
 															raceId, loaded->skeleton.bones.size(), loaded->clips.size(), fullMeshPath);
 														m_raceMeshes.emplace(raceId, std::move(*loaded));

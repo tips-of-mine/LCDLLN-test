@@ -13,7 +13,7 @@
       "defaultSkinColors": ["#C68642", "#F1C27D", "#FDBCB4", "#8D5524"],
       "defaultHairColors": ["#1A0A00", "#4E1A00", "#B5651D", "#D2B48C", "#FFD700", "#808080"],
       "defaultEyeColors": ["#3B5998", "#228B22", "#8B4513", "#808080"],
-      "meshPath": "models/avatars/y_bot/y_bot.glb"
+      "meshPath": "models/characters/humains/Male_Ranger/Male_Ranger.glb"
     },
     {
       "id": "elfes",

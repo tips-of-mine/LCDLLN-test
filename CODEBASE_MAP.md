@@ -1690,3 +1690,19 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 ### Limites connues
 - **Pas de changement d'emote « à chaud »** : enchaîner deux emotes sans bouger ne relance pas le clip (le state reste `Emote`, pas de transition). Bouger puis ré-emoter. (Acceptable ; à raffiner si besoin via un re-trigger sur changement de rôle.)
 - **Emotes en boucle simple** : pas de séquence Enter/Exit (ex. `Sitting_Enter`/`Exit` non utilisés) — on joue directement le `*_Idle_Loop`, le crossfade lisse l'entrée/sortie.
+
+## 37. Coup de poing (touche C) + factorisation des actions one-shot (2026-05-22)
+
+**Objectif** : 2ᵉ attaque mêlée (coup de poing) **et** nettoyage de la logique d'exclusion mutuelle des actions one-shot, devenue verbeuse au fil des ajouts (attaque/sort/interaction).
+
+### Coup de poing
+- **Input** : touche **remappable** `controls.keybind.punch` (défaut `C`), edge. `addRole("Punch", "Punch_Jab")`.
+- **État** : `AvatarLocomotionState::Punch` (one-shot, comme l'attaque). 5ᵉ ligne « Coup de poing » dans la section Controles d'Options.
+
+### Factorisation `busyOneShot()`
+- Une lambda `busyOneShot()` (dans la SM) retourne vrai si l'avatar est dans **une action one-shot ou la roulade** (`Roll/Attack/Cast/Interact/Punch`). Les overrides d'attaque/coup/sort/interaction se réduisent à `if (xPressed && !jump && !busyOneShot()) newState = X;` — **comportement identique** à l'ancienne liste d'exclusions, mais plus lisible et **extensible** (ajouter une action one-shot = une entrée dans la lambda + un override).
+- **Priorité (au sol)** : `Roll > Attack > Punch > Cast > Interact > Emote > Crouch > Sprint > Run > Walk`.
+
+### Limites connues
+- **Cosmétique** : aucun dégât/cible (comme l'attaque épée).
+- **Pas de combo** : `Punch_Cross` reste non câblé (enchaînement Jab→Cross = amélioration future).

@@ -274,6 +274,7 @@ namespace engine
 				case engine::Engine::AvatarLocomotionState::Attack:       return "Attack";
 				case engine::Engine::AvatarLocomotionState::Cast:         return "Cast";
 				case engine::Engine::AvatarLocomotionState::Interact:     return "Interact";
+				case engine::Engine::AvatarLocomotionState::Punch:        return "Punch";
 				case engine::Engine::AvatarLocomotionState::Jump:         return "Jump";
 				case engine::Engine::AvatarLocomotionState::Fall:         return "Fall";
 				case engine::Engine::AvatarLocomotionState::Land:         return "Land";
@@ -4122,6 +4123,7 @@ namespace engine
 															addRole("Attack", "Sword_Attack");
 															addRole("Cast", "Spell_Simple_Shoot");
 															addRole("Interact", "Interact");
+															addRole("Punch", "Punch_Jab");
 															addRole("Jump", "Jump_Start");
 															addRole("Fall", "Jump_Loop");
 															addRole("Land", "Jump_Land");
@@ -7036,6 +7038,8 @@ namespace engine
 					KeyFromName(m_cfg.GetString("controls.keybind.cast", "R"), engine::platform::Key::R);
 				const engine::platform::Key interactKey =
 					KeyFromName(m_cfg.GetString("controls.keybind.interact", "E"), engine::platform::Key::E);
+				const engine::platform::Key punchKey =
+					KeyFromName(m_cfg.GetString("controls.keybind.punch", "C"), engine::platform::Key::C);
 				// Vue 3eme personne : controleur orbital pur (camera derriere la
 				// cible). Souris libre par defaut ; clic droit maintenu = rotate
 				// camera autour de la cible (yaw/pitch) ; molette = zoom.
@@ -7127,6 +7131,8 @@ namespace engine
 						m_currentSkinnedMesh->FindClip("Cast");
 					const engine::render::skinned::AnimationClip* interactClip =
 						m_currentSkinnedMesh->FindClip("Interact");
+					const engine::render::skinned::AnimationClip* punchClip =
+						m_currentSkinnedMesh->FindClip("Punch");
 
 					// Attaque melee : clic gauche (edge). Le bloc gameplay est deja garde
 					// contre le focus chat / l'auth (cf. ligne ~6969) ; on exclut en plus
@@ -7146,6 +7152,10 @@ namespace engine
 					// usage). Geste cosmetique one-shot ; cible/objet a brancher plus tard.
 					const bool interactPressed =
 						m_input.WasPressed(interactKey);
+
+					// Coup de poing : 2e attaque melee, touche remappable (controls.keybind.punch, def. C).
+					const bool punchPressed =
+						m_input.WasPressed(punchKey);
 
 					// Esquive/roulade : double-appui (fenetre 0.30s) sur la touche Crouch
 					// (remappable). Touche maintenue = crouch ; deux appuis = Roll (one-shot).
@@ -7294,19 +7304,43 @@ namespace engine
 									else                          newState = AvatarLocomotionState::Walk;
 								}
 								break;
+							case AvatarLocomotionState::Punch:
+								// One-shot : retour locomotion quand le coup de poing est fini.
+								if (!punchClip || stateElapsed >= punchClip->duration)
+								{
+									if (!moving)                  newState = AvatarLocomotionState::Idle;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
 						}
 
+						// Une action "one-shot" en cours (roulade ou geste combat/interaction)
+						// bloque le declenchement d'une autre. Centralise ici pour eviter une
+						// longue liste d'exclusions par override et faciliter l'ajout d'actions.
+						auto busyOneShot = [&]()
+						{
+							return m_avatarLocoState == AvatarLocomotionState::Roll
+								|| m_avatarLocoState == AvatarLocomotionState::Attack
+								|| m_avatarLocoState == AvatarLocomotionState::Cast
+								|| m_avatarLocoState == AvatarLocomotionState::Interact
+								|| m_avatarLocoState == AvatarLocomotionState::Punch;
+						};
+
 						// Crouch (Ctrl) : etat accroupi prioritaire tant que la touche est tenue
-						// (sauf amorce de saut, ou Roll/Dance/Attack en cours). CrouchWalk si deplacement.
+						// (sauf amorce de saut, emote, ou action one-shot en cours). CrouchWalk si deplacement.
 						if (moveInput.crouch && newState != AvatarLocomotionState::Jump
 							&& newState != AvatarLocomotionState::Roll
 							&& newState != AvatarLocomotionState::Emote
 							&& newState != AvatarLocomotionState::Attack
 							&& newState != AvatarLocomotionState::Cast
-							&& newState != AvatarLocomotionState::Interact)
+							&& newState != AvatarLocomotionState::Interact
+							&& newState != AvatarLocomotionState::Punch)
 							newState = moving ? AvatarLocomotionState::CrouchWalk : AvatarLocomotionState::CrouchIdle;
 
-						// Esquive/roulade (Ctrl double-tap) : Roll one-shot, prioritaire sur crouch.
+						// Esquive/roulade (double-appui Crouch) : Roll one-shot, prioritaire sur crouch.
 						if (dodgePressed && m_avatarLocoState != AvatarLocomotionState::Roll)
 							newState = AvatarLocomotionState::Roll;
 
@@ -7318,35 +7352,21 @@ namespace engine
 							newState = AvatarLocomotionState::Emote;
 						}
 
-						// Attaque melee (clic gauche) : Sword_Attack one-shot. Ne s'enclenche
-						// pas pendant un saut/roll et ne coupe pas un Roll en cours. Prioritaire
-						// sur crouch (on peut frapper accroupi -> repasse debout l'attaque finie).
-						if (attackPressed && !moveInput.jumpPressed
-							&& m_avatarLocoState != AvatarLocomotionState::Roll
-							&& m_avatarLocoState != AvatarLocomotionState::Cast
-							&& m_avatarLocoState != AvatarLocomotionState::Attack
-							&& m_avatarLocoState != AvatarLocomotionState::Interact)
+						// Attaque melee (clic gauche) : Sword_Attack one-shot. Pas pendant un saut
+						// ni une autre action one-shot ; prioritaire sur le crouch.
+						if (attackPressed && !moveInput.jumpPressed && !busyOneShot())
 							newState = AvatarLocomotionState::Attack;
 
-						// Sort (touche R) : Spell_Simple_Shoot one-shot. Memes regles que
-						// l'attaque (pas pendant un saut/roll, ne coupe pas un Roll/Attack/
-						// Cast en cours). Prioritaire sur le crouch (caster accroupi ->
-						// repasse debout le sort fini).
-						if (castPressed && !moveInput.jumpPressed
-							&& m_avatarLocoState != AvatarLocomotionState::Roll
-							&& m_avatarLocoState != AvatarLocomotionState::Attack
-							&& m_avatarLocoState != AvatarLocomotionState::Cast
-							&& m_avatarLocoState != AvatarLocomotionState::Interact)
+						// Coup de poing (touche C par defaut) : Punch_Jab one-shot, 2e attaque melee.
+						if (punchPressed && !moveInput.jumpPressed && !busyOneShot())
+							newState = AvatarLocomotionState::Punch;
+
+						// Sort (touche R par defaut) : Spell_Simple_Shoot one-shot.
+						if (castPressed && !moveInput.jumpPressed && !busyOneShot())
 							newState = AvatarLocomotionState::Cast;
 
-						// Interagir (touche E par defaut) : geste Interact one-shot, action
-						// non-combat. Memes regles que le sort (pas pendant saut/roll, ne coupe
-						// pas un Roll/Attack/Cast/Interact en cours). Prioritaire sur le crouch.
-						if (interactPressed && !moveInput.jumpPressed
-							&& m_avatarLocoState != AvatarLocomotionState::Roll
-							&& m_avatarLocoState != AvatarLocomotionState::Attack
-							&& m_avatarLocoState != AvatarLocomotionState::Cast
-							&& m_avatarLocoState != AvatarLocomotionState::Interact)
+						// Interagir (touche E par defaut) : geste Interact one-shot, action non-combat.
+						if (interactPressed && !moveInput.jumpPressed && !busyOneShot())
 							newState = AvatarLocomotionState::Interact;
 					}
 					else
@@ -8073,7 +8093,7 @@ namespace engine
 			if (m_inGameOptionsPanelVisible)
 			{
 				const float optW = 460.f;
-				const float optH = 520.f;
+				const float optH = 560.f;
 				ImGui::SetNextWindowPos(ImVec2((dw - optW) * 0.5f, (dh - optH) * 0.5f), ImGuiCond_Always);
 				ImGui::SetNextWindowSize(ImVec2(optW, optH), ImGuiCond_Always);
 				ImGui::SetNextWindowBgAlpha(0.95f);
@@ -8139,7 +8159,8 @@ namespace engine
 									(m_rebindingAction == 1) ? "controls.keybind.sprint"
 									: (m_rebindingAction == 2) ? "controls.keybind.crouch"
 									: (m_rebindingAction == 3) ? "controls.keybind.cast"
-									: "controls.keybind.interact";
+									: (m_rebindingAction == 4) ? "controls.keybind.interact"
+									: "controls.keybind.punch";
 								m_cfg.SetValue(cfgKey, std::string(rk.name));
 								m_rebindingAction = 0;
 								break;
@@ -8165,6 +8186,7 @@ namespace engine
 				rebindRow("Accroupi", "controls.keybind.crouch", "Ctrl", 2);
 				rebindRow("Sort", "controls.keybind.cast", "R", 3);
 				rebindRow("Interagir", "controls.keybind.interact", "E", 4);
+				rebindRow("Coup de poing", "controls.keybind.punch", "C", 5);
 				ImGui::TextDisabled("Roulade : double-appui sur la touche Accroupi");
 				ImGui::TextDisabled("Attaque : clic gauche (non remappable)");
 

@@ -478,6 +478,13 @@ namespace engine
 
 		void ApplyUserSettingsOverrides(engine::core::Config& cfg)
 		{
+			// Binds clavier persistants (controls.keybind.*) : fichier dedie
+			// keybinds.json, ecrit par le panneau Options au rebind. Merge par-dessus
+			// les defauts de config.json. Absent/malforme -> ignore (on garde les defauts) ;
+			// fichier dedie => un echec ne corrompt jamais user_settings.json.
+			if (cfg.LoadFromFile("keybinds.json"))
+				LOG_INFO(Core, "[Boot] keybinds.json applique (binds clavier persistants)");
+
 			engine::core::Config persisted;
 			if (!persisted.LoadFromFile("user_settings.json"))
 			{
@@ -8168,6 +8175,20 @@ namespace engine
 									: (m_rebindingAction == 4) ? "controls.keybind.interact"
 									: "controls.keybind.punch";
 								m_cfg.SetValue(cfgKey, std::string(rk.name));
+								// Persistance : ecrit keybinds.json (fichier dedie, format controle ;
+								// valeurs = noms ASCII de kRebindableKeys -> pas d'echappement JSON requis).
+								{
+									const std::string kb =
+										std::string("{\n  \"controls\": {\n    \"keybind\": {\n")
+										+ "      \"sprint\": \"" + m_cfg.GetString("controls.keybind.sprint", "Alt") + "\",\n"
+										+ "      \"crouch\": \"" + m_cfg.GetString("controls.keybind.crouch", "Ctrl") + "\",\n"
+										+ "      \"cast\": \"" + m_cfg.GetString("controls.keybind.cast", "R") + "\",\n"
+										+ "      \"interact\": \"" + m_cfg.GetString("controls.keybind.interact", "E") + "\",\n"
+										+ "      \"punch\": \"" + m_cfg.GetString("controls.keybind.punch", "C") + "\"\n"
+										+ "    }\n  }\n}\n";
+									if (!engine::platform::FileSystem::WriteAllText("keybinds.json", kb))
+										LOG_WARN(Core, "[Options] keybinds.json non ecrit (rebind non persiste)");
+								}
 								m_rebindingAction = 0;
 								break;
 							}

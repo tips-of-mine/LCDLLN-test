@@ -1652,7 +1652,7 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 - Roulade et Attaque affichées en **info** (non remappables : la roulade suit la touche Accroupi, l'attaque est le clic gauche — souris).
 
 ### Limites connues
-- **Persistance session-only** : le rebind écrit dans `m_cfg` (live), comme les autres réglages du panneau Options in-game ; non re-sérialisé dans `user_settings.json` (même limite que volume/sensibilité de ce panneau). Pour un défaut persistant, éditer `config.json`.
+- **Persistance** : le rebind est **persisté** dans un fichier dédié `keybinds.json` (écrit par le panneau Options via `FileSystem::WriteAllText`, format contrôlé). Au boot, `ApplyUserSettingsOverrides` fait `cfg.LoadFromFile("keybinds.json")` qui **merge** par-dessus les défauts de `config.json`. Choix d'un **fichier dédié** (et non un patch de `user_settings.json`) pour que tout échec d'écriture/lecture soit **bénin** (retour aux défauts) et ne corrompe jamais les autres réglages. Les sliders volume/sensibilité de ce panneau restent eux session-only (hors périmètre).
 - **Pas de détection de conflit** : binder deux actions sur la même touche est permis (ex. réutiliser une touche de panneau B/G/…). À durcir si besoin.
 - **Souris/modificateurs** : l'attaque (clic gauche) n'est pas remappable en v1 ; rebinder un modificateur (Alt/Ctrl) vers une lettre fonctionne mais peut entrer en conflit avec d'autres usages (Ctrl = modificateur de raccourcis).
 

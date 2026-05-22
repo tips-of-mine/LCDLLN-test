@@ -1387,6 +1387,9 @@ namespace engine
 					{ "/assis", "Sit",   "Vous vous asseyez." },
 					{ "/talk",  "Talk",  "Vous discutez." },
 					{ "/torch", "Torch", "Vous brandissez une torche." },
+					{ "/kneel", "Kneel", "Vous vous agenouillez." },
+					{ "/sittalk", "SitTalk", "Vous discutez, assis." },
+					{ "/push", "Push", "Vous poussez." },
 				};
 				if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say))
 				{
@@ -4120,6 +4123,9 @@ namespace engine
 															addRole("Sit", "Sitting_Idle_Loop");
 															addRole("Talk", "Idle_Talking_Loop");
 															addRole("Torch", "Idle_Torch_Loop");
+															addRole("Kneel", "Fixing_Kneeling");
+															addRole("SitTalk", "Sitting_Talking_Loop");
+															addRole("Push", "Push_Loop");
 															addRole("Attack", "Sword_Attack");
 															addRole("Cast", "Spell_Simple_Shoot");
 															addRole("Interact", "Interact");

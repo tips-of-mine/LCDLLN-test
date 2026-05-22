@@ -1680,7 +1680,7 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 ### Mécanique
 - **État unique `Emote`** (renommé depuis `Dance`) : anim **en boucle**, interrompue par tout déplacement/saut (le `case Emote` sort vers Walk/Run/Jump/…). `ClipLoops(Emote) = true`.
 - **Clip dynamique** : le rôle d'anim joué n'est pas fixe. `m_pendingEmoteRole` (posé par la slash command) → consommé par la SM → `m_currentEmoteRole`. Au point de lecture du clip (`Engine.cpp`, transition d'état), si `newState == Emote` on joue `m_currentEmoteRole` au lieu de `StateToClipName`.
-- **Table des emotes** (`kEmotes` dans le handler chat) : `{ commande, rôle, message }`. Actuellement : `/dance`→Dance, `/sit` & `/assis`→Sit, `/talk`→Talk, `/torch`→Torch. Rôles mappés via `addRole("Dance","Dance_Loop")`, `addRole("Sit","Sitting_Idle_Loop")`, `addRole("Talk","Idle_Talking_Loop")`, `addRole("Torch","Idle_Torch_Loop")`.
+- **Table des emotes** (`kEmotes` dans le handler chat) : `{ commande, rôle, message }`. Actuellement : `/dance`, `/sit` & `/assis`, `/talk`, `/torch`, `/kneel` (Fixing_Kneeling), `/sittalk` (Sitting_Talking_Loop), `/push` (Push_Loop). Rôles mappés via `addRole("Dance","Dance_Loop")`, `addRole("Sit","Sitting_Idle_Loop")`, `addRole("Talk","Idle_Talking_Loop")`, `addRole("Torch","Idle_Torch_Loop")`.
 - **Priorité** : `Roll > Attack > Cast > Interact > Emote > Crouch > Sprint > Run > Walk` (emote uniquement à l'arrêt, hors Roll).
 
 ### Ajouter une emote

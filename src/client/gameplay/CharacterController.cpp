@@ -124,7 +124,8 @@ namespace engine::gameplay
 		const float moveLen = LengthXZ(desiredMoveXZ);
 		const bool hasMove = moveLen > 1e-5f;
 
-		const float targetSpeed = input.run ? m_cfg.runSpeed : m_cfg.walkSpeed;
+		const float targetSpeed = input.sprint ? m_cfg.sprintSpeed
+		                        : (input.run  ? m_cfg.runSpeed : m_cfg.walkSpeed);
 		engine::math::Vec3 desiredVelXZ(0.0f, 0.0f, 0.0f);
 		if (hasMove)
 			desiredVelXZ = desiredMoveXZ * (targetSpeed / moveLen);

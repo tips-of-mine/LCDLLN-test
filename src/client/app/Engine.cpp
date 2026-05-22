@@ -183,6 +183,7 @@ namespace engine
 			}
 
 			out.run         = input.IsDown(engine::platform::Key::Shift);
+			out.sprint      = input.IsDown(engine::platform::Key::Alt);
 			out.jumpPressed = input.WasPressed(engine::platform::Key::Space);
 			// swim/fly hors-scope B.1 : restent false (consommes par les modes
 			// Water/Fly du CharacterController, inutiles tant que la query eau
@@ -223,6 +224,7 @@ namespace engine
 				case engine::Engine::AvatarLocomotionState::Walk:         return "Walk";
 				case engine::Engine::AvatarLocomotionState::WalkBack:     return "WalkBack";
 				case engine::Engine::AvatarLocomotionState::Run:          return "Run";
+				case engine::Engine::AvatarLocomotionState::Sprint:       return "Sprint";
 				case engine::Engine::AvatarLocomotionState::Jump:         return "Jump";
 				case engine::Engine::AvatarLocomotionState::Fall:         return "Fall";
 				case engine::Engine::AvatarLocomotionState::Land:         return "Land";
@@ -244,6 +246,7 @@ namespace engine
 				|| s == engine::Engine::AvatarLocomotionState::Walk
 				|| s == engine::Engine::AvatarLocomotionState::WalkBack
 				|| s == engine::Engine::AvatarLocomotionState::Run
+				|| s == engine::Engine::AvatarLocomotionState::Sprint
 				|| s == engine::Engine::AvatarLocomotionState::Fall;
 		}
 
@@ -4020,6 +4023,7 @@ namespace engine
 															addRole("StartWalking", "Walk_Loop");
 															addRole("WalkBack", "Walk_Loop");
 															addRole("Run", "Jog_Fwd_Loop");
+															addRole("Sprint", "Sprint_Loop");
 															addRole("Jump", "Jump_Start");
 															addRole("Fall", "Jump_Loop");
 															addRole("Land", "Jump_Land");
@@ -7033,12 +7037,15 @@ namespace engine
 								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
 								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
 								else if (startWalkClip && stateElapsed >= startWalkClip->duration)
-									newState = (moveInput.run ? AvatarLocomotionState::Run : AvatarLocomotionState::Walk);
+									newState = (moveInput.sprint ? AvatarLocomotionState::Sprint
+									            : moveInput.run ? AvatarLocomotionState::Run
+									            : AvatarLocomotionState::Walk);
 								break;
 							case AvatarLocomotionState::Walk:
 								if (!moving)                      newState = AvatarLocomotionState::Idle;
 								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
 								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
+								else if (moveInput.sprint)        newState = AvatarLocomotionState::Sprint;
 								else if (moveInput.run)           newState = AvatarLocomotionState::Run;
 								break;
 							case AvatarLocomotionState::WalkBack:
@@ -7050,7 +7057,15 @@ namespace engine
 								if (!moving)                      newState = AvatarLocomotionState::Idle;
 								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
 								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
+								else if (moveInput.sprint)        newState = AvatarLocomotionState::Sprint;
 								else if (!moveInput.run)          newState = AvatarLocomotionState::Walk;
+								break;
+							case AvatarLocomotionState::Sprint:
+								if (!moving)                      newState = AvatarLocomotionState::Idle;
+								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
+								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
+								else if (!moveInput.sprint)
+									newState = (moveInput.run ? AvatarLocomotionState::Run : AvatarLocomotionState::Walk);
 								break;
 							case AvatarLocomotionState::Jump:
 								// Takeoff = first 40% of Jump clip ; then Fall (until grounded).
@@ -7066,6 +7081,7 @@ namespace engine
 								{
 									if (!moving)                  newState = AvatarLocomotionState::Idle;
 									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
 									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
 									else                          newState = AvatarLocomotionState::Walk;
 								}

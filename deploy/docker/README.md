@@ -93,6 +93,9 @@ Le **ZIP CI** inclut **`deploy/docker/web-portal/`**. En clone Git sans pack : `
 
 **Master — accès par IP (défaut actuel)** : le service `master` publie **3840** (jeu) et **3842** (HTTP embarqué : `/status`, etc.) sur **`MASTER_PUBLISH_ADDR`** (défaut `0.0.0.0`), joignable depuis le LAN (ex. `http://10.0.4.133:3842/status`). **`traefik.enable=false`** sur le master : pas de route Traefik tant que vous n’avez pas de DNS / reverse proxy devant. Côté client, adaptez **`external/external_links.json`** (copié à côté de l’exe) si l’IP du serveur change.
 
+> **IP master côté client — source unique** : l’IP/host effectif vient de `external/external_links.json` (`client.status_api_url`, `master_tcp_host`, …), chargé **à côté de l’exe** par `Config.cpp` et qui **écrase** le défaut compilé `engine::core::defaults::kStatusApiUrl` (`src/shared/core/DefaultClientEndpoints.h`). Depuis la CI, l’artefact Windows **package** ce fichier (étape « Collect artifacts » de `build-windows.yml`) → **pour changer l’IP, éditer `external/external_links.json` suffit** (le défaut compilé n’est qu’un repli si le fichier est absent ; le garder aligné).
+
+
 **Master derrière Traefik (plus tard)** : copier les labels depuis **`traefik-master.labels.reference.yml`** (HTTP vers 3842, TCP jeu vers 3840, TLS passthrough). Il faut alors des **entrypoints** Traefik adaptés et `traefik.enable=true` sur le master ; voir aussi [doc Traefik TCP](https://doc.traefik.io/traefik/routing/routers/#tcp).
 
 **Dépannage** : si le routeur ne répond pas, vérifiez que Traefik apparaît dans `docker network inspect traefik_front_network` et que le DNS pointe vers Traefik pour l’host des labels (`lcdlln-portal.tips-of-mine.com` par défaut).

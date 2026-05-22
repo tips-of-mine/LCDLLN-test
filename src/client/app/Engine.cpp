@@ -4023,6 +4023,38 @@ namespace engine
 															addRole("Jump", "Jump_Start");
 															addRole("Fall", "Jump_Loop");
 															addRole("Land", "Jump_Land");
+
+															// Expose AUSSI tous les autres clips UE5 par leur nom brut (sans
+															// prefixe "Armature|"), disponibles pour les futurs systemes
+															// (sprint, crouch, roll, combat, emotes, nage...). Exclus : armes
+															// a feu (pas dans le jeu) + conduite (pas de vehicule) + A_TPose
+															// (pose de reference, pas une anim de jeu). Aucun declencheur ici :
+															// les clips sont seulement rendus accessibles via FindClip(<nom>).
+															auto isExcludedUe5Clip = [](const std::string& n) {
+																return n == "Pistol_Aim_Up" || n == "Pistol_Aim_Neutral"
+																	|| n == "Pistol_Aim_Down" || n == "Pistol_Idle_Loop"
+																	|| n == "Pistol_Reload" || n == "Pistol_Shoot"
+																	|| n == "Driving_Loop" || n == "A_TPose";
+															};
+															int ue5Exposed = 0;
+															for (const auto& c : ue5Clips) {
+																if (c.duration <= 0.0f) continue;
+																std::string name = c.name;
+																const auto bar = name.rfind('|');
+																if (bar != std::string::npos) name = name.substr(bar + 1);
+																if (isExcludedUe5Clip(name)) continue;
+																bool exists = false;
+																for (const auto& existing : loaded->clips) {
+																	if (existing.name == name) { exists = true; break; }
+																}
+																if (exists) continue;
+																engine::render::skinned::AnimationClip copy = c;
+																copy.name = name;
+																loaded->clips.push_back(std::move(copy));
+																++ue5Exposed;
+															}
+															LOG_INFO(Render, "[Engine] UE5 race '{}' : {} clips additionnels exposes (total {})",
+																raceId, ue5Exposed, loaded->clips.size());
 														}
 														else
 														{

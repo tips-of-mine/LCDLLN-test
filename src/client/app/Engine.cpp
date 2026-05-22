@@ -273,6 +273,7 @@ namespace engine
 				case engine::Engine::AvatarLocomotionState::Dance:        return "Dance";
 				case engine::Engine::AvatarLocomotionState::Attack:       return "Attack";
 				case engine::Engine::AvatarLocomotionState::Cast:         return "Cast";
+				case engine::Engine::AvatarLocomotionState::Interact:     return "Interact";
 				case engine::Engine::AvatarLocomotionState::Jump:         return "Jump";
 				case engine::Engine::AvatarLocomotionState::Fall:         return "Fall";
 				case engine::Engine::AvatarLocomotionState::Land:         return "Land";
@@ -4100,6 +4101,7 @@ namespace engine
 															addRole("Dance", "Dance_Loop");
 															addRole("Attack", "Sword_Attack");
 															addRole("Cast", "Spell_Simple_Shoot");
+															addRole("Interact", "Interact");
 															addRole("Jump", "Jump_Start");
 															addRole("Fall", "Jump_Loop");
 															addRole("Land", "Jump_Land");
@@ -7012,6 +7014,8 @@ namespace engine
 					KeyFromName(m_cfg.GetString("controls.keybind.crouch", "Ctrl"), engine::platform::Key::Control);
 				const engine::platform::Key castKey =
 					KeyFromName(m_cfg.GetString("controls.keybind.cast", "R"), engine::platform::Key::R);
+				const engine::platform::Key interactKey =
+					KeyFromName(m_cfg.GetString("controls.keybind.interact", "E"), engine::platform::Key::E);
 				// Vue 3eme personne : controleur orbital pur (camera derriere la
 				// cible). Souris libre par defaut ; clic droit maintenu = rotate
 				// camera autour de la cible (yaw/pitch) ; molette = zoom.
@@ -7101,6 +7105,8 @@ namespace engine
 						m_currentSkinnedMesh->FindClip("Attack");
 					const engine::render::skinned::AnimationClip* castClip =
 						m_currentSkinnedMesh->FindClip("Cast");
+					const engine::render::skinned::AnimationClip* interactClip =
+						m_currentSkinnedMesh->FindClip("Interact");
 
 					// Attaque melee : clic gauche (edge). Le bloc gameplay est deja garde
 					// contre le focus chat / l'auth (cf. ligne ~6969) ; on exclut en plus
@@ -7114,6 +7120,12 @@ namespace engine
 					// cible ni d'aller-retour serveur), pendant clavier de l'attaque souris.
 					const bool castPressed =
 						m_input.WasPressed(castKey);
+
+					// Interagir : touche remappable (controls.keybind.interact, def. E),
+					// edge. Action non-combat (la touche E reservee au §32 trouve ici son
+					// usage). Geste cosmetique one-shot ; cible/objet a brancher plus tard.
+					const bool interactPressed =
+						m_input.WasPressed(interactKey);
 
 					// Esquive/roulade : double-appui (fenetre 0.30s) sur la touche Crouch
 					// (remappable). Touche maintenue = crouch ; deux appuis = Roll (one-shot).
@@ -7250,6 +7262,18 @@ namespace engine
 									else                          newState = AvatarLocomotionState::Walk;
 								}
 								break;
+							case AvatarLocomotionState::Interact:
+								// One-shot : retour locomotion quand le geste d'interaction est fini.
+								// Action non-combat (la touche E reservee au menu Options trouve ici son usage).
+								if (!interactClip || stateElapsed >= interactClip->duration)
+								{
+									if (!moving)                  newState = AvatarLocomotionState::Idle;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
 						}
 
 						// Crouch (Ctrl) : etat accroupi prioritaire tant que la touche est tenue
@@ -7258,7 +7282,8 @@ namespace engine
 							&& newState != AvatarLocomotionState::Roll
 							&& newState != AvatarLocomotionState::Dance
 							&& newState != AvatarLocomotionState::Attack
-							&& newState != AvatarLocomotionState::Cast)
+							&& newState != AvatarLocomotionState::Cast
+							&& newState != AvatarLocomotionState::Interact)
 							newState = moving ? AvatarLocomotionState::CrouchWalk : AvatarLocomotionState::CrouchIdle;
 
 						// Esquive/roulade (Ctrl double-tap) : Roll one-shot, prioritaire sur crouch.
@@ -7276,7 +7301,8 @@ namespace engine
 						if (attackPressed && !moveInput.jumpPressed
 							&& m_avatarLocoState != AvatarLocomotionState::Roll
 							&& m_avatarLocoState != AvatarLocomotionState::Cast
-							&& m_avatarLocoState != AvatarLocomotionState::Attack)
+							&& m_avatarLocoState != AvatarLocomotionState::Attack
+							&& m_avatarLocoState != AvatarLocomotionState::Interact)
 							newState = AvatarLocomotionState::Attack;
 
 						// Sort (touche R) : Spell_Simple_Shoot one-shot. Memes regles que
@@ -7286,8 +7312,19 @@ namespace engine
 						if (castPressed && !moveInput.jumpPressed
 							&& m_avatarLocoState != AvatarLocomotionState::Roll
 							&& m_avatarLocoState != AvatarLocomotionState::Attack
-							&& m_avatarLocoState != AvatarLocomotionState::Cast)
+							&& m_avatarLocoState != AvatarLocomotionState::Cast
+							&& m_avatarLocoState != AvatarLocomotionState::Interact)
 							newState = AvatarLocomotionState::Cast;
+
+						// Interagir (touche E par defaut) : geste Interact one-shot, action
+						// non-combat. Memes regles que le sort (pas pendant saut/roll, ne coupe
+						// pas un Roll/Attack/Cast/Interact en cours). Prioritaire sur le crouch.
+						if (interactPressed && !moveInput.jumpPressed
+							&& m_avatarLocoState != AvatarLocomotionState::Roll
+							&& m_avatarLocoState != AvatarLocomotionState::Attack
+							&& m_avatarLocoState != AvatarLocomotionState::Cast
+							&& m_avatarLocoState != AvatarLocomotionState::Interact)
+							newState = AvatarLocomotionState::Interact;
 					}
 					else
 					{
@@ -8011,7 +8048,7 @@ namespace engine
 			if (m_inGameOptionsPanelVisible)
 			{
 				const float optW = 460.f;
-				const float optH = 480.f;
+				const float optH = 520.f;
 				ImGui::SetNextWindowPos(ImVec2((dw - optW) * 0.5f, (dh - optH) * 0.5f), ImGuiCond_Always);
 				ImGui::SetNextWindowSize(ImVec2(optW, optH), ImGuiCond_Always);
 				ImGui::SetNextWindowBgAlpha(0.95f);
@@ -8076,7 +8113,8 @@ namespace engine
 								const char* cfgKey =
 									(m_rebindingAction == 1) ? "controls.keybind.sprint"
 									: (m_rebindingAction == 2) ? "controls.keybind.crouch"
-									: "controls.keybind.cast";
+									: (m_rebindingAction == 3) ? "controls.keybind.cast"
+									: "controls.keybind.interact";
 								m_cfg.SetValue(cfgKey, std::string(rk.name));
 								m_rebindingAction = 0;
 								break;
@@ -8101,6 +8139,7 @@ namespace engine
 				rebindRow("Sprint", "controls.keybind.sprint", "Alt", 1);
 				rebindRow("Accroupi", "controls.keybind.crouch", "Ctrl", 2);
 				rebindRow("Sort", "controls.keybind.cast", "R", 3);
+				rebindRow("Interagir", "controls.keybind.interact", "E", 4);
 				ImGui::TextDisabled("Roulade : double-appui sur la touche Accroupi");
 				ImGui::TextDisabled("Attaque : clic gauche (non remappable)");
 

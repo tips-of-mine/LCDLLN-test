@@ -1655,3 +1655,20 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 - **Persistance session-only** : le rebind écrit dans `m_cfg` (live), comme les autres réglages du panneau Options in-game ; non re-sérialisé dans `user_settings.json` (même limite que volume/sensibilité de ce panneau). Pour un défaut persistant, éditer `config.json`.
 - **Pas de détection de conflit** : binder deux actions sur la même touche est permis (ex. réutiliser une touche de panneau B/G/…). À durcir si besoin.
 - **Souris/modificateurs** : l'attaque (clic gauche) n'est pas remappable en v1 ; rebinder un modificateur (Alt/Ctrl) vers une lettre fonctionne mais peut entrer en conflit avec d'autres usages (Ctrl = modificateur de raccourcis).
+
+## 35. Action « interagir » (touche E) — geste `Interact` one-shot (2026-05-22)
+
+**Objectif** : donner enfin un usage à la **touche E** réservée au §32 (libérée du toggle GameEvents). Premier maillon d'un futur système d'interaction (PNJ/objet/loot) : pour l'instant un **geste cosmétique** one-shot, comme l'attaque/le sort. Livré **dans la même PR que les keybinds (§34)** (consigne « minimum de PR »).
+
+### Chaîne
+- **Input** : touche **remappable** `controls.keybind.interact` (défaut `E`), résolue chaque frame (`KeyFromName`). `interactPressed = WasPressed(interactKey)`, dans le bloc gameplay gardé (chat/auth/Options).
+- **État** : `AvatarLocomotionState::Interact` (**one-shot**, absent de `ClipLoops`). Override : `if (interactPressed && !jump && état ∉ {Roll, Attack, Cast, Interact}) newState = Interact` — prioritaire sur le crouch, ne coupe pas Roll/Attack/Cast. Le `case Interact` sort vers la locomotion quand `stateElapsed ≥ interactClip->duration`.
+- **Anim** : `addRole("Interact", "Interact")`. `StateToClipName(Interact) = "Interact"`.
+- **Remap** : 4ᵉ ligne « Interagir » dans la section Controles du panneau Options (capture clavier, comme sprint/crouch/sort).
+
+### Priorité d'intention (au sol), mise à jour
+`Roll > Attack > Cast > Interact > Dance > Crouch > Sprint > Run > Walk` (les actions one-shot s'excluent mutuellement tant que l'une joue).
+
+### Limites connues
+- **Geste cosmétique seulement** : aucune cible, aucun objet ramassé, aucun PNJ adressé — c'est l'animation de base. Le vrai système « interagir » (raycast vers une entité interactible, prompt, loot) reste à construire (nécessitera des entités interactibles, voire des events serveur).
+- **Repli gracieux** : race sans clip `Interact` → sortie immédiate de l'état.

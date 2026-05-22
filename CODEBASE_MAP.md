@@ -1581,3 +1581,22 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 - **Double-tap Ctrl** : la fenêtre 0.30 s peut occasionnellement déclencher un Roll lors d'un crouch « nerveux » (deux appuis rapprochés). Ajustable via le seuil.
 
 §27 étape 2 **terminée**.
+
+## 31. Attaque mêlée (clic gauche) — clip combat one-shot (2026-05-22)
+
+**Objectif** : 1er déclencheur de l'étape « combat » de §27 (après l'étape 2 locomotion). Câble un clip d'attaque mêlée déclenché par l'input, **purement client/cosmétique** pour l'instant (pas de dégâts ni d'aller-retour serveur).
+
+### Chaîne
+- **Input** : **clic gauche** (`m_input.WasMousePressed(MouseButton::Left)`), edge-triggered, lu dans la SM. Le bloc gameplay est déjà gardé contre le focus chat / l'auth (Engine.cpp ~6969) ; on exclut en plus le drag inventaire (`!m_invUi.IsDragging()`) pour ne pas frapper en relâchant un objet.
+- **État** : `AvatarLocomotionState::Attack` (**one-shot**, non bouclé — absent de `ClipLoops`). Override après le switch : `if (attackPressed && !jumpPressed && état ≠ Roll && état ≠ Attack) newState = Attack` — **prioritaire sur le crouch** (on peut frapper accroupi, retour debout l'attaque finie), mais ne coupe **pas** un Roll en cours et ne s'enclenche pas en plein saut. Le `case Attack` du switch sort vers la locomotion quand `stateElapsed ≥ attackClip->duration` (ou clip absent → sortie immédiate).
+- **Anim** : `addRole("Attack", "Sword_Attack")` (branche UE5 ; clip dont l'existence est vérifiée par `SkinnedMeshLoaderTests`). `StateToClipName(Attack) = "Attack"`.
+- **Déplacement** : non modifié pendant l'attaque (geste plein corps, pas de root motion) — le `CharacterController` continue de piloter la position selon l'input.
+
+### Priorité d'intention (au sol), mise à jour
+`Roll (double-tap Ctrl) > Attack (clic gauche) > Dance (/dance, à l'arrêt) > Crouch (Ctrl tenu) > Sprint (Alt) > Run (Shift) > Walk`.
+
+### Limites connues
+- **Cosmétique uniquement** : aucun dégât, aucune cible, aucun envoi serveur. Le HUD combat existant (`src/client/combat/`) reste piloté par les events serveur, indépendant de ce geste.
+- **Pas d'arme visible** : le clip `Sword_Attack` est joué sans système d'équipement (l'avatar « frappe » à mains nues visuellement). À relier au futur système d'équipement.
+- **Pas de combo** : un clic pendant l'attaque est ignoré (le clip doit finir). Combo `Sword_Attack` → enchaînement à ajouter plus tard.
+- **Clic sur UI ouverte** : un clic gauche sur une fenêtre de jeu (inventaire/boutique) peut aussi déclencher le geste (curseur libre en vue 3ᵉ personne) ; seuls le focus chat et le drag inventaire sont exclus pour l'instant.

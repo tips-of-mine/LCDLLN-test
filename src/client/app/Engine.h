@@ -583,6 +583,7 @@ namespace engine
 			CrouchWalk,
 			Roll,
 			Dance,
+			Attack,
 			Jump,
 			Fall,
 			Land

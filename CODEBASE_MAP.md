@@ -1600,3 +1600,17 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 - **Pas d'arme visible** : le clip `Sword_Attack` est joué sans système d'équipement (l'avatar « frappe » à mains nues visuellement). À relier au futur système d'équipement.
 - **Pas de combo** : un clic pendant l'attaque est ignoré (le clip doit finir). Combo `Sword_Attack` → enchaînement à ajouter plus tard.
 - **Clic sur UI ouverte** : un clic gauche sur une fenêtre de jeu (inventaire/boutique) peut aussi déclencher le geste (curseur libre en vue 3ᵉ personne) ; seuls le focus chat et le drag inventaire sont exclus pour l'instant.
+## 32. Menu de panneaux (barre de menus ImGui) + libération de la touche E (2026-05-22)
+
+**Objectif** : offrir un accès **souris** à tous les panneaux togglables (sans raccourci clavier dédié) et **libérer la touche E** pour une future action « interagir » (hors combat). Premier menu ImGui du **client de jeu** (jusqu'ici, seul l'éditeur monde en avait).
+
+### Chaîne
+- **Barre de menus** : `ImGui::BeginMainMenuBar()` → menu `« Panneaux »` rendu dans la branche ImGui in-game de `Engine::Update` (`src/client/app/Engine.cpp`, juste après `m_chatImGui->Render(...)`, sous `#if defined(_WIN32)`). Toujours visible en jeu (tant que `render.chat_imgui.enabled` ou un menu pause/options est actif).
+- **Items** : un `MenuItem` par panneau (Carnet de sorts, Arènes, Champs de bataille, PvP extérieur, Météo, Événements, Guilde, Hôtel des ventes, Jets de butin). Chaque item reflète l'état `m_*Visible` (coche) et, à l'ouverture, reproduit le `RequestList()`/`RequestTeams()` du toggle clavier correspondant.
+- **Libellés ASCII** : la police ImGui par défaut (ProggyClean) n'a pas les glyphes accentués → libellés sans accents pour un rendu correct quelle que soit la police.
+- **Touche E libérée** : le bloc `if (... Key::E) { m_gameEventVisible = ... }` (toggle GameEvents au clavier) est **supprimé**. GameEvents s'ouvre désormais **uniquement via le menu**. Les autres panneaux **gardent leur touche** (B/A/G/P/Y/U/H/L) **en plus** de l'accès menu.
+
+### Limites connues
+- **Barre toujours visible** : occupe un bandeau haut en jeu (choix assumé pour l'accès sans touche) ; à terme on pourra la masquer/replier.
+- **E non rebranchée** : E ne fait plus rien tant que le système « interagir » (PNJ/objet/loot) n'existe pas — réservée volontairement, pas de bind mort.
+- **Rendu non vérifié visuellement** : code ImGui Windows-only, non testable en headless ; validation au build Windows.

@@ -1632,3 +1632,26 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 - **Cosmétique uniquement** : aucun projectile, aucune cible, aucun envoi serveur.
 - **Clip unique (pas de séquence)** : on joue `Spell_Simple_Shoot` seul, sans le wind-up/exit (`Spell_Simple_Enter`/`Idle_Loop`/`Exit`). Le crossfade lisse le retour à la locomotion ; une vraie séquence Enter→(channel)→Shoot→Exit est une amélioration future.
 - **Repli gracieux** : une race sans clip `Spell_Simple_Shoot` (`FindClip` nullptr) sort immédiatement de l'état (anim précédente conservée).
+
+## 34. Touches d'action remappables depuis le menu Options (2026-05-22)
+
+**Objectif** : rendre **modifiables in-game** (panneau Options) les touches des actions ajoutées récemment (Sprint, Accroupi/Roulade, Sort), sans toucher au protocole ni au serveur.
+
+### Config
+- Clés `controls.keybind.{sprint,crouch,cast}` (défauts `Alt`/`Ctrl`/`R`) dans `config.json`. Noms acceptés = ceux de la table `kRebindableKeys` (Engine.cpp) : lettres A-Z **sauf I/J/K/T** (absentes de `platform::Key`), chiffres 0-9, `Ctrl`/`Alt`/`Shift`/`Espace`/`Tab`.
+- `KeyName(Key)` / `KeyFromName(nom, fallback)` (anonymous namespace de `Engine.cpp`) font la conversion enum ↔ nom. Pas de modif de l'API `Input`.
+
+### Lecture gameplay (config-driven)
+- Dans le bloc gameplay (`Engine.cpp`, `if (!authGateActive && !IsChatFocusActive() && !m_inGameOptionsPanelVisible)`), les 3 touches sont **résolues chaque frame** depuis la config (reflète un rebind immédiatement).
+- `BuildMoveInput(..., sprintKey, crouchKey)` : `out.sprint = IsDown(sprintKey)`, `out.crouch = IsDown(crouchKey)` (avant : `Alt`/`Control` en dur). La **roulade** réutilise `crouchKey` (double-appui). Le **sort** lit `WasPressed(castKey)`. Run (Shift) et Jump (Espace) restent fixes (hors périmètre « nouvelles touches »).
+
+### UI Options (rebind par capture)
+- Section « Controles » ajoutée au **panneau Options in-game** (`Engine.cpp`, `#if defined(_WIN32)`). Une ligne par action (Sprint/Accroupi/Sort) : libellé + touche courante + bouton « Modifier ».
+- « Modifier » arme `m_rebindingAction` (1/2/3) ; le rendu suivant capture la **1re touche connue pressée** (`kRebindableKeys`) et écrit `controls.keybind.*` (Échap = annuler).
+- **Gameplay suspendu** tant que le panneau Options est ouvert (ajout de `!m_inGameOptionsPanelVisible` au garde) → la touche capturée ne déclenche pas l'action en même temps.
+- Roulade et Attaque affichées en **info** (non remappables : la roulade suit la touche Accroupi, l'attaque est le clic gauche — souris).
+
+### Limites connues
+- **Persistance session-only** : le rebind écrit dans `m_cfg` (live), comme les autres réglages du panneau Options in-game ; non re-sérialisé dans `user_settings.json` (même limite que volume/sensibilité de ce panneau). Pour un défaut persistant, éditer `config.json`.
+- **Pas de détection de conflit** : binder deux actions sur la même touche est permis (ex. réutiliser une touche de panneau B/G/…). À durcir si besoin.
+- **Souris/modificateurs** : l'attaque (clic gauche) n'est pas remappable en v1 ; rebinder un modificateur (Alt/Ctrl) vers une lettre fonctionne mais peut entrer en conflit avec d'autres usages (Ctrl = modificateur de raccourcis).

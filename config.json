@@ -93,6 +93,14 @@
     "camera": {
         "mouse_sensitivity": 0.002
     },
+    "_comment_controls": "Touches d'action remappables in-game (menu Options). Noms acceptes : lettres A-Z (sauf I/J/K/T, absentes de l'enum Key), chiffres 0-9, Ctrl, Alt, Shift, Espace, Tab. La roulade reprend la touche d'accroupissement (double-appui) ; l'attaque reste le clic gauche (non remappable en v1).",
+    "controls": {
+        "keybind": {
+            "sprint": "Alt",
+            "crouch": "Ctrl",
+            "cast": "R"
+        }
+    },
     "_comment_player_movement": "Sous-projet B.1 — CharacterController params. Defaults sensibles si absent (CharacterController::Config). walk_speed/run_speed en m/s. gravity en m/s2 (signe negatif). jump_speed = impulse m/s a l'instant du jump. coyote_time_s = jump grace apres avoir quitte le sol. jump_buffer_s = jump grace si presse juste avant atterrissage.",
     "player": {
         "movement": {

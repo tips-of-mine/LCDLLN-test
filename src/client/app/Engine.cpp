@@ -136,10 +136,51 @@ namespace engine
 		///         `swim*/fly` sont hors-scope B.1 et restent false.
 		///
 		/// Effet de bord : aucun. Pure projection input -> intention.
+		// Touches remappables (nom config <-> enum platform::Key). Limitee aux
+		// Key reellement definies dans l'enum (I/J/K/T n'y figurent pas). Sert au
+		// panneau Options (affichage + capture du rebind) et a la lecture des
+		// binds gameplay depuis controls.keybind.* (sprint / crouch / cast).
+		struct RebindableKey { engine::platform::Key key; const char* name; };
+		const RebindableKey kRebindableKeys[] = {
+			{engine::platform::Key::A,"A"},{engine::platform::Key::B,"B"},{engine::platform::Key::C,"C"},
+			{engine::platform::Key::D,"D"},{engine::platform::Key::E,"E"},{engine::platform::Key::F,"F"},
+			{engine::platform::Key::G,"G"},{engine::platform::Key::H,"H"},{engine::platform::Key::L,"L"},
+			{engine::platform::Key::M,"M"},{engine::platform::Key::N,"N"},{engine::platform::Key::O,"O"},
+			{engine::platform::Key::P,"P"},{engine::platform::Key::Q,"Q"},{engine::platform::Key::R,"R"},
+			{engine::platform::Key::S,"S"},{engine::platform::Key::U,"U"},{engine::platform::Key::V,"V"},
+			{engine::platform::Key::W,"W"},{engine::platform::Key::X,"X"},{engine::platform::Key::Y,"Y"},
+			{engine::platform::Key::Z,"Z"},
+			{engine::platform::Key::Digit0,"0"},{engine::platform::Key::Digit1,"1"},{engine::platform::Key::Digit2,"2"},
+			{engine::platform::Key::Digit3,"3"},{engine::platform::Key::Digit4,"4"},{engine::platform::Key::Digit5,"5"},
+			{engine::platform::Key::Digit6,"6"},{engine::platform::Key::Digit7,"7"},{engine::platform::Key::Digit8,"8"},
+			{engine::platform::Key::Digit9,"9"},
+			{engine::platform::Key::Control,"Ctrl"},{engine::platform::Key::Alt,"Alt"},
+			{engine::platform::Key::Shift,"Shift"},{engine::platform::Key::Space,"Espace"},
+			{engine::platform::Key::Tab,"Tab"},
+		};
+
+		/// Nom affichable/config d'une touche (ou "?" si hors table).
+		const char* KeyName(engine::platform::Key k)
+		{
+			for (const auto& e : kRebindableKeys)
+				if (e.key == k) return e.name;
+			return "?";
+		}
+
+		/// Resout un nom de touche (config) en `Key`, `fallback` si inconnu.
+		engine::platform::Key KeyFromName(const std::string& name, engine::platform::Key fallback)
+		{
+			for (const auto& e : kRebindableKeys)
+				if (name == e.name) return e.key;
+			return fallback;
+		}
+
 		engine::gameplay::MoveInput BuildMoveInput(
 			const engine::platform::Input& input,
 			const engine::render::OrbitalCameraController& camera,
-			engine::render::MovementLayout layout)
+			engine::render::MovementLayout layout,
+			engine::platform::Key sprintKey,
+			engine::platform::Key crouchKey)
 		{
 			engine::gameplay::MoveInput out{};
 
@@ -183,8 +224,8 @@ namespace engine
 			}
 
 			out.run         = input.IsDown(engine::platform::Key::Shift);
-			out.sprint      = input.IsDown(engine::platform::Key::Alt);
-			out.crouch      = input.IsDown(engine::platform::Key::Control);
+			out.sprint      = input.IsDown(sprintKey);
+			out.crouch      = input.IsDown(crouchKey);
 			out.jumpPressed = input.WasPressed(engine::platform::Key::Space);
 			// swim/fly hors-scope B.1 : restent false (consommes par les modes
 			// Water/Fly du CharacterController, inutiles tant que la query eau
@@ -6960,8 +7001,17 @@ namespace engine
 
 		if (!m_editorEnabled)
 		{
-			if (!authGateActive && !m_chatUi.IsChatFocusActive())
+			if (!authGateActive && !m_chatUi.IsChatFocusActive() && !m_inGameOptionsPanelVisible)
 			{
+				// Touches d'action remappables (controls.keybind.*), resolues chaque
+				// frame depuis la config pour refleter immediatement un rebind fait
+				// dans le panneau Options. Defauts : sprint=Alt, crouch=Ctrl, sort=R.
+				const engine::platform::Key sprintKey =
+					KeyFromName(m_cfg.GetString("controls.keybind.sprint", "Alt"), engine::platform::Key::Alt);
+				const engine::platform::Key crouchKey =
+					KeyFromName(m_cfg.GetString("controls.keybind.crouch", "Ctrl"), engine::platform::Key::Control);
+				const engine::platform::Key castKey =
+					KeyFromName(m_cfg.GetString("controls.keybind.cast", "R"), engine::platform::Key::R);
 				// Vue 3eme personne : controleur orbital pur (camera derriere la
 				// cible). Souris libre par defaut ; clic droit maintenu = rotate
 				// camera autour de la cible (yaw/pitch) ; molette = zoom.
@@ -6973,7 +7023,7 @@ namespace engine
 				// avant le CC, son repere (Forward/Right XZ) servirait a projeter
 				// l'input du frame courant mais sa position cible utiliserait la
 				// position de la frame precedente -> 1-frame lag visible.
-				const auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout);
+				const auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout, sprintKey, crouchKey);
 				m_characterController.Update(static_cast<float>(dt), moveInput, m_terrainCollider);
 				const engine::math::Vec3 ccPos = m_characterController.GetPosition();
 				m_orbitalCameraController.SetTargetPosition(ccPos);
@@ -7063,12 +7113,12 @@ namespace engine
 					// chat / l'auth (cf. ligne ~6961). Geste cosmetique one-shot (pas de
 					// cible ni d'aller-retour serveur), pendant clavier de l'attaque souris.
 					const bool castPressed =
-						m_input.WasPressed(engine::platform::Key::R);
+						m_input.WasPressed(castKey);
 
-					// Esquive/roulade : Ctrl double-tap (fenetre 0.30s). Ctrl maintenu
-					// = crouch ; deux appuis rapides = Roll (one-shot).
+					// Esquive/roulade : double-appui (fenetre 0.30s) sur la touche Crouch
+					// (remappable). Touche maintenue = crouch ; deux appuis = Roll (one-shot).
 					bool dodgePressed = false;
-					if (m_input.WasPressed(engine::platform::Key::Control))
+					if (m_input.WasPressed(crouchKey))
 					{
 						if (nowSec - m_lastCtrlTapSec <= 0.30f)
 							dodgePressed = true;
@@ -7960,8 +8010,8 @@ namespace engine
 			// Le full panel auth Options reste accessible via Se deconnecter -> Login -> Options.
 			if (m_inGameOptionsPanelVisible)
 			{
-				const float optW = 420.f;
-				const float optH = 320.f;
+				const float optW = 460.f;
+				const float optH = 480.f;
 				ImGui::SetNextWindowPos(ImVec2((dw - optW) * 0.5f, (dh - optH) * 0.5f), ImGuiCond_Always);
 				ImGui::SetNextWindowSize(ImVec2(optW, optH), ImGuiCond_Always);
 				ImGui::SetNextWindowBgAlpha(0.95f);
@@ -8002,6 +8052,57 @@ namespace engine
 				{
 					m_cfg.SetValue("controls.mouse_sensitivity", static_cast<double>(sens));
 				}
+
+				// --- Controles : touches d'action remappables (controls.keybind.*) ---
+				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::TextUnformatted("Controles");
+
+				// Capture du rebind en cours : la 1re touche connue pressee est affectee
+				// a l'action ciblee (Echap annule). Le bloc gameplay etant suspendu tant
+				// que ce panneau est ouvert, la touche capturee ne declenche pas l'action.
+				if (m_rebindingAction != 0)
+				{
+					if (m_input.WasPressed(engine::platform::Key::Escape))
+					{
+						m_rebindingAction = 0;
+					}
+					else
+					{
+						for (const auto& rk : kRebindableKeys)
+						{
+							if (m_input.WasPressed(rk.key))
+							{
+								const char* cfgKey =
+									(m_rebindingAction == 1) ? "controls.keybind.sprint"
+									: (m_rebindingAction == 2) ? "controls.keybind.crouch"
+									: "controls.keybind.cast";
+								m_cfg.SetValue(cfgKey, std::string(rk.name));
+								m_rebindingAction = 0;
+								break;
+							}
+						}
+					}
+				}
+
+				auto rebindRow = [&](const char* label, const char* cfgKey,
+					const char* def, int action)
+				{
+					const std::string cur = m_cfg.GetString(cfgKey, def);
+					ImGui::Text("%s : %s", label, cur.c_str());
+					ImGui::SameLine(190.f);
+					ImGui::PushID(action);
+					if (m_rebindingAction == action)
+						ImGui::TextUnformatted("appuyez sur une touche (Echap = annuler)");
+					else if (ImGui::SmallButton("Modifier"))
+						m_rebindingAction = action;
+					ImGui::PopID();
+				};
+				rebindRow("Sprint", "controls.keybind.sprint", "Alt", 1);
+				rebindRow("Accroupi", "controls.keybind.crouch", "Ctrl", 2);
+				rebindRow("Sort", "controls.keybind.cast", "R", 3);
+				ImGui::TextDisabled("Roulade : double-appui sur la touche Accroupi");
+				ImGui::TextDisabled("Attaque : clic gauche (non remappable)");
 
 				ImGui::Spacing();
 				ImGui::Separator();

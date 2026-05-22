@@ -597,6 +597,10 @@ namespace engine
 		/// Emote danse demandée (commande chat /dance) — consommée par la state
 		/// machine de locomotion pour passer en état Dance (annulée au déplacement).
 		bool                                                     m_danceRequested = false;
+		/// Action en cours de remappage dans le panneau Options (capture clavier) :
+		/// 0 = aucune, 1 = sprint, 2 = crouch, 3 = sort. Tant que != 0, le panneau
+		/// attend une touche ; le bloc gameplay est suspendu (panneau Options ouvert).
+		int                                                      m_rebindingAction = 0;
 		/// Instant d'entrée dans l'état courant. Utilisé pour :
 		///   - détecter la fin de StartWalking / Jump / Land (durée écoulée >= clip.duration).
 		///   - tracer la transition Jump -> Fall après 40% du clip Jump (takeoff).

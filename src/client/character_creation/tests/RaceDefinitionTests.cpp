@@ -55,7 +55,8 @@ namespace
 
         const RaceDefinition* humains = FindRace(races, "humains");
         REQUIRE(humains != nullptr);
-        REQUIRE(humains->meshPath == "models/avatars/y_bot/y_bot.glb");
+        // Migration UE5 : humains pointe sur le corps modulaire UE5 (Male_Ranger).
+        REQUIRE(humains->meshPath == "models/characters/humains/Male_Ranger/Male_Ranger.glb");
 
         const RaceDefinition* nains = FindRace(races, "nains");
         REQUIRE(nains != nullptr);

@@ -27,6 +27,12 @@ struct SkinnedMesh
     /// Liste des clips d'animation chargés depuis le même glTF.
     std::vector<AnimationClip> clips;
 
+    /// Transform d'import appliquée au model matrix de l'avatar (innermost) pour
+    /// corriger échelle/orientation à l'import (ex. corps UE5 : Z-up + cm vs le
+    /// moteur Y-up + m). Identité par défaut (meshes Mixamo inchangés). Réglée
+    /// depuis races.json (importScale / importRotXDeg) au chargement.
+    engine::math::Mat4 importTransform = engine::math::Mat4::Identity();
+
     /// Vertex buffer GPU (contient des SkinnedVertex, stride 56 octets).
     VkBuffer vertexBuffer = VK_NULL_HANDLE;
     /// Mémoire backing du vertex buffer (host-visible + coherent).

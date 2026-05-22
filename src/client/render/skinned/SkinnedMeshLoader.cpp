@@ -141,12 +141,44 @@ std::optional<SkinnedMeshCpuData> SkinnedMeshLoader::LoadCpuOnlyForTests(const s
         }
     }
 
-    // Parcourt les meshes ; prend le premier primitive ayant POSITION + JOINTS_0 + WEIGHTS_0.
-    // Pour Y Bot il n'y a qu'un seul mesh / primitive, mais on reste défensif.
+    // Parcourt TOUS les meshes/primitives skinnés et les FUSIONNE en un seul
+    // buffer (vertices/indices). Nécessaire pour les personnages modulaires
+    // (ex. corps UE5 découpé en tête/torse/bras/jambes = plusieurs meshes). Pour
+    // un mesh mono-primitive (ex. Y Bot Mixamo) le résultat est identique à
+    // l'ancien comportement (un seul primitive, remap d'os identité).
+    //
+    // Chaque primitive peut référencer son propre skin : on remappe ses indices
+    // d'os (JOINTS_0) vers l'ordre du squelette canonique (skins[0]) par identité
+    // de node, et on rebase l'index buffer sur l'offset de vertex courant.
+
+    // Le skin est porté par le node qui référence le mesh (pas par le mesh).
+    auto FindSkinForMesh = [&](const cgltf_mesh* m) -> const cgltf_skin* {
+        for (cgltf_size ni = 0; ni < data->nodes_count; ++ni) {
+            const cgltf_node* n = &data->nodes[ni];
+            if (n->mesh == m && n->skin) return n->skin;
+        }
+        return skin; // repli : skin canonique
+    };
+    // Index d'un node dans skins[0]->joints, ou -1 si absent.
+    auto CanonicalBoneIndex = [&](const cgltf_node* n) -> int {
+        for (cgltf_size i = 0; i < skin->joints_count; ++i) {
+            if (skin->joints[i] == n) return static_cast<int>(i);
+        }
+        return -1;
+    };
+
     bool meshLoaded = false;
-    for (cgltf_size mi = 0; mi < data->meshes_count && !meshLoaded; ++mi) {
+    for (cgltf_size mi = 0; mi < data->meshes_count; ++mi) {
         const cgltf_mesh* mesh = &data->meshes[mi];
-        for (cgltf_size pi = 0; pi < mesh->primitives_count && !meshLoaded; ++pi) {
+        const cgltf_skin* primSkin = FindSkinForMesh(mesh);
+
+        // Table de remap : index joint dans le skin de la primitive -> bone canonique.
+        std::vector<int> jointRemap(primSkin ? primSkin->joints_count : 0, -1);
+        for (cgltf_size j = 0; primSkin && j < primSkin->joints_count; ++j) {
+            jointRemap[j] = CanonicalBoneIndex(primSkin->joints[j]);
+        }
+
+        for (cgltf_size pi = 0; pi < mesh->primitives_count; ++pi) {
             const cgltf_primitive* prim = &mesh->primitives[pi];
             const cgltf_accessor *aPos = nullptr, *aNor = nullptr, *aUv = nullptr,
                                  *aJoints = nullptr, *aWeights = nullptr;
@@ -160,10 +192,11 @@ std::optional<SkinnedMeshCpuData> SkinnedMeshLoader::LoadCpuOnlyForTests(const s
             }
             if (!aPos || !aJoints || !aWeights) continue;
 
+            const uint32_t baseVertex = static_cast<uint32_t>(out.vertices.size());
             const size_t nv = aPos->count;
-            out.vertices.resize(nv);
+            out.vertices.resize(baseVertex + nv);
             for (size_t v = 0; v < nv; ++v) {
-                SkinnedVertex& sv = out.vertices[v];
+                SkinnedVertex& sv = out.vertices[baseVertex + v];
                 cgltf_accessor_read_float(aPos, v, sv.pos, 3);
                 if (aNor) {
                     cgltf_accessor_read_float(aNor, v, sv.normal, 3);
@@ -177,19 +210,27 @@ std::optional<SkinnedMeshCpuData> SkinnedMeshLoader::LoadCpuOnlyForTests(const s
                 }
                 cgltf_uint joints[4] = {0, 0, 0, 0};
                 cgltf_accessor_read_uint(aJoints, v, joints, 4);
-                for (int k = 0; k < 4; ++k) sv.boneIndices[k] = static_cast<uint16_t>(joints[k]);
+                for (int k = 0; k < 4; ++k) {
+                    const int canon = (joints[k] < jointRemap.size()) ? jointRemap[joints[k]] : -1;
+                    sv.boneIndices[k] = static_cast<uint16_t>(canon >= 0 ? canon : 0);
+                }
                 cgltf_accessor_read_float(aWeights, v, sv.weights, 4);
             }
+
             if (prim->indices) {
                 const size_t ni = prim->indices->count;
-                out.indices.resize(ni);
+                const size_t base = out.indices.size();
+                out.indices.resize(base + ni);
                 for (size_t i = 0; i < ni; ++i) {
-                    out.indices[i] = static_cast<uint32_t>(cgltf_accessor_read_index(prim->indices, i));
+                    out.indices[base + i] =
+                        baseVertex + static_cast<uint32_t>(cgltf_accessor_read_index(prim->indices, i));
                 }
             } else {
-                // Pas d'index buffer : on génère une séquence 0..nv-1.
-                out.indices.resize(nv);
-                for (size_t i = 0; i < nv; ++i) out.indices[i] = static_cast<uint32_t>(i);
+                const size_t base = out.indices.size();
+                out.indices.resize(base + nv);
+                for (size_t i = 0; i < nv; ++i) {
+                    out.indices[base + i] = baseVertex + static_cast<uint32_t>(i);
+                }
             }
             meshLoaded = true;
         }

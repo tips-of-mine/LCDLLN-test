@@ -1614,3 +1614,21 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 - **Barre toujours visible** : occupe un bandeau haut en jeu (choix assumé pour l'accès sans touche) ; à terme on pourra la masquer/replier.
 - **E non rebranchée** : E ne fait plus rien tant que le système « interagir » (PNJ/objet/loot) n'existe pas — réservée volontairement, pas de bind mort.
 - **Rendu non vérifié visuellement** : code ImGui Windows-only, non testable en headless ; validation au build Windows.
+
+## 33. Sort — cast (touche R) — clip `Spell_Simple_Shoot` one-shot (2026-05-22)
+
+**Objectif** : 2ᵉ déclencheur de l'étape « combat » de §27 (pendant du clic gauche de l'attaque #31). Câble un clip de **sort** piloté par l'input, **purement client/cosmétique** (pas de cible, de dégâts ni d'aller-retour serveur).
+
+### Chaîne
+- **Input** : **touche `R`** (`m_input.WasPressed(Key::R)`), edge-triggered, lue dans la SM. Le **clic droit n'est PAS utilisé** (déjà pris par le RMB-look de la caméra orbitale, `ThirdPersonCamera`/Engine.cpp). La touche **E reste libre/réservée** (cf. §32, action « interagir » future). Le bloc gameplay est déjà gardé contre le focus chat / l'auth (Engine.cpp ~6961), donc `R` ne se déclenche pas en tapant dans le chat.
+- **État** : `AvatarLocomotionState::Cast` (**one-shot**, non bouclé — absent de `ClipLoops`). Override après le switch : `if (castPressed && !jumpPressed && état ∉ {Roll, Attack, Cast}) newState = Cast` — **prioritaire sur le crouch** (caster accroupi → retour debout le sort fini), mais ne coupe **pas** un Roll/Attack en cours et ne s'enclenche pas en plein saut. Le `case Cast` du switch sort vers la locomotion quand `stateElapsed ≥ castClip->duration` (ou clip absent → sortie immédiate).
+- **Anim** : `addRole("Cast", "Spell_Simple_Shoot")` (branche UE5). `StateToClipName(Cast) = "Cast"`. L'attaque exclut aussi `Cast` en cours (pas de clic gauche pendant un sort, et inversement).
+- **Déplacement** : non modifié pendant le sort (geste plein corps, pas de root motion).
+
+### Priorité d'intention (au sol), mise à jour
+`Roll (double-tap Ctrl) > Attack (clic gauche) > Cast (touche R) > Dance (/dance, à l'arrêt) > Crouch (Ctrl tenu) > Sprint (Alt) > Run (Shift) > Walk`.
+
+### Limites connues
+- **Cosmétique uniquement** : aucun projectile, aucune cible, aucun envoi serveur.
+- **Clip unique (pas de séquence)** : on joue `Spell_Simple_Shoot` seul, sans le wind-up/exit (`Spell_Simple_Enter`/`Idle_Loop`/`Exit`). Le crossfade lisse le retour à la locomotion ; une vraie séquence Enter→(channel)→Shoot→Exit est une amélioration future.
+- **Repli gracieux** : une race sans clip `Spell_Simple_Shoot` (`FindClip` nullptr) sort immédiatement de l'état (anim précédente conservée).

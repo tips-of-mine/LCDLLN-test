@@ -231,6 +231,7 @@ namespace engine
 				case engine::Engine::AvatarLocomotionState::Roll:         return "Roll";
 				case engine::Engine::AvatarLocomotionState::Dance:        return "Dance";
 				case engine::Engine::AvatarLocomotionState::Attack:       return "Attack";
+				case engine::Engine::AvatarLocomotionState::Cast:         return "Cast";
 				case engine::Engine::AvatarLocomotionState::Jump:         return "Jump";
 				case engine::Engine::AvatarLocomotionState::Fall:         return "Fall";
 				case engine::Engine::AvatarLocomotionState::Land:         return "Land";
@@ -4057,6 +4058,7 @@ namespace engine
 															addRole("Roll", "Roll");
 															addRole("Dance", "Dance_Loop");
 															addRole("Attack", "Sword_Attack");
+															addRole("Cast", "Spell_Simple_Shoot");
 															addRole("Jump", "Jump_Start");
 															addRole("Fall", "Jump_Loop");
 															addRole("Land", "Jump_Land");
@@ -7047,6 +7049,8 @@ namespace engine
 						m_currentSkinnedMesh->FindClip("Roll");
 					const engine::render::skinned::AnimationClip* attackClip =
 						m_currentSkinnedMesh->FindClip("Attack");
+					const engine::render::skinned::AnimationClip* castClip =
+						m_currentSkinnedMesh->FindClip("Cast");
 
 					// Attaque melee : clic gauche (edge). Le bloc gameplay est deja garde
 					// contre le focus chat / l'auth (cf. ligne ~6969) ; on exclut en plus
@@ -7054,6 +7058,12 @@ namespace engine
 					const bool attackPressed =
 						m_input.WasMousePressed(engine::platform::MouseButton::Left)
 						&& !m_invUi.IsDragging();
+
+					// Sort : touche R (edge). Meme bloc gameplay garde contre le focus
+					// chat / l'auth (cf. ligne ~6961). Geste cosmetique one-shot (pas de
+					// cible ni d'aller-retour serveur), pendant clavier de l'attaque souris.
+					const bool castPressed =
+						m_input.WasPressed(engine::platform::Key::R);
 
 					// Esquive/roulade : Ctrl double-tap (fenetre 0.30s). Ctrl maintenu
 					// = crouch ; deux appuis rapides = Roll (one-shot).
@@ -7178,6 +7188,18 @@ namespace engine
 									else                          newState = AvatarLocomotionState::Walk;
 								}
 								break;
+							case AvatarLocomotionState::Cast:
+								// One-shot : retour locomotion quand le clip de sort est fini.
+								// Deplacement pilote par le CharacterController pendant le cast.
+								if (!castClip || stateElapsed >= castClip->duration)
+								{
+									if (!moving)                  newState = AvatarLocomotionState::Idle;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
 						}
 
 						// Crouch (Ctrl) : etat accroupi prioritaire tant que la touche est tenue
@@ -7185,7 +7207,8 @@ namespace engine
 						if (moveInput.crouch && newState != AvatarLocomotionState::Jump
 							&& newState != AvatarLocomotionState::Roll
 							&& newState != AvatarLocomotionState::Dance
-							&& newState != AvatarLocomotionState::Attack)
+							&& newState != AvatarLocomotionState::Attack
+							&& newState != AvatarLocomotionState::Cast)
 							newState = moving ? AvatarLocomotionState::CrouchWalk : AvatarLocomotionState::CrouchIdle;
 
 						// Esquive/roulade (Ctrl double-tap) : Roll one-shot, prioritaire sur crouch.
@@ -7202,8 +7225,19 @@ namespace engine
 						// sur crouch (on peut frapper accroupi -> repasse debout l'attaque finie).
 						if (attackPressed && !moveInput.jumpPressed
 							&& m_avatarLocoState != AvatarLocomotionState::Roll
+							&& m_avatarLocoState != AvatarLocomotionState::Cast
 							&& m_avatarLocoState != AvatarLocomotionState::Attack)
 							newState = AvatarLocomotionState::Attack;
+
+						// Sort (touche R) : Spell_Simple_Shoot one-shot. Memes regles que
+						// l'attaque (pas pendant un saut/roll, ne coupe pas un Roll/Attack/
+						// Cast en cours). Prioritaire sur le crouch (caster accroupi ->
+						// repasse debout le sort fini).
+						if (castPressed && !moveInput.jumpPressed
+							&& m_avatarLocoState != AvatarLocomotionState::Roll
+							&& m_avatarLocoState != AvatarLocomotionState::Attack
+							&& m_avatarLocoState != AvatarLocomotionState::Cast)
+							newState = AvatarLocomotionState::Cast;
 					}
 					else
 					{

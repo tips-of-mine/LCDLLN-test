@@ -584,6 +584,7 @@ namespace engine
 			Roll,
 			Dance,
 			Attack,
+			Cast,
 			Jump,
 			Fall,
 			Land

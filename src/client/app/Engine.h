@@ -582,7 +582,7 @@ namespace engine
 			CrouchIdle,
 			CrouchWalk,
 			Roll,
-			Dance,
+			Emote,
 			Attack,
 			Cast,
 			Interact,
@@ -595,9 +595,11 @@ namespace engine
 		/// Instant (s, EngineNowSec) du dernier appui sur Ctrl — détection du
 		/// double-tap pour déclencher la roulade/esquive (Roll). -10 = jamais.
 		float                                                    m_lastCtrlTapSec = -10.0f;
-		/// Emote danse demandée (commande chat /dance) — consommée par la state
-		/// machine de locomotion pour passer en état Dance (annulée au déplacement).
-		bool                                                     m_danceRequested = false;
+		/// Emote en cours de demande (slash command), consommée par la state machine
+		/// de locomotion : passe l'avatar en état Emote (anim en boucle, annulée au
+		/// déplacement). m_currentEmoteRole = rôle d'anim actif (clip joué en Emote).
+		std::string                                              m_pendingEmoteRole;
+		std::string                                              m_currentEmoteRole;
 		/// Action en cours de remappage dans le panneau Options (capture clavier) :
 		/// 0 = aucune, 1 = sprint, 2 = crouch, 3 = sort. Tant que != 0, le panneau
 		/// attend une touche ; le bloc gameplay est suspendu (panneau Options ouvert).

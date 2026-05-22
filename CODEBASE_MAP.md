@@ -1672,3 +1672,21 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 ### Limites connues
 - **Geste cosmétique seulement** : aucune cible, aucun objet ramassé, aucun PNJ adressé — c'est l'animation de base. Le vrai système « interagir » (raycast vers une entité interactible, prompt, loot) reste à construire (nécessitera des entités interactibles, voire des events serveur).
 - **Repli gracieux** : race sans clip `Interact` → sortie immédiate de l'état.
+
+## 36. Emotes génériques par slash command (généralisation de `/dance`) (2026-05-22)
+
+**Objectif** : transformer le `/dance` mono-usage (§30) en **système d'emotes data-driven** — ajouter une emote = **une ligne** + un `addRole`. Livré dans la même PR que §34/§35 (« minimum de PR »).
+
+### Mécanique
+- **État unique `Emote`** (renommé depuis `Dance`) : anim **en boucle**, interrompue par tout déplacement/saut (le `case Emote` sort vers Walk/Run/Jump/…). `ClipLoops(Emote) = true`.
+- **Clip dynamique** : le rôle d'anim joué n'est pas fixe. `m_pendingEmoteRole` (posé par la slash command) → consommé par la SM → `m_currentEmoteRole`. Au point de lecture du clip (`Engine.cpp`, transition d'état), si `newState == Emote` on joue `m_currentEmoteRole` au lieu de `StateToClipName`.
+- **Table des emotes** (`kEmotes` dans le handler chat) : `{ commande, rôle, message }`. Actuellement : `/dance`→Dance, `/sit` & `/assis`→Sit, `/talk`→Talk, `/torch`→Torch. Rôles mappés via `addRole("Dance","Dance_Loop")`, `addRole("Sit","Sitting_Idle_Loop")`, `addRole("Talk","Idle_Talking_Loop")`, `addRole("Torch","Idle_Torch_Loop")`.
+- **Priorité** : `Roll > Attack > Cast > Interact > Emote > Crouch > Sprint > Run > Walk` (emote uniquement à l'arrêt, hors Roll).
+
+### Ajouter une emote
+1. Une entrée `{ "/macommande", "MonRole", "Mon message." }` dans `kEmotes`.
+2. Un `addRole("MonRole", "Clip_Loop")` (clip présent dans la library UE5).
+
+### Limites connues
+- **Pas de changement d'emote « à chaud »** : enchaîner deux emotes sans bouger ne relance pas le clip (le state reste `Emote`, pas de transition). Bouger puis ré-emoter. (Acceptable ; à raffiner si besoin via un re-trigger sur changement de rôle.)
+- **Emotes en boucle simple** : pas de séquence Enter/Exit (ex. `Sitting_Enter`/`Exit` non utilisés) — on joue directement le `*_Idle_Loop`, le crossfade lisse l'entrée/sortie.

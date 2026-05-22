@@ -270,7 +270,7 @@ namespace engine
 				case engine::Engine::AvatarLocomotionState::CrouchIdle:   return "CrouchIdle";
 				case engine::Engine::AvatarLocomotionState::CrouchWalk:   return "CrouchWalk";
 				case engine::Engine::AvatarLocomotionState::Roll:         return "Roll";
-				case engine::Engine::AvatarLocomotionState::Dance:        return "Dance";
+				case engine::Engine::AvatarLocomotionState::Emote:        return "Emote";
 				case engine::Engine::AvatarLocomotionState::Attack:       return "Attack";
 				case engine::Engine::AvatarLocomotionState::Cast:         return "Cast";
 				case engine::Engine::AvatarLocomotionState::Interact:     return "Interact";
@@ -298,7 +298,7 @@ namespace engine
 				|| s == engine::Engine::AvatarLocomotionState::Sprint
 				|| s == engine::Engine::AvatarLocomotionState::CrouchIdle
 				|| s == engine::Engine::AvatarLocomotionState::CrouchWalk
-				|| s == engine::Engine::AvatarLocomotionState::Dance
+				|| s == engine::Engine::AvatarLocomotionState::Emote
 				|| s == engine::Engine::AvatarLocomotionState::Fall;
 		}
 
@@ -1374,23 +1374,40 @@ namespace engine
 				sendAdminAudit("/mail");
 				return true;
 			}
-			// CHAR-MODEL — Emote /dance : pose une requete consommee par la state
-			// machine de locomotion (avatar -> etat Dance, annule au moindre
-			// deplacement/saut). Slash command locale (pas d'aller-retour serveur).
-			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
-				&& (text == "/dance" || text.starts_with("/dance ") || text.starts_with("/dance\t")))
+			// CHAR-MODEL — Emotes par slash command : posent un role d'emote consomme
+			// par la state machine (avatar -> etat Emote, anim en boucle annulee au
+			// moindre deplacement/saut). Locales (pas d'aller-retour serveur). Ajouter
+			// une emote = une ligne dans kEmotes (+ addRole correspondant).
 			{
-				m_danceRequested = true;
-				LOG_INFO(Core, "[Engine] /dance emote requested");
-				engine::net::ChatMessage emoteMsg;
-				emoteMsg.timestampUnixMs = static_cast<uint64_t>(
-					std::chrono::duration_cast<std::chrono::milliseconds>(
-						std::chrono::system_clock::now().time_since_epoch()).count());
-				emoteMsg.channel = engine::net::ChatChannel::Server;
-				emoteMsg.sender  = "[Emote]";
-				emoteMsg.text    = "Vous dansez.";
-				m_chatUi.PushNetworkLine(emoteMsg);
-				return true;
+				struct EmoteCmd { const char* cmd; const char* role; const char* feedback; };
+				static const EmoteCmd kEmotes[] = {
+					{ "/dance", "Dance", "Vous dansez." },
+					{ "/sit",   "Sit",   "Vous vous asseyez." },
+					{ "/assis", "Sit",   "Vous vous asseyez." },
+					{ "/talk",  "Talk",  "Vous discutez." },
+					{ "/torch", "Torch", "Vous brandissez une torche." },
+				};
+				if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say))
+				{
+					for (const auto& em : kEmotes)
+					{
+						const std::string c = em.cmd;
+						if (text == c || text.starts_with(c + " ") || text.starts_with(c + "\t"))
+						{
+							m_pendingEmoteRole = em.role;
+							LOG_INFO(Core, "[Engine] emote {} (role {}) requested", em.cmd, em.role);
+							engine::net::ChatMessage emoteMsg;
+							emoteMsg.timestampUnixMs = static_cast<uint64_t>(
+								std::chrono::duration_cast<std::chrono::milliseconds>(
+									std::chrono::system_clock::now().time_since_epoch()).count());
+							emoteMsg.channel = engine::net::ChatChannel::Server;
+							emoteMsg.sender  = "[Emote]";
+							emoteMsg.text    = em.feedback;
+							m_chatUi.PushNetworkLine(emoteMsg);
+							return true;
+						}
+					}
+				}
 			}
 			// CMANGOS.23 (Phase 5.23 step 3+4) — Slash command /quest et /quests
 			// pour ouvrir/fermer le panneau quete et synchroniser la liste depuis
@@ -4099,6 +4116,9 @@ namespace engine
 															addRole("CrouchWalk", "Crouch_Fwd_Loop");
 															addRole("Roll", "Roll");
 															addRole("Dance", "Dance_Loop");
+															addRole("Sit", "Sitting_Idle_Loop");
+															addRole("Talk", "Idle_Talking_Loop");
+															addRole("Torch", "Idle_Torch_Loop");
 															addRole("Attack", "Sword_Attack");
 															addRole("Cast", "Spell_Simple_Shoot");
 															addRole("Interact", "Interact");
@@ -7136,9 +7156,9 @@ namespace engine
 							dodgePressed = true;
 						m_lastCtrlTapSec = nowSec;
 					}
-					// Emote /dance : requete posee par la commande chat, consommee ici.
-					const bool danceRequested = m_danceRequested;
-					m_danceRequested = false;
+					// Emote demandee par slash command, consommee ici (vide = aucune).
+					const std::string emoteRole = m_pendingEmoteRole;
+					m_pendingEmoteRole.clear();
 
 					AvatarLocomotionState newState = m_avatarLocoState;
 					if (grounded)
@@ -7226,7 +7246,7 @@ namespace engine
 									else                          newState = AvatarLocomotionState::Walk;
 								}
 								break;
-							case AvatarLocomotionState::Dance:
+							case AvatarLocomotionState::Emote:
 								// Emote en boucle : interrompue par tout mouvement / saut.
 								if (moving || movingBack || moveInput.jumpPressed)
 								{
@@ -7280,7 +7300,7 @@ namespace engine
 						// (sauf amorce de saut, ou Roll/Dance/Attack en cours). CrouchWalk si deplacement.
 						if (moveInput.crouch && newState != AvatarLocomotionState::Jump
 							&& newState != AvatarLocomotionState::Roll
-							&& newState != AvatarLocomotionState::Dance
+							&& newState != AvatarLocomotionState::Emote
 							&& newState != AvatarLocomotionState::Attack
 							&& newState != AvatarLocomotionState::Cast
 							&& newState != AvatarLocomotionState::Interact)
@@ -7290,10 +7310,13 @@ namespace engine
 						if (dodgePressed && m_avatarLocoState != AvatarLocomotionState::Roll)
 							newState = AvatarLocomotionState::Roll;
 
-						// Emote /dance : uniquement a l'arret (immobile, sans saut ni roll en cours).
-						if (danceRequested && !moving && !movingBack && !moveInput.jumpPressed
+						// Emote (slash) : uniquement a l'arret (immobile, sans saut ni roll en cours).
+						if (!emoteRole.empty() && !moving && !movingBack && !moveInput.jumpPressed
 							&& m_avatarLocoState != AvatarLocomotionState::Roll)
-							newState = AvatarLocomotionState::Dance;
+						{
+							m_currentEmoteRole = emoteRole;
+							newState = AvatarLocomotionState::Emote;
+						}
 
 						// Attaque melee (clic gauche) : Sword_Attack one-shot. Ne s'enclenche
 						// pas pendant un saut/roll et ne coupe pas un Roll en cours. Prioritaire
@@ -7361,7 +7384,9 @@ namespace engine
 						// introuvable (asset manquant -> FindClip == nullptr), on log un
 						// warn une seule fois et on laisse l'animation precedente continuer
 						// (Sample retombera dessus jusqu'a la prochaine transition reussie).
-						const char* clipName = StateToClipName(newState);
+						const char* clipName = (newState == AvatarLocomotionState::Emote && !m_currentEmoteRole.empty())
+							? m_currentEmoteRole.c_str()
+							: StateToClipName(newState);
 						const engine::render::skinned::AnimationClip* newClip = m_currentSkinnedMesh->FindClip(clipName);
 						if (newClip)
 						{

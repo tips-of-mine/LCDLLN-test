@@ -1506,3 +1506,15 @@ Le wiring C MVP ne touche ni `CharacterController` ni `TerrainCollider` (sticky 
 ### Extensibilité
 
 Ajouter une race = entrée dans `races.json` + `RACE_SPECS` du générateur → `gen_race_configs.py` → `Initialize()` découvre le fichier automatiquement (aucune recompilation). Nouvelles features raciales : synchroniser `kKnownRacialFeatures` (`.cpp`) et le générateur. Conventions assets : `docs/CONVENTIONS_NAMING.md`, exigences FBX : `docs/FBX_REQUIREMENTS.md`.
+
+## 28. Sprint — palier de vitesse + état de locomotion (2026-05-22)
+
+**Objectif** : 3ᵉ palier de déplacement (premier déclencheur d'anim UE5 de l'étape 2 de §27). Touches : **marche** (défaut) → **course = Shift** (jog) → **sprint = Alt maintenu**.
+
+### Chaîne complète
+- **Input** : `engine::platform::Key::Alt = 0x12` (VK_MENU, capturé via `WM_SYSKEYDOWN` dans `Input::HandleMessage`). `BuildMoveInput` : `out.sprint = input.IsDown(Key::Alt)`.
+- **Vitesse** : `CharacterController::Config::sprintSpeed = 13` ; `targetSpeed = sprint ? sprintSpeed : (run ? runSpeed : walkSpeed)`.
+- **État** : `AvatarLocomotionState::Sprint` (après `Run`) ; transitions dans la SM (`Walk/Run/StartWalking/Land` → `Sprint` si `moveInput.sprint`, et `Sprint` → Run/Walk/Idle/WalkBack/Jump). `StateToClipName(Sprint) = "Sprint"`, `ClipLoops(Sprint) = true`.
+- **Anim** : `addRole("Sprint", "Sprint_Loop")` dans la branche UE5 de `loadOneRace` (clip de la library UE5). Pour une race Mixamo sans clip "Sprint", `FindClip` renvoie nullptr → l'anim précédente continue (repli gracieux).
+
+Priorité d'intention : **sprint > run > walk**. Reste de l'étape 2 (§27) : Crouch → Roll/esquive → emote `/dance`.

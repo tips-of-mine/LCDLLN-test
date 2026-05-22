@@ -578,6 +578,7 @@ namespace engine
 			Walk,
 			WalkBack,
 			Run,
+			Sprint,
 			Jump,
 			Fall,
 			Land

@@ -58,6 +58,8 @@ namespace engine::gameplay
 		/// Desired direction on XZ plane (y ignored). Length can be 0.
 		engine::math::Vec3 moveDirXZ{ 0.0f, 0.0f, 0.0f };
 		bool run = false;
+		/// Sprint (vitesse max). Prioritaire sur `run`. Mappé sur Alt côté caller.
+		bool sprint = false;
 		/// Jump edge trigger (true on the frame the player presses jump).
 		bool jumpPressed = false;
 
@@ -76,6 +78,7 @@ namespace engine::gameplay
 		{
 			float walkSpeed = 5.0f;  ///< range: 4-6 m/s
 			float runSpeed = 9.0f;   ///< range: 8-10 m/s
+			float sprintSpeed = 13.0f; ///< range: 12-14 m/s (Alt maintenu)
 			float acceleration = 25.0f; ///< m/s^2
 			float friction = 20.0f;     ///< m/s^2 (horizontal decel when no input)
 

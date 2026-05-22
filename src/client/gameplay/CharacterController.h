@@ -60,6 +60,8 @@ namespace engine::gameplay
 		bool run = false;
 		/// Sprint (vitesse max). Prioritaire sur `run`. Mappé sur Alt côté caller.
 		bool sprint = false;
+		/// Accroupi (vitesse réduite). Prioritaire sur run/sprint. Mappé sur Ctrl.
+		bool crouch = false;
 		/// Jump edge trigger (true on the frame the player presses jump).
 		bool jumpPressed = false;
 
@@ -79,6 +81,7 @@ namespace engine::gameplay
 			float walkSpeed = 5.0f;  ///< range: 4-6 m/s
 			float runSpeed = 9.0f;   ///< range: 8-10 m/s
 			float sprintSpeed = 13.0f; ///< range: 12-14 m/s (Alt maintenu)
+			float crouchSpeed = 2.5f;  ///< range: 2-3 m/s (Ctrl maintenu)
 			float acceleration = 25.0f; ///< m/s^2
 			float friction = 20.0f;     ///< m/s^2 (horizontal decel when no input)
 

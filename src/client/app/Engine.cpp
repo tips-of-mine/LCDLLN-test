@@ -184,6 +184,7 @@ namespace engine
 
 			out.run         = input.IsDown(engine::platform::Key::Shift);
 			out.sprint      = input.IsDown(engine::platform::Key::Alt);
+			out.crouch      = input.IsDown(engine::platform::Key::Control);
 			out.jumpPressed = input.WasPressed(engine::platform::Key::Space);
 			// swim/fly hors-scope B.1 : restent false (consommes par les modes
 			// Water/Fly du CharacterController, inutiles tant que la query eau
@@ -225,6 +226,8 @@ namespace engine
 				case engine::Engine::AvatarLocomotionState::WalkBack:     return "WalkBack";
 				case engine::Engine::AvatarLocomotionState::Run:          return "Run";
 				case engine::Engine::AvatarLocomotionState::Sprint:       return "Sprint";
+				case engine::Engine::AvatarLocomotionState::CrouchIdle:   return "CrouchIdle";
+				case engine::Engine::AvatarLocomotionState::CrouchWalk:   return "CrouchWalk";
 				case engine::Engine::AvatarLocomotionState::Jump:         return "Jump";
 				case engine::Engine::AvatarLocomotionState::Fall:         return "Fall";
 				case engine::Engine::AvatarLocomotionState::Land:         return "Land";
@@ -247,6 +250,8 @@ namespace engine
 				|| s == engine::Engine::AvatarLocomotionState::WalkBack
 				|| s == engine::Engine::AvatarLocomotionState::Run
 				|| s == engine::Engine::AvatarLocomotionState::Sprint
+				|| s == engine::Engine::AvatarLocomotionState::CrouchIdle
+				|| s == engine::Engine::AvatarLocomotionState::CrouchWalk
 				|| s == engine::Engine::AvatarLocomotionState::Fall;
 		}
 
@@ -4024,6 +4029,8 @@ namespace engine
 															addRole("WalkBack", "Walk_Loop");
 															addRole("Run", "Jog_Fwd_Loop");
 															addRole("Sprint", "Sprint_Loop");
+															addRole("CrouchIdle", "Crouch_Idle_Loop");
+															addRole("CrouchWalk", "Crouch_Fwd_Loop");
 															addRole("Jump", "Jump_Start");
 															addRole("Fall", "Jump_Loop");
 															addRole("Land", "Jump_Land");
@@ -7086,7 +7093,23 @@ namespace engine
 									else                          newState = AvatarLocomotionState::Walk;
 								}
 								break;
+							case AvatarLocomotionState::CrouchIdle:
+							case AvatarLocomotionState::CrouchWalk:
+								// Base de sortie vers la station debout ; l'override crouch ci-dessous
+								// re-force le crouch tant que Ctrl est tenu.
+								if (moveInput.jumpPressed)        newState = AvatarLocomotionState::Jump;
+								else if (!moving)                 newState = AvatarLocomotionState::Idle;
+								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
+								else if (moveInput.sprint)        newState = AvatarLocomotionState::Sprint;
+								else if (moveInput.run)           newState = AvatarLocomotionState::Run;
+								else                              newState = AvatarLocomotionState::Walk;
+								break;
 						}
+
+						// Crouch (Ctrl) : etat accroupi prioritaire tant que la touche est tenue
+						// (sauf amorce de saut). CrouchWalk si deplacement, sinon CrouchIdle.
+						if (moveInput.crouch && newState != AvatarLocomotionState::Jump)
+							newState = moving ? AvatarLocomotionState::CrouchWalk : AvatarLocomotionState::CrouchIdle;
 					}
 					else
 					{

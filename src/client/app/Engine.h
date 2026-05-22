@@ -579,6 +579,8 @@ namespace engine
 			WalkBack,
 			Run,
 			Sprint,
+			CrouchIdle,
+			CrouchWalk,
 			Jump,
 			Fall,
 			Land

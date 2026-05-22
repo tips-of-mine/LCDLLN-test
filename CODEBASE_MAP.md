@@ -1506,3 +1506,14 @@ Le wiring C MVP ne touche ni `CharacterController` ni `TerrainCollider` (sticky 
 ### Extensibilité
 
 Ajouter une race = entrée dans `races.json` + `RACE_SPECS` du générateur → `gen_race_configs.py` → `Initialize()` découvre le fichier automatiquement (aucune recompilation). Nouvelles features raciales : synchroniser `kKnownRacialFeatures` (`.cpp`) et le générateur. Conventions assets : `docs/CONVENTIONS_NAMING.md`, exigences FBX : `docs/FBX_REQUIREMENTS.md`.
+
+## 26. Disposition clavier par défaut au 1er lancement (2026-05-22)
+
+**Objectif** : au tout premier lancement (aucune préférence persistée), choisir automatiquement la disposition de déplacement selon le **clavier de l'OS** — clavier **français (AZERTY) → `zqsd`**, sinon `wasd`. Le joueur peut toujours changer dans les Options ; la valeur persistée (`user_settings.json`) **prime ensuite**.
+
+### Mécanique
+
+- Réglage : `controls.movement_layout` = `"wasd"` | `"zqsd"` (lu dans `m_useZqsd` côté `AuthUiPresenter`, et en `engine::render::MovementLayout` côté `Engine`).
+- Détection : `Engine.cpp` (namespace anonyme) `DetectDefaultMovementLayout()` — sur Windows `GetKeyboardLayout(0)` → `PRIMARYLANGID == LANG_FRENCH` ⇒ `zqsd` ; ailleurs (`#else`) ⇒ `wasd`.
+- Injection : juste après `ApplyUserSettingsOverrides(m_cfg)`, **si** `!m_cfg.Has("controls.movement_layout")` (ni `config.json` ni `user_settings.json` ne le fixent), on `SetValue` le défaut OS. Les lectures aval (`Engine` + `AuthUiPresenter`) héritent donc du bon défaut, et le 1er enregistrement de `user_settings.json` le persiste (template via `replaceString("movement_layout", …)`).
+- Priorité : `user_settings.json` > `config.json` > **défaut OS** > `"wasd"` (repli ultime). Aucune régression : si une source fixe déjà la disposition, le défaut OS est ignoré.

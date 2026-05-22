@@ -1338,7 +1338,14 @@ namespace engine
 			{
 				m_danceRequested = true;
 				LOG_INFO(Core, "[Engine] /dance emote requested");
-				m_chatUi.PushNetworkLine(std::string("[Emote] Vous dansez."));
+				engine::net::ChatMessage emoteMsg;
+				emoteMsg.timestampUnixMs = static_cast<uint64_t>(
+					std::chrono::duration_cast<std::chrono::milliseconds>(
+						std::chrono::system_clock::now().time_since_epoch()).count());
+				emoteMsg.channel = engine::net::ChatChannel::Server;
+				emoteMsg.sender  = "[Emote]";
+				emoteMsg.text    = "Vous dansez.";
+				m_chatUi.PushNetworkLine(emoteMsg);
 				return true;
 			}
 			// CMANGOS.23 (Phase 5.23 step 3+4) — Slash command /quest et /quests

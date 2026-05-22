@@ -1518,3 +1518,19 @@ Ajouter une race = entrée dans `races.json` + `RACE_SPECS` du générateur → 
 - **Anim** : `addRole("Sprint", "Sprint_Loop")` dans la branche UE5 de `loadOneRace` (clip de la library UE5). Pour une race Mixamo sans clip "Sprint", `FindClip` renvoie nullptr → l'anim précédente continue (repli gracieux).
 
 Priorité d'intention : **sprint > run > walk**. Reste de l'étape 2 (§27) : Crouch → Roll/esquive → emote `/dance`.
+
+## 29. Crouch (Ctrl) — accroupi (vitesse + états de locomotion) (2026-05-22)
+
+**Objectif** : 2ᵉ déclencheur de l'étape 2 (§27). Touche : **Ctrl maintenu** = accroupi (idle + déplacement). Priorité **crouch > sprint > run > walk**.
+
+### Chaîne
+- **Input** : `BuildMoveInput` → `out.crouch = input.IsDown(Key::Control)` (Ctrl existe déjà dans l'enum).
+- **Vitesse** : `CharacterController::Config::crouchSpeed = 2.5` ; `targetSpeed = crouch ? crouchSpeed : (sprint ? … : (run ? … : walk))`.
+- **États** : `AvatarLocomotionState::CrouchIdle` (immobile) et `CrouchWalk` (en mouvement). Implémentés par un **override après le switch** de la SM : si `moveInput.crouch` (et pas en amorce de saut) → `CrouchWalk`/`CrouchIdle` selon `moving`. Les `case CrouchIdle/CrouchWalk` du switch calculent la **sortie debout** (relâche Ctrl → Idle/Walk/Run/Sprint/WalkBack, ou Jump). `StateToClipName`/`ClipLoops` à jour (loop).
+- **Anim** : `addRole("CrouchIdle","Crouch_Idle_Loop")` + `addRole("CrouchWalk","Crouch_Fwd_Loop")` (branche UE5).
+
+### Limites connues (1ère itération)
+- **Pas de réduction de capsule** : l'anim est accroupie mais la collision (`r=0.3 h=1.8`) est inchangée → pas de passage sous obstacle bas pour l'instant (à ajouter avec un test "puis-je me relever ?").
+- **Ctrl** sert aussi de modificateur de raccourcis (ex. Ctrl+L loot) : tenir Ctrl pour s'accroupir peut interférer avec ces combos (rebindable si gênant).
+
+Reste de l'étape 2 : Roll/esquive → emote `/dance`.

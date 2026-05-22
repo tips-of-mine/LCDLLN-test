@@ -1558,3 +1558,26 @@ Priorité d'intention : **sprint > run > walk**. Reste de l'étape 2 (§27) : Cr
 - **Ctrl** sert aussi de modificateur de raccourcis (ex. Ctrl+L loot) : tenir Ctrl pour s'accroupir peut interférer avec ces combos (rebindable si gênant).
 
 Reste de l'étape 2 : Roll/esquive → emote `/dance`.
+
+## 30. Roll/esquive (Ctrl double-tap) + emote `/dance` (2026-05-22)
+
+**Objectif** : 3ᵉ et 4ᵉ (dernier) déclencheurs de l'étape 2 (§27). Termine §27 étape 2 (Sprint ✅ → Crouch ✅ → **Roll** → **emote**).
+
+### Roll / esquive — Ctrl **double-tap**
+- **Input** : détecté dans la SM (pas dans `BuildMoveInput`). À chaque `m_input.WasPressed(Key::Control)`, si l'écart avec l'appui précédent (`m_lastCtrlTapSec`, horloge `EngineNowSec`) ≤ **0.30 s** → `dodgePressed = true`. Ctrl **maintenu** reste le crouch (§29) ; **deux appuis rapides** = Roll.
+- **État** : `AvatarLocomotionState::Roll` (**one-shot**, non bouclé — absent de `ClipLoops`). Override après le switch : `if (dodgePressed && état ≠ Roll) newState = Roll` — **prioritaire sur le crouch**. Le `case Roll` du switch sort vers la locomotion debout (Idle/Walk/Run/Sprint/WalkBack) quand `stateElapsed ≥ rollClip->duration` (ou clip absent → sortie immédiate).
+- **Anim** : `addRole("Roll", "Roll")` (branche UE5). `StateToClipName(Roll) = "Roll"`.
+
+### Emote — commande chat `/dance`
+- **Input** : slash command **locale** (pas d'aller-retour serveur) dans `SetSendCallback` (canal `Say`) → pose `m_danceRequested = true` + ligne chat `[Emote] Vous dansez.`. Consommée (remise à `false`) une fois par tick dans la SM.
+- **État** : `AvatarLocomotionState::Dance` (**bouclé** — présent dans `ClipLoops`). Override : déclenché **uniquement à l'arrêt** (`!moving && !movingBack && !jumpPressed` et pas en Roll). Le `case Dance` du switch **interrompt** l'emote au moindre déplacement/saut (→ Jump/Walk/Run/Sprint/WalkBack). `StateToClipName(Dance) = "Dance"`.
+- **Anim** : `addRole("Dance", "Dance_Loop")` (branche UE5).
+
+### Priorité d'intention (au sol)
+`Roll (double-tap) > Dance (/dance, à l'arrêt) > Crouch (Ctrl tenu) > Sprint (Alt) > Run (Shift) > Walk`.
+
+### Limites connues
+- **Roll sans déplacement réel** : l'anim joue mais le `CharacterController` n'applique pas d'impulsion/i-frames d'esquive (purement cosmétique pour l'instant).
+- **Double-tap Ctrl** : la fenêtre 0.30 s peut occasionnellement déclencher un Roll lors d'un crouch « nerveux » (deux appuis rapprochés). Ajustable via le seuil.
+
+§27 étape 2 **terminée**.

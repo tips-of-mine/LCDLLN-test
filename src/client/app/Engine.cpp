@@ -405,6 +405,21 @@ namespace engine
 			return RaycastTerrainHeightmap(camera.position, dir, hm, ox, oz, ws, hScale, maxDist, outX, outZ);
 		}
 
+		// Détecte la disposition clavier par défaut au 1er lancement selon l'OS :
+		// clavier français (AZERTY) -> "zqsd", sinon "wasd". N'est appliquée que si
+		// ni config.json ni user_settings.json ne fixent controls.movement_layout ;
+		// le choix du joueur (persisté dans user_settings.json) prime ensuite.
+		std::string DetectDefaultMovementLayout()
+		{
+#if defined(_WIN32)
+			const HKL  hkl    = ::GetKeyboardLayout(0);
+			const WORD langId = LOWORD(reinterpret_cast<UINT_PTR>(hkl));
+			if (PRIMARYLANGID(langId) == LANG_FRENCH)
+				return "zqsd";
+#endif
+			return "wasd";
+		}
+
 		void ApplyUserSettingsOverrides(engine::core::Config& cfg)
 		{
 			engine::core::Config persisted;
@@ -814,6 +829,14 @@ namespace engine
 		// Config + subsystems
 		// ------------------------------------------------------------------
 		ApplyUserSettingsOverrides(m_cfg);
+		// 1er lancement : si aucune source (config.json / user_settings.json) ne
+		// fixe la disposition clavier, défaut basé sur le clavier OS (AZERTY -> zqsd).
+		if (!m_cfg.Has("controls.movement_layout"))
+		{
+			const std::string osLayout = DetectDefaultMovementLayout();
+			m_cfg.SetValue("controls.movement_layout", osLayout);
+			LOG_INFO(Core, "[Boot] controls.movement_layout défaut OS (clavier) = {}", osLayout);
+		}
 		m_vsync   = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
 		m_worldEditorExe = HasCliFlag(argc, argv, "--world-editor");

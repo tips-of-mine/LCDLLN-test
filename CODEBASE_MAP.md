@@ -1705,4 +1705,4 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 
 ### Limites connues
 - **Cosmétique** : aucun dégât/cible (comme l'attaque épée).
-- **Pas de combo** : `Punch_Cross` reste non câblé (enchaînement Jab→Cross = amélioration future).
+- **Alternance Jab/Cross** : chaque coup alterne `Punch_Jab` et `Punch_Cross` (variété ; clip dynamique via `m_currentPunchRole`, comme l'état Emote). Pas de vrai « combo » chaîné sur presses rapides — un coup pendant l'autre est ignoré (one-shot) ; échec bénin (au pire le mauvais clip de poing, jamais d'état bloqué).

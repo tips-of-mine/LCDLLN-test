@@ -601,6 +601,10 @@ namespace engine
 		/// déplacement). m_currentEmoteRole = rôle d'anim actif (clip joué en Emote).
 		std::string                                              m_pendingEmoteRole;
 		std::string                                              m_currentEmoteRole;
+		/// Combo coups de poing : role d'anim du poing en cours (Punch=Jab / PunchCross)
+		/// et bascule Jab<->Cross a chaque coup. Clip dynamique (cf. point de lecture).
+		std::string                                              m_currentPunchRole = "Punch";
+		bool                                                     m_punchAlt = false;
 		/// Action en cours de remappage dans le panneau Options (capture clavier) :
 		/// 0 = aucune, 1 = sprint, 2 = crouch, 3 = sort. Tant que != 0, le panneau
 		/// attend une touche ; le bloc gameplay est suspendu (panneau Options ouvert).

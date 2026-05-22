@@ -4137,6 +4137,7 @@ namespace engine
 															addRole("Cast", "Spell_Simple_Shoot");
 															addRole("Interact", "Interact");
 															addRole("Punch", "Punch_Jab");
+															addRole("PunchCross", "Punch_Cross");
 															addRole("Jump", "Jump_Start");
 															addRole("Fall", "Jump_Loop");
 															addRole("Land", "Jump_Land");
@@ -7145,7 +7146,7 @@ namespace engine
 					const engine::render::skinned::AnimationClip* interactClip =
 						m_currentSkinnedMesh->FindClip("Interact");
 					const engine::render::skinned::AnimationClip* punchClip =
-						m_currentSkinnedMesh->FindClip("Punch");
+						m_currentSkinnedMesh->FindClip(m_currentPunchRole.c_str());
 
 					// Attaque melee : clic gauche (edge). Le bloc gameplay est deja garde
 					// contre le focus chat / l'auth (cf. ligne ~6969) ; on exclut en plus
@@ -7372,7 +7373,12 @@ namespace engine
 
 						// Coup de poing (touche C par defaut) : Punch_Jab one-shot, 2e attaque melee.
 						if (punchPressed && !moveInput.jumpPressed && !busyOneShot())
+						{
+							// Alterne Jab <-> Cross a chaque coup (variete ; clip dynamique).
+							m_currentPunchRole = m_punchAlt ? "PunchCross" : "Punch";
+							m_punchAlt = !m_punchAlt;
 							newState = AvatarLocomotionState::Punch;
+						}
 
 						// Sort (touche R par defaut) : Spell_Simple_Shoot one-shot.
 						if (castPressed && !moveInput.jumpPressed && !busyOneShot())
@@ -7417,8 +7423,9 @@ namespace engine
 						// introuvable (asset manquant -> FindClip == nullptr), on log un
 						// warn une seule fois et on laisse l'animation precedente continuer
 						// (Sample retombera dessus jusqu'a la prochaine transition reussie).
-						const char* clipName = (newState == AvatarLocomotionState::Emote && !m_currentEmoteRole.empty())
-							? m_currentEmoteRole.c_str()
+						const char* clipName =
+							(newState == AvatarLocomotionState::Emote && !m_currentEmoteRole.empty()) ? m_currentEmoteRole.c_str()
+							: (newState == AvatarLocomotionState::Punch) ? m_currentPunchRole.c_str()
 							: StateToClipName(newState);
 						const engine::render::skinned::AnimationClip* newClip = m_currentSkinnedMesh->FindClip(clipName);
 						if (newClip)

@@ -1517,3 +1517,16 @@ Ajouter une race = entrée dans `races.json` + `RACE_SPECS` du générateur → 
 - Détection : `Engine.cpp` (namespace anonyme) `DetectDefaultMovementLayout()` — sur Windows `GetKeyboardLayout(0)` → `PRIMARYLANGID == LANG_FRENCH` ⇒ `zqsd` ; ailleurs (`#else`) ⇒ `wasd`.
 - Injection : juste après `ApplyUserSettingsOverrides(m_cfg)`, **si** `!m_cfg.Has("controls.movement_layout")` (ni `config.json` ni `user_settings.json` ne le fixent), on `SetValue` le défaut OS. Les lectures aval (`Engine` + `AuthUiPresenter`) héritent donc du bon défaut, et le 1er enregistrement de `user_settings.json` le persiste (template via `replaceString("movement_layout", …)`).
 - Priorité : `user_settings.json` > `config.json` > **défaut OS** > `"wasd"` (repli ultime). Aucune régression : si une source fixe déjà la disposition, le défaut OS est ignoré.
+
+## 27. Animations UE5 — clips disponibles & mapping (2026-05-22)
+
+La library `models/animations/humanoid_base/Humanoid_Base_Standard/…glb` contient **45 clips** (rig UE5), chargés/retargetés par `SkinnedMeshLoader::LoadClipsAnimOnly` et rattachés à l'avatar dans `Engine.cpp` (branche `isUe5Rig` de `loadOneRace`).
+
+### Étape 1 (faite) — clips exposés
+- **Mappés aux états de locomotion** (joués par la state machine) : `Idle←Idle_Loop`, `Walk←Walk_Loop`, `StartWalking/WalkBack←Walk_Loop`, `Run←Jog_Fwd_Loop`, `Jump←Jump_Start`, `Fall←Jump_Loop`, `Land←Jump_Land`.
+- **Exposés par leur nom brut** (disponibles via `SkinnedMesh::FindClip("<nom>")`, **sans déclencheur** pour l'instant) : tous les autres clips retenus — `Sprint_Loop, Walk_Formal_Loop, Crouch_Idle_Loop, Crouch_Fwd_Loop, Roll, Roll_RM, Push_Loop, Idle_Talking_Loop, Idle_Torch_Loop, Sword_Idle, Sword_Attack, Sword_Attack_RM, Punch_Jab, Punch_Cross, Hit_Chest, Hit_Head, Death01, Spell_Simple_Enter/Idle_Loop/Shoot/Exit, Dance_Loop, Sitting_Enter/Idle_Loop/Talking_Loop/Exit, Interact, PickUp_Table, Fixing_Kneeling, Swim_Fwd_Loop, Swim_Idle_Loop`.
+- **Exclus** (non chargés) : `Pistol_*` (pas d'arme à feu), `Driving_Loop` (pas de véhicule), `A_TPose` (pose de référence).
+- Test : `skinned_mesh_loader_tests` vérifie la présence/retarget de plusieurs de ces clips.
+
+### Étape 2 (à venir, 1 PR par feature, testée en jeu) — déclencheurs
+La state machine n'a que `Idle/StartWalking/Walk/WalkBack/Run/Jump/Fall/Land` ; `Run` = touche **Shift**. Aucun système de **crouch / dodge / combat / emote** ; la **nage** existe dans `CharacterController` mais est forcée à `false` (B.1). « Câbler » chaque clip = créer l'input + l'état/le système gameplay. Ordre prévu : **Sprint → Crouch → Roll/esquive → emote `/dance`** → (combat & nage = plus gros, dépend possiblement des events serveur).

@@ -144,6 +144,20 @@ namespace
             const auto& trk = idle->tracks[pelvisIdx];
             REQUIRE(!trk.rotation.empty() || !trk.translation.empty());
         }
+
+        // Les clips additionnels exposés à l'avatar (sprint/crouch/combat/emotes)
+        // doivent être présents et retargetés dans la library (foundation #3).
+        auto hasClip = [&](const char* needle) {
+            for (const auto& c : clips)
+                if (c.name.find(needle) != std::string::npos && c.duration > 0.0f) return true;
+            return false;
+        };
+        REQUIRE(hasClip("Sprint_Loop"));
+        REQUIRE(hasClip("Crouch_Idle_Loop"));
+        REQUIRE(hasClip("Roll"));
+        REQUIRE(hasClip("Sword_Attack"));
+        REQUIRE(hasClip("Dance_Loop"));
+        REQUIRE(hasClip("Swim_Fwd_Loop"));
     }
 
     /// Vérifie qu'un chemin inexistant renvoie std::nullopt (pas un crash).

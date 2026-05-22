@@ -1528,8 +1528,9 @@ namespace engine
 			}
 			// CMANGOS.31 (Phase 5.31 step 3+4) — Slash command /events pour
 			// ouvrir/fermer le panneau GameEvents et synchroniser la liste
-			// depuis le master au moment de l'ouverture. La touche E fait
-			// la meme chose (cf. boucle input dans BeginFrame).
+			// depuis le master au moment de l'ouverture. Le menu "Panneaux"
+			// (barre de menus ImGui in-game) fait la meme chose (la touche E,
+			// qui servait a cela, a ete liberee).
 			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
 				&& (text == "/events" || text.starts_with("/events ") || text.starts_with("/events\t")))
 			{
@@ -5961,20 +5962,9 @@ namespace engine
 				}
 				LOG_INFO(Core, "[Engine] Y toggle weather (visible={})", m_weatherVisible);
 			}
-			// CMANGOS.31 (Phase 5.31 step 3+4) — Touche E : toggle panneau
-			// GameEvents + RequestList si on l'ouvre. Memes guards que Y.
-			// Pas de conflit Ctrl+E (non utilise par WorldEditorShell).
-			if (inGameNoMenu && !chatBlocks
-				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::E))
-			{
-				m_gameEventVisible = !m_gameEventVisible;
-				if (m_gameEventVisible)
-				{
-					m_gameEventUi.RequestList();
-				}
-				LOG_INFO(Core, "[Engine] E toggle gameevents (visible={})", m_gameEventVisible);
-			}
+			// Touche E desormais LIBRE (reservee a une future action "interagir"
+			// hors combat). Le panneau GameEvents s'ouvre via la barre de menus
+			// "Panneaux" (rendu ImGui in-game), plus par une touche dediee.
 			// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Touche U : toggle
 			// panneau Guildes + RequestList si on l'ouvre. Memes guards que
 			// E (chat focus, pause, editor). Pas de conflit Ctrl+U.
@@ -7680,6 +7670,64 @@ namespace engine
 			}
 			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
 			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+			// Menu de panneaux : barre de menus ImGui toujours visible en jeu,
+			// acces souris a tous les panneaux togglables sans raccourci clavier
+			// dedie. Les panneaux gardent par ailleurs leurs touches existantes ;
+			// GameEvents n'est plus accessible que par ce menu (touche E liberee).
+			// Chaque MenuItem reflete l'etat *Visible et reproduit le RequestList
+			// d'ouverture du toggle clavier correspondant.
+			if (ImGui::BeginMainMenuBar())
+			{
+				if (ImGui::BeginMenu("Panneaux"))
+				{
+					if (ImGui::MenuItem("Carnet de sorts", nullptr, m_skillBookVisible))
+					{
+						m_skillBookVisible = !m_skillBookVisible;
+						if (m_skillBookVisible) m_skillBookUi.RequestList();
+					}
+					if (ImGui::MenuItem("Arenes", nullptr, m_arenaVisible))
+					{
+						m_arenaVisible = !m_arenaVisible;
+						if (m_arenaVisible) m_arenaUi.RequestTeams();
+					}
+					if (ImGui::MenuItem("Champs de bataille", nullptr, m_battleGroundVisible))
+					{
+						m_battleGroundVisible = !m_battleGroundVisible;
+						if (m_battleGroundVisible) m_battleGroundUi.RequestList();
+					}
+					if (ImGui::MenuItem("PvP exterieur", nullptr, m_outdoorPvpVisible))
+					{
+						m_outdoorPvpVisible = !m_outdoorPvpVisible;
+						if (m_outdoorPvpVisible) m_outdoorPvpUi.RequestList();
+					}
+					if (ImGui::MenuItem("Meteo", nullptr, m_weatherVisible))
+					{
+						m_weatherVisible = !m_weatherVisible;
+						if (m_weatherVisible) m_weatherUi.RequestList();
+					}
+					if (ImGui::MenuItem("Evenements", nullptr, m_gameEventVisible))
+					{
+						m_gameEventVisible = !m_gameEventVisible;
+						if (m_gameEventVisible) m_gameEventUi.RequestList();
+					}
+					if (ImGui::MenuItem("Guilde", nullptr, m_guildVisible))
+					{
+						m_guildVisible = !m_guildVisible;
+						if (m_guildVisible) m_guildUi.RequestList();
+					}
+					if (ImGui::MenuItem("Hotel des ventes", nullptr, m_auctionHouseVisible))
+					{
+						m_auctionHouseVisible = !m_auctionHouseVisible;
+						if (m_auctionHouseVisible) m_auctionHouseUi.RequestList(0u);
+					}
+					if (ImGui::MenuItem("Jets de butin", nullptr, m_lootRollVisible))
+					{
+						m_lootRollVisible = !m_lootRollVisible;
+					}
+					ImGui::EndMenu();
+				}
+				ImGui::EndMainMenuBar();
+			}
 			// CMANGOS.18 (Phase 3.18 step 4) — Render du panneau Mail si visible.
 			// Le panneau partage la frame ImGui en cours (NewFrame deja appele
 			// par chatImguiOverlayNewFrame plus haut). Visible uniquement quand

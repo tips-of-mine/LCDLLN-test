@@ -230,6 +230,7 @@ namespace engine
 				case engine::Engine::AvatarLocomotionState::CrouchWalk:   return "CrouchWalk";
 				case engine::Engine::AvatarLocomotionState::Roll:         return "Roll";
 				case engine::Engine::AvatarLocomotionState::Dance:        return "Dance";
+				case engine::Engine::AvatarLocomotionState::Attack:       return "Attack";
 				case engine::Engine::AvatarLocomotionState::Jump:         return "Jump";
 				case engine::Engine::AvatarLocomotionState::Fall:         return "Fall";
 				case engine::Engine::AvatarLocomotionState::Land:         return "Land";
@@ -4054,6 +4055,7 @@ namespace engine
 															addRole("CrouchWalk", "Crouch_Fwd_Loop");
 															addRole("Roll", "Roll");
 															addRole("Dance", "Dance_Loop");
+															addRole("Attack", "Sword_Attack");
 															addRole("Jump", "Jump_Start");
 															addRole("Fall", "Jump_Loop");
 															addRole("Land", "Jump_Land");
@@ -7053,6 +7055,15 @@ namespace engine
 						m_currentSkinnedMesh->FindClip("Land");
 					const engine::render::skinned::AnimationClip* rollClip =
 						m_currentSkinnedMesh->FindClip("Roll");
+					const engine::render::skinned::AnimationClip* attackClip =
+						m_currentSkinnedMesh->FindClip("Attack");
+
+					// Attaque melee : clic gauche (edge). Le bloc gameplay est deja garde
+					// contre le focus chat / l'auth (cf. ligne ~6969) ; on exclut en plus
+					// le drag inventaire pour ne pas frapper en relachant un objet.
+					const bool attackPressed =
+						m_input.WasMousePressed(engine::platform::MouseButton::Left)
+						&& !m_invUi.IsDragging();
 
 					// Esquive/roulade : Ctrl double-tap (fenetre 0.30s). Ctrl maintenu
 					// = crouch ; deux appuis rapides = Roll (one-shot).
@@ -7164,13 +7175,27 @@ namespace engine
 									else                          newState = AvatarLocomotionState::Walk;
 								}
 								break;
+							case AvatarLocomotionState::Attack:
+								// One-shot : retour locomotion quand le clip d'attaque est fini.
+								// Le deplacement reste pilote par le CharacterController pendant
+								// l'attaque (geste plein corps, pas de root motion).
+								if (!attackClip || stateElapsed >= attackClip->duration)
+								{
+									if (!moving)                  newState = AvatarLocomotionState::Idle;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
 						}
 
 						// Crouch (Ctrl) : etat accroupi prioritaire tant que la touche est tenue
-						// (sauf amorce de saut, ou Roll/Dance en cours). CrouchWalk si deplacement.
+						// (sauf amorce de saut, ou Roll/Dance/Attack en cours). CrouchWalk si deplacement.
 						if (moveInput.crouch && newState != AvatarLocomotionState::Jump
 							&& newState != AvatarLocomotionState::Roll
-							&& newState != AvatarLocomotionState::Dance)
+							&& newState != AvatarLocomotionState::Dance
+							&& newState != AvatarLocomotionState::Attack)
 							newState = moving ? AvatarLocomotionState::CrouchWalk : AvatarLocomotionState::CrouchIdle;
 
 						// Esquive/roulade (Ctrl double-tap) : Roll one-shot, prioritaire sur crouch.
@@ -7181,6 +7206,14 @@ namespace engine
 						if (danceRequested && !moving && !movingBack && !moveInput.jumpPressed
 							&& m_avatarLocoState != AvatarLocomotionState::Roll)
 							newState = AvatarLocomotionState::Dance;
+
+						// Attaque melee (clic gauche) : Sword_Attack one-shot. Ne s'enclenche
+						// pas pendant un saut/roll et ne coupe pas un Roll en cours. Prioritaire
+						// sur crouch (on peut frapper accroupi -> repasse debout l'attaque finie).
+						if (attackPressed && !moveInput.jumpPressed
+							&& m_avatarLocoState != AvatarLocomotionState::Roll
+							&& m_avatarLocoState != AvatarLocomotionState::Attack)
+							newState = AvatarLocomotionState::Attack;
 					}
 					else
 					{

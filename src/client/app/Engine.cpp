@@ -228,6 +228,8 @@ namespace engine
 				case engine::Engine::AvatarLocomotionState::Sprint:       return "Sprint";
 				case engine::Engine::AvatarLocomotionState::CrouchIdle:   return "CrouchIdle";
 				case engine::Engine::AvatarLocomotionState::CrouchWalk:   return "CrouchWalk";
+				case engine::Engine::AvatarLocomotionState::Roll:         return "Roll";
+				case engine::Engine::AvatarLocomotionState::Dance:        return "Dance";
 				case engine::Engine::AvatarLocomotionState::Jump:         return "Jump";
 				case engine::Engine::AvatarLocomotionState::Fall:         return "Fall";
 				case engine::Engine::AvatarLocomotionState::Land:         return "Land";
@@ -252,6 +254,7 @@ namespace engine
 				|| s == engine::Engine::AvatarLocomotionState::Sprint
 				|| s == engine::Engine::AvatarLocomotionState::CrouchIdle
 				|| s == engine::Engine::AvatarLocomotionState::CrouchWalk
+				|| s == engine::Engine::AvatarLocomotionState::Dance
 				|| s == engine::Engine::AvatarLocomotionState::Fall;
 		}
 
@@ -1325,6 +1328,24 @@ namespace engine
 				}
 				LOG_INFO(Core, "[Engine] /mail toggle (visible={})", m_mailVisible);
 				sendAdminAudit("/mail");
+				return true;
+			}
+			// CHAR-MODEL — Emote /dance : pose une requete consommee par la state
+			// machine de locomotion (avatar -> etat Dance, annule au moindre
+			// deplacement/saut). Slash command locale (pas d'aller-retour serveur).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/dance" || text.starts_with("/dance ") || text.starts_with("/dance\t")))
+			{
+				m_danceRequested = true;
+				LOG_INFO(Core, "[Engine] /dance emote requested");
+				engine::net::ChatMessage emoteMsg;
+				emoteMsg.timestampUnixMs = static_cast<uint64_t>(
+					std::chrono::duration_cast<std::chrono::milliseconds>(
+						std::chrono::system_clock::now().time_since_epoch()).count());
+				emoteMsg.channel = engine::net::ChatChannel::Server;
+				emoteMsg.sender  = "[Emote]";
+				emoteMsg.text    = "Vous dansez.";
+				m_chatUi.PushNetworkLine(emoteMsg);
 				return true;
 			}
 			// CMANGOS.23 (Phase 5.23 step 3+4) — Slash command /quest et /quests
@@ -4031,6 +4052,8 @@ namespace engine
 															addRole("Sprint", "Sprint_Loop");
 															addRole("CrouchIdle", "Crouch_Idle_Loop");
 															addRole("CrouchWalk", "Crouch_Fwd_Loop");
+															addRole("Roll", "Roll");
+															addRole("Dance", "Dance_Loop");
 															addRole("Jump", "Jump_Start");
 															addRole("Fall", "Jump_Loop");
 															addRole("Land", "Jump_Land");
@@ -7028,6 +7051,21 @@ namespace engine
 						m_currentSkinnedMesh->FindClip("Jump");
 					const engine::render::skinned::AnimationClip* landClip =
 						m_currentSkinnedMesh->FindClip("Land");
+					const engine::render::skinned::AnimationClip* rollClip =
+						m_currentSkinnedMesh->FindClip("Roll");
+
+					// Esquive/roulade : Ctrl double-tap (fenetre 0.30s). Ctrl maintenu
+					// = crouch ; deux appuis rapides = Roll (one-shot).
+					bool dodgePressed = false;
+					if (m_input.WasPressed(engine::platform::Key::Control))
+					{
+						if (nowSec - m_lastCtrlTapSec <= 0.30f)
+							dodgePressed = true;
+						m_lastCtrlTapSec = nowSec;
+					}
+					// Emote /dance : requete posee par la commande chat, consommee ici.
+					const bool danceRequested = m_danceRequested;
+					m_danceRequested = false;
 
 					AvatarLocomotionState newState = m_avatarLocoState;
 					if (grounded)
@@ -7104,12 +7142,45 @@ namespace engine
 								else if (moveInput.run)           newState = AvatarLocomotionState::Run;
 								else                              newState = AvatarLocomotionState::Walk;
 								break;
+							case AvatarLocomotionState::Roll:
+								// One-shot : retour locomotion debout quand le clip Roll est fini.
+								if (!rollClip || stateElapsed >= rollClip->duration)
+								{
+									if (!moving)                  newState = AvatarLocomotionState::Idle;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
+							case AvatarLocomotionState::Dance:
+								// Emote en boucle : interrompue par tout mouvement / saut.
+								if (moving || movingBack || moveInput.jumpPressed)
+								{
+									if (moveInput.jumpPressed)    newState = AvatarLocomotionState::Jump;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
 						}
 
 						// Crouch (Ctrl) : etat accroupi prioritaire tant que la touche est tenue
-						// (sauf amorce de saut). CrouchWalk si deplacement, sinon CrouchIdle.
-						if (moveInput.crouch && newState != AvatarLocomotionState::Jump)
+						// (sauf amorce de saut, ou Roll/Dance en cours). CrouchWalk si deplacement.
+						if (moveInput.crouch && newState != AvatarLocomotionState::Jump
+							&& newState != AvatarLocomotionState::Roll
+							&& newState != AvatarLocomotionState::Dance)
 							newState = moving ? AvatarLocomotionState::CrouchWalk : AvatarLocomotionState::CrouchIdle;
+
+						// Esquive/roulade (Ctrl double-tap) : Roll one-shot, prioritaire sur crouch.
+						if (dodgePressed && m_avatarLocoState != AvatarLocomotionState::Roll)
+							newState = AvatarLocomotionState::Roll;
+
+						// Emote /dance : uniquement a l'arret (immobile, sans saut ni roll en cours).
+						if (danceRequested && !moving && !movingBack && !moveInput.jumpPressed
+							&& m_avatarLocoState != AvatarLocomotionState::Roll)
+							newState = AvatarLocomotionState::Dance;
 					}
 					else
 					{

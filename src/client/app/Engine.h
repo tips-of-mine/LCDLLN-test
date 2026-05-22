@@ -581,12 +581,20 @@ namespace engine
 			Sprint,
 			CrouchIdle,
 			CrouchWalk,
+			Roll,
+			Dance,
 			Jump,
 			Fall,
 			Land
 		};
 	private:
 		AvatarLocomotionState                                     m_avatarLocoState = AvatarLocomotionState::Idle;
+		/// Instant (s, EngineNowSec) du dernier appui sur Ctrl — détection du
+		/// double-tap pour déclencher la roulade/esquive (Roll). -10 = jamais.
+		float                                                    m_lastCtrlTapSec = -10.0f;
+		/// Emote danse demandée (commande chat /dance) — consommée par la state
+		/// machine de locomotion pour passer en état Dance (annulée au déplacement).
+		bool                                                     m_danceRequested = false;
 		/// Instant d'entrée dans l'état courant. Utilisé pour :
 		///   - détecter la fin de StartWalking / Jump / Land (durée écoulée >= clip.duration).
 		///   - tracer la transition Jump -> Fall après 40% du clip Jump (takeoff).

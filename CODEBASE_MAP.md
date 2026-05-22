@@ -1530,3 +1530,15 @@ La library `models/animations/humanoid_base/Humanoid_Base_Standard/…glb` conti
 
 ### Étape 2 (à venir, 1 PR par feature, testée en jeu) — déclencheurs
 La state machine n'a que `Idle/StartWalking/Walk/WalkBack/Run/Jump/Fall/Land` ; `Run` = touche **Shift**. Aucun système de **crouch / dodge / combat / emote** ; la **nage** existe dans `CharacterController` mais est forcée à `false` (B.1). « Câbler » chaque clip = créer l'input + l'état/le système gameplay. Ordre prévu : **Sprint → Crouch → Roll/esquive → emote `/dance`** → (combat & nage = plus gros, dépend possiblement des events serveur).
+
+## 28. Sprint — palier de vitesse + état de locomotion (2026-05-22)
+
+**Objectif** : 3ᵉ palier de déplacement (premier déclencheur d'anim UE5 de l'étape 2 de §27). Touches : **marche** (défaut) → **course = Shift** (jog) → **sprint = Alt maintenu**.
+
+### Chaîne complète
+- **Input** : `engine::platform::Key::Alt = 0x12` (VK_MENU, capturé via `WM_SYSKEYDOWN` dans `Input::HandleMessage`). `BuildMoveInput` : `out.sprint = input.IsDown(Key::Alt)`.
+- **Vitesse** : `CharacterController::Config::sprintSpeed = 13` ; `targetSpeed = sprint ? sprintSpeed : (run ? runSpeed : walkSpeed)`.
+- **État** : `AvatarLocomotionState::Sprint` (après `Run`) ; transitions dans la SM (`Walk/Run/StartWalking/Land` → `Sprint` si `moveInput.sprint`, et `Sprint` → Run/Walk/Idle/WalkBack/Jump). `StateToClipName(Sprint) = "Sprint"`, `ClipLoops(Sprint) = true`.
+- **Anim** : `addRole("Sprint", "Sprint_Loop")` dans la branche UE5 de `loadOneRace` (clip de la library UE5). Pour une race Mixamo sans clip "Sprint", `FindClip` renvoie nullptr → l'anim précédente continue (repli gracieux).
+
+Priorité d'intention : **sprint > run > walk**. Reste de l'étape 2 (§27) : Crouch → Roll/esquive → emote `/dance`.

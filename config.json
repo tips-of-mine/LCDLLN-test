@@ -215,7 +215,10 @@
             "body_basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
             "body_normal": "textures/characters/humains/T_Regular_Male_Normal.png",
             "body_orm": "",
-            "body_material_names": "MI_Regular_Male"
+            "body_material_names": "MI_Regular_Male",
+            "_comment_skin_depth_bias": "Anti z-fighting : sur l'avatar modulaire, la peau du corps est ~coplanaire avec l'habit (bras) ; texturees differemment elles clignotent / paraissent doubles. On pousse la PEAU legerement en arriere (depth bias) pour que l'habit gagne la ou ils se superposent ; la peau exposee (mains) rend normalement. Reglable A CHAUD (relance du client, pas de rebuild) : augmenter si ca clignote encore, baisser si l'habit ronge la peau exposee. 0 = desactive. constant = decalage fixe, slope = decalage proportionnel a la pente (utile sur surfaces obliques).",
+            "skin_depth_bias_constant": 4.0,
+            "skin_depth_bias_slope": 4.0
         },
         "auth_ui": {
             "enabled": true,

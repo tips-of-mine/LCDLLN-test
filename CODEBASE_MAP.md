@@ -1816,3 +1816,15 @@ L'attaque restait fixée au clic gauche (§31). Ajout d'une **touche alternative
 ### Limites / reste
 - **ORM peau** non packée (Roughness source dispo dans l'inbox) → repli ORM par défaut (peau un peu trop lisse). Packer R=AO/G=Rough/B=Metal = polish ultérieur.
 - **Validation visuelle requise** (rendu non testable en CI) : à confirmer en jeu via screenshots.
+
+## 48. Avatar : depth bias peau (anti z-fighting peau/habit) (2026-05-23)
+
+**Problème** : après §47, l'avatar **clignotait / paraissait double** sur le corps (rapporté en jeu, « la surface clignote et parait double, seulement sur le modèle »). Cause : sur l'avatar modulaire, la **peau du corps** (`MI_Regular_Male`) est ~**coplanaire** avec l'**habit** (`MI_Ranger`) sur les bras (le corps complet est sous l'habit). Avant §47 les deux portaient la même texture → invisible ; avec deux textures distinctes, le **z-fighting** devient visible (amplifié par la TAA).
+
+### Fix
+- **Depth bias** sur les sous-maillages **peau** uniquement : le pipeline `SkinnedRenderer` passe `depthBiasEnable=TRUE` + `VK_DYNAMIC_STATE_DEPTH_BIAS` ; `Record` appelle `vkCmdSetDepthBias` par sous-maillage (biais config pour la peau, 0 pour l'habit). La peau est poussée **derrière** l'habit coplanaire → l'habit gagne le z-test (`LESS_OR_EQUAL`) là où ils se superposent ; la peau **exposée** (mains) rend normalement.
+- **Réglable à chaud** (pas de rebuild) : `client.character_creation.skin_depth_bias_constant` / `_slope` (défauts 4.0 / 4.0). Valeurs négatives possibles si le sens doit être inversé. 0 = désactivé.
+- **Pipeline / winding (CCW + BACK) inchangés** (seul `depthBiasEnable` + l'état dynamique sont ajoutés).
+
+### À valider
+- En jeu : plus de clignotement « double » sur le corps ; la peau des mains reste visible ; l'habit n'empiète pas trop sur la peau exposée (sinon **baisser** le biais dans config).

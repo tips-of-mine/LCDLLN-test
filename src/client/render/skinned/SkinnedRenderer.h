@@ -120,6 +120,16 @@ public:
     ///                            propre draw call avec son index (rendu
     ///                            multi-matériaux : habit vs peau). Sinon on
     ///                            retombe sur un unique draw avec `materialIndex`.
+    /// \param skinMaterialIndex   Index matériau considéré « peau » (corps), ou
+    ///                            0 = aucun. Les sous-maillages dont l'index
+    ///                            matériau == celui-ci reçoivent un depth bias
+    ///                            (skinDepthBias*) pour passer DERRIÈRE l'habit
+    ///                            coplanaire et éviter le z-fighting/flicker
+    ///                            (« parait double »). 0 → aucun biais.
+    /// \param skinDepthBiasConstant Facteur constant passé à vkCmdSetDepthBias
+    ///                            pour les sous-maillages peau (0 = pas de biais).
+    /// \param skinDepthBiasSlope  Facteur de pente passé à vkCmdSetDepthBias
+    ///                            pour les sous-maillages peau.
     void Record(VkDevice device, VkCommandBuffer cmd,
                 VkExtent2D extent,
                 VkRenderPass renderPass, VkFramebuffer framebuffer,
@@ -129,7 +139,10 @@ public:
                 VkDescriptorSet materialDescriptorSet,
                 const float* modelMatrixColumnMajor4x4,
                 uint32_t materialIndex,
-                const std::vector<uint32_t>& submeshMaterialIndices = {});
+                const std::vector<uint32_t>& submeshMaterialIndices = {},
+                uint32_t skinMaterialIndex = 0u,
+                float skinDepthBiasConstant = 0.0f,
+                float skinDepthBiasSlope = 0.0f);
 
     /// Libère toutes les ressources Vulkan dans l'ordre inverse de leur
     /// création. Idempotent (safe à appeler plusieurs fois, ou après un Init

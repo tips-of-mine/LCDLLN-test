@@ -383,6 +383,15 @@ bool SkinnedRenderer::Init(VkDevice device,
     rs.cullMode    = VK_CULL_MODE_BACK_BIT;
     rs.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rs.lineWidth   = 1.0f;
+    // Depth bias active (valeurs poussees dynamiquement par Record) : sert a
+    // departager les couches qui se chevauchent sur l'avatar modulaire (peau du
+    // corps SOUS l'habit, ~coplanaires sur les bras) -> sans biais elles
+    // z-fightent et clignotent ("parait double") une fois texturees differemment
+    // (peau vs habit). On pousse la PEAU legerement en arriere pour que l'habit
+    // gagne la ou ils se superposent ; la peau exposee (mains) rend normalement.
+    // depthBiasEnable seul ne biaise rien : tout vient des vkCmdSetDepthBias par
+    // sous-maillage (0 pour l'habit, valeur config pour la peau).
+    rs.depthBiasEnable = VK_TRUE;
 
     VkPipelineMultisampleStateCreateInfo ms = {};
     ms.sType                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -405,10 +414,13 @@ bool SkinnedRenderer::Init(VkDevice device,
     cb.attachmentCount = 4;
     cb.pAttachments    = blendAtt;
 
-    VkDynamicState dynStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+    // DEPTH_BIAS dynamique : valeurs (re)poussees par Record selon que le
+    // sous-maillage est de la peau (biais config) ou de l'habit (0).
+    VkDynamicState dynStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
+                                   VK_DYNAMIC_STATE_DEPTH_BIAS };
     VkPipelineDynamicStateCreateInfo dyn = {};
     dyn.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dyn.dynamicStateCount = 2;
+    dyn.dynamicStateCount = 3;
     dyn.pDynamicStates    = dynStates;
 
     VkGraphicsPipelineCreateInfo gpInfo = {};
@@ -542,7 +554,10 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
                              VkDescriptorSet materialDescriptorSet,
                              const float* modelMatrixColumnMajor4x4,
                              uint32_t materialIndex,
-                             const std::vector<uint32_t>& submeshMaterialIndices)
+                             const std::vector<uint32_t>& submeshMaterialIndices,
+                             uint32_t skinMaterialIndex,
+                             float skinDepthBiasConstant,
+                             float skinDepthBiasSlope)
 {
     // 1. Upload des matrices de bones dans le SSBO host-visible.
     //    Clamp au max alloué dans Init pour ne jamais déborder (256 bones par
@@ -634,13 +649,25 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
     //    materialIndex (habit vs peau). Le descriptor set (set 0) est bindless
     //    et déjà bindé : seul le push constant materialIndex change entre draws.
     //    Sinon, chemin mono-draw historique (mesh.indexCount d'un coup).
+    // Le pipeline a depthBiasEnable=TRUE + DEPTH_BIAS dynamique : il FAUT donc
+    // appeler vkCmdSetDepthBias avant chaque draw (sinon valeur indefinie). On
+    // pose 0 par defaut, et le biais peau (skinDepthBias*) pour les sous-maillages
+    // dont l'index materiau figure dans skinMaterialIndices.
+    auto isSkin = [&](uint32_t matIndex) -> bool {
+        return skinMaterialIndex != 0u && matIndex == skinMaterialIndex;
+    };
+
     const bool perSubmesh =
         !mesh.submeshes.empty() && submeshMaterialIndices.size() == mesh.submeshes.size();
     if (perSubmesh) {
         for (size_t s = 0; s < mesh.submeshes.size(); ++s) {
             const SkinnedSubMesh& sub = mesh.submeshes[s];
             if (sub.indexCount == 0) continue;
-            pc.materialIndex = submeshMaterialIndices[s];
+            const uint32_t matIdx = submeshMaterialIndices[s];
+            const bool skin = isSkin(matIdx);
+            vkCmdSetDepthBias(cmd, skin ? skinDepthBiasConstant : 0.0f, 0.0f,
+                              skin ? skinDepthBiasSlope : 0.0f);
+            pc.materialIndex = matIdx;
             vkCmdPushConstants(cmd, m_pipelineLayout,
                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                                0, sizeof(PushConstants), &pc);
@@ -648,6 +675,7 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
                              sub.firstIndex, 0, 0);
         }
     } else {
+        vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
         pc.materialIndex = materialIndex;
         vkCmdPushConstants(cmd, m_pipelineLayout,
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,

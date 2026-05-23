@@ -345,6 +345,13 @@ namespace engine
 		/// recoivent m_avatarBodyMaterialId (la peau). Tout autre nom -> habit.
 		/// Renseigne depuis client.character_creation.body_material_names.
 		std::vector<std::string> m_avatarBodyMaterialNames;
+		/// Depth bias applique aux sous-maillages PEAU (corps) au draw pour les
+		/// pousser DERRIERE l'habit coplanaire et eviter le z-fighting/flicker
+		/// (« parait double ») sur l'avatar modulaire (peau sous l'habit, bras).
+		/// Reglable a chaud via client.character_creation.skin_depth_bias_* (pas
+		/// de rebuild necessaire pour ajuster). Defauts sensibles si absent.
+		float m_avatarSkinDepthBiasConstant = 4.0f;
+		float m_avatarSkinDepthBiasSlope    = 4.0f;
 		engine::render::DecalSystem m_decalSystem;
 		std::vector<engine::render::VisibleDecal> m_visibleDecals;
 

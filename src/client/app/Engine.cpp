@@ -4075,6 +4075,12 @@ namespace engine
 										// tout autre nom recoit l'habit. Defaut : "MI_Regular_Male".
 										m_avatarBodyMaterialNames = SplitCsv(
 											m_cfg.GetString("client.character_creation.body_material_names", "MI_Regular_Male"));
+										// Depth bias peau (anti z-fight peau/habit, « parait double ») : reglable
+										// a chaud via config (pas de rebuild pour ajuster). 0 = desactive.
+										m_avatarSkinDepthBiasConstant = static_cast<float>(
+											m_cfg.GetDouble("client.character_creation.skin_depth_bias_constant", 4.0));
+										m_avatarSkinDepthBiasSlope = static_cast<float>(
+											m_cfg.GetDouble("client.character_creation.skin_depth_bias_slope", 4.0));
 
 										m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture(outfitBc, /*useSrgb*/ true);
 										if (!m_avatarSkinTextureHandle.IsValid())
@@ -4735,7 +4741,10 @@ namespace engine
 																materialCache.GetDescriptorSet(),
 																finalModelMat.m,
 																skinnedMaterialIndex,
-																submeshMaterialIndices);
+																submeshMaterialIndices,
+																m_avatarBodyMaterialId,
+																m_avatarSkinDepthBiasConstant,
+																m_avatarSkinDepthBiasSlope);
 														});
 												}
 

@@ -1747,3 +1747,12 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 - Un vrai `instances/water.bin` par zone (level-design) pour de l'eau realiste.
 - Des meshes/rendu pour les interactibles (PNJ/objets visibles) + arbres de dialogue.
 - Des meshes d'armes (`models/equipment/weapons/*` vides) pour l'equipement / arme visible.
+
+## 41. Dialogue PNJ + marqueurs ImGui des interactibles (2026-05-22)
+
+Complète §39/§40 (interaction E) côté **dialogue** et **visibilité**.
+
+- **Dialogue multi-lignes** : `InteractableEntity.dialogue` (vector) + `dialogueCursor`. En config : `world.interactables.i.dialogue.count` + `.dialogue.j`. Sur E, un PNJ avec dialogue affiche la **ligne suivante** (boucle) ; sinon `message`. (Objets : `message`.) Exemple livré pour le Villageois (config.json).
+- **Marqueurs ImGui** (`#if _WIN32`) : chaque interactible affiche un **label flottant projeté** à l'écran (`WorldToScreenPx`, formule alignée sur `WorldEditorImGui::WorldToScreen`, viewProj col-major). Surligné + « [E] » à portée. Donne la **visibilité** sans passe de rendu de mesh (les vrais props/PNJ visibles = backlog).
+
+Backlog complet des tâches restantes (polish, contenu, serveur) : **`docs/BACKLOG_gameplay.md`**.

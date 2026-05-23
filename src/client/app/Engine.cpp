@@ -175,6 +175,25 @@ namespace engine
 			return fallback;
 		}
 
+		// Projette une position monde -> pixels ecran. Formule alignee sur
+		// WorldEditorImGui::WorldToScreen (viewProj col-major .m, convention Vulkan).
+		// false si derriere la camera ou hors near/far. Sert aux marqueurs interactibles.
+		[[maybe_unused]] bool WorldToScreenPx(const float vp[16], float wx, float wy, float wz,
+			int vw, int vh, float& sx, float& sy)
+		{
+			const float cx = vp[0]*wx + vp[4]*wy + vp[8]*wz + vp[12];
+			const float cy = vp[1]*wx + vp[5]*wy + vp[9]*wz + vp[13];
+			const float cz = vp[2]*wx + vp[6]*wy + vp[10]*wz + vp[14];
+			const float cw = vp[3]*wx + vp[7]*wy + vp[11]*wz + vp[15];
+			if (cw <= 1e-5f) return false;
+			const float invW = 1.0f / cw;
+			const float ndcX = cx * invW, ndcY = cy * invW, ndcZ = cz * invW;
+			if (ndcZ < 0.0f || ndcZ > 1.0f) return false;
+			sx = (ndcX * 0.5f + 0.5f) * static_cast<float>(vw);
+			sy = (ndcY * 0.5f + 0.5f) * static_cast<float>(vh);
+			return true;
+		}
+
 		engine::gameplay::MoveInput BuildMoveInput(
 			const engine::platform::Input& input,
 			const engine::render::OrbitalCameraController& camera,
@@ -4362,6 +4381,9 @@ namespace engine
 												e.isNpc = m_cfg.GetBool(base + "npc", false);
 												e.label = m_cfg.GetString(base + "label", "?");
 												e.message = m_cfg.GetString(base + "message", "");
+												const int dcount = static_cast<int>(m_cfg.GetInt(base + "dialogue.count", 0));
+												for (int dj = 0; dj < dcount; ++dj)
+													e.dialogue.push_back(m_cfg.GetString(base + "dialogue." + std::to_string(dj), ""));
 												m_interactables.push_back(e);
 											}
 											if (m_interactables.empty())
@@ -7606,8 +7628,16 @@ namespace engine
 						}
 						if (interactPressed && nearestI >= 0)
 						{
-							const InteractableEntity& e = m_interactables[nearestI];
-							pushInteractChat(e.isNpc ? "[PNJ]" : "[Objet]", e.message);
+							InteractableEntity& e = m_interactables[nearestI];
+							if (e.isNpc && !e.dialogue.empty())
+							{
+								pushInteractChat("[PNJ]", e.label + " : " + e.dialogue[e.dialogueCursor]);
+								e.dialogueCursor = (e.dialogueCursor + 1) % static_cast<int>(e.dialogue.size());
+							}
+							else
+							{
+								pushInteractChat(e.isNpc ? "[PNJ]" : "[Objet]", e.message);
+							}
 						}
 					}
 				}
@@ -8027,6 +8057,26 @@ namespace engine
 			}
 			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
 			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+			// Marqueurs ImGui des interactibles : label flottant projete (visibilite v1
+			// sans mesh). Surligne + " [E]" si a portee. Cf. m_interactables (#39/#40).
+			{
+				const int ivw = static_cast<int>(dw);
+				const int ivh = static_cast<int>(dh);
+				ImDrawList* fg = ImGui::GetForegroundDrawList();
+				for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
+				{
+					const InteractableEntity& e = m_interactables[ii];
+					const float my = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 1.9f;
+					float sx = 0.0f, sy = 0.0f;
+					if (!WorldToScreenPx(out.viewProjMatrix.m, e.position.x, my, e.position.z, ivw, ivh, sx, sy))
+						continue;
+					const bool inRange = (static_cast<int>(ii) == m_interactableInRange);
+					const ImU32 col = inRange ? IM_COL32(255, 220, 80, 255) : IM_COL32(210, 210, 210, 200);
+					const std::string txt = e.label + (inRange ? " [E]" : "");
+					const ImVec2 ts = ImGui::CalcTextSize(txt.c_str());
+					fg->AddText(ImVec2(sx - ts.x * 0.5f, sy - ts.y), col, txt.c_str());
+				}
+			}
 			// Menu de panneaux : barre de menus ImGui toujours visible en jeu,
 			// acces souris a tous les panneaux togglables sans raccourci clavier
 			// dedie. Les panneaux gardent par ailleurs leurs touches existantes ;

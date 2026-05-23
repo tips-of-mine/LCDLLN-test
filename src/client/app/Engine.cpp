@@ -7356,7 +7356,15 @@ namespace engine
 
 						// Esquive/roulade (double-appui Crouch) : Roll one-shot, prioritaire sur crouch.
 						if (dodgePressed && m_avatarLocoState != AvatarLocomotionState::Roll)
+						{
 							newState = AvatarLocomotionState::Roll;
+							// Impulsion d'esquive : direction = mouvement si actif, sinon l'avant camera.
+							// Le CharacterController force la vitesse horizontale pendant dodgeDurationSec.
+							engine::math::Vec3 dodgeDir = moveInput.moveDirXZ;
+							if (dodgeDir.x * dodgeDir.x + dodgeDir.z * dodgeDir.z < 1e-6f)
+								dodgeDir = m_orbitalCameraController.GetForwardXZ();
+							m_characterController.ApplyDodgeImpulse(dodgeDir);
+						}
 
 						// Emote (slash) : uniquement a l'arret (immobile, sans saut ni roll en cours).
 						if (!emoteRole.empty() && !moving && !movingBack && !moveInput.jumpPressed

@@ -95,6 +95,12 @@ namespace engine::gameplay
 			float coyoteTimeSec = 0.1f;   ///< allow jump shortly after leaving ground
 			float jumpBufferSec = 0.1f;   ///< allow jump shortly before landing
 
+			// Esquive / roulade (dodge). Impulsion horizontale appliquee au passage
+			// en etat Roll (cf. Engine SM). I-frames d'invincibilite differees au
+			// systeme de combat reel (cote serveur).
+			float dodgeSpeed = 11.0f;       ///< m/s, vitesse de l'impulsion d'esquive
+			float dodgeDurationSec = 0.45f; ///< duree de l'impulsion (~ duree du clip Roll)
+
 			// Swimming parameters.
 			float waterGravityMultiplier = 0.3f; ///< reduced gravity factor while submerged
 			float waterHorizontalDamping = 6.0f; ///< horizontal velocity damping (1/s)
@@ -125,6 +131,13 @@ namespace engine::gameplay
 		engine::math::Vec3 GetPosition() const { return m_positionCenter; }
 		engine::math::Vec3 GetVelocity() const { return m_velocity; }
 		IWorldCollider::Capsule GetCapsule() const { return m_capsule; }
+
+		/// Declenche une impulsion d'esquive (roulade) dans la direction XZ donnee.
+		/// Pendant `dodgeDurationSec`, la vitesse horizontale est forcee a
+		/// `dodgeSpeed` dans cette direction ; collision (sweep) et gravite restent
+		/// appliquees (on peut rouler dans un mur / au bord d'une falaise). Sans
+		/// effet si `dirXZ` est ~nul. Appele par l'Engine au passage en etat Roll.
+		void ApplyDodgeImpulse(const engine::math::Vec3& dirXZ);
 
 	private:
 		static float DotXZ(const engine::math::Vec3& a, const engine::math::Vec3& b)
@@ -169,6 +182,10 @@ namespace engine::gameplay
 		bool m_isGrounded = false;
 		float m_timeSinceLeftGroundSec = 0.0f;
 		float m_timeSinceJumpPressedSec = 999.0f; // invalid until jumpPressed occurs
+		// Esquive en cours : temps restant (s) et direction XZ normalisee. Tant que
+		// m_dodgeTimeRemaining > 0, la vitesse horizontale est forcee (cf. Update).
+		float m_dodgeTimeRemaining = 0.0f;
+		engine::math::Vec3 m_dodgeDirXZ{ 0.0f, 0.0f, 0.0f };
 	};
 }
 

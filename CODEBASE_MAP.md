@@ -1577,7 +1577,7 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 `Roll (double-tap) > Dance (/dance, à l'arrêt) > Crouch (Ctrl tenu) > Sprint (Alt) > Run (Shift) > Walk`.
 
 ### Limites connues
-- **Roll sans déplacement réel** : l'anim joue mais le `CharacterController` n'applique pas d'impulsion/i-frames d'esquive (purement cosmétique pour l'instant).
+- **Roll = vraie esquive (impulsion)** : au passage en Roll, l'Engine appelle `CharacterController::ApplyDodgeImpulse(dir)` (dir = mouvement, sinon avant-caméra). Pendant `dodgeDurationSec` (~0.45 s) la vitesse horizontale est forcée à `dodgeSpeed` (~11 m/s) ; collision (sweep) et gravité restent appliquées (roulade dans un mur / au bord OK). **I-frames d'invincibilité** non incluses : elles n'ont de sens qu'avec le système de dégâts (combat réel, côté serveur) — à ajouter là. À régler en jeu : `dodgeSpeed`/`dodgeDurationSec`.
 - **Double-tap Ctrl** : la fenêtre 0.30 s peut occasionnellement déclencher un Roll lors d'un crouch « nerveux » (deux appuis rapprochés). Ajustable via le seuil.
 
 §27 étape 2 **terminée**.

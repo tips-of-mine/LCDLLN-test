@@ -206,7 +206,11 @@
         "character_creation": {
             "default_server_id": 1,
             "_comment_gender": "Modele feminin (cosmetique client v1) : 'male' ou 'female'. Si 'female', l'avatar derive le mesh Male_ -> Female_ (humains : Female_Ranger). Non persiste (relog = retour defaut) ; persistance serveur = etape 2.",
-            "gender": "male"
+            "gender": "male",
+            "_comment_skin": "Textures PBR de l'avatar (#5). BaseColor en sRGB, Normal et ORM en lineaire. Defauts = set Ranger (mesh par defaut Male_Ranger). Repli sur textures/avatar_skin.texr si la BaseColor manque.",
+            "skin_basecolor": "textures/characters/humains/T_Ranger_BaseColor.png",
+            "skin_normal": "textures/characters/humains/T_Ranger_Normal.png",
+            "skin_orm": "textures/characters/humains/T_Ranger_ORM.png"
         },
         "auth_ui": {
             "enabled": true,

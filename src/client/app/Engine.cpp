@@ -4027,7 +4027,15 @@ namespace engine
 										// Texture peau avatar : 1x1 sRGB violet clair (190,140,230). Le materiel
 										// dedie m_avatarMaterialId remplace le default fallback (texture blanche
 										// invisible sur sol blanc) pour que l'humanoide ressorte clairement.
-										m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture("textures/avatar_skin.texr", true);
+										// Textures PBR de l'avatar (#5) : BaseColor (sRGB) + Normal + ORM (lineaires),
+										// chargees depuis textures/characters/<race>/ (pack PBR). Repli sur le placeholder
+										// violet (avatar_skin.texr) si la BaseColor manque. Chemins config-driven.
+										const std::string skinBc  = m_cfg.GetString("client.character_creation.skin_basecolor", "textures/characters/humains/T_Ranger_BaseColor.png");
+										const std::string skinNrm = m_cfg.GetString("client.character_creation.skin_normal",    "textures/characters/humains/T_Ranger_Normal.png");
+										const std::string skinOrm = m_cfg.GetString("client.character_creation.skin_orm",       "textures/characters/humains/T_Ranger_ORM.png");
+										m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture(skinBc, /*useSrgb*/ true);
+										if (!m_avatarSkinTextureHandle.IsValid())
+											m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture("textures/avatar_skin.texr", true);
 										if (m_avatarSkinTextureHandle.IsValid() && m_pipeline)
 										{
 											auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
@@ -4035,8 +4043,12 @@ namespace engine
 											{
 												engine::render::Material avatarMat{};
 												avatarMat.baseColor = m_avatarSkinTextureHandle;
+												const engine::render::TextureHandle skinNrmTex = m_assetRegistry.LoadTexture(skinNrm, /*useSrgb*/ false);
+												const engine::render::TextureHandle skinOrmTex = m_assetRegistry.LoadTexture(skinOrm, /*useSrgb*/ false);
+												if (skinNrmTex.IsValid()) avatarMat.normal = skinNrmTex;
+												if (skinOrmTex.IsValid()) avatarMat.orm = skinOrmTex;
 												m_avatarMaterialId = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), avatarMat);
-												LOG_INFO(Render, "[Avatar] Materiel violet clair enregistre, materialId={}", m_avatarMaterialId);
+												LOG_INFO(Render, "[Avatar] Materiel PBR (bc={} nrm={} orm={}) materialId={}", m_avatarSkinTextureHandle.IsValid(), skinNrmTex.IsValid(), skinOrmTex.IsValid(), m_avatarMaterialId);
 											}
 										}
 

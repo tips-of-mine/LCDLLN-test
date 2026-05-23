@@ -633,6 +633,10 @@ namespace engine
 		/// 0 = aucune, 1 = sprint, 2 = crouch, 3 = sort. Tant que != 0, le panneau
 		/// attend une touche ; le bloc gameplay est suspendu (panneau Options ouvert).
 		int                                                      m_rebindingAction = 0;
+		/// Avertissement de conflit de touches affiché sous les lignes de rebind
+		/// (Options) : non vide si la dernière touche bindée était déjà sur une
+		/// autre action. Le bind reste appliqué (doublon autorisé, juste signalé).
+		std::string                                              m_keybindWarning;
 		/// Instant d'entrée dans l'état courant. Utilisé pour :
 		///   - détecter la fin de StartWalking / Jump / Land (durée écoulée >= clip.duration).
 		///   - tracer la transition Jump -> Fall après 40% du clip Jump (takeoff).

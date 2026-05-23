@@ -4068,13 +4068,30 @@ namespace engine
 											m_cfg.GetString("client.character_creation.skin_normal", "textures/characters/humains/T_Ranger_Normal.png"));
 										const std::string outfitOrm = m_cfg.GetString("client.character_creation.outfit_orm",
 											m_cfg.GetString("client.character_creation.skin_orm", "textures/characters/humains/T_Ranger_ORM.png"));
-										const std::string bodyBc  = m_cfg.GetString("client.character_creation.body_basecolor", "textures/characters/humains/T_Regular_Male_BaseColor.png");
-										const std::string bodyNrm = m_cfg.GetString("client.character_creation.body_normal",    "textures/characters/humains/T_Regular_Male_Normal.png");
+										std::string bodyBc  = m_cfg.GetString("client.character_creation.body_basecolor", "textures/characters/humains/T_Regular_Male_BaseColor.png");
+										std::string bodyNrm = m_cfg.GetString("client.character_creation.body_normal",    "textures/characters/humains/T_Regular_Male_Normal.png");
 										const std::string bodyOrm = m_cfg.GetString("client.character_creation.body_orm",       "");
+										// Genre feminin : derive la texture de peau Male_ -> Female_
+										// (T_Regular_Male_* -> T_Regular_Female_*), en miroir du swap de mesh
+										// (Male_Ranger -> Female_Ranger) effectue plus bas. Le mesh feminin porte
+										// le materiau de peau "MI_Regular_Female" (vs "MI_Regular_Male") : les
+										// DEUX noms sont listes par defaut dans body_material_names pour router
+										// la peau quel que soit le genre.
+										const std::string avatarGenderMat = m_cfg.GetString("client.character_creation.gender", "male");
+										if (avatarGenderMat == "female")
+										{
+											auto deriveFemalePath = [](std::string p) {
+												std::string::size_type i = 0;
+												while ((i = p.find("Male_", i)) != std::string::npos) { p.replace(i, 5, "Female_"); i += 7; }
+												return p;
+											};
+											bodyBc  = deriveFemalePath(bodyBc);
+											bodyNrm = deriveFemalePath(bodyNrm);
+										}
 										// Noms de materiaux glTF qui recoivent la PEAU (separes par des virgules) ;
-										// tout autre nom recoit l'habit. Defaut : "MI_Regular_Male".
+										// tout autre nom recoit l'habit. Defaut : peau male ET femelle.
 										m_avatarBodyMaterialNames = SplitCsv(
-											m_cfg.GetString("client.character_creation.body_material_names", "MI_Regular_Male"));
+											m_cfg.GetString("client.character_creation.body_material_names", "MI_Regular_Male,MI_Regular_Female"));
 
 										m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture(outfitBc, /*useSrgb*/ true);
 										if (!m_avatarSkinTextureHandle.IsValid())

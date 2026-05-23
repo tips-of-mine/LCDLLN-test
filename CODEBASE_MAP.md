@@ -1811,8 +1811,12 @@ L'attaque restait fixée au clic gauche (§31). Ajout d'une **touche alternative
 - `body_material_names` : liste CSV de noms de matériaux glTF recevant la peau (défaut `MI_Regular_Male`).
 
 ### Assets
-- Ajout `game/data/textures/characters/humains/T_Regular_Male_{BaseColor,Normal}.png` (depuis l'inbox `source_textures/`, le BaseColor = variante *Dark*).
+- Ajout `game/data/textures/characters/humains/T_Regular_{Male,Female}_{BaseColor,Normal}.png` (depuis l'inbox `source_textures/`, le BaseColor = variante *Dark*).
+
+### Genre (mise à jour ultérieure)
+- **Peau gender-aware** : si `gender=female`, `body_basecolor`/`body_normal` sont dérivés `Male_ → Female_` (`T_Regular_Male_*` → `T_Regular_Female_*`), en miroir du swap de mesh `Male_Ranger → Female_Ranger`. Le mesh féminin porte le matériau de peau **`MI_Regular_Female`** (vs `MI_Regular_Male`) : `body_material_names` liste **les deux** par défaut (`MI_Regular_Male,MI_Regular_Female`) pour router la peau quel que soit le genre.
 
 ### Limites / reste
 - **ORM peau** non packée (Roughness source dispo dans l'inbox) → repli ORM par défaut (peau un peu trop lisse). Packer R=AO/G=Rough/B=Metal = polish ultérieur.
-- **Validation visuelle requise** (rendu non testable en CI) : à confirmer en jeu via screenshots.
+- **Tenues (Peasant)** : seul Ranger est le mesh par défaut ; généraliser l'habit par tenue (`T_Peasant_*`) reste à faire quand un sélecteur de tenue existera.
+- **Validation visuelle requise** (rendu non testable en CI) : à confirmer en jeu via screenshots (mâle **et** femelle).

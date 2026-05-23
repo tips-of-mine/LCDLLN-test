@@ -4316,7 +4316,15 @@ namespace engine
 											// eau ; on pose un BASSIN DE TEST au-dessus du sol pour valider la
 											// mecanique de nage (a remplacer par une vraie etendue d'eau via le
 											// pipeline water.bin / level-design). Desactivable : world.test_water.enabled=false.
-											if (m_cfg.GetBool("world.test_water.enabled", true))
+											// Nage : tenter d'abord une VRAIE eau (instances/water.bin via StreamCache) ;
+											// repli sur l'eau-test procedurale si absente (zone demo plate, sans water.bin).
+											if (auto realWater = m_streamCache.LoadWater(m_cfg, ""))
+											{
+												m_clientWaterScene = realWater;
+												m_waterClientSceneDirty = true;
+												LOG_INFO(Render, "[Nage] water.bin charge ({} lac(s))", static_cast<int>(realWater->lakes.size()));
+											}
+											else if (m_cfg.GetBool("world.test_water.enabled", true))
 											{
 												const float cx = static_cast<float>(m_cfg.GetDouble("world.test_water.center_x", 25.0));
 												const float cz = static_cast<float>(m_cfg.GetDouble("world.test_water.center_z", 0.0));
@@ -4341,9 +4349,22 @@ namespace engine
 												LOG_INFO(Render, "[Nage] Eau-test posee (centre=({:.1f},{:.1f}) half={:.1f} niveauY={:.2f})", cx, cz, half, lvl);
 											}
 											m_terrainCollider.BindWater(m_clientWaterScene.get());
-											// Interaction (v1) : entites interactibles de TEST (invisibles) pour valider
-											// la mecanique objets + dialogue PNJ. A remplacer par de vraies entites.
+											// Interaction : interactibles declares en config (world.interactables.N.*).
+											// Repli sur 2 cibles de TEST pres du spawn si aucun n'est declare.
 											m_interactables.clear();
+											const int icount = static_cast<int>(m_cfg.GetInt("world.interactables.count", 0));
+											for (int ii = 0; ii < icount; ++ii)
+											{
+												const std::string base = "world.interactables." + std::to_string(ii) + ".";
+												InteractableEntity e;
+												e.position = engine::math::Vec3{ static_cast<float>(m_cfg.GetDouble(base + "x", 0.0)), 0.0f, static_cast<float>(m_cfg.GetDouble(base + "z", 0.0)) };
+												e.radius = static_cast<float>(m_cfg.GetDouble(base + "radius", 2.5));
+												e.isNpc = m_cfg.GetBool(base + "npc", false);
+												e.label = m_cfg.GetString(base + "label", "?");
+												e.message = m_cfg.GetString(base + "message", "");
+												m_interactables.push_back(e);
+											}
+											if (m_interactables.empty())
 											{
 												InteractableEntity npc;
 												npc.position = engine::math::Vec3{ 4.0f, 0.0f, 0.0f };

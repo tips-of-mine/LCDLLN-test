@@ -141,6 +141,20 @@
     },
     "world": {
         "max_draw_distance_m": 0.0,
+        "_comment_interactables": "Interagir (touche E) : count = nombre de cibles ; chaque index i a x/z (metres monde), radius (portee m), npc (bool : PNJ vs objet), label, message (dialogue PNJ ou effet objet). Cibles de TEST pres du spawn par defaut.",
+        "interactables": {
+            "count": 2,
+            "0": { "x": 4.0, "z": 0.0, "radius": 2.5, "npc": true, "label": "Villageois", "message": "Villageois : Bienvenue ! L'eau de test est a l'est." },
+            "1": { "x": -4.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Coffre", "message": "Vous fouillez le coffre... vide pour l'instant." }
+        },
+        "_comment_test_water": "Nage : bassin de TEST procedural (la zone demo n'a pas d'eau). enabled=false pour le retirer. Ignore si un instances/water.bin reel est charge.",
+        "test_water": {
+            "enabled": true,
+            "center_x": 25.0,
+            "center_z": 0.0,
+            "half_size_m": 15.0,
+            "depth_m": 2.5
+        },
         "default_spawn": {
             "_comment": "Position de la caméra (m) au moment du clic Jouer (Phase 3.5). Y > 0 = au-dessus du terrain. Sera surchargée par characters.spawn_x/y/z une fois la migration en place.",
             "x": 0.0,

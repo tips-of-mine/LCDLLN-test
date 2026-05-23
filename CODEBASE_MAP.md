@@ -1731,3 +1731,19 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 ### Limites connues
 - **Cibles invisibles** (pas de rendu de props/PNJ) → découvrables seulement via le hint chat. À remplacer par de vraies entités avec **meshes** + **dialogues** (arbre de dialogue, loot, etc.).
 - **Dialogue mono-ligne** (pas d'arbre). Pas de portée/raycast visée (proximité simple).
+
+## 40. Outillage contenu : interactibles en config + pipeline eau reel (2026-05-22)
+
+**Objectif** : transformer les v1 « test » (§38 nage, §39 interagir) en systemes **pilotes par donnees**, prets pour du vrai contenu — sans rien casser (replis conserves).
+
+### Interactibles data-driven
+- Declares en config sous `world.interactables` : `count` + par index `i` les cles `world.interactables.i.{x,z,radius,npc,label,message}` (objet JSON a cles numerotees -> aplati par `Config`, pas de parseur de tableau). Lus au world-init dans `m_interactables`.
+- **Repli** : si `count<=0` (ou section absente), 2 cibles de TEST pres du spawn (Villageois + Coffre). `config.json` livre ces 2 par defaut (authorables / extensibles).
+
+### Pipeline eau reel
+- Au world-init, `m_streamCache.LoadWater(cfg, "")` tente de charger `instances/water.bin` (vrai contenu eau). Si present -> `m_clientWaterScene` = eau reelle. **Sinon** repli sur l'eau-test procedurale (§38). Dans les deux cas `BindWater` branche la scene sur le collider (nage).
+
+### Reste a fournir (contenu / assets, hors code)
+- Un vrai `instances/water.bin` par zone (level-design) pour de l'eau realiste.
+- Des meshes/rendu pour les interactibles (PNJ/objets visibles) + arbres de dialogue.
+- Des meshes d'armes (`models/equipment/weapons/*` vides) pour l'equipement / arme visible.

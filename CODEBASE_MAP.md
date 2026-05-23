@@ -1774,6 +1774,19 @@ Backlog complet des tâches restantes (polish, contenu, serveur) : **`docs/BACKL
 - **Persistance serveur** : genre stocké en DB (migration) + payload → redéploiement master/shard, visible des autres joueurs.
 - **Textures** (#5) : les modèles (M/F) rendent en matériau fallback tant que les textures ne sont pas placées/converties (assets).
 
+## 44. Textures PBR de l'avatar (#5 volet code) (2026-05-23)
+
+**Objectif** : l'avatar affichait un **matériau placeholder en dur** (`textures/avatar_skin.texr`, 1×1 violet) et ignorait toute texture. On charge désormais un vrai set **PBR** (BaseColor + Normal + ORM) sur le matériau de l'avatar.
+
+- **Chargement** : au boot de l'avatar (`Engine.cpp`), `Material{ baseColor, normal, orm }` rempli depuis `client.character_creation.skin_{basecolor,normal,orm}` (config.json). **BaseColor en sRGB** (`LoadTexture(..., true)`), **Normal + ORM en linéaire** (`false`). Le shader `gbuffer_geometry.frag` consomme déjà ces 3 slots.
+- **Défauts** : set **Ranger** (`textures/characters/humains/T_Ranger_*.png`) car le mesh par défaut est `Male_Ranger`. Les fichiers viennent du pack PBR (déplacés de l'inbox `source_textures/` vers `game/data/textures/characters/humains/`).
+- **Repli** : si la BaseColor est absente → ancien placeholder `avatar_skin.texr` (jamais de crash, juste le visuel violet).
+
+### Limites / reste
+- **Un seul set par avatar** : si le mesh a plusieurs matériaux (corps + armure), un seul est appliqué (le renderer avatar = 1 matériau). Le rendu multi-matériaux = chantier ultérieur.
+- **Convention normal = OpenGL** (dossier parent du pack, pas `Normals-UnrealEngine/`).
+- **Par-genre/par-race** : v1 chemins config (Ranger humain). Généraliser (skin par race/genre/tenue) = suite. Les textures Female/Peasant/Regular restent dans l'inbox pour ces étapes.
+
 ## 45. Détection de conflit de touches (Options) (2026-05-23)
 
 Petit garde-fou UX (§34) : au rebind d'une action dans le panneau Options, si la touche choisie est **déjà affectée à une autre action** (sprint/accroupi/sort/interagir/coup de poing), un **avertissement** s'affiche sous les lignes de rebind (`m_keybindWarning`, texte orange). Le bind reste **appliqué** (doublon autorisé, juste signalé). Effacé au prochain rebind sans conflit.

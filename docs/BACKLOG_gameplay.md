@@ -23,8 +23,6 @@
 
 - **Roll — i-frames** : la roulade a son impulsion (§30) mais pas d'invincibilité ;
   n'a de sens qu'avec un système de dégâts (cf. section serveur).
-- **Détection de conflit de touches** (Options) : binder 2 actions sur la même touche
-  est permis sans avertissement (§34).
 - **Attaque (souris) remappable** : le clic gauche d'attaque n'est pas remappable (§34).
 
 ## C. Contenu / assets (hors code — création par level-design / artiste)

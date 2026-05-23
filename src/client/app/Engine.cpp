@@ -8418,6 +8418,23 @@ namespace engine
 									: (m_rebindingAction == 3) ? "controls.keybind.cast"
 									: (m_rebindingAction == 4) ? "controls.keybind.interact"
 									: "controls.keybind.punch";
+								// Detection de conflit : la touche choisie est-elle deja sur une autre
+								// action ? (doublon autorise, juste signale sous les lignes de rebind).
+								m_keybindWarning.clear();
+								{
+									struct Kb { int act; const char* key; const char* label; };
+									static const Kb kKb[] = {
+										{1,"controls.keybind.sprint","Sprint"}, {2,"controls.keybind.crouch","Accroupi"},
+										{3,"controls.keybind.cast","Sort"}, {4,"controls.keybind.interact","Interagir"},
+										{5,"controls.keybind.punch","Coup de poing"},
+									};
+									for (const auto& kb : kKb)
+										if (kb.act != m_rebindingAction && m_cfg.GetString(kb.key, "") == rk.name)
+										{
+											m_keybindWarning = std::string("Touche '") + rk.name + "' deja utilisee par " + kb.label + " (doublon).";
+											break;
+										}
+								}
 								m_cfg.SetValue(cfgKey, std::string(rk.name));
 								// Persistance : ecrit keybinds.json (fichier dedie, format controle ;
 								// valeurs = noms ASCII de kRebindableKeys -> pas d'echappement JSON requis).
@@ -8460,6 +8477,8 @@ namespace engine
 				rebindRow("Coup de poing", "controls.keybind.punch", "C", 5);
 				ImGui::TextDisabled("Roulade : double-appui sur la touche Accroupi");
 				ImGui::TextDisabled("Attaque : clic gauche (non remappable)");
+				if (!m_keybindWarning.empty())
+					ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "%s", m_keybindWarning.c_str());
 
 				ImGui::Spacing();
 				ImGui::Separator();

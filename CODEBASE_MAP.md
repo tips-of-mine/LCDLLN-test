@@ -1773,3 +1773,7 @@ Backlog complet des tâches restantes (polish, contenu, serveur) : **`docs/BACKL
 - **Sélecteur de genre dans l'UI** de création de perso (ImGui) — au lieu de la config.
 - **Persistance serveur** : genre stocké en DB (migration) + payload → redéploiement master/shard, visible des autres joueurs.
 - **Textures** (#5) : les modèles (M/F) rendent en matériau fallback tant que les textures ne sont pas placées/converties (assets).
+
+## 45. Détection de conflit de touches (Options) (2026-05-23)
+
+Petit garde-fou UX (§34) : au rebind d'une action dans le panneau Options, si la touche choisie est **déjà affectée à une autre action** (sprint/accroupi/sort/interagir/coup de poing), un **avertissement** s'affiche sous les lignes de rebind (`m_keybindWarning`, texte orange). Le bind reste **appliqué** (doublon autorisé, juste signalé). Effacé au prochain rebind sans conflit.

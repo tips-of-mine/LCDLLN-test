@@ -63,6 +63,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cctype>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -92,6 +93,29 @@ namespace engine
 	namespace
 	{
 		constexpr float kWorldEditorPickPi = 3.14159265f;
+
+		/// Découpe une chaîne CSV en tokens nettoyés (espaces de début/fin
+		/// retirés), en ignorant les tokens vides. Utilisé pour lire la liste
+		/// `client.character_creation.body_material_names` (noms de matériaux
+		/// glTF qui reçoivent la peau). Renvoie des std::string possédés (pas
+		/// de string_view) car la source est une valeur de config temporaire.
+		std::vector<std::string> SplitCsv(const std::string& csv)
+		{
+			std::vector<std::string> out;
+			size_t start = 0;
+			while (start <= csv.size())
+			{
+				const size_t comma = csv.find(',', start);
+				const size_t end = (comma == std::string::npos) ? csv.size() : comma;
+				size_t a = start, b = end;
+				while (a < b && std::isspace(static_cast<unsigned char>(csv[a]))) ++a;
+				while (b > a && std::isspace(static_cast<unsigned char>(csv[b - 1]))) --b;
+				if (b > a) out.emplace_back(csv.substr(a, b - a));
+				if (comma == std::string::npos) break;
+				start = comma + 1;
+			}
+			return out;
+		}
 
 		/// Retourne le temps ecoule en secondes depuis le premier appel a cette
 		/// fonction, en float 32 bits. Normalise par un temps de reference
@@ -4024,19 +4048,70 @@ namespace engine
 										// (cf. branche !m_editorMode du Update).
 										m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/avatar_placeholder.mesh");
 
-										// Texture peau avatar : 1x1 sRGB violet clair (190,140,230). Le materiel
-										// dedie m_avatarMaterialId remplace le default fallback (texture blanche
-										// invisible sur sol blanc) pour que l'humanoide ressorte clairement.
-										m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture("textures/avatar_skin.texr", true);
+										// Materiaux PBR de l'avatar (#5 + multi-materiaux) : un personnage
+										// modulaire (ex. Male_Ranger) possede DEUX materiaux glTF distincts :
+										//   - l'habit  (materiau "MI_Ranger")      -> textures T_Ranger
+										//   - la peau  (materiau "MI_Regular_Male") -> textures T_Regular_Male
+										// Le mesh est fusionne en un seul buffer mais conserve ses sous-maillages
+										// (SkinnedSubMesh : plage d'indices + nom de materiau). On cree donc ICI
+										// deux materiaux bindless (habit + peau) et on memorise quels noms de
+										// materiau glTF doivent recevoir la peau ; au draw, chaque sous-maillage
+										// est dessine avec le bon index materiau (cf. SkinnedRenderer::Record).
+										//
+										// Chemins config-driven (client.character_creation.*) avec repli sur
+										// l'ancien schema skin_* (#5) puis sur des chemins par defaut. BaseColor
+										// en sRGB ; Normal/ORM lineaires. ORM peau optionnel : repli sur l'ORM
+										// 1x1 par defaut (AO=1, rough=0.5, metal=0) du MaterialDescriptorCache.
+										const std::string outfitBc  = m_cfg.GetString("client.character_creation.outfit_basecolor",
+											m_cfg.GetString("client.character_creation.skin_basecolor", "textures/characters/humains/T_Ranger_BaseColor.png"));
+										const std::string outfitNrm = m_cfg.GetString("client.character_creation.outfit_normal",
+											m_cfg.GetString("client.character_creation.skin_normal", "textures/characters/humains/T_Ranger_Normal.png"));
+										const std::string outfitOrm = m_cfg.GetString("client.character_creation.outfit_orm",
+											m_cfg.GetString("client.character_creation.skin_orm", "textures/characters/humains/T_Ranger_ORM.png"));
+										const std::string bodyBc  = m_cfg.GetString("client.character_creation.body_basecolor", "textures/characters/humains/T_Regular_Male_BaseColor.png");
+										const std::string bodyNrm = m_cfg.GetString("client.character_creation.body_normal",    "textures/characters/humains/T_Regular_Male_Normal.png");
+										const std::string bodyOrm = m_cfg.GetString("client.character_creation.body_orm",       "");
+										// Noms de materiaux glTF qui recoivent la PEAU (separes par des virgules) ;
+										// tout autre nom recoit l'habit. Defaut : "MI_Regular_Male".
+										m_avatarBodyMaterialNames = SplitCsv(
+											m_cfg.GetString("client.character_creation.body_material_names", "MI_Regular_Male"));
+
+										m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture(outfitBc, /*useSrgb*/ true);
+										if (!m_avatarSkinTextureHandle.IsValid())
+											m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture("textures/avatar_skin.texr", true);
 										if (m_avatarSkinTextureHandle.IsValid() && m_pipeline)
 										{
 											auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
 											if (materialCache.IsValid())
 											{
-												engine::render::Material avatarMat{};
-												avatarMat.baseColor = m_avatarSkinTextureHandle;
-												m_avatarMaterialId = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), avatarMat);
-												LOG_INFO(Render, "[Avatar] Materiel violet clair enregistre, materialId={}", m_avatarMaterialId);
+												// Materiau HABIT (defaut pour tous les sous-maillages non-peau).
+												engine::render::Material outfitMat{};
+												outfitMat.baseColor = m_avatarSkinTextureHandle;
+												const engine::render::TextureHandle outfitNrmTex = m_assetRegistry.LoadTexture(outfitNrm, /*useSrgb*/ false);
+												const engine::render::TextureHandle outfitOrmTex = m_assetRegistry.LoadTexture(outfitOrm, /*useSrgb*/ false);
+												if (outfitNrmTex.IsValid()) outfitMat.normal = outfitNrmTex;
+												if (outfitOrmTex.IsValid()) outfitMat.orm = outfitOrmTex;
+												m_avatarMaterialId = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), outfitMat);
+
+												// Materiau PEAU (sous-maillages dont le nom est dans body_material_names).
+												// Si la BaseColor peau est absente, on retombe sur l'habit (m_avatarBodyMaterialId
+												// reste 0 -> traite comme habit au draw).
+												const engine::render::TextureHandle bodyBcTex = m_assetRegistry.LoadTexture(bodyBc, /*useSrgb*/ true);
+												if (bodyBcTex.IsValid())
+												{
+													engine::render::Material bodyMat{};
+													bodyMat.baseColor = bodyBcTex;
+													const engine::render::TextureHandle bodyNrmTex = m_assetRegistry.LoadTexture(bodyNrm, /*useSrgb*/ false);
+													if (bodyNrmTex.IsValid()) bodyMat.normal = bodyNrmTex;
+													if (!bodyOrm.empty())
+													{
+														const engine::render::TextureHandle bodyOrmTex = m_assetRegistry.LoadTexture(bodyOrm, /*useSrgb*/ false);
+														if (bodyOrmTex.IsValid()) bodyMat.orm = bodyOrmTex;
+													}
+													m_avatarBodyMaterialId = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), bodyMat);
+												}
+												LOG_INFO(Render, "[Avatar] Materiaux PBR habit(id={}) peau(id={}, bc={})",
+													m_avatarMaterialId, m_avatarBodyMaterialId, bodyBcTex.IsValid());
 											}
 										}
 
@@ -4616,16 +4691,39 @@ namespace engine
 													// La matrice modele est desormais calculee a partir de cc.GetPosition()
 													// + m_avatarYaw ; le cube placeholder garde sa matrice d'origine (cf.
 													// rs.objectModelMatrix construit dans Update).
-													// materialDescriptorSet + materialIndex : meme set/index que le cube draw.
+													// materialDescriptorSet + materialIndex : meme set bindless que le
+													// cube draw. skinnedMaterialIndex = HABIT (defaut).
 													const uint32_t skinnedMaterialIndex = (m_avatarMaterialId != 0u)
 														? m_avatarMaterialId
 														: materialCache.GetDefaultMaterialIndex();
+
+													// Multi-materiaux : un index par sous-maillage. Les sous-maillages
+													// dont le nom de materiau glTF figure dans m_avatarBodyMaterialNames
+													// recoivent la PEAU (m_avatarBodyMaterialId), les autres l'habit.
+													// Si aucune texture de peau n'est chargee (id 0), tout retombe sur
+													// l'habit -> comportement identique a l'ancien mono-draw.
+													std::vector<uint32_t> submeshMaterialIndices;
+													if (m_avatarBodyMaterialId != 0u && !m_currentSkinnedMesh->submeshes.empty())
+													{
+														submeshMaterialIndices.reserve(m_currentSkinnedMesh->submeshes.size());
+														for (const auto& sub : m_currentSkinnedMesh->submeshes)
+														{
+															const bool isBody = std::find(
+																m_avatarBodyMaterialNames.begin(),
+																m_avatarBodyMaterialNames.end(),
+																sub.materialName) != m_avatarBodyMaterialNames.end();
+															submeshMaterialIndices.push_back(isBody ? m_avatarBodyMaterialId
+																                                    : skinnedMaterialIndex);
+														}
+													}
+
 													m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
 														m_vkDeviceContext.GetDevice(), cmd, reg,
 														m_vkSwapchain.GetExtent(),
 														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
 														m_fgGBufferVelocityId, m_fgDepthId,
-														[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat](VkCommandBuffer innerCmd) {
+														[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat,
+														 submeshMaterialIndices = std::move(submeshMaterialIndices)](VkCommandBuffer innerCmd) {
 															m_skinnedRenderer.Record(
 																m_vkDeviceContext.GetDevice(), innerCmd,
 																m_vkSwapchain.GetExtent(),
@@ -4636,7 +4734,8 @@ namespace engine
 																finals,
 																materialCache.GetDescriptorSet(),
 																finalModelMat.m,
-																skinnedMaterialIndex);
+																skinnedMaterialIndex,
+																submeshMaterialIndices);
 														});
 												}
 

@@ -1774,6 +1774,19 @@ Backlog complet des tâches restantes (polish, contenu, serveur) : **`docs/BACKL
 - **Persistance serveur** : genre stocké en DB (migration) + payload → redéploiement master/shard, visible des autres joueurs.
 - **Textures** (#5) : les modèles (M/F) rendent en matériau fallback tant que les textures ne sont pas placées/converties (assets).
 
+## 44. Textures PBR de l'avatar (#5 volet code) (2026-05-23)
+
+**Objectif** : l'avatar affichait un **matériau placeholder en dur** (`textures/avatar_skin.texr`, 1×1 violet) et ignorait toute texture. On charge désormais un vrai set **PBR** (BaseColor + Normal + ORM) sur le matériau de l'avatar.
+
+- **Chargement** : au boot de l'avatar (`Engine.cpp`), `Material{ baseColor, normal, orm }` rempli depuis `client.character_creation.skin_{basecolor,normal,orm}` (config.json). **BaseColor en sRGB** (`LoadTexture(..., true)`), **Normal + ORM en linéaire** (`false`). Le shader `gbuffer_geometry.frag` consomme déjà ces 3 slots.
+- **Défauts** : set **Ranger** (`textures/characters/humains/T_Ranger_*.png`) car le mesh par défaut est `Male_Ranger`. Les fichiers viennent du pack PBR (déplacés de l'inbox `source_textures/` vers `game/data/textures/characters/humains/`).
+- **Repli** : si la BaseColor est absente → ancien placeholder `avatar_skin.texr` (jamais de crash, juste le visuel violet).
+
+### Limites / reste
+- **Convention normal = OpenGL** (dossier parent du pack, pas `Normals-UnrealEngine/`).
+- **Par-genre/par-race** : v1 chemins config (Ranger humain). Généraliser (skin par race/genre/tenue) = suite. Les textures Female/Peasant/Regular restent dans l'inbox pour ces étapes.
+- ~~Un seul matériau par avatar~~ → **résolu en §47** (multi-matériaux).
+
 ## 45. Détection de conflit de touches (Options) (2026-05-23)
 
 Petit garde-fou UX (§34) : au rebind d'une action dans le panneau Options, si la touche choisie est **déjà affectée à une autre action** (sprint/accroupi/sort/interagir/coup de poing), un **avertissement** s'affiche sous les lignes de rebind (`m_keybindWarning`, texte orange). Le bind reste **appliqué** (doublon autorisé, juste signalé). Effacé au prochain rebind sans conflit.
@@ -1781,3 +1794,25 @@ Petit garde-fou UX (§34) : au rebind d'une action dans le panneau Options, si l
 ## 46. Attaque remappable (touche alternative) (2026-05-23)
 
 L'attaque restait fixée au clic gauche (§31). Ajout d'une **touche alternative** : `controls.keybind.attack` (vide par défaut = clic gauche seul). Si renseignée avec une touche valide (table `kRebindableKeys`), l'attaque se déclenche au **clic gauche OU** sur cette touche. Validation par round-trip `KeyName(KeyFromName(...))` (ignore une valeur invalide → pas de déclenchement parasite). Volet **input** (cross-platform) ; la ligne UI dans Options reste un petit suivi (Windows-only).
+
+## 47. Avatar multi-matériaux : peau + habit (#5 suite) (2026-05-23)
+
+**Problème** : avec §44, un **seul** matériau était appliqué à tout l'avatar. Or `Male_Ranger.glb` a **2 matériaux glTF** — l'habit `MI_Ranger` et la peau `MI_Regular_Male` (sur les mains/avant-bras). Résultat : les mains portaient la texture d'habit au lieu de la peau (rapporté au test de #669).
+
+### Chaîne
+- **Loader** (`SkinnedMeshLoader`) : la fusion des primitives en un seul vertex/index buffer est conservée, mais chaque primitive produit désormais un `SkinnedSubMesh { firstIndex, indexCount, materialName }`. Les plages sont contiguës et couvrent tout l'index buffer (vérifié par `SkinnedMeshLoaderTests`).
+- **Mesh** (`SkinnedMesh`) : `submeshes` copié à l'`Upload`.
+- **Renderer** (`SkinnedRenderer::Record`) : nouveau paramètre `submeshMaterialIndices` (1 index matériau bindless par sous-maillage). S'il est cohérent avec `mesh.submeshes`, on émet **un draw par sous-maillage** (même set bindless `set 0` ; seul le push-constant `materialIndex` change). Sinon → ancien chemin mono-draw inchangé. **Pipeline / winding (CCW + BACK) NON touchés.**
+- **Engine** : création de **2 matériaux** (`m_avatarMaterialId` = habit, `m_avatarBodyMaterialId` = peau). Au draw, chaque sous-maillage dont le nom de matériau ∈ `client.character_creation.body_material_names` reçoit la peau, les autres l'habit.
+
+### Config (`client.character_creation`)
+- `outfit_{basecolor,normal,orm}` (habit, défaut T_Ranger ; repli sur l'ancien schéma `skin_*`).
+- `body_{basecolor,normal,orm}` (peau, défaut T_Regular_Male ; `body_orm` vide → ORM 1×1 par défaut AO=1/rough=0.5/metal=0).
+- `body_material_names` : liste CSV de noms de matériaux glTF recevant la peau (défaut `MI_Regular_Male`).
+
+### Assets
+- Ajout `game/data/textures/characters/humains/T_Regular_Male_{BaseColor,Normal}.png` (depuis l'inbox `source_textures/`, le BaseColor = variante *Dark*).
+
+### Limites / reste
+- **ORM peau** non packée (Roughness source dispo dans l'inbox) → repli ORM par défaut (peau un peu trop lisse). Packer R=AO/G=Rough/B=Metal = polish ultérieur.
+- **Validation visuelle requise** (rendu non testable en CI) : à confirmer en jeu via screenshots.

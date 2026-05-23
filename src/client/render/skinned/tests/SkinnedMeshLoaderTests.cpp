@@ -110,6 +110,27 @@ namespace
             if (boneOob) break;
         }
         REQUIRE(!boneOob);
+
+        // Multi-matériaux : chaque primitive devient un SkinnedSubMesh (plage +
+        // nom de matériau). Les plages doivent être contiguës et couvrir tout
+        // l'index buffer, et on doit retrouver les 2 matériaux du Ranger
+        // (habit "MI_Ranger" + peau "MI_Regular_Male").
+        REQUIRE(!cpu.submeshes.empty());
+        uint32_t expectedFirst = 0;
+        uint64_t totalSubIndices = 0;
+        bool hasOutfit = false, hasBody = false;
+        for (const auto& sub : cpu.submeshes) {
+            REQUIRE(sub.firstIndex == expectedFirst);  // contiguës, dans l'ordre.
+            REQUIRE(sub.indexCount % 3 == 0);
+            REQUIRE(static_cast<size_t>(sub.firstIndex) + sub.indexCount <= cpu.indices.size());
+            expectedFirst += sub.indexCount;
+            totalSubIndices += sub.indexCount;
+            if (sub.materialName == "MI_Ranger") hasOutfit = true;
+            if (sub.materialName == "MI_Regular_Male") hasBody = true;
+        }
+        REQUIRE(totalSubIndices == cpu.indices.size());  // couverture complète.
+        REQUIRE(hasOutfit);
+        REQUIRE(hasBody);
     }
 
     /// Migration UE5 — la library d'animation UE5 (45 takes) doit se retargeter

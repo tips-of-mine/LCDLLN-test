@@ -334,9 +334,17 @@ namespace engine
 		engine::render::MeshHandle m_geometryMeshHandle;
 		/// Texture peau de l'avatar (1x1 sRGB violet clair, visible sur sol blanc et ciel sombre).
 		engine::render::TextureHandle m_avatarSkinTextureHandle;
-		/// Index materiel de l'avatar dans la MaterialDescriptorCache (0 = default fallback,
-		/// non-zero = materiel dedie violet clair). Renseigne au boot apres registration.
+		/// Index materiel HABIT de l'avatar dans la MaterialDescriptorCache
+		/// (0 = default fallback, non-zero = materiel dedie). Materiau par defaut
+		/// applique a tous les sous-maillages sauf ceux listes comme "peau".
 		uint32_t m_avatarMaterialId = 0u;
+		/// Index materiel PEAU de l'avatar (corps/mains). 0 si aucune texture de
+		/// peau chargee -> les sous-maillages peau retombent sur l'habit.
+		uint32_t m_avatarBodyMaterialId = 0u;
+		/// Noms de materiaux glTF (ex. "MI_Regular_Male") dont les sous-maillages
+		/// recoivent m_avatarBodyMaterialId (la peau). Tout autre nom -> habit.
+		/// Renseigne depuis client.character_creation.body_material_names.
+		std::vector<std::string> m_avatarBodyMaterialNames;
 		engine::render::DecalSystem m_decalSystem;
 		std::vector<engine::render::VisibleDecal> m_visibleDecals;
 

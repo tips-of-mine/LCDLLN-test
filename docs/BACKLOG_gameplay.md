@@ -18,6 +18,10 @@
   sortie déclenchée par le mouvement (pas par un timer).
 - **Combo épée** : enchaînement sur clics rapides (au lieu d'« ignoré pendant l'attaque »).
   Nécessite un 2ᵉ clip de frappe franc (seul `Sword_Attack_RM`, à root-motion, dispo).
+- **Touche `TAB` → carte** : quand un système de carte/minimap existera, **réserver `TAB`**
+  pour afficher/masquer la carte (toggle). Aujourd'hui aucune carte n'existe ; c'est un
+  rappel pour câbler la touche le moment venu (cf. aussi « Rendu de props / meshes
+  statiques » et un éventuel système de carte monde en section D).
 
 ## B. Refinements mouvement / anim
 
@@ -66,5 +70,5 @@
 ## G. Character-customization (chantier d'origine)
 
 - **#2 Modèle féminin** : cosmétique client ✅ (§43, `client.character_creation.gender`). **Reste** : sélecteur UI de genre + **persistance serveur** (DB migration + payload = redéploiement).
-- **#5 Textures** : modèles M/F en matériau fallback (aucune texture sous `models/characters/`). Placer les textures + reconvertir (assets) ; côté code, vérifier les chemins référencés par les `.glb`.
+- **#5 Textures** : ✅ habit + peau livrés. Set Ranger BaseColor/Normal/ORM (§44) **et** rendu **multi-matériaux** peau/habit (§47 : `MI_Regular_Male` → T_Regular_Male sur les mains, `MI_Ranger` → T_Ranger ailleurs). **Reste** : packer l'ORM peau (Roughness dispo en inbox `source_textures/`) ; textures Female/Peasant/autres races (encore en inbox) ; généraliser par race/genre/tenue.
 - **#3 Animations** : ✅ fait et dépassé (§27→§42).

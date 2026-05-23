@@ -39,6 +39,22 @@ struct SkinnedVertex
 // Stride = 56 octets : pos(12) + normal(12) + uv(8) + boneIndices(8) + weights(16).
 static_assert(sizeof(SkinnedVertex) == 56, "SkinnedVertex stride must be 56");
 
+/// Plage contiguë d'indices partageant un même matériau glTF.
+///
+/// Le loader fusionne toujours toutes les primitives skinnées dans un seul
+/// couple vertex/index buffer (cf. SkinnedMeshLoader::LoadCpuOnlyForTests),
+/// mais conserve ici, pour chaque primitive, où commence sa plage d'indices
+/// et quel matériau elle référence. Cela permet le rendu multi-matériaux :
+/// un personnage modulaire (ex. Male_Ranger = habit `MI_Ranger` + peau
+/// `MI_Regular_Male` sur les mains) peut être dessiné en plusieurs draw calls,
+/// une par sous-maillage, chacun avec son propre index matériau bindless.
+struct SkinnedSubMesh
+{
+    uint32_t firstIndex = 0;   ///< Offset (en indices) du début de la plage dans indices[].
+    uint32_t indexCount = 0;   ///< Nombre d'indices de la plage (multiple de 3).
+    std::string materialName;  ///< Nom du matériau glTF (ex. "MI_Ranger"). Vide si la primitive n'a pas de matériau.
+};
+
 /// Données CPU d'un mesh skinné chargé depuis un .glb. Pas de ressource GPU
 /// (buffers Vulkan) ici — c'est la responsabilité de Task 11 (SkinnedMesh).
 ///
@@ -46,12 +62,16 @@ static_assert(sizeof(SkinnedVertex) == 56, "SkinnedVertex stride must be 56");
 ///   - skeleton : hiérarchie de bones + bind pose + inverse-bind matrices.
 ///   - vertices : tableau plat de SkinnedVertex (taille = nombre de sommets).
 ///   - indices  : indices triangulaires uint32 (taille = nombre de triangles * 3).
+///   - submeshes: plages d'indices par matériau (cf. SkinnedSubMesh). Toujours
+///                renseigné : une entrée par primitive fusionnée, dans l'ordre
+///                d'ajout. La somme des indexCount == indices.size().
 ///   - clips    : toutes les animations exposées par le .glb (vide possible).
 struct SkinnedMeshCpuData
 {
     Skeleton skeleton;
     std::vector<SkinnedVertex> vertices;
     std::vector<uint32_t> indices;
+    std::vector<SkinnedSubMesh> submeshes;
     std::vector<AnimationClip> clips;
 };
 

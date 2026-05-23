@@ -106,9 +106,20 @@ public:
     ///                            (`bind * inverseBind * worldPose`), une par
     ///                            bone. Uploadé dans le SSBO chaque Record.
     /// \param materialDescriptorSet Descriptor set matériau à binder (set 0).
+    ///                            Bindless : un seul set partagé, l'index
+    ///                            matériau sélectionne la slot dans le shader.
     /// \param modelMatrixColumnMajor4x4 Matrice modèle 4x4 column-major
     ///                            (transform monde de l'avatar). 16 floats.
-    /// \param materialIndex       Index matériau pour le push constant.
+    /// \param materialIndex       Index matériau du push constant utilisé pour
+    ///                            le chemin mono-draw (mesh.submeshes vide OU
+    ///                            submeshMaterialIndices de taille incohérente).
+    /// \param submeshMaterialIndices Index matériau bindless par sous-maillage,
+    ///                            parallèle à `mesh.submeshes`. S'il est non
+    ///                            vide et de même taille que `mesh.submeshes`,
+    ///                            chaque sous-maillage est dessiné dans son
+    ///                            propre draw call avec son index (rendu
+    ///                            multi-matériaux : habit vs peau). Sinon on
+    ///                            retombe sur un unique draw avec `materialIndex`.
     void Record(VkDevice device, VkCommandBuffer cmd,
                 VkExtent2D extent,
                 VkRenderPass renderPass, VkFramebuffer framebuffer,
@@ -117,7 +128,8 @@ public:
                 const std::vector<engine::math::Mat4>& finalBoneMatrices,
                 VkDescriptorSet materialDescriptorSet,
                 const float* modelMatrixColumnMajor4x4,
-                uint32_t materialIndex);
+                uint32_t materialIndex,
+                const std::vector<uint32_t>& submeshMaterialIndices = {});
 
     /// Libère toutes les ressources Vulkan dans l'ordre inverse de leur
     /// création. Idempotent (safe à appeler plusieurs fois, ou après un Init

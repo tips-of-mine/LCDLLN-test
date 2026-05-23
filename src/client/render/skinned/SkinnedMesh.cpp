@@ -92,6 +92,7 @@ bool SkinnedMesh::Upload(VkDevice device, VkPhysicalDevice physicalDevice, const
 {
     skeleton = cpu.skeleton;
     clips = cpu.clips;
+    submeshes = cpu.submeshes;
     indexCount = static_cast<uint32_t>(cpu.indices.size());
 
     const size_t vBytes = cpu.vertices.size() * sizeof(SkinnedVertex);

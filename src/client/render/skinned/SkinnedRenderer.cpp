@@ -541,7 +541,8 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
                              const std::vector<engine::math::Mat4>& finalBoneMatrices,
                              VkDescriptorSet materialDescriptorSet,
                              const float* modelMatrixColumnMajor4x4,
-                             uint32_t materialIndex)
+                             uint32_t materialIndex,
+                             const std::vector<uint32_t>& submeshMaterialIndices)
 {
     // 1. Upload des matrices de bones dans le SSBO host-visible.
     //    Clamp au max alloué dans Init pour ne jamais déborder (256 bones par
@@ -603,6 +604,8 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
     //    prevViewProj (mat4, 64) + viewProj (mat4, 64) + materialIndex (uint,
     //    +12 padding pour aligner sur 16) = 144 octets. Doit matcher
     //    `kPushConstantSize` utilisé pour le pipeline layout.
+    //    Le champ materialIndex est (re)poussé par sous-maillage plus bas ; les
+    //    deux matrices restent constantes pour tous les draws de cet avatar.
     struct PushConstants {
         float prevViewProj[16];
         float viewProj[16];
@@ -614,11 +617,7 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
     static_assert(sizeof(PushConstants) == 144, "PushConstants must match shader layout");
     std::memcpy(pc.prevViewProj, prevViewProj, sizeof(float) * 16);
     std::memcpy(pc.viewProj, viewProj, sizeof(float) * 16);
-    pc.materialIndex = materialIndex;
     pc.pad0 = pc.pad1 = pc.pad2 = 0;
-    vkCmdPushConstants(cmd, m_pipelineLayout,
-                       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                       0, sizeof(PushConstants), &pc);
 
     // 7. Bind des vertex buffers : per-vertex @ binding 0 (mesh), per-instance
     //    @ binding 1 (matrice modèle). Cf. layout vertex input dans Init.
@@ -629,8 +628,32 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
     // 8. Bind de l'index buffer (UINT32 — cf. SkinnedMeshCpuData::indices).
     vkCmdBindIndexBuffer(cmd, mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-    // 9. Une seule instance (1 avatar).
-    vkCmdDrawIndexed(cmd, mesh.indexCount, /*instanceCount*/ 1, 0, 0, 0);
+    // 9. Draw call(s), 1 instance (1 avatar).
+    //    Chemin multi-matériaux : si on a un index matériau par sous-maillage
+    //    (parallèle à mesh.submeshes), on dessine chaque plage avec son propre
+    //    materialIndex (habit vs peau). Le descriptor set (set 0) est bindless
+    //    et déjà bindé : seul le push constant materialIndex change entre draws.
+    //    Sinon, chemin mono-draw historique (mesh.indexCount d'un coup).
+    const bool perSubmesh =
+        !mesh.submeshes.empty() && submeshMaterialIndices.size() == mesh.submeshes.size();
+    if (perSubmesh) {
+        for (size_t s = 0; s < mesh.submeshes.size(); ++s) {
+            const SkinnedSubMesh& sub = mesh.submeshes[s];
+            if (sub.indexCount == 0) continue;
+            pc.materialIndex = submeshMaterialIndices[s];
+            vkCmdPushConstants(cmd, m_pipelineLayout,
+                               VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                               0, sizeof(PushConstants), &pc);
+            vkCmdDrawIndexed(cmd, sub.indexCount, /*instanceCount*/ 1,
+                             sub.firstIndex, 0, 0);
+        }
+    } else {
+        pc.materialIndex = materialIndex;
+        vkCmdPushConstants(cmd, m_pipelineLayout,
+                           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                           0, sizeof(PushConstants), &pc);
+        vkCmdDrawIndexed(cmd, mesh.indexCount, /*instanceCount*/ 1, 0, 0, 0);
+    }
 }
 
 // -----------------------------------------------------------------------------

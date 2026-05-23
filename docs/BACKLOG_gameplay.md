@@ -23,7 +23,7 @@
 
 - **Roll — i-frames** : la roulade a son impulsion (§30) mais pas d'invincibilité ;
   n'a de sens qu'avec un système de dégâts (cf. section serveur).
-- **Attaque (souris) remappable** : le clic gauche d'attaque n'est pas remappable (§34).
+- **Attaque remappable — UI** : touche alternative livrée par config (§46) ; reste la ligne UI dans Options (Windows-only).
 
 ## C. Contenu / assets (hors code — création par level-design / artiste)
 

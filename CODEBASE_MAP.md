@@ -1777,3 +1777,7 @@ Backlog complet des tâches restantes (polish, contenu, serveur) : **`docs/BACKL
 ## 45. Détection de conflit de touches (Options) (2026-05-23)
 
 Petit garde-fou UX (§34) : au rebind d'une action dans le panneau Options, si la touche choisie est **déjà affectée à une autre action** (sprint/accroupi/sort/interagir/coup de poing), un **avertissement** s'affiche sous les lignes de rebind (`m_keybindWarning`, texte orange). Le bind reste **appliqué** (doublon autorisé, juste signalé). Effacé au prochain rebind sans conflit.
+
+## 46. Attaque remappable (touche alternative) (2026-05-23)
+
+L'attaque restait fixée au clic gauche (§31). Ajout d'une **touche alternative** : `controls.keybind.attack` (vide par défaut = clic gauche seul). Si renseignée avec une touche valide (table `kRebindableKeys`), l'attaque se déclenche au **clic gauche OU** sur cette touche. Validation par round-trip `KeyName(KeyFromName(...))` (ignore une valeur invalide → pas de déclenchement parasite). Volet **input** (cross-platform) ; la ligne UI dans Options reste un petit suivi (Windows-only).

@@ -7268,9 +7268,15 @@ namespace engine
 					// Attaque melee : clic gauche (edge). Le bloc gameplay est deja garde
 					// contre le focus chat / l'auth (cf. ligne ~6969) ; on exclut en plus
 					// le drag inventaire pour ne pas frapper en relachant un objet.
+					// Touche d'attaque ALTERNATIVE (controls.keybind.attack, vide = clic gauche
+					// seul). Permet de remapper l'attaque sur une touche, en plus du clic gauche.
+					// Round-trip KeyName(KeyFromName(...)) pour ignorer une valeur invalide.
+					const std::string attackKeyName = m_cfg.GetString("controls.keybind.attack", "");
+					const engine::platform::Key attackKey = KeyFromName(attackKeyName, engine::platform::Key::Escape);
+					const bool attackKeyBound = !attackKeyName.empty() && std::string(KeyName(attackKey)) == attackKeyName;
 					const bool attackPressed =
-						m_input.WasMousePressed(engine::platform::MouseButton::Left)
-						&& !m_invUi.IsDragging();
+						(m_input.WasMousePressed(engine::platform::MouseButton::Left) && !m_invUi.IsDragging())
+						|| (attackKeyBound && m_input.WasPressed(attackKey));
 
 					// Sort : touche R (edge). Meme bloc gameplay garde contre le focus
 					// chat / l'auth (cf. ligne ~6961). Geste cosmetique one-shot (pas de

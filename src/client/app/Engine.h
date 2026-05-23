@@ -582,21 +582,53 @@ namespace engine
 			CrouchIdle,
 			CrouchWalk,
 			Roll,
-			Dance,
+			Emote,
 			Attack,
 			Cast,
+			Interact,
+			Punch,
 			Jump,
 			Fall,
-			Land
+			Land,
+			SwimIdle,
+			SwimForward
 		};
 	private:
 		AvatarLocomotionState                                     m_avatarLocoState = AvatarLocomotionState::Idle;
 		/// Instant (s, EngineNowSec) du dernier appui sur Ctrl — détection du
 		/// double-tap pour déclencher la roulade/esquive (Roll). -10 = jamais.
 		float                                                    m_lastCtrlTapSec = -10.0f;
-		/// Emote danse demandée (commande chat /dance) — consommée par la state
-		/// machine de locomotion pour passer en état Dance (annulée au déplacement).
-		bool                                                     m_danceRequested = false;
+		/// Emote en cours de demande (slash command), consommée par la state machine
+		/// de locomotion : passe l'avatar en état Emote (anim en boucle, annulée au
+		/// déplacement). m_currentEmoteRole = rôle d'anim actif (clip joué en Emote).
+		std::string                                              m_pendingEmoteRole;
+		std::string                                              m_currentEmoteRole;
+		/// Combo coups de poing : role d'anim du poing en cours (Punch=Jab / PunchCross)
+		/// et bascule Jab<->Cross a chaque coup. Clip dynamique (cf. point de lecture).
+		std::string                                              m_currentPunchRole = "Punch";
+		bool                                                     m_punchAlt = false;
+		/// Sequence de sort : phase (0=Enter,1=Shoot,2=Exit) + clip a rejouer en
+		/// cours d'etat (vide=aucun ; consomme 1 fois par la SM, rejoue un one-shot
+		/// sans changer d'etat). Garde-fou 3s dans le case Cast => jamais bloque.
+		int                                                      m_castPhase = 0;
+		std::string                                              m_avatarPendingClipRole;
+		/// Interaction (touche E) v1 : entites interactibles (objets / PNJ). Cibles
+		/// de TEST invisibles (pas de rendu/dialogue avance) -> a remplacer par de
+		/// vraies entites. m_interactableInRange = index a portee (-1 = aucun).
+		struct InteractableEntity
+		{
+			engine::math::Vec3 position{};
+			float radius = 2.5f;
+			bool isNpc = false;
+			std::string label;
+			std::string message;
+		};
+		std::vector<InteractableEntity> m_interactables;
+		int m_interactableInRange = -1;
+		/// Action en cours de remappage dans le panneau Options (capture clavier) :
+		/// 0 = aucune, 1 = sprint, 2 = crouch, 3 = sort. Tant que != 0, le panneau
+		/// attend une touche ; le bloc gameplay est suspendu (panneau Options ouvert).
+		int                                                      m_rebindingAction = 0;
 		/// Instant d'entrée dans l'état courant. Utilisé pour :
 		///   - détecter la fin de StartWalking / Jump / Land (durée écoulée >= clip.duration).
 		///   - tracer la transition Jump -> Fall après 40% du clip Jump (takeoff).

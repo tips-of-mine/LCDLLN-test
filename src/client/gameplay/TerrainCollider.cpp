@@ -1,8 +1,10 @@
 #include "src/client/gameplay/TerrainCollider.h"
 #include "src/client/render/terrain/TerrainRenderer.h"
+#include "src/client/world/water/WaterSurfaces.h"
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 
 namespace engine::gameplay
 {
@@ -96,6 +98,54 @@ bool TerrainCollider::SweepCapsule(const Capsule& capsule,
     }
 
     return outHit.hit;
+}
+
+/// Nage : detecte l'immersion a `worldCenter` (centre capsule ~ hauteur du
+/// bassin). Parcourt les lacs de la scene d'eau et fait un point-in-polygon
+/// (ray-casting) dans le plan XZ ; retient la surface la plus haute couvrant
+/// (x,z). `inWater` ssi la surface depasse le centre (eau au-dessus du bassin).
+bool TerrainCollider::QueryWater(const engine::math::Vec3& worldCenter, WaterQuery& out) const
+{
+    out = WaterQuery{};
+    if (m_water == nullptr)
+        return false;
+
+    const float px = worldCenter.x;
+    const float pz = worldCenter.z;
+    bool found = false;
+    float bestSurfaceY = 0.0f;
+
+    for (const auto& lake : m_water->lakes)
+    {
+        const std::vector<engine::math::Vec3>& poly = lake.polygon;
+        const std::size_t n = poly.size();
+        if (n < 3)
+            continue;
+        bool inside = false;
+        for (std::size_t i = 0, j = n - 1; i < n; j = i++)
+        {
+            const float zi = poly[i].z, zj = poly[j].z;
+            if ((zi > pz) != (zj > pz))
+            {
+                const float xCross = (poly[j].x - poly[i].x) * (pz - zi) / (zj - zi) + poly[i].x;
+                if (px < xCross)
+                    inside = !inside;
+            }
+        }
+        if (inside && (!found || lake.waterLevelY > bestSurfaceY))
+        {
+            found = true;
+            bestSurfaceY = lake.waterLevelY;
+        }
+    }
+
+    if (!found)
+        return false;
+
+    out.surfaceY = bestSurfaceY;
+    out.depth    = bestSurfaceY - worldCenter.y;  // > 0 si centre (bassin) immerge
+    out.inWater  = out.depth > 0.0f;
+    return out.inWater;
 }
 
 }  // namespace engine::gameplay

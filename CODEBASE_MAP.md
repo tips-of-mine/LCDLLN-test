@@ -1577,7 +1577,7 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 `Roll (double-tap) > Dance (/dance, à l'arrêt) > Crouch (Ctrl tenu) > Sprint (Alt) > Run (Shift) > Walk`.
 
 ### Limites connues
-- **Roll sans déplacement réel** : l'anim joue mais le `CharacterController` n'applique pas d'impulsion/i-frames d'esquive (purement cosmétique pour l'instant).
+- **Roll = vraie esquive (impulsion)** : au passage en Roll, l'Engine appelle `CharacterController::ApplyDodgeImpulse(dir)` (dir = mouvement, sinon avant-caméra). Pendant `dodgeDurationSec` (~0.45 s) la vitesse horizontale est forcée à `dodgeSpeed` (~11 m/s) ; collision (sweep) et gravité restent appliquées (roulade dans un mur / au bord OK). **I-frames d'invincibilité** non incluses : elles n'ont de sens qu'avec le système de dégâts (combat réel, côté serveur) — à ajouter là. À régler en jeu : `dodgeSpeed`/`dodgeDurationSec`.
 - **Double-tap Ctrl** : la fenêtre 0.30 s peut occasionnellement déclencher un Roll lors d'un crouch « nerveux » (deux appuis rapprochés). Ajustable via le seuil.
 
 §27 étape 2 **terminée**.
@@ -1630,5 +1630,104 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 
 ### Limites connues
 - **Cosmétique uniquement** : aucun projectile, aucune cible, aucun envoi serveur.
-- **Clip unique (pas de séquence)** : on joue `Spell_Simple_Shoot` seul, sans le wind-up/exit (`Spell_Simple_Enter`/`Idle_Loop`/`Exit`). Le crossfade lisse le retour à la locomotion ; une vraie séquence Enter→(channel)→Shoot→Exit est une amélioration future.
+- **Séquence Enter→Shoot→Exit** (depuis §37+) : l'état `Cast` joue désormais `Spell_Simple_Enter` à l'entrée, puis **rejoue** `Spell_Simple_Shoot` puis `Spell_Simple_Exit` aux frontières de phase (`m_castPhase`), via un **replay de clip en cours d'état** (`m_avatarPendingClipRole`, consommé une fois par frame dans la SM — rejoue un one-shot sans transition). `addRole` : `Cast`=Enter, `CastShoot`=Shoot, `CastExit`=Exit. **Garde-fou** : sortie forcée si `stateElapsed ≥ 3 s` → jamais bloqué. Mécanisme réutilisable pour d'autres séquences (emotes Enter/Exit, combos).
 - **Repli gracieux** : une race sans clip `Spell_Simple_Shoot` (`FindClip` nullptr) sort immédiatement de l'état (anim précédente conservée).
+
+## 34. Touches d'action remappables depuis le menu Options (2026-05-22)
+
+**Objectif** : rendre **modifiables in-game** (panneau Options) les touches des actions ajoutées récemment (Sprint, Accroupi/Roulade, Sort), sans toucher au protocole ni au serveur.
+
+### Config
+- Clés `controls.keybind.{sprint,crouch,cast}` (défauts `Alt`/`Ctrl`/`R`) dans `config.json`. Noms acceptés = ceux de la table `kRebindableKeys` (Engine.cpp) : lettres A-Z **sauf I/J/K/T** (absentes de `platform::Key`), chiffres 0-9, `Ctrl`/`Alt`/`Shift`/`Espace`/`Tab`.
+- `KeyName(Key)` / `KeyFromName(nom, fallback)` (anonymous namespace de `Engine.cpp`) font la conversion enum ↔ nom. Pas de modif de l'API `Input`.
+
+### Lecture gameplay (config-driven)
+- Dans le bloc gameplay (`Engine.cpp`, `if (!authGateActive && !IsChatFocusActive() && !m_inGameOptionsPanelVisible)`), les 3 touches sont **résolues chaque frame** depuis la config (reflète un rebind immédiatement).
+- `BuildMoveInput(..., sprintKey, crouchKey)` : `out.sprint = IsDown(sprintKey)`, `out.crouch = IsDown(crouchKey)` (avant : `Alt`/`Control` en dur). La **roulade** réutilise `crouchKey` (double-appui). Le **sort** lit `WasPressed(castKey)`. Run (Shift) et Jump (Espace) restent fixes (hors périmètre « nouvelles touches »).
+
+### UI Options (rebind par capture)
+- Section « Controles » ajoutée au **panneau Options in-game** (`Engine.cpp`, `#if defined(_WIN32)`). Une ligne par action (Sprint/Accroupi/Sort) : libellé + touche courante + bouton « Modifier ».
+- « Modifier » arme `m_rebindingAction` (1/2/3) ; le rendu suivant capture la **1re touche connue pressée** (`kRebindableKeys`) et écrit `controls.keybind.*` (Échap = annuler).
+- **Gameplay suspendu** tant que le panneau Options est ouvert (ajout de `!m_inGameOptionsPanelVisible` au garde) → la touche capturée ne déclenche pas l'action en même temps.
+- Roulade et Attaque affichées en **info** (non remappables : la roulade suit la touche Accroupi, l'attaque est le clic gauche — souris).
+
+### Limites connues
+- **Persistance** : le rebind est **persisté** dans un fichier dédié `keybinds.json` (écrit par le panneau Options via `FileSystem::WriteAllText`, format contrôlé). Au boot, `ApplyUserSettingsOverrides` fait `cfg.LoadFromFile("keybinds.json")` qui **merge** par-dessus les défauts de `config.json`. Choix d'un **fichier dédié** (et non un patch de `user_settings.json`) pour que tout échec d'écriture/lecture soit **bénin** (retour aux défauts) et ne corrompe jamais les autres réglages. Les sliders volume/sensibilité de ce panneau restent eux session-only (hors périmètre).
+- **Pas de détection de conflit** : binder deux actions sur la même touche est permis (ex. réutiliser une touche de panneau B/G/…). À durcir si besoin.
+- **Souris/modificateurs** : l'attaque (clic gauche) n'est pas remappable en v1 ; rebinder un modificateur (Alt/Ctrl) vers une lettre fonctionne mais peut entrer en conflit avec d'autres usages (Ctrl = modificateur de raccourcis).
+
+## 35. Action « interagir » (touche E) — geste `Interact` one-shot (2026-05-22)
+
+**Objectif** : donner enfin un usage à la **touche E** réservée au §32 (libérée du toggle GameEvents). Premier maillon d'un futur système d'interaction (PNJ/objet/loot) : pour l'instant un **geste cosmétique** one-shot, comme l'attaque/le sort. Livré **dans la même PR que les keybinds (§34)** (consigne « minimum de PR »).
+
+### Chaîne
+- **Input** : touche **remappable** `controls.keybind.interact` (défaut `E`), résolue chaque frame (`KeyFromName`). `interactPressed = WasPressed(interactKey)`, dans le bloc gameplay gardé (chat/auth/Options).
+- **État** : `AvatarLocomotionState::Interact` (**one-shot**, absent de `ClipLoops`). Override : `if (interactPressed && !jump && état ∉ {Roll, Attack, Cast, Interact}) newState = Interact` — prioritaire sur le crouch, ne coupe pas Roll/Attack/Cast. Le `case Interact` sort vers la locomotion quand `stateElapsed ≥ interactClip->duration`.
+- **Anim** : `addRole("Interact", "Interact")`. `StateToClipName(Interact) = "Interact"`.
+- **Remap** : 4ᵉ ligne « Interagir » dans la section Controles du panneau Options (capture clavier, comme sprint/crouch/sort).
+
+### Priorité d'intention (au sol), mise à jour
+`Roll > Attack > Cast > Interact > Dance > Crouch > Sprint > Run > Walk` (les actions one-shot s'excluent mutuellement tant que l'une joue).
+
+### Limites connues
+- **Geste cosmétique seulement** : aucune cible, aucun objet ramassé, aucun PNJ adressé — c'est l'animation de base. Le vrai système « interagir » (raycast vers une entité interactible, prompt, loot) reste à construire (nécessitera des entités interactibles, voire des events serveur).
+- **Repli gracieux** : race sans clip `Interact` → sortie immédiate de l'état.
+
+## 36. Emotes génériques par slash command (généralisation de `/dance`) (2026-05-22)
+
+**Objectif** : transformer le `/dance` mono-usage (§30) en **système d'emotes data-driven** — ajouter une emote = **une ligne** + un `addRole`. Livré dans la même PR que §34/§35 (« minimum de PR »).
+
+### Mécanique
+- **État unique `Emote`** (renommé depuis `Dance`) : anim **en boucle**, interrompue par tout déplacement/saut (le `case Emote` sort vers Walk/Run/Jump/…). `ClipLoops(Emote) = true`.
+- **Clip dynamique** : le rôle d'anim joué n'est pas fixe. `m_pendingEmoteRole` (posé par la slash command) → consommé par la SM → `m_currentEmoteRole`. Au point de lecture du clip (`Engine.cpp`, transition d'état), si `newState == Emote` on joue `m_currentEmoteRole` au lieu de `StateToClipName`.
+- **Table des emotes** (`kEmotes` dans le handler chat) : `{ commande, rôle, message }`. Actuellement : `/dance`, `/sit` & `/assis`, `/talk`, `/torch`, `/kneel` (Fixing_Kneeling), `/sittalk` (Sitting_Talking_Loop), `/push` (Push_Loop). Rôles mappés via `addRole("Dance","Dance_Loop")`, `addRole("Sit","Sitting_Idle_Loop")`, `addRole("Talk","Idle_Talking_Loop")`, `addRole("Torch","Idle_Torch_Loop")`.
+- **Priorité** : `Roll > Attack > Cast > Interact > Emote > Crouch > Sprint > Run > Walk` (emote uniquement à l'arrêt, hors Roll).
+
+### Ajouter une emote
+1. Une entrée `{ "/macommande", "MonRole", "Mon message." }` dans `kEmotes`.
+2. Un `addRole("MonRole", "Clip_Loop")` (clip présent dans la library UE5).
+
+### Limites connues
+- **Pas de changement d'emote « à chaud »** : enchaîner deux emotes sans bouger ne relance pas le clip (le state reste `Emote`, pas de transition). Bouger puis ré-emoter. (Acceptable ; à raffiner si besoin via un re-trigger sur changement de rôle.)
+- **Emotes en boucle simple** : pas de séquence Enter/Exit (ex. `Sitting_Enter`/`Exit` non utilisés) — on joue directement le `*_Idle_Loop`, le crossfade lisse l'entrée/sortie.
+
+## 37. Coup de poing (touche C) + factorisation des actions one-shot (2026-05-22)
+
+**Objectif** : 2ᵉ attaque mêlée (coup de poing) **et** nettoyage de la logique d'exclusion mutuelle des actions one-shot, devenue verbeuse au fil des ajouts (attaque/sort/interaction).
+
+### Coup de poing
+- **Input** : touche **remappable** `controls.keybind.punch` (défaut `C`), edge. `addRole("Punch", "Punch_Jab")`.
+- **État** : `AvatarLocomotionState::Punch` (one-shot, comme l'attaque). 5ᵉ ligne « Coup de poing » dans la section Controles d'Options.
+
+### Factorisation `busyOneShot()`
+- Une lambda `busyOneShot()` (dans la SM) retourne vrai si l'avatar est dans **une action one-shot ou la roulade** (`Roll/Attack/Cast/Interact/Punch`). Les overrides d'attaque/coup/sort/interaction se réduisent à `if (xPressed && !jump && !busyOneShot()) newState = X;` — **comportement identique** à l'ancienne liste d'exclusions, mais plus lisible et **extensible** (ajouter une action one-shot = une entrée dans la lambda + un override).
+- **Priorité (au sol)** : `Roll > Attack > Punch > Cast > Interact > Emote > Crouch > Sprint > Run > Walk`.
+
+### Limites connues
+- **Cosmétique** : aucun dégât/cible (comme l'attaque épée).
+- **Alternance Jab/Cross** : chaque coup alterne `Punch_Jab` et `Punch_Cross` (variété ; clip dynamique via `m_currentPunchRole`, comme l'état Emote). Pas de vrai « combo » chaîné sur presses rapides — un coup pendant l'autre est ignoré (one-shot) ; échec bénin (au pire le mauvais clip de poing, jamais d'état bloqué).
+
+## 38. Nage automatique (immersion > bassin) — v1 (2026-05-22)
+
+**Objectif** : passage en nage **sans touche**, déclenché par le niveau d'eau sur le corps (au-dessus du bassin). La physique de nage (`CharacterController` mode `Water`) et le rendu d'eau existaient déjà ; on branche la **détection d'eau** + l'**anim**.
+
+### Chaîne
+- **QueryWater** (`TerrainCollider`) : `BindWater(WaterScene*)` + override `QueryWater(center)` — point-in-polygon (ray-casting XZ) sur les lacs ; retient la surface la plus haute couvrant (x,z). `inWater = (surfaceY > centerY)` → le **centre de la capsule ≈ bassin**, donc nage quand l'eau dépasse le bassin (réglable). Le `CharacterController` bascule alors **automatiquement** en mode `Water` (déjà implémenté).
+- **Anim** : nouveaux états `SwimIdle`/`SwimForward` (bouclés), `addRole("SwimIdle","Swim_Idle_Loop")`/`("SwimForward","Swim_Fwd_Loop")`. Dans la SM, un override **après** locomotion/air : `if (m_characterController.IsInWater()) newState = (moving)?SwimForward:SwimIdle;` (surclasse tout). **Sortie d'eau** gérée explicitement (sinon l'avatar resterait figé en nage au sol).
+- **Eau de TEST** (`world.test_water.*`, défaut activé) : la zone demo est plate et sans eau → on pose un **bassin procédural** (lac carré au-dessus du sol) pour pouvoir tester. À remplacer par une vraie étendue d'eau (pipeline `water.bin` / level-design).
+
+### Limites connues
+- **Eau-test artificielle** : « pool » posé sur la plaine (pas de bassin creusé) ; visuellement faux mais fonctionnel. Winding du quad à vérifier (surface peut être cullée — la nage marche quand même).
+- **Lacs seulement** (rivières ignorées en v1). Pas de contrôle vertical mappé (swimUp/Down existent, non bindés).
+
+## 39. Interaction (touche E) — objets + dialogue PNJ — v1 (2026-05-22)
+
+**Objectif** : donner un vrai usage à E (au-delà du geste §35) : **interagir avec des objets** et **parler aux PNJ**. v1 = framework + cibles de TEST.
+
+### Chaîne
+- **Entités** : `Engine::InteractableEntity { position, radius, isNpc, label, message }` + `m_interactables`. Deux cibles de TEST placées près du spawn (un PNJ « Villageois », un « Coffre »).
+- **Détection** : chaque frame, l'interactible le plus proche (distance XZ) à portée. À l'**entrée de portée** → hint chat (« Près de X — appuyez sur E »). Sur **E** (`interactPressed`) → message chat : dialogue (`[PNJ]`) ou effet (`[Objet]`). Le geste Interact (§35) joue par ailleurs.
+
+### Limites connues
+- **Cibles invisibles** (pas de rendu de props/PNJ) → découvrables seulement via le hint chat. À remplacer par de vraies entités avec **meshes** + **dialogues** (arbre de dialogue, loot, etc.).
+- **Dialogue mono-ligne** (pas d'arbre). Pas de portée/raycast visée (proximité simple).

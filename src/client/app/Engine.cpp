@@ -4258,6 +4258,10 @@ namespace engine
 
 													// Charge les 3 races MVP. Lookup meshPath via
 													// CharacterCreationPresenter local (Init() vient d'etre appele).
+													// Modele feminin (cosmetique client v1, #2) : si genre feminin, derive le
+													// chemin Male_ -> Female_ (humains : Male_Ranger -> Female_Ranger present).
+													// Sans variante (pas de 'Male_') -> mesh par defaut. NON persiste (serveur=etape 2).
+													const std::string avatarGender = m_cfg.GetString("client.character_creation.gender", "male");
 													for (const char* raceId : kMvpRaces) {
 														const auto& races = racesPresenter.GetRaces();
 														const engine::client::RaceDefinition* def = nullptr;
@@ -4266,7 +4270,17 @@ namespace engine
 															LOG_WARN(Render, "[Engine] Race '{}' : RaceDefinition introuvable ou meshPath vide", raceId);
 															continue;
 														}
-														loadOneRace(raceId, def->meshPath, def->importScale, def->importRotXDeg);
+														std::string meshPath = def->meshPath;
+														if (avatarGender == "female") {
+															std::string fem = meshPath;
+															std::string::size_type gp = 0;
+															while ((gp = fem.find("Male_", gp)) != std::string::npos) { fem.replace(gp, 5, "Female_"); gp += 7; }
+															if (fem != meshPath) {
+																meshPath = fem;
+																LOG_INFO(Render, "[Engine] Race '{}' : variante feminine -> {}", raceId, meshPath);
+															}
+														}
+														loadOneRace(raceId, meshPath, def->importScale, def->importRotXDeg);
 													}
 
 													// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le

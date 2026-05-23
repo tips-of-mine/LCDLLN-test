@@ -64,3 +64,9 @@
   *session-only* (non sérialisés). Seuls les binds sont persistés (`keybinds.json`, §34/§38… cf. §34).
 - **Validation runtime** : tout le gameplay/anim/physique ci-dessus n'est pas testable en
   CI (compilation seulement). Chaque item « feel » nécessite un test en jeu (build Windows).
+
+## G. Character-customization (chantier d'origine)
+
+- **#2 Modèle féminin** : cosmétique client ✅ (§43, `client.character_creation.gender`). **Reste** : sélecteur UI de genre + **persistance serveur** (DB migration + payload = redéploiement).
+- **#5 Textures** : modèles M/F en matériau fallback (aucune texture sous `models/characters/`). Placer les textures + reconvertir (assets) ; côté code, vérifier les chemins référencés par les `.glb`.
+- **#3 Animations** : ✅ fait et dépassé (§27→§42).

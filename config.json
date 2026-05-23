@@ -204,7 +204,9 @@
         "allow_insecure_dev": true,
         "locale": "",
         "character_creation": {
-            "default_server_id": 1
+            "default_server_id": 1,
+            "_comment_gender": "Modele feminin (cosmetique client v1) : 'male' ou 'female'. Si 'female', l'avatar derive le mesh Male_ -> Female_ (humains : Female_Ranger). Non persiste (relog = retour defaut) ; persistance serveur = etape 2.",
+            "gender": "male"
         },
         "auth_ui": {
             "enabled": true,

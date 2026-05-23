@@ -1761,3 +1761,15 @@ Backlog complet des tâches restantes (polish, contenu, serveur) : **`docs/BACKL
 
 - **Contrôle vertical** : `BuildMoveInput` pose `swimUpPressed`=Espace, `swimDownPressed`=touche Crouch. Le `CharacterController` ne les consomme qu'en mode `Water` (monter/descendre en nage) ; hors eau, Espace=saut / Crouch=accroupi inchangés.
 - **Rivières dans `QueryWater`** : en plus des lacs (point-in-polygon), on teste chaque segment `[a,b]` des rivières (distance XZ au segment ≤ demi-largeur interpolée → immersion ; surface = Y interpolé le long du segment). Couvre lacs **et** rivières (océan = lac `isOcean`).
+
+## 43. Modèle féminin — cosmétique client v1 (#2) (2026-05-22)
+
+**Objectif** : rendre le **modèle féminin** sélectionnable/affiché côté client, sans serveur (les meshes `Female_Ranger`/`Female_Peasant` existaient mais n'étaient pas câblés ; `races.json` ne pointe que `Male_Ranger`).
+
+- **Genre** : `client.character_creation.gender` = `"male"` (défaut) | `"female"`. Au chargement de l'avatar, si `female`, on **dérive** le chemin `Male_` → `Female_` (humains : `Male_Ranger/Male_Ranger.glb` → `Female_Ranger/Female_Ranger.glb`, présent). Races sans variante (`orcs`/`nains`, pas de `Male_` dans le chemin) → mesh par défaut inchangé.
+- **Cosmétique / client uniquement** : choix lu en config, **non persisté** (relog = retour au défaut) et **non envoyé au serveur**. Aucun redéploiement.
+
+### Reste (étape 2, cf. backlog #2)
+- **Sélecteur de genre dans l'UI** de création de perso (ImGui) — au lieu de la config.
+- **Persistance serveur** : genre stocké en DB (migration) + payload → redéploiement master/shard, visible des autres joueurs.
+- **Textures** (#5) : les modèles (M/F) rendent en matériau fallback tant que les textures ne sont pas placées/converties (assets).

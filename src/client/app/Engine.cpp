@@ -136,10 +136,51 @@ namespace engine
 		///         `swim*/fly` sont hors-scope B.1 et restent false.
 		///
 		/// Effet de bord : aucun. Pure projection input -> intention.
+		// Touches remappables (nom config <-> enum platform::Key). Limitee aux
+		// Key reellement definies dans l'enum (I/J/K/T n'y figurent pas). Sert au
+		// panneau Options (affichage + capture du rebind) et a la lecture des
+		// binds gameplay depuis controls.keybind.* (sprint / crouch / cast).
+		struct RebindableKey { engine::platform::Key key; const char* name; };
+		const RebindableKey kRebindableKeys[] = {
+			{engine::platform::Key::A,"A"},{engine::platform::Key::B,"B"},{engine::platform::Key::C,"C"},
+			{engine::platform::Key::D,"D"},{engine::platform::Key::E,"E"},{engine::platform::Key::F,"F"},
+			{engine::platform::Key::G,"G"},{engine::platform::Key::H,"H"},{engine::platform::Key::L,"L"},
+			{engine::platform::Key::M,"M"},{engine::platform::Key::N,"N"},{engine::platform::Key::O,"O"},
+			{engine::platform::Key::P,"P"},{engine::platform::Key::Q,"Q"},{engine::platform::Key::R,"R"},
+			{engine::platform::Key::S,"S"},{engine::platform::Key::U,"U"},{engine::platform::Key::V,"V"},
+			{engine::platform::Key::W,"W"},{engine::platform::Key::X,"X"},{engine::platform::Key::Y,"Y"},
+			{engine::platform::Key::Z,"Z"},
+			{engine::platform::Key::Digit0,"0"},{engine::platform::Key::Digit1,"1"},{engine::platform::Key::Digit2,"2"},
+			{engine::platform::Key::Digit3,"3"},{engine::platform::Key::Digit4,"4"},{engine::platform::Key::Digit5,"5"},
+			{engine::platform::Key::Digit6,"6"},{engine::platform::Key::Digit7,"7"},{engine::platform::Key::Digit8,"8"},
+			{engine::platform::Key::Digit9,"9"},
+			{engine::platform::Key::Control,"Ctrl"},{engine::platform::Key::Alt,"Alt"},
+			{engine::platform::Key::Shift,"Shift"},{engine::platform::Key::Space,"Espace"},
+			{engine::platform::Key::Tab,"Tab"},
+		};
+
+		/// Nom affichable/config d'une touche (ou "?" si hors table).
+		const char* KeyName(engine::platform::Key k)
+		{
+			for (const auto& e : kRebindableKeys)
+				if (e.key == k) return e.name;
+			return "?";
+		}
+
+		/// Resout un nom de touche (config) en `Key`, `fallback` si inconnu.
+		engine::platform::Key KeyFromName(const std::string& name, engine::platform::Key fallback)
+		{
+			for (const auto& e : kRebindableKeys)
+				if (name == e.name) return e.key;
+			return fallback;
+		}
+
 		engine::gameplay::MoveInput BuildMoveInput(
 			const engine::platform::Input& input,
 			const engine::render::OrbitalCameraController& camera,
-			engine::render::MovementLayout layout)
+			engine::render::MovementLayout layout,
+			engine::platform::Key sprintKey,
+			engine::platform::Key crouchKey)
 		{
 			engine::gameplay::MoveInput out{};
 
@@ -183,6 +224,8 @@ namespace engine
 			}
 
 			out.run         = input.IsDown(engine::platform::Key::Shift);
+			out.sprint      = input.IsDown(sprintKey);
+			out.crouch      = input.IsDown(crouchKey);
 			out.jumpPressed = input.WasPressed(engine::platform::Key::Space);
 			// swim/fly hors-scope B.1 : restent false (consommes par les modes
 			// Water/Fly du CharacterController, inutiles tant que la query eau
@@ -223,9 +266,20 @@ namespace engine
 				case engine::Engine::AvatarLocomotionState::Walk:         return "Walk";
 				case engine::Engine::AvatarLocomotionState::WalkBack:     return "WalkBack";
 				case engine::Engine::AvatarLocomotionState::Run:          return "Run";
+				case engine::Engine::AvatarLocomotionState::Sprint:       return "Sprint";
+				case engine::Engine::AvatarLocomotionState::CrouchIdle:   return "CrouchIdle";
+				case engine::Engine::AvatarLocomotionState::CrouchWalk:   return "CrouchWalk";
+				case engine::Engine::AvatarLocomotionState::Roll:         return "Roll";
+				case engine::Engine::AvatarLocomotionState::Emote:        return "Emote";
+				case engine::Engine::AvatarLocomotionState::Attack:       return "Attack";
+				case engine::Engine::AvatarLocomotionState::Cast:         return "Cast";
+				case engine::Engine::AvatarLocomotionState::Interact:     return "Interact";
+				case engine::Engine::AvatarLocomotionState::Punch:        return "Punch";
 				case engine::Engine::AvatarLocomotionState::Jump:         return "Jump";
 				case engine::Engine::AvatarLocomotionState::Fall:         return "Fall";
 				case engine::Engine::AvatarLocomotionState::Land:         return "Land";
+				case engine::Engine::AvatarLocomotionState::SwimIdle:     return "SwimIdle";
+				case engine::Engine::AvatarLocomotionState::SwimForward:  return "SwimForward";
 			}
 			return "Idle";
 		}
@@ -244,7 +298,13 @@ namespace engine
 				|| s == engine::Engine::AvatarLocomotionState::Walk
 				|| s == engine::Engine::AvatarLocomotionState::WalkBack
 				|| s == engine::Engine::AvatarLocomotionState::Run
-				|| s == engine::Engine::AvatarLocomotionState::Fall;
+				|| s == engine::Engine::AvatarLocomotionState::Sprint
+				|| s == engine::Engine::AvatarLocomotionState::CrouchIdle
+				|| s == engine::Engine::AvatarLocomotionState::CrouchWalk
+				|| s == engine::Engine::AvatarLocomotionState::Emote
+				|| s == engine::Engine::AvatarLocomotionState::Fall
+				|| s == engine::Engine::AvatarLocomotionState::SwimIdle
+				|| s == engine::Engine::AvatarLocomotionState::SwimForward;
 		}
 
 		engine::core::LogLevel ParseLogLevelConfig(std::string_view text)
@@ -405,8 +465,30 @@ namespace engine
 			return RaycastTerrainHeightmap(camera.position, dir, hm, ox, oz, ws, hScale, maxDist, outX, outZ);
 		}
 
+		// Détecte la disposition clavier par défaut au 1er lancement selon l'OS :
+		// clavier français (AZERTY) -> "zqsd", sinon "wasd". N'est appliquée que si
+		// ni config.json ni user_settings.json ne fixent controls.movement_layout ;
+		// le choix du joueur (persisté dans user_settings.json) prime ensuite.
+		std::string DetectDefaultMovementLayout()
+		{
+#if defined(_WIN32)
+			const HKL  hkl    = ::GetKeyboardLayout(0);
+			const WORD langId = LOWORD(reinterpret_cast<UINT_PTR>(hkl));
+			if (PRIMARYLANGID(langId) == LANG_FRENCH)
+				return "zqsd";
+#endif
+			return "wasd";
+		}
+
 		void ApplyUserSettingsOverrides(engine::core::Config& cfg)
 		{
+			// Binds clavier persistants (controls.keybind.*) : fichier dedie
+			// keybinds.json, ecrit par le panneau Options au rebind. Merge par-dessus
+			// les defauts de config.json. Absent/malforme -> ignore (on garde les defauts) ;
+			// fichier dedie => un echec ne corrompt jamais user_settings.json.
+			if (cfg.LoadFromFile("keybinds.json"))
+				LOG_INFO(Core, "[Boot] keybinds.json applique (binds clavier persistants)");
+
 			engine::core::Config persisted;
 			if (!persisted.LoadFromFile("user_settings.json"))
 			{
@@ -814,6 +896,14 @@ namespace engine
 		// Config + subsystems
 		// ------------------------------------------------------------------
 		ApplyUserSettingsOverrides(m_cfg);
+		// 1er lancement : si aucune source (config.json / user_settings.json) ne
+		// fixe la disposition clavier, défaut basé sur le clavier OS (AZERTY -> zqsd).
+		if (!m_cfg.Has("controls.movement_layout"))
+		{
+			const std::string osLayout = DetectDefaultMovementLayout();
+			m_cfg.SetValue("controls.movement_layout", osLayout);
+			LOG_INFO(Core, "[Boot] controls.movement_layout défaut OS (clavier) = {}", osLayout);
+		}
 		m_vsync   = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
 		m_worldEditorExe = HasCliFlag(argc, argv, "--world-editor");
@@ -1296,6 +1386,44 @@ namespace engine
 				sendAdminAudit("/mail");
 				return true;
 			}
+			// CHAR-MODEL — Emotes par slash command : posent un role d'emote consomme
+			// par la state machine (avatar -> etat Emote, anim en boucle annulee au
+			// moindre deplacement/saut). Locales (pas d'aller-retour serveur). Ajouter
+			// une emote = une ligne dans kEmotes (+ addRole correspondant).
+			{
+				struct EmoteCmd { const char* cmd; const char* role; const char* feedback; };
+				static const EmoteCmd kEmotes[] = {
+					{ "/dance", "Dance", "Vous dansez." },
+					{ "/sit",   "Sit",   "Vous vous asseyez." },
+					{ "/assis", "Sit",   "Vous vous asseyez." },
+					{ "/talk",  "Talk",  "Vous discutez." },
+					{ "/torch", "Torch", "Vous brandissez une torche." },
+					{ "/kneel", "Kneel", "Vous vous agenouillez." },
+					{ "/sittalk", "SitTalk", "Vous discutez, assis." },
+					{ "/push", "Push", "Vous poussez." },
+				};
+				if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say))
+				{
+					for (const auto& em : kEmotes)
+					{
+						const std::string c = em.cmd;
+						if (text == c || text.starts_with(c + " ") || text.starts_with(c + "\t"))
+						{
+							m_pendingEmoteRole = em.role;
+							LOG_INFO(Core, "[Engine] emote {} (role {}) requested", em.cmd, em.role);
+							engine::net::ChatMessage emoteMsg;
+							emoteMsg.timestampUnixMs = static_cast<uint64_t>(
+								std::chrono::duration_cast<std::chrono::milliseconds>(
+									std::chrono::system_clock::now().time_since_epoch()).count());
+							emoteMsg.channel = engine::net::ChatChannel::Server;
+							emoteMsg.sender  = "[Emote]";
+							emoteMsg.text    = em.feedback;
+							m_chatUi.PushNetworkLine(emoteMsg);
+							return true;
+						}
+					}
+				}
+			}
 			// CMANGOS.23 (Phase 5.23 step 3+4) — Slash command /quest et /quests
 			// pour ouvrir/fermer le panneau quete et synchroniser la liste depuis
 			// le master au moment de l'ouverture.
@@ -1475,8 +1603,9 @@ namespace engine
 			}
 			// CMANGOS.31 (Phase 5.31 step 3+4) — Slash command /events pour
 			// ouvrir/fermer le panneau GameEvents et synchroniser la liste
-			// depuis le master au moment de l'ouverture. La touche E fait
-			// la meme chose (cf. boucle input dans BeginFrame).
+			// depuis le master au moment de l'ouverture. Le menu "Panneaux"
+			// (barre de menus ImGui in-game) fait la meme chose (la touche E,
+			// qui servait a cela, a ete liberee).
 			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
 				&& (text == "/events" || text.starts_with("/events ") || text.starts_with("/events\t")))
 			{
@@ -3950,7 +4079,8 @@ namespace engine
 													engine::client::CharacterCreationPresenter racesPresenter;
 													racesPresenter.Init(m_cfg);
 
-													auto loadOneRace = [&](const std::string& raceId, const std::string& meshPath) -> bool {
+													auto loadOneRace = [&](const std::string& raceId, const std::string& meshPath,
+													                       float importScale, float importRotXDeg) -> bool {
 														const std::string fullMeshPath = contentRoot + "/" + meshPath;
 														auto loaded = engine::render::skinned::SkinnedMeshLoader::Load(
 															m_vkDeviceContext.GetDevice(),
@@ -3965,6 +4095,95 @@ namespace engine
 														for (auto& c : loaded->clips) {
 															if (c.name == "mixamo.com") { c.name = "Walk"; break; }
 														}
+														// Detection du rig : UE5 (pelvis, pas de mixamorig:*) vs Mixamo.
+														// Bascule la source d'animations sans casser les races Mixamo (additif + repli).
+														const bool isUe5Rig =
+															loaded->skeleton.FindBoneIndex("pelvis") >= 0 &&
+															loaded->skeleton.FindBoneIndex("mixamorig:Hips") < 0;
+														if (isUe5Rig)
+														{
+															// Migration UE5 — clips depuis la library UE5 (45 takes "Armature|<Clip>"),
+															// copies vers les noms de role attendus par la state machine. Retarget par
+															// nom d'os (memes os que le corps UE5, cf. SkinnedMeshLoaderTests).
+															const std::string ue5LibPath = contentRoot +
+																"/models/animations/humanoid_base/Humanoid_Base_Standard/Humanoid_Base_Standard.glb";
+															auto ue5Clips = engine::render::skinned::SkinnedMeshLoader::LoadClipsAnimOnly(
+																ue5LibPath, loaded->skeleton);
+															auto addRole = [&](const char* role, const char* ualName) {
+																const std::string want = std::string("Armature|") + ualName;
+																for (const auto& c : ue5Clips) {
+																	if (c.name == want && c.duration > 0.0f) {
+																		engine::render::skinned::AnimationClip copy = c;
+																		copy.name = role;
+																		loaded->clips.push_back(std::move(copy));
+																		return;
+																	}
+																}
+																LOG_WARN(Render, "[Engine] UE5 race '{}' : take '{}' introuvable (role '{}')", raceId, ualName, role);
+															};
+															addRole("Idle", "Idle_Loop");
+															addRole("Walk", "Walk_Loop");
+															addRole("StartWalking", "Walk_Loop");
+															addRole("WalkBack", "Walk_Loop");
+															addRole("Run", "Jog_Fwd_Loop");
+															addRole("Sprint", "Sprint_Loop");
+															addRole("CrouchIdle", "Crouch_Idle_Loop");
+															addRole("CrouchWalk", "Crouch_Fwd_Loop");
+															addRole("Roll", "Roll");
+															addRole("Dance", "Dance_Loop");
+															addRole("Sit", "Sitting_Idle_Loop");
+															addRole("Talk", "Idle_Talking_Loop");
+															addRole("Torch", "Idle_Torch_Loop");
+															addRole("Kneel", "Fixing_Kneeling");
+															addRole("SitTalk", "Sitting_Talking_Loop");
+															addRole("Push", "Push_Loop");
+															addRole("Attack", "Sword_Attack");
+															addRole("Cast", "Spell_Simple_Enter");
+															addRole("CastShoot", "Spell_Simple_Shoot");
+															addRole("CastExit", "Spell_Simple_Exit");
+															addRole("Interact", "Interact");
+															addRole("Punch", "Punch_Jab");
+															addRole("PunchCross", "Punch_Cross");
+															addRole("Jump", "Jump_Start");
+															addRole("Fall", "Jump_Loop");
+															addRole("Land", "Jump_Land");
+															addRole("SwimIdle", "Swim_Idle_Loop");
+															addRole("SwimForward", "Swim_Fwd_Loop");
+
+															// Expose AUSSI tous les autres clips UE5 par leur nom brut (sans
+															// prefixe "Armature|"), disponibles pour les futurs systemes
+															// (sprint, crouch, roll, combat, emotes, nage...). Exclus : armes
+															// a feu (pas dans le jeu) + conduite (pas de vehicule) + A_TPose
+															// (pose de reference, pas une anim de jeu). Aucun declencheur ici :
+															// les clips sont seulement rendus accessibles via FindClip(<nom>).
+															auto isExcludedUe5Clip = [](const std::string& n) {
+																return n == "Pistol_Aim_Up" || n == "Pistol_Aim_Neutral"
+																	|| n == "Pistol_Aim_Down" || n == "Pistol_Idle_Loop"
+																	|| n == "Pistol_Reload" || n == "Pistol_Shoot"
+																	|| n == "Driving_Loop" || n == "A_TPose";
+															};
+															int ue5Exposed = 0;
+															for (const auto& c : ue5Clips) {
+																if (c.duration <= 0.0f) continue;
+																std::string name = c.name;
+																const auto bar = name.rfind('|');
+																if (bar != std::string::npos) name = name.substr(bar + 1);
+																if (isExcludedUe5Clip(name)) continue;
+																bool exists = false;
+																for (const auto& existing : loaded->clips) {
+																	if (existing.name == name) { exists = true; break; }
+																}
+																if (exists) continue;
+																engine::render::skinned::AnimationClip copy = c;
+																copy.name = name;
+																loaded->clips.push_back(std::move(copy));
+																++ue5Exposed;
+															}
+															LOG_INFO(Render, "[Engine] UE5 race '{}' : {} clips additionnels exposes (total {})",
+																raceId, ue5Exposed, loaded->clips.size());
+														}
+														else
+														{
 														// Retarget les clips d'anim partages sur le squelette de cette
 														// race. Convention herite de B.1 (LoadClipsAnimOnly matche par
 														// nom de bone mixamorig:*). Si la race a un squelette
@@ -3996,6 +4215,20 @@ namespace engine
 														loadAnimOnly(jumpPath, "Jump");
 														loadAnimOnly(fallPath, "Fall");
 														loadAnimOnly(landPath, "Land");
+														}
+														// Migration UE5 — transform d'import (echelle/orientation) reglable via races.json.
+														{
+															const float th = importRotXDeg * 3.14159265358979f / 180.0f;
+															const float cx = std::cos(th);
+															const float sx = std::sin(th);
+															engine::math::Mat4 imp;
+															imp.m[0]  = importScale;
+															imp.m[5]  = importScale * cx;
+															imp.m[6]  = importScale * sx;
+															imp.m[9]  = importScale * -sx;
+															imp.m[10] = importScale * cx;
+															loaded->importTransform = imp;
+														}
 														LOG_INFO(Render, "[Engine] Race '{}' loaded ({} bones, {} clips) from '{}'",
 															raceId, loaded->skeleton.bones.size(), loaded->clips.size(), fullMeshPath);
 														m_raceMeshes.emplace(raceId, std::move(*loaded));
@@ -4012,7 +4245,7 @@ namespace engine
 															LOG_WARN(Render, "[Engine] Race '{}' : RaceDefinition introuvable ou meshPath vide", raceId);
 															continue;
 														}
-														loadOneRace(raceId, def->meshPath);
+														loadOneRace(raceId, def->meshPath, def->importScale, def->importRotXDeg);
 													}
 
 													// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le
@@ -4078,6 +4311,52 @@ namespace engine
 										// que la sphere du bas de la capsule traverse le sol au premier sweep.
 										{
 											m_terrainCollider.BindTerrain(&m_terrain);
+
+											// Nage (v1) : eau-test procedurale. La zone demo est plate et sans
+											// eau ; on pose un BASSIN DE TEST au-dessus du sol pour valider la
+											// mecanique de nage (a remplacer par une vraie etendue d'eau via le
+											// pipeline water.bin / level-design). Desactivable : world.test_water.enabled=false.
+											if (m_cfg.GetBool("world.test_water.enabled", true))
+											{
+												const float cx = static_cast<float>(m_cfg.GetDouble("world.test_water.center_x", 25.0));
+												const float cz = static_cast<float>(m_cfg.GetDouble("world.test_water.center_z", 0.0));
+												const float half = static_cast<float>(m_cfg.GetDouble("world.test_water.half_size_m", 15.0));
+												const float depth = static_cast<float>(m_cfg.GetDouble("world.test_water.depth_m", 2.5));
+												const float lvl = m_terrainCollider.GroundHeightAt(cx, cz) + depth;
+												auto waterScene = std::make_shared<engine::world::water::WaterScene>();
+												engine::world::water::LakeInstance lake;
+												lake.name = "test_pool";
+												lake.waterLevelY = lvl;
+												// Polygone XZ (SW->SE->NE->NW). Si la surface est cullee a l'affichage,
+												// inverser l'ordre (winding) ; la nage (QueryWater) marche dans les 2 cas.
+												lake.polygon = {
+													engine::math::Vec3{ cx - half, lvl, cz - half },
+													engine::math::Vec3{ cx + half, lvl, cz - half },
+													engine::math::Vec3{ cx + half, lvl, cz + half },
+													engine::math::Vec3{ cx - half, lvl, cz + half },
+												};
+												waterScene->lakes.push_back(std::move(lake));
+												m_clientWaterScene = std::move(waterScene);
+												m_waterClientSceneDirty = true;
+												LOG_INFO(Render, "[Nage] Eau-test posee (centre=({:.1f},{:.1f}) half={:.1f} niveauY={:.2f})", cx, cz, half, lvl);
+											}
+											m_terrainCollider.BindWater(m_clientWaterScene.get());
+											// Interaction (v1) : entites interactibles de TEST (invisibles) pour valider
+											// la mecanique objets + dialogue PNJ. A remplacer par de vraies entites.
+											m_interactables.clear();
+											{
+												InteractableEntity npc;
+												npc.position = engine::math::Vec3{ 4.0f, 0.0f, 0.0f };
+												npc.radius = 2.5f; npc.isNpc = true; npc.label = "Villageois";
+												npc.message = "Villageois : Bienvenue ! L'eau de test est a l'est.";
+												m_interactables.push_back(npc);
+												InteractableEntity chest;
+												chest.position = engine::math::Vec3{ -4.0f, 0.0f, 0.0f };
+												chest.radius = 2.0f; chest.isNpc = false; chest.label = "Coffre";
+												chest.message = "Vous fouillez le coffre... vide pour l'instant.";
+												m_interactables.push_back(chest);
+											}
+											m_interactableInRange = -1;
 
 											engine::gameplay::CharacterController::Config ccCfg{};
 											ccCfg.walkSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.walk_speed",      5.0));
@@ -4272,7 +4551,8 @@ namespace engine
 													const engine::math::Vec3 feetPos{ ccPos.x, ccPos.y - 0.9f, ccPos.z };
 													const engine::math::Mat4 finalModelMat =
 														engine::math::Mat4::Translate(feetPos) *
-														engine::math::Mat4::RotateY(m_avatarYaw);
+														engine::math::Mat4::RotateY(m_avatarYaw) *
+														(m_currentSkinnedMesh ? m_currentSkinnedMesh->importTransform : engine::math::Mat4::Identity());
 
 													// La matrice modele est desormais calculee a partir de cc.GetPosition()
 													// + m_avatarYaw ; le cube placeholder garde sa matrice d'origine (cf.
@@ -5817,20 +6097,9 @@ namespace engine
 				}
 				LOG_INFO(Core, "[Engine] Y toggle weather (visible={})", m_weatherVisible);
 			}
-			// CMANGOS.31 (Phase 5.31 step 3+4) — Touche E : toggle panneau
-			// GameEvents + RequestList si on l'ouvre. Memes guards que Y.
-			// Pas de conflit Ctrl+E (non utilise par WorldEditorShell).
-			if (inGameNoMenu && !chatBlocks
-				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::E))
-			{
-				m_gameEventVisible = !m_gameEventVisible;
-				if (m_gameEventVisible)
-				{
-					m_gameEventUi.RequestList();
-				}
-				LOG_INFO(Core, "[Engine] E toggle gameevents (visible={})", m_gameEventVisible);
-			}
+			// Touche E desormais LIBRE (reservee a une future action "interagir"
+			// hors combat). Le panneau GameEvents s'ouvre via la barre de menus
+			// "Panneaux" (rendu ImGui in-game), plus par une touche dediee.
 			// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Touche U : toggle
 			// panneau Guildes + RequestList si on l'ouvre. Memes guards que
 			// E (chat focus, pause, editor). Pas de conflit Ctrl+U.
@@ -6824,8 +7093,21 @@ namespace engine
 
 		if (!m_editorEnabled)
 		{
-			if (!authGateActive && !m_chatUi.IsChatFocusActive())
+			if (!authGateActive && !m_chatUi.IsChatFocusActive() && !m_inGameOptionsPanelVisible)
 			{
+				// Touches d'action remappables (controls.keybind.*), resolues chaque
+				// frame depuis la config pour refleter immediatement un rebind fait
+				// dans le panneau Options. Defauts : sprint=Alt, crouch=Ctrl, sort=R.
+				const engine::platform::Key sprintKey =
+					KeyFromName(m_cfg.GetString("controls.keybind.sprint", "Alt"), engine::platform::Key::Alt);
+				const engine::platform::Key crouchKey =
+					KeyFromName(m_cfg.GetString("controls.keybind.crouch", "Ctrl"), engine::platform::Key::Control);
+				const engine::platform::Key castKey =
+					KeyFromName(m_cfg.GetString("controls.keybind.cast", "R"), engine::platform::Key::R);
+				const engine::platform::Key interactKey =
+					KeyFromName(m_cfg.GetString("controls.keybind.interact", "E"), engine::platform::Key::E);
+				const engine::platform::Key punchKey =
+					KeyFromName(m_cfg.GetString("controls.keybind.punch", "C"), engine::platform::Key::C);
 				// Vue 3eme personne : controleur orbital pur (camera derriere la
 				// cible). Souris libre par defaut ; clic droit maintenu = rotate
 				// camera autour de la cible (yaw/pitch) ; molette = zoom.
@@ -6837,7 +7119,7 @@ namespace engine
 				// avant le CC, son repere (Forward/Right XZ) servirait a projeter
 				// l'input du frame courant mais sa position cible utiliserait la
 				// position de la frame precedente -> 1-frame lag visible.
-				const auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout);
+				const auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout, sprintKey, crouchKey);
 				m_characterController.Update(static_cast<float>(dt), moveInput, m_terrainCollider);
 				const engine::math::Vec3 ccPos = m_characterController.GetPosition();
 				m_orbitalCameraController.SetTargetPosition(ccPos);
@@ -6909,6 +7191,56 @@ namespace engine
 						m_currentSkinnedMesh->FindClip("Jump");
 					const engine::render::skinned::AnimationClip* landClip =
 						m_currentSkinnedMesh->FindClip("Land");
+					const engine::render::skinned::AnimationClip* rollClip =
+						m_currentSkinnedMesh->FindClip("Roll");
+					const engine::render::skinned::AnimationClip* attackClip =
+						m_currentSkinnedMesh->FindClip("Attack");
+					const engine::render::skinned::AnimationClip* castClip =
+						m_currentSkinnedMesh->FindClip("Cast");
+					const engine::render::skinned::AnimationClip* castShootClip =
+						m_currentSkinnedMesh->FindClip("CastShoot");
+					const engine::render::skinned::AnimationClip* castExitClip =
+						m_currentSkinnedMesh->FindClip("CastExit");
+					const engine::render::skinned::AnimationClip* interactClip =
+						m_currentSkinnedMesh->FindClip("Interact");
+					const engine::render::skinned::AnimationClip* punchClip =
+						m_currentSkinnedMesh->FindClip(m_currentPunchRole.c_str());
+
+					// Attaque melee : clic gauche (edge). Le bloc gameplay est deja garde
+					// contre le focus chat / l'auth (cf. ligne ~6969) ; on exclut en plus
+					// le drag inventaire pour ne pas frapper en relachant un objet.
+					const bool attackPressed =
+						m_input.WasMousePressed(engine::platform::MouseButton::Left)
+						&& !m_invUi.IsDragging();
+
+					// Sort : touche R (edge). Meme bloc gameplay garde contre le focus
+					// chat / l'auth (cf. ligne ~6961). Geste cosmetique one-shot (pas de
+					// cible ni d'aller-retour serveur), pendant clavier de l'attaque souris.
+					const bool castPressed =
+						m_input.WasPressed(castKey);
+
+					// Interagir : touche remappable (controls.keybind.interact, def. E),
+					// edge. Action non-combat (la touche E reservee au §32 trouve ici son
+					// usage). Geste cosmetique one-shot ; cible/objet a brancher plus tard.
+					const bool interactPressed =
+						m_input.WasPressed(interactKey);
+
+					// Coup de poing : 2e attaque melee, touche remappable (controls.keybind.punch, def. C).
+					const bool punchPressed =
+						m_input.WasPressed(punchKey);
+
+					// Esquive/roulade : double-appui (fenetre 0.30s) sur la touche Crouch
+					// (remappable). Touche maintenue = crouch ; deux appuis = Roll (one-shot).
+					bool dodgePressed = false;
+					if (m_input.WasPressed(crouchKey))
+					{
+						if (nowSec - m_lastCtrlTapSec <= 0.30f)
+							dodgePressed = true;
+						m_lastCtrlTapSec = nowSec;
+					}
+					// Emote demandee par slash command, consommee ici (vide = aucune).
+					const std::string emoteRole = m_pendingEmoteRole;
+					m_pendingEmoteRole.clear();
 
 					AvatarLocomotionState newState = m_avatarLocoState;
 					if (grounded)
@@ -6925,12 +7257,15 @@ namespace engine
 								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
 								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
 								else if (startWalkClip && stateElapsed >= startWalkClip->duration)
-									newState = (moveInput.run ? AvatarLocomotionState::Run : AvatarLocomotionState::Walk);
+									newState = (moveInput.sprint ? AvatarLocomotionState::Sprint
+									            : moveInput.run ? AvatarLocomotionState::Run
+									            : AvatarLocomotionState::Walk);
 								break;
 							case AvatarLocomotionState::Walk:
 								if (!moving)                      newState = AvatarLocomotionState::Idle;
 								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
 								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
+								else if (moveInput.sprint)        newState = AvatarLocomotionState::Sprint;
 								else if (moveInput.run)           newState = AvatarLocomotionState::Run;
 								break;
 							case AvatarLocomotionState::WalkBack:
@@ -6942,7 +7277,15 @@ namespace engine
 								if (!moving)                      newState = AvatarLocomotionState::Idle;
 								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
 								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
+								else if (moveInput.sprint)        newState = AvatarLocomotionState::Sprint;
 								else if (!moveInput.run)          newState = AvatarLocomotionState::Walk;
+								break;
+							case AvatarLocomotionState::Sprint:
+								if (!moving)                      newState = AvatarLocomotionState::Idle;
+								else if (moveInput.jumpPressed)   newState = AvatarLocomotionState::Jump;
+								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
+								else if (!moveInput.sprint)
+									newState = (moveInput.run ? AvatarLocomotionState::Run : AvatarLocomotionState::Walk);
 								break;
 							case AvatarLocomotionState::Jump:
 								// Takeoff = first 40% of Jump clip ; then Fall (until grounded).
@@ -6958,11 +7301,173 @@ namespace engine
 								{
 									if (!moving)                  newState = AvatarLocomotionState::Idle;
 									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
+							case AvatarLocomotionState::CrouchIdle:
+							case AvatarLocomotionState::CrouchWalk:
+								// Base de sortie vers la station debout ; l'override crouch ci-dessous
+								// re-force le crouch tant que Ctrl est tenu.
+								if (moveInput.jumpPressed)        newState = AvatarLocomotionState::Jump;
+								else if (!moving)                 newState = AvatarLocomotionState::Idle;
+								else if (movingBack)              newState = AvatarLocomotionState::WalkBack;
+								else if (moveInput.sprint)        newState = AvatarLocomotionState::Sprint;
+								else if (moveInput.run)           newState = AvatarLocomotionState::Run;
+								else                              newState = AvatarLocomotionState::Walk;
+								break;
+							case AvatarLocomotionState::Roll:
+								// One-shot : retour locomotion debout quand le clip Roll est fini.
+								if (!rollClip || stateElapsed >= rollClip->duration)
+								{
+									if (!moving)                  newState = AvatarLocomotionState::Idle;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
+							case AvatarLocomotionState::Emote:
+								// Emote en boucle : interrompue par tout mouvement / saut.
+								if (moving || movingBack || moveInput.jumpPressed)
+								{
+									if (moveInput.jumpPressed)    newState = AvatarLocomotionState::Jump;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
+							case AvatarLocomotionState::Attack:
+								// One-shot : retour locomotion quand le clip d'attaque est fini.
+								// Le deplacement reste pilote par le CharacterController pendant
+								// l'attaque (geste plein corps, pas de root motion).
+								if (!attackClip || stateElapsed >= attackClip->duration)
+								{
+									if (!moving)                  newState = AvatarLocomotionState::Idle;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
+							case AvatarLocomotionState::Cast:
+							{
+								// Sequence : Enter (clip "Cast") -> Shoot -> Exit, les 2 derniers rejoues
+								// via m_avatarPendingClipRole (sans changer d'etat). Garde-fou 3s.
+								const float enterDur = castClip ? castClip->duration : 0.0f;
+								const float shootDur = castShootClip ? castShootClip->duration : 0.0f;
+								const float exitDur  = castExitClip ? castExitClip->duration : 0.0f;
+								if (m_castPhase == 0 && stateElapsed >= enterDur)
+								{
+									m_avatarPendingClipRole = "CastShoot";
+									m_castPhase = 1;
+								}
+								else if (m_castPhase == 1 && stateElapsed >= enterDur + shootDur)
+								{
+									m_avatarPendingClipRole = "CastExit";
+									m_castPhase = 2;
+								}
+								if (stateElapsed >= enterDur + shootDur + exitDur || stateElapsed >= 3.0f)
+								{
+									if (!moving)                  newState = AvatarLocomotionState::Idle;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
+							}
+							case AvatarLocomotionState::Interact:
+								// One-shot : retour locomotion quand le geste d'interaction est fini.
+								// Action non-combat (la touche E reservee au menu Options trouve ici son usage).
+								if (!interactClip || stateElapsed >= interactClip->duration)
+								{
+									if (!moving)                  newState = AvatarLocomotionState::Idle;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
+									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
+									else                          newState = AvatarLocomotionState::Walk;
+								}
+								break;
+							case AvatarLocomotionState::Punch:
+								// One-shot : retour locomotion quand le coup de poing est fini.
+								if (!punchClip || stateElapsed >= punchClip->duration)
+								{
+									if (!moving)                  newState = AvatarLocomotionState::Idle;
+									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
+									else if (moveInput.sprint)    newState = AvatarLocomotionState::Sprint;
 									else if (moveInput.run)       newState = AvatarLocomotionState::Run;
 									else                          newState = AvatarLocomotionState::Walk;
 								}
 								break;
 						}
+
+						// Une action "one-shot" en cours (roulade ou geste combat/interaction)
+						// bloque le declenchement d'une autre. Centralise ici pour eviter une
+						// longue liste d'exclusions par override et faciliter l'ajout d'actions.
+						auto busyOneShot = [&]()
+						{
+							return m_avatarLocoState == AvatarLocomotionState::Roll
+								|| m_avatarLocoState == AvatarLocomotionState::Attack
+								|| m_avatarLocoState == AvatarLocomotionState::Cast
+								|| m_avatarLocoState == AvatarLocomotionState::Interact
+								|| m_avatarLocoState == AvatarLocomotionState::Punch;
+						};
+
+						// Crouch (Ctrl) : etat accroupi prioritaire tant que la touche est tenue
+						// (sauf amorce de saut, emote, ou action one-shot en cours). CrouchWalk si deplacement.
+						if (moveInput.crouch && newState != AvatarLocomotionState::Jump
+							&& newState != AvatarLocomotionState::Roll
+							&& newState != AvatarLocomotionState::Emote
+							&& newState != AvatarLocomotionState::Attack
+							&& newState != AvatarLocomotionState::Cast
+							&& newState != AvatarLocomotionState::Interact
+							&& newState != AvatarLocomotionState::Punch)
+							newState = moving ? AvatarLocomotionState::CrouchWalk : AvatarLocomotionState::CrouchIdle;
+
+						// Esquive/roulade (double-appui Crouch) : Roll one-shot, prioritaire sur crouch.
+						if (dodgePressed && m_avatarLocoState != AvatarLocomotionState::Roll)
+						{
+							newState = AvatarLocomotionState::Roll;
+							// Impulsion d'esquive : direction = mouvement si actif, sinon l'avant camera.
+							// Le CharacterController force la vitesse horizontale pendant dodgeDurationSec.
+							engine::math::Vec3 dodgeDir = moveInput.moveDirXZ;
+							if (dodgeDir.x * dodgeDir.x + dodgeDir.z * dodgeDir.z < 1e-6f)
+								dodgeDir = m_orbitalCameraController.GetForwardXZ();
+							m_characterController.ApplyDodgeImpulse(dodgeDir);
+						}
+
+						// Emote (slash) : uniquement a l'arret (immobile, sans saut ni roll en cours).
+						if (!emoteRole.empty() && !moving && !movingBack && !moveInput.jumpPressed
+							&& m_avatarLocoState != AvatarLocomotionState::Roll)
+						{
+							m_currentEmoteRole = emoteRole;
+							newState = AvatarLocomotionState::Emote;
+						}
+
+						// Attaque melee (clic gauche) : Sword_Attack one-shot. Pas pendant un saut
+						// ni une autre action one-shot ; prioritaire sur le crouch.
+						if (attackPressed && !moveInput.jumpPressed && !busyOneShot())
+							newState = AvatarLocomotionState::Attack;
+
+						// Coup de poing (touche C par defaut) : Punch_Jab one-shot, 2e attaque melee.
+						if (punchPressed && !moveInput.jumpPressed && !busyOneShot())
+						{
+							// Alterne Jab <-> Cross a chaque coup (variete ; clip dynamique).
+							m_currentPunchRole = m_punchAlt ? "PunchCross" : "Punch";
+							m_punchAlt = !m_punchAlt;
+							newState = AvatarLocomotionState::Punch;
+						}
+
+						// Sort (touche R par defaut) : Spell_Simple_Shoot one-shot.
+						if (castPressed && !moveInput.jumpPressed && !busyOneShot())
+							newState = AvatarLocomotionState::Cast;
+
+						// Interagir (touche E par defaut) : geste Interact one-shot, action non-combat.
+						if (interactPressed && !moveInput.jumpPressed && !busyOneShot())
+							newState = AvatarLocomotionState::Interact;
 					}
 					else
 					{
@@ -6977,6 +7482,23 @@ namespace engine
 						{
 							newState = AvatarLocomotionState::Fall;
 						}
+					}
+
+					// Nage : si le controller est en mode eau (immersion > bassin), l'avatar
+					// nage -> surclasse locomotion / saut / actions one-shot ci-dessus. A la
+					// sortie d'eau, on quitte explicitement Swim* (le switch n'a pas de case
+					// Swim* -> sinon l'avatar resterait fige en nage au sol).
+					if (m_characterController.IsInWater())
+					{
+						newState = (moving || movingBack) ? AvatarLocomotionState::SwimForward : AvatarLocomotionState::SwimIdle;
+					}
+					else if (m_avatarLocoState == AvatarLocomotionState::SwimIdle
+						|| m_avatarLocoState == AvatarLocomotionState::SwimForward)
+					{
+						if (!grounded)        newState = AvatarLocomotionState::Fall;
+						else if (movingBack)  newState = AvatarLocomotionState::WalkBack;
+						else if (moving)      newState = moveInput.sprint ? AvatarLocomotionState::Sprint : (moveInput.run ? AvatarLocomotionState::Run : AvatarLocomotionState::Walk);
+						else                  newState = AvatarLocomotionState::Idle;
 					}
 
 					if (newState != m_avatarLocoState)
@@ -6994,12 +7516,16 @@ namespace engine
 
 						m_avatarLocoState = newState;
 						m_avatarLocoStateEnterTime = now;
+						if (newState == AvatarLocomotionState::Cast) m_castPhase = 0;
 
 						// Trigger crossfade vers le clip du nouvel etat. Si le clip est
 						// introuvable (asset manquant -> FindClip == nullptr), on log un
 						// warn une seule fois et on laisse l'animation precedente continuer
 						// (Sample retombera dessus jusqu'a la prochaine transition reussie).
-						const char* clipName = StateToClipName(newState);
+						const char* clipName =
+							(newState == AvatarLocomotionState::Emote && !m_currentEmoteRole.empty()) ? m_currentEmoteRole.c_str()
+							: (newState == AvatarLocomotionState::Punch) ? m_currentPunchRole.c_str()
+							: StateToClipName(newState);
 						const engine::render::skinned::AnimationClip* newClip = m_currentSkinnedMesh->FindClip(clipName);
 						if (newClip)
 						{
@@ -7010,6 +7536,57 @@ namespace engine
 						else
 						{
 							LOG_WARN(Render, "[Avatar SM] FindClip('{}') returned nullptr — animation precedente continue", clipName);
+						}
+					}
+					// Replay d'un clip en cours d'etat (sequence de sort) sans transition d'etat.
+					if (!m_avatarPendingClipRole.empty())
+					{
+						const engine::render::skinned::AnimationClip* rc = m_currentSkinnedMesh->FindClip(m_avatarPendingClipRole.c_str());
+						if (rc)
+							m_avatarCrossfade.Play(*rc, /*loops=*/false, nowSec);
+						m_avatarPendingClipRole.clear();
+					}
+
+					// Interaction (touche E) : interactible le plus proche (distance XZ) a portee.
+					// Hint chat a l'entree de portee ; sur E -> effet (objet) ou dialogue (PNJ).
+					// Le geste Interact joue par ailleurs (SM). v1 sans rendu des cibles.
+					{
+						const engine::math::Vec3 ppos = m_characterController.GetPosition();
+						int nearestI = -1;
+						float bestD2 = 0.0f;
+						for (std::size_t i = 0; i < m_interactables.size(); ++i)
+						{
+							const InteractableEntity& e = m_interactables[i];
+							const float dx = e.position.x - ppos.x;
+							const float dz = e.position.z - ppos.z;
+							const float d2 = dx * dx + dz * dz;
+							if (d2 <= e.radius * e.radius && (nearestI < 0 || d2 < bestD2))
+							{
+								nearestI = static_cast<int>(i);
+								bestD2 = d2;
+							}
+						}
+						auto pushInteractChat = [&](const std::string& sender, const std::string& text)
+						{
+							engine::net::ChatMessage cm;
+							cm.timestampUnixMs = static_cast<uint64_t>(
+								std::chrono::duration_cast<std::chrono::milliseconds>(
+									std::chrono::system_clock::now().time_since_epoch()).count());
+							cm.channel = engine::net::ChatChannel::Server;
+							cm.sender = sender;
+							cm.text = text;
+							m_chatUi.PushNetworkLine(cm);
+						};
+						if (nearestI != m_interactableInRange)
+						{
+							m_interactableInRange = nearestI;
+							if (nearestI >= 0)
+								pushInteractChat("[Interaction]", "Pres de " + m_interactables[nearestI].label + " - appuyez sur E.");
+						}
+						if (interactPressed && nearestI >= 0)
+						{
+							const InteractableEntity& e = m_interactables[nearestI];
+							pushInteractChat(e.isNpc ? "[PNJ]" : "[Objet]", e.message);
 						}
 					}
 				}
@@ -7429,6 +8006,64 @@ namespace engine
 			}
 			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
 			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+			// Menu de panneaux : barre de menus ImGui toujours visible en jeu,
+			// acces souris a tous les panneaux togglables sans raccourci clavier
+			// dedie. Les panneaux gardent par ailleurs leurs touches existantes ;
+			// GameEvents n'est plus accessible que par ce menu (touche E liberee).
+			// Chaque MenuItem reflete l'etat *Visible et reproduit le RequestList
+			// d'ouverture du toggle clavier correspondant.
+			if (ImGui::BeginMainMenuBar())
+			{
+				if (ImGui::BeginMenu("Panneaux"))
+				{
+					if (ImGui::MenuItem("Carnet de sorts", nullptr, m_skillBookVisible))
+					{
+						m_skillBookVisible = !m_skillBookVisible;
+						if (m_skillBookVisible) m_skillBookUi.RequestList();
+					}
+					if (ImGui::MenuItem("Arenes", nullptr, m_arenaVisible))
+					{
+						m_arenaVisible = !m_arenaVisible;
+						if (m_arenaVisible) m_arenaUi.RequestTeams();
+					}
+					if (ImGui::MenuItem("Champs de bataille", nullptr, m_battleGroundVisible))
+					{
+						m_battleGroundVisible = !m_battleGroundVisible;
+						if (m_battleGroundVisible) m_battleGroundUi.RequestList();
+					}
+					if (ImGui::MenuItem("PvP exterieur", nullptr, m_outdoorPvpVisible))
+					{
+						m_outdoorPvpVisible = !m_outdoorPvpVisible;
+						if (m_outdoorPvpVisible) m_outdoorPvpUi.RequestList();
+					}
+					if (ImGui::MenuItem("Meteo", nullptr, m_weatherVisible))
+					{
+						m_weatherVisible = !m_weatherVisible;
+						if (m_weatherVisible) m_weatherUi.RequestList();
+					}
+					if (ImGui::MenuItem("Evenements", nullptr, m_gameEventVisible))
+					{
+						m_gameEventVisible = !m_gameEventVisible;
+						if (m_gameEventVisible) m_gameEventUi.RequestList();
+					}
+					if (ImGui::MenuItem("Guilde", nullptr, m_guildVisible))
+					{
+						m_guildVisible = !m_guildVisible;
+						if (m_guildVisible) m_guildUi.RequestList();
+					}
+					if (ImGui::MenuItem("Hotel des ventes", nullptr, m_auctionHouseVisible))
+					{
+						m_auctionHouseVisible = !m_auctionHouseVisible;
+						if (m_auctionHouseVisible) m_auctionHouseUi.RequestList(0u);
+					}
+					if (ImGui::MenuItem("Jets de butin", nullptr, m_lootRollVisible))
+					{
+						m_lootRollVisible = !m_lootRollVisible;
+					}
+					ImGui::EndMenu();
+				}
+				ImGui::EndMainMenuBar();
+			}
 			// CMANGOS.18 (Phase 3.18 step 4) — Render du panneau Mail si visible.
 			// Le panneau partage la frame ImGui en cours (NewFrame deja appele
 			// par chatImguiOverlayNewFrame plus haut). Visible uniquement quand
@@ -7627,8 +8262,8 @@ namespace engine
 			// Le full panel auth Options reste accessible via Se deconnecter -> Login -> Options.
 			if (m_inGameOptionsPanelVisible)
 			{
-				const float optW = 420.f;
-				const float optH = 320.f;
+				const float optW = 460.f;
+				const float optH = 560.f;
 				ImGui::SetNextWindowPos(ImVec2((dw - optW) * 0.5f, (dh - optH) * 0.5f), ImGuiCond_Always);
 				ImGui::SetNextWindowSize(ImVec2(optW, optH), ImGuiCond_Always);
 				ImGui::SetNextWindowBgAlpha(0.95f);
@@ -7669,6 +8304,75 @@ namespace engine
 				{
 					m_cfg.SetValue("controls.mouse_sensitivity", static_cast<double>(sens));
 				}
+
+				// --- Controles : touches d'action remappables (controls.keybind.*) ---
+				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::TextUnformatted("Controles");
+
+				// Capture du rebind en cours : la 1re touche connue pressee est affectee
+				// a l'action ciblee (Echap annule). Le bloc gameplay etant suspendu tant
+				// que ce panneau est ouvert, la touche capturee ne declenche pas l'action.
+				if (m_rebindingAction != 0)
+				{
+					if (m_input.WasPressed(engine::platform::Key::Escape))
+					{
+						m_rebindingAction = 0;
+					}
+					else
+					{
+						for (const auto& rk : kRebindableKeys)
+						{
+							if (m_input.WasPressed(rk.key))
+							{
+								const char* cfgKey =
+									(m_rebindingAction == 1) ? "controls.keybind.sprint"
+									: (m_rebindingAction == 2) ? "controls.keybind.crouch"
+									: (m_rebindingAction == 3) ? "controls.keybind.cast"
+									: (m_rebindingAction == 4) ? "controls.keybind.interact"
+									: "controls.keybind.punch";
+								m_cfg.SetValue(cfgKey, std::string(rk.name));
+								// Persistance : ecrit keybinds.json (fichier dedie, format controle ;
+								// valeurs = noms ASCII de kRebindableKeys -> pas d'echappement JSON requis).
+								{
+									const std::string kb =
+										std::string("{\n  \"controls\": {\n    \"keybind\": {\n")
+										+ "      \"sprint\": \"" + m_cfg.GetString("controls.keybind.sprint", "Alt") + "\",\n"
+										+ "      \"crouch\": \"" + m_cfg.GetString("controls.keybind.crouch", "Ctrl") + "\",\n"
+										+ "      \"cast\": \"" + m_cfg.GetString("controls.keybind.cast", "R") + "\",\n"
+										+ "      \"interact\": \"" + m_cfg.GetString("controls.keybind.interact", "E") + "\",\n"
+										+ "      \"punch\": \"" + m_cfg.GetString("controls.keybind.punch", "C") + "\"\n"
+										+ "    }\n  }\n}\n";
+									if (!engine::platform::FileSystem::WriteAllText("keybinds.json", kb))
+										LOG_WARN(Core, "[Options] keybinds.json non ecrit (rebind non persiste)");
+								}
+								m_rebindingAction = 0;
+								break;
+							}
+						}
+					}
+				}
+
+				auto rebindRow = [&](const char* label, const char* cfgKey,
+					const char* def, int action)
+				{
+					const std::string cur = m_cfg.GetString(cfgKey, def);
+					ImGui::Text("%s : %s", label, cur.c_str());
+					ImGui::SameLine(190.f);
+					ImGui::PushID(action);
+					if (m_rebindingAction == action)
+						ImGui::TextUnformatted("appuyez sur une touche (Echap = annuler)");
+					else if (ImGui::SmallButton("Modifier"))
+						m_rebindingAction = action;
+					ImGui::PopID();
+				};
+				rebindRow("Sprint", "controls.keybind.sprint", "Alt", 1);
+				rebindRow("Accroupi", "controls.keybind.crouch", "Ctrl", 2);
+				rebindRow("Sort", "controls.keybind.cast", "R", 3);
+				rebindRow("Interagir", "controls.keybind.interact", "E", 4);
+				rebindRow("Coup de poing", "controls.keybind.punch", "C", 5);
+				ImGui::TextDisabled("Roulade : double-appui sur la touche Accroupi");
+				ImGui::TextDisabled("Attaque : clic gauche (non remappable)");
 
 				ImGui::Spacing();
 				ImGui::Separator();

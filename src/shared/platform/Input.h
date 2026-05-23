@@ -45,6 +45,7 @@ namespace engine::platform
 		Escape = 0x1B,
 		Tab = 0x09,
 		Control = 0x11,
+		Alt = 0x12, ///< VK_MENU (gauche ou droite) — capturé via WM_SYSKEYDOWN. Sprint (CHAR-MODEL).
 		Space = 0x20,
 		Enter = 0x0D,
 		Backspace = 0x08,

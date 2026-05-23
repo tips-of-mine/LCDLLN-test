@@ -7,6 +7,11 @@ namespace engine::render::terrain
     class TerrainRenderer;  // forward
 }
 
+namespace engine::world::water
+{
+    struct WaterScene;  // forward (nage : QueryWater)
+}
+
 namespace engine::gameplay
 {
 
@@ -51,10 +56,21 @@ public:
     /// terrain n'est bind.
     float GroundHeightAt(float worldX, float worldZ) const;
 
+    /// Bind la scene d'eau (non-owning) pour la nage. nullptr = pas d'eau.
+    void BindWater(const engine::world::water::WaterScene* water) { m_water = water; }
+
+    /// IWorldCollider : detecte l'immersion a `worldCenter` (centre capsule ~
+    /// hauteur du bassin). Parcourt les lacs de la scene d'eau (point-in-polygon
+    /// XZ) ; si le centre est sous la surface d'un lac -> `inWater=true`,
+    /// `surfaceY`/`depth` renseignes. Sans scene -> `inWater=false`.
+    bool QueryWater(const engine::math::Vec3& worldCenter, WaterQuery& out) const override;
+
 private:
     /// Non-owning. Lifetime garanti par l'appelant (le terrain vit aussi
     /// longtemps que le collider qui s'y refere).
     const engine::render::terrain::TerrainRenderer* m_terrain = nullptr;
+    /// Non-owning. Scene d'eau pour QueryWater (nage). nullptr = pas d'eau.
+    const engine::world::water::WaterScene* m_water = nullptr;
 };
 
 }  // namespace engine::gameplay

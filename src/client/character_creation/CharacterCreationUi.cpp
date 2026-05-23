@@ -478,6 +478,8 @@ namespace engine::client
 			def.hairColorHex = ReadStringArray(raceCfg, pfx + ".defaultHairColors");
 			def.eyeColorHex  = ReadStringArray(raceCfg, pfx + ".defaultEyeColors");
 			def.meshPath     = raceCfg.GetString(pfx + ".meshPath", "");
+			def.importScale  = static_cast<float>(raceCfg.GetDouble(pfx + ".importScale", 1.0));
+			def.importRotXDeg = static_cast<float>(raceCfg.GetDouble(pfx + ".importRotXDeg", 0.0));
 
 			if (!def.id.empty())
 			{

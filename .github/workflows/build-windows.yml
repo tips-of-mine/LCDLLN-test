@@ -200,6 +200,16 @@ jobs:
             Copy-Item $config -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
           }
 
+          # external/external_links.json : source runtime de l'IP master (status
+          # + host master derive). Charge a cote de l'exe par Config.cpp et ecrase
+          # le defaut compile (DefaultClientEndpoints). En le packageant ici, l'IP
+          # se change en editant ce seul fichier, sans recompiler.
+          $extLinks = "$env:GITHUB_WORKSPACE\external\external_links.json"
+          if (Test-Path $extLinks) {
+            New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\artifacts\external" | Out-Null
+            Copy-Item $extLinks -Destination "$env:GITHUB_WORKSPACE\artifacts\external" -Force
+          }
+
           # build_hlod.bat à la racine du package de livraison (si présent)
           $buildHlod = "$env:GITHUB_WORKSPACE\build_hlod.bat"
           if (Test-Path $buildHlod) {

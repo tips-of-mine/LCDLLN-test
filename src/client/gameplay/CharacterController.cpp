@@ -66,6 +66,17 @@ namespace engine::gameplay
 		return true;
 	}
 
+	void CharacterController::ApplyDodgeImpulse(const engine::math::Vec3& dirXZ)
+	{
+		const float len = std::sqrt(dirXZ.x * dirXZ.x + dirXZ.z * dirXZ.z);
+		if (len < 1e-4f)
+			return;
+		m_dodgeDirXZ = engine::math::Vec3(dirXZ.x / len, 0.0f, dirXZ.z / len);
+		m_dodgeTimeRemaining = m_cfg.dodgeDurationSec;
+		m_velocity.x = m_dodgeDirXZ.x * m_cfg.dodgeSpeed;
+		m_velocity.z = m_dodgeDirXZ.z * m_cfg.dodgeSpeed;
+	}
+
 	bool CharacterController::Update(float dt, const MoveInput& input, const IWorldCollider& world)
 	{
 		if (dt <= 0.0f)
@@ -124,14 +135,23 @@ namespace engine::gameplay
 		const float moveLen = LengthXZ(desiredMoveXZ);
 		const bool hasMove = moveLen > 1e-5f;
 
-		const float targetSpeed = input.run ? m_cfg.runSpeed : m_cfg.walkSpeed;
+		const float targetSpeed = input.crouch ? m_cfg.crouchSpeed
+		                        : (input.sprint ? m_cfg.sprintSpeed
+		                        : (input.run    ? m_cfg.runSpeed : m_cfg.walkSpeed));
 		engine::math::Vec3 desiredVelXZ(0.0f, 0.0f, 0.0f);
 		if (hasMove)
 			desiredVelXZ = desiredMoveXZ * (targetSpeed / moveLen);
 
-		// Horizontal acceleration or friction.
+		// Horizontal acceleration or friction. Exception : pendant une esquive
+		// (m_dodgeTimeRemaining > 0), la vitesse horizontale est forcee a
+		// l'impulsion d'esquive ; collision (sweep) et gravite restent appliquees.
 		engine::math::Vec3 velXZ = Vec3XZ(m_velocity);
-		if (hasMove)
+		if (m_dodgeTimeRemaining > 0.0f && !inWater && !isFlying)
+		{
+			m_dodgeTimeRemaining -= dt;
+			velXZ = m_dodgeDirXZ * m_cfg.dodgeSpeed;
+		}
+		else if (hasMove)
 		{
 			const engine::math::Vec3 delta = desiredVelXZ - velXZ;
 			const float deltaLen = delta.Length();

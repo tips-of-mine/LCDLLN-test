@@ -128,6 +128,9 @@ namespace engine::gameplay
 		bool Update(float dt, const MoveInput& input, const IWorldCollider& world);
 
 		bool IsGrounded() const { return m_isGrounded; }
+		/// True quand le controller est en mode nage (immersion detectee par
+		/// IWorldCollider::QueryWater). Consomme par la state machine d'anim.
+		bool IsInWater() const { return m_mode == MovementMode::Water; }
 		engine::math::Vec3 GetPosition() const { return m_positionCenter; }
 		engine::math::Vec3 GetVelocity() const { return m_velocity; }
 		IWorldCollider::Capsule GetCapsule() const { return m_capsule; }

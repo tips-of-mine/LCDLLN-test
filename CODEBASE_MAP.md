@@ -1706,3 +1706,28 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 ### Limites connues
 - **Cosmétique** : aucun dégât/cible (comme l'attaque épée).
 - **Alternance Jab/Cross** : chaque coup alterne `Punch_Jab` et `Punch_Cross` (variété ; clip dynamique via `m_currentPunchRole`, comme l'état Emote). Pas de vrai « combo » chaîné sur presses rapides — un coup pendant l'autre est ignoré (one-shot) ; échec bénin (au pire le mauvais clip de poing, jamais d'état bloqué).
+
+## 38. Nage automatique (immersion > bassin) — v1 (2026-05-22)
+
+**Objectif** : passage en nage **sans touche**, déclenché par le niveau d'eau sur le corps (au-dessus du bassin). La physique de nage (`CharacterController` mode `Water`) et le rendu d'eau existaient déjà ; on branche la **détection d'eau** + l'**anim**.
+
+### Chaîne
+- **QueryWater** (`TerrainCollider`) : `BindWater(WaterScene*)` + override `QueryWater(center)` — point-in-polygon (ray-casting XZ) sur les lacs ; retient la surface la plus haute couvrant (x,z). `inWater = (surfaceY > centerY)` → le **centre de la capsule ≈ bassin**, donc nage quand l'eau dépasse le bassin (réglable). Le `CharacterController` bascule alors **automatiquement** en mode `Water` (déjà implémenté).
+- **Anim** : nouveaux états `SwimIdle`/`SwimForward` (bouclés), `addRole("SwimIdle","Swim_Idle_Loop")`/`("SwimForward","Swim_Fwd_Loop")`. Dans la SM, un override **après** locomotion/air : `if (m_characterController.IsInWater()) newState = (moving)?SwimForward:SwimIdle;` (surclasse tout). **Sortie d'eau** gérée explicitement (sinon l'avatar resterait figé en nage au sol).
+- **Eau de TEST** (`world.test_water.*`, défaut activé) : la zone demo est plate et sans eau → on pose un **bassin procédural** (lac carré au-dessus du sol) pour pouvoir tester. À remplacer par une vraie étendue d'eau (pipeline `water.bin` / level-design).
+
+### Limites connues
+- **Eau-test artificielle** : « pool » posé sur la plaine (pas de bassin creusé) ; visuellement faux mais fonctionnel. Winding du quad à vérifier (surface peut être cullée — la nage marche quand même).
+- **Lacs seulement** (rivières ignorées en v1). Pas de contrôle vertical mappé (swimUp/Down existent, non bindés).
+
+## 39. Interaction (touche E) — objets + dialogue PNJ — v1 (2026-05-22)
+
+**Objectif** : donner un vrai usage à E (au-delà du geste §35) : **interagir avec des objets** et **parler aux PNJ**. v1 = framework + cibles de TEST.
+
+### Chaîne
+- **Entités** : `Engine::InteractableEntity { position, radius, isNpc, label, message }` + `m_interactables`. Deux cibles de TEST placées près du spawn (un PNJ « Villageois », un « Coffre »).
+- **Détection** : chaque frame, l'interactible le plus proche (distance XZ) à portée. À l'**entrée de portée** → hint chat (« Près de X — appuyez sur E »). Sur **E** (`interactPressed`) → message chat : dialogue (`[PNJ]`) ou effet (`[Objet]`). Le geste Interact (§35) joue par ailleurs.
+
+### Limites connues
+- **Cibles invisibles** (pas de rendu de props/PNJ) → découvrables seulement via le hint chat. À remplacer par de vraies entités avec **meshes** + **dialogues** (arbre de dialogue, loot, etc.).
+- **Dialogue mono-ligne** (pas d'arbre). Pas de portée/raycast visée (proximité simple).

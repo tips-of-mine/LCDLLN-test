@@ -278,6 +278,8 @@ namespace engine
 				case engine::Engine::AvatarLocomotionState::Jump:         return "Jump";
 				case engine::Engine::AvatarLocomotionState::Fall:         return "Fall";
 				case engine::Engine::AvatarLocomotionState::Land:         return "Land";
+				case engine::Engine::AvatarLocomotionState::SwimIdle:     return "SwimIdle";
+				case engine::Engine::AvatarLocomotionState::SwimForward:  return "SwimForward";
 			}
 			return "Idle";
 		}
@@ -300,7 +302,9 @@ namespace engine
 				|| s == engine::Engine::AvatarLocomotionState::CrouchIdle
 				|| s == engine::Engine::AvatarLocomotionState::CrouchWalk
 				|| s == engine::Engine::AvatarLocomotionState::Emote
-				|| s == engine::Engine::AvatarLocomotionState::Fall;
+				|| s == engine::Engine::AvatarLocomotionState::Fall
+				|| s == engine::Engine::AvatarLocomotionState::SwimIdle
+				|| s == engine::Engine::AvatarLocomotionState::SwimForward;
 		}
 
 		engine::core::LogLevel ParseLogLevelConfig(std::string_view text)
@@ -4143,6 +4147,8 @@ namespace engine
 															addRole("Jump", "Jump_Start");
 															addRole("Fall", "Jump_Loop");
 															addRole("Land", "Jump_Land");
+															addRole("SwimIdle", "Swim_Idle_Loop");
+															addRole("SwimForward", "Swim_Fwd_Loop");
 
 															// Expose AUSSI tous les autres clips UE5 par leur nom brut (sans
 															// prefixe "Armature|"), disponibles pour les futurs systemes
@@ -4305,6 +4311,52 @@ namespace engine
 										// que la sphere du bas de la capsule traverse le sol au premier sweep.
 										{
 											m_terrainCollider.BindTerrain(&m_terrain);
+
+											// Nage (v1) : eau-test procedurale. La zone demo est plate et sans
+											// eau ; on pose un BASSIN DE TEST au-dessus du sol pour valider la
+											// mecanique de nage (a remplacer par une vraie etendue d'eau via le
+											// pipeline water.bin / level-design). Desactivable : world.test_water.enabled=false.
+											if (m_cfg.GetBool("world.test_water.enabled", true))
+											{
+												const float cx = static_cast<float>(m_cfg.GetDouble("world.test_water.center_x", 25.0));
+												const float cz = static_cast<float>(m_cfg.GetDouble("world.test_water.center_z", 0.0));
+												const float half = static_cast<float>(m_cfg.GetDouble("world.test_water.half_size_m", 15.0));
+												const float depth = static_cast<float>(m_cfg.GetDouble("world.test_water.depth_m", 2.5));
+												const float lvl = m_terrainCollider.GroundHeightAt(cx, cz) + depth;
+												auto waterScene = std::make_shared<engine::world::water::WaterScene>();
+												engine::world::water::LakeInstance lake;
+												lake.name = "test_pool";
+												lake.waterLevelY = lvl;
+												// Polygone XZ (SW->SE->NE->NW). Si la surface est cullee a l'affichage,
+												// inverser l'ordre (winding) ; la nage (QueryWater) marche dans les 2 cas.
+												lake.polygon = {
+													engine::math::Vec3{ cx - half, lvl, cz - half },
+													engine::math::Vec3{ cx + half, lvl, cz - half },
+													engine::math::Vec3{ cx + half, lvl, cz + half },
+													engine::math::Vec3{ cx - half, lvl, cz + half },
+												};
+												waterScene->lakes.push_back(std::move(lake));
+												m_clientWaterScene = std::move(waterScene);
+												m_waterClientSceneDirty = true;
+												LOG_INFO(Render, "[Nage] Eau-test posee (centre=({:.1f},{:.1f}) half={:.1f} niveauY={:.2f})", cx, cz, half, lvl);
+											}
+											m_terrainCollider.BindWater(m_clientWaterScene.get());
+											// Interaction (v1) : entites interactibles de TEST (invisibles) pour valider
+											// la mecanique objets + dialogue PNJ. A remplacer par de vraies entites.
+											m_interactables.clear();
+											{
+												InteractableEntity npc;
+												npc.position = engine::math::Vec3{ 4.0f, 0.0f, 0.0f };
+												npc.radius = 2.5f; npc.isNpc = true; npc.label = "Villageois";
+												npc.message = "Villageois : Bienvenue ! L'eau de test est a l'est.";
+												m_interactables.push_back(npc);
+												InteractableEntity chest;
+												chest.position = engine::math::Vec3{ -4.0f, 0.0f, 0.0f };
+												chest.radius = 2.0f; chest.isNpc = false; chest.label = "Coffre";
+												chest.message = "Vous fouillez le coffre... vide pour l'instant.";
+												m_interactables.push_back(chest);
+											}
+											m_interactableInRange = -1;
 
 											engine::gameplay::CharacterController::Config ccCfg{};
 											ccCfg.walkSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.walk_speed",      5.0));
@@ -7432,6 +7484,23 @@ namespace engine
 						}
 					}
 
+					// Nage : si le controller est en mode eau (immersion > bassin), l'avatar
+					// nage -> surclasse locomotion / saut / actions one-shot ci-dessus. A la
+					// sortie d'eau, on quitte explicitement Swim* (le switch n'a pas de case
+					// Swim* -> sinon l'avatar resterait fige en nage au sol).
+					if (m_characterController.IsInWater())
+					{
+						newState = (moving || movingBack) ? AvatarLocomotionState::SwimForward : AvatarLocomotionState::SwimIdle;
+					}
+					else if (m_avatarLocoState == AvatarLocomotionState::SwimIdle
+						|| m_avatarLocoState == AvatarLocomotionState::SwimForward)
+					{
+						if (!grounded)        newState = AvatarLocomotionState::Fall;
+						else if (movingBack)  newState = AvatarLocomotionState::WalkBack;
+						else if (moving)      newState = moveInput.sprint ? AvatarLocomotionState::Sprint : (moveInput.run ? AvatarLocomotionState::Run : AvatarLocomotionState::Walk);
+						else                  newState = AvatarLocomotionState::Idle;
+					}
+
 					if (newState != m_avatarLocoState)
 					{
 						// DEBUG B.1 : log chaque transition d'etat pour diagnostiquer
@@ -7476,6 +7545,49 @@ namespace engine
 						if (rc)
 							m_avatarCrossfade.Play(*rc, /*loops=*/false, nowSec);
 						m_avatarPendingClipRole.clear();
+					}
+
+					// Interaction (touche E) : interactible le plus proche (distance XZ) a portee.
+					// Hint chat a l'entree de portee ; sur E -> effet (objet) ou dialogue (PNJ).
+					// Le geste Interact joue par ailleurs (SM). v1 sans rendu des cibles.
+					{
+						const engine::math::Vec3 ppos = m_characterController.GetPosition();
+						int nearestI = -1;
+						float bestD2 = 0.0f;
+						for (std::size_t i = 0; i < m_interactables.size(); ++i)
+						{
+							const InteractableEntity& e = m_interactables[i];
+							const float dx = e.position.x - ppos.x;
+							const float dz = e.position.z - ppos.z;
+							const float d2 = dx * dx + dz * dz;
+							if (d2 <= e.radius * e.radius && (nearestI < 0 || d2 < bestD2))
+							{
+								nearestI = static_cast<int>(i);
+								bestD2 = d2;
+							}
+						}
+						auto pushInteractChat = [&](const std::string& sender, const std::string& text)
+						{
+							engine::net::ChatMessage cm;
+							cm.timestampUnixMs = static_cast<uint64_t>(
+								std::chrono::duration_cast<std::chrono::milliseconds>(
+									std::chrono::system_clock::now().time_since_epoch()).count());
+							cm.channel = engine::net::ChatChannel::Server;
+							cm.sender = sender;
+							cm.text = text;
+							m_chatUi.PushNetworkLine(cm);
+						};
+						if (nearestI != m_interactableInRange)
+						{
+							m_interactableInRange = nearestI;
+							if (nearestI >= 0)
+								pushInteractChat("[Interaction]", "Pres de " + m_interactables[nearestI].label + " - appuyez sur E.");
+						}
+						if (interactPressed && nearestI >= 0)
+						{
+							const InteractableEntity& e = m_interactables[nearestI];
+							pushInteractChat(e.isNpc ? "[PNJ]" : "[Objet]", e.message);
+						}
 					}
 				}
 

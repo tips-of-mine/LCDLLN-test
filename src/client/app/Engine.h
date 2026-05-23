@@ -589,7 +589,9 @@ namespace engine
 			Punch,
 			Jump,
 			Fall,
-			Land
+			Land,
+			SwimIdle,
+			SwimForward
 		};
 	private:
 		AvatarLocomotionState                                     m_avatarLocoState = AvatarLocomotionState::Idle;
@@ -610,6 +612,19 @@ namespace engine
 		/// sans changer d'etat). Garde-fou 3s dans le case Cast => jamais bloque.
 		int                                                      m_castPhase = 0;
 		std::string                                              m_avatarPendingClipRole;
+		/// Interaction (touche E) v1 : entites interactibles (objets / PNJ). Cibles
+		/// de TEST invisibles (pas de rendu/dialogue avance) -> a remplacer par de
+		/// vraies entites. m_interactableInRange = index a portee (-1 = aucun).
+		struct InteractableEntity
+		{
+			engine::math::Vec3 position{};
+			float radius = 2.5f;
+			bool isNpc = false;
+			std::string label;
+			std::string message;
+		};
+		std::vector<InteractableEntity> m_interactables;
+		int m_interactableInRange = -1;
 		/// Action en cours de remappage dans le panneau Options (capture clavier) :
 		/// 0 = aucune, 1 = sprint, 2 = crouch, 3 = sort. Tant que != 0, le panneau
 		/// attend une touche ; le bloc gameplay est suspendu (panneau Options ouvert).

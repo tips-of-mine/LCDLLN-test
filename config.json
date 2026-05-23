@@ -100,7 +100,8 @@
             "crouch": "Ctrl",
             "cast": "R",
             "interact": "E",
-            "punch": "C"
+            "punch": "C",
+            "attack": ""
         }
     },
     "_comment_player_movement": "Sous-projet B.1 — CharacterController params. Defaults sensibles si absent (CharacterController::Config). walk_speed/run_speed en m/s. gravity en m/s2 (signe negatif). jump_speed = impulse m/s a l'instant du jump. coyote_time_s = jump grace apres avoir quitte le sol. jump_buffer_s = jump grace si presse juste avant atterrissage.",

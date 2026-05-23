@@ -139,6 +139,38 @@ bool TerrainCollider::QueryWater(const engine::math::Vec3& worldCenter, WaterQue
         }
     }
 
+    // Rivieres : pour chaque segment [a,b], distance XZ du point au segment ;
+    // si <= demi-largeur (interpolee), on est dans la riviere. Surface = Y
+    // interpole le long du segment (le node.position.y porte la surface).
+    for (const auto& river : m_water->rivers)
+    {
+        const std::vector<engine::world::water::RiverNode>& nodes = river.nodes;
+        for (std::size_t i = 0; i + 1 < nodes.size(); ++i)
+        {
+            const engine::math::Vec3& a = nodes[i].position;
+            const engine::math::Vec3& b = nodes[i + 1].position;
+            const float abx = b.x - a.x, abz = b.z - a.z;
+            const float abLen2 = abx * abx + abz * abz;
+            float t = 0.0f;
+            if (abLen2 > 1e-6f)
+                t = std::clamp(((px - a.x) * abx + (pz - a.z) * abz) / abLen2, 0.0f, 1.0f);
+            const float closeX = a.x + t * abx;
+            const float closeZ = a.z + t * abz;
+            const float dx = px - closeX, dz = pz - closeZ;
+            const float d2 = dx * dx + dz * dz;
+            const float halfW = (nodes[i].widthMeters + t * (nodes[i + 1].widthMeters - nodes[i].widthMeters)) * 0.5f;
+            if (d2 <= halfW * halfW)
+            {
+                const float surfaceY = a.y + t * (b.y - a.y);
+                if (!found || surfaceY > bestSurfaceY)
+                {
+                    found = true;
+                    bestSurfaceY = surfaceY;
+                }
+            }
+        }
+    }
+
     if (!found)
         return false;
 

@@ -622,6 +622,10 @@ namespace engine
 			bool isNpc = false;
 			std::string label;
 			std::string message;
+			/// Dialogue PNJ multi-lignes (optionnel). Si non vide, chaque appui sur E
+			/// affiche la ligne suivante (boucle). Sinon on affiche `message`.
+			std::vector<std::string> dialogue;
+			int dialogueCursor = 0;
 		};
 		std::vector<InteractableEntity> m_interactables;
 		int m_interactableInRange = -1;

@@ -175,6 +175,25 @@ namespace engine
 			return fallback;
 		}
 
+		// Projette une position monde -> pixels ecran. Formule alignee sur
+		// WorldEditorImGui::WorldToScreen (viewProj col-major .m, convention Vulkan).
+		// false si derriere la camera ou hors near/far. Sert aux marqueurs interactibles.
+		[[maybe_unused]] bool WorldToScreenPx(const float vp[16], float wx, float wy, float wz,
+			int vw, int vh, float& sx, float& sy)
+		{
+			const float cx = vp[0]*wx + vp[4]*wy + vp[8]*wz + vp[12];
+			const float cy = vp[1]*wx + vp[5]*wy + vp[9]*wz + vp[13];
+			const float cz = vp[2]*wx + vp[6]*wy + vp[10]*wz + vp[14];
+			const float cw = vp[3]*wx + vp[7]*wy + vp[11]*wz + vp[15];
+			if (cw <= 1e-5f) return false;
+			const float invW = 1.0f / cw;
+			const float ndcX = cx * invW, ndcY = cy * invW, ndcZ = cz * invW;
+			if (ndcZ < 0.0f || ndcZ > 1.0f) return false;
+			sx = (ndcX * 0.5f + 0.5f) * static_cast<float>(vw);
+			sy = (ndcY * 0.5f + 0.5f) * static_cast<float>(vh);
+			return true;
+		}
+
 		engine::gameplay::MoveInput BuildMoveInput(
 			const engine::platform::Input& input,
 			const engine::render::OrbitalCameraController& camera,
@@ -227,9 +246,11 @@ namespace engine
 			out.sprint      = input.IsDown(sprintKey);
 			out.crouch      = input.IsDown(crouchKey);
 			out.jumpPressed = input.WasPressed(engine::platform::Key::Space);
-			// swim/fly hors-scope B.1 : restent false (consommes par les modes
-			// Water/Fly du CharacterController, inutiles tant que la query eau
-			// n'est pas branchee — IWorldCollider::QueryWater renvoie false).
+			// Nage : contrôle vertical. Espace = remonter, touche Crouch = descendre.
+			// Le CharacterController ne les consomme qu'en mode Water (cf. QueryWater) ;
+			// hors eau, Espace reste le saut et Crouch l'accroupi.
+			out.swimUpPressed   = input.IsDown(engine::platform::Key::Space);
+			out.swimDownPressed = input.IsDown(crouchKey);
 			return out;
 		}
 
@@ -4237,6 +4258,10 @@ namespace engine
 
 													// Charge les 3 races MVP. Lookup meshPath via
 													// CharacterCreationPresenter local (Init() vient d'etre appele).
+													// Modele feminin (cosmetique client v1, #2) : si genre feminin, derive le
+													// chemin Male_ -> Female_ (humains : Male_Ranger -> Female_Ranger present).
+													// Sans variante (pas de 'Male_') -> mesh par defaut. NON persiste (serveur=etape 2).
+													const std::string avatarGender = m_cfg.GetString("client.character_creation.gender", "male");
 													for (const char* raceId : kMvpRaces) {
 														const auto& races = racesPresenter.GetRaces();
 														const engine::client::RaceDefinition* def = nullptr;
@@ -4245,7 +4270,17 @@ namespace engine
 															LOG_WARN(Render, "[Engine] Race '{}' : RaceDefinition introuvable ou meshPath vide", raceId);
 															continue;
 														}
-														loadOneRace(raceId, def->meshPath, def->importScale, def->importRotXDeg);
+														std::string meshPath = def->meshPath;
+														if (avatarGender == "female") {
+															std::string fem = meshPath;
+															std::string::size_type gp = 0;
+															while ((gp = fem.find("Male_", gp)) != std::string::npos) { fem.replace(gp, 5, "Female_"); gp += 7; }
+															if (fem != meshPath) {
+																meshPath = fem;
+																LOG_INFO(Render, "[Engine] Race '{}' : variante feminine -> {}", raceId, meshPath);
+															}
+														}
+														loadOneRace(raceId, meshPath, def->importScale, def->importRotXDeg);
 													}
 
 													// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le
@@ -4316,7 +4351,15 @@ namespace engine
 											// eau ; on pose un BASSIN DE TEST au-dessus du sol pour valider la
 											// mecanique de nage (a remplacer par une vraie etendue d'eau via le
 											// pipeline water.bin / level-design). Desactivable : world.test_water.enabled=false.
-											if (m_cfg.GetBool("world.test_water.enabled", true))
+											// Nage : tenter d'abord une VRAIE eau (instances/water.bin via StreamCache) ;
+											// repli sur l'eau-test procedurale si absente (zone demo plate, sans water.bin).
+											if (auto realWater = m_streamCache.LoadWater(m_cfg, ""))
+											{
+												m_clientWaterScene = realWater;
+												m_waterClientSceneDirty = true;
+												LOG_INFO(Render, "[Nage] water.bin charge ({} lac(s))", static_cast<int>(realWater->lakes.size()));
+											}
+											else if (m_cfg.GetBool("world.test_water.enabled", true))
 											{
 												const float cx = static_cast<float>(m_cfg.GetDouble("world.test_water.center_x", 25.0));
 												const float cz = static_cast<float>(m_cfg.GetDouble("world.test_water.center_z", 0.0));
@@ -4341,9 +4384,25 @@ namespace engine
 												LOG_INFO(Render, "[Nage] Eau-test posee (centre=({:.1f},{:.1f}) half={:.1f} niveauY={:.2f})", cx, cz, half, lvl);
 											}
 											m_terrainCollider.BindWater(m_clientWaterScene.get());
-											// Interaction (v1) : entites interactibles de TEST (invisibles) pour valider
-											// la mecanique objets + dialogue PNJ. A remplacer par de vraies entites.
+											// Interaction : interactibles declares en config (world.interactables.N.*).
+											// Repli sur 2 cibles de TEST pres du spawn si aucun n'est declare.
 											m_interactables.clear();
+											const int icount = static_cast<int>(m_cfg.GetInt("world.interactables.count", 0));
+											for (int ii = 0; ii < icount; ++ii)
+											{
+												const std::string base = "world.interactables." + std::to_string(ii) + ".";
+												InteractableEntity e;
+												e.position = engine::math::Vec3{ static_cast<float>(m_cfg.GetDouble(base + "x", 0.0)), 0.0f, static_cast<float>(m_cfg.GetDouble(base + "z", 0.0)) };
+												e.radius = static_cast<float>(m_cfg.GetDouble(base + "radius", 2.5));
+												e.isNpc = m_cfg.GetBool(base + "npc", false);
+												e.label = m_cfg.GetString(base + "label", "?");
+												e.message = m_cfg.GetString(base + "message", "");
+												const int dcount = static_cast<int>(m_cfg.GetInt(base + "dialogue.count", 0));
+												for (int dj = 0; dj < dcount; ++dj)
+													e.dialogue.push_back(m_cfg.GetString(base + "dialogue." + std::to_string(dj), ""));
+												m_interactables.push_back(e);
+											}
+											if (m_interactables.empty())
 											{
 												InteractableEntity npc;
 												npc.position = engine::math::Vec3{ 4.0f, 0.0f, 0.0f };
@@ -7585,8 +7644,16 @@ namespace engine
 						}
 						if (interactPressed && nearestI >= 0)
 						{
-							const InteractableEntity& e = m_interactables[nearestI];
-							pushInteractChat(e.isNpc ? "[PNJ]" : "[Objet]", e.message);
+							InteractableEntity& e = m_interactables[nearestI];
+							if (e.isNpc && !e.dialogue.empty())
+							{
+								pushInteractChat("[PNJ]", e.label + " : " + e.dialogue[e.dialogueCursor]);
+								e.dialogueCursor = (e.dialogueCursor + 1) % static_cast<int>(e.dialogue.size());
+							}
+							else
+							{
+								pushInteractChat(e.isNpc ? "[PNJ]" : "[Objet]", e.message);
+							}
 						}
 					}
 				}
@@ -8006,6 +8073,26 @@ namespace engine
 			}
 			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
 			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+			// Marqueurs ImGui des interactibles : label flottant projete (visibilite v1
+			// sans mesh). Surligne + " [E]" si a portee. Cf. m_interactables (#39/#40).
+			{
+				const int ivw = static_cast<int>(dw);
+				const int ivh = static_cast<int>(dh);
+				ImDrawList* fg = ImGui::GetForegroundDrawList();
+				for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
+				{
+					const InteractableEntity& e = m_interactables[ii];
+					const float my = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 1.9f;
+					float sx = 0.0f, sy = 0.0f;
+					if (!WorldToScreenPx(out.viewProjMatrix.m, e.position.x, my, e.position.z, ivw, ivh, sx, sy))
+						continue;
+					const bool inRange = (static_cast<int>(ii) == m_interactableInRange);
+					const ImU32 col = inRange ? IM_COL32(255, 220, 80, 255) : IM_COL32(210, 210, 210, 200);
+					const std::string txt = e.label + (inRange ? " [E]" : "");
+					const ImVec2 ts = ImGui::CalcTextSize(txt.c_str());
+					fg->AddText(ImVec2(sx - ts.x * 0.5f, sy - ts.y), col, txt.c_str());
+				}
+			}
 			// Menu de panneaux : barre de menus ImGui toujours visible en jeu,
 			// acces souris a tous les panneaux togglables sans raccourci clavier
 			// dedie. Les panneaux gardent par ailleurs leurs touches existantes ;

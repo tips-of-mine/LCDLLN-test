@@ -1731,3 +1731,45 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 ### Limites connues
 - **Cibles invisibles** (pas de rendu de props/PNJ) → découvrables seulement via le hint chat. À remplacer par de vraies entités avec **meshes** + **dialogues** (arbre de dialogue, loot, etc.).
 - **Dialogue mono-ligne** (pas d'arbre). Pas de portée/raycast visée (proximité simple).
+
+## 40. Outillage contenu : interactibles en config + pipeline eau reel (2026-05-22)
+
+**Objectif** : transformer les v1 « test » (§38 nage, §39 interagir) en systemes **pilotes par donnees**, prets pour du vrai contenu — sans rien casser (replis conserves).
+
+### Interactibles data-driven
+- Declares en config sous `world.interactables` : `count` + par index `i` les cles `world.interactables.i.{x,z,radius,npc,label,message}` (objet JSON a cles numerotees -> aplati par `Config`, pas de parseur de tableau). Lus au world-init dans `m_interactables`.
+- **Repli** : si `count<=0` (ou section absente), 2 cibles de TEST pres du spawn (Villageois + Coffre). `config.json` livre ces 2 par defaut (authorables / extensibles).
+
+### Pipeline eau reel
+- Au world-init, `m_streamCache.LoadWater(cfg, "")` tente de charger `instances/water.bin` (vrai contenu eau). Si present -> `m_clientWaterScene` = eau reelle. **Sinon** repli sur l'eau-test procedurale (§38). Dans les deux cas `BindWater` branche la scene sur le collider (nage).
+
+### Reste a fournir (contenu / assets, hors code)
+- Un vrai `instances/water.bin` par zone (level-design) pour de l'eau realiste.
+- Des meshes/rendu pour les interactibles (PNJ/objets visibles) + arbres de dialogue.
+- Des meshes d'armes (`models/equipment/weapons/*` vides) pour l'equipement / arme visible.
+
+## 41. Dialogue PNJ + marqueurs ImGui des interactibles (2026-05-22)
+
+Complète §39/§40 (interaction E) côté **dialogue** et **visibilité**.
+
+- **Dialogue multi-lignes** : `InteractableEntity.dialogue` (vector) + `dialogueCursor`. En config : `world.interactables.i.dialogue.count` + `.dialogue.j`. Sur E, un PNJ avec dialogue affiche la **ligne suivante** (boucle) ; sinon `message`. (Objets : `message`.) Exemple livré pour le Villageois (config.json).
+- **Marqueurs ImGui** (`#if _WIN32`) : chaque interactible affiche un **label flottant projeté** à l'écran (`WorldToScreenPx`, formule alignée sur `WorldEditorImGui::WorldToScreen`, viewProj col-major). Surligné + « [E] » à portée. Donne la **visibilité** sans passe de rendu de mesh (les vrais props/PNJ visibles = backlog).
+
+Backlog complet des tâches restantes (polish, contenu, serveur) : **`docs/BACKLOG_gameplay.md`**.
+
+## 42. Nage — complétion : contrôle vertical + rivières (2026-05-22)
+
+- **Contrôle vertical** : `BuildMoveInput` pose `swimUpPressed`=Espace, `swimDownPressed`=touche Crouch. Le `CharacterController` ne les consomme qu'en mode `Water` (monter/descendre en nage) ; hors eau, Espace=saut / Crouch=accroupi inchangés.
+- **Rivières dans `QueryWater`** : en plus des lacs (point-in-polygon), on teste chaque segment `[a,b]` des rivières (distance XZ au segment ≤ demi-largeur interpolée → immersion ; surface = Y interpolé le long du segment). Couvre lacs **et** rivières (océan = lac `isOcean`).
+
+## 43. Modèle féminin — cosmétique client v1 (#2) (2026-05-22)
+
+**Objectif** : rendre le **modèle féminin** sélectionnable/affiché côté client, sans serveur (les meshes `Female_Ranger`/`Female_Peasant` existaient mais n'étaient pas câblés ; `races.json` ne pointe que `Male_Ranger`).
+
+- **Genre** : `client.character_creation.gender` = `"male"` (défaut) | `"female"`. Au chargement de l'avatar, si `female`, on **dérive** le chemin `Male_` → `Female_` (humains : `Male_Ranger/Male_Ranger.glb` → `Female_Ranger/Female_Ranger.glb`, présent). Races sans variante (`orcs`/`nains`, pas de `Male_` dans le chemin) → mesh par défaut inchangé.
+- **Cosmétique / client uniquement** : choix lu en config, **non persisté** (relog = retour au défaut) et **non envoyé au serveur**. Aucun redéploiement.
+
+### Reste (étape 2, cf. backlog #2)
+- **Sélecteur de genre dans l'UI** de création de perso (ImGui) — au lieu de la config.
+- **Persistance serveur** : genre stocké en DB (migration) + payload → redéploiement master/shard, visible des autres joueurs.
+- **Textures** (#5) : les modèles (M/F) rendent en matériau fallback tant que les textures ne sont pas placées/converties (assets).

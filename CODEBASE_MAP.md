@@ -1756,3 +1756,8 @@ Complète §39/§40 (interaction E) côté **dialogue** et **visibilité**.
 - **Marqueurs ImGui** (`#if _WIN32`) : chaque interactible affiche un **label flottant projeté** à l'écran (`WorldToScreenPx`, formule alignée sur `WorldEditorImGui::WorldToScreen`, viewProj col-major). Surligné + « [E] » à portée. Donne la **visibilité** sans passe de rendu de mesh (les vrais props/PNJ visibles = backlog).
 
 Backlog complet des tâches restantes (polish, contenu, serveur) : **`docs/BACKLOG_gameplay.md`**.
+
+## 42. Nage — complétion : contrôle vertical + rivières (2026-05-22)
+
+- **Contrôle vertical** : `BuildMoveInput` pose `swimUpPressed`=Espace, `swimDownPressed`=touche Crouch. Le `CharacterController` ne les consomme qu'en mode `Water` (monter/descendre en nage) ; hors eau, Espace=saut / Crouch=accroupi inchangés.
+- **Rivières dans `QueryWater`** : en plus des lacs (point-in-polygon), on teste chaque segment `[a,b]` des rivières (distance XZ au segment ≤ demi-largeur interpolée → immersion ; surface = Y interpolé le long du segment). Couvre lacs **et** rivières (océan = lac `isOcean`).

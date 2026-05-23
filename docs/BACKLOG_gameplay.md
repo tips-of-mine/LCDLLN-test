@@ -23,10 +23,6 @@
 
 - **Roll — i-frames** : la roulade a son impulsion (§30) mais pas d'invincibilité ;
   n'a de sens qu'avec un système de dégâts (cf. section serveur).
-- **Nage — contrôle vertical** : `swimUpPressed`/`swimDownPressed` existent dans
-  `CharacterController` mais ne sont pas bindés (monter/descendre en nage).
-- **Nage — rivières** : `QueryWater` (§38) ne gère que les lacs (point-in-polygon).
-  Ajouter les rivières (`RiverInstance`, largeur/profondeur le long du tracé).
 - **Détection de conflit de touches** (Options) : binder 2 actions sur la même touche
   est permis sans avertissement (§34).
 - **Attaque (souris) remappable** : le clic gauche d'attaque n'est pas remappable (§34).

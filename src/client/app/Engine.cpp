@@ -246,9 +246,11 @@ namespace engine
 			out.sprint      = input.IsDown(sprintKey);
 			out.crouch      = input.IsDown(crouchKey);
 			out.jumpPressed = input.WasPressed(engine::platform::Key::Space);
-			// swim/fly hors-scope B.1 : restent false (consommes par les modes
-			// Water/Fly du CharacterController, inutiles tant que la query eau
-			// n'est pas branchee — IWorldCollider::QueryWater renvoie false).
+			// Nage : contrôle vertical. Espace = remonter, touche Crouch = descendre.
+			// Le CharacterController ne les consomme qu'en mode Water (cf. QueryWater) ;
+			// hors eau, Espace reste le saut et Crouch l'accroupi.
+			out.swimUpPressed   = input.IsDown(engine::platform::Key::Space);
+			out.swimDownPressed = input.IsDown(crouchKey);
 			return out;
 		}
 

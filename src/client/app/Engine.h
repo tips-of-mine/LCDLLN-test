@@ -605,6 +605,11 @@ namespace engine
 		/// et bascule Jab<->Cross a chaque coup. Clip dynamique (cf. point de lecture).
 		std::string                                              m_currentPunchRole = "Punch";
 		bool                                                     m_punchAlt = false;
+		/// Sequence de sort : phase (0=Enter,1=Shoot,2=Exit) + clip a rejouer en
+		/// cours d'etat (vide=aucun ; consomme 1 fois par la SM, rejoue un one-shot
+		/// sans changer d'etat). Garde-fou 3s dans le case Cast => jamais bloque.
+		int                                                      m_castPhase = 0;
+		std::string                                              m_avatarPendingClipRole;
 		/// Action en cours de remappage dans le panneau Options (capture clavier) :
 		/// 0 = aucune, 1 = sprint, 2 = crouch, 3 = sort. Tant que != 0, le panneau
 		/// attend une touche ; le bloc gameplay est suspendu (panneau Options ouvert).

@@ -1630,7 +1630,7 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 
 ### Limites connues
 - **Cosmétique uniquement** : aucun projectile, aucune cible, aucun envoi serveur.
-- **Clip unique (pas de séquence)** : on joue `Spell_Simple_Shoot` seul, sans le wind-up/exit (`Spell_Simple_Enter`/`Idle_Loop`/`Exit`). Le crossfade lisse le retour à la locomotion ; une vraie séquence Enter→(channel)→Shoot→Exit est une amélioration future.
+- **Séquence Enter→Shoot→Exit** (depuis §37+) : l'état `Cast` joue désormais `Spell_Simple_Enter` à l'entrée, puis **rejoue** `Spell_Simple_Shoot` puis `Spell_Simple_Exit` aux frontières de phase (`m_castPhase`), via un **replay de clip en cours d'état** (`m_avatarPendingClipRole`, consommé une fois par frame dans la SM — rejoue un one-shot sans transition). `addRole` : `Cast`=Enter, `CastShoot`=Shoot, `CastExit`=Exit. **Garde-fou** : sortie forcée si `stateElapsed ≥ 3 s` → jamais bloqué. Mécanisme réutilisable pour d'autres séquences (emotes Enter/Exit, combos).
 - **Repli gracieux** : une race sans clip `Spell_Simple_Shoot` (`FindClip` nullptr) sort immédiatement de l'état (anim précédente conservée).
 
 ## 34. Touches d'action remappables depuis le menu Options (2026-05-22)

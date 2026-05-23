@@ -4134,7 +4134,9 @@ namespace engine
 															addRole("SitTalk", "Sitting_Talking_Loop");
 															addRole("Push", "Push_Loop");
 															addRole("Attack", "Sword_Attack");
-															addRole("Cast", "Spell_Simple_Shoot");
+															addRole("Cast", "Spell_Simple_Enter");
+															addRole("CastShoot", "Spell_Simple_Shoot");
+															addRole("CastExit", "Spell_Simple_Exit");
 															addRole("Interact", "Interact");
 															addRole("Punch", "Punch_Jab");
 															addRole("PunchCross", "Punch_Cross");
@@ -7143,6 +7145,10 @@ namespace engine
 						m_currentSkinnedMesh->FindClip("Attack");
 					const engine::render::skinned::AnimationClip* castClip =
 						m_currentSkinnedMesh->FindClip("Cast");
+					const engine::render::skinned::AnimationClip* castShootClip =
+						m_currentSkinnedMesh->FindClip("CastShoot");
+					const engine::render::skinned::AnimationClip* castExitClip =
+						m_currentSkinnedMesh->FindClip("CastExit");
 					const engine::render::skinned::AnimationClip* interactClip =
 						m_currentSkinnedMesh->FindClip("Interact");
 					const engine::render::skinned::AnimationClip* punchClip =
@@ -7295,9 +7301,23 @@ namespace engine
 								}
 								break;
 							case AvatarLocomotionState::Cast:
-								// One-shot : retour locomotion quand le clip de sort est fini.
-								// Deplacement pilote par le CharacterController pendant le cast.
-								if (!castClip || stateElapsed >= castClip->duration)
+							{
+								// Sequence : Enter (clip "Cast") -> Shoot -> Exit, les 2 derniers rejoues
+								// via m_avatarPendingClipRole (sans changer d'etat). Garde-fou 3s.
+								const float enterDur = castClip ? castClip->duration : 0.0f;
+								const float shootDur = castShootClip ? castShootClip->duration : 0.0f;
+								const float exitDur  = castExitClip ? castExitClip->duration : 0.0f;
+								if (m_castPhase == 0 && stateElapsed >= enterDur)
+								{
+									m_avatarPendingClipRole = "CastShoot";
+									m_castPhase = 1;
+								}
+								else if (m_castPhase == 1 && stateElapsed >= enterDur + shootDur)
+								{
+									m_avatarPendingClipRole = "CastExit";
+									m_castPhase = 2;
+								}
+								if (stateElapsed >= enterDur + shootDur + exitDur || stateElapsed >= 3.0f)
 								{
 									if (!moving)                  newState = AvatarLocomotionState::Idle;
 									else if (movingBack)          newState = AvatarLocomotionState::WalkBack;
@@ -7306,6 +7326,7 @@ namespace engine
 									else                          newState = AvatarLocomotionState::Walk;
 								}
 								break;
+							}
 							case AvatarLocomotionState::Interact:
 								// One-shot : retour locomotion quand le geste d'interaction est fini.
 								// Action non-combat (la touche E reservee au menu Options trouve ici son usage).
@@ -7426,6 +7447,7 @@ namespace engine
 
 						m_avatarLocoState = newState;
 						m_avatarLocoStateEnterTime = now;
+						if (newState == AvatarLocomotionState::Cast) m_castPhase = 0;
 
 						// Trigger crossfade vers le clip du nouvel etat. Si le clip est
 						// introuvable (asset manquant -> FindClip == nullptr), on log un
@@ -7446,6 +7468,14 @@ namespace engine
 						{
 							LOG_WARN(Render, "[Avatar SM] FindClip('{}') returned nullptr — animation precedente continue", clipName);
 						}
+					}
+					// Replay d'un clip en cours d'etat (sequence de sort) sans transition d'etat.
+					if (!m_avatarPendingClipRole.empty())
+					{
+						const engine::render::skinned::AnimationClip* rc = m_currentSkinnedMesh->FindClip(m_avatarPendingClipRole.c_str());
+						if (rc)
+							m_avatarCrossfade.Play(*rc, /*loops=*/false, nowSec);
+						m_avatarPendingClipRole.clear();
 					}
 				}
 

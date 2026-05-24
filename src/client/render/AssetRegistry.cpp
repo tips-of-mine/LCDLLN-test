@@ -316,6 +316,86 @@ namespace engine::render
 		LOG_INFO(Render, "[AssetRegistry] Destroyed");
 	}
 
+	MeshHandle AssetRegistry::CreateMeshFromData(const void* vertexData, uint32_t vertexCount,
+	                                             const uint32_t* indices, uint32_t indexCount)
+	{
+		if (m_device == VK_NULL_HANDLE || vertexData == nullptr || vertexCount == 0 ||
+			indices == nullptr || indexCount == 0)
+			return MeshHandle(this, kInvalidAssetId);
+
+		const size_t vertexBytes = static_cast<size_t>(vertexCount) * kMeshVertexStride;
+		const size_t indexBytes  = static_cast<size_t>(indexCount) * sizeof(uint32_t);
+		const uint8_t* vBytes = reinterpret_cast<const uint8_t*>(vertexData);
+
+		MeshAsset asset{};
+		asset.vertexCount = vertexCount;
+		asset.indexCount  = indexCount;
+		{
+			const float* first = reinterpret_cast<const float*>(vBytes);
+			asset.localBoundsMin = { first[0], first[1], first[2] };
+			asset.localBoundsMax = asset.localBoundsMin;
+			for (uint32_t vi = 1; vi < vertexCount; ++vi)
+			{
+				const float* p = reinterpret_cast<const float*>(vBytes + static_cast<size_t>(vi) * kMeshVertexStride);
+				asset.localBoundsMin.x = std::min(asset.localBoundsMin.x, p[0]);
+				asset.localBoundsMin.y = std::min(asset.localBoundsMin.y, p[1]);
+				asset.localBoundsMin.z = std::min(asset.localBoundsMin.z, p[2]);
+				asset.localBoundsMax.x = std::max(asset.localBoundsMax.x, p[0]);
+				asset.localBoundsMax.y = std::max(asset.localBoundsMax.y, p[1]);
+				asset.localBoundsMax.z = std::max(asset.localBoundsMax.z, p[2]);
+			}
+			asset.hasLocalBounds = true;
+		}
+
+		auto createBuffer = [&](VkDeviceSize size, VkBufferUsageFlags usage,
+			VkBuffer& outBuffer, void*& outAlloc) -> bool
+		{
+			VkBufferCreateInfo bufInfo{};
+			bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bufInfo.size = size;
+			bufInfo.usage = usage;
+			bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			if (vkCreateBuffer(m_device, &bufInfo, nullptr, &outBuffer) != VK_SUCCESS || outBuffer == VK_NULL_HANDLE)
+				return false;
+			VkMemoryRequirements memReq{};
+			vkGetBufferMemoryRequirements(m_device, outBuffer, &memReq);
+			uint32_t memTypeIdx = FindMemoryType(m_physicalDevice, memReq.memoryTypeBits,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			if (memTypeIdx == UINT32_MAX) { vkDestroyBuffer(m_device, outBuffer, nullptr); outBuffer = VK_NULL_HANDLE; return false; }
+			VkMemoryAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			allocInfo.allocationSize = memReq.size;
+			allocInfo.memoryTypeIndex = memTypeIdx;
+			VkDeviceMemory mem = VK_NULL_HANDLE;
+			if (vkAllocateMemory(m_device, &allocInfo, nullptr, &mem) != VK_SUCCESS || mem == VK_NULL_HANDLE) { vkDestroyBuffer(m_device, outBuffer, nullptr); outBuffer = VK_NULL_HANDLE; return false; }
+			if (vkBindBufferMemory(m_device, outBuffer, mem, 0) != VK_SUCCESS) { vkFreeMemory(m_device, mem, nullptr); vkDestroyBuffer(m_device, outBuffer, nullptr); outBuffer = VK_NULL_HANDLE; return false; }
+			outAlloc = reinterpret_cast<void*>(mem);
+			return true;
+		};
+
+		if (!createBuffer(vertexBytes, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, asset.vertexBuffer, asset.vertexAlloc))
+			return MeshHandle(this, kInvalidAssetId);
+		if (!createBuffer(indexBytes, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, asset.indexBuffer, asset.indexAlloc))
+		{
+			VkDeviceMemory vMem = reinterpret_cast<VkDeviceMemory>(asset.vertexAlloc);
+			vkDestroyBuffer(m_device, asset.vertexBuffer, nullptr);
+			vkFreeMemory(m_device, vMem, nullptr);
+			return MeshHandle(this, kInvalidAssetId);
+		}
+
+		void* pv = nullptr;
+		VkDeviceMemory vMem = reinterpret_cast<VkDeviceMemory>(asset.vertexAlloc);
+		if (vkMapMemory(m_device, vMem, 0, vertexBytes, 0, &pv) == VK_SUCCESS) { memcpy(pv, vBytes, vertexBytes); vkUnmapMemory(m_device, vMem); }
+		void* pi = nullptr;
+		VkDeviceMemory iMem = reinterpret_cast<VkDeviceMemory>(asset.indexAlloc);
+		if (vkMapMemory(m_device, iMem, 0, indexBytes, 0, &pi) == VK_SUCCESS) { memcpy(pi, indices, indexBytes); vkUnmapMemory(m_device, iMem); }
+
+		AssetId id = m_nextMeshId++;
+		m_meshes[id] = std::move(asset);
+		LOG_INFO(Render, "[AssetRegistry] CreateMeshFromData OK ({} vertices, {} indices)", vertexCount, indexCount);
+		return MeshHandle(this, id);
+	}
+
 	AssetId AssetRegistry::loadMeshInternal(std::string_view relativePath)
 	{
 		LOG_WARN(Render, "[ASSET] loadMesh '{}'", relativePath);

@@ -146,7 +146,7 @@
         "interactables": {
             "count": 2,
             "0": { "x": 4.0, "z": 0.0, "radius": 2.5, "npc": true, "label": "Villageois", "message": "Villageois : Bonjour !", "dialogue": { "count": 3, "0": "Bonjour, aventurier ! Bienvenue par ici.", "1": "Le bassin de test est a l'est, si tu veux nager.", "2": "Reviens me voir quand tu veux." } },
-            "1": { "x": -4.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Coffre", "message": "Vous fouillez le coffre... vide pour l'instant." }
+            "1": { "x": -4.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Coffre", "message": "Vous fouillez le coffre... vide pour l'instant.", "mesh": "meshes/props/Chest_Wood.gltf", "scale": 1.0, "yaw_deg": 0.0 }
         },
         "_comment_test_water": "Nage : bassin de TEST procedural (la zone demo n'a pas d'eau). enabled=false pour le retirer. Ignore si un instances/water.bin reel est charge.",
         "test_water": {

@@ -683,9 +683,44 @@ namespace engine
 			/// affiche la ligne suivante (boucle). Sinon on affiche `message`.
 			std::vector<std::string> dialogue;
 			int dialogueCursor = 0;
+			/// Mesh statique optionnel du prop (chantier B). Chemin relatif à
+			/// paths.content (ex. "meshes/props/Chest_Wood.gltf"). Vide = pas de mesh
+			/// rendu (marqueur ImGui seul, comportement historique).
+			std::string meshPath;
+			float meshScale = 1.0f;    ///< Échelle uniforme appliquée au mesh.
+			float meshYawDeg = 0.0f;   ///< Rotation Y (degrés) du mesh.
 		};
 		std::vector<InteractableEntity> m_interactables;
 		int m_interactableInRange = -1;
+
+		/// Une partie de prop = un sous-ensemble de matériau (un MeshAsset GPU + son
+		/// index matériau bindless). Un prop multi-matériaux a plusieurs parties.
+		struct PropPart
+		{
+			engine::render::MeshHandle mesh;
+			uint32_t materialIndex = 0;
+		};
+		/// Prop rendu in-world : matrice modèle monde + parties (une par matériau).
+		struct PropRenderable
+		{
+			engine::math::Mat4 modelMatrix = engine::math::Mat4::Identity();
+			std::vector<PropPart> parts;
+		};
+		/// Props statiques rendus (chantier B), construits au boot depuis les
+		/// interactibles ayant un meshPath. Cf. LoadInteractableProps / RecordPropsGeometry.
+		std::vector<PropRenderable> m_props;
+
+		/// Charge les meshes glTF statiques des interactibles (groupés par matériau,
+		/// matériaux trim chargés dans le cache bindless) et peuple m_props. À appeler
+		/// au boot, après l'init du pipeline (cache matériaux valide) et le parse des
+		/// interactibles. Main thread.
+		void LoadInteractableProps();
+
+		/// Dessine les props (m_props) dans la passe Geometry, après l'avatar : un
+		/// GeometryPass.Record par partie (matériau) avec loadOp=LOAD (superposition au
+		/// GBuffer terrain/avatar). No-op si pas de props ou pas de load pass.
+		void RecordPropsGeometry(VkCommandBuffer cmd, engine::render::Registry& reg,
+		                         const engine::RenderState& rs);
 		/// Action en cours de remappage dans le panneau Options (capture clavier) :
 		/// 0 = aucune, 1 = sprint, 2 = crouch, 3 = sort. Tant que != 0, le panneau
 		/// attend une touche ; le bloc gameplay est suspendu (panneau Options ouvert).

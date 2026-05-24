@@ -122,6 +122,19 @@ namespace engine::render
 		/// Format: minimal binary .mesh (see implementation). Returns invalid handle on failure.
 		MeshHandle LoadMesh(std::string_view relativePath);
 
+		/// Crée un MeshAsset GPU à partir de données en mémoire (props chargés depuis
+		/// glTF, chantier B). Les sommets doivent être au format `kMeshVertexStride`
+		/// (pos[3]+normal[3]+uv[2] = 32 octets), identique au format `.mesh`, pour être
+		/// compatibles avec le pipeline GeometryPass. Pas de cache (chaque appel crée un
+		/// nouvel asset, libéré au Shutdown du registry).
+		/// \param vertexData    Pointeur vers `vertexCount * 32` octets (8 floats/sommet).
+        /// \param vertexCount   Nombre de sommets.
+        /// \param indices       Index buffer (uint32, triangle list).
+        /// \param indexCount    Nombre d'indices.
+		/// \return Handle invalide si device absent, données vides, ou échec Vulkan.
+		MeshHandle CreateMeshFromData(const void* vertexData, uint32_t vertexCount,
+		                              const uint32_t* indices, uint32_t indexCount);
+
 		/// Loads a texture from content path. Returns cached asset if already loaded.
 		/// \param useSrgb If true, use sRGB format; otherwise linear.
 		/// Format: raw .texr (magic, width, height, sRGB flag, RGBA pixels) ou PNG (8-bit RGBA).

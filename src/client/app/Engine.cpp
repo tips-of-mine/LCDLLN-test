@@ -534,6 +534,13 @@ namespace engine
 			if (cfg.LoadFromFile("keybinds.json"))
 				LOG_INFO(Core, "[Boot] keybinds.json applique (binds clavier persistants)");
 
+			// Apparence persistante (client.character_creation.gender) : fichier
+			// dedie character_appearance.json, ecrit par le selecteur de genre de
+			// l'ecran de creation. Merge par-dessus config.json. Meme logique que
+			// keybinds.json (un echec ne corrompt jamais user_settings.json).
+			if (cfg.LoadFromFile("character_appearance.json"))
+				LOG_INFO(Core, "[Boot] character_appearance.json applique (genre avatar persistant)");
+
 			engine::core::Config persisted;
 			if (!persisted.LoadFromFile("user_settings.json"))
 			{
@@ -4071,10 +4078,26 @@ namespace engine
 										const std::string bodyBc  = m_cfg.GetString("client.character_creation.body_basecolor", "textures/characters/humains/T_Regular_Male_BaseColor.png");
 										const std::string bodyNrm = m_cfg.GetString("client.character_creation.body_normal",    "textures/characters/humains/T_Regular_Male_Normal.png");
 										const std::string bodyOrm = m_cfg.GetString("client.character_creation.body_orm",       "");
+										// Sélecteur de genre : on cree DEUX materiaux de peau (male + femelle) au
+										// boot pour la bascule live (apercu de creation) et le rendu in-world
+										// immediat sans rechargement. Les chemins femelle derivent des chemins
+										// male (Male_ -> Female_, ex. T_Regular_Male_* -> T_Regular_Female_*), en
+										// miroir du swap de mesh (Male_Ranger -> Female_Ranger). Le mesh femelle
+										// porte le materiau "MI_Regular_Female", le male "MI_Regular_Male" : les
+										// DEUX sont listes par defaut dans body_material_names pour router la peau
+										// quel que soit le genre.
+										auto deriveFemalePath = [](std::string p) {
+											std::string::size_type i = 0;
+											while ((i = p.find("Male_", i)) != std::string::npos) { p.replace(i, 5, "Female_"); i += 7; }
+											return p;
+										};
+										const std::string bodyBcF  = deriveFemalePath(bodyBc);
+										const std::string bodyNrmF = deriveFemalePath(bodyNrm);
+										const std::string bodyOrmF = bodyOrm.empty() ? std::string() : deriveFemalePath(bodyOrm);
 										// Noms de materiaux glTF qui recoivent la PEAU (separes par des virgules) ;
-										// tout autre nom recoit l'habit. Defaut : "MI_Regular_Male".
+										// tout autre nom recoit l'habit. Defaut : peau male ET femelle.
 										m_avatarBodyMaterialNames = SplitCsv(
-											m_cfg.GetString("client.character_creation.body_material_names", "MI_Regular_Male"));
+											m_cfg.GetString("client.character_creation.body_material_names", "MI_Regular_Male,MI_Regular_Female"));
 										// Depth bias peau (anti z-fight peau/habit, « parait double ») : reglable
 										// a chaud via config (pas de rebuild pour ajuster). 0 = desactive.
 										m_avatarSkinDepthBiasConstant = static_cast<float>(
@@ -4099,25 +4122,27 @@ namespace engine
 												if (outfitOrmTex.IsValid()) outfitMat.orm = outfitOrmTex;
 												m_avatarMaterialId = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), outfitMat);
 
-												// Materiau PEAU (sous-maillages dont le nom est dans body_material_names).
-												// Si la BaseColor peau est absente, on retombe sur l'habit (m_avatarBodyMaterialId
-												// reste 0 -> traite comme habit au draw).
-												const engine::render::TextureHandle bodyBcTex = m_assetRegistry.LoadTexture(bodyBc, /*useSrgb*/ true);
-												if (bodyBcTex.IsValid())
-												{
-													engine::render::Material bodyMat{};
-													bodyMat.baseColor = bodyBcTex;
-													const engine::render::TextureHandle bodyNrmTex = m_assetRegistry.LoadTexture(bodyNrm, /*useSrgb*/ false);
-													if (bodyNrmTex.IsValid()) bodyMat.normal = bodyNrmTex;
-													if (!bodyOrm.empty())
+												// Fabrique un materiau de peau depuis un triplet bc/nrm/orm. Renvoie 0
+												// (= retombe sur l'habit au draw) si la BaseColor est absente.
+												auto makeBodyMaterial = [&](const std::string& bc, const std::string& nrm,
+												                            const std::string& orm) -> uint32_t {
+													const engine::render::TextureHandle bcTex = m_assetRegistry.LoadTexture(bc, /*useSrgb*/ true);
+													if (!bcTex.IsValid()) return 0u;
+													engine::render::Material mat{};
+													mat.baseColor = bcTex;
+													const engine::render::TextureHandle nrmTex = m_assetRegistry.LoadTexture(nrm, /*useSrgb*/ false);
+													if (nrmTex.IsValid()) mat.normal = nrmTex;
+													if (!orm.empty())
 													{
-														const engine::render::TextureHandle bodyOrmTex = m_assetRegistry.LoadTexture(bodyOrm, /*useSrgb*/ false);
-														if (bodyOrmTex.IsValid()) bodyMat.orm = bodyOrmTex;
+														const engine::render::TextureHandle ormTex = m_assetRegistry.LoadTexture(orm, /*useSrgb*/ false);
+														if (ormTex.IsValid()) mat.orm = ormTex;
 													}
-													m_avatarBodyMaterialId = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), bodyMat);
-												}
-												LOG_INFO(Render, "[Avatar] Materiaux PBR habit(id={}) peau(id={}, bc={})",
-													m_avatarMaterialId, m_avatarBodyMaterialId, bodyBcTex.IsValid());
+													return materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+												};
+												m_avatarBodyMaterialIdMale   = makeBodyMaterial(bodyBc,  bodyNrm,  bodyOrm);
+												m_avatarBodyMaterialIdFemale = makeBodyMaterial(bodyBcF, bodyNrmF, bodyOrmF);
+												LOG_INFO(Render, "[Avatar] Materiaux PBR habit(id={}) peau male(id={}) peau femelle(id={})",
+													m_avatarMaterialId, m_avatarBodyMaterialIdMale, m_avatarBodyMaterialIdFemale);
 											}
 										}
 
@@ -4181,7 +4206,11 @@ namespace engine
 													engine::client::CharacterCreationPresenter racesPresenter;
 													racesPresenter.Init(m_cfg);
 
-													auto loadOneRace = [&](const std::string& raceId, const std::string& meshPath,
+													// meshKey : clef de stockage dans m_raceMeshes ("raceId|gender",
+													// ex. "humains|female"). raceId reste utilise pour les logs et la
+													// detection de rig. Cf. RaceMeshKey() / GetRaceMesh().
+													auto loadOneRace = [&](const std::string& meshKey, const std::string& raceId,
+													                       const std::string& meshPath,
 													                       float importScale, float importRotXDeg) -> bool {
 														const std::string fullMeshPath = contentRoot + "/" + meshPath;
 														auto loaded = engine::render::skinned::SkinnedMeshLoader::Load(
@@ -4331,18 +4360,22 @@ namespace engine
 															imp.m[10] = importScale * cx;
 															loaded->importTransform = imp;
 														}
-														LOG_INFO(Render, "[Engine] Race '{}' loaded ({} bones, {} clips) from '{}'",
-															raceId, loaded->skeleton.bones.size(), loaded->clips.size(), fullMeshPath);
-														m_raceMeshes.emplace(raceId, std::move(*loaded));
+														LOG_INFO(Render, "[Engine] Race '{}' loaded as '{}' ({} bones, {} clips) from '{}'",
+															raceId, meshKey, loaded->skeleton.bones.size(), loaded->clips.size(), fullMeshPath);
+														m_raceMeshes.emplace(meshKey, std::move(*loaded));
 														return true;
 													};
 
-													// Charge les 3 races MVP. Lookup meshPath via
-													// CharacterCreationPresenter local (Init() vient d'etre appele).
-													// Modele feminin (cosmetique client v1, #2) : si genre feminin, derive le
-													// chemin Male_ -> Female_ (humains : Male_Ranger -> Female_Ranger present).
-													// Sans variante (pas de 'Male_') -> mesh par defaut. NON persiste (serveur=etape 2).
-													const std::string avatarGender = m_cfg.GetString("client.character_creation.gender", "male");
+													// Charge les 3 races MVP, pour les DEUX genres (selecteur de genre).
+													// Le male est toujours charge sous "raceId|male". Le femelle (chemin
+													// derive Male_ -> Female_, ex. Female_Ranger) est charge sous
+													// "raceId|female" UNIQUEMENT si une variante distincte existe ET se
+													// charge ; sinon GetRaceMesh(race,"female") retombe sur le male.
+													auto deriveFemaleMesh = [](std::string p) {
+														std::string::size_type gp = 0;
+														while ((gp = p.find("Male_", gp)) != std::string::npos) { p.replace(gp, 5, "Female_"); gp += 7; }
+														return p;
+													};
 													for (const char* raceId : kMvpRaces) {
 														const auto& races = racesPresenter.GetRaces();
 														const engine::client::RaceDefinition* def = nullptr;
@@ -4351,25 +4384,24 @@ namespace engine
 															LOG_WARN(Render, "[Engine] Race '{}' : RaceDefinition introuvable ou meshPath vide", raceId);
 															continue;
 														}
-														std::string meshPath = def->meshPath;
-														if (avatarGender == "female") {
-															std::string fem = meshPath;
-															std::string::size_type gp = 0;
-															while ((gp = fem.find("Male_", gp)) != std::string::npos) { fem.replace(gp, 5, "Female_"); gp += 7; }
-															if (fem != meshPath) {
-																meshPath = fem;
-																LOG_INFO(Render, "[Engine] Race '{}' : variante feminine -> {}", raceId, meshPath);
-															}
+														const std::string maleMesh = def->meshPath;
+														loadOneRace(RaceMeshKey(raceId, "male"), raceId, maleMesh, def->importScale, def->importRotXDeg);
+														const std::string femaleMesh = deriveFemaleMesh(maleMesh);
+														if (femaleMesh != maleMesh) {
+															loadOneRace(RaceMeshKey(raceId, "female"), raceId, femaleMesh, def->importScale, def->importRotXDeg);
 														}
-														loadOneRace(raceId, meshPath, def->importScale, def->importRotXDeg);
 													}
+													// Genre courant depuis config (mergee avec le fichier de persistance au boot).
+													m_avatarGender = m_cfg.GetString("client.character_creation.gender", "male");
+													if (m_avatarGender != "male" && m_avatarGender != "female")
+														m_avatarGender = "male";
 
 													// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le
 													// perso n'est pas encore "in world" avant EnterWorld, mais Engine
 													// peut etre questionne sur ce mesh pour des previews/tests).
-													auto humansIt = m_raceMeshes.find("humains");
-													if (humansIt != m_raceMeshes.end()) {
-														m_currentSkinnedMesh = &humansIt->second;
+													engine::render::skinned::SkinnedMesh* defaultMesh = GetRaceMesh("humains", m_avatarGender);
+													if (defaultMesh != nullptr) {
+														m_currentSkinnedMesh = defaultMesh;
 														m_playerAnimStartTime = std::chrono::steady_clock::now();
 														m_avatarLocoStateEnterTime = m_playerAnimStartTime;
 														m_skinnedAvatarReady = true;
@@ -4708,8 +4740,10 @@ namespace engine
 													// recoivent la PEAU (m_avatarBodyMaterialId), les autres l'habit.
 													// Si aucune texture de peau n'est chargee (id 0), tout retombe sur
 													// l'habit -> comportement identique a l'ancien mono-draw.
+													const uint32_t bodyMaterialId = (m_avatarGender == "female")
+														? m_avatarBodyMaterialIdFemale : m_avatarBodyMaterialIdMale;
 													std::vector<uint32_t> submeshMaterialIndices;
-													if (m_avatarBodyMaterialId != 0u && !m_currentSkinnedMesh->submeshes.empty())
+													if (bodyMaterialId != 0u && !m_currentSkinnedMesh->submeshes.empty())
 													{
 														submeshMaterialIndices.reserve(m_currentSkinnedMesh->submeshes.size());
 														for (const auto& sub : m_currentSkinnedMesh->submeshes)
@@ -4718,7 +4752,7 @@ namespace engine
 																m_avatarBodyMaterialNames.begin(),
 																m_avatarBodyMaterialNames.end(),
 																sub.materialName) != m_avatarBodyMaterialNames.end();
-															submeshMaterialIndices.push_back(isBody ? m_avatarBodyMaterialId
+															submeshMaterialIndices.push_back(isBody ? bodyMaterialId
 																                                    : skinnedMaterialIndex);
 														}
 													}
@@ -4728,7 +4762,7 @@ namespace engine
 														m_vkSwapchain.GetExtent(),
 														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
 														m_fgGBufferVelocityId, m_fgDepthId,
-														[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat,
+														[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat, bodyMaterialId,
 														 submeshMaterialIndices = std::move(submeshMaterialIndices)](VkCommandBuffer innerCmd) {
 															m_skinnedRenderer.Record(
 																m_vkDeviceContext.GetDevice(), innerCmd,
@@ -4742,7 +4776,7 @@ namespace engine
 																finalModelMat.m,
 																skinnedMaterialIndex,
 																submeshMaterialIndices,
-																m_avatarBodyMaterialId,
+																bodyMaterialId,
 																m_avatarSkinDepthBiasConstant,
 																m_avatarSkinDepthBiasSlope);
 														});
@@ -9039,19 +9073,54 @@ namespace engine
 	/// Thread : main thread uniquement (m_raceMeshes n'est ni mute ni protege).
 	engine::render::skinned::SkinnedMesh* Engine::GetRaceMesh(const std::string& raceId)
 	{
-		auto it = m_raceMeshes.find(raceId);
+		return GetRaceMesh(raceId, m_avatarGender);
+	}
+
+	engine::render::skinned::SkinnedMesh* Engine::GetRaceMesh(const std::string& raceId,
+	                                                          const std::string& gender)
+	{
+		// 1. Mesh exact race+genre demande.
+		auto it = m_raceMeshes.find(RaceMeshKey(raceId, gender));
 		if (it != m_raceMeshes.end()) return &it->second;
-		// Fallback : si la race demandee n'est pas chargee (asset manquant
-		// ou race hors-MVP), on retourne le mesh humains. Si meme humains
-		// est absent (boot rate), on retourne nullptr -> caller fallback
-		// cube placeholder via m_skinnedAvatarReady = false.
-		auto humansIt = m_raceMeshes.find("humains");
+		// 2. Pas de variante pour ce genre (ex. femelle absente pour nains/orcs)
+		//    -> male de la meme race (toujours charge).
+		if (gender != "male") {
+			auto maleIt = m_raceMeshes.find(RaceMeshKey(raceId, "male"));
+			if (maleIt != m_raceMeshes.end()) {
+				return &maleIt->second;
+			}
+		}
+		// 3. Race inconnue / non chargee -> humains male.
+		auto humansIt = m_raceMeshes.find(RaceMeshKey("humains", "male"));
 		if (humansIt != m_raceMeshes.end()) {
-			LOG_WARN(Render, "[Engine] GetRaceMesh('{}') fallback humains", raceId);
+			LOG_WARN(Render, "[Engine] GetRaceMesh('{}','{}') fallback humains|male", raceId, gender);
 			return &humansIt->second;
 		}
-		LOG_ERROR(Render, "[Engine] GetRaceMesh('{}') fallback humains ECHEC (humains absent)", raceId);
+		// 4. Boot rate : meme humains|male absent -> cube placeholder.
+		LOG_ERROR(Render, "[Engine] GetRaceMesh('{}','{}') ECHEC (humains|male absent)", raceId, gender);
 		return nullptr;
+	}
+
+	void Engine::SetAvatarGender(const std::string& gender)
+	{
+		if (gender != "male" && gender != "female") {
+			LOG_WARN(Core, "[Avatar] SetAvatarGender('{}') ignore (attendu male/female)", gender);
+			return;
+		}
+		if (gender == m_avatarGender)
+			return;
+		m_avatarGender = gender;
+		// Runtime : la valeur sert au prochain EnterWorld (mesh) et aux apercus.
+		m_cfg.SetValue("client.character_creation.gender", gender);
+		// Persistance : fichier dedie merge au boot (comme keybinds.json) -> le
+		// choix survit au relog. JSON imbrique = aplati en client.character_creation.gender.
+		const std::string json =
+			std::string("{\n  \"client\": {\n    \"character_creation\": {\n")
+			+ "      \"gender\": \"" + gender + "\"\n"
+			+ "    }\n  }\n}\n";
+		if (!engine::platform::FileSystem::WriteAllText("character_appearance.json", json))
+			LOG_WARN(Core, "[Avatar] character_appearance.json non ecrit (genre non persiste)");
+		LOG_INFO(Core, "[Avatar] Genre actif -> {}", gender);
 	}
 
 	void Engine::OnResize(int w, int h)

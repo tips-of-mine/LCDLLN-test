@@ -2,6 +2,7 @@
 
 // Couche modèle : BuildModel_CharacterCreate expose le champ nom, StartCharacterCreateWorker envoie la requête réseau.
 #include "src/client/auth/AuthUi.h"
+#include "src/client/app/Engine.h"  // SetAvatarGender (selecteur de genre) sur m_engineForRaceLookup
 
 #include "src/shared/network/CharacterPayloads.h"
 #include "src/shared/network/ErrorPacket.h"
@@ -53,7 +54,7 @@ namespace engine::client
 	} // namespace
 
 	/// Soumet le nom de personnage saisi depuis le renderer ImGui et lance la création.
-	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8)
+	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8, const char* genderUtf8)
 	{
 		if (m_phase != Phase::CharacterCreate)
 		{
@@ -61,6 +62,11 @@ namespace engine::client
 		}
 		m_characterName = nameUtf8 ? std::string(nameUtf8) : std::string();
 		m_characterRaceId = raceIdUtf8 ? std::string(raceIdUtf8) : std::string();
+		// Applique le genre choisi au moteur AVANT la soumission : l'EnterWorld qui
+		// suit resout le mesh via Engine::GetRaceMesh(raceId) qui lit m_avatarGender,
+		// et le choix est persiste (relog) par SetAvatarGender.
+		if (m_engineForRaceLookup != nullptr && genderUtf8 != nullptr)
+			m_engineForRaceLookup->SetAvatarGender(genderUtf8);
 		SubmitCurrentPhase(cfg);
 	}
 
@@ -206,7 +212,7 @@ namespace engine::client
 // Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
 
-	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config&, const char*, const char*) {}
+	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config&, const char*, const char*, const char*) {}
 	void AuthUiPresenter::ImGuiCancelCharacterCreateReturnToLogin() {}
 
 	void AuthUiPresenter::BuildModel_CharacterCreate(RenderModel&) const {}

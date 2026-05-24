@@ -109,9 +109,9 @@ namespace engine::render
 				ImGui::PopStyleColor();
 			}
 
-			// Race (combo data-driven). Le push du mesh d'apercu se fait ici
-			// (colonne droite) ; la colonne gauche affiche le rendu correspondant
-			// (1 frame de latence au changement, invisible en pratique).
+			// Race (combo data-driven) + Genre (toggle). Le push du mesh d'apercu
+			// se fait apres les deux controles : la colonne gauche affiche le rendu
+			// race+genre correspondant (1 frame de latence au changement).
 			ImGui::Spacing();
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
 			ImGui::TextUnformatted("RACE");
@@ -122,22 +122,36 @@ namespace engine::render
 				labels.reserve(races->size());
 				for (const auto& r : *races)
 					labels.push_back(r.displayName.c_str());
-				const int prevRaceIdx = m_charRaceIdx;
 				ImGui::SetNextItemWidth(-FLT_MIN);
 				ImGui::Combo("##charcreate_race", &m_charRaceIdx, labels.data(),
 				             static_cast<int>(labels.size()));
-				const bool needFirstPush = !m_racePreviewInitialMeshSent;
-				if ((m_charRaceIdx != prevRaceIdx || needFirstPush) && m_racePreview && m_authPresenter)
-				{
-					m_racePreview->SetMesh(m_authPresenter->GetRaceMeshForId((*races)[m_charRaceIdx].id));
-					m_racePreviewInitialMeshSent = true;
-				}
 			}
 			else
 			{
 				ImGui::TextDisabled("(liste des races indisponible)");
 				if (m_charRaceIdx < 0)
 					m_charRaceIdx = 0;
+			}
+
+			// Genre : 0 = Homme (male), 1 = Femme (female). Deux RadioButtons cote
+			// a cote. La bascule met a jour l'apercu 3D (mesh genre) plus bas.
+			ImGui::Spacing();
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::TextUnformatted("GENRE");
+			ImGui::PopStyleColor();
+			ImGui::RadioButton("Homme", &m_charGender, 0);
+			ImGui::SameLine();
+			ImGui::RadioButton("Femme", &m_charGender, 1);
+
+			// Push du mesh d'apercu si la race OU le genre a change (ou 1er rendu).
+			if (hasRaces && m_racePreview && m_authPresenter &&
+			    (m_charRaceIdx != m_racePreviewSentRaceIdx || m_charGender != m_racePreviewSentGender))
+			{
+				const std::string genderStr = (m_charGender == 1) ? "female" : "male";
+				m_racePreview->SetMesh(
+					m_authPresenter->GetRaceMeshForId((*races)[m_charRaceIdx].id, genderStr));
+				m_racePreviewSentRaceIdx = m_charRaceIdx;
+				m_racePreviewSentGender  = m_charGender;
 			}
 
 			// Apparence physique (CHAR-MODEL.25) : sliders bornes a la race +
@@ -256,7 +270,8 @@ namespace engine::render
 				if (m_charRaceIdx >= 0 && m_charRaceIdx < static_cast<int>(submitRaces.size()))
 					raceId = submitRaces[m_charRaceIdx].id;
 			}
-			m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName, raceId.c_str());
+			const char* genderId = (m_charGender == 1) ? "female" : "male";
+				m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName, raceId.c_str(), genderId);
 		}
 		EndPanel();
 		ImGui::EndChild();

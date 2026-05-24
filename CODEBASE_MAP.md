@@ -1840,3 +1840,22 @@ L'attaque restait fixée au clic gauche (§31). Ajout d'une **touche alternative
 
 ### À valider
 - En jeu : l'avatar ne tremble plus / ne paraît plus double, immobile **et** en mouvement.
+
+## 50. Sélecteur de genre in-game (création de personnage) (2026-05-23)
+
+**But** : pouvoir choisir Homme/Femme **dans l'écran de création** (avant, seul `config.json` `gender` éditable à la main le permettait). Approche **complète** : les deux genres sont chargés au boot → aperçu 3D qui bascule en live + avatar in-world immédiat au choix.
+
+### Moteur (`Engine`)
+- **Chargement des 2 genres au boot** : `m_raceMeshes` est désormais clé par `"raceId|gender"` (`RaceMeshKey`). Pour chaque race MVP, le mesh **male** est chargé (`raceId|male`) ; le **female** (chemin dérivé `Male_`→`Female_`, ex. `Female_Ranger`) seulement si une variante distincte existe.
+- **2 matériaux de peau** créés au boot (`m_avatarBodyMaterialIdMale/Female`, textures `T_Regular_Male/Female_*`). Le draw choisit l'id selon `m_avatarGender` (et le passe aussi comme `skinMaterialIndex` au depth bias §48).
+- `GetRaceMesh(raceId, gender)` : résout race+genre, retombe sur le male de la race puis `humains|male`. `GetRaceMesh(raceId)` utilise `m_avatarGender`.
+- `SetAvatarGender("male"/"female")` : met à jour `m_avatarGender` (mesh in-world au prochain EnterWorld + peau au draw) et **persiste** dans `character_appearance.json` (mergé au boot comme `keybinds.json`) → survit au relog.
+
+### UI (création, Windows/ImGui)
+- Section **GENRE** (RadioButtons Homme/Femme) sous RACE. La bascule re-pousse le mesh d'aperçu via `GetRaceMeshForId(raceId, gender)` (aperçu 3D live).
+- « Créer » transmet le genre à `ImGuiSubmitCharacterCreate(..., genderUtf8)` → `Engine::SetAvatarGender` avant la soumission, donc l'EnterWorld suivant utilise le bon avatar.
+
+### Limites / reste
+- **Persistance client uniquement** (`character_appearance.json`) ; la persistance **serveur** (DB + payload) reste à faire (redéploiement serveur le moment venu).
+- `nains`/`orcs` : pas de variante femelle → repli sur le mesh male (pas d'erreur).
+- **Validation visuelle requise** (rendu non testable en CI).

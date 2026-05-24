@@ -81,6 +81,14 @@ namespace engine::render
 		/// 0 = humains, 1 = elfes, 2 = orcs, 3 = nains, 4 = demons, 5 = chevaliers_dragons.
 		int m_charRaceIdx = 0;
 
+		/// Genre choisi dans l'ecran de creation : 0 = Homme (male), 1 = Femme
+		/// (female). Pilote l'apercu 3D (mesh genre) et est transmis a la creation.
+		int m_charGender = 0;
+		/// Memorise (raceIdx, gender) du dernier mesh pousse a l'apercu pour ne le
+		/// re-pousser que sur changement. -1 = jamais pousse (force le 1er envoi).
+		int m_racePreviewSentRaceIdx = -1;
+		int m_racePreviewSentGender  = -1;
+
 		/// Métriques de proportions éditées par le panneau « Apparence physique »
 		/// (CHAR-MODEL.25). Bornées aux limites de la race sélectionnée. Réinitialisées
 		/// aux valeurs par défaut de la race quand \c m_charMetricsRaceIdx diffère de

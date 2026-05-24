@@ -1343,6 +1343,13 @@ namespace engine::client
 		return m_engineForRaceLookup->GetRaceMesh(raceId);
 	}
 
+	engine::render::skinned::SkinnedMesh* AuthUiPresenter::GetRaceMeshForId(const std::string& raceId,
+	                                                                        const std::string& gender)
+	{
+		if (m_engineForRaceLookup == nullptr) return nullptr;
+		return m_engineForRaceLookup->GetRaceMesh(raceId, gender);
+	}
+
 	void AuthUiPresenter::LoadRememberPreference()
 	{
 		engine::core::Config persisted;

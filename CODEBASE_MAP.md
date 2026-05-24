@@ -1881,5 +1881,23 @@ Les logs `[AvatarSkinDiag]` ont montré : matériaux OK (idMale=2, idFemale=3), 
 
 ### Reste
 - **#2** (peau peu visible) : `peau=1` sur 10 (seules les mains, `MI_Regular_Male`). À isoler via le test depth bias=0 (réglable à chaud, §48) : depth bias trop fort vs mesh n'exposant que les mains.
-- L'aperçu 3D réel (rendu forward dédié réutilisant `BuildSubmeshMaterialIndices`) est la **Phase 2 (§52 à venir)**.
+- L'aperçu 3D réel de l'avatar (rendu forward dédié) reste une option ultérieure.
 - **Déploiement** : ✅ client uniquement, pas de redéploiement serveur (le fix serveur du genre viendra séparément).
+
+## 52. Rendu des props statiques (coffre + interactibles) — chantier B (2026-05-24)
+
+**But** : afficher un mesh 3D pour les interactibles (coffre, etc.), au lieu du seul marqueur texte. Débloque le §F (« aucun rendu de props statiques »). Validé en jeu (le coffre s'affiche). Sur 94 props, **93 sont statiques** (sans armature) → le `SkinnedRenderer` ne peut pas les rendre ; il fallait un chemin statique.
+
+### Pièces
+- `src/client/render/static_mesh/StaticMeshLoader.{h,cpp}` : loader glTF **statique** (cgltf, CPU). Lit géométrie (pos/normal/uv) + sous-maillages + **URI de textures par matériau** (trim sheet). Pendant non-skinné de `SkinnedMeshLoader`. N'inclut PAS `CGLTF_IMPLEMENTATION` (résolu via SkinnedMeshLoader.cpp). Testé : `static_mesh_loader_tests` (Barrel statique, Chest extrait les matériaux/URIs, fichier absent → nullopt).
+- `AssetRegistry::CreateMeshFromData(vertexData, vertexCount, indices, indexCount)` : crée un `MeshAsset` GPU depuis des données en mémoire (format `kMeshVertexStride`=32o pos/normal/uv, identique `.mesh`), sans fichier ni cache. Miroir de `loadMeshInternal`.
+- `Engine::LoadInteractableProps()` (boot) : pour chaque interactible avec `meshPath`, charge le glTF, **groupe les sous-maillages par matériau**, crée un `MeshAsset` par groupe + résout/charge le **matériau trim** (cache bindless, mis en cache par nom de matériau via `materialCache.CreateMaterial`). Stocke `m_props` (matrice modèle + parties `{MeshHandle, materialIndex}`). Matrice = `Translate(pos au sol) * RotateY(yaw) * Scale`.
+- `Engine::RecordPropsGeometry(cmd, reg, rs)` (par frame, dans la passe « Geometry » après l'avatar) : **approche A** = un `GeometryPass.Record(... loadExistingGbuffer=true)` par partie (matériau), superposé au GBuffer terrain+avatar. No-op si pas de load pass.
+- Config : `world.interactables.N.mesh` / `scale` / `yaw_deg` ; `InteractableEntity` += `meshPath`/`meshScale`/`meshYawDeg`. Le coffre → `meshes/props/Chest_Wood.gltf`.
+
+### Limites / reste
+- Le **coffre est riggé** (seul prop avec armature) → rendu en **pose de repos** (squelette ignoré) ; OK visuellement, mais les props statiques (Barrel…) sont le cas nominal.
+- Pas de vertex-color (matériaux `MI_Trim_*_Vertex`) → ces props rendraient à plat (finition ultérieure).
+- Pas de culling par prop ni d'instancing (quelques draws, OK pour peu de props).
+- **Chantier C** à suivre : surbrillance du prop ciblé + repère d'interaction (remplace le `[E]` texte).
+- **Déploiement** : ✅ client uniquement.

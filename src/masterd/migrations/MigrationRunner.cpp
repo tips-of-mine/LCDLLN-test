@@ -204,33 +204,36 @@ namespace engine::server
 		}
 		std::sort(files.begin(), files.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
 
-		// Verify checksums for all applied versions
+		// Verify checksums for all applied versions.
+		// Tolérance doublon : plusieurs fichiers peuvent porter le même numéro (ex. 0023
+		// historique). La migration réellement appliquée correspond à l'UN d'eux ; on
+		// accepte si le checksum en base correspond à n'importe lequel des fichiers de ce
+		// numéro (sinon le boot avortait via un find_if non déterministe).
 		for (const auto& [version, expectedChecksum] : appliedVersions)
 		{
-			auto it = std::find_if(files.begin(), files.end(), [version](const auto& p) { return p.first == version; });
-			if (it == files.end())
+			fs::path firstFile;
+			bool anyMatch = false;
+			for (const auto& [v, p] : files)
+			{
+				if (v != version) continue;
+				if (firstFile.empty()) firstFile = p;
+				std::string computed = Sha256HexFromFile(p);
+				if (!computed.empty() && computed == expectedChecksum) { anyMatch = true; break; }
+			}
+			if (firstFile.empty())
 			{
 				LOG_ERROR(Core, "[MigrationRunner] Applied version {} has no matching file in {}", version, migrationsPath);
 				mysql_query(mysql, "SELECT RELEASE_LOCK('lcdlln_master_migrations')");
 				mysql_close(mysql);
 				return false;
 			}
-			std::string computed = Sha256HexFromFile(it->second);
-			if (computed.empty())
+			if (!anyMatch)
 			{
-				LOG_ERROR(Core, "[MigrationRunner] Failed to read migration file: {}", it->second.generic_string());
-				mysql_query(mysql, "SELECT RELEASE_LOCK('lcdlln_master_migrations')");
-				mysql_close(mysql);
-				return false;
-			}
-			if (computed != expectedChecksum)
-			{
-				// Anciens schema.sql Docker / init inséraient ce checksum factice pour la v1 ; le volume MySQL
-				// ne repasse pas par docker-entrypoint-initdb.d. On aligne une seule fois sur le fichier actuel.
 				static constexpr std::string_view kLegacyV1Placeholder =
 					"0000000000000000000000000000000000000000000000000000000000000001";
 				if (version == 1 && expectedChecksum == kLegacyV1Placeholder)
 				{
+					std::string computed = Sha256HexFromFile(firstFile);
 					char escaped[160];
 					mysql_real_escape_string(mysql, escaped, computed.c_str(), static_cast<unsigned long>(computed.size()));
 					std::string fixSql = "UPDATE schema_version SET checksum='";
@@ -238,30 +241,22 @@ namespace engine::server
 					fixSql += "' WHERE version=1";
 					if (mysql_real_query(mysql, fixSql.c_str(), static_cast<unsigned long>(fixSql.size())) != 0)
 					{
-						LOG_ERROR(Core, "[MigrationRunner] Échec réparation checksum v1 : {}", mysql_error(mysql));
+						LOG_ERROR(Core, "[MigrationRunner] Echec reparation checksum v1 : {}", mysql_error(mysql));
 						mysql_query(mysql, "SELECT RELEASE_LOCK('lcdlln_master_migrations')");
 						mysql_close(mysql);
 						return false;
 					}
 					if (!DrainResults(mysql))
 					{
-						LOG_ERROR(Core, "[MigrationRunner] Drain après réparation checksum v1 : {}", mysql_error(mysql));
+						LOG_ERROR(Core, "[MigrationRunner] Drain apres reparation checksum v1 : {}", mysql_error(mysql));
 						mysql_query(mysql, "SELECT RELEASE_LOCK('lcdlln_master_migrations')");
 						mysql_close(mysql);
 						return false;
 					}
-					LOG_WARN(Core,
-						"[MigrationRunner] Checksum v1 corrigé (placeholder historique → SHA-256 actuel de {})",
-						it->second.filename().string());
+					LOG_WARN(Core, "[MigrationRunner] Checksum v1 corrige (placeholder historique -> SHA-256 actuel de {})", firstFile.filename().string());
 					continue;
 				}
-				LOG_ERROR(Core,
-					"[MigrationRunner] Checksum mismatch for version {} (file {}): en base='{}', fichier='{}'. "
-					"(voir deploy/docker/repair-schema-checksum.sh ou README si migration légitime)",
-					version,
-					it->second.generic_string(),
-					expectedChecksum,
-					computed);
+				LOG_ERROR(Core, "[MigrationRunner] Checksum mismatch version {} : aucun fichier de ce numero ne correspond (ex. {}), en base='{}'", version, firstFile.generic_string(), expectedChecksum);
 				mysql_query(mysql, "SELECT RELEASE_LOCK('lcdlln_master_migrations')");
 				mysql_close(mysql);
 				return false;
@@ -269,11 +264,22 @@ namespace engine::server
 		}
 		int maxApplied = appliedVersions.empty() ? 0 : appliedVersions.back().first;
 
+		// Anti-doublon : si deux fichiers portent le même numéro (ex. 0023), on n'applique
+		// qu'UN script par numéro et on n'insère qu'UNE ligne schema_version (sinon INSERT
+		// en double sur la PK version -> boot avorté). Les colonnes manquantes du second
+		// fichier doivent être ajoutées par une migration idempotente ultérieure (cf. 0066).
+		std::vector<int> appliedThisRun;
+
 		// Apply pending migrations
 		for (const auto& [version, path] : files)
 		{
 			if (version <= maxApplied)
 				continue;
+			if (std::find(appliedThisRun.begin(), appliedThisRun.end(), version) != appliedThisRun.end())
+			{
+				LOG_WARN(Core, "[MigrationRunner] Numero {} en double -- fichier '{}' ignore (un seul script par numero applique)", version, path.filename().string());
+				continue;
+			}
 			std::string sql = engine::platform::FileSystem::ReadAllText(path);
 			if (sql.empty())
 			{
@@ -320,6 +326,7 @@ namespace engine::server
 			}
 			DrainResults(mysql);
 			LOG_INFO(Core, "[MigrationRunner] Applied migration {} ({})", version, path.filename().string());
+			appliedThisRun.push_back(version);
 		}
 
 		mysql_query(mysql, "SELECT RELEASE_LOCK('lcdlln_master_migrations')");

@@ -222,7 +222,7 @@ namespace engine::client
 // Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
 
-	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config&, const char*, const char*, const char*) {}
+	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config&, const char*, const char*, const char*, uint8_t) {}
 	void AuthUiPresenter::ImGuiCancelCharacterCreateReturnToLogin() {}
 
 	void AuthUiPresenter::BuildModel_CharacterCreate(RenderModel&) const {}

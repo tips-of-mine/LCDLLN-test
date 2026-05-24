@@ -4095,6 +4095,19 @@ namespace engine
 										const std::string bodyBcF  = deriveFemalePath(bodyBc);
 										const std::string bodyNrmF = deriveFemalePath(bodyNrm);
 										const std::string bodyOrmF = bodyOrm.empty() ? std::string() : deriveFemalePath(bodyOrm);
+										// Teinte foncee (skinColorIdx=1) : derive le chemin BaseColor en
+										// inserant "_Dark" avant "_BaseColor" (ex. T_Regular_Male_BaseColor.png
+										// -> T_Regular_Male_Dark_BaseColor.png). Normal/ORM partages avec la
+										// teinte claire (la teinte ne change que l'albedo). Repli sur la teinte
+										// claire au draw si la texture foncee est absente (id 0).
+										auto deriveDarkPath = [](std::string p) {
+											const std::string needle = "_BaseColor";
+											const std::string::size_type i = p.rfind(needle);
+											if (i != std::string::npos) p.replace(i, needle.size(), "_Dark_BaseColor");
+											return p;
+										};
+										const std::string bodyBcDark  = deriveDarkPath(bodyBc);
+										const std::string bodyBcDarkF = deriveDarkPath(bodyBcF);
 										// Noms de materiaux glTF qui recoivent la PEAU (separes par des virgules) ;
 										// tout autre nom recoit l'habit. Defaut : peau male ET femelle.
 										m_avatarBodyMaterialNames = SplitCsv(
@@ -4142,8 +4155,13 @@ namespace engine
 												};
 												m_avatarBodyMaterialIdMale   = makeBodyMaterial(bodyBc,  bodyNrm,  bodyOrm);
 												m_avatarBodyMaterialIdFemale = makeBodyMaterial(bodyBcF, bodyNrmF, bodyOrmF);
-												LOG_INFO(Render, "[Avatar] Materiaux PBR habit(id={}) peau male(id={}) peau femelle(id={})",
-													m_avatarMaterialId, m_avatarBodyMaterialIdMale, m_avatarBodyMaterialIdFemale);
+												// Teinte foncee : 2 materiaux de peau supplementaires (male/femelle).
+												// 0 si la texture _Dark est absente -> le draw retombe sur la teinte claire.
+												m_avatarBodyMaterialIdMaleDark   = makeBodyMaterial(bodyBcDark,  bodyNrm,  bodyOrm);
+												m_avatarBodyMaterialIdFemaleDark = makeBodyMaterial(bodyBcDarkF, bodyNrmF, bodyOrmF);
+												LOG_INFO(Render, "[Avatar] Materiaux PBR habit(id={}) peau male(id={}) femelle(id={}) male_dark(id={}) femelle_dark(id={})",
+													m_avatarMaterialId, m_avatarBodyMaterialIdMale, m_avatarBodyMaterialIdFemale,
+													m_avatarBodyMaterialIdMaleDark, m_avatarBodyMaterialIdFemaleDark);
 											}
 										}
 
@@ -6589,6 +6607,8 @@ namespace engine
 								previewOutfitId,
 								m_avatarBodyMaterialIdMale,
 								m_avatarBodyMaterialIdFemale,
+								m_avatarBodyMaterialIdMaleDark,
+								m_avatarBodyMaterialIdFemaleDark,
 								m_avatarBodyMaterialNames,
 								m_avatarSkinDepthBiasConstant,
 								m_avatarSkinDepthBiasSlope);

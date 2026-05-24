@@ -669,18 +669,26 @@ namespace engine::render::race
 		m_gender = (gender == "female") ? "female" : "male";
 	}
 
+	void RacePreviewViewport::SetSkinTone(int tone)
+	{
+		m_skinTone = (tone == 1) ? 1 : 0;
+	}
+
 	void RacePreviewViewport::SetAvatarMaterials(VkDescriptorSet materialSet, uint32_t outfitId,
 	                                             uint32_t bodyMaleId, uint32_t bodyFemaleId,
+	                                             uint32_t bodyMaleDarkId, uint32_t bodyFemaleDarkId,
 	                                             const std::vector<std::string>& bodyNames,
 	                                             float skinDepthBiasConstant, float skinDepthBiasSlope)
 	{
-		m_materialDescSet       = materialSet;
-		m_outfitMaterialId      = outfitId;
-		m_bodyMaterialIdMale    = bodyMaleId;
-		m_bodyMaterialIdFemale  = bodyFemaleId;
-		m_bodyMaterialNames     = bodyNames;
-		m_skinDepthBiasConstant = skinDepthBiasConstant;
-		m_skinDepthBiasSlope    = skinDepthBiasSlope;
+		m_materialDescSet          = materialSet;
+		m_outfitMaterialId         = outfitId;
+		m_bodyMaterialIdMale       = bodyMaleId;
+		m_bodyMaterialIdFemale     = bodyFemaleId;
+		m_bodyMaterialIdMaleDark   = bodyMaleDarkId;
+		m_bodyMaterialIdFemaleDark = bodyFemaleDarkId;
+		m_bodyMaterialNames        = bodyNames;
+		m_skinDepthBiasConstant    = skinDepthBiasConstant;
+		m_skinDepthBiasSlope       = skinDepthBiasSlope;
 	}
 
 	bool RacePreviewViewport::InitForwardPipeline(VkDescriptorSetLayout materialLayout,
@@ -1083,8 +1091,15 @@ namespace engine::render::race
 		const engine::math::Mat4 viewProj = proj * view;
 
 		// 3) Routage peau/habit (fonction pure partagée avec le rendu in-world).
-		const uint32_t bodyMaterialId = (m_gender == "female")
-			? m_bodyMaterialIdFemale : m_bodyMaterialIdMale;
+		//    Sélection genre × teinte ; repli sur la teinte claire si le matériau
+		//    foncé est absent (id 0).
+		uint32_t bodyMaterialId;
+		if (m_gender == "female")
+			bodyMaterialId = (m_skinTone == 1 && m_bodyMaterialIdFemaleDark != 0u)
+				? m_bodyMaterialIdFemaleDark : m_bodyMaterialIdFemale;
+		else
+			bodyMaterialId = (m_skinTone == 1 && m_bodyMaterialIdMaleDark != 0u)
+				? m_bodyMaterialIdMaleDark : m_bodyMaterialIdMale;
 		const std::vector<uint32_t> submeshMat =
 			engine::render::skinned::BuildSubmeshMaterialIndices(
 				m_currentMesh->submeshes, m_bodyMaterialNames,

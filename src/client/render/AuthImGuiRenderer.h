@@ -84,10 +84,14 @@ namespace engine::render
 		/// Genre choisi dans l'ecran de creation : 0 = Homme (male), 1 = Femme
 		/// (female). Pilote l'apercu 3D (mesh genre) et est transmis a la creation.
 		int m_charGender = 0;
-		/// Memorise (raceIdx, gender) du dernier mesh pousse a l'apercu pour ne le
-		/// re-pousser que sur changement. -1 = jamais pousse (force le 1er envoi).
+		/// Teinte de peau choisie : 0 = Claire, 1 = Foncée. Pilote l'apercu 3D
+		/// (materiau peau clair/fonce) ; transmis a la creation (skinColorIdx).
+		int m_charSkinTone = 0;
+		/// Memorise (raceIdx, gender, teinte) du dernier etat pousse a l'apercu pour
+		/// ne le re-pousser que sur changement. -1 = jamais pousse (force le 1er envoi).
 		int m_racePreviewSentRaceIdx = -1;
 		int m_racePreviewSentGender  = -1;
+		int m_racePreviewSentSkinTone = -1;
 
 		/// Métriques de proportions éditées par le panneau « Apparence physique »
 		/// (CHAR-MODEL.25). Bornées aux limites de la race sélectionnée. Réinitialisées

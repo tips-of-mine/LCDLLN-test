@@ -109,6 +109,11 @@ namespace engine::render::race
 		/// RenderOffscreen. Toute valeur != "female" est traitée comme "male".
 		void SetGender(const std::string& gender);
 
+		/// Teinte de peau active : 0 = claire (défaut), 1 = foncée. Sélectionne
+		/// le matériau peau clair/foncé au prochain RenderOffscreen. Repli sur la
+		/// teinte claire si le matériau foncé n'existe pas (id 0).
+		void SetSkinTone(int tone);
+
 		/// Matériaux de l'avatar (set bindless + ids + noms peau + depth bias),
 		/// fournis par Engine après création des matériaux au boot. À appeler une
 		/// fois avant le 1er RenderOffscreen (re-appelable sans risque).
@@ -121,6 +126,7 @@ namespace engine::render::race
 		/// \param skinDepthBiasSlope    Depth bias slope peau.
 		void SetAvatarMaterials(VkDescriptorSet materialSet, uint32_t outfitId,
 		                        uint32_t bodyMaleId, uint32_t bodyFemaleId,
+		                        uint32_t bodyMaleDarkId, uint32_t bodyFemaleDarkId,
 		                        const std::vector<std::string>& bodyNames,
 		                        float skinDepthBiasConstant, float skinDepthBiasSlope);
 
@@ -207,11 +213,14 @@ namespace engine::render::race
 
 		// --- Phase 2 : matériaux avatar (set 0 bindless fourni par Engine) ---
 		VkDescriptorSet          m_materialDescSet      = VK_NULL_HANDLE;
-		uint32_t                 m_outfitMaterialId     = 0u;
-		uint32_t                 m_bodyMaterialIdMale   = 0u;
-		uint32_t                 m_bodyMaterialIdFemale = 0u;
+		uint32_t                 m_outfitMaterialId         = 0u;
+		uint32_t                 m_bodyMaterialIdMale       = 0u;
+		uint32_t                 m_bodyMaterialIdFemale     = 0u;
+		uint32_t                 m_bodyMaterialIdMaleDark   = 0u;
+		uint32_t                 m_bodyMaterialIdFemaleDark = 0u;
 		std::vector<std::string> m_bodyMaterialNames;
 		std::string              m_gender               = "male";
+		int                      m_skinTone             = 0; ///< 0 = claire, 1 = foncée.
 		float                    m_skinDepthBiasConstant = 0.0f;
 		float                    m_skinDepthBiasSlope    = 0.0f;
 

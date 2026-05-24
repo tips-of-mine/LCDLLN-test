@@ -133,15 +133,15 @@ namespace engine::render
 					m_charRaceIdx = 0;
 			}
 
-			// Genre : 0 = Homme (male), 1 = Femme (female). Deux RadioButtons cote
+			// Genre : 0 = Masculin (male), 1 = Feminin (female). Deux RadioButtons cote
 			// a cote. La bascule met a jour l'apercu 3D (mesh genre) plus bas.
 			ImGui::Spacing();
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
 			ImGui::TextUnformatted("GENRE");
 			ImGui::PopStyleColor();
-			ImGui::RadioButton("Homme", &m_charGender, 0);
+			ImGui::RadioButton("Masculin", &m_charGender, 0);
 			ImGui::SameLine();
-			ImGui::RadioButton("Femme", &m_charGender, 1);
+			ImGui::RadioButton("Féminin", &m_charGender, 1);
 
 			// Push du mesh d'apercu si la race OU le genre a change (ou 1er rendu).
 			if (hasRaces && m_racePreview && m_authPresenter &&

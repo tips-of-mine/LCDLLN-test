@@ -1843,7 +1843,7 @@ L'attaque restait fixée au clic gauche (§31). Ajout d'une **touche alternative
 
 ## 50. Sélecteur de genre in-game (création de personnage) (2026-05-23)
 
-**But** : pouvoir choisir Homme/Femme **dans l'écran de création** (avant, seul `config.json` `gender` éditable à la main le permettait). Approche **complète** : les deux genres sont chargés au boot → aperçu 3D qui bascule en live + avatar in-world immédiat au choix.
+**But** : pouvoir choisir Homme/Femme **dans l'écran de création** (avant, seul `config.json` `gender` éditable à la main le permettait). Approche **complète** : les deux genres sont chargés au boot → avatar in-world immédiat au choix. ⚠️ **Correction (§51)** : l'« aperçu 3D qui bascule en live » mentionné initialement n'existait pas — `RacePreviewViewport::Render` était un stub (clear color). Le vrai rendu 3D est ajouté en §51. Libellés « Homme/Femme » remplacés par « Masculin/Féminin » (§51).
 
 ### Moteur (`Engine`)
 - **Chargement des 2 genres au boot** : `m_raceMeshes` est désormais clé par `"raceId|gender"` (`RaceMeshKey`). Pour chaque race MVP, le mesh **male** est chargé (`raceId|male`) ; le **female** (chemin dérivé `Male_`→`Female_`, ex. `Female_Ranger`) seulement si une variante distincte existe.
@@ -1859,3 +1859,27 @@ L'attaque restait fixée au clic gauche (§31). Ajout d'une **touche alternative
 - **Persistance client uniquement** (`character_appearance.json`) ; la persistance **serveur** (DB + payload) reste à faire (redéploiement serveur le moment venu).
 - `nains`/`orcs` : pas de variante femelle → repli sur le mesh male (pas d'erreur).
 - **Validation visuelle requise** (rendu non testable en CI).
+
+## 51. Avatar : routage de matériaux extrait + testé + diagnostic peau (2026-05-24)
+
+**But** : préparer la correction des bugs #1 (peau féminine non appliquée en jeu) et #2 (peau non visible en jeu), et partager la logique de routage avec le futur aperçu 3D (§52). Phase 1 du sous-chantier A (cf. `docs/superpowers/plans/2026-05-24-A-avatar-peau-genre-apercu3d.md`).
+
+- **Nouveau module `src/client/render/skinned/AvatarMaterialRouting.{h,cpp}`** : fonction pure `BuildSubmeshMaterialIndices(submeshes, bodyMaterialNames, bodyMaterialId, outfitMaterialId)` → un index matériau par sous-maillage (peau si `materialName` ∈ `bodyMaterialNames` après trim, sinon habit). Vide si `bodyMaterialId == 0` ou pas de sous-maillages (→ mono-draw habit). Sans Vulkan, **testable**.
+- **Test** : `src/client/render/skinned/tests/AvatarMaterialRoutingTests.cpp` (`avatar_material_routing_tests` via `lcdlln_add_simple_test`). 5 cas (match, no-match→tout habit, id0→vide, vide→vide, trim). ⚠️ CI compile-only : compile en CI, exécuté en local/VS ou par l'utilisateur.
+- **Refactor `Engine.cpp`** : le routage in-world inline (`std::find` exact) est remplacé par un appel à `BuildSubmeshMaterialIndices` (matching durci au trim, comportement par ailleurs identique).
+- **Diagnostic `[AvatarSkinDiag]`** (`Engine.cpp`, membre `m_avatarSkinDiagLoggedGender`) : loggé **une fois par changement de genre** — genre, ids matériaux male/female résolus, `bodyId`/`habitId`, nb de sous-maillages, nb classés peau, et **noms de matériaux réellement chargés**. `LOG_ERROR` si `bodyId==0` (texture peau non chargée), `LOG_WARN` si aucun sous-maillage peau (noms ne matchent pas). Sert à cibler #1/#2 au runtime (relevé par l'utilisateur après build).
+- **Vocabulaire** : RadioButtons « Homme/Femme » → « Masculin/Féminin » (`AuthImGuiCharacterCreate.cpp`), titre « GENRE » conservé.
+
+### Diagnostic #1 (cause confirmée par les logs) + fix client interim
+Les logs `[AvatarSkinDiag]` ont montré : matériaux OK (idMale=2, idFemale=3), routage OK (10 sous-maillages : 9 `MI_Ranger` + 1 `MI_Regular_Male`, `peau=1`). **Cause de #1** : `EnterWorld` ne fixait jamais le genre — `GetRaceMesh(raceId)` lit `m_avatarGender` resté à « male » (défaut). Le genre était **global client**, jamais rechargé par personnage au relog.
+
+**Fix client interim** (`Engine::SetCharacterGender(nom, genre)`) :
+- Persiste le genre **par personnage** (`characters.<nom>.gender`) dans `character_appearance.json` (rebâti depuis `Config::GetStringMapUnderPrefix("characters")`), en plus du genre global.
+- Appelé à la création (`AuthUiPresenter::ImGuiSubmitCharacterCreate`, nom + genre finaux).
+- Appliqué à l'`EnterWorld` (avant `GetRaceMesh`) : lit `characters.<enterCmd.characterName>.gender` et fixe `m_avatarGender`. Absent → genre courant conservé (perso créé cette session, ou perso d'avant le fix → reste « male » jusqu'à re-création).
+- **Limite** : stockage local à la machine, et les persos créés AVANT ce fix n'ont pas d'entrée (re-créer pour valider). Le **fix serveur** (colonne `gender` en DB + payload CHARACTER_LIST/EnterWorld) reste à faire — ⚠️ **redéploiement serveur** le moment venu.
+
+### Reste
+- **#2** (peau peu visible) : `peau=1` sur 10 (seules les mains, `MI_Regular_Male`). À isoler via le test depth bias=0 (réglable à chaud, §48) : depth bias trop fort vs mesh n'exposant que les mains.
+- L'aperçu 3D réel (rendu forward dédié réutilisant `BuildSubmeshMaterialIndices`) est la **Phase 2 (§52 à venir)**.
+- **Déploiement** : ✅ client uniquement, pas de redéploiement serveur (le fix serveur du genre viendra séparément).

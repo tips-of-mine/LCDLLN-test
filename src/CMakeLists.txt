@@ -686,6 +686,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(skinned_mesh_loader_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/SkinnedMeshLoaderTests.cpp)
 
+  # Routage de materiaux peau/habit de l'avatar (fonction pure, sans Vulkan).
+  # AvatarMaterialRouting.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(avatar_material_routing_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AvatarMaterialRoutingTests.cpp)
+
   # Sous-projet B.1 (locomotion state machine) etape 1/14 : Mat4 helpers.
   # Identity / Translate / RotateY utilises par la state machine pour composer
   # T(pos) * R_y(yaw) par frame (model matrix de l'avatar).

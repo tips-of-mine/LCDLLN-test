@@ -3,6 +3,7 @@
 #include "src/shared/math/Math.h"
 
 #include <cstdint>
+#include <string>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 

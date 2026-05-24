@@ -53,6 +53,12 @@ void main()
     // pass will read it as linear (sRGB attachment auto-linearises on sample).
     outAlbedo = texture(uTextures[mat.baseColorIndex], tiledUv);
 
+    // Surbrillance d'interaction (chantier C) : si le bit Highlight (1) est posé dans
+    // mat.flags, on teinte l'albedo vers un or chaud + on l'éclaircit. Les matériaux
+    // normaux (flags=0) ne sont pas affectés.
+    if ((mat.flags & 1u) != 0u)
+        outAlbedo.rgb = mix(outAlbedo.rgb, vec3(1.0, 0.85, 0.30), 0.45) * 1.25;
+
     // ---- Normal -----------------------------------------------------------
     // Decode the tangent-space normal map from [0,1] → [-1,1].
     // Without per-vertex tangent data (MVP) we perturb the interpolated

@@ -10,10 +10,13 @@
 
 namespace engine::render
 {
-	/// Flags for material properties (reserved for future use).
+	/// Flags for material properties (bitmask, propagés vers MaterialGpuData.flags).
 	enum class MaterialFlags : uint32_t
 	{
 		None = 0,
+		/// Surbrillance : le fragment shader gbuffer_geometry.frag teinte l'albedo
+		/// quand ce bit est posé (feedback d'interaction sur le prop ciblé, chantier C).
+		Highlight = 1u << 0,
 	};
 
 	/// Per-material texture handles + tiling parameters.

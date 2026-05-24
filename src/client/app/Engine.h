@@ -699,12 +699,18 @@ namespace engine
 		{
 			engine::render::MeshHandle mesh;
 			uint32_t materialIndex = 0;
+			/// Variante du matériau avec MaterialFlags::Highlight (teinte de surbrillance).
+			/// Utilisée au draw quand le prop est l'interactible ciblé (chantier C).
+			uint32_t highlightMaterialIndex = 0;
 		};
 		/// Prop rendu in-world : matrice modèle monde + parties (une par matériau).
 		struct PropRenderable
 		{
 			engine::math::Mat4 modelMatrix = engine::math::Mat4::Identity();
 			std::vector<PropPart> parts;
+			/// Index dans m_interactables (pour comparer à m_interactableInRange et
+			/// décider la surbrillance). -1 si non lié à un interactible.
+			int interactableIndex = -1;
 		};
 		/// Props statiques rendus (chantier B), construits au boot depuis les
 		/// interactibles ayant un meshPath. Cf. LoadInteractableProps / RecordPropsGeometry.

@@ -8286,9 +8286,23 @@ namespace engine
 						continue;
 					const bool inRange = (static_cast<int>(ii) == m_interactableInRange);
 					const ImU32 col = inRange ? IM_COL32(255, 220, 80, 255) : IM_COL32(210, 210, 210, 200);
-					const std::string txt = e.label + (inRange ? " [E]" : "");
-					const ImVec2 ts = ImGui::CalcTextSize(txt.c_str());
-					fg->AddText(ImVec2(sx - ts.x * 0.5f, sy - ts.y), col, txt.c_str());
+					// Label du nom seul ; le "[E]" texte est remplace par un badge touche
+					// (chantier C) + la surbrillance 3D du prop signale l'interactivite.
+					const ImVec2 ts = ImGui::CalcTextSize(e.label.c_str());
+					fg->AddText(ImVec2(sx - ts.x * 0.5f, sy - ts.y), col, e.label.c_str());
+					// Repere d'interaction : badge "touche E" sous le label quand a portee.
+					if (inRange)
+					{
+						const ImVec2 keySz = ImGui::CalcTextSize("E");
+						const float pad = 6.0f;
+						const float bw = keySz.x + pad * 2.0f;
+						const float bh = keySz.y + pad * 2.0f;
+						const float bx = sx - bw * 0.5f;
+						const float by = sy + 4.0f;
+						fg->AddRectFilled(ImVec2(bx, by), ImVec2(bx + bw, by + bh), IM_COL32(20, 20, 24, 220), 4.0f);
+						fg->AddRect(ImVec2(bx, by), ImVec2(bx + bw, by + bh), IM_COL32(255, 220, 80, 255), 4.0f, 0, 2.0f);
+						fg->AddText(ImVec2(bx + pad, by + pad), IM_COL32(255, 220, 80, 255), "E");
+					}
 				}
 			}
 			// Menu de panneaux : barre de menus ImGui toujours visible en jeu,
@@ -9241,11 +9255,12 @@ namespace engine
 		if (!materialCache.IsValid()) return;
 		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
 		constexpr float kDeg2Rad = 3.14159265f / 180.f;
-		// Cache materiau trim par nom (Furniture/Metal/Cloth...) -> index bindless.
-		std::unordered_map<std::string, uint32_t> trimMatCache;
+		// Cache materiau trim par nom (Furniture/Metal/Cloth...) -> {index normal, index highlight}.
+		std::unordered_map<std::string, std::pair<uint32_t, uint32_t>> trimMatCache;
 
-		for (const auto& e : m_interactables)
+		for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
 		{
+			const InteractableEntity& e = m_interactables[ii];
 			if (e.meshPath.empty()) continue;
 			const std::string full = contentRoot + "/" + e.meshPath;
 			auto cpu = engine::render::staticmesh::StaticMeshLoader::LoadCpuOnlyForTests(full);
@@ -9291,10 +9306,12 @@ namespace engine
 				if (!mh.IsValid()) continue;
 
 				uint32_t matIdx = materialCache.GetDefaultMaterialIndex();
+				uint32_t hlIdx  = matIdx;
 				auto cached = trimMatCache.find(matName);
 				if (cached != trimMatCache.end())
 				{
-					matIdx = cached->second;
+					matIdx = cached->second.first;
+					hlIdx  = cached->second.second;
 				}
 				else
 				{
@@ -9318,17 +9335,22 @@ namespace engine
 								if (o.IsValid()) mat.orm = o;
 							}
 							matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+							// Variante surbrillance : memes textures + flag Highlight (teinte au draw).
+							mat.flags = engine::render::MaterialFlags::Highlight;
+							hlIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
 						}
 					}
-					trimMatCache[matName] = matIdx;
+					trimMatCache[matName] = { matIdx, hlIdx };
 				}
 
 				PropPart part;
 				part.mesh = mh;
 				part.materialIndex = matIdx;
+				part.highlightMaterialIndex = hlIdx;
 				prop.parts.push_back(part);
 			}
 
+			prop.interactableIndex = static_cast<int>(ii);
 			if (!prop.parts.empty())
 			{
 				LOG_INFO(Render, "[Props] '{}' charge ({} partie(s), mesh '{}')", e.label, prop.parts.size(), e.meshPath);
@@ -9348,6 +9370,10 @@ namespace engine
 		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
 		for (const auto& prop : m_props)
 		{
+			// Surbrillance (chantier C) : si ce prop est l'interactible a portee, on
+			// dessine ses parties avec la variante de materiau Highlight (teinte).
+			const bool highlight =
+				(prop.interactableIndex >= 0 && prop.interactableIndex == m_interactableInRange);
 			for (const auto& part : prop.parts)
 			{
 				engine::render::MeshAsset* mesh = part.mesh.Get();
@@ -9359,7 +9385,7 @@ namespace engine
 					0u,
 					materialCache.GetDescriptorSet(),
 					prop.modelMatrix.m,
-					part.materialIndex,
+					highlight ? part.highlightMaterialIndex : part.materialIndex,
 					true);
 			}
 		}

@@ -150,6 +150,8 @@ namespace engine::render
 				const std::string genderStr = (m_charGender == 1) ? "female" : "male";
 				m_racePreview->SetMesh(
 					m_authPresenter->GetRaceMeshForId((*races)[m_charRaceIdx].id, genderStr));
+				// Phase 2 — route la peau genrée dans l'aperçu 3D (mesh + peau live).
+				m_racePreview->SetGender(genderStr);
 				m_racePreviewSentRaceIdx = m_charRaceIdx;
 				m_racePreviewSentGender  = m_charGender;
 			}

@@ -547,6 +547,11 @@ namespace engine
 		/// liberation des descriptors ImGui (idem que m_editorViewportTarget).
 		engine::render::race::RacePreviewViewport m_racePreviewViewport;
 
+		/// Phase 2 — horodatage (EngineNowSec) du dernier Tick de l'aperçu race,
+		/// pour calculer un delta-time robuste alimentant la rotation orbit +
+		/// l'échantillonnage d'animation. 0 = pas encore tické.
+		float m_racePreviewLastNowSec = 0.0f;
+
 #if defined(_WIN32)
 		std::unique_ptr<engine::editor::TexturePreviewCache> m_texturePreviewCache;
 

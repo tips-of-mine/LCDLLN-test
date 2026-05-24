@@ -6555,6 +6555,55 @@ namespace engine
 				{
 					LOG_WARN(Render, "[Engine] RacePreviewViewport init failed -- ecran creation perso restera sans apercu 3D");
 				}
+				else
+				{
+					// Sous-chantier A phase 2 — pipeline forward 3D de l'apercu +
+					// cablage des materiaux avatar (set bindless + ids peau/habit).
+					// loadSpirv (defini plus haut) n'est pas dans la portee ici :
+					// on relit le SPIR-V directement depuis le content root.
+					auto loadPreviewSpv = [&](const char* p) -> std::vector<uint32_t> {
+						std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, p);
+						std::vector<uint32_t> out;
+						if (!bytes.empty() && bytes.size() % 4 == 0)
+						{
+							out.resize(bytes.size() / 4);
+							std::memcpy(out.data(), bytes.data(), bytes.size());
+						}
+						return out;
+					};
+					const std::vector<uint32_t> previewVert = loadPreviewSpv("shaders/skinned_preview.vert.spv");
+					const std::vector<uint32_t> previewFrag = loadPreviewSpv("shaders/skinned_preview.frag.spv");
+					if (m_pipeline && !previewVert.empty() && !previewFrag.empty())
+					{
+						auto& matCache = m_pipeline->GetMaterialDescriptorCache();
+						if (matCache.IsValid()
+							&& m_racePreviewViewport.InitForwardPipeline(
+								matCache.GetLayout(),
+								previewVert.data(), previewVert.size(),
+								previewFrag.data(), previewFrag.size()))
+						{
+							const uint32_t previewOutfitId = (m_avatarMaterialId != 0u)
+								? m_avatarMaterialId : matCache.GetDefaultMaterialIndex();
+							m_racePreviewViewport.SetAvatarMaterials(
+								matCache.GetDescriptorSet(),
+								previewOutfitId,
+								m_avatarBodyMaterialIdMale,
+								m_avatarBodyMaterialIdFemale,
+								m_avatarBodyMaterialNames,
+								m_avatarSkinDepthBiasConstant,
+								m_avatarSkinDepthBiasSlope);
+							LOG_INFO(Render, "[Engine] RacePreviewViewport forward 3D pret (outfitId={})", previewOutfitId);
+						}
+						else
+						{
+							LOG_WARN(Render, "[Engine] RacePreviewViewport InitForwardPipeline echoue -- apercu en clear couleur");
+						}
+					}
+					else
+					{
+						LOG_WARN(Render, "[Engine] shaders skinned_preview absents -- apercu 3D en clear couleur");
+					}
+				}
 				// Branche le DayNightCycle au panneau "Atmosphere" pour que l'utilisateur
 				// puisse regler time-of-day et timeScale en live depuis l'editeur monde.
 				m_worldEditorImGui->SetDayNightCycle(&m_dayNight);
@@ -8250,6 +8299,21 @@ namespace engine
 					dh = static_cast<float>(extUi.height);
 				}
 			}
+			// Phase 2 — aperçu 3D : avance l'anim/orbit puis rend l'avatar dans
+			// l'image offscreen AVANT que la draw list ImGui n'échantillonne la
+			// texture (RenderOffscreen est autonome : submit + wait idle). No-op
+			// si pas de mesh/pipeline forward -> l'image garde le clear de Init.
+			{
+				const float previewNowSec = EngineNowSec();
+				float previewDt = (m_racePreviewLastNowSec > 0.0f)
+					? (previewNowSec - m_racePreviewLastNowSec) : 0.0f;
+				m_racePreviewLastNowSec = previewNowSec;
+				if (previewDt < 0.0f)  previewDt = 0.0f;
+				if (previewDt > 0.1f)  previewDt = 0.1f; // clamp gros hitch
+				m_racePreviewViewport.Tick(previewDt);
+				m_racePreviewViewport.RenderOffscreen();
+			}
+
 			const engine::client::AuthUiPresenter::VisualState authVsImgui = m_authUi.GetVisualState();
 			const engine::client::AuthUiPresenter::RenderModel authRmImgui = m_authUi.BuildRenderModel();
 			m_authImGui->Render(authVsImgui, authRmImgui, dw, dh);

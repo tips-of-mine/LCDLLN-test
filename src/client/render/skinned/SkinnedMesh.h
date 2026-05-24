@@ -46,6 +46,12 @@ struct SkinnedMesh
     /// Nombre d'indices dans indexBuffer (passé à vkCmdDrawIndexed).
     uint32_t indexCount = 0;
 
+    /// Plages d'indices par matériau (copiées depuis SkinnedMeshCpuData à
+    /// l'Upload). Permet à SkinnedRenderer::Record de dessiner l'avatar en
+    /// plusieurs draw calls (un par matériau : habit vs peau). Vide → l'ancien
+    /// chemin mono-draw (mesh.indexCount d'un coup) reste utilisé.
+    std::vector<SkinnedSubMesh> submeshes;
+
     /// Uploade les données CPU (vertices + indices) vers le GPU et copie
     /// skeleton + clips dans cette struct. Utilise host-visible + coherent
     /// memory : pas de staging buffer, pas de transfer queue requise.

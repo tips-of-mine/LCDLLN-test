@@ -334,9 +334,17 @@ namespace engine
 		engine::render::MeshHandle m_geometryMeshHandle;
 		/// Texture peau de l'avatar (1x1 sRGB violet clair, visible sur sol blanc et ciel sombre).
 		engine::render::TextureHandle m_avatarSkinTextureHandle;
-		/// Index materiel de l'avatar dans la MaterialDescriptorCache (0 = default fallback,
-		/// non-zero = materiel dedie violet clair). Renseigne au boot apres registration.
+		/// Index materiel HABIT de l'avatar dans la MaterialDescriptorCache
+		/// (0 = default fallback, non-zero = materiel dedie). Materiau par defaut
+		/// applique a tous les sous-maillages sauf ceux listes comme "peau".
 		uint32_t m_avatarMaterialId = 0u;
+		/// Index materiel PEAU de l'avatar (corps/mains). 0 si aucune texture de
+		/// peau chargee -> les sous-maillages peau retombent sur l'habit.
+		uint32_t m_avatarBodyMaterialId = 0u;
+		/// Noms de materiaux glTF (ex. "MI_Regular_Male") dont les sous-maillages
+		/// recoivent m_avatarBodyMaterialId (la peau). Tout autre nom -> habit.
+		/// Renseigne depuis client.character_creation.body_material_names.
+		std::vector<std::string> m_avatarBodyMaterialNames;
 		engine::render::DecalSystem m_decalSystem;
 		std::vector<engine::render::VisibleDecal> m_visibleDecals;
 
@@ -622,6 +630,10 @@ namespace engine
 			bool isNpc = false;
 			std::string label;
 			std::string message;
+			/// Dialogue PNJ multi-lignes (optionnel). Si non vide, chaque appui sur E
+			/// affiche la ligne suivante (boucle). Sinon on affiche `message`.
+			std::vector<std::string> dialogue;
+			int dialogueCursor = 0;
 		};
 		std::vector<InteractableEntity> m_interactables;
 		int m_interactableInRange = -1;
@@ -629,6 +641,10 @@ namespace engine
 		/// 0 = aucune, 1 = sprint, 2 = crouch, 3 = sort. Tant que != 0, le panneau
 		/// attend une touche ; le bloc gameplay est suspendu (panneau Options ouvert).
 		int                                                      m_rebindingAction = 0;
+		/// Avertissement de conflit de touches affiché sous les lignes de rebind
+		/// (Options) : non vide si la dernière touche bindée était déjà sur une
+		/// autre action. Le bind reste appliqué (doublon autorisé, juste signalé).
+		std::string                                              m_keybindWarning;
 		/// Instant d'entrée dans l'état courant. Utilisé pour :
 		///   - détecter la fin de StartWalking / Jump / Land (durée écoulée >= clip.duration).
 		///   - tracer la transition Jump -> Fall après 40% du clip Jump (takeoff).

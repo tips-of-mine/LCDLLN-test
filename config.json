@@ -100,7 +100,8 @@
             "crouch": "Ctrl",
             "cast": "R",
             "interact": "E",
-            "punch": "C"
+            "punch": "C",
+            "attack": ""
         }
     },
     "_comment_player_movement": "Sous-projet B.1 — CharacterController params. Defaults sensibles si absent (CharacterController::Config). walk_speed/run_speed en m/s. gravity en m/s2 (signe negatif). jump_speed = impulse m/s a l'instant du jump. coyote_time_s = jump grace apres avoir quitte le sol. jump_buffer_s = jump grace si presse juste avant atterrissage.",
@@ -141,6 +142,20 @@
     },
     "world": {
         "max_draw_distance_m": 0.0,
+        "_comment_interactables": "Interagir (touche E) : count = nombre de cibles ; chaque index i a x/z (metres monde), radius (portee m), npc (bool : PNJ vs objet), label, message (dialogue PNJ ou effet objet). Cibles de TEST pres du spawn par defaut.",
+        "interactables": {
+            "count": 2,
+            "0": { "x": 4.0, "z": 0.0, "radius": 2.5, "npc": true, "label": "Villageois", "message": "Villageois : Bonjour !", "dialogue": { "count": 3, "0": "Bonjour, aventurier ! Bienvenue par ici.", "1": "Le bassin de test est a l'est, si tu veux nager.", "2": "Reviens me voir quand tu veux." } },
+            "1": { "x": -4.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Coffre", "message": "Vous fouillez le coffre... vide pour l'instant." }
+        },
+        "_comment_test_water": "Nage : bassin de TEST procedural (la zone demo n'a pas d'eau). enabled=false pour le retirer. Ignore si un instances/water.bin reel est charge.",
+        "test_water": {
+            "enabled": true,
+            "center_x": 25.0,
+            "center_z": 0.0,
+            "half_size_m": 15.0,
+            "depth_m": 2.5
+        },
         "default_spawn": {
             "_comment": "Position de la caméra (m) au moment du clic Jouer (Phase 3.5). Y > 0 = au-dessus du terrain. Sera surchargée par characters.spawn_x/y/z une fois la migration en place.",
             "x": 0.0,
@@ -190,7 +205,17 @@
         "allow_insecure_dev": true,
         "locale": "",
         "character_creation": {
-            "default_server_id": 1
+            "default_server_id": 1,
+            "_comment_gender": "Modele feminin (cosmetique client v1) : 'male' ou 'female'. Si 'female', l'avatar derive le mesh Male_ -> Female_ (humains : Female_Ranger). Non persiste (relog = retour defaut) ; persistance serveur = etape 2.",
+            "gender": "male",
+            "_comment_materials": "Textures PBR de l'avatar (multi-materiaux). Le mesh Male_Ranger a 2 materiaux glTF : l'habit (MI_Ranger) et la peau (MI_Regular_Male, sur les mains). On fournit donc 2 jeux de textures. BaseColor en sRGB, Normal/ORM en lineaire. outfit_* = habit (defaut pour tous les sous-maillages). body_* = peau ; body_orm vide = ORM par defaut (AO=1, rough=0.5, metal=0). body_material_names = noms de materiaux glTF (separes par virgules) qui recoivent la peau ; tout autre nom recoit l'habit. Repli sur textures/avatar_skin.texr si la BaseColor habit manque ; sur l'habit si la BaseColor peau manque.",
+            "outfit_basecolor": "textures/characters/humains/T_Ranger_BaseColor.png",
+            "outfit_normal": "textures/characters/humains/T_Ranger_Normal.png",
+            "outfit_orm": "textures/characters/humains/T_Ranger_ORM.png",
+            "body_basecolor": "textures/characters/humains/T_Regular_Male_BaseColor.png",
+            "body_normal": "textures/characters/humains/T_Regular_Male_Normal.png",
+            "body_orm": "",
+            "body_material_names": "MI_Regular_Male"
         },
         "auth_ui": {
             "enabled": true,

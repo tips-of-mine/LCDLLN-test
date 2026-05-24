@@ -63,6 +63,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cctype>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -92,6 +93,29 @@ namespace engine
 	namespace
 	{
 		constexpr float kWorldEditorPickPi = 3.14159265f;
+
+		/// Découpe une chaîne CSV en tokens nettoyés (espaces de début/fin
+		/// retirés), en ignorant les tokens vides. Utilisé pour lire la liste
+		/// `client.character_creation.body_material_names` (noms de matériaux
+		/// glTF qui reçoivent la peau). Renvoie des std::string possédés (pas
+		/// de string_view) car la source est une valeur de config temporaire.
+		std::vector<std::string> SplitCsv(const std::string& csv)
+		{
+			std::vector<std::string> out;
+			size_t start = 0;
+			while (start <= csv.size())
+			{
+				const size_t comma = csv.find(',', start);
+				const size_t end = (comma == std::string::npos) ? csv.size() : comma;
+				size_t a = start, b = end;
+				while (a < b && std::isspace(static_cast<unsigned char>(csv[a]))) ++a;
+				while (b > a && std::isspace(static_cast<unsigned char>(csv[b - 1]))) --b;
+				if (b > a) out.emplace_back(csv.substr(a, b - a));
+				if (comma == std::string::npos) break;
+				start = comma + 1;
+			}
+			return out;
+		}
 
 		/// Retourne le temps ecoule en secondes depuis le premier appel a cette
 		/// fonction, en float 32 bits. Normalise par un temps de reference
@@ -175,6 +199,25 @@ namespace engine
 			return fallback;
 		}
 
+		// Projette une position monde -> pixels ecran. Formule alignee sur
+		// WorldEditorImGui::WorldToScreen (viewProj col-major .m, convention Vulkan).
+		// false si derriere la camera ou hors near/far. Sert aux marqueurs interactibles.
+		[[maybe_unused]] bool WorldToScreenPx(const float vp[16], float wx, float wy, float wz,
+			int vw, int vh, float& sx, float& sy)
+		{
+			const float cx = vp[0]*wx + vp[4]*wy + vp[8]*wz + vp[12];
+			const float cy = vp[1]*wx + vp[5]*wy + vp[9]*wz + vp[13];
+			const float cz = vp[2]*wx + vp[6]*wy + vp[10]*wz + vp[14];
+			const float cw = vp[3]*wx + vp[7]*wy + vp[11]*wz + vp[15];
+			if (cw <= 1e-5f) return false;
+			const float invW = 1.0f / cw;
+			const float ndcX = cx * invW, ndcY = cy * invW, ndcZ = cz * invW;
+			if (ndcZ < 0.0f || ndcZ > 1.0f) return false;
+			sx = (ndcX * 0.5f + 0.5f) * static_cast<float>(vw);
+			sy = (ndcY * 0.5f + 0.5f) * static_cast<float>(vh);
+			return true;
+		}
+
 		engine::gameplay::MoveInput BuildMoveInput(
 			const engine::platform::Input& input,
 			const engine::render::OrbitalCameraController& camera,
@@ -227,9 +270,11 @@ namespace engine
 			out.sprint      = input.IsDown(sprintKey);
 			out.crouch      = input.IsDown(crouchKey);
 			out.jumpPressed = input.WasPressed(engine::platform::Key::Space);
-			// swim/fly hors-scope B.1 : restent false (consommes par les modes
-			// Water/Fly du CharacterController, inutiles tant que la query eau
-			// n'est pas branchee — IWorldCollider::QueryWater renvoie false).
+			// Nage : contrôle vertical. Espace = remonter, touche Crouch = descendre.
+			// Le CharacterController ne les consomme qu'en mode Water (cf. QueryWater) ;
+			// hors eau, Espace reste le saut et Crouch l'accroupi.
+			out.swimUpPressed   = input.IsDown(engine::platform::Key::Space);
+			out.swimDownPressed = input.IsDown(crouchKey);
 			return out;
 		}
 
@@ -4003,19 +4048,70 @@ namespace engine
 										// (cf. branche !m_editorMode du Update).
 										m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/avatar_placeholder.mesh");
 
-										// Texture peau avatar : 1x1 sRGB violet clair (190,140,230). Le materiel
-										// dedie m_avatarMaterialId remplace le default fallback (texture blanche
-										// invisible sur sol blanc) pour que l'humanoide ressorte clairement.
-										m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture("textures/avatar_skin.texr", true);
+										// Materiaux PBR de l'avatar (#5 + multi-materiaux) : un personnage
+										// modulaire (ex. Male_Ranger) possede DEUX materiaux glTF distincts :
+										//   - l'habit  (materiau "MI_Ranger")      -> textures T_Ranger
+										//   - la peau  (materiau "MI_Regular_Male") -> textures T_Regular_Male
+										// Le mesh est fusionne en un seul buffer mais conserve ses sous-maillages
+										// (SkinnedSubMesh : plage d'indices + nom de materiau). On cree donc ICI
+										// deux materiaux bindless (habit + peau) et on memorise quels noms de
+										// materiau glTF doivent recevoir la peau ; au draw, chaque sous-maillage
+										// est dessine avec le bon index materiau (cf. SkinnedRenderer::Record).
+										//
+										// Chemins config-driven (client.character_creation.*) avec repli sur
+										// l'ancien schema skin_* (#5) puis sur des chemins par defaut. BaseColor
+										// en sRGB ; Normal/ORM lineaires. ORM peau optionnel : repli sur l'ORM
+										// 1x1 par defaut (AO=1, rough=0.5, metal=0) du MaterialDescriptorCache.
+										const std::string outfitBc  = m_cfg.GetString("client.character_creation.outfit_basecolor",
+											m_cfg.GetString("client.character_creation.skin_basecolor", "textures/characters/humains/T_Ranger_BaseColor.png"));
+										const std::string outfitNrm = m_cfg.GetString("client.character_creation.outfit_normal",
+											m_cfg.GetString("client.character_creation.skin_normal", "textures/characters/humains/T_Ranger_Normal.png"));
+										const std::string outfitOrm = m_cfg.GetString("client.character_creation.outfit_orm",
+											m_cfg.GetString("client.character_creation.skin_orm", "textures/characters/humains/T_Ranger_ORM.png"));
+										const std::string bodyBc  = m_cfg.GetString("client.character_creation.body_basecolor", "textures/characters/humains/T_Regular_Male_BaseColor.png");
+										const std::string bodyNrm = m_cfg.GetString("client.character_creation.body_normal",    "textures/characters/humains/T_Regular_Male_Normal.png");
+										const std::string bodyOrm = m_cfg.GetString("client.character_creation.body_orm",       "");
+										// Noms de materiaux glTF qui recoivent la PEAU (separes par des virgules) ;
+										// tout autre nom recoit l'habit. Defaut : "MI_Regular_Male".
+										m_avatarBodyMaterialNames = SplitCsv(
+											m_cfg.GetString("client.character_creation.body_material_names", "MI_Regular_Male"));
+
+										m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture(outfitBc, /*useSrgb*/ true);
+										if (!m_avatarSkinTextureHandle.IsValid())
+											m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture("textures/avatar_skin.texr", true);
 										if (m_avatarSkinTextureHandle.IsValid() && m_pipeline)
 										{
 											auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
 											if (materialCache.IsValid())
 											{
-												engine::render::Material avatarMat{};
-												avatarMat.baseColor = m_avatarSkinTextureHandle;
-												m_avatarMaterialId = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), avatarMat);
-												LOG_INFO(Render, "[Avatar] Materiel violet clair enregistre, materialId={}", m_avatarMaterialId);
+												// Materiau HABIT (defaut pour tous les sous-maillages non-peau).
+												engine::render::Material outfitMat{};
+												outfitMat.baseColor = m_avatarSkinTextureHandle;
+												const engine::render::TextureHandle outfitNrmTex = m_assetRegistry.LoadTexture(outfitNrm, /*useSrgb*/ false);
+												const engine::render::TextureHandle outfitOrmTex = m_assetRegistry.LoadTexture(outfitOrm, /*useSrgb*/ false);
+												if (outfitNrmTex.IsValid()) outfitMat.normal = outfitNrmTex;
+												if (outfitOrmTex.IsValid()) outfitMat.orm = outfitOrmTex;
+												m_avatarMaterialId = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), outfitMat);
+
+												// Materiau PEAU (sous-maillages dont le nom est dans body_material_names).
+												// Si la BaseColor peau est absente, on retombe sur l'habit (m_avatarBodyMaterialId
+												// reste 0 -> traite comme habit au draw).
+												const engine::render::TextureHandle bodyBcTex = m_assetRegistry.LoadTexture(bodyBc, /*useSrgb*/ true);
+												if (bodyBcTex.IsValid())
+												{
+													engine::render::Material bodyMat{};
+													bodyMat.baseColor = bodyBcTex;
+													const engine::render::TextureHandle bodyNrmTex = m_assetRegistry.LoadTexture(bodyNrm, /*useSrgb*/ false);
+													if (bodyNrmTex.IsValid()) bodyMat.normal = bodyNrmTex;
+													if (!bodyOrm.empty())
+													{
+														const engine::render::TextureHandle bodyOrmTex = m_assetRegistry.LoadTexture(bodyOrm, /*useSrgb*/ false);
+														if (bodyOrmTex.IsValid()) bodyMat.orm = bodyOrmTex;
+													}
+													m_avatarBodyMaterialId = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), bodyMat);
+												}
+												LOG_INFO(Render, "[Avatar] Materiaux PBR habit(id={}) peau(id={}, bc={})",
+													m_avatarMaterialId, m_avatarBodyMaterialId, bodyBcTex.IsValid());
 											}
 										}
 
@@ -4237,6 +4333,10 @@ namespace engine
 
 													// Charge les 3 races MVP. Lookup meshPath via
 													// CharacterCreationPresenter local (Init() vient d'etre appele).
+													// Modele feminin (cosmetique client v1, #2) : si genre feminin, derive le
+													// chemin Male_ -> Female_ (humains : Male_Ranger -> Female_Ranger present).
+													// Sans variante (pas de 'Male_') -> mesh par defaut. NON persiste (serveur=etape 2).
+													const std::string avatarGender = m_cfg.GetString("client.character_creation.gender", "male");
 													for (const char* raceId : kMvpRaces) {
 														const auto& races = racesPresenter.GetRaces();
 														const engine::client::RaceDefinition* def = nullptr;
@@ -4245,7 +4345,17 @@ namespace engine
 															LOG_WARN(Render, "[Engine] Race '{}' : RaceDefinition introuvable ou meshPath vide", raceId);
 															continue;
 														}
-														loadOneRace(raceId, def->meshPath, def->importScale, def->importRotXDeg);
+														std::string meshPath = def->meshPath;
+														if (avatarGender == "female") {
+															std::string fem = meshPath;
+															std::string::size_type gp = 0;
+															while ((gp = fem.find("Male_", gp)) != std::string::npos) { fem.replace(gp, 5, "Female_"); gp += 7; }
+															if (fem != meshPath) {
+																meshPath = fem;
+																LOG_INFO(Render, "[Engine] Race '{}' : variante feminine -> {}", raceId, meshPath);
+															}
+														}
+														loadOneRace(raceId, meshPath, def->importScale, def->importRotXDeg);
 													}
 
 													// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le
@@ -4316,7 +4426,15 @@ namespace engine
 											// eau ; on pose un BASSIN DE TEST au-dessus du sol pour valider la
 											// mecanique de nage (a remplacer par une vraie etendue d'eau via le
 											// pipeline water.bin / level-design). Desactivable : world.test_water.enabled=false.
-											if (m_cfg.GetBool("world.test_water.enabled", true))
+											// Nage : tenter d'abord une VRAIE eau (instances/water.bin via StreamCache) ;
+											// repli sur l'eau-test procedurale si absente (zone demo plate, sans water.bin).
+											if (auto realWater = m_streamCache.LoadWater(m_cfg, ""))
+											{
+												m_clientWaterScene = realWater;
+												m_waterClientSceneDirty = true;
+												LOG_INFO(Render, "[Nage] water.bin charge ({} lac(s))", static_cast<int>(realWater->lakes.size()));
+											}
+											else if (m_cfg.GetBool("world.test_water.enabled", true))
 											{
 												const float cx = static_cast<float>(m_cfg.GetDouble("world.test_water.center_x", 25.0));
 												const float cz = static_cast<float>(m_cfg.GetDouble("world.test_water.center_z", 0.0));
@@ -4341,9 +4459,25 @@ namespace engine
 												LOG_INFO(Render, "[Nage] Eau-test posee (centre=({:.1f},{:.1f}) half={:.1f} niveauY={:.2f})", cx, cz, half, lvl);
 											}
 											m_terrainCollider.BindWater(m_clientWaterScene.get());
-											// Interaction (v1) : entites interactibles de TEST (invisibles) pour valider
-											// la mecanique objets + dialogue PNJ. A remplacer par de vraies entites.
+											// Interaction : interactibles declares en config (world.interactables.N.*).
+											// Repli sur 2 cibles de TEST pres du spawn si aucun n'est declare.
 											m_interactables.clear();
+											const int icount = static_cast<int>(m_cfg.GetInt("world.interactables.count", 0));
+											for (int ii = 0; ii < icount; ++ii)
+											{
+												const std::string base = "world.interactables." + std::to_string(ii) + ".";
+												InteractableEntity e;
+												e.position = engine::math::Vec3{ static_cast<float>(m_cfg.GetDouble(base + "x", 0.0)), 0.0f, static_cast<float>(m_cfg.GetDouble(base + "z", 0.0)) };
+												e.radius = static_cast<float>(m_cfg.GetDouble(base + "radius", 2.5));
+												e.isNpc = m_cfg.GetBool(base + "npc", false);
+												e.label = m_cfg.GetString(base + "label", "?");
+												e.message = m_cfg.GetString(base + "message", "");
+												const int dcount = static_cast<int>(m_cfg.GetInt(base + "dialogue.count", 0));
+												for (int dj = 0; dj < dcount; ++dj)
+													e.dialogue.push_back(m_cfg.GetString(base + "dialogue." + std::to_string(dj), ""));
+												m_interactables.push_back(e);
+											}
+											if (m_interactables.empty())
 											{
 												InteractableEntity npc;
 												npc.position = engine::math::Vec3{ 4.0f, 0.0f, 0.0f };
@@ -4557,16 +4691,39 @@ namespace engine
 													// La matrice modele est desormais calculee a partir de cc.GetPosition()
 													// + m_avatarYaw ; le cube placeholder garde sa matrice d'origine (cf.
 													// rs.objectModelMatrix construit dans Update).
-													// materialDescriptorSet + materialIndex : meme set/index que le cube draw.
+													// materialDescriptorSet + materialIndex : meme set bindless que le
+													// cube draw. skinnedMaterialIndex = HABIT (defaut).
 													const uint32_t skinnedMaterialIndex = (m_avatarMaterialId != 0u)
 														? m_avatarMaterialId
 														: materialCache.GetDefaultMaterialIndex();
+
+													// Multi-materiaux : un index par sous-maillage. Les sous-maillages
+													// dont le nom de materiau glTF figure dans m_avatarBodyMaterialNames
+													// recoivent la PEAU (m_avatarBodyMaterialId), les autres l'habit.
+													// Si aucune texture de peau n'est chargee (id 0), tout retombe sur
+													// l'habit -> comportement identique a l'ancien mono-draw.
+													std::vector<uint32_t> submeshMaterialIndices;
+													if (m_avatarBodyMaterialId != 0u && !m_currentSkinnedMesh->submeshes.empty())
+													{
+														submeshMaterialIndices.reserve(m_currentSkinnedMesh->submeshes.size());
+														for (const auto& sub : m_currentSkinnedMesh->submeshes)
+														{
+															const bool isBody = std::find(
+																m_avatarBodyMaterialNames.begin(),
+																m_avatarBodyMaterialNames.end(),
+																sub.materialName) != m_avatarBodyMaterialNames.end();
+															submeshMaterialIndices.push_back(isBody ? m_avatarBodyMaterialId
+																                                    : skinnedMaterialIndex);
+														}
+													}
+
 													m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
 														m_vkDeviceContext.GetDevice(), cmd, reg,
 														m_vkSwapchain.GetExtent(),
 														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
 														m_fgGBufferVelocityId, m_fgDepthId,
-														[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat](VkCommandBuffer innerCmd) {
+														[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat,
+														 submeshMaterialIndices = std::move(submeshMaterialIndices)](VkCommandBuffer innerCmd) {
 															m_skinnedRenderer.Record(
 																m_vkDeviceContext.GetDevice(), innerCmd,
 																m_vkSwapchain.GetExtent(),
@@ -4577,7 +4734,8 @@ namespace engine
 																finals,
 																materialCache.GetDescriptorSet(),
 																finalModelMat.m,
-																skinnedMaterialIndex);
+																skinnedMaterialIndex,
+																submeshMaterialIndices);
 														});
 												}
 
@@ -7209,9 +7367,15 @@ namespace engine
 					// Attaque melee : clic gauche (edge). Le bloc gameplay est deja garde
 					// contre le focus chat / l'auth (cf. ligne ~6969) ; on exclut en plus
 					// le drag inventaire pour ne pas frapper en relachant un objet.
+					// Touche d'attaque ALTERNATIVE (controls.keybind.attack, vide = clic gauche
+					// seul). Permet de remapper l'attaque sur une touche, en plus du clic gauche.
+					// Round-trip KeyName(KeyFromName(...)) pour ignorer une valeur invalide.
+					const std::string attackKeyName = m_cfg.GetString("controls.keybind.attack", "");
+					const engine::platform::Key attackKey = KeyFromName(attackKeyName, engine::platform::Key::Escape);
+					const bool attackKeyBound = !attackKeyName.empty() && std::string(KeyName(attackKey)) == attackKeyName;
 					const bool attackPressed =
-						m_input.WasMousePressed(engine::platform::MouseButton::Left)
-						&& !m_invUi.IsDragging();
+						(m_input.WasMousePressed(engine::platform::MouseButton::Left) && !m_invUi.IsDragging())
+						|| (attackKeyBound && m_input.WasPressed(attackKey));
 
 					// Sort : touche R (edge). Meme bloc gameplay garde contre le focus
 					// chat / l'auth (cf. ligne ~6961). Geste cosmetique one-shot (pas de
@@ -7585,8 +7749,16 @@ namespace engine
 						}
 						if (interactPressed && nearestI >= 0)
 						{
-							const InteractableEntity& e = m_interactables[nearestI];
-							pushInteractChat(e.isNpc ? "[PNJ]" : "[Objet]", e.message);
+							InteractableEntity& e = m_interactables[nearestI];
+							if (e.isNpc && !e.dialogue.empty())
+							{
+								pushInteractChat("[PNJ]", e.label + " : " + e.dialogue[e.dialogueCursor]);
+								e.dialogueCursor = (e.dialogueCursor + 1) % static_cast<int>(e.dialogue.size());
+							}
+							else
+							{
+								pushInteractChat(e.isNpc ? "[PNJ]" : "[Objet]", e.message);
+							}
 						}
 					}
 				}
@@ -8006,6 +8178,26 @@ namespace engine
 			}
 			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
 			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+			// Marqueurs ImGui des interactibles : label flottant projete (visibilite v1
+			// sans mesh). Surligne + " [E]" si a portee. Cf. m_interactables (#39/#40).
+			{
+				const int ivw = static_cast<int>(dw);
+				const int ivh = static_cast<int>(dh);
+				ImDrawList* fg = ImGui::GetForegroundDrawList();
+				for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
+				{
+					const InteractableEntity& e = m_interactables[ii];
+					const float my = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 1.9f;
+					float sx = 0.0f, sy = 0.0f;
+					if (!WorldToScreenPx(out.viewProjMatrix.m, e.position.x, my, e.position.z, ivw, ivh, sx, sy))
+						continue;
+					const bool inRange = (static_cast<int>(ii) == m_interactableInRange);
+					const ImU32 col = inRange ? IM_COL32(255, 220, 80, 255) : IM_COL32(210, 210, 210, 200);
+					const std::string txt = e.label + (inRange ? " [E]" : "");
+					const ImVec2 ts = ImGui::CalcTextSize(txt.c_str());
+					fg->AddText(ImVec2(sx - ts.x * 0.5f, sy - ts.y), col, txt.c_str());
+				}
+			}
 			// Menu de panneaux : barre de menus ImGui toujours visible en jeu,
 			// acces souris a tous les panneaux togglables sans raccourci clavier
 			// dedie. Les panneaux gardent par ailleurs leurs touches existantes ;
@@ -8331,6 +8523,23 @@ namespace engine
 									: (m_rebindingAction == 3) ? "controls.keybind.cast"
 									: (m_rebindingAction == 4) ? "controls.keybind.interact"
 									: "controls.keybind.punch";
+								// Detection de conflit : la touche choisie est-elle deja sur une autre
+								// action ? (doublon autorise, juste signale sous les lignes de rebind).
+								m_keybindWarning.clear();
+								{
+									struct Kb { int act; const char* key; const char* label; };
+									static const Kb kKb[] = {
+										{1,"controls.keybind.sprint","Sprint"}, {2,"controls.keybind.crouch","Accroupi"},
+										{3,"controls.keybind.cast","Sort"}, {4,"controls.keybind.interact","Interagir"},
+										{5,"controls.keybind.punch","Coup de poing"},
+									};
+									for (const auto& kb : kKb)
+										if (kb.act != m_rebindingAction && m_cfg.GetString(kb.key, "") == rk.name)
+										{
+											m_keybindWarning = std::string("Touche '") + rk.name + "' deja utilisee par " + kb.label + " (doublon).";
+											break;
+										}
+								}
 								m_cfg.SetValue(cfgKey, std::string(rk.name));
 								// Persistance : ecrit keybinds.json (fichier dedie, format controle ;
 								// valeurs = noms ASCII de kRebindableKeys -> pas d'echappement JSON requis).
@@ -8373,6 +8582,8 @@ namespace engine
 				rebindRow("Coup de poing", "controls.keybind.punch", "C", 5);
 				ImGui::TextDisabled("Roulade : double-appui sur la touche Accroupi");
 				ImGui::TextDisabled("Attaque : clic gauche (non remappable)");
+				if (!m_keybindWarning.empty())
+					ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "%s", m_keybindWarning.c_str());
 
 				ImGui::Spacing();
 				ImGui::Separator();

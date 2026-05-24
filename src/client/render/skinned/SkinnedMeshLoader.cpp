@@ -217,6 +217,10 @@ std::optional<SkinnedMeshCpuData> SkinnedMeshLoader::LoadCpuOnlyForTests(const s
                 cgltf_accessor_read_float(aWeights, v, sv.weights, 4);
             }
 
+            // Mémorise le début de la plage d'indices de CETTE primitive avant
+            // de l'ajouter : permet de reconstruire un SkinnedSubMesh (plage +
+            // matériau) pour le rendu multi-matériaux.
+            const uint32_t subFirstIndex = static_cast<uint32_t>(out.indices.size());
             if (prim->indices) {
                 const size_t ni = prim->indices->count;
                 const size_t base = out.indices.size();
@@ -232,6 +236,16 @@ std::optional<SkinnedMeshCpuData> SkinnedMeshLoader::LoadCpuOnlyForTests(const s
                     out.indices[base + i] = baseVertex + static_cast<uint32_t>(i);
                 }
             }
+
+            // Enregistre le sous-maillage : plage [subFirstIndex, fin) + nom du
+            // matériau glTF (vide si la primitive n'en référence pas). L'appelant
+            // (Engine) mappe ensuite ce nom vers un index matériau bindless
+            // (habit vs peau) au moment du draw.
+            SkinnedSubMesh sub;
+            sub.firstIndex = subFirstIndex;
+            sub.indexCount = static_cast<uint32_t>(out.indices.size()) - subFirstIndex;
+            sub.materialName = (prim->material && prim->material->name) ? prim->material->name : "";
+            out.submeshes.push_back(std::move(sub));
             meshLoaded = true;
         }
     }

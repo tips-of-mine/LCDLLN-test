@@ -1828,3 +1828,15 @@ L'attaque restait fixée au clic gauche (§31). Ajout d'une **touche alternative
 
 ### À valider
 - En jeu : plus de clignotement « double » sur le corps ; la peau des mains reste visible ; l'habit n'empiète pas trop sur la peau exposée (sinon **baisser** le biais dans config).
+
+## 49. Avatar : double-buffer des buffers skinning (anti tremblement / pose « double ») (2026-05-23)
+
+**Problème** : l'avatar **tremble** / **parait double** en jeu (régression vs `8b974e9`, apparue avec #672). **Cause racine** : `SkinnedRenderer` réécrivait chaque frame un **unique** bone SSBO (matrices de skinning) + un **unique** model instance buffer, tous deux host-coherent. Avec **2 frames en vol** (FIF=2, cf. `m_frameArena`), la frame N+1 réécrit ces buffers **pendant que le GPU lit encore** ceux de la frame N → deux poses se mélangent (tremblement). Le multi-draw de #672 (9 draws au lieu d'1) **allonge la fenêtre de lecture GPU** → la course, jusque-là peu visible, devient flagrante. Le caveat était déjà documenté dans `SkinnedRenderer.cpp` (« fix propre = duplication par frame, PR de suivi »).
+
+### Fix
+- **Duplication par slot** : `SkinnedRenderer` alloue `kFrameSlots = 3` copies (FIF=2 + 1 de marge) du bone SSBO, du model buffer, et du descriptor set bone (chaque set pointe sur SON SSBO). `Record` choisit le slot de la frame puis avance un **ring** (`m_frameSlot = (m_frameSlot+1) % kFrameSlots`) → on ne réécrit jamais un buffer encore lu.
+- **Auto-contenu** : ring interne au renderer, **aucun** changement côté `Engine` (pas de frame index à câbler). Init/Record/Destroy bouclent sur les slots.
+- **Pipeline / shaders / winding inchangés.**
+
+### À valider
+- En jeu : l'avatar ne tremble plus / ne paraît plus double, immobile **et** en mouvement.

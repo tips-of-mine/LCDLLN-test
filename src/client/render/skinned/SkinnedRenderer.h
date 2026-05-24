@@ -157,6 +157,14 @@ public:
     ///         Utilisé par l'appelant pour créer un framebuffer compatible.
     VkRenderPass GetRenderPass() const { return m_renderPass; }
 
+    /// Nombre de copies des buffers réécrits chaque frame (bone SSBO + model
+    /// instance + descriptor set bone). Doit être >= au nombre de frames en vol
+    /// (FIF) de l'engine (2). Sans cette duplication, réécrire un buffer
+    /// host-coherent pendant que la frame précédente le lit encore provoque une
+    /// course → l'avatar tremble / « parait double » (deux poses se mélangent).
+    /// 3 = FIF(2) + 1 de marge. Cf. CODEBASE_MAP §49.
+    static constexpr uint32_t kFrameSlots = 3u;
+
 private:
     VkDevice m_device = VK_NULL_HANDLE;
     VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
@@ -167,14 +175,20 @@ private:
 
     VkDescriptorSetLayout m_boneSetLayout = VK_NULL_HANDLE;
     VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
-    VkDescriptorSet m_boneDescriptorSet = VK_NULL_HANDLE;
+    /// Un descriptor set bone par slot, pointant chacun sur son m_boneSsbo[slot].
+    VkDescriptorSet m_boneDescriptorSet[kFrameSlots] = {};
 
-    VkBuffer m_boneSsbo = VK_NULL_HANDLE;
-    VkDeviceMemory m_boneSsboMemory = VK_NULL_HANDLE;
+    /// Bone SSBO host-visible/coherent, un par slot (anti-course FIF).
+    VkBuffer m_boneSsbo[kFrameSlots] = {};
+    VkDeviceMemory m_boneSsboMemory[kFrameSlots] = {};
 
-    /// VkBuffer 64 octets : mat4 modèle de l'avatar, réécrit chaque Record.
-    VkBuffer m_modelInstanceBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory m_modelInstanceMemory = VK_NULL_HANDLE;
+    /// VkBuffer 64 octets : mat4 modèle de l'avatar, réécrit chaque Record, un
+    /// par slot (anti-course FIF).
+    VkBuffer m_modelInstanceBuffer[kFrameSlots] = {};
+    VkDeviceMemory m_modelInstanceMemory[kFrameSlots] = {};
+
+    /// Slot courant, avancé d'un cran à chaque Record (ring sur kFrameSlots).
+    uint32_t m_frameSlot = 0u;
 
     uint32_t m_maxBones = 0;
 };

@@ -62,10 +62,12 @@ namespace engine::client
 		}
 		m_characterName = nameUtf8 ? std::string(nameUtf8) : std::string();
 		m_characterRaceId = raceIdUtf8 ? std::string(raceIdUtf8) : std::string();
-		// Applique le genre choisi au moteur AVANT la soumission : l'EnterWorld qui
-		// suit resout le mesh via Engine::GetRaceMesh(raceId) qui lit m_avatarGender.
-		// SetCharacterGender persiste le genre PAR PERSONNAGE (characters.<nom>.gender)
-		// pour que le relog d'un perso existant retrouve son genre (fix client interim #1).
+		// #1 serveur — genre envoye au master dans la requete de creation (persiste en DB).
+		m_characterGender = (genderUtf8 && std::string(genderUtf8) == "female") ? "female" : "male";
+		// Applique aussi le genre au moteur AVANT la soumission : l'EnterWorld qui suit
+		// resout le mesh via Engine::GetRaceMesh(raceId) qui lit m_avatarGender.
+		// SetCharacterGender garde le fix client interim #1 (repli si la DB serveur n'a
+		// pas encore le genre, ex. master pas redeploye).
 		if (m_engineForRaceLookup != nullptr && genderUtf8 != nullptr)
 			m_engineForRaceLookup->SetCharacterGender(m_characterName, genderUtf8);
 		SubmitCurrentPhase(cfg);
@@ -139,6 +141,7 @@ namespace engine::client
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const std::string characterName = m_characterName;
 		const std::string characterRaceId = m_characterRaceId;
+		const std::string characterGender = m_characterGender;  // #1 serveur
 
 		m_pendingAsyncKind = AsyncKind::CharacterCreate;
 		{
@@ -148,7 +151,7 @@ namespace engine::client
 
 		engine::network::NetClient* const masterClient = m_masterClient.get();
 		const uint64_t sessionId = m_masterSessionId;
-		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, characterName, characterRaceId]() {
+		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, characterName, characterRaceId, characterGender]() {
 			AsyncResult local{};
 			if (masterClient == nullptr)
 			{
@@ -163,7 +166,7 @@ namespace engine::client
 			bool done = false;
 			std::string errMsg;
 			if (!disp.SendRequest(engine::network::kOpcodeCharacterCreateRequest,
-					engine::network::BuildCharacterCreateRequestPayload(characterName, characterRaceId),
+					engine::network::BuildCharacterCreateRequestPayload(characterName, characterRaceId, "", {}, characterGender),
 					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
 						done = true;
 						if (timeout)

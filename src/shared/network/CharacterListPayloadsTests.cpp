@@ -96,6 +96,7 @@ static void TestPopulatedResponseRoundTrip()
 		a.spawn_pitch_deg  = -5.5f;
 		a.race_str         = "humains";
 		a.class_str        = "warrior";
+		a.gender           = "female";
 		entries.push_back(a);
 	}
 	{
@@ -146,6 +147,7 @@ static void TestPopulatedResponseRoundTrip()
 		Assert(a.spawn_pitch_deg == -5.5f, "entry0 spawn_pitch_deg");
 		Assert(a.race_str == "humains", "entry0 race_str");
 		Assert(a.class_str == "warrior", "entry0 class_str");
+		Assert(a.gender == "female", "entry0 gender");
 
 		const auto& b = parsed->entries[1];
 		Assert(b.character_id == 1002u, "entry1 id");

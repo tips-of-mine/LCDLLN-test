@@ -67,6 +67,8 @@ namespace engine::client
 		// race via Engine::GetRaceMesh(). Vide pour les persos pre-migration
 		// (Engine retombera sur le fallback humains).
 		m_pendingEnterWorld.raceId        = chosen.race_str;
+			// #1 serveur — genre du perso (DB, migration 0067) via CHARACTER_LIST -> Engine.
+			m_pendingEnterWorld.gender        = chosen.gender;
 		const bool nonZero = (chosen.spawn_x != 0.0f) || (chosen.spawn_y != 0.0f)
 			|| (chosen.spawn_z != 0.0f) || (chosen.spawn_yaw_deg != 0.0f)
 			|| (chosen.spawn_pitch_deg != 0.0f);

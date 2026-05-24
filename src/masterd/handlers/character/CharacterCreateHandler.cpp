@@ -256,19 +256,24 @@ namespace engine::server
 			return "";
 		};
 		const std::string factionStr = factionFromRace(raceIdTruncated);
+		// #1 serveur — genre du personnage (validé male/female, défaut male).
+		const std::string genderStr = (parsed->gender == "female") ? "female" : "male";
 		char escapedRace[80]{};
 		char escapedClass[80]{};
 		char escapedFaction[80]{};
+		char escapedGender[24]{};
 		mysql_real_escape_string(mysql, escapedRace,
 			raceIdTruncated.c_str(), static_cast<unsigned long>(raceIdTruncated.size()));
 		mysql_real_escape_string(mysql, escapedClass,
 			classIdTruncated.c_str(), static_cast<unsigned long>(classIdTruncated.size()));
 		mysql_real_escape_string(mysql, escapedFaction,
 			factionStr.c_str(), static_cast<unsigned long>(factionStr.size()));
+		mysql_real_escape_string(mysql, escapedGender,
+			genderStr.c_str(), static_cast<unsigned long>(genderStr.size()));
 
 		std::string sql =
 			"INSERT INTO characters (account_id, slot, name, server_id, race_id, class_id, level, appearance_json,"
-			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg, race_str, class_str, faction_str) VALUES ("
+			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg, race_str, class_str, faction_str, gender) VALUES ("
 			+ std::to_string(*accountId) + ", "
 			+ std::to_string(slot) + ", '"
 			+ escapedName + "', "
@@ -276,7 +281,8 @@ namespace engine::server
 			+ spawnBuf + ", '"
 			+ escapedRace + "', '"
 			+ escapedClass + "', '"
-			+ escapedFaction + "')";
+			+ escapedFaction + "', '"
+			+ escapedGender + "')";
 		if (!engine::server::db::DbExecute(mysql, sql))
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "character creation failed", requestId, sessionIdHeader);

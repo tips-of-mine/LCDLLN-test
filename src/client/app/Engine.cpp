@@ -6962,22 +6962,31 @@ namespace engine
 							spawnX, ccY, spawnZ, groundY);
 					}
 
-					// Fix client interim #1 : applique le genre persiste pour CE perso (par nom)
-					// AVANT la selection du mesh/peau. Absent (perso cree cette session, ou
-					// perso d'avant ce fix) => on garde le genre courant. Le stockage serveur
-					// (DB) remplacera cette lecture client le moment venu.
+					// #1 — genre du perso applique AVANT la selection du mesh/peau.
+					// Source autoritative : enterCmd.gender (DB serveur via CHARACTER_LIST,
+					// migration 0067). Repli : characters.<nom>.gender (fix client interim)
+					// si le serveur ne fournit pas encore le genre (master pas redeploye).
 					{
-						const std::string storedGender =
-							m_cfg.GetString("characters." + enterCmd.characterName + ".gender", "");
-						if (storedGender == "male" || storedGender == "female") {
-							if (storedGender != m_avatarGender) {
-								m_avatarGender = storedGender;
+						std::string gender = enterCmd.gender;
+						const char* src = "serveur";
+						if (gender != "male" && gender != "female")
+						{
+							gender = m_cfg.GetString("characters." + enterCmd.characterName + ".gender", "");
+							src = "client (repli)";
+						}
+						if (gender == "male" || gender == "female")
+						{
+							if (gender != m_avatarGender)
+							{
+								m_avatarGender = gender;
 								m_avatarSkinDiagLoggedGender.clear();
 							}
-							LOG_INFO(Core, "[EnterWorld] genre perso '{}' = {} (persistance client)",
-								enterCmd.characterName, storedGender);
-						} else {
-							LOG_INFO(Core, "[EnterWorld] pas de genre persiste pour '{}' -> genre courant '{}'",
+							LOG_INFO(Core, "[EnterWorld] genre perso '{}' = {} ({})",
+								enterCmd.characterName, gender, src);
+						}
+						else
+						{
+							LOG_INFO(Core, "[EnterWorld] pas de genre (serveur/client) pour '{}' -> genre courant '{}'",
 								enterCmd.characterName, m_avatarGender);
 						}
 					}

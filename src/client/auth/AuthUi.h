@@ -113,6 +113,9 @@ namespace engine::client
 			/// `m_currentSkinnedMesh` via `Engine::GetRaceMesh(raceId)` (avec fallback
 			/// humains si la race n'est pas chargée dans `m_raceMeshes`).
 			std::string raceId;
+			/// #1 serveur — genre du personnage ("male"/"female"), reçu via CHARACTER_LIST
+			/// (migration 0067). Vide = legacy/pré-migration -> 'male' par défaut côté Engine.
+			std::string gender;
 		};
 
 		struct AudioSettingsCommand
@@ -888,6 +891,9 @@ namespace engine::client
 		/// Vide = race non sélectionnée (le serveur recevra une chaîne vide et
 		/// stockera race_str = ""). Aligné sur la table `races` (cf. migration 0036).
 		std::string m_characterRaceId;
+		/// #1 serveur — genre choisi sur l'écran CharacterCreate ("male"/"female"),
+		/// envoyé au master dans CharacterCreateRequestPayload.gender. Défaut "male".
+		std::string m_characterGender = "male";
 		uint32_t m_activeField = 0;
 		int32_t m_hoveredFieldIndex = -1;
 		int32_t m_hoveredFieldInfoIndex = -1;

@@ -383,6 +383,15 @@ bool SkinnedRenderer::Init(VkDevice device,
     rs.cullMode    = VK_CULL_MODE_BACK_BIT;
     rs.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rs.lineWidth   = 1.0f;
+    // Depth bias active (valeurs poussees dynamiquement par Record) : sert a
+    // departager les couches qui se chevauchent sur l'avatar modulaire (peau du
+    // corps SOUS l'habit, ~coplanaires sur les bras) -> sans biais elles
+    // z-fightent et clignotent ("parait double") une fois texturees differemment
+    // (peau vs habit). On pousse la PEAU legerement en arriere pour que l'habit
+    // gagne la ou ils se superposent ; la peau exposee (mains) rend normalement.
+    // depthBiasEnable seul ne biaise rien : tout vient des vkCmdSetDepthBias par
+    // sous-maillage (0 pour l'habit, valeur config pour la peau).
+    rs.depthBiasEnable = VK_TRUE;
 
     VkPipelineMultisampleStateCreateInfo ms = {};
     ms.sType                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -405,10 +414,13 @@ bool SkinnedRenderer::Init(VkDevice device,
     cb.attachmentCount = 4;
     cb.pAttachments    = blendAtt;
 
-    VkDynamicState dynStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+    // DEPTH_BIAS dynamique : valeurs (re)poussees par Record selon que le
+    // sous-maillage est de la peau (biais config) ou de l'habit (0).
+    VkDynamicState dynStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
+                                   VK_DYNAMIC_STATE_DEPTH_BIAS };
     VkPipelineDynamicStateCreateInfo dyn = {};
     dyn.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dyn.dynamicStateCount = 2;
+    dyn.dynamicStateCount = 3;
     dyn.pDynamicStates    = dynStates;
 
     VkGraphicsPipelineCreateInfo gpInfo = {};
@@ -442,42 +454,42 @@ bool SkinnedRenderer::Init(VkDevice device,
     }
 
     // -------------------------------------------------------------------------
-    // Bone SSBO (host-visible + coherent). Dimensionné pour maxBones mat4.
-    // Réécrit chaque Record (Task 14).
+    // Bone SSBO + model instance buffer : kFrameSlots copies (anti-course FIF).
+    // Chaque slot a son SSBO bones, son buffer model, et son descriptor set
+    // bone qui pointe sur SON SSBO. Record alterne de slot a chaque frame pour
+    // ne jamais reecrire un buffer encore lu par une frame en vol.
     // -------------------------------------------------------------------------
     const VkDeviceSize boneBufferSize =
         static_cast<VkDeviceSize>(maxBonesPerSkeleton) * sizeof(float) * 16;
-    if (!CreateEmptyHostVisibleBuffer(device, physicalDevice,
-                                      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                                      boneBufferSize, &m_boneSsbo, &m_boneSsboMemory)) {
-        LOG_ERROR(Render, "[SkinnedRenderer] bone SSBO creation failed ({} bytes)",
-                      static_cast<size_t>(boneBufferSize));
-        Destroy(device);
-        return false;
+    for (uint32_t slot = 0; slot < kFrameSlots; ++slot) {
+        if (!CreateEmptyHostVisibleBuffer(device, physicalDevice,
+                                          VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                          boneBufferSize, &m_boneSsbo[slot], &m_boneSsboMemory[slot])) {
+            LOG_ERROR(Render, "[SkinnedRenderer] bone SSBO creation failed slot {} ({} bytes)",
+                          slot, static_cast<size_t>(boneBufferSize));
+            Destroy(device);
+            return false;
+        }
+        if (!CreateEmptyHostVisibleBuffer(device, physicalDevice,
+                                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                                          64u, &m_modelInstanceBuffer[slot], &m_modelInstanceMemory[slot])) {
+            LOG_ERROR(Render, "[SkinnedRenderer] model instance buffer creation failed slot {}", slot);
+            Destroy(device);
+            return false;
+        }
     }
 
     // -------------------------------------------------------------------------
-    // Model instance buffer (1 mat4 = 64 octets). Réécrit chaque Record.
-    // -------------------------------------------------------------------------
-    if (!CreateEmptyHostVisibleBuffer(device, physicalDevice,
-                                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                                      64u, &m_modelInstanceBuffer, &m_modelInstanceMemory)) {
-        LOG_ERROR(Render, "[SkinnedRenderer] model instance buffer creation failed");
-        Destroy(device);
-        return false;
-    }
-
-    // -------------------------------------------------------------------------
-    // Descriptor pool (1 SSBO max) + allocation du bone descriptor set +
-    // binding du SSBO sur ce set.
+    // Descriptor pool (kFrameSlots SSBO) + 1 bone descriptor set par slot,
+    // chacun bindant le SSBO du meme slot.
     // -------------------------------------------------------------------------
     VkDescriptorPoolSize poolSize = {};
     poolSize.type            = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    poolSize.descriptorCount = 1;
+    poolSize.descriptorCount = kFrameSlots;
 
     VkDescriptorPoolCreateInfo poolCi = {};
     poolCi.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolCi.maxSets       = 1;
+    poolCi.maxSets       = kFrameSlots;
     poolCi.poolSizeCount = 1;
     poolCi.pPoolSizes    = &poolSize;
 
@@ -487,35 +499,37 @@ bool SkinnedRenderer::Init(VkDevice device,
         return false;
     }
 
-    VkDescriptorSetAllocateInfo allocInfo = {};
-    allocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool     = m_descriptorPool;
-    allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts        = &m_boneSetLayout;
+    for (uint32_t slot = 0; slot < kFrameSlots; ++slot) {
+        VkDescriptorSetAllocateInfo allocInfo = {};
+        allocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.descriptorPool     = m_descriptorPool;
+        allocInfo.descriptorSetCount = 1;
+        allocInfo.pSetLayouts        = &m_boneSetLayout;
 
-    if (vkAllocateDescriptorSets(device, &allocInfo, &m_boneDescriptorSet) != VK_SUCCESS) {
-        LOG_ERROR(Render, "[SkinnedRenderer] bone descriptor set allocation failed");
-        Destroy(device);
-        return false;
+        if (vkAllocateDescriptorSets(device, &allocInfo, &m_boneDescriptorSet[slot]) != VK_SUCCESS) {
+            LOG_ERROR(Render, "[SkinnedRenderer] bone descriptor set allocation failed slot {}", slot);
+            Destroy(device);
+            return false;
+        }
+
+        VkDescriptorBufferInfo boneBufInfo = {};
+        boneBufInfo.buffer = m_boneSsbo[slot];
+        boneBufInfo.offset = 0;
+        boneBufInfo.range  = VK_WHOLE_SIZE;
+
+        VkWriteDescriptorSet write = {};
+        write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet          = m_boneDescriptorSet[slot];
+        write.dstBinding      = 0;
+        write.dstArrayElement = 0;
+        write.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        write.descriptorCount = 1;
+        write.pBufferInfo     = &boneBufInfo;
+        vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
     }
 
-    VkDescriptorBufferInfo boneBufInfo = {};
-    boneBufInfo.buffer = m_boneSsbo;
-    boneBufInfo.offset = 0;
-    boneBufInfo.range  = VK_WHOLE_SIZE;
-
-    VkWriteDescriptorSet write = {};
-    write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.dstSet          = m_boneDescriptorSet;
-    write.dstBinding      = 0;
-    write.dstArrayElement = 0;
-    write.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    write.descriptorCount = 1;
-    write.pBufferInfo     = &boneBufInfo;
-    vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
-
-    LOG_INFO(Render, "[SkinnedRenderer] Init OK (maxBones={}, SSBO={} bytes)",
-                 maxBonesPerSkeleton, static_cast<size_t>(boneBufferSize));
+    LOG_INFO(Render, "[SkinnedRenderer] Init OK (maxBones={}, SSBO={} bytes x{} slots)",
+                 maxBonesPerSkeleton, static_cast<size_t>(boneBufferSize), kFrameSlots);
     return true;
 }
 
@@ -527,10 +541,11 @@ bool SkinnedRenderer::Init(VkDevice device,
 // que `GeometryPass::Record`). Les paramètres `renderPass` / `framebuffer`
 // restent dans la signature pour symétrie et usage futur éventuel.
 //
-// Caveat known FIF (frame-in-flight) : si l'engine a FIF >= 2, les buffers
-// host-coherent réécrits chaque frame peuvent racer avec la draw précédente.
-// Pour l'unique avatar du scope A c'est peu visible, mais le fix propre
-// (duplication des buffers par frame) appartient à une PR de suivi.
+// FIF (frame-in-flight) : les buffers host-coherent réécrits chaque frame sont
+// désormais DUPLIQUÉS par slot (kFrameSlots, ring avancé à chaque Record) pour
+// ne jamais réécrire un buffer encore lu par une frame en vol. Sans ça, à FIF=2
+// (a fortiori avec le multi-draw qui allonge la fenêtre de lecture GPU), la
+// course faisait trembler l'avatar / le faisait « parait double ». Cf. §49.
 // -----------------------------------------------------------------------------
 
 void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
@@ -542,8 +557,17 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
                              VkDescriptorSet materialDescriptorSet,
                              const float* modelMatrixColumnMajor4x4,
                              uint32_t materialIndex,
-                             const std::vector<uint32_t>& submeshMaterialIndices)
+                             const std::vector<uint32_t>& submeshMaterialIndices,
+                             uint32_t skinMaterialIndex,
+                             float skinDepthBiasConstant,
+                             float skinDepthBiasSlope)
 {
+    // 0. Sélectionne le slot de buffers de cette frame puis avance le ring.
+    //    Garantit qu'on ne réécrit jamais le bone SSBO / model buffer encore lu
+    //    par une frame en vol (FIF) → plus de tremblement / pose « double ».
+    const uint32_t slot = m_frameSlot;
+    m_frameSlot = (m_frameSlot + 1u) % kFrameSlots;
+
     // 1. Upload des matrices de bones dans le SSBO host-visible.
     //    Clamp au max alloué dans Init pour ne jamais déborder (256 bones par
     //    défaut). Si la liste est vide on saute l'upload (mesh sans skin
@@ -553,9 +577,9 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
         const size_t boneBytes = boneCountClamped * sizeof(engine::math::Mat4);
         if (boneBytes > 0) {
             void* mapped = nullptr;
-            if (vkMapMemory(device, m_boneSsboMemory, 0, boneBytes, 0, &mapped) == VK_SUCCESS) {
+            if (vkMapMemory(device, m_boneSsboMemory[slot], 0, boneBytes, 0, &mapped) == VK_SUCCESS) {
                 std::memcpy(mapped, finalBoneMatrices.data(), boneBytes);
-                vkUnmapMemory(device, m_boneSsboMemory);
+                vkUnmapMemory(device, m_boneSsboMemory[slot]);
             } else {
                 LOG_WARN(Render, "[SkinnedRenderer] vkMapMemory failed for bone SSBO; skipping draw");
                 return;
@@ -566,9 +590,9 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
     // 2. Upload de la matrice modèle (64 octets) dans le per-instance buffer.
     {
         void* mapped = nullptr;
-        if (vkMapMemory(device, m_modelInstanceMemory, 0, 64, 0, &mapped) == VK_SUCCESS) {
+        if (vkMapMemory(device, m_modelInstanceMemory[slot], 0, 64, 0, &mapped) == VK_SUCCESS) {
             std::memcpy(mapped, modelMatrixColumnMajor4x4, 64);
-            vkUnmapMemory(device, m_modelInstanceMemory);
+            vkUnmapMemory(device, m_modelInstanceMemory[slot]);
         } else {
             LOG_WARN(Render, "[SkinnedRenderer] vkMapMemory failed for model instance buffer; skipping draw");
             return;
@@ -596,7 +620,7 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
 
     // 5. Bind des descriptor sets : set 0 = matériau (fourni par l'appelant),
     //    set 1 = bone SSBO (interne, mis à jour à l'Init).
-    VkDescriptorSet sets[2] = { materialDescriptorSet, m_boneDescriptorSet };
+    VkDescriptorSet sets[2] = { materialDescriptorSet, m_boneDescriptorSet[slot] };
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout,
                              /*firstSet*/ 0, /*setCount*/ 2, sets, 0, nullptr);
 
@@ -621,7 +645,7 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
 
     // 7. Bind des vertex buffers : per-vertex @ binding 0 (mesh), per-instance
     //    @ binding 1 (matrice modèle). Cf. layout vertex input dans Init.
-    VkBuffer vbufs[2] = { mesh.vertexBuffer, m_modelInstanceBuffer };
+    VkBuffer vbufs[2] = { mesh.vertexBuffer, m_modelInstanceBuffer[slot] };
     VkDeviceSize offsets[2] = { 0, 0 };
     vkCmdBindVertexBuffers(cmd, 0, 2, vbufs, offsets);
 
@@ -634,13 +658,25 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
     //    materialIndex (habit vs peau). Le descriptor set (set 0) est bindless
     //    et déjà bindé : seul le push constant materialIndex change entre draws.
     //    Sinon, chemin mono-draw historique (mesh.indexCount d'un coup).
+    // Le pipeline a depthBiasEnable=TRUE + DEPTH_BIAS dynamique : il FAUT donc
+    // appeler vkCmdSetDepthBias avant chaque draw (sinon valeur indefinie). On
+    // pose 0 par defaut, et le biais peau (skinDepthBias*) pour les sous-maillages
+    // dont l'index materiau figure dans skinMaterialIndices.
+    auto isSkin = [&](uint32_t matIndex) -> bool {
+        return skinMaterialIndex != 0u && matIndex == skinMaterialIndex;
+    };
+
     const bool perSubmesh =
         !mesh.submeshes.empty() && submeshMaterialIndices.size() == mesh.submeshes.size();
     if (perSubmesh) {
         for (size_t s = 0; s < mesh.submeshes.size(); ++s) {
             const SkinnedSubMesh& sub = mesh.submeshes[s];
             if (sub.indexCount == 0) continue;
-            pc.materialIndex = submeshMaterialIndices[s];
+            const uint32_t matIdx = submeshMaterialIndices[s];
+            const bool skin = isSkin(matIdx);
+            vkCmdSetDepthBias(cmd, skin ? skinDepthBiasConstant : 0.0f, 0.0f,
+                              skin ? skinDepthBiasSlope : 0.0f);
+            pc.materialIndex = matIdx;
             vkCmdPushConstants(cmd, m_pipelineLayout,
                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                                0, sizeof(PushConstants), &pc);
@@ -648,6 +684,7 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
                              sub.firstIndex, 0, 0);
         }
     } else {
+        vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
         pc.materialIndex = materialIndex;
         vkCmdPushConstants(cmd, m_pipelineLayout,
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -672,39 +709,43 @@ void SkinnedRenderer::Destroy(VkDevice device)
         m_pipeline = VK_NULL_HANDLE;
         m_boneSetLayout = VK_NULL_HANDLE;
         m_descriptorPool = VK_NULL_HANDLE;
-        m_boneDescriptorSet = VK_NULL_HANDLE;
-        m_boneSsbo = VK_NULL_HANDLE;
-        m_boneSsboMemory = VK_NULL_HANDLE;
-        m_modelInstanceBuffer = VK_NULL_HANDLE;
-        m_modelInstanceMemory = VK_NULL_HANDLE;
+        for (uint32_t slot = 0; slot < kFrameSlots; ++slot) {
+            m_boneDescriptorSet[slot] = VK_NULL_HANDLE;
+            m_boneSsbo[slot] = VK_NULL_HANDLE;
+            m_boneSsboMemory[slot] = VK_NULL_HANDLE;
+            m_modelInstanceBuffer[slot] = VK_NULL_HANDLE;
+            m_modelInstanceMemory[slot] = VK_NULL_HANDLE;
+        }
+        m_frameSlot = 0;
         m_maxBones = 0;
         return;
     }
 
-    // Le descriptor set est libéré automatiquement par la destruction du pool.
+    // Les descriptor sets sont libérés automatiquement par la destruction du pool.
     if (m_descriptorPool != VK_NULL_HANDLE) {
         vkDestroyDescriptorPool(device, m_descriptorPool, nullptr);
         m_descriptorPool = VK_NULL_HANDLE;
-        m_boneDescriptorSet = VK_NULL_HANDLE;
     }
-
-    if (m_modelInstanceBuffer != VK_NULL_HANDLE) {
-        vkDestroyBuffer(device, m_modelInstanceBuffer, nullptr);
-        m_modelInstanceBuffer = VK_NULL_HANDLE;
+    for (uint32_t slot = 0; slot < kFrameSlots; ++slot) {
+        m_boneDescriptorSet[slot] = VK_NULL_HANDLE;
+        if (m_modelInstanceBuffer[slot] != VK_NULL_HANDLE) {
+            vkDestroyBuffer(device, m_modelInstanceBuffer[slot], nullptr);
+            m_modelInstanceBuffer[slot] = VK_NULL_HANDLE;
+        }
+        if (m_modelInstanceMemory[slot] != VK_NULL_HANDLE) {
+            vkFreeMemory(device, m_modelInstanceMemory[slot], nullptr);
+            m_modelInstanceMemory[slot] = VK_NULL_HANDLE;
+        }
+        if (m_boneSsbo[slot] != VK_NULL_HANDLE) {
+            vkDestroyBuffer(device, m_boneSsbo[slot], nullptr);
+            m_boneSsbo[slot] = VK_NULL_HANDLE;
+        }
+        if (m_boneSsboMemory[slot] != VK_NULL_HANDLE) {
+            vkFreeMemory(device, m_boneSsboMemory[slot], nullptr);
+            m_boneSsboMemory[slot] = VK_NULL_HANDLE;
+        }
     }
-    if (m_modelInstanceMemory != VK_NULL_HANDLE) {
-        vkFreeMemory(device, m_modelInstanceMemory, nullptr);
-        m_modelInstanceMemory = VK_NULL_HANDLE;
-    }
-
-    if (m_boneSsbo != VK_NULL_HANDLE) {
-        vkDestroyBuffer(device, m_boneSsbo, nullptr);
-        m_boneSsbo = VK_NULL_HANDLE;
-    }
-    if (m_boneSsboMemory != VK_NULL_HANDLE) {
-        vkFreeMemory(device, m_boneSsboMemory, nullptr);
-        m_boneSsboMemory = VK_NULL_HANDLE;
-    }
+    m_frameSlot = 0;
 
     if (m_pipeline != VK_NULL_HANDLE) {
         vkDestroyPipeline(device, m_pipeline, nullptr);

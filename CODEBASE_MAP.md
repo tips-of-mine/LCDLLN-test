@@ -1816,3 +1816,27 @@ L'attaque restait fixée au clic gauche (§31). Ajout d'une **touche alternative
 ### Limites / reste
 - **ORM peau** non packée (Roughness source dispo dans l'inbox) → repli ORM par défaut (peau un peu trop lisse). Packer R=AO/G=Rough/B=Metal = polish ultérieur.
 - **Validation visuelle requise** (rendu non testable en CI) : à confirmer en jeu via screenshots.
+
+## 48. Avatar : depth bias peau (anti z-fighting peau/habit) (2026-05-23)
+
+**Problème** : après §47, l'avatar **clignotait / paraissait double** sur le corps (rapporté en jeu, « la surface clignote et parait double, seulement sur le modèle »). Cause : sur l'avatar modulaire, la **peau du corps** (`MI_Regular_Male`) est ~**coplanaire** avec l'**habit** (`MI_Ranger`) sur les bras (le corps complet est sous l'habit). Avant §47 les deux portaient la même texture → invisible ; avec deux textures distinctes, le **z-fighting** devient visible (amplifié par la TAA).
+
+### Fix
+- **Depth bias** sur les sous-maillages **peau** uniquement : le pipeline `SkinnedRenderer` passe `depthBiasEnable=TRUE` + `VK_DYNAMIC_STATE_DEPTH_BIAS` ; `Record` appelle `vkCmdSetDepthBias` par sous-maillage (biais config pour la peau, 0 pour l'habit). La peau est poussée **derrière** l'habit coplanaire → l'habit gagne le z-test (`LESS_OR_EQUAL`) là où ils se superposent ; la peau **exposée** (mains) rend normalement.
+- **Réglable à chaud** (pas de rebuild) : `client.character_creation.skin_depth_bias_constant` / `_slope` (défauts 4.0 / 4.0). Valeurs négatives possibles si le sens doit être inversé. 0 = désactivé.
+- **Pipeline / winding (CCW + BACK) inchangés** (seul `depthBiasEnable` + l'état dynamique sont ajoutés).
+
+### À valider
+- En jeu : plus de clignotement « double » sur le corps ; la peau des mains reste visible ; l'habit n'empiète pas trop sur la peau exposée (sinon **baisser** le biais dans config).
+
+## 49. Avatar : double-buffer des buffers skinning (anti tremblement / pose « double ») (2026-05-23)
+
+**Problème** : l'avatar **tremble** / **parait double** en jeu (régression vs `8b974e9`, apparue avec #672). **Cause racine** : `SkinnedRenderer` réécrivait chaque frame un **unique** bone SSBO (matrices de skinning) + un **unique** model instance buffer, tous deux host-coherent. Avec **2 frames en vol** (FIF=2, cf. `m_frameArena`), la frame N+1 réécrit ces buffers **pendant que le GPU lit encore** ceux de la frame N → deux poses se mélangent (tremblement). Le multi-draw de #672 (9 draws au lieu d'1) **allonge la fenêtre de lecture GPU** → la course, jusque-là peu visible, devient flagrante. Le caveat était déjà documenté dans `SkinnedRenderer.cpp` (« fix propre = duplication par frame, PR de suivi »).
+
+### Fix
+- **Duplication par slot** : `SkinnedRenderer` alloue `kFrameSlots = 3` copies (FIF=2 + 1 de marge) du bone SSBO, du model buffer, et du descriptor set bone (chaque set pointe sur SON SSBO). `Record` choisit le slot de la frame puis avance un **ring** (`m_frameSlot = (m_frameSlot+1) % kFrameSlots`) → on ne réécrit jamais un buffer encore lu.
+- **Auto-contenu** : ring interne au renderer, **aucun** changement côté `Engine` (pas de frame index à câbler). Init/Record/Destroy bouclent sur les slots.
+- **Pipeline / shaders / winding inchangés.**
+
+### À valider
+- En jeu : l'avatar ne tremble plus / ne paraît plus double, immobile **et** en mouvement.

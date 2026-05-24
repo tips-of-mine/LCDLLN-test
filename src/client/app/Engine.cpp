@@ -4742,20 +4742,16 @@ namespace engine
 													// l'habit -> comportement identique a l'ancien mono-draw.
 													const uint32_t bodyMaterialId = (m_avatarGender == "female")
 														? m_avatarBodyMaterialIdFemale : m_avatarBodyMaterialIdMale;
-													std::vector<uint32_t> submeshMaterialIndices;
-													if (bodyMaterialId != 0u && !m_currentSkinnedMesh->submeshes.empty())
-													{
-														submeshMaterialIndices.reserve(m_currentSkinnedMesh->submeshes.size());
-														for (const auto& sub : m_currentSkinnedMesh->submeshes)
-														{
-															const bool isBody = std::find(
-																m_avatarBodyMaterialNames.begin(),
-																m_avatarBodyMaterialNames.end(),
-																sub.materialName) != m_avatarBodyMaterialNames.end();
-															submeshMaterialIndices.push_back(isBody ? bodyMaterialId
-																                                    : skinnedMaterialIndex);
-														}
-													}
+													// Routage peau/habit par sous-maillage (fonction pure partagee
+													// avec l'apercu de creation). Vide si pas de materiau peau ou pas
+													// de sous-maillages -> mono-draw habit (comportement identique
+													// a l'ancien code).
+													std::vector<uint32_t> submeshMaterialIndices =
+														engine::render::skinned::BuildSubmeshMaterialIndices(
+															m_currentSkinnedMesh->submeshes,
+															m_avatarBodyMaterialNames,
+															bodyMaterialId,
+															skinnedMaterialIndex);
 
 													m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
 														m_vkDeviceContext.GetDevice(), cmd, reg,

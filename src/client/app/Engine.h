@@ -73,6 +73,7 @@
 #include "src/client/render/skinned/SkinnedRenderer.h"
 #include "src/client/render/skinned/SkinnedMesh.h"
 #include "src/client/render/skinned/SkinnedMeshLoader.h"
+#include "src/client/render/skinned/AvatarMaterialRouting.h"
 #include "src/client/render/skinned/AnimationSampler.h"
 // Sous-projet B.1 (Task 11) : crossfade entre clips de locomotion (7 etats).
 #include "src/client/render/skinned/AnimationCrossfade.h"

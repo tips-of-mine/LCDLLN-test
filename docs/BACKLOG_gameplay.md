@@ -69,6 +69,6 @@
 
 ## G. Character-customization (chantier d'origine)
 
-- **#2 Modèle féminin** : cosmétique client ✅ (§43, `client.character_creation.gender`). **Reste** : sélecteur UI de genre + **persistance serveur** (DB migration + payload = redéploiement).
+- **#2 Modèle féminin** : cosmétique client ✅ (§43) + **sélecteur UI de genre in-game** ✅ (§50 : toggle Homme/Femme à la création, aperçu 3D live, 2 genres chargés au boot, persisté client via `character_appearance.json`). **Reste** : **persistance serveur** (DB migration + payload = redéploiement).
 - **#5 Textures** : ✅ habit + peau livrés. Set Ranger BaseColor/Normal/ORM (§44) **et** rendu **multi-matériaux** peau/habit (§47 : `MI_Regular_Male` → T_Regular_Male sur les mains, `MI_Ranger` → T_Ranger ailleurs). **Reste** : packer l'ORM peau (Roughness dispo en inbox `source_textures/`) ; textures Female/Peasant/autres races (encore en inbox) ; généraliser par race/genre/tenue.
 - **#3 Animations** : ✅ fait et dépassé (§27→§42).

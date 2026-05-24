@@ -642,7 +642,11 @@ namespace engine::client
 		void ImGuiTermsPrimaryClick(const engine::core::Config& cfg);
 		void ImGuiTermsDecline(engine::platform::Window& window);
 
-		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8 = "");
+		/// \param genderUtf8 Genre choisi ("male"/"female") : applique au moteur
+		///                   (SetAvatarGender -> mesh + peau in-world + persistance)
+		///                   avant la soumission, pour que l'EnterWorld qui suit
+		///                   utilise le bon avatar.
+		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8 = "", const char* genderUtf8 = "male");
 
 		/// Sous-projet C MVP (Task 12) — Accesseur vers le presenter de
 		/// creation de personnage detenu par AuthUiPresenter. Permet a
@@ -659,6 +663,12 @@ namespace engine::client
 		/// Engine n'est pas branche (cas test unitaire / boot rate) ou si
 		/// meme la race fallback "humains" est absente de m_raceMeshes.
 		engine::render::skinned::SkinnedMesh* GetRaceMeshForId(const std::string& raceId);
+
+		/// Variante genre-explicite : resout le mesh d'apercu pour race+genre
+		/// ("male"/"female"). Utilise par le selecteur de genre de l'ecran de
+		/// creation pour basculer l'apercu 3D en live. Delegue a
+		/// Engine::GetRaceMesh(raceId, gender). nullptr si Engine non branche.
+		engine::render::skinned::SkinnedMesh* GetRaceMeshForId(const std::string& raceId, const std::string& gender);
 
 		/// Sous-projet C MVP (Task 12) — Branche le pointer Engine
 		/// utilise par \c GetRaceMeshForId. Appele une fois par

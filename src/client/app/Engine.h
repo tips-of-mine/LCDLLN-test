@@ -201,7 +201,29 @@ namespace engine
 		/// creation de personnage.
 		engine::render::skinned::SkinnedMesh* GetRaceMesh(const std::string& raceId);
 
+		/// Variante genre-explicite : resout le mesh raceId pour `gender`
+		/// ("male"/"female"). Cherche "raceId|gender", retombe sur le male de la
+		/// race, puis sur "humains|male", puis nullptr. Utilise par l'apercu de
+		/// creation (bascule de genre live) et en interne par GetRaceMesh.
+		engine::render::skinned::SkinnedMesh* GetRaceMesh(const std::string& raceId,
+		                                                  const std::string& gender);
+
+		/// Change le genre actif de l'avatar ("male"/"female") : met a jour
+		/// m_avatarGender (mesh + materiau de peau du genre seront pris au prochain
+		/// EnterWorld et par l'apercu) et persiste le choix (fichier dedie merge au
+		/// boot). Sans effet si gender invalide. Appele par le selecteur de creation.
+		void SetAvatarGender(const std::string& gender);
+
+		/// Genre actif courant ("male"/"female").
+		const std::string& GetAvatarGender() const { return m_avatarGender; }
+
 	private:
+		/// Clef de stockage d'un mesh de race dans m_raceMeshes : "raceId|gender".
+		static std::string RaceMeshKey(const std::string& raceId, const std::string& gender)
+		{
+			return raceId + "|" + gender;
+		}
+
 		void BeginFrame();
 		void Update();
 		void Render();
@@ -338,11 +360,17 @@ namespace engine
 		/// (0 = default fallback, non-zero = materiel dedie). Materiau par defaut
 		/// applique a tous les sous-maillages sauf ceux listes comme "peau".
 		uint32_t m_avatarMaterialId = 0u;
-		/// Index materiel PEAU de l'avatar (corps/mains). 0 si aucune texture de
-		/// peau chargee -> les sous-maillages peau retombent sur l'habit.
-		uint32_t m_avatarBodyMaterialId = 0u;
+		/// Index materiel PEAU de l'avatar, un par genre (corps/mains). 0 si la
+		/// texture de peau correspondante est absente -> les sous-maillages peau
+		/// retombent sur l'habit. Le draw choisit l'id selon m_avatarGender.
+		uint32_t m_avatarBodyMaterialIdMale = 0u;
+		uint32_t m_avatarBodyMaterialIdFemale = 0u;
+		/// Genre actif de l'avatar ("male" / "female"). Pilote le mesh in-world
+		/// (GetRaceMesh) ET le materiau de peau au draw. Modifie en live par le
+		/// selecteur de creation (SetAvatarGender) ; defaut depuis config au boot.
+		std::string m_avatarGender = "male";
 		/// Noms de materiaux glTF (ex. "MI_Regular_Male") dont les sous-maillages
-		/// recoivent m_avatarBodyMaterialId (la peau). Tout autre nom -> habit.
+		/// recoivent le materiau de peau du genre actif. Tout autre nom -> habit.
 		/// Renseigne depuis client.character_creation.body_material_names.
 		std::vector<std::string> m_avatarBodyMaterialNames;
 		/// Depth bias applique aux sous-maillages PEAU (corps) au draw pour les

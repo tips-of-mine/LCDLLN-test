@@ -97,6 +97,7 @@ static void TestPopulatedResponseRoundTrip()
 		a.race_str         = "humains";
 		a.class_str        = "warrior";
 		a.gender           = "female";
+		a.skin_color_idx   = 1u;
 		entries.push_back(a);
 	}
 	{
@@ -148,6 +149,7 @@ static void TestPopulatedResponseRoundTrip()
 		Assert(a.race_str == "humains", "entry0 race_str");
 		Assert(a.class_str == "warrior", "entry0 class_str");
 		Assert(a.gender == "female", "entry0 gender");
+		Assert(a.skin_color_idx == 1u, "entry0 skin_color_idx");
 
 		const auto& b = parsed->entries[1];
 		Assert(b.character_id == 1002u, "entry1 id");
@@ -160,6 +162,7 @@ static void TestPopulatedResponseRoundTrip()
 		Assert(b.spawn_pitch_deg == -10.0f, "entry1 spawn_pitch_deg default");
 		Assert(b.race_str.empty(), "entry1 race_str empty (pre-migration)");
 		Assert(b.class_str.empty(), "entry1 class_str empty (pre-migration)");
+		Assert(b.skin_color_idx == 0u, "entry1 skin_color_idx default 0");
 	}
 }
 

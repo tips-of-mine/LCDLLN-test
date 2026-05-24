@@ -72,7 +72,7 @@ namespace engine::server
 			"COALESCE(UNIX_TIMESTAMP(s.last_seen), 0) AS last_seen_unix, "
 			"COALESCE(s.total_play_seconds, 0) AS total_play, "
 			"c.spawn_x, c.spawn_y, c.spawn_z, c.spawn_yaw_deg, c.spawn_pitch_deg, "
-			"c.race_str, c.class_str, c.gender "
+			"c.race_str, c.class_str, c.gender, c.skin_color_idx "
 			"FROM characters c "
 			"LEFT JOIN character_stats s ON s.character_id = c.id AND s.server_id = c.server_id "
 			"WHERE c.account_id = " + std::to_string(*accountId)
@@ -115,6 +115,8 @@ namespace engine::server
 			// #1 serveur — genre (migration 0067). Defaut 'male' si vide/NULL.
 			if (row[16]) e.gender = row[16];
 			if (e.gender.empty()) e.gender = "male";
+			// Teinte de peau (migration 0068). Defaut 0 (claire) si vide/NULL.
+			if (row[17]) e.skin_color_idx = static_cast<uint8_t>(std::strtoul(row[17], nullptr, 10));
 			entries.push_back(std::move(e));
 		}
 		engine::server::db::DbFreeResult(res);

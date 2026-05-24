@@ -4762,11 +4762,17 @@ namespace engine
 
 													// Multi-materiaux : un index par sous-maillage. Les sous-maillages
 													// dont le nom de materiau glTF figure dans m_avatarBodyMaterialNames
-													// recoivent la PEAU (m_avatarBodyMaterialId), les autres l'habit.
+													// recoivent la PEAU (selon genre x teinte), les autres l'habit.
 													// Si aucune texture de peau n'est chargee (id 0), tout retombe sur
 													// l'habit -> comportement identique a l'ancien mono-draw.
-													const uint32_t bodyMaterialId = (m_avatarGender == "female")
-														? m_avatarBodyMaterialIdFemale : m_avatarBodyMaterialIdMale;
+													// Teinte foncee (m_avatarSkinTone==1) avec repli sur claire si absente.
+													uint32_t bodyMaterialId;
+													if (m_avatarGender == "female")
+														bodyMaterialId = (m_avatarSkinTone == 1 && m_avatarBodyMaterialIdFemaleDark != 0u)
+															? m_avatarBodyMaterialIdFemaleDark : m_avatarBodyMaterialIdFemale;
+													else
+														bodyMaterialId = (m_avatarSkinTone == 1 && m_avatarBodyMaterialIdMaleDark != 0u)
+															? m_avatarBodyMaterialIdMaleDark : m_avatarBodyMaterialIdMale;
 													// Routage peau/habit par sous-maillage (fonction pure partagee
 													// avec l'apercu de creation). Vide si pas de materiau peau ou pas
 													// de sous-maillages -> mono-draw habit (comportement identique
@@ -7059,6 +7065,11 @@ namespace engine
 								enterCmd.characterName, m_avatarGender);
 						}
 					}
+					// Teinte de peau du perso (DB serveur via CHARACTER_LIST, migration 0068).
+					// 0 = claire (defaut), 1 = foncee. Applique le materiau de peau au draw.
+					m_avatarSkinTone = (enterCmd.skinColorIdx == 1u) ? 1 : 0;
+					LOG_INFO(Core, "[EnterWorld] teinte peau '{}' = {}",
+						enterCmd.characterName, m_avatarSkinTone == 1 ? "foncee" : "claire");
 					// Sous-projet C MVP — Resout le mesh de la race du perso depuis le
 					// payload EnterWorld (race_str persistee en DB depuis migration 0033).
 					// Fallback humains si la race n'est pas chargee dans m_raceMeshes.

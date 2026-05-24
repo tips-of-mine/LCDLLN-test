@@ -215,6 +215,15 @@ namespace engine
 		/// boot). Sans effet si gender invalide. Appele par le selecteur de creation.
 		void SetAvatarGender(const std::string& gender);
 
+		/// Persiste et applique le genre d'un personnage donne, par NOM
+		/// (fix client interim #1 : le genre n'est pas encore stocke serveur).
+		/// Met a jour m_avatarGender pour la session ET ecrit
+		/// `characters.<nom>.gender` dans character_appearance.json (merge au boot),
+		/// pour que l'EnterWorld d'un perso existant retrouve son genre au relog.
+		/// Sans effet si gender invalide ; repli sur SetAvatarGender si nom vide.
+		/// Appele a la creation de personnage (nom + genre finaux).
+		void SetCharacterGender(const std::string& characterName, const std::string& gender);
+
 		/// Genre actif courant ("male"/"female").
 		const std::string& GetAvatarGender() const { return m_avatarGender; }
 

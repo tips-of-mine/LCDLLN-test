@@ -1870,7 +1870,16 @@ L'attaque restait fixée au clic gauche (§31). Ajout d'une **touche alternative
 - **Diagnostic `[AvatarSkinDiag]`** (`Engine.cpp`, membre `m_avatarSkinDiagLoggedGender`) : loggé **une fois par changement de genre** — genre, ids matériaux male/female résolus, `bodyId`/`habitId`, nb de sous-maillages, nb classés peau, et **noms de matériaux réellement chargés**. `LOG_ERROR` si `bodyId==0` (texture peau non chargée), `LOG_WARN` si aucun sous-maillage peau (noms ne matchent pas). Sert à cibler #1/#2 au runtime (relevé par l'utilisateur après build).
 - **Vocabulaire** : RadioButtons « Homme/Femme » → « Masculin/Féminin » (`AuthImGuiCharacterCreate.cpp`), titre « GENRE » conservé.
 
-### Limites / reste
-- #1/#2 **non corrigés de façon déterministe** : la cause exige une observation runtime (impossible sans build local). Cette phase livre l'instrumentation ; le correctif ciblé suit une 2ᵉ itération une fois les logs relevés.
+### Diagnostic #1 (cause confirmée par les logs) + fix client interim
+Les logs `[AvatarSkinDiag]` ont montré : matériaux OK (idMale=2, idFemale=3), routage OK (10 sous-maillages : 9 `MI_Ranger` + 1 `MI_Regular_Male`, `peau=1`). **Cause de #1** : `EnterWorld` ne fixait jamais le genre — `GetRaceMesh(raceId)` lit `m_avatarGender` resté à « male » (défaut). Le genre était **global client**, jamais rechargé par personnage au relog.
+
+**Fix client interim** (`Engine::SetCharacterGender(nom, genre)`) :
+- Persiste le genre **par personnage** (`characters.<nom>.gender`) dans `character_appearance.json` (rebâti depuis `Config::GetStringMapUnderPrefix("characters")`), en plus du genre global.
+- Appelé à la création (`AuthUiPresenter::ImGuiSubmitCharacterCreate`, nom + genre finaux).
+- Appliqué à l'`EnterWorld` (avant `GetRaceMesh`) : lit `characters.<enterCmd.characterName>.gender` et fixe `m_avatarGender`. Absent → genre courant conservé (perso créé cette session, ou perso d'avant le fix → reste « male » jusqu'à re-création).
+- **Limite** : stockage local à la machine, et les persos créés AVANT ce fix n'ont pas d'entrée (re-créer pour valider). Le **fix serveur** (colonne `gender` en DB + payload CHARACTER_LIST/EnterWorld) reste à faire — ⚠️ **redéploiement serveur** le moment venu.
+
+### Reste
+- **#2** (peau peu visible) : `peau=1` sur 10 (seules les mains, `MI_Regular_Male`). À isoler via le test depth bias=0 (réglable à chaud, §48) : depth bias trop fort vs mesh n'exposant que les mains.
 - L'aperçu 3D réel (rendu forward dédié réutilisant `BuildSubmeshMaterialIndices`) est la **Phase 2 (§52 à venir)**.
-- **Déploiement** : ✅ client uniquement, pas de redéploiement serveur.
+- **Déploiement** : ✅ client uniquement, pas de redéploiement serveur (le fix serveur du genre viendra séparément).

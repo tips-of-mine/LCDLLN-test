@@ -63,10 +63,11 @@ namespace engine::client
 		m_characterName = nameUtf8 ? std::string(nameUtf8) : std::string();
 		m_characterRaceId = raceIdUtf8 ? std::string(raceIdUtf8) : std::string();
 		// Applique le genre choisi au moteur AVANT la soumission : l'EnterWorld qui
-		// suit resout le mesh via Engine::GetRaceMesh(raceId) qui lit m_avatarGender,
-		// et le choix est persiste (relog) par SetAvatarGender.
+		// suit resout le mesh via Engine::GetRaceMesh(raceId) qui lit m_avatarGender.
+		// SetCharacterGender persiste le genre PAR PERSONNAGE (characters.<nom>.gender)
+		// pour que le relog d'un perso existant retrouve son genre (fix client interim #1).
 		if (m_engineForRaceLookup != nullptr && genderUtf8 != nullptr)
-			m_engineForRaceLookup->SetAvatarGender(genderUtf8);
+			m_engineForRaceLookup->SetCharacterGender(m_characterName, genderUtf8);
 		SubmitCurrentPhase(cfg);
 	}
 

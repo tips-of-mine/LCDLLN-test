@@ -6952,6 +6952,25 @@ namespace engine
 							spawnX, ccY, spawnZ, groundY);
 					}
 
+					// Fix client interim #1 : applique le genre persiste pour CE perso (par nom)
+					// AVANT la selection du mesh/peau. Absent (perso cree cette session, ou
+					// perso d'avant ce fix) => on garde le genre courant. Le stockage serveur
+					// (DB) remplacera cette lecture client le moment venu.
+					{
+						const std::string storedGender =
+							m_cfg.GetString("characters." + enterCmd.characterName + ".gender", "");
+						if (storedGender == "male" || storedGender == "female") {
+							if (storedGender != m_avatarGender) {
+								m_avatarGender = storedGender;
+								m_avatarSkinDiagLoggedGender.clear();
+							}
+							LOG_INFO(Core, "[EnterWorld] genre perso '{}' = {} (persistance client)",
+								enterCmd.characterName, storedGender);
+						} else {
+							LOG_INFO(Core, "[EnterWorld] pas de genre persiste pour '{}' -> genre courant '{}'",
+								enterCmd.characterName, m_avatarGender);
+						}
+					}
 					// Sous-projet C MVP — Resout le mesh de la race du perso depuis le
 					// payload EnterWorld (race_str persistee en DB depuis migration 0033).
 					// Fallback humains si la race n'est pas chargee dans m_raceMeshes.
@@ -9142,6 +9161,66 @@ namespace engine
 		if (!engine::platform::FileSystem::WriteAllText("character_appearance.json", json))
 			LOG_WARN(Core, "[Avatar] character_appearance.json non ecrit (genre non persiste)");
 		LOG_INFO(Core, "[Avatar] Genre actif -> {}", gender);
+	}
+
+	void Engine::SetCharacterGender(const std::string& characterName, const std::string& gender)
+	{
+		if (gender != "male" && gender != "female") {
+			LOG_WARN(Core, "[Avatar] SetCharacterGender('{}','{}') ignore (genre attendu male/female)",
+				characterName, gender);
+			return;
+		}
+		if (characterName.empty()) {
+			// Cas limite (nom vide) : repli sur le genre global de session.
+			SetAvatarGender(gender);
+			return;
+		}
+		// Session : applique tout de suite. Le 1er EnterWorld apres creation lit
+		// m_avatarGender (la persistance ci-dessous sert surtout au relog ulterieur).
+		if (gender != m_avatarGender) {
+			m_avatarGender = gender;
+			m_avatarSkinDiagLoggedGender.clear();  // force le re-log du diagnostic peau
+		}
+		m_cfg.SetValue("client.character_creation.gender", gender);
+		m_cfg.SetValue("characters." + characterName + ".gender", gender);
+
+		// Persistance : rebatit character_appearance.json = genre global (defaut) +
+		// map genre-par-personnage (characters.<nom>.gender), pour que l'EnterWorld
+		// d'un perso existant retrouve son genre au relog. Fix client interim ; le
+		// stockage serveur (DB) remplacera ce fichier le moment venu.
+		std::unordered_map<std::string, std::string> genders;
+		for (const auto& kv : m_cfg.GetStringMapUnderPrefix("characters")) {
+			const std::string::size_type dot = kv.first.rfind('.');
+			if (dot == std::string::npos) continue;
+			if (kv.first.substr(dot + 1) != "gender") continue;
+			genders[kv.first.substr(0, dot)] = kv.second;
+		}
+		genders[characterName] = gender;
+
+		auto jsonEscape = [](const std::string& s) {
+			std::string out;
+			out.reserve(s.size());
+			for (char c : s) {
+				if (c == '\\' || c == '"') out.push_back('\\');
+				out.push_back(c);
+			}
+			return out;
+		};
+
+		std::string json =
+			"{\n  \"client\": {\n    \"character_creation\": {\n      \"gender\": \""
+			+ gender + "\"\n    }\n  },\n  \"characters\": {\n";
+		std::size_t i = 0;
+		for (const auto& kv : genders) {
+			json += "    \"" + jsonEscape(kv.first) + "\": { \"gender\": \"" + kv.second + "\" }";
+			json += (++i < genders.size()) ? ",\n" : "\n";
+		}
+		json += "  }\n}\n";
+
+		if (!engine::platform::FileSystem::WriteAllText("character_appearance.json", json))
+			LOG_WARN(Core, "[Avatar] character_appearance.json non ecrit (genre perso non persiste)");
+		LOG_INFO(Core, "[Avatar] Genre perso '{}' -> {} (persiste, {} perso(s))",
+			characterName, gender, genders.size());
 	}
 
 	void Engine::OnResize(int w, int h)

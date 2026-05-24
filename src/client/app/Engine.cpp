@@ -4752,6 +4752,31 @@ namespace engine
 															m_avatarBodyMaterialNames,
 															bodyMaterialId,
 															skinnedMaterialIndex);
+													// Diagnostic peau/genre (#1/#2) : logge une seule fois par changement de
+													// genre. Revele en clair l'etat runtime (ids materiaux, nb de sous-maillages
+													// peau vs habit, noms de materiaux reellement charges).
+													if (m_avatarSkinDiagLoggedGender != m_avatarGender)
+													{
+														m_avatarSkinDiagLoggedGender = m_avatarGender;
+														std::size_t bodyCount = 0;
+														for (uint32_t matId : submeshMaterialIndices)
+															if (matId == bodyMaterialId) ++bodyCount;
+														std::string noms;
+														for (const auto& sub : m_currentSkinnedMesh->submeshes)
+														{
+															if (!noms.empty()) noms += ", ";
+															noms += sub.materialName.empty() ? "<vide>" : sub.materialName;
+														}
+														LOG_INFO(Render,
+															"[AvatarSkinDiag] genre={} idMale={} idFemale={} bodyId={} habitId={} submeshes={} peau={} noms=[{}]",
+															m_avatarGender, m_avatarBodyMaterialIdMale, m_avatarBodyMaterialIdFemale,
+															bodyMaterialId, skinnedMaterialIndex, m_currentSkinnedMesh->submeshes.size(),
+															bodyCount, noms);
+														if (bodyMaterialId == 0u)
+															LOG_ERROR(Render, "[AvatarSkinDiag] bodyMaterialId=0 -> peau NON routee (texture peau non chargee ?)");
+														else if (!submeshMaterialIndices.empty() && bodyCount == 0)
+															LOG_WARN(Render, "[AvatarSkinDiag] 0 sous-maillage peau (noms ne matchent pas body_material_names)");
+													}
 
 													m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
 														m_vkDeviceContext.GetDevice(), cmd, reg,

@@ -370,6 +370,10 @@ namespace engine
 		/// (GetRaceMesh) ET le materiau de peau au draw. Modifie en live par le
 		/// selecteur de creation (SetAvatarGender) ; defaut depuis config au boot.
 		std::string m_avatarGender = "male";
+		/// Genre pour lequel le diagnostic peau a deja ete logge (evite le spam
+		/// par frame ; on relogue uniquement au changement de genre). Cf. le bloc
+		/// [AvatarSkinDiag] dans Engine.cpp (rendu de l'avatar skinne).
+		std::string m_avatarSkinDiagLoggedGender;
 		/// Noms de materiaux glTF (ex. "MI_Regular_Male") dont les sous-maillages
 		/// recoivent le materiau de peau du genre actif. Tout autre nom -> habit.
 		/// Renseigne depuis client.character_creation.body_material_names.

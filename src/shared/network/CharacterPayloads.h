@@ -31,6 +31,7 @@ namespace engine::network
 		std::string           raceId;    ///< M39.1 — race identifier (e.g. "humains").
 		std::string           classId;   ///< M39.1 — class identifier (e.g. "warrior").
 		CharacterCustomization customization{}; ///< M39.1 — appearance options.
+		std::string           gender;    ///< "male"/"female" (#1 serveur). Vide => 'male' côté serveur.
 	};
 
 	struct CharacterCreateResponsePayload
@@ -43,7 +44,8 @@ namespace engine::network
 	std::vector<uint8_t> BuildCharacterCreateRequestPayload(std::string_view name,
 	                                                        std::string_view raceId  = {},
 	                                                        std::string_view classId = {},
-	                                                        const CharacterCustomization& customization = {});
+	                                                        const CharacterCustomization& customization = {},
+	                                                        std::string_view gender = {});
 
 	std::optional<CharacterCreateResponsePayload> ParseCharacterCreateResponsePayload(const uint8_t* payload, size_t payloadSize);
 	std::vector<uint8_t> BuildCharacterCreateResponsePacket(uint8_t success, uint64_t characterId, uint32_t requestId, uint64_t sessionIdHeader);
@@ -84,6 +86,9 @@ namespace engine::network
 		// Vides si character créé pré-migration 0033, ou si l'utilisateur n'a pas choisi.
 		std::string race_str;
 		std::string class_str;
+		// #1 serveur — genre ("male"/"female"). Appendu après class_str (wire-breaking,
+		// client + master déployés ensemble). Vide => 'male' côté client.
+		std::string gender;
 	};
 
 	struct CharacterListResponsePayload

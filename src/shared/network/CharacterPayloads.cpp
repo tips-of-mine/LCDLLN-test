@@ -62,6 +62,13 @@ namespace engine::network
 			if (r.ReadBytes(&b, 1u)) out.customization.eyeColorIdx = b;
 		}
 
+		// #1 serveur — genre (string), optionnel : absent sur ancien client (forward-compat).
+		if (r.Remaining() > 0)
+		{
+			if (!r.ReadString(out.gender))
+				return std::nullopt;
+		}
+
 		return out;
 	}
 
@@ -72,7 +79,8 @@ namespace engine::network
 	std::vector<uint8_t> BuildCharacterCreateRequestPayload(std::string_view name,
 	                                                        std::string_view raceId,
 	                                                        std::string_view classId,
-	                                                        const CharacterCustomization& customization)
+	                                                        const CharacterCustomization& customization,
+	                                                        std::string_view gender)
 	{
 		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
 		ByteWriter w(buf.data(), buf.size());
@@ -95,6 +103,10 @@ namespace engine::network
 			customization.eyeColorIdx
 		};
 		if (!w.WriteBytes(customBytes, 5u))
+			return {};
+
+		// #1 serveur — genre (string), appendu après la customization.
+		if (!w.WriteString(gender))
 			return {};
 
 		buf.resize(w.Offset());
@@ -211,6 +223,10 @@ namespace engine::network
 			// Phase 3.8 — race/class strings (length-prefixed UTF-8).
 			if (!r.ReadString(e.race_str) || !r.ReadString(e.class_str))
 				return std::nullopt;
+			// #1 serveur — genre (string), appendu après class_str (wire-breaking,
+			// client/master en lock-step). Vide => 'male' appliqué côté client.
+			if (!r.ReadString(e.gender))
+				return std::nullopt;
 			out.entries.push_back(std::move(e));
 		}
 		return out;
@@ -254,6 +270,9 @@ namespace engine::network
 				}
 				// Phase 3.8 — race / class strings.
 				if (!w.WriteString(e.race_str) || !w.WriteString(e.class_str))
+					return {};
+				// #1 serveur — genre (string), appendu après class_str.
+				if (!w.WriteString(e.gender))
 					return {};
 			}
 		}

@@ -73,6 +73,7 @@
 #include "src/client/render/skinned/SkinnedRenderer.h"
 #include "src/client/render/skinned/SkinnedMesh.h"
 #include "src/client/render/skinned/SkinnedMeshLoader.h"
+#include "src/client/render/skinned/AvatarMaterialRouting.h"
 #include "src/client/render/skinned/AnimationSampler.h"
 // Sous-projet B.1 (Task 11) : crossfade entre clips de locomotion (7 etats).
 #include "src/client/render/skinned/AnimationCrossfade.h"
@@ -213,6 +214,15 @@ namespace engine
 		/// EnterWorld et par l'apercu) et persiste le choix (fichier dedie merge au
 		/// boot). Sans effet si gender invalide. Appele par le selecteur de creation.
 		void SetAvatarGender(const std::string& gender);
+
+		/// Persiste et applique le genre d'un personnage donne, par NOM
+		/// (fix client interim #1 : le genre n'est pas encore stocke serveur).
+		/// Met a jour m_avatarGender pour la session ET ecrit
+		/// `characters.<nom>.gender` dans character_appearance.json (merge au boot),
+		/// pour que l'EnterWorld d'un perso existant retrouve son genre au relog.
+		/// Sans effet si gender invalide ; repli sur SetAvatarGender si nom vide.
+		/// Appele a la creation de personnage (nom + genre finaux).
+		void SetCharacterGender(const std::string& characterName, const std::string& gender);
 
 		/// Genre actif courant ("male"/"female").
 		const std::string& GetAvatarGender() const { return m_avatarGender; }
@@ -369,6 +379,10 @@ namespace engine
 		/// (GetRaceMesh) ET le materiau de peau au draw. Modifie en live par le
 		/// selecteur de creation (SetAvatarGender) ; defaut depuis config au boot.
 		std::string m_avatarGender = "male";
+		/// Genre pour lequel le diagnostic peau a deja ete logge (evite le spam
+		/// par frame ; on relogue uniquement au changement de genre). Cf. le bloc
+		/// [AvatarSkinDiag] dans Engine.cpp (rendu de l'avatar skinne).
+		std::string m_avatarSkinDiagLoggedGender;
 		/// Noms de materiaux glTF (ex. "MI_Regular_Male") dont les sous-maillages
 		/// recoivent le materiau de peau du genre actif. Tout autre nom -> habit.
 		/// Renseigne depuis client.character_creation.body_material_names.

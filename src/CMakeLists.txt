@@ -686,6 +686,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(skinned_mesh_loader_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/SkinnedMeshLoaderTests.cpp)
 
+  # Routage de materiaux peau/habit de l'avatar (fonction pure, sans Vulkan).
+  # AvatarMaterialRouting.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(avatar_material_routing_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AvatarMaterialRoutingTests.cpp)
+
   # Chargeur de mesh glTF statique (props, chantier B). StaticMeshLoader.cpp est
   # compile dans engine_core ; cgltf y est resolu via SkinnedMeshLoader.cpp (CGLTF_IMPLEMENTATION).
   lcdlln_add_simple_test(static_mesh_loader_tests

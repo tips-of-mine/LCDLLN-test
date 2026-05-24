@@ -383,6 +383,10 @@ namespace engine
 		/// (GetRaceMesh) ET le materiau de peau au draw. Modifie en live par le
 		/// selecteur de creation (SetAvatarGender) ; defaut depuis config au boot.
 		std::string m_avatarGender = "male";
+		/// Teinte de peau active in-world : 0 = claire (défaut), 1 = foncée.
+		/// Appliquée à EnterWorld depuis enterCmd.skinColorIdx (DB serveur,
+		/// migration 0068) ; pilote le choix du matériau de peau au draw.
+		int m_avatarSkinTone = 0;
 		/// Genre pour lequel le diagnostic peau a deja ete logge (evite le spam
 		/// par frame ; on relogue uniquement au changement de genre). Cf. le bloc
 		/// [AvatarSkinDiag] dans Engine.cpp (rendu de l'avatar skinne).

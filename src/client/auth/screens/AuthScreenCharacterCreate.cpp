@@ -54,7 +54,7 @@ namespace engine::client
 	} // namespace
 
 	/// Soumet le nom de personnage saisi depuis le renderer ImGui et lance la création.
-	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8, const char* genderUtf8)
+	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8, const char* genderUtf8, uint8_t skinColorIdx)
 	{
 		if (m_phase != Phase::CharacterCreate)
 		{
@@ -64,6 +64,8 @@ namespace engine::client
 		m_characterRaceId = raceIdUtf8 ? std::string(raceIdUtf8) : std::string();
 		// #1 serveur — genre envoye au master dans la requete de creation (persiste en DB).
 		m_characterGender = (genderUtf8 && std::string(genderUtf8) == "female") ? "female" : "male";
+		// Teinte de peau envoyee au master (skinColorIdx, persiste en DB migration 0068).
+		m_characterSkinColorIdx = skinColorIdx;
 		// Applique aussi le genre au moteur AVANT la soumission : l'EnterWorld qui suit
 		// resout le mesh via Engine::GetRaceMesh(raceId) qui lit m_avatarGender.
 		// SetCharacterGender garde le fix client interim #1 (repli si la DB serveur n'a
@@ -142,6 +144,7 @@ namespace engine::client
 		const std::string characterName = m_characterName;
 		const std::string characterRaceId = m_characterRaceId;
 		const std::string characterGender = m_characterGender;  // #1 serveur
+		const uint8_t characterSkinColorIdx = m_characterSkinColorIdx;  // teinte (migration 0068)
 
 		m_pendingAsyncKind = AsyncKind::CharacterCreate;
 		{
@@ -151,7 +154,7 @@ namespace engine::client
 
 		engine::network::NetClient* const masterClient = m_masterClient.get();
 		const uint64_t sessionId = m_masterSessionId;
-		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, characterName, characterRaceId, characterGender]() {
+		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, characterName, characterRaceId, characterGender, characterSkinColorIdx]() {
 			AsyncResult local{};
 			if (masterClient == nullptr)
 			{
@@ -165,8 +168,11 @@ namespace engine::client
 			disp.SetSessionId(sessionId);
 			bool done = false;
 			std::string errMsg;
+			// Teinte de peau dans la customization (skinColorIdx, persiste en DB migration 0068).
+			engine::network::CharacterCustomization custom{};
+			custom.skinColorIdx = characterSkinColorIdx;
 			if (!disp.SendRequest(engine::network::kOpcodeCharacterCreateRequest,
-					engine::network::BuildCharacterCreateRequestPayload(characterName, characterRaceId, "", {}, characterGender),
+					engine::network::BuildCharacterCreateRequestPayload(characterName, characterRaceId, "", custom, characterGender),
 					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
 						done = true;
 						if (timeout)

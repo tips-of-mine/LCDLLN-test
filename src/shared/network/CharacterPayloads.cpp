@@ -227,6 +227,9 @@ namespace engine::network
 			// client/master en lock-step). Vide => 'male' appliqué côté client.
 			if (!r.ReadString(e.gender))
 				return std::nullopt;
+			// Teinte de peau (1 octet), appendu après gender (wire-breaking).
+			if (!r.ReadBytes(&e.skin_color_idx, 1u))
+				return std::nullopt;
 			out.entries.push_back(std::move(e));
 		}
 		return out;
@@ -273,6 +276,9 @@ namespace engine::network
 					return {};
 				// #1 serveur — genre (string), appendu après class_str.
 				if (!w.WriteString(e.gender))
+					return {};
+				// Teinte de peau (1 octet), appendu après gender.
+				if (!w.WriteBytes(&e.skin_color_idx, 1u))
 					return {};
 			}
 		}

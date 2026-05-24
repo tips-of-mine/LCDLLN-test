@@ -89,6 +89,9 @@ namespace engine::network
 		// #1 serveur — genre ("male"/"female"). Appendu après class_str (wire-breaking,
 		// client + master déployés ensemble). Vide => 'male' côté client.
 		std::string gender;
+		// Teinte de peau (0 = claire, 1 = foncée). Appendu après gender (wire-breaking,
+		// client + master déployés ensemble). 0 par défaut (perso pré-migration 0068).
+		uint8_t skin_color_idx = 0;
 	};
 
 	struct CharacterListResponsePayload

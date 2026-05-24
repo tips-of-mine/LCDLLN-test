@@ -286,7 +286,8 @@ namespace engine::render
 					raceId = submitRaces[m_charRaceIdx].id;
 			}
 			const char* genderId = (m_charGender == 1) ? "female" : "male";
-				m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName, raceId.c_str(), genderId);
+			const uint8_t skinTone = static_cast<uint8_t>((m_charSkinTone == 1) ? 1 : 0);
+				m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName, raceId.c_str(), genderId, skinTone);
 		}
 		EndPanel();
 		ImGui::EndChild();

@@ -1,5 +1,6 @@
 ﻿#include "src/client/app/Engine.h"
 
+#include "src/client/render/static_mesh/StaticMeshLoader.h"
 #include "src/shared/core/Log.h"
 #include "src/world_editor/ui/EditorMode.h"
 #include "src/world_editor/ui/WorldEditorImGui.h"
@@ -4510,6 +4511,9 @@ namespace engine
 												e.isNpc = m_cfg.GetBool(base + "npc", false);
 												e.label = m_cfg.GetString(base + "label", "?");
 												e.message = m_cfg.GetString(base + "message", "");
+												e.meshPath = m_cfg.GetString(base + "mesh", "");
+												e.meshScale = static_cast<float>(m_cfg.GetDouble(base + "scale", 1.0));
+												e.meshYawDeg = static_cast<float>(m_cfg.GetDouble(base + "yaw_deg", 0.0));
 												const int dcount = static_cast<int>(m_cfg.GetInt(base + "dialogue.count", 0));
 												for (int dj = 0; dj < dcount; ++dj)
 													e.dialogue.push_back(m_cfg.GetString(base + "dialogue." + std::to_string(dj), ""));
@@ -4526,9 +4530,12 @@ namespace engine
 												chest.position = engine::math::Vec3{ -4.0f, 0.0f, 0.0f };
 												chest.radius = 2.0f; chest.isNpc = false; chest.label = "Coffre";
 												chest.message = "Vous fouillez le coffre... vide pour l'instant.";
+												chest.meshPath = "meshes/props/Chest_Wood.gltf";
 												m_interactables.push_back(chest);
 											}
 											m_interactableInRange = -1;
+											// Chantier B : charge les meshes statiques des props (coffre + interactibles).
+											LoadInteractableProps();
 
 											engine::gameplay::CharacterController::Config ccCfg{};
 											ccCfg.walkSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.walk_speed",      5.0));
@@ -4802,6 +4809,9 @@ namespace engine
 																m_avatarSkinDepthBiasSlope);
 														});
 												}
+
+												// Chantier B : dessine les props statiques (coffre, etc.) par-dessus le GBuffer.
+												RecordPropsGeometry(cmd, reg, rs);
 
 												// M100 — Task 12 : drawcall terrain chunk (post-Phase-3a).
 												// Dessine les chunks visibles qui ont terrain.bin + splat.bin
@@ -9221,6 +9231,138 @@ namespace engine
 			LOG_WARN(Core, "[Avatar] character_appearance.json non ecrit (genre perso non persiste)");
 		LOG_INFO(Core, "[Avatar] Genre perso '{}' -> {} (persiste, {} perso(s))",
 			characterName, gender, genders.size());
+	}
+
+	void Engine::LoadInteractableProps()
+	{
+		m_props.clear();
+		if (!m_pipeline) return;
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		if (!materialCache.IsValid()) return;
+		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+		constexpr float kDeg2Rad = 3.14159265f / 180.f;
+		// Cache materiau trim par nom (Furniture/Metal/Cloth...) -> index bindless.
+		std::unordered_map<std::string, uint32_t> trimMatCache;
+
+		for (const auto& e : m_interactables)
+		{
+			if (e.meshPath.empty()) continue;
+			const std::string full = contentRoot + "/" + e.meshPath;
+			auto cpu = engine::render::staticmesh::StaticMeshLoader::LoadCpuOnlyForTests(full);
+			if (!cpu || cpu->vertices.empty() || cpu->submeshes.empty())
+			{
+				LOG_WARN(Render, "[Props] mesh load FAIL '{}'", full);
+				continue;
+			}
+			// Dossier du mesh : les URI de textures sont relatives au .gltf.
+			std::string meshDir;
+			{
+				const auto slash = e.meshPath.find_last_of('/');
+				if (slash != std::string::npos) meshDir = e.meshPath.substr(0, slash + 1);
+			}
+			// Groupe les indices par nom de materiau + un sous-maillage representatif (URIs).
+			std::unordered_map<std::string, std::vector<uint32_t>> idxByMat;
+			std::unordered_map<std::string, const engine::render::staticmesh::StaticSubMesh*> repByMat;
+			for (const auto& sub : cpu->submeshes)
+			{
+				std::vector<uint32_t>& v = idxByMat[sub.materialName];
+				v.insert(v.end(), cpu->indices.begin() + sub.firstIndex,
+				         cpu->indices.begin() + sub.firstIndex + sub.indexCount);
+				if (repByMat.find(sub.materialName) == repByMat.end()) repByMat[sub.materialName] = &sub;
+			}
+
+			PropRenderable prop;
+			const float groundY = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z);
+			engine::math::Mat4 scaleM = engine::math::Mat4::Identity();
+			scaleM.m[0] = e.meshScale; scaleM.m[5] = e.meshScale; scaleM.m[10] = e.meshScale;
+			prop.modelMatrix =
+				engine::math::Mat4::Translate(engine::math::Vec3{ e.position.x, groundY, e.position.z }) *
+				engine::math::Mat4::RotateY(e.meshYawDeg * kDeg2Rad) *
+				scaleM;
+
+			for (const auto& kv : idxByMat)
+			{
+				const std::string& matName = kv.first;
+				const std::vector<uint32_t>& idxs = kv.second;
+				if (idxs.empty()) continue;
+				engine::render::MeshHandle mh = m_assetRegistry.CreateMeshFromData(
+					cpu->vertices.data(), static_cast<uint32_t>(cpu->vertices.size()),
+					idxs.data(), static_cast<uint32_t>(idxs.size()));
+				if (!mh.IsValid()) continue;
+
+				uint32_t matIdx = materialCache.GetDefaultMaterialIndex();
+				auto cached = trimMatCache.find(matName);
+				if (cached != trimMatCache.end())
+				{
+					matIdx = cached->second;
+				}
+				else
+				{
+					const engine::render::staticmesh::StaticSubMesh* rep = repByMat[matName];
+					if (rep && !rep->baseColorUri.empty())
+					{
+						const engine::render::TextureHandle bc =
+							m_assetRegistry.LoadTexture(meshDir + rep->baseColorUri, /*useSrgb*/ true);
+						if (bc.IsValid())
+						{
+							engine::render::Material mat{};
+							mat.baseColor = bc;
+							if (!rep->normalUri.empty())
+							{
+								const engine::render::TextureHandle n = m_assetRegistry.LoadTexture(meshDir + rep->normalUri, false);
+								if (n.IsValid()) mat.normal = n;
+							}
+							if (!rep->ormUri.empty())
+							{
+								const engine::render::TextureHandle o = m_assetRegistry.LoadTexture(meshDir + rep->ormUri, false);
+								if (o.IsValid()) mat.orm = o;
+							}
+							matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+						}
+					}
+					trimMatCache[matName] = matIdx;
+				}
+
+				PropPart part;
+				part.mesh = mh;
+				part.materialIndex = matIdx;
+				prop.parts.push_back(part);
+			}
+
+			if (!prop.parts.empty())
+			{
+				LOG_INFO(Render, "[Props] '{}' charge ({} partie(s), mesh '{}')", e.label, prop.parts.size(), e.meshPath);
+				m_props.push_back(std::move(prop));
+			}
+		}
+		LOG_INFO(Render, "[Props] {} prop(s) rendus", m_props.size());
+	}
+
+	void Engine::RecordPropsGeometry(VkCommandBuffer cmd, engine::render::Registry& reg,
+	                                 const engine::RenderState& rs)
+	{
+		if (m_props.empty() || !m_pipeline) return;
+		auto& geom = m_pipeline->GetGeometryPass();
+		// loadOp=LOAD requis pour se superposer au GBuffer (terrain + avatar) sans clear.
+		if (!geom.HasLoadPass()) return;
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		for (const auto& prop : m_props)
+		{
+			for (const auto& part : prop.parts)
+			{
+				engine::render::MeshAsset* mesh = part.mesh.Get();
+				if (mesh == nullptr) continue;
+				geom.Record(
+					m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+					m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+					rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
+					0u,
+					materialCache.GetDescriptorSet(),
+					prop.modelMatrix.m,
+					part.materialIndex,
+					true);
+			}
+		}
 	}
 
 	void Engine::OnResize(int w, int h)

@@ -9514,11 +9514,19 @@ namespace engine
 			? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex();
 		for (const engine::client::UIRemoteEntity& re : remotes)
 		{
+			// TD.3 : position lissée (interpolation, cf. UpdateGameplayNet) ; repli sur la
+			// position snapshot brute si pas encore d'état lissé (graceful).
+			float px = re.positionX, py = re.positionY, pz = re.positionZ, yaw = re.yawRadians;
+			const auto sit = m_remoteSmoothed.find(re.entityId);
+			if (sit != m_remoteSmoothed.end() && sit->second.valid)
+			{
+				px = sit->second.x; py = sit->second.y; pz = sit->second.z; yaw = sit->second.yaw;
+			}
 			// Pieds au sol : le serveur réplique la position « centre capsule » comme pour
 			// l'avatar local (feetPos = ccPos.y - 0.9). Même offset ici pour la cohérence.
 			const engine::math::Mat4 model =
-				engine::math::Mat4::Translate(engine::math::Vec3{ re.positionX, re.positionY - 0.9f, re.positionZ }) *
-				engine::math::Mat4::RotateY(re.yawRadians);
+				engine::math::Mat4::Translate(engine::math::Vec3{ px, py - 0.9f, pz }) *
+				engine::math::Mat4::RotateY(yaw);
 			geom.Record(
 				m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
 				m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
@@ -9783,6 +9791,37 @@ namespace engine
 				const engine::math::Vec3 avatarPos = m_characterController.GetPosition();
 				(void)m_gameplayUdp.SendInput(clientId, ++m_gameplayInputSeq,
 					avatarPos.x, avatarPos.y, avatarPos.z, m_avatarYaw);
+			}
+		}
+
+		// TD.3 — lissage exponentiel des positions des avatars distants vers la cible
+		// snapshot (~10 Hz) pour un rendu fluide entre snapshots. RecordRemoteAvatars lit
+		// ces valeurs (et retombe sur la position snapshot brute si une entité manque ici).
+		{
+			const std::vector<engine::client::UIRemoteEntity>& remotes = m_uiModelBinding.GetModel().remoteEntities;
+			const float k = std::clamp(deltaSeconds * 12.0f, 0.0f, 1.0f); // ~0.1-0.2 s pour converger
+			for (const engine::client::UIRemoteEntity& re : remotes)
+			{
+				RemoteAvatarSmoothed& s = m_remoteSmoothed[re.entityId];
+				if (!s.valid)
+				{
+					s.x = re.positionX; s.y = re.positionY; s.z = re.positionZ; s.yaw = re.yawRadians; s.valid = true;
+				}
+				else
+				{
+					s.x += (re.positionX - s.x) * k;
+					s.y += (re.positionY - s.y) * k;
+					s.z += (re.positionZ - s.z) * k;
+					s.yaw += (re.yawRadians - s.yaw) * k;
+				}
+			}
+			// Purge des entités sorties d'AoI (borne la map ; erase renvoie l'itérateur suivant).
+			for (auto it = m_remoteSmoothed.begin(); it != m_remoteSmoothed.end(); )
+			{
+				bool present = false;
+				for (const engine::client::UIRemoteEntity& re : remotes)
+					if (re.entityId == it->first) { present = true; break; }
+				if (present) ++it; else it = m_remoteSmoothed.erase(it);
 			}
 		}
 

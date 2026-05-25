@@ -797,6 +797,12 @@ namespace engine
 		float                                                     m_avatarYaw = 3.14159265f;
 		uint32_t m_gameplayInputSeq = 0;         ///< TC.2 : séquence monotone des Input UDP.
 		float    m_gameplayInputAccumSec = 0.0f; ///< TC.2 : accumulateur de cadence d'envoi.
+		/// TD.3 : position lissée d'un avatar distant (interpolation exponentielle vers la
+		/// cible snapshot, mise à jour par frame dans UpdateGameplayNet).
+		struct RemoteAvatarSmoothed { float x = 0.0f; float y = 0.0f; float z = 0.0f; float yaw = 0.0f; bool valid = false; };
+		/// TD.3 : positions lissées par EntityId. Si une entité n'y figure pas, le rendu
+		/// (RecordRemoteAvatars) retombe sur sa position snapshot brute (graceful).
+		std::unordered_map<engine::server::EntityId, RemoteAvatarSmoothed> m_remoteSmoothed;
 		engine::gameplay::MoveInput                               m_lastMoveInput{};
 
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).

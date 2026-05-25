@@ -874,7 +874,44 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/anticheat/AntiCheatGameplayRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/spell/SpellFamilyRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/maps/InstanceManagerRuntime.cpp
+    # TA.2 (replication des joueurs) : replication AoI executable sous Linux.
+    # On ajoute ServerApp + la grille AoI + le transport UDP (porte POSIX en TA.1)
+    # + les systemes gameplay que ServerApp instancie. On N'AJOUTE PAS ce que
+    # engine_core fournit deja (ServerProtocol, ChatSystem, ChatEmotes, Config,
+    # Log, LogConfig, FileSystem, SessionManager, RateLimitAndBan, SecurityAuditLog)
+    # sous peine de doublons de symboles (shard_app linke engine_core).
+    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/SpatialPartition.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/GridState.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/GridNotifier.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/ZoneTransitions.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildTabard.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildBank.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/CurrencyConfig.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/VendorCatalog.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/PlayerWalletService.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/trade/TradeSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/gathering/GatheringSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/crafting/CraftingSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/auction/AuctionHouse.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntime.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/event/EventRuntime.cpp
   )
+  # TA.2 link en mode FICHIER (sans MySQL), strictement la config gameplay prouvee
+  # linkable du bloc WIN32 `server_app`. CharacterPersistence est fichier-only
+  # (aucun acces a la table characters) → activer ENGINE_HAS_MYSQL ici n'apporterait
+  # pas le pont position et basculerait FriendSystem & co. en backend DB (friction
+  # de link inutile a ce stade). Le branchement MySQL (T0.2) qui fait reellement le
+  # pont position (spawn_x/y/z) est introduit en **TA.4**.
   target_include_directories(shard_app PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(shard_app PRIVATE engine_core OpenSSL::SSL pthread)
   target_compile_options(shard_app PRIVATE -Wall -Wextra -Wpedantic)

@@ -30,14 +30,14 @@ namespace engine::network
 
 	std::optional<ShardTicketData> ParseShardTicketPayload(const uint8_t* payload, size_t payloadSize)
 	{
-		const size_t expected = kShardTicketIdSize + 8u + 4u + 8u + kShardTicketHmacSize; // 68
+		const size_t expected = kShardTicketIdSize + 8u + 4u + 8u + 8u + kShardTicketHmacSize; // 76 (TA.3 : +character_id)
 		if (payload == nullptr || payloadSize < expected)
 			return std::nullopt;
 		ByteReader r(payload, payloadSize);
 		ShardTicketData out;
 		if (!r.ReadBytes(out.ticket_id.data(), kShardTicketIdSize))
 			return std::nullopt;
-		if (!r.ReadU64(out.account_id) || !r.ReadU32(out.target_shard_id) || !r.ReadU64(out.expires_at))
+		if (!r.ReadU64(out.account_id) || !r.ReadU32(out.target_shard_id) || !r.ReadU64(out.expires_at) || !r.ReadU64(out.character_id))
 			return std::nullopt;
 		if (!r.ReadBytes(out.hmac.data(), kShardTicketHmacSize))
 			return std::nullopt;
@@ -45,16 +45,16 @@ namespace engine::network
 	}
 
 	std::vector<uint8_t> BuildShardTicketPayload(const ShardTicketId& ticket_id, uint64_t account_id,
-		uint32_t target_shard_id, uint64_t expires_at, const uint8_t* hmac, size_t hmacSize)
+		uint32_t target_shard_id, uint64_t expires_at, uint64_t character_id, const uint8_t* hmac, size_t hmacSize)
 	{
 		if (hmac == nullptr || hmacSize != kShardTicketHmacSize)
 			return {};
-		const size_t total = kShardTicketIdSize + 8u + 4u + 8u + kShardTicketHmacSize;
+		const size_t total = kShardTicketIdSize + 8u + 4u + 8u + 8u + kShardTicketHmacSize;
 		std::vector<uint8_t> buf(total, 0u);
 		ByteWriter w(buf.data(), buf.size());
 		if (!w.WriteBytes(ticket_id.data(), kShardTicketIdSize))
 			return {};
-		if (!w.WriteU64(account_id) || !w.WriteU32(target_shard_id) || !w.WriteU64(expires_at))
+		if (!w.WriteU64(account_id) || !w.WriteU32(target_shard_id) || !w.WriteU64(expires_at) || !w.WriteU64(character_id))
 			return {};
 		if (!w.WriteBytes(hmac, kShardTicketHmacSize))
 			return {};

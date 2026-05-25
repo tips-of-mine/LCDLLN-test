@@ -11,6 +11,7 @@ namespace engine::server
 	class ShardRegistry;
 	class SessionManager;
 	class TermsRepository;
+	class SessionCharacterMap;
 }
 
 namespace engine::server
@@ -28,6 +29,10 @@ namespace engine::server
 		/// Optional: block ticket if e-mail not verified (M33.2) or CGU pending.
 		void SetAccountStore(AccountStore* store);
 		void SetTermsRepository(TermsRepository* repo);
+		/// TA.3 : source du character_id à graver dans le ticket (personnage actif de la
+		/// connexion, peuplé à l'EnterWorld). Optionnel : si absent ou pas en jeu, le ticket
+		/// porte character_id=0 (le shard refusera alors le Hello — fail-closed).
+		void SetSessionCharacterMap(SessionCharacterMap* map) { m_charMap = map; }
 
 		/// Secret for HMAC (shared with shards). Empty = reject all requests.
 		void SetSecret(std::string secret);
@@ -45,6 +50,7 @@ namespace engine::server
 		ConnectionSessionMap* m_connSessionMap = nullptr;
 		AccountStore* m_accountStore   = nullptr;
 		TermsRepository*      m_termsRepository = nullptr;
+		SessionCharacterMap*  m_charMap = nullptr;
 		std::string m_secret;
 		int m_validity_sec = 60;
 	};

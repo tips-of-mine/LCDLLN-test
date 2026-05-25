@@ -18,6 +18,7 @@
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
 #include "src/shared/network/ReplicationTypes.h"
 #include "src/shared/security/SecurityAuditLog.h"
+#include "src/shardd/anticheat/AntiCheatGameplay.h"
 #include "src/shared/network/ServerProtocol.h"
 #include "src/shardd/world/SpatialPartition.h"
 #include "src/shardd/world/TickScheduler.h"
@@ -206,6 +207,8 @@ namespace engine::server
 		std::vector<ItemStack> items;
 	};
 
+	class AdmittedCharacterRegistry;
+
 	/// Headless authoritative server skeleton with fixed ticks, replication and minimal combat.
 	class ServerApp final
 	{
@@ -227,6 +230,12 @@ namespace engine::server
 
 		/// Release transport resources and emit shutdown logs.
 		void Shutdown();
+
+		/// TA.3 : gate de session. Si défini, HandleHello n'accepte un Hello que si son
+		/// nonce (character_id) est admis dans ce registre (rempli par le handshake TCP au
+		/// vu du ticket signé). Non défini → comportement historique (build Windows). Le
+		/// registre appartient à l'appelant (shardd/main_linux) et doit survivre à ServerApp.
+		void SetAdmittedCharacterRegistry(AdmittedCharacterRegistry* registry) { m_admittedRegistry = registry; }
 
 		/// M35.1 — add currency to a connected player (caps enforced).
 		bool TryAddCurrency(uint32_t clientId, uint8_t currencyId, uint64_t amount, std::string& outError);
@@ -764,6 +773,16 @@ namespace engine::server
 		uint32_t m_snapshotAccumulator = 0;
 		bool m_initialized = false;
 		bool m_stopRequested = false;
+
+		/// TA.3 : gate de session UDP (optionnel, possédé par l'appelant). Voir
+		/// SetAdmittedCharacterRegistry.
+		AdmittedCharacterRegistry* m_admittedRegistry = nullptr;
+
+		/// TA.3c : anti-triche mouvement (speed/teleport) sur les positions reçues en
+		/// Input. Détecteur header-only seedé à la config V1 par défaut (7.5 m/s * 1.5,
+		/// saut max 50 m). Suit les vrais joueurs sur le thread gameplay.
+		anticheat::AntiCheatGameplay m_antiCheat;
+		uint64_t m_antiCheatViolations = 0;
 
 		/// Per-player chat send rate limiting (M29.1).
 		engine::net::ChatRateLimiter m_chatRateLimiter;

@@ -6,6 +6,8 @@
 #include "src/shared/network/PacketLog.h"
 #include "src/masterd/handlers/shard/ShardTicketValidator.h"
 #include "src/masterd/handlers/shard/ShardTicketHandshakeHandler.h"
+#include "src/shardd/world/AdmittedCharacterRegistry.h"
+#include "src/shared/server_bootstrap/ServerApp.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/network/ShardToMasterClient.h"
 #include "src/shared/core/Config.h"
@@ -131,6 +133,10 @@ int main(int argc, char** argv)
 	engine::server::ShardTicketHandshakeHandler handshakeHandler;
 	handshakeHandler.SetServer(&server);
 	handshakeHandler.SetValidator(&validator);
+	// TA.3 : registre d'admission partagé — le handshake TCP y inscrit le character_id
+	// authentifié du ticket ; le gate UDP (ServerApp::HandleHello) le consulte.
+	engine::server::AdmittedCharacterRegistry admittedRegistry;
+	handshakeHandler.SetAdmittedCharacterRegistry(&admittedRegistry);
 	server.SetPacketHandler([&handshakeHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionId,
 		const uint8_t* payload, size_t payloadSize) {
 		handshakeHandler.HandlePacket(connId, opcode, requestId, sessionId, payload, payloadSize);
@@ -164,6 +170,20 @@ int main(int argc, char** argv)
 	toMaster.SetShardIdentity(regName, regEndpoint, regCap, buildVer, regDisplayName, regGameMode, regRuleset, regRegion);
 	toMaster.SetHeartbeatIntervalSec(static_cast<int>(config.GetInt("shard.heartbeat_interval_sec", 10)));
 	toMaster.Start();
+	// TA.3 : boucle gameplay UDP (ServerApp) sur un thread dedie, gated par admittedRegistry.
+	// Cohabite avec la stack TCP ticket + heartbeat + runtimes (ports/protocoles distincts).
+	engine::server::ServerApp gameplayApp(config);
+	gameplayApp.SetAdmittedCharacterRegistry(&admittedRegistry);
+	std::thread gameplayThread;
+	if (gameplayApp.Init())
+	{
+		gameplayThread = std::thread([&gameplayApp]() { (void)gameplayApp.Run(); });
+		LOG_INFO(Net, "[ShardMain] Gameplay UDP loop demarree (ServerApp sur thread dedie)");
+	}
+	else
+	{
+		LOG_ERROR(Net, "[ShardMain] ServerApp Init a echoue — replication UDP desactivee");
+	}
 
 	// Wave 6 — Instanciation + seed des modules internes (EventAI + Pools).
 	// V1 : scripts/pools hardcodes. Future iteration : SeedFromDb() qui
@@ -367,6 +387,12 @@ int main(int argc, char** argv)
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 
+	// TA.3 : arret propre de la boucle gameplay UDP.
+	if (gameplayThread.joinable())
+	{
+		gameplayApp.RequestStop();
+		gameplayThread.join();
+	}
 	LOG_INFO(Net, "[ShardMain] Shutdown");
 	healthEndpoint.Shutdown();
 	engine::core::Log::Shutdown();

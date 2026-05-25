@@ -18,6 +18,7 @@ if(WIN32)
   add_executable(server_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_win.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerProtocol.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
@@ -438,6 +439,12 @@ elseif(UNIX)
   lcdlln_add_simple_test(udp_transport_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransportTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp)
+
+  # TA.3 (replication des joueurs) : registre des personnages admis (gate de la
+  # session UDP, lié au character_id authentifié du ticket). Pure logique testable.
+  lcdlln_add_simple_test(admitted_character_registry_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistryTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp)
 
   # CMANGOS.18 (Phase 3.18a) : MailManager core (workflow Send/Take/COD/expire).
   lcdlln_add_simple_test(mail_manager_tests
@@ -885,6 +892,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/SpatialPartition.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/GridState.cpp

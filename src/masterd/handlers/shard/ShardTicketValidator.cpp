@@ -49,7 +49,7 @@ namespace engine::server
 			LOG_DEBUG(Core, "[ShardTicketValidator] VerifyAndConsume: ticket expired (expires_at={} now={})", data->expires_at, now);
 			return std::nullopt;
 		}
-		if (!VerifyTicketHmac(data->ticket_id.data(), data->ticket_id.size(), data->account_id, data->target_shard_id, data->expires_at,
+		if (!VerifyTicketHmac(data->ticket_id.data(), data->ticket_id.size(), data->account_id, data->target_shard_id, data->expires_at, data->character_id,
 			data->hmac.data(), data->hmac.size(), m_secret))
 		{
 			LOG_WARN(Core, "[ShardTicketValidator] VerifyAndConsume: invalid HMAC (account_id={} target_shard_id={})", data->account_id, data->target_shard_id);
@@ -73,7 +73,8 @@ namespace engine::server
 		ShardTicketAccept accept;
 		accept.account_id = data->account_id;
 		accept.target_shard_id = data->target_shard_id;
-		LOG_INFO(Core, "[ShardTicketValidator] Ticket accepted (account_id={} target_shard_id={})", accept.account_id, accept.target_shard_id);
+		accept.character_id = data->character_id;
+		LOG_INFO(Core, "[ShardTicketValidator] Ticket accepted (account_id={} target_shard_id={} character_id={})", accept.account_id, accept.target_shard_id, accept.character_id);
 		return accept;
 	}
 }

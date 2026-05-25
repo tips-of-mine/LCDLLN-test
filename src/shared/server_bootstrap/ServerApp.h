@@ -283,7 +283,7 @@ namespace engine::server
 		void HandleHello(const Endpoint& endpoint, uint64_t helloNonce);
 
 		/// Record the last input sequence for a connected client.
-		void HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersZ);
+		void HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersY, float positionMetersZ, float yawRadians);
 
 		/// Advance one authoritative server tick.
 		void TickOnce();

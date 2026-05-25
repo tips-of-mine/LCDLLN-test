@@ -788,6 +788,8 @@ namespace engine
 		engine::gameplay::CharacterController                     m_characterController;
 		engine::gameplay::TerrainCollider                         m_terrainCollider;
 		float                                                     m_avatarYaw = 3.14159265f;
+		uint32_t m_gameplayInputSeq = 0;         ///< TC.2 : séquence monotone des Input UDP.
+		float    m_gameplayInputAccumSec = 0.0f; ///< TC.2 : accumulateur de cadence d'envoi.
 		engine::gameplay::MoveInput                               m_lastMoveInput{};
 
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).

@@ -549,7 +549,7 @@ namespace engine::server
 		InputMessage input{};
 		if (DecodeInput(packetBytes, input))
 		{
-			HandleInput(datagram.endpoint, input.clientId, input.inputSequence, input.positionMetersX, input.positionMetersZ);
+			HandleInput(datagram.endpoint, input.clientId, input.inputSequence, input.positionMetersX, input.positionMetersY, input.positionMetersZ, input.yawRadians);
 			return;
 		}
 
@@ -1061,7 +1061,7 @@ namespace engine::server
 		OnClientLogin(acceptedClient);
 	}
 
-	void ServerApp::HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersZ)
+	void ServerApp::HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersY, float positionMetersZ, float yawRadians)
 	{
 		ConnectedClient* client = FindClient(endpoint);
 		if (client == nullptr)
@@ -1081,14 +1081,13 @@ namespace engine::server
 		}
 
 		// TA.3c — anti-triche : rejette une position implausible (speed/teleport hack)
-		// AVANT de l'appliquer ; on conserve alors la dernière position valide. Y inchangé
-		// par l'Input (InputMessage v2 n'a pas de Y) → on passe le Y courant pour ne pas
-		// fausser la distance 3D.
+		// AVANT de l'appliquer ; on conserve alors la dernière position valide. TC.1 : l'Input
+		// porte désormais Y → on l'utilise pour la distance 3D.
 		{
 			const uint64_t antiCheatNowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
 				std::chrono::steady_clock::now().time_since_epoch()).count());
 			const anticheat::CheatVerdict verdict = m_antiCheat.CheckMovement(
-				client->persistenceCharacterKey, positionMetersX, client->positionMetersY, positionMetersZ, antiCheatNowMs);
+				client->persistenceCharacterKey, positionMetersX, positionMetersY, positionMetersZ, antiCheatNowMs);
 			if (verdict != anticheat::CheatVerdict::OK)
 			{
 				++m_antiCheatViolations;
@@ -1103,16 +1102,14 @@ namespace engine::server
 		const float previousPositionZ = client->positionMetersZ;
 		client->lastInputSequence = inputSequence;
 		client->positionMetersX = positionMetersX;
+		client->positionMetersY = positionMetersY; // TC.1 : altitude fournie par le client
 		client->positionMetersZ = positionMetersZ;
+		client->yawRadians = yawRadians;            // TC.1 : orientation fournie par le client (plus dérivée de la vélocité)
 		if (client->hasReplicatedState)
 		{
 			const float tickDt = 1.0f / static_cast<float>(m_tickHz);
 			client->velocityMetersPerSecondX = (client->positionMetersX - previousPositionX) / tickDt;
 			client->velocityMetersPerSecondZ = (client->positionMetersZ - previousPositionZ) / tickDt;
-			if (std::abs(client->velocityMetersPerSecondX) > 0.001f || std::abs(client->velocityMetersPerSecondZ) > 0.001f)
-			{
-				client->yawRadians = std::atan2(client->velocityMetersPerSecondX, client->velocityMetersPerSecondZ);
-			}
 		}
 		client->hasReplicatedState = true;
 		MaybeApplyZoneTransition(*client);

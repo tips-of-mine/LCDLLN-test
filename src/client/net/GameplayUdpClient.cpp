@@ -213,6 +213,19 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw)
+	{
+		engine::server::InputMessage im{};
+		im.clientId = clientId;
+		im.inputSequence = inputSequence;
+		im.positionMetersX = posX;
+		im.positionMetersY = posY;
+		im.positionMetersZ = posZ;
+		im.yawRadians = yaw;
+		// Pas de log par paquet (cadence ~20 Hz) — éviterait de noyer la console.
+		return SendBytes(engine::server::EncodeInput(im));
+	}
+
 	bool GameplayUdpClient::SendTalkRequest(uint32_t clientId, std::string_view targetId)
 	{
 		engine::server::TalkRequestMessage msg{};

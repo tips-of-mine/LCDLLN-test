@@ -9734,6 +9734,22 @@ namespace engine
 			return;
 		}
 
+		// TC.2 — émet la position + orientation de l'avatar local au shard, à la cadence
+		// client.gameplay_udp.request_tick_hz (défaut 20 Hz), avec une séquence monotone.
+		// C'est ce qui permet aux autres joueurs de voir bouger ce client (réplication AoI).
+		{
+			const int64_t hzCfg = m_cfg.GetInt("client.gameplay_udp.request_tick_hz", 20);
+			const float hz = static_cast<float>(std::clamp<int64_t>(hzCfg, 1, 120));
+			m_gameplayInputAccumSec += deltaSeconds;
+			if (m_gameplayInputAccumSec >= (1.0f / hz))
+			{
+				m_gameplayInputAccumSec = 0.0f;
+				const engine::math::Vec3 avatarPos = m_characterController.GetPosition();
+				(void)m_gameplayUdp.SendInput(clientId, ++m_gameplayInputSeq,
+					avatarPos.x, avatarPos.y, avatarPos.z, m_avatarYaw);
+			}
+		}
+
 		const float mx = static_cast<float>(m_input.MouseX());
 		const float my = static_cast<float>(m_input.MouseY());
 		(void)m_invUi.UpdateHover(mx, my);

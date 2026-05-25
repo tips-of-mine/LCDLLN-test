@@ -36,6 +36,10 @@ namespace engine::client
 		/// Phase 3.7.5 — clientNonce élargi à uint64 pour transporter un character_id complet.
 		bool SendHello(uint16_t requestedTickHz, uint16_t requestedSnapshotHz, uint64_t clientNonce);
 
+		/// TC.2 — envoie un Input (position + orientation de l'avatar local) au shard.
+		/// Appelé à la cadence `client.gameplay_udp.request_tick_hz` depuis la boucle de jeu.
+		bool SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw);
+
 		/// Send TalkRequest (e.g. `vendor:1` to open shop).
 		bool SendTalkRequest(uint32_t clientId, std::string_view targetId);
 

@@ -3,9 +3,21 @@
 #include "src/masterd/handlers/shard/ShardTicketValidator.h"
 #include "src/shared/network/ShardTicketPayloads.h"
 #include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shardd/world/AdmittedCharacterRegistry.h"
 #include "src/shared/core/Log.h"
 
+#include <chrono>
 #include <cstdio>
+
+namespace
+{
+	/// Horloge monotone en ms, base partagée avec le gate UDP (steady_clock process-wide).
+	uint64_t NowMonotonicMs()
+	{
+		return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
+	}
+}
 
 namespace engine::server
 {
@@ -28,6 +40,14 @@ namespace engine::server
 			if (acctIt != m_accountToConn.end() && acctIt->second == connId)
 				m_accountToConn.erase(acctIt);
 			m_connToAccount.erase(it);
+		}
+		// TA.3 : révoque l'admission UDP du personnage associé à cette connexion.
+		auto charIt = m_connToCharacter.find(connId);
+		if (charIt != m_connToCharacter.end())
+		{
+			if (m_admittedRegistry != nullptr)
+				m_admittedRegistry->Revoke(charIt->second);
+			m_connToCharacter.erase(charIt);
 		}
 	}
 
@@ -81,6 +101,14 @@ namespace engine::server
 				m_handshakeDone.erase(oldConnId);
 				m_connToAccount.erase(oldConnId);
 				m_accountToConn.erase(prev);
+				// TA.3 : révoque l'admission UDP du personnage de l'ancienne connexion.
+				auto oldChar = m_connToCharacter.find(oldConnId);
+				if (oldChar != m_connToCharacter.end())
+				{
+					if (m_admittedRegistry != nullptr)
+						m_admittedRegistry->Revoke(oldChar->second);
+					m_connToCharacter.erase(oldChar);
+				}
 			}
 		}
 
@@ -94,6 +122,14 @@ namespace engine::server
 		m_handshakeDone.insert(connId);
 		m_accountToConn[accept->account_id] = connId;
 		m_connToAccount[connId] = accept->account_id;
-		LOG_INFO(Core, "[ShardTicketHandshakeHandler] Ticket accepted (connId={} account_id={} target_shard_id={})", connId, accept->account_id, accept->target_shard_id);
+		// TA.3 : admet le personnage (character_id authentifié du ticket) pour que le gate
+		// UDP ServerApp::HandleHello accepte son Hello. character_id=0 (ticket émis avant
+		// EnterWorld) n'est pas admis → le client devra entrer en monde avant de jouer.
+		if (m_admittedRegistry != nullptr && accept->character_id != 0u)
+		{
+			m_admittedRegistry->Admit(accept->character_id, accept->account_id, NowMonotonicMs());
+			m_connToCharacter[connId] = accept->character_id;
+		}
+		LOG_INFO(Core, "[ShardTicketHandshakeHandler] Ticket accepted (connId={} account_id={} character_id={} target_shard_id={})", connId, accept->account_id, accept->character_id, accept->target_shard_id);
 	}
 }

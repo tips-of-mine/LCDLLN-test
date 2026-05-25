@@ -18,6 +18,7 @@ if(WIN32)
   add_executable(server_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_win.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerProtocol.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp

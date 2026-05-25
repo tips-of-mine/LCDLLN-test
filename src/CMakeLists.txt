@@ -877,9 +877,12 @@ elseif(UNIX)
     # TA.2 (replication des joueurs) : replication AoI executable sous Linux.
     # On ajoute ServerApp + la grille AoI + le transport UDP (porte POSIX en TA.1)
     # + les systemes gameplay que ServerApp instancie. On N'AJOUTE PAS ce que
-    # engine_core fournit deja (ServerProtocol, ChatSystem, ChatEmotes, Config,
-    # Log, LogConfig, FileSystem, SessionManager, RateLimitAndBan, SecurityAuditLog)
-    # sous peine de doublons de symboles (shard_app linke engine_core).
+    # engine_core fournit deja (verifie) : ServerProtocol, ChatSystem, ChatEmotes,
+    # Config, Log, LogConfig, FileSystem → NE PAS les rajouter (doublons de symboles,
+    # shard_app linke engine_core). En revanche SecurityAuditLog n'est PAS dans
+    # engine_core (uniquement la cible security_tests) et ServerApp l'utilise
+    # (membre m_moderationAuditLog) → on l'ajoute ici.
+    ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp

@@ -432,6 +432,13 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
 
+  # TA.1 (replication des joueurs) : UdpTransport rendu cross-platform (Winsock +
+  # BSD sockets POSIX). Le test loopback 127.0.0.1 valide le chemin POSIX a
+  # l'execution sur le runner Linux (Init/Send/Receive/non-blocking/BoundPort).
+  lcdlln_add_simple_test(udp_transport_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransportTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp)
+
   # CMANGOS.18 (Phase 3.18a) : MailManager core (workflow Send/Take/COD/expire).
   lcdlln_add_simple_test(mail_manager_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/mail/MailManagerTests.cpp

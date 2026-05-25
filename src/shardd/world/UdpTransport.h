@@ -27,14 +27,16 @@ namespace engine::server
 		size_t size = 0;
 	};
 
-	/// Minimal non-blocking UDP transport for the Windows headless server.
+	/// Minimal non-blocking UDP transport, cross-platform (Winsock sous Windows,
+	/// BSD sockets sous POSIX/Linux). Sert de socle au shard (boucle gameplay UDP)
+	/// sur les deux cibles de build du projet.
 	class UdpTransport final
 	{
 	public:
 		/// Construct an empty transport that owns no socket yet.
 		UdpTransport() = default;
 
-		/// Close the socket and release Winsock state if still active.
+		/// Close the socket and release platform networking state if still active.
 		~UdpTransport();
 
 		/// Open and bind a UDP socket on the requested listen port.
@@ -58,11 +60,16 @@ namespace engine::server
 		/// Return the total number of packets sent since init.
 		uint64_t SentPacketCount() const { return m_sentPackets; }
 
+		/// Return the port the socket is actually bound to. When Init() is called
+		/// with port 0, this exposes the ephemeral port assigned by the OS.
+		uint16_t BoundPort() const { return m_listenPort; }
+
 		/// Return true when the socket is ready for send/receive.
-		bool IsValid() const { return m_socketHandle != 0; }
+		bool IsValid() const { return m_socketOpen; }
 
 	private:
 		uintptr_t m_socketHandle = 0;
+		bool m_socketOpen = false;
 		bool m_wsaStarted = false;
 		uint16_t m_listenPort = 0;
 		uint64_t m_receivedPackets = 0;

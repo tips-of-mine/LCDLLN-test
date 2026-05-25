@@ -440,6 +440,11 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransportTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp)
 
+  # TE.1 (replication des joueurs) : round-trip EncodeInput/DecodeInput (Y+yaw, TC.1)
+  # + Hello. ServerProtocol.cpp est fourni par engine_core (lié par le helper).
+  lcdlln_add_simple_test(server_protocol_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ServerProtocolTests.cpp)
+
   # TA.3 (replication des joueurs) : registre des personnages admis (gate de la
   # session UDP, lié au character_id authentifié du ticket). Pure logique testable.
   lcdlln_add_simple_test(admitted_character_registry_tests

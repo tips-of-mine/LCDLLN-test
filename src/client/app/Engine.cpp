@@ -4837,6 +4837,9 @@ namespace engine
 												// Chantier B : dessine les props statiques (coffre, etc.) par-dessus le GBuffer.
 												RecordPropsGeometry(cmd, reg, rs);
 
+												// TD.2 : dessine les avatars des joueurs distants (réplication AoI).
+												RecordRemoteAvatars(cmd, reg, rs);
+
 												// M100 — Task 12 : drawcall terrain chunk (post-Phase-3a).
 												// Dessine les chunks visibles qui ont terrain.bin + splat.bin
 												// dans une passe de chargement (loadOp=LOAD) après la geometry
@@ -9492,6 +9495,39 @@ namespace engine
 					highlight ? part.highlightMaterialIndex : part.materialIndex,
 					true);
 			}
+		}
+	}
+
+	void Engine::RecordRemoteAvatars(VkCommandBuffer cmd, engine::render::Registry& reg,
+	                                 const engine::RenderState& rs)
+	{
+		if (!m_pipeline) return;
+		const std::vector<engine::client::UIRemoteEntity>& remotes = m_uiModelBinding.GetModel().remoteEntities;
+		if (remotes.empty()) return;
+		engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
+		if (mesh == nullptr || mesh->vertexBuffer == VK_NULL_HANDLE || mesh->indexBuffer == VK_NULL_HANDLE) return;
+		auto& geom = m_pipeline->GetGeometryPass();
+		// loadOp=LOAD requis pour se superposer au GBuffer (terrain + avatar + props) sans clear.
+		if (!geom.HasLoadPass()) return;
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		const uint32_t materialIndex = (m_avatarMaterialId != 0u)
+			? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex();
+		for (const engine::client::UIRemoteEntity& re : remotes)
+		{
+			// Pieds au sol : le serveur réplique la position « centre capsule » comme pour
+			// l'avatar local (feetPos = ccPos.y - 0.9). Même offset ici pour la cohérence.
+			const engine::math::Mat4 model =
+				engine::math::Mat4::Translate(engine::math::Vec3{ re.positionX, re.positionY - 0.9f, re.positionZ }) *
+				engine::math::Mat4::RotateY(re.yawRadians);
+			geom.Record(
+				m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+				m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+				rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
+				0u,
+				materialCache.GetDescriptorSet(),
+				model.m,
+				materialIndex,
+				true);
 		}
 	}
 

@@ -740,6 +740,13 @@ namespace engine
 		/// GBuffer terrain/avatar). No-op si pas de props ou pas de load pass.
 		void RecordPropsGeometry(VkCommandBuffer cmd, engine::render::Registry& reg,
 		                         const engine::RenderState& rs);
+		/// TD.2 — dessine les avatars des joueurs distants (m_uiModelBinding remoteEntities)
+		/// dans la passe Geometry, un GeometryPass.Record par entité avec le mesh placeholder
+		/// (m_geometryMeshHandle), à leur position/orientation réseau. Path instancié éprouvé
+		/// (identique aux props) — évite le SkinnedRenderer (anneau 3 slots). No-op si aucune
+		/// entité distante / pas de mesh / pas de load pass.
+		void RecordRemoteAvatars(VkCommandBuffer cmd, engine::render::Registry& reg,
+		                         const engine::RenderState& rs);
 		/// Action en cours de remappage dans le panneau Options (capture clavier) :
 		/// 0 = aucune, 1 = sprint, 2 = crouch, 3 = sort. Tant que != 0, le panneau
 		/// attend une touche ; le bloc gameplay est suspendu (panneau Options ouvert).

@@ -1010,6 +1010,25 @@ namespace engine::server
 			return;
 		}
 
+		// TA.3c — anti-triche : rejette une position implausible (speed/teleport hack)
+		// AVANT de l'appliquer ; on conserve alors la dernière position valide. Y inchangé
+		// par l'Input (InputMessage v2 n'a pas de Y) → on passe le Y courant pour ne pas
+		// fausser la distance 3D.
+		{
+			const uint64_t antiCheatNowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now().time_since_epoch()).count());
+			const anticheat::CheatVerdict verdict = m_antiCheat.CheckMovement(
+				client->persistenceCharacterKey, positionMetersX, client->positionMetersY, positionMetersZ, antiCheatNowMs);
+			if (verdict != anticheat::CheatVerdict::OK)
+			{
+				++m_antiCheatViolations;
+				LOG_WARN(AntiCheat,
+					"[ServerApp] Input rejete par anti-triche (verdict={}, client_id={}, character_key={}, pos=({:.2f},{:.2f}))",
+					static_cast<int>(verdict), client->clientId, client->persistenceCharacterKey, positionMetersX, positionMetersZ);
+				return;
+			}
+		}
+
 		const float previousPositionX = client->positionMetersX;
 		const float previousPositionZ = client->positionMetersZ;
 		client->lastInputSequence = inputSequence;

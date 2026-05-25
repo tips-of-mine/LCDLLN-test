@@ -18,6 +18,7 @@
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
 #include "src/shared/network/ReplicationTypes.h"
 #include "src/shared/security/SecurityAuditLog.h"
+#include "src/shardd/anticheat/AntiCheatGameplay.h"
 #include "src/shared/network/ServerProtocol.h"
 #include "src/shardd/world/SpatialPartition.h"
 #include "src/shardd/world/TickScheduler.h"
@@ -776,6 +777,12 @@ namespace engine::server
 		/// TA.3 : gate de session UDP (optionnel, possédé par l'appelant). Voir
 		/// SetAdmittedCharacterRegistry.
 		AdmittedCharacterRegistry* m_admittedRegistry = nullptr;
+
+		/// TA.3c : anti-triche mouvement (speed/teleport) sur les positions reçues en
+		/// Input. Détecteur header-only seedé à la config V1 par défaut (7.5 m/s * 1.5,
+		/// saut max 50 m). Suit les vrais joueurs sur le thread gameplay.
+		anticheat::AntiCheatGameplay m_antiCheat;
+		uint64_t m_antiCheatViolations = 0;
 
 		/// Per-player chat send rate limiting (M29.1).
 		engine::net::ChatRateLimiter m_chatRateLimiter;

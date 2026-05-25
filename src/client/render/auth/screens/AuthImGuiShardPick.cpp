@@ -232,11 +232,11 @@ namespace engine::render
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.76f);
 				// Ligne « MODE  REGLE » construite a partir des enums (game_mode + ruleset),
-				// localisee. Remplace le texte « PvE  COOPERATIVE » fige.
-				const std::string modeLine =
-					tr(std::string("auth.shard_pick.mode.") + std::string(engine::network::GameModeToken(e.game_mode)))
-					+ "  "
-					+ tr(std::string("auth.shard_pick.ruleset.") + std::string(engine::network::RulesetToken(e.ruleset)));
+				// localisee. Remplace le texte « PvE  COOPERATIVE » fige. tr() prend un
+				// const char* -> on materialise les cles avant d'appeler .c_str().
+				const std::string modeKey = std::string("auth.shard_pick.mode.") + std::string(engine::network::GameModeToken(e.game_mode));
+				const std::string rulesetKey = std::string("auth.shard_pick.ruleset.") + std::string(engine::network::RulesetToken(e.ruleset));
+				const std::string modeLine = tr(modeKey.c_str()) + "  " + tr(rulesetKey.c_str());
 				ImGui::TextUnformatted(modeLine.c_str());
 				if (e.character_count > 0u)
 				{

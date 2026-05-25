@@ -313,22 +313,38 @@ namespace engine::render
 				ImGui::PopStyleColor();
 				ImGui::EndGroup();
 
-				// --- Colonne statut (etat seul) : ligne unique ANCREE A DROITE, centree --
-				// Plus de ligne « latence » (le « - » au-dessus de l'etat est supprime).
-				const float statusBlockH = fs * 0.78f;
-				const float statusTopY = centeredY(statusBlockH);
+				// --- Colonne statut : etat (EN LIGNE) + latence master EN DESSOUS --------
+				// Latence = aller-retour de la sonde /status (latence vers le master,
+				// donc commune a tous les serveurs) ; « -- ms » tant qu'elle n'est pas
+				// mesuree. Les deux lignes sont ancrees a droite.
 				ImFont* statusFont = ImGui::GetFont();
 				const char* statKey = (vis == RowVis::Online) ? "auth.shard_pick.status_online"
 					: (vis == RowVis::Saturated) ? "auth.shard_pick.status_saturated" : "auth.shard_pick.status_offline";
 				const LnTheme::Rgba stCol =
 					(vis == RowVis::Online) ? LnTheme::kSuccess : (vis == RowVis::Saturated) ? LnTheme::kWarning : LnTheme::kErrorCol;
 				const std::string statStr = tr(statKey);
-				// X tel que le texte finisse pile au bord droit de la cellule.
-				const float statusX = rightEdge - statusFont->CalcTextSizeA(fs * 0.78f, FLT_MAX, 0.f, statStr.c_str()).x;
-				ImGui::SetCursorPos(ImVec2(statusX, statusTopY));
+				const int latMs = (m_authPresenter != nullptr) ? m_authPresenter->GetStatusCache().latencyMs : -1;
+				const std::string latStr = (latMs >= 0)
+					? tr("auth.shard_pick.latency_ms", P{{"ms", std::to_string(latMs)}})
+					: tr("auth.shard_pick.latency_unknown");
+				const float statusBlockH = fs * 0.78f + sp + fs * 0.72f;
+				const float statusTopY = centeredY(statusBlockH);
+				// X tel que le texte (a l'echelle voulue) finisse pile au bord droit.
+				auto rightAlignX = [&](float scale, const char* s) {
+					return rightEdge - statusFont->CalcTextSizeA(fs * scale, FLT_MAX, 0.f, s).x;
+				};
+				// Ligne 1 : etat.
+				ImGui::SetCursorPos(ImVec2(rightAlignX(0.78f, statStr.c_str()), statusTopY));
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(stCol));
 				ImGui::SetWindowFontScale(0.78f);
 				ImGui::TextUnformatted(statStr.c_str());
+				ImGui::SetWindowFontScale(1.f);
+				ImGui::PopStyleColor();
+				// Ligne 2 : latence master, sous l'etat, plus petite et discrete.
+				ImGui::SetCursorPos(ImVec2(rightAlignX(0.72f, latStr.c_str()), statusTopY + fs * 0.78f + sp));
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::SetWindowFontScale(0.72f);
+				ImGui::TextUnformatted(latStr.c_str());
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
 

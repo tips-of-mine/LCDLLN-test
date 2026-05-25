@@ -399,6 +399,10 @@ namespace engine::client
 			uint32_t totalPlayers = 0;
 			std::vector<GameServerStatus> servers;
 			std::string infoMessage;
+			/// Latence mesuree (aller-retour HTTP de la sonde /status vers le master),
+			/// en millisecondes. -1 = inconnue (sonde non encore aboutie / en echec).
+			/// Valeur commune a tous les serveurs (c'est la latence vers le master).
+			int latencyMs = -1;
 		};
 
 		AuthUiPresenter() = default;

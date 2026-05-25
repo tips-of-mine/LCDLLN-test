@@ -2630,11 +2630,17 @@ namespace engine::client
 		m_worker = std::thread([this, url, timeoutMs]() {
 			LOG_INFO(Core, "[StatusProbe] thread réseau: GET en cours vers {}", url);
 			AsyncResult local{};
+			// Mesure de l'aller-retour HTTP (latence master affichee dans la liste des
+			// serveurs). On encadre uniquement l'appel reseau.
+			const auto httpT0 = std::chrono::steady_clock::now();
 #if defined(_WIN32)
 			const StatusHttpResponse resp = HttpGetStatusUrlWin32(url, timeoutMs);
 #else
 			const StatusHttpResponse resp = HttpGetStatusUrlCurl(url, timeoutMs);
 #endif
+			const auto httpT1 = std::chrono::steady_clock::now();
+			const int httpLatencyMs = static_cast<int>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(httpT1 - httpT0).count());
 
 			auto publishFailure = [&](std::string_view userMessage, std::string_view transportDetail) {
 				local.ready = true;
@@ -2677,9 +2683,12 @@ namespace engine::client
 				return;
 			}
 
+			// Latence master mesuree (ms) : renseignee seulement quand la sonde aboutit.
+			local.statusCache.latencyMs = httpLatencyMs;
 			local.ready = true;
 			local.success = true;
 			local.message = parseDetail;
+			LOG_INFO(Core, "[StatusProbe] latence master mesuree: {} ms", httpLatencyMs);
 			LOG_INFO(Core,
 				"[StatusProbe] succès — authOk={} masterOk={} shards={} totalJoueurs={} message='{}'",
 				local.statusCache.authOk ? "oui" : "non", local.statusCache.masterOk ? "oui" : "non", local.statusCache.servers.size(),

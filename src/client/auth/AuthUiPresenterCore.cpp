@@ -24,7 +24,6 @@
 
 #include "src/client/render/AuthUiRenderer.h"
 
-#include "src/shared/core/DefaultClientEndpoints.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/network/NetClient.h"
 #include "src/shared/platform/FileSystem.h"
@@ -69,10 +68,6 @@ namespace engine::client
 		constexpr std::string_view kRegisterBackgroundPath = "ui/loading/background.png";
 		// Résolu par Window::ResolveUiImagePath : aussi sous game/data/ (voir FileSystem::ResolveContentPath).
 		constexpr std::string_view kRegisterInfoPath = "ui/register/info.png";
-
-		// URL portail reset (identique à external/external_links.json) ; la sonde statut utilise defaults::kStatusApiUrl.
-		constexpr std::string_view kProductionWebPortalResetUrl =
-			"https://lcdlln-portal.tips-of-mine.com/password-recovery";
 
 		std::string JsonBool(bool value)
 		{
@@ -354,12 +349,8 @@ namespace engine::client
 
 		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
 		{
-			const std::string fromCfg = cfg.GetString("client.web_portal_reset_url", "");
-			if (!fromCfg.empty())
-			{
-				return fromCfg;
-			}
-			return std::string(kProductionWebPortalResetUrl);
+			// Clé garantie présente via la table des endpoints (config/server.ini).
+			return cfg.GetString("client.web_portal_reset_url", "");
 		}
 
 		std::string ResolveStatusApiUrl(const engine::core::Config& cfg)
@@ -369,12 +360,8 @@ namespace engine::client
 			{
 				return authUiUrl;
 			}
-			const std::string fromLinks = cfg.GetString("client.status_api_url", "");
-			if (!fromLinks.empty())
-			{
-				return fromLinks;
-			}
-			return std::string(engine::core::defaults::kStatusApiUrl);
+			// Clé garantie présente via la table des endpoints (config/server.ini).
+			return cfg.GetString("client.status_api_url", "");
 		}
 
 		struct StatusHttpResponse
@@ -499,8 +486,11 @@ namespace engine::client
 						s.ok = statusCfg.GetBool(keyOk, true);
 						s.players = static_cast<uint32_t>(std::max<int64_t>(0, statusCfg.GetInt(keyPlayers, 0)));
 						s.endpoint = statusCfg.GetString(base + "endpoint", "");
-						LOG_INFO(Core, "[StatusProbe] parse: shard [{}] name='{}' ok={} players={} endpoint='{}'", i, s.name,
-							s.ok ? "true" : "false", s.players, s.endpoint);
+						s.display_name = statusCfg.GetString(base + "display_name", s.name);
+						s.game_mode = engine::network::ParseGameMode(statusCfg.GetString(base + "game_mode", "pve"));
+						s.ruleset = engine::network::ParseRuleset(statusCfg.GetString(base + "ruleset", "cooperative"));
+						LOG_INFO(Core, "[StatusProbe] parse: shard [{}] name='{}' display='{}' ok={} players={} endpoint='{}'", i, s.name,
+							s.display_name, s.ok ? "true" : "false", s.players, s.endpoint);
 						cache.servers.push_back(std::move(s));
 					}
 				}
@@ -1247,7 +1237,7 @@ namespace engine::client
 		m_layoutAuthTitleCenterViewportWidth = cfg.GetBool("render.auth_ui.layout.title_center_viewport_width", true);
 		m_layoutAuthFieldRowExtraPx = static_cast<int32_t>(
 			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.field_row_extra_px", 0), 0, 64));
-		// URL de sonde "status" (defaults::kStatusApiUrl si non fourni par la config) au début de l'écran de connexion.
+		// URL de sonde "status" (client.status_api_url, via config/server.ini) au début de l'écran de connexion.
 		m_masterAvailabilityUrl = ResolveStatusApiUrl(cfg);
 		LOG_INFO(Core, "[StatusProbe] Init: URL statut maître = '{}'", m_masterAvailabilityUrl);
 		m_statusProbeInitialized = false;
@@ -1636,6 +1626,14 @@ namespace engine::client
 					{
 						entry.current_load = srv.players;
 						++patched;
+					}
+					// Repli : si l'entree SERVER_LIST n'a pas de nom public (vieux master),
+					// on complete depuis la sonde /status (presentation + mode/regle).
+					if (entry.display_name.empty() && !srv.display_name.empty())
+					{
+						entry.display_name = srv.display_name;
+						entry.game_mode = srv.game_mode;
+						entry.ruleset = srv.ruleset;
 					}
 					break;
 				}
@@ -2632,11 +2630,17 @@ namespace engine::client
 		m_worker = std::thread([this, url, timeoutMs]() {
 			LOG_INFO(Core, "[StatusProbe] thread réseau: GET en cours vers {}", url);
 			AsyncResult local{};
+			// Mesure de l'aller-retour HTTP (latence master affichee dans la liste des
+			// serveurs). On encadre uniquement l'appel reseau.
+			const auto httpT0 = std::chrono::steady_clock::now();
 #if defined(_WIN32)
 			const StatusHttpResponse resp = HttpGetStatusUrlWin32(url, timeoutMs);
 #else
 			const StatusHttpResponse resp = HttpGetStatusUrlCurl(url, timeoutMs);
 #endif
+			const auto httpT1 = std::chrono::steady_clock::now();
+			const int httpLatencyMs = static_cast<int>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(httpT1 - httpT0).count());
 
 			auto publishFailure = [&](std::string_view userMessage, std::string_view transportDetail) {
 				local.ready = true;
@@ -2679,9 +2683,12 @@ namespace engine::client
 				return;
 			}
 
+			// Latence master mesuree (ms) : renseignee seulement quand la sonde aboutit.
+			local.statusCache.latencyMs = httpLatencyMs;
 			local.ready = true;
 			local.success = true;
 			local.message = parseDetail;
+			LOG_INFO(Core, "[StatusProbe] latence master mesuree: {} ms", httpLatencyMs);
 			LOG_INFO(Core,
 				"[StatusProbe] succès — authOk={} masterOk={} shards={} totalJoueurs={} message='{}'",
 				local.statusCache.authOk ? "oui" : "non", local.statusCache.masterOk ? "oui" : "non", local.statusCache.servers.size(),

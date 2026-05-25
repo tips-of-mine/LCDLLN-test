@@ -200,7 +200,6 @@
         }
     },
     "client": {
-        "master_port": 3840,
         "server_fingerprint": "",
         "allow_insecure_dev": true,
         "locale": "",

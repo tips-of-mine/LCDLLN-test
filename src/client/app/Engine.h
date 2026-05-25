@@ -375,10 +375,18 @@ namespace engine
 		/// retombent sur l'habit. Le draw choisit l'id selon m_avatarGender.
 		uint32_t m_avatarBodyMaterialIdMale = 0u;
 		uint32_t m_avatarBodyMaterialIdFemale = 0u;
+		/// Index materiel PEAU teinte FONCEE (skinColorIdx=1), un par genre. 0 si la
+		/// texture _Dark est absente -> le draw retombe sur la teinte claire.
+		uint32_t m_avatarBodyMaterialIdMaleDark = 0u;
+		uint32_t m_avatarBodyMaterialIdFemaleDark = 0u;
 		/// Genre actif de l'avatar ("male" / "female"). Pilote le mesh in-world
 		/// (GetRaceMesh) ET le materiau de peau au draw. Modifie en live par le
 		/// selecteur de creation (SetAvatarGender) ; defaut depuis config au boot.
 		std::string m_avatarGender = "male";
+		/// Teinte de peau active in-world : 0 = claire (défaut), 1 = foncée.
+		/// Appliquée à EnterWorld depuis enterCmd.skinColorIdx (DB serveur,
+		/// migration 0068) ; pilote le choix du matériau de peau au draw.
+		int m_avatarSkinTone = 0;
 		/// Genre pour lequel le diagnostic peau a deja ete logge (evite le spam
 		/// par frame ; on relogue uniquement au changement de genre). Cf. le bloc
 		/// [AvatarSkinDiag] dans Engine.cpp (rendu de l'avatar skinne).
@@ -546,6 +554,11 @@ namespace engine
 		/// EditorViewportRenderTarget pour respecter l'ordre LIFO de
 		/// liberation des descriptors ImGui (idem que m_editorViewportTarget).
 		engine::render::race::RacePreviewViewport m_racePreviewViewport;
+
+		/// Phase 2 — horodatage (EngineNowSec) du dernier Tick de l'aperçu race,
+		/// pour calculer un delta-time robuste alimentant la rotation orbit +
+		/// l'échantillonnage d'animation. 0 = pas encore tické.
+		float m_racePreviewLastNowSec = 0.0f;
 
 #if defined(_WIN32)
 		std::unique_ptr<engine::editor::TexturePreviewCache> m_texturePreviewCache;

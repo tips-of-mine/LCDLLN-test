@@ -258,6 +258,8 @@ namespace engine::server
 		const std::string factionStr = factionFromRace(raceIdTruncated);
 		// #1 serveur — genre du personnage (validé male/female, défaut male).
 		const std::string genderStr = (parsed->gender == "female") ? "female" : "male";
+		// Teinte de peau (skinColorIdx) : entier non signé borné [0, 255] (0 = claire).
+		const uint32_t skinColorIdx = static_cast<uint32_t>(parsed->customization.skinColorIdx);
 		char escapedRace[80]{};
 		char escapedClass[80]{};
 		char escapedFaction[80]{};
@@ -273,7 +275,7 @@ namespace engine::server
 
 		std::string sql =
 			"INSERT INTO characters (account_id, slot, name, server_id, race_id, class_id, level, appearance_json,"
-			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg, race_str, class_str, faction_str, gender) VALUES ("
+			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg, race_str, class_str, faction_str, gender, skin_color_idx) VALUES ("
 			+ std::to_string(*accountId) + ", "
 			+ std::to_string(slot) + ", '"
 			+ escapedName + "', "
@@ -282,7 +284,8 @@ namespace engine::server
 			+ escapedRace + "', '"
 			+ escapedClass + "', '"
 			+ escapedFaction + "', '"
-			+ escapedGender + "')";
+			+ escapedGender + "', "
+			+ std::to_string(skinColorIdx) + ")";
 		if (!engine::server::db::DbExecute(mysql, sql))
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "character creation failed", requestId, sessionIdHeader);

@@ -48,6 +48,7 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ZoneTransitions.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/core/ServerEndpoints.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Log.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/LogConfig.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/FileSystem.cpp
@@ -76,6 +77,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/NetServer.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/core/ServerEndpoints.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Log.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/LogConfig.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/FileSystem.cpp
@@ -233,6 +235,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/security/CaptchaVerifier.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/security/BotDetector.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/core/ServerEndpoints.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Log.cpp
   )
   target_include_directories(anti_bot_tests PRIVATE ${CMAKE_SOURCE_DIR})

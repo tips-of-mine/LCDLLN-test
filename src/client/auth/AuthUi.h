@@ -116,6 +116,9 @@ namespace engine::client
 			/// #1 serveur — genre du personnage ("male"/"female"), reçu via CHARACTER_LIST
 			/// (migration 0067). Vide = legacy/pré-migration -> 'male' par défaut côté Engine.
 			std::string gender;
+			/// Teinte de peau (0 = claire, 1 = foncée), reçue via CHARACTER_LIST
+			/// (migration 0068). Consommée par Engine::EnterWorld -> SetAvatarSkinTone.
+			uint8_t skinColorIdx = 0;
 		};
 
 		struct AudioSettingsCommand
@@ -383,6 +386,10 @@ namespace engine::client
 			/// correspondance avec \ref engine::network::ServerListEntry::endpoint
 			/// pour rafraîchir le compteur de joueurs de l'écran de choix de serveur.
 			std::string endpoint;
+			/// Nom public affiché (champ \c display_name du /status). Repli sur name si vide.
+			std::string display_name;
+			engine::network::ShardGameMode game_mode = engine::network::ShardGameMode::PvE;
+			engine::network::ShardRuleset ruleset = engine::network::ShardRuleset::Cooperative;
 		};
 
 		struct StatusCache
@@ -392,6 +399,10 @@ namespace engine::client
 			uint32_t totalPlayers = 0;
 			std::vector<GameServerStatus> servers;
 			std::string infoMessage;
+			/// Latence mesuree (aller-retour HTTP de la sonde /status vers le master),
+			/// en millisecondes. -1 = inconnue (sonde non encore aboutie / en echec).
+			/// Valeur commune a tous les serveurs (c'est la latence vers le master).
+			int latencyMs = -1;
 		};
 
 		AuthUiPresenter() = default;
@@ -649,7 +660,7 @@ namespace engine::client
 		///                   (SetAvatarGender -> mesh + peau in-world + persistance)
 		///                   avant la soumission, pour que l'EnterWorld qui suit
 		///                   utilise le bon avatar.
-		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8 = "", const char* genderUtf8 = "male");
+		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8 = "", const char* genderUtf8 = "male", uint8_t skinColorIdx = 0u);
 
 		/// Sous-projet C MVP (Task 12) — Accesseur vers le presenter de
 		/// creation de personnage detenu par AuthUiPresenter. Permet a
@@ -894,6 +905,9 @@ namespace engine::client
 		/// #1 serveur — genre choisi sur l'écran CharacterCreate ("male"/"female"),
 		/// envoyé au master dans CharacterCreateRequestPayload.gender. Défaut "male".
 		std::string m_characterGender = "male";
+		/// Teinte de peau choisie (0 = claire, 1 = foncée), envoyée au master dans
+		/// CharacterCreateRequestPayload.customization.skinColorIdx (migration 0068).
+		uint8_t m_characterSkinColorIdx = 0;
 		uint32_t m_activeField = 0;
 		int32_t m_hoveredFieldIndex = -1;
 		int32_t m_hoveredFieldInfoIndex = -1;

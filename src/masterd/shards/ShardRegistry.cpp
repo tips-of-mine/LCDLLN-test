@@ -9,7 +9,9 @@
 
 namespace engine::server
 {
-	std::optional<uint32_t> ShardRegistry::RegisterShard(std::string name, std::string endpoint, uint32_t max_capacity, std::string region)
+	std::optional<uint32_t> ShardRegistry::RegisterShard(std::string name, std::string endpoint, uint32_t max_capacity,
+		std::string region, std::string display_name,
+		engine::network::ShardGameMode game_mode, engine::network::ShardRuleset ruleset)
 	{
 LOG_DEBUG(Server, "[SREG_REG] RegisterShard name='{}' endpoint='{}' cap={}", name.c_str(), endpoint.c_str(), max_capacity);
 		std::lock_guard<std::mutex> lock(m_mutex);
@@ -29,6 +31,10 @@ LOG_DEBUG(Server, "[SREG_REG] RegisterShard name='{}' endpoint='{}' cap={}", nam
 		e.current_load = 0;
 		e.last_heartbeat = std::chrono::steady_clock::now();
 		e.state = ShardState::Registering;
+		// Repli : si aucun nom public fourni, on affiche l'identifiant technique.
+		e.display_name = display_name.empty() ? e.name : std::move(display_name);
+		e.game_mode = game_mode;
+		e.ruleset = ruleset;
 		m_shards[id] = std::move(e);
 		m_name_to_id[m_shards[id].name] = id;
 		LOG_INFO(Core, "[ShardRegistry] RegisterShard OK (id={}, name='{}', endpoint='{}')", id, m_shards[id].name, m_shards[id].endpoint);
@@ -178,6 +184,9 @@ LOG_DEBUG(Server, "[SREG_REG] EvictStaleHeartbeats timeout={}s marked={}", timeo
 		info.current_load = e.current_load;
 		info.last_heartbeat = e.last_heartbeat;
 		info.state = e.state;
+		info.display_name = e.display_name;
+		info.game_mode = e.game_mode;
+		info.ruleset = e.ruleset;
 		return info;
 	}
 
@@ -197,6 +206,9 @@ LOG_DEBUG(Server, "[SREG_REG] EvictStaleHeartbeats timeout={}s marked={}", timeo
 			info.current_load = e.current_load;
 			info.last_heartbeat = e.last_heartbeat;
 			info.state = e.state;
+			info.display_name = e.display_name;
+			info.game_mode = e.game_mode;
+			info.ruleset = e.ruleset;
 			out.push_back(std::move(info));
 		}
 		return out;
@@ -230,6 +242,9 @@ LOG_DEBUG(Server, "[SREG_REG] EvictStaleHeartbeats timeout={}s marked={}", timeo
 		info.current_load = best->current_load;
 		info.last_heartbeat = best->last_heartbeat;
 		info.state = best->state;
+		info.display_name = best->display_name;
+		info.game_mode = best->game_mode;
+		info.ruleset = best->ruleset;
 		return info;
 	}
 }

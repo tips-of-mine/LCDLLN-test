@@ -142,6 +142,17 @@ int main(int argc, char** argv)
 	const std::string regEndpoint = config.GetString("shard.register.endpoint", config.GetString("shard.register_endpoint", "127.0.0.1:3843"));
 	const uint32_t regCap = static_cast<uint32_t>(config.GetInt("shard.register.max_capacity", config.GetInt("shard.register_max_capacity", 500)));
 	const std::string buildVer = config.GetString("shard.register.build_version", config.GetString("shard.build_version", "dev"));
+	// Présentation publique du serveur dans la liste client (M-server-meta).
+	// display_name : repli sur le nom technique si absent.
+	// game_mode : "pve" / "pvp" (défaut pve). ruleset : "cooperative" / "competitive"
+	// / "hardcore" / "roleplay" (défaut cooperative).
+	const std::string regDisplayName = config.GetString("shard.register.display_name", regName);
+	const engine::network::ShardGameMode regGameMode =
+		engine::network::ParseGameMode(config.GetString("shard.register.game_mode", "pve"));
+	const engine::network::ShardRuleset regRuleset =
+		engine::network::ParseRuleset(config.GetString("shard.register.ruleset", "cooperative"));
+	// Région annoncée (texte libre, ex. « eu-west »), remontée telle quelle dans l'API /status.
+	const std::string regRegion = config.GetString("shard.register.region", config.GetString("shard.register_region", ""));
 	const std::string masterTlsFp = config.GetString("shard.master.tls_fingerprint", config.GetString("shard.master_tls_fingerprint", ""));
 	const bool masterInsecure = config.GetBool("shard.master.allow_insecure_dev", config.GetBool("shard.master_allow_insecure_dev", false));
 
@@ -150,7 +161,7 @@ int main(int argc, char** argv)
 	if (!masterTlsFp.empty())
 		toMaster.SetExpectedServerFingerprint(masterTlsFp);
 	toMaster.SetAllowInsecureDev(masterInsecure);
-	toMaster.SetShardIdentity(regName, regEndpoint, regCap, buildVer);
+	toMaster.SetShardIdentity(regName, regEndpoint, regCap, buildVer, regDisplayName, regGameMode, regRuleset, regRegion);
 	toMaster.SetHeartbeatIntervalSec(static_cast<int>(config.GetInt("shard.heartbeat_interval_sec", 10)));
 	toMaster.Start();
 

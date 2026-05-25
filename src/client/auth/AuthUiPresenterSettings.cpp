@@ -1,6 +1,5 @@
 #include "src/client/auth/AuthUi.h"
 #include "src/client/render/AuthUiRenderer.h"
-#include "src/shared/core/DefaultClientEndpoints.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/network/AuthRegisterPayloads.h"
 #include "src/shared/network/CharacterPayloads.h"

@@ -4095,6 +4095,19 @@ namespace engine
 										const std::string bodyBcF  = deriveFemalePath(bodyBc);
 										const std::string bodyNrmF = deriveFemalePath(bodyNrm);
 										const std::string bodyOrmF = bodyOrm.empty() ? std::string() : deriveFemalePath(bodyOrm);
+										// Teinte foncee (skinColorIdx=1) : derive le chemin BaseColor en
+										// inserant "_Dark" avant "_BaseColor" (ex. T_Regular_Male_BaseColor.png
+										// -> T_Regular_Male_Dark_BaseColor.png). Normal/ORM partages avec la
+										// teinte claire (la teinte ne change que l'albedo). Repli sur la teinte
+										// claire au draw si la texture foncee est absente (id 0).
+										auto deriveDarkPath = [](std::string p) {
+											const std::string needle = "_BaseColor";
+											const std::string::size_type i = p.rfind(needle);
+											if (i != std::string::npos) p.replace(i, needle.size(), "_Dark_BaseColor");
+											return p;
+										};
+										const std::string bodyBcDark  = deriveDarkPath(bodyBc);
+										const std::string bodyBcDarkF = deriveDarkPath(bodyBcF);
 										// Noms de materiaux glTF qui recoivent la PEAU (separes par des virgules) ;
 										// tout autre nom recoit l'habit. Defaut : peau male ET femelle.
 										m_avatarBodyMaterialNames = SplitCsv(
@@ -4142,8 +4155,13 @@ namespace engine
 												};
 												m_avatarBodyMaterialIdMale   = makeBodyMaterial(bodyBc,  bodyNrm,  bodyOrm);
 												m_avatarBodyMaterialIdFemale = makeBodyMaterial(bodyBcF, bodyNrmF, bodyOrmF);
-												LOG_INFO(Render, "[Avatar] Materiaux PBR habit(id={}) peau male(id={}) peau femelle(id={})",
-													m_avatarMaterialId, m_avatarBodyMaterialIdMale, m_avatarBodyMaterialIdFemale);
+												// Teinte foncee : 2 materiaux de peau supplementaires (male/femelle).
+												// 0 si la texture _Dark est absente -> le draw retombe sur la teinte claire.
+												m_avatarBodyMaterialIdMaleDark   = makeBodyMaterial(bodyBcDark,  bodyNrm,  bodyOrm);
+												m_avatarBodyMaterialIdFemaleDark = makeBodyMaterial(bodyBcDarkF, bodyNrmF, bodyOrmF);
+												LOG_INFO(Render, "[Avatar] Materiaux PBR habit(id={}) peau male(id={}) femelle(id={}) male_dark(id={}) femelle_dark(id={})",
+													m_avatarMaterialId, m_avatarBodyMaterialIdMale, m_avatarBodyMaterialIdFemale,
+													m_avatarBodyMaterialIdMaleDark, m_avatarBodyMaterialIdFemaleDark);
 											}
 										}
 
@@ -4744,11 +4762,17 @@ namespace engine
 
 													// Multi-materiaux : un index par sous-maillage. Les sous-maillages
 													// dont le nom de materiau glTF figure dans m_avatarBodyMaterialNames
-													// recoivent la PEAU (m_avatarBodyMaterialId), les autres l'habit.
+													// recoivent la PEAU (selon genre x teinte), les autres l'habit.
 													// Si aucune texture de peau n'est chargee (id 0), tout retombe sur
 													// l'habit -> comportement identique a l'ancien mono-draw.
-													const uint32_t bodyMaterialId = (m_avatarGender == "female")
-														? m_avatarBodyMaterialIdFemale : m_avatarBodyMaterialIdMale;
+													// Teinte foncee (m_avatarSkinTone==1) avec repli sur claire si absente.
+													uint32_t bodyMaterialId;
+													if (m_avatarGender == "female")
+														bodyMaterialId = (m_avatarSkinTone == 1 && m_avatarBodyMaterialIdFemaleDark != 0u)
+															? m_avatarBodyMaterialIdFemaleDark : m_avatarBodyMaterialIdFemale;
+													else
+														bodyMaterialId = (m_avatarSkinTone == 1 && m_avatarBodyMaterialIdMaleDark != 0u)
+															? m_avatarBodyMaterialIdMaleDark : m_avatarBodyMaterialIdMale;
 													// Routage peau/habit par sous-maillage (fonction pure partagee
 													// avec l'apercu de creation). Vide si pas de materiau peau ou pas
 													// de sous-maillages -> mono-draw habit (comportement identique
@@ -6555,6 +6579,57 @@ namespace engine
 				{
 					LOG_WARN(Render, "[Engine] RacePreviewViewport init failed -- ecran creation perso restera sans apercu 3D");
 				}
+				else
+				{
+					// Sous-chantier A phase 2 — pipeline forward 3D de l'apercu +
+					// cablage des materiaux avatar (set bindless + ids peau/habit).
+					// loadSpirv (defini plus haut) n'est pas dans la portee ici :
+					// on relit le SPIR-V directement depuis le content root.
+					auto loadPreviewSpv = [&](const char* p) -> std::vector<uint32_t> {
+						std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, p);
+						std::vector<uint32_t> out;
+						if (!bytes.empty() && bytes.size() % 4 == 0)
+						{
+							out.resize(bytes.size() / 4);
+							std::memcpy(out.data(), bytes.data(), bytes.size());
+						}
+						return out;
+					};
+					const std::vector<uint32_t> previewVert = loadPreviewSpv("shaders/skinned_preview.vert.spv");
+					const std::vector<uint32_t> previewFrag = loadPreviewSpv("shaders/skinned_preview.frag.spv");
+					if (m_pipeline && !previewVert.empty() && !previewFrag.empty())
+					{
+						auto& matCache = m_pipeline->GetMaterialDescriptorCache();
+						if (matCache.IsValid()
+							&& m_racePreviewViewport.InitForwardPipeline(
+								matCache.GetLayout(),
+								previewVert.data(), previewVert.size(),
+								previewFrag.data(), previewFrag.size()))
+						{
+							const uint32_t previewOutfitId = (m_avatarMaterialId != 0u)
+								? m_avatarMaterialId : matCache.GetDefaultMaterialIndex();
+							m_racePreviewViewport.SetAvatarMaterials(
+								matCache.GetDescriptorSet(),
+								previewOutfitId,
+								m_avatarBodyMaterialIdMale,
+								m_avatarBodyMaterialIdFemale,
+								m_avatarBodyMaterialIdMaleDark,
+								m_avatarBodyMaterialIdFemaleDark,
+								m_avatarBodyMaterialNames,
+								m_avatarSkinDepthBiasConstant,
+								m_avatarSkinDepthBiasSlope);
+							LOG_INFO(Render, "[Engine] RacePreviewViewport forward 3D pret (outfitId={})", previewOutfitId);
+						}
+						else
+						{
+							LOG_WARN(Render, "[Engine] RacePreviewViewport InitForwardPipeline echoue -- apercu en clear couleur");
+						}
+					}
+					else
+					{
+						LOG_WARN(Render, "[Engine] shaders skinned_preview absents -- apercu 3D en clear couleur");
+					}
+				}
 				// Branche le DayNightCycle au panneau "Atmosphere" pour que l'utilisateur
 				// puisse regler time-of-day et timeScale en live depuis l'editeur monde.
 				m_worldEditorImGui->SetDayNightCycle(&m_dayNight);
@@ -6990,6 +7065,11 @@ namespace engine
 								enterCmd.characterName, m_avatarGender);
 						}
 					}
+					// Teinte de peau du perso (DB serveur via CHARACTER_LIST, migration 0068).
+					// 0 = claire (defaut), 1 = foncee. Applique le materiau de peau au draw.
+					m_avatarSkinTone = (enterCmd.skinColorIdx == 1u) ? 1 : 0;
+					LOG_INFO(Core, "[EnterWorld] teinte peau '{}' = {}",
+						enterCmd.characterName, m_avatarSkinTone == 1 ? "foncee" : "claire");
 					// Sous-projet C MVP — Resout le mesh de la race du perso depuis le
 					// payload EnterWorld (race_str persistee en DB depuis migration 0033).
 					// Fallback humains si la race n'est pas chargee dans m_raceMeshes.
@@ -8250,6 +8330,21 @@ namespace engine
 					dh = static_cast<float>(extUi.height);
 				}
 			}
+			// Phase 2 — aperçu 3D : avance l'anim/orbit puis rend l'avatar dans
+			// l'image offscreen AVANT que la draw list ImGui n'échantillonne la
+			// texture (RenderOffscreen est autonome : submit + wait idle). No-op
+			// si pas de mesh/pipeline forward -> l'image garde le clear de Init.
+			{
+				const float previewNowSec = EngineNowSec();
+				float previewDt = (m_racePreviewLastNowSec > 0.0f)
+					? (previewNowSec - m_racePreviewLastNowSec) : 0.0f;
+				m_racePreviewLastNowSec = previewNowSec;
+				if (previewDt < 0.0f)  previewDt = 0.0f;
+				if (previewDt > 0.1f)  previewDt = 0.1f; // clamp gros hitch
+				m_racePreviewViewport.Tick(previewDt);
+				m_racePreviewViewport.RenderOffscreen();
+			}
+
 			const engine::client::AuthUiPresenter::VisualState authVsImgui = m_authUi.GetVisualState();
 			const engine::client::AuthUiPresenter::RenderModel authRmImgui = m_authUi.BuildRenderModel();
 			m_authImGui->Render(authVsImgui, authRmImgui, dw, dh);

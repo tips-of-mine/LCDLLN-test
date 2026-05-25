@@ -1,6 +1,7 @@
 #pragma once
 
 #include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/network/ServerMeta.h"
 
 #include <chrono>
 #include <cstdint>
@@ -30,7 +31,13 @@ namespace engine::network
 		void SetAllowInsecureDev(bool allow);
 
 		/// Shard identity for REGISTER. Call before Start().
-		void SetShardIdentity(std::string name, std::string endpoint, uint32_t max_capacity, std::string build_version);
+		/// \param display_name nom public affiché au joueur (repli sur \p name si vide).
+		/// \param game_mode mode de jeu annoncé (PvE/PvP).
+		/// \param ruleset règle annoncée (liste fermée).
+		/// \param region région annoncée (texte libre), exposée par l'API /status.
+		void SetShardIdentity(std::string name, std::string endpoint, uint32_t max_capacity, std::string build_version,
+			std::string display_name = {}, ShardGameMode game_mode = ShardGameMode::PvE,
+			ShardRuleset ruleset = ShardRuleset::Cooperative, std::string region = {});
 
 		/// Start connecting. Returns immediately; result via Pump() / GetState().
 		void Start();
@@ -71,6 +78,10 @@ namespace engine::network
 		std::string m_endpoint;
 		uint32_t m_max_capacity = 0;
 		std::string m_build_version;
+		std::string m_display_name;
+		ShardGameMode m_game_mode = ShardGameMode::PvE;
+		ShardRuleset m_ruleset = ShardRuleset::Cooperative;
+		std::string m_region;
 		uint32_t m_current_load = 0;
 
 		State m_state = State::Disconnected;

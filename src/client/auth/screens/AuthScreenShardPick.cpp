@@ -61,10 +61,18 @@ namespace engine::client
 		for (const auto& e : m_shardPickEntries)
 		{
 			RenderBodyLine line{};
+			// On n'affiche PAS l'endpoint (IP:port) : information sensible. Nom public +
+			// charge + mode/regle localises.
+			const std::string serverName = e.display_name.empty()
+				? Tr("auth.shard_pick.name_fallback", { { "id", std::to_string(e.shard_id) } })
+				: e.display_name;
+			const std::string modeStr =
+				Tr(std::string("auth.shard_pick.mode.") + std::string(engine::network::GameModeToken(e.game_mode)))
+				+ " " + Tr(std::string("auth.shard_pick.ruleset.") + std::string(engine::network::RulesetToken(e.ruleset)));
 			line.text = Tr("auth.shard_pick.line",
-				{ { "id", std::to_string(e.shard_id) },
+				{ { "name", serverName },
 					{ "load", std::to_string(e.current_load) + "/" + std::to_string(e.max_capacity) },
-					{ "endpoint", e.endpoint.empty() ? std::string("-") : e.endpoint } });
+					{ "mode", modeStr } });
 			const bool rowSelectable = (e.status == 1u && !e.endpoint.empty());
 			line.active = (m_shardPickChoiceShardId == e.shard_id);
 			line.link = rowSelectable;

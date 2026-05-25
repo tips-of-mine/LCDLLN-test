@@ -143,15 +143,30 @@ namespace engine::render
 			ImGui::SameLine();
 			ImGui::RadioButton("Féminin", &m_charGender, 1);
 
-			// Push du mesh d'apercu si la race OU le genre a change (ou 1er rendu).
+			// Teinte de peau : 0 = Claire, 1 = Foncée. Visible sur les parties de
+			// peau exposées (mains avec le Ranger ; corps entier avec un futur mesh).
+			ImGui::Spacing();
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::TextUnformatted("TEINTE DE PEAU");
+			ImGui::PopStyleColor();
+			ImGui::RadioButton("Claire", &m_charSkinTone, 0);
+			ImGui::SameLine();
+			ImGui::RadioButton("Foncée", &m_charSkinTone, 1);
+
+			// Push de l'apercu si la race OU le genre OU la teinte a change (ou 1er rendu).
 			if (hasRaces && m_racePreview && m_authPresenter &&
-			    (m_charRaceIdx != m_racePreviewSentRaceIdx || m_charGender != m_racePreviewSentGender))
+			    (m_charRaceIdx != m_racePreviewSentRaceIdx || m_charGender != m_racePreviewSentGender
+			     || m_charSkinTone != m_racePreviewSentSkinTone))
 			{
 				const std::string genderStr = (m_charGender == 1) ? "female" : "male";
 				m_racePreview->SetMesh(
 					m_authPresenter->GetRaceMeshForId((*races)[m_charRaceIdx].id, genderStr));
-				m_racePreviewSentRaceIdx = m_charRaceIdx;
-				m_racePreviewSentGender  = m_charGender;
+				// Phase 2 — route la peau genrée + teinte dans l'aperçu 3D (live).
+				m_racePreview->SetGender(genderStr);
+				m_racePreview->SetSkinTone(m_charSkinTone);
+				m_racePreviewSentRaceIdx  = m_charRaceIdx;
+				m_racePreviewSentGender   = m_charGender;
+				m_racePreviewSentSkinTone = m_charSkinTone;
 			}
 
 			// Apparence physique (CHAR-MODEL.25) : sliders bornes a la race +
@@ -271,7 +286,8 @@ namespace engine::render
 					raceId = submitRaces[m_charRaceIdx].id;
 			}
 			const char* genderId = (m_charGender == 1) ? "female" : "male";
-				m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName, raceId.c_str(), genderId);
+			const uint8_t skinTone = static_cast<uint8_t>((m_charSkinTone == 1) ? 1 : 0);
+				m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName, raceId.c_str(), genderId, skinTone);
 		}
 		EndPanel();
 		ImGui::EndChild();

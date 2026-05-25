@@ -36,7 +36,7 @@ static void TestServerListReflectsRegistry()
 	engine::core::Log::Init(logSettings);
 
 	ShardRegistry reg;
-	auto id1 = reg.RegisterShard("s1", "ep1", 100, "eu", "Royaume Un",
+	auto id1 = reg.RegisterShard("s1", "ep1", "", 100, "eu", "Royaume Un",
 		engine::network::ShardGameMode::PvP, engine::network::ShardRuleset::Hardcore);
 	Assert(id1.has_value(), "Register s1");
 	reg.UpdateHeartbeat(*id1, 25);
@@ -85,8 +85,8 @@ static void TestPolicyChoosesLessLoadedShard()
 	engine::core::Log::Init(logSettings);
 
 	ShardRegistry reg;
-	auto id1 = reg.RegisterShard("s1", "ep1", 100, "eu");
-	auto id2 = reg.RegisterShard("s2", "ep2", 100, "eu");
+	auto id1 = reg.RegisterShard("s1", "ep1", "", 100, "eu");
+	auto id2 = reg.RegisterShard("s2", "ep2", "", 100, "eu");
 	Assert(id1.has_value() && id2.has_value(), "Register 2 shards");
 	reg.UpdateHeartbeat(*id1, 60);
 	reg.UpdateHeartbeat(*id2, 20);

@@ -17,6 +17,7 @@ namespace engine::network
 	{
 		std::string name;            ///< Identifiant technique unique (clé de dédup à la reconnexion).
 		std::string endpoint;
+		std::string udp_endpoint;    ///< TB.1: endpoint UDP gameplay du shard (host:port). Vide si non annoncé.
 		uint32_t max_capacity = 0;
 		uint32_t current_load = 0;
 		std::string build_version;
@@ -29,9 +30,10 @@ namespace engine::network
 	/// Parses SHARD_REGISTER payload. Returns nullopt if truncated or invalid.
 	std::optional<ShardRegisterPayload> ParseShardRegisterPayload(const uint8_t* payload, size_t payloadSize);
 
-	/// Builds SHARD_REGISTER payload (Shard→Master).
+	/// Builds SHARD_REGISTER payload (Shard→Master). TB.1: \a udp_endpoint annonce l'endpoint
+	/// UDP gameplay du shard (relayé au client via SERVER_LIST).
 	std::vector<uint8_t> BuildShardRegisterPayload(std::string_view name, std::string_view endpoint,
-		uint32_t max_capacity, uint32_t current_load, std::string_view build_version,
+		std::string_view udp_endpoint, uint32_t max_capacity, uint32_t current_load, std::string_view build_version,
 		std::string_view display_name = {}, ShardGameMode game_mode = ShardGameMode::PvE,
 		ShardRuleset ruleset = ShardRuleset::Cooperative, std::string_view region = {});
 

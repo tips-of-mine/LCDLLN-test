@@ -9,7 +9,7 @@
 
 namespace engine::server
 {
-	std::optional<uint32_t> ShardRegistry::RegisterShard(std::string name, std::string endpoint, uint32_t max_capacity,
+	std::optional<uint32_t> ShardRegistry::RegisterShard(std::string name, std::string endpoint, std::string udp_endpoint, uint32_t max_capacity,
 		std::string region, std::string display_name,
 		engine::network::ShardGameMode game_mode, engine::network::ShardRuleset ruleset)
 	{
@@ -26,6 +26,7 @@ LOG_DEBUG(Server, "[SREG_REG] RegisterShard name='{}' endpoint='{}' cap={}", nam
 		e.shard_id = id;
 		e.name = std::move(name);
 		e.endpoint = std::move(endpoint);
+		e.udp_endpoint = std::move(udp_endpoint);
 		e.region = std::move(region);
 		e.max_capacity = max_capacity;
 		e.current_load = 0;
@@ -179,6 +180,7 @@ LOG_DEBUG(Server, "[SREG_REG] EvictStaleHeartbeats timeout={}s marked={}", timeo
 		info.shard_id = e.shard_id;
 		info.name = e.name;
 		info.endpoint = e.endpoint;
+			info.udp_endpoint = e.udp_endpoint;
 		info.region = e.region;
 		info.max_capacity = e.max_capacity;
 		info.current_load = e.current_load;
@@ -201,6 +203,7 @@ LOG_DEBUG(Server, "[SREG_REG] EvictStaleHeartbeats timeout={}s marked={}", timeo
 			info.shard_id = e.shard_id;
 			info.name = e.name;
 			info.endpoint = e.endpoint;
+			info.udp_endpoint = e.udp_endpoint;
 			info.region = e.region;
 			info.max_capacity = e.max_capacity;
 			info.current_load = e.current_load;
@@ -237,6 +240,7 @@ LOG_DEBUG(Server, "[SREG_REG] EvictStaleHeartbeats timeout={}s marked={}", timeo
 		info.shard_id = best->shard_id;
 		info.name = best->name;
 		info.endpoint = best->endpoint;
+		info.udp_endpoint = best->udp_endpoint;
 		info.region = best->region;
 		info.max_capacity = best->max_capacity;
 		info.current_load = best->current_load;

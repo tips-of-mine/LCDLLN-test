@@ -62,6 +62,7 @@ namespace engine::server
 				e.max_capacity = s.max_capacity;
 				e.character_count = m_characterCountHook ? m_characterCountHook(s.shard_id) : 0u;
 				e.endpoint = s.endpoint;
+				e.udp_endpoint = s.udp_endpoint; // TB.1 : relais de l'endpoint UDP au client
 				e.display_name = s.display_name.empty() ? s.name : s.display_name;
 				e.game_mode = s.game_mode;
 				e.ruleset = s.ruleset;

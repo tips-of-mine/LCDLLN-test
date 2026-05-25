@@ -13,7 +13,7 @@ namespace engine::network
 			return std::nullopt;
 		ByteReader r(payload, payloadSize);
 		ShardRegisterPayload out;
-		if (!r.ReadString(out.name) || !r.ReadString(out.endpoint))
+		if (!r.ReadString(out.name) || !r.ReadString(out.endpoint) || !r.ReadString(out.udp_endpoint))
 			return std::nullopt;
 		if (!r.ReadU32(out.max_capacity) || !r.ReadU32(out.current_load))
 			return std::nullopt;
@@ -34,12 +34,12 @@ namespace engine::network
 	}
 
 	std::vector<uint8_t> BuildShardRegisterPayload(std::string_view name, std::string_view endpoint,
-		uint32_t max_capacity, uint32_t current_load, std::string_view build_version,
+		std::string_view udp_endpoint, uint32_t max_capacity, uint32_t current_load, std::string_view build_version,
 		std::string_view display_name, ShardGameMode game_mode, ShardRuleset ruleset, std::string_view region)
 	{
 		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
 		ByteWriter w(buf.data(), buf.size());
-		if (!w.WriteString(name) || !w.WriteString(endpoint) || !w.WriteU32(max_capacity) || !w.WriteU32(current_load) || !w.WriteString(build_version))
+		if (!w.WriteString(name) || !w.WriteString(endpoint) || !w.WriteString(udp_endpoint) || !w.WriteU32(max_capacity) || !w.WriteU32(current_load) || !w.WriteString(build_version))
 			return {};
 		const uint8_t modeByte = static_cast<uint8_t>(game_mode);
 		const uint8_t rulesetByte = static_cast<uint8_t>(ruleset);

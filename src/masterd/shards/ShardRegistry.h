@@ -28,6 +28,7 @@ namespace engine::server
 		uint32_t shard_id = 0;
 		std::string name;          ///< Identifiant technique unique (clé interne).
 		std::string endpoint;
+		std::string udp_endpoint;  ///< TB.1: endpoint UDP gameplay annoncé (relayé au client via SERVER_LIST).
 		std::string region;
 		uint32_t max_capacity = 0;
 		uint32_t current_load = 0;
@@ -52,7 +53,7 @@ namespace engine::server
 		/// \param display_name nom public affiché ; si vide, on retombe sur \p name.
 		/// \param game_mode mode de jeu annoncé (PvE/PvP).
 		/// \param ruleset règle annoncée (liste fermée).
-		std::optional<uint32_t> RegisterShard(std::string name, std::string endpoint, uint32_t max_capacity,
+		std::optional<uint32_t> RegisterShard(std::string name, std::string endpoint, std::string udp_endpoint, uint32_t max_capacity,
 			std::string region = {}, std::string display_name = {},
 			engine::network::ShardGameMode game_mode = engine::network::ShardGameMode::PvE,
 			engine::network::ShardRuleset ruleset = engine::network::ShardRuleset::Cooperative);
@@ -93,6 +94,7 @@ namespace engine::server
 			uint32_t shard_id = 0;
 			std::string name;
 			std::string endpoint;
+			std::string udp_endpoint;
 			std::string region;
 			uint32_t max_capacity = 0;
 			uint32_t current_load = 0;

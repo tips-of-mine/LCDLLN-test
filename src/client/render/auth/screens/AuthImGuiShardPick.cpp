@@ -126,9 +126,8 @@ namespace engine::render
 		}
 		else
 		{
-			constexpr float kFlag = 50.f;
-			constexpr float kLoadW = 200.f;
-			constexpr float kPingW = 112.f;
+			constexpr float kFlag = 68.f;
+			constexpr float kLoadW = 260.f;
 			constexpr float kRowH = 114.f;
 
 			for (const auto& e : entries)
@@ -198,21 +197,60 @@ namespace engine::render
 				ImGui::PopStyleVar(2);
 				ImGui::PopStyleColor(2);
 
-				const float innerW = ImGui::GetContentRegionAvail().x;
-				const float textW = (std::max)(120.f, innerW - kFlag - 18.f - kLoadW - kPingW - 16.f);
+				// Geometrie de la ligne (V3) : drapeau agrandi + colonnes centrees
+				// verticalement dans la hauteur de cellule. Chaque colonne est placee en
+				// absolu (SetCursorPos) au lieu de SameLine : cela permet un centrage
+				// vertical independant par colonne et d'ancrer le statut a droite.
+				const ImVec2 cellStart = ImGui::GetCursorPos();
+				const float availW = ImGui::GetContentRegionAvail().x;
+				const float availH = ImGui::GetContentRegionAvail().y;
+				const float fs = ImGui::GetFontSize();
+				const float sp = ImGui::GetStyle().ItemSpacing.y;
 
-				ImGui::BeginGroup();
+				constexpr float kGapFlagName = 16.f;
+				constexpr float kGapNameLoad = 32.f;   ///< Espace nom <-> bloc charge.
+				constexpr float kGapLoadStatus = 32.f; ///< Espace bloc charge <-> statut.
+				constexpr float kStatusW = 120.f;
+				constexpr float kPadR = 20.f;          ///< Marge du statut au bord droit.
+				constexpr float kBarH = 12.f;          ///< Hauteur de la barre de charge (agrandie).
+				constexpr float kInitFontPx = 32.f;    ///< Taille de l'initiale dans le drapeau.
+
+				// Bornes X des colonnes : statut ancre a droite, charge a sa gauche,
+				// nom occupe l'espace restant.
+				const float flagX = cellStart.x;
+				const float nameX = flagX + kFlag + kGapFlagName;
+				const float statusX = cellStart.x + availW - kPadR - kStatusW;
+				const float loadX = statusX - kGapLoadStatus - kLoadW;
+				const float nameW = (std::max)(120.f, loadX - kGapNameLoad - nameX);
+
+				// Offset Y de centrage vertical pour un bloc de hauteur \p blockH.
+				auto centeredY = [&](float blockH) {
+					return cellStart.y + (std::max)(0.f, (availH - blockH) * 0.5f);
+				};
+
+				// --- Drapeau : carre 68x68 + initiale agrandie, centre verticalement ----
+				ImGui::SetCursorPos(ImVec2(flagX, centeredY(kFlag)));
 				const ImVec2 flagP0 = ImGui::GetCursorScreenPos();
-				ImGui::Dummy(ImVec2(kFlag, kFlag));
-				const ImVec2 flagP1 = ImGui::GetItemRectMax();
+				const ImVec2 flagP1 = ImVec2(flagP0.x + kFlag, flagP0.y + kFlag);
 				ImDrawList* dl = ImGui::GetWindowDrawList();
-				dl->AddRectFilled(flagP0, flagP1, U32(LnTheme::kPanel), 4.f);
-				dl->AddRect(flagP0, flagP1, isSelected ? U32(LnTheme::kAccent) : U32(LnTheme::kBorder), 4.f, 0, 1.5f);
+				dl->AddRectFilled(flagP0, flagP1, U32(LnTheme::kPanel), 6.f);
+				dl->AddRect(flagP0, flagP1, isSelected ? U32(LnTheme::kAccent) : U32(LnTheme::kBorder), 6.f, 0, 1.5f);
 				{
-					const ImVec2 ts = ImGui::CalcTextSize(initialBuf);
-					dl->AddText(ImVec2(flagP0.x + (kFlag - ts.x) * 0.5f, flagP0.y + (kFlag - ts.y) * 0.5f), U32(LnTheme::kText), initialBuf);
+					ImFont* font = ImGui::GetFont();
+					const ImVec2 ts = font->CalcTextSizeA(kInitFontPx, FLT_MAX, 0.f, initialBuf);
+					dl->AddText(font, kInitFontPx,
+						ImVec2(flagP0.x + (kFlag - ts.x) * 0.5f, flagP0.y + (kFlag - ts.y) * 0.5f),
+						U32(LnTheme::kText), initialBuf);
 				}
-				ImGui::SameLine(0.f, 14.f);
+
+				// --- Colonne nom (nom + [desc] + mode + [event]), centree verticalement -
+				float nameBlockH = fs * 1.05f;
+				if (!descLine.empty())
+					nameBlockH += sp + fs * 0.82f;
+				nameBlockH += sp + fs * 0.76f;
+				if (e.character_count > 0u)
+					nameBlockH += sp + fs * 0.76f;
+				ImGui::SetCursorPos(ImVec2(nameX, centeredY(nameBlockH)));
 				ImGui::BeginGroup();
 				ImGui::PushStyleColor(ImGuiCol_Text, isSelected ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
 				ImGui::SetWindowFontScale(1.05f);
@@ -223,7 +261,7 @@ namespace engine::render
 				{
 					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 					ImGui::SetWindowFontScale(0.82f);
-					ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + textW);
+					ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + nameW);
 					ImGui::TextWrapped("%s", descLine.c_str());
 					ImGui::PopTextWrapPos();
 					ImGui::SetWindowFontScale(1.f);
@@ -249,11 +287,11 @@ namespace engine::render
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
 				ImGui::EndGroup();
-				ImGui::EndGroup();
 
-				ImGui::SameLine(0.f, 10.f);
+				// --- Colonne charge (label + barre 260x12 + ratio), centree verticalement
+				const float loadBlockH = fs * 0.72f + sp + kBarH + sp + fs * 0.78f;
+				ImGui::SetCursorPos(ImVec2(loadX, centeredY(loadBlockH)));
 				ImGui::BeginGroup();
-				ImGui::Dummy(ImVec2(kLoadW, 1.f));
 				const std::string loadLbl = tr("auth.shard_pick.load_line", P{{"percent", std::to_string(pct)}});
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.72f);
@@ -263,7 +301,7 @@ namespace engine::render
 				const LnTheme::Rgba barCol = (vis == RowVis::Offline) ? LnTheme::kMuted
 					: (vis == RowVis::Saturated) ? LnTheme::kWarning : LnTheme::kSuccess;
 				ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IV(barCol));
-				ImGui::ProgressBar(loadFrac, ImVec2(kLoadW, 6.f), "");
+				ImGui::ProgressBar(loadFrac, ImVec2(kLoadW, kBarH), "");
 				ImGui::PopStyleColor();
 				const std::string pl = tr("auth.shard_pick.players",
 					P{{"current", std::to_string(e.current_load)}, {"max", std::to_string(e.max_capacity)}});
@@ -274,9 +312,10 @@ namespace engine::render
 				ImGui::PopStyleColor();
 				ImGui::EndGroup();
 
-				ImGui::SameLine(0.f, 10.f);
+				// --- Colonne statut (latence + etat), ancree a droite, centree ----------
+				const float statusBlockH = fs * 0.85f + sp + fs * 0.78f;
+				ImGui::SetCursorPos(ImVec2(statusX, centeredY(statusBlockH)));
 				ImGui::BeginGroup();
-				ImGui::Dummy(ImVec2(kPingW, 1.f));
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.85f);
 				ImGui::TextUnformatted(tr("auth.shard_pick.latency_na").c_str());

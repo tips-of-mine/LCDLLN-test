@@ -127,7 +127,7 @@ namespace engine::render
 		else
 		{
 			constexpr float kFlag = 68.f;
-			constexpr float kLoadW = 260.f;
+			constexpr float kLoadW = 240.f;
 			constexpr float kRowH = 114.f;
 
 			for (const auto& e : entries)
@@ -208,20 +208,38 @@ namespace engine::render
 				const float sp = ImGui::GetStyle().ItemSpacing.y;
 
 				constexpr float kGapFlagName = 16.f;
-				constexpr float kGapNameLoad = 32.f;   ///< Espace nom <-> bloc charge.
-				constexpr float kGapLoadStatus = 32.f; ///< Espace bloc charge <-> statut.
-				constexpr float kStatusW = 120.f;
-				constexpr float kPadR = 20.f;          ///< Marge du statut au bord droit.
-				constexpr float kBarH = 12.f;          ///< Hauteur de la barre de charge (agrandie).
-				constexpr float kInitFontPx = 32.f;    ///< Taille de l'initiale dans le drapeau.
+				constexpr float kGapNameLoad = 28.f;    ///< Espace nom <-> bloc charge.
+				constexpr float kGapLoadStatus = 28.f;  ///< Espace bloc charge <-> zone statut.
+				constexpr float kStatusReserve = 100.f; ///< Largeur reservee a la zone statut (ancree a droite).
+				constexpr float kPadR = 8.f;            ///< Marge du statut au bord droit.
+				constexpr float kBarH = 12.f;           ///< Hauteur de la barre de charge (agrandie).
+				constexpr float kInitFontPx = 32.f;     ///< Taille de l'initiale dans le drapeau.
 
-				// Bornes X des colonnes : statut ancre a droite, charge a sa gauche,
-				// nom occupe l'espace restant.
+				// Bornes X des colonnes : statut ancre a droite, bloc charge a sa gauche,
+				// nom occupe l'espace restant (tronque si trop long pour ne JAMAIS chevaucher
+				// la colonne charge).
+				const float rightEdge = cellStart.x + availW - kPadR;
 				const float flagX = cellStart.x;
 				const float nameX = flagX + kFlag + kGapFlagName;
-				const float statusX = cellStart.x + availW - kPadR - kStatusW;
-				const float loadX = statusX - kGapLoadStatus - kLoadW;
-				const float nameW = (std::max)(120.f, loadX - kGapNameLoad - nameX);
+				const float loadX = rightEdge - kStatusReserve - kGapLoadStatus - kLoadW;
+				const float nameW = (std::max)(80.f, loadX - kGapNameLoad - nameX);
+
+				// Tronque un texte (avec « ... ») pour qu'il tienne dans \p maxW a l'echelle \p scale.
+				auto fitText = [&](std::string s, float scale, float maxW) -> std::string {
+					ImFont* f = ImGui::GetFont();
+					const float sz = fs * scale;
+					if (f->CalcTextSizeA(sz, FLT_MAX, 0.f, s.c_str()).x <= maxW)
+						return s;
+					while (!s.empty())
+					{
+						s.pop_back();
+						const std::string cand = s + "...";
+						if (f->CalcTextSizeA(sz, FLT_MAX, 0.f, cand.c_str()).x <= maxW)
+							return cand;
+					}
+					return std::string("...");
+				};
+				nameUpper = fitText(nameUpper, 1.05f, nameW);
 
 				// Offset Y de centrage vertical pour un bloc de hauteur \p blockH.
 				auto centeredY = [&](float blockH) {
@@ -288,7 +306,7 @@ namespace engine::render
 				ImGui::PopStyleColor();
 				ImGui::EndGroup();
 
-				// --- Colonne charge (label + barre 260x12 + ratio), centree verticalement
+				// --- Colonne charge (label + barre 240x12 + ratio), centree verticalement
 				const float loadBlockH = fs * 0.72f + sp + kBarH + sp + fs * 0.78f;
 				ImGui::SetCursorPos(ImVec2(loadX, centeredY(loadBlockH)));
 				ImGui::BeginGroup();
@@ -312,25 +330,32 @@ namespace engine::render
 				ImGui::PopStyleColor();
 				ImGui::EndGroup();
 
-				// --- Colonne statut (latence + etat), ancree a droite, centree ----------
+				// --- Colonne statut (latence + etat) : chaque ligne ANCREE A DROITE ------
 				const float statusBlockH = fs * 0.85f + sp + fs * 0.78f;
-				ImGui::SetCursorPos(ImVec2(statusX, centeredY(statusBlockH)));
-				ImGui::BeginGroup();
+				const float statusTopY = centeredY(statusBlockH);
+				ImFont* statusFont = ImGui::GetFont();
+				// X tel que le texte (a l'echelle voulue) finisse pile au bord droit.
+				auto rightAlignX = [&](float scale, const char* s) {
+					return rightEdge - statusFont->CalcTextSizeA(fs * scale, FLT_MAX, 0.f, s).x;
+				};
+				const std::string latStr = tr("auth.shard_pick.latency_na");
+				ImGui::SetCursorPos(ImVec2(rightAlignX(0.85f, latStr.c_str()), statusTopY));
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.85f);
-				ImGui::TextUnformatted(tr("auth.shard_pick.latency_na").c_str());
+				ImGui::TextUnformatted(latStr.c_str());
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
 				const char* statKey = (vis == RowVis::Online) ? "auth.shard_pick.status_online"
 					: (vis == RowVis::Saturated) ? "auth.shard_pick.status_saturated" : "auth.shard_pick.status_offline";
 				const LnTheme::Rgba stCol =
 					(vis == RowVis::Online) ? LnTheme::kSuccess : (vis == RowVis::Saturated) ? LnTheme::kWarning : LnTheme::kErrorCol;
+				const std::string statStr = tr(statKey);
+				ImGui::SetCursorPos(ImVec2(rightAlignX(0.78f, statStr.c_str()), statusTopY + fs * 0.85f + sp));
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(stCol));
 				ImGui::SetWindowFontScale(0.78f);
-				ImGui::TextUnformatted(tr(statKey).c_str());
+				ImGui::TextUnformatted(statStr.c_str());
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
-				ImGui::EndGroup();
 
 				ImGui::SetCursorPos(ImVec2(0.f, 0.f));
 				char invId[48];

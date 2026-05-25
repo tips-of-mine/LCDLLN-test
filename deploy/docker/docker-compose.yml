@@ -126,6 +126,9 @@ services:
       - ./data/logs/shard:/app/logs
     environment:
       SHARD_REGISTER_ENDPOINT: ${SHARD_REGISTER_ENDPOINT:-127.0.0.1:3843}
+      SHARD_NAME: ${SHARD_NAME:-main-shard}
+      SHARD_MAX_CAPACITY: ${SHARD_MAX_CAPACITY:-500}
+      SHARD_BUILD_VERSION: ${SHARD_BUILD_VERSION:-docker-dev}
       SHARD_DISPLAY_NAME: ${SHARD_DISPLAY_NAME:-Royaume principal}
       SHARD_GAME_MODE: ${SHARD_GAME_MODE:-pve}
       SHARD_RULESET: ${SHARD_RULESET:-cooperative}
@@ -136,6 +139,9 @@ services:
       - >-
         exec /app/lcdlln_shard -log -console
         --shard.register.endpoint=$$SHARD_REGISTER_ENDPOINT
+        --shard.register.name="$$SHARD_NAME"
+        --shard.register.max_capacity=$$SHARD_MAX_CAPACITY
+        --shard.register.build_version="$$SHARD_BUILD_VERSION"
         --shard.register.display_name="$$SHARD_DISPLAY_NAME"
         --shard.register.game_mode=$$SHARD_GAME_MODE
         --shard.register.ruleset=$$SHARD_RULESET

@@ -653,21 +653,38 @@ namespace engine::client
 		stats.sentPackets = m_snapshotMessage.sentPackets;
 		stats.hasSnapshot = false;
 
+		// TD.1 — on n'extrait plus seulement le joueur local : on capture aussi les avatars
+		// distants (≠ joueur local) dans m_model.remoteEntities pour le rendu monde (TD.2).
+		// Reconstruction complète à chaque snapshot (le snapshot porte l'ensemble courant de
+		// l'AoI ; une entité absente du prochain snapshot disparaît donc naturellement).
+		m_model.remoteEntities.clear();
 		for (const engine::server::SnapshotEntity& entity : m_snapshotScratch)
 		{
-			if (entity.entityId != stats.playerEntityId)
+			if (entity.entityId == stats.playerEntityId)
 			{
+				stats.currentHealth = entity.state.currentHealth;
+				stats.maxHealth = entity.state.maxHealth;
+				stats.stateFlags = entity.state.stateFlags;
+				stats.positionX = entity.state.positionX;
+				stats.positionY = entity.state.positionY;
+				stats.positionZ = entity.state.positionZ;
+				stats.hasSnapshot = true;
 				continue;
 			}
 
-			stats.currentHealth = entity.state.currentHealth;
-			stats.maxHealth = entity.state.maxHealth;
-			stats.stateFlags = entity.state.stateFlags;
-			stats.positionX = entity.state.positionX;
-			stats.positionY = entity.state.positionY;
-			stats.positionZ = entity.state.positionZ;
-			stats.hasSnapshot = true;
-			break;
+			UIRemoteEntity remote;
+			remote.entityId = entity.entityId;
+			remote.positionX = entity.state.positionX;
+			remote.positionY = entity.state.positionY;
+			remote.positionZ = entity.state.positionZ;
+			remote.yawRadians = entity.state.yawRadians;
+			remote.velocityX = entity.state.velocityX;
+			remote.velocityY = entity.state.velocityY;
+			remote.velocityZ = entity.state.velocityZ;
+			remote.currentHealth = entity.state.currentHealth;
+			remote.maxHealth = entity.state.maxHealth;
+			remote.stateFlags = entity.state.stateFlags;
+			m_model.remoteEntities.push_back(remote);
 		}
 
 		if (m_model.targetStats.hasTarget)

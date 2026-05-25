@@ -285,6 +285,24 @@ namespace engine::client
 		std::vector<engine::server::ItemStack> rewardItems;
 	};
 
+	/// TD.1 — un avatar joueur/créature distant répliqué par l'AoI (≠ joueur local).
+	/// Rempli depuis les SnapshotEntity à chaque snapshot ; consommé par le rendu monde
+	/// (TD.2) et l'interpolation (TD.3).
+	struct UIRemoteEntity
+	{
+		engine::server::EntityId entityId = 0;
+		float positionX = 0.0f;
+		float positionY = 0.0f;
+		float positionZ = 0.0f;
+		float yawRadians = 0.0f;
+		float velocityX = 0.0f;
+		float velocityY = 0.0f;
+		float velocityZ = 0.0f;
+		uint32_t currentHealth = 0;
+		uint32_t maxHealth = 0;
+		uint32_t stateFlags = 0;
+	};
+
 	/// Pure data model consumed by UI views and debug panels.
 	struct UIModel
 	{
@@ -301,6 +319,9 @@ namespace engine::client
 		std::vector<UIActiveEmoteEntry> activeEmotes;
 		/// M32.2: Party member entries (up to 5), populated from PartyUpdate packets.
 		std::vector<UIPartyMemberEntry> partyMembers;
+		/// TD.1 : avatars distants (≠ joueur local) reçus dans le dernier snapshot AoI.
+		/// Reconstruit à chaque ApplySnapshot. Consommé par le rendu monde (TD.2).
+		std::vector<UIRemoteEntity> remoteEntities;
 		/// M32.2: True when the local player is currently in a party.
 		bool        inParty          = false;
 		/// M32.2: Human-readable loot mode label received in the last PartyUpdate (e.g. "FreeForAll").

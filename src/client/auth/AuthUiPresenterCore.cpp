@@ -24,7 +24,6 @@
 
 #include "src/client/render/AuthUiRenderer.h"
 
-#include "src/shared/core/DefaultClientEndpoints.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/network/NetClient.h"
 #include "src/shared/platform/FileSystem.h"
@@ -69,10 +68,6 @@ namespace engine::client
 		constexpr std::string_view kRegisterBackgroundPath = "ui/loading/background.png";
 		// Résolu par Window::ResolveUiImagePath : aussi sous game/data/ (voir FileSystem::ResolveContentPath).
 		constexpr std::string_view kRegisterInfoPath = "ui/register/info.png";
-
-		// URL portail reset (identique à external/external_links.json) ; la sonde statut utilise defaults::kStatusApiUrl.
-		constexpr std::string_view kProductionWebPortalResetUrl =
-			"https://lcdlln-portal.tips-of-mine.com/password-recovery";
 
 		std::string JsonBool(bool value)
 		{
@@ -354,12 +349,8 @@ namespace engine::client
 
 		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
 		{
-			const std::string fromCfg = cfg.GetString("client.web_portal_reset_url", "");
-			if (!fromCfg.empty())
-			{
-				return fromCfg;
-			}
-			return std::string(kProductionWebPortalResetUrl);
+			// Clé garantie présente via la table des endpoints (config/server.ini).
+			return cfg.GetString("client.web_portal_reset_url", "");
 		}
 
 		std::string ResolveStatusApiUrl(const engine::core::Config& cfg)
@@ -369,12 +360,8 @@ namespace engine::client
 			{
 				return authUiUrl;
 			}
-			const std::string fromLinks = cfg.GetString("client.status_api_url", "");
-			if (!fromLinks.empty())
-			{
-				return fromLinks;
-			}
-			return std::string(engine::core::defaults::kStatusApiUrl);
+			// Clé garantie présente via la table des endpoints (config/server.ini).
+			return cfg.GetString("client.status_api_url", "");
 		}
 
 		struct StatusHttpResponse
@@ -1247,7 +1234,7 @@ namespace engine::client
 		m_layoutAuthTitleCenterViewportWidth = cfg.GetBool("render.auth_ui.layout.title_center_viewport_width", true);
 		m_layoutAuthFieldRowExtraPx = static_cast<int32_t>(
 			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.field_row_extra_px", 0), 0, 64));
-		// URL de sonde "status" (defaults::kStatusApiUrl si non fourni par la config) au début de l'écran de connexion.
+		// URL de sonde "status" (client.status_api_url, via config/server.ini) au début de l'écran de connexion.
 		m_masterAvailabilityUrl = ResolveStatusApiUrl(cfg);
 		LOG_INFO(Core, "[StatusProbe] Init: URL statut maître = '{}'", m_masterAvailabilityUrl);
 		m_statusProbeInitialized = false;

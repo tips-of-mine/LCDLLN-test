@@ -3,9 +3,9 @@
 ///
 /// Résolution des valeurs (ordre de priorité décroissant) :
 ///   1. Ligne de commande CLI  (--clé=valeur, priorité maximale)
-///   2. Fichier JSON/INI chargé via LoadFromFile()
-///   3. Fichiers de liens externes (external/external_links.json, fusionnés en tant que défauts)
-///   4. Valeurs par défaut déclarées avec SetDefault()
+///   2. Endpoints serveur éditables (config/server.ini, à côté de l'exe)
+///   3. Fichier JSON/INI chargé via LoadFromFile() (config.json)
+///   4. Valeurs par défaut déclarées avec SetDefault() / table des endpoints
 ///
 /// Utilisation typique (serveur ou client) :
 /// @code
@@ -50,7 +50,7 @@ namespace engine::core
 		/// Load values from a JSON/INI file (returns false if file is missing/unreadable).
 		bool LoadFromFile(std::string_view filePath);
 
-		/// Fusionne un JSON aplati comme valeurs par défaut (sans écraser les clés déjà chargées) — ex. \c external/external_links.json.
+		/// Fusionne un JSON aplati comme valeurs par défaut (sans écraser les clés déjà chargées).
 		bool MergeDefaultsFromJsonFile(std::string_view filePath);
 
 		/// Apply CLI overrides of the form `--key=value` (highest priority).
@@ -63,7 +63,7 @@ namespace engine::core
 		std::string GetString(std::string_view key, std::string_view fallback = {}) const;
 
 		/// Hôte TCP maître : \c client.master_host, puis \c client.master_tcp_host, puis hôte extrait de \c client.status_api_url,
-		/// puis hôte extrait de l’URL de sonde embarquée (\c defaults::kStatusApiUrl), sinon \p fallback.
+		/// sinon \p fallback. Ces clés proviennent de \c config/server.ini (voir ServerEndpoints).
 		std::string GetEffectiveMasterHost(std::string_view fallback = "localhost") const;
 
 		/// Get an int64 value or return `fallback` if missing/not convertible.

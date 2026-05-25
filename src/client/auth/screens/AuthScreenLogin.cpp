@@ -3,7 +3,6 @@
 // Couche modèle : BuildModel_* peuple RenderModel, Update_* gère les entrées clavier hors ImGui, ImGui* reçoit les actions du renderer.
 #include "src/client/auth/AuthUi.h"
 #include "src/client/render/AuthUiRenderer.h"
-#include "src/shared/core/DefaultClientEndpoints.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/network/NetClient.h"
 #include "src/shared/platform/FileSystem.h"
@@ -22,17 +21,10 @@ namespace engine::client
 #if defined(_WIN32)
 namespace
 {
-	constexpr std::string_view kProductionWebPortalResetUrl =
-		"https://lcdlln-portal.tips-of-mine.com/password-recovery";
-
 	std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
 	{
-		const std::string fromCfg = cfg.GetString("client.web_portal_reset_url", "");
-		if (!fromCfg.empty())
-		{
-			return fromCfg;
-		}
-		return std::string(kProductionWebPortalResetUrl);
+		// Clé garantie présente via la table des endpoints (config/server.ini).
+		return cfg.GetString("client.web_portal_reset_url", "");
 	}
 } // namespace
 

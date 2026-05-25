@@ -407,7 +407,23 @@ namespace engine::network
 
 		result.success = true;
 		result.shard_id = targetShardId;
-		result.shard_endpoint = shardHost + ":" + std::to_string(static_cast<unsigned>(shardPort));
+		// TB.2 : l'endpoint renvoyé au client pour le gameplay UDP est l'udp_endpoint
+		// annoncé par le master (et NON le host:port TCP du ticket). Repli sur le TCP si
+		// le shard n'a pas annoncé d'endpoint UDP (compat). Même rewrite loopback→master
+		// (shard co-localisé) que pour la connexion TCP.
+		if (chosen != nullptr && !chosen->udp_endpoint.empty())
+		{
+			std::string udpHost;
+			uint16_t udpPort = 0;
+			ParseEndpoint(chosen->udp_endpoint, udpHost, udpPort);
+			if (IsLoopbackHost(udpHost) && !IsLoopbackHost(m_masterHost))
+				udpHost = m_masterHost;
+			result.shard_endpoint = udpHost + ":" + std::to_string(static_cast<unsigned>(udpPort));
+		}
+		else
+		{
+			result.shard_endpoint = shardHost + ":" + std::to_string(static_cast<unsigned>(shardPort));
+		}
 		LOG_INFO(Net, "[MasterShardClientFlow] Flow complete (shard_id={}, endpoint={}, characters={})",
 			result.shard_id, result.shard_endpoint, result.character_list.size());
 		return result;

@@ -35,7 +35,7 @@ namespace engine::network
 		/// \param game_mode mode de jeu annoncé (PvE/PvP).
 		/// \param ruleset règle annoncée (liste fermée).
 		/// \param region région annoncée (texte libre), exposée par l'API /status.
-		void SetShardIdentity(std::string name, std::string endpoint, uint32_t max_capacity, std::string build_version,
+		void SetShardIdentity(std::string name, std::string endpoint, std::string udp_endpoint, uint32_t max_capacity, std::string build_version,
 			std::string display_name = {}, ShardGameMode game_mode = ShardGameMode::PvE,
 			ShardRuleset ruleset = ShardRuleset::Cooperative, std::string region = {});
 
@@ -76,6 +76,7 @@ namespace engine::network
 		bool m_allow_insecure = false;
 		std::string m_name;
 		std::string m_endpoint;
+		std::string m_udp_endpoint; ///< TB.1: endpoint UDP gameplay annoncé au master.
 		uint32_t m_max_capacity = 0;
 		std::string m_build_version;
 		std::string m_display_name;

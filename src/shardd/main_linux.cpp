@@ -147,6 +147,8 @@ int main(int argc, char** argv)
 	const uint16_t masterPort = static_cast<uint16_t>(config.GetInt("shard.master.port", config.GetInt("shard.master_port", 3840)));
 	const std::string regName = config.GetString("shard.register.name", config.GetString("shard.register_name", "shard"));
 	const std::string regEndpoint = config.GetString("shard.register.endpoint", config.GetString("shard.register_endpoint", "127.0.0.1:3843"));
+	// TB.1 : endpoint UDP gameplay annoncé au master (relayé au client via SERVER_LIST). Vide = non annoncé.
+	const std::string regUdpEndpoint = config.GetString("shard.register.udp_endpoint", "");
 	const uint32_t regCap = static_cast<uint32_t>(config.GetInt("shard.register.max_capacity", config.GetInt("shard.register_max_capacity", 500)));
 	const std::string buildVer = config.GetString("shard.register.build_version", config.GetString("shard.build_version", "dev"));
 	// Présentation publique du serveur dans la liste client (M-server-meta).
@@ -168,7 +170,7 @@ int main(int argc, char** argv)
 	if (!masterTlsFp.empty())
 		toMaster.SetExpectedServerFingerprint(masterTlsFp);
 	toMaster.SetAllowInsecureDev(masterInsecure);
-	toMaster.SetShardIdentity(regName, regEndpoint, regCap, buildVer, regDisplayName, regGameMode, regRuleset, regRegion);
+	toMaster.SetShardIdentity(regName, regEndpoint, regUdpEndpoint, regCap, buildVer, regDisplayName, regGameMode, regRuleset, regRegion);
 	toMaster.SetHeartbeatIntervalSec(static_cast<int>(config.GetInt("shard.heartbeat_interval_sec", 10)));
 	toMaster.Start();
 	// TA.3 : boucle gameplay UDP (ServerApp) sur un thread dedie, gated par admittedRegistry.

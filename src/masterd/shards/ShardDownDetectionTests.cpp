@@ -37,7 +37,7 @@ static void TestEvictStaleHeartbeatsMarksOfflineAndInvokesCallback()
 
 	ShardRegistry reg;
 	auto t0 = std::chrono::steady_clock::now();
-	auto idOpt = reg.RegisterShard("s1", "ep1", 100, "eu");
+	auto idOpt = reg.RegisterShard("s1", "ep1", "", 100, "eu");
 	Assert(idOpt.has_value(), "RegisterShard returns id");
 	uint32_t shardId = *idOpt;
 
@@ -70,7 +70,7 @@ static void TestOnlineToDegradedWhenLoadAboveThreshold()
 
 	ShardRegistry reg;
 	reg.SetDegradedLoadThreshold(0.90);
-	auto idOpt = reg.RegisterShard("s1", "ep1", 100, "eu");
+	auto idOpt = reg.RegisterShard("s1", "ep1", "", 100, "eu");
 	Assert(idOpt.has_value(), "RegisterShard returns id");
 	uint32_t shardId = *idOpt;
 	// First heartbeat: Registering → Online
@@ -96,7 +96,7 @@ static void TestDegradedToOnlineWhenLoadBelowThreshold()
 
 	ShardRegistry reg;
 	reg.SetDegradedLoadThreshold(0.90);
-	auto idOpt = reg.RegisterShard("s1", "ep1", 100, "eu");
+	auto idOpt = reg.RegisterShard("s1", "ep1", "", 100, "eu");
 	Assert(idOpt.has_value(), "RegisterShard returns id");
 	uint32_t shardId = *idOpt;
 	reg.UpdateHeartbeat(shardId, 95);
@@ -121,7 +121,7 @@ static void TestDegradedToOfflineOnHeartbeatTimeout()
 	ShardRegistry reg;
 	reg.SetDegradedLoadThreshold(0.90);
 	auto t0 = std::chrono::steady_clock::now();
-	auto idOpt = reg.RegisterShard("s1", "ep1", 100, "eu");
+	auto idOpt = reg.RegisterShard("s1", "ep1", "", 100, "eu");
 	Assert(idOpt.has_value(), "RegisterShard returns id");
 	uint32_t shardId = *idOpt;
 	reg.UpdateHeartbeat(shardId, 95);
@@ -146,8 +146,8 @@ static void TestSelectShardExcludesDegraded()
 
 	ShardRegistry reg;
 	reg.SetDegradedLoadThreshold(0.90);
-	auto id1Opt = reg.RegisterShard("s1", "ep1", 100, "eu");
-	auto id2Opt = reg.RegisterShard("s2", "ep2", 100, "eu");
+	auto id1Opt = reg.RegisterShard("s1", "ep1", "", 100, "eu");
+	auto id2Opt = reg.RegisterShard("s2", "ep2", "", 100, "eu");
 	Assert(id1Opt.has_value() && id2Opt.has_value(), "Both shards registered");
 	uint32_t shard1 = *id1Opt;
 	uint32_t shard2 = *id2Opt;

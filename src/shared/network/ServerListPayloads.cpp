@@ -31,6 +31,8 @@ namespace engine::network
 				break;
 			if (!r.ReadString(e.endpoint))
 				break;
+			if (!r.ReadString(e.udp_endpoint)) // TB.1 (wire-breaking) : après endpoint TCP
+				break;
 			if (!r.ReadString(e.display_name))
 				break;
 			uint8_t modeByte = 0;
@@ -48,7 +50,7 @@ namespace engine::network
 	{
 		size_t total = 2u;
 		for (const auto& e : entries)
-			total += 4u + 1u + 4u + 4u + 4u + 2u + e.endpoint.size() + 2u + e.display_name.size() + 1u + 1u;
+			total += 4u + 1u + 4u + 4u + 4u + 2u + e.endpoint.size() + 2u + e.udp_endpoint.size() + 2u + e.display_name.size() + 1u + 1u;
 		if (total > kProtocolV1MaxPacketSize)
 			return {};
 		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
@@ -65,6 +67,8 @@ namespace engine::network
 			if (!w.WriteU32(e.current_load) || !w.WriteU32(e.max_capacity) || !w.WriteU32(e.character_count))
 				return {};
 			if (!w.WriteString(e.endpoint))
+				return {};
+			if (!w.WriteString(e.udp_endpoint)) // TB.1 (wire-breaking) : après endpoint TCP
 				return {};
 			const uint8_t modeByte = static_cast<uint8_t>(e.game_mode);
 			const uint8_t rulesetByte = static_cast<uint8_t>(e.ruleset);

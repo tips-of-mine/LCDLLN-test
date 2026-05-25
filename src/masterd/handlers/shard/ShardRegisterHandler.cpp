@@ -70,7 +70,7 @@ namespace engine::server
 
 		// --- Étape 2 : enregistrement dans le registre ----------------------------
 		// RegisterShard retourne nullopt si le nom est déjà présent (cas de reconnexion).
-		auto id = m_registry->RegisterShard(std::move(parsed->name), std::move(parsed->endpoint), parsed->max_capacity,
+		auto id = m_registry->RegisterShard(std::move(parsed->name), std::move(parsed->endpoint), std::move(parsed->udp_endpoint), parsed->max_capacity,
 			std::move(parsed->region), std::move(parsed->display_name), parsed->game_mode, parsed->ruleset);
 		LOG_DEBUG(Server, "[SREG] RegisterShard id={} (0=duplicate)", id ? *id : 0u);
 

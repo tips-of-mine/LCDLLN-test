@@ -42,11 +42,12 @@ namespace engine::network
 		m_allow_insecure = allow;
 	}
 
-	void ShardToMasterClient::SetShardIdentity(std::string name, std::string endpoint, uint32_t max_capacity, std::string build_version,
+	void ShardToMasterClient::SetShardIdentity(std::string name, std::string endpoint, std::string udp_endpoint, uint32_t max_capacity, std::string build_version,
 		std::string display_name, ShardGameMode game_mode, ShardRuleset ruleset, std::string region)
 	{
 		m_name = std::move(name);
 		m_endpoint = std::move(endpoint);
+		m_udp_endpoint = std::move(udp_endpoint);
 		m_max_capacity = max_capacity;
 		m_build_version = std::move(build_version);
 		m_display_name = display_name.empty() ? m_name : std::move(display_name);
@@ -117,7 +118,7 @@ LOG_DEBUG(Net, "[STMC] Pump state={} reconnect_in={}s", (int)m_state, (long long
 	void ShardToMasterClient::SendRegister()
 	{
 LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} mode={} ruleset={}", m_name.c_str(), m_display_name.c_str(), m_endpoint.c_str(), m_max_capacity, GameModeToken(m_game_mode), RulesetToken(m_ruleset));
-		auto payload = BuildShardRegisterPayload(m_name, m_endpoint, m_max_capacity, m_current_load, m_build_version,
+		auto payload = BuildShardRegisterPayload(m_name, m_endpoint, m_udp_endpoint, m_max_capacity, m_current_load, m_build_version,
 			m_display_name, m_game_mode, m_ruleset, m_region);
 		if (payload.empty())
 		{

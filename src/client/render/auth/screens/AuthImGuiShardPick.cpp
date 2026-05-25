@@ -5,6 +5,7 @@
 #include "src/client/render/LnTheme.h"
 
 #include "src/client/localization/LocalizationService.h"
+#include "src/shared/network/ServerListPayloads.h"
 
 #include <algorithm>
 #include <cctype>
@@ -34,23 +35,12 @@ namespace engine::render
 			return ImGui::ColorConvertFloat4ToU32(IV(c));
 		}
 
-		/// Extrait la partie hote d'un endpoint "host:port" ; retourne l'endpoint brut si aucun ':' n'est trouve.
-		std::string ShardEndpointHost(const std::string& endpoint)
+		/// Retourne la premiere lettre alphabetique (majuscule) d'une chaine (nom public
+		/// du serveur), utilisee comme avatar textuel dans la carte de shard. '?' si aucune.
+		/// On n'utilise PLUS l'endpoint ici : l'IP/port ne doit pas transparaitre dans l'UI.
+		char ShardInitialFromName(const std::string& name)
 		{
-			if (endpoint.empty())
-			{
-				return {};
-			}
-			const auto colon = endpoint.find(':');
-			return (colon == std::string::npos) ? endpoint : endpoint.substr(0u, colon);
-		}
-
-		/// Retourne la premiere lettre alphabetique (majuscule) de l'hote d'un endpoint, utilisee comme avatar textuel dans la carte de shard.
-		char ShardInitialFromEndpoint(const std::string& endpoint)
-		{
-			const std::string host = ShardEndpointHost(endpoint);
-			const std::string& scan = host.empty() ? endpoint : host;
-			for (unsigned char c : scan)
+			for (unsigned char c : name)
 			{
 				if (std::isalpha(c) != 0)
 				{
@@ -136,9 +126,8 @@ namespace engine::render
 		}
 		else
 		{
-			constexpr float kFlag = 50.f;
-			constexpr float kLoadW = 200.f;
-			constexpr float kPingW = 112.f;
+			constexpr float kFlag = 68.f;
+			constexpr float kLoadW = 240.f;
 			constexpr float kRowH = 114.f;
 
 			for (const auto& e : entries)
@@ -167,23 +156,26 @@ namespace engine::render
 					vis = RowVis::Saturated;
 				}
 
-				const std::string host = ShardEndpointHost(e.endpoint);
-				std::string nameUpper = host.empty()
-					? tr("auth.shard_pick.name_fallback", P{{"id", std::to_string(e.shard_id)}})
-					: host;
-				if (!host.empty())
+				// Nom public du serveur (texte) — remplace l'adresse IP en jaune. On
+				// n'affiche NI l'IP NI le port (information sensible) dans la liste.
+				const bool hasDisplayName = !e.display_name.empty();
+				std::string nameUpper = hasDisplayName
+					? e.display_name
+					: tr("auth.shard_pick.name_fallback", P{{"id", std::to_string(e.shard_id)}});
+				for (char& ch : nameUpper)
 				{
-					for (char& ch : nameUpper)
+					if (ch >= 'a' && ch <= 'z')
 					{
-						if (ch >= 'a' && ch <= 'z')
-						{
-							ch = static_cast<char>(ch - 'a' + 'A');
-						}
+						ch = static_cast<char>(ch - 'a' + 'A');
 					}
 				}
-				const char initialBuf[4] = {ShardInitialFromEndpoint(e.endpoint), '\0', '\0', '\0'};
+				const char initialBuf[4] = {ShardInitialFromName(nameUpper), '\0', '\0', '\0'};
+				// Sous-titre : pour un serveur hors-ligne on garde le message de maintenance ;
+				// sinon on n'affiche aucune adresse (descLine vide => ligne omise plus bas).
 				const std::string descLine =
-					e.endpoint.empty() ? tr("auth.shard_pick.desc_offline") : e.endpoint;
+					(e.endpoint.empty() && e.status != 1u && e.status != 2u)
+						? tr("auth.shard_pick.desc_offline")
+						: std::string{};
 
 				const ImVec4 borderCol = isSelected ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder);
 				const float dim = (rowSelectable || e.status == 2u) ? 1.f : 0.48f;
@@ -205,34 +197,85 @@ namespace engine::render
 				ImGui::PopStyleVar(2);
 				ImGui::PopStyleColor(2);
 
-				const float innerW = ImGui::GetContentRegionAvail().x;
-				const float textW = (std::max)(120.f, innerW - kFlag - 18.f - kLoadW - kPingW - 16.f);
+				// Geometrie de la ligne (V3) : drapeau agrandi + colonnes centrees
+				// verticalement dans la hauteur de cellule. Chaque colonne est placee en
+				// absolu (SetCursorPos) au lieu de SameLine : cela permet un centrage
+				// vertical independant par colonne et d'ancrer le statut a droite.
+				const ImVec2 cellStart = ImGui::GetCursorPos();
+				const float availW = ImGui::GetContentRegionAvail().x;
+				const float availH = ImGui::GetContentRegionAvail().y;
+				const float fs = ImGui::GetFontSize();
+				const float sp = ImGui::GetStyle().ItemSpacing.y;
 
-				ImGui::BeginGroup();
+				constexpr float kGapFlagName = 16.f;
+				constexpr float kGapNameLoad = 28.f;    ///< Espace nom <-> bloc charge.
+				constexpr float kGapLoadStatus = 24.f;  ///< Espace bloc charge <-> zone statut.
+				constexpr float kStatusReserve = 88.f;  ///< Largeur reservee a la zone statut (ancree a droite).
+				constexpr float kPadR = 4.f;            ///< Marge du statut au bord droit (au plus pres du bord).
+				constexpr float kBarH = 12.f;           ///< Hauteur de la barre de charge (agrandie).
+				constexpr float kInitFontPx = 32.f;     ///< Taille de l'initiale dans le drapeau.
+
+				// Bornes X des colonnes : statut ancre tout a droite, bloc charge a sa
+				// gauche (decale un peu vers la droite), nom occupe l'espace restant.
+				// Le nom n'est PAS tronque : il s'affiche en entier.
+				const float rightEdge = cellStart.x + availW - kPadR;
+				const float flagX = cellStart.x;
+				const float nameX = flagX + kFlag + kGapFlagName;
+				const float loadX = rightEdge - kStatusReserve - kGapLoadStatus - kLoadW;
+				const float nameW = (std::max)(80.f, loadX - kGapNameLoad - nameX);
+
+				// Offset Y de centrage vertical pour un bloc de hauteur \p blockH.
+				auto centeredY = [&](float blockH) {
+					return cellStart.y + (std::max)(0.f, (availH - blockH) * 0.5f);
+				};
+
+				// --- Drapeau : carre 68x68 + initiale agrandie, centre verticalement ----
+				ImGui::SetCursorPos(ImVec2(flagX, centeredY(kFlag)));
 				const ImVec2 flagP0 = ImGui::GetCursorScreenPos();
-				ImGui::Dummy(ImVec2(kFlag, kFlag));
-				const ImVec2 flagP1 = ImGui::GetItemRectMax();
+				const ImVec2 flagP1 = ImVec2(flagP0.x + kFlag, flagP0.y + kFlag);
 				ImDrawList* dl = ImGui::GetWindowDrawList();
-				dl->AddRectFilled(flagP0, flagP1, U32(LnTheme::kPanel), 4.f);
-				dl->AddRect(flagP0, flagP1, isSelected ? U32(LnTheme::kAccent) : U32(LnTheme::kBorder), 4.f, 0, 1.5f);
+				dl->AddRectFilled(flagP0, flagP1, U32(LnTheme::kPanel), 6.f);
+				dl->AddRect(flagP0, flagP1, isSelected ? U32(LnTheme::kAccent) : U32(LnTheme::kBorder), 6.f, 0, 1.5f);
 				{
-					const ImVec2 ts = ImGui::CalcTextSize(initialBuf);
-					dl->AddText(ImVec2(flagP0.x + (kFlag - ts.x) * 0.5f, flagP0.y + (kFlag - ts.y) * 0.5f), U32(LnTheme::kText), initialBuf);
+					ImFont* font = ImGui::GetFont();
+					const ImVec2 ts = font->CalcTextSizeA(kInitFontPx, FLT_MAX, 0.f, initialBuf);
+					dl->AddText(font, kInitFontPx,
+						ImVec2(flagP0.x + (kFlag - ts.x) * 0.5f, flagP0.y + (kFlag - ts.y) * 0.5f),
+						U32(LnTheme::kText), initialBuf);
 				}
-				ImGui::SameLine(0.f, 14.f);
+
+				// --- Colonne nom (nom + [desc] + mode + [event]), centree verticalement -
+				float nameBlockH = fs * 1.05f;
+				if (!descLine.empty())
+					nameBlockH += sp + fs * 0.82f;
+				nameBlockH += sp + fs * 0.76f;
+				if (e.character_count > 0u)
+					nameBlockH += sp + fs * 0.76f;
+				ImGui::SetCursorPos(ImVec2(nameX, centeredY(nameBlockH)));
 				ImGui::BeginGroup();
 				ImGui::PushStyleColor(ImGuiCol_Text, isSelected ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
 				ImGui::SetWindowFontScale(1.05f);
 				ImGui::TextUnformatted(nameUpper.c_str());
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
+				if (!descLine.empty())
+				{
+					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+					ImGui::SetWindowFontScale(0.82f);
+					ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + nameW);
+					ImGui::TextWrapped("%s", descLine.c_str());
+					ImGui::PopTextWrapPos();
+					ImGui::SetWindowFontScale(1.f);
+					ImGui::PopStyleColor();
+				}
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-				ImGui::SetWindowFontScale(0.82f);
-				ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + textW);
-				ImGui::TextWrapped("%s", descLine.c_str());
-				ImGui::PopTextWrapPos();
 				ImGui::SetWindowFontScale(0.76f);
-				const std::string modeLine = tr("auth.shard_pick.mode_default");
+				// Ligne « MODE  REGLE » construite a partir des enums (game_mode + ruleset),
+				// localisee. Remplace le texte « PvE  COOPERATIVE » fige. tr() prend un
+				// const char* -> on materialise les cles avant d'appeler .c_str().
+				const std::string modeKey = std::string("auth.shard_pick.mode.") + std::string(engine::network::GameModeToken(e.game_mode));
+				const std::string rulesetKey = std::string("auth.shard_pick.ruleset.") + std::string(engine::network::RulesetToken(e.ruleset));
+				const std::string modeLine = tr(modeKey.c_str()) + "  " + tr(rulesetKey.c_str());
 				ImGui::TextUnformatted(modeLine.c_str());
 				if (e.character_count > 0u)
 				{
@@ -245,11 +288,11 @@ namespace engine::render
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
 				ImGui::EndGroup();
-				ImGui::EndGroup();
 
-				ImGui::SameLine(0.f, 10.f);
+				// --- Colonne charge (label + barre 240x12 + ratio), centree verticalement
+				const float loadBlockH = fs * 0.72f + sp + kBarH + sp + fs * 0.78f;
+				ImGui::SetCursorPos(ImVec2(loadX, centeredY(loadBlockH)));
 				ImGui::BeginGroup();
-				ImGui::Dummy(ImVec2(kLoadW, 1.f));
 				const std::string loadLbl = tr("auth.shard_pick.load_line", P{{"percent", std::to_string(pct)}});
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.72f);
@@ -259,7 +302,7 @@ namespace engine::render
 				const LnTheme::Rgba barCol = (vis == RowVis::Offline) ? LnTheme::kMuted
 					: (vis == RowVis::Saturated) ? LnTheme::kWarning : LnTheme::kSuccess;
 				ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IV(barCol));
-				ImGui::ProgressBar(loadFrac, ImVec2(kLoadW, 6.f), "");
+				ImGui::ProgressBar(loadFrac, ImVec2(kLoadW, kBarH), "");
 				ImGui::PopStyleColor();
 				const std::string pl = tr("auth.shard_pick.players",
 					P{{"current", std::to_string(e.current_load)}, {"max", std::to_string(e.max_capacity)}});
@@ -270,24 +313,40 @@ namespace engine::render
 				ImGui::PopStyleColor();
 				ImGui::EndGroup();
 
-				ImGui::SameLine(0.f, 10.f);
-				ImGui::BeginGroup();
-				ImGui::Dummy(ImVec2(kPingW, 1.f));
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-				ImGui::SetWindowFontScale(0.85f);
-				ImGui::TextUnformatted(tr("auth.shard_pick.latency_na").c_str());
-				ImGui::SetWindowFontScale(1.f);
-				ImGui::PopStyleColor();
+				// --- Colonne statut : etat (EN LIGNE) + latence master EN DESSOUS --------
+				// Latence = aller-retour de la sonde /status (latence vers le master,
+				// donc commune a tous les serveurs) ; « -- ms » tant qu'elle n'est pas
+				// mesuree. Les deux lignes sont ancrees a droite.
+				ImFont* statusFont = ImGui::GetFont();
 				const char* statKey = (vis == RowVis::Online) ? "auth.shard_pick.status_online"
 					: (vis == RowVis::Saturated) ? "auth.shard_pick.status_saturated" : "auth.shard_pick.status_offline";
 				const LnTheme::Rgba stCol =
 					(vis == RowVis::Online) ? LnTheme::kSuccess : (vis == RowVis::Saturated) ? LnTheme::kWarning : LnTheme::kErrorCol;
+				const std::string statStr = tr(statKey);
+				const int latMs = (m_authPresenter != nullptr) ? m_authPresenter->GetStatusCache().latencyMs : -1;
+				const std::string latStr = (latMs >= 0)
+					? tr("auth.shard_pick.latency_ms", P{{"ms", std::to_string(latMs)}})
+					: tr("auth.shard_pick.latency_unknown");
+				const float statusBlockH = fs * 0.78f + sp + fs * 0.72f;
+				const float statusTopY = centeredY(statusBlockH);
+				// X tel que le texte (a l'echelle voulue) finisse pile au bord droit.
+				auto rightAlignX = [&](float scale, const char* s) {
+					return rightEdge - statusFont->CalcTextSizeA(fs * scale, FLT_MAX, 0.f, s).x;
+				};
+				// Ligne 1 : etat.
+				ImGui::SetCursorPos(ImVec2(rightAlignX(0.78f, statStr.c_str()), statusTopY));
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(stCol));
 				ImGui::SetWindowFontScale(0.78f);
-				ImGui::TextUnformatted(tr(statKey).c_str());
+				ImGui::TextUnformatted(statStr.c_str());
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
-				ImGui::EndGroup();
+				// Ligne 2 : latence master, sous l'etat, plus petite et discrete.
+				ImGui::SetCursorPos(ImVec2(rightAlignX(0.72f, latStr.c_str()), statusTopY + fs * 0.78f + sp));
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::SetWindowFontScale(0.72f);
+				ImGui::TextUnformatted(latStr.c_str());
+				ImGui::SetWindowFontScale(1.f);
+				ImGui::PopStyleColor();
 
 				ImGui::SetCursorPos(ImVec2(0.f, 0.f));
 				char invId[48];

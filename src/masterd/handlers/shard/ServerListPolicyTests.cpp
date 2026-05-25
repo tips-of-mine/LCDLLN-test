@@ -36,12 +36,17 @@ static void TestServerListReflectsRegistry()
 	engine::core::Log::Init(logSettings);
 
 	ShardRegistry reg;
-	auto id1 = reg.RegisterShard("s1", "ep1", 100, "eu");
+	auto id1 = reg.RegisterShard("s1", "ep1", 100, "eu", "Royaume Un",
+		engine::network::ShardGameMode::PvP, engine::network::ShardRuleset::Hardcore);
 	Assert(id1.has_value(), "Register s1");
 	reg.UpdateHeartbeat(*id1, 25);
 
 	auto list = reg.ListShards();
 	Assert(list.size() == 1u, "ListShards size 1");
+	Assert(list[0].display_name == "Royaume Un", "registry display_name");
+	Assert(list[0].region == "eu", "registry region");
+	Assert(list[0].game_mode == engine::network::ShardGameMode::PvP, "registry game_mode");
+	Assert(list[0].ruleset == engine::network::ShardRuleset::Hardcore, "registry ruleset");
 	std::vector<ServerListEntry> entries;
 	for (const auto& s : list)
 	{
@@ -52,6 +57,9 @@ static void TestServerListReflectsRegistry()
 		e.max_capacity = s.max_capacity;
 		e.character_count = 0;
 		e.endpoint = s.endpoint;
+		e.display_name = s.display_name;
+		e.game_mode = s.game_mode;
+		e.ruleset = s.ruleset;
 		entries.push_back(e);
 	}
 	auto payload = BuildServerListResponsePayload(entries);
@@ -62,6 +70,9 @@ static void TestServerListReflectsRegistry()
 	Assert(parsed[0].status == static_cast<uint8_t>(ShardState::Online), "entry status Online");
 	Assert(parsed[0].current_load == 25u, "entry current_load");
 	Assert(parsed[0].max_capacity == 100u, "entry max_capacity");
+	Assert(parsed[0].display_name == "Royaume Un", "entry display_name round-trip");
+	Assert(parsed[0].game_mode == engine::network::ShardGameMode::PvP, "entry game_mode round-trip");
+	Assert(parsed[0].ruleset == engine::network::ShardRuleset::Hardcore, "entry ruleset round-trip");
 
 	engine::core::Log::Shutdown();
 }

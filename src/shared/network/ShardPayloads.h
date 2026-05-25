@@ -1,6 +1,7 @@
 #pragma once
 
 #include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/network/ServerMeta.h"
 
 #include <cstdint>
 #include <optional>
@@ -10,14 +11,19 @@
 
 namespace engine::network
 {
-	/// Parsed SHARD_REGISTER payload: name, endpoint, max_capacity, current_load, build_version.
+	/// Parsed SHARD_REGISTER payload: name, endpoint, max_capacity, current_load,
+	/// build_version, plus présentation publique (display_name + game_mode + ruleset).
 	struct ShardRegisterPayload
 	{
-		std::string name;
+		std::string name;            ///< Identifiant technique unique (clé de dédup à la reconnexion).
 		std::string endpoint;
 		uint32_t max_capacity = 0;
 		uint32_t current_load = 0;
 		std::string build_version;
+		std::string display_name;    ///< Nom public affiché au joueur (ne PAS confondre avec name).
+		ShardGameMode game_mode = ShardGameMode::PvE;
+		ShardRuleset ruleset = ShardRuleset::Cooperative;
+		std::string region;          ///< Région annoncée (texte libre, ex. « eu-west »), exposée par l'API /status.
 	};
 
 	/// Parses SHARD_REGISTER payload. Returns nullopt if truncated or invalid.
@@ -25,7 +31,9 @@ namespace engine::network
 
 	/// Builds SHARD_REGISTER payload (Shard→Master).
 	std::vector<uint8_t> BuildShardRegisterPayload(std::string_view name, std::string_view endpoint,
-		uint32_t max_capacity, uint32_t current_load, std::string_view build_version);
+		uint32_t max_capacity, uint32_t current_load, std::string_view build_version,
+		std::string_view display_name = {}, ShardGameMode game_mode = ShardGameMode::PvE,
+		ShardRuleset ruleset = ShardRuleset::Cooperative, std::string_view region = {});
 
 	/// Parsed SHARD_REGISTER_OK payload: shard_id.
 	struct ShardRegisterOkPayload

@@ -14,9 +14,13 @@
     },
     "register": {
       "name": "main-shard",
+      "display_name": "Royaume principal",
       "endpoint": "127.0.0.1:3843",
       "max_capacity": 500,
-      "build_version": "docker-dev"
+      "build_version": "docker-dev",
+      "game_mode": "pve",
+      "ruleset": "cooperative",
+      "region": "eu-west"
     }
   },
   "log": {

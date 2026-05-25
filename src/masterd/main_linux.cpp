@@ -1225,12 +1225,22 @@ int main(int argc, char** argv)
 
 		auto appendServer = [&](std::string_view name, bool ok, uint32_t players,
 			std::string_view endpoint, std::string_view region, uint32_t maxCapacity, engine::server::ShardState state,
-			const engine::server::SessionCharacterMap::RoleCounts& byRole) {
+			const engine::server::SessionCharacterMap::RoleCounts& byRole,
+			std::string_view displayName, engine::network::ShardGameMode gameMode, engine::network::ShardRuleset ruleset) {
 			if (!serversJson.empty())
 				serversJson += ",";
 			serversJson += "{";
 			serversJson += "\"name\":\"";
 			serversJson += escapeJson(name);
+			serversJson += "\",";
+			serversJson += "\"display_name\":\"";
+			serversJson += escapeJson(displayName.empty() ? name : displayName);
+			serversJson += "\",";
+			serversJson += "\"game_mode\":\"";
+			serversJson += engine::network::GameModeToken(gameMode);
+			serversJson += "\",";
+			serversJson += "\"ruleset\":\"";
+			serversJson += engine::network::RulesetToken(ruleset);
 			serversJson += "\",";
 			serversJson += "\"ok\":";
 			serversJson += (ok ? "true" : "false");
@@ -1261,7 +1271,8 @@ int main(int argc, char** argv)
 
 		if (shards.empty())
 		{
-			appendServer("NO_SHARD", false, 0u, "", "", 0u, engine::server::ShardState::Offline, kNoRoleBreakdown);
+			appendServer("NO_SHARD", false, 0u, "", "", 0u, engine::server::ShardState::Offline, kNoRoleBreakdown,
+				"NO_SHARD", engine::network::ShardGameMode::PvE, engine::network::ShardRuleset::Cooperative);
 		}
 		else
 		{
@@ -1278,7 +1289,8 @@ int main(int argc, char** argv)
 					? static_cast<uint32_t>(playersFromMaster)
 					: s.current_load;
 				appendServer(s.name, ok, players, s.endpoint, s.region, s.max_capacity, s.state,
-					useMasterCount ? roleCounts : kNoRoleBreakdown);
+					useMasterCount ? roleCounts : kNoRoleBreakdown,
+					s.display_name.empty() ? s.name : s.display_name, s.game_mode, s.ruleset);
 			}
 		}
 

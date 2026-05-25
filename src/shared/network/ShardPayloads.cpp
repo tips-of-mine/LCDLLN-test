@@ -19,15 +19,33 @@ namespace engine::network
 			return std::nullopt;
 		if (!r.ReadString(out.build_version))
 			return std::nullopt;
+		// Présentation publique (M-server-meta). display_name + 2 octets enum.
+		if (!r.ReadString(out.display_name))
+			return std::nullopt;
+		uint8_t modeByte = 0;
+		uint8_t rulesetByte = 0;
+		if (!r.ReadBytes(&modeByte, 1) || !r.ReadBytes(&rulesetByte, 1))
+			return std::nullopt;
+		out.game_mode = ClampGameMode(modeByte);
+		out.ruleset = ClampRuleset(rulesetByte);
+		if (!r.ReadString(out.region))
+			return std::nullopt;
 		return out;
 	}
 
 	std::vector<uint8_t> BuildShardRegisterPayload(std::string_view name, std::string_view endpoint,
-		uint32_t max_capacity, uint32_t current_load, std::string_view build_version)
+		uint32_t max_capacity, uint32_t current_load, std::string_view build_version,
+		std::string_view display_name, ShardGameMode game_mode, ShardRuleset ruleset, std::string_view region)
 	{
 		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
 		ByteWriter w(buf.data(), buf.size());
 		if (!w.WriteString(name) || !w.WriteString(endpoint) || !w.WriteU32(max_capacity) || !w.WriteU32(current_load) || !w.WriteString(build_version))
+			return {};
+		const uint8_t modeByte = static_cast<uint8_t>(game_mode);
+		const uint8_t rulesetByte = static_cast<uint8_t>(ruleset);
+		if (!w.WriteString(display_name) || !w.WriteBytes(&modeByte, 1) || !w.WriteBytes(&rulesetByte, 1))
+			return {};
+		if (!w.WriteString(region))
 			return {};
 		buf.resize(w.Offset());
 		return buf;

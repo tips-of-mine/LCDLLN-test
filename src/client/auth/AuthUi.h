@@ -386,6 +386,10 @@ namespace engine::client
 			/// correspondance avec \ref engine::network::ServerListEntry::endpoint
 			/// pour rafraîchir le compteur de joueurs de l'écran de choix de serveur.
 			std::string endpoint;
+			/// Nom public affiché (champ \c display_name du /status). Repli sur name si vide.
+			std::string display_name;
+			engine::network::ShardGameMode game_mode = engine::network::ShardGameMode::PvE;
+			engine::network::ShardRuleset ruleset = engine::network::ShardRuleset::Cooperative;
 		};
 
 		struct StatusCache
@@ -395,6 +399,10 @@ namespace engine::client
 			uint32_t totalPlayers = 0;
 			std::vector<GameServerStatus> servers;
 			std::string infoMessage;
+			/// Latence mesuree (aller-retour HTTP de la sonde /status vers le master),
+			/// en millisecondes. -1 = inconnue (sonde non encore aboutie / en echec).
+			/// Valeur commune a tous les serveurs (c'est la latence vers le master).
+			int latencyMs = -1;
 		};
 
 		AuthUiPresenter() = default;

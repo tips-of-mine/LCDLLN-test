@@ -486,8 +486,11 @@ namespace engine::client
 						s.ok = statusCfg.GetBool(keyOk, true);
 						s.players = static_cast<uint32_t>(std::max<int64_t>(0, statusCfg.GetInt(keyPlayers, 0)));
 						s.endpoint = statusCfg.GetString(base + "endpoint", "");
-						LOG_INFO(Core, "[StatusProbe] parse: shard [{}] name='{}' ok={} players={} endpoint='{}'", i, s.name,
-							s.ok ? "true" : "false", s.players, s.endpoint);
+						s.display_name = statusCfg.GetString(base + "display_name", s.name);
+						s.game_mode = engine::network::ParseGameMode(statusCfg.GetString(base + "game_mode", "pve"));
+						s.ruleset = engine::network::ParseRuleset(statusCfg.GetString(base + "ruleset", "cooperative"));
+						LOG_INFO(Core, "[StatusProbe] parse: shard [{}] name='{}' display='{}' ok={} players={} endpoint='{}'", i, s.name,
+							s.display_name, s.ok ? "true" : "false", s.players, s.endpoint);
 						cache.servers.push_back(std::move(s));
 					}
 				}
@@ -1624,6 +1627,14 @@ namespace engine::client
 						entry.current_load = srv.players;
 						++patched;
 					}
+					// Repli : si l'entree SERVER_LIST n'a pas de nom public (vieux master),
+					// on complete depuis la sonde /status (presentation + mode/regle).
+					if (entry.display_name.empty() && !srv.display_name.empty())
+					{
+						entry.display_name = srv.display_name;
+						entry.game_mode = srv.game_mode;
+						entry.ruleset = srv.ruleset;
+					}
 					break;
 				}
 			}
@@ -2619,11 +2630,17 @@ namespace engine::client
 		m_worker = std::thread([this, url, timeoutMs]() {
 			LOG_INFO(Core, "[StatusProbe] thread réseau: GET en cours vers {}", url);
 			AsyncResult local{};
+			// Mesure de l'aller-retour HTTP (latence master affichee dans la liste des
+			// serveurs). On encadre uniquement l'appel reseau.
+			const auto httpT0 = std::chrono::steady_clock::now();
 #if defined(_WIN32)
 			const StatusHttpResponse resp = HttpGetStatusUrlWin32(url, timeoutMs);
 #else
 			const StatusHttpResponse resp = HttpGetStatusUrlCurl(url, timeoutMs);
 #endif
+			const auto httpT1 = std::chrono::steady_clock::now();
+			const int httpLatencyMs = static_cast<int>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(httpT1 - httpT0).count());
 
 			auto publishFailure = [&](std::string_view userMessage, std::string_view transportDetail) {
 				local.ready = true;
@@ -2666,9 +2683,12 @@ namespace engine::client
 				return;
 			}
 
+			// Latence master mesuree (ms) : renseignee seulement quand la sonde aboutit.
+			local.statusCache.latencyMs = httpLatencyMs;
 			local.ready = true;
 			local.success = true;
 			local.message = parseDetail;
+			LOG_INFO(Core, "[StatusProbe] latence master mesuree: {} ms", httpLatencyMs);
 			LOG_INFO(Core,
 				"[StatusProbe] succès — authOk={} masterOk={} shards={} totalJoueurs={} message='{}'",
 				local.statusCache.authOk ? "oui" : "non", local.statusCache.masterOk ? "oui" : "non", local.statusCache.servers.size(),

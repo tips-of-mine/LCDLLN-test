@@ -13,8 +13,10 @@ namespace engine::server
 	/// Protocol version accepted by the server skeleton.
 	/// Phase 3.7.5 — bump 1 → 2 : `HelloMessage::clientNonce` est passé de \c uint32 à \c uint64
 	/// pour transporter un \c character_id complet (BIGINT UNSIGNED) sans tronquer.
+	/// TC.1 — bump 2 → 3 : `InputMessage` gagne `positionMetersY` + `yawRadians` (le client
+	/// envoie désormais son altitude et son orientation, plus seulement X/Z).
 	/// Wire-breaking : client + shard doivent se déployer ensemble.
-	inline constexpr uint16_t kProtocolVersion = 2;
+	inline constexpr uint16_t kProtocolVersion = 3;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -200,7 +202,9 @@ namespace engine::server
 		uint32_t clientId = 0;
 		uint32_t inputSequence = 0;
 		float positionMetersX = 0.0f;
+		float positionMetersY = 0.0f; ///< TC.1 : altitude (terrain accidenté).
 		float positionMetersZ = 0.0f;
+		float yawRadians = 0.0f;      ///< TC.1 : orientation envoyée par le client.
 	};
 
 	/// Handshake acknowledgement emitted after a client is accepted.
@@ -343,6 +347,10 @@ namespace engine::server
 
 	/// Decode an input packet and validate the protocol header.
 	bool DecodeInput(std::span<const std::byte> packet, InputMessage& outMessage);
+
+	/// TC.1 — encode un INPUT (client→shard) : symétrique de DecodeInput. 24 octets de payload
+	/// (clientId, inputSequence, posX, posY, posZ, yaw).
+	std::vector<std::byte> EncodeInput(const InputMessage& message);
 
 	/// Read only the packet kind after validating the shared protocol header.
 	bool PeekMessageKind(std::span<const std::byte> packet, MessageKind& outKind);

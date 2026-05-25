@@ -212,7 +212,7 @@ namespace engine::server
 	bool DecodeInput(std::span<const std::byte> packet, InputMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
-		if (!DecodeHeader(packet, MessageKind::Input, payload) || payload.size() != 16)
+		if (!DecodeHeader(packet, MessageKind::Input, payload) || payload.size() != 24)
 		{
 			return false;
 		}
@@ -220,8 +220,23 @@ namespace engine::server
 		outMessage.clientId = ReadU32(payload, 0);
 		outMessage.inputSequence = ReadU32(payload, 4);
 		outMessage.positionMetersX = std::bit_cast<float>(ReadU32(payload, 8));
-		outMessage.positionMetersZ = std::bit_cast<float>(ReadU32(payload, 12));
+		outMessage.positionMetersY = std::bit_cast<float>(ReadU32(payload, 12));
+		outMessage.positionMetersZ = std::bit_cast<float>(ReadU32(payload, 16));
+		outMessage.yawRadians = std::bit_cast<float>(ReadU32(payload, 20));
 		return true;
+	}
+
+	std::vector<std::byte> EncodeInput(const InputMessage& message)
+	{
+		// TC.1 — payload 24 octets : clientId, inputSequence, posX, posY, posZ, yaw.
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Input, 24);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.inputSequence);
+		WriteU32(packet, std::bit_cast<uint32_t>(message.positionMetersX));
+		WriteU32(packet, std::bit_cast<uint32_t>(message.positionMetersY));
+		WriteU32(packet, std::bit_cast<uint32_t>(message.positionMetersZ));
+		WriteU32(packet, std::bit_cast<uint32_t>(message.yawRadians));
+		return packet;
 	}
 
 	bool PeekMessageKind(std::span<const std::byte> packet, MessageKind& outKind)

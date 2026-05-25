@@ -90,7 +90,6 @@
   "auth.shard_pick.ruleset.roleplay": "ROLEPLAY",
   "auth.shard_pick.load_line": "LOAD {percent} pct",
   "auth.shard_pick.players": "{current} / {max}",
-  "auth.shard_pick.latency_na": "-",
   "auth.shard_pick.status_online": "ONLINE",
   "auth.shard_pick.status_saturated": "SATURATED",
   "auth.shard_pick.status_offline": "OFFLINE",

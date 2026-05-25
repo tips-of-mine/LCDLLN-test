@@ -207,6 +207,7 @@ add_library(engine_core
   src/client/render/vk/VmaAllocator.cpp
   src/client/render/vk/VkUtils.cpp
   src/shared/core/Config.cpp
+  src/shared/core/ServerEndpoints.cpp
   src/shared/core/Profiler.cpp
   src/shared/core/jobs/JobSystem.cpp
   src/shared/core/Log.cpp
@@ -730,21 +731,23 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
   )
 endif()
 
-# Liens externes (défauts client : maître HTTPS / TCP / HTTP tunnel) — relatif à l’exe : external/external_links.json
-if(EXISTS "${CMAKE_SOURCE_DIR}/external/external_links.json")
+# Endpoints serveur (master TCP/HTTPS/HTTP tunnel, sonde, portail) — fichier
+# éditable embarqué à côté de l'exe : config/server.ini. Auto-recréé au lancement
+# s'il est absent (voir ServerEndpoints), mais on le livre dans l'artifact.
+if(EXISTS "${CMAKE_SOURCE_DIR}/config/server.ini")
   add_custom_command(TARGET engine_app POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:engine_app>/external"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:engine_app>/config"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/external/external_links.json"
-            "$<TARGET_FILE_DIR:engine_app>/external/external_links.json"
-    COMMENT "Copie de external/external_links.json..."
+            "${CMAKE_SOURCE_DIR}/config/server.ini"
+            "$<TARGET_FILE_DIR:engine_app>/config/server.ini"
+    COMMENT "Copie de config/server.ini..."
   )
   add_custom_command(TARGET world_editor_app POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:world_editor_app>/external"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:world_editor_app>/config"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/external/external_links.json"
-            "$<TARGET_FILE_DIR:world_editor_app>/external/external_links.json"
-    COMMENT "Copie de external/external_links.json à côté de lcdlln_world_editor.exe..."
+            "${CMAKE_SOURCE_DIR}/config/server.ini"
+            "$<TARGET_FILE_DIR:world_editor_app>/config/server.ini"
+    COMMENT "Copie de config/server.ini à côté de lcdlln_world_editor.exe..."
   )
 endif()
 
@@ -793,8 +796,8 @@ endif()
 if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
   install(FILES "${CMAKE_SOURCE_DIR}/config.json" DESTINATION .)
 endif()
-if(EXISTS "${CMAKE_SOURCE_DIR}/external/external_links.json")
-  install(FILES "${CMAKE_SOURCE_DIR}/external/external_links.json" DESTINATION external)
+if(EXISTS "${CMAKE_SOURCE_DIR}/config/server.ini")
+  install(FILES "${CMAKE_SOURCE_DIR}/config/server.ini" DESTINATION config)
 endif()
 
 # M19.2: Protocol v1 serialization unit tests
@@ -1579,13 +1582,13 @@ if(WIN32)
       COMMENT "Copie des DLL OpenSSL à côté de client_flow_app.exe..."
     )
   endif()
-  if(EXISTS "${CMAKE_SOURCE_DIR}/external/external_links.json")
+  if(EXISTS "${CMAKE_SOURCE_DIR}/config/server.ini")
     add_custom_command(TARGET client_flow_app POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:client_flow_app>/external"
+      COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:client_flow_app>/config"
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-              "${CMAKE_SOURCE_DIR}/external/external_links.json"
-              "$<TARGET_FILE_DIR:client_flow_app>/external/external_links.json"
-      COMMENT "Copie de external/external_links.json (client_flow_app)..."
+              "${CMAKE_SOURCE_DIR}/config/server.ini"
+              "$<TARGET_FILE_DIR:client_flow_app>/config/server.ini"
+      COMMENT "Copie de config/server.ini (client_flow_app)..."
     )
   endif()
 endif()

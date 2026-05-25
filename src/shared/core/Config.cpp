@@ -1,6 +1,6 @@
 #include "src/shared/core/Config.h"
 
-#include "src/shared/core/DefaultClientEndpoints.h"
+#include "src/shared/core/ServerEndpoints.h"
 
 #include <algorithm>
 #include <cmath>
@@ -501,13 +501,19 @@ namespace engine::core
 		cfg.SetDefault("log.console", true);
 
 		cfg.LoadFromFile(filePath);
-		(void)cfg.MergeDefaultsFromJsonFile("external/external_links.json");
+
+		// Endpoints serveur (master / portail / sonde) : fichier dédié et éditable,
+		// embarqué dans l'artifact, pour basculer prod / préprod / dev sans recompiler.
+		// Auto-créé avec les valeurs par défaut s'il est absent, puis chargé (il prime
+		// sur config.json pour ces clés). ApplyServerEndpointDefaults garantit qu'aucune
+		// clé ne manque même si le fichier sur disque est ancien.
 		const auto exeDir = ExecutableDirectory();
-		if (!exeDir.empty())
-		{
-			const std::filesystem::path besideExe = exeDir / "external" / "external_links.json";
-			(void)cfg.MergeDefaultsFromJsonFile(besideExe.string());
-		}
+		const std::filesystem::path serverEndpointsPath =
+			(exeDir.empty() ? std::filesystem::path("config") : exeDir / "config") / "server.ini";
+		(void)EnsureServerEndpointsFile(serverEndpointsPath);
+		cfg.LoadFromFile(serverEndpointsPath.string());
+		ApplyServerEndpointDefaults(cfg);
+
 		cfg.ApplyCli(argc, argv);
 		return cfg;
 	}
@@ -691,10 +697,6 @@ namespace engine::core
 		}
 		const std::string statusUrl = GetString("client.status_api_url", "");
 		if (const auto h = HostFromAbsoluteHttpUrl(statusUrl))
-		{
-			return *h;
-		}
-		if (const auto h = HostFromAbsoluteHttpUrl(defaults::kStatusApiUrl))
 		{
 			return *h;
 		}

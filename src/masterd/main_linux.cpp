@@ -990,7 +990,7 @@ int main(int argc, char** argv)
 	shardTicketHandler.SetConnectionSessionMap(&connSessionMap);
 	shardTicketHandler.SetAccountStore(accountStore);
 	shardTicketHandler.SetTermsRepository(&termsRepository);
-	shardTicketHandler.SetSecret(config.GetString("shard.ticket_hmac_secret", ""));
+	shardTicketHandler.SetSessionCharacterMap(&sessionCharMap); shardTicketHandler.SetSecret(config.GetString("shard.ticket_hmac_secret", ""));
 	shardTicketHandler.SetValiditySec(static_cast<int>(config.GetInt("shard.ticket_validity_sec", 60)));
 	engine::server::ServerListHandler serverListHandler;
 	serverListHandler.SetServer(&server);

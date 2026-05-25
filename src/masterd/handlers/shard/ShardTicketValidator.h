@@ -15,6 +15,7 @@ namespace engine::server
 	{
 		uint64_t account_id = 0;
 		uint32_t target_shard_id = 0;
+		uint64_t character_id = 0; ///< TA.3 : personnage lié au ticket (0 = aucun). Authentifié par HMAC.
 	};
 
 	/// Validates and consumes shard tickets (one-time use). Thread-safe.

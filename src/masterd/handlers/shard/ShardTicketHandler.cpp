@@ -5,6 +5,7 @@
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/account/AccountStore.h"
 #include "src/masterd/handlers/terms/TermsRepository.h"
+#include "src/masterd/session/SessionCharacterMap.h"
 #include "src/masterd/handlers/shard/ShardTicketCrypto.h"
 #include "src/shared/network/ShardTicketPayloads.h"
 #include "src/shared/network/ProtocolV1Constants.h"
@@ -116,8 +117,17 @@ namespace engine::server
 		uint64_t now_sec = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(
 			std::chrono::system_clock::now().time_since_epoch()).count());
 		uint64_t expires_at = now_sec + static_cast<uint64_t>(m_validity_sec);
+		// TA.3 : lie le ticket au personnage actif de la connexion (peuplé à l'EnterWorld).
+		// Si le client n'a pas encore fait EnterWorld, character_id reste 0 → le shard
+		// refusera le Hello (fail-closed) plutôt que de laisser usurper un personnage.
+		uint64_t character_id = 0;
+		if (m_charMap != nullptr)
+		{
+			if (auto info = m_charMap->GetByConnId(connId))
+				character_id = info->characterId;
+		}
 		std::array<uint8_t, engine::network::kShardTicketHmacSize> hmac{};
-		if (!ComputeTicketHmac(ticket_id.data(), ticket_id.size(), *accountOpt, req->target_shard_id, expires_at,
+		if (!ComputeTicketHmac(ticket_id.data(), ticket_id.size(), *accountOpt, req->target_shard_id, expires_at, character_id,
 			m_secret, hmac.data(), hmac.size()))
 		{
 			LOG_ERROR(Core, "[ShardTicketHandler] ComputeTicketHmac failed (connId={})", connId);
@@ -126,7 +136,7 @@ namespace engine::server
 				m_server->Send(connId, pkt);
 			return;
 		}
-		auto ticketPayload = BuildShardTicketPayload(ticket_id, *accountOpt, req->target_shard_id, expires_at, hmac.data(), hmac.size());
+		auto ticketPayload = BuildShardTicketPayload(ticket_id, *accountOpt, req->target_shard_id, expires_at, character_id, hmac.data(), hmac.size());
 		if (ticketPayload.empty())
 		{
 			LOG_ERROR(Core, "[ShardTicketHandler] BuildShardTicketPayload failed (connId={})", connId);

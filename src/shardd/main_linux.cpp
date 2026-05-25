@@ -8,6 +8,7 @@
 #include "src/masterd/handlers/shard/ShardTicketHandshakeHandler.h"
 #include "src/shardd/world/AdmittedCharacterRegistry.h"
 #include "src/shared/server_bootstrap/ServerApp.h"
+#include "src/shared/db/ConnectionPool.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/network/ShardToMasterClient.h"
 #include "src/shared/core/Config.h"
@@ -174,6 +175,19 @@ int main(int argc, char** argv)
 	// Cohabite avec la stack TCP ticket + heartbeat + runtimes (ports/protocoles distincts).
 	engine::server::ServerApp gameplayApp(config);
 	gameplayApp.SetAdmittedCharacterRegistry(&admittedRegistry);
+	// TA.4 : pont position — pool MySQL (meme base que le master, cles db.* du config).
+	// Injecte dans ServerApp pour lire characters.spawn_x/y/z au HandleHello. DB non
+	// configuree => Init false => spawn depuis le fichier (pont inactif, non bloquant).
+	engine::server::db::ConnectionPool characterDbPool;
+	if (characterDbPool.Init(config))
+	{
+		gameplayApp.SetCharacterDbPool(&characterDbPool);
+		LOG_INFO(Net, "[ShardMain] Pont position DB actif (spawn depuis characters)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ShardMain] DB non configuree — spawn depuis fichier (pont position TA.4 inactif)");
+	}
 	std::thread gameplayThread;
 	if (gameplayApp.Init())
 	{
@@ -393,7 +407,7 @@ int main(int argc, char** argv)
 		gameplayApp.RequestStop();
 		gameplayThread.join();
 	}
-	LOG_INFO(Net, "[ShardMain] Shutdown");
+	characterDbPool.Shutdown(); LOG_INFO(Net, "[ShardMain] Shutdown");
 	healthEndpoint.Shutdown();
 	engine::core::Log::Shutdown();
 	return 0;

@@ -208,6 +208,7 @@ namespace engine::server
 	};
 
 	class AdmittedCharacterRegistry;
+	namespace db { class ConnectionPool; }
 
 	/// Headless authoritative server skeleton with fixed ticks, replication and minimal combat.
 	class ServerApp final
@@ -237,6 +238,11 @@ namespace engine::server
 		/// registre appartient à l'appelant (shardd/main_linux) et doit survivre à ServerApp.
 		void SetAdmittedCharacterRegistry(AdmittedCharacterRegistry* registry) { m_admittedRegistry = registry; }
 
+		/// TA.4 : pool MySQL (même base que le master) d'où lire la position de spawn
+		/// (table characters) au HandleHello. Optionnel : absent → spawn depuis le fichier
+		/// (build Windows ou DB non configurée). Possédé par l'appelant.
+		void SetCharacterDbPool(db::ConnectionPool* pool) { m_characterDbPool = pool; }
+
 		/// M35.1 — add currency to a connected player (caps enforced).
 		bool TryAddCurrency(uint32_t clientId, uint8_t currencyId, uint64_t amount, std::string& outError);
 
@@ -265,6 +271,12 @@ namespace engine::server
 
 		/// Handle one protocol packet coming from a client endpoint.
 		void ProcessPacket(const Datagram& datagram);
+
+		/// TA.4 : lit la position de spawn (table characters, écrite par le master) pour
+		/// \a characterId via m_characterDbPool. Renvoie true + remplit x/y/z/yawDeg si trouvé.
+		/// Renvoie false si pas de pool, DB non configurée, ou personnage absent (le caller
+		/// garde alors la position fichier). Corps réel sous ENGINE_HAS_MYSQL (sinon no-op).
+		bool LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg);
 
 		/// Accept a new client or refresh an existing handshake.
 		/// Phase 3.7.5 — \p helloNonce élargi à uint64 (character_id complet).
@@ -783,6 +795,10 @@ namespace engine::server
 		/// saut max 50 m). Suit les vrais joueurs sur le thread gameplay.
 		anticheat::AntiCheatGameplay m_antiCheat;
 		uint64_t m_antiCheatViolations = 0;
+
+		/// TA.4 : pool MySQL pour le pont position (optionnel, possédé par l'appelant). Voir
+		/// SetCharacterDbPool / LoadSpawnFromDb.
+		db::ConnectionPool* m_characterDbPool = nullptr;
 
 		/// Per-player chat send rate limiting (M29.1).
 		engine::net::ChatRateLimiter m_chatRateLimiter;

@@ -8,6 +8,17 @@
 #include "src/shardd/world/AdmittedCharacterRegistry.h"
 #include "src/shared/network/ServerProtocol.h"
 
+// TA.4 — pont position : compilé uniquement pour la cible shard Linux (SHARD_POSITION_DB),
+// pas pour le build Windows (ServerApp.cpp est partagé). Macro dédié plutôt qu'ENGINE_HAS_MYSQL
+// pour ne PAS basculer les autres systèmes gameplay du shard en mode DB.
+#if defined(SHARD_POSITION_DB)
+#	include "src/shared/db/ConnectionPool.h"
+#	include "src/shared/db/DbHelpers.h"
+#	include <mysql.h>
+#	include <cstdio>
+#	include <cstdlib>
+#endif
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -849,6 +860,46 @@ namespace engine::server
 		LOG_WARN(Net, "[ServerApp] Dropped invalid packet from {}", UdpTransport::EndpointToString(datagram.endpoint));
 	}
 
+	bool ServerApp::LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg)
+	{
+#if defined(SHARD_POSITION_DB)
+		if (m_characterDbPool == nullptr || characterId == 0u)
+		{
+			return false;
+		}
+		auto guard = m_characterDbPool->Acquire();
+		MYSQL* mysql = guard.get();
+		if (mysql == nullptr)
+		{
+			return false;
+		}
+		char sql[256];
+		std::snprintf(sql, sizeof(sql),
+			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg FROM characters "
+			"WHERE id = %llu AND deleted_at IS NULL",
+			static_cast<unsigned long long>(characterId));
+		MYSQL_RES* res = db::DbQuery(mysql, sql);
+		if (res == nullptr)
+		{
+			return false;
+		}
+		bool found = false;
+		if (MYSQL_ROW row = mysql_fetch_row(res))
+		{
+			x = row[0] ? std::strtof(row[0], nullptr) : 0.0f;
+			y = row[1] ? std::strtof(row[1], nullptr) : 0.0f;
+			z = row[2] ? std::strtof(row[2], nullptr) : 0.0f;
+			yawDeg = row[3] ? std::strtof(row[3], nullptr) : 0.0f;
+			found = true;
+		}
+		db::DbFreeResult(res);
+		return found;
+#else
+		(void)characterId; (void)x; (void)y; (void)z; (void)yawDeg;
+		return false;
+#endif
+	}
+
 	void ServerApp::HandleHello(const Endpoint& endpoint, uint64_t helloNonce)
 	{
 		// Phase 3.7.5 — tentativeCharacterKey élargi à uint64. Fallback sur m_nextClientId
@@ -958,6 +1009,25 @@ namespace engine::server
 				"[ServerApp] Character state defaults active (client_id={}, character_key={})",
 				acceptedClient.clientId,
 				acceptedClient.persistenceCharacterKey);
+		}
+
+		// TA.4 — pont position : la table `characters` (écrite par le master via
+		// CharacterSavePositionHandler) fait foi pour le spawn. On surcharge la position
+		// issue du fichier/défauts par spawn_x/y/z de la DB. Sans pool (build Windows ou
+		// DB non configurée) ou personnage absent, LoadSpawnFromDb renvoie false et on
+		// conserve la position fichier. Avant UpdateClientInterest (qui place l'AoI).
+		{
+			float dbX = 0.0f, dbY = 0.0f, dbZ = 0.0f, dbYawDeg = 0.0f;
+			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg))
+			{
+				acceptedClient.positionMetersX = dbX;
+				acceptedClient.positionMetersY = dbY;
+				acceptedClient.positionMetersZ = dbZ;
+				acceptedClient.yawRadians = dbYawDeg * 0.01745329252f; // deg -> rad
+				LOG_INFO(Net,
+					"[ServerApp] Spawn position chargee depuis la DB (character_key={}, pos=({:.2f}, {:.2f}, {:.2f}))",
+					acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ);
+			}
 		}
 
 		std::vector<QuestProgressDelta> questSyncDeltas;

@@ -916,6 +916,9 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/event/EventRuntime.cpp
+    # TA.4 : accès MySQL pour le pont position (lecture characters.spawn_x/y/z).
+    ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
   )
   # TA.2 link en mode FICHIER (sans MySQL), strictement la config gameplay prouvee
   # linkable du bloc WIN32 `server_app`. CharacterPersistence est fichier-only
@@ -923,8 +926,13 @@ elseif(UNIX)
   # pas le pont position et basculerait FriendSystem & co. en backend DB (friction
   # de link inutile a ce stade). Le branchement MySQL (T0.2) qui fait reellement le
   # pont position (spawn_x/y/z) est introduit en **TA.4**.
-  target_include_directories(shard_app PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(shard_app PRIVATE engine_core OpenSSL::SSL pthread)
+  # TA.4 : T0.2 = MySQL — le shard lit characters.spawn_x/y/z (même base que le master).
+  # SHARD_POSITION_DB (et NON ENGINE_HAS_MYSQL) : n'active que le pont position dans
+  # ServerApp, sans basculer les autres systèmes gameplay du shard en mode DB (ils restent
+  # en mode fichier, config TA.2 prouvée linkable).
+  target_include_directories(shard_app PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
+  target_compile_definitions(shard_app PRIVATE SHARD_POSITION_DB=1)
+  target_link_libraries(shard_app PRIVATE engine_core OpenSSL::SSL pthread ${MYSQL_LIBRARY})
   target_compile_options(shard_app PRIVATE -Wall -Wextra -Wpedantic)
   set_target_properties(shard_app PROPERTIES
     OUTPUT_NAME "lcdlln_shard"

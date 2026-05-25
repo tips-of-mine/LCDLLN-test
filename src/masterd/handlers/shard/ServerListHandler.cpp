@@ -62,6 +62,9 @@ namespace engine::server
 				e.max_capacity = s.max_capacity;
 				e.character_count = m_characterCountHook ? m_characterCountHook(s.shard_id) : 0u;
 				e.endpoint = s.endpoint;
+				e.display_name = s.display_name.empty() ? s.name : s.display_name;
+				e.game_mode = s.game_mode;
+				e.ruleset = s.ruleset;
 				entries.push_back(e);
 			}
 		}
@@ -91,6 +94,9 @@ namespace engine::server
 					? m_characterCountHook(m_serverRegistry->GetServerId()) : 0u;
 				self.endpoint        = m_serverRegistry->GetHost() + ":"
 					                 + std::to_string(m_serverRegistry->GetPort());
+				self.display_name    = m_serverRegistry->GetName();
+				self.game_mode       = engine::network::ShardGameMode::PvE;
+				self.ruleset         = engine::network::ShardRuleset::Cooperative;
 				entries.push_back(std::move(self));
 			}
 			else

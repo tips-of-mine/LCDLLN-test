@@ -5,6 +5,7 @@
 #include "src/client/render/LnTheme.h"
 
 #include "src/client/localization/LocalizationService.h"
+#include "src/shared/network/ServerListPayloads.h"
 
 #include <algorithm>
 #include <cctype>
@@ -34,23 +35,12 @@ namespace engine::render
 			return ImGui::ColorConvertFloat4ToU32(IV(c));
 		}
 
-		/// Extrait la partie hote d'un endpoint "host:port" ; retourne l'endpoint brut si aucun ':' n'est trouve.
-		std::string ShardEndpointHost(const std::string& endpoint)
+		/// Retourne la premiere lettre alphabetique (majuscule) d'une chaine (nom public
+		/// du serveur), utilisee comme avatar textuel dans la carte de shard. '?' si aucune.
+		/// On n'utilise PLUS l'endpoint ici : l'IP/port ne doit pas transparaitre dans l'UI.
+		char ShardInitialFromName(const std::string& name)
 		{
-			if (endpoint.empty())
-			{
-				return {};
-			}
-			const auto colon = endpoint.find(':');
-			return (colon == std::string::npos) ? endpoint : endpoint.substr(0u, colon);
-		}
-
-		/// Retourne la premiere lettre alphabetique (majuscule) de l'hote d'un endpoint, utilisee comme avatar textuel dans la carte de shard.
-		char ShardInitialFromEndpoint(const std::string& endpoint)
-		{
-			const std::string host = ShardEndpointHost(endpoint);
-			const std::string& scan = host.empty() ? endpoint : host;
-			for (unsigned char c : scan)
+			for (unsigned char c : name)
 			{
 				if (std::isalpha(c) != 0)
 				{
@@ -167,23 +157,26 @@ namespace engine::render
 					vis = RowVis::Saturated;
 				}
 
-				const std::string host = ShardEndpointHost(e.endpoint);
-				std::string nameUpper = host.empty()
-					? tr("auth.shard_pick.name_fallback", P{{"id", std::to_string(e.shard_id)}})
-					: host;
-				if (!host.empty())
+				// Nom public du serveur (texte) — remplace l'adresse IP en jaune. On
+				// n'affiche NI l'IP NI le port (information sensible) dans la liste.
+				const bool hasDisplayName = !e.display_name.empty();
+				std::string nameUpper = hasDisplayName
+					? e.display_name
+					: tr("auth.shard_pick.name_fallback", P{{"id", std::to_string(e.shard_id)}});
+				for (char& ch : nameUpper)
 				{
-					for (char& ch : nameUpper)
+					if (ch >= 'a' && ch <= 'z')
 					{
-						if (ch >= 'a' && ch <= 'z')
-						{
-							ch = static_cast<char>(ch - 'a' + 'A');
-						}
+						ch = static_cast<char>(ch - 'a' + 'A');
 					}
 				}
-				const char initialBuf[4] = {ShardInitialFromEndpoint(e.endpoint), '\0', '\0', '\0'};
+				const char initialBuf[4] = {ShardInitialFromName(nameUpper), '\0', '\0', '\0'};
+				// Sous-titre : pour un serveur hors-ligne on garde le message de maintenance ;
+				// sinon on n'affiche aucune adresse (descLine vide => ligne omise plus bas).
 				const std::string descLine =
-					e.endpoint.empty() ? tr("auth.shard_pick.desc_offline") : e.endpoint;
+					(e.endpoint.empty() && e.status != 1u && e.status != 2u)
+						? tr("auth.shard_pick.desc_offline")
+						: std::string{};
 
 				const ImVec4 borderCol = isSelected ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder);
 				const float dim = (rowSelectable || e.status == 2u) ? 1.f : 0.48f;
@@ -226,13 +219,24 @@ namespace engine::render
 				ImGui::TextUnformatted(nameUpper.c_str());
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
+				if (!descLine.empty())
+				{
+					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+					ImGui::SetWindowFontScale(0.82f);
+					ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + textW);
+					ImGui::TextWrapped("%s", descLine.c_str());
+					ImGui::PopTextWrapPos();
+					ImGui::SetWindowFontScale(1.f);
+					ImGui::PopStyleColor();
+				}
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-				ImGui::SetWindowFontScale(0.82f);
-				ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + textW);
-				ImGui::TextWrapped("%s", descLine.c_str());
-				ImGui::PopTextWrapPos();
 				ImGui::SetWindowFontScale(0.76f);
-				const std::string modeLine = tr("auth.shard_pick.mode_default");
+				// Ligne « MODE  REGLE » construite a partir des enums (game_mode + ruleset),
+				// localisee. Remplace le texte « PvE  COOPERATIVE » fige.
+				const std::string modeLine =
+					tr(std::string("auth.shard_pick.mode.") + std::string(engine::network::GameModeToken(e.game_mode)))
+					+ "  "
+					+ tr(std::string("auth.shard_pick.ruleset.") + std::string(engine::network::RulesetToken(e.ruleset)));
 				ImGui::TextUnformatted(modeLine.c_str());
 				if (e.character_count > 0u)
 				{

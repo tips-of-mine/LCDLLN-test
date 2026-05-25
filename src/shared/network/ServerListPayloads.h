@@ -1,5 +1,7 @@
 #pragma once
 
+#include "src/shared/network/ServerMeta.h"
+
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -15,7 +17,10 @@ namespace engine::network
 		uint32_t current_load = 0;
 		uint32_t max_capacity = 0;
 		uint32_t character_count = 0; ///< Optional, from hook (M20/M21); 0 if not provided.
-		std::string endpoint;          ///< M22.6: shard address (e.g. host:port) for CONNECT SHARD.
+		std::string endpoint;          ///< M22.6: shard address (host:port) for CONNECT SHARD. Sert à se connecter, NE PAS afficher au joueur.
+		std::string display_name;      ///< Nom public du serveur (texte). Remplace l'IP dans la liste client.
+		ShardGameMode game_mode = ShardGameMode::PvE; ///< PvE / PvP (remplace « PvE » figé).
+		ShardRuleset ruleset = ShardRuleset::Cooperative; ///< Règle (remplace « COOPERATIVE » figé).
 	};
 
 	/// Parses SERVER_LIST_RESPONSE payload. Returns empty vector if invalid.

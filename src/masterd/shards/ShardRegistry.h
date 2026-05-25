@@ -1,5 +1,7 @@
 #pragma once
 
+#include "src/shared/network/ServerMeta.h"
+
 #include <chrono>
 #include <cstdint>
 #include <functional>
@@ -24,13 +26,16 @@ namespace engine::server
 	struct ShardInfo
 	{
 		uint32_t shard_id = 0;
-		std::string name;
+		std::string name;          ///< Identifiant technique unique (clé interne).
 		std::string endpoint;
 		std::string region;
 		uint32_t max_capacity = 0;
 		uint32_t current_load = 0;
 		std::chrono::steady_clock::time_point last_heartbeat{};
 		ShardState state = ShardState::Registering;
+		std::string display_name;  ///< Nom public affiché (repli sur name si vide à l'enregistrement).
+		engine::network::ShardGameMode game_mode = engine::network::ShardGameMode::PvE;
+		engine::network::ShardRuleset ruleset = engine::network::ShardRuleset::Cooperative;
 	};
 
 	/// In-memory shard registry (Master source of truth). Optional persistence by caller (e.g. to shards table).
@@ -44,7 +49,13 @@ namespace engine::server
 		ShardRegistry& operator=(const ShardRegistry&) = delete;
 
 		/// Registers a new shard (state Registering). Returns shard_id or nullopt if name duplicate.
-		std::optional<uint32_t> RegisterShard(std::string name, std::string endpoint, uint32_t max_capacity, std::string region = {});
+		/// \param display_name nom public affiché ; si vide, on retombe sur \p name.
+		/// \param game_mode mode de jeu annoncé (PvE/PvP).
+		/// \param ruleset règle annoncée (liste fermée).
+		std::optional<uint32_t> RegisterShard(std::string name, std::string endpoint, uint32_t max_capacity,
+			std::string region = {}, std::string display_name = {},
+			engine::network::ShardGameMode game_mode = engine::network::ShardGameMode::PvE,
+			engine::network::ShardRuleset ruleset = engine::network::ShardRuleset::Cooperative);
 
 		/// Updates last_heartbeat (and optionally current_load). If state was Registering, transitions to Online.
 		/// Returns true if shard exists and was updated.
@@ -87,6 +98,9 @@ namespace engine::server
 			uint32_t current_load = 0;
 			std::chrono::steady_clock::time_point last_heartbeat{};
 			ShardState state = ShardState::Registering;
+			std::string display_name;
+			engine::network::ShardGameMode game_mode = engine::network::ShardGameMode::PvE;
+			engine::network::ShardRuleset ruleset = engine::network::ShardRuleset::Cooperative;
 		};
 		mutable std::mutex m_mutex;
 		std::unordered_map<uint32_t, Entry> m_shards;

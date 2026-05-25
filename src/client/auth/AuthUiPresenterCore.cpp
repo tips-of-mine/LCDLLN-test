@@ -486,8 +486,11 @@ namespace engine::client
 						s.ok = statusCfg.GetBool(keyOk, true);
 						s.players = static_cast<uint32_t>(std::max<int64_t>(0, statusCfg.GetInt(keyPlayers, 0)));
 						s.endpoint = statusCfg.GetString(base + "endpoint", "");
-						LOG_INFO(Core, "[StatusProbe] parse: shard [{}] name='{}' ok={} players={} endpoint='{}'", i, s.name,
-							s.ok ? "true" : "false", s.players, s.endpoint);
+						s.display_name = statusCfg.GetString(base + "display_name", s.name);
+						s.game_mode = engine::network::ParseGameMode(statusCfg.GetString(base + "game_mode", "pve"));
+						s.ruleset = engine::network::ParseRuleset(statusCfg.GetString(base + "ruleset", "cooperative"));
+						LOG_INFO(Core, "[StatusProbe] parse: shard [{}] name='{}' display='{}' ok={} players={} endpoint='{}'", i, s.name,
+							s.display_name, s.ok ? "true" : "false", s.players, s.endpoint);
 						cache.servers.push_back(std::move(s));
 					}
 				}
@@ -1623,6 +1626,14 @@ namespace engine::client
 					{
 						entry.current_load = srv.players;
 						++patched;
+					}
+					// Repli : si l'entree SERVER_LIST n'a pas de nom public (vieux master),
+					// on complete depuis la sonde /status (presentation + mode/regle).
+					if (entry.display_name.empty() && !srv.display_name.empty())
+					{
+						entry.display_name = srv.display_name;
+						entry.game_mode = srv.game_mode;
+						entry.ruleset = srv.ruleset;
 					}
 					break;
 				}

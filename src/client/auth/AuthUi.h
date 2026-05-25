@@ -386,6 +386,10 @@ namespace engine::client
 			/// correspondance avec \ref engine::network::ServerListEntry::endpoint
 			/// pour rafraîchir le compteur de joueurs de l'écran de choix de serveur.
 			std::string endpoint;
+			/// Nom public affiché (champ \c display_name du /status). Repli sur name si vide.
+			std::string display_name;
+			engine::network::ShardGameMode game_mode = engine::network::ShardGameMode::PvE;
+			engine::network::ShardRuleset ruleset = engine::network::ShardRuleset::Cooperative;
 		};
 
 		struct StatusCache

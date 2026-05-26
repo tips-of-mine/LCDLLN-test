@@ -4837,6 +4837,9 @@ namespace engine
 												// Chantier B : dessine les props statiques (coffre, etc.) par-dessus le GBuffer.
 												RecordPropsGeometry(cmd, reg, rs);
 
+												// TD.2 : dessine les avatars des joueurs distants (réplication AoI).
+												RecordRemoteAvatars(cmd, reg, rs);
+
 												// M100 — Task 12 : drawcall terrain chunk (post-Phase-3a).
 												// Dessine les chunks visibles qui ont terrain.bin + splat.bin
 												// dans une passe de chargement (loadOp=LOAD) après la geometry
@@ -9495,6 +9498,47 @@ namespace engine
 		}
 	}
 
+	void Engine::RecordRemoteAvatars(VkCommandBuffer cmd, engine::render::Registry& reg,
+	                                 const engine::RenderState& rs)
+	{
+		if (!m_pipeline) return;
+		const std::vector<engine::client::UIRemoteEntity>& remotes = m_uiModelBinding.GetModel().remoteEntities;
+		if (remotes.empty()) return;
+		engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
+		if (mesh == nullptr || mesh->vertexBuffer == VK_NULL_HANDLE || mesh->indexBuffer == VK_NULL_HANDLE) return;
+		auto& geom = m_pipeline->GetGeometryPass();
+		// loadOp=LOAD requis pour se superposer au GBuffer (terrain + avatar + props) sans clear.
+		if (!geom.HasLoadPass()) return;
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		const uint32_t materialIndex = (m_avatarMaterialId != 0u)
+			? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex();
+		for (const engine::client::UIRemoteEntity& re : remotes)
+		{
+			// TD.3 : position lissée (interpolation, cf. UpdateGameplayNet) ; repli sur la
+			// position snapshot brute si pas encore d'état lissé (graceful).
+			float px = re.positionX, py = re.positionY, pz = re.positionZ, yaw = re.yawRadians;
+			const auto sit = m_remoteSmoothed.find(re.entityId);
+			if (sit != m_remoteSmoothed.end() && sit->second.valid)
+			{
+				px = sit->second.x; py = sit->second.y; pz = sit->second.z; yaw = sit->second.yaw;
+			}
+			// Pieds au sol : le serveur réplique la position « centre capsule » comme pour
+			// l'avatar local (feetPos = ccPos.y - 0.9). Même offset ici pour la cohérence.
+			const engine::math::Mat4 model =
+				engine::math::Mat4::Translate(engine::math::Vec3{ px, py - 0.9f, pz }) *
+				engine::math::Mat4::RotateY(yaw);
+			geom.Record(
+				m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+				m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+				rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
+				0u,
+				materialCache.GetDescriptorSet(),
+				model.m,
+				materialIndex,
+				true);
+		}
+	}
+
 	void Engine::OnResize(int w, int h)
 	{
     	LOG_INFO(Platform, "[Resize] OnResize");
@@ -9747,6 +9791,37 @@ namespace engine
 				const engine::math::Vec3 avatarPos = m_characterController.GetPosition();
 				(void)m_gameplayUdp.SendInput(clientId, ++m_gameplayInputSeq,
 					avatarPos.x, avatarPos.y, avatarPos.z, m_avatarYaw);
+			}
+		}
+
+		// TD.3 — lissage exponentiel des positions des avatars distants vers la cible
+		// snapshot (~10 Hz) pour un rendu fluide entre snapshots. RecordRemoteAvatars lit
+		// ces valeurs (et retombe sur la position snapshot brute si une entité manque ici).
+		{
+			const std::vector<engine::client::UIRemoteEntity>& remotes = m_uiModelBinding.GetModel().remoteEntities;
+			const float k = std::clamp(deltaSeconds * 12.0f, 0.0f, 1.0f); // ~0.1-0.2 s pour converger
+			for (const engine::client::UIRemoteEntity& re : remotes)
+			{
+				RemoteAvatarSmoothed& s = m_remoteSmoothed[re.entityId];
+				if (!s.valid)
+				{
+					s.x = re.positionX; s.y = re.positionY; s.z = re.positionZ; s.yaw = re.yawRadians; s.valid = true;
+				}
+				else
+				{
+					s.x += (re.positionX - s.x) * k;
+					s.y += (re.positionY - s.y) * k;
+					s.z += (re.positionZ - s.z) * k;
+					s.yaw += (re.yawRadians - s.yaw) * k;
+				}
+			}
+			// Purge des entités sorties d'AoI (borne la map ; erase renvoie l'itérateur suivant).
+			for (auto it = m_remoteSmoothed.begin(); it != m_remoteSmoothed.end(); )
+			{
+				bool present = false;
+				for (const engine::client::UIRemoteEntity& re : remotes)
+					if (re.entityId == it->first) { present = true; break; }
+				if (present) ++it; else it = m_remoteSmoothed.erase(it);
 			}
 		}
 

@@ -740,6 +740,13 @@ namespace engine
 		/// GBuffer terrain/avatar). No-op si pas de props ou pas de load pass.
 		void RecordPropsGeometry(VkCommandBuffer cmd, engine::render::Registry& reg,
 		                         const engine::RenderState& rs);
+		/// TD.2 — dessine les avatars des joueurs distants (m_uiModelBinding remoteEntities)
+		/// dans la passe Geometry, un GeometryPass.Record par entité avec le mesh placeholder
+		/// (m_geometryMeshHandle), à leur position/orientation réseau. Path instancié éprouvé
+		/// (identique aux props) — évite le SkinnedRenderer (anneau 3 slots). No-op si aucune
+		/// entité distante / pas de mesh / pas de load pass.
+		void RecordRemoteAvatars(VkCommandBuffer cmd, engine::render::Registry& reg,
+		                         const engine::RenderState& rs);
 		/// Action en cours de remappage dans le panneau Options (capture clavier) :
 		/// 0 = aucune, 1 = sprint, 2 = crouch, 3 = sort. Tant que != 0, le panneau
 		/// attend une touche ; le bloc gameplay est suspendu (panneau Options ouvert).
@@ -790,6 +797,12 @@ namespace engine
 		float                                                     m_avatarYaw = 3.14159265f;
 		uint32_t m_gameplayInputSeq = 0;         ///< TC.2 : séquence monotone des Input UDP.
 		float    m_gameplayInputAccumSec = 0.0f; ///< TC.2 : accumulateur de cadence d'envoi.
+		/// TD.3 : position lissée d'un avatar distant (interpolation exponentielle vers la
+		/// cible snapshot, mise à jour par frame dans UpdateGameplayNet).
+		struct RemoteAvatarSmoothed { float x = 0.0f; float y = 0.0f; float z = 0.0f; float yaw = 0.0f; bool valid = false; };
+		/// TD.3 : positions lissées par EntityId. Si une entité n'y figure pas, le rendu
+		/// (RecordRemoteAvatars) retombe sur sa position snapshot brute (graceful).
+		std::unordered_map<engine::server::EntityId, RemoteAvatarSmoothed> m_remoteSmoothed;
 		engine::gameplay::MoveInput                               m_lastMoveInput{};
 
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).

@@ -293,6 +293,13 @@ namespace engine::server
 		/// Phase 3.7.5 — \p helloNonce élargi à uint64 (character_id complet).
 		void HandleHello(const Endpoint& endpoint, uint64_t helloNonce);
 
+		/// TA.3 — Retraite les Hellos en attente d'admission. Appelé au début de chaque
+		/// TickOnce : pour chaque entrée du buffer, si le registry indique maintenant
+		/// l'admission, on rappelle HandleHello (l'admission ayant été poussée entre temps
+		/// par le master via kOpcodeMasterToShardAdmitCharacter). Entrées expirées (TTL)
+		/// supprimées silencieusement.
+		void DrainPendingHellos();
+
 		/// Record the last input sequence for a connected client.
 		void HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersY, float positionMetersZ, float yawRadians);
 
@@ -834,6 +841,25 @@ namespace engine::server
 		/// TA.3 : gate de session UDP (optionnel, possédé par l'appelant). Voir
 		/// SetAdmittedCharacterRegistry.
 		AdmittedCharacterRegistry* m_admittedRegistry = nullptr;
+
+		/// TA.3 — race condition Hello/Admit : le Hello UDP du client peut arriver au shard
+		/// AVANT que le push d'admission TCP du master n'ait été traité (master émet le push
+		/// puis répond au client ; UDP client→shard est souvent plus court que TCP master→shard
+		/// par bufferisation). Sans buffer, le Hello est rejeté et le client ne réessaie pas.
+		/// On garde donc en attente, pour un court TTL, les Hellos rejetés pour cause
+		/// « not admitted » ; à chaque tick on les retraite si l'admission est devenue valide.
+		/// Réécrit uniquement depuis le thread gameplay (HandleHello + DrainPendingHellos),
+		/// pas besoin de mutex (le registry sous-jacent est thread-safe).
+		struct PendingHello
+		{
+			Endpoint endpoint{};
+			uint64_t characterKey = 0;
+			uint64_t arrivedAtMs = 0;
+		};
+		std::vector<PendingHello> m_pendingHellos;
+		/// TTL ms d'un Hello en attente. Au-delà, on abandonne (l'admission n'est pas arrivée).
+		/// 5 s suffisent largement vs la latence master→shard (typiquement < 100 ms).
+		static constexpr uint64_t kPendingHelloTtlMs = 5000u;
 
 		/// TA.3c : anti-triche mouvement (speed/teleport) sur les positions reçues en
 		/// Input. Détecteur header-only seedé à la config V1 par défaut (7.5 m/s * 1.5,

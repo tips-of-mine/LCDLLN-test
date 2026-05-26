@@ -86,6 +86,9 @@ namespace engine::server
 				if (s.name == name)
 				{
 					m_registry->UpdateHeartbeat(s.shard_id, current_load);
+					// TA.3 : memorise la nouvelle connId du shard (re-register implique souvent
+					// une nouvelle connexion TCP) pour les push master->shard (AdmitCharacter).
+					m_registry->SetShardConnection(s.shard_id, connId);
 					auto pkt = BuildShardRegisterOkPacket(s.shard_id, requestId);
 					if (!pkt.empty() && m_server->Send(connId, pkt))
 					{
@@ -106,6 +109,8 @@ namespace engine::server
 		// --- Étape 3 : mise à jour du heartbeat et envoi de la réponse OK ----------
 		// Le premier UpdateHeartbeat fait passer l'état de Registering → Online.
 		m_registry->UpdateHeartbeat(*id, current_load);
+		// TA.3 : memorise la connId du shard pour les push master->shard (AdmitCharacter).
+		m_registry->SetShardConnection(*id, connId);
 		auto pkt = BuildShardRegisterOkPacket(*id, requestId);
 		if (!pkt.empty() && m_server->Send(connId, pkt))
 		{

@@ -172,6 +172,18 @@ int main(int argc, char** argv)
 	toMaster.SetAllowInsecureDev(masterInsecure);
 	toMaster.SetShardIdentity(regName, regEndpoint, regUdpEndpoint, regCap, buildVer, regDisplayName, regGameMode, regRuleset, regRegion);
 	toMaster.SetHeartbeatIntervalSec(static_cast<int>(config.GetInt("shard.heartbeat_interval_sec", 10)));
+	// TA.3 — admet (account_id, character_id) dans le registre dès que le master pousse
+	// kOpcodeMasterToShardAdmitCharacter (suite à un EnterWorld réussi côté master). Sans
+	// ce câblage, le Hello UDP du client (clientNonce=character_id) serait rejeté car le
+	// ticket TCP avait été émis avant le choix de perso (character_id=0 → non admis).
+	toMaster.SetAdmitCharacterCallback([&admittedRegistry](uint64_t account_id, uint64_t character_id) {
+		const std::uint64_t nowMs = static_cast<std::uint64_t>(
+			std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now().time_since_epoch()).count());
+		admittedRegistry.Admit(character_id, account_id, nowMs);
+		LOG_INFO(Net, "[ShardMain] Admit pushed by master (account_id={}, character_id={}, nowMs={})",
+			account_id, character_id, nowMs);
+	});
 	toMaster.Start();
 	// TA.3 : boucle gameplay UDP (ServerApp) sur un thread dedie, gated par admittedRegistry.
 	// Cohabite avec la stack TCP ticket + heartbeat + runtimes (ports/protocoles distincts).

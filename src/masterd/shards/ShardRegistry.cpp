@@ -251,4 +251,21 @@ LOG_DEBUG(Server, "[SREG_REG] EvictStaleHeartbeats timeout={}s marked={}", timeo
 		info.ruleset = best->ruleset;
 		return info;
 	}
+
+	void ShardRegistry::SetShardConnection(uint32_t shard_id, uint32_t connId)
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		if (m_shards.find(shard_id) == m_shards.end())
+			return; // shard inconnu (race avec un evict ?). On ignore plutôt qu'insérer un fantôme.
+		m_shard_connections[shard_id] = connId;
+	}
+
+	std::optional<uint32_t> ShardRegistry::GetShardConnection(uint32_t shard_id) const
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		auto it = m_shard_connections.find(shard_id);
+		if (it == m_shard_connections.end())
+			return std::nullopt;
+		return it->second;
+	}
 }

@@ -4,10 +4,12 @@
 #include "src/shared/network/CharacterPayloads.h"
 #include "src/shared/network/ErrorPacket.h"
 #include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/network/ShardPayloads.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/shared/network/NetServer.h"
 #include "src/masterd/session/SessionCharacterMap.h"
 #include "src/masterd/session/SessionManager.h"
+#include "src/masterd/shards/ShardRegistry.h"
 #include "src/masterd/account/AccountRole.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
@@ -15,6 +17,7 @@
 #include <mysql.h>
 
 #include <cstdio>
+#include <cstdlib>
 #include <string>
 
 namespace engine::server
@@ -24,6 +27,7 @@ namespace engine::server
 	void CharacterEnterWorldHandler::SetConnectionSessionMap(ConnectionSessionMap* map) { m_connMap = map; }
 	void CharacterEnterWorldHandler::SetSessionCharacterMap(SessionCharacterMap* charMap) { m_charMap = charMap; }
 	void CharacterEnterWorldHandler::SetConnectionPool(engine::server::db::ConnectionPool* pool) { m_pool = pool; }
+	void CharacterEnterWorldHandler::SetShardRegistry(ShardRegistry* registry) { m_shardRegistry = registry; }
 
 	void CharacterEnterWorldHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize)
@@ -74,17 +78,19 @@ namespace engine::server
 			return;
 		}
 
-		// Vérifie ownership : SELECT name FROM characters WHERE id=? AND account_id=? AND deleted_at IS NULL.
+		// Vérifie ownership : SELECT name, server_id FROM characters WHERE id=? AND account_id=? AND deleted_at IS NULL.
 		// On compare ensuite le name DB au name client byte-pour-byte (rejette toute imposture
-		// comme un sender qui claim un autre nom que celui en DB).
+		// comme un sender qui claim un autre nom que celui en DB). TA.3 : server_id sert au
+		// lookup du shard cible pour le push d'admission.
 		char queryBuf[256]{};
 		std::snprintf(queryBuf, sizeof(queryBuf),
-			"SELECT name FROM characters WHERE id = %llu AND account_id = %llu AND deleted_at IS NULL",
+			"SELECT name, server_id FROM characters WHERE id = %llu AND account_id = %llu AND deleted_at IS NULL",
 			static_cast<unsigned long long>(parsed->characterId),
 			static_cast<unsigned long long>(*accountId));
 
 		MYSQL_RES* res = engine::server::db::DbQuery(mysql, queryBuf);
 		std::string dbName;
+		uint32_t dbServerId = 0;
 		bool found = false;
 		if (res)
 		{
@@ -92,6 +98,8 @@ namespace engine::server
 			if (row && row[0])
 			{
 				dbName = row[0];
+				if (row[1])
+					dbServerId = static_cast<uint32_t>(std::strtoul(row[1], nullptr, 10));
 				found = true;
 			}
 			engine::server::db::DbFreeResult(res);
@@ -141,6 +149,39 @@ namespace engine::server
 		m_charMap->Set(connId, parsed->characterId, parsed->characterName, normalized, accountRole);
 		LOG_INFO(Net, "[CharacterEnterWorldHandler] registered (account_id={}, character_id={}, name='{}')",
 			*accountId, parsed->characterId, parsed->characterName);
+
+		// TA.3 — push d'admission au shard. Sans ça, le client envoie son Hello UDP avec
+		// `clientNonce=character_id`, mais le shard l'a admis au handshake TCP avec
+		// `character_id=0` (le ticket avait été demandé AVANT le choix de perso), donc rejet.
+		// Le push réutilise la connexion TCP long-vivante établie par ShardToMasterClient.
+		if (m_shardRegistry != nullptr && dbServerId != 0u)
+		{
+			auto shardConnId = m_shardRegistry->GetShardConnection(dbServerId);
+			if (shardConnId)
+			{
+				auto admitPkt = engine::network::BuildAdmitCharacterPacket(*accountId, parsed->characterId);
+				if (!admitPkt.empty() && m_server->Send(*shardConnId, admitPkt))
+				{
+					LOG_INFO(Net, "[CharacterEnterWorldHandler] admit push sent (shard_id={}, shardConnId={}, account_id={}, character_id={})",
+						dbServerId, *shardConnId, *accountId, parsed->characterId);
+				}
+				else
+				{
+					LOG_WARN(Net, "[CharacterEnterWorldHandler] admit push send FAILED (shard_id={}, shardConnId={}, account_id={}, character_id={})",
+						dbServerId, *shardConnId, *accountId, parsed->characterId);
+				}
+			}
+			else
+			{
+				LOG_WARN(Net, "[CharacterEnterWorldHandler] admit push skipped: no shard connection (shard_id={}, account_id={}, character_id={})",
+					dbServerId, *accountId, parsed->characterId);
+			}
+		}
+		else if (m_shardRegistry == nullptr)
+		{
+			LOG_WARN(Net, "[CharacterEnterWorldHandler] admit push skipped: ShardRegistry not configured (account_id={}, character_id={})",
+				*accountId, parsed->characterId);
+		}
 
 		auto pkt = BuildCharacterEnterWorldResponsePacket(1u, requestId, sessionIdHeader);
 		if (!pkt.empty())

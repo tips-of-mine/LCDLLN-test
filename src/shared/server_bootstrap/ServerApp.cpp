@@ -1229,17 +1229,27 @@ namespace engine::server
 		// TA.3c — anti-triche : rejette une position implausible (speed/teleport hack)
 		// AVANT de l'appliquer ; on conserve alors la dernière position valide. TC.1 : l'Input
 		// porte désormais Y → on l'utilise pour la distance 3D.
+		//
+		// On utilise inputSequence (et non steady_clock serveur) comme source de temps. Raison :
+		// quand plusieurs paquets UDP arrivent dans la même tick serveur (burst de réception
+		// — courant en UDP même en flux nominal, notamment sous mode TG.3 thread receive split),
+		// ils sont processés en séquence avec des steady_clock_now() quasi identiques.
+		// dt(steady_clock) ≈ 0 ms → vitesse calculée énorme → faux positif SpeedHack alors que
+		// le client a bien envoyé ses inputs à cadence normale. inputSequence est en revanche
+		// stable : 1 unité = 1 tick client = 1000/m_tickHz ms (m_tickHz partagé avec le client
+		// via le Welcome packet ; client et serveur tiquent au même rythme).
 		{
-			const uint64_t antiCheatNowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
-				std::chrono::steady_clock::now().time_since_epoch()).count());
+			const uint16_t tickHzSafe = (m_tickHz != 0u) ? m_tickHz : static_cast<uint16_t>(20);  // fallback defensif si Init n'a pas tourne
+			const uint64_t clientTickPeriodMs = 1000u / static_cast<uint64_t>(tickHzSafe);
+			const uint64_t antiCheatNowMs = static_cast<uint64_t>(inputSequence) * clientTickPeriodMs;
 			const anticheat::CheatVerdict verdict = m_antiCheat.CheckMovement(
 				client->persistenceCharacterKey, positionMetersX, positionMetersY, positionMetersZ, antiCheatNowMs);
 			if (verdict != anticheat::CheatVerdict::OK)
 			{
 				++m_antiCheatViolations;
 				LOG_WARN(AntiCheat,
-					"[ServerApp] Input rejete par anti-triche (verdict={}, client_id={}, character_key={}, pos=({:.2f},{:.2f}))",
-					static_cast<int>(verdict), client->clientId, client->persistenceCharacterKey, positionMetersX, positionMetersZ);
+					"[ServerApp] Input rejete par anti-triche (verdict={}, client_id={}, character_key={}, pos=({:.2f},{:.2f}), seq={})",
+					static_cast<int>(verdict), client->clientId, client->persistenceCharacterKey, positionMetersX, positionMetersZ, inputSequence);
 				return;
 			}
 		}
@@ -4426,6 +4436,12 @@ namespace engine::server
 				(void)zoneIt->second.RemoveEntity(clientIt->entityId);
 			}
 		}
+
+		// TA.3c — reset de l'état anti-cheat pour ce character_key. Sans ça, si le même
+		// personnage se reconnecte plus tard, son inputSequence redémarre à 1 alors que le
+		// state AntiCheat conserve l'ancien tsMs (très supérieur) → dt négatif clampé à 1 ms
+		// → faux positif SpeedHack sur le premier input post-reconnexion.
+		m_antiCheat.Reset(clientIt->persistenceCharacterKey);
 
 		OnClientLogout(*clientIt);
 		LOG_INFO(Net, "[ServerApp] Client disconnected (client_id={}, reason={})", clientId, persistenceReason);

@@ -120,12 +120,21 @@ services:
         condition: service_healthy
     ports:
       - "${SHARD_PORT:-3843}:3843"
+      # Replication joueurs (TE.3) : port UDP gameplay (Hello/Input/Snapshot).
+      # Lu par ServerApp via la cle `server.listen_port` (defaut 27015).
+      # Doit etre joignable depuis chaque client : ouvrir UDP au firewall hote
+      # et au pare-feu cloud (SG/UFW/iptables). Voir docs/deployment_udp.md.
+      - "${SHARD_UDP_PORT:-27015}:27015/udp"
     volumes:
       - ./config/shard.config.json:/app/config.json:ro
       - ./game/data:/app/game/data:ro
       - ./data/logs/shard:/app/logs
     environment:
       SHARD_REGISTER_ENDPOINT: ${SHARD_REGISTER_ENDPOINT:-127.0.0.1:3843}
+      # TB.1/TE.3 : endpoint UDP gameplay annonce aux clients via le master
+      # (SERVER_LIST). Vide => non annonce (clients ne pourront pas se connecter
+      # en gameplay UDP). Format : <ip-publique-joignable-par-le-client>:<port-UDP>.
+      SHARD_REGISTER_UDP_ENDPOINT: ${SHARD_REGISTER_UDP_ENDPOINT:-}
       SHARD_NAME: ${SHARD_NAME:-main-shard}
       SHARD_MAX_CAPACITY: ${SHARD_MAX_CAPACITY:-500}
       SHARD_BUILD_VERSION: ${SHARD_BUILD_VERSION:-docker-dev}
@@ -139,6 +148,7 @@ services:
       - >-
         exec /app/lcdlln_shard -log -console
         --shard.register.endpoint=$$SHARD_REGISTER_ENDPOINT
+        --shard.register.udp_endpoint="$$SHARD_REGISTER_UDP_ENDPOINT"
         --shard.register.name="$$SHARD_NAME"
         --shard.register.max_capacity=$$SHARD_MAX_CAPACITY
         --shard.register.build_version="$$SHARD_BUILD_VERSION"

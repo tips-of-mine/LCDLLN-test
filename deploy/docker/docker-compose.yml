@@ -128,6 +128,13 @@ services:
     volumes:
       - ./config/shard.config.json:/app/config.json:ro
       - ./game/data:/app/game/data:ro
+      # TA.4 — autosave perso : CharacterPersistenceStore écrit
+      # game/data/persistence/characters/character_<id>.ini à chaque autosave (30 s).
+      # Sans ce sous-mount, l'écriture échoue (Read-only file system) car le parent
+      # game/data est monté ro pour protéger les assets immuables. Docker permet
+      # de superposer un sous-chemin en rw sur un parent ro — c'est ce qu'on fait ici.
+      # Le dossier hôte ./data/persistence est créé automatiquement au premier `up`.
+      - ./data/persistence:/app/game/data/persistence:rw
       - ./data/logs/shard:/app/logs
     environment:
       SHARD_REGISTER_ENDPOINT: ${SHARD_REGISTER_ENDPOINT:-127.0.0.1:3843}

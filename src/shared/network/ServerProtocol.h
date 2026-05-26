@@ -17,8 +17,13 @@ namespace engine::server
 	/// envoie désormais son altitude et son orientation, plus seulement X/Z).
 	/// TD.4 — bump 3 → 4 : `SnapshotEntity` gagne `playerClientId` (uint32) — sert au client
 	/// à afficher une plaque de nom "P<clientId>" au-dessus des avatars distants. Vaut 0 pour
-	/// les mobs / loot bags. Wire-breaking : client + shard doivent se déployer ensemble.
-	inline constexpr uint16_t kProtocolVersion = 4;
+	/// les mobs / loot bags.
+	/// TG.1 — bump 4 → 5 : `SnapshotMessage` gagne `chunkIndex` + `chunkCount` (uint16 × 2)
+	/// pour autoriser le chunking d'un snapshot AoI dépassant le budget MTU UDP (~1200 o).
+	/// `chunkCount = 1` (mono-paquet) reste le cas dominant ; `chunkCount > 1` exige une
+	/// réassemblage côté client (cf. UIModelBinding::ApplySnapshot).
+	/// Wire-breaking : client + shard doivent se déployer ensemble.
+	inline constexpr uint16_t kProtocolVersion = 5;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -218,6 +223,11 @@ namespace engine::server
 	};
 
 	/// Snapshot envelope carrying timing, connection stats and entity state count.
+	/// TG.1 — `chunkIndex` / `chunkCount` permettent au serveur de découper un snapshot AoI
+	/// trop gros pour un seul datagramme (~1200 o MTU). Valeurs par défaut 0/1 = snapshot
+	/// mono-paquet (cas dominant). `chunkCount > 1` : le client doit accumuler les
+	/// `chunkCount` chunks (même `serverTick`) avant de commiter le snapshot global ;
+	/// `entityCount` ne référence alors que les entités de CE chunk.
 	struct SnapshotMessage
 	{
 		uint32_t clientId = 0;
@@ -226,6 +236,8 @@ namespace engine::server
 		uint16_t entityCount = 0;
 		uint32_t receivedPackets = 0;
 		uint32_t sentPackets = 0;
+		uint16_t chunkIndex = 0;
+		uint16_t chunkCount = 1;
 	};
 
 	/// Server-authoritative zone assignment sent when a transition volume is validated.

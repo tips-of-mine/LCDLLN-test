@@ -54,6 +54,15 @@ namespace engine::server
 		/// M32.2 — Maximum range (metres) for party XP and loot sharing.
 		inline constexpr float kPartyShareRangeMeters = 40.0f;
 
+		/// TG.2 — endpoint compacté en uint64 (address sur les 32 bits hauts + port sur les 16
+		/// bits bas) pour servir de clé aux index O(1) sur m_clients (cf. ServerApp.h).
+		/// Le port étant 16 bits, le décalage n'écrase rien et la clé reste injective ; les
+		/// 16 bits du milieu (vides) ne posent pas de risque de collision.
+		inline uint64_t PackEndpointKey(const Endpoint& endpoint)
+		{
+			return (static_cast<uint64_t>(endpoint.address) << 16) | static_cast<uint64_t>(endpoint.port);
+		}
+
 		/// M35.2 — Maximum stack size per shop buy/sell request (anti-spam).
 		inline constexpr uint32_t kMaxShopQuantityPerRequest = 10000u;
 
@@ -257,6 +266,10 @@ namespace engine::server
 		m_snapshotAccumulator = 0;
 		m_stopRequested = false;
 		m_clients.clear();
+		// TG.2 — vider aussi les 3 index pour rester cohérent.
+		m_clientIndexByPackedEndpoint.clear();
+		m_clientIndexByClientId.clear();
+		m_clientIndexByEntityId.clear();
 		m_mobs.clear();
 		m_lootBags.clear();
 		m_lootTableEntries.clear();
@@ -443,6 +456,10 @@ namespace engine::server
 			}
 		}
 		m_clients.clear();
+		// TG.2 — Shutdown : vider aussi les 3 index O(1) sur m_clients.
+		m_clientIndexByPackedEndpoint.clear();
+		m_clientIndexByClientId.clear();
+		m_clientIndexByEntityId.clear();
 		for (const MobEntity& mob : m_mobs)
 		{
 			const auto zoneIt = m_zoneGrids.find(mob.zoneId);
@@ -964,6 +981,12 @@ namespace engine::server
 		client.stats.maxHealth = kDefaultPlayerHealth;
 		client.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultPlayerDamage);
 		ConnectedClient& acceptedClient = m_clients.emplace_back(std::move(client));
+		// TG.2 — insertion incrémentale dans les 3 index O(1). push_back garantit que les
+		// indices existants restent valides (la nouvelle entrée est en queue).
+		const size_t acceptedIndex = m_clients.size() - 1u;
+		m_clientIndexByPackedEndpoint[PackEndpointKey(acceptedClient.endpoint)] = acceptedIndex;
+		m_clientIndexByClientId[acceptedClient.clientId] = acceptedIndex;
+		m_clientIndexByEntityId[acceptedClient.entityId] = acceptedIndex;
 		PersistedCharacterState persistedState{};
 		if (m_characterPersistence.LoadCharacter(acceptedClient.persistenceCharacterKey, persistedState))
 		{
@@ -3159,14 +3182,11 @@ namespace engine::server
 
 	ConnectedClient* ServerApp::FindConnectedClient(uint32_t clientId)
 	{
-		for (ConnectedClient& client : m_clients)
-		{
-			if (client.clientId == clientId)
-			{
-				return &client;
-			}
-		}
-		return nullptr;
+		// TG.2 — O(1) via index map (auparavant O(N) sur m_clients).
+		const auto it = m_clientIndexByClientId.find(clientId);
+		if (it == m_clientIndexByClientId.end() || it->second >= m_clients.size())
+			return nullptr;
+		return &m_clients[it->second];
 	}
 
 	bool ServerApp::TryAddCurrency(uint32_t clientId, uint8_t currencyId, uint64_t amount, std::string& outError)
@@ -3777,50 +3797,52 @@ namespace engine::server
 
 	ConnectedClient* ServerApp::FindClient(const Endpoint& endpoint)
 	{
-		for (ConnectedClient& client : m_clients)
-		{
-			if (client.endpoint == endpoint)
-			{
-				return &client;
-			}
-		}
-		return nullptr;
+		// TG.2 — O(1) via index map (auparavant O(N) sur m_clients).
+		const auto it = m_clientIndexByPackedEndpoint.find(PackEndpointKey(endpoint));
+		if (it == m_clientIndexByPackedEndpoint.end() || it->second >= m_clients.size())
+			return nullptr;
+		return &m_clients[it->second];
 	}
 
 	const ConnectedClient* ServerApp::FindClient(const Endpoint& endpoint) const
 	{
-		for (const ConnectedClient& client : m_clients)
-		{
-			if (client.endpoint == endpoint)
-			{
-				return &client;
-			}
-		}
-		return nullptr;
+		const auto it = m_clientIndexByPackedEndpoint.find(PackEndpointKey(endpoint));
+		if (it == m_clientIndexByPackedEndpoint.end() || it->second >= m_clients.size())
+			return nullptr;
+		return &m_clients[it->second];
 	}
 
 	ConnectedClient* ServerApp::FindClientByEntityId(EntityId entityId)
 	{
-		for (ConnectedClient& client : m_clients)
-		{
-			if (client.entityId == entityId)
-			{
-				return &client;
-			}
-		}
-		return nullptr;
+		const auto it = m_clientIndexByEntityId.find(entityId);
+		if (it == m_clientIndexByEntityId.end() || it->second >= m_clients.size())
+			return nullptr;
+		return &m_clients[it->second];
 	}
 
 	const ConnectedClient* ServerApp::FindClientByEntityId(EntityId entityId) const
 	{
-		for (const ConnectedClient& client : m_clients)
+		const auto it = m_clientIndexByEntityId.find(entityId);
+		if (it == m_clientIndexByEntityId.end() || it->second >= m_clients.size())
+			return nullptr;
+		return &m_clients[it->second];
+	}
+
+	void ServerApp::RebuildClientIndexes()
+	{
+		m_clientIndexByPackedEndpoint.clear();
+		m_clientIndexByClientId.clear();
+		m_clientIndexByEntityId.clear();
+		m_clientIndexByPackedEndpoint.reserve(m_clients.size());
+		m_clientIndexByClientId.reserve(m_clients.size());
+		m_clientIndexByEntityId.reserve(m_clients.size());
+		for (size_t i = 0; i < m_clients.size(); ++i)
 		{
-			if (client.entityId == entityId)
-			{
-				return &client;
-			}
+			const ConnectedClient& c = m_clients[i];
+			m_clientIndexByPackedEndpoint[PackEndpointKey(c.endpoint)] = i;
+			m_clientIndexByClientId[c.clientId] = i;
+			m_clientIndexByEntityId[c.entityId] = i;
 		}
-		return nullptr;
 	}
 
 	MobEntity* ServerApp::FindMobByEntityId(EntityId entityId)
@@ -4128,6 +4150,8 @@ namespace engine::server
 		OnClientLogout(*clientIt);
 		LOG_INFO(Net, "[ServerApp] Client disconnected (client_id={}, reason={})", clientId, persistenceReason);
 		m_clients.erase(clientIt);
+		// TG.2 — l'erase décale les indices après le slot supprimé ; reconstruire les 3 maps.
+		RebuildClientIndexes();
 	}
 
 	bool ServerApp::HandleChatSlashCommand(ConnectedClient& sender, const ParsedChatSlashCommand& command)

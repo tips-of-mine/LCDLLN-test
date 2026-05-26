@@ -5,6 +5,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -51,6 +52,13 @@ namespace engine::network
 		/// Heartbeat interval in seconds. Default 10. Call before Start() to take effect.
 		void SetHeartbeatIntervalSec(int sec) { m_heartbeat_interval_sec = (sec > 0) ? sec : 10; }
 
+		/// TA.3 — Callback invoqué quand le master pousse un `kOpcodeMasterToShardAdmitCharacter`
+		/// (suite à un EnterWorld réussi côté master). Le destinataire typique alimente
+		/// `AdmittedCharacterRegistry::Admit(character_id, account_id, now)` côté shard.
+		/// `nullptr` (défaut) = drop silencieux.
+		using AdmitCharacterCallback = std::function<void(uint64_t account_id, uint64_t character_id)>;
+		void SetAdmitCharacterCallback(AdmitCharacterCallback cb) { m_admit_callback = std::move(cb); }
+
 		enum class State
 		{
 			Disconnected,
@@ -91,5 +99,7 @@ namespace engine::network
 		std::chrono::steady_clock::time_point m_reconnect_after{};
 		int m_reconnect_backoff_sec = 1;
 		int m_heartbeat_interval_sec = 10;
+		/// TA.3 — callback admission (master push). Voir SetAdmitCharacterCallback.
+		AdmitCharacterCallback m_admit_callback;
 	};
 }

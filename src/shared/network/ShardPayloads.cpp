@@ -105,4 +105,28 @@ namespace engine::network
 			return {};
 		return buf;
 	}
+
+	std::optional<AdmitCharacterPayload> ParseAdmitCharacterPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (payload == nullptr || payloadSize < 16u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		AdmitCharacterPayload out;
+		if (!r.ReadU64(out.account_id) || !r.ReadU64(out.character_id))
+			return std::nullopt;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildAdmitCharacterPacket(uint64_t account_id, uint64_t character_id)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteU64(account_id) || !w.WriteU64(character_id))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		// Push master→shard, pas de request_id ni session.
+		if (!builder.Finalize(kOpcodeMasterToShardAdmitCharacter, 0, 0, 0, payloadBytes))
+			return {};
+		return builder.Data();
+	}
 }

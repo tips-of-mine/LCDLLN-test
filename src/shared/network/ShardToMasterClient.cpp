@@ -200,6 +200,28 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 			LOG_ERROR(Core, "[ShardToMasterClient] Register ERROR from Master");
 			m_client->Disconnect("register error");
 		}
+		else if (opcode == kOpcodeMasterToShardAdmitCharacter)
+		{
+			// TA.3 — push master->shard suite a un EnterWorld reussi cote master.
+			// Le master reutilise cette connexion long-vivante (initialement
+			// shard->master) pour pousser (account_id, character_id) au shard sans
+			// inventer un nouveau canal de transport.
+			auto parsed = ParseAdmitCharacterPayload(view.Payload(), view.PayloadSize());
+			if (!parsed)
+			{
+				LOG_WARN(Core, "[ShardToMasterClient] AdmitCharacter: parse FAILED (size={})", view.PayloadSize());
+				return;
+			}
+			if (!m_admit_callback)
+			{
+				LOG_WARN(Core, "[ShardToMasterClient] AdmitCharacter received but no callback registered (account_id={}, character_id={})",
+					parsed->account_id, parsed->character_id);
+				return;
+			}
+			LOG_INFO(Core, "[ShardToMasterClient] AdmitCharacter received (account_id={}, character_id={})",
+				parsed->account_id, parsed->character_id);
+			m_admit_callback(parsed->account_id, parsed->character_id);
+		}
 	}
 
 	void ShardToMasterClient::ScheduleReconnect()

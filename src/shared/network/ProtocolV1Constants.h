@@ -816,4 +816,10 @@ namespace engine::network
 
 	constexpr uint16_t kOpcodeEnterDungeonRequest  = 197u; ///< Client to Master : déclenche un portail (dungeonTemplateId, difficulty). Reservé M100.43, non câblé jusqu'a M100.44.
 	constexpr uint16_t kOpcodeEnterDungeonResponse = 198u; ///< Master to Client : ACK avec instanceId + shardEndpoint, ou erreur (TemplateNotFound / InstanceFull / DifficultyLocked).
+
+	// -------------------------------------------------------------------------
+	// TA.3 — Admission de personnage (master → shard, push) — voir AdmitCharacterPayload.
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeMasterToShardAdmitCharacter = 199u; ///< Master to Shard (push, request_id=0) : (account_id, character_id) à admettre dans AdmittedCharacterRegistry, suite à un EnterWorld réussi côté master.
 }

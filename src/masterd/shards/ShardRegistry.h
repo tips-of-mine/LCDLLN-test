@@ -88,6 +88,16 @@ namespace engine::server
 		/// M22.5: returns Online shard with lowest load ratio (current_load/max_capacity). Excludes Offline and Degraded.
 		std::optional<ShardInfo> SelectShard() const;
 
+		/// TA.3 — Mémorise (ou rafraîchit) la `connId` TCP sur laquelle le shard est connecté
+		/// au master. Permet au master d'émettre une commande push (ex.
+		/// `kOpcodeMasterToShardAdmitCharacter`) via `NetServer::Send(connId, ...)` en
+		/// réutilisant la connexion long-vivante initiée par `ShardToMasterClient`. Appelé
+		/// par `ShardRegisterHandler` à chaque (re-)register. No-op si shard_id inconnu.
+		void SetShardConnection(uint32_t shard_id, uint32_t connId);
+
+		/// TA.3 — Récupère la connId TCP du shard. `nullopt` si aucune connexion mémorisée.
+		std::optional<uint32_t> GetShardConnection(uint32_t shard_id) const;
+
 	private:
 		struct Entry
 		{
@@ -107,6 +117,10 @@ namespace engine::server
 		mutable std::mutex m_mutex;
 		std::unordered_map<uint32_t, Entry> m_shards;
 		std::unordered_map<std::string, uint32_t> m_name_to_id;
+		/// TA.3 — Mapping shard_id → connId TCP. Tenu synchronisé par `ShardRegisterHandler`
+		/// à chaque (re-)register du shard. Permet au master d'émettre des push vers le shard
+		/// via `NetServer::Send(connId, ...)`.
+		std::unordered_map<uint32_t, uint32_t> m_shard_connections;
 		uint32_t m_next_id = 1;
 		std::function<void(uint32_t)> m_shard_down_callback;
 		double m_degraded_load_threshold = 0.90;

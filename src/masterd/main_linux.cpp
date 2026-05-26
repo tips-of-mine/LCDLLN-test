@@ -424,6 +424,10 @@ int main(int argc, char** argv)
 	characterEnterWorldHandler.SetConnectionSessionMap(&connSessionMap);
 	characterEnterWorldHandler.SetSessionCharacterMap(&sessionCharMap);
 	characterEnterWorldHandler.SetConnectionPool(&dbPool);
+	// TA.3 — pousse l'admission (account_id, character_id) au shard a chaque EnterWorld
+	// reussi, via la connexion TCP long-vivante etablie par ShardToMasterClient et la
+	// connId memorisee par ShardRegisterHandler::SetShardConnection.
+	characterEnterWorldHandler.SetShardRegistry(&shardRegistry);
 
 	// M100.44 — handler des portails de donjon (Phase 11). Câble les
 	// opcodes 197/198 réservés par M100.43 : INSERT dans dungeon_instances

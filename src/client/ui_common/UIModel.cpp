@@ -725,6 +725,8 @@ namespace engine::client
 			remote.stateFlags = entity.state.stateFlags;
 			// TD.4 : propage le clientId reçu (0 = mob/lootbag, ≠ 0 = joueur distant).
 			remote.playerClientId = entity.playerClientId;
+			// TD.5 : nom du perso pour la plaque de nom (vide → fallback "P<clientId>").
+			remote.displayName = entity.characterName;
 			m_model.remoteEntities.push_back(remote);
 		}
 

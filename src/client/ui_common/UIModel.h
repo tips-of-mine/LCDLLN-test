@@ -304,6 +304,10 @@ namespace engine::client
 		uint32_t stateFlags = 0;
 		/// TD.4 : id client (≠ entityId) reçu du serveur, sert à l'overlay nameplate.
 		uint32_t playerClientId = 0;
+		/// TD.5 : nom du personnage choisi par le joueur, propagé via le SnapshotEntity.
+		/// Vide pour les mobs / lootbags, ou pour les joueurs si la DB serveur n'a pas
+		/// pu servir le nom — le HUD retombe alors sur "P<playerClientId>".
+		std::string displayName;
 	};
 
 	/// Pure data model consumed by UI views and debug panels.

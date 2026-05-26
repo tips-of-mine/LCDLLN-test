@@ -292,10 +292,12 @@ namespace engine::server
 		outMessage.chunkCount = ReadU16(payload, 22);
 
 		const size_t entityCount = static_cast<size_t>(outMessage.entityCount);
-		// TD.4 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId) = 52 octets.
-		// TG.1 — header passe a 24 octets.
-		const size_t expectedPayloadSize = 24 + (entityCount * 52);
-		if (payload.size() != expectedPayloadSize)
+		// TD.5 — taille variable par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId)
+		// + 2 (nameLen) + N (name) octets. On vérifie un minimum (54 par entité, nom vide), puis
+		// on parse sequentiellement et on rejette si on dépasse la fin du payload en cours de route.
+		// TG.1 — header a 24 octets.
+		const size_t minimumPayloadSize = 24 + (entityCount * 54);
+		if (payload.size() < minimumPayloadSize)
 		{
 			return false;
 		}
@@ -316,6 +318,14 @@ namespace engine::server
 			// TD.4 : id client decode apres EntityState. ReadEntityState a deja avance offset de 40.
 			entity.playerClientId = ReadU32(payload, offset);
 			offset += 4;
+			// TD.5 : nom du personnage (chaîne préfixée u16). Borne dure : 64 octets (cf.
+			// kMaxChatLocalSenderNameBytes), au-delà on rejette le paquet pour défense en profondeur.
+			if (!ReadSizedString(payload, offset, entity.characterName)
+				|| entity.characterName.size() > 64u)
+			{
+				outEntities.clear();
+				return false;
+			}
 		}
 
 		return true;
@@ -400,9 +410,13 @@ namespace engine::server
 
 	std::vector<std::byte> EncodeSnapshot(const SnapshotMessage& message, std::span<const SnapshotEntity> entities)
 	{
-		// TD.4 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId) = 52 octets.
+		// TD.4 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId) + 2 (nameLen)
+		// + N (name bytes, variable) octets. TD.5 wire-bump v5→v6 : ajout du nom de personnage.
+		// Pour le sizing : on prend une estimation a 8 + 40 + 4 + 2 = 54 par entite (sans le nom)
+		// + buffer reserve via push_back si nom non vide. BeginPacket.reserve est juste un hint,
+		// pas une borne stricte (le vector grandit a l'append).
 		// TG.1 — header passe de 20 → 24 octets (ajout chunkIndex + chunkCount uint16 × 2).
-		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 24 + (entities.size() * 52));
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 24 + (entities.size() * 54));
 		WriteU32(packet, message.clientId);
 		WriteU32(packet, message.serverTick);
 		WriteU16(packet, message.connectedClients);
@@ -417,8 +431,10 @@ namespace engine::server
 		{
 			WriteU64(packet, entity.entityId);
 			WriteEntityState(packet, entity.state);
-			// TD.4 : id client (≠ entityId) pour qu'un client distant puisse afficher "P<clientId>".
+			// TD.4 : id client (≠ entityId) pour qu'un client distant puisse afficher la plaque.
 			WriteU32(packet, entity.playerClientId);
+			// TD.5 : nom du personnage (préfixé u16). Vide pour les mobs / lootbags.
+			WriteSizedString(packet, entity.characterName);
 		}
 		return packet;
 	}

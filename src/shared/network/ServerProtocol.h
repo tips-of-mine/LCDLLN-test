@@ -23,7 +23,7 @@ namespace engine::server
 	/// `chunkCount = 1` (mono-paquet) reste le cas dominant ; `chunkCount > 1` exige une
 	/// réassemblage côté client (cf. UIModelBinding::ApplySnapshot).
 	/// Wire-breaking : client + shard doivent se déployer ensemble.
-	inline constexpr uint16_t kProtocolVersion = 5;
+	inline constexpr uint16_t kProtocolVersion = 6;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t

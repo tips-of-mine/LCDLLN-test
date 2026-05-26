@@ -23,7 +23,7 @@ namespace
 		CellGrid grid;
 		grid.Init();
 		int count = 0;
-		GridVisit(grid, 5000.0f, 5000.0f, [&count](EntityId) { ++count; });
+		GridVisit(grid, 0.0f, 0.0f, [&count](EntityId) { ++count; });
 		assert(count == 0);
 		std::puts("[OK] TestGridVisitEmpty");
 	}
@@ -37,7 +37,7 @@ namespace
 		assert(grid.UpsertEntity(/*id*/42, /*x*/5000.0f, /*z*/5000.0f, cell));
 
 		std::vector<EntityId> visited;
-		GridVisit(grid, 5000.0f, 5000.0f, [&visited](EntityId id) {
+		GridVisit(grid, 0.0f, 0.0f, [&visited](EntityId id) {
 			visited.push_back(id);
 		});
 		assert(visited.size() == 1);
@@ -52,11 +52,11 @@ namespace
 		CellGrid grid;
 		grid.Init();
 		CellCoord cell{};
-		assert(grid.UpsertEntity(1, 5000.0f, 5000.0f, cell));
-		assert(grid.UpsertEntity(2, 5050.0f, 5050.0f, cell)); // meme cell
+		assert(grid.UpsertEntity(1, 0.0f, 0.0f, cell));
+		assert(grid.UpsertEntity(2, 50.0f, 50.0f, cell)); // meme cell
 
 		std::vector<EntityId> visited;
-		GridVisit(grid, 5000.0f, 5000.0f, [&visited](EntityId id) {
+		GridVisit(grid, 0.0f, 0.0f, [&visited](EntityId id) {
 			visited.push_back(id);
 		});
 		assert(visited.size() == 2);
@@ -70,12 +70,12 @@ namespace
 		CellGrid grid;
 		grid.Init();
 		CellCoord cell{};
-		assert(grid.UpsertEntity(10, 5000.0f, 5000.0f, cell));  // center
-		assert(grid.UpsertEntity(20, 5200.0f, 5000.0f, cell));  // +2 cells (inside 7x7)
-		assert(grid.UpsertEntity(30, 5500.0f, 5000.0f, cell));  // +5 cells (outside 7x7)
+		assert(grid.UpsertEntity(10, 0.0f, 0.0f, cell));  // center
+		assert(grid.UpsertEntity(20, 200.0f, 0.0f, cell));  // +2 cells (inside 7x7)
+		assert(grid.UpsertEntity(30, 500.0f, 0.0f, cell));  // +5 cells (outside 7x7)
 
 		std::vector<EntityId> visited;
-		GridVisit(grid, 5000.0f, 5000.0f, [&visited](EntityId id) {
+		GridVisit(grid, 0.0f, 0.0f, [&visited](EntityId id) {
 			visited.push_back(id);
 		});
 		assert(visited.size() == 2);
@@ -93,13 +93,13 @@ namespace
 		CellGrid grid;
 		grid.Init();
 		CellCoord cell{};
-		assert(grid.UpsertEntity(1, 5000.0f, 5000.0f, cell));
+		assert(grid.UpsertEntity(1, 0.0f, 0.0f, cell));
 
-		// Position negative ou > kZoneSizeMeters -> hors zone.
+		// Convention centree : plage monde acceptee [-5000, +5000). Au-dela : hors-zone.
 		int count = 0;
-		GridVisit(grid, -100.0f, 5000.0f, [&count](EntityId) { ++count; });
+		GridVisit(grid, -50000.0f, 0.0f, [&count](EntityId) { ++count; });
 		assert(count == 0);
-		GridVisit(grid, 50000.0f, 5000.0f, [&count](EntityId) { ++count; });
+		GridVisit(grid, 50000.0f, 0.0f, [&count](EntityId) { ++count; });
 		assert(count == 0);
 		std::puts("[OK] TestGridVisitOutsideZone");
 	}
@@ -111,7 +111,7 @@ namespace
 		CellGrid grid;
 		// pas d'Init()
 		int count = 0;
-		GridVisit(grid, 5000.0f, 5000.0f, [&count](EntityId) { ++count; });
+		GridVisit(grid, 0.0f, 0.0f, [&count](EntityId) { ++count; });
 		assert(count == 0);
 		std::puts("[OK] TestGridVisitUninitialized");
 	}
@@ -129,11 +129,11 @@ namespace
 		CellGrid grid;
 		grid.Init();
 		CellCoord cell{};
-		assert(grid.UpsertEntity(7, 5000.0f, 5000.0f, cell));
-		assert(grid.UpsertEntity(8, 5050.0f, 5050.0f, cell));
+		assert(grid.UpsertEntity(7, 0.0f, 0.0f, cell));
+		assert(grid.UpsertEntity(8, 50.0f, 50.0f, cell));
 
 		CollectorVisitor v;
-		GridVisitWithVisitor(grid, 5000.0f, 5000.0f, v);
+		GridVisitWithVisitor(grid, 0.0f, 0.0f, v);
 		assert(v.ids.size() == 2);
 		std::puts("[OK] TestGridVisitWithVisitor");
 	}
@@ -148,17 +148,18 @@ namespace
 		CellGrid grid;
 		grid.Init();
 
-		// Place 1000 entites sur grille 32x32 (1024 cells, gardons 1000)
-		// pas = 312.5m, mais on arrondit a 310m pour rester dans zone.
-		// Cells 100m -> les entites tombent dans des cells distinctes.
+		// Convention centree (-5000..+5000) : place 1000 entites sur grille 32x32 dont
+		// l'origine grille est a (-5000+50, -5000+50). Pas = 310m. Cells 100m -> les
+		// entites tombent dans des cells distinctes.
 		const int stepMeters = 310;
+		const float originMeters = -5000.0f + 50.0f; // coin sud-ouest dans le repere centre
 		int placed = 0;
 		for (int gx = 0; gx < 32 && placed < 1000; ++gx)
 		{
 			for (int gz = 0; gz < 32 && placed < 1000; ++gz)
 			{
-				const float x = static_cast<float>(gx * stepMeters + 50);
-				const float z = static_cast<float>(gz * stepMeters + 50);
+				const float x = originMeters + static_cast<float>(gx * stepMeters);
+				const float z = originMeters + static_cast<float>(gz * stepMeters);
 				CellCoord cell{};
 				if (grid.UpsertEntity(static_cast<EntityId>(placed + 1), x, z, cell))
 					++placed;
@@ -166,14 +167,13 @@ namespace
 		}
 		assert(placed == 1000);
 
-		// Visite autour de (5000, 5000) : 7x7 cells centrees sur (50, 50)
-		// in cell-coords (5000m / 100m = 50). Range cells [47..53] sur x et z.
-		// Cells touchées : trouver les entites avec gx*310+50 dans [4700..5350]
-		// (cells 47..53 = 4700..5400 m), idem pour z. gx*310+50 in [4700..5350]
-		// -> gx in [15..17] (since 15*310+50=4700, 17*310+50=5320, 18*310+50=5630>5400).
-		// 3 valeurs de gx * 3 valeurs de gz = 9 entites attendues.
+		// Visite autour de (0, 0) world (= cell (50, 50) en repere grille apres offset).
+		// Plage cellules visitee : [47..53] sur x et z (7x7). Cellules touchees a partir
+		// de la grille reguliere : entites avec gx*310 + (-4950) dans world [-300..+350]
+		// (cells 47..53 = world [-300..+400] approx). gx in [15..17] (15*310-4950=-300,
+		// 17*310-4950=320). 3 valeurs de gx * 3 valeurs de gz = 9 entites attendues.
 		int count = 0;
-		GridVisit(grid, 5000.0f, 5000.0f, [&count](EntityId) { ++count; });
+		GridVisit(grid, 0.0f, 0.0f, [&count](EntityId) { ++count; });
 		assert(count == 9);
 		std::puts("[OK] TestGridVisitStress1000Entities");
 	}

@@ -92,12 +92,12 @@ namespace
 		CellGrid grid;
 		grid.Init();
 
-		// 4 entites au meme endroit (5000,5000) — tous dans le 7x7 center.
+		// 4 entites au meme endroit (0,0) — convention centree, tous dans le 7x7 center.
 		CellCoord cell{};
-		assert(grid.UpsertEntity(101, 5000.0f, 5000.0f, cell));
-		assert(grid.UpsertEntity(102, 5050.0f, 5050.0f, cell));
-		assert(grid.UpsertEntity(201, 5010.0f, 5010.0f, cell));
-		assert(grid.UpsertEntity(202, 5020.0f, 5020.0f, cell));
+		assert(grid.UpsertEntity(101, 0.0f, 0.0f, cell));
+		assert(grid.UpsertEntity(102, 50.0f, 50.0f, cell));
+		assert(grid.UpsertEntity(201, 10.0f, 10.0f, cell));
+		assert(grid.UpsertEntity(202, 20.0f, 20.0f, cell));
 
 		// "Players" = ids commencant par 1, "Creatures" = ids commencant par 2.
 		std::unordered_set<EntityId> playerIds = {101, 102};
@@ -105,7 +105,7 @@ namespace
 			return playerIds.count(id) > 0;
 		});
 
-		GridVisitWithVisitor(grid, 5000.0f, 5000.0f, notifier);
+		GridVisitWithVisitor(grid, 0.0f, 0.0f, notifier);
 
 		assert(notifier.Count() == 2);
 		auto has101 = std::find(notifier.Recipients().begin(),

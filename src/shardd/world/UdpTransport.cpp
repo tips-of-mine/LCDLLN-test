@@ -158,8 +158,8 @@ namespace engine::server
 		m_socketHandle = static_cast<uintptr_t>(socketHandle);
 		m_socketOpen = true;
 		m_listenPort = boundPort;
-		m_receivedPackets = 0;
-		m_sentPackets = 0;
+		m_receivedPackets.store(0, std::memory_order_relaxed);
+		m_sentPackets.store(0, std::memory_order_relaxed);
 		LOG_INFO(Net, "[UdpTransport] Init OK (port={}, non_blocking=true)", m_listenPort);
 		return true;
 	}
@@ -181,15 +181,17 @@ namespace engine::server
 		}
 #endif
 
-		if (m_listenPort != 0 || m_receivedPackets != 0 || m_sentPackets != 0)
+		const uint64_t rxSnapshot = m_receivedPackets.load(std::memory_order_relaxed);
+		const uint64_t txSnapshot = m_sentPackets.load(std::memory_order_relaxed);
+		if (m_listenPort != 0 || rxSnapshot != 0 || txSnapshot != 0)
 		{
 			LOG_INFO(Net, "[UdpTransport] Destroyed (port={}, rx_packets={}, tx_packets={})",
-				m_listenPort, m_receivedPackets, m_sentPackets);
+				m_listenPort, rxSnapshot, txSnapshot);
 		}
 
 		m_listenPort = 0;
-		m_receivedPackets = 0;
-		m_sentPackets = 0;
+		m_receivedPackets.store(0, std::memory_order_relaxed);
+		m_sentPackets.store(0, std::memory_order_relaxed);
 	}
 
 	size_t UdpTransport::Receive(std::vector<Datagram>& outDatagrams, size_t maxDatagrams)
@@ -235,7 +237,7 @@ namespace engine::server
 			datagram.endpoint.port = ntohs(from.sin_port);
 			datagram.size = static_cast<size_t>(received);
 			outDatagrams.push_back(datagram);
-			++m_receivedPackets;
+			m_receivedPackets.fetch_add(1u, std::memory_order_relaxed);
 		}
 
 		if (!outDatagrams.empty())
@@ -271,7 +273,7 @@ namespace engine::server
 			return false;
 		}
 
-		++m_sentPackets;
+		m_sentPackets.fetch_add(1u, std::memory_order_relaxed);
 		return true;
 	}
 

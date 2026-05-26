@@ -259,6 +259,13 @@ namespace engine::server
 		m_listenPort = ClampToU16(m_config.GetInt("server.listen_port", 27015), 1, 65535);
 		m_tickHz = ResolveTickHz();
 		m_snapshotHz = ResolveSnapshotHz(m_tickHz);
+		// TG.3 — opt-in split-receive : lecture config au boot. Le flag est lu UNE seule fois
+		// (changer le mode en cours d'exécution casserait l'invariant queue-vide↔mono-thread).
+		m_splitReceiveThread = m_config.GetBool("server.network.split_receive_thread", false);
+		if (m_splitReceiveThread)
+		{
+			LOG_INFO(Core, "[ServerApp] Split-receive thread actif (TG.3) : I/O reseau decorrele du thread tick");
+		}
 		// TG.4 — cap top-N par distance configurable (0 = pas de cap). Bornage défensif :
 		// on clamp a un plafond confortable pour éviter qu'une faute de config (-1, valeur
 		// énorme) ne casse silencieusement la replication ou ne sature la mémoire au boot.
@@ -415,16 +422,38 @@ namespace engine::server
 		}
 
 		LOG_INFO(Core, "[ServerApp] Run loop started");
+
+		// TG.3 — démarre le thread reseau si le mode split est actif (opt-in config).
+		if (m_splitReceiveThread)
+		{
+			m_networkThreadStopRequested.store(false, std::memory_order_relaxed);
+			m_networkThread = std::thread([this]() { NetworkPumpLoop(); });
+		}
+
 		while (!m_stopRequested)
 		{
 			if (!m_tickScheduler.WaitForNextTick())
 			{
 				LOG_ERROR(Core, "[ServerApp] Run FAILED: scheduler tick wait failed");
+				// TG.3 — signaler l'arret au thread reseau avant de remonter l'erreur
+				// (sinon il continuerait a appeler m_transport.Receive apres Shutdown).
+				if (m_networkThread.joinable())
+				{
+					m_networkThreadStopRequested.store(true, std::memory_order_relaxed);
+					m_networkThread.join();
+				}
 				return 1;
 			}
 
 			ProcessIncomingPackets();
 			TickOnce();
+		}
+
+		// TG.3 — arret propre du thread reseau apant la sortie de Run.
+		if (m_networkThread.joinable())
+		{
+			m_networkThreadStopRequested.store(true, std::memory_order_relaxed);
+			m_networkThread.join();
 		}
 
 		LOG_INFO(Core, "[ServerApp] Run loop stopped");
@@ -448,7 +477,8 @@ namespace engine::server
 			&& m_lootBags.empty()
 			&& m_lootTableEntries.empty()
 			&& m_zoneGrids.empty()
-			&& m_pendingDatagrams.empty())
+			&& m_pendingDatagrams.empty()
+			&& !m_networkThread.joinable()) // TG.3 — pas de thread reseau pendant
 		{
 			m_moderationAuditLog.Shutdown();
 			m_moderationAuditLogReady = false;
@@ -456,6 +486,17 @@ namespace engine::server
 		}
 
 		m_initialized = false;
+		// TG.3 — defensive : si Shutdown est appele en dehors de Run (ex. erreur Init),
+		// s'assurer que le thread reseau est bien arrete et joine.
+		if (m_networkThread.joinable())
+		{
+			m_networkThreadStopRequested.store(true, std::memory_order_relaxed);
+			m_networkThread.join();
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_networkQueueMutex);
+			m_networkIngressQueue.clear();
+		}
 		for (const ConnectedClient& client : m_clients)
 		{
 			SaveConnectedClient(client, "shutdown");
@@ -556,9 +597,48 @@ namespace engine::server
 		return std::max<uint32_t>(1u, autosaveTicks);
 	}
 
+	void ServerApp::NetworkPumpLoop()
+	{
+		// TG.3 — boucle dediee au thread reseau : draine la socket en continu et empile
+		// les datagrammes dans m_networkIngressQueue sous mutex pour le thread tick.
+		// Sleep court (1 ms) quand la socket est vide pour eviter de saturer le CPU.
+		std::vector<Datagram> localBuffer;
+		while (!m_networkThreadStopRequested.load(std::memory_order_relaxed))
+		{
+			localBuffer.clear();
+			const size_t received = m_transport.Receive(localBuffer, 128);
+			if (received > 0u)
+			{
+				std::lock_guard<std::mutex> lock(m_networkQueueMutex);
+				m_networkIngressQueue.insert(
+					m_networkIngressQueue.end(),
+					std::make_move_iterator(localBuffer.begin()),
+					std::make_move_iterator(localBuffer.end()));
+			}
+			else
+			{
+				// Socket vide : libere le CPU en attendant le prochain datagramme.
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			}
+		}
+	}
+
 	void ServerApp::ProcessIncomingPackets()
 	{
-		m_transport.Receive(m_pendingDatagrams, 64);
+		// TG.3 — mode split actif : on draine la queue remplie par le thread reseau (swap
+		// minimise la duree de detention du mutex). Mode mono-thread : appel direct comme avant.
+		if (m_splitReceiveThread)
+		{
+			m_pendingDatagrams.clear();
+			{
+				std::lock_guard<std::mutex> lock(m_networkQueueMutex);
+				std::swap(m_pendingDatagrams, m_networkIngressQueue);
+			}
+		}
+		else
+		{
+			m_transport.Receive(m_pendingDatagrams, 64);
+		}
 		for (const Datagram& datagram : m_pendingDatagrams)
 		{
 			ProcessPacket(datagram);

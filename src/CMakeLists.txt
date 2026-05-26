@@ -445,6 +445,15 @@ elseif(UNIX)
   lcdlln_add_simple_test(server_protocol_tests
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerProtocolTests.cpp)
 
+  # TE.2 (replication des joueurs) : test d'integration 2 clients loopback.
+  # Mini-serveur in-process (UdpTransport) + 2 transports clients sur 127.0.0.1.
+  # Valide le contrat wire Hello/Welcome/Input/Snapshot de bout en bout, et
+  # surtout que chaque client recoit l'entite de l'autre dans le snapshot.
+  # UdpTransport.cpp doit etre compile dans le test (engine_core ne l'embarque pas).
+  lcdlln_add_simple_test(loopback_integration_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/LoopbackIntegrationTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp)
+
   # TA.3 (replication des joueurs) : registre des personnages admis (gate de la
   # session UDP, lié au character_id authentifié du ticket). Pure logique testable.
   lcdlln_add_simple_test(admitted_character_registry_tests

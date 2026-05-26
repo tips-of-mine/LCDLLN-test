@@ -1,6 +1,11 @@
 # M24.4 — Shard server (image runtime, binaire pré-compilé)
 # Build : depuis deploy/docker avec bin/lcdlln_shard
 #   docker build -f Dockerfile.shard -t lcdlln-shard:ubuntu-24.04 .
+#
+# libmysqlclient : depuis TA.4 (pont position), le shard link MySQL pour lire
+# characters.spawn_x/y/z. Le runtime libmysqlclient.so.21 est fourni par le
+# bundle CI dans lib/ (pack-linux-docker-bundle.sh), pas via apt — même
+# mécanisme que le Dockerfile.master.
 
 # Même base que le master (binaires CI = ubuntu-latest / glibc récent).
 FROM ubuntu:24.04
@@ -12,6 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
+
+COPY lib/ /usr/local/lib/
+RUN ldconfig
 
 WORKDIR /app
 

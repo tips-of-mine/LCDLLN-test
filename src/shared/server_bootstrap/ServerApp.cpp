@@ -3820,25 +3820,57 @@ namespace engine::server
 			m_snapshotEntitiesScratch.push_back(snapshotEntity);
 		}
 
-		SnapshotMessage snapshot{};
-		snapshot.clientId = client.clientId;
-		snapshot.serverTick = m_currentTick;
-		snapshot.connectedClients = static_cast<uint16_t>(std::min<size_t>(m_clients.size(), 0xFFFFu));
-		snapshot.entityCount = static_cast<uint16_t>(std::min<size_t>(m_snapshotEntitiesScratch.size(), 0xFFFFu));
-		snapshot.receivedPackets = static_cast<uint32_t>(std::min<uint64_t>(m_transport.ReceivedPacketCount(), 0xFFFFFFFFu));
-		snapshot.sentPackets = static_cast<uint32_t>(std::min<uint64_t>(m_transport.SentPacketCount(), 0xFFFFFFFFu));
-		const std::vector<std::byte> packet = EncodeSnapshot(snapshot, m_snapshotEntitiesScratch);
-		if (!m_transport.Send(client.endpoint, packet))
+		// TG.1 — chunking : decoupe le snapshot pour rester sous ~1200 octets MTU UDP.
+		// Le header est borne par BeginPacket (16 o) + meta SnapshotMessage (24 o, TG.1)
+		// = 40 o constants. Une entite = 52 o (TD.4). Budget restant pour les entites :
+		// 1200 - 40 = 1160 o ⇒ max 22 entites/chunk (1160 / 52). On garde une marge
+		// confortable en visant 20 entites par chunk.
+		constexpr size_t kMaxEntitiesPerChunk = 20u;
+		const size_t totalEntities = m_snapshotEntitiesScratch.size();
+		const size_t chunkCountSize = (totalEntities == 0u)
+			? 1u
+			: (totalEntities + kMaxEntitiesPerChunk - 1u) / kMaxEntitiesPerChunk;
+		// Borne defensive : on ne dépasse pas la capacite wire de chunkCount (uint16).
+		const uint16_t chunkCount = static_cast<uint16_t>(std::min<size_t>(chunkCountSize, 0xFFFFu));
+
+		const uint32_t receivedPackets = static_cast<uint32_t>(std::min<uint64_t>(m_transport.ReceivedPacketCount(), 0xFFFFFFFFu));
+		const uint32_t sentPackets = static_cast<uint32_t>(std::min<uint64_t>(m_transport.SentPacketCount(), 0xFFFFFFFFu));
+		const uint16_t connectedClients = static_cast<uint16_t>(std::min<size_t>(m_clients.size(), 0xFFFFu));
+
+		bool allSent = true;
+		for (uint16_t chunkIdx = 0; chunkIdx < chunkCount; ++chunkIdx)
 		{
-			LOG_WARN(Net, "[ServerApp] Snapshot send failed (client_id={}, tick={})", client.clientId, m_currentTick);
-			return false;
+			const size_t chunkStart = static_cast<size_t>(chunkIdx) * kMaxEntitiesPerChunk;
+			const size_t chunkEnd = std::min(chunkStart + kMaxEntitiesPerChunk, totalEntities);
+			const std::span<const SnapshotEntity> chunkEntities(
+				m_snapshotEntitiesScratch.data() + chunkStart,
+				chunkEnd - chunkStart);
+
+			SnapshotMessage snapshot{};
+			snapshot.clientId = client.clientId;
+			snapshot.serverTick = m_currentTick;
+			snapshot.connectedClients = connectedClients;
+			// `entityCount` ne reference que CE chunk (cf. SnapshotMessage doc TG.1).
+			snapshot.entityCount = static_cast<uint16_t>(chunkEntities.size());
+			snapshot.receivedPackets = receivedPackets;
+			snapshot.sentPackets = sentPackets;
+			snapshot.chunkIndex = chunkIdx;
+			snapshot.chunkCount = chunkCount;
+			const std::vector<std::byte> packet = EncodeSnapshot(snapshot, chunkEntities);
+			if (!m_transport.Send(client.endpoint, packet))
+			{
+				LOG_WARN(Net, "[ServerApp] Snapshot send failed (client_id={}, tick={}, chunk={}/{})",
+					client.clientId, m_currentTick, chunkIdx + 1u, chunkCount);
+				allSent = false;
+			}
 		}
 
-		LOG_DEBUG(Net, "[ServerApp] Snapshot sent (client_id={}, tick={}, entity_count={})",
+		LOG_DEBUG(Net, "[ServerApp] Snapshot sent (client_id={}, tick={}, entity_count={}, chunks={})",
 			client.clientId,
 			m_currentTick,
-			m_snapshotEntitiesScratch.size());
-		return true;
+			totalEntities,
+			chunkCount);
+		return allSent;
 	}
 
 	ConnectedClient* ServerApp::FindClient(const Endpoint& endpoint)

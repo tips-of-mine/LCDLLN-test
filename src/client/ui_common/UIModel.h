@@ -494,6 +494,20 @@ namespace engine::client
 		std::vector<engine::server::SnapshotEntity> m_snapshotScratch;
 		std::vector<engine::server::ItemStack> m_inventoryScratch;
 		engine::server::SnapshotMessage m_snapshotMessage{};
+		/// TG.1 — accumulateur pour les snapshots scindes en plusieurs chunks (chunkCount > 1).
+		/// On collecte les entites des chunks reçus pour un meme serverTick puis on commite
+		/// l'image globale dès que tous les chunks attendus sont arrives. Un changement de
+		/// serverTick abandonne l'accumulation precedente (best-effort, pas de retry UDP).
+		struct ChunkedSnapshotAccumulator
+		{
+			uint32_t serverTick = 0;
+			uint16_t expectedChunkCount = 0;
+			uint16_t chunksReceived = 0;
+			std::vector<engine::server::SnapshotEntity> entities;
+			engine::server::SnapshotMessage header{};
+			bool active = false;
+		};
+		ChunkedSnapshotAccumulator m_chunkAccumulator{};
 		engine::server::CombatEventMessage m_combatEventMessage{};
 		engine::server::ZoneChangeMessage m_zoneChangeMessage{};
 		engine::server::InventoryDeltaMessage m_inventoryMessage{};

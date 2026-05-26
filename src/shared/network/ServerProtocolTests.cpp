@@ -176,6 +176,64 @@ namespace
 		assert(!DecodeSnapshot(packet, outMsg, out));
 		std::puts("[OK] TestSnapshotRejectsLegacyV3PayloadSize");
 	}
+
+	/// TG.1 — round-trip Snapshot avec chunkIndex / chunkCount > 1 : le wire transporte
+	/// bien les 2 champs et le client peut donc raisonner sur le chunking.
+	void TestSnapshotRoundTripWithChunking()
+	{
+		SnapshotMessage inMsg{};
+		inMsg.clientId = 5u;
+		inMsg.serverTick = 999u;
+		inMsg.connectedClients = 30u;
+		inMsg.entityCount = 2u; // ce chunk porte 2 entités sur un total potentiel de N
+		inMsg.chunkIndex = 1u;  // 2e chunk (0-indexed)
+		inMsg.chunkCount = 3u;  // sur 3 chunks au total
+
+		std::vector<SnapshotEntity> in;
+		SnapshotEntity a{};
+		a.entityId = 100u;
+		a.playerClientId = 1u;
+		in.push_back(a);
+		SnapshotEntity b{};
+		b.entityId = 200u;
+		b.playerClientId = 2u;
+		in.push_back(b);
+
+		const std::vector<std::byte> packet = EncodeSnapshot(inMsg, in);
+		assert(!packet.empty());
+
+		SnapshotMessage outMsg{};
+		std::vector<SnapshotEntity> out;
+		assert(DecodeSnapshot(packet, outMsg, out));
+		assert(outMsg.chunkIndex == 1u);
+		assert(outMsg.chunkCount == 3u);
+		assert(outMsg.entityCount == 2u);
+		assert(out.size() == 2u);
+		assert(out[0].playerClientId == 1u);
+		assert(out[1].playerClientId == 2u);
+		std::puts("[OK] TestSnapshotRoundTripWithChunking");
+	}
+
+	/// TG.1 — defauts SnapshotMessage : chunkCount=1 (mono-paquet) doit round-tripper
+	/// proprement (compat « pas de chunking » = cas dominant a 2 joueurs).
+	void TestSnapshotMonoChunkDefaultsRoundTrip()
+	{
+		SnapshotMessage inMsg{};
+		inMsg.clientId = 1u;
+		inMsg.entityCount = 0u;
+		// chunkIndex defaut = 0, chunkCount defaut = 1 (cf. struct init in ServerProtocol.h).
+
+		const std::vector<std::byte> packet = EncodeSnapshot(inMsg, {});
+		assert(!packet.empty());
+
+		SnapshotMessage outMsg{};
+		std::vector<SnapshotEntity> out;
+		assert(DecodeSnapshot(packet, outMsg, out));
+		assert(outMsg.chunkIndex == 0u);
+		assert(outMsg.chunkCount == 1u);
+		assert(out.empty());
+		std::puts("[OK] TestSnapshotMonoChunkDefaultsRoundTrip");
+	}
 }
 
 int main()
@@ -185,6 +243,8 @@ int main()
 	TestHelloRoundTrip();
 	TestSnapshotRoundTripWithPlayerClientId();
 	TestSnapshotRejectsLegacyV3PayloadSize();
+	TestSnapshotRoundTripWithChunking();
+	TestSnapshotMonoChunkDefaultsRoundTrip();
 	std::puts("All ServerProtocol tests passed");
 	return 0;
 }

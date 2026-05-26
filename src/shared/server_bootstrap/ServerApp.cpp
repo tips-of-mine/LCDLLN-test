@@ -259,6 +259,19 @@ namespace engine::server
 		m_listenPort = ClampToU16(m_config.GetInt("server.listen_port", 27015), 1, 65535);
 		m_tickHz = ResolveTickHz();
 		m_snapshotHz = ResolveSnapshotHz(m_tickHz);
+		// TG.4 — cap top-N par distance configurable (0 = pas de cap). Bornage défensif :
+		// on clamp a un plafond confortable pour éviter qu'une faute de config (-1, valeur
+		// énorme) ne casse silencieusement la replication ou ne sature la mémoire au boot.
+		{
+			const int64_t cfgViewCap = m_config.GetInt("server.replication.view_cap_entities", 0);
+			constexpr int64_t kMaxReasonableViewCap = 4096;
+			const int64_t clampedViewCap = std::clamp<int64_t>(cfgViewCap, 0, kMaxReasonableViewCap);
+			m_viewCapEntities = static_cast<uint32_t>(clampedViewCap);
+			if (m_viewCapEntities != 0u)
+			{
+				LOG_INFO(Core, "[ServerApp] View cap actif (TG.4) : top-{} entites/client par snapshot", m_viewCapEntities);
+			}
+		}
 		m_nextClientId = 1;
 		m_currentTick = 0;
 		m_characterAutosaveIntervalTicks = 0;
@@ -3431,6 +3444,21 @@ namespace engine::server
 	void ServerApp::BuildRelevantEntityIds(const ConnectedClient& client, std::vector<EntityId>& outEntityIds) const
 	{
 		outEntityIds.clear();
+		// TG.4 — collecte avec distance carrée pour pouvoir cap top-N (par distance au joueur)
+		// si la liste explose. On factorise la position du sujet au moment où l'on identifie
+		// son type (client / mob / loot bag) : évite un second lookup à l'application du cap.
+		// Capacité 0 (défaut) = comportement historique (pas de cap).
+		struct Candidate { EntityId entityId; float distSq; };
+		std::vector<Candidate> candidates;
+		candidates.reserve(client.interestEntityIds.size());
+		const float cx = client.positionMetersX;
+		const float cy = client.positionMetersY;
+		const float cz = client.positionMetersZ;
+		auto AddCandidate = [&](EntityId id, float x, float y, float z) {
+			const float dx = x - cx, dy = y - cy, dz = z - cz;
+			candidates.push_back({id, dx*dx + dy*dy + dz*dz});
+		};
+
 		for (EntityId entityId : client.interestEntityIds)
 		{
 			if (entityId == client.entityId)
@@ -3445,13 +3473,14 @@ namespace engine::server
 				{
 					continue;
 				}
-				outEntityIds.push_back(entityId);
+				AddCandidate(entityId,
+					subjectClient->positionMetersX, subjectClient->positionMetersY, subjectClient->positionMetersZ);
 				continue;
 			}
 
-			if (FindMobByEntityId(entityId) != nullptr)
+			if (const MobEntity* mob = FindMobByEntityId(entityId); mob != nullptr)
 			{
-				outEntityIds.push_back(entityId);
+				AddCandidate(entityId, mob->positionMetersX, mob->positionMetersY, mob->positionMetersZ);
 				continue;
 			}
 
@@ -3460,9 +3489,26 @@ namespace engine::server
 			{
 				if (lootBag->visibility == LootVisibility::Public || lootBag->ownerEntityId == client.entityId)
 				{
-					outEntityIds.push_back(entityId);
+					AddCandidate(entityId, lootBag->positionMetersX, lootBag->positionMetersY, lootBag->positionMetersZ);
 				}
 			}
+		}
+
+		// TG.4 — cap top-N par distance (squared, monotone donc équivalent à la distance euclidienne).
+		// Si configuré et dépassé, on partial_sort sur les N premiers puis on tronque.
+		// Sinon (par défaut, ou liste déjà sous la limite), on remonte tout dans l'ordre découvert.
+		if (m_viewCapEntities != 0u && candidates.size() > static_cast<size_t>(m_viewCapEntities))
+		{
+			const size_t cap = static_cast<size_t>(m_viewCapEntities);
+			std::partial_sort(candidates.begin(), candidates.begin() + cap, candidates.end(),
+				[](const Candidate& a, const Candidate& b) { return a.distSq < b.distSq; });
+			candidates.resize(cap);
+		}
+
+		outEntityIds.reserve(candidates.size());
+		for (const Candidate& c : candidates)
+		{
+			outEntityIds.push_back(c.entityId);
 		}
 	}
 

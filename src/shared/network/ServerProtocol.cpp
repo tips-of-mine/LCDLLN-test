@@ -287,7 +287,8 @@ namespace engine::server
 		outMessage.sentPackets = ReadU32(payload, 16);
 
 		const size_t entityCount = static_cast<size_t>(outMessage.entityCount);
-		const size_t expectedPayloadSize = 20 + (entityCount * 48);
+		// TD.4 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId) = 52 octets.
+		const size_t expectedPayloadSize = 20 + (entityCount * 52);
 		if (payload.size() != expectedPayloadSize)
 		{
 			return false;
@@ -306,6 +307,9 @@ namespace engine::server
 				outEntities.clear();
 				return false;
 			}
+			// TD.4 : id client decode apres EntityState. ReadEntityState a deja avance offset de 40.
+			entity.playerClientId = ReadU32(payload, offset);
+			offset += 4;
 		}
 
 		return true;
@@ -390,7 +394,8 @@ namespace engine::server
 
 	std::vector<std::byte> EncodeSnapshot(const SnapshotMessage& message, std::span<const SnapshotEntity> entities)
 	{
-		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 20 + (entities.size() * 48));
+		// TD.4 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId) = 52 octets.
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 20 + (entities.size() * 52));
 		WriteU32(packet, message.clientId);
 		WriteU32(packet, message.serverTick);
 		WriteU16(packet, message.connectedClients);
@@ -401,6 +406,8 @@ namespace engine::server
 		{
 			WriteU64(packet, entity.entityId);
 			WriteEntityState(packet, entity.state);
+			// TD.4 : id client (≠ entityId) pour qu'un client distant puisse afficher "P<clientId>".
+			WriteU32(packet, entity.playerClientId);
 		}
 		return packet;
 	}

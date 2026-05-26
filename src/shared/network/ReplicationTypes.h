@@ -63,9 +63,13 @@ namespace engine::server
 	};
 
 	/// Snapshot payload for one already-spawned entity state update.
+	/// TD.4 — `playerClientId` ≠ 0 quand l'entité représente un **joueur connecté** ;
+	/// vaut 0 pour les mobs / loot bags. Sert au client à afficher une plaque de nom
+	/// "P<playerClientId>" au-dessus des avatars distants (cf. `Engine::Update.*Hud`).
 	struct SnapshotEntity
 	{
 		EntityId entityId = 0;
 		EntityState state{};
+		uint32_t playerClientId = 0;
 	};
 }

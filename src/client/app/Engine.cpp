@@ -8411,6 +8411,39 @@ namespace engine
 						fg->AddText(ImVec2(bx + pad, by + pad), IM_COL32(255, 220, 80, 255), "E");
 					}
 				}
+				// TD.4 — Plaques de nom au-dessus des avatars joueurs distants.
+				// Source : `m_uiModelBinding.GetModel().remoteEntities` (peuple par
+				// ApplySnapshot, cf. TD.1) ; le serveur expose `playerClientId` ≠ 0
+				// uniquement pour les joueurs (mobs/lootbags = 0 → pas de plaque).
+				// Position : meme pattern que RecordRemoteAvatars — repli sur le
+				// snapshot brut si l'etat lisse n'existe pas encore (graceful) ;
+				// le `+ 1.2` est calibre sur la hauteur d'avatar (`py - 0.9` = pieds,
+				// donc tete ~ `py + 0.9`, plaque au-dessus = `py + 1.2`).
+				{
+					const auto& remotes = m_uiModelBinding.GetModel().remoteEntities;
+					for (const engine::client::UIRemoteEntity& re : remotes)
+					{
+						if (re.playerClientId == 0u)
+							continue; // mob / loot bag : pas de nameplate
+						float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
+						const auto sit = m_remoteSmoothed.find(re.entityId);
+						if (sit != m_remoteSmoothed.end() && sit->second.valid)
+						{
+							wx = sit->second.x; wy = sit->second.y; wz = sit->second.z;
+						}
+						float sxp = 0.0f, syp = 0.0f;
+						if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 1.2f, wz, ivw, ivh, sxp, syp))
+							continue;
+						const std::string label = "P" + std::to_string(re.playerClientId);
+						const ImVec2 ts = ImGui::CalcTextSize(label.c_str());
+						// Halo noir derriere le texte pour la lisibilite sur fond clair (ciel).
+						fg->AddRectFilled(
+							ImVec2(sxp - ts.x * 0.5f - 4.0f, syp - ts.y - 2.0f),
+							ImVec2(sxp + ts.x * 0.5f + 4.0f, syp + 2.0f),
+							IM_COL32(0, 0, 0, 140), 3.0f);
+						fg->AddText(ImVec2(sxp - ts.x * 0.5f, syp - ts.y), IM_COL32(220, 230, 255, 255), label.c_str());
+					}
+				}
 			}
 			// Menu de panneaux : barre de menus ImGui toujours visible en jeu,
 			// acces souris a tous les panneaux togglables sans raccourci clavier

@@ -17,10 +17,14 @@
 
 using engine::server::DecodeHello;
 using engine::server::DecodeInput;
+using engine::server::DecodeSnapshot;
 using engine::server::EncodeHello;
 using engine::server::EncodeInput;
+using engine::server::EncodeSnapshot;
 using engine::server::HelloMessage;
 using engine::server::InputMessage;
+using engine::server::SnapshotEntity;
+using engine::server::SnapshotMessage;
 
 namespace
 {
@@ -82,6 +86,96 @@ namespace
 		assert(out.clientNonce == in.clientNonce);
 		std::puts("[OK] TestHelloRoundTrip");
 	}
+
+	/// TD.4 — round-trip Snapshot avec `playerClientId` exposé pour les joueurs et
+	/// laissé à 0 pour les mobs/lootbags. Format wire bump v3→v4 (52 octets / entité).
+	void TestSnapshotRoundTripWithPlayerClientId()
+	{
+		SnapshotMessage inMsg{};
+		inMsg.clientId = 42u;
+		inMsg.serverTick = 1234u;
+		inMsg.connectedClients = 2u;
+		inMsg.entityCount = 3u;
+		inMsg.receivedPackets = 99u;
+		inMsg.sentPackets = 77u;
+
+		std::vector<SnapshotEntity> in;
+		// 2 joueurs avec playerClientId ≠ 0, 1 mob avec playerClientId = 0.
+		SnapshotEntity ePlayerA{};
+		ePlayerA.entityId = 0x200000001ull;
+		ePlayerA.state.positionX = 10.5f;
+		ePlayerA.state.positionY = 1.25f;
+		ePlayerA.state.positionZ = -3.75f;
+		ePlayerA.state.yawRadians = 0.42f;
+		ePlayerA.playerClientId = 7u;
+		in.push_back(ePlayerA);
+
+		SnapshotEntity ePlayerB{};
+		ePlayerB.entityId = 0x200000002ull;
+		ePlayerB.state.positionX = 100.0f;
+		ePlayerB.state.positionZ = 50.0f;
+		ePlayerB.playerClientId = 12u;
+		in.push_back(ePlayerB);
+
+		SnapshotEntity eMob{};
+		eMob.entityId = 0x300000005ull;
+		eMob.state.currentHealth = 80u;
+		eMob.state.maxHealth = 100u;
+		eMob.playerClientId = 0u; // mob => pas de nameplate
+		in.push_back(eMob);
+
+		const std::vector<std::byte> packet = EncodeSnapshot(inMsg, in);
+		assert(!packet.empty());
+
+		SnapshotMessage outMsg{};
+		std::vector<SnapshotEntity> out;
+		assert(DecodeSnapshot(packet, outMsg, out));
+		assert(outMsg.clientId == inMsg.clientId);
+		assert(outMsg.serverTick == inMsg.serverTick);
+		assert(outMsg.entityCount == inMsg.entityCount);
+		assert(out.size() == 3u);
+
+		assert(out[0].entityId == ePlayerA.entityId);
+		assert(out[0].state.positionX == ePlayerA.state.positionX);
+		assert(out[0].state.positionY == ePlayerA.state.positionY);
+		assert(out[0].state.positionZ == ePlayerA.state.positionZ);
+		assert(out[0].state.yawRadians == ePlayerA.state.yawRadians);
+		assert(out[0].playerClientId == 7u);
+
+		assert(out[1].entityId == ePlayerB.entityId);
+		assert(out[1].state.positionX == ePlayerB.state.positionX);
+		assert(out[1].playerClientId == 12u);
+
+		assert(out[2].entityId == eMob.entityId);
+		assert(out[2].state.currentHealth == 80u);
+		assert(out[2].state.maxHealth == 100u);
+		assert(out[2].playerClientId == 0u);
+		std::puts("[OK] TestSnapshotRoundTripWithPlayerClientId");
+	}
+
+	/// TD.4 — un Snapshot dont la taille de payload ne suit pas la nouvelle convention
+	/// 52 octets/entité doit être rejeté (defense contre un client/serveur de version
+	/// antérieure parlant v3 = 48 octets/entité).
+	void TestSnapshotRejectsLegacyV3PayloadSize()
+	{
+		SnapshotMessage inMsg{};
+		inMsg.entityCount = 1u;
+		std::vector<SnapshotEntity> in;
+		SnapshotEntity e{};
+		e.entityId = 0x200000001ull;
+		e.playerClientId = 5u;
+		in.push_back(e);
+
+		std::vector<std::byte> packet = EncodeSnapshot(inMsg, in);
+		// Ampute exactement 4 octets : simule l'absence du playerClientId (taille v3).
+		assert(packet.size() >= 4u);
+		packet.resize(packet.size() - 4u);
+
+		SnapshotMessage outMsg{};
+		std::vector<SnapshotEntity> out;
+		assert(!DecodeSnapshot(packet, outMsg, out));
+		std::puts("[OK] TestSnapshotRejectsLegacyV3PayloadSize");
+	}
 }
 
 int main()
@@ -89,6 +183,8 @@ int main()
 	TestInputRoundTrip();
 	TestInputRejectsTruncated();
 	TestHelloRoundTrip();
+	TestSnapshotRoundTripWithPlayerClientId();
+	TestSnapshotRejectsLegacyV3PayloadSize();
 	std::puts("All ServerProtocol tests passed");
 	return 0;
 }

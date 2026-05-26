@@ -684,6 +684,8 @@ namespace engine::client
 			remote.currentHealth = entity.state.currentHealth;
 			remote.maxHealth = entity.state.maxHealth;
 			remote.stateFlags = entity.state.stateFlags;
+			// TD.4 : propage le clientId reçu (0 = mob/lootbag, ≠ 0 = joueur distant).
+			remote.playerClientId = entity.playerClientId;
 			m_model.remoteEntities.push_back(remote);
 		}
 

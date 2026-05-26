@@ -26,7 +26,9 @@ docker compose up -d      # premier run : mysql + master + shard + web-portal (b
 
 **Depuis un clone Git en local** : le pack refait les synchros ; pour ne mettre à jour que le portail : `./scripts/sync-web-portal-to-docker-deploy.sh`. Le dossier `deploy/docker/sql/` versionné sert de repli pour un `docker compose build` sans pack complet.
 
-Ports par défaut : **3840** (master TCP jeu), **3843** (shard TCP jeu), **3844** (shard HTTP santé), **3000** (portail sur 127.0.0.1), MySQL sur **127.0.0.1:3306**. Le shard s’enregistre sur le master (`master:3840`) et annonce une adresse **joignable par les clients** dans `shard.register.endpoint` (fichier `config/shard.config.json` ou variable d’environnement **`SHARD_REGISTER_ENDPOINT`** passée au conteneur, ex. `10.0.0.5:3843` pour un client sur le LAN).
+Ports par défaut : **3840** (master TCP jeu), **3843** (shard TCP jeu), **3844** (shard HTTP santé), **27015/udp** (shard gameplay — replication joueurs), **3000** (portail sur 127.0.0.1), MySQL sur **127.0.0.1:3306**. Le shard s’enregistre sur le master (`master:3840`) et annonce une adresse **joignable par les clients** dans `shard.register.endpoint` (fichier `config/shard.config.json` ou variable d’environnement **`SHARD_REGISTER_ENDPOINT`** passée au conteneur, ex. `10.0.0.5:3843` pour un client sur le LAN).
+
+**Port UDP gameplay (27015/udp)** : nouveau depuis la replication joueurs. Doit être ouvert au firewall hôte **et** au pare-feu cloud (SG/UFW/iptables) ; aligner `SHARD_REGISTER_UDP_ENDPOINT` (`.env`) sur l'IP publique du serveur (ex. `10.0.4.133:27015`). Procédure complète + dépannage : [docs/deployment_udp.md](../../docs/deployment_udp.md).
 
 Arrêt : `docker compose down`. Les données sont sur l’hôte : **`./data/mysql`** (InnoDB), journaux **`./data/logs/master`** et **`./data/logs/shard`**. Pour repartir d’une base neuve : `docker compose down`, puis `rm -rf data/mysql`, puis `up` (les scripts `docker-entrypoint-initdb.d` ne s’exécutent que si le datadir est vide au premier démarrage).
 

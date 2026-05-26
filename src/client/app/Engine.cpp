@@ -8434,7 +8434,13 @@ namespace engine
 						float sxp = 0.0f, syp = 0.0f;
 						if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 1.2f, wz, ivw, ivh, sxp, syp))
 							continue;
-						const std::string label = "P" + std::to_string(re.playerClientId);
+						// TD.5 : on affiche le vrai nom du perso s'il est connu (chargé depuis
+						// la DB serveur et propagé via le SnapshotEntity). Sinon, fallback sur
+						// "P<clientId>" — utile quand la DB serveur ne sert pas (Windows / DB
+						// indisponible) ou pour identifier l'entité dans un log.
+						const std::string label = !re.displayName.empty()
+							? re.displayName
+							: ("P" + std::to_string(re.playerClientId));
 						const ImVec2 ts = ImGui::CalcTextSize(label.c_str());
 						// Halo noir derriere le texte pour la lisibilite sur fond clair (ciel).
 						fg->AddRectFilled(

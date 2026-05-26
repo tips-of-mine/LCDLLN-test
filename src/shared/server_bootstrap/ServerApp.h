@@ -96,6 +96,11 @@ namespace engine::server
 		/// Phase 3.7.5 — élargi à uint64 pour porter le character_id complet.
 		uint64_t helloNonce = 0;
 		uint64_t persistenceCharacterKey = 0;
+		/// TD.5 — nom du personnage choisi par le joueur (cf. table SQL characters.name).
+		/// Chargé depuis la DB au moment de l'admission (LoadCharacterIdentityFromDb) puis
+		/// recopié dans chaque SnapshotEntity pour ce client → les avatars distants peuvent
+		/// afficher le vrai nom dans leur plaque (au lieu du fallback "P<clientId>").
+		std::string characterName;
 		uint32_t experiencePoints = 0;
 		uint32_t gold = 0;
 		/// M35.1 — additional currencies (wallet); gold remains primary trade currency.
@@ -292,7 +297,11 @@ namespace engine::server
 		/// \a characterId via m_characterDbPool. Renvoie true + remplit x/y/z/yawDeg si trouvé.
 		/// Renvoie false si pas de pool, DB non configurée, ou personnage absent (le caller
 		/// garde alors la position fichier). Corps réel sous ENGINE_HAS_MYSQL (sinon no-op).
-		bool LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg);
+		/// TA.4 — charge spawn (position + yaw) depuis `characters` ; TD.5 — récupère aussi
+		/// `name` pour le porter dans le SnapshotEntity (plaque de nom des avatars distants).
+		/// Renvoie false si pas de pool DB (Windows / DB non configurée) ou si character
+		/// introuvable ; dans ce cas les out-params ne sont pas modifiés.
+		bool LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg, std::string& outName);
 
 		/// Accept a new client or refresh an existing handshake.
 		/// Phase 3.7.5 — \p helloNonce élargi à uint64 (character_id complet).

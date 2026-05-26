@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 namespace engine::server
 {
@@ -65,11 +66,15 @@ namespace engine::server
 	/// Snapshot payload for one already-spawned entity state update.
 	/// TD.4 — `playerClientId` ≠ 0 quand l'entité représente un **joueur connecté** ;
 	/// vaut 0 pour les mobs / loot bags. Sert au client à afficher une plaque de nom
-	/// "P<playerClientId>" au-dessus des avatars distants (cf. `Engine::Update.*Hud`).
+	/// au-dessus des avatars distants (cf. `Engine::Update.*Hud`).
+	/// TD.5 — `characterName` porte le nom de personnage choisi par le joueur ; non vide
+	/// uniquement pour les joueurs (mobs/lootbags ont la chaîne vide). Wire-bump v5→v6 :
+	/// chaque entité du Snapshot est suivie d'une chaîne préfixée u16 (taille variable).
 	struct SnapshotEntity
 	{
 		EntityId entityId = 0;
 		EntityState state{};
 		uint32_t playerClientId = 0;
+		std::string characterName;
 	};
 }

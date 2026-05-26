@@ -100,7 +100,8 @@ namespace
 		inMsg.sentPackets = 77u;
 
 		std::vector<SnapshotEntity> in;
-		// 2 joueurs avec playerClientId ≠ 0, 1 mob avec playerClientId = 0.
+		// 2 joueurs avec playerClientId ≠ 0 et un characterName non vide,
+		// 1 mob avec playerClientId = 0 et characterName vide.
 		SnapshotEntity ePlayerA{};
 		ePlayerA.entityId = 0x200000001ull;
 		ePlayerA.state.positionX = 10.5f;
@@ -108,6 +109,7 @@ namespace
 		ePlayerA.state.positionZ = -3.75f;
 		ePlayerA.state.yawRadians = 0.42f;
 		ePlayerA.playerClientId = 7u;
+		ePlayerA.characterName = "homme"; // TD.5
 		in.push_back(ePlayerA);
 
 		SnapshotEntity ePlayerB{};
@@ -115,6 +117,7 @@ namespace
 		ePlayerB.state.positionX = 100.0f;
 		ePlayerB.state.positionZ = 50.0f;
 		ePlayerB.playerClientId = 12u;
+		ePlayerB.characterName = "femme"; // TD.5
 		in.push_back(ePlayerB);
 
 		SnapshotEntity eMob{};
@@ -122,6 +125,7 @@ namespace
 		eMob.state.currentHealth = 80u;
 		eMob.state.maxHealth = 100u;
 		eMob.playerClientId = 0u; // mob => pas de nameplate
+		// characterName reste vide pour les mobs / lootbags (TD.5).
 		in.push_back(eMob);
 
 		const std::vector<std::byte> packet = EncodeSnapshot(inMsg, in);
@@ -141,22 +145,28 @@ namespace
 		assert(out[0].state.positionZ == ePlayerA.state.positionZ);
 		assert(out[0].state.yawRadians == ePlayerA.state.yawRadians);
 		assert(out[0].playerClientId == 7u);
+		assert(out[0].characterName == "homme"); // TD.5
 
 		assert(out[1].entityId == ePlayerB.entityId);
 		assert(out[1].state.positionX == ePlayerB.state.positionX);
 		assert(out[1].playerClientId == 12u);
+		assert(out[1].characterName == "femme"); // TD.5
 
 		assert(out[2].entityId == eMob.entityId);
 		assert(out[2].state.currentHealth == 80u);
 		assert(out[2].state.maxHealth == 100u);
 		assert(out[2].playerClientId == 0u);
+		assert(out[2].characterName.empty()); // TD.5 : mob => pas de nom
 		std::puts("[OK] TestSnapshotRoundTripWithPlayerClientId");
 	}
 
-	/// TD.4 — un Snapshot dont la taille de payload ne suit pas la nouvelle convention
-	/// 52 octets/entité doit être rejeté (defense contre un client/serveur de version
-	/// antérieure parlant v3 = 48 octets/entité).
-	void TestSnapshotRejectsLegacyV3PayloadSize()
+	/// TD.5 — un Snapshot dont la taille de payload est inferieure au minimum attendu
+	/// (54 octets/entité = 8 entityId + 40 EntityState + 4 playerClientId + 2 nameLen=0,
+	/// au-delà de l'entête 24 octets) doit être rejeté. Defense en profondeur contre un
+	/// pair (client ou serveur) qui parlerait une version antérieure du wire (v3 = 48,
+	/// v4 = 52, v5 = 52 sans nom). Le bump kProtocolVersion à v6 filtre déjà la plupart
+	/// des cas dans DecodeHeader, ce test couvre une corruption après header valide.
+	void TestSnapshotRejectsTruncatedPayload()
 	{
 		SnapshotMessage inMsg{};
 		inMsg.entityCount = 1u;
@@ -164,17 +174,19 @@ namespace
 		SnapshotEntity e{};
 		e.entityId = 0x200000001ull;
 		e.playerClientId = 5u;
+		// characterName vide → 2 octets de nameLen seulement.
 		in.push_back(e);
 
 		std::vector<std::byte> packet = EncodeSnapshot(inMsg, in);
-		// Ampute exactement 4 octets : simule l'absence du playerClientId (taille v3).
+		// Ampute 4 octets : simule un pair qui n'aurait pas écrit nameLen+name (4 < 2 mais on
+		// retire 4 pour passer aussi sous le playerClientId terminé, soit un pair pré-v6).
 		assert(packet.size() >= 4u);
 		packet.resize(packet.size() - 4u);
 
 		SnapshotMessage outMsg{};
 		std::vector<SnapshotEntity> out;
 		assert(!DecodeSnapshot(packet, outMsg, out));
-		std::puts("[OK] TestSnapshotRejectsLegacyV3PayloadSize");
+		std::puts("[OK] TestSnapshotRejectsTruncatedPayload");
 	}
 
 	/// TG.1 — round-trip Snapshot avec chunkIndex / chunkCount > 1 : le wire transporte
@@ -242,7 +254,7 @@ int main()
 	TestInputRejectsTruncated();
 	TestHelloRoundTrip();
 	TestSnapshotRoundTripWithPlayerClientId();
-	TestSnapshotRejectsLegacyV3PayloadSize();
+	TestSnapshotRejectsTruncatedPayload();
 	TestSnapshotRoundTripWithChunking();
 	TestSnapshotMonoChunkDefaultsRoundTrip();
 	std::puts("All ServerProtocol tests passed");

@@ -972,7 +972,7 @@ namespace engine::server
 		LOG_WARN(Net, "[ServerApp] Dropped invalid packet from {}", UdpTransport::EndpointToString(datagram.endpoint));
 	}
 
-	bool ServerApp::LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg)
+	bool ServerApp::LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg, std::string& outName)
 	{
 #if defined(SHARD_POSITION_DB)
 		if (m_characterDbPool == nullptr || characterId == 0u)
@@ -986,8 +986,9 @@ namespace engine::server
 			return false;
 		}
 		char sql[256];
+		// TD.5 — on fetch aussi `name` pour le SnapshotEntity (plaque de nom).
 		std::snprintf(sql, sizeof(sql),
-			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg FROM characters "
+			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name FROM characters "
 			"WHERE id = %llu AND deleted_at IS NULL",
 			static_cast<unsigned long long>(characterId));
 		MYSQL_RES* res = db::DbQuery(mysql, sql);
@@ -1002,12 +1003,13 @@ namespace engine::server
 			y = row[1] ? std::strtof(row[1], nullptr) : 0.0f;
 			z = row[2] ? std::strtof(row[2], nullptr) : 0.0f;
 			yawDeg = row[3] ? std::strtof(row[3], nullptr) : 0.0f;
+			outName = row[4] ? std::string(row[4]) : std::string{};
 			found = true;
 		}
 		db::DbFreeResult(res);
 		return found;
 #else
-		(void)characterId; (void)x; (void)y; (void)z; (void)yawDeg;
+		(void)characterId; (void)x; (void)y; (void)z; (void)yawDeg; (void)outName;
 		return false;
 #endif
 	}
@@ -1164,15 +1166,18 @@ namespace engine::server
 		// conserve la position fichier. Avant UpdateClientInterest (qui place l'AoI).
 		{
 			float dbX = 0.0f, dbY = 0.0f, dbZ = 0.0f, dbYawDeg = 0.0f;
-			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg))
+			std::string dbName;
+			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg, dbName))
 			{
 				acceptedClient.positionMetersX = dbX;
 				acceptedClient.positionMetersY = dbY;
 				acceptedClient.positionMetersZ = dbZ;
 				acceptedClient.yawRadians = dbYawDeg * 0.01745329252f; // deg -> rad
+				// TD.5 — nom du personnage destiné aux plaques de nom des avatars distants.
+				acceptedClient.characterName = std::move(dbName);
 				LOG_INFO(Net,
-					"[ServerApp] Spawn position chargee depuis la DB (character_key={}, pos=({:.2f}, {:.2f}, {:.2f}))",
-					acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ);
+					"[ServerApp] Spawn position chargee depuis la DB (character_key={}, name=\"{}\", pos=({:.2f}, {:.2f}, {:.2f}))",
+					acceptedClient.persistenceCharacterKey, acceptedClient.characterName, dbX, dbY, dbZ);
 			}
 		}
 
@@ -3799,8 +3804,12 @@ namespace engine::server
 			outEntity.entityId = client->entityId;
 			outEntity.state = BuildEntityState(*client);
 			// TD.4 : expose le clientId au snapshot pour que les autres clients puissent
-			// afficher une plaque de nom "P<clientId>" au-dessus de cet avatar joueur.
+			// afficher une plaque de nom au-dessus de cet avatar joueur.
 			outEntity.playerClientId = client->clientId;
+			// TD.5 : nom du perso (chargé depuis la DB au moment de l'admission) → plaque
+			// avec le vrai nom au lieu du fallback "P<clientId>". Vide si la DB n'a pas pu
+			// servir (Windows / DB indisponible), le client retombe sur "P<clientId>".
+			outEntity.characterName = client->characterName;
 			return true;
 		}
 

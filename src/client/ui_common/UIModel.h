@@ -287,7 +287,8 @@ namespace engine::client
 
 	/// TD.1 — un avatar joueur/créature distant répliqué par l'AoI (≠ joueur local).
 	/// Rempli depuis les SnapshotEntity à chaque snapshot ; consommé par le rendu monde
-	/// (TD.2) et l'interpolation (TD.3).
+	/// (TD.2) et l'interpolation (TD.3). TD.4 ajoute `playerClientId` : ≠ 0 pour un joueur
+	/// (sert à dessiner la plaque "P<clientId>"), 0 pour un mob / loot bag.
 	struct UIRemoteEntity
 	{
 		engine::server::EntityId entityId = 0;
@@ -301,6 +302,8 @@ namespace engine::client
 		uint32_t currentHealth = 0;
 		uint32_t maxHealth = 0;
 		uint32_t stateFlags = 0;
+		/// TD.4 : id client (≠ entityId) reçu du serveur, sert à l'overlay nameplate.
+		uint32_t playerClientId = 0;
 	};
 
 	/// Pure data model consumed by UI views and debug panels.
@@ -491,6 +494,20 @@ namespace engine::client
 		std::vector<engine::server::SnapshotEntity> m_snapshotScratch;
 		std::vector<engine::server::ItemStack> m_inventoryScratch;
 		engine::server::SnapshotMessage m_snapshotMessage{};
+		/// TG.1 — accumulateur pour les snapshots scindes en plusieurs chunks (chunkCount > 1).
+		/// On collecte les entites des chunks reçus pour un meme serverTick puis on commite
+		/// l'image globale dès que tous les chunks attendus sont arrives. Un changement de
+		/// serverTick abandonne l'accumulation precedente (best-effort, pas de retry UDP).
+		struct ChunkedSnapshotAccumulator
+		{
+			uint32_t serverTick = 0;
+			uint16_t expectedChunkCount = 0;
+			uint16_t chunksReceived = 0;
+			std::vector<engine::server::SnapshotEntity> entities;
+			engine::server::SnapshotMessage header{};
+			bool active = false;
+		};
+		ChunkedSnapshotAccumulator m_chunkAccumulator{};
 		engine::server::CombatEventMessage m_combatEventMessage{};
 		engine::server::ZoneChangeMessage m_zoneChangeMessage{};
 		engine::server::InventoryDeltaMessage m_inventoryMessage{};

@@ -54,6 +54,15 @@ namespace engine::server
 		/// M32.2 — Maximum range (metres) for party XP and loot sharing.
 		inline constexpr float kPartyShareRangeMeters = 40.0f;
 
+		/// TG.2 — endpoint compacté en uint64 (address sur les 32 bits hauts + port sur les 16
+		/// bits bas) pour servir de clé aux index O(1) sur m_clients (cf. ServerApp.h).
+		/// Le port étant 16 bits, le décalage n'écrase rien et la clé reste injective ; les
+		/// 16 bits du milieu (vides) ne posent pas de risque de collision.
+		inline uint64_t PackEndpointKey(const Endpoint& endpoint)
+		{
+			return (static_cast<uint64_t>(endpoint.address) << 16) | static_cast<uint64_t>(endpoint.port);
+		}
+
 		/// M35.2 — Maximum stack size per shop buy/sell request (anti-spam).
 		inline constexpr uint32_t kMaxShopQuantityPerRequest = 10000u;
 
@@ -257,6 +266,19 @@ namespace engine::server
 		{
 			LOG_INFO(Core, "[ServerApp] Split-receive thread actif (TG.3) : I/O reseau decorrele du thread tick");
 		}
+		// TG.4 — cap top-N par distance configurable (0 = pas de cap). Bornage défensif :
+		// on clamp a un plafond confortable pour éviter qu'une faute de config (-1, valeur
+		// énorme) ne casse silencieusement la replication ou ne sature la mémoire au boot.
+		{
+			const int64_t cfgViewCap = m_config.GetInt("server.replication.view_cap_entities", 0);
+			constexpr int64_t kMaxReasonableViewCap = 4096;
+			const int64_t clampedViewCap = std::clamp<int64_t>(cfgViewCap, 0, kMaxReasonableViewCap);
+			m_viewCapEntities = static_cast<uint32_t>(clampedViewCap);
+			if (m_viewCapEntities != 0u)
+			{
+				LOG_INFO(Core, "[ServerApp] View cap actif (TG.4) : top-{} entites/client par snapshot", m_viewCapEntities);
+			}
+		}
 		m_nextClientId = 1;
 		m_currentTick = 0;
 		m_characterAutosaveIntervalTicks = 0;
@@ -264,6 +286,10 @@ namespace engine::server
 		m_snapshotAccumulator = 0;
 		m_stopRequested = false;
 		m_clients.clear();
+		// TG.2 — vider aussi les 3 index pour rester cohérent.
+		m_clientIndexByPackedEndpoint.clear();
+		m_clientIndexByClientId.clear();
+		m_clientIndexByEntityId.clear();
 		m_mobs.clear();
 		m_lootBags.clear();
 		m_lootTableEntries.clear();
@@ -484,6 +510,10 @@ namespace engine::server
 			}
 		}
 		m_clients.clear();
+		// TG.2 — Shutdown : vider aussi les 3 index O(1) sur m_clients.
+		m_clientIndexByPackedEndpoint.clear();
+		m_clientIndexByClientId.clear();
+		m_clientIndexByEntityId.clear();
 		for (const MobEntity& mob : m_mobs)
 		{
 			const auto zoneIt = m_zoneGrids.find(mob.zoneId);
@@ -1044,6 +1074,12 @@ namespace engine::server
 		client.stats.maxHealth = kDefaultPlayerHealth;
 		client.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultPlayerDamage);
 		ConnectedClient& acceptedClient = m_clients.emplace_back(std::move(client));
+		// TG.2 — insertion incrémentale dans les 3 index O(1). push_back garantit que les
+		// indices existants restent valides (la nouvelle entrée est en queue).
+		const size_t acceptedIndex = m_clients.size() - 1u;
+		m_clientIndexByPackedEndpoint[PackEndpointKey(acceptedClient.endpoint)] = acceptedIndex;
+		m_clientIndexByClientId[acceptedClient.clientId] = acceptedIndex;
+		m_clientIndexByEntityId[acceptedClient.entityId] = acceptedIndex;
 		PersistedCharacterState persistedState{};
 		if (m_characterPersistence.LoadCharacter(acceptedClient.persistenceCharacterKey, persistedState))
 		{
@@ -3239,14 +3275,11 @@ namespace engine::server
 
 	ConnectedClient* ServerApp::FindConnectedClient(uint32_t clientId)
 	{
-		for (ConnectedClient& client : m_clients)
-		{
-			if (client.clientId == clientId)
-			{
-				return &client;
-			}
-		}
-		return nullptr;
+		// TG.2 — O(1) via index map (auparavant O(N) sur m_clients).
+		const auto it = m_clientIndexByClientId.find(clientId);
+		if (it == m_clientIndexByClientId.end() || it->second >= m_clients.size())
+			return nullptr;
+		return &m_clients[it->second];
 	}
 
 	bool ServerApp::TryAddCurrency(uint32_t clientId, uint8_t currencyId, uint64_t amount, std::string& outError)
@@ -3491,6 +3524,21 @@ namespace engine::server
 	void ServerApp::BuildRelevantEntityIds(const ConnectedClient& client, std::vector<EntityId>& outEntityIds) const
 	{
 		outEntityIds.clear();
+		// TG.4 — collecte avec distance carrée pour pouvoir cap top-N (par distance au joueur)
+		// si la liste explose. On factorise la position du sujet au moment où l'on identifie
+		// son type (client / mob / loot bag) : évite un second lookup à l'application du cap.
+		// Capacité 0 (défaut) = comportement historique (pas de cap).
+		struct Candidate { EntityId entityId; float distSq; };
+		std::vector<Candidate> candidates;
+		candidates.reserve(client.interestEntityIds.size());
+		const float cx = client.positionMetersX;
+		const float cy = client.positionMetersY;
+		const float cz = client.positionMetersZ;
+		auto AddCandidate = [&](EntityId id, float x, float y, float z) {
+			const float dx = x - cx, dy = y - cy, dz = z - cz;
+			candidates.push_back({id, dx*dx + dy*dy + dz*dz});
+		};
+
 		for (EntityId entityId : client.interestEntityIds)
 		{
 			if (entityId == client.entityId)
@@ -3505,13 +3553,14 @@ namespace engine::server
 				{
 					continue;
 				}
-				outEntityIds.push_back(entityId);
+				AddCandidate(entityId,
+					subjectClient->positionMetersX, subjectClient->positionMetersY, subjectClient->positionMetersZ);
 				continue;
 			}
 
-			if (FindMobByEntityId(entityId) != nullptr)
+			if (const MobEntity* mob = FindMobByEntityId(entityId); mob != nullptr)
 			{
-				outEntityIds.push_back(entityId);
+				AddCandidate(entityId, mob->positionMetersX, mob->positionMetersY, mob->positionMetersZ);
 				continue;
 			}
 
@@ -3520,9 +3569,26 @@ namespace engine::server
 			{
 				if (lootBag->visibility == LootVisibility::Public || lootBag->ownerEntityId == client.entityId)
 				{
-					outEntityIds.push_back(entityId);
+					AddCandidate(entityId, lootBag->positionMetersX, lootBag->positionMetersY, lootBag->positionMetersZ);
 				}
 			}
+		}
+
+		// TG.4 — cap top-N par distance (squared, monotone donc équivalent à la distance euclidienne).
+		// Si configuré et dépassé, on partial_sort sur les N premiers puis on tronque.
+		// Sinon (par défaut, ou liste déjà sous la limite), on remonte tout dans l'ordre découvert.
+		if (m_viewCapEntities != 0u && candidates.size() > static_cast<size_t>(m_viewCapEntities))
+		{
+			const size_t cap = static_cast<size_t>(m_viewCapEntities);
+			std::partial_sort(candidates.begin(), candidates.begin() + cap, candidates.end(),
+				[](const Candidate& a, const Candidate& b) { return a.distSq < b.distSq; });
+			candidates.resize(cap);
+		}
+
+		outEntityIds.reserve(candidates.size());
+		for (const Candidate& c : candidates)
+		{
+			outEntityIds.push_back(c.entityId);
 		}
 	}
 
@@ -3610,6 +3676,9 @@ namespace engine::server
 		{
 			outEntity.entityId = client->entityId;
 			outEntity.state = BuildEntityState(*client);
+			// TD.4 : expose le clientId au snapshot pour que les autres clients puissent
+			// afficher une plaque de nom "P<clientId>" au-dessus de cet avatar joueur.
+			outEntity.playerClientId = client->clientId;
 			return true;
 		}
 
@@ -3617,6 +3686,7 @@ namespace engine::server
 		{
 			outEntity.entityId = mob->entityId;
 			outEntity.state = BuildEntityState(*mob);
+			// playerClientId reste 0 par defaut (entite non-joueur, pas de plaque de nom).
 			return true;
 		}
 
@@ -3830,73 +3900,107 @@ namespace engine::server
 			m_snapshotEntitiesScratch.push_back(snapshotEntity);
 		}
 
-		SnapshotMessage snapshot{};
-		snapshot.clientId = client.clientId;
-		snapshot.serverTick = m_currentTick;
-		snapshot.connectedClients = static_cast<uint16_t>(std::min<size_t>(m_clients.size(), 0xFFFFu));
-		snapshot.entityCount = static_cast<uint16_t>(std::min<size_t>(m_snapshotEntitiesScratch.size(), 0xFFFFu));
-		snapshot.receivedPackets = static_cast<uint32_t>(std::min<uint64_t>(m_transport.ReceivedPacketCount(), 0xFFFFFFFFu));
-		snapshot.sentPackets = static_cast<uint32_t>(std::min<uint64_t>(m_transport.SentPacketCount(), 0xFFFFFFFFu));
-		const std::vector<std::byte> packet = EncodeSnapshot(snapshot, m_snapshotEntitiesScratch);
-		if (!m_transport.Send(client.endpoint, packet))
+		// TG.1 — chunking : decoupe le snapshot pour rester sous ~1200 octets MTU UDP.
+		// Le header est borne par BeginPacket (16 o) + meta SnapshotMessage (24 o, TG.1)
+		// = 40 o constants. Une entite = 52 o (TD.4). Budget restant pour les entites :
+		// 1200 - 40 = 1160 o ⇒ max 22 entites/chunk (1160 / 52). On garde une marge
+		// confortable en visant 20 entites par chunk.
+		constexpr size_t kMaxEntitiesPerChunk = 20u;
+		const size_t totalEntities = m_snapshotEntitiesScratch.size();
+		const size_t chunkCountSize = (totalEntities == 0u)
+			? 1u
+			: (totalEntities + kMaxEntitiesPerChunk - 1u) / kMaxEntitiesPerChunk;
+		// Borne defensive : on ne dépasse pas la capacite wire de chunkCount (uint16).
+		const uint16_t chunkCount = static_cast<uint16_t>(std::min<size_t>(chunkCountSize, 0xFFFFu));
+
+		const uint32_t receivedPackets = static_cast<uint32_t>(std::min<uint64_t>(m_transport.ReceivedPacketCount(), 0xFFFFFFFFu));
+		const uint32_t sentPackets = static_cast<uint32_t>(std::min<uint64_t>(m_transport.SentPacketCount(), 0xFFFFFFFFu));
+		const uint16_t connectedClients = static_cast<uint16_t>(std::min<size_t>(m_clients.size(), 0xFFFFu));
+
+		bool allSent = true;
+		for (uint16_t chunkIdx = 0; chunkIdx < chunkCount; ++chunkIdx)
 		{
-			LOG_WARN(Net, "[ServerApp] Snapshot send failed (client_id={}, tick={})", client.clientId, m_currentTick);
-			return false;
+			const size_t chunkStart = static_cast<size_t>(chunkIdx) * kMaxEntitiesPerChunk;
+			const size_t chunkEnd = std::min(chunkStart + kMaxEntitiesPerChunk, totalEntities);
+			const std::span<const SnapshotEntity> chunkEntities(
+				m_snapshotEntitiesScratch.data() + chunkStart,
+				chunkEnd - chunkStart);
+
+			SnapshotMessage snapshot{};
+			snapshot.clientId = client.clientId;
+			snapshot.serverTick = m_currentTick;
+			snapshot.connectedClients = connectedClients;
+			// `entityCount` ne reference que CE chunk (cf. SnapshotMessage doc TG.1).
+			snapshot.entityCount = static_cast<uint16_t>(chunkEntities.size());
+			snapshot.receivedPackets = receivedPackets;
+			snapshot.sentPackets = sentPackets;
+			snapshot.chunkIndex = chunkIdx;
+			snapshot.chunkCount = chunkCount;
+			const std::vector<std::byte> packet = EncodeSnapshot(snapshot, chunkEntities);
+			if (!m_transport.Send(client.endpoint, packet))
+			{
+				LOG_WARN(Net, "[ServerApp] Snapshot send failed (client_id={}, tick={}, chunk={}/{})",
+					client.clientId, m_currentTick, chunkIdx + 1u, chunkCount);
+				allSent = false;
+			}
 		}
 
-		LOG_DEBUG(Net, "[ServerApp] Snapshot sent (client_id={}, tick={}, entity_count={})",
+		LOG_DEBUG(Net, "[ServerApp] Snapshot sent (client_id={}, tick={}, entity_count={}, chunks={})",
 			client.clientId,
 			m_currentTick,
-			m_snapshotEntitiesScratch.size());
-		return true;
+			totalEntities,
+			chunkCount);
+		return allSent;
 	}
 
 	ConnectedClient* ServerApp::FindClient(const Endpoint& endpoint)
 	{
-		for (ConnectedClient& client : m_clients)
-		{
-			if (client.endpoint == endpoint)
-			{
-				return &client;
-			}
-		}
-		return nullptr;
+		// TG.2 — O(1) via index map (auparavant O(N) sur m_clients).
+		const auto it = m_clientIndexByPackedEndpoint.find(PackEndpointKey(endpoint));
+		if (it == m_clientIndexByPackedEndpoint.end() || it->second >= m_clients.size())
+			return nullptr;
+		return &m_clients[it->second];
 	}
 
 	const ConnectedClient* ServerApp::FindClient(const Endpoint& endpoint) const
 	{
-		for (const ConnectedClient& client : m_clients)
-		{
-			if (client.endpoint == endpoint)
-			{
-				return &client;
-			}
-		}
-		return nullptr;
+		const auto it = m_clientIndexByPackedEndpoint.find(PackEndpointKey(endpoint));
+		if (it == m_clientIndexByPackedEndpoint.end() || it->second >= m_clients.size())
+			return nullptr;
+		return &m_clients[it->second];
 	}
 
 	ConnectedClient* ServerApp::FindClientByEntityId(EntityId entityId)
 	{
-		for (ConnectedClient& client : m_clients)
-		{
-			if (client.entityId == entityId)
-			{
-				return &client;
-			}
-		}
-		return nullptr;
+		const auto it = m_clientIndexByEntityId.find(entityId);
+		if (it == m_clientIndexByEntityId.end() || it->second >= m_clients.size())
+			return nullptr;
+		return &m_clients[it->second];
 	}
 
 	const ConnectedClient* ServerApp::FindClientByEntityId(EntityId entityId) const
 	{
-		for (const ConnectedClient& client : m_clients)
+		const auto it = m_clientIndexByEntityId.find(entityId);
+		if (it == m_clientIndexByEntityId.end() || it->second >= m_clients.size())
+			return nullptr;
+		return &m_clients[it->second];
+	}
+
+	void ServerApp::RebuildClientIndexes()
+	{
+		m_clientIndexByPackedEndpoint.clear();
+		m_clientIndexByClientId.clear();
+		m_clientIndexByEntityId.clear();
+		m_clientIndexByPackedEndpoint.reserve(m_clients.size());
+		m_clientIndexByClientId.reserve(m_clients.size());
+		m_clientIndexByEntityId.reserve(m_clients.size());
+		for (size_t i = 0; i < m_clients.size(); ++i)
 		{
-			if (client.entityId == entityId)
-			{
-				return &client;
-			}
+			const ConnectedClient& c = m_clients[i];
+			m_clientIndexByPackedEndpoint[PackEndpointKey(c.endpoint)] = i;
+			m_clientIndexByClientId[c.clientId] = i;
+			m_clientIndexByEntityId[c.entityId] = i;
 		}
-		return nullptr;
 	}
 
 	MobEntity* ServerApp::FindMobByEntityId(EntityId entityId)
@@ -4204,6 +4308,8 @@ namespace engine::server
 		OnClientLogout(*clientIt);
 		LOG_INFO(Net, "[ServerApp] Client disconnected (client_id={}, reason={})", clientId, persistenceReason);
 		m_clients.erase(clientIt);
+		// TG.2 — l'erase décale les indices après le slot supprimé ; reconstruire les 3 maps.
+		RebuildClientIndexes();
 	}
 
 	bool ServerApp::HandleChatSlashCommand(ConnectedClient& sender, const ParsedChatSlashCommand& command)

@@ -274,7 +274,8 @@ namespace engine::server
 	bool DecodeSnapshot(std::span<const std::byte> packet, SnapshotMessage& outMessage, std::vector<SnapshotEntity>& outEntities)
 	{
 		std::span<const std::byte> payload;
-		if (!DecodeHeader(packet, MessageKind::Snapshot, payload) || payload.size() < 20)
+		// TG.1 — header passe de 20 → 24 octets (ajout chunkIndex + chunkCount).
+		if (!DecodeHeader(packet, MessageKind::Snapshot, payload) || payload.size() < 24)
 		{
 			return false;
 		}
@@ -285,9 +286,15 @@ namespace engine::server
 		outMessage.entityCount = ReadU16(payload, 10);
 		outMessage.receivedPackets = ReadU32(payload, 12);
 		outMessage.sentPackets = ReadU32(payload, 16);
+		// TG.1 — chunkIndex / chunkCount. Le client utilise ces 2 valeurs pour reassembler
+		// un snapshot scinde sur plusieurs datagrammes (meme serverTick).
+		outMessage.chunkIndex = ReadU16(payload, 20);
+		outMessage.chunkCount = ReadU16(payload, 22);
 
 		const size_t entityCount = static_cast<size_t>(outMessage.entityCount);
-		const size_t expectedPayloadSize = 20 + (entityCount * 48);
+		// TD.4 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId) = 52 octets.
+		// TG.1 — header passe a 24 octets.
+		const size_t expectedPayloadSize = 24 + (entityCount * 52);
 		if (payload.size() != expectedPayloadSize)
 		{
 			return false;
@@ -295,7 +302,7 @@ namespace engine::server
 
 		outEntities.clear();
 		outEntities.resize(entityCount);
-		size_t offset = 20;
+		size_t offset = 24;
 		for (size_t index = 0; index < entityCount; ++index)
 		{
 			SnapshotEntity& entity = outEntities[index];
@@ -306,6 +313,9 @@ namespace engine::server
 				outEntities.clear();
 				return false;
 			}
+			// TD.4 : id client decode apres EntityState. ReadEntityState a deja avance offset de 40.
+			entity.playerClientId = ReadU32(payload, offset);
+			offset += 4;
 		}
 
 		return true;
@@ -390,17 +400,25 @@ namespace engine::server
 
 	std::vector<std::byte> EncodeSnapshot(const SnapshotMessage& message, std::span<const SnapshotEntity> entities)
 	{
-		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 20 + (entities.size() * 48));
+		// TD.4 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId) = 52 octets.
+		// TG.1 — header passe de 20 → 24 octets (ajout chunkIndex + chunkCount uint16 × 2).
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 24 + (entities.size() * 52));
 		WriteU32(packet, message.clientId);
 		WriteU32(packet, message.serverTick);
 		WriteU16(packet, message.connectedClients);
 		WriteU16(packet, message.entityCount);
 		WriteU32(packet, message.receivedPackets);
 		WriteU32(packet, message.sentPackets);
+		// TG.1 — chunking : chunkCount = 1 (defaut) = mono-paquet ; > 1 = chunk d'un snapshot
+		// scinde pour rester sous le budget MTU UDP. Le client reassemble par serverTick.
+		WriteU16(packet, message.chunkIndex);
+		WriteU16(packet, message.chunkCount);
 		for (const SnapshotEntity& entity : entities)
 		{
 			WriteU64(packet, entity.entityId);
 			WriteEntityState(packet, entity.state);
+			// TD.4 : id client (≠ entityId) pour qu'un client distant puisse afficher "P<clientId>".
+			WriteU32(packet, entity.playerClientId);
 		}
 		return packet;
 	}

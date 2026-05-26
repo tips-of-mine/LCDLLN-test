@@ -640,6 +640,45 @@ namespace engine::client
 			return false;
 		}
 
+		// TG.1 — chunking : si le serveur a scinde le snapshot en plusieurs chunks
+		// (chunkCount > 1), on accumule jusqu'a avoir tous les chunks du meme serverTick
+		// puis on commite l'image globale. Un changement de serverTick abandonne
+		// l'accumulation precedente (best-effort UDP, pas de retry).
+		if (m_snapshotMessage.chunkCount > 1u)
+		{
+			if (!m_chunkAccumulator.active || m_chunkAccumulator.serverTick != m_snapshotMessage.serverTick)
+			{
+				// Nouveau serverTick (premier chunk recu pour ce tick) ou
+				// abandon d'un precedent accumulator incomplet.
+				m_chunkAccumulator.serverTick = m_snapshotMessage.serverTick;
+				m_chunkAccumulator.expectedChunkCount = m_snapshotMessage.chunkCount;
+				m_chunkAccumulator.chunksReceived = 0u;
+				m_chunkAccumulator.entities.clear();
+				m_chunkAccumulator.header = m_snapshotMessage; // garde le header du 1er chunk
+				m_chunkAccumulator.active = true;
+			}
+			m_chunkAccumulator.entities.insert(
+				m_chunkAccumulator.entities.end(),
+				m_snapshotScratch.begin(), m_snapshotScratch.end());
+			++m_chunkAccumulator.chunksReceived;
+			if (m_chunkAccumulator.chunksReceived < m_chunkAccumulator.expectedChunkCount)
+			{
+				// Pas encore tous les chunks : on attend les suivants sans commiter.
+				return true;
+			}
+			// Tous les chunks recus : commit avec l'union des entites. On reutilise
+			// m_snapshotMessage / m_snapshotScratch pour la suite du chemin de commit
+			// existant ; entityCount du header committe = total des chunks.
+			m_snapshotMessage = m_chunkAccumulator.header;
+			m_snapshotMessage.entityCount = static_cast<uint16_t>(
+				std::min<size_t>(m_chunkAccumulator.entities.size(), 0xFFFFu));
+			m_snapshotMessage.chunkIndex = 0u;
+			m_snapshotMessage.chunkCount = 1u;
+			m_snapshotScratch = std::move(m_chunkAccumulator.entities);
+			m_chunkAccumulator.active = false;
+			m_chunkAccumulator.entities.clear();
+		}
+
 		PumpWorldPresenterAge();
 		m_chatWorld.SyncEntityPositions(m_snapshotScratch);
 
@@ -684,6 +723,8 @@ namespace engine::client
 			remote.currentHealth = entity.state.currentHealth;
 			remote.maxHealth = entity.state.maxHealth;
 			remote.stateFlags = entity.state.stateFlags;
+			// TD.4 : propage le clientId reçu (0 = mob/lootbag, ≠ 0 = joueur distant).
+			remote.playerClientId = entity.playerClientId;
 			m_model.remoteEntities.push_back(remote);
 		}
 

@@ -20,7 +20,11 @@ RUN chmod +x /app/lcdlln_shard
 
 COPY config/shard.config.json /app/config.json
 
+# 3843/tcp : ticket/handshake auth (NetServer)
+# 3844/tcp : health/metrics (loopback usuel)
+# 27015/udp : gameplay (ServerApp, server.listen_port). Cf docs/deployment_udp.md
 EXPOSE 3843
+EXPOSE 27015/udp
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
     CMD nc -z localhost 3844 || exit 1

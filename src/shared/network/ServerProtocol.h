@@ -15,8 +15,10 @@ namespace engine::server
 	/// pour transporter un \c character_id complet (BIGINT UNSIGNED) sans tronquer.
 	/// TC.1 — bump 2 → 3 : `InputMessage` gagne `positionMetersY` + `yawRadians` (le client
 	/// envoie désormais son altitude et son orientation, plus seulement X/Z).
-	/// Wire-breaking : client + shard doivent se déployer ensemble.
-	inline constexpr uint16_t kProtocolVersion = 3;
+	/// TD.4 — bump 3 → 4 : `SnapshotEntity` gagne `playerClientId` (uint32) — sert au client
+	/// à afficher une plaque de nom "P<clientId>" au-dessus des avatars distants. Vaut 0 pour
+	/// les mobs / loot bags. Wire-breaking : client + shard doivent se déployer ensemble.
+	inline constexpr uint16_t kProtocolVersion = 4;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t

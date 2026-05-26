@@ -287,7 +287,8 @@ namespace engine::client
 
 	/// TD.1 — un avatar joueur/créature distant répliqué par l'AoI (≠ joueur local).
 	/// Rempli depuis les SnapshotEntity à chaque snapshot ; consommé par le rendu monde
-	/// (TD.2) et l'interpolation (TD.3).
+	/// (TD.2) et l'interpolation (TD.3). TD.4 ajoute `playerClientId` : ≠ 0 pour un joueur
+	/// (sert à dessiner la plaque "P<clientId>"), 0 pour un mob / loot bag.
 	struct UIRemoteEntity
 	{
 		engine::server::EntityId entityId = 0;
@@ -301,6 +302,8 @@ namespace engine::client
 		uint32_t currentHealth = 0;
 		uint32_t maxHealth = 0;
 		uint32_t stateFlags = 0;
+		/// TD.4 : id client (≠ entityId) reçu du serveur, sert à l'overlay nameplate.
+		uint32_t playerClientId = 0;
 	};
 
 	/// Pure data model consumed by UI views and debug panels.

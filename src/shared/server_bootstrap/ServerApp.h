@@ -783,6 +783,11 @@ namespace engine::server
 		uint32_t m_characterAutosaveIntervalTicks = 0;
 		uint32_t m_nextCharacterAutosaveTick = 0;
 		uint32_t m_snapshotAccumulator = 0;
+		/// TG.4 — cap top-N par distance des entités relayées par client (`BuildRelevantEntityIds`).
+		/// 0 (défaut) = pas de cap (comportement historique). Lu au boot depuis la clé
+		/// `server.replication.view_cap_entities` du config.json — opt-in pour éviter de couper
+		/// silencieusement la visibilité sur les déploiements existants.
+		uint32_t m_viewCapEntities = 0;
 		bool m_initialized = false;
 		bool m_stopRequested = false;
 

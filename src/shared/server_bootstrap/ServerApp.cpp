@@ -296,6 +296,7 @@ namespace engine::server
 		m_dynamicEvents.clear();
 		m_spawners.clear();
 		m_pendingDatagrams.clear();
+		m_pendingHellos.clear(); // TA.3 — buffer Hello en attente d'admission, vide au boot.
 		m_zoneGrids.clear();
 		m_nextServerEntityId = 0x200000000ull;
 		if (!m_zoneTransitionMap.Init())
@@ -540,6 +541,7 @@ namespace engine::server
 		}
 		m_zoneGrids.clear();
 		m_pendingDatagrams.clear();
+		m_pendingHellos.clear(); // TA.3 — buffer Hello en attente d'admission.
 		m_tickScheduler.Shutdown();
 		m_transport.Shutdown();
 		m_zoneTransitionMap.Shutdown();
@@ -1037,10 +1039,33 @@ namespace engine::server
 				std::chrono::steady_clock::now().time_since_epoch()).count());
 			if (!m_admittedRegistry->IsAdmitted(tentativeCharacterKey, nowMs))
 			{
-				LOG_WARN(Net,
-					"[ServerApp] Hello rejected: character_key={} not admitted (no valid ticket) (endpoint={})",
+				// TA.3 — race condition Hello/Admit : l'admission est peut-être en route
+				// (master vient de pousser kOpcodeMasterToShardAdmitCharacter, mais le
+				// Hello UDP est arrivé avant). On met en attente plutôt que de drop, et
+				// DrainPendingHellos (appelé à chaque TickOnce) re-essaiera dès que
+				// l'admission sera vue.
+				// Dédup par character_key : un client qui spam Hello pour le même perso
+				// n'écrase que sa propre entrée (et le timestamp est rafraîchi).
+				bool found = false;
+				for (PendingHello& entry : m_pendingHellos)
+				{
+					if (entry.characterKey == tentativeCharacterKey)
+					{
+						entry.endpoint = endpoint;
+						entry.arrivedAtMs = nowMs;
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+				{
+					m_pendingHellos.push_back(PendingHello{ endpoint, tentativeCharacterKey, nowMs });
+				}
+				LOG_INFO(Net,
+					"[ServerApp] Hello mis en attente d'admission (character_key={}, endpoint={}, pending={})",
 					tentativeCharacterKey,
-					UdpTransport::EndpointToString(endpoint));
+					UdpTransport::EndpointToString(endpoint),
+					m_pendingHellos.size());
 				return;
 			}
 		}
@@ -1237,9 +1262,60 @@ namespace engine::server
 		UpdateClientInterest(*client);
 	}
 
+	void ServerApp::DrainPendingHellos()
+	{
+		if (m_pendingHellos.empty() || m_admittedRegistry == nullptr)
+			return;
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
+		// On copie les entrées candidates (admises ou expirées) puis on rebuild la liste
+		// en gardant uniquement les non-admises non-expirées. Cas attendu : 0-2 entrées,
+		// donc le coût est négligeable.
+		std::vector<PendingHello> toReplay;
+		std::vector<PendingHello> stillPending;
+		toReplay.reserve(m_pendingHellos.size());
+		stillPending.reserve(m_pendingHellos.size());
+		for (const PendingHello& entry : m_pendingHellos)
+		{
+			if (nowMs - entry.arrivedAtMs > kPendingHelloTtlMs)
+			{
+				LOG_WARN(Net,
+					"[ServerApp] Hello en attente expire (character_key={}, endpoint={}, age_ms={})",
+					entry.characterKey,
+					UdpTransport::EndpointToString(entry.endpoint),
+					nowMs - entry.arrivedAtMs);
+				continue; // drop expired
+			}
+			if (m_admittedRegistry->IsAdmitted(entry.characterKey, nowMs))
+			{
+				toReplay.push_back(entry);
+			}
+			else
+			{
+				stillPending.push_back(entry);
+			}
+		}
+		m_pendingHellos = std::move(stillPending);
+		// Retraite hors-boucle pour eviter de re-entrer dans HandleHello qui pourrait
+		// re-buffer l'entree si on echoue une 2e fois (cas pathologique : admit revoque
+		// entre temps). Le rebuild de m_pendingHellos est deja figé avant les Replay.
+		for (const PendingHello& entry : toReplay)
+		{
+			LOG_INFO(Net,
+				"[ServerApp] Retraite Hello en attente (character_key={}, endpoint={}, age_ms={})",
+				entry.characterKey,
+				UdpTransport::EndpointToString(entry.endpoint),
+				nowMs - entry.arrivedAtMs);
+			HandleHello(entry.endpoint, entry.characterKey);
+		}
+	}
+
 	void ServerApp::TickOnce()
 	{
 		++m_currentTick;
+		// TA.3 — retraite avant Simulate : un Hello admis ce tick devient un client connecté
+		// dont la position sera diffusée par MaybeSendSnapshots du même tick.
+		DrainPendingHellos();
 		Simulate();
 		MaybeAutosaveCharacters();
 		RefreshReplication();

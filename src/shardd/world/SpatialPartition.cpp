@@ -90,14 +90,22 @@ namespace engine::server
 			return false;
 		}
 
-		if (posX < 0.0f || posZ < 0.0f || posX >= static_cast<float>(kZoneSizeMeters) || posZ >= static_cast<float>(kZoneSizeMeters))
+		// Convention : le client centre le monde à (0,0) (cf. Engine.cpp B.1 spawn).
+		// La grille stocke des cellules indexées [0, kCellGridAxisCount). On translate
+		// donc les coords monde par +halfZone pour les mapper sur l'espace cellule.
+		// Plage monde acceptée : [-halfZone, +halfZone). Au-delà : hors-zone (rejet).
+		constexpr float halfZoneMeters = static_cast<float>(kZoneSizeMeters) * 0.5f;
+		const float gridX = posX + halfZoneMeters;
+		const float gridZ = posZ + halfZoneMeters;
+		if (gridX < 0.0f || gridZ < 0.0f || gridX >= static_cast<float>(kZoneSizeMeters) || gridZ >= static_cast<float>(kZoneSizeMeters))
 		{
-			LOG_WARN(Net, "[CellGrid] TryWorldToCellCoord FAILED: out of zone position ({:.2f}, {:.2f})", posX, posZ);
+			LOG_WARN(Net, "[CellGrid] TryWorldToCellCoord FAILED: out of zone position ({:.2f}, {:.2f}) (plage acceptee [-{:.0f}, +{:.0f}))",
+				posX, posZ, halfZoneMeters, halfZoneMeters);
 			return false;
 		}
 
-		outCell.x = static_cast<int16_t>(std::floor(posX / static_cast<float>(kCellSizeMeters)));
-		outCell.z = static_cast<int16_t>(std::floor(posZ / static_cast<float>(kCellSizeMeters)));
+		outCell.x = static_cast<int16_t>(std::floor(gridX / static_cast<float>(kCellSizeMeters)));
+		outCell.z = static_cast<int16_t>(std::floor(gridZ / static_cast<float>(kCellSizeMeters)));
 		return true;
 	}
 

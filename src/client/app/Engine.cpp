@@ -9537,11 +9537,44 @@ namespace engine
 		if (!m_pipeline) return;
 		const std::vector<engine::client::UIRemoteEntity>& remotes = m_uiModelBinding.GetModel().remoteEntities;
 		if (remotes.empty()) return;
+		// TD.2 diag : logs une-fois pour identifier les early-return silencieux qui empechent
+		// le rendu des avatars distants (nameplate visible mais skin invisible).
+		static bool diagLoggedReason = false;
 		engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
-		if (mesh == nullptr || mesh->vertexBuffer == VK_NULL_HANDLE || mesh->indexBuffer == VK_NULL_HANDLE) return;
+		if (mesh == nullptr || mesh->vertexBuffer == VK_NULL_HANDLE || mesh->indexBuffer == VK_NULL_HANDLE)
+		{
+			if (!diagLoggedReason)
+			{
+				LOG_WARN(Render,
+					"[RecordRemoteAvatars] SKIP : mesh placeholder non pret (mesh={} vbuf={} ibuf={}, remotes={})",
+					mesh ? "ok" : "null",
+					(mesh && mesh->vertexBuffer != VK_NULL_HANDLE) ? "ok" : "null",
+					(mesh && mesh->indexBuffer != VK_NULL_HANDLE) ? "ok" : "null",
+					remotes.size());
+				diagLoggedReason = true;
+			}
+			return;
+		}
 		auto& geom = m_pipeline->GetGeometryPass();
 		// loadOp=LOAD requis pour se superposer au GBuffer (terrain + avatar + props) sans clear.
-		if (!geom.HasLoadPass()) return;
+		if (!geom.HasLoadPass())
+		{
+			if (!diagLoggedReason)
+			{
+				LOG_WARN(Render, "[RecordRemoteAvatars] SKIP : GeometryPass sans load pass (remotes={})", remotes.size());
+				diagLoggedReason = true;
+			}
+			return;
+		}
+		static bool diagLoggedSuccess = false;
+		if (!diagLoggedSuccess)
+		{
+			LOG_INFO(Render,
+				"[RecordRemoteAvatars] OK : rendu des avatars distants demarre (remotes={}, mesh.vcount={}, mesh.icount={}, material_id={})",
+				remotes.size(), mesh->vertexCount, mesh->indexCount,
+				(m_avatarMaterialId != 0u) ? m_avatarMaterialId : 0u);
+			diagLoggedSuccess = true;
+		}
 		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
 		const uint32_t materialIndex = (m_avatarMaterialId != 0u)
 			? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex();

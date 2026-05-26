@@ -1074,6 +1074,8 @@ namespace engine::server
 		if (existingClient != nullptr)
 		{
 			existingClient->helloNonce = helloNonce;
+			existingClient->lastUdpActivityAtMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now().time_since_epoch()).count());
 			LOG_INFO(Net, "[ServerApp] Handshake refresh (client_id={}, endpoint={}, nonce={})",
 				existingClient->clientId,
 				UdpTransport::EndpointToString(endpoint),
@@ -1098,6 +1100,9 @@ namespace engine::server
 		client.stats.currentHealth = kDefaultPlayerHealth;
 		client.stats.maxHealth = kDefaultPlayerHealth;
 		client.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultPlayerDamage);
+		// TA.3 — initialise le timestamp d'activite UDP au Hello (premier signe de vie).
+		client.lastUdpActivityAtMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
 		ConnectedClient& acceptedClient = m_clients.emplace_back(std::move(client));
 		// TG.2 — insertion incrémentale dans les 3 index O(1). push_back garantit que les
 		// indices existants restent valides (la nouvelle entrée est en queue).
@@ -1242,6 +1247,10 @@ namespace engine::server
 		const float previousPositionX = client->positionMetersX;
 		const float previousPositionZ = client->positionMetersZ;
 		client->lastInputSequence = inputSequence;
+		// TA.3 — rafraichit le timestamp UDP : ce client est vivant. EvictIdleClients
+		// le laissera tranquille tant qu'il continue d'envoyer des Input.
+		client->lastUdpActivityAtMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
 		client->positionMetersX = positionMetersX;
 		client->positionMetersY = positionMetersY; // TC.1 : altitude fournie par le client
 		client->positionMetersZ = positionMetersZ;
@@ -1310,12 +1319,49 @@ namespace engine::server
 		}
 	}
 
+	void ServerApp::EvictIdleUdpClients()
+	{
+		if (m_clients.empty())
+			return;
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
+		// Recolte les candidats puis appelle DisconnectConnectedClient hors-boucle (qui
+		// modifie m_clients + reconstruit les index hash TG.2 ; iterer en mutation casserait).
+		std::vector<uint32_t> toDisconnect;
+		toDisconnect.reserve(m_clients.size());
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (client.lastUdpActivityAtMs == 0)
+				continue; // jamais initialise (defensive)
+			if (nowMs - client.lastUdpActivityAtMs >= kUdpClientIdleTimeoutMs)
+			{
+				LOG_INFO(Net,
+					"[ServerApp] Evict idle UDP client (client_id={}, character_key={}, endpoint={}, idle_ms={})",
+					client.clientId, client.persistenceCharacterKey,
+					UdpTransport::EndpointToString(client.endpoint),
+					nowMs - client.lastUdpActivityAtMs);
+				toDisconnect.push_back(client.clientId);
+			}
+		}
+		for (uint32_t clientId : toDisconnect)
+		{
+			DisconnectConnectedClient(clientId, "udp_idle_timeout");
+		}
+	}
+
 	void ServerApp::TickOnce()
 	{
 		++m_currentTick;
 		// TA.3 — retraite avant Simulate : un Hello admis ce tick devient un client connecté
 		// dont la position sera diffusée par MaybeSendSnapshots du même tick.
 		DrainPendingHellos();
+		// TA.3 — eviction des clients UDP zombies (1 Hz pour limiter le cout, suffisant
+		// pour la propriete attendue : zombie disparait en max ~kUdpClientIdleTimeoutMs + 1 s).
+		if (m_currentTick - m_lastEvictIdleClientsTick >= m_tickHz)
+		{
+			EvictIdleUdpClients();
+			m_lastEvictIdleClientsTick = m_currentTick;
+		}
 		Simulate();
 		MaybeAutosaveCharacters();
 		RefreshReplication();

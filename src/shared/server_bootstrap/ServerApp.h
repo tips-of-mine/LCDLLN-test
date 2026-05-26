@@ -88,6 +88,11 @@ namespace engine::server
 		EntityId entityId = 0;
 		uint32_t archetypeId = 1;
 		uint32_t lastInputSequence = 0;
+		/// TA.3 — timeout zombie : rafraichi a chaque Hello/Input (UDP). Utilise par
+		/// EvictIdleClients pour evincer un client qui ne souffle plus depuis > N ticks
+		/// (le NetServer TCP a son propre timeout, mais l'UDP gameplay non — sans ca,
+		/// les avatars de joueurs deconnectes restent broadcastes indefiniment).
+		uint64_t lastUdpActivityAtMs = 0;
 		/// Phase 3.7.5 — élargi à uint64 pour porter le character_id complet.
 		uint64_t helloNonce = 0;
 		uint64_t persistenceCharacterKey = 0;
@@ -299,6 +304,13 @@ namespace engine::server
 		/// par le master via kOpcodeMasterToShardAdmitCharacter). Entrées expirées (TTL)
 		/// supprimées silencieusement.
 		void DrainPendingHellos();
+
+		/// TA.3 — Évince les clients dont la dernière activité UDP date de plus de
+		/// kUdpClientIdleTimeoutMs. Le UDP est sans connexion : un client qui ferme son
+		/// process ne génère aucun FIN, donc sans timeout actif son `ConnectedClient` resterait
+		/// dans `m_clients` et sa position continuerait d'être broadcastée aux autres
+		/// (avatars / nameplates fantômes). Appelé périodiquement dans TickOnce.
+		void EvictIdleUdpClients();
 
 		/// Record the last input sequence for a connected client.
 		void HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersY, float positionMetersZ, float yawRadians);
@@ -860,6 +872,13 @@ namespace engine::server
 		/// TTL ms d'un Hello en attente. Au-delà, on abandonne (l'admission n'est pas arrivée).
 		/// 5 s suffisent largement vs la latence master→shard (typiquement < 100 ms).
 		static constexpr uint64_t kPendingHelloTtlMs = 5000u;
+
+		/// TA.3 — délai d'inactivité au-delà duquel un client UDP est considéré déconnecté.
+		/// Choisi a 30 s : largement plus que la cadence Input (50 ms a 20 Hz) tout en restant
+		/// court pour eviter des nameplates fantomes longtemps apres une deco brutale.
+		static constexpr uint64_t kUdpClientIdleTimeoutMs = 30000u;
+		/// Dernier tick ou EvictIdleUdpClients a tourne (throttling 1 Hz au lieu de 20 Hz).
+		uint32_t m_lastEvictIdleClientsTick = 0;
 
 		/// TA.3c : anti-triche mouvement (speed/teleport) sur les positions reçues en
 		/// Input. Détecteur header-only seedé à la config V1 par défaut (7.5 m/s * 1.5,

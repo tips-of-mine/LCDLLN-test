@@ -9566,20 +9566,33 @@ namespace engine
 			}
 			return;
 		}
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		// Le placeholder mesh (avatar_placeholder.mesh) a ses propres UVs simples, qui ne
+		// sont pas alignées sur l'atlas T_Ranger du matériau habit (m_avatarMaterialId).
+		// Sampler avec ce matériau renvoie des zones arbitraires de la texture (souvent
+		// transparentes ou indistinguables du ciel) — l'avatar distant est dessiné mais
+		// invisible à l'écran (bug A historique). Tant qu'on n'a pas de matériau dédié
+		// placeholder, on utilise le matériau par défaut (texture fallback unie) : visible,
+		// sans dépendance à un atlas spécifique.
+		const uint32_t materialIndex = materialCache.GetDefaultMaterialIndex();
 		static bool diagLoggedSuccess = false;
 		if (!diagLoggedSuccess)
 		{
 			LOG_INFO(Render,
-				"[RecordRemoteAvatars] OK : rendu des avatars distants demarre (remotes={}, mesh.vcount={}, mesh.icount={}, material_id={})",
+				"[RecordRemoteAvatars] OK : rendu des avatars distants demarre (remotes={}, mesh.vcount={}, mesh.icount={}, material_id={} (default placeholder))",
 				remotes.size(), mesh->vertexCount, mesh->indexCount,
-				(m_avatarMaterialId != 0u) ? m_avatarMaterialId : 0u);
+				materialIndex);
 			diagLoggedSuccess = true;
 		}
-		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
-		const uint32_t materialIndex = (m_avatarMaterialId != 0u)
-			? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex();
 		for (const engine::client::UIRemoteEntity& re : remotes)
 		{
+			// remoteEntities contient TOUTES les entités distantes (joueurs + mobs + lootbags).
+			// Les mobs ont leur propre pipeline de rendu (mesh dédié), donc ici on ne dessine
+			// le placeholder que pour les joueurs distants (playerClientId != 0). Sans ce filtre
+			// on superposerait un humanoïde placeholder par-dessus chaque mob — bug visuel.
+			// Même critère que la plaque de nom (cf. boucle TD.4 dans le HUD in-game).
+			if (re.playerClientId == 0u)
+				continue;
 			// TD.3 : position lissée (interpolation, cf. UpdateGameplayNet) ; repli sur la
 			// position snapshot brute si pas encore d'état lissé (graceful).
 			float px = re.positionX, py = re.positionY, pz = re.positionZ, yaw = re.yawRadians;

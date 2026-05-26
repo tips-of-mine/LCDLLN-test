@@ -3550,6 +3550,9 @@ namespace engine::server
 		{
 			outEntity.entityId = client->entityId;
 			outEntity.state = BuildEntityState(*client);
+			// TD.4 : expose le clientId au snapshot pour que les autres clients puissent
+			// afficher une plaque de nom "P<clientId>" au-dessus de cet avatar joueur.
+			outEntity.playerClientId = client->clientId;
 			return true;
 		}
 
@@ -3557,6 +3560,7 @@ namespace engine::server
 		{
 			outEntity.entityId = mob->entityId;
 			outEntity.state = BuildEntityState(*mob);
+			// playerClientId reste 0 par defaut (entite non-joueur, pas de plaque de nom).
 			return true;
 		}
 

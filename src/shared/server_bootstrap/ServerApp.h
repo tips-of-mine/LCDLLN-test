@@ -554,6 +554,12 @@ namespace engine::server
 		/// Find a connected client by replicated entity id.
 		const ConnectedClient* FindClientByEntityId(EntityId entityId) const;
 
+		/// TG.2 — reconstruit les 3 index O(1) sur m_clients depuis zéro. Appelé après une
+		/// suppression dans m_clients (erase) qui décale les indices ; pas nécessaire après
+		/// un push_back/emplace_back (les indices existants restent valides, on insère juste
+		/// la nouvelle entrée). Coût O(N) où N = m_clients.size().
+		void RebuildClientIndexes();
+
 		/// Find a mob by replicated entity id.
 		MobEntity* FindMobByEntityId(EntityId entityId);
 
@@ -766,6 +772,13 @@ namespace engine::server
 		UdpTransport m_transport;
 		std::vector<Datagram> m_pendingDatagrams;
 		std::vector<ConnectedClient> m_clients;
+		/// TG.2 : index O(1) sur m_clients pour les 3 lookups chauds (Find/FindByEntityId/
+		/// FindConnectedClient). Valeurs = index dans m_clients ; clé endpoint = (address<<16)|port.
+		/// Maintenance : insertion incrémentale dans HandleHello, reconstruction complète dans
+		/// DisconnectConnectedClient (rare). Wipe dans Init/Shutdown en même temps que m_clients.
+		std::unordered_map<uint64_t, size_t> m_clientIndexByPackedEndpoint;
+		std::unordered_map<uint32_t, size_t> m_clientIndexByClientId;
+		std::unordered_map<EntityId, size_t> m_clientIndexByEntityId;
 		std::vector<MobEntity> m_mobs;
 		std::vector<LootBagEntity> m_lootBags;
 		std::vector<LootTableEntry> m_lootTableEntries;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -55,10 +56,11 @@ namespace engine::server
 		static std::string EndpointToString(const Endpoint& endpoint);
 
 		/// Return the total number of packets received since init.
-		uint64_t ReceivedPacketCount() const { return m_receivedPackets; }
+		/// TG.3 — atomique pour autoriser Receive (thread réseau) et Send (thread tick) concurrents.
+		uint64_t ReceivedPacketCount() const { return m_receivedPackets.load(std::memory_order_relaxed); }
 
 		/// Return the total number of packets sent since init.
-		uint64_t SentPacketCount() const { return m_sentPackets; }
+		uint64_t SentPacketCount() const { return m_sentPackets.load(std::memory_order_relaxed); }
 
 		/// Return the port the socket is actually bound to. When Init() is called
 		/// with port 0, this exposes the ephemeral port assigned by the OS.
@@ -72,7 +74,9 @@ namespace engine::server
 		bool m_socketOpen = false;
 		bool m_wsaStarted = false;
 		uint16_t m_listenPort = 0;
-		uint64_t m_receivedPackets = 0;
-		uint64_t m_sentPackets = 0;
+		/// TG.3 — atomique relaxed : Receive incrémente côté thread réseau, Send côté thread tick.
+		/// Pas de besoin d'ordre mémoire fort (compteurs de stats, lecture déclarative).
+		std::atomic<uint64_t> m_receivedPackets{0};
+		std::atomic<uint64_t> m_sentPackets{0};
 	};
 }

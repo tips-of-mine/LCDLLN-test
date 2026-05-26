@@ -25,11 +25,15 @@
 #include "src/shardd/world/UdpTransport.h"
 #include "src/shardd/world/ZoneTransitions.h"
 
+#include <atomic>
+#include <condition_variable>
 #include <cstdint>
 #include <cstddef>
+#include <mutex>
 #include <string>
 #include <span>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -267,7 +271,14 @@ namespace engine::server
 		uint16_t ResolveSnapshotHz(uint16_t tickHz) const;
 
 		/// Receive pending datagrams and dispatch them to protocol handlers.
+		/// TG.3 — quand le mode `split-receive` est actif, lit depuis le buffer rempli par le
+		/// thread réseau (sous mutex) au lieu d'appeler directement `m_transport.Receive`.
 		void ProcessIncomingPackets();
+
+		/// TG.3 — boucle exécutée par `m_networkThread` : appelle `m_transport.Receive` en
+		/// continu, accumule dans `m_networkIngressQueue` sous mutex, dort brièvement quand
+		/// la socket est vide (anti-CPU-spin). Sortie quand `m_networkThreadStopRequested`.
+		void NetworkPumpLoop();
 
 		/// Handle one protocol packet coming from a client endpoint.
 		void ProcessPacket(const Datagram& datagram);
@@ -785,6 +796,22 @@ namespace engine::server
 		uint32_t m_snapshotAccumulator = 0;
 		bool m_initialized = false;
 		bool m_stopRequested = false;
+
+		// ------------------------------------------------------------------
+		// TG.3 — split du thread receive (opt-in via `server.network.split_receive_thread`,
+		// défaut false ⇒ comportement historique mono-thread préservé). Quand activé, un
+		// thread dédié appelle `UdpTransport::Receive` en continu et empile les datagrammes
+		// dans `m_networkIngressQueue` ; le thread tick (Run) draine la queue dans
+		// `ProcessIncomingPackets`. Décorrèle la jitter réseau de la jitter gameplay.
+		// ------------------------------------------------------------------
+		bool m_splitReceiveThread = false;
+		std::thread m_networkThread;
+		std::mutex m_networkQueueMutex;
+		/// Buffer rempli par le thread réseau et drainé (swap) par le thread tick à chaque
+		/// `ProcessIncomingPackets`. Vide quand le mode n'est pas actif.
+		std::vector<Datagram> m_networkIngressQueue;
+		/// Signal d'arrêt vu par `NetworkPumpLoop` ; positionné dans `RequestStop`/`Shutdown`.
+		std::atomic<bool> m_networkThreadStopRequested{false};
 
 		/// TA.3 : gate de session UDP (optionnel, possédé par l'appelant). Voir
 		/// SetAdmittedCharacterRegistry.

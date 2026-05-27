@@ -429,6 +429,8 @@ function matchesRecoveryFactors(bundle: RecoveryProfileBundle, input: RecoveryRe
 async function sendResetEmail(to: string, resetUrl: string): Promise<void> {
   const { createTransport } = await import("nodemailer");
   const host = process.env.SMTP_HOST;
+  // SMTP_PORT : défaut "587" conservé volontairement — c'est le port submission
+  // SMTP standard universel (RFC 6409). Pas un secret, pas une URL prod-critique.
   const port = Number.parseInt(process.env.SMTP_PORT || "587", 10);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;

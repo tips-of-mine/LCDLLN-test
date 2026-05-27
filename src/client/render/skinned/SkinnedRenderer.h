@@ -158,12 +158,17 @@ public:
     VkRenderPass GetRenderPass() const { return m_renderPass; }
 
     /// Nombre de copies des buffers réécrits chaque frame (bone SSBO + model
-    /// instance + descriptor set bone). Doit être >= au nombre de frames en vol
-    /// (FIF) de l'engine (2). Sans cette duplication, réécrire un buffer
+    /// instance + descriptor set bone). Doit être >= au nombre maximal de Record
+    /// par frame × FIF + marge. Sans cette duplication, réécrire un buffer
     /// host-coherent pendant que la frame précédente le lit encore provoque une
     /// course → l'avatar tremble / « parait double » (deux poses se mélangent).
-    /// 3 = FIF(2) + 1 de marge. Cf. CODEBASE_MAP §49.
-    static constexpr uint32_t kFrameSlots = 3u;
+    ///
+    /// TD.7 — bump 3 → 32 pour le rendu skinné des avatars distants. Avec FIF=2
+    /// et jusqu'à 14 avatars/frame (1 local + 13 distants), 32 slots laissent
+    /// une marge confortable avant qu'un slot soit réutilisé par-dessus une
+    /// écriture encore en flight côté GPU. Coût : 32 × (~16 KB bone SSBO + 64 B
+    /// model) ≈ 512 KB host-visible GPU. Acceptable pour un client.
+    static constexpr uint32_t kFrameSlots = 32u;
 
 private:
     VkDevice m_device = VK_NULL_HANDLE;

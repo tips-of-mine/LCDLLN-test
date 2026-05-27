@@ -972,7 +972,8 @@ namespace engine::server
 		LOG_WARN(Net, "[ServerApp] Dropped invalid packet from {}", UdpTransport::EndpointToString(datagram.endpoint));
 	}
 
-	bool ServerApp::LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg, std::string& outName)
+	bool ServerApp::LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg,
+		std::string& outName, std::string& outGender)
 	{
 #if defined(SHARD_POSITION_DB)
 		if (m_characterDbPool == nullptr || characterId == 0u)
@@ -987,8 +988,9 @@ namespace engine::server
 		}
 		char sql[256];
 		// TD.5 — on fetch aussi `name` pour le SnapshotEntity (plaque de nom).
+		// TD.6 — et `gender` (migration 0067) pour le rendu de l'avatar distant.
 		std::snprintf(sql, sizeof(sql),
-			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name FROM characters "
+			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender FROM characters "
 			"WHERE id = %llu AND deleted_at IS NULL",
 			static_cast<unsigned long long>(characterId));
 		MYSQL_RES* res = db::DbQuery(mysql, sql);
@@ -1004,12 +1006,13 @@ namespace engine::server
 			z = row[2] ? std::strtof(row[2], nullptr) : 0.0f;
 			yawDeg = row[3] ? std::strtof(row[3], nullptr) : 0.0f;
 			outName = row[4] ? std::string(row[4]) : std::string{};
+			outGender = row[5] ? std::string(row[5]) : std::string{};
 			found = true;
 		}
 		db::DbFreeResult(res);
 		return found;
 #else
-		(void)characterId; (void)x; (void)y; (void)z; (void)yawDeg; (void)outName;
+		(void)characterId; (void)x; (void)y; (void)z; (void)yawDeg; (void)outName; (void)outGender;
 		return false;
 #endif
 	}
@@ -1167,7 +1170,8 @@ namespace engine::server
 		{
 			float dbX = 0.0f, dbY = 0.0f, dbZ = 0.0f, dbYawDeg = 0.0f;
 			std::string dbName;
-			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg, dbName))
+			std::string dbGender;
+			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg, dbName, dbGender))
 			{
 				acceptedClient.positionMetersX = dbX;
 				acceptedClient.positionMetersY = dbY;
@@ -1175,27 +1179,44 @@ namespace engine::server
 				acceptedClient.yawRadians = dbYawDeg * 0.01745329252f; // deg -> rad
 				// TD.5 — nom du personnage destiné aux plaques de nom des avatars distants.
 				acceptedClient.characterName = std::move(dbName);
+				// TD.6 — genre du personnage destiné au rendu des avatars distants.
+				acceptedClient.gender = std::move(dbGender);
 				LOG_INFO(Net,
-					"[ServerApp] Spawn position chargee depuis la DB (character_key={}, name=\"{}\", pos=({:.2f}, {:.2f}, {:.2f}))",
-					acceptedClient.persistenceCharacterKey, acceptedClient.characterName, dbX, dbY, dbZ);
+					"[ServerApp] Spawn position chargee depuis la DB (character_key={}, name=\"{}\", gender=\"{}\", pos=({:.2f}, {:.2f}, {:.2f}))",
+					acceptedClient.persistenceCharacterKey, acceptedClient.characterName, acceptedClient.gender, dbX, dbY, dbZ);
 			}
-			// TD.5 — fallback nom : en mode no-DB (deploiement sans MySQL cote shard),
-			// LoadSpawnFromDb renvoie false et characterName reste vide → la plaque
-			// retomberait sur le fallback "P<clientId>" cote client. Le master nous a
-			// pousse le nom via kOpcodeMasterToShardAdmitCharacter (TD.5), on le recupere
-			// du registre d'admission qui le stocke depuis cette PR.
-			if (acceptedClient.characterName.empty() && m_admittedRegistry != nullptr)
+			// TD.5/TD.6 — fallback nom/genre : en mode no-DB (deploiement sans MySQL cote shard),
+			// LoadSpawnFromDb renvoie false et characterName/gender restent vides → le client
+			// retomberait sur le fallback "P<clientId>" + skin male par defaut. Le master nous a
+			// pousse nom et genre via kOpcodeMasterToShardAdmitCharacter, on les recupere du
+			// registre d'admission.
+			if (m_admittedRegistry != nullptr)
 			{
 				const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
 					std::chrono::steady_clock::now().time_since_epoch()).count());
-				std::string admittedName = m_admittedRegistry->AdmittedCharacterName(
-					acceptedClient.persistenceCharacterKey, nowMs);
-				if (!admittedName.empty())
+				if (acceptedClient.characterName.empty())
 				{
-					acceptedClient.characterName = std::move(admittedName);
-					LOG_INFO(Net,
-						"[ServerApp] Nom personnage recupere du registre d'admission (character_key={}, name=\"{}\")",
-						acceptedClient.persistenceCharacterKey, acceptedClient.characterName);
+					std::string admittedName = m_admittedRegistry->AdmittedCharacterName(
+						acceptedClient.persistenceCharacterKey, nowMs);
+					if (!admittedName.empty())
+					{
+						acceptedClient.characterName = std::move(admittedName);
+						LOG_INFO(Net,
+							"[ServerApp] Nom personnage recupere du registre d'admission (character_key={}, name=\"{}\")",
+							acceptedClient.persistenceCharacterKey, acceptedClient.characterName);
+					}
+				}
+				if (acceptedClient.gender.empty())
+				{
+					std::string admittedGender = m_admittedRegistry->AdmittedGender(
+						acceptedClient.persistenceCharacterKey, nowMs);
+					if (!admittedGender.empty())
+					{
+						acceptedClient.gender = std::move(admittedGender);
+						LOG_INFO(Net,
+							"[ServerApp] Genre personnage recupere du registre d'admission (character_key={}, gender=\"{}\")",
+							acceptedClient.persistenceCharacterKey, acceptedClient.gender);
+					}
 				}
 			}
 		}
@@ -3839,6 +3860,9 @@ namespace engine::server
 			// avec le vrai nom au lieu du fallback "P<clientId>". Vide si la DB n'a pas pu
 			// servir (Windows / DB indisponible), le client retombe sur "P<clientId>".
 			outEntity.characterName = client->characterName;
+			// TD.6 : genre du perso (migration 0067, "male"/"female") → le client sélectionne
+			// le bon mesh skinné pour l'avatar distant. Vide = fallback "male" côté rendu.
+			outEntity.gender = client->gender;
 			return true;
 		}
 

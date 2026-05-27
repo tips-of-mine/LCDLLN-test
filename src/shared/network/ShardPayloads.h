@@ -69,19 +69,22 @@ namespace engine::network
 	/// Builds SHARD_HEARTBEAT payload (Shard→Master). timestamp: e.g. seconds since epoch or monotonic.
 	std::vector<uint8_t> BuildShardHeartbeatPayload(uint32_t shard_id, uint32_t current_load, uint64_t timestamp = 0);
 
-	/// Parsed MASTER_TO_SHARD_ADMIT_CHARACTER payload : (account_id, character_id, character_name).
+	/// Parsed MASTER_TO_SHARD_ADMIT_CHARACTER payload : (account_id, character_id, character_name, gender).
 	/// Émis par le master (CharacterEnterWorldHandler) à destination du shard via la
 	/// connexion TCP persistante établie par ShardToMasterClient. Le shard l'utilise pour
 	/// admettre (account_id, character_id) dans son AdmittedCharacterRegistry → le Hello
 	/// UDP du client (clientNonce=character_id) sera ensuite accepté. TD.5 — `character_name`
 	/// vient de la table SQL `characters.name` et permet au shard (en mode no-DB en
 	/// particulier) de remplir `ConnectedClient.characterName`, donc la plaque de nom
-	/// des avatars distants côté client.
+	/// des avatars distants côté client. TD.6 — `gender` vient de `characters.gender`
+	/// (migration 0067, "male"/"female") et permet au client de choisir le mesh skinné
+	/// correct pour les avatars distants.
 	struct AdmitCharacterPayload
 	{
 		uint64_t account_id = 0;
 		uint64_t character_id = 0;
 		std::string character_name;
+		std::string gender;
 	};
 
 	/// Parses MASTER_TO_SHARD_ADMIT_CHARACTER payload. Returns nullopt if truncated.
@@ -90,6 +93,7 @@ namespace engine::network
 	/// Builds MASTER_TO_SHARD_ADMIT_CHARACTER packet (Master→Shard, push, request_id=0).
 	/// \param character_name nom du personnage (table SQL characters.name) ; sera tronqué
 	///        à 32 caractères côté master avant l'appel (cohérent avec la contrainte SQL).
+	/// \param gender genre du personnage ("male"/"female", cf. migration 0067).
 	std::vector<uint8_t> BuildAdmitCharacterPacket(uint64_t account_id, uint64_t character_id,
-		std::string_view character_name);
+		std::string_view character_name, std::string_view gender);
 }

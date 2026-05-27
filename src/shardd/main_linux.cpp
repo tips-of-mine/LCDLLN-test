@@ -177,13 +177,13 @@ int main(int argc, char** argv)
 	// ce câblage, le Hello UDP du client (clientNonce=character_id) serait rejeté car le
 	// ticket TCP avait été émis avant le choix de perso (character_id=0 → non admis).
 	toMaster.SetAdmitCharacterCallback([&admittedRegistry](uint64_t account_id, uint64_t character_id,
-		std::string_view character_name) {
+		std::string_view character_name, std::string_view gender) {
 		const std::uint64_t nowMs = static_cast<std::uint64_t>(
 			std::chrono::duration_cast<std::chrono::milliseconds>(
 				std::chrono::steady_clock::now().time_since_epoch()).count());
-		admittedRegistry.Admit(character_id, account_id, character_name, nowMs);
-		LOG_INFO(Net, "[ShardMain] Admit pushed by master (account_id={}, character_id={}, name='{}', nowMs={})",
-			account_id, character_id, character_name, nowMs);
+		admittedRegistry.Admit(character_id, account_id, character_name, gender, nowMs);
+		LOG_INFO(Net, "[ShardMain] Admit pushed by master (account_id={}, character_id={}, name='{}', gender='{}', nowMs={})",
+			account_id, character_id, character_name, gender, nowMs);
 	});
 	toMaster.Start();
 	// TA.3 : boucle gameplay UDP (ServerApp) sur un thread dedie, gated par admittedRegistry.

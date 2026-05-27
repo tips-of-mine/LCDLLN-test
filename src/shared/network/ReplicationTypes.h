@@ -70,11 +70,16 @@ namespace engine::server
 	/// TD.5 — `characterName` porte le nom de personnage choisi par le joueur ; non vide
 	/// uniquement pour les joueurs (mobs/lootbags ont la chaîne vide). Wire-bump v5→v6 :
 	/// chaque entité du Snapshot est suivie d'une chaîne préfixée u16 (taille variable).
+	/// TD.6 — `gender` porte le genre du personnage ("male"/"female", cf. migration 0067).
+	/// Permet au client de sélectionner le bon mesh skinné (Male_Ranger vs Female_Ranger)
+	/// pour le rendu de l'avatar distant. Chaîne vide pour les mobs/lootbags. Wire-bump
+	/// v6→v7 : ajout d'une seconde chaîne préfixée u16 après `characterName`.
 	struct SnapshotEntity
 	{
 		EntityId entityId = 0;
 		EntityState state{};
 		uint32_t playerClientId = 0;
 		std::string characterName;
+		std::string gender;
 	};
 }

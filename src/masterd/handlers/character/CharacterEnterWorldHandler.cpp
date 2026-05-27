@@ -78,18 +78,20 @@ namespace engine::server
 			return;
 		}
 
-		// Vérifie ownership : SELECT name, server_id FROM characters WHERE id=? AND account_id=? AND deleted_at IS NULL.
-		// On compare ensuite le name DB au name client byte-pour-byte (rejette toute imposture
-		// comme un sender qui claim un autre nom que celui en DB). TA.3 : server_id sert au
-		// lookup du shard cible pour le push d'admission.
+		// Vérifie ownership : SELECT name, server_id, gender FROM characters WHERE id=? AND account_id=?
+		// AND deleted_at IS NULL. On compare ensuite le name DB au name client byte-pour-byte
+		// (rejette toute imposture comme un sender qui claim un autre nom que celui en DB).
+		// TA.3 : server_id sert au lookup du shard cible pour le push d'admission.
+		// TD.6 : gender (migration 0067, "male"/"female") propagé au shard via AdmitCharacter.
 		char queryBuf[256]{};
 		std::snprintf(queryBuf, sizeof(queryBuf),
-			"SELECT name, server_id FROM characters WHERE id = %llu AND account_id = %llu AND deleted_at IS NULL",
+			"SELECT name, server_id, gender FROM characters WHERE id = %llu AND account_id = %llu AND deleted_at IS NULL",
 			static_cast<unsigned long long>(parsed->characterId),
 			static_cast<unsigned long long>(*accountId));
 
 		MYSQL_RES* res = engine::server::db::DbQuery(mysql, queryBuf);
 		std::string dbName;
+		std::string dbGender;
 		uint32_t dbServerId = 0;
 		bool found = false;
 		if (res)
@@ -100,6 +102,8 @@ namespace engine::server
 				dbName = row[0];
 				if (row[1])
 					dbServerId = static_cast<uint32_t>(std::strtoul(row[1], nullptr, 10));
+				if (row[2])
+					dbGender = row[2];
 				found = true;
 			}
 			engine::server::db::DbFreeResult(res);
@@ -162,8 +166,11 @@ namespace engine::server
 				// TD.5 — on embarque le nom du personnage dans le push d'admission pour
 				// permettre au shard (notamment en mode no-DB) de l'utiliser dans la
 				// SnapshotEntity (plaque de nom des avatars distants).
+				// TD.6 — on embarque aussi le genre (cf. migration 0067) pour permettre au
+				// client de sélectionner le bon mesh skinné (Male_Ranger vs Female_Ranger)
+				// pour les avatars distants.
 				auto admitPkt = engine::network::BuildAdmitCharacterPacket(*accountId, parsed->characterId,
-					parsed->characterName);
+					parsed->characterName, dbGender);
 				if (!admitPkt.empty() && m_server->Send(*shardConnId, admitPkt))
 				{
 					LOG_INFO(Net, "[CharacterEnterWorldHandler] admit push sent (shard_id={}, shardConnId={}, account_id={}, character_id={})",

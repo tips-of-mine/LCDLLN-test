@@ -308,6 +308,10 @@ namespace engine::client
 		/// Vide pour les mobs / lootbags, ou pour les joueurs si la DB serveur n'a pas
 		/// pu servir le nom — le HUD retombe alors sur "P<playerClientId>".
 		std::string displayName;
+		/// TD.6 : genre du personnage ("male"/"female", cf. migration 0067), propagé via
+		/// le SnapshotEntity. Vide pour les mobs / lootbags, ou pour les joueurs si le
+		/// master n'a pas pu fournir le genre — le rendu retombe alors sur "male".
+		std::string gender;
 	};
 
 	/// Pure data model consumed by UI views and debug panels.

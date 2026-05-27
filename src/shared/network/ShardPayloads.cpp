@@ -122,17 +122,26 @@ namespace engine::network
 			if (!r.ReadString(out.character_name))
 				return std::nullopt;
 		}
+		// TD.6 — gender optionnel : un master sans la migration 0067 ne l'enverra pas. Dans
+		// ce cas, le client retombera sur "male" par défaut côté rendu.
+		if (r.Remaining() > 0u)
+		{
+			if (!r.ReadString(out.gender))
+				return std::nullopt;
+		}
 		return out;
 	}
 
 	std::vector<uint8_t> BuildAdmitCharacterPacket(uint64_t account_id, uint64_t character_id,
-		std::string_view character_name)
+		std::string_view character_name, std::string_view gender)
 	{
 		PacketBuilder builder;
 		ByteWriter w = builder.PayloadWriter();
 		if (!w.WriteU64(account_id) || !w.WriteU64(character_id))
 			return {};
 		if (!w.WriteString(character_name))
+			return {};
+		if (!w.WriteString(gender))
 			return {};
 		const size_t payloadBytes = w.Offset();
 		// Push master→shard, pas de request_id ni session.

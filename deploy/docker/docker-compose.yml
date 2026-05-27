@@ -133,8 +133,13 @@ services:
       # Sans ce sous-mount, l'écriture échoue (Read-only file system) car le parent
       # game/data est monté ro pour protéger les assets immuables. Docker permet
       # de superposer un sous-chemin en rw sur un parent ro — c'est ce qu'on fait ici.
-      # Le dossier hôte ./data/persistence est créé automatiquement au premier `up`.
-      - ./data/persistence:/app/game/data/persistence:rw
+      # IMPORTANT : on monte SEULEMENT le sous-répertoire `characters/`, PAS tout
+      # `persistence/`. Sinon le sous-mount masque aussi `persistence/db/migrations/`
+      # qui contient le schéma SQL (0001_characters_inventory.sql) nécessaire à
+      # CharacterPersistenceStore.Init — sans schéma, Init échoue et ServerApp.Init
+      # plante → UDP désactivé → aucune réplication joueurs (régression PR #710).
+      # Le dossier hôte ./data/persistence/characters est créé automatiquement au premier `up`.
+      - ./data/persistence/characters:/app/game/data/persistence/characters:rw
       - ./data/logs/shard:/app/logs
     environment:
       SHARD_REGISTER_ENDPOINT: ${SHARD_REGISTER_ENDPOINT:-127.0.0.1:3843}

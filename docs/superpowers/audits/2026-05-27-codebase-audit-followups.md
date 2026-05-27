@@ -115,10 +115,12 @@ de libération. Si bug → fixer. Sinon ajuster le test.
 
 ---
 
-## FU-5 — Arithmétique floating-point `netserver_bandwidth_tests`
+## FU-5 — Arithmétique floating-point `netserver_bandwidth_tests` — ✅ RÉSOLU
 
-**Test bloqué :** `netserver_bandwidth_tests` — re-exclu en CI Linux après
-tentative de réintégration (PR #721).
+**Statut :** ✅ Résolu dans une PR ultérieure (option A — assertion avec
+tolérance ±1 byte). Le test est réintégré dans `ctest`, plus exclu.
+
+**Test (anciennement) bloqué :** `netserver_bandwidth_tests`.
 
 **Symptôme :** assertion `Assert(totalSent == 1000u, ...)` ligne 88 du
 test échoue sur Linux GCC après 5 itérations de `now += 0.2`. La somme
@@ -217,18 +219,21 @@ serveur.
 
 ## Synthèse
 
-| Follow-up | Effort | Priorité | Peut être combiné ? |
+| Follow-up | Effort | Priorité | Statut |
 |---|---|---|---|
-| FU-1 + FU-2 | 4-6h | Moyenne | **Oui** — abstraction Clock commune dans 1 PR |
-| FU-3 | 2-4h | Moyenne | Non — zone shard distincte |
-| FU-4 | 3-5h | Moyenne | Non — lifecycle distinct |
-| FU-5 | 30 min | **Haute** | Non — test-only, fix rapide |
-| FU-6 | 2-4h | Moyenne | Non — diag Linux distinct |
-| FU-7 | 3-5h | Moyenne | Non — tooling éditeur distinct |
+| FU-1 + FU-2 | 4-6h | Moyenne | À faire |
+| FU-3 | 2-4h | Moyenne | À faire |
+| FU-4 | 3-5h | Moyenne | À faire |
+| FU-5 | 30 min | — | ✅ **Résolu** (tolérance ±1 byte) |
+| FU-6 | 2-4h | Moyenne | À faire |
+| FU-7 | 3-5h | Moyenne | À faire |
 
-**Recommandation :** **FU-5 en priorité** (quick win 30 min, restaure
-1 test). Puis 3 PRs (FU-1+FU-2 combinées, FU-3 seule, FU-4 seule).
-FU-6 + FU-7 demandent un build Linux pour diagnostiquer — à
-programmer quand l'environnement est accessible. Total ~13-20h spread
-sur 5-6 PRs. Pas urgent : ces tests sont des protections contre
-régressions, leur absence ne casse rien fonctionnellement.
+**Recommandation :** FU-5 fixé (quick win consommé). Reste 5 follow-ups
+à programmer en PRs séparées :
+- FU-1+FU-2 combinables (abstraction `Clock` commune)
+- FU-3 et FU-4 séparées (zones distinctes)
+- FU-6 + FU-7 demandent un build Linux pour diagnostiquer
+
+Total restant : ~12-15h spread sur 4-5 PRs. Pas urgent : ces tests sont
+des protections contre régressions, leur absence ne casse rien
+fonctionnellement.

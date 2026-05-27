@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { isStaff } from "@/lib/auth/roles";
 import { query } from "@/lib/db/connection";
+import { logError } from "@/lib/log";
 import type { RowDataPacket } from "mysql2/promise";
 
 type AcceptanceRow = RowDataPacket & {
@@ -33,7 +34,7 @@ export default async function AdminAcceptancesPage() {
       []
     );
   } catch (err) {
-    console.error("[AdminAcceptancesPage] DB error:", err);
+    logError("AdminAcceptancesPage", "DB error", { err });
     dbError = true;
   }
 

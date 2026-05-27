@@ -3,6 +3,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypt
 import { query } from "@/lib/db/connection";
 import { hashPasswordForGameMaster } from "@/lib/auth/gamePasswordHash";
 import { requireEnv } from "@/lib/env";
+import { logWarn } from "@/lib/log";
 
 type AccountRow = RowDataPacket & {
   id: number;
@@ -437,7 +438,7 @@ async function sendResetEmail(to: string, resetUrl: string): Promise<void> {
   const from = process.env.SMTP_FROM;
 
   if (!host || !from) {
-    console.warn(`[password-recovery] SMTP non configure, lien genere pour ${to}: ${resetUrl}`);
+    logWarn("password-recovery", "SMTP non configuré, lien généré localement", { to, resetUrl });
     return;
   }
 

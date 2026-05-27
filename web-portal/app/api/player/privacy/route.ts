@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
+import { logError } from '@/lib/log'
 
 export async function PATCH(request: Request) {
   const jar = cookies()
@@ -27,7 +28,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ ok: true })
   } catch (err) {
-    console.error('[PATCH /api/player/privacy]', err)
+    logError("PATCH /api/player/privacy", "Update failed", { err })
     const msg = err instanceof Error ? err.message : 'Erreur serveur'
     return NextResponse.json({ ok: false, message: msg }, { status: 500 })
   }

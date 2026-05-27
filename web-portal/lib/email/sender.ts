@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer'
 import fs from 'node:fs'
 import path from 'node:path'
+import { requireEnv } from '@/lib/env'
 
 interface SmtpLocalConfig {
   smtp: {
@@ -106,7 +107,7 @@ export async function sendAccountConfirmed(to: string, login: string, tagId: str
 }
 
 export async function sendAccountDisabled(to: string, login: string, reason: string, locale = 'fr'): Promise<void> {
-  const html = loadTemplate('account-disabled', { login, reason, contact_url: process.env.PORTAL_URL + '/support' }, locale)
+  const html = loadTemplate('account-disabled', { login, reason, contact_url: requireEnv("PORTAL_URL") + '/support' }, locale)
   await getTransporter().sendMail({ from: getFrom(), to, subject: getSubject('accountDisabled', locale), html })
 }
 

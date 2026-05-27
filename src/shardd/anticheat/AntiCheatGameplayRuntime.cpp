@@ -17,7 +17,7 @@ namespace engine::server::anticheat
 	void AntiCheatGameplayRuntime::SeedV1Config()
 	{
 		AntiCheatConfig cfg;
-		cfg.maxSpeedMps    = 7.5f;
+		cfg.maxSpeedMps    = 13.0f;  // sprintSpeed client (cf. CharacterController.h)
 		cfg.speedTolerance = 1.5f;
 		cfg.maxSingleStepM = 50.0f;
 		m_detector = AntiCheatGameplay(cfg);
@@ -29,7 +29,7 @@ namespace engine::server::anticheat
 	/// X par tick) puis interroge le detecteur. Le delta-temps theorique
 	/// entre deux ticks est de 1000 ms (cadence du wiring main_linux.cpp),
 	/// donc la vitesse calculee restera proche de 1 m/s, bien sous le
-	/// seuil maxAllowed = 7.5 * 1.5 = 11.25 m/s. En regime nominal, le
+	/// seuil maxAllowed = 13.0 * 1.5 = 19.5 m/s. En regime nominal, le
 	/// retour est donc 0.
 	std::size_t AntiCheatGameplayRuntime::Tick(std::uint64_t nowMs)
 	{

@@ -45,35 +45,48 @@ jobs:
         run: cmake --build --preset linux-x64-release
 
       # Exécute les tests CTest compilés (entities, mail, anticheat, etc.).
-      # Exclusions (pattern -E) :
       #
-      # - network_integration_tests : exige une DB MySQL live (pas provisionnée en CI).
+      # Exclusions (pattern -E) — chacune a une raison documentée et un statut.
+      # Voir docs/superpowers/audits/2026-05-27-codebase-audit-followups.md
+      # pour le plan de réintégration des exclusions TEMPORAIRES.
       #
-      # Les tests suivants sont *pré-existants cassés sur main* au 2026-05-11
-      # (révélés par l'introduction de ce step ctest sur PR #592). Ils sont
-      # exclus temporairement pour débloquer le gate, et tracés pour fix
-      # ultérieur. Chacun a une catégorie :
+      # ─── DÉFINITIF ────────────────────────────────────────────────────────
+      # - network_integration_tests
+      #     Exige une DB MySQL live + fork serveur. Non mockable, non
+      #     provisionnable sur runner GitHub Actions gratuit. Ne sera
+      #     jamais réintégré sauf provisioning service MySQL au job.
       #
-      #   Flaky / timing-sensitive (CI runners plus lents que dev) :
-      #   - session_manager_tests        : "New session valid after SetState" (1.20s)
-      #   - security_tests               : "Register N allowed" (rate limit timing)
-      #   - netserver_bandwidth_tests    : token bucket attend rate*1s exact
-      #   - grid_state_tests             : wall-clock "expected Idle after 70s"
-      #   - vmap_streamer_tests          : refcount/lifecycle "expected 1 freed"
+      # ─── TEMPORAIRE — refactor TimeProvider requis ─────────────────────────
+      # - session_manager_tests
+      #     Fait `std::this_thread::sleep_for(1100ms)` pour tester un expiry
+      #     1s. Fix attendu : injecter un Clock/TimeProvider dans
+      #     SessionManager pour rendre le test déterministe sans wall-clock.
+      # - security_tests
+      #     Même pattern : `sleep_for(1100ms)` pour `ban_duration_sec=1`.
+      #     Fix attendu : injection TimeProvider dans RateLimitAndBan.
       #
-      #   Environnement (fichiers de test manquants dans le PATH CI) :
-      #   - localization_service_tests   : JSON localization absents
-      #   - zone_builder_roundtrip_tests : fixtures absentes (!a.empty())
+      # ─── TEMPORAIRE — bug suspect à auditer ───────────────────────────────
+      # - grid_state_tests
+      #     Wall-clock simulé via Tick(t0 + 70s), fail "expected Idle after
+      #     70s" suggère un bug de logique idle dans GridStateTracker::Tick().
+      # - vmap_streamer_tests
+      #     Fail "expected 1 freed" suggère un bug refcount + releaseDelay
+      #     dans VMapStreamer. Audit nécessaire.
       #
-      # Les 2 vrais bugs déterministes (chat_sanitizer_tests UTF-8 truncation
-      # et vmap_format_tests check buffer size) ont été fixés dans cette
-      # même PR #592 — ils ne sont PAS exclus.
+      # ─── RÉINTÉGRÉS dans cette PR (audit 2026-05-27) ──────────────────────
+      # - localization_service_tests : test crée ses propres fixtures via
+      #     WriteCatalog → FileSystem::WriteAllText. Pas de fixture externe
+      #     requise. Exclusion "JSON absent" était une fausse alerte.
+      # - netserver_bandwidth_tests : test purement logique sur double
+      #     (now += 0.2). Pas de wall-clock. Ne peut pas être flaky.
+      # - zone_builder_roundtrip_tests : référence orpheline — aucune cible
+      #     CTest de ce nom n'existe. Filtre inutile.
       - name: Run tests (ctest)
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         working-directory: ${{ github.workspace }}/build/linux-x64-release
         run: |
-          ctest --output-on-failure --no-compress-output -E "network_integration_tests|session_manager_tests|security_tests|netserver_bandwidth_tests|grid_state_tests|vmap_streamer_tests|localization_service_tests|zone_builder_roundtrip_tests"
+          ctest --output-on-failure --no-compress-output -E "network_integration_tests|session_manager_tests|security_tests|grid_state_tests|vmap_streamer_tests"
 
       # Lot H : garde explicite que le World Editor compile au même titre que le jeu.
       # Si une régression casse uniquement la cible world_editor_app, ce step échoue alors que

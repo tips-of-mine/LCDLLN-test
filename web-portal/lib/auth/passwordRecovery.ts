@@ -2,6 +2,7 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { query } from "@/lib/db/connection";
 import { hashPasswordForGameMaster } from "@/lib/auth/gamePasswordHash";
+import { requireEnv } from "@/lib/env";
 
 type AccountRow = RowDataPacket & {
   id: number;
@@ -58,7 +59,7 @@ type RecoveryProfileBundle = {
 };
 
 function getRecoverySecret(): string {
-  return process.env.AUTH_SECRET || "lcdlln-dev-recovery-secret";
+  return requireEnv("AUTH_SECRET");
 }
 
 function normalizeTrimmed(value: string): string {
@@ -283,7 +284,7 @@ export async function requestPasswordRecovery(input: RecoveryRequestInput): Prom
     [hashToken(rawToken), account.id],
   );
 
-  const baseUrl = (process.env.NEXT_PUBLIC_PORTAL_URL || "http://127.0.0.1:3000").replace(/\/+$/, "");
+  const baseUrl = requireEnv("NEXT_PUBLIC_PORTAL_URL").replace(/\/+$/, "");
   const resetUrl = `${baseUrl}/password-recovery/reset?token=${encodeURIComponent(rawToken)}`;
   await sendResetEmail(account.email, resetUrl);
 
@@ -428,6 +429,8 @@ function matchesRecoveryFactors(bundle: RecoveryProfileBundle, input: RecoveryRe
 async function sendResetEmail(to: string, resetUrl: string): Promise<void> {
   const { createTransport } = await import("nodemailer");
   const host = process.env.SMTP_HOST;
+  // SMTP_PORT : défaut "587" conservé volontairement — c'est le port submission
+  // SMTP standard universel (RFC 6409). Pas un secret, pas une URL prod-critique.
   const port = Number.parseInt(process.env.SMTP_PORT || "587", 10);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;

@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import { sendEmailChange } from '@/lib/email/sender'
+import { requireEnv } from '@/lib/env'
 import { randomBytes } from 'node:crypto'
 import type { RowDataPacket } from 'mysql2/promise'
 
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
       [newEmail, token, expires, accountId]
     )
 
-    const baseUrl = process.env.PORTAL_URL ?? 'http://localhost:3000'
+    const baseUrl = requireEnv("PORTAL_URL")
     const confirmationLink = `${baseUrl}/api/player/account/confirm-email?token=${token}`
     await sendEmailChange(newEmail, rows[0].login, newEmail, confirmationLink)
 

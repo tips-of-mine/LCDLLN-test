@@ -9540,29 +9540,26 @@ namespace engine
 	void Engine::RecordRemoteAvatars(VkCommandBuffer cmd, engine::render::Registry& reg,
 	                                 const engine::RenderState& rs)
 	{
+		(void)reg; // reg n'est plus utilisé depuis le passage à SkinnedRenderer (TD.7).
 		if (!m_pipeline) return;
 		const std::vector<engine::client::UIRemoteEntity>& remotes = m_uiModelBinding.GetModel().remoteEntities;
 		if (remotes.empty()) return;
-		// TD.2 diag : logs une-fois pour identifier les early-return silencieux qui empechent
-		// le rendu des avatars distants (nameplate visible mais skin invisible).
+		// TD.7 — bascule du placeholder (GeometryPass, mesh cube statique) au rendu skinné
+		// (SkinnedRenderer, mesh humanoïde + animation dérivée de la vélocité serveur). Les
+		// pré-requis : (1) SkinnedRenderer initialisé + ses meshes humains chargés ;
+		// (2) GeometryPass dispose d'un load pass (on partage le render pass pour superposer
+		// au G-buffer terrain + props + avatar local sans clear).
 		static bool diagLoggedReason = false;
-		engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
-		if (mesh == nullptr || mesh->vertexBuffer == VK_NULL_HANDLE || mesh->indexBuffer == VK_NULL_HANDLE)
+		if (!m_skinnedRenderer.IsValid())
 		{
 			if (!diagLoggedReason)
 			{
-				LOG_WARN(Render,
-					"[RecordRemoteAvatars] SKIP : mesh placeholder non pret (mesh={} vbuf={} ibuf={}, remotes={})",
-					mesh ? "ok" : "null",
-					(mesh && mesh->vertexBuffer != VK_NULL_HANDLE) ? "ok" : "null",
-					(mesh && mesh->indexBuffer != VK_NULL_HANDLE) ? "ok" : "null",
-					remotes.size());
+				LOG_WARN(Render, "[RecordRemoteAvatars] SKIP : SkinnedRenderer non initialise (remotes={})", remotes.size());
 				diagLoggedReason = true;
 			}
 			return;
 		}
 		auto& geom = m_pipeline->GetGeometryPass();
-		// loadOp=LOAD requis pour se superposer au GBuffer (terrain + avatar + props) sans clear.
 		if (!geom.HasLoadPass())
 		{
 			if (!diagLoggedReason)
@@ -9573,32 +9570,33 @@ namespace engine
 			return;
 		}
 		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
-		// Le placeholder mesh (avatar_placeholder.mesh) a ses propres UVs simples, qui ne
-		// sont pas alignées sur l'atlas T_Ranger du matériau habit (m_avatarMaterialId).
-		// Sampler avec ce matériau renvoie des zones arbitraires de la texture (souvent
-		// transparentes ou indistinguables du ciel) — l'avatar distant est dessiné mais
-		// invisible à l'écran (bug A historique). Tant qu'on n'a pas de matériau dédié
-		// placeholder, on utilise le matériau par défaut (texture fallback unie) : visible,
-		// sans dépendance à un atlas spécifique.
-		const uint32_t materialIndex = materialCache.GetDefaultMaterialIndex();
+		const float nowSec = EngineNowSec();
+		// TD.7 — seuils dérivation Idle/Walk depuis la vélocité serveur. Le seuil bas est
+		// volontairement laxiste (0.1 m/s) pour éviter de flicker entre Idle et Walk autour
+		// du stationnement (déplacements d'inertie / sub-tick). Au-delà, on joue Walk en
+		// boucle. Pas encore de distinction Walk/Run/Sprint côté wire — TD.7 V1 suffit.
+		constexpr float kIdleSpeedThresholdMps = 0.1f;
 		static bool diagLoggedSuccess = false;
-		if (!diagLoggedSuccess)
-		{
-			LOG_INFO(Render,
-				"[RecordRemoteAvatars] OK : rendu des avatars distants demarre (remotes={}, mesh.vcount={}, mesh.icount={}, material_id={} (default placeholder))",
-				remotes.size(), mesh->vertexCount, mesh->indexCount,
-				materialIndex);
-			diagLoggedSuccess = true;
-		}
 		for (const engine::client::UIRemoteEntity& re : remotes)
 		{
 			// remoteEntities contient TOUTES les entités distantes (joueurs + mobs + lootbags).
 			// Les mobs ont leur propre pipeline de rendu (mesh dédié), donc ici on ne dessine
-			// le placeholder que pour les joueurs distants (playerClientId != 0). Sans ce filtre
-			// on superposerait un humanoïde placeholder par-dessus chaque mob — bug visuel.
-			// Même critère que la plaque de nom (cf. boucle TD.4 dans le HUD in-game).
+			// le mesh humanoïde que pour les joueurs distants (playerClientId != 0). Même
+			// critère que la plaque de nom (cf. boucle TD.4 dans le HUD in-game).
 			if (re.playerClientId == 0u)
 				continue;
+			// TD.6 — genre du personnage propagé par le snapshot. Fallback "male" si vide
+			// (master sans migration 0067 ou avatar legacy). Récupère le mesh correspondant
+			// dans le registre m_raceMeshes (clé "humains|male" / "humains|female").
+			const std::string gender = (re.gender == "male" || re.gender == "female") ? re.gender : std::string{"male"};
+			engine::render::skinned::SkinnedMesh* remoteMesh = GetRaceMesh("humains", gender);
+			if (remoteMesh == nullptr)
+			{
+				// Aucun mesh chargé pour cette combo race+genre → on saute. Pas de fallback
+				// vers le cube placeholder ici : si le mesh humain n'est pas chargé, l'avatar
+				// local non plus ne s'afficherait pas correctement.
+				continue;
+			}
 			// TD.3 : position lissée (interpolation, cf. UpdateGameplayNet) ; repli sur la
 			// position snapshot brute si pas encore d'état lissé (graceful).
 			float px = re.positionX, py = re.positionY, pz = re.positionZ, yaw = re.yawRadians;
@@ -9607,20 +9605,73 @@ namespace engine
 			{
 				px = sit->second.x; py = sit->second.y; pz = sit->second.z; yaw = sit->second.yaw;
 			}
+			// TD.7 — état d'animation par avatar distant. Crée l'entrée à la première frame
+			// où on voit cet entityId. L'horloge utilisée pour Sample() / Play() est la même
+			// (nowSec) pour tous les avatars : crossfade et boucle restent en phase.
+			RemoteAvatarAnim& anim = m_remoteAnims[re.entityId];
+			// Dérivation Idle/Walk depuis la vélocité serveur. On ignore la composante Y
+			// (chute libre / saut) pour éviter de jouer Walk quand l'avatar tombe vertical.
+			const float speedXZ = std::sqrt(re.velocityX * re.velocityX + re.velocityZ * re.velocityZ);
+			const char* desiredClipName = (speedXZ < kIdleSpeedThresholdMps) ? "Idle" : "Walk";
+			if (anim.lastClipName != desiredClipName)
+			{
+				const engine::render::skinned::AnimationClip* clip = remoteMesh->FindClip(desiredClipName);
+				if (clip != nullptr)
+				{
+					// loops=true pour Idle et Walk (clips à répétition naturelle).
+					anim.crossfade.Play(*clip, /*loops=*/ true, nowSec);
+					anim.lastClipName = desiredClipName;
+				}
+			}
+			// Sample → globals → finals : même chaîne que l'avatar local (cf. ligne ~4723).
+			auto locals  = anim.crossfade.Sample(remoteMesh->skeleton, nowSec);
+			auto globals = engine::render::skinned::AnimationSampler::ComputeGlobalMatrices(
+				remoteMesh->skeleton, locals);
+			auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
+				remoteMesh->skeleton, globals);
 			// Pieds au sol : le serveur réplique la position « centre capsule » comme pour
 			// l'avatar local (feetPos = ccPos.y - 0.9). Même offset ici pour la cohérence.
 			const engine::math::Mat4 model =
 				engine::math::Mat4::Translate(engine::math::Vec3{ px, py - 0.9f, pz }) *
-				engine::math::Mat4::RotateY(yaw);
-			geom.Record(
-				m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
-				m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
-				rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
-				0u,
+				engine::math::Mat4::RotateY(yaw) *
+				(remoteMesh->importTransform);
+			// Matériau : on prend le même matériau habit (m_avatarMaterialId) que l'avatar
+			// local. Pas encore de skin par-personnage côté serveur — toute la flotte distante
+			// partage le même habit pour V1. Idem pour la peau (m_avatarBodyMaterialId{Male,Female}).
+			const uint32_t outfitMaterialIndex = m_avatarMaterialId;
+			const uint32_t skinMaterialIndex = (gender == "female")
+				? m_avatarBodyMaterialIdFemale
+				: m_avatarBodyMaterialIdMale;
+			// Per-submesh materials : skin pour les sous-maillages dont le nom matche un body
+			// material name (cf. Engine::BuildAvatarSubmeshMaterialIndices pour la logique).
+			// Pour V1, on passe un vecteur vide → SkinnedRenderer dessine en un seul draw avec
+			// outfitMaterialIndex. C'est cohérent avec l'avatar local pré-mat-mat (régression
+			// acceptée pour V1, sera amélioré quand les matériaux par submesh seront décorrélés
+			// de l'état local).
+			const std::vector<uint32_t> submeshMaterialIndices;
+			m_skinnedRenderer.Record(
+				m_vkDeviceContext.GetDevice(), cmd,
+				m_vkSwapchain.GetExtent(),
+				geom.GetRenderPassLoad(),
+				VK_NULL_HANDLE,
+				rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+				*remoteMesh,
+				finals,
 				materialCache.GetDescriptorSet(),
 				model.m,
-				materialIndex,
-				true);
+				outfitMaterialIndex,
+				submeshMaterialIndices,
+				skinMaterialIndex,
+				m_avatarSkinDepthBiasConstant,
+				m_avatarSkinDepthBiasSlope);
+			if (!diagLoggedSuccess)
+			{
+				LOG_INFO(Render,
+					"[RecordRemoteAvatars] OK : rendu skinne demarre (remotes={}, premier entity_id={}, gender='{}', clip='{}', mesh.bones={}, skin_mat={})",
+					remotes.size(), re.entityId, gender, desiredClipName,
+					remoteMesh->skeleton.bones.size(), skinMaterialIndex);
+				diagLoggedSuccess = true;
+			}
 		}
 	}
 
@@ -9907,6 +9958,16 @@ namespace engine
 				for (const engine::client::UIRemoteEntity& re : remotes)
 					if (re.entityId == it->first) { present = true; break; }
 				if (present) ++it; else it = m_remoteSmoothed.erase(it);
+			}
+			// TD.7 — purge symétrique des états d'animation. Si un avatar sort d'AoI ou se
+			// déconnecte, on libère son AnimationCrossfade (sinon m_remoteAnims grossit sans
+			// borne pour les entités qu'on a vues une fois).
+			for (auto it = m_remoteAnims.begin(); it != m_remoteAnims.end(); )
+			{
+				bool present = false;
+				for (const engine::client::UIRemoteEntity& re : remotes)
+					if (re.entityId == it->first) { present = true; break; }
+				if (present) ++it; else it = m_remoteAnims.erase(it);
 			}
 		}
 

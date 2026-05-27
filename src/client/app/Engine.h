@@ -803,6 +803,19 @@ namespace engine
 		/// TD.3 : positions lissées par EntityId. Si une entité n'y figure pas, le rendu
 		/// (RecordRemoteAvatars) retombe sur sa position snapshot brute (graceful).
 		std::unordered_map<engine::server::EntityId, RemoteAvatarSmoothed> m_remoteSmoothed;
+
+		/// TD.7 : état d'animation d'un avatar distant. Une instance d'AnimationCrossfade
+		/// par avatar distant (état stateful : clip courante, blend en cours). Le clip
+		/// est dérivé de la vélocité serveur (Idle si |v| < seuil, Walk sinon). lastClipName
+		/// évite de relancer le même clip chaque frame (qui réinitialiserait le timer et
+		/// causerait des glitches). Hashmap purgée en même temps que m_remoteSmoothed dans
+		/// UpdateGameplayNet (entités sorties d'AoI / déconnexion).
+		struct RemoteAvatarAnim
+		{
+			engine::render::skinned::AnimationCrossfade crossfade;
+			std::string lastClipName;
+		};
+		std::unordered_map<engine::server::EntityId, RemoteAvatarAnim> m_remoteAnims;
 		engine::gameplay::MoveInput                               m_lastMoveInput{};
 
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).

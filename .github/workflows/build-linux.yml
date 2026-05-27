@@ -74,17 +74,13 @@ jobs:
       #     dans VMapStreamer. Audit nécessaire.
       #
       # ─── TEMPORAIRE — Linux-specific (tentative réintégration 2026-05-27 a échoué) ──
-      # Les 3 tests ci-dessous ont été retirés de -E par la tentative de
+      # Les tests ci-dessous ont été retirés de -E par la tentative de
       # réintégration de la PR #721, puis ré-exclus quand la CI Linux a
       # révélé des échecs réels (pas des fausses alertes comme le rapport
-      # d'audit initial le supposait). Suivi détaillé : FU-5/6/7 dans
+      # d'audit initial le supposait). Suivi détaillé : FU-6/7 dans
       # docs/superpowers/audits/2026-05-27-codebase-audit-followups.md
-      # - netserver_bandwidth_tests
-      #     `Assert(totalSent == 1000u)` échoue sur Linux GCC après 5
-      #     itérations de `now += 0.2` (somme de 5 fois 0.2 en IEEE 754).
-      #     Cross-platform fragile — pas du timing, mais de l'arithmétique
-      #     floating-point. Fix : assertion avec tolérance ou recalcul en
-      #     entiers (effort ~30 min, à fixer dans le test seul).
+      # (FU-5 netserver_bandwidth_tests fixé et réintégré dans une PR
+      # ultérieure — tolérance ±1 byte sur l'assertion floating-point.)
       # - localization_service_tests
       #     `LocalizationService::Init()` retourne false sur Linux après
       #     que `WriteCatalog` (FileSystem::WriteAllText) ait réussi.
@@ -102,7 +98,7 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         working-directory: ${{ github.workspace }}/build/linux-x64-release
         run: |
-          ctest --output-on-failure --no-compress-output -E "network_integration_tests|session_manager_tests|security_tests|grid_state_tests|vmap_streamer_tests|netserver_bandwidth_tests|localization_service_tests|zone_builder_roundtrip_tests"
+          ctest --output-on-failure --no-compress-output -E "network_integration_tests|session_manager_tests|security_tests|grid_state_tests|vmap_streamer_tests|localization_service_tests|zone_builder_roundtrip_tests"
 
       # Lot H : garde explicite que le World Editor compile au même titre que le jeu.
       # Si une régression casse uniquement la cible world_editor_app, ce step échoue alors que

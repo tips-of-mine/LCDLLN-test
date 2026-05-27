@@ -284,7 +284,7 @@ export async function requestPasswordRecovery(input: RecoveryRequestInput): Prom
     [hashToken(rawToken), account.id],
   );
 
-  const baseUrl = (process.env.NEXT_PUBLIC_PORTAL_URL || "http://127.0.0.1:3000").replace(/\/+$/, "");
+  const baseUrl = requireEnv("NEXT_PUBLIC_PORTAL_URL").replace(/\/+$/, "");
   const resetUrl = `${baseUrl}/password-recovery/reset?token=${encodeURIComponent(rawToken)}`;
   await sendResetEmail(account.email, resetUrl);
 

@@ -96,6 +96,12 @@ services:
       - ./config/smtp.local.json:/app/smtp.local.json:ro
       - ./game/data:/app/game/data:ro
       - ./data/logs/master:/app/logs
+    environment:
+      # TD.10 — fuseau horaire des logs aligné sur la zone d'exploitation (FR/CEST).
+      # Sans cette variable, les containers Ubuntu 24.04 utilisent UTC par défaut →
+      # les timestamps serveur sont décalés de 1-2 h vs ceux du client Windows, ce qui
+      # complique la corrélation cross-machine. La valeur est surchargeable via .env.
+      TZ: ${TZ:-Europe/Paris}
     # HTTP 3842 (/healthz) : le TCP 3840 est le protocole jeu ; nc -z le pollue dans les logs NetServer.
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3842/healthz"]
@@ -142,6 +148,8 @@ services:
       - ./data/persistence/characters:/app/game/data/persistence/characters:rw
       - ./data/logs/shard:/app/logs
     environment:
+      # TD.10 — fuseau horaire aligné sur le master (cf. service master ci-dessus).
+      TZ: ${TZ:-Europe/Paris}
       SHARD_REGISTER_ENDPOINT: ${SHARD_REGISTER_ENDPOINT:-127.0.0.1:3843}
       # TB.1/TE.3 : endpoint UDP gameplay annonce aux clients via le master
       # (SERVER_LIST). Vide => non annonce (clients ne pourront pas se connecter

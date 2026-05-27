@@ -1900,4 +1900,113 @@ Les logs `[AvatarSkinDiag]` ont montré : matériaux OK (idMale=2, idFemale=3), 
 - Pas de vertex-color (matériaux `MI_Trim_*_Vertex`) → ces props rendraient à plat (finition ultérieure).
 - Pas de culling par prop ni d'instancing (quelques draws, OK pour peu de props).
 - **Chantier C** à suivre : surbrillance du prop ciblé + repère d'interaction (remplace le `[E]` texte).
+
+## 53. Anti-cheat mouvement — seuil aligné sur sprint client (PR #709 + #714, 2026-05-27)
+
+**But** : éliminer les faux positifs `SpeedHack` (verdict=1) déclenchés quand un joueur sprintait normalement (touche Alt). Cause initiale : `maxSpeedMps=7.5` côté serveur < `sprintSpeed=13.0` côté client → 18+ rejets/minute en jeu réel.
+
+### Composants
+- `src/shardd/anticheat/AntiCheatGameplay.h` (header-only) : config V1 avec `maxSpeedMps=13.0f` (était 7.5), `speedTolerance=1.5f` (= seuil effectif 19.5 m/s), `maxSingleStepM=50.0f`. Le `CheckMovement` compare `distance/dt` à `maxSpeed*tolerance` ; au-delà → `SpeedHack`. Au-delà de `maxSingleStepM` quel que soit dt → `TeleportHack`.
+- `src/shardd/anticheat/AntiCheatGameplayRuntime.cpp::SeedV1Config()` : seed la même valeur (cohérence Tick monitor).
+- `src/shardd/main_linux.cpp` : log boot `[AntiCheat] runtime configured (V1 thresholds : maxSpeed=13.0 m/s, tolerance=1.5, maxStep=50 m)` — utile au déploiement pour vérifier la version effective.
+- `src/shared/server_bootstrap/ServerApp.cpp::HandleInput` : utilise **inputSequence** (et non `steady_clock`) comme source de temps pour AC (fix PR #709 préalable). Raison : en burst UDP, plusieurs paquets traités dans la même tick serveur avec `steady_clock_now()` quasi identiques → dt≈0 → faux positif. inputSequence est stable (1 unité = `1000/m_tickHz` ms).
+
+### Tests
+- `src/shardd/anticheat/AntiCheatGameplayTests.cpp::TestSprintAtTickRateNotRejected` : simule 1 s de sprint à 13 m/s (20 ticks × 0.65 m) ; doit être intégralement accepté. Régression du bug #714.
+- `TestSpeedHack` : 30 m/s → toujours rejeté (> 19.5 m/s tolérance).
+- `TestTeleportHack` : 100 m d'un coup → toujours rejeté.
+
+### Limites / reste
+- Pas de distinction Walk/Run/Sprint côté wire (cf. §56 pour anim dérivée vélocité). Si on ajoute un palier serveur > 13 m/s (monture, sort de vitesse), bumper `maxSpeedMps` en conséquence.
+- `verdict=1` n'arrête pas le client (continue à envoyer ses inputs) mais perd les paquets rejetés → position serveur saccadée + desync visible côté autres joueurs. Pas de message côté client pour signaler le rejet.
+
+## 54. Persistence personnage — autosave Docker (sous-mount RW, PR #710 + #712, 2026-05-27)
+
+**But** : permettre à `CharacterPersistenceStore` d'écrire `game/data/persistence/characters/character_<id>.ini` toutes les 30 s en prod Docker, malgré le mount `game/data` en `:ro` (immutable assets). Fix d'une régression : la PR #710 montait `./data/persistence:/app/game/data/persistence:rw` ce qui masquait `persistence/db/migrations/0001_*.sql` → `CharacterPersistence Init FAILED` → UDP désactivée → personne ne se voyait.
+
+### Composants
+- `deploy/docker/docker-compose.yml` (service `shard`) : sous-mount restreint à `characters/` seulement :
+  ```yaml
+  - ./game/data:/app/game/data:ro
+  - ./data/persistence/characters:/app/game/data/persistence/characters:rw
+  ```
+  → `persistence/db/migrations/` reste accessible via le bind parent ro.
+- `game/data/persistence/characters/.gitkeep` : placeholder versionné pour que Docker trouve le mountpoint au démarrage (sinon `error during container init: read-only file system` en tentant de créer le dir dans le parent ro).
+
+### Limites / reste
+- Mode no-DB (déploiement actuel) : les autosaves vont dans `.ini` filesystem. Le pont DB (`SHARD_POSITION_DB`) reste optionnel.
+- Si on ajoute un nouveau sous-répertoire écrit par le shard sous `game/data/persistence/`, il faut un mount RW dédié (ne pas remettre tout `persistence/` en RW).
+
+## 55. Identité personnage sur la wire — nom + genre (TD.5/TD.6, PR #711 + #713 + #715, 2026-05-27)
+
+**But** : propager le `name` et le `gender` du personnage du master jusqu'au client via le `SnapshotEntity`, pour que les autres joueurs (1) voient une vraie plaque de nom au lieu de `P{n}`, (2) puissent sélectionner le bon mesh skinné (Male_Ranger vs Female_Ranger) pour le rendu des avatars distants (cf. §56).
+
+### Wire UDP (client ↔ shard) — kProtocolVersion 5→7
+- `src/shared/network/ReplicationTypes.h::SnapshotEntity` : 2 champs ajoutés en cascade :
+  - `std::string characterName` (TD.5, v5→v6) — préfixé u16, borne dure 64 octets.
+  - `std::string gender` (TD.6, v6→v7) — préfixé u16, borne dure 8 octets (cohérent `VARCHAR(8)` migration 0067).
+- `src/shared/network/ServerProtocol.cpp::EncodeSnapshot`/`DecodeSnapshot` : writes/reads séquentiels après `playerClientId`. Min payload/entité passe 52 → 54 → **56 octets** (au-delà de l'entête 24 octets).
+- `src/shared/network/ServerProtocol.h::kProtocolVersion = 7` : bumpé deux fois, **lock-step client + shard requis** à chaque bump (un client ancien face à un shard neuf rejette tout via `DecodeHeader`).
+
+### Wire TCP master ↔ shard — opcode 199 (AdmitCharacter)
+- `src/shared/network/ShardPayloads.h::AdmitCharacterPayload` : ajout de `character_name` puis `gender`. Backward compat : `ParseAdmitCharacterPayload` lit chaque chaîne seulement si `Remaining() > 0` → un shard neuf accepte un master legacy (valeurs vides → fallbacks côté rendu).
+- `src/masterd/handlers/character/CharacterEnterWorldHandler.cpp` : `SELECT name, server_id, gender FROM characters` (migration 0067), passe les 2 valeurs à `BuildAdmitCharacterPacket`.
+- `src/shared/network/ShardToMasterClient.h::AdmitCharacterCallback` : signature `(account_id, character_id, character_name, gender)`.
+- `src/shardd/world/AdmittedCharacterRegistry.{h,cpp}` : `Admit(charId, accId, name, gender, nowMs)` + getters `AdmittedCharacterName()` / `AdmittedGender()`. **Surcharges legacy préservées** pour `ShardTicketHandshakeHandler` (ticket TCP émis avant EnterWorld, ni nom ni genre).
+
+### Stockage côté shard
+- `src/shared/server_bootstrap/ServerApp.h::ConnectedClient` : `std::string characterName` + `std::string gender`.
+- `ServerApp::LoadSpawnFromDb(charId, x, y, z, yawDeg, outName, outGender)` : si `SHARD_POSITION_DB` actif, `SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender FROM characters`.
+- `ServerApp::HandleHello` : si `LoadSpawnFromDb` ne renvoie pas le nom/genre (mode no-DB), fallback sur `m_admittedRegistry->AdmittedCharacterName/Gender(charKey, nowMs)`. Stockés sur `ConnectedClient`, recopiés à chaque `TryBuildSnapshotEntity`.
+
+### Côté client
+- `src/client/ui_common/UIModel.h::UIRemoteEntity` : `std::string displayName` (TD.5) + `std::string gender` (TD.6).
+- `src/client/ui_common/UIModel.cpp::UIModelBinding::ApplySnapshot` : recopie depuis `SnapshotEntity`.
+- Plaque de nom : `Engine::Update...Hud` lit `displayName` ; si vide, fallback `"P" + clientId`.
+- Le genre est consommé par `RecordRemoteAvatars` (cf. §56).
+
+### Tests
+- `src/shared/network/ServerProtocolTests.cpp::TestSnapshotRoundTripWithPlayerClientId` : round-trip de 2 joueurs avec `name`/`gender` non vides + 1 mob avec chaînes vides.
+- `TestSnapshotRejectsTruncatedPayload` : payload < 56 octets/entité → rejeté.
+- `src/shardd/world/AdmittedCharacterRegistryTests.cpp::TestAdmitWithName` / `TestAdmitWithGender` / `TestReAdmitWithoutNamePreservesName` / `TestReAdmitWithoutGenderPreservesGender` : couvre le scénario où un ticket TCP (sans nom/genre) rafraîchit l'horodatage mais ne doit pas effacer les valeurs précédemment enregistrées par l'EnterWorld.
+
+### Limites / reste
+- Pas de variante `displayName` distincte du `name` SQL (les vieux MMO permettaient un alias). À introduire si besoin.
+- Limites de longueur côté wire : 64 octets nom, 8 octets genre. Si élargissement (Unicode étendu, `non-binary`, etc.), bumper.
+
+## 56. Rendu skinné des avatars distants (TD.7, PR #716, 2026-05-27)
+
+**But** : remplacer le cube placeholder blanc des avatars distants (cf. log `[RecordRemoteAvatars] OK ... material_id=0 (default placeholder)`) par le vrai mesh humain skinné, avec animation Idle/Walk dérivée de la vélocité serveur. Consomme le `gender` propagé par §55 / TD.6.
+
+### Composants
+- `src/client/render/skinned/SkinnedRenderer.h` : `kFrameSlots` 3 → **32** pour supporter le fan-out N avatars/frame. Sans ce bump, le ring 3 slots cyclait sur la même frame → données bones clobberées entre 2 `Record()` consécutifs côté CPU pendant que le GPU lisait encore le slot d'avant → flickers / poses mélangées (probable cause du bug visuel « coffre fusionné avec placeholder » rapporté avant ce refactor). Coût : ~512 KB GPU host-visible. Couvre 14 avatars/frame en FIF=2 avec marge.
+- `src/client/app/Engine.h::RemoteAvatarAnim` : nouvelle struct `{ AnimationCrossfade crossfade; std::string lastClipName; }` stockée dans `std::unordered_map<EntityId, RemoteAvatarAnim> m_remoteAnims`. État stateful **par avatar** distant (clip courante + blend en cours). `lastClipName` évite de relancer le même clip chaque frame.
+- `src/client/app/Engine.cpp::RecordRemoteAvatars` : entièrement réécrit. Pour chaque `UIRemoteEntity` avec `playerClientId != 0` :
+  1. Genre = `re.gender` si `"male"`/`"female"`, sinon fallback `"male"` (master legacy / mob).
+  2. Mesh = `GetRaceMesh("humains", gender)` → `m_raceMeshes["humains|male"]` ou `"humains|female"`.
+  3. Vitesse XZ = `sqrt(vx²+vz²)` ; si < `kIdleSpeedThresholdMps=0.1f` → clip `"Idle"`, sinon `"Walk"`. Crossfade 150 ms (`AnimationCrossfade::kCrossfadeDuration`) entre transitions.
+  4. Sample animation → ComputeGlobalMatrices → ComputeFinalMatrices (mêmes appels que l'avatar local). Skeleton issue du mesh remote.
+  5. Matrice modèle : `Translate(feetPos=ccPos.y - 0.9f) * RotateY(yaw_lissé) * mesh.importTransform`. Position lissée depuis `m_remoteSmoothed[entityId]` (interpolation exponentielle gérée par `UpdateGameplayNet`).
+  6. `m_skinnedRenderer.Record(...)` avec `geom.GetRenderPassLoad()` (partagé avec l'avatar local). Matériaux : `m_avatarMaterialId` (habit Ranger) + `m_avatarBodyMaterialIdMale/Female` (peau). Pas de submeshMaterialIndices V1 → un seul draw par avatar.
+- Purge symétrique à `m_remoteSmoothed` dans `Engine::UpdateGameplayNet` quand une entité sort d'AoI / se déconnecte. Évite que `m_remoteAnims` grossisse sans borne.
+
+### Limites / reste
+- **Animations limitées à Idle/Walk**. Run/Sprint/Attack/Jump/Swim ne sont pas propagés sur le wire (l'état local-only de §28-§42 n'est pas répliqué). À faire dans une TD.8 dédiée : ajouter `animation_state` au `SnapshotEntity`.
+- **Habit + peau partagés** : toute la flotte distante utilise les mêmes matériaux que l'avatar local. Pas d'outfit par-personnage en DB (à venir TD.9 : `characters.outfit_id`).
+- **Pas de submesh material routing** pour les remotes (passé à `submeshMaterialIndices = {}`) → la peau et l'habit ne sont pas dissociés sur les remotes. Visuellement OK pour V1 ; à finaliser quand l'extraction de `BuildAvatarSubmeshMaterialIndices` sera décorrélée de l'état avatar local.
+- Log `[RecordRemoteAvatars] OK : rendu skinne demarre (remotes=N, gender='...', clip='Idle', mesh.bones=65, skin_mat=...)` au 1er rendu réussi (une seule fois par session).
+
+## 57. Timezone Docker — TZ=Europe/Paris (TD.10, PR #717, 2026-05-27)
+
+**But** : aligner les timestamps des logs serveur (containers Docker Ubuntu 24.04, UTC par défaut) sur ceux du client Windows (CEST en France) pour faciliter la corrélation cross-machine au débogage. Décalage observé : 2 h.
+
+### Composants
+- `deploy/docker/docker-compose.yml` : ajout de `TZ: ${TZ:-Europe/Paris}` dans les blocs `environment:` des services `master` et `shard`. Surchargeable via `.env` pour un déploiement dans une autre zone.
+
+### Pas modifié
+- **mysql** : timezone DB sensible (colonnes DATETIME, `SELECT NOW()`). On garde UTC pour éviter écarts entre données persistées vs récupérées. Si voulu plus tard : migration explicite + audit.
+- **web-portal**, **phpmyadmin** : moins critiques pour la corrélation logs C++. Peut être ajouté plus tard.
+
+### Limites / reste
+- Aucun. Modification cosmétique, applicable au prochain `docker compose up -d --force-recreate master shard`. Aucun impact wire ni régression.
 - **Déploiement** : ✅ client uniquement.

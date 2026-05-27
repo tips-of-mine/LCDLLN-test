@@ -1179,6 +1179,25 @@ namespace engine::server
 					"[ServerApp] Spawn position chargee depuis la DB (character_key={}, name=\"{}\", pos=({:.2f}, {:.2f}, {:.2f}))",
 					acceptedClient.persistenceCharacterKey, acceptedClient.characterName, dbX, dbY, dbZ);
 			}
+			// TD.5 — fallback nom : en mode no-DB (deploiement sans MySQL cote shard),
+			// LoadSpawnFromDb renvoie false et characterName reste vide → la plaque
+			// retomberait sur le fallback "P<clientId>" cote client. Le master nous a
+			// pousse le nom via kOpcodeMasterToShardAdmitCharacter (TD.5), on le recupere
+			// du registre d'admission qui le stocke depuis cette PR.
+			if (acceptedClient.characterName.empty() && m_admittedRegistry != nullptr)
+			{
+				const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::steady_clock::now().time_since_epoch()).count());
+				std::string admittedName = m_admittedRegistry->AdmittedCharacterName(
+					acceptedClient.persistenceCharacterKey, nowMs);
+				if (!admittedName.empty())
+				{
+					acceptedClient.characterName = std::move(admittedName);
+					LOG_INFO(Net,
+						"[ServerApp] Nom personnage recupere du registre d'admission (character_key={}, name=\"{}\")",
+						acceptedClient.persistenceCharacterKey, acceptedClient.characterName);
+				}
+			}
 		}
 
 		std::vector<QuestProgressDelta> questSyncDeltas;

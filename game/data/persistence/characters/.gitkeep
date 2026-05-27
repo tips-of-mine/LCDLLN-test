@@ -1,0 +1,9 @@
+# TA.4 — répertoire de persistance des personnages (.ini écrits par
+# CharacterPersistenceStore.Save toutes les 30 s). Maintenu vide dans le
+# bundle pour servir uniquement de mountpoint au bind rw Docker :
+# `./data/persistence/characters:/app/game/data/persistence/characters:rw`
+# (cf. deploy/docker/docker-compose.yml service shard).
+#
+# Sans ce fichier-sentinelle, Git ignore le répertoire vide → il n'apparaît
+# pas dans le bundle → Docker ne peut pas créer le mountpoint sous le parent
+# /app/game/data monté en read-only, et le shard refuse de démarrer.

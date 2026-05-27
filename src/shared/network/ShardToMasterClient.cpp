@@ -218,9 +218,9 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 					parsed->account_id, parsed->character_id);
 				return;
 			}
-			LOG_INFO(Core, "[ShardToMasterClient] AdmitCharacter received (account_id={}, character_id={})",
-				parsed->account_id, parsed->character_id);
-			m_admit_callback(parsed->account_id, parsed->character_id);
+			LOG_INFO(Core, "[ShardToMasterClient] AdmitCharacter received (account_id={}, character_id={}, name='{}')",
+				parsed->account_id, parsed->character_id, parsed->character_name);
+			m_admit_callback(parsed->account_id, parsed->character_id, parsed->character_name);
 		}
 	}
 

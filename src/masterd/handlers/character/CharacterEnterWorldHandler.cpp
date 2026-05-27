@@ -159,7 +159,11 @@ namespace engine::server
 			auto shardConnId = m_shardRegistry->GetShardConnection(dbServerId);
 			if (shardConnId)
 			{
-				auto admitPkt = engine::network::BuildAdmitCharacterPacket(*accountId, parsed->characterId);
+				// TD.5 — on embarque le nom du personnage dans le push d'admission pour
+				// permettre au shard (notamment en mode no-DB) de l'utiliser dans la
+				// SnapshotEntity (plaque de nom des avatars distants).
+				auto admitPkt = engine::network::BuildAdmitCharacterPacket(*accountId, parsed->characterId,
+					parsed->characterName);
 				if (!admitPkt.empty() && m_server->Send(*shardConnId, admitPkt))
 				{
 					LOG_INFO(Net, "[CharacterEnterWorldHandler] admit push sent (shard_id={}, shardConnId={}, account_id={}, character_id={})",

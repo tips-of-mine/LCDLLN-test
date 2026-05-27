@@ -97,9 +97,11 @@ namespace engine::server
 		uint64_t helloNonce = 0;
 		uint64_t persistenceCharacterKey = 0;
 		/// TD.5 — nom du personnage choisi par le joueur (cf. table SQL characters.name).
-		/// Chargé depuis la DB au moment de l'admission (LoadCharacterIdentityFromDb) puis
-		/// recopié dans chaque SnapshotEntity pour ce client → les avatars distants peuvent
-		/// afficher le vrai nom dans leur plaque (au lieu du fallback "P<clientId>").
+		/// Chargé depuis la DB (LoadSpawnFromDb) si le shard a un pool MySQL configuré ;
+		/// sinon (mode no-DB) repris du push master AdmitCharacter via
+		/// AdmittedCharacterRegistry::AdmittedCharacterName. Recopié dans chaque
+		/// SnapshotEntity pour ce client → les avatars distants peuvent afficher le vrai
+		/// nom dans leur plaque (au lieu du fallback "P<clientId>").
 		std::string characterName;
 		uint32_t experiencePoints = 0;
 		uint32_t gold = 0;

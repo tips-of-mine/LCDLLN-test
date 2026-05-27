@@ -13,6 +13,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
+#include <string_view>
 
 using engine::server::AdmittedCharacterRegistry;
 
@@ -75,6 +76,33 @@ namespace
 		assert(reg.IsAdmitted(5u, 2500u));     // de nouveau valide
 		std::puts("[OK] TestReAdmitRefreshesTimestamp");
 	}
+
+	/// TD.5 — Admit avec nom retourne ce nom ; Admit sans nom retourne chaîne vide.
+	void TestAdmitWithName()
+	{
+		AdmittedCharacterRegistry reg;
+		reg.SetTtlMs(1000u);
+		reg.Admit(11u, 1u, std::string_view{"homme"}, 100u);
+		assert(reg.AdmittedCharacterName(11u, 100u) == "homme");
+		reg.Admit(12u, 1u, 100u); // surcharge legacy = nom vide
+		assert(reg.AdmittedCharacterName(12u, 100u).empty());
+		// character_id inconnu ou expiré => chaîne vide
+		assert(reg.AdmittedCharacterName(999u, 100u).empty());
+		assert(reg.AdmittedCharacterName(11u, 100u + 5000u).empty()); // TTL dépassé
+		std::puts("[OK] TestAdmitWithName");
+	}
+
+	/// TD.5 — un re-Admit anonyme après un Admit nommé préserve le nom (le ticket TCP
+	/// rafraîchit le timestamp mais ne porte pas le nom — ne doit pas l'effacer).
+	void TestReAdmitWithoutNamePreservesName()
+	{
+		AdmittedCharacterRegistry reg;
+		reg.Admit(20u, 7u, std::string_view{"femme"}, 0u);
+		assert(reg.AdmittedCharacterName(20u, 0u) == "femme");
+		reg.Admit(20u, 7u, 1000u); // legacy : sans nom
+		assert(reg.AdmittedCharacterName(20u, 1000u) == "femme");
+		std::puts("[OK] TestReAdmitWithoutNamePreservesName");
+	}
 }
 
 int main()
@@ -84,6 +112,8 @@ int main()
 	TestAdmissionExpiresAfterTtl();
 	TestRevoke();
 	TestReAdmitRefreshesTimestamp();
+	TestAdmitWithName();
+	TestReAdmitWithoutNamePreservesName();
 	std::puts("All AdmittedCharacterRegistry tests passed");
 	return 0;
 }

@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <mutex>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 
 namespace engine::server
@@ -27,7 +29,17 @@ namespace engine::server
 		/// Admet (ou rafraîchit l'horodatage d')un personnage. `characterId == 0` est ignoré
 		/// (sentinelle « aucun personnage » : un ticket émis avant l'EnterWorld porte 0).
 		/// \param nowMs horloge monotone en millisecondes (point de départ du TTL).
-		void Admit(uint64_t characterId, uint64_t accountId, uint64_t nowMs);
+		/// \param characterName TD.5 — nom du personnage (table SQL characters.name) ; peut
+		///        être vide si l'origine de l'admission n'a pas le nom (ex. ticket TCP
+		///        antérieur à EnterWorld). Le shard utilise ce nom pour alimenter
+		///        ConnectedClient.characterName en mode no-DB.
+		void Admit(uint64_t characterId, uint64_t accountId, std::string_view characterName, uint64_t nowMs);
+
+		/// Surcharge legacy (sans nom) — équivalente à Admit(..., "", nowMs).
+		void Admit(uint64_t characterId, uint64_t accountId, uint64_t nowMs)
+		{
+			Admit(characterId, accountId, std::string_view{}, nowMs);
+		}
 
 		/// Retire un personnage (ex. déconnexion). No-op si absent.
 		void Revoke(uint64_t characterId);
@@ -38,6 +50,11 @@ namespace engine::server
 
 		/// account_id associé à un personnage admis et non expiré, 0 sinon.
 		uint64_t AdmittedAccountId(uint64_t characterId, uint64_t nowMs) const;
+
+		/// TD.5 — nom du personnage admis et non expiré, chaîne vide sinon (ou si aucun
+		/// nom n'avait été fourni à `Admit`). Utilisé par `ServerApp::HandleHello` pour
+		/// remplir `ConnectedClient.characterName` quand la DB locale n'est pas configurée.
+		std::string AdmittedCharacterName(uint64_t characterId, uint64_t nowMs) const;
 
 		/// Nombre d'entrées (admises ou non, sans purge). Utile aux tests / diagnostics.
 		size_t Count() const;
@@ -51,6 +68,7 @@ namespace engine::server
 		{
 			uint64_t accountId = 0;
 			uint64_t admittedAtMs = 0;
+			std::string characterName; ///< TD.5 — peut être vide (admission sans nom).
 		};
 
 		mutable std::mutex m_mutex;

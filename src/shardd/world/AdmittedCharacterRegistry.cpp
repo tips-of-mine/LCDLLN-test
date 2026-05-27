@@ -2,14 +2,23 @@
 
 namespace engine::server
 {
-	void AdmittedCharacterRegistry::Admit(uint64_t characterId, uint64_t accountId, uint64_t nowMs)
+	void AdmittedCharacterRegistry::Admit(uint64_t characterId, uint64_t accountId,
+		std::string_view characterName, uint64_t nowMs)
 	{
 		if (characterId == 0u)
 		{
 			return; // sentinelle « aucun personnage » : jamais admis.
 		}
 		std::lock_guard<std::mutex> lock(m_mutex);
-		m_admitted[characterId] = Entry{accountId, nowMs};
+		// Préserve le nom déjà connu si la nouvelle admission est anonyme (rafraîchissement
+		// d'horodatage via un ticket sans nom après un EnterWorld qui l'avait fourni).
+		Entry& entry = m_admitted[characterId];
+		entry.accountId = accountId;
+		entry.admittedAtMs = nowMs;
+		if (!characterName.empty())
+		{
+			entry.characterName.assign(characterName);
+		}
 	}
 
 	void AdmittedCharacterRegistry::Revoke(uint64_t characterId)
@@ -46,6 +55,21 @@ namespace engine::server
 			return 0u;
 		}
 		return it->second.accountId;
+	}
+
+	std::string AdmittedCharacterRegistry::AdmittedCharacterName(uint64_t characterId, uint64_t nowMs) const
+	{
+		if (characterId == 0u)
+		{
+			return {};
+		}
+		std::lock_guard<std::mutex> lock(m_mutex);
+		const auto it = m_admitted.find(characterId);
+		if (it == m_admitted.end() || (nowMs - it->second.admittedAtMs) > m_ttlMs)
+		{
+			return {};
+		}
+		return it->second.characterName;
 	}
 
 	size_t AdmittedCharacterRegistry::Count() const

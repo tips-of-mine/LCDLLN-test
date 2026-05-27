@@ -54,9 +54,12 @@ namespace engine::network
 
 		/// TA.3 — Callback invoqué quand le master pousse un `kOpcodeMasterToShardAdmitCharacter`
 		/// (suite à un EnterWorld réussi côté master). Le destinataire typique alimente
-		/// `AdmittedCharacterRegistry::Admit(character_id, account_id, now)` côté shard.
+		/// `AdmittedCharacterRegistry::Admit(character_id, account_id, characterName, now)`
+		/// côté shard. TD.5 — `character_name` est fourni par le master (table characters.name)
+		/// pour alimenter les plaques de nom côté client ; peut être vide (master legacy).
 		/// `nullptr` (défaut) = drop silencieux.
-		using AdmitCharacterCallback = std::function<void(uint64_t account_id, uint64_t character_id)>;
+		using AdmitCharacterCallback = std::function<void(uint64_t account_id, uint64_t character_id,
+			std::string_view character_name)>;
 		void SetAdmitCharacterCallback(AdmitCharacterCallback cb) { m_admit_callback = std::move(cb); }
 
 		enum class State

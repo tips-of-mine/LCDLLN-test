@@ -114,14 +114,25 @@ namespace engine::network
 		AdmitCharacterPayload out;
 		if (!r.ReadU64(out.account_id) || !r.ReadU64(out.character_id))
 			return std::nullopt;
+		// TD.5 — character_name optionnel : un master ancien ne l'enverra pas et le payload
+		// s'arrête à 16 octets. Dans ce cas, on garde out.character_name vide et le shard
+		// retombera sur le fallback "P<clientId>" (comportement legacy).
+		if (r.Remaining() > 0u)
+		{
+			if (!r.ReadString(out.character_name))
+				return std::nullopt;
+		}
 		return out;
 	}
 
-	std::vector<uint8_t> BuildAdmitCharacterPacket(uint64_t account_id, uint64_t character_id)
+	std::vector<uint8_t> BuildAdmitCharacterPacket(uint64_t account_id, uint64_t character_id,
+		std::string_view character_name)
 	{
 		PacketBuilder builder;
 		ByteWriter w = builder.PayloadWriter();
 		if (!w.WriteU64(account_id) || !w.WriteU64(character_id))
+			return {};
+		if (!w.WriteString(character_name))
 			return {};
 		const size_t payloadBytes = w.Offset();
 		// Push master→shard, pas de request_id ni session.

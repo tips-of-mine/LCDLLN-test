@@ -103,6 +103,11 @@ namespace engine::server
 		/// SnapshotEntity pour ce client → les avatars distants peuvent afficher le vrai
 		/// nom dans leur plaque (au lieu du fallback "P<clientId>").
 		std::string characterName;
+		/// TD.6 — genre du personnage ("male"/"female", cf. migration 0067). Même chaîne
+		/// d'acquisition que `characterName` : LoadSpawnFromDb avec pool DB, sinon via
+		/// AdmittedCharacterRegistry::AdmittedGender. Recopié dans chaque SnapshotEntity
+		/// pour permettre au client de sélectionner le mesh skinné des avatars distants.
+		std::string gender;
 		uint32_t experiencePoints = 0;
 		uint32_t gold = 0;
 		/// M35.1 — additional currencies (wallet); gold remains primary trade currency.
@@ -303,7 +308,8 @@ namespace engine::server
 		/// `name` pour le porter dans le SnapshotEntity (plaque de nom des avatars distants).
 		/// Renvoie false si pas de pool DB (Windows / DB non configurée) ou si character
 		/// introuvable ; dans ce cas les out-params ne sont pas modifiés.
-		bool LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg, std::string& outName);
+		bool LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg,
+		std::string& outName, std::string& outGender);
 
 		/// Accept a new client or refresh an existing handshake.
 		/// Phase 3.7.5 — \p helloNonce élargi à uint64 (character_id complet).

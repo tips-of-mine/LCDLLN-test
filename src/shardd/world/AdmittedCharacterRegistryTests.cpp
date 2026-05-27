@@ -103,6 +103,35 @@ namespace
 		assert(reg.AdmittedCharacterName(20u, 1000u) == "femme");
 		std::puts("[OK] TestReAdmitWithoutNamePreservesName");
 	}
+
+	/// TD.6 — Admit avec genre retourne ce genre ; surcharges sans genre retournent vide.
+	void TestAdmitWithGender()
+	{
+		AdmittedCharacterRegistry reg;
+		reg.SetTtlMs(1000u);
+		reg.Admit(30u, 1u, std::string_view{"homme"}, std::string_view{"male"}, 100u);
+		assert(reg.AdmittedGender(30u, 100u) == "male");
+		reg.Admit(31u, 1u, std::string_view{"femme"}, std::string_view{"female"}, 100u);
+		assert(reg.AdmittedGender(31u, 100u) == "female");
+		// Surcharge legacy (nom mais sans genre) => genre vide.
+		reg.Admit(32u, 1u, std::string_view{"anon"}, 100u);
+		assert(reg.AdmittedGender(32u, 100u).empty());
+		// character_id inconnu ou expiré => chaîne vide.
+		assert(reg.AdmittedGender(999u, 100u).empty());
+		assert(reg.AdmittedGender(30u, 100u + 5000u).empty()); // TTL dépassé
+		std::puts("[OK] TestAdmitWithGender");
+	}
+
+	/// TD.6 — un re-Admit sans genre après un Admit avec genre préserve le genre.
+	void TestReAdmitWithoutGenderPreservesGender()
+	{
+		AdmittedCharacterRegistry reg;
+		reg.Admit(40u, 7u, std::string_view{"femme"}, std::string_view{"female"}, 0u);
+		assert(reg.AdmittedGender(40u, 0u) == "female");
+		reg.Admit(40u, 7u, std::string_view{"femme"}, 1000u); // surcharge sans genre
+		assert(reg.AdmittedGender(40u, 1000u) == "female");
+		std::puts("[OK] TestReAdmitWithoutGenderPreservesGender");
+	}
 }
 
 int main()
@@ -114,6 +143,8 @@ int main()
 	TestReAdmitRefreshesTimestamp();
 	TestAdmitWithName();
 	TestReAdmitWithoutNamePreservesName();
+	TestAdmitWithGender();
+	TestReAdmitWithoutGenderPreservesGender();
 	std::puts("All AdmittedCharacterRegistry tests passed");
 	return 0;
 }

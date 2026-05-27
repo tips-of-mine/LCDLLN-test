@@ -100,8 +100,8 @@ namespace
 		inMsg.sentPackets = 77u;
 
 		std::vector<SnapshotEntity> in;
-		// 2 joueurs avec playerClientId ≠ 0 et un characterName non vide,
-		// 1 mob avec playerClientId = 0 et characterName vide.
+		// 2 joueurs avec playerClientId ≠ 0, characterName et gender non vides ;
+		// 1 mob avec playerClientId = 0, characterName et gender vides.
 		SnapshotEntity ePlayerA{};
 		ePlayerA.entityId = 0x200000001ull;
 		ePlayerA.state.positionX = 10.5f;
@@ -110,6 +110,7 @@ namespace
 		ePlayerA.state.yawRadians = 0.42f;
 		ePlayerA.playerClientId = 7u;
 		ePlayerA.characterName = "homme"; // TD.5
+		ePlayerA.gender = "male";          // TD.6
 		in.push_back(ePlayerA);
 
 		SnapshotEntity ePlayerB{};
@@ -118,6 +119,7 @@ namespace
 		ePlayerB.state.positionZ = 50.0f;
 		ePlayerB.playerClientId = 12u;
 		ePlayerB.characterName = "femme"; // TD.5
+		ePlayerB.gender = "female";        // TD.6
 		in.push_back(ePlayerB);
 
 		SnapshotEntity eMob{};
@@ -125,7 +127,7 @@ namespace
 		eMob.state.currentHealth = 80u;
 		eMob.state.maxHealth = 100u;
 		eMob.playerClientId = 0u; // mob => pas de nameplate
-		// characterName reste vide pour les mobs / lootbags (TD.5).
+		// characterName et gender restent vides pour les mobs / lootbags (TD.5/TD.6).
 		in.push_back(eMob);
 
 		const std::vector<std::byte> packet = EncodeSnapshot(inMsg, in);
@@ -146,26 +148,29 @@ namespace
 		assert(out[0].state.yawRadians == ePlayerA.state.yawRadians);
 		assert(out[0].playerClientId == 7u);
 		assert(out[0].characterName == "homme"); // TD.5
+		assert(out[0].gender == "male");          // TD.6
 
 		assert(out[1].entityId == ePlayerB.entityId);
 		assert(out[1].state.positionX == ePlayerB.state.positionX);
 		assert(out[1].playerClientId == 12u);
 		assert(out[1].characterName == "femme"); // TD.5
+		assert(out[1].gender == "female");        // TD.6
 
 		assert(out[2].entityId == eMob.entityId);
 		assert(out[2].state.currentHealth == 80u);
 		assert(out[2].state.maxHealth == 100u);
 		assert(out[2].playerClientId == 0u);
 		assert(out[2].characterName.empty()); // TD.5 : mob => pas de nom
+		assert(out[2].gender.empty());        // TD.6 : mob => pas de genre
 		std::puts("[OK] TestSnapshotRoundTripWithPlayerClientId");
 	}
 
-	/// TD.5 — un Snapshot dont la taille de payload est inferieure au minimum attendu
-	/// (54 octets/entité = 8 entityId + 40 EntityState + 4 playerClientId + 2 nameLen=0,
-	/// au-delà de l'entête 24 octets) doit être rejeté. Defense en profondeur contre un
-	/// pair (client ou serveur) qui parlerait une version antérieure du wire (v3 = 48,
-	/// v4 = 52, v5 = 52 sans nom). Le bump kProtocolVersion à v6 filtre déjà la plupart
-	/// des cas dans DecodeHeader, ce test couvre une corruption après header valide.
+	/// TD.6 — un Snapshot dont la taille de payload est inferieure au minimum attendu
+	/// (56 octets/entité = 8 entityId + 40 EntityState + 4 playerClientId + 2 nameLen=0
+	/// + 2 genderLen=0, au-delà de l'entête 24 octets) doit être rejeté. Defense en
+	/// profondeur contre un pair qui parlerait une version antérieure du wire. Le bump
+	/// kProtocolVersion à v7 filtre déjà la plupart des cas dans DecodeHeader, ce test
+	/// couvre une corruption après header valide.
 	void TestSnapshotRejectsTruncatedPayload()
 	{
 		SnapshotMessage inMsg{};

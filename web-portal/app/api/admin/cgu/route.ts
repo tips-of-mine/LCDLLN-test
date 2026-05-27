@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { isStaff } from '@/lib/auth/roles'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
+import { logError } from '@/lib/log'
 import type { ResultSetHeader } from 'mysql2/promise'
 
 function isAdmin(): boolean {
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, id: editionId }, { status: 201 })
   } catch (err) {
-    console.error('[POST /api/admin/cgu]', err)
+    logError("POST /api/admin/cgu", "Operation failed", { err })
     const msg = err instanceof Error ? err.message : 'Erreur serveur'
     return NextResponse.json({ ok: false, message: msg }, { status: 500 })
   }

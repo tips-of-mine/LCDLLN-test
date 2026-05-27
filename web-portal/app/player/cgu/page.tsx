@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { query } from "@/lib/db/connection";
+import { logError } from "@/lib/log";
 import { CguAcceptButton } from "@/components/cgu/CguAcceptButton";
 import type { RowDataPacket } from "mysql2/promise";
 
@@ -37,7 +38,7 @@ export default async function PlayerCguPage() {
       [accountId]
     );
   } catch (err) {
-    console.error("[PlayerCguPage] query error:", err);
+    logError("PlayerCguPage", "query error", { err });
     dbError = true;
   }
 

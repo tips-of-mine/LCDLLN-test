@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
+import { logError } from '@/lib/log'
 import type { ResultSetHeader } from 'mysql2/promise'
 
 const VALID_CATEGORIES = ['gameplay', 'graphique', 'reseau', 'interface', 'autre'] as const
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, id: result.insertId }, { status: 201 })
   } catch (err) {
-    console.error('[POST /api/bugs]', err)
+    logError("POST /api/bugs", "Insert bug report failed", { err })
     const msg = err instanceof Error ? err.message : 'Erreur serveur'
     return NextResponse.json({ ok: false, message: msg }, { status: 500 })
   }

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { query } from '@/lib/db/connection'
+import { logError } from '@/lib/log'
 import { getSession } from '@/lib/auth/session'
 import { isStaff, type AccountRole } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
@@ -72,7 +73,7 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
     )
     players = rows as PlayerRow[]
   } catch (err) {
-    console.error('[AdminPlayersPage] DB error:', err)
+    logError("AdminPlayersPage", "DB error", { err })
     dbError = true
   }
 

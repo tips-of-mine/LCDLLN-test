@@ -1,28 +1,37 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { isStaff } from "@/lib/auth/roles";
 import { query } from "@/lib/db/connection";
 import type { RowDataPacket } from "mysql2/promise";
 
-async function getStats() {
-  try {
-    const [accounts, cgu, bugs, acceptances] = await Promise.all([
-      query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM accounts", []),
-      query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM terms_editions WHERE status = 'published'", []),
-      query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM bug_reports", []),
-      query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM account_terms_acceptances", []),
-    ]);
-    return {
-      accounts: accounts[0]?.n ?? 0,
-      cgu: cgu[0]?.n ?? 0,
-      bugs: bugs[0]?.n ?? 0,
-      acceptances: acceptances[0]?.n ?? 0,
-    };
-  } catch {
-    return { accounts: "—", cgu: "—", bugs: "—", acceptances: "—" };
-  }
-}
+// Stats admin cachées 60s côté serveur Next.js — évite 4 COUNT(*) par render.
+// Le cache est isolé de getSession() pour ne pas leaker entre utilisateurs ;
+// les stats sont les mêmes pour tous les admins (lecture globale).
+// Invalidation manuelle possible via revalidateTag("admin-stats") après mutation.
+const getStats = unstable_cache(
+  async () => {
+    try {
+      const [accounts, cgu, bugs, acceptances] = await Promise.all([
+        query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM accounts", []),
+        query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM terms_editions WHERE status = 'published'", []),
+        query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM bug_reports", []),
+        query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM account_terms_acceptances", []),
+      ]);
+      return {
+        accounts: accounts[0]?.n ?? 0,
+        cgu: cgu[0]?.n ?? 0,
+        bugs: bugs[0]?.n ?? 0,
+        acceptances: acceptances[0]?.n ?? 0,
+      };
+    } catch {
+      return { accounts: "—", cgu: "—", bugs: "—", acceptances: "—" };
+    }
+  },
+  ["admin-stats"],
+  { revalidate: 60, tags: ["admin-stats"] }
+);
 
 export default async function AdminHomePage() {
   const session = await getSession();

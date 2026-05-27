@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { query } from '@/lib/db/connection'
+import { logError } from '@/lib/log'
 import { getSession } from '@/lib/auth/session'
 import { redirect } from 'next/navigation'
 import type { RowDataPacket } from 'mysql2/promise'
@@ -39,7 +40,7 @@ export default async function PrivacyPage() {
       [accountId]
     )
   } catch (err) {
-    console.error('[PrivacyPage] CGU query error:', err)
+    logError("PrivacyPage", "CGU query error", { err })
   }
 
   let privacyRows: PrivacyRow[] = []
@@ -49,7 +50,7 @@ export default async function PrivacyPage() {
       [accountId]
     )
   } catch (err) {
-    console.error('[PrivacyPage] Privacy query error:', err)
+    logError("PrivacyPage", "Privacy query error", { err })
   }
 
   const currentVisibility: 'public' | 'friends' | 'none' =

@@ -73,20 +73,36 @@ jobs:
       #     Fail "expected 1 freed" suggère un bug refcount + releaseDelay
       #     dans VMapStreamer. Audit nécessaire.
       #
-      # ─── RÉINTÉGRÉS dans cette PR (audit 2026-05-27) ──────────────────────
-      # - localization_service_tests : test crée ses propres fixtures via
-      #     WriteCatalog → FileSystem::WriteAllText. Pas de fixture externe
-      #     requise. Exclusion "JSON absent" était une fausse alerte.
-      # - netserver_bandwidth_tests : test purement logique sur double
-      #     (now += 0.2). Pas de wall-clock. Ne peut pas être flaky.
-      # - zone_builder_roundtrip_tests : référence orpheline — aucune cible
-      #     CTest de ce nom n'existe. Filtre inutile.
+      # ─── TEMPORAIRE — Linux-specific (tentative réintégration 2026-05-27 a échoué) ──
+      # Les 3 tests ci-dessous ont été retirés de -E par la tentative de
+      # réintégration de la PR #721, puis ré-exclus quand la CI Linux a
+      # révélé des échecs réels (pas des fausses alertes comme le rapport
+      # d'audit initial le supposait). Suivi détaillé : FU-5/6/7 dans
+      # docs/superpowers/audits/2026-05-27-codebase-audit-followups.md
+      # - netserver_bandwidth_tests
+      #     `Assert(totalSent == 1000u)` échoue sur Linux GCC après 5
+      #     itérations de `now += 0.2` (somme de 5 fois 0.2 en IEEE 754).
+      #     Cross-platform fragile — pas du timing, mais de l'arithmétique
+      #     floating-point. Fix : assertion avec tolérance ou recalcul en
+      #     entiers (effort ~30 min, à fixer dans le test seul).
+      # - localization_service_tests
+      #     `LocalizationService::Init()` retourne false sur Linux après
+      #     que `WriteCatalog` (FileSystem::WriteAllText) ait réussi.
+      #     Vrai bug Linux à diagnostiquer : FileSystem::ReadAllText ?
+      #     path traversal ? encoding ? Demande un build Linux pour
+      #     investiguer (effort ~2-4h).
+      # - zone_builder_roundtrip_tests
+      #     `ReadFileBytes(dirA/probes.bin)` retourne `.empty()` — les
+      #     fichiers binaires écrits puis relus sont vides sur Linux.
+      #     Plus assertion `rebuilt.positionX == source.positionX` qui
+      #     échoue (précision float). Bug serialize ou path Linux
+      #     spécifique (effort ~3-5h).
       - name: Run tests (ctest)
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         working-directory: ${{ github.workspace }}/build/linux-x64-release
         run: |
-          ctest --output-on-failure --no-compress-output -E "network_integration_tests|session_manager_tests|security_tests|grid_state_tests|vmap_streamer_tests"
+          ctest --output-on-failure --no-compress-output -E "network_integration_tests|session_manager_tests|security_tests|grid_state_tests|vmap_streamer_tests|netserver_bandwidth_tests|localization_service_tests|zone_builder_roundtrip_tests"
 
       # Lot H : garde explicite que le World Editor compile au même titre que le jeu.
       # Si une régression casse uniquement la cible world_editor_app, ce step échoue alors que

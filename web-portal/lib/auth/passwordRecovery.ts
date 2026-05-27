@@ -2,6 +2,7 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { query } from "@/lib/db/connection";
 import { hashPasswordForGameMaster } from "@/lib/auth/gamePasswordHash";
+import { requireEnv } from "@/lib/env";
 
 type AccountRow = RowDataPacket & {
   id: number;
@@ -58,7 +59,7 @@ type RecoveryProfileBundle = {
 };
 
 function getRecoverySecret(): string {
-  return process.env.AUTH_SECRET || "lcdlln-dev-recovery-secret";
+  return requireEnv("AUTH_SECRET");
 }
 
 function normalizeTrimmed(value: string): string {

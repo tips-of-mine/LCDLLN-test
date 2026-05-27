@@ -27,8 +27,11 @@ namespace engine::server::anticheat
 
 	struct AntiCheatConfig
 	{
-		float    maxSpeedMps      = 7.5f;     ///< walk + run + mount typical
-		float    speedTolerance   = 1.5f;     ///< 50%% lag headroom
+		/// Vitesse max légale du client (gameplay) : sprintSpeed (touche Alt) côté
+		/// CharacterController.h = 13.0 m/s. Walk = 5, Run = 9, Sprint = 13. On aligne
+		/// le seuil sur la vitesse la plus haute pour éviter les faux positifs en sprint.
+		float    maxSpeedMps      = 13.0f;
+		float    speedTolerance   = 1.5f;     ///< 50% de marge pour le lag/jitter UDP
 		float    maxSingleStepM   = 50.0f;    ///< gros hop = teleport hack
 	};
 

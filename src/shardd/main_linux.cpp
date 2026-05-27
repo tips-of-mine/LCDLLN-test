@@ -250,7 +250,7 @@ int main(int argc, char** argv)
 	// pour qu'un futur SeedFromDb() ait son point d'accroche evident).
 	engine::server::anticheat::AntiCheatGameplayRuntime antiCheat;
 	antiCheat.SeedV1Config();
-	LOG_INFO(AntiCheat, "[AntiCheat] runtime configured (V1 thresholds : maxSpeed=7.5 m/s, tolerance=1.5, maxStep=50 m)");
+	LOG_INFO(AntiCheat, "[AntiCheat] runtime configured (V1 thresholds : maxSpeed=13.0 m/s, tolerance=1.5, maxStep=50 m)");
 
 	engine::server::spell::SpellFamilyRuntime spellFamily;
 	spellFamily.SeedV1Families();

@@ -3,6 +3,7 @@ import { isStaff } from '@/lib/auth/roles'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 async function checkAdmin() {
   const role = cookies().get('lcdlln_portal_role')?.value
@@ -22,7 +23,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       [id]
     )
     return NextResponse.json({ ok: true, characters })
-  } catch {
+  } catch (err) {
+    logError('GET /api/admin/players/[id]/characters', 'Fetch characters failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

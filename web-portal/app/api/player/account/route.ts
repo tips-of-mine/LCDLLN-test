@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
+import { logError } from '@/lib/log'
 
 export async function PATCH(request: Request) {
   const jar = cookies()
@@ -35,7 +36,8 @@ export async function PATCH(request: Request) {
     values.push(accountId)
     await query(`UPDATE accounts SET ${updates.join(', ')} WHERE id = ?`, values)
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('PATCH /api/player/account', 'Account update failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requestPasswordRecovery } from "@/lib/auth/passwordRecovery";
+import { logError } from "@/lib/log";
 
 export async function POST(request: Request) {
   try {
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result);
   } catch (error) {
+    logError("POST /api/password-recovery/request", "Recovery request failed", { err: error });
     const message = error instanceof Error ? error.message : "Erreur inconnue.";
     return NextResponse.json({ accepted: false, delivery: "noop", message }, { status: 500 });
   }

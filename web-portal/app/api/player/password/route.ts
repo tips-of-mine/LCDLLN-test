@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import { verifyGameMasterPassword, hashPasswordForGameMaster } from '@/lib/auth/gamePasswordHash'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 export async function POST(request: Request) {
   const jar = cookies()
@@ -39,7 +40,8 @@ export async function POST(request: Request) {
     await query('UPDATE accounts SET password_hash = ? WHERE id = ?', [newHash, accountId])
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('POST /api/player/password', 'Password change failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

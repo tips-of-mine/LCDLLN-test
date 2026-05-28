@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
@@ -25,7 +26,8 @@ export async function GET(request: Request) {
     )
 
     return NextResponse.redirect(new URL('/?parental=valide', request.url))
-  } catch {
+  } catch (err) {
+    logError('GET /api/player/parental/validate', 'Parental validation failed', { err })
     return NextResponse.redirect(new URL('/?parental=erreur', request.url))
   }
 }

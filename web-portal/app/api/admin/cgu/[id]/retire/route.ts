@@ -6,6 +6,7 @@ import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import { isStaff } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 export async function POST(
   request: Request,
@@ -48,7 +49,8 @@ export async function POST(
     )
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('POST /api/admin/cgu/[id]/retire', 'Retire CGU edition failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

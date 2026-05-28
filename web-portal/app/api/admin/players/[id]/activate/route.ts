@@ -2,6 +2,7 @@
 import { isStaff } from '@/lib/auth/roles'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
+import { logError } from '@/lib/log'
 
 async function checkAdmin() {
   const role = cookies().get('lcdlln_portal_role')?.value
@@ -18,7 +19,8 @@ export async function PATCH(_req: Request, { params }: { params: { id: string } 
       [id]
     )
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('PATCH /api/admin/players/[id]/activate', 'Activate account failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

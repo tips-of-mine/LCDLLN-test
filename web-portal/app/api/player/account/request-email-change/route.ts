@@ -7,6 +7,7 @@ import { sendEmailChange } from '@/lib/email/sender'
 import { requireEnv } from '@/lib/env'
 import { randomBytes } from 'node:crypto'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 export async function POST(request: Request) {
   const jar = cookies()
@@ -48,7 +49,8 @@ export async function POST(request: Request) {
     await sendEmailChange(newEmail, rows[0].login, newEmail, confirmationLink)
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('POST /api/player/account/request-email-change', 'Email change request failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

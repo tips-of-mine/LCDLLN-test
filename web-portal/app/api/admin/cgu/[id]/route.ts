@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import { isStaff } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 function isAdmin(): boolean {
   const jar = cookies()
@@ -86,7 +87,8 @@ export async function PATCH(
     }
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('PATCH /api/admin/cgu/[id]', 'Update CGU draft failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }
@@ -115,7 +117,8 @@ export async function DELETE(
     await query('DELETE FROM terms_editions WHERE id = ?', [id])
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('DELETE /api/admin/cgu/[id]', 'Delete CGU draft failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

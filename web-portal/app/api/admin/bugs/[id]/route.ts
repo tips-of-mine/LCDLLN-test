@@ -13,6 +13,7 @@ import { isStaff } from '@/lib/auth/roles'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 function isAdmin(): boolean {
   const jar = cookies()
@@ -53,7 +54,8 @@ export async function PATCH(
   let body: Record<string, unknown>
   try {
     body = await request.json() as Record<string, unknown>
-  } catch {
+  } catch (err) {
+    logError('PATCH /api/admin/bugs/[id]', 'Invalid JSON body', { err })
     return NextResponse.json({ error: 'Corps JSON invalide' }, { status: 400 })
   }
 
@@ -129,7 +131,8 @@ export async function PATCH(
     )
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('PATCH /api/admin/bugs/[id]', 'Bug update / exploit award failed', { err })
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }

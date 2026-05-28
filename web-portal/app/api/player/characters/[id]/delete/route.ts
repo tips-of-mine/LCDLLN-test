@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 export async function PATCH(
   _request: Request,
@@ -25,7 +26,8 @@ export async function PATCH(
 
     await query('UPDATE characters SET deleted_at = NOW() WHERE id = ?', [characterId])
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('PATCH /api/player/characters/[id]/delete', 'Delete character failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

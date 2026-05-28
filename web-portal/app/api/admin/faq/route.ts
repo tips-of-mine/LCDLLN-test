@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import { isStaff } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 function isAdmin(): boolean {
   const jar = cookies()
@@ -20,7 +21,8 @@ export async function GET() {
       'SELECT id, question, answer, category, display_order, published FROM faq_items ORDER BY display_order ASC, id ASC'
     )
     return NextResponse.json(items)
-  } catch {
+  } catch (err) {
+    logError('GET /api/admin/faq', 'Fetch FAQ items failed', { err })
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }
@@ -57,7 +59,8 @@ export async function POST(request: Request) {
       [question.trim(), answer.trim(), category ?? null, order, published ? 1 : 0]
     )
     return NextResponse.json({ ok: true }, { status: 201 })
-  } catch {
+  } catch (err) {
+    logError('POST /api/admin/faq', 'Create FAQ item failed', { err })
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }

@@ -232,6 +232,18 @@ namespace engine::server::db
 		return std::string(reinterpret_cast<const char*>(buf.data()), len);
 	}
 
+	uint64_t SqlPreparedStatement::AffectedRows() const
+	{
+		if (!m_stmt)
+			return 0;
+		const my_ulonglong n = mysql_stmt_affected_rows(m_stmt);
+		// my_ulonglong = uint64_t sur les builds standard, mais sentinelle (uint64_t)-1
+		// signifie erreur (ex. statement non exécuté). On normalise à 0.
+		if (n == static_cast<my_ulonglong>(-1))
+			return 0;
+		return static_cast<uint64_t>(n);
+	}
+
 	bool SqlPreparedStatement::Reset()
 	{
 		if (!m_stmt)

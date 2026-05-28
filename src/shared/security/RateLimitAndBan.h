@@ -1,5 +1,6 @@
 #pragma once
 
+#include "src/shared/core/Clock.h"
 #include "src/shared/core/Config.h"
 
 #include <chrono>
@@ -64,6 +65,12 @@ namespace engine::server
 		/// Fill \a out with current counters (exportables pre-M23).
 		void GetCounters(SecurityCounters& out) const;
 
+		/// Injecte une horloge alternative (typiquement \ref engine::core::FakeClock
+		/// pour les tests déterministes d'expiry de bans). Si non appelée,
+		/// l'instance utilise \ref engine::core::SteadyClock::Instance(). \a clock
+		/// doit rester vivant aussi longtemps que ce RateLimitAndBan.
+		void SetClock(engine::core::IClock* clock);
+
 	private:
 		using Clock = std::chrono::steady_clock;
 
@@ -83,7 +90,9 @@ namespace engine::server
 		mutable SecurityCounters m_counters;
 		std::unordered_map<std::string, AuthState> m_by_ip;
 		std::unordered_map<std::string, Clock::time_point> m_banned_until;
+		engine::core::IClock* m_clock = nullptr;
 
+		engine::core::IClock& clock() const;
 		bool tryConsume(TokenBucket& bucket, double capacity, double refill_per_sec);
 		void purgeOldEntries();
 	};

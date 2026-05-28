@@ -7,6 +7,16 @@
 
 namespace engine::server
 {
+	void RateLimitAndBan::SetClock(engine::core::IClock* c)
+	{
+		m_clock = c;
+	}
+
+	engine::core::IClock& RateLimitAndBan::clock() const
+	{
+		return m_clock ? *m_clock : engine::core::SteadyClock::Instance();
+	}
+
 	void RateLimitAndBan::SetConfig(const RateLimitAndBanConfig& config)
 	{
 		m_config = config;
@@ -27,7 +37,7 @@ namespace engine::server
 
 	bool RateLimitAndBan::tryConsume(TokenBucket& bucket, double capacity, double refill_per_sec)
 	{
-		auto now = Clock::now();
+		auto now = clock().Now();
 		double elapsed = std::chrono::duration<double>(now - bucket.last_refill).count();
 		bucket.tokens = std::min(capacity, bucket.tokens + elapsed * refill_per_sec);
 		bucket.last_refill = now;
@@ -80,7 +90,7 @@ namespace engine::server
 		state.failure_count++;
 		if (state.failure_count >= m_config.max_failures_before_ban)
 		{
-			auto until = Clock::now() + std::chrono::seconds(m_config.ban_duration_sec);
+			auto until = clock().Now() + std::chrono::seconds(m_config.ban_duration_sec);
 			m_banned_until[key] = until;
 			state.failure_count = 0;
 			++m_counters.bans_issued;
@@ -93,7 +103,7 @@ namespace engine::server
 		auto it = m_banned_until.find(std::string(ip));
 		if (it == m_banned_until.end())
 			return false;
-		if (Clock::now() < it->second)
+		if (clock().Now() < it->second)
 			return true;
 		return false;
 	}
@@ -102,7 +112,7 @@ namespace engine::server
 	{
 		if (m_config.max_entries_per_map == 0)
 			return;
-		auto now = Clock::now();
+		auto now = clock().Now();
 		for (auto it = m_banned_until.begin(); it != m_banned_until.end(); )
 		{
 			if (now >= it->second)
@@ -122,7 +132,7 @@ namespace engine::server
 
 	void RateLimitAndBan::PurgeExpired()
 	{
-		auto now = Clock::now();
+		auto now = clock().Now();
 		for (auto it = m_banned_until.begin(); it != m_banned_until.end(); )
 		{
 			if (now >= it->second)
@@ -137,7 +147,7 @@ namespace engine::server
 	{
 		out = m_counters;
 		out.bans_active = 0;
-		auto now = Clock::now();
+		auto now = clock().Now();
 		for (const auto& p : m_banned_until)
 		{
 			if (now < p.second)

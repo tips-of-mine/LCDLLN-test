@@ -21,6 +21,16 @@ namespace engine::server
 		m_sessionInWorldHook = std::move(hook);
 	}
 
+	void SessionManager::SetClock(engine::core::IClock* clock)
+	{
+		m_clock = clock;
+	}
+
+	engine::core::IClock& SessionManager::clock() const
+	{
+		return m_clock ? *m_clock : engine::core::SteadyClock::Instance();
+	}
+
 	void SessionManager::SetConfig(const SessionManagerConfig& config)
 	{
 		m_config = config;
@@ -64,7 +74,7 @@ namespace engine::server
 
 	uint64_t SessionManager::CreateSession(uint64_t account_id)
 	{
-		auto now = Clock::now();
+		auto now = clock().Now();
 		auto expires_at = now + std::chrono::seconds(m_config.max_session_age_sec);
 
 		auto it = m_by_account_id.find(account_id);
@@ -126,7 +136,7 @@ namespace engine::server
 		auto it = m_by_session_id.find(session_id);
 		if (it == m_by_session_id.end())
 			return false;
-		auto now = Clock::now();
+		auto now = clock().Now();
 		return isValid(it->second, now);
 	}
 
@@ -137,7 +147,7 @@ namespace engine::server
 		auto it = m_by_session_id.find(session_id);
 		if (it == m_by_session_id.end())
 			return false;
-		auto now = Clock::now();
+		auto now = clock().Now();
 		if (!isValid(it->second, now))
 			return false;
 		it->second.last_seen = now;
@@ -167,7 +177,7 @@ namespace engine::server
 		auto it = m_by_session_id.find(session_id);
 		if (it == m_by_session_id.end())
 			return;
-		auto now = Clock::now();
+		auto now = clock().Now();
 		if (it->second.state != SessionState::Created && it->second.state != SessionState::Authenticated && it->second.state != SessionState::Active)
 			return;
 		if (now > it->second.expires_at)
@@ -218,7 +228,7 @@ namespace engine::server
 
 	void SessionManager::EvictExpired()
 	{
-		auto now = Clock::now();
+		auto now = clock().Now();
 		for (auto it = m_by_session_id.begin(); it != m_by_session_id.end(); )
 		{
 			Session& s = it->second;

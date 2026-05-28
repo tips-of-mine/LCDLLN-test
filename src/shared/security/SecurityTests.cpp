@@ -4,13 +4,13 @@
 
 #include "src/shared/security/RateLimitAndBan.h"
 #include "src/shared/security/SecurityAuditLog.h"
+#include "src/shared/core/Clock.h"
 #include "src/shared/core/Log.h"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <thread>
 
 namespace
 {
@@ -87,7 +87,12 @@ static void TestIpBanTrigger()
 
 static void TestIpBanExpiry()
 {
+	// FU-2 : FakeClock injectée pour avancer au-delà de ban_duration_sec=1
+	// sans dépendre du wall-clock. Avant FU-2 ce test faisait
+	// `sleep_for(1100ms)` et était exclu de la CI ctest.
+	engine::core::FakeClock fakeClock;
 	RateLimitAndBan rlb;
+	rlb.SetClock(&fakeClock);
 	RateLimitAndBanConfig cfg;
 	cfg.max_failures_before_ban = 1;
 	cfg.ban_duration_sec = 1;
@@ -96,7 +101,7 @@ static void TestIpBanExpiry()
 	const std::string ip = "127.0.0.1";
 	rlb.RecordAuthFailure(ip);
 	Assert(rlb.IsBanned(ip), "Banned after 1 failure");
-	std::this_thread::sleep_for(std::chrono::milliseconds(1100));
+	fakeClock.AdvanceMs(1100);
 	rlb.PurgeExpired();
 	Assert(!rlb.IsBanned(ip), "Not banned after expiry and purge");
 }

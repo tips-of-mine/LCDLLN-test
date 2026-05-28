@@ -1,5 +1,6 @@
 #pragma once
 
+#include "src/shared/core/Clock.h"
 #include "src/shared/core/Config.h"
 
 #include <chrono>
@@ -130,6 +131,13 @@ namespace engine::server
 		/// client : auth initiale puis re-auth dans MasterShardClientFlow).
 		void SetSessionInWorldHook(std::function<bool(uint64_t existingSessionId)> hook);
 
+		/// Injecte une horloge alternative (typiquement \ref engine::core::FakeClock
+		/// pour les tests déterministes). Si non appelée, l'instance utilise
+		/// \ref engine::core::SteadyClock::Instance() — le comportement runtime
+		/// reste donc identique au précédent (steady_clock direct). \a clock
+		/// doit rester vivant aussi longtemps que ce SessionManager.
+		void SetClock(engine::core::IClock* clock);
+
 	private:
 		using Clock = std::chrono::steady_clock;
 
@@ -138,7 +146,9 @@ namespace engine::server
 		std::unordered_map<uint64_t, uint64_t> m_by_account_id;
 		std::function<void(uint64_t, uint64_t, SessionCloseReason)> m_onSessionClosed;
 		std::function<bool(uint64_t)> m_sessionInWorldHook;
+		engine::core::IClock* m_clock = nullptr;
 
+		engine::core::IClock& clock() const;
 		bool isValid(const Session& s, Clock::time_point now) const;
 		uint64_t generateSessionId();
 	};

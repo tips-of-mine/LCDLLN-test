@@ -56,14 +56,13 @@ jobs:
       #     provisionnable sur runner GitHub Actions gratuit. Ne sera
       #     jamais réintégré sauf provisioning service MySQL au job.
       #
-      # ─── TEMPORAIRE — refactor TimeProvider requis ─────────────────────────
-      # - session_manager_tests
-      #     Fait `std::this_thread::sleep_for(1100ms)` pour tester un expiry
-      #     1s. Fix attendu : injecter un Clock/TimeProvider dans
-      #     SessionManager pour rendre le test déterministe sans wall-clock.
-      # - security_tests
-      #     Même pattern : `sleep_for(1100ms)` pour `ban_duration_sec=1`.
-      #     Fix attendu : injection TimeProvider dans RateLimitAndBan.
+      # ─── (FU-1+FU-2) RÉINTÉGRÉS — injection IClock effectuée ──────────────
+      # session_manager_tests et security_tests ne sont plus exclus :
+      # SessionManager et RateLimitAndBan acceptent désormais un
+      # engine::core::IClock* via SetClock(). Les tests utilisent
+      # engine::core::FakeClock + AdvanceMs(1100) au lieu de
+      # std::this_thread::sleep_for(1100ms), ce qui rend l'expiry des
+      # sessions et des bans IP déterministes sans dépendre du wall-clock.
       #
       # ─── TEMPORAIRE — bug suspect à auditer ───────────────────────────────
       # - grid_state_tests
@@ -98,7 +97,7 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         working-directory: ${{ github.workspace }}/build/linux-x64-release
         run: |
-          ctest --output-on-failure --no-compress-output -E "network_integration_tests|session_manager_tests|security_tests|grid_state_tests|vmap_streamer_tests|localization_service_tests|zone_builder_roundtrip_tests"
+          ctest --output-on-failure --no-compress-output -E "network_integration_tests|grid_state_tests|vmap_streamer_tests|localization_service_tests|zone_builder_roundtrip_tests"
 
       # Lot H : garde explicite que le World Editor compile au même titre que le jeu.
       # Si une régression casse uniquement la cible world_editor_app, ce step échoue alors que

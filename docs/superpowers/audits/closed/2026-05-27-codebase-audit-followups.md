@@ -15,56 +15,63 @@ et restent à programmer en PRs dédiées (1 par follow-up suggéré).
 
 ---
 
-## FU-1 — Injection `TimeProvider` dans `SessionManager`
+## FU-1 — Injection `TimeProvider` dans `SessionManager` ✅ RÉSOLU (PR #742, 2026-05-28)
 
-**Test bloqué :** `session_manager_tests` — actuellement exclu en CI.
+**Test bloqué :** ~~`session_manager_tests` — actuellement exclu en CI.~~
+→ Test **réintégré** au pattern `ctest -E` du job `build-linux`.
 
-**Symptôme :** le test fait `std::this_thread::sleep_for(1100ms)` pour
-attendre l'expiration d'une session de 1s. Sur runner CI lent, le
-sleep peut prendre 1.2s ou plus → assertion timing-sensitive échoue
-de façon intermittente.
+**Symptôme initial :** `std::this_thread::sleep_for(1100ms)` pour
+attendre l'expiration d'une session de 1s, fragile sur runner CI lent.
 
-**Source :** `src/masterd/session/SessionManagerTests.cpp:99` et
-`src/masterd/session/SessionManager.h`.
+**Fix appliqué (PR #742) :**
+1. Nouvelle interface `engine::core::IClock` + `SteadyClock` (default
+   runtime) + `FakeClock` (tests) dans `src/shared/core/Clock.{h,cpp}`.
+2. `SessionManager::SetClock(IClock*)` (setter, default = singleton
+   `SteadyClock::Instance()`).
+3. Tous les `Clock::now()` internes remplacés par `clock().Now()`.
+4. `SessionManagerTests.cpp` : `FakeClock` + `AdvanceMs(1100)` au lieu
+   de `sleep_for`.
+5. Retiré du `ctest -E` dans `.github/workflows/build-linux.yml`.
 
-**Fix proposé :**
-1. Introduire une interface `Clock` (ou réutiliser un type existant
-   du shared) injectable dans `SessionManager` au constructeur.
-2. En prod, `SessionManager` utilise un `SteadyClock` qui appelle
-   `std::chrono::steady_clock::now()`.
-3. En test, `SessionManager` reçoit un `FakeClock` mockable où le
-   test peut avancer le temps via `clock.Advance(1100ms)` sans sleep.
-4. Mettre à jour `SessionManagerTests.cpp` pour utiliser le FakeClock.
-5. Retirer `session_manager_tests` de l'exclusion `ctest -E` dans
-   `.github/workflows/build-linux.yml`.
+**Bug latent corrigé en bonus :** `TestDuplicateLoginKickExisting`
+appelait `Validate(sid2)` AVANT le `SetState(Active)` — assertion
+buggée pré-existante masquée par l'exclusion CI. Le test attendait
+`true` mais `Created` n'est pas un état valide. Assertion corrigée
+en `!Validate(sid2)` + `Validate(sid2)` post-`SetState`.
 
-**Effort estimé :** 2-4h. Risque : refactor de code de prod
-(SessionManager), peut nécessiter ajustement des call sites
-(`master_app`, handlers qui instancient un SessionManager).
-
-**Déploiement :** ⚠️ master + lock-step (refactor de production code).
+**Déploiement :** ✅ pas de redéploiement requis (comportement runtime
+identique car aucun appelant ne câble `SetClock` — tout tombe sur
+`SteadyClock::Instance()` par défaut).
 
 ---
 
-## FU-2 — Injection `TimeProvider` dans `RateLimitAndBan`
+## FU-2 — Injection `TimeProvider` dans `RateLimitAndBan` ✅ RÉSOLU (PR #742, 2026-05-28)
 
-**Test bloqué :** `security_tests` — actuellement exclu en CI.
+**Test bloqué :** ~~`security_tests` — actuellement exclu en CI.~~
+→ Test **réintégré** au pattern `ctest -E`.
 
-**Symptôme :** identique à FU-1 — `sleep_for(1100ms)` pour
-`ban_duration_sec=1`.
+**Fix appliqué (PR #742) :** identique à FU-1 (`SetClock(IClock*)` +
+remplacement de `Clock::now()` par `clock().Now()`). Le module
+partage l'abstraction `engine::core::IClock` avec `SessionManager`.
 
-**Source :** `src/shared/security/SecurityTests.cpp:99` et
-`src/shared/security/RateLimitAndBan.h`.
+**Bug critique réel corrigé en bonus :** la réintégration CI a révélé
+que `TokenBucket` démarrait `tokens=0` + `last_refill=epoch`. Au 1er
+`TryConsume`, `elapsed = now() - epoch = uptime du process`. Conséquence
+en prod : sur un master master fraîchement (re)démarré, le 1er
+`/register` d'une nouvelle IP était **silencieusement refusé pendant
+~20 minutes** (`register_per_hour=3` → refill ≈ 0.000833 tok/s → besoin
+de ~1200s d'uptime pour accumuler 1 token).
 
-**Fix proposé :** même pattern que FU-1 (injection `Clock`/
-`TimeProvider`). Pourrait partager une abstraction commune avec FU-1
-(même interface Clock dans `src/shared/core/`).
+**Fix warm-start :** `RateLimitAndBan::getOrCreateState()` initialise
+`tokens=capacity` + `last_refill=now()` à la 1ère insertion d'une IP
+dans `m_by_ip`. Pattern aligné avec `UserRateLimiter.cpp:55-60` qui
+faisait déjà ce warm-start (convention pré-existante du codebase, le
+seul oubli était `RateLimitAndBan`).
 
-**Effort estimé :** 2-4h (peut être combiné avec FU-1 dans 1 PR
-"refactor: injection Clock dans SessionManager + RateLimitAndBan"
-si l'abstraction est commune).
-
-**Déploiement :** ⚠️ master + lock-step.
+**Déploiement :** ⚠️ redéploiement serveur master recommandé pour
+bénéficier du fix warm-start (sinon le bug `/register` muet pendant
+~20 min après chaque restart persiste). Pas urgent (le contournement
+est "attendre 20 min après restart") mais utile.
 
 ---
 
@@ -221,19 +228,19 @@ serveur.
 
 | Follow-up | Effort | Priorité | Statut |
 |---|---|---|---|
-| FU-1 + FU-2 | 4-6h | Moyenne | À faire |
-| FU-3 | 2-4h | Moyenne | À faire |
-| FU-4 | 3-5h | Moyenne | À faire |
-| FU-5 | 30 min | — | ✅ **Résolu** (tolérance ±1 byte) |
-| FU-6 | 2-4h | Moyenne | À faire |
-| FU-7 | 3-5h | Moyenne | À faire |
+| FU-1 + FU-2 | 4-6h | Moyenne | ✅ **Résolu** (PR #742, 2026-05-28) — IClock + warm-start bonus |
+| FU-3 | 2-4h | Moyenne | À faire — exige build Linux local |
+| FU-4 | 3-5h | Moyenne | À faire — exige build Linux local |
+| FU-5 | 30 min | — | ✅ Résolu (tolérance ±1 byte) |
+| FU-6 | 2-4h | Moyenne | À faire — exige build C++ local |
+| FU-7 | 3-5h | Moyenne | À faire — exige build C++ local |
 
-**Recommandation :** FU-5 fixé (quick win consommé). Reste 5 follow-ups
-à programmer en PRs séparées :
-- FU-1+FU-2 combinables (abstraction `Clock` commune)
-- FU-3 et FU-4 séparées (zones distinctes)
-- FU-6 + FU-7 demandent un build Linux pour diagnostiquer
+**État au 2026-05-28 :** FU-1, FU-2, FU-5 résolus (3/6). Restent 4
+follow-ups, **tous bloqués par l'absence de toolchain build C++ locale**
+(MSVC/Linux) — les fixes prudents demandent un cycle compile/test
+local pour diagnostiquer ces bugs latents avant de proposer une
+correction.
 
-Total restant : ~12-15h spread sur 4-5 PRs. Pas urgent : ces tests sont
-des protections contre régressions, leur absence ne casse rien
-fonctionnellement.
+Effort total restant : ~10-14h. Pas urgent fonctionnellement : ces
+tests sont des protections contre régressions, leur absence ne casse
+rien.

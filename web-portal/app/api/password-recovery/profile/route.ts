@@ -1,20 +1,32 @@
 import { NextResponse } from "next/server";
 import { getRecoveryProfile, upsertRecoveryProfile } from "@/lib/auth/passwordRecovery";
+import { getSession } from "@/lib/auth/session";
 import { logError } from "@/lib/log";
 
-function parseAccountId(value: string | null): number {
-  const parsed = Number.parseInt(value || "", 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-}
+// FAILLE IDOR CORRIGÉE : avant ce fix, GET et POST acceptaient un accountId
+// arbitraire (query string pour GET, body pour POST) sans aucun check de
+// session. Conséquence côté GET : un attaquant pouvait lire le profil de
+// récupération de n'importe quel utilisateur (date de naissance, adresse,
+// code postal, **questions secrètes**) par simple curl. Conséquence côté
+// POST encore plus grave : un attaquant pouvait ÉCRASER le profil de
+// récupération de n'importe quel utilisateur, plantant ses propres
+// questions et réponses → bypass du parcours "mot de passe oublié" et
+// compromission complète du compte cible.
+//
+// Maintenant l'accountId vient EXCLUSIVEMENT de la session — query/body
+// sont ignorés côté autorité. Cette API ne sert que la page connectée
+// /player/recovery-profile (RecoveryProfileForm), elle peut donc exiger
+// l'authentification. Le parcours "mot de passe oublié" non connecté
+// utilise des endpoints distincts (/api/password-recovery/request|reset)
+// qui n'ont pas le même modèle d'accès et restent inchangés.
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+  }
   try {
-    const { searchParams } = new URL(request.url);
-    const accountId = parseAccountId(searchParams.get("accountId"));
-    if (!accountId) {
-      return NextResponse.json({ error: "accountId invalide." }, { status: 400 });
-    }
-
+    const accountId = session.accountId;
     const profile = await getRecoveryProfile(accountId);
     return NextResponse.json({
       profile: profile ?? {
@@ -34,9 +46,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+  }
   try {
     const body = (await request.json()) as {
-      accountId?: number;
       birthDate?: string;
       address?: string;
       city?: string;
@@ -44,12 +59,8 @@ export async function POST(request: Request) {
       secretQuestions?: Array<{ question?: string; answer?: string }>;
     };
 
-    if (!body.accountId || body.accountId <= 0) {
-      return NextResponse.json({ error: "accountId invalide." }, { status: 400 });
-    }
-
     await upsertRecoveryProfile({
-      accountId: body.accountId,
+      accountId: session.accountId,
       birthDate: body.birthDate || "",
       address: body.address || "",
       city: body.city || "",

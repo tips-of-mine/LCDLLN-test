@@ -4,7 +4,7 @@
 
 **Goal:** Ajouter un index `ix_characters_server_id` sur `characters(server_id)` via une migration SQL idempotente. C'est la seule lacune d'index réellement confirmée par l'audit codebase 2026-05-27 — les autres tables des hot queries (friends, guild_members) sont déjà bien indexées.
 
-**Spec source :** [docs/superpowers/audits/2026-05-27-codebase-audit.md](../audits/2026-05-27-codebase-audit.md) section 8 PR 2, **scope ultra-minimal** validé par utilisateur (option A : "migration d'index seule") vu l'absence de toolchain C++ locale pour valider du refactor de handlers.
+**Spec source :** [docs/superpowers/audits/2026-05-27-codebase-audit.md](../audits/closed/2026-05-27-codebase-audit.md) section 8 PR 2, **scope ultra-minimal** validé par utilisateur (option A : "migration d'index seule") vu l'absence de toolchain C++ locale pour valider du refactor de handlers.
 
 **Architecture:** Migration MySQL 8.0 idempotente via le pattern déjà utilisé dans `0040_factions.sql:101-108` (`SET @idx_exists := SELECT FROM INFORMATION_SCHEMA.STATISTICS` + `PREPARE`/`EXECUTE` conditionnel). Pas de DELIMITER (le `MigrationRunner` du repo gère le multi-statement mais pas les procédures avec body custom).
 

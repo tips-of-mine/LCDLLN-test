@@ -3,7 +3,7 @@
 -- ────────────────────────────────────────────────────────────────────────
 --
 -- Issu de l'audit codebase 2026-05-27 (PR 2, chantier C — scope ultra-minimal).
--- Réf : docs/superpowers/audits/2026-05-27-codebase-audit.md
+-- Réf : docs/superpowers/audits/closed/2026-05-27-codebase-audit.md
 --       docs/superpowers/plans/2026-05-27-pr2-sql-characters-server-id-index.md
 --
 -- Motivation :

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js 14 (App Router), TypeScript strict, aucune dépendance ajoutée. Pas d'infra de test introduite (web-portal n'en a pas et l'ajout serait un scope creep).
 
-**Spec source :** [docs/superpowers/audits/2026-05-27-codebase-audit.md](../audits/2026-05-27-codebase-audit.md) section 8 (PR 1, chantier A).
+**Spec source :** [docs/superpowers/audits/2026-05-27-codebase-audit.md](../audits/closed/2026-05-27-codebase-audit.md) section 8 (PR 1, chantier A).
 
 **Déploiement :** ✅ web portal uniquement, aucun redéploiement serveur. Lock-step requis avec la mise à jour de l'env de prod : **avant de merger, vérifier que `AUTH_SECRET` ET `NEXT_PUBLIC_PORTAL_URL` sont déjà définis sur l'env Docker/serveur web** — sinon le portail tombera au premier appel des routes de récupération mot de passe.
 

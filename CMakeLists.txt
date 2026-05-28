@@ -206,6 +206,7 @@ set_source_files_properties(src/client/render/vk/VmaAllocator.cpp PROPERTIES
 add_library(engine_core
   src/client/render/vk/VmaAllocator.cpp
   src/client/render/vk/VkUtils.cpp
+  src/shared/core/Clock.cpp
   src/shared/core/Config.cpp
   src/shared/core/ServerEndpoints.cpp
   src/shared/core/Profiler.cpp

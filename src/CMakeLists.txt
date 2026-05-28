@@ -48,6 +48,7 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/GridNotifier.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ZoneTransitions.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/core/Clock.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/ServerEndpoints.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Log.cpp
@@ -78,6 +79,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatement.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/NetServer.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/core/Clock.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/ServerEndpoints.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Log.cpp
@@ -236,6 +238,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/security/UserRateLimiter.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/security/CaptchaVerifier.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/security/BotDetector.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/core/Clock.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/ServerEndpoints.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Log.cpp

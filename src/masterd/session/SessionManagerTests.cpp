@@ -4,12 +4,12 @@
  */
 
 #include "src/masterd/session/SessionManager.h"
+#include "src/shared/core/Clock.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
-#include <thread>
 
 namespace
 {
@@ -80,14 +80,23 @@ static void TestDuplicateLoginKickExisting()
 	uint64_t sid2 = mgr.CreateSession(42);
 	Assert(sid2 != 0 && sid2 != sid1, "CreateSession duplicate creates new (KickExisting)");
 	Assert(!mgr.Validate(sid1), "Old session invalid after kick");
-	Assert(mgr.Validate(sid2), "New session valid after SetState");
+	// sid2 vient d'être créée en état Created : pas encore Validate-able tant
+	// que SetState(Active) n'a pas eu lieu. Le message d'assertion historique
+	// "valid after SetState" laissait penser qu'un SetState implicite était fait
+	// dans CreateSession, ce qui n'est pas (et n'a jamais été) le cas.
+	Assert(!mgr.Validate(sid2), "New session not yet valid (Created, needs SetState)");
 	mgr.SetState(sid2, SessionState::Active);
-	Assert(mgr.Validate(sid2), "New session valid");
+	Assert(mgr.Validate(sid2), "New session valid after SetState Active");
 }
 
 static void TestExpiry24h()
 {
+	// FU-1 : on injecte une FakeClock pour avancer le temps virtuel au-delà
+	// de max_session_age_sec=1, sans dépendre du wall-clock. Avant FU-1 ce
+	// test faisait `sleep_for(1100ms)` et était exclu de la CI ctest.
+	engine::core::FakeClock fakeClock;
 	SessionManager mgr;
+	mgr.SetClock(&fakeClock);
 	SessionManagerConfig cfg;
 	cfg.max_session_age_sec = 1;
 	cfg.heartbeat_timeout_sec = 10;
@@ -96,14 +105,17 @@ static void TestExpiry24h()
 	uint64_t sid = mgr.CreateSession(1);
 	mgr.SetState(sid, SessionState::Active);
 	Assert(mgr.Validate(sid), "Validate passes initially");
-	std::this_thread::sleep_for(std::chrono::milliseconds(1100));
+	fakeClock.AdvanceMs(1100);
 	mgr.EvictExpired();
 	Assert(!mgr.Validate(sid), "Validate fails after max_session_age exceeded");
 }
 
 static void TestResumeInWindow()
 {
+	// FU-1 : FakeClock injectée pour avancer de 100ms sans sleep réel.
+	engine::core::FakeClock fakeClock;
 	SessionManager mgr;
+	mgr.SetClock(&fakeClock);
 	SessionManagerConfig cfg;
 	cfg.max_session_age_sec = 3600;
 	cfg.heartbeat_timeout_sec = 5;
@@ -114,7 +126,7 @@ static void TestResumeInWindow()
 	mgr.SetState(sid, SessionState::Active);
 	Assert(mgr.Validate(sid), "Validate passes");
 	Assert(mgr.Touch(sid), "Touch succeeds");
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	fakeClock.AdvanceMs(100);
 	Assert(mgr.Validate(sid), "Validate passes within reconnection/heartbeat window");
 }
 

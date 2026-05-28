@@ -7,6 +7,16 @@
 
 namespace engine::server
 {
+	void RateLimitAndBan::SetClock(engine::core::IClock* c)
+	{
+		m_clock = c;
+	}
+
+	engine::core::IClock& RateLimitAndBan::clock() const
+	{
+		return m_clock ? *m_clock : engine::core::SteadyClock::Instance();
+	}
+
 	void RateLimitAndBan::SetConfig(const RateLimitAndBanConfig& config)
 	{
 		m_config = config;
@@ -27,7 +37,7 @@ namespace engine::server
 
 	bool RateLimitAndBan::tryConsume(TokenBucket& bucket, double capacity, double refill_per_sec)
 	{
-		auto now = Clock::now();
+		auto now = clock().Now();
 		double elapsed = std::chrono::duration<double>(now - bucket.last_refill).count();
 		bucket.tokens = std::min(capacity, bucket.tokens + elapsed * refill_per_sec);
 		bucket.last_refill = now;
@@ -39,6 +49,28 @@ namespace engine::server
 		return false;
 	}
 
+	RateLimitAndBan::AuthState& RateLimitAndBan::getOrCreateState(const std::string& key)
+	{
+		auto [it, inserted] = m_by_ip.try_emplace(key);
+		if (inserted)
+		{
+			// Warm-start : à la 1ère insertion, le bucket démarre PLEIN au cap
+			// configuré et last_refill = now. Sans ce warm-start, le bucket
+			// démarrait tokens=0 + last_refill=epoch, ce qui rendait le 1er
+			// consume dépendant de l'uptime du process (sur un master fraîchement
+			// (re)démarré, register_per_hour=3 → refill ≈ 0.000833 tok/s →
+			// le 1er register d'une nouvelle IP était refusé pendant ~1h après
+			// le boot). Bug masqué en CI car les tests étaient exclus du `-E`
+			// ctest, révélé par la réintégration FU-2.
+			auto now = clock().Now();
+			it->second.auth_bucket.tokens = static_cast<double>(m_config.auth_per_minute);
+			it->second.auth_bucket.last_refill = now;
+			it->second.register_bucket.tokens = static_cast<double>(m_config.register_per_hour);
+			it->second.register_bucket.last_refill = now;
+		}
+		return it->second;
+	}
+
 	bool RateLimitAndBan::TryConsumeAuth(std::string_view ip)
 	{
 		std::string key(ip);
@@ -46,7 +78,7 @@ namespace engine::server
 			return false;
 		double capacity = static_cast<double>(m_config.auth_per_minute);
 		double refill_per_sec = capacity / 60.0;
-		AuthState& state = m_by_ip[key];
+		AuthState& state = getOrCreateState(key);
 		if (!tryConsume(state.auth_bucket, capacity, refill_per_sec))
 		{
 			++m_counters.rate_limit_hits_auth;
@@ -63,7 +95,7 @@ namespace engine::server
 			return false;
 		double capacity = static_cast<double>(m_config.register_per_hour);
 		double refill_per_sec = capacity / 3600.0;
-		AuthState& state = m_by_ip[key];
+		AuthState& state = getOrCreateState(key);
 		if (!tryConsume(state.register_bucket, capacity, refill_per_sec))
 		{
 			++m_counters.rate_limit_hits_register;
@@ -76,11 +108,11 @@ namespace engine::server
 	void RateLimitAndBan::RecordAuthFailure(std::string_view ip)
 	{
 		std::string key(ip);
-		AuthState& state = m_by_ip[key];
+		AuthState& state = getOrCreateState(key);
 		state.failure_count++;
 		if (state.failure_count >= m_config.max_failures_before_ban)
 		{
-			auto until = Clock::now() + std::chrono::seconds(m_config.ban_duration_sec);
+			auto until = clock().Now() + std::chrono::seconds(m_config.ban_duration_sec);
 			m_banned_until[key] = until;
 			state.failure_count = 0;
 			++m_counters.bans_issued;
@@ -93,7 +125,7 @@ namespace engine::server
 		auto it = m_banned_until.find(std::string(ip));
 		if (it == m_banned_until.end())
 			return false;
-		if (Clock::now() < it->second)
+		if (clock().Now() < it->second)
 			return true;
 		return false;
 	}
@@ -102,7 +134,7 @@ namespace engine::server
 	{
 		if (m_config.max_entries_per_map == 0)
 			return;
-		auto now = Clock::now();
+		auto now = clock().Now();
 		for (auto it = m_banned_until.begin(); it != m_banned_until.end(); )
 		{
 			if (now >= it->second)
@@ -122,7 +154,7 @@ namespace engine::server
 
 	void RateLimitAndBan::PurgeExpired()
 	{
-		auto now = Clock::now();
+		auto now = clock().Now();
 		for (auto it = m_banned_until.begin(); it != m_banned_until.end(); )
 		{
 			if (now >= it->second)
@@ -137,7 +169,7 @@ namespace engine::server
 	{
 		out = m_counters;
 		out.bans_active = 0;
-		auto now = Clock::now();
+		auto now = clock().Now();
 		for (const auto& p : m_banned_until)
 		{
 			if (now < p.second)

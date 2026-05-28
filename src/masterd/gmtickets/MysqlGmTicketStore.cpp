@@ -1,42 +1,30 @@
+// N1-G : converti en prepared statements (Insert, Update, Delete, Find, ListOpen).
+
 #include "src/masterd/gmtickets/MysqlGmTicketStore.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/db/ConnectionPool.h"
-#include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
 
 #include <algorithm>
-#include <cstdio>
-#include <cstdlib>
 
 namespace engine::server::gmtickets
 {
 	namespace
 	{
-		std::string EscapeMysql(MYSQL* mysql, std::string_view v)
-		{
-			if (!mysql) return {};
-			std::vector<char> buf(v.size() * 2 + 1);
-			const auto w = mysql_real_escape_string(mysql, buf.data(), v.data(),
-				static_cast<unsigned long>(v.size()));
-			return std::string(buf.data(), w);
-		}
-
-		GmTicket RowToTicket(MYSQL_ROW row)
+		GmTicket StmtToTicket(engine::server::db::SqlPreparedStatement* stmt)
 		{
 			GmTicket t;
-			if (row[0]) t.id           = std::strtoull(row[0], nullptr, 10);
-			if (row[1]) t.reporter     = std::strtoull(row[1], nullptr, 10);
-			if (row[2]) t.body         = row[2];
-			if (row[3]) t.createdTsMs  = std::strtoull(row[3], nullptr, 10);
-			if (row[4]) t.resolvedTsMs = std::strtoull(row[4], nullptr, 10);
-			if (row[5]) t.assignedGm   = std::strtoull(row[5], nullptr, 10);
-			if (row[6])
-			{
-				const auto st = static_cast<uint32_t>(std::strtoul(row[6], nullptr, 10));
-				t.state = static_cast<TicketState>(std::min<uint32_t>(st, 3));
-			}
+			t.id           = stmt->GetUInt64(0);
+			t.reporter     = stmt->GetUInt64(1);
+			t.body         = stmt->GetString(2);
+			t.createdTsMs  = stmt->GetUInt64(3);
+			t.resolvedTsMs = stmt->GetUInt64(4);
+			t.assignedGm   = stmt->GetUInt64(5);
+			const uint32_t st = static_cast<uint32_t>(stmt->GetUInt64(6));
+			t.state = static_cast<TicketState>(std::min<uint32_t>(st, 3));
 			return t;
 		}
 	}
@@ -46,22 +34,22 @@ namespace engine::server::gmtickets
 		if (!m_pool || !m_pool->IsInitialized()) return 0;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return 0;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return 0;
 
-		const std::string body = EscapeMysql(mysql, out.body);
-		char sql[1024];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"INSERT INTO gm_tickets (reporter_account_id, body, created_ts_ms, "
 			"resolved_ts_ms, assigned_gm, state) "
-			"VALUES (%llu, '%s', %llu, %llu, %llu, %u)",
-			static_cast<unsigned long long>(out.reporter),
-			body.c_str(),
-			static_cast<unsigned long long>(out.createdTsMs),
-			static_cast<unsigned long long>(out.resolvedTsMs),
-			static_cast<unsigned long long>(out.assignedGm),
-			static_cast<unsigned>(out.state));
-
-		if (!engine::server::db::DbExecute(mysql, sql))
+			"VALUES (?, ?, ?, ?, ?, ?)");
+		const bool ok = stmt
+			&& stmt->Bind(0, out.reporter)
+			&& stmt->Bind(1, std::string_view(out.body))
+			&& stmt->Bind(2, out.createdTsMs)
+			&& stmt->Bind(3, out.resolvedTsMs)
+			&& stmt->Bind(4, out.assignedGm)
+			&& stmt->Bind(5, static_cast<uint32_t>(out.state))
+			&& stmt->Execute();
+		if (!ok)
 		{
 			LOG_ERROR(Core, "[MysqlGmTicketStore] Insert failed");
 			return 0;
@@ -75,19 +63,19 @@ namespace engine::server::gmtickets
 		if (!m_pool || !m_pool->IsInitialized()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
 
-		const std::string body = EscapeMysql(mysql, t.body);
-		char sql[1024];
-		std::snprintf(sql, sizeof(sql),
-			"UPDATE gm_tickets SET body = '%s', resolved_ts_ms = %llu, "
-			"assigned_gm = %llu, state = %u WHERE ticket_id = %llu",
-			body.c_str(),
-			static_cast<unsigned long long>(t.resolvedTsMs),
-			static_cast<unsigned long long>(t.assignedGm),
-			static_cast<unsigned>(t.state),
-			static_cast<unsigned long long>(t.id));
-		return engine::server::db::DbExecute(mysql, sql);
+		auto* stmt = cache->Acquire(mysql,
+			"UPDATE gm_tickets SET body = ?, resolved_ts_ms = ?, "
+			"assigned_gm = ?, state = ? WHERE ticket_id = ?");
+		return stmt
+			&& stmt->Bind(0, std::string_view(t.body))
+			&& stmt->Bind(1, t.resolvedTsMs)
+			&& stmt->Bind(2, t.assignedGm)
+			&& stmt->Bind(3, static_cast<uint32_t>(t.state))
+			&& stmt->Bind(4, t.id)
+			&& stmt->Execute();
 	}
 
 	bool MysqlGmTicketStore::Delete(TicketId id)
@@ -95,12 +83,10 @@ namespace engine::server::gmtickets
 		if (!m_pool || !m_pool->IsInitialized()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
-		char sql[128];
-		std::snprintf(sql, sizeof(sql),
-			"DELETE FROM gm_tickets WHERE ticket_id = %llu",
-			static_cast<unsigned long long>(id));
-		return engine::server::db::DbExecute(mysql, sql);
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
+		auto* stmt = cache->Acquire(mysql, "DELETE FROM gm_tickets WHERE ticket_id = ?");
+		return stmt && stmt->Bind(0, static_cast<uint64_t>(id)) && stmt->Execute();
 	}
 
 	std::optional<GmTicket> MysqlGmTicketStore::Find(TicketId id) const
@@ -108,21 +94,16 @@ namespace engine::server::gmtickets
 		if (!m_pool || !m_pool->IsInitialized()) return std::nullopt;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return std::nullopt;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return std::nullopt;
 
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT ticket_id, reporter_account_id, body, created_ts_ms, "
 			"resolved_ts_ms, assigned_gm, state "
-			"FROM gm_tickets WHERE ticket_id = %llu LIMIT 1",
-			static_cast<unsigned long long>(id));
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res) return std::nullopt;
-		std::optional<GmTicket> out;
-		if (MYSQL_ROW row = mysql_fetch_row(res))
-			out = RowToTicket(row);
-		engine::server::db::DbFreeResult(res);
-		return out;
+			"FROM gm_tickets WHERE ticket_id = ? LIMIT 1");
+		if (!stmt || !stmt->Bind(0, static_cast<uint64_t>(id)) || !stmt->Execute() || !stmt->FetchRow())
+			return std::nullopt;
+		return StmtToTicket(stmt);
 	}
 
 	std::vector<GmTicket> MysqlGmTicketStore::ListOpen() const
@@ -131,17 +112,16 @@ namespace engine::server::gmtickets
 		if (!m_pool || !m_pool->IsInitialized()) return out;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return out;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return out;
 
-		const char* sql =
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT ticket_id, reporter_account_id, body, created_ts_ms, "
 			"resolved_ts_ms, assigned_gm, state "
-			"FROM gm_tickets WHERE state = 0 ORDER BY created_ts_ms ASC";
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res) return out;
-		while (MYSQL_ROW row = mysql_fetch_row(res))
-			out.push_back(RowToTicket(row));
-		engine::server::db::DbFreeResult(res);
+			"FROM gm_tickets WHERE state = 0 ORDER BY created_ts_ms ASC");
+		if (!stmt || !stmt->Execute()) return out;
+		while (stmt->FetchRow())
+			out.push_back(StmtToTicket(stmt));
 		return out;
 	}
 }

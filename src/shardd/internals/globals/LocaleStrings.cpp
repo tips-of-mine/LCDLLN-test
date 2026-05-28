@@ -1,12 +1,10 @@
 #include "src/shardd/internals/globals/LocaleStrings.h"
 
 #include "src/shared/db/ConnectionPool.h"
-#include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 #include "src/shared/core/Log.h"
 
 #include <mysql.h>
-
-#include <cstdlib>
 
 namespace engine::server::shard::globals
 {
@@ -19,25 +17,24 @@ namespace engine::server::shard::globals
 
 		auto guard = pool.Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
 
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql,
+		// N1-I : prepared statement no-param.
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT string_id, locale_id, text FROM locale_strings");
-		if (!res)
+		if (!stmt || !stmt->Execute())
 			return false;
 
-		MYSQL_ROW row;
-		while ((row = mysql_fetch_row(res)) != nullptr)
+		while (stmt->FetchRow())
 		{
-			if (!row[0] || !row[1] || !row[2]) continue;
 			Key k{
-				static_cast<uint32_t>(std::strtoul(row[0], nullptr, 10)),
-				static_cast<LocaleId>(std::atoi(row[1]))
+				static_cast<uint32_t>(stmt->GetUInt64(0)),
+				static_cast<LocaleId>(stmt->GetInt32(1))
 			};
-			m_strings.emplace(k, std::string(row[2]));
+			m_strings.emplace(k, stmt->GetString(2));
 		}
-		engine::server::db::DbFreeResult(res);
 
 		m_loaded = true;
 		LOG_INFO(Core, "[LocaleStrings] Loaded {} strings, default locale = {}",

@@ -982,35 +982,28 @@ namespace engine::server
 		}
 		auto guard = m_characterDbPool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (mysql == nullptr)
+		auto* cache = guard.cache();
+		if (mysql == nullptr || cache == nullptr)
 		{
 			return false;
 		}
-		char sql[256];
 		// TD.5 — on fetch aussi `name` pour le SnapshotEntity (plaque de nom).
 		// TD.6 — et `gender` (migration 0067) pour le rendu de l'avatar distant.
-		std::snprintf(sql, sizeof(sql),
+		// N1-I : prepared statement (bind characterId). Floats lus via GetString + strtof.
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender FROM characters "
-			"WHERE id = %llu AND deleted_at IS NULL",
-			static_cast<unsigned long long>(characterId));
-		MYSQL_RES* res = db::DbQuery(mysql, sql);
-		if (res == nullptr)
+			"WHERE id = ? AND deleted_at IS NULL");
+		if (!stmt || !stmt->Bind(0, characterId) || !stmt->Execute() || !stmt->FetchRow())
 		{
 			return false;
 		}
-		bool found = false;
-		if (MYSQL_ROW row = mysql_fetch_row(res))
-		{
-			x = row[0] ? std::strtof(row[0], nullptr) : 0.0f;
-			y = row[1] ? std::strtof(row[1], nullptr) : 0.0f;
-			z = row[2] ? std::strtof(row[2], nullptr) : 0.0f;
-			yawDeg = row[3] ? std::strtof(row[3], nullptr) : 0.0f;
-			outName = row[4] ? std::string(row[4]) : std::string{};
-			outGender = row[5] ? std::string(row[5]) : std::string{};
-			found = true;
-		}
-		db::DbFreeResult(res);
-		return found;
+		x = std::strtof(stmt->GetString(0).c_str(), nullptr);
+		y = std::strtof(stmt->GetString(1).c_str(), nullptr);
+		z = std::strtof(stmt->GetString(2).c_str(), nullptr);
+		yawDeg = std::strtof(stmt->GetString(3).c_str(), nullptr);
+		outName = stmt->GetString(4);
+		outGender = stmt->GetString(5);
+		return true;
 #else
 		(void)characterId; (void)x; (void)y; (void)z; (void)yawDeg; (void)outName; (void)outGender;
 		return false;

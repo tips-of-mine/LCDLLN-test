@@ -5,6 +5,7 @@
 #include "src/masterd/account/AccountStore.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #if defined(__unix__) || defined(__APPLE__)
 #include <mysql.h>
@@ -200,28 +201,20 @@ namespace engine::server::chat
 
 			auto guard = pool->Acquire();
 			MYSQL* mysql = guard.get();
-			if (!mysql)
+			auto* cache = guard.cache();
+			if (!mysql || !cache)
 				return std::nullopt;
 
-			char sql[256];
-			std::snprintf(sql, sizeof(sql),
-				"SELECT until_ts, reason FROM chat_mutes WHERE account_id = %llu LIMIT 1",
-				static_cast<unsigned long long>(accountId));
-
-			MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-			if (!res)
+			// N1-I : prepared statement (bind accountId).
+			auto* stmt = cache->Acquire(mysql,
+				"SELECT until_ts, reason FROM chat_mutes WHERE account_id = ? LIMIT 1");
+			if (!stmt || !stmt->Bind(0, accountId) || !stmt->Execute() || !stmt->FetchRow())
 				return std::nullopt;
 
-			std::optional<ChatMute> out;
-			if (MYSQL_ROW row = mysql_fetch_row(res))
-			{
-				ChatMute m;
-				m.untilTsMs = row[0] ? std::strtoull(row[0], nullptr, 10) : 0ULL;
-				m.reason    = row[1] ? row[1] : "";
-				out = std::move(m);
-			}
-			mysql_free_result(res);
-			return out;
+			ChatMute m;
+			m.untilTsMs = stmt->GetUInt64(0);
+			m.reason    = stmt->GetString(1);
+			return m;
 		};
 #else
 		(void)pool;

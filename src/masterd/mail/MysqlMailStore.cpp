@@ -1,78 +1,61 @@
+// N1-H : converti en prepared statements (Insert+Update avec transaction,
+// Delete, Find+LoadItemsForMail, ListInbox, FindExpired).
+
 #include "src/masterd/mail/MysqlMailStore.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
 
-#include <cstdio>
-#include <cstdlib>
-#include <vector>
+#include <algorithm>
 
 namespace engine::server::mail
 {
 	namespace
 	{
-		/// Echappe une chaine pour MySQL via mysql_real_escape_string.
-		/// Retourne vide si mysql null. Aligne sur le pattern MysqlGuildStore.
-		std::string EscapeMysql(MYSQL* mysql, std::string_view v)
-		{
-			if (!mysql) return {};
-			std::vector<char> buf(v.size() * 2 + 1);
-			const auto w = mysql_real_escape_string(mysql, buf.data(), v.data(),
-				static_cast<unsigned long>(v.size()));
-			return std::string(buf.data(), w);
-		}
-
-		/// Mappe une ligne SELECT mail (10 colonnes dans l'ordre canonique
-		/// mail_id, sender, receiver, subject, body, copper_gold, copper_cod,
-		/// sent_ts_ms, expires_ts_ms, state) vers la struct Mail.
+		/// Mappe le résultat courant d'un SqlPreparedStatement (10 colonnes
+		/// dans l'ordre canonique mail_id, sender, receiver, subject, body,
+		/// copper_gold, copper_cod, sent_ts_ms, expires_ts_ms, state) vers Mail.
 		/// N'attache PAS les items — c'est LoadItemsForMail qui s'en charge.
-		Mail RowToMail(MYSQL_ROW row)
+		Mail StmtToMail(engine::server::db::SqlPreparedStatement* stmt)
 		{
 			Mail m;
-			if (row[0]) m.mailId             = std::strtoull(row[0], nullptr, 10);
-			if (row[1]) m.senderAccountId    = std::strtoull(row[1], nullptr, 10);
-			if (row[2]) m.receiverAccountId  = std::strtoull(row[2], nullptr, 10);
-			if (row[3]) m.subject            = row[3];
-			if (row[4]) m.body               = row[4];
-			if (row[5]) m.copperGold         = std::strtoull(row[5], nullptr, 10);
-			if (row[6]) m.copperCod          = std::strtoull(row[6], nullptr, 10);
-			if (row[7]) m.sentTsMs           = std::strtoull(row[7], nullptr, 10);
-			if (row[8]) m.expiresTsMs        = std::strtoull(row[8], nullptr, 10);
-			if (row[9])
-			{
-				const auto st = static_cast<uint32_t>(std::strtoul(row[9], nullptr, 10));
-				m.state = static_cast<MailState>(std::min<uint32_t>(st, 3));
-			}
+			m.mailId             = stmt->GetUInt64(0);
+			m.senderAccountId    = stmt->GetUInt64(1);
+			m.receiverAccountId  = stmt->GetUInt64(2);
+			m.subject            = stmt->GetString(3);
+			m.body               = stmt->GetString(4);
+			m.copperGold         = stmt->GetUInt64(5);
+			m.copperCod          = stmt->GetUInt64(6);
+			m.sentTsMs           = stmt->GetUInt64(7);
+			m.expiresTsMs        = stmt->GetUInt64(8);
+			const uint32_t st    = static_cast<uint32_t>(stmt->GetUInt64(9));
+			m.state              = static_cast<MailState>(std::min<uint32_t>(st, 3));
 			return m;
 		}
 
-		/// Charge les attachments d'un mail depuis mail_items dans \p m.
-		/// Effet de bord : append-only sur m.items (le caller doit l'initialiser
-		/// vide). Log warning sur erreur DB ; ne throw jamais.
-		void LoadItemsForMail(MYSQL* mysql, Mail& m)
+		/// Charge les attachments d'un mail depuis mail_items dans m (append-only).
+		/// N1-H : prepared statement.
+		void LoadItemsForMail(MYSQL* mysql, engine::server::db::SqlPreparedStatementCache* cache, Mail& m)
 		{
-			char sql[256];
-			std::snprintf(sql, sizeof(sql),
+			auto* stmt = cache->Acquire(mysql,
 				"SELECT slot, item_template_id, count FROM mail_items "
-				"WHERE mail_id = %llu ORDER BY slot ASC",
-				static_cast<unsigned long long>(m.mailId));
-			MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-			if (!res)
+				"WHERE mail_id = ? ORDER BY slot ASC");
+			if (!stmt || !stmt->Bind(0, m.mailId) || !stmt->Execute())
 			{
 				LOG_WARN(Net, "[MysqlMailStore] LoadItemsForMail query failed mailId={}", m.mailId);
 				return;
 			}
-			while (MYSQL_ROW row = mysql_fetch_row(res))
+			while (stmt->FetchRow())
 			{
 				MailItemAttachment a;
-				if (row[1]) a.itemTemplateId = static_cast<uint32_t>(std::strtoul(row[1], nullptr, 10));
-				if (row[2]) a.count = static_cast<uint32_t>(std::strtoul(row[2], nullptr, 10));
+				a.itemTemplateId = static_cast<uint32_t>(stmt->GetUInt64(1));
+				a.count          = static_cast<uint32_t>(stmt->GetUInt64(2));
 				m.items.push_back(a);
 			}
-			engine::server::db::DbFreeResult(res);
 		}
 	}
 
@@ -86,29 +69,28 @@ namespace engine::server::mail
 		if (!IsAvailable()) return 0;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return 0;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return 0;
 
 		engine::server::db::ScopedTransaction tx(mysql);
 
-		const std::string subj = EscapeMysql(mysql, out.subject);
-		const std::string body = EscapeMysql(mysql, out.body);
-
-		char sql[1024];
-		std::snprintf(sql, sizeof(sql),
+		// INSERT mail (9 binds, subject + body strings user-controlled).
+		auto* mailStmt = cache->Acquire(mysql,
 			"INSERT INTO mail (sender_account_id, receiver_account_id, subject, body, "
 			"copper_gold, copper_cod, sent_ts_ms, expires_ts_ms, state) "
-			"VALUES (%llu, %llu, '%s', '%s', %llu, %llu, %llu, %llu, %u)",
-			static_cast<unsigned long long>(out.senderAccountId),
-			static_cast<unsigned long long>(out.receiverAccountId),
-			subj.c_str(),
-			body.c_str(),
-			static_cast<unsigned long long>(out.copperGold),
-			static_cast<unsigned long long>(out.copperCod),
-			static_cast<unsigned long long>(out.sentTsMs),
-			static_cast<unsigned long long>(out.expiresTsMs),
-			static_cast<unsigned>(out.state));
-
-		if (!engine::server::db::DbExecute(mysql, sql))
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		const bool ok = mailStmt
+			&& mailStmt->Bind(0, out.senderAccountId)
+			&& mailStmt->Bind(1, out.receiverAccountId)
+			&& mailStmt->Bind(2, std::string_view(out.subject))
+			&& mailStmt->Bind(3, std::string_view(out.body))
+			&& mailStmt->Bind(4, out.copperGold)
+			&& mailStmt->Bind(5, out.copperCod)
+			&& mailStmt->Bind(6, out.sentTsMs)
+			&& mailStmt->Bind(7, out.expiresTsMs)
+			&& mailStmt->Bind(8, static_cast<uint32_t>(out.state))
+			&& mailStmt->Execute();
+		if (!ok)
 		{
 			LOG_WARN(Net, "[MysqlMailStore] Insert mail failed sender={} receiver={}",
 				out.senderAccountId, out.receiverAccountId);
@@ -116,16 +98,24 @@ namespace engine::server::mail
 		}
 		out.mailId = mysql_insert_id(mysql);
 
+		// INSERT mail_items (1 stmt cached, ré-exécuté N fois grâce au Reset() auto).
+		auto* itemStmt = cache->Acquire(mysql,
+			"INSERT INTO mail_items (mail_id, slot, item_template_id, count) "
+			"VALUES (?, ?, ?, ?)");
 		for (size_t i = 0; i < out.items.size(); ++i)
 		{
 			const auto& it = out.items[i];
-			char sqli[256];
-			std::snprintf(sqli, sizeof(sqli),
+			// Re-Acquire pour bénéficier du Reset() automatique sur cache hit.
+			itemStmt = cache->Acquire(mysql,
 				"INSERT INTO mail_items (mail_id, slot, item_template_id, count) "
-				"VALUES (%llu, %zu, %u, %u)",
-				static_cast<unsigned long long>(out.mailId),
-				i, it.itemTemplateId, it.count);
-			if (!engine::server::db::DbExecute(mysql, sqli))
+				"VALUES (?, ?, ?, ?)");
+			const bool itemOk = itemStmt
+				&& itemStmt->Bind(0, out.mailId)
+				&& itemStmt->Bind(1, static_cast<uint32_t>(i))
+				&& itemStmt->Bind(2, it.itemTemplateId)
+				&& itemStmt->Bind(3, it.count)
+				&& itemStmt->Execute();
+			if (!itemOk)
 			{
 				LOG_WARN(Net, "[MysqlMailStore] Insert mail_item slot={} failed mailId={}",
 					i, out.mailId);
@@ -142,26 +132,18 @@ namespace engine::server::mail
 		if (!IsAvailable()) return std::nullopt;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return std::nullopt;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return std::nullopt;
 
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT mail_id, sender_account_id, receiver_account_id, subject, body, "
 			"copper_gold, copper_cod, sent_ts_ms, expires_ts_ms, state "
-			"FROM mail WHERE mail_id = %llu LIMIT 1",
-			static_cast<unsigned long long>(mailId));
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res) return std::nullopt;
-		std::optional<Mail> out;
-		if (MYSQL_ROW row = mysql_fetch_row(res))
-		{
-			Mail m = RowToMail(row);
-			engine::server::db::DbFreeResult(res);
-			LoadItemsForMail(mysql, m);
-			return m;
-		}
-		engine::server::db::DbFreeResult(res);
-		return std::nullopt;
+			"FROM mail WHERE mail_id = ? LIMIT 1");
+		if (!stmt || !stmt->Bind(0, mailId) || !stmt->Execute() || !stmt->FetchRow())
+			return std::nullopt;
+		Mail m = StmtToMail(stmt);
+		LoadItemsForMail(mysql, cache, m);
+		return m;
 	}
 
 	std::vector<Mail> MysqlMailStore::ListInbox(uint64_t receiverAccountId) const
@@ -170,23 +152,21 @@ namespace engine::server::mail
 		if (!IsAvailable()) return out;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return out;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return out;
 
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT mail_id, sender_account_id, receiver_account_id, subject, body, "
 			"copper_gold, copper_cod, sent_ts_ms, expires_ts_ms, state "
-			"FROM mail WHERE receiver_account_id = %llu "
-			"ORDER BY sent_ts_ms DESC",
-			static_cast<unsigned long long>(receiverAccountId));
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res) return out;
-		while (MYSQL_ROW row = mysql_fetch_row(res))
-			out.push_back(RowToMail(row));
-		engine::server::db::DbFreeResult(res);
+			"FROM mail WHERE receiver_account_id = ? "
+			"ORDER BY sent_ts_ms DESC");
+		if (!stmt || !stmt->Bind(0, receiverAccountId) || !stmt->Execute())
+			return out;
+		while (stmt->FetchRow())
+			out.push_back(StmtToMail(stmt));
 
 		for (auto& m : out)
-			LoadItemsForMail(mysql, m);
+			LoadItemsForMail(mysql, cache, m);
 		return out;
 	}
 
@@ -195,43 +175,52 @@ namespace engine::server::mail
 		if (!IsAvailable()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
 
 		engine::server::db::ScopedTransaction tx(mysql);
 
 		// Update main row.
-		char sql[512];
-		std::snprintf(sql, sizeof(sql),
-			"UPDATE mail SET copper_gold = %llu, copper_cod = %llu, state = %u, "
-			"expires_ts_ms = %llu WHERE mail_id = %llu",
-			static_cast<unsigned long long>(mail.copperGold),
-			static_cast<unsigned long long>(mail.copperCod),
-			static_cast<unsigned>(mail.state),
-			static_cast<unsigned long long>(mail.expiresTsMs),
-			static_cast<unsigned long long>(mail.mailId));
-		if (!engine::server::db::DbExecute(mysql, sql))
 		{
-			LOG_WARN(Net, "[MysqlMailStore] Update mail row failed mailId={}", mail.mailId);
-			return false;
+			auto* stmt = cache->Acquire(mysql,
+				"UPDATE mail SET copper_gold = ?, copper_cod = ?, state = ?, "
+				"expires_ts_ms = ? WHERE mail_id = ?");
+			const bool ok = stmt
+				&& stmt->Bind(0, mail.copperGold)
+				&& stmt->Bind(1, mail.copperCod)
+				&& stmt->Bind(2, static_cast<uint32_t>(mail.state))
+				&& stmt->Bind(3, mail.expiresTsMs)
+				&& stmt->Bind(4, mail.mailId)
+				&& stmt->Execute();
+			if (!ok)
+			{
+				LOG_WARN(Net, "[MysqlMailStore] Update mail row failed mailId={}", mail.mailId);
+				return false;
+			}
 		}
 
-		// Items : delete + reinsert (simple). Une optimisation possible
-		// est diff, mais le caller appelle Update apres TakeItems donc
-		// items est vide ou peu nombreux.
-		std::snprintf(sql, sizeof(sql),
-			"DELETE FROM mail_items WHERE mail_id = %llu",
-			static_cast<unsigned long long>(mail.mailId));
-		engine::server::db::DbExecute(mysql, sql);
+		// Items : delete + reinsert (simple). Caller appelle Update apres TakeItems
+		// donc items est vide ou peu nombreux.
+		{
+			auto* delStmt = cache->Acquire(mysql,
+				"DELETE FROM mail_items WHERE mail_id = ?");
+			if (delStmt && delStmt->Bind(0, mail.mailId))
+				delStmt->Execute();
+		}
 
 		for (size_t i = 0; i < mail.items.size(); ++i)
 		{
 			const auto& it = mail.items[i];
-			std::snprintf(sql, sizeof(sql),
+			auto* insStmt = cache->Acquire(mysql,
 				"INSERT INTO mail_items (mail_id, slot, item_template_id, count) "
-				"VALUES (%llu, %zu, %u, %u)",
-				static_cast<unsigned long long>(mail.mailId),
-				i, it.itemTemplateId, it.count);
-			if (!engine::server::db::DbExecute(mysql, sql))
+				"VALUES (?, ?, ?, ?)");
+			const bool ok = insStmt
+				&& insStmt->Bind(0, mail.mailId)
+				&& insStmt->Bind(1, static_cast<uint32_t>(i))
+				&& insStmt->Bind(2, it.itemTemplateId)
+				&& insStmt->Bind(3, it.count)
+				&& insStmt->Execute();
+			if (!ok)
 			{
 				LOG_WARN(Net, "[MysqlMailStore] Update mail_item slot={} failed mailId={}",
 					i, mail.mailId);
@@ -247,19 +236,19 @@ namespace engine::server::mail
 		if (!IsAvailable()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
 
 		engine::server::db::ScopedTransaction tx(mysql);
-		char sql[128];
-		std::snprintf(sql, sizeof(sql),
-			"DELETE FROM mail_items WHERE mail_id = %llu",
-			static_cast<unsigned long long>(mailId));
-		engine::server::db::DbExecute(mysql, sql);
+		{
+			auto* stmt = cache->Acquire(mysql,
+				"DELETE FROM mail_items WHERE mail_id = ?");
+			if (stmt && stmt->Bind(0, mailId))
+				stmt->Execute();
+		}
 
-		std::snprintf(sql, sizeof(sql),
-			"DELETE FROM mail WHERE mail_id = %llu",
-			static_cast<unsigned long long>(mailId));
-		const bool ok = engine::server::db::DbExecute(mysql, sql);
+		auto* mailStmt = cache->Acquire(mysql, "DELETE FROM mail WHERE mail_id = ?");
+		const bool ok = mailStmt && mailStmt->Bind(0, mailId) && mailStmt->Execute();
 		if (!ok)
 			LOG_WARN(Net, "[MysqlMailStore] Delete mail failed mailId={}", mailId);
 		else
@@ -273,19 +262,15 @@ namespace engine::server::mail
 		if (!IsAvailable()) return out;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return out;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return out;
 
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
-			"SELECT mail_id FROM mail WHERE expires_ts_ms > 0 AND expires_ts_ms <= %llu",
-			static_cast<unsigned long long>(nowMs));
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res) return out;
-		while (MYSQL_ROW row = mysql_fetch_row(res))
-		{
-			if (row[0]) out.push_back(std::strtoull(row[0], nullptr, 10));
-		}
-		engine::server::db::DbFreeResult(res);
+		auto* stmt = cache->Acquire(mysql,
+			"SELECT mail_id FROM mail WHERE expires_ts_ms > 0 AND expires_ts_ms <= ?");
+		if (!stmt || !stmt->Bind(0, nowMs) || !stmt->Execute())
+			return out;
+		while (stmt->FetchRow())
+			out.push_back(stmt->GetUInt64(0));
 		return out;
 	}
 }

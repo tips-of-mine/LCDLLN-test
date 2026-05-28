@@ -30,6 +30,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -108,9 +109,15 @@ namespace engine::server
 		{
 			GridState   state         = GridState::Loaded;
 			int         playerCount   = 0;
-			/// Timestamp du dernier "no-player" (0 → inactif). Sert
-			/// pour les transitions vers Idle puis Removal.
-			TimePoint   lastEmptySince{};
+			/// Timestamp du dernier "no-player". `std::nullopt` tant que la
+			/// cellule n'a jamais été vidée OU a été ré-occupée depuis. Sert
+			/// pour les transitions vers Idle puis Removal. NB : utiliser un
+			/// `optional` (et NON un `TimePoint{}` sentinel) car `TimePoint{}`
+			/// est aussi une valeur LÉGITIME (epoch) — sans cette distinction,
+			/// quand `Tick` recevait un `now == epoch`, le sentinel et la
+			/// valeur initialisée étaient confondus → la cellule restait
+			/// éternellement Loaded au lieu de passer à Idle.
+			std::optional<TimePoint> lastEmptySince;
 		};
 
 		GridStateConfig                                              m_cfg;

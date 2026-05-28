@@ -21,7 +21,7 @@ namespace engine::server
 		// Tout entry avec ≥ 1 joueur passe à Active. Reset le timer
 		// "no-player" — on n'est plus en attente.
 		e.state = GridState::Active;
-		e.lastEmptySince = TimePoint{};
+		e.lastEmptySince.reset();
 		(void)now;
 	}
 
@@ -42,7 +42,7 @@ namespace engine::server
 			// deux Tick.
 			if (e.state == GridState::Active)
 				e.state = GridState::Loaded;
-			if (e.lastEmptySince == TimePoint{})
+			if (!e.lastEmptySince)
 				e.lastEmptySince = now;
 		}
 	}
@@ -53,7 +53,7 @@ namespace engine::server
 		{
 			if (e.playerCount > 0)
 				continue;  // Active → reste Active
-			if (e.lastEmptySince == TimePoint{})
+			if (!e.lastEmptySince)
 			{
 				// Cellule jamais visitée OU revenue d'Active sans
 				// passer par OnPlayerLeave (cas anormal). Démarrer le
@@ -61,7 +61,7 @@ namespace engine::server
 				e.lastEmptySince = now;
 				continue;
 			}
-			const auto elapsed = now - e.lastEmptySince;
+			const auto elapsed = now - *e.lastEmptySince;
 			if (elapsed >= m_cfg.unloadTimeout)
 				e.state = GridState::Removal;
 			else if (elapsed >= m_cfg.idleTimeout)

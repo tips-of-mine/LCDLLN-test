@@ -64,10 +64,17 @@ jobs:
       # std::this_thread::sleep_for(1100ms), ce qui rend l'expiry des
       # sessions et des bans IP déterministes sans dépendre du wall-clock.
       #
+      # ─── (FU-6) RÉINTÉGRÉ — bug sentinel TimePoint{} corrigé ──────────────
+      # grid_state_tests : le bug "expected Idle after 70s" venait de l'usage
+      # de TimePoint{} (epoch) comme sentinel "non initialisé" dans
+      # GridStateTracker::Entry::lastEmptySince, alors que TimePoint{} est
+      # aussi une valeur LÉGITIME. Quand un test/callsite utilisait t0=epoch,
+      # OnPlayerLeave assignait lastEmptySince=epoch, indistinguable du
+      # sentinel → Tick suivant réinitialisait au lieu de mesurer elapsed.
+      # Fix : lastEmptySince passée à std::optional<TimePoint> — nullopt
+      # pour "non init", optional<epoch> pour "init à epoch".
+      #
       # ─── TEMPORAIRE — bug suspect à auditer ───────────────────────────────
-      # - grid_state_tests
-      #     Wall-clock simulé via Tick(t0 + 70s), fail "expected Idle after
-      #     70s" suggère un bug de logique idle dans GridStateTracker::Tick().
       # - vmap_streamer_tests
       #     Fail "expected 1 freed" suggère un bug refcount + releaseDelay
       #     dans VMapStreamer. Audit nécessaire.
@@ -97,7 +104,7 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         working-directory: ${{ github.workspace }}/build/linux-x64-release
         run: |
-          ctest --output-on-failure --no-compress-output -E "network_integration_tests|grid_state_tests|vmap_streamer_tests|localization_service_tests|zone_builder_roundtrip_tests"
+          ctest --output-on-failure --no-compress-output -E "network_integration_tests|vmap_streamer_tests|localization_service_tests|zone_builder_roundtrip_tests"
 
       # Lot H : garde explicite que le World Editor compile au même titre que le jeu.
       # Si une régression casse uniquement la cible world_editor_app, ce step échoue alors que

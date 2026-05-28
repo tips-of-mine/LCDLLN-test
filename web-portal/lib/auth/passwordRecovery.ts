@@ -4,6 +4,7 @@ import { query } from "@/lib/db/connection";
 import { hashPasswordForGameMaster } from "@/lib/auth/gamePasswordHash";
 import { requireEnv } from "@/lib/env";
 import { logWarn } from "@/lib/log";
+import { sendPasswordReset } from "@/lib/email/sender";
 
 type AccountRow = RowDataPacket & {
   id: number;
@@ -287,7 +288,11 @@ export async function requestPasswordRecovery(input: RecoveryRequestInput): Prom
 
   const baseUrl = requireEnv("NEXT_PUBLIC_PORTAL_URL").replace(/\/+$/, "");
   const resetUrl = `${baseUrl}/password-recovery/reset?token=${encodeURIComponent(rawToken)}`;
-  await sendResetEmail(account.email, resetUrl);
+  if (!process.env.SMTP_HOST || !process.env.SMTP_FROM) {
+    logWarn("password-recovery", "SMTP non configuré, lien généré localement", { to: account.email, resetUrl });
+  } else {
+    await sendPasswordReset(account.email, resetUrl);
+  }
 
   return {
     accepted: true,
@@ -425,41 +430,4 @@ function matchesRecoveryFactors(bundle: RecoveryProfileBundle, input: RecoveryRe
   }
 
   return true;
-}
-
-async function sendResetEmail(to: string, resetUrl: string): Promise<void> {
-  const { createTransport } = await import("nodemailer");
-  const host = process.env.SMTP_HOST;
-  // SMTP_PORT : défaut "587" conservé volontairement — c'est le port submission
-  // SMTP standard universel (RFC 6409). Pas un secret, pas une URL prod-critique.
-  const port = Number.parseInt(process.env.SMTP_PORT || "587", 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const from = process.env.SMTP_FROM;
-
-  if (!host || !from) {
-    logWarn("password-recovery", "SMTP non configuré, lien généré localement", { to, resetUrl });
-    return;
-  }
-
-  const transport = createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: user && pass ? { user, pass } : undefined,
-  });
-
-  await transport.sendMail({
-    from,
-    to,
-    subject: "LCDLLN - Reinitialisation de votre mot de passe",
-    text: [
-      "Une demande de reinitialisation de mot de passe vient d'etre validee.",
-      "",
-      "Utilisez ce lien dans les 10 minutes :",
-      resetUrl,
-      "",
-      "Si le lien expire, recommencez les verifications sur le portail web.",
-    ].join("\n"),
-  });
 }

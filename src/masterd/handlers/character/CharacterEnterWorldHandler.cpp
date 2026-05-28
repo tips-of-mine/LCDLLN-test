@@ -13,6 +13,7 @@
 #include "src/masterd/account/AccountRole.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
 
@@ -70,6 +71,7 @@ namespace engine::server
 
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
+		auto* stmtCache = guard.cache();
 		if (!mysql)
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "database unavailable", requestId, sessionIdHeader);
@@ -83,30 +85,30 @@ namespace engine::server
 		// (rejette toute imposture comme un sender qui claim un autre nom que celui en DB).
 		// TA.3 : server_id sert au lookup du shard cible pour le push d'admission.
 		// TD.6 : gender (migration 0067, "male"/"female") propagé au shard via AdmitCharacter.
-		char queryBuf[256]{};
-		std::snprintf(queryBuf, sizeof(queryBuf),
-			"SELECT name, server_id, gender FROM characters WHERE id = %llu AND account_id = %llu AND deleted_at IS NULL",
-			static_cast<unsigned long long>(parsed->characterId),
-			static_cast<unsigned long long>(*accountId));
-
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, queryBuf);
+		// N1-B : prepared statement (bind characterId, accountId).
 		std::string dbName;
 		std::string dbGender;
 		uint32_t dbServerId = 0;
 		bool found = false;
-		if (res)
+		if (stmtCache)
 		{
-			MYSQL_ROW row = mysql_fetch_row(res);
-			if (row && row[0])
+			auto* stmt = stmtCache->Acquire(mysql,
+				"SELECT name, server_id, gender FROM characters WHERE id = ? AND account_id = ? AND deleted_at IS NULL");
+			if (stmt
+				&& stmt->Bind(0, parsed->characterId)
+				&& stmt->Bind(1, *accountId)
+				&& stmt->Execute()
+				&& stmt->FetchRow())
 			{
-				dbName = row[0];
-				if (row[1])
-					dbServerId = static_cast<uint32_t>(std::strtoul(row[1], nullptr, 10));
-				if (row[2])
-					dbGender = row[2];
-				found = true;
+				dbName = stmt->GetString(0);
+				dbServerId = static_cast<uint32_t>(stmt->GetUInt64(1));
+				dbGender = stmt->GetString(2);
+				found = !dbName.empty();
 			}
-			engine::server::db::DbFreeResult(res);
+		}
+		else
+		{
+			LOG_WARN(Net, "[CharacterEnterWorldHandler] ownership query : cache absent");
 		}
 
 		if (!found)
@@ -132,19 +134,19 @@ namespace engine::server
 		// Rôle du compte : alimente la ventilation par rôle de l'API /status
 		// (players_by_role). Une requête séparée et tolérante aux erreurs — un rôle
 		// indéterminé retombe sur Player (sentinel sûr de ParseRole).
+		// N1-B : prepared statement (bind accountId).
 		AccountRole accountRole = AccountRole::Player;
+		if (stmtCache)
 		{
-			char roleQuery[160]{};
-			std::snprintf(roleQuery, sizeof(roleQuery),
-				"SELECT role FROM accounts WHERE id = %llu",
-				static_cast<unsigned long long>(*accountId));
-			MYSQL_RES* roleRes = engine::server::db::DbQuery(mysql, roleQuery);
-			if (roleRes)
+			auto* roleStmt = stmtCache->Acquire(mysql, "SELECT role FROM accounts WHERE id = ?");
+			if (roleStmt
+				&& roleStmt->Bind(0, *accountId)
+				&& roleStmt->Execute()
+				&& roleStmt->FetchRow())
 			{
-				MYSQL_ROW roleRow = mysql_fetch_row(roleRes);
-				if (roleRow && roleRow[0])
-					accountRole = engine::server::ParseRole(roleRow[0]);
-				engine::server::db::DbFreeResult(roleRes);
+				const std::string roleStr = roleStmt->GetString(0);
+				if (!roleStr.empty())
+					accountRole = engine::server::ParseRole(roleStr.c_str());
 			}
 		}
 

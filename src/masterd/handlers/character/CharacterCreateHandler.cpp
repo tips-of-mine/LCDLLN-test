@@ -86,28 +86,27 @@ namespace engine::server
 		return stmt->FetchRow();
 	}
 
-	uint64_t CharacterCreateHandler::ResolveDefaultServerId(void* mysqlPtr) const
+	uint64_t CharacterCreateHandler::ResolveDefaultServerId(void* mysqlPtr,
+		engine::server::db::SqlPreparedStatementCache* cache) const
 	{
 		MYSQL* mysql = reinterpret_cast<MYSQL*>(mysqlPtr);
 		const uint64_t configured = m_config ? static_cast<uint64_t>(std::max<int64_t>(0, m_config->GetInt("character_creation.default_server_id", 1))) : 1u;
-		std::string sql = "SELECT id FROM servers WHERE id = " + std::to_string(configured) + " LIMIT 1";
-		if (MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql))
+		if (!cache)
 		{
-			MYSQL_ROW row = mysql_fetch_row(res);
-			if (row && row[0])
-			{
-				uint64_t out = std::strtoull(row[0], nullptr, 10);
-				engine::server::db::DbFreeResult(res);
-				return out;
-			}
-			engine::server::db::DbFreeResult(res);
+			LOG_WARN(Net, "[CharacterCreateHandler] ResolveDefaultServerId : cache absent");
+			return 0;
 		}
-		if (MYSQL_RES* res = engine::server::db::DbQuery(mysql, "SELECT id FROM servers ORDER BY id ASC LIMIT 1"))
+		// Premier essai : ID configuré explicitement.
 		{
-			MYSQL_ROW row = mysql_fetch_row(res);
-			uint64_t out = (row && row[0]) ? std::strtoull(row[0], nullptr, 10) : 0u;
-			engine::server::db::DbFreeResult(res);
-			return out;
+			auto* stmt = cache->Acquire(mysql, "SELECT id FROM servers WHERE id = ? LIMIT 1");
+			if (stmt && stmt->Bind(0, configured) && stmt->Execute() && stmt->FetchRow())
+				return stmt->GetUInt64(0);
+		}
+		// Fallback : premier serveur de la table par ordre d'ID (pas de paramètre).
+		{
+			auto* stmt = cache->Acquire(mysql, "SELECT id FROM servers ORDER BY id ASC LIMIT 1");
+			if (stmt && stmt->Execute() && stmt->FetchRow())
+				return stmt->GetUInt64(0);
 		}
 		return 0;
 	}
@@ -196,7 +195,7 @@ namespace engine::server
 			return;
 		}
 
-		const uint64_t serverId = ResolveDefaultServerId(mysql);
+		const uint64_t serverId = ResolveDefaultServerId(mysql, stmtCache);
 		if (serverId == 0)
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "no target server configured", requestId, sessionIdHeader);
@@ -230,9 +229,6 @@ namespace engine::server
 			return;
 		}
 
-		char escapedName[128]{};
-		mysql_real_escape_string(mysql, escapedName, parsed->name.c_str(), static_cast<unsigned long>(parsed->name.size()));
-
 		// Phase 3.6 — Spawn par défaut lu depuis la config serveur (peut être surchargé
 		// plus tard par le shard quand l'utilisateur se déconnecte / le serveur sauvegarde
 		// la position courante du personnage). Défauts cohérents avec le défaut client
@@ -243,13 +239,9 @@ namespace engine::server
 		const double spawnYaw   = m_config ? m_config->GetDouble("character_creation.default_spawn.yaw_deg", 0.0) : 0.0;
 		const double spawnPitch = m_config ? m_config->GetDouble("character_creation.default_spawn.pitch_deg", -10.0) : -10.0;
 
-		char spawnBuf[256]{};
-		std::snprintf(spawnBuf, sizeof(spawnBuf), "%.6f, %.6f, %.6f, %.6f, %.6f",
-			spawnX, spawnY, spawnZ, spawnYaw, spawnPitch);
-
 		// Phase 3.8 — Persistance des identifiants chaîne race/classe choisis par
 		// l'utilisateur (parsed->raceId / parsed->classId, ex. "humains" / "warrior").
-		// Limite à 32 chars (taille de la colonne) ; plus court côté SQL après escape.
+		// Limite à 32 chars (taille de la colonne).
 		auto truncate = [](const std::string& s) -> std::string {
 			constexpr size_t kMax = 32u;
 			return s.size() <= kMax ? s : s.substr(0, kMax);
@@ -275,33 +267,39 @@ namespace engine::server
 		const std::string genderStr = (parsed->gender == "female") ? "female" : "male";
 		// Teinte de peau (skinColorIdx) : entier non signé borné [0, 255] (0 = claire).
 		const uint32_t skinColorIdx = static_cast<uint32_t>(parsed->customization.skinColorIdx);
-		char escapedRace[80]{};
-		char escapedClass[80]{};
-		char escapedFaction[80]{};
-		char escapedGender[24]{};
-		mysql_real_escape_string(mysql, escapedRace,
-			raceIdTruncated.c_str(), static_cast<unsigned long>(raceIdTruncated.size()));
-		mysql_real_escape_string(mysql, escapedClass,
-			classIdTruncated.c_str(), static_cast<unsigned long>(classIdTruncated.size()));
-		mysql_real_escape_string(mysql, escapedFaction,
-			factionStr.c_str(), static_cast<unsigned long>(factionStr.size()));
-		mysql_real_escape_string(mysql, escapedGender,
-			genderStr.c_str(), static_cast<unsigned long>(genderStr.size()));
 
-		std::string sql =
+		// N1-B : INSERT via prepared statement. 14 paramètres bind (positions 0-13).
+		// Les 4 colonnes hardcodées (race_id=0, class_id=0, level=1, appearance_json='{}')
+		// restent en littéraux SQL — pas d'entrée utilisateur.
+		// Plus besoin de mysql_real_escape_string : le binding de string_view est safe.
+		if (!stmtCache)
+		{
+			LOG_WARN(Net, "[CharacterCreateHandler] INSERT : cache absent");
+			auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "prepared statement cache unavailable", requestId, sessionIdHeader);
+			if (!pkt.empty())
+				m_server->Send(connId, pkt);
+			return;
+		}
+		auto* insertStmt = stmtCache->Acquire(mysql,
 			"INSERT INTO characters (account_id, slot, name, server_id, race_id, class_id, level, appearance_json,"
-			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg, race_str, class_str, faction_str, gender, skin_color_idx) VALUES ("
-			+ std::to_string(*accountId) + ", "
-			+ std::to_string(slot) + ", '"
-			+ escapedName + "', "
-			+ std::to_string(serverId) + ", 0, 0, 1, '{}', "
-			+ spawnBuf + ", '"
-			+ escapedRace + "', '"
-			+ escapedClass + "', '"
-			+ escapedFaction + "', '"
-			+ escapedGender + "', "
-			+ std::to_string(skinColorIdx) + ")";
-		if (!engine::server::db::DbExecute(mysql, sql))
+			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg, race_str, class_str, faction_str, gender, skin_color_idx) "
+			"VALUES (?, ?, ?, ?, 0, 0, 1, '{}', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		if (!insertStmt
+			|| !insertStmt->Bind(0,  *accountId)
+			|| !insertStmt->Bind(1,  static_cast<int32_t>(slot))
+			|| !insertStmt->Bind(2,  std::string_view(parsed->name))
+			|| !insertStmt->Bind(3,  serverId)
+			|| !insertStmt->Bind(4,  spawnX)
+			|| !insertStmt->Bind(5,  spawnY)
+			|| !insertStmt->Bind(6,  spawnZ)
+			|| !insertStmt->Bind(7,  spawnYaw)
+			|| !insertStmt->Bind(8,  spawnPitch)
+			|| !insertStmt->Bind(9,  std::string_view(raceIdTruncated))
+			|| !insertStmt->Bind(10, std::string_view(classIdTruncated))
+			|| !insertStmt->Bind(11, std::string_view(factionStr))
+			|| !insertStmt->Bind(12, std::string_view(genderStr))
+			|| !insertStmt->Bind(13, skinColorIdx)
+			|| !insertStmt->Execute())
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "character creation failed", requestId, sessionIdHeader);
 			if (!pkt.empty())

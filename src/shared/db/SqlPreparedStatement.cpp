@@ -262,6 +262,14 @@ namespace engine::server::db
 		{
 			m_lru.splice(m_lru.begin(), m_lru, it->second);
 			it->second = m_lru.begin();
+			// Reset() avant retour : sans ça, une 2e exécution du même stmt après
+			// un FetchRow() consommé peut échouer (libmysql conserve l'état du
+			// résultat précédent jusqu'à mysql_stmt_free_result/mysql_stmt_reset).
+			// Reset() est no-op sur un stmt fraîchement préparé jamais exécuté.
+			// Si Reset() échoue (connexion morte / stmt corrompu), on retourne
+			// nullptr — le call site sait que l'acquisition a échoué.
+			if (!it->second->stmt->Reset())
+				return nullptr;
 			return it->second->stmt.get();
 		}
 

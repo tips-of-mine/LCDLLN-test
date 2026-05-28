@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js 14 (App Router, `unstable_cache`), TypeScript strict, zero dépendance ajoutée.
 
-**Spec source:** [docs/superpowers/audits/2026-05-27-codebase-audit.md](../audits/2026-05-27-codebase-audit.md) section 8 (PR 4, chantier E partiel F10).
+**Spec source:** [docs/superpowers/audits/2026-05-27-codebase-audit.md](../audits/closed/2026-05-27-codebase-audit.md) section 8 (PR 4, chantier E partiel F10).
 
 **Branche:** depuis `origin/main` (indépendante de PR 1 #719). Conflict potentiel uniquement sur `passwordRecovery.ts` (PR 1 a ajouté un import L.5, PR 4 modifiera la ligne 440 `console.warn`) — git devrait merger automatiquement, sinon rebase trivial.
 

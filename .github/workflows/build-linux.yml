@@ -47,7 +47,7 @@ jobs:
       # Exécute les tests CTest compilés (entities, mail, anticheat, etc.).
       #
       # Exclusions (pattern -E) — chacune a une raison documentée et un statut.
-      # Voir docs/superpowers/audits/2026-05-27-codebase-audit-followups.md
+      # Voir docs/superpowers/audits/closed/2026-05-27-codebase-audit-followups.md
       # pour le plan de réintégration des exclusions TEMPORAIRES.
       #
       # ─── DÉFINITIF ────────────────────────────────────────────────────────
@@ -78,7 +78,7 @@ jobs:
       # réintégration de la PR #721, puis ré-exclus quand la CI Linux a
       # révélé des échecs réels (pas des fausses alertes comme le rapport
       # d'audit initial le supposait). Suivi détaillé : FU-6/7 dans
-      # docs/superpowers/audits/2026-05-27-codebase-audit-followups.md
+      # docs/superpowers/audits/closed/2026-05-27-codebase-audit-followups.md
       # (FU-5 netserver_bandwidth_tests fixé et réintégré dans une PR
       # ultérieure — tolérance ±1 byte sur l'assertion floating-point.)
       # - localization_service_tests

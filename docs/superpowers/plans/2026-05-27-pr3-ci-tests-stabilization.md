@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML (GitHub Actions), Markdown.
 
-**Spec source :** [docs/superpowers/audits/2026-05-27-codebase-audit.md](../audits/2026-05-27-codebase-audit.md) section 8 PR 3, scope réduit "quick wins" validé par utilisateur.
+**Spec source :** [docs/superpowers/audits/2026-05-27-codebase-audit.md](../audits/closed/2026-05-27-codebase-audit.md) section 8 PR 3, scope réduit "quick wins" validé par utilisateur.
 
 **Branche:** depuis `origin/main` (contient PR #719 mergée). Indépendante de PR #720 (en attente de merge). Pas de conflit possible — fichiers non touchés par les autres PRs.
 

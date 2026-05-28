@@ -1,15 +1,18 @@
 /// @file MysqlAccountStore.cpp
 /// @brief Implémentation de MysqlAccountStore — opérations CRUD MySQL sur la table `accounts`.
 ///
-/// Toutes les chaînes interpolées dans les requêtes SQL passent par EscapeMysql() (mysql_real_escape_string)
-/// pour prévenir les injections SQL. Le code pays utilisé dans le TAG-ID est également validé
-/// (2 lettres ASCII majuscules) avant d'être inclus dans un LIKE. Aucun mot de passe en clair
-/// ni hash intermédiaire n'est loggué ou persisté — seul le hash Argon2 final est écrit.
+/// N1-D : toutes les queries SQL sont maintenant des prepared statements via
+/// `SqlPreparedStatementCache` (récupéré sur `ConnectionPool::Guard::cache()`).
+/// Plus de `mysql_real_escape_string` ni de concaténation — les bindings
+/// `std::string_view` sont safe par construction. Aucun mot de passe en clair
+/// ni hash intermédiaire n'est loggué ou persisté — seul le hash Argon2 final
+/// est écrit.
 
 #include "src/masterd/account/MysqlAccountStore.h"
 #include "src/masterd/account/AccountValidation.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 #include "src/shared/auth/Argon2Hash.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/network/NetErrorCode.h"
@@ -38,95 +41,43 @@ namespace engine::server
 		/// Évite la dépendance à mysqld_error.h dont la disponibilité varie selon l'installation.
 		constexpr unsigned kMysqlDupKey = 1062;
 
-		/// Échappe une chaîne pour une insertion sûre dans une requête SQL MySQL.
-		/// Utilise mysql_real_escape_string() qui tient compte du jeu de caractères de la connexion.
-		/// @param mysql Handle MySQL actif. Si nullptr, retourne une chaîne vide.
-		/// @param v     Valeur brute à échapper.
-		/// @return Chaîne échappée prête à être insérée entre guillemets simples dans un SQL.
-		std::string EscapeMysql(MYSQL* mysql, std::string_view v)
-		{
-			if (!mysql)
-				return {};
-			std::vector<char> buf(v.size() * 2 + 1);
-			unsigned long w = mysql_real_escape_string(mysql, buf.data(), v.data(), static_cast<unsigned long>(v.size()));
-			return std::string(buf.data(), w);
-		}
+		/// Liste de colonnes pour les SELECT * équivalents.
+		/// Ordre fixe : id, email, login, password_hash, account_status,
+		/// email_verified, email_locale, first_name, last_name, birth_date,
+		/// country_code, tag_id.
+		constexpr std::string_view kAccountColumns =
+			"id, email, login, password_hash, account_status, email_verified, "
+			"email_locale, first_name, last_name, birth_date, country_code, tag_id";
 
-		/// Convertit une ligne MySQL (MYSQL_ROW) en AccountRecord.
-		/// Ordre des colonnes attendu : id, email, login, password_hash, account_status,
-		///                              email_verified, email_locale, first_name, last_name,
-		///                              birth_date, country_code, tag_id.
-		/// Les e-mails placeholder (@lcdlln.no-email.local) sont silencieusement remplacés par
-		/// une chaîne vide dans AccountRecord.email (transparence vis-à-vis de l'appelant).
-		/// @param row Ligne renvoyée par mysql_fetch_row(). Ne doit pas être nullptr.
-		/// @return AccountRecord partiellement ou entièrement rempli selon les colonnes non-NULL.
-		AccountRecord RowToRecord(MYSQL_ROW row)
+		/// Lit un AccountRecord depuis le résultat courant d'un SqlPreparedStatement.
+		/// Les 12 colonnes doivent être dans l'ordre `kAccountColumns`.
+		/// Les e-mails placeholder (@lcdlln.no-email.local) sont silencieusement
+		/// remplacés par une chaîne vide (transparence vis-à-vis de l'appelant).
+		AccountRecord StmtToRecord(engine::server::db::SqlPreparedStatement* stmt)
 		{
 			AccountRecord r;
-			if (row[0])
-				r.account_id = std::strtoull(row[0], nullptr, 10);
-			std::string db_email = row[1] ? row[1] : "";
+			r.account_id = stmt->GetUInt64(0);
+			std::string db_email = stmt->GetString(1);
 			if (db_email.size() >= kNoEmailPlaceholderSuffix.size()
 				&& db_email.compare(db_email.size() - kNoEmailPlaceholderSuffix.size(), kNoEmailPlaceholderSuffix.size(),
 					kNoEmailPlaceholderSuffix) == 0)
 				r.email.clear();
 			else
 				r.email = std::move(db_email);
-			if (row[2])
-				r.login = row[2];
-			if (row[3])
-				r.final_hash = row[3];
-			const unsigned st = row[4] ? static_cast<unsigned>(std::strtoul(row[4], nullptr, 10)) : 0;
-			r.status = (st == 0) ? AccountStatus::Active : AccountStatus::Locked;
-			r.email_verified = row[5] && row[5][0] != '0';
-			const unsigned loc = row[6] ? static_cast<unsigned>(std::strtoul(row[6], nullptr, 10)) : 0;
-			if (loc <= static_cast<unsigned>(AccountEmailLocale::Italian))
+			r.login = stmt->GetString(2);
+			r.final_hash = stmt->GetString(3);
+			const uint64_t st = stmt->GetUInt64(4);
+			r.status = (st == 0u) ? AccountStatus::Active : AccountStatus::Locked;
+			r.email_verified = (stmt->GetUInt64(5) != 0u);
+			const uint64_t loc = stmt->GetUInt64(6);
+			if (loc <= static_cast<uint64_t>(AccountEmailLocale::Italian))
 				r.email_locale = static_cast<AccountEmailLocale>(loc);
-			if (row[7])
-				r.first_name = row[7];
-			if (row[8])
-				r.last_name = row[8];
-			if (row[9])
-				r.birth_date = row[9];
-			if (row[10])
-				r.country_code = row[10];
-			if (row[11])
-				r.tag_id = row[11];
+			r.first_name = stmt->GetString(7);
+			r.last_name = stmt->GetString(8);
+			r.birth_date = stmt->GetString(9);
+			r.country_code = stmt->GetString(10);
+			r.tag_id = stmt->GetString(11);
 			return r;
-		}
-
-		/// Exécute \a sql et retourne le premier AccountRecord trouvé, ou nullopt.
-		/// Libère le résultat MySQL avant de retourner (pas de fuite).
-		/// @param mysql Handle MySQL actif.
-		/// @param sql   Requête SELECT complète, déjà échappée.
-		/// @return Premier enregistrement ou nullopt si résultat vide ou erreur.
-		std::optional<AccountRecord> QueryOneAccount(MYSQL* mysql, const std::string& sql)
-		{
-			MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-			if (!res)
-				return std::nullopt;
-			MYSQL_ROW row = mysql_fetch_row(res);
-			std::optional<AccountRecord> out;
-			if (row)
-				out = RowToRecord(row);
-			mysql_free_result(res);
-			return out;
-		}
-
-		/// Exécute \a sql et retourne true si au moins une ligne est renvoyée.
-		/// Utilisé pour les vérifications d'existence (SELECT 1 ... LIMIT 1).
-		/// @param mysql Handle MySQL actif.
-		/// @param sql   Requête SELECT, déjà échappée.
-		/// @return true si au moins une ligne existe, false si vide ou erreur.
-		bool QueryExists(MYSQL* mysql, const std::string& sql)
-		{
-			MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-			if (!res)
-				return false;
-			MYSQL_ROW row = mysql_fetch_row(res);
-			const bool ok = row != nullptr;
-			mysql_free_result(res);
-			return ok;
 		}
 	} // namespace
 
@@ -179,7 +130,7 @@ namespace engine::server
 		// Uppercase the country code.
 		for (char& c : cc)
 			c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-		// Validate cc is exactly 2 ASCII uppercase letters (anti-injection guard for SQL LIKE).
+		// Validate cc is exactly 2 ASCII uppercase letters (anti-injection guard).
 		{
 			bool valid = (cc.size() == 2 && cc[0] >= 'A' && cc[0] <= 'Z' && cc[1] >= 'A' && cc[1] <= 'Z');
 			if (!valid)
@@ -204,22 +155,24 @@ namespace engine::server
 		const std::string prefix = cc + year_digit + month_ss.str(); // e.g. "FR602"
 
 		// Sequence query — done before main Acquire to keep pool (size 1) free.
+		// N1-D : prepared statement avec LIKE bindé (bind = prefix + "%").
 		uint64_t seq = 1;
 		{
 			auto conn = m_pool->Acquire();
 			MYSQL* mysql_seq = conn.get();
-			if (mysql_seq)
+			auto* cache_seq = conn.cache();
+			if (mysql_seq && cache_seq)
 			{
-				const std::string sql_seq =
+				auto* stmt_seq = cache_seq->Acquire(mysql_seq,
 					"SELECT COALESCE(MAX(CAST(SUBSTR(tag_id, 6) AS UNSIGNED)), 0) + 1 "
-					"FROM accounts WHERE tag_id LIKE '" + prefix + "%'";
-				MYSQL_RES* res_seq = engine::server::db::DbQuery(mysql_seq, sql_seq);
-				if (res_seq)
+					"FROM accounts WHERE tag_id LIKE ?");
+				const std::string like_pattern = prefix + "%";
+				if (stmt_seq
+					&& stmt_seq->Bind(0, std::string_view(like_pattern))
+					&& stmt_seq->Execute()
+					&& stmt_seq->FetchRow())
 				{
-					MYSQL_ROW row_seq = mysql_fetch_row(res_seq);
-					if (row_seq && row_seq[0])
-						seq = std::strtoull(row_seq[0], nullptr, 10);
-					mysql_free_result(res_seq);
+					seq = stmt_seq->GetUInt64(0, 1);
 				}
 			}
 		}
@@ -231,9 +184,10 @@ namespace engine::server
 
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 		{
-			LOG_WARN(Auth, "[MysqlAccountStore] CreateAccount: no connection");
+			LOG_WARN(Auth, "[MysqlAccountStore] CreateAccount: no connection or cache");
 			return 0;
 		}
 
@@ -252,40 +206,27 @@ namespace engine::server
 		}
 
 		const std::string db_email = email_norm.empty() ? (login_key + std::string(kNoEmailPlaceholderSuffix)) : email_norm;
-		const std::string esc_login = EscapeMysql(mysql, login_key);
-		const std::string esc_email = EscapeMysql(mysql, db_email);
-		const std::string esc_hash = EscapeMysql(mysql, final_hash);
-		const std::string esc_country = EscapeMysql(mysql, cc);
-		const std::string esc_tag_id = EscapeMysql(mysql, local_tag_id);
-		const std::string esc_first_name = EscapeMysql(mysql, first_name);
-		const std::string esc_last_name = EscapeMysql(mysql, last_name);
-		const std::string esc_birth_date = EscapeMysql(mysql, birth_date);
-		const unsigned loc = static_cast<unsigned>(email_locale);
+		const uint32_t loc = static_cast<uint32_t>(email_locale);
 
-		std::string sql = "INSERT INTO accounts (email, login, password_hash, account_status, email_locale, email_verified, country_code, tag_id, first_name, last_name, birth_date) VALUES ('";
-		sql += esc_email;
-		sql += "','";
-		sql += esc_login;
-		sql += "','";
-		sql += esc_hash;
-		sql += "',0,";
-		sql += std::to_string(loc);
-		sql += ",0,'";
-		sql += esc_country;
-		sql += "','";
-		sql += esc_tag_id;
-		sql += "','";
-		sql += esc_first_name;
-		sql += "','";
-		sql += esc_last_name;
-		sql += "','";
-		sql += esc_birth_date;
-		sql += "')";
-
+		// N1-D : INSERT prepared (9 binds, account_status=0 / email_verified=0 littéraux).
+		auto* stmt = cache->Acquire(mysql,
+			"INSERT INTO accounts (email, login, password_hash, account_status, email_locale, email_verified, "
+			"country_code, tag_id, first_name, last_name, birth_date) "
+			"VALUES (?, ?, ?, 0, ?, 0, ?, ?, ?, ?, ?)");
 		auto t0 = std::chrono::steady_clock::now();
-		const int qerr = mysql_real_query(mysql, sql.c_str(), static_cast<unsigned long>(sql.size()));
+		const bool ok = stmt
+			&& stmt->Bind(0, std::string_view(db_email))
+			&& stmt->Bind(1, std::string_view(login_key))
+			&& stmt->Bind(2, std::string_view(final_hash))
+			&& stmt->Bind(3, loc)
+			&& stmt->Bind(4, std::string_view(cc))
+			&& stmt->Bind(5, std::string_view(local_tag_id))
+			&& stmt->Bind(6, first_name)
+			&& stmt->Bind(7, last_name)
+			&& stmt->Bind(8, birth_date)
+			&& stmt->Execute();
 		engine::server::db::DbRecordLatencySince(t0);
-		if (qerr != 0)
+		if (!ok)
 		{
 			const unsigned err = mysql_errno(mysql);
 			if (err == kMysqlDupKey)
@@ -293,24 +234,6 @@ namespace engine::server
 			else
 				LOG_ERROR(Auth, "[MysqlAccountStore] CreateAccount INSERT: {}", mysql_error(mysql));
 			return 0;
-		}
-		for (;;)
-		{
-			MYSQL_RES* res = mysql_store_result(mysql);
-			if (res)
-				mysql_free_result(res);
-			if (mysql_errno(mysql) != 0)
-			{
-				LOG_ERROR(Auth, "[MysqlAccountStore] CreateAccount drain: {}", mysql_error(mysql));
-				return 0;
-			}
-			if (!mysql_more_results(mysql))
-				break;
-			if (mysql_next_result(mysql) != 0)
-			{
-				LOG_ERROR(Auth, "[MysqlAccountStore] CreateAccount next_result: {}", mysql_error(mysql));
-				return 0;
-			}
 		}
 
 		const uint64_t id = mysql_insert_id(mysql);
@@ -330,13 +253,17 @@ namespace engine::server
 			return std::nullopt;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return std::nullopt;
-		const std::string esc = EscapeMysql(mysql, normalisedLogin);
-		const std::string sql =
-			"SELECT id, email, login, password_hash, account_status, email_verified, email_locale, first_name, last_name, birth_date, country_code, tag_id FROM accounts WHERE login='"
-			+ esc + "' LIMIT 1";
-		return QueryOneAccount(mysql, sql);
+		// N1-D : prepared statement (bind login).
+		auto* stmt = cache->Acquire(mysql,
+			"SELECT id, email, login, password_hash, account_status, email_verified, "
+			"email_locale, first_name, last_name, birth_date, country_code, tag_id "
+			"FROM accounts WHERE login = ? LIMIT 1");
+		if (!stmt || !stmt->Bind(0, normalisedLogin) || !stmt->Execute() || !stmt->FetchRow())
+			return std::nullopt;
+		return StmtToRecord(stmt);
 	}
 
 	std::optional<AccountRecord> MysqlAccountStore::FindByAccountId(uint64_t account_id)
@@ -345,12 +272,17 @@ namespace engine::server
 			return std::nullopt;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return std::nullopt;
-		const std::string sql =
-			"SELECT id, email, login, password_hash, account_status, email_verified, email_locale, first_name, last_name, birth_date, country_code, tag_id FROM accounts WHERE id="
-			+ std::to_string(account_id) + " LIMIT 1";
-		return QueryOneAccount(mysql, sql);
+		// N1-D : prepared statement (bind account_id).
+		auto* stmt = cache->Acquire(mysql,
+			"SELECT id, email, login, password_hash, account_status, email_verified, "
+			"email_locale, first_name, last_name, birth_date, country_code, tag_id "
+			"FROM accounts WHERE id = ? LIMIT 1");
+		if (!stmt || !stmt->Bind(0, account_id) || !stmt->Execute() || !stmt->FetchRow())
+			return std::nullopt;
+		return StmtToRecord(stmt);
 	}
 
 	bool MysqlAccountStore::ExistsEmail(std::string_view normalisedEmail)
@@ -361,11 +293,13 @@ namespace engine::server
 			return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
-		const std::string esc = EscapeMysql(mysql, normalisedEmail);
-		const std::string sql = "SELECT 1 FROM accounts WHERE email='" + esc + "' LIMIT 1";
-		return QueryExists(mysql, sql);
+		auto* stmt = cache->Acquire(mysql, "SELECT 1 FROM accounts WHERE email = ? LIMIT 1");
+		if (!stmt || !stmt->Bind(0, normalisedEmail) || !stmt->Execute())
+			return false;
+		return stmt->FetchRow();
 	}
 
 	bool MysqlAccountStore::ExistsLogin(std::string_view normalisedLogin)
@@ -374,11 +308,13 @@ namespace engine::server
 			return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
-		const std::string esc = EscapeMysql(mysql, normalisedLogin);
-		const std::string sql = "SELECT 1 FROM accounts WHERE login='" + esc + "' LIMIT 1";
-		return QueryExists(mysql, sql);
+		auto* stmt = cache->Acquire(mysql, "SELECT 1 FROM accounts WHERE login = ? LIMIT 1");
+		if (!stmt || !stmt->Bind(0, normalisedLogin) || !stmt->Execute())
+			return false;
+		return stmt->FetchRow();
 	}
 
 	std::optional<AccountRecord> MysqlAccountStore::FindByEmail(std::string_view normalisedEmail)
@@ -389,13 +325,16 @@ namespace engine::server
 			return std::nullopt;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return std::nullopt;
-		const std::string esc = EscapeMysql(mysql, normalisedEmail);
-		const std::string sql =
-			"SELECT id, email, login, password_hash, account_status, email_verified, email_locale, first_name, last_name, birth_date, country_code, tag_id FROM accounts WHERE email='"
-			+ esc + "' LIMIT 1";
-		return QueryOneAccount(mysql, sql);
+		auto* stmt = cache->Acquire(mysql,
+			"SELECT id, email, login, password_hash, account_status, email_verified, "
+			"email_locale, first_name, last_name, birth_date, country_code, tag_id "
+			"FROM accounts WHERE email = ? LIMIT 1");
+		if (!stmt || !stmt->Bind(0, normalisedEmail) || !stmt->Execute() || !stmt->FetchRow())
+			return std::nullopt;
+		return StmtToRecord(stmt);
 	}
 
 	bool MysqlAccountStore::SetEmailVerified(uint64_t account_id)
@@ -404,13 +343,14 @@ namespace engine::server
 			return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
-		const std::string sql =
-			"UPDATE accounts SET email_verified=1 WHERE id=" + std::to_string(account_id) + " LIMIT 1";
-		if (!engine::server::db::DbExecute(mysql, sql))
+		auto* stmt = cache->Acquire(mysql,
+			"UPDATE accounts SET email_verified = 1 WHERE id = ? LIMIT 1");
+		if (!stmt || !stmt->Bind(0, account_id) || !stmt->Execute())
 			return false;
-		if (mysql_affected_rows(mysql) == 0)
+		if (stmt->AffectedRows() == 0u)
 		{
 			LOG_WARN(Auth, "[MysqlAccountStore] SetEmailVerified: account_id={} not found", account_id);
 			return false;
@@ -425,19 +365,29 @@ namespace engine::server
 			return;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return;
-		const std::string esc_code = EscapeMysql(mysql, code);
+		// N1-D : delete preceded by insert, both prepared.
 		// Delete any previous unverified entry for this account, then insert the new one.
-		const std::string del = "DELETE FROM email_verifications WHERE account_id=" + std::to_string(account_id)
-			+ " AND verified_at IS NULL";
-		engine::server::db::DbExecute(mysql, del);
-		const std::string ins = "INSERT INTO email_verifications (account_id, code, expires_at) VALUES ("
-			+ std::to_string(account_id) + ", '" + esc_code + "', NOW() + INTERVAL 15 MINUTE)";
-		if (!engine::server::db::DbExecute(mysql, ins))
+		{
+			auto* delStmt = cache->Acquire(mysql,
+				"DELETE FROM email_verifications WHERE account_id = ? AND verified_at IS NULL");
+			if (delStmt && delStmt->Bind(0, account_id))
+				delStmt->Execute();
+		}
+		auto* insStmt = cache->Acquire(mysql,
+			"INSERT INTO email_verifications (account_id, code, expires_at) "
+			"VALUES (?, ?, NOW() + INTERVAL 15 MINUTE)");
+		if (!insStmt
+			|| !insStmt->Bind(0, account_id)
+			|| !insStmt->Bind(1, std::string_view(code))
+			|| !insStmt->Execute())
+		{
 			LOG_WARN(Auth, "[MysqlAccountStore] PersistEmailVerificationCode: INSERT failed (account_id={})", account_id);
-		else
-			LOG_INFO(Auth, "[MysqlAccountStore] PersistEmailVerificationCode OK (account_id={})", account_id);
+			return;
+		}
+		LOG_INFO(Auth, "[MysqlAccountStore] PersistEmailVerificationCode OK (account_id={})", account_id);
 	}
 
 	bool MysqlAccountStore::UpdatePasswordHash(uint64_t account_id, std::string_view new_final_hash)
@@ -446,14 +396,17 @@ namespace engine::server
 			return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
-		const std::string esc_hash = EscapeMysql(mysql, new_final_hash);
-		const std::string sql = "UPDATE accounts SET password_hash='" + esc_hash + "' WHERE id=" + std::to_string(account_id)
-			+ " LIMIT 1";
-		if (!engine::server::db::DbExecute(mysql, sql))
+		auto* stmt = cache->Acquire(mysql,
+			"UPDATE accounts SET password_hash = ? WHERE id = ? LIMIT 1");
+		if (!stmt
+			|| !stmt->Bind(0, new_final_hash)
+			|| !stmt->Bind(1, account_id)
+			|| !stmt->Execute())
 			return false;
-		if (mysql_affected_rows(mysql) == 0)
+		if (stmt->AffectedRows() == 0u)
 		{
 			LOG_WARN(Auth, "[MysqlAccountStore] UpdatePasswordHash: account_id={} not found", account_id);
 			return false;
@@ -468,20 +421,16 @@ namespace engine::server
 			return AccountRole::Player;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return AccountRole::Player;
-
-		const std::string sql = "SELECT role FROM accounts WHERE id=" + std::to_string(account_id) + " LIMIT 1";
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		AccountRole role = AccountRole::Player;
-		if (res)
-		{
-			MYSQL_ROW row = mysql_fetch_row(res);
-			if (row && row[0])
-				role = ParseRole(row[0]);
-			engine::server::db::DbFreeResult(res);
-		}
-		return role;
+		auto* stmt = cache->Acquire(mysql, "SELECT role FROM accounts WHERE id = ? LIMIT 1");
+		if (!stmt || !stmt->Bind(0, account_id) || !stmt->Execute() || !stmt->FetchRow())
+			return AccountRole::Player;
+		const std::string roleStr = stmt->GetString(0);
+		if (roleStr.empty())
+			return AccountRole::Player;
+		return ParseRole(roleStr.c_str());
 	}
 
 	bool MysqlAccountStore::SetRole(uint64_t account_id, AccountRole role)
@@ -493,16 +442,19 @@ namespace engine::server
 			return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
 
 		const std::string roleStr = std::string(RoleToString(role));
-		const std::string esc_role = EscapeMysql(mysql, roleStr);
-		const std::string sql = "UPDATE accounts SET role='" + esc_role
-			+ "' WHERE id=" + std::to_string(account_id) + " LIMIT 1";
-		if (!engine::server::db::DbExecute(mysql, sql))
+		auto* stmt = cache->Acquire(mysql,
+			"UPDATE accounts SET role = ? WHERE id = ? LIMIT 1");
+		if (!stmt
+			|| !stmt->Bind(0, std::string_view(roleStr))
+			|| !stmt->Bind(1, account_id)
+			|| !stmt->Execute())
 			return false;
-		if (mysql_affected_rows(mysql) == 0)
+		if (stmt->AffectedRows() == 0u)
 		{
 			LOG_WARN(Auth, "[MysqlAccountStore] SetRole: account_id={} not found", account_id);
 			return false;
@@ -520,15 +472,19 @@ namespace engine::server
 			return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
 
-		const int statusInt = static_cast<int>(status);
-		const std::string sql = "UPDATE accounts SET account_status=" + std::to_string(statusInt)
-			+ " WHERE id=" + std::to_string(account_id) + " LIMIT 1";
-		if (!engine::server::db::DbExecute(mysql, sql))
+		const uint32_t statusInt = static_cast<uint32_t>(status);
+		auto* stmt = cache->Acquire(mysql,
+			"UPDATE accounts SET account_status = ? WHERE id = ? LIMIT 1");
+		if (!stmt
+			|| !stmt->Bind(0, statusInt)
+			|| !stmt->Bind(1, account_id)
+			|| !stmt->Execute())
 			return false;
-		if (mysql_affected_rows(mysql) == 0)
+		if (stmt->AffectedRows() == 0u)
 		{
 			LOG_WARN(Auth, "[MysqlAccountStore] SetAccountStatus: account_id={} not found", account_id);
 			return false;

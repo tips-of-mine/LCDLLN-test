@@ -71,8 +71,17 @@ namespace engine::server
 
 		struct EmailRateEntry
 		{
-			int               count        = 0;
-			Clock::time_point window_start = Clock::time_point{};
+			int                              count        = 0;
+			/// Début de la fenêtre glissante anti-spam (1h). `std::nullopt`
+			/// tant qu'aucun email n'a encore été envoyé pour ce compte —
+			/// distingue ce cas de "fenêtre démarrée à epoch UNIX". Pattern
+			/// aligné sur la convention défensive FU-3/FU-4. NB : ce store
+			/// utilise `system_clock` (wall-clock) et non `steady_clock` —
+			/// le sentinel `time_point{}` = epoch UNIX 1970 était inoffensif
+			/// en prod car `now()` ≈ 2026 → la condition "fenêtre expirée"
+			/// se déclenchait par coïncidence (~56 ans ≫ 1h). L'optional
+			/// rend l'intention explicite et protège des futurs cas de test.
+			std::optional<Clock::time_point> window_start;
 		};
 
 		/// token string → entry

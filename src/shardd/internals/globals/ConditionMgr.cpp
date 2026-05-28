@@ -1,12 +1,10 @@
 #include "src/shardd/internals/globals/ConditionMgr.h"
 
 #include "src/shared/db/ConnectionPool.h"
-#include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 #include "src/shared/core/Log.h"
 
 #include <mysql.h>
-
-#include <cstdlib>
 
 namespace engine::server::shard::globals
 {
@@ -28,51 +26,46 @@ namespace engine::server::shard::globals
 
 		auto guard = pool.Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
 
-		// 1) Conditions atomiques.
+		// 1) Conditions atomiques. N1-I : prepared statement no-param.
 		{
-			MYSQL_RES* res = engine::server::db::DbQuery(mysql,
+			auto* stmt = cache->Acquire(mysql,
 				"SELECT condition_id, type, value1, value2, value3 FROM conditions");
-			if (!res)
+			if (!stmt || !stmt->Execute())
 				return false;
-			MYSQL_ROW row;
-			while ((row = mysql_fetch_row(res)) != nullptr)
+			while (stmt->FetchRow())
 			{
-				if (!row[0]) continue;
 				Condition c{};
-				c.conditionId = static_cast<uint32_t>(std::strtoul(row[0], nullptr, 10));
-				c.type        = static_cast<ConditionType>(std::atoi(row[1]));
-				c.value1      = std::atoi(row[2]);
-				c.value2      = std::atoi(row[3]);
-				c.value3      = std::atoi(row[4]);
+				c.conditionId = static_cast<uint32_t>(stmt->GetUInt64(0));
+				c.type        = static_cast<ConditionType>(stmt->GetInt32(1));
+				c.value1      = stmt->GetInt32(2);
+				c.value2      = stmt->GetInt32(3);
+				c.value3      = stmt->GetInt32(4);
 				m_conditions.emplace(c.conditionId, c);
 			}
-			engine::server::db::DbFreeResult(res);
 		}
 
-		// 2) Condition groups (rows multiples par group_id).
+		// 2) Condition groups (rows multiples par group_id). N1-I : prepared statement.
 		{
-			MYSQL_RES* res = engine::server::db::DbQuery(mysql,
+			auto* stmt = cache->Acquire(mysql,
 				"SELECT group_id, logic, member_id, member_type FROM condition_groups "
 				"ORDER BY group_id, member_id");
-			if (!res)
+			if (!stmt || !stmt->Execute())
 				return false;
-			MYSQL_ROW row;
-			while ((row = mysql_fetch_row(res)) != nullptr)
+			while (stmt->FetchRow())
 			{
-				if (!row[0]) continue;
-				const uint32_t gid = static_cast<uint32_t>(std::strtoul(row[0], nullptr, 10));
+				const uint32_t gid = static_cast<uint32_t>(stmt->GetUInt64(0));
 				ConditionGroup& g = m_groups[gid];
 				g.groupId = gid;
-				g.logic   = static_cast<ConditionLogic>(std::atoi(row[1]));
+				g.logic   = static_cast<ConditionLogic>(stmt->GetInt32(1));
 				ConditionGroupMember m{};
-				m.memberId   = static_cast<uint32_t>(std::strtoul(row[2], nullptr, 10));
-				m.memberType = static_cast<ConditionMemberType>(std::atoi(row[3]));
+				m.memberId   = static_cast<uint32_t>(stmt->GetUInt64(2));
+				m.memberType = static_cast<ConditionMemberType>(stmt->GetInt32(3));
 				g.members.push_back(m);
 			}
-			engine::server::db::DbFreeResult(res);
 		}
 
 		// 3) Détection cycles dans les groups.

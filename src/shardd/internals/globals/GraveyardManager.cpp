@@ -1,7 +1,7 @@
 #include "src/shardd/internals/globals/GraveyardManager.h"
 
 #include "src/shared/db/ConnectionPool.h"
-#include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 #include "src/shared/core/Log.h"
 
 #include <mysql.h>
@@ -19,30 +19,29 @@ namespace engine::server::shard::globals
 
 		auto guard = pool.Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
 
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql,
+		// N1-I : prepared statement no-param. Floats via GetString + strtof.
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT id, map_id, position_x, position_y, position_z, faction, zone_id "
 			"FROM graveyards");
-		if (!res)
+		if (!stmt || !stmt->Execute())
 			return false;
 
-		MYSQL_ROW row;
-		while ((row = mysql_fetch_row(res)) != nullptr)
+		while (stmt->FetchRow())
 		{
-			if (!row[0]) continue;
 			Graveyard g{};
-			g.id        = static_cast<uint32_t>(std::strtoul(row[0], nullptr, 10));
-			g.mapId     = static_cast<uint32_t>(std::strtoul(row[1], nullptr, 10));
-			g.positionX = static_cast<float>(std::atof(row[2]));
-			g.positionY = static_cast<float>(std::atof(row[3]));
-			g.positionZ = static_cast<float>(std::atof(row[4]));
-			g.faction   = static_cast<FactionId>(std::atoi(row[5]));
-			g.zoneId    = static_cast<uint32_t>(std::strtoul(row[6], nullptr, 10));
+			g.id        = static_cast<uint32_t>(stmt->GetUInt64(0));
+			g.mapId     = static_cast<uint32_t>(stmt->GetUInt64(1));
+			g.positionX = std::strtof(stmt->GetString(2).c_str(), nullptr);
+			g.positionY = std::strtof(stmt->GetString(3).c_str(), nullptr);
+			g.positionZ = std::strtof(stmt->GetString(4).c_str(), nullptr);
+			g.faction   = static_cast<FactionId>(stmt->GetInt32(5));
+			g.zoneId    = static_cast<uint32_t>(stmt->GetUInt64(6));
 			m_graveyards.push_back(g);
 		}
-		engine::server::db::DbFreeResult(res);
 
 		m_loaded = true;
 		LOG_INFO(Core, "[GraveyardManager] Loaded {} graveyards", m_graveyards.size());

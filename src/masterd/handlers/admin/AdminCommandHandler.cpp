@@ -193,7 +193,11 @@ namespace engine::server
 			}
 			int phase = -1;
 			try { phase = std::stoi(args[0]); }
-			catch (...) { phase = -1; }
+			catch (...)
+			{
+				LOG_WARN(Net, "/sky moon : argument <phase> invalide ('{}')", args[0]);
+				phase = -1;
+			}
 			if (phase < 0 || phase > 15)
 			{
 				resp.status = AdminCommandStatus::InvalidArgs;
@@ -232,7 +236,11 @@ namespace engine::server
 			}
 			float hours = -1.0f;
 			try { hours = std::stof(args[0]); }
-			catch (...) { hours = -1.0f; }
+			catch (...)
+			{
+				LOG_WARN(Net, "/sky time : argument <hours> invalide ('{}')", args[0]);
+				hours = -1.0f;
+			}
 			if (!(hours >= 0.0f) || hours >= 24.0f)
 			{
 				resp.status = AdminCommandStatus::InvalidArgs;
@@ -306,7 +314,11 @@ namespace engine::server
 			}
 			uint64_t targetId = 0;
 			try { targetId = std::stoull(args[0]); }
-			catch (...) { targetId = 0; }
+			catch (...)
+			{
+				LOG_WARN(Net, "/promote : argument <account_id> invalide ('{}')", args[0]);
+				targetId = 0;
+			}
 			if (targetId == 0u)
 			{
 				resp.status = AdminCommandStatus::InvalidArgs;
@@ -699,7 +711,11 @@ namespace engine::server
 
 		int durationMin = -1;
 		try { durationMin = std::stoi(args[1]); }
-		catch (...) { durationMin = -1; }
+		catch (...)
+		{
+			LOG_WARN(Net, "/mute : argument <duration_minutes> invalide ('{}')", args[1]);
+			durationMin = -1;
+		}
 		if (durationMin <= 0 || durationMin > 60 * 24 * 365)
 		{
 			resp.status = AdminCommandStatus::InvalidArgs;
@@ -996,7 +1012,11 @@ namespace engine::server
 			}
 			uint32_t connId = 0u;
 			try { connId = static_cast<uint32_t>(std::stoul(args[0])); }
-			catch (...) { connId = 0u; }
+			catch (...)
+			{
+				LOG_WARN(Net, "/packet log dump : argument <connId> invalide ('{}')", args[0]);
+				connId = 0u;
+			}
 			// Note : connId == 0 est une valeur valide (slot NetServer
 			// commence a 0 ou 1 selon allocations). On ne rejette pas.
 
@@ -1004,7 +1024,11 @@ namespace engine::server
 			if (args.size() >= 2u)
 			{
 				try { n = static_cast<size_t>(std::stoul(args[1])); }
-				catch (...) { n = kDefaultN; }
+				catch (...)
+				{
+					LOG_WARN(Net, "/packet log dump : argument <n> invalide ('{}')", args[1]);
+					n = kDefaultN;
+				}
 				if (n == 0u) n = kDefaultN;
 			}
 
@@ -1030,7 +1054,11 @@ namespace engine::server
 			if (!args.empty())
 			{
 				try { n = static_cast<size_t>(std::stoul(args[0])); }
-				catch (...) { n = kDefaultN; }
+				catch (...)
+				{
+					LOG_WARN(Net, "/packet log dump_all : argument <n> invalide ('{}')", args[0]);
+					n = kDefaultN;
+				}
 				if (n == 0u) n = kDefaultN;
 			}
 

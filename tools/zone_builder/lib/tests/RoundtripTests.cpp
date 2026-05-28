@@ -35,7 +35,9 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iterator>
+#include <limits>
 #include <random>
 #include <sstream>
 #include <string>
@@ -167,11 +169,20 @@ namespace
 
 		for (const char* name : kFileNames)
 		{
+			// Existence : `WriteChunkPackage` doit créer TOUS les fichiers,
+			// même ceux légitimement vides (instances.bin / navmesh.bin /
+			// probes.bin sont produits par `WriteEmptyBin` — leur taille
+			// est 0 octet par design). On vérifie donc l'existence sur
+			// disque, pas le `!empty()` du buffer lu.
+			REQUIRE(std::filesystem::exists(dirA / name));
+			REQUIRE(std::filesystem::exists(dirB / name));
+
 			const std::vector<uint8_t> a = ReadFileBytes(dirA / name);
 			const std::vector<uint8_t> b = ReadFileBytes(dirB / name);
 
-			REQUIRE(!a.empty());
-			REQUIRE(!b.empty());
+			// Déterminisme : tailles et contenus strictement identiques
+			// (deux fichiers vides hashent à la même valeur d'amorce
+			// FNV-1a, ce qui est correct pour la garantie testée ici).
 			REQUIRE(a.size() == b.size());
 
 			const uint64_t hashA = HashFnv1a64(a);
@@ -215,7 +226,15 @@ namespace
 
 		// Sérialisation manuelle (mêmes noms de membres que LoadLayoutDocument
 		// attend : version, instances[], guid, gltf, position[3]).
+		//
+		// `max_digits10` (= 17 pour double IEEE-754) garantit qu'un double
+		// sérialisé en décimal puis re-parsé retrouve EXACTEMENT la même
+		// valeur binaire. Sans cette précision, ostream utilise la précision
+		// par défaut de 6 chiffres → `9000.125` devenait "9000.12" puis se
+		// re-parsait comme 9000.12, faisant échouer l'égalité bit-à-bit
+		// `rebuilt.positionX == source.positionX` (bug du test, pas du parser).
 		std::ostringstream oss;
+		oss << std::setprecision(std::numeric_limits<double>::max_digits10);
 		oss << "{\n  \"version\": " << source.version << ",\n  \"instances\": [\n";
 		for (size_t i = 0; i < source.instances.size(); ++i)
 		{

@@ -1,51 +1,37 @@
 // Wave 5 Persistence (Phase 5.09b) - Implementation MysqlAuctionStore.
+// N1-G : converti en prepared statements (LoadAllActive + Insert + UpdateBid + MarkEnded).
 
 #include "src/masterd/auction/MysqlAuctionStore.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/db/ConnectionPool.h"
-#include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
-
-#include <cstdio>
-#include <cstdlib>
-#include <vector>
 
 namespace engine::server::auctions
 {
 	namespace
 	{
-		/// Echappe une chaine pour MySQL via mysql_real_escape_string.
-		/// Retourne vide si mysql null.
-		std::string EscapeMysql(MYSQL* mysql, std::string_view v)
-		{
-			if (!mysql) return {};
-			std::vector<char> buf(v.size() * 2 + 1);
-			const auto w = mysql_real_escape_string(mysql, buf.data(), v.data(),
-				static_cast<unsigned long>(v.size()));
-			return std::string(buf.data(), w);
-		}
-
-		/// Materialise une AuctionRow a partir d'un MYSQL_ROW.
-		/// L'ordre des colonnes est ALIGNE sur la query SELECT.
-		AuctionRow RowToAuction(MYSQL_ROW row)
+		/// Materialise une AuctionRow a partir d'un SqlPreparedStatement au FetchRow courant.
+		/// L'ordre des colonnes est ALIGNE sur la query SELECT (14 colonnes).
+		AuctionRow StmtToAuction(engine::server::db::SqlPreparedStatement* stmt)
 		{
 			AuctionRow a;
-			if (row[0])  a.auctionId               = std::strtoull(row[0], nullptr, 10);
-			if (row[1])  a.itemTemplateId          = static_cast<uint32_t>(std::strtoul(row[1], nullptr, 10));
-			if (row[2])  a.itemName                = row[2];
-			if (row[3])  a.count                   = static_cast<uint32_t>(std::strtoul(row[3], nullptr, 10));
-			if (row[4])  a.startBidCopper          = std::strtoull(row[4], nullptr, 10);
-			if (row[5])  a.currentBidCopper        = std::strtoull(row[5], nullptr, 10);
-			if (row[6])  a.buyoutCopper            = std::strtoull(row[6], nullptr, 10);
-			if (row[7])  a.ownerAccountId          = std::strtoull(row[7], nullptr, 10);
-			if (row[8])  a.ownerName               = row[8];
-			if (row[9])  a.highestBidderAccountId  = std::strtoull(row[9], nullptr, 10);
-			if (row[10]) a.highestBidderName       = row[10];
-			if (row[11]) a.expiresAtUnixMs         = std::strtoull(row[11], nullptr, 10);
-			if (row[12]) a.ended                   = (std::strtoul(row[12], nullptr, 10) != 0u);
-			if (row[13]) a.wonByBuyout             = (std::strtoul(row[13], nullptr, 10) != 0u);
+			a.auctionId               = stmt->GetUInt64(0);
+			a.itemTemplateId          = static_cast<uint32_t>(stmt->GetUInt64(1));
+			a.itemName                = stmt->GetString(2);
+			a.count                   = static_cast<uint32_t>(stmt->GetUInt64(3));
+			a.startBidCopper          = stmt->GetUInt64(4);
+			a.currentBidCopper        = stmt->GetUInt64(5);
+			a.buyoutCopper            = stmt->GetUInt64(6);
+			a.ownerAccountId          = stmt->GetUInt64(7);
+			a.ownerName               = stmt->GetString(8);
+			a.highestBidderAccountId  = stmt->GetUInt64(9);
+			a.highestBidderName       = stmt->GetString(10);
+			a.expiresAtUnixMs         = stmt->GetUInt64(11);
+			a.ended                   = (stmt->GetUInt64(12) != 0u);
+			a.wonByBuyout             = (stmt->GetUInt64(13) != 0u);
 			return a;
 		}
 	}
@@ -61,26 +47,25 @@ namespace engine::server::auctions
 		if (!IsAvailable()) return out;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return out;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return out;
 
-		// SELECT colonnes alignees sur RowToAuction (14 colonnes).
-		const char* sql =
+		// SELECT colonnes alignees sur StmtToAuction (14 colonnes).
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT auction_id, item_template_id, item_name, count, "
 			"start_bid_copper, current_bid_copper, buyout_copper, "
 			"owner_account_id, owner_name, "
 			"COALESCE(highest_bidder_account_id, 0), "
 			"COALESCE(highest_bidder_name, ''), "
 			"expires_at_unix_ms, ended, won_by_buyout "
-			"FROM auction_listings_v2 WHERE ended = 0";
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res)
+			"FROM auction_listings_v2 WHERE ended = 0");
+		if (!stmt || !stmt->Execute())
 		{
 			LOG_WARN(Net, "[MysqlAuctionStore] LoadAllActive query failed");
 			return out;
 		}
-		while (MYSQL_ROW row = mysql_fetch_row(res))
-			out.push_back(RowToAuction(row));
-		engine::server::db::DbFreeResult(res);
+		while (stmt->FetchRow())
+			out.push_back(StmtToAuction(stmt));
 		LOG_INFO(Net, "[MysqlAuctionStore] LoadAllActive loaded {} active listings", out.size());
 		return out;
 	}
@@ -90,32 +75,29 @@ namespace engine::server::auctions
 		if (!IsAvailable()) return 0u;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return 0u;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return 0u;
 
-		const std::string itemName  = EscapeMysql(mysql, row.itemName);
-		const std::string ownerName = EscapeMysql(mysql, row.ownerName);
-
-		char sql[1024];
 		// AUTO_INCREMENT pour auction_id, on n'envoie pas la colonne.
-		std::snprintf(sql, sizeof(sql),
+		// 10 binds, ended=0 / won_by_buyout=0 littéraux (auction nouvellement créée).
+		auto* stmt = cache->Acquire(mysql,
 			"INSERT INTO auction_listings_v2 ("
 			"item_template_id, item_name, count, start_bid_copper, "
 			"current_bid_copper, buyout_copper, owner_account_id, owner_name, "
 			"expires_at_unix_ms, ended, won_by_buyout"
-			") VALUES ("
-			"%u, '%s', %u, %llu, %llu, %llu, %llu, '%s', %llu, 0, 0"
-			")",
-			row.itemTemplateId,
-			itemName.c_str(),
-			row.count,
-			static_cast<unsigned long long>(row.startBidCopper),
-			static_cast<unsigned long long>(row.currentBidCopper),
-			static_cast<unsigned long long>(row.buyoutCopper),
-			static_cast<unsigned long long>(row.ownerAccountId),
-			ownerName.c_str(),
-			static_cast<unsigned long long>(row.expiresAtUnixMs));
-
-		if (!engine::server::db::DbExecute(mysql, sql))
+			") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)");
+		const bool ok = stmt
+			&& stmt->Bind(0, row.itemTemplateId)
+			&& stmt->Bind(1, std::string_view(row.itemName))
+			&& stmt->Bind(2, row.count)
+			&& stmt->Bind(3, row.startBidCopper)
+			&& stmt->Bind(4, row.currentBidCopper)
+			&& stmt->Bind(5, row.buyoutCopper)
+			&& stmt->Bind(6, row.ownerAccountId)
+			&& stmt->Bind(7, std::string_view(row.ownerName))
+			&& stmt->Bind(8, row.expiresAtUnixMs)
+			&& stmt->Execute();
+		if (!ok)
 		{
 			LOG_WARN(Net, "[MysqlAuctionStore] Insert auction failed");
 			return 0u;
@@ -129,23 +111,21 @@ namespace engine::server::auctions
 		if (!IsAvailable()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
 
-		const std::string name = EscapeMysql(mysql, bidderName);
-
-		char sql[512];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"UPDATE auction_listings_v2 SET "
-			"current_bid_copper = %llu, "
-			"highest_bidder_account_id = %llu, "
-			"highest_bidder_name = '%s' "
-			"WHERE auction_id = %llu",
-			static_cast<unsigned long long>(newBidCopper),
-			static_cast<unsigned long long>(bidderAccountId),
-			name.c_str(),
-			static_cast<unsigned long long>(auctionId));
-
-		const bool ok = engine::server::db::DbExecute(mysql, sql);
+			"current_bid_copper = ?, "
+			"highest_bidder_account_id = ?, "
+			"highest_bidder_name = ? "
+			"WHERE auction_id = ?");
+		const bool ok = stmt
+			&& stmt->Bind(0, newBidCopper)
+			&& stmt->Bind(1, bidderAccountId)
+			&& stmt->Bind(2, bidderName)
+			&& stmt->Bind(3, auctionId)
+			&& stmt->Execute();
 		if (!ok)
 			LOG_WARN(Net, "[MysqlAuctionStore] UpdateBid failed auctionId={}", auctionId);
 		return ok;
@@ -156,16 +136,16 @@ namespace engine::server::auctions
 		if (!IsAvailable()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
 
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
-			"UPDATE auction_listings_v2 SET ended = 1, won_by_buyout = %u "
-			"WHERE auction_id = %llu",
-			wonByBuyout ? 1u : 0u,
-			static_cast<unsigned long long>(auctionId));
-
-		const bool ok = engine::server::db::DbExecute(mysql, sql);
+		auto* stmt = cache->Acquire(mysql,
+			"UPDATE auction_listings_v2 SET ended = 1, won_by_buyout = ? "
+			"WHERE auction_id = ?");
+		const bool ok = stmt
+			&& stmt->Bind(0, static_cast<uint32_t>(wonByBuyout ? 1u : 0u))
+			&& stmt->Bind(1, auctionId)
+			&& stmt->Execute();
 		if (!ok)
 			LOG_WARN(Net, "[MysqlAuctionStore] MarkEnded failed auctionId={}", auctionId);
 		return ok;

@@ -1,17 +1,11 @@
 ﻿import { NextResponse } from 'next/server'
-import { isStaff } from '@/lib/auth/roles'
-import { cookies } from 'next/headers'
+import { requireAdmin } from '@/lib/auth/admin'
 import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
 import { logError } from '@/lib/log'
 
-async function checkAdmin() {
-  const role = cookies().get('lcdlln_portal_role')?.value
-  return isStaff(role)
-}
-
 export async function PATCH(_req: Request, { params }: { params: { id: string } }) {
-  if (!await checkAdmin()) return NextResponse.json({ ok: false }, { status: 403 })
+  if (!(await requireAdmin())) return NextResponse.json({ ok: false }, { status: 403 })
   const id = parseInt(params.id, 10)
   if (isNaN(id)) return NextResponse.json({ ok: false }, { status: 400 })
 

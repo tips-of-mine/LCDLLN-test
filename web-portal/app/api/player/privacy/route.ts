@@ -2,19 +2,15 @@
 // Body: { visibility: 'public' | 'friends' | 'none' }
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
-import { cookies } from 'next/headers'
+import { getSession } from '@/lib/auth/session'
 import type { ResultSetHeader } from 'mysql2/promise'
 import { query } from '@/lib/db/connection'
 import { logError } from '@/lib/log'
 
 export async function PATCH(request: Request) {
-  const jar = cookies()
-  const raw = jar.get('lcdlln_portal_account')?.value
-  if (!raw) return NextResponse.json({ ok: false, message: 'Non authentifié' }, { status: 401 })
-  const accountId = parseInt(raw, 10)
-  if (isNaN(accountId) || accountId <= 0) {
-    return NextResponse.json({ ok: false, message: 'Session invalide' }, { status: 401 })
-  }
+  const session = await getSession()
+  if (!session) return NextResponse.json({ ok: false, message: 'Non authentifié' }, { status: 401 })
+  const accountId = session.accountId
 
   try {
     const body = await request.json() as { visibility?: string }

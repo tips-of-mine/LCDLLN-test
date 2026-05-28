@@ -1,18 +1,16 @@
 // POST /api/player/password
 // Body: { currentPassword: string, newPassword: string }
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { getSession } from '@/lib/auth/session'
 import { query } from '@/lib/db/connection'
 import { verifyGameMasterPassword, hashPasswordForGameMaster } from '@/lib/auth/gamePasswordHash'
 import type { RowDataPacket } from 'mysql2/promise'
 import { logError } from '@/lib/log'
 
 export async function POST(request: Request) {
-  const jar = cookies()
-  const raw = jar.get('lcdlln_portal_account')?.value
-  if (!raw) return NextResponse.json({ ok: false }, { status: 401 })
-  const accountId = parseInt(raw, 10)
-  if (isNaN(accountId)) return NextResponse.json({ ok: false }, { status: 401 })
+  const session = await getSession()
+  if (!session) return NextResponse.json({ ok: false }, { status: 401 })
+  const accountId = session.accountId
 
   try {
     const body = await request.json() as { currentPassword?: string; newPassword?: string }

@@ -1,16 +1,10 @@
 // PATCH /api/admin/cgu/[id] — update draft edition
 // DELETE /api/admin/cgu/[id] — delete draft edition
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { requireAdmin } from '@/lib/auth/admin'
 import { query } from '@/lib/db/connection'
-import { isStaff } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
 import { logError } from '@/lib/log'
-
-function isAdmin(): boolean {
-  const jar = cookies()
-  return isStaff(jar.get('lcdlln_portal_role')?.value)
-}
 
 async function getEdition(id: number) {
   const rows = await query<Array<RowDataPacket & { id: number; status: string }>>(
@@ -24,7 +18,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  if (!isAdmin()) return NextResponse.json({ ok: false }, { status: 403 })
+  if (!(await requireAdmin())) return NextResponse.json({ ok: false }, { status: 403 })
 
   const id = parseInt(params.id, 10)
   if (isNaN(id)) return NextResponse.json({ ok: false }, { status: 400 })
@@ -97,7 +91,7 @@ export async function DELETE(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
-  if (!isAdmin()) return NextResponse.json({ ok: false }, { status: 403 })
+  if (!(await requireAdmin())) return NextResponse.json({ ok: false }, { status: 403 })
 
   const id = parseInt(params.id, 10)
   if (isNaN(id)) return NextResponse.json({ ok: false }, { status: 400 })

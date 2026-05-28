@@ -1,19 +1,13 @@
 // GET /api/admin/faq — returns all faq items ordered by display_order
 // POST /api/admin/faq — creates a new faq item
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { requireAdmin } from '@/lib/auth/admin'
 import { query } from '@/lib/db/connection'
-import { isStaff } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
 import { logError } from '@/lib/log'
 
-function isAdmin(): boolean {
-  const jar = cookies()
-  return isStaff(jar.get('lcdlln_portal_role')?.value)
-}
-
 export async function GET() {
-  if (!isAdmin()) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
   try {
@@ -28,7 +22,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!isAdmin()) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
   try {

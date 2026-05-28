@@ -1,7 +1,7 @@
 // POST /api/bugs
 // Body: { title, body, category }
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { getSession } from '@/lib/auth/session'
 import { query } from '@/lib/db/connection'
 import { logError } from '@/lib/log'
 import type { ResultSetHeader } from 'mysql2/promise'
@@ -9,11 +9,9 @@ import type { ResultSetHeader } from 'mysql2/promise'
 const VALID_CATEGORIES = ['gameplay', 'graphique', 'reseau', 'interface', 'autre'] as const
 
 export async function POST(request: Request) {
-  const jar = cookies()
-  const raw = jar.get('lcdlln_portal_account')?.value
-  if (!raw) return NextResponse.json({ ok: false }, { status: 401 })
-  const accountId = parseInt(raw, 10)
-  if (isNaN(accountId)) return NextResponse.json({ ok: false }, { status: 401 })
+  const session = await getSession()
+  if (!session) return NextResponse.json({ ok: false }, { status: 401 })
+  const accountId = session.accountId
 
   try {
     const body = await request.json() as { title?: string; body?: string; category?: string }

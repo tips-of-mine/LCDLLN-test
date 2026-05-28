@@ -1,7 +1,7 @@
 // POST /api/player/parental/request
 // Body: { parentalEmail: string }
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { getSession } from '@/lib/auth/session'
 import { query } from '@/lib/db/connection'
 import { sendParentalValidation } from '@/lib/email/sender'
 import { requireEnv } from '@/lib/env'
@@ -10,11 +10,9 @@ import type { RowDataPacket } from 'mysql2/promise'
 import { logError } from '@/lib/log'
 
 export async function POST(request: Request) {
-  const jar = cookies()
-  const raw = jar.get('lcdlln_portal_account')?.value
-  if (!raw) return NextResponse.json({ ok: false }, { status: 401 })
-  const accountId = parseInt(raw, 10)
-  if (isNaN(accountId)) return NextResponse.json({ ok: false }, { status: 401 })
+  const session = await getSession()
+  if (!session) return NextResponse.json({ ok: false }, { status: 401 })
+  const accountId = session.accountId
 
   try {
     const body = await request.json() as { parentalEmail?: string }

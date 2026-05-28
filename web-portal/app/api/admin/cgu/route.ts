@@ -2,19 +2,13 @@
 // Body: { versionLabel, titleFr, contentFr, titleEn?, contentEn? }
 // Creates a new terms_edition (status='draft') + terms_localizations entries
 import { NextResponse } from 'next/server'
-import { isStaff } from '@/lib/auth/roles'
-import { cookies } from 'next/headers'
+import { requireAdmin } from '@/lib/auth/admin'
 import { query } from '@/lib/db/connection'
 import { logError } from '@/lib/log'
 import type { ResultSetHeader } from 'mysql2/promise'
 
-function isAdmin(): boolean {
-  const jar = cookies()
-  return isStaff(jar.get('lcdlln_portal_role')?.value)
-}
-
 export async function POST(request: Request) {
-  if (!isAdmin()) return NextResponse.json({ ok: false }, { status: 403 })
+  if (!(await requireAdmin())) return NextResponse.json({ ok: false }, { status: 403 })
 
   try {
     const body = await request.json() as {

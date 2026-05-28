@@ -5,10 +5,10 @@ import { getSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
-// Source d'autorité = la session (cookie `lcdlln_portal_account` posé au login).
-// Avant ce fix la page exigeait `?accountId=N` manuellement dans l'URL — un
-// TODO dev qui n'avait jamais été terminé. Le middleware `/player/:path*` +
-// getSession() garantissent un accountId valide ici.
+// Source d'autorité = la session (session_token random posé au login dans
+// le cookie `lcdlln_portal_session`, matérialisée par `getSession()` via
+// lookup `portal_sessions` JOIN `accounts`). Le middleware `/player/:path*`
+// + getSession() garantissent un accountId valide ici.
 export default async function RecoveryProfilePage() {
   const session = await getSession();
   if (!session) redirect("/login?redirect=/player/recovery-profile");

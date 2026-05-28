@@ -10,6 +10,7 @@
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
 
@@ -37,45 +38,52 @@ namespace engine::server
 		return true;
 	}
 
-	bool CharacterCreateHandler::IsForbiddenCharacterName(void* mysqlPtr, std::string_view name) const
+	bool CharacterCreateHandler::IsForbiddenCharacterName(void* mysqlPtr,
+		engine::server::db::SqlPreparedStatementCache* cache, std::string_view name) const
 	{
 		MYSQL* mysql = reinterpret_cast<MYSQL*>(mysqlPtr);
-		char escapedName[128]{};
-		mysql_real_escape_string(mysql, escapedName, std::string(name).c_str(), static_cast<unsigned long>(name.size()));
-		std::string sql = "SELECT id FROM forbidden_character_names WHERE LOWER(name) = LOWER('";
-		sql += escapedName;
-		sql += "') LIMIT 1";
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res)
+		if (!cache)
+		{
+			LOG_WARN(Net, "[CharacterCreateHandler] IsForbiddenCharacterName : cache de prepared statements absent");
 			return false;
-		MYSQL_ROW row = mysql_fetch_row(res);
-		const bool found = row != nullptr;
-		engine::server::db::DbFreeResult(res);
-		return found;
+		}
+		auto* stmt = cache->Acquire(mysql,
+			"SELECT id FROM forbidden_character_names WHERE LOWER(name) = LOWER(?) LIMIT 1");
+		if (!stmt)
+		{
+			LOG_WARN(Net, "[CharacterCreateHandler] IsForbiddenCharacterName : Acquire prepared stmt a échoué");
+			return false;
+		}
+		if (!stmt->Bind(0, name)) return false;
+		if (!stmt->Execute()) return false;
+		return stmt->FetchRow();
 	}
 
-	bool CharacterCreateHandler::CharacterNameExistsOnServer(void* mysqlPtr, std::string_view name, uint64_t serverId) const
+	bool CharacterCreateHandler::CharacterNameExistsOnServer(void* mysqlPtr,
+		engine::server::db::SqlPreparedStatementCache* cache, std::string_view name, uint64_t serverId) const
 	{
 		MYSQL* mysql = reinterpret_cast<MYSQL*>(mysqlPtr);
-		char escapedName[128]{};
-		mysql_real_escape_string(mysql, escapedName, std::string(name).c_str(), static_cast<unsigned long>(name.size()));
+		if (!cache)
+		{
+			LOG_WARN(Net, "[CharacterCreateHandler] CharacterNameExistsOnServer : cache absent");
+			return false;
+		}
 		// Filtre 'deleted_at IS NULL' : sans cela, un nom de perso
 		// soft-delete reste reserve a vie et empeche l'utilisateur de
 		// recreer un perso avec le meme nom (meme s'il l'a lui-meme
 		// supprime). MVP : on libere le nom des la suppression. Une
 		// future evolution pourra ajouter un delai de carence anti-squat.
-		std::string sql = "SELECT id FROM characters WHERE server_id = ";
-		sql += std::to_string(serverId);
-		sql += " AND LOWER(name) = LOWER('";
-		sql += escapedName;
-		sql += "') AND deleted_at IS NULL LIMIT 1";
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res)
+		auto* stmt = cache->Acquire(mysql,
+			"SELECT id FROM characters WHERE server_id = ? AND LOWER(name) = LOWER(?) AND deleted_at IS NULL LIMIT 1");
+		if (!stmt)
+		{
+			LOG_WARN(Net, "[CharacterCreateHandler] CharacterNameExistsOnServer : Acquire prepared stmt a échoué");
 			return false;
-		MYSQL_ROW row = mysql_fetch_row(res);
-		const bool found = row != nullptr;
-		engine::server::db::DbFreeResult(res);
-		return found;
+		}
+		if (!stmt->Bind(0, serverId)) return false;
+		if (!stmt->Bind(1, name)) return false;
+		if (!stmt->Execute()) return false;
+		return stmt->FetchRow();
 	}
 
 	uint64_t CharacterCreateHandler::ResolveDefaultServerId(void* mysqlPtr) const
@@ -104,32 +112,38 @@ namespace engine::server
 		return 0;
 	}
 
-	int CharacterCreateHandler::FindNextSlot(void* mysqlPtr, uint64_t accountId, uint64_t serverId) const
+	int CharacterCreateHandler::FindNextSlot(void* mysqlPtr,
+		engine::server::db::SqlPreparedStatementCache* cache,
+		uint64_t accountId, uint64_t serverId) const
 	{
 		MYSQL* mysql = reinterpret_cast<MYSQL*>(mysqlPtr);
+		if (!cache)
+		{
+			LOG_WARN(Net, "[CharacterCreateHandler] FindNextSlot : cache absent");
+			return -1;
+		}
 		// Filtre 'deleted_at IS NULL' : sans cela, les persos soft-deletes via
 		// CharacterDeleteHandler (qui pose deleted_at = NOW()) restent comptes
 		// comme occupant un slot, et FindNextSlot retourne 1 au lieu de 0 apres
 		// suppression d'un unique perso. Du coup le client affiche 'Slot 2' alors
 		// qu'il devrait afficher 'Slot 1'.
-		std::string sql = "SELECT slot FROM characters WHERE account_id = " + std::to_string(accountId)
-			+ " AND server_id = " + std::to_string(serverId)
-			+ " AND deleted_at IS NULL ORDER BY slot ASC";
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res)
-			return -1;
-		bool used[5]{ false, false, false, false, false };
-		MYSQL_ROW row;
-		while ((row = mysql_fetch_row(res)))
+		auto* stmt = cache->Acquire(mysql,
+			"SELECT slot FROM characters WHERE account_id = ? AND server_id = ? AND deleted_at IS NULL ORDER BY slot ASC");
+		if (!stmt)
 		{
-			if (row[0])
-			{
-				const unsigned long slot = std::strtoul(row[0], nullptr, 10);
-				if (slot < 5u)
-					used[slot] = true;
-			}
+			LOG_WARN(Net, "[CharacterCreateHandler] FindNextSlot : Acquire prepared stmt a échoué");
+			return -1;
 		}
-		engine::server::db::DbFreeResult(res);
+		if (!stmt->Bind(0, accountId)) return -1;
+		if (!stmt->Bind(1, serverId)) return -1;
+		if (!stmt->Execute()) return -1;
+		bool used[5]{ false, false, false, false, false };
+		while (stmt->FetchRow())
+		{
+			const int32_t slot = stmt->GetInt32(0, -1);
+			if (slot >= 0 && slot < 5)
+				used[slot] = true;
+		}
 		for (int i = 0; i < 5; ++i)
 		{
 			if (!used[i])
@@ -173,6 +187,7 @@ namespace engine::server
 
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
+		auto* stmtCache = guard.cache();
 		if (!mysql)
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "database unavailable", requestId, sessionIdHeader);
@@ -190,7 +205,7 @@ namespace engine::server
 			return;
 		}
 
-		if (IsForbiddenCharacterName(mysql, parsed->name))
+		if (IsForbiddenCharacterName(mysql, stmtCache, parsed->name))
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "character name is forbidden", requestId, sessionIdHeader);
 			if (!pkt.empty())
@@ -198,7 +213,7 @@ namespace engine::server
 			return;
 		}
 
-		if (CharacterNameExistsOnServer(mysql, parsed->name, serverId))
+		if (CharacterNameExistsOnServer(mysql, stmtCache, parsed->name, serverId))
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "character name already taken on this server", requestId, sessionIdHeader);
 			if (!pkt.empty())
@@ -206,7 +221,7 @@ namespace engine::server
 			return;
 		}
 
-		const int slot = FindNextSlot(mysql, *accountId, serverId);
+		const int slot = FindNextSlot(mysql, stmtCache, *accountId, serverId);
 		if (slot < 0)
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "character slots full", requestId, sessionIdHeader);

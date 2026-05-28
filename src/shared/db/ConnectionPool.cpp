@@ -3,6 +3,7 @@
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
 
@@ -15,14 +16,21 @@ namespace engine::server::db
 	{
 		constexpr int kAcquireTimeoutMs = 5000;
 		constexpr int kAcquireRetryMs = 50;
+		/// Capacité LRU du cache de prepared statements par connexion.
+		/// 32 = couvre confortablement les hot handlers du master sans gaspiller
+		/// de mémoire (chaque entrée ≈ 1 MYSQL_STMT + buffers de bind ~ quelques Ko).
+		constexpr size_t kPreparedStatementCacheSize = 32;
 	}
 
-	ConnectionPool::Guard::Guard(ConnectionPool* pool, MYSQL* mysql) : m_pool(pool), m_mysql(mysql) {}
+	ConnectionPool::Guard::Guard(ConnectionPool* pool, MYSQL* mysql, SqlPreparedStatementCache* cache)
+		: m_pool(pool), m_mysql(mysql), m_cache(cache) {}
 
-	ConnectionPool::Guard::Guard(Guard&& other) noexcept : m_pool(other.m_pool), m_mysql(other.m_mysql)
+	ConnectionPool::Guard::Guard(Guard&& other) noexcept
+		: m_pool(other.m_pool), m_mysql(other.m_mysql), m_cache(other.m_cache)
 	{
 		other.m_pool = nullptr;
 		other.m_mysql = nullptr;
+		other.m_cache = nullptr;
 	}
 
 	ConnectionPool::Guard& ConnectionPool::Guard::operator=(Guard&& other) noexcept
@@ -33,8 +41,10 @@ namespace engine::server::db
 				m_pool->Release(m_mysql);
 			m_pool = other.m_pool;
 			m_mysql = other.m_mysql;
+			m_cache = other.m_cache;
 			other.m_pool = nullptr;
 			other.m_mysql = nullptr;
+			other.m_cache = nullptr;
 		}
 		return *this;
 	}
@@ -45,6 +55,7 @@ namespace engine::server::db
 			m_pool->Release(m_mysql);
 		m_pool = nullptr;
 		m_mysql = nullptr;
+		m_cache = nullptr;
 	}
 
 	bool ConnectionPool::ConnectOne(MYSQL* mysql) const
@@ -105,6 +116,7 @@ namespace engine::server::db
 			}
 			m_connections[i].mysql = mysql;
 			m_connections[i].in_use = false;
+			m_connections[i].cache = std::make_unique<SqlPreparedStatementCache>(kPreparedStatementCacheSize);
 			++ok;
 		}
 
@@ -127,6 +139,10 @@ namespace engine::server::db
 		{
 			if (e.mysql)
 			{
+				// Détruire le cache de prepared statements AVANT de fermer la
+				// connexion : les ~SqlPreparedStatement appellent mysql_stmt_close
+				// qui requiert que le MYSQL* parent soit encore valide.
+				e.cache.reset();
 				mysql_close(e.mysql);
 				e.mysql = nullptr;
 				e.in_use = false;
@@ -158,6 +174,10 @@ namespace engine::server::db
 					{
 						if (mysql_ping(e.mysql) != 0)
 						{
+							// Reset du cache de prepared statements AVANT mysql_close :
+							// les MYSQL_STMT cachés sont liés à la connexion parente,
+							// on doit les fermer tant que le MYSQL* est encore valide.
+							e.cache.reset();
 							mysql_close(e.mysql);
 							e.mysql = mysql_init(nullptr);
 							if (e.mysql)
@@ -171,13 +191,16 @@ namespace engine::server::db
 									e.mysql = nullptr;
 									continue;
 								}
+								// Nouveau cache pour la connexion reconnectée :
+								// les anciens stmts étaient liés au MYSQL* fermé.
+								e.cache = std::make_unique<SqlPreparedStatementCache>(kPreparedStatementCacheSize);
 								LOG_INFO(Core, "[ConnectionPool] Reconnected after ping failure");
 							}
 						}
 						if (e.mysql)
 						{
 							e.in_use = true;
-							return Guard(this, e.mysql);
+							return Guard(this, e.mysql, e.cache.get());
 						}
 					}
 				}

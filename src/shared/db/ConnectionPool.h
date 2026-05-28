@@ -5,6 +5,16 @@
 #include <mutex>
 #include <vector>
 
+// Inclusion REQUISE (pas seulement forward-déclaration) :
+// `struct Entry` contient un `std::unique_ptr<SqlPreparedStatementCache>`.
+// Le destructeur par défaut de `unique_ptr<T>` exige le type complet de T
+// au point d'instanciation de `~Entry()` — ce qui se produit dans toute TU
+// qui détruit un `ConnectionPool` ou un `std::vector<Entry>` (notamment
+// `src/masterd/main_linux.cpp` qui possède l'instance maître). Une simple
+// forward-déclaration provoque l'erreur GCC "invalid application of
+// 'sizeof' to incomplete type" sur `~unique_ptr`.
+#include "src/shared/db/SqlPreparedStatement.h"
+
 struct MYSQL;
 
 namespace engine::core
@@ -16,6 +26,11 @@ namespace engine::server::db
 {
 	/// Thread-safe MySQL connection pool: configurable size, health check (ping) and reconnect on Acquire.
 	/// Only built on UNIX with MySQL client. Warm-up: Init() creates all connections at boot.
+	///
+	/// Chaque connexion porte un `SqlPreparedStatementCache` (LRU, taille fixe 32)
+	/// dédié — accessible via `Guard::cache()`. Les `MYSQL_STMT*` cachés sont liés
+	/// à la connexion qui les a préparés ; le cache est donc reset lors de la
+	/// reconnexion d'un slot et lors du Shutdown.
 	class ConnectionPool
 	{
 	public:
@@ -39,7 +54,7 @@ namespace engine::server::db
 		{
 		public:
 			Guard() = default;
-			Guard(ConnectionPool* pool, MYSQL* mysql);
+			Guard(ConnectionPool* pool, MYSQL* mysql, SqlPreparedStatementCache* cache);
 			Guard(Guard&& other) noexcept;
 			Guard& operator=(Guard&& other) noexcept;
 			~Guard();
@@ -50,9 +65,14 @@ namespace engine::server::db
 			MYSQL* get() const { return m_mysql; }
 			explicit operator bool() const { return m_mysql != nullptr; }
 
+			/// Cache de prepared statements dédié à cette connexion.
+			/// Null si la connexion est vide.
+			SqlPreparedStatementCache* cache() const { return m_cache; }
+
 		private:
 			ConnectionPool* m_pool = nullptr;
 			MYSQL* m_mysql = nullptr;
+			SqlPreparedStatementCache* m_cache = nullptr;
 		};
 
 		/// Acquires a connection (ping + reconnect if needed). Blocks until one is available or timeout.
@@ -64,6 +84,7 @@ namespace engine::server::db
 		{
 			MYSQL* mysql = nullptr;
 			bool in_use = false;
+			std::unique_ptr<SqlPreparedStatementCache> cache;
 		};
 		void Release(MYSQL* mysql);
 		bool ConnectOne(MYSQL* mysql) const;

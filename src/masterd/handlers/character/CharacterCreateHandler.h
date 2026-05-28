@@ -11,6 +11,7 @@ namespace engine::core
 namespace engine::server::db
 {
 	class ConnectionPool;
+	class SqlPreparedStatementCache;
 }
 
 namespace engine::server
@@ -33,10 +34,16 @@ namespace engine::server
 
 	private:
 		bool IsValidCharacterName(std::string_view name) const;
-		bool IsForbiddenCharacterName(void* mysqlPtr, std::string_view name) const;
-		bool CharacterNameExistsOnServer(void* mysqlPtr, std::string_view name, uint64_t serverId) const;
+		/// Variantes par prepared statement (N1-A) :
+		/// `cache` est récupéré depuis `ConnectionPool::Guard::cache()`. Null
+		/// désactive le chemin prepared et le helper retourne en erreur.
+		bool IsForbiddenCharacterName(void* mysqlPtr, engine::server::db::SqlPreparedStatementCache* cache,
+			std::string_view name) const;
+		bool CharacterNameExistsOnServer(void* mysqlPtr, engine::server::db::SqlPreparedStatementCache* cache,
+			std::string_view name, uint64_t serverId) const;
 		uint64_t ResolveDefaultServerId(void* mysqlPtr) const;
-		int FindNextSlot(void* mysqlPtr, uint64_t accountId, uint64_t serverId) const;
+		int FindNextSlot(void* mysqlPtr, engine::server::db::SqlPreparedStatementCache* cache,
+			uint64_t accountId, uint64_t serverId) const;
 
 		NetServer* m_server = nullptr;
 		SessionManager* m_sessions = nullptr;

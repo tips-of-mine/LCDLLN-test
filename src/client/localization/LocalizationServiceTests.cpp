@@ -27,7 +27,17 @@ namespace
 
 	bool WriteCatalog(const std::filesystem::path& root, std::string_view locale, std::string_view json)
 	{
-		const std::filesystem::path file = root / "localization" / "text" / (std::string(locale) + ".json");
+		// Le LocalizationService attend la structure
+		// `<paths.content>/localization/<locale>/<locale>.json` (cf.
+		// LocalizationService::LoadCatalog l. 322-342 + Init l. 100-113 qui
+		// scanne les sous-dossiers de `localization/` et cherche
+		// `<entry>/<entry>.json`). La version pré-FU-3 du test écrivait dans
+		// `localization/text/<locale>.json` — un sous-dossier littéral "text"
+		// qui ne correspond à aucun tag de locale, donc Init ne trouvait
+		// jamais le catalogue. Bug masqué par l'exclusion ctest `-E` sur les
+		// deux plateformes (la CI Windows ne lance pas ctest du tout).
+		const std::string localeStr(locale);
+		const std::filesystem::path file = root / "localization" / localeStr / (localeStr + ".json");
 		return engine::platform::FileSystem::WriteAllText(file, json);
 	}
 

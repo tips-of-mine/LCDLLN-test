@@ -83,20 +83,26 @@ jobs:
       # ShouldRelease retournait éternellement false → tile jamais déchargé.
       # Fix : std::optional<TimePoint> — même remède qu'en FU-6.
       #
+      # ─── (FU-3) RÉINTÉGRÉ — bug dans le TEST, pas dans le code prod ──────
+      # localization_service_tests : le diagnostic initial pointait un
+      # supposé bug Linux dans FileSystem::WriteAllText, mais l'analyse
+      # statique a révélé que le helper de test `WriteCatalog` écrivait
+      # dans `<root>/localization/text/<locale>.json` alors que
+      # LocalizationService::Init/LoadCatalog attend
+      # `<root>/localization/<locale>/<locale>.json`. Le sous-dossier
+      # littéral "text" ne correspondait à aucun tag de locale → Init
+      # retournait toujours false. Bug invisible jusqu'ici car la CI
+      # Windows ne lance pas ctest (cf. build-windows.yml). Fix : helper
+      # `WriteCatalog` corrigé pour utiliser la structure attendue.
+      #
       # ─── TEMPORAIRE — Linux-specific (tentative réintégration 2026-05-27 a échoué) ──
       # Les tests ci-dessous ont été retirés de -E par la tentative de
       # réintégration de la PR #721, puis ré-exclus quand la CI Linux a
       # révélé des échecs réels (pas des fausses alertes comme le rapport
-      # d'audit initial le supposait). Suivi détaillé : FU-6/7 dans
+      # d'audit initial le supposait). Suivi détaillé : FU-4 dans
       # docs/superpowers/audits/closed/2026-05-27-codebase-audit-followups.md
       # (FU-5 netserver_bandwidth_tests fixé et réintégré dans une PR
       # ultérieure — tolérance ±1 byte sur l'assertion floating-point.)
-      # - localization_service_tests
-      #     `LocalizationService::Init()` retourne false sur Linux après
-      #     que `WriteCatalog` (FileSystem::WriteAllText) ait réussi.
-      #     Vrai bug Linux à diagnostiquer : FileSystem::ReadAllText ?
-      #     path traversal ? encoding ? Demande un build Linux pour
-      #     investiguer (effort ~2-4h).
       # - zone_builder_roundtrip_tests
       #     `ReadFileBytes(dirA/probes.bin)` retourne `.empty()` — les
       #     fichiers binaires écrits puis relus sont vides sur Linux.
@@ -108,7 +114,7 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         working-directory: ${{ github.workspace }}/build/linux-x64-release
         run: |
-          ctest --output-on-failure --no-compress-output -E "network_integration_tests|localization_service_tests|zone_builder_roundtrip_tests"
+          ctest --output-on-failure --no-compress-output -E "network_integration_tests|zone_builder_roundtrip_tests"
 
       # Lot H : garde explicite que le World Editor compile au même titre que le jeu.
       # Si une régression casse uniquement la cible world_editor_app, ce step échoue alors que

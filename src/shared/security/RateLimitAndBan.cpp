@@ -49,6 +49,28 @@ namespace engine::server
 		return false;
 	}
 
+	RateLimitAndBan::AuthState& RateLimitAndBan::getOrCreateState(const std::string& key)
+	{
+		auto [it, inserted] = m_by_ip.try_emplace(key);
+		if (inserted)
+		{
+			// Warm-start : à la 1ère insertion, le bucket démarre PLEIN au cap
+			// configuré et last_refill = now. Sans ce warm-start, le bucket
+			// démarrait tokens=0 + last_refill=epoch, ce qui rendait le 1er
+			// consume dépendant de l'uptime du process (sur un master fraîchement
+			// (re)démarré, register_per_hour=3 → refill ≈ 0.000833 tok/s →
+			// le 1er register d'une nouvelle IP était refusé pendant ~1h après
+			// le boot). Bug masqué en CI car les tests étaient exclus du `-E`
+			// ctest, révélé par la réintégration FU-2.
+			auto now = clock().Now();
+			it->second.auth_bucket.tokens = static_cast<double>(m_config.auth_per_minute);
+			it->second.auth_bucket.last_refill = now;
+			it->second.register_bucket.tokens = static_cast<double>(m_config.register_per_hour);
+			it->second.register_bucket.last_refill = now;
+		}
+		return it->second;
+	}
+
 	bool RateLimitAndBan::TryConsumeAuth(std::string_view ip)
 	{
 		std::string key(ip);
@@ -56,7 +78,7 @@ namespace engine::server
 			return false;
 		double capacity = static_cast<double>(m_config.auth_per_minute);
 		double refill_per_sec = capacity / 60.0;
-		AuthState& state = m_by_ip[key];
+		AuthState& state = getOrCreateState(key);
 		if (!tryConsume(state.auth_bucket, capacity, refill_per_sec))
 		{
 			++m_counters.rate_limit_hits_auth;
@@ -73,7 +95,7 @@ namespace engine::server
 			return false;
 		double capacity = static_cast<double>(m_config.register_per_hour);
 		double refill_per_sec = capacity / 3600.0;
-		AuthState& state = m_by_ip[key];
+		AuthState& state = getOrCreateState(key);
 		if (!tryConsume(state.register_bucket, capacity, refill_per_sec))
 		{
 			++m_counters.rate_limit_hits_register;
@@ -86,7 +108,7 @@ namespace engine::server
 	void RateLimitAndBan::RecordAuthFailure(std::string_view ip)
 	{
 		std::string key(ip);
-		AuthState& state = m_by_ip[key];
+		AuthState& state = getOrCreateState(key);
 		state.failure_count++;
 		if (state.failure_count >= m_config.max_failures_before_ban)
 		{

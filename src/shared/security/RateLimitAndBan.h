@@ -94,6 +94,7 @@ namespace engine::server
 
 		engine::core::IClock& clock() const;
 		bool tryConsume(TokenBucket& bucket, double capacity, double refill_per_sec);
+		AuthState& getOrCreateState(const std::string& key);
 		void purgeOldEntries();
 	};
 }

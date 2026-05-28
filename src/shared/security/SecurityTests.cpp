@@ -28,27 +28,13 @@ namespace
 
 using namespace engine::server;
 
-// Le bucket démarre à `tokens=0` + `last_refill=epoch`. Au premier consume,
-// `elapsed = now() - epoch` = uptime du process. En prod sur un serveur up
-// depuis plusieurs heures, le bucket se remplit instantanément au cap. Mais
-// dans un container CI fraîchement démarré (uptime ~quelques secondes),
-// `elapsed * refill_per_sec` peut être < 1 pour register_per_hour=2 (refill
-// ≈ 0.000555 tok/s). Pour rendre les tests déterministes indépendamment de
-// l'uptime du runner, on injecte une FakeClock initialisée à T=3700s : ainsi
-// elapsed = 3700s au premier consume → bucket plein au cap (clamp), peu
-// importe l'host. Un éventuel bug "cold-start prod < 1h après reboot" est
-// signalé en follow-up séparé.
-static void primeFakeClock(engine::core::FakeClock& fc)
-{
-	fc.AdvanceSec(3700);
-}
-
 static void TestRateLimitAuth()
 {
-	engine::core::FakeClock fakeClock;
-	primeFakeClock(fakeClock);
+	// Warm-start bucket (RateLimitAndBan::getOrCreateState) : à la 1ère
+	// insertion, tokens=capacity → 3 consume back-to-back doivent passer
+	// indépendamment du wall-clock / uptime du process. Plus besoin de
+	// FakeClock pour ce test.
 	RateLimitAndBan rlb;
-	rlb.SetClock(&fakeClock);
 	RateLimitAndBanConfig cfg;
 	cfg.auth_per_minute = 3;
 	cfg.register_per_hour = 10;
@@ -68,10 +54,9 @@ static void TestRateLimitAuth()
 
 static void TestRateLimitRegister()
 {
-	engine::core::FakeClock fakeClock;
-	primeFakeClock(fakeClock);
+	// Warm-start bucket : 2 consume back-to-back garantis indépendamment
+	// du wall-clock.
 	RateLimitAndBan rlb;
-	rlb.SetClock(&fakeClock);
 	RateLimitAndBanConfig cfg;
 	cfg.auth_per_minute = 100;
 	cfg.register_per_hour = 2;
@@ -85,10 +70,7 @@ static void TestRateLimitRegister()
 
 static void TestIpBanTrigger()
 {
-	engine::core::FakeClock fakeClock;
-	primeFakeClock(fakeClock);
 	RateLimitAndBan rlb;
-	rlb.SetClock(&fakeClock);
 	RateLimitAndBanConfig cfg;
 	cfg.auth_per_minute = 100;
 	cfg.max_failures_before_ban = 3;

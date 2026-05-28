@@ -95,26 +95,30 @@ jobs:
       # Windows ne lance pas ctest (cf. build-windows.yml). Fix : helper
       # `WriteCatalog` corrigé pour utiliser la structure attendue.
       #
-      # ─── TEMPORAIRE — Linux-specific (tentative réintégration 2026-05-27 a échoué) ──
-      # Les tests ci-dessous ont été retirés de -E par la tentative de
-      # réintégration de la PR #721, puis ré-exclus quand la CI Linux a
-      # révélé des échecs réels (pas des fausses alertes comme le rapport
-      # d'audit initial le supposait). Suivi détaillé : FU-4 dans
-      # docs/superpowers/audits/closed/2026-05-27-codebase-audit-followups.md
-      # (FU-5 netserver_bandwidth_tests fixé et réintégré dans une PR
-      # ultérieure — tolérance ±1 byte sur l'assertion floating-point.)
-      # - zone_builder_roundtrip_tests
-      #     `ReadFileBytes(dirA/probes.bin)` retourne `.empty()` — les
-      #     fichiers binaires écrits puis relus sont vides sur Linux.
-      #     Plus assertion `rebuilt.positionX == source.positionX` qui
-      #     échoue (précision float). Bug serialize ou path Linux
-      #     spécifique (effort ~3-5h).
+      # ─── (FU-4) RÉINTÉGRÉ — 2 bugs dans le TEST, pas dans le code prod ───
+      # zone_builder_roundtrip_tests : (1) `Test_WriteChunkPackage_DeterministicBytes`
+      # faisait `REQUIRE(!a.empty())` pour TOUS les fichiers, y compris
+      # `instances.bin`/`navmesh.bin`/`probes.bin` que `WriteEmptyBin` crée
+      # légitimement vides (0 octet, par design — son nom le dit). Fix :
+      # vérifier `std::filesystem::exists` au lieu de `!empty()`, garder
+      # le check d'égalité de taille + hash FNV-1a pour le déterminisme.
+      # (2) `Test_LayoutDocument_JsonRoundtrip` sérialisait des doubles
+      # via `ostringstream << v` sans `setprecision` → précision par
+      # défaut 6 chiffres → `9000.125` → "9000.12" → re-parse 9000.12 →
+      # fail `rebuilt.positionX == source.positionX`. Fix : `setprecision(
+      # numeric_limits<double>::max_digits10)` = 17 chiffres garantis
+      # bit-à-bit. Aucun changement de code prod.
+      #
+      # Note historique : la PR #721 avait tenté de réintégrer plusieurs
+      # tests en bloc, puis ré-exclu quand la CI Linux avait révélé des
+      # échecs réels (pas des fausses alertes). FU-3/4/5/6/7 ont depuis
+      # diagnostiqué et fixé chacun, restaurant la couverture intégrale.
       - name: Run tests (ctest)
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         working-directory: ${{ github.workspace }}/build/linux-x64-release
         run: |
-          ctest --output-on-failure --no-compress-output -E "network_integration_tests|zone_builder_roundtrip_tests"
+          ctest --output-on-failure --no-compress-output -E "network_integration_tests"
 
       # Lot H : garde explicite que le World Editor compile au même titre que le jeu.
       # Si une régression casse uniquement la cible world_editor_app, ce step échoue alors que

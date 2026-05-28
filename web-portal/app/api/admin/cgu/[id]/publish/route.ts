@@ -5,6 +5,7 @@ import { isStaff } from '@/lib/auth/roles'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 export async function POST(
   _request: Request,
@@ -38,7 +39,8 @@ export async function POST(
     )
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('POST /api/admin/cgu/[id]/publish', 'Publish CGU edition failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

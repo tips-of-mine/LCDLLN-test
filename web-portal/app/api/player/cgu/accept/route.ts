@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 export async function POST(request: Request) {
   const jar = cookies()
@@ -37,7 +38,8 @@ export async function POST(request: Request) {
     )
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('POST /api/player/cgu/accept', 'CGU acceptance failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

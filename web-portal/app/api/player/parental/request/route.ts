@@ -7,6 +7,7 @@ import { sendParentalValidation } from '@/lib/email/sender'
 import { requireEnv } from '@/lib/env'
 import { randomBytes } from 'node:crypto'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 export async function POST(request: Request) {
   const jar = cookies()
@@ -47,7 +48,8 @@ export async function POST(request: Request) {
     await sendParentalValidation(parentalEmail, rows[0].login, validationLink)
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('POST /api/player/parental/request', 'Parental validation request failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

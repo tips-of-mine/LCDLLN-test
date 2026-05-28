@@ -4,6 +4,7 @@ import { verifyPortalCredentials } from "@/lib/auth/portalLogin";
 import { query } from "@/lib/db/connection";
 import type { RowDataPacket } from "mysql2/promise";
 import { isStaff, normalizeRole } from "@/lib/auth/roles";
+import { logError } from "@/lib/log";
 
 const COOKIE_NAME = "lcdlln_portal_account";
 const COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 7;
@@ -55,7 +56,8 @@ export async function POST(request: Request) {
       tagId: accountTagId,
       redirect: isStaff(accountRole) ? '/admin' : '/player',
     });
-  } catch {
+  } catch (err) {
+    logError("POST /api/auth/login", "Login handler failed", { err });
     return NextResponse.json({ ok: false, message: "Requête invalide." }, { status: 400 });
   }
 }

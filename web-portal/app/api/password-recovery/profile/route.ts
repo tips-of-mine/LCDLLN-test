@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRecoveryProfile, upsertRecoveryProfile } from "@/lib/auth/passwordRecovery";
+import { logError } from "@/lib/log";
 
 function parseAccountId(value: string | null): number {
   const parsed = Number.parseInt(value || "", 10);
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
+    logError("GET /api/password-recovery/profile", "Fetch recovery profile failed", { err: error });
     const message = error instanceof Error ? error.message : "Erreur inconnue.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -60,6 +62,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
+    logError("POST /api/password-recovery/profile", "Upsert recovery profile failed", { err: error });
     const message = error instanceof Error ? error.message : "Erreur inconnue.";
     return NextResponse.json({ error: message }, { status: 400 });
   }

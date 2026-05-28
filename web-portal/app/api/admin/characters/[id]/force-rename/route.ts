@@ -3,6 +3,7 @@ import { isStaff } from '@/lib/auth/roles'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError } from '@/lib/log'
 
 async function checkAdmin() {
   const role = cookies().get('lcdlln_portal_role')?.value
@@ -23,7 +24,8 @@ export async function PATCH(_req: Request, { params }: { params: { id: string } 
 
     await query('UPDATE characters SET force_rename = 1 WHERE id = ?', [id])
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('PATCH /api/admin/characters/[id]/force-rename', 'Force-rename failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

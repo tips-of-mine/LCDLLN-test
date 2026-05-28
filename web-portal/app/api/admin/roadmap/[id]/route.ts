@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import { isStaff } from '@/lib/auth/roles'
+import { logError } from '@/lib/log'
 
 function isAdmin(): boolean {
   const jar = cookies()
@@ -51,7 +52,8 @@ export async function PATCH(
       values
     )
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('PATCH /api/admin/roadmap/[id]', 'Update roadmap item failed', { err })
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }
@@ -70,7 +72,8 @@ export async function DELETE(
   try {
     await query('DELETE FROM roadmap_items WHERE id = ?', [id])
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('DELETE /api/admin/roadmap/[id]', 'Delete roadmap item failed', { err })
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }

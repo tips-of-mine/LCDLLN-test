@@ -4,6 +4,7 @@ import { query } from '@/lib/db/connection'
 import { isStaff } from '@/lib/auth/roles'
 import { sendAccountDisabled } from '@/lib/email/sender'
 import type { RowDataPacket } from 'mysql2/promise'
+import { logError, logWarn } from '@/lib/log'
 
 async function checkAdmin() {
   const role = cookies().get('lcdlln_portal_role')?.value
@@ -18,7 +19,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   let body: { reason?: string }
   try {
     body = await req.json()
-  } catch {
+  } catch (err) {
+    logError('PATCH /api/admin/players/[id]/disable', 'Invalid JSON body', { err })
     return NextResponse.json({ ok: false, message: 'Corps invalide' }, { status: 400 })
   }
 
@@ -39,12 +41,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     try {
       await sendAccountDisabled(rows[0].email, rows[0].login, reason)
-    } catch {
+    } catch (err) {
       // Email failure is non-fatal — account is already disabled
+      logWarn('PATCH /api/admin/players/[id]/disable', 'Account-disabled email send failed', { err, accountId: id })
     }
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('PATCH /api/admin/players/[id]/disable', 'Disable account failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

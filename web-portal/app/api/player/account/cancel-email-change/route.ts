@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
+import { logError } from '@/lib/log'
 
 export async function POST() {
   const jar = cookies()
@@ -16,7 +17,8 @@ export async function POST() {
       [accountId]
     )
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logError('POST /api/player/account/cancel-email-change', 'Cancel email change failed', { err })
     return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

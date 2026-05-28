@@ -1,13 +1,12 @@
+// N1-F : converti en prepared statements (INSERT IGNORE + DELETE + 3 SELECTs).
+
 #include "src/masterd/social/MysqlIgnoreStore.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/db/ConnectionPool.h"
-#include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
-
-#include <cstdio>
-#include <cstdlib>
 
 namespace engine::server::social
 {
@@ -16,17 +15,17 @@ namespace engine::server::social
 		if (!m_pool || !m_pool->IsInitialized()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
 
 		// INSERT IGNORE : si la PK (owner, target) existe deja, no-op.
 		// Le cap de 50 ignored est applique cote IgnoreListManager runtime.
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
-			"INSERT IGNORE INTO account_ignore_list (owner_account_id, target_account_id) "
-			"VALUES (%llu, %llu)",
-			static_cast<unsigned long long>(owner),
-			static_cast<unsigned long long>(target));
-		return engine::server::db::DbExecute(mysql, sql);
+		auto* stmt = cache->Acquire(mysql,
+			"INSERT IGNORE INTO account_ignore_list (owner_account_id, target_account_id) VALUES (?, ?)");
+		return stmt
+			&& stmt->Bind(0, owner)
+			&& stmt->Bind(1, target)
+			&& stmt->Execute();
 	}
 
 	bool MysqlIgnoreStore::Remove(uint64_t owner, uint64_t target)
@@ -34,15 +33,16 @@ namespace engine::server::social
 		if (!m_pool || !m_pool->IsInitialized()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
 
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"DELETE FROM account_ignore_list "
-			"WHERE owner_account_id = %llu AND target_account_id = %llu",
-			static_cast<unsigned long long>(owner),
-			static_cast<unsigned long long>(target));
-		return engine::server::db::DbExecute(mysql, sql);
+			"WHERE owner_account_id = ? AND target_account_id = ?");
+		return stmt
+			&& stmt->Bind(0, owner)
+			&& stmt->Bind(1, target)
+			&& stmt->Execute();
 	}
 
 	bool MysqlIgnoreStore::IsIgnored(uint64_t owner, uint64_t target) const
@@ -50,19 +50,18 @@ namespace engine::server::social
 		if (!m_pool || !m_pool->IsInitialized()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
 
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT 1 FROM account_ignore_list "
-			"WHERE owner_account_id = %llu AND target_account_id = %llu LIMIT 1",
-			static_cast<unsigned long long>(owner),
-			static_cast<unsigned long long>(target));
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res) return false;
-		const bool found = (mysql_fetch_row(res) != nullptr);
-		engine::server::db::DbFreeResult(res);
-		return found;
+			"WHERE owner_account_id = ? AND target_account_id = ? LIMIT 1");
+		if (!stmt
+			|| !stmt->Bind(0, owner)
+			|| !stmt->Bind(1, target)
+			|| !stmt->Execute())
+			return false;
+		return stmt->FetchRow();
 	}
 
 	std::vector<uint64_t> MysqlIgnoreStore::List(uint64_t owner) const
@@ -71,20 +70,16 @@ namespace engine::server::social
 		if (!m_pool || !m_pool->IsInitialized()) return out;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return out;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return out;
 
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT target_account_id FROM account_ignore_list "
-			"WHERE owner_account_id = %llu ORDER BY target_account_id ASC",
-			static_cast<unsigned long long>(owner));
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res) return out;
-		while (MYSQL_ROW row = mysql_fetch_row(res))
-		{
-			if (row[0]) out.push_back(std::strtoull(row[0], nullptr, 10));
-		}
-		engine::server::db::DbFreeResult(res);
+			"WHERE owner_account_id = ? ORDER BY target_account_id ASC");
+		if (!stmt || !stmt->Bind(0, owner) || !stmt->Execute())
+			return out;
+		while (stmt->FetchRow())
+			out.push_back(stmt->GetUInt64(0));
 		return out;
 	}
 
@@ -93,20 +88,13 @@ namespace engine::server::social
 		if (!m_pool || !m_pool->IsInitialized()) return 0;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return 0;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return 0;
 
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
-			"SELECT COUNT(*) FROM account_ignore_list WHERE owner_account_id = %llu",
-			static_cast<unsigned long long>(owner));
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res) return 0;
-		size_t count = 0;
-		if (MYSQL_ROW row = mysql_fetch_row(res))
-		{
-			if (row[0]) count = static_cast<size_t>(std::strtoull(row[0], nullptr, 10));
-		}
-		engine::server::db::DbFreeResult(res);
-		return count;
+		auto* stmt = cache->Acquire(mysql,
+			"SELECT COUNT(*) FROM account_ignore_list WHERE owner_account_id = ?");
+		if (!stmt || !stmt->Bind(0, owner) || !stmt->Execute() || !stmt->FetchRow())
+			return 0;
+		return static_cast<size_t>(stmt->GetUInt64(0));
 	}
 }

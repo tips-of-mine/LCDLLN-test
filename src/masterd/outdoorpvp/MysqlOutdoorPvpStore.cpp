@@ -1,15 +1,13 @@
 // Wave 5 Persistence (Phase 5.36b) - Implementation MysqlOutdoorPvpStore.
+// N1-F : converti en prepared statements (2 SELECTs no-param + 2 INSERTs upsert).
 
 #include "src/masterd/outdoorpvp/MysqlOutdoorPvpStore.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/db/ConnectionPool.h"
-#include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
-
-#include <cstdio>
-#include <cstdlib>
 
 namespace engine::server::outdoorpvp_db
 {
@@ -24,28 +22,27 @@ namespace engine::server::outdoorpvp_db
 		if (!IsAvailable()) return out;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return out;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return out;
 
-		const char* sql =
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT zone_id, objective_id, owner, capture_pct, capturing_by "
-			"FROM outdoor_pvp_state";
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res)
+			"FROM outdoor_pvp_state");
+		if (!stmt || !stmt->Execute())
 		{
 			LOG_WARN(Net, "[MysqlOutdoorPvpStore] LoadStates query failed");
 			return out;
 		}
-		while (MYSQL_ROW row = mysql_fetch_row(res))
+		while (stmt->FetchRow())
 		{
 			ObjectiveRow r;
-			if (row[0]) r.zoneId      = static_cast<uint32_t>(std::strtoul(row[0], nullptr, 10));
-			if (row[1]) r.objectiveId = static_cast<uint32_t>(std::strtoul(row[1], nullptr, 10));
-			if (row[2]) r.owner       = static_cast<uint8_t>(std::strtoul(row[2], nullptr, 10));
-			if (row[3]) r.capturePct  = static_cast<uint32_t>(std::strtoul(row[3], nullptr, 10));
-			if (row[4]) r.capturingBy = static_cast<uint8_t>(std::strtoul(row[4], nullptr, 10));
+			r.zoneId      = static_cast<uint32_t>(stmt->GetUInt64(0));
+			r.objectiveId = static_cast<uint32_t>(stmt->GetUInt64(1));
+			r.owner       = static_cast<uint8_t>(stmt->GetUInt64(2));
+			r.capturePct  = static_cast<uint32_t>(stmt->GetUInt64(3));
+			r.capturingBy = static_cast<uint8_t>(stmt->GetUInt64(4));
 			out.push_back(r);
 		}
-		engine::server::db::DbFreeResult(res);
 		return out;
 	}
 
@@ -55,24 +52,24 @@ namespace engine::server::outdoorpvp_db
 		if (!IsAvailable()) return out;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return out;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return out;
 
-		const char* sql = "SELECT zone_id, faction, score FROM outdoor_pvp_scores";
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res)
+		auto* stmt = cache->Acquire(mysql,
+			"SELECT zone_id, faction, score FROM outdoor_pvp_scores");
+		if (!stmt || !stmt->Execute())
 		{
 			LOG_WARN(Net, "[MysqlOutdoorPvpStore] LoadScores query failed");
 			return out;
 		}
-		while (MYSQL_ROW row = mysql_fetch_row(res))
+		while (stmt->FetchRow())
 		{
 			ScoreRow r;
-			if (row[0]) r.zoneId  = static_cast<uint32_t>(std::strtoul(row[0], nullptr, 10));
-			if (row[1]) r.faction = static_cast<uint8_t>(std::strtoul(row[1], nullptr, 10));
-			if (row[2]) r.score   = static_cast<uint32_t>(std::strtoul(row[2], nullptr, 10));
+			r.zoneId  = static_cast<uint32_t>(stmt->GetUInt64(0));
+			r.faction = static_cast<uint8_t>(stmt->GetUInt64(1));
+			r.score   = static_cast<uint32_t>(stmt->GetUInt64(2));
 			out.push_back(r);
 		}
-		engine::server::db::DbFreeResult(res);
 		return out;
 	}
 
@@ -81,20 +78,22 @@ namespace engine::server::outdoorpvp_db
 		if (!IsAvailable()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
 
-		char sql[512];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"INSERT INTO outdoor_pvp_state (zone_id, objective_id, owner, capture_pct, capturing_by) "
-			"VALUES (%u, %u, %u, %u, %u) "
+			"VALUES (?, ?, ?, ?, ?) "
 			"ON DUPLICATE KEY UPDATE "
 			"owner = VALUES(owner), capture_pct = VALUES(capture_pct), "
-			"capturing_by = VALUES(capturing_by)",
-			row.zoneId, row.objectiveId,
-			static_cast<unsigned>(row.owner), row.capturePct,
-			static_cast<unsigned>(row.capturingBy));
-
-		const bool ok = engine::server::db::DbExecute(mysql, sql);
+			"capturing_by = VALUES(capturing_by)");
+		const bool ok = stmt
+			&& stmt->Bind(0, row.zoneId)
+			&& stmt->Bind(1, row.objectiveId)
+			&& stmt->Bind(2, static_cast<uint32_t>(row.owner))
+			&& stmt->Bind(3, row.capturePct)
+			&& stmt->Bind(4, static_cast<uint32_t>(row.capturingBy))
+			&& stmt->Execute();
 		if (!ok)
 			LOG_WARN(Net, "[MysqlOutdoorPvpStore] UpsertObjective failed zid={} oid={}",
 				row.zoneId, row.objectiveId);
@@ -106,16 +105,18 @@ namespace engine::server::outdoorpvp_db
 		if (!IsAvailable()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
 
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"INSERT INTO outdoor_pvp_scores (zone_id, faction, score) "
-			"VALUES (%u, %u, %u) "
-			"ON DUPLICATE KEY UPDATE score = VALUES(score)",
-			row.zoneId, static_cast<unsigned>(row.faction), row.score);
-
-		const bool ok = engine::server::db::DbExecute(mysql, sql);
+			"VALUES (?, ?, ?) "
+			"ON DUPLICATE KEY UPDATE score = VALUES(score)");
+		const bool ok = stmt
+			&& stmt->Bind(0, row.zoneId)
+			&& stmt->Bind(1, static_cast<uint32_t>(row.faction))
+			&& stmt->Bind(2, row.score)
+			&& stmt->Execute();
 		if (!ok)
 			LOG_WARN(Net, "[MysqlOutdoorPvpStore] UpsertScore failed zid={} fac={}",
 				row.zoneId, static_cast<unsigned>(row.faction));

@@ -1,31 +1,16 @@
 // Wave 5 Persistence (Phase 5.21b) - Implementation MysqlArenaStore.
+// N1-F : converti en prepared statements (1 SELECT + 1 INSERT upsert).
 
 #include "src/masterd/arena/MysqlArenaStore.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/db/ConnectionPool.h"
-#include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
 
-#include <cstdio>
-#include <cstdlib>
-#include <vector>
-
 namespace engine::server::arena
 {
-	namespace
-	{
-		std::string EscapeMysql(MYSQL* mysql, const std::string& v)
-		{
-			if (!mysql) return {};
-			std::vector<char> buf(v.size() * 2 + 1);
-			const auto w = mysql_real_escape_string(mysql, buf.data(), v.data(),
-				static_cast<unsigned long>(v.size()));
-			return std::string(buf.data(), w);
-		}
-	}
-
 	bool MysqlArenaStore::IsAvailable() const noexcept
 	{
 		return m_pool && m_pool->IsInitialized();
@@ -37,35 +22,32 @@ namespace engine::server::arena
 		if (!IsAvailable()) return out;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return out;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return out;
 
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT team_id, account_id_owner, name, size, rating, "
 			"weekly_games, weekly_wins, season_games, season_wins "
-			"FROM arena_teams WHERE account_id_owner = %llu ORDER BY team_id ASC",
-			static_cast<unsigned long long>(accountId));
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res)
+			"FROM arena_teams WHERE account_id_owner = ? ORDER BY team_id ASC");
+		if (!stmt || !stmt->Bind(0, accountId) || !stmt->Execute())
 		{
 			LOG_WARN(Net, "[MysqlArenaStore] LoadForAccount query failed account={}", accountId);
 			return out;
 		}
-		while (MYSQL_ROW row = mysql_fetch_row(res))
+		while (stmt->FetchRow())
 		{
 			ArenaTeamRow r;
-			if (row[0]) r.teamId         = static_cast<uint32_t>(std::strtoul(row[0], nullptr, 10));
-			if (row[1]) r.accountIdOwner = std::strtoull(row[1], nullptr, 10);
-			if (row[2]) r.name           = row[2];
-			if (row[3]) r.size           = static_cast<uint8_t>(std::strtoul(row[3], nullptr, 10));
-			if (row[4]) r.rating         = static_cast<uint32_t>(std::strtoul(row[4], nullptr, 10));
-			if (row[5]) r.weeklyGames    = static_cast<uint32_t>(std::strtoul(row[5], nullptr, 10));
-			if (row[6]) r.weeklyWins     = static_cast<uint32_t>(std::strtoul(row[6], nullptr, 10));
-			if (row[7]) r.seasonGames    = static_cast<uint32_t>(std::strtoul(row[7], nullptr, 10));
-			if (row[8]) r.seasonWins     = static_cast<uint32_t>(std::strtoul(row[8], nullptr, 10));
+			r.teamId         = static_cast<uint32_t>(stmt->GetUInt64(0));
+			r.accountIdOwner = stmt->GetUInt64(1);
+			r.name           = stmt->GetString(2);
+			r.size           = static_cast<uint8_t>(stmt->GetUInt64(3));
+			r.rating         = static_cast<uint32_t>(stmt->GetUInt64(4));
+			r.weeklyGames    = static_cast<uint32_t>(stmt->GetUInt64(5));
+			r.weeklyWins     = static_cast<uint32_t>(stmt->GetUInt64(6));
+			r.seasonGames    = static_cast<uint32_t>(stmt->GetUInt64(7));
+			r.seasonWins     = static_cast<uint32_t>(stmt->GetUInt64(8));
 			out.push_back(std::move(r));
 		}
-		engine::server::db::DbFreeResult(res);
 		return out;
 	}
 
@@ -74,29 +56,29 @@ namespace engine::server::arena
 		if (!IsAvailable()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
 
-		const std::string name = EscapeMysql(mysql, row.name);
-
-		char sql[1024];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"INSERT INTO arena_teams ("
 			"team_id, account_id_owner, name, size, rating, "
 			"weekly_games, weekly_wins, season_games, season_wins"
-			") VALUES (%u, %llu, '%s', %u, %u, %u, %u, %u, %u) "
+			") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
 			"ON DUPLICATE KEY UPDATE "
 			"name = VALUES(name), size = VALUES(size), rating = VALUES(rating), "
 			"weekly_games = VALUES(weekly_games), weekly_wins = VALUES(weekly_wins), "
-			"season_games = VALUES(season_games), season_wins = VALUES(season_wins)",
-			row.teamId,
-			static_cast<unsigned long long>(row.accountIdOwner),
-			name.c_str(),
-			static_cast<unsigned>(row.size),
-			row.rating,
-			row.weeklyGames, row.weeklyWins,
-			row.seasonGames, row.seasonWins);
-
-		const bool ok = engine::server::db::DbExecute(mysql, sql);
+			"season_games = VALUES(season_games), season_wins = VALUES(season_wins)");
+		const bool ok = stmt
+			&& stmt->Bind(0, row.teamId)
+			&& stmt->Bind(1, row.accountIdOwner)
+			&& stmt->Bind(2, std::string_view(row.name))
+			&& stmt->Bind(3, static_cast<uint32_t>(row.size))
+			&& stmt->Bind(4, row.rating)
+			&& stmt->Bind(5, row.weeklyGames)
+			&& stmt->Bind(6, row.weeklyWins)
+			&& stmt->Bind(7, row.seasonGames)
+			&& stmt->Bind(8, row.seasonWins)
+			&& stmt->Execute();
 		if (!ok)
 			LOG_WARN(Net, "[MysqlArenaStore] Upsert failed team={} account={}",
 				row.teamId, row.accountIdOwner);

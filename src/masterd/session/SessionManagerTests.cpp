@@ -80,9 +80,13 @@ static void TestDuplicateLoginKickExisting()
 	uint64_t sid2 = mgr.CreateSession(42);
 	Assert(sid2 != 0 && sid2 != sid1, "CreateSession duplicate creates new (KickExisting)");
 	Assert(!mgr.Validate(sid1), "Old session invalid after kick");
-	Assert(mgr.Validate(sid2), "New session valid after SetState");
+	// sid2 vient d'être créée en état Created : pas encore Validate-able tant
+	// que SetState(Active) n'a pas eu lieu. Le message d'assertion historique
+	// "valid after SetState" laissait penser qu'un SetState implicite était fait
+	// dans CreateSession, ce qui n'est pas (et n'a jamais été) le cas.
+	Assert(!mgr.Validate(sid2), "New session not yet valid (Created, needs SetState)");
 	mgr.SetState(sid2, SessionState::Active);
-	Assert(mgr.Validate(sid2), "New session valid");
+	Assert(mgr.Validate(sid2), "New session valid after SetState Active");
 }
 
 static void TestExpiry24h()

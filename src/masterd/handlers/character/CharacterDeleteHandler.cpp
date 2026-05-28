@@ -9,6 +9,7 @@
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
 
@@ -54,7 +55,8 @@ namespace engine::server
 
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* stmtCache = guard.cache();
+		if (!mysql || !stmtCache)
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "database unavailable", requestId, sessionIdHeader);
 			if (!pkt.empty())
@@ -65,12 +67,16 @@ namespace engine::server
 		// Soft delete : set deleted_at = NOW() conditionnellement à l'appartenance.
 		// Si le perso n'existe pas OU n'appartient pas au compte OU est déjà supprimé,
 		// l'UPDATE renvoie 0 affected rows — on répond NOT_FOUND sans révéler l'existence.
-		std::string sql =
+		// N1-C : prepared statement (bind characterId, accountId). On utilise
+		// stmt->AffectedRows() au lieu de mysql_affected_rows() pour fiabilité
+		// après mysql_stmt_execute.
+		auto* stmt = stmtCache->Acquire(mysql,
 			"UPDATE characters SET deleted_at = NOW() "
-			"WHERE id = " + std::to_string(parsed->characterId)
-			+ " AND account_id = " + std::to_string(*accountId)
-			+ " AND deleted_at IS NULL";
-		if (!engine::server::db::DbExecute(mysql, sql))
+			"WHERE id = ? AND account_id = ? AND deleted_at IS NULL");
+		if (!stmt
+			|| !stmt->Bind(0, parsed->characterId)
+			|| !stmt->Bind(1, *accountId)
+			|| !stmt->Execute())
 		{
 			LOG_ERROR(Auth, "[CharacterDeleteHandler] UPDATE failed (account_id={}, character_id={})",
 				*accountId, parsed->characterId);
@@ -80,7 +86,7 @@ namespace engine::server
 			return;
 		}
 
-		const my_ulonglong affected = mysql_affected_rows(mysql);
+		const uint64_t affected = stmt->AffectedRows();
 		if (affected == 0u)
 		{
 			LOG_WARN(Auth, "[CharacterDeleteHandler] no row updated (account_id={}, character_id={}) — not owned, missing or already deleted",

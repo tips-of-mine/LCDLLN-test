@@ -50,6 +50,14 @@ namespace engine::server::db
 		uint64_t GetUInt64(size_t col, uint64_t fallback = 0) const;
 		std::string GetString(size_t col) const;
 
+		/// Nombre de rangs affectés par la dernière exécution INSERT/UPDATE/DELETE.
+		/// Pour SELECT, retourne le nombre de rangs résultat (idem mysql_num_rows).
+		/// À utiliser à la place de mysql_affected_rows(MYSQL*) après Execute() :
+		/// le compteur connexion-niveau de libmysql peut donner des valeurs incorrectes
+		/// après mysql_stmt_execute selon la version, alors que mysql_stmt_affected_rows
+		/// est garanti par la doc.
+		uint64_t AffectedRows() const;
+
 		/// Réinitialise les bindings et l'état pour une nouvelle exécution.
 		/// Le statement reste valide, on peut Bind+Execute à nouveau.
 		bool Reset();

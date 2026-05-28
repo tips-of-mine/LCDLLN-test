@@ -1,5 +1,7 @@
 #include "src/masterd/handlers/terms/TermsRepository.h"
 #include "src/shared/core/Log.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
 
@@ -61,32 +63,33 @@ namespace engine::server
 			return rows[0];
 		}
 
-		bool FetchAllLocales(MYSQL* mysql, uint64_t edition_id, std::vector<LocRow>& outRows)
+		// N1-C : conversion vers prepared statement. Le cache est requis ;
+		// retourne false si nullptr (le call site doit fournir un cache valide
+		// récupéré depuis ConnectionPool::Guard::cache()).
+		bool FetchAllLocales(MYSQL* mysql, engine::server::db::SqlPreparedStatementCache* cache,
+		                      uint64_t edition_id, std::vector<LocRow>& outRows)
 		{
-		std::string sql = "SELECT locale, title, content FROM terms_localizations WHERE edition_id = "
-			+ std::to_string(edition_id) + " ORDER BY locale ASC";
-			if (mysql_query(mysql, sql.c_str()) != 0)
+			if (!cache)
 			{
-				LOG_ERROR(Core, "[TermsRepository] query locales: {}", mysql_error(mysql));
+				LOG_ERROR(Core, "[TermsRepository] FetchAllLocales : cache absent");
 				return false;
 			}
-			MYSQL_RES* res = mysql_store_result(mysql);
-			if (!res)
+			auto* stmt = cache->Acquire(mysql,
+				"SELECT locale, title, content FROM terms_localizations WHERE edition_id = ? ORDER BY locale ASC");
+			if (!stmt || !stmt->Bind(0, edition_id) || !stmt->Execute())
 			{
-				LOG_ERROR(Core, "[TermsRepository] store_result locales failed");
+				LOG_ERROR(Core, "[TermsRepository] FetchAllLocales execute failed: {}", mysql_error(mysql));
 				return false;
 			}
 			outRows.clear();
-			MYSQL_ROW row;
-			while ((row = mysql_fetch_row(res)))
+			while (stmt->FetchRow())
 			{
 				LocRow lr;
-				if (row[0]) lr.locale = row[0];
-				if (row[1]) lr.title = row[1];
-				if (row[2]) lr.content = row[2];
+				lr.locale  = stmt->GetString(0);
+				lr.title   = stmt->GetString(1);
+				lr.content = stmt->GetString(2);
 				outRows.push_back(std::move(lr));
 			}
-			mysql_free_result(res);
 			return true;
 		}
 	} // namespace
@@ -108,27 +111,20 @@ namespace engine::server
 			return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
-		std::string sql =
+		// N1-C : prepared statement (bind account_id).
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT COUNT(*) FROM terms_editions e WHERE e.status = 'published' "
 			"AND e.published_at <= UTC_TIMESTAMP() AND NOT EXISTS ("
-			"SELECT 1 FROM account_terms_acceptances a WHERE a.account_id = "
-			+ std::to_string(account_id) + " AND a.edition_id = e.id)";
-		if (mysql_query(mysql, sql.c_str()) != 0)
+			"SELECT 1 FROM account_terms_acceptances a WHERE a.account_id = ? AND a.edition_id = e.id)");
+		if (!stmt || !stmt->Bind(0, account_id) || !stmt->Execute() || !stmt->FetchRow())
 		{
 			LOG_ERROR(Core, "[TermsRepository] HasPendingTerms query: {}", mysql_error(mysql));
 			return false;
 		}
-		MYSQL_RES* res = mysql_store_result(mysql);
-		if (!res)
-			return false;
-		MYSQL_ROW row = mysql_fetch_row(res);
-		unsigned long n = 0;
-		if (row && row[0])
-			n = std::strtoul(row[0], nullptr, 10);
-		mysql_free_result(res);
-		return n > 0;
+		return stmt->GetUInt64(0) > 0u;
 	}
 
 	uint32_t TermsRepository::CountPendingEditions(uint64_t account_id)
@@ -137,26 +133,21 @@ namespace engine::server
 			return 0;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return 0;
-		std::string sql =
+		// N1-C : prepared statement (bind account_id). Même query que HasPendingTerms
+		// mais retourne le count tel quel (capé à 999 pour rester dans uint32).
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT COUNT(*) FROM terms_editions e WHERE e.status = 'published' "
 			"AND e.published_at <= UTC_TIMESTAMP() AND NOT EXISTS ("
-			"SELECT 1 FROM account_terms_acceptances a WHERE a.account_id = "
-			+ std::to_string(account_id) + " AND a.edition_id = e.id)";
-		if (mysql_query(mysql, sql.c_str()) != 0)
+			"SELECT 1 FROM account_terms_acceptances a WHERE a.account_id = ? AND a.edition_id = e.id)");
+		if (!stmt || !stmt->Bind(0, account_id) || !stmt->Execute() || !stmt->FetchRow())
 		{
 			LOG_ERROR(Core, "[TermsRepository] CountPendingEditions: {}", mysql_error(mysql));
 			return 0;
 		}
-		MYSQL_RES* res = mysql_store_result(mysql);
-		if (!res)
-			return 0;
-		MYSQL_ROW row = mysql_fetch_row(res);
-		unsigned long n = 0;
-		if (row && row[0])
-			n = std::strtoul(row[0], nullptr, 10);
-		mysql_free_result(res);
+		const uint64_t n = stmt->GetUInt64(0);
 		return static_cast<uint32_t>(n > 999u ? 999u : n);
 	}
 
@@ -167,18 +158,14 @@ namespace engine::server
 			return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
-		std::string sql = "SELECT version_label FROM terms_editions WHERE id = " + std::to_string(edition_id) + " LIMIT 1";
-		if (mysql_query(mysql, sql.c_str()) != 0)
+		auto* stmt = cache->Acquire(mysql,
+			"SELECT version_label FROM terms_editions WHERE id = ? LIMIT 1");
+		if (!stmt || !stmt->Bind(0, edition_id) || !stmt->Execute() || !stmt->FetchRow())
 			return false;
-		MYSQL_RES* res = mysql_store_result(mysql);
-		if (!res)
-			return false;
-		MYSQL_ROW row = mysql_fetch_row(res);
-		if (row && row[0])
-			out_label = row[0];
-		mysql_free_result(res);
+		out_label = stmt->GetString(0);
 		return !out_label.empty();
 	}
 
@@ -189,35 +176,27 @@ namespace engine::server
 			return true;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
-		std::string sql =
+		// N1-C : prepared statement (bind account_id).
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT e.id, e.version_label FROM terms_editions e WHERE e.status = 'published' "
 			"AND e.published_at <= UTC_TIMESTAMP() AND NOT EXISTS ("
-			"SELECT 1 FROM account_terms_acceptances a WHERE a.account_id = "
-			+ std::to_string(account_id) + " AND a.edition_id = e.id) "
-			"ORDER BY e.published_at ASC, e.id ASC LIMIT 1";
-		if (mysql_query(mysql, sql.c_str()) != 0)
+			"SELECT 1 FROM account_terms_acceptances a WHERE a.account_id = ? AND a.edition_id = e.id) "
+			"ORDER BY e.published_at ASC, e.id ASC LIMIT 1");
+		if (!stmt || !stmt->Bind(0, account_id) || !stmt->Execute())
 		{
 			LOG_ERROR(Core, "[TermsRepository] GetFirstPending: {}", mysql_error(mysql));
 			return false;
 		}
-		MYSQL_RES* res = mysql_store_result(mysql);
-		if (!res)
-			return false;
-		MYSQL_ROW row = mysql_fetch_row(res);
-		if (!row || !row[0])
-		{
-			mysql_free_result(res);
-			return true;
-		}
-		out.edition_id = std::strtoull(row[0], nullptr, 10);
-		if (row[1])
-			out.version_label = row[1];
-		mysql_free_result(res);
+		if (!stmt->FetchRow())
+			return true; // aucune édition pending → OK, out reste vide
+		out.edition_id = stmt->GetUInt64(0);
+		out.version_label = stmt->GetString(1);
 
 		std::vector<LocRow> locs;
-		if (!FetchAllLocales(mysql, out.edition_id, locs))
+		if (!FetchAllLocales(mysql, cache, out.edition_id, locs))
 			return false;
 		auto pick = PickLocalization(locs, locale_pref, m_fallback_locale);
 		if (!pick)
@@ -234,10 +213,11 @@ namespace engine::server
 			return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
 		std::vector<LocRow> locs;
-		if (!FetchAllLocales(mysql, edition_id, locs) || locs.empty())
+		if (!FetchAllLocales(mysql, cache, edition_id, locs) || locs.empty())
 			return false;
 		auto pick = PickLocalization(locs, locale_pref, m_fallback_locale);
 		if (!pick)
@@ -253,26 +233,21 @@ namespace engine::server
 			return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
-		std::string sql =
-			"SELECT 1 FROM terms_editions e WHERE e.id = "
-			+ std::to_string(edition_id)
-			+ " AND e.status = 'published' AND e.published_at <= UTC_TIMESTAMP() "
-			"AND NOT EXISTS (SELECT 1 FROM account_terms_acceptances a WHERE a.account_id = "
-			+ std::to_string(account_id) + " AND a.edition_id = e.id) LIMIT 1";
-		if (mysql_query(mysql, sql.c_str()) != 0)
+		// N1-C : prepared statement (bind edition_id puis account_id — ordre des '?' dans le SQL).
+		auto* stmt = cache->Acquire(mysql,
+			"SELECT 1 FROM terms_editions e WHERE e.id = ? "
+			"AND e.status = 'published' AND e.published_at <= UTC_TIMESTAMP() "
+			"AND NOT EXISTS (SELECT 1 FROM account_terms_acceptances a WHERE a.account_id = ? AND a.edition_id = e.id) "
+			"LIMIT 1");
+		if (!stmt || !stmt->Bind(0, edition_id) || !stmt->Bind(1, account_id) || !stmt->Execute())
 		{
 			LOG_ERROR(Core, "[TermsRepository] IsEditionPendingForAccount: {}", mysql_error(mysql));
 			return false;
 		}
-		MYSQL_RES* res = mysql_store_result(mysql);
-		if (!res)
-			return false;
-		MYSQL_ROW row = mysql_fetch_row(res);
-		const bool ok = (row != nullptr);
-		mysql_free_result(res);
-		return ok;
+		return stmt->FetchRow();
 	}
 
 	bool TermsRepository::RecordAcceptance(uint64_t account_id, uint64_t edition_id)
@@ -281,11 +256,13 @@ namespace engine::server
 			return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
 			return false;
-		std::string sql = "INSERT IGNORE INTO account_terms_acceptances (account_id, edition_id) VALUES ("
-			+ std::to_string(account_id) + ", " + std::to_string(edition_id) + ")";
-		if (mysql_query(mysql, sql.c_str()) != 0)
+		// N1-C : prepared statement (bind account_id, edition_id).
+		auto* stmt = cache->Acquire(mysql,
+			"INSERT IGNORE INTO account_terms_acceptances (account_id, edition_id) VALUES (?, ?)");
+		if (!stmt || !stmt->Bind(0, account_id) || !stmt->Bind(1, edition_id) || !stmt->Execute())
 		{
 			LOG_ERROR(Core, "[TermsRepository] RecordAcceptance: {}", mysql_error(mysql));
 			return false;

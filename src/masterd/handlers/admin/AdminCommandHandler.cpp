@@ -17,6 +17,7 @@
 #include "src/shared/core/Log.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 #include "src/shared/net/ChatSystem.h"
 #include "src/shared/network/AdminCommandPayloads.h"
 #include "src/shared/network/ChatPayloads.h"
@@ -160,20 +161,6 @@ namespace engine::server
 		{
 			using namespace std::chrono;
 			return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-		}
-
-		/// Echappe une chaine pour SQL (utilise par /mute : INSERT). Aligne
-		/// sur le helper DbHelpers (mais defini ici car on n'a pas
-		/// EscapeMysql exporte publiquement).
-		std::string EscapeForSql(MYSQL* mysql, std::string_view input)
-		{
-			if (!mysql)
-				return std::string(input);
-			std::string out(input.size() * 2u + 1u, '\0');
-			const unsigned long len = mysql_real_escape_string(mysql,
-				out.data(), input.data(), static_cast<unsigned long>(input.size()));
-			out.resize(len);
-			return out;
 		}
 
 		/// Dispatch metier pour "/sky moon <phase>". Valide l'argument et
@@ -745,21 +732,22 @@ namespace engine::server
 
 		auto guard = m_dbPool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* stmtCache = guard.cache();
+		if (!mysql || !stmtCache)
 		{
 			resp.status = AdminCommandStatus::ServerError;
 			resp.message = "DB indisponible";
 			return;
 		}
-		const std::string escReason = EscapeForSql(mysql, reason);
-		char sqlBuf[512];
-		std::snprintf(sqlBuf, sizeof(sqlBuf),
-			"REPLACE INTO chat_mutes (account_id, until_ts, reason) "
-			"VALUES (%llu, %llu, '%s')",
-			static_cast<unsigned long long>(target->account_id),
-			static_cast<unsigned long long>(untilTsMs),
-			escReason.c_str());
-		if (!engine::server::db::DbExecute(mysql, sqlBuf))
+		// N1-C : prepared statement (bind account_id, until_ts, reason).
+		// Plus besoin de EscapeForSql : le binding string_view est safe.
+		auto* stmt = stmtCache->Acquire(mysql,
+			"REPLACE INTO chat_mutes (account_id, until_ts, reason) VALUES (?, ?, ?)");
+		if (!stmt
+			|| !stmt->Bind(0, target->account_id)
+			|| !stmt->Bind(1, untilTsMs)
+			|| !stmt->Bind(2, std::string_view(reason))
+			|| !stmt->Execute())
 		{
 			resp.status = AdminCommandStatus::ServerError;
 			resp.message = "DB write failed";

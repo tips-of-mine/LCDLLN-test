@@ -3,6 +3,7 @@
 #include "src/shared/core/Log.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 #include "src/shared/network/DungeonPayloads.h"
 #include "src/shared/network/ErrorPacket.h"
 #include "src/shared/network/NetServer.h"
@@ -61,7 +62,8 @@ namespace engine::server
 
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql)
+		auto* stmtCache = guard.cache();
+		if (!mysql || !stmtCache)
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "database unavailable",
 				requestId, sessionIdHeader);
@@ -71,18 +73,18 @@ namespace engine::server
 		}
 
 		// Ownership : le personnage doit appartenir au compte de la session.
-		char ownerQuery[256]{};
-		std::snprintf(ownerQuery, sizeof(ownerQuery),
-			"SELECT id FROM characters WHERE id = %llu AND account_id = %llu AND deleted_at IS NULL",
-			static_cast<unsigned long long>(parsed->characterId),
-			static_cast<unsigned long long>(*accountId));
-		MYSQL_RES* ownerRes = engine::server::db::DbQuery(mysql, ownerQuery);
+		// N1-C : prepared statement (bind characterId, accountId).
 		bool owned = false;
-		if (ownerRes)
 		{
-			MYSQL_ROW row = mysql_fetch_row(ownerRes);
-			owned = (row && row[0]);
-			engine::server::db::DbFreeResult(ownerRes);
+			auto* ownerStmt = stmtCache->Acquire(mysql,
+				"SELECT id FROM characters WHERE id = ? AND account_id = ? AND deleted_at IS NULL");
+			if (ownerStmt
+				&& ownerStmt->Bind(0, parsed->characterId)
+				&& ownerStmt->Bind(1, *accountId)
+				&& ownerStmt->Execute())
+			{
+				owned = ownerStmt->FetchRow();
+			}
 		}
 		if (!owned)
 		{
@@ -95,27 +97,18 @@ namespace engine::server
 			return;
 		}
 
-		// INSERT de l'instance de donjon. Le dungeon_template_id est
-		// échappé (valeur client). shard_endpoint reste vide (résolution
-		// multi-instance = follow-up).
-		std::string escapedTemplate;
-		escapedTemplate.resize(parsed->dungeonTemplateId.size() * 2u + 1u);
-		const unsigned long escLen = mysql_real_escape_string(mysql, escapedTemplate.data(),
-			parsed->dungeonTemplateId.c_str(),
-			static_cast<unsigned long>(parsed->dungeonTemplateId.size()));
-		escapedTemplate.resize(escLen);
-
-		std::string insertQuery =
+		// INSERT de l'instance de donjon. N1-C : prepared statement (bind 3 params).
+		// shard_endpoint reste '' (résolution multi-instance = follow-up).
+		// Plus besoin de mysql_real_escape_string : le binding string_view est safe.
+		auto* insertStmt = stmtCache->Acquire(mysql,
 			"INSERT INTO dungeon_instances "
-			"(dungeon_template_id, owner_character_id, difficulty, shard_endpoint) VALUES ('";
-		insertQuery += escapedTemplate;
-		insertQuery += "', ";
-		insertQuery += std::to_string(static_cast<unsigned long long>(parsed->characterId));
-		insertQuery += ", ";
-		insertQuery += std::to_string(static_cast<unsigned>(parsed->difficulty));
-		insertQuery += ", '')";
-
-		if (!engine::server::db::DbExecute(mysql, insertQuery))
+			"(dungeon_template_id, owner_character_id, difficulty, shard_endpoint) "
+			"VALUES (?, ?, ?, '')");
+		if (!insertStmt
+			|| !insertStmt->Bind(0, std::string_view(parsed->dungeonTemplateId))
+			|| !insertStmt->Bind(1, parsed->characterId)
+			|| !insertStmt->Bind(2, static_cast<uint32_t>(parsed->difficulty))
+			|| !insertStmt->Execute())
 		{
 			LOG_ERROR(Net, "[EnterDungeonHandler] INSERT dungeon_instances failed (character_id={}, template='{}')",
 				parsed->characterId, parsed->dungeonTemplateId);

@@ -14,6 +14,7 @@
 #include "src/masterd/social/IgnoreList.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
 
@@ -326,6 +327,7 @@ namespace engine::server
 			{
 				auto guard = m_pool->Acquire();
 				MYSQL* mysql = guard.get();
+				auto* stmtCache = guard.cache();
 				if (!mysql)
 				{
 					auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "database unavailable", requestId, sessionIdHeader);
@@ -336,27 +338,26 @@ namespace engine::server
 
 				// Une seule requête : récupère tous les player_id qui partagent la guilde du sender.
 				// Si le sender n'a pas de ligne dans guild_members → result vide → on notice.
-				char queryBuf[512]{};
-				std::snprintf(queryBuf, sizeof(queryBuf),
-					"SELECT player_id FROM guild_members WHERE guild_id = "
-					"(SELECT guild_id FROM guild_members WHERE player_id = %llu LIMIT 1)",
-					static_cast<unsigned long long>(*accountId));
-
-				MYSQL_RES* res = engine::server::db::DbQuery(mysql, queryBuf);
+				// N1-B : prepared statement (bind accountId, utilisé dans la sub-query).
 				std::unordered_set<uint64_t> memberAccountIds;
-				if (res)
+				if (!stmtCache)
 				{
-					MYSQL_ROW row;
-					while ((row = mysql_fetch_row(res)) != nullptr)
+					LOG_WARN(Net, "[ChatRelayHandler] Guild routing : cache de prepared statements absent");
+				}
+				else
+				{
+					auto* stmt = stmtCache->Acquire(mysql,
+						"SELECT player_id FROM guild_members WHERE guild_id = "
+						"(SELECT guild_id FROM guild_members WHERE player_id = ? LIMIT 1)");
+					if (stmt && stmt->Bind(0, *accountId) && stmt->Execute())
 					{
-						if (row[0])
+						while (stmt->FetchRow())
 						{
-							const uint64_t pid = std::strtoull(row[0], nullptr, 10);
+							const uint64_t pid = stmt->GetUInt64(0);
 							if (pid != 0u)
 								memberAccountIds.insert(pid);
 						}
 					}
-					engine::server::db::DbFreeResult(res);
 				}
 
 				if (memberAccountIds.empty())
@@ -410,6 +411,7 @@ namespace engine::server
 			{
 				auto guard = m_pool->Acquire();
 				MYSQL* mysql = guard.get();
+				auto* stmtCache = guard.cache();
 				if (!mysql)
 				{
 					auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "database unavailable", requestId, sessionIdHeader);
@@ -418,27 +420,26 @@ namespace engine::server
 					return;
 				}
 
-				char queryBuf[256]{};
-				std::snprintf(queryBuf, sizeof(queryBuf),
-					"SELECT friend_id FROM friends WHERE player_id = %llu AND status = 1",
-					static_cast<unsigned long long>(*accountId));
-
-				MYSQL_RES* res = engine::server::db::DbQuery(mysql, queryBuf);
+				// N1-B : prepared statement (bind accountId).
 				std::unordered_set<uint64_t> friendAccountIds;
 				friendAccountIds.insert(*accountId); // sender voit son propre echo
-				if (res)
+				if (!stmtCache)
 				{
-					MYSQL_ROW row;
-					while ((row = mysql_fetch_row(res)) != nullptr)
+					LOG_WARN(Net, "[ChatRelayHandler] Friends routing : cache de prepared statements absent");
+				}
+				else
+				{
+					auto* stmt = stmtCache->Acquire(mysql,
+						"SELECT friend_id FROM friends WHERE player_id = ? AND status = 1");
+					if (stmt && stmt->Bind(0, *accountId) && stmt->Execute())
 					{
-						if (row[0])
+						while (stmt->FetchRow())
 						{
-							const uint64_t fid = std::strtoull(row[0], nullptr, 10);
+							const uint64_t fid = stmt->GetUInt64(0);
 							if (fid != 0u)
 								friendAccountIds.insert(fid);
 						}
 					}
-					engine::server::db::DbFreeResult(res);
 				}
 
 				if (friendAccountIds.size() == 1u)

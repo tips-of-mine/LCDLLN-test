@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <span>
 #include <string>
 #include <unordered_map>
@@ -67,7 +68,7 @@ namespace engine::server::shard::vmap
 		void IncRef() noexcept
 		{
 			++m_refCount;
-			m_zeroRefSince = TimePoint{};
+			m_zeroRefSince.reset();
 		}
 		/// Decremente. Si retombe a 0, demarre le timer no-ref a \p now.
 		void DecRef(TimePoint now) noexcept
@@ -83,14 +84,22 @@ namespace engine::server::shard::vmap
 		bool ShouldRelease(TimePoint now, VMapStreamerConfig::Duration delay) const noexcept
 		{
 			if (m_refCount > 0) return false;
-			if (m_zeroRefSince == TimePoint{}) return false;
-			return (now - m_zeroRefSince) >= delay;
+			if (!m_zeroRefSince) return false;
+			return (now - *m_zeroRefSince) >= delay;
 		}
 
 	private:
 		VMapManager m_manager;
 		uint32_t    m_refCount = 0;
-		TimePoint   m_zeroRefSince{};  ///< 0 si refcount > 0
+		/// `nullopt` tant que refcount > 0 (ou avant le 1er Acquire/Release).
+		/// NB : utiliser `optional` (et NON un sentinel `TimePoint{}`) car
+		/// `TimePoint{}` est aussi une valeur LÉGITIME (epoch) — sans cette
+		/// distinction, un appelant utilisant `t0=TimePoint{}` (ex. tests
+		/// déterministes) voyait `DecRef(epoch)` assigner `m_zeroRefSince=epoch`,
+		/// indistinguable du sentinel → `ShouldRelease` retournait éternellement
+		/// false → tile jamais déchargé. Pattern identique à GridStateTracker
+		/// (FU-6).
+		std::optional<TimePoint> m_zeroRefSince;
 	};
 
 	class VMapStreamer

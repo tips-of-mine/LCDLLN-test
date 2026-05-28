@@ -1,15 +1,13 @@
 // Wave 5 Persistence (Phase 4.39b) - Implementation MysqlSkillStore.
+// N1-E : converti en prepared statements (1 SELECT + 1 INSERT upsert).
 
 #include "src/masterd/skills/MysqlSkillStore.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/db/ConnectionPool.h"
-#include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
-
-#include <cstdio>
-#include <cstdlib>
 
 namespace engine::server::skills
 {
@@ -24,30 +22,27 @@ namespace engine::server::skills
 		if (!IsAvailable()) return out;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return out;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return out;
 
-		char sql[256];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT character_id, skill_id, value, cap, bonus "
-			"FROM character_skills WHERE character_id = %llu",
-			static_cast<unsigned long long>(characterId));
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res)
+			"FROM character_skills WHERE character_id = ?");
+		if (!stmt || !stmt->Bind(0, characterId) || !stmt->Execute())
 		{
 			LOG_WARN(Net, "[MysqlSkillStore] LoadForCharacter query failed character={}", characterId);
 			return out;
 		}
-		while (MYSQL_ROW row = mysql_fetch_row(res))
+		while (stmt->FetchRow())
 		{
 			SkillRow r;
-			if (row[0]) r.characterId = std::strtoull(row[0], nullptr, 10);
-			if (row[1]) r.skillId     = static_cast<uint32_t>(std::strtoul(row[1], nullptr, 10));
-			if (row[2]) r.value       = static_cast<uint32_t>(std::strtoul(row[2], nullptr, 10));
-			if (row[3]) r.cap         = static_cast<uint32_t>(std::strtoul(row[3], nullptr, 10));
-			if (row[4]) r.bonus       = static_cast<uint32_t>(std::strtoul(row[4], nullptr, 10));
+			r.characterId = stmt->GetUInt64(0);
+			r.skillId     = static_cast<uint32_t>(stmt->GetUInt64(1));
+			r.value       = static_cast<uint32_t>(stmt->GetUInt64(2));
+			r.cap         = static_cast<uint32_t>(stmt->GetUInt64(3));
+			r.bonus       = static_cast<uint32_t>(stmt->GetUInt64(4));
 			out.push_back(r);
 		}
-		engine::server::db::DbFreeResult(res);
 		return out;
 	}
 
@@ -56,18 +51,21 @@ namespace engine::server::skills
 		if (!IsAvailable()) return false;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return false;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return false;
 
-		char sql[512];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"INSERT INTO character_skills (character_id, skill_id, value, cap, bonus) "
-			"VALUES (%llu, %u, %u, %u, %u) "
+			"VALUES (?, ?, ?, ?, ?) "
 			"ON DUPLICATE KEY UPDATE "
-			"value = VALUES(value), cap = VALUES(cap), bonus = VALUES(bonus)",
-			static_cast<unsigned long long>(row.characterId),
-			row.skillId, row.value, row.cap, row.bonus);
-
-		const bool ok = engine::server::db::DbExecute(mysql, sql);
+			"value = VALUES(value), cap = VALUES(cap), bonus = VALUES(bonus)");
+		const bool ok = stmt
+			&& stmt->Bind(0, row.characterId)
+			&& stmt->Bind(1, row.skillId)
+			&& stmt->Bind(2, row.value)
+			&& stmt->Bind(3, row.cap)
+			&& stmt->Bind(4, row.bonus)
+			&& stmt->Execute();
 		if (!ok)
 			LOG_WARN(Net, "[MysqlSkillStore] Upsert failed character={} skill={}",
 				row.characterId, row.skillId);

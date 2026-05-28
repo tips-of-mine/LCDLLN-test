@@ -1,15 +1,13 @@
 // Wave 5 Persistence (Phase 3.17b) - Implementation MysqlLootStore.
+// N1-E : converti en prepared statements (2 SELECTs).
 
 #include "src/masterd/loot/MysqlLootStore.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/db/ConnectionPool.h"
-#include "src/shared/db/DbHelpers.h"
+#include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
-
-#include <cstdio>
-#include <cstdlib>
 
 namespace engine::server::loot_db
 {
@@ -24,26 +22,24 @@ namespace engine::server::loot_db
 		if (!IsAvailable()) return out;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return out;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return out;
 
-		const char* sql =
-			"SELECT table_id, name, description FROM loot_tables "
-			"ORDER BY table_id ASC";
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res)
+		auto* stmt = cache->Acquire(mysql,
+			"SELECT table_id, name, description FROM loot_tables ORDER BY table_id ASC");
+		if (!stmt || !stmt->Execute())
 		{
 			LOG_WARN(Net, "[MysqlLootStore] LoadAllTables query failed");
 			return out;
 		}
-		while (MYSQL_ROW row = mysql_fetch_row(res))
+		while (stmt->FetchRow())
 		{
 			LootTableRow r;
-			if (row[0]) r.tableId     = static_cast<uint32_t>(std::strtoul(row[0], nullptr, 10));
-			if (row[1]) r.name        = row[1];
-			if (row[2]) r.description = row[2];
+			r.tableId     = static_cast<uint32_t>(stmt->GetUInt64(0));
+			r.name        = stmt->GetString(1);
+			r.description = stmt->GetString(2);
 			out.push_back(std::move(r));
 		}
-		engine::server::db::DbFreeResult(res);
 		LOG_INFO(Net, "[MysqlLootStore] LoadAllTables loaded {} tables", out.size());
 		return out;
 	}
@@ -54,33 +50,30 @@ namespace engine::server::loot_db
 		if (!IsAvailable()) return out;
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
-		if (!mysql) return out;
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return out;
 
-		char sql[512];
-		std::snprintf(sql, sizeof(sql),
+		auto* stmt = cache->Acquire(mysql,
 			"SELECT entry_id, table_id, item_template_id, item_name, "
 			"drop_chance_pct, min_count, max_count "
-			"FROM loot_table_entries WHERE table_id = %u ORDER BY entry_id ASC",
-			tableId);
-		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
-		if (!res)
+			"FROM loot_table_entries WHERE table_id = ? ORDER BY entry_id ASC");
+		if (!stmt || !stmt->Bind(0, tableId) || !stmt->Execute())
 		{
 			LOG_WARN(Net, "[MysqlLootStore] LoadEntriesForTable query failed tableId={}", tableId);
 			return out;
 		}
-		while (MYSQL_ROW row = mysql_fetch_row(res))
+		while (stmt->FetchRow())
 		{
 			LootEntryRow r;
-			if (row[0]) r.entryId         = static_cast<uint32_t>(std::strtoul(row[0], nullptr, 10));
-			if (row[1]) r.tableId          = static_cast<uint32_t>(std::strtoul(row[1], nullptr, 10));
-			if (row[2]) r.itemTemplateId   = static_cast<uint32_t>(std::strtoul(row[2], nullptr, 10));
-			if (row[3]) r.itemName         = row[3];
-			if (row[4]) r.dropChancePct    = static_cast<uint32_t>(std::strtoul(row[4], nullptr, 10));
-			if (row[5]) r.minCount          = static_cast<uint32_t>(std::strtoul(row[5], nullptr, 10));
-			if (row[6]) r.maxCount          = static_cast<uint32_t>(std::strtoul(row[6], nullptr, 10));
+			r.entryId         = static_cast<uint32_t>(stmt->GetUInt64(0));
+			r.tableId         = static_cast<uint32_t>(stmt->GetUInt64(1));
+			r.itemTemplateId  = static_cast<uint32_t>(stmt->GetUInt64(2));
+			r.itemName        = stmt->GetString(3);
+			r.dropChancePct   = static_cast<uint32_t>(stmt->GetUInt64(4));
+			r.minCount        = static_cast<uint32_t>(stmt->GetUInt64(5));
+			r.maxCount        = static_cast<uint32_t>(stmt->GetUInt64(6));
 			out.push_back(std::move(r));
 		}
-		engine::server::db::DbFreeResult(res);
 		LOG_INFO(Net, "[MysqlLootStore] LoadEntriesForTable tableId={} loaded {} entries", tableId, out.size());
 		return out;
 	}

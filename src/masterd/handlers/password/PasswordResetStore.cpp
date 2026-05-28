@@ -160,8 +160,11 @@ namespace engine::server
 			return true;
 		using namespace std::chrono;
 		const auto& entry = it->second;
-		if (Clock::now() - entry.window_start >= hours(1))
-			return true; // Window has expired; will be reset on RecordEmailSent.
+		// Pas de window_start = aucun email envoyé encore = autoriser.
+		// window_start vieux d'≥ 1h = fenêtre expirée (RecordEmailSent
+		// la réinitialisera au prochain appel).
+		if (!entry.window_start || Clock::now() - *entry.window_start >= hours(1))
+			return true;
 		return entry.count < kMaxEmailsPerHour;
 	}
 
@@ -169,7 +172,7 @@ namespace engine::server
 	{
 		using namespace std::chrono;
 		auto& entry = m_email_rate[account_id];
-		if (Clock::now() - entry.window_start >= hours(1))
+		if (!entry.window_start || Clock::now() - *entry.window_start >= hours(1))
 		{
 			entry.count        = 1;
 			entry.window_start = Clock::now();

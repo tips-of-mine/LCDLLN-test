@@ -74,9 +74,9 @@ namespace engine::client
 	void AuthUiPresenter::BuildModel_EmailConfirmationPending(RenderModel& model) const
 	{
 		using namespace std::chrono;
-		const bool timerStarted = m_verifyCodeSentAt != steady_clock::time_point{};
+		const bool timerStarted = m_verifyCodeSentAt.has_value();
 		const bool codeExpired  = timerStarted
-			&& (steady_clock::now() - m_verifyCodeSentAt) >= minutes(15);
+			&& (steady_clock::now() - *m_verifyCodeSentAt) >= minutes(15);
 
 		model.titleLine2 = Tr("auth.email_confirmation.title");
 		model.sectionTitle = Tr("auth.panel.email_confirmation");

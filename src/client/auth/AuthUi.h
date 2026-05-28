@@ -19,6 +19,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -923,8 +924,13 @@ namespace engine::client
 		std::string m_infoBanner;
 		uint64_t m_pendingVerifyAccountId = 0;
 		/// Instant auquel le dernier code de vérification a été envoyé (steady_clock).
-		/// Vaut time_point{} si aucun code n'a encore été envoyé dans cette session.
-		std::chrono::steady_clock::time_point m_verifyCodeSentAt{};
+		/// `std::nullopt` si aucun code n'a encore été envoyé dans cette session.
+		/// NB : on utilise `optional` (et non `time_point{}` sentinel) pour aligner
+		/// sur la convention défensive introduite par FU-3/FU-4 — `time_point{}`
+		/// est aussi une valeur LÉGITIME (epoch) qui peut se confondre avec le
+		/// sentinel dans des contextes de test ou si une horloge alternative est
+		/// injectée. Pattern strictement identique à GridStateTracker / ManagedModel.
+		std::optional<std::chrono::steady_clock::time_point> m_verifyCodeSentAt;
 		uint64_t m_pendingTermsEditionId = 0;
 		bool m_termsScrolledToBottom = false;
 		bool m_termsAcknowledgeChecked = false;

@@ -5,6 +5,16 @@
 #include <mutex>
 #include <vector>
 
+// Inclusion REQUISE (pas seulement forward-déclaration) :
+// `struct Entry` contient un `std::unique_ptr<SqlPreparedStatementCache>`.
+// Le destructeur par défaut de `unique_ptr<T>` exige le type complet de T
+// au point d'instanciation de `~Entry()` — ce qui se produit dans toute TU
+// qui détruit un `ConnectionPool` ou un `std::vector<Entry>` (notamment
+// `src/masterd/main_linux.cpp` qui possède l'instance maître). Une simple
+// forward-déclaration provoque l'erreur GCC "invalid application of
+// 'sizeof' to incomplete type" sur `~unique_ptr`.
+#include "src/shared/db/SqlPreparedStatement.h"
+
 struct MYSQL;
 
 namespace engine::core
@@ -14,8 +24,6 @@ namespace engine::core
 
 namespace engine::server::db
 {
-	class SqlPreparedStatementCache;
-
 	/// Thread-safe MySQL connection pool: configurable size, health check (ping) and reconnect on Acquire.
 	/// Only built on UNIX with MySQL client. Warm-up: Init() creates all connections at boot.
 	///

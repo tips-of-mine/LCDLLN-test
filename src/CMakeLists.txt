@@ -75,6 +75,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/migrations/MigrationRunner.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatement.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/NetServer.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
@@ -249,6 +250,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbLayerTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatement.cpp
   )
   target_include_directories(db_layer_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(db_layer_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
@@ -274,6 +276,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/db/SQLStorageTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatement.cpp
   )
   target_include_directories(sql_storage_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(sql_storage_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
@@ -283,9 +286,9 @@ elseif(UNIX)
   # CMANGOS.13 (Phase 1a) : SqlPreparedStatement + cache tests
   add_executable(sql_prepared_statement_tests
     ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatementTests.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatement.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatement.cpp
   )
   target_include_directories(sql_prepared_statement_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(sql_prepared_statement_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
@@ -298,6 +301,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/db/SqlDelayThread.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatement.cpp
   )
   target_include_directories(sql_delay_thread_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(sql_delay_thread_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
@@ -310,6 +314,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/globals/ConditionMgr.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatement.cpp
   )
   target_include_directories(condition_mgr_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(condition_mgr_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
@@ -332,6 +337,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/globals/GraveyardManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatement.cpp
   )
   target_include_directories(graveyard_manager_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(graveyard_manager_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
@@ -344,6 +350,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/globals/LocaleStrings.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatement.cpp
   )
   target_include_directories(locale_strings_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(locale_strings_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
@@ -369,6 +376,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatGate.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatement.cpp
   )
   target_include_directories(chat_gate_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(chat_gate_tests PRIVATE engine_core spdlog::spdlog ${MYSQL_LIBRARY} pthread)
@@ -924,6 +932,7 @@ elseif(UNIX)
     # TA.4 : accès MySQL pour le pont position (lecture characters.spawn_x/y/z).
     ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/db/SqlPreparedStatement.cpp
   )
   # TA.2 link en mode FICHIER (sans MySQL), strictement la config gameplay prouvee
   # linkable du bloc WIN32 `server_app`. CharacterPersistence est fichier-only

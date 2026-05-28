@@ -20,6 +20,12 @@ export function PrivacyForm({ initialVisibility }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   async function handleChange(value: Visibility) {
+    // Snapshot de la valeur précédente : si l'API échoue, on doit
+    // revenir dessus pour ne pas afficher un état désynchronisé de la DB.
+    // Avant ce fix, le formulaire affichait la nouvelle option cochée
+    // même en cas d'erreur 401/500 → l'utilisateur croyait à tort que
+    // sa préférence était sauvegardée.
+    const previous = visibility
     setVisibility(value)
     setSaving(true)
     setSaved(false)
@@ -29,15 +35,18 @@ export function PrivacyForm({ initialVisibility }: Props) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ visibility: value }),
+        credentials: 'same-origin',
       })
       const data = await res.json() as { ok: boolean; message?: string }
       if (!data.ok) {
         setError(data.message ?? 'Erreur lors de la sauvegarde')
+        setVisibility(previous)
       } else {
         setSaved(true)
       }
     } catch {
       setError('Erreur réseau')
+      setVisibility(previous)
     } finally {
       setSaving(false)
     }

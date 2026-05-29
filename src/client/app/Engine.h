@@ -422,6 +422,17 @@ namespace engine
 		/// Long-lived command pool dédié aux uploads water (RESET between Rebuilds).
 		/// Évite le coût vkCreateCommandPool/vkDestroyCommandPool par frame d'édition.
 		VkCommandPool m_waterTransferPool = VK_NULL_HANDLE;
+		/// Textures muettes 1×1 pour WaterPass (créées au boot si VMA dispo).
+		/// normalMap = (128,128,255) = normale plate vers le haut.
+		/// skybox = cube 6 faces = bleu ciel (fallback réflexion).
+		VkImage        m_waterNormalMapImg     = VK_NULL_HANDLE;
+		VkDeviceMemory m_waterNormalMapMem     = VK_NULL_HANDLE;
+		VkImageView    m_waterNormalMapView    = VK_NULL_HANDLE;
+		VkSampler      m_waterNormalMapSampler = VK_NULL_HANDLE;
+		VkImage        m_waterSkyboxImg        = VK_NULL_HANDLE;
+		VkDeviceMemory m_waterSkyboxMem        = VK_NULL_HANDLE;
+		VkImageView    m_waterSkyboxView       = VK_NULL_HANDLE;
+		VkSampler      m_waterSkyboxSampler    = VK_NULL_HANDLE;
 		/// Scene d'eau côté client (post-EnterWorld). Nullptr en mode --world-editor
 		/// (ce mode utilise WaterDocument du WorldEditorShell). Non encore renseignée
 		/// par la chaîne de chargement client M100.14 → la passe restera inactive

@@ -95,6 +95,237 @@ namespace engine
 	{
 		constexpr float kWorldEditorPickPi = 3.14159265f;
 
+		/// Crée une image Vulkan OPTIMAL-tiling remplie d'une couleur unie, avec
+		/// VkImageView + VkSampler. Supporte images 2D (arrayLayers=1) et cubes
+		/// (arrayLayers=6, viewType=VK_IMAGE_VIEW_TYPE_CUBE).
+		/// Upload via staging buffer + one-shot command sur \p pool / \p queue.
+		/// Toutes les sorties sont VK_NULL_HANDLE en cas d'échec.
+		static bool CreateSolidColorTexture(
+			VkDevice device, VkPhysicalDevice physDev,
+			VkCommandPool pool, VkQueue queue,
+			uint32_t arrayLayers, VkImageViewType viewType,
+			uint8_t r, uint8_t g, uint8_t b, uint8_t a,
+			VkImage& outImage, VkDeviceMemory& outMemory,
+			VkImageView& outView, VkSampler& outSampler)
+		{
+			outImage = VK_NULL_HANDLE; outMemory = VK_NULL_HANDLE;
+			outView  = VK_NULL_HANDLE; outSampler = VK_NULL_HANDLE;
+
+			constexpr VkFormat kFmt = VK_FORMAT_R8G8B8A8_UNORM;
+			const uint8_t pixel[4] = {r, g, b, a};
+			const VkDeviceSize kPixelBytes = 4u;
+			const VkDeviceSize stagingBytes = kPixelBytes * arrayLayers;
+			const bool isCube = (arrayLayers == 6);
+
+			// 1. Staging buffer HOST_VISIBLE + HOST_COHERENT
+			VkBuffer      stagBuf  = VK_NULL_HANDLE;
+			VkDeviceMemory stagMem  = VK_NULL_HANDLE;
+			{
+				VkBufferCreateInfo bi{};
+				bi.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+				bi.size        = stagingBytes;
+				bi.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+				bi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+				if (vkCreateBuffer(device, &bi, nullptr, &stagBuf) != VK_SUCCESS) return false;
+
+				VkMemoryRequirements req{};
+				vkGetBufferMemoryRequirements(device, stagBuf, &req);
+
+				VkPhysicalDeviceMemoryProperties props{};
+				vkGetPhysicalDeviceMemoryProperties(physDev, &props);
+				uint32_t memType = UINT32_MAX;
+				constexpr VkMemoryPropertyFlags kHost =
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+				for (uint32_t i = 0; i < props.memoryTypeCount; ++i)
+				{
+					if ((req.memoryTypeBits & (1u << i)) &&
+					    (props.memoryTypes[i].propertyFlags & kHost) == kHost)
+					{ memType = i; break; }
+				}
+				if (memType == UINT32_MAX) { vkDestroyBuffer(device, stagBuf, nullptr); return false; }
+
+				VkMemoryAllocateInfo ai{};
+				ai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+				ai.allocationSize  = req.size;
+				ai.memoryTypeIndex = memType;
+				if (vkAllocateMemory(device, &ai, nullptr, &stagMem) != VK_SUCCESS)
+				{ vkDestroyBuffer(device, stagBuf, nullptr); return false; }
+				vkBindBufferMemory(device, stagBuf, stagMem, 0);
+
+				void* mapped = nullptr;
+				vkMapMemory(device, stagMem, 0, stagingBytes, 0, &mapped);
+				for (uint32_t i = 0; i < arrayLayers; ++i)
+					memcpy(static_cast<uint8_t*>(mapped) + i * kPixelBytes, pixel, kPixelBytes);
+				vkUnmapMemory(device, stagMem);
+			}
+
+			auto cleanup = [&]()
+			{
+				vkDestroyBuffer(device, stagBuf, nullptr);
+				vkFreeMemory(device, stagMem, nullptr);
+				if (outView)    { vkDestroyImageView(device, outView, nullptr);  outView    = VK_NULL_HANDLE; }
+				if (outSampler) { vkDestroySampler(device, outSampler, nullptr); outSampler = VK_NULL_HANDLE; }
+				if (outImage)   { vkDestroyImage(device, outImage, nullptr);     outImage   = VK_NULL_HANDLE; }
+				if (outMemory)  { vkFreeMemory(device, outMemory, nullptr);      outMemory  = VK_NULL_HANDLE; }
+			};
+
+			// 2. Image DEVICE_LOCAL OPTIMAL
+			{
+				VkImageCreateInfo imgInfo{};
+				imgInfo.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+				if (isCube) imgInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+				imgInfo.imageType   = VK_IMAGE_TYPE_2D;
+				imgInfo.format      = kFmt;
+				imgInfo.extent      = {1, 1, 1};
+				imgInfo.mipLevels   = 1;
+				imgInfo.arrayLayers = arrayLayers;
+				imgInfo.samples     = VK_SAMPLE_COUNT_1_BIT;
+				imgInfo.tiling      = VK_IMAGE_TILING_OPTIMAL;
+				imgInfo.usage       = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+				imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+				if (vkCreateImage(device, &imgInfo, nullptr, &outImage) != VK_SUCCESS)
+				{ cleanup(); return false; }
+
+				VkMemoryRequirements req{};
+				vkGetImageMemoryRequirements(device, outImage, &req);
+
+				VkPhysicalDeviceMemoryProperties props{};
+				vkGetPhysicalDeviceMemoryProperties(physDev, &props);
+				uint32_t memType = UINT32_MAX;
+				for (uint32_t i = 0; i < props.memoryTypeCount; ++i)
+				{
+					if ((req.memoryTypeBits & (1u << i)) &&
+					    (props.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
+					{ memType = i; break; }
+				}
+				if (memType == UINT32_MAX) { cleanup(); return false; }
+
+				VkMemoryAllocateInfo ai{};
+				ai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+				ai.allocationSize  = req.size;
+				ai.memoryTypeIndex = memType;
+				if (vkAllocateMemory(device, &ai, nullptr, &outMemory) != VK_SUCCESS)
+				{ cleanup(); return false; }
+				vkBindImageMemory(device, outImage, outMemory, 0);
+			}
+
+			// 3. One-shot command : layout UNDEFINED→TRANSFER_DST + copy + TRANSFER_DST→SHADER_READ
+			{
+				VkCommandBufferAllocateInfo cbai{};
+				cbai.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+				cbai.commandPool        = pool;
+				cbai.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+				cbai.commandBufferCount = 1;
+				VkCommandBuffer cmd = VK_NULL_HANDLE;
+				if (vkAllocateCommandBuffers(device, &cbai, &cmd) != VK_SUCCESS)
+				{ cleanup(); return false; }
+
+				VkCommandBufferBeginInfo bi{};
+				bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+				bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+				vkBeginCommandBuffer(cmd, &bi);
+
+				VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, arrayLayers};
+
+				VkImageMemoryBarrier bar{};
+				bar.sType            = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				bar.srcAccessMask    = 0;
+				bar.dstAccessMask    = VK_ACCESS_TRANSFER_WRITE_BIT;
+				bar.oldLayout        = VK_IMAGE_LAYOUT_UNDEFINED;
+				bar.newLayout        = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				bar.image            = outImage;
+				bar.subresourceRange = range;
+				vkCmdPipelineBarrier(cmd,
+					VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+					0, 0, nullptr, 0, nullptr, 1, &bar);
+
+				std::vector<VkBufferImageCopy> copies(arrayLayers);
+				for (uint32_t i = 0; i < arrayLayers; ++i)
+				{
+					VkBufferImageCopy& c = copies[i];
+					c = {};
+					c.bufferOffset         = i * kPixelBytes;
+					c.imageSubresource     = {VK_IMAGE_ASPECT_COLOR_BIT, 0, i, 1};
+					c.imageExtent          = {1, 1, 1};
+				}
+				vkCmdCopyBufferToImage(cmd, stagBuf, outImage,
+					VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					static_cast<uint32_t>(copies.size()), copies.data());
+
+				bar.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				bar.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				bar.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				bar.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				vkCmdPipelineBarrier(cmd,
+					VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+					0, 0, nullptr, 0, nullptr, 1, &bar);
+
+				vkEndCommandBuffer(cmd);
+
+				VkFence fence = VK_NULL_HANDLE;
+				VkFenceCreateInfo fi{};
+				fi.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+				vkCreateFence(device, &fi, nullptr, &fence);
+
+				VkSubmitInfo si{};
+				si.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+				si.commandBufferCount = 1;
+				si.pCommandBuffers    = &cmd;
+				vkQueueSubmit(queue, 1, &si, fence);
+				vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX);
+
+				vkDestroyFence(device, fence, nullptr);
+				vkFreeCommandBuffers(device, pool, 1, &cmd);
+			}
+
+			// 4. Libère le staging
+			vkDestroyBuffer(device, stagBuf, nullptr);
+			vkFreeMemory(device, stagMem, nullptr);
+
+			// 5. ImageView
+			{
+				VkImageViewCreateInfo vi{};
+				vi.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+				vi.image    = outImage;
+				vi.viewType = viewType;
+				vi.format   = kFmt;
+				vi.components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,
+				                 VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY};
+				vi.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, arrayLayers};
+				if (vkCreateImageView(device, &vi, nullptr, &outView) != VK_SUCCESS)
+				{
+					vkDestroyImage(device, outImage, nullptr);  outImage  = VK_NULL_HANDLE;
+					vkFreeMemory(device, outMemory, nullptr);   outMemory = VK_NULL_HANDLE;
+					return false;
+				}
+			}
+
+			// 6. Sampler linéaire
+			{
+				VkSamplerCreateInfo si{};
+				si.sType        = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+				si.magFilter    = VK_FILTER_LINEAR;
+				si.minFilter    = VK_FILTER_LINEAR;
+				si.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+				si.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+				si.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+				si.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+				si.maxLod       = 0.0f;
+				si.maxAnisotropy = 1.0f;
+				if (vkCreateSampler(device, &si, nullptr, &outSampler) != VK_SUCCESS)
+				{
+					vkDestroyImageView(device, outView, nullptr);   outView   = VK_NULL_HANDLE;
+					vkDestroyImage(device, outImage, nullptr);      outImage  = VK_NULL_HANDLE;
+					vkFreeMemory(device, outMemory, nullptr);       outMemory = VK_NULL_HANDLE;
+					return false;
+				}
+			}
+
+			return true;
+		}
+
 		/// Découpe une chaîne CSV en tokens nettoyés (espaces de début/fin
 		/// retirés), en ignorant les tokens vides. Utilisé pour lire la liste
 		/// `client.character_creation.body_material_names` (noms de matériaux
@@ -3792,21 +4023,53 @@ namespace engine
 												m_vmaAllocator ? "set" : "null (STAB.7)");
 										}
 
-										// Init WaterPass : prerequisites = shaders + normalMap + skybox cube.
-										// Aucun de ces prerequisites n'est encore exposé par le moteur (pas de
-										// skybox cube view, pas de sampler partagé linear-clamp, pas de tile
-										// normal-map water dédiée). On passe VK_NULL_HANDLE → Init échoue
-										// gracieusement et le fallback Water_Passthrough kicks in.
+										// Init WaterPass : shaders + textures muettes 1×1.
+										// normalMap  = (128,128,255,255) = normale plate vers le haut.
+										// skybox cube = (15,30,80,255)   = bleu ciel sombre (fallback réfl.).
 										std::vector<uint32_t> waterVert = loadSpirv("shaders/water.vert.spv");
 										std::vector<uint32_t> waterFrag = loadSpirv("shaders/water.frag.spv");
-										VkImageView normalView = VK_NULL_HANDLE;
-										VkSampler   normalSamp = VK_NULL_HANDLE;
-										VkImageView skyView    = VK_NULL_HANDLE;
-										VkSampler   skySamp    = VK_NULL_HANDLE;
+
+										if (m_waterTransferPool != VK_NULL_HANDLE
+											&& CreateSolidColorTexture(
+												m_vkDeviceContext.GetDevice(),
+												m_vkDeviceContext.GetPhysicalDevice(),
+												m_waterTransferPool,
+												m_vkDeviceContext.GetGraphicsQueue(),
+												1u, VK_IMAGE_VIEW_TYPE_2D,
+												128, 128, 255, 255,
+												m_waterNormalMapImg, m_waterNormalMapMem,
+												m_waterNormalMapView, m_waterNormalMapSampler))
+										{
+											LOG_INFO(Render, "[Boot] WaterPass: normalMap muette créée");
+										}
+										else
+										{
+											LOG_WARN(Render, "[Boot] WaterPass: création normalMap muette échouée");
+										}
+
+										if (m_waterTransferPool != VK_NULL_HANDLE
+											&& CreateSolidColorTexture(
+												m_vkDeviceContext.GetDevice(),
+												m_vkDeviceContext.GetPhysicalDevice(),
+												m_waterTransferPool,
+												m_vkDeviceContext.GetGraphicsQueue(),
+												6u, VK_IMAGE_VIEW_TYPE_CUBE,
+												15, 30, 80, 255,
+												m_waterSkyboxImg, m_waterSkyboxMem,
+												m_waterSkyboxView, m_waterSkyboxSampler))
+										{
+											LOG_INFO(Render, "[Boot] WaterPass: skybox muette créée");
+										}
+										else
+										{
+											LOG_WARN(Render, "[Boot] WaterPass: création skybox muette échouée");
+										}
 
 										if (!waterVert.empty() && !waterFrag.empty()
-											&& normalView != VK_NULL_HANDLE && normalSamp != VK_NULL_HANDLE
-											&& skyView != VK_NULL_HANDLE    && skySamp != VK_NULL_HANDLE
+											&& m_waterNormalMapView != VK_NULL_HANDLE
+											&& m_waterNormalMapSampler != VK_NULL_HANDLE
+											&& m_waterSkyboxView != VK_NULL_HANDLE
+											&& m_waterSkyboxSampler != VK_NULL_HANDLE
 											&& m_waterMeshGpu.IsInitialized())
 										{
 											if (m_waterPass.Init(
@@ -3815,8 +4078,8 @@ namespace engine
 													VK_FORMAT_R16G16B16A16_SFLOAT,
 													waterVert.data(), waterVert.size(),
 													waterFrag.data(), waterFrag.size(),
-													normalView, normalSamp,
-													skyView,    skySamp,
+													m_waterNormalMapView, m_waterNormalMapSampler,
+													m_waterSkyboxView,    m_waterSkyboxSampler,
 													2u))
 											{
 												LOG_INFO(Render, "[Boot] WaterPass init OK");
@@ -3832,8 +4095,8 @@ namespace engine
 												"[Boot] WaterPass : prerequisites missing (vert={} frag={} normalMap={} skybox={}) — Water_Passthrough fallback",
 												!waterVert.empty(),
 												!waterFrag.empty(),
-												normalView != VK_NULL_HANDLE,
-												skyView != VK_NULL_HANDLE);
+												m_waterNormalMapView != VK_NULL_HANDLE,
+												m_waterSkyboxView != VK_NULL_HANDLE);
 										}
 									}
 
@@ -6116,6 +6379,26 @@ namespace engine
 			// (les ressources sont indépendantes mais l'ordre symétrique d'Init est plus
 			// lisible côté boot ↔ shutdown).
 			m_waterPass.Destroy(m_vkDeviceContext.GetDevice());
+			// Textures muettes WaterPass (normalMap + skybox cube).
+			{
+				VkDevice dev = m_vkDeviceContext.GetDevice();
+				if (m_waterNormalMapSampler != VK_NULL_HANDLE)
+				{ vkDestroySampler(dev, m_waterNormalMapSampler, nullptr); m_waterNormalMapSampler = VK_NULL_HANDLE; }
+				if (m_waterNormalMapView != VK_NULL_HANDLE)
+				{ vkDestroyImageView(dev, m_waterNormalMapView, nullptr);  m_waterNormalMapView = VK_NULL_HANDLE; }
+				if (m_waterNormalMapImg != VK_NULL_HANDLE)
+				{ vkDestroyImage(dev, m_waterNormalMapImg, nullptr);       m_waterNormalMapImg = VK_NULL_HANDLE; }
+				if (m_waterNormalMapMem != VK_NULL_HANDLE)
+				{ vkFreeMemory(dev, m_waterNormalMapMem, nullptr);         m_waterNormalMapMem = VK_NULL_HANDLE; }
+				if (m_waterSkyboxSampler != VK_NULL_HANDLE)
+				{ vkDestroySampler(dev, m_waterSkyboxSampler, nullptr);    m_waterSkyboxSampler = VK_NULL_HANDLE; }
+				if (m_waterSkyboxView != VK_NULL_HANDLE)
+				{ vkDestroyImageView(dev, m_waterSkyboxView, nullptr);     m_waterSkyboxView = VK_NULL_HANDLE; }
+				if (m_waterSkyboxImg != VK_NULL_HANDLE)
+				{ vkDestroyImage(dev, m_waterSkyboxImg, nullptr);          m_waterSkyboxImg = VK_NULL_HANDLE; }
+				if (m_waterSkyboxMem != VK_NULL_HANDLE)
+				{ vkFreeMemory(dev, m_waterSkyboxMem, nullptr);            m_waterSkyboxMem = VK_NULL_HANDLE; }
+			}
 			// Phase 5 Lunar + M38.1 Sky : detruit le SkyPass (pipeline + layout)
 			// avant le DeferredPipeline (m_skyPass depend du renderPass de
 			// GeometryPass, donc on libere le pipeline d'abord).

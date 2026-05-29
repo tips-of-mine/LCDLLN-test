@@ -191,7 +191,41 @@ namespace engine::server::db
 				return false;
 		}
 
-		return mysql_stmt_execute(m_stmt) == 0;
+		if (mysql_stmt_execute(m_stmt) != 0)
+			return false;
+
+		// CRITIQUE : bufferiser tout le result set côté client immédiatement
+		// après l'exécution (pour les SELECT, c.-à-d. m_resultColumnCount > 0).
+		//
+		// Sans `mysql_stmt_store_result`, libmysql laisse le result set en mode
+		// "unbuffered" (streaming serveur) : la connexion reste bloquée tant que
+		// le client n'a pas fetché TOUTES les lignes jusqu'à MYSQL_NO_DATA. Or
+		// de nombreux call sites font un `FetchRow()` unique sur un lookup
+		// LIMIT 1 qui renvoie 1 ligne (ex. AUTH FindByLogin, IsForbiddenName,
+		// NameExists) puis s'arrêtent SANS drainer la ligne EOF. La connexion
+		// reste alors en état "commands out of sync" → le PROCHAIN
+		// `mysql_stmt_prepare` sur cette même connexion poolée échoue avec
+		// CR_COMMANDS_OUT_OF_SYNC (2014), et `mysql_ping` finit par échouer →
+		// reconnexions permanentes.
+		//
+		// `store_result` transfère l'intégralité des lignes côté client en une
+		// fois : la connexion redevient immédiatement réutilisable pour un autre
+		// statement, peu importe combien de lignes le caller fetche ensuite.
+		// FetchRow() lit alors depuis le buffer client, Reset()/free_result le
+		// libère. C'est le pattern standard libmysql pour multiplexer plusieurs
+		// prepared statements sur une connexion partagée.
+		//
+		// Régression introduite par la conversion N1 (mysql_query +
+		// mysql_store_result bufferisé par défaut → prepared statements
+		// unbuffered). Restée latente car network_integration_tests (seul test
+		// exerçant MySQL live multi-requêtes/connexion) est exclu de la CI.
+		if (m_resultColumnCount > 0)
+		{
+			if (mysql_stmt_store_result(m_stmt) != 0)
+				return false;
+		}
+
+		return true;
 	}
 
 	bool SqlPreparedStatement::FetchRow()

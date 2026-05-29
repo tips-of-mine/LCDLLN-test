@@ -90,7 +90,10 @@ namespace engine::gameplay
 			float maxSlopeDeg = 45.0f; ///< walkable slope
 			float maxStep = 0.3f;      ///< m
 
-			float jumpSpeed = 9.0f;       ///< m/s, impulse applied when jumping
+			// Saut realiste : apex = jumpSpeed^2 / (2*|gravity|). Avec gravity=-20,
+			// jumpSpeed=4.9 -> ~0.60 m (env. 1/3 de la taille 1.8 m, saut humain pose).
+			// Auparavant 9.0 -> ~2.0 m (irrealiste, ~1.1x la taille).
+			float jumpSpeed = 4.9f;       ///< m/s, impulse applied when jumping
 			float airControlMultiplier = 0.5f; ///< 50% of ground control
 			float coyoteTimeSec = 0.1f;   ///< allow jump shortly after leaving ground
 			float jumpBufferSec = 0.1f;   ///< allow jump shortly before landing

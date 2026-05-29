@@ -110,7 +110,7 @@
             "walk_speed": 5.0,
             "run_speed": 9.0,
             "gravity": -20.0,
-            "jump_speed": 9.0,
+            "jump_speed": 4.9,
             "coyote_time_s": 0.1,
             "jump_buffer_s": 0.1
         }

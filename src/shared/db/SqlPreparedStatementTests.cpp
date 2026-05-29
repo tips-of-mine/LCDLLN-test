@@ -87,6 +87,36 @@ namespace
 		LOG_INFO(Core, "[SqlPSTests] Cache hit/miss/LRU eviction OK");
 		return true;
 	}
+
+	// Non-régression : une colonne dépassant la taille inline du buffer (256 o)
+	// doit être lue EN INTÉGRALITÉ, pas tronquée ni perdue. Avant le fix, FetchRow
+	// traitait MYSQL_DATA_TRUNCATED comme un échec → la ligne était droppée
+	// (régression CGU : terms_localizations.content ~40 Ko → GetFirstPending vide).
+	// SELECT REPEAT('x', N) : self-contained, aucune table requise.
+	bool TestLargeColumnNoTruncation(MYSQL* mysql)
+	{
+		SqlPreparedStatementCache cache(4);
+		constexpr int kLen = 5000;  // >> 256 o inline
+		SqlPreparedStatement* stmt = cache.Acquire(mysql, "SELECT REPEAT('x', ?)");
+		if (!stmt || !stmt->Bind(0, static_cast<int32_t>(kLen)) || !stmt->Execute())
+		{
+			LOG_ERROR(Core, "[SqlPSTests] LargeColumn Acquire/Bind/Execute failed");
+			return false;
+		}
+		if (!stmt->FetchRow())
+		{
+			LOG_ERROR(Core, "[SqlPSTests] LargeColumn FetchRow failed (truncation dropped row?)");
+			return false;
+		}
+		const std::string s = stmt->GetString(0);
+		if (s.size() != static_cast<size_t>(kLen))
+		{
+			LOG_ERROR(Core, "[SqlPSTests] LargeColumn expected {} bytes, got {}", kLen, s.size());
+			return false;
+		}
+		LOG_INFO(Core, "[SqlPSTests] LargeColumn full {}-byte read OK (no truncation)", kLen);
+		return true;
+	}
 }
 
 int main(int argc, char** argv)
@@ -114,7 +144,8 @@ int main(int argc, char** argv)
 
 	auto guard = pool.Acquire();
 	MYSQL* mysql = guard.get();
-	bool ok = mysql && TestBindExecuteFetch(mysql) && TestCacheHitMiss(mysql);
+	bool ok = mysql && TestBindExecuteFetch(mysql) && TestCacheHitMiss(mysql)
+		&& TestLargeColumnNoTruncation(mysql);
 
 	guard = ConnectionPool::Guard();
 	pool.Shutdown();

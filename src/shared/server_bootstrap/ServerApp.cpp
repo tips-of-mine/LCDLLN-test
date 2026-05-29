@@ -661,7 +661,7 @@ namespace engine::server
 		InputMessage input{};
 		if (DecodeInput(packetBytes, input))
 		{
-			HandleInput(datagram.endpoint, input.clientId, input.inputSequence, input.positionMetersX, input.positionMetersY, input.positionMetersZ, input.yawRadians);
+			HandleInput(datagram.endpoint, input.clientId, input.inputSequence, input.positionMetersX, input.positionMetersY, input.positionMetersZ, input.yawRadians, input.animationState);
 			return;
 		}
 
@@ -1245,7 +1245,7 @@ namespace engine::server
 		OnClientLogin(acceptedClient);
 	}
 
-	void ServerApp::HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersY, float positionMetersZ, float yawRadians)
+	void ServerApp::HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersY, float positionMetersZ, float yawRadians, uint8_t animationState)
 	{
 		ConnectedClient* client = FindClient(endpoint);
 		if (client == nullptr)
@@ -1303,6 +1303,7 @@ namespace engine::server
 		client->positionMetersY = positionMetersY; // TC.1 : altitude fournie par le client
 		client->positionMetersZ = positionMetersZ;
 		client->yawRadians = yawRadians;            // TC.1 : orientation fournie par le client (plus dérivée de la vélocité)
+		client->animationState = animationState;    // TD.8 : état d'animation reporté par le client (emote/roll/run/…)
 		if (client->hasReplicatedState)
 		{
 			const float tickDt = 1.0f / static_cast<float>(m_tickHz);
@@ -3856,6 +3857,9 @@ namespace engine::server
 			// TD.6 : genre du perso (migration 0067, "male"/"female") → le client sélectionne
 			// le bon mesh skinné pour l'avatar distant. Vide = fallback "male" côté rendu.
 			outEntity.gender = client->gender;
+			// TD.8 : état d'animation reporté par ce joueur → les autres clients jouent le bon
+			// clip (emote/roll/run/sprint/jump/…) au lieu de dériver Idle/Walk de la vélocité.
+			outEntity.animationState = static_cast<AvatarAnimState>(client->animationState);
 			return true;
 		}
 

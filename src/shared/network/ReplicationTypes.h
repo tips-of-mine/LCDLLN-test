@@ -63,6 +63,36 @@ namespace engine::server
 		EntityId entityId = 0;
 	};
 
+	/// TD.8 — état d'animation répliqué (client → shard → autres clients). Sans ce champ,
+	/// le client distant dérive Idle/Walk de la seule vélocité serveur : les emotes (/dance),
+	/// roulades, run/sprint/attaque restaient invisibles aux autres joueurs (seul le saut,
+	/// via le déplacement vertical de la position, semblait visible). Les valeurs sont
+	/// alignées 1:1 (même ordre) sur `Engine::AvatarLocomotionState`, mais le client fait
+	/// un mapping **explicite** (`ToWireAnimState` / `FromWireAnimState`, Engine.cpp) pour
+	/// ne pas dépendre de l'ordre de l'enum côté rendu.
+	enum class AvatarAnimState : uint8_t
+	{
+		Idle = 0,
+		StartWalking,
+		Walk,
+		WalkBack,
+		Run,
+		Sprint,
+		CrouchIdle,
+		CrouchWalk,
+		Roll,
+		Emote,
+		Attack,
+		Cast,
+		Interact,
+		Punch,
+		Jump,
+		Fall,
+		Land,
+		SwimIdle,
+		SwimForward
+	};
+
 	/// Snapshot payload for one already-spawned entity state update.
 	/// TD.4 — `playerClientId` ≠ 0 quand l'entité représente un **joueur connecté** ;
 	/// vaut 0 pour les mobs / loot bags. Sert au client à afficher une plaque de nom
@@ -81,5 +111,8 @@ namespace engine::server
 		uint32_t playerClientId = 0;
 		std::string characterName;
 		std::string gender;
+		/// TD.8 — état d'animation courant du joueur (Idle pour les mobs/lootbags).
+		/// Wire-bump v7→v8 : 1 octet ajouté après le genre dans chaque entité du Snapshot.
+		AvatarAnimState animationState = AvatarAnimState::Idle;
 	};
 }

@@ -38,7 +38,9 @@ namespace engine::client
 
 		/// TC.2 — envoie un Input (position + orientation de l'avatar local) au shard.
 		/// Appelé à la cadence `client.gameplay_udp.request_tick_hz` depuis la boucle de jeu.
-		bool SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw);
+		/// TD.8 — `animationState` (valeur d'AvatarAnimState) propage l'animation courante
+		/// pour que les autres joueurs voient emotes/roulades/run/sprint/saut/etc.
+		bool SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw, uint8_t animationState);
 
 		/// Send TalkRequest (e.g. `vendor:1` to open shop).
 		bool SendTalkRequest(uint32_t clientId, std::string_view targetId);

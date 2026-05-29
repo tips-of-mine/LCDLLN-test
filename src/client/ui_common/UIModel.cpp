@@ -729,6 +729,8 @@ namespace engine::client
 			remote.displayName = entity.characterName;
 			// TD.6 : genre du perso pour le rendu de l'avatar distant (vide → fallback "male").
 			remote.gender = entity.gender;
+			// TD.8 : état d'animation pour jouer le bon clip sur l'avatar distant.
+			remote.animationState = static_cast<uint8_t>(entity.animationState);
 			m_model.remoteEntities.push_back(remote);
 		}
 

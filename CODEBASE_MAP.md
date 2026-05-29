@@ -2010,3 +2010,43 @@ Les logs `[AvatarSkinDiag]` ont montré : matériaux OK (idMale=2, idFemale=3), 
 ### Limites / reste
 - Aucun. Modification cosmétique, applicable au prochain `docker compose up -d --force-recreate master shard`. Aucun impact wire ni régression.
 - **Déploiement** : ✅ client uniquement.
+
+## 58. Réplication de l'état d'animation (TD.8, 2026-05-29)
+
+**But** : rendre visibles aux autres joueurs les animations qui ne déplacent pas
+la position — `/dance` (emote), roulade, et aussi Run/Sprint/Attaque. Avant TD.8,
+`RecordRemoteAvatars` dérivait l'animation distante de la seule vélocité serveur
+(`< 0.1 m/s → Idle`, sinon `Walk`), donc seul le **saut** semblait visible (via le
+déplacement vertical réel de la position). Cf. limite notée §56.
+
+### Wire — kProtocolVersion 7 → 8 (lock-step client + shard)
+- **Enum partagé** : `engine::server::AvatarAnimState : uint8_t` dans
+  `src/shared/network/ReplicationTypes.h` (19 états, même ordre que
+  `Engine::AvatarLocomotionState`). Mapping explicite côté client via
+  `ToWireAnimState` / `FromWireAnimState` (`Engine.cpp`, anonymous ns) gardé par
+  3 `static_assert` d'alignement (Idle/Emote/Roll/SwimForward).
+- **Client → shard** : `InputMessage` gagne `uint8_t animationState` ; payload
+  Input **24 → 25 octets** (`EncodeInput`/`DecodeInput`). `GameplayUdpClient::SendInput`
+  prend le paramètre ; `Engine::UpdateGameplayNet` envoie `ToWireAnimState(m_avatarLocoState)`.
+- **Shard** : `ConnectedClient::animationState` stocké dans `HandleInput` (après le
+  gate anti-triche) ; recopié dans `SnapshotEntity` par `TryBuildSnapshotEntity`.
+- **Shard → clients** : `SnapshotEntity` gagne `AvatarAnimState animationState` ;
+  min payload/entité **56 → 57 octets** (`EncodeSnapshot`/`DecodeSnapshot`).
+- **Client rendu** : `UIRemoteEntity::animationState` (recopié par `ApplySnapshot`) ;
+  `RecordRemoteAvatars` mappe l'état → clip via `StateToClipName`/`ClipLoops` (repli
+  Walk si Idle reçu mais l'avatar glisse). Le mesh distant est le même objet
+  `m_raceMeshes` que l'avatar local (rig UE5 → clips Roll/Dance/Sprint/… présents).
+
+### Limites / reste
+- **Emotes** : le wire ne porte qu'un état (1 octet), pas le rôle d'emote précis.
+  `kEmotes` compte 7 entrées (/dance, /sit, /talk, /torch, /kneel, /sittalk, /push)
+  mais TOUTES s'affichent comme **Dance** chez les autres joueurs. `/dance` est donc
+  exact ; les autres s'animent visuellement comme Dance (mieux que l'ancien figé).
+  Réplication du rôle exact = porter le rôle d'emote sur le wire (travail ultérieur).
+- Si un clip mappé manque sur le mesh distant, `FindClip` renvoie nullptr et l'anim
+  précédente est conservée (graceful, pas de crash).
+- **Tests** : `server_protocol_tests` — round-trip Input (animationState) + Snapshot
+  (Emote/Roll/Idle) + rejet payload tronqué (57/entité).
+- **Déploiement** : ⚠️ **redéploiement serveur (shard) requis** + client neuf, en
+  **lock-step** (double bump wire, deux directions ; un client v7 face à un shard v8
+  rejette tout via `DecodeHeader`).

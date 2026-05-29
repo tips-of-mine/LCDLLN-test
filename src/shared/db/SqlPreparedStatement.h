@@ -70,6 +70,10 @@ namespace engine::server::db
 		friend class SqlPreparedStatementCache;
 		SqlPreparedStatement(MYSQL_STMT* stmt, size_t paramCount, size_t resultColumnCount);
 
+		// Buffer source de la colonne \p col pour la ligne courante : overflow si
+		// la colonne a été tronquée puis re-fetchée par FetchRow, sinon inline.
+		const std::vector<uint8_t>& resultBuffer(size_t col) const;
+
 		MYSQL_STMT* m_stmt = nullptr;
 		size_t m_paramCount = 0;
 		size_t m_resultColumnCount = 0;
@@ -84,9 +88,22 @@ namespace engine::server::db
 		// Drapeau "non signé" pour les types entiers (MYSQL_BIND::is_unsigned).
 		std::vector<char> m_paramIsUnsigned;
 		// Buffers pour les colonnes de résultat (alloués au premier Execute).
+		// Taille fixe (kResultInlineBytes) : c'est CE buffer qui est lié via
+		// mysql_stmt_bind_result, il ne doit donc pas être réalloué tant que le
+		// statement vit (sinon le pointeur lié devient dangling pour le prochain
+		// mysql_stmt_fetch).
 		std::vector<std::vector<uint8_t>> m_resultBuffers;
 		std::vector<unsigned long> m_resultLengths;
 		std::vector<char> m_resultIsNull;
+		// Overflow par colonne : quand une colonne dépasse kResultInlineBytes,
+		// mysql_stmt_fetch retourne MYSQL_DATA_TRUNCATED ; FetchRow re-fetch alors
+		// la colonne complète ici via mysql_stmt_fetch_column (buffer dimensionné
+		// à la longueur réelle). m_resultTruncated[col] indique, pour la ligne
+		// courante, si la valeur doit être lue depuis l'overflow plutôt que le
+		// buffer inline. Sépare le buffer LIÉ (inline, stable) du buffer VALEUR
+		// (overflow, redimensionnable) pour éviter le dangling pointer.
+		std::vector<std::vector<uint8_t>> m_resultOverflow;
+		std::vector<char> m_resultTruncated;
 	};
 
 	/// Cache LRU de SqlPreparedStatement par connexion MYSQL*.

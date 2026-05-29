@@ -353,6 +353,33 @@ namespace engine
 				|| s == engine::Engine::AvatarLocomotionState::SwimForward;
 		}
 
+		/// TD.8 — conversions entre l'état de locomotion local (Engine) et l'enum wire
+		/// partagé (engine::server::AvatarAnimState). Les deux enums listent les mêmes états
+		/// dans le même ordre ; les static_assert garantissent l'alignement à la compilation
+		/// (un état inséré d'un seul côté casse la build au lieu d'un désync silencieux sur
+		/// le wire). On caste sur l'uint8_t sous-jacent — pas de switch à maintenir en double.
+		static_assert(static_cast<uint8_t>(engine::Engine::AvatarLocomotionState::Idle)
+			== static_cast<uint8_t>(engine::server::AvatarAnimState::Idle), "AvatarAnimState desync (Idle)");
+		static_assert(static_cast<uint8_t>(engine::Engine::AvatarLocomotionState::Emote)
+			== static_cast<uint8_t>(engine::server::AvatarAnimState::Emote), "AvatarAnimState desync (Emote)");
+		static_assert(static_cast<uint8_t>(engine::Engine::AvatarLocomotionState::Roll)
+			== static_cast<uint8_t>(engine::server::AvatarAnimState::Roll), "AvatarAnimState desync (Roll)");
+		static_assert(static_cast<uint8_t>(engine::Engine::AvatarLocomotionState::SwimForward)
+			== static_cast<uint8_t>(engine::server::AvatarAnimState::SwimForward), "AvatarAnimState desync (dernier état)");
+
+		uint8_t ToWireAnimState(engine::Engine::AvatarLocomotionState s)
+		{
+			return static_cast<uint8_t>(s);
+		}
+
+		engine::Engine::AvatarLocomotionState FromWireAnimState(uint8_t v)
+		{
+			// Borne défensive : une valeur hors enum (paquet corrompu) retombe sur Idle.
+			if (v > static_cast<uint8_t>(engine::server::AvatarAnimState::SwimForward))
+				return engine::Engine::AvatarLocomotionState::Idle;
+			return static_cast<engine::Engine::AvatarLocomotionState>(v);
+		}
+
 		engine::core::LogLevel ParseLogLevelConfig(std::string_view text)
 		{
 			if (text == "Trace" || text == "trace") return engine::core::LogLevel::Trace;
@@ -9622,19 +9649,34 @@ namespace engine
 			// où on voit cet entityId. L'horloge utilisée pour Sample() / Play() est la même
 			// (nowSec) pour tous les avatars : crossfade et boucle restent en phase.
 			RemoteAvatarAnim& anim = m_remoteAnims[re.entityId];
-			// Dérivation Idle/Walk depuis la vélocité serveur. On ignore la composante Y
-			// (chute libre / saut) pour éviter de jouer Walk quand l'avatar tombe vertical.
+			// TD.8 — clip dérivé de l'état d'animation RÉPLIQUÉ (emote/roulade/run/sprint/saut/…),
+			// plus seulement Idle/Walk dérivé de la vélocité. C'est ce qui rend /dance et la
+			// roulade visibles aux autres joueurs.
 			const float speedXZ = std::sqrt(re.velocityX * re.velocityX + re.velocityZ * re.velocityZ);
-			const char* desiredClipName = (speedXZ < kIdleSpeedThresholdMps) ? "Idle" : "Walk";
+			AvatarLocomotionState effState = FromWireAnimState(re.animationState);
+			// Repli : état Idle reçu mais l'avatar glisse encore (latence de propagation de
+			// l'état) → on joue Walk pour éviter une pose Idle qui dérape.
+			if (effState == AvatarLocomotionState::Idle && speedXZ >= kIdleSpeedThresholdMps)
+				effState = AvatarLocomotionState::Walk;
+			// L'état Emote ne désigne pas un clip unique : plusieurs emotes existent
+			// (cf. kEmotes : /dance, /sit, /talk, /torch, /kneel, /sittalk, /push) mais le wire
+			// ne porte pas le rôle précis (1 octet d'état seulement). V1 : on joue l'emote
+			// primaire "Dance" pour TOUTES les emotes distantes — /dance est donc exact, les
+			// autres s'animent visuellement comme Dance (mieux que l'ancien Idle/Walk figé).
+			// Réplication du rôle d'emote exact = travail ultérieur (porter le rôle sur le wire).
+			const char* desiredClipName = (effState == AvatarLocomotionState::Emote)
+				? "Dance"
+				: StateToClipName(effState);
 			if (anim.lastClipName != desiredClipName)
 			{
 				const engine::render::skinned::AnimationClip* clip = remoteMesh->FindClip(desiredClipName);
 				if (clip != nullptr)
 				{
-					// loops=true pour Idle et Walk (clips à répétition naturelle).
-					anim.crossfade.Play(*clip, /*loops=*/ true, nowSec);
+					anim.crossfade.Play(*clip, /*loops=*/ ClipLoops(effState), nowSec);
 					anim.lastClipName = desiredClipName;
 				}
+				// Si le clip n'existe pas sur ce mesh (asset manquant), on garde l'anim
+				// précédente (graceful) — pas de switch, pas de crash.
 			}
 			// Sample → globals → finals : même chaîne que l'avatar local (cf. ligne ~4723).
 			auto locals  = anim.crossfade.Sample(remoteMesh->skeleton, nowSec);
@@ -9938,8 +9980,11 @@ namespace engine
 			{
 				m_gameplayInputAccumSec = 0.0f;
 				const engine::math::Vec3 avatarPos = m_characterController.GetPosition();
+				// TD.8 — propage l'état d'animation local pour que les autres joueurs voient
+				// emotes/roulades/run/sprint/etc. (pas seulement Idle/Walk dérivé de la vélocité).
 				(void)m_gameplayUdp.SendInput(clientId, ++m_gameplayInputSeq,
-					avatarPos.x, avatarPos.y, avatarPos.z, m_avatarYaw);
+					avatarPos.x, avatarPos.y, avatarPos.z, m_avatarYaw,
+					ToWireAnimState(m_avatarLocoState));
 			}
 		}
 

@@ -312,6 +312,9 @@ namespace engine::client
 		/// le SnapshotEntity. Vide pour les mobs / lootbags, ou pour les joueurs si le
 		/// master n'a pas pu fournir le genre — le rendu retombe alors sur "male".
 		std::string gender;
+		/// TD.8 : état d'animation (valeur d'AvatarAnimState) propagé via le SnapshotEntity.
+		/// Consommé par RecordRemoteAvatars pour jouer le bon clip (emote/roulade/run/…).
+		uint8_t animationState = 0;
 	};
 
 	/// Pure data model consumed by UI views and debug panels.

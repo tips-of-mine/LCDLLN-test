@@ -22,8 +22,14 @@ namespace engine::server
 	/// pour autoriser le chunking d'un snapshot AoI dépassant le budget MTU UDP (~1200 o).
 	/// `chunkCount = 1` (mono-paquet) reste le cas dominant ; `chunkCount > 1` exige une
 	/// réassemblage côté client (cf. UIModelBinding::ApplySnapshot).
+	/// TD.5/TD.6 — bump 5 → 6 → 7 : `SnapshotEntity` gagne `characterName` puis `gender`
+	/// (chaînes préfixées u16) pour la plaque de nom et la sélection du mesh distant.
+	/// TD.8 — bump 7 → 8 : `InputMessage` gagne `animationState` (1 octet, client→shard) et
+	/// `SnapshotEntity` gagne `animationState` (1 octet, shard→clients) — propage l'état
+	/// d'animation (emote/roulade/run/sprint/saut/…) pour que les autres joueurs voient
+	/// les bonnes animations au lieu d'un Idle/Walk dérivé de la vélocité.
 	/// Wire-breaking : client + shard doivent se déployer ensemble.
-	inline constexpr uint16_t kProtocolVersion = 7;
+	inline constexpr uint16_t kProtocolVersion = 8;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -212,6 +218,10 @@ namespace engine::server
 		float positionMetersY = 0.0f; ///< TC.1 : altitude (terrain accidenté).
 		float positionMetersZ = 0.0f;
 		float yawRadians = 0.0f;      ///< TC.1 : orientation envoyée par le client.
+		/// TD.8 : état d'animation courant de l'avatar local (valeur d'AvatarAnimState).
+		/// Le shard le stocke et le réémet dans le SnapshotEntity pour que les autres
+		/// joueurs voient les emotes/roulades/etc. Payload Input 24 → 25 octets (v7→v8).
+		uint8_t animationState = 0;
 	};
 
 	/// Handshake acknowledgement emitted after a client is accepted.

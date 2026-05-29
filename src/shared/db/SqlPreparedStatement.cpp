@@ -16,6 +16,12 @@ namespace engine::server::db
 {
 	namespace
 	{
+		// Taille inline du buffer de résultat par colonne. Couvre la grande
+		// majorité des colonnes (ids, noms, labels, dates…). Les colonnes plus
+		// longues (TEXT/MEDIUMTEXT : contenu CGU, corps de mail…) déclenchent
+		// MYSQL_DATA_TRUNCATED et sont re-fetchées dans l'overflow.
+		constexpr size_t kResultInlineBytes = 256;
+
 		MYSQL_STMT* PrepareStatement(MYSQL* mysql, std::string_view sql)
 		{
 			MYSQL_STMT* stmt = mysql_stmt_init(mysql);
@@ -45,9 +51,11 @@ namespace engine::server::db
 		}
 		if (resultColumnCount > 0)
 		{
-			m_resultBuffers.assign(resultColumnCount, std::vector<uint8_t>(256));
+			m_resultBuffers.assign(resultColumnCount, std::vector<uint8_t>(kResultInlineBytes));
 			m_resultLengths.assign(resultColumnCount, 0);
 			m_resultIsNull.assign(resultColumnCount, 0);
+			m_resultOverflow.assign(resultColumnCount, std::vector<uint8_t>());
+			m_resultTruncated.assign(resultColumnCount, 0);
 		}
 	}
 
@@ -232,8 +240,60 @@ namespace engine::server::db
 	{
 		if (!m_stmt)
 			return false;
+
+		// Réinitialise les drapeaux de troncature pour la nouvelle ligne.
+		if (!m_resultTruncated.empty())
+			std::fill(m_resultTruncated.begin(), m_resultTruncated.end(), static_cast<char>(0));
+
 		const int rc = mysql_stmt_fetch(m_stmt);
-		return rc == 0;  // 0 = OK, MYSQL_NO_DATA = fin, autres = erreur
+
+		// rc == 0 : ligne complète, toutes les colonnes tenaient dans leur buffer inline.
+		if (rc == 0)
+			return true;
+
+		// MYSQL_NO_DATA : fin du result set. Toute autre valeur ≠ TRUNCATED = erreur.
+		if (rc != MYSQL_DATA_TRUNCATED)
+			return false;  // MYSQL_NO_DATA (plus de lignes) ou erreur réelle
+
+		// MYSQL_DATA_TRUNCATED : au moins une colonne dépasse kResultInlineBytes.
+		// m_resultLengths[col] contient la longueur RÉELLE (libmysql l'écrit même
+		// en cas de troncature). On re-fetch chaque colonne tronquée dans son
+		// buffer overflow dimensionné, via mysql_stmt_fetch_column.
+		//
+		// IMPORTANT : on ne redimensionne PAS m_resultBuffers (le buffer lié par
+		// mysql_stmt_bind_result), seulement m_resultOverflow — sinon le pointeur
+		// lié deviendrait dangling pour le prochain mysql_stmt_fetch.
+		for (size_t col = 0; col < m_resultColumnCount; ++col)
+		{
+			if (m_resultIsNull[col])
+				continue;
+			const unsigned long actualLen = m_resultLengths[col];
+			if (actualLen <= m_resultBuffers[col].size())
+				continue;  // colonne tenait dans le buffer inline, déjà correcte
+
+			m_resultOverflow[col].assign(actualLen, 0);
+			MYSQL_BIND b;
+			std::memset(&b, 0, sizeof(b));
+			b.buffer        = m_resultOverflow[col].data();
+			b.buffer_length = static_cast<unsigned long>(m_resultOverflow[col].size());
+			b.length        = &m_resultLengths[col];
+			b.is_null       = reinterpret_cast<bool*>(&m_resultIsNull[col]);
+			b.buffer_type   = MYSQL_TYPE_STRING;
+			// offset 0 : re-lit la colonne depuis le début, complète cette fois.
+			if (mysql_stmt_fetch_column(m_stmt, &b, static_cast<unsigned int>(col), 0) != 0)
+				return false;
+			m_resultTruncated[col] = 1;  // GetXxx lira depuis l'overflow pour cette ligne
+		}
+		return true;  // ligne valide : colonnes tronquées re-fetchées en intégralité
+	}
+
+	// Sélection du buffer source pour la colonne \p col de la ligne courante :
+	// overflow si la colonne a été tronquée puis re-fetchée, sinon buffer inline.
+	const std::vector<uint8_t>& SqlPreparedStatement::resultBuffer(size_t col) const
+	{
+		if (col < m_resultTruncated.size() && m_resultTruncated[col])
+			return m_resultOverflow[col];
+		return m_resultBuffers[col];
 	}
 
 	int32_t SqlPreparedStatement::GetInt32(size_t col, int32_t fallback) const
@@ -241,7 +301,7 @@ namespace engine::server::db
 		if (col >= m_resultColumnCount || m_resultIsNull[col])
 			return fallback;
 		// Le buffer contient une string ASCII de l'entier (MYSQL_TYPE_STRING).
-		const auto& buf = m_resultBuffers[col];
+		const auto& buf = resultBuffer(col);
 		const unsigned long len = std::min(m_resultLengths[col], static_cast<unsigned long>(buf.size()));
 		const std::string s(reinterpret_cast<const char*>(buf.data()), len);
 		return std::atoi(s.c_str());
@@ -251,7 +311,7 @@ namespace engine::server::db
 	{
 		if (col >= m_resultColumnCount || m_resultIsNull[col])
 			return fallback;
-		const auto& buf = m_resultBuffers[col];
+		const auto& buf = resultBuffer(col);
 		const unsigned long len = std::min(m_resultLengths[col], static_cast<unsigned long>(buf.size()));
 		const std::string s(reinterpret_cast<const char*>(buf.data()), len);
 		return std::strtoull(s.c_str(), nullptr, 10);
@@ -261,7 +321,7 @@ namespace engine::server::db
 	{
 		if (col >= m_resultColumnCount || m_resultIsNull[col])
 			return {};
-		const auto& buf = m_resultBuffers[col];
+		const auto& buf = resultBuffer(col);
 		const unsigned long len = std::min(m_resultLengths[col], static_cast<unsigned long>(buf.size()));
 		return std::string(reinterpret_cast<const char*>(buf.data()), len);
 	}

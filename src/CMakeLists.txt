@@ -749,6 +749,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(terrain_collider_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/TerrainColliderTests.cpp)
 
+  # Saut realiste : verifie l'apex (~0.60 m) du CharacterController apres le
+  # passage jumpSpeed 9.0 -> 4.9. Garde anti-regression (pas de saut ~2 m).
+  lcdlln_add_simple_test(character_controller_jump_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CharacterControllerJumpTests.cpp)
+
   # Sous-projet C MVP : RaceDefinition.meshPath parsing.
   # Verifie que les 3 races MVP (humains, nains, orcs) exposent un meshPath
   # non vide depuis races.json, et que les races hors-MVP exposent une

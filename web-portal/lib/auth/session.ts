@@ -1,20 +1,16 @@
 import { cookies } from 'next/headers'
-import { randomBytes } from 'node:crypto'
+import { randomBytes } from 'crypto'
 import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise'
 import { query } from '@/lib/db/connection'
 import { normalizeRole, type AccountRole } from '@/lib/auth/roles'
+import { SESSION_COOKIE_NAME, SESSION_MAX_AGE_SEC } from '@/lib/auth/session-cookie'
 
-// Nom du seul cookie d'authentification. Contient un session_token random
-// (64 chars hex). Aucune information identifiante ou autoritative côté
-// client — toute la matérialisation de l'identité passe par une lecture
-// de la table portal_sessions à chaque appel de getSession().
-export const SESSION_COOKIE_NAME = 'lcdlln_portal_session'
-
-// Durée de vie maximale d'une session (login → expiration absolue). Le
-// rolling refresh (last_seen_at via ON UPDATE CURRENT_TIMESTAMP) ne
-// repousse PAS expires_at — c'est volontaire pour limiter les sessions
-// éternellement actives sur une machine partagée.
-export const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 7 // 7 jours
+// Re-export pour conserver la compatibilité des imports existants
+// (`import { SESSION_COOKIE_NAME } from '@/lib/auth/session'`). Le code
+// runtime de session reste dans ce module ; les constantes pures vivent
+// dans `session-cookie.ts` pour pouvoir être consommées par le middleware
+// Edge sans tirer les dépendances Node.js (`crypto`, `mysql2`).
+export { SESSION_COOKIE_NAME, SESSION_MAX_AGE_SEC }
 
 export type Session = {
   accountId: number

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { SESSION_COOKIE_NAME } from '@/lib/auth/session'
+// Import depuis `session-cookie` (module pur, sans deps Node.js) plutôt
+// que `session` (qui importe crypto + mysql2). Cela permet au middleware
+// de tourner sur l'Edge Runtime de Next.js sans casser le webpack bundle.
+import { SESSION_COOKIE_NAME } from '@/lib/auth/session-cookie'
 
 // Le middleware vérifie uniquement la PRÉSENCE d'un cookie session_token.
 // Il NE DOIT PAS faire de lookup DB ici (le middleware tourne sur Edge

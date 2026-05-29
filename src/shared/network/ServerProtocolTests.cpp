@@ -18,6 +18,9 @@
 using engine::server::DecodeHello;
 using engine::server::DecodeInput;
 using engine::server::DecodeSnapshot;
+using engine::server::DecodeGoodbye;
+using engine::server::EncodeGoodbye;
+using engine::server::GoodbyeMessage;
 using engine::server::EncodeHello;
 using engine::server::EncodeInput;
 using engine::server::EncodeSnapshot;
@@ -260,10 +263,31 @@ namespace
 	}
 }
 
+	/// Départ propre : un Goodbye encodé puis décodé restitue le clientId, et un paquet
+	/// tronqué (payload != 4 octets) est rejeté par DecodeGoodbye.
+	void TestGoodbyeRoundTrip()
+	{
+		GoodbyeMessage in{};
+		in.clientId = 4242u;
+		const std::vector<std::byte> packet = EncodeGoodbye(in);
+		assert(!packet.empty());
+
+		GoodbyeMessage out{};
+		assert(DecodeGoodbye(packet, out));
+		assert(out.clientId == in.clientId);
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 1u);
+		GoodbyeMessage bad{};
+		assert(!DecodeGoodbye(truncated, bad));
+		std::puts("[OK] TestGoodbyeRoundTrip");
+	}
+
 int main()
 {
 	TestInputRoundTrip();
 	TestInputRejectsTruncated();
+	TestGoodbyeRoundTrip();
 	TestHelloRoundTrip();
 	TestSnapshotRoundTripWithPlayerClientId();
 	TestSnapshotRejectsTruncatedPayload();

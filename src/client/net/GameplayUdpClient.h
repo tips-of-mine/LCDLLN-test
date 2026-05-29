@@ -42,6 +42,11 @@ namespace engine::client
 		/// pour que les autres joueurs voient emotes/roulades/run/sprint/saut/etc.
 		bool SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw, uint8_t animationState);
 
+		/// Envoie un GOODBYE (départ propre) pour que le shard évince immédiatement l'entité
+		/// au lieu d'attendre le timeout d'inactivité (sinon l'avatar reste un « fantôme »
+		/// visible des autres). Appelé automatiquement par Shutdown() si la session est active.
+		bool SendGoodbye();
+
 		/// Send TalkRequest (e.g. `vendor:1` to open shop).
 		bool SendTalkRequest(uint32_t clientId, std::string_view targetId);
 

@@ -665,6 +665,15 @@ namespace engine::server
 			return;
 		}
 
+		// Départ propre du client : éviction immédiate (sinon l'avatar resterait un fantôme
+		// visible des autres jusqu'au timeout d'inactivité). Cf. CODEBASE_MAP §60.
+		GoodbyeMessage goodbye{};
+		if (DecodeGoodbye(packetBytes, goodbye))
+		{
+			HandleGoodbye(datagram.endpoint, goodbye.clientId);
+			return;
+		}
+
 		AttackRequestMessage attackRequest{};
 		if (DecodeAttackRequest(packetBytes, attackRequest))
 		{
@@ -1318,6 +1327,31 @@ namespace engine::server
 			client->positionMetersX,
 			client->positionMetersZ);
 		UpdateClientInterest(*client);
+	}
+
+	void ServerApp::HandleGoodbye(const Endpoint& endpoint, uint32_t clientId)
+	{
+		// Départ propre : on évince immédiatement le client (retrait grille + despawn au
+		// prochain RefreshReplication + OnClientLogout + persistance), au lieu d'attendre
+		// EvictIdleClients. Évite l'avatar « fantôme » d'un joueur déconnecté.
+		const ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			// Endpoint inconnu (Goodbye en double, ou déjà évincé) : rien à faire.
+			return;
+		}
+		// Défense : un Goodbye dont le clientId ne correspond pas à l'endpoint est ignoré
+		// (paquet usurpé / obsolète). clientId==0 (client legacy) → on fait confiance à l'endpoint.
+		if (clientId != 0u && client->clientId != clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] Goodbye ignoré : client_id mismatch (endpoint={}, attendu={}, reçu={})",
+				UdpTransport::EndpointToString(endpoint), client->clientId, clientId);
+			return;
+		}
+		const uint32_t resolvedClientId = client->clientId;
+		LOG_INFO(Net, "[ServerApp] Goodbye reçu — éviction immédiate (client_id={}, endpoint={})",
+			resolvedClientId, UdpTransport::EndpointToString(endpoint));
+		DisconnectConnectedClient(resolvedClientId, "client_goodbye");
 	}
 
 	void ServerApp::DrainPendingHellos()

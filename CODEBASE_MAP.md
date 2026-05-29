@@ -2096,3 +2096,38 @@ correctif durcit le chemin post-création (provablement incorrect quand
 `characterId == 0`) et le diagnostic confirmera sur la prochaine reproduction.
 
 - **Déploiement** : ✅ client uniquement (le shard est déjà correct).
+
+## 60. Éviction immédiate à la déconnexion — message Goodbye (2026-05-29)
+
+**Symptôme (cause racine #3 réelle)** : un joueur qui quitte (fermeture client /
+retour menu) reste un **avatar « fantôme »** visible et compté (`total_clients`)
+par les autres joueurs jusqu'à l'expiration du timeout d'inactivité UDP
+(`EvictIdleClients`). Confirmé par log : à 14:50:05 un nouveau client se connecte
+avec `total_clients=2` alors que l'autre joueur s'était déjà déconnecté — son
+entité (entity_id=2) traînait et était rendue chez le nouveau venu. Explique
+aussi les confusions « je vois quelqu'un de déjà parti » et « reconnexion répare »
+(la reconnexion repart d'un AoI propre).
+
+**Correctif** : départ propre via un nouveau message UDP **Goodbye** (client → shard).
+- `src/shared/network/ServerProtocol.h` : `MessageKind::Goodbye = 78` +
+  `GoodbyeMessage { uint32 clientId }` + `EncodeGoodbye`/`DecodeGoodbye` (payload
+  4 octets). **Pas de bump `kProtocolVersion`** : ajout d'opcode rétro-compatible
+  (un shard qui ne gère pas Goodbye l'ignore → fallback timeout ; aucun cassage).
+- Client : `GameplayUdpClient::SendGoodbye()` appelé par `Shutdown()` si la session
+  est active (`m_serverClientId != 0`), **avant** la fermeture de la socket.
+  Best-effort (UDP sans accusé) : datagramme perdu → le timeout serveur prend le relais.
+- Shard : `ProcessPacket` dispatche `DecodeGoodbye` → `HandleGoodbye(endpoint, clientId)`
+  → `DisconnectConnectedClient(clientId, "client_goodbye")` (retrait grille
+  `RemoveEntity` + reset anti-triche + `OnClientLogout` + `m_clients.erase` +
+  reindex). Le despawn chez les autres suit au prochain `RefreshReplication`.
+  Garde : Goodbye dont le `clientId` ≠ endpoint ignoré (anti-usurpation).
+
+### Tests
+- `server_protocol_tests::TestGoodbyeRoundTrip` : round-trip Goodbye + rejet payload tronqué.
+
+### Limites / reste
+- Best-effort : un Goodbye perdu retombe sur l'éviction par timeout (comportement actuel).
+- **Déploiement** : ⚠️ **redéploiement serveur (shard) requis** pour l'éviction
+  immédiate (nouveau handler). **Non lock-step / non wire-breaking** : client neuf ↔
+  shard ancien (ou inverse) fonctionnent, mais sans l'éviction immédiate tant que le
+  shard n'est pas redéployé (fallback timeout).

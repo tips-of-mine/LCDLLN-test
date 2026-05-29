@@ -195,7 +195,12 @@ namespace engine::server
 		/// Client → server: cancel the current crafting session (M36.2).
 		CraftCancelRequest = 76,
 		/// Server → client: crafting session was cancelled (M36.2).
-		CraftCancelled = 77
+		CraftCancelled = 77,
+		/// Client → server: départ propre du joueur (fermeture / retour menu). Permet au
+		/// shard d'évincer immédiatement l'entité au lieu d'attendre le timeout d'inactivité
+		/// (sinon l'avatar du joueur parti reste un « fantôme » visible des autres). Ajout
+		/// rétro-compatible : un shard qui ne connaît pas cet opcode l'ignore (fallback timeout).
+		Goodbye = 78
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -230,6 +235,12 @@ namespace engine::server
 		uint32_t clientId = 0;
 		uint16_t tickHz = 0;
 		uint16_t snapshotHz = 0;
+	};
+
+	/// Départ propre du joueur (client → shard). Permet l'éviction immédiate de l'entité.
+	struct GoodbyeMessage
+	{
+		uint32_t clientId = 0;
 	};
 
 	/// Snapshot envelope carrying timing, connection stats and entity state count.
@@ -375,6 +386,10 @@ namespace engine::server
 	/// TC.1 — encode un INPUT (client→shard) : symétrique de DecodeInput. 24 octets de payload
 	/// (clientId, inputSequence, posX, posY, posZ, yaw).
 	std::vector<std::byte> EncodeInput(const InputMessage& message);
+
+	/// Encode/decode un GOODBYE (client→shard) : départ propre, payload 4 octets (clientId).
+	std::vector<std::byte> EncodeGoodbye(const GoodbyeMessage& message);
+	bool DecodeGoodbye(std::span<const std::byte> packet, GoodbyeMessage& outMessage);
 
 	/// Read only the packet kind after validating the shared protocol header.
 	bool PeekMessageKind(std::span<const std::byte> packet, MessageKind& outKind);

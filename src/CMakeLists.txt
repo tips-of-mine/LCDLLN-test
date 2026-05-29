@@ -741,6 +741,12 @@ elseif(UNIX)
   lcdlln_add_simple_test(animation_crossfade_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AnimationCrossfadeTests.cpp)
 
+  # Bug "pied coupe a l'arret" : un os non anime par un clip (ex. l'orteil dans
+  # Idle_Loop) doit conserver sa bind pose complete (rotation comprise), pas une
+  # rotation identite qui effondrait la pointe de la botte. Garde anti-regression.
+  lcdlln_add_simple_test(animation_sampler_bind_fallback_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AnimationSamplerBindFallbackTests.cpp)
+
   # Sous-projet B.1 (locomotion state machine) etape 6/14 : TerrainCollider.
   # Tests du fallback "no terrain bound" (GroundHeightAt = 0, SweepCapsule
   # detection traversee Y=0) + edge cases (sweep ascendant, sweep horizontal).

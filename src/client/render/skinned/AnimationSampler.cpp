@@ -36,23 +36,33 @@ std::vector<engine::math::Mat4> AnimationSampler::SamplePose(const Skeleton& ske
     for (size_t i = 0; i < skeleton.bones.size(); ++i) {
         const Bone& b = skeleton.bones[i];
 
-        // Valeurs de fallback : translation = colonne 3 de bindLocal,
-        // rotation = identite, scale = (1,1,1). Les clips Mixamo animent
-        // chaque bone a chaque frame donc ce chemin est rarement utilise sur
-        // les vrais assets, mais reste correct pour les clips synthetiques.
-        const engine::math::Vec3 bindT{b.bindLocal.m[12], b.bindLocal.m[13], b.bindLocal.m[14]};
-
-        engine::math::Vec3 tr = bindT;
-        engine::math::Quat ro = engine::math::Quat::Identity();
-        engine::math::Vec3 sc{1.0f, 1.0f, 1.0f};
-
-        if (i < clip.tracks.size()) {
-            const BoneTracks& trk = clip.tracks[i];
-            tr = InterpolateKeyframes(trk.translation, t, bindT);
-            ro = InterpolateKeyframes(trk.rotation, t, engine::math::Quat::Identity());
-            sc = InterpolateKeyframes(trk.scale, t, engine::math::Vec3{1.0f, 1.0f, 1.0f});
+        // Par defaut, un os garde sa transform de BIND POSE complete (bindLocal).
+        // C'est correct pour les os qu'un clip n'anime PAS du tout : avant, on
+        // recomposait avec rotation=identite/scale=1 (translation seule conservee),
+        // ce qui ECRASAIT la rotation de bind d'un os non keye. Symptome observe :
+        // les clips UE5 (ex. Idle_Loop) n'animent pas l'os d'orteil -> la pointe de
+        // la botte s'effondrait ("pied coupe") a l'arret, alors que Walk_Loop keye
+        // l'orteil (pied normal). Les clips Mixamo animent chaque os a chaque frame,
+        // donc ce chemin par defaut ne les concerne pas.
+        if (i >= clip.tracks.size()) {
+            locals[i] = b.bindLocal;
+            continue;
         }
 
+        const BoneTracks& trk = clip.tracks[i];
+        if (trk.translation.empty() && trk.rotation.empty() && trk.scale.empty()) {
+            // Os non anime par ce clip -> on conserve sa pose de bind exacte.
+            locals[i] = b.bindLocal;
+            continue;
+        }
+
+        // Os anime : on compose depuis les pistes. Fallback par canal vide conserve
+        // (translation = bind, rotation = identite, scale = 1) : cas rare d'un clip
+        // qui keyerait certains canaux mais pas d'autres pour un meme os.
+        const engine::math::Vec3 bindT{b.bindLocal.m[12], b.bindLocal.m[13], b.bindLocal.m[14]};
+        const engine::math::Vec3 tr = InterpolateKeyframes(trk.translation, t, bindT);
+        const engine::math::Quat ro = InterpolateKeyframes(trk.rotation, t, engine::math::Quat::Identity());
+        const engine::math::Vec3 sc = InterpolateKeyframes(trk.scale, t, engine::math::Vec3{1.0f, 1.0f, 1.0f});
         locals[i] = ComposeTRS(tr, ro, sc);
     }
     return locals;

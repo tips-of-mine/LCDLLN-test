@@ -2096,3 +2096,26 @@ correctif durcit le chemin post-création (provablement incorrect quand
 `characterId == 0`) et le diagnostic confirmera sur la prochaine reproduction.
 
 - **Déploiement** : ✅ client uniquement (le shard est déjà correct).
+
+## 61. Pied « coupé » à l'arrêt — fallback bind pose du sampler (2026-05-29)
+
+**Symptôme** : à l'**arrêt** (clip Idle), la pointe des bottes apparaît tranchée/aplatie
+(orteil effondré) ; en marche, les pieds sont normaux. Visible local ET distant.
+
+**Cause racine** : `AnimationSampler::SamplePose`
+(`src/client/render/skinned/AnimationSampler.cpp`) recomposait chaque os en TRS avec,
+pour un canal vide, **rotation = identité** / **scale = 1** (seule la translation
+retombait sur la bind). Or les clips UE5 (ex. `Idle_Loop`) **n'animent pas l'os
+d'orteil** → sa rotation de bind était écrasée par l'identité → la pointe de la botte
+s'effondrait. `Walk_Loop` keye l'orteil → pied normal (d'où « seulement à l'arrêt »).
+
+**Correctif** : pour un os qu'un clip n'anime **pas du tout** (pistes vides, ou index
+hors `clip.tracks`), on conserve **`bindLocal` complet** (T+R+S de bind) au lieu de
+recomposer. Les os animés passent par le même chemin TRS qu'avant. Strictement plus
+correct pour les os non keyés, identique pour les os keyés.
+
+### Tests
+- `animation_sampler_bind_fallback_tests` : un os non animé (bind à rotation 90° Z) →
+  `SamplePose` renvoie sa bind pose exacte ; un os animé suit sa piste.
+
+- **Déploiement** : ✅ client uniquement (rendu/anim ; aucun impact wire ni serveur).

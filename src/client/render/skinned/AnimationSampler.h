@@ -24,12 +24,15 @@ public:
     /// Echantillonne le clip a l'instant t (secondes) et renvoie une matrice
     /// locale 4x4 par bone (taille = skeleton.bones.size()).
     ///
-    /// Pour chaque bone, compose une matrice TRS a partir des keyframes des trois
-    /// canaux (translation / rotation / scale). Si un canal est absent (track
-    /// vide), retombe sur une valeur par defaut :
-    ///   - translation : colonne 3 de bindLocal (translation de la bind pose)
-    ///   - rotation    : identite
-    ///   - scale       : (1, 1, 1)
+    /// Pour un bone que le clip n'anime PAS (aucune piste), la matrice locale est
+    /// sa BIND POSE complete (bindLocal) — translation ET rotation ET scale de bind.
+    /// (Auparavant on recomposait avec rotation=identite, ce qui ecrasait la rotation
+    /// de bind d'un os non keye : un clip UE5 type Idle_Loop n'animant pas l'orteil
+    /// faisait s'effondrer la pointe de la botte a l'arret.)
+    ///
+    /// Pour un bone anime, compose une matrice TRS a partir des keyframes des trois
+    /// canaux ; un canal vide d'un os par ailleurs anime retombe sur translation=bind,
+    /// rotation=identite, scale=(1,1,1) (cas rare).
     ///
     /// \param skeleton Squelette de reference (definit le nombre de bones et la bind pose).
     /// \param clip     Clip d'animation. Si clip.tracks.size() < bones.size(), les bones

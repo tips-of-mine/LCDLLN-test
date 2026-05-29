@@ -7185,6 +7185,19 @@ namespace engine
 								LOG_INFO(Core, "[EnterWorld] propagating character_id={} as gameplay UDP character_key (uint64)",
 									enterCmd.characterId);
 							}
+							else
+							{
+								// Correctif visibilité 1ère connexion — diagnostic : un characterId==0
+								// ici signifie que le Hello UDP partirait avec la clé de config
+								// résiduelle (souvent 1) → le shard associerait ce client au mauvais
+								// personnage → invisibilité mutuelle (corrigé en amont côté
+								// AuthUiPresenter, cf. CODEBASE_MAP §59). Ce log doit rester muet en
+								// fonctionnement nominal ; s'il apparaît, le fallback d'id amont a
+								// échoué et il faut investiguer le flux post-création.
+								LOG_ERROR(Core, "[EnterWorld] character_id == 0 a l'entree en jeu : le character_key "
+									"gameplay UDP n'est PAS surcharge (risque d'invisibilite mutuelle). "
+									"Verifier la CHARACTER_LIST / le fallback de creation.");
+							}
 							// Si la session UDP a été ouverte au boot avec un host différent
 							// (config par défaut), on la coupe avant de la rouvrir sur le bon shard.
 							if (m_gameplayNetInitialized)

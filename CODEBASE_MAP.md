@@ -2010,3 +2010,42 @@ Les logs `[AvatarSkinDiag]` ont montré : matériaux OK (idMale=2, idFemale=3), 
 ### Limites / reste
 - Aucun. Modification cosmétique, applicable au prochain `docker compose up -d --force-recreate master shard`. Aucun impact wire ni régression.
 - **Déploiement** : ✅ client uniquement.
+
+## 59. Visibilité mutuelle à la première connexion après création (2026-05-29)
+
+**Symptôme** : juste après avoir créé un personnage puis être entré en jeu avec
+lui, le joueur ne voyait pas les autres et n'était pas vu d'eux ; une
+déconnexion + reconnexion (login normal) réparait tout.
+
+**Cause racine (côté client)** : à l'EnterWorld (`Engine.cpp`, bloc
+`ConsumePendingEnterWorldCommand`), le `character_key` de la session gameplay UDP
+n'est surchargé que si `enterCmd.characterId != 0`. Si le `character_id` propagé
+est 0 — entrée sélectionnée sans id valide dans la `CHARACTER_LIST` rechargée
+après création (latence DB côté master) — le bloc est sauté ; `InitGameplayNet`
+relit alors la clé de config **résiduelle** (souvent 1) et envoie le Hello UDP
+avec une mauvaise clé. Le shard (`ServerApp::HandleHello`, `helloNonce` =
+`persistenceCharacterKey`) associe le client au **mauvais** personnage → pas de
+réplication AoI cohérente entre joueurs. La reconnexion par login normal répare
+car la `CHARACTER_LIST` contient alors le perso avec un `character_id` valide.
+
+**Correctif (client, défense en profondeur)** :
+- `AuthUiPresenter::m_lastCreatedCharacterId` (`AuthUi.h`) : mémorise le
+  `character_id` renvoyé par `CHARACTER_CREATE` (porté par `AsyncResult::accountId`).
+  Renseigné au succès de création (`AuthUiPresenterCore.cpp`), remis à 0 au login
+  et après consommation à l'entrée en jeu.
+- Après rechargement de la `CHARACTER_LIST` post-création
+  (`AuthUiPresenterCore.cpp`), on **sélectionne l'entrée du perso créé** (par id)
+  au lieu de l'index 0 ; si absente (latence DB), un `LOG_WARN` le signale.
+- `ImGuiActivateSelectedCharacter` (`AuthScreenCharacterSelect.cpp`) : l'id propagé
+  doit être non nul. Si l'entrée sélectionnée a un id 0 → **fallback** sur
+  `m_lastCreatedCharacterId`. Si toujours 0 → **refus d'entrer** (message d'erreur)
+  plutôt que se connecter en « personnage fantôme ».
+- `Engine.cpp` (EnterWorld) : `LOG_ERROR` diagnostic si `characterId == 0` à
+  l'entrée (doit rester muet en nominal — sert à confirmer un éventuel résidu).
+
+**Note** : la cause racine exacte (le déclencheur précis du `character_id == 0`)
+n'a pas pu être reproduite en local (pas de toolchain ni de serveur de test). Le
+correctif durcit le chemin post-création (provablement incorrect quand
+`characterId == 0`) et le diagnostic confirmera sur la prochaine reproduction.
+
+- **Déploiement** : ✅ client uniquement (le shard est déjà correct).

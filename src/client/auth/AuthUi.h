@@ -951,6 +951,14 @@ namespace engine::client
 		std::vector<engine::network::CharacterListEntry> m_characterList;
 		/// Phase 2 — Index du personnage actuellement sélectionné dans \ref m_characterList (-1 = rien).
 		int m_selectedCharacterIndex = -1;
+		/// Correctif visibilité 1ère connexion — character_id du personnage qui vient d'être
+		/// créé (réponse CHARACTER_CREATE). Sert à (1) re-sélectionner ce perso précis dans la
+		/// CHARACTER_LIST rechargée après création, et (2) fournir un fallback d'id non nul à
+		/// l'entrée en jeu si la liste rechargée le manque encore (latence DB). Sans cela, un
+		/// `character_id == 0` à l'EnterWorld faisait partir le Hello UDP avec une clé erronée
+		/// → le shard associait le client au mauvais personnage → invisibilité mutuelle jusqu'à
+		/// une reconnexion. 0 = aucune création récente en attente. Cf. CODEBASE_MAP §59.
+		uint64_t m_lastCreatedCharacterId = 0;
 		/// Phase 3.9 — Index du perso pour lequel l'utilisateur est en train de
 		/// confirmer la suppression. -1 = pas de confirmation en cours.
 		int m_pendingDeleteCharacterIndex = -1;

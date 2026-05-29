@@ -1985,6 +1985,13 @@ namespace engine::client
 			{
 				ResetMasterSession();
 				m_infoBanner = copy.message.empty() ? Tr("auth.info.character_created") : copy.message;
+				// Correctif visibilité 1ère connexion — mémorise le character_id renvoyé par
+				// CHARACTER_CREATE (porté par accountId, cf. AuthScreenCharacterCreate). Permet de
+				// re-sélectionner ce perso précis dans la CHARACTER_LIST rechargée et de fournir un
+				// fallback d'id non nul à l'EnterWorld si la liste le manque encore (latence DB).
+				m_lastCreatedCharacterId = copy.accountId;
+				LOG_INFO(Core, "[AuthUiPresenter] CharacterCreate OK (character_id={}) — memorise pour l'entree en jeu",
+					m_lastCreatedCharacterId);
 				// Le personnage existe désormais sur m_chosenShardId : on saute l'écran ShardPick au tour suivant.
 				m_postRegistrationCharacterCreatePending = false;
 				m_shardFlowOverrideId = m_chosenShardId;
@@ -2099,6 +2106,31 @@ namespace engine::client
 			// Sinon : 0 perso => CharacterCreate ; ≥1 perso => CharacterSelect.
 			m_characterList = std::move(copy.characterList);
 			m_selectedCharacterIndex = m_characterList.empty() ? -1 : 0;
+			// Correctif visibilité 1ère connexion — si on vient de créer un personnage, on
+			// sélectionne SON entrée (et pas l'index 0 par défaut) afin que le clic « Jouer »
+			// parte avec le bon character_id. Si la liste rechargée ne le contient pas encore
+			// (latence DB côté master), on le signale : le fallback à l'entrée en jeu
+			// (ImGuiActivateSelectedCharacter) couvrira ce cas via m_lastCreatedCharacterId.
+			if (m_lastCreatedCharacterId != 0u && !m_characterList.empty())
+			{
+				bool found = false;
+				for (size_t i = 0; i < m_characterList.size(); ++i)
+				{
+					if (m_characterList[i].character_id == m_lastCreatedCharacterId)
+					{
+						m_selectedCharacterIndex = static_cast<int>(i);
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+				{
+					LOG_WARN(Core,
+						"[AuthUiPresenter] Perso cree (character_id={}) absent de la CHARACTER_LIST rechargee "
+						"({} entrees) — fallback d'id a l'entree en jeu actif",
+						m_lastCreatedCharacterId, m_characterList.size());
+				}
+			}
 			// Phase 3 — Persister l'endpoint du shard pour pouvoir le re-publier dans la
 			// EnterWorldCommand quand l'utilisateur cliquera Jouer / validera CharacterCreate.
 			if (!copy.shardEndpoint.empty())
@@ -2149,6 +2181,9 @@ namespace engine::client
 		}
 
 		ResetMasterSession();
+		// Correctif visibilité 1ère connexion — repart d'un login propre : pas d'id de
+		// création résiduel d'une session précédente qui pourrait fausser le fallback d'entrée.
+		m_lastCreatedCharacterId = 0u;
 		m_masterClient = std::make_unique<engine::network::NetClient>();
 		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));

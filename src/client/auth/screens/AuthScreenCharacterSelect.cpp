@@ -43,8 +43,31 @@ namespace engine::client
 			return;
 		}
 		const auto& chosen = m_characterList[static_cast<size_t>(m_selectedCharacterIndex)];
+		// Correctif visibilité 1ère connexion — l'id à propager doit être NON NUL : un
+		// character_id == 0 ferait partir le Hello UDP avec une clé erronée (le shard associerait
+		// le client au mauvais personnage → invisibilité mutuelle). Si l'entrée sélectionnée a un
+		// id 0 (liste pas encore réécrite après création, latence DB), on retombe sur le
+		// character_id mémorisé à la création (m_lastCreatedCharacterId). Cf. CODEBASE_MAP §59.
+		uint64_t resolvedCharacterId = chosen.character_id;
+		if (resolvedCharacterId == 0u && m_lastCreatedCharacterId != 0u)
+		{
+			LOG_WARN(Core,
+				"[AuthUiPresenter] character_id selectionne == 0 — fallback sur l'id du perso cree ({})",
+				m_lastCreatedCharacterId);
+			resolvedCharacterId = m_lastCreatedCharacterId;
+		}
+		if (resolvedCharacterId == 0u)
+		{
+			// Aucun id valide disponible : refuser l'entrée plutôt que de se connecter en
+			// « personnage fantôme ». L'utilisateur voit une erreur et peut réessayer
+			// (la liste sera rechargée correctement au prochain tour de flow).
+			LOG_ERROR(Core, "[AuthUiPresenter] Entree en jeu refusee : character_id introuvable (index={})",
+				m_selectedCharacterIndex);
+			m_userErrorText = Tr("auth.error.character_session_inactive");
+			return;
+		}
 		LOG_INFO(Core, "[AuthUiPresenter] CharacterSelect -> activate (character_id={}, name={}, shard={}, endpoint={}, spawn=({},{},{}))",
-			chosen.character_id, chosen.name, m_chosenShardId, m_chosenShardEndpoint,
+			resolvedCharacterId, chosen.name, m_chosenShardId, m_chosenShardEndpoint,
 			chosen.spawn_x, chosen.spawn_y, chosen.spawn_z);
 		// Phase 3 — émission de la commande d'entrée dans le monde, consommée par
 		// Engine::Update sur la première frame post-auth (cf. AuthGate else branch).
@@ -53,7 +76,7 @@ namespace engine::client
 		// créé pas encore réécrit), hasSpawn reste false et l'engine appliquera son défaut.
 		m_pendingEnterWorld = {};
 		m_pendingEnterWorld.applyRequested = true;
-		m_pendingEnterWorld.characterId = chosen.character_id;
+		m_pendingEnterWorld.characterId = resolvedCharacterId;
 		m_pendingEnterWorld.shardId = m_chosenShardId;
 		m_pendingEnterWorld.shardEndpoint = m_chosenShardEndpoint;
 		m_pendingEnterWorld.characterName = chosen.name;
@@ -78,6 +101,9 @@ namespace engine::client
 		m_userErrorText.clear();
 		m_infoBanner.clear();
 		m_postRegistrationCharacterCreatePending = false;
+		// Correctif visibilité 1ère connexion — id de création consommé : on le réinitialise
+		// pour ne pas le réutiliser à tort lors d'une entrée ultérieure (autre perso/session).
+		m_lastCreatedCharacterId = 0u;
 		m_flowComplete = true;
 	}
 

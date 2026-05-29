@@ -4822,6 +4822,7 @@ namespace engine
 												e.meshPath = m_cfg.GetString(base + "mesh", "");
 												e.meshScale = static_cast<float>(m_cfg.GetDouble(base + "scale", 1.0));
 												e.meshYawDeg = static_cast<float>(m_cfg.GetDouble(base + "yaw_deg", 0.0));
+												e.meshRotXDeg = static_cast<float>(m_cfg.GetDouble(base + "rot_x_deg", 0.0));
 												const int dcount = static_cast<int>(m_cfg.GetInt(base + "dialogue.count", 0));
 												for (int dj = 0; dj < dcount; ++dj)
 													e.dialogue.push_back(m_cfg.GetString(base + "dialogue." + std::to_string(dj), ""));
@@ -9762,6 +9763,7 @@ namespace engine
 			prop.modelMatrix =
 				engine::math::Mat4::Translate(engine::math::Vec3{ e.position.x, groundY, e.position.z }) *
 				engine::math::Mat4::RotateY(e.meshYawDeg * kDeg2Rad) *
+				engine::math::Mat4::RotateX(e.meshRotXDeg * kDeg2Rad) *
 				scaleM;
 
 			for (const auto& kv : idxByMat)

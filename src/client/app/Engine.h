@@ -713,6 +713,7 @@ namespace engine
 			std::string meshPath;
 			float meshScale = 1.0f;    ///< Échelle uniforme appliquée au mesh.
 			float meshYawDeg = 0.0f;   ///< Rotation Y (degrés) du mesh.
+			float meshRotXDeg = 0.0f;  ///< Pré-rotation X (degrés) — conversion GLTF Y-up vers monde Z-up (ex. -90 pour les races). Appliquée avant yaw.
 		};
 		std::vector<InteractableEntity> m_interactables;
 		int m_interactableInRange = -1;

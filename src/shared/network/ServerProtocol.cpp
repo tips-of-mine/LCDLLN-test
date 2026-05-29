@@ -212,7 +212,8 @@ namespace engine::server
 	bool DecodeInput(std::span<const std::byte> packet, InputMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
-		if (!DecodeHeader(packet, MessageKind::Input, payload) || payload.size() != 24)
+		// TD.8 — payload 25 octets : 24 (TC.1) + 1 (animationState).
+		if (!DecodeHeader(packet, MessageKind::Input, payload) || payload.size() != 25)
 		{
 			return false;
 		}
@@ -223,19 +224,22 @@ namespace engine::server
 		outMessage.positionMetersY = std::bit_cast<float>(ReadU32(payload, 12));
 		outMessage.positionMetersZ = std::bit_cast<float>(ReadU32(payload, 16));
 		outMessage.yawRadians = std::bit_cast<float>(ReadU32(payload, 20));
+		outMessage.animationState = ReadU8(payload, 24);
 		return true;
 	}
 
 	std::vector<std::byte> EncodeInput(const InputMessage& message)
 	{
-		// TC.1 — payload 24 octets : clientId, inputSequence, posX, posY, posZ, yaw.
-		std::vector<std::byte> packet = BeginPacket(MessageKind::Input, 24);
+		// TC.1/TD.8 — payload 25 octets : clientId, inputSequence, posX, posY, posZ, yaw,
+		// animationState (1 octet).
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Input, 25);
 		WriteU32(packet, message.clientId);
 		WriteU32(packet, message.inputSequence);
 		WriteU32(packet, std::bit_cast<uint32_t>(message.positionMetersX));
 		WriteU32(packet, std::bit_cast<uint32_t>(message.positionMetersY));
 		WriteU32(packet, std::bit_cast<uint32_t>(message.positionMetersZ));
 		WriteU32(packet, std::bit_cast<uint32_t>(message.yawRadians));
+		WriteU8(packet, message.animationState);
 		return packet;
 	}
 
@@ -292,11 +296,11 @@ namespace engine::server
 		outMessage.chunkCount = ReadU16(payload, 22);
 
 		const size_t entityCount = static_cast<size_t>(outMessage.entityCount);
-		// TD.6 — taille variable par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId)
-		// + 2 (nameLen) + N (name) + 2 (genderLen) + M (gender) octets. On vérifie un minimum
-		// (56 par entité, nom et genre vides), puis on parse sequentiellement et on rejette si
-		// on dépasse la fin du payload en cours de route. TG.1 — header a 24 octets.
-		const size_t minimumPayloadSize = 24 + (entityCount * 56);
+		// TD.6/TD.8 — taille variable par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId)
+		// + 2 (nameLen) + N (name) + 2 (genderLen) + M (gender) + 1 (animationState) octets. On vérifie
+		// un minimum (57 par entité, nom et genre vides), puis on parse sequentiellement et on rejette
+		// si on dépasse la fin du payload en cours de route. TG.1 — header a 24 octets.
+		const size_t minimumPayloadSize = 24 + (entityCount * 57);
 		if (payload.size() < minimumPayloadSize)
 		{
 			return false;
@@ -334,6 +338,16 @@ namespace engine::server
 				outEntities.clear();
 				return false;
 			}
+			// TD.8 : état d'animation (1 octet) après le genre. ReadSizedString a avancé offset ;
+			// le minimum (57/entité, chaînes vides) garantit qu'il reste au moins 1 octet, mais
+			// avec des chaînes non vides on peut dépasser : on vérifie explicitement la borne.
+			if (offset + 1u > payload.size())
+			{
+				outEntities.clear();
+				return false;
+			}
+			entity.animationState = static_cast<AvatarAnimState>(ReadU8(payload, offset));
+			offset += 1u;
 		}
 
 		return true;
@@ -418,13 +432,13 @@ namespace engine::server
 
 	std::vector<std::byte> EncodeSnapshot(const SnapshotMessage& message, std::span<const SnapshotEntity> entities)
 	{
-		// TD.6 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId)
-		// + 2 (nameLen) + N (name bytes) + 2 (genderLen) + M (gender bytes, variable) octets.
-		// Wire-bump v6→v7 : ajout du genre du personnage après le nom. Pour le sizing :
-		// estimation à 8 + 40 + 4 + 2 + 2 = 56 par entité (nom et genre vides). BeginPacket.reserve
+		// TD.6/TD.8 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId)
+		// + 2 (nameLen) + N (name bytes) + 2 (genderLen) + M (gender bytes) + 1 (animationState) octets.
+		// Wire-bump v7→v8 : ajout de l'état d'animation (1 octet) après le genre. Pour le sizing :
+		// estimation à 8 + 40 + 4 + 2 + 2 + 1 = 57 par entité (nom et genre vides). BeginPacket.reserve
 		// est juste un hint, pas une borne stricte (le vector grandit à l'append).
 		// TG.1 — header passe de 20 → 24 octets (ajout chunkIndex + chunkCount uint16 × 2).
-		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 24 + (entities.size() * 56));
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 24 + (entities.size() * 57));
 		WriteU32(packet, message.clientId);
 		WriteU32(packet, message.serverTick);
 		WriteU16(packet, message.connectedClients);
@@ -445,6 +459,8 @@ namespace engine::server
 			WriteSizedString(packet, entity.characterName);
 			// TD.6 : genre du personnage (préfixé u16). Vide pour les mobs / lootbags.
 			WriteSizedString(packet, entity.gender);
+			// TD.8 : état d'animation (1 octet). Idle (0) pour les mobs / lootbags.
+			WriteU8(packet, static_cast<uint8_t>(entity.animationState));
 		}
 		return packet;
 	}

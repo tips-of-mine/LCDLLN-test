@@ -121,6 +121,9 @@ namespace engine::server
 		float velocityMetersPerSecondX = 0.0f;
 		float velocityMetersPerSecondY = 0.0f;
 		float velocityMetersPerSecondZ = 0.0f;
+		/// TD.8 — état d'animation reporté par le client (valeur d'AvatarAnimState). Recopié
+		/// dans chaque SnapshotEntity pour que les autres joueurs voient emotes/roulades/etc.
+		uint8_t animationState = 0;
 		uint32_t stateFlags = 0;
 		StatsComponent stats{};
 		CombatComponent combat{};
@@ -330,7 +333,7 @@ namespace engine::server
 		void EvictIdleUdpClients();
 
 		/// Record the last input sequence for a connected client.
-		void HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersY, float positionMetersZ, float yawRadians);
+		void HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersY, float positionMetersZ, float yawRadians, uint8_t animationState);
 
 		/// Advance one authoritative server tick.
 		void TickOnce();

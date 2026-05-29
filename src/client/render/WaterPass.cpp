@@ -312,7 +312,9 @@ namespace engine::render
 			VkPipelineRasterizationStateCreateInfo rs{};
 			rs.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 			rs.polygonMode = VK_POLYGON_MODE_FILL;
-			rs.cullMode    = VK_CULL_MODE_BACK_BIT;
+			// Surface visible de dessus (joueur qui regarde depuis la rive)
+			// ET de dessous (joueur qui nage, regarde la surface depuis l'eau).
+			rs.cullMode    = VK_CULL_MODE_NONE;
 			rs.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 			rs.lineWidth   = 1.0f;
 

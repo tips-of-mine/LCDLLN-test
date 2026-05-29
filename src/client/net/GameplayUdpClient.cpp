@@ -126,6 +126,13 @@ namespace engine::client
 
 	void GameplayUdpClient::Shutdown()
 	{
+		// Départ propre : prévient le shard AVANT de fermer la socket pour qu'il évince
+		// immédiatement notre entité (sinon avatar « fantôme » jusqu'au timeout). Best-effort
+		// (UDP, sans accusé) : si le datagramme se perd, le timeout serveur prend le relais.
+		if (m_active && m_serverClientId != 0u)
+		{
+			(void)SendGoodbye();
+		}
 #if defined(_WIN32)
 		if (m_socket != nullptr)
 		{
@@ -225,6 +232,15 @@ namespace engine::client
 		im.animationState = animationState; // TD.8 : état d'animation local propagé au shard.
 		// Pas de log par paquet (cadence ~20 Hz) — éviterait de noyer la console.
 		return SendBytes(engine::server::EncodeInput(im));
+	}
+
+	bool GameplayUdpClient::SendGoodbye()
+	{
+		engine::server::GoodbyeMessage gm{};
+		gm.clientId = m_serverClientId;
+		const bool ok = SendBytes(engine::server::EncodeGoodbye(gm));
+		LOG_INFO(Net, "[GameplayUdpClient] Goodbye sent (client_id={}, ok={})", m_serverClientId, ok ? 1 : 0);
+		return ok;
 	}
 
 	bool GameplayUdpClient::SendTalkRequest(uint32_t clientId, std::string_view targetId)

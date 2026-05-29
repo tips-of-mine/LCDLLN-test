@@ -334,6 +334,9 @@ namespace engine::server
 
 		/// Record the last input sequence for a connected client.
 		void HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersY, float positionMetersZ, float yawRadians, uint8_t animationState);
+		/// Départ propre du client (message Goodbye) : éviction immédiate de l'entité au lieu
+		/// d'attendre le timeout d'inactivité. Évite l'avatar « fantôme » (cf. CODEBASE_MAP §60).
+		void HandleGoodbye(const Endpoint& endpoint, uint32_t clientId);
 
 		/// Advance one authoritative server tick.
 		void TickOnce();

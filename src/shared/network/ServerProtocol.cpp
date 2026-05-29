@@ -243,6 +243,26 @@ namespace engine::server
 		return packet;
 	}
 
+	std::vector<std::byte> EncodeGoodbye(const GoodbyeMessage& message)
+	{
+		// Départ propre : payload 4 octets (clientId). Pas de bump de version — un shard
+		// qui ne gère pas cet opcode l'ignore simplement (fallback timeout d'inactivité).
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Goodbye, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeGoodbye(std::span<const std::byte> packet, GoodbyeMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::Goodbye, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
 	bool PeekMessageKind(std::span<const std::byte> packet, MessageKind& outKind)
 	{
 		if (packet.size() < kHeaderSize)

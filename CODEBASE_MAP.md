@@ -943,6 +943,13 @@ auront beaucoup de clips Mixamo).
   (snap immédiat). À ajouter en B ultérieure si demandé.
 - **Pas de saut en longueur distinct** du saut vertical. `Running Jump.fbx`
   dans l'inbox, non utilisé.
+- **Hauteur de saut réaliste (2026-05-29)** : `CharacterController::Config::jumpSpeed`
+  est passé de `9.0` à **`4.9` m/s** (config `player.movement.jump_speed` aussi).
+  Apex = `jumpSpeed² / (2·|gravity|)` = `4.9² / 40` ≈ **0,60 m** (avant ~2,0 m,
+  irréaliste). Garde anti-régression : `character_controller_jump_tests`
+  (`src/client/gameplay/tests/CharacterControllerJumpTests.cpp`) vérifie l'apex
+  ∈ [0,50 ; 0,72] m. Pur client (le shard valide la position mais n'impose pas
+  la hauteur de saut).
 - **Pas de strafe / walk backward distincts** : le perso pivote toujours pour
   faire face à la direction de mouvement (convention free-look).
 - **First-frame** : à la première frame post-EnterWorld, `m_avatarYaw = 0` →

@@ -9764,11 +9764,38 @@ namespace engine
 			const float groundY = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z);
 			engine::math::Mat4 scaleM = engine::math::Mat4::Identity();
 			scaleM.m[0] = e.meshScale; scaleM.m[5] = e.meshScale; scaleM.m[10] = e.meshScale;
-			prop.modelMatrix =
+			// Matrice modèle monde du prop (translation au sol + yaw + rotX + échelle).
+			const engine::math::Mat4 bakeM =
 				engine::math::Mat4::Translate(engine::math::Vec3{ e.position.x, groundY, e.position.z }) *
 				engine::math::Mat4::RotateY(e.meshYawDeg * kDeg2Rad) *
 				engine::math::Mat4::RotateX(e.meshRotXDeg * kDeg2Rad) *
 				scaleM;
+			// CONTOURNEMENT bug moteur : GeometryPass::Record applique la matrice d'instance
+			// via un buffer GPU PARTAGE (m_identityInstanceBuffer) reecrit a chaque draw au
+			// moment du RECORD. Avec plusieurs props dans le meme command buffer, seule la
+			// DERNIERE matrice survit a l'execution -> tous les props se dessinent au meme
+			// endroit (empiles). On contourne en CUISANT la transformation monde directement
+			// dans les sommets (chaque prop a deja son propre mesh CPU), puis on laisse la
+			// matrice d'instance a l'identite. (Les labels, eux, utilisent e.position : ils
+			// etaient deja bien places, d'ou l'illusion que "ca marchait" a 1-2 props.)
+			{
+				const float* M = bakeM.m;  // column-major : M[col*4+row]
+				for (auto& v : cpu->vertices)
+				{
+					const float px = v.pos[0], py = v.pos[1], pz = v.pos[2];
+					v.pos[0] = M[0]*px + M[4]*py + M[8]*pz  + M[12];
+					v.pos[1] = M[1]*px + M[5]*py + M[9]*pz  + M[13];
+					v.pos[2] = M[2]*px + M[6]*py + M[10]*pz + M[14];
+					const float nx = v.normal[0], ny = v.normal[1], nz = v.normal[2];
+					float rnx = M[0]*nx + M[4]*ny + M[8]*nz;
+					float rny = M[1]*nx + M[5]*ny + M[9]*nz;
+					float rnz = M[2]*nx + M[6]*ny + M[10]*nz;
+					const float nlen = std::sqrt(rnx*rnx + rny*rny + rnz*rnz);
+					if (nlen > 1e-6f) { rnx /= nlen; rny /= nlen; rnz /= nlen; }
+					v.normal[0] = rnx; v.normal[1] = rny; v.normal[2] = rnz;
+				}
+			}
+			prop.modelMatrix = engine::math::Mat4::Identity();  // sommets deja en espace monde
 
 			for (const auto& kv : idxByMat)
 			{

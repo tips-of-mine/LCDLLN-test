@@ -5536,6 +5536,17 @@ namespace engine
 										// sortirait tôt (scene/mesh absent) et PostWater resterait NON ÉCRIT → bloom lit
 										// du garbage → écran blanc délavé. Sans eau réelle, on prend le passthrough qui
 										// copie SceneColor → PostWater et garantit un contenu valide.
+										// DIAG one-shot : revele quelle branche eau est prise (et pourquoi).
+										{
+											static bool s_waterBranchLogged = false;
+											if (!s_waterBranchLogged)
+											{
+												s_waterBranchLogged = true;
+												LOG_INFO(Render, "[WaterDiag] gating: waterPassValid={} meshValid={} -> branche={}",
+													m_waterPass.IsValid(), m_waterMeshGpu.IsValid(),
+													(m_waterPass.IsValid() && m_waterMeshGpu.IsValid()) ? "WATER(dessin quad)" : "PASSTHROUGH(pas d'eau)");
+											}
+										}
 										if (m_waterPass.IsValid() && m_waterMeshGpu.IsValid())
 										{
 											m_frameGraph.addPass("Water",

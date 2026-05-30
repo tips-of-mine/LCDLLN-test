@@ -472,6 +472,13 @@ namespace engine::render
 		const engine::world::water::WaterScene& scene,
 		uint32_t frameIndex)
 	{
+		// DIAG one-shot : pourquoi l'eau ne s'affiche pas ? On logue l'etat a l'entree.
+		static bool s_recDiag = false;
+		const bool diagNow = !s_recDiag;
+		if (diagNow)
+			LOG_INFO(Render, "[WaterDiag] Record enter: valid={} instances={} frameIdx={}/{}",
+				IsValid(), static_cast<int>(mesh.GetInstanceCount()), frameIndex, m_maxFrames);
+
 		if (!IsValid()) return;
 		if (mesh.GetInstanceCount() == 0) return;
 		if (frameIndex >= m_maxFrames) return;
@@ -482,7 +489,12 @@ namespace engine::render
 		VkImageView depthView    = registry.getImageView(idSceneDepth);
 		if (colorOut == VK_NULL_HANDLE || colorOutView == VK_NULL_HANDLE
 		    || sceneInView == VK_NULL_HANDLE || depthView == VK_NULL_HANDLE)
+		{
+			if (diagNow)
+				LOG_WARN(Render, "[WaterDiag] Record ABORT: handle null (colorOut={} colorOutView={} sceneIn={} depth={})",
+					(void*)colorOut, (void*)colorOutView, (void*)sceneInView, (void*)depthView);
 			return;
+		}
 
 		// 1. Update descriptor set for this frame.
 		{
@@ -623,6 +635,13 @@ namespace engine::render
 
 			vkCmdDrawIndexed(cmd, drawInfo.indexCount, 1, drawInfo.firstIndex,
 			                 drawInfo.vertexOffset, 0);
+		}
+
+		if (diagNow)
+		{
+			LOG_INFO(Render, "[WaterDiag] Record: {} draw(s) emis (extent={}x{})",
+				static_cast<int>(drawInfos.size()), extent.width, extent.height);
+			s_recDiag = true;
 		}
 
 		vkCmdEndRenderPass(cmd);

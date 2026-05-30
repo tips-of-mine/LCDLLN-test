@@ -46,7 +46,8 @@ namespace engine::render
 		std::vector<WaterInstanceDrawInfo>& outDrawInfos);
 
 	/// Buffer GPU contenant tous les meshes d'eau (lakes + rivers concatenes).
-	/// Reconstruit a la demande depuis une WaterScene CPU via VMA staging.
+	/// Reconstruit a la demande depuis une WaterScene CPU via staging raw Vulkan.
+	/// N'utilise pas VMA (compatible STAB.7 — VMA desactive).
 	class WaterMeshGpu final
 	{
 	public:
@@ -55,8 +56,8 @@ namespace engine::render
 		WaterMeshGpu& operator=(const WaterMeshGpu&) = delete;
 
 		/// Initialise l'objet. Pas d'allocation buffer ici — Rebuild s'en charge.
-		/// \param vmaAllocator Handle VmaAllocator opaque (evite de polluer le header avec vk_mem_alloc.h).
-		bool Init(VkDevice device, void* vmaAllocator);
+		/// \param physicalDevice Requis pour la recherche de type memoire (AllocateMemory).
+		bool Init(VkDevice device, VkPhysicalDevice physicalDevice);
 
 		/// Reconstruit VBO/IBO depuis la scene. Realloue si capacite insuffisante,
 		/// reutilise l'allocation existante sinon. Retourne false en cas d'erreur
@@ -77,28 +78,26 @@ namespace engine::render
 		size_t GetInstanceCount() const { return m_drawInfos.size(); }
 		bool IsValid() const { return m_vbo != VK_NULL_HANDLE && m_ibo != VK_NULL_HANDLE; }
 
-		/// Returns true after a successful Init() (i.e., m_device + m_vmaAllocator stored).
-		/// Distinct from IsValid() which is true only after the first successful Rebuild
-		/// (when GPU buffers have been allocated). Use IsInitialized() as the gate to
-		/// attempt Rebuild ; use IsValid() as the gate to draw with the buffers.
+		/// Retourne true apres un Init() reussi (m_device stocke).
+		/// Distinct de IsValid() qui n'est vrai qu'apres le premier Rebuild reussi.
 		bool IsInitialized() const { return m_device != VK_NULL_HANDLE; }
 
 	private:
 		/// Alloue ou realloue VBO/IBO si la nouvelle taille depasse la capacite actuelle.
 		/// Reutilise les buffers existants si la capacite est suffisante.
-		/// \return false si vmaCreateBuffer echoue (logue ERROR).
+		/// \return false si l'allocation Vulkan echoue (logue ERROR).
 		bool EnsureCapacity(VkDeviceSize newVboSize, VkDeviceSize newIboSize);
 
 		VkDevice         m_device         = VK_NULL_HANDLE;
-		void*            m_vmaAllocator   = nullptr;  // VmaAllocator (opaque)
+		VkPhysicalDevice m_physicalDevice  = VK_NULL_HANDLE;
 
-		VkBuffer       m_vbo            = VK_NULL_HANDLE;
-		void*          m_vboAllocation  = nullptr;  // VmaAllocation
-		VkDeviceSize   m_vboCapacity    = 0;
+		VkBuffer       m_vbo         = VK_NULL_HANDLE;
+		VkDeviceMemory m_vboMemory   = VK_NULL_HANDLE;
+		VkDeviceSize   m_vboCapacity = 0;
 
-		VkBuffer       m_ibo            = VK_NULL_HANDLE;
-		void*          m_iboAllocation  = nullptr;  // VmaAllocation
-		VkDeviceSize   m_iboCapacity    = 0;
+		VkBuffer       m_ibo         = VK_NULL_HANDLE;
+		VkDeviceMemory m_iboMemory   = VK_NULL_HANDLE;
+		VkDeviceSize   m_iboCapacity = 0;
 
 		std::vector<WaterInstanceDrawInfo> m_drawInfos;
 	};

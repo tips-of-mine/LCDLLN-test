@@ -148,9 +148,9 @@
             "0": { "x": 4.0, "z": 0.0, "radius": 2.5, "npc": true, "label": "Villageois", "message": "Villageois : Bonjour !", "mesh": "models/characters/humains/Male_Ranger/Male_Ranger.glb", "scale": 95.0, "rot_x_deg": -90.0, "yaw_deg": 270.0, "dialogue": { "count": 3, "0": "Bonjour, aventurier ! Bienvenue par ici.", "1": "Le bassin de test est a l'est, si tu veux nager.", "2": "Reviens me voir quand tu veux." } },
             "1": { "x": -4.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Coffre", "message": "Vous fouillez le coffre... vide pour l'instant.", "mesh": "meshes/props/Chest_Wood.gltf", "scale": 1.0, "yaw_deg": 0.0 }
         },
-        "_comment_test_water": "Nage : bassin de TEST procedural (la zone demo n'a pas d'eau). enabled=false pour le retirer. Ignore si un instances/water.bin reel est charge.",
+        "_comment_test_water": "Nage : bassin de TEST procedural (la zone demo n'a pas d'eau). DESACTIVE : ce bassin flotte 2.5m au-dessus d'un terrain plat et la passe water n'a pas de depth-test, donc la dalle d'eau recouvre tout l'ecran (blanc delave). Reactiver UNIQUEMENT avec une vraie etendue d'eau au niveau du sol (zone avec depression terrain ou instances/water.bin) ET un depth-test sur WaterPass. enabled=false pour le retirer.",
         "test_water": {
-            "enabled": true,
+            "enabled": false,
             "center_x": 25.0,
             "center_z": 0.0,
             "half_size_m": 15.0,

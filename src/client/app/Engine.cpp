@@ -5530,7 +5530,13 @@ namespace engine
 										// on enregistre un passthrough vkCmdCopyImage à la place pour garantir
 										// que le ping-pong PostWater est toujours renseigné — sinon Bloom_Prefilter
 										// (qui lit PostWater) lirait du contenu indéfini.
-										if (m_waterPass.IsValid())
+										//
+										// IMPORTANT : on n'enregistre la passe « Water » (ColorWrite sur PostWater)
+										// QUE si un mesh d'eau valide existe (m_waterMeshGpu.IsValid()). Sinon le record
+										// sortirait tôt (scene/mesh absent) et PostWater resterait NON ÉCRIT → bloom lit
+										// du garbage → écran blanc délavé. Sans eau réelle, on prend le passthrough qui
+										// copie SceneColor → PostWater et garantit un contenu valide.
+										if (m_waterPass.IsValid() && m_waterMeshGpu.IsValid())
 										{
 											m_frameGraph.addPass("Water",
 												[this](engine::render::PassBuilder& b) {

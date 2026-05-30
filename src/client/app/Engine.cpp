@@ -4016,11 +4016,9 @@ namespace engine
 											}
 										}
 
-										if (!m_waterMeshGpu.Init(m_vkDeviceContext.GetDevice(), m_vmaAllocator))
+										if (!m_waterMeshGpu.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice()))
 										{
-											LOG_WARN(Render,
-												"[Boot] WaterMeshGpu::Init failed (vmaAllocator={}) — Water_Passthrough fallback",
-												m_vmaAllocator ? "set" : "null (STAB.7)");
+											LOG_WARN(Render, "[Boot] WaterMeshGpu::Init failed — Water_Passthrough fallback");
 										}
 
 										// Init WaterPass : shaders + textures muettes 1×1.

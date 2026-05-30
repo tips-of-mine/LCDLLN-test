@@ -58,17 +58,24 @@ vec3 ssrTrace(vec3 worldPos, vec3 reflectDir, vec3 fallback)
 
 void main()
 {
-    // NOTE depth : la passe water dessine dans SceneColor_HDR_PostWater SANS
-    // depth-attachment. On NE fait PAS de depth-test ecran ici : la projection
-    // (near 0.05 / far 1000) sature la precision de profondeur des ~50 m — or
-    // l'eau de test est a ~50 m — donc toute comparaison NDC ecran y est non
-    // fiable (les profondeurs se confondent) et rejetait l'eau A TORT -> nappe
-    // invisible (bug observe). L'eau etant confinee dans un BOL creuse du
-    // heightmap et le ping-pong PostWater etant TOUJOURS ecrit (gating dans
-    // Engine.cpp), l'absence de depth-test ne reintroduit pas le plein-ecran
-    // blanc : la nappe reste une etendue LOCALE. Occlusion fine du rivage par le
-    // terrain : a refaire plus tard en world-space (inverse projection) si besoin.
     vec2 screenUv = gl_FragCoord.xy / pc.screenSize;
+
+    // ── Occlusion de profondeur ──────────────────────────────────────────────
+    // La passe water dessine dans PostWater SANS depth-attachment. On teste donc
+    // MANUELLEMENT la profondeur du fragment d'eau (gl_FragCoord.z, deja en [0,1]
+    // sous Vulkan) contre la profondeur de la scene opaque (u_sceneDepth) :
+    //  - si une surface opaque est DEVANT l'eau (profondeur plus PETITE = plus
+    //    proche camera), on jette le fragment -> empeche l'eau de se peindre
+    //    par-dessus le joueur / le terrain situes devant la nappe (bug observe :
+    //    "l'eau coupe le joueur alors qu'il n'est pas dans l'eau").
+    //  - le FOND du bassin est PLUS LOIN que la surface -> non rejete -> l'eau
+    //    reste bien visible a l'interieur du bol creuse.
+    // Le bias 1e-4 evite le z-fighting de surface. La precision se degrade au-dela
+    // de ~50 m (projection near 0.05 / far 1000) : au pire un leger scintillement
+    // au bord du bassin lointain, sans reintroduire l'occlusion erronee du joueur.
+    float occluderDepth = texture(u_sceneDepth, screenUv).r;
+    if (occluderDepth < gl_FragCoord.z - 1e-4)
+        discard;
 
     // Flow effective : prend la direction per-vertex (rivière) ou le push constant (lac).
     vec2 flowEff = (length(vFlowDir) > 0.001) ? vFlowDir : pc.flowDirection;

@@ -4804,6 +4804,24 @@ namespace engine
 												LOG_INFO(Render, "[Nage] Eau-test posee (centre=({:.1f},{:.1f}) half={:.1f} niveauY={:.2f})", cx, cz, half, lvl);
 											}
 											m_terrainCollider.BindWater(m_clientWaterScene.get());
+											// REBUILD SYNCHRONE du mesh d'eau ICI (avant la 1ere construction du
+											// FrameGraph). Sinon le gating de la passe water voit m_waterMeshGpu.IsValid()
+											// == false (le rebuild paresseux n'arrive qu'APRES, plus tard dans la frame)
+											// -> il grave la branche PASSTHROUGH et l'eau n'est JAMAIS dessinee
+											// (diagnostic [WaterDiag] gating: meshValid=false). On force donc le rebuild
+											// des maintenant pour que IsValid()==true quand le graphe choisit la branche.
+											if (m_clientWaterScene && m_waterMeshGpu.IsInitialized()
+												&& m_waterTransferPool != VK_NULL_HANDLE)
+											{
+												vkResetCommandPool(m_vkDeviceContext.GetDevice(), m_waterTransferPool, 0);
+												if (m_waterMeshGpu.Rebuild(m_waterTransferPool,
+														m_vkDeviceContext.GetGraphicsQueue(), *m_clientWaterScene))
+												{
+													m_waterClientSceneDirty = false;
+													LOG_INFO(Render, "[Nage] Mesh d'eau reconstruit (synchrone, avant FrameGraph) -> IsValid={}",
+														m_waterMeshGpu.IsValid());
+												}
+											}
 											// Interaction : interactibles declares en config (world.interactables.N.*).
 											// Repli sur 2 cibles de TEST pres du spawn si aucun n'est declare.
 											m_interactables.clear();

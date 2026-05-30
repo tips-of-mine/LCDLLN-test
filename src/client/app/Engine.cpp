@@ -9791,12 +9791,14 @@ namespace engine
 			// etaient deja bien places, d'ou l'illusion que "ca marchait" a 1-2 props.)
 			{
 				const float* M = bakeM.m;  // column-major : M[col*4+row]
+				float minY = 1e30f;        // point le plus bas du prop en espace monde
 				for (auto& v : cpu->vertices)
 				{
 					const float px = v.pos[0], py = v.pos[1], pz = v.pos[2];
 					v.pos[0] = M[0]*px + M[4]*py + M[8]*pz  + M[12];
 					v.pos[1] = M[1]*px + M[5]*py + M[9]*pz  + M[13];
 					v.pos[2] = M[2]*px + M[6]*py + M[10]*pz + M[14];
+					if (v.pos[1] < minY) minY = v.pos[1];
 					const float nx = v.normal[0], ny = v.normal[1], nz = v.normal[2];
 					float rnx = M[0]*nx + M[4]*ny + M[8]*nz;
 					float rny = M[1]*nx + M[5]*ny + M[9]*nz;
@@ -9805,6 +9807,14 @@ namespace engine
 					if (nlen > 1e-6f) { rnx /= nlen; rny /= nlen; rnz /= nlen; }
 					v.normal[0] = rnx; v.normal[1] = rny; v.normal[2] = rnz;
 				}
+				// Ancrage au sol : selon le modele, le pivot n'est pas a la base
+				// -> le prop s'enterre (ou flotte). On decale tout le mesh pour que
+				// son point le PLUS BAS repose exactement sur le sol (groundY).
+				// Corrige le "clipping objets/terrain" pour tous les props.
+				const float lift = groundY - minY;
+				if (std::fabs(lift) > 1e-4f)
+					for (auto& v : cpu->vertices)
+						v.pos[1] += lift;
 			}
 			prop.modelMatrix = engine::math::Mat4::Identity();  // sommets deja en espace monde
 

@@ -357,6 +357,46 @@ namespace engine::gameplay
 			grounded = false;
 		}
 
+		// ── Recuperation anti-encastrement (penetration recovery) ────────────────
+		// SweepCapsule ne rattrape le sol QUE si le centre le traverse de haut en
+		// bas pendant la frame (cf. TerrainCollider::SweepCapsule). Si le perso
+		// finit la frame DEJA sous le sol — cas typique : il nage en surface puis
+		// ressort la ou le terrain remonte (bord de bassin), ou une pente raide a
+		// laisse le sweep descendant "tunneler" — plus aucune frame ne le detecte
+		// et il tombe a l'infini (bug "eau sans fond", chute jusqu'a y<<0).
+		//
+		// Parade : on sonde depuis un point HAUT au-dessus du perso vers sa
+		// position. Ce sweep traverse forcement le sol par le haut, donc
+		// SweepCapsule renvoie la hauteur de repos (sol + halfHeight). Si le centre
+		// est sous ce niveau, on l'y remonte et on annule la vitesse descendante.
+		// Ne se declenche jamais en jeu normal (le perso est au niveau ou au-dessus
+		// du sol -> pas de hit, ou restY ~= pos.y) : impact nul hors encastrement.
+		if (!isFlying)
+		{
+			constexpr float kRecoverProbeUp = 50.0f;  // > toute penetration par frame
+			const engine::math::Vec3 probeFrom =
+				pos + engine::math::Vec3(0.0f, kRecoverProbeUp, 0.0f);
+			IWorldCollider::SweepHit recHit{};
+			recHit.hit = false;
+			recHit.fraction = 1.0f;
+			recHit.normal = engine::math::Vec3(0.0f, 1.0f, 0.0f);
+			if (world.SweepCapsule(m_capsule, probeFrom, pos, recHit) && recHit.hit)
+			{
+				// restY = sol + halfHeight (hauteur de repos du centre capsule).
+				const float restY = probeFrom.y + (pos.y - probeFrom.y) * recHit.fraction;
+				if (pos.y < restY - 1e-3f)
+				{
+					pos.y = restY;
+					if (vel.y < 0.0f)
+						vel.y = 0.0f;
+					// En nage/vol on remonte hors du terrain mais on ne force pas
+					// l'etat "grounded" (gere par le mode courant).
+					if (m_mode != MovementMode::Water && m_mode != MovementMode::Fly)
+						grounded = true;
+				}
+			}
+		}
+
 		m_positionCenter = pos;
 		m_velocity = vel;
 		m_isGrounded = grounded;

@@ -154,7 +154,7 @@
             "center_x": 50.0,
             "center_z": 0.0,
             "half_size_m": 24.0,
-            "depth_m": 5.0
+            "depth_m": 3.0
         },
         "default_spawn": {
             "_comment": "Position de la caméra (m) au moment du clic Jouer (Phase 3.5). Y > 0 = au-dessus du terrain. Sera surchargée par characters.spawn_x/y/z une fois la migration en place.",

@@ -93,6 +93,20 @@ void main()
     float NdotV = max(0.0, dot(surfaceN, viewDir));
     float f = pow(1.0 - NdotV, pc.fresnelPower);
 
-    vec3 color = mix(refr, refl, f * pc.reflectionStrength);
+    // ── Couleur d'eau GARANTIE visible ───────────────────────────────────────
+    // Les textures (normalMap/skybox) sont muettes (1x1) et reflectionStrength
+    // peut valoir 0 : on ne peut donc PAS compter sur le SSR/reflet pour rendre
+    // l'eau visible (sinon la nappe est quasi transparente = invisible). On
+    // impose une couleur d'eau bleu-vert nette, melangee a la refraction
+    // (garde un peu de transparence/profondeur), avec un lisere de Fresnel clair
+    // pour la brillance de surface. La nappe se lit ainsi toujours comme de l'eau.
+    float fres = clamp(pow(1.0 - NdotV, 3.0), 0.0, 1.0);
+    vec3 deepWater    = vec3(0.03, 0.20, 0.30);   // bleu-vert profond (vu d'aplomb)
+    vec3 shallowWater = vec3(0.10, 0.42, 0.52);   // bleu-vert clair (angle rasant)
+    vec3 waterBody    = mix(deepWater, shallowWater, fres);
+
+    vec3 color = mix(refr, waterBody, 0.70);                                 // 70% eau, 30% fond
+    color = mix(color, refl, clamp(f * pc.reflectionStrength, 0.0, 1.0));    // reflet si dispo
+    color += vec3(0.18, 0.22, 0.26) * fres;                                  // sheen de surface
     fragColor = vec4(color, 1.0);
 }

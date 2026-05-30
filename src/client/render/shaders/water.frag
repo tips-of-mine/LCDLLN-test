@@ -58,6 +58,18 @@ vec3 ssrTrace(vec3 worldPos, vec3 reflectDir, vec3 fallback)
 
 void main()
 {
+    // Depth-test manuel (occlusion par la geometrie de scene). La passe water
+    // dessine dans SceneColor_HDR_PostWater SANS depth-attachment ; on rejette
+    // donc ici les fragments d'eau situes DERRIERE une geometrie opaque, en
+    // comparant la profondeur de ce fragment (gl_FragCoord.z) a la depth de
+    // scene echantillonnee au meme pixel. Effet : l'eau est correctement
+    // occultee par le terrain / les berges du bassin / l'avatar, et ne peut
+    // plus recouvrir tout l'ecran (cf. regression corrigee dans cette PR).
+    // Meme espace de depth : la passe water utilise le meme viewProj que la scene.
+    vec2 screenUv = gl_FragCoord.xy / pc.screenSize;
+    float sceneDepthOccl = texture(u_sceneDepth, screenUv).r;
+    if (sceneDepthOccl < gl_FragCoord.z) discard;
+
     // Flow effective : prend la direction per-vertex (rivière) ou le push constant (lac).
     vec2 flowEff = (length(vFlowDir) > 0.001) ? vFlowDir : pc.flowDirection;
     vec2 flow = flowEff * pc.flowSpeed * pc.timeSeconds;
@@ -68,7 +80,6 @@ void main()
     vec3 n2 = unpackNormal(texture(u_normalMap, uv2).xyz);
     vec3 n  = normalize(n1 + n2);
 
-    vec2 screenUv = gl_FragCoord.xy / pc.screenSize;
     vec2 refrUv   = clamp(screenUv + n.xz * pc.refractionAmount, vec2(0.0), vec2(1.0));
     vec3 refr     = texture(u_sceneColor, refrUv).rgb;
     refr          = mix(refr, pc.bottomColor, pc.turbidity);

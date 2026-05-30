@@ -58,17 +58,17 @@ vec3 ssrTrace(vec3 worldPos, vec3 reflectDir, vec3 fallback)
 
 void main()
 {
-    // Depth-test manuel (occlusion par la geometrie de scene). La passe water
-    // dessine dans SceneColor_HDR_PostWater SANS depth-attachment ; on rejette
-    // donc ici les fragments d'eau situes DERRIERE une geometrie opaque, en
-    // comparant la profondeur de ce fragment (gl_FragCoord.z) a la depth de
-    // scene echantillonnee au meme pixel. Effet : l'eau est correctement
-    // occultee par le terrain / les berges du bassin / l'avatar, et ne peut
-    // plus recouvrir tout l'ecran (cf. regression corrigee dans cette PR).
-    // Meme espace de depth : la passe water utilise le meme viewProj que la scene.
+    // NOTE depth : la passe water dessine dans SceneColor_HDR_PostWater SANS
+    // depth-attachment. On NE fait PAS de depth-test ecran ici : la projection
+    // (near 0.05 / far 1000) sature la precision de profondeur des ~50 m — or
+    // l'eau de test est a ~50 m — donc toute comparaison NDC ecran y est non
+    // fiable (les profondeurs se confondent) et rejetait l'eau A TORT -> nappe
+    // invisible (bug observe). L'eau etant confinee dans un BOL creuse du
+    // heightmap et le ping-pong PostWater etant TOUJOURS ecrit (gating dans
+    // Engine.cpp), l'absence de depth-test ne reintroduit pas le plein-ecran
+    // blanc : la nappe reste une etendue LOCALE. Occlusion fine du rivage par le
+    // terrain : a refaire plus tard en world-space (inverse projection) si besoin.
     vec2 screenUv = gl_FragCoord.xy / pc.screenSize;
-    float sceneDepthOccl = texture(u_sceneDepth, screenUv).r;
-    if (sceneDepthOccl < gl_FragCoord.z) discard;
 
     // Flow effective : prend la direction per-vertex (rivière) ou le push constant (lac).
     vec2 flowEff = (length(vFlowDir) > 0.001) ? vFlowDir : pc.flowDirection;

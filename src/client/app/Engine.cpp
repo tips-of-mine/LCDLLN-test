@@ -5565,6 +5565,35 @@ namespace engine
 													(m_waterPass.IsValid() && m_waterMeshGpu.IsValid()) ? "WATER(dessin quad)" : "PASSTHROUGH(pas d'eau)");
 											}
 										}
+										// ETAPE 1 — TOUJOURS : copie SceneColor_HDR -> SceneColor_HDR_PostWater.
+										// Garantit que PostWater contient la SCENE COMPLETE. Sans ca, la passe
+										// Water (qui ne dessine que le quad d'eau) laisserait le reste de
+										// PostWater non initialise -> tout l'ecran noir sauf l'eau (regression
+										// observee une fois meshValid=true). On copie donc d'abord, puis l'eau
+										// se dessine PAR-DESSUS (WaterPass en loadOp=LOAD).
+										m_frameGraph.addPass("Water_Passthrough",
+											[this](engine::render::PassBuilder& b) {
+												b.read(m_fgSceneColorHDRId,           engine::render::ImageUsage::TransferSrc);
+												b.write(m_fgSceneColorHDRPostWaterId, engine::render::ImageUsage::TransferDst);
+											},
+											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+												VkImage src = reg.getImage(m_fgSceneColorHDRId);
+												VkImage dst = reg.getImage(m_fgSceneColorHDRPostWaterId);
+												if (src == VK_NULL_HANDLE || dst == VK_NULL_HANDLE) return;
+												VkImageCopy copy{};
+												copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+												copy.srcSubresource.layerCount = 1;
+												copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+												copy.dstSubresource.layerCount = 1;
+												VkExtent2D ext = m_vkSwapchain.GetExtent();
+												copy.extent = { ext.width, ext.height, 1 };
+												vkCmdCopyImage(cmd, src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+													dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+											});
+
+										// ETAPE 2 — si l'eau est prete, on dessine le quad PAR-DESSUS la copie.
+										// Le WaterPass utilise loadOp=LOAD (cf. WaterPass.cpp) -> il preserve la
+										// scene deja copiee dans PostWater et ne remplace que les pixels d'eau.
 										if (m_waterPass.IsValid() && m_waterMeshGpu.IsValid())
 										{
 											m_frameGraph.addPass("Water",
@@ -5599,31 +5628,6 @@ namespace engine
 													m_waterPass.Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
 														m_fgSceneColorHDRId, m_fgDepthId, m_fgSceneColorHDRPostWaterId,
 														m_waterMeshGpu, base, *scene, frameIdx);
-												});
-										}
-										else
-										{
-											// Fallback : copie SceneColor_HDR → SceneColor_HDR_PostWater pour
-											// que les passes aval (Bloom_*) lisent une image valide même quand
-											// la passe water est désactivée (shaders/textures absents, VMA off, etc.).
-											m_frameGraph.addPass("Water_Passthrough",
-												[this](engine::render::PassBuilder& b) {
-													b.read(m_fgSceneColorHDRId,           engine::render::ImageUsage::TransferSrc);
-													b.write(m_fgSceneColorHDRPostWaterId, engine::render::ImageUsage::TransferDst);
-												},
-												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-													VkImage src = reg.getImage(m_fgSceneColorHDRId);
-													VkImage dst = reg.getImage(m_fgSceneColorHDRPostWaterId);
-													if (src == VK_NULL_HANDLE || dst == VK_NULL_HANDLE) return;
-													VkImageCopy copy{};
-													copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-													copy.srcSubresource.layerCount = 1;
-													copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-													copy.dstSubresource.layerCount = 1;
-													VkExtent2D ext = m_vkSwapchain.GetExtent();
-													copy.extent = { ext.width, ext.height, 1 };
-													vkCmdCopyImage(cmd, src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-														dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
 												});
 										}
 

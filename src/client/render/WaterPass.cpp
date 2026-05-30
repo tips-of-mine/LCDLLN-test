@@ -66,17 +66,22 @@ namespace engine::render
 
 		// -----------------------------------------------------------------
 		// 1. Render pass : 1 color attachment (SceneColor_HDR_PostWater).
-		//    LOAD_OP_DONT_CARE — la passe écrit par-dessus via blend.
+		//    LOAD_OP_LOAD — PostWater contient deja la SCENE (copiee par la passe
+		//    "Water_Passthrough" juste avant, cf. Engine.cpp). On la PRESERVE et on
+		//    dessine le quad d'eau PAR-DESSUS (blend). Avec DONT_CARE, le reste de
+		//    l'ecran (hors quad) serait noir -> regression.
 		// -----------------------------------------------------------------
 		{
 			VkAttachmentDescription colorAtt{};
 			colorAtt.format         = sceneColorHDRFormat;
 			colorAtt.samples        = VK_SAMPLE_COUNT_1_BIT;
-			colorAtt.loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			colorAtt.loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
 			colorAtt.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
 			colorAtt.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			colorAtt.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			colorAtt.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+			// PostWater a ete laisse en COLOR_ATTACHMENT_OPTIMAL par le barrier du
+			// FrameGraph (transition depuis TRANSFER_DST de la copie passthrough).
+			colorAtt.initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			colorAtt.finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 			VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
@@ -91,12 +96,17 @@ namespace engine::render
 			VkSubpassDependency dep{};
 			dep.srcSubpass    = VK_SUBPASS_EXTERNAL;
 			dep.dstSubpass    = 0;
+			// La copie passthrough (TRANSFER) doit etre terminee avant le LOAD/blend.
 			dep.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-			                  | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			                  | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+			                  | VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dep.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-			                  | VK_ACCESS_SHADER_READ_BIT;
+			                  | VK_ACCESS_SHADER_READ_BIT
+			                  | VK_ACCESS_TRANSFER_WRITE_BIT;
+			// dst : on LIT (load) + on ECRIT (blend) le color attachment.
 			dep.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
+			                  | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 
 			VkRenderPassCreateInfo rpInfo{};
 			rpInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;

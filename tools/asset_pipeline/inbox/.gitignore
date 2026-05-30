@@ -1,3 +1,5 @@
-# Source FBX files dropped here are inputs only, not committed.
-*.fbx
+# FBX en vrac a la racine de l'inbox : dumps temporaires, non commites (~218 Mo Mixamo).
+# Le / en tete ancre le pattern a ce dossier seulement — les sous-dossiers organises
+# (meshes/props/, characters/, animations/, orc/, equipment/) sont commites normalement.
+/*.fbx
 !.gitignore

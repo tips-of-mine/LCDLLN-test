@@ -212,6 +212,12 @@ services:
       NODE_ENV: production
       # Aligné sur MYSQL_USER / MYSQL_PASSWORD / MYSQL_DATABASE du service mysql
       DATABASE_URL: mysql://${MYSQL_USER:-lcdlln_user}:${MYSQL_PASSWORD:-lcdlln_pass_dev}@mysql:3306/${MYSQL_DATABASE:-lcdlln_master}
+      # Présence "en ligne" (pastille admin > Gestion des joueurs) : HealthEndpoint
+      # du master, joignable sur le réseau Docker interne via le nom de service
+      # `master` (port health 3842, bind 0.0.0.0 cf. config/master.config.json).
+      # NE PAS mettre 127.0.0.1 ici : dans le conteneur portail cela pointerait
+      # sur le portail lui-même, pas sur le master -> aucune pastille.
+      MASTER_STATUS_URL: ${MASTER_STATUS_URL:-http://master:3842}
     expose:
       - "3000"
     ports:

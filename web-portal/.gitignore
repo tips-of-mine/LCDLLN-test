@@ -1,0 +1,5 @@
+# Secrets d'environnement : ne jamais committer les fichiers remplis.
+# `.env.example` (sans secret) reste versionne comme reference.
+.env
+.env.local
+.env.*.local

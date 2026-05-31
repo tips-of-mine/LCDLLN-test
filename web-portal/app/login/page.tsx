@@ -2,10 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,8 +24,16 @@ export default function LoginPage() {
         setError(data.message || "Connexion impossible.");
         return;
       }
-      router.push(data.redirect || "/player");
-      router.refresh();
+      // Navigation "dure" volontaire (et non router.push + router.refresh).
+      // /api/auth/login pose le cookie de session via Set-Cookie sur la réponse
+      // du fetch ; une navigation client App Router peut alors rendre la cible
+      // depuis le cache router/RSC produit AVANT que le cookie existe — le
+      // middleware Edge et SiteHeader voient l'état "déconnecté", obligeant
+      // l'utilisateur à recharger manuellement. window.location.assign force une
+      // requête HTTP complète : le cookie part, middleware + getSession voient
+      // la session, et la page cible est rendue fraîche, authentifiée.
+      window.location.assign(data.redirect || "/player");
+      return;
     } catch {
       setError("Erreur réseau. Réessayez.");
     } finally {

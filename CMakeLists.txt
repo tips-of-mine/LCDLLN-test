@@ -542,6 +542,7 @@ add_library(engine_core
   src/client/render/static_mesh/StaticMeshLoader.cpp
   src/client/gameplay/CharacterController.cpp
   src/client/gameplay/TerrainCollider.cpp
+  src/client/gameplay/CompositeWorldCollider.cpp
   src/client/gameplay/ThirdPersonCamera.cpp
   src/client/gameplay/SkillSystem.cpp
   src/client/gameplay/ClientPrediction.cpp

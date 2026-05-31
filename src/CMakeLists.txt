@@ -754,6 +754,12 @@ elseif(UNIX)
   lcdlln_add_simple_test(character_controller_jump_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CharacterControllerJumpTests.cpp)
 
+  # Collision props : CompositeWorldCollider (terrain + cylindres verticaux).
+  # Verifie sweep capsule-vs-cylindre (traversee bloquee, a-cote ignore, hors
+  # bornes Y ignore, delegation QueryWater au terrain).
+  lcdlln_add_simple_test(composite_world_collider_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CompositeWorldColliderTests.cpp)
+
   # Sous-projet C MVP : RaceDefinition.meshPath parsing.
   # Verifie que les 3 races MVP (humains, nains, orcs) exposent un meshPath
   # non vide depuis races.json, et que les races hors-MVP exposent une

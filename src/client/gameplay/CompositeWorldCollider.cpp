@@ -50,27 +50,33 @@ namespace engine::gameplay
 			if (capHi < c.baseY || capLo > c.topY) continue;
 
 			const float fx = sx - c.cx, fz = sz - c.cz;
-			const float a = dx * dx + dz * dz;
-			const float b = 2.0f * (fx * dx + fz * dz);
-			const float cc = fx * fx + fz * fz - R * R;
+			const float a = dx * dx + dz * dz;            // mouvement horizontal au carré
+			const float cc = fx * fx + fz * fz - R * R;   // < 0 => déjà en chevauchement XZ
 
+			// IMPORTANT : la collision contre un prop ne concerne QUE le déplacement
+			// HORIZONTAL entrant dans le cylindre. On ne bloque JAMAIS un sweep vertical
+			// (gravité, sonde de sol, récupération anti-encastrement du CharacterController
+			// qui sonde depuis 50 m au-dessus). Sinon ces sweeps verticaux heurtent le
+			// cylindre et la récupération téléporte le perso au sommet de la sonde.
 			float tHit = -1.0f;
-			if (a < 1e-8f)
+			if (a >= 1e-8f)
 			{
-				// Déplacement XZ négligeable : test statique au point de départ.
-				if (cc <= 0.0f) tHit = 0.0f;
-			}
-			else
-			{
-				const float disc = b * b - 4.0f * a * cc;
-				if (disc >= 0.0f)
+				const float b = 2.0f * (fx * dx + fz * dz);  // = 2 d·(start-axe) ; < 0 = on se rapproche
+				if (cc <= 0.0f)
 				{
-					const float sq = std::sqrt(disc);
-					const float t0 = (-b - sq) / (2.0f * a);
-					const float t1 = (-b + sq) / (2.0f * a);
-					if (cc <= 0.0f) tHit = 0.0f;                  // déjà en intersection au départ
-					else if (t0 >= 0.0f && t0 <= 1.0f) tHit = t0; // entrée dans le cylindre
-					else if (t1 >= 0.0f && t1 <= 1.0f) tHit = t1; // sortie : on bloque quand même
+					// Déjà en chevauchement : bloquer seulement si on se RAPPROCHE de
+					// l'axe (closing). Permet de glisser le long et de ressortir.
+					if (b < 0.0f) tHit = 0.0f;
+				}
+				else
+				{
+					const float disc = b * b - 4.0f * a * cc;
+					if (disc >= 0.0f)
+					{
+						const float sq = std::sqrt(disc);
+						const float t0 = (-b - sq) / (2.0f * a);
+						if (t0 >= 0.0f && t0 <= 1.0f) tHit = t0;  // entrée dans le cylindre
+					}
 				}
 			}
 

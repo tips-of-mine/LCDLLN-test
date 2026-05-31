@@ -11,6 +11,7 @@
 #include "src/shared/network/ProtocolV1Constants.h"
 
 #include <cstdio>
+#include <unordered_set>
 #include <vector>
 
 namespace engine::server
@@ -104,13 +105,13 @@ namespace engine::server
 					for (const auto& mr : r.members)
 					{
 						InMemoryGuildMember m;
+						m.accountId   = mr.accountId;
 						m.accountName = ResolveV1AccountName(mr.accountId);
 						m.rankId      = mr.rankId;
-						// online inconnu cote DB V1 (snapshot statique).
-						// Le handler ne push pas d'event presence V1 :
-						// online reste false par defaut sauf pour le leader
-						// (heuristique simple V1 : leader = online).
-						m.online      = (mr.accountId == r.leaderAccountId);
+						// online n'est plus figé ici : il est recalculé à l'envoi du roster
+						// (HandleMembers) via l'autorité de présence master (SessionManager).
+						// Valeur initiale neutre.
+						m.online      = false;
 						g.members.push_back(std::move(m));
 					}
 					for (const auto& bi : r.bank0)
@@ -334,6 +335,18 @@ namespace engine::server
 		}
 
 		const uint32_t guildId = parsed->guildId;
+
+		// Présence unifiée : le statut « en ligne » des membres vient de l'autorité
+		// master (SessionManager = comptes avec une session de jeu active), recalculé
+		// à CHAQUE envoi de roster — fini l'heuristique factice « leader=online ».
+		// Les membres seed hardcodés (accountId == 0) conservent leur online statique.
+		std::unordered_set<uint64_t> onlineAccounts;
+		if (m_sessionMgr)
+		{
+			const auto active = m_sessionMgr->ListActiveAccountIds();
+			onlineAccounts.insert(active.begin(), active.end());
+		}
+
 		std::vector<GuildMember> members;
 		bool found = false;
 		{
@@ -349,7 +362,9 @@ namespace engine::server
 					wm.accountName = mem.accountName;
 					wm.rankId      = mem.rankId;
 					wm.rankName    = RankName(mem.rankId);
-					wm.online      = mem.online;
+					wm.online      = (mem.accountId != 0)
+						? (onlineAccounts.count(mem.accountId) > 0)
+						: mem.online;
 					members.push_back(std::move(wm));
 				}
 			}

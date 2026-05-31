@@ -56,7 +56,6 @@ namespace engine::server
 	{
 		m_guilds.clear();
 		m_playerGuildMap.clear();
-		m_onlinePlayers.clear();
 		m_nextGuildId = 1;
 		m_initialized = true;
 
@@ -76,7 +75,6 @@ namespace engine::server
 	{
 		m_guilds.clear();
 		m_playerGuildMap.clear();
-		m_onlinePlayers.clear();
 		m_initialized = false;
 		LOG_INFO(Server, "[GuildSystem] Shutdown");
 	}
@@ -163,38 +161,11 @@ namespace engine::server
 		return (rank->permissionsBitfield & static_cast<uint32_t>(perm)) != 0u;
 	}
 
-	std::vector<uint64_t> GuildSystem::GetOnlineMemberIds(uint64_t guildId) const
-	{
-		const GuildRecord* guild = FindGuild(guildId);
-		if (!guild)
-			return {};
-		std::vector<uint64_t> result;
-		result.reserve(guild->members.size());
-		for (const auto& m : guild->members)
-		{
-			if (m_onlinePlayers.count(m.playerId))
-				result.push_back(m.playerId);
-		}
-		return result;
-	}
-
-	// =========================================================================
-	// Online presence
-	// =========================================================================
-
-	void GuildSystem::SetOnline(uint64_t playerId, uint64_t guildId)
-	{
-		m_onlinePlayers.insert(playerId);
-		if (guildId != 0u)
-			m_playerGuildMap[playerId] = guildId;
-		LOG_DEBUG(Server, "[GuildSystem] Player {} online (guild={})", playerId, guildId);
-	}
-
-	void GuildSystem::SetOffline(uint64_t playerId)
-	{
-		m_onlinePlayers.erase(playerId);
-		LOG_DEBUG(Server, "[GuildSystem] Player {} offline", playerId);
-	}
+	// Présence unifiée (Phase 2) : l'ancienne présence guilde shard-locale
+	// (m_onlinePlayers + SetOnline/SetOffline/GetOnlineMemberIds) était du code mort
+	// (aucun appelant) et a été supprimée. Le statut « en ligne » du roster de guilde
+	// est désormais calculé côté master (GuildHandler) via l'autorité de présence
+	// unique (SessionManager). Cf. spec service de présence unifié.
 
 	// =========================================================================
 	// Guild lifecycle — CreateGuild

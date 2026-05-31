@@ -104,6 +104,9 @@ std::optional<StaticMeshCpuData> StaticMeshLoader::LoadCpuOnlyForTests(const std
                     sub.ormUri       = UriOf(pbr.metallic_roughness_texture);
                 }
                 sub.normalUri = UriOf(prim->material->normal_texture);
+                // alphaMode MASK/BLEND -> decoupe alpha (feuillages). En differe on traite
+                // les deux comme un cutout (discard sous le seuil dans le fragment shader).
+                sub.alphaCutout = (prim->material->alpha_mode != cgltf_alpha_mode_opaque);
             }
             out.submeshes.push_back(std::move(sub));
             meshLoaded = true;

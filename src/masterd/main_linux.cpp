@@ -13,6 +13,7 @@
 #include "src/masterd/handlers/shard/ShardRegisterHandler.h"
 #include "src/masterd/shards/ShardRegistry.h"
 #include "src/masterd/shards/ShardPlayerPresenceCache.h"
+#include "src/masterd/world/ZoneNameRegistry.h"
 #include "src/masterd/handlers/shard/ShardTicketHandler.h"
 #include "src/masterd/handlers/shard/ServerListHandler.h"
 #include "src/shared/network/ProtocolV1Constants.h"
@@ -190,6 +191,11 @@ int main(int argc, char** argv)
 	// heartbeats v9, purgé quand un shard tombe (cf. SetShardDownCallback).
 	engine::server::ShardPlayerPresenceCache playerPresenceCache;
 	shardRegisterHandler.SetPlayerPresenceCache(&playerPresenceCache);
+	// Présence enrichie : noms de région lus depuis les manifestes de zone (game/data).
+	// Vide si les champs zone_numeric_id/display_name ne sont pas (encore) renseignés —
+	// le portail retombe alors sur « Zone N ». Aucun nom inventé.
+	engine::server::ZoneNameRegistry zoneNames;
+	zoneNames.Load(config.GetString("paths.content", "game/data") + std::string("/zones"));
 	LOG_INFO(Server, "[MAIN_SRV] ShardRegistry setup OK");
 
 	engine::server::NetServer server;
@@ -1388,7 +1394,7 @@ int main(int argc, char** argv)
 	//  - inWorld        : comptes ayant validé EnterWorld (réellement en jeu).
 	// Source 100% en mémoire master, aucune persistance DB. Le portail interroge
 	// cette route en server-side et dégrade gracieusement si le master est injoignable.
-	auto onlineAccountsProvider = [&sessionManager, &sessionCharMap, &playerPresenceCache, &dbPool]() -> std::string {
+	auto onlineAccountsProvider = [&sessionManager, &sessionCharMap, &playerPresenceCache, &dbPool, &zoneNames]() -> std::string {
 		auto appendJsonArray = [](std::string& out, const std::vector<uint64_t>& ids) {
 			out += "[";
 			for (size_t i = 0; i < ids.size(); ++i)
@@ -1507,10 +1513,15 @@ int main(int argc, char** argv)
 					body += std::to_string(pit->second.level);
 					body += ",\"zoneId\":";
 					body += std::to_string(pit->second.zoneId);
+					// region : nom lisible si le manifeste de zone le fournit, sinon
+					// chaîne vide (le portail retombe sur « Zone N »).
+					body += ",\"region\":\"";
+					body += escapeJson(zoneNames.NameFor(pit->second.zoneId));
+					body += "\"";
 				}
 				else
 				{
-					body += ",\"level\":null,\"zoneId\":null";
+					body += ",\"level\":null,\"zoneId\":null,\"region\":null";
 				}
 			}
 			else

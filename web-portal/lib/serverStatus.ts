@@ -25,6 +25,9 @@ export interface OnlinePlayer {
   character: string | null;
   level: number | null;
   zoneId: number | null;
+  /** Nom de région lisible résolu par le master depuis les manifestes de zone
+   *  (null si la zone n'a pas de display_name → le portail retombe sur « Zone N »). */
+  region: string | null;
   inWorld: boolean;
 }
 
@@ -73,6 +76,7 @@ function toPlayerMap(value: unknown): Map<number, OnlinePlayer> {
       character: toStringOrNull(row.character),
       level: toNumberOrNull(row.level),
       zoneId: toNumberOrNull(row.zoneId),
+      region: toStringOrNull(row.region),
       inWorld: row.inWorld === true,
     });
   }

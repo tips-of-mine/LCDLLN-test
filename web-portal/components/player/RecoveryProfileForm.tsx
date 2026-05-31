@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SECRET_QUESTIONS, availableQuestions } from "@/lib/recovery/secretQuestions";
 
 type RecoveryProfile = {
   accountId: number;
@@ -117,7 +118,7 @@ export function RecoveryProfileForm({ accountId }: { accountId: number }) {
         <div className="form-grid" key={`secret-${index}`}>
           <label className="field">
             <span>{`Question secrete ${index + 1}`}</span>
-            <input
+            <select
               value={question.question}
               onChange={(event) =>
                 setForm((current) => {
@@ -126,7 +127,18 @@ export function RecoveryProfileForm({ accountId }: { accountId: number }) {
                   return { ...current, secretQuestions: next };
                 })
               }
-            />
+            >
+              <option value="">— Choisir une question —</option>
+              {availableQuestions(
+                SECRET_QUESTIONS,
+                form.secretQuestions.map((q) => q.question),
+                index,
+              ).map((q) => (
+                <option key={q} value={q}>
+                  {q}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="field">
             <span>{`Reponse ${index + 1}`}</span>

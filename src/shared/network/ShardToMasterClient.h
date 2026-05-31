@@ -2,6 +2,7 @@
 
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/network/ServerMeta.h"
+#include "src/shared/network/ShardPayloads.h"
 
 #include <chrono>
 #include <cstdint>
@@ -9,6 +10,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace engine::network
 {
@@ -51,6 +53,13 @@ namespace engine::network
 
 		/// Heartbeat interval in seconds. Default 10. Call before Start() to take effect.
 		void SetHeartbeatIntervalSec(int sec) { m_heartbeat_interval_sec = (sec > 0) ? sec : 10; }
+
+		/// Présence enrichie (v9) : fournisseur optionnel appelé à chaque heartbeat pour
+		/// joindre la liste des joueurs en jeu `{accountId, characterId, level, zoneId}`.
+		/// Doit renvoyer un snapshot cohérent (typiquement construit sur le thread monde).
+		/// `nullptr` (défaut) = heartbeat legacy sans tableau joueurs.
+		using PlayerPresenceProvider = std::function<std::vector<ShardPlayerPresence>()>;
+		void SetPlayerPresenceProvider(PlayerPresenceProvider provider) { m_presence_provider = std::move(provider); }
 
 		/// TA.3 — Callback invoqué quand le master pousse un `kOpcodeMasterToShardAdmitCharacter`
 		/// (suite à un EnterWorld réussi côté master). Le destinataire typique alimente
@@ -106,5 +115,7 @@ namespace engine::network
 		int m_heartbeat_interval_sec = 10;
 		/// TA.3 — callback admission (master push). Voir SetAdmitCharacterCallback.
 		AdmitCharacterCallback m_admit_callback;
+		/// Présence enrichie (v9) — fournisseur optionnel de la liste des joueurs. Voir SetPlayerPresenceProvider.
+		PlayerPresenceProvider m_presence_provider;
 	};
 }

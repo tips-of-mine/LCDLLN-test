@@ -190,6 +190,11 @@ int main(int argc, char** argv)
 	// Cohabite avec la stack TCP ticket + heartbeat + runtimes (ports/protocoles distincts).
 	engine::server::ServerApp gameplayApp(config);
 	gameplayApp.SetAdmittedCharacterRegistry(&admittedRegistry);
+	// Présence enrichie (web-portal) : le heartbeat shard→master joint la liste des
+	// joueurs en jeu {accountId, characterId, level, zoneId}. Le snapshot est publié à
+	// ~1 Hz par TickOnce (thread gameplay) et lu ici de façon thread-safe. La lambda
+	// capture gameplayApp par référence : elle vit jusqu'à la fin de main(), comme toMaster.
+	toMaster.SetPlayerPresenceProvider([&gameplayApp]() { return gameplayApp.GetPlayerPresenceSnapshot(); });
 	// TA.4 : pont position — pool MySQL (meme base que le master, cles db.* du config).
 	// Injecte dans ServerApp pour lire characters.spawn_x/y/z au HandleHello. DB non
 	// configuree => Init false => spawn depuis le fichier (pont inactif, non bloquant).

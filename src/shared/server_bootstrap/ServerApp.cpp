@@ -982,7 +982,7 @@ namespace engine::server
 	}
 
 	bool ServerApp::LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg,
-		std::string& outName, std::string& outGender)
+		std::string& outName, std::string& outGender, uint32_t& outLevel)
 	{
 #if defined(SHARD_POSITION_DB)
 		if (m_characterDbPool == nullptr || characterId == 0u)
@@ -998,9 +998,10 @@ namespace engine::server
 		}
 		// TD.5 — on fetch aussi `name` pour le SnapshotEntity (plaque de nom).
 		// TD.6 — et `gender` (migration 0067) pour le rendu de l'avatar distant.
+		// Présence enrichie — `level` (migration 0004) pour la présence web-portal.
 		// N1-I : prepared statement (bind characterId). Floats lus via GetString + strtof.
 		auto* stmt = cache->Acquire(mysql,
-			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender FROM characters "
+			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender, level FROM characters "
 			"WHERE id = ? AND deleted_at IS NULL");
 		if (!stmt || !stmt->Bind(0, characterId) || !stmt->Execute() || !stmt->FetchRow())
 		{
@@ -1012,9 +1013,12 @@ namespace engine::server
 		yawDeg = std::strtof(stmt->GetString(3).c_str(), nullptr);
 		outName = stmt->GetString(4);
 		outGender = stmt->GetString(5);
+		outLevel = static_cast<uint32_t>(std::strtoul(stmt->GetString(6).c_str(), nullptr, 10));
+		if (outLevel == 0u)
+			outLevel = 1u; // garde-fou : niveau minimal 1.
 		return true;
 #else
-		(void)characterId; (void)x; (void)y; (void)z; (void)yawDeg; (void)outName; (void)outGender;
+		(void)characterId; (void)x; (void)y; (void)z; (void)yawDeg; (void)outName; (void)outGender; (void)outLevel;
 		return false;
 #endif
 	}
@@ -1173,7 +1177,8 @@ namespace engine::server
 			float dbX = 0.0f, dbY = 0.0f, dbZ = 0.0f, dbYawDeg = 0.0f;
 			std::string dbName;
 			std::string dbGender;
-			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg, dbName, dbGender))
+			uint32_t dbLevel = 1u;
+			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg, dbName, dbGender, dbLevel))
 			{
 				acceptedClient.positionMetersX = dbX;
 				acceptedClient.positionMetersY = dbY;
@@ -1183,6 +1188,8 @@ namespace engine::server
 				acceptedClient.characterName = std::move(dbName);
 				// TD.6 — genre du personnage destiné au rendu des avatars distants.
 				acceptedClient.gender = std::move(dbGender);
+				// Présence enrichie — niveau (table characters) reporté au master via heartbeat.
+				acceptedClient.level = dbLevel;
 				LOG_INFO(Net,
 					"[ServerApp] Spawn position chargee depuis la DB (character_key={}, name=\"{}\", gender=\"{}\", pos=({:.2f}, {:.2f}, {:.2f}))",
 					acceptedClient.persistenceCharacterKey, acceptedClient.characterName, acceptedClient.gender, dbX, dbY, dbZ);
@@ -1456,7 +1463,43 @@ namespace engine::server
 				m_clients.size(),
 				m_transport.ReceivedPacketCount(),
 				m_transport.SentPacketCount());
+
+			// Présence enrichie (web-portal) : republie le snapshot des joueurs en jeu à
+			// ~1 Hz (suffisant pour un affichage admin, et évite de reconstruire à chaque
+			// tick). Construit ici sur le thread gameplay (accès direct à m_clients), puis
+			// publié sous mutex pour lecture par GetPlayerPresenceSnapshot (autre thread).
+			std::vector<engine::network::ShardPlayerPresence> snapshot;
+			snapshot.reserve(m_clients.size());
+			const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now().time_since_epoch()).count());
+			for (const auto& client : m_clients)
+			{
+				const uint64_t characterId = client.persistenceCharacterKey;
+				if (characterId == 0u)
+					continue;
+				uint64_t accountId = 0u;
+				if (m_admittedRegistry != nullptr)
+					accountId = m_admittedRegistry->AdmittedAccountId(characterId, nowMs);
+				if (accountId == 0u)
+					continue; // accountId non résolu (registre absent / expiré) : omis.
+				engine::network::ShardPlayerPresence p;
+				p.accountId = accountId;
+				p.characterId = characterId;
+				p.level = client.level;
+				p.zoneId = client.zoneId;
+				snapshot.push_back(p);
+			}
+			{
+				std::lock_guard<std::mutex> lock(m_presenceMutex);
+				m_presenceSnapshot = std::move(snapshot);
+			}
 		}
+	}
+
+	std::vector<engine::network::ShardPlayerPresence> ServerApp::GetPlayerPresenceSnapshot() const
+	{
+		std::lock_guard<std::mutex> lock(m_presenceMutex);
+		return m_presenceSnapshot;
 	}
 
 	void ServerApp::Simulate()

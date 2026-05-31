@@ -148,7 +148,11 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 		LOG_DEBUG(Net, "[STMC] SendHeartbeat shard_id={} load={}", m_shard_id, m_current_load);
 		uint64_t timestamp = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(
 			std::chrono::steady_clock::now().time_since_epoch()).count());
-		auto payload = BuildShardHeartbeatPayload(m_shard_id, m_current_load, timestamp);
+		// Présence enrichie (v9) : joint la liste des joueurs si un fournisseur est câblé.
+		std::vector<ShardPlayerPresence> players;
+		if (m_presence_provider)
+			players = m_presence_provider();
+		auto payload = BuildShardHeartbeatPayload(m_shard_id, m_current_load, timestamp, players);
 		if (payload.empty())
 			return;
 		PacketBuilder builder;

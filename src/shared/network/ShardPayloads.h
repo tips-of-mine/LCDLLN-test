@@ -57,17 +57,32 @@ namespace engine::network
 	/// Builds SHARD_REGISTER_ERROR packet (Master→Shard).
 	std::vector<uint8_t> BuildShardRegisterErrorPacket(ShardRegisterErrorCode code, uint32_t requestId);
 
+	/// Présence d'un joueur en jeu remontée par le shard dans le heartbeat enrichi
+	/// (protocole v9). Alimente la présence enrichie exposée au web-portal.
+	struct ShardPlayerPresence
+	{
+		uint64_t accountId = 0;
+		uint64_t characterId = 0;
+		uint32_t level = 0;
+		uint32_t zoneId = 0;
+	};
+
 	/// Parsed SHARD_HEARTBEAT payload: shard_id, current_load, timestamp (M22.3).
+	/// v9 : `players` est rempli si le payload contient le tableau optionnel en queue
+	/// (vide pour un heartbeat legacy sans joueurs).
 	struct ShardHeartbeatPayload
 	{
 		uint32_t shard_id = 0;
 		uint32_t current_load = 0;
 		uint64_t timestamp = 0;
+		std::vector<ShardPlayerPresence> players;
 	};
 	std::optional<ShardHeartbeatPayload> ParseShardHeartbeatPayload(const uint8_t* payload, size_t payloadSize);
 
 	/// Builds SHARD_HEARTBEAT payload (Shard→Master). timestamp: e.g. seconds since epoch or monotonic.
-	std::vector<uint8_t> BuildShardHeartbeatPayload(uint32_t shard_id, uint32_t current_load, uint64_t timestamp = 0);
+	/// \param players liste optionnelle des joueurs en jeu (présence enrichie v9). Vide = heartbeat legacy.
+	std::vector<uint8_t> BuildShardHeartbeatPayload(uint32_t shard_id, uint32_t current_load, uint64_t timestamp = 0,
+		const std::vector<ShardPlayerPresence>& players = {});
 
 	/// Parsed MASTER_TO_SHARD_ADMIT_CHARACTER payload : (account_id, character_id, character_name, gender).
 	/// Émis par le master (CharacterEnterWorldHandler) à destination du shard via la

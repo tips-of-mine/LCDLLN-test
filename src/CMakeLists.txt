@@ -197,6 +197,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/security/CaptchaVerifier.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/security/BotDetector.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/shards/ShardRegistry.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/shards/ShardPlayerPresenceCache.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/shards/ServerRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardRegisterHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketCrypto.cpp
@@ -843,6 +844,20 @@ elseif(UNIX)
   target_link_libraries(shard_ticket_tests PRIVATE engine_core OpenSSL::SSL)
   target_compile_options(shard_ticket_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME shard_ticket_tests COMMAND shard_ticket_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # Présence enrichie (v9) : round-trip du payload SHARD_HEARTBEAT avec tableau joueurs.
+  add_executable(shard_payloads_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ShardPayloadsTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ShardPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ByteReader.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ByteWriter.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/PacketBuilder.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/PacketLog.cpp
+  )
+  target_include_directories(shard_payloads_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(shard_payloads_tests PRIVATE engine_core)
+  target_compile_options(shard_payloads_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME shard_payloads_tests COMMAND shard_payloads_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M22.5: Server list and shard selection policy tests
   add_executable(server_list_policy_tests

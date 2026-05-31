@@ -68,6 +68,11 @@ namespace engine::server
 		/// n'apparaît qu'une fois même s'il avait (théoriquement) plusieurs connId.
 		std::vector<uint64_t> ListInWorldAccountIds() const;
 
+		/// Snapshot accountId → nom de personnage en jeu, pour la présence enrichie
+		/// (/online-accounts). Si un compte a (théoriquement) plusieurs connId, l'un
+		/// d'eux gagne arbitrairement. Comptes sans accountId (0) omis.
+		std::unordered_map<uint64_t, std::string> SnapshotAccountIdToCharacterName() const;
+
 		/// Ventilation de \ref Count() par rôle de compte. Utilisé par l'API /status
 		/// pour les sous-compteurs players_by_role.
 		RoleCounts CountByRole() const;

@@ -111,6 +111,21 @@ namespace engine::server
 		return ids;
 	}
 
+	std::unordered_map<uint64_t, std::string> SessionCharacterMap::SnapshotAccountIdToCharacterName() const
+	{
+		std::lock_guard lock(m_mutex);
+		std::unordered_map<uint64_t, std::string> out;
+		out.reserve(m_byConn.size());
+		for (const auto& [connId, info] : m_byConn)
+		{
+			(void)connId;
+			if (info.accountId == 0)
+				continue;
+			out[info.accountId] = info.characterName;
+		}
+		return out;
+	}
+
 	SessionCharacterMap::RoleCounts SessionCharacterMap::CountByRole() const
 	{
 		std::lock_guard lock(m_mutex);

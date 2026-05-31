@@ -127,9 +127,11 @@ void main()
     // (garde un peu de transparence/profondeur), avec un lisere de Fresnel clair
     // pour la brillance de surface. La nappe se lit ainsi toujours comme de l'eau.
     float fres = clamp(pow(1.0 - NdotV, 3.0), 0.0, 1.0);
-    vec3 deepWater    = vec3(0.02, 0.16, 0.30);   // bleu profond FONCE (vu d'aplomb)
-    vec3 shallowWater = vec3(0.05, 0.26, 0.42);   // bleu moyen (angle rasant) — assombri
-                                                  // et moins cyan (demande : bleu plus fonce).
+    // Couleur cible demandee : bleu ocean moyen (~#1E6FA0). Valeurs LINEAIRES
+    // (la sortie passe par tonemap+exposition). deep = vu d'aplomb, shallow =
+    // angle rasant (legerement plus clair).
+    vec3 deepWater    = vec3(0.02, 0.17, 0.37);
+    vec3 shallowWater = vec3(0.05, 0.26, 0.47);
     vec3 waterBody    = mix(deepWater, shallowWater, fres);
 
     // ── Opacite selon la profondeur (transparence du dessus) ─────────────────
@@ -142,10 +144,11 @@ void main()
     // (surfaceDist / bottomDist deja calcules pour l'occlusion ci-dessus.)
     float waterThickness = max(0.0, bottomDist - surfaceDist);          // metres approx
     float beer    = 1.0 - exp(-waterThickness * 0.28);                  // 0 (fin) .. 1 (epais)
-                                                                        // coef 0.28 (etait 0.15) :
-                                                                        // bleu plus vite (bassin peu profond)
-    float opacity = mix(0.22, 0.97, beer);                              // 22% mini (etait 12% : bleu
-                                                                        // plus marque au bord) .. 97% maxi
+    // Opacite ELEVEE : le corps de l'eau doit LIRE la couleur cible (bleu ocean),
+    // pas se deteindre vers le fond sableux clair. min 0.80 -> meme en eau peu
+    // profonde l'eau est franchement bleue ; max 0.99 au centre/profond. (Le bord
+    // reste adouci via l'alpha 'edge' calcule plus haut, independamment.)
+    float opacity = mix(0.80, 0.99, beer);
 
     vec3 color = mix(refr, waterBody, opacity);                              // fond <-> eau selon profondeur
     color = mix(color, refl, clamp(f * pc.reflectionStrength, 0.0, 1.0));    // reflet si dispo

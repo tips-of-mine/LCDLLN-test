@@ -29,11 +29,14 @@ namespace engine::server
 	/// d'animation (emote/roulade/run/sprint/saut/…) pour que les autres joueurs voient
 	/// les bonnes animations au lieu d'un Idle/Walk dérivé de la vélocité.
 	/// Wire-breaking : client + shard doivent se déployer ensemble.
-	/// Présence enrichie — bump 8 → 9 : `SHARD_HEARTBEAT` (shard→master) gagne un
-	/// tableau optionnel de joueurs `{accountId, characterId, level, zoneId}` pour
-	/// alimenter la présence enrichie exposée au web-portal (login/perso/niveau/zone).
-	/// Wire-breaking interne : master + shard doivent se déployer ensemble.
-	inline constexpr uint16_t kProtocolVersion = 9;
+	/// Présence enrichie (heartbeat) — PAS de bump : `SHARD_HEARTBEAT` (shard→master)
+	/// gagne un tableau OPTIONNEL de joueurs `{accountId, characterId, level, zoneId}`
+	/// en QUEUE de payload. C'est rétro-compatible : un master legacy lit les 16 octets
+	/// fixes et ignore la queue ; un master neuf lit la queue si présente ; un heartbeat
+	/// legacy (sans queue) reste valide. Comme `kProtocolVersion` borne aussi le framing
+	/// client↔master, le laisser à 8 évite de casser les clients v8 déjà distribués
+	/// (le bump 8→9 initial, PR #770, était inutile et a été annulé ici).
+	inline constexpr uint16_t kProtocolVersion = 8;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t

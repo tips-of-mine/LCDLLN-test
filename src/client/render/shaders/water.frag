@@ -27,6 +27,18 @@ layout(location = 0) out vec4 fragColor;
 
 vec3 unpackNormal(vec3 n) { return normalize(n * 2.0 - 1.0); }
 
+// Linearise une profondeur [0,1] (Vulkan) en distance approx. le long de l'axe
+// camera. Sert a estimer l'EPAISSEUR de colonne d'eau (fond - surface) pour
+// l'opacite selon la profondeur. near/far de la projection du jeu
+// (Mat4::PerspectiveVulkan) : near=0.1, far=1000 — deduits du viewProj observe
+// (row2 = (.,.,-1.0001,-0.1)). d=0 -> near, d=1 -> far (monotone croissant).
+float linearizeDepth(float d)
+{
+    const float NEAR_PLANE = 0.1;
+    const float FAR_PLANE  = 1000.0;
+    return (NEAR_PLANE * FAR_PLANE) / (FAR_PLANE - d * (FAR_PLANE - NEAR_PLANE));
+}
+
 // SSR mince : raymarch en screen-space, max 32 steps, fallback skybox.
 vec3 ssrTrace(vec3 worldPos, vec3 reflectDir, vec3 fallback)
 {
@@ -117,7 +129,21 @@ void main()
                                                   // pour NE PAS saturer en blanc.
     vec3 waterBody    = mix(deepWater, shallowWater, fres);
 
-    vec3 color = mix(refr, waterBody, 0.85);                                 // 85% eau, 15% fond
+    // ── Opacite selon la profondeur (transparence du dessus) ─────────────────
+    // Epaisseur de la colonne d'eau traversee par le rayon = distance lineaire
+    // entre le FOND (u_sceneDepth, deja echantillonne plus haut) et la SURFACE
+    // (gl_FragCoord.z). Loi de Beer-Lambert : fin -> transparent (on voit le
+    // fond sableux via la refraction), epais -> bleu opaque (le fond disparait).
+    // L'epaisseur augmente avec la profondeur ET avec l'angle rasant : un joueur
+    // exterieur voit donc le fond pres du bord, mais plus du tout vers le centre.
+    float surfaceDist = linearizeDepth(gl_FragCoord.z);
+    float bottomDist  = linearizeDepth(occluderDepth);
+    float waterThickness = max(0.0, bottomDist - surfaceDist);          // metres approx
+    float beer    = 1.0 - exp(-waterThickness * 0.15);                  // 0 (fin) .. 1 (epais)
+    float opacity = mix(0.12, 0.97, beer);                              // 12% mini (eau toujours
+                                                                        // teintee) .. 97% maxi
+
+    vec3 color = mix(refr, waterBody, opacity);                              // fond <-> eau selon profondeur
     color = mix(color, refl, clamp(f * pc.reflectionStrength, 0.0, 1.0));    // reflet si dispo
     color += vec3(0.06, 0.09, 0.12) * fres;                                  // sheen discret (etait
                                                                              // 0.20,0.26,0.32 -> blanc)

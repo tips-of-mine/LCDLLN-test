@@ -11,7 +11,6 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 struct MYSQL;
@@ -175,25 +174,11 @@ namespace engine::server
 		               MYSQL*             mysql);
 
 		// ------------------------------------------------------------------
-		// Online presence (for guild chat routing)
-		// ------------------------------------------------------------------
-
-		/// Mark \p playerId as online and associate them with \p guildId (call on login).
-		void SetOnline(uint64_t playerId, uint64_t guildId);
-
-		/// Mark \p playerId as offline (call on disconnect/logout).
-		void SetOffline(uint64_t playerId);
-
-		// ------------------------------------------------------------------
 		// Queries
 		// ------------------------------------------------------------------
 
 		/// Return the guild id for \p playerId; 0 when not in any guild.
 		uint64_t GetGuildIdForPlayer(uint64_t playerId) const;
-
-		/// Return the account ids of all currently-online members of \p guildId.
-		/// Used to route guild chat messages and notifications.
-		std::vector<uint64_t> GetOnlineMemberIds(uint64_t guildId) const;
 
 		/// Return a const pointer to the guild record for \p guildId; nullptr when not found.
 		const GuildRecord* GetGuild(uint64_t guildId) const;
@@ -216,8 +201,6 @@ namespace engine::server
 		std::unordered_map<uint64_t, GuildRecord> m_guilds;
 		/// Reverse lookup: playerId → guildId (absent = not in a guild).
 		std::unordered_map<uint64_t, uint64_t>    m_playerGuildMap;
-		/// Set of currently-online player ids (for guild chat / notification routing).
-		std::unordered_set<uint64_t>              m_onlinePlayers;
 
 		/// Validate guild name: length and allowed characters.
 		bool ValidateGuildName(std::string_view name) const;

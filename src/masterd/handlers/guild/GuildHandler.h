@@ -62,8 +62,12 @@ namespace engine::server
 	/// Membre in-memory d'une guilde V1.
 	struct InMemoryGuildMember
 	{
+		uint64_t    accountId = 0;   ///< Compte du membre (0 = seed hardcodé sans compte réel).
 		std::string accountName;
 		uint8_t     rankId = 0;
+		/// Statut affiché. Pour les membres chargés depuis la DB (accountId != 0), il est
+		/// recalculé en direct à l'envoi du roster via l'autorité de présence master
+		/// (SessionManager). Conservé tel quel uniquement pour les membres seed (accountId 0).
 		bool        online = false;
 	};
 

@@ -21,3 +21,6 @@ game/data/editor/user_prefs.json.tmp
 # Asset pipeline binaries (downloaded by download_fbx2gltf.ps1)
 tools/asset_pipeline/bin/*
 !tools/asset_pipeline/bin/.gitignore
+
+# Sauvegarde de reference du heightmap (raise_hill.py) — non versionnee
+*.r16h.bak

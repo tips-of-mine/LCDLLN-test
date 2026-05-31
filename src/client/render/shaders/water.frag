@@ -70,11 +70,15 @@ void main()
     //    "l'eau coupe le joueur alors qu'il n'est pas dans l'eau").
     //  - le FOND du bassin est PLUS LOIN que la surface -> non rejete -> l'eau
     //    reste bien visible a l'interieur du bol creuse.
-    // Le bias 1e-4 evite le z-fighting de surface. La precision se degrade au-dela
-    // de ~50 m (projection near 0.05 / far 1000) : au pire un leger scintillement
-    // au bord du bassin lointain, sans reintroduire l'occlusion erronee du joueur.
+    // Bias VOLONTAIREMENT large (2.5e-3) : a distance la profondeur sature
+    // (projection near 0.05 / far 1000) et le bruit de quantification du depth
+    // buffer faisait clignoter le test -> l'eau disparaissait par plaques et le
+    // bord du bassin "vibrait" (bug observe). On ne jette donc le fragment QUE si
+    // l'occludeur est NETTEMENT devant (marge 2.5e-3) : le joueur (tres proche)
+    // occulte toujours l'eau, mais le fond/bord du bassin (a profondeur quasi
+    // egale) ne declenche plus de faux rejet -> nappe stable.
     float occluderDepth = texture(u_sceneDepth, screenUv).r;
-    if (occluderDepth < gl_FragCoord.z - 1e-4)
+    if (occluderDepth < gl_FragCoord.z - 2.5e-3)
         discard;
 
     // Flow effective : prend la direction per-vertex (rivière) ou le push constant (lac).
@@ -108,12 +112,14 @@ void main()
     // (garde un peu de transparence/profondeur), avec un lisere de Fresnel clair
     // pour la brillance de surface. La nappe se lit ainsi toujours comme de l'eau.
     float fres = clamp(pow(1.0 - NdotV, 3.0), 0.0, 1.0);
-    vec3 deepWater    = vec3(0.05, 0.35, 0.55);   // bleu vif profond (vu d'aplomb)
-    vec3 shallowWater = vec3(0.20, 0.58, 0.74);   // bleu clair (angle rasant)
+    vec3 deepWater    = vec3(0.05, 0.35, 0.55);   // bleu-cyan profond (vu d'aplomb)
+    vec3 shallowWater = vec3(0.12, 0.46, 0.62);   // bleu (angle rasant) — assombri
+                                                  // pour NE PAS saturer en blanc.
     vec3 waterBody    = mix(deepWater, shallowWater, fres);
 
     vec3 color = mix(refr, waterBody, 0.85);                                 // 85% eau, 15% fond
     color = mix(color, refl, clamp(f * pc.reflectionStrength, 0.0, 1.0));    // reflet si dispo
-    color += vec3(0.20, 0.26, 0.32) * fres;                                  // sheen de surface
+    color += vec3(0.06, 0.09, 0.12) * fres;                                  // sheen discret (etait
+                                                                             // 0.20,0.26,0.32 -> blanc)
     fragColor = vec4(color, 1.0);
 }

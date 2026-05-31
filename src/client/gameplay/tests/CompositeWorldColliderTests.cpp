@@ -68,6 +68,27 @@ int main()
 		check(!h, "sans_cylindre: pas de hit");
 	}
 
+	// 4bis) RÉGRESSION (téléport en hauteur) : un sweep VERTICAL traversant le
+	// cylindre par son axe (ex. sonde de récupération anti-encastrement qui sonde
+	// depuis 50 m au-dessus) NE DOIT PAS générer de hit. Sinon le CharacterController
+	// téléporte le perso au sommet de la sonde.
+	{
+		CompositeWorldCollider c(&terrain); c.AddCylinder(cyl);
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 5, 20, 0 }, Vec3{ 5, 1, 0 }, hit);
+		check(!h && !hit.hit, "sweep vertical dans cylindre: pas de hit (anti-teleport)");
+	}
+
+	// 4ter) Déjà en chevauchement, mouvement s'ÉLOIGNANT de l'axe : pas de hit
+	// (le perso doit pouvoir ressortir / glisser, pas rester collé).
+	{
+		CompositeWorldCollider c(&terrain); c.AddCylinder(cyl);
+		IWorldCollider::SweepHit hit;
+		// Départ au bord du cylindre (x=5.5 ~ R=0.8 de l'axe), on s'éloigne vers +x.
+		bool h = c.SweepCapsule(cap, Vec3{ 5.5f, 1, 0 }, Vec3{ 7.0f, 1, 0 }, hit);
+		check(!h, "chevauchement + eloignement: pas de hit (peut ressortir)");
+	}
+
 	// 5) QueryWater délégué au terrain.
 	{
 		CompositeWorldCollider c(&terrain);

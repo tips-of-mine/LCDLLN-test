@@ -86,8 +86,15 @@ void main()
     float occluderDepth  = texture(u_sceneDepth, screenUv).r;
     float surfaceDist    = linearizeDepth(gl_FragCoord.z);   // distance camera->surface eau
     float bottomDist     = linearizeDepth(occluderDepth);    // distance camera->fond opaque
-    if (bottomDist < surfaceDist - 0.15)
-        discard;
+    // Bord ADOUCI (anti-crawl TAA) : au lieu d'un discard BINAIRE (un bord franc
+    // d'1 px qui "rampe" sous le TAA quand la camera bouge -> sensation que l'eau
+    // bouge / "collision"), on fait varier une opacite de bord sur une bande
+    // metrique de ~0.20 m. edge=0 quand un opaque est nettement devant l'eau
+    // (occulte), edge=1 quand le fond est derriere (eau pleine). Le degrade donne
+    // au TAA de quoi anti-creneler proprement -> bord stable.
+    float edge = smoothstep(surfaceDist - 0.20, surfaceDist - 0.02, bottomDist);
+    if (edge <= 0.001)
+        discard;   // entierement occulte (joueur/terrain devant) : rien a dessiner
 
     // Flow effective : prend la direction per-vertex (rivière) ou le push constant (lac).
     vec2 flowEff = (length(vFlowDir) > 0.001) ? vFlowDir : pc.flowDirection;
@@ -142,5 +149,7 @@ void main()
     color = mix(color, refl, clamp(f * pc.reflectionStrength, 0.0, 1.0));    // reflet si dispo
     color += vec3(0.06, 0.09, 0.12) * fres;                                  // sheen discret (etait
                                                                              // 0.20,0.26,0.32 -> blanc)
-    fragColor = vec4(color, 1.0);
+    // alpha = edge : bord de l'eau adouci (fondu vers le fond deja present dans
+    // PostWater) -> plus de crawl TAA. Interieur : edge=1 -> opaque (inchange).
+    fragColor = vec4(color, edge);
 }

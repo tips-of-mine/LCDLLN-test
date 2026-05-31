@@ -1,7 +1,17 @@
 # Spec — Forêt riveraine, colline et collision props sur `demo_plains`
 
 Date : 2026-05-31
-Statut : design validé (brainstorming) — en attente de relecture utilisateur avant plan d'implémentation.
+Statut : **implémenté** (branche `feat/demo-plains-decor-collision`).
+
+> **Note d'implémentation — support couleur de sommet (COLOR_0).** Découvert en cours :
+> les props « nature » (arbres, herbe, fleurs…) sont colorés par couleur de sommet
+> (`COLOR_0`), sans texture, alors que les props *trim* (94 existants) sont texturés.
+> Le pipeline props (texturé-PBR) ignorait la couleur de sommet. Ajout réalisé (choix
+> utilisateur « fidèle ») : `StaticVertex` gagne `color[4]` (stride GPU 48 ; format `.mesh`
+> disque reste 32, étendu à l'upload) ; `GeometryPass` + `ShadowMapPass` passent à stride
+> 48 ; un flag matériau `VertexColorAlbedo` fait que `gbuffer_geometry.frag` prend l'albedo
+> dans `COLOR_0` pour les props sans texture (props texturés et avatar inchangés).
+> Conversion Blender = méthode retenue (les 94 existants venaient de Blender), pas FBX2glTF.
 
 ## 1. Objectif
 

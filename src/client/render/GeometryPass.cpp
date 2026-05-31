@@ -336,18 +336,22 @@ namespace engine::render
 		// -------------------------------------------------------------------------
 		// Vertex input: binding 0 = vertex (pos,norm,uv); binding 1 = instance mat4 (M09.3).
 		// -------------------------------------------------------------------------
-		VkVertexInputAttributeDescription attrs[7] = {};
-		attrs[0].location = 0; attrs[0].binding = 0; attrs[0].format = VK_FORMAT_R32G32B32_SFLOAT; attrs[0].offset = 0;
-		attrs[1].location = 1; attrs[1].binding = 0; attrs[1].format = VK_FORMAT_R32G32B32_SFLOAT; attrs[1].offset = 12;
-		attrs[2].location = 2; attrs[2].binding = 0; attrs[2].format = VK_FORMAT_R32G32_SFLOAT;    attrs[2].offset = 24;
-		attrs[3].location = 3; attrs[3].binding = 1; attrs[3].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[3].offset = 0;
-		attrs[4].location = 4; attrs[4].binding = 1; attrs[4].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[4].offset = 16;
-		attrs[5].location = 5; attrs[5].binding = 1; attrs[5].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[5].offset = 32;
-		attrs[6].location = 6; attrs[6].binding = 1; attrs[6].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[6].offset = 48;
+		// binding 0 = vertex StaticVertex 48 o (pos/normal/uv/color COLOR_0).
+		// La couleur de sommet est en location 3 ; les lignes de la matrice d'instance
+		// (binding 1) sont donc décalées en locations 4..7.
+		VkVertexInputAttributeDescription attrs[8] = {};
+		attrs[0].location = 0; attrs[0].binding = 0; attrs[0].format = VK_FORMAT_R32G32B32_SFLOAT;    attrs[0].offset = 0;
+		attrs[1].location = 1; attrs[1].binding = 0; attrs[1].format = VK_FORMAT_R32G32B32_SFLOAT;    attrs[1].offset = 12;
+		attrs[2].location = 2; attrs[2].binding = 0; attrs[2].format = VK_FORMAT_R32G32_SFLOAT;       attrs[2].offset = 24;
+		attrs[3].location = 3; attrs[3].binding = 0; attrs[3].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[3].offset = 32;
+		attrs[4].location = 4; attrs[4].binding = 1; attrs[4].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[4].offset = 0;
+		attrs[5].location = 5; attrs[5].binding = 1; attrs[5].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[5].offset = 16;
+		attrs[6].location = 6; attrs[6].binding = 1; attrs[6].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[6].offset = 32;
+		attrs[7].location = 7; attrs[7].binding = 1; attrs[7].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[7].offset = 48;
 
 		VkVertexInputBindingDescription bindings[2] = {};
 		bindings[0].binding   = 0;
-		bindings[0].stride    = 32;
+		bindings[0].stride    = 48;
 		bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 		bindings[1].binding   = 1;
 		bindings[1].stride    = 64;
@@ -357,7 +361,7 @@ namespace engine::render
 		vi.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vi.vertexBindingDescriptionCount   = 2;
 		vi.pVertexBindingDescriptions      = bindings;
-		vi.vertexAttributeDescriptionCount = 7;
+		vi.vertexAttributeDescriptionCount = 8;
 		vi.pVertexAttributeDescriptions    = attrs;
 
 		VkPipelineInputAssemblyStateCreateInfo ia = {};

@@ -49,25 +49,29 @@ std::optional<StaticMeshCpuData> StaticMeshLoader::LoadCpuOnlyForTests(const std
         for (cgltf_size pi = 0; pi < mesh->primitives_count; ++pi)
         {
             const cgltf_primitive* prim = &mesh->primitives[pi];
-            const cgltf_accessor *aPos = nullptr, *aNor = nullptr, *aUv = nullptr;
+            const cgltf_accessor *aPos = nullptr, *aNor = nullptr, *aUv = nullptr, *aCol = nullptr;
             for (cgltf_size ai = 0; ai < prim->attributes_count; ++ai)
             {
                 const cgltf_attribute& at = prim->attributes[ai];
                 if (at.type == cgltf_attribute_type_position) aPos = at.data;
                 else if (at.type == cgltf_attribute_type_normal) aNor = at.data;
                 else if (at.type == cgltf_attribute_type_texcoord && at.index == 0) aUv = at.data;
+                else if (at.type == cgltf_attribute_type_color && at.index == 0) aCol = at.data;
             }
             if (!aPos) continue;  // primitive sans position : ignorée
 
             const uint32_t baseVertex = static_cast<uint32_t>(out.vertices.size());
             const size_t nv = aPos->count;
             out.vertices.resize(baseVertex + nv);
+            // Nombre de composantes de COLOR_0 (vec3 ou vec4) ; l'alpha reste à 1 si vec3.
+            const int colComps = aCol ? static_cast<int>(cgltf_num_components(aCol->type)) : 0;
             for (size_t v = 0; v < nv; ++v)
             {
                 StaticVertex& sv = out.vertices[baseVertex + v];
                 cgltf_accessor_read_float(aPos, v, sv.pos, 3);
                 if (aNor) cgltf_accessor_read_float(aNor, v, sv.normal, 3);
                 if (aUv)  cgltf_accessor_read_float(aUv, v, sv.uv, 2);
+                if (aCol) cgltf_accessor_read_float(aCol, v, sv.color, colComps > 4 ? 4 : colComps);
             }
 
             const uint32_t subFirstIndex = static_cast<uint32_t>(out.indices.size());
@@ -112,6 +116,20 @@ std::optional<StaticMeshCpuData> StaticMeshLoader::LoadCpuOnlyForTests(const std
     {
         LOG_WARN(Render, "[StaticMeshLoader] No primitive with POSITION in '{}'", path);
         return std::nullopt;
+    }
+
+    // Bornes verticales locales (pour le topY des cylindres de collision des props).
+    if (!out.vertices.empty())
+    {
+        float mn = out.vertices[0].pos[1];
+        float mx = out.vertices[0].pos[1];
+        for (const auto& v : out.vertices)
+        {
+            if (v.pos[1] < mn) mn = v.pos[1];
+            if (v.pos[1] > mx) mx = v.pos[1];
+        }
+        out.localMinY = mn;
+        out.localMaxY = mx;
     }
     return out;
 }

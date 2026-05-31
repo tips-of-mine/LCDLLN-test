@@ -80,6 +80,7 @@
 // Sous-projet B.1 (Task 9) : physics + collision pour l'avatar joueur.
 #include "src/client/gameplay/CharacterController.h"
 #include "src/client/gameplay/TerrainCollider.h"
+#include "src/client/gameplay/CompositeWorldCollider.h"
 #if defined(_WIN32)
 #include "src/client/render/terrain/TerrainEditingTools.h"
 #include "src/world_editor/ui/TexturePreviewCache.h"
@@ -741,11 +742,45 @@ namespace engine
 		/// interactibles ayant un meshPath. Cf. LoadInteractableProps / RecordPropsGeometry.
 		std::vector<PropRenderable> m_props;
 
+		/// Élément de décor solide non interactif (arbres, props nature) chargé depuis
+		/// world.scenery. Rendu comme un prop ; ne participe pas à l'interaction (touche E).
+		struct SceneryInstance
+		{
+			std::string meshPath;
+			float x = 0.0f, z = 0.0f;
+			float yawDeg = 0.0f;
+			float scale = 1.0f;
+			float collisionRadius = 0.0f; ///< 0 = empreinte XZ auto du mesh.
+		};
+		std::vector<SceneryInstance> m_scenery;
+
+		/// Cache matériau par nom (Furniture/Metal/Cloth/Bark...) -> {index, index highlight},
+		/// partagé entre props interactifs et décor pour dédupliquer les matériaux. Vidé au
+		/// début de LoadInteractableProps.
+		std::unordered_map<std::string, std::pair<uint32_t, uint32_t>> m_trimMatCache;
+
+		/// Collisionneur composite (terrain + cylindres des props/décor/PNJ). Construit au
+		/// boot par LoadInteractableProps + LoadScenery, consommé par CharacterController.
+		engine::gameplay::CompositeWorldCollider m_worldCollider;
+
 		/// Charge les meshes glTF statiques des interactibles (groupés par matériau,
-		/// matériaux trim chargés dans le cache bindless) et peuple m_props. À appeler
-		/// au boot, après l'init du pipeline (cache matériaux valide) et le parse des
-		/// interactibles. Main thread.
+		/// matériaux trim chargés dans le cache bindless) et peuple m_props. (Re)construit
+		/// aussi m_worldCollider (terrain + cylindres). À appeler au boot, après l'init du
+		/// pipeline (cache matériaux valide) et le parse des interactibles. Main thread.
 		void LoadInteractableProps();
+
+		/// Charge le décor solide depuis world.scenery (arbres, props nature) : mesh baké
+		/// comme un prop + cylindre de collision enregistré dans m_worldCollider. À appeler
+		/// au boot juste après LoadInteractableProps (qui réinitialise le collisionneur).
+		void LoadScenery();
+
+		/// Helper partagé : charge un mesh statique, cuit sa transformation monde dans les
+		/// sommets, l'ancre au sol, crée ses matériaux (texture trim OU couleur de sommet si
+		/// pas de texture), l'ajoute à m_props et, si \p solid, enregistre un cylindre de
+		/// collision. Voir l'implémentation pour le détail des paramètres.
+		void BuildPropFromMesh(const std::string& meshPath, float wx, float wz,
+			float yawDeg, float rotXDeg, float scale, int interactableIndex,
+			bool solid, float collisionRadius);
 
 		/// Dessine les props (m_props) dans la passe Geometry, après l'avatar : un
 		/// GeometryPass.Record par partie (matériau) avec loadOp=LOAD (superposition au

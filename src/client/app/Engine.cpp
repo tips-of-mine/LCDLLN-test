@@ -4861,6 +4861,9 @@ namespace engine
 											m_interactableInRange = -1;
 											// Chantier B : charge les meshes statiques des props (coffre + interactibles).
 											LoadInteractableProps();
+											// Décor solide (arbres, props nature) depuis world.scenery. Doit suivre
+											// LoadInteractableProps (qui réinitialise le collisionneur composite).
+											LoadScenery();
 
 											engine::gameplay::CharacterController::Config ccCfg{};
 											ccCfg.walkSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.walk_speed",      5.0));
@@ -7878,7 +7881,8 @@ namespace engine
 				// l'input du frame courant mais sa position cible utiliserait la
 				// position de la frame precedente -> 1-frame lag visible.
 				const auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout, sprintKey, crouchKey);
-				m_characterController.Update(static_cast<float>(dt), moveInput, m_terrainCollider);
+				// Collisionneur composite : terrain (sol + eau) + cylindres des props/décor.
+				m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
 				const engine::math::Vec3 ccPos = m_characterController.GetPosition();
 				m_orbitalCameraController.SetTargetPosition(ccPos);
 
@@ -9811,152 +9815,225 @@ namespace engine
 	void Engine::LoadInteractableProps()
 	{
 		m_props.clear();
+		m_trimMatCache.clear();
+		// Le collisionneur composite est (re)construit ici : terrain + cylindres des
+		// props interactifs (coffre, villageois) puis du décor (LoadScenery, appelé après).
+		m_worldCollider.SetTerrain(&m_terrainCollider);
+		m_worldCollider.ClearCylinders();
 		if (!m_pipeline) return;
-		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
-		if (!materialCache.IsValid()) return;
-		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
-		constexpr float kDeg2Rad = 3.14159265f / 180.f;
-		// Cache materiau trim par nom (Furniture/Metal/Cloth...) -> {index normal, index highlight}.
-		std::unordered_map<std::string, std::pair<uint32_t, uint32_t>> trimMatCache;
 
 		for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
 		{
 			const InteractableEntity& e = m_interactables[ii];
 			if (e.meshPath.empty()) continue;
-			const std::string full = contentRoot + "/" + e.meshPath;
-			auto cpu = engine::render::staticmesh::StaticMeshLoader::LoadCpuOnlyForTests(full);
-			if (!cpu || cpu->vertices.empty() || cpu->submeshes.empty())
-			{
-				LOG_WARN(Render, "[Props] mesh load FAIL '{}'", full);
-				continue;
-			}
-			// Dossier du mesh : les URI de textures sont relatives au .gltf.
-			std::string meshDir;
-			{
-				const auto slash = e.meshPath.find_last_of('/');
-				if (slash != std::string::npos) meshDir = e.meshPath.substr(0, slash + 1);
-			}
-			// Groupe les indices par nom de materiau + un sous-maillage representatif (URIs).
-			std::unordered_map<std::string, std::vector<uint32_t>> idxByMat;
-			std::unordered_map<std::string, const engine::render::staticmesh::StaticSubMesh*> repByMat;
-			for (const auto& sub : cpu->submeshes)
-			{
-				std::vector<uint32_t>& v = idxByMat[sub.materialName];
-				v.insert(v.end(), cpu->indices.begin() + sub.firstIndex,
-				         cpu->indices.begin() + sub.firstIndex + sub.indexCount);
-				if (repByMat.find(sub.materialName) == repByMat.end()) repByMat[sub.materialName] = &sub;
-			}
+			// Interactibles solides (coffre, PNJ...) : collision auto (empreinte XZ du mesh).
+			BuildPropFromMesh(e.meshPath, e.position.x, e.position.z, e.meshYawDeg,
+			                  e.meshRotXDeg, e.meshScale, static_cast<int>(ii),
+			                  /*solid*/ true, /*collisionRadius*/ 0.0f);
+		}
+		LOG_INFO(Render, "[Props] {} prop(s) interactif(s) rendus", m_props.size());
+	}
 
-			PropRenderable prop;
-			const float groundY = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z);
-			engine::math::Mat4 scaleM = engine::math::Mat4::Identity();
-			scaleM.m[0] = e.meshScale; scaleM.m[5] = e.meshScale; scaleM.m[10] = e.meshScale;
-			// Matrice modèle monde du prop (translation au sol + yaw + rotX + échelle).
-			const engine::math::Mat4 bakeM =
-				engine::math::Mat4::Translate(engine::math::Vec3{ e.position.x, groundY, e.position.z }) *
-				engine::math::Mat4::RotateY(e.meshYawDeg * kDeg2Rad) *
-				engine::math::Mat4::RotateX(e.meshRotXDeg * kDeg2Rad) *
-				scaleM;
-			// CONTOURNEMENT bug moteur : GeometryPass::Record applique la matrice d'instance
-			// via un buffer GPU PARTAGE (m_identityInstanceBuffer) reecrit a chaque draw au
-			// moment du RECORD. Avec plusieurs props dans le meme command buffer, seule la
-			// DERNIERE matrice survit a l'execution -> tous les props se dessinent au meme
-			// endroit (empiles). On contourne en CUISANT la transformation monde directement
-			// dans les sommets (chaque prop a deja son propre mesh CPU), puis on laisse la
-			// matrice d'instance a l'identite. (Les labels, eux, utilisent e.position : ils
-			// etaient deja bien places, d'ou l'illusion que "ca marchait" a 1-2 props.)
+	void Engine::LoadScenery()
+	{
+		m_scenery.clear();
+		if (!m_pipeline) return;
+		const int n = static_cast<int>(m_cfg.GetInt("world.scenery.count", 0));
+		for (int i = 0; i < n; ++i)
+		{
+			const std::string base = "world.scenery." + std::to_string(i) + ".";
+			SceneryInstance s;
+			s.meshPath = m_cfg.GetString(base + "mesh", "");
+			if (s.meshPath.empty()) continue;
+			s.x = static_cast<float>(m_cfg.GetDouble(base + "x", 0.0));
+			s.z = static_cast<float>(m_cfg.GetDouble(base + "z", 0.0));
+			s.yawDeg = static_cast<float>(m_cfg.GetDouble(base + "yaw_deg", 0.0));
+			s.scale = static_cast<float>(m_cfg.GetDouble(base + "scale", 1.0));
+			s.collisionRadius = static_cast<float>(m_cfg.GetDouble(base + "collision_radius", 0.0));
+			m_scenery.push_back(s);
+		}
+		for (const auto& s : m_scenery)
+			BuildPropFromMesh(s.meshPath, s.x, s.z, s.yawDeg, /*rotXDeg*/ 0.0f, s.scale,
+			                  /*interactableIndex*/ -1, /*solid*/ true, s.collisionRadius);
+		LOG_INFO(Render, "[Scenery] {} element(s) decor charge(s) ; {} cylindre(s) collision",
+		         static_cast<int>(m_scenery.size()), static_cast<int>(m_worldCollider.CylinderCount()));
+	}
+
+	// Charge un mesh statique (prop/décor), CUIT sa transformation monde dans les
+	// sommets (contournement du buffer d'instance partagé, cf. plus bas), l'ancre au
+	// sol, crée ses matériaux et l'ajoute à m_props. Si \p solid, enregistre un
+	// cylindre de collision dans m_worldCollider.
+	// \param wx,wz             Position monde (m) ; Y posé au sol via GroundHeightAt.
+	// \param yawDeg,rotXDeg    Rotations (degrés) ; \param scale échelle uniforme.
+	// \param interactableIndex Index dans m_interactables (-1 pour le décor non interactif).
+	// \param solid             Si true, ajoute un cylindre de collision.
+	// \param collisionRadius   Rayon du cylindre (m) ; 0 = empreinte XZ auto du mesh.
+	void Engine::BuildPropFromMesh(const std::string& meshPath, float wx, float wz,
+		float yawDeg, float rotXDeg, float scale, int interactableIndex,
+		bool solid, float collisionRadius)
+	{
+		if (!m_pipeline) return;
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		if (!materialCache.IsValid()) return;
+		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+		constexpr float kDeg2Rad = 3.14159265f / 180.f;
+
+		const std::string full = contentRoot + "/" + meshPath;
+		auto cpu = engine::render::staticmesh::StaticMeshLoader::LoadCpuOnlyForTests(full);
+		if (!cpu || cpu->vertices.empty() || cpu->submeshes.empty())
+		{
+			LOG_WARN(Render, "[Props] mesh load FAIL '{}'", full);
+			return;
+		}
+		// Dossier du mesh : les URI de textures sont relatives au .gltf.
+		std::string meshDir;
+		{
+			const auto slash = meshPath.find_last_of('/');
+			if (slash != std::string::npos) meshDir = meshPath.substr(0, slash + 1);
+		}
+		// Groupe les indices par nom de materiau + un sous-maillage representatif (URIs).
+		std::unordered_map<std::string, std::vector<uint32_t>> idxByMat;
+		std::unordered_map<std::string, const engine::render::staticmesh::StaticSubMesh*> repByMat;
+		for (const auto& sub : cpu->submeshes)
+		{
+			std::vector<uint32_t>& v = idxByMat[sub.materialName];
+			v.insert(v.end(), cpu->indices.begin() + sub.firstIndex,
+			         cpu->indices.begin() + sub.firstIndex + sub.indexCount);
+			if (repByMat.find(sub.materialName) == repByMat.end()) repByMat[sub.materialName] = &sub;
+		}
+
+		PropRenderable prop;
+		const float groundY = m_terrainCollider.GroundHeightAt(wx, wz);
+		engine::math::Mat4 scaleM = engine::math::Mat4::Identity();
+		scaleM.m[0] = scale; scaleM.m[5] = scale; scaleM.m[10] = scale;
+		// Matrice modèle monde du prop (translation au sol + yaw + rotX + échelle).
+		const engine::math::Mat4 bakeM =
+			engine::math::Mat4::Translate(engine::math::Vec3{ wx, groundY, wz }) *
+			engine::math::Mat4::RotateY(yawDeg * kDeg2Rad) *
+			engine::math::Mat4::RotateX(rotXDeg * kDeg2Rad) *
+			scaleM;
+		// CONTOURNEMENT bug moteur : GeometryPass::Record applique la matrice d'instance
+		// via un buffer GPU PARTAGE (m_identityInstanceBuffer) reecrit a chaque draw au
+		// moment du RECORD. Avec plusieurs props dans le meme command buffer, seule la
+		// DERNIERE matrice survit a l'execution -> tous les props se dessinent au meme
+		// endroit (empiles). On contourne en CUISANT la transformation monde directement
+		// dans les sommets (chaque prop a deja son propre mesh CPU), puis on laisse la
+		// matrice d'instance a l'identite.
+		float topY = groundY;     // haut du cylindre de collision (monde)
+		float radiusAuto = 0.0f;  // empreinte XZ max autour de (wx, wz)
+		{
+			const float* M = bakeM.m;  // column-major : M[col*4+row]
+			float minY = 1e30f, maxY = -1e30f;
+			for (auto& v : cpu->vertices)
 			{
-				const float* M = bakeM.m;  // column-major : M[col*4+row]
-				float minY = 1e30f;        // point le plus bas du prop en espace monde
+				const float px = v.pos[0], py = v.pos[1], pz = v.pos[2];
+				v.pos[0] = M[0]*px + M[4]*py + M[8]*pz  + M[12];
+				v.pos[1] = M[1]*px + M[5]*py + M[9]*pz  + M[13];
+				v.pos[2] = M[2]*px + M[6]*py + M[10]*pz + M[14];
+				if (v.pos[1] < minY) minY = v.pos[1];
+				if (v.pos[1] > maxY) maxY = v.pos[1];
+				const float nx = v.normal[0], ny = v.normal[1], nz = v.normal[2];
+				float rnx = M[0]*nx + M[4]*ny + M[8]*nz;
+				float rny = M[1]*nx + M[5]*ny + M[9]*nz;
+				float rnz = M[2]*nx + M[6]*ny + M[10]*nz;
+				const float nlen = std::sqrt(rnx*rnx + rny*rny + rnz*rnz);
+				if (nlen > 1e-6f) { rnx /= nlen; rny /= nlen; rnz /= nlen; }
+				v.normal[0] = rnx; v.normal[1] = rny; v.normal[2] = rnz;
+			}
+			// Ancrage au sol : selon le modele, le pivot n'est pas a la base
+			// -> le prop s'enterre (ou flotte). On decale tout le mesh pour que
+			// son point le PLUS BAS repose exactement sur le sol (groundY).
+			const float lift = groundY - minY;
+			if (std::fabs(lift) > 1e-4f)
 				for (auto& v : cpu->vertices)
-				{
-					const float px = v.pos[0], py = v.pos[1], pz = v.pos[2];
-					v.pos[0] = M[0]*px + M[4]*py + M[8]*pz  + M[12];
-					v.pos[1] = M[1]*px + M[5]*py + M[9]*pz  + M[13];
-					v.pos[2] = M[2]*px + M[6]*py + M[10]*pz + M[14];
-					if (v.pos[1] < minY) minY = v.pos[1];
-					const float nx = v.normal[0], ny = v.normal[1], nz = v.normal[2];
-					float rnx = M[0]*nx + M[4]*ny + M[8]*nz;
-					float rny = M[1]*nx + M[5]*ny + M[9]*nz;
-					float rnz = M[2]*nx + M[6]*ny + M[10]*nz;
-					const float nlen = std::sqrt(rnx*rnx + rny*rny + rnz*rnz);
-					if (nlen > 1e-6f) { rnx /= nlen; rny /= nlen; rnz /= nlen; }
-					v.normal[0] = rnx; v.normal[1] = rny; v.normal[2] = rnz;
-				}
-				// Ancrage au sol : selon le modele, le pivot n'est pas a la base
-				// -> le prop s'enterre (ou flotte). On decale tout le mesh pour que
-				// son point le PLUS BAS repose exactement sur le sol (groundY).
-				// Corrige le "clipping objets/terrain" pour tous les props.
-				const float lift = groundY - minY;
-				if (std::fabs(lift) > 1e-4f)
-					for (auto& v : cpu->vertices)
-						v.pos[1] += lift;
-			}
-			prop.modelMatrix = engine::math::Mat4::Identity();  // sommets deja en espace monde
-
-			for (const auto& kv : idxByMat)
+					v.pos[1] += lift;
+			topY = maxY + lift;
+			// Empreinte XZ auto (rayon max des sommets autour de l'axe (wx,wz)).
+			for (const auto& v : cpu->vertices)
 			{
-				const std::string& matName = kv.first;
-				const std::vector<uint32_t>& idxs = kv.second;
-				if (idxs.empty()) continue;
-				engine::render::MeshHandle mh = m_assetRegistry.CreateMeshFromData(
-					cpu->vertices.data(), static_cast<uint32_t>(cpu->vertices.size()),
-					idxs.data(), static_cast<uint32_t>(idxs.size()));
-				if (!mh.IsValid()) continue;
+				const float ddx = v.pos[0] - wx, ddz = v.pos[2] - wz;
+				const float r = std::sqrt(ddx*ddx + ddz*ddz);
+				if (r > radiusAuto) radiusAuto = r;
+			}
+		}
+		prop.modelMatrix = engine::math::Mat4::Identity();  // sommets deja en espace monde
 
-				uint32_t matIdx = materialCache.GetDefaultMaterialIndex();
-				uint32_t hlIdx  = matIdx;
-				auto cached = trimMatCache.find(matName);
-				if (cached != trimMatCache.end())
+		for (const auto& kv : idxByMat)
+		{
+			const std::string& matName = kv.first;
+			const std::vector<uint32_t>& idxs = kv.second;
+			if (idxs.empty()) continue;
+			engine::render::MeshHandle mh = m_assetRegistry.CreateMeshFromData(
+				cpu->vertices.data(), static_cast<uint32_t>(cpu->vertices.size()),
+				idxs.data(), static_cast<uint32_t>(idxs.size()));
+			if (!mh.IsValid()) continue;
+
+			uint32_t matIdx = materialCache.GetDefaultMaterialIndex();
+			uint32_t hlIdx  = matIdx;
+			auto cached = m_trimMatCache.find(matName);
+			if (cached != m_trimMatCache.end())
+			{
+				matIdx = cached->second.first;
+				hlIdx  = cached->second.second;
+			}
+			else
+			{
+				const engine::render::staticmesh::StaticSubMesh* rep = repByMat[matName];
+				if (rep && !rep->baseColorUri.empty())
 				{
-					matIdx = cached->second.first;
-					hlIdx  = cached->second.second;
+					const engine::render::TextureHandle bc =
+						m_assetRegistry.LoadTexture(meshDir + rep->baseColorUri, /*useSrgb*/ true);
+					if (bc.IsValid())
+					{
+						engine::render::Material mat{};
+						mat.baseColor = bc;
+						if (!rep->normalUri.empty())
+						{
+							const engine::render::TextureHandle n = m_assetRegistry.LoadTexture(meshDir + rep->normalUri, false);
+							if (n.IsValid()) mat.normal = n;
+						}
+						if (!rep->ormUri.empty())
+						{
+							const engine::render::TextureHandle o = m_assetRegistry.LoadTexture(meshDir + rep->ormUri, false);
+							if (o.IsValid()) mat.orm = o;
+						}
+						matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+						// Variante surbrillance : memes textures + flag Highlight (teinte au draw).
+						mat.flags = engine::render::MaterialFlags::Highlight;
+						hlIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+					}
 				}
 				else
 				{
-					const engine::render::staticmesh::StaticSubMesh* rep = repByMat[matName];
-					if (rep && !rep->baseColorUri.empty())
-					{
-						const engine::render::TextureHandle bc =
-							m_assetRegistry.LoadTexture(meshDir + rep->baseColorUri, /*useSrgb*/ true);
-						if (bc.IsValid())
-						{
-							engine::render::Material mat{};
-							mat.baseColor = bc;
-							if (!rep->normalUri.empty())
-							{
-								const engine::render::TextureHandle n = m_assetRegistry.LoadTexture(meshDir + rep->normalUri, false);
-								if (n.IsValid()) mat.normal = n;
-							}
-							if (!rep->ormUri.empty())
-							{
-								const engine::render::TextureHandle o = m_assetRegistry.LoadTexture(meshDir + rep->ormUri, false);
-								if (o.IsValid()) mat.orm = o;
-							}
-							matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
-							// Variante surbrillance : memes textures + flag Highlight (teinte au draw).
-							mat.flags = engine::render::MaterialFlags::Highlight;
-							hlIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
-						}
-					}
-					trimMatCache[matName] = { matIdx, hlIdx };
+					// Pas de texture baseColor (props « nature » : arbres, herbe...) :
+					// l'albedo provient de la couleur de sommet COLOR_0 (flag VertexColorAlbedo).
+					engine::render::Material mat{};
+					mat.flags = engine::render::MaterialFlags::VertexColorAlbedo;
+					matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+					hlIdx = matIdx;
 				}
-
-				PropPart part;
-				part.mesh = mh;
-				part.materialIndex = matIdx;
-				part.highlightMaterialIndex = hlIdx;
-				prop.parts.push_back(part);
+				m_trimMatCache[matName] = { matIdx, hlIdx };
 			}
 
-			prop.interactableIndex = static_cast<int>(ii);
-			if (!prop.parts.empty())
-			{
-				LOG_INFO(Render, "[Props] '{}' charge ({} partie(s), mesh '{}')", e.label, prop.parts.size(), e.meshPath);
-				m_props.push_back(std::move(prop));
-			}
+			PropPart part;
+			part.mesh = mh;
+			part.materialIndex = matIdx;
+			part.highlightMaterialIndex = hlIdx;
+			prop.parts.push_back(part);
 		}
-		LOG_INFO(Render, "[Props] {} prop(s) rendus", m_props.size());
+
+		prop.interactableIndex = interactableIndex;
+		if (!prop.parts.empty())
+		{
+			if (solid)
+			{
+				float radius = collisionRadius > 0.0f ? collisionRadius : radiusAuto;
+				if (radius < 0.05f) radius = 0.5f;
+				m_worldCollider.AddCylinder(
+					engine::gameplay::PropCylinder{ wx, wz, radius, groundY, topY });
+			}
+			m_props.push_back(std::move(prop));
+		}
 	}
 
 	void Engine::RecordPropsGeometry(VkCommandBuffer cmd, engine::render::Registry& reg,

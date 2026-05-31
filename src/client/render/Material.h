@@ -17,6 +17,11 @@ namespace engine::render
 		/// Surbrillance : le fragment shader gbuffer_geometry.frag teinte l'albedo
 		/// quand ce bit est posé (feedback d'interaction sur le prop ciblé, chantier C).
 		Highlight = 1u << 0,
+		/// Albedo issu de la couleur de sommet (COLOR_0) au lieu de la texture baseColor.
+		/// Pour les props « nature » (arbres, herbe…) colorés par vertex color, sans
+		/// texture. Le fragment shader gbuffer_geometry.frag remplace alors l'albedo
+		/// échantillonné par vColor.rgb quand ce bit est posé.
+		VertexColorAlbedo = 1u << 1,
 	};
 
 	/// Per-material texture handles + tiling parameters.

@@ -30,6 +30,34 @@ vérification SHA256. Le binaire est gitignored (pas dans le repo).
    → produit `game/data/models/<Category>/<EntityName>/<EntityName>.glb`.
 5. Commit le `.glb` (le `.fbx` source reste gitignored).
 
+## Conversion des PROPS (Blender headless)
+
+Les **props statiques** (`tools/asset_pipeline/inbox/meshes/props/*.fbx`) ne passent
+**pas** par FBX2glTF mais par Blender (export glTF natif), pour reproduire le pipeline
+d'origine : matériaux `MI_Trim_*`, ORM packé en `metallicRoughnessTexture`, `COLOR_0`
+(couleur de sommet, utilisée par les props « nature » sans texture : arbres, herbe…),
+`doubleSided`, et textures *trim* partagées (`T_Trim_Furniture/Metal/Cloth_*.png`)
+référencées par URI relatif dans `game/data/meshes/props/`.
+
+Prérequis : **Blender 5.1** installé (`C:/Program Files/Blender Foundation/Blender 5.1/`).
+
+```powershell
+# Convertit tous les FBX de inbox/meshes/props sans .gltf correspondant :
+& "C:/Program Files/Blender Foundation/Blender 5.1/blender.exe" --background `
+    --python tools/asset_pipeline/convert_props_blender.py
+
+# Un seul prop : --only <Nom>   |   Validation (sortie temp, n'ecrase pas) : --validate
+```
+
+Le script `convert_props_blender.py` reconstruit les matériaux `MI_Trim_*` (BaseColor,
+Normal, ORM→roughness/metallic) et produit `game/data/meshes/props/<Nom>.gltf` + `.bin`.
+**Validation** : re-convertir un prop déjà commité (ex. `Barrel`) en `--validate` puis
+comparer la structure (`materials`, `images`, `metallicRoughnessTexture`, attributs) au
+`.gltf` de référence avant un batch.
+
+Les props « nature » (arbres…) sont colorés par `COLOR_0` (pas de texture). Le moteur
+les rend via le flag matériau `VertexColorAlbedo` (cf. `gbuffer_geometry.frag`).
+
 ## Versions pinned
 
 - FBX2glTF : v0.13.0 (Godot fork). Pour mettre à jour : modifier `$Version` dans `download_fbx2gltf.ps1` + recalculer SHA256.

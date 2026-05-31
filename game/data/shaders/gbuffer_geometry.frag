@@ -11,6 +11,7 @@ layout(location = 0) in vec3 vNormal;
 layout(location = 1) in vec2 vUv;
 layout(location = 2) in vec4 vPrevClip;
 layout(location = 3) in vec4 vCurrClip;
+layout(location = 4) in vec4 vColor;
 
 struct MaterialGpuData
 {
@@ -52,6 +53,11 @@ void main()
     // sRGB attachment so the hardware re-encodes for storage. The lighting
     // pass will read it as linear (sRGB attachment auto-linearises on sample).
     outAlbedo = texture(uTextures[mat.baseColorIndex], tiledUv);
+
+    // Vertex color albedo (bit 2) : props « nature » (arbres, herbe…) colorés par
+    // COLOR_0 sans texture. On remplace l'albedo échantillonné par la couleur de sommet.
+    if ((mat.flags & 2u) != 0u)
+        outAlbedo = vec4(vColor.rgb, 1.0);
 
     // Surbrillance d'interaction (chantier C) : si le bit Highlight (1) est posé dans
     // mat.flags, on teinte l'albedo vers un or chaud + on l'éclaircit. Les matériaux

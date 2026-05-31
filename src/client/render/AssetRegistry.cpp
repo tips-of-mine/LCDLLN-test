@@ -29,7 +29,11 @@ namespace engine::render
 	// Values as read into a uint32_t on little-endian platforms from ASCII byte headers.
 	static constexpr uint32_t kMeshMagic = 0x4853454Du; // bytes "MESH"
 	static constexpr uint32_t kTexrMagic = 0x52584554u; // bytes "TEXR"
-	static constexpr size_t kMeshVertexStride = 32u;    // 3+3+2 floats
+	// Stride GPU des sommets statiques = StaticVertex (pos3 + normal3 + uv2 + color4 =
+	// 48 octets). Le format de fichier .mesh sur disque reste à 32 octets (sans
+	// couleur) ; loadMeshInternal étend chaque sommet à 48 (couleur blanche) à l'upload.
+	static constexpr size_t kMeshVertexStride     = 48u; // 3+3+2+4 floats (GPU)
+	static constexpr size_t kMeshFileVertexStride = 32u; // 3+3+2 floats (fichier .mesh)
 
 	uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeBits, VkMemoryPropertyFlags desiredFlags)
 	{
@@ -408,11 +412,23 @@ namespace engine::render
 		memcpy(&numVertices, data.data() + 8, 4);
 		memcpy(&numIndices, data.data() + 12, 4);
 		if (magic != kMeshMagic || version != 1) { LOG_ERROR(Render, "AssetRegistry: invalid mesh format: {}", relativePath); return kInvalidAssetId; }
+		// Le fichier .mesh stocke 32 octets/sommet (sans couleur) ; on étend à 48 (GPU).
+		const size_t fileVertexBytes = numVertices * kMeshFileVertexStride;
 		size_t vertexBytes = numVertices * kMeshVertexStride;
 		size_t indexBytes = numIndices * sizeof(uint32_t);
-		if (data.size() < 16 + vertexBytes + indexBytes) { LOG_ERROR(Render, "AssetRegistry: mesh file truncated: {}", relativePath); return kInvalidAssetId; }
+		if (data.size() < 16 + fileVertexBytes + indexBytes) { LOG_ERROR(Render, "AssetRegistry: mesh file truncated: {}", relativePath); return kInvalidAssetId; }
 		const uint8_t* vertexData = data.data() + 16;
-		const uint8_t* indexData = data.data() + 16 + vertexBytes;
+		const uint8_t* indexData = data.data() + 16 + fileVertexBytes;
+
+		// Sommets étendus 48 o : copie les 32 o du fichier + couleur blanche (16 o).
+		std::vector<uint8_t> expandedVerts(vertexBytes);
+		for (uint32_t vIdx = 0; vIdx < numVertices; ++vIdx)
+		{
+			uint8_t* dst = expandedVerts.data() + static_cast<size_t>(vIdx) * kMeshVertexStride;
+			memcpy(dst, vertexData + static_cast<size_t>(vIdx) * kMeshFileVertexStride, kMeshFileVertexStride);
+			float* col = reinterpret_cast<float*>(dst + kMeshFileVertexStride);
+			col[0] = 1.0f; col[1] = 1.0f; col[2] = 1.0f; col[3] = 1.0f;
+		}
 
 		MeshAsset asset{};
 		asset.vertexCount = numVertices;
@@ -424,7 +440,7 @@ namespace engine::render
 			asset.localBoundsMax = asset.localBoundsMin;
 			for (uint32_t vertexIndex = 1; vertexIndex < numVertices; ++vertexIndex)
 			{
-				const float* position = reinterpret_cast<const float*>(vertexData + static_cast<size_t>(vertexIndex) * kMeshVertexStride);
+				const float* position = reinterpret_cast<const float*>(vertexData + static_cast<size_t>(vertexIndex) * kMeshFileVertexStride);
 				asset.localBoundsMin.x = std::min(asset.localBoundsMin.x, position[0]);
 				asset.localBoundsMin.y = std::min(asset.localBoundsMin.y, position[1]);
 				asset.localBoundsMin.z = std::min(asset.localBoundsMin.z, position[2]);
@@ -504,7 +520,7 @@ namespace engine::render
 			vkFreeMemory(m_device, vMem, nullptr);
 			return kInvalidAssetId;
 		}
-		memcpy(pv, vertexData, vertexBytes);
+		memcpy(pv, expandedVerts.data(), vertexBytes);
 		vkUnmapMemory(m_device, vMem);
 
 		void* pi = nullptr;

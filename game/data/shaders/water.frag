@@ -141,9 +141,11 @@ void main()
     // exterieur voit donc le fond pres du bord, mais plus du tout vers le centre.
     // (surfaceDist / bottomDist deja calcules pour l'occlusion ci-dessus.)
     float waterThickness = max(0.0, bottomDist - surfaceDist);          // metres approx
-    float beer    = 1.0 - exp(-waterThickness * 0.15);                  // 0 (fin) .. 1 (epais)
-    float opacity = mix(0.12, 0.97, beer);                              // 12% mini (eau toujours
-                                                                        // teintee) .. 97% maxi
+    float beer    = 1.0 - exp(-waterThickness * 0.28);                  // 0 (fin) .. 1 (epais)
+                                                                        // coef 0.28 (etait 0.15) :
+                                                                        // bleu plus vite (bassin peu profond)
+    float opacity = mix(0.22, 0.97, beer);                              // 22% mini (etait 12% : bleu
+                                                                        // plus marque au bord) .. 97% maxi
 
     vec3 color = mix(refr, waterBody, opacity);                              // fond <-> eau selon profondeur
     color = mix(color, refl, clamp(f * pc.reflectionStrength, 0.0, 1.0));    // reflet si dispo

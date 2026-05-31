@@ -4804,6 +4804,24 @@ namespace engine
 												LOG_INFO(Render, "[Nage] Eau-test posee (centre=({:.1f},{:.1f}) half={:.1f} niveauY={:.2f})", cx, cz, half, lvl);
 											}
 											m_terrainCollider.BindWater(m_clientWaterScene.get());
+											// REBUILD SYNCHRONE du mesh d'eau ICI (avant la 1ere construction du
+											// FrameGraph). Sinon le gating de la passe water voit m_waterMeshGpu.IsValid()
+											// == false (le rebuild paresseux n'arrive qu'APRES, plus tard dans la frame)
+											// -> il grave la branche PASSTHROUGH et l'eau n'est JAMAIS dessinee
+											// (diagnostic [WaterDiag] gating: meshValid=false). On force donc le rebuild
+											// des maintenant pour que IsValid()==true quand le graphe choisit la branche.
+											if (m_clientWaterScene && m_waterMeshGpu.IsInitialized()
+												&& m_waterTransferPool != VK_NULL_HANDLE)
+											{
+												vkResetCommandPool(m_vkDeviceContext.GetDevice(), m_waterTransferPool, 0);
+												if (m_waterMeshGpu.Rebuild(m_waterTransferPool,
+														m_vkDeviceContext.GetGraphicsQueue(), *m_clientWaterScene))
+												{
+													m_waterClientSceneDirty = false;
+													LOG_INFO(Render, "[Nage] Mesh d'eau reconstruit (synchrone, avant FrameGraph) -> IsValid={}",
+														m_waterMeshGpu.IsValid());
+												}
+											}
 											// Interaction : interactibles declares en config (world.interactables.N.*).
 											// Repli sur 2 cibles de TEST pres du spawn si aucun n'est declare.
 											m_interactables.clear();
@@ -5530,7 +5548,34 @@ namespace engine
 										// on enregistre un passthrough vkCmdCopyImage à la place pour garantir
 										// que le ping-pong PostWater est toujours renseigné — sinon Bloom_Prefilter
 										// (qui lit PostWater) lirait du contenu indéfini.
-										if (m_waterPass.IsValid())
+										//
+										// IMPORTANT : on n'enregistre la passe « Water » (ColorWrite sur PostWater)
+										// QUE si un mesh d'eau valide existe (m_waterMeshGpu.IsValid()). Sinon le record
+										// sortirait tôt (scene/mesh absent) et PostWater resterait NON ÉCRIT → bloom lit
+										// du garbage → écran blanc délavé. Sans eau réelle, on prend le passthrough qui
+										// copie SceneColor → PostWater et garantit un contenu valide.
+										// DIAG one-shot : revele quelle branche eau est prise (et pourquoi).
+										{
+											static bool s_waterBranchLogged = false;
+											if (!s_waterBranchLogged)
+											{
+												s_waterBranchLogged = true;
+												LOG_INFO(Render, "[WaterDiag] gating: waterPassValid={} meshValid={} -> branche={}",
+													m_waterPass.IsValid(), m_waterMeshGpu.IsValid(),
+													(m_waterPass.IsValid() && m_waterMeshGpu.IsValid()) ? "WATER(dessin quad)" : "PASSTHROUGH(pas d'eau)");
+											}
+										}
+										// Le FrameGraph MVP INTERDIT deux writers sur la meme ressource
+										// (PostWater). On ne peut donc PAS faire "passe copie" + "passe eau"
+										// separees. On fait donc UNE SEULE passe, writer unique de PostWater,
+										// qui fait les deux choses a la suite :
+										//   (1) copie SceneColor_HDR -> PostWater (toute la scene),
+										//   (2) dessine le quad d'eau PAR-DESSUS (renderpass loadOp=LOAD).
+										// On declare read(SceneColor)+read(depth)+write(PostWater) : le FG met
+										// SceneColor en SHADER_READ et PostWater en COLOR_ATTACHMENT avant le
+										// lambda. On bascule manuellement en layouts transfer pour la copie,
+										// puis on restaure pour que (2) trouve les bons layouts.
+										if (m_waterPass.IsValid() && m_waterMeshGpu.IsValid())
 										{
 											m_frameGraph.addPass("Water",
 												[this](engine::render::PassBuilder& b) {
@@ -5546,6 +5591,55 @@ namespace engine
 														scene = m_clientWaterScene.get();
 													if (!scene || !m_waterMeshGpu.IsValid()) return;
 
+													VkImage src = reg.getImage(m_fgSceneColorHDRId);
+													VkImage dst = reg.getImage(m_fgSceneColorHDRPostWaterId);
+													if (src == VK_NULL_HANDLE || dst == VK_NULL_HANDLE) return;
+
+													// (1) Copie SceneColor (SHADER_READ) -> PostWater (COLOR_ATTACHMENT).
+													//     On passe les deux en layouts transfer, on copie, on restaure.
+													auto barrier = [&](VkImage img, VkImageLayout oldL, VkImageLayout newL,
+													                   VkAccessFlags srcA, VkAccessFlags dstA,
+													                   VkPipelineStageFlags srcS, VkPipelineStageFlags dstS) {
+														VkImageMemoryBarrier bar{};
+														bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+														bar.srcAccessMask = srcA;
+														bar.dstAccessMask = dstA;
+														bar.oldLayout = oldL;
+														bar.newLayout = newL;
+														bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														bar.image = img;
+														bar.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+														vkCmdPipelineBarrier(cmd, srcS, dstS, 0, 0, nullptr, 0, nullptr, 1, &bar);
+													};
+
+													barrier(src, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+													        VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+													        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+													barrier(dst, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+													        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,
+													        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+													VkImageCopy copy{};
+													copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+													copy.srcSubresource.layerCount = 1;
+													copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+													copy.dstSubresource.layerCount = 1;
+													VkExtent2D ext = m_vkSwapchain.GetExtent();
+													copy.extent = { ext.width, ext.height, 1 };
+													vkCmdCopyImage(cmd, src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+														dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+
+													// Restaure : SceneColor -> SHADER_READ (lu par le shader eau),
+													//            PostWater  -> COLOR_ATTACHMENT (cible du renderpass LOAD).
+													barrier(src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+													        VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT,
+													        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+													barrier(dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+													        VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+													        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+													// (2) Dessine l'eau PAR-DESSUS la scene copiee (loadOp=LOAD).
 													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 													const engine::RenderState& rs = m_renderStates[readIdx];
 
@@ -5568,9 +5662,8 @@ namespace engine
 										}
 										else
 										{
-											// Fallback : copie SceneColor_HDR → SceneColor_HDR_PostWater pour
-											// que les passes aval (Bloom_*) lisent une image valide même quand
-											// la passe water est désactivée (shaders/textures absents, VMA off, etc.).
+											// Pas d'eau prete -> simple copie SceneColor -> PostWater (writer
+											// unique) pour que les passes aval (Bloom_*) lisent une image valide.
 											m_frameGraph.addPass("Water_Passthrough",
 												[this](engine::render::PassBuilder& b) {
 													b.read(m_fgSceneColorHDRId,           engine::render::ImageUsage::TransferSrc);
@@ -9758,11 +9851,48 @@ namespace engine
 			const float groundY = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z);
 			engine::math::Mat4 scaleM = engine::math::Mat4::Identity();
 			scaleM.m[0] = e.meshScale; scaleM.m[5] = e.meshScale; scaleM.m[10] = e.meshScale;
-			prop.modelMatrix =
+			// Matrice modèle monde du prop (translation au sol + yaw + rotX + échelle).
+			const engine::math::Mat4 bakeM =
 				engine::math::Mat4::Translate(engine::math::Vec3{ e.position.x, groundY, e.position.z }) *
 				engine::math::Mat4::RotateY(e.meshYawDeg * kDeg2Rad) *
 				engine::math::Mat4::RotateX(e.meshRotXDeg * kDeg2Rad) *
 				scaleM;
+			// CONTOURNEMENT bug moteur : GeometryPass::Record applique la matrice d'instance
+			// via un buffer GPU PARTAGE (m_identityInstanceBuffer) reecrit a chaque draw au
+			// moment du RECORD. Avec plusieurs props dans le meme command buffer, seule la
+			// DERNIERE matrice survit a l'execution -> tous les props se dessinent au meme
+			// endroit (empiles). On contourne en CUISANT la transformation monde directement
+			// dans les sommets (chaque prop a deja son propre mesh CPU), puis on laisse la
+			// matrice d'instance a l'identite. (Les labels, eux, utilisent e.position : ils
+			// etaient deja bien places, d'ou l'illusion que "ca marchait" a 1-2 props.)
+			{
+				const float* M = bakeM.m;  // column-major : M[col*4+row]
+				float minY = 1e30f;        // point le plus bas du prop en espace monde
+				for (auto& v : cpu->vertices)
+				{
+					const float px = v.pos[0], py = v.pos[1], pz = v.pos[2];
+					v.pos[0] = M[0]*px + M[4]*py + M[8]*pz  + M[12];
+					v.pos[1] = M[1]*px + M[5]*py + M[9]*pz  + M[13];
+					v.pos[2] = M[2]*px + M[6]*py + M[10]*pz + M[14];
+					if (v.pos[1] < minY) minY = v.pos[1];
+					const float nx = v.normal[0], ny = v.normal[1], nz = v.normal[2];
+					float rnx = M[0]*nx + M[4]*ny + M[8]*nz;
+					float rny = M[1]*nx + M[5]*ny + M[9]*nz;
+					float rnz = M[2]*nx + M[6]*ny + M[10]*nz;
+					const float nlen = std::sqrt(rnx*rnx + rny*rny + rnz*rnz);
+					if (nlen > 1e-6f) { rnx /= nlen; rny /= nlen; rnz /= nlen; }
+					v.normal[0] = rnx; v.normal[1] = rny; v.normal[2] = rnz;
+				}
+				// Ancrage au sol : selon le modele, le pivot n'est pas a la base
+				// -> le prop s'enterre (ou flotte). On decale tout le mesh pour que
+				// son point le PLUS BAS repose exactement sur le sol (groundY).
+				// Corrige le "clipping objets/terrain" pour tous les props.
+				const float lift = groundY - minY;
+				if (std::fabs(lift) > 1e-4f)
+					for (auto& v : cpu->vertices)
+						v.pos[1] += lift;
+			}
+			prop.modelMatrix = engine::math::Mat4::Identity();  // sommets deja en espace monde
 
 			for (const auto& kv : idxByMat)
 			{

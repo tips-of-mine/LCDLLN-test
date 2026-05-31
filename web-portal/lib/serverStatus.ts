@@ -18,12 +18,24 @@
 
 import { logWarn } from "@/lib/log";
 
+/** Détail enrichi d'un joueur en ligne (présence v9). Champs perso null si pas en jeu. */
+export interface OnlinePlayer {
+  accountId: number;
+  login: string | null;
+  character: string | null;
+  level: number | null;
+  zoneId: number | null;
+  inWorld: boolean;
+}
+
 export interface OnlineAccounts {
   authenticated: Set<number>;
   inWorld: Set<number>;
+  /** Détails enrichis indexés par accountId (vide si le master ne renvoie pas "players"). */
+  players: Map<number, OnlinePlayer>;
 }
 
-const EMPTY: OnlineAccounts = { authenticated: new Set(), inWorld: new Set() };
+const EMPTY: OnlineAccounts = { authenticated: new Set(), inWorld: new Set(), players: new Map() };
 
 function toIdSet(value: unknown): Set<number> {
   if (!Array.isArray(value)) return new Set();
@@ -31,6 +43,38 @@ function toIdSet(value: unknown): Set<number> {
   for (const item of value) {
     const id = typeof item === "number" ? item : Number(item);
     if (Number.isFinite(id) && id > 0) out.add(id);
+  }
+  return out;
+}
+
+function toNumberOrNull(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function toStringOrNull(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+// Parse le tableau "players" enrichi (présence v9). Rétro-compat : si absent ou
+// malformé, renvoie une map vide (les pastilles s'appuient alors sur les sets).
+function toPlayerMap(value: unknown): Map<number, OnlinePlayer> {
+  const out = new Map<number, OnlinePlayer>();
+  if (!Array.isArray(value)) return out;
+  for (const item of value) {
+    if (typeof item !== "object" || item === null) continue;
+    const row = item as Record<string, unknown>;
+    const accountId = toNumberOrNull(row.accountId);
+    if (accountId === null || accountId <= 0) continue;
+    out.set(accountId, {
+      accountId,
+      login: toStringOrNull(row.login),
+      character: toStringOrNull(row.character),
+      level: toNumberOrNull(row.level),
+      zoneId: toNumberOrNull(row.zoneId),
+      inWorld: row.inWorld === true,
+    });
   }
   return out;
 }
@@ -61,10 +105,11 @@ export async function fetchOnlineAccounts(): Promise<OnlineAccounts> {
       logWarn("serverStatus", "Master /online-accounts a répondu en erreur.", { url, status: response.status });
       return EMPTY;
     }
-    const payload = (await response.json()) as { authenticated?: unknown; inWorld?: unknown };
+    const payload = (await response.json()) as { authenticated?: unknown; inWorld?: unknown; players?: unknown };
     return {
       authenticated: toIdSet(payload.authenticated),
       inWorld: toIdSet(payload.inWorld),
+      players: toPlayerMap(payload.players),
     };
   } catch (err) {
     // Master injoignable / timeout / JSON invalide : on logge l'URL et l'erreur

@@ -6,16 +6,27 @@ import { getSession } from '@/lib/auth/session'
 import { isStaff, type AccountRole } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
 import { PlayerActions, type PlayerRow } from '@/components/admin/PlayerActions'
-import { fetchOnlineAccounts, presenceFor, type PlayerPresence } from '@/lib/serverStatus'
+import { fetchOnlineAccounts, presenceFor, type PlayerPresence, type OnlinePlayer } from '@/lib/serverStatus'
+import { regionName } from '@/lib/zones'
 
-/** Pastille de présence affichée à droite du nom du joueur (3 états). */
-function PresenceDot({ presence }: { presence: PlayerPresence }) {
+/** Pastille de présence affichée à droite du nom du joueur (3 états).
+ *  Le tooltip est enrichi (perso / niveau / région) si l'info est disponible. */
+function PresenceDot({ presence, detail }: { presence: PlayerPresence; detail?: OnlinePlayer }) {
   if (presence === 'offline') return null
   const inWorld = presence === 'in_world'
+  const base = inWorld ? 'En jeu' : 'Connecté (menu)'
+  let title = base
+  if (inWorld && detail) {
+    const parts: string[] = []
+    if (detail.character) parts.push(detail.character)
+    if (detail.level != null) parts.push(`niveau ${detail.level}`)
+    if (detail.zoneId != null) parts.push(regionName(detail.zoneId))
+    if (parts.length > 0) title = `${base} — ${parts.join(' • ')}`
+  }
   return (
     <span
-      title={inWorld ? 'En jeu' : 'Connecté (menu)'}
-      aria-label={inWorld ? 'En jeu' : 'Connecté (menu)'}
+      title={title}
+      aria-label={title}
       style={{
         display: 'inline-block',
         width: 9,
@@ -27,6 +38,21 @@ function PresenceDot({ presence }: { presence: PlayerPresence }) {
         boxShadow: inWorld ? '0 0 5px rgba(95,184,110,.6)' : 'none',
       }}
     />
+  )
+}
+
+/** Ligne discrète sous le nom : perso • niveau N • région (joueurs en jeu seulement). */
+function OnlineDetailLine({ detail }: { detail?: OnlinePlayer }) {
+  if (!detail || !detail.inWorld) return null
+  const parts: string[] = []
+  if (detail.character) parts.push(detail.character)
+  if (detail.level != null) parts.push(`niveau ${detail.level}`)
+  if (detail.zoneId != null) parts.push(regionName(detail.zoneId))
+  if (parts.length === 0) return null
+  return (
+    <div style={{ marginTop: 3, fontFamily: 'var(--font-body)', fontSize: 11.5, color: 'var(--ln-success)' }}>
+      {parts.join('  •  ')}
+    </div>
   )
 }
 
@@ -203,6 +229,7 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
             const st = statusLabel(player.account_status)
             const em = emailBadge(player.email_verified)
             const displayName = player.tag_id ?? player.login
+            const onlineDetail = online.players.get(player.id)
             const cguOk = player.accepted_cgu_count >= player.published_cgu_count && player.published_cgu_count > 0
             const cguLabel = `${player.accepted_cgu_count}/${player.published_cgu_count} acceptée${player.published_cgu_count !== 1 ? 's' : ''}`
 
@@ -216,7 +243,7 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
                       <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, letterSpacing: '.12em', color: 'var(--ln-accent)' }}>
                         {displayName}
                       </span>
-                      <PresenceDot presence={presenceFor(player.id, online)} />
+                      <PresenceDot presence={presenceFor(player.id, online)} detail={onlineDetail} />
                       {player.tag_id && (
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ln-muted)' }}>
                           ({player.login})
@@ -229,6 +256,7 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
                     <div style={{ marginTop: 4, fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--ln-muted)' }}>
                       {player.email}
                     </div>
+                    <OnlineDetailLine detail={onlineDetail} />
                   </div>
 
                   {/* Badges */}

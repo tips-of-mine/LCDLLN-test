@@ -32,6 +32,10 @@ layout(location = 0) out vec3 vNormal;
 layout(location = 1) out vec2 vUv;
 layout(location = 2) out vec4 vPrevClip;
 layout(location = 3) out vec4 vCurrClip;
+// Le fragment partagé gbuffer_geometry.frag attend vColor en location 4. L'avatar
+// n'utilise pas de vertex color : on émet du blanc (le bit VertexColorAlbedo n'est
+// jamais posé sur ses matériaux, donc vColor est ignoré côté frag).
+layout(location = 4) out vec4 vColor;
 
 void main() {
     // Build the per-vertex skinning matrix as a weighted sum of bone matrices.
@@ -56,4 +60,5 @@ void main() {
     vUv = inUv;
     vPrevClip = prevClip;
     vCurrClip = currClip;
+    vColor = vec4(1.0);
 }

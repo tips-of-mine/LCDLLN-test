@@ -16,12 +16,16 @@
 namespace engine::render::staticmesh
 {
 
-/// Sommet statique minimal (position + normale + UV). Pas de bones/weights.
+/// Sommet statique (position + normale + UV + couleur de sommet). Pas de bones/weights.
+/// `color` = COLOR_0 glTF (RGBA, défaut blanc opaque). Utilisé comme albedo pour les
+/// props « nature » colorés par vertex color (cf. MaterialFlags::VertexColorAlbedo).
+/// Stride = 48 octets (12 + 12 + 8 + 16), aligné sur kMeshVertexStride côté GPU.
 struct StaticVertex
 {
     float pos[3]    = { 0.f, 0.f, 0.f };
     float normal[3] = { 0.f, 0.f, 1.f };
     float uv[2]     = { 0.f, 0.f };
+    float color[4]  = { 1.f, 1.f, 1.f, 1.f };
 };
 
 /// Plage d'indices d'un sous-maillage + nom et textures du matériau glTF associé.
@@ -44,6 +48,8 @@ struct StaticMeshCpuData
     std::vector<StaticVertex> vertices;
     std::vector<uint32_t>     indices;
     std::vector<StaticSubMesh> submeshes;
+    float localMinY = 0.0f;  ///< Y min des sommets (espace local du mesh).
+    float localMaxY = 0.0f;  ///< Y max des sommets (espace local du mesh).
 };
 
 class StaticMeshLoader

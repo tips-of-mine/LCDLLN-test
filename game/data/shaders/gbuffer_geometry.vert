@@ -4,10 +4,11 @@
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec2 inUv;
-layout(location = 3) in vec4 instanceRow0;
-layout(location = 4) in vec4 instanceRow1;
-layout(location = 5) in vec4 instanceRow2;
-layout(location = 6) in vec4 instanceRow3;
+layout(location = 3) in vec4 inColor;        // COLOR_0 (vertex color des props nature)
+layout(location = 4) in vec4 instanceRow0;
+layout(location = 5) in vec4 instanceRow1;
+layout(location = 6) in vec4 instanceRow2;
+layout(location = 7) in vec4 instanceRow3;
 
 layout(push_constant) uniform PushConstants {
 	mat4 prevViewProj;  // 0..63
@@ -22,6 +23,7 @@ layout(location = 0) out vec3 vNormal;
 layout(location = 1) out vec2 vUv;
 layout(location = 2) out vec4 vPrevClip;
 layout(location = 3) out vec4 vCurrClip;
+layout(location = 4) out vec4 vColor;
 
 void main() {
 	mat4 instanceMatrix = mat4(instanceRow0, instanceRow1, instanceRow2, instanceRow3);
@@ -33,4 +35,5 @@ void main() {
 	vUv = inUv;
 	vPrevClip = prevClip;
 	vCurrClip = currClip;
+	vColor = inColor;
 }

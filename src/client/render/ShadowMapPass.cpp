@@ -172,9 +172,11 @@ namespace engine::render
 		attrs[1].location = 1; attrs[1].binding = 0; attrs[1].format = VK_FORMAT_R32G32B32_SFLOAT; attrs[1].offset = 12;
 		attrs[2].location = 2; attrs[2].binding = 0; attrs[2].format = VK_FORMAT_R32G32_SFLOAT;    attrs[2].offset = 24;
 
+		// Stride 48 : aligné sur StaticVertex (pos/normal/uv/color). Seule la position
+		// (offset 0) est lue ici ; la couleur de sommet n'est pas déclarée en attribut.
 		VkVertexInputBindingDescription vbinding{};
 		vbinding.binding   = 0;
-		vbinding.stride    = 32;
+		vbinding.stride    = 48;
 		vbinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 		VkPipelineVertexInputStateCreateInfo vi{};

@@ -4,6 +4,7 @@
 // mode: presence tracking is fully functional; persistent DB operations are skipped.
 
 #include "src/shardd/gameplay/social/FriendSystem.h"
+#include "src/shardd/world/ShardPresenceService.h"
 #include "src/shared/core/Log.h"
 
 #if ENGINE_HAS_MYSQL
@@ -83,7 +84,7 @@ namespace engine::server
 
 	void FriendSystem::Shutdown()
 	{
-		m_presence.clear();
+		m_presenceService = nullptr;
 		m_requestRateLimit.clear();
 		m_initialized = false;
 		LOG_INFO(Core, "[FriendSystem] Destroyed");
@@ -423,35 +424,14 @@ namespace engine::server
 	}
 
 	// -------------------------------------------------------------------------
-	// Presence tracking
+	// Presence (déléguée à l'autorité unique ShardPresenceService, par character_id)
 	// -------------------------------------------------------------------------
 
-	void FriendSystem::SetPresence(uint64_t playerId, std::string_view playerName, PresenceStatus status)
+	PresenceStatus FriendSystem::GetPresence(uint64_t characterId) const
 	{
-		auto& entry       = m_presence[playerId];
-		entry.playerId    = playerId;
-		entry.playerName  = std::string(playerName);
-		entry.presence    = status;
-		LOG_DEBUG(Core, "[FriendSystem] Presence updated: player {} ('{}') status={}",
-			playerId, playerName, static_cast<int>(status));
-	}
-
-	void FriendSystem::SetOffline(uint64_t playerId)
-	{
-		auto it = m_presence.find(playerId);
-		if (it != m_presence.end())
-		{
-			LOG_DEBUG(Core, "[FriendSystem] Player {} ('{}') went offline", playerId, it->second.playerName);
-			m_presence.erase(it);
-		}
-	}
-
-	PresenceStatus FriendSystem::GetPresence(uint64_t playerId) const
-	{
-		auto it = m_presence.find(playerId);
-		if (it == m_presence.end())
+		if (m_presenceService == nullptr)
 			return PresenceStatus::Offline;
-		return it->second.presence;
+		return m_presenceService->GetStatusByCharacter(characterId);
 	}
 
 	// -------------------------------------------------------------------------
@@ -529,8 +509,8 @@ namespace engine::server
 			if (!row[0])
 				continue;
 			uint64_t fid = static_cast<uint64_t>(std::strtoull(row[0], nullptr, 10));
-			// Only include friends that are currently online.
-			if (m_presence.count(fid) > 0)
+			// Only include friends currently online (autorité unique, par character_id).
+			if (m_presenceService != nullptr && m_presenceService->IsCharacterOnline(fid))
 				result.push_back(fid);
 		}
 		db::DbFreeResult(res);

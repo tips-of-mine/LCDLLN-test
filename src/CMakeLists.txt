@@ -101,6 +101,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/TermsPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildTabard.cpp

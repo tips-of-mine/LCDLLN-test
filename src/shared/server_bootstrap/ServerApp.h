@@ -18,6 +18,7 @@
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
 #include "src/shared/network/ReplicationTypes.h"
 #include "src/shared/network/ShardPayloads.h"
+#include "src/shardd/world/ShardPresenceService.h"
 #include "src/shared/security/SecurityAuditLog.h"
 #include "src/shardd/anticheat/AntiCheatGameplay.h"
 #include "src/shared/network/ServerProtocol.h"
@@ -110,6 +111,9 @@ namespace engine::server
 		/// pour permettre au client de sélectionner le mesh skinné des avatars distants.
 		std::string gender;
 		uint32_t experiencePoints = 0;
+		/// Compte propriétaire (résolu au Hello via AdmittedCharacterRegistry). Clé de la
+		/// présence unifiée (ShardPresenceService) ; 0 si non résolu (registre absent).
+		uint64_t accountId = 0;
 		/// Niveau du personnage (table characters.level, chargé au Hello via LoadSpawnFromDb).
 		/// Reporté au master dans le heartbeat enrichi (présence web-portal).
 		uint32_t level = 1;
@@ -836,11 +840,11 @@ namespace engine::server
 		UdpTransport m_transport;
 		std::vector<Datagram> m_pendingDatagrams;
 		std::vector<ConnectedClient> m_clients;
-		/// Présence enrichie : snapshot publié à chaque TickOnce (thread gameplay) et lu
-		/// par GetPlayerPresenceSnapshot depuis le thread shard→master. Protégé par son
-		/// propre mutex pour découpler les deux threads sans verrouiller m_clients.
-		mutable std::mutex m_presenceMutex;
-		std::vector<engine::network::ShardPlayerPresence> m_presenceSnapshot;
+		/// Présence unifiée (Niveau 1) : autorité UNIQUE de la présence shard-locale.
+		/// Alimentée aux hooks login/logout/zone ; consommée par FriendSystem (par
+		/// character_id) et, via GetPlayerPresenceSnapshot, par le heartbeat → master.
+		/// Thread-safe en interne (découple thread gameplay / thread shard→master).
+		ShardPresenceService m_shardPresence;
 		/// TG.2 : index O(1) sur m_clients pour les 3 lookups chauds (Find/FindByEntityId/
 		/// FindConnectedClient). Valeurs = index dans m_clients ; clé endpoint = (address<<16)|port.
 		/// Maintenance : insertion incrémentale dans HandleHello, reconstruction complète dans

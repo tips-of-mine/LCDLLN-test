@@ -380,6 +380,9 @@ namespace engine::server
 
 		// M32.1 — FriendSystem runs in no-DB mode on WIN32 (presence tracking only).
 		m_friendSystem.Init(nullptr);
+		// Présence unifiée : FriendSystem consulte l'autorité unique (par character_id)
+		// au lieu de tenir sa propre map de présence.
+		m_friendSystem.SetPresenceService(&m_shardPresence);
 
 		// M32.2 — PartySystem (in-memory, no DB dependency).
 		m_partySystem.Init();
@@ -1203,6 +1206,9 @@ namespace engine::server
 			{
 				const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
 					std::chrono::steady_clock::now().time_since_epoch()).count());
+				// Présence unifiée : résout le compte propriétaire (clé de ShardPresenceService).
+				acceptedClient.accountId = m_admittedRegistry->AdmittedAccountId(
+					acceptedClient.persistenceCharacterKey, nowMs);
 				if (acceptedClient.characterName.empty())
 				{
 					std::string admittedName = m_admittedRegistry->AdmittedCharacterName(
@@ -1463,43 +1469,24 @@ namespace engine::server
 				m_clients.size(),
 				m_transport.ReceivedPacketCount(),
 				m_transport.SentPacketCount());
-
-			// Présence enrichie (web-portal) : republie le snapshot des joueurs en jeu à
-			// ~1 Hz (suffisant pour un affichage admin, et évite de reconstruire à chaque
-			// tick). Construit ici sur le thread gameplay (accès direct à m_clients), puis
-			// publié sous mutex pour lecture par GetPlayerPresenceSnapshot (autre thread).
-			std::vector<engine::network::ShardPlayerPresence> snapshot;
-			snapshot.reserve(m_clients.size());
-			const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
-				std::chrono::steady_clock::now().time_since_epoch()).count());
-			for (const auto& client : m_clients)
-			{
-				const uint64_t characterId = client.persistenceCharacterKey;
-				if (characterId == 0u)
-					continue;
-				uint64_t accountId = 0u;
-				if (m_admittedRegistry != nullptr)
-					accountId = m_admittedRegistry->AdmittedAccountId(characterId, nowMs);
-				if (accountId == 0u)
-					continue; // accountId non résolu (registre absent / expiré) : omis.
-				engine::network::ShardPlayerPresence p;
-				p.accountId = accountId;
-				p.characterId = characterId;
-				p.level = client.level;
-				p.zoneId = client.zoneId;
-				snapshot.push_back(p);
-			}
-			{
-				std::lock_guard<std::mutex> lock(m_presenceMutex);
-				m_presenceSnapshot = std::move(snapshot);
-			}
 		}
 	}
 
 	std::vector<engine::network::ShardPlayerPresence> ServerApp::GetPlayerPresenceSnapshot() const
 	{
-		std::lock_guard<std::mutex> lock(m_presenceMutex);
-		return m_presenceSnapshot;
+		// Source unique : ShardPresenceService (Niveau 1). Alimenté aux hooks
+		// login/logout/zone ; thread-safe. On projette ses entrées sur le format wire.
+		std::vector<engine::network::ShardPlayerPresence> out;
+		for (const auto& e : m_shardPresence.Snapshot())
+		{
+			engine::network::ShardPlayerPresence p;
+			p.accountId = e.accountId;
+			p.characterId = e.characterId;
+			p.level = e.level;
+			p.zoneId = e.zoneId;
+			out.push_back(p);
+		}
+		return out;
 	}
 
 	void ServerApp::Simulate()
@@ -2501,6 +2488,10 @@ namespace engine::server
 		}
 
 		client.zoneId = zoneChange.zoneId;
+		// Présence unifiée : maintient la zone à jour pour le snapshot master / amis
+		// (même clé de repli qu'au login : account_id, sinon character_id).
+		m_shardPresence.UpdateZone(client.accountId != 0 ? client.accountId
+			: static_cast<uint64_t>(client.persistenceCharacterKey), client.zoneId);
 		client.positionMetersX = zoneChange.spawnPositionX;
 		client.positionMetersY = zoneChange.spawnPositionY;
 		client.positionMetersZ = zoneChange.spawnPositionZ;
@@ -4851,19 +4842,25 @@ namespace engine::server
 
 	void ServerApp::OnClientLogin(ConnectedClient& client)
 	{
+		// Présence unifiée (Niveau 1) : autorité UNIQUE. On y inscrit le joueur (clé
+		// account_id + index character_id) ; FriendSystem et le snapshot heartbeat la
+		// consultent. Remplace l'ancien FriendSystem.SetPresence (map dédiée supprimée).
+		// Repli : sur build sans gate d'admission (WIN32 no-DB), accountId n'est pas
+		// résolu (0) — on clé alors sur le character_id pour préserver la présence amis
+		// (le snapshot master n'est de toute façon pas consommé sur ces builds).
+		const uint64_t presenceKey = client.accountId != 0 ? client.accountId
+			: static_cast<uint64_t>(client.persistenceCharacterKey);
+		m_shardPresence.SetOnline(presenceKey, client.persistenceCharacterKey,
+			client.characterName, client.level, client.zoneId, PresenceStatus::Online);
+
 		if (!m_friendSystem.IsInitialized())
 			return;
-
-		const std::string playerLabel = "P" + std::to_string(client.clientId);
-		m_friendSystem.SetPresence(
-			static_cast<uint64_t>(client.persistenceCharacterKey),
-			playerLabel,
-			PresenceStatus::Online);
 
 		SendFriendListSync(client);
 		BroadcastFriendStatusUpdate(client, PresenceStatus::Online);
 
-		LOG_INFO(Net, "[ServerApp] OnClientLogin: friend presence set online (client_id={})", client.clientId);
+		LOG_INFO(Net, "[ServerApp] OnClientLogin: presence set online (client_id={}, account_id={})",
+			client.clientId, client.accountId);
 	}
 
 	void ServerApp::OnClientLogout(const ConnectedClient& client)
@@ -4883,13 +4880,16 @@ namespace engine::server
 			}
 		}
 
-		if (!m_friendSystem.IsInitialized())
-			return;
+		if (m_friendSystem.IsInitialized())
+			BroadcastFriendStatusUpdate(client, PresenceStatus::Offline);
 
-		BroadcastFriendStatusUpdate(client, PresenceStatus::Offline);
-		m_friendSystem.SetOffline(static_cast<uint64_t>(client.persistenceCharacterKey));
+		// Présence unifiée : retire le joueur (même clé de repli qu'au login).
+		const uint64_t presenceKey = client.accountId != 0 ? client.accountId
+			: static_cast<uint64_t>(client.persistenceCharacterKey);
+		m_shardPresence.SetOffline(presenceKey);
 
-		LOG_INFO(Net, "[ServerApp] OnClientLogout: friend presence cleared (client_id={})", client.clientId);
+		LOG_INFO(Net, "[ServerApp] OnClientLogout: presence cleared (client_id={}, account_id={})",
+			client.clientId, client.accountId);
 	}
 
 	void ServerApp::SendFriendListSync(const ConnectedClient& receiver)

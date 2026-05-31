@@ -9,18 +9,28 @@ namespace engine::server
 			return;
 		std::lock_guard lock(m_mutex);
 		Entry& e = m_byAccount[accountId];
+		// Si ce compte était associé à un autre character_id, purge l'ancien index.
+		if (e.characterId != 0 && e.characterId != characterId)
+			m_accountByCharacter.erase(e.characterId);
 		e.accountId = accountId;
 		e.characterId = characterId;
 		e.characterName = std::move(characterName);
 		e.level = level;
 		e.zoneId = zoneId;
 		e.status = status;
+		if (characterId != 0)
+			m_accountByCharacter[characterId] = accountId;
 	}
 
 	void ShardPresenceService::SetOffline(uint64_t accountId)
 	{
 		std::lock_guard lock(m_mutex);
-		m_byAccount.erase(accountId);
+		auto it = m_byAccount.find(accountId);
+		if (it == m_byAccount.end())
+			return;
+		if (it->second.characterId != 0)
+			m_accountByCharacter.erase(it->second.characterId);
+		m_byAccount.erase(it);
 	}
 
 	void ShardPresenceService::UpdateZone(uint64_t accountId, uint32_t zoneId)
@@ -70,6 +80,35 @@ namespace engine::server
 		{
 			if (m_byAccount.find(id) != m_byAccount.end())
 				out.push_back(id);
+		}
+		return out;
+	}
+
+	bool ShardPresenceService::IsCharacterOnline(uint64_t characterId) const
+	{
+		std::lock_guard lock(m_mutex);
+		return m_accountByCharacter.find(characterId) != m_accountByCharacter.end();
+	}
+
+	PresenceStatus ShardPresenceService::GetStatusByCharacter(uint64_t characterId) const
+	{
+		std::lock_guard lock(m_mutex);
+		auto it = m_accountByCharacter.find(characterId);
+		if (it == m_accountByCharacter.end())
+			return PresenceStatus::Offline;
+		auto acc = m_byAccount.find(it->second);
+		return acc != m_byAccount.end() ? acc->second.status : PresenceStatus::Offline;
+	}
+
+	std::vector<uint64_t> ShardPresenceService::OnlineCharacterIdsAmong(const std::vector<uint64_t>& candidateCharacterIds) const
+	{
+		std::lock_guard lock(m_mutex);
+		std::vector<uint64_t> out;
+		out.reserve(candidateCharacterIds.size());
+		for (uint64_t cid : candidateCharacterIds)
+		{
+			if (m_accountByCharacter.find(cid) != m_accountByCharacter.end())
+				out.push_back(cid);
 		}
 		return out;
 	}

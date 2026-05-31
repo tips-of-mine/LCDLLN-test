@@ -61,8 +61,19 @@ namespace engine::server
 		/// Copie de l'entrée pour \p accountId, ou nullopt si absent.
 		std::optional<Entry> Get(uint64_t accountId) const;
 
-		/// Sous-ensemble de \p candidates actuellement en ligne (pour amis/guilde).
+		/// Sous-ensemble de \p candidates (account_ids) actuellement en ligne.
 		std::vector<uint64_t> OnlineAccountIdsAmong(const std::vector<uint64_t>& candidates) const;
+
+		// --- Index secondaire par character_id (consommateurs identifiant par perso : amis) ---
+
+		/// True si le \p characterId est connecté à ce shard.
+		bool IsCharacterOnline(uint64_t characterId) const;
+
+		/// Statut de présence par character_id (\ref PresenceStatus::Offline si inconnu).
+		PresenceStatus GetStatusByCharacter(uint64_t characterId) const;
+
+		/// Sous-ensemble de \p candidateCharacterIds actuellement en ligne (pour FriendSystem).
+		std::vector<uint64_t> OnlineCharacterIdsAmong(const std::vector<uint64_t>& candidateCharacterIds) const;
 
 		/// Copie de toutes les entrées (source du snapshot heartbeat → master).
 		std::vector<Entry> Snapshot() const;
@@ -70,5 +81,7 @@ namespace engine::server
 	private:
 		mutable std::mutex m_mutex;
 		std::unordered_map<uint64_t, Entry> m_byAccount;
+		/// Index secondaire : character_id → account_id (pour les lookups par perso).
+		std::unordered_map<uint64_t, uint64_t> m_accountByCharacter;
 	};
 }

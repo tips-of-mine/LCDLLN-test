@@ -15,6 +15,8 @@ struct MYSQL;
 
 namespace engine::server
 {
+	class ShardPresenceService;
+
 	/// Friendship record loaded from the DB (one directed row).
 	struct FriendRecord
 	{
@@ -25,15 +27,7 @@ namespace engine::server
 		std::string      friendName;
 	};
 
-	/// Presence entry held in-memory for one connected player.
-	struct FriendPresenceEntry
-	{
-		uint64_t       playerId = 0;
-		std::string    playerName;
-		PresenceStatus presence = PresenceStatus::Offline;
-	};
-
-	/// Server-side friend and presence manager (M32.1).
+	/// Server-side friend manager (M32.1).
 	///
 	/// Handles /friend add, /friend accept, /friend decline, /friend remove,
 	/// bilateral DB persistence, per-player rate limiting (≤5 requests/60 s),
@@ -91,17 +85,16 @@ namespace engine::server
 		                  MYSQL*           mysql);
 
 		// ------------------------------------------------------------------
-		// Presence tracking
+		// Presence (déléguée à l'autorité unique ShardPresenceService)
 		// ------------------------------------------------------------------
 
-		/// Mark a player as online (call on successful login).
-		void SetPresence(uint64_t playerId, std::string_view playerName, PresenceStatus status);
+		/// Injecte l'autorité de présence (Niveau 1). À appeler après Init.
+		/// FriendSystem ne tient plus de map de présence : il interroge ce service
+		/// par character_id (l'identité joueur des amis = id de personnage).
+		void SetPresenceService(ShardPresenceService* presence) { m_presenceService = presence; }
 
-		/// Mark a player as offline (call on disconnect/logout).
-		void SetOffline(uint64_t playerId);
-
-		/// Return the current presence for \p playerId (Offline when unknown).
-		PresenceStatus GetPresence(uint64_t playerId) const;
+		/// Présence d'un \p characterId (Offline si inconnu ou service non câblé).
+		PresenceStatus GetPresence(uint64_t characterId) const;
 
 		// ------------------------------------------------------------------
 		// Queries
@@ -129,8 +122,9 @@ namespace engine::server
 
 		bool m_initialized = false;
 
-		/// In-memory presence map: account_id → FriendPresenceEntry.
-		std::unordered_map<uint64_t, FriendPresenceEntry> m_presence;
+		/// Autorité de présence (Niveau 1), non possédée. Nul = présence indisponible
+		/// (GetPresence renvoie Offline, GetOnlineFriendIds renvoie vide).
+		ShardPresenceService* m_presenceService = nullptr;
 
 		/// Per-player request timestamps for rate limiting.
 		std::unordered_map<uint64_t, std::deque<Clock::time_point>> m_requestRateLimit;

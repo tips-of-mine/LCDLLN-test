@@ -79,11 +79,35 @@ static void TestOnlineAmongAndSnapshot()
 	Assert(e && e->characterId == 101 && e->zoneId == 7, "re-SetOnline remplace l'entree");
 }
 
+static void TestCharacterIndex()
+{
+	ShardPresenceService svc;
+	svc.SetOnline(/*account*/10, /*character*/1000, "Alyx", 5, 3);
+	Assert(svc.IsCharacterOnline(1000), "IsCharacterOnline true pour perso connecté");
+	Assert(!svc.IsCharacterOnline(9999), "IsCharacterOnline false pour perso inconnu");
+	Assert(svc.GetStatusByCharacter(1000) == PresenceStatus::Online, "GetStatusByCharacter Online");
+	Assert(svc.GetStatusByCharacter(9999) == PresenceStatus::Offline, "GetStatusByCharacter inconnu => Offline");
+
+	auto online = svc.OnlineCharacterIdsAmong({ 1000, 2000 });
+	Assert(online.size() == 1 && online[0] == 1000, "OnlineCharacterIdsAmong filtre par perso");
+
+	// SetOffline purge aussi l'index character_id.
+	svc.SetOffline(10);
+	Assert(!svc.IsCharacterOnline(1000), "SetOffline purge l'index character");
+
+	// Changement de perso pour le même compte : l'ancien character sort de l'index.
+	svc.SetOnline(10, 1000, "Alyx", 5, 3);
+	svc.SetOnline(10, 1001, "Alyx2", 6, 4);
+	Assert(!svc.IsCharacterOnline(1000), "ancien character purgé apres changement");
+	Assert(svc.IsCharacterOnline(1001), "nouveau character indexé");
+}
+
 int main()
 {
 	TestOnlineOfflineAndGet();
 	TestUpdateZoneLevel();
 	TestOnlineAmongAndSnapshot();
+	TestCharacterIndex();
 	std::cerr << (s_failCount == 0 ? "[OK] all shard_presence_service tests passed\n" : "[FAIL] some tests failed\n");
 	return s_failCount == 0 ? 0 : 1;
 }

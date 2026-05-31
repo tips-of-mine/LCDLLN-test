@@ -7,6 +7,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace engine::server
 {
@@ -23,6 +24,7 @@ namespace engine::server
 	public:
 		struct CharacterInfo
 		{
+			uint64_t    accountId = 0;        ///< Compte propriétaire (pour la présence "en jeu" exposée au web-portal).
 			uint64_t    characterId = 0;
 			std::string characterName;        ///< Original UTF-8, displayed as-is.
 			std::string normalizedName;       ///< Lowercased ASCII for whisper target match.
@@ -43,8 +45,9 @@ namespace engine::server
 		/// Register or update the active character for \a connId.
 		/// Removes any previous binding for the same connId and any name → conn binding
 		/// that pointed at the old name (consistency under updates).
-		void Set(uint32_t connId, uint64_t characterId, std::string characterName, std::string normalizedName,
-			AccountRole role);
+		/// \param accountId compte propriétaire (présence "en jeu" exposée au web-portal).
+		void Set(uint32_t connId, uint64_t accountId, uint64_t characterId, std::string characterName,
+			std::string normalizedName, AccountRole role);
 
 		/// Drop the binding for \a connId (call on connection close).
 		void Remove(uint32_t connId);
@@ -58,6 +61,12 @@ namespace engine::server
 		/// Nombre de joueurs ayant valide EnterWorld (connId actuellement en jeu).
 		/// Utilise par l'API /status pour le compteur totalPlayers / per-shard players.
 		size_t Count() const;
+
+		/// Liste dédupliquée des accountId actuellement en jeu (post-EnterWorld).
+		/// Utilisée par l'API HTTP /online-accounts (champ "inWorld") consommée par le
+		/// web-portal pour la pastille "en jeu". L'ordre n'est pas garanti. Un compte
+		/// n'apparaît qu'une fois même s'il avait (théoriquement) plusieurs connId.
+		std::vector<uint64_t> ListInWorldAccountIds() const;
 
 		/// Ventilation de \ref Count() par rôle de compte. Utilisé par l'API /status
 		/// pour les sous-compteurs players_by_role.

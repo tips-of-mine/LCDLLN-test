@@ -25,6 +25,15 @@ npm run dev
 
 Build production : `npm run build` puis `npm start` ou image Docker.
 
+## Variables d'environnement
+
+- `DATABASE_URL` — connexion MySQL `lcdlln_master` (obligatoire).
+- `SMTP_*` — configuration e-mail (récupération mot de passe, vérification, CGU).
+- `MASTER_STATUS_URL` *(optionnelle)* — URL de base du HealthEndpoint du master
+  (ex. `http://127.0.0.1:3842`). Sert à afficher la pastille « en ligne » dans
+  **Admin → Gestion des joueurs** (route `GET /online-accounts`). Si absente ou
+  master injoignable : dégradation gracieuse, aucune pastille (page fonctionnelle).
+
 ## Base de données
 
 - CGU : `terms_editions`, `terms_localizations`, `account_terms_acceptances` (migration `0007`).

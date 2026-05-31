@@ -26,11 +26,14 @@ namespace engine::server
 	/// \param metricsProvider Optional. Called for GET /metrics; returns Prometheus text (M23.2). If null, /metrics returns 404.
 	/// \param statusProvider Optional. Called for GET /status; returns JSON body. If null, /status returns 404.
 	/// \param webPortalStatusHtmlProvider Optional. Called for GET /web-portal/status; returns HTML page. If null, returns 404.
+	/// \param onlineAccountsProvider Optional. Called for GET /online-accounts; returns JSON body
+	///        (ex. {"authenticated":[...],"inWorld":[...]}). If null, /online-accounts returns 404.
 		/// \return true if listen socket created and thread started; false on error.
 		bool Init(uint16_t port, const std::string& bindAddress, std::function<bool()> readyCheck,
 		std::function<std::string()> metricsProvider = nullptr,
 		std::function<std::string()> statusProvider = nullptr,
-		std::function<std::string()> webPortalStatusHtmlProvider = nullptr);
+		std::function<std::string()> webPortalStatusHtmlProvider = nullptr,
+		std::function<std::string()> onlineAccountsProvider = nullptr);
 
 		/// Stops the server thread and closes the listen socket. Safe to call multiple times.
 		void Shutdown();
@@ -45,6 +48,7 @@ namespace engine::server
 		std::function<std::string()> m_metricsProvider;
 		std::function<std::string()> m_statusProvider;
 		std::function<std::string()> m_webPortalStatusHtmlProvider;
+		std::function<std::string()> m_onlineAccountsProvider;
 		std::atomic<bool> m_running{ false };
 		std::thread m_thread;
 		std::atomic<bool> m_lastReady{ false };

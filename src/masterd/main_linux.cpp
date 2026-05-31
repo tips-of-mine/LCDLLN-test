@@ -95,8 +95,10 @@
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <string>
 #include <string_view>
 #include <thread>
+#include <vector>
 
 namespace
 {
@@ -1373,7 +1375,38 @@ int main(int argc, char** argv)
 		return html;
 	};
 
-	if (healthEndpoint.Init(healthPort, healthBind, readyCheck, metricsProvider, statusProvider, webPortalStatusHtmlProvider))
+	// Présence "en ligne" exposée au web-portal (pastille admin). Deux listes :
+	//  - authenticated : comptes avec une session master active (login jeu réussi,
+	//    éventuellement encore au menu de sélection de personnage).
+	//  - inWorld        : comptes ayant validé EnterWorld (réellement en jeu).
+	// Source 100% en mémoire master, aucune persistance DB. Le portail interroge
+	// cette route en server-side et dégrade gracieusement si le master est injoignable.
+	auto onlineAccountsProvider = [&sessionManager, &sessionCharMap]() -> std::string {
+		auto appendJsonArray = [](std::string& out, const std::vector<uint64_t>& ids) {
+			out += "[";
+			for (size_t i = 0; i < ids.size(); ++i)
+			{
+				if (i != 0)
+					out += ",";
+				out += std::to_string(ids[i]);
+			}
+			out += "]";
+		};
+
+		const std::vector<uint64_t> authenticated = sessionManager.ListActiveAccountIds();
+		const std::vector<uint64_t> inWorld = sessionCharMap.ListInWorldAccountIds();
+
+		std::string body;
+		body.reserve(32 + (authenticated.size() + inWorld.size()) * 12);
+		body += "{\"authenticated\":";
+		appendJsonArray(body, authenticated);
+		body += ",\"inWorld\":";
+		appendJsonArray(body, inWorld);
+		body += "}";
+		return body;
+	};
+
+	if (healthEndpoint.Init(healthPort, healthBind, readyCheck, metricsProvider, statusProvider, webPortalStatusHtmlProvider, onlineAccountsProvider))
 		LOG_INFO(Net, "[ServerMain] Health endpoint listening on {}:{} (/healthz, /readyz, /metrics)", healthBind, healthPort);
 	else
 		LOG_WARN(Net, "[ServerMain] Health endpoint Init failed (port {}), continuing without health endpoint", healthPort);

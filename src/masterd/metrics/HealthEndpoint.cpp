@@ -32,13 +32,14 @@ namespace engine::server
 			}
 		}
 
-		bool ParseRequestLine(const char* line, size_t len, bool& outHealthz, bool& outReadyz, bool& outMetrics, bool& outStatus, bool& outWebPortalStatus)
+		bool ParseRequestLine(const char* line, size_t len, bool& outHealthz, bool& outReadyz, bool& outMetrics, bool& outStatus, bool& outWebPortalStatus, bool& outOnlineAccounts)
 		{
 			outHealthz = false;
 			outReadyz = false;
 			outMetrics = false;
 			outStatus = false;
 			outWebPortalStatus = false;
+			outOnlineAccounts = false;
 			if (len < 14)
 				return false;
 			if (std::strncmp(line, "GET ", 4) != 0)
@@ -70,6 +71,11 @@ namespace engine::server
 			if (pathLen == 18 && std::strncmp(path, "/web-portal/status", 18) == 0)
 			{
 				outWebPortalStatus = true;
+				return true;
+			}
+			if (pathLen == 16 && std::strncmp(path, "/online-accounts", 16) == 0)
+			{
+				outOnlineAccounts = true;
 				return true;
 			}
 			return false;
@@ -114,7 +120,7 @@ namespace engine::server
 
 	bool HealthEndpoint::Init(uint16_t port, const std::string& bindAddress, std::function<bool()> readyCheck,
 		std::function<std::string()> metricsProvider, std::function<std::string()> statusProvider,
-		std::function<std::string()> webPortalStatusHtmlProvider)
+		std::function<std::string()> webPortalStatusHtmlProvider, std::function<std::string()> onlineAccountsProvider)
 	{
 		if (m_running.load(std::memory_order_relaxed))
 		{
@@ -126,6 +132,7 @@ namespace engine::server
 		m_metricsProvider = std::move(metricsProvider);
 		m_statusProvider = std::move(statusProvider);
 		m_webPortalStatusHtmlProvider = std::move(webPortalStatusHtmlProvider);
+		m_onlineAccountsProvider = std::move(onlineAccountsProvider);
 
 		m_listenFd = ::socket(AF_INET, SOCK_STREAM, 0);
 		if (m_listenFd < 0)
@@ -249,9 +256,22 @@ namespace engine::server
 			bool metrics = false;
 			bool status = false;
 			bool webPortalStatus = false;
-			bool valid = ParseRequestLine(buf, static_cast<size_t>(n), healthz, readyz, metrics, status, webPortalStatus);
+			bool onlineAccounts = false;
+			bool valid = ParseRequestLine(buf, static_cast<size_t>(n), healthz, readyz, metrics, status, webPortalStatus, onlineAccounts);
 
-			if (valid && webPortalStatus)
+			if (valid && onlineAccounts)
+			{
+				if (m_onlineAccountsProvider)
+				{
+					std::string body = m_onlineAccountsProvider();
+					SendResponse(clientFd, 200, "OK", "application/json", body.empty() ? "{\"authenticated\":[],\"inWorld\":[]}" : body.c_str());
+				}
+				else
+				{
+					SendResponse(clientFd, 404, "Not Found", "application/json", "{\"status\":\"error\",\"reason\":\"online-accounts not configured\"}");
+				}
+			}
+			else if (valid && webPortalStatus)
 			{
 				if (m_webPortalStatusHtmlProvider)
 				{

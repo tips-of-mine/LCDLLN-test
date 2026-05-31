@@ -6,9 +6,11 @@
 #include "src/masterd/session/SessionCharacterMap.h"
 #include "src/masterd/account/AccountRole.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace
 {
@@ -20,6 +22,11 @@ namespace
 			++s_failCount;
 			std::cerr << "[FAIL] " << msg << std::endl;
 		}
+	}
+
+	bool Contains(const std::vector<uint64_t>& v, uint64_t value)
+	{
+		return std::find(v.begin(), v.end(), value) != v.end();
 	}
 }
 
@@ -40,12 +47,13 @@ static void TestNormalize()
 static void TestSetAndLookup()
 {
 	SessionCharacterMap m;
-	m.Set(42u, 1001ull, "Alyx", "alyx", AccountRole::GameMaster);
+	m.Set(42u, 5001ull, 1001ull, "Alyx", "alyx", AccountRole::GameMaster);
 
 	auto byConn = m.GetByConnId(42u);
 	Assert(byConn.has_value(), "GetByConnId returns set value");
 	if (byConn)
 	{
+		Assert(byConn->accountId == 5001ull, "accountId round-trips");
 		Assert(byConn->characterId == 1001ull, "characterId round-trips");
 		Assert(byConn->characterName == "Alyx", "characterName round-trips");
 		Assert(byConn->normalizedName == "alyx", "normalizedName round-trips");
@@ -62,7 +70,7 @@ static void TestSetAndLookup()
 static void TestRemoveCleansBothMaps()
 {
 	SessionCharacterMap m;
-	m.Set(7u, 999ull, "Alyx", "alyx", AccountRole::Player);
+	m.Set(7u, 5007ull, 999ull, "Alyx", "alyx", AccountRole::Player);
 	m.Remove(7u);
 
 	Assert(!m.GetByConnId(7u).has_value(), "Remove drops connId binding");
@@ -76,8 +84,8 @@ static void TestUpdateOldNameIsDropped()
 	// perso post-logout/re-login sur la même connexion), l'ancien nom doit
 	// disparaître du whisper directory.
 	SessionCharacterMap m;
-	m.Set(11u, 100ull, "Alyx", "alyx", AccountRole::Player);
-	m.Set(11u, 200ull, "Bob", "bob", AccountRole::Player);
+	m.Set(11u, 1100ull, 100ull, "Alyx", "alyx", AccountRole::Player);
+	m.Set(11u, 1100ull, 200ull, "Bob", "bob", AccountRole::Player);
 
 	auto byConn = m.GetByConnId(11u);
 	Assert(byConn && byConn->characterName == "Bob", "Update overwrites characterName");
@@ -91,8 +99,8 @@ static void TestUpdateOldNameIsDropped()
 static void TestTwoConnectionsDifferentNames()
 {
 	SessionCharacterMap m;
-	m.Set(1u, 100ull, "Alyx", "alyx", AccountRole::Player);
-	m.Set(2u, 200ull, "Bob",  "bob", AccountRole::Player);
+	m.Set(1u, 101ull, 100ull, "Alyx", "alyx", AccountRole::Player);
+	m.Set(2u, 102ull, 200ull, "Bob",  "bob", AccountRole::Player);
 
 	auto a = m.FindConnByNormalizedName("alyx");
 	auto b = m.FindConnByNormalizedName("bob");
@@ -109,11 +117,11 @@ static void TestCountAndCountByRole()
 	SessionCharacterMap m;
 	Assert(m.Count() == 0u, "Count empty == 0");
 
-	m.Set(1u, 100ull, "Alyx", "alyx", AccountRole::Player);
-	m.Set(2u, 200ull, "Bob", "bob", AccountRole::Player);
-	m.Set(3u, 300ull, "Mod", "mod", AccountRole::Moderator);
-	m.Set(4u, 400ull, "Gm", "gm", AccountRole::GameMaster);
-	m.Set(5u, 500ull, "Admin", "admin", AccountRole::Administrator);
+	m.Set(1u, 201ull, 100ull, "Alyx", "alyx", AccountRole::Player);
+	m.Set(2u, 202ull, 200ull, "Bob", "bob", AccountRole::Player);
+	m.Set(3u, 203ull, 300ull, "Mod", "mod", AccountRole::Moderator);
+	m.Set(4u, 204ull, 400ull, "Gm", "gm", AccountRole::GameMaster);
+	m.Set(5u, 205ull, 500ull, "Admin", "admin", AccountRole::Administrator);
 
 	Assert(m.Count() == 5u, "Count == 5 after 5 Set");
 
@@ -126,7 +134,7 @@ static void TestCountAndCountByRole()
 		"CountByRole sums to Count");
 
 	// Une mise à jour du même connId vers un autre rôle ne double-compte pas.
-	m.Set(3u, 300ull, "Mod", "mod", AccountRole::Administrator);
+	m.Set(3u, 203ull, 300ull, "Mod", "mod", AccountRole::Administrator);
 	auto rc2 = m.CountByRole();
 	Assert(rc2.moderator == 0u, "CountByRole moderator == 0 after role change");
 	Assert(rc2.administrator == 2u, "CountByRole administrator == 2 after role change");
@@ -138,6 +146,31 @@ static void TestCountAndCountByRole()
 	Assert(m.Count() == 4u, "Count == 4 after Remove");
 }
 
+static void TestListInWorldAccountIds()
+{
+	SessionCharacterMap m;
+	Assert(m.ListInWorldAccountIds().empty(), "ListInWorldAccountIds empty == {}");
+
+	m.Set(1u, 201ull, 100ull, "Alyx", "alyx", AccountRole::Player);
+	m.Set(2u, 202ull, 200ull, "Bob", "bob", AccountRole::GameMaster);
+
+	auto ids = m.ListInWorldAccountIds();
+	Assert(ids.size() == 2u, "ListInWorldAccountIds size == 2");
+	Assert(Contains(ids, 201ull), "ListInWorldAccountIds contains 201");
+	Assert(Contains(ids, 202ull), "ListInWorldAccountIds contains 202");
+
+	// Le même compte sur deux connId (cas théorique) ne doit apparaître qu'une fois.
+	m.Set(3u, 201ull, 300ull, "Alyx2", "alyx2", AccountRole::Player);
+	auto idsDedup = m.ListInWorldAccountIds();
+	Assert(idsDedup.size() == 2u, "ListInWorldAccountIds dedup same account");
+	Assert(std::count(idsDedup.begin(), idsDedup.end(), 201ull) == 1, "account 201 appears once");
+
+	m.Remove(2u);
+	auto idsAfter = m.ListInWorldAccountIds();
+	Assert(!Contains(idsAfter, 202ull), "ListInWorldAccountIds drops removed account");
+	Assert(Contains(idsAfter, 201ull), "ListInWorldAccountIds keeps account 201 (still on conn 1/3)");
+}
+
 int main()
 {
 	TestNormalize();
@@ -146,6 +179,7 @@ int main()
 	TestUpdateOldNameIsDropped();
 	TestTwoConnectionsDifferentNames();
 	TestCountAndCountByRole();
+	TestListInWorldAccountIds();
 	std::cerr << (s_failCount == 0 ? "[OK] all session_character_map tests passed\n" : "[FAIL] some tests failed\n");
 	return s_failCount == 0 ? 0 : 1;
 }

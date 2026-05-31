@@ -19,6 +19,7 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/main_win.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerProtocol.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
@@ -859,6 +860,16 @@ elseif(UNIX)
   target_compile_options(shard_payloads_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME shard_payloads_tests COMMAND shard_payloads_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # Présence unifiée (Niveau 1) : ShardPresenceService — présence shard-locale.
+  add_executable(shard_presence_service_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceServiceTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
+  )
+  target_include_directories(shard_presence_service_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(shard_presence_service_tests PRIVATE pthread)
+  target_compile_options(shard_presence_service_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME shard_presence_service_tests COMMAND shard_presence_service_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # M22.5: Server list and shard selection policy tests
   add_executable(server_list_policy_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ServerListPolicyTests.cpp
@@ -929,6 +940,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/SpatialPartition.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/GridState.cpp

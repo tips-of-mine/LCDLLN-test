@@ -9,8 +9,9 @@ import { PlayerActions, type PlayerRow } from '@/components/admin/PlayerActions'
 import { fetchOnlineAccounts, presenceFor, type PlayerPresence, type OnlinePlayer } from '@/lib/serverStatus'
 import { regionName } from '@/lib/zones'
 
-/** Pastille de présence affichée à droite du nom du joueur (3 états).
- *  Le tooltip est enrichi (perso / niveau / région) si l'info est disponible. */
+/** Pastille de présence (vert clair, pleine) à droite du nom : affichée si en
+ *  ligne (en jeu OU connecté au menu), masquée si hors ligne. L'état précis et les
+ *  infos perso/niveau/région sont dans l'infobulle. */
 function PresenceDot({ presence, detail }: { presence: PlayerPresence; detail?: OnlinePlayer }) {
   if (presence === 'offline') return null
   const inWorld = presence === 'in_world'
@@ -23,19 +24,22 @@ function PresenceDot({ presence, detail }: { presence: PlayerPresence; detail?: 
     if (detail.zoneId != null) parts.push(regionName(detail.zoneId))
     if (parts.length > 0) title = `${base} — ${parts.join(' • ')}`
   }
+  // Vert bien clair, pastille PLEINE pour les deux états en ligne (plus de cercle
+  // creux). La distinction en jeu / connecté reste dans l'infobulle ; en jeu garde
+  // un halo un peu plus marqué comme indice visuel léger.
+  const brightGreen = '#5BE89A'
   return (
     <span
       title={title}
       aria-label={title}
       style={{
         display: 'inline-block',
-        width: 9,
-        height: 9,
+        width: 10,
+        height: 10,
         borderRadius: '50%',
         flexShrink: 0,
-        background: inWorld ? 'var(--ln-success)' : 'transparent',
-        border: `1.5px solid var(--ln-success)`,
-        boxShadow: inWorld ? '0 0 5px rgba(95,184,110,.6)' : 'none',
+        background: brightGreen,
+        boxShadow: inWorld ? '0 0 6px rgba(91,232,154,.8)' : '0 0 3px rgba(91,232,154,.5)',
       }}
     />
   )

@@ -878,6 +878,16 @@ elseif(UNIX)
   target_compile_options(shard_presence_service_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME shard_presence_service_tests COMMAND shard_presence_service_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # Présence unifiée (Niveau 2) : ShardPlayerPresenceCache — agrégat master.
+  add_executable(shard_player_presence_cache_tests
+    ${CMAKE_SOURCE_DIR}/src/masterd/shards/ShardPlayerPresenceCacheTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/shards/ShardPlayerPresenceCache.cpp
+  )
+  target_include_directories(shard_player_presence_cache_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(shard_player_presence_cache_tests PRIVATE pthread)
+  target_compile_options(shard_player_presence_cache_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME shard_player_presence_cache_tests COMMAND shard_player_presence_cache_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # M22.5: Server list and shard selection policy tests
   add_executable(server_list_policy_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ServerListPolicyTests.cpp

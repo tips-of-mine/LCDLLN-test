@@ -72,25 +72,21 @@ void main()
 {
     vec2 screenUv = gl_FragCoord.xy / pc.screenSize;
 
-    // ── Occlusion de profondeur ──────────────────────────────────────────────
+    // ── Occlusion de profondeur (en espace LINEAIRE / metres) ────────────────
     // La passe water dessine dans PostWater SANS depth-attachment. On teste donc
-    // MANUELLEMENT la profondeur du fragment d'eau (gl_FragCoord.z, deja en [0,1]
-    // sous Vulkan) contre la profondeur de la scene opaque (u_sceneDepth) :
-    //  - si une surface opaque est DEVANT l'eau (profondeur plus PETITE = plus
-    //    proche camera), on jette le fragment -> empeche l'eau de se peindre
-    //    par-dessus le joueur / le terrain situes devant la nappe (bug observe :
-    //    "l'eau coupe le joueur alors qu'il n'est pas dans l'eau").
-    //  - le FOND du bassin est PLUS LOIN que la surface -> non rejete -> l'eau
-    //    reste bien visible a l'interieur du bol creuse.
-    // Bias VOLONTAIREMENT large (2.5e-3) : a distance la profondeur sature
-    // (projection near 0.05 / far 1000) et le bruit de quantification du depth
-    // buffer faisait clignoter le test -> l'eau disparaissait par plaques et le
-    // bord du bassin "vibrait" (bug observe). On ne jette donc le fragment QUE si
-    // l'occludeur est NETTEMENT devant (marge 2.5e-3) : le joueur (tres proche)
-    // occulte toujours l'eau, mais le fond/bord du bassin (a profondeur quasi
-    // egale) ne declenche plus de faux rejet -> nappe stable.
-    float occluderDepth = texture(u_sceneDepth, screenUv).r;
-    if (occluderDepth < gl_FragCoord.z - 2.5e-3)
+    // MANUELLEMENT la profondeur du fragment d'eau contre la scene opaque
+    // (u_sceneDepth). IMPORTANT : on compare en DISTANCES LINEAIRES (metres) et
+    // non en depth brut [0,1]. Un bias en depth brut etait soit trop petit
+    // (scintillement a distance) soit trop grand (l'eau "bavait" sur la rive et
+    // formait des plaques blanches au loin). En metres, un bias uniforme de
+    // 15 cm regle les deux : la rive (~1 m au-dessus de l'eau) est nettement
+    // rejetee (pas de debordement), et le bruit de precision (qq cm) ne fait
+    // plus clignoter. Si une surface opaque est devant l'eau de plus de 15 cm
+    // (joueur, terrain) -> discard ; le fond du bassin (plus loin) est conserve.
+    float occluderDepth  = texture(u_sceneDepth, screenUv).r;
+    float surfaceDist    = linearizeDepth(gl_FragCoord.z);   // distance camera->surface eau
+    float bottomDist     = linearizeDepth(occluderDepth);    // distance camera->fond opaque
+    if (bottomDist < surfaceDist - 0.15)
         discard;
 
     // Flow effective : prend la direction per-vertex (rivière) ou le push constant (lac).
@@ -136,8 +132,7 @@ void main()
     // fond sableux via la refraction), epais -> bleu opaque (le fond disparait).
     // L'epaisseur augmente avec la profondeur ET avec l'angle rasant : un joueur
     // exterieur voit donc le fond pres du bord, mais plus du tout vers le centre.
-    float surfaceDist = linearizeDepth(gl_FragCoord.z);
-    float bottomDist  = linearizeDepth(occluderDepth);
+    // (surfaceDist / bottomDist deja calcules pour l'occlusion ci-dessus.)
     float waterThickness = max(0.0, bottomDist - surfaceDist);          // metres approx
     float beer    = 1.0 - exp(-waterThickness * 0.15);                  // 0 (fin) .. 1 (epais)
     float opacity = mix(0.12, 0.97, beer);                              // 12% mini (eau toujours

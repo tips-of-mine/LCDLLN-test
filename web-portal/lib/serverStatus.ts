@@ -12,6 +12,11 @@
 // Dégradation gracieuse : si la variable est absente, l'URL invalide, le master
 // injoignable ou la réponse malformée, on renvoie des ensembles VIDES sans lever
 // d'erreur — la page admin reste fonctionnelle, seules les pastilles disparaissent.
+// Pour rester diagnosticable malgré cette dégradation, on logge la raison de
+// l'échec (logWarn) côté serveur : un admin qui ne voit aucune pastille peut
+// regarder les logs portail pour distinguer "non configuré" / "injoignable".
+
+import { logWarn } from "@/lib/log";
 
 export interface OnlineAccounts {
   authenticated: Set<number>;
@@ -37,22 +42,34 @@ function toIdSet(value: unknown): Set<number> {
  */
 export async function fetchOnlineAccounts(): Promise<OnlineAccounts> {
   const base = process.env.MASTER_STATUS_URL?.trim();
-  if (!base) return EMPTY;
+  if (!base) {
+    // Variable optionnelle non définie : pas de pastille. On le signale une fois
+    // par rendu pour qu'un admin surpris par l'absence de pastille comprenne.
+    logWarn("serverStatus", "MASTER_STATUS_URL non défini : présence en ligne désactivée (aucune pastille).");
+    return EMPTY;
+  }
 
+  const url = `${base.replace(/\/$/, "")}/online-accounts`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 1500);
   try {
-    const response = await fetch(`${base.replace(/\/$/, "")}/online-accounts`, {
+    const response = await fetch(url, {
       cache: "no-store",
       signal: controller.signal,
     });
-    if (!response.ok) return EMPTY;
+    if (!response.ok) {
+      logWarn("serverStatus", "Master /online-accounts a répondu en erreur.", { url, status: response.status });
+      return EMPTY;
+    }
     const payload = (await response.json()) as { authenticated?: unknown; inWorld?: unknown };
     return {
       authenticated: toIdSet(payload.authenticated),
       inWorld: toIdSet(payload.inWorld),
     };
-  } catch {
+  } catch (err) {
+    // Master injoignable / timeout / JSON invalide : on logge l'URL et l'erreur
+    // pour distinguer un mauvais host (ex. 127.0.0.1 en conteneur) d'un master KO.
+    logWarn("serverStatus", "Échec de la récupération de la présence en ligne.", { url, err });
     return EMPTY;
   } finally {
     clearTimeout(timeout);

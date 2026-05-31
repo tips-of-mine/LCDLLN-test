@@ -120,9 +120,9 @@ void main()
     // (garde un peu de transparence/profondeur), avec un lisere de Fresnel clair
     // pour la brillance de surface. La nappe se lit ainsi toujours comme de l'eau.
     float fres = clamp(pow(1.0 - NdotV, 3.0), 0.0, 1.0);
-    vec3 deepWater    = vec3(0.05, 0.35, 0.55);   // bleu-cyan profond (vu d'aplomb)
-    vec3 shallowWater = vec3(0.12, 0.46, 0.62);   // bleu (angle rasant) — assombri
-                                                  // pour NE PAS saturer en blanc.
+    vec3 deepWater    = vec3(0.02, 0.16, 0.30);   // bleu profond FONCE (vu d'aplomb)
+    vec3 shallowWater = vec3(0.05, 0.26, 0.42);   // bleu moyen (angle rasant) — assombri
+                                                  // et moins cyan (demande : bleu plus fonce).
     vec3 waterBody    = mix(deepWater, shallowWater, fres);
 
     // ── Opacite selon la profondeur (transparence du dessus) ─────────────────

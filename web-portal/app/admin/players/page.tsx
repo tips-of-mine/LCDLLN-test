@@ -21,7 +21,8 @@ function PresenceDot({ presence, detail }: { presence: PlayerPresence; detail?: 
     const parts: string[] = []
     if (detail.character) parts.push(detail.character)
     if (detail.level != null) parts.push(`niveau ${detail.level}`)
-    if (detail.zoneId != null) parts.push(regionName(detail.zoneId))
+    if (detail.region) parts.push(detail.region)
+    else if (detail.zoneId != null) parts.push(regionName(detail.zoneId))
     if (parts.length > 0) title = `${base} — ${parts.join(' • ')}`
   }
   // Vert bien clair, pastille PLEINE pour les deux états en ligne (plus de cercle
@@ -51,7 +52,8 @@ function OnlineDetailLine({ detail }: { detail?: OnlinePlayer }) {
   const parts: string[] = []
   if (detail.character) parts.push(detail.character)
   if (detail.level != null) parts.push(`niveau ${detail.level}`)
-  if (detail.zoneId != null) parts.push(regionName(detail.zoneId))
+  if (detail.region) parts.push(detail.region)
+  else if (detail.zoneId != null) parts.push(regionName(detail.zoneId))
   if (parts.length === 0) return null
   return (
     <div style={{ marginTop: 3, fontFamily: 'var(--font-body)', fontSize: 11.5, color: 'var(--ln-success)' }}>

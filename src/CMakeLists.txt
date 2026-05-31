@@ -200,6 +200,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/security/BotDetector.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/shards/ShardRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/shards/ShardPlayerPresenceCache.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/world/ZoneNameRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/shards/ServerRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardRegisterHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketCrypto.cpp

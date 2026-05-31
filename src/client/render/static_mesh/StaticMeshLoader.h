@@ -38,6 +38,7 @@ struct StaticSubMesh
     std::string baseColorUri;     ///< URI baseColor (sRGB). Vide si absent.
     std::string normalUri;        ///< URI normal map (linéaire). Vide si absent.
     std::string ormUri;           ///< URI ORM / metallic-roughness (linéaire). Vide si absent.
+    bool        alphaCutout = false; ///< true si alphaMode != OPAQUE (feuillages : decoupe alpha).
 };
 
 /// Données CPU d'un mesh statique : sommets + indices triangulaires + sous-maillages.

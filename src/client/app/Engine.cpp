@@ -9997,9 +9997,13 @@ namespace engine
 							const engine::render::TextureHandle o = m_assetRegistry.LoadTexture(meshDir + rep->ormUri, false);
 							if (o.IsValid()) mat.orm = o;
 						}
+						// Feuillages (alphaMode != opaque) : decoupe alpha au fragment shader.
+						if (rep->alphaCutout)
+							mat.flags = engine::render::MaterialFlags::AlphaCutout;
 						matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
-						// Variante surbrillance : memes textures + flag Highlight (teinte au draw).
-						mat.flags = engine::render::MaterialFlags::Highlight;
+						// Variante surbrillance : memes textures + Highlight (+ cutout eventuel).
+						mat.flags = static_cast<engine::render::MaterialFlags>(
+							static_cast<uint32_t>(mat.flags) | static_cast<uint32_t>(engine::render::MaterialFlags::Highlight));
 						hlIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
 					}
 				}

@@ -22,6 +22,9 @@ namespace engine::render
 		/// texture. Le fragment shader gbuffer_geometry.frag remplace alors l'albedo
 		/// échantillonné par vColor.rgb quand ce bit est posé.
 		VertexColorAlbedo = 1u << 1,
+		/// Decoupe alpha : gbuffer_geometry.frag rejette (discard) les fragments dont
+		/// l'alpha baseColor est sous le seuil. Pour les feuillages d'arbres.
+		AlphaCutout = 1u << 2,
 	};
 
 	/// Per-material texture handles + tiling parameters.

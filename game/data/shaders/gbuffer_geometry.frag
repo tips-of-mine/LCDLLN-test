@@ -53,6 +53,10 @@ void main()
     // sRGB attachment so the hardware re-encodes for storage. The lighting
     // pass will read it as linear (sRGB attachment auto-linearises on sample).
     outAlbedo = texture(uTextures[mat.baseColorIndex], tiledUv);
+    // Decoupe alpha (flag AlphaCutout = 4u) : rejette les fragments transparents
+    // (feuillages d'arbres : textures de feuilles sur quads transparents).
+    if ((mat.flags & 4u) != 0u && outAlbedo.a < 0.5)
+        discard;
 
     // Vertex color albedo (bit 2) : props « nature » (arbres, herbe…) colorés par
     // COLOR_0 sans texture. On remplace l'albedo échantillonné par la couleur de sommet.

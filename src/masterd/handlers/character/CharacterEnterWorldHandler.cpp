@@ -152,7 +152,7 @@ namespace engine::server
 
 		// Tout est validé : on enregistre le mapping pour le chat.
 		const std::string normalized = SessionCharacterMap::Normalize(parsed->characterName);
-		m_charMap->Set(connId, parsed->characterId, parsed->characterName, normalized, accountRole);
+		m_charMap->Set(connId, *accountId, parsed->characterId, parsed->characterName, normalized, accountRole);
 		LOG_INFO(Net, "[CharacterEnterWorldHandler] registered (account_id={}, character_id={}, name='{}')",
 			*accountId, parsed->characterId, parsed->characterName);
 

@@ -1,5 +1,7 @@
 #include "src/masterd/session/SessionCharacterMap.h"
 
+#include <algorithm>
+
 namespace engine::server
 {
 	std::string SessionCharacterMap::Normalize(const std::string& name)
@@ -16,8 +18,8 @@ namespace engine::server
 		return out;
 	}
 
-	void SessionCharacterMap::Set(uint32_t connId, uint64_t characterId, std::string characterName, std::string normalizedName,
-		AccountRole role)
+	void SessionCharacterMap::Set(uint32_t connId, uint64_t accountId, uint64_t characterId, std::string characterName,
+		std::string normalizedName, AccountRole role)
 	{
 		std::lock_guard lock(m_mutex);
 
@@ -46,6 +48,7 @@ namespace engine::server
 		}
 
 		CharacterInfo info{};
+		info.accountId = accountId;
 		info.characterId = characterId;
 		info.characterName = std::move(characterName);
 		info.normalizedName = normalizedName;
@@ -88,6 +91,24 @@ namespace engine::server
 	{
 		std::lock_guard lock(m_mutex);
 		return m_byConn.size();
+	}
+
+	std::vector<uint64_t> SessionCharacterMap::ListInWorldAccountIds() const
+	{
+		std::lock_guard lock(m_mutex);
+		std::vector<uint64_t> ids;
+		ids.reserve(m_byConn.size());
+		for (const auto& [connId, info] : m_byConn)
+		{
+			(void)connId;
+			if (info.accountId == 0)
+				continue; // binding sans compte connu : ignoré (ne devrait pas arriver post-EnterWorld).
+			// Dédup linéaire : le nombre de joueurs en jeu reste petit (un seul connId
+			// par compte en pratique, le master kick les duplicate-login).
+			if (std::find(ids.begin(), ids.end(), info.accountId) == ids.end())
+				ids.push_back(info.accountId);
+		}
+		return ids;
 	}
 
 	SessionCharacterMap::RoleCounts SessionCharacterMap::CountByRole() const

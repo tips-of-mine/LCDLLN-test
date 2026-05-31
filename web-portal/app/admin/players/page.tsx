@@ -6,6 +6,29 @@ import { getSession } from '@/lib/auth/session'
 import { isStaff, type AccountRole } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
 import { PlayerActions, type PlayerRow } from '@/components/admin/PlayerActions'
+import { fetchOnlineAccounts, presenceFor, type PlayerPresence } from '@/lib/serverStatus'
+
+/** Pastille de présence affichée à droite du nom du joueur (3 états). */
+function PresenceDot({ presence }: { presence: PlayerPresence }) {
+  if (presence === 'offline') return null
+  const inWorld = presence === 'in_world'
+  return (
+    <span
+      title={inWorld ? 'En jeu' : 'Connecté (menu)'}
+      aria-label={inWorld ? 'En jeu' : 'Connecté (menu)'}
+      style={{
+        display: 'inline-block',
+        width: 9,
+        height: 9,
+        borderRadius: '50%',
+        flexShrink: 0,
+        background: inWorld ? 'var(--ln-success)' : 'transparent',
+        border: `1.5px solid var(--ln-success)`,
+        boxShadow: inWorld ? '0 0 5px rgba(95,184,110,.6)' : 'none',
+      }}
+    />
+  )
+}
 
 function roleBadgeLabel(role: AccountRole): string {
   switch (role) {
@@ -76,6 +99,10 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
     logError("AdminPlayersPage", "DB error", { err })
     dbError = true
   }
+
+  // Présence "en ligne" lue en direct depuis le master (dégradation gracieuse :
+  // ensembles vides si MASTER_STATUS_URL absente ou master injoignable).
+  const online = await fetchOnlineAccounts()
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
@@ -189,6 +216,7 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
                       <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, letterSpacing: '.12em', color: 'var(--ln-accent)' }}>
                         {displayName}
                       </span>
+                      <PresenceDot presence={presenceFor(player.id, online)} />
                       {player.tag_id && (
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ln-muted)' }}>
                           ({player.login})

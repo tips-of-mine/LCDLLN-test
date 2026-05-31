@@ -94,15 +94,46 @@ namespace engine::network
 		ShardHeartbeatPayload out;
 		if (!r.ReadU32(out.shard_id) || !r.ReadU32(out.current_load) || !r.ReadU64(out.timestamp))
 			return std::nullopt;
+		// v9 : tableau optionnel de joueurs en queue. Absent pour un heartbeat legacy
+		// (Remaining() == 0). Si présent, on lit u16 playerCount puis chaque entrée.
+		if (r.Remaining() > 0u)
+		{
+			uint16_t playerCount = 0;
+			if (!r.ReadU16(playerCount))
+				return std::nullopt;
+			out.players.reserve(playerCount);
+			for (uint16_t i = 0; i < playerCount; ++i)
+			{
+				ShardPlayerPresence p;
+				if (!r.ReadU64(p.accountId) || !r.ReadU64(p.characterId)
+					|| !r.ReadU32(p.level) || !r.ReadU32(p.zoneId))
+					return std::nullopt;
+				out.players.push_back(p);
+			}
+		}
 		return out;
 	}
 
-	std::vector<uint8_t> BuildShardHeartbeatPayload(uint32_t shard_id, uint32_t current_load, uint64_t timestamp)
+	std::vector<uint8_t> BuildShardHeartbeatPayload(uint32_t shard_id, uint32_t current_load, uint64_t timestamp,
+		const std::vector<ShardPlayerPresence>& players)
 	{
-		std::vector<uint8_t> buf(16u, 0u);
+		// 16 octets fixes + (si joueurs) u16 count + 24 octets/joueur.
+		const size_t total = players.empty() ? 16u : (16u + 2u + players.size() * 24u);
+		std::vector<uint8_t> buf(total, 0u);
 		ByteWriter w(buf.data(), buf.size());
 		if (!w.WriteU32(shard_id) || !w.WriteU32(current_load) || !w.WriteU64(timestamp))
 			return {};
+		if (!players.empty())
+		{
+			if (!w.WriteU16(static_cast<uint16_t>(players.size())))
+				return {};
+			for (const auto& p : players)
+			{
+				if (!w.WriteU64(p.accountId) || !w.WriteU64(p.characterId)
+					|| !w.WriteU32(p.level) || !w.WriteU32(p.zoneId))
+					return {};
+			}
+		}
 		return buf;
 	}
 

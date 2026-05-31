@@ -12,6 +12,7 @@
 #include "src/masterd/handlers/shard/ShardRegisterHandler.h"
 #include "src/shared/network/NetServer.h"
 #include "src/masterd/shards/ShardRegistry.h"
+#include "src/masterd/shards/ShardPlayerPresenceCache.h"
 #include "src/shared/network/ShardPayloads.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/core/Log.h"
@@ -22,6 +23,7 @@ namespace engine::server
 {
 	void ShardRegisterHandler::SetServer(NetServer* server) { m_server = server; }
 	void ShardRegisterHandler::SetShardRegistry(ShardRegistry* registry) { m_registry = registry; }
+	void ShardRegisterHandler::SetPlayerPresenceCache(ShardPlayerPresenceCache* cache) { m_presenceCache = cache; }
 
 	void ShardRegisterHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t /*sessionIdHeader*/,
 		const uint8_t* payload, size_t payloadSize)
@@ -137,5 +139,11 @@ namespace engine::server
 			return;
 		}
 		m_registry->UpdateHeartbeat(parsed->shard_id, parsed->current_load);
+
+		// Présence enrichie (v9) : répercute l'ensemble des joueurs rapportés par ce
+		// shard dans le cache (remplace les entrées du shard). Tolérant : un heartbeat
+		// legacy sans tableau laisse players vide -> le shard est considéré sans joueur.
+		if (m_presenceCache)
+			m_presenceCache->Update(parsed->shard_id, parsed->players);
 	}
 }

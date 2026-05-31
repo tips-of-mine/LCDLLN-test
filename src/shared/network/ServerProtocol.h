@@ -29,7 +29,11 @@ namespace engine::server
 	/// d'animation (emote/roulade/run/sprint/saut/…) pour que les autres joueurs voient
 	/// les bonnes animations au lieu d'un Idle/Walk dérivé de la vélocité.
 	/// Wire-breaking : client + shard doivent se déployer ensemble.
-	inline constexpr uint16_t kProtocolVersion = 8;
+	/// Présence enrichie — bump 8 → 9 : `SHARD_HEARTBEAT` (shard→master) gagne un
+	/// tableau optionnel de joueurs `{accountId, characterId, level, zoneId}` pour
+	/// alimenter la présence enrichie exposée au web-portal (login/perso/niveau/zone).
+	/// Wire-breaking interne : master + shard doivent se déployer ensemble.
+	inline constexpr uint16_t kProtocolVersion = 9;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t

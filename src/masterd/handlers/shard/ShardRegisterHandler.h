@@ -15,6 +15,7 @@ namespace engine::server
 {
 	class NetServer;
 	class ShardRegistry;
+	class ShardPlayerPresenceCache;
 }
 
 namespace engine::server
@@ -41,6 +42,11 @@ namespace engine::server
 		/// Injecte le registre des shards (requis avant HandlePacket).
 		/// @param registry  Instance ShardRegistry maintenant l'état de tous les shards.
 		void SetShardRegistry(ShardRegistry* registry);
+
+		/// Injecte le cache de présence enrichie (optionnel). Si câblé, HandleHeartbeat
+		/// y répercute le tableau de joueurs du heartbeat v9 (présence web-portal).
+		/// @param cache  Instance ShardPlayerPresenceCache. Non possédé. Peut être nul.
+		void SetPlayerPresenceCache(ShardPlayerPresenceCache* cache);
 
 		/// Point d'entrée principal : dispatche vers HandleRegister ou HandleHeartbeat.
 		///
@@ -83,5 +89,7 @@ namespace engine::server
 		NetServer* m_server = nullptr;
 		/// Registre en mémoire des shards connus. Non possédé.
 		ShardRegistry* m_registry = nullptr;
+		/// Cache de présence enrichie (optionnel, non possédé). Nul = présence enrichie désactivée.
+		ShardPlayerPresenceCache* m_presenceCache = nullptr;
 	};
 }

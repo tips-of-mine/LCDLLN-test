@@ -17,6 +17,7 @@
 #include "src/shared/net/ChatSystem.h"
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
 #include "src/shared/network/ReplicationTypes.h"
+#include "src/shared/network/ShardPayloads.h"
 #include "src/shared/security/SecurityAuditLog.h"
 #include "src/shardd/anticheat/AntiCheatGameplay.h"
 #include "src/shared/network/ServerProtocol.h"
@@ -109,6 +110,9 @@ namespace engine::server
 		/// pour permettre au client de sélectionner le mesh skinné des avatars distants.
 		std::string gender;
 		uint32_t experiencePoints = 0;
+		/// Niveau du personnage (table characters.level, chargé au Hello via LoadSpawnFromDb).
+		/// Reporté au master dans le heartbeat enrichi (présence web-portal).
+		uint32_t level = 1;
 		uint32_t gold = 0;
 		/// M35.1 — additional currencies (wallet); gold remains primary trade currency.
 		uint32_t honor = 0;
@@ -262,6 +266,13 @@ namespace engine::server
 		/// registre appartient à l'appelant (shardd/main_linux) et doit survivre à ServerApp.
 		void SetAdmittedCharacterRegistry(AdmittedCharacterRegistry* registry) { m_admittedRegistry = registry; }
 
+		/// Présence enrichie (web-portal) : snapshot thread-safe des joueurs en jeu
+		/// `{accountId, characterId, level, zoneId}`. Publié à chaque TickOnce (thread
+		/// gameplay) et lu ici depuis un AUTRE thread (boucle shard→master). Renvoie une
+		/// copie sous mutex. accountId est résolu via l'AdmittedCharacterRegistry ; une
+		/// entrée dont l'accountId n'a pu être résolu (0) est omise.
+		std::vector<engine::network::ShardPlayerPresence> GetPlayerPresenceSnapshot() const;
+
 		/// TA.4 : pool MySQL (même base que le master) d'où lire la position de spawn
 		/// (table characters) au HandleHello. Optionnel : absent → spawn depuis le fichier
 		/// (build Windows ou DB non configurée). Possédé par l'appelant.
@@ -312,7 +323,7 @@ namespace engine::server
 		/// Renvoie false si pas de pool DB (Windows / DB non configurée) ou si character
 		/// introuvable ; dans ce cas les out-params ne sont pas modifiés.
 		bool LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg,
-		std::string& outName, std::string& outGender);
+		std::string& outName, std::string& outGender, uint32_t& outLevel);
 
 		/// Accept a new client or refresh an existing handshake.
 		/// Phase 3.7.5 — \p helloNonce élargi à uint64 (character_id complet).
@@ -825,6 +836,11 @@ namespace engine::server
 		UdpTransport m_transport;
 		std::vector<Datagram> m_pendingDatagrams;
 		std::vector<ConnectedClient> m_clients;
+		/// Présence enrichie : snapshot publié à chaque TickOnce (thread gameplay) et lu
+		/// par GetPlayerPresenceSnapshot depuis le thread shard→master. Protégé par son
+		/// propre mutex pour découpler les deux threads sans verrouiller m_clients.
+		mutable std::mutex m_presenceMutex;
+		std::vector<engine::network::ShardPlayerPresence> m_presenceSnapshot;
 		/// TG.2 : index O(1) sur m_clients pour les 3 lookups chauds (Find/FindByEntityId/
 		/// FindConnectedClient). Valeurs = index dans m_clients ; clé endpoint = (address<<16)|port.
 		/// Maintenance : insertion incrémentale dans HandleHello, reconstruction complète dans

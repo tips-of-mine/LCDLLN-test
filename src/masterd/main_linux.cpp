@@ -12,6 +12,7 @@
 #include "src/masterd/shards/ServerRegistry.h"
 #include "src/masterd/handlers/shard/ShardRegisterHandler.h"
 #include "src/masterd/shards/ShardRegistry.h"
+#include "src/masterd/shards/ShardPlayerPresenceCache.h"
 #include "src/masterd/handlers/shard/ShardTicketHandler.h"
 #include "src/masterd/handlers/shard/ServerListHandler.h"
 #include "src/shared/network/ProtocolV1Constants.h"
@@ -98,6 +99,8 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace
@@ -183,6 +186,10 @@ int main(int argc, char** argv)
 	engine::server::ShardRegistry shardRegistry;
 	engine::server::ShardRegisterHandler shardRegisterHandler;
 	shardRegisterHandler.SetShardRegistry(&shardRegistry);
+	// Présence enrichie (web-portal) : cache alimenté par le tableau joueurs des
+	// heartbeats v9, purgé quand un shard tombe (cf. SetShardDownCallback).
+	engine::server::ShardPlayerPresenceCache playerPresenceCache;
+	shardRegisterHandler.SetPlayerPresenceCache(&playerPresenceCache);
 	LOG_INFO(Server, "[MAIN_SRV] ShardRegistry setup OK");
 
 	engine::server::NetServer server;
@@ -1381,7 +1388,7 @@ int main(int argc, char** argv)
 	//  - inWorld        : comptes ayant validé EnterWorld (réellement en jeu).
 	// Source 100% en mémoire master, aucune persistance DB. Le portail interroge
 	// cette route en server-side et dégrade gracieusement si le master est injoignable.
-	auto onlineAccountsProvider = [&sessionManager, &sessionCharMap]() -> std::string {
+	auto onlineAccountsProvider = [&sessionManager, &sessionCharMap, &playerPresenceCache, &dbPool]() -> std::string {
 		auto appendJsonArray = [](std::string& out, const std::vector<uint64_t>& ids) {
 			out += "[";
 			for (size_t i = 0; i < ids.size(); ++i)
@@ -1392,17 +1399,127 @@ int main(int argc, char** argv)
 			}
 			out += "]";
 		};
+		// Échappement JSON minimal pour login / nom de personnage (peuvent contenir " \ etc.).
+		auto escapeJson = [](const std::string& s) -> std::string {
+			std::string out;
+			out.reserve(s.size() + 4);
+			for (unsigned char c : s)
+			{
+				switch (c)
+				{
+				case '"': out += "\\\""; break;
+				case '\\': out += "\\\\"; break;
+				case '\n': out += "\\n"; break;
+				case '\r': out += "\\r"; break;
+				case '\t': out += "\\t"; break;
+				default:
+					if (c < 0x20u)
+					{
+						const char hex[] = "0123456789ABCDEF";
+						out += "\\u00";
+						out += hex[(c >> 4) & 0xF];
+						out += hex[c & 0xF];
+					}
+					else
+					{
+						out.push_back(static_cast<char>(c));
+					}
+					break;
+				}
+			}
+			return out;
+		};
 
 		const std::vector<uint64_t> authenticated = sessionManager.ListActiveAccountIds();
 		const std::vector<uint64_t> inWorld = sessionCharMap.ListInWorldAccountIds();
+		const std::unordered_map<uint64_t, std::string> nameByAccount = sessionCharMap.SnapshotAccountIdToCharacterName();
+
+		// Présence enrichie (level/zoneId) indexée par accountId.
+		std::unordered_map<uint64_t, engine::server::ShardPlayerPresenceCache::Entry> presenceByAccount;
+		for (const auto& e : playerPresenceCache.Snapshot())
+			presenceByAccount[e.accountId] = e;
+
+		// Ensemble dédupliqué de tous les comptes à exposer (authentifiés ∪ en jeu).
+		std::unordered_set<uint64_t> inWorldSet(inWorld.begin(), inWorld.end());
+		std::unordered_set<uint64_t> allAccounts(authenticated.begin(), authenticated.end());
+		for (uint64_t id : inWorld)
+			allAccounts.insert(id);
+
+		// Login par compte : un lookup préparé par compte (N petit ; le cache Reset() le stmt
+		// à chaque Acquire, donc la réutilisation en boucle est sûre). DB absente -> login vide.
+		std::unordered_map<uint64_t, std::string> loginByAccount;
+		if (dbPool.IsInitialized() && !allAccounts.empty())
+		{
+			auto guard = dbPool.Acquire();
+			MYSQL* mysql = guard.get();
+			auto* cache = guard.cache();
+			if (mysql != nullptr && cache != nullptr)
+			{
+				for (uint64_t id : allAccounts)
+				{
+					auto* stmt = cache->Acquire(mysql, "SELECT login FROM accounts WHERE id = ? LIMIT 1");
+					if (stmt && stmt->Bind(0, id) && stmt->Execute() && stmt->FetchRow())
+						loginByAccount[id] = stmt->GetString(0);
+				}
+			}
+		}
 
 		std::string body;
-		body.reserve(32 + (authenticated.size() + inWorld.size()) * 12);
+		body.reserve(64 + allAccounts.size() * 96);
 		body += "{\"authenticated\":";
 		appendJsonArray(body, authenticated);
 		body += ",\"inWorld\":";
 		appendJsonArray(body, inWorld);
-		body += "}";
+		body += ",\"players\":[";
+		bool first = true;
+		for (uint64_t id : allAccounts)
+		{
+			if (!first)
+				body += ",";
+			first = false;
+			const bool inW = inWorldSet.count(id) > 0;
+			body += "{\"accountId\":";
+			body += std::to_string(id);
+			body += ",\"login\":\"";
+			auto lit = loginByAccount.find(id);
+			body += escapeJson(lit != loginByAccount.end() ? lit->second : std::string());
+			body += "\",\"inWorld\":";
+			body += (inW ? "true" : "false");
+			// Champs liés au personnage : seulement si en jeu (sinon null).
+			if (inW)
+			{
+				body += ",\"character\":";
+				auto nit = nameByAccount.find(id);
+				if (nit != nameByAccount.end())
+				{
+					body += "\"";
+					body += escapeJson(nit->second);
+					body += "\"";
+				}
+				else
+				{
+					body += "null";
+				}
+				auto pit = presenceByAccount.find(id);
+				if (pit != presenceByAccount.end())
+				{
+					body += ",\"level\":";
+					body += std::to_string(pit->second.level);
+					body += ",\"zoneId\":";
+					body += std::to_string(pit->second.zoneId);
+				}
+				else
+				{
+					body += ",\"level\":null,\"zoneId\":null";
+				}
+			}
+			else
+			{
+				body += ",\"character\":null,\"level\":null,\"zoneId\":null";
+			}
+			body += "}";
+		}
+		body += "]}";
 		return body;
 	};
 
@@ -1413,8 +1530,10 @@ int main(int argc, char** argv)
 
 	LOG_INFO(Server, "[MAIN_SRV] SetPacketHandler OK");
 	int shardHeartbeatTimeoutSec = static_cast<int>(config.GetInt("shard.heartbeat_timeout_sec", 90));
-	shardRegistry.SetShardDownCallback([](uint32_t shard_id) {
+	shardRegistry.SetShardDownCallback([&playerPresenceCache](uint32_t shard_id) {
 		LOG_INFO(Net, "[ServerMain] Shard down event: shard_id={}", shard_id);
+		// Présence enrichie : un shard tombé ne rapporte plus ses joueurs -> purge.
+		playerPresenceCache.Clear(shard_id);
 	});
 	double degradedLoadThreshold = config.GetDouble("shard.degraded_load_threshold", 0.90);
 	shardRegistry.SetDegradedLoadThreshold(degradedLoadThreshold);

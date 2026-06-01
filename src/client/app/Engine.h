@@ -346,6 +346,13 @@ namespace engine
 		/// M45.2 — true si VolumetricFogPass::IsValid() au boot (passe fog active) ;
 		/// sinon Engine enregistre un passthrough (copie PostWater -> Fogged).
 		bool m_volumetricFogReady = false;
+		/// M45.3 — SceneColor_HDR_Dof : SceneColor_HDR_WithBloom après profondeur de
+		/// champ / bokeh (DepthOfField), ou copie passthrough si la passe DoF est
+		/// invalide. Lu en SampledRead par Tonemap (à la place de WithBloom).
+		engine::render::ResourceId m_fgSceneColorDofId = engine::render::kInvalidResourceId;
+		/// M45.3 — true si DepthOfFieldPass::IsValid() au boot (passe DoF active) ;
+		/// sinon Engine enregistre un passthrough (copie WithBloom -> Dof).
+		bool m_dofReady = false;
 		/// SceneColor_LDR: output of the tonemap pass (R8G8B8A8_UNORM). Added in M03.4.
 		engine::render::ResourceId m_fgSceneColorLDRId   = engine::render::kInvalidResourceId;
 		/// M08.2: SceneColor_HDR + bloom (combine pass output); tonemap reads this.

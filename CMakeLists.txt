@@ -525,6 +525,7 @@ add_library(engine_core
   src/client/render/HiZPyramidPass.cpp
   src/client/render/LightingPass.cpp
   src/client/render/VolumetricFogPass.cpp
+  src/client/render/DepthOfFieldPass.cpp
   src/client/render/TonemapPass.cpp
   src/client/render/BloomPass.cpp
   src/client/render/AutoExposure.cpp

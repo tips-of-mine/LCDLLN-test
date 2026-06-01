@@ -13,6 +13,7 @@
 #include "src/client/render/DecalPass.h"
 #include "src/client/render/LightingPass.h"
 #include "src/client/render/VolumetricFogPass.h"
+#include "src/client/render/DepthOfFieldPass.h"
 #include "src/client/render/TonemapPass.h"
 #include "src/client/render/BloomPass.h"
 #include "src/client/render/AutoExposure.h"
@@ -87,6 +88,8 @@ namespace engine::render
 		const LightingPass&  GetLightingPass() const    { return m_lightingPass; }
 		VolumetricFogPass&        GetVolumetricFogPass()        { return m_volumetricFogPass; }
 		const VolumetricFogPass&  GetVolumetricFogPass() const  { return m_volumetricFogPass; }
+		DepthOfFieldPass&         GetDepthOfFieldPass()         { return m_depthOfFieldPass; }
+		const DepthOfFieldPass&   GetDepthOfFieldPass() const   { return m_depthOfFieldPass; }
 		TonemapPass&          GetTonemapPass()          { return m_tonemapPass; }
 		const TonemapPass&    GetTonemapPass() const    { return m_tonemapPass; }
 		BloomPrefilterPass&   GetBloomPrefilterPass()   { return m_bloomPrefilterPass; }
@@ -112,6 +115,7 @@ namespace engine::render
 		DecalPass             m_decalPass;
 		LightingPass          m_lightingPass;
 		VolumetricFogPass     m_volumetricFogPass;
+		DepthOfFieldPass      m_depthOfFieldPass;
 		TonemapPass           m_tonemapPass;
 		BloomPrefilterPass    m_bloomPrefilterPass;
 		BloomDownsamplePass   m_bloomDownsamplePass;

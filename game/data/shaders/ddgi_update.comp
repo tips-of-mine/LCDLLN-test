@@ -66,13 +66,13 @@ void main()
 {
     ivec2 texel = ivec2(gl_GlobalInvocationID.xy);
 
-    uint irradianceTexels = counts.w;           // côté octaédrique hors bordure
+    uint irradianceTexels = pc.counts.w;        // côté octaédrique hors bordure
     uint tileSize = uint(pc.params.z);           // = irradianceTexels + 2 (bordure 1px)
     uint atlasCols = uint(pc.params.y);          // = counts.x * counts.z
     if (tileSize == 0u || irradianceTexels == 0u || atlasCols == 0u)
         return;
 
-    uint atlasRows = counts.y;                   // = un étage vertical par rangée
+    uint atlasRows = pc.counts.y;                // = un étage vertical par rangée
     uint atlasW = atlasCols * tileSize;
     uint atlasH = atlasRows * tileSize;
 
@@ -98,8 +98,8 @@ void main()
 
     // Reconstruction des indices de grille de la sonde (cf. packing M45.6) :
     //   col = ix + iz * counts.x ; row = iy.
-    uint ix = (counts.x != 0u) ? (col % counts.x) : 0u;
-    uint iz = (counts.x != 0u) ? (col / counts.x) : 0u;
+    uint ix = (pc.counts.x != 0u) ? (col % pc.counts.x) : 0u;
+    uint iz = (pc.counts.x != 0u) ? (col / pc.counts.x) : 0u;
     uint iy = row;
 
     // 4) Radiance entrante : ciel (gradient horizon->zénith) + soleil.

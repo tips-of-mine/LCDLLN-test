@@ -1599,6 +1599,9 @@ endif()
 
 # M09.4: HLOD builder (offline tool, no Vulkan)
 add_subdirectory(tools/hlod_builder)
+# M45.4: Impostor builder (offline tool, no Vulkan) — pré-rend un atlas
+# d'impostors octaédriques depuis un mesh glTF.
+add_subdirectory(tools/impostor_builder)
 # M100.3: Zone builder library (statique, partagée par l'exécutable offline et
 # le futur exporter éditeur — anti-duplication des writers binaires).
 # Doit être déclarée AVANT add_subdirectory(tools/zone_builder) pour que la

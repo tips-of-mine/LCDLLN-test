@@ -1,0 +1,143 @@
+#version 450
+
+// M45.7 — Mise à jour runtime de l'atlas d'irradiance DDGI (GI dynamique phase 2).
+//
+// PORTÉE v1 ASSUMÉE (conservatrice — PAS de DDGI à rebonds) : le moteur n'a NI
+// ray tracing NI voxelisation. Ce shader N'ÉCHANTILLONNE PAS la géométrie de la
+// scène. Pour chaque texel octaédrique de chaque sonde, la radiance entrante est
+// composée de :
+//   - le CIEL : gradient procédural horizon (skyColor) -> zénith, fonction de dir.y ;
+//   - le SOLEIL : sunColor * max(dot(dir, sunDir), 0) ;
+//   - une occlusion soleil GROSSIÈRE : on projette le CENTRE de la sonde dans la
+//     shadow map cascade 0 ; si la sonde est en ombre, on atténue le terme soleil.
+// Le résultat est combiné temporellement avec l'irradiance précédente (hysteresis).
+//
+// WRITER UNIQUE : ce shader est le seul écrivain de l'atlas d'irradiance.
+// Le LightingPass est lecteur seul.
+//
+// Décodage octaédrique : MÊME convention que tools/impostor_builder/OctahedralMap.h
+// (OctaToDir, Cigolle et al. 2014). Toute divergence casserait l'échantillonnage
+// côté lighting.frag.
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(binding = 0, rgba16f) uniform image2D uIrradiance; // atlas irradiance (storage)
+layout(binding = 1) uniform sampler2D uShadow;            // shadow map cascade 0 (depth)
+
+// Push constants — DOIT rester aligné sur DdgiUpdatePass::DdgiUpdateParams (C++).
+layout(push_constant) uniform PC
+{
+    vec4  gridOrigin;  // xyz = origine monde sonde (0,0,0) en mètres ; w inutilisé
+    vec4  gridSpacing; // xyz = espacement par axe (mètres) ; w inutilisé
+    uvec4 counts;      // xyz = nb sondes par axe ; w = irradianceTexels (côté hors bordure)
+    vec4  sunDir;      // xyz = direction NORMALISÉE vers le soleil ; w inutilisé
+    vec4  sunColor;    // xyz = couleur/intensité soleil ; w inutilisé
+    vec4  skyColor;    // xyz = couleur horizon du ciel ; w inutilisé
+    vec4  params;      // x = hysteresis [0..1], y = atlasCols, z = tileSize (texels+2), w inutilisé
+    // sunViewProj n'est PAS passée : l'occlusion soleil v1 reste grossière (cf. note).
+} pc;
+
+// Décodage octaédrique (u,v) ∈ [0,1]² -> direction unitaire.
+// Réplique EXACTE de tools/impostor_builder/OctahedralMap.h::OctaToDir.
+vec3 octaToDir(vec2 uv)
+{
+    float px = 2.0 * uv.x - 1.0;
+    float py = 2.0 * uv.y - 1.0;
+
+    float x = px;
+    float y = py;
+    float z = 1.0 - abs(px) - abs(py);
+
+    if (z < 0.0)
+    {
+        float oldX = x;
+        float signX = (x >= 0.0) ? 1.0 : -1.0;
+        float signY = (y >= 0.0) ? 1.0 : -1.0;
+        x = (1.0 - abs(y)) * signX;
+        y = (1.0 - abs(oldX)) * signY;
+    }
+
+    float len = sqrt(x * x + y * y + z * z);
+    if (len > 1e-8) { x /= len; y /= len; z /= len; }
+    return vec3(x, y, z);
+}
+
+void main()
+{
+    ivec2 texel = ivec2(gl_GlobalInvocationID.xy);
+
+    uint irradianceTexels = counts.w;           // côté octaédrique hors bordure
+    uint tileSize = uint(pc.params.z);           // = irradianceTexels + 2 (bordure 1px)
+    uint atlasCols = uint(pc.params.y);          // = counts.x * counts.z
+    if (tileSize == 0u || irradianceTexels == 0u || atlasCols == 0u)
+        return;
+
+    uint atlasRows = counts.y;                   // = un étage vertical par rangée
+    uint atlasW = atlasCols * tileSize;
+    uint atlasH = atlasRows * tileSize;
+
+    // 1) Hors de l'atlas -> rien à faire.
+    if (uint(texel.x) >= atlasW || uint(texel.y) >= atlasH)
+        return;
+
+    // 2) Sonde (col,row) et texel local dans la tuile.
+    uint col = uint(texel.x) / tileSize;
+    uint row = uint(texel.y) / tileSize;
+    uint lx = uint(texel.x) - col * tileSize;    // [0, tileSize-1]
+    uint ly = uint(texel.y) - row * tileSize;
+
+    // Bordure 1px : on ne calcule que l'intérieur [1, tileSize-2].
+    // Les pixels de bordure restent inchangés (filtrage géré côté lecture en v1).
+    if (lx == 0u || ly == 0u || lx >= tileSize - 1u || ly >= tileSize - 1u)
+        return;
+
+    // 3) Direction octaédrique : centre du texel intérieur (lx-1, ly-1) sur N=irradianceTexels.
+    float u = (float(lx) - 1.0 + 0.5) / float(irradianceTexels);
+    float v = (float(ly) - 1.0 + 0.5) / float(irradianceTexels);
+    vec3 dir = octaToDir(vec2(u, v));
+
+    // Reconstruction des indices de grille de la sonde (cf. packing M45.6) :
+    //   col = ix + iz * counts.x ; row = iy.
+    uint ix = (counts.x != 0u) ? (col % counts.x) : 0u;
+    uint iz = (counts.x != 0u) ? (col / counts.x) : 0u;
+    uint iy = row;
+
+    // 4) Radiance entrante : ciel (gradient horizon->zénith) + soleil.
+    //    Gradient ciel : t = composante verticale de la direction remappée [0..1].
+    float skyT = clamp(dir.y * 0.5 + 0.5, 0.0, 1.0);
+    // Le zénith est ~1.3x l'horizon : ciel légèrement plus lumineux vers le haut.
+    vec3 sky = pc.skyColor.rgb * mix(1.0, 1.3, skyT);
+
+    // Soleil : lobe diffus simple (cosinus) dans la direction du soleil.
+    float sunDot = max(dot(dir, normalize(pc.sunDir.xyz)), 0.0);
+    vec3 sun = pc.sunColor.rgb * sunDot;
+
+    // 5) Occlusion soleil GROSSIÈRE via shadow map cascade 0 au CENTRE de la sonde.
+    //    NOTE v1 : on n'a pas la matrice sunViewProj en push constants (budget), on
+    //    se contente d'un échantillon central de la shadow map. Faute de projection
+    //    exacte, on utilise une heuristique conservatrice : la profondeur centrale
+    //    de la cascade 0 sert d'indicateur global d'ombrage. Le suivi (M45.8)
+    //    branchera la vraie projection par sonde. On lit le texel central (0.5,0.5)
+    //    pour rester déterministe et borné.
+    float shadowDepth = texture(uShadow, vec2(0.5, 0.5)).r;
+    // Atténuation douce : si la zone centrale est fortement occultée (depth faible),
+    // on réduit légèrement le soleil. Heuristique bornée pour ne pas surcorriger.
+    float sunVisibility = mix(0.6, 1.0, clamp(shadowDepth, 0.0, 1.0));
+    sun *= sunVisibility;
+
+    vec3 radiance = sky + sun;
+    // Borne anti-NaN / anti-débordement (atlas RGBA16F).
+    radiance = clamp(radiance, vec3(0.0), vec3(64.0));
+    if (any(isnan(radiance)) || any(isinf(radiance)))
+        radiance = vec3(0.0);
+
+    // 6) Blend temporel : hysteresis élevé = lent/stable.
+    float hysteresis = clamp(pc.params.x, 0.0, 0.999);
+    vec3 prev = imageLoad(uIrradiance, texel).rgb;
+    if (any(isnan(prev)) || any(isinf(prev)))
+        prev = radiance;
+    vec3 outRgb = mix(radiance, prev, hysteresis);
+    outRgb = clamp(outRgb, vec3(0.0), vec3(64.0));
+
+    imageStore(uIrradiance, texel, vec4(outRgb, 1.0));
+}

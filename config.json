@@ -616,14 +616,16 @@
         }
     },
     "gi": {
-        "_comment_gi": "DDGI phase 1 (M45.6) — structure seulement. DESACTIVE (enabled=false) => aucune allocation GPU, aucun rendu, usage VRAM strictement inchange. Les ressources persistantes (atlas irradiance/visibilite) ne s'allouent que si enabled=true (reserve M45.7). origin_m/spacing_m en metres, counts = nb de sondes par axe (X,Y,Z), *_texels = resolution octaedrique par sonde (hors bordure 1px).",
+        "_comment_gi": "DDGI phase 2 (M45.7) — injection + propagation runtime. DESACTIVE (enabled=false, DEFAUT) => aucune allocation GPU, passe DDGI_Update NON enregistree, LightingPass useDdgi=0 => rendu STRICTEMENT identique au chemin probes statiques. enabled=true alloue l'atlas irradiance et active la passe compute ddgi_update (ciel/soleil dynamique par sonde, base conservatrice SANS rebonds — pas de RT/voxelisation). origin_m/spacing_m en metres, counts = nb de sondes par axe (X,Y,Z), *_texels = resolution octaedrique par sonde (hors bordure 1px). hysteresis = blend temporel [0..1] (eleve = lent/stable), intensity = facteur du terme indirect DDGI dans le lighting.",
         "ddgi": {
             "enabled": false,
             "origin_m": [0, 0, 0],
             "spacing_m": [2, 2, 2],
             "counts": [8, 8, 4],
             "irradiance_texels": 8,
-            "visibility_texels": 16
+            "visibility_texels": 16,
+            "hysteresis": 0.95,
+            "intensity": 1.0
         }
     }
 }

@@ -123,6 +123,11 @@ namespace engine::render::gi
 		/// Vue de l'atlas d'irradiance (VK_NULL_HANDLE si non alloué).
 		VkImageView IrradianceView() const { return m_irradianceView; }
 
+		/// Image de l'atlas d'irradiance (VK_NULL_HANDLE si non alloué).
+		/// M45.7 : nécessaire pour poser les barrières de layout (GENERAL <->
+		/// SHADER_READ_ONLY) sur l'image persistante depuis la passe de mise à jour.
+		VkImage IrradianceImage() const { return m_irradianceImage; }
+
 		/// Vue de l'atlas de visibilité (VK_NULL_HANDLE si non alloué).
 		VkImageView VisibilityView() const { return m_visibilityView; }
 

@@ -153,10 +153,10 @@ namespace engine::render
 		}
 
 		// -----------------------------------------------------------------
-		// 2. Descriptor set layout: 9 combined image samplers (GBufA/B/C, Depth, irradiance, prefilter, BRDF LUT, SSAO_Blur, DecalOverlay)
+		// 2. Descriptor set layout: 10 combined image samplers (GBufA/B/C, Depth, irradiance, prefilter, BRDF LUT, SSAO_Blur, DecalOverlay, DDGI irradiance [M45.7])
 		// -----------------------------------------------------------------
 		{
-			std::array<VkDescriptorSetLayoutBinding, 9> bindings{};
+			std::array<VkDescriptorSetLayoutBinding, 10> bindings{};
 			for (size_t i = 0; i < bindings.size(); ++i)
 			{
 				bindings[i].binding            = i;
@@ -181,12 +181,12 @@ namespace engine::render
 		}
 
 		// -----------------------------------------------------------------
-		// 3. Descriptor pool: maxFrames sets, 9 combined image samplers each
+		// 3. Descriptor pool: maxFrames sets, 10 combined image samplers each
 		// -----------------------------------------------------------------
 		{
 			VkDescriptorPoolSize poolSize{};
 			poolSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSize.descriptorCount = 9 * m_maxFrames;
+			poolSize.descriptorCount = 10 * m_maxFrames;
 
 			VkDescriptorPoolCreateInfo poolInfo{};
 			poolInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -266,7 +266,7 @@ namespace engine::render
 			VkPushConstantRange pushRange{};
 			pushRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 			pushRange.offset     = 0;
-			pushRange.size       = static_cast<uint32_t>(sizeof(LightParams)); // 148 bytes (skyColor ajouté)
+			pushRange.size       = static_cast<uint32_t>(sizeof(LightParams)); // 224 bytes (M45.7: champs DDGI ajoutés)
 
 			VkPipelineLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -401,6 +401,7 @@ namespace engine::render
 		VkImageView irradianceView, VkSampler irradianceSampler,
 		VkImageView prefilterView, VkSampler prefilterSampler,
 		VkImageView brdfLutView, VkSampler brdfLutSampler,
+		VkImageView ddgiIrradianceView, VkSampler ddgiSampler,
 		const LightParams& params, uint32_t frameIndex)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
@@ -430,13 +431,20 @@ namespace engine::render
 		if (brdfLutView == VK_NULL_HANDLE) { brdfLutView = viewA; brdfLutSampler = m_sampler; }
 		if (irrView == VK_NULL_HANDLE) { irrView = viewA; irrSamp = m_sampler; }
 
+		// M45.7 — binding 9 (DDGI). Quand l'atlas DDGI est absent (chemin par
+		// défaut, useDdgi=0), on lie un fallback valide (GBufferA + m_sampler) pour
+		// garder le descriptor set valide. Le shader ne le lit JAMAIS dans ce cas
+		// (gate `if (pc.useDdgi > 0.5)`), garantissant un rendu byte-identique.
+		if (ddgiIrradianceView == VK_NULL_HANDLE) { ddgiIrradianceView = viewA; ddgiSampler = m_sampler; }
+		if (ddgiSampler == VK_NULL_HANDLE) { ddgiSampler = m_sampler; }
+
 		// ------------------------------------------------------------------
 		// Update descriptor set for this frame with GBuffer + IBL views.
 		// ------------------------------------------------------------------
 		const uint32_t setIdx = frameIndex % m_maxFrames;
 		VkDescriptorSet ds = m_descriptorSets[setIdx];
 
-		std::array<VkDescriptorImageInfo, 9> imageInfos{};
+		std::array<VkDescriptorImageInfo, 10> imageInfos{};
 		imageInfos[0] = { m_sampler,         viewA,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[1] = { m_sampler,         viewB,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[2] = { m_sampler,         viewC,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
@@ -446,8 +454,9 @@ namespace engine::render
 		imageInfos[6] = { brdfLutSampler,    brdfLutView,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[7] = { m_sampler,         viewSsao, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[8] = { m_sampler,         viewDecal, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[9] = { ddgiSampler,       ddgiIrradianceView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }; // M45.7 DDGI
 
-		std::array<VkWriteDescriptorSet, 9> writes{};
+		std::array<VkWriteDescriptorSet, 10> writes{};
 		for (size_t i = 0; i < writes.size(); ++i)
 		{
 			writes[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

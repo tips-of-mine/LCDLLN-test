@@ -53,6 +53,8 @@
 #include "src/client/render/WaterPass.h"
 #include "src/client/render/DayNightCycle.h"
 #include "src/client/render/SkyPass.h"
+#include "src/client/render/gi/DdgiVolume.h"
+#include "src/client/render/gi/DdgiUpdatePass.h"
 #include "src/client/render/WeatherSystem.h"
 #include "src/client/render/DynamicLightSystem.h"
 #include "src/client/world/water/WaterSurfaces.h"
@@ -354,6 +356,15 @@ namespace engine
 		/// M45.3 — true si DepthOfFieldPass::IsValid() au boot (passe DoF active) ;
 		/// sinon Engine enregistre un passthrough (copie WithBloom -> Dof).
 		bool m_dofReady = false;
+		/// M45.7 — GI dynamique DDGI. DÉSACTIVÉ par défaut (gi.ddgi.enabled=false) :
+		/// le volume n'est PAS alloué, la passe DDGI_Update n'est PAS enregistrée et
+		/// le LightingPass garde useDdgi=0 => rendu STRICTEMENT identique au chemin
+		/// probes statiques. Activé seulement si la config + l'allocation réussissent.
+		engine::render::gi::DdgiVolume m_ddgiVolume;
+		/// M45.7 — passe compute qui met à jour l'atlas d'irradiance du volume DDGI.
+		engine::render::gi::DdgiUpdatePass m_ddgiUpdatePass;
+		/// M45.7 — true uniquement si gi.ddgi.enabled ET allocation/init réussis.
+		bool m_ddgiEnabled = false;
 		/// SceneColor_LDR: output of the tonemap pass (R8G8B8A8_UNORM). Added in M03.4.
 		engine::render::ResourceId m_fgSceneColorLDRId   = engine::render::kInvalidResourceId;
 		/// M08.2: SceneColor_HDR + bloom (combine pass output); tonemap reads this.

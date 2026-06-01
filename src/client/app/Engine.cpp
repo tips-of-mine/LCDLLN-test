@@ -5525,12 +5525,17 @@ namespace engine
 												lp.cameraPos[3] = static_cast<float>(m_cfg.GetDouble("world.fog.start_m", 35.0));
 												lp.lightDir[0] = m_zoneAtmosphere.sunDirection[0]; lp.lightDir[1] = m_zoneAtmosphere.sunDirection[1]; lp.lightDir[2] = m_zoneAtmosphere.sunDirection[2];
 												lp.lightDir[3] = static_cast<float>(m_cfg.GetDouble("world.fog.end_m", 85.0)); // brouillard : distance de fondu total (cf. cameraPos.w = start)
-												lp.lightColor[0] = m_zoneAtmosphere.sunColor[0]; lp.lightColor[1] = m_zoneAtmosphere.sunColor[1]; lp.lightColor[2] = m_zoneAtmosphere.sunColor[2]; lp.lightColor[3] = 0.0f;
+												lp.lightColor[0] = m_zoneAtmosphere.sunColor[0]; lp.lightColor[1] = m_zoneAtmosphere.sunColor[1]; lp.lightColor[2] = m_zoneAtmosphere.sunColor[2];
+												// M45.1 — densité d'extinction de la perspective aérienne (slot lightColor.w).
+												// Override config.json (world.fog.density) sinon valeur per-zone (atmosphere.json).
+												lp.lightColor[3] = static_cast<float>(m_cfg.GetDouble("world.fog.density", static_cast<double>(m_zoneAtmosphere.aerialDensity)));
 												const float probeIntensity = GetGlobalProbeIntensity(m_zoneProbes);
 												lp.ambientColor[0] = m_zoneAtmosphere.ambientColor[0] * probeIntensity;
 												lp.ambientColor[1] = m_zoneAtmosphere.ambientColor[1] * probeIntensity;
 												lp.ambientColor[2] = m_zoneAtmosphere.ambientColor[2] * probeIntensity;
-												lp.ambientColor[3] = 0.0f;
+												// M45.1 — force d'inscattering directionnel (slot ambientColor.w).
+												// Override config.json (world.fog.inscatter) sinon valeur per-zone.
+												lp.ambientColor[3] = static_cast<float>(m_cfg.GetDouble("world.fog.inscatter", static_cast<double>(m_zoneAtmosphere.aerialInscatter)));
 												// Couleur du ciel utilisée par lighting.frag pour les pixels
 												// sans géométrie (depth==1.0). Pilotée par DayNightCycle pour
 												// rendre le cycle jour/nuit visible sans skybox dédié.

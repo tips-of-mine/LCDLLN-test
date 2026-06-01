@@ -30,10 +30,10 @@ namespace engine::render
 		struct LightParams
 		{
 			float invViewProj[16]; ///< Inverse view-projection matrix, column-major (64 bytes).
-			float cameraPos[4];   ///< Camera world-space position xyz, w unused (16 bytes).
-			float lightDir[4];    ///< Normalized direction *toward* the light, xyz, w unused.
-			float lightColor[4];   ///< RGB radiance (color * intensity), w unused.
-			float ambientColor[4]; ///< Constant ambient RGB, w unused (fallback when IBL absent).
+			float cameraPos[4];   ///< Camera world-space position xyz ; w = M45.1 aerial fogStart (m).
+			float lightDir[4];    ///< Normalized direction *toward* the light xyz ; w = M45.1 aerial fogEnd (m).
+			float lightColor[4];   ///< RGB radiance (color * intensity) ; w = M45.1 aerialDensity (1/m, <=0 désactive).
+			float ambientColor[4]; ///< Constant ambient RGB (fallback when IBL absent) ; w = M45.1 aerialInscatter.
 			float skyColor[4];     ///< RGB couleur du ciel (skyHorizon DayNightCycle) pour les pixels sans géométrie. w unused.
 			float useIBL;          ///< 1.0 = use IBL (irradiance + prefilter + BRDF LUT), 0.0 = fallback.
 		};

@@ -118,6 +118,16 @@ namespace engine::render
 		/// Initializes the registry for loading. vmaAllocator = centralised GPU allocator (VMA); cast to VmaAllocator in impl.
 		void Init(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator, const engine::core::Config& config);
 
+		/// Fournit la queue + famille servant aux uploads device-local (staging). Si
+		/// renseignée, CreateMeshFromData crée des buffers DEVICE_LOCAL (rapides en
+		/// rendu) via une copie de staging au lieu de buffers HOST_VISIBLE (lents,
+		/// lus par le GPU via PCIe à chaque frame). À appeler une fois après Init.
+		void SetUploadContext(VkQueue uploadQueue, uint32_t uploadQueueFamilyIndex)
+		{
+			m_uploadQueue = uploadQueue;
+			m_uploadQueueFamily = uploadQueueFamilyIndex;
+		}
+
 		/// Loads a mesh from content path (relative to paths.content). Returns cached asset if already loaded.
 		/// Format: minimal binary .mesh (see implementation). Returns invalid handle on failure.
 		MeshHandle LoadMesh(std::string_view relativePath);
@@ -164,6 +174,10 @@ namespace engine::render
 		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 		void* m_vmaAllocator = nullptr;
 		const engine::core::Config* m_config = nullptr;
+		/// Queue + famille pour les uploads device-local des meshes (cf. SetUploadContext).
+		/// VK_NULL_HANDLE = repli HOST_VISIBLE (pas de staging).
+		VkQueue m_uploadQueue = VK_NULL_HANDLE;
+		uint32_t m_uploadQueueFamily = 0;
 
 		AssetId m_nextMeshId = 1;
 		AssetId m_nextTextureId = 1;

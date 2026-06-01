@@ -5515,8 +5515,16 @@ namespace engine
 												lp.cameraPos[0] = rs.camera.position.x;
 												lp.cameraPos[1] = rs.camera.position.y;
 												lp.cameraPos[2] = rs.camera.position.z;
-												lp.cameraPos[3] = 0.0f;
-												lp.lightDir[0] = m_zoneAtmosphere.sunDirection[0]; lp.lightDir[1] = m_zoneAtmosphere.sunDirection[1]; lp.lightDir[2] = m_zoneAtmosphere.sunDirection[2]; lp.lightDir[3] = 0.0f;
+												// Brouillard atmospherique LINEAIRE a distance. fogStart (cameraPos.w) :
+												// rayon CLAIR autour du joueur ; fogEnd (lightDir.w) : distance ou tout
+												// est fondu vers l'horizon. Le joueur n'est plus noye dans le brouillard.
+												// Regler fogEnd ~ world.props.cull_distance_m pour que les arbres se
+												// fondent dans le ciel juste avant d'etre cull. Desactive si end<=start.
+												// Slots .w libres -> pas de redimensionnement de LightParams. Lu chaque
+												// frame (reglage a chaud via config.json).
+												lp.cameraPos[3] = static_cast<float>(m_cfg.GetDouble("world.fog.start_m", 35.0));
+												lp.lightDir[0] = m_zoneAtmosphere.sunDirection[0]; lp.lightDir[1] = m_zoneAtmosphere.sunDirection[1]; lp.lightDir[2] = m_zoneAtmosphere.sunDirection[2];
+												lp.lightDir[3] = static_cast<float>(m_cfg.GetDouble("world.fog.end_m", 85.0)); // brouillard : distance de fondu total (cf. cameraPos.w = start)
 												lp.lightColor[0] = m_zoneAtmosphere.sunColor[0]; lp.lightColor[1] = m_zoneAtmosphere.sunColor[1]; lp.lightColor[2] = m_zoneAtmosphere.sunColor[2]; lp.lightColor[3] = 0.0f;
 												const float probeIntensity = GetGlobalProbeIntensity(m_zoneProbes);
 												lp.ambientColor[0] = m_zoneAtmosphere.ambientColor[0] * probeIntensity;
@@ -8363,16 +8371,30 @@ namespace engine
 							if (nearestI >= 0)
 								pushInteractChat("[Interaction]", "Pres de " + m_interactables[nearestI].label + " - appuyez sur E.");
 						}
+						// Refermeture automatique du coffre 2 s apres la derniere ouverture
+						// (verifie chaque frame, independamment de l'appui sur E).
+						if (m_chestLoaded && m_chestOpen && EngineNowSec() >= m_chestAutoCloseAtSec)
+						{
+							m_chestOpen = false;
+							if (const auto* clip = m_chestMesh.FindClip("Chest_Close"))
+								m_chestCrossfade.Play(*clip, /*loops*/ false, EngineNowSec());
+							pushInteractChat("[Objet]", "Le coffre se referme.");
+						}
 						if (interactPressed && nearestI >= 0)
 						{
 							InteractableEntity& e = m_interactables[nearestI];
 							if (m_chestLoaded && e.meshPath.find("Chest_Wood") != std::string::npos)
 							{
-								m_chestOpen = !m_chestOpen;
-								const char* clipName = m_chestOpen ? "Chest_Open" : "Chest_Close";
-								if (const auto* clip = m_chestMesh.FindClip(clipName))
-									m_chestCrossfade.Play(*clip, /*loops*/ false, EngineNowSec());
-								pushInteractChat("[Objet]", m_chestOpen ? "Vous ouvrez le coffre." : "Vous refermez le coffre.");
+								// E ouvre le coffre (s'il ne l'est pas deja) puis (re)arme une
+								// refermeture automatique 2 s plus tard (cf. check par frame).
+								if (!m_chestOpen)
+								{
+									m_chestOpen = true;
+									if (const auto* clip = m_chestMesh.FindClip("Chest_Open"))
+										m_chestCrossfade.Play(*clip, /*loops*/ false, EngineNowSec());
+									pushInteractChat("[Objet]", "Vous ouvrez le coffre.");
+								}
+								m_chestAutoCloseAtSec = EngineNowSec() + 2.0f;
 							}
 							else if (e.isNpc && !e.dialogue.empty())
 							{
@@ -10192,22 +10214,28 @@ namespace engine
 		// loadOp=LOAD requis pour se superposer au GBuffer (terrain + avatar) sans clear.
 		if (!geom.HasLoadPass()) return;
 		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
-		// Culling de distance : la foret dense compte des centaines de props ; les
-		// dessiner tous = des centaines de draw calls de geometrie en memoire hote ->
-		// framerate effondre. On ne dessine que le decor proche de la camera (140 m).
-		// Les interactibles (coffre, caisses, PNJ : peu nombreux) restent toujours dessines.
+		// Culling de distance des props de DECOR. Le profiler (M18.1) montre que la
+		// passe Geometry GPU (overdraw de feuillages a 6,2 Mpx) est le poste de cout
+		// n1 en foret dense : au-dela de ce rayon, on ne dessine plus le decor lointain
+		// VISIBLE. Distance lue a CHAQUE frame depuis config.json (reglage a chaud, sans
+		// recompilation) ; repli 80 m si la cle est absente (sinon le correctif perf
+		// serait silencieusement desactive sur une config plus ancienne). <= 0 =>
+		// desactive. Les INTERACTIBLES (coffre, caisses, PNJ) sont toujours dessines.
 		const engine::math::Vec3 camPos = rs.camera.position;
-		constexpr float kPropCullDist = 110.0f;
-		const float kPropCullDist2 = kPropCullDist * kPropCullDist;
+		const float cullDist = static_cast<float>(m_cfg.GetDouble("world.props.cull_distance_m", 80.0));
+		const float cullDist2 = cullDist * cullDist;
+		const bool cullEnabled = cullDist > 0.0f;
+		int drawn = 0, culled = 0;
 		for (const auto& prop : m_props)
 		{
-			if (prop.interactableIndex < 0)
+			if (cullEnabled && prop.interactableIndex < 0)
 			{
 				const float dxp = prop.worldPos.x - camPos.x;
 				const float dzp = prop.worldPos.z - camPos.z;
-				if (dxp * dxp + dzp * dzp > kPropCullDist2)
-					continue;  // decor trop loin -> non dessine
+				if (dxp * dxp + dzp * dzp > cullDist2)
+					{ ++culled; continue; }  // decor trop loin -> non dessine
 			}
+			++drawn;
 			// Surbrillance (chantier C) : si ce prop est l'interactible a portee, on
 			// dessine ses parties avec la variante de materiau Highlight (teinte).
 			const bool highlight =
@@ -10227,6 +10255,10 @@ namespace engine
 					true);
 			}
 		}
+		// Diag throttle (1/60 frames) : visible uniquement en log.level=Debug.
+		if ((m_currentFrame % 60) == 0)
+			LOG_DEBUG(Render, "[Props] cull_dist={:.0f}m dessines={} coupes={} (total={})",
+			          cullDist, drawn, culled, static_cast<int>(m_props.size()));
 	}
 
 	void Engine::RecordRemoteAvatars(VkCommandBuffer cmd, engine::render::Registry& reg,

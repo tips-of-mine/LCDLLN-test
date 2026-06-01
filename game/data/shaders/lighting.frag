@@ -185,5 +185,24 @@ void main()
 
     // ---- Combine & output HDR ------------------------------------------
     vec3  color = ambient + Lo;
+
+    // ---- Brouillard atmospherique LINEAIRE (profondeur de champ) -------
+    // Brouillard a DISTANCE : zone CLAIRE autour du joueur (< fogStart), puis
+    // fondu lineaire vers la couleur d'horizon (pc.skyColor.rgb) jusqu'a
+    // fogEnd ou tout est ciel. Le joueur n'est donc PAS noye dans le
+    // brouillard ; ca ajoute de la profondeur au loin ET masque la coupe de
+    // distance des props (regler fogEnd ~ world.props.cull_distance_m).
+    // fogStart = pc.cameraPos.w, fogEnd = pc.lightDir.w (slots libres).
+    // Desactive si fogEnd <= fogStart. Applique UNIQUEMENT aux pixels avec
+    // geometrie (le ciel a deja ete ecrit via l'early-return depth>=1.0).
+    float fogStart = pc.cameraPos.w;
+    float fogEnd   = pc.lightDir.w;
+    if (fogEnd > fogStart)
+    {
+        float dist = length(pc.cameraPos.xyz - P);
+        float fogF = clamp((dist - fogStart) / (fogEnd - fogStart), 0.0, 1.0);
+        color = mix(color, pc.skyColor.rgb, fogF);
+    }
+
     outSceneColorHDR = vec4(color, 1.0);
 }

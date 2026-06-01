@@ -834,6 +834,9 @@ namespace engine
 		engine::render::skinned::AnimationCrossfade               m_chestCrossfade;
 		bool                                                     m_chestLoaded = false;
 		bool                                                     m_chestOpen = false;
+		/// Instant (EngineNowSec) auquel le coffre se referme automatiquement après
+		/// ouverture. Armé/réarmé à chaque interaction E ; comparé chaque frame.
+		float                                                    m_chestAutoCloseAtSec = 0.0f;
 		engine::math::Vec3                                       m_chestPos{ 0.0f, 0.0f, 0.0f };
 		float                                                    m_chestYawDeg = 0.0f;
 		float                                                    m_chestScale = 1.0f;

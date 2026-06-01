@@ -9842,10 +9842,11 @@ namespace engine
 		{
 			const InteractableEntity& e = m_interactables[ii];
 			if (e.meshPath.empty()) continue;
-			// Le coffre (Chest_Wood) est rendu via le pipeline ANIME (LoadAnimatedChest)
-			// pour pouvoir l'ouvrir/fermer ; on saute son rendu statique (mais on lui
-			// pose un cylindre de collision) UNIQUEMENT si le chargement skinne a reussi.
-			if (m_chestLoaded && e.meshPath.find("Chest_Wood") != std::string::npos)
+			// Le coffre anime (LoadAnimatedChest) est rendu via le pipeline skinne ; on
+			// saute son rendu statique (mais on lui pose un cylindre de collision)
+			// UNIQUEMENT pour l'interactible EXACT charge en anime (m_chestInteractableIndex).
+			// Les autres coffres eventuels restent rendus en statique normalement.
+			if (m_chestLoaded && static_cast<int>(ii) == m_chestInteractableIndex)
 			{
 				const float gy = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z);
 				m_worldCollider.AddCylinder(engine::gameplay::PropCylinder{
@@ -9895,8 +9896,14 @@ namespace engine
 		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
 
 		const InteractableEntity* chest = nullptr;
-		for (const auto& e : m_interactables)
-			if (e.meshPath.find("Chest_Wood") != std::string::npos) { chest = &e; break; }
+		int chestIdx = -1;
+		for (std::size_t i = 0; i < m_interactables.size(); ++i)
+			if (m_interactables[i].meshPath.find("Chest_Wood") != std::string::npos)
+			{
+				chest = &m_interactables[i];
+				chestIdx = static_cast<int>(i);
+				break;
+			}
 		if (!chest) return;
 
 		const std::string full = contentRoot + "/" + chest->meshPath;
@@ -9908,9 +9915,12 @@ namespace engine
 			return;
 		}
 		m_chestMesh = std::move(*loaded);
+		m_chestInteractableIndex = chestIdx;
 		m_chestPos = engine::math::Vec3{ chest->position.x,
 			m_terrainCollider.GroundHeightAt(chest->position.x, chest->position.z), chest->position.z };
 		m_chestYawDeg = chest->meshYawDeg;
+		m_chestScale = chest->meshScale;
+		m_chestRotXDeg = chest->meshRotXDeg;
 
 		std::string meshDir;
 		{
@@ -9962,9 +9972,15 @@ namespace engine
 		auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(m_chestMesh.skeleton, globals);
 
 		constexpr float kDeg2Rad = 3.14159265f / 180.f;
+		// Meme composition que BuildPropFromMesh : T * Ry(yaw) * Rx(rotX) * Scale * import,
+		// pour honorer les champs scale / rot_x_deg de l'interactable coffre.
+		engine::math::Mat4 scaleM = engine::math::Mat4::Identity();
+		scaleM.m[0] = m_chestScale; scaleM.m[5] = m_chestScale; scaleM.m[10] = m_chestScale;
 		const engine::math::Mat4 model =
 			engine::math::Mat4::Translate(m_chestPos) *
 			engine::math::Mat4::RotateY(m_chestYawDeg * kDeg2Rad) *
+			engine::math::Mat4::RotateX(m_chestRotXDeg * kDeg2Rad) *
+			scaleM *
 			m_chestMesh.importTransform;
 
 		std::vector<uint32_t> subMat = m_chestSubmeshMat;

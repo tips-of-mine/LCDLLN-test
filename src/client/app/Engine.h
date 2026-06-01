@@ -833,6 +833,9 @@ namespace engine
 		bool                                                     m_chestOpen = false;
 		engine::math::Vec3                                       m_chestPos{ 0.0f, 0.0f, 0.0f };
 		float                                                    m_chestYawDeg = 0.0f;
+		float                                                    m_chestScale = 1.0f;
+		float                                                    m_chestRotXDeg = 0.0f;
+		int                                                      m_chestInteractableIndex = -1;
 		uint32_t                                                 m_chestMatFurniture = 0u;
 		uint32_t                                                 m_chestMatMetal = 0u;
 		std::vector<uint32_t>                                    m_chestSubmeshMat;

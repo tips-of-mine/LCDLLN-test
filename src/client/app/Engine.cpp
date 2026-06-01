@@ -3837,6 +3837,11 @@ namespace engine
 										// TRANSFER_DST pour le passthrough vkCmdCopyImage). Lu en aval par
 										// Bloom_Prefilter / Bloom_Combine.
 										m_fgSceneColorFoggedId = m_frameGraph.createImage("SceneColor_HDR_Fogged", sceneColorHDRDesc);
+										// M45.3 — SceneColor_HDR_Dof : cible de la passe DepthOfField (bokeh),
+										// ou copie passthrough si la passe DoF est invalide. Meme desc que
+										// WithBloom/Fogged (qui inclut deja TRANSFER_DST pour le passthrough
+										// vkCmdCopyImage). Lu en aval par Tonemap (a la place de WithBloom).
+										m_fgSceneColorDofId = m_frameGraph.createImage("SceneColor_HDR_Dof", sceneColorHDRDesc);
 
 										engine::render::ImageDesc sceneColorLDRDesc{};
 										sceneColorLDRDesc.format = m_vkSwapchain.GetImageFormat();
@@ -3958,6 +3963,11 @@ namespace engine
 									// reussi (shaders presents). Sinon Engine enregistre un passthrough
 									// (copie PostWater -> Fogged) pour que Bloom lise une image valide.
 									m_volumetricFogReady = m_pipeline->GetVolumetricFogPass().IsValid();
+
+									// M45.3 — la passe DepthOfField est active uniquement si son Init a
+									// reussi (shaders presents). Sinon Engine enregistre un passthrough
+									// (copie WithBloom -> Dof) pour que Tonemap lise une image valide.
+									m_dofReady = m_pipeline->GetDepthOfFieldPass().IsValid();
 
 									// M100 — Task 12 : Terrain Chunk Runtime — drawcall mesh-terrain par
 									// chunk avec splat 8-layer. Co-existe avec le legacy TerrainRenderer
@@ -5924,9 +5934,107 @@ namespace engine
 													m_fgSceneColorHDRWithBloomId, m_vkSwapchain.GetExtent(), frameIdx);
 											});
 
+										// M45.3 — Profondeur de champ / bokeh. Lit SceneColor_HDR_WithBloom
+										// (HDR post-bloom) et le depth, calcule un CoC par pixel et ecrit
+										// SceneColor_HDR_Dof. Si la passe DoF est invalide (shaders absents /
+										// Init KO), on enregistre a la place un passthrough vkCmdCopyImage qui
+										// recopie WithBloom -> Dof, exactement comme VolumetricFog_Passthrough,
+										// pour garantir que Tonemap (qui lit desormais Dof) trouve une image
+										// valide. Le gating runtime (focus_range_m<=0) est gere dans le shader.
+										if (m_dofReady)
+										{
+											m_frameGraph.addPass("DepthOfField",
+												[this](engine::render::PassBuilder& b) {
+													b.read(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::SampledRead);
+													b.read(m_fgDepthId,                  engine::render::ImageUsage::SampledRead);
+													b.write(m_fgSceneColorDofId,         engine::render::ImageUsage::ColorWrite);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													if (!m_pipeline->GetDepthOfFieldPass().IsValid()) return;
+													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+													const engine::RenderState& rs = m_renderStates[readIdx];
+													engine::render::DepthOfFieldPass::DofParams dp{};
+													// invViewProj = inverse de rs.viewProjMatrix (meme routine que VolumetricFog).
+													const float* vp = rs.viewProjMatrix.m;
+													const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
+													const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
+													const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
+													const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
+													const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
+													const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
+													const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
+													const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
+													const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+													if (det > 1e-7f || det < -1e-7f)
+													{
+														const float inv = 1.0f / det;
+														dp.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*inv;
+														dp.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*inv;
+														dp.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*inv;
+														dp.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*inv;
+														dp.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*inv;
+														dp.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*inv;
+														dp.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*inv;
+														dp.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*inv;
+														dp.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*inv;
+														dp.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*inv;
+														dp.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*inv;
+														dp.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*inv;
+														dp.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*inv;
+														dp.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*inv;
+														dp.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*inv;
+														dp.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*inv;
+													}
+													dp.cameraPos[0] = rs.camera.position.x;
+													dp.cameraPos[1] = rs.camera.position.y;
+													dp.cameraPos[2] = rs.camera.position.z;
+													// w = distance focale (m).
+													dp.cameraPos[3] = static_cast<float>(m_cfg.GetDouble("world.dof.focus_distance_m", 12.0));
+													// x = plage de nettete (m ; defaut 0 = desactive ; gating runtime dans le shader).
+													dp.dofParams[0] = static_cast<float>(m_cfg.GetDouble("world.dof.focus_range_m", 0.0));
+													dp.dofParams[1] = static_cast<float>(m_cfg.GetDouble("world.dof.max_blur_px", 8.0));
+													dp.dofParams[2] = static_cast<float>(m_cfg.GetDouble("world.dof.near_scale", 1.0));
+													dp.dofParams[3] = static_cast<float>(m_cfg.GetDouble("world.dof.far_scale", 1.0));
+													VkExtent2D ext = m_vkSwapchain.GetExtent();
+													dp.texelSize[0] = (ext.width  > 0) ? (1.0f / static_cast<float>(ext.width))  : 0.0f;
+													dp.texelSize[1] = (ext.height > 0) ? (1.0f / static_cast<float>(ext.height)) : 0.0f;
+													dp.texelSize[2] = 0.0f;
+													dp.texelSize[3] = 0.0f;
+													m_pipeline->GetDepthOfFieldPass().Record(
+														m_vkDeviceContext.GetDevice(), cmd, reg,
+														ext,
+														m_fgSceneColorHDRWithBloomId, m_fgDepthId,
+														m_fgSceneColorDofId, dp, m_currentFrame % 2);
+												});
+										}
+										else
+										{
+											// DoF indisponible -> copie WithBloom -> Dof (writer unique) pour que
+											// Tonemap lise une image valide. Meme pattern que VolumetricFog_Passthrough.
+											m_frameGraph.addPass("DepthOfField_Passthrough",
+												[this](engine::render::PassBuilder& b) {
+													b.read(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::TransferSrc);
+													b.write(m_fgSceneColorDofId,         engine::render::ImageUsage::TransferDst);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													VkImage src = reg.getImage(m_fgSceneColorHDRWithBloomId);
+													VkImage dst = reg.getImage(m_fgSceneColorDofId);
+													if (src == VK_NULL_HANDLE || dst == VK_NULL_HANDLE) return;
+													VkImageCopy copy{};
+													copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+													copy.srcSubresource.layerCount = 1;
+													copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+													copy.dstSubresource.layerCount = 1;
+													VkExtent2D ext = m_vkSwapchain.GetExtent();
+													copy.extent = { ext.width, ext.height, 1 };
+													vkCmdCopyImage(cmd, src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+														dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+												});
+										}
+
 										m_frameGraph.addPass("Tonemap",
 											[this](engine::render::PassBuilder& b) {
-												b.read(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::SampledRead);
+												b.read(m_fgSceneColorDofId,          engine::render::ImageUsage::SampledRead);
 												b.write(m_fgSceneColorLDRId,         engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
@@ -5940,7 +6048,7 @@ namespace engine
 												VkImageView lutView = VK_NULL_HANDLE;
 												if (lutEnabled) { engine::render::TextureAsset* lutTex = m_colorGradingLutHandle.Get(); if (lutTex && lutTex->view != VK_NULL_HANDLE) lutView = lutTex->view; }
 												const uint32_t frameIdx = m_currentFrame % 2;
-												m_pipeline->GetTonemapPass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorHDRWithBloomId, m_fgSceneColorLDRId, tp, lutView, frameIdx);
+												m_pipeline->GetTonemapPass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorDofId, m_fgSceneColorLDRId, tp, lutView, frameIdx);
 											});
 
 										m_frameGraph.addPass("TAA",

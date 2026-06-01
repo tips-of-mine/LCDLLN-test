@@ -260,6 +260,25 @@ namespace engine::render
 				LOG_WARN(Render, "M45.2: volumetric fog shaders not found, passthrough fallback");
 		}
 
+		// M45.3 — Depth of field / bokeh pass (sur HDR, apres bloom, avant tonemap).
+		// Reutilise le vertex shader fullscreen triangle de la passe lighting.
+		// N'echoue jamais le boot : si shaders absents ou Init KO, la passe reste
+		// invalide et Engine enregistre un passthrough (copie WithBloom -> Dof).
+		{
+			std::vector<uint32_t> dofVert = loadSpirv("shaders/lighting.vert.spv");
+			std::vector<uint32_t> dofFrag = loadSpirv("shaders/dof.frag.spv");
+			if (!dofVert.empty() && !dofFrag.empty())
+			{
+				if (m_depthOfFieldPass.Init(device, physicalDevice, VK_FORMAT_R16G16B16A16_SFLOAT,
+						dofVert.data(), dofVert.size(), dofFrag.data(), dofFrag.size(), 2u, pipelineCacheHandle))
+					LOG_INFO(Render, "[Boot] DeferredPipeline DepthOfFieldPass OK");
+				else
+					LOG_WARN(Render, "M45.3: depth of field pass init failed, passthrough fallback");
+			}
+			else
+				LOG_WARN(Render, "M45.3: depth of field shaders not found, passthrough fallback");
+		}
+
 		// Tonemap pass
 		{
 			std::vector<uint32_t> tmVert = loadSpirv("shaders/tonemap.vert.spv");
@@ -365,6 +384,8 @@ namespace engine::render
 		m_bloomDownsamplePass.Destroy(device);
 		m_bloomPrefilterPass.Destroy(device);
 		m_tonemapPass.Destroy(device);
+		m_depthOfFieldPass.Destroy(device); // M45.3
+		m_volumetricFogPass.Destroy(device); // M45.2
 		m_lightingPass.Destroy(device);
 		m_decalPass.Destroy(device);
 		m_shadowMapPass.Destroy(device);

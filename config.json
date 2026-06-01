@@ -163,6 +163,14 @@
             "height_m": 10.0,
             "height_falloff": 0.1
         },
+        "_comment_dof": "M45.3 Profondeur de champ / bokeh. Passe plein ecran sur l'image HDR APRES bloom et AVANT tonemap : reconstruit la distance monde par pixel (depth + invViewProj), calcule un Circle of Confusion depuis l'ecart au plan focal, et applique un flou en disque (16 samples) ponderé par le CoC (un sample ne bave que s'il est lui-meme flou). DESACTIVE par defaut (focus_range_m = 0 -> passthrough). focus_distance_m : distance du plan de nettete (m) ; focus_range_m : demi-largeur de la zone nette (m ; <= 0 desactive entierement la passe) ; max_blur_px : rayon de flou max (pixels) ; near_scale : echelle du flou pour l'avant-plan (devant le plan focal) ; far_scale : echelle du flou pour l'arriere-plan. Lu a chaque frame -> reglage a chaud.",
+        "dof": {
+            "focus_distance_m": 12.0,
+            "focus_range_m": 0.0,
+            "max_blur_px": 8.0,
+            "near_scale": 1.0,
+            "far_scale": 1.0
+        },
         "_comment_interactables": "Interagir (touche E) : count = nombre de cibles ; chaque index i a x/z (metres monde), radius (portee m), npc (bool : PNJ vs objet), label, message (dialogue PNJ ou effet objet), mesh/scale/yaw_deg/rot_x_deg, dialogue. Seuls les VRAIS interactibles ici (PNJ, coffre). Le DECOR (arbres, props non interactifs mais solides) est dans world.scenery. Le coffre et le villageois sont solides (collision) comme tout le decor.",
         "interactables": {
             "count": 7,

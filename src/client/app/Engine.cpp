@@ -10192,22 +10192,28 @@ namespace engine
 		// loadOp=LOAD requis pour se superposer au GBuffer (terrain + avatar) sans clear.
 		if (!geom.HasLoadPass()) return;
 		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
-		// Culling de distance : la foret dense compte des centaines de props ; les
-		// dessiner tous = des centaines de draw calls de geometrie en memoire hote ->
-		// framerate effondre. On ne dessine que le decor proche de la camera (140 m).
-		// Les interactibles (coffre, caisses, PNJ : peu nombreux) restent toujours dessines.
+		// Culling de distance des props de DECOR. Le profiler (M18.1) montre que la
+		// passe Geometry GPU (overdraw de feuillages a 6,2 Mpx) est le poste de cout
+		// n1 en foret dense : au-dela de ce rayon, on ne dessine plus le decor lointain
+		// VISIBLE. Distance lue a CHAQUE frame depuis config.json (reglage a chaud, sans
+		// recompilation) ; repli 80 m si la cle est absente (sinon le correctif perf
+		// serait silencieusement desactive sur une config plus ancienne). <= 0 =>
+		// desactive. Les INTERACTIBLES (coffre, caisses, PNJ) sont toujours dessines.
 		const engine::math::Vec3 camPos = rs.camera.position;
-		constexpr float kPropCullDist = 110.0f;
-		const float kPropCullDist2 = kPropCullDist * kPropCullDist;
+		const float cullDist = static_cast<float>(m_cfg.GetDouble("world.props.cull_distance_m", 80.0));
+		const float cullDist2 = cullDist * cullDist;
+		const bool cullEnabled = cullDist > 0.0f;
+		int drawn = 0, culled = 0;
 		for (const auto& prop : m_props)
 		{
-			if (prop.interactableIndex < 0)
+			if (cullEnabled && prop.interactableIndex < 0)
 			{
 				const float dxp = prop.worldPos.x - camPos.x;
 				const float dzp = prop.worldPos.z - camPos.z;
-				if (dxp * dxp + dzp * dzp > kPropCullDist2)
-					continue;  // decor trop loin -> non dessine
+				if (dxp * dxp + dzp * dzp > cullDist2)
+					{ ++culled; continue; }  // decor trop loin -> non dessine
 			}
+			++drawn;
 			// Surbrillance (chantier C) : si ce prop est l'interactible a portee, on
 			// dessine ses parties avec la variante de materiau Highlight (teinte).
 			const bool highlight =
@@ -10227,6 +10233,10 @@ namespace engine
 					true);
 			}
 		}
+		// Diag throttle (1/60 frames) : visible uniquement en log.level=Debug.
+		if ((m_currentFrame % 60) == 0)
+			LOG_DEBUG(Render, "[Props] cull_dist={:.0f}m dessines={} coupes={} (total={})",
+			          cullDist, drawn, culled, static_cast<int>(m_props.size()));
 	}
 
 	void Engine::RecordRemoteAvatars(VkCommandBuffer cmd, engine::render::Registry& reg,

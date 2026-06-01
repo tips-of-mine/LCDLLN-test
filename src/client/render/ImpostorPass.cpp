@@ -329,8 +329,14 @@ namespace engine::render
 		if (m_pipeline != VK_NULL_HANDLE)       { vkDestroyPipeline(device, m_pipeline, nullptr);             m_pipeline = VK_NULL_HANDLE; }
 		if (m_pipelineLayout != VK_NULL_HANDLE) { vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr); m_pipelineLayout = VK_NULL_HANDLE; }
 		if (m_sampler != VK_NULL_HANDLE)        { vkDestroySampler(device, m_sampler, nullptr);               m_sampler = VK_NULL_HANDLE; }
-		// Le pool libère implicitement m_descSet.
-		if (m_descPool != VK_NULL_HANDLE)       { vkDestroyDescriptorPool(device, m_descPool, nullptr);       m_descPool = VK_NULL_HANDLE; m_descSet = VK_NULL_HANDLE; }
+		// Le pool libère implicitement tout l'anneau m_descSets.
+		if (m_descPool != VK_NULL_HANDLE)
+		{
+			vkDestroyDescriptorPool(device, m_descPool, nullptr);
+			m_descPool = VK_NULL_HANDLE;
+			for (uint32_t i = 0; i < kDescRing; ++i) m_descSets[i] = VK_NULL_HANDLE;
+			m_descCursor = 0;
+		}
 		if (m_setLayout != VK_NULL_HANDLE)      { vkDestroyDescriptorSetLayout(device, m_setLayout, nullptr); m_setLayout = VK_NULL_HANDLE; }
 	}
 }

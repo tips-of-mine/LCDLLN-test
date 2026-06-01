@@ -144,9 +144,14 @@
         "max_draw_distance_m": 0.0,
         "_comment_interactables": "Interagir (touche E) : count = nombre de cibles ; chaque index i a x/z (metres monde), radius (portee m), npc (bool : PNJ vs objet), label, message (dialogue PNJ ou effet objet), mesh/scale/yaw_deg/rot_x_deg, dialogue. Seuls les VRAIS interactibles ici (PNJ, coffre). Le DECOR (arbres, props non interactifs mais solides) est dans world.scenery. Le coffre et le villageois sont solides (collision) comme tout le decor.",
         "interactables": {
-            "count": 2,
+            "count": 7,
             "0": { "x": 4.0, "z": 0.0, "radius": 2.5, "npc": true, "label": "Villageois", "message": "Villageois : Bonjour !", "mesh": "models/characters/humains/Male_Ranger/Male_Ranger.glb", "scale": 95.0, "rot_x_deg": -90.0, "yaw_deg": 270.0, "dialogue": { "count": 3, "0": "Bonjour, aventurier ! Bienvenue par ici.", "1": "Le bassin de test est a l'est, si tu veux nager.", "2": "Reviens me voir quand tu veux." } },
-            "1": { "x": -4.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Coffre", "message": "Vous fouillez le coffre... vide pour l'instant.", "mesh": "meshes/props/Chest_Wood.gltf", "scale": 1.0, "yaw_deg": 0.0 }
+            "1": { "x": -4.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Coffre", "message": "Vous fouillez le coffre... vide pour l'instant.", "mesh": "meshes/props/Chest_Wood.gltf", "scale": 1.0, "yaw_deg": 0.0 },
+            "2": { "x": -9.0, "z": -4.0, "radius": 2.0, "npc": false, "label": "Caisse en bois", "message": "Caisse en bois (comparaison).", "mesh": "meshes/props/Crate_Wooden.gltf", "scale": 1.0, "yaw_deg": 0.0 },
+            "3": { "x": -9.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Caisse metal", "message": "Caisse en metal (comparaison).", "mesh": "meshes/props/Crate_Metal.gltf", "scale": 1.0, "yaw_deg": 0.0 },
+            "4": { "x": -9.0, "z": 4.0, "radius": 2.0, "npc": false, "label": "Cageot", "message": "Cageot de ferme vide (comparaison).", "mesh": "meshes/props/FarmCrate_Empty.gltf", "scale": 1.0, "yaw_deg": 0.0 },
+            "5": { "x": -13.0, "z": -2.0, "radius": 2.0, "npc": false, "label": "Cage", "message": "Petite cage (comparaison).", "mesh": "meshes/props/Cage_Small.gltf", "scale": 1.0, "yaw_deg": 0.0 },
+            "6": { "x": -13.0, "z": 2.0, "radius": 2.0, "npc": false, "label": "Tonneau", "message": "Tonneau (comparaison).", "mesh": "meshes/props/Barrel.gltf", "scale": 1.0, "yaw_deg": 0.0 }
         },
         "_comment_scenery": "Decor solide/non-solide (foret riveraine dense + sous-bois). Genere par tools/world_gen/scatter_forest.py (deterministe). Chaque index i : mesh, x/z (metres monde, Y au sol au runtime), yaw_deg, scale, collision_radius (cylindre, m), solid (false = traversable : herbe/fougeres/fleurs ; true = bloque : arbres, rochers).",
         "scenery": {

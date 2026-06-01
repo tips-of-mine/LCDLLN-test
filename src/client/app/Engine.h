@@ -774,6 +774,12 @@ namespace engine
 		/// comme un prop + cylindre de collision enregistré dans m_worldCollider. À appeler
 		/// au boot juste après LoadInteractableProps (qui réinitialise le collisionneur).
 		void LoadScenery();
+		/// Charge le coffre (Chest_Wood) en mesh SKINNE (squelette + clips Open/Close)
+		/// pour l'animer a l'interaction. A appeler au boot apres LoadInteractableProps.
+		void LoadAnimatedChest();
+		/// Dessine le coffre anime (pose courante du crossfade) dans la passe Geometry.
+		void RecordAnimatedChest(VkCommandBuffer cmd, engine::render::Registry& reg,
+		                         const engine::RenderState& rs);
 
 		/// Helper partagé : charge un mesh statique, cuit sa transformation monde dans les
 		/// sommets, l'ancre au sol, crée ses matériaux (texture trim OU couleur de sommet si
@@ -819,6 +825,17 @@ namespace engine
 		/// doit etre utilisee dans Play et Sample : sinon le t reel applique au clip
 		/// est decale et la pose initiale "snap" au lieu de demarrer a 0.
 		engine::render::skinned::AnimationCrossfade               m_avatarCrossfade;
+		// Coffre anime (Chest_Wood) : rendu via le pipeline skinne pour jouer
+		// Chest_Open/Chest_Close a l'interaction (remplace le rendu statique du coffre).
+		engine::render::skinned::SkinnedMesh                      m_chestMesh;
+		engine::render::skinned::AnimationCrossfade               m_chestCrossfade;
+		bool                                                     m_chestLoaded = false;
+		bool                                                     m_chestOpen = false;
+		engine::math::Vec3                                       m_chestPos{ 0.0f, 0.0f, 0.0f };
+		float                                                    m_chestYawDeg = 0.0f;
+		uint32_t                                                 m_chestMatFurniture = 0u;
+		uint32_t                                                 m_chestMatMetal = 0u;
+		std::vector<uint32_t>                                    m_chestSubmeshMat;
 
 		/// Sous-projet B.1 (Task 9) — Physics et collision pour le joueur.
 		///

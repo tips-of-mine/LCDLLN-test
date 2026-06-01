@@ -4859,7 +4859,12 @@ namespace engine
 												m_interactables.push_back(chest);
 											}
 											m_interactableInRange = -1;
-											// Chantier B : charge les meshes statiques des props (coffre + interactibles).
+											// Coffre anime (Chest_Wood) : charge en skinne AVANT les props statiques
+											// pour que LoadInteractableProps sache s'il doit sauter le rendu statique
+											// du coffre (m_chestLoaded). Si le chargement skinne echoue, le coffre
+											// retombe sur le rendu statique (pas de disparition).
+											LoadAnimatedChest();
+											// Chantier B : charge les meshes statiques des props (coffre si non anime + interactibles).
 											LoadInteractableProps();
 											// Décor solide (arbres, props nature) depuis world.scenery. Doit suivre
 											// LoadInteractableProps (qui réinitialise le collisionneur composite).
@@ -5149,6 +5154,8 @@ namespace engine
 
 												// TD.2 : dessine les avatars des joueurs distants (réplication AoI).
 												RecordRemoteAvatars(cmd, reg, rs);
+												// Coffre anime (ouverture/fermeture a l'interaction).
+												RecordAnimatedChest(cmd, reg, rs);
 
 												// M100 — Task 12 : drawcall terrain chunk (post-Phase-3a).
 												// Dessine les chunks visibles qui ont terrain.bin + splat.bin
@@ -6523,6 +6530,7 @@ namespace engine
 				kv.second.Destroy(m_vkDeviceContext.GetDevice());
 			}
 			m_raceMeshes.clear();
+			m_chestMesh.Destroy(m_vkDeviceContext.GetDevice());
 			m_currentSkinnedMesh = nullptr;
 			m_skinnedRenderer.Destroy(m_vkDeviceContext.GetDevice());
 			m_skinnedAvatarReady = false;
@@ -8354,7 +8362,15 @@ namespace engine
 						if (interactPressed && nearestI >= 0)
 						{
 							InteractableEntity& e = m_interactables[nearestI];
-							if (e.isNpc && !e.dialogue.empty())
+							if (m_chestLoaded && e.meshPath.find("Chest_Wood") != std::string::npos)
+							{
+								m_chestOpen = !m_chestOpen;
+								const char* clipName = m_chestOpen ? "Chest_Open" : "Chest_Close";
+								if (const auto* clip = m_chestMesh.FindClip(clipName))
+									m_chestCrossfade.Play(*clip, /*loops*/ false, EngineNowSec());
+								pushInteractChat("[Objet]", m_chestOpen ? "Vous ouvrez le coffre." : "Vous refermez le coffre.");
+							}
+							else if (e.isNpc && !e.dialogue.empty())
 							{
 								pushInteractChat("[PNJ]", e.label + " : " + e.dialogue[e.dialogueCursor]);
 								e.dialogueCursor = (e.dialogueCursor + 1) % static_cast<int>(e.dialogue.size());
@@ -9826,6 +9842,16 @@ namespace engine
 		{
 			const InteractableEntity& e = m_interactables[ii];
 			if (e.meshPath.empty()) continue;
+			// Le coffre (Chest_Wood) est rendu via le pipeline ANIME (LoadAnimatedChest)
+			// pour pouvoir l'ouvrir/fermer ; on saute son rendu statique (mais on lui
+			// pose un cylindre de collision) UNIQUEMENT si le chargement skinne a reussi.
+			if (m_chestLoaded && e.meshPath.find("Chest_Wood") != std::string::npos)
+			{
+				const float gy = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z);
+				m_worldCollider.AddCylinder(engine::gameplay::PropCylinder{
+					e.position.x, e.position.z, 0.6f, gy, gy + 1.0f });
+				continue;
+			}
 			// Interactibles solides (coffre, PNJ...) : collision auto (empreinte XZ du mesh).
 			BuildPropFromMesh(e.meshPath, e.position.x, e.position.z, e.meshYawDeg,
 			                  e.meshRotXDeg, e.meshScale, static_cast<int>(ii),
@@ -9858,6 +9884,102 @@ namespace engine
 			                  /*interactableIndex*/ -1, /*solid*/ s.solid, s.collisionRadius);
 		LOG_INFO(Render, "[Scenery] {} element(s) decor charge(s) ; {} cylindre(s) collision",
 		         static_cast<int>(m_scenery.size()), static_cast<int>(m_worldCollider.CylinderCount()));
+	}
+
+	void Engine::LoadAnimatedChest()
+	{
+		m_chestLoaded = false;
+		if (!m_pipeline) return;
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		if (!materialCache.IsValid()) return;
+		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+
+		const InteractableEntity* chest = nullptr;
+		for (const auto& e : m_interactables)
+			if (e.meshPath.find("Chest_Wood") != std::string::npos) { chest = &e; break; }
+		if (!chest) return;
+
+		const std::string full = contentRoot + "/" + chest->meshPath;
+		auto loaded = engine::render::skinned::SkinnedMeshLoader::Load(
+			m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), full);
+		if (!loaded)
+		{
+			LOG_WARN(Render, "[Chest] chargement skinne ECHEC '{}' (coffre non anime)", full);
+			return;
+		}
+		m_chestMesh = std::move(*loaded);
+		m_chestPos = engine::math::Vec3{ chest->position.x,
+			m_terrainCollider.GroundHeightAt(chest->position.x, chest->position.z), chest->position.z };
+		m_chestYawDeg = chest->meshYawDeg;
+
+		std::string meshDir;
+		{
+			const auto sl = chest->meshPath.find_last_of('/');
+			if (sl != std::string::npos) meshDir = chest->meshPath.substr(0, sl + 1);
+		}
+		auto makeTrim = [&](const std::string& trimType) -> uint32_t
+		{
+			const engine::render::TextureHandle bc =
+				m_assetRegistry.LoadTexture(meshDir + "T_Trim_" + trimType + "_BaseColor.png", true);
+			if (!bc.IsValid()) return materialCache.GetDefaultMaterialIndex();
+			engine::render::Material mat{};
+			mat.baseColor = bc;
+			const engine::render::TextureHandle n =
+				m_assetRegistry.LoadTexture(meshDir + "T_Trim_" + trimType + "_Normal.png", false);
+			if (n.IsValid()) mat.normal = n;
+			const engine::render::TextureHandle o =
+				m_assetRegistry.LoadTexture(meshDir + "T_Trim_" + trimType + "_ORM.png", false);
+			if (o.IsValid()) mat.orm = o;
+			return materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+		};
+		m_chestMatFurniture = makeTrim("Furniture");
+		m_chestMatMetal = makeTrim("Metal");
+
+		m_chestSubmeshMat.clear();
+		for (const auto& sm : m_chestMesh.submeshes)
+			m_chestSubmeshMat.push_back(
+				sm.materialName.find("Metal") != std::string::npos ? m_chestMatMetal : m_chestMatFurniture);
+
+		m_chestLoaded = true;
+		LOG_INFO(Render,
+			"[Chest] coffre anime charge ({} bones, {} clips, {} sous-maillages)",
+			static_cast<int>(m_chestMesh.skeleton.bones.size()),
+			static_cast<int>(m_chestMesh.clips.size()),
+			static_cast<int>(m_chestMesh.submeshes.size()));
+	}
+
+	void Engine::RecordAnimatedChest(VkCommandBuffer cmd, engine::render::Registry& reg,
+	                                 const engine::RenderState& rs)
+	{
+		if (!m_chestLoaded || !m_pipeline || !m_skinnedRenderer.IsValid()) return;
+		if (m_chestMesh.skeleton.bones.empty()) return;
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		if (!materialCache.IsValid()) return;
+
+		const float nowSec = EngineNowSec();
+		auto locals  = m_chestCrossfade.Sample(m_chestMesh.skeleton, nowSec);
+		auto globals = engine::render::skinned::AnimationSampler::ComputeGlobalMatrices(m_chestMesh.skeleton, locals);
+		auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(m_chestMesh.skeleton, globals);
+
+		constexpr float kDeg2Rad = 3.14159265f / 180.f;
+		const engine::math::Mat4 model =
+			engine::math::Mat4::Translate(m_chestPos) *
+			engine::math::Mat4::RotateY(m_chestYawDeg * kDeg2Rad) *
+			m_chestMesh.importTransform;
+
+		std::vector<uint32_t> subMat = m_chestSubmeshMat;
+		m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
+			m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+			m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+			[this, &rs, finals = std::move(finals), &materialCache, model,
+			 subMat = std::move(subMat)](VkCommandBuffer innerCmd) {
+				m_skinnedRenderer.Record(
+					m_vkDeviceContext.GetDevice(), innerCmd, m_vkSwapchain.GetExtent(),
+					m_pipeline->GetGeometryPass().GetRenderPassLoad(), VK_NULL_HANDLE,
+					rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+					m_chestMesh, finals, materialCache.GetDescriptorSet(),
+					model.m, m_chestMatFurniture, subMat, m_chestMatMetal, 0.0f, 0.0f);
+			});
 	}
 
 	// Charge un mesh statique (prop/décor), CUIT sa transformation monde dans les

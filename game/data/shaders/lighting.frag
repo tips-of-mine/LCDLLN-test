@@ -26,6 +26,12 @@
 //                         ready (alors on lit GBufferA pour la sky), 0.0
 //                         si on utilise la flat skyColor.
 //   float useIBL        – 1.0 = use IBL, 0.0 = constant ambient
+//
+// M45.1 — Perspective aérienne (upgrade du brouillard de distance) :
+//   lightColor.w = aerialDensity   – densité d'extinction (1/m). <= 0 désactive.
+//   ambientColor.w = aerialInscatter – force du halo directionnel vers le soleil.
+//   fogStart (cameraPos.w) = rayon clair ; fogEnd (lightDir.w) = distance de
+//   fondu complet (garantit le masquage de la coupe de distance des props).
 
 layout(location = 0) in  vec2 inUV;
 layout(location = 0) out vec4 outSceneColorHDR;
@@ -45,13 +51,18 @@ layout(set = 0, binding = 8) uniform sampler2D   decalOverlayTex;
 layout(push_constant) uniform PC
 {
     mat4  invVP;        // inverse view-projection (for world position reconstruction)
-    vec4  cameraPos;    // camera world-space position (xyz, w unused)
-    vec4  lightDir;     // normalised direction toward the directional light (xyz)
-    vec4  lightColor;   // RGB radiance (xyz = color * intensity)
-    vec4  ambientColor; // constant ambient RGB (fallback when useIBL == 0)
+    vec4  cameraPos;    // xyz = camera world-space position ; w = aerial fogStart (m)
+    vec4  lightDir;     // xyz = normalised direction toward the sun ; w = aerial fogEnd (m)
+    vec4  lightColor;   // xyz = RGB radiance (color * intensity) ; w = aerialDensity (1/m)
+    vec4  ambientColor; // xyz = constant ambient RGB (fallback) ; w = aerialInscatter
     vec4  skyColor;     // rgb = couleur du ciel flat (fallback) ; w = 1.0 si SkyPass ready
     float useIBL;       // 1.0 = use IBL, 0.0 = constant ambient
 } pc;
+
+// M45.1 — exposant d'anisotropie du halo directionnel d'inscattering vers le
+// soleil. Plus élevé = halo plus concentré autour du disque solaire. Constante
+// (pas de slot push-constant libre) ; ajuster ici si besoin de réglage visuel.
+const float kAerialSunExponent = 8.0;
 
 // ---- Constants --------------------------------------------------------------
 const float PI       = 3.14159265358979323846;
@@ -186,22 +197,39 @@ void main()
     // ---- Combine & output HDR ------------------------------------------
     vec3  color = ambient + Lo;
 
-    // ---- Brouillard atmospherique LINEAIRE (profondeur de champ) -------
-    // Brouillard a DISTANCE : zone CLAIRE autour du joueur (< fogStart), puis
-    // fondu lineaire vers la couleur d'horizon (pc.skyColor.rgb) jusqu'a
-    // fogEnd ou tout est ciel. Le joueur n'est donc PAS noye dans le
-    // brouillard ; ca ajoute de la profondeur au loin ET masque la coupe de
-    // distance des props (regler fogEnd ~ world.props.cull_distance_m).
-    // fogStart = pc.cameraPos.w, fogEnd = pc.lightDir.w (slots libres).
-    // Desactive si fogEnd <= fogStart. Applique UNIQUEMENT aux pixels avec
-    // geometrie (le ciel a deja ete ecrit via l'early-return depth>=1.0).
-    float fogStart = pc.cameraPos.w;
-    float fogEnd   = pc.lightDir.w;
-    if (fogEnd > fogStart)
+    // ---- M45.1 — Perspective aerienne (extinction + inscattering) ------
+    // Upgrade du brouillard de distance : zone CLAIRE autour du joueur
+    // (< fogStart), puis EXTINCTION EXPONENTIELLE vers une teinte
+    // atmospherique. Le joueur n'est PAS noye ; ca ajoute de la profondeur
+    // au loin, suit le cycle jour/nuit (base = skyHorizon) et masque la
+    // coupe de distance des props (regler fogEnd ~ world.props.cull_distance_m).
+    // Teinte = horizon, rechauffee vers le soleil quand on le regarde
+    // (inscattering directionnel, sans ray-march — c'est M45.2 qui marchera).
+    // Slots : fogStart=cameraPos.w, fogEnd=lightDir.w, density=lightColor.w,
+    // inscatter=ambientColor.w. Desactive si fogEnd<=fogStart ou density<=0.
+    // Applique UNIQUEMENT aux pixels avec geometrie (le ciel a deja ete ecrit
+    // via l'early-return depth>=1.0).
+    float fogStart  = pc.cameraPos.w;
+    float fogEnd    = pc.lightDir.w;
+    float density   = pc.lightColor.w;
+    float inscatter = pc.ambientColor.w;
+    if (fogEnd > fogStart && density > 0.0)
     {
         float dist = length(pc.cameraPos.xyz - P);
-        float fogF = clamp((dist - fogStart) / (fogEnd - fogStart), 0.0, 1.0);
-        color = mix(color, pc.skyColor.rgb, fogF);
+        float d    = max(dist - fogStart, 0.0);
+        // Extinction exponentielle (transmittance = exp(-d*density)).
+        float fog  = 1.0 - exp(-d * density);
+        // Filet de securite : garantit l'opacite complete a fogEnd (masquage du
+        // cull des props), meme si la densite seule n'y suffit pas. smoothstep
+        // reste ~0 pres de fogStart pour laisser l'exponentielle s'exprimer.
+        fog = max(fog, smoothstep(fogStart, fogEnd, dist));
+        // Inscattering directionnel : halo chaud vers le soleil (couleur du
+        // soleil = lightColor.rgb), base = couleur d'horizon (skyColor.rgb,
+        // pilotee jour/nuit). rayDir = direction camera->pixel.
+        vec3  rayDir = normalize(P - pc.cameraPos.xyz);
+        float sunAmt = pow(max(dot(rayDir, normalize(pc.lightDir.xyz)), 0.0), kAerialSunExponent) * inscatter;
+        vec3  tint   = mix(pc.skyColor.rgb, pc.lightColor.rgb, clamp(sunAmt, 0.0, 1.0));
+        color = mix(color, tint, fog);
     }
 
     outSceneColorHDR = vec4(color, 1.0);

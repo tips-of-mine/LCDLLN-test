@@ -116,6 +116,12 @@ namespace engine::world
 		ReadFloat3(atmosphereCfg, "sun.direction", outSettings.sunDirection);
 		ReadFloat3(atmosphereCfg, "sun.color", outSettings.sunColor);
 		ReadFloat3(atmosphereCfg, "ambient.color", outSettings.ambientColor);
+		// M45.1 — Perspective aérienne (per-zone, optionnel). Si la clé est
+		// absente d'atmosphere.json, on garde le défaut doux de la struct.
+		if (atmosphereCfg.Has("aerial.density"))
+			outSettings.aerialDensity = static_cast<float>(atmosphereCfg.GetDouble("aerial.density", static_cast<double>(outSettings.aerialDensity)));
+		if (atmosphereCfg.Has("aerial.inscatter"))
+			outSettings.aerialInscatter = static_cast<float>(atmosphereCfg.GetDouble("aerial.inscatter", static_cast<double>(outSettings.aerialInscatter)));
 		LOG_INFO(Core, "[ZoneProbes] Load atmosphere OK (path={})", fullPath.string());
 		return true;
 	}

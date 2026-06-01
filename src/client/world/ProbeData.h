@@ -38,6 +38,11 @@ namespace engine::world
 		float sunDirection[3]{ 0.5774f, 0.5774f, 0.5774f };
 		float sunColor[3]{ 1.0f, 0.95f, 0.85f };
 		float ambientColor[3]{ 0.03f, 0.03f, 0.05f };
+		// M45.1 — Perspective aérienne (par zone). aerialDensity = densité
+		// d'extinction (1/m), <= 0 désactive l'effet. aerialInscatter = force du
+		// halo directionnel chaud vers le soleil. Défauts doux (effet léger).
+		float aerialDensity{ 0.012f };
+		float aerialInscatter{ 0.6f };
 	};
 
 	/// Load `probes.bin` from a content-relative path resolved via `paths.content`.

@@ -376,7 +376,14 @@ namespace engine::render
 		VkPipelineRasterizationStateCreateInfo rs = {};
 		rs.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rs.polygonMode = VK_POLYGON_MODE_FILL;
-		rs.cullMode    = VK_CULL_MODE_BACK_BIT;
+		// cullMode = NONE : les props proviennent de sources au winding heterogene
+		// (props trim CW, arbres Quaternius au winding oppose) et beaucoup sont
+		// doubleSided (feuillages = quads vus des deux cotes, troncs). Avec BACK_BIT
+		// on voyait l'INTERIEUR des troncs (faces avant cullees) et les feuilles
+		// disparaissaient d'un cote. NONE rend les deux faces : sans danger pour les
+		// meshes pleins (la face avant gagne le depth-test) et correct pour le feuillage.
+		// L'avatar n'est PAS concerne (pipeline SkinnedRenderer separe).
+		rs.cullMode    = VK_CULL_MODE_NONE;
 		// PR25 (M??.?) : meme correction que TerrainRenderer.cpp:528 (PR24).
 		// Le commit ee181da (Reapply view matrix transposee) a change la
 		// convention de Camera::ComputeViewMatrix vers Vulkan LH +Z forward.

@@ -14,6 +14,7 @@
 #include "src/client/render/LightingPass.h"
 #include "src/client/render/VolumetricFogPass.h"
 #include "src/client/render/DepthOfFieldPass.h"
+#include "src/client/render/ImpostorPass.h"
 #include "src/client/render/TonemapPass.h"
 #include "src/client/render/BloomPass.h"
 #include "src/client/render/AutoExposure.h"
@@ -90,6 +91,8 @@ namespace engine::render
 		const VolumetricFogPass&  GetVolumetricFogPass() const  { return m_volumetricFogPass; }
 		DepthOfFieldPass&         GetDepthOfFieldPass()         { return m_depthOfFieldPass; }
 		const DepthOfFieldPass&   GetDepthOfFieldPass() const   { return m_depthOfFieldPass; }
+		ImpostorPass&             GetImpostorPass()             { return m_impostorPass; }
+		const ImpostorPass&       GetImpostorPass() const       { return m_impostorPass; }
 		TonemapPass&          GetTonemapPass()          { return m_tonemapPass; }
 		const TonemapPass&    GetTonemapPass() const    { return m_tonemapPass; }
 		BloomPrefilterPass&   GetBloomPrefilterPass()   { return m_bloomPrefilterPass; }
@@ -116,6 +119,7 @@ namespace engine::render
 		LightingPass          m_lightingPass;
 		VolumetricFogPass     m_volumetricFogPass;
 		DepthOfFieldPass      m_depthOfFieldPass;
+		ImpostorPass          m_impostorPass; ///< M45.5 — impostors végétation (gated world.impostor.enabled)
 		TonemapPass           m_tonemapPass;
 		BloomPrefilterPass    m_bloomPrefilterPass;
 		BloomDownsamplePass   m_bloomDownsamplePass;

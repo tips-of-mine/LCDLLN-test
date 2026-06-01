@@ -33,6 +33,7 @@
 #include "src/shared/platform/Input.h"
 #include "src/shared/platform/Window.h"
 #include "src/client/render/AssetRegistry.h"
+#include "src/client/render/ImpostorAsset.h"
 #include "src/client/render/DecalSystem.h"
 #include "src/client/render/FrameGraph.h"
 #include "src/client/render/vk/VkDeviceContext.h"
@@ -754,10 +755,34 @@ namespace engine
 			/// Position monde (base) du prop, pour le culling de distance dans
 			/// RecordPropsGeometry (sommets cuits en monde, modelMatrix=identité).
 			engine::math::Vec3 worldPos{ 0.0f, 0.0f, 0.0f };
+			/// M45.5 — chemin du mesh source (relatif à paths.content), clé du cache
+			/// d'atlas d'impostors `m_impostorAtlases`. Vide pour les interactibles.
+			std::string meshPath;
+			/// M45.5 — centre monde de la sphère englobante du prop (= centre du
+			/// billboard impostor). Calculé au build depuis les sommets cuits.
+			engine::math::Vec3 impostorCenter{ 0.0f, 0.0f, 0.0f };
+			/// M45.5 — rayon (m) de la sphère englobante (demi-taille du billboard).
+			float impostorRadius = 0.0f;
 		};
 		/// Props statiques rendus (chantier B), construits au boot depuis les
 		/// interactibles ayant un meshPath. Cf. LoadInteractableProps / RecordPropsGeometry.
 		std::vector<PropRenderable> m_props;
+
+		/// M45.5 — atlas d'impostors par chemin de mesh (clé = PropRenderable::meshPath).
+		/// Peuplé à la demande dans BuildPropFromMesh quand world.impostor.enabled :
+		/// pour chaque mesh de DÉCOR, tente de charger `<même nom>.mipo` à côté du
+		/// .gltf. Absent => le prop n'aura pas d'impostor (fallback mesh). Les atlas
+		/// (textures GPU) appartiennent à m_assetRegistry.
+		std::unordered_map<std::string, engine::render::ImpostorAsset> m_impostorAtlases;
+		/// M45.5 — flag global impostors (lu depuis world.impostor.enabled au boot).
+		/// false par défaut => AUCUN code impostor ne s'exécute (rendu inchangé).
+		bool m_impostorEnabled = false;
+
+		/// M45.5 — tente de charger l'atlas `.mipo` associé à `meshPath` (à côté du
+		/// .gltf, même nom + extension `.mipo`) dans `m_impostorAtlases` s'il n'y est
+		/// pas déjà. No-op si !m_impostorEnabled. \return true si un atlas valide est
+		/// disponible pour ce mesh après l'appel.
+		bool EnsureImpostorAtlas(const std::string& meshPath);
 
 		/// Élément de décor solide non interactif (arbres, props nature) chargé depuis
 		/// world.scenery. Rendu comme un prop ; ne participe pas à l'interaction (touche E).

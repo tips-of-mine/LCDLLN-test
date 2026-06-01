@@ -751,6 +751,7 @@ namespace engine
 			float yawDeg = 0.0f;
 			float scale = 1.0f;
 			float collisionRadius = 0.0f; ///< 0 = empreinte XZ auto du mesh.
+			bool  solid = true;            ///< false = pas de collision (sous-bois traversable).
 		};
 		std::vector<SceneryInstance> m_scenery;
 

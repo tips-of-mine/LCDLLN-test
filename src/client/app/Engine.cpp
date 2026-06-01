@@ -9850,11 +9850,12 @@ namespace engine
 			s.yawDeg = static_cast<float>(m_cfg.GetDouble(base + "yaw_deg", 0.0));
 			s.scale = static_cast<float>(m_cfg.GetDouble(base + "scale", 1.0));
 			s.collisionRadius = static_cast<float>(m_cfg.GetDouble(base + "collision_radius", 0.0));
+			s.solid = m_cfg.GetBool(base + "solid", true);
 			m_scenery.push_back(s);
 		}
 		for (const auto& s : m_scenery)
 			BuildPropFromMesh(s.meshPath, s.x, s.z, s.yawDeg, /*rotXDeg*/ 0.0f, s.scale,
-			                  /*interactableIndex*/ -1, /*solid*/ true, s.collisionRadius);
+			                  /*interactableIndex*/ -1, /*solid*/ s.solid, s.collisionRadius);
 		LOG_INFO(Render, "[Scenery] {} element(s) decor charge(s) ; {} cylindre(s) collision",
 		         static_cast<int>(m_scenery.size()), static_cast<int>(m_worldCollider.CylinderCount()));
 	}

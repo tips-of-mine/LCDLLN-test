@@ -5515,7 +5515,12 @@ namespace engine
 												lp.cameraPos[0] = rs.camera.position.x;
 												lp.cameraPos[1] = rs.camera.position.y;
 												lp.cameraPos[2] = rs.camera.position.z;
-												lp.cameraPos[3] = 0.0f;
+												// Brouillard atmospherique : densite packee dans cameraPos.w (slot libre,
+												// evite de redimensionner LightParams). Le shader fond les pixels lointains
+												// vers pc.skyColor.rgb (couleur d'horizon DayNightCycle) -> profondeur +
+												// masque la coupe de distance des props (world.props.cull_distance_m).
+												// 0 = desactive. Lu a chaque frame (reglage a chaud via config.json).
+												lp.cameraPos[3] = static_cast<float>(m_cfg.GetDouble("world.fog.density", 0.012));
 												lp.lightDir[0] = m_zoneAtmosphere.sunDirection[0]; lp.lightDir[1] = m_zoneAtmosphere.sunDirection[1]; lp.lightDir[2] = m_zoneAtmosphere.sunDirection[2]; lp.lightDir[3] = 0.0f;
 												lp.lightColor[0] = m_zoneAtmosphere.sunColor[0]; lp.lightColor[1] = m_zoneAtmosphere.sunColor[1]; lp.lightColor[2] = m_zoneAtmosphere.sunColor[2]; lp.lightColor[3] = 0.0f;
 												const float probeIntensity = GetGlobalProbeIntensity(m_zoneProbes);
@@ -8363,16 +8368,30 @@ namespace engine
 							if (nearestI >= 0)
 								pushInteractChat("[Interaction]", "Pres de " + m_interactables[nearestI].label + " - appuyez sur E.");
 						}
+						// Refermeture automatique du coffre 2 s apres la derniere ouverture
+						// (verifie chaque frame, independamment de l'appui sur E).
+						if (m_chestLoaded && m_chestOpen && EngineNowSec() >= m_chestAutoCloseAtSec)
+						{
+							m_chestOpen = false;
+							if (const auto* clip = m_chestMesh.FindClip("Chest_Close"))
+								m_chestCrossfade.Play(*clip, /*loops*/ false, EngineNowSec());
+							pushInteractChat("[Objet]", "Le coffre se referme.");
+						}
 						if (interactPressed && nearestI >= 0)
 						{
 							InteractableEntity& e = m_interactables[nearestI];
 							if (m_chestLoaded && e.meshPath.find("Chest_Wood") != std::string::npos)
 							{
-								m_chestOpen = !m_chestOpen;
-								const char* clipName = m_chestOpen ? "Chest_Open" : "Chest_Close";
-								if (const auto* clip = m_chestMesh.FindClip(clipName))
-									m_chestCrossfade.Play(*clip, /*loops*/ false, EngineNowSec());
-								pushInteractChat("[Objet]", m_chestOpen ? "Vous ouvrez le coffre." : "Vous refermez le coffre.");
+								// E ouvre le coffre (s'il ne l'est pas deja) puis (re)arme une
+								// refermeture automatique 2 s plus tard (cf. check par frame).
+								if (!m_chestOpen)
+								{
+									m_chestOpen = true;
+									if (const auto* clip = m_chestMesh.FindClip("Chest_Open"))
+										m_chestCrossfade.Play(*clip, /*loops*/ false, EngineNowSec());
+									pushInteractChat("[Objet]", "Vous ouvrez le coffre.");
+								}
+								m_chestAutoCloseAtSec = EngineNowSec() + 2.0f;
 							}
 							else if (e.isNpc && !e.dialogue.empty())
 							{

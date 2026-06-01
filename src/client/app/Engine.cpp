@@ -5515,13 +5515,16 @@ namespace engine
 												lp.cameraPos[0] = rs.camera.position.x;
 												lp.cameraPos[1] = rs.camera.position.y;
 												lp.cameraPos[2] = rs.camera.position.z;
-												// Brouillard atmospherique : densite packee dans cameraPos.w (slot libre,
-												// evite de redimensionner LightParams). Le shader fond les pixels lointains
-												// vers pc.skyColor.rgb (couleur d'horizon DayNightCycle) -> profondeur +
-												// masque la coupe de distance des props (world.props.cull_distance_m).
-												// 0 = desactive. Lu a chaque frame (reglage a chaud via config.json).
-												lp.cameraPos[3] = static_cast<float>(m_cfg.GetDouble("world.fog.density", 0.012));
-												lp.lightDir[0] = m_zoneAtmosphere.sunDirection[0]; lp.lightDir[1] = m_zoneAtmosphere.sunDirection[1]; lp.lightDir[2] = m_zoneAtmosphere.sunDirection[2]; lp.lightDir[3] = 0.0f;
+												// Brouillard atmospherique LINEAIRE a distance. fogStart (cameraPos.w) :
+												// rayon CLAIR autour du joueur ; fogEnd (lightDir.w) : distance ou tout
+												// est fondu vers l'horizon. Le joueur n'est plus noye dans le brouillard.
+												// Regler fogEnd ~ world.props.cull_distance_m pour que les arbres se
+												// fondent dans le ciel juste avant d'etre cull. Desactive si end<=start.
+												// Slots .w libres -> pas de redimensionnement de LightParams. Lu chaque
+												// frame (reglage a chaud via config.json).
+												lp.cameraPos[3] = static_cast<float>(m_cfg.GetDouble("world.fog.start_m", 35.0));
+												lp.lightDir[0] = m_zoneAtmosphere.sunDirection[0]; lp.lightDir[1] = m_zoneAtmosphere.sunDirection[1]; lp.lightDir[2] = m_zoneAtmosphere.sunDirection[2];
+												lp.lightDir[3] = static_cast<float>(m_cfg.GetDouble("world.fog.end_m", 85.0)); // brouillard : distance de fondu total (cf. cameraPos.w = start)
 												lp.lightColor[0] = m_zoneAtmosphere.sunColor[0]; lp.lightColor[1] = m_zoneAtmosphere.sunColor[1]; lp.lightColor[2] = m_zoneAtmosphere.sunColor[2]; lp.lightColor[3] = 0.0f;
 												const float probeIntensity = GetGlobalProbeIntensity(m_zoneProbes);
 												lp.ambientColor[0] = m_zoneAtmosphere.ambientColor[0] * probeIntensity;

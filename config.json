@@ -146,9 +146,10 @@
         "props": {
             "cull_distance_m": 80.0
         },
-        "_comment_fog": "Brouillard atmospherique (profondeur de champ). density : plus c'est haut, plus les lointains se fondent tot vers la couleur d'horizon du ciel. 0 = desactive. Donne de la profondeur ET masque la coupe de distance des props (un arbre se fond dans le ciel juste avant d'etre cull). Lu a chaque frame -> reglage a chaud. Reperes : 0.008 (leger), 0.012 (defaut), 0.02 (dense/brumeux).",
+        "_comment_fog": "Brouillard atmospherique LINEAIRE a distance (profondeur de champ). start_m : rayon CLAIR autour du joueur (aucun brouillard en deca) ; end_m : distance ou tout est fondu vers la couleur d'horizon du ciel. Le joueur n'est PAS noye dans le brouillard. Desactive si end_m <= start_m. Conseil : mettre end_m proche de world.props.cull_distance_m pour que les arbres se fondent dans le ciel juste avant d'etre cull (transition invisible). Lu a chaque frame -> reglage a chaud.",
         "fog": {
-            "density": 0.012
+            "start_m": 35.0,
+            "end_m": 85.0
         },
         "_comment_interactables": "Interagir (touche E) : count = nombre de cibles ; chaque index i a x/z (metres monde), radius (portee m), npc (bool : PNJ vs objet), label, message (dialogue PNJ ou effet objet), mesh/scale/yaw_deg/rot_x_deg, dialogue. Seuls les VRAIS interactibles ici (PNJ, coffre). Le DECOR (arbres, props non interactifs mais solides) est dans world.scenery. Le coffre et le villageois sont solides (collision) comme tout le decor.",
         "interactables": {

@@ -153,6 +153,16 @@
             "density": 0.012,
             "inscatter": 0.6
         },
+        "_comment_volfog": "M45.2 Brouillard VOLUMIQUE + god rays (rayons crepusculaires). Distinct du brouillard de distance (world.fog ci-dessus) : ici une passe plein ecran ray-marche par pixel le long du rayon camera->pixel en echantillonnant la shadow map cascade 0 pour l'occlusion solaire (god rays). DESACTIVE par defaut (density = 0). density : densite du milieu (<= 0 desactive entierement la passe) ; anisotropy : g de Henyey-Greenstein [-1..1] (>0 = diffusion vers l'avant, halo concentre autour du soleil) ; inscatter : intensite globale de l'inscattering ; steps : nombre de pas de marche (cout GPU ~ lineaire) ; max_dist_m : distance max de marche (m) ; height_m : hauteur de reference du fog (m, plus dense en dessous) ; height_falloff : taux d'attenuation en hauteur. Lu a chaque frame -> reglage a chaud.",
+        "volfog": {
+            "density": 0.0,
+            "anisotropy": 0.6,
+            "inscatter": 1.0,
+            "steps": 32,
+            "max_dist_m": 120.0,
+            "height_m": 10.0,
+            "height_falloff": 0.1
+        },
         "_comment_interactables": "Interagir (touche E) : count = nombre de cibles ; chaque index i a x/z (metres monde), radius (portee m), npc (bool : PNJ vs objet), label, message (dialogue PNJ ou effet objet), mesh/scale/yaw_deg/rot_x_deg, dialogue. Seuls les VRAIS interactibles ici (PNJ, coffre). Le DECOR (arbres, props non interactifs mais solides) est dans world.scenery. Le coffre et le villageois sont solides (collision) comme tout le decor.",
         "interactables": {
             "count": 7,

@@ -339,6 +339,13 @@ namespace engine
 		/// m_fgSceneColorHDRId. Si WaterPass::Init échoue, un fallback Water_Passthrough
 		/// (vkCmdCopyImage) garantit que cette ressource est bien renseignée chaque frame.
 		engine::render::ResourceId m_fgSceneColorHDRPostWaterId = engine::render::kInvalidResourceId;
+		/// M45.2 — SceneColor_HDR_Fogged: SceneColor_HDR_PostWater après application du
+		/// brouillard volumique + god rays (VolumetricFog), ou copie passthrough si la
+		/// passe fog est invalide. Lu en SampledRead par Bloom_Prefilter / Bloom_Combine.
+		engine::render::ResourceId m_fgSceneColorFoggedId = engine::render::kInvalidResourceId;
+		/// M45.2 — true si VolumetricFogPass::IsValid() au boot (passe fog active) ;
+		/// sinon Engine enregistre un passthrough (copie PostWater -> Fogged).
+		bool m_volumetricFogReady = false;
 		/// SceneColor_LDR: output of the tonemap pass (R8G8B8A8_UNORM). Added in M03.4.
 		engine::render::ResourceId m_fgSceneColorLDRId   = engine::render::kInvalidResourceId;
 		/// M08.2: SceneColor_HDR + bloom (combine pass output); tonemap reads this.

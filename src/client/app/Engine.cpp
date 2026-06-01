@@ -3643,6 +3643,10 @@ namespace engine
 										m_pipeline = std::make_unique<engine::render::DeferredPipeline>();
 
 										m_assetRegistry.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, m_cfg);
+										// Upload device-local des meshes de props (buffers GPU rapides via staging)
+										// au lieu de buffers HOST_VISIBLE lus par PCIe chaque frame (lag de la foret).
+										m_assetRegistry.SetUploadContext(m_vkDeviceContext.GetGraphicsQueue(),
+											m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
 
 										if (!m_profiler.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), 2u))
 										{

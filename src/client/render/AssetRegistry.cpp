@@ -351,8 +351,9 @@ namespace engine::render
 			asset.hasLocalBounds = true;
 		}
 
+		// createBuffer parametré par usage + propriétés mémoire (host-visible OU device-local).
 		auto createBuffer = [&](VkDeviceSize size, VkBufferUsageFlags usage,
-			VkBuffer& outBuffer, void*& outAlloc) -> bool
+			VkMemoryPropertyFlags memProps, VkBuffer& outBuffer, void*& outAlloc) -> bool
 		{
 			VkBufferCreateInfo bufInfo{};
 			bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -363,8 +364,7 @@ namespace engine::render
 				return false;
 			VkMemoryRequirements memReq{};
 			vkGetBufferMemoryRequirements(m_device, outBuffer, &memReq);
-			uint32_t memTypeIdx = FindMemoryType(m_physicalDevice, memReq.memoryTypeBits,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			uint32_t memTypeIdx = FindMemoryType(m_physicalDevice, memReq.memoryTypeBits, memProps);
 			if (memTypeIdx == UINT32_MAX) { vkDestroyBuffer(m_device, outBuffer, nullptr); outBuffer = VK_NULL_HANDLE; return false; }
 			VkMemoryAllocateInfo allocInfo{};
 			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -377,9 +377,18 @@ namespace engine::render
 			return true;
 		};
 
-		if (!createBuffer(vertexBytes, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, asset.vertexBuffer, asset.vertexAlloc))
+		// Device-local si une queue d'upload est fournie (SetUploadContext) : buffers
+		// GPU rapides (lus localement par le GPU) au lieu de HOST_VISIBLE (PCIe/frame).
+		const bool deviceLocal = (m_uploadQueue != VK_NULL_HANDLE);
+		constexpr VkMemoryPropertyFlags kHostProps =
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		const VkMemoryPropertyFlags meshProps = deviceLocal ? VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT : kHostProps;
+		const VkBufferUsageFlags vtxUsage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | (deviceLocal ? VK_BUFFER_USAGE_TRANSFER_DST_BIT : 0u);
+		const VkBufferUsageFlags idxUsage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT  | (deviceLocal ? VK_BUFFER_USAGE_TRANSFER_DST_BIT : 0u);
+
+		if (!createBuffer(vertexBytes, vtxUsage, meshProps, asset.vertexBuffer, asset.vertexAlloc))
 			return MeshHandle(this, kInvalidAssetId);
-		if (!createBuffer(indexBytes, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, asset.indexBuffer, asset.indexAlloc))
+		if (!createBuffer(indexBytes, idxUsage, meshProps, asset.indexBuffer, asset.indexAlloc))
 		{
 			VkDeviceMemory vMem = reinterpret_cast<VkDeviceMemory>(asset.vertexAlloc);
 			vkDestroyBuffer(m_device, asset.vertexBuffer, nullptr);
@@ -387,12 +396,69 @@ namespace engine::render
 			return MeshHandle(this, kInvalidAssetId);
 		}
 
-		void* pv = nullptr;
-		VkDeviceMemory vMem = reinterpret_cast<VkDeviceMemory>(asset.vertexAlloc);
-		if (vkMapMemory(m_device, vMem, 0, vertexBytes, 0, &pv) == VK_SUCCESS) { memcpy(pv, vBytes, vertexBytes); vkUnmapMemory(m_device, vMem); }
-		void* pi = nullptr;
-		VkDeviceMemory iMem = reinterpret_cast<VkDeviceMemory>(asset.indexAlloc);
-		if (vkMapMemory(m_device, iMem, 0, indexBytes, 0, &pi) == VK_SUCCESS) { memcpy(pi, indices, indexBytes); vkUnmapMemory(m_device, iMem); }
+		if (!deviceLocal)
+		{
+			// Repli HOST_VISIBLE : map + memcpy direct.
+			void* pv = nullptr;
+			VkDeviceMemory vMem = reinterpret_cast<VkDeviceMemory>(asset.vertexAlloc);
+			if (vkMapMemory(m_device, vMem, 0, vertexBytes, 0, &pv) == VK_SUCCESS) { memcpy(pv, vBytes, vertexBytes); vkUnmapMemory(m_device, vMem); }
+			void* pi = nullptr;
+			VkDeviceMemory iMem = reinterpret_cast<VkDeviceMemory>(asset.indexAlloc);
+			if (vkMapMemory(m_device, iMem, 0, indexBytes, 0, &pi) == VK_SUCCESS) { memcpy(pi, indices, indexBytes); vkUnmapMemory(m_device, iMem); }
+		}
+		else
+		{
+			// Upload device-local : 1 buffer de staging host -> copie GPU -> attente.
+			const VkDeviceSize stagingSize = static_cast<VkDeviceSize>(vertexBytes + indexBytes);
+			VkBuffer staging = VK_NULL_HANDLE; void* stagingAlloc = nullptr;
+			const bool stagingOk = createBuffer(stagingSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, kHostProps, staging, stagingAlloc);
+			VkDeviceMemory sMem = reinterpret_cast<VkDeviceMemory>(stagingAlloc);
+			if (stagingOk)
+			{
+				void* ps = nullptr;
+				if (vkMapMemory(m_device, sMem, 0, stagingSize, 0, &ps) == VK_SUCCESS)
+				{
+					memcpy(ps, vBytes, vertexBytes);
+					memcpy(reinterpret_cast<uint8_t*>(ps) + vertexBytes, indices, indexBytes);
+					vkUnmapMemory(m_device, sMem);
+				}
+				VkCommandPoolCreateInfo poolCI{};
+				poolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+				poolCI.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+				poolCI.queueFamilyIndex = m_uploadQueueFamily;
+				VkCommandPool pool = VK_NULL_HANDLE;
+				if (vkCreateCommandPool(m_device, &poolCI, nullptr, &pool) == VK_SUCCESS)
+				{
+					VkCommandBufferAllocateInfo cbAI{};
+					cbAI.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+					cbAI.commandPool = pool;
+					cbAI.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+					cbAI.commandBufferCount = 1;
+					VkCommandBuffer cmd = VK_NULL_HANDLE;
+					if (vkAllocateCommandBuffers(m_device, &cbAI, &cmd) == VK_SUCCESS)
+					{
+						VkCommandBufferBeginInfo bi{};
+						bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+						bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+						vkBeginCommandBuffer(cmd, &bi);
+						VkBufferCopy vc{}; vc.srcOffset = 0; vc.dstOffset = 0; vc.size = vertexBytes;
+						vkCmdCopyBuffer(cmd, staging, asset.vertexBuffer, 1, &vc);
+						VkBufferCopy ic{}; ic.srcOffset = vertexBytes; ic.dstOffset = 0; ic.size = indexBytes;
+						vkCmdCopyBuffer(cmd, staging, asset.indexBuffer, 1, &ic);
+						vkEndCommandBuffer(cmd);
+						VkSubmitInfo si{};
+						si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+						si.commandBufferCount = 1;
+						si.pCommandBuffers = &cmd;
+						vkQueueSubmit(m_uploadQueue, 1, &si, VK_NULL_HANDLE);
+						vkQueueWaitIdle(m_uploadQueue);
+					}
+					vkDestroyCommandPool(m_device, pool, nullptr);
+				}
+			}
+			if (staging != VK_NULL_HANDLE) vkDestroyBuffer(m_device, staging, nullptr);
+			if (sMem != VK_NULL_HANDLE) vkFreeMemory(m_device, sMem, nullptr);
+		}
 
 		AssetId id = m_nextMeshId++;
 		m_meshes[id] = std::move(asset);

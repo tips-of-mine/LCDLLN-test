@@ -10028,6 +10028,7 @@ namespace engine
 		}
 
 		prop.interactableIndex = interactableIndex;
+		prop.worldPos = engine::math::Vec3{ wx, groundY, wz };
 		if (!prop.parts.empty())
 		{
 			if (solid)
@@ -10049,8 +10050,22 @@ namespace engine
 		// loadOp=LOAD requis pour se superposer au GBuffer (terrain + avatar) sans clear.
 		if (!geom.HasLoadPass()) return;
 		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		// Culling de distance : la foret dense compte des centaines de props ; les
+		// dessiner tous = des centaines de draw calls de geometrie en memoire hote ->
+		// framerate effondre. On ne dessine que le decor proche de la camera (140 m).
+		// Les interactibles (coffre, caisses, PNJ : peu nombreux) restent toujours dessines.
+		const engine::math::Vec3 camPos = rs.camera.position;
+		constexpr float kPropCullDist = 110.0f;
+		const float kPropCullDist2 = kPropCullDist * kPropCullDist;
 		for (const auto& prop : m_props)
 		{
+			if (prop.interactableIndex < 0)
+			{
+				const float dxp = prop.worldPos.x - camPos.x;
+				const float dzp = prop.worldPos.z - camPos.z;
+				if (dxp * dxp + dzp * dzp > kPropCullDist2)
+					continue;  // decor trop loin -> non dessine
+			}
 			// Surbrillance (chantier C) : si ce prop est l'interactible a portee, on
 			// dessine ses parties avec la variante de materiau Highlight (teinte).
 			const bool highlight =

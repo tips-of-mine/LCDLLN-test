@@ -737,6 +737,9 @@ namespace engine
 			/// Index dans m_interactables (pour comparer à m_interactableInRange et
 			/// décider la surbrillance). -1 si non lié à un interactible.
 			int interactableIndex = -1;
+			/// Position monde (base) du prop, pour le culling de distance dans
+			/// RecordPropsGeometry (sommets cuits en monde, modelMatrix=identité).
+			engine::math::Vec3 worldPos{ 0.0f, 0.0f, 0.0f };
 		};
 		/// Props statiques rendus (chantier B), construits au boot depuis les
 		/// interactibles ayant un meshPath. Cf. LoadInteractableProps / RecordPropsGeometry.

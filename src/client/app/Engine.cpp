@@ -3831,6 +3831,12 @@ namespace engine
 										// le fallback Water_Passthrough (vkCmdCopyImage TransferDst). Lu en
 										// SampledRead par Bloom_Prefilter / Bloom_Combine.
 										m_fgSceneColorHDRPostWaterId = m_frameGraph.createImage("SceneColor_HDR_PostWater", sceneColorHDRDesc);
+										// M45.2 — SceneColor_HDR_Fogged : cible de la passe VolumetricFog
+										// (brouillard volumique + god rays), ou copie passthrough si la
+										// passe fog est invalide. Meme desc que PostWater (qui inclut deja
+										// TRANSFER_DST pour le passthrough vkCmdCopyImage). Lu en aval par
+										// Bloom_Prefilter / Bloom_Combine.
+										m_fgSceneColorFoggedId = m_frameGraph.createImage("SceneColor_HDR_Fogged", sceneColorHDRDesc);
 
 										engine::render::ImageDesc sceneColorLDRDesc{};
 										sceneColorLDRDesc.format = m_vkSwapchain.GetImageFormat();
@@ -3947,6 +3953,11 @@ namespace engine
 										    loadSpirv
 										);
 									LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
+
+									// M45.2 — la passe VolumetricFog est active uniquement si son Init a
+									// reussi (shaders presents). Sinon Engine enregistre un passthrough
+									// (copie PostWater -> Fogged) pour que Bloom lise une image valide.
+									m_volumetricFogReady = m_pipeline->GetVolumetricFogPass().IsValid();
 
 									// M100 — Task 12 : Terrain Chunk Runtime — drawcall mesh-terrain par
 									// chunk avec splat 8-layer. Co-existe avec le legacy TerrainRenderer
@@ -5712,9 +5723,119 @@ namespace engine
 												});
 										}
 
+										// M45.2 — Brouillard volumique + god rays. Lit SceneColor_HDR_PostWater,
+										// le depth et la shadow map cascade 0, ray-marche par pixel et ecrit
+										// SceneColor_HDR_Fogged. Si la passe fog est invalide (shaders absents /
+										// Init KO), on enregistre a la place un passthrough vkCmdCopyImage qui
+										// recopie PostWater -> Fogged, exactement comme Water_Passthrough, pour
+										// garantir que Bloom_Prefilter (qui lit desormais Fogged) trouve une
+										// image valide. Le gating runtime (density<=0) est gere dans le shader.
+										if (m_volumetricFogReady)
+										{
+											m_frameGraph.addPass("VolumetricFog",
+												[this](engine::render::PassBuilder& b) {
+													b.read(m_fgSceneColorHDRPostWaterId, engine::render::ImageUsage::SampledRead);
+													b.read(m_fgDepthId,                  engine::render::ImageUsage::SampledRead);
+													b.read(m_fgShadowMapIds[0],          engine::render::ImageUsage::SampledRead);
+													b.write(m_fgSceneColorFoggedId,      engine::render::ImageUsage::ColorWrite);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													if (!m_pipeline->GetVolumetricFogPass().IsValid()) return;
+													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+													const engine::RenderState& rs = m_renderStates[readIdx];
+													engine::render::VolumetricFogPass::FogParams fp{};
+													// invViewProj = inverse de rs.viewProjMatrix (meme routine que Lighting).
+													const float* vp = rs.viewProjMatrix.m;
+													const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
+													const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
+													const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
+													const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
+													const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
+													const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
+													const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
+													const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
+													const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+													if (det > 1e-7f || det < -1e-7f)
+													{
+														const float inv = 1.0f / det;
+														fp.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*inv;
+														fp.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*inv;
+														fp.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*inv;
+														fp.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*inv;
+														fp.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*inv;
+														fp.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*inv;
+														fp.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*inv;
+														fp.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*inv;
+														fp.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*inv;
+														fp.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*inv;
+														fp.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*inv;
+														fp.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*inv;
+														fp.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*inv;
+														fp.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*inv;
+														fp.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*inv;
+														fp.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*inv;
+													}
+													// sunViewProj = lightViewProj de la cascade 0.
+													std::memcpy(fp.sunViewProj, rs.cascades.lightViewProj[0].m, sizeof(float) * 16);
+													fp.cameraPos[0] = rs.camera.position.x;
+													fp.cameraPos[1] = rs.camera.position.y;
+													fp.cameraPos[2] = rs.camera.position.z;
+													// densite fog (defaut 0 = desactive ; gating runtime dans le shader).
+													fp.cameraPos[3] = static_cast<float>(m_cfg.GetDouble("world.volfog.density", 0.0));
+													// direction VERS le soleil (normalisee).
+													{
+														float sx = m_zoneAtmosphere.sunDirection[0];
+														float sy = m_zoneAtmosphere.sunDirection[1];
+														float sz = m_zoneAtmosphere.sunDirection[2];
+														float sl = std::sqrt(sx*sx + sy*sy + sz*sz);
+														if (sl > 1e-6f) { sx /= sl; sy /= sl; sz /= sl; }
+														fp.sunDir[0] = sx; fp.sunDir[1] = sy; fp.sunDir[2] = sz;
+													}
+													fp.sunDir[3]   = static_cast<float>(m_cfg.GetDouble("world.volfog.anisotropy", 0.6));
+													fp.sunColor[0] = m_zoneAtmosphere.sunColor[0];
+													fp.sunColor[1] = m_zoneAtmosphere.sunColor[1];
+													fp.sunColor[2] = m_zoneAtmosphere.sunColor[2];
+													fp.sunColor[3] = static_cast<float>(m_cfg.GetDouble("world.volfog.inscatter", 1.0));
+													fp.fogParams[0] = static_cast<float>(m_cfg.GetDouble("world.volfog.steps", 32.0));
+													fp.fogParams[1] = static_cast<float>(m_cfg.GetDouble("world.volfog.max_dist_m", 120.0));
+													fp.fogParams[2] = static_cast<float>(m_cfg.GetDouble("world.volfog.height_m", 10.0));
+													fp.fogParams[3] = static_cast<float>(m_cfg.GetDouble("world.volfog.height_falloff", 0.1));
+													m_pipeline->GetVolumetricFogPass().Record(
+														m_vkDeviceContext.GetDevice(), cmd, reg,
+														m_vkSwapchain.GetExtent(),
+														m_fgSceneColorHDRPostWaterId, m_fgDepthId, m_fgShadowMapIds[0],
+														m_fgSceneColorFoggedId, fp, m_currentFrame % 2);
+												});
+										}
+										else
+										{
+											// Fog indisponible -> copie PostWater -> Fogged (writer unique) pour
+											// que Bloom_Prefilter lise une image valide. Meme pattern que
+											// Water_Passthrough (les barrieres FG posent TransferSrc/TransferDst).
+											m_frameGraph.addPass("VolumetricFog_Passthrough",
+												[this](engine::render::PassBuilder& b) {
+													b.read(m_fgSceneColorHDRPostWaterId, engine::render::ImageUsage::TransferSrc);
+													b.write(m_fgSceneColorFoggedId,      engine::render::ImageUsage::TransferDst);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													VkImage src = reg.getImage(m_fgSceneColorHDRPostWaterId);
+													VkImage dst = reg.getImage(m_fgSceneColorFoggedId);
+													if (src == VK_NULL_HANDLE || dst == VK_NULL_HANDLE) return;
+													VkImageCopy copy{};
+													copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+													copy.srcSubresource.layerCount = 1;
+													copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+													copy.dstSubresource.layerCount = 1;
+													VkExtent2D ext = m_vkSwapchain.GetExtent();
+													copy.extent = { ext.width, ext.height, 1 };
+													vkCmdCopyImage(cmd, src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+														dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+												});
+										}
+
 										m_frameGraph.addPass("Bloom_Prefilter",
 											[this](engine::render::PassBuilder& b) {
-												b.read(m_fgSceneColorHDRPostWaterId, engine::render::ImageUsage::SampledRead);
+												b.read(m_fgSceneColorFoggedId, engine::render::ImageUsage::SampledRead);
 												b.write(m_fgBloomDownMipIds[0], engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
@@ -5726,7 +5847,7 @@ namespace engine
 												m_pipeline->GetBloomPrefilterPass().Record(
 													m_vkDeviceContext.GetDevice(), cmd, reg,
 													m_vkSwapchain.GetExtent(),
-													m_fgSceneColorHDRPostWaterId, m_fgBloomDownMipIds[0], pp, frameIdx);
+													m_fgSceneColorFoggedId, m_fgBloomDownMipIds[0], pp, frameIdx);
 											});
 
 										for (uint32_t i = 0; i < engine::render::kBloomMipCount - 1; ++i)
@@ -5775,7 +5896,11 @@ namespace engine
 
 										m_frameGraph.addPass("Bloom_Combine",
 											[this](engine::render::PassBuilder& b) {
-												b.read(m_fgSceneColorHDRPostWaterId,  engine::render::ImageUsage::SampledRead);
+												// M45.2 — base de composition = SceneColor_HDR_Fogged (scene + fog
+												// volumique), pas PostWater, sinon le fog serait bypasse dans
+												// l'image finale (Combine produit l'image post-bloom consommee par
+												// AutoExposure/Tonemap).
+												b.read(m_fgSceneColorFoggedId,        engine::render::ImageUsage::SampledRead);
 												b.read(m_fgBloomUpMipIds[0],         engine::render::ImageUsage::SampledRead);
 												b.write(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::ColorWrite);
 											},
@@ -5784,7 +5909,7 @@ namespace engine
 												engine::render::BloomCombinePass::CombineParams cp{};
 												cp.intensity = static_cast<float>(m_cfg.GetDouble("bloom.intensity", 1.0));
 												const uint32_t frameIdx = m_currentFrame % 2;
-												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorHDRPostWaterId, m_fgBloomUpMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
+												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorFoggedId, m_fgBloomUpMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
 											});
 
 										m_frameGraph.addPass("AutoExposure_Luminance",

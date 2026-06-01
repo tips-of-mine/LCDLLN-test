@@ -241,6 +241,25 @@ namespace engine::render
 				LOG_WARN(Render, "M03.2: lighting shaders not found — lighting pass disabled");
 		}
 
+		// M45.2 — Volumetric fog pass (brouillard volumique + god rays).
+		// Reutilise le vertex shader fullscreen triangle de la passe lighting.
+		// N'echoue jamais le boot : si shaders absents ou Init KO, la passe reste
+		// invalide et Engine enregistre un passthrough (copie PostWater -> Fogged).
+		{
+			std::vector<uint32_t> fogVert = loadSpirv("shaders/lighting.vert.spv");
+			std::vector<uint32_t> fogFrag = loadSpirv("shaders/volumetric_fog.frag.spv");
+			if (!fogVert.empty() && !fogFrag.empty())
+			{
+				if (m_volumetricFogPass.Init(device, physicalDevice, VK_FORMAT_R16G16B16A16_SFLOAT,
+						fogVert.data(), fogVert.size(), fogFrag.data(), fogFrag.size(), 2u, pipelineCacheHandle))
+					LOG_INFO(Render, "[Boot] DeferredPipeline VolumetricFogPass OK");
+				else
+					LOG_WARN(Render, "M45.2: volumetric fog pass init failed, passthrough fallback");
+			}
+			else
+				LOG_WARN(Render, "M45.2: volumetric fog shaders not found, passthrough fallback");
+		}
+
 		// Tonemap pass
 		{
 			std::vector<uint32_t> tmVert = loadSpirv("shaders/tonemap.vert.spv");

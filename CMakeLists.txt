@@ -524,6 +524,7 @@ add_library(engine_core
   src/client/render/GpuDrivenCullingPass.cpp
   src/client/render/HiZPyramidPass.cpp
   src/client/render/LightingPass.cpp
+  src/client/render/gi/DdgiVolume.cpp
   src/client/render/VolumetricFogPass.cpp
   src/client/render/DepthOfFieldPass.cpp
   src/client/render/TonemapPass.cpp
@@ -809,6 +810,11 @@ add_executable(protocol_v1_tests src/shared/network/ProtocolV1Tests.cpp)
 target_link_libraries(protocol_v1_tests PRIVATE engine_core)
 enable_testing()
 add_test(NAME protocol_v1_tests COMMAND protocol_v1_tests)
+
+# M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
+add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)
+target_link_libraries(ddgi_volume_tests PRIVATE engine_core)
+add_test(NAME ddgi_volume_tests COMMAND ddgi_volume_tests)
 
 # Phase 1: CHARACTER_LIST request/response payload round-trip tests
 add_executable(character_list_payloads_tests src/shared/network/CharacterListPayloadsTests.cpp)

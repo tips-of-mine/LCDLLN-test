@@ -612,6 +612,109 @@ namespace engine::render
 		return id;
 	}
 
+	AssetId AssetRegistry::createSampledRgba8Texture(uint32_t width, uint32_t height,
+		VkFormat format, const uint8_t* pixels)
+	{
+		if (m_device == VK_NULL_HANDLE || width == 0u || height == 0u || pixels == nullptr)
+			return kInvalidAssetId;
+
+		TextureAsset asset{};
+		asset.width = width;
+		asset.height = height;
+		VkImageCreateInfo imgInfo{};
+		imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imgInfo.imageType = VK_IMAGE_TYPE_2D;
+		imgInfo.format = format;
+		imgInfo.extent = { width, height, 1 };
+		imgInfo.mipLevels = 1;
+		imgInfo.arrayLayers = 1;
+		imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imgInfo.tiling = VK_IMAGE_TILING_LINEAR;
+		imgInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+		imgInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+		imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		if (vkCreateImage(m_device, &imgInfo, nullptr, &asset.image) != VK_SUCCESS || asset.image == VK_NULL_HANDLE)
+			return kInvalidAssetId;
+
+		VkMemoryRequirements memReq{};
+		vkGetImageMemoryRequirements(m_device, asset.image, &memReq);
+		uint32_t memTypeIdx = FindMemoryType(m_physicalDevice, memReq.memoryTypeBits,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		if (memTypeIdx == UINT32_MAX)
+		{
+			vkDestroyImage(m_device, asset.image, nullptr);
+			return kInvalidAssetId;
+		}
+
+		VkMemoryAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memReq.size;
+		allocInfo.memoryTypeIndex = memTypeIdx;
+		VkDeviceMemory imgMem = VK_NULL_HANDLE;
+		if (vkAllocateMemory(m_device, &allocInfo, nullptr, &imgMem) != VK_SUCCESS || imgMem == VK_NULL_HANDLE)
+		{
+			vkDestroyImage(m_device, asset.image, nullptr);
+			return kInvalidAssetId;
+		}
+		if (vkBindImageMemory(m_device, asset.image, imgMem, 0) != VK_SUCCESS)
+		{
+			vkFreeMemory(m_device, imgMem, nullptr);
+			vkDestroyImage(m_device, asset.image, nullptr);
+			return kInvalidAssetId;
+		}
+		asset.allocation = reinterpret_cast<void*>(imgMem);
+
+		void* ptr = nullptr;
+		if (vkMapMemory(m_device, imgMem, 0, memReq.size, 0, &ptr) == VK_SUCCESS)
+		{
+			VkImageSubresource subres{};
+			subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			subres.mipLevel = 0;
+			subres.arrayLayer = 0;
+			VkSubresourceLayout layout{};
+			vkGetImageSubresourceLayout(m_device, asset.image, &subres, &layout);
+			uint8_t* dst = static_cast<uint8_t*>(ptr);
+			for (uint32_t y = 0; y < height; ++y)
+				memcpy(dst + y * layout.rowPitch, pixels + static_cast<size_t>(y) * width * 4, static_cast<size_t>(width) * 4);
+			vkUnmapMemory(m_device, imgMem);
+		}
+
+		VkImageViewCreateInfo viewInfo{};
+		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.image = asset.image;
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		viewInfo.format = format;
+		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		viewInfo.subresourceRange.baseMipLevel = 0;
+		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.baseArrayLayer = 0;
+		viewInfo.subresourceRange.layerCount = 1;
+		if (vkCreateImageView(m_device, &viewInfo, nullptr, &asset.view) != VK_SUCCESS)
+		{
+			vkDestroyImage(m_device, asset.image, nullptr);
+			vkFreeMemory(m_device, imgMem, nullptr);
+			return kInvalidAssetId;
+		}
+
+		AssetId id = m_nextTextureId++;
+		m_textures[id] = std::move(asset);
+		return id;
+	}
+
+	TextureHandle AssetRegistry::CreateTextureFromMemory(const uint8_t* rgba, uint32_t width,
+		uint32_t height, bool useSrgb)
+	{
+		const VkFormat format = useSrgb ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
+		const AssetId id = createSampledRgba8Texture(width, height, format, rgba);
+		if (id != kInvalidAssetId)
+			LOG_INFO(Render, "[AssetRegistry] CreateTextureFromMemory OK ({}x{}, {})",
+				width, height, useSrgb ? "sRGB" : "linear");
+		else
+			LOG_ERROR(Render, "[AssetRegistry] CreateTextureFromMemory failed ({}x{})", width, height);
+		return TextureHandle(this, id);
+	}
+
 	namespace
 	{
 		bool IsPngFile(const uint8_t* data, size_t size)
@@ -829,87 +932,12 @@ namespace engine::render
 				return id;
 			}
 
-			const uint8_t* pixels = owned.data();
-
-			TextureAsset asset{};
-			asset.width = width;
-			asset.height = height;
-			VkImageCreateInfo imgInfo{};
-			imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-			imgInfo.imageType = VK_IMAGE_TYPE_2D;
-			imgInfo.format = format;
-			imgInfo.extent = { width, height, 1 };
-			imgInfo.mipLevels = 1;
-			imgInfo.arrayLayers = 1;
-			imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-			imgInfo.tiling = VK_IMAGE_TILING_LINEAR;
-			imgInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
-			imgInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-			imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-			if (vkCreateImage(m_device, &imgInfo, nullptr, &asset.image) != VK_SUCCESS || asset.image == VK_NULL_HANDLE)
+			// Chemin factorisé (M45.5) : création image LINEAR host-visible + view + upload
+			// ligne par ligne. Identique au code précédent, désormais partagé avec
+			// CreateTextureFromMemory via createSampledRgba8Texture.
+			const AssetId id = createSampledRgba8Texture(width, height, format, owned.data());
+			if (id == kInvalidAssetId)
 				return kInvalidAssetId;
-
-			VkMemoryRequirements memReq{};
-			vkGetImageMemoryRequirements(m_device, asset.image, &memReq);
-			uint32_t memTypeIdx = FindMemoryType(m_physicalDevice, memReq.memoryTypeBits,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			if (memTypeIdx == UINT32_MAX)
-			{
-				vkDestroyImage(m_device, asset.image, nullptr);
-				return kInvalidAssetId;
-			}
-
-			VkMemoryAllocateInfo allocInfo{};
-			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			allocInfo.allocationSize = memReq.size;
-			allocInfo.memoryTypeIndex = memTypeIdx;
-			VkDeviceMemory imgMem = VK_NULL_HANDLE;
-			if (vkAllocateMemory(m_device, &allocInfo, nullptr, &imgMem) != VK_SUCCESS || imgMem == VK_NULL_HANDLE)
-			{
-				vkDestroyImage(m_device, asset.image, nullptr);
-				return kInvalidAssetId;
-			}
-			if (vkBindImageMemory(m_device, asset.image, imgMem, 0) != VK_SUCCESS)
-			{
-				vkFreeMemory(m_device, imgMem, nullptr);
-				vkDestroyImage(m_device, asset.image, nullptr);
-				return kInvalidAssetId;
-			}
-			asset.allocation = reinterpret_cast<void*>(imgMem);
-
-			void* ptr = nullptr;
-			if (vkMapMemory(m_device, imgMem, 0, memReq.size, 0, &ptr) == VK_SUCCESS)
-			{
-				VkImageSubresource subres{};
-				subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				subres.mipLevel = 0;
-				subres.arrayLayer = 0;
-				VkSubresourceLayout layout{};
-				vkGetImageSubresourceLayout(m_device, asset.image, &subres, &layout);
-				uint8_t* dst = static_cast<uint8_t*>(ptr);
-				for (uint32_t y = 0; y < height; ++y)
-					memcpy(dst + y * layout.rowPitch, pixels + y * width * 4, width * 4);
-				vkUnmapMemory(m_device, imgMem);
-			}
-			VkImageViewCreateInfo viewInfo{};
-			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			viewInfo.image = asset.image;
-			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			viewInfo.format = format;
-			viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			viewInfo.subresourceRange.baseMipLevel = 0;
-			viewInfo.subresourceRange.levelCount = 1;
-			viewInfo.subresourceRange.baseArrayLayer = 0;
-			viewInfo.subresourceRange.layerCount = 1;
-			if (vkCreateImageView(m_device, &viewInfo, nullptr, &asset.view) != VK_SUCCESS)
-			{
-				vkDestroyImage(m_device, asset.image, nullptr);
-				vkFreeMemory(m_device, imgMem, nullptr);
-				return kInvalidAssetId;
-			}
-			AssetId id = m_nextTextureId++;
-			m_textures[id] = std::move(asset);
 			LOG_INFO(Render, "AssetRegistry: loaded PNG texture {} ({}x{}, LINEAR)", relativePath, width, height, useSrgb ? "sRGB" : "linear");
 			return id;
 		}
@@ -937,87 +965,12 @@ namespace engine::render
 		}
 		const uint8_t* pixels = data.data() + 16;
 
-		TextureAsset asset{};
-		asset.width = width;
-		asset.height = height;
-		VkFormat format = useSrgb ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
-		VkImageCreateInfo imgInfo{};
-		imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		imgInfo.imageType = VK_IMAGE_TYPE_2D;
-		imgInfo.format = format;
-		imgInfo.extent = { width, height, 1 };
-		imgInfo.mipLevels = 1;
-		imgInfo.arrayLayers = 1;
-		imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		imgInfo.tiling = VK_IMAGE_TILING_LINEAR;
-		imgInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
-		imgInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-		imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		if (vkCreateImage(m_device, &imgInfo, nullptr, &asset.image) != VK_SUCCESS || asset.image == VK_NULL_HANDLE)
+		// Chemin factorisé (M45.5) : même création image LINEAR host-visible + view + upload
+		// ligne par ligne que le code précédent, désormais partagé via createSampledRgba8Texture.
+		const VkFormat format = useSrgb ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
+		const AssetId id = createSampledRgba8Texture(width, height, format, pixels);
+		if (id == kInvalidAssetId)
 			return kInvalidAssetId;
-
-		VkMemoryRequirements memReq{};
-		vkGetImageMemoryRequirements(m_device, asset.image, &memReq);
-		uint32_t memTypeIdx = FindMemoryType(m_physicalDevice, memReq.memoryTypeBits,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		if (memTypeIdx == UINT32_MAX)
-		{
-			vkDestroyImage(m_device, asset.image, nullptr);
-			return kInvalidAssetId;
-		}
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memReq.size;
-		allocInfo.memoryTypeIndex = memTypeIdx;
-		VkDeviceMemory imgMem = VK_NULL_HANDLE;
-		if (vkAllocateMemory(m_device, &allocInfo, nullptr, &imgMem) != VK_SUCCESS || imgMem == VK_NULL_HANDLE)
-		{
-			vkDestroyImage(m_device, asset.image, nullptr);
-			return kInvalidAssetId;
-		}
-		if (vkBindImageMemory(m_device, asset.image, imgMem, 0) != VK_SUCCESS)
-		{
-			vkFreeMemory(m_device, imgMem, nullptr);
-			vkDestroyImage(m_device, asset.image, nullptr);
-			return kInvalidAssetId;
-		}
-		asset.allocation = reinterpret_cast<void*>(imgMem);
-
-		void* ptr = nullptr;
-		if (vkMapMemory(m_device, imgMem, 0, memReq.size, 0, &ptr) == VK_SUCCESS)
-		{
-			VkImageSubresource subres{};
-			subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			subres.mipLevel = 0;
-			subres.arrayLayer = 0;
-			VkSubresourceLayout layout{};
-			vkGetImageSubresourceLayout(m_device, asset.image, &subres, &layout);
-			const uint8_t* src = pixels;
-			uint8_t* dst = static_cast<uint8_t*>(ptr);
-			for (uint32_t y = 0; y < height; ++y)
-				memcpy(dst + y * layout.rowPitch, src + y * width * 4, width * 4);
-			vkUnmapMemory(m_device, imgMem);
-		}
-		VkImageViewCreateInfo viewInfo{};
-		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image = asset.image;
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = format;
-		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = 1;
-		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
-		if (vkCreateImageView(m_device, &viewInfo, nullptr, &asset.view) != VK_SUCCESS)
-		{
-			vkDestroyImage(m_device, asset.image, nullptr);
-			vkFreeMemory(m_device, imgMem, nullptr);
-			return kInvalidAssetId;
-		}
-		AssetId id = m_nextTextureId++;
-		m_textures[id] = std::move(asset);
 		LOG_INFO(Render, "AssetRegistry: loaded texture {} ({}x{}, {})", relativePath, width, height, useSrgb ? "sRGB" : "linear");
 		return id;
 	}

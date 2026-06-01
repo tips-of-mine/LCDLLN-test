@@ -150,6 +150,21 @@ namespace engine::render
 		/// Format: raw .texr (magic, width, height, sRGB flag, RGBA pixels) ou PNG (8-bit RGBA).
 		TextureHandle LoadTexture(std::string_view relativePath, bool useSrgb = false);
 
+		/// M45.5 — Crée une texture GPU RGBA8 échantillonnable directement depuis un buffer
+		/// mémoire (sans fichier disque). Utilisée par les atlas d'impostors (ImpostorAsset)
+		/// dont les pixels sont décodés du format .mipo en RAM. Réutilise EXACTEMENT le chemin
+		/// de création d'image + view de \ref LoadTexture (image LINEAR host-visible, map +
+		/// memcpy par ligne via rowPitch) via le helper interne `createSampledRgba8Texture`.
+		/// Aucun cache (chaque appel crée un nouvel asset, libéré au \ref Destroy du registry).
+		/// \param rgba    Pointeur vers `width*height*4` octets RGBA8.
+		/// \param width   Largeur en texels (> 0).
+		/// \param height  Hauteur en texels (> 0).
+		/// \param useSrgb true = format sRGB (albedo, linéarisé au sample) ; false = UNORM
+		///                (normales encodées, lues telles quelles).
+		/// \return Handle invalide si device absent, args nuls/zéro, ou échec Vulkan.
+		TextureHandle CreateTextureFromMemory(const uint8_t* rgba, uint32_t width, uint32_t height,
+		                                      bool useSrgb);
+
 		/// Charge une PNG pour blit plein écran vers la swapchain (canal BGRA si la surface est B8G8R8A8).
 		/// Ignoré pour les .texr (même chargement que \ref LoadTexture).
 		TextureHandle LoadTextureForPresentBlit(std::string_view relativePath, VkFormat swapchainColorFormat);
@@ -188,6 +203,19 @@ namespace engine::render
 
 		AssetId loadMeshInternal(std::string_view relativePath);
 		AssetId loadTextureInternal(std::string_view relativePath, bool useSrgb, VkFormat presentBlitDstFormat = VK_FORMAT_UNDEFINED);
+
+		/// Helper interne partagé : crée une VkImage 2D RGBA8 LINEAR host-visible
+		/// échantillonnable, copie `pixels` (width*height*4 octets) ligne par ligne en
+		/// respectant le `rowPitch` de la subresource, crée la view, et enregistre
+		/// l'asset dans `m_textures`. C'est la factorisation EXACTE du chemin de upload
+		/// déjà utilisé par les branches PNG (non-blit) et TEXR de `loadTextureInternal`
+		/// (mêmes flags : TILING_LINEAR, USAGE_SAMPLED, INITIAL_PREINITIALIZED, mémoire
+		/// HOST_VISIBLE|HOST_COHERENT). Réutilisé par `CreateTextureFromMemory`.
+		/// \param format Format Vulkan (sRGB ou UNORM) déjà résolu par l'appelant.
+		/// \param pixels Pointeur vers width*height*4 octets RGBA8.
+		/// \return kInvalidAssetId en cas d'échec Vulkan (ressources libérées).
+		AssetId createSampledRgba8Texture(uint32_t width, uint32_t height,
+		                                  VkFormat format, const uint8_t* pixels);
 
 		void ReleasePendingPresentBlitStaging();
 

@@ -4889,6 +4889,11 @@ namespace engine
 											// du coffre (m_chestLoaded). Si le chargement skinne echoue, le coffre
 											// retombe sur le rendu statique (pas de disparition).
 											LoadAnimatedChest();
+											// M45.5 — flag global impostors végétation (défaut OFF). Lu une fois ici ;
+											// quand false, RecordPropsGeometry s'exécute exactement comme l'historique.
+											m_impostorEnabled = m_cfg.GetBool("world.impostor.enabled", false);
+											if (m_impostorEnabled)
+												LOG_INFO(Render, "[Impostor] M45.5 activé (world.impostor.enabled=true)");
 											// Chantier B : charge les meshes statiques des props (coffre si non anime + interactibles).
 											LoadInteractableProps();
 											// Décor solide (arbres, props nature) depuis world.scenery. Doit suivre
@@ -10361,6 +10366,18 @@ namespace engine
 		}
 		prop.modelMatrix = engine::math::Mat4::Identity();  // sommets deja en espace monde
 
+		// M45.5 — sphère englobante monde du prop (centre du billboard impostor +
+		// rayon = demi-taille). Le centre XZ est (wx,wz) ; en Y, milieu entre le
+		// sol (groundY) et le sommet (topY). Le rayon couvre largeur (radiusAuto)
+		// ET hauteur (demi-hauteur), pour un quad qui englobe tout le mesh.
+		prop.meshPath = meshPath;
+		{
+			const float halfHeight = 0.5f * (topY - groundY);
+			prop.impostorCenter = engine::math::Vec3{ wx, groundY + halfHeight, wz };
+			prop.impostorRadius = std::max(radiusAuto, halfHeight);
+			if (prop.impostorRadius < 0.05f) prop.impostorRadius = 0.5f;
+		}
+
 		for (const auto& kv : idxByMat)
 		{
 			const std::string& matName = kv.first;
@@ -10444,6 +10461,36 @@ namespace engine
 		}
 	}
 
+	bool Engine::EnsureImpostorAtlas(const std::string& meshPath)
+	{
+		if (!m_impostorEnabled || meshPath.empty()) return false;
+		auto it = m_impostorAtlases.find(meshPath);
+		if (it != m_impostorAtlases.end())
+			return it->second.IsValid();
+
+		// Chemin de l'atlas : à côté du .gltf, même nom, extension `.mipo`.
+		// Ex. meshes/props/DeadTree_2.gltf -> <content>/meshes/props/DeadTree_2.mipo.
+		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+		std::string base = meshPath;
+		const auto dot = base.find_last_of('.');
+		if (dot != std::string::npos) base = base.substr(0, dot);
+		const std::string mipoPath = contentRoot + "/" + base + ".mipo";
+
+		engine::render::ImpostorAsset asset;
+		std::string err;
+		const bool ok = asset.LoadFromFile(mipoPath, m_assetRegistry, err);
+		if (!ok)
+		{
+			// Absence d'atlas = cas normal (tous les meshes n'en ont pas) -> Debug, pas Warn.
+			LOG_DEBUG(Render, "[Impostor] pas d'atlas pour '{}' ({})", meshPath, err);
+		}
+		// On insère même un asset invalide pour mémoriser l'échec (évite de retenter
+		// le chargement disque à chaque frame/prop partageant ce mesh).
+		auto [insIt, inserted] = m_impostorAtlases.emplace(meshPath, std::move(asset));
+		(void)inserted;
+		return insIt->second.IsValid();
+	}
+
 	void Engine::RecordPropsGeometry(VkCommandBuffer cmd, engine::render::Registry& reg,
 	                                 const engine::RenderState& rs)
 	{
@@ -10463,16 +10510,51 @@ namespace engine
 		const float cullDist = static_cast<float>(m_cfg.GetDouble("world.props.cull_distance_m", 80.0));
 		const float cullDist2 = cullDist * cullDist;
 		const bool cullEnabled = cullDist > 0.0f;
-		int drawn = 0, culled = 0;
+
+		// M45.5 — bascule mesh -> impostor. GATED world.impostor.enabled : par défaut
+		// false => `impostorActive` reste false et le chemin ci-dessous est STRICTEMENT
+		// l'historique (aucun changement de rendu). Quand actif : un prop de DÉCOR
+		// (interactableIndex<0) dont la distance XZ ∈ [impostorDist, cullDist] ET qui a
+		// un atlas chargé est rendu en impostor au lieu de son mesh ; en deçà
+		// d'impostorDist, mesh normal (inchangé).
+		const bool impostorPassValid = m_pipeline->GetImpostorPass().IsValid();
+		const bool impostorActive = m_impostorEnabled && impostorPassValid;
+		const float impostorDist = impostorActive
+			? static_cast<float>(m_cfg.GetDouble("world.impostor.distance_m", 60.0)) : 1e30f;
+		const float impostorDist2 = impostorDist * impostorDist;
+		// Instances d'impostors accumulées, groupées par chemin de mesh (= clé atlas).
+		std::unordered_map<std::string, std::vector<engine::render::ImpostorInstance>> impostorBatches;
+
+		int drawn = 0, culled = 0, impostored = 0;
 		for (const auto& prop : m_props)
 		{
+			const float dxp = prop.worldPos.x - camPos.x;
+			const float dzp = prop.worldPos.z - camPos.z;
+			const float dist2 = dxp * dxp + dzp * dzp;
+
 			if (cullEnabled && prop.interactableIndex < 0)
 			{
-				const float dxp = prop.worldPos.x - camPos.x;
-				const float dzp = prop.worldPos.z - camPos.z;
-				if (dxp * dxp + dzp * dzp > cullDist2)
+				if (dist2 > cullDist2)
 					{ ++culled; continue; }  // decor trop loin -> non dessine
 			}
+
+			// Bascule impostor (décor uniquement, distance >= seuil, atlas dispo).
+			if (impostorActive && prop.interactableIndex < 0 && dist2 >= impostorDist2)
+			{
+				if (EnsureImpostorAtlas(prop.meshPath))
+				{
+					engine::render::ImpostorInstance inst;
+					inst.worldPos[0] = prop.impostorCenter.x;
+					inst.worldPos[1] = prop.impostorCenter.y;
+					inst.worldPos[2] = prop.impostorCenter.z;
+					inst.radius      = prop.impostorRadius;
+					impostorBatches[prop.meshPath].push_back(inst);
+					++impostored;
+					continue; // NE PAS dessiner le mesh : l'impostor le remplace.
+				}
+				// Pas d'atlas pour ce mesh -> fallback mesh normal (continue plus bas).
+			}
+
 			++drawn;
 			// Surbrillance (chantier C) : si ce prop est l'interactible a portee, on
 			// dessine ses parties avec la variante de materiau Highlight (teinte).
@@ -10493,10 +10575,46 @@ namespace engine
 					true);
 			}
 		}
+
+		// M45.5 — dessine les impostors accumulés DANS le GBuffer, via le render pass
+		// loadOp=LOAD de la GeometryPass (RecordTerrainChunkBatch ouvre exactement ce
+		// render pass + framebuffer + viewport/scissor). Un RecordInstances par atlas
+		// distinct (le descriptor de l'ImpostorPass est réécrit à chaque appel).
+		if (impostorActive && !impostorBatches.empty())
+		{
+			auto& impostorPass = m_pipeline->GetImpostorPass();
+			geom.RecordTerrainChunkBatch(
+				m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+				m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+				[this, &impostorPass, &impostorBatches, &rs](VkCommandBuffer innerCmd) {
+					const float camPos3[3] = {
+						rs.camera.position.x, rs.camera.position.y, rs.camera.position.z };
+					for (auto& kv : impostorBatches)
+					{
+						auto atlasIt = m_impostorAtlases.find(kv.first);
+						if (atlasIt == m_impostorAtlases.end() || !atlasIt->second.IsValid())
+							continue;
+						const engine::render::ImpostorAsset& atlas = atlasIt->second;
+						engine::render::TextureAsset* albedo = atlas.Albedo().Get();
+						engine::render::TextureAsset* normal = atlas.Normal().Get();
+						if (albedo == nullptr || normal == nullptr
+							|| albedo->view == VK_NULL_HANDLE || normal->view == VK_NULL_HANDLE)
+							continue;
+						const VkSampler samp = impostorPass.GetSampler();
+						impostorPass.RecordInstances(
+							m_vkDeviceContext.GetDevice(), innerCmd, m_vkSwapchain.GetExtent(),
+							kv.second.data(), static_cast<uint32_t>(kv.second.size()),
+							albedo->view, samp, normal->view, samp,
+							rs.viewProjMatrix.m, rs.prevViewProjMatrix.m, camPos3,
+							atlas.Info().viewsPerAxis, atlas.Info().tileSize);
+					}
+				});
+		}
+
 		// Diag throttle (1/60 frames) : visible uniquement en log.level=Debug.
 		if ((m_currentFrame % 60) == 0)
-			LOG_DEBUG(Render, "[Props] cull_dist={:.0f}m dessines={} coupes={} (total={})",
-			          cullDist, drawn, culled, static_cast<int>(m_props.size()));
+			LOG_DEBUG(Render, "[Props] cull_dist={:.0f}m dessines={} impostors={} coupes={} (total={})",
+			          cullDist, drawn, impostored, culled, static_cast<int>(m_props.size()));
 	}
 
 	void Engine::RecordRemoteAvatars(VkCommandBuffer cmd, engine::render::Registry& reg,

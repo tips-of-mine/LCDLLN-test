@@ -279,6 +279,35 @@ namespace engine::render
 				LOG_WARN(Render, "M45.3: depth of field shaders not found, passthrough fallback");
 		}
 
+		// M45.5: Impostor pass (impostors végétation). Dessine dans le GBuffer via
+		// le render pass loadOp=LOAD de la GeometryPass (réutilisé, pas de nouvelle
+		// ressource FrameGraph). Init non bloquant : si les shaders manquent ou
+		// l'init échoue, on log un WARN et la feature reste simplement inactive
+		// (gated par world.impostor.enabled côté Engine, défaut OFF de toute façon).
+		{
+			std::vector<uint32_t> impVert = loadSpirv("shaders/impostor.vert.spv");
+			std::vector<uint32_t> impFrag = loadSpirv("shaders/impostor.frag.spv");
+			const VkRenderPass gbufferLoad = m_geometryPass.GetRenderPassLoad();
+			if (impVert.empty() || impFrag.empty())
+			{
+				LOG_WARN(Render, "M45.5: impostor shaders not found — impostors disabled");
+			}
+			else if (gbufferLoad == VK_NULL_HANDLE)
+			{
+				LOG_WARN(Render, "M45.5: GeometryPass load render pass absent — impostors disabled");
+			}
+			else if (m_impostorPass.Init(device, physicalDevice, gbufferLoad,
+					impVert.data(), impVert.size(), impFrag.data(), impFrag.size(),
+					pipelineCacheHandle))
+			{
+				LOG_INFO(Render, "[Boot] DeferredPipeline ImpostorPass OK");
+			}
+			else
+			{
+				LOG_WARN(Render, "M45.5: impostor pass init failed — impostors disabled");
+			}
+		}
+
 		// Tonemap pass
 		{
 			std::vector<uint32_t> tmVert = loadSpirv("shaders/tonemap.vert.spv");
@@ -384,6 +413,7 @@ namespace engine::render
 		m_bloomDownsamplePass.Destroy(device);
 		m_bloomPrefilterPass.Destroy(device);
 		m_tonemapPass.Destroy(device);
+		m_impostorPass.Destroy(device); // M45.5
 		m_depthOfFieldPass.Destroy(device); // M45.3
 		m_volumetricFogPass.Destroy(device); // M45.2
 		m_lightingPass.Destroy(device);

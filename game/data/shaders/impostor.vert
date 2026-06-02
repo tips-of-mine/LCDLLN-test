@@ -9,6 +9,11 @@
 //   - vUv  : UV du quad dans [0,1]² ;
 //   - vViewDir : direction monde INSTANCE -> CAMÉRA (unitaire), décodée en
 //                coords octaédriques dans le fragment (cf. impostor.frag).
+//   - vViewTangent : direction de vue (instance->caméra) projetée dans le repère
+//                tangent (camRight, camUp) du billboard. Sert d'inclinaison de
+//                vue pour le décalage de parallax single-step (frag v2). C'est
+//                une APPROXIMATION v1 (billboard plan, pas de vraie reconstruction
+//                de la profondeur de surface).
 #version 450
 
 // Push constants : cf. ImpostorPushConstants (ImpostorPass.h), 176 octets.
@@ -22,6 +27,7 @@ layout(push_constant) uniform PushConstants {
 
 layout(location = 0) out vec2 vUv;
 layout(location = 1) out vec3 vViewDir;
+layout(location = 2) out vec2 vViewTangent; // inclinaison de vue dans le repère tangent (parallax)
 
 void main()
 {
@@ -54,7 +60,13 @@ void main()
         + camUp    * (corner.y * 2.0 * radius);
 
     // Direction instance -> caméra (mesh -> caméra), pour le décodage octaédrique.
-    vViewDir = normalize(pc.cameraPos.xyz - center);
+    vec3 toCam = normalize(pc.cameraPos.xyz - center);
+    vViewDir = toCam;
+
+    // Projection de la direction de vue dans le repère tangent (right/up) du
+    // billboard : composantes de l'inclinaison de vue utilisées par le décalage
+    // de parallax intra-tuile dans le fragment. Approximation v1.
+    vViewTangent = vec2(dot(toCam, camRight), dot(toCam, camUp));
 
     gl_Position = pc.viewProj * vec4(worldPos, 1.0);
 }

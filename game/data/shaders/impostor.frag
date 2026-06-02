@@ -1,9 +1,10 @@
-// game/data/shaders/impostor.frag (M45.5 — impostors végétation runtime)
+// game/data/shaders/impostor.frag (M45.4b — impostors végétation runtime, format v2)
 //
 // Décode la direction caméra->instance en coords octaédriques (INVERSE de
 // OctaToDir de tools/impostor_builder/OctahedralMap.h) pour choisir la tile
-// (i,j), échantillonne albedo + normal dans la tile, applique l'alpha-test de
-// silhouette + un dither fade anti-popping, puis écrit les 4 sorties GBuffer
+// (i,j), échantillonne albedo + normal + ORM dans la tile, applique un décalage
+// de parallax single-step (depth en normal.a), l'alpha-test de silhouette (sur
+// albedo.a) + un dither fade anti-popping, puis écrit les 4 sorties GBuffer
 // (ordre/format IDENTIQUE à gbuffer_geometry.frag).
 //
 // Sorties GBuffer (cf. gbuffer_geometry.frag) :
@@ -15,15 +16,17 @@
 
 layout(location = 0) in vec2 vUv;       // UV du quad billboard [0,1]²
 layout(location = 1) in vec3 vViewDir;   // direction monde instance -> caméra (unitaire)
+layout(location = 2) in vec2 vViewTangent; // inclinaison de vue (right/up) pour la parallax
 
-layout(set = 0, binding = 0) uniform sampler2D uAlbedo; // atlas albedo (sRGB)
-layout(set = 0, binding = 1) uniform sampler2D uNormal;  // atlas normal (UNORM, a=masque)
+layout(set = 0, binding = 0) uniform sampler2D uAlbedo; // atlas albedo (sRGB, a=couverture)
+layout(set = 0, binding = 1) uniform sampler2D uNormal;  // atlas normal (UNORM, a=profondeur)
+layout(set = 0, binding = 2) uniform sampler2D uOrm;     // atlas ORM (UNORM, r=AO g=rough b=metal)
 
 layout(push_constant) uniform PushConstants {
     mat4 viewProj;
     mat4 prevViewProj;
     vec4 cameraPos;
-    vec4 atlasParams;   // x=viewsPerAxis, y=tileSize, z=fadeAlpha, w=0
+    vec4 atlasParams;   // x=viewsPerAxis, y=tileSize, z=fadeAlpha, w=parallaxScale
     vec4 instancePos;
 } pc;
 
@@ -64,8 +67,9 @@ float Bayer4x4(ivec2 p)
 
 void main()
 {
-    float viewsPerAxis = pc.atlasParams.x;
-    float fadeAlpha    = pc.atlasParams.z;
+    float viewsPerAxis  = pc.atlasParams.x;
+    float fadeAlpha     = pc.atlasParams.z;
+    float parallaxScale = pc.atlasParams.w;
 
     // 1) Dither fade anti-popping : discard pseudo-aléatoire stable sur l'écran.
     if (fadeAlpha < 1.0)
@@ -81,24 +85,38 @@ void main()
     vec2 tileF = floor(octUv * viewsPerAxis);
     tileF = clamp(tileF, vec2(0.0), vec2(viewsPerAxis - 1.0));
 
-    // 3) UV dans l'atlas : origine de la tile + UV du quad ramenée à la tile.
-    //    L'atlas est une grille N×N ; chaque tile occupe 1/N de l'atlas.
-    //    quadUv [0,1] -> sous-région [tile/N, (tile+1)/N].
-    vec2 atlasUv = (tileF + clamp(vUv, vec2(0.0), vec2(1.0))) / viewsPerAxis;
+    // 3) Repère de la tile dans l'atlas (grille N×N, chaque tile = 1/N).
+    //    tileSpan = taille d'une tile en UV atlas ; tileOrigin = coin de la tile.
+    float tileSpan  = 1.0 / viewsPerAxis;
+    vec2  tileOrigin = tileF * tileSpan;
+    vec2  quadUv     = clamp(vUv, vec2(0.0), vec2(1.0));
 
-    vec4 albedo = texture(uAlbedo, atlasUv);
-    vec4 normalSample = texture(uNormal, atlasUv); // .rgb = n*0.5+0.5, .a = masque silhouette
+    // 4) Parallax v1 (single-step) : on lit la profondeur relative (normal.a) à
+    //    l'UV non décalée, puis on décale l'UV intra-tuile selon l'inclinaison de
+    //    vue. depth ∈ [0,1] (0.5 = surface du billboard). L'offset est borné à la
+    //    tile (clamp du quadUv décalé) pour éviter le bleeding inter-tuiles.
+    vec2 atlasUv0 = tileOrigin + quadUv * tileSpan;
+    float depth   = texture(uNormal, atlasUv0).a;
+    vec2  par     = vViewTangent * (depth - 0.5) * parallaxScale;
+    vec2  quadUvP = clamp(quadUv + par, vec2(0.0), vec2(1.0));
+    vec2  atlasUv = tileOrigin + quadUvP * tileSpan;
 
-    // 4) Alpha-test de silhouette (masque de couverture M45.4 stocké en normal.a).
-    if (normalSample.a < 0.5)
+    // 5) Ré-échantillonnage à l'UV décalée.
+    vec4 albedo       = texture(uAlbedo, atlasUv); // .rgb = albedo, .a = couverture
+    vec4 normalSample = texture(uNormal, atlasUv); // .rgb = n*0.5+0.5, .a = profondeur
+    vec4 orm          = texture(uOrm,    atlasUv); // .r = AO, .g = rough, .b = metal
+
+    // 6) Alpha-test de silhouette : en v2 la COUVERTURE est dans albedo.a
+    //    (normal.a porte désormais la profondeur).
+    if (albedo.a < 0.5)
         discard;
 
-    // 5) Écriture GBuffer.
+    // 7) Écriture GBuffer.
     outAlbedo = vec4(albedo.rgb, 1.0);
     // L'atlas stocke déjà la normale encodée n*0.5+0.5 -> on la réécrit telle quelle.
     outNormal = vec4(normalSample.rgb, 1.0);
-    // ORM : AO=1, Roughness=1 (feuillage mat), Metallic=0.
-    outORM = vec4(1.0, 1.0, 0.0, 1.0);
+    // ORM échantillonné depuis l'atlas v2 (au lieu du codé en dur v1).
+    outORM = vec4(orm.rgb, 1.0);
     // Velocity nulle en v1 (impostors statiques ; pas de reprojection dédiée).
     outVelocity = vec4(0.0, 0.0, 0.0, 1.0);
 }

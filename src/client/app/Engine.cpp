@@ -10723,6 +10723,9 @@ namespace engine
 				[this, &impostorPass, &impostorBatches, &rs](VkCommandBuffer innerCmd) {
 					const float camPos3[3] = {
 						rs.camera.position.x, rs.camera.position.y, rs.camera.position.z };
+					// Échelle de parallax single-step (frag v2) ; gated par enabled.
+					const float parallaxScale = static_cast<float>(
+						m_cfg.GetDouble("world.impostor.parallax_scale", 0.08));
 					for (auto& kv : impostorBatches)
 					{
 						auto atlasIt = m_impostorAtlases.find(kv.first);
@@ -10731,16 +10734,18 @@ namespace engine
 						const engine::render::ImpostorAsset& atlas = atlasIt->second;
 						engine::render::TextureAsset* albedo = atlas.Albedo().Get();
 						engine::render::TextureAsset* normal = atlas.Normal().Get();
-						if (albedo == nullptr || normal == nullptr
-							|| albedo->view == VK_NULL_HANDLE || normal->view == VK_NULL_HANDLE)
+						engine::render::TextureAsset* orm    = atlas.Orm().Get();
+						if (albedo == nullptr || normal == nullptr || orm == nullptr
+							|| albedo->view == VK_NULL_HANDLE || normal->view == VK_NULL_HANDLE
+							|| orm->view == VK_NULL_HANDLE)
 							continue;
 						const VkSampler samp = impostorPass.GetSampler();
 						impostorPass.RecordInstances(
 							m_vkDeviceContext.GetDevice(), innerCmd, m_vkSwapchain.GetExtent(),
 							kv.second.data(), static_cast<uint32_t>(kv.second.size()),
-							albedo->view, samp, normal->view, samp,
+							albedo->view, samp, normal->view, samp, orm->view, samp,
 							rs.viewProjMatrix.m, rs.prevViewProjMatrix.m, camPos3,
-							atlas.Info().viewsPerAxis, atlas.Info().tileSize);
+							atlas.Info().viewsPerAxis, atlas.Info().tileSize, parallaxScale);
 					}
 				});
 		}

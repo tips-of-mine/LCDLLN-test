@@ -1,13 +1,19 @@
 /// M45.4 — Implémentation du chargement glTF via cgltf.
-/// CGLTF_IMPLEMENTATION n'est défini QUE dans ce .cpp (unique TU).
+/// CGLTF_IMPLEMENTATION et STB_IMAGE_IMPLEMENTATION ne sont définis QUE dans ce
+/// .cpp (unique TU pour chaque bibliothèque header-only).
 
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #include "GltfMeshLoader.h"
 
 #include <cfloat>
 #include <cstring>
+#include <filesystem>
+#include <iostream>
 
 namespace tools::impostor_builder
 {
@@ -21,6 +27,77 @@ namespace tools::impostor_builder
 				if (prim.attributes[a].type == type)
 					return prim.attributes[a].data;
 			return nullptr;
+		}
+
+		/// Résout l'URI d'une image glTF en chemin absolu sur disque.
+		/// \param gltfPath Chemin du .gltf source (sert de base pour l'URI relative).
+		/// \param image    Image cgltf (peut avoir image->uri == nullptr si embarquée).
+		/// \return Chemin résolu, ou chaîne vide si l'URI est absente/data-uri/buffer.
+		std::string ResolveImagePath(const std::string& gltfPath, const cgltf_image* image)
+		{
+			if (image == nullptr || image->uri == nullptr)
+				return {}; // image embarquée (buffer view / data-uri) non gérée ici
+
+			// Les data-URI (base64 inline) commencent par "data:" — non gérées.
+			if (std::strncmp(image->uri, "data:", 5) == 0)
+				return {};
+
+			// Décode les éventuels %20 etc. sur une copie locale.
+			std::string uri = image->uri;
+			std::vector<char> buf(uri.begin(), uri.end());
+			buf.push_back('\0');
+			cgltf_decode_uri(buf.data());
+			uri = buf.data();
+
+			const std::filesystem::path base = std::filesystem::path(gltfPath).parent_path();
+			return (base / uri).string();
+		}
+
+		/// Charge la texture baseColor d'un matériau dans LoadedMaterial.
+		/// Non-fatale : en cas de PNG manquante, warne et laisse bcW=bcH=0.
+		/// \param gltfPath Chemin du .gltf (base de résolution).
+		/// \param src      Matériau cgltf source.
+		/// \param dst      Matériau destination (rempli).
+		/// Effet de bord : warnings sur stderr ; appelle stbi_load/stbi_image_free.
+		void FillMaterial(const std::string& gltfPath, const cgltf_material& src, LoadedMaterial& dst)
+		{
+			if (src.has_pbr_metallic_roughness)
+			{
+				const cgltf_pbr_metallic_roughness& pbr = src.pbr_metallic_roughness;
+				for (int k = 0; k < 4; ++k)
+					dst.baseColorFactor[k] = pbr.base_color_factor[k];
+				dst.metallic  = pbr.metallic_factor;
+				dst.roughness = pbr.roughness_factor;
+
+				const cgltf_texture* tex = pbr.base_color_texture.texture;
+				if (tex != nullptr && tex->image != nullptr)
+				{
+					const std::string imgPath = ResolveImagePath(gltfPath, tex->image);
+					if (!imgPath.empty())
+					{
+						int w = 0, h = 0, comp = 0;
+						// Force RGBA (4 canaux) pour un échantillonnage uniforme.
+						stbi_uc* pixels = stbi_load(imgPath.c_str(), &w, &h, &comp, 4);
+						if (pixels != nullptr && w > 0 && h > 0)
+						{
+							dst.bcW = w;
+							dst.bcH = h;
+							dst.baseColorRGBA.assign(pixels,
+								pixels + static_cast<size_t>(w) * h * 4);
+							stbi_image_free(pixels);
+						}
+						else
+						{
+							std::cerr << "[impostor_builder] WARN: baseColor PNG introuvable/illisible: "
+							          << imgPath << " (fallback baseColorFactor)\n";
+							if (pixels != nullptr) stbi_image_free(pixels);
+						}
+					}
+				}
+			}
+
+			dst.alphaBlendOrMask = (src.alpha_mode == cgltf_alpha_mode_blend ||
+			                        src.alpha_mode == cgltf_alpha_mode_mask);
 		}
 	}
 
@@ -47,6 +124,19 @@ namespace tools::impostor_builder
 			return false;
 		}
 
+		// --- Charge tous les matériaux (index cgltf == index LoadedMesh) -----
+		out.materials.resize(data->materials_count);
+		for (cgltf_size mi = 0; mi < data->materials_count; ++mi)
+			FillMaterial(path, data->materials[mi], out.materials[mi]);
+
+		/// Retrouve l'index global d'un matériau cgltf dans data->materials.
+		/// \return index [0,materials_count) ou -1 si nullptr.
+		auto materialIndexOf = [&](const cgltf_material* m) -> int {
+			if (m == nullptr) return -1;
+			const cgltf_size idx = cgltf_material_index(data, m);
+			return static_cast<int>(idx);
+		};
+
 		float bmin[3] = {FLT_MAX, FLT_MAX, FLT_MAX};
 		float bmax[3] = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
 
@@ -64,6 +154,7 @@ namespace tools::impostor_builder
 					continue; // POSITION obligatoire ; primitive ignorée si absente
 				const cgltf_accessor* nrmAcc = FindAttr(prim, cgltf_attribute_type_normal);
 				const cgltf_accessor* colAcc = FindAttr(prim, cgltf_attribute_type_color);
+				const cgltf_accessor* uvAcc  = FindAttr(prim, cgltf_attribute_type_texcoord);
 
 				const cgltf_size vcount = posAcc->count;
 				const uint32_t baseVertex = static_cast<uint32_t>(out.vertices.size());
@@ -94,7 +185,14 @@ namespace tools::impostor_builder
 					}
 					// sinon défaut blanc opaque déjà dans RasterVertex.
 
-					// Mise à jour des bounds.
+					if (uvAcc != nullptr)
+					{
+						float uv[2] = {0, 0};
+						cgltf_accessor_read_float(uvAcc, v, uv, 2);
+						rv.uv[0] = uv[0]; rv.uv[1] = uv[1];
+					}
+					// sinon défaut (0,0) déjà dans RasterVertex.
+
 					for (int k = 0; k < 3; ++k)
 					{
 						if (rv.pos[k] < bmin[k]) bmin[k] = rv.pos[k];
@@ -104,7 +202,8 @@ namespace tools::impostor_builder
 					out.vertices.push_back(rv);
 				}
 
-				// Indices (réindexés avec l'offset baseVertex).
+				// --- Indices du sous-mesh (réindexés avec baseVertex) --------
+				const uint32_t firstIndex = static_cast<uint32_t>(out.indices.size());
 				if (prim.indices != nullptr)
 				{
 					const cgltf_size icount = prim.indices->count;
@@ -116,16 +215,22 @@ namespace tools::impostor_builder
 				}
 				else
 				{
-					// Pas d'indices : triangles séquentiels.
 					for (cgltf_size i = 0; i < vcount; ++i)
 						out.indices.push_back(baseVertex + static_cast<uint32_t>(i));
 				}
+
+				LoadedSubMesh sm;
+				sm.firstIndex    = firstIndex;
+				sm.indexCount    = static_cast<uint32_t>(out.indices.size()) - firstIndex;
+				sm.materialIndex = materialIndexOf(prim.material);
+				if (sm.indexCount >= 3)
+					out.subMeshes.push_back(sm);
 			}
 		}
 
 		cgltf_free(data);
 
-		if (out.vertices.empty() || out.indices.empty())
+		if (out.vertices.empty() || out.indices.empty() || out.subMeshes.empty())
 		{
 			err = "LoadGltf: aucune primitive triangle exploitable dans " + path;
 			return false;

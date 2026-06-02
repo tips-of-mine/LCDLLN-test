@@ -150,7 +150,8 @@
         "impostor": {
             "enabled": false,
             "distance_m": 60.0,
-            "fade_band_m": 10.0
+            "fade_band_m": 10.0,
+            "parallax_scale": 0.08
         },
         "_comment_fog": "M45.1 Perspective aerienne a distance. start_m : rayon CLAIR autour du joueur (aucun brouillard en deca) ; end_m : distance de fondu COMPLET vers la teinte atmospherique (garantit le masquage de la coupe de distance des props). density : extinction exponentielle (1/m), <= 0 desactive l'effet ; inscatter : force du halo chaud directionnel quand on regarde le soleil. start/end : desactive si end_m <= start_m. density/inscatter : override des valeurs per-zone (atmosphere.json : aerial.density / aerial.inscatter) ; retirer ces cles ici pour piloter par zone. Lu a chaque frame -> reglage a chaud.",
         "fog": {

@@ -50,11 +50,11 @@ namespace engine::render
 			return false;
 		}
 
-		// 1) Descriptor set layout (set 0) : 2 combined image samplers
-		//    (binding 0 = albedo, binding 1 = normal), stage FRAGMENT.
+		// 1) Descriptor set layout (set 0) : 3 combined image samplers
+		//    (binding 0 = albedo, binding 1 = normal, binding 2 = orm), stage FRAGMENT.
 		{
-			VkDescriptorSetLayoutBinding bindings[2]{};
-			for (uint32_t i = 0; i < 2u; ++i)
+			VkDescriptorSetLayoutBinding bindings[3]{};
+			for (uint32_t i = 0; i < 3u; ++i)
 			{
 				bindings[i].binding         = i;
 				bindings[i].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -63,7 +63,7 @@ namespace engine::render
 			}
 			VkDescriptorSetLayoutCreateInfo info{};
 			info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			info.bindingCount = 2;
+			info.bindingCount = 3;
 			info.pBindings    = bindings;
 			if (vkCreateDescriptorSetLayout(device, &info, nullptr, &m_setLayout) != VK_SUCCESS)
 			{
@@ -74,11 +74,11 @@ namespace engine::render
 		}
 
 		// 2) Descriptor pool + anneau de kDescRing sets (un par atlas/draw, cf. .h).
-		//    2 image samplers par set.
+		//    3 image samplers par set.
 		{
 			VkDescriptorPoolSize poolSize{};
 			poolSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSize.descriptorCount = 2u * kDescRing;
+			poolSize.descriptorCount = 3u * kDescRing;
 			VkDescriptorPoolCreateInfo pci{};
 			pci.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 			pci.maxSets       = kDescRing;
@@ -255,12 +255,15 @@ namespace engine::render
 		const ImpostorInstance* instances, uint32_t count,
 		VkImageView albedoView, VkSampler albedoSamp,
 		VkImageView normalView, VkSampler normalSamp,
+		VkImageView ormView, VkSampler ormSamp,
 		const float* viewProj, const float* prevViewProj, const float* cameraPos3,
-		uint32_t viewsPerAxis, uint32_t tileSize)
+		uint32_t viewsPerAxis, uint32_t tileSize, float parallaxScale)
 	{
 		if (m_pipeline == VK_NULL_HANDLE || cmd == VK_NULL_HANDLE || instances == nullptr
 			|| count == 0 || albedoView == VK_NULL_HANDLE || normalView == VK_NULL_HANDLE
+			|| ormView == VK_NULL_HANDLE
 			|| albedoSamp == VK_NULL_HANDLE || normalSamp == VK_NULL_HANDLE
+			|| ormSamp == VK_NULL_HANDLE
 			|| viewProj == nullptr || cameraPos3 == nullptr)
 		{
 			return;
@@ -271,16 +274,19 @@ namespace engine::render
 		VkDescriptorSet descSet = m_descSets[m_descCursor];
 		m_descCursor = (m_descCursor + 1u) % kDescRing;
 
-		// Met à jour CE set avec l'atlas courant.
-		VkDescriptorImageInfo imgInfos[2]{};
+		// Met à jour CE set avec l'atlas courant (3 samplers : albedo, normal, orm).
+		VkDescriptorImageInfo imgInfos[3]{};
 		imgInfos[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imgInfos[0].imageView   = albedoView;
 		imgInfos[0].sampler     = albedoSamp;
 		imgInfos[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imgInfos[1].imageView   = normalView;
 		imgInfos[1].sampler     = normalSamp;
-		VkWriteDescriptorSet writes[2]{};
-		for (uint32_t i = 0; i < 2u; ++i)
+		imgInfos[2].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imgInfos[2].imageView   = ormView;
+		imgInfos[2].sampler     = ormSamp;
+		VkWriteDescriptorSet writes[3]{};
+		for (uint32_t i = 0; i < 3u; ++i)
 		{
 			writes[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writes[i].dstSet          = descSet;
@@ -289,7 +295,7 @@ namespace engine::render
 			writes[i].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			writes[i].pImageInfo      = &imgInfos[i];
 		}
-		vkUpdateDescriptorSets(device, 2u, writes, 0, nullptr);
+		vkUpdateDescriptorSets(device, 3u, writes, 0, nullptr);
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -307,11 +313,13 @@ namespace engine::render
 		pc.cameraPos[3] = 0.0f;
 		pc.atlasParams[0] = static_cast<float>(viewsPerAxis);
 		pc.atlasParams[1] = static_cast<float>(tileSize);
-		pc.atlasParams[2] = 1.0f; // fadeAlpha (v1 : pas de fondu, opaque)
-		pc.atlasParams[3] = 0.0f;
+		// atlasParams[2] (fadeAlpha) est désormais poussé PAR instance dans la boucle
+		// ci-dessous (cross-fade M45.5b) — plus de valeur codée en dur ici.
+		pc.atlasParams[3] = parallaxScale;   // v2 : échelle du décalage de parallax (frag)
 
 		for (uint32_t i = 0; i < count; ++i)
 		{
+			pc.atlasParams[2] = instances[i].fadeAlpha; // fondu dither anti-popping par instance
 			pc.instancePos[0] = instances[i].worldPos[0];
 			pc.instancePos[1] = instances[i].worldPos[1];
 			pc.instancePos[2] = instances[i].worldPos[2];

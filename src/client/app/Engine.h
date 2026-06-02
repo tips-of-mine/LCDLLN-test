@@ -55,6 +55,7 @@
 #include "src/client/render/SkyPass.h"
 #include "src/client/render/gi/DdgiVolume.h"
 #include "src/client/render/gi/DdgiUpdatePass.h"
+#include "src/client/render/gi/DdgiQuality.h"
 #include "src/client/render/WeatherSystem.h"
 #include "src/client/render/DynamicLightSystem.h"
 #include "src/client/world/water/WaterSurfaces.h"
@@ -368,8 +369,16 @@ namespace engine
 		engine::render::gi::DdgiVolume m_ddgiVolume;
 		/// M45.7 — passe compute qui met à jour l'atlas d'irradiance du volume DDGI.
 		engine::render::gi::DdgiUpdatePass m_ddgiUpdatePass;
-		/// M45.7 — true uniquement si gi.ddgi.enabled ET allocation/init réussis.
+		/// M45.7 — true uniquement si la qualité DDGI est dynamique ET allocation/init réussis.
 		bool m_ddgiEnabled = false;
+		/// M45.8 — amortissement : 1 sonde sur N mise à jour par frame (>= 1).
+		/// Dérivé du niveau de qualité (DynamicLow=8, DynamicHigh=2). Poussé au
+		/// shader ddgi_update via DdgiUpdateParams::gridSpacing.w.
+		uint32_t m_ddgiUpdateDivisor = 4;
+		/// M45.8 — intensité du terme indirect DDGI dans le lighting. Dérivée du
+		/// niveau de qualité (DynamicLow=0.5, DynamicHigh=1.0 ; 0 si statique).
+		/// Poussée au LightingPass via LightParams::ddgiAtlas[3].
+		float m_ddgiIntensity = 1.0f;
 		/// SceneColor_LDR: output of the tonemap pass (R8G8B8A8_UNORM). Added in M03.4.
 		engine::render::ResourceId m_fgSceneColorLDRId   = engine::render::kInvalidResourceId;
 		/// M08.2: SceneColor_HDR + bloom (combine pass output); tonemap reads this.
@@ -727,6 +736,15 @@ namespace engine
 		/// et bascule Jab<->Cross a chaque coup. Clip dynamique (cf. point de lecture).
 		std::string                                              m_currentPunchRole = "Punch";
 		bool                                                     m_punchAlt = false;
+		/// Interaction : rôle d'anim joué par l'état Interact (clip dynamique, même
+		/// patron que m_currentPunchRole). "Interact" par défaut (geste générique sur E) ;
+		/// passe à "PickUp_Table" près d'un coffre (se pencher → saisir → se redresser).
+		std::string                                              m_currentInteractRole = "Interact";
+		/// Verrou de déplacement : instant (s, EngineNowSec) jusqu'auquel les entrées
+		/// de déplacement de l'avatar sont neutralisées (MoveInput vide) pendant un
+		/// geste verrouillant (ouverture de coffre). Toujours tester via
+		/// `EngineNowSec() < m_avatarMoveLockUntilSec` (jamais `!= 0`). 0 = aucun verrou.
+		float                                                    m_avatarMoveLockUntilSec = 0.0f;
 		/// Sequence de sort : phase (0=Enter,1=Shoot,2=Exit) + clip a rejouer en
 		/// cours d'etat (vide=aucun ; consomme 1 fois par la SM, rejoue un one-shot
 		/// sans changer d'etat). Garde-fou 3s dans le case Cast => jamais bloque.

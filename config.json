@@ -140,17 +140,25 @@
         "histogram_percentile_low": 0.10,
         "histogram_percentile_high": 0.90
     },
+    "_comment_lod": "Seuils de LOD lus par engine::world::LodConfig (M09.3). distance_lodX_max : distance max (m) du niveau de detail X (0 = plus detaille). distance_impostor_m (M45.5b) : distance (m) au-dela de laquelle un prop de DECOR (non interactible) bascule en impostor (billboard octaedrique) au lieu de son mesh, jusqu'a world.props.cull_distance_m. Remplace l'ancienne cle world.impostor.distance_m. Lu a l'init (LodConfig.Init).",
+    "lod": {
+        "distance_lod0_max": 25.0,
+        "distance_lod1_max": 60.0,
+        "distance_lod2_max": 150.0,
+        "distance_lod3_max": 400.0,
+        "distance_impostor_m": 60.0
+    },
     "world": {
         "max_draw_distance_m": 0.0,
         "_comment_props": "Rendu des props de decor (world.scenery). cull_distance_m : au-dela de ce rayon (m) autour de la camera, un prop de DECOR n'est plus dessine (les INTERACTIBLES coffre/villageois/caisses sont toujours dessines). Lu a chaque frame -> reglage a chaud (modifier config.json puis relancer suffit, AUCUNE recompilation). Reduire si la foret dense fait chuter le framerate ; augmenter pour plus de profondeur visuelle. <= 0 = desactive (tout est dessine). Repli 80 si la cle est absente.",
         "props": {
             "cull_distance_m": 80.0
         },
-        "_comment_impostor": "M45.5 — Impostors vegetation (billboards octaedriques) au LOIN, a la place des meshes de decor, eclaires via le GBuffer deferred. DESACTIVE par defaut (enabled=false) : aucun changement de rendu tant que non active. Necessite des atlas .mipo (generes par tools/impostor_builder) places A COTE de chaque mesh (meme nom, extension .mipo). distance_m : distance (m) au-dela de laquelle un prop de DECOR (non interactible) est rendu en impostor au lieu de son mesh, jusqu'a world.props.cull_distance_m ou il disparait. fade_band_m : largeur (m) de la bande de fondu (dither anti-popping) juste apres distance_m. Lu a chaque frame -> reglage a chaud.",
+        "_comment_impostor": "M45.5 — Impostors vegetation (billboards octaedriques) au LOIN, a la place des meshes de decor, eclaires via le GBuffer deferred. DESACTIVE par defaut (enabled=false) : aucun changement de rendu tant que non active. Necessite des atlas .mipo (generes par tools/impostor_builder) places A COTE de chaque mesh (meme nom, extension .mipo). Le SEUIL de bascule mesh->impostor est desormais lod.distance_impostor_m (l'ancienne cle distance_m a ete retiree). fade_band_m : largeur (m) de la bande de fondu (cross-fade dither anti-popping) juste apres ce seuil : dans cette bande, le mesh ET l'impostor coexistent (l'impostor monte en dither 0->1). parallax_scale : echelle du decalage de parallax single-step (frag v2). Lu a chaque frame -> reglage a chaud.",
         "impostor": {
             "enabled": false,
-            "distance_m": 60.0,
-            "fade_band_m": 10.0
+            "fade_band_m": 10.0,
+            "parallax_scale": 0.08
         },
         "_comment_fog": "M45.1 Perspective aerienne a distance. start_m : rayon CLAIR autour du joueur (aucun brouillard en deca) ; end_m : distance de fondu COMPLET vers la teinte atmospherique (garantit le masquage de la coupe de distance des props). density : extinction exponentielle (1/m), <= 0 desactive l'effet ; inscatter : force du halo chaud directionnel quand on regarde le soleil. start/end : desactive si end_m <= start_m. density/inscatter : override des valeurs per-zone (atmosphere.json : aerial.density / aerial.inscatter) ; retirer ces cles ici pour piloter par zone. Lu a chaque frame -> reglage a chaud.",
         "fog": {
@@ -655,8 +663,10 @@
         }
     },
     "gi": {
-        "_comment_gi": "DDGI phase 2 (M45.7) — injection + propagation runtime. DESACTIVE (enabled=false, DEFAUT) => aucune allocation GPU, passe DDGI_Update NON enregistree, LightingPass useDdgi=0 => rendu STRICTEMENT identique au chemin probes statiques. enabled=true alloue l'atlas irradiance et active la passe compute ddgi_update (ciel/soleil dynamique par sonde, base conservatrice SANS rebonds — pas de RT/voxelisation). origin_m/spacing_m en metres, counts = nb de sondes par axe (X,Y,Z), *_texels = resolution octaedrique par sonde (hors bordure 1px). hysteresis = blend temporel [0..1] (eleve = lent/stable), intensity = facteur du terme indirect DDGI dans le lighting.",
+        "_comment_gi": "DDGI (M45.7 phase 2 / M45.8 phase 3) — injection + propagation runtime. PILOTE PAR 'quality' (DEFAUT 'off'). quality in {off, static-probes, dynamic-low, dynamic-high} : off/static-probes => aucune DDGI dynamique => aucune allocation GPU, passe DDGI_Update NON enregistree, LightingPass useDdgi=0 => rendu STRICTEMENT identique au chemin probes statiques. dynamic-low (amortissement /8, intensite 0.5) et dynamic-high (amortissement /2, intensite 1.0) allouent l'atlas irradiance et activent la passe compute ddgi_update (ciel/soleil dynamique par sonde, base conservatrice SANS rebonds — pas de RT/voxelisation). RETRO-COMPAT : si 'quality' est absent mais 'enabled'=true, traite comme dynamic-high ; sinon 'quality' prime et 'enabled' est ignore. La QUALITE pilote desormais l'amortissement (divisor) et l'intensite (l'ancienne cle 'intensity' n'est plus lue). 'debug'=true loggue l'etat DDGI au boot (qualite/alloc/probeCount/divisor/intensity ; PAS de visualisation 3D des sondes, reportee). origin_m/spacing_m en metres, counts = nb de sondes par axe (X,Y,Z), *_texels = resolution octaedrique par sonde (hors bordure 1px). hysteresis = blend temporel [0..1] (eleve = lent/stable).",
         "ddgi": {
+            "quality": "off",
+            "debug": false,
             "enabled": false,
             "origin_m": [0, 0, 0],
             "spacing_m": [2, 2, 2],

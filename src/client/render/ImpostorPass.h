@@ -28,10 +28,15 @@ namespace engine::render
 {
 	/// Une instance d'impostor à dessiner : centre monde + rayon de la sphère
 	/// englobante du prop (demi-taille du billboard, en mètres).
+	/// `fadeAlpha` (M45.5b) pilote le cross-fade dither anti-popping PAR instance :
+	/// 1.0 = impostor pleinement opaque ; <1.0 = en cours d'apparition (le mesh est
+	/// encore dessiné par-dessous dans la bande de fondu). Poussé dans
+	/// `atlasParams.z` au moment du draw (cf. RecordInstances).
 	struct ImpostorInstance
 	{
 		float worldPos[3] = {0.0f, 0.0f, 0.0f};
 		float radius      = 1.0f;
+		float fadeAlpha   = 1.0f;
 	};
 
 	/// Push constants poussées par instance (stage VERTEX + FRAGMENT).
@@ -39,8 +44,10 @@ namespace engine::render
 	///   viewProj      : 64  (mat4 caméra)
 	///   prevViewProj  : 64  (mat4 frame précédente — réservé velocity, écrit 0)
 	///   cameraPos     : 16  (xyz position caméra monde, w pad)
-	///   atlasParams   : 16  (x=viewsPerAxis, y=tileSize, z=fadeAlpha, w=0)
+	///   atlasParams   : 16  (x=viewsPerAxis, y=tileSize, z=fadeAlpha, w=parallaxScale)
 	///   instancePos   : 16  (xyz centre monde, w=radius)
+	/// NB : `atlasParams.w` (réservé en v1) porte désormais l'échelle de parallax
+	/// du fragment v2 — pas de changement de taille (toujours 176 octets).
 	struct ImpostorPushConstants
 	{
 		float viewProj[16]     = {};
@@ -64,7 +71,7 @@ namespace engine::render
 		/// (4 color attachments + depth, depthTest ON, depthWrite ON, blend OFF
 		/// sur les 4 — calque l'état MRT de GeometryPass/TerrainChunkRenderer
 		/// pour ce render pass). Crée aussi le descriptor set layout (set 0 =
-		/// 2 combined image samplers : albedo, normal), le pool, le set, et un
+		/// 3 combined image samplers : albedo, normal, orm), le pool, le set, et un
 		/// sampler linéaire CLAMP_TO_EDGE partagé.
 		///
 		/// \param gbufferLoadRenderPass Render pass GBuffer loadOp=LOAD du caller.
@@ -77,7 +84,7 @@ namespace engine::render
 		          const uint32_t* fragSpirv, size_t fragWordCount,
 		          VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
-		/// Dessine `count` impostors partageant le même atlas (albedo+normal).
+		/// Dessine `count` impostors partageant le même atlas (albedo+normal+orm).
 		/// À APPELER DANS le callback de `RecordTerrainChunkBatch` (render pass
 		/// déjà ouvert). Bind pipeline + descriptor (atlas), puis pour chaque
 		/// instance : push constants (avec instancePos), `vkCmdDraw(cmd,6,1,0,0)`.
@@ -87,12 +94,17 @@ namespace engine::render
 		///                      sont déjà posés par le caller via le render pass).
 		/// \param instances     Tableau de `count` instances (même atlas).
 		/// \param albedoView/albedoSamp  Atlas albedo (sRGB) + sampler.
-		/// \param normalView/normalSamp  Atlas normal (UNORM) + sampler.
+		/// \param normalView/normalSamp  Atlas normal (UNORM, a=profondeur) + sampler.
+		/// \param ormView/ormSamp        Atlas ORM (UNORM, r=AO g=rough b=metal) + sampler.
 		/// \param viewProj      Matrice viewProj (16 floats, row-major `.m`).
 		/// \param prevViewProj  Matrice viewProj frame précédente (16 floats).
 		/// \param cameraPos3    Position caméra monde (3 floats).
 		/// \param viewsPerAxis  N de la grille N×N de l'atlas.
 		/// \param tileSize      Côté d'une tile en pixels.
+		/// \param parallaxScale Échelle du décalage de parallax single-step (frag v2),
+		///                      écrite dans `atlasParams.w` des push constants.
+		///                      Le fondu (`atlasParams.z`) est pris PAR instance dans
+		///                      `instances[i].fadeAlpha` (cross-fade M45.5b), plus codé en dur.
 		///
 		/// Effet de bord : met à jour le descriptor set partagé (vkUpdateDescriptorSets)
 		/// à chaque appel — un seul atlas peut donc être lié à la fois ; appeler
@@ -101,11 +113,12 @@ namespace engine::render
 		          const ImpostorInstance* instances, uint32_t count,
 		          VkImageView albedoView, VkSampler albedoSamp,
 		          VkImageView normalView, VkSampler normalSamp,
+		          VkImageView ormView, VkSampler ormSamp,
 		          const float* viewProj, const float* prevViewProj, const float* cameraPos3,
-		          uint32_t viewsPerAxis, uint32_t tileSize);
+		          uint32_t viewsPerAxis, uint32_t tileSize, float parallaxScale);
 
-		/// Sampler linéaire CLAMP_TO_EDGE créé au Init, partagé pour albedo+normal.
-		/// Le caller peut le passer comme `albedoSamp`/`normalSamp` à RecordInstances.
+		/// Sampler linéaire CLAMP_TO_EDGE créé au Init, partagé pour albedo+normal+orm.
+		/// Le caller peut le passer comme `albedoSamp`/`normalSamp`/`ormSamp` à RecordInstances.
 		VkSampler GetSampler() const { return m_sampler; }
 
 		/// Libère tous les objets Vulkan. Sûr d'appeler même non initialisé.

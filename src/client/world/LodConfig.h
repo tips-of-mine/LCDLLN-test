@@ -24,7 +24,13 @@ namespace engine::world
 		/// Returns the max distance (meters) for the given LOD level (0..3).
 		float GetDistanceMax(int lodLevel) const;
 
+		/// Distance (meters) beyond which a decor prop switches from its mesh to an
+		/// impostor billboard (M45.5b). Config key: lod.distance_impostor_m (default 60).
+		/// Centralizes the impostor threshold previously read from world.impostor.distance_m.
+		float GetImpostorDistanceMax() const { return m_impostorDistanceMax; }
+
 	private:
 		float m_distanceMax[kLodLevelCount] = { 25.0f, 60.0f, 150.0f, 400.0f };
+		float m_impostorDistanceMax = 60.0f;
 	};
 }

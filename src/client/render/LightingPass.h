@@ -18,9 +18,10 @@ namespace engine::render
 	/// ambient fallback, and writes SceneColor_HDR (R16G16B16A16_SFLOAT). M05.4.
 	///
 	/// Pipeline: fullscreen triangle (3 vertices, no vertex buffer).
-		/// Descriptor set 0: 9 combined image samplers (GBufA, GBufB, GBufC, Depth, irradiance,
-		/// prefiltered specular, BRDF LUT, SSAO_Blur, DecalOverlay). Push constants (148 bytes): invVP, cameraPos,
-	/// lightDir, lightColor, ambientColor, skyColor, useIBL.
+		/// Descriptor set 0: 10 combined image samplers (GBufA, GBufB, GBufC, Depth, irradiance,
+		/// prefiltered specular, BRDF LUT, SSAO_Blur, DecalOverlay, DDGI irradiance [M45.7]).
+	/// Push constants (224 bytes): invVP, cameraPos, lightDir, lightColor, ambientColor, skyColor,
+	/// useIBL, puis champs DDGI (useDdgi + grille/atlas) ajoutés en M45.7.
 	class LightingPass
 	{
 	public:
@@ -36,8 +37,20 @@ namespace engine::render
 			float ambientColor[4]; ///< Constant ambient RGB (fallback when IBL absent) ; w = M45.1 aerialInscatter.
 			float skyColor[4];     ///< RGB couleur du ciel (skyHorizon DayNightCycle) pour les pixels sans géométrie. w unused.
 			float useIBL;          ///< 1.0 = use IBL (irradiance + prefilter + BRDF LUT), 0.0 = fallback.
+			// --- M45.7 — DDGI dynamique (ADDITIF). useDdgi=0 (défaut) => chemin
+			// strictement inchangé (binding 9 lié à un fallback valide mais jamais lu).
+			// useIBL + useDdgi + pad0 + pad1 = 16 octets pour que les vec4 DDGI
+			// suivants soient alignés sur 16 (règle std140 des push_constant GLSL).
+			float useDdgi;         ///< 1.0 = échantillonne l'irradiance DDGI dynamique, 0.0 = aucun changement.
+			float pad0;            ///< Padding (alignement vec4 std140).
+			float pad1;            ///< Padding (alignement vec4 std140).
+			float ddgiOrigin[4];   ///< xyz = origine monde de la grille DDGI (mètres) ; w inutilisé.
+			float ddgiSpacing[4];  ///< xyz = espacement par axe (mètres) ; w inutilisé.
+			float ddgiCounts[4];   ///< xyz = nb de sondes par axe ; w = irradianceTexels (côté hors bordure).
+			float ddgiAtlas[4];    ///< x = atlasCols, y = atlasRows, z = tileSize (texels+2), w = intensity.
 		};
-		static_assert(sizeof(LightParams) == 148, "LightParams must be exactly 148 bytes");
+		// 144 (jusqu'à skyColor) + 16 (useIBL+useDdgi+pad0+pad1) + 64 (4 vec4 DDGI) = 224.
+		static_assert(sizeof(LightParams) == 224, "LightParams must be exactly 224 bytes (144 + 16 + 64 DDGI)");
 
 		LightingPass() = default;
 		LightingPass(const LightingPass&) = delete;
@@ -64,6 +77,10 @@ namespace engine::render
 		/// \param irradianceView / irradianceSampler  Irradiance cubemap (M05.2); may be null.
 		/// \param prefilterView / prefilterSampler     Prefiltered specular cubemap (M05.3).
 		/// \param brdfLutView / brdfLutSampler         BRDF LUT 2D (M05.1).
+		/// \param ddgiIrradianceView / ddgiSampler     M45.7 — atlas d'irradiance DDGI dynamique
+		///        (binding 9). Quand ddgiIrradianceView == VK_NULL_HANDLE (défaut),
+		///        un fallback valide (GBufferA / m_sampler) est lié pour garder le
+		///        descriptor valide ; params.useDdgi=0 garantit que le shader ne le lit pas.
 		/// \param frameIndex  Current in-flight frame index (0 .. maxFrames-1).
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,
 			ResourceId idGBufA, ResourceId idGBufB, ResourceId idGBufC, ResourceId idDepth,
@@ -71,6 +88,7 @@ namespace engine::render
 			VkImageView irradianceView, VkSampler irradianceSampler,
 			VkImageView prefilterView, VkSampler prefilterSampler,
 			VkImageView brdfLutView, VkSampler brdfLutSampler,
+			VkImageView ddgiIrradianceView, VkSampler ddgiSampler,
 			const LightParams& params, uint32_t frameIndex);
 
 		/// Releases all Vulkan resources. Safe to call even when not initialized.

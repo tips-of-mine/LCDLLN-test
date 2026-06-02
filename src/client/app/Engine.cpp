@@ -3969,6 +3969,51 @@ namespace engine
 									// (copie WithBloom -> Dof) pour que Tonemap lise une image valide.
 									m_dofReady = m_pipeline->GetDepthOfFieldPass().IsValid();
 
+									// M45.7 — GI dynamique DDGI. DÉSACTIVÉ par défaut : si gi.ddgi.enabled
+									// est false (cas par défaut), on n'alloue rien, on n'enregistre pas la
+									// passe DDGI_Update et le LightingPass garde useDdgi=0 => rendu
+									// strictement identique. Si tout réussit, on bascule m_ddgiEnabled=true.
+									m_ddgiEnabled = false;
+									if (m_cfg.GetBool("gi.ddgi.enabled", false))
+									{
+										engine::render::gi::DdgiGridConfig gridCfg{};
+										gridCfg.origin[0]  = static_cast<float>(m_cfg.GetDouble("gi.ddgi.origin_m[0]", 0.0));
+										gridCfg.origin[1]  = static_cast<float>(m_cfg.GetDouble("gi.ddgi.origin_m[1]", 0.0));
+										gridCfg.origin[2]  = static_cast<float>(m_cfg.GetDouble("gi.ddgi.origin_m[2]", 0.0));
+										gridCfg.spacing[0] = static_cast<float>(m_cfg.GetDouble("gi.ddgi.spacing_m[0]", 2.0));
+										gridCfg.spacing[1] = static_cast<float>(m_cfg.GetDouble("gi.ddgi.spacing_m[1]", 2.0));
+										gridCfg.spacing[2] = static_cast<float>(m_cfg.GetDouble("gi.ddgi.spacing_m[2]", 2.0));
+										gridCfg.counts[0]  = static_cast<uint32_t>(m_cfg.GetInt("gi.ddgi.counts[0]", 8));
+										gridCfg.counts[1]  = static_cast<uint32_t>(m_cfg.GetInt("gi.ddgi.counts[1]", 8));
+										gridCfg.counts[2]  = static_cast<uint32_t>(m_cfg.GetInt("gi.ddgi.counts[2]", 4));
+										gridCfg.irradianceTexels = static_cast<uint32_t>(m_cfg.GetInt("gi.ddgi.irradiance_texels", 8));
+										gridCfg.visibilityTexels = static_cast<uint32_t>(m_cfg.GetInt("gi.ddgi.visibility_texels", 16));
+										m_ddgiVolume.SetConfig(gridCfg);
+
+										std::string ddgiErr;
+										if (!m_ddgiVolume.Allocate(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, ddgiErr))
+										{
+											LOG_WARN(Render, "[Engine] DDGI desactive : allocation volume KO ({}) -> fallback probes statiques", ddgiErr);
+										}
+										else
+										{
+											std::vector<uint32_t> ddgiComp = loadSpirv("shaders/ddgi_update.comp.spv");
+											if (ddgiComp.empty()
+												|| !m_ddgiUpdatePass.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(),
+													ddgiComp.data(), ddgiComp.size(),
+													VK_NULL_HANDLE))
+											{
+												LOG_WARN(Render, "[Engine] DDGI desactive : DdgiUpdatePass init KO (shader absent ?) -> fallback probes statiques");
+												m_ddgiVolume.Destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
+											}
+											else
+											{
+												m_ddgiEnabled = true;
+												LOG_INFO(Render, "[Engine] DDGI runtime ACTIF (gi.ddgi.enabled=true)");
+											}
+										}
+									}
+
 									// M100 — Task 12 : Terrain Chunk Runtime — drawcall mesh-terrain par
 									// chunk avec splat 8-layer. Co-existe avec le legacy TerrainRenderer
 									// (skip strict si fichiers chunk absents). Cf.
@@ -5493,6 +5538,64 @@ namespace engine
 											LOG_WARN(Render, "[Engine] Decal pass disabled, overlay clear fallback registered");
 										}
 
+										// M45.7 — DDGI_Update : passe COMPUTE qui rafraîchit l'atlas
+										// d'irradiance du volume DDGI AVANT le LightingPass. Enregistrée
+										// UNIQUEMENT si m_ddgiEnabled (gi.ddgi.enabled=true + alloc/init OK) ;
+										// sinon le LightingPass garde useDdgi=0 et le rendu est inchangé.
+										// L'écriture de l'atlas (image persistante hors frame graph) est
+										// gérée par les barrières internes de la passe ; on déclare en READ
+										// la shadow cascade 0 pour que le FG la rende lisible (SAMPLED).
+										if (m_ddgiEnabled && m_ddgiUpdatePass.IsValid())
+										{
+											m_frameGraph.addPass("DDGI_Update",
+												[this](engine::render::PassBuilder& b) {
+													b.read(m_fgShadowMapIds[0], engine::render::ImageUsage::SampledRead);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													if (!m_ddgiEnabled || !m_ddgiUpdatePass.IsValid() || !m_ddgiVolume.IsAllocated())
+														return;
+													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+													const engine::RenderState& rs = m_renderStates[readIdx];
+
+													engine::render::gi::DdgiUpdatePass::DdgiUpdateParams up{};
+													const engine::render::gi::DdgiGridConfig& gc = m_ddgiVolume.Config();
+													up.gridOrigin[0] = gc.origin[0]; up.gridOrigin[1] = gc.origin[1]; up.gridOrigin[2] = gc.origin[2];
+													up.gridSpacing[0] = gc.spacing[0]; up.gridSpacing[1] = gc.spacing[1]; up.gridSpacing[2] = gc.spacing[2];
+													up.counts[0] = gc.counts[0]; up.counts[1] = gc.counts[1]; up.counts[2] = gc.counts[2];
+													up.counts[3] = gc.irradianceTexels;
+													// Direction VERS le soleil (normalisée), couleur soleil per-zone.
+													{
+														float sx = m_zoneAtmosphere.sunDirection[0];
+														float sy = m_zoneAtmosphere.sunDirection[1];
+														float sz = m_zoneAtmosphere.sunDirection[2];
+														float sl = std::sqrt(sx*sx + sy*sy + sz*sz);
+														if (sl > 1e-6f) { sx /= sl; sy /= sl; sz /= sl; }
+														up.sunDir[0] = sx; up.sunDir[1] = sy; up.sunDir[2] = sz;
+													}
+													up.sunColor[0] = m_zoneAtmosphere.sunColor[0];
+													up.sunColor[1] = m_zoneAtmosphere.sunColor[1];
+													up.sunColor[2] = m_zoneAtmosphere.sunColor[2];
+													// Horizon du ciel piloté par DayNightCycle.
+													{
+														const engine::render::DayNightCycle::State& dn = m_dayNight.GetState();
+														up.skyColor[0] = dn.skyHorizon[0];
+														up.skyColor[1] = dn.skyHorizon[1];
+														up.skyColor[2] = dn.skyHorizon[2];
+													}
+													up.params[0] = static_cast<float>(m_cfg.GetDouble("gi.ddgi.hysteresis", 0.95));
+													up.params[1] = static_cast<float>(m_ddgiVolume.AtlasCols());
+													up.params[2] = static_cast<float>(m_ddgiVolume.IrradianceTileSize());
+													up.params[3] = 0.0f;
+													(void)rs; // rs réservé (cascade 0 lue via le registry ci-dessous).
+
+													// Shadow cascade 0 : on lit sa vue via le registry (comme VolumetricFog).
+													VkImageView shadowView = reg.getImageView(m_fgShadowMapIds[0]);
+													m_ddgiUpdatePass.Record(
+														m_vkDeviceContext.GetDevice(), cmd, m_ddgiVolume,
+														shadowView, m_ddgiUpdatePass.GetShadowSampler(), up);
+												});
+										}
+
 										m_frameGraph.addPass("Lighting",
 											[this](engine::render::PassBuilder& b) {
 												b.read(m_fgGBufferAId,       engine::render::ImageUsage::SampledRead);
@@ -5586,6 +5689,31 @@ namespace engine
 												VkImageView brdfView      = m_pipeline->GetBrdfLutPass().GetImageView();
 												VkSampler   brdfSamp      = m_pipeline->GetBrdfLutPass().GetSampler();
 												lp.useIBL = (irrView != VK_NULL_HANDLE && prefilterView != VK_NULL_HANDLE && brdfView != VK_NULL_HANDLE) ? 1.0f : 0.0f;
+
+												// M45.7 — DDGI dynamique. Par défaut (m_ddgiEnabled=false ou volume
+												// non alloué) : useDdgi reste 0 et la vue DDGI reste VK_NULL_HANDLE
+												// (LightingPass lie alors un fallback valide mais non lu) => rendu
+												// strictement identique au chemin probes statiques.
+												VkImageView ddgiView = VK_NULL_HANDLE;
+												VkSampler   ddgiSamp = VK_NULL_HANDLE;
+												if (m_ddgiEnabled && m_ddgiVolume.IsAllocated())
+												{
+													lp.useDdgi = 1.0f;
+													const engine::render::gi::DdgiGridConfig& gc = m_ddgiVolume.Config();
+													lp.ddgiOrigin[0] = gc.origin[0]; lp.ddgiOrigin[1] = gc.origin[1]; lp.ddgiOrigin[2] = gc.origin[2];
+													lp.ddgiSpacing[0] = gc.spacing[0]; lp.ddgiSpacing[1] = gc.spacing[1]; lp.ddgiSpacing[2] = gc.spacing[2];
+													lp.ddgiCounts[0] = static_cast<float>(gc.counts[0]);
+													lp.ddgiCounts[1] = static_cast<float>(gc.counts[1]);
+													lp.ddgiCounts[2] = static_cast<float>(gc.counts[2]);
+													lp.ddgiCounts[3] = static_cast<float>(gc.irradianceTexels);
+													lp.ddgiAtlas[0] = static_cast<float>(m_ddgiVolume.AtlasCols());
+													lp.ddgiAtlas[1] = static_cast<float>(m_ddgiVolume.AtlasRows());
+													lp.ddgiAtlas[2] = static_cast<float>(m_ddgiVolume.IrradianceTileSize());
+													lp.ddgiAtlas[3] = static_cast<float>(m_cfg.GetDouble("gi.ddgi.intensity", 1.0));
+													ddgiView = m_ddgiVolume.IrradianceView();
+													ddgiSamp = m_ddgiUpdatePass.GetShadowSampler(); // sampler linéaire-équivalent (NEAREST clamp) interne
+												}
+
 												const uint32_t frameIdx = m_currentFrame % 2;
 												m_pipeline->GetLightingPass().Record(
 													m_vkDeviceContext.GetDevice(), cmd, reg,
@@ -5593,6 +5721,7 @@ namespace engine
 													m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgDepthId,
 													m_fgSceneColorHDRId, m_fgSsaoBlurId, m_fgDecalOverlayId,
 													irrView, irrSamp, prefilterView, prefilterSamp, brdfView, brdfSamp,
+													ddgiView, ddgiSamp,
 													lp, frameIdx);
 											});
 
@@ -6789,6 +6918,11 @@ namespace engine
 			m_currentSkinnedMesh = nullptr;
 			m_skinnedRenderer.Destroy(m_vkDeviceContext.GetDevice());
 			m_skinnedAvatarReady = false;
+			// M45.7 — libère le volume DDGI + sa passe de mise à jour (idempotent :
+			// sûr même si DDGI n'a jamais été activé/alloué).
+			m_ddgiUpdatePass.Destroy(m_vkDeviceContext.GetDevice());
+			m_ddgiVolume.Destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
+			m_ddgiEnabled = false;
 			if (m_pipeline)
 			{
 				m_pipeline->Destroy(m_vkDeviceContext.GetDevice());

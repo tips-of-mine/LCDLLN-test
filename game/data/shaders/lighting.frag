@@ -10,11 +10,14 @@
 //   (M05.4)  binding 4 – irradiance cubemap, 5 – prefiltered specular cubemap, 6 – BRDF LUT
 //   (M06.4)  binding 7 – SSAO_Blur (R16F, .r = screen-space AO)
 //   (M17.3)  binding 8 – DecalOverlay (RGBA, rgb = decal albedo, a = blend)
+//   (M45.7)  binding 9 – DDGI irradiance atlas (RGBA16F). Lu UNIQUEMENT si
+//                        useDdgi > 0.5 ; sinon binding lié à un fallback valide
+//                        mais jamais échantillonné (rendu byte-identique).
 //
 // Outputs:
 //   outSceneColorHDR (location 0) – SceneColor_HDR, R16G16B16A16_SFLOAT
 //
-// Push constants (148 bytes, fragment stage):
+// Push constants (224 bytes, fragment stage ; +80 o DDGI/pad ajoutés en M45.7):
 //   mat4  invVP         – inverse view-projection matrix
 //   vec4  cameraPos     – camera world-space position (xyz, w unused)
 //   vec4  lightDir      – normalised direction *toward* the light (xyz, w unused)
@@ -26,6 +29,12 @@
 //                         ready (alors on lit GBufferA pour la sky), 0.0
 //                         si on utilise la flat skyColor.
 //   float useIBL        – 1.0 = use IBL, 0.0 = constant ambient
+//   float useDdgi       – M45.7 : 1.0 = ajoute l'irradiance DDGI dynamique, 0.0 = inchangé
+//   vec3  pad0..2       – padding (alignement vec4)
+//   vec4  ddgiOrigin    – xyz origine monde grille (m)
+//   vec4  ddgiSpacing   – xyz espacement par axe (m)
+//   vec4  ddgiCounts    – xyz nb sondes par axe ; w = irradianceTexels
+//   vec4  ddgiAtlas     – x atlasCols, y atlasRows, z tileSize, w intensity
 //
 // M45.1 — Perspective aérienne (upgrade du brouillard de distance) :
 //   lightColor.w = aerialDensity   – densité d'extinction (1/m). <= 0 désactive.
@@ -46,6 +55,7 @@ layout(set = 0, binding = 5) uniform samplerCube prefilterMap;  // M05.4 specula
 layout(set = 0, binding = 6) uniform sampler2D   brdfLut;       // M05.4 BRDF LUT (scale, bias)
 layout(set = 0, binding = 7) uniform sampler2D   ssaoTex;       // M06.4 SSAO_Blur (R16F, .r = AO)
 layout(set = 0, binding = 8) uniform sampler2D   decalOverlayTex;
+layout(set = 0, binding = 9) uniform sampler2D   ddgiIrradiance; // M45.7 atlas irradiance DDGI (RGBA16F)
 
 // ---- Push constants ---------------------------------------------------------
 layout(push_constant) uniform PC
@@ -57,7 +67,69 @@ layout(push_constant) uniform PC
     vec4  ambientColor; // xyz = constant ambient RGB (fallback) ; w = aerialInscatter
     vec4  skyColor;     // rgb = couleur du ciel flat (fallback) ; w = 1.0 si SkyPass ready
     float useIBL;       // 1.0 = use IBL, 0.0 = constant ambient
+    // --- M45.7 — DDGI dynamique (ADDITIF). useDdgi=0 (défaut) => aucun changement.
+    // useIBL+useDdgi+pad0+pad1 = 16 o pour aligner les vec4 DDGI sur 16 (std140). ---
+    float useDdgi;      // 1.0 = ajoute l'irradiance DDGI dynamique, 0.0 = inchangé
+    float pad0;         // padding (alignement vec4)
+    float pad1;         // padding (alignement vec4)
+    vec4  ddgiOrigin;   // xyz = origine monde grille (mètres) ; w inutilisé
+    vec4  ddgiSpacing;  // xyz = espacement par axe (mètres) ; w inutilisé
+    vec4  ddgiCounts;   // xyz = nb sondes par axe ; w = irradianceTexels (côté hors bordure)
+    vec4  ddgiAtlas;    // x = atlasCols, y = atlasRows, z = tileSize (texels+2), w = intensity
 } pc;
+
+// M45.7 — Encodage octaédrique direction -> (u,v) ∈ [0,1]². Inverse de
+// OctaToDir (tools/impostor_builder/OctahedralMap.h) : MÊME convention que la
+// passe d'écriture ddgi_update.comp, sinon l'échantillonnage serait décalé.
+vec2 ddgiDirToOcta(vec3 dir)
+{
+    vec3 n = dir / max(abs(dir.x) + abs(dir.y) + abs(dir.z), 1e-8);
+    vec2 uv;
+    if (n.z >= 0.0)
+    {
+        uv = n.xy;
+    }
+    else
+    {
+        // Repli de l'hémisphère inférieur (symétrique d'OctaToDir).
+        uv = vec2((1.0 - abs(n.y)) * (n.x >= 0.0 ? 1.0 : -1.0),
+                  (1.0 - abs(n.x)) * (n.y >= 0.0 ? 1.0 : -1.0));
+    }
+    return uv * 0.5 + 0.5; // [-1,1] -> [0,1]
+}
+
+// M45.7 — Échantillonne l'irradiance DDGI pour la position monde P selon la
+// normale N. v1 : SONDE LA PLUS PROCHE (pas de trilinéaire, pas de Chebyshev
+// anti-leak — suivi M45.8). Reconstruit l'indice de grille le plus proche,
+// déplie en (col,row) selon le packing M45.6 (col = ix + iz*counts.x, row = iy),
+// encode N en octaédrique -> texel intérieur dans la tuile, échantillonne l'atlas.
+vec3 ddgiSampleNearest(vec3 P, vec3 N)
+{
+    vec3 counts = max(pc.ddgiCounts.xyz, vec3(1.0));
+    // Coords continues dans la grille puis arrondi à la sonde la plus proche.
+    vec3 gf = (P - pc.ddgiOrigin.xyz) / max(pc.ddgiSpacing.xyz, vec3(1e-4));
+    vec3 gi = clamp(floor(gf + 0.5), vec3(0.0), counts - 1.0);
+
+    float atlasCols = max(pc.ddgiAtlas.x, 1.0);
+    float atlasRows = max(pc.ddgiAtlas.y, 1.0);
+    float tileSize  = max(pc.ddgiAtlas.z, 3.0);
+    float texels    = max(pc.ddgiCounts.w, 1.0); // côté octaédrique hors bordure
+
+    // Déplie l'indice de grille en (col,row) selon le packing M45.6.
+    float col = gi.x + gi.z * counts.x;
+    float row = gi.y;
+
+    // Octa (u,v) sur N -> texel intérieur [1, tileSize-2]. On borne dans
+    // [1, texels] (la bordure 1px n'est pas mise à jour par ddgi_update.comp en v1).
+    vec2 octa  = ddgiDirToOcta(normalize(N));
+    vec2 local = clamp(vec2(1.0) + octa * texels, vec2(1.0), vec2(texels)); // décalage bordure 1px
+
+    // Coord pixel (centre du texel) dans l'atlas -> UV [0,1].
+    vec2 pixel = vec2(col * tileSize, row * tileSize) + local;
+    vec2 uv = (pixel + 0.5) / vec2(atlasCols * tileSize, atlasRows * tileSize);
+
+    return texture(ddgiIrradiance, uv).rgb;
+}
 
 // M45.1 — exposant d'anisotropie du halo directionnel d'inscattering vers le
 // soleil. Plus élevé = halo plus concentré autour du disque solaire. Constante
@@ -192,6 +264,19 @@ void main()
     else
     {
         ambient = pc.ambientColor.rgb * albedo * ao_final;
+    }
+
+    // ---- M45.7 — Terme indirect DDGI dynamique (ADDITIF, gated) --------
+    // Quand useDdgi <= 0.5 (DÉFAUT), ce bloc est entièrement sauté : le rendu
+    // est STRICTEMENT identique au chemin probes statiques (byte-identique).
+    // v1 : SONDE LA PLUS PROCHE (pas de trilinéaire ni de Chebyshev anti-leak —
+    // suivi M45.8). On échantillonne l'irradiance dynamique le long de la
+    // normale, modulée par albedo, AO et l'intensité (ddgiAtlas.w).
+    if (pc.useDdgi > 0.5)
+    {
+        vec3 ddgiIrr = ddgiSampleNearest(P, normalW);
+        ddgiIrr = clamp(ddgiIrr, vec3(0.0), vec3(64.0));
+        ambient += ddgiIrr * albedo * ao_final * pc.ddgiAtlas.w;
     }
 
     // ---- Combine & output HDR ------------------------------------------

@@ -525,6 +525,7 @@ add_library(engine_core
   src/client/render/HiZPyramidPass.cpp
   src/client/render/LightingPass.cpp
   src/client/render/gi/DdgiVolume.cpp
+  src/client/render/gi/DdgiUpdatePass.cpp
   src/client/render/VolumetricFogPass.cpp
   src/client/render/DepthOfFieldPass.cpp
   src/client/render/ImpostorPass.cpp

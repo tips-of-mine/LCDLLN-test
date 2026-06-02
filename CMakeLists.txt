@@ -482,6 +482,7 @@ add_library(engine_core
   src/client/render/LnTheme.h
   src/client/render/AuthImGuiRenderer.cpp
   src/client/render/ChatImGuiRenderer.cpp
+  src/client/render/DialogueImGuiRenderer.cpp
   src/client/render/MailImGuiRenderer.cpp
   src/client/render/GmTicketImGuiRenderer.cpp
   src/client/render/ReputationImGuiRenderer.cpp

@@ -154,20 +154,24 @@ l'empreinte → couvercle).
 
 Tests à enregistrer dans la liste CTest (`build-linux.yml` lance `ctest`).
 
-## 8. Impact déploiement serveur
+## 8. Impact déploiement serveur — **vérifié : client uniquement**
 
-À lever au moment du plan :
+La position est client-autoritaire avec validation serveur (réplication T0.1). Le
+validateur de mouvement côté shard (`src/shardd/anticheat/AntiCheatGameplay.h`)
+contrôle :
 
-- La position est **client-autoritaire avec validation serveur** (réplication T0.1).
-  **Vérifier** s'il existe un clamp de vitesse/déplacement vertical côté shard
-  (validateur de mouvement). Recherche : `src/shardd/` autour de la validation de
-  position/mouvement.
-  - **Si un clamp vertical existe** → relever sa tolérance pour accepter le nouvel apex
-    ⇒ **redéploiement serveur (shard) requis** (et lock-step client+serveur).
-  - **Si aucun clamp vertical** (client-autoritaire pur sur le vertical) ⇒ **client
-    uniquement, pas de redéploiement serveur**.
-- Les sections 4.1/4.2/4.3 sont sinon **purement client** (collision et controller
-  vivent dans `src/client/`, docs).
+- la **vitesse 3D** : `dist/dt` vs `maxSpeedMps (13) × speedTolerance (1.5) = 19,5 m/s` ;
+- un **saut de téléport** : `dist > maxSingleStepM (50 m)`.
+
+Il ne contrôle **pas** la hauteur de saut en tant que telle. Avec `jumpSpeed = 6.25` :
+
+- sprint + saut simultanés = `√(13² + 6,25²) ≈ 14,4 m/s < 19,5 m/s` → pas de faux
+  positif `SpeedHack` ;
+- la gravité (`-20`) est **inchangée** → vitesse de chute identique à aujourd'hui ;
+- pas de déplacement > 50 m introduit.
+
+**Conclusion : ✅ client uniquement, pas de redéploiement serveur.** Les sections
+4.1/4.2/4.3 vivent toutes dans `src/client/` (controller, collision) ou la doc.
 
 ## 9. Hors périmètre (épics suivants)
 

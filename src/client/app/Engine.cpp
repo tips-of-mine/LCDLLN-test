@@ -32,6 +32,8 @@
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/client/render/AuthImGuiRenderer.h"
+#include "src/client/dialogue/DialogueConfigLoader.h"
+#include "src/client/render/DialogueImGuiRenderer.h"
 #include "src/client/render/ChatImGuiRenderer.h"
 #include "src/client/render/MailImGuiRenderer.h"
 #include "src/client/render/GmTicketImGuiRenderer.h"
@@ -4949,6 +4951,10 @@ namespace engine
 												const int dcount = static_cast<int>(m_cfg.GetInt(base + "dialogue.count", 0));
 												for (int dj = 0; dj < dcount; ++dj)
 													e.dialogue.push_back(m_cfg.GetString(base + "dialogue." + std::to_string(dj), ""));
+												// Cellule de dialogue PNJ : sous-titre (role) + arbre moderne
+												// (fallback legacy depuis e.dialogue si pas de dialogue_tree).
+												e.role = m_cfg.GetString(base + "role", "");
+												e.dialogueTree = engine::client::LoadDialogueTree(m_cfg, base, e.dialogue);
 												m_interactables.push_back(e);
 											}
 											if (m_interactables.empty())
@@ -7501,6 +7507,10 @@ namespace engine
 				// Phase 3.11.1 — partage du même contexte ImGui (NewFrame/Render gérés par m_worldEditorImGui).
 				m_chatImGui = std::make_unique<engine::render::ChatImGuiRenderer>();
 				m_chatImGui->BindChatUi(&m_chatUi, &m_cfg);
+				// Cellule de dialogue PNJ : renderer ImGui dédié (fenêtre centrale).
+				// Partage le contexte ImGui avec auth/chat ; rendu Windows uniquement
+				// (le .cpp est gardé par #if _WIN32). Constructeur par défaut.
+				m_dialogueImGui = std::make_unique<engine::render::DialogueImGuiRenderer>();
 				// CMANGOS.18 (Phase 3.18 step 4) — Renderer ImGui de la boite mail.
 				// Partage le contexte ImGui avec auth/chat. Visible uniquement quand
 				// m_mailVisible (toggle via /mail). La taille viewport est mise a
@@ -7964,6 +7974,21 @@ namespace engine
 				// La connexion master (m_authUi.m_masterClient) reste vivante grâce au fix
 				// Phase 2/3 ; SavePositionAsync l'utilise en fire-and-forget.
 				m_currentCharacterId = enterCmd.characterId;
+				// Cellule de dialogue PNJ : journal local de conversation de quête pour ce
+				// personnage + branchement du presenter (sink de journalisation + callback
+				// d'action quête). AcceptQuest/CompleteQuest réutilisent les opcodes quête
+				// existants (m_questUi expose AcceptQuest(uint32_t)/CompleteQuest(uint32_t)).
+				m_dialogueJournal = std::make_unique<engine::client::QuestConversationJournal>(m_cfg, m_currentCharacterId);
+				m_dialogue.SetJournalSink(m_dialogueJournal.get());
+				m_dialogue.SetQuestActionCallback(
+					[this](engine::client::DialogueAction action, int questId)
+					{
+						if (questId < 0) return;
+						if (action == engine::client::DialogueAction::AcceptQuest)
+							m_questUi.AcceptQuest(static_cast<uint32_t>(questId));
+						else if (action == engine::client::DialogueAction::CompleteQuest)
+							m_questUi.CompleteQuest(static_cast<uint32_t>(questId));
+					});
 				const int64_t intervalCfg = m_cfg.GetInt("client.save_position.interval_sec", 30);
 				m_savePositionIntervalSec = std::chrono::seconds(std::max<int64_t>(5, intervalCfg));
 				m_nextSavePositionTime = std::chrono::steady_clock::now() + m_savePositionIntervalSec;
@@ -8322,14 +8347,16 @@ namespace engine
 				// l'input du frame courant mais sa position cible utiliserait la
 				// position de la frame precedente -> 1-frame lag visible.
 				auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout, sprintKey, crouchKey);
-				// Verrou de geste (ouverture de coffre) : tant qu'il est actif, on
-				// neutralise toutes les entrées de déplacement (direction + saut) pour
-				// que l'avatar reste immobile pendant l'animation. La caméra reste libre
+				// Verrou de déplacement : on neutralise toutes les entrées de
+				// déplacement (direction + saut) pour garder l'avatar immobile, dans
+				// deux cas — (1) dialogue PNJ actif (cellule dédiée) ; (2) geste
+				// verrouillant en cours (ex. ouverture de coffre via
+				// m_avatarMoveLockUntilSec). La caméra reste libre dans les deux cas
 				// (m_orbitalCameraController non touché). nowSec est recalculé ici (le
 				// nowSec de la state machine n'est pas encore en portée à ce point) ;
 				// l'écart sub-ms avec la garde roulade plus bas est sans effet visible.
 				const bool moveLocked = EngineNowSec() < m_avatarMoveLockUntilSec;
-				if (moveLocked)
+				if (m_dialogueActive || moveLocked)
 					moveInput = engine::gameplay::MoveInput{};
 				// Collisionneur composite : terrain (sol + eau) + cylindres des props/décor.
 				m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
@@ -8429,15 +8456,17 @@ namespace engine
 					const std::string attackKeyName = m_cfg.GetString("controls.keybind.attack", "");
 					const engine::platform::Key attackKey = KeyFromName(attackKeyName, engine::platform::Key::Escape);
 					const bool attackKeyBound = !attackKeyName.empty() && std::string(KeyName(attackKey)) == attackKeyName;
-					const bool attackPressed =
-						(m_input.WasMousePressed(engine::platform::MouseButton::Left) && !m_invUi.IsDragging())
-						|| (attackKeyBound && m_input.WasPressed(attackKey));
+					// Pendant un dialogue PNJ : aucune attaque. Le clic gauche sert à
+					// sélectionner une réponse (sinon le perso frappe en même temps).
+					const bool attackPressed = !m_dialogueActive &&
+						((m_input.WasMousePressed(engine::platform::MouseButton::Left) && !m_invUi.IsDragging())
+						|| (attackKeyBound && m_input.WasPressed(attackKey)));
 
 					// Sort : touche R (edge). Meme bloc gameplay garde contre le focus
 					// chat / l'auth (cf. ligne ~6961). Geste cosmetique one-shot (pas de
 					// cible ni d'aller-retour serveur), pendant clavier de l'attaque souris.
 					const bool castPressed =
-						m_input.WasPressed(castKey);
+						m_input.WasPressed(castKey) && !m_dialogueActive;
 
 					// Interagir : touche remappable (controls.keybind.interact, def. E),
 					// edge. Action non-combat (la touche E reservee au §32 trouve ici son
@@ -8447,7 +8476,7 @@ namespace engine
 
 					// Coup de poing : 2e attaque melee, touche remappable (controls.keybind.punch, def. C).
 					const bool punchPressed =
-						m_input.WasPressed(punchKey);
+						m_input.WasPressed(punchKey) && !m_dialogueActive;
 
 					// Esquive/roulade : double-appui (fenetre 0.30s) sur la touche Crouch
 					// (remappable). Touche maintenue = crouch ; deux appuis = Roll (one-shot).
@@ -8854,15 +8883,52 @@ namespace engine
 								}
 								m_chestAutoCloseAtSec = EngineNowSec() + 2.0f;
 							}
-							else if (e.isNpc && !e.dialogue.empty())
+							else if (e.isNpc && !e.dialogueTree.nodes.empty())
 							{
-								pushInteractChat("[PNJ]", e.label + " : " + e.dialogue[e.dialogueCursor]);
-								e.dialogueCursor = (e.dialogueCursor + 1) % static_cast<int>(e.dialogue.size());
+								// Cellule de dialogue PNJ : ouvre la fenêtre centrale dédiée
+								// (plus de poussée dans le chat). Ignoré si un dialogue est
+								// déjà actif (E ne ré-ouvre pas par-dessus).
+								if (!m_dialogueActive)
+								{
+									engine::client::DialogueNpcRef npc;
+									npc.label       = e.label;
+									npc.role        = e.role;
+									npc.entityIndex = nearestI; // index de l'interactable courant
+									m_dialogue.OpenDialogue(e.dialogueTree, npc);
+									m_dialogueActive = true;
+								}
 							}
 							else
 							{
 								pushInteractChat(e.isNpc ? "[PNJ]" : "[Objet]", e.message);
 							}
+						}
+
+						// Cellule de dialogue PNJ : tick par frame (auto-scroll + rupture de
+						// distance à 1,50 m) et fermeture sur Échap. La distance est recalculée
+						// vers le PNJ courant (entityIndex mémorisé à l'ouverture).
+						if (m_dialogueActive)
+						{
+							float dist = 999.0f;
+							const int idx = m_dialogue.Npc().entityIndex;
+							if (idx >= 0 && idx < static_cast<int>(m_interactables.size()))
+							{
+								const engine::math::Vec3 pp = m_characterController.GetPosition();
+								const engine::math::Vec3 np = m_interactables[idx].position;
+								const float dx = np.x - pp.x;
+								const float dz = np.z - pp.z;
+								dist = std::sqrt(dx * dx + dz * dz);
+							}
+							m_dialogue.Tick(static_cast<float>(dt), dist);
+
+							// Échap ferme le dialogue (edge-triggered).
+							if (m_input.WasPressed(engine::platform::Key::Escape))
+								m_dialogue.Close(engine::client::DialogueCloseReason::UserClose);
+
+							// Synchronise le flag : toute fermeture (distance, Échap, choix End)
+							// libère le déplacement.
+							if (!m_dialogue.IsActive())
+								m_dialogueActive = false;
 						}
 					}
 				}
@@ -9297,6 +9363,10 @@ namespace engine
 			}
 			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
 			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+			// Cellule de dialogue PNJ : fenêtre centrale dédiée (no-op si inactif).
+			// Partage la frame ImGui en cours (NewFrame déjà appelé plus haut).
+			if (m_dialogueImGui && m_dialogue.IsActive())
+				m_dialogueImGui->Render(m_dialogue, dw, dh);
 			// Marqueurs ImGui des interactibles : label flottant projete (visibilite v1
 			// sans mesh). Surligne + " [E]" si a portee. Cf. m_interactables (#39/#40).
 			{
@@ -9306,7 +9376,12 @@ namespace engine
 				for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
 				{
 					const InteractableEntity& e = m_interactables[ii];
-					const float my = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 1.9f;
+					// Pendant un dialogue PNJ : on masque le label flottant + badge « E » de
+						// l'interactible (le PNJ engagé est derrière la cellule, son label
+						// transparaîtrait au travers).
+						if (m_dialogueActive)
+							continue;
+						const float my = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 1.9f;
 					float sx = 0.0f, sy = 0.0f;
 					if (!WorldToScreenPx(out.viewProjMatrix.m, e.position.x, my, e.position.z, ivw, ivh, sx, sy))
 						continue;

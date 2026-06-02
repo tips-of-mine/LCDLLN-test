@@ -8360,8 +8360,10 @@ namespace engine
 						m_currentSkinnedMesh->FindClip("CastShoot");
 					const engine::render::skinned::AnimationClip* castExitClip =
 						m_currentSkinnedMesh->FindClip("CastExit");
+					// Clip dynamique : "Interact" (geste générique) ou "PickUp_Table"
+					// (près d'un coffre). m_currentInteractRole est fixé au déclenchement.
 					const engine::render::skinned::AnimationClip* interactClip =
-						m_currentSkinnedMesh->FindClip("Interact");
+						m_currentSkinnedMesh->FindClip(m_currentInteractRole.c_str());
 					const engine::render::skinned::AnimationClip* punchClip =
 						m_currentSkinnedMesh->FindClip(m_currentPunchRole.c_str());
 
@@ -8690,6 +8692,7 @@ namespace engine
 						const char* clipName =
 							(newState == AvatarLocomotionState::Emote && !m_currentEmoteRole.empty()) ? m_currentEmoteRole.c_str()
 							: (newState == AvatarLocomotionState::Punch) ? m_currentPunchRole.c_str()
+							: (newState == AvatarLocomotionState::Interact) ? m_currentInteractRole.c_str()
 							: StateToClipName(newState);
 						const engine::render::skinned::AnimationClip* newClip = m_currentSkinnedMesh->FindClip(clipName);
 						if (newClip)

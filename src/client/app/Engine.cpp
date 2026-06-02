@@ -1,4 +1,4 @@
-#include "src/client/app/Engine.h"
+﻿#include "src/client/app/Engine.h"
 
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
 #include "src/shared/core/Log.h"
@@ -8281,7 +8281,9 @@ namespace engine
 				// Verrou de geste (ouverture de coffre) : tant qu'il est actif, on
 				// neutralise toutes les entrées de déplacement (direction + saut) pour
 				// que l'avatar reste immobile pendant l'animation. La caméra reste libre
-				// (m_orbitalCameraController non touché).
+				// (m_orbitalCameraController non touché). nowSec est recalculé ici (le
+				// nowSec de la state machine n'est pas encore en portée à ce point) ;
+				// l'écart sub-ms avec la garde roulade plus bas est sans effet visible.
 				const bool moveLocked = EngineNowSec() < m_avatarMoveLockUntilSec;
 				if (moveLocked)
 					moveInput = engine::gameplay::MoveInput{};

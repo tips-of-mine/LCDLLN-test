@@ -10653,9 +10653,18 @@ namespace engine
 		// d'impostorDist, mesh normal (inchangé).
 		const bool impostorPassValid = m_pipeline->GetImpostorPass().IsValid();
 		const bool impostorActive = m_impostorEnabled && impostorPassValid;
+		// Seuil de bascule mesh -> impostor : centralisé dans LodConfig (M45.5b),
+		// plus de duplication avec world.impostor.distance_m. Gated : si inactif,
+		// D = +inf => aucune des branches impostor ne s'active (historique strict).
 		const float impostorDist = impostorActive
-			? static_cast<float>(m_cfg.GetDouble("world.impostor.distance_m", 60.0)) : 1e30f;
+			? m_lodConfig.GetImpostorDistanceMax() : 1e30f;
+		// Largeur de la bande de cross-fade (m) juste après le seuil : le mesh et
+		// l'impostor coexistent, l'impostor monte en dither 0->1 (anti-popping).
+		const float impostorBand = impostorActive
+			? static_cast<float>(m_cfg.GetDouble("world.impostor.fade_band_m", 10.0)) : 0.0f;
 		const float impostorDist2 = impostorDist * impostorDist;
+		// Borne haute de la bande de fondu (au-delà : impostor seul, fadeAlpha=1).
+		const float impostorFadeEnd = impostorDist + impostorBand;
 		// Instances d'impostors accumulées, groupées par chemin de mesh (= clé atlas).
 		std::unordered_map<std::string, std::vector<engine::render::ImpostorInstance>> impostorBatches;
 
@@ -10672,22 +10681,44 @@ namespace engine
 					{ ++culled; continue; }  // decor trop loin -> non dessine
 			}
 
-			// Bascule impostor (décor uniquement, distance >= seuil, atlas dispo).
+			// Cross-fade mesh <-> impostor (M45.5b, décor uniquement, atlas dispo).
+			// Trois régimes selon la distance XZ `dist` :
+			//   dist < D                : mesh seul (drawImpostorOnly=false, pas d'impostor).
+			//   D <= dist < D+band      : mesh PLEIN + impostor en dither montant (fadeAlpha
+			//                             = smoothstep(D, D+band, dist)) -> aucun pop.
+			//   dist >= D+band          : impostor SEUL (fadeAlpha=1), pas de mesh.
+			// Gated : si impostorActive est false, D = +inf => on n'entre jamais ici.
+			bool drawImpostorOnly = false;
 			if (impostorActive && prop.interactableIndex < 0 && dist2 >= impostorDist2)
 			{
 				if (EnsureImpostorAtlas(prop.meshPath))
 				{
+					const float dist = std::sqrt(dist2);
+					// smoothstep(D, D+band, dist) : 0 au seuil, 1 en fin de bande.
+					float fade = 1.0f;
+					if (impostorBand > 0.0f && dist < impostorFadeEnd)
+					{
+						const float t = std::clamp((dist - impostorDist) / impostorBand, 0.0f, 1.0f);
+						fade = t * t * (3.0f - 2.0f * t); // smoothstep
+					}
 					engine::render::ImpostorInstance inst;
 					inst.worldPos[0] = prop.impostorCenter.x;
 					inst.worldPos[1] = prop.impostorCenter.y;
 					inst.worldPos[2] = prop.impostorCenter.z;
 					inst.radius      = prop.impostorRadius;
+					inst.fadeAlpha   = fade;
 					impostorBatches[prop.meshPath].push_back(inst);
 					++impostored;
-					continue; // NE PAS dessiner le mesh : l'impostor le remplace.
+					// Hors de la bande de fondu : l'impostor REMPLACE le mesh (pas de mesh).
+					// Dans la bande : on dessine AUSSI le mesh par-dessous (drawImpostorOnly
+					// reste false) pour que l'impostor monte en fondu sans pop.
+					if (dist >= impostorFadeEnd)
+						drawImpostorOnly = true;
 				}
-				// Pas d'atlas pour ce mesh -> fallback mesh normal (continue plus bas).
+				// Pas d'atlas pour ce mesh -> fallback mesh normal (dessin plus bas).
 			}
+			if (drawImpostorOnly)
+				continue; // NE PAS dessiner le mesh : l'impostor le remplace entièrement.
 
 			++drawn;
 			// Surbrillance (chantier C) : si ce prop est l'interactible a portee, on

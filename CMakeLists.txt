@@ -526,6 +526,7 @@ add_library(engine_core
   src/client/render/LightingPass.cpp
   src/client/render/gi/DdgiVolume.cpp
   src/client/render/gi/DdgiUpdatePass.cpp
+  src/client/render/gi/DdgiQuality.cpp
   src/client/render/VolumetricFogPass.cpp
   src/client/render/DepthOfFieldPass.cpp
   src/client/render/ImpostorPass.cpp
@@ -818,6 +819,11 @@ add_test(NAME protocol_v1_tests COMMAND protocol_v1_tests)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)
 target_link_libraries(ddgi_volume_tests PRIVATE engine_core)
 add_test(NAME ddgi_volume_tests COMMAND ddgi_volume_tests)
+
+# M45.8: niveaux de qualité / fallback DDGI (DdgiQuality) — tests CPU purs (pas de device Vulkan)
+add_executable(ddgi_fallback_tests src/client/render/gi/tests/DdgiFallbackTests.cpp)
+target_link_libraries(ddgi_fallback_tests PRIVATE engine_core)
+add_test(NAME ddgi_fallback_tests COMMAND ddgi_fallback_tests)
 
 # Phase 1: CHARACTER_LIST request/response payload round-trip tests
 add_executable(character_list_payloads_tests src/shared/network/CharacterListPayloadsTests.cpp)

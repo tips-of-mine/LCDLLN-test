@@ -98,17 +98,15 @@ vec2 ddgiDirToOcta(vec3 dir)
     return uv * 0.5 + 0.5; // [-1,1] -> [0,1]
 }
 
-// M45.7 — Échantillonne l'irradiance DDGI pour la position monde P selon la
-// normale N. v1 : SONDE LA PLUS PROCHE (pas de trilinéaire, pas de Chebyshev
-// anti-leak — suivi M45.8). Reconstruit l'indice de grille le plus proche,
-// déplie en (col,row) selon le packing M45.6 (col = ix + iz*counts.x, row = iy),
+// M45.7 — Échantillonne l'irradiance DDGI d'UNE sonde, donnée par ses indices
+// de grille entiers (gridIdx = ix,iy,iz en float), selon la normale N.
+// Déplie en (col,row) selon le packing M45.6 (col = ix + iz*counts.x, row = iy),
 // encode N en octaédrique -> texel intérieur dans la tuile, échantillonne l'atlas.
-vec3 ddgiSampleNearest(vec3 P, vec3 N)
+// (Logique factorisée depuis l'ancien ddgiSampleNearest — packing inchangé.)
+vec3 ddgiSampleProbe(vec3 gridIdx, vec3 N)
 {
     vec3 counts = max(pc.ddgiCounts.xyz, vec3(1.0));
-    // Coords continues dans la grille puis arrondi à la sonde la plus proche.
-    vec3 gf = (P - pc.ddgiOrigin.xyz) / max(pc.ddgiSpacing.xyz, vec3(1e-4));
-    vec3 gi = clamp(floor(gf + 0.5), vec3(0.0), counts - 1.0);
+    vec3 gi = clamp(gridIdx, vec3(0.0), counts - 1.0);
 
     float atlasCols = max(pc.ddgiAtlas.x, 1.0);
     float atlasRows = max(pc.ddgiAtlas.y, 1.0);
@@ -129,6 +127,54 @@ vec3 ddgiSampleNearest(vec3 P, vec3 N)
     vec2 uv = (pixel + 0.5) / vec2(atlasCols * tileSize, atlasRows * tileSize);
 
     return texture(ddgiIrradiance, uv).rgb;
+}
+
+// M45.7b — Échantillonne l'irradiance DDGI pour la position monde P selon la
+// normale N avec INTERPOLATION TRILINÉAIRE sur les 8 sondes englobantes,
+// pondérée par la normale (anti-leak doux, sans Chebyshev).
+//
+// DDGI APPROCHÉE : il n'y a PAS de terme de visibilité/profondeur par sonde
+// (Chebyshev) car cela exigerait du ray-tracing ou un rendu de profondeur par
+// sonde, non disponible ici. La pondération normale ci-dessous (favorise les
+// sondes « devant » la surface) atténue le light-leak mais ne le supprime pas.
+vec3 ddgiSampleTrilinear(vec3 P, vec3 N)
+{
+    vec3 counts = max(pc.ddgiCounts.xyz, vec3(1.0));
+    // Coords continues dans la grille.
+    vec3 gf   = (P - pc.ddgiOrigin.xyz) / max(pc.ddgiSpacing.xyz, vec3(1e-4));
+    vec3 base = floor(gf);
+    vec3 frac = clamp(gf - base, 0.0, 1.0);
+
+    vec3  accumIrr = vec3(0.0);
+    float accumW   = 0.0;
+
+    // Parcours des 8 coins o ∈ {0,1}^3 du cube de sondes englobant.
+    for (int i = 0; i < 8; ++i)
+    {
+        vec3 o = vec3(float(i & 1), float((i >> 1) & 1), float((i >> 2) & 1));
+        vec3 gi = clamp(base + o, vec3(0.0), counts - 1.0);
+
+        // Poids trilinéaire : produit par axe de frac (si o=1) ou 1-frac (si o=0).
+        vec3  tw  = mix(vec3(1.0) - frac, frac, o);
+        float wTri = tw.x * tw.y * tw.z;
+
+        // Pondération par la normale : favorise les sondes situées « devant » la
+        // surface (anti-leak doux). Poids ∈ [0.05, 1.05].
+        vec3  probePos   = pc.ddgiOrigin.xyz + gi * pc.ddgiSpacing.xyz;
+        vec3  dirToProbe = normalize(probePos - P);
+        float wN = max(dot(dirToProbe, N), 0.0);
+        wN = wN * 0.5 + 0.5;
+        wN = wN * wN + 0.05;
+
+        float w = wTri * wN;
+        accumIrr += ddgiSampleProbe(gi, N) * w;
+        accumW   += w;
+    }
+
+    // Repli sur la sonde la plus proche si tous les poids sont négligeables.
+    return (accumW > 1e-5)
+        ? accumIrr / accumW
+        : ddgiSampleProbe(clamp(floor(gf + 0.5), vec3(0.0), counts - 1.0), N);
 }
 
 // M45.1 — exposant d'anisotropie du halo directionnel d'inscattering vers le
@@ -269,12 +315,13 @@ void main()
     // ---- M45.7 — Terme indirect DDGI dynamique (ADDITIF, gated) --------
     // Quand useDdgi <= 0.5 (DÉFAUT), ce bloc est entièrement sauté : le rendu
     // est STRICTEMENT identique au chemin probes statiques (byte-identique).
-    // v1 : SONDE LA PLUS PROCHE (pas de trilinéaire ni de Chebyshev anti-leak —
-    // suivi M45.8). On échantillonne l'irradiance dynamique le long de la
-    // normale, modulée par albedo, AO et l'intensité (ddgiAtlas.w).
+    // M45.7b : INTERPOLATION TRILINÉAIRE (8 sondes) + pondération par la normale,
+    // DDGI APPROCHÉE sans Chebyshev (pas de ray-tracing/profondeur par sonde). On
+    // échantillonne l'irradiance dynamique le long de la normale, modulée par
+    // albedo, AO et l'intensité (ddgiAtlas.w).
     if (pc.useDdgi > 0.5)
     {
-        vec3 ddgiIrr = ddgiSampleNearest(P, normalW);
+        vec3 ddgiIrr = ddgiSampleTrilinear(P, normalW);
         ddgiIrr = clamp(ddgiIrr, vec3(0.0), vec3(64.0));
         ambient += ddgiIrr * albedo * ao_final * pc.ddgiAtlas.w;
     }

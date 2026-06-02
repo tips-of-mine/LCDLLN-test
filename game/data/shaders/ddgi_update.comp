@@ -33,9 +33,16 @@ layout(push_constant) uniform PC
     vec4  sunDir;      // xyz = direction NORMALISÉE vers le soleil ; w inutilisé
     vec4  sunColor;    // xyz = couleur/intensité soleil ; w inutilisé
     vec4  skyColor;    // xyz = couleur horizon du ciel ; w inutilisé
-    vec4  params;      // x = hysteresis [0..1], y = atlasCols, z = tileSize (texels+2), w inutilisé
+    vec4  params;      // x = hysteresis [0..1], y = atlasCols, z = tileSize (texels+2),
+                       // w = indice de frame courant (M45.7b — amortissement)
     // sunViewProj n'est PAS passée : l'occlusion soleil v1 reste grossière (cf. note).
 } pc;
+
+// M45.7b — MISE À JOUR AMORTIE. Diviseur fixe (v1) : chaque sonde n'est mise à
+// jour qu'1 frame sur kUpdateDivisor (les autres frames conservent l'irradiance
+// précédente, AUCUNE écriture). Réduit le coût ~kUpdateDivisor×. L'hystérésis
+// lisse déjà le résultat ; au repos une sonde se rafraîchit en kUpdateDivisor frames.
+const uint kUpdateDivisor = 4u;
 
 // Décodage octaédrique (u,v) ∈ [0,1]² -> direction unitaire.
 // Réplique EXACTE de tools/impostor_builder/OctahedralMap.h::OctaToDir.
@@ -101,6 +108,15 @@ void main()
     uint ix = (pc.counts.x != 0u) ? (col % pc.counts.x) : 0u;
     uint iz = (pc.counts.x != 0u) ? (col / pc.counts.x) : 0u;
     uint iy = row;
+
+    // 3b) Amortissement (M45.7b) : on ne met à jour cette sonde que si son indice
+    //     linéaire est congru à l'indice de frame modulo kUpdateDivisor. Sinon on
+    //     sort SANS écrire -> l'irradiance précédente est conservée telle quelle.
+    //     IMPORTANT : tous les texels d'une même sonde partagent probeLinear, donc
+    //     une sonde est mise à jour entièrement (tous ses texels) ou pas du tout.
+    uint probeLinear = ix + iy * pc.counts.x + iz * pc.counts.x * pc.counts.y;
+    if ((probeLinear % kUpdateDivisor) != (uint(pc.params.w) % kUpdateDivisor))
+        return;
 
     // 4) Radiance entrante : ciel (gradient horizon->zénith) + soleil.
     //    Gradient ciel : t = composante verticale de la direction remappée [0..1].

@@ -1,4 +1,4 @@
-﻿#include "src/client/app/Engine.h"
+#include "src/client/app/Engine.h"
 
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
 #include "src/shared/core/Log.h"

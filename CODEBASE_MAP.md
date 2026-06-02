@@ -2131,3 +2131,45 @@ aussi les confusions « je vois quelqu'un de déjà parti » et « reconnexion r
   immédiate (nouveau handler). **Non lock-step / non wire-breaking** : client neuf ↔
   shard ancien (ou inverse) fonctionnent, mais sans l'éviction immédiate tant que le
   shard n'est pas redéployé (fallback timeout).
+
+## 61. Saut plus haut & dessus de props atterrissable (épic A, 2026-06-02)
+
+**But** : permettre de sauter **sur** les caisses (et tout prop solide) pour ouvrir
+l'exploration de zones cachées. Spec : `docs/superpowers/specs/2026-06-02-saut-caisses-atterrissables-design.md`.
+
+### Composants
+- `src/client/gameplay/CharacterController.h` : `Config::jumpSpeed` 4.9 → **6.25**
+  (apex `6.25²/(2·20) ≈ 0.98 m`). Calibré pour franchir une « caisse métal »
+  (`Crate_Metal.gltf`, ~0.87 m de haut à l'échelle 1) avec marge +0.1 m. Saut **global**
+  (toutes les situations), **client uniquement** (le controller vit côté client).
+- `src/client/gameplay/CompositeWorldCollider.cpp` : `SweepCapsule` émet désormais un
+  contact **sol** (normale +Y) sur le **dessus** d'un `PropCylinder` (`topY`) pour les
+  **sweeps descendants de proximité** — miroir d'un sol plat à `y=topY`. Le perso peut
+  donc atterrir et se tenir sur tout prop solide. Le blocage **horizontal** des flancs
+  est inchangé.
+  - **Garde anti-sonde (`kPropTopMargin = 4.0f`)** : le couvercle n'est émis que si le
+    sweep part à ≤ 4 m au-dessus de `topY`. La sonde anti-encastrement du
+    `CharacterController` (depuis 50 m) reste donc ignorée par les props → aucune
+    téléportation au sommet (préserve la parade documentée dans le fichier).
+
+### Règle loot — caisses non-lootables
+Les caisses `Crate_Metal` et `Crate_Wooden` (`game/data/meshes/props/`) ne sont **pas**
+des emplacements de loot. Le loot reste réservé aux nœuds de récolte (`GatheringSystem`)
+— et, à terme, aux coffres dédiés (épic B « coffres à clé »). Ne pas associer de table
+de loot à ces props.
+
+### Tests
+- `character_controller_jump_tests::Test_Jump_DefaultClearsMetalCrate` : apex par défaut
+  ≥ 0.97 m (franchit la caisse + marge).
+- `composite_world_collider_tests` cas 6/7/8 : atterrissage sur le dessus, posé immédiat
+  (frac 0, garde « grounded »), hors empreinte XZ (pas de hit). Le cas **4bis** (sweep
+  50 m → pas de hit) reste la garde anti-téléport.
+
+### Conséquences / limites
+- **Tous** les props solides ont un dessus plat atterrissable à leur point le plus haut
+  (y compris les arbres — un peu artificiel au-dessus du feuillage ; opt-out par prop
+  possible plus tard, hors périmètre).
+- Saut global → beaucoup de rebords du monde deviennent atteignables (c'est l'objectif).
+- **Déploiement** : ✅ **client uniquement, pas de redéploiement serveur**. L'anti-cheat
+  (`AntiCheatGameplay.h`) contrôle la vitesse 3D (19.5 m/s) et le téléport (50 m), pas la
+  hauteur de saut ; sprint+saut = √(13²+6.25²) ≈ 14.4 m/s < 19.5. Gravité inchangée.

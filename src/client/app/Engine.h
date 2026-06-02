@@ -743,10 +743,10 @@ namespace engine
 			std::string label;
 			std::string role; ///< Sous-titre affiché dans la cellule de dialogue (ex. "Garde du pont").
 			std::string message;
-			/// Dialogue PNJ multi-lignes (optionnel). Si non vide, chaque appui sur E
-			/// affiche la ligne suivante (boucle). Sinon on affiche `message`.
+			/// Dialogue PNJ multi-lignes (format legacy, optionnel). Conservé comme
+			/// source de repli : converti en \ref dialogueTree au chargement
+			/// (\see DialogueConfigLoader). Pour les objets non-PNJ, on affiche `message`.
 			std::vector<std::string> dialogue;
-			int dialogueCursor = 0;
 			/// Arbre de dialogue (format moderne). Si vide, le client le construit à partir
 			/// de \ref dialogue (legacy) au chargement. \see DialogueConfigLoader.
 			engine::client::DialogueTree dialogueTree;

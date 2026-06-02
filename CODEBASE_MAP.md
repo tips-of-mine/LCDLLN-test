@@ -1759,7 +1759,7 @@ Reste de l'étape 2 : Roll/esquive → emote `/dance`.
 
 Complète §39/§40 (interaction E) côté **dialogue** et **visibilité**.
 
-- **Dialogue multi-lignes** : `InteractableEntity.dialogue` (vector) + `dialogueCursor`. En config : `world.interactables.i.dialogue.count` + `.dialogue.j`. Sur E, un PNJ avec dialogue affiche la **ligne suivante** (boucle) ; sinon `message`. (Objets : `message`.) Exemple livré pour le Villageois (config.json).
+- **Dialogue PNJ (cellule dédiée, 2026-06-02)** : sur E, un PNJ ouvre une **cellule de dialogue dédiée** (fenêtre centrale, hors chat) via `engine::client::DialoguePresenter` + `engine::render::DialogueImGuiRenderer`. Données : `InteractableEntity.dialogueTree` (`engine::client::DialogueTree`), chargé par `engine::client::LoadDialogueTree` depuis `world.interactables.i.dialogue_tree` (clés plates `nodes`/`lines`/`choices` à la `count`+index), avec **repli legacy** sur l'ancien champ `dialogue` (vector) converti en nœud unique. Le joueur est **figé** pendant le dialogue ; la conversation se ferme au-delà de **1,50 m** (hystérésis 1,60 m) ou sur Échap/croix. Choix 2-5 (raccourcis 1-5), auto-scroll fluide, word-wrap. Conversations liées à une quête consignées en local (`QuestConversationJournal`, `quest_journal/character_<id>.jsonl`). (Objets non-PNJ : `message` inchangé.)
 - **Marqueurs ImGui** (`#if _WIN32`) : chaque interactible affiche un **label flottant projeté** à l'écran (`WorldToScreenPx`, formule alignée sur `WorldEditorImGui::WorldToScreen`, viewProj col-major). Surligné + « [E] » à portée. Donne la **visibilité** sans passe de rendu de mesh (les vrais props/PNJ visibles = backlog).
 
 Backlog complet des tâches restantes (polish, contenu, serveur) : **`docs/BACKLOG_gameplay.md`**.

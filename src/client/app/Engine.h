@@ -92,6 +92,10 @@
 // Sous-projet C MVP (Task 12) — viewport offscreen pour l'apercu race
 // dans l'ecran ImGui de creation de personnage.
 #include "src/client/render/race/RacePreviewViewport.h"
+// Cellule de dialogue PNJ (logique pure + journal).
+#include "src/client/dialogue/DialogueTree.h"
+#include "src/client/dialogue/DialoguePresenter.h"
+#include "src/client/dialogue/QuestConversationJournal.h"
 
 struct GLFWwindow;
 
@@ -122,6 +126,7 @@ namespace engine::editor
 	class WorldEditorImGui;
 	class WorldEditorSession;
 }
+namespace engine::client { class DialogueImGuiRenderer; }
 namespace engine::editor::world
 {
 	/// M100.1 — Coquille du nouvel éditeur monde, indépendante du shell M43.x.
@@ -567,6 +572,13 @@ namespace engine
 		std::unique_ptr<engine::render::LootRollImGuiRenderer> m_lootRollImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
+
+		// --- Dialogue PNJ (cellule dédiée) ---
+		engine::client::DialoguePresenter m_dialogue;                                        ///< Logique runtime du dialogue.
+		std::unique_ptr<engine::client::DialogueImGuiRenderer> m_dialogueImGui;              ///< Rendu (Windows).
+		std::unique_ptr<engine::client::QuestConversationJournal> m_dialogueJournal;         ///< Journal local (créé au login).
+		bool m_dialogueActive = false;                                                       ///< Vrai pendant un dialogue (verrouille le déplacement).
+
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
 		std::unique_ptr<engine::editor::WorldEditorSession> m_worldEditorSession;
 		/// M100.1 — Coquille du nouvel éditeur monde "couche au-dessus".
@@ -734,6 +746,9 @@ namespace engine
 			/// affiche la ligne suivante (boucle). Sinon on affiche `message`.
 			std::vector<std::string> dialogue;
 			int dialogueCursor = 0;
+			/// Arbre de dialogue (format moderne). Si vide, le client le construit à partir
+			/// de \ref dialogue (legacy) au chargement. \see DialogueConfigLoader.
+			engine::client::DialogueTree dialogueTree;
 			/// Mesh statique optionnel du prop (chantier B). Chemin relatif à
 			/// paths.content (ex. "meshes/props/Chest_Wood.gltf"). Vide = pas de mesh
 			/// rendu (marqueur ImGui seul, comportement historique).

@@ -760,7 +760,8 @@ elseif(UNIX)
 
   # Collision props : CompositeWorldCollider (terrain + cylindres verticaux).
   # Verifie sweep capsule-vs-cylindre (traversee bloquee, a-cote ignore, hors
-  # bornes Y ignore, delegation QueryWater au terrain).
+  # bornes Y ignore, ATTERRISSAGE sur le dessus + anti-teleport sonde 50 m,
+  # delegation QueryWater au terrain).
   lcdlln_add_simple_test(composite_world_collider_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CompositeWorldColliderTests.cpp)
 

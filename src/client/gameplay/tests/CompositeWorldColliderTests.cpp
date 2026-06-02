@@ -89,6 +89,39 @@ int main()
 		check(!h, "chevauchement + eloignement: pas de hit (peut ressortir)");
 	}
 
+	// 6) ATTERRISSAGE sur le DESSUS : sweep descendant court dont le bas de capsule
+	//    (center.y - halfH) franchit topY de haut en bas, dans l'empreinte XZ.
+	//    -> hit "sol" (normale +Y) au niveau topY.
+	{
+		CompositeWorldCollider c(&terrain); c.AddCylinder(cyl); // topY = 3
+		IWorldCollider::SweepHit hit;
+		// halfH = 0.9 ; start bottom = 4.5-0.9 = 3.6 (>3) ; end bottom = 3.5-0.9 = 2.6 (<3).
+		bool h = c.SweepCapsule(cap, Vec3{ 5, 4.5f, 0 }, Vec3{ 5, 3.5f, 0 }, hit);
+		check(h && hit.hit, "dessus: hit attendu");
+		check(hit.normal.y > 0.99f, "dessus: normale verticale (sol)");
+		check(hit.fraction > 0.5f && hit.fraction < 0.7f, "dessus: fraction ~0.6");
+	}
+
+	// 7) Déjà posé sur le dessus (start bottom <= topY) : hit immédiat (frac ~0) ->
+	//    le sticky ground probe garde le perso "grounded" sur la caisse.
+	{
+		CompositeWorldCollider c(&terrain); c.AddCylinder(cyl);
+		IWorldCollider::SweepHit hit;
+		// start bottom = 3.9-0.9 = 3.0 (== topY) ; end bottom = 3.8-0.9 = 2.9 (<3).
+		bool h = c.SweepCapsule(cap, Vec3{ 5, 3.9f, 0 }, Vec3{ 5, 3.8f, 0 }, hit);
+		check(h && hit.hit, "dessus pose: hit attendu");
+		check(hit.fraction < 0.01f, "dessus pose: fraction ~0");
+		check(hit.normal.y > 0.99f, "dessus pose: normale verticale");
+	}
+
+	// 8) Sweep descendant HORS empreinte XZ : pas de hit dessus (ni horizontal).
+	{
+		CompositeWorldCollider c(&terrain); c.AddCylinder(cyl);
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 7, 4.5f, 0 }, Vec3{ 7, 3.5f, 0 }, hit);
+		check(!h && !hit.hit, "dessus hors empreinte: pas de hit");
+	}
+
 	// 5) QueryWater délégué au terrain.
 	{
 		CompositeWorldCollider c(&terrain);

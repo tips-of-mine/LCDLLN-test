@@ -41,6 +41,43 @@ namespace engine::gameplay
 
 		for (const auto& c : m_cylinders)
 		{
+			// Atterrissage sur le DESSUS du prop (couvercle). Le perso peut se poser et
+			// se tenir sur tout prop solide. On ne traite QUE les sweeps descendants de
+			// PROXIMITE : le bas de la capsule (center.y - halfH, meme convention que le
+			// sol/terrain) franchit `topY` de haut en bas, a l'interieur de l'empreinte XZ.
+			// GARDE ANTI-SONDE : on ignore les sweeps qui partent loin au-dessus du sommet
+			// (ex. sonde anti-encastrement du CharacterController, depuis 50 m), pour
+			// preserver "jamais de blocage vertical par un prop" hors atterrissage proche.
+			{
+				constexpr float kPropTopMargin = 4.0f; // >> demi-capsule, << 50 m (sonde)
+				const bool descending = endCenter.y < startCenter.y;
+				if (descending && (startCenter.y - c.topY) <= kPropTopMargin)
+				{
+					const float startBottom = startCenter.y - halfH;
+					const float endBottom   = endCenter.y   - halfH;
+					const float ex = endCenter.x - c.cx, ez = endCenter.z - c.cz;
+					const bool insideXZ = (ex * ex + ez * ez) <= (c.radius * c.radius);
+					// Franchissement de topY de haut en bas dans l'empreinte (miroir du
+					// sol plat a y=topY). startBottom <= topY => deja pose (frac 0).
+					if (insideXZ && endBottom < c.topY && startBottom >= c.topY)
+					{
+						const float denom = startBottom - endBottom;
+						float frac = (denom > 1e-8f) ? (startBottom - c.topY) / denom : 0.0f;
+						if (frac < 0.0f) frac = 0.0f;
+						if (frac > 1.0f) frac = 1.0f;
+						if (frac < best.fraction)
+						{
+							best.hit = true;
+							best.fraction = frac;
+							best.normal = engine::math::Vec3{ 0.0f, 1.0f, 0.0f };
+						}
+						// On est au-dessus : ce cylindre ne bloque pas horizontalement
+						// cette frame. Passer au cylindre suivant.
+						continue;
+					}
+				}
+			}
+
 			const float R = capsule.radius + c.radius;
 
 			// Recouvrement vertical (au point d'arrivée, conservateur) : si la capsule

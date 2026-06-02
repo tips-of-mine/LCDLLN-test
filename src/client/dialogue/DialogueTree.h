@@ -61,12 +61,12 @@ namespace engine::client
 	};
 
 	/// Valide et normalise un arbre chargé depuis la config :
-	///  - startNodeId par défaut = premier nœud si vide ;
-	///  - chaque nœud doit avoir 1..5 choix (sinon erreur) ;
-	///  - chaque choix Continue doit référencer un nœud existant (sinon erreur) ;
-	///  - un choix sans action explicite et sans nextNodeId valide est ramené à End.
-	/// En cas d'erreur, \c ok = false et \c errors décrit les problèmes ; l'appelant
-	/// peut alors retomber sur un nœud unique de secours.
+	///  - startNodeId par défaut = premier nœud si vide (seule mutation effectuée) ;
+	///  - chaque nœud doit avoir 1..5 choix (sinon \c ok = false) ;
+	///  - chaque choix Continue doit référencer un nœud existant (sinon \c ok = false).
+	/// La fonction ne « répare » pas les choix invalides : elle les signale. En cas
+	/// d'erreur, \c ok = false et \c errors décrit les problèmes ; l'appelant
+	/// (\ref LoadDialogueTree) retombe alors sur l'arbre legacy de secours.
 	DialogueValidationResult NormalizeDialogueTree(DialogueTree& tree);
 
 } // namespace engine::client

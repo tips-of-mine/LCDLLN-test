@@ -63,6 +63,9 @@ namespace engine::client
 		const std::string relPath = RelPathForCharacter(m_characterId);
 
 		// Append : on relit l'existant et on ajoute une ligne (JSONL).
+		// Note : relecture + réécriture complète à chaque entrée (coût O(N) par
+		// append), faute d'API d'append dans FileSystem. Acceptable ici : les
+		// conversations de quête sont peu fréquentes et le journal reste petit.
 		std::string content = engine::platform::FileSystem::ReadAllTextContent(m_config, relPath);
 		if (!content.empty() && content.back() != '\n')
 			content += "\n";

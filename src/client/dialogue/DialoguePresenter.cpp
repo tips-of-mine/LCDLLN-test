@@ -31,7 +31,10 @@ namespace engine::client
 
 		const DialogueChoice& choice = m_current->choices[index];
 
-		// Journalisation si lié à une quête/raid.
+		// Journalisation si lié à une quête/raid. On consigne AVANT de déclencher
+		// l'action quête : le callback est best-effort (retour void, pas d'échec
+		// remonté), donc l'ordre n'altère pas la cohérence — on garde une trace de
+		// la conversation même si le système quête traite l'action de façon asynchrone.
 		const bool questLinked = (choice.action == DialogueAction::AcceptQuest)
 		                       || (choice.action == DialogueAction::CompleteQuest)
 		                       || (choice.questId >= 0);

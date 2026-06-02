@@ -18,6 +18,9 @@ namespace engine::client
 	public:
 		/// \param config pour résoudre `paths.content` et l'écriture relative.
 		/// \param characterId identifiant du personnage courant.
+		/// \warning \p config est conservée par référence ; elle doit rester valide
+		///          pour toute la durée de vie de ce journal (même contrat que
+		///          \ref HudLayoutEditor).
 		QuestConversationJournal(const engine::core::Config& config, uint64_t characterId);
 
 		/// Sérialise l'entrée en une ligne JSON et l'ajoute au fichier du personnage.

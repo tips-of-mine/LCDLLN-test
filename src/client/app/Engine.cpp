@@ -9374,7 +9374,12 @@ namespace engine
 				for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
 				{
 					const InteractableEntity& e = m_interactables[ii];
-					const float my = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 1.9f;
+					// Pendant un dialogue PNJ : on masque le label flottant + badge « E » de
+						// l'interactible (le PNJ engagé est derrière la cellule, son label
+						// transparaîtrait au travers).
+						if (m_dialogueActive)
+							continue;
+						const float my = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 1.9f;
 					float sx = 0.0f, sy = 0.0f;
 					if (!WorldToScreenPx(out.viewProjMatrix.m, e.position.x, my, e.position.z, ivw, ivh, sx, sy))
 						continue;

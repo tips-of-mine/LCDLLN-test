@@ -46,32 +46,37 @@ namespace engine::render
 			ImGuiCond_Always,
 			ImVec2(0.5f, 0.5f));
 
-		// --- Skin parchemin + cadre or ---
-		ImGui::PushStyleColor(ImGuiCol_WindowBg,    ImVec4(0.91f, 0.86f, 0.75f, 0.98f));
-		ImGui::PushStyleColor(ImGuiCol_Border,      ImVec4(0.78f, 0.64f, 0.29f, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_Text,        ImVec4(0.17f, 0.13f, 0.07f, 1.0f));
-		// Boutons de choix : teinte bois clair
-		ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.78f, 0.64f, 0.29f, 0.35f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.78f, 0.64f, 0.29f, 0.60f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.78f, 0.64f, 0.29f, 0.85f));
+		// --- Skin parchemin foncé + cadre or ---
+		ImGui::PushStyleColor(ImGuiCol_WindowBg,      ImVec4(0.13f, 0.10f, 0.07f, 0.97f)); // bois sombre
+		ImGui::PushStyleColor(ImGuiCol_Border,        ImVec4(0.80f, 0.66f, 0.33f, 1.0f));  // cadre or
+		ImGui::PushStyleColor(ImGuiCol_Text,          ImVec4(0.92f, 0.86f, 0.72f, 1.0f));  // texte parchemin clair
+		ImGui::PushStyleColor(ImGuiCol_TextDisabled,  ImVec4(0.66f, 0.58f, 0.42f, 1.0f));  // didascalies / labels atténués
+		// Boutons de choix : bois sombre, surbrillance dorée.
+		ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.28f, 0.22f, 0.13f, 0.85f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.35f, 0.19f, 0.95f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.58f, 0.45f, 0.23f, 1.0f));
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
+		// Réponses alignées à gauche (et non centrées).
+		ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.0f, 0.5f));
 
+		// Pas de barre de titre ImGui (la barre bleue) : on dessine notre propre
+		// en-tête (nom + bouton fermer) dans le corps de la fenêtre.
 		const ImGuiWindowFlags winFlags =
-			  ImGuiWindowFlags_NoCollapse
+			  ImGuiWindowFlags_NoTitleBar
+			| ImGuiWindowFlags_NoCollapse
 			| ImGuiWindowFlags_NoResize
 			| ImGuiWindowFlags_NoMove
 			| ImGuiWindowFlags_NoSavedSettings;
 
-		bool open = true;
-		if (ImGui::Begin("##dialogue_pnj", &open, winFlags))
+		bool requestClose = false;
+		if (ImGui::Begin("##dialogue_pnj", nullptr, winFlags))
 		{
-			// --- Barre de titre custom : nom du PNJ + rôle ---
+			// --- En-tête custom : nom du PNJ + bouton fermer aligné à droite ---
 			ImGui::TextUnformatted(presenter.Npc().label.c_str());
-			if (!presenter.Npc().role.empty())
-			{
-				ImGui::SameLine();
-				ImGui::TextDisabled(" · %s", presenter.Npc().role.c_str());
-			}
+			const float closeBtnW = ImGui::GetFrameHeight();
+			ImGui::SameLine(ImGui::GetContentRegionMax().x - closeBtnW);
+			if (ImGui::Button("X##dlg_close", ImVec2(closeBtnW, 0.0f)))
+				requestClose = true;
 			ImGui::Separator();
 
 			// --- Calcul de la hauteur de la zone texte ---
@@ -176,11 +181,11 @@ namespace engine::render
 		}
 		ImGui::End();
 
-		ImGui::PopStyleVar();          // WindowBorderSize
-		ImGui::PopStyleColor(6);       // WindowBg, Border, Text, Button, ButtonHovered, ButtonActive
+		ImGui::PopStyleVar(2);         // WindowBorderSize, ButtonTextAlign
+		ImGui::PopStyleColor(7);       // WindowBg, Border, Text, TextDisabled, Button, ButtonHovered, ButtonActive
 
-		// Fermeture via la croix de la fenêtre (ImGui::Begin a mis open=false).
-		if (!open)
+		// Fermeture via notre bouton fermer custom.
+		if (requestClose)
 			presenter.Close(DialogueCloseReason::UserClose);
 	}
 

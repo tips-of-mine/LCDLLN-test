@@ -90,10 +90,12 @@ namespace engine::gameplay
 			float maxSlopeDeg = 45.0f; ///< walkable slope
 			float maxStep = 0.3f;      ///< m
 
-			// Saut realiste : apex = jumpSpeed^2 / (2*|gravity|). Avec gravity=-20,
-			// jumpSpeed=4.9 -> ~0.60 m (env. 1/3 de la taille 1.8 m, saut humain pose).
-			// Auparavant 9.0 -> ~2.0 m (irrealiste, ~1.1x la taille).
-			float jumpSpeed = 4.9f;       ///< m/s, impulse applied when jumping
+			// Saut : apex = jumpSpeed^2 / (2*|gravity|). Avec gravity=-20,
+			// jumpSpeed=6.25 -> ~0.98 m. Calibre pour sauter SUR une "caisse metal"
+			// (~0.87 m de haut) avec une marge de securite de +0.1 m. Le dessus des
+			// props solides est atterrissable (cf. CompositeWorldCollider::SweepCapsule).
+			// Historique : 9.0 (~2.0 m, irrealiste) -> 4.9 (~0.60 m) -> 6.25 (~0.98 m).
+			float jumpSpeed = 6.25f;       ///< m/s, impulse applied when jumping
 			float airControlMultiplier = 0.5f; ///< 50% of ground control
 			float coyoteTimeSec = 0.1f;   ///< allow jump shortly after leaving ground
 			float jumpBufferSec = 0.1f;   ///< allow jump shortly before landing

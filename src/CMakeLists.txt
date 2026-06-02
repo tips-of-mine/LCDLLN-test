@@ -753,8 +753,8 @@ elseif(UNIX)
   lcdlln_add_simple_test(terrain_collider_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/TerrainColliderTests.cpp)
 
-  # Saut realiste : verifie l'apex (~0.60 m) du CharacterController apres le
-  # passage jumpSpeed 9.0 -> 4.9. Garde anti-regression (pas de saut ~2 m).
+  # Saut : verifie l'apex par defaut (~0.98 m, jumpSpeed=6.25) qui franchit une
+  # caisse metal (~0.87 m) + marge 0.1. Garde anti-regression (pas de saut ~2 m).
   lcdlln_add_simple_test(character_controller_jump_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CharacterControllerJumpTests.cpp)
 

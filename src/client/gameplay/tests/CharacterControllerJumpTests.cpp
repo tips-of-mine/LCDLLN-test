@@ -143,6 +143,18 @@ namespace
 		const float high = SimulateJumpApex(7.0f);
 		REQUIRE(high > low);
 	}
+
+	// Le saut PAR DEFAUT doit franchir une caisse metal (~0.87 m) avec marge 0.1 m,
+	// soit un apex >= 0.97 m. Garde le calibrage "sauter sur les caisses".
+	void Test_Jump_DefaultClearsMetalCrate()
+	{
+		const float defaultSpeed = CharacterController::Config{}.jumpSpeed;
+		const float apex = SimulateJumpApex(defaultSpeed);
+		std::fprintf(stderr, "[INFO] apex(default=%.2f) = %.3f m (attendu >= 0.97)\n",
+			defaultSpeed, apex);
+		REQUIRE(apex >= 0.97f);   // 0.87 (caisse) + 0.10 (marge)
+		REQUIRE(apex < 1.30f);    // borne haute : pas de saut absurde
+	}
 }
 
 int main()
@@ -150,5 +162,6 @@ int main()
 	Test_Jump_Apex_IsRealistic();
 	Test_Jump_NotTheOldUnrealisticHeight();
 	Test_Jump_HigherSpeedGivesHigherApex();
+	Test_Jump_DefaultClearsMetalCrate();
 	return g_failed;
 }

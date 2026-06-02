@@ -7,6 +7,8 @@
 #include "src/client/dialogue/DialogueTree.h"
 #include "src/client/dialogue/DialoguePresenter.h"
 #include "src/client/dialogue/QuestConversationJournal.h"
+#include "src/client/dialogue/DialogueConfigLoader.h"
+#include "src/shared/core/Config.h"
 
 #include <cstdio>
 #include <string>
@@ -268,6 +270,37 @@ namespace
 		REQUIRE(line.find('\n') == std::string::npos);            // une seule ligne
 	}
 
+	// Task 8 (relocalisation) : charge le VRAI fichier de dialogue dédié
+	// game/data/dialogues/villageois.json via la référence dialogue_id.
+	// CTest tourne avec WORKING_DIRECTORY = CMAKE_SOURCE_DIR, donc le chemin
+	// "game/data/..." est résoluble tel quel.
+	void Test_LoadDialogueFromDedicatedFile()
+	{
+		engine::core::Config world;
+		world.SetDefault("paths.content", std::string("game/data"));
+		world.SetDefault("npc.dialogue_id", std::string("villageois"));
+
+		const DialogueTree t = engine::client::LoadDialogueTree(world, "npc.", {});
+		REQUIRE(t.startNodeId == "intro");
+		REQUIRE(t.nodes.size() == 2);
+		REQUIRE(t.FindNode("intro") != nullptr);
+		REQUIRE(t.FindNode("infos") != nullptr);
+		REQUIRE(t.FindNode("intro")->choices.size() == 3);
+		// Le 2e choix du nœud d'intro accepte une quête (questId illustratif >= 0).
+		REQUIRE(t.FindNode("intro")->choices[1].action == DialogueAction::AcceptQuest);
+		REQUIRE(t.FindNode("intro")->choices[1].questId >= 0);
+	}
+
+	// Si dialogue_id est absent, on retombe sur l'arbre legacy (un nœud + « Au revoir »).
+	void Test_NoDialogueIdFallsBackToLegacy()
+	{
+		engine::core::Config world; // aucune clé dialogue_id
+		const DialogueTree t = engine::client::LoadDialogueTree(world, "npc.", {"Bonjour."});
+		REQUIRE(t.nodes.size() == 1);
+		REQUIRE(t.nodes[0].choices.size() == 1);
+		REQUIRE(t.nodes[0].choices[0].action == DialogueAction::End);
+	}
+
 } // namespace
 
 int main()
@@ -297,6 +330,10 @@ int main()
 
 	// Task 6
 	Test_JournalSerializeEntryLine();
+
+	// Task 8 (relocalisation : fichiers de dialogue dédiés)
+	Test_LoadDialogueFromDedicatedFile();
+	Test_NoDialogueIdFallsBackToLegacy();
 
 	if (g_failed == 0)
 		std::printf("[OK] DialoguePresenterTests: all assertions passed\n");

@@ -119,6 +119,15 @@ et avec un unique choix « Au revoir » → `End`. Aucune rupture pour les PNJ e
 
 ### 4.3 Format `config.json`
 
+> **Mise à jour 2026-06-02 (relocalisation)** : sur demande, les **définitions** de
+> dialogues ne vivent plus inline dans `config.json` mais dans des **fichiers dédiés,
+> un par PNJ/zone**, sous `game/data/dialogues/<id>.json` (racine `{ start, nodes }`,
+> lus via `engine::core::Config`, mêmes clés `count`+index). `config.json` ne porte
+> plus qu'une **référence** `world.interactables.<i>.dialogue_id`. Le bloc inline
+> `dialogue_tree` décrit ci-dessous est conservé pour mémoire mais n'est plus utilisé ;
+> `LoadDialogueTree` lit `dialogue_id`, charge le fichier, normalise, et retombe sur
+> le champ legacy `dialogue` si l'id est absent ou le fichier introuvable.
+
 Extension de `world.interactables[i]` avec un bloc `dialogue_tree` (le champ
 `dialogue` reste lu en fallback) :
 

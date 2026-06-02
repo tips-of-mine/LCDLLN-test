@@ -1,8 +1,8 @@
 // src/client/render/ImpostorAsset.cpp (M45.5)
 //
-// Implémentation du loader runtime du format `.mipo` (M45.4). Voir
+// Implémentation du loader runtime du format `.mipo` v2 (M45.4b). Voir
 // ImpostorAsset.h pour l'API. La lecture du header + métadonnées + blocs
-// albedo/normal est faite champ-par-champ en little-endian, RÉPLIQUANT la
+// albedo/normal/orm est faite champ-par-champ en little-endian, RÉPLIQUANT la
 // disposition documentée dans tools/impostor_builder/FORMAT.md, sans dépendre
 // du code de l'outil offline.
 
@@ -21,8 +21,8 @@ namespace engine::render
 		/// Magic du format `.mipo` : ASCII 'M''I''P''O' en little-endian
 		/// (0x4F50494D), IDENTIQUE à `tools::impostor_builder::kImpostorMagic`.
 		constexpr uint32_t kImpostorMagic   = 0x4F50494Du;
-		/// Version du format disque supportée (cf. kImpostorVersion outil).
-		constexpr uint32_t kImpostorVersion = 1u;
+		/// Version du format disque supportée (v2 : 3 atlas albedo/normal/orm).
+		constexpr uint32_t kImpostorVersion = 2u;
 
 		/// Lit un uint32 little-endian depuis `data` à `offset`, avance `offset`.
 		/// \return false si dépassement de buffer.
@@ -58,11 +58,35 @@ namespace engine::render
 			std::memcpy(&out, &bits, sizeof(out)); // bit-cast (little-endian sur nos plateformes cibles)
 			return true;
 		}
+
+		/// Lit un bloc `[u64 size][size octets]` depuis `data` à `offset`. Valide
+		/// que `size == expectedBytes` et que les octets tiennent dans le buffer,
+		/// renvoie via `outPtr` un pointeur DANS `data` (non-owning), avance `offset`.
+		/// \param label    Nom du bloc, injecté dans le message d'erreur.
+		/// \param expectedBytes Taille attendue ((views*tile)^2 * 4).
+		/// \return false (avec `err` renseigné) si tronqué ou taille incohérente.
+		bool ReadBlock(const std::vector<uint8_t>& data, size_t& offset,
+			uint64_t expectedBytes, const char* label,
+			const uint8_t*& outPtr, std::string& err)
+		{
+			uint64_t blockSize = 0;
+			if (!ReadU64LE(data, offset, blockSize))
+			{ err = std::string("ImpostorAsset: taille bloc ") + label + " tronquée"; return false; }
+			if (blockSize != expectedBytes || offset + blockSize > data.size())
+			{
+				err = std::string("ImpostorAsset: bloc ") + label + " invalide (taille="
+					+ std::to_string(blockSize) + ", attendu=" + std::to_string(expectedBytes) + ")";
+				return false;
+			}
+			outPtr = data.data() + offset;
+			offset += static_cast<size_t>(blockSize);
+			return true;
+		}
 	} // namespace
 
 	bool ImpostorAsset::IsValid() const
 	{
-		return m_valid && m_albedo.IsValid() && m_normal.IsValid();
+		return m_valid && m_albedo.IsValid() && m_normal.IsValid() && m_orm.IsValid();
 	}
 
 	bool ImpostorAsset::LoadFromFile(const std::string& absOrContentPath, AssetRegistry& reg, std::string& err)
@@ -105,7 +129,6 @@ namespace engine::render
 		}
 		(void)builderVersion;
 		(void)engineVersion;
-		(void)contentHash;
 		if (magic != kImpostorMagic)
 		{
 			err = "ImpostorAsset: magic invalide (attendu MIPO 0x4F50494D)";
@@ -113,9 +136,13 @@ namespace engine::render
 		}
 		if (formatVersion != kImpostorVersion)
 		{
-			err = "ImpostorAsset: version de format non supportée: " + std::to_string(formatVersion);
+			// Rejet propre (pas de crash) : l'appelant retombe sur le rendu mesh.
+			err = "ImpostorAsset: version de format non supportée: " + std::to_string(formatVersion)
+				+ " (attendu v" + std::to_string(kImpostorVersion) + ")";
 			return false;
 		}
+		// contentHash stocké pour diagnostic (non vérifié en v2).
+		m_contentHash = contentHash;
 
 		// 3) ImpostorAtlasInfo : viewsPerAxis, tileSize, channels (3×u32),
 		//    boundsMin[3], boundsMax[3] (6×f32). Cf. FORMAT.md offsets 24..59.
@@ -143,37 +170,25 @@ namespace engine::render
 		const uint32_t atlasSidePx = viewsPerAxis * tileSize;
 		const uint64_t expectedBytes = static_cast<uint64_t>(atlasSidePx) * atlasSidePx * 4ull;
 
-		// 4) Bloc albedo : u64 albedoSize + albedoSize octets RGBA8.
-		uint64_t albedoSize = 0;
-		if (!ReadU64LE(data, off, albedoSize))
-		{ err = "ImpostorAsset: albedoSize tronqué"; return false; }
-		if (albedoSize != expectedBytes || off + albedoSize > data.size())
-		{
-			err = "ImpostorAsset: bloc albedo invalide (taille=" + std::to_string(albedoSize)
-				+ ", attendu=" + std::to_string(expectedBytes) + ")";
-			return false;
-		}
-		const uint8_t* albedoPtr = data.data() + off;
-		off += static_cast<size_t>(albedoSize);
+		// 4) Trois blocs `[u64 size][size octets RGBA8]` dans l'ordre VERROUILLÉ
+		//    albedo (rgb=albedo a=couverture), normal (rgb=normale encodée a=profondeur
+		//    relative), orm (r=AO g=roughness b=metallic a=255). Chacun de
+		//    expectedBytes octets.
+		const uint8_t* albedoPtr = nullptr;
+		const uint8_t* normalPtr = nullptr;
+		const uint8_t* ormPtr    = nullptr;
+		if (!ReadBlock(data, off, expectedBytes, "albedo", albedoPtr, err)) return false;
+		if (!ReadBlock(data, off, expectedBytes, "normal", normalPtr, err)) return false;
+		if (!ReadBlock(data, off, expectedBytes, "orm",    ormPtr,    err)) return false;
 
-		// 5) Bloc normal : u64 normalSize + normalSize octets RGBA8.
-		uint64_t normalSize = 0;
-		if (!ReadU64LE(data, off, normalSize))
-		{ err = "ImpostorAsset: normalSize tronqué"; return false; }
-		if (normalSize != expectedBytes || off + normalSize > data.size())
-		{
-			err = "ImpostorAsset: bloc normal invalide (taille=" + std::to_string(normalSize)
-				+ ", attendu=" + std::to_string(expectedBytes) + ")";
-			return false;
-		}
-		const uint8_t* normalPtr = data.data() + off;
-
-		// 6) Upload des deux atlas en VkImage échantillonnable.
-		//    Albedo en sRGB (couleur, linéarisée au sample), normal en UNORM
-		//    (valeurs encodées n*0.5+0.5 lues telles quelles, + masque alpha).
+		// 5) Upload des trois atlas en VkImage échantillonnable.
+		//    Albedo en sRGB (couleur, linéarisée au sample) ; normal en UNORM
+		//    (valeurs encodées n*0.5+0.5 + profondeur en alpha, lues telles quelles) ;
+		//    ORM en UNORM (canaux PBR linéaires, lus tels quels).
 		m_albedo = reg.CreateTextureFromMemory(albedoPtr, atlasSidePx, atlasSidePx, /*useSrgb=*/true);
 		m_normal = reg.CreateTextureFromMemory(normalPtr, atlasSidePx, atlasSidePx, /*useSrgb=*/false);
-		if (!m_albedo.IsValid() || !m_normal.IsValid())
+		m_orm    = reg.CreateTextureFromMemory(ormPtr,    atlasSidePx, atlasSidePx, /*useSrgb=*/false);
+		if (!m_albedo.IsValid() || !m_normal.IsValid() || !m_orm.IsValid())
 		{
 			err = "ImpostorAsset: échec upload GPU des atlas";
 			return false;

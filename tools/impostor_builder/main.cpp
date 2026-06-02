@@ -3,15 +3,18 @@
 ///
 /// Usage (mode build) :
 ///   impostor_builder --input <mesh.gltf> [--output impostor_atlas.bin]
-///                    [--views 8] [--tile 64]
+///                    [--views 8] [--tile 64] [--ss 2]
 ///
 /// Usage (mode vérification round-trip) :
 ///   impostor_builder --verify <atlas.bin>
 ///
-/// Mode build : charge le mesh glTF, pour chaque vue (i,j) calcule la direction
-/// octaédrique, construit une view-projection orthographique cadrant l'AABB,
-/// rasterise albedo + normale dans la tile (i,j), écrit le fichier, puis
-/// auto-vérifie par relecture (round-trip).
+/// Mode build (FORMAT v2) : charge le mesh glTF, calcule un hash de contenu
+/// FNV-1a 64 bits des octets bruts du .gltf, puis pour chaque vue (i,j) calcule
+/// la direction octaédrique, construit une view-projection orthographique
+/// cadrant l'AABB, et rasterise les TROIS atlas (albedo / normal / orm) à une
+/// résolution supersamplée (SS×) tile par tile. Après toutes les vues, downsample
+/// box SS→final, écrit le fichier (albedo, normal, orm), puis auto-vérifie par
+/// relecture (round-trip + comparaison contentHash).
 
 #include "GltfMeshLoader.h"
 #include "ImpostorFormat.h"
@@ -22,6 +25,7 @@
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -114,12 +118,85 @@ namespace
 		return o;
 	}
 
+	/// Calcule le hash FNV-1a 64 bits des octets bruts d'un fichier.
+	/// NOTE : c'est bien FNV-1a (offset basis 1469598103934665603, prime
+	/// 1099511628211), PAS xxHash. Utilisé comme contentHash du .gltf source
+	/// pour détecter les changements de mesh entre deux builds.
+	/// \param path  Chemin du fichier source (lu en binaire).
+	/// \param outOk Mis à false si le fichier ne peut pas être lu.
+	/// \return Hash FNV-1a 64 (0 et outOk=false si lecture impossible).
+	uint64_t Fnv1a64File(const std::string& path, bool& outOk)
+	{
+		std::ifstream is(path, std::ios::binary);
+		if (!is)
+		{
+			outOk = false;
+			return 0u;
+		}
+		outOk = true;
+		uint64_t hash = 1469598103934665603ull; // offset basis FNV-1a 64
+		constexpr uint64_t prime = 1099511628211ull;
+		char buf[65536];
+		while (is)
+		{
+			is.read(buf, sizeof(buf));
+			const std::streamsize n = is.gcount();
+			for (std::streamsize k = 0; k < n; ++k)
+			{
+				hash ^= static_cast<uint8_t>(buf[k]);
+				hash *= prime;
+			}
+		}
+		return hash;
+	}
+
+	/// Box-downsample un atlas supersamplé (ssDim×ssDim) vers la résolution
+	/// finale (dstDim×dstDim) en moyennant, par canal RGBA, le bloc ss×ss de
+	/// texels source correspondant à chaque texel final.
+	///
+	/// \param src    Atlas source RGBA8 supersamplé (ssDim*ssDim*4 octets).
+	/// \param ssDim  Côté de l'atlas source en texels (= dstDim*ss).
+	/// \param dstDim Côté de l'atlas final en texels (= views*tile).
+	/// \param ss     Facteur de supersampling (>=1).
+	/// \param dst    Atlas final RGBA8 (dstDim*dstDim*4 octets, redimensionné).
+	void DownsampleBox(const std::vector<uint8_t>& src, uint32_t ssDim,
+	                   uint32_t dstDim, uint32_t ss, std::vector<uint8_t>& dst)
+	{
+		dst.assign(static_cast<size_t>(dstDim) * dstDim * 4, 0);
+		const uint32_t blockArea = ss * ss; // nombre d'échantillons moyennés
+		for (uint32_t dy = 0; dy < dstDim; ++dy)
+		{
+			for (uint32_t dx = 0; dx < dstDim; ++dx)
+			{
+				uint32_t acc[4] = {0, 0, 0, 0};
+				for (uint32_t sy = 0; sy < ss; ++sy)
+				{
+					const uint32_t srcY = dy * ss + sy;
+					for (uint32_t sx = 0; sx < ss; ++sx)
+					{
+						const uint32_t srcX = dx * ss + sx;
+						const size_t si = (static_cast<size_t>(srcY) * ssDim + srcX) * 4;
+						acc[0] += src[si + 0];
+						acc[1] += src[si + 1];
+						acc[2] += src[si + 2];
+						acc[3] += src[si + 3];
+					}
+				}
+				const size_t di = (static_cast<size_t>(dy) * dstDim + dx) * 4;
+				dst[di + 0] = static_cast<uint8_t>(acc[0] / blockArea);
+				dst[di + 1] = static_cast<uint8_t>(acc[1] / blockArea);
+				dst[di + 2] = static_cast<uint8_t>(acc[2] / blockArea);
+				dst[di + 3] = static_cast<uint8_t>(acc[3] / blockArea);
+			}
+		}
+	}
+
 	void PrintUsage()
 	{
 		std::cerr <<
 			"Usage:\n"
 			"  impostor_builder --input <mesh.gltf> [--output impostor_atlas.bin]\n"
-			"                   [--views 8] [--tile 64]\n"
+			"                   [--views 8] [--tile 64] [--ss 2]\n"
 			"  impostor_builder --verify <atlas.bin>\n"
 			"\n"
 			"Options:\n"
@@ -127,16 +204,18 @@ namespace
 			"  --output <file>  Fichier atlas de sortie (défaut: impostor_atlas.bin)\n"
 			"  --views <N>      Vues par axe -> grille N×N (défaut: 8)\n"
 			"  --tile <px>      Côté d'une tile en pixels (défaut: 64)\n"
+			"  --ss <N>         Facteur de supersampling AA (défaut: 2)\n"
 			"  --verify <file>  Relit un atlas et vérifie le round-trip\n";
 	}
 
-	/// Mode vérification : relit un atlas et affiche ses métadonnées.
+	/// Mode vérification : relit un atlas v2 et affiche ses métadonnées.
 	int RunVerify(const std::string& path)
 	{
 		ImpostorAtlasInfo info;
-		std::vector<uint8_t> albedo, normal;
+		uint64_t contentHash = 0;
+		std::vector<uint8_t> albedo, normal, orm;
 		std::string err;
-		if (!ReadImpostorFile(path, info, albedo, normal, err))
+		if (!ReadImpostorFile(path, info, contentHash, albedo, normal, orm, err))
 		{
 			std::cerr << "[impostor_builder] verify FAILED: " << err << "\n";
 			return 1;
@@ -147,7 +226,9 @@ namespace
 		          << "  tileSize      : " << info.tileSize << "\n"
 		          << "  channels      : " << info.channels << "\n"
 		          << "  albedo bytes  : " << albedo.size() << "\n"
-		          << "  normal bytes  : " << normal.size() << "\n";
+		          << "  normal bytes  : " << normal.size() << "\n"
+		          << "  orm bytes     : " << orm.size() << "\n"
+		          << "  contentHash   : 0x" << std::hex << contentHash << std::dec << "\n";
 		return 0;
 	}
 }
@@ -159,6 +240,7 @@ int main(int argc, char** argv)
 	std::string verifyPath;
 	uint32_t views = 8;
 	uint32_t tile  = 64;
+	uint32_t ss    = 2; // facteur supersampling AA (défaut 2)
 
 	for (int i = 1; i < argc; ++i)
 	{
@@ -171,6 +253,8 @@ int main(int argc, char** argv)
 			views = static_cast<uint32_t>(std::stoul(argv[++i]));
 		else if (arg == "--tile" && i + 1 < argc)
 			tile = static_cast<uint32_t>(std::stoul(argv[++i]));
+		else if (arg == "--ss" && i + 1 < argc)
+			ss = static_cast<uint32_t>(std::stoul(argv[++i]));
 		else if (arg == "--verify" && i + 1 < argc)
 			verifyPath = argv[++i];
 		else if (arg == "--help" || arg == "-h")
@@ -191,9 +275,19 @@ int main(int argc, char** argv)
 		PrintUsage();
 		return 1;
 	}
-	if (views == 0 || tile == 0)
+	if (views == 0 || tile == 0 || ss == 0)
 	{
-		std::cerr << "[impostor_builder] --views et --tile doivent être > 0\n";
+		std::cerr << "[impostor_builder] --views, --tile et --ss doivent être > 0\n";
+		return 1;
+	}
+
+	// --- Hash de contenu FNV-1a 64 du .gltf source ----------------------
+	bool hashOk = false;
+	const uint64_t contentHash = Fnv1a64File(inputPath, hashOk);
+	if (!hashOk)
+	{
+		std::cerr << "[impostor_builder] impossible de lire le fichier d'entrée pour le hash: "
+		          << inputPath << "\n";
 		return 1;
 	}
 
@@ -229,13 +323,20 @@ int main(int argc, char** argv)
 		info.boundsMax[k] = mesh.boundsMax[k];
 	}
 
+	// Résolution finale et résolution supersamplée (SS×).
 	const uint32_t atlasDim = views * tile;
-	const size_t   atlasBytes = static_cast<size_t>(atlasDim) * atlasDim * 4;
-	std::vector<uint8_t> albedo(atlasBytes, 0);
-	std::vector<uint8_t> normal(atlasBytes, 0);
-	std::vector<float>   zbuf;
+	const uint32_t ssDim    = views * tile * ss; // côté atlas supersamplé
+	const uint32_t ssTile   = tile * ss;         // côté tile supersamplée
+	const size_t   ssBytes  = static_cast<size_t>(ssDim) * ssDim * 4;
 
-	// --- Rendu de chaque vue --------------------------------------------
+	// Atlas rendus à la résolution supersamplée (downsamplés ensuite).
+	std::vector<uint8_t> albedoSS(ssBytes, 0);
+	std::vector<uint8_t> normalSS(ssBytes, 0);
+	std::vector<uint8_t> ormSS(ssBytes, 0);
+	// Z-buffer d'UNE tile supersamplée (partagé entre sous-meshes d'une vue).
+	std::vector<float>   zbuf(static_cast<size_t>(ssTile) * ssTile, 0.0f);
+
+	// --- Rendu de chaque vue (résolution SS×) ---------------------------
 	for (uint32_t j = 0; j < views; ++j)
 	{
 		for (uint32_t i = 0; i < views; ++i)
@@ -258,17 +359,56 @@ int main(int argc, char** argv)
 			const Mat4 proj = OrthoVulkan(-radius, radius, -radius, radius, 0.0f, dist * 2.0f);
 			const Mat4 vp = Mul(proj, view);
 
+			// Cible = tile (i,j) dans les atlas SUPERSAMPLÉS.
 			RasterTarget target;
-			target.albedo     = albedo.data();
-			target.normal     = normal.data();
-			target.atlasWidth = atlasDim;
-			target.tileSize   = tile;
+			target.albedo     = albedoSS.data();
+			target.normal     = normalSS.data();
+			target.orm        = ormSS.data();
+			target.atlasWidth = ssDim;
+			target.tileSize   = ssTile;
 			target.tileX      = i;
 			target.tileY      = j;
 
-			RasterizeTile(mesh.vertices, mesh.indices, vp.m, target, zbuf);
+			// Efface la tile + le z-buffer UNE fois avant les sous-meshes.
+			ClearTile(target, zbuf);
+
+			// Accumule chaque sous-mesh (matériau propre) dans la même tile.
+			for (const LoadedSubMesh& sm : mesh.subMeshes)
+			{
+				RasterMaterial mat; // défaut : pas de texture, blanc, rough=1
+				if (sm.materialIndex >= 0 &&
+				    static_cast<size_t>(sm.materialIndex) < mesh.materials.size())
+				{
+					const LoadedMaterial& lm = mesh.materials[sm.materialIndex];
+					mat.baseColorRGBA = lm.baseColorRGBA.empty() ? nullptr
+					                                             : lm.baseColorRGBA.data();
+					mat.bcW = lm.bcW;
+					mat.bcH = lm.bcH;
+					for (int k = 0; k < 4; ++k) mat.baseColorFactor[k] = lm.baseColorFactor[k];
+					mat.metallic    = lm.metallic;
+					mat.roughness   = lm.roughness;
+					mat.alphaCutout = lm.alphaBlendOrMask;
+				}
+
+				// Slice d'indices de ce sous-mesh.
+				if (sm.indexCount == 0) continue;
+				const size_t first = sm.firstIndex;
+				const size_t last  = first + sm.indexCount;
+				if (last > mesh.indices.size()) continue; // garde-fou
+				std::vector<uint32_t> sub(mesh.indices.begin() + first,
+				                          mesh.indices.begin() + last);
+
+				RasterizeSubMesh(mesh.vertices, sub, vp.m, target, zbuf, mat, 0.0f, 1.0f);
+			}
 		}
 	}
+
+	// --- Downsample box SS -> résolution finale -------------------------
+	std::vector<uint8_t> albedo, normal, orm;
+	DownsampleBox(albedoSS, ssDim, atlasDim, ss, albedo);
+	DownsampleBox(normalSS, ssDim, atlasDim, ss, normal);
+	DownsampleBox(ormSS, ssDim, atlasDim, ss, orm);
+	const size_t atlasBytes = static_cast<size_t>(atlasDim) * atlasDim * 4;
 
 	// --- Création du dossier de sortie ----------------------------------
 	{
@@ -278,22 +418,24 @@ int main(int argc, char** argv)
 			std::filesystem::create_directories(parent, ec);
 	}
 
-	// --- Écriture -------------------------------------------------------
-	if (!WriteImpostorFile(outputPath, info, albedo, normal, err))
+	// --- Écriture (FORMAT v2 : albedo, normal, orm) ---------------------
+	if (!WriteImpostorFile(outputPath, info, contentHash, albedo, normal, orm, err))
 	{
 		std::cerr << "[impostor_builder] échec écriture: " << err << "\n";
 		return 1;
 	}
 	std::cout << "[impostor_builder] atlas écrit: " << outputPath
 	          << " (" << views << "x" << views << " vues, tile " << tile
-	          << "px, " << atlasBytes << " octets/canal)\n";
+	          << "px, ss " << ss << "x, " << atlasBytes << " octets/canal, "
+	          << "contentHash 0x" << std::hex << contentHash << std::dec << ")\n";
 
 	// --- Auto-vérification round-trip -----------------------------------
 	{
 		ImpostorAtlasInfo rInfo;
-		std::vector<uint8_t> rAlbedo, rNormal;
+		uint64_t rHash = 0;
+		std::vector<uint8_t> rAlbedo, rNormal, rOrm;
 		std::string rErr;
-		if (!ReadImpostorFile(outputPath, rInfo, rAlbedo, rNormal, rErr))
+		if (!ReadImpostorFile(outputPath, rInfo, rHash, rAlbedo, rNormal, rOrm, rErr))
 		{
 			std::cerr << "[impostor_builder] round-trip FAILED (relecture): " << rErr << "\n";
 			return 1;
@@ -301,10 +443,12 @@ int main(int argc, char** argv)
 		if (rInfo.viewsPerAxis != info.viewsPerAxis ||
 		    rInfo.tileSize != info.tileSize ||
 		    rInfo.channels != info.channels ||
+		    rHash != contentHash ||
 		    rAlbedo.size() != albedo.size() ||
-		    rNormal.size() != normal.size())
+		    rNormal.size() != normal.size() ||
+		    rOrm.size() != orm.size())
 		{
-			std::cerr << "[impostor_builder] round-trip FAILED: métadonnées/tailles incohérentes\n";
+			std::cerr << "[impostor_builder] round-trip FAILED: métadonnées/tailles/hash incohérents\n";
 			return 1;
 		}
 		std::cout << "[impostor_builder] round-trip OK\n";

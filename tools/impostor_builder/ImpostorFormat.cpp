@@ -70,35 +70,83 @@ namespace tools::impostor_builder
 		}
 	}
 
+	namespace
+	{
+		/// Lit un bloc [u64 size][size octets] et valide size == expected.
+		/// \param label Nom de l'atlas pour les messages d'erreur ("albedo"…).
+		/// \return true si la taille et les données ont été lues et validées.
+		bool ReadAtlasBlock(std::istream& is, uint64_t expected,
+		                    std::vector<uint8_t>& out, const char* label,
+		                    std::string& err)
+		{
+			bool ok = true;
+			const uint64_t size = ReadU64(is, ok);
+			if (!ok)
+			{
+				err = std::string("ReadImpostorFile: fichier tronqué (taille ") + label + ")";
+				return false;
+			}
+			if (size != expected)
+			{
+				err = std::string("ReadImpostorFile: taille ") + label +
+				      " incohérente avec les métadonnées";
+				return false;
+			}
+			out.resize(static_cast<size_t>(size));
+			if (size > 0)
+			{
+				is.read(reinterpret_cast<char*>(out.data()),
+				        static_cast<std::streamsize>(size));
+				if (!is)
+				{
+					err = std::string("ReadImpostorFile: fichier tronqué (données ") + label + ")";
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/// Écrit un bloc [u64 size][size octets] dans le flux.
+		void WriteAtlasBlock(std::ostream& os, const std::vector<uint8_t>& data)
+		{
+			WriteU64(os, static_cast<uint64_t>(data.size()));
+			if (!data.empty())
+				os.write(reinterpret_cast<const char*>(data.data()),
+				         static_cast<std::streamsize>(data.size()));
+		}
+	}
+
 	bool WriteImpostorFile(const std::string& path,
 	                       const ImpostorAtlasInfo& info,
-	                       const std::vector<uint8_t>& albedoAtlas,
-	                       const std::vector<uint8_t>& normalAtlas,
-	                       std::string& outError)
+	                       uint64_t contentHash,
+	                       const std::vector<uint8_t>& albedo,
+	                       const std::vector<uint8_t>& normal,
+	                       const std::vector<uint8_t>& orm,
+	                       std::string& err)
 	{
 		// Vérification de cohérence des tailles avant écriture.
 		const uint64_t atlasDim = static_cast<uint64_t>(info.viewsPerAxis) * info.tileSize;
 		const uint64_t expected = atlasDim * atlasDim * info.channels;
-		if (albedoAtlas.size() != expected || normalAtlas.size() != expected)
+		if (albedo.size() != expected || normal.size() != expected || orm.size() != expected)
 		{
-			outError = "WriteImpostorFile: taille d'atlas incohérente avec viewsPerAxis/tileSize/channels";
+			err = "WriteImpostorFile: taille d'atlas incohérente avec viewsPerAxis/tileSize/channels";
 			return false;
 		}
 
 		std::ofstream os(path, std::ios::binary | std::ios::trunc);
 		if (!os)
 		{
-			outError = "WriteImpostorFile: impossible d'ouvrir en écriture: " + path;
+			err = "WriteImpostorFile: impossible d'ouvrir en écriture: " + path;
 			return false;
 		}
 
 		// --- Header (24 octets) -----------------------------------------
-		ImpostorHeader header; // valeurs par défaut = magic/version courants
+		ImpostorHeader header; // magic/version/builderVersion = défauts courants (v2)
 		WriteU32(os, header.magic);
 		WriteU32(os, header.formatVersion);
 		WriteU32(os, header.builderVersion);
 		WriteU32(os, header.engineVersion);
-		WriteU64(os, header.contentHash);
+		WriteU64(os, contentHash); // hash FNV-1a 64 fourni par l'appelant
 
 		// --- ImpostorAtlasInfo ------------------------------------------
 		WriteU32(os, info.viewsPerAxis);
@@ -107,21 +155,14 @@ namespace tools::impostor_builder
 		for (int i = 0; i < 3; ++i) WriteF32(os, info.boundsMin[i]);
 		for (int i = 0; i < 3; ++i) WriteF32(os, info.boundsMax[i]);
 
-		// --- Atlas albedo -----------------------------------------------
-		WriteU64(os, static_cast<uint64_t>(albedoAtlas.size()));
-		if (!albedoAtlas.empty())
-			os.write(reinterpret_cast<const char*>(albedoAtlas.data()),
-			         static_cast<std::streamsize>(albedoAtlas.size()));
-
-		// --- Atlas normal -----------------------------------------------
-		WriteU64(os, static_cast<uint64_t>(normalAtlas.size()));
-		if (!normalAtlas.empty())
-			os.write(reinterpret_cast<const char*>(normalAtlas.data()),
-			         static_cast<std::streamsize>(normalAtlas.size()));
+		// --- Trois atlas dans l'ordre disque : albedo, normal, orm ------
+		WriteAtlasBlock(os, albedo);
+		WriteAtlasBlock(os, normal);
+		WriteAtlasBlock(os, orm);
 
 		if (!os)
 		{
-			outError = "WriteImpostorFile: erreur d'écriture sur " + path;
+			err = "WriteImpostorFile: erreur d'écriture sur " + path;
 			return false;
 		}
 		return true;
@@ -129,14 +170,16 @@ namespace tools::impostor_builder
 
 	bool ReadImpostorFile(const std::string& path,
 	                      ImpostorAtlasInfo& outInfo,
+	                      uint64_t& outContentHash,
 	                      std::vector<uint8_t>& outAlbedo,
 	                      std::vector<uint8_t>& outNormal,
-	                      std::string& outError)
+	                      std::vector<uint8_t>& outOrm,
+	                      std::string& err)
 	{
 		std::ifstream is(path, std::ios::binary);
 		if (!is)
 		{
-			outError = "ReadImpostorFile: impossible d'ouvrir en lecture: " + path;
+			err = "ReadImpostorFile: impossible d'ouvrir en lecture: " + path;
 			return false;
 		}
 
@@ -147,20 +190,20 @@ namespace tools::impostor_builder
 		const uint32_t fmtVer  = ReadU32(is, ok);
 		(void)ReadU32(is, ok); // builderVersion
 		(void)ReadU32(is, ok); // engineVersion
-		(void)ReadU64(is, ok); // contentHash
+		outContentHash = ReadU64(is, ok);
 		if (!ok)
 		{
-			outError = "ReadImpostorFile: fichier tronqué (header)";
+			err = "ReadImpostorFile: fichier tronqué (header)";
 			return false;
 		}
 		if (magic != kImpostorMagic)
 		{
-			outError = "ReadImpostorFile: magic invalide";
+			err = "ReadImpostorFile: magic invalide";
 			return false;
 		}
 		if (fmtVer != kImpostorVersion)
 		{
-			outError = "ReadImpostorFile: version de format non supportée";
+			err = "ReadImpostorFile: version de format non supportée (attendu 2)";
 			return false;
 		}
 
@@ -172,59 +215,17 @@ namespace tools::impostor_builder
 		for (int i = 0; i < 3; ++i) outInfo.boundsMax[i] = ReadF32(is, ok);
 		if (!ok)
 		{
-			outError = "ReadImpostorFile: fichier tronqué (atlas info)";
+			err = "ReadImpostorFile: fichier tronqué (atlas info)";
 			return false;
 		}
 
-		// --- Atlas albedo -----------------------------------------------
-		const uint64_t albedoSize = ReadU64(is, ok);
-		if (!ok)
-		{
-			outError = "ReadImpostorFile: fichier tronqué (taille albedo)";
-			return false;
-		}
 		const uint64_t atlasDim = static_cast<uint64_t>(outInfo.viewsPerAxis) * outInfo.tileSize;
 		const uint64_t expected = atlasDim * atlasDim * outInfo.channels;
-		if (albedoSize != expected)
-		{
-			outError = "ReadImpostorFile: taille albedo incohérente avec les métadonnées";
-			return false;
-		}
-		outAlbedo.resize(static_cast<size_t>(albedoSize));
-		if (albedoSize > 0)
-		{
-			is.read(reinterpret_cast<char*>(outAlbedo.data()),
-			        static_cast<std::streamsize>(albedoSize));
-			if (!is)
-			{
-				outError = "ReadImpostorFile: fichier tronqué (données albedo)";
-				return false;
-			}
-		}
 
-		// --- Atlas normal -----------------------------------------------
-		const uint64_t normalSize = ReadU64(is, ok);
-		if (!ok)
-		{
-			outError = "ReadImpostorFile: fichier tronqué (taille normal)";
-			return false;
-		}
-		if (normalSize != expected)
-		{
-			outError = "ReadImpostorFile: taille normal incohérente avec les métadonnées";
-			return false;
-		}
-		outNormal.resize(static_cast<size_t>(normalSize));
-		if (normalSize > 0)
-		{
-			is.read(reinterpret_cast<char*>(outNormal.data()),
-			        static_cast<std::streamsize>(normalSize));
-			if (!is)
-			{
-				outError = "ReadImpostorFile: fichier tronqué (données normal)";
-				return false;
-			}
-		}
+		// --- Trois atlas dans l'ordre disque : albedo, normal, orm ------
+		if (!ReadAtlasBlock(is, expected, outAlbedo, "albedo", err)) return false;
+		if (!ReadAtlasBlock(is, expected, outNormal, "normal", err)) return false;
+		if (!ReadAtlasBlock(is, expected, outOrm, "orm", err)) return false;
 
 		return true;
 	}

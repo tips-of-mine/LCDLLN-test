@@ -251,6 +251,10 @@ add_library(engine_core
   src/client/net/GameplayUdpClient.cpp
   src/client/debug/ProfilerHud.cpp
   src/client/quest/QuestUi.cpp
+  src/client/dialogue/DialogueTree.cpp
+  src/client/dialogue/DialoguePresenter.cpp
+  src/client/dialogue/DialogueConfigLoader.cpp
+  src/client/dialogue/QuestConversationJournal.cpp
   src/client/ui_common/ThemeManager.cpp
   src/client/ui_common/UIModel.cpp
   src/client/chat/ChatUi.cpp

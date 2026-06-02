@@ -782,6 +782,13 @@ elseif(UNIX)
   lcdlln_add_simple_test(character_customization_tests
     ${CMAKE_SOURCE_DIR}/src/client/character_creation/tests/CharacterCustomizationTests.cpp)
 
+  # Dialogue PNJ : modele d'arbre, presenter (navigation/choix/distance/auto-scroll),
+  # journal de conversation. DialogueTree.cpp, DialoguePresenter.cpp,
+  # QuestConversationJournal.cpp, DialogueConfigLoader.cpp sont deja linkes via
+  # engine_core (CMakeLists racine), donc ne pas les re-ajouter ici (multiple definition).
+  lcdlln_add_simple_test(dialogue_presenter_tests
+    ${CMAKE_SOURCE_DIR}/src/client/dialogue/tests/DialoguePresenterTests.cpp)
+
   # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
   lcdlln_add_simple_test(vmap_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/vmap/VMapManagerTests.cpp

@@ -8321,7 +8321,16 @@ namespace engine
 				// avant le CC, son repere (Forward/Right XZ) servirait a projeter
 				// l'input du frame courant mais sa position cible utiliserait la
 				// position de la frame precedente -> 1-frame lag visible.
-				const auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout, sprintKey, crouchKey);
+				auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout, sprintKey, crouchKey);
+				// Verrou de geste (ouverture de coffre) : tant qu'il est actif, on
+				// neutralise toutes les entrées de déplacement (direction + saut) pour
+				// que l'avatar reste immobile pendant l'animation. La caméra reste libre
+				// (m_orbitalCameraController non touché). nowSec est recalculé ici (le
+				// nowSec de la state machine n'est pas encore en portée à ce point) ;
+				// l'écart sub-ms avec la garde roulade plus bas est sans effet visible.
+				const bool moveLocked = EngineNowSec() < m_avatarMoveLockUntilSec;
+				if (moveLocked)
+					moveInput = engine::gameplay::MoveInput{};
 				// Collisionneur composite : terrain (sol + eau) + cylindres des props/décor.
 				m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
 				const engine::math::Vec3 ccPos = m_characterController.GetPosition();
@@ -8404,8 +8413,10 @@ namespace engine
 						m_currentSkinnedMesh->FindClip("CastShoot");
 					const engine::render::skinned::AnimationClip* castExitClip =
 						m_currentSkinnedMesh->FindClip("CastExit");
+					// Clip dynamique : "Interact" (geste générique) ou "PickUp_Table"
+					// (près d'un coffre). m_currentInteractRole est fixé au déclenchement.
 					const engine::render::skinned::AnimationClip* interactClip =
-						m_currentSkinnedMesh->FindClip("Interact");
+						m_currentSkinnedMesh->FindClip(m_currentInteractRole.c_str());
 					const engine::render::skinned::AnimationClip* punchClip =
 						m_currentSkinnedMesh->FindClip(m_currentPunchRole.c_str());
 
@@ -8637,7 +8648,9 @@ namespace engine
 							newState = moving ? AvatarLocomotionState::CrouchWalk : AvatarLocomotionState::CrouchIdle;
 
 						// Esquive/roulade (double-appui Crouch) : Roll one-shot, prioritaire sur crouch.
-						if (dodgePressed && m_avatarLocoState != AvatarLocomotionState::Roll)
+						// Bloquée pendant le verrou de geste (ouverture de coffre).
+						if (dodgePressed && m_avatarLocoState != AvatarLocomotionState::Roll
+							&& nowSec >= m_avatarMoveLockUntilSec)
 						{
 							newState = AvatarLocomotionState::Roll;
 							// Impulsion d'esquive : direction = mouvement si actif, sinon l'avant camera.
@@ -8675,8 +8688,31 @@ namespace engine
 							newState = AvatarLocomotionState::Cast;
 
 						// Interagir (touche E par defaut) : geste Interact one-shot, action non-combat.
+						// Près d'un coffre : joue "PickUp_Table" (se pencher → saisir → se redresser)
+						// et verrouille le déplacement le temps du clip. Ailleurs : geste "Interact"
+						// générique, sans verrou (comportement historique inchangé).
 						if (interactPressed && !moveInput.jumpPressed && !busyOneShot())
+						{
+							const bool nearChest =
+								m_chestLoaded && m_interactableInRange == m_chestInteractableIndex;
+							if (nearChest)
+							{
+								m_currentInteractRole = "PickUp_Table";
+								const engine::render::skinned::AnimationClip* puClip =
+									m_currentSkinnedMesh->FindClip("PickUp_Table");
+								// Clip absent (race non-UE5 / fallback) -> durée 0 -> verrou expire
+								// immédiatement, pas de gel permanent ; le repli sur "Interact"
+								// est géré juste en dessous.
+								m_avatarMoveLockUntilSec = nowSec + (puClip ? puClip->duration : 0.0f);
+								if (!puClip)
+									m_currentInteractRole = "Interact";
+							}
+							else
+							{
+								m_currentInteractRole = "Interact";
+							}
 							newState = AvatarLocomotionState::Interact;
+						}
 					}
 					else
 					{
@@ -8734,6 +8770,7 @@ namespace engine
 						const char* clipName =
 							(newState == AvatarLocomotionState::Emote && !m_currentEmoteRole.empty()) ? m_currentEmoteRole.c_str()
 							: (newState == AvatarLocomotionState::Punch) ? m_currentPunchRole.c_str()
+							: (newState == AvatarLocomotionState::Interact) ? m_currentInteractRole.c_str()
 							: StateToClipName(newState);
 						const engine::render::skinned::AnimationClip* newClip = m_currentSkinnedMesh->FindClip(clipName);
 						if (newClip)

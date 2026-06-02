@@ -8633,8 +8633,31 @@ namespace engine
 							newState = AvatarLocomotionState::Cast;
 
 						// Interagir (touche E par defaut) : geste Interact one-shot, action non-combat.
+						// Près d'un coffre : joue "PickUp_Table" (se pencher → saisir → se redresser)
+						// et verrouille le déplacement le temps du clip. Ailleurs : geste "Interact"
+						// générique, sans verrou (comportement historique inchangé).
 						if (interactPressed && !moveInput.jumpPressed && !busyOneShot())
+						{
+							const bool nearChest =
+								m_chestLoaded && m_interactableInRange == m_chestInteractableIndex;
+							if (nearChest)
+							{
+								m_currentInteractRole = "PickUp_Table";
+								const engine::render::skinned::AnimationClip* puClip =
+									m_currentSkinnedMesh->FindClip("PickUp_Table");
+								// Clip absent (race non-UE5 / fallback) -> durée 0 -> verrou expire
+								// immédiatement, pas de gel permanent ; le repli sur "Interact"
+								// est géré juste en dessous.
+								m_avatarMoveLockUntilSec = nowSec + (puClip ? puClip->duration : 0.0f);
+								if (!puClip)
+									m_currentInteractRole = "Interact";
+							}
+							else
+							{
+								m_currentInteractRole = "Interact";
+							}
 							newState = AvatarLocomotionState::Interact;
+						}
 					}
 					else
 					{

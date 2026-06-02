@@ -8277,7 +8277,14 @@ namespace engine
 				// avant le CC, son repere (Forward/Right XZ) servirait a projeter
 				// l'input du frame courant mais sa position cible utiliserait la
 				// position de la frame precedente -> 1-frame lag visible.
-				const auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout, sprintKey, crouchKey);
+				auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout, sprintKey, crouchKey);
+				// Verrou de geste (ouverture de coffre) : tant qu'il est actif, on
+				// neutralise toutes les entrées de déplacement (direction + saut) pour
+				// que l'avatar reste immobile pendant l'animation. La caméra reste libre
+				// (m_orbitalCameraController non touché).
+				const bool moveLocked = EngineNowSec() < m_avatarMoveLockUntilSec;
+				if (moveLocked)
+					moveInput = engine::gameplay::MoveInput{};
 				// Collisionneur composite : terrain (sol + eau) + cylindres des props/décor.
 				m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
 				const engine::math::Vec3 ccPos = m_characterController.GetPosition();
@@ -8595,7 +8602,9 @@ namespace engine
 							newState = moving ? AvatarLocomotionState::CrouchWalk : AvatarLocomotionState::CrouchIdle;
 
 						// Esquive/roulade (double-appui Crouch) : Roll one-shot, prioritaire sur crouch.
-						if (dodgePressed && m_avatarLocoState != AvatarLocomotionState::Roll)
+						// Bloquée pendant le verrou de geste (ouverture de coffre).
+						if (dodgePressed && m_avatarLocoState != AvatarLocomotionState::Roll
+							&& nowSec >= m_avatarMoveLockUntilSec)
 						{
 							newState = AvatarLocomotionState::Roll;
 							// Impulsion d'esquive : direction = mouvement si actif, sinon l'avant camera.

@@ -715,13 +715,14 @@ namespace engine
 		/// et bascule Jab<->Cross a chaque coup. Clip dynamique (cf. point de lecture).
 		std::string                                              m_currentPunchRole = "Punch";
 		bool                                                     m_punchAlt = false;
-		/// Interaction : rôle d'anim joué par l'état Interact (clip dynamique, calqué
-		/// sur m_currentPunchRole). "Interact" par défaut (geste générique sur E) ;
+		/// Interaction : rôle d'anim joué par l'état Interact (clip dynamique, même
+		/// patron que m_currentPunchRole). "Interact" par défaut (geste générique sur E) ;
 		/// passe à "PickUp_Table" près d'un coffre (se pencher → saisir → se redresser).
 		std::string                                              m_currentInteractRole = "Interact";
 		/// Verrou de déplacement : instant (s, EngineNowSec) jusqu'auquel les entrées
 		/// de déplacement de l'avatar sont neutralisées (MoveInput vide) pendant un
-		/// geste verrouillant (ouverture de coffre). 0 = aucun verrou actif.
+		/// geste verrouillant (ouverture de coffre). Toujours tester via
+		/// `EngineNowSec() < m_avatarMoveLockUntilSec` (jamais `!= 0`). 0 = aucun verrou.
 		float                                                    m_avatarMoveLockUntilSec = 0.0f;
 		/// Sequence de sort : phase (0=Enter,1=Shoot,2=Exit) + clip a rejouer en
 		/// cours d'etat (vide=aucun ; consomme 1 fois par la SM, rejoue un one-shot

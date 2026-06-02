@@ -624,8 +624,10 @@
         }
     },
     "gi": {
-        "_comment_gi": "DDGI phase 2 (M45.7) — injection + propagation runtime. DESACTIVE (enabled=false, DEFAUT) => aucune allocation GPU, passe DDGI_Update NON enregistree, LightingPass useDdgi=0 => rendu STRICTEMENT identique au chemin probes statiques. enabled=true alloue l'atlas irradiance et active la passe compute ddgi_update (ciel/soleil dynamique par sonde, base conservatrice SANS rebonds — pas de RT/voxelisation). origin_m/spacing_m en metres, counts = nb de sondes par axe (X,Y,Z), *_texels = resolution octaedrique par sonde (hors bordure 1px). hysteresis = blend temporel [0..1] (eleve = lent/stable), intensity = facteur du terme indirect DDGI dans le lighting.",
+        "_comment_gi": "DDGI (M45.7 phase 2 / M45.8 phase 3) — injection + propagation runtime. PILOTE PAR 'quality' (DEFAUT 'off'). quality in {off, static-probes, dynamic-low, dynamic-high} : off/static-probes => aucune DDGI dynamique => aucune allocation GPU, passe DDGI_Update NON enregistree, LightingPass useDdgi=0 => rendu STRICTEMENT identique au chemin probes statiques. dynamic-low (amortissement /8, intensite 0.5) et dynamic-high (amortissement /2, intensite 1.0) allouent l'atlas irradiance et activent la passe compute ddgi_update (ciel/soleil dynamique par sonde, base conservatrice SANS rebonds — pas de RT/voxelisation). RETRO-COMPAT : si 'quality' est absent mais 'enabled'=true, traite comme dynamic-high ; sinon 'quality' prime et 'enabled' est ignore. La QUALITE pilote desormais l'amortissement (divisor) et l'intensite (l'ancienne cle 'intensity' n'est plus lue). 'debug'=true loggue l'etat DDGI au boot (qualite/alloc/probeCount/divisor/intensity ; PAS de visualisation 3D des sondes, reportee). origin_m/spacing_m en metres, counts = nb de sondes par axe (X,Y,Z), *_texels = resolution octaedrique par sonde (hors bordure 1px). hysteresis = blend temporel [0..1] (eleve = lent/stable).",
         "ddgi": {
+            "quality": "off",
+            "debug": false,
             "enabled": false,
             "origin_m": [0, 0, 0],
             "spacing_m": [2, 2, 2],

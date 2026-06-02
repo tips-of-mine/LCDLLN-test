@@ -28,7 +28,7 @@ layout(binding = 1) uniform sampler2D uShadow;            // shadow map cascade 
 layout(push_constant) uniform PC
 {
     vec4  gridOrigin;  // xyz = origine monde sonde (0,0,0) en mètres ; w inutilisé
-    vec4  gridSpacing; // xyz = espacement par axe (mètres) ; w inutilisé
+    vec4  gridSpacing; // xyz = espacement par axe (mètres) ; w = diviseur d'amortissement (M45.8)
     uvec4 counts;      // xyz = nb sondes par axe ; w = irradianceTexels (côté hors bordure)
     vec4  sunDir;      // xyz = direction NORMALISÉE vers le soleil ; w inutilisé
     vec4  sunColor;    // xyz = couleur/intensité soleil ; w inutilisé
@@ -38,11 +38,12 @@ layout(push_constant) uniform PC
     // sunViewProj n'est PAS passée : l'occlusion soleil v1 reste grossière (cf. note).
 } pc;
 
-// M45.7b — MISE À JOUR AMORTIE. Diviseur fixe (v1) : chaque sonde n'est mise à
-// jour qu'1 frame sur kUpdateDivisor (les autres frames conservent l'irradiance
-// précédente, AUCUNE écriture). Réduit le coût ~kUpdateDivisor×. L'hystérésis
-// lisse déjà le résultat ; au repos une sonde se rafraîchit en kUpdateDivisor frames.
-const uint kUpdateDivisor = 4u;
+// M45.7b/M45.8 — MISE À JOUR AMORTIE. Chaque sonde n'est mise à jour qu'1 frame
+// sur `divisor` (les autres frames conservent l'irradiance précédente, AUCUNE
+// écriture). Réduit le coût ~divisor×. L'hystérésis lisse déjà le résultat ; au
+// repos une sonde se rafraîchit en `divisor` frames.
+// M45.8 : le diviseur est piloté par le NIVEAU DE QUALITÉ côté CPU et passé via
+// gridSpacing.w (DynamicLow=8, DynamicHigh=2). max(.,1) anti division par zéro.
 
 // Décodage octaédrique (u,v) ∈ [0,1]² -> direction unitaire.
 // Réplique EXACTE de tools/impostor_builder/OctahedralMap.h::OctaToDir.
@@ -115,7 +116,9 @@ void main()
     //     IMPORTANT : tous les texels d'une même sonde partagent probeLinear, donc
     //     une sonde est mise à jour entièrement (tous ses texels) ou pas du tout.
     uint probeLinear = ix + iy * pc.counts.x + iz * pc.counts.x * pc.counts.y;
-    if ((probeLinear % kUpdateDivisor) != (uint(pc.params.w) % kUpdateDivisor))
+    // gridSpacing.w = diviseur d'amortissement (piloté par la qualité, M45.8).
+    uint divisor = max(uint(pc.gridSpacing.w), 1u);
+    if ((probeLinear % divisor) != (uint(pc.params.w) % divisor))
         return;
 
     // 4) Radiance entrante : ciel (gradient horizon->zénith) + soleil.

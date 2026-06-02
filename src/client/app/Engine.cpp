@@ -3969,12 +3969,32 @@ namespace engine
 									// (copie WithBloom -> Dof) pour que Tonemap lise une image valide.
 									m_dofReady = m_pipeline->GetDepthOfFieldPass().IsValid();
 
-									// M45.7 — GI dynamique DDGI. DÉSACTIVÉ par défaut : si gi.ddgi.enabled
-									// est false (cas par défaut), on n'alloue rien, on n'enregistre pas la
-									// passe DDGI_Update et le LightingPass garde useDdgi=0 => rendu
-									// strictement identique. Si tout réussit, on bascule m_ddgiEnabled=true.
+									// M45.7/M45.8 — GI dynamique DDGI pilotée par NIVEAUX DE QUALITÉ.
+									// DÉFAUT quality="off" => s.dynamic=false => aucune allocation, passe
+									// DDGI_Update NON enregistrée, LightingPass useDdgi=0 => rendu
+									// STRICTEMENT identique au chemin probes statiques. Seuls
+									// dynamic-low/dynamic-high allouent le volume et activent la passe.
+									//
+									// Rétro-compat : si la clé gi.ddgi.quality est ABSENTE mais
+									// gi.ddgi.enabled==true, on traite comme DynamicHigh (ancien
+									// comportement « DDGI runtime pleine qualité »). Sinon, quality
+									// prime (défaut "off").
 									m_ddgiEnabled = false;
-									if (m_cfg.GetBool("gi.ddgi.enabled", false))
+									engine::render::gi::DdgiQuality ddgiQuality;
+									if (!m_cfg.Has("gi.ddgi.quality") && m_cfg.GetBool("gi.ddgi.enabled", false))
+									{
+										ddgiQuality = engine::render::gi::DdgiQuality::DynamicHigh;
+									}
+									else
+									{
+										const std::string q = m_cfg.GetString("gi.ddgi.quality", "off");
+										ddgiQuality = engine::render::gi::ParseDdgiQuality(q);
+									}
+									const engine::render::gi::DdgiQualitySettings ddgiSettings =
+										engine::render::gi::ResolveDdgiQuality(ddgiQuality);
+									m_ddgiUpdateDivisor = (ddgiSettings.updateDivisor >= 1u) ? ddgiSettings.updateDivisor : 1u;
+									m_ddgiIntensity = ddgiSettings.intensity;
+									if (ddgiSettings.dynamic)
 									{
 										engine::render::gi::DdgiGridConfig gridCfg{};
 										gridCfg.origin[0]  = static_cast<float>(m_cfg.GetDouble("gi.ddgi.origin_m[0]", 0.0));
@@ -4009,9 +4029,26 @@ namespace engine
 											else
 											{
 												m_ddgiEnabled = true;
-												LOG_INFO(Render, "[Engine] DDGI runtime ACTIF (gi.ddgi.enabled=true)");
+												LOG_INFO(Render, "[Engine] DDGI runtime ACTIF (quality={})",
+													engine::render::gi::DdgiQualityName(ddgiQuality));
 											}
 										}
+									}
+
+									// M45.8 — log debug de l'état DDGI (gated par gi.ddgi.debug).
+									// PÉRIMÈTRE : le « debug » se limite ici à ce log. La visualisation
+									// 3D des sondes (sphères colorées en ImGui) est REPORTÉE — elle
+									// nécessite un debug-draw 3D dédié (non couvert par ce ticket).
+									if (m_cfg.GetBool("gi.ddgi.debug", false))
+									{
+										LOG_INFO(Render,
+											"[Engine][DDGI debug] quality={} dynamic={} allouee={} probeCount={} divisor={} intensity={:.3f}",
+											engine::render::gi::DdgiQualityName(ddgiQuality),
+											ddgiSettings.dynamic ? 1 : 0,
+											m_ddgiEnabled ? 1 : 0,
+											m_ddgiVolume.ProbeCount(),
+											m_ddgiUpdateDivisor,
+											m_ddgiIntensity);
 									}
 
 									// M100 — Task 12 : Terrain Chunk Runtime — drawcall mesh-terrain par
@@ -5561,6 +5598,9 @@ namespace engine
 													const engine::render::gi::DdgiGridConfig& gc = m_ddgiVolume.Config();
 													up.gridOrigin[0] = gc.origin[0]; up.gridOrigin[1] = gc.origin[1]; up.gridOrigin[2] = gc.origin[2];
 													up.gridSpacing[0] = gc.spacing[0]; up.gridSpacing[1] = gc.spacing[1]; up.gridSpacing[2] = gc.spacing[2];
+													// M45.8 — slot .w (sinon inutilisé) = diviseur d'amortissement,
+													// lu par ddgi_update.comp (1 sonde sur N mise à jour par frame).
+													up.gridSpacing[3] = static_cast<float>(m_ddgiUpdateDivisor);
 													up.counts[0] = gc.counts[0]; up.counts[1] = gc.counts[1]; up.counts[2] = gc.counts[2];
 													up.counts[3] = gc.irradianceTexels;
 													// Direction VERS le soleil (normalisée), couleur soleil per-zone.
@@ -5711,7 +5751,9 @@ namespace engine
 													lp.ddgiAtlas[0] = static_cast<float>(m_ddgiVolume.AtlasCols());
 													lp.ddgiAtlas[1] = static_cast<float>(m_ddgiVolume.AtlasRows());
 													lp.ddgiAtlas[2] = static_cast<float>(m_ddgiVolume.IrradianceTileSize());
-													lp.ddgiAtlas[3] = static_cast<float>(m_cfg.GetDouble("gi.ddgi.intensity", 1.0));
+													// M45.8 — intensité pilotée par le niveau de qualité (DynamicLow=0.5,
+													// DynamicHigh=1.0). Remplace l'ancienne lecture de gi.ddgi.intensity.
+													lp.ddgiAtlas[3] = m_ddgiIntensity;
 													ddgiView = m_ddgiVolume.IrradianceView();
 													ddgiSamp = m_ddgiUpdatePass.GetShadowSampler(); // sampler linéaire-équivalent (NEAREST clamp) interne
 												}

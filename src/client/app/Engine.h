@@ -103,6 +103,7 @@ namespace engine::render
 {
 	class AuthImGuiRenderer;
 	class ChatImGuiRenderer;
+	class DialogueImGuiRenderer;
 	class MailImGuiRenderer;
 	class GmTicketImGuiRenderer;
 	class ReputationImGuiRenderer;
@@ -126,7 +127,6 @@ namespace engine::editor
 	class WorldEditorImGui;
 	class WorldEditorSession;
 }
-namespace engine::client { class DialogueImGuiRenderer; }
 namespace engine::editor::world
 {
 	/// M100.1 — Coquille du nouvel éditeur monde, indépendante du shell M43.x.
@@ -575,7 +575,7 @@ namespace engine
 
 		// --- Dialogue PNJ (cellule dédiée) ---
 		engine::client::DialoguePresenter m_dialogue;                                        ///< Logique runtime du dialogue.
-		std::unique_ptr<engine::client::DialogueImGuiRenderer> m_dialogueImGui;              ///< Rendu (Windows).
+		std::unique_ptr<engine::render::DialogueImGuiRenderer> m_dialogueImGui;              ///< Rendu (Windows).
 		std::unique_ptr<engine::client::QuestConversationJournal> m_dialogueJournal;         ///< Journal local (créé au login).
 		bool m_dialogueActive = false;                                                       ///< Vrai pendant un dialogue (verrouille le déplacement).
 

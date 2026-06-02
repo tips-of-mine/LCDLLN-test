@@ -1461,6 +1461,14 @@ git commit -m "feat(dialogue): Engine — ouverture sur E (hors chat), verrouill
 
 > Ce renderer n'est **pas** testé en CI (ImGui/Windows). Vérification en jeu (Task 13).
 > Documenter chaque fonction (`///`), conformément aux conventions de rendu du repo.
+>
+> **Correction namespace (décidée à l'exécution)** : tous les renderers ImGui du repo
+> vivent dans `namespace engine::render` (cf. forward-decls dans `Engine.h`), pas
+> `engine::client`. `DialogueImGuiRenderer` doit donc être dans **`engine::render`**.
+> Les types de dialogue (`DialoguePresenter`, `DialogueNode`, `DialogueCloseReason`…)
+> restent dans `engine::client` : les qualifier `engine::client::` dans le renderer
+> (ou `using namespace engine::client;` en début de fonction). `Engine.h` a déjà été
+> ajusté en conséquence (forward-decl `engine::render::DialogueImGuiRenderer`).
 
 - [ ] **Step 1: Écrire l'en-tête**
 

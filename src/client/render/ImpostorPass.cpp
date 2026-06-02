@@ -313,11 +313,13 @@ namespace engine::render
 		pc.cameraPos[3] = 0.0f;
 		pc.atlasParams[0] = static_cast<float>(viewsPerAxis);
 		pc.atlasParams[1] = static_cast<float>(tileSize);
-		pc.atlasParams[2] = 1.0f;            // fadeAlpha (v1 : pas de fondu, opaque)
+		// atlasParams[2] (fadeAlpha) est désormais poussé PAR instance dans la boucle
+		// ci-dessous (cross-fade M45.5b) — plus de valeur codée en dur ici.
 		pc.atlasParams[3] = parallaxScale;   // v2 : échelle du décalage de parallax (frag)
 
 		for (uint32_t i = 0; i < count; ++i)
 		{
+			pc.atlasParams[2] = instances[i].fadeAlpha; // fondu dither anti-popping par instance
 			pc.instancePos[0] = instances[i].worldPos[0];
 			pc.instancePos[1] = instances[i].worldPos[1];
 			pc.instancePos[2] = instances[i].worldPos[2];

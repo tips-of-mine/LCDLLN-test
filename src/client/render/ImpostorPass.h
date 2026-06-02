@@ -28,10 +28,15 @@ namespace engine::render
 {
 	/// Une instance d'impostor à dessiner : centre monde + rayon de la sphère
 	/// englobante du prop (demi-taille du billboard, en mètres).
+	/// `fadeAlpha` (M45.5b) pilote le cross-fade dither anti-popping PAR instance :
+	/// 1.0 = impostor pleinement opaque ; <1.0 = en cours d'apparition (le mesh est
+	/// encore dessiné par-dessous dans la bande de fondu). Poussé dans
+	/// `atlasParams.z` au moment du draw (cf. RecordInstances).
 	struct ImpostorInstance
 	{
 		float worldPos[3] = {0.0f, 0.0f, 0.0f};
 		float radius      = 1.0f;
+		float fadeAlpha   = 1.0f;
 	};
 
 	/// Push constants poussées par instance (stage VERTEX + FRAGMENT).
@@ -98,6 +103,8 @@ namespace engine::render
 		/// \param tileSize      Côté d'une tile en pixels.
 		/// \param parallaxScale Échelle du décalage de parallax single-step (frag v2),
 		///                      écrite dans `atlasParams.w` des push constants.
+		///                      Le fondu (`atlasParams.z`) est pris PAR instance dans
+		///                      `instances[i].fadeAlpha` (cross-fade M45.5b), plus codé en dur.
 		///
 		/// Effet de bord : met à jour le descriptor set partagé (vkUpdateDescriptorSets)
 		/// à chaque appel — un seul atlas peut donc être lié à la fois ; appeler

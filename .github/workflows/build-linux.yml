@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5
 
       - name: Install system dependencies
         run: |
@@ -172,7 +172,7 @@ jobs:
           ls -la "$ZIP_NAME"
 
       - name: Upload Docker bundle artifact
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v6
         with:
           name: lcdlln-docker-linux-${{ github.sha }}
           path: lcdlln-docker-linux-${{ github.sha }}.zip

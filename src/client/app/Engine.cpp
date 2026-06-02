@@ -8456,15 +8456,17 @@ namespace engine
 					const std::string attackKeyName = m_cfg.GetString("controls.keybind.attack", "");
 					const engine::platform::Key attackKey = KeyFromName(attackKeyName, engine::platform::Key::Escape);
 					const bool attackKeyBound = !attackKeyName.empty() && std::string(KeyName(attackKey)) == attackKeyName;
-					const bool attackPressed =
-						(m_input.WasMousePressed(engine::platform::MouseButton::Left) && !m_invUi.IsDragging())
-						|| (attackKeyBound && m_input.WasPressed(attackKey));
+					// Pendant un dialogue PNJ : aucune attaque. Le clic gauche sert à
+					// sélectionner une réponse (sinon le perso frappe en même temps).
+					const bool attackPressed = !m_dialogueActive &&
+						((m_input.WasMousePressed(engine::platform::MouseButton::Left) && !m_invUi.IsDragging())
+						|| (attackKeyBound && m_input.WasPressed(attackKey)));
 
 					// Sort : touche R (edge). Meme bloc gameplay garde contre le focus
 					// chat / l'auth (cf. ligne ~6961). Geste cosmetique one-shot (pas de
 					// cible ni d'aller-retour serveur), pendant clavier de l'attaque souris.
 					const bool castPressed =
-						m_input.WasPressed(castKey);
+						m_input.WasPressed(castKey) && !m_dialogueActive;
 
 					// Interagir : touche remappable (controls.keybind.interact, def. E),
 					// edge. Action non-combat (la touche E reservee au §32 trouve ici son
@@ -8474,7 +8476,7 @@ namespace engine
 
 					// Coup de poing : 2e attaque melee, touche remappable (controls.keybind.punch, def. C).
 					const bool punchPressed =
-						m_input.WasPressed(punchKey);
+						m_input.WasPressed(punchKey) && !m_dialogueActive;
 
 					// Esquive/roulade : double-appui (fenetre 0.30s) sur la touche Crouch
 					// (remappable). Touche maintenue = crouch ; deux appuis = Roll (one-shot).

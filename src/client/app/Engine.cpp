@@ -5585,7 +5585,9 @@ namespace engine
 													up.params[0] = static_cast<float>(m_cfg.GetDouble("gi.ddgi.hysteresis", 0.95));
 													up.params[1] = static_cast<float>(m_ddgiVolume.AtlasCols());
 													up.params[2] = static_cast<float>(m_ddgiVolume.IrradianceTileSize());
-													up.params[3] = 0.0f;
+													// M45.7b — indice de frame courant : le compute fait le modulo
+													// kUpdateDivisor pour l'amortissement (1 sonde sur 4 par frame).
+													up.params[3] = static_cast<float>(m_currentFrame);
 													(void)rs; // rs réservé (cascade 0 lue via le registry ci-dessous).
 
 													// Shadow cascade 0 : on lit sa vue via le registry (comme VolumetricFog).

@@ -741,6 +741,7 @@ namespace engine
 			float radius = 2.5f;
 			bool isNpc = false;
 			std::string label;
+			std::string role; ///< Sous-titre affiché dans la cellule de dialogue (ex. "Garde du pont").
 			std::string message;
 			/// Dialogue PNJ multi-lignes (optionnel). Si non vide, chaque appui sur E
 			/// affiche la ligne suivante (boucle). Sinon on affiche `message`.

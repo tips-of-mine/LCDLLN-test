@@ -8268,6 +8268,19 @@ namespace engine
 						m_editorViewportTarget.GetImguiTextureId());
 				}
 			}
+			// Sous-projet 1, bloc B/C — alimente l'Outliner / l'Inspector : lie le
+			// modèle de scène aux documents sources (layout = session, mesh/donjon
+			// = shell) puis le reconstruit. Coût négligeable (quelques clears +
+			// push de vecteurs) ; fait chaque frame pour refléter les placements/
+			// suppressions immédiatement.
+			if (m_worldEditorSession)
+			{
+				m_worldEditorShell->MutableSceneModel().Bind(
+					&m_worldEditorSession->Doc(),
+					&m_worldEditorShell->GetMeshInsertDocument(),
+					&m_worldEditorShell->GetDungeonPortalDocument());
+				m_worldEditorShell->MutableSceneModel().Rebuild();
+			}
 			m_worldEditorShell->RenderFrame();
 		}
 #endif

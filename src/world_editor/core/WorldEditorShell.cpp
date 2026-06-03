@@ -81,7 +81,10 @@ namespace engine::editor::world
 		m_panels.emplace_back(std::make_unique<panels::ScenePanel>());
 		m_panels.emplace_back(std::make_unique<panels::InspectorPanel>());
 		m_panels.emplace_back(std::make_unique<panels::AssetBrowserPanel>());
-		m_panels.emplace_back(std::make_unique<panels::OutlinerPanel>());
+		// Sous-projet 1, bloc C — Outliner réel : reçoit le modèle de scène + la
+		// sélection partagés (possédés par le Shell). L'Engine lie le modèle aux
+		// documents et le reconstruit chaque frame.
+		m_panels.emplace_back(std::make_unique<panels::OutlinerPanel>(&m_sceneModel, &m_selection));
 		m_panels.emplace_back(std::make_unique<panels::ConsolePanel>());
 		m_panels.emplace_back(std::make_unique<panels::ToolPropertiesPanel>());
 		// M100.2 — Insère HistoryPanel après les 6 panneaux M100.1. L'ordre

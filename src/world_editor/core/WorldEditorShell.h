@@ -20,6 +20,7 @@
 #include "src/world_editor/terrain/TerrainStampTool.h"
 #include "src/world_editor/terrain/ValleyChainTool.h"
 #include "src/world_editor/water/WaterDocument.h"
+#include "src/world_editor/scene/EditorSceneModel.h" // sous-projet 1, bloc B (selection + scene)
 
 #include <memory>
 #include <string>
@@ -173,6 +174,19 @@ namespace engine::editor::world
 		/// Effet de bord : ecriture disque.
 		size_t SaveTerrainChunks(const engine::core::Config& cfg);
 
+		/// Sous-projet 1, bloc B/C — Accès à l'état de sélection partagé de
+		/// l'éditeur (consommé par l'Outliner pour sélectionner, par l'Inspector
+		/// pour afficher/éditer l'entité courante).
+		engine::editor::scene::EditorSelection&       MutableSelection()       { return m_selection; }
+		const engine::editor::scene::EditorSelection& GetSelection()     const { return m_selection; }
+
+		/// Sous-projet 1, bloc B/C — Accès à la vue agrégée des entités de la
+		/// zone. L'Engine la lie aux documents sources (layout = session,
+		/// mesh/donjon = shell) et la reconstruit chaque frame avant le rendu
+		/// des panneaux.
+		engine::editor::scene::EditorSceneModel&       MutableSceneModel()       { return m_sceneModel; }
+		const engine::editor::scene::EditorSceneModel& GetSceneModel()     const { return m_sceneModel; }
+
 		/// M100.6 — Accès mutable à l'outil de sculpt. Le panneau Tool
 		/// Properties l'utilise pour lire/écrire les paramètres de brosse
 		/// quand `m_activeTool == TerrainSculpt`.
@@ -312,6 +326,8 @@ namespace engine::editor::world
 		std::vector<std::unique_ptr<IPanel>> m_panels;
 		CommandStack m_commandStack;
 		TerrainDocument m_terrainDoc;
+		engine::editor::scene::EditorSelection  m_selection;  // sous-projet 1, bloc B
+		engine::editor::scene::EditorSceneModel m_sceneModel; // sous-projet 1, bloc B
 		TerrainSculptTool m_sculptTool;
 		TerrainStampTool m_stampTool;
 		SplatPaintTool m_splatPaintTool;

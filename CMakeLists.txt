@@ -876,6 +876,13 @@ add_executable(routine_segment_codec_tests src/shared/routine/tests/RoutineSegme
 target_link_libraries(routine_segment_codec_tests PRIVATE routine_graph)
 add_test(NAME routine_segment_codec_tests COMMAND routine_segment_codec_tests)
 
+# M101.7 (partiel) — Traduction npc_routine -> EventAIRow (cote shard).
+add_executable(routine_to_eventai_tests
+  src/shardd/ai/tests/RoutineToEventAITests.cpp
+  src/shardd/ai/RoutineToEventAI.cpp)
+target_link_libraries(routine_to_eventai_tests PRIVATE routine_graph)
+add_test(NAME routine_to_eventai_tests COMMAND routine_to_eventai_tests)
+
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)
 target_link_libraries(ddgi_volume_tests PRIVATE engine_core)

@@ -5,11 +5,13 @@
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/routine/RoutineGraphCommands.h"
 #include "src/world_editor/routine/RoutineGraphDocument.h"
+#include "src/world_editor/help/HelpContentStore.h"
 #include "src/shared/routine/RoutineNodeSchema.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"
 #	include <memory>
+#	include <string>
 
 namespace
 {
@@ -51,6 +53,17 @@ namespace engine::editor::world
 			{
 				undo.Push(std::make_unique<AddNodeCommand>(doc, MakeNodeFromSchema(s, doc)));
 				ImGui::CloseCurrentPopup();
+			}
+			// M101.11 — tooltip de survol : réutilise HelpContentStore (M100.47)
+			// si une entrée "routine.<NodeType>" existe, sinon le libellé.
+			if (ImGui::IsItemHovered())
+			{
+				const std::string key = std::string("routine.") + engine::routine::ToString(s.type);
+				const auto* help = engine::editor::world::help::HelpContentStore::Instance().FindTooltip(key);
+				if (help && !help->descriptionSimple.empty())
+					ImGui::SetTooltip("%s\n%s", help->label.c_str(), help->descriptionSimple.c_str());
+				else
+					ImGui::SetTooltip("%s", s.displayName);
 			}
 		}
 #else

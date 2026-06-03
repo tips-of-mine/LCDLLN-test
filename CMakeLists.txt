@@ -893,6 +893,11 @@ add_executable(routine_graph_commands_tests src/world_editor/routine/tests/Routi
 target_link_libraries(routine_graph_commands_tests PRIVATE engine_core)
 add_test(NAME routine_graph_commands_tests COMMAND routine_graph_commands_tests)
 
+# M101.11 — Test de parsing du contenu d'aide des routines (format M100.47).
+add_executable(routine_help_content_tests src/world_editor/routine/tests/RoutineHelpContentTests.cpp)
+target_link_libraries(routine_help_content_tests PRIVATE engine_core)
+add_test(NAME routine_help_content_tests COMMAND routine_help_content_tests)
+
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)
 target_link_libraries(ddgi_volume_tests PRIVATE engine_core)

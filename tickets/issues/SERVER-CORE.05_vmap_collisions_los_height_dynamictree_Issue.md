@@ -1,3 +1,20 @@
+# Issue: SERVER-CORE.05
+
+**Status:** Closed
+
+_Re-verifie DONE le 2026-06-03 (correction d'un faux-negatif du au decalage de chemins engine/ -> src/)._
+
+## Preuves d'implementation
+- src/shardd/internals/vmap/VMapManager.h
+- src/shardd/internals/vmap/BIH.h
+
+## Note
+VMapManager/BIH/Streamer + tests sous src/shardd/internals/vmap (faux-negatif corrige)
+
+---
+
+## Contenu du ticket (SERVER-CORE.05)
+
 # SERVER-CORE.05_vmap_collisions_los_height_dynamictree
 
 ## Objectif

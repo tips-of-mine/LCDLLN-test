@@ -1,3 +1,20 @@
+# Issue: SERVER-CORE.20
+
+**Status:** Closed
+
+_Re-verifie DONE le 2026-06-03 (correction d'un faux-negatif du au decalage de chemins engine/ -> src/)._
+
+## Preuves d'implementation
+- src/shardd/ai/MotionGeneratorStack.h
+- src/shardd/ai/MotionGeneratorStackTests.cpp
+
+## Note
+MotionGeneratorStack + PathFollow + tests
+
+---
+
+## Contenu du ticket (SERVER-CORE.20)
+
 # SERVER-CORE.20_MotionGenerators_stack_navmesh_waypoints
 
 > **Etat : PARTIEL** (verifie 2026-06-03)

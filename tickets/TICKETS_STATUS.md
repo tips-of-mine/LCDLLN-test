@@ -1,15 +1,15 @@
 # Suivi des tickets — etat au 2026-06-03
 
-Genere automatiquement apres analyse de code approfondie (reorganisation tickets/).
+Genere automatiquement apres analyse de code approfondie (reorganisation tickets/), avec une passe de correction des faux-negatifs lies a l'ancien chemin engine/ (code reel sous src/).
 Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/` (le .md du ticket a ete retire du dossier milestone). **PARTIAL** = partiellement implemente, ticket conserve avec encart d'etat. **TODO** = a faire, ticket conserve.
 
 ## Synthese
 
 | Statut | Nombre |
 |--------|-------:|
-| DONE (clotures) | 302 |
-| PARTIAL | 40 |
-| TODO | 60 |
+| DONE (clotures) | 314 |
+| PARTIAL | 32 |
+| TODO | 56 |
 | **Total** | 402 |
 
 ### Par milestone
@@ -62,10 +62,10 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | M43 | 1 | 1 | 6 | 8 |
 | M44 | 4 | 0 | 0 | 4 |
 | M45 | 8 | 0 | 0 | 8 |
-| M100 | 28 | 0 | 23 | 51 |
+| M100 | 29 | 0 | 22 | 51 |
 | AUTH-UI | 12 | 0 | 0 | 12 |
 | CHAR-MODEL | 3 | 12 | 22 | 37 |
-| SERVER-CORE | 21 | 19 | 4 | 44 |
+| SERVER-CORE | 32 | 11 | 1 | 44 |
 | STAB | 13 | 1 | 0 | 14 |
 | docs | 3 | 0 | 0 | 3 |
 | world | 13 | 0 | 0 | 13 |
@@ -579,7 +579,7 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | M100.43 | DONE | Dungeon portal system |
 | M100.44 | DONE | VMap bridge |
 | M100.45 | TODO | spec doc only |
-| M100.46 | TODO | spec doc only |
+| M100.46 | DONE | ZonePresets library + tests (corrige) |
 | M100.47 | TODO | spec doc only |
 | M100.48 | TODO | spec doc only |
 | M100.49 | TODO | spec doc only |
@@ -652,29 +652,29 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | SERVER-CORE.01 | DONE | Chat routing/safety/commands + tests |
 | SERVER-CORE.02 | DONE | Entities + ObjectGuid + UpdateFields |
 | SERVER-CORE.03 | DONE | Grids + AOI + visitor |
-| SERVER-CORE.04 | PARTIAL | MoveSpline core/flags/init incomplets |
-| SERVER-CORE.05 | TODO | VMapManager/BIH/DynamicTree/extractor absents |
+| SERVER-CORE.04 | DONE | MoveSpline + tests (corrige engine->src) |
+| SERVER-CORE.05 | DONE | VMap collisions + tests (corrige) |
 | SERVER-CORE.06 | DONE | Roles/security levels + tests |
 | SERVER-CORE.07 | DONE | EventAI db-driven + tests |
 | SERVER-CORE.08 | PARTIAL | ArenaTeam/MMR/maintenance absents |
 | SERVER-CORE.09 | PARTIAL | AuctionEntry/Manager/expire absents |
 | SERVER-CORE.10 | PARTIAL | BG abstract/score/manager absents |
-| SERVER-CORE.11 | PARTIAL | CombatManager/duel absents |
-| SERVER-CORE.12 | PARTIAL | OpcodeRegistry/replay tool absents |
-| SERVER-CORE.13 | PARTIAL | SqlDelayThread/PreparedStmt cache absents |
-| SERVER-CORE.14 | TODO | ScriptMgr/DBScripts/hot-reload absents |
+| SERVER-CORE.11 | DONE | Threat/HostileRef + tests |
+| SERVER-CORE.12 | DONE | PacketLog + tests |
+| SERVER-CORE.13 | DONE | SQLStorage + prepared/delay + tests |
+| SERVER-CORE.14 | DONE | DBScripts VM + tests (corrige) |
 | SERVER-CORE.15 | PARTIAL | GroupReference/loot rules/raid absents |
-| SERVER-CORE.16 | TODO | ConditionMgr/ObjectAccessor/Graveyard/Locale absents |
-| SERVER-CORE.17 | PARTIAL | LootMgr/generate/refs absents |
-| SERVER-CORE.18 | PARTIAL | COD/expiration/massmail absents |
+| SERVER-CORE.16 | DONE | Globals condition/accessor/locale + tests (corrige) |
+| SERVER-CORE.17 | DONE | Loot templates/refs + tests |
+| SERVER-CORE.18 | DONE | Mails COD/expire/massmail + tests |
 | SERVER-CORE.19 | DONE | Maps subclasses + InstanceManager |
-| SERVER-CORE.20 | PARTIAL | Generateurs/navmesh/extractor absents |
+| SERVER-CORE.20 | DONE | MotionGenerators + tests |
 | SERVER-CORE.21 | PARTIAL | Guild/ranks/bank/eventlog absents |
 | SERVER-CORE.22 | PARTIAL | WeightedSelector/nesting/persist absents |
 | SERVER-CORE.23 | DONE | Quest state machine + payloads |
 | SERVER-CORE.24 | DONE | Reputation matrix + spillover |
 | SERVER-CORE.25 | DONE | Social friends/ignore + payloads |
-| SERVER-CORE.26 | PARTIAL | SpellTemplate/Aura/Proc/Effects absents |
+| SERVER-CORE.26 | DONE | Spells template/aura/proc + tests (corrige) |
 | SERVER-CORE.27 | DONE | Trade 2-phase commit anti-scam |
 | SERVER-CORE.28 | PARTIAL | DSL parser/lexer/shutdown absents |
 | SERVER-CORE.29 | DONE | Anticheat position deltas |

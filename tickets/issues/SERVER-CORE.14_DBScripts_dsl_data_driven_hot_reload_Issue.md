@@ -1,3 +1,20 @@
+# Issue: SERVER-CORE.14
+
+**Status:** Closed
+
+_Re-verifie DONE le 2026-06-03 (correction d'un faux-negatif du au decalage de chemins engine/ -> src/)._
+
+## Preuves d'implementation
+- src/shardd/dbscripts/DBScript.h
+- src/shardd/dbscripts/DBScriptRuntime.h
+
+## Note
+DBScript VM + runtime + tests sous src/shardd/dbscripts (faux-negatif corrige)
+
+---
+
+## Contenu du ticket (SERVER-CORE.14)
+
 # SERVER-CORE.14_DBScripts_dsl_data_driven_hot_reload
 
 ## Objectif

@@ -1,3 +1,20 @@
+# Issue: SERVER-CORE.18
+
+**Status:** Closed
+
+_Re-verifie DONE le 2026-06-03 (correction d'un faux-negatif du au decalage de chemins engine/ -> src/)._
+
+## Preuves d'implementation
+- src/masterd/mail/MailManager.h
+- src/masterd/mail/MailManagerTests.cpp
+
+## Note
+Mail/MailManager (Send/Take/COD/expire) + store + tests
+
+---
+
+## Contenu du ticket (SERVER-CORE.18)
+
 # SERVER-CORE.18_Mails_master_side_cod_expiration_massmail
 
 > **Etat : PARTIEL** (verifie 2026-06-03)

@@ -1,3 +1,20 @@
+# Issue: SERVER-CORE.04
+
+**Status:** Closed
+
+_Re-verifie DONE le 2026-06-03 (correction d'un faux-negatif du au decalage de chemins engine/ -> src/)._
+
+## Preuves d'implementation
+- src/shardd/internals/movement/MoveSpline.h
+- src/shardd/internals/movement/MoveSplineInit.h
+
+## Note
+MoveSpline/Init/Flag + Spline + PacketBuilder + tests sous src/shardd/internals/movement (faux-negatif engine->src corrige)
+
+---
+
+## Contenu du ticket (SERVER-CORE.04)
+
 # SERVER-CORE.04_Movement_server_authoritative_splines
 
 > **Etat : PARTIEL** (verifie 2026-06-03)

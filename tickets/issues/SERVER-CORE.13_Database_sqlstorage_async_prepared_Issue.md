@@ -1,3 +1,20 @@
+# Issue: SERVER-CORE.13
+
+**Status:** Closed
+
+_Re-verifie DONE le 2026-06-03 (correction d'un faux-negatif du au decalage de chemins engine/ -> src/)._
+
+## Preuves d'implementation
+- src/shared/db/SQLStorage.h
+- src/shared/db/SQLStorageTests.cpp
+
+## Note
+SQLStorage templated + SqlPreparedStatement/SqlDelayThread + tests
+
+---
+
+## Contenu du ticket (SERVER-CORE.13)
+
 # SERVER-CORE.13_Database_sqlstorage_async_prepared
 
 > **Etat : PARTIEL** (verifie 2026-06-03)

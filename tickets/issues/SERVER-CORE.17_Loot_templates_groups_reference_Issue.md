@@ -1,3 +1,20 @@
+# Issue: SERVER-CORE.17
+
+**Status:** Closed
+
+_Re-verifie DONE le 2026-06-03 (correction d'un faux-negatif du au decalage de chemins engine/ -> src/)._
+
+## Preuves d'implementation
+- src/shardd/loot/LootTable.h
+- src/shardd/loot/LootTableTests.cpp
+
+## Note
+LootTable/Registry/Rule + tests
+
+---
+
+## Contenu du ticket (SERVER-CORE.17)
+
 # SERVER-CORE.17_Loot_templates_groups_reference
 
 > **Etat : PARTIEL** (verifie 2026-06-03)

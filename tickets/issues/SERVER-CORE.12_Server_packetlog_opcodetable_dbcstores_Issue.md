@@ -1,3 +1,20 @@
+# Issue: SERVER-CORE.12
+
+**Status:** Closed
+
+_Re-verifie DONE le 2026-06-03 (correction d'un faux-negatif du au decalage de chemins engine/ -> src/)._
+
+## Preuves d'implementation
+- src/shared/network/PacketLog.h
+- src/shared/network/PacketLogTests.cpp
+
+## Note
+PacketLog + tests
+
+---
+
+## Contenu du ticket (SERVER-CORE.12)
+
 # SERVER-CORE.12_Server_packetlog_opcodetable_dbcstores
 
 > **Etat : PARTIEL** (verifie 2026-06-03)

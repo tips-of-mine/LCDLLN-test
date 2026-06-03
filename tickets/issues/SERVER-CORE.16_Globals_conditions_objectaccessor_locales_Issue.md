@@ -1,3 +1,20 @@
+# Issue: SERVER-CORE.16
+
+**Status:** Closed
+
+_Re-verifie DONE le 2026-06-03 (correction d'un faux-negatif du au decalage de chemins engine/ -> src/)._
+
+## Preuves d'implementation
+- src/shardd/internals/globals/ConditionMgr.h
+- src/shardd/internals/globals/ObjectAccessor.h
+
+## Note
+Condition/ConditionMgr/ObjectAccessor/Graveyard/LocaleStrings + tests sous src/shardd/internals/globals (faux-negatif corrige)
+
+---
+
+## Contenu du ticket (SERVER-CORE.16)
+
 # SERVER-CORE.16_Globals_conditions_objectaccessor_locales
 
 ## Objectif

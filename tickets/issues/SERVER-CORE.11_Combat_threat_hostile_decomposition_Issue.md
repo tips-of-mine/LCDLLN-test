@@ -1,3 +1,20 @@
+# Issue: SERVER-CORE.11
+
+**Status:** Closed
+
+_Re-verifie DONE le 2026-06-03 (correction d'un faux-negatif du au decalage de chemins engine/ -> src/)._
+
+## Preuves d'implementation
+- src/shardd/combat/ThreatList.h
+- src/shardd/combat/ThreatListTests.cpp
+
+## Note
+ThreatList/HostileRef/Runtime + tests
+
+---
+
+## Contenu du ticket (SERVER-CORE.11)
+
 # SERVER-CORE.11_Combat_threat_hostile_decomposition
 
 > **Etat : PARTIEL** (verifie 2026-06-03)

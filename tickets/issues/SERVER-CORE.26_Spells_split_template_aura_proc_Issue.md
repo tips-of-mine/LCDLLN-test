@@ -1,3 +1,20 @@
+# Issue: SERVER-CORE.26
+
+**Status:** Closed
+
+_Re-verifie DONE le 2026-06-03 (correction d'un faux-negatif du au decalage de chemins engine/ -> src/)._
+
+## Preuves d'implementation
+- src/shardd/spell/SpellTemplate.h
+- src/shardd/spell/SpellMgr.h
+
+## Note
+SpellTemplate/FamilyMask/SpellMgr + tests sous src/shardd/spell (faux-negatif corrige)
+
+---
+
+## Contenu du ticket (SERVER-CORE.26)
+
 # SERVER-CORE.26_Spells_split_template_aura_proc
 
 > **Etat : PARTIEL** (verifie 2026-06-03)

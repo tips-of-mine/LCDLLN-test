@@ -180,6 +180,19 @@ else()
   target_compile_options(routine_graph PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+# M101.2 — VM d'interpretation deterministe des graphes zone_event. Lib pure
+# (depend de routine_graph + IRoutineHost ; aucune dependance Vulkan/GLFW).
+add_library(routine_vm STATIC
+  src/shared/routine/vm/ZoneEventVm.cpp
+)
+target_include_directories(routine_vm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(routine_vm PUBLIC routine_graph)
+if(MSVC)
+  target_compile_options(routine_vm PRIVATE /W4 /permissive- /Zc:preprocessor)
+else()
+  target_compile_options(routine_vm PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 # Dear ImGui (branche docking) — World Editor Windows : overlay Vulkan (dynamic rendering), pas d’OpenGL.
 if(WIN32)
   FetchContent_Declare(imgui_lcdlln_fc
@@ -662,6 +675,7 @@ target_link_libraries(engine_core PUBLIC
   engine_auth
   spdlog::spdlog
   routine_graph
+  routine_vm
 )
 if(WIN32)
   target_link_libraries(engine_core PRIVATE imgui_lcdlln)
@@ -844,6 +858,11 @@ add_test(NAME protocol_v1_tests COMMAND protocol_v1_tests)
 add_executable(routine_serialization_tests src/shared/routine/tests/RoutineSerializationTests.cpp)
 target_link_libraries(routine_serialization_tests PRIVATE routine_graph)
 add_test(NAME routine_serialization_tests COMMAND routine_serialization_tests)
+
+# M101.2 — Tests de la VM zone_event (execution + determinisme).
+add_executable(routine_vm_tests src/shared/routine/vm/tests/RoutineVmTests.cpp)
+target_link_libraries(routine_vm_tests PRIVATE routine_vm)
+add_test(NAME routine_vm_tests COMMAND routine_vm_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

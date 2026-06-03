@@ -1,5 +1,10 @@
 # CHAR-MODEL.6 — Format clip `.anim` (TRS keyframes) + builder glTF → `.anim`
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/client/render/skinned/AnimationClip.cpp
+> - Manque : anim_builder/.anim assets absents
+> - Resume : Clip runtime ok, builder absent
+
 ## Dépendances
 - CHAR-MODEL.2 (`Skeleton`, conventions os / quaternion)
 

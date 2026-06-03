@@ -1,5 +1,10 @@
 # CHAR-MODEL.5 — Pipeline de rendu skinné intégré au deferred
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/client/render/skinned/SkinnedRenderer.cpp
+> - Manque : GeometryPass/CSM skinned absents
+> - Resume : Pipeline deferred partiel
+
 ## Dépendances
 - CHAR-MODEL.3 (shader skin, vertex input, palette buffer)
 - CHAR-MODEL.4 (`AssetRegistry` étendu)

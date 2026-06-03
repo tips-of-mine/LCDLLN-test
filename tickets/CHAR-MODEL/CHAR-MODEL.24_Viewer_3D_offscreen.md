@@ -1,5 +1,10 @@
 # CHAR-MODEL.24 — Viewer 3D off-screen dans `CharacterCreationUi`
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/client/render/race/RacePreviewViewport.h
+> - Manque : pipeline forward/anim partiels
+> - Resume : Viewer 3D partiel
+
 ## Dépendances
 - CHAR-MODEL.5 (pipeline rendu skinné dans deferred)
 - CHAR-MODEL.14 (`humanoid_v1.skel` + clips placeholder, dont `idle.anim`)

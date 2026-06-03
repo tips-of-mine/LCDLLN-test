@@ -1,5 +1,10 @@
 # SERVER-CORE.13_Database_sqlstorage_async_prepared
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shared/db/SQLStorage.h;src/shared/db/SQLStorageTests.cpp
+> - Manque : SqlDelayThread/PreparedStmt cache absents
+> - Resume : DB partiel
+
 ## Objectif
 
 Étendre la couche d'accès DB LCDLLN avec 3 patterns server-core

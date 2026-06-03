@@ -1,5 +1,10 @@
 # SERVER-CORE.28_World_state_expression_dsl
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/masterd/world/WorldStateRegistry.h
+> - Manque : DSL parser/lexer/shutdown absents
+> - Resume : WorldState partiel
+
 ## Objectif
 
 Mettre en place le **système de world state + mini-DSL d'expressions**

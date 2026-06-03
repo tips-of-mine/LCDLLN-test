@@ -1,5 +1,10 @@
 # SERVER-CORE.21_Guilds_schema_permissions_bank
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/masterd/handlers/guild/GuildHandler.h
+> - Manque : Guild/ranks/bank/eventlog absents
+> - Resume : Guilds partiel
+
 ## Objectif
 
 Mettre en place le **système de guildes persistantes** côté master

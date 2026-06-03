@@ -1,5 +1,10 @@
 # SERVER-CORE.34_Metric_influxdb_measurement_raii
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shared/metric/MetricRegistry.h
+> - Manque : Measurement RAII/influx/pool absents
+> - Resume : Metric partiel
+
 ## Objectif
 
 Mettre en place un **collecteur de métriques** prod LCDLLN inspiré de

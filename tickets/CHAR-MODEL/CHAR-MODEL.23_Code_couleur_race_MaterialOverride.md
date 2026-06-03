@@ -1,5 +1,10 @@
 # CHAR-MODEL.23 — Code couleur de race (placeholder skin) — `MaterialOverride`
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : game/data/races/races.json;src/client/character_creation/CharacterCreationUi.h
+> - Manque : RaceColorTable/MaterialOverride absents
+> - Resume : Code couleur partiel
+
 ## Dépendances
 - CHAR-MODEL.5 (pipeline skinned dans deferred — base d'extension)
 - CHAR-MODEL.15 à 22 (les 8 races livrées avec leur `colorCode`)

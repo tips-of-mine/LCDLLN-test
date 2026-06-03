@@ -1,5 +1,10 @@
 # SERVER-CORE.22_Pools_weighted_spawns_nested
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shardd/pools/PoolManager.h;src/shardd/pools/PoolManagerTests.cpp
+> - Manque : WeightedSelector/nesting/persist absents
+> - Resume : Pools partiel
+
 ## Objectif
 
 Mettre en place un **système de spawns aléatoires groupés** côté shard

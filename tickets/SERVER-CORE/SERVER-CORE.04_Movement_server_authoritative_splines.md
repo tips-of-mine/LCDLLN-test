@@ -1,5 +1,10 @@
 # SERVER-CORE.04_Movement_server_authoritative_splines
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shardd/Movement/PathFollowMotion.h
+> - Manque : MoveSpline core/flags/init incomplets
+> - Resume : Mouvement partiel
+
 ## Objectif
 
 Mettre en place un système de mouvement **server-authoritative basé sur

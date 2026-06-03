@@ -1,5 +1,10 @@
 # SERVER-CORE.12_Server_packetlog_opcodetable_dbcstores
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shared/network/PacketLog.h
+> - Manque : OpcodeRegistry/replay tool absents
+> - Resume : Packetlog partiel
+
 ## Objectif
 
 Mettre en place les **patterns infra serveur** pour LCDLLN, inspirés de

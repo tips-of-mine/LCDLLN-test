@@ -1,5 +1,10 @@
 # SERVER-CORE.17_Loot_templates_groups_reference
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shardd/loot/LootTable.cpp;src/shardd/loot/LootTableTests.cpp
+> - Manque : LootMgr/generate/refs absents
+> - Resume : Loot partiel
+
 ## Objectif
 
 Mettre en place le **système de butin (loot)** côté shard LCDLLN,

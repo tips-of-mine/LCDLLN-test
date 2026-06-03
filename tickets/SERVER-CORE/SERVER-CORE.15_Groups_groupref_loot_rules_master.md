@@ -1,5 +1,10 @@
 # SERVER-CORE.15_Groups_groupref_loot_rules_master
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/masterd/Groups/Group.h;src/masterd/Groups/GroupManager.h
+> - Manque : GroupReference/loot rules/raid absents
+> - Resume : Groups partiel
+
 ## Objectif
 
 Mettre en place les **groupes/raids de joueurs** côté master LCDLLN,

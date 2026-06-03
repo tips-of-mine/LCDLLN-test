@@ -1,5 +1,10 @@
 # SERVER-CORE.44_AuctionHouseBot_internal_client_low_pop
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shardd/auction/AuctionHouseBot.h
+> - Manque : Config/timing/rarity logic absents
+> - Resume : AHBot partiel
+
 ## Objectif
 
 Mettre en place un **bot interne** alimentant l'hôtel des ventes en

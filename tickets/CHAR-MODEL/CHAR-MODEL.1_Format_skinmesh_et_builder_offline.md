@@ -1,5 +1,10 @@
 # CHAR-MODEL.1 — Format mesh skinné `.skinmesh` + builder offline glTF → `.skinmesh`
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/client/render/skinned/SkinnedMesh.h;src/client/render/skinned/SkinnedMeshLoader.h
+> - Manque : builder offline/assets binaires absents
+> - Resume : Format runtime ok, builder absent
+
 ## Dépendances
 - *(racine de la chaîne CHAR-MODEL — aucune dépendance amont)*
 

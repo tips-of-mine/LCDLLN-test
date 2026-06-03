@@ -1,5 +1,10 @@
 # SERVER-CORE.26_Spells_split_template_aura_proc
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shardd/spell/SpellFamilyMask.h
+> - Manque : SpellTemplate/Aura/Proc/Effects absents
+> - Resume : Spells partiel (mask seul)
+
 ## Objectif
 
 Mettre en place le **système de sorts/abilities** côté shard LCDLLN

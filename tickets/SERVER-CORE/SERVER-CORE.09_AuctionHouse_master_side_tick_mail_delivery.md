@@ -1,5 +1,10 @@
 # SERVER-CORE.09_AuctionHouse_master_side_tick_mail_delivery
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/masterd/handlers/auction/AuctionHandler.h
+> - Manque : AuctionEntry/Manager/expire absents
+> - Resume : AH partiel
+
 ## Objectif
 
 Mettre en place l'**hôtel des ventes** (HV) côté master LCDLLN, inspiré

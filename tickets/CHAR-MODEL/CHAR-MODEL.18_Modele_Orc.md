@@ -1,5 +1,10 @@
 # CHAR-MODEL.18 — Modèle **Orc**
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : game/data/configuration/races/orcs.json
+> - Manque : skinmesh binaire absent
+> - Resume : Manifest Orc ok, mesh absent
+
 ## Dépendances
 - CHAR-MODEL.14
 

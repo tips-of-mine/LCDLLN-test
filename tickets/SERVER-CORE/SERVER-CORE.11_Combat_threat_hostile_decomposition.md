@@ -1,5 +1,10 @@
 # SERVER-CORE.11_Combat_threat_hostile_decomposition
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shardd/combat/ThreatList.h;src/shardd/combat/ThreatListTests.cpp
+> - Manque : CombatManager/duel absents
+> - Resume : Combat partiel
+
 ## Objectif
 
 Mettre en place le **cœur du combat** côté shard LCDLLN, inspiré de la

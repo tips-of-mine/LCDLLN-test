@@ -1,5 +1,10 @@
 # CHAR-MODEL.15 — Modèle **Humain**
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : game/data/configuration/races/humains.json
+> - Manque : skinmesh binaire absent
+> - Resume : Manifest Humain ok, mesh absent
+
 ## Dépendances
 - CHAR-MODEL.14 (`humanoid_v1.skel`, sockets, clips placeholder)
 

@@ -1,5 +1,10 @@
 # SERVER-CORE.41_Util_bytebuffer_pcqueue_trackable
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shared/util/ServerUtil.h
+> - Manque : ByteBuffer/PCQueue/Trackable absents
+> - Resume : Util partiel
+
 ## Objectif
 
 Mettre en place 3 utilitaires C++ inspirés de `src/shared/Util` server-core :

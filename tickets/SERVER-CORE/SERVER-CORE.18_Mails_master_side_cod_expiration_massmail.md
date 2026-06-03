@@ -1,5 +1,10 @@
 # SERVER-CORE.18_Mails_master_side_cod_expiration_massmail
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/masterd/mail/MailManager.h;src/masterd/handlers/mail/MailHandler.h
+> - Manque : COD/expiration/massmail absents
+> - Resume : Mails partiel
+
 ## Objectif
 
 Mettre en place la **messagerie asynchrone in-game** côté master LCDLLN,

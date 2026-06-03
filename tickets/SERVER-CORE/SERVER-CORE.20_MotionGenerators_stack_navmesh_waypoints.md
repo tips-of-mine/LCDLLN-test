@@ -1,5 +1,10 @@
 # SERVER-CORE.20_MotionGenerators_stack_navmesh_waypoints
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shardd/ai/MotionGeneratorStack.h
+> - Manque : Generateurs/navmesh/extractor absents
+> - Resume : MotionGen partiel
+
 ## Objectif
 
 Mettre en place la **pile de générateurs de mouvement** côté shard

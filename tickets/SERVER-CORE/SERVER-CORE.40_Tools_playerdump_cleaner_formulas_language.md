@@ -1,5 +1,10 @@
 # SERVER-CORE.40_Tools_playerdump_cleaner_formulas_language
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shared/formulas/Formulas.h
+> - Manque : PlayerDump/Cleaner/Language/tool absents
+> - Resume : Tools partiel (formulas seul)
+
 ## Objectif
 
 Mettre en place 4 utilitaires d'administration côté master+shard

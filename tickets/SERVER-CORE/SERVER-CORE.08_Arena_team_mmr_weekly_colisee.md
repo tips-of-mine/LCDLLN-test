@@ -1,5 +1,10 @@
 # SERVER-CORE.08_Arena_team_mmr_weekly_colisee
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/masterd/handlers/arena/ArenaHandler.h
+> - Manque : ArenaTeam/MMR/maintenance absents
+> - Resume : Arena partiel
+
 ## Objectif
 
 Mettre en place le **système d'arène** côté master+shard LCDLLN, adapté

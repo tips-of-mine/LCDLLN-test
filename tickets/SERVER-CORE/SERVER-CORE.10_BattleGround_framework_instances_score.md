@@ -1,5 +1,10 @@
 # SERVER-CORE.10_BattleGround_framework_instances_score
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/shardd/battleground/BattleGroundQueue.h
+> - Manque : BG abstract/score/manager absents
+> - Resume : BG partiel (queue seule)
+
 ## Objectif
 
 Mettre en place le **framework PvP instancié** côté shard LCDLLN,

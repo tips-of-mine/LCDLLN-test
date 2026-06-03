@@ -299,6 +299,8 @@ add_library(engine_core
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
+  # Sous-projet 1, bloc D — commande undoable d'edition de transform.
+  src/world_editor/inspector/SetEntityTransformCommand.cpp
   src/world_editor/terrain/TerrainDocument.cpp
   src/world_editor/terrain/TerrainBrush.cpp
   src/world_editor/terrain/TerrainRaycast.cpp
@@ -1072,6 +1074,16 @@ if(MSVC)
   target_compile_options(editor_scene_model_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME editor_scene_model_tests COMMAND editor_scene_model_tests)
+
+# Sous-projet 1, bloc D — Tests CPU pour SetEntityTransformCommand (Execute/Undo,
+# TryMerge meme entite, coalescing via CommandStack). Pur CPU, non gate.
+add_executable(set_entity_transform_command_tests src/world_editor/tests/SetEntityTransformCommandTests.cpp)
+target_include_directories(set_entity_transform_command_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(set_entity_transform_command_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(set_entity_transform_command_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME set_entity_transform_command_tests COMMAND set_entity_transform_command_tests)
 
 # M100.1 — Tests unitaires CPU pour la coquille WorldEditorShell.
 # Vérifient le cycle Init/Shutdown, la persistance du layout .ini, le

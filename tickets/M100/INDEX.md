@@ -243,7 +243,7 @@ au minimum (le shard reste optionnel à ce ticket).
 
 | Ticket | Impact serveur |
 |--------|----------------|
-| M100.43 | `INSTANCE_ENTER_REQUEST/RESPONSE` (validation level / faction / quest / day-night) ; `sql/migrations/00XX_dungeons.sql` ; bump `kProtocolVersion`. Réponse `NotImplemented` pour l'allocation d'instance shard (follow-up CMANGOS.19). |
+| M100.43 | `INSTANCE_ENTER_REQUEST/RESPONSE` (validation level / faction / quest / day-night) ; `sql/migrations/00XX_dungeons.sql` ; bump `kProtocolVersion`. Réponse `NotImplemented` pour l'allocation d'instance shard (follow-up SERVER-CORE.19). |
 
 ### Tier 3 — Lock-step client + server obligatoire (bump format binaire serveur)
 
@@ -345,7 +345,7 @@ doivent être déployés simultanément ; un mismatch hash → tile rejetée
 | `SeasonBroadcast` (opcode) | M100.25 | Master `SeasonBroadcaster` (60 s) |
 | `WeatherBroadcast` (opcode) | M100.26 | Master tirage aléatoire (5 min) + broadcast (30 s) |
 | `InteractiveStateChange` + `InteractiveStateBroadcast` + `InteractiveStateSync` (3 opcodes) | M100.32 | Master `InteractiveStateRelay` (RAM par zone) |
-| `INSTANCE_ENTER_REQUEST` + `INSTANCE_ENTER_RESPONSE` (2 opcodes) | M100.43 | Master `InstanceEnterHandler` (validation gameplay, réponse `NotImplemented` pour allocation shard jusqu'à CMANGOS.19) |
+| `INSTANCE_ENTER_REQUEST` + `INSTANCE_ENTER_RESPONSE` (2 opcodes) | M100.43 | Master `InstanceEnterHandler` (validation gameplay, réponse `NotImplemented` pour allocation shard jusqu'à SERVER-CORE.19) |
 
 ## Format des tickets
 

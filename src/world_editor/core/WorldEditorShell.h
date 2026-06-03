@@ -20,7 +20,9 @@
 #include "src/world_editor/terrain/TerrainStampTool.h"
 #include "src/world_editor/terrain/ValleyChainTool.h"
 #include "src/world_editor/water/WaterDocument.h"
+#include "src/world_editor/scene/EditorSceneModel.h" // sous-projet 1, bloc B (selection + scene)
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -156,6 +158,45 @@ namespace engine::editor::world
 		/// terrain (sculpt, stamps…) lisent/écrivent les chunks via ce
 		/// document.
 		TerrainDocument& MutableTerrainDocument() { return m_terrainDoc; }
+
+		/// Sous-projet 1 (boucle d'edition d'une zone) — Initialise le terrain
+		/// d'une zone neuve : alloue `chunksPerAxis × chunksPerAxis` chunks plats
+		/// dans le `TerrainDocument` (source de verite). Les chunks sont marques
+		/// dirty et seront ecrits au prochain `SaveTerrainChunks`. A appeler sur
+		/// le main thread, depuis Engine, a la creation d'une nouvelle carte.
+		/// \param chunksPerAxis empreinte d'edition (nombre de chunks par axe).
+		void InitNewZoneTerrain(int chunksPerAxis);
+
+		/// Sous-projet 1 — Persiste sur disque les chunks terrain + splat dirty
+		/// (source de verite de la zone) sous `<paths.content>/chunks/`. Appelee
+		/// depuis Engine quand l'utilisateur sauvegarde la carte.
+		/// \param cfg source de `paths.content`.
+		/// \return nombre total de fichiers chunk ecrits (terrain + splat).
+		/// Effet de bord : ecriture disque.
+		size_t SaveTerrainChunks(const engine::core::Config& cfg);
+
+		/// Sous-projet 1, bloc B/C — Accès à l'état de sélection partagé de
+		/// l'éditeur (consommé par l'Outliner pour sélectionner, par l'Inspector
+		/// pour afficher/éditer l'entité courante).
+		engine::editor::scene::EditorSelection&       MutableSelection()       { return m_selection; }
+		const engine::editor::scene::EditorSelection& GetSelection()     const { return m_selection; }
+
+		/// Sous-projet 1, bloc B/C — Accès à la vue agrégée des entités de la
+		/// zone. L'Engine la lie aux documents sources (layout = session,
+		/// mesh/donjon = shell) et la reconstruit chaque frame avant le rendu
+		/// des panneaux.
+		engine::editor::scene::EditorSceneModel&       MutableSceneModel()       { return m_sceneModel; }
+		const engine::editor::scene::EditorSceneModel& GetSceneModel()     const { return m_sceneModel; }
+
+		/// Sous-projet 1, bloc D — Type du foncteur d'écriture de transform :
+		/// applique un `EntityTransform` à l'entité `EntityId` dans le document
+		/// concret. Installé par l'Engine (qui capture les documents mutables) ;
+		/// consommé par l'Inspector pour construire des `SetEntityTransformCommand`.
+		using TransformWriter = std::function<void(
+			engine::editor::scene::EntityId, const engine::editor::scene::EntityTransform&)>;
+
+		/// Installe le foncteur d'écriture de transform (appelé par l'Engine).
+		void SetTransformWriter(TransformWriter w) { m_transformWriter = std::move(w); }
 
 		/// M100.6 — Accès mutable à l'outil de sculpt. Le panneau Tool
 		/// Properties l'utilise pour lire/écrire les paramètres de brosse
@@ -296,6 +337,9 @@ namespace engine::editor::world
 		std::vector<std::unique_ptr<IPanel>> m_panels;
 		CommandStack m_commandStack;
 		TerrainDocument m_terrainDoc;
+		engine::editor::scene::EditorSelection  m_selection;  // sous-projet 1, bloc B
+		engine::editor::scene::EditorSceneModel m_sceneModel; // sous-projet 1, bloc B
+		TransformWriter m_transformWriter;                    // sous-projet 1, bloc D
 		TerrainSculptTool m_sculptTool;
 		TerrainStampTool m_stampTool;
 		SplatPaintTool m_splatPaintTool;

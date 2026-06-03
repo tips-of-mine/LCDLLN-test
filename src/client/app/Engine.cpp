@@ -7610,9 +7610,32 @@ namespace engine
 				m_worldEditorImGui.reset();
 			}
 		}
-		if (m_worldEditorExe && m_worldEditorSession && m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
+		if (m_worldEditorExe && m_worldEditorSession)
 		{
-			RebuildWorldEditorTerrainGpu();
+			// Sous-projet 1 (boucle d'edition d'une zone) — Zone NEUVE : initialise
+			// les chunks plats (source de verite) AVANT le rebuild GPU. L'empreinte
+			// N (chunks par axe) se deduit de la resolution r16h : apres l'alignement
+			// A2, 1 texel = 1 m, et un chunk fait 256 m, donc N = max(1, res/256).
+			if (m_worldEditorSession->ConsumeNewZoneChunkInitRequest()
+				&& m_worldEditorShell && m_worldEditorShell->IsInitialized())
+			{
+				const uint32_t hmRes = m_worldEditorSession->Doc().heightmapResolution;
+				const int chunksPerAxis = static_cast<int>(std::max<uint32_t>(1u, hmRes / 256u));
+				m_worldEditorShell->InitNewZoneTerrain(chunksPerAxis);
+			}
+			if (m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
+			{
+				RebuildWorldEditorTerrainGpu();
+			}
+			// Sous-projet 1 — Sauvegarde des chunks (source de verite) demandee par
+			// ActionSaveCurrentMap / ActionSaveEditJson. Le r16h est ecrit par le
+			// terrainSaveHook ; ici on persiste en plus les chunks terrain/splat.
+			if (m_worldEditorSession->ConsumeTerrainChunksSaveRequest()
+				&& m_worldEditorShell && m_worldEditorShell->IsInitialized())
+			{
+				const size_t nWritten = m_worldEditorShell->SaveTerrainChunks(m_cfg);
+				LOG_INFO(EditorWorld, "[Engine] Persisted {} terrain chunk file(s)", nWritten);
+			}
 		}
 		// M100.46+ — Pont TerrainDocument → HeightmapData GPU. Consomme le
 		// flag set par le callback OnChunkChanged et déclenche la copie
@@ -8313,6 +8336,69 @@ namespace engine
 					scenePanel->SetEditorViewportTextureId(
 						m_editorViewportTarget.GetImguiTextureId());
 				}
+			}
+			// Sous-projet 1, bloc B/C — alimente l'Outliner / l'Inspector : lie le
+			// modèle de scène aux documents sources (layout = session, mesh/donjon
+			// = shell) puis le reconstruit. Coût négligeable (quelques clears +
+			// push de vecteurs) ; fait chaque frame pour refléter les placements/
+			// suppressions immédiatement.
+			if (m_worldEditorSession)
+			{
+				m_worldEditorShell->MutableSceneModel().Bind(
+					&m_worldEditorSession->Doc(),
+					&m_worldEditorShell->GetMeshInsertDocument(),
+					&m_worldEditorShell->GetDungeonPortalDocument());
+				m_worldEditorShell->MutableSceneModel().Rebuild();
+
+				// Sous-projet 1, bloc D — foncteur d'écriture de transform consommé
+				// par l'Inspector (SetEntityTransformCommand). Écrit dans le
+				// document concret par EntityId.index (= position dans la liste
+				// source au moment du Rebuild de cette frame). Capture [this] :
+				// l'Engine survit aux commandes (undo/redo différé OK).
+				m_worldEditorShell->SetTransformWriter(
+					[this](engine::editor::scene::EntityId id,
+						const engine::editor::scene::EntityTransform& t)
+					{
+						using K = engine::editor::scene::EntityKind;
+						if (id.kind == K::LayoutInstance && m_worldEditorSession)
+						{
+							auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+							if (id.index < insts.size())
+							{
+								auto& inst = insts[id.index];
+								inst.worldX = static_cast<double>(t.position.x);
+								inst.worldY = static_cast<double>(t.position.y);
+								inst.worldZ = static_cast<double>(t.position.z);
+								inst.yawDegrees = static_cast<double>(t.eulerDeg.y);
+								inst.uniformScale = static_cast<double>(t.uniformScale);
+							}
+						}
+						else if (id.kind == K::MeshInsert && m_worldEditorShell)
+						{
+							auto& doc = m_worldEditorShell->MutableMeshInsertDocument();
+							const auto& all = doc.All();
+							if (id.index < all.size())
+							{
+								auto updated = all[id.index];
+								updated.worldPosition = t.position;
+								updated.eulerRotationDeg = t.eulerDeg;
+								updated.uniformScale = t.uniformScale;
+								doc.Update(updated.guid, updated);
+							}
+						}
+						else if (id.kind == K::DungeonPortal && m_worldEditorShell)
+						{
+							auto& doc = m_worldEditorShell->MutableDungeonPortalDocument();
+							const auto& all = doc.All();
+							if (id.index < all.size())
+							{
+								auto updated = all[id.index];
+								updated.worldPosition = t.position;
+								updated.eulerRotationDeg = t.eulerDeg;
+								doc.Update(updated.guid, updated);
+							}
+						}
+					});
 			}
 			m_worldEditorShell->RenderFrame();
 		}
@@ -9238,7 +9324,106 @@ namespace engine
 				}
 			}
 
-			if (m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
+			// Sous-projet 1, bloc G — pipeline d'edition unifie : quand un outil
+			// MODERNE du Shell est actif (Sculpt ou Stamp), on le pilote depuis
+			// l'input viewport (il edite les CHUNKS -> sync 1:1 vers le GPU via
+			// A2/A3 + undo/redo via CommandStack) et on NEUTRALISE le pinceau
+			// legacy (garde `!modernEditActive` sur le bloc legacy plus bas). Sans
+			// outil moderne d'edition actif, le legacy reste le chemin par defaut.
+			// Ctrl+clic gauche reste reserve au picking B3 (donc exclu ici).
+			bool modernEditActive = false;
+			if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
+			{
+				const engine::editor::world::ActiveTool tool = m_worldEditorShell->GetActiveTool();
+				const bool freeClick = !m_worldEditorImGui->WantsCaptureMouse()
+					&& !m_input.IsDown(engine::platform::Key::Control);
+				if (tool == engine::editor::world::ActiveTool::TerrainSculpt)
+				{
+					modernEditActive = true;
+					if (freeClick)
+					{
+						engine::editor::world::TerrainSculptTool& sculpt =
+							m_worldEditorShell->MutableSculptTool();
+						const int mx = m_input.MouseX();
+						const int my = m_input.MouseY();
+						if (m_input.WasMousePressed(engine::platform::MouseButton::Left))
+							sculpt.OnMouseDown(out.camera, mx, my, vw, vh, m_cfg);
+						else if (m_input.IsMouseDown(engine::platform::MouseButton::Left))
+							sculpt.OnMouseMove(out.camera, mx, my, vw, vh, m_cfg);
+						if (m_input.WasMouseReleased(engine::platform::MouseButton::Left))
+							sculpt.OnMouseUp();
+					}
+				}
+				else if (tool == engine::editor::world::ActiveTool::TerrainStamp)
+				{
+					modernEditActive = true;
+					// Stamp one-shot : clic gauche au point de sol cliqué (pickX,pickZ)
+					// -> calcule la preview puis l'applique (push command -> sync +
+					// persistance + undo). terrainPick garantit un point valide.
+					if (freeClick && terrainPick
+						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						engine::editor::world::TerrainStampTool& stamp =
+							m_worldEditorShell->MutableStampTool();
+						stamp.OnClickAt(m_cfg, pickX, pickZ);
+						stamp.Apply();
+					}
+				}
+				else if (tool == engine::editor::world::ActiveTool::MountainRange)
+				{
+					modernEditActive = true;
+					// Macro polyline : chaque clic gauche ajoute un sommet ; la
+					// generation (rasterisation -> command -> sync validee) se fait
+					// via le bouton "Apply" du ToolPropertiesPanel.
+					if (freeClick && terrainPick
+						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						m_worldEditorShell->MutableMountainRangeTool().AddVertex(pickX, pickZ);
+					}
+				}
+				else if (tool == engine::editor::world::ActiveTool::ValleyChain)
+				{
+					modernEditActive = true;
+					// Jumeau soustractif de MountainRange (vallees). Meme entree :
+					// clic = ajout de sommet, "Apply" (panneau) genere.
+					if (freeClick && terrainPick
+						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						m_worldEditorShell->MutableValleyChainTool().AddVertex(pickX, pickZ);
+					}
+				}
+			}
+
+			// Sous-projet 1, bloc B3 — picking d'entite : Ctrl+clic gauche dans la
+			// vue 3D (hors ImGui) selectionne l'entite dont la position (XZ) est la
+			// plus proche du point de sol cliqué (seuil ~3 m), via EditorSceneModel
+			// + EditorSelection. Geste Ctrl+clic distinct du clic d'edition
+			// (sculpt/placement) pour ne pas interferer avec les deux systemes.
+			if (terrainPick && m_worldEditorShell && m_worldEditorShell->IsInitialized()
+				&& !m_worldEditorImGui->WantsCaptureMouse()
+				&& m_input.IsDown(engine::platform::Key::Control)
+				&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+			{
+				const std::vector<engine::editor::scene::SceneEntity>& entities =
+					m_worldEditorShell->GetSceneModel().Entities();
+				const engine::editor::scene::SceneEntity* best = nullptr;
+				float bestDist2 = 9.0f; // (3 m)^2
+				for (const engine::editor::scene::SceneEntity& e : entities)
+				{
+					if (!e.hasTransform) continue;
+					const float dx = e.transform.position.x - pickX;
+					const float dz = e.transform.position.z - pickZ;
+					const float d2 = dx * dx + dz * dz;
+					if (d2 < bestDist2) { bestDist2 = d2; best = &e; }
+				}
+				if (best != nullptr)
+				{
+					m_worldEditorShell->MutableSelection().Select(best->id);
+					LOG_INFO(EditorWorld, "[WorldEditor] Entite selectionnee (Ctrl+clic): {}", best->label);
+				}
+			}
+
+			if (!modernEditActive && m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
 			{
 				const bool cap = m_worldEditorImGui->WantsCaptureMouse();
 				engine::editor::WorldEditorSession& ws = *m_worldEditorSession;

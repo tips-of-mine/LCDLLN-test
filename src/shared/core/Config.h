@@ -50,6 +50,16 @@ namespace engine::core
 		/// Load values from a JSON/INI file (returns false if file is missing/unreadable).
 		bool LoadFromFile(std::string_view filePath);
 
+		/// Écrit toutes les valeurs scalaires courantes dans un fichier JSON
+		/// **plat** (clés pointées au niveau racine, valeurs scalaires). Conçu
+		/// pour round-tripper avec \ref LoadFromFile (qui aplatit les objets en
+		/// clés pointées : un objet plat reste donc identique). Les clés sans
+		/// valeur (`std::monostate`) sont ignorées.
+		/// \return false si le fichier n'est pas ouvrable en écriture.
+		/// Effet de bord : écriture disque (tronque le fichier existant).
+		/// Sous-projet 1 (éditeur) : sert à persister préférences + layout.
+		bool SaveToFile(std::string_view filePath) const;
+
 		/// Fusionne un JSON aplati comme valeurs par défaut (sans écraser les clés déjà chargées).
 		bool MergeDefaultsFromJsonFile(std::string_view filePath);
 

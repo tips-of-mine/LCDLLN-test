@@ -18,6 +18,24 @@ namespace engine::editor::world
 			 | static_cast<uint64_t>(static_cast<uint32_t>(c.z));
 	}
 
+	void TerrainDocument::InitFlatZone(int chunksPerAxis, float flatHeightMeters)
+	{
+		m_chunks.clear();
+		m_splats.clear();
+		if (chunksPerAxis <= 0) return;
+		for (int iz = 0; iz < chunksPerAxis; ++iz)
+		{
+			for (int ix = 0; ix < chunksPerAxis; ++ix)
+			{
+				auto chunk = std::make_shared<engine::world::terrain::TerrainChunk>(
+					engine::world::terrain::TerrainChunk::MakeFlat(flatHeightMeters));
+				const engine::world::GlobalChunkCoord coord{ix, iz};
+				// dirty=true : zone neuve -> doit être écrite au prochain save.
+				m_chunks.emplace(PackCoord(coord), ChunkSlot{std::move(chunk), true});
+			}
+		}
+	}
+
 	void TerrainDocument::ForEachLoadedChunk(const ChunkVisitor& visitor) const
 	{
 		if (!visitor) return;

@@ -79,9 +79,16 @@ namespace engine::editor::world
 
 		m_panels.clear();
 		m_panels.emplace_back(std::make_unique<panels::ScenePanel>());
-		m_panels.emplace_back(std::make_unique<panels::InspectorPanel>());
+		// Sous-projet 1, bloc D — Inspector réel : affiche + édite (undoable) les
+		// propriétés de l'entité sélectionnée. Reçoit la pile de commandes et le
+		// foncteur d'écriture de transform (installé par l'Engine).
+		m_panels.emplace_back(std::make_unique<panels::InspectorPanel>(
+			&m_sceneModel, &m_selection, &m_commandStack, &m_transformWriter));
 		m_panels.emplace_back(std::make_unique<panels::AssetBrowserPanel>());
-		m_panels.emplace_back(std::make_unique<panels::OutlinerPanel>());
+		// Sous-projet 1, bloc C — Outliner réel : reçoit le modèle de scène + la
+		// sélection partagés (possédés par le Shell). L'Engine lie le modèle aux
+		// documents et le reconstruit chaque frame.
+		m_panels.emplace_back(std::make_unique<panels::OutlinerPanel>(&m_sceneModel, &m_selection));
 		m_panels.emplace_back(std::make_unique<panels::ConsolePanel>());
 		m_panels.emplace_back(std::make_unique<panels::ToolPropertiesPanel>());
 		// M100.2 — Insère HistoryPanel après les 6 panneaux M100.1. L'ordre
@@ -710,6 +717,24 @@ namespace engine::editor::world
 		// std::format ne supporte pas string_view via {} directement avant C++23
 		// pour certains compilers ; on convertit en std::string pour être large.
 		LOG_INFO(EditorWorld, "WorldEditorShell dirty: {}", std::string(reason));
+	}
+
+	void WorldEditorShell::InitNewZoneTerrain(int chunksPerAxis)
+	{
+		m_terrainDoc.InitFlatZone(chunksPerAxis, 0.0f);
+		LOG_INFO(EditorWorld,
+			"[WorldEditorShell] Init new zone terrain: {}x{} flat chunks",
+			chunksPerAxis, chunksPerAxis);
+	}
+
+	size_t WorldEditorShell::SaveTerrainChunks(const engine::core::Config& cfg)
+	{
+		const size_t terrainWritten = m_terrainDoc.SaveDirtyToDisk(cfg);
+		const size_t splatWritten   = m_terrainDoc.SaveDirtySplatToDisk(cfg);
+		LOG_INFO(EditorWorld,
+			"[WorldEditorShell] Saved terrain chunks: {} terrain + {} splat",
+			terrainWritten, splatWritten);
+		return terrainWritten + splatWritten;
 	}
 
 	/// Réinitialise un layout par défaut minimal : rend tous les panneaux

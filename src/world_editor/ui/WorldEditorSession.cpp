@@ -302,6 +302,36 @@ namespace engine::editor
 		return true;
 	}
 
+	void WorldEditorSession::RequestNewZoneChunkInit()
+	{
+		m_newZoneChunkInitRequested = true;
+	}
+
+	bool WorldEditorSession::ConsumeNewZoneChunkInitRequest()
+	{
+		if (!m_newZoneChunkInitRequested)
+		{
+			return false;
+		}
+		m_newZoneChunkInitRequested = false;
+		return true;
+	}
+
+	void WorldEditorSession::RequestTerrainChunksSave()
+	{
+		m_terrainChunksSaveRequested = true;
+	}
+
+	bool WorldEditorSession::ConsumeTerrainChunksSaveRequest()
+	{
+		if (!m_terrainChunksSaveRequested)
+		{
+			return false;
+		}
+		m_terrainChunksSaveRequested = false;
+		return true;
+	}
+
 	bool WorldEditorSession::ActionNewMap(const engine::core::Config& cfg)
 	{
 		SyncDocIdFromBuffer();
@@ -376,7 +406,19 @@ namespace engine::editor
 		m_treeScaleT01 = 0.5f;
 		m_doc.formatVersion = WorldMapEditDocument::kFormatVersion;
 		m_doc.hasTerrainWorldSizeM = true;
-		m_doc.terrainWorldSizeM    = static_cast<double>(engine::world::kZoneSize);
+		// Alignement chunk <-> r16h (sous-projet 1, boucle d'edition d'une zone).
+		// On fixe la taille monde du terrain a (resolution - 1) metres, soit
+		// 1 texel r16h = 1 metre = 1 cellule de chunk (kTerrainCellSizeMeters).
+		// La synchro chunk -> heightmap GPU
+		// (Engine::SyncWorldEditorHeightmapFromDocument) devient alors strictement
+		// 1:1 et les editions sont visibles a pleine resolution.
+		// AVANT ce fix : terrainWorldSizeM = kZoneSize (10000 m) etirait une
+		// heightmap de 256 texels sur 10 km (~0.025 px/m) -> les coups de pinceau
+		// etaient ecrases en quasi-invisibilite (cause du ressenti "on cree une
+		// zone mais on ne peut rien en faire"). L'empreinte editable vaut donc
+		// (sz - 1) m = (sz - 1)/256 chunks ; la pleine zone 20x20 relevera du
+		// sous-projet 3 (monde entier).
+		m_doc.terrainWorldSizeM    = static_cast<double>(sz) - 1.0;
 
 		const std::filesystem::path jsonAbs = dirAbs / "map.lcdlln_edit.json";
 		m_editJsonAbsolutePath = jsonAbs.string();
@@ -385,6 +427,7 @@ namespace engine::editor
 		{
 			SetStatus("Carte creee mais sauvegarde JSON echouee: " + err);
 			LOG_WARN(Core, "[WorldEditor] {}", err);
+			RequestNewZoneChunkInit();
 			RequestTerrainGpuReload();
 			// Note (debug regression terrain invisible) : on n'arme PAS m_splatRefsDirty
 			// ici. Sur carte neuve, RequestTerrainGpuReload() declenche un Init complet
@@ -395,6 +438,9 @@ namespace engine::editor
 			return true;
 		}
 		SetStatus("Nouvelle carte OK - " + hmRel);
+		// Sous-projet 1 : zone neuve -> l'Engine doit initialiser les chunks plats
+		// (source de verite) via WorldEditorShell::InitNewZoneTerrain.
+		RequestNewZoneChunkInit();
 		RequestTerrainGpuReload();
 		SyncBuffersFromDoc();
 		LOG_INFO(Core, "[WorldEditor] New map OK zone={} size={}", zid, sz);
@@ -427,6 +473,8 @@ namespace engine::editor
 			return false;
 		}
 		m_editJsonAbsolutePath = path;
+		// Sous-projet 1 : persiste aussi les chunks (source de verite) via l'Engine.
+		RequestTerrainChunksSave();
 		SetStatus("Sauvegarde: " + path);
 		return true;
 	}
@@ -550,6 +598,8 @@ namespace engine::editor
 		SetBuf(m_bufSavePath, m_editJsonAbsolutePath);
 		SetStatus("Carte sauvegardee: " + zid);
 		LOG_INFO(Core, "[WorldEditor] Saved map zone={} -> {}", zid, m_editJsonAbsolutePath);
+		// Sous-projet 1 : persiste aussi les chunks (source de verite) via l'Engine.
+		RequestTerrainChunksSave();
 		RefreshAvailableMaps(cfg);
 		for (int i = 0; i < static_cast<int>(m_availableMapIds.size()); ++i)
 		{

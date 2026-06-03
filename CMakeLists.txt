@@ -296,6 +296,11 @@ add_library(engine_core
   # editor.world.enabled. Pas référencé par engine/server/.
   src/world_editor/core/WorldEditorShell.cpp
   src/world_editor/core/CommandStack.cpp
+  # Sous-projet 1, bloc B — modele de scene + selection partagee.
+  src/world_editor/scene/EditorSelection.cpp
+  src/world_editor/scene/EditorSceneModel.cpp
+  # Sous-projet 1, bloc D — commande undoable d'edition de transform.
+  src/world_editor/inspector/SetEntityTransformCommand.cpp
   src/world_editor/terrain/TerrainDocument.cpp
   src/world_editor/terrain/TerrainBrush.cpp
   src/world_editor/terrain/TerrainRaycast.cpp
@@ -1037,6 +1042,58 @@ if(MSVC)
   target_compile_options(world_editor_session_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME world_editor_session_tests COMMAND world_editor_session_tests)
+
+# Sous-projet 1 (boucle d'edition d'une zone) — Tests CPU pour TerrainDocument :
+# InitFlatZone (alloc NxN chunks plats) + round-trip disque des chunks
+# (source de verite de la zone). Pur CPU + E/S (pas de Vulkan), non gate WIN32
+# pour tourner sous ctest Linux comme world_editor_session_tests.
+add_executable(terrain_document_roundtrip_tests src/world_editor/tests/TerrainDocumentRoundTripTests.cpp)
+target_include_directories(terrain_document_roundtrip_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(terrain_document_roundtrip_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(terrain_document_roundtrip_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME terrain_document_roundtrip_tests COMMAND terrain_document_roundtrip_tests)
+
+# Sous-projet 1, bloc B — Tests CPU pour EditorSelection (notification au
+# changement, idempotence Clear). Pur CPU, non gate WIN32 (ctest Linux).
+add_executable(editor_selection_tests src/world_editor/tests/EditorSelectionTests.cpp)
+target_include_directories(editor_selection_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(editor_selection_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(editor_selection_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME editor_selection_tests COMMAND editor_selection_tests)
+
+# Sous-projet 1, bloc B — Tests CPU pour EditorSceneModel (agregation Terrain +
+# layout + mesh inserts + dungeon portals, libelles, Find). Pur CPU, non gate.
+add_executable(editor_scene_model_tests src/world_editor/tests/EditorSceneModelTests.cpp)
+target_include_directories(editor_scene_model_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(editor_scene_model_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(editor_scene_model_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME editor_scene_model_tests COMMAND editor_scene_model_tests)
+
+# Sous-projet 1, bloc D — Tests CPU pour SetEntityTransformCommand (Execute/Undo,
+# TryMerge meme entite, coalescing via CommandStack). Pur CPU, non gate.
+add_executable(set_entity_transform_command_tests src/world_editor/tests/SetEntityTransformCommandTests.cpp)
+target_include_directories(set_entity_transform_command_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(set_entity_transform_command_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(set_entity_transform_command_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME set_entity_transform_command_tests COMMAND set_entity_transform_command_tests)
+
+# Sous-projet 1, bloc H — Tests CPU pour Config::SaveToFile (round-trip JSON
+# plat des 4 types scalaires + echappement). Pur CPU + E/S, non gate WIN32.
+add_executable(config_save_to_file_tests src/world_editor/tests/ConfigSaveToFileTests.cpp)
+target_include_directories(config_save_to_file_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(config_save_to_file_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(config_save_to_file_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME config_save_to_file_tests COMMAND config_save_to_file_tests)
 
 # M100.1 — Tests unitaires CPU pour la coquille WorldEditorShell.
 # Vérifient le cycle Init/Shutdown, la persistance du layout .ini, le

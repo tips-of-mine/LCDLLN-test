@@ -325,6 +325,11 @@ add_library(engine_core
   # editor.world.enabled. Pas référencé par engine/server/.
   src/world_editor/core/WorldEditorShell.cpp
   src/world_editor/core/CommandStack.cpp
+  # M101.4 / M101.5 — editeur de routines nodal (panel + commandes + palette/inspecteur).
+  src/world_editor/routine/RoutineGraphCommands.cpp
+  src/world_editor/routine/RoutineGraphPanel.cpp
+  src/world_editor/routine/RoutineNodePalette.cpp
+  src/world_editor/routine/RoutineNodeInspector.cpp
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
@@ -882,6 +887,11 @@ add_executable(routine_to_eventai_tests
   src/shardd/ai/RoutineToEventAI.cpp)
 target_link_libraries(routine_to_eventai_tests PRIVATE routine_graph)
 add_test(NAME routine_to_eventai_tests COMMAND routine_to_eventai_tests)
+
+# M101.4 / M101.5 — Tests des commandes d'edition de graphe (apply/undo).
+add_executable(routine_graph_commands_tests src/world_editor/routine/tests/RoutineGraphCommandsTests.cpp)
+target_link_libraries(routine_graph_commands_tests PRIVATE engine_core)
+add_test(NAME routine_graph_commands_tests COMMAND routine_graph_commands_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

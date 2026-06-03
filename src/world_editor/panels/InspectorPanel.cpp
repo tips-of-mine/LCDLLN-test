@@ -6,6 +6,8 @@
 #	include "imgui.h"
 #endif
 
+#include <memory>
+
 namespace engine::editor::world::panels
 {
 	namespace
@@ -51,24 +53,43 @@ namespace engine::editor::world::panels
 					ImGui::Text("Type : %s", KindLabel(e->id.kind));
 					ImGui::Text("Nom  : %s", e->label.c_str());
 					ImGui::Separator();
-					if (e->hasTransform)
+					if (!e->hasTransform)
 					{
-						// Lecture seule a ce stade (edition undoable -> increment D suivant).
-						ImGui::TextDisabled("Transform (lecture seule)");
-						ImGui::Text("Position : %.2f, %.2f, %.2f m",
-							static_cast<double>(e->transform.position.x),
-							static_cast<double>(e->transform.position.y),
-							static_cast<double>(e->transform.position.z));
-						ImGui::Text("Rotation : %.1f, %.1f, %.1f deg",
-							static_cast<double>(e->transform.eulerDeg.x),
-							static_cast<double>(e->transform.eulerDeg.y),
-							static_cast<double>(e->transform.eulerDeg.z));
-						ImGui::Text("Echelle  : %.3f",
-							static_cast<double>(e->transform.uniformScale));
+						ImGui::TextDisabled("(pas de transform editable)");
 					}
 					else
 					{
-						ImGui::TextDisabled("(pas de transform editable)");
+						// État courant (= document, le modèle de scène est
+						// reconstruit chaque frame par l'Engine).
+						const scene::EntityTransform cur = e->transform;
+						float pos[3]   = { cur.position.x, cur.position.y, cur.position.z };
+						float yaw      = cur.eulerDeg.y;
+						float scale    = cur.uniformScale;
+
+						bool changed = false;
+						changed |= ImGui::DragFloat3("Position (m)", pos, 0.1f);
+						changed |= ImGui::DragFloat("Rotation Y (deg)", &yaw, 0.5f);
+						changed |= ImGui::DragFloat("Echelle", &scale, 0.01f, 0.01f, 1000.0f);
+
+						const bool canEdit = (m_commandStack != nullptr)
+							&& (m_writer != nullptr) && static_cast<bool>(*m_writer);
+						if (changed && canEdit)
+						{
+							scene::EntityTransform next = cur;
+							next.position.x   = pos[0];
+							next.position.y   = pos[1];
+							next.position.z   = pos[2];
+							next.eulerDeg.y   = yaw;
+							next.uniformScale = scale;
+							// Push chaque frame de drag : les commandes consecutives
+							// d'une meme entite fusionnent (1 item d'historique).
+							m_commandStack->Push(std::make_unique<SetEntityTransformCommand>(
+								e->id, cur, next, *m_writer));
+						}
+						else if (!canEdit)
+						{
+							ImGui::TextDisabled("(edition indisponible : pile/ecriture non branchees)");
+						}
 					}
 				}
 			}

@@ -79,9 +79,11 @@ namespace engine::editor::world
 
 		m_panels.clear();
 		m_panels.emplace_back(std::make_unique<panels::ScenePanel>());
-		// Sous-projet 1, bloc D — Inspector réel : affiche les propriétés de
-		// l'entité sélectionnée (modèle de scène + sélection partagés).
-		m_panels.emplace_back(std::make_unique<panels::InspectorPanel>(&m_sceneModel, &m_selection));
+		// Sous-projet 1, bloc D — Inspector réel : affiche + édite (undoable) les
+		// propriétés de l'entité sélectionnée. Reçoit la pile de commandes et le
+		// foncteur d'écriture de transform (installé par l'Engine).
+		m_panels.emplace_back(std::make_unique<panels::InspectorPanel>(
+			&m_sceneModel, &m_selection, &m_commandStack, &m_transformWriter));
 		m_panels.emplace_back(std::make_unique<panels::AssetBrowserPanel>());
 		// Sous-projet 1, bloc C — Outliner réel : reçoit le modèle de scène + la
 		// sélection partagés (possédés par le Shell). L'Engine lie le modèle aux

@@ -22,6 +22,7 @@
 #include "src/world_editor/water/WaterDocument.h"
 #include "src/world_editor/scene/EditorSceneModel.h" // sous-projet 1, bloc B (selection + scene)
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -187,6 +188,16 @@ namespace engine::editor::world
 		engine::editor::scene::EditorSceneModel&       MutableSceneModel()       { return m_sceneModel; }
 		const engine::editor::scene::EditorSceneModel& GetSceneModel()     const { return m_sceneModel; }
 
+		/// Sous-projet 1, bloc D — Type du foncteur d'écriture de transform :
+		/// applique un `EntityTransform` à l'entité `EntityId` dans le document
+		/// concret. Installé par l'Engine (qui capture les documents mutables) ;
+		/// consommé par l'Inspector pour construire des `SetEntityTransformCommand`.
+		using TransformWriter = std::function<void(
+			engine::editor::scene::EntityId, const engine::editor::scene::EntityTransform&)>;
+
+		/// Installe le foncteur d'écriture de transform (appelé par l'Engine).
+		void SetTransformWriter(TransformWriter w) { m_transformWriter = std::move(w); }
+
 		/// M100.6 — Accès mutable à l'outil de sculpt. Le panneau Tool
 		/// Properties l'utilise pour lire/écrire les paramètres de brosse
 		/// quand `m_activeTool == TerrainSculpt`.
@@ -328,6 +339,7 @@ namespace engine::editor::world
 		TerrainDocument m_terrainDoc;
 		engine::editor::scene::EditorSelection  m_selection;  // sous-projet 1, bloc B
 		engine::editor::scene::EditorSceneModel m_sceneModel; // sous-projet 1, bloc B
+		TransformWriter m_transformWriter;                    // sous-projet 1, bloc D
 		TerrainSculptTool m_sculptTool;
 		TerrainStampTool m_stampTool;
 		SplatPaintTool m_splatPaintTool;

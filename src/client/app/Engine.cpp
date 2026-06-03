@@ -8349,6 +8349,56 @@ namespace engine
 					&m_worldEditorShell->GetMeshInsertDocument(),
 					&m_worldEditorShell->GetDungeonPortalDocument());
 				m_worldEditorShell->MutableSceneModel().Rebuild();
+
+				// Sous-projet 1, bloc D — foncteur d'écriture de transform consommé
+				// par l'Inspector (SetEntityTransformCommand). Écrit dans le
+				// document concret par EntityId.index (= position dans la liste
+				// source au moment du Rebuild de cette frame). Capture [this] :
+				// l'Engine survit aux commandes (undo/redo différé OK).
+				m_worldEditorShell->SetTransformWriter(
+					[this](engine::editor::scene::EntityId id,
+						const engine::editor::scene::EntityTransform& t)
+					{
+						using K = engine::editor::scene::EntityKind;
+						if (id.kind == K::LayoutInstance && m_worldEditorSession)
+						{
+							auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+							if (id.index < insts.size())
+							{
+								auto& inst = insts[id.index];
+								inst.worldX = static_cast<double>(t.position.x);
+								inst.worldY = static_cast<double>(t.position.y);
+								inst.worldZ = static_cast<double>(t.position.z);
+								inst.yawDegrees = static_cast<double>(t.eulerDeg.y);
+								inst.uniformScale = static_cast<double>(t.uniformScale);
+							}
+						}
+						else if (id.kind == K::MeshInsert && m_worldEditorShell)
+						{
+							auto& doc = m_worldEditorShell->MutableMeshInsertDocument();
+							const auto& all = doc.All();
+							if (id.index < all.size())
+							{
+								auto updated = all[id.index];
+								updated.worldPosition = t.position;
+								updated.eulerRotationDeg = t.eulerDeg;
+								updated.uniformScale = t.uniformScale;
+								doc.Update(updated.guid, updated);
+							}
+						}
+						else if (id.kind == K::DungeonPortal && m_worldEditorShell)
+						{
+							auto& doc = m_worldEditorShell->MutableDungeonPortalDocument();
+							const auto& all = doc.All();
+							if (id.index < all.size())
+							{
+								auto updated = all[id.index];
+								updated.worldPosition = t.position;
+								updated.eulerRotationDeg = t.eulerDeg;
+								doc.Update(updated.guid, updated);
+							}
+						}
+					});
 			}
 			m_worldEditorShell->RenderFrame();
 		}

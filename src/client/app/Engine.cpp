@@ -9324,32 +9324,50 @@ namespace engine
 				}
 			}
 
-			// Sous-projet 1, bloc G — pipeline d'edition unifie : quand l'outil
-			// MODERNE Sculpt du Shell est actif, on le pilote depuis l'input
-			// viewport (il edite les CHUNKS -> sync 1:1 vers le GPU via A2/A3 +
-			// undo/redo via CommandStack) et on NEUTRALISE le pinceau legacy
-			// (garde `!modernSculptActive` sur le bloc legacy plus bas). Sans outil
-			// moderne Sculpt actif, le legacy reste le chemin par defaut (compat).
+			// Sous-projet 1, bloc G — pipeline d'edition unifie : quand un outil
+			// MODERNE du Shell est actif (Sculpt ou Stamp), on le pilote depuis
+			// l'input viewport (il edite les CHUNKS -> sync 1:1 vers le GPU via
+			// A2/A3 + undo/redo via CommandStack) et on NEUTRALISE le pinceau
+			// legacy (garde `!modernEditActive` sur le bloc legacy plus bas). Sans
+			// outil moderne d'edition actif, le legacy reste le chemin par defaut.
 			// Ctrl+clic gauche reste reserve au picking B3 (donc exclu ici).
-			bool modernSculptActive = false;
+			bool modernEditActive = false;
 			if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
 			{
 				const engine::editor::world::ActiveTool tool = m_worldEditorShell->GetActiveTool();
-				modernSculptActive = (tool == engine::editor::world::ActiveTool::TerrainSculpt);
-				if (modernSculptActive
-					&& !m_worldEditorImGui->WantsCaptureMouse()
-					&& !m_input.IsDown(engine::platform::Key::Control))
+				const bool freeClick = !m_worldEditorImGui->WantsCaptureMouse()
+					&& !m_input.IsDown(engine::platform::Key::Control);
+				if (tool == engine::editor::world::ActiveTool::TerrainSculpt)
 				{
-					engine::editor::world::TerrainSculptTool& sculpt =
-						m_worldEditorShell->MutableSculptTool();
-					const int mx = m_input.MouseX();
-					const int my = m_input.MouseY();
-					if (m_input.WasMousePressed(engine::platform::MouseButton::Left))
-						sculpt.OnMouseDown(out.camera, mx, my, vw, vh, m_cfg);
-					else if (m_input.IsMouseDown(engine::platform::MouseButton::Left))
-						sculpt.OnMouseMove(out.camera, mx, my, vw, vh, m_cfg);
-					if (m_input.WasMouseReleased(engine::platform::MouseButton::Left))
-						sculpt.OnMouseUp();
+					modernEditActive = true;
+					if (freeClick)
+					{
+						engine::editor::world::TerrainSculptTool& sculpt =
+							m_worldEditorShell->MutableSculptTool();
+						const int mx = m_input.MouseX();
+						const int my = m_input.MouseY();
+						if (m_input.WasMousePressed(engine::platform::MouseButton::Left))
+							sculpt.OnMouseDown(out.camera, mx, my, vw, vh, m_cfg);
+						else if (m_input.IsMouseDown(engine::platform::MouseButton::Left))
+							sculpt.OnMouseMove(out.camera, mx, my, vw, vh, m_cfg);
+						if (m_input.WasMouseReleased(engine::platform::MouseButton::Left))
+							sculpt.OnMouseUp();
+					}
+				}
+				else if (tool == engine::editor::world::ActiveTool::TerrainStamp)
+				{
+					modernEditActive = true;
+					// Stamp one-shot : clic gauche au point de sol cliqué (pickX,pickZ)
+					// -> calcule la preview puis l'applique (push command -> sync +
+					// persistance + undo). terrainPick garantit un point valide.
+					if (freeClick && terrainPick
+						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						engine::editor::world::TerrainStampTool& stamp =
+							m_worldEditorShell->MutableStampTool();
+						stamp.OnClickAt(m_cfg, pickX, pickZ);
+						stamp.Apply();
+					}
 				}
 			}
 
@@ -9382,7 +9400,7 @@ namespace engine
 				}
 			}
 
-			if (!modernSculptActive && m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
+			if (!modernEditActive && m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
 			{
 				const bool cap = m_worldEditorImGui->WantsCaptureMouse();
 				engine::editor::WorldEditorSession& ws = *m_worldEditorSession;

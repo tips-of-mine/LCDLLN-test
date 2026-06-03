@@ -166,6 +166,20 @@ if(MSVC)
   target_compile_options(engine_auth PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 
+# M101.1 — Lib pure du modele de graphe de routine (cluster M101 : editeur de
+# routines nodal). AUCUNE dependance Vulkan/GLFW/reseau : reutilisable par
+# engine_core (client + editeur) ET par server_app (shard, traduction PNJ M101.7).
+add_library(routine_graph STATIC
+  src/shared/routine/RoutineNodeSchema.cpp
+  src/shared/routine/RoutineSerialization.cpp
+)
+target_include_directories(routine_graph PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if(MSVC)
+  target_compile_options(routine_graph PRIVATE /W4 /permissive- /Zc:preprocessor)
+else()
+  target_compile_options(routine_graph PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 # Dear ImGui (branche docking) — World Editor Windows : overlay Vulkan (dynamic rendering), pas d’OpenGL.
 if(WIN32)
   FetchContent_Declare(imgui_lcdlln_fc
@@ -647,6 +661,7 @@ target_link_libraries(engine_core PUBLIC
   glfw
   engine_auth
   spdlog::spdlog
+  routine_graph
 )
 if(WIN32)
   target_link_libraries(engine_core PRIVATE imgui_lcdlln)
@@ -824,6 +839,11 @@ add_executable(protocol_v1_tests src/shared/network/ProtocolV1Tests.cpp)
 target_link_libraries(protocol_v1_tests PRIVATE engine_core)
 enable_testing()
 add_test(NAME protocol_v1_tests COMMAND protocol_v1_tests)
+
+# M101.1 — Tests de serialisation/round-trip/determinisme du modele de routine.
+add_executable(routine_serialization_tests src/shared/routine/tests/RoutineSerializationTests.cpp)
+target_link_libraries(routine_serialization_tests PRIVATE routine_graph)
+add_test(NAME routine_serialization_tests COMMAND routine_serialization_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

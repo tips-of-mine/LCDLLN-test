@@ -1,5 +1,10 @@
 # CHAR-MODEL.14 — Rig humanoïde standard `humanoid_v1.skel` + clips placeholder
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : game/data/configuration/races/humains.json
+> - Manque : .skel/.anim binaires absents
+> - Resume : Rig humanoid manifest ok, assets absents
+
 ## Dépendances
 - CHAR-MODEL.9 (locomotion : nécessite `humanoid_v1` pour les clips)
 - CHAR-MODEL.10 (actions)

@@ -1,5 +1,10 @@
 # CHAR-MODEL.19 — Modèle **Démon** (+ variante ailé)
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : game/data/configuration/races/demons.json
+> - Manque : skinmesh/skel winged absents
+> - Resume : Manifest Demon ok, assets absents
+
 ## Dépendances
 - CHAR-MODEL.14
 - CHAR-MODEL.12 (sockets : ajout d'un socket `ailes` au rig)

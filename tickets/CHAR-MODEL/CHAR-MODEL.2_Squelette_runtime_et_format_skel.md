@@ -1,5 +1,10 @@
 # CHAR-MODEL.2 — Squelette runtime `Skeleton` + format `.skel` + builder
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/client/render/skinned/Skeleton.cpp
+> - Manque : builder/.skel assets absents
+> - Resume : Skeleton runtime ok, builder absent
+
 ## Dépendances
 - CHAR-MODEL.1 (livré : format `.skinmesh`, conventions binaires partagées)
 

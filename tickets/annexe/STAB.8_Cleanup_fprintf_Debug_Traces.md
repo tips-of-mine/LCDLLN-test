@@ -1,5 +1,10 @@
 # STAB.8 — Nettoyage de tous les `fprintf` de debug
 
+> **Etat : PARTIEL** (verifie 2026-06-03)
+> - Fait / preuves : src/client/app/Engine.cpp
+> - Manque : 1 fprintf debug restant
+> - Resume : Cleanup fprintf incomplet
+
 **Priorité :** Normale  
 **Périmètre :** Tous les fichiers `.cpp` et `.h` sous `engine/` et `game/`  
 **Dépendances :** STAB.1 à STAB.7 doivent être livrés **en premier** (ce ticket est le dernier de la série)

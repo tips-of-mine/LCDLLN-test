@@ -78,7 +78,7 @@
             <div class="title">2. Outil offline <code>lcdlln_vmap_extractor</code></div>
             <div class="desc">
               <code>--zone-bundle path --out vmap_tiles/</code><br>
-              • Bake heightmap classique (CMANGOS.05)<br>
+              • Bake heightmap classique (SERVER-CORE.05)<br>
               • Pour chaque mesh insert dans la tile : ajoute AuxiliaryColliders<br>
               • SHA-256 du mesh_inserts.bin embarqué en header<br>
               • Écrit .vmap <b>v(N+1)</b> par tile (533 × 533 m)
@@ -257,7 +257,7 @@ struct VmapTileHeader {
     <div class="panel">
       <div class="title amber">Dette technique restante (backlog)</div>
       <div class="body" style="font-size:11px; line-height:1.7;color:#cdcdcd">
-        <div>• <b>Implémentation runtime donjon</b> : allocation shard d'instance, peuplement mobs, sauvegarde d'état par joueur — futur ticket CMANGOS.20 / Instance Manager.</div>
+        <div>• <b>Implémentation runtime donjon</b> : allocation shard d'instance, peuplement mobs, sauvegarde d'état par joueur — futur ticket SERVER-CORE.20 / Instance Manager.</div>
         <div>• <b>Génération procédurale</b> : grottes (Voronoi 3D), rivières secondaires, formations rocheuses — backlog Phase 12.</div>
         <div>• <b>Hot-reload .vmap</b> : pour l'instant cold restart obligatoire — recherche en cours.</div>
         <div>• <b>Drag-drop in-game</b> des mesh inserts (édition légère sans relancer l'éditeur) — futur.</div>

@@ -13,6 +13,7 @@ namespace engine::world
 		case ChunkSegment::Instances: return "instances.bin";
 		case ChunkSegment::Nav:       return "navmesh.bin";
 		case ChunkSegment::Probes:    return "probes.bin";
+		case ChunkSegment::Routines:  return "routines.bin";
 		}
 		return "geo.pak";
 	}
@@ -26,7 +27,8 @@ namespace engine::world
 			ChunkSegment::Tex,
 			ChunkSegment::Instances,
 			ChunkSegment::Nav,
-			ChunkSegment::Probes
+			ChunkSegment::Probes,
+			ChunkSegment::Routines
 		}};
 	}
 }

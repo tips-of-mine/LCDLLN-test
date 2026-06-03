@@ -173,6 +173,7 @@ add_library(routine_graph STATIC
   src/shared/routine/RoutineNodeSchema.cpp
   src/shared/routine/RoutineSerialization.cpp
   src/shared/routine/RoutineGraphValidation.cpp
+  src/shared/routine/RoutineSegmentCodec.cpp
 )
 target_include_directories(routine_graph PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(MSVC)
@@ -869,6 +870,11 @@ add_test(NAME routine_vm_tests COMMAND routine_vm_tests)
 add_executable(routine_validation_tests src/shared/routine/tests/RoutineValidationTests.cpp)
 target_link_libraries(routine_validation_tests PRIVATE routine_graph)
 add_test(NAME routine_validation_tests COMMAND routine_validation_tests)
+
+# M101.3 — Tests du codec routines.bin (round-trip en memoire).
+add_executable(routine_segment_codec_tests src/shared/routine/tests/RoutineSegmentCodecTests.cpp)
+target_link_libraries(routine_segment_codec_tests PRIVATE routine_graph)
+add_test(NAME routine_segment_codec_tests COMMAND routine_segment_codec_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

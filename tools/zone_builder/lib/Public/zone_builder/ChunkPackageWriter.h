@@ -5,9 +5,11 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace engine::world::terrain { struct TerrainChunk; struct TerrainLodChain; struct SplatMap; }
 namespace engine::world::water { struct WaterScene; }
+namespace engine::routine { struct RoutineGraph; }
 
 namespace tools::zone_builder
 {
@@ -66,4 +68,13 @@ namespace tools::zone_builder
 		const engine::world::water::WaterScene& scene,
 		float seaLevelMeters,
 		std::string& outError);
+
+	/// Écrit `routines.bin` (M101.3) dans `<outputRootDir>/chunks/chunk_<x>_<z>/`.
+	/// Crée le dossier au besoin. Sérialise via `engine::routine::codec::
+	/// EncodeRoutinesBin` (JSON canonique length-prefixé) ; format identique à
+	/// celui que le client relit avec `DecodeRoutinesBin` (parité éditeur ↔
+	/// client). Extension ADDITIVE du package : ne touche aucun segment existant.
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteRoutines(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const std::vector<engine::routine::RoutineGraph>& graphs, std::string& outError);
 }

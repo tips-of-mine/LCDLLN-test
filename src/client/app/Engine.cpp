@@ -9369,6 +9369,29 @@ namespace engine
 						stamp.Apply();
 					}
 				}
+				else if (tool == engine::editor::world::ActiveTool::MountainRange)
+				{
+					modernEditActive = true;
+					// Macro polyline : chaque clic gauche ajoute un sommet ; la
+					// generation (rasterisation -> command -> sync validee) se fait
+					// via le bouton "Apply" du ToolPropertiesPanel.
+					if (freeClick && terrainPick
+						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						m_worldEditorShell->MutableMountainRangeTool().AddVertex(pickX, pickZ);
+					}
+				}
+				else if (tool == engine::editor::world::ActiveTool::ValleyChain)
+				{
+					modernEditActive = true;
+					// Jumeau soustractif de MountainRange (vallees). Meme entree :
+					// clic = ajout de sommet, "Apply" (panneau) genere.
+					if (freeClick && terrainPick
+						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						m_worldEditorShell->MutableValleyChainTool().AddVertex(pickX, pickZ);
+					}
+				}
 			}
 
 			// Sous-projet 1, bloc B3 — picking d'entite : Ctrl+clic gauche dans la

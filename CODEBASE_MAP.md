@@ -2138,10 +2138,12 @@ aussi les confusions « je vois quelqu'un de déjà parti » et « reconnexion r
 l'exploration de zones cachées. Spec : `docs/superpowers/specs/2026-06-02-saut-caisses-atterrissables-design.md`.
 
 ### Composants
-- `src/client/gameplay/CharacterController.h` : `Config::jumpSpeed` 4.9 → **6.25**
-  (apex `6.25²/(2·20) ≈ 0.98 m`). Calibré pour franchir une « caisse métal »
-  (`Crate_Metal.gltf`, ~0.87 m de haut à l'échelle 1) avec marge +0.1 m. Saut **global**
-  (toutes les situations), **client uniquement** (le controller vit côté client).
+- **Saut `jumpSpeed` 4.9 → 6.25** (apex `6.25²/(2·20) ≈ 0.98 m`) — calibré pour franchir
+  une « caisse métal » (`Crate_Metal.gltf`, ~0.87 m à l'échelle 1) + marge +0.1 m. Saut
+  **global**, **client uniquement**. ⚠️ **Le levier runtime est `config.json`**
+  (`player.movement.jump_speed`), lu par `Engine.cpp:4952` (fallback aligné 9.0 → 6.25) ;
+  le défaut de `CharacterController::Config` n'est PAS utilisé en jeu (seulement par les
+  tests). Les 3 (config.json, Engine fallback, header) sont alignés à 6.25.
 - `src/client/gameplay/CompositeWorldCollider.cpp` : `SweepCapsule` émet désormais un
   contact **sol** (normale +Y) sur le **dessus** d'un `PropCylinder` (`topY`) pour les
   **sweeps descendants de proximité** — miroir d'un sol plat à `y=topY`. Le perso peut

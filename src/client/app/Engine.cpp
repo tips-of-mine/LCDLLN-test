@@ -4949,7 +4949,10 @@ namespace engine
 											ccCfg.walkSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.walk_speed",      5.0));
 											ccCfg.runSpeed      = static_cast<float>(m_cfg.GetDouble("player.movement.run_speed",       9.0));
 											ccCfg.gravity       = static_cast<float>(m_cfg.GetDouble("player.movement.gravity",       -20.0));
-											ccCfg.jumpSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.jump_speed",      9.0));
+											// Defaut aligne sur CharacterController::Config (6.25 -> apex ~0.98 m,
+											// permet de sauter sur une caisse metal ~0.87 m + marge). Valeur reelle
+											// pilotee par config.json "player.movement.jump_speed".
+											ccCfg.jumpSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.jump_speed",      6.25));
 											ccCfg.coyoteTimeSec = static_cast<float>(m_cfg.GetDouble("player.movement.coyote_time_s",   0.1));
 											ccCfg.jumpBufferSec = static_cast<float>(m_cfg.GetDouble("player.movement.jump_buffer_s",   0.1));
 											ccCfg.capsule.radius = 0.3f;

@@ -66,14 +66,30 @@ Le tout livré dans **une seule PR**.
 
 Trois unités isolées.
 
-### 4.1 Hauteur de saut — `CharacterController::Config`
+### 4.1 Hauteur de saut
 
-- `jumpSpeed : 4.9f → 6.25f`.
-  - Apex = `6.25² / (2·20) = 39,0625 / 40 ≈ **0,977 m**` > 0,87 + 0,1 = 0,97. ✓
-- Mettre à jour le commentaire de calibrage (lignes ~93-96) pour refléter le nouveau
-  calcul et la raison (sauter sur une caisse métal de ~0,87 m avec marge 0,1 m).
+> **⚠️ Levier runtime = `config.json`, PAS le défaut du header.** L'Engine construit le
+> `CharacterController::Config` en lisant `config.json` (`player.movement.jump_speed`) à
+> [Engine.cpp:4952](src/client/app/Engine.cpp:4952), avec un fallback en dur. Le défaut
+> de la struct `Config` n'est **pas** utilisé au runtime du client de jeu. **Tous** les
+> emplacements doivent être alignés, sinon le changement n'a aucun effet en jeu (bug
+> constaté au test : le perso ne sautait pas plus haut car `config.json` valait 4.9).
+
+Aligner `jumpSpeed` à **6.25** aux trois endroits :
+
+- **`config.json`** : `player.movement.jump_speed : 4.9 → 6.25` (**valeur réelle en jeu**).
+- **`src/client/app/Engine.cpp:4952`** : fallback `9.0 → 6.25` (cohérence si la clé est
+  absente d'un `config.json` déployé).
+- **`src/client/gameplay/CharacterController.h`** : défaut de struct `4.9 → 6.25` (doc +
+  utilisé par les tests).
+
+Apex = `6.25² / (2·20) = 39,0625 / 40 ≈ **0,977 m**` > 0,87 + 0,1 = 0,97. ✓
+
 - **Effet de bord assumé** : tous les sauts montent à ~0,98 m → beaucoup de rebords du
-  monde deviennent atteignables (c'est l'objectif « zones cachées »).
+  monde deviennent atteignables (objectif « zones cachées »).
+- **Leçon test** : `Test_Jump_DefaultClearsMetalCrate` valide la *physique* (apex pour la
+  vitesse par défaut) mais **pas le câblage `config.json`** — vérifié manuellement en jeu
+  (instancier l'Engine en test nécessite un `VkDevice`).
 
 ### 4.2 Couvercle atterrissable — `CompositeWorldCollider::SweepCapsule`
 

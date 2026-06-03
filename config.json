@@ -179,18 +179,16 @@
         },
         "_comment_interactables": "Interagir (touche E) : count = nombre de cibles ; chaque index i a x/z (metres monde), radius (portee m), npc (bool : PNJ vs objet), label, message (dialogue PNJ ou effet objet), mesh/scale/yaw_deg/rot_x_deg, dialogue. Seuls les VRAIS interactibles ici (PNJ, coffre). Le DECOR (arbres, props non interactifs mais solides) est dans world.scenery. Le coffre et le villageois sont solides (collision) comme tout le decor.",
         "interactables": {
-            "count": 7,
+            "count": 5,
             "0": { "x": 4.0, "z": 0.0, "radius": 2.5, "npc": true, "label": "Villageois", "message": "Villageois : Bonjour !", "mesh": "models/characters/humains/Male_Ranger/Male_Ranger.glb", "scale": 95.0, "rot_x_deg": -90.0, "yaw_deg": 270.0, "dialogue": { "count": 3, "0": "Bonjour, aventurier ! Bienvenue par ici.", "1": "Le bassin de test est a l'est, si tu veux nager.", "2": "Reviens me voir quand tu veux." } },
             "1": { "x": -4.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Coffre", "message": "Vous fouillez le coffre... vide pour l'instant.", "mesh": "meshes/props/Chest_Wood.gltf", "scale": 1.0, "yaw_deg": 0.0 },
-            "2": { "x": -9.0, "z": -4.0, "radius": 2.0, "npc": false, "label": "Caisse en bois", "message": "Caisse en bois (comparaison).", "mesh": "meshes/props/Crate_Wooden.gltf", "scale": 1.0, "yaw_deg": 0.0 },
-            "3": { "x": -9.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Caisse metal", "message": "Caisse en metal (comparaison).", "mesh": "meshes/props/Crate_Metal.gltf", "scale": 1.0, "yaw_deg": 0.0 },
-            "4": { "x": -9.0, "z": 4.0, "radius": 2.0, "npc": false, "label": "Cageot", "message": "Cageot de ferme vide (comparaison).", "mesh": "meshes/props/FarmCrate_Empty.gltf", "scale": 1.0, "yaw_deg": 0.0 },
-            "5": { "x": -13.0, "z": -2.0, "radius": 2.0, "npc": false, "label": "Cage", "message": "Petite cage (comparaison).", "mesh": "meshes/props/Cage_Small.gltf", "scale": 1.0, "yaw_deg": 0.0 },
-            "6": { "x": -13.0, "z": 2.0, "radius": 2.0, "npc": false, "label": "Tonneau", "message": "Tonneau (comparaison).", "mesh": "meshes/props/Barrel.gltf", "scale": 1.0, "yaw_deg": 0.0 }
+            "2": { "x": -9.0, "z": 4.0, "radius": 2.0, "npc": false, "label": "Cageot", "message": "Cageot de ferme vide (comparaison).", "mesh": "meshes/props/FarmCrate_Empty.gltf", "scale": 1.0, "yaw_deg": 0.0 },
+            "3": { "x": -13.0, "z": -2.0, "radius": 2.0, "npc": false, "label": "Cage", "message": "Petite cage (comparaison).", "mesh": "meshes/props/Cage_Small.gltf", "scale": 1.0, "yaw_deg": 0.0 },
+            "4": { "x": -13.0, "z": 2.0, "radius": 2.0, "npc": false, "label": "Tonneau", "message": "Tonneau (comparaison).", "mesh": "meshes/props/Barrel.gltf", "scale": 1.0, "yaw_deg": 0.0 }
         },
         "_comment_scenery": "Decor solide/non-solide (foret riveraine dense + sous-bois). Genere par tools/world_gen/scatter_forest.py (deterministe). Chaque index i : mesh, x/z (metres monde, Y au sol au runtime), yaw_deg, scale, collision_radius (cylindre, m), solid (false = traversable : herbe/fougeres/fleurs ; true = bloque : arbres, rochers).",
         "scenery": {
-            "count": 310,
+            "count": 312,
             "0": { "mesh": "meshes/props/DeadTree_2.gltf", "x": -11.81, "z": -32.97, "yaw_deg": 62.3, "scale": 1.14, "collision_radius": 0.50, "solid": true },
             "1": { "mesh": "meshes/props/TwistedTree_3.gltf", "x": -12.50, "z": 50.24, "yaw_deg": 266.1, "scale": 1.18, "collision_radius": 0.80, "solid": true },
             "2": { "mesh": "meshes/props/DeadTree_4.gltf", "x": 63.57, "z": 45.89, "yaw_deg": 68.4, "scale": 1.03, "collision_radius": 0.50, "solid": true },
@@ -500,7 +498,9 @@
             "306": { "mesh": "meshes/props/Bush_Common.gltf", "x": 101.95, "z": -17.44, "yaw_deg": 256.5, "scale": 0.93, "collision_radius": 0.00, "solid": false },
             "307": { "mesh": "meshes/props/Mushroom_Laetiporus.gltf", "x": 119.01, "z": 72.83, "yaw_deg": 199.4, "scale": 1.21, "collision_radius": 0.00, "solid": false },
             "308": { "mesh": "meshes/props/Clover_2.gltf", "x": 23.08, "z": -47.71, "yaw_deg": 282.3, "scale": 0.93, "collision_radius": 0.00, "solid": false },
-            "309": { "mesh": "meshes/props/Bush_Common.gltf", "x": -0.75, "z": -47.65, "yaw_deg": 245.0, "scale": 1.04, "collision_radius": 0.00, "solid": false }
+            "309": { "mesh": "meshes/props/Bush_Common.gltf", "x": -0.75, "z": -47.65, "yaw_deg": 245.0, "scale": 1.04, "collision_radius": 0.00, "solid": false },
+            "310": { "mesh": "meshes/props/Crate_Wooden.gltf", "x": -9.0, "z": -4.0, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.00, "solid": true },
+            "311": { "mesh": "meshes/props/Crate_Metal.gltf", "x": -9.0, "z": 0.0, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.00, "solid": true }
         },
         "_comment_test_water": "Nage : bassin de TEST procedural. Le heightmap demo_plains a ete CREUSE en bol lisse centre sur (center_x,center_z) (fond a y=94, berge a y=100) ; l'eau est posee au niveau du sol creuse + depth_m. niveauY = GroundHeightAt(centre) + depth_m = 96 + 3 = 99 (1 m sous la berge). Le depth-test du water.frag clippe la nappe au rivage reel du bol (pas de bord carre, pas de recouvrement plein ecran). Centre eloigne du spawn/props (x=50) pour ne pas creuser sous le coffre/villageois (resolution heightmap ~16 m/sample). enabled=false pour retirer l'eau (le bol reste creuse dans le heightmap). Sera remplace par une vraie etendue d'eau via instances/water.bin.",
         "test_water": {

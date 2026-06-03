@@ -102,6 +102,18 @@ int main()
 		check(hit.fraction > 0.5f && hit.fraction < 0.7f, "dessus: fraction ~0.6");
 	}
 
+	// 6b) Atterrissage en BORD : centre hors du rayon cylindre (0.5) mais dans le
+	//     rayon combiné (cyl 0.5 + capsule 0.3 = 0.8) -> on se pose quand même
+	//     ("si ça te bloque latéralement, tu peux te poser dessus").
+	{
+		CompositeWorldCollider c(&terrain); c.AddCylinder(cyl); // topY = 3, radius 0.5
+		IWorldCollider::SweepHit hit;
+		// ex = 5.7 - 5.0 = 0.7 : hors 0.5 mais dans 0.8.
+		bool h = c.SweepCapsule(cap, Vec3{ 5.7f, 4.5f, 0 }, Vec3{ 5.7f, 3.5f, 0 }, hit);
+		check(h && hit.hit, "bord: hit attendu (rayon combine)");
+		check(hit.normal.y > 0.99f, "bord: normale verticale");
+	}
+
 	// 7) Déjà posé sur le dessus (start bottom <= topY) : hit immédiat (frac ~0) ->
 	//    le sticky ground probe garde le perso "grounded" sur la caisse.
 	{

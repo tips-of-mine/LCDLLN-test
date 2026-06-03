@@ -56,7 +56,13 @@ namespace engine::gameplay
 					const float startBottom = startCenter.y - halfH;
 					const float endBottom   = endCenter.y   - halfH;
 					const float ex = endCenter.x - c.cx, ez = endCenter.z - c.cz;
-					const bool insideXZ = (ex * ex + ez * ez) <= (c.radius * c.radius);
+					// Zone d'atterrissage alignee sur l'empreinte de blocage horizontal
+					// (rayon cylindre + rayon capsule) : "si ca te bloque lateralement,
+					// tu peux te poser dessus". Sinon le dessus (petit disque de rayon
+					// c.radius) serait quasi impossible a viser en sautant (le blocage
+					// lateral maintient le joueur a c.radius+capsule.radius du centre).
+					const float landR = c.radius + capsule.radius;
+					const bool insideXZ = (ex * ex + ez * ez) <= (landR * landR);
 					// Franchissement de topY de haut en bas dans l'empreinte (miroir du
 					// sol plat a y=topY). startBottom <= topY => deja pose (frac 0).
 					if (insideXZ && endBottom < c.topY && startBottom >= c.topY)

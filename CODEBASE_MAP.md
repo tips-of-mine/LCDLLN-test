@@ -2153,19 +2153,27 @@ l'exploration de zones cachées. Spec : `docs/superpowers/specs/2026-06-02-saut-
     sweep part à ≤ 4 m au-dessus de `topY`. La sonde anti-encastrement du
     `CharacterController` (depuis 50 m) reste donc ignorée par les props → aucune
     téléportation au sommet (préserve la parade documentée dans le fichier).
+  - **Zone d'atterrissage = rayon combiné** (`c.radius + capsule.radius`), aligné sur
+    l'empreinte de blocage horizontal : « si ça te bloque latéralement, tu peux te poser
+    dessus ». Sans ça, le dessus (petit disque de rayon `c.radius`) est quasi impossible
+    à viser en sautant, car le blocage latéral maintient le joueur à
+    `c.radius + capsule.radius` du centre (bug constaté au test : on passait au-dessus
+    sans s'arrêter dessus).
 
-### Règle loot — caisses non-lootables
-Les caisses `Crate_Metal` et `Crate_Wooden` (`game/data/meshes/props/`) ne sont **pas**
-des emplacements de loot. Le loot reste réservé aux nœuds de récolte (`GatheringSystem`)
-— et, à terme, aux coffres dédiés (épic B « coffres à clé »). Ne pas associer de table
-de loot à ces props.
+### Caisses : décor solide non-interactif (plus de loot/interaction)
+Les caisses `Crate_Metal` (« Caisse metal ») et `Crate_Wooden` (« Caisse en bois »)
+**ne sont plus des interactables** : déplacées de `config.json` `world.interactables`
+vers `world.scenery` (`solid: true`). Elles restent **visibles et solides/atterrissables**
+mais **sans interaction touche E ni message**. Elles **ne sont pas** des emplacements de
+loot (le loot reste réservé aux nœuds de récolte `GatheringSystem` — et, à terme, aux
+coffres dédiés de l'épic B). Ne pas leur réassocier d'interaction ni de table de loot.
 
 ### Tests
 - `character_controller_jump_tests::Test_Jump_DefaultClearsMetalCrate` : apex par défaut
   ≥ 0.97 m (franchit la caisse + marge).
-- `composite_world_collider_tests` cas 6/7/8 : atterrissage sur le dessus, posé immédiat
-  (frac 0, garde « grounded »), hors empreinte XZ (pas de hit). Le cas **4bis** (sweep
-  50 m → pas de hit) reste la garde anti-téléport.
+- `composite_world_collider_tests` cas 6/6b/7/8 : atterrissage sur le dessus, en **bord**
+  (rayon combiné), posé immédiat (frac 0, garde « grounded »), hors empreinte XZ (pas de
+  hit). Le cas **4bis** (sweep 50 m → pas de hit) reste la garde anti-téléport.
 
 ### Conséquences / limites
 - **Tous** les props solides ont un dessus plat atterrissable à leur point le plus haut

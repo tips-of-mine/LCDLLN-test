@@ -101,10 +101,12 @@ Condition d'émission d'un contact « sol sur prop » :
 1. Sweep descendant : `endCenter.y < startCenter.y`.
 2. Le **bas de la capsule** (`center.y - halfHeight - radius`) part au-dessus de `topY`
    au début du sweep et finit à/sous `topY` à la fin.
-3. La position XZ au moment du franchissement est **dans l'empreinte** du cylindre
-   (distance horizontale à l'axe ≤ `c.radius` ; tolérance possible de `+capsule.radius`
-   pour rester cohérent avec le rayon combiné utilisé en horizontal — à figer à
-   l'implémentation).
+3. La position XZ au moment du franchissement est **dans l'empreinte** du cylindre.
+   **Décision (corrigée après test en jeu)** : rayon **combiné** `c.radius + capsule.radius`
+   (et non `c.radius` seul), aligné sur l'empreinte de blocage horizontal. Sinon le dessus
+   (petit disque) est quasi impossible à viser : le blocage latéral maintient le joueur à
+   `c.radius + capsule.radius` du centre, donc en sautant droit il retombe **à côté** du
+   disque (bug constaté : « on passe au-dessus sans s'arrêter dessus »).
 4. **Garde anti-sonde 50 m** : n'émettre que si `startCenter.y - c.topY ≤ kPropTopMargin`,
    avec `kPropTopMargin` une petite marge (quelques mètres, ≪ 50). La sonde
    anti-encastrement part de 50 m → exclue → comportement actuel préservé.
@@ -123,12 +125,20 @@ Le blocage **horizontal** existant (côtés du cylindre) reste inchangé : les d
 contributions coexistent (approche latérale → côté ; approche descendante dans
 l'empreinte → couvercle).
 
-### 4.3 Documentation « caisses non-lootables »
+### 4.3 Caisses non-lootables **et non-interactives**
 
-- Ajouter une note dans `CODEBASE_MAP.md` (section props/loot) actant la règle :
-  les caisses (`Crate_Metal`, `Crate_Wooden`) **ne sont pas** des emplacements de loot ;
-  le loot reste réservé aux nœuds de récolte (et, plus tard, aux coffres de l'épic B).
-- Aucune suppression de code (rien n'associe de loot aux caisses aujourd'hui).
+**Correction après test** : les caisses étaient en réalité des **interactables**
+(`config.json` `world.interactables` : « Caisse metal » = `Crate_Metal`, « Caisse en
+bois » = `Crate_Wooden`) avec interaction touche E + message. Demande utilisateur :
+**supprimer toute possibilité d'interaction** (et elles ne sont pas des spots de loot).
+
+- **Déplacer** `Crate_Metal` et `Crate_Wooden` de `world.interactables` vers
+  `world.scenery` (`solid: true`) : elles restent **visibles et solides/atterrissables**,
+  mais **sans interaction ni message**. Renuméroter les interactables restants
+  (count 7 → 5).
+- Mettre à jour `CODEBASE_MAP.md` : caisses = décor solide non-interactif, pas de loot
+  (réservé aux nœuds de récolte, et aux coffres de l'épic B).
+- Aucune table de loot n'était associée aux caisses (rien à retirer de ce côté).
 
 ## 5. Flux nominal
 

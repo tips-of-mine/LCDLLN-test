@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LCDLLN — Maquettes cellule de dialogue PNJ</title>
+<style>
+  :root {
+    --parch:#e9dcc0; --parch-dark:#d8c69e; --ink:#2c2113; --ink-soft:#4a3a22;
+    --gold:#c8a24a; --gold-bright:#e7c66b; --frame:#3a2a16; --frame-light:#6b4f2a;
+    --choice:#f3ead2; --choice-hover:#fff4d6; --bg:#10141b;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; font-family:"Segoe UI",system-ui,sans-serif; color:#dfe4ea;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #1c2535 0%, transparent 60%),
+      linear-gradient(160deg,#0c1018,#161d29 60%,#0c1018);
+    min-height:100vh; padding:24px;
+  }
+  h1 { font-size:20px; font-weight:600; margin:0 0 4px; letter-spacing:.3px; }
+  .sub { color:#8b97a7; font-size:13px; margin-bottom:18px; }
+  .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:18px; }
+  .toolbar .group { display:flex; gap:6px; align-items:center; background:#1b2434; border:1px solid #2c3a52; padding:6px 10px; border-radius:8px; }
+  .toolbar label { font-size:12px; color:#9fb0c6; }
+  button.tab, .toolbar button {
+    background:#22304a; color:#cfe0f5; border:1px solid #34507a; padding:6px 12px;
+    border-radius:7px; cursor:pointer; font-size:13px;
+  }
+  button.tab.active { background:var(--gold); color:#241a07; border-color:var(--gold-bright); font-weight:600; }
+  .toolbar button:hover { background:#2c3f63; }
+  .chip { font-size:11px; padding:3px 8px; border-radius:99px; background:#1e2a3e; border:1px solid #33445f; color:#9fb6d6; }
+
+  /* ===== Scene (game viewport) ===== */
+  .scene {
+    position:relative; height:560px; border-radius:14px; overflow:hidden;
+    border:1px solid #2a3548;
+    background:
+      linear-gradient(180deg,#6f86b8 0%,#9fb6d8 38%,#cdd6c0 55%,#7e8a5e 56%,#566038 100%);
+    box-shadow:inset 0 0 120px rgba(0,0,0,.45);
+  }
+  .scene .sun { position:absolute; top:40px; right:90px; width:70px; height:70px; border-radius:50%;
+    background:radial-gradient(circle,#fff5d0,#ffd56b); box-shadow:0 0 60px 20px rgba(255,213,107,.5); }
+  .scene .npc {
+    position:absolute; left:50%; top:300px; transform:translateX(-50%);
+    width:64px; height:120px; border-radius:30px 30px 14px 14px;
+    background:linear-gradient(180deg,#7b5a37,#4a3620); border:2px solid #2c2012;
+  }
+  .scene .npc::after { content:"PNJ"; position:absolute; top:-22px; left:50%; transform:translateX(-50%);
+    font-size:11px; color:#ffe9b0; background:rgba(0,0,0,.55); padding:1px 7px; border-radius:5px; white-space:nowrap; }
+  .scene .dist {
+    position:absolute; left:50%; top:430px; transform:translateX(-50%);
+    font-size:11px; color:#0c1018; background:rgba(231,198,107,.92); padding:3px 9px; border-radius:6px;
+    display:flex; gap:8px; align-items:center; font-weight:600;
+  }
+  .scene .dist .lock::before { content:"🔒"; }
+
+  /* ===== Shared dialogue cell skin (parchment + gold frame) ===== */
+  .dlg {
+    position:absolute; display:flex; flex-direction:column;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,0) 12%),
+      repeating-linear-gradient(0deg, rgba(120,90,40,.04) 0 2px, transparent 2px 4px),
+      linear-gradient(160deg,var(--parch),var(--parch-dark));
+    color:var(--ink);
+    border:2px solid var(--frame);
+    box-shadow:0 0 0 2px var(--gold) inset, 0 10px 40px rgba(0,0,0,.55);
+    border-radius:10px;
+  }
+  .dlg .titlebar {
+    display:flex; align-items:center; gap:10px;
+    padding:8px 14px; border-bottom:1px solid rgba(58,42,22,.4);
+    background:linear-gradient(180deg, rgba(200,162,74,.35), rgba(200,162,74,0));
+  }
+  .dlg .portrait { width:34px; height:34px; border-radius:6px; flex:none;
+    background:linear-gradient(180deg,#8a6a42,#4a3620); border:1px solid var(--frame); }
+  .dlg .npcname { font-weight:700; color:var(--frame); font-size:15px; letter-spacing:.2px; }
+  .dlg .npcrole { font-size:11px; color:var(--ink-soft); }
+  .dlg .close { margin-left:auto; cursor:pointer; color:var(--frame); font-size:16px; opacity:.7; }
+  .dlg .close:hover { opacity:1; }
+
+  /* text area with right scrollbar */
+  .dlg .body {
+    position:relative; padding:14px 18px; overflow-y:auto; overflow-x:hidden;
+    line-height:1.55; font-size:15px; color:var(--ink);
+    scrollbar-width:thin; scrollbar-color:var(--gold) transparent;
+  }
+  .dlg .body p { margin:0 0 12px; overflow-wrap:break-word; word-break:break-word; } /* retour à la ligne auto */
+  .dlg .body p.cue { color:var(--ink-soft); font-style:italic; }
+  .dlg .body::-webkit-scrollbar { width:12px; }
+  .dlg .body::-webkit-scrollbar-track { background:rgba(58,42,22,.12); border-radius:8px; margin:6px; }
+  .dlg .body::-webkit-scrollbar-thumb {
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold)); border-radius:8px; border:2px solid var(--parch); }
+  .caret { display:inline-block; width:8px; background:var(--frame); margin-left:1px;
+    animation:blink 1s steps(2) infinite; }
+  @keyframes blink { 50%{opacity:0;} }
+
+  /* choices */
+  .dlg .choices { padding:10px 14px 14px; border-top:1px solid rgba(58,42,22,.4); display:flex; flex-direction:column; gap:8px; }
+  .dlg .choices .hint { font-size:11px; color:var(--ink-soft); margin-bottom:2px; }
+  .choice {
+    display:flex; gap:10px; align-items:flex-start; text-align:left; width:100%;
+    background:linear-gradient(180deg,var(--choice),#e7dcc0); color:var(--ink);
+    border:1px solid var(--frame-light); border-radius:8px; padding:9px 12px; cursor:pointer;
+    font-size:14px; line-height:1.4; overflow-wrap:break-word; word-break:break-word; /* réponses : retour ligne auto */
+  }
+  .choice:hover { background:var(--choice-hover); border-color:var(--gold); }
+  .choice .num { flex:none; width:20px; height:20px; border-radius:5px; background:var(--frame); color:var(--gold-bright);
+    font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .choice .ico { flex:none; }
+
+  /* ===== Variant A: bottom banner ===== */
+  .vA .dlg { left:5%; right:5%; bottom:18px; max-height:300px; }
+  .vA .dlg .body { max-height:150px; }
+
+  /* ===== Variant B: centered parchment window ===== */
+  .vB .dlg { left:50%; top:50%; transform:translate(-50%,-50%); width:560px; max-height:460px; }
+  .vB .dlg .body { max-height:230px; }
+
+  /* ===== Variant C: anchored side window (cohérent panneaux ImGui) ===== */
+  .vC .dlg { right:18px; top:18px; bottom:18px; width:380px; }
+  .vC .dlg .body { flex:1 1 auto; }
+
+  .legend { margin-top:16px; display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:10px; }
+  .legend .card { background:#161f2e; border:1px solid #28344a; border-radius:10px; padding:12px 14px; }
+  .legend .card b { color:var(--gold-bright); font-size:13px; }
+  .legend .card p { margin:6px 0 0; font-size:12.5px; color:#aab8cc; line-height:1.5; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+  <h1>LCDLLN — Cellule de dialogue PNJ <span class="chip">maquette</span></h1>
+  <div class="sub">3 dispositions à comparer. Les mécaniques sont animées : auto-scroll fluide, retour à la ligne, immobilité + distance, 2→5 choix.</div>
+
+  <div class="toolbar">
+    <div class="group">
+      <button class="tab active" data-v="vA">A · Bandeau bas</button>
+      <button class="tab" data-v="vB">B · Fenêtre centrale</button>
+      <button class="tab" data-v="vC">C · Panneau ancré</button>
+    </div>
+    <div class="group">
+      <label>Choix de réponse :</label>
+      <button data-n="2">2</button>
+      <button data-n="3">3</button>
+      <button data-n="4">4</button>
+      <button data-n="5">5</button>
+    </div>
+    <div class="group">
+      <button id="replay">▶ Rejouer l'auto-scroll</button>
+    </div>
+  </div>
+
+  <div class="scene vA" id="scene">
+    <div class="sun"></div>
+    <div class="npc"></div>
+    <div class="dist"><span class="lock">Immobile</span> · 0,8 m / 1,50 m</div>
+
+    <div class="dlg">
+      <div class="titlebar">
+        <div class="portrait"></div>
+        <div>
+          <div class="npcname">Aldric le Veilleur</div>
+          <div class="npcrole">Donneur de quête · Garde du pont</div>
+        </div>
+        <div class="close" title="Quitter le dialogue">✕</div>
+      </div>
+      <div class="body" id="body"></div>
+      <div class="choices" id="choices">
+        <div class="hint">Vos réponses :</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="card"><b>Auto-scroll fluide</b><p>La vue glisse lentement vers le bas (lecture mains-libres). Dès que vous touchez la scrollbar, l'auto-scroll se met en pause pour vous laisser remonter ; il reprend si vous revenez en bas.</p></div>
+    <div class="card"><b>Retour à la ligne</b><p>Texte du PNJ et libellés de réponse passent automatiquement à la ligne (word-wrap), quelle que soit la longueur.</p></div>
+    <div class="card"><b>Immobilité + 1,50 m</b><p>Le bandeau du haut montre l'état « Immobile » et la distance au PNJ. Au-delà de 1,50 m, le dialogue se ferme automatiquement.</p></div>
+    <div class="card"><b>Journal de quête</b><p>Si le dialogue est lié à une quête/raid, il est consigné dans le journal de quête local (par personnage) pour relecture.</p></div>
+  </div>
+
+<script>
+  const NPC_LINES = [
+    {cue:false, t:"Halte, voyageur. Peu de gens empruntent encore ce pont depuis que les eaux ont monté."},
+    {cue:true,  t:"(Il pose la main sur le pommeau de son épée, puis se détend.)"},
+    {cue:false, t:"Les ruines en aval grouillent de pillards. Mon frère y est parti il y a trois jours et n'en est jamais revenu. Je crains le pire."},
+    {cue:false, t:"Si tu as le courage d'aller voir, je te récompenserai. Rapporte-moi son médaillon — un croissant de lune gravé d'argent — et je saurai à quoi m'en tenir."},
+    {cue:true,  t:"(Son regard se perd vers l'horizon brumeux.)"},
+    {cue:false, t:"Le temps presse. Alors, qu'en dis-tu ?"}
+  ];
+  const ALL_CHOICES = [
+    {ico:"❓", t:"Parle-moi davantage de ces ruines et de ce qui s'y cache."},
+    {ico:"⚔️", t:"J'accepte. Je retrouverai ton frère et son médaillon, coûte que coûte."},
+    {ico:"💰", t:"Quelle sera ma récompense, exactement, si je te rapporte ce médaillon ?"},
+    {ico:"🛡️", t:"C'est trop dangereux pour moi en ce moment. Je reviendrai mieux préparé."},
+    {ico:"👋", t:"Je n'ai pas le temps pour ça. Au revoir, garde."}
+  ];
+
+  const body = document.getElementById('body');
+  const choicesEl = document.getElementById('choices');
+  const scene = document.getElementById('scene');
+  let nChoices = 3;
+  let autoScroll = true, scrollRAF = null;
+
+  function renderChoices(){
+    choicesEl.innerHTML = '<div class="hint">Vos réponses :</div>';
+    for (let i=0;i<nChoices;i++){
+      const c = ALL_CHOICES[i];
+      const b = document.createElement('button');
+      b.className = 'choice';
+      b.innerHTML = `<span class="num">${i+1}</span><span class="ico">${c.ico}</span><span>${c.t}</span>`;
+      choicesEl.appendChild(b);
+    }
+  }
+
+  function typeOutThenScroll(){
+    body.innerHTML = '';
+    autoScroll = true;
+    // Texte complet présent (auto-scroll du bloc) : on insère tout, puis on glisse.
+    NPC_LINES.forEach(l=>{
+      const p = document.createElement('p');
+      if (l.cue) p.className = 'cue';
+      p.textContent = l.t;
+      body.appendChild(p);
+    });
+    body.scrollTop = 0;
+    startSmoothScroll();
+  }
+
+  function startSmoothScroll(){
+    cancelAnimationFrame(scrollRAF);
+    const step = ()=>{
+      if (!autoScroll) return;
+      const max = body.scrollHeight - body.clientHeight;
+      if (body.scrollTop < max - 0.5){
+        body.scrollTop += 0.35; // doucement
+        scrollRAF = requestAnimationFrame(step);
+      }
+    };
+    scrollRAF = requestAnimationFrame(step);
+  }
+
+  // Pause auto-scroll quand l'utilisateur remonte ; reprise s'il revient en bas.
+  body.addEventListener('wheel', ()=>{ pauseThenMaybeResume(); });
+  body.addEventListener('scroll', ()=>{ /* tracked by pause logic */ });
+  function pauseThenMaybeResume(){
+    autoScroll = false;
+    clearTimeout(body._t);
+    body._t = setTimeout(()=>{
+      const max = body.scrollHeight - body.clientHeight;
+      if (body.scrollTop >= max - 24){ autoScroll = true; startSmoothScroll(); }
+    }, 600);
+  }
+
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      scene.className = 'scene ' + t.dataset.v;
+      typeOutThenScroll();
+    });
+  });
+  document.querySelectorAll('[data-n]').forEach(b=>{
+    b.addEventListener('click', ()=>{ nChoices = +b.dataset.n; renderChoices(); });
+  });
+  document.getElementById('replay').addEventListener('click', typeOutThenScroll);
+
+  renderChoices();
+  typeOutThenScroll();
+</script>
+</body>
+</html>

@@ -46,7 +46,7 @@ namespace engine::render::gi
 			float sunDir[4];      ///< xyz = direction NORMALISÉE *vers* le soleil ; w inutilisé.
 			float sunColor[4];    ///< xyz = couleur/intensité du soleil ; w inutilisé.
 			float skyColor[4];    ///< xyz = couleur d'horizon du ciel (DayNightCycle skyHorizon) ; w inutilisé.
-			float params[4];      ///< x = hysteresis [0..1] (élevé = lent/stable), y = atlasCols, z = tileSize (texels+2), w inutilisé.
+			float params[4];      ///< x = hysteresis [0..1] (élevé = lent/stable), y = atlasCols, z = tileSize (texels+2), w = indice de frame courant (M45.7b — amortissement : modulo kUpdateDivisor côté shader).
 		};
 		static_assert(sizeof(DdgiUpdateParams) == 112, "DdgiUpdateParams doit faire 112 octets (<=128 pour push constants)");
 

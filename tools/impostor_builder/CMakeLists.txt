@@ -13,10 +13,12 @@ add_executable(impostor_builder
 # Include dirs :
 #  - dossier courant (headers de l'outil)
 #  - external/cgltf (cgltf.h, header-only)
+#  - external/stb   (stb_image.h, header-only — décodage textures baseColor)
 #  - racine du dépôt (au cas où un header partagé autonome serait inclus)
 target_include_directories(impostor_builder PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/external/cgltf
+  ${CMAKE_SOURCE_DIR}/external/stb
   ${CMAKE_SOURCE_DIR}
 )
 

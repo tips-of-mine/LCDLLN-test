@@ -16,6 +16,10 @@ namespace engine::world
 		for (int i = 1; i < kLodLevelCount; ++i)
 			if (m_distanceMax[i] < m_distanceMax[i - 1])
 				m_distanceMax[i] = m_distanceMax[i - 1];
+
+		// Seuil de bascule mesh -> impostor (M45.5b). Centralise ici plutot que
+		// dans world.impostor.distance_m. Defaut 60 m si la cle est absente.
+		m_impostorDistanceMax = static_cast<float>(config.GetDouble("lod.distance_impostor_m", 60.0));
 	}
 
 	int LodConfig::GetLodLevel(float distanceMeters) const

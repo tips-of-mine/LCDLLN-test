@@ -32,6 +32,8 @@
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/client/render/AuthImGuiRenderer.h"
+#include "src/client/dialogue/DialogueConfigLoader.h"
+#include "src/client/render/DialogueImGuiRenderer.h"
 #include "src/client/render/ChatImGuiRenderer.h"
 #include "src/client/render/MailImGuiRenderer.h"
 #include "src/client/render/GmTicketImGuiRenderer.h"
@@ -3969,12 +3971,32 @@ namespace engine
 									// (copie WithBloom -> Dof) pour que Tonemap lise une image valide.
 									m_dofReady = m_pipeline->GetDepthOfFieldPass().IsValid();
 
-									// M45.7 — GI dynamique DDGI. DÉSACTIVÉ par défaut : si gi.ddgi.enabled
-									// est false (cas par défaut), on n'alloue rien, on n'enregistre pas la
-									// passe DDGI_Update et le LightingPass garde useDdgi=0 => rendu
-									// strictement identique. Si tout réussit, on bascule m_ddgiEnabled=true.
+									// M45.7/M45.8 — GI dynamique DDGI pilotée par NIVEAUX DE QUALITÉ.
+									// DÉFAUT quality="off" => s.dynamic=false => aucune allocation, passe
+									// DDGI_Update NON enregistrée, LightingPass useDdgi=0 => rendu
+									// STRICTEMENT identique au chemin probes statiques. Seuls
+									// dynamic-low/dynamic-high allouent le volume et activent la passe.
+									//
+									// Rétro-compat : si la clé gi.ddgi.quality est ABSENTE mais
+									// gi.ddgi.enabled==true, on traite comme DynamicHigh (ancien
+									// comportement « DDGI runtime pleine qualité »). Sinon, quality
+									// prime (défaut "off").
 									m_ddgiEnabled = false;
-									if (m_cfg.GetBool("gi.ddgi.enabled", false))
+									engine::render::gi::DdgiQuality ddgiQuality;
+									if (!m_cfg.Has("gi.ddgi.quality") && m_cfg.GetBool("gi.ddgi.enabled", false))
+									{
+										ddgiQuality = engine::render::gi::DdgiQuality::DynamicHigh;
+									}
+									else
+									{
+										const std::string q = m_cfg.GetString("gi.ddgi.quality", "off");
+										ddgiQuality = engine::render::gi::ParseDdgiQuality(q);
+									}
+									const engine::render::gi::DdgiQualitySettings ddgiSettings =
+										engine::render::gi::ResolveDdgiQuality(ddgiQuality);
+									m_ddgiUpdateDivisor = (ddgiSettings.updateDivisor >= 1u) ? ddgiSettings.updateDivisor : 1u;
+									m_ddgiIntensity = ddgiSettings.intensity;
+									if (ddgiSettings.dynamic)
 									{
 										engine::render::gi::DdgiGridConfig gridCfg{};
 										gridCfg.origin[0]  = static_cast<float>(m_cfg.GetDouble("gi.ddgi.origin_m[0]", 0.0));
@@ -4009,9 +4031,26 @@ namespace engine
 											else
 											{
 												m_ddgiEnabled = true;
-												LOG_INFO(Render, "[Engine] DDGI runtime ACTIF (gi.ddgi.enabled=true)");
+												LOG_INFO(Render, "[Engine] DDGI runtime ACTIF (quality={})",
+													engine::render::gi::DdgiQualityName(ddgiQuality));
 											}
 										}
+									}
+
+									// M45.8 — log debug de l'état DDGI (gated par gi.ddgi.debug).
+									// PÉRIMÈTRE : le « debug » se limite ici à ce log. La visualisation
+									// 3D des sondes (sphères colorées en ImGui) est REPORTÉE — elle
+									// nécessite un debug-draw 3D dédié (non couvert par ce ticket).
+									if (m_cfg.GetBool("gi.ddgi.debug", false))
+									{
+										LOG_INFO(Render,
+											"[Engine][DDGI debug] quality={} dynamic={} allouee={} probeCount={} divisor={} intensity={:.3f}",
+											engine::render::gi::DdgiQualityName(ddgiQuality),
+											ddgiSettings.dynamic ? 1 : 0,
+											m_ddgiEnabled ? 1 : 0,
+											m_ddgiVolume.ProbeCount(),
+											m_ddgiUpdateDivisor,
+											m_ddgiIntensity);
 									}
 
 									// M100 — Task 12 : Terrain Chunk Runtime — drawcall mesh-terrain par
@@ -4912,6 +4951,10 @@ namespace engine
 												const int dcount = static_cast<int>(m_cfg.GetInt(base + "dialogue.count", 0));
 												for (int dj = 0; dj < dcount; ++dj)
 													e.dialogue.push_back(m_cfg.GetString(base + "dialogue." + std::to_string(dj), ""));
+												// Cellule de dialogue PNJ : sous-titre (role) + arbre moderne
+												// (fallback legacy depuis e.dialogue si pas de dialogue_tree).
+												e.role = m_cfg.GetString(base + "role", "");
+												e.dialogueTree = engine::client::LoadDialogueTree(m_cfg, base, e.dialogue);
 												m_interactables.push_back(e);
 											}
 											if (m_interactables.empty())
@@ -5561,6 +5604,9 @@ namespace engine
 													const engine::render::gi::DdgiGridConfig& gc = m_ddgiVolume.Config();
 													up.gridOrigin[0] = gc.origin[0]; up.gridOrigin[1] = gc.origin[1]; up.gridOrigin[2] = gc.origin[2];
 													up.gridSpacing[0] = gc.spacing[0]; up.gridSpacing[1] = gc.spacing[1]; up.gridSpacing[2] = gc.spacing[2];
+													// M45.8 — slot .w (sinon inutilisé) = diviseur d'amortissement,
+													// lu par ddgi_update.comp (1 sonde sur N mise à jour par frame).
+													up.gridSpacing[3] = static_cast<float>(m_ddgiUpdateDivisor);
 													up.counts[0] = gc.counts[0]; up.counts[1] = gc.counts[1]; up.counts[2] = gc.counts[2];
 													up.counts[3] = gc.irradianceTexels;
 													// Direction VERS le soleil (normalisée), couleur soleil per-zone.
@@ -5585,7 +5631,9 @@ namespace engine
 													up.params[0] = static_cast<float>(m_cfg.GetDouble("gi.ddgi.hysteresis", 0.95));
 													up.params[1] = static_cast<float>(m_ddgiVolume.AtlasCols());
 													up.params[2] = static_cast<float>(m_ddgiVolume.IrradianceTileSize());
-													up.params[3] = 0.0f;
+													// M45.7b — indice de frame courant : le compute fait le modulo
+													// kUpdateDivisor pour l'amortissement (1 sonde sur 4 par frame).
+													up.params[3] = static_cast<float>(m_currentFrame);
 													(void)rs; // rs réservé (cascade 0 lue via le registry ci-dessous).
 
 													// Shadow cascade 0 : on lit sa vue via le registry (comme VolumetricFog).
@@ -5709,7 +5757,9 @@ namespace engine
 													lp.ddgiAtlas[0] = static_cast<float>(m_ddgiVolume.AtlasCols());
 													lp.ddgiAtlas[1] = static_cast<float>(m_ddgiVolume.AtlasRows());
 													lp.ddgiAtlas[2] = static_cast<float>(m_ddgiVolume.IrradianceTileSize());
-													lp.ddgiAtlas[3] = static_cast<float>(m_cfg.GetDouble("gi.ddgi.intensity", 1.0));
+													// M45.8 — intensité pilotée par le niveau de qualité (DynamicLow=0.5,
+													// DynamicHigh=1.0). Remplace l'ancienne lecture de gi.ddgi.intensity.
+													lp.ddgiAtlas[3] = m_ddgiIntensity;
 													ddgiView = m_ddgiVolume.IrradianceView();
 													ddgiSamp = m_ddgiUpdatePass.GetShadowSampler(); // sampler linéaire-équivalent (NEAREST clamp) interne
 												}
@@ -7457,6 +7507,10 @@ namespace engine
 				// Phase 3.11.1 — partage du même contexte ImGui (NewFrame/Render gérés par m_worldEditorImGui).
 				m_chatImGui = std::make_unique<engine::render::ChatImGuiRenderer>();
 				m_chatImGui->BindChatUi(&m_chatUi, &m_cfg);
+				// Cellule de dialogue PNJ : renderer ImGui dédié (fenêtre centrale).
+				// Partage le contexte ImGui avec auth/chat ; rendu Windows uniquement
+				// (le .cpp est gardé par #if _WIN32). Constructeur par défaut.
+				m_dialogueImGui = std::make_unique<engine::render::DialogueImGuiRenderer>();
 				// CMANGOS.18 (Phase 3.18 step 4) — Renderer ImGui de la boite mail.
 				// Partage le contexte ImGui avec auth/chat. Visible uniquement quand
 				// m_mailVisible (toggle via /mail). La taille viewport est mise a
@@ -7943,6 +7997,21 @@ namespace engine
 				// La connexion master (m_authUi.m_masterClient) reste vivante grâce au fix
 				// Phase 2/3 ; SavePositionAsync l'utilise en fire-and-forget.
 				m_currentCharacterId = enterCmd.characterId;
+				// Cellule de dialogue PNJ : journal local de conversation de quête pour ce
+				// personnage + branchement du presenter (sink de journalisation + callback
+				// d'action quête). AcceptQuest/CompleteQuest réutilisent les opcodes quête
+				// existants (m_questUi expose AcceptQuest(uint32_t)/CompleteQuest(uint32_t)).
+				m_dialogueJournal = std::make_unique<engine::client::QuestConversationJournal>(m_cfg, m_currentCharacterId);
+				m_dialogue.SetJournalSink(m_dialogueJournal.get());
+				m_dialogue.SetQuestActionCallback(
+					[this](engine::client::DialogueAction action, int questId)
+					{
+						if (questId < 0) return;
+						if (action == engine::client::DialogueAction::AcceptQuest)
+							m_questUi.AcceptQuest(static_cast<uint32_t>(questId));
+						else if (action == engine::client::DialogueAction::CompleteQuest)
+							m_questUi.CompleteQuest(static_cast<uint32_t>(questId));
+					});
 				const int64_t intervalCfg = m_cfg.GetInt("client.save_position.interval_sec", 30);
 				m_savePositionIntervalSec = std::chrono::seconds(std::max<int64_t>(5, intervalCfg));
 				m_nextSavePositionTime = std::chrono::steady_clock::now() + m_savePositionIntervalSec;
@@ -8313,7 +8382,18 @@ namespace engine
 				// avant le CC, son repere (Forward/Right XZ) servirait a projeter
 				// l'input du frame courant mais sa position cible utiliserait la
 				// position de la frame precedente -> 1-frame lag visible.
-				const auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout, sprintKey, crouchKey);
+				auto moveInput = BuildMoveInput(m_input, m_orbitalCameraController, movementLayout, sprintKey, crouchKey);
+				// Verrou de déplacement : on neutralise toutes les entrées de
+				// déplacement (direction + saut) pour garder l'avatar immobile, dans
+				// deux cas — (1) dialogue PNJ actif (cellule dédiée) ; (2) geste
+				// verrouillant en cours (ex. ouverture de coffre via
+				// m_avatarMoveLockUntilSec). La caméra reste libre dans les deux cas
+				// (m_orbitalCameraController non touché). nowSec est recalculé ici (le
+				// nowSec de la state machine n'est pas encore en portée à ce point) ;
+				// l'écart sub-ms avec la garde roulade plus bas est sans effet visible.
+				const bool moveLocked = EngineNowSec() < m_avatarMoveLockUntilSec;
+				if (m_dialogueActive || moveLocked)
+					moveInput = engine::gameplay::MoveInput{};
 				// Collisionneur composite : terrain (sol + eau) + cylindres des props/décor.
 				m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
 				const engine::math::Vec3 ccPos = m_characterController.GetPosition();
@@ -8396,8 +8476,10 @@ namespace engine
 						m_currentSkinnedMesh->FindClip("CastShoot");
 					const engine::render::skinned::AnimationClip* castExitClip =
 						m_currentSkinnedMesh->FindClip("CastExit");
+					// Clip dynamique : "Interact" (geste générique) ou "PickUp_Table"
+					// (près d'un coffre). m_currentInteractRole est fixé au déclenchement.
 					const engine::render::skinned::AnimationClip* interactClip =
-						m_currentSkinnedMesh->FindClip("Interact");
+						m_currentSkinnedMesh->FindClip(m_currentInteractRole.c_str());
 					const engine::render::skinned::AnimationClip* punchClip =
 						m_currentSkinnedMesh->FindClip(m_currentPunchRole.c_str());
 
@@ -8410,15 +8492,17 @@ namespace engine
 					const std::string attackKeyName = m_cfg.GetString("controls.keybind.attack", "");
 					const engine::platform::Key attackKey = KeyFromName(attackKeyName, engine::platform::Key::Escape);
 					const bool attackKeyBound = !attackKeyName.empty() && std::string(KeyName(attackKey)) == attackKeyName;
-					const bool attackPressed =
-						(m_input.WasMousePressed(engine::platform::MouseButton::Left) && !m_invUi.IsDragging())
-						|| (attackKeyBound && m_input.WasPressed(attackKey));
+					// Pendant un dialogue PNJ : aucune attaque. Le clic gauche sert à
+					// sélectionner une réponse (sinon le perso frappe en même temps).
+					const bool attackPressed = !m_dialogueActive &&
+						((m_input.WasMousePressed(engine::platform::MouseButton::Left) && !m_invUi.IsDragging())
+						|| (attackKeyBound && m_input.WasPressed(attackKey)));
 
 					// Sort : touche R (edge). Meme bloc gameplay garde contre le focus
 					// chat / l'auth (cf. ligne ~6961). Geste cosmetique one-shot (pas de
 					// cible ni d'aller-retour serveur), pendant clavier de l'attaque souris.
 					const bool castPressed =
-						m_input.WasPressed(castKey);
+						m_input.WasPressed(castKey) && !m_dialogueActive;
 
 					// Interagir : touche remappable (controls.keybind.interact, def. E),
 					// edge. Action non-combat (la touche E reservee au §32 trouve ici son
@@ -8428,7 +8512,7 @@ namespace engine
 
 					// Coup de poing : 2e attaque melee, touche remappable (controls.keybind.punch, def. C).
 					const bool punchPressed =
-						m_input.WasPressed(punchKey);
+						m_input.WasPressed(punchKey) && !m_dialogueActive;
 
 					// Esquive/roulade : double-appui (fenetre 0.30s) sur la touche Crouch
 					// (remappable). Touche maintenue = crouch ; deux appuis = Roll (one-shot).
@@ -8629,7 +8713,9 @@ namespace engine
 							newState = moving ? AvatarLocomotionState::CrouchWalk : AvatarLocomotionState::CrouchIdle;
 
 						// Esquive/roulade (double-appui Crouch) : Roll one-shot, prioritaire sur crouch.
-						if (dodgePressed && m_avatarLocoState != AvatarLocomotionState::Roll)
+						// Bloquée pendant le verrou de geste (ouverture de coffre).
+						if (dodgePressed && m_avatarLocoState != AvatarLocomotionState::Roll
+							&& nowSec >= m_avatarMoveLockUntilSec)
 						{
 							newState = AvatarLocomotionState::Roll;
 							// Impulsion d'esquive : direction = mouvement si actif, sinon l'avant camera.
@@ -8667,8 +8753,31 @@ namespace engine
 							newState = AvatarLocomotionState::Cast;
 
 						// Interagir (touche E par defaut) : geste Interact one-shot, action non-combat.
+						// Près d'un coffre : joue "PickUp_Table" (se pencher → saisir → se redresser)
+						// et verrouille le déplacement le temps du clip. Ailleurs : geste "Interact"
+						// générique, sans verrou (comportement historique inchangé).
 						if (interactPressed && !moveInput.jumpPressed && !busyOneShot())
+						{
+							const bool nearChest =
+								m_chestLoaded && m_interactableInRange == m_chestInteractableIndex;
+							if (nearChest)
+							{
+								m_currentInteractRole = "PickUp_Table";
+								const engine::render::skinned::AnimationClip* puClip =
+									m_currentSkinnedMesh->FindClip("PickUp_Table");
+								// Clip absent (race non-UE5 / fallback) -> durée 0 -> verrou expire
+								// immédiatement, pas de gel permanent ; le repli sur "Interact"
+								// est géré juste en dessous.
+								m_avatarMoveLockUntilSec = nowSec + (puClip ? puClip->duration : 0.0f);
+								if (!puClip)
+									m_currentInteractRole = "Interact";
+							}
+							else
+							{
+								m_currentInteractRole = "Interact";
+							}
 							newState = AvatarLocomotionState::Interact;
+						}
 					}
 					else
 					{
@@ -8726,6 +8835,7 @@ namespace engine
 						const char* clipName =
 							(newState == AvatarLocomotionState::Emote && !m_currentEmoteRole.empty()) ? m_currentEmoteRole.c_str()
 							: (newState == AvatarLocomotionState::Punch) ? m_currentPunchRole.c_str()
+							: (newState == AvatarLocomotionState::Interact) ? m_currentInteractRole.c_str()
 							: StateToClipName(newState);
 						const engine::render::skinned::AnimationClip* newClip = m_currentSkinnedMesh->FindClip(clipName);
 						if (newClip)
@@ -8809,15 +8919,52 @@ namespace engine
 								}
 								m_chestAutoCloseAtSec = EngineNowSec() + 2.0f;
 							}
-							else if (e.isNpc && !e.dialogue.empty())
+							else if (e.isNpc && !e.dialogueTree.nodes.empty())
 							{
-								pushInteractChat("[PNJ]", e.label + " : " + e.dialogue[e.dialogueCursor]);
-								e.dialogueCursor = (e.dialogueCursor + 1) % static_cast<int>(e.dialogue.size());
+								// Cellule de dialogue PNJ : ouvre la fenêtre centrale dédiée
+								// (plus de poussée dans le chat). Ignoré si un dialogue est
+								// déjà actif (E ne ré-ouvre pas par-dessus).
+								if (!m_dialogueActive)
+								{
+									engine::client::DialogueNpcRef npc;
+									npc.label       = e.label;
+									npc.role        = e.role;
+									npc.entityIndex = nearestI; // index de l'interactable courant
+									m_dialogue.OpenDialogue(e.dialogueTree, npc);
+									m_dialogueActive = true;
+								}
 							}
 							else
 							{
 								pushInteractChat(e.isNpc ? "[PNJ]" : "[Objet]", e.message);
 							}
+						}
+
+						// Cellule de dialogue PNJ : tick par frame (auto-scroll + rupture de
+						// distance à 1,50 m) et fermeture sur Échap. La distance est recalculée
+						// vers le PNJ courant (entityIndex mémorisé à l'ouverture).
+						if (m_dialogueActive)
+						{
+							float dist = 999.0f;
+							const int idx = m_dialogue.Npc().entityIndex;
+							if (idx >= 0 && idx < static_cast<int>(m_interactables.size()))
+							{
+								const engine::math::Vec3 pp = m_characterController.GetPosition();
+								const engine::math::Vec3 np = m_interactables[idx].position;
+								const float dx = np.x - pp.x;
+								const float dz = np.z - pp.z;
+								dist = std::sqrt(dx * dx + dz * dz);
+							}
+							m_dialogue.Tick(static_cast<float>(dt), dist);
+
+							// Échap ferme le dialogue (edge-triggered).
+							if (m_input.WasPressed(engine::platform::Key::Escape))
+								m_dialogue.Close(engine::client::DialogueCloseReason::UserClose);
+
+							// Synchronise le flag : toute fermeture (distance, Échap, choix End)
+							// libère le déplacement.
+							if (!m_dialogue.IsActive())
+								m_dialogueActive = false;
 						}
 					}
 				}
@@ -9252,6 +9399,10 @@ namespace engine
 			}
 			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
 			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+			// Cellule de dialogue PNJ : fenêtre centrale dédiée (no-op si inactif).
+			// Partage la frame ImGui en cours (NewFrame déjà appelé plus haut).
+			if (m_dialogueImGui && m_dialogue.IsActive())
+				m_dialogueImGui->Render(m_dialogue, dw, dh);
 			// Marqueurs ImGui des interactibles : label flottant projete (visibilite v1
 			// sans mesh). Surligne + " [E]" si a portee. Cf. m_interactables (#39/#40).
 			{
@@ -9261,7 +9412,12 @@ namespace engine
 				for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
 				{
 					const InteractableEntity& e = m_interactables[ii];
-					const float my = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 1.9f;
+					// Pendant un dialogue PNJ : on masque le label flottant + badge « E » de
+						// l'interactible (le PNJ engagé est derrière la cellule, son label
+						// transparaîtrait au travers).
+						if (m_dialogueActive)
+							continue;
+						const float my = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 1.9f;
 					float sx = 0.0f, sy = 0.0f;
 					if (!WorldToScreenPx(out.viewProjMatrix.m, e.position.x, my, e.position.z, ivw, ivh, sx, sy))
 						continue;
@@ -10689,9 +10845,18 @@ namespace engine
 		// d'impostorDist, mesh normal (inchangé).
 		const bool impostorPassValid = m_pipeline->GetImpostorPass().IsValid();
 		const bool impostorActive = m_impostorEnabled && impostorPassValid;
+		// Seuil de bascule mesh -> impostor : centralisé dans LodConfig (M45.5b),
+		// plus de duplication avec world.impostor.distance_m. Gated : si inactif,
+		// D = +inf => aucune des branches impostor ne s'active (historique strict).
 		const float impostorDist = impostorActive
-			? static_cast<float>(m_cfg.GetDouble("world.impostor.distance_m", 60.0)) : 1e30f;
+			? m_lodConfig.GetImpostorDistanceMax() : 1e30f;
+		// Largeur de la bande de cross-fade (m) juste après le seuil : le mesh et
+		// l'impostor coexistent, l'impostor monte en dither 0->1 (anti-popping).
+		const float impostorBand = impostorActive
+			? static_cast<float>(m_cfg.GetDouble("world.impostor.fade_band_m", 10.0)) : 0.0f;
 		const float impostorDist2 = impostorDist * impostorDist;
+		// Borne haute de la bande de fondu (au-delà : impostor seul, fadeAlpha=1).
+		const float impostorFadeEnd = impostorDist + impostorBand;
 		// Instances d'impostors accumulées, groupées par chemin de mesh (= clé atlas).
 		std::unordered_map<std::string, std::vector<engine::render::ImpostorInstance>> impostorBatches;
 
@@ -10708,22 +10873,44 @@ namespace engine
 					{ ++culled; continue; }  // decor trop loin -> non dessine
 			}
 
-			// Bascule impostor (décor uniquement, distance >= seuil, atlas dispo).
+			// Cross-fade mesh <-> impostor (M45.5b, décor uniquement, atlas dispo).
+			// Trois régimes selon la distance XZ `dist` :
+			//   dist < D                : mesh seul (drawImpostorOnly=false, pas d'impostor).
+			//   D <= dist < D+band      : mesh PLEIN + impostor en dither montant (fadeAlpha
+			//                             = smoothstep(D, D+band, dist)) -> aucun pop.
+			//   dist >= D+band          : impostor SEUL (fadeAlpha=1), pas de mesh.
+			// Gated : si impostorActive est false, D = +inf => on n'entre jamais ici.
+			bool drawImpostorOnly = false;
 			if (impostorActive && prop.interactableIndex < 0 && dist2 >= impostorDist2)
 			{
 				if (EnsureImpostorAtlas(prop.meshPath))
 				{
+					const float dist = std::sqrt(dist2);
+					// smoothstep(D, D+band, dist) : 0 au seuil, 1 en fin de bande.
+					float fade = 1.0f;
+					if (impostorBand > 0.0f && dist < impostorFadeEnd)
+					{
+						const float t = std::clamp((dist - impostorDist) / impostorBand, 0.0f, 1.0f);
+						fade = t * t * (3.0f - 2.0f * t); // smoothstep
+					}
 					engine::render::ImpostorInstance inst;
 					inst.worldPos[0] = prop.impostorCenter.x;
 					inst.worldPos[1] = prop.impostorCenter.y;
 					inst.worldPos[2] = prop.impostorCenter.z;
 					inst.radius      = prop.impostorRadius;
+					inst.fadeAlpha   = fade;
 					impostorBatches[prop.meshPath].push_back(inst);
 					++impostored;
-					continue; // NE PAS dessiner le mesh : l'impostor le remplace.
+					// Hors de la bande de fondu : l'impostor REMPLACE le mesh (pas de mesh).
+					// Dans la bande : on dessine AUSSI le mesh par-dessous (drawImpostorOnly
+					// reste false) pour que l'impostor monte en fondu sans pop.
+					if (dist >= impostorFadeEnd)
+						drawImpostorOnly = true;
 				}
-				// Pas d'atlas pour ce mesh -> fallback mesh normal (continue plus bas).
+				// Pas d'atlas pour ce mesh -> fallback mesh normal (dessin plus bas).
 			}
+			if (drawImpostorOnly)
+				continue; // NE PAS dessiner le mesh : l'impostor le remplace entièrement.
 
 			++drawn;
 			// Surbrillance (chantier C) : si ce prop est l'interactible a portee, on
@@ -10759,6 +10946,9 @@ namespace engine
 				[this, &impostorPass, &impostorBatches, &rs](VkCommandBuffer innerCmd) {
 					const float camPos3[3] = {
 						rs.camera.position.x, rs.camera.position.y, rs.camera.position.z };
+					// Échelle de parallax single-step (frag v2) ; gated par enabled.
+					const float parallaxScale = static_cast<float>(
+						m_cfg.GetDouble("world.impostor.parallax_scale", 0.08));
 					for (auto& kv : impostorBatches)
 					{
 						auto atlasIt = m_impostorAtlases.find(kv.first);
@@ -10767,16 +10957,18 @@ namespace engine
 						const engine::render::ImpostorAsset& atlas = atlasIt->second;
 						engine::render::TextureAsset* albedo = atlas.Albedo().Get();
 						engine::render::TextureAsset* normal = atlas.Normal().Get();
-						if (albedo == nullptr || normal == nullptr
-							|| albedo->view == VK_NULL_HANDLE || normal->view == VK_NULL_HANDLE)
+						engine::render::TextureAsset* orm    = atlas.Orm().Get();
+						if (albedo == nullptr || normal == nullptr || orm == nullptr
+							|| albedo->view == VK_NULL_HANDLE || normal->view == VK_NULL_HANDLE
+							|| orm->view == VK_NULL_HANDLE)
 							continue;
 						const VkSampler samp = impostorPass.GetSampler();
 						impostorPass.RecordInstances(
 							m_vkDeviceContext.GetDevice(), innerCmd, m_vkSwapchain.GetExtent(),
 							kv.second.data(), static_cast<uint32_t>(kv.second.size()),
-							albedo->view, samp, normal->view, samp,
+							albedo->view, samp, normal->view, samp, orm->view, samp,
 							rs.viewProjMatrix.m, rs.prevViewProjMatrix.m, camPos3,
-							atlas.Info().viewsPerAxis, atlas.Info().tileSize);
+							atlas.Info().viewsPerAxis, atlas.Info().tileSize, parallaxScale);
 					}
 				});
 		}

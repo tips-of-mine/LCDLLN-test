@@ -154,22 +154,6 @@ namespace engine::core
 	std::atomic<bool>     Log::s_active{ false };
 	std::atomic<uint64_t> Log::s_filters{ 0 };
 
-	namespace
-	{
-		// Sous-projet 1, bloc E — observateur global optionnel (console in-app).
-		// Set-once au boot via Log::SetSink ; lu sans verrou par WriteLine.
-		Log::LogSink      g_logSink;
-		std::atomic<bool> g_hasLogSink{ false };
-	}
-
-	void Log::SetSink(LogSink sink)
-	{
-		LockLog();
-		g_logSink = std::move(sink);
-		g_hasLogSink.store(static_cast<bool>(g_logSink), std::memory_order_release);
-		UnlockLog();
-	}
-
 	std::string Log::MakeTimestampedFilename(std::string_view prefix)
 	{
 		const auto now = std::chrono::system_clock::now();
@@ -520,14 +504,6 @@ namespace engine::core
 #endif
 		const char* lvlStr = LevelToString(level);
 		const char* sys    = subsystem ? subsystem : "?";
-
-		// Sous-projet 1, bloc E — observateur console in-app (éditeur monde).
-		// Invoqué HORS du verrou de log (pas de deadlock/réentrance si le sink
-		// venait à logguer) ; set-once au boot -> lecture concurrente sûre.
-		if (g_hasLogSink.load(std::memory_order_acquire))
-		{
-			g_logSink(level, sys, message);
-		}
 
 		std::string line;
 		if (s_jsonOutput)

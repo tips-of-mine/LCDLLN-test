@@ -14,7 +14,6 @@
 
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
-#include "src/world_editor/console/EditorLogSink.h" // sous-projet 1, bloc E
 
 #include "src/world_editor/modes/EditorModeRegistry.h"
 #include "src/world_editor/prefs/UserPrefsStore.h"
@@ -66,16 +65,6 @@ namespace engine::editor::world
 	/// 8=CollisionEditor (M100.12) — référencé par les tests M100.1.
 	bool WorldEditorShell::Init(const engine::core::Config& cfg)
 	{
-		// Sous-projet 1, bloc E — branche la Console in-app : installe le sink
-		// global Log -> EditorLogSink (singleton process). Set-once : toute ligne
-		// LOG_* émise après ce point apparait dans le ConsolePanel. Le sink ne
-		// capture aucun pointeur de durée de vie limitée (pas de dangling).
-		engine::core::Log::SetSink(
-			[](engine::core::LogLevel lvl, const char* sys, std::string_view msg)
-			{
-				console::EditorLogSink::Instance().Push(lvl, sys, msg);
-			});
-
 		m_layoutPath = cfg.GetString("editor.world.layout_path", "editor_world_layout.ini");
 
 		// M100.2 — Configure la pile undo/redo depuis config.json. Defaults :

@@ -9324,6 +9324,35 @@ namespace engine
 				}
 			}
 
+			// Sous-projet 1, bloc B3 — picking d'entite : Ctrl+clic gauche dans la
+			// vue 3D (hors ImGui) selectionne l'entite dont la position (XZ) est la
+			// plus proche du point de sol cliqué (seuil ~3 m), via EditorSceneModel
+			// + EditorSelection. Geste Ctrl+clic distinct du clic d'edition
+			// (sculpt/placement) pour ne pas interferer avec les deux systemes.
+			if (terrainPick && m_worldEditorShell && m_worldEditorShell->IsInitialized()
+				&& !m_worldEditorImGui->WantsCaptureMouse()
+				&& m_input.IsDown(engine::platform::Key::Control)
+				&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+			{
+				const std::vector<engine::editor::scene::SceneEntity>& entities =
+					m_worldEditorShell->GetSceneModel().Entities();
+				const engine::editor::scene::SceneEntity* best = nullptr;
+				float bestDist2 = 9.0f; // (3 m)^2
+				for (const engine::editor::scene::SceneEntity& e : entities)
+				{
+					if (!e.hasTransform) continue;
+					const float dx = e.transform.position.x - pickX;
+					const float dz = e.transform.position.z - pickZ;
+					const float d2 = dx * dx + dz * dz;
+					if (d2 < bestDist2) { bestDist2 = d2; best = &e; }
+				}
+				if (best != nullptr)
+				{
+					m_worldEditorShell->MutableSelection().Select(best->id);
+					LOG_INFO(EditorWorld, "[WorldEditor] Entite selectionnee (Ctrl+clic): {}", best->label);
+				}
+			}
+
 			if (m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
 			{
 				const bool cap = m_worldEditorImGui->WantsCaptureMouse();

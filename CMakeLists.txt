@@ -292,6 +292,8 @@ add_library(engine_core
   # editor.world.enabled. Pas référencé par engine/server/.
   src/world_editor/core/WorldEditorShell.cpp
   src/world_editor/core/CommandStack.cpp
+  # Sous-projet 1, bloc B — modele de scene + selection partagee.
+  src/world_editor/scene/EditorSelection.cpp
   src/world_editor/terrain/TerrainDocument.cpp
   src/world_editor/terrain/TerrainBrush.cpp
   src/world_editor/terrain/TerrainRaycast.cpp
@@ -1038,6 +1040,16 @@ if(MSVC)
   target_compile_options(terrain_document_roundtrip_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME terrain_document_roundtrip_tests COMMAND terrain_document_roundtrip_tests)
+
+# Sous-projet 1, bloc B — Tests CPU pour EditorSelection (notification au
+# changement, idempotence Clear). Pur CPU, non gate WIN32 (ctest Linux).
+add_executable(editor_selection_tests src/world_editor/tests/EditorSelectionTests.cpp)
+target_include_directories(editor_selection_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(editor_selection_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(editor_selection_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME editor_selection_tests COMMAND editor_selection_tests)
 
 # M100.1 — Tests unitaires CPU pour la coquille WorldEditorShell.
 # Vérifient le cycle Init/Shutdown, la persistance du layout .ini, le

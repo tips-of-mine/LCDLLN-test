@@ -302,6 +302,36 @@ namespace engine::editor
 		return true;
 	}
 
+	void WorldEditorSession::RequestNewZoneChunkInit()
+	{
+		m_newZoneChunkInitRequested = true;
+	}
+
+	bool WorldEditorSession::ConsumeNewZoneChunkInitRequest()
+	{
+		if (!m_newZoneChunkInitRequested)
+		{
+			return false;
+		}
+		m_newZoneChunkInitRequested = false;
+		return true;
+	}
+
+	void WorldEditorSession::RequestTerrainChunksSave()
+	{
+		m_terrainChunksSaveRequested = true;
+	}
+
+	bool WorldEditorSession::ConsumeTerrainChunksSaveRequest()
+	{
+		if (!m_terrainChunksSaveRequested)
+		{
+			return false;
+		}
+		m_terrainChunksSaveRequested = false;
+		return true;
+	}
+
 	bool WorldEditorSession::ActionNewMap(const engine::core::Config& cfg)
 	{
 		SyncDocIdFromBuffer();
@@ -397,6 +427,7 @@ namespace engine::editor
 		{
 			SetStatus("Carte creee mais sauvegarde JSON echouee: " + err);
 			LOG_WARN(Core, "[WorldEditor] {}", err);
+			RequestNewZoneChunkInit();
 			RequestTerrainGpuReload();
 			// Note (debug regression terrain invisible) : on n'arme PAS m_splatRefsDirty
 			// ici. Sur carte neuve, RequestTerrainGpuReload() declenche un Init complet
@@ -407,6 +438,9 @@ namespace engine::editor
 			return true;
 		}
 		SetStatus("Nouvelle carte OK - " + hmRel);
+		// Sous-projet 1 : zone neuve -> l'Engine doit initialiser les chunks plats
+		// (source de verite) via WorldEditorShell::InitNewZoneTerrain.
+		RequestNewZoneChunkInit();
 		RequestTerrainGpuReload();
 		SyncBuffersFromDoc();
 		LOG_INFO(Core, "[WorldEditor] New map OK zone={} size={}", zid, sz);
@@ -439,6 +473,8 @@ namespace engine::editor
 			return false;
 		}
 		m_editJsonAbsolutePath = path;
+		// Sous-projet 1 : persiste aussi les chunks (source de verite) via l'Engine.
+		RequestTerrainChunksSave();
 		SetStatus("Sauvegarde: " + path);
 		return true;
 	}
@@ -562,6 +598,8 @@ namespace engine::editor
 		SetBuf(m_bufSavePath, m_editJsonAbsolutePath);
 		SetStatus("Carte sauvegardee: " + zid);
 		LOG_INFO(Core, "[WorldEditor] Saved map zone={} -> {}", zid, m_editJsonAbsolutePath);
+		// Sous-projet 1 : persiste aussi les chunks (source de verite) via l'Engine.
+		RequestTerrainChunksSave();
 		RefreshAvailableMaps(cfg);
 		for (int i = 0; i < static_cast<int>(m_availableMapIds.size()); ++i)
 		{

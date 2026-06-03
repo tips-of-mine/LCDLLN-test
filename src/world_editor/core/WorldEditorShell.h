@@ -157,6 +157,22 @@ namespace engine::editor::world
 		/// document.
 		TerrainDocument& MutableTerrainDocument() { return m_terrainDoc; }
 
+		/// Sous-projet 1 (boucle d'edition d'une zone) — Initialise le terrain
+		/// d'une zone neuve : alloue `chunksPerAxis × chunksPerAxis` chunks plats
+		/// dans le `TerrainDocument` (source de verite). Les chunks sont marques
+		/// dirty et seront ecrits au prochain `SaveTerrainChunks`. A appeler sur
+		/// le main thread, depuis Engine, a la creation d'une nouvelle carte.
+		/// \param chunksPerAxis empreinte d'edition (nombre de chunks par axe).
+		void InitNewZoneTerrain(int chunksPerAxis);
+
+		/// Sous-projet 1 — Persiste sur disque les chunks terrain + splat dirty
+		/// (source de verite de la zone) sous `<paths.content>/chunks/`. Appelee
+		/// depuis Engine quand l'utilisateur sauvegarde la carte.
+		/// \param cfg source de `paths.content`.
+		/// \return nombre total de fichiers chunk ecrits (terrain + splat).
+		/// Effet de bord : ecriture disque.
+		size_t SaveTerrainChunks(const engine::core::Config& cfg);
+
 		/// M100.6 — Accès mutable à l'outil de sculpt. Le panneau Tool
 		/// Properties l'utilise pour lire/écrire les paramètres de brosse
 		/// quand `m_activeTool == TerrainSculpt`.

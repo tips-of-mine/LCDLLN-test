@@ -131,6 +131,24 @@ namespace engine::editor
 		/// \return true une fois par demande consommee (pour l'Engine).
 		bool ConsumeTerrainGpuReloadRequest();
 
+		/// Sous-projet 1 — Demande l'initialisation des chunks d'une zone NEUVE
+		/// (set par ActionNewMap uniquement). L'Engine consomme ce flag pour
+		/// appeler `WorldEditorShell::InitNewZoneTerrain`. Distinct du flag de
+		/// reload GPU (set aussi au chargement d'une carte existante, ou il NE
+		/// faut PAS reinitialiser les chunks).
+		void RequestNewZoneChunkInit();
+		/// \return true une fois par demande consommee (pour l'Engine).
+		bool ConsumeNewZoneChunkInitRequest();
+
+		/// Sous-projet 1 — Demande la persistance disque des chunks terrain/splat
+		/// (set par ActionSaveCurrentMap / ActionSaveEditJson apres succes).
+		/// L'Engine consomme ce flag pour appeler
+		/// `WorldEditorShell::SaveTerrainChunks` (les chunks sont la source de
+		/// verite de la zone ; le r16h n'en est qu'un cache).
+		void RequestTerrainChunksSave();
+		/// \return true une fois par demande consommee (pour l'Engine).
+		bool ConsumeTerrainChunksSaveRequest();
+
 		/// Marque les references de textures de layer (splatLayerTextureRefs)
 		/// comme modifiees. A appeler par les UIs apres avoir change un element
 		/// du tableau (combo Peindre, vignette Bibliotheque). Engine::ProcessSplatRefsDirty
@@ -195,6 +213,8 @@ namespace engine::editor
 		std::function<bool(const engine::core::Config&, const WorldMapEditDocument&)> m_terrainSaveHook;
 
 		bool m_terrainGpuReloadRequested = false;
+		bool m_newZoneChunkInitRequested = false; // sous-projet 1 (zone neuve)
+		bool m_terrainChunksSaveRequested = false; // sous-projet 1 (save chunks)
 		bool m_splatRefsDirty = false;
 
 		std::vector<std::string> m_recentlyImported;

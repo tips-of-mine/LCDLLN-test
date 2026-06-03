@@ -7556,9 +7556,32 @@ namespace engine
 				m_worldEditorImGui.reset();
 			}
 		}
-		if (m_worldEditorExe && m_worldEditorSession && m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
+		if (m_worldEditorExe && m_worldEditorSession)
 		{
-			RebuildWorldEditorTerrainGpu();
+			// Sous-projet 1 (boucle d'edition d'une zone) — Zone NEUVE : initialise
+			// les chunks plats (source de verite) AVANT le rebuild GPU. L'empreinte
+			// N (chunks par axe) se deduit de la resolution r16h : apres l'alignement
+			// A2, 1 texel = 1 m, et un chunk fait 256 m, donc N = max(1, res/256).
+			if (m_worldEditorSession->ConsumeNewZoneChunkInitRequest()
+				&& m_worldEditorShell && m_worldEditorShell->IsInitialized())
+			{
+				const uint32_t hmRes = m_worldEditorSession->Doc().heightmapResolution;
+				const int chunksPerAxis = static_cast<int>(std::max<uint32_t>(1u, hmRes / 256u));
+				m_worldEditorShell->InitNewZoneTerrain(chunksPerAxis);
+			}
+			if (m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
+			{
+				RebuildWorldEditorTerrainGpu();
+			}
+			// Sous-projet 1 — Sauvegarde des chunks (source de verite) demandee par
+			// ActionSaveCurrentMap / ActionSaveEditJson. Le r16h est ecrit par le
+			// terrainSaveHook ; ici on persiste en plus les chunks terrain/splat.
+			if (m_worldEditorSession->ConsumeTerrainChunksSaveRequest()
+				&& m_worldEditorShell && m_worldEditorShell->IsInitialized())
+			{
+				const size_t nWritten = m_worldEditorShell->SaveTerrainChunks(m_cfg);
+				LOG_INFO(EditorWorld, "[Engine] Persisted {} terrain chunk file(s)", nWritten);
+			}
 		}
 		// M100.46+ — Pont TerrainDocument → HeightmapData GPU. Consomme le
 		// flag set par le callback OnChunkChanged et déclenche la copie

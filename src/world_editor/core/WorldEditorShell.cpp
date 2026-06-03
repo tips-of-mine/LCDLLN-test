@@ -712,6 +712,24 @@ namespace engine::editor::world
 		LOG_INFO(EditorWorld, "WorldEditorShell dirty: {}", std::string(reason));
 	}
 
+	void WorldEditorShell::InitNewZoneTerrain(int chunksPerAxis)
+	{
+		m_terrainDoc.InitFlatZone(chunksPerAxis, 0.0f);
+		LOG_INFO(EditorWorld,
+			"[WorldEditorShell] Init new zone terrain: {}x{} flat chunks",
+			chunksPerAxis, chunksPerAxis);
+	}
+
+	size_t WorldEditorShell::SaveTerrainChunks(const engine::core::Config& cfg)
+	{
+		const size_t terrainWritten = m_terrainDoc.SaveDirtyToDisk(cfg);
+		const size_t splatWritten   = m_terrainDoc.SaveDirtySplatToDisk(cfg);
+		LOG_INFO(EditorWorld,
+			"[WorldEditorShell] Saved terrain chunks: {} terrain + {} splat",
+			terrainWritten, splatWritten);
+		return terrainWritten + splatWritten;
+	}
+
 	/// Réinitialise un layout par défaut minimal : rend tous les panneaux
 	/// visibles. La disposition fine (Outliner | Scene | Inspector / Asset
 	/// Browser | Tool Properties | Console) sera implémentée via ImGui

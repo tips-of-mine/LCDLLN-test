@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <format>
+#include <functional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -118,6 +119,20 @@ namespace engine::core
         static LogLevel GetLevel();
         /// Set current minimum log level.
         static void SetLevel(LogLevel level);
+
+        /// Type d'un observateur de lignes de log : reçoit `(niveau, sous-système,
+        /// message)` pour chaque ligne émise (au-dessus du seuil), AVANT l'écriture
+        /// fichier/console et **hors** du verrou de log. Sert à alimenter une
+        /// console in-app (éditeur monde). Sous-projet 1, bloc E.
+        using LogSink = std::function<void(LogLevel, const char* /*subsystem*/, std::string_view /*message*/)>;
+
+        /// Installe (ou retire avec un foncteur vide) l'observateur global de
+        /// lignes de log. Contrat : appeler **une seule fois au démarrage**, sur
+        /// le thread principal, avant que d'autres threads ne loggent (le sink
+        /// est ensuite invoqué sans verrou par tous les threads ; l'implémentation
+        /// du sink doit être thread-safe). Le serveur ne pose jamais de sink :
+        /// comportement inchangé. Effet de bord : remplace le sink courant.
+        static void SetSink(LogSink sink);
 
         /// M45 — Test si un filtre bitmask est actif (atomique, sans verrou).
         /// Utiliser via la macro \c LOG_FILTERED qui court-circuite le \c std::format si false.

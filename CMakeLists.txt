@@ -301,6 +301,8 @@ add_library(engine_core
   src/world_editor/scene/EditorSceneModel.cpp
   # Sous-projet 1, bloc D — commande undoable d'edition de transform.
   src/world_editor/inspector/SetEntityTransformCommand.cpp
+  # Sous-projet 1, bloc E — sink de log pour la Console in-app.
+  src/world_editor/console/EditorLogSink.cpp
   src/world_editor/terrain/TerrainDocument.cpp
   src/world_editor/terrain/TerrainBrush.cpp
   src/world_editor/terrain/TerrainRaycast.cpp
@@ -1094,6 +1096,16 @@ if(MSVC)
   target_compile_options(config_save_to_file_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME config_save_to_file_tests COMMAND config_save_to_file_tests)
+
+# Sous-projet 1, bloc E — Tests CPU pour EditorLogSink (eviction capacite ring
+# buffer, ordre, filtre niveau). Pur CPU, non gate WIN32 (ctest Linux).
+add_executable(editor_log_sink_tests src/world_editor/tests/EditorLogSinkTests.cpp)
+target_include_directories(editor_log_sink_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(editor_log_sink_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(editor_log_sink_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME editor_log_sink_tests COMMAND editor_log_sink_tests)
 
 # M100.1 — Tests unitaires CPU pour la coquille WorldEditorShell.
 # Vérifient le cycle Init/Shutdown, la persistance du layout .ini, le

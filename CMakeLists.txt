@@ -1085,6 +1085,16 @@ if(MSVC)
 endif()
 add_test(NAME set_entity_transform_command_tests COMMAND set_entity_transform_command_tests)
 
+# Sous-projet 1, bloc H — Tests CPU pour Config::SaveToFile (round-trip JSON
+# plat des 4 types scalaires + echappement). Pur CPU + E/S, non gate WIN32.
+add_executable(config_save_to_file_tests src/world_editor/tests/ConfigSaveToFileTests.cpp)
+target_include_directories(config_save_to_file_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(config_save_to_file_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(config_save_to_file_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME config_save_to_file_tests COMMAND config_save_to_file_tests)
+
 # M100.1 — Tests unitaires CPU pour la coquille WorldEditorShell.
 # Vérifient le cycle Init/Shutdown, la persistance du layout .ini, le
 # dispatch des raccourcis F1..F12 et le flag dirty. Le test crée un

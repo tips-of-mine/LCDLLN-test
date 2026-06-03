@@ -594,6 +594,76 @@ namespace engine::core
 		return true;
 	}
 
+	namespace
+	{
+		/// Échappe `s` et l'entoure de guillemets pour une chaîne JSON. Couvre
+		/// les caractères de contrôle usuels (suffisant pour des clés/valeurs de
+		/// configuration ; pas d'échappement \uXXXX exhaustif).
+		std::string ConfigJsonQuote(const std::string& s)
+		{
+			std::string out;
+			out.reserve(s.size() + 2u);
+			out.push_back('"');
+			for (char c : s)
+			{
+				switch (c)
+				{
+					case '"':  out += "\\\""; break;
+					case '\\': out += "\\\\"; break;
+					case '\n': out += "\\n";  break;
+					case '\r': out += "\\r";  break;
+					case '\t': out += "\\t";  break;
+					default:   out.push_back(c); break;
+				}
+			}
+			out.push_back('"');
+			return out;
+		}
+	}
+
+	bool Config::SaveToFile(std::string_view filePath) const
+	{
+		std::ofstream out(std::string(filePath), std::ios::out | std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			return false;
+		}
+		out << "{\n";
+		bool first = true;
+		for (const auto& [key, val] : m_values)
+		{
+			if (std::holds_alternative<std::monostate>(val))
+			{
+				continue; // clé déclarée sans valeur : non sérialisée
+			}
+			if (!first)
+			{
+				out << ",\n";
+			}
+			first = false;
+			out << "  " << ConfigJsonQuote(key) << ": ";
+			if (std::holds_alternative<bool>(val))
+			{
+				out << (std::get<bool>(val) ? "true" : "false");
+			}
+			else if (std::holds_alternative<int64_t>(val))
+			{
+				out << std::to_string(std::get<int64_t>(val));
+			}
+			else if (std::holds_alternative<double>(val))
+			{
+				out << std::to_string(std::get<double>(val));
+			}
+			else if (std::holds_alternative<std::string>(val))
+			{
+				out << ConfigJsonQuote(std::get<std::string>(val));
+			}
+		}
+		out << "\n}\n";
+		out.flush();
+		return out.good();
+	}
+
 	void Config::ApplyCli(int argc, char** argv)
 	{
 		for (int i = 1; i < argc; ++i)

@@ -1027,6 +1027,18 @@ if(MSVC)
 endif()
 add_test(NAME world_editor_session_tests COMMAND world_editor_session_tests)
 
+# Sous-projet 1 (boucle d'edition d'une zone) — Tests CPU pour TerrainDocument :
+# InitFlatZone (alloc NxN chunks plats) + round-trip disque des chunks
+# (source de verite de la zone). Pur CPU + E/S (pas de Vulkan), non gate WIN32
+# pour tourner sous ctest Linux comme world_editor_session_tests.
+add_executable(terrain_document_roundtrip_tests src/world_editor/tests/TerrainDocumentRoundTripTests.cpp)
+target_include_directories(terrain_document_roundtrip_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(terrain_document_roundtrip_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(terrain_document_roundtrip_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME terrain_document_roundtrip_tests COMMAND terrain_document_roundtrip_tests)
+
 # M100.1 — Tests unitaires CPU pour la coquille WorldEditorShell.
 # Vérifient le cycle Init/Shutdown, la persistance du layout .ini, le
 # dispatch des raccourcis F1..F12 et le flag dirty. Le test crée un

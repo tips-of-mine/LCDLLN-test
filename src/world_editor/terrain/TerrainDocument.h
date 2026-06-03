@@ -70,6 +70,18 @@ namespace engine::editor::world
 			m_splats.clear();
 		}
 
+		/// Initialise une zone neuve : vide le cache puis alloue
+		/// `chunksPerAxis * chunksPerAxis` chunks plats (257×257, 1 m/cellule)
+		/// à `flatHeightMeters`, indexés de (0,0) à (chunksPerAxis-1,
+		/// chunksPerAxis-1). **Tous marqués dirty** pour qu'un
+		/// `SaveDirtyToDisk` ultérieur les persiste sur disque — les chunks
+		/// sont la source de vérité de la zone (le `r16h` n'en est qu'un cache
+		/// GPU reconstruit). No-op si `chunksPerAxis <= 0`.
+		/// \param chunksPerAxis nombre de chunks par axe (empreinte d'édition).
+		/// \param flatHeightMeters hauteur uniforme initiale, en mètres monde.
+		/// Contrainte thread : main thread (comme le reste de la classe).
+		void InitFlatZone(int chunksPerAxis, float flatHeightMeters);
+
 		/// Attache un `TerrainLodWorker` pour la régénération asynchrone des
 		/// LODs (M100.8). Le caller possède le worker (ne le détruit pas pendant
 		/// la durée de vie du document). `contentRoot` est mémorisé pour que le

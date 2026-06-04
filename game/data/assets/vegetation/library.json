@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "categories": [
+    { "id": "grass",      "label": "Herbes" },
+    { "id": "wheat",      "label": "Ble" },
+    { "id": "corn",       "label": "Mais" },
+    { "id": "fern",       "label": "Fougere" },
+    { "id": "thorn",      "label": "Ronces" },
+    { "id": "tree_young", "label": "Jeunes arbres" },
+    { "id": "tree_oak",   "label": "Chene mature" },
+    { "id": "tree_pine",  "label": "Sapin / conifere" },
+    { "id": "tree_dead",  "label": "Conifere mort" },
+    { "id": "tree_dark",  "label": "Arbre noir torture" },
+    { "id": "bush",       "label": "Buisson" },
+    { "id": "mushroom",   "label": "Champignon" }
+  ],
+  "assets": [
+    { "id": "grass_01", "category": "grass", "mesh": "veg/grass_01.glb", "billboard": false,
+      "rules": { "slopeMaxDeg": 35.0, "altMin": -200.0, "altMax": 2500.0, "splatLayers": [1, 2] } },
+    { "id": "fern_01", "category": "fern", "mesh": "veg/fern_01.glb", "billboard": false,
+      "rules": { "slopeMaxDeg": 30.0, "altMin": -50.0, "altMax": 1600.0, "splatLayers": [1, 2] } },
+    { "id": "tree_oak_01", "category": "tree_oak", "mesh": "veg/tree_oak_01.glb", "billboard": false,
+      "rules": { "slopeMaxDeg": 25.0, "altMin": 0.0, "altMax": 1800.0, "splatLayers": [1, 2] } },
+    { "id": "tree_pine_01", "category": "tree_pine", "mesh": "veg/tree_pine_01.glb", "billboard": false,
+      "rules": { "slopeMaxDeg": 30.0, "altMin": 200.0, "altMax": 2400.0, "splatLayers": [2, 3] } },
+    { "id": "tree_dark_01", "category": "tree_dark", "mesh": "veg/tree_dark_01.glb", "billboard": false,
+      "rules": { "slopeMaxDeg": 28.0, "altMin": -100.0, "altMax": 2000.0, "splatLayers": [3] } },
+    { "id": "mushroom_01", "category": "mushroom", "mesh": "veg/mushroom_01.glb", "billboard": false,
+      "rules": { "slopeMaxDeg": 40.0, "altMin": -200.0, "altMax": 1200.0, "splatLayers": [1] } }
+  ]
+}

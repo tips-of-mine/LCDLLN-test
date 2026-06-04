@@ -12,6 +12,7 @@ namespace engine::world::water { struct WaterScene; }
 namespace engine::routine { struct RoutineGraph; }
 namespace engine::world::hazard { struct HazardVolume; }
 namespace engine::world::instances { struct PropInstance; }
+namespace engine::world::foliage { struct FoliageInstance; }
 
 namespace tools::zone_builder
 {
@@ -95,4 +96,11 @@ namespace tools::zone_builder
 	/// \return true si OK ; sinon `outError` est renseigné.
 	bool WriteProps(std::string_view outputRootDir,
 		const std::vector<engine::world::instances::PropInstance>& props, std::string& outError);
+
+	/// Écrit `foliage.bin` (M100.18) dans `<outputRootDir>/chunks/chunk_<x>_<z>/`.
+	/// Crée le dossier au besoin. Sérialise via `engine::world::foliage::
+	/// SaveFoliageBin` (header-only partagé client). Fichier par chunk.
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteFoliage(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const std::vector<engine::world::foliage::FoliageInstance>& items, std::string& outError);
 }

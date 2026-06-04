@@ -336,6 +336,10 @@ add_library(engine_core
   # M100.17 — Easy Placement Tool (geometrie pure + outil ; format/commande header-only).
   src/world_editor/PlacementGeometry.cpp
   src/world_editor/PlacementTool.cpp
+  # M100.18 — Vegetation library + density painting (library JSON + Poisson-disk + outil).
+  src/client/world/foliage/FoliageLibrary.cpp
+  src/client/world/foliage/PoissonDiskSampler.cpp
+  src/world_editor/FoliagePaintTool.cpp
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
@@ -914,6 +918,11 @@ add_test(NAME hazard_tests COMMAND hazard_tests)
 add_executable(placement_tests src/world_editor/tests/PlacementTests.cpp)
 target_link_libraries(placement_tests PRIVATE engine_core)
 add_test(NAME placement_tests COMMAND placement_tests)
+
+# M100.18 — Tests foliage (library JSON + Poisson-disk + regles + round-trip).
+add_executable(foliage_tests src/client/world/foliage/tests/FoliageTests.cpp)
+target_link_libraries(foliage_tests PRIVATE engine_core)
+add_test(NAME foliage_tests COMMAND foliage_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

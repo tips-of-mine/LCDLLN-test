@@ -19,11 +19,12 @@ namespace engine::world
 		Tex,       /// tex.pak — textures
 		Instances, /// instances.bin
 		Nav,       /// navmesh.bin
-		Probes     /// probes.bin
+		Probes,    /// probes.bin
+		Routines   /// routines.bin — graphes de routine zone_event/npc_routine (M101.3)
 	};
 
 	/// Number of segment types.
-	constexpr uint32_t kChunkSegmentCount = 7u;
+	constexpr uint32_t kChunkSegmentCount = 8u;
 
 	/// Returns the relative filename for the segment (e.g. "geo.pak", "instances.bin").
 	std::string_view GetChunkSegmentFilename(ChunkSegment segment);
@@ -52,4 +53,7 @@ namespace engine::world
 	constexpr uint32_t kChunkMetaHasTerrain = 1u << 5;
 	/// Présence de `splat.bin` (8-layer splat-map 257², M100.9).
 	constexpr uint32_t kChunkMetaHasSplat = 1u << 6;
+	/// Présence de `routines.bin` (graphes de routine, M101.3). Bit 7 : premier
+	/// bit libre (les bits 0..6 sont déjà pris ci-dessus).
+	constexpr uint32_t kChunkMetaHasRoutines = 1u << 7;
 }

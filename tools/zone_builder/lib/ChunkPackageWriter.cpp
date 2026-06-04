@@ -9,6 +9,7 @@
 #include "src/client/world/terrain/TerrainChunk.h"
 #include "src/client/world/terrain/TerrainLodChain.h"
 #include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/routine/RoutineSegmentCodec.h"
 
 #include <array>
 #include <cmath>
@@ -628,6 +629,40 @@ namespace tools::zone_builder
 		if (!out.good())
 		{
 			outError = "WriteWater: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteRoutines(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const std::vector<engine::routine::RoutineGraph>& graphs, std::string& outError)
+	{
+		// M101.3 — sérialise les graphes via le codec pur (parité éditeur ↔
+		// client : le client relit avec DecodeRoutinesBin), puis écrit
+		// `routines.bin` dans le dossier du chunk. Crée le dossier au besoin.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "chunks" /
+			("chunk_" + std::to_string(chunkX) + "_" + std::to_string(chunkZ));
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteRoutines: create_directories failed: " + dir.string();
+			return false;
+		}
+
+		const std::vector<uint8_t> bytes = engine::routine::codec::EncodeRoutinesBin(graphs);
+		const std::filesystem::path file = dir / "routines.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteRoutines: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteRoutines: write failed: " + file.string();
 			return false;
 		}
 		return true;

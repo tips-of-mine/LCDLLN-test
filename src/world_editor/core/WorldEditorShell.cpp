@@ -10,6 +10,7 @@
 #include "src/world_editor/panels/HistoryPanel.h"
 #include "src/world_editor/panels/SurfaceTablePanel.h"
 #include "src/world_editor/panels/CollisionEditorPanel.h"
+#include "src/world_editor/routine/RoutineGraphPanel.h"
 #include "src/world_editor/ui/EditorToolbar.h"
 
 #include "src/shared/core/Config.h"
@@ -107,6 +108,10 @@ namespace engine::editor::world
 		collisionPanel->Init(
 			std::filesystem::path(cfg.GetString("paths.content", "game/data")));
 		m_panels.emplace_back(std::move(collisionPanel));
+		// M101.4 — Panel nodal de routines. AJOUTÉ EN FIN pour ne pas décaler
+		// les indices fixes (Scene=0, ToolProperties=5). Caché par défaut,
+		// toggle via le menu View. Partage la pile undo/redo du shell.
+		m_panels.emplace_back(std::make_unique<RoutineGraphPanel>(&m_commandStack));
 
 #if defined(_WIN32)
 		std::error_code ec;

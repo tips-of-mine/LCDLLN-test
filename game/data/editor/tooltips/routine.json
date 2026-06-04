@@ -1,0 +1,61 @@
+{
+  "toolId": "routine",
+  "tooltips": {
+    "graph": {
+      "label": "Graphe de routine",
+      "description_simple": "Programme visuel fait de noeuds relies par des fils.",
+      "description_advanced": "Artefact JSON interprete au runtime par la VM (zone_event) ou traduit en EventAIRow (npc_routine). Aucune recompilation : editer = changer le JSON.",
+      "defaultValue": "zone_event",
+      "range": "zone_event / npc_routine",
+      "docSectionId": "routine/graph"
+    },
+    "execPin": {
+      "label": "Pin d'execution",
+      "description_simple": "Fil qui declenche le noeud suivant.",
+      "description_advanced": "Flux de controle (Blueprint-like) : un noeud ne s'execute que lorsqu'un fil exec entrant est active.",
+      "defaultValue": "",
+      "range": "",
+      "docSectionId": "routine/pins#exec"
+    },
+    "dataPin": {
+      "label": "Pin de donnee",
+      "description_simple": "Valeur typee passee entre noeuds.",
+      "description_advanced": "Bool / Int / Float / Vec3 / String / EntityRef. Evalue en pull lorsqu'un noeud a besoin de la valeur.",
+      "defaultValue": "",
+      "range": "Bool / Int / Float / Vec3 / String / EntityRef",
+      "docSectionId": "routine/pins#data"
+    },
+    "EventOnInteract": {
+      "label": "Evenement : interaction",
+      "description_simple": "Demarre la routine quand le joueur interagit avec un objet.",
+      "description_advanced": "Noeud racine zone_event. Declenche par M100.32 (prop interactif). Fournit l'entite interagie au contexte.",
+      "defaultValue": "",
+      "range": "",
+      "docSectionId": "routine/nodes#EventOnInteract"
+    },
+    "BranchIf": {
+      "label": "Branche (si)",
+      "description_simple": "Choisit la suite selon une condition vraie/fausse.",
+      "description_advanced": "Lit un pin Data Bool ; suit l'exec 'true' ou 'false'. Condition non liee => false (deterministe).",
+      "defaultValue": "",
+      "range": "",
+      "docSectionId": "routine/nodes#BranchIf"
+    },
+    "ActionOpenInteractive": {
+      "label": "Action : ouvrir/fermer objet",
+      "description_simple": "Ouvre ou ferme une porte/objet interactif.",
+      "description_advanced": "Appelle l'hote (InteractiveSimulator, M100.32). Reutilise l'opcode InteractiveStateChange ; aucun nouvel opcode.",
+      "defaultValue": "open=true",
+      "range": "",
+      "docSectionId": "routine/nodes#ActionOpenInteractive"
+    },
+    "NpcStateRoot": {
+      "label": "PNJ : racine d'etats",
+      "description_simple": "Point de depart d'une routine de PNJ.",
+      "description_advanced": "Cible npc_routine. Traduit en EventAIRow (M101.7). Hierarchie d'etats facon StateTree.",
+      "defaultValue": "",
+      "range": "",
+      "docSectionId": "routine/nodes#NpcStateRoot"
+    }
+  }
+}

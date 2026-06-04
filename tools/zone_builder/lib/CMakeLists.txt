@@ -44,7 +44,7 @@ target_include_directories(zone_builder_lib PRIVATE
   ${CMAKE_SOURCE_DIR}
 )
 
-target_link_libraries(zone_builder_lib PUBLIC spdlog::spdlog)
+target_link_libraries(zone_builder_lib PUBLIC spdlog::spdlog routine_graph)
 
 if(MSVC)
   target_compile_options(zone_builder_lib PRIVATE /W4 /permissive- /Zc:preprocessor)
@@ -63,3 +63,14 @@ else()
   target_compile_options(zone_builder_roundtrip_tests PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 add_test(NAME zone_builder_roundtrip_tests COMMAND zone_builder_roundtrip_tests)
+
+# M101.3 / M101.10 — Round-trip fichier editeur->client de routines.bin.
+add_executable(routines_segment_tests tests/RoutinesSegmentTests.cpp)
+target_link_libraries(routines_segment_tests PRIVATE zone_builder_lib)
+target_include_directories(routines_segment_tests PRIVATE ${CMAKE_SOURCE_DIR})
+if(MSVC)
+  target_compile_options(routines_segment_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+else()
+  target_compile_options(routines_segment_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME routines_segment_tests COMMAND routines_segment_tests)

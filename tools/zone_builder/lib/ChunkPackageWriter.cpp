@@ -15,6 +15,7 @@
 #include "src/client/world/foliage/FoliageInstances.h"
 #include "src/client/world/wind/WindZones.h"
 #include "src/client/world/thermal/ShadeMap.h"
+#include "src/client/world/zones/Zones.h"
 
 #include <array>
 #include <cmath>
@@ -820,6 +821,36 @@ namespace tools::zone_builder
 		if (!out.good())
 		{
 			outError = "WriteShadeMap: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteZones(std::string_view outputRootDir,
+		const std::vector<engine::world::zones::GameplayZone>& zones, std::string& outError)
+	{
+		// M100.28 — fichier zone-level instances/zones.bin.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "instances";
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteZones: create_directories failed: " + dir.string();
+			return false;
+		}
+		const std::vector<uint8_t> bytes = engine::world::zones::SaveZonesBin(zones);
+		const std::filesystem::path file = dir / "zones.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteZones: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteZones: write failed: " + file.string();
 			return false;
 		}
 		return true;

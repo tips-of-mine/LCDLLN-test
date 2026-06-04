@@ -352,6 +352,9 @@ add_library(engine_core
   # M100.27 — Shade map + thermal (ComputeTemperature + builder).
   src/client/world/thermal/Thermal.cpp
   src/client/world/thermal/ShadeMapBuilder.cpp
+  # M100.28 — Gameplay zones (requetes + outil).
+  src/client/world/zones/ZoneQuery.cpp
+  src/world_editor/ZoneTool.cpp
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
@@ -955,6 +958,11 @@ add_test(NAME entity_influence_tests COMMAND entity_influence_tests)
 add_executable(thermal_tests src/client/world/thermal/tests/ThermalTests.cpp)
 target_link_libraries(thermal_tests PRIVATE engine_core)
 add_test(NAME thermal_tests COMMAND thermal_tests)
+
+# M100.28 — Tests zones (round-trip + transition meteo bord + champs quest).
+add_executable(zones_tests src/client/world/zones/tests/ZonesTests.cpp)
+target_link_libraries(zones_tests PRIVATE engine_core)
+add_test(NAME zones_tests COMMAND zones_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

@@ -483,6 +483,14 @@ add_library(engine_core
   # cross-fichiers avant export.
   src/world_editor/volumes/bridge/VMapBridge.cpp
   src/world_editor/volumes/bridge/Phase11Validator.cpp
+  # M100.48 — Zone Validation Service (Phase 12). Registre de règles + service
+  # ZoneValidator (lecture seule sur les données de zone) + règles MVP
+  # (heightmap/splat/mesh inserts). Éditeur-only, pas de validation runtime.
+  src/world_editor/validation/ValidationRuleRegistry.cpp
+  src/world_editor/validation/ZoneValidator.cpp
+  src/world_editor/validation/rules/HeightmapRules.cpp
+  src/world_editor/validation/rules/SplatRules.cpp
+  src/world_editor/validation/rules/MeshInsertRules.cpp
   # M100.45 — Phase 12 « Accessibilité » — infrastructure transverse
   # (Phase A) : registry de mode Simple/Advanced, registry de presets
   # d'outils (JSON), store de préférences utilisateur persistées.
@@ -944,6 +952,13 @@ add_test(NAME routine_graph_commands_tests COMMAND routine_graph_commands_tests)
 add_executable(routine_help_content_tests src/world_editor/routine/tests/RoutineHelpContentTests.cpp)
 target_link_libraries(routine_help_content_tests PRIVATE engine_core)
 add_test(NAME routine_help_content_tests COMMAND routine_help_content_tests)
+
+# M100.48 — Tests Zone Validation Service (registre + regles MVP + ZoneValidator
+# + incremental). Pure logique dans engine_core. (Ancrage distinct d'interactive_tests
+# pour eviter un conflit CMake avec d'autres PR M100 en vol.)
+add_executable(zone_validation_tests src/world_editor/tests/ZoneValidationTests.cpp)
+target_link_libraries(zone_validation_tests PRIVATE engine_core)
+add_test(NAME zone_validation_tests COMMAND zone_validation_tests)
 
 # M100.16 — Tests hazards (round-trip binaire + simulateur). Format header-only,
 # simulateur dans engine_core : on ne lie QUE engine_core (pas de doublon).

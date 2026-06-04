@@ -476,6 +476,14 @@ add_library(engine_core
   # cross-fichiers avant export.
   src/world_editor/volumes/bridge/VMapBridge.cpp
   src/world_editor/volumes/bridge/Phase11Validator.cpp
+  # M100.48 — Zone Validation Service (Phase 12). Registre de règles + service
+  # ZoneValidator (lecture seule sur les données de zone) + règles MVP
+  # (heightmap/splat/mesh inserts). Éditeur-only, pas de validation runtime.
+  src/world_editor/validation/ValidationRuleRegistry.cpp
+  src/world_editor/validation/ZoneValidator.cpp
+  src/world_editor/validation/rules/HeightmapRules.cpp
+  src/world_editor/validation/rules/SplatRules.cpp
+  src/world_editor/validation/rules/MeshInsertRules.cpp
   # M100.45 — Phase 12 « Accessibilité » — infrastructure transverse
   # (Phase A) : registry de mode Simple/Advanced, registry de presets
   # d'outils (JSON), store de préférences utilisateur persistées.
@@ -950,6 +958,12 @@ add_test(NAME hazard_tests COMMAND hazard_tests)
 add_executable(interactive_tests src/client/world/interactive/tests/InteractiveTests.cpp)
 target_link_libraries(interactive_tests PRIVATE engine_core)
 add_test(NAME interactive_tests COMMAND interactive_tests)
+
+# M100.48 — Tests Zone Validation Service (registre + regles MVP + ZoneValidator
+# + incremental). Pure logique dans engine_core.
+add_executable(zone_validation_tests src/world_editor/tests/ZoneValidationTests.cpp)
+target_link_libraries(zone_validation_tests PRIVATE engine_core)
+add_test(NAME zone_validation_tests COMMAND zone_validation_tests)
 
 # M100.17 — Tests placement (geometrie pure + format props.bin + commande).
 add_executable(placement_tests src/world_editor/tests/PlacementTests.cpp)

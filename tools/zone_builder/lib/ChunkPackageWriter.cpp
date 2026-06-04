@@ -11,6 +11,7 @@
 #include "src/client/world/water/WaterSurfaces.h"
 #include "src/shared/routine/RoutineSegmentCodec.h"
 #include "src/client/world/hazard/HazardVolumes.h"
+#include "src/client/world/instances/PropInstances.h"
 
 #include <array>
 #include <cmath>
@@ -694,6 +695,36 @@ namespace tools::zone_builder
 		if (!out.good())
 		{
 			outError = "WriteHazards: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteProps(std::string_view outputRootDir,
+		const std::vector<engine::world::instances::PropInstance>& props, std::string& outError)
+	{
+		// M100.17 — fichier zone-level instances/props.bin. Crée instances/ au besoin.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "instances";
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteProps: create_directories failed: " + dir.string();
+			return false;
+		}
+		const std::vector<uint8_t> bytes = engine::world::instances::SavePropsBin(props);
+		const std::filesystem::path file = dir / "props.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteProps: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteProps: write failed: " + file.string();
 			return false;
 		}
 		return true;

@@ -333,6 +333,9 @@ add_library(engine_core
   # M100.16 — Hazard volumes (simulateur client + outil editeur ; format header-only).
   src/client/world/hazard/HazardSimulator.cpp
   src/world_editor/HazardTool.cpp
+  # M100.17 — Easy Placement Tool (geometrie pure + outil ; format/commande header-only).
+  src/world_editor/PlacementGeometry.cpp
+  src/world_editor/PlacementTool.cpp
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
@@ -906,6 +909,11 @@ add_test(NAME routine_help_content_tests COMMAND routine_help_content_tests)
 add_executable(hazard_tests src/client/world/hazard/tests/HazardTests.cpp)
 target_link_libraries(hazard_tests PRIVATE engine_core)
 add_test(NAME hazard_tests COMMAND hazard_tests)
+
+# M100.17 — Tests placement (geometrie pure + format props.bin + commande).
+add_executable(placement_tests src/world_editor/tests/PlacementTests.cpp)
+target_link_libraries(placement_tests PRIVATE engine_core)
+add_test(NAME placement_tests COMMAND placement_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

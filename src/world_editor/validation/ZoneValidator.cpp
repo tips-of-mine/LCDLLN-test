@@ -55,6 +55,11 @@ namespace engine::editor::world::validation
 		}
 	}
 
+	ZoneValidator::Report ZoneValidator::Validate(const ValidationContext& ctx) const
+	{
+		return Validate(ctx, Options{});
+	}
+
 	ZoneValidator::Report ZoneValidator::Validate(const ValidationContext& ctx, const Options& options) const
 	{
 		Report report;
@@ -65,6 +70,13 @@ namespace engine::editor::world::validation
 		}
 		RecountAndSort(report, options.minSeverity);
 		return report;
+	}
+
+	ZoneValidator::Report ZoneValidator::ValidateIncremental(const ValidationContext& ctx,
+		const std::vector<std::string>& changedTags,
+		const Report& previousReport) const
+	{
+		return ValidateIncremental(ctx, changedTags, previousReport, Options{});
 	}
 
 	ZoneValidator::Report ZoneValidator::ValidateIncremental(const ValidationContext& ctx,

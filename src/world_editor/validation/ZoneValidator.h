@@ -43,15 +43,23 @@ namespace engine::editor::world::validation
 		};
 
 		/// Exécute toutes les règles applicables et renvoie un rapport complet.
-		Report Validate(const ValidationContext& ctx, const Options& options = Options{}) const;
+		/// Surcharge sans options : équivaut à `Validate(ctx, Options{})`.
+		/// (Surcharges plutôt qu'argument par défaut `= Options{}` : un nested
+		/// type ne peut pas servir d'argument par défaut tant que la classe
+		/// englobante est incomplète — GCC le refuse.)
+		Report Validate(const ValidationContext& ctx) const;
+		Report Validate(const ValidationContext& ctx, const Options& options) const;
 
 		/// Variante incrémentale : ne re-run que les règles dont au moins un
 		/// GetDocumentTags() est dans `changedTags` ; conserve du rapport
 		/// précédent les problèmes des autres règles. Renvoie un rapport fusionné.
 		Report ValidateIncremental(const ValidationContext& ctx,
 			const std::vector<std::string>& changedTags,
+			const Report& previousReport) const;
+		Report ValidateIncremental(const ValidationContext& ctx,
+			const std::vector<std::string>& changedTags,
 			const Report& previousReport,
-			const Options& options = Options{}) const;
+			const Options& options) const;
 
 	private:
 		const ValidationRuleRegistry& m_registry;

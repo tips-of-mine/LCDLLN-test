@@ -12,6 +12,11 @@ namespace engine::world::water { struct WaterScene; }
 namespace engine::routine { struct RoutineGraph; }
 namespace engine::world::hazard { struct HazardVolume; }
 namespace engine::world::instances { struct PropInstance; }
+namespace engine::world::foliage { struct FoliageInstance; }
+namespace engine::world::wind { struct WindZone; }
+namespace engine::world::thermal { struct ShadeMap; }
+namespace engine::world::zones { struct GameplayZone; }
+namespace engine::world::spline { struct Spline; }
 
 namespace tools::zone_builder
 {
@@ -95,4 +100,39 @@ namespace tools::zone_builder
 	/// \return true si OK ; sinon `outError` est renseigné.
 	bool WriteProps(std::string_view outputRootDir,
 		const std::vector<engine::world::instances::PropInstance>& props, std::string& outError);
+
+	/// Écrit `foliage.bin` (M100.18) dans `<outputRootDir>/chunks/chunk_<x>_<z>/`.
+	/// Crée le dossier au besoin. Sérialise via `engine::world::foliage::
+	/// SaveFoliageBin` (header-only partagé client). Fichier par chunk.
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteFoliage(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const std::vector<engine::world::foliage::FoliageInstance>& items, std::string& outError);
+
+	/// Écrit `instances/wind_zones.bin` (M100.20) sous `<outputRootDir>/instances/`.
+	/// Crée le dossier au besoin. Sérialise via `engine::world::wind::
+	/// SaveWindZonesBin` (header-only partagé client). Fichier zone-level.
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteWindZones(std::string_view outputRootDir,
+		const std::vector<engine::world::wind::WindZone>& zones, std::string& outError);
+
+	/// Écrit `shade.bin` (M100.27) dans `<outputRootDir>/chunks/chunk_<x>_<z>/`.
+	/// Crée le dossier au besoin. Sérialise via `engine::world::thermal::
+	/// SaveShadeMapBin` (header-only partagé client). Fichier par chunk.
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteShadeMap(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const engine::world::thermal::ShadeMap& shade, std::string& outError);
+
+	/// Écrit `instances/zones.bin` (M100.28) sous `<outputRootDir>/instances/`.
+	/// Crée le dossier au besoin. Sérialise via `engine::world::zones::
+	/// SaveZonesBin` (header-only partagé client). Fichier zone-level.
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteZones(std::string_view outputRootDir,
+		const std::vector<engine::world::zones::GameplayZone>& zones, std::string& outError);
+
+	/// Écrit `instances/splines.bin` (M100.29) sous `<outputRootDir>/instances/`.
+	/// Crée le dossier au besoin. Sérialise via `engine::world::spline::
+	/// SaveSplinesBin` (header-only partagé client). Fichier zone-level.
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteSplines(std::string_view outputRootDir,
+		const std::vector<engine::world::spline::Spline>& splines, std::string& outError);
 }

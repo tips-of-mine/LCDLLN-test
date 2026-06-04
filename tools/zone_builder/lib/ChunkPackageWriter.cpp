@@ -12,6 +12,11 @@
 #include "src/shared/routine/RoutineSegmentCodec.h"
 #include "src/client/world/hazard/HazardVolumes.h"
 #include "src/client/world/instances/PropInstances.h"
+#include "src/client/world/foliage/FoliageInstances.h"
+#include "src/client/world/wind/WindZones.h"
+#include "src/client/world/thermal/ShadeMap.h"
+#include "src/client/world/zones/Zones.h"
+#include "src/client/world/spline/SplineInstances.h"
 
 #include <array>
 #include <cmath>
@@ -725,6 +730,158 @@ namespace tools::zone_builder
 		if (!out.good())
 		{
 			outError = "WriteProps: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteFoliage(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const std::vector<engine::world::foliage::FoliageInstance>& items, std::string& outError)
+	{
+		// M100.18 — foliage.bin par chunk.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "chunks" /
+			("chunk_" + std::to_string(chunkX) + "_" + std::to_string(chunkZ));
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteFoliage: create_directories failed: " + dir.string();
+			return false;
+		}
+		const std::vector<uint8_t> bytes = engine::world::foliage::SaveFoliageBin(items);
+		const std::filesystem::path file = dir / "foliage.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteFoliage: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteFoliage: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteWindZones(std::string_view outputRootDir,
+		const std::vector<engine::world::wind::WindZone>& zones, std::string& outError)
+	{
+		// M100.20 — fichier zone-level instances/wind_zones.bin.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "instances";
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteWindZones: create_directories failed: " + dir.string();
+			return false;
+		}
+		const std::vector<uint8_t> bytes = engine::world::wind::SaveWindZonesBin(zones);
+		const std::filesystem::path file = dir / "wind_zones.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteWindZones: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteWindZones: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteShadeMap(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const engine::world::thermal::ShadeMap& shade, std::string& outError)
+	{
+		// M100.27 — shade.bin par chunk.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "chunks" /
+			("chunk_" + std::to_string(chunkX) + "_" + std::to_string(chunkZ));
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteShadeMap: create_directories failed: " + dir.string();
+			return false;
+		}
+		const std::vector<uint8_t> bytes = engine::world::thermal::SaveShadeMapBin(shade);
+		const std::filesystem::path file = dir / "shade.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteShadeMap: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteShadeMap: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteZones(std::string_view outputRootDir,
+		const std::vector<engine::world::zones::GameplayZone>& zones, std::string& outError)
+	{
+		// M100.28 — fichier zone-level instances/zones.bin.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "instances";
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteZones: create_directories failed: " + dir.string();
+			return false;
+		}
+		const std::vector<uint8_t> bytes = engine::world::zones::SaveZonesBin(zones);
+		const std::filesystem::path file = dir / "zones.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteZones: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteZones: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteSplines(std::string_view outputRootDir,
+		const std::vector<engine::world::spline::Spline>& splines, std::string& outError)
+	{
+		// M100.29 — fichier zone-level instances/splines.bin.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "instances";
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteSplines: create_directories failed: " + dir.string();
+			return false;
+		}
+		const std::vector<uint8_t> bytes = engine::world::spline::SaveSplinesBin(splines);
+		const std::filesystem::path file = dir / "splines.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteSplines: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteSplines: write failed: " + file.string();
 			return false;
 		}
 		return true;

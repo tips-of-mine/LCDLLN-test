@@ -1,0 +1,11 @@
+{
+  "race": "Humains",
+  "biome": "plains",
+  "houses": [
+    { "mesh": "structures/human_house_01.glb", "weight": 0.5 },
+    { "mesh": "structures/human_house_02.glb", "weight": 0.3 },
+    { "mesh": "structures/human_house_03.glb", "weight": 0.2 }
+  ],
+  "minSpacingDefault": 8.0,
+  "footprintRadius": 5.0
+}

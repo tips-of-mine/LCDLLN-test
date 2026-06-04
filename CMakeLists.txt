@@ -336,6 +336,35 @@ add_library(engine_core
   # M100.17 — Easy Placement Tool (geometrie pure + outil ; format/commande header-only).
   src/world_editor/PlacementGeometry.cpp
   src/world_editor/PlacementTool.cpp
+  # M100.18 — Vegetation library + density painting (library JSON + Poisson-disk + outil).
+  src/client/world/foliage/FoliageLibrary.cpp
+  src/client/world/foliage/PoissonDiskSampler.cpp
+  src/world_editor/FoliagePaintTool.cpp
+  # M100.19 — Forest & Field procedural tools (generateurs purs + outils).
+  src/world_editor/ForestFieldGen.cpp
+  src/world_editor/ForestTool.cpp
+  src/world_editor/FieldTool.cpp
+  # M100.20 — Vegetation wind (WindSystem eval + zones + outil).
+  src/client/world/wind/WindSystem.cpp
+  src/world_editor/WindZoneTool.cpp
+  # M100.21 — Player interaction (collecteur d'influences d'entites).
+  src/client/world/foliage/EntityInfluenceCollector.cpp
+  # M100.27 — Shade map + thermal (ComputeTemperature + builder).
+  src/client/world/thermal/Thermal.cpp
+  src/client/world/thermal/ShadeMapBuilder.cpp
+  # M100.28 — Gameplay zones (requetes + outil).
+  src/client/world/zones/ZoneQuery.cpp
+  src/world_editor/ZoneTool.cpp
+  # M100.29 — Spline tool & roads (sampler pur + outil).
+  src/client/world/spline/SplineSampler.cpp
+  src/world_editor/SplineTool.cpp
+  # M100.30 — Bridges & modular walls (structures pures ; outils header-only).
+  src/client/world/structures/Structures.cpp
+  # M100.31 — Hamlet generator (generation pure + kit JSON ; outil header-only).
+  src/client/world/structures/HamletKitLibrary.cpp
+  src/world_editor/HamletGen.cpp
+  # M100.33 — Footstep audio (resolution pure ; PlaytestMode header-only).
+  src/client/audio/FootstepAudioSurfaceHook.cpp
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
@@ -914,6 +943,57 @@ add_test(NAME hazard_tests COMMAND hazard_tests)
 add_executable(placement_tests src/world_editor/tests/PlacementTests.cpp)
 target_link_libraries(placement_tests PRIVATE engine_core)
 add_test(NAME placement_tests COMMAND placement_tests)
+
+# M100.18 — Tests foliage (library JSON + Poisson-disk + regles + round-trip).
+add_executable(foliage_tests src/client/world/foliage/tests/FoliageTests.cpp)
+target_link_libraries(foliage_tests PRIVATE engine_core)
+add_test(NAME foliage_tests COMMAND foliage_tests)
+
+# M100.19 — Tests Forest & Field (generateurs purs : densite, regles, spacing).
+add_executable(forest_field_tests src/world_editor/tests/ForestFieldTests.cpp)
+target_link_libraries(forest_field_tests PRIVATE engine_core)
+add_test(NAME forest_field_tests COMMAND forest_field_tests)
+
+# M100.20 — Tests vent (sway proportionnel hauteur, override zone, round-trip).
+add_executable(wind_tests src/client/world/wind/tests/WindTests.cpp)
+target_link_libraries(wind_tests PRIVATE engine_core)
+add_test(NAME wind_tests COMMAND wind_tests)
+
+# M100.21 — Tests collecteur d'influences (portee, troncature, flexion).
+add_executable(entity_influence_tests src/client/world/foliage/tests/EntityInfluenceTests.cpp)
+target_link_libraries(entity_influence_tests PRIVATE engine_core)
+add_test(NAME entity_influence_tests COMMAND entity_influence_tests)
+
+# M100.27 — Tests thermal (shade round-trip/builder + ComputeTemperature + query).
+add_executable(thermal_tests src/client/world/thermal/tests/ThermalTests.cpp)
+target_link_libraries(thermal_tests PRIVATE engine_core)
+add_test(NAME thermal_tests COMMAND thermal_tests)
+
+# M100.28 — Tests zones (round-trip + transition meteo bord + champs quest).
+add_executable(zones_tests src/client/world/zones/tests/ZonesTests.cpp)
+target_link_libraries(zones_tests PRIVATE engine_core)
+add_test(NAME zones_tests COMMAND zones_tests)
+
+# M100.29 — Tests spline (Catmull-Rom, ground-fit, splat sum=255, round-trip).
+# Nom prefixe m100_ : un target `spline_tests` existe deja (MoveSpline serveur).
+add_executable(m100_spline_tests src/client/world/spline/tests/SplineTests.cpp)
+target_link_libraries(m100_spline_tests PRIVATE engine_core)
+add_test(NAME m100_spline_tests COMMAND m100_spline_tests)
+
+# M100.30 — Tests structures (pont/mur, coins, surface pont, migration v1->v2).
+add_executable(structures_tests src/client/world/structures/tests/StructuresTests.cpp)
+target_link_libraries(structures_tests PRIVATE engine_core)
+add_test(NAME structures_tests COMMAND structures_tests)
+
+# M100.31 — Tests hameau (kit JSON, determinisme, min_spacing, snap route, 1 entree historique).
+add_executable(hamlet_tests src/world_editor/tests/HamletTests.cpp)
+target_link_libraries(hamlet_tests PRIVATE engine_core)
+add_test(NAME hamlet_tests COMMAND hamlet_tests)
+
+# M100.33 — Tests footstep audio + machine d'etat playtest.
+add_executable(playtest_tests src/world_editor/tests/PlaytestTests.cpp)
+target_link_libraries(playtest_tests PRIVATE engine_core)
+add_test(NAME playtest_tests COMMAND playtest_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

@@ -10,6 +10,7 @@
 #include "src/client/world/terrain/TerrainLodChain.h"
 #include "src/client/world/water/WaterSurfaces.h"
 #include "src/shared/routine/RoutineSegmentCodec.h"
+#include "src/client/world/hazard/HazardVolumes.h"
 
 #include <array>
 #include <cmath>
@@ -663,6 +664,36 @@ namespace tools::zone_builder
 		if (!out.good())
 		{
 			outError = "WriteRoutines: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteHazards(std::string_view outputRootDir,
+		const std::vector<engine::world::hazard::HazardVolume>& hazards, std::string& outError)
+	{
+		// M100.16 — fichier zone-level instances/hazards.bin. Crée instances/ au besoin.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "instances";
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteHazards: create_directories failed: " + dir.string();
+			return false;
+		}
+		const std::vector<uint8_t> bytes = engine::world::hazard::SaveHazardsBin(hazards);
+		const std::filesystem::path file = dir / "hazards.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteHazards: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteHazards: write failed: " + file.string();
 			return false;
 		}
 		return true;

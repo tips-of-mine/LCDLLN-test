@@ -10,6 +10,7 @@
 namespace engine::world::terrain { struct TerrainChunk; struct TerrainLodChain; struct SplatMap; }
 namespace engine::world::water { struct WaterScene; }
 namespace engine::routine { struct RoutineGraph; }
+namespace engine::world::hazard { struct HazardVolume; }
 
 namespace tools::zone_builder
 {
@@ -77,4 +78,12 @@ namespace tools::zone_builder
 	/// \return true si OK ; sinon `outError` est renseigné.
 	bool WriteRoutines(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
 		const std::vector<engine::routine::RoutineGraph>& graphs, std::string& outError);
+
+	/// Écrit `instances/hazards.bin` (M100.16) sous `<outputRootDir>/instances/`.
+	/// Crée le dossier au besoin. Sérialise via `engine::world::hazard::
+	/// SaveHazardsBin` (format header-only partagé avec le client : parité
+	/// éditeur ↔ client). Fichier zone-level (pas par chunk).
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteHazards(std::string_view outputRootDir,
+		const std::vector<engine::world::hazard::HazardVolume>& hazards, std::string& outError);
 }

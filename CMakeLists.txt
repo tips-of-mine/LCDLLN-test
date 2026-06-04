@@ -360,6 +360,9 @@ add_library(engine_core
   src/world_editor/SplineTool.cpp
   # M100.30 — Bridges & modular walls (structures pures ; outils header-only).
   src/client/world/structures/Structures.cpp
+  # M100.31 — Hamlet generator (generation pure + kit JSON ; outil header-only).
+  src/client/world/structures/HamletKitLibrary.cpp
+  src/world_editor/HamletGen.cpp
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
@@ -979,6 +982,11 @@ add_test(NAME m100_spline_tests COMMAND m100_spline_tests)
 add_executable(structures_tests src/client/world/structures/tests/StructuresTests.cpp)
 target_link_libraries(structures_tests PRIVATE engine_core)
 add_test(NAME structures_tests COMMAND structures_tests)
+
+# M100.31 — Tests hameau (kit JSON, determinisme, min_spacing, snap route, 1 entree historique).
+add_executable(hamlet_tests src/world_editor/tests/HamletTests.cpp)
+target_link_libraries(hamlet_tests PRIVATE engine_core)
+add_test(NAME hamlet_tests COMMAND hamlet_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

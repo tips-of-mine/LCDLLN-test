@@ -946,6 +946,13 @@ add_executable(routine_help_content_tests src/world_editor/routine/tests/Routine
 target_link_libraries(routine_help_content_tests PRIVATE engine_core)
 add_test(NAME routine_help_content_tests COMMAND routine_help_content_tests)
 
+# M100.48 — Tests Zone Validation Service (registre + regles MVP + ZoneValidator
+# + incremental). Pure logique dans engine_core. (Ancrage distinct d'interactive_tests
+# pour eviter un conflit CMake avec d'autres PR M100 en vol.)
+add_executable(zone_validation_tests src/world_editor/tests/ZoneValidationTests.cpp)
+target_link_libraries(zone_validation_tests PRIVATE engine_core)
+add_test(NAME zone_validation_tests COMMAND zone_validation_tests)
+
 # M100.16 — Tests hazards (round-trip binaire + simulateur). Format header-only,
 # simulateur dans engine_core : on ne lie QUE engine_core (pas de doublon).
 add_executable(hazard_tests src/client/world/hazard/tests/HazardTests.cpp)
@@ -958,12 +965,6 @@ add_test(NAME hazard_tests COMMAND hazard_tests)
 add_executable(interactive_tests src/client/world/interactive/tests/InteractiveTests.cpp)
 target_link_libraries(interactive_tests PRIVATE engine_core)
 add_test(NAME interactive_tests COMMAND interactive_tests)
-
-# M100.48 — Tests Zone Validation Service (registre + regles MVP + ZoneValidator
-# + incremental). Pure logique dans engine_core.
-add_executable(zone_validation_tests src/world_editor/tests/ZoneValidationTests.cpp)
-target_link_libraries(zone_validation_tests PRIVATE engine_core)
-add_test(NAME zone_validation_tests COMMAND zone_validation_tests)
 
 # M100.17 — Tests placement (geometrie pure + format props.bin + commande).
 add_executable(placement_tests src/world_editor/tests/PlacementTests.cpp)

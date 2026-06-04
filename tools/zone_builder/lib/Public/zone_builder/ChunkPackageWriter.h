@@ -12,6 +12,7 @@ namespace engine::world::water { struct WaterScene; }
 namespace engine::routine { struct RoutineGraph; }
 namespace engine::world::hazard { struct HazardVolume; }
 namespace engine::world::instances { struct PropInstance; }
+namespace engine::world::interactive { struct InteractivePropInstance; }
 namespace engine::world::foliage { struct FoliageInstance; }
 namespace engine::world::wind { struct WindZone; }
 namespace engine::world::thermal { struct ShadeMap; }
@@ -100,6 +101,14 @@ namespace tools::zone_builder
 	/// \return true si OK ; sinon `outError` est renseigné.
 	bool WriteProps(std::string_view outputRootDir,
 		const std::vector<engine::world::instances::PropInstance>& props, std::string& outError);
+
+	/// Écrit `instances/interactives.bin` (M100.32) sous `<outputRootDir>/instances/`.
+	/// Crée le dossier au besoin. Sérialise via `engine::world::interactive::
+	/// SaveInteractivesBin` (format header-only partagé avec le client : parité
+	/// éditeur ↔ client). Fichier zone-level.
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteInteractives(std::string_view outputRootDir,
+		const std::vector<engine::world::interactive::InteractivePropInstance>& items, std::string& outError);
 
 	/// Écrit `foliage.bin` (M100.18) dans `<outputRootDir>/chunks/chunk_<x>_<z>/`.
 	/// Crée le dossier au besoin. Sérialise via `engine::world::foliage::

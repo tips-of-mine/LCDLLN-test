@@ -822,4 +822,17 @@ namespace engine::network
 	// -------------------------------------------------------------------------
 
 	constexpr uint16_t kOpcodeMasterToShardAdmitCharacter = 199u; ///< Master to Shard (push, request_id=0) : (account_id, character_id) à admettre dans AdmittedCharacterRegistry, suite à un EnterWorld réussi côté master.
+
+	// -------------------------------------------------------------------------
+	// Opcodes Interactive Props (valeurs 200-202)
+	// Référence : M100.32 — Interactive Props (portes/fenêtres/trappes/coffres).
+	// Relai master SANS validation gameplay (cf. InteractiveStateRelay). Le master
+	// maintient une map id → state par zone, relaie les changements et envoie un
+	// snapshot complet à tout client entrant. Wire-additif : un master ancien
+	// répondrait BAD_REQUEST à kOpInteractiveStateChange — déployer en lock-step.
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpInteractiveStateChange    = 200u; ///< Client → Master : un objet a été ouvert/fermé (id, newState, clientTimeMs).
+	constexpr uint16_t kOpInteractiveStateBroadcast = 201u; ///< Master → autres clients (push, request_id=0) : relai d'un changement d'état (id, newState, serverTimeMs).
+	constexpr uint16_t kOpInteractiveStateSync      = 202u; ///< Master → client entrant (push, request_id=0) : état complet de la zone (count × {id, state}).
 }

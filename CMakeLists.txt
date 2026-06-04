@@ -330,6 +330,9 @@ add_library(engine_core
   src/world_editor/routine/RoutineGraphPanel.cpp
   src/world_editor/routine/RoutineNodePalette.cpp
   src/world_editor/routine/RoutineNodeInspector.cpp
+  # M100.16 — Hazard volumes (simulateur client + outil editeur ; format header-only).
+  src/client/world/hazard/HazardSimulator.cpp
+  src/world_editor/HazardTool.cpp
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
@@ -897,6 +900,12 @@ add_test(NAME routine_graph_commands_tests COMMAND routine_graph_commands_tests)
 add_executable(routine_help_content_tests src/world_editor/routine/tests/RoutineHelpContentTests.cpp)
 target_link_libraries(routine_help_content_tests PRIVATE engine_core)
 add_test(NAME routine_help_content_tests COMMAND routine_help_content_tests)
+
+# M100.16 — Tests hazards (round-trip binaire + simulateur). Format header-only,
+# simulateur dans engine_core : on ne lie QUE engine_core (pas de doublon).
+add_executable(hazard_tests src/client/world/hazard/tests/HazardTests.cpp)
+target_link_libraries(hazard_tests PRIVATE engine_core)
+add_test(NAME hazard_tests COMMAND hazard_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

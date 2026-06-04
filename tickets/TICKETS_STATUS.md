@@ -7,9 +7,9 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 
 | Statut | Nombre |
 |--------|-------:|
-| DONE (clotures) | 322 |
+| DONE (clotures) | 334 |
 | PARTIAL | 33 |
-| TODO | 58 |
+| TODO | 46 |
 | **Total** | 413 |
 
 ### Par milestone
@@ -62,7 +62,7 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | M43 | 1 | 1 | 6 | 8 |
 | M44 | 4 | 0 | 0 | 4 |
 | M45 | 8 | 0 | 0 | 8 |
-| M100 | 29 | 0 | 22 | 51 |
+| M100 | 41 | 0 | 10 | 51 |
 | M101 | 8 | 1 | 2 | 11 |
 | AUTH-UI | 12 | 0 | 0 | 12 |
 | CHAR-MODEL | 3 | 12 | 22 | 37 |
@@ -550,24 +550,24 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | M100.13 | DONE | Lacs/rivieres + mesh + flow |
 | M100.14 | DONE | Passe eau SSR + refraction |
 | M100.15 | DONE | Wading/swimming detection |
-| M100.16 | TODO | HazardVolumes/Simulator/Tool absents |
-| M100.17 | TODO | PlacementTool/Ghost/Snapping absents |
-| M100.18 | TODO | FoliagePaintTool/Library/PoissonDisk absents |
-| M100.19 | TODO | ForestTool/FieldTool absents |
-| M100.20 | TODO | WindZoneTool/WindSystem absents |
-| M100.21 | TODO | EntityInfluenceCollector/foliage shader absents |
+| M100.16 | DONE | Hazard volumes + simulateur + outil (cloture #808) |
+| M100.17 | DONE | Easy placement tool + props.bin (cloture #810) |
+| M100.18 | DONE | Vegetation library + Poisson-disk + density (cloture #811) |
+| M100.19 | DONE | Forest/Field generators procéduraux (cloture #811) |
+| M100.20 | DONE | Wind system + zones (sway/override) (cloture #811) |
+| M100.21 | DONE | EntityInfluenceCollector + flexion (cloture #811) |
 | M100.22 | DONE | Fog volumetrique froxel |
 | M100.23 | DONE | Distance/height fog + zones |
 | M100.24 | DONE | Sun/sky ToDxToY + probes |
 | M100.25 | DONE | Saisons client+broadcaster |
 | M100.26 | DONE | Meteo 6 types + modifiers |
-| M100.27 | TODO | ShadeMap/ThermalQueryService absents |
-| M100.28 | TODO | ZoneTool/Zones absents |
-| M100.29 | TODO | SplineTool/SplineInstances absents |
-| M100.30 | TODO | BridgeTool/WallTool absents |
-| M100.31 | TODO | HamletGeneratorTool absent |
+| M100.27 | DONE | Shade map + ComputeTemperature + ThermalQuery (cloture #811) |
+| M100.28 | DONE | Gameplay zones + WeatherOverride blend (cloture #811) |
+| M100.29 | DONE | Spline sampler + roads (Catmull-Rom, splat) (cloture #811) |
+| M100.30 | DONE | Bridges/walls + splines v2 + surface pont (cloture #811) |
+| M100.31 | DONE | Hamlet generator + kits (cloture #811) |
 | M100.32 | TODO | InteractiveProps/relay absents |
-| M100.33 | TODO | FootstepAudio/PlaytestMode absents |
+| M100.33 | DONE | Footstep audio + PlaytestMode (cloture #811) |
 | M100.34 | TODO | SelectionTool/Layers/Minimap/Exporter absents |
 | M100.35 | DONE | Mountain range tools |
 | M100.36 | DONE | River network generator |

@@ -504,6 +504,12 @@ add_library(engine_core
   src/world_editor/help/OverlayGuidanceSystem.cpp
   src/world_editor/tutorial/TutorialSystem.cpp
   src/world_editor/tutorial/TutorialIo.cpp
+  # M100.49 partie 2 — Système de diagnostic « Pourquoi ça ne marche pas ? »
+  # (registre + système + 10 règles workflow). S'appuie sur le ValidationContext
+  # de M100.48. Cœur pur ; UI panel/one-click = passe séparée.
+  src/world_editor/diagnostic/DiagnosticRuleRegistry.cpp
+  src/world_editor/diagnostic/DiagnosticSystem.cpp
+  src/world_editor/diagnostic/rules/WorkflowRules.cpp
   # M100.46 — Zone Presets Library. Incrément 1 : socle data (format
   # JSON + parsing + registry + validation). Incrément 2a : couche de
   # paramètres typés (OperationParams) + customisation (relief/eau/
@@ -1012,6 +1018,12 @@ add_test(NAME wind_tests COMMAND wind_tests)
 add_executable(tutorial_diagnostic_tests src/world_editor/tests/TutorialDiagnosticTests.cpp)
 target_link_libraries(tutorial_diagnostic_tests PRIVATE engine_core)
 add_test(NAME tutorial_diagnostic_tests COMMAND tutorial_diagnostic_tests)
+
+# M100.49 partie 2 — Tests du système de diagnostic (registre + 10 règles +
+# tri par importance). Pure logique dans engine_core.
+add_executable(diagnostic_tests src/world_editor/tests/DiagnosticTests.cpp)
+target_link_libraries(diagnostic_tests PRIVATE engine_core)
+add_test(NAME diagnostic_tests COMMAND diagnostic_tests)
 
 # M100.21 — Tests collecteur d'influences (portee, troncature, flexion).
 add_executable(entity_influence_tests src/client/world/foliage/tests/EntityInfluenceTests.cpp)

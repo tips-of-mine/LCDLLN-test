@@ -11,6 +11,7 @@ namespace engine::world::terrain { struct TerrainChunk; struct TerrainLodChain; 
 namespace engine::world::water { struct WaterScene; }
 namespace engine::routine { struct RoutineGraph; }
 namespace engine::world::hazard { struct HazardVolume; }
+namespace engine::world::instances { struct PropInstance; }
 
 namespace tools::zone_builder
 {
@@ -86,4 +87,12 @@ namespace tools::zone_builder
 	/// \return true si OK ; sinon `outError` est renseigné.
 	bool WriteHazards(std::string_view outputRootDir,
 		const std::vector<engine::world::hazard::HazardVolume>& hazards, std::string& outError);
+
+	/// Écrit `instances/props.bin` (M100.17) sous `<outputRootDir>/instances/`.
+	/// Crée le dossier au besoin. Sérialise via `engine::world::instances::
+	/// SavePropsBin` (format header-only partagé avec le client : parité éditeur
+	/// ↔ client). Fichier zone-level.
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteProps(std::string_view outputRootDir,
+		const std::vector<engine::world::instances::PropInstance>& props, std::string& outError);
 }

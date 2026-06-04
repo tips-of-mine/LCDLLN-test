@@ -7,10 +7,10 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 
 | Statut | Nombre |
 |--------|-------:|
-| DONE (clotures) | 314 |
-| PARTIAL | 32 |
-| TODO | 56 |
-| **Total** | 402 |
+| DONE (clotures) | 322 |
+| PARTIAL | 33 |
+| TODO | 58 |
+| **Total** | 413 |
 
 ### Par milestone
 
@@ -63,6 +63,7 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | M44 | 4 | 0 | 0 | 4 |
 | M45 | 8 | 0 | 0 | 8 |
 | M100 | 29 | 0 | 22 | 51 |
+| M101 | 8 | 1 | 2 | 11 |
 | AUTH-UI | 12 | 0 | 0 | 12 |
 | CHAR-MODEL | 3 | 12 | 22 | 37 |
 | SERVER-CORE | 32 | 11 | 1 | 44 |
@@ -585,6 +586,22 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | M100.49 | TODO | spec doc only |
 | M100.50 | TODO | spec doc only |
 | M100.51 | TODO | spec doc only |
+
+### M101
+
+| Ticket | Statut | Detail |
+|--------|--------|--------|
+| M101.1 | DONE | Modele de graphe + serialisation JSON deterministe (routine_graph) |
+| M101.2 | DONE | VM zone_event deterministe (routine_vm, lib pure) |
+| M101.3 | DONE | Segment routines.bin additif + codec + round-trip |
+| M101.4 | DONE | Panneau nodal + commandes undo/redo (CommandStack) |
+| M101.5 | DONE | Palette schema-driven + inspecteur de proprietes |
+| M101.6 | DONE | Validation de graphe (cycles/pins/orphelins/schema) |
+| M101.7 | PARTIAL | RoutineToEventAI livre ; PNJ complet Blocked (Role Registry/Smart Objects/MoveTo absents) |
+| M101.8 | TODO | Noeuds zone/gameplay differes (deps M100.16/28/32 non livrees) |
+| M101.9 | TODO | Playtest F5 differe (dep M100.33 non livree) |
+| M101.10 | DONE | Round-trip + tests CI headless |
+| M101.11 | DONE | Tooltips + contenu d'aide (reutilise HelpContentStore) |
 
 ### AUTH-UI
 

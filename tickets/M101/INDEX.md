@@ -80,36 +80,42 @@ ainsi un format binaire unique tout en isolant les sémantiques d'exécution.
 
 ## Liste complète des tickets (11)
 
+> **Statut au 2026-06-03 (post-merge #806).** Les tickets **Done** ont été
+> clôturés et déplacés vers `tickets/issues/M101.N-*_Issue.md` (convention dépôt :
+> le .md quitte le dossier milestone). Restent ici : M101.7 (PARTIAL/Blocked),
+> M101.8 et M101.9 (différés tant que leurs dépendances M100 ne sont pas livrées).
+> Source de vérité des statuts : `tickets/TICKETS_STATUS.md`.
+
 ### Phase 1 — Modèle de données & VM
 
 | Ticket | Titre | Dépendances | Statut |
 |--------|-------|-------------|--------|
-| M101.1 | Modèle de graphe & sérialisation JSON | — (lib pure) | Draft |
-| M101.2 | VM d'interprétation déterministe (lib pure `routine_vm`) | M101.1 | Draft |
-| M101.3 | Segment de chunk `routines.bin` (extension additive) | M101.1, M100.3 (lib `zone_builder`, Done) | Draft |
+| M101.1 | Modèle de graphe & sérialisation JSON | — (lib pure) | **Done** (→ issues/) |
+| M101.2 | VM d'interprétation déterministe (lib pure `routine_vm`) | M101.1 | **Done** (→ issues/) |
+| M101.3 | Segment de chunk `routines.bin` (extension additive) | M101.1, M100.3 (Done) | **Done** (→ issues/) |
 
 ### Phase 2 — UI nodale (ImGui)
 
 | Ticket | Titre | Dépendances | Statut |
 |--------|-------|-------------|--------|
-| M101.4 | Panneau nodal dockable (canvas, pan/zoom, CRUD) | M101.1, M100.1 (Done), M100.2 (Done) | Draft |
-| M101.5 | Palette de nœuds + inspecteur de propriétés | M101.4 | Draft |
-| M101.6 | Validation visuelle du graphe | M101.4, M101.1 | Draft |
+| M101.4 | Panneau nodal dockable (canvas, pan/zoom, CRUD) | M101.1, M100.1 (Done), M100.2 (Done) | **Done** (→ issues/) |
+| M101.5 | Palette de nœuds + inspecteur de propriétés | M101.4 | **Done** (→ issues/) |
+| M101.6 | Validation visuelle du graphe | M101.4, M101.1 | **Done** (→ issues/) |
 
 ### Phase 3 — Bibliothèques de nœuds (les deux cibles)
 
 | Ticket | Titre | Dépendances | Statut |
 |--------|-------|-------------|--------|
-| M101.7 | Nœuds **PNJ** (génère `EventAIRow`) | M101.1, M101.2, `EventAI` (Done) ; **Role Registry + Smart Objects (ABSENTS)** | **Blocked** |
-| M101.8 | Nœuds **zone/gameplay** | M101.1, M101.2, M100.16 (Ready), M100.28 (Ready), M100.32 (Ready) | Draft |
+| M101.7 | Nœuds **PNJ** (génère `EventAIRow`) | M101.1, M101.2, `EventAI` (Done) ; **Role Registry + Smart Objects (ABSENTS)** | **PARTIAL / Blocked** (`RoutineToEventAI` livré en #806) |
+| M101.8 | Nœuds **zone/gameplay** | M101.1, M101.2, M100.16 (TODO), M100.28 (TODO), M100.32 (TODO) | **TODO** (différé) |
 
 ### Phase 4 — Intégration & tests
 
 | Ticket | Titre | Dépendances | Statut |
 |--------|-------|-------------|--------|
-| M101.9 | Mode Playtest (F5) — exécution via code client de prod | M101.2, M101.8, M100.33 (Ready, Playtest F5) | Draft |
-| M101.10 | Round-trip & tests CI (headless, Linux + Windows) | M101.1, M101.2, M101.3 | Draft |
-| M101.11 | Documentation F1 + tooltips | M101.4, M101.5, M100.47 (Tooltips & F1 Doc) | Draft |
+| M101.9 | Mode Playtest (F5) — exécution via code client de prod | M101.2, M101.8, M100.33 (TODO, Playtest F5) | **TODO** (différé) |
+| M101.10 | Round-trip & tests CI (headless, Linux + Windows) | M101.1, M101.2, M101.3 | **Done** (→ issues/) |
+| M101.11 | Documentation F1 + tooltips | M101.4, M101.5, M100.47 (Done) | **Done** (→ issues/) |
 
 ## Ordre d'implémentation recommandé
 

@@ -7,9 +7,9 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 
 | Statut | Nombre |
 |--------|-------:|
-| DONE (clotures) | 334 |
+| DONE (clotures) | 335 |
 | PARTIAL | 33 |
-| TODO | 46 |
+| TODO | 45 |
 | **Total** | 413 |
 
 ### Par milestone
@@ -62,7 +62,7 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | M43 | 1 | 1 | 6 | 8 |
 | M44 | 4 | 0 | 0 | 4 |
 | M45 | 8 | 0 | 0 | 8 |
-| M100 | 41 | 0 | 10 | 51 |
+| M100 | 42 | 0 | 9 | 51 |
 | M101 | 8 | 1 | 2 | 11 |
 | AUTH-UI | 12 | 0 | 0 | 12 |
 | CHAR-MODEL | 3 | 12 | 22 | 37 |
@@ -566,7 +566,7 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | M100.29 | DONE | Spline sampler + roads (Catmull-Rom, splat) (cloture #811) |
 | M100.30 | DONE | Bridges/walls + splines v2 + surface pont (cloture #811) |
 | M100.31 | DONE | Hamlet generator + kits (cloture #811) |
-| M100.32 | TODO | InteractiveProps/relay absents |
+| M100.32 | DONE | Interactive props + relay master + simulateur (cloture #814) |
 | M100.33 | DONE | Footstep audio + PlaytestMode (cloture #811) |
 | M100.34 | TODO | SelectionTool/Layers/Minimap/Exporter absents |
 | M100.35 | DONE | Mountain range tools |

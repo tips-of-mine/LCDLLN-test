@@ -23,6 +23,21 @@ namespace engine::world::spline
 		float tangentMagnitude = 0.0f; // Bezier
 	};
 
+	// M100.30 — extension v2 : kit modulaire (pont/mur) optionnel par spline.
+	enum class SplineKitMode : uint32_t { None = 0, Bridge = 1, Wall = 2 };
+
+	struct SplineKitData
+	{
+		SplineKitMode mode = SplineKitMode::None;
+		uint32_t kitNameHash = 0;
+		float segmentLengthMeters = 4.0f;
+		uint32_t yMode = 0;            // Bridge : 0 = constant, 1 = suit la spline
+		float yConstant = 0.0f;        // Bridge
+		float widthMeters = 6.0f;      // Bridge
+		float heightMeters = 3.5f;     // Wall
+		float postSpacingMeters = 4.0f; // Wall
+	};
+
 	struct Spline
 	{
 		SplineType type = SplineType::Road;
@@ -32,10 +47,11 @@ namespace engine::world::spline
 		uint32_t splatLayerIndex = 0;
 		float splatStrength = 1.0f;
 		float splatFeatherMeters = 0.5f;
+		SplineKitData kit; // M100.30 (v2)
 	};
 
 	constexpr uint32_t kSplinesMagic = 0x4C50534Eu; // "NSPL"
-	constexpr uint32_t kSplinesVersion = 1u;
+	constexpr uint32_t kSplinesVersion = 2u;        // v2 : kit pont/mur (M100.30)
 
 	namespace detail
 	{
@@ -68,6 +84,23 @@ namespace engine::world::spline
 			detail::PutU32(b, s.splatLayerIndex);
 			detail::PutF32(b, s.splatStrength);
 			detail::PutF32(b, s.splatFeatherMeters);
+			// v2 : kit pont/mur.
+			detail::PutU32(b, static_cast<uint32_t>(s.kit.mode));
+			if (s.kit.mode == SplineKitMode::Bridge)
+			{
+				detail::PutU32(b, s.kit.kitNameHash);
+				detail::PutF32(b, s.kit.segmentLengthMeters);
+				detail::PutU32(b, s.kit.yMode);
+				detail::PutF32(b, s.kit.yConstant);
+				detail::PutF32(b, s.kit.widthMeters);
+			}
+			else if (s.kit.mode == SplineKitMode::Wall)
+			{
+				detail::PutU32(b, s.kit.kitNameHash);
+				detail::PutF32(b, s.kit.segmentLengthMeters);
+				detail::PutF32(b, s.kit.heightMeters);
+				detail::PutF32(b, s.kit.postSpacingMeters);
+			}
 		}
 		return b;
 	}
@@ -99,6 +132,28 @@ namespace engine::world::spline
 			detail::GetU32(bytes, p, s.splatLayerIndex);
 			detail::GetF32(bytes, p, s.splatStrength);
 			if (!detail::GetF32(bytes, p, s.splatFeatherMeters)) { err = "splines.bin: splat tronque"; return false; }
+			// v2 : kit pont/mur (rétro-compat : v1 => kitMode None par défaut).
+			if (version >= 2u)
+			{
+				uint32_t km = 0;
+				if (!detail::GetU32(bytes, p, km)) { err = "splines.bin: kit tronque"; return false; }
+				s.kit.mode = static_cast<SplineKitMode>(km);
+				if (s.kit.mode == SplineKitMode::Bridge)
+				{
+					detail::GetU32(bytes, p, s.kit.kitNameHash);
+					detail::GetF32(bytes, p, s.kit.segmentLengthMeters);
+					detail::GetU32(bytes, p, s.kit.yMode);
+					detail::GetF32(bytes, p, s.kit.yConstant);
+					if (!detail::GetF32(bytes, p, s.kit.widthMeters)) { err = "splines.bin: bridge tronque"; return false; }
+				}
+				else if (s.kit.mode == SplineKitMode::Wall)
+				{
+					detail::GetU32(bytes, p, s.kit.kitNameHash);
+					detail::GetF32(bytes, p, s.kit.segmentLengthMeters);
+					detail::GetF32(bytes, p, s.kit.heightMeters);
+					if (!detail::GetF32(bytes, p, s.kit.postSpacingMeters)) { err = "splines.bin: wall tronque"; return false; }
+				}
+			}
 			out.push_back(std::move(s));
 		}
 		return true;

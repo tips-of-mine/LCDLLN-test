@@ -358,6 +358,8 @@ add_library(engine_core
   # M100.29 — Spline tool & roads (sampler pur + outil).
   src/client/world/spline/SplineSampler.cpp
   src/world_editor/SplineTool.cpp
+  # M100.30 — Bridges & modular walls (structures pures ; outils header-only).
+  src/client/world/structures/Structures.cpp
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
@@ -972,6 +974,11 @@ add_test(NAME zones_tests COMMAND zones_tests)
 add_executable(m100_spline_tests src/client/world/spline/tests/SplineTests.cpp)
 target_link_libraries(m100_spline_tests PRIVATE engine_core)
 add_test(NAME m100_spline_tests COMMAND m100_spline_tests)
+
+# M100.30 — Tests structures (pont/mur, coins, surface pont, migration v1->v2).
+add_executable(structures_tests src/client/world/structures/tests/StructuresTests.cpp)
+target_link_libraries(structures_tests PRIVATE engine_core)
+add_test(NAME structures_tests COMMAND structures_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

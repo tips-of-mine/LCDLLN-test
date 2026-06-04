@@ -4,6 +4,7 @@
 // dépendance ImGui/rendu) : le moteur OverlayGuidanceSystem les consomme et le
 // rendu visuel (surlignage, bulle) est une passe UI séparée (Windows).
 
+#include <cstdint>
 #include <string>
 #include <vector>
 

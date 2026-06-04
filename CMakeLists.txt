@@ -340,6 +340,13 @@ add_library(engine_core
   # types/format/relais header-only ; payloads reseau partages).
   src/client/world/interactive/InteractiveSimulator.cpp
   src/world_editor/InteractivePanel.cpp
+  # M100.34 — Selection/Layers/Minimap/Export zone (geometrie + calques + export
+  # via Save*Bin header-only ; panneau minimap ImGui guarde).
+  src/world_editor/SelectionTool.cpp
+  src/world_editor/LayersDocument.cpp
+  src/world_editor/DeleteCommand.cpp
+  src/world_editor/WorldEditorExporter.cpp
+  src/world_editor/panels/MinimapPanel.cpp
   # M100.18 — Vegetation library + density painting (library JSON + Poisson-disk + outil).
   src/client/world/foliage/FoliageLibrary.cpp
   src/client/world/foliage/PoissonDiskSampler.cpp
@@ -950,6 +957,13 @@ add_test(NAME hazard_tests COMMAND hazard_tests)
 add_executable(interactive_tests src/client/world/interactive/tests/InteractiveTests.cpp)
 target_link_libraries(interactive_tests PRIVATE engine_core)
 add_test(NAME interactive_tests COMMAND interactive_tests)
+
+# M100.34 — Tests Selection/Layers/Minimap/DeleteCommand + export zone round-trip.
+# Tout est dans engine_core (Save*Bin header-only) ; on lie zone_builder_lib
+# comme le demande le ticket (writers offline partages, pas de doublon de format).
+add_executable(export_zone_tests src/world_editor/tests/ExportZoneTests.cpp)
+target_link_libraries(export_zone_tests PRIVATE engine_core zone_builder_lib)
+add_test(NAME export_zone_tests COMMAND export_zone_tests)
 
 # M100.17 — Tests placement (geometrie pure + format props.bin + commande).
 add_executable(placement_tests src/world_editor/tests/PlacementTests.cpp)

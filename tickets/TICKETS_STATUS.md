@@ -7,9 +7,9 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 
 | Statut | Nombre |
 |--------|-------:|
-| DONE (clotures) | 322 |
+| DONE (clotures) | 324 |
 | PARTIAL | 33 |
-| TODO | 58 |
+| TODO | 56 |
 | **Total** | 413 |
 
 ### Par milestone
@@ -62,7 +62,7 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | M43 | 1 | 1 | 6 | 8 |
 | M44 | 4 | 0 | 0 | 4 |
 | M45 | 8 | 0 | 0 | 8 |
-| M100 | 29 | 0 | 22 | 51 |
+| M100 | 31 | 0 | 20 | 51 |
 | M101 | 8 | 1 | 2 | 11 |
 | AUTH-UI | 12 | 0 | 0 | 12 |
 | CHAR-MODEL | 3 | 12 | 22 | 37 |
@@ -550,8 +550,8 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | M100.13 | DONE | Lacs/rivieres + mesh + flow |
 | M100.14 | DONE | Passe eau SSR + refraction |
 | M100.15 | DONE | Wading/swimming detection |
-| M100.16 | TODO | HazardVolumes/Simulator/Tool absents |
-| M100.17 | TODO | PlacementTool/Ghost/Snapping absents |
+| M100.16 | DONE | Hazard volumes + simulateur + outil (cloture #808) |
+| M100.17 | DONE | Easy placement tool + props.bin (cloture #810) |
 | M100.18 | TODO | FoliagePaintTool/Library/PoissonDisk absents |
 | M100.19 | TODO | ForestTool/FieldTool absents |
 | M100.20 | TODO | WindZoneTool/WindSystem absents |

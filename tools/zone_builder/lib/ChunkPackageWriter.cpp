@@ -12,6 +12,7 @@
 #include "src/shared/routine/RoutineSegmentCodec.h"
 #include "src/client/world/hazard/HazardVolumes.h"
 #include "src/client/world/instances/PropInstances.h"
+#include "src/client/world/foliage/FoliageInstances.h"
 
 #include <array>
 #include <cmath>
@@ -725,6 +726,37 @@ namespace tools::zone_builder
 		if (!out.good())
 		{
 			outError = "WriteProps: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteFoliage(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const std::vector<engine::world::foliage::FoliageInstance>& items, std::string& outError)
+	{
+		// M100.18 — foliage.bin par chunk.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "chunks" /
+			("chunk_" + std::to_string(chunkX) + "_" + std::to_string(chunkZ));
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteFoliage: create_directories failed: " + dir.string();
+			return false;
+		}
+		const std::vector<uint8_t> bytes = engine::world::foliage::SaveFoliageBin(items);
+		const std::filesystem::path file = dir / "foliage.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteFoliage: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteFoliage: write failed: " + file.string();
 			return false;
 		}
 		return true;

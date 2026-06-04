@@ -13,6 +13,7 @@ namespace engine::routine { struct RoutineGraph; }
 namespace engine::world::hazard { struct HazardVolume; }
 namespace engine::world::instances { struct PropInstance; }
 namespace engine::world::foliage { struct FoliageInstance; }
+namespace engine::world::wind { struct WindZone; }
 
 namespace tools::zone_builder
 {
@@ -103,4 +104,11 @@ namespace tools::zone_builder
 	/// \return true si OK ; sinon `outError` est renseigné.
 	bool WriteFoliage(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
 		const std::vector<engine::world::foliage::FoliageInstance>& items, std::string& outError);
+
+	/// Écrit `instances/wind_zones.bin` (M100.20) sous `<outputRootDir>/instances/`.
+	/// Crée le dossier au besoin. Sérialise via `engine::world::wind::
+	/// SaveWindZonesBin` (header-only partagé client). Fichier zone-level.
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteWindZones(std::string_view outputRootDir,
+		const std::vector<engine::world::wind::WindZone>& zones, std::string& outError);
 }

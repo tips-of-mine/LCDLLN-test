@@ -344,6 +344,9 @@ add_library(engine_core
   src/world_editor/ForestFieldGen.cpp
   src/world_editor/ForestTool.cpp
   src/world_editor/FieldTool.cpp
+  # M100.20 — Vegetation wind (WindSystem eval + zones + outil).
+  src/client/world/wind/WindSystem.cpp
+  src/world_editor/WindZoneTool.cpp
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
@@ -932,6 +935,11 @@ add_test(NAME foliage_tests COMMAND foliage_tests)
 add_executable(forest_field_tests src/world_editor/tests/ForestFieldTests.cpp)
 target_link_libraries(forest_field_tests PRIVATE engine_core)
 add_test(NAME forest_field_tests COMMAND forest_field_tests)
+
+# M100.20 — Tests vent (sway proportionnel hauteur, override zone, round-trip).
+add_executable(wind_tests src/client/world/wind/tests/WindTests.cpp)
+target_link_libraries(wind_tests PRIVATE engine_core)
+add_test(NAME wind_tests COMMAND wind_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

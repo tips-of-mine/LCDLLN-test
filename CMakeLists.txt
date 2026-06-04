@@ -510,6 +510,13 @@ add_library(engine_core
   src/world_editor/diagnostic/DiagnosticRuleRegistry.cpp
   src/world_editor/diagnostic/DiagnosticSystem.cpp
   src/world_editor/diagnostic/rules/WorkflowRules.cpp
+  # M100.50 — Quick Start Wizard (cœur pur : FSM 5 étapes + résolution choix →
+  # ZonePreset M100.46 + conditions/substitution + auto-gen déterministe).
+  # UI (cartes, aperçu 3D) + exécution = passe séparée.
+  src/world_editor/wizard/QuickStartWizard.cpp
+  src/world_editor/wizard/ConditionEvaluator.cpp
+  src/world_editor/wizard/AutoGenerators.cpp
+  src/world_editor/wizard/WizardTemplateResolver.cpp
   # M100.46 — Zone Presets Library. Incrément 1 : socle data (format
   # JSON + parsing + registry + validation). Incrément 2a : couche de
   # paramètres typés (OperationParams) + customisation (relief/eau/
@@ -1039,6 +1046,12 @@ add_test(NAME thermal_tests COMMAND thermal_tests)
 add_executable(zones_tests src/client/world/zones/tests/ZonesTests.cpp)
 target_link_libraries(zones_tests PRIVATE engine_core)
 add_test(NAME zones_tests COMMAND zones_tests)
+
+# M100.50 — Tests Quick Start Wizard (FSM + resolver 192 combinaisons + conditions
+# + substitution + determinisme auto-gen). Pure logique dans engine_core.
+add_executable(quick_start_wizard_tests src/world_editor/tests/QuickStartWizardTests.cpp)
+target_link_libraries(quick_start_wizard_tests PRIVATE engine_core)
+add_test(NAME quick_start_wizard_tests COMMAND quick_start_wizard_tests)
 
 # M100.29 — Tests spline (Catmull-Rom, ground-fit, splat sum=255, round-trip).
 # Nom prefixe m100_ : un target `spline_tests` existe deja (MoveSpline serveur).

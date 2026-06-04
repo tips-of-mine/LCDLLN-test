@@ -49,6 +49,7 @@
 #include "src/masterd/handlers/outdoorpvp/OutdoorPvpHandler.h"
 #include "src/masterd/handlers/weather/WeatherHandler.h"
 #include "src/masterd/handlers/events/GameEventHandler.h"
+#include "src/masterd/handlers/interactive/InteractiveHandler.h"
 #include "src/masterd/handlers/guild/GuildHandler.h"
 #include "src/masterd/handlers/auction/AuctionHandler.h"
 #include "src/masterd/handlers/loot/LootHandler.h"
@@ -808,6 +809,18 @@ int main(int argc, char** argv)
 	gameEventHandler.SeedV1Events();
 	LOG_INFO(Net, "[ServerMain] GameEventHandler configured (CMANGOS.31 step 3+4, in-memory, 4 events seed)");
 
+	// M100.32 — InteractiveHandler : relai sans validation gameplay des objets
+	// interactifs (portes/fenêtres/trappes/coffres). Opcode 200 (StateChange)
+	// dispatché au handler ; 201 (broadcast) et 202 (sync) sont des pushes émis
+	// par le handler. État RAM par zone (perdu au reboot, re-seedé depuis
+	// interactives.bin). V1 : pas de seed depuis fichier au boot (le seed se fera
+	// au chargement de la zone via SeedInteractive ; voir StreamCache 2e passe).
+	engine::server::InteractiveHandler interactiveHandler;
+	interactiveHandler.SetServer(&server);
+	interactiveHandler.SetSessionManager(&sessionManager);
+	interactiveHandler.SetConnectionSessionMap(&connSessionMap);
+	LOG_INFO(Net, "[ServerMain] InteractiveHandler configured (M100.32, relai sans validation gameplay)");
+
 	// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — GuildHandler : list /
 	// members / permissions / bank + push MotdUpdate. V1 : 2 guildes
 	// seedees au boot ("Les Gardiens", "L'Ombre") avec membres + bank
@@ -1038,7 +1051,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &interactiveHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -1144,6 +1157,8 @@ int main(int argc, char** argv)
 			lootHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeLunarStateRequest)
 			lunarHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpInteractiveStateChange)
+			interactiveHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeAdminCommandRequest)
 			adminCommandHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else

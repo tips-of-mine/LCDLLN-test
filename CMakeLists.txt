@@ -336,6 +336,10 @@ add_library(engine_core
   # M100.17 — Easy Placement Tool (geometrie pure + outil ; format/commande header-only).
   src/world_editor/PlacementGeometry.cpp
   src/world_editor/PlacementTool.cpp
+  # M100.32 — Interactive Props (simulateur d'animation pur + panneau editeur ;
+  # types/format/relais header-only ; payloads reseau partages).
+  src/client/world/interactive/InteractiveSimulator.cpp
+  src/world_editor/InteractivePanel.cpp
   # M100.18 — Vegetation library + density painting (library JSON + Poisson-disk + outil).
   src/client/world/foliage/FoliageLibrary.cpp
   src/client/world/foliage/PoissonDiskSampler.cpp
@@ -690,6 +694,7 @@ add_library(engine_core
   src/shared/network/OutdoorPvpPayloads.cpp
   src/shared/network/WeatherPayloads.cpp
   src/shared/network/GameEventPayloads.cpp
+  src/shared/network/InteractivePayloads.cpp
   src/shared/network/GuildPayloads.cpp
   src/shared/network/AuctionPayloads.cpp
   src/shared/network/LootPayloads.cpp
@@ -938,6 +943,13 @@ add_test(NAME routine_help_content_tests COMMAND routine_help_content_tests)
 add_executable(hazard_tests src/client/world/hazard/tests/HazardTests.cpp)
 target_link_libraries(hazard_tests PRIVATE engine_core)
 add_test(NAME hazard_tests COMMAND hazard_tests)
+
+# M100.32 — Tests Interactive Props (round-trip binaire + simulateur + reseau +
+# relais serveur). Types/format/relais header-only ; simulateur + payloads dans
+# engine_core : on ne lie QUE engine_core (pas de doublon).
+add_executable(interactive_tests src/client/world/interactive/tests/InteractiveTests.cpp)
+target_link_libraries(interactive_tests PRIVATE engine_core)
+add_test(NAME interactive_tests COMMAND interactive_tests)
 
 # M100.17 — Tests placement (geometrie pure + format props.bin + commande).
 add_executable(placement_tests src/world_editor/tests/PlacementTests.cpp)

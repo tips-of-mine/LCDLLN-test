@@ -139,6 +139,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/outdoorpvp/OutdoorPvpHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/weather/WeatherHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/events/GameEventHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/interactive/InteractiveHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/guild/GuildHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/auction/AuctionHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/loot/LootHandler.cpp
@@ -161,6 +162,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/OutdoorPvpPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/WeatherPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/GameEventPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/InteractivePayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/GuildPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/AuctionPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/LootPayloads.cpp

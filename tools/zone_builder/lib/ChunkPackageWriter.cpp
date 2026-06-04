@@ -12,6 +12,7 @@
 #include "src/shared/routine/RoutineSegmentCodec.h"
 #include "src/client/world/hazard/HazardVolumes.h"
 #include "src/client/world/instances/PropInstances.h"
+#include "src/client/world/interactive/InteractiveInstances.h"
 #include "src/client/world/foliage/FoliageInstances.h"
 #include "src/client/world/wind/WindZones.h"
 #include "src/client/world/thermal/ShadeMap.h"
@@ -730,6 +731,36 @@ namespace tools::zone_builder
 		if (!out.good())
 		{
 			outError = "WriteProps: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteInteractives(std::string_view outputRootDir,
+		const std::vector<engine::world::interactive::InteractivePropInstance>& items, std::string& outError)
+	{
+		// M100.32 — fichier zone-level instances/interactives.bin. Crée instances/ au besoin.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "instances";
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteInteractives: create_directories failed: " + dir.string();
+			return false;
+		}
+		const std::vector<uint8_t> bytes = engine::world::interactive::SaveInteractivesBin(items);
+		const std::filesystem::path file = dir / "interactives.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteInteractives: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteInteractives: write failed: " + file.string();
 			return false;
 		}
 		return true;

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Feyhin Lokcthat — Placeur interactif (repère image, vue du sud)</title>
+<style>
+  :root{ --bg:#10141b; --panel:#1a2029; --ink:#e8eef5; --muted:#93a1b0; --accent:#d8a657; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:Arial,"Segoe UI",sans-serif; }
+  header{ padding:12px 18px; border-bottom:1px solid #2a3340; }
+  header h1{ margin:0; font-size:17px; }
+  header p{ margin:4px 0 0; color:var(--muted); font-size:13px; max-width:1100px; }
+  .toolbar{ padding:10px 18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  button{ background:var(--accent); color:#1a1206; border:0; padding:8px 14px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:13px; }
+  button.alt{ background:#2a3340; color:var(--ink); }
+  .stagewrap{ padding:0 18px 18px; }
+  /* Le cadre = l'image vue depuis le sud. Gauche=ouest, droite=est, bas=premier plan/sud, haut=fond/nord. */
+  #stage{ position:relative; width:100%; max-width:1100px; aspect-ratio:16/9; border:2px solid #2a3340; border-radius:8px;
+          background:linear-gradient(#1b2a3c 0%, #213347 38%, #2c4258 46%, #25506b 62%, #2a5a76 100%); overflow:hidden; user-select:none; }
+  .axis{ position:absolute; color:#ffffff99; font-size:12px; pointer-events:none; }
+  .ax-w{ left:8px; top:50%; } .ax-e{ right:8px; top:50%; }
+  .ax-n{ left:50%; top:6px; transform:translateX(-50%);} .ax-s{ left:50%; bottom:6px; transform:translateX(-50%);}
+  .item{ position:absolute; display:flex; align-items:center; justify-content:center; text-align:center;
+         border:2px solid #ffffffaa; border-radius:6px; font-size:12px; font-weight:bold; color:#10141b;
+         cursor:grab; padding:2px 4px; line-height:1.1; box-shadow:0 2px 6px #0006; }
+  .item:active{ cursor:grabbing; }
+  .item small{ display:block; font-weight:normal; font-size:10px; }
+  aside{ position:fixed; right:0; top:0; bottom:0; width:300px; background:var(--panel); border-left:1px solid #2a3340; padding:16px; font-size:13px; overflow:auto; }
+  .layout-body{ margin-right:300px; }
+  textarea{ width:100%; height:200px; background:#0c0f14; color:#cfe9c2; border:1px solid #2a3340; border-radius:6px; font-family:Consolas,monospace; font-size:12px; padding:8px; }
+  aside h2{ font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--accent); margin:14px 0 6px;}
+  ul{ padding-left:18px; color:var(--muted);} li{ margin:4px 0;}
+</style>
+</head>
+<body>
+<div class="layout-body">
+<header>
+  <h1>Feyhin Lokcthat — placeur interactif (repère de TON image, vue depuis le sud)</h1>
+  <p>Glisse chaque bloc là où il apparaît dans ton image de concept. Le cadre EST l'image : <b>gauche = ouest</b>, <b>droite = est</b>, <b>bas = premier plan (sud, proche)</b>, <b>haut = fond (nord, loin)</b>. Place aussi en hauteur apparente (plus haut dans le cadre = plus loin/plus élevé). Quand c'est bon, clique « Exporter » et colle-moi le texte.</p>
+</header>
+<div class="toolbar">
+  <button id="export">⬇ Exporter le placement</button>
+  <button class="alt" id="reset">↺ Réinitialiser</button>
+  <span style="color:var(--muted);font-size:12px;">Astuce : tu peux empiler/superposer librement (ex. monument devant le massif).</span>
+</div>
+<div class="stagewrap">
+  <div id="stage">
+    <div class="axis ax-w">◀ OUEST</div>
+    <div class="axis ax-e">EST ▶</div>
+    <div class="axis ax-n">▲ FOND (nord)</div>
+    <div class="axis ax-s">▼ PREMIER PLAN (sud)</div>
+  </div>
+</div>
+</div>
+
+<aside>
+  <h2>Éléments à placer</h2>
+  <ul id="list"></ul>
+  <h2>Placement exporté</h2>
+  <textarea id="out" placeholder="Clique « Exporter » puis copie ce texte et colle-le moi dans le chat."></textarea>
+</aside>
+
+<script>
+// Chaque item : position en % du cadre (x = gauche, y = haut), taille en % (w,h).
+// Valeurs initiales = mon hypothèse actuelle ; déplace-les pour coller à ton image.
+const ITEMS = [
+  { id:'massif_est',  label:'Massif est',      sub:'porte la cité', color:'#5a5240', x:70, y:4,  w:28, h:88 },
+  { id:'versant_ouest',label:'Versant ouest',  sub:'boisé',          color:'#2f4a32', x:1,  y:18, w:22, h:74 },
+  { id:'riviere',     label:'Rivière',         sub:'coule N→S',      color:'#2f6f93', x:30, y:55, w:34, h:42 },
+  { id:'pont',        label:'Pont',            sub:'10 arches',      color:'#9b8157', x:20, y:50, w:20, h:7  },
+  { id:'cite',        label:'CITÉ HAUTE',      sub:'monuments+flèche',color:'#c6ad82', x:60, y:18, w:26, h:18 },
+  { id:'faubourg',    label:'Faubourg bas',    sub:'~40 maisons',    color:'#caa46a', x:58, y:46, w:22, h:16 },
+  { id:'monument',    label:'Monument',        sub:'isolé ~26 m',    color:'#d8a657', x:68, y:36, w:7,  h:9  },
+  { id:'arbre',       label:'Arbre',           sub:'isolé ~10 m',    color:'#4e7a3a', x:53, y:56, w:5,  h:6  },
+  { id:'rochers_amont',label:'Rochers amont',  sub:'amas pointu',    color:'#8b8b86', x:40, y:58, w:8,  h:6  },
+  { id:'rochers_aval',label:'Rochers aval',    sub:'épars',          color:'#a3a39c', x:36, y:80, w:8,  h:6  },
+];
+
+const stage = document.getElementById('stage');
+const list = document.getElementById('list');
+const out = document.getElementById('out');
+let nodes = {};
+
+function build(){
+  // purge anciens items
+  Object.values(nodes).forEach(n=>n.remove());
+  nodes = {}; list.innerHTML='';
+  ITEMS.forEach(it=>{
+    const d = document.createElement('div');
+    d.className='item'; d.dataset.id=it.id;
+    d.style.background=it.color; d.style.left=it.x+'%'; d.style.top=it.y+'%';
+    d.style.width=it.w+'%'; d.style.height=it.h+'%';
+    d.innerHTML = `${it.label}<small>${it.sub}</small>`;
+    stage.appendChild(d);
+    nodes[it.id]=d;
+    makeDraggable(d);
+    const li=document.createElement('li'); li.textContent=it.label+' — '+it.sub; list.appendChild(li);
+  });
+}
+
+function makeDraggable(d){
+  let startX, startY, origLeft, origTop;
+  d.addEventListener('pointerdown', e=>{
+    e.preventDefault(); d.setPointerCapture(e.pointerId);
+    const r = stage.getBoundingClientRect();
+    startX=e.clientX; startY=e.clientY;
+    origLeft = parseFloat(d.style.left)/100*r.width;
+    origTop  = parseFloat(d.style.top)/100*r.height;
+    const move = ev=>{
+      const dx=ev.clientX-startX, dy=ev.clientY-startY;
+      let nx=(origLeft+dx)/r.width*100, ny=(origTop+dy)/r.height*100;
+      nx=Math.max(0,Math.min(100-parseFloat(d.style.width), nx));
+      ny=Math.max(0,Math.min(100-parseFloat(d.style.height), ny));
+      d.style.left=nx.toFixed(1)+'%'; d.style.top=ny.toFixed(1)+'%';
+    };
+    const up = ev=>{ d.releasePointerCapture(e.pointerId); document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up); };
+    document.addEventListener('pointermove',move); document.addEventListener('pointerup',up);
+  });
+}
+
+document.getElementById('export').addEventListener('click', ()=>{
+  const lines = ['PLACEMENT FEYHIN LOKCTHAT (repère image, vue du sud ; gauche=ouest, droite=est, bas=sud/proche, haut=nord/loin)'];
+  lines.push('format: id : centre_x%, centre_y%  (0,0 = coin haut-gauche)');
+  ITEMS.forEach(it=>{
+    const d=nodes[it.id];
+    const cx = (parseFloat(d.style.left)+parseFloat(d.style.width)/2).toFixed(1);
+    const cy = (parseFloat(d.style.top)+parseFloat(d.style.height)/2).toFixed(1);
+    lines.push(`${it.id.padEnd(15)} : x=${cx}%, y=${cy}%`);
+  });
+  out.value = lines.join('\n');
+  out.select();
+});
+
+document.getElementById('reset').addEventListener('click', build);
+build();
+</script>
+</body>
+</html>

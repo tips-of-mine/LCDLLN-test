@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Feyhin Lokcthat — Plan de masse v6 (d'après ton croquis)</title>
+<style>
+  :root { --bg:#11151c; --panel:#1b2129; --ink:#e8eef5; --muted:#93a1b0; --accent:#d8a657; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:Arial,"Segoe UI",sans-serif; }
+  header { padding:14px 20px; border-bottom:1px solid #2a3340; }
+  header h1 { margin:0; font-size:18px; }
+  header p { margin:4px 0 0; color:var(--muted); font-size:13px; }
+  .wrap { display:flex; }
+  .stage { flex:1; padding:16px; overflow:auto; }
+  svg { background:#0c0f14; border:1px solid #2a3340; border-radius:6px; display:block; max-width:100%; height:auto; }
+  aside { width:300px; background:var(--panel); border-left:1px solid #2a3340; padding:16px; font-size:13px; }
+  aside h2 { font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--accent); margin:18px 0 8px; }
+  aside h2:first-child { margin-top:0; }
+  .legend div { display:flex; align-items:center; gap:8px; margin:5px 0; cursor:pointer; user-select:none; }
+  .legend .sw { width:16px; height:16px; border-radius:3px; flex:none; border:1px solid #00000055; }
+  .legend label { cursor:pointer; }
+  .legend .off { opacity:.35; }
+  ul.notes { margin:6px 0 0; padding-left:18px; color:var(--muted); }
+  ul.notes li { margin:4px 0; }
+  .hint { color:var(--muted); font-size:12px; margin-top:6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Feyhin Lokcthat — plan de masse v7 (vue de dessus, nord en haut) · d'après TON croquis</h1>
+  <p>Rivière en méandre ; pont horizontal à mi-hauteur (ouest→est) ; monument au-dessus du pont ; cité sur son PIC ROCHEUX DÉTACHÉ (en avant du massif est, pas dessus) ; faubourg sous le monument au bord de l'eau. (+ arbre, rochers, fond, POV ajoutés.)</p>
+</header>
+<div class="wrap">
+  <div class="stage"><svg id="map" viewBox="0 0 900 820" width="900" height="820"></svg></div>
+  <aside>
+    <h2>Légende (cliquable)</h2>
+    <div class="legend" id="legend"></div>
+    <h2>Repères d'échelle</h2>
+    <ul class="notes">
+      <li>Pont : 200 m (10 arches × 20 m)</li>
+      <li>Rivière au pont : ~145 m</li>
+      <li>Cité : verticale, contre le massif est</li>
+      <li>Monument : au-dessus du pont</li>
+      <li>Faubourg : sous le monument, bord de l'eau</li>
+    </ul>
+    <p class="hint">Éléments en pointillé = ajoutés par moi (absents de ton croquis). Dis-moi si je les déplace.</p>
+  </aside>
+</div>
+
+<script>
+const W = { minX:-360, maxX:380, minZ:-60, maxZ:640 };
+const PAD = 40, SVGW = 900, SVGH = 820;
+const S = Math.min((SVGW-2*PAD)/(W.maxX-W.minX), (SVGH-2*PAD)/(W.maxZ-W.minZ));
+function px(x){ return PAD + (x - W.minX) * S; }
+function py(z){ return SVGH - PAD - (z - W.minZ) * S; }
+const svg = document.getElementById('map');
+const NS = 'http://www.w3.org/2000/svg';
+function el(t,a,p){ const e=document.createElementNS(NS,t); for(const k in a) e.setAttribute(k,a[k]); (p||svg).appendChild(e); return e; }
+function poly(pts,a,p){ return el('polygon', Object.assign({points:pts.map(q=>`${px(q[0])},${py(q[1])}`).join(' ')},a), p); }
+function label(x,z,txt,a){ const e=el('text',Object.assign({x:px(x),y:py(z),fill:'#e8eef5','font-size':13,'text-anchor':'middle'},a||{})); e.textContent=txt; return e; }
+const layers={}; function L(n){ if(!layers[n]) layers[n]=el('g',{}); return layers[n]; }
+
+// Versant ouest (bande verte gauche)
+const gW=L('Versant ouest');
+poly([[-360,-60],[-120,-60],[-120,640],[-360,640]],{fill:'#2aa84f',stroke:'#1f8a40','stroke-width':1.5},gW);
+label(-240,340,'Versant ouest',{fill:'#0c3d18','font-size':15,'font-weight':'bold'});
+
+// Massif est (bande rouge droite)
+const gE=L('Massif est (mur de fond)');
+poly([[235,-60],[380,-60],[380,640],[235,640]],{fill:'#8c0f2a',stroke:'#6e0b20','stroke-width':1.5},gE);
+label(308,420,'Massif est',{fill:'#f0c24a','font-size':14,'font-weight':'bold'});
+label(308,400,'(mur de fond, séparé)',{fill:'#f0c24a','font-size':10});
+
+// Rivière (méandre en S) — centerline + largeur
+const gR=L('Rivière (méandre)');
+const center=[ [640,30],[560,85],[470,55],[380,5],[300,-45],[210,5],[120,55],[40,20],[-60,-15] ]; // [Z,X]
+const halfW = [ 60,62,64,66,72,70,66,72,90 ]; // demi-largeur (m), un peu plus large au sud
+const right=[], left=[];
+for(let i=0;i<center.length;i++){ const z=center[i][0], x=center[i][1], h=halfW[i]; right.push([x+h,z]); left.push([x-h,z]); }
+poly(right.concat(left.reverse()),{fill:'#3a49c8',stroke:'#5566e0','stroke-width':1.5,opacity:.95},gR);
+label(40,560,'Rivière',{fill:'#dfe4ff','font-size':14});
+
+// Pont (barre noire horizontale, ouest→est, à mi-hauteur Z~300)
+const gP=L('Pont à arches (200 m)');
+const bz=300,bx0=-135,bx1=90,bw=10;
+el('rect',{x:px(bx0),y:py(bz+bw),width:(bx1-bx0)*S,height:2*bw*S,fill:'#111417',stroke:'#000','stroke-width':1},gP);
+for(let i=0;i<=10;i++){const x=bx0+(bx1-bx0)*i/10; el('line',{x1:px(x),y1:py(bz+bw),x2:px(x),y2:py(bz-bw),stroke:'#444','stroke-width':1},gP);}
+label(-160,300,'Pont',{fill:'#e8eef5','font-size':13,'text-anchor':'end'});
+
+// Monument isolé (pastille dorée, au-dessus du pont)
+const gM=L('Monument isolé');
+el('circle',{cx:px(55),cy:py(345),r:14,fill:'#f2c20c',stroke:'#fff0a8','stroke-width':2},gM);
+label(55,373,'Monument isolé',{fill:'#1b2540','font-size':12,'font-weight':'bold'});
+
+// Pic de la cité (relief rocheux DÉTACHÉ, en avant du massif est ; selle entre les deux)
+const gPic=L('Pic de la cité (détaché)');
+poly([[78,188],[188,188],[188,412],[88,412]],{fill:'#7d6b5a',stroke:'#a08a72','stroke-width':1.5},gPic);
+label(133,420,'pic détaché',{fill:'#d8c7b0','font-size':10});
+
+// Cité haute (rectangle violet VERTICAL, posée sur le PIC détaché, centrée sur la hauteur du pont)
+const gC=L('Cité haute (sur le pic)');
+poly([[92,215],[150,215],[150,395],[92,395]],{fill:'#9a3fae',stroke:'#c46cd6','stroke-width':2},gC);
+label(121,310,'Cité',{fill:'#fbeaff','font-size':14,'font-weight':'bold'});
+label(121,292,'haute',{fill:'#fbeaff','font-size':14,'font-weight':'bold'});
+
+// Faubourg bas (rose, sous le monument, débouché est du pont, bord de l'eau)
+const gF=L('Faubourg bas');
+poly([[40,205],[92,205],[92,290],[45,290]],{fill:'#f3a9c8',stroke:'#e07ba6','stroke-width':1.5},gF);
+label(66,255,'faubourg',{fill:'#5a1334','font-size':12,'font-weight':'bold'});
+label(66,238,'bas',{fill:'#5a1334','font-size':12,'font-weight':'bold'});
+
+// ----- Ajouts (pointillés) : arbre, rochers, fond nord, POV -----
+const gT=L('+ Arbre isolé');
+el('circle',{cx:px(78),cy:py(150),r:6,fill:'#2f7d32',stroke:'#bfe0c2','stroke-width':1.5,'stroke-dasharray':'3 2'},gT);
+label(78,135,'arbre isolé',{fill:'#9ccB7f','font-size':10});
+
+const gK=L('+ Rochers / îlots');
+[[-40,355],[-28,360],[-52,358]].forEach(p=>el('polygon',{points:`${px(p[0])},${py(p[1])-5} ${px(p[0])-4},${py(p[1])+3} ${px(p[0])+4},${py(p[1])+3}`,fill:'none',stroke:'#c9c9c2','stroke-width':1.3,'stroke-dasharray':'3 2'},gK));
+label(-40,377,'rochers (amont)',{fill:'#c9c9c2','font-size':10});
+[[20,120],[35,95]].forEach(p=>el('circle',{cx:px(p[0]),cy:py(p[1]),r:3,fill:'none',stroke:'#b9b9b2','stroke-width':1.3,'stroke-dasharray':'3 2'},gK));
+label(35,80,'rochers (aval)',{fill:'#b6b6af','font-size':10});
+
+const gBk=L('+ Fond nord');
+poly([[-360,600],[380,600],[380,640],[-360,640]],{fill:'none',stroke:'#8aa0bf','stroke-width':1,'stroke-dasharray':'5 3'},gBk);
+label(-150,618,'fond nord (chaîne bleutée)',{fill:'#8aa0bf','font-size':10,'text-anchor':'start'});
+
+const gV=L('+ Point de vue (sud)');
+poly([[-30,-40],[-180,420],[160,420]],{fill:'#fff','opacity':.05,stroke:'#fff','stroke-dasharray':'4 4','stroke-width':1},gV);
+el('circle',{cx:px(-30),cy:py(-40),r:6,fill:'none',stroke:'#fff','stroke-width':1.5,'stroke-dasharray':'3 2'},gV);
+label(-30,-55,'POV (cavaliers, sud)',{fill:'#fff','font-size':11});
+
+// Boussole + échelle
+const gU=L('Repères (nord, échelle)');
+el('line',{x1:px(345),y1:py(20),x2:px(345),y2:py(95),stroke:'#d8a657','stroke-width':2},gU);
+el('polygon',{points:`${px(345)},${py(105)} ${px(345)-6},${py(88)} ${px(345)+6},${py(88)}`,fill:'#d8a657'},gU);
+label(345,5,'N',{fill:'#d8a657','font-size':16,'font-weight':'bold'});
+const x0=px(-330),x2=px(-130),yb=py(-50);
+el('line',{x1:x0,y1:yb,x2:x2,y2:yb,stroke:'#e8eef5','stroke-width':2},gU);
+el('line',{x1:x0,y1:yb-5,x2:x0,y2:yb+5,stroke:'#e8eef5','stroke-width':2},gU);
+el('line',{x1:x2,y1:yb-5,x2:x2,y2:yb+5,stroke:'#e8eef5','stroke-width':2},gU);
+const sl=el('text',{x:(x0+x2)/2,y:yb-8,fill:'#e8eef5','font-size':12,'text-anchor':'middle'},gU); sl.textContent='200 m';
+
+const colors={
+ 'Versant ouest':'#2aa84f','Massif est (mur de fond)':'#8c0f2a','Rivière (méandre)':'#3a49c8','Pont à arches (200 m)':'#111417',
+ 'Monument isolé':'#f2c20c','Pic de la cité (détaché)':'#7d6b5a','Cité haute (sur le pic)':'#9a3fae','Faubourg bas':'#f3a9c8',
+ '+ Arbre isolé':'#2f7d32','+ Rochers / îlots':'#c9c9c2','+ Fond nord':'#8aa0bf','+ Point de vue (sud)':'#ffffff','Repères (nord, échelle)':'#d8a657'};
+const legend=document.getElementById('legend');
+Object.keys(colors).forEach(name=>{
+  const row=document.createElement('div');
+  const sw=document.createElement('span'); sw.className='sw'; sw.style.background=colors[name];
+  const lab=document.createElement('label'); lab.textContent=name;
+  row.appendChild(sw); row.appendChild(lab);
+  row.addEventListener('click',()=>{ const g=layers[name]; if(!g)return; const vis=g.getAttribute('display')!=='none'; g.setAttribute('display',vis?'none':'inline'); row.classList.toggle('off',vis); });
+  legend.appendChild(row);
+});
+</script>
+</body>
+</html>

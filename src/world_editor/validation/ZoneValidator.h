@@ -43,7 +43,7 @@ namespace engine::editor::world::validation
 		};
 
 		/// Exécute toutes les règles applicables et renvoie un rapport complet.
-		Report Validate(const ValidationContext& ctx, const Options& options = {}) const;
+		Report Validate(const ValidationContext& ctx, const Options& options = Options{}) const;
 
 		/// Variante incrémentale : ne re-run que les règles dont au moins un
 		/// GetDocumentTags() est dans `changedTags` ; conserve du rapport
@@ -51,7 +51,7 @@ namespace engine::editor::world::validation
 		Report ValidateIncremental(const ValidationContext& ctx,
 			const std::vector<std::string>& changedTags,
 			const Report& previousReport,
-			const Options& options = {}) const;
+			const Options& options = Options{}) const;
 
 	private:
 		const ValidationRuleRegistry& m_registry;

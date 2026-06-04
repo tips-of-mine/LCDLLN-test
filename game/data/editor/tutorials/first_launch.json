@@ -1,0 +1,30 @@
+{
+  "id": "first_launch",
+  "version": 1,
+  "displayName": "Premier lancement",
+  "estimatedMinutes": 5,
+  "_note": "M100.49 MVP — contenu defini en code dans TutorialIo.cpp (BuildFirstLaunchTutorial). Ce fichier documente le format ; le chargement JSON via TutorialIo est differe (2e passe).",
+  "introModal": {
+    "titleFr": "Bienvenue dans l'editeur LCDLLN",
+    "bodyFr": "Vous etes ici pour la premiere fois. Voulez-vous suivre le tutoriel de 5 minutes qui vous guidera dans la creation de votre premiere zone ?",
+    "bulletsFr": [
+      "Creer une zone a partir d'un template",
+      "Ajuster les parametres de terrain",
+      "Valider et exporter votre zone"
+    ]
+  },
+  "steps": [
+    { "id": "step1_open_zone_preset", "titleFr": "Etape 1/8 — Ouvre le dialog", "bodyFr": "Clique sur Fichier -> Nouvelle zone depuis preset.", "iconHint": "point_up", "targetWidget": "menubar.file.new_from_preset", "validatesOn": "zone_preset_dialog.opened" },
+    { "id": "step2_select_forest", "titleFr": "Etape 2/8 — Choisis un preset", "bodyFr": "Choisis la Foret temperee.", "iconHint": "point_up", "targetWidget": "zone_preset_dialog.thumbnail.temperate_forest", "validatesOn": "zone_preset_dialog.selected.temperate_forest" },
+    { "id": "step3_create_zone", "titleFr": "Etape 3/8 — Cree la zone", "bodyFr": "Laisse les sliders par defaut et clique Creer la zone.", "iconHint": "point_up", "targetWidget": "zone_preset_dialog.button.create", "validatesOn": "zone.created" },
+    { "id": "step4_select_cave_tool", "titleFr": "Etape 4/8 — Outil Cave", "bodyFr": "Clique sur Cave dans la barre d'outils.", "iconHint": "point_up", "targetWidget": "toolbar.button.cave", "validatesOn": "tool.cave.active" },
+    { "id": "step5_select_cave_asset", "titleFr": "Etape 5/8 — Choisis un asset", "bodyFr": "Selectionne cave_small_01 dans le catalogue.", "iconHint": "point_up", "targetWidget": "panel.tool_properties.catalog_item.cave_small_01", "validatesOn": "catalog.cave_small_01.selected" },
+    { "id": "step6_place_cave", "titleFr": "Etape 6/8 — Pose la grotte", "bodyFr": "Clique sur le terrain pour poser la grotte.", "iconHint": "point_up", "targetWidget": "viewport", "validatesOn": "mesh_insert.cave.placed" },
+    { "id": "step7_validate", "titleFr": "Etape 7/8 — Valide ta zone", "bodyFr": "Clique sur le bouton Valider dans la barre d'outils.", "iconHint": "shield", "targetWidget": "toolbar.button.validate", "validatesOn": "panel.validation.opened" },
+    { "id": "step8_export_info", "titleFr": "Etape 8/8 — Exporter", "bodyFr": "Exporte via Fichier -> Exporter. Le tutoriel s'arrete ici !", "iconHint": "check", "targetWidget": "menubar.file.export", "validatesOn": "" }
+  ],
+  "outroModal": {
+    "titleFr": "Felicitations !",
+    "bodyFr": "Tu sais maintenant l'essentiel. F1 ouvre la doc complete, et « Pourquoi ca ne marche pas ? » (menu Aide) t'aide a diagnostiquer les problemes."
+  }
+}

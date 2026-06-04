@@ -498,6 +498,12 @@ add_library(engine_core
   src/world_editor/presets/ToolPresetIo.cpp
   src/world_editor/presets/ToolPresetRegistry.cpp
   src/world_editor/prefs/UserPrefsStore.cpp
+  # M100.49 — Tutorial & Overlay guidance (coeur pur ; diagnostic differe car
+  # depend de M100.48). OverlayGuidanceSystem = moteur de sequence ;
+  # TutorialSystem = pilotage + flags ; TutorialIo = tutoriel "first_launch" code.
+  src/world_editor/help/OverlayGuidanceSystem.cpp
+  src/world_editor/tutorial/TutorialSystem.cpp
+  src/world_editor/tutorial/TutorialIo.cpp
   # M100.46 — Zone Presets Library. Incrément 1 : socle data (format
   # JSON + parsing + registry + validation). Incrément 2a : couche de
   # paramètres typés (OperationParams) + customisation (relief/eau/
@@ -999,6 +1005,13 @@ add_test(NAME forest_field_tests COMMAND forest_field_tests)
 add_executable(wind_tests src/client/world/wind/tests/WindTests.cpp)
 target_link_libraries(wind_tests PRIVATE engine_core)
 add_test(NAME wind_tests COMMAND wind_tests)
+
+# M100.49 — Tests Tutorial & Overlay (moteur de sequence + systeme tutoriel +
+# registre widgets). Diagnostic differe (depend de M100.48). Ancrage distinct
+# pour eviter les conflits CMake avec d'autres PR M100 en vol.
+add_executable(tutorial_diagnostic_tests src/world_editor/tests/TutorialDiagnosticTests.cpp)
+target_link_libraries(tutorial_diagnostic_tests PRIVATE engine_core)
+add_test(NAME tutorial_diagnostic_tests COMMAND tutorial_diagnostic_tests)
 
 # M100.21 — Tests collecteur d'influences (portee, troncature, flexion).
 add_executable(entity_influence_tests src/client/world/foliage/tests/EntityInfluenceTests.cpp)

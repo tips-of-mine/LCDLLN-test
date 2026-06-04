@@ -347,6 +347,8 @@ add_library(engine_core
   # M100.20 — Vegetation wind (WindSystem eval + zones + outil).
   src/client/world/wind/WindSystem.cpp
   src/world_editor/WindZoneTool.cpp
+  # M100.21 — Player interaction (collecteur d'influences d'entites).
+  src/client/world/foliage/EntityInfluenceCollector.cpp
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
@@ -940,6 +942,11 @@ add_test(NAME forest_field_tests COMMAND forest_field_tests)
 add_executable(wind_tests src/client/world/wind/tests/WindTests.cpp)
 target_link_libraries(wind_tests PRIVATE engine_core)
 add_test(NAME wind_tests COMMAND wind_tests)
+
+# M100.21 — Tests collecteur d'influences (portee, troncature, flexion).
+add_executable(entity_influence_tests src/client/world/foliage/tests/EntityInfluenceTests.cpp)
+target_link_libraries(entity_influence_tests PRIVATE engine_core)
+add_test(NAME entity_influence_tests COMMAND entity_influence_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

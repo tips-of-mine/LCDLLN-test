@@ -16,6 +16,7 @@ namespace engine::world::foliage { struct FoliageInstance; }
 namespace engine::world::wind { struct WindZone; }
 namespace engine::world::thermal { struct ShadeMap; }
 namespace engine::world::zones { struct GameplayZone; }
+namespace engine::world::spline { struct Spline; }
 
 namespace tools::zone_builder
 {
@@ -127,4 +128,11 @@ namespace tools::zone_builder
 	/// \return true si OK ; sinon `outError` est renseigné.
 	bool WriteZones(std::string_view outputRootDir,
 		const std::vector<engine::world::zones::GameplayZone>& zones, std::string& outError);
+
+	/// Écrit `instances/splines.bin` (M100.29) sous `<outputRootDir>/instances/`.
+	/// Crée le dossier au besoin. Sérialise via `engine::world::spline::
+	/// SaveSplinesBin` (header-only partagé client). Fichier zone-level.
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteSplines(std::string_view outputRootDir,
+		const std::vector<engine::world::spline::Spline>& splines, std::string& outError);
 }

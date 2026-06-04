@@ -16,6 +16,7 @@
 #include "src/client/world/wind/WindZones.h"
 #include "src/client/world/thermal/ShadeMap.h"
 #include "src/client/world/zones/Zones.h"
+#include "src/client/world/spline/SplineInstances.h"
 
 #include <array>
 #include <cmath>
@@ -851,6 +852,36 @@ namespace tools::zone_builder
 		if (!out.good())
 		{
 			outError = "WriteZones: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteSplines(std::string_view outputRootDir,
+		const std::vector<engine::world::spline::Spline>& splines, std::string& outError)
+	{
+		// M100.29 — fichier zone-level instances/splines.bin.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "instances";
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteSplines: create_directories failed: " + dir.string();
+			return false;
+		}
+		const std::vector<uint8_t> bytes = engine::world::spline::SaveSplinesBin(splines);
+		const std::filesystem::path file = dir / "splines.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteSplines: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteSplines: write failed: " + file.string();
 			return false;
 		}
 		return true;

@@ -968,9 +968,10 @@ target_link_libraries(zones_tests PRIVATE engine_core)
 add_test(NAME zones_tests COMMAND zones_tests)
 
 # M100.29 — Tests spline (Catmull-Rom, ground-fit, splat sum=255, round-trip).
-add_executable(spline_tests src/client/world/spline/tests/SplineTests.cpp)
-target_link_libraries(spline_tests PRIVATE engine_core)
-add_test(NAME spline_tests COMMAND spline_tests)
+# Nom prefixe m100_ : un target `spline_tests` existe deja (MoveSpline serveur).
+add_executable(m100_spline_tests src/client/world/spline/tests/SplineTests.cpp)
+target_link_libraries(m100_spline_tests PRIVATE engine_core)
+add_test(NAME m100_spline_tests COMMAND m100_spline_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

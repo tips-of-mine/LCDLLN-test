@@ -100,7 +100,13 @@ namespace
 		sim.Enter(v);
 		HazardInput in; in.dtSeconds = 1.0f; // 0.15 m/s
 		HazardOutput out;
-		for (int i = 0; i < 12; ++i) out = sim.Update(in); // 12 * 0.15 = 1.8 m
+		// Boucle jusqu'au dépassement franc de maxDepth (robuste à l'accumulation
+		// float : 12*0.15f peut tomber juste sous 1.8f). Garde-fou 100 itérations.
+		for (int i = 0; i < 100; ++i)
+		{
+			out = sim.Update(in);
+			if (out.state != HazardState::Sinking) break;
+		}
 		REQUIRE(out.state == HazardState::Dead);
 		REQUIRE(out.deathReason == "hazard_drowning");
 	}

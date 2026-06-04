@@ -363,6 +363,8 @@ add_library(engine_core
   # M100.31 — Hamlet generator (generation pure + kit JSON ; outil header-only).
   src/client/world/structures/HamletKitLibrary.cpp
   src/world_editor/HamletGen.cpp
+  # M100.33 — Footstep audio (resolution pure ; PlaytestMode header-only).
+  src/client/audio/FootstepAudioSurfaceHook.cpp
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
@@ -987,6 +989,11 @@ add_test(NAME structures_tests COMMAND structures_tests)
 add_executable(hamlet_tests src/world_editor/tests/HamletTests.cpp)
 target_link_libraries(hamlet_tests PRIVATE engine_core)
 add_test(NAME hamlet_tests COMMAND hamlet_tests)
+
+# M100.33 — Tests footstep audio + machine d'etat playtest.
+add_executable(playtest_tests src/world_editor/tests/PlaytestTests.cpp)
+target_link_libraries(playtest_tests PRIVATE engine_core)
+add_test(NAME playtest_tests COMMAND playtest_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
 add_executable(ddgi_volume_tests src/client/render/gi/tests/DdgiVolumeTests.cpp)

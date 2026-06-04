@@ -14,6 +14,7 @@
 #include "src/client/world/instances/PropInstances.h"
 #include "src/client/world/foliage/FoliageInstances.h"
 #include "src/client/world/wind/WindZones.h"
+#include "src/client/world/thermal/ShadeMap.h"
 
 #include <array>
 #include <cmath>
@@ -788,6 +789,37 @@ namespace tools::zone_builder
 		if (!out.good())
 		{
 			outError = "WriteWindZones: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteShadeMap(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const engine::world::thermal::ShadeMap& shade, std::string& outError)
+	{
+		// M100.27 — shade.bin par chunk.
+		const std::filesystem::path dir = std::filesystem::path(outputRootDir) / "chunks" /
+			("chunk_" + std::to_string(chunkX) + "_" + std::to_string(chunkZ));
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteShadeMap: create_directories failed: " + dir.string();
+			return false;
+		}
+		const std::vector<uint8_t> bytes = engine::world::thermal::SaveShadeMapBin(shade);
+		const std::filesystem::path file = dir / "shade.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteShadeMap: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteShadeMap: write failed: " + file.string();
 			return false;
 		}
 		return true;

@@ -10622,11 +10622,21 @@ namespace engine
 			s.scale = static_cast<float>(m_cfg.GetDouble(base + "scale", 1.0));
 			s.collisionRadius = static_cast<float>(m_cfg.GetDouble(base + "collision_radius", 0.0));
 			s.solid = m_cfg.GetBool(base + "solid", true);
+			// SP2 — optionnels (rétro-compat : absents = comportement actuel).
+			constexpr double kNoY = -1.0e30;
+			const double yVal = m_cfg.GetDouble(base + "y", kNoY);
+			if (yVal != kNoY) { s.hasY = true; s.y = static_cast<float>(yVal); }
+			s.pitchDeg = static_cast<float>(m_cfg.GetDouble(base + "pitch_deg", 0.0));
+			s.rollDeg  = static_cast<float>(m_cfg.GetDouble(base + "roll_deg", 0.0));
+			s.albedo   = m_cfg.GetString(base + "albedo", "");
+			s.scaleY = static_cast<float>(m_cfg.GetDouble(base + "scale_y", -1.0));
 			m_scenery.push_back(s);
 		}
 		for (const auto& s : m_scenery)
-			BuildPropFromMesh(s.meshPath, s.x, s.z, s.yawDeg, /*rotXDeg*/ 0.0f, s.scale,
-			                  /*interactableIndex*/ -1, /*solid*/ s.solid, s.collisionRadius);
+			BuildPropFromMesh(s.meshPath, s.x, s.z, s.yawDeg, /*rotXDeg*/ s.pitchDeg, s.scale,
+			                  /*interactableIndex*/ -1, /*solid*/ s.solid, s.collisionRadius,
+			                  /*rotZDeg*/ s.rollDeg, /*hasYOverride*/ s.hasY, /*yOverride*/ s.y,
+			                  /*albedoOverride*/ s.albedo, /*scaleYOverride*/ s.scaleY);
 		LOG_INFO(Render, "[Scenery] {} element(s) decor charge(s) ; {} cylindre(s) collision",
 		         static_cast<int>(m_scenery.size()), static_cast<int>(m_worldCollider.CylinderCount()));
 	}
@@ -10751,9 +10761,12 @@ namespace engine
 	// \param interactableIndex Index dans m_interactables (-1 pour le décor non interactif).
 	// \param solid             Si true, ajoute un cylindre de collision.
 	// \param collisionRadius   Rayon du cylindre (m) ; 0 = empreinte XZ auto du mesh.
+	// \param scaleYOverride    SP2 : echelle Y independante (m) ; <=0 => echelle uniforme (scale).
 	void Engine::BuildPropFromMesh(const std::string& meshPath, float wx, float wz,
 		float yawDeg, float rotXDeg, float scale, int interactableIndex,
-		bool solid, float collisionRadius)
+		bool solid, float collisionRadius,
+		float rotZDeg, bool hasYOverride, float yOverride,
+		const std::string& albedoOverride, float scaleYOverride)
 	{
 		if (!m_pipeline) return;
 		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
@@ -10786,14 +10799,15 @@ namespace engine
 		}
 
 		PropRenderable prop;
-		const float groundY = m_terrainCollider.GroundHeightAt(wx, wz);
+		const float groundY = hasYOverride ? yOverride : m_terrainCollider.GroundHeightAt(wx, wz);
 		engine::math::Mat4 scaleM = engine::math::Mat4::Identity();
-		scaleM.m[0] = scale; scaleM.m[5] = scale; scaleM.m[10] = scale;
+		scaleM.m[0] = scale; scaleM.m[5] = (scaleYOverride > 0.0f) ? scaleYOverride : scale; scaleM.m[10] = scale;
 		// Matrice modèle monde du prop (translation au sol + yaw + rotX + échelle).
 		const engine::math::Mat4 bakeM =
 			engine::math::Mat4::Translate(engine::math::Vec3{ wx, groundY, wz }) *
 			engine::math::Mat4::RotateY(yawDeg * kDeg2Rad) *
 			engine::math::Mat4::RotateX(rotXDeg * kDeg2Rad) *
+			engine::math::Mat4::RotateZ(rotZDeg * kDeg2Rad) *
 			scaleM;
 		// CONTOURNEMENT bug moteur : GeometryPass::Record applique la matrice d'instance
 		// via un buffer GPU PARTAGE (m_identityInstanceBuffer) reecrit a chaque draw au
@@ -10863,9 +10877,10 @@ namespace engine
 				idxs.data(), static_cast<uint32_t>(idxs.size()));
 			if (!mh.IsValid()) continue;
 
+			const std::string matKey = matName + "|" + albedoOverride;
 			uint32_t matIdx = materialCache.GetDefaultMaterialIndex();
 			uint32_t hlIdx  = matIdx;
-			auto cached = m_trimMatCache.find(matName);
+			auto cached = m_trimMatCache.find(matKey);
 			if (cached != m_trimMatCache.end())
 			{
 				matIdx = cached->second.first;
@@ -10874,7 +10889,20 @@ namespace engine
 			else
 			{
 				const engine::render::staticmesh::StaticSubMesh* rep = repByMat[matName];
-				if (rep && !rep->baseColorUri.empty())
+				if (!albedoOverride.empty())
+				{
+					// SP2 — override base color (ex. pierre taillee sombre) sur une piece nue.
+					const engine::render::TextureHandle bc =
+						m_assetRegistry.LoadTexture(albedoOverride, /*useSrgb*/ true);
+					engine::render::Material mat{};
+					if (bc.IsValid()) mat.baseColor = bc;
+					else mat.flags = engine::render::MaterialFlags::VertexColorAlbedo;
+					matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+					mat.flags = static_cast<engine::render::MaterialFlags>(
+						static_cast<uint32_t>(mat.flags) | static_cast<uint32_t>(engine::render::MaterialFlags::Highlight));
+					hlIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+				}
+				else if (rep && !rep->baseColorUri.empty())
 				{
 					const engine::render::TextureHandle bc =
 						m_assetRegistry.LoadTexture(meshDir + rep->baseColorUri, /*useSrgb*/ true);
@@ -10911,7 +10939,7 @@ namespace engine
 					matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
 					hlIdx = matIdx;
 				}
-				m_trimMatCache[matName] = { matIdx, hlIdx };
+				m_trimMatCache[matKey] = { matIdx, hlIdx };
 			}
 
 			PropPart part;

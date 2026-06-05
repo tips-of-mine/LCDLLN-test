@@ -1,0 +1,14 @@
+{
+  "lcdlln_runtime_manifest_version": 3,
+  "zone_id": "feyhin_lokcthat",
+  "terrain_heightmap": "zones/feyhin_lokcthat/terrain_height.r16h",
+  "terrain_splatmap": "zones/feyhin_lokcthat/terrain_splat.slap",
+  "terrain_grass_mask": "zones/feyhin_lokcthat/terrain_grass.grms",
+  "source_edit_format_version": 1,
+  "terrain_world_size_m": 1536,
+  "texture_assets": [],
+  "exported_textures": [],
+  "texture_assets_source_missing": [],
+  "object_prefab_ids": [],
+  "note": "SP1 Feyhin Lokcthat â€” genere par tools/world/Generate-FeyhinLokcthatAssets.ps1"
+}

@@ -839,6 +839,13 @@ namespace engine
 			float scale = 1.0f;
 			float collisionRadius = 0.0f; ///< 0 = empreinte XZ auto du mesh.
 			bool  solid = true;            ///< false = pas de collision (sous-bois traversable).
+			// SP2 — champs optionnels pour placer des structures (pont) :
+			bool  hasY = false;            ///< true => Y monde explicite (sinon GroundHeightAt).
+			float y = 0.0f;                ///< Y monde (si hasY).
+			float pitchDeg = 0.0f;         ///< rotation X (deg).
+			float rollDeg = 0.0f;          ///< rotation Z (deg).
+			std::string albedo;            ///< override base color (chemin texture content-relatif) ; vide = comportement gltf.
+			float scaleY = -1.0f;            ///< SP2 : echelle Y independante (<0 = uniforme).
 		};
 		std::vector<SceneryInstance> m_scenery;
 
@@ -874,7 +881,9 @@ namespace engine
 		/// collision. Voir l'implémentation pour le détail des paramètres.
 		void BuildPropFromMesh(const std::string& meshPath, float wx, float wz,
 			float yawDeg, float rotXDeg, float scale, int interactableIndex,
-			bool solid, float collisionRadius);
+			bool solid, float collisionRadius,
+			float rotZDeg = 0.0f, bool hasYOverride = false, float yOverride = 0.0f,
+			const std::string& albedoOverride = "", float scaleYOverride = -1.0f);
 
 		/// Dessine les props (m_props) dans la passe Geometry, après l'avatar : un
 		/// GeometryPass.Record par partie (matériau) avec loadOp=LOAD (superposition au

@@ -115,6 +115,21 @@ namespace engine::math
 			return m;
 		}
 
+		/// Builds a rotation matrix around the Z axis (roll).
+		/// Convention column-major, repere main droite.
+		/// \param radians Angle de rotation en radians (positif = sens trigo vu de +Z).
+		static Mat4 RotateZ(float radians)
+		{
+			const float c = std::cos(radians);
+			const float s = std::sin(radians);
+			Mat4 m;
+			m.m[0]  = c;
+			m.m[1]  = s;
+			m.m[4]  = -s;
+			m.m[5]  = c;
+			return m;
+		}
+
 		/// Builds perspective matrix for Vulkan (Y down in NDC, Z in [0, 1]).
 		/// \param fovYRad Vertical FOV in radians.
 		/// \param aspect Width/height.

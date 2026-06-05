@@ -981,6 +981,10 @@ namespace engine
 		/// M100 — Task 12 : runtime mesh-terrain par chunk avec splat 8-layer.
 		/// Cohabite avec `m_terrain` legacy : skippe les chunks sans terrain.bin/splat.bin.
 		std::unique_ptr<engine::render::terrain_chunk::TerrainChunkRenderer> m_terrainChunkRenderer;
+		// Phase 0 (chantier C) : nombre de chunks dessinés à la frame précédente.
+		// Lu par le gating terrain legacy (rendu exclusif anti z-fighting).
+		// Remis à jour chaque frame à la fin du bloc de dessin des chunks.
+		std::uint32_t m_lastFrameChunkDrawCount = 0u;
 		/// M100 — Task 12 : descriptor set layout pour le set 0 caméra
 		/// (UBO `CameraUBO { mat4 viewProj; }`) du `TerrainChunkPipeline`.
 		VkDescriptorSetLayout m_terrainChunkCameraSetLayout = VK_NULL_HANDLE;

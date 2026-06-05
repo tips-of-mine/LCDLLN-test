@@ -55,6 +55,7 @@
 #include "src/client/render/ShaderCompiler.h"
 #include "src/client/render/terrain/HeightmapLoader.h"
 #include "src/client/render/terrain/TerrainEditingTools.h"
+#include "src/client/render/terrain/TerrainRenderSelection.h"
 #include "src/client/character_creation/CharacterCreationUi.h"
 #include "src/shared/network/ServerProtocol.h"
 
@@ -5067,8 +5068,13 @@ namespace engine
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 												const engine::RenderState& rs = m_renderStates[readIdx];
-												const bool terrainBeforeGeometry = m_terrain.IsValid()
-													&& m_pipeline->GetGeometryPass().HasLoadPass();
+												// Phase 0 (chantier C) : rendu exclusif. On ne dessine le terrain
+												// heightmap legacy que si les chunks n'ont pas couvert la scène à la
+												// frame précédente -> supprime le z-fighting du double terrain.
+												const bool terrainBeforeGeometry = engine::render::ShouldDrawLegacyTerrain(
+													m_terrain.IsValid(),
+													m_pipeline->GetGeometryPass().HasLoadPass(),
+													m_lastFrameChunkDrawCount);
 												if (terrainBeforeGeometry)
 												{
 													m_terrain.Record(
@@ -5282,6 +5288,7 @@ namespace engine
 												// TerrainRenderer continue à les dessiner). PAS de branche
 												// m_editorEnabled — parité jeu/éditeur garantie par le format
 												// binaire identique (cf. critère M100.5/.9).
+												std::uint32_t chunksDrawnThisFrame = 0u;
 												if (m_terrainChunkRenderer && m_terrainChunkRenderer->IsValid())
 												{
 													UpdateTerrainChunkCameraUbo(rs.viewProjMatrix.m);
@@ -5301,8 +5308,13 @@ namespace engine
 																	m_world,
 																	visibleChunks);
 															});
+														chunksDrawnThisFrame = m_terrainChunkRenderer->GetLastDrawnChunkCount();
 													}
 												}
+												// Phase 0 : mémorise pour le gating legacy de la frame SUIVANTE.
+												// Remis à 0 chaque frame (carte heightmap-only / chunks non visibles
+												// -> le legacy redevient visible sans rester "collé" éteint).
+												m_lastFrameChunkDrawCount = chunksDrawnThisFrame;
 
 												// Phase 5 Lunar + M38.1 Sky : enregistre le draw fullscreen-quad
 												// du SkyPass (ciel + disque lunaire procedural) dans le render

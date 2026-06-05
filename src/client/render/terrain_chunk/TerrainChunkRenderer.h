@@ -210,6 +210,13 @@ namespace engine::render::terrain_chunk
 		/// vers le legacy.
 		bool IsValid() const { return m_pipeline.IsValid(); }
 
+		/// Nombre de chunks réellement dessinés lors du dernier appel à
+		/// `RenderVisibleChunks` (hors chunks skippés faute de terrain.bin/
+		/// splat.bin/descriptor). Remis à zéro au début de chaque appel.
+		/// Utilisé par l'Engine pour décider du rendu exclusif terrain
+		/// legacy vs chunks (anti z-fighting, Phase 0 chantier C).
+		std::uint32_t GetLastDrawnChunkCount() const { return m_lastDrawnChunkCount; }
+
 	private:
 		/// Charge la palette + uploade les 3 arrays PBR (8 layers chacun) +
 		/// crée les 2 samplers. Délégué depuis `Init` après que le
@@ -229,6 +236,9 @@ namespace engine::render::terrain_chunk
 		/// Track slot → coord pour libérer les bonnes entrées caches lors des
 		/// evictions (alternative à un getter ChunkRuntime::GetCoordForSlot).
 		std::unordered_map<ChunkSlotId, engine::world::GlobalChunkCoord> m_slotToCoord;
+
+		// Compteur de chunks dessinés au dernier RenderVisibleChunks (Phase 0).
+		std::uint32_t m_lastDrawnChunkCount = 0u;
 
 		// Composants principaux.
 		TerrainChunkPipeline m_pipeline;

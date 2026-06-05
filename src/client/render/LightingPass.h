@@ -63,6 +63,22 @@ namespace engine::render
 		};
 		static_assert(sizeof(ShadowUbo) == 272, "ShadowUbo must be exactly 272 bytes (256 + 16)");
 
+		/// CPU-side de l'UBO point lights (binding 12, std140). SÉPARÉ de LightParams
+		/// (push-constant 224 o) et de ShadowUbo. count.x = nb lumières [0..64] ;
+		/// lights[i].posRadius (xyz=position monde m, w=rayon m) ; colorIntensity
+		/// (rgb=couleur linéaire, a=intensité×intensity_scale). Voir lighting.frag b12.
+		struct PointLightStd140
+		{
+			float posRadius[4];      ///< xyz = position monde (m) ; w = rayon (m).
+			float colorIntensity[4]; ///< rgb = couleur linéaire ; a = intensité finale.
+		};
+		struct PointLightUbo
+		{
+			uint32_t        count[4];    ///< x = nb actives [0..64] ; yzw padding std140.
+			PointLightStd140 lights[64]; ///< std140, stride 32 o/élément.
+		};
+		static_assert(sizeof(PointLightUbo) == 2064, "PointLightUbo must be 2064 bytes (16 + 64*32)");
+
 		LightingPass() = default;
 		LightingPass(const LightingPass&) = delete;
 		LightingPass& operator=(const LightingPass&) = delete;
@@ -106,6 +122,9 @@ namespace engine::render
 			/// \param shadowData lightViewProj[4] (256 o) + shadowParams (16 o), uploadés
 			///        dans l'UBO host-visible binding 11.
 			const VkImageView shadowViews[4], const ShadowUbo& shadowData,
+			/// \param pointLightData count + lights[64] (2064 o), uploadés dans l'UBO
+			///        binding 12. count.x==0 => boucle point lights sautée (rendu inchangé).
+			const PointLightUbo& pointLightData,
 			const LightParams& params, uint32_t frameIndex);
 
 		/// Releases all Vulkan resources. Safe to call even when not initialized.
@@ -126,6 +145,9 @@ namespace engine::render
 		std::vector<VkBuffer>       m_shadowUboBuffers; ///< UBO cascades host-visible, un par frame (binding 11).
 		std::vector<VkDeviceMemory> m_shadowUboMemory;  ///< Mémoire host-visible.
 		std::vector<void*>          m_shadowUboMapped;  ///< Pointeurs mappés persistants (HOST_VISIBLE|HOST_COHERENT).
+		std::vector<VkBuffer>       m_pointLightUboBuffers; ///< UBO point lights host-visible, un par frame (binding 12).
+		std::vector<VkDeviceMemory> m_pointLightUboMemory;  ///< Mémoire host-visible.
+		std::vector<void*>          m_pointLightUboMapped;  ///< Pointeurs mappés persistants.
 
 		std::vector<VkDescriptorSet> m_descriptorSets; ///< One per in-flight frame.
 		uint32_t m_maxFrames = 2;

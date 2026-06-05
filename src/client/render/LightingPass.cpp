@@ -157,8 +157,8 @@ namespace engine::render
 		// -----------------------------------------------------------------
 		{
 			// 0..9 : COMBINED_IMAGE_SAMPLER count=1. 10 : 4 shadow maps (count=4).
-			// 11 : UBO cascades.
-			std::array<VkDescriptorSetLayoutBinding, 12> bindings{};
+			// 11 : UBO cascades. 12 : UBO point lights.
+			std::array<VkDescriptorSetLayoutBinding, 13> bindings{};
 			for (size_t i = 0; i < 10; ++i)
 			{
 				bindings[i].binding            = static_cast<uint32_t>(i);
@@ -177,6 +177,12 @@ namespace engine::render
 			bindings[11].descriptorCount    = 1;
 			bindings[11].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
 			bindings[11].pImmutableSamplers = nullptr;
+			// 12 : UBO point lights (std140, 2064 o).
+			bindings[12].binding            = 12;
+			bindings[12].descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			bindings[12].descriptorCount    = 1;
+			bindings[12].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+			bindings[12].pImmutableSamplers = nullptr;
 
 			VkDescriptorSetLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -202,7 +208,7 @@ namespace engine::render
 			poolSizes[0].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			poolSizes[0].descriptorCount = 14 * m_maxFrames;
 			poolSizes[1].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			poolSizes[1].descriptorCount = 1 * m_maxFrames;
+			poolSizes[1].descriptorCount = 2 * m_maxFrames; // binding 11 (cascades) + binding 12 (point lights)
 
 			VkDescriptorPoolCreateInfo poolInfo{};
 			poolInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -341,6 +347,59 @@ namespace engine::render
 					LOG_ERROR(Render, "LightingPass: shadow UBO alloc/bind/map failed");
 					Destroy(device);
 					return false;
+				}
+			}
+		}
+
+		// -----------------------------------------------------------------
+		// 5c. UBO point lights (binding 12), host-visible, un par frame (2064 o,
+		// mappé en permanence). Calque EXACT du bloc 5b.
+		// -----------------------------------------------------------------
+		{
+			VkPhysicalDeviceMemoryProperties memProps{};
+			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+			auto findMemoryType = [&](uint32_t typeBits, VkMemoryPropertyFlags want) -> uint32_t
+			{
+				for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+					if ((typeBits & (1u << i)) &&
+						(memProps.memoryTypes[i].propertyFlags & want) == want)
+						return i;
+				return UINT32_MAX;
+			};
+			m_pointLightUboBuffers.resize(m_maxFrames, VK_NULL_HANDLE);
+			m_pointLightUboMemory.resize(m_maxFrames, VK_NULL_HANDLE);
+			m_pointLightUboMapped.resize(m_maxFrames, nullptr);
+			for (uint32_t f = 0; f < m_maxFrames; ++f)
+			{
+				VkBufferCreateInfo bi{};
+				bi.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+				bi.size        = sizeof(PointLightUbo);
+				bi.usage       = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+				bi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+				if (vkCreateBuffer(device, &bi, nullptr, &m_pointLightUboBuffers[f]) != VK_SUCCESS)
+				{
+					LOG_ERROR(Render, "LightingPass: vkCreateBuffer (point light UBO) failed");
+					Destroy(device); return false;
+				}
+				VkMemoryRequirements memReq{};
+				vkGetBufferMemoryRequirements(device, m_pointLightUboBuffers[f], &memReq);
+				const uint32_t memTypeIdx = findMemoryType(memReq.memoryTypeBits,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+				if (memTypeIdx == UINT32_MAX)
+				{
+					LOG_ERROR(Render, "LightingPass: no host-visible memory type for point light UBO");
+					Destroy(device); return false;
+				}
+				VkMemoryAllocateInfo ai{};
+				ai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+				ai.allocationSize  = memReq.size;
+				ai.memoryTypeIndex = memTypeIdx;
+				if (vkAllocateMemory(device, &ai, nullptr, &m_pointLightUboMemory[f]) != VK_SUCCESS ||
+					vkBindBufferMemory(device, m_pointLightUboBuffers[f], m_pointLightUboMemory[f], 0) != VK_SUCCESS ||
+					vkMapMemory(device, m_pointLightUboMemory[f], 0, sizeof(PointLightUbo), 0, &m_pointLightUboMapped[f]) != VK_SUCCESS)
+				{
+					LOG_ERROR(Render, "LightingPass: point light UBO alloc/bind/map failed");
+					Destroy(device); return false;
 				}
 			}
 		}
@@ -489,6 +548,7 @@ namespace engine::render
 		VkImageView brdfLutView, VkSampler brdfLutSampler,
 		VkImageView ddgiIrradianceView, VkSampler ddgiSampler,
 		const VkImageView shadowViews[4], const ShadowUbo& shadowData,
+		const PointLightUbo& pointLightData,
 		const LightParams& params, uint32_t frameIndex)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
@@ -557,7 +617,13 @@ namespace engine::render
 		shadowBufInfo.offset = 0;
 		shadowBufInfo.range  = sizeof(ShadowUbo);
 
-		std::array<VkWriteDescriptorSet, 12> writes{};
+		std::memcpy(m_pointLightUboMapped[setIdx], &pointLightData, sizeof(PointLightUbo));
+		VkDescriptorBufferInfo pointLightBufInfo{};
+		pointLightBufInfo.buffer = m_pointLightUboBuffers[setIdx];
+		pointLightBufInfo.offset = 0;
+		pointLightBufInfo.range  = sizeof(PointLightUbo);
+
+		std::array<VkWriteDescriptorSet, 13> writes{};
 		for (size_t i = 0; i < 10; ++i)
 		{
 			writes[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -582,6 +648,13 @@ namespace engine::render
 		writes[11].descriptorCount = 1;
 		writes[11].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		writes[11].pBufferInfo     = &shadowBufInfo;
+		writes[12].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writes[12].dstSet          = ds;
+		writes[12].dstBinding      = 12;
+		writes[12].dstArrayElement = 0;
+		writes[12].descriptorCount = 1;
+		writes[12].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		writes[12].pBufferInfo     = &pointLightBufInfo;
 
 		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 
@@ -694,6 +767,16 @@ namespace engine::render
 		m_shadowUboBuffers.clear();
 		m_shadowUboMemory.clear();
 		m_shadowUboMapped.clear();
+		for (size_t f = 0; f < m_pointLightUboBuffers.size(); ++f)
+		{
+			if (m_pointLightUboMemory[f] != VK_NULL_HANDLE)
+				vkFreeMemory(device, m_pointLightUboMemory[f], nullptr);
+			if (m_pointLightUboBuffers[f] != VK_NULL_HANDLE)
+				vkDestroyBuffer(device, m_pointLightUboBuffers[f], nullptr);
+		}
+		m_pointLightUboBuffers.clear();
+		m_pointLightUboMemory.clear();
+		m_pointLightUboMapped.clear();
 		// Descriptor sets are implicitly freed when the pool is destroyed.
 		m_descriptorSets.clear();
 		if (m_descriptorPool != VK_NULL_HANDLE)

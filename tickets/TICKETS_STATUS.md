@@ -7,9 +7,9 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 
 | Statut | Nombre |
 |--------|-------:|
-| DONE (clotures) | 335 |
-| PARTIAL | 33 |
-| TODO | 45 |
+| DONE (clotures) | 340 |
+| PARTIAL | 35 |
+| TODO | 38 |
 | **Total** | 413 |
 
 ### Par milestone
@@ -62,7 +62,7 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | M43 | 1 | 1 | 6 | 8 |
 | M44 | 4 | 0 | 0 | 4 |
 | M45 | 8 | 0 | 0 | 8 |
-| M100 | 42 | 0 | 9 | 51 |
+| M100 | 47 | 2 | 2 | 51 |
 | M101 | 8 | 1 | 2 | 11 |
 | AUTH-UI | 12 | 0 | 0 | 12 |
 | CHAR-MODEL | 3 | 12 | 22 | 37 |
@@ -568,23 +568,23 @@ Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/`
 | M100.31 | DONE | Hamlet generator + kits (cloture #811) |
 | M100.32 | DONE | Interactive props + relay master + simulateur (cloture #814) |
 | M100.33 | DONE | Footstep audio + PlaytestMode (cloture #811) |
-| M100.34 | TODO | SelectionTool/Layers/Minimap/Exporter absents |
+| M100.34 | DONE | Selection/Layers/Minimap + export round-trip (cloture #816) |
 | M100.35 | DONE | Mountain range tools |
 | M100.36 | DONE | River network generator |
 | M100.37 | DONE | Coastline + sea level |
 | M100.38 | DONE | Hydraulic erosion |
 | M100.39 | DONE | Thermal/wind erosion |
 | M100.40 | DONE | Mesh insert + cave tool |
-| M100.41 | TODO | src/world_editor/volumes/overhangs/ absent |
-| M100.42 | TODO | src/world_editor/volumes/arches/ absent |
+| M100.41 | DONE | Overhang Cliff Tool (cloture corrective, commit d16cbcc2) |
+| M100.42 | DONE | Natural Arch Tool (cloture corrective, commit 910f97da) |
 | M100.43 | DONE | Dungeon portal system |
 | M100.44 | DONE | VMap bridge |
-| M100.45 | TODO | spec doc only |
+| M100.45 | PARTIAL | Phase A faite (modes+presets, #611) ; Phase B (13 outils) restante |
 | M100.46 | DONE | ZonePresets library + tests (corrige) |
-| M100.47 | TODO | spec doc only |
-| M100.48 | TODO | spec doc only |
-| M100.49 | TODO | spec doc only |
-| M100.50 | TODO | spec doc only |
+| M100.47 | PARTIAL | HelpContentStore + RichTooltipWidget (incr 1+3) ; couverture tooltips/F1 restante |
+| M100.48 | DONE | Zone Validation Service (cloture #817) |
+| M100.49 | DONE | Tutoriel + Diagnostic (cloture #818 + #819) |
+| M100.50 | TODO | Quick Start Wizard — PR #820 en cours (cloture au merge) |
 | M100.51 | TODO | spec doc only |
 
 ### M101

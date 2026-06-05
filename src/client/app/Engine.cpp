@@ -10629,13 +10629,14 @@ namespace engine
 			s.pitchDeg = static_cast<float>(m_cfg.GetDouble(base + "pitch_deg", 0.0));
 			s.rollDeg  = static_cast<float>(m_cfg.GetDouble(base + "roll_deg", 0.0));
 			s.albedo   = m_cfg.GetString(base + "albedo", "");
+			s.scaleY = static_cast<float>(m_cfg.GetDouble(base + "scale_y", -1.0));
 			m_scenery.push_back(s);
 		}
 		for (const auto& s : m_scenery)
 			BuildPropFromMesh(s.meshPath, s.x, s.z, s.yawDeg, /*rotXDeg*/ s.pitchDeg, s.scale,
 			                  /*interactableIndex*/ -1, /*solid*/ s.solid, s.collisionRadius,
 			                  /*rotZDeg*/ s.rollDeg, /*hasYOverride*/ s.hasY, /*yOverride*/ s.y,
-			                  /*albedoOverride*/ s.albedo);
+			                  /*albedoOverride*/ s.albedo, /*scaleYOverride*/ s.scaleY);
 		LOG_INFO(Render, "[Scenery] {} element(s) decor charge(s) ; {} cylindre(s) collision",
 		         static_cast<int>(m_scenery.size()), static_cast<int>(m_worldCollider.CylinderCount()));
 	}
@@ -10760,11 +10761,12 @@ namespace engine
 	// \param interactableIndex Index dans m_interactables (-1 pour le décor non interactif).
 	// \param solid             Si true, ajoute un cylindre de collision.
 	// \param collisionRadius   Rayon du cylindre (m) ; 0 = empreinte XZ auto du mesh.
+	// \param scaleYOverride    SP2 : echelle Y independante (m) ; <=0 => echelle uniforme (scale).
 	void Engine::BuildPropFromMesh(const std::string& meshPath, float wx, float wz,
 		float yawDeg, float rotXDeg, float scale, int interactableIndex,
 		bool solid, float collisionRadius,
 		float rotZDeg, bool hasYOverride, float yOverride,
-		const std::string& albedoOverride)
+		const std::string& albedoOverride, float scaleYOverride)
 	{
 		if (!m_pipeline) return;
 		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
@@ -10799,7 +10801,7 @@ namespace engine
 		PropRenderable prop;
 		const float groundY = hasYOverride ? yOverride : m_terrainCollider.GroundHeightAt(wx, wz);
 		engine::math::Mat4 scaleM = engine::math::Mat4::Identity();
-		scaleM.m[0] = scale; scaleM.m[5] = scale; scaleM.m[10] = scale;
+		scaleM.m[0] = scale; scaleM.m[5] = (scaleYOverride > 0.0f) ? scaleYOverride : scale; scaleM.m[10] = scale;
 		// Matrice modèle monde du prop (translation au sol + yaw + rotX + échelle).
 		const engine::math::Mat4 bakeM =
 			engine::math::Mat4::Translate(engine::math::Vec3{ wx, groundY, wz }) *

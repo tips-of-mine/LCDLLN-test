@@ -845,6 +845,7 @@ namespace engine
 			float pitchDeg = 0.0f;         ///< rotation X (deg).
 			float rollDeg = 0.0f;          ///< rotation Z (deg).
 			std::string albedo;            ///< override base color (chemin texture content-relatif) ; vide = comportement gltf.
+			float scaleY = -1.0f;            ///< SP2 : echelle Y independante (<0 = uniforme).
 		};
 		std::vector<SceneryInstance> m_scenery;
 
@@ -882,7 +883,7 @@ namespace engine
 			float yawDeg, float rotXDeg, float scale, int interactableIndex,
 			bool solid, float collisionRadius,
 			float rotZDeg = 0.0f, bool hasYOverride = false, float yOverride = 0.0f,
-			const std::string& albedoOverride = "");
+			const std::string& albedoOverride = "", float scaleYOverride = -1.0f);
 
 		/// Dessine les props (m_props) dans la passe Geometry, après l'avatar : un
 		/// GeometryPass.Record par partie (matériau) avec loadOp=LOAD (superposition au

@@ -227,9 +227,8 @@ for ($iz = 0; $iz -lt $sh; $iz++) {
     $slope = [math]::Sqrt($sxx*$sxx + $szz*$szz)
     $rgba = @(0,0,0,0)
     if ($h -lt ($WaterLevel + 2.0)) { $rgba[$CH_DIRT] = 255 }       # bords/lit : terre/boue
-    elseif ($slope -gt 0.9)         { $rgba[$CH_ROCK] = 255 }       # pente forte : roche
-    elseif ($h -gt 430.0)           { $rgba[$CH_SNOW] = 255 }       # sommets : neige
-    else                            { $rgba[$CH_GRASS] = 255 }      # défaut : herbe
+    elseif ($slope -gt 2.0)         { $rgba[$CH_ROCK] = 255 }       # falaises/flancs tres raides : roche
+    else                            { $rgba[$CH_GRASS] = 255 }      # defaut : herbe (vallee verdoyante : massif/versants verts, PAS de neige)
     $sb[$so]=$rgba[0]; $sb[$so+1]=$rgba[1]; $sb[$so+2]=$rgba[2]; $sb[$so+3]=$rgba[3]
     $so += 4
   }

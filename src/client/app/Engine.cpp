@@ -5292,8 +5292,13 @@ namespace engine
 												if (m_terrainChunkRenderer && m_terrainChunkRenderer->IsValid())
 												{
 													UpdateTerrainChunkCameraUbo(rs.viewProjMatrix.m);
+													// Phase 1 (chantier C) : les chunks terrain sont sur la grille 256 m,
+													// pas sur la grille 500 m de m_world (instances/zone). On dérive donc
+													// l'ensemble visible directement de la position caméra sur la grille
+													// terrain, pour charger/placer les bons terrain.bin (alignés éditeur).
 													const std::vector<engine::world::GlobalChunkCoord> visibleChunks =
-														m_world.GetActiveAndVisibleChunks();
+														engine::world::ComputeVisibleTerrainChunks(
+															rs.camera.position.x, rs.camera.position.z);
 													if (!visibleChunks.empty())
 													{
 														m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(

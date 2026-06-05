@@ -159,6 +159,11 @@ namespace engine
 		float jitterCurrNdc[2]{ 0.0f, 0.0f };
 		engine::math::Frustum frustum;
 		engine::render::CascadesUniform cascades;
+		// Snapshot des point lights actives pour la passe Lighting. Rempli au
+		// moment de l'assemblage du RenderState (même endroit que cascades),
+		// lu dans le lambda Lighting → découple m_dynamicLights du thread de
+		// rendu (anti data-race).
+		std::vector<engine::render::ActivePointLight> pointLights;
 		float objectModelMatrix[16] = {
 			1.0f, 0.0f, 0.0f, 0.0f,
 			0.0f, 1.0f, 0.0f, 0.0f,

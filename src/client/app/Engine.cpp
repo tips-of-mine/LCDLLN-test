@@ -5806,6 +5806,27 @@ namespace engine
 												shadowUbo.shadowParams[2] = static_cast<float>(m_cfg.GetDouble("shadows.bias_constant", 0.0015));
 												shadowUbo.shadowParams[3] = static_cast<float>(m_cfg.GetDouble("shadows.bias_slope_max", 0.005));
 
+												// UBO point lights (binding 12). Snapshot rs.pointLights (anti
+												// data-race) ; clamp 64 ; intensité globale world.point_lights.intensity_scale
+												// (défaut 1.0, garde-fou anti sur-exposition HDR).
+												engine::render::LightingPass::PointLightUbo pointLightUbo{};
+												const float intensityScale =
+													static_cast<float>(m_cfg.GetDouble("world.point_lights.intensity_scale", 1.0));
+												const size_t activeCount = std::min<size_t>(rs.pointLights.size(), 64);
+												pointLightUbo.count[0] = static_cast<uint32_t>(activeCount);
+												for (size_t i = 0; i < activeCount; ++i)
+												{
+													const engine::render::ActivePointLight& pl = rs.pointLights[i];
+													pointLightUbo.lights[i].posRadius[0] = pl.position[0];
+													pointLightUbo.lights[i].posRadius[1] = pl.position[1];
+													pointLightUbo.lights[i].posRadius[2] = pl.position[2];
+													pointLightUbo.lights[i].posRadius[3] = pl.radius;
+													pointLightUbo.lights[i].colorIntensity[0] = pl.color[0];
+													pointLightUbo.lights[i].colorIntensity[1] = pl.color[1];
+													pointLightUbo.lights[i].colorIntensity[2] = pl.color[2];
+													pointLightUbo.lights[i].colorIntensity[3] = pl.intensity * intensityScale;
+												}
+
 												const uint32_t frameIdx = m_currentFrame % 2;
 												m_pipeline->GetLightingPass().Record(
 													m_vkDeviceContext.GetDevice(), cmd, reg,
@@ -5815,6 +5836,7 @@ namespace engine
 													irrView, irrSamp, prefilterView, prefilterSamp, brdfView, brdfSamp,
 													ddgiView, ddgiSamp,
 													shadowViews, shadowUbo,
+													pointLightUbo,
 													lp, frameIdx);
 											});
 
@@ -10133,6 +10155,11 @@ namespace engine
 			const uint32_t shadowMapResolution = static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024));
 			engine::render::ComputeCascades(out.camera, lightDirTowardLight, lambda, shadowMapResolution, out.cascades);
 		}
+
+		// Snapshot des point lights actives dans le RenderState (anti data-race).
+		// COPIE ici (assemblage de `out`) ; le lambda Lighting lit rs.pointLights
+		// et ne touche jamais m_dynamicLights. Tick() déjà appelé plus tôt (Update).
+		out.pointLights = m_dynamicLights.GetActiveLights();
 
 		for (int i = 0; i < 256; ++i)
 			(void)m_frameArena.alloc(64, alignof(std::max_align_t), engine::core::memory::MemTag::Temp);

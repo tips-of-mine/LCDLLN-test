@@ -43,7 +43,11 @@ namespace engine::render
 		/// Call after fence wait. Reads the previous slot staging buffer, computes log-avg,
 		/// adapts exposure, writes exposure buffer.
 		/// key = target mid-gray (default 0.18); speed = adaptation speed.
-		void Update(VkDevice device, float dt, float key, float speed, uint32_t frameIndex);
+		/// minExposure/maxExposure : bornes de l'exposition adaptée (configurables
+		/// via exposure.min/exposure.max). Le plafond évite que l'auto-exposition
+		/// surcompense une scène assombrie (ex. par les ombres) et crame le ciel.
+		void Update(VkDevice device, float dt, float key, float speed,
+			float minExposure, float maxExposure, uint32_t frameIndex);
 
 		/// Returns current exposure for tonemap (valid after first Update).
 		float GetExposure() const { return m_exposure; }

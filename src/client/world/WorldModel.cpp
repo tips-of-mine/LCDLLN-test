@@ -19,6 +19,24 @@ namespace engine::world
 		return GlobalChunkCoord{ cx, cz };
 	}
 
+	GlobalChunkCoord WorldToTerrainChunkCoord(float worldX, float worldZ)
+	{
+		const int32_t cx = static_cast<int32_t>(std::floor(worldX / static_cast<float>(kTerrainChunkSizeMeters)));
+		const int32_t cz = static_cast<int32_t>(std::floor(worldZ / static_cast<float>(kTerrainChunkSizeMeters)));
+		return GlobalChunkCoord{ cx, cz };
+	}
+
+	std::vector<GlobalChunkCoord> ComputeVisibleTerrainChunks(float worldX, float worldZ)
+	{
+		const GlobalChunkCoord center = WorldToTerrainChunkCoord(worldX, worldZ);
+		std::vector<GlobalChunkCoord> result;
+		result.reserve(static_cast<size_t>((2 * kVisibleRadius + 1) * (2 * kVisibleRadius + 1)));
+		for (int dz = -kVisibleRadius; dz <= kVisibleRadius; ++dz)
+			for (int dx = -kVisibleRadius; dx <= kVisibleRadius; ++dx)
+				result.push_back(GlobalChunkCoord{ center.x + dx, center.z + dz });
+		return result;
+	}
+
 	void World::GlobalToZoneAndLocal(GlobalChunkCoord g, ZoneCoord& zone, LocalChunkCoord& local)
 	{
 		zone.x = static_cast<int32_t>(std::floor(static_cast<float>(g.x) / static_cast<float>(kChunksPerZoneAxis)));

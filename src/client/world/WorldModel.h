@@ -26,6 +26,15 @@ namespace engine::world
 	static_assert(kChunkSize % kSpatialCellSizeMeters == 0,
 	              "kChunkSize should align with spatial cells (tooling / debug consistency)");
 
+	// --- Grille TERRAIN (chantier C, Phase 1) ---------------------------------
+	// Côté du mesh d'un chunk terrain, en mètres = (terrain::kTerrainResolution - 1)
+	// * terrain::kTerrainCellSizeMeters = 256 m. Grille DISTINCTE de kChunkSize
+	// (500 m, instances/zone/streaming). Les terrain.bin sont indexés et placés
+	// sur cette grille 256 (cohérent avec l'éditeur). Ne PAS lier par static_assert
+	// à kZoneSize (10000 % 256 != 0) : le terrain est indexé en coords monde
+	// globales absolues, sans alignement zone. Voir TerrainChunk.h.
+	constexpr int kTerrainChunkSizeMeters = 256;
+
 	/// Chunk index in world space (2D, XZ plane), without clamp.
 	/// Values are signed and may be negative for zones left/below origin.
 	struct GlobalChunkCoord
@@ -153,4 +162,15 @@ namespace engine::world
 	{
 		return World::ChunkBounds(c);
 	}
+
+	/// Convertit une position monde (x,z) en coord de chunk TERRAIN (grille
+	/// kTerrainChunkSizeMeters = 256 m). Miroir de WorldToGlobalChunkCoord mais
+	/// sur la grille terrain. Pur, sans état.
+	GlobalChunkCoord WorldToTerrainChunkCoord(float worldX, float worldZ);
+
+	/// Retourne les chunks TERRAIN (grille 256 m) du carré 7×7 autour de la
+	/// position monde donnée. Miroir de World::GetActiveAndVisibleChunks mais sur
+	/// la grille terrain — utilisé par le chemin de RENDU terrain (Phase 1).
+	/// Pur, sans état : unit-testable.
+	std::vector<GlobalChunkCoord> ComputeVisibleTerrainChunks(float worldX, float worldZ);
 }

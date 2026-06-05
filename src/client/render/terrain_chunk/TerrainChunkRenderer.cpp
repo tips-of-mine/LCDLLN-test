@@ -1040,6 +1040,10 @@ namespace engine::render::terrain_chunk
 		const engine::world::World& world,
 		const std::vector<engine::world::GlobalChunkCoord>& visibleChunks)
 	{
+		// Phase 0 : remis à zéro à chaque appel pour que tout retour anticipé
+		// (renderer invalide, PBR non chargé) laisse un compte de 0.
+		m_lastDrawnChunkCount = 0u;
+
 		if (!IsValid() || cmd == VK_NULL_HANDLE || cameraSet == VK_NULL_HANDLE
 			|| m_streamCache == nullptr || m_config == nullptr)
 			return;
@@ -1129,6 +1133,7 @@ namespace engine::render::terrain_chunk
 			const float originX = static_cast<float>(engine::world::kChunkSize) * coord.x;
 			const float originZ = static_cast<float>(engine::world::kChunkSize) * coord.z;
 			m_pipeline.RecordChunkDraw(cmd, cameraSet, descSet, mesh, originX, 0.0f, originZ);
+			++m_lastDrawnChunkCount;
 		}
 	}
 

@@ -1037,6 +1037,11 @@ add_executable(entity_influence_tests src/client/world/foliage/tests/EntityInflu
 target_link_libraries(entity_influence_tests PRIVATE engine_core)
 add_test(NAME entity_influence_tests COMMAND entity_influence_tests)
 
+# Phase 0 chantier C — Test fonction pure ShouldDrawLegacyTerrain (header-only).
+add_executable(terrain_render_selection_tests src/client/render/tests/TerrainRenderSelectionTests.cpp)
+target_include_directories(terrain_render_selection_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME terrain_render_selection_tests COMMAND terrain_render_selection_tests)
+
 # M100.27 — Tests thermal (shade round-trip/builder + ComputeTemperature + query).
 add_executable(thermal_tests src/client/world/thermal/tests/ThermalTests.cpp)
 target_link_libraries(thermal_tests PRIVATE engine_core)

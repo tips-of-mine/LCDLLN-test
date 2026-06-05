@@ -165,7 +165,15 @@ namespace engine::editor::world
 		/// dirty et seront ecrits au prochain `SaveTerrainChunks`. A appeler sur
 		/// le main thread, depuis Engine, a la creation d'une nouvelle carte.
 		/// \param chunksPerAxis empreinte d'edition (nombre de chunks par axe).
-		void InitNewZoneTerrain(int chunksPerAxis);
+		/// \param flatHeightMeters hauteur plate initiale des chunks, en metres.
+		///        DOIT correspondre a la hauteur encodee par la heightmap r16h
+		///        ecrite en parallele par `WorldEditorSession::ActionNewMap`
+		///        (valeur 32768 = milieu => `(32768/65535) * terrain.height_scale`).
+		///        Sans cet accord, la 1ere synchro chunk -> heightmap
+		///        (`SyncWorldEditorHeightmapFromDocument`) reecrit toute la
+		///        heightmap a la hauteur du chunk et fait « chuter » le sol hors
+		///        champ des la 1ere edition (regression terrain invisible).
+		void InitNewZoneTerrain(int chunksPerAxis, float flatHeightMeters);
 
 		/// Sous-projet 1 — Persiste sur disque les chunks terrain + splat dirty
 		/// (source de verite de la zone) sous `<paths.content>/chunks/`. Appelee
@@ -363,5 +371,9 @@ namespace engine::editor::world
 		bool m_dirty = false;
 		bool m_initialized = false;
 		bool m_menuBarSuppressed = false;
+		/// Lecture du layout dock differee : Init() s'execute avant la creation
+		/// du contexte ImGui ; on charge le `.ini` au 1er RenderFrame (contexte
+		/// vivant) pour eviter un crash de boot (cf. Init / RenderFrame).
+		bool m_pendingLayoutLoad = false;
 	};
 }

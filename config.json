@@ -116,10 +116,13 @@
         }
     },
     "shadows": {
+        "enabled": true,
         "resolution": 1024,
         "depth_bias_constant": 1.25,
         "depth_bias_slope": 1.75,
-        "cull_front_faces": false
+        "cull_front_faces": false,
+        "bias_constant": 0.0015,
+        "bias_slope_max": 0.005
     },
     "bloom": {
         "threshold": 1.0,

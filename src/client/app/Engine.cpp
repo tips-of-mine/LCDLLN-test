@@ -5669,6 +5669,9 @@ namespace engine
 												b.read(m_fgDepthId,          engine::render::ImageUsage::SampledRead);
 												b.read(m_fgSsaoBlurId,       engine::render::ImageUsage::SampledRead);
 												b.read(m_fgDecalOverlayId,   engine::render::ImageUsage::SampledRead);
+												// CSM — les 4 shadow maps cascades (rendues lisibles SAMPLED par le FG).
+												for (uint32_t i = 0; i < engine::render::kCascadeCount; ++i)
+													b.read(m_fgShadowMapIds[i], engine::render::ImageUsage::SampledRead);
 												b.write(m_fgSceneColorHDRId, engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
@@ -5781,6 +5784,28 @@ namespace engine
 													ddgiSamp = m_ddgiUpdatePass.GetShadowSampler(); // sampler linéaire-équivalent (NEAREST clamp) interne
 												}
 
+												// ---- CSM — Ombres cascades --------------------------------------
+												// Récupère les 4 vues shadow maps et remplit l'UBO cascades
+												// (binding 11). shadowParams : x=useShadows(0/1), y=texelSize
+												// (1/résolution), z=biasConstant, w=biasSlopeMax. Si une vue est
+												// invalide, useShadows tombe à 0 (le shader ignore alors le fallback).
+												engine::render::LightingPass::ShadowUbo shadowUbo{};
+												VkImageView shadowViews[engine::render::kCascadeCount] = {};
+												bool shadowViewsOk = true;
+												for (uint32_t i = 0; i < engine::render::kCascadeCount; ++i)
+												{
+													shadowViews[i] = reg.getImageView(m_fgShadowMapIds[i]);
+													if (shadowViews[i] == VK_NULL_HANDLE) shadowViewsOk = false;
+													std::memcpy(&shadowUbo.lightViewProj[i * 16],
+														rs.cascades.lightViewProj[i].m, sizeof(float) * 16);
+												}
+												const bool shadowsEnabled = m_cfg.GetBool("shadows.enabled", true);
+												const uint32_t shadowRes  = static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024));
+												shadowUbo.shadowParams[0] = (shadowsEnabled && shadowViewsOk) ? 1.0f : 0.0f;
+												shadowUbo.shadowParams[1] = (shadowRes > 0) ? (1.0f / static_cast<float>(shadowRes)) : 0.0f;
+												shadowUbo.shadowParams[2] = static_cast<float>(m_cfg.GetDouble("shadows.bias_constant", 0.0015));
+												shadowUbo.shadowParams[3] = static_cast<float>(m_cfg.GetDouble("shadows.bias_slope_max", 0.005));
+
 												const uint32_t frameIdx = m_currentFrame % 2;
 												m_pipeline->GetLightingPass().Record(
 													m_vkDeviceContext.GetDevice(), cmd, reg,
@@ -5789,6 +5814,7 @@ namespace engine
 													m_fgSceneColorHDRId, m_fgSsaoBlurId, m_fgDecalOverlayId,
 													irrView, irrSamp, prefilterView, prefilterSamp, brdfView, brdfSamp,
 													ddgiView, ddgiSamp,
+													shadowViews, shadowUbo,
 													lp, frameIdx);
 											});
 

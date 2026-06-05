@@ -84,7 +84,7 @@ namespace engine::render
 	// LightingPass::Init
 	// -------------------------------------------------------------------------
 
-	bool LightingPass::Init(VkDevice device, VkPhysicalDevice /*physicalDevice*/,
+	bool LightingPass::Init(VkDevice device, VkPhysicalDevice physicalDevice,
 		VkFormat sceneColorHDRFormat,
 		const uint32_t* vertSpirv, size_t vertWordCount,
 		const uint32_t* fragSpirv, size_t fragWordCount,
@@ -156,15 +156,27 @@ namespace engine::render
 		// 2. Descriptor set layout: 10 combined image samplers (GBufA/B/C, Depth, irradiance, prefilter, BRDF LUT, SSAO_Blur, DecalOverlay, DDGI irradiance [M45.7])
 		// -----------------------------------------------------------------
 		{
-			std::array<VkDescriptorSetLayoutBinding, 10> bindings{};
-			for (size_t i = 0; i < bindings.size(); ++i)
+			// 0..9 : COMBINED_IMAGE_SAMPLER count=1. 10 : 4 shadow maps (count=4).
+			// 11 : UBO cascades.
+			std::array<VkDescriptorSetLayoutBinding, 12> bindings{};
+			for (size_t i = 0; i < 10; ++i)
 			{
-				bindings[i].binding            = i;
+				bindings[i].binding            = static_cast<uint32_t>(i);
 				bindings[i].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				bindings[i].descriptorCount    = 1;
 				bindings[i].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
 				bindings[i].pImmutableSamplers = nullptr;
 			}
+			bindings[10].binding            = 10;
+			bindings[10].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			bindings[10].descriptorCount    = 4;
+			bindings[10].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+			bindings[10].pImmutableSamplers = nullptr;
+			bindings[11].binding            = 11;
+			bindings[11].descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			bindings[11].descriptorCount    = 1;
+			bindings[11].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+			bindings[11].pImmutableSamplers = nullptr;
 
 			VkDescriptorSetLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -184,14 +196,18 @@ namespace engine::render
 		// 3. Descriptor pool: maxFrames sets, 10 combined image samplers each
 		// -----------------------------------------------------------------
 		{
-			VkDescriptorPoolSize poolSize{};
-			poolSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSize.descriptorCount = 10 * m_maxFrames;
+			// Par set : 10 (bindings 0-9) + 4 (binding 10) = 14 image samplers,
+			// + 1 UNIFORM_BUFFER (binding 11).
+			std::array<VkDescriptorPoolSize, 2> poolSizes{};
+			poolSizes[0].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			poolSizes[0].descriptorCount = 14 * m_maxFrames;
+			poolSizes[1].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			poolSizes[1].descriptorCount = 1 * m_maxFrames;
 
 			VkDescriptorPoolCreateInfo poolInfo{};
 			poolInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			poolInfo.poolSizeCount = 1;
-			poolInfo.pPoolSizes    = &poolSize;
+			poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+			poolInfo.pPoolSizes    = poolSizes.data();
 			poolInfo.maxSets       = m_maxFrames;
 
 			VkResult res = vkCreateDescriptorPool(device, &poolInfo, nullptr, &m_descriptorPool);
@@ -256,6 +272,76 @@ namespace engine::render
 				LOG_ERROR(Render, "LightingPass: vkCreateSampler (depth) failed: {}", static_cast<int>(res));
 				Destroy(device);
 				return false;
+			}
+
+			// Sampler des shadow maps (binding 10) : nearest clamp, PAS de compare
+			// (PCF + test profondeur faits manuellement dans lighting.frag).
+			res = vkCreateSampler(device, &si, nullptr, &m_shadowSampler);
+			if (res != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "LightingPass: vkCreateSampler (shadow) failed: {}", static_cast<int>(res));
+				Destroy(device);
+				return false;
+			}
+		}
+
+		// -----------------------------------------------------------------
+		// 5b. UBO cascades (binding 11), host-visible, un par frame in-flight
+		// (272 o, mappé en permanence HOST_COHERENT). Repère : SsaoKernelNoise.cpp.
+		// -----------------------------------------------------------------
+		{
+			VkPhysicalDeviceMemoryProperties memProps{};
+			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+			auto findMemoryType = [&](uint32_t typeBits, VkMemoryPropertyFlags want) -> uint32_t
+			{
+				for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+					if ((typeBits & (1u << i)) &&
+						(memProps.memoryTypes[i].propertyFlags & want) == want)
+						return i;
+				return UINT32_MAX;
+			};
+
+			m_shadowUboBuffers.resize(m_maxFrames, VK_NULL_HANDLE);
+			m_shadowUboMemory.resize(m_maxFrames, VK_NULL_HANDLE);
+			m_shadowUboMapped.resize(m_maxFrames, nullptr);
+
+			for (uint32_t f = 0; f < m_maxFrames; ++f)
+			{
+				VkBufferCreateInfo bi{};
+				bi.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+				bi.size        = sizeof(ShadowUbo);
+				bi.usage       = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+				bi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+				if (vkCreateBuffer(device, &bi, nullptr, &m_shadowUboBuffers[f]) != VK_SUCCESS)
+				{
+					LOG_ERROR(Render, "LightingPass: vkCreateBuffer (shadow UBO) failed");
+					Destroy(device);
+					return false;
+				}
+
+				VkMemoryRequirements memReq{};
+				vkGetBufferMemoryRequirements(device, m_shadowUboBuffers[f], &memReq);
+				const uint32_t memTypeIdx = findMemoryType(memReq.memoryTypeBits,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+				if (memTypeIdx == UINT32_MAX)
+				{
+					LOG_ERROR(Render, "LightingPass: no host-visible memory type for shadow UBO");
+					Destroy(device);
+					return false;
+				}
+
+				VkMemoryAllocateInfo ai{};
+				ai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+				ai.allocationSize  = memReq.size;
+				ai.memoryTypeIndex = memTypeIdx;
+				if (vkAllocateMemory(device, &ai, nullptr, &m_shadowUboMemory[f]) != VK_SUCCESS ||
+					vkBindBufferMemory(device, m_shadowUboBuffers[f], m_shadowUboMemory[f], 0) != VK_SUCCESS ||
+					vkMapMemory(device, m_shadowUboMemory[f], 0, sizeof(ShadowUbo), 0, &m_shadowUboMapped[f]) != VK_SUCCESS)
+				{
+					LOG_ERROR(Render, "LightingPass: shadow UBO alloc/bind/map failed");
+					Destroy(device);
+					return false;
+				}
 			}
 		}
 
@@ -402,6 +488,7 @@ namespace engine::render
 		VkImageView prefilterView, VkSampler prefilterSampler,
 		VkImageView brdfLutView, VkSampler brdfLutSampler,
 		VkImageView ddgiIrradianceView, VkSampler ddgiSampler,
+		const VkImageView shadowViews[4], const ShadowUbo& shadowData,
 		const LightParams& params, uint32_t frameIndex)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
@@ -438,13 +525,19 @@ namespace engine::render
 		if (ddgiIrradianceView == VK_NULL_HANDLE) { ddgiIrradianceView = viewA; ddgiSampler = m_sampler; }
 		if (ddgiSampler == VK_NULL_HANDLE) { ddgiSampler = m_sampler; }
 
+		// binding 10 (4 shadow maps). Vue nulle => fallback GBufferA (viewA) ;
+		// useShadows (shadowParams.x) vaudra 0 et le shader ne lira pas le fallback.
+		VkImageView shView[4];
+		for (int i = 0; i < 4; ++i)
+			shView[i] = (shadowViews && shadowViews[i] != VK_NULL_HANDLE) ? shadowViews[i] : viewA;
+
 		// ------------------------------------------------------------------
 		// Update descriptor set for this frame with GBuffer + IBL views.
 		// ------------------------------------------------------------------
 		const uint32_t setIdx = frameIndex % m_maxFrames;
 		VkDescriptorSet ds = m_descriptorSets[setIdx];
 
-		std::array<VkDescriptorImageInfo, 10> imageInfos{};
+		std::array<VkDescriptorImageInfo, 14> imageInfos{};
 		imageInfos[0] = { m_sampler,         viewA,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[1] = { m_sampler,         viewB,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[2] = { m_sampler,         viewC,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
@@ -455,18 +548,41 @@ namespace engine::render
 		imageInfos[7] = { m_sampler,         viewSsao, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[8] = { m_sampler,         viewDecal, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[9] = { ddgiSampler,       ddgiIrradianceView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }; // M45.7 DDGI
+		for (int i = 0; i < 4; ++i)
+			imageInfos[10 + i] = { m_shadowSampler, shView[i], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 
-		std::array<VkWriteDescriptorSet, 10> writes{};
-		for (size_t i = 0; i < writes.size(); ++i)
+		std::memcpy(m_shadowUboMapped[setIdx], &shadowData, sizeof(ShadowUbo));
+		VkDescriptorBufferInfo shadowBufInfo{};
+		shadowBufInfo.buffer = m_shadowUboBuffers[setIdx];
+		shadowBufInfo.offset = 0;
+		shadowBufInfo.range  = sizeof(ShadowUbo);
+
+		std::array<VkWriteDescriptorSet, 12> writes{};
+		for (size_t i = 0; i < 10; ++i)
 		{
 			writes[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writes[i].dstSet          = ds;
-			writes[i].dstBinding      = i;
+			writes[i].dstBinding      = static_cast<uint32_t>(i);
 			writes[i].dstArrayElement = 0;
 			writes[i].descriptorCount = 1;
 			writes[i].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			writes[i].pImageInfo      = &imageInfos[i];
 		}
+		writes[10].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writes[10].dstSet          = ds;
+		writes[10].dstBinding      = 10;
+		writes[10].dstArrayElement = 0;
+		writes[10].descriptorCount = 4;
+		writes[10].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writes[10].pImageInfo      = &imageInfos[10];
+		writes[11].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writes[11].dstSet          = ds;
+		writes[11].dstBinding      = 11;
+		writes[11].dstArrayElement = 0;
+		writes[11].descriptorCount = 1;
+		writes[11].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		writes[11].pBufferInfo     = &shadowBufInfo;
+
 		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 
 		// ------------------------------------------------------------------
@@ -563,6 +679,21 @@ namespace engine::render
 			vkDestroySampler(device, m_sampler, nullptr);
 			m_sampler = VK_NULL_HANDLE;
 		}
+		if (m_shadowSampler != VK_NULL_HANDLE)
+		{
+			vkDestroySampler(device, m_shadowSampler, nullptr);
+			m_shadowSampler = VK_NULL_HANDLE;
+		}
+		for (size_t f = 0; f < m_shadowUboBuffers.size(); ++f)
+		{
+			if (m_shadowUboMemory[f] != VK_NULL_HANDLE)
+				vkFreeMemory(device, m_shadowUboMemory[f], nullptr); // unmappe implicitement
+			if (m_shadowUboBuffers[f] != VK_NULL_HANDLE)
+				vkDestroyBuffer(device, m_shadowUboBuffers[f], nullptr);
+		}
+		m_shadowUboBuffers.clear();
+		m_shadowUboMemory.clear();
+		m_shadowUboMapped.clear();
 		// Descriptor sets are implicitly freed when the pool is destroyed.
 		m_descriptorSets.clear();
 		if (m_descriptorPool != VK_NULL_HANDLE)

@@ -52,6 +52,17 @@ namespace engine::render
 		// 144 (jusqu'à skyColor) + 16 (useIBL+useDdgi+pad0+pad1) + 64 (4 vec4 DDGI) = 224.
 		static_assert(sizeof(LightParams) == 224, "LightParams must be exactly 224 bytes (144 + 16 + 64 DDGI)");
 
+		/// CPU-side de l'UBO cascades (binding 11, std140). 4 lightViewProj (256 o)
+		/// + shadowParams (16 o) = 272 o. SÉPARÉ de LightParams (push-constant figé
+		/// à 224 o). shadowParams : x=useShadows(0/1), y=texelSize(1/résolution),
+		/// z=biasConstant, w=biasSlopeMax. Voir lighting.frag binding 11.
+		struct ShadowUbo
+		{
+			float lightViewProj[16 * 4]; ///< 4 matrices colonne-major (cascade 0..3), 256 o.
+			float shadowParams[4];       ///< x=useShadows, y=texelSize, z=biasConstant, w=biasSlopeMax.
+		};
+		static_assert(sizeof(ShadowUbo) == 272, "ShadowUbo must be exactly 272 bytes (256 + 16)");
+
 		LightingPass() = default;
 		LightingPass(const LightingPass&) = delete;
 		LightingPass& operator=(const LightingPass&) = delete;
@@ -89,6 +100,12 @@ namespace engine::render
 			VkImageView prefilterView, VkSampler prefilterSampler,
 			VkImageView brdfLutView, VkSampler brdfLutSampler,
 			VkImageView ddgiIrradianceView, VkSampler ddgiSampler,
+			/// \param shadowViews 4 vues des shadow maps cascades (binding 10). Toute
+			///        entrée VK_NULL_HANDLE => fallback GBufferA ; shadowData.shadowParams[0]
+			///        (useShadows) doit alors valoir 0 (le shader ne lit pas le fallback).
+			/// \param shadowData lightViewProj[4] (256 o) + shadowParams (16 o), uploadés
+			///        dans l'UBO host-visible binding 11.
+			const VkImageView shadowViews[4], const ShadowUbo& shadowData,
 			const LightParams& params, uint32_t frameIndex);
 
 		/// Releases all Vulkan resources. Safe to call even when not initialized.
@@ -105,6 +122,10 @@ namespace engine::render
 		VkPipeline            m_pipeline            = VK_NULL_HANDLE;
 		VkSampler             m_sampler             = VK_NULL_HANDLE; ///< Nearest clamp, for GBuf color channels.
 		VkSampler             m_depthSampler        = VK_NULL_HANDLE; ///< Nearest clamp, no compare, for depth.
+		VkSampler m_shadowSampler = VK_NULL_HANDLE; ///< nearest clamp, lecture plain de la profondeur shadow (binding 10).
+		std::vector<VkBuffer>       m_shadowUboBuffers; ///< UBO cascades host-visible, un par frame (binding 11).
+		std::vector<VkDeviceMemory> m_shadowUboMemory;  ///< Mémoire host-visible.
+		std::vector<void*>          m_shadowUboMapped;  ///< Pointeurs mappés persistants (HOST_VISIBLE|HOST_COHERENT).
 
 		std::vector<VkDescriptorSet> m_descriptorSets; ///< One per in-flight frame.
 		uint32_t m_maxFrames = 2;

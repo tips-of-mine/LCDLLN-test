@@ -724,12 +724,12 @@ namespace engine::editor::world
 		LOG_INFO(EditorWorld, "WorldEditorShell dirty: {}", std::string(reason));
 	}
 
-	void WorldEditorShell::InitNewZoneTerrain(int chunksPerAxis)
+	void WorldEditorShell::InitNewZoneTerrain(int chunksPerAxis, float flatHeightMeters)
 	{
-		m_terrainDoc.InitFlatZone(chunksPerAxis, 0.0f);
+		m_terrainDoc.InitFlatZone(chunksPerAxis, flatHeightMeters);
 		LOG_INFO(EditorWorld,
-			"[WorldEditorShell] Init new zone terrain: {}x{} flat chunks",
-			chunksPerAxis, chunksPerAxis);
+			"[WorldEditorShell] Init new zone terrain: {}x{} flat chunks at {:.1f} m",
+			chunksPerAxis, chunksPerAxis, flatHeightMeters);
 	}
 
 	size_t WorldEditorShell::SaveTerrainChunks(const engine::core::Config& cfg)

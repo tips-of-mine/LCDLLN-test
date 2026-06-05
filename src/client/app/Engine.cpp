@@ -7621,7 +7621,18 @@ namespace engine
 			{
 				const uint32_t hmRes = m_worldEditorSession->Doc().heightmapResolution;
 				const int chunksPerAxis = static_cast<int>(std::max<uint32_t>(1u, hmRes / 256u));
-				m_worldEditorShell->InitNewZoneTerrain(chunksPerAxis);
+				// Accord de hauteur chunk <-> heightmap (corrige le "terrain qui
+				// chute hors champ a la 1ere edition"). ActionNewMap ecrit la
+				// heightmap r16h a la valeur 32768 (milieu). Le chunk plat
+				// (source de verite) doit demarrer a la MEME hauteur physique,
+				// sinon la 1ere SyncWorldEditorHeightmapFromDocument reecrit
+				// toute la heightmap a la hauteur du chunk et fait chuter le sol.
+				// height_scale est lue avec la meme cle/le meme defaut que
+				// TerrainRenderer::Init (terrain.height_scale, defaut 200).
+				const float heightScale =
+					static_cast<float>(m_cfg.GetDouble("terrain.height_scale", 200.0));
+				const float flatHeightMeters = (32768.0f / 65535.0f) * heightScale;
+				m_worldEditorShell->InitNewZoneTerrain(chunksPerAxis, flatHeightMeters);
 			}
 			if (m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
 			{
@@ -12061,18 +12072,37 @@ namespace engine
 			const float centerX     = ox + actualExtX * 0.5f;
 			const float centerZ     = oz + actualExtZ * 0.5f;
 			const float midGroundY  = hs * 0.5f;            // hauteur moyenne attendue du sol
-			const float camAltitude = midGroundY + 80.0f;   // marge confortable pour sculpter
+
+			// Cadrage ADAPTATIF : on place la camera en recul (+Z) et en hauteur
+			// PROPORTIONNELS a l'etendue REELLE du terrain, orientee pour viser
+			// exactement son centre. L'ancienne version (altitude fixe +80 m,
+			// pitch fixe ~20deg) cadrait les grands terrains mais laissait une
+			// PETITE carte neuve (ex. 60 m) entierement SOUS le bas de l'ecran :
+			// le terrain etait bien rendu (Record diag kept=225) mais hors champ,
+			// d'ou le ressenti "rien ne s'affiche apres Creer une nouvelle carte".
+			// On calcule la distance qui fait tenir l'etendue verticale du
+			// terrain dans le FOV (+ marge), avec un garde-fou bas pour les
+			// micro-terrains. La camera vise le centre : avec la base camera
+			// (forward = (0, -sin(pitch), -cos(pitch)) pour yaw=0), poser la
+			// camera a `centre + (0, dist*sin(pitch), dist*cos(pitch))` garantit
+			// que l'axe optique passe pile par le centre du sol.
+			constexpr float kPi      = 3.14159265358979323846f;
+			constexpr float fovYDeg  = 70.0f;
+			constexpr float pitchDown = 0.70f;              // ~40deg : vue d'ensemble plongeante
+			const float halfFovY     = (fovYDeg * 0.5f) * (kPi / 180.0f);
+			const float fitDist      = (std::max(maxExt, 1.0f) * 0.5f * 1.3f) / std::tan(halfFovY);
+			const float dist         = std::max(fitDist, 8.0f); // garde-fou micro-terrain
 
 			engine::render::Camera reset;
 			reset.position.x = centerX;
-			reset.position.y = camAltitude;
-			reset.position.z = centerZ;
+			reset.position.y = midGroundY + dist * std::sin(pitchDown);
+			reset.position.z = centerZ + dist * std::cos(pitchDown);
 			reset.yaw        = 0.0f;
-			reset.pitch      = 0.35f;                       // ~20deg vers le bas
-			reset.fovYDeg    = 70.0f;
+			reset.pitch      = pitchDown;
+			reset.fovYDeg    = fovYDeg;
 			reset.aspect     = static_cast<float>(std::max(1, m_width)) / static_cast<float>(std::max(1, m_height));
 			reset.nearZ      = 0.1f;
-			reset.farZ       = std::max(5000.0f, maxExt * 1.5f); // garantit la visibilite des bords sur grand terrain
+			reset.farZ       = std::max(5000.0f, (dist + maxExt) * 2.0f); // visibilite des bords
 			m_renderStates[0].camera = reset;
 			m_renderStates[1].camera = reset;
 			LOG_INFO(Render,

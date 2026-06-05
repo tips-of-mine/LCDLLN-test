@@ -1077,6 +1077,12 @@ namespace engine::render::terrain_chunk
 			// Tracking slot → coord pour le Tick.
 			const auto slot = m_runtime.GetOrAllocateSlot(coord);
 			m_slotToCoord[slot] = coord;
+			// Phase 1 : `coord` est sur la grille terrain 256, alors que `world`
+			// (et donc GetRingForChunk) raisonne sur la grille 500. Le ring obtenu
+			// est donc approximatif. C'est TOLÉRÉ : le ring ne pilote QUE la
+			// politique d'éviction LRU (CollectEvictionsForBudget), jamais
+			// l'exactitude du rendu. Un ring dédié 256 pourra être ajouté si la
+			// pression budgétaire GPU le justifie (hors périmètre Phase 1).
 			m_runtime.UpdateRing(coord, world.GetRingForChunk(coord));
 			m_runtime.Touch(slot);
 
@@ -1130,8 +1136,12 @@ namespace engine::render::terrain_chunk
 			vkUpdateDescriptorSets(m_device, 6u, writes, 0, nullptr);
 
 			// Origine monde (mètres) du coin chunk-local (0,0,0).
-			const float originX = static_cast<float>(engine::world::kChunkSize) * coord.x;
-			const float originZ = static_cast<float>(engine::world::kChunkSize) * coord.z;
+			// Phase 1 (chantier C) : le mesh d'un chunk terrain couvre 256 m
+			// (= kTerrainChunkSizeMeters), pas 500 m. Placer sur la grille terrain
+			// rend les chunks jointifs (plus de trou de 244 m) et aligne le jeu
+			// sur l'éditeur. kChunkSize (500) reste réservé aux instances/zone.
+			const float originX = static_cast<float>(engine::world::kTerrainChunkSizeMeters) * coord.x;
+			const float originZ = static_cast<float>(engine::world::kTerrainChunkSizeMeters) * coord.z;
 			m_pipeline.RecordChunkDraw(cmd, cameraSet, descSet, mesh, originX, 0.0f, originZ);
 			++m_lastDrawnChunkCount;
 		}

@@ -1019,6 +1019,11 @@ add_executable(wind_tests src/client/world/wind/tests/WindTests.cpp)
 target_link_libraries(wind_tests PRIVATE engine_core)
 add_test(NAME wind_tests COMMAND wind_tests)
 
+# Chantier C Phase 1 — Tests grille terrain 256 m (constante + helpers purs).
+add_executable(terrain_chunk_grid_tests src/client/world/tests/TerrainChunkGridTests.cpp)
+target_link_libraries(terrain_chunk_grid_tests PRIVATE engine_core)
+add_test(NAME terrain_chunk_grid_tests COMMAND terrain_chunk_grid_tests)
+
 # M100.49 — Tests Tutorial & Overlay (moteur de sequence + systeme tutoriel +
 # registre widgets). Diagnostic differe (depend de M100.48). Ancrage distinct
 # pour eviter les conflits CMake avec d'autres PR M100 en vol.

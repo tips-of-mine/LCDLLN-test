@@ -337,6 +337,14 @@ namespace engine::editor::world
 	{
 #if defined(_WIN32)
 		if (m_layoutPath.empty()) return;
+		// Garde anti-crash : SaveIniSettingsToDisk dereference le contexte ImGui
+		// global (GImGui). Au teardown, WorldEditorImGui::Shutdown peut avoir
+		// deja appele ImGui::DestroyContext -> contexte nul -> access violation
+		// (SEH 0xC0000005 observe a chaque fermeture de l'editeur). On ne
+		// persiste donc que si le contexte est encore vivant. La sequence de
+		// shutdown appelle desormais Shell::Shutdown AVANT la destruction du
+		// contexte ImGui pour que le layout soit reellement sauvegarde.
+		if (ImGui::GetCurrentContext() == nullptr) return;
 		ImGui::SaveIniSettingsToDisk(m_layoutPath.c_str());
 #endif
 	}

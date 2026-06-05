@@ -6890,6 +6890,13 @@ namespace engine
 #if defined(_WIN32)
 			if (m_texturePreviewCache) m_texturePreviewCache->Shutdown();
 			m_texturePreviewCache.reset();
+			// M100.1 — Persiste le layout du shell (ImGui::SaveIniSettingsToDisk)
+			// AVANT WorldEditorImGui::Shutdown, qui detruit le contexte ImGui.
+			// Sinon le Shell::Shutdown appele plus bas (apres destruction du
+			// contexte + du device Vulkan) ecrirait via un contexte ImGui nul
+			// -> access violation a la fermeture (SEH 0xC0000005). Idempotent :
+			// le 2e Shutdown plus bas est neutralise par la garde m_initialized.
+			if (m_worldEditorShell) m_worldEditorShell->Shutdown();
 			if (m_worldEditorImGui)
 			{
 				m_worldEditorImGui->DetachPlatformWindow(m_window);

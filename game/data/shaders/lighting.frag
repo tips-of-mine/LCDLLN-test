@@ -57,6 +57,18 @@ layout(set = 0, binding = 7) uniform sampler2D   ssaoTex;       // M06.4 SSAO_Bl
 layout(set = 0, binding = 8) uniform sampler2D   decalOverlayTex;
 layout(set = 0, binding = 9) uniform sampler2D   ddgiIrradiance; // M45.7 atlas irradiance DDGI (RGBA16F)
 
+// ---- CSM — Ombres cascades --------------------------------------------------
+// binding 10 : 4 shadow maps (depth Vulkan [0,1], sampler nearest clamp, compare
+//   manuel comme volumetric_fog.frag — PAS de sampler2DShadow).
+// binding 11 : UBO cascades (std140). shadowParams : x=useShadows, y=texelSize
+//   (1/résolution), z=biasConstant, w=biasSlopeMax.
+layout(set = 0, binding = 10) uniform sampler2D uShadowMaps[4];
+layout(set = 0, binding = 11) uniform ShadowUbo
+{
+    mat4 lightViewProj[4];
+    vec4 shadowParams;
+} uShadow;
+
 // ---- Push constants ---------------------------------------------------------
 layout(push_constant) uniform PC
 {
@@ -218,6 +230,54 @@ vec3 F_Schlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }
 
+// CSM — lit la profondeur stockée dans la cascade i à l'UV donné. Index CONSTANT
+// (switch) pour éviter l'indexation dynamique non-uniforme d'un sampler array.
+float SampleShadowDepth(int i, vec2 uv)
+{
+    if (i == 0) return texture(uShadowMaps[0], uv).r;
+    if (i == 1) return texture(uShadowMaps[1], uv).r;
+    if (i == 2) return texture(uShadowMaps[2], uv).r;
+    return texture(uShadowMaps[3], uv).r;
+}
+
+// CSM — visibilité du soleil. Sélectionne la première cascade i (0→3) où P se
+// projette dans [0,1]² (UV) et [0,1] (profondeur) [containment]. Hors de toutes
+// -> éclairé (1.0). PCF 3×3 (9 taps, pas = shadowParams.y) ; compare manuel sur
+// profondeur Vulkan [0,1] (cf. volumetric_fog.frag) ; biais slope-scaled.
+// \param P     Position monde du fragment.
+// \param NdotL normale·soleil (>=0), pour le biais.
+// \return [0,1] : 1 = éclairé, 0 = ombré.
+float ShadowVisibility(vec3 P, float NdotL)
+{
+    float texel = uShadow.shadowParams.y;
+    float bias  = max(uShadow.shadowParams.z,
+                      uShadow.shadowParams.w * (1.0 - NdotL));
+
+    for (int i = 0; i < 4; ++i)
+    {
+        vec4 clip = uShadow.lightViewProj[i] * vec4(P, 1.0);
+        if (clip.w <= 0.0) continue;
+        vec3 ndc = clip.xyz / clip.w;
+        vec2 uv  = ndc.xy * 0.5 + 0.5;   // [-1,1] -> [0,1]
+        float refDepth = ndc.z;          // profondeur Vulkan, déjà [0,1]
+
+        if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0 ||
+            refDepth < 0.0 || refDepth > 1.0)
+            continue; // pas dans cette cascade -> essaie la suivante
+
+        float vis = 0.0;
+        for (int dy = -1; dy <= 1; ++dy)
+        for (int dx = -1; dx <= 1; ++dx)
+        {
+            vec2  off = vec2(float(dx), float(dy)) * texel;
+            float occ = SampleShadowDepth(i, uv + off);
+            vis += (refDepth - bias <= occ) ? 1.0 : 0.0;
+        }
+        return vis / 9.0;
+    }
+    return 1.0; // hors de toutes les cascades -> éclairé
+}
+
 // ---- Main -------------------------------------------------------------------
 void main()
 {
@@ -289,7 +349,10 @@ void main()
     vec3  diffuse  = kD * albedo / PI;
 
     // ---- Direct lighting contribution ----------------------------------
-    vec3  Lo = (diffuse + specular) * pc.lightColor.rgb * NdotL;
+    // CSM — atténue le SEUL soleil direct par les ombres cascades. Ambient/IBL/DDGI
+    // non ombrés. Gating : shadowParams.x <= 0.5 (shadows off / maps invalides) -> 1.
+    float vis = (uShadow.shadowParams.x > 0.5) ? ShadowVisibility(P, NdotL) : 1.0;
+    vec3  Lo = (diffuse + specular) * pc.lightColor.rgb * NdotL * vis;
 
     // ---- Ambient: IBL (split-sum diffuse + spec) or fallback constant -------
     vec3  ambient;

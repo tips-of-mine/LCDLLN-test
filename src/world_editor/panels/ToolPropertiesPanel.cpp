@@ -460,7 +460,13 @@ namespace engine::editor::world::panels
 		ImGui::Separator();
 
 		ImGui::Text("Default values for next lake :");
-		ImGui::SliderFloat("Water Level Y", &tool.MutableWaterLevelY(), -50.0f, 50.0f, "%.3f");
+		// Plage elargie : un terrain neuf est a ~0.5*height_scale (≈100 m pour
+		// height_scale=200, ≈256 m pour 512). L'ancienne plage [-50, 50] ne
+		// pouvait PAS atteindre la surface -> lac toujours sous le sol =
+		// invisible. Le clic 3D pose automatiquement le niveau au ras du sol ;
+		// ce slider sert a l'ajuster (sous le sol pour un bassin, au-dessus
+		// pour une nappe).
+		ImGui::SliderFloat("Water Level Y", &tool.MutableWaterLevelY(), -50.0f, 600.0f, "%.1f");
 		ImGui::ColorEdit3("Bottom Color", &tool.MutableBottomColor().x);
 		if (advanced)
 		{

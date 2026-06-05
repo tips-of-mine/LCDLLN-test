@@ -580,6 +580,18 @@ namespace engine::editor
 			return false;
 		}
 		m_doc.zoneId = zid;
+		// Realigne les chemins terrain (heightmap/splat/grass) sur la zone
+		// COURANTE avant le hook de sauvegarde. Sinon un « Enregistrer sous »
+		// (nom de zone modifie depuis le chargement/creation) ecrit le terrain
+		// dans l'ANCIEN dossier et le JSON reference l'ancien -> carte NON
+		// autonome (bug observe : zone "untitled_zone2" dont le JSON pointe
+		// vers "untitled_zone"). On reconstruit les memes chemins que ActionNewMap.
+		{
+			const std::string relDir = "world_editor/maps/" + zid;
+			m_doc.heightmapContentRelativePath = relDir + "/height.r16h";
+			m_doc.splatmapContentRelativePath  = relDir + "/splat.slap";
+			m_doc.grassMaskContentRelativePath = relDir + "/grass.grms";
+		}
 		const std::filesystem::path jsonAbs = CanonicalMapJsonPath(cfg, zid);
 		std::error_code ec;
 		std::filesystem::create_directories(jsonAbs.parent_path(), ec);

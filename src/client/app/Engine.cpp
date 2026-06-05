@@ -9410,6 +9410,39 @@ namespace engine
 						m_worldEditorShell->MutableValleyChainTool().AddVertex(pickX, pickZ);
 					}
 				}
+				else if (tool == engine::editor::world::ActiveTool::Lake)
+				{
+					modernEditActive = true;
+					// Lac : chaque clic gauche ajoute un point au polygone,
+					// directement dans la vue 3D (en plus du canvas 2D du
+					// ToolPropertiesPanel). On pose le niveau d'eau AU RAS DU
+					// SOL au 1er point, sinon le defaut (0 m) place la surface
+					// ~100 m sous un terrain neuf -> lac invisible. La
+					// validation (>=3 points) se fait via "Close polygon" du
+					// panneau Lake.
+					if (freeClick && terrainPick
+						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						engine::editor::world::LakeTool& lake =
+							m_worldEditorShell->MutableLakeTool();
+						if (lake.GetPointCount() == 0 && m_terrain.IsValid())
+							lake.MutableWaterLevelY() =
+								m_terrain.SampleHeightAtWorldXZ(pickX, pickZ);
+						lake.AddPoint(pickX, pickZ);
+					}
+				}
+				else if (tool == engine::editor::world::ActiveTool::River)
+				{
+					modernEditActive = true;
+					// Riviere : chaque clic gauche ajoute un noeud a la spline
+					// (en plus du canvas 2D). La finalisation (>=2 noeuds) se
+					// fait via "End spline" du panneau River.
+					if (freeClick && terrainPick
+						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						m_worldEditorShell->MutableRiverTool().AddNode(pickX, pickZ);
+					}
+				}
 			}
 
 			// Sous-projet 1, bloc B3 — picking d'entite : Ctrl+clic gauche dans la

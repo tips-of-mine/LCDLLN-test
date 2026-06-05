@@ -117,7 +117,16 @@ namespace engine::editor::world
 		std::error_code ec;
 		if (std::filesystem::exists(m_layoutPath, ec) && !ec)
 		{
-			ImGui::LoadIniSettingsFromDisk(m_layoutPath.c_str());
+			// IMPORTANT : Init() s'execute TOT au boot (Engine cree le Shell
+			// avant l'init Vulkan), AVANT que WorldEditorImGui::Init n'appelle
+			// ImGui::CreateContext. Appeler ImGui::LoadIniSettingsFromDisk ici
+			// dereferencerait le contexte ImGui global (GImGui) encore nul ->
+			// SEH 0xC0000005. Ce bug etait masque tant que le fichier de layout
+			// n'existait pas (le crash de shutdown empechait sa persistance) ; il
+			// est devenu reproductible des la 2e ouverture une fois le shutdown
+			// corrige. On DIFFERE donc la lecture au 1er RenderFrame, ou le
+			// contexte ImGui est garanti vivant.
+			m_pendingLayoutLoad = true;
 		}
 		else
 		{
@@ -356,6 +365,14 @@ namespace engine::editor::world
 	{
 		if (!m_initialized) return;
 #if defined(_WIN32)
+		// Lecture differee du layout dock persiste (cf. Init) : on attend le 1er
+		// frame ou le contexte ImGui existe pour eviter le crash de boot a la 2e
+		// ouverture (LoadIniSettingsFromDisk sur contexte nul).
+		if (m_pendingLayoutLoad && ImGui::GetCurrentContext() != nullptr)
+		{
+			ImGui::LoadIniSettingsFromDisk(m_layoutPath.c_str());
+			m_pendingLayoutLoad = false;
+		}
 		RenderMenuBar();
 		// M100.35 — Toolbar à icônes rendue juste sous le menu bar, au-dessus
 		// du dockspace. La fenêtre est non-dockable, fixée en haut, hauteur

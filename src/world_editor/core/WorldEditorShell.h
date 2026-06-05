@@ -371,5 +371,9 @@ namespace engine::editor::world
 		bool m_dirty = false;
 		bool m_initialized = false;
 		bool m_menuBarSuppressed = false;
+		/// Lecture du layout dock differee : Init() s'execute avant la creation
+		/// du contexte ImGui ; on charge le `.ini` au 1er RenderFrame (contexte
+		/// vivant) pour eviter un crash de boot (cf. Init / RenderFrame).
+		bool m_pendingLayoutLoad = false;
 	};
 }

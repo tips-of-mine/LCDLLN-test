@@ -22,6 +22,11 @@ namespace engine::editor::world
 	{
 		m_chunks.clear();
 		m_splats.clear();
+		// Mémorise la ligne de base : les chunks créés à la volée par
+		// EnsureLoaded (voisins absents du disque) partiront de cette hauteur,
+		// et non de 0, sinon les outils multi-chunks (eau/érosion) voient une
+		// falaise artificielle 0↔baseline et produisent un résultat garbage.
+		m_flatBaselineMeters = flatHeightMeters;
 		if (chunksPerAxis <= 0) return;
 		for (int iz = 0; iz < chunksPerAxis; ++iz)
 		{
@@ -90,11 +95,17 @@ namespace engine::editor::world
 				}
 			}
 		}
-		// Si chargement échoué ou fichier absent, créer un chunk plat à 0.
+		// Si chargement échoué ou fichier absent, créer un chunk plat à la
+		// LIGNE DE BASE de la zone (et non à 0). Crucial pour la continuité :
+		// les outils qui assemblent une grille multi-chunks (eau/érosion)
+		// préchargent les voisins ; sur une carte 1×1 à 100 m, des voisins
+		// fantômes à 0 m créeraient une falaise artificielle → simulation
+		// garbage (« le terrain monte »). m_flatBaselineMeters = 0 par défaut
+		// (cartes chargées : seuls les voisins vraiment absents retombent ici).
 		if (!chunk)
 		{
 			chunk = std::make_shared<engine::world::terrain::TerrainChunk>(
-				engine::world::terrain::TerrainChunk::MakeFlat(0.0f));
+				engine::world::terrain::TerrainChunk::MakeFlat(m_flatBaselineMeters));
 		}
 
 		m_chunks.emplace(key, ChunkSlot{chunk, false});

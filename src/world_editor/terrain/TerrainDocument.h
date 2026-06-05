@@ -148,6 +148,17 @@ namespace engine::editor::world
 		std::string m_contentRootForLods;
 		OnChunkChangedCallback m_onChunkChanged;
 
+		/// Hauteur plate de référence de la zone (mémorisée par `InitFlatZone`).
+		/// `EnsureLoaded` crée les chunks ABSENTS du disque à cette hauteur (et
+		/// non à 0) pour garantir la CONTINUITÉ avec le terrain de la carte.
+		/// Sans ça, un outil qui assemble une grille multi-chunks (eau, érosion)
+		/// sur une carte 1×1 récupère des chunks voisins fantômes à 0 m alors
+		/// que la carte est à 100 m → falaise artificielle → simulation garbage
+		/// (« le terrain monte »). 0 par défaut (cartes chargées du disque, dont
+		/// les chunks ont leur vraie hauteur ; seuls les voisins vraiment absents
+		/// retombent sur ce défaut).
+		float m_flatBaselineMeters = 0.0f;
+
 		/// Slot splat-map (M100.9) parallèle à `ChunkSlot` mais sur un map
 		/// distinct pour éviter de réécrire EnsureLoaded/MarkDirty/Save.
 		struct SplatSlot

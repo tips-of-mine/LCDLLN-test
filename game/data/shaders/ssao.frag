@@ -39,8 +39,15 @@ void main()
     vec4 posVS = pc.invProj * vec4(ndc, depth, 1.0);
     posVS /= posVS.w;
 
-    vec2 noiseUV = inUV * vec2(textureSize(noiseTex, 0));
-    vec3 noiseVec = vec3(texture(noiseTex, noiseUV).rg * 2.0 - 1.0, 0.0);
+    // Rotation du kernel par-pixel via Interleaved Gradient Noise (Jimenez).
+    // Remplace l'ancienne texture de bruit 4x4 echantillonnee en REPEAT, qui
+    // produisait un DAMIER 4 px colle a l'ecran (rendu visible par l'ambient IBL,
+    // ambient = IBL * ao). IGN est procedural, par-pixel, SANS motif repete -> pas
+    // de damier. (noiseTex binding 3 reste declare mais inutilise : evite de
+    // toucher le descriptor set / le C++.)
+    float ign = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+    float noiseAngle = ign * 6.28318530718; // 2*PI : angle de rotation aleatoire par pixel
+    vec3 noiseVec = vec3(cos(noiseAngle), sin(noiseAngle), 0.0);
     vec3 tangent = normalize(noiseVec - normalVS * dot(noiseVec, normalVS));
     vec3 bitangent = cross(normalVS, tangent);
     mat3 tbn = mat3(tangent, bitangent, normalVS);

@@ -47,4 +47,17 @@ namespace engine::world
         if (phase > 15) phase = 15;
         return static_cast<uint8_t>(phase);
     }
+
+    /// Phase qualitative de la journee (pour ambiances/logique gameplay).
+    enum class DayPhase : uint8_t { Night, Dawn, Day, Dusk };
+
+    /// Phase de la journee a partir de l'heure [0,24). Seuils repris de l'ancien
+    /// WorldClock master : Night [22..5), Dawn [5..7), Day [7..19), Dusk [19..22).
+    inline DayPhase DayPhaseAt(float hours)
+    {
+        if (hours >= 22.0f || hours < 5.0f) return DayPhase::Night;
+        if (hours < 7.0f)  return DayPhase::Dawn;
+        if (hours < 19.0f) return DayPhase::Day;
+        return DayPhase::Dusk;
+    }
 }

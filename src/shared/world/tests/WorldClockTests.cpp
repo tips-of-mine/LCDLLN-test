@@ -7,6 +7,8 @@ using engine::world::WorldClockParams;
 using engine::world::GameSeconds;
 using engine::world::TimeOfDayHours;
 using engine::world::LunarPhase;
+using engine::world::DayPhase;
+using engine::world::DayPhaseAt;
 
 static int g_failed = 0;
 #define CHECK(cond) do { if(!(cond)){ std::fprintf(stderr,"[FAIL] %s:%d %s\n",__FILE__,__LINE__,#cond); ++g_failed; } } while(0)
@@ -35,6 +37,13 @@ int main()
     CHECK(LunarPhase(0.0, period) == 0);
     CHECK(LunarPhase(period*0.5 + 1.0, period) == 8);
     CHECK(LunarPhase(period - 1.0, period) == 15);
+
+    CHECK(DayPhaseAt(0.0f)  == DayPhase::Night);
+    CHECK(DayPhaseAt(3.0f)  == DayPhase::Night);
+    CHECK(DayPhaseAt(6.0f)  == DayPhase::Dawn);
+    CHECK(DayPhaseAt(12.0f) == DayPhase::Day);
+    CHECK(DayPhaseAt(20.0f) == DayPhase::Dusk);
+    CHECK(DayPhaseAt(23.0f) == DayPhase::Night);
 
     if (g_failed == 0) std::printf("[OK] WorldClockTests\n");
     return g_failed;

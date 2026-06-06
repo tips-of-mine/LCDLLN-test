@@ -63,6 +63,9 @@ namespace engine::render
 			/// True when the sun is above the horizon (elevation > 0).
 			bool isDaytime = true;
 
+			/// 0 = nuit profonde, 1 = plein jour (pour piloter l'exposition).
+			float dayFactor = 1.0f;
+
 			// ---- Lunar phase (master-driven via OnLunarPhaseChange callback) ----
 
 			/// Index de la phase lunaire courante (0..15). 0=NewMoon, 7=FullMoon, 15=Earthshine late.

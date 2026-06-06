@@ -30,6 +30,7 @@ namespace engine::server
 	class NetServer;
 	class SessionManager;
 	class ConnectionSessionMap;
+	class WorldClockHandler;
 }
 
 namespace engine::server
@@ -45,6 +46,12 @@ namespace engine::server
 		void SetSessionManager(SessionManager* mgr) { m_sessionMgr = mgr; }
 		/// Branche la map connId -> sessionId pour valider les requests + iterer pour le push.
 		void SetConnectionSessionMap(ConnectionSessionMap* m) { m_connMap = m; }
+		/// Branche l'horloge monde : si non-null, la phase lunaire derive du temps
+		/// de JEU (GameSeconds + lunarPeriodGameSec) au lieu du temps reel, ce qui
+		/// unifie la cadence lunaire avec la cadence jour/nuit (timeScale, pause,
+		/// /settime s'appliquent aussi a la lune). Si null, fallback temps reel
+		/// (comportement d'origine via m_cycleStartMs / m_cycleDurationMs).
+		void SetWorldClock(WorldClockHandler* wc) { m_worldClock = wc; }
 
 		/// Configure les parametres du cycle. Appele une fois au boot avant le
 		/// premier Tick. Modifie uniquement les parametres ; ne reset pas
@@ -77,6 +84,15 @@ namespace engine::server
 		uint8_t CurrentPhase() const;
 
 	private:
+		/// Calcule la phase lunaire courante de maniere centralisee. Unifie la
+		/// source : si l'horloge monde est branchee (m_worldClock != null), la
+		/// phase derive du temps de JEU (GameSeconds + lunarPeriodGameSec), sinon
+		/// fallback temps reel (m_cycleStartMs / m_cycleDurationMs, comportement
+		/// d'origine). NE prend PAS m_mutex (lit m_worldClock/m_cycleStartMs/
+		/// m_cycleDurationMs ; les appelants qui mutent ces champs verrouillent
+		/// deja). \param realNowMs Timestamp Unix courant en ms (entree du calcul).
+		engine::server::world::LunarPhaseInfo ComputePhaseNow(uint64_t realNowMs) const;
+
 		/// Traite LUNAR_STATE_REQUEST : valide session, calcule phase courante,
 		/// envoie une reponse 193 avec la phase + cycle params.
 		void HandleStateRequest(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader);
@@ -88,6 +104,9 @@ namespace engine::server
 		NetServer*            m_server     = nullptr;
 		SessionManager*       m_sessionMgr = nullptr;
 		ConnectionSessionMap* m_connMap    = nullptr;
+		/// Horloge monde optionnelle. Si non-null, ComputePhaseNow derive la
+		/// phase du temps de jeu ; sinon fallback temps reel. Non possede.
+		WorldClockHandler*    m_worldClock = nullptr;
 
 		/// Mutex protegeant m_cycleStartMs / m_cycleDurationMs / m_lastBroadcastPhase.
 		mutable std::mutex m_mutex;

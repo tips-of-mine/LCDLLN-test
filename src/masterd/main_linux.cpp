@@ -983,6 +983,14 @@ int main(int argc, char** argv)
 	}
 	LOG_INFO(Net, "[ServerMain] WorldClockHandler configured (Phase 3 WorldClock, opcodes 203-205)");
 
+	// Unification lunaire <-> horloge monde : branche l'horloge sur le LunarHandler
+	// pour que la phase lunaire derive du temps de JEU (GameSeconds + periode
+	// lunaire en secondes de jeu) au lieu du temps reel. Doit etre fait apres
+	// l'instanciation des deux handlers (lunarHandler ci-dessus, worldClockHandler
+	// juste au-dessus). Si non branche, le LunarHandler retombe sur le temps reel.
+	lunarHandler.SetWorldClock(&worldClockHandler);
+	LOG_INFO(Net, "[ServerMain] LunarHandler branched to WorldClockHandler (lunar phase derives from game time)");
+
 	// AdminCommand RBAC — registre des slash commands (charge depuis
 	// game/data/config/slash_commands.json) + handler central qui valide
 	// le role + log audit pour TOUTES les slash commands. Pattern central

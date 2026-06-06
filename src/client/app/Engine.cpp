@@ -2099,6 +2099,76 @@ namespace engine
 				pushSkyChatLine("/sky moon %d envoye au master (validation RBAC en cours...)", phase);
 				return true;
 			}
+			// WorldClock client sync : commandes admin horloge monde. Calquees
+			// EXACTEMENT sur /sky time et /sky moon : on intercepte le prefixe
+			// tape, on extrait l'argument brut (texte apres la commande, trimme
+			// des espaces de bord) et on envoie un AdminCommandRequest au master
+			// via kOpcodeAdminCommandRequest (opcode 195). AUCUNE validation
+			// metier cliente : le master valide RBAC + arguments, applique et
+			// broadcast (205) ; le client verra l'effet via la sync horloge.
+			// Le nom de commande envoye est la forme CANONIQUE (sans placeholder)
+			// indexee par le registre serveur. La reponse 196 est traitee
+			// generiquement par le case kOpcodeAdminCommandResponse (branche
+			// "else" -> ligne chat OK, ou branche refus -> ligne chat DENIED).
+			//
+			// Petit helper local de trim (espaces de bord) pour extraire
+			// l'argument tape proprement, sans dependre d'un util externe.
+			auto trimEdges = [](std::string_view sv) -> std::string {
+				const auto first = sv.find_first_not_of(" \t");
+				if (first == std::string_view::npos)
+					return std::string();
+				const auto last = sv.find_last_not_of(" \t");
+				return std::string(sv.substr(first, last - first + 1));
+			};
+
+			//   /settime HH:MM : regle l'heure du monde (master valide le format).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/settime "))
+			{
+				const std::string arg = trimEdges(text.substr(9));
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/settime";
+				req.args.push_back(arg);
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Render, "[WorldClock] /settime '{}' envoye au master (validation RBAC)", arg);
+				pushSkyChatLine("/settime %s envoye au master (validation RBAC en cours...)", arg.c_str());
+				return true;
+			}
+			//   /pausetime on|off : met en pause ou reprend l'horloge monde.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/pausetime "))
+			{
+				const std::string arg = trimEdges(text.substr(11));
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/pausetime";
+				req.args.push_back(arg);
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Render, "[WorldClock] /pausetime '{}' envoye au master (validation RBAC)", arg);
+				pushSkyChatLine("/pausetime %s envoye au master (validation RBAC en cours...)", arg.c_str());
+				return true;
+			}
+			//   /settimescale N : regle l'echelle de temps (min reels / jour).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/settimescale "))
+			{
+				const std::string arg = trimEdges(text.substr(14));
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/settimescale";
+				req.args.push_back(arg);
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Render, "[WorldClock] /settimescale '{}' envoye au master (validation RBAC)", arg);
+				pushSkyChatLine("/settimescale %s envoye au master (validation RBAC en cours...)", arg.c_str());
+				return true;
+			}
 			// Wave 1 RBAC : /promote <account_id> <role> est un outil admin
 			// permettant de promouvoir/retrograder un compte sans acces direct
 			// DB. Le serveur valide le role administrator + applique la mise

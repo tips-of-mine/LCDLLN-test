@@ -261,20 +261,11 @@ add_library(engine_core
   src/client/auth/screens/AuthScreenTerms.cpp
   src/client/auth/screens/AuthScreenCharacterCreate.cpp
   src/client/auth/screens/AuthScreenCharacterSelect.cpp
-  src/client/combat/AoEPreviewSystem.cpp
-  src/client/combat/BuffBarPresenter.cpp
-  src/client/combat/AuraFXSystem.cpp
-  src/client/fx/FXManager.cpp
   src/client/inventory/InventoryUi.cpp
   src/client/trade/TradeWindowUi.cpp
-  src/client/crafting/HarvestCastBar.cpp
-  src/client/crafting/CraftingUi.cpp
   src/client/character_creation/CharacterCreationUi.cpp
   src/client/character_creation/CharacterCustomizationSystem.cpp
   src/client/render/race/RacePreviewViewport.cpp
-  src/client/settings/SettingsMenuUi.cpp
-  src/client/hud/HudLayoutEditor.cpp
-  src/client/combat/AdvancedCombatUi.cpp
   src/client/economy/AuctionUi.cpp
   src/client/economy/ShopUi.cpp
   src/client/net/GameplayUdpClient.cpp
@@ -284,12 +275,10 @@ add_library(engine_core
   src/client/dialogue/DialoguePresenter.cpp
   src/client/dialogue/DialogueConfigLoader.cpp
   src/client/dialogue/QuestConversationJournal.cpp
-  src/client/ui_common/ThemeManager.cpp
   src/client/ui_common/UIModel.cpp
   src/client/chat/ChatUi.cpp
   src/client/chat/ChatWorldVisualPresenter.cpp
   src/client/mail/MailUi.cpp
-  src/client/social/FriendsUi.cpp
   src/client/social/IgnoreListUi.cpp
   src/client/gmtickets/GmTicketUi.cpp
   src/client/reputation/ReputationUi.cpp
@@ -304,8 +293,6 @@ add_library(engine_core
   src/client/lfg/LfgUi.cpp
   src/client/cinematics/CinematicUi.cpp
   src/client/skills/SkillBookUi.cpp
-  src/client/social/PartyHud.cpp
-  src/client/world/ZonePreloadHook.cpp
   src/shared/net/ChatSystem.cpp
   src/shared/net/ChatEmotes.cpp
   src/world_editor/ui/EditorMode.cpp
@@ -613,8 +600,6 @@ add_library(engine_core
   src/client/render/DecalSystem.cpp
   src/client/render/DecalPass.cpp
   src/client/render/ParticleSystem.cpp
-  src/client/render/ParticleBillboardPass.cpp
-  src/client/render/UnderwaterPass.cpp
   src/client/render/WaterMeshGpu.cpp
   src/client/render/WaterPass.cpp
   src/client/render/DayNightCycle.cpp
@@ -667,14 +652,12 @@ add_library(engine_core
   src/client/gameplay/CharacterController.cpp
   src/client/gameplay/TerrainCollider.cpp
   src/client/gameplay/CompositeWorldCollider.cpp
-  src/client/gameplay/ThirdPersonCamera.cpp
   src/client/gameplay/SkillSystem.cpp
   src/client/gameplay/ClientPrediction.cpp
   src/client/gameplay/StatusEffect.cpp
   src/client/world/WorldModel.cpp
   src/client/world/OutputVersion.cpp
   src/client/world/ProbeData.cpp
-  src/client/world/PakReader.cpp
   src/client/world/ChunkPackageLayout.cpp
   src/client/world/StreamingScheduler.cpp
   src/client/world/StreamCache.cpp
@@ -702,7 +685,6 @@ add_library(engine_core
   src/client/render/terrain/HeightmapLoader.cpp
   src/client/render/terrain/TerrainMesh.cpp
   src/client/render/terrain/TerrainSplatting.cpp
-  src/client/render/terrain/SplatSampling.cpp
   src/client/render/terrain/TerrainHoleMask.cpp
   src/client/render/terrain/TerrainGrassDetail.cpp
   src/client/render/terrain/TerrainCliffMesh.cpp

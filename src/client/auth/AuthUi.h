@@ -83,7 +83,7 @@ namespace engine::client
 			bool vsync = true;
 			int32_t resolutionWidth = 1920;
 			int32_t resolutionHeight = 1080;
-			/// 0 = basse … 3 = ultra (aligné \c SettingsMenuPresenter).
+			/// 0 = basse … 3 = ultra.
 			int32_t qualityPreset = 2;
 			float fovDegrees = 70.f;
 		};

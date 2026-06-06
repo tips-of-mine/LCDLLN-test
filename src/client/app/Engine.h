@@ -48,7 +48,6 @@
 #include "src/client/render/TaaJitter.h"
 #include "src/client/render/Camera.h"
 #include "src/client/render/CascadedShadowMaps.h"
-#include "src/client/render/UnderwaterPass.h"
 #include "src/client/render/WaterMeshGpu.h"
 #include "src/client/render/WaterPass.h"
 #include "src/client/render/DayNightCycle.h"
@@ -388,8 +387,6 @@ namespace engine
 		engine::render::ResourceId m_fgSceneColorLDRId   = engine::render::kInvalidResourceId;
 		/// M08.2: SceneColor_HDR + bloom (combine pass output); tonemap reads this.
 		engine::render::ResourceId m_fgSceneColorHDRWithBloomId = engine::render::kInvalidResourceId;
-		/// M37.3: UnderwaterHDR — output of the underwater post-effect pass (R16G16B16A16_SFLOAT).
-		engine::render::ResourceId m_fgUnderwaterHDRId = engine::render::kInvalidResourceId;
 		/// SSAO_Raw: output of SSAO generate pass (R16F). M06.2.
 		engine::render::ResourceId m_fgSsaoRawId        = engine::render::kInvalidResourceId;
 		/// SSAO_Blur_Temp: intermediate for bilateral blur H pass. M06.3.
@@ -451,10 +448,6 @@ namespace engine
 		engine::render::DecalSystem m_decalSystem;
 		std::vector<engine::render::VisibleDecal> m_visibleDecals;
 
-		/// M37.3: underwater post-effect pass (blue tint, depth fog, blur vignette).
-		engine::render::UnderwaterPass m_underwaterPass;
-		/// M37.3: true when camera.y < waterLevel (underwater detection result, updated each frame).
-		bool m_isUnderwater = false;
 
 		/// M100.14 — Water rendering FG-intégré (lit la WaterScene M100.13).
 		/// \note WaterPass::Init nécessite VMA + skybox cube + normal map ; sur les

@@ -2,7 +2,7 @@
 
 // M100.33 — Machine d'état du mode Playtest (F5). Header-only. Sauvegarde l'état
 // caméra éditeur à l'entrée, le restaure à la sortie. Le branchement réel sur
-// CharacterController/ThirdPersonCamera de PRODUCTION (sans fork) est fait côté
+// le contrôleur de personnage de PRODUCTION (sans fork) est fait côté
 // intégration (différé) ; ici la logique d'état est testable headless.
 
 #include "src/shared/math/Math.h"

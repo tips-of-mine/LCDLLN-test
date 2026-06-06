@@ -624,6 +624,7 @@ add_library(engine_core
   src/client/render/CascadedShadowMaps.cpp
   src/client/render/BrdfLutPass.cpp
   src/client/render/SpecularPrefilterPass.cpp
+  src/client/render/SkyCubeCapturePass.cpp
   src/client/render/SsaoKernelNoise.cpp
   src/client/render/SsaoPass.cpp
   src/client/render/SsaoBlurPass.cpp

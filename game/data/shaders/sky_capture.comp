@@ -1,0 +1,178 @@
+#version 450
+
+// IBL — Capture du ciel procédural dans une face de cubemap RGBA16F.
+//
+// Porte la logique couleur de sky.frag (gradient zénith/horizon, sun glow,
+// transition sous l'horizon, disque lunaire procédural RenderMoonDisk) en
+// remplaçant la reconstruction de viewDir par FaceUvToDirection(face, u, v).
+// Dispatché une fois par face au boot ; sortie écrite via imageStore.
+//
+// Push constants (96 octets, std430, miroir de SkyCaptureParams côté C++) :
+//   face          (uint)  — 0..5, face de cubemap courante
+//   faceSize      (uint)  — largeur/hauteur de la face en texels
+//   pad0, pad1    (float) — alignement
+//   lightDir      (vec4)  — .xyz direction vers le soleil (normalisée)
+//   zenithColor   (vec4)  — .xyz couleur du ciel au zénith
+//   horizonColor  (vec4)  — .xyz couleur du ciel à l'horizon
+//   moonDir       (vec4)  — .xyz direction vers la lune (normalisée)
+//   moonParams    (vec4)  — .x intensité (0..1), .y phase (0..15), .z illumination (0..1)
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(binding = 0, rgba16f) writeonly uniform image2D uOut;
+
+layout(push_constant, std430) uniform PC {
+	uint  face;
+	uint  faceSize;
+	float pad0;
+	float pad1;
+	vec4  lightDir;
+	vec4  zenithColor;
+	vec4  horizonColor;
+	vec4  moonDir;
+	vec4  moonParams;
+} pc;
+
+// (face 0..5, u,v in [-1,1]) -> direction from cube center.
+// Copié À L'IDENTIQUE depuis specular_prefilter.comp (orientation cohérente).
+vec3 FaceUvToDirection(uint face, float u, float v)
+{
+	switch (face) {
+		case 0u: return normalize(vec3( 1.0, -v, -u)); // +X
+		case 1u: return normalize(vec3(-1.0, -v,  u)); // -X
+		case 2u: return normalize(vec3( u,  1.0, -v)); // +Y
+		case 3u: return normalize(vec3( u, -1.0,  v)); // -Y
+		case 4u: return normalize(vec3( u, -v,  1.0)); // +Z
+		default: return normalize(vec3(-u, -v, -1.0)); // -Z (5)
+	}
+}
+
+// -------------------------------------------------------------------------
+// RenderMoonDisk : composite procedurale d'un disque lunaire avec ombre
+// dependant de la phase. Renvoie la couleur ciel modifiee (mix entre baseSky
+// et la surface lunaire ponderee par halo + intensity).
+//
+// Porté à l'identique depuis sky.frag (lignes 61-116) ; les uniformes
+// pc.moonIntensity / pc.moonPhase / pc.moonIllumination y sont remplacés par
+// pc.moonParams.x / .y / .z et pc.moonDir par pc.moonDir.xyz.
+// -------------------------------------------------------------------------
+vec3 RenderMoonDisk(vec3 viewDir, vec3 baseSky)
+{
+	float moonIntensity    = pc.moonParams.x;
+	float moonPhase        = pc.moonParams.y;
+	float moonIllumination = pc.moonParams.z;
+	vec3  moonDir          = pc.moonDir.xyz;
+
+	if (moonIntensity < 0.001) return baseSky;
+	float cosA = dot(viewDir, moonDir);
+	const float kMoonRadius = 0.012;
+	if (cosA <= cos(kMoonRadius * 1.5)) return baseSky;
+
+	vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), moonDir));
+	vec3 up    = cross(moonDir, right);
+	float u    = dot(viewDir, right) / sin(kMoonRadius);
+	float v    = dot(viewDir, up)    / sin(kMoonRadius);
+
+	// Decalage du cercle d'ombre selon l'illumination. Le signe depend de la
+	// phase : avant FullMoon (phase < 7.5) la lune croit a droite, apres elle
+	// decroit a gauche.
+	float shadowOffset = 1.0 - moonIllumination * 2.0;
+	if (moonPhase < 7.5) shadowOffset = -shadowOffset;
+
+	float distFromShadow = length(vec2(u - shadowOffset, v));
+	float shadowMask     = smoothstep(1.0, 0.95, distFromShadow);
+
+	vec3 moonSurface = vec3(0.95, 0.92, 0.85) * shadowMask;
+
+	// Wave 4 polish — texture surface lunaire procedurale (no asset needed).
+	// V1 simple : value-noise sparse pour simuler des cratere-spots, plus une
+	// tache plus large simulant un Mare (ex. Mare Tranquillitatis). La
+	// multiplication garde la tonalite generale et assombrit ponctuellement
+	// pour donner du relief visuel. Une PR future pourra remplacer par une
+	// vraie texture lunaire (cube ou sphere mapping). On applique uniquement
+	// si on est dans la zone illuminee (shadowMask > epsilon) pour ne pas
+	// crepiter la zone sombre.
+	if (shadowMask > 0.01)
+	{
+		// Value-noise simple a partir des coords (u, v) du disque.
+		float craterNoise = fract(sin(dot(vec2(u, v), vec2(12.9898, 78.233))) * 43758.5453);
+		// smoothstep(0.85, 0.95) -> ~10% des points donnent un cratere visible.
+		craterNoise = smoothstep(0.85, 0.95, craterNoise);
+		moonSurface *= 1.0 - craterNoise * 0.25;  // assombrissement 25% ponctuel.
+
+		// Cratere "Mare" plus grand a (u=0.2, v=0.1) — ombre douce ~15%.
+		float distFromMare = length(vec2(u - 0.2, v - 0.1));
+		float mareMask     = smoothstep(0.4, 0.3, distFromMare);
+		moonSurface *= 1.0 - mareMask * 0.15;
+	}
+
+	// Earthshine sur les phases tres sombres (0..2 et 13..15) : bleute discret
+	// sur la partie ombragee.
+	if (moonPhase < 3.0 || moonPhase > 13.0)
+	{
+		moonSurface += vec3(0.05, 0.06, 0.10) * (1.0 - shadowMask);
+	}
+
+	// Halo doux : transition smoothstep entre baseSky et moonSurface.
+	float haloFalloff = smoothstep(cos(kMoonRadius * 1.5), cos(kMoonRadius), cosA);
+	return mix(baseSky, moonSurface * moonIntensity, haloFalloff);
+}
+
+void main()
+{
+	ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+	uint faceSize = pc.faceSize;
+	if (coord.x >= int(faceSize) || coord.y >= int(faceSize))
+		return;
+
+	float u = 2.0 * (float(coord.x) + 0.5) / float(faceSize) - 1.0;
+	float v = 2.0 * (float(coord.y) + 0.5) / float(faceSize) - 1.0;
+
+	// Direction monde correspondant à ce texel de face (substitution de la
+	// reconstruction viewDir par invViewProj de sky.frag).
+	vec3 viewDir = FaceUvToDirection(pc.face, u, v);
+
+	vec3 lightDir     = pc.lightDir.xyz;
+	vec3 zenithColor  = pc.zenithColor.xyz;
+	vec3 horizonColor = pc.horizonColor.xyz;
+
+	// ---- Sky gradient via view-zenith angle ---------------------------------
+	// viewDir.y is the sine of the elevation angle.
+	float t = clamp(viewDir.y, 0.0, 1.0);
+
+	// Rayleigh approximation: non-linear blend (slightly exponential).
+	float blendFactor = pow(t, 0.6);
+	vec3 skyColor = mix(horizonColor, zenithColor, blendFactor);
+
+	// ---- Mie-scatter-like sun glow ------------------------------------------
+	float sunDot = max(dot(viewDir, lightDir), 0.0);
+
+	// Sun disk: tight halo.
+	float sunGlow = pow(sunDot, 256.0);
+
+	// Atmospheric halo: wide bloom around sun.
+	float haloGlow = pow(sunDot, 8.0) * 0.35;
+
+	// Sun/moon colour: white tint.
+	vec3 sunContrib = vec3(1.0, 0.95, 0.85) * sunGlow
+	                + horizonColor          * haloGlow;
+
+	// Only add sun glow above the horizon.
+	if (viewDir.y < 0.02)
+	{
+		sunContrib = vec3(0.0);
+	}
+
+	// ---- Below-horizon transition -------------------------------------------
+	if (viewDir.y < 0.0)
+	{
+		float belowT = clamp(-viewDir.y / 0.1, 0.0, 1.0);
+		skyColor = mix(skyColor, horizonColor * 0.3, belowT);
+	}
+
+	// ---- Disque lunaire procedural ------------------------------------------
+	skyColor = RenderMoonDisk(viewDir, skyColor);
+
+	// ---- Final colour --------------------------------------------------------
+	imageStore(uOut, coord, vec4(skyColor + sunContrib, 1.0));
+}

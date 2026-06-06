@@ -69,6 +69,21 @@ layout(set = 0, binding = 11) uniform ShadowUbo
     vec4 shadowParams;
 } uShadow;
 
+// ---- Lumières ponctuelles (point lights) ------------------------------------
+// binding 12 : UBO std140. count.x = nb actives [0..64] ; lights[i].posRadius
+// (xyz=position monde m, w=rayon m) ; lights[i].colorIntensity (rgb=couleur
+// linéaire, a=intensité×intensity_scale). Pas d'ombre (v1).
+struct PointLightStd140
+{
+    vec4 posRadius;
+    vec4 colorIntensity;
+};
+layout(set = 0, binding = 12) uniform PointLightUbo
+{
+    uvec4 count;
+    PointLightStd140 lights[64];
+} uPoint;
+
 // ---- Push constants ---------------------------------------------------------
 layout(push_constant) uniform PC
 {
@@ -230,6 +245,15 @@ vec3 F_Schlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }
 
+// Atténuation UE4 « windowed inverse square » : ~1/d² près de la source, fond à 0
+// à d=r (coupure nette, cohérente avec le skip dist>radius).
+float PointAtten(float d, float r)
+{
+    float f = d / max(r, 1e-4);
+    float w = clamp(1.0 - f * f * f * f, 0.0, 1.0); // 1 - (d/r)^4, saturé
+    return (w * w) / (d * d + 1.0);
+}
+
 // CSM — lit la profondeur stockée dans la cascade i à l'UV donné. Index CONSTANT
 // (switch) pour éviter l'indexation dynamique non-uniforme d'un sampler array.
 float SampleShadowDepth(int i, vec2 uv)
@@ -353,6 +377,42 @@ void main()
     // non ombrés. Gating : shadowParams.x <= 0.5 (shadows off / maps invalides) -> 1.
     float vis = (uShadow.shadowParams.x > 0.5) ? ShadowVisibility(P, NdotL) : 1.0;
     vec3  Lo = (diffuse + specular) * pc.lightColor.rgb * NdotL * vis;
+
+    // ---- Point lights (additif, gated count>0, sans ombre) ------------------
+    // Même BRDF Cook-Torrance que le soleil (D/G/F réutilisés). Skip si hors du
+    // rayon (dist>radius). Atténuation UE4 windowed. count==0 (jour) => sauté.
+    if (uPoint.count.x > 0u)
+    {
+        uint n = min(uPoint.count.x, 64u);
+        for (uint i = 0u; i < n; ++i)
+        {
+            vec3  Lpos   = uPoint.lights[i].posRadius.xyz;
+            float radius = uPoint.lights[i].posRadius.w;
+            vec3  Lp     = Lpos - P;
+            float dist   = length(Lp);
+            if (dist > radius) continue;
+
+            vec3  Lp_n = Lp / max(dist, 1e-4);
+            vec3  Hp   = normalize(V + Lp_n);
+            float NdLp = max(dot(normalW, Lp_n), 0.0);
+            if (NdLp <= 0.0) continue;
+            float NdHp = max(dot(normalW, Hp), 0.0);
+            float VdHp = max(dot(V, Hp), 0.0);
+
+            float Dp = D_GGX(NdHp, roughness);
+            float Gp = G_Smith(NdotV, NdLp, roughness);
+            vec3  Fp = F_Schlick(VdHp, F0);
+            vec3  kSp = Fp;
+            vec3  kDp = (1.0 - kSp) * (1.0 - metallic);
+            vec3  specp = (Dp * Gp * Fp) / max(4.0 * NdotV * NdLp, 1e-7);
+            vec3  diffp = kDp * albedo / PI;
+
+            float atten = PointAtten(dist, radius);
+            vec3  radiance = uPoint.lights[i].colorIntensity.rgb
+                           * uPoint.lights[i].colorIntensity.a * atten;
+            Lo += (diffp + specp) * radiance * NdLp;
+        }
+    }
 
     // ---- Ambient: IBL (split-sum diffuse + spec) or fallback constant -------
     vec3  ambient;

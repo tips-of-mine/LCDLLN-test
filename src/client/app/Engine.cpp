@@ -24,6 +24,8 @@
 #include "src/shared/network/AuctionPayloads.h"
 #include "src/shared/network/LootPayloads.h"
 #include "src/shared/network/LunarPayloads.h"
+#include "src/shared/network/WorldClockPayloads.h"
+#include "src/shared/world/WorldClock.h"
 #include "src/shared/network/AdminCommandPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
@@ -1138,6 +1140,12 @@ namespace engine
 		dnParams.timeScale        = static_cast<float>(
 			m_cfg.GetDouble("world.day_night.time_scale",    60.0));
 		m_dayNight.Init(dnParams);
+
+		// WorldClock sync (Task 6.2) — intervalle de re-synchro de l'horloge
+		// serveur (controle de derive). Defaut 300 s (5 min). La valeur init
+		// reste le fallback local jusqu'a la 1ere reception WorldClock (204).
+		m_worldClockDriftCheckSec = static_cast<float>(
+			m_cfg.GetInt("game.worldclock.drift_check_sec", 300));
 	}
 
 	// M38.2 — Initialise weather system with parameters from config.json.
@@ -3137,6 +3145,41 @@ namespace engine
 				m_dayNight.OnLunarPhaseChange(parsed.newPhase, parsed.newIllumination);
 				LOG_INFO(Render, "[Engine] LunarPhaseChange: phase={} illumination={:.3f}",
 					static_cast<unsigned>(parsed.newPhase), parsed.newIllumination);
+				return;
+			}
+			// WorldClock sync (Task 6.2) — Dispatch des opcodes 204 (StateResponse)
+			// et 205 (ChangeNotification, push admin). Les deux portent les memes
+			// champs ; on construit les WorldClockParams et on les branche sur le
+			// cycle jour/nuit via SetServerClock (bascule en mode driven). Le master
+			// est autoritaire ; le client recoit l'etat initial sur EnterWorld, un
+			// push 205 a chaque changement admin (/settime, /pausetime...), et une
+			// re-sync periodique 204 (controle de derive) declenchee par Update().
+			case kOpcodeWorldClockStateResponse:
+			case kOpcodeWorldClockChangeNotification:
+			{
+				engine::network::worldclock::WorldClockStateResponse parsed;
+				const bool ok = (opcode == kOpcodeWorldClockStateResponse)
+					? engine::network::worldclock::ParseWorldClockStateResponsePayload(payload, payloadSize, parsed)
+					: engine::network::worldclock::ParseWorldClockChangeNotificationPayload(payload, payloadSize, parsed);
+				if (!ok || parsed.status != engine::network::worldclock::WorldClockStatus::Ok)
+				{
+					LOG_WARN(Net, "[Engine] WORLDCLOCK parse/status failed (opcode={}, size={})",
+						opcode, payloadSize);
+					return;
+				}
+				engine::world::WorldClockParams p;
+				p.epochRefUnixMs          = parsed.epochRefUnixMs;
+				p.timeScaleRealMinPerDay  = parsed.timeScaleRealMinPerDay;
+				p.offsetGameSec           = parsed.offsetGameSec;
+				p.paused                  = (parsed.paused != 0);
+				p.pausedAtGameSec         = parsed.pausedAtGameSec;
+				p.lunarPeriodGameSec      = parsed.lunarPeriodGameSec;
+				const uint64_t clientNow = static_cast<uint64_t>(
+					std::chrono::duration_cast<std::chrono::milliseconds>(
+						std::chrono::system_clock::now().time_since_epoch()).count());
+				m_dayNight.SetServerClock(p, parsed.serverTimeUnixMs, clientNow);
+				LOG_INFO(Render, "[Engine] WorldClock sync: timeScale={:.1f} offset={:.0f} paused={}",
+					p.timeScaleRealMinPerDay, p.offsetGameSec, static_cast<int>(p.paused));
 				return;
 			}
 			// AdminCommand RBAC — reponse master apres validation du role +
@@ -7831,6 +7874,26 @@ namespace engine
 		m_zoneAtmosphere.ambientColor[2] = dnState.ambientColor[2];
 	}
 
+	// WorldClock sync (Task 6.2) — controle de derive. Une fois l'horloge
+	// serveur branchee (mode driven), on renvoie periodiquement un
+	// WorldClockStateRequest (203) au master pour rafraichir m_clockOffsetMs
+	// (la reponse 204 rappelle SetServerClock). La correction est sub-seconde
+	// donc invisible — pas besoin de lerp. Fire-and-forget : no-op si la
+	// connexion master n'est pas vivante.
+	if (m_dayNight.IsServerDriven() && m_worldClockDriftCheckSec > 0.0f)
+	{
+		m_worldClockResyncTimer += static_cast<float>(dt);
+		if (m_worldClockResyncTimer >= m_worldClockDriftCheckSec)
+		{
+			m_worldClockResyncTimer = 0.0f;
+			std::vector<uint8_t> wcReq;
+			engine::network::worldclock::BuildWorldClockStateRequestPayload(wcReq);
+			(void)m_authUi.SendGenericRequestAsync(
+				engine::network::kOpcodeWorldClockStateRequest, wcReq);
+			LOG_DEBUG(Render, "[Engine] WorldClock re-sync request envoye (drift check)");
+		}
+	}
+
 	// --- Suivi jour/nuit de l'IBL : re-capture du ciel quand le soleil a
 	// assez bouge, throttle pour eviter un stall trop frequent (vkQueueWaitIdle).
 	// Garde sur IsValid() (IBL active). Point sur : fin du bloc day/night,
@@ -8232,6 +8295,20 @@ namespace engine
 					engine::network::lunar::BuildLunarStateRequestPayload(lunarPayload);
 					(void)m_authUi.SendGenericRequestAsync(
 						engine::network::kOpcodeLunarStateRequest, lunarPayload);
+				}
+
+				// WorldClock sync (Task 6.2) — fetch l'etat horloge serveur a
+				// l'entree monde (master-authoritative). Le master repond via
+				// opcode 204 (WorldClockStateResponse) dispatche dans le push
+				// handler ci-dessus -> m_dayNight.SetServerClock (mode driven).
+				// Le push 205 arrive ensuite a chaque changement admin, et une
+				// re-sync 204 periodique (controle de derive) est declenchee par
+				// Update() toutes les game.worldclock.drift_check_sec.
+				{
+					std::vector<uint8_t> wcReq;
+					engine::network::worldclock::BuildWorldClockStateRequestPayload(wcReq);
+					(void)m_authUi.SendGenericRequestAsync(
+						engine::network::kOpcodeWorldClockStateRequest, wcReq);
 				}
 
 				// Override runtime du host:port gameplay UDP par l'endpoint du shard accepté.

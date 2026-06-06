@@ -130,6 +130,12 @@ namespace engine::render
 		void SetServerClock(const engine::world::WorldClockParams& p,
 		                    uint64_t serverTimeUnixMs, uint64_t clientRecvUnixMs);
 
+		/// true si l'horloge serveur a ete branchee (SetServerClock appele) :
+		/// le cycle est pilote par le master. false = fallback local (solo).
+		/// Sert au controle de derive cote Engine (ne re-synchroniser que si
+		/// deja synchronise au moins une fois).
+		bool IsServerDriven() const { return m_driven; }
+
 		/// Return the current time scale (real seconds per in-game hour).
 		float GetTimeScale() const { return m_timeScale; }
 

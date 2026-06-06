@@ -640,6 +640,12 @@
             "max_tracked_accounts": 4096
         }
     },
+    "game": {
+        "worldclock": {
+            "_comment": "CLIENT : intervalle de re-synchro de l'horloge serveur. epoch/timescale/lunar_period sont AUTORITE master (cf. config serveur). Les valeurs locales world.day_night.* ne servent que de fallback solo / serveur muet.",
+            "drift_check_sec": 300
+        }
+    },
     "gi": {
         "_comment_ibl": "IBL (image-based lighting) statique : capture du ciel procedural dans une cubemap au boot (1x), puis specular prefilter + irradiance diffuse. ibl.enabled (bool, defaut true, CLIENT uniquement, pas de cle serveur) gate l'orchestration dans DeferredPipeline::Init. false => aucune des 3 passes IBL n'est generee => irrView NULL => LightingPass useIBL=0 => repli ambient plat (rendu inchange), sans crash. Tout echec d'init/generate (shader absent, format RGBA16F non storable) retombe aussi sur ce repli.",
         "ibl": {

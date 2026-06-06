@@ -3,7 +3,8 @@
 // - Per-vertex bone indices (uint16x4, widened to uvec4) at location 7
 // - Per-vertex weights (float4) at location 8
 // - Per-draw bone matrix palette via SSBO set 1 binding 0
-// Outputs: identical to gbuffer_geometry.vert -> paired with gbuffer_geometry.frag unchanged.
+// Outputs: identiques à gbuffer_geometry.vert (location 0-5, dont location 5 =
+// vWorldPos pour la base TBN cotangente) -> appairé à gbuffer_geometry.frag.
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
@@ -36,6 +37,7 @@ layout(location = 3) out vec4 vCurrClip;
 // n'utilise pas de vertex color : on émet du blanc (le bit VertexColorAlbedo n'est
 // jamais posé sur ses matériaux, donc vColor est ignoré côté frag).
 layout(location = 4) out vec4 vColor;
+layout(location = 5) out vec3 vWorldPos; // position MONDE (base TBN cotangente du frag partagé)
 
 void main() {
     // Build the per-vertex skinning matrix as a weighted sum of bone matrices.
@@ -61,4 +63,5 @@ void main() {
     vPrevClip = prevClip;
     vCurrClip = currClip;
     vColor = vec4(1.0);
+    vWorldPos = worldPos.xyz;
 }

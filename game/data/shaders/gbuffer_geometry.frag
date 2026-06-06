@@ -12,6 +12,7 @@ layout(location = 1) in vec2 vUv;
 layout(location = 2) in vec4 vPrevClip;
 layout(location = 3) in vec4 vCurrClip;
 layout(location = 4) in vec4 vColor;
+layout(location = 5) in vec3 vWorldPos; // position MONDE (base TBN cotangente)
 
 struct MaterialGpuData
 {
@@ -69,15 +70,31 @@ void main()
     if ((mat.flags & 1u) != 0u)
         outAlbedo.rgb = mix(outAlbedo.rgb, vec3(1.0, 0.85, 0.30), 0.45) * 1.25;
 
-    // ---- Normal -----------------------------------------------------------
-    // Decode the tangent-space normal map from [0,1] → [-1,1].
-    // Without per-vertex tangent data (MVP) we perturb the interpolated
-    // vertex normal using the XY deviation from the flat default (0,0,1).
+    // ---- Normal (base TBN cotangente, sans tangentes pré-calculées) -------
+    // Décode la normal-map tangent-space [0,1] → [-1,1], puis la transforme en
+    // espace MONDE via une base TBN reconstruite à partir des dérivées écran de
+    // la position monde et de l'UV (méthode « cotangent frame », Schüler).
+    // Remplace l'ancienne perturbation `N + xy*0.5` qui ignorait l'orientation
+    // réelle de la surface (relief plat/incohérent, dépendant de l'orientation).
     vec3 normalSample = texture(uTextures[mat.normalIndex], tiledUv).xyz * 2.0 - 1.0; // [-1,1]
     vec3 N = normalize(vNormal);
-    // Blend: add the tangent-space XY offset projected onto the hemisphere.
-    // This is a simplified approximation valid for meshes with low curvature.
-    N = normalize(N + vec3(normalSample.xy, 0.0) * 0.5);
+    vec3 dp1  = dFdx(vWorldPos);
+    vec3 dp2  = dFdy(vWorldPos);
+    vec2 duv1 = dFdx(tiledUv);
+    vec2 duv2 = dFdy(tiledUv);
+    vec3 dp2perp = cross(dp2, N);
+    vec3 dp1perp = cross(N, dp1);
+    vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+    vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+    float maxLen2 = max(dot(T, T), dot(B, B));
+    // Garde anti-NaN : UV dégénérée (ex. props vertex-color sans mapping, ou
+    // normal-map plate) -> T/B nuls -> on conserve la normale géométrique N.
+    if (maxLen2 > 1e-12)
+    {
+        float invmax = inversesqrt(maxLen2);
+        mat3 TBN = mat3(T * invmax, B * invmax, N);
+        N = normalize(TBN * normalSample);
+    }
     outNormal = vec4(N * 0.5 + 0.5, 1.0);
 
     // ---- ORM --------------------------------------------------------------

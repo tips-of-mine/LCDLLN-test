@@ -24,6 +24,7 @@ layout(location = 1) out vec2 vUv;
 layout(location = 2) out vec4 vPrevClip;
 layout(location = 3) out vec4 vCurrClip;
 layout(location = 4) out vec4 vColor;
+layout(location = 5) out vec3 vWorldPos; // position MONDE (pour la base TBN cotangente du frag)
 
 void main() {
 	mat4 instanceMatrix = mat4(instanceRow0, instanceRow1, instanceRow2, instanceRow3);
@@ -31,9 +32,14 @@ void main() {
 	vec4 prevClip = pc.prevViewProj * worldPos;
 	vec4 currClip = pc.viewProj * worldPos;
 	gl_Position = currClip;
-	vNormal = inNormal;
+	// Normale en espace MONDE : mat3(instanceMatrix) applique la rotation (+
+	// échelle uniforme, sans incidence après normalize côté frag). Corrige les
+	// props TOURNÉS (yaw) dont la normale objet était auparavant écrite telle
+	// quelle dans le GBuffer monde. Indispensable aussi à la base TBN du frag.
+	vNormal = mat3(instanceMatrix) * inNormal;
 	vUv = inUv;
 	vPrevClip = prevClip;
 	vCurrClip = currClip;
 	vColor = inColor;
+	vWorldPos = worldPos.xyz;
 }

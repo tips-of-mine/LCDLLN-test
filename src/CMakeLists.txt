@@ -582,6 +582,17 @@ elseif(UNIX)
   lcdlln_add_simple_test(world_clock_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/world/WorldClockTests.cpp)
 
+  # Sous-chantier 1 (Task 1.1) : formule horloge monde deterministe partagee
+  # (engine::world, header-only). Cible cross-platform (add_executable nu, pas
+  # lcdlln_add_simple_test : ce helper linke pthread + flags GCC, non portables
+  # Windows). engine_core expose ${CMAKE_SOURCE_DIR} en include PUBLIC, ce qui
+  # resout les #include "src/...". Nom de cible distinct de world_clock_tests
+  # (masterd) pour eviter la collision de target.
+  add_executable(world_clock_formula_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/world/tests/WorldClockTests.cpp)
+  target_link_libraries(world_clock_formula_tests PRIVATE engine_core)
+  add_test(NAME world_clock_formula_tests COMMAND world_clock_formula_tests)
+
   # CMANGOS.21 (Phase 3.21a) : GuildPermissionMatrix (header-only).
   lcdlln_add_simple_test(guild_permission_matrix_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/guild/GuildPermissionMatrixTests.cpp)

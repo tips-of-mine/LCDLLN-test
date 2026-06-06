@@ -14,7 +14,8 @@ namespace engine::render
 		VkFormat sceneColorLDRFormat,
 		VkQueue graphicsQueue,
 		uint32_t graphicsQueueFamilyIndex,
-		ShaderLoaderFn loadSpirv)
+		ShaderLoaderFn loadSpirv,
+		const engine::render::SkyCaptureParams& skyParams)
 	{
 
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || !loadSpirv)
@@ -70,6 +71,81 @@ namespace engine::render
 			{
 				LOG_WARN(Render, "M05.3: SpecularPrefilter shader not found — disabled");
 			}
+		}
+
+		// IBL — capture du ciel procédural → cubemap, puis specular prefilter +
+		// irradiance (one-shot au boot, statique). Gardé par gi.ibl.enabled (défaut
+		// true). Tout échec (shader absent, format non supporté, Init/Generate KO)
+		// laisse m_irradiancePass !IsValid() → irrView NULL côté Lighting →
+		// useIBL=0 → repli ambient plat, sans crash. m_specularPrefilterPass doit
+		// être initialisée (bloc ci-dessus) pour que sa Generate tourne ici.
+		if (config.GetBool("gi.ibl.enabled", true))
+		{
+			std::vector<uint32_t> skyComp = loadSpirv("shaders/sky_capture.comp.spv");
+			std::vector<uint32_t> irrComp = loadSpirv("shaders/irradiance_convolve.comp.spv");
+			if (skyComp.empty())
+			{
+				LOG_WARN(Render, "[Boot] IBL: sky_capture.comp.spv not found — IBL disabled (flat ambient fallback)");
+			}
+			else if (irrComp.empty())
+			{
+				LOG_WARN(Render, "[Boot] IBL: irradiance_convolve.comp.spv not found — IBL disabled (flat ambient fallback)");
+			}
+			else if (!m_specularPrefilterPass.IsValid())
+			{
+				LOG_WARN(Render, "[Boot] IBL: SpecularPrefilter not initialised — IBL disabled (flat ambient fallback)");
+			}
+			else
+			{
+				const uint32_t skyFaceSize = 128u;
+				const uint32_t irrFaceSize = 32u;
+				bool iblOk = false;
+				// [1] Capture ciel procédural dans une cubemap RGBA16F 128².
+				if (m_skyCubeCapturePass.Init(device, physicalDevice, vmaAllocator,
+						skyFaceSize,
+						skyComp.data(), skyComp.size(),
+						graphicsQueueFamilyIndex, pipelineCacheHandle)
+					&& m_skyCubeCapturePass.Generate(device, graphicsQueue, skyParams))
+				{
+					const VkImageView skyCubeView    = m_skyCubeCapturePass.GetImageView();
+					const VkSampler   skyCubeSampler = m_skyCubeCapturePass.GetSampler();
+					// [2] Specular prefilter (1re exécution réelle de sa Generate).
+					if (m_specularPrefilterPass.Generate(device, graphicsQueue, skyCubeView, skyCubeSampler))
+					{
+						// [3] Irradiance diffuse (convolution cosine → cubemap 32²).
+						if (m_irradiancePass.Init(device, physicalDevice, vmaAllocator,
+								irrFaceSize,
+								irrComp.data(), irrComp.size(),
+								graphicsQueueFamilyIndex, pipelineCacheHandle)
+							&& m_irradiancePass.Generate(device, graphicsQueue, skyCubeView, skyCubeSampler))
+						{
+							iblOk = true;
+							LOG_INFO(Render, "[Boot] DeferredPipeline IBL OK (sky capture + specular prefilter + irradiance)");
+						}
+						else
+						{
+							LOG_WARN(Render, "[Boot] IBL: irradiance Init/Generate failed — IBL disabled (flat ambient fallback)");
+						}
+					}
+					else
+					{
+						LOG_WARN(Render, "[Boot] IBL: specular prefilter Generate failed — IBL disabled (flat ambient fallback)");
+					}
+				}
+				else
+				{
+					LOG_WARN(Render, "[Boot] IBL: sky cube capture Init/Generate failed — IBL disabled (flat ambient fallback)");
+				}
+
+				// En cas d'échec partiel, libérer l'irradiance pour garantir
+				// !IsValid() (repli propre côté Lighting).
+				if (!iblOk)
+					m_irradiancePass.Destroy(device);
+			}
+		}
+		else
+		{
+			LOG_INFO(Render, "[Boot] gi.ibl.enabled=false — IBL disabled (flat ambient)");
 		}
 
 		// M06.1: SSAO kernel + noise
@@ -426,6 +502,8 @@ namespace engine::render
 		m_ssaoBlurPass.Destroy(device);
 		m_ssaoPass.Destroy(device);
 		m_ssaoKernelNoise.Destroy(device);
+		m_irradiancePass.Destroy(device);      // IBL (reverse: irradiance avant sa source)
+		m_skyCubeCapturePass.Destroy(device);  // IBL (capture ciel, source de prefilter+irradiance)
 		m_specularPrefilterPass.Destroy(device);
 		m_brdfLutPass.Destroy(device);
 		m_pipelineCache.Destroy(device);

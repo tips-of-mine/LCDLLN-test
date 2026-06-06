@@ -3949,6 +3949,26 @@ namespace engine
 											return {};
 										};
 
+										// IBL — état ciel figé au boot (statique, 1×). Rempli depuis
+										// DayNightCycle::State (déjà Init au-dessus, avant ce point) :
+										// gradient zénith/horizon + direction lumière (soleil/lune) +
+										// paramètres lunaires. moonDir = -lightDir (convention Engine) ;
+										// moonIntensity = 0 le jour, 1 la nuit (la lune n'éclaire que la nuit).
+										engine::render::SkyCaptureParams iblSky{};
+										{
+											const engine::render::DayNightCycle::State& dnIbl = m_dayNight.GetState();
+											for (int i = 0; i < 3; ++i)
+											{
+												iblSky.lightDir[i]     = dnIbl.lightDir[i];
+												iblSky.zenithColor[i]  = dnIbl.skyZenith[i];
+												iblSky.horizonColor[i] = dnIbl.skyHorizon[i];
+												iblSky.moonDir[i]      = -dnIbl.lightDir[i];
+											}
+											iblSky.moonIntensity    = dnIbl.isDaytime ? 0.0f : 1.0f;
+											iblSky.moonPhase        = static_cast<float>(dnIbl.moonPhase);
+											iblSky.moonIllumination = dnIbl.moonIllumination;
+										}
+
 										bool pipelineOk = m_pipeline->Init(
 										    m_vkDeviceContext.GetDevice(),
 										    m_vkDeviceContext.GetPhysicalDevice(),
@@ -3958,7 +3978,8 @@ namespace engine
 										    m_vkSwapchain.GetImageFormat(),
 										    m_vkDeviceContext.GetGraphicsQueue(),
 										    m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
-										    loadSpirv
+										    loadSpirv,
+										    iblSky
 										);
 									LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
 
@@ -5750,8 +5771,8 @@ namespace engine
 													lp.skyColor[2] = dnLight.skyHorizon[2];
 													lp.skyColor[3] = m_skyPassReady ? 1.0f : 0.0f;
 												}
-												VkImageView irrView       = VK_NULL_HANDLE;
-												VkSampler   irrSamp       = VK_NULL_HANDLE;
+												VkImageView irrView       = m_pipeline->GetIrradiancePass().IsValid() ? m_pipeline->GetIrradiancePass().GetImageView() : VK_NULL_HANDLE;
+												VkSampler   irrSamp       = m_pipeline->GetIrradiancePass().IsValid() ? m_pipeline->GetIrradiancePass().GetSampler()   : VK_NULL_HANDLE;
 												VkImageView prefilterView = m_pipeline->GetSpecularPrefilterPass().IsValid() ? m_pipeline->GetSpecularPrefilterPass().GetImageView() : VK_NULL_HANDLE;
 												VkSampler   prefilterSamp = m_pipeline->GetSpecularPrefilterPass().IsValid() ? m_pipeline->GetSpecularPrefilterPass().GetSampler()    : VK_NULL_HANDLE;
 												VkImageView brdfView      = m_pipeline->GetBrdfLutPass().GetImageView();

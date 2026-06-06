@@ -7,6 +7,8 @@
 #include "src/client/render/ShadowMapPass.h"
 #include "src/client/render/BrdfLutPass.h"
 #include "src/client/render/SpecularPrefilterPass.h"
+#include "src/client/render/SkyCubeCapturePass.h"
+#include "src/client/render/IrradiancePass.h"
 #include "src/client/render/SsaoKernelNoise.h"
 #include "src/client/render/SsaoPass.h"
 #include "src/client/render/SsaoBlurPass.h"
@@ -48,6 +50,9 @@ namespace engine::render
 		/// Initialises all passes (BRDF LUT, specular prefilter, SSAO kernel/noise/pass/blur,
 		/// geometry, shadow, lighting, tonemap, bloom chain, auto-exposure, TAA).
 		/// \param loadSpirv  Returns SPIR-V words for a given path (e.g. "shaders/foo.vert.spv"); may compile on the fly.
+		/// \param skyParams  État ciel figé au boot (DayNightCycle::State), consommé
+		///                   par l'orchestration IBL (capture ciel → prefilter → irradiance)
+		///                   gardée par `gi.ibl.enabled`. Rempli par l'Engine avant l'appel.
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
 			void* vmaAllocator,
 			const engine::core::Config& config,
@@ -55,7 +60,8 @@ namespace engine::render
 			VkFormat sceneColorLDRFormat,
 			VkQueue graphicsQueue,
 			uint32_t graphicsQueueFamilyIndex,
-			ShaderLoaderFn loadSpirv);
+			ShaderLoaderFn loadSpirv,
+			const engine::render::SkyCaptureParams& skyParams);
 
 		/// Destroys all passes in reverse init order. Safe to call when not initialised.
 		void Destroy(VkDevice device);
@@ -77,6 +83,10 @@ namespace engine::render
 		const BrdfLutPass&    GetBrdfLutPass() const    { return m_brdfLutPass; }
 		SpecularPrefilterPass& GetSpecularPrefilterPass() { return m_specularPrefilterPass; }
 		const SpecularPrefilterPass& GetSpecularPrefilterPass() const { return m_specularPrefilterPass; }
+		SkyCubeCapturePass&   GetSkyCubeCapturePass()   { return m_skyCubeCapturePass; }
+		const SkyCubeCapturePass& GetSkyCubeCapturePass() const { return m_skyCubeCapturePass; }
+		IrradiancePass&       GetIrradiancePass()       { return m_irradiancePass; }
+		const IrradiancePass& GetIrradiancePass() const { return m_irradiancePass; }
 		SsaoKernelNoise&      GetSsaoKernelNoise()      { return m_ssaoKernelNoise; }
 		const SsaoKernelNoise& GetSsaoKernelNoise() const { return m_ssaoKernelNoise; }
 		SsaoPass&             GetSsaoPass()             { return m_ssaoPass; }
@@ -112,6 +122,8 @@ namespace engine::render
 		ShadowMapPass         m_shadowMapPass;
 		BrdfLutPass           m_brdfLutPass;
 		SpecularPrefilterPass m_specularPrefilterPass;
+		SkyCubeCapturePass    m_skyCubeCapturePass; ///< IBL — capture ciel procédural en cubemap (1×/boot)
+		IrradiancePass        m_irradiancePass;     ///< IBL — irradiance diffuse convoluée (1×/boot)
 		SsaoKernelNoise       m_ssaoKernelNoise;
 		SsaoPass              m_ssaoPass;
 		SsaoBlurPass          m_ssaoBlurPass;

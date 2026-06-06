@@ -198,6 +198,22 @@ namespace
         REQUIRE(!r.modifiers.frozen);
         REQUIRE(!r.modifiers.seasonalSnow);
     }
+
+    // Prouve que le service utilise la grille TERRAIN 256 m (et plus la grille
+    // 500 m). worldPos.x = 300 → chunk (1,0) sur la grille 256, mais (0,0) sur
+    // l'ancienne grille 500. On insère le splat UNIQUEMENT au chunk (1,0) :
+    //  - grille 256 (correcte) → charge (1,0) → Rock.
+    //  - grille 500 (bug) → chargerait (0,0) (vide) → fallback Dirt.
+    // Ce test échouerait donc si on revenait à WorldToGlobalChunkCoord/ChunkBounds.
+    void Test_Query_Uses256TerrainGrid()
+    {
+        Fixture fx;
+        InsertUniformSplatToCache(fx.cache, 1, 0, 4);  // chunk (1,0) = Rock
+        // x=300 ∈ [256,512) → chunk terrain (1,0) ; serait (0,0) en grille 500.
+        engine::math::Vec3 pos{ 300.0f, 0.0f, 1.0f };
+        SurfaceQueryResult r = fx.svc.Query(pos);
+        REQUIRE(r.base == SurfaceType::Rock);
+    }
 }
 
 int main()
@@ -209,5 +225,6 @@ int main()
     Test_Query_TieBreaker_LowestIndex();
     Test_Query_OutOfBoundsCell_FallbackDirt();
     Test_Query_ModifiersNeutralByDefault();
+    Test_Query_Uses256TerrainGrid();
     return g_failed;
 }

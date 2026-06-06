@@ -168,6 +168,20 @@ namespace engine::world
 	/// sur la grille terrain. Pur, sans état.
 	GlobalChunkCoord WorldToTerrainChunkCoord(float worldX, float worldZ);
 
+	/// Bornes monde (m, XZ) d'un chunk TERRAIN (grille kTerrainChunkSizeMeters
+	/// = 256 m). Miroir de ChunkBounds mais sur la grille terrain — cohérent avec
+	/// le placement du renderer (Phase 1) et le chargement des splat.bin authorés
+	/// par l'éditeur. Pur, sans état.
+	inline struct ChunkBounds TerrainChunkBounds(GlobalChunkCoord c)
+	{
+		struct ChunkBounds b;
+		b.minX = static_cast<float>(c.x * kTerrainChunkSizeMeters);
+		b.minZ = static_cast<float>(c.z * kTerrainChunkSizeMeters);
+		b.maxX = static_cast<float>((c.x + 1) * kTerrainChunkSizeMeters);
+		b.maxZ = static_cast<float>((c.z + 1) * kTerrainChunkSizeMeters);
+		return b;
+	}
+
 	/// Retourne les chunks TERRAIN (grille 256 m) du carré 7×7 autour de la
 	/// position monde donnée. Miroir de World::GetActiveAndVisibleChunks mais sur
 	/// la grille terrain — utilisé par le chemin de RENDU terrain (Phase 1).

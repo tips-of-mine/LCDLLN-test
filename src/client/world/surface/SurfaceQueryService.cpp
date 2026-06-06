@@ -30,11 +30,15 @@ namespace engine::world::surface
         if (!m_table || !m_cache || !m_cfg || !m_palette) return fallback;
 
         // 1. worldPos.xz → (chunkCoord, localCellX, localCellZ).
-        const auto coord = engine::world::WorldToGlobalChunkCoord(worldPos.x, worldPos.z);
+        // Grille TERRAIN 256 m (kTerrainChunkSizeMeters), cohérente avec le
+        // placement du renderer (Phase 1) ET avec les splat.bin authorés par
+        // l'éditeur (grille 256). L'ancienne grille 500 (WorldToGlobalChunkCoord/
+        // ChunkBounds) chargeait le mauvais chunk splat ET faussait la cellule.
+        const auto coord = engine::world::WorldToTerrainChunkCoord(worldPos.x, worldPos.z);
 
-        // ChunkBounds → cellule splat locale. ChunkSize en mètres = engine::world::kChunkSize.
+        // TerrainChunkBounds → cellule splat locale (chunkSize = 256 m).
         // localCell = (worldOffset / chunkSize) * splatResolution.
-        const auto bounds = engine::world::ChunkBounds(coord);
+        const auto bounds = engine::world::TerrainChunkBounds(coord);
         const float chunkSizeX = bounds.maxX - bounds.minX;
         const float chunkSizeZ = bounds.maxZ - bounds.minZ;
         if (chunkSizeX <= 0.0f || chunkSizeZ <= 0.0f) return fallback;

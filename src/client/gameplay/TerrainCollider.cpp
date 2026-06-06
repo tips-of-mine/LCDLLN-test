@@ -1,5 +1,5 @@
 #include "src/client/gameplay/TerrainCollider.h"
-#include "src/client/render/terrain/TerrainRenderer.h"
+#include "src/client/world/terrain/IHeightField.h"
 #include "src/client/world/water/WaterSurfaces.h"
 
 #include <algorithm>
@@ -12,24 +12,33 @@ namespace engine::gameplay
 TerrainCollider::TerrainCollider() = default;
 TerrainCollider::~TerrainCollider() = default;
 
-/// Bind / debind le pointeur terrain (non-owning).
-void TerrainCollider::BindTerrain(const engine::render::terrain::TerrainRenderer* terrainRenderer)
+/// Bind / debind les sources de hauteur (non-owning).
+void TerrainCollider::BindHeightFields(
+    const engine::world::terrain::IHeightField* chunkField,
+    const engine::world::terrain::IHeightField* heightmapField)
 {
-    m_terrain = terrainRenderer;
+    m_chunkField     = chunkField;
+    m_heightmapField = heightmapField;
 }
 
 /// Echantillonne la hauteur du sol en metres a (worldX, worldZ).
-/// Delegue a `TerrainRenderer::SampleHeightAtWorldXZ` qui gere :
-///   - origine monde (config `terrain.origin_x/z`, defaut -512),
-///   - taille monde (config `terrain.world_size`, defaut 1024),
-///   - height_scale (config, defaut 200),
-///   - interpolation bilineaire,
-///   - edge-clamp hors-terrain.
-/// Retourne 0.0 si aucun terrain n'est bind (placeholder flat).
+///
+/// Phase 2 (chantier C) : strategie a trois niveaux, sans aucune I/O dans le
+/// chemin collision (`IsLoadedAt` = lookup cache pur) :
+///   1. chunk resident prioritaire (autorite quand des zones chunkees sont
+///      embarquees : le joueur marche sur ce qu'il voit),
+///   2. sinon repli sur la heightmap legacy,
+///   3. sinon sol plat a Y=0.
+/// Aujourd'hui aucune carte ne livre de `terrain.bin` -> `IsLoadedAt` toujours
+/// faux -> repli heightmap systematique -> comportement inchange vs Phase 1.
+/// Chaque chemin retourne une valeur finie (jamais NaN).
 float TerrainCollider::GroundHeightAt(float worldX, float worldZ) const
 {
-    if (m_terrain == nullptr) return 0.0f;
-    return m_terrain->SampleHeightAtWorldXZ(worldX, worldZ);
+    if (m_chunkField != nullptr && m_chunkField->IsLoadedAt(worldX, worldZ))
+        return m_chunkField->HeightAt(worldX, worldZ);
+    if (m_heightmapField != nullptr)
+        return m_heightmapField->HeightAt(worldX, worldZ);
+    return 0.0f;
 }
 
 /// Sweep vertical approxime contre le sol terrain (MVP B.1).

@@ -44,6 +44,7 @@
 #include "src/client/render/BattleGroundImGuiRenderer.h"
 #include "src/client/render/OutdoorPvpImGuiRenderer.h"
 #include "src/client/render/WeatherImGuiRenderer.h"
+#include "src/client/render/clouds/WeatherKindMap.h"
 #include "src/client/render/GameEventImGuiRenderer.h"
 #include "src/client/render/GuildImGuiRenderer.h"
 #include "src/client/render/AuctionImGuiRenderer.h"
@@ -2974,6 +2975,10 @@ namespace engine
 					return;
 				}
 				m_weatherUi.OnUpdateNotification(*parsed);
+				// Signal autoritaire unique -> pilote le visuel (particules + nuages).
+				// (Branchement absent jusqu'ici : la météo serveur n'affectait pas le rendu.)
+				m_weatherSystem.SetWeather(
+					engine::render::MapServerKindToWeatherState(parsed->kind));
 				return;
 			}
 			// CMANGOS.31 (Phase 5.31 step 3+4) — Dispatch des reponses

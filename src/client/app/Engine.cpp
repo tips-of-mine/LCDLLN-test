@@ -10469,8 +10469,16 @@ namespace engine
 	        // empêche l'auto-exposition de surcompenser une scène assombrie par les
 	        // ombres et de cramer le ciel/horizon en blanc. Réglable via config.
 	        const float minExp = static_cast<float>(m_cfg.GetDouble("exposure.min", 0.1));
-	        const float maxExp = static_cast<float>(m_cfg.GetDouble("exposure.max", 3.0));
-	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed, minExp, maxExp, frameIndex);
+	        // Plafond d'exposition piloté par l'heure : bas la nuit (night_max),
+	        // normal le jour (max), interpolé linéairement via le facteur jour
+	        // (élévation solaire clampée [0,1]). À dayFactor=1, effectiveMax==dayMax
+	        // (jour inchangé). Comme tout passe par l'exposition, l'ambient IBL
+	        // nocturne est aussi assombri. Lu chaque frame → night_max réglable à chaud.
+	        const float dayMax    = static_cast<float>(m_cfg.GetDouble("exposure.max", 3.0));
+	        const float nightMax  = static_cast<float>(m_cfg.GetDouble("exposure.night_max", 0.8));
+	        const float dayFactor = m_dayNight.GetState().dayFactor; // 0=nuit, 1=jour
+	        const float effectiveMax = nightMax + (dayMax - nightMax) * dayFactor;
+	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed, minExp, effectiveMax, frameIndex);
 	    }
 	
 	    auto handleSuboptimal = [this](const char* phase)

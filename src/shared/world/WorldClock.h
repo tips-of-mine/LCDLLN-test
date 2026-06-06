@@ -24,7 +24,11 @@ namespace engine::world
         if (p.paused) return p.pausedAtGameSec;
         const double realSec = (nowUnixMs >= p.epochRefUnixMs)
             ? static_cast<double>(nowUnixMs - p.epochRefUnixMs) / 1000.0 : 0.0;
-        const double gsPerRs = 86400.0 / (static_cast<double>(p.timeScaleRealMinPerDay) * 60.0);
+        // Garde defensive : timeScale <= 0 (config/wire corrompu) retombe sur le
+        // defaut 60 plutot que de produire une division par zero (gsPerRs = inf).
+        const double scaleMinPerDay = (p.timeScaleRealMinPerDay > 0.0f)
+            ? static_cast<double>(p.timeScaleRealMinPerDay) : 60.0;
+        const double gsPerRs = 86400.0 / (scaleMinPerDay * 60.0);
         return realSec * gsPerRs + p.offsetGameSec;
     }
 

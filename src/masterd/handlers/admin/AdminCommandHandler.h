@@ -52,6 +52,7 @@ namespace engine::server
 	class AccountRoleService;
 	class AccountStore;
 	class SlashCommandRegistry;
+	class WorldClockHandler;
 }
 
 namespace engine::server::db
@@ -111,6 +112,11 @@ namespace engine::server
 		/// nullptr (cas server.debug.packetlog.enabled=false), les
 		/// commandes repondront Ok avec un message "PacketLog disabled".
 		void SetPacketLog(engine::server::netdebug::PacketLog* log) { m_packetLog = log; }
+
+		/// Branche le WorldClockHandler (etat horloge monde authoritative)
+		/// pour les commandes admin /settime, /pausetime, /settimescale.
+		/// Si nullptr, ces commandes repondront ServerError.
+		void SetWorldClockHandler(engine::server::WorldClockHandler* h) { m_worldClock = h; }
 
 		/// Dispatch packet : traite uniquement opcode 195
 		/// (kOpcodeAdminCommandRequest). Pour tout autre opcode, no-op.
@@ -201,6 +207,30 @@ namespace engine::server
 		                       const std::vector<std::string>& args,
 		                       engine::network::admin::AdminCommandResponse& resp);
 
+		/// Dispatch "/settime <HH:MM>" : parse l'heure (split sur ':'),
+		/// valide 0<=h<24 et 0<=m<60, convertit en hours flottant, puis
+		/// applique via WorldClockHandler::SetTimeOfDay (broadcast 205).
+		/// \param args args[0] = heure au format "HH:MM".
+		/// \param resp Reponse a remplir (Ok / InvalidArgs / ServerError).
+		void DispatchSetTime(const std::vector<std::string>& args,
+		                     engine::network::admin::AdminCommandResponse& resp);
+
+		/// Dispatch "/pausetime <on|off>" : gele (on) ou reprend (off)
+		/// l'horloge monde via WorldClockHandler::SetPaused. Argument hors
+		/// {on,off} -> InvalidArgs.
+		/// \param args args[0] = "on" ou "off".
+		/// \param resp Reponse a remplir.
+		void DispatchPauseTime(const std::vector<std::string>& args,
+		                       engine::network::admin::AdminCommandResponse& resp);
+
+		/// Dispatch "/settimescale <minutes>" : change la vitesse du cycle
+		/// jour/nuit via WorldClockHandler::SetTimeScale (borne [1,1440] cote
+		/// handler). Argument non numerique ou hors bornes -> InvalidArgs.
+		/// \param args args[0] = minutes reelles par jour de jeu (1..1440).
+		/// \param resp Reponse a remplir.
+		void DispatchSetTimeScale(const std::vector<std::string>& args,
+		                          engine::network::admin::AdminCommandResponse& resp);
+
 		NetServer*            m_server      = nullptr;
 		SessionManager*       m_sessionMgr  = nullptr;
 		ConnectionSessionMap* m_connMap     = nullptr;
@@ -210,5 +240,6 @@ namespace engine::server
 		engine::server::gmtickets::GmTicketSystem* m_gmTicketSys = nullptr;
 		engine::server::db::ConnectionPool*        m_dbPool      = nullptr;
 		engine::server::netdebug::PacketLog*       m_packetLog   = nullptr;
+		engine::server::WorldClockHandler*         m_worldClock  = nullptr;
 	};
 }

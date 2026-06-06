@@ -419,6 +419,42 @@
       "status": "implemented",
       "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
       "notes": "Wave 16 RBAC : utilise PacketLog::Drain() puis FormatEntries. n optionnel (defaut 20). Resultat tronque a ~4 KB pour tenir dans un seul paquet wire."
+    },
+    {
+      "command": "/settime <HH:MM>",
+      "aliases": [],
+      "description": "Fixe l'heure du jour (horloge monde serveur, broadcast a tous les clients).",
+      "category": "admin",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Commande admin horloge monde : le master parse HH:MM, valide 0<=h<24 et 0<=m<60, puis appelle WorldClockHandler::SetTimeOfDay (broadcast 205 a tous les clients). Etat serveur authoritative modifie."
+    },
+    {
+      "command": "/pausetime <on|off>",
+      "aliases": [],
+      "description": "Gele ou reprend l'horloge monde serveur.",
+      "category": "admin",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Commande admin horloge monde : le master appelle WorldClockHandler::SetPaused (true si on, false si off) puis broadcast 205. Argument hors {on,off} -> InvalidArgs."
+    },
+    {
+      "command": "/settimescale <minutes reelles par jour>",
+      "aliases": [],
+      "description": "Vitesse du cycle jour/nuit (1..1440 ; 60 = 1 jour de jeu par heure reelle).",
+      "category": "admin",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Commande admin horloge monde : le master appelle WorldClockHandler::SetTimeScale qui borne [1,1440] et broadcast 205. Hors bornes ou argument non numerique -> InvalidArgs."
     }
   ]
 }

@@ -493,6 +493,15 @@ namespace engine
 		/// M38.1: day/night cycle (time-of-day, sun direction, sky gradient colours).
 		engine::render::DayNightCycle m_dayNight;
 
+		/// WorldClock sync (Task 6.2) — accumulateur (s) du controle de derive.
+		/// Incremente chaque frame dans Update() ; quand il depasse
+		/// m_worldClockDriftCheckSec on renvoie un WorldClockStateRequest (203)
+		/// au master pour rafraichir l'offset d'horloge (correction sub-seconde).
+		float m_worldClockResyncTimer = 0.0f;
+		/// Intervalle de re-synchro horloge (s), lu depuis
+		/// game.worldclock.drift_check_sec (defaut 300). <=0 desactive la re-sync.
+		float m_worldClockDriftCheckSec = 300.0f;
+
 		std::array<float, 3> m_iblLastSunDir { 0.0f, 1.0f, 0.0f }; ///< dernière dir soleil capturée pour l'IBL (suivi jour/nuit).
 		float m_iblRegenTimer = 0.0f;                              ///< throttle de re-capture IBL (s).
 

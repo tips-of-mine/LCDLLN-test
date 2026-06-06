@@ -11,6 +11,7 @@
 #include "src/masterd/account/AccountValidation.h"
 #include "src/masterd/admin/SlashCommandRegistry.h"
 #include "src/masterd/gmtickets/GmTicketSystem.h"
+#include "src/masterd/handlers/worldclock/WorldClockHandler.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
 #include "src/shardd/world/LunarCalendar.h"
@@ -495,6 +496,21 @@ namespace engine::server
 		else if (req.command == "/packetlog dump_all")
 		{
 			DispatchPacketLog("dump_all", req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/settime")
+		{
+			DispatchSetTime(req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/pausetime")
+		{
+			DispatchPauseTime(req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/settimescale")
+		{
+			DispatchSetTimeScale(req.args, resp);
 			handled = true;
 		}
 		else if (UiPanelCommandSet().count(req.command) > 0)
@@ -1069,5 +1085,153 @@ namespace engine::server
 		// dispatcher en amont matche par nom canonique).
 		resp.status = AdminCommandStatus::InvalidArgs;
 		resp.message = "Sous-commande /packetlog inconnue : " + subCommand;
+	}
+
+	// ============================================================
+	// WorldClock : commandes admin /settime, /pausetime, /settimescale.
+	// Le RBAC (minRole=administrator) et le LogAudit sont deja appliques
+	// par HandleRequest avant le dispatch ; ces methodes ne font que la
+	// logique metier (parsing + appel des mutateurs WorldClockHandler).
+	// ============================================================
+
+	/// Fixe l'heure du jour de l'horloge monde a partir d'un "HH:MM".
+	/// Parse split sur ':', valide 0<=h<24 et 0<=m<60, convertit en hours
+	/// flottant (h + m/60) puis applique via WorldClockHandler::SetTimeOfDay
+	/// (qui broadcast 205 a tous les clients). Sans handler cable -> ServerError.
+	void AdminCommandHandler::DispatchSetTime(const std::vector<std::string>& args,
+		engine::network::admin::AdminCommandResponse& resp)
+	{
+		using namespace engine::network::admin;
+		if (!m_worldClock)
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "/settime : WorldClockHandler non cable";
+			return;
+		}
+		if (args.size() != 1)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Usage : /settime <HH:MM>";
+			return;
+		}
+
+		// Parse "HH:MM" : split sur ':'.
+		const std::string& arg = args[0];
+		const auto colon = arg.find(':');
+		if (colon == std::string::npos)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Usage : /settime <HH:MM>";
+			return;
+		}
+		int h = -1;
+		int m = -1;
+		try
+		{
+			h = std::stoi(arg.substr(0, colon));
+			m = std::stoi(arg.substr(colon + 1));
+		}
+		catch (...)
+		{
+			LOG_WARN(Net, "/settime : argument <HH:MM> invalide ('{}')", arg);
+			h = -1;
+			m = -1;
+		}
+		if (h < 0 || h >= 24 || m < 0 || m >= 60)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Usage : /settime <HH:MM> (HH dans 0..23, MM dans 0..59)";
+			return;
+		}
+
+		const float hours = static_cast<float>(h) + static_cast<float>(m) / 60.0f;
+		if (!m_worldClock->SetTimeOfDay(hours))
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Heure hors plage [0..24)";
+			return;
+		}
+
+		char hmBuf[16];
+		std::snprintf(hmBuf, sizeof(hmBuf), "%02d:%02d", h, m);
+		resp.status = AdminCommandStatus::Ok;
+		resp.result.push_back(std::string("time=") + hmBuf);
+		resp.message = std::string("Heure reglee a ") + hmBuf;
+	}
+
+	/// Gele (on) ou reprend (off) l'horloge monde via SetPaused. Rejette tout
+	/// argument hors {on,off} en InvalidArgs. SetPaused broadcast 205.
+	void AdminCommandHandler::DispatchPauseTime(const std::vector<std::string>& args,
+		engine::network::admin::AdminCommandResponse& resp)
+	{
+		using namespace engine::network::admin;
+		if (!m_worldClock)
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "/pausetime : WorldClockHandler non cable";
+			return;
+		}
+		if (args.size() != 1)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Usage : /pausetime <on|off>";
+			return;
+		}
+
+		const std::string& arg = args[0];
+		if (arg != "on" && arg != "off")
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Usage : /pausetime <on|off>";
+			return;
+		}
+		const bool paused = (arg == "on");
+		m_worldClock->SetPaused(paused);
+
+		resp.status = AdminCommandStatus::Ok;
+		resp.result.push_back(std::string("paused=") + (paused ? "true" : "false"));
+		resp.message = paused ? "Horloge gelee" : "Horloge reprise";
+	}
+
+	/// Change la vitesse du cycle jour/nuit (minutes reelles par jour de jeu)
+	/// via SetTimeScale. Le handler borne [1,1440] et renvoie false si hors
+	/// bornes -> InvalidArgs. Argument non numerique -> InvalidArgs (try/catch).
+	void AdminCommandHandler::DispatchSetTimeScale(const std::vector<std::string>& args,
+		engine::network::admin::AdminCommandResponse& resp)
+	{
+		using namespace engine::network::admin;
+		if (!m_worldClock)
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "/settimescale : WorldClockHandler non cable";
+			return;
+		}
+		if (args.size() != 1)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Usage : /settimescale <minutes 1..1440>";
+			return;
+		}
+
+		float scale = -1.0f;
+		try { scale = std::stof(args[0]); }
+		catch (...)
+		{
+			LOG_WARN(Net, "/settimescale : argument <minutes> invalide ('{}')", args[0]);
+			scale = -1.0f;
+		}
+		if (!m_worldClock->SetTimeScale(scale))
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "time scale hors bornes (minutes reelles par jour : 1..1440)";
+			return;
+		}
+
+		char scaleBuf[48];
+		std::snprintf(scaleBuf, sizeof(scaleBuf), "real_min_per_day=%.3f",
+			static_cast<double>(scale));
+		resp.status = AdminCommandStatus::Ok;
+		resp.result.push_back(scaleBuf);
+		resp.message = "Time scale mis a jour";
 	}
 }

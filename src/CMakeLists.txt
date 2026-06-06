@@ -144,6 +144,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/auction/AuctionHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/loot/LootHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/lunar/LunarHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/worldclock/WorldClockHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/admin/AdminCommandHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/admin/SlashCommandRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/trade/TradeSessionRegistry.cpp
@@ -167,6 +168,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/AuctionPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/LootPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/LunarPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/WorldClockPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/AdminCommandPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatGate.cpp
@@ -578,9 +580,15 @@ elseif(UNIX)
   lcdlln_add_simple_test(skill_book_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/skills/SkillBookTests.cpp)
 
-  # CMANGOS.28 (Phase 3.28a) : WorldClock (header-only).
-  lcdlln_add_simple_test(world_clock_tests
-    ${CMAKE_SOURCE_DIR}/src/masterd/world/WorldClockTests.cpp)
+  # Sous-chantier 1 (Task 1.1) : formule horloge monde deterministe partagee
+  # (engine::world, header-only). Cible cross-platform (add_executable nu, pas
+  # lcdlln_add_simple_test : ce helper linke pthread + flags GCC, non portables
+  # Windows). engine_core expose ${CMAKE_SOURCE_DIR} en include PUBLIC, ce qui
+  # resout les #include "src/...".
+  add_executable(world_clock_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/world/tests/WorldClockTests.cpp)
+  target_link_libraries(world_clock_tests PRIVATE engine_core)
+  add_test(NAME world_clock_tests COMMAND world_clock_tests)
 
   # CMANGOS.21 (Phase 3.21a) : GuildPermissionMatrix (header-only).
   lcdlln_add_simple_test(guild_permission_matrix_tests

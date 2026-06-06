@@ -2,6 +2,7 @@
 
 #include "src/masterd/handlers/lunar/LunarHandler.h"
 
+#include "src/masterd/handlers/worldclock/WorldClockHandler.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/core/Log.h"
@@ -26,14 +27,30 @@ namespace engine::server
 		m_cycleDurationMs = cycleDurationMs;
 	}
 
+	LunarPhaseInfo LunarHandler::ComputePhaseNow(uint64_t realNowMs) const
+	{
+		// Unifie : la phase derive de l'horloge MONDE (temps de jeu) si disponible.
+		// On garde LunarCalendar comme point de calcul : seule son ENTREE change
+		// (gameMs / periodMs derives de l'horloge au lieu de realNowMs / cycle reel).
+		if (m_worldClock)
+		{
+			const engine::world::WorldClockParams p = m_worldClock->GetParams();
+			const double gameSec = engine::world::GameSeconds(realNowMs, p);
+			const uint64_t gameMs = static_cast<uint64_t>(gameSec * 1000.0);
+			const uint64_t periodMs = static_cast<uint64_t>(p.lunarPeriodGameSec * 1000.0);
+			return LunarCalendar::Compute(gameMs, 0ull, periodMs);
+		}
+		// Fallback (horloge non cablee) : ancien comportement temps reel.
+		return LunarCalendar::Compute(realNowMs, m_cycleStartMs, m_cycleDurationMs);
+	}
+
 	uint8_t LunarHandler::CurrentPhase() const
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 		const uint64_t nowMs = static_cast<uint64_t>(
 			std::chrono::duration_cast<std::chrono::milliseconds>(
 				std::chrono::system_clock::now().time_since_epoch()).count());
-		auto info = LunarCalendar::Compute(nowMs, m_cycleStartMs, m_cycleDurationMs);
-		return info.phase;
+		return ComputePhaseNow(nowMs).phase;
 	}
 
 	void LunarHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId,
@@ -101,11 +118,24 @@ namespace engine::server
 			const uint64_t nowMs = static_cast<uint64_t>(
 				std::chrono::duration_cast<std::chrono::milliseconds>(
 					std::chrono::system_clock::now().time_since_epoch()).count());
-			auto info = LunarCalendar::Compute(nowMs, m_cycleStartMs, m_cycleDurationMs);
+			auto info = ComputePhaseNow(nowMs);
 			resp.phase = info.phase;
 			resp.illumination = info.illumination;
-			resp.cycleStartMs = m_cycleStartMs;
-			resp.cycleDurationMs = m_cycleDurationMs;
+			// Champs cycle (informationnels : le client utilise phase + illumination).
+			// Si l'horloge monde est branchee, on renvoie l'epoch + la periode lunaire
+			// derivees de l'horloge (temps de jeu) pour rester coherent avec la source
+			// reelle de la phase. Sinon, anciennes valeurs temps reel. Wire inchange.
+			if (m_worldClock)
+			{
+				const engine::world::WorldClockParams p = m_worldClock->GetParams();
+				resp.cycleStartMs = p.epochRefUnixMs;
+				resp.cycleDurationMs = static_cast<uint64_t>(p.lunarPeriodGameSec * 1000.0);
+			}
+			else
+			{
+				resp.cycleStartMs = m_cycleStartMs;
+				resp.cycleDurationMs = m_cycleDurationMs;
+			}
 			LOG_INFO(Net, "[LunarHandler] sending LunarStateResponse (connId={} phase={} illumination={:.3f} cycleStartMs={} cycleDurationMs={})",
 				connId, static_cast<unsigned>(resp.phase), resp.illumination,
 				static_cast<unsigned long long>(resp.cycleStartMs),
@@ -134,12 +164,20 @@ namespace engine::server
 
 		{
 			std::lock_guard<std::mutex> lock(m_mutex);
-			auto info = LunarCalendar::Compute(realNowMs, m_cycleStartMs, m_cycleDurationMs);
+			auto info = ComputePhaseNow(realNowMs);
 			if (info.phase != m_lastBroadcastPhase)
 			{
 				newPhase = info.phase;
 				newIllumination = info.illumination;
-				nextChangeTs = LunarCalendar::NextChangeTsMs(realNowMs, m_cycleStartMs, m_cycleDurationMs);
+				// nextChangeTsMs (informationnel) : si l'horloge monde est branchee,
+				// la phase derive du temps de jeu et il n'y a pas de mapping direct
+				// vers un timestamp Unix de prochain changement (la cadence depend du
+				// timeScale, qui peut changer). On laisse 0 dans ce cas (le client
+				// rafraichit via le push 194 a chaque changement de phase). Sinon,
+				// calcul temps reel d'origine.
+				nextChangeTs = m_worldClock
+					? 0ull
+					: LunarCalendar::NextChangeTsMs(realNowMs, m_cycleStartMs, m_cycleDurationMs);
 				m_lastBroadcastPhase = info.phase;
 				needBroadcast = true;
 			}

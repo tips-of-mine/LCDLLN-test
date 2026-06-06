@@ -1025,7 +1025,10 @@ int main(int argc, char** argv)
 	// Si packetLogOpt est nullptr (server.debug.packetlog.enabled=false),
 	// le handler bascule naturellement sur le chemin "PacketLog disabled".
 	adminCommandHandler.SetPacketLog(packetLogOpt.get());
-	LOG_INFO(Net, "[ServerMain] AdminCommandHandler configured (RBAC + audit log + Wave 2 moderation + Wave 16 packetlog wiring)");
+	// WorldClock : branche l'horloge monde pour /settime, /pausetime, /settimescale
+	// (mutateurs authoritative master + broadcast 205 a tous les clients).
+	adminCommandHandler.SetWorldClockHandler(&worldClockHandler);
+	LOG_INFO(Net, "[ServerMain] AdminCommandHandler configured (RBAC + audit log + Wave 2 moderation + Wave 16 packetlog + worldclock wiring)");
 
 	// Phase 5 Lunar — Branche le GameEventHandler sur le LunarHandler pour
 	// pouvoir filtrer les events par phase lunaire (event "Nuit de la

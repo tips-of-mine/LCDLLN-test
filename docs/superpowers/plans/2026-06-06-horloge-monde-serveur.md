@@ -4,7 +4,7 @@
 
 **Goal:** Rendre l'heure de jeu (jour/nuit + phase de lune) serveur-autoritaire : le master détient une horloge monde unique, les clients la synchronisent et la calculent localement, avec contrôle de dérive et commandes admin RBAC.
 
-**Architecture:** Une formule déterministe **partagée** (header-only `WorldClock`) calcule `gameSec` à partir de `{epoch, timeScale, offset, paused}` ; le master détient l'état mutable + le diffuse (opcodes 200-202, calque lunaire) ; le client le reçoit, calcule soleil **et** lune localement, et resynchronise périodiquement. Les modifications passent par les commandes admin existantes (opcode 195, RBAC `administrator`). Le système lunaire est rebranché sur la même horloge.
+**Architecture:** Une formule déterministe **partagée** (header-only `WorldClock`) calcule `gameSec` à partir de `{epoch, timeScale, offset, paused}` ; le master détient l'état mutable + le diffuse (opcodes 203-205, calque lunaire) ; le client le reçoit, calcule soleil **et** lune localement, et resynchronise périodiquement. Les modifications passent par les commandes admin existantes (opcode 195, RBAC `administrator`). Le système lunaire est rebranché sur la même horloge.
 
 **Tech Stack:** C++17, Vulkan (client), sérialisation wire little-endian maison, RBAC slash commands, ctest (CI Linux).
 
@@ -29,13 +29,13 @@
 - `src/masterd/handlers/worldclock/WorldClockHandler.h` / `.cpp` — état mutable + handler + broadcast.
 
 **Modifiés:**
-- `src/shared/network/ProtocolV1Constants.h` — opcodes 200-202.
+- `src/shared/network/ProtocolV1Constants.h` — opcodes 203-205.
 - `src/masterd/main_linux.cpp` — instanciation/wiring/dispatch/config.
 - `src/masterd/handlers/admin/AdminCommandHandler.{h,cpp}` — 3 commandes + wiring vers WorldClockHandler.
 - `game/data/config/slash_commands.json` — 3 commandes admin.
 - `src/masterd/handlers/lunar/LunarHandler.cpp` — phase dérivée de l'horloge monde.
 - `src/client/render/DayNightCycle.{h,cpp}` — mode piloté par horloge synchronisée.
-- `src/client/app/Engine.cpp` — sync (req 200, handle 201/202) + contrôle dérive.
+- `src/client/app/Engine.cpp` — sync (req 203, handle 204/205) + contrôle dérive.
 - `config.json` — bloc `game.worldclock` (epoch, timeScale, lunarPeriodGameDays, driftCheckSec, driftThresholdGameSec).
 - `src/CMakeLists.txt` — sources partagées dans `server_app`/`shard_app` + cibles de test.
 
@@ -181,22 +181,25 @@ git commit -m "feat(worldclock): formule horloge monde deterministe partagee + t
 
 # Sous-chantier 2 — Wire (payloads + opcodes) + tests  [PR 2]
 
-### Task 2.1 : Opcodes 200-202
+### Task 2.1 : Opcodes 203-205
 
-**Files:** Modify `src/shared/network/ProtocolV1Constants.h` (après la ligne 794, bloc lunaire)
+> NOTE : 200-202 sont déjà pris par Interactive Props (`kOpInteractive*`). Le vrai
+> max d'opcode = 202 → on prend **203-205**.
+
+**Files:** Modify `src/shared/network/ProtocolV1Constants.h` (après le bloc Interactive Props ~837)
 
 - [ ] **Step 1 : Ajouter les opcodes**
 
 ```cpp
 	// Phase 6 — Horloge monde serveur-autoritaire (jour/nuit + lune unifies).
-	//   - State (200/201)                 : etat de l'horloge sur connexion / contrôle de derive.
-	//   - ChangeNotification (202, push)   : un admin a modifie le temps.
-	constexpr uint16_t kOpcodeWorldClockStateRequest        = 200u; ///< Client to Master : etat horloge (vide).
-	constexpr uint16_t kOpcodeWorldClockStateResponse       = 201u; ///< Master to Client : epoch, timeScale, offset, paused, lunarPeriod + serverTimeUnixMs.
-	constexpr uint16_t kOpcodeWorldClockChangeNotification  = 202u; ///< Master to Client (push, request_id=0) : changement admin.
+	//   - State (203/204)                 : etat de l'horloge sur connexion / contrôle de derive.
+	//   - ChangeNotification (205, push)   : un admin a modifie le temps.
+	constexpr uint16_t kOpcodeWorldClockStateRequest        = 203u; ///< Client to Master : etat horloge (vide).
+	constexpr uint16_t kOpcodeWorldClockStateResponse       = 204u; ///< Master to Client : epoch, timeScale, offset, paused, lunarPeriod + serverTimeUnixMs.
+	constexpr uint16_t kOpcodeWorldClockChangeNotification  = 205u; ///< Master to Client (push, request_id=0) : changement admin.
 ```
 
-- [ ] **Step 2 : Commit** `git add -A && git commit -m "feat(worldclock): opcodes 200-202"`
+- [ ] **Step 2 : Commit** `git add -A && git commit -m "feat(worldclock): opcodes 203-205"`
 
 ### Task 2.2 : Payloads (calque `LunarPayloads`)
 
@@ -268,7 +271,7 @@ namespace engine::network::worldclock
 
     struct WorldClockStateRequest {}; // vide
 
-    /// État complet de l'horloge (réponse 201 ET notification 202 : mêmes champs).
+    /// État complet de l'horloge (réponse 204 ET notification 205 : mêmes champs).
     struct WorldClockStateResponse
     {
         WorldClockStatus status = WorldClockStatus::Ok;
@@ -317,13 +320,13 @@ add_test(NAME world_clock_payloads_tests COMMAND world_clock_payloads_tests)
 - [ ] **Step 1 : `WorldClockHandler.h`** — classe avec :
   - `SetServer/SetSessionManager/SetConnectionSessionMap` (comme LunarHandler).
   - `void Configure(const engine::world::WorldClockParams& p)` (params boot depuis config).
-  - `void HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, size)` → si opcode 200, valide session (comme LunarHandler) → `BuildWorldClockStateResponsePayload` avec `serverTimeUnixMs = now()`, params courants → Send 201. Si session invalide → `status=Unauthorized`.
+  - `void HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, size)` → si opcode 203, valide session (comme LunarHandler) → `BuildWorldClockStateResponsePayload` avec `serverTimeUnixMs = now()`, params courants → Send 204. Si session invalide → `status=Unauthorized`.
   - **Mutateurs (appelés par AdminCommandHandler), chacun broadcast** :
     - `bool SetTimeOfDay(float hours)` → calcule `offsetGameSec` pour que `TimeOfDayHours(GameSeconds(now)) == hours` (voir formule ci-dessous) → broadcast.
     - `bool SetPaused(bool paused)` → si on met paused, mémoriser `pausedAtGameSec = GameSeconds(now)` ; broadcast.
     - `bool SetTimeScale(float realMinPerDay)` → borne [1,1440] ; **conserver la continuité** : recalculer `offsetGameSec` pour que `GameSeconds(now)` soit inchangé juste après le changement de scale ; broadcast.
   - `engine::world::WorldClockParams GetParams() const` (mutex-protégé) — pour le shard/lunaire/queries.
-  - `void BroadcastChange()` (privé) : `BuildWorldClockChangeNotificationPayload` + `BuildPushPacket(202, payload)` + `m_connMap->Snapshot()` + Send-all (exact calque `LunarHandler::PushPhaseChangeBroadcast`).
+  - `void BroadcastChange()` (privé) : `BuildWorldClockChangeNotificationPayload` + `BuildPushPacket(205, payload)` + `m_connMap->Snapshot()` + Send-all (exact calque `LunarHandler::PushPhaseChangeBroadcast`).
   - Membres : `WorldClockParams m_params; std::mutex m_mutex;` + pointeurs services.
 
   **Formule `SetTimeOfDay`** : `targetSec = hours*3600` ; `base = GameSeconds(now, paramsAvecOffset0) `; `m_params.offsetGameSec += targetSec - std::fmod(base + m_params.offsetGameSec, 86400.0)` (ramène la composante jour à `targetSec` sans toucher la composante long-terme). Documenter que cela décale aussi la phase lunaire (effet de bord assumé v1).
@@ -410,7 +413,7 @@ else if (opcode == kOpcodeWorldClockStateRequest)
 
 **Files:** Modify `src/client/app/Engine.cpp`, `config.json`
 
-- [ ] **Step 1** : À l'entrée monde (là où le client envoie déjà `LunarStateRequest`), envoyer aussi `WorldClockStateRequest` (opcode 200) via le même dispatcher.
+- [ ] **Step 1** : À l'entrée monde (là où le client envoie déjà `LunarStateRequest`), envoyer aussi `WorldClockStateRequest` (opcode 203) via le même dispatcher.
 - [ ] **Step 2** : Ajouter le handling réception (calque le bloc lunaire `case kOpcodeLunarStateResponse`) :
 ```cpp
 case kOpcodeWorldClockStateResponse:
@@ -431,7 +434,7 @@ case kOpcodeWorldClockChangeNotification: {
 ```
 - [ ] **Step 2b** : Contrôle de dérive — toutes les `game.worldclock.drift_check_sec` (config, défaut 300), renvoyer un `WorldClockStateRequest` léger (timer dans `Update`). La réception (ci-dessus) recale ; `DayNightCycle` corrige en douceur si l'écart > `drift_threshold_game_sec` (config, défaut 30).
 - [ ] **Step 3** : `config.json` — bloc `game.worldclock` (epoch_ms, timescale_real_min_per_day, lunar_period_game_days, drift_check_sec, drift_threshold_game_sec). Documenter « CLIENT lit drift_* ; epoch/timescale/lunar_period sont AUTORITÉ master ».
-- [ ] **Step 4** : Commit `git commit -m "feat(client): sync horloge monde (req 200, handle 201/202) + controle derive"`
+- [ ] **Step 4** : Commit `git commit -m "feat(client): sync horloge monde (req 203, handle 204/205) + controle derive"`
 
 ---
 
@@ -439,7 +442,7 @@ case kOpcodeWorldClockChangeNotification: {
 
 PR 1 → PR 2 → PR 3 → PR 4 → PR 5 → PR 6 (dépendances séquentielles). Les PR 1-2 (formule + wire) sont sûres (tests CI). PR 3-5 = serveur. PR 6 = client.
 
-⚠️ **REDÉPLOIEMENT SERVEUR MASTER REQUIS** dès PR 3 (nouveau handler/opcodes). **Lock-step** : déployer master neuf AVANT/AVEC le client neuf. Tant que PR 6 n'est pas livré, le client garde son horloge locale (fallback) — pas de casse. Tant que le master neuf n'est pas déployé, le client neuf retombe sur le fallback local (pas de réponse 201).
+⚠️ **REDÉPLOIEMENT SERVEUR MASTER REQUIS** dès PR 3 (nouveau handler/opcodes). **Lock-step** : déployer master neuf AVANT/AVEC le client neuf. Tant que PR 6 n'est pas livré, le client garde son horloge locale (fallback) — pas de casse. Tant que le master neuf n'est pas déployé, le client neuf retombe sur le fallback local (pas de réponse 204).
 
 ## Plan de test
 

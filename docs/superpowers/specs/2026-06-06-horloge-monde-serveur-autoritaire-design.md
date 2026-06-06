@@ -86,13 +86,13 @@ avec `timeScale=60`, 1 s réelle = 24 s de jeu.)
 
 ### 5.1 Nouveaux opcodes — sync horloge (calque lunaire 192-194)
 
-Max opcode actuel = 199. On prend **200-202** :
+200-202 sont déjà pris par Interactive Props (`kOpInteractive*`) ; max opcode = 202. On prend **203-205** :
 
 | Opcode | Nom | Sens | Charge |
 |---|---|---|---|
-| 200 | `kOpcodeWorldClockStateRequest` | Client → Master | vide |
-| 201 | `kOpcodeWorldClockStateResponse` | Master → Client | `status`, `serverTimeUnixMs`, `epochRefUnixMs`, `timeScale`, `offsetGameSec`, `paused`, `pausedAtGameSec`, `lunarPeriodGameSec` |
-| 202 | `kOpcodeWorldClockChangeNotification` | Master → Client (push, request_id=0) | mêmes champs que 201 |
+| 203 | `kOpcodeWorldClockStateRequest` | Client → Master | vide |
+| 204 | `kOpcodeWorldClockStateResponse` | Master → Client | `status`, `serverTimeUnixMs`, `epochRefUnixMs`, `timeScale`, `offsetGameSec`, `paused`, `pausedAtGameSec`, `lunarPeriodGameSec` |
+| 205 | `kOpcodeWorldClockChangeNotification` | Master → Client (push, request_id=0) | mêmes champs que 204 |
 
 `status` = `Ok` / `Unauthorized` (réutilise le pattern `LunarStatus`). La réponse
 porte `serverTimeUnixMs` pour que le client cale son horloge (compense la latence
@@ -103,11 +103,11 @@ Payloads dans un nouveau `src/shared/network/WorldClockPayloads.h` (calque de
 
 ### 5.2 Lecture libre, modification gated
 
-- **200/201/202** (lecture/sync) : tout client authentifié (session valide). Pas
+- **203/204/205** (lecture/sync) : tout client authentifié (session valide). Pas
   de RBAC — c'est de la lecture.
 - **Modification** : passe **exclusivement** par les commandes admin (§6), donc
   par l'opcode existant `kOpcodeAdminCommandRequest` (195) qui applique déjà le
-  RBAC + le log. Aucun chemin de modification direct via 200-202.
+  RBAC + le log. Aucun chemin de modification direct via 203-205.
 
 ## 6. RBAC & commandes admin
 
@@ -124,7 +124,7 @@ commands, **rôle requis = `admin`** :
 Chaque commande, **après vérification RBAC `admin` côté master** (un client sans
 le droit reçoit `Unauthorized`, comme les autres commandes admin) :
 1. mute le `WorldClockState` master,
-2. **broadcaste** une `WorldClockChangeNotification` (202) à tous les clients,
+2. **broadcaste** une `WorldClockChangeNotification` (205) à tous les clients,
 3. est **loggée côté serveur** (conforme à la règle « commandes admin loggées »).
 
 ## 7. Intégration client
@@ -132,9 +132,9 @@ le droit reçoit `Unauthorized`, comme les autres commandes admin) :
 - `DayNightCycle` **n'avance plus en autonomie** (`Advance(dt)` libre supprimé du
   pilotage) : son `timeOfDay` (et la phase de lune) sont **calculés depuis
   l'horloge monde synchronisée**. Le calcul reste local chaque frame (fluide).
-- **Au login / entrée monde** : le client envoie `WorldClockStateRequest` (200),
+- **Au login / entrée monde** : le client envoie `WorldClockStateRequest` (203),
   reçoit l'état, cale son horloge de référence (`localUnixMs ↔ serverTimeUnixMs`).
-- **Sur `WorldClockChangeNotification` (202)** : re-cale immédiatement (un admin a
+- **Sur `WorldClockChangeNotification` (205)** : re-cale immédiatement (un admin a
   modifié le temps).
 - **Contrôle de dérive** : toutes les **N minutes** (config, défaut 5), renvoie un
   `WorldClockStateRequest` léger ; si l'écart entre l'heure calculée localement et
@@ -174,7 +174,7 @@ monde. Tests lunaires existants (`ObjectGuidTests`/`LunarCalendar`) à adapter.
 
 1. **WorldClock master (état + formule + config)** — `WorldClockState`, lecture
    `config.json` (epoch, timeScale, lunarPeriodGameDays), calcul `gameSec`.
-2. **Wire** — `WorldClockPayloads.h` + opcodes 200-202 + handler master
+2. **Wire** — `WorldClockPayloads.h` + opcodes 203-205 + handler master
    (request→response, broadcast notification).
 3. **Commandes admin** — 3 slash commands `admin` dans `slash_commands.json` +
    branchement `AdminCommandHandler` → mute état + broadcast + log.
@@ -186,7 +186,7 @@ monde. Tests lunaires existants (`ObjectGuidTests`/`LunarCalendar`) à adapter.
 
 ## 10. Déploiement
 
-⚠️ **REDÉPLOIEMENT SERVEUR REQUIS (master)** — nouveaux opcodes 200-202, nouveau
+⚠️ **REDÉPLOIEMENT SERVEUR REQUIS (master)** — nouveaux opcodes 203-205, nouveau
 handler master, 3 commandes admin, refactor lunaire. **Client + serveur en
 lock-step** : un client neuf parlant à un master ancien ne recevrait pas l'état
 (→ fallback local), et un master neuf avec client ancien garderait l'ancien

@@ -620,6 +620,7 @@ add_library(engine_core
   src/client/render/DayNightCycle.cpp
   src/client/render/SkyPass.cpp
   src/client/render/WeatherSystem.cpp
+  src/client/render/clouds/CloudWeatherMapper.cpp
   src/client/render/DynamicLightSystem.cpp
   src/client/render/CascadedShadowMaps.cpp
   src/client/render/BrdfLutPass.cpp

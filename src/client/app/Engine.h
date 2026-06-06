@@ -830,6 +830,16 @@ namespace engine
 		/// false par défaut => AUCUN code impostor ne s'exécute (rendu inchangé).
 		bool m_impostorEnabled = false;
 
+		/// fix/hiz-gate-off — flag global Hi-Z occlusion culling (lu depuis
+		/// render.hiz.enabled au boot). false par défaut : la passe HiZ_Build n'est
+		/// PAS enregistrée dans le frame graph (sinon HiZPyramidPass réécrit son
+		/// descriptor set unique en vol => violation de validation chaque frame), et
+		/// le GpuDrivenCullingPass reçoit un view Hi-Z nul => il retombe sur son
+		/// fallback Hi-Z conservateur (occlusionEnabled=false). Rendu inchangé car le
+		/// cull ne culait que le cube placeholder inerte. Réactivable (=true) si le
+		/// GPU-cull est un jour réellement branché sur plusieurs draw-items.
+		bool m_hiZEnabled = false;
+
 		/// M45.5 — tente de charger l'atlas `.mipo` associé à `meshPath` (à côté du
 		/// .gltf, même nom + extension `.mipo`) dans `m_impostorAtlases` s'il n'y est
 		/// pas déjà. No-op si !m_impostorEnabled. \return true si un atlas valide est

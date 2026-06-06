@@ -77,6 +77,10 @@
             "grass_mask": "zones/demo_plains/terrain_grass.grms",
             "grass_mask_visual_strength": 0.35,
             "hole_mask": ""
+        },
+        "hiz": {
+            "_comment": "Occlusion culling Hi-Z (GPU-driven cull). Defaut false : la passe HiZ_Build n'est PAS enregistree dans le frame graph (HiZPyramidPass reecrivait son descriptor set unique en vol => erreur de validation Vulkan chaque frame) et le GpuDrivenCullingPass recoit un view Hi-Z nul => fallback conservateur. Sa sortie etait inerte (seul le cube placeholder etait cull). Repasser a true uniquement si le GPU-cull est reellement branche sur plusieurs draw-items.",
+            "enabled": false
         }
     },
     "audio": {

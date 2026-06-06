@@ -648,6 +648,7 @@ add_library(engine_core
   src/client/render/gi/DdgiUpdatePass.cpp
   src/client/render/gi/DdgiQuality.cpp
   src/client/render/VolumetricFogPass.cpp
+  src/client/render/CloudPass.cpp
   src/client/render/DepthOfFieldPass.cpp
   src/client/render/ImpostorPass.cpp
   src/client/render/ImpostorAsset.cpp

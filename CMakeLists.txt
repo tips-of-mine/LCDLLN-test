@@ -1027,10 +1027,14 @@ target_link_libraries(terrain_chunk_grid_tests PRIVATE engine_core)
 add_test(NAME terrain_chunk_grid_tests COMMAND terrain_chunk_grid_tests)
 
 # Chantier C Phase 2 — Tests des IHeightField (heightmap repli + chunk résident).
-# CPU pur (StreamCache::Insert + LoadFromCache, aucune I/O Vulkan/disque) : pas
-# de garde WIN32, exécuté par ctest Linux comme terrain_chunk_grid_tests.
-lcdlln_add_simple_test(height_field_tests
-  src/client/world/terrain/tests/HeightFieldTests.cpp)
+# CPU pur (StreamCache::Insert + LoadFromCache, aucune I/O Vulkan/disque).
+# Pattern cross-platform IDENTIQUE à terrain_chunk_grid_tests (add_executable +
+# link engine_core + add_test) : compile sur Windows ET Linux, exécuté par ctest.
+# NE PAS utiliser lcdlln_add_simple_test ici : ce helper applique -Wall/-Wextra/
+# -Wpedantic + pthread (GCC/Clang/Linux only) que MSVC rejette (D8021 /Wextra).
+add_executable(height_field_tests src/client/world/terrain/tests/HeightFieldTests.cpp)
+target_link_libraries(height_field_tests PRIVATE engine_core)
+add_test(NAME height_field_tests COMMAND height_field_tests)
 
 # M100.49 — Tests Tutorial & Overlay (moteur de sequence + systeme tutoriel +
 # registre widgets). Diagnostic differe (depend de M100.48). Ancrage distinct

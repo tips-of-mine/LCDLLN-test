@@ -2,6 +2,7 @@
 
 #include "src/shared/core/Log.h"
 
+#include <chrono>
 #include <cmath>
 
 namespace engine::render
@@ -70,6 +71,30 @@ namespace engine::render
 		return v;
 	}
 
+	/// Horodatage Unix courant (ms) cote client. Utilise system_clock (horloge
+	/// murale) pour pouvoir le comparer a serverTimeUnixMs (lui aussi murale).
+	/*static*/ uint64_t DayNightCycle::NowMsClient()
+	{
+		return static_cast<uint64_t>(
+			std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::system_clock::now().time_since_epoch()).count());
+	}
+
+	// -------------------------------------------------------------------------
+	// DayNightCycle::SetServerClock — bascule en mode driven (Task 6.1)
+	// -------------------------------------------------------------------------
+
+	/// Stocke les params serveur + calcule l'offset d'horloge et active le mode
+	/// driven. Effet de bord : m_driven=true (le fallback local est neutralise).
+	void DayNightCycle::SetServerClock(const engine::world::WorldClockParams& p,
+	                                   uint64_t serverTimeUnixMs, uint64_t clientRecvUnixMs)
+	{
+		m_serverParams  = p;
+		m_clockOffsetMs = static_cast<int64_t>(serverTimeUnixMs)
+		                - static_cast<int64_t>(clientRecvUnixMs);
+		m_driven        = true;
+	}
+
 	// -------------------------------------------------------------------------
 	// DayNightCycle::Init
 	// -------------------------------------------------------------------------
@@ -95,6 +120,28 @@ namespace engine::render
 
 	void DayNightCycle::Advance(float deltaSeconds)
 	{
+		// --- Mode driven (Task 6.1) : horloge serveur autoritaire ------------
+		// Quand SetServerClock a ete appele, on RECALCULE timeOfDay + phase
+		// lunaire chaque frame depuis l'horloge serveur synchronisee. Le calcul
+		// partant toujours de l'instant present corrige de l'offset, il est
+		// exact et fluide, SANS derive accumulee (la re-sync periodique cote
+		// Engine rafraichit m_clockOffsetMs pour corriger le drift d'horloge).
+		if (m_driven)
+		{
+			const uint64_t nowServerMs = static_cast<uint64_t>(
+				static_cast<int64_t>(NowMsClient()) + m_clockOffsetMs);
+			const double gameSec = engine::world::GameSeconds(nowServerMs, m_serverParams);
+			m_timeOfDay          = engine::world::TimeOfDayHours(gameSec);
+			m_state.moonPhase    = engine::world::LunarPhase(gameSec, m_serverParams.lunarPeriodGameSec);
+			// Illumination : meme courbe cosinus que le calendrier lunaire
+			// (max a la phase 7 = pleine lune, min aux phases 0/15 = nouvelle).
+			const float t = (static_cast<float>(m_state.moonPhase) - 7.0f) * (3.14159265f / 8.0f);
+			m_state.moonIllumination = 0.5f * (1.0f + std::cos(t));
+			ComputeState();
+			return;
+		}
+
+		// --- Fallback LOCAL (mode solo / serveur muet) : inchange ------------
 		// Advance in-game time: each real second = timeScale in-game hours / 3600 * timeScale.
 		// timeScale encodes "game-hours per real-hour", so:
 		//   inGameHoursPerSecond = timeScale / 3600.

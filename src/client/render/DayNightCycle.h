@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "src/shared/world/WorldClock.h"
+
 namespace engine::render
 {
 	/// CPU-side day/night cycle system (M38.1).
@@ -104,6 +106,30 @@ namespace engine::render
 		/// \param illumination 0..1 (clamp si hors plage)
 		void OnLunarPhaseChange(uint8_t phase, float illumination);
 
+		/// Branche l'horloge serveur (autoritaire) sur le cycle jour/nuit.
+		///
+		/// Une fois appelee, le cycle passe en mode "driven" : Advance() ne fait
+		/// plus avancer un compteur local, il RECALCULE timeOfDay + phase lunaire
+		/// chaque frame depuis l'horloge serveur synchronisee (formule pure
+		/// engine::world::GameSeconds). Garantit qu'aucune derive ne s'accumule
+		/// (le calcul part toujours de l'instant present corrige de l'offset).
+		///
+		/// Appel typique : reception des opcodes 204 (WorldClockStateResponse) et
+		/// 205 (WorldClockChangeNotification). Les parametres admin (offset via
+		/// /settime, pause via /pausetime) arrivent dans \p p et s'appliquent
+		/// IMMEDIATEMENT au prochain Advance — comportement intentionnel.
+		///
+		/// \param p                 Parametres horloge (epoch, timeScale, offset,
+		///                          pause, periode lunaire) — autorite master.
+		/// \param serverTimeUnixMs  Horodatage Unix (ms) cote serveur a l'emission.
+		/// \param clientRecvUnixMs  Horodatage Unix (ms) cote client a la reception.
+		///                          L'offset (serverTimeUnixMs - clientRecvUnixMs)
+		///                          corrige l'ecart d'horloge client/serveur.
+		/// \note Effet de bord : passe m_driven a true (le fallback local est
+		///       desactive tant que ce mode est actif).
+		void SetServerClock(const engine::world::WorldClockParams& p,
+		                    uint64_t serverTimeUnixMs, uint64_t clientRecvUnixMs);
+
 		/// Return the current time scale (real seconds per in-game hour).
 		float GetTimeScale() const { return m_timeScale; }
 
@@ -120,9 +146,25 @@ namespace engine::render
 		/// Clamp \p v to [lo, hi].
 		static float Clamp(float v, float lo, float hi);
 
+		/// Horodatage Unix courant (ms) cote client (system_clock).
+		/// Utilise pour reconstruire l'instant serveur en mode driven.
+		static uint64_t NowMsClient();
+
 		float  m_timeOfDay = 8.0f;   ///< Current in-game time [0, 24).
 		float  m_timeScale = 60.0f;  ///< Real seconds per in-game hour.
 		State  m_state{};
+
+		// ---- Mode "driven" par l'horloge serveur (Task 6.1) ----
+
+		/// true quand SetServerClock a ete appele : Advance recalcule depuis
+		/// l'horloge serveur. false (defaut) => fallback local inchange (solo /
+		/// serveur muet), AUCUNE regression.
+		bool   m_driven = false;
+		/// Parametres horloge serveur (autorite master) recus via SetServerClock.
+		engine::world::WorldClockParams m_serverParams{};
+		/// Decalage d'horloge client->serveur (ms) = serverTimeUnixMs - clientRecvUnixMs.
+		/// Ajoute a NowMsClient() pour reconstruire l'instant serveur courant.
+		int64_t m_clockOffsetMs = 0;
 	};
 
 } // namespace engine::render

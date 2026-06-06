@@ -4983,6 +4983,15 @@ namespace engine
 											m_impostorEnabled = m_cfg.GetBool("world.impostor.enabled", false);
 											if (m_impostorEnabled)
 												LOG_INFO(Render, "[Impostor] M45.5 activé (world.impostor.enabled=true)");
+											// fix/hiz-gate-off — flag global Hi-Z occlusion (défaut OFF). Lu une fois
+											// ici. Quand false : la passe HiZ_Build n'est pas enregistrée (plus de
+											// réécriture de descriptor en vol => plus de violation de validation), et
+											// le GpuDrivenCullingPass reçoit un view Hi-Z nul => fallback conservateur.
+											m_hiZEnabled = m_cfg.GetBool("render.hiz.enabled", false);
+											if (m_hiZEnabled)
+												LOG_INFO(Render, "[Boot] Hi-Z occlusion enabled (render.hiz.enabled=true)");
+											else
+												LOG_INFO(Render, "[Boot] Hi-Z occlusion disabled (render.hiz.enabled=false)");
 											// Chantier B : charge les meshes statiques des props (coffre si non anime + interactibles).
 											LoadInteractableProps();
 											// Décor solide (arbres, props nature) depuis world.scenery. Doit suivre
@@ -5045,12 +5054,28 @@ namespace engine
 													return;
 												}
 
-												const auto& hiZPass = m_pipeline->GetHiZPyramidPass();
-												cullingPass.Record(
-													m_vkDeviceContext.GetDevice(), cmd, rs.viewProjMatrix.m, m_currentFrame,
-													hiZPass.GetImageView(m_currentFrame),
-													hiZPass.GetExtent(),
-													hiZPass.GetMipCount());
+												// fix/hiz-gate-off — quand la Hi-Z est désactivée (m_hiZEnabled=false,
+												// défaut), on passe un view nul + extent {0,0} + mipCount 0 : dans
+												// GpuDrivenCullingPass::Record, occlusionEnabled devient false et le cull
+												// retombe sur son fallback Hi-Z conservateur. On NE lit PAS les accesseurs
+												// HiZPyramidPass (la passe HiZ_Build n'est alors pas enregistrée).
+												if (m_hiZEnabled)
+												{
+													const auto& hiZPass = m_pipeline->GetHiZPyramidPass();
+													cullingPass.Record(
+														m_vkDeviceContext.GetDevice(), cmd, rs.viewProjMatrix.m, m_currentFrame,
+														hiZPass.GetImageView(m_currentFrame),
+														hiZPass.GetExtent(),
+														hiZPass.GetMipCount());
+												}
+												else
+												{
+													cullingPass.Record(
+														m_vkDeviceContext.GetDevice(), cmd, rs.viewProjMatrix.m, m_currentFrame,
+														VK_NULL_HANDLE,
+														VkExtent2D{ 0, 0 },
+														0u);
+												}
 											});
 
 										// Terrain prepass must not be a separate FrameGraph pass: it targets the same
@@ -5409,20 +5434,30 @@ namespace engine
 												}
 											});
 
-										m_frameGraph.addPass("HiZ_Build",
-											[this](engine::render::PassBuilder& b) {
-												b.read(m_fgDepthId, engine::render::ImageUsage::SampledRead);
-											},
-											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-												auto& hiZPass = m_pipeline->GetHiZPyramidPass();
-												if (!hiZPass.IsValid())
-													return;
+										// fix/hiz-gate-off — la passe HiZ_Build n'est enregistrée QUE si la Hi-Z
+										// est explicitement activée (render.hiz.enabled=true). Par défaut (false)
+										// elle est éteinte du chemin frame : HiZPyramidPass réécrivait son
+										// descriptor set unique pendant qu'il était en vol (violation Vulkan,
+										// erreur de validation chaque frame) alors que sa sortie était inerte
+										// (le GpuDrivenCullingPass ne traitait que le cube placeholder désactivé).
+										// La classe HiZPyramidPass est conservée, seulement débranchée ici.
+										if (m_hiZEnabled)
+										{
+											m_frameGraph.addPass("HiZ_Build",
+												[this](engine::render::PassBuilder& b) {
+													b.read(m_fgDepthId, engine::render::ImageUsage::SampledRead);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													auto& hiZPass = m_pipeline->GetHiZPyramidPass();
+													if (!hiZPass.IsValid())
+														return;
 
-												hiZPass.Record(
-													m_vkDeviceContext.GetDevice(), cmd,
-													reg.getImage(m_fgDepthId), reg.getImageView(m_fgDepthId),
-													m_vkSwapchain.GetExtent(), m_currentFrame);
-											});
+													hiZPass.Record(
+														m_vkDeviceContext.GetDevice(), cmd,
+														reg.getImage(m_fgDepthId), reg.getImageView(m_fgDepthId),
+														m_vkSwapchain.GetExtent(), m_currentFrame);
+												});
+										}
 
 										for (uint32_t cascade = 0; cascade < engine::render::kCascadeCount; ++cascade)
 										{

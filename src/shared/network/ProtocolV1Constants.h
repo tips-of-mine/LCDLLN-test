@@ -835,4 +835,17 @@ namespace engine::network
 	constexpr uint16_t kOpInteractiveStateChange    = 200u; ///< Client → Master : un objet a été ouvert/fermé (id, newState, clientTimeMs).
 	constexpr uint16_t kOpInteractiveStateBroadcast = 201u; ///< Master → autres clients (push, request_id=0) : relai d'un changement d'état (id, newState, serverTimeMs).
 	constexpr uint16_t kOpInteractiveStateSync      = 202u; ///< Master → client entrant (push, request_id=0) : état complet de la zone (count × {id, state}).
+
+	// =====================================================================
+	// Phase 6 — Horloge monde serveur-autoritaire (jour/nuit + lune unifies).
+	//   - State (203/204)                : etat de l'horloge sur connexion / controle de derive.
+	//   - ChangeNotification (205, push)  : un admin a modifie le temps.
+	//
+	// NOTE : les opcodes 200-202 initialement envisages sont DEJA pris par
+	// Interactive Props (M100.32). Ce bloc utilise donc 203-205, premiere plage
+	// libre au-dessus du max courant (202).
+	// =====================================================================
+	constexpr uint16_t kOpcodeWorldClockStateRequest        = 203u; ///< Client to Master : etat horloge (vide).
+	constexpr uint16_t kOpcodeWorldClockStateResponse       = 204u; ///< Master to Client : epoch, timeScale, offset, paused, lunarPeriod + serverTimeUnixMs.
+	constexpr uint16_t kOpcodeWorldClockChangeNotification  = 205u; ///< Master to Client (push, request_id=0) : changement admin.
 }

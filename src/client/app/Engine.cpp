@@ -45,6 +45,9 @@
 #include "src/client/render/OutdoorPvpImGuiRenderer.h"
 #include "src/client/render/WeatherImGuiRenderer.h"
 #include "src/client/render/clouds/WeatherKindMap.h"
+#include "src/client/render/clouds/CloudParams.h"
+#include "src/client/render/clouds/CloudWeatherMapper.h"
+#include "src/client/render/CloudPass.h"
 #include "src/client/render/GameEventImGuiRenderer.h"
 #include "src/client/render/GuildImGuiRenderer.h"
 #include "src/client/render/AuctionImGuiRenderer.h"
@@ -3958,6 +3961,11 @@ namespace engine
 										// TRANSFER_DST pour le passthrough vkCmdCopyImage). Lu en aval par
 										// Bloom_Prefilter / Bloom_Combine.
 										m_fgSceneColorFoggedId = m_frameGraph.createImage("SceneColor_HDR_Fogged", sceneColorHDRDesc);
+										// Nuages — SceneColor_HDR_Clouds : cible de la passe Clouds (composition
+										// des nuages volumétriques sur la scène brouillardée). Même desc que
+										// Fogged (R16G16B16A16_SFLOAT, extent swapchain). Lu en aval par Bloom
+										// (Prefilter / Combine) quand la passe nuages est active.
+										m_fgCloudsId = m_frameGraph.createImage("SceneColor_HDR_Clouds", sceneColorHDRDesc);
 										// M45.3 — SceneColor_HDR_Dof : cible de la passe DepthOfField (bokeh),
 										// ou copie passthrough si la passe DoF est invalide. Meme desc que
 										// WithBloom/Fogged (qui inclut deja TRANSFER_DST pour le passthrough
@@ -6278,12 +6286,118 @@ namespace engine
 												});
 										}
 
+										// Nuages volumétriques — passe insérée entre VolumetricFog et Bloom.
+										// Lit la scène brouillardée + le depth, compose les nuages ray-marchés
+										// et écrit SceneColor_HDR_Clouds. Les matrices caméra (invViewProj +
+										// cameraPos) sont recalculées EXACTEMENT comme la passe fog ci-dessus
+										// (même rs.viewProjMatrix / rs.camera.position) ; l'apparence vient de
+										// l'état jour/nuit (m_dayNight) et de la météo (m_weatherSystem via
+										// CloudWeatherMapper). Si la passe nuages n'est pas prête, on garde
+										// SceneColor_HDR_Fogged comme source du bloom (cf sceneAfterClouds).
+										const bool cloudsEnabled = m_cfg.GetBool("render.clouds.enabled", true);
+										if (cloudsEnabled && m_pipeline && m_pipeline->IsCloudPassReady())
+										{
+											m_frameGraph.addPass("Clouds",
+												[this](engine::render::PassBuilder& b) {
+													b.read(m_fgSceneColorFoggedId, engine::render::ImageUsage::SampledRead);
+													b.read(m_fgDepthId,            engine::render::ImageUsage::SampledRead);
+													b.write(m_fgCloudsId,          engine::render::ImageUsage::ColorWrite);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													if (!m_pipeline->GetCloudPass().IsValid()) return;
+													const engine::render::DayNightCycle::State& dn = m_dayNight.GetState();
+													engine::render::CloudParams target =
+														engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetTargetState());
+													engine::render::CloudParams current =
+														engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetCurrentState());
+													engine::render::CloudParams cp =
+														engine::render::CloudParams::Lerp(current, target, m_weatherSystem.GetIntensity());
+
+													engine::render::CloudPass::CloudPushConstants pc{};
+													// invViewProj + cameraPos : MÊME source que la passe VolumetricFog
+													// ci-dessus (rs.viewProjMatrix inversée + rs.camera.position).
+													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+													const engine::RenderState& rs = m_renderStates[readIdx];
+													const float* vp = rs.viewProjMatrix.m;
+													const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
+													const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
+													const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
+													const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
+													const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
+													const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
+													const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
+													const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
+													const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+													if (det > 1e-7f || det < -1e-7f)
+													{
+														const float inv = 1.0f / det;
+														pc.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*inv;
+														pc.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*inv;
+														pc.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*inv;
+														pc.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*inv;
+														pc.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*inv;
+														pc.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*inv;
+														pc.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*inv;
+														pc.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*inv;
+														pc.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*inv;
+														pc.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*inv;
+														pc.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*inv;
+														pc.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*inv;
+														pc.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*inv;
+														pc.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*inv;
+														pc.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*inv;
+														pc.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*inv;
+													}
+													pc.cameraPos[0] = rs.camera.position.x;
+													pc.cameraPos[1] = rs.camera.position.y;
+													pc.cameraPos[2] = rs.camera.position.z;
+													// w = temps (s) : pas de source de temps dédiée ici -> 0.
+													pc.cameraPos[3] = 0.0f;
+
+													for (int i = 0; i < 3; ++i)
+													{
+														pc.sunDir[i]       = dn.lightDir[i];
+														pc.sunColor[i]     = dn.lightColor[i];
+														const float tint   = (i == 0 ? cp.tintR : (i == 1 ? cp.tintG : cp.tintB));
+														pc.zenithColor[i]  = dn.skyZenith[i]  * tint;
+														pc.horizonColor[i] = dn.skyHorizon[i] * tint;
+													}
+													pc.sunDir[3]       = cp.coverage;
+													pc.sunColor[3]     = cp.density;
+													pc.zenithColor[3]  = cp.baseAltMeters;
+													pc.horizonColor[3] = cp.topAltMeters;
+
+													pc.windParams[0] = 1.0f;
+													pc.windParams[1] = 0.3f;
+													pc.windParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.windScale", 6.0));
+													pc.windParams[3] = 0.2f;
+
+													pc.stepParams[0] = static_cast<float>(m_cfg.GetInt("render.clouds.raymarchSteps", 64));
+													pc.stepParams[1] = static_cast<float>(m_cfg.GetInt("render.clouds.lightSteps", 6));
+													pc.stepParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.maxDistanceMeters", 60000.0));
+													pc.stepParams[3] = static_cast<float>(m_cfg.GetDouble("render.clouds.ambientStrength", 0.4));
+
+													m_pipeline->GetCloudPass().Record(
+														m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+														m_fgSceneColorFoggedId, m_fgDepthId, m_fgCloudsId, pc, m_currentFrame % 2);
+												});
+										}
+
+										// Source effective consommée par le bloom : sortie nuages si la passe
+										// Clouds est active, sinon la scène brouillardée. Les DEUX consommateurs
+										// aval de Fogged (Bloom_Prefilter ET Bloom_Combine) basculent dessus
+										// pour rester cohérents (sinon Combine recomposerait sur une base sans
+										// nuages).
+										const engine::render::ResourceId sceneAfterClouds =
+											(cloudsEnabled && m_pipeline && m_pipeline->IsCloudPassReady())
+												? m_fgCloudsId : m_fgSceneColorFoggedId;
+
 										m_frameGraph.addPass("Bloom_Prefilter",
-											[this](engine::render::PassBuilder& b) {
-												b.read(m_fgSceneColorFoggedId, engine::render::ImageUsage::SampledRead);
+											[this, sceneAfterClouds](engine::render::PassBuilder& b) {
+												b.read(sceneAfterClouds, engine::render::ImageUsage::SampledRead);
 												b.write(m_fgBloomDownMipIds[0], engine::render::ImageUsage::ColorWrite);
 											},
-											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+											[this, sceneAfterClouds](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												if (!m_pipeline->GetBloomPrefilterPass().IsValid()) return;
 												engine::render::BloomPrefilterPass::PrefilterParams pp{};
 												pp.threshold = static_cast<float>(m_cfg.GetDouble("bloom.threshold", 1.0));
@@ -6292,7 +6406,7 @@ namespace engine
 												m_pipeline->GetBloomPrefilterPass().Record(
 													m_vkDeviceContext.GetDevice(), cmd, reg,
 													m_vkSwapchain.GetExtent(),
-													m_fgSceneColorFoggedId, m_fgBloomDownMipIds[0], pp, frameIdx);
+													sceneAfterClouds, m_fgBloomDownMipIds[0], pp, frameIdx);
 											});
 
 										for (uint32_t i = 0; i < engine::render::kBloomMipCount - 1; ++i)
@@ -6340,21 +6454,22 @@ namespace engine
 										}
 
 										m_frameGraph.addPass("Bloom_Combine",
-											[this](engine::render::PassBuilder& b) {
-												// M45.2 — base de composition = SceneColor_HDR_Fogged (scene + fog
-												// volumique), pas PostWater, sinon le fog serait bypasse dans
-												// l'image finale (Combine produit l'image post-bloom consommee par
+											[this, sceneAfterClouds](engine::render::PassBuilder& b) {
+												// M45.2 — base de composition = scene + fog volumique (et nuages si
+												// la passe Clouds est active : sceneAfterClouds), pas PostWater,
+												// sinon le fog/les nuages seraient bypasses dans l'image finale
+												// (Combine produit l'image post-bloom consommee par
 												// AutoExposure/Tonemap).
-												b.read(m_fgSceneColorFoggedId,        engine::render::ImageUsage::SampledRead);
+												b.read(sceneAfterClouds,             engine::render::ImageUsage::SampledRead);
 												b.read(m_fgBloomUpMipIds[0],         engine::render::ImageUsage::SampledRead);
 												b.write(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::ColorWrite);
 											},
-											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+											[this, sceneAfterClouds](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												if (!m_pipeline->GetBloomCombinePass().IsValid()) return;
 												engine::render::BloomCombinePass::CombineParams cp{};
 												cp.intensity = static_cast<float>(m_cfg.GetDouble("bloom.intensity", 1.0));
 												const uint32_t frameIdx = m_currentFrame % 2;
-												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorFoggedId, m_fgBloomUpMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
+												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), sceneAfterClouds, m_fgBloomUpMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
 											});
 
 										m_frameGraph.addPass("AutoExposure_Luminance",

@@ -359,6 +359,11 @@ namespace engine
 		/// brouillard volumique + god rays (VolumetricFog), ou copie passthrough si la
 		/// passe fog est invalide. Lu en SampledRead par Bloom_Prefilter / Bloom_Combine.
 		engine::render::ResourceId m_fgSceneColorFoggedId = engine::render::kInvalidResourceId;
+		/// Nuages — SceneColor_HDR_Clouds : SceneColor_HDR_Fogged après composition
+		/// des nuages volumétriques (CloudPass). Lu en SampledRead par Bloom
+		/// (Prefilter + Combine) lorsque la passe nuages est active. Même desc que
+		/// Fogged (R16G16B16A16_SFLOAT, extent swapchain).
+		engine::render::ResourceId m_fgCloudsId = engine::render::kInvalidResourceId;
 		/// M45.2 — true si VolumetricFogPass::IsValid() au boot (passe fog active) ;
 		/// sinon Engine enregistre un passthrough (copie PostWater -> Fogged).
 		bool m_volumetricFogReady = false;

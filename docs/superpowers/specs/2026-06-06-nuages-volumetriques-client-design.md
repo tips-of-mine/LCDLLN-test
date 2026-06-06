@@ -75,12 +75,19 @@ touche le GPU.
 |-----------|------|-------------|-----------------|
 | `CloudWeatherMapper` | **Pur** : `render::WeatherState` (du `WeatherSystem` existant) + `blendT` → `CloudParams`. Table de correspondance déterministe | aucune (testable sans GPU) | `src/client/render/clouds/CloudWeatherMapper.{h,cpp}` |
 | `CloudParams` | État continu (couverture, densité, altitude base/sommet, vent, teinte) + interpolation/fondu | aucune | `src/client/render/clouds/CloudParams.{h,cpp}` |
-| `CloudNoise` | Génération au boot des textures 3D (base Worley-Perlin + détail) + cloud-map 2D | Vulkan (upload textures) | `src/client/render/clouds/CloudNoise.{h,cpp}` |
-| `CloudPass` | Passe de rendu : raymarch (compute) + compositing + (option) shadow map | Vulkan, `DayNightCycle`, depth scene | `src/client/render/clouds/CloudPass.{h,cpp}` |
-| Shaders | raymarch, compositing, shadow map | — | `game/data/shaders/clouds_raymarch.comp`, `clouds_composite.frag`, `clouds_shadow.comp` |
+| `CloudPass` | Passe de rendu **graphique plein écran** (fragment raymarch) + compositing | Vulkan, `DayNightCycle`, depth scene | `src/client/render/CloudPass.{h,cpp}` |
+| Shaders | raymarch + compositing (fragment) ; bruit FBM **in-shader** ; shadow en P2 | — | `game/data/shaders/clouds.frag`, `clouds_common.glsl`, `clouds_shadow.comp` (P2) |
 
 Flux : `WeatherSystem` (existant) → `CloudWeatherMapper` → `CloudParams`
 (interpolé chaque frame) → push-constants → `CloudPass` (GPU).
+
+> **Raffinements d'implémentation (post-plan, cohérents avec le moteur réel)** :
+> (1) **Bruit FBM procédural in-shader** plutôt qu'un sous-système de textures 3D
+> `CloudNoise` (comme `sky.frag`) → moins de composants, pas de storage-image ;
+> textures 3D = optimisation future. (2) **Passe fragment fullscreen** (pas
+> compute) car le FrameGraph ne gère pas les barrières storage-image (cf.
+> `VolumetricFogPass`). (3) Insertion **après le Volumetric Fog, avant le Bloom**
+> (cf. §5) — câblage minimal + perspective aérienne sur les nuages lointains.
 
 ## 4. Modèle de nuage (détail technique)
 

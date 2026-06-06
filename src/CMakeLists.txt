@@ -167,6 +167,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/AuctionPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/LootPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/LunarPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/WorldClockPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/AdminCommandPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatGate.cpp

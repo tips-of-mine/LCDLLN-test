@@ -737,6 +737,7 @@ add_library(engine_core
   src/shared/network/AuctionPayloads.cpp
   src/shared/network/LootPayloads.cpp
   src/shared/network/LunarPayloads.cpp
+  src/shared/network/WorldClockPayloads.cpp
   src/shared/network/AdminCommandPayloads.cpp
   src/shared/network/LfgPayloads.cpp
   src/shared/network/CinematicPayloads.cpp
@@ -1207,6 +1208,11 @@ add_test(NAME loot_payloads_tests COMMAND loot_payloads_tests)
 add_executable(lunar_payloads_tests src/shared/network/LunarPayloadsTests.cpp)
 target_link_libraries(lunar_payloads_tests PRIVATE engine_core)
 add_test(NAME lunar_payloads_tests COMMAND lunar_payloads_tests)
+
+# Phase 6 WorldClock — round-trip tests payloads (203-205).
+add_executable(world_clock_payloads_tests src/shared/network/tests/WorldClockPayloadsTests.cpp)
+target_link_libraries(world_clock_payloads_tests PRIVATE engine_core)
+add_test(NAME world_clock_payloads_tests COMMAND world_clock_payloads_tests)
 
 # AdminCommand RBAC — round-trip tests payloads (195/196).
 add_executable(admin_command_payloads_tests src/shared/network/AdminCommandPayloadsTests.cpp)

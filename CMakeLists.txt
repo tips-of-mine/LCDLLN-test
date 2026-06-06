@@ -691,6 +691,8 @@ add_library(engine_core
   src/client/world/terrain/SplatMap.cpp
   src/client/world/terrain/TerrainChunk.cpp
   src/client/world/terrain/TerrainChunkLoader.cpp
+  src/client/world/terrain/HeightmapHeightField.cpp
+  src/client/world/terrain/ChunkHeightField.cpp
   src/client/world/terrain/TerrainLodChain.cpp
   src/client/world/terrain/TerrainLodWorker.cpp
   src/client/world/terrain/TerrainMeshBuilder.cpp
@@ -1023,6 +1025,12 @@ add_test(NAME wind_tests COMMAND wind_tests)
 add_executable(terrain_chunk_grid_tests src/client/world/tests/TerrainChunkGridTests.cpp)
 target_link_libraries(terrain_chunk_grid_tests PRIVATE engine_core)
 add_test(NAME terrain_chunk_grid_tests COMMAND terrain_chunk_grid_tests)
+
+# Chantier C Phase 2 — Tests des IHeightField (heightmap repli + chunk résident).
+# CPU pur (StreamCache::Insert + LoadFromCache, aucune I/O Vulkan/disque) : pas
+# de garde WIN32, exécuté par ctest Linux comme terrain_chunk_grid_tests.
+lcdlln_add_simple_test(height_field_tests
+  src/client/world/terrain/tests/HeightFieldTests.cpp)
 
 # M100.49 — Tests Tutorial & Overlay (moteur de sequence + systeme tutoriel +
 # registre widgets). Diagnostic differe (depend de M100.48). Ancrage distinct

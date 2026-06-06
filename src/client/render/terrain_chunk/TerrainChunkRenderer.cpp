@@ -1154,6 +1154,17 @@ namespace engine::render::terrain_chunk
 
 		// Eviction LRU des chunks Far excédant le budget.
 		auto evictions = m_runtime.CollectEvictionsForBudget();
+		if (!evictions.empty())
+		{
+			// UAF guard : l'eviction tourne dans BeginFrame, AVANT le wait de fence
+			// du Render -> une frame en vol pourrait encore referencer les VBO/IBO
+			// evinces (m_meshCache/m_splatCache.Evict detruit immediatement les
+			// VkBuffer). device-idle garantit qu'aucune commande GPU ne les utilise
+			// au moment de la destruction. Cout nul en pratique (eviction = streaming
+			// terrain, rare ; jamais sur le contenu actuel). Optimisation future :
+			// differer via DeferredDestroyQueue.
+			vkDeviceWaitIdle(device);
+		}
 		for (auto slot : evictions)
 		{
 			engine::world::GlobalChunkCoord coord{0, 0};

@@ -547,7 +547,8 @@ namespace engine::render
 			0, 0, nullptr, 1, &stagingBarrier, 0, nullptr);
 	}
 
-	void AutoExposure::Update(VkDevice device, float dt, float key, float speed, uint32_t frameIndex)
+	void AutoExposure::Update(VkDevice device, float dt, float key, float speed,
+		float minExposure, float maxExposure, uint32_t frameIndex)
 	{
 		const uint32_t slot = (frameIndex + 1u) % kAESlots;
 		if (device == VK_NULL_HANDLE || m_stagingAlloc[slot] == nullptr)
@@ -564,12 +565,12 @@ namespace engine::render
 		float avgLuminance = std::exp2(avgLog);
 		const float kEpsilon = 1e-6f;
 		float targetExposure = key / (avgLuminance + kEpsilon);
-		targetExposure = std::max(0.001f, std::min(10.0f, targetExposure));
+		targetExposure = std::max(minExposure, std::min(maxExposure, targetExposure));
 
 		// exposure = lerp(prev, target, 1 - exp(-dt*speed))
 		float blend = 1.0f - std::exp(-dt * speed);
 		m_exposure = m_exposure + (targetExposure - m_exposure) * blend;
-		m_exposure = std::max(0.001f, std::min(10.0f, m_exposure));
+		m_exposure = std::max(minExposure, std::min(maxExposure, m_exposure));
 
 		// Write to persistent exposure buffer
 		if (m_exposureAlloc != nullptr)

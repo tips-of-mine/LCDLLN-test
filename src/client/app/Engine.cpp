@@ -10190,7 +10190,12 @@ namespace engine
 	        const float dt    = static_cast<float>(m_time.DeltaSeconds());
 	        const float key   = static_cast<float>(m_cfg.GetDouble("exposure.key", 0.18));
 	        const float speed = static_cast<float>(m_cfg.GetDouble("exposure.speed", 2.0));
-	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed, frameIndex);
+	        // Bornes de l'exposition adaptée. Le plafond (défaut 3.0 au lieu de 10.0)
+	        // empêche l'auto-exposition de surcompenser une scène assombrie par les
+	        // ombres et de cramer le ciel/horizon en blanc. Réglable via config.
+	        const float minExp = static_cast<float>(m_cfg.GetDouble("exposure.min", 0.1));
+	        const float maxExp = static_cast<float>(m_cfg.GetDouble("exposure.max", 3.0));
+	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed, minExp, maxExp, frameIndex);
 	    }
 	
 	    auto handleSuboptimal = [this](const char* phase)

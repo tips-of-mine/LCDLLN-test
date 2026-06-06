@@ -364,6 +364,10 @@ namespace engine
 		/// (Prefilter + Combine) lorsque la passe nuages est active. Même desc que
 		/// Fogged (R16G16B16A16_SFLOAT, extent swapchain).
 		engine::render::ResourceId m_fgCloudsId = engine::render::kInvalidResourceId;
+
+		/// Temps réel cumulé (secondes) pour l'advection des nuages par le vent
+		/// (push-constant CloudPass). Avancé chaque frame par le dt d'Update.
+		float m_cloudTimeSeconds = 0.0f;
 		/// M45.2 — true si VolumetricFogPass::IsValid() au boot (passe fog active) ;
 		/// sinon Engine enregistre un passthrough (copie PostWater -> Fogged).
 		bool m_volumetricFogReady = false;

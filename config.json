@@ -46,6 +46,15 @@
         "vsync": true,
         "present_mode": "fifo",
         "fullscreen": true,
+        "clouds": {
+            "_comment": "Nuages volumetriques (CloudPass). enabled=false desactive proprement la passe (Bloom relit la scene brouillardee). raymarch_steps/light_steps = qualite/cout.",
+            "enabled": true,
+            "raymarch_steps": 64,
+            "light_steps": 6,
+            "max_distance_meters": 60000.0,
+            "ambient_strength": 0.4,
+            "wind_scale": 6.0
+        },
         "auth_ui": {
             "background_path": "ui/login/background.png",
             "background_blit": {

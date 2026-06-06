@@ -6351,8 +6351,8 @@ namespace engine
 													pc.cameraPos[0] = rs.camera.position.x;
 													pc.cameraPos[1] = rs.camera.position.y;
 													pc.cameraPos[2] = rs.camera.position.z;
-													// w = temps (s) : pas de source de temps dédiée ici -> 0.
-													pc.cameraPos[3] = 0.0f;
+													// w = temps réel cumulé (s) : advection des nuages par le vent.
+													pc.cameraPos[3] = m_cloudTimeSeconds;
 
 													for (int i = 0; i < 3; ++i)
 													{
@@ -6369,13 +6369,13 @@ namespace engine
 
 													pc.windParams[0] = 1.0f;
 													pc.windParams[1] = 0.3f;
-													pc.windParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.windScale", 6.0));
+													pc.windParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.wind_scale", 6.0));
 													pc.windParams[3] = 0.2f;
 
-													pc.stepParams[0] = static_cast<float>(m_cfg.GetInt("render.clouds.raymarchSteps", 64));
-													pc.stepParams[1] = static_cast<float>(m_cfg.GetInt("render.clouds.lightSteps", 6));
-													pc.stepParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.maxDistanceMeters", 60000.0));
-													pc.stepParams[3] = static_cast<float>(m_cfg.GetDouble("render.clouds.ambientStrength", 0.4));
+													pc.stepParams[0] = static_cast<float>(m_cfg.GetInt("render.clouds.raymarch_steps", 64));
+													pc.stepParams[1] = static_cast<float>(m_cfg.GetInt("render.clouds.light_steps", 6));
+													pc.stepParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.max_distance_meters", 60000.0));
+													pc.stepParams[3] = static_cast<float>(m_cfg.GetDouble("render.clouds.ambient_strength", 0.4));
 
 													m_pipeline->GetCloudPass().Record(
 														m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
@@ -8047,6 +8047,9 @@ namespace engine
 #endif
 
 	const double dt               = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
+
+	// Temps cumulé pour l'advection des nuages (vent). Continu, non cyclique.
+	m_cloudTimeSeconds += static_cast<float>(dt);
 
 	// M38.1 — Advance day/night cycle and propagate results into m_zoneAtmosphere
 	// so that the existing lighting path picks them up without further changes.

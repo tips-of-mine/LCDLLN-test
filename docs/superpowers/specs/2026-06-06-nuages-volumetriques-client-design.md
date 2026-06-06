@@ -19,7 +19,7 @@ effets demandés :
 |------------------|------|--------|
 | Météo serveur par zone (types discrets + intensité, reroll Markov) | V1 | `src/shardd/weather/WeatherManager.h`, `WeatherHandler` (opcodes 150-156) |
 | Broadcast serveur→clients d'une zone | OK | M100.26 `WeatherBroadcaster` master, push opcode 156 |
-| Particules pluie/neige + brouillard + audio (client) | OK | `src/client/render/WeatherSystem.h` (M38.2) |
+| Particules pluie/neige + brouillard + audio (client) | OK mais **non branché au réseau** (cf. §9) | `src/client/render/WeatherSystem.h` (M38.2) |
 | Modificateurs de surface (sol mouillé, glissant) | OK | M100.26 `weather_modifiers.json` |
 | Zones d'override météo (polygones éditeur) | OK (PR #811) | M100.28 |
 
@@ -73,7 +73,7 @@ touche le GPU.
 
 | Composant | Rôle | Dépendances | Fichier proposé |
 |-----------|------|-------------|-----------------|
-| `CloudWeatherMapper` | **Pur** : `WeatherKind` + `blendT` → `CloudParams`. Table de correspondance déterministe | aucune (testable sans GPU) | `src/client/render/clouds/CloudWeatherMapper.{h,cpp}` |
+| `CloudWeatherMapper` | **Pur** : `render::WeatherState` (du `WeatherSystem` existant) + `blendT` → `CloudParams`. Table de correspondance déterministe | aucune (testable sans GPU) | `src/client/render/clouds/CloudWeatherMapper.{h,cpp}` |
 | `CloudParams` | État continu (couverture, densité, altitude base/sommet, vent, teinte) + interpolation/fondu | aucune | `src/client/render/clouds/CloudParams.{h,cpp}` |
 | `CloudNoise` | Génération au boot des textures 3D (base Worley-Perlin + détail) + cloud-map 2D | Vulkan (upload textures) | `src/client/render/clouds/CloudNoise.{h,cpp}` |
 | `CloudPass` | Passe de rendu : raymarch (compute) + compositing + (option) shadow map | Vulkan, `DayNightCycle`, depth scene | `src/client/render/clouds/CloudPass.{h,cpp}` |
@@ -136,21 +136,45 @@ dans `lighting.frag` pour **atténuer la lumière directionnelle** → ombres
 mouvantes au sol, synchronisées avec le vent. Activable via
 `render.clouds.shadowMapEnabled`.
 
-## 9. Pilotage par la météo
+## 9. Pilotage par la météo — état réel résolu (anti-doublon)
 
-`CloudWeatherMapper` lit l'état du **WeatherSystem client déjà câblé**.
+Investigation faite en amont du plan (exigence « pas de doublons ») :
 
-> ⚠️ **À résoudre en phase plan** : il existe potentiellement **deux** classes
-> `WeatherSystem` côté client — `src/client/render/WeatherSystem` (M38.2) et
-> `src/client/world/weather/WeatherSystem` (décrite dans le ticket M100.26). Le
-> plan devra identifier laquelle est réellement instanciée dans `Engine` et y
-> brancher le mapper (et signaler si les deux coexistent en doublon).
+- **Une seule classe `WeatherSystem` existe** : `src/client/render/WeatherSystem`
+  (M38.2), instanciée dans `Engine` (`Engine.h:517 m_weatherSystem`). Le chemin
+  `src/client/world/weather/WeatherSystem` du ticket M100.26 **n'a jamais été
+  créé** (confirmé par l'audit M100 : « pas de sous-dossier `world/weather/` »).
+  → **Le mapper réutilise cette unique classe ; on ne crée AUCUN nouveau
+  détenteur d'état météo.**
+- **Gap pré-existant** : le broadcast météo serveur (opcode 156
+  `WeatherUpdateNotification`) est reçu dans `Engine.cpp` mais routé **uniquement
+  vers `m_weatherUi`** (panneau UI/debug). `m_weatherSystem.SetWeather()` n'est
+  appelé **nulle part** → aujourd'hui la météo serveur ne pilote **ni** les
+  visuels existants **ni** (a fortiori) les nuages.
 
-Table de correspondance `WeatherKind` → `CloudParams` (indicatif, à affiner en
-jeu) :
+### Conséquence de conception
+Pour éviter tout doublon et corriger la chaîne au bon endroit :
 
-| WeatherKind | Couverture | Type / densité | Teinte |
-|-------------|-----------|----------------|--------|
+1. Au handler de l'opcode 156 (déjà présent, `Engine.cpp:2968`), **mapper le
+   `WeatherKind` serveur → `render::WeatherState`** et appeler
+   `m_weatherSystem.SetWeather(...)`. Cela alimente d'un coup les particules/
+   brouillard existants **et** les nuages, depuis le **signal autoritaire
+   unique**. (Petit ajout ciblé, pas une refonte.)
+2. `CloudWeatherMapper` lit l'état de `m_weatherSystem`
+   (`GetCurrentState()` / `GetTargetState()` / `GetIntensity()`) — **source
+   unique de vérité météo côté client**.
+
+> ⚠️ **Décalage d'enum à gérer dans le mapping (1)** : serveur
+> `WeatherKind { Clear=0, Rain=1, Snow=2, Storm=3, Sandstorm=4, Fog=5 }` vs
+> client `render::WeatherState { Clear=0, Rain=1, Snow=2, Fog=3, Storm=4 }`
+> (pas de `Sandstorm`, indices `Fog`/`Storm` inversés). Le mapping doit être
+> explicite, pas un cast. `Sandstorm` → repli (`Fog` ou `Storm`) à trancher.
+
+Table de correspondance `render::WeatherState` → `CloudParams` (indicatif, à
+affiner en jeu) :
+
+| WeatherState | Couverture | Type / densité | Teinte |
+|--------------|-----------|----------------|--------|
 | Clear | faible | cumulus épars | claire |
 | Fog | moyenne (bas) | stratus bas dense | gris pâle |
 | Rain | élevée | nimbostratus couvert | gris |
@@ -212,8 +236,13 @@ ou inclus selon la convention CI (`build-linux.yml` lance `ctest`).
 
 - **Coût GPU** : pleine qualité = lourd sur petites configs (assumé). Le knob
   `raymarchSteps`/`lightSteps` permet d'ajuster sans recompiler.
-- **Doublon `WeatherSystem`** : lever l'ambiguïté en phase plan avant de
-  brancher le mapper (cf. §9).
+- **Pas de doublon `WeatherSystem`** : résolu (cf. §9) — une seule classe,
+  réutilisée. Vigilance : ne pas réintroduire un détenteur d'état météo
+  parallèle ; le mapper lit `m_weatherSystem`.
+- **Gap réseau→visuel pré-existant** : le branchement opcode 156 →
+  `m_weatherSystem.SetWeather()` (cf. §9) est un correctif inclus dans ce spec.
+  Sans lui, ni les nuages ni les particules existantes ne réagissent à la météo
+  serveur.
 - **Ordre des passes** : insérer strictement avant le Volumetric Fog et après
   Lighting ; vérifier que le depth de la scène est disponible et correctement
   lu (occultation montagnes).

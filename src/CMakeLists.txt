@@ -144,6 +144,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/auction/AuctionHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/loot/LootHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/lunar/LunarHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/worldclock/WorldClockHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/admin/AdminCommandHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/admin/SlashCommandRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/trade/TradeSessionRegistry.cpp

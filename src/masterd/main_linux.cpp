@@ -54,6 +54,7 @@
 #include "src/masterd/handlers/auction/AuctionHandler.h"
 #include "src/masterd/handlers/loot/LootHandler.h"
 #include "src/masterd/handlers/lunar/LunarHandler.h"
+#include "src/masterd/handlers/worldclock/WorldClockHandler.h"
 #include "src/masterd/handlers/admin/AdminCommandHandler.h"
 #include "src/masterd/admin/SlashCommandRegistry.h"
 #include "src/masterd/account/AccountRoleService.h"
@@ -953,6 +954,35 @@ int main(int argc, char** argv)
 		lunarHandler.Tick(bootNowMs);
 	}
 
+	// Phase 3 step 1 WorldClock — WorldClockHandler : etat horloge monde
+	// authoritative master (epoch, time scale, offset, pause). Etat MUTABLE
+	// (contrairement a la lune stateless) modifiable au runtime via commandes
+	// admin (/settime, /pausetime, /timescale) ; chaque mutation broadcast 205.
+	// Pas de Subscribe : l'horloge est globale.
+	engine::server::WorldClockHandler worldClockHandler;
+	worldClockHandler.SetServer(&server);
+	worldClockHandler.SetSessionManager(&sessionManager);
+	worldClockHandler.SetConnectionSessionMap(&connSessionMap);
+
+	// Parametres boot lus depuis config.json (cles game.worldclock.*). Defaults
+	// identiques aux defaults WorldClockParams (epoch 2026-01-01 UTC, 60 min
+	// reelles/jour de jeu, periode lunaire 16 jours de jeu). Doit etre appele
+	// AVANT le premier HandlePacket.
+	{
+		engine::world::WorldClockParams wcParams;
+		wcParams.epochRefUnixMs = static_cast<uint64_t>(
+			config.GetInt("game.worldclock.epoch_ms", 1767225600000ll));
+		wcParams.timeScaleRealMinPerDay = static_cast<float>(
+			config.GetDouble("game.worldclock.timescale_real_min_per_day", 60.0));
+		wcParams.lunarPeriodGameSec =
+			config.GetDouble("game.worldclock.lunar_period_game_days", 16.0) * 86400.0;
+		worldClockHandler.Configure(wcParams);
+		LOG_INFO(Net, "[ServerMain] WorldClock config : epoch={}ms timeScale={:.2f}min/jour lunarPeriod={:.0f}s",
+			static_cast<unsigned long long>(wcParams.epochRefUnixMs),
+			wcParams.timeScaleRealMinPerDay, wcParams.lunarPeriodGameSec);
+	}
+	LOG_INFO(Net, "[ServerMain] WorldClockHandler configured (Phase 3 WorldClock, opcodes 203-205)");
+
 	// AdminCommand RBAC — registre des slash commands (charge depuis
 	// game/data/config/slash_commands.json) + handler central qui valide
 	// le role + log audit pour TOUTES les slash commands. Pattern central
@@ -1051,7 +1081,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &interactiveHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &interactiveHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &worldClockHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -1157,6 +1187,8 @@ int main(int argc, char** argv)
 			lootHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeLunarStateRequest)
 			lunarHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeWorldClockStateRequest)
+			worldClockHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpInteractiveStateChange)
 			interactiveHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeAdminCommandRequest)

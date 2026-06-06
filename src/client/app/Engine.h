@@ -493,6 +493,9 @@ namespace engine
 		/// M38.1: day/night cycle (time-of-day, sun direction, sky gradient colours).
 		engine::render::DayNightCycle m_dayNight;
 
+		std::array<float, 3> m_iblLastSunDir { 0.0f, 1.0f, 0.0f }; ///< dernière dir soleil capturée pour l'IBL (suivi jour/nuit).
+		float m_iblRegenTimer = 0.0f;                              ///< throttle de re-capture IBL (s).
+
 		/// Sky pass V1 (M38.1 + Phase 5 Lunar) : pipeline ciel + disque lunaire
 		/// procedural via push-constants. Consomme sky.frag et sky.vert. Le
 		/// pipeline est cree au boot dans InitVulkan ; m_skyPassReady passe a

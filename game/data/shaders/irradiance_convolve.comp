@@ -1,0 +1,91 @@
+#version 450
+
+// IBL — Convolution d'irradiance diffuse (cosine-weighted hemisphere).
+// Lit la cubemap d'environnement source (binding 0, samplerCube), écrit une
+// face de la cubemap d'irradiance (binding 1, image2D rgba16f).
+// Dispatché une fois par face. Modèle : specular_prefilter.comp (1 seul mip).
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(binding = 0) uniform samplerCube uEnv;
+layout(binding = 1, rgba16f) writeonly uniform image2D uOut;
+
+layout(push_constant, std430) uniform PC {
+	uint face;       // 0..5 face de la cubemap
+	uint faceSize;   // largeur/hauteur de la face (32)
+	float pad0;
+	float pad1;
+} pc;
+
+const float PI = 3.14159265359;
+
+// (face 0..5, u,v dans [-1,1]) -> direction depuis le centre du cube.
+// COPIE À L'IDENTIQUE de specular_prefilter.comp (orientation des faces cohérente
+// entre les 3 shaders IBL — sinon réflexions/ambiant en miroir).
+vec3 FaceUvToDirection(uint face, float u, float v)
+{
+	switch (face) {
+		case 0u: return normalize(vec3( 1.0, -v, -u)); // +X
+		case 1u: return normalize(vec3(-1.0, -v,  u)); // -X
+		case 2u: return normalize(vec3( u,  1.0, -v)); // +Y
+		case 3u: return normalize(vec3( u, -1.0,  v)); // -Y
+		case 4u: return normalize(vec3( u, -v,  1.0)); // +Z
+		default: return normalize(vec3(-u, -v, -1.0)); // -Z (5)
+	}
+}
+
+void main()
+{
+	ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+	uint faceSize = pc.faceSize;
+	if (coord.x >= int(faceSize) || coord.y >= int(faceSize))
+		return;
+
+	float u = 2.0 * (float(coord.x) + 0.5) / float(faceSize) - 1.0;
+	float v = 2.0 * (float(coord.y) + 0.5) / float(faceSize) - 1.0;
+
+	// N = normale de la surface = direction du texel courant.
+	vec3 N = FaceUvToDirection(pc.face, u, v);
+
+	// Repère tangent autour de N (up arbitraire évitant la colinéarité).
+	vec3 up      = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+	vec3 right   = normalize(cross(up, N));
+	up           = normalize(cross(N, right));
+
+	// Convolution cosine-hemisphere : double boucle phi/theta.
+	const float deltaPhi   = 0.025;
+	const float deltaTheta = 0.025;
+	vec3  irradiance = vec3(0.0);
+	float nrSamples  = 0.0;
+
+	for (float phi = 0.0; phi < 2.0 * PI; phi += deltaPhi)
+	{
+		for (float theta = 0.0; theta < 0.5 * PI; theta += deltaTheta)
+		{
+			// Direction d'échantillonnage en espace tangent puis monde.
+			vec3 tangentSample = vec3(sin(theta) * cos(phi),
+			                          sin(theta) * sin(phi),
+			                          cos(theta));
+			vec3 sampleVec = tangentSample.x * right
+			               + tangentSample.y * up
+			               + tangentSample.z * N;
+
+			// Pondération cos(theta) (lambert) * sin(theta) (jacobien sphérique).
+			irradiance += textureLod(uEnv, sampleVec, 0.0).rgb
+			            * cos(theta) * sin(theta);
+			nrSamples += 1.0;
+		}
+	}
+
+	// FACTEUR D'IRRADIANCE — convention LearnOpenGL.
+	// `lighting.frag` (bloc useIBL, ~ligne 422) consomme l'irradiance ainsi :
+	//     vec3 diffuseIBL = texture(irradianceMap, normalW).rgb * albedo * kD;
+	// -> multiplication directe par albedo SANS division par PI. Le terme
+	// diffus Lambert (albedo/PI) n'est donc PAS divisé par PI côté lighting :
+	// le facteur PI doit être ABSORBÉ ici, dans l'irradiance pré-intégrée
+	// (irradiance = PI * moyenne des échantillons). On garde donc bien le `PI *` ;
+	// le retirer sous-exposerait l'ambiant d'un facteur PI.
+	irradiance = PI * irradiance * (1.0 / max(nrSamples, 1.0));
+
+	imageStore(uOut, coord, vec4(irradiance, 1.0));
+}

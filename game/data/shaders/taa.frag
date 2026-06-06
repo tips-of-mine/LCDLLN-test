@@ -1,9 +1,10 @@
 #version 450
 
-// M07.4: TAA — reproject history, clamp 3x3 neighborhood, blend.
+// M07.4: TAA — reproject history, variance clamping du voisinage 3x3, blend.
 // Binding 0: current LDR, 1: history prev, 2: velocity (R16G16, NDC delta), 3: depth (optional).
 // uvHistory = uv - velocity*0.5 (velocity is currNDC - prevNDC; UV = (NDC+1)*0.5).
-// Clamp history to 3x3 min/max of current; out = lerp(current, historyClamped, alpha).
+// Borne l'historique à mean ± sigma (variance clamping) du voisinage 3x3 courant ;
+// out = lerp(current, historyClamped, alpha). Moins de ghosting qu'un min/max dur.
 
 layout(location = 0) in vec2 inUV;
 layout(location = 0) out vec4 outColor;
@@ -35,19 +36,26 @@ void main()
 
     vec4 currentCenter = texture(uCurrent, inUV);
 
-    // 3x3 neighborhood min/max of current frame.
+    // Variance clamping (Salvi/Karis) : au lieu d'un AABB min/max dur du voisinage
+    // 3x3 (trop permissif -> ghosting), on borne l'historique à mean ± gamma*sigma.
+    // La boîte est plus serrée et adaptée au bruit local -> moins de traînées,
+    // tout en gardant assez de marge pour l'anti-aliasing.
     vec2 texelSize = 1.0 / vec2(textureSize(uCurrent, 0));
-    vec4 cMin = currentCenter;
-    vec4 cMax = currentCenter;
+    vec4 m1 = vec4(0.0);
+    vec4 m2 = vec4(0.0);
     for (int dy = -1; dy <= 1; ++dy)
         for (int dx = -1; dx <= 1; ++dx)
         {
-            if (dx == 0 && dy == 0) continue;
-            vec2 uv = inUV + vec2(float(dx), float(dy)) * texelSize;
-            vec4 c = texture(uCurrent, uv);
-            cMin = min(cMin, c);
-            cMax = max(cMax, c);
+            vec4 c = texture(uCurrent, inUV + vec2(float(dx), float(dy)) * texelSize);
+            m1 += c;
+            m2 += c * c;
         }
+    const float invN = 1.0 / 9.0;
+    vec4 mean  = m1 * invN;
+    vec4 sigma = sqrt(max(m2 * invN - mean * mean, vec4(0.0)));
+    const float gamma = 1.0; // largeur de la boîte en écarts-types
+    vec4 cMin = mean - gamma * sigma;
+    vec4 cMax = mean + gamma * sigma;
 
     vec4 history = texture(uHistory, uvHistory);
     vec4 historyClamped = clamp(history, cMin, cMax);

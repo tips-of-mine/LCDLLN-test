@@ -14,10 +14,15 @@ namespace engine::render
 	public:
 		DeferredDestroyQueue() = default;
 
-		/// Queues a buffer for destruction after the given frame's fence is signaled.
-		void PushBuffer(VkBuffer buffer, uint64_t fenceValue);
-		/// Queues an image for destruction after the given frame's fence is signaled.
-		void PushImage(VkImage image, uint64_t fenceValue);
+		/// Queues a buffer (et sa mémoire associée) pour destruction après que le fence
+		/// de la frame donnée est signalé. La mémoire est libérée APRÈS le buffer.
+		/// \param memory mémoire à libérer (VK_NULL_HANDLE si gérée ailleurs).
+		void PushBuffer(VkBuffer buffer, VkDeviceMemory memory, uint64_t fenceValue);
+		/// Queues une image (sa vue + sa mémoire) pour destruction après que le fence
+		/// de la frame donnée est signalé. Ordre : vue, image, puis mémoire.
+		/// \param view vue d'image à détruire (VK_NULL_HANDLE si aucune).
+		/// \param memory mémoire à libérer (VK_NULL_HANDLE si gérée ailleurs).
+		void PushImage(VkImage image, VkImageView view, VkDeviceMemory memory, uint64_t fenceValue);
 
 		/// Frees all queued resources whose fenceValue <= completedFrameIndex. Call after vkWaitForFences(completedFrameIndex's frame).
 		void Collect(VkDevice device, uint64_t completedFrameIndex);
@@ -29,6 +34,8 @@ namespace engine::render
 			enum class Type { Buffer, Image } type = Type::Buffer;
 			VkBuffer buffer = VK_NULL_HANDLE;
 			VkImage image = VK_NULL_HANDLE;
+			VkImageView view = VK_NULL_HANDLE;
+			VkDeviceMemory memory = VK_NULL_HANDLE;
 		};
 		std::queue<Entry> m_queue;
 	};

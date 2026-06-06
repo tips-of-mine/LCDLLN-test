@@ -77,12 +77,19 @@ void main()
     // morph towards their snapped parent position.
     if (pc.morphFactor > 0.0 && pc.lodLevel < 4)
     {
-        // Snap local position to nearest parent LOD grid vertex
+        // Snap local position to nearest parent LOD grid vertex.
+        // snappedLocalX/Z sont en indices FINS (mêmes unités que inPatchLocal),
+        // arrondis au sommet pair (= grille parent). La position monde doit donc
+        // utiliser EXACTEMENT la même conversion que worldX/worldZ ci-dessus
+        // (origin + localIndex * stepMult * vertStepWorld). L'ancien facteur
+        // « * 2.0 » échantillonnait la heightmap deux fois trop loin → la cible de
+        // morph n'était pas la vraie hauteur parent, d'où des sauts de hauteur
+        // (coutures/tirets sombres) dans la bande de transition de LOD.
         float snappedLocalX = floor(inPatchLocal.x / 2.0 + 0.5) * 2.0;
         float snappedLocalZ = floor(inPatchLocal.y / 2.0 + 0.5) * 2.0;
 
-        float snappedWorldX = pc.patchOriginX + snappedLocalX * stepMult * 2.0 * vertStepWorld;
-        float snappedWorldZ = pc.patchOriginZ + snappedLocalZ * stepMult * 2.0 * vertStepWorld;
+        float snappedWorldX = pc.patchOriginX + snappedLocalX * stepMult * vertStepWorld;
+        float snappedWorldZ = pc.patchOriginZ + snappedLocalZ * stepMult * vertStepWorld;
 
         vec2 snappedUV;
         snappedUV.x = clamp((snappedWorldX - terrainOriginX) / terrainSize, 0.0, 1.0);

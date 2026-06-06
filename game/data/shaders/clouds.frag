@@ -124,8 +124,9 @@ void main()
 	// Intersection de la dalle horizontale [baseAlt, topAlt].
 	float baseAlt = pc.zenithColor.w;
 	float topAlt  = pc.horizonColor.w;
-	if (rd.y == 0.0)
+	if (abs(rd.y) < 1e-4)
 	{
+		// Rayon quasi-horizontal : pas d'intersection nette de la dalle.
 		outColor = vec4(sceneCol, 1.0);
 		return;
 	}

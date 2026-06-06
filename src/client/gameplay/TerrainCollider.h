@@ -2,9 +2,9 @@
 
 #include "src/client/gameplay/CharacterController.h"  // for IWorldCollider
 
-namespace engine::render::terrain
+namespace engine::world::terrain
 {
-    class TerrainRenderer;  // forward
+    class IHeightField;  // forward (Phase 2 : source de hauteur abstraite)
 }
 
 namespace engine::world::water
@@ -17,10 +17,11 @@ namespace engine::gameplay
 
 /// Implementation de IWorldCollider pour le terrain heightmap (B.1).
 ///
-/// Bind sur un TerrainRenderer deja initialise ; les requetes de hauteur
-/// passent par `TerrainRenderer::SampleHeightAtWorldXZ` (bilineaire, origin /
-/// worldSize / heightScale gerees par le renderer). `SweepCapsule` realise
-/// un sweep vertical approxime contre le sol : si la capsule traverse le
+/// Bind sur une ou deux sources `IHeightField` (Phase 2, chantier C) : un
+/// champ chunke prioritaire (residents) et un champ heightmap de repli. Les
+/// requetes de hauteur passent par `GroundHeightAt` qui aiguille chunk ->
+/// heightmap -> sol plat. `SweepCapsule` realise un sweep vertical approxime
+/// contre le sol echantillonne par `GroundHeightAt` : si la capsule traverse le
 /// terrain entre `startCenter` et `endCenter`, on renvoie le hit avec la
 /// fraction lineaire correspondante (approximation valable pour pentes
 /// faibles et pas de simulation court).
@@ -36,10 +37,13 @@ public:
     TerrainCollider();
     ~TerrainCollider() override;
 
-    /// Bind sur le terrain (non-owning). Doit etre appele avant toute
-    /// requete (`SweepCapsule`, `GroundHeightAt`). Passer `nullptr` pour
-    /// debinder (toutes les requetes renvoient alors un sol plat a Y=0).
-    void BindTerrain(const engine::render::terrain::TerrainRenderer* terrainRenderer);
+    /// Bind les sources de hauteur (non-owning). `chunkField` est prioritaire
+    /// quand il est resident (zones chunkees embarquees) ; `heightmapField`
+    /// sert de repli (heightmap legacy). L'un ou l'autre peut etre `nullptr`
+    /// (collider non-bound -> sol plat a Y=0). Remplace
+    /// `BindTerrain(TerrainRenderer*)` (Phase 2, chantier C).
+    void BindHeightFields(const engine::world::terrain::IHeightField* chunkField,
+                          const engine::world::terrain::IHeightField* heightmapField);
 
     /// IWorldCollider : sweep capsule du centre `startCenter` vers `endCenter`.
     /// Retourne true ssi le sweep traverse le sol pendant le mouvement ;
@@ -66,9 +70,12 @@ public:
     bool QueryWater(const engine::math::Vec3& worldCenter, WaterQuery& out) const override;
 
 private:
-    /// Non-owning. Lifetime garanti par l'appelant (le terrain vit aussi
-    /// longtemps que le collider qui s'y refere).
-    const engine::render::terrain::TerrainRenderer* m_terrain = nullptr;
+    /// Non-owning. Source de hauteur prioritaire (chunks residents, grille 256).
+    /// Lifetime garanti par l'appelant. nullptr = pas de source chunkee.
+    const engine::world::terrain::IHeightField* m_chunkField = nullptr;
+    /// Non-owning. Source de hauteur de repli (heightmap legacy). Lifetime
+    /// garanti par l'appelant. nullptr = pas de repli (sol plat a Y=0).
+    const engine::world::terrain::IHeightField* m_heightmapField = nullptr;
     /// Non-owning. Scene d'eau pour QueryWater (nage). nullptr = pas d'eau.
     const engine::world::water::WaterScene* m_water = nullptr;
 };

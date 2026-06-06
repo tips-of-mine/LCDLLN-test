@@ -4875,7 +4875,14 @@ namespace engine
 										// echantillonnant le sol + half-capsule (0.9 m = height/2) pour eviter
 										// que la sphere du bas de la capsule traverse le sol au premier sweep.
 										{
-											m_terrainCollider.BindTerrain(&m_terrain);
+											// Phase 2 (chantier C) — construire les IHeightField et les
+											// injecter dans le collider. Chunk (terrain.bin residents,
+											// grille 256) prioritaire si resident ; repli heightmap
+											// (m_terrain) sinon. m_streamCache (Init ~ligne 1365) et
+											// m_terrain (Init ~ligne 3538) deja initialises a ce point.
+											m_heightmapField = std::make_unique<engine::world::terrain::HeightmapHeightField>(&m_terrain);
+											m_chunkField     = std::make_unique<engine::world::terrain::ChunkHeightField>(&m_streamCache, &m_cfg);
+											m_terrainCollider.BindHeightFields(m_chunkField.get(), m_heightmapField.get());
 
 											// Nage (v1) : eau-test procedurale. La zone demo est plate et sans
 											// eau ; on pose un BASSIN DE TEST au-dessus du sol pour valider la

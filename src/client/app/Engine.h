@@ -72,6 +72,8 @@
 #include "src/client/render/GpuUploadQueue.h"
 #include "src/client/render/vk/StagingAllocator.h"
 #include "src/client/render/terrain/TerrainRenderer.h"
+#include "src/client/world/terrain/HeightmapHeightField.h"
+#include "src/client/world/terrain/ChunkHeightField.h"
 #include "src/client/render/terrain_chunk/TerrainChunkRenderer.h"
 // Sous-projet A (Task 15) : skinned humanoid avatar runtime.
 #include "src/client/render/skinned/SkinnedRenderer.h"
@@ -957,6 +959,12 @@ namespace engine
 		/// puisse decider Idle/Walk/Run/Jump sans avoir a reconstruire l'input.
 		engine::gameplay::CharacterController                     m_characterController;
 		engine::gameplay::TerrainCollider                         m_terrainCollider;
+		/// Phase 2 (chantier C) — sources de hauteur injectées dans
+		/// `m_terrainCollider` au boot (BindHeightFields). `m_chunkField`
+		/// (terrain.bin résidents) prioritaire si résident ; `m_heightmapField`
+		/// (wrappe `m_terrain`) en repli. Non-owning vis-à-vis de leurs sources.
+		std::unique_ptr<engine::world::terrain::HeightmapHeightField> m_heightmapField;
+		std::unique_ptr<engine::world::terrain::ChunkHeightField>     m_chunkField;
 		float                                                     m_avatarYaw = 3.14159265f;
 		uint32_t m_gameplayInputSeq = 0;         ///< TC.2 : séquence monotone des Input UDP.
 		float    m_gameplayInputAccumSec = 0.0f; ///< TC.2 : accumulateur de cadence d'envoi.

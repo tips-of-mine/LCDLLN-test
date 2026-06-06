@@ -3983,6 +3983,11 @@ namespace engine
 										);
 									LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
 
+									// Suivi jour/nuit IBL : mémorise la direction soleil capturée au
+									// boot pour que le 1er frame ne déclenche pas une regen immédiate
+									// (la regen se fait uniquement quand le soleil a assez bougé).
+									m_iblLastSunDir = { iblSky.lightDir[0], iblSky.lightDir[1], iblSky.lightDir[2] };
+
 									// M45.2 — la passe VolumetricFog est active uniquement si son Init a
 									// reussi (shaders presents). Sinon Engine enregistre un passthrough
 									// (copie PostWater -> Fogged) pour que Bloom lise une image valide.
@@ -7824,6 +7829,39 @@ namespace engine
 		m_zoneAtmosphere.ambientColor[0] = dnState.ambientColor[0];
 		m_zoneAtmosphere.ambientColor[1] = dnState.ambientColor[1];
 		m_zoneAtmosphere.ambientColor[2] = dnState.ambientColor[2];
+	}
+
+	// --- Suivi jour/nuit de l'IBL : re-capture du ciel quand le soleil a
+	// assez bouge, throttle pour eviter un stall trop frequent (vkQueueWaitIdle).
+	// Garde sur IsValid() (IBL active). Point sur : fin du bloc day/night,
+	// hors enregistrement de command buffer de frame.
+	if (m_pipeline && m_pipeline->GetIrradiancePass().IsValid())
+	{
+		constexpr float kIblMinRegenInterval = 2.5f;   // s
+		constexpr float kIblSunCosThreshold  = 0.9962f; // cos(~5deg)
+		m_iblRegenTimer += static_cast<float>(dt);
+		const engine::render::DayNightCycle::State& dn = m_dayNight.GetState();
+		const float dotSun = dn.lightDir[0]*m_iblLastSunDir[0]
+		                   + dn.lightDir[1]*m_iblLastSunDir[1]
+		                   + dn.lightDir[2]*m_iblLastSunDir[2];
+		if (m_iblRegenTimer >= kIblMinRegenInterval && dotSun < kIblSunCosThreshold)
+		{
+			engine::render::SkyCaptureParams iblSky{};
+			for (int i = 0; i < 3; ++i)
+			{
+				iblSky.lightDir[i]     =  dn.lightDir[i];
+				iblSky.zenithColor[i]  =  dn.skyZenith[i];
+				iblSky.horizonColor[i] =  dn.skyHorizon[i];
+				iblSky.moonDir[i]      = -dn.lightDir[i];
+			}
+			iblSky.moonIntensity    = dn.isDaytime ? 0.0f : 1.0f;
+			iblSky.moonPhase        = static_cast<float>(dn.moonPhase);
+			iblSky.moonIllumination = dn.moonIllumination;
+			m_pipeline->RegenerateIbl(m_vkDeviceContext.GetDevice(),
+			                          m_vkDeviceContext.GetGraphicsQueue(), iblSky);
+			m_iblRegenTimer = 0.0f;
+			m_iblLastSunDir = { dn.lightDir[0], dn.lightDir[1], dn.lightDir[2] };
+		}
 	}
 
 	// M38.2 — Advance weather system and propagate audio volume.

@@ -63,6 +63,14 @@ namespace engine::render
 			ShaderLoaderFn loadSpirv,
 			const engine::render::SkyCaptureParams& skyParams);
 
+		/// Re-capture le ciel IBL + reconvolue prefilter & irradiance avec les
+		/// paramètres ciel courants (suivi jour/nuit). Suppose les passes IBL déjà
+		/// Init au boot ; no-op (return false) sinon. Fait 3 submits + vkQueueWaitIdle
+		/// internes -> STALL : à appeler throttlé, en main thread, HORS enregistrement
+		/// de command buffer de frame.
+		bool RegenerateIbl(VkDevice device, VkQueue graphicsQueue,
+			const engine::render::SkyCaptureParams& skyParams);
+
 		/// Destroys all passes in reverse init order. Safe to call when not initialised.
 		void Destroy(VkDevice device);
 

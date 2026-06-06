@@ -478,6 +478,26 @@ namespace engine::render
 		return true;
 	}
 
+	bool DeferredPipeline::RegenerateIbl(VkDevice device, VkQueue graphicsQueue,
+		const engine::render::SkyCaptureParams& skyParams)
+	{
+		// Suivi jour/nuit : re-exécute la séquence du boot [1][2][3] SANS Init
+		// (les passes IBL sont déjà initialisées). Chaque Generate re-dispatch +
+		// barrières sur la MÊME image + vkQueueWaitIdle → contenu mis à jour, handles
+		// inchangés (les vues IBL re-bindées chaque frame voient le nouveau ciel).
+		// No-op (return false) si l'une des passes IBL n'est pas initialisée.
+		if (!m_skyCubeCapturePass.IsValid() || !m_specularPrefilterPass.IsValid()
+			|| !m_irradiancePass.IsValid())
+			return false;
+		const bool ok =
+			m_skyCubeCapturePass.Generate(device, graphicsQueue, skyParams)
+		 && m_specularPrefilterPass.Generate(device, graphicsQueue,
+				m_skyCubeCapturePass.GetImageView(), m_skyCubeCapturePass.GetSampler())
+		 && m_irradiancePass.Generate(device, graphicsQueue,
+				m_skyCubeCapturePass.GetImageView(), m_skyCubeCapturePass.GetSampler());
+		return ok;
+	}
+
 	void DeferredPipeline::Destroy(VkDevice device)
 	{
 		if (device == VK_NULL_HANDLE) return;

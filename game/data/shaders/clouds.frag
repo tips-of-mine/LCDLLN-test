@@ -33,6 +33,7 @@ layout(push_constant) uniform CloudPC
 	vec4  horizonColor;  // xyz = teinte horizon ciel ; w = topAltMeters
 	vec4  windParams;    // x = ventX ; y = ventZ ; z = vitesse ; w = anisotropie HG g
 	vec4  stepParams;    // x = nbStepsVue ; y = nbStepsLumière ; z = distMax (m) ; w = forceAmbiante
+	vec4  shadowParams;  // x = force des ombres de nuages au sol [0..1] ; yzw réservés
 } pc;
 
 const float PI = 3.14159265358979;
@@ -120,6 +121,37 @@ void main()
 	vec3 farWorld = farClip.xyz / farClip.w;
 	vec3 ro = pc.cameraPos.xyz;
 	vec3 rd = normalize(farWorld - ro);
+
+	// --- Ombres de nuages au sol (Phase 2) ---
+	// Pour les pixels de géométrie (depth < 1), marche le rayon SOLEIL à travers
+	// la dalle de nuages depuis la position monde du sol et assombrit la scène.
+	// Réutilise cloudDensity() (même champ de densité que la dalle vue).
+	float shadowStrength = pc.shadowParams.x;
+	if (depth < 1.0 && shadowStrength > 0.001)
+	{
+		vec4 gClipS = pc.invViewProj * vec4(ndc, depth, 1.0);
+		vec3 P = gClipS.xyz / gClipS.w;
+		vec3 sunS = normalize(pc.sunDir.xyz);
+		if (sunS.y > 0.05) // soleil au-dessus de l'horizon
+		{
+			float baseA = pc.zenithColor.w;
+			float topA  = pc.horizonColor.w;
+			float tb = (baseA - P.y) / sunS.y;
+			float tt = (topA  - P.y) / sunS.y;
+			float te = max(min(tb, tt), 0.0);
+			float tx = max(tb, tt);
+			if (tx > te)
+			{
+				const int ss = 8;
+				float sdt = (tx - te) / float(ss);
+				float sum = 0.0;
+				float st  = te;
+				for (int i = 0; i < ss; ++i) { sum += cloudDensity(P + sunS * st) * sdt; st += sdt; }
+				float shadowTrans = exp(-sum * 0.04);
+				sceneCol *= mix(1.0, shadowTrans, shadowStrength);
+			}
+		}
+	}
 
 	// Intersection de la dalle horizontale [baseAlt, topAlt].
 	float baseAlt = pc.zenithColor.w;

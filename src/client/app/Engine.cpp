@@ -6399,6 +6399,12 @@ namespace engine
 													pc.stepParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.max_distance_meters", 60000.0));
 													pc.stepParams[3] = static_cast<float>(m_cfg.GetDouble("render.clouds.ambient_strength", 0.4));
 
+													// Phase 2 — force des ombres de nuages au sol (0 = désactivé).
+													pc.shadowParams[0] = static_cast<float>(m_cfg.GetDouble("render.clouds.shadow_strength", 0.5));
+													pc.shadowParams[1] = 0.0f;
+													pc.shadowParams[2] = 0.0f;
+													pc.shadowParams[3] = 0.0f;
+
 													m_pipeline->GetCloudPass().Record(
 														m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
 														m_fgSceneColorFoggedId, m_fgDepthId, m_fgCloudsId, pc, m_currentFrame % 2);

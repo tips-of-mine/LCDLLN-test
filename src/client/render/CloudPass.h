@@ -33,8 +33,9 @@ namespace engine::render
 			float horizonColor[4];  ///< xyz horizon ; w = topAltMeters.      16 o.
 			float windParams[4];    ///< x ventX ; y ventZ ; z vitesse ; w = HG g. 16 o.
 			float stepParams[4];    ///< x stepsVue ; y stepsLum ; z distMax ; w = ambiant. 16 o.
+			float shadowParams[4];  ///< x = force ombres sol [0..1] ; yzw réservés. 16 o.
 		};
-		static_assert(sizeof(CloudPushConstants) == 176, "CloudPushConstants doit faire 176 octets");
+		static_assert(sizeof(CloudPushConstants) == 192, "CloudPushConstants doit faire 192 octets");
 
 		CloudPass() = default;
 		CloudPass(const CloudPass&) = delete;

@@ -15,7 +15,7 @@
 // Sortie :
 //   outColor (location 0) — scene + nuages composités.
 //
-// Push constants (176 octets, fragment) — cf. CloudPushConstants (CloudPass.h).
+// Push constants (192 octets, fragment) — cf. CloudPushConstants (CloudPass.h).
 
 layout(location = 0) in  vec2 inUV;
 layout(location = 0) out vec4 outColor;

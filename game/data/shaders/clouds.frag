@@ -102,14 +102,17 @@ float cloudDensity(vec3 p)
 	// (1-coverage) brut donnait 0.75 à Clear -> densité nulle partout (nuages
 	// invisibles). On remappe : coverage 0 -> seuil 0.55 (ciel quasi vide),
 	// coverage 1 -> seuil 0.10 (couvert). smoothstep pour des bords doux + opacité visible.
-	float threshold = mix(0.55, 0.10, coverage);
-	float d = smoothstep(threshold, threshold + 0.2, base);
+	// Plage relevée (0.68..0.25) : à Clear (coverage~0.25) le seuil ~0.57 reste
+	// au-dessus de la moyenne du FBM (~0.48) -> nuages ÉPARS avec du ciel entre eux
+	// (et non un plafond couvrant). Storm (coverage~0.97) -> seuil ~0.26 -> couvert.
+	float threshold = mix(0.68, 0.25, coverage);
+	float d = smoothstep(threshold, threshold + 0.18, base);
 
 	// Érosion de détail haute fréquence sur les bords.
 	float detail = fbm(sp * 4.0 + wind * 0.01);
 	d = max(d - detail * 0.2 * (1.0 - coverage), 0.0);
 
-	return d * heightGrad * pc.sunColor.w * 2.0; // * density, gain d'opacité
+	return d * heightGrad * pc.sunColor.w * 1.5; // * density, gain d'opacité
 }
 
 void main()

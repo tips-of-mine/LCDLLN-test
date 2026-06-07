@@ -6347,6 +6347,18 @@ namespace engine
 													engine::render::CloudParams cp =
 														engine::render::CloudParams::Lerp(current, target, m_weatherSystem.GetIntensity());
 
+													// Surcharges LIVE (config.json, sans rebuild) pour le réglage visuel :
+													// échelle de couverture/densité + altitude/épaisseur de la couche.
+													float cloudCoverage = cp.coverage * static_cast<float>(m_cfg.GetDouble("render.clouds.coverage_scale", 1.0));
+													cloudCoverage = cloudCoverage < 0.0f ? 0.0f : (cloudCoverage > 1.0f ? 1.0f : cloudCoverage);
+													float cloudDensityV = cp.density * static_cast<float>(m_cfg.GetDouble("render.clouds.density_scale", 1.0));
+													if (cloudDensityV < 0.0f) cloudDensityV = 0.0f;
+													const double baseAltCfg = m_cfg.GetDouble("render.clouds.base_altitude_m", 0.0); // 0 = auto (météo)
+													const double thickCfg   = m_cfg.GetDouble("render.clouds.thickness_m", 0.0);     // 0 = auto
+													float cloudBaseAlt = baseAltCfg > 0.0 ? static_cast<float>(baseAltCfg) : cp.baseAltMeters;
+													float cloudTopAlt  = thickCfg   > 0.0 ? (cloudBaseAlt + static_cast<float>(thickCfg)) : cp.topAltMeters;
+													if (cloudTopAlt <= cloudBaseAlt) cloudTopAlt = cloudBaseAlt + 100.0f;
+
 													engine::render::CloudPass::CloudPushConstants pc{};
 													// invViewProj + cameraPos : MÊME source que la passe VolumetricFog
 													// ci-dessus (rs.viewProjMatrix inversée + rs.camera.position).
@@ -6396,10 +6408,10 @@ namespace engine
 														pc.zenithColor[i]  = dn.skyZenith[i]  * tint;
 														pc.horizonColor[i] = dn.skyHorizon[i] * tint;
 													}
-													pc.sunDir[3]       = cp.coverage;
-													pc.sunColor[3]     = cp.density;
-													pc.zenithColor[3]  = cp.baseAltMeters;
-													pc.horizonColor[3] = cp.topAltMeters;
+													pc.sunDir[3]       = cloudCoverage;
+													pc.sunColor[3]     = cloudDensityV;
+													pc.zenithColor[3]  = cloudBaseAlt;
+													pc.horizonColor[3] = cloudTopAlt;
 
 													pc.windParams[0] = 1.0f;
 													pc.windParams[1] = 0.3f;

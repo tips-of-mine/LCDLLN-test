@@ -45,9 +45,11 @@ namespace engine::render
 		const float kPi = 3.14159265358979f;
 		const float heading = std::atan2(camFwdX, camFwdZ);
 
-		// Centre de la boussole, avec de la place au-dessus pour l'arc temporel.
+		// Centre de la boussole : coin HAUT-DROITE (dégagé du soleil, qui est rendu
+		// par le ciel au centre-haut quand on le regarde). Place au-dessus pour l'arc.
+		// Déplaçable : ajuster center.x / center.y ici.
 		const float arcR = radiusPx + 16.0f;
-		const ImVec2 center(screenW * 0.5f, arcR + 14.0f);
+		const ImVec2 center(screenW - arcR - 16.0f, arcR + 14.0f);
 		ImDrawList* dl = ImGui::GetForegroundDrawList();
 
 		// ---- Arc temporel (demi-cercle supérieur, θ de π=gauche à 0=droite) ----

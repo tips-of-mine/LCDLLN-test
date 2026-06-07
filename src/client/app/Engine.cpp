@@ -96,6 +96,7 @@
 #endif
 #include <windows.h>
 #	include "imgui.h"
+#	include "src/client/render/CompassHud.h"
 #endif
 
 namespace engine
@@ -10064,6 +10065,20 @@ namespace engine
 			}
 			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
 			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+#if defined(_WIN32)
+			// Boussole HUD (aide à valider l'orientation vis-à-vis du soleil) : visible
+			// en jeu. Forward caméra = row 2 du view matrix ; direction soleil = atmosphère
+			// pilotée par le cycle jour/nuit. Marqueur soleil en haut = on regarde le soleil.
+			if (m_authUi.IsInWorldShard())
+			{
+				const uint32_t rIdxHud = m_renderReadIndex.load(std::memory_order_acquire);
+				const engine::RenderState& rsHud = m_renderStates[rIdxHud];
+				engine::render::DrawCompassHud(
+					rsHud.viewMatrix.m[2], rsHud.viewMatrix.m[10],
+					m_zoneAtmosphere.sunDirection[0], m_zoneAtmosphere.sunDirection[2],
+					dw, dh);
+			}
+#endif
 			// Cellule de dialogue PNJ : fenêtre centrale dédiée (no-op si inactif).
 			// Partage la frame ImGui en cours (NewFrame déjà appelé plus haut).
 			if (m_dialogueImGui && m_dialogue.IsActive())

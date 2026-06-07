@@ -1,14 +1,10 @@
 #pragma once
 // Petite boussole HUD (ImGui) pour le client de jeu.
 //
-// Rôle : afficher le cap de la caméra (N/E/S/O) et surtout un marqueur SOLEIL,
-// pour aider à valider visuellement quand le joueur regarde vers le soleil
-// (le marqueur soleil arrive en HAUT de la boussole quand la caméra est alignée
-// avec le soleil). Le haut de la boussole = direction regardée par la caméra.
-//
-// La position relative du soleil est calculée à partir des vrais vecteurs monde
-// (forward caméra + direction soleil), donc correcte quelle que soit la
-// convention de Nord du moteur.
+// Rôle : afficher le cap de la caméra. Le HAUT de la boussole = direction
+// regardée par la caméra ; une AIGUILLE rouge indique toujours le NORD et tourne
+// au fur et à mesure que le joueur pivote/se déplace. Les lettres N/E/S/O
+// tournent de même.
 //
 // Effet de bord : dessine via ImGui::GetForegroundDrawList() (overlay, ne capture
 // pas la souris, n'ouvre pas de fenêtre interactive).
@@ -21,19 +17,17 @@
 
 namespace engine::render
 {
-	/// Dessine la boussole HUD.
+	/// Dessine la boussole HUD (aiguille pointant le Nord).
 	/// \param camFwdX,camFwdZ  Forward caméra projeté sur le plan horizontal (XZ), non normalisé OK.
-	/// \param sunX,sunZ        Direction VERS le soleil projetée sur XZ (non normalisée OK).
 	/// \param screenW,screenH  Dimensions de la surface (px), pour positionner la boussole.
 	/// \param radiusPx         Rayon de la boussole en pixels (petite par défaut).
 	inline void DrawCompassHud(float camFwdX, float camFwdZ,
-	                           float sunX, float sunZ,
-	                           float screenW, float screenH,
+	                           float screenW, float /*screenH*/,
 	                           float radiusPx = 46.0f)
 	{
-		// Cap de la caméra et azimut du soleil (radians). atan2(x, z) : +Z = "Nord".
+		// Cap de la caméra (radians). atan2(x, z) : +Z = "Nord".
 		const float heading = std::atan2(camFwdX, camFwdZ);
-		const float sunAz   = std::atan2(sunX, sunZ);
+		const float kPi = 3.14159265358979f;
 
 		// Centre : en haut, légèrement décalé du bord (déplaçable plus tard).
 		const ImVec2 center(screenW * 0.5f, radiusPx + 24.0f);
@@ -43,7 +37,7 @@ namespace engine::render
 		dl->AddCircleFilled(center, radiusPx + 4.0f, IM_COL32(10, 12, 18, 150), 48);
 		dl->AddCircle(center, radiusPx, IM_COL32(220, 225, 235, 220), 48, 2.0f);
 
-		// Place un point cardinal (bearing monde) sur la boussole : le HAUT = cap caméra.
+		// Place un point d'azimut monde sur la boussole : le HAUT = cap caméra.
 		// Position écran (y vers le bas) : up = -Y. phi = bearing - heading.
 		auto place = [&](float bearing, float r) -> ImVec2
 		{
@@ -51,8 +45,7 @@ namespace engine::render
 			return ImVec2(center.x + r * std::sin(phi), center.y - r * std::cos(phi));
 		};
 
-		// Lettres cardinales (N=+Z, E=+X, S=-Z, O=-X).
-		const float kPi = 3.14159265358979f;
+		// Lettres cardinales (N=+Z, E=+X, S=-Z, O=-X), tournent avec le cap.
 		struct Card { float bearing; const char* label; };
 		const Card cards[4] = {
 			{ 0.0f, "N" }, { kPi * 0.5f, "E" }, { kPi, "S" }, { -kPi * 0.5f, "O" }
@@ -65,27 +58,25 @@ namespace engine::render
 			            IM_COL32(235, 238, 245, 235), c.label);
 		}
 
-		// Repère "direction regardée" : petit triangle fixe au sommet.
+		// Index fixe "direction regardée" : petit repère au sommet de l'anneau.
 		dl->AddTriangleFilled(
 			ImVec2(center.x, center.y - radiusPx - 7.0f),
 			ImVec2(center.x - 5.0f, center.y - radiusPx + 2.0f),
 			ImVec2(center.x + 5.0f, center.y - radiusPx + 2.0f),
-			IM_COL32(255, 90, 90, 240));
+			IM_COL32(235, 238, 245, 235));
 
-		// Marqueur SOLEIL : disque jaune. En HAUT de la boussole = caméra alignée au soleil.
-		const ImVec2 sp = place(sunAz, radiusPx - 4.0f);
-		dl->AddCircleFilled(sp, 6.0f, IM_COL32(255, 220, 60, 255), 16);
-		dl->AddCircle(sp, 6.0f, IM_COL32(120, 90, 0, 255), 16, 1.5f);
-
-		// Angle caméra↔soleil (0° = pile vers le soleil), aide au diagnostic nuages.
-		float rel = sunAz - heading;
-		while (rel >  kPi) rel -= 2.0f * kPi;
-		while (rel < -kPi) rel += 2.0f * kPi;
-		const int deg = static_cast<int>(std::abs(rel) * 180.0f / kPi + 0.5f);
-		char buf[32];
-		std::snprintf(buf, sizeof(buf), "soleil %d", deg);
-		const ImVec2 lts = ImGui::CalcTextSize(buf);
-		dl->AddText(ImVec2(center.x - lts.x * 0.5f, center.y + radiusPx + 6.0f),
-		            IM_COL32(255, 220, 60, 235), buf);
+		// AIGUILLE NORD : pointe rouge vers le Nord (tourne avec le cap), queue grise.
+		const ImVec2 north = place(0.0f, radiusPx - 6.0f);
+		const ImVec2 south = place(kPi, radiusPx - 6.0f);
+		// Base de l'aiguille (perpendiculaire) pour un losange fin.
+		const float perp = heading; // direction "droite" sur la boussole = est local
+		const ImVec2 sideA(center.x + 5.0f * std::cos(perp), center.y + 5.0f * std::sin(perp));
+		const ImVec2 sideB(center.x - 5.0f * std::cos(perp), center.y - 5.0f * std::sin(perp));
+		// Queue grise (vers le sud).
+		dl->AddTriangleFilled(sideA, sideB, south, IM_COL32(150, 155, 165, 235));
+		// Pointe rouge (vers le nord).
+		dl->AddTriangleFilled(sideA, sideB, north, IM_COL32(230, 60, 60, 255));
+		// Moyeu central.
+		dl->AddCircleFilled(center, 3.0f, IM_COL32(245, 248, 252, 255), 12);
 	}
 }

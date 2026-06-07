@@ -10072,8 +10072,10 @@ namespace engine
 			{
 				const uint32_t rIdxHud = m_renderReadIndex.load(std::memory_order_acquire);
 				const engine::RenderState& rsHud = m_renderStates[rIdxHud];
+				const engine::render::DayNightCycle::State& dnHud = m_dayNight.GetState();
 				engine::render::DrawCompassHud(
 					rsHud.viewMatrix.m[2], rsHud.viewMatrix.m[10],
+					dnHud.timeOfDay, dnHud.isDaytime,
 					dw, dh);
 			}
 #endif

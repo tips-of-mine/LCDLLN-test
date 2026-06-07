@@ -137,11 +137,16 @@ horaire dupliquée — `CloudPass` **consomme** l'état déjà calculé.
 
 ## 8. Ombres de nuages au sol
 
-`clouds_shadow.comp` génère une **cloud-shadow-map basse résolution**
-(projection top-down de la couverture le long de `lightDir`). Échantillonnée
-dans `lighting.frag` pour **atténuer la lumière directionnelle** → ombres
-mouvantes au sol, synchronisées avec le vent. Activable via
-`render.clouds.shadowMapEnabled`.
+**Implémenté (Phase 2)** : plutôt qu'une `clouds_shadow.comp` + une modification du
+`lighting.frag` déféré (descriptor set fragile, cf. CLAUDE.md), les ombres sont
+calculées **dans la même passe `clouds.frag`** : pour les pixels de géométrie
+(`depth < 1`), on marche le rayon **soleil** à travers la dalle de nuages depuis
+la position monde du sol, on accumule `cloudDensity()` (même champ que la dalle
+vue → **aucun doublon**) et on assombrit `sceneColor` avant le compositing du
+ciel. Avantages : une seule passe, aucun changement de pipeline/descriptor du
+lighting, aucune nouvelle ressource frame-graph. Réglable via
+`render.clouds.shadow_strength` (0 = désactivé). Ombres mouvantes synchronisées
+avec le vent. Une cloud-shadow-map top-down dédiée reste une optimisation future.
 
 ## 9. Pilotage par la météo — état réel résolu (anti-doublon)
 

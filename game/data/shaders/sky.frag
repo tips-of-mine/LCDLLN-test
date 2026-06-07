@@ -143,16 +143,17 @@ void main()
     float sunDot = max(dot(viewDir, pc.lightDir), 0.0);
     float sunAng = acos(clamp(sunDot, -1.0, 1.0)); // angle au centre du soleil (rad)
 
-    const float kSunRadius = 0.018;                       // ~1°, lisible
-    float sunDisk  = smoothstep(kSunRadius, kSunRadius * 0.6, sunAng); // disque net
-    float corona   = pow(sunDot, 250.0) * 0.7;            // couronne serrée
-    float haloGlow = pow(sunDot, 8.0)   * 0.30;           // bloom large
+    const float kSunRadius = 0.045;                       // ~2.5°, nettement visible
+    float sunDisk  = smoothstep(kSunRadius, kSunRadius * 0.8, sunAng); // disque net
+    float corona   = pow(sunDot, 90.0) * 0.9;             // couronne large
+    float haloGlow = pow(sunDot, 7.0)  * 0.40;            // bloom atmosphérique
 
-    // Élévation du soleil (lightDir.y) : bas -> orange, haut -> blanc chaud.
+    // Élévation du soleil (lightDir.y) : bas -> orange, haut -> jaune-blanc chaud.
     float sunElev  = clamp(pc.lightDir.y, 0.0, 1.0);
-    vec3  sunCore  = mix(vec3(1.0, 0.50, 0.18), vec3(1.0, 0.93, 0.78), sunElev);
-    vec3  haloCol  = mix(vec3(1.0, 0.45, 0.20), pc.horizonColor, sunElev);
-    vec3  sunContrib = sunCore * (sunDisk + corona) + haloCol * haloGlow;
+    vec3  sunCore  = mix(vec3(1.0, 0.45, 0.15), vec3(1.0, 0.92, 0.72), sunElev);
+    vec3  haloCol  = mix(vec3(1.0, 0.40, 0.15), pc.horizonColor, sunElev);
+    // Disque sur-lumineux (HDR > 1) -> ressort du ciel et alimente le bloom.
+    vec3  sunContrib = sunCore * (sunDisk * 2.5 + corona) + haloCol * haloGlow;
 
     // Pas de soleil quand il est sous l'horizon.
     if (pc.lightDir.y < -0.02)

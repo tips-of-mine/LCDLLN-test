@@ -6360,11 +6360,13 @@ namespace engine
 													if (cloudTopAlt <= cloudBaseAlt) cloudTopAlt = cloudBaseAlt + 100.0f;
 
 													engine::render::CloudPass::CloudPushConstants pc{};
-													// invViewProj + cameraPos : MÊME source que la passe VolumetricFog
-													// ci-dessus (rs.viewProjMatrix inversée + rs.camera.position).
+													// invViewProj + cameraPos. On utilise la matrice NON-jitterée
+													// (viewProjMatrixUnjittered) : le raymarch nuages doit être stable
+													// temporellement, sinon le jitter TAA fait scintiller les nuages
+													// (haute fréquence, non reprojetables faute de vecteurs de mouvement).
 													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 													const engine::RenderState& rs = m_renderStates[readIdx];
-													const float* vp = rs.viewProjMatrix.m;
+													const float* vp = rs.viewProjMatrixUnjittered.m;
 													const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
 													const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
 													const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
@@ -9622,6 +9624,11 @@ namespace engine
 			m_taaHistoryInvalid = true;
 
 		out.projMatrix = out.camera.ComputeProjectionMatrix();
+
+		// ViewProj non-jitterée (avant l'ajout du jitter TAA) : sert au raymarch des
+		// nuages pour qu'ils soient stables temporellement (pas de tremblement
+		// sous-pixel -> pas de scintillement via le TAA).
+		out.viewProjMatrixUnjittered = out.projMatrix * out.viewMatrix;
 
 		const uint32_t taaSampleIndex = m_currentFrame % engine::render::kTaaHaltonN;
 		float jitterX = 0.0f, jitterY = 0.0f;

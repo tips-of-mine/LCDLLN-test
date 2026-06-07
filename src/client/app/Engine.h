@@ -155,6 +155,11 @@ namespace engine
 		engine::math::Mat4 viewMatrix;
 		engine::math::Mat4 projMatrix;
 		engine::math::Mat4 viewProjMatrix;
+		/// ViewProj SANS le jitter TAA (= projMatrix non-jitterée * viewMatrix).
+		/// Utilisée par la passe nuages : raymarcher avec la matrice jitterée fait
+		/// trembler le rayon en sous-pixel chaque frame -> scintillement des nuages
+		/// (haute fréquence, non reprojetables par le TAA). Stable temporellement.
+		engine::math::Mat4 viewProjMatrixUnjittered;
 		/// M07.1: ViewProj from previous frame (for TAA reprojection).
 		engine::math::Mat4 prevViewProjMatrix;
 		/// M07.1: Current frame jitter in NDC (x, y), applied to projection.

@@ -52,8 +52,8 @@
             "raymarch_steps": 64,
             "light_steps": 6,
             "max_distance_meters": 60000.0,
-            "ambient_strength": 0.4,
-            "wind_scale": 6.0,
+            "ambient_strength": 0.55,
+            "wind_scale": 40.0,
             "overcast_strength": 0.6,
             "shadow_strength": 0.5
         },

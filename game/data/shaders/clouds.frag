@@ -234,7 +234,12 @@ void main()
 			}
 			// Powder (auto-ombrage des bords).
 			float powder = 1.0 - exp(-dens * 2.0);
-			vec3 lightCol = sunCol * lightTrans * hg * powder + skyAmb;
+			// Éclairage : terme directionnel soleil = base lumineuse (0.8) + pic
+			// Henyey-Greenstein vers le soleil, atténué par l'auto-ombrage vers le
+			// soleil ; + ambiant ciel. La base évite les nuages gris/ternes (un
+			// cumulus éclairé tend vers le blanc). hg ne fait que renforcer le pic.
+			float sunPhase = 0.8 + 2.0 * hg;
+			vec3 lightCol = sunCol * lightTrans * sunPhase * mix(0.7, 1.0, powder) + skyAmb;
 
 			float aT = exp(-dens * dt * 0.05);
 			scattered += transmittance * (1.0 - aT) * lightCol;

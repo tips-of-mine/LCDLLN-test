@@ -94,7 +94,9 @@ float cloudDensity(vec3 p)
 
 	// Animation par le vent.
 	vec3 wind = vec3(pc.windParams.x, 0.0, pc.windParams.y) * pc.windParams.z * pc.cameraPos.w;
-	vec3 sp = (p + wind) * 0.0006;
+	// Échelle de bruit plus fine (0.0010 ~ flocons de ~1 km) : évite les 2 gros
+	// blobs, donne plus de petits nuages découpés.
+	vec3 sp = (p + wind) * 0.0010;
 
 	float coverage = pc.sunDir.w;
 	float base = fbm(sp);
@@ -112,7 +114,7 @@ float cloudDensity(vec3 p)
 	float detail = fbm(sp * 4.0 + wind * 0.01);
 	d = max(d - detail * 0.2 * (1.0 - coverage), 0.0);
 
-	return d * heightGrad * pc.sunColor.w * 1.5; // * density, gain d'opacité
+	return d * heightGrad * pc.sunColor.w * 1.2; // * density, gain d'opacité (plus translucide)
 }
 
 void main()
@@ -246,7 +248,7 @@ void main()
 			// Henyey-Greenstein vers le soleil, atténué par l'auto-ombrage vers le
 			// soleil ; + ambiant ciel. La base évite les nuages gris/ternes (un
 			// cumulus éclairé tend vers le blanc). hg ne fait que renforcer le pic.
-			float sunPhase = 0.8 + 2.0 * hg;
+			float sunPhase = 0.6 + 1.6 * hg;
 			vec3 lightCol = sunCol * lightTrans * sunPhase * mix(0.7, 1.0, powder) + skyAmb;
 
 			float aT = exp(-dens * dt * 0.05);

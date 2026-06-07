@@ -57,10 +57,12 @@
             "overcast_strength": 0.6,
             "shadow_strength": 0.5,
             "_comment_tuning": "Réglages live (sans rebuild) : coverage_scale/density_scale (0=rien, 1=normal), base_altitude_m (0=auto météo) + thickness_m pour monter/descendre la couche. Couche basse (200-300 m) pour le vol des créatures (plafond ~400 m) : on doit pouvoir traverser les nuages.",
-            "coverage_scale": 1.0,
-            "density_scale": 0.85,
-            "base_altitude_m": 200.0,
-            "thickness_m": 100.0
+            "coverage_scale": 0.6,
+            "density_scale": 0.5,
+            "base_altitude_m": 320.0,
+            "thickness_m": 90.0,
+            "_comment_fade": "fade_distance_m : distance (m) de début d'estompage des nuages lointains (perspective aérienne). Évite le mur blanc à l'horizon ; baisser (1500) pour dégager plus l'horizon, monter (5000) pour des nuages visibles plus loin. 0 = désactivé.",
+            "fade_distance_m": 2500.0
         },
         "auth_ui": {
             "background_path": "ui/login/background.png",

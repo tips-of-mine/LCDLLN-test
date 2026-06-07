@@ -197,6 +197,11 @@ void main()
 	}
 
 	tExit = min(tExit, pc.stepParams.z); // distMax
+	if (tExit <= tEnter)
+	{
+		outColor = vec4(sceneCol, 1.0);
+		return;
+	}
 
 	int   steps      = int(pc.stepParams.x);
 	int   lightSteps = int(pc.stepParams.y);
@@ -252,6 +257,14 @@ void main()
 		t += dt;
 	}
 
-	vec3 finalCol = sceneCol * transmittance + scattered;
+	// Atténuation par la distance (perspective aérienne) : les nuages lointains se
+	// fondent dans le ciel au lieu de former un mur blanc opaque à l'horizon (un
+	// rayon rasant traverse la fine dalle sur des km -> saturation). Basé sur tEnter
+	// (distance au nuage le plus proche le long du rayon). shadowParams.z = distance
+	// de début d'estompage (m) ; estompe entre fadeStart et 3x fadeStart ; 0 = off.
+	float fadeStart = pc.shadowParams.z;
+	float fade = (fadeStart > 0.0) ? (1.0 - smoothstep(fadeStart, fadeStart * 3.0, tEnter)) : 1.0;
+	float opacity = (1.0 - transmittance) * fade;
+	vec3 finalCol = sceneCol * (1.0 - opacity) + scattered * fade;
 	outColor = vec4(finalCol, 1.0);
 }

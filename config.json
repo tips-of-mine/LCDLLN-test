@@ -149,7 +149,8 @@
         "bias_slope_max": 0.005
     },
     "bloom": {
-        "threshold": 1.0,
+        "_comment": "threshold relevé à 2.5 : seuls les éléments très brillants (soleil) bloomment ; évite les gros cercles blancs flous que les reflets spéculaires du feuillage produisaient à threshold=1.0.",
+        "threshold": 2.5,
         "knee": 0.5,
         "intensity": 1.0
     },

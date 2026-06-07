@@ -56,11 +56,11 @@
             "wind_scale": 40.0,
             "overcast_strength": 0.6,
             "shadow_strength": 0.5,
-            "_comment_tuning": "Réglages live (sans rebuild) : coverage_scale/density_scale (0=rien, 1=normal), base_altitude_m (0=auto météo) + thickness_m pour monter/descendre la couche.",
+            "_comment_tuning": "Réglages live (sans rebuild) : coverage_scale/density_scale (0=rien, 1=normal), base_altitude_m (0=auto météo) + thickness_m pour monter/descendre la couche. Couche basse (200-300 m) pour le vol des créatures (plafond ~400 m) : on doit pouvoir traverser les nuages.",
             "coverage_scale": 1.0,
-            "density_scale": 1.0,
-            "base_altitude_m": 2500.0,
-            "thickness_m": 1200.0
+            "density_scale": 0.85,
+            "base_altitude_m": 200.0,
+            "thickness_m": 100.0
         },
         "auth_ui": {
             "background_path": "ui/login/background.png",

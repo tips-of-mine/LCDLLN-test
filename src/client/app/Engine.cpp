@@ -5927,6 +5927,28 @@ namespace engine
 												// M45.1 — force d'inscattering directionnel (slot ambientColor.w).
 												// Override config.json (world.fog.inscatter) sinon valeur per-zone.
 												lp.ambientColor[3] = static_cast<float>(m_cfg.GetDouble("world.fog.inscatter", static_cast<double>(m_zoneAtmosphere.aerialInscatter)));
+
+												// Nuages (Phase 3) — assombrissement "ciel couvert" : module le
+												// soleil directionnel / l'ambiant selon la couverture nuageuse
+												// courante (dérivée du WeatherSystem, même source que CloudPass).
+												// Modulation scalaire pure (aucun changement de pipeline/descriptor) ;
+												// couplée au flag nuages, désactivable via overcast_strength = 0.
+												if (m_cfg.GetBool("render.clouds.enabled", true))
+												{
+													const float overcastStrength = static_cast<float>(m_cfg.GetDouble("render.clouds.overcast_strength", 0.6));
+													engine::render::CloudParams ocCur = engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetCurrentState());
+													engine::render::CloudParams ocTgt = engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetTargetState());
+													engine::render::CloudParams ocp   = engine::render::CloudParams::Lerp(ocCur, ocTgt, m_weatherSystem.GetIntensity());
+													float overcast = ocp.coverage * (ocp.density * 0.5f) * overcastStrength;
+													overcast = overcast < 0.0f ? 0.0f : (overcast > 1.0f ? 1.0f : overcast);
+													const float sunFactor = 1.0f - 0.7f * overcast; // soleil atténué (jusqu'à -70%)
+													const float ambFactor = 1.0f + 0.4f * overcast; // ambiant diffus renforcé
+													for (int i = 0; i < 3; ++i)
+													{
+														lp.lightColor[i]   *= sunFactor;
+														lp.ambientColor[i] *= ambFactor;
+													}
+												}
 												// Couleur du ciel utilisée par lighting.frag pour les pixels
 												// sans géométrie (depth==1.0). Pilotée par DayNightCycle pour
 												// rendre le cycle jour/nuit visible sans skybox dédié.

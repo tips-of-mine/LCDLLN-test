@@ -620,6 +620,7 @@ add_library(engine_core
   src/client/render/DayNightCycle.cpp
   src/client/render/SkyPass.cpp
   src/client/render/WeatherSystem.cpp
+  src/client/render/clouds/CloudWeatherMapper.cpp
   src/client/render/DynamicLightSystem.cpp
   src/client/render/CascadedShadowMaps.cpp
   src/client/render/BrdfLutPass.cpp
@@ -647,6 +648,7 @@ add_library(engine_core
   src/client/render/gi/DdgiUpdatePass.cpp
   src/client/render/gi/DdgiQuality.cpp
   src/client/render/VolumetricFogPass.cpp
+  src/client/render/CloudPass.cpp
   src/client/render/DepthOfFieldPass.cpp
   src/client/render/ImpostorPass.cpp
   src/client/render/ImpostorAsset.cpp

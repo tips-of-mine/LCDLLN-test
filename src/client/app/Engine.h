@@ -155,6 +155,11 @@ namespace engine
 		engine::math::Mat4 viewMatrix;
 		engine::math::Mat4 projMatrix;
 		engine::math::Mat4 viewProjMatrix;
+		/// ViewProj SANS le jitter TAA (= projMatrix non-jitterée * viewMatrix).
+		/// Utilisée par la passe nuages : raymarcher avec la matrice jitterée fait
+		/// trembler le rayon en sous-pixel chaque frame -> scintillement des nuages
+		/// (haute fréquence, non reprojetables par le TAA). Stable temporellement.
+		engine::math::Mat4 viewProjMatrixUnjittered;
 		/// M07.1: ViewProj from previous frame (for TAA reprojection).
 		engine::math::Mat4 prevViewProjMatrix;
 		/// M07.1: Current frame jitter in NDC (x, y), applied to projection.
@@ -359,6 +364,15 @@ namespace engine
 		/// brouillard volumique + god rays (VolumetricFog), ou copie passthrough si la
 		/// passe fog est invalide. Lu en SampledRead par Bloom_Prefilter / Bloom_Combine.
 		engine::render::ResourceId m_fgSceneColorFoggedId = engine::render::kInvalidResourceId;
+		/// Nuages — SceneColor_HDR_Clouds : SceneColor_HDR_Fogged après composition
+		/// des nuages volumétriques (CloudPass). Lu en SampledRead par Bloom
+		/// (Prefilter + Combine) lorsque la passe nuages est active. Même desc que
+		/// Fogged (R16G16B16A16_SFLOAT, extent swapchain).
+		engine::render::ResourceId m_fgCloudsId = engine::render::kInvalidResourceId;
+
+		/// Temps réel cumulé (secondes) pour l'advection des nuages par le vent
+		/// (push-constant CloudPass). Avancé chaque frame par le dt d'Update.
+		float m_cloudTimeSeconds = 0.0f;
 		/// M45.2 — true si VolumetricFogPass::IsValid() au boot (passe fog active) ;
 		/// sinon Engine enregistre un passthrough (copie PostWater -> Fogged).
 		bool m_volumetricFogReady = false;

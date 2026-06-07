@@ -336,6 +336,25 @@ namespace engine::render
 				LOG_WARN(Render, "M45.2: volumetric fog shaders not found, passthrough fallback");
 		}
 
+		// Nuages volumétriques : réutilise le fullscreen triangle de lighting.vert.
+		{
+			std::vector<uint32_t> cloudVert = loadSpirv("shaders/lighting.vert.spv");
+			std::vector<uint32_t> cloudFrag = loadSpirv("shaders/clouds.frag.spv");
+			if (!cloudVert.empty() && !cloudFrag.empty())
+			{
+				if (m_cloudPass.Init(device, physicalDevice, VK_FORMAT_R16G16B16A16_SFLOAT,
+						cloudVert.data(), cloudVert.size(), cloudFrag.data(), cloudFrag.size(),
+						2u, pipelineCacheHandle))
+					LOG_INFO(Render, "[Boot] DeferredPipeline CloudPass OK");
+				else
+					LOG_WARN(Render, "clouds: CloudPass init failed");
+			}
+			else
+			{
+				LOG_WARN(Render, "clouds: SPIR-V manquant (lighting.vert.spv / clouds.frag.spv)");
+			}
+		}
+
 		// M45.3 — Depth of field / bokeh pass (sur HDR, apres bloom, avant tonemap).
 		// Reutilise le vertex shader fullscreen triangle de la passe lighting.
 		// N'echoue jamais le boot : si shaders absents ou Init KO, la passe reste
@@ -511,6 +530,7 @@ namespace engine::render
 		m_tonemapPass.Destroy(device);
 		m_impostorPass.Destroy(device); // M45.5
 		m_depthOfFieldPass.Destroy(device); // M45.3
+		m_cloudPass.Destroy(device);
 		m_volumetricFogPass.Destroy(device); // M45.2
 		m_lightingPass.Destroy(device);
 		m_decalPass.Destroy(device);

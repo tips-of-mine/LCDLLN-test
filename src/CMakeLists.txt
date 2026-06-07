@@ -830,6 +830,17 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/chat/ChatLocalPayloadTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/chat/ChatLocalPayload.cpp)
 
+  # Nuages volumetriques (client) : CloudParams (struct pure, interpolation) +
+  # CloudWeatherMapper (WeatherState -> CloudParams). Tests header-only / pur
+  # CPU ; CloudWeatherMapper.cpp est fourni par engine_core (lie par le helper).
+  lcdlln_add_simple_test(cloud_params_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/clouds/CloudParamsTests.cpp)
+  lcdlln_add_simple_test(cloud_weather_mapper_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/clouds/CloudWeatherMapperTests.cpp)
+  # WeatherKindMap : conversion WeatherKind serveur (wire 156) -> WeatherState client.
+  lcdlln_add_simple_test(weather_kind_map_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/clouds/WeatherKindMapTests.cpp)
+
   # CMANGOS.01 (Phase 2.01b) : ChatCommandRouter pure tests
   add_executable(chat_command_router_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatCommandRouterTests.cpp

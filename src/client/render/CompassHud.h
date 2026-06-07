@@ -39,17 +39,19 @@ namespace engine::render
 	/// \param radiusPx         Rayon de la boussole (petite par défaut).
 	inline void DrawCompassHud(float camFwdX, float camFwdZ,
 	                           float timeOfDay, bool isDaytime,
-	                           float screenW, float /*screenH*/,
+	                           float /*screenW*/, float /*screenH*/,
 	                           float radiusPx = 44.0f)
 	{
 		const float kPi = 3.14159265358979f;
 		const float heading = std::atan2(camFwdX, camFwdZ);
 
-		// Centre de la boussole : coin HAUT-DROITE (dégagé du soleil, qui est rendu
-		// par le ciel au centre-haut quand on le regarde). Place au-dessus pour l'arc.
-		// Déplaçable : ajuster center.x / center.y ici.
+		// On positionne avec la VRAIE taille d'affichage ImGui (et non l'extent
+		// swapchain passé par l'appelant), sinon sur écran large/ultrawide ou DPI
+		// scalé la boussole peut tomber hors écran. Coin HAUT-DROITE.
+		// Déplaçable : ajuster center.x / center.y ci-dessous.
+		const float dispW = ImGui::GetIO().DisplaySize.x;
 		const float arcR = radiusPx + 16.0f;
-		const ImVec2 center(screenW - arcR - 16.0f, arcR + 14.0f);
+		const ImVec2 center(dispW - arcR - 16.0f, arcR + 14.0f);
 		ImDrawList* dl = ImGui::GetForegroundDrawList();
 
 		// ---- Arc temporel (demi-cercle supérieur, θ de π=gauche à 0=droite) ----

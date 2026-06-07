@@ -98,15 +98,18 @@ float cloudDensity(vec3 p)
 
 	float coverage = pc.sunDir.w;
 	float base = fbm(sp);
-	// Seuil par couverture : plus coverage est haut, plus le ciel se remplit.
-	float d = base - (1.0 - coverage);
-	d = max(d, 0.0);
+	// Seuil placé dans la plage RÉELLE du FBM (moyenne ~0.48, max ~0.97) : un seuil
+	// (1-coverage) brut donnait 0.75 à Clear -> densité nulle partout (nuages
+	// invisibles). On remappe : coverage 0 -> seuil 0.55 (ciel quasi vide),
+	// coverage 1 -> seuil 0.10 (couvert). smoothstep pour des bords doux + opacité visible.
+	float threshold = mix(0.55, 0.10, coverage);
+	float d = smoothstep(threshold, threshold + 0.2, base);
 
 	// Érosion de détail haute fréquence sur les bords.
 	float detail = fbm(sp * 4.0 + wind * 0.01);
-	d = max(d - detail * 0.25 * (1.0 - coverage), 0.0);
+	d = max(d - detail * 0.2 * (1.0 - coverage), 0.0);
 
-	return d * heightGrad * pc.sunColor.w; // * density
+	return d * heightGrad * pc.sunColor.w * 2.0; // * density, gain d'opacité
 }
 
 void main()

@@ -6317,6 +6317,18 @@ namespace engine
 										// CloudWeatherMapper). Si la passe nuages n'est pas prête, on garde
 										// SceneColor_HDR_Fogged comme source du bloom (cf sceneAfterClouds).
 										const bool cloudsEnabled = m_cfg.GetBool("render.clouds.enabled", true);
+										{
+											// Diagnostic one-shot : confirme si la passe nuages est active
+											// (enabled + SPIR-V chargé + pipeline OK). Tranche "build/spv" vs "réglage".
+											static bool s_cloudDiagLogged = false;
+											if (!s_cloudDiagLogged)
+											{
+												s_cloudDiagLogged = true;
+												LOG_INFO(Render, "[Clouds][diag] enabled={} cloudPassReady={}",
+													cloudsEnabled,
+													(m_pipeline && m_pipeline->IsCloudPassReady()));
+											}
+										}
 										if (cloudsEnabled && m_pipeline && m_pipeline->IsCloudPassReady())
 										{
 											m_frameGraph.addPass("Clouds",

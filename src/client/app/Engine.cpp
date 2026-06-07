@@ -6427,7 +6427,8 @@ namespace engine
 
 													// Phase 2 — force des ombres de nuages au sol (0 = désactivé).
 													pc.shadowParams[0] = static_cast<float>(m_cfg.GetDouble("render.clouds.shadow_strength", 0.5));
-													pc.shadowParams[1] = 0.0f;
+													// y = plafond de luminosité des nuages (anti-blowout vers le soleil) ; 0 = off.
+													pc.shadowParams[1] = static_cast<float>(m_cfg.GetDouble("render.clouds.max_luminance", 1.3));
 													// z = distance (m) de début d'estompage des nuages lointains (perspective
 													// aérienne) ; évite le mur blanc à l'horizon. 0 = désactivé.
 													pc.shadowParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.fade_distance_m", 2500.0));

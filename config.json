@@ -62,7 +62,9 @@
             "base_altitude_m": 320.0,
             "thickness_m": 90.0,
             "_comment_fade": "fade_distance_m : distance (m) de début d'estompage des nuages lointains (perspective aérienne). Évite le mur blanc à l'horizon ; baisser (1500) pour dégager plus l'horizon, monter (5000) pour des nuages visibles plus loin. 0 = désactivé.",
-            "fade_distance_m": 2500.0
+            "fade_distance_m": 2500.0,
+            "_comment_maxlum": "max_luminance : plafond de luminosité des nuages. Empêche le flamboiement en gros blobs blancs quand on regarde vers le soleil. Baisser (1.0, 0.8) si encore trop éclatant ; 0 = pas de plafond.",
+            "max_luminance": 1.3
         },
         "auth_ui": {
             "background_path": "ui/login/background.png",

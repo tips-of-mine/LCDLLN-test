@@ -120,8 +120,11 @@ namespace engine::render
 		// Aiguille : pointe rouge vers le Nord (tourne avec le cap), queue grise.
 		const ImVec2 north = place(0.0f, radiusPx - 6.0f);
 		const ImVec2 south = place(kPi, radiusPx - 6.0f);
-		const ImVec2 sideA(center.x + 5.0f * std::cos(heading), center.y + 5.0f * std::sin(heading));
-		const ImVec2 sideB(center.x - 5.0f * std::cos(heading), center.y - 5.0f * std::sin(heading));
+		// Base PERPENDICULAIRE à l'axe N-S de l'aiguille (axe = (-sin h, -cos h) ;
+		// perpendiculaire = (cos h, -sin h)). Sinon l'épaisseur apparente de
+		// l'aiguille varie avec l'orientation de la caméra.
+		const ImVec2 sideA(center.x + 5.0f * std::cos(heading), center.y - 5.0f * std::sin(heading));
+		const ImVec2 sideB(center.x - 5.0f * std::cos(heading), center.y + 5.0f * std::sin(heading));
 		dl->AddTriangleFilled(sideA, sideB, south, IM_COL32(150, 155, 165, 235));
 		dl->AddTriangleFilled(sideA, sideB, north, IM_COL32(230, 60, 60, 255));
 		dl->AddCircleFilled(center, 3.0f, IM_COL32(245, 248, 252, 255), 12);

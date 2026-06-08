@@ -802,11 +802,12 @@ namespace engine
 			// ui_theme.json : préférence de thème UI (fichier dédié écrit par le
 			// panneau Options, comme keybinds.json). Merge dans cfg puis applique.
 			if (cfg.LoadFromFile("ui_theme.json"))
-				LOG_INFO(Core, "[Boot] ui_theme.json applique");
+				LOG_INFO(Core, "[Boot] ui_theme.json applique (theme UI persistant)");
 			// Applique le thème lu ; défaut or_royal si absent ou nom invalide
 			// (SetActive renvoie false et conserve or_royal dans ce cas).
-			if (!LnTheme::SetActive(cfg.GetString("ui.theme", "or_royal")))
-				LOG_WARN(Core, "[Boot] theme '{}' inconnu -> or_royal", cfg.GetString("ui.theme", "or_royal"));
+			const std::string uiTheme = cfg.GetString("ui.theme", "or_royal");
+			if (!LnTheme::SetActive(uiTheme))
+				LOG_WARN(Core, "[Boot] theme '{}' inconnu -> or_royal", uiTheme);
 
 			// Apparence persistante (client.character_creation.gender) : fichier
 			// dedie character_appearance.json, ecrit par le selecteur de genre de

@@ -10469,7 +10469,13 @@ namespace engine
 	        // empêche l'auto-exposition de surcompenser une scène assombrie par les
 	        // ombres et de cramer le ciel/horizon en blanc. Réglable via config.
 	        const float minExp = static_cast<float>(m_cfg.GetDouble("exposure.min", 0.1));
-	        const float maxExp = static_cast<float>(m_cfg.GetDouble("exposure.max", 3.0));
+	        const float maxExpDay   = static_cast<float>(m_cfg.GetDouble("exposure.max", 3.0));
+	        const float maxExpNight = static_cast<float>(m_cfg.GetDouble("exposure.max_night", 1.0));
+	        // Plafond d'exposition lissé selon l'élévation du soleil : la nuit on
+	        // empêche l'auto-exposition de réhausser la luminance et d'annuler
+	        // l'assombrissement voulu. sunDir.y = sin(élévation) ∈ [-1,1].
+	        const float sunUpFactor = std::clamp(m_dayNight.GetState().sunDir[1] * 5.0f, 0.0f, 1.0f);
+	        const float maxExp = maxExpNight + (maxExpDay - maxExpNight) * sunUpFactor;
 	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed, minExp, maxExp, frameIndex);
 	    }
 	

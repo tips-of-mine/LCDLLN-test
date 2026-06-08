@@ -8949,7 +8949,11 @@ namespace engine
 
 		if (!m_editorEnabled)
 		{
-			if (!authGateActive && !m_chatUi.IsChatFocusActive() && !m_inGameOptionsPanelVisible)
+			if (!authGateActive && !m_chatUi.IsChatFocusActive() && !m_inGameOptionsPanelVisible
+					// Menu Pause ouvert => gèle tout l'input gameplay (déplacement,
+					// caméra, attaque, sorts, interaction), comme le panneau Options :
+					// le joueur ne doit ni bouger ni attaquer tant que la pause est active.
+					&& !m_inGamePauseMenuVisible)
 			{
 				// Touches d'action remappables (controls.keybind.*), resolues chaque
 				// frame depuis la config pour refleter immediatement un rebind fait

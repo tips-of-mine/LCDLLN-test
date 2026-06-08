@@ -10271,6 +10271,36 @@ namespace engine
 					m_cfg.SetValue("controls.mouse_sensitivity", static_cast<double>(sens));
 				}
 
+				// --- Thème de l'interface (recolore tout l'UI in-game) ---
+				// Libellés ASCII volontaires : la police in-game (Windlass) n'a
+				// pas tous les glyphes accentués (cf. "Se deconnecter" du menu pause).
+				auto prettyTheme = [](std::string_view n) -> const char* {
+					if (n == "or_royal") return "Or royal";
+					if (n == "sylve_emeraude") return "Sylve emeraude";
+					return "?";
+				};
+				const std::string_view curTheme = LnTheme::ActiveName();
+				if (ImGui::BeginCombo("Theme de l'interface", prettyTheme(curTheme)))
+				{
+					for (std::string_view n : LnTheme::Names())
+					{
+						const bool selected = (n == curTheme);
+						if (ImGui::Selectable(prettyTheme(n), selected) && !selected)
+						{
+							LnTheme::SetActive(n);
+							// Persistance : fichier dédié mergé au boot (comme keybinds.json).
+							const std::string js =
+								std::string("{\n  \"ui\": { \"theme\": \"")
+								+ std::string(LnTheme::ActiveName()) + "\" }\n}\n";
+							if (!engine::platform::FileSystem::WriteAllText("ui_theme.json", js))
+								LOG_WARN(Core, "[Options] ui_theme.json non ecrit (theme non persiste)");
+						}
+						if (selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+
 				// --- Controles : touches d'action remappables (controls.keybind.*) ---
 				ImGui::Spacing();
 				ImGui::Separator();

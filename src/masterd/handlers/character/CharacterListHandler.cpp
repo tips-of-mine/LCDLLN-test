@@ -7,6 +7,7 @@
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/shared/network/NetServer.h"
 #include "src/masterd/session/SessionManager.h"
+#include "src/masterd/handlers/worldclock/WorldClockHandler.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
 #include "src/shared/db/SqlPreparedStatement.h"
@@ -21,6 +22,7 @@ namespace engine::server
 	void CharacterListHandler::SetSessionManager(SessionManager* sessions) { m_sessions = sessions; }
 	void CharacterListHandler::SetConnectionSessionMap(ConnectionSessionMap* map) { m_connMap = map; }
 	void CharacterListHandler::SetConnectionPool(engine::server::db::ConnectionPool* pool) { m_pool = pool; }
+	void CharacterListHandler::SetWorldClockHandler(WorldClockHandler* wc) { m_worldClock = wc; }
 
 	void CharacterListHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize)
@@ -132,7 +134,13 @@ namespace engine::server
 			entries.push_back(std::move(e));
 		}
 
-		auto pkt = BuildCharacterListResponsePacket(1u, entries, requestId, sessionIdHeader);
+		// Piggyback horloge monde (opcode 40) : le client synchronise le cycle
+		// jour/nuit dès la sélection de personnage, sans requête 203 séparée.
+		const bool hasWc = (m_worldClock != nullptr);
+		engine::network::worldclock::WorldClockStateResponse wc;
+		if (hasWc)
+			wc = m_worldClock->BuildStateResponse();
+		auto pkt = BuildCharacterListResponsePacket(1u, entries, requestId, sessionIdHeader, hasWc, wc);
 		if (pkt.empty() || !m_server->Send(connId, pkt))
 		{
 			LOG_ERROR(Auth, "[CharacterListHandler] Send CHARACTER_LIST_RESPONSE failed (connId={}, account_id={}, server_id={})",

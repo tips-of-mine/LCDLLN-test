@@ -13,6 +13,7 @@ namespace engine::server
 	class NetServer;
 	class SessionManager;
 	class ConnectionSessionMap;
+	class WorldClockHandler;
 
 	/// Phase 1 — Master-side handler for kOpcodeCharacterListRequest.
 	/// Resolves connId → sessionId → accountId, queries the master DB for the
@@ -32,6 +33,11 @@ namespace engine::server
 		void SetConnectionSessionMap(ConnectionSessionMap* map);
 		void SetConnectionPool(engine::server::db::ConnectionPool* pool);
 
+		/// Branche le WorldClockHandler pour embarquer l'horloge dans la réponse
+		/// liste perso (piggyback opcode 40). Optionnel : si nullptr, aucune
+		/// horloge n'est jointe (hasWorldClock = 0).
+		void SetWorldClockHandler(WorldClockHandler* wc);
+
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
 
@@ -40,5 +46,6 @@ namespace engine::server
 		SessionManager* m_sessions = nullptr;
 		ConnectionSessionMap* m_connMap = nullptr;
 		engine::server::db::ConnectionPool* m_pool = nullptr;
+		WorldClockHandler* m_worldClock = nullptr;
 	};
 }

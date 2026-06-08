@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "factions": [
+    { "id": "lumiere", "name": "Chevaliers de la Lumière", "race": "humains", "selectable": true, "classes": [
+      { "id": "guerrier", "name": "Guerrier", "profile": "melee", "resource": "endurance" },
+      { "id": "archer", "name": "Archer", "profile": "distance", "resource": "souffle" },
+      { "id": "voleur", "name": "Voleur", "profile": "voleur", "resource": "reflexes" },
+      { "id": "inquisiteur_chatieur", "name": "Inquisiteur", "subclass": "Châtieur", "profile": "melee", "resource": "ferveur" },
+      { "id": "inquisiteur_hospitalier", "name": "Inquisiteur", "subclass": "Hospitalier", "profile": "healer", "resource": "ferveur" }
+    ] },
+    { "id": "justice", "name": "Chevaliers de la Justice", "race": "humains", "selectable": true, "classes": [
+      { "id": "guerrier", "name": "Guerrier", "profile": "melee", "resource": "endurance" },
+      { "id": "archer", "name": "Archer", "profile": "distance", "resource": "souffle" },
+      { "id": "paladin", "name": "Paladin", "profile": "sacre", "resource": "ferveur" },
+      { "id": "pretre_jugement", "name": "Prêtre", "subclass": "du Jugement", "profile": "lanceur", "resource": "ferveur" },
+      { "id": "pretre_grace", "name": "Prêtre", "subclass": "de la Grâce", "profile": "healer", "resource": "ferveur" }
+    ] },
+    { "id": "lune_noire", "name": "La Lune Noire", "race": "humains", "selectable": true, "classes": [
+      { "id": "guerrier", "name": "Guerrier", "profile": "melee", "resource": "endurance" },
+      { "id": "arbaletrier", "name": "Arbalétrier", "profile": "distance", "resource": "souffle" },
+      { "id": "pretre_lune_noire", "name": "Prêtre de la Lune Noire", "profile": "lanceur", "resource": "devotion" },
+      { "id": "menthats", "name": "Menthats", "profile": "lanceur", "resource": "magie" }
+    ] },
+    { "id": "dzorak", "name": "Dzorak", "race": "orcs", "selectable": true, "classes": [
+      { "id": "guerrier", "name": "Guerrier", "profile": "melee", "resource": "endurance" },
+      { "id": "chaman", "name": "Chaman", "profile": "lanceur", "resource": "transe" },
+      { "id": "archer", "name": "Archer", "profile": "distance", "resource": "souffle" },
+      { "id": "pisteur", "name": "Pisteur", "profile": "pisteur", "resource": "instinct" }
+    ] },
+    { "id": "legion", "name": "Légion infernale", "race": "demons", "selectable": true, "classes": [
+      { "id": "guerrier", "name": "Guerrier", "profile": "melee", "resource": "endurance" },
+      { "id": "demoniste", "name": "Démoniste", "profile": "lanceur", "resource": "corruption" },
+      { "id": "tourmenteur", "name": "Tourmenteur", "profile": "melee", "resource": "corruption" },
+      { "id": "sorcier_sang", "name": "Sorcier de sang", "profile": "lanceur", "resource": "corruption" }
+    ] },
+    { "id": "dragons", "name": "Chevaliers-Dragons", "race": "humains", "selectable": true, "classes": [
+      { "id": "guerrier", "name": "Guerrier", "profile": "melee", "resource": "endurance" },
+      { "id": "archimage", "name": "Archimage", "profile": "lanceur", "resource": "flamme_draconique" },
+      { "id": "dragonnier", "name": "Dragonnier", "profile": "melee", "resource": "furie_draconique" },
+      { "id": "gardien_ecailles", "name": "Gardien d'écailles", "profile": "tank", "resource": "ecaille" }
+    ] },
+    { "id": "serpent", "name": "Maison du Serpent", "race": "humains", "selectable": true, "classes": [
+      { "id": "guerrier", "name": "Guerrier", "profile": "melee", "resource": "endurance" },
+      { "id": "archimage", "name": "Archimage", "profile": "lanceur", "resource": "magie_base" },
+      { "id": "assassin", "name": "Assassin", "profile": "voleur", "resource": "reflexes" },
+      { "id": "mage", "name": "Mage", "profile": "lanceur", "resource": "magie_base" }
+    ] },
+    { "id": "naine", "name": "Faction Naine", "race": "nains", "selectable": true, "classes": [
+      { "id": "guerrier", "name": "Guerrier", "profile": "melee", "resource": "endurance" },
+      { "id": "pisteur", "name": "Pisteur", "profile": "pisteur", "resource": "instinct" },
+      { "id": "mage", "name": "Mage", "profile": "lanceur", "resource": "magie_base" },
+      { "id": "brise_roc", "name": "Brise-roc", "profile": "tank", "resource": "endurance" }
+    ] },
+    { "id": "elfe", "name": "Faction Elfe", "race": "elfes", "selectable": true, "classes": [
+      { "id": "guerrier", "name": "Guerrier", "profile": "melee", "resource": "endurance" },
+      { "id": "archer_bois", "name": "Archer", "subclass": "Bois", "profile": "distance", "resource": "souffle" },
+      { "id": "voleur_tenebreux", "name": "Voleur", "subclass": "Ténébreux", "profile": "voleur", "resource": "reflexes" },
+      { "id": "mage", "name": "Mage", "profile": "lanceur", "resource": "magie_base" }
+    ] },
+    { "id": "empire_hynn", "name": "L'Empire de L'hynn", "race": "humains", "selectable": false, "classes": [] }
+  ]
+}

@@ -70,6 +70,16 @@ identifiable, ne pas le confondre avec l'accent).
 
 ### Migration des consommateurs (~28 fichiers)
 
+> **Note (superseded par le plan d'implémentation, 2026-06-08)** : la migration
+> mécanique décrite ci-dessous a finalement été **évitée**. Le plan retient une
+> approche par **alias-références** : les constantes `kXxx` sont conservées comme
+> `inline const Rgba&` liées aux membres d'un `Palette` actif muté **en place**,
+> si bien que les ~249 call sites suivent le thème courant **sans aucune
+> édition**. La crainte « fragile à l'init » exprimée plus bas ne se matérialise
+> pas (aucun consommateur ne lit ces alias en initialisation statique — vérifié).
+> Le résultat fonctionnel est identique ; voir
+> [le plan](../plans/2026-06-08-theming-runtime-ui.md) § « Refinement vs spec ».
+
 Remplacement mécanique dans tous les écrans ImGui sous `src/client/render/` :
 
 - `LnTheme::kAccent` → `LnTheme::Active().accent`

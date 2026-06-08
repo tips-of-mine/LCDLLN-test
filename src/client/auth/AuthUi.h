@@ -5,6 +5,7 @@
 #include "src/shared/network/CharacterPayloads.h"
 #include "src/shared/network/NetClient.h"
 #include "src/shared/network/ServerListPayloads.h"
+#include "src/shared/network/WorldClockPayloads.h"
 #include "src/shared/platform/Input.h"
 #include "src/shared/platform/StableMutex.h"
 // Sous-projet C MVP (Task 12) — CharacterCreationPresenter est instancie
@@ -647,6 +648,15 @@ namespace engine::client
 
 		/// Phase 2 — Accessor pour le renderer ImGui de l'écran CharacterSelect.
 		const std::vector<engine::network::CharacterListEntry>& CharacterListEntries() const { return m_characterList; }
+		/// True si une horloge monde a été reçue en piggyback de la liste perso.
+		bool HasWorldClock() const { return m_hasWorldClock; }
+		/// L'état horloge piggyback (valide si HasWorldClock()).
+		const engine::network::worldclock::WorldClockStateResponse& WorldClock() const { return m_worldClock; }
+		/// Timestamp client (ms) de réception de l'horloge piggyback.
+		uint64_t WorldClockClientRecvMs() const { return m_worldClockClientRecvMs; }
+		/// Consommé par l'Engine : marque l'horloge piggyback comme appliquée
+		/// (évite une double application).
+		void ClearWorldClock() { m_hasWorldClock = false; }
 		/// Phase 2 — Index du personnage sélectionné (-1 = aucun).
 		int CharacterSelectIndex() const { return m_selectedCharacterIndex; }
 		void ImGuiSubmitShardPick(const engine::core::Config& cfg);
@@ -949,6 +959,11 @@ namespace engine::client
 		/// Vide = aucun personnage sur ce shard → routage vers \c Phase::CharacterCreate.
 		/// Au moins un = routage vers \c Phase::CharacterSelect.
 		std::vector<engine::network::CharacterListEntry> m_characterList;
+		/// Horloge monde reçue en piggyback (opcode 40). Consommée par l'Engine
+		/// (main thread) à l'entrée monde via \ref ClearWorldClock.
+		bool m_hasWorldClock = false;
+		engine::network::worldclock::WorldClockStateResponse m_worldClock{};
+		uint64_t m_worldClockClientRecvMs = 0;
 		/// Phase 2 — Index du personnage actuellement sélectionné dans \ref m_characterList (-1 = rien).
 		int m_selectedCharacterIndex = -1;
 		/// Correctif visibilité 1ère connexion — character_id du personnage qui vient d'être
@@ -1087,6 +1102,11 @@ namespace engine::client
 			/// Phase 2 — Personnages reçus via CHARACTER_LIST après TICKET_ACCEPTED. Vide si aucun
 			/// (route vers CharacterCreate) ou si la requête optionnelle a échoué (même routage).
 			std::vector<engine::network::CharacterListEntry> characterList;
+			/// Horloge monde reçue en piggyback (opcode 40). Appliquée au cycle
+			/// jour/nuit par l'Engine (main thread) au moment de l'entrée monde.
+			bool hasWorldClock = false;
+			engine::network::worldclock::WorldClockStateResponse worldClock{};
+			uint64_t worldClockClientRecvMs = 0;
 			/// Phase 3 — Endpoint du shard accepté (host:port) pour câbler la gameplay UDP.
 			std::string shardEndpoint;
 			/// Phase 3 — shard_id du shard accepté (déjà connu côté presenter mais utile pour

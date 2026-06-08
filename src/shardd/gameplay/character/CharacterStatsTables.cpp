@@ -77,6 +77,7 @@ namespace engine::server::gameplay
 		t.levelMax = static_cast<uint32_t>(s.GetInt("level_max", 100));
 		t.xpBase   = s.GetDouble("xp.base", 0.0);
 		t.xpFactor = s.GetDouble("xp.factor", 0.0);
+		// xp.base / xp.factor sont obligatoires dès maintenant (contrat de la donnée embarquée) même si ComputeStats ne les consomme pas encore — la couche XP les utilisera.
 		if (t.levelMax < 2 || t.xpBase <= 0.0 || t.xpFactor <= 0.0) return std::nullopt;
 
 		auto base = [&](const char* name) {
@@ -97,6 +98,7 @@ namespace engine::server::gameplay
 		t.perceptionLvl1   = s.GetDouble("bases.perception_lvl1", 10.0);
 		t.perceptionPerLevel = s.GetDouble("bases.perception_per_level", 0.5);
 
+		// NB: ces listes doivent rester synchronisées avec character_stats.json — un profil/race présent dans le JSON mais absent ici est ignoré silencieusement.
 		for (const char* p : { "tank","melee","sacre","distance","pisteur","voleur","healer","lanceur" })
 			t.classProfiles[p] = ParseClassProfile(s, std::string("class_profiles.") + p);
 		for (const char* r : { "humains","nains","orcs","elfes","demons" })

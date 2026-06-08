@@ -84,7 +84,7 @@ namespace engine::server::gameplay
 
 		d.speedWalk   = static_cast<float>(t.speedWalkBase  * cp.speed * rp.speed_walk * SexGet(sx, "speed_walk"));
 		d.speedRun    = static_cast<float>(t.speedRunBase   * cp.speed * rp.speed_run  * SexGet(sx, "speed_run"));
-		d.speedSprint = static_cast<float>(t.speedSprintBase* cp.speed * rp.speed_run  * SexGet(sx, "speed_run"));
+		d.speedSprint = static_cast<float>(t.speedSprintBase* cp.speed * rp.speed_run  * SexGet(sx, "speed_run")); // sprint : pas de mult race/sexe dédié dans les données — seule la base diffère, on réutilise les mults de course.
 
 		const double perceptionBase = t.perceptionLvl1 + t.perceptionPerLevel * (static_cast<double>(std::max(1u, level)) - 1.0);
 		d.perception = static_cast<float>(perceptionBase * cp.perception * rp.perception * SexGet(sx, "perception"));

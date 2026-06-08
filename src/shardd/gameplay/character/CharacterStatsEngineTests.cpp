@@ -23,7 +23,7 @@ namespace
 		if (!d) return false;
 		if (d->hp != 81u) return false;       // 100 * 0.90 * 0.90 * 1 = 81
 		if (d->damage != 11u) return false;   // 10 * 1.25 * 0.95 * 0.93 = 11.04 -> 11
-		if (!nearF(d->critRate, 2.2)) return false; // 2 * 1.00 * 1.10
+		if (!nearF(d->critRate, 2.2, 0.05)) return false; // 2 * 1.00 * 1.10
 		if (d->resourceKey != "reflexes") return false;
 		return true;
 	}

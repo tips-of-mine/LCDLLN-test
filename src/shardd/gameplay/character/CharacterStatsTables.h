@@ -41,7 +41,7 @@ namespace engine::server::gameplay
 	struct CharacterStatsTables
 	{
 		uint32_t levelMax = 100;
-		double xpBase = 0.0, xpFactor = 0.0;
+		double xpBase = 0.0, xpFactor = 0.0; // réservés à la couche XP (paramètres de courbe).
 
 		std::unordered_map<std::string, StatBase> bases; // hp,resource,damage,accuracy,range,crit_rate,stamina
 		double critMultBase = 1.5;

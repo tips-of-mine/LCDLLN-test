@@ -19,8 +19,8 @@ namespace engine::render
 		// ---- Sky colour keyframes  (time in hours) --------------------------
 
 		/// Night sky (0 h = midnight).
-		constexpr float kSkyZenithNight[3]  = { 0.01f, 0.02f, 0.08f };
-		constexpr float kSkyHorizonNight[3] = { 0.04f, 0.06f, 0.14f };
+		constexpr float kSkyZenithNight[3]  = { 0.004f, 0.005f, 0.012f };
+		constexpr float kSkyHorizonNight[3] = { 0.012f, 0.014f, 0.025f };
 
 		/// Dawn / dusk sky (≈ 6 h / 18 h).
 		constexpr float kSkyZenithDawn[3]  = { 0.30f, 0.18f, 0.45f };
@@ -44,7 +44,7 @@ namespace engine::render
 		constexpr float kIntensityNight = 0.10f; ///< Moonlight (spec: 0.1).
 
 		/// Minimum ambient to avoid pitch-black nights (spec: "avoid pitch black night").
-		constexpr float kAmbientNightMin = 0.04f;
+		constexpr float kAmbientNightMin = 0.02f;
 
 		// ---- Azimuth: fixed east->west sun path (simplified) ----------------
 		/// Azimuth angle at dawn (radians) — sun rises in the east.
@@ -69,6 +69,16 @@ namespace engine::render
 		if (v < lo) return lo;
 		if (v > hi) return hi;
 		return v;
+	}
+
+	/*static*/ void DayNightCycle::DirFromElevAzimuth(float sinElev, float azimuth, float out[3])
+	{
+		const float s    = Clamp(sinElev, -1.0f, 1.0f);
+		const float elev = std::asin(s);     // angle réel d'élévation
+		const float ce   = std::cos(elev);   // composante horizontale
+		out[0] = ce * std::cos(azimuth);
+		out[1] = s;                          // sin(elev) == s
+		out[2] = ce * std::sin(azimuth);
 	}
 
 	/// Horodatage Unix courant (ms) cote client. Utilise system_clock (horloge
@@ -215,50 +225,26 @@ namespace engine::render
 		const float dayFraction = Clamp((m_timeOfDay - 6.0f) / 12.0f, 0.0f, 1.0f);
 		const float sunAzimuth  = kAzimuthDawn + (kAzimuthDusk - kAzimuthDawn) * dayFraction;
 
-		// ---- Sun direction (toward-sun unit vector) --------------------------
-		// When elevation < 0 the sun is below the horizon; we switch to the moon.
+		// ---- Directions soleil & lune (toujours calculées, jour comme nuit) ----
 		const bool isSunUp = (sunElevation > 0.0f);
 		m_state.isDaytime  = isSunUp;
 
-		float activeLightElevation = sunElevation;
-		float activeLightAzimuth   = sunAzimuth;
+		// Soleil.
+		DirFromElevAzimuth(sunElevation, sunAzimuth, m_state.sunDir);
 
-		if (!isSunUp)
-		{
-			// Moon is 12 h offset from the sun (opposite side of the sky).
-			const float moonTime      = m_timeOfDay + 12.0f;
-			const float moonTimeW     = moonTime >= 24.0f ? moonTime - 24.0f : moonTime;
-			activeLightElevation      = std::sin(moonTimeW * kPi / 12.0f - kPi / 2.0f);
-			const float moonDayFrac   = Clamp((moonTimeW - 6.0f) / 12.0f, 0.0f, 1.0f);
-			activeLightAzimuth        = kAzimuthDawn + (kAzimuthDusk - kAzimuthDawn) * moonDayFrac;
-		}
+		// Lune = soleil décalé de 12 h (arc opposé).
+		const float moonTime    = (m_timeOfDay + 12.0f >= 24.0f)
+		                        ? m_timeOfDay - 12.0f : m_timeOfDay + 12.0f;
+		const float moonElev    = std::sin(moonTime * kPi / 12.0f - kPi / 2.0f);
+		const float moonDayFrac = Clamp((moonTime - 6.0f) / 12.0f, 0.0f, 1.0f);
+		const float moonAzimuth = kAzimuthDawn + (kAzimuthDusk - kAzimuthDawn) * moonDayFrac;
+		DirFromElevAzimuth(moonElev, moonAzimuth, m_state.moonDir);
 
-		// Clamp active elevation to avoid the light going underground when both are down.
-		// Per spec: minimum ambient keeps the scene never pitch-black.
-		const float clampedElev = Clamp(activeLightElevation, -1.0f, 1.0f);
-
-		m_state.lightDir[0] = std::cos(clampedElev) * std::cos(activeLightAzimuth);
-		m_state.lightDir[1] = clampedElev;   // Y = up/down component
-		m_state.lightDir[2] = std::cos(clampedElev) * std::sin(activeLightAzimuth);
-
-		// Normalise.
-		const float lenSq = m_state.lightDir[0] * m_state.lightDir[0]
-		                  + m_state.lightDir[1] * m_state.lightDir[1]
-		                  + m_state.lightDir[2] * m_state.lightDir[2];
-		if (lenSq > 1e-6f)
-		{
-			const float invLen = 1.0f / std::sqrt(lenSq);
-			m_state.lightDir[0] *= invLen;
-			m_state.lightDir[1] *= invLen;
-			m_state.lightDir[2] *= invLen;
-		}
-		else
-		{
-			// Fallback: straight up when degenerate.
-			m_state.lightDir[0] = 0.0f;
-			m_state.lightDir[1] = 1.0f;
-			m_state.lightDir[2] = 0.0f;
-		}
+		// Lumière directionnelle active = soleil le jour, lune la nuit.
+		const float* active = isSunUp ? m_state.sunDir : m_state.moonDir;
+		m_state.lightDir[0] = active[0];
+		m_state.lightDir[1] = active[1];
+		m_state.lightDir[2] = active[2];
 
 		// ---- Light colour and intensity ---------------------------------------
 		// sunElevation in [−1, +1]; map to [0, 1] for day blend.
@@ -303,9 +289,11 @@ namespace engine::render
 		// ---- Ambient colour --------------------------------------------------
 		// Ambient scales with sun elevation; minimum kAmbientNightMin to avoid pitch black.
 		const float ambientScale = kAmbientNightMin + (1.0f - kAmbientNightMin) * dayT;
-		m_state.ambientColor[0] = 0.04f * ambientScale + 0.02f * dayT;
-		m_state.ambientColor[1] = 0.04f * ambientScale + 0.04f * dayT;
-		m_state.ambientColor[2] = 0.08f * ambientScale + 0.06f * dayT;
+		// Nuit : gris froid neutre (canal bleu ~1.3× au lieu de 2×) pour éviter
+		// la dominante bleue. Le terme additif * dayT redonne du bleu le jour.
+		m_state.ambientColor[0] = 0.030f * ambientScale + 0.02f * dayT;
+		m_state.ambientColor[1] = 0.032f * ambientScale + 0.04f * dayT;
+		m_state.ambientColor[2] = 0.040f * ambientScale + 0.06f * dayT;
 
 		// Wave 4 polish (Phase 5 Lunar) : la nuit, on module aussi l'ambient
 		// par moonIllumination. La pleine lune eclaire l'environnement de

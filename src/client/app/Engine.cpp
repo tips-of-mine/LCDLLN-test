@@ -4086,10 +4086,10 @@ namespace engine
 											const engine::render::DayNightCycle::State& dnIbl = m_dayNight.GetState();
 											for (int i = 0; i < 3; ++i)
 											{
-												iblSky.lightDir[i]     = dnIbl.lightDir[i];
+												iblSky.lightDir[i]     = dnIbl.sunDir[i];
 												iblSky.zenithColor[i]  = dnIbl.skyZenith[i];
 												iblSky.horizonColor[i] = dnIbl.skyHorizon[i];
-												iblSky.moonDir[i]      = -dnIbl.lightDir[i];
+												iblSky.moonDir[i]      = dnIbl.moonDir[i];
 											}
 											iblSky.moonIntensity    = dnIbl.isDaytime ? 0.0f : 1.0f;
 											iblSky.moonPhase        = static_cast<float>(dnIbl.moonPhase);
@@ -5566,22 +5566,28 @@ namespace engine
 													}
 
 													const auto& dn = m_dayNight.GetState();
-													skyPc.lightDir[0]      = dn.lightDir[0];
-													skyPc.lightDir[1]      = dn.lightDir[1];
-													skyPc.lightDir[2]      = dn.lightDir[2];
+													skyPc.lightDir[0]      = dn.sunDir[0];
+													skyPc.lightDir[1]      = dn.sunDir[1];
+													skyPc.lightDir[2]      = dn.sunDir[2];
 													skyPc.zenithColor[0]   = dn.skyZenith[0];
 													skyPc.zenithColor[1]   = dn.skyZenith[1];
 													skyPc.zenithColor[2]   = dn.skyZenith[2];
 													skyPc.horizonColor[0]  = dn.skyHorizon[0];
 													skyPc.horizonColor[1]  = dn.skyHorizon[1];
 													skyPc.horizonColor[2]  = dn.skyHorizon[2];
-													// Lune = direction opposee au soleil (convention LCDLLN).
-													skyPc.moonDir[0]       = -dn.lightDir[0];
-													skyPc.moonDir[1]       = -dn.lightDir[1];
-													skyPc.moonDir[2]       = -dn.lightDir[2];
+													// Lune : direction réelle de la lune (jour comme nuit).
+													skyPc.moonDir[0]       = dn.moonDir[0];
+													skyPc.moonDir[1]       = dn.moonDir[1];
+													skyPc.moonDir[2]       = dn.moonDir[2];
 													skyPc.moonIntensity    = dn.isDaytime ? 0.0f : 1.0f;
 													skyPc.moonPhase        = static_cast<float>(dn.moonPhase);
 													skyPc.moonIllumination = dn.moonIllumination;
+													// Position caméra : sert au sky.frag à reconstruire un vrai
+													// rayon de vue (sinon ciel uniforme, soleil/lune invisibles).
+													skyPc.cameraPos[0]     = rs.camera.position.x;
+													skyPc.cameraPos[1]     = rs.camera.position.y;
+													skyPc.cameraPos[2]     = rs.camera.position.z;
+													skyPc.cameraPos[3]     = 0.0f;
 
 													m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
 														m_vkDeviceContext.GetDevice(), cmd, reg,
@@ -8163,10 +8169,10 @@ namespace engine
 			engine::render::SkyCaptureParams iblSky{};
 			for (int i = 0; i < 3; ++i)
 			{
-				iblSky.lightDir[i]     =  dn.lightDir[i];
+				iblSky.lightDir[i]     =  dn.sunDir[i];
 				iblSky.zenithColor[i]  =  dn.skyZenith[i];
 				iblSky.horizonColor[i] =  dn.skyHorizon[i];
-				iblSky.moonDir[i]      = -dn.lightDir[i];
+				iblSky.moonDir[i]      =  dn.moonDir[i];
 			}
 			iblSky.moonIntensity    = dn.isDaytime ? 0.0f : 1.0f;
 			iblSky.moonPhase        = static_cast<float>(dn.moonPhase);
@@ -8548,13 +8554,27 @@ namespace engine
 						engine::network::kOpcodeLunarStateRequest, lunarPayload);
 				}
 
-				// WorldClock sync (Task 6.2) — fetch l'etat horloge serveur a
-				// l'entree monde (master-authoritative). Le master repond via
-				// opcode 204 (WorldClockStateResponse) dispatche dans le push
-				// handler ci-dessus -> m_dayNight.SetServerClock (mode driven).
-				// Le push 205 arrive ensuite a chaque changement admin, et une
-				// re-sync 204 periodique (controle de derive) est declenchee par
-				// Update() toutes les game.worldclock.drift_check_sec.
+				// WorldClock sync — l'horloge est désormais reçue en piggyback de
+				// la réponse liste des personnages (opcode 40) et stockée dans
+				// l'AuthUi. On l'applique ici (main thread) au lieu d'envoyer une
+				// requête 203 séparée. Repli : si aucune horloge piggyback (vieux
+				// master / requête liste échouée), on garde l'ancien comportement
+				// (requête 203) pour ne pas régresser le solo/compat.
+				if (m_authUi.HasWorldClock())
+				{
+					const auto& wc = m_authUi.WorldClock();
+					engine::world::WorldClockParams p;
+					p.epochRefUnixMs         = wc.epochRefUnixMs;
+					p.timeScaleRealMinPerDay = wc.timeScaleRealMinPerDay;
+					p.offsetGameSec          = wc.offsetGameSec;
+					p.paused                 = (wc.paused != 0u);
+					p.pausedAtGameSec        = wc.pausedAtGameSec;
+					p.lunarPeriodGameSec     = wc.lunarPeriodGameSec;
+					m_dayNight.SetServerClock(p, wc.serverTimeUnixMs, m_authUi.WorldClockClientRecvMs());
+					m_authUi.ClearWorldClock();
+					LOG_INFO(Render, "[Engine] WorldClock applique depuis le piggyback liste perso");
+				}
+				else
 				{
 					std::vector<uint8_t> wcReq;
 					engine::network::worldclock::BuildWorldClockStateRequestPayload(wcReq);

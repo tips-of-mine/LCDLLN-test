@@ -166,6 +166,44 @@ static void TestPopulatedResponseRoundTrip()
 	}
 }
 
+static void TestWorldClockPiggyback()
+{
+	std::vector<CharacterListEntry> entries;
+	CharacterListEntry a;
+	a.character_id = 1u; a.name = "Test"; a.spawn_y = 100.0f;
+	entries.push_back(a);
+
+	engine::network::worldclock::WorldClockStateResponse wc;
+	wc.status = engine::network::worldclock::WorldClockStatus::Ok;
+	wc.serverTimeUnixMs = 1700000000000ull;
+	wc.epochRefUnixMs   = 1690000000000ull;
+	wc.timeScaleRealMinPerDay = 90.0f;
+	wc.offsetGameSec    = 1234.5;
+	wc.paused           = 1u;
+	wc.pausedAtGameSec  = 42.0;
+	wc.lunarPeriodGameSec = 229000.0;
+
+	auto pkt = BuildCharacterListResponsePacket(1u, entries, 5u, 77u, true, wc);
+	Assert(!pkt.empty(), "Build response with worldclock");
+	PacketView view;
+	Assert(PacketView::Parse(pkt.data(), pkt.size(), view) == PacketParseResult::Ok, "PacketView parse OK (wc)");
+	auto parsed = ParseCharacterListResponsePayload(view.Payload(), view.PayloadSize());
+	Assert(parsed.has_value() && parsed->success == 1u, "parse success (wc)");
+	Assert(parsed && parsed->entries.size() == 1u, "one entry (wc)");
+	Assert(parsed && parsed->hasWorldClock, "hasWorldClock true");
+	Assert(parsed && parsed->worldClock.serverTimeUnixMs == 1700000000000ull, "wc serverTime round-trips");
+	Assert(parsed && parsed->worldClock.timeScaleRealMinPerDay == 90.0f, "wc timeScale round-trips");
+	Assert(parsed && parsed->worldClock.paused == 1u, "wc paused round-trips");
+	Assert(parsed && parsed->worldClock.lunarPeriodGameSec == 229000.0, "wc lunarPeriod round-trips");
+
+	// Sans horloge : hasWorldClock == false.
+	auto pkt2 = BuildCharacterListResponsePacket(1u, entries, 5u, 77u);
+	PacketView view2;
+	PacketView::Parse(pkt2.data(), pkt2.size(), view2);
+	auto parsed2 = ParseCharacterListResponsePayload(view2.Payload(), view2.PayloadSize());
+	Assert(parsed2 && !parsed2->hasWorldClock, "no worldclock when omitted");
+}
+
 int main()
 {
 	engine::core::LogSettings logSettings;
@@ -178,6 +216,7 @@ int main()
 	TestEmptyResponseRoundTrip();
 	TestErrorResponseSkipsEntries();
 	TestPopulatedResponseRoundTrip();
+	TestWorldClockPiggyback();
 
 	engine::core::Log::Shutdown();
 	return s_failCount == 0 ? 0 : 1;

@@ -7,6 +7,8 @@
 #include <string_view>
 #include <vector>
 
+#include "src/shared/network/WorldClockPayloads.h"
+
 namespace engine::network
 {
 	/// M39.1 — Customization options chosen by the player during character creation.
@@ -98,6 +100,11 @@ namespace engine::network
 	{
 		uint8_t success = 0; ///< 0 = error (count ignored), 1 = OK.
 		std::vector<CharacterListEntry> entries;
+		/// Horloge monde embarquée (piggyback opcode 40). Présente quand
+		/// hasWorldClock == 1 et success == 1. Permet au client de synchroniser
+		/// le cycle jour/nuit dès la réception de la liste (avant EnterWorld).
+		bool hasWorldClock = false;
+		engine::network::worldclock::WorldClockStateResponse worldClock{};
 	};
 
 	std::optional<CharacterListRequestPayload> ParseCharacterListRequestPayload(const uint8_t* payload, size_t payloadSize);
@@ -105,7 +112,9 @@ namespace engine::network
 
 	std::optional<CharacterListResponsePayload> ParseCharacterListResponsePayload(const uint8_t* payload, size_t payloadSize);
 	std::vector<uint8_t> BuildCharacterListResponsePacket(uint8_t success, const std::vector<CharacterListEntry>& entries,
-	                                                     uint32_t requestId, uint64_t sessionIdHeader);
+	                                                     uint32_t requestId, uint64_t sessionIdHeader,
+	                                                     bool hasWorldClock = false,
+	                                                     const engine::network::worldclock::WorldClockStateResponse& worldClock = {});
 
 	/// Phase 3.9 — Character delete request payload (8 bytes).
 	struct CharacterDeleteRequestPayload

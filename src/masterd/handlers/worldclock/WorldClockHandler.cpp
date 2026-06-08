@@ -48,6 +48,21 @@ namespace engine::server
 		return m_params;
 	}
 
+	engine::network::worldclock::WorldClockStateResponse WorldClockHandler::BuildStateResponse() const
+	{
+		engine::network::worldclock::WorldClockStateResponse resp;
+		resp.status           = engine::network::worldclock::WorldClockStatus::Ok;
+		resp.serverTimeUnixMs = NowMs();
+		std::lock_guard<std::mutex> lock(m_mutex);
+		resp.epochRefUnixMs         = m_params.epochRefUnixMs;
+		resp.timeScaleRealMinPerDay = m_params.timeScaleRealMinPerDay;
+		resp.offsetGameSec          = m_params.offsetGameSec;
+		resp.paused                 = m_params.paused ? 1u : 0u;
+		resp.pausedAtGameSec        = m_params.pausedAtGameSec;
+		resp.lunarPeriodGameSec     = m_params.lunarPeriodGameSec;
+		return resp;
+	}
+
 	void WorldClockHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId,
 	                                     uint64_t sessionIdHeader, const uint8_t* /*payload*/, size_t /*payloadSize*/)
 	{

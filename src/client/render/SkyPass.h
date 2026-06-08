@@ -33,7 +33,7 @@ namespace engine::render
 	class SkyPass
 	{
 	public:
-		/// Push-constants (144 bytes total). Doit matcher exactement le bloc
+		/// Push-constants (160 bytes total). Doit matcher exactement le bloc
 		/// `SkyPC` dans sky.frag (alignement std140 vec3 = 16 bytes via _padN).
 		struct PushConstants
 		{
@@ -49,8 +49,13 @@ namespace engine::render
 			float moonPhase;
 			float moonIllumination;
 			float _pad3[2];
+			/// xyz = position monde de la caméra ; w inutilisé. Indispensable pour
+			/// reconstruire un vrai rayon de vue (viewDir) dans sky.frag quand la
+			/// caméra n'est pas à l'origine — sinon le ciel dégénère vers une
+			/// couleur uniforme et le soleil/lune deviennent invisibles.
+			float cameraPos[4];
 		};
-		static_assert(sizeof(PushConstants) == 144, "SkyPass push constants size mismatch");
+		static_assert(sizeof(PushConstants) == 160, "SkyPass push constants size mismatch");
 
 		/// Cree le pipeline layout + pipeline + shader modules.
 		/// \param device         Device Vulkan logique.

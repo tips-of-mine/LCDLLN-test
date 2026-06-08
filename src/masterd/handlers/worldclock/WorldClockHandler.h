@@ -26,6 +26,7 @@
 //     (mutateurs). La derive temporelle est implicite dans GameSeconds().
 
 #include "src/shared/world/WorldClock.h"
+#include "src/shared/network/WorldClockPayloads.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -96,6 +97,12 @@ namespace engine::server
 
 		/// Copie des parametres courants sous mutex (pour le futur lunaire/shard).
 		engine::world::WorldClockParams GetParams() const;
+
+		/// Construit un WorldClockStateResponse (status Ok) à partir des params
+		/// courants, avec serverTimeUnixMs = maintenant. Réutilisable par d'autres
+		/// handlers (ex. CharacterListHandler) pour embarquer l'horloge. Prend le
+		/// mutex en interne.
+		engine::network::worldclock::WorldClockStateResponse BuildStateResponse() const;
 
 	private:
 		/// Push une WorldClockChangeNotification (opcode 205, push) a tous les

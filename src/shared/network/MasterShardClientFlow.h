@@ -3,6 +3,7 @@
 #include "src/shared/network/CharacterPayloads.h"
 #include "src/shared/network/NetErrorCode.h"
 #include "src/shared/network/ServerListPayloads.h"
+#include "src/shared/network/WorldClockPayloads.h"
 
 #include <cstdint>
 #include <optional>
@@ -41,6 +42,14 @@ namespace engine::network
 		/// (the client UI should route to CharacterCreate). Stays empty if the optional list
 		/// query failed — the flow still reports success because the shard handshake completed.
 		std::vector<CharacterListEntry> character_list;
+		/// Horloge monde reçue en piggyback de la liste perso (opcode 40). Permet
+		/// au client de synchroniser le cycle jour/nuit dès la sélection de perso.
+		bool has_world_clock = false;
+		engine::network::worldclock::WorldClockStateResponse world_clock{};
+		/// Timestamp Unix client (ms) capturé à la RÉCEPTION de la liste, pour
+		/// calculer l'offset d'horloge correct quelle que soit l'heure
+		/// d'application ultérieure de SetServerClock.
+		uint64_t world_clock_client_recv_ms = 0;
 		/// Hotfix : la session AUTH créée par MasterShardClientFlow::Run doit être propagée
 		/// à l'appelant pour que la connexion master reste utilisable post-flow (CharacterCreate,
 		/// CharacterDelete, SAVE_POSITION). Sinon m_masterSessionId reste sur l'ancienne session

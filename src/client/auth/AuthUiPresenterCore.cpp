@@ -2105,6 +2105,11 @@ namespace engine::client
 			// Si le compte vient d'être créé (post-Register), on garde le routage forcé vers CharacterCreate.
 			// Sinon : 0 perso => CharacterCreate ; ≥1 perso => CharacterSelect.
 			m_characterList = std::move(copy.characterList);
+			// Horloge monde piggyback (opcode 40) — publiée vers les membres au même
+			// moment que la liste perso ; consommée ensuite par l'Engine (ClearWorldClock).
+			m_hasWorldClock = copy.hasWorldClock;
+			m_worldClock = copy.worldClock;
+			m_worldClockClientRecvMs = copy.worldClockClientRecvMs;
 			m_selectedCharacterIndex = m_characterList.empty() ? -1 : 0;
 			// Correctif visibilité 1ère connexion — si on vient de créer un personnage, on
 			// sélectionne SON entrée (et pas l'index 0 par défaut) afin que le clic « Jouer »
@@ -2461,6 +2466,11 @@ namespace engine::client
 					// Phase 2 — la liste optionnelle est récupérée par le flow sur la connexion master ;
 					// vide si la requête a échoué (le client retombera sur CharacterCreate).
 					local.characterList = std::move(r.character_list);
+					// Horloge monde piggyback (opcode 40) — propagée à l'état pour
+					// application par l'Engine au démarrage du monde.
+					local.hasWorldClock = r.has_world_clock;
+					local.worldClock = r.world_clock;
+					local.worldClockClientRecvMs = r.world_clock_client_recv_ms;
 					// Phase 3 — l'endpoint du shard accepté est nécessaire pour câbler la gameplay UDP.
 					local.shardId = r.shard_id;
 					local.shardEndpoint = std::move(r.shard_endpoint);

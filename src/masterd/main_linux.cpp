@@ -991,6 +991,13 @@ int main(int argc, char** argv)
 	lunarHandler.SetWorldClock(&worldClockHandler);
 	LOG_INFO(Net, "[ServerMain] LunarHandler branched to WorldClockHandler (lunar phase derives from game time)");
 
+	// Piggyback horloge monde dans la reponse liste perso (opcode 40) : le
+	// CharacterListHandler (instancie/configure plus haut) embarque l'etat
+	// horloge a la selection de personnage. Cable ICI, apres Configure() du
+	// worldClockHandler, pour que BuildStateResponse() renvoie les params boot.
+	characterListHandler.SetWorldClockHandler(&worldClockHandler);
+	LOG_INFO(Net, "[ServerMain] CharacterListHandler branched to WorldClockHandler (piggyback horloge opcode 40)");
+
 	// AdminCommand RBAC — registre des slash commands (charge depuis
 	// game/data/config/slash_commands.json) + handler central qui valide
 	// le role + log audit pour TOUTES les slash commands. Pattern central

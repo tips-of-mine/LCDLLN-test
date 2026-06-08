@@ -232,11 +232,31 @@ namespace engine::network
 				return std::nullopt;
 			out.entries.push_back(std::move(e));
 		}
+		// Bloc horloge piggyback (optionnel, en fin de payload). Tolérant à
+		// l'absence du flag (anciens paquets sans horloge) : si plus rien à lire,
+		// hasWorldClock reste false.
+		if (r.Remaining() >= 1u)
+		{
+			uint8_t hasWc = 0;
+			if (!r.ReadBytes(&hasWc, 1u))
+				return std::nullopt;
+			if (hasWc)
+			{
+				uint8_t wcBuf[46];
+				if (!r.ReadBytes(wcBuf, sizeof(wcBuf)))
+					return std::nullopt;
+				if (!engine::network::worldclock::ParseWorldClockStateResponsePayload(wcBuf, sizeof(wcBuf), out.worldClock))
+					return std::nullopt;
+				out.hasWorldClock = true;
+			}
+		}
 		return out;
 	}
 
 	std::vector<uint8_t> BuildCharacterListResponsePacket(uint8_t success, const std::vector<CharacterListEntry>& entries,
-	                                                     uint32_t requestId, uint64_t sessionIdHeader)
+	                                                     uint32_t requestId, uint64_t sessionIdHeader,
+	                                                     bool hasWorldClock,
+	                                                     const engine::network::worldclock::WorldClockStateResponse& worldClock)
 	{
 		PacketBuilder builder;
 		ByteWriter w = builder.PayloadWriter();
@@ -279,6 +299,17 @@ namespace engine::network
 					return {};
 				// Teinte de peau (1 octet), appendu après gender.
 				if (!w.WriteBytes(&e.skin_color_idx, 1u))
+					return {};
+			}
+			// Bloc horloge piggyback : 1 octet flag + (si présent) 46 octets WorldClock.
+			const uint8_t hasWc = hasWorldClock ? 1u : 0u;
+			if (!w.WriteBytes(&hasWc, 1u))
+				return {};
+			if (hasWc)
+			{
+				std::vector<uint8_t> wcBytes;
+				engine::network::worldclock::BuildWorldClockStateResponsePayload(worldClock, wcBytes);
+				if (!w.WriteBytes(wcBytes.data(), wcBytes.size()))
 					return {};
 			}
 		}

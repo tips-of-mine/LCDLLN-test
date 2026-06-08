@@ -1116,6 +1116,11 @@ add_executable(character_list_payloads_tests src/shared/network/CharacterListPay
 target_link_libraries(character_list_payloads_tests PRIVATE engine_core)
 add_test(NAME character_list_payloads_tests COMMAND character_list_payloads_tests)
 
+# Cycle jour/nuit — directions soleil/lune + invariants nuit (pure CPU).
+add_executable(day_night_cycle_tests src/client/render/tests/DayNightCycleTests.cpp)
+target_link_libraries(day_night_cycle_tests PRIVATE engine_core)
+add_test(NAME day_night_cycle_tests COMMAND day_night_cycle_tests)
+
 # Phase 3.6.5: CHARACTER_SAVE_POSITION request/response payload round-trip tests
 add_executable(character_save_position_payloads_tests src/shared/network/CharacterSavePositionPayloadsTests.cpp)
 target_link_libraries(character_save_position_payloads_tests PRIVATE engine_core)

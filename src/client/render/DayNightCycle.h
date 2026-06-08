@@ -43,6 +43,14 @@ namespace engine::render
 			/// Matches the convention used by LightingPass::LightParams::lightDir.
 			float lightDir[3] = { 0.5774f, 0.5774f, 0.5774f };
 
+			/// Normalised direction *toward the sun*, valide jour ET nuit (peut être
+			/// sous l'horizon). Utilisée par le glow solaire du sky shader.
+			float sunDir[3] = { 0.0f, 1.0f, 0.0f };
+
+			/// Normalised direction *toward the moon*, valide jour ET nuit (peut être
+			/// sous l'horizon). Utilisée par le disque lunaire du sky shader.
+			float moonDir[3] = { 0.0f, -1.0f, 0.0f };
+
 			/// RGB colour of the directional light (intensity pre-multiplied).
 			/// Day = 1.0; night = 0.1 (dim moonlight).
 			float lightColor[3] = { 1.0f, 0.95f, 0.85f };
@@ -154,6 +162,14 @@ namespace engine::render
 
 		/// Clamp \p v to [lo, hi].
 		static float Clamp(float v, float lo, float hi);
+
+		/// Construit une direction unitaire "vers l'astre" à partir du SINUS de son
+		/// élévation et de son azimut (radians). Convertit d'abord le sinus en
+		/// angle réel (asin) avant le cosinus — évite le bug cos(sin(x)).
+		/// \param sinElev sinus de l'élévation [-1,1].
+		/// \param azimuth azimut en radians.
+		/// \param out     vecteur unitaire résultat (3 floats).
+		static void DirFromElevAzimuth(float sinElev, float azimuth, float out[3]);
 
 		/// Horodatage Unix courant (ms) cote client (system_clock).
 		/// Utilise pour reconstruire l'instant serveur en mode driven.

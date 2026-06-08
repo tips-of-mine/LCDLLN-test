@@ -19,8 +19,8 @@ namespace engine::render
 		// ---- Sky colour keyframes  (time in hours) --------------------------
 
 		/// Night sky (0 h = midnight).
-		constexpr float kSkyZenithNight[3]  = { 0.01f, 0.02f, 0.08f };
-		constexpr float kSkyHorizonNight[3] = { 0.04f, 0.06f, 0.14f };
+		constexpr float kSkyZenithNight[3]  = { 0.004f, 0.005f, 0.012f };
+		constexpr float kSkyHorizonNight[3] = { 0.012f, 0.014f, 0.025f };
 
 		/// Dawn / dusk sky (≈ 6 h / 18 h).
 		constexpr float kSkyZenithDawn[3]  = { 0.30f, 0.18f, 0.45f };
@@ -44,7 +44,7 @@ namespace engine::render
 		constexpr float kIntensityNight = 0.10f; ///< Moonlight (spec: 0.1).
 
 		/// Minimum ambient to avoid pitch-black nights (spec: "avoid pitch black night").
-		constexpr float kAmbientNightMin = 0.04f;
+		constexpr float kAmbientNightMin = 0.02f;
 
 		// ---- Azimuth: fixed east->west sun path (simplified) ----------------
 		/// Azimuth angle at dawn (radians) — sun rises in the east.
@@ -284,9 +284,11 @@ namespace engine::render
 		// ---- Ambient colour --------------------------------------------------
 		// Ambient scales with sun elevation; minimum kAmbientNightMin to avoid pitch black.
 		const float ambientScale = kAmbientNightMin + (1.0f - kAmbientNightMin) * dayT;
-		m_state.ambientColor[0] = 0.04f * ambientScale + 0.02f * dayT;
-		m_state.ambientColor[1] = 0.04f * ambientScale + 0.04f * dayT;
-		m_state.ambientColor[2] = 0.08f * ambientScale + 0.06f * dayT;
+		// Nuit : gris froid neutre (canal bleu ~1.3× au lieu de 2×) pour éviter
+		// la dominante bleue. Le terme additif * dayT redonne du bleu le jour.
+		m_state.ambientColor[0] = 0.030f * ambientScale + 0.02f * dayT;
+		m_state.ambientColor[1] = 0.032f * ambientScale + 0.04f * dayT;
+		m_state.ambientColor[2] = 0.040f * ambientScale + 0.06f * dayT;
 
 		// Wave 4 polish (Phase 5 Lunar) : la nuit, on module aussi l'ambient
 		// par moonIllumination. La pleine lune eclaire l'environnement de

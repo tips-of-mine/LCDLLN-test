@@ -30,6 +30,15 @@ function(lcdlln_add_simple_test target_name)
   add_executable(${target_name} ${ARGN})
   target_include_directories(${target_name} PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(${target_name} PRIVATE engine_core spdlog::spdlog pthread)
-  target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
+  # -UNDEBUG : force la reactivation des assert() dans les tests, MEME en build
+  # Release. Le preset CI linux-x64-release (CMAKE_BUILD_TYPE=Release) injecte
+  # -DNDEBUG via CMAKE_CXX_FLAGS_RELEASE, ce qui transforme tous les assert(...)
+  # en no-op -> les tests passeraient « vacuousement » (verts sans rien verifier).
+  # ATTENTION : assert se base sur #ifdef NDEBUG (presence du symbole), PAS sur
+  # sa valeur. Definir NDEBUG=0 ne suffirait donc PAS (le symbole reste defini) :
+  # il faut bien -UNDEBUG pour le retirer. Les target_compile_options sont
+  # placees apres CMAKE_CXX_FLAGS_RELEASE sur la ligne de commande, donc ce
+  # -UNDEBUG annule correctement le -DNDEBUG precedent.
+  target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME ${target_name} COMMAND ${target_name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endfunction()

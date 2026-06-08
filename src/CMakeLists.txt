@@ -230,6 +230,18 @@ elseif(UNIX)
   target_compile_definitions(server_app PRIVATE ENGINE_HAS_MYSQL=1)
   target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth spdlog::spdlog ${MYSQL_LIBRARY})
 
+  # ─── Convention tests : -UNDEBUG sur CHAQUE cible *_tests ────────────────
+  # Les cibles de test ci-dessous sont declarees en add_executable manuel
+  # (et non via lcdlln_add_simple_test) parce qu'elles ont des deps externes
+  # (MySQL, OpenSSL, etc.). Elles DOIVENT toutes porter -UNDEBUG dans leurs
+  # target_compile_options, exactement comme le helper lcdlln_add_simple_test.
+  # Raison : le preset CI linux-x64-release (Release) injecte -DNDEBUG via
+  # CMAKE_CXX_FLAGS_RELEASE, ce qui transforme tous les assert(...) en no-op.
+  # Sans -UNDEBUG, ces tests passeraient « vacuousement » (verts sans rien
+  # verifier). NB : NDEBUG se teste avec #ifdef (presence du symbole), donc
+  # NDEBUG=0 ne suffirait PAS — il faut bien -UNDEBUG pour retirer le symbole.
+  # Toute nouvelle cible *_tests manuelle doit donc inclure -UNDEBUG.
+  #
   # Phase 4 chat — SessionCharacterMap unit tests (pure in-memory, no DB).
   add_executable(session_character_map_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/session/SessionCharacterMapTests.cpp
@@ -237,7 +249,7 @@ elseif(UNIX)
   )
   target_include_directories(session_character_map_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(session_character_map_tests PRIVATE pthread)
-  target_compile_options(session_character_map_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(session_character_map_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME session_character_map_tests COMMAND session_character_map_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M33.3: Anti-bot unit tests (UserRateLimiter, CaptchaVerifier bypass, BotDetector).
@@ -253,7 +265,7 @@ elseif(UNIX)
   )
   target_include_directories(anti_bot_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(anti_bot_tests PRIVATE OpenSSL::SSL spdlog::spdlog pthread)
-  target_compile_options(anti_bot_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(anti_bot_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME anti_bot_tests COMMAND anti_bot_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M21.6: DB layer smoke tests
@@ -265,7 +277,7 @@ elseif(UNIX)
   )
   target_include_directories(db_layer_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(db_layer_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
-  target_compile_options(db_layer_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(db_layer_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME db_layer_tests COMMAND db_layer_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.06 (Phase 1c) : AccountRoleService tests (no DB required)
@@ -279,7 +291,7 @@ elseif(UNIX)
   )
   target_include_directories(account_role_service_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(account_role_service_tests PRIVATE engine_core engine_auth OpenSSL::SSL spdlog::spdlog pthread)
-  target_compile_options(account_role_service_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(account_role_service_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME account_role_service_tests COMMAND account_role_service_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.13 (Phase 1a) : SQLStorage<T> tests
@@ -291,7 +303,7 @@ elseif(UNIX)
   )
   target_include_directories(sql_storage_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(sql_storage_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
-  target_compile_options(sql_storage_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(sql_storage_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME sql_storage_tests COMMAND sql_storage_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.13 (Phase 1a) : SqlPreparedStatement + cache tests
@@ -303,7 +315,7 @@ elseif(UNIX)
   )
   target_include_directories(sql_prepared_statement_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(sql_prepared_statement_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
-  target_compile_options(sql_prepared_statement_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(sql_prepared_statement_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME sql_prepared_statement_tests COMMAND sql_prepared_statement_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.13 (Phase 1a) : SqlDelayThread async worker tests
@@ -316,7 +328,7 @@ elseif(UNIX)
   )
   target_include_directories(sql_delay_thread_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(sql_delay_thread_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
-  target_compile_options(sql_delay_thread_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(sql_delay_thread_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME sql_delay_thread_tests COMMAND sql_delay_thread_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.16 (Phase 1b) : ConditionMgr tests
@@ -329,7 +341,7 @@ elseif(UNIX)
   )
   target_include_directories(condition_mgr_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(condition_mgr_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
-  target_compile_options(condition_mgr_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(condition_mgr_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME condition_mgr_tests COMMAND condition_mgr_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.16 (Phase 1b) : ObjectAccessor tests (no DB required)
@@ -339,7 +351,7 @@ elseif(UNIX)
   )
   target_include_directories(object_accessor_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(object_accessor_tests PRIVATE engine_core pthread)
-  target_compile_options(object_accessor_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(object_accessor_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME object_accessor_tests COMMAND object_accessor_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.16 (Phase 1b) : GraveyardManager tests
@@ -352,7 +364,7 @@ elseif(UNIX)
   )
   target_include_directories(graveyard_manager_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(graveyard_manager_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
-  target_compile_options(graveyard_manager_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(graveyard_manager_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME graveyard_manager_tests COMMAND graveyard_manager_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.16 (Phase 1b) : LocaleStrings tests
@@ -365,7 +377,7 @@ elseif(UNIX)
   )
   target_include_directories(locale_strings_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(locale_strings_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
-  target_compile_options(locale_strings_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(locale_strings_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME locale_strings_tests COMMAND locale_strings_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.01 (Phase 2.01a) : ChatSanitizer pure unit tests (no DB)
@@ -375,7 +387,7 @@ elseif(UNIX)
   )
   target_include_directories(chat_sanitizer_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(chat_sanitizer_tests PRIVATE engine_core spdlog::spdlog pthread)
-  target_compile_options(chat_sanitizer_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(chat_sanitizer_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME chat_sanitizer_tests COMMAND chat_sanitizer_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.01 (Phase 2.01a) : ChatGate tests (mock callbacks ; pas de
@@ -391,7 +403,7 @@ elseif(UNIX)
   )
   target_include_directories(chat_gate_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
   target_link_libraries(chat_gate_tests PRIVATE engine_core spdlog::spdlog ${MYSQL_LIBRARY} pthread)
-  target_compile_options(chat_gate_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(chat_gate_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME chat_gate_tests COMMAND chat_gate_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.02 (Phase 2.02a) : ObjectGuid pure tests (no DB)
@@ -401,7 +413,7 @@ elseif(UNIX)
   )
   target_include_directories(object_guid_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(object_guid_tests PRIVATE engine_core spdlog::spdlog pthread)
-  target_compile_options(object_guid_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(object_guid_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME object_guid_tests COMMAND object_guid_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # Wave 7 Entities foundation : ObjectGuid + UpdateMask + UpdateField + Object base.
@@ -656,7 +668,7 @@ elseif(UNIX)
   )
   target_include_directories(bih_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(bih_tests PRIVATE engine_core spdlog::spdlog pthread)
-  target_compile_options(bih_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(bih_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME bih_tests COMMAND bih_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.03 (Phase 2.03a) : GridStateTracker pure tests (no DB)
@@ -667,7 +679,7 @@ elseif(UNIX)
   )
   target_include_directories(grid_state_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(grid_state_tests PRIVATE engine_core spdlog::spdlog pthread)
-  target_compile_options(grid_state_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(grid_state_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME grid_state_tests COMMAND grid_state_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # Wave 18 (CMANGOS.03 step 2) : GridVisitor pattern (template free function)
@@ -678,7 +690,7 @@ elseif(UNIX)
   )
   target_include_directories(grid_visitor_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(grid_visitor_tests PRIVATE engine_core spdlog::spdlog pthread)
-  target_compile_options(grid_visitor_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(grid_visitor_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME grid_visitor_tests COMMAND grid_visitor_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # Wave 18 (CMANGOS.03 step 2) : GridNotifier foncteur Visitor avec filter
@@ -690,7 +702,7 @@ elseif(UNIX)
   )
   target_include_directories(grid_notifier_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(grid_notifier_tests PRIVATE engine_core spdlog::spdlog pthread)
-  target_compile_options(grid_notifier_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(grid_notifier_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME grid_notifier_tests COMMAND grid_notifier_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.05 (Phase 2.05b) : VMapFormat encode/decode tests (no DB, no I/O)
@@ -700,7 +712,7 @@ elseif(UNIX)
   )
   target_include_directories(vmap_format_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(vmap_format_tests PRIVATE engine_core spdlog::spdlog pthread)
-  target_compile_options(vmap_format_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(vmap_format_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME vmap_format_tests COMMAND vmap_format_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.04 (Phase 2.04a) : Spline<T> + MovementTypedefs (header-only).
@@ -860,7 +872,7 @@ elseif(UNIX)
   )
   target_include_directories(chat_command_router_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(chat_command_router_tests PRIVATE engine_core engine_auth OpenSSL::SSL spdlog::spdlog pthread)
-  target_compile_options(chat_command_router_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(chat_command_router_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME chat_command_router_tests COMMAND chat_command_router_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.01 (Phase 2.01b) : ChatChannelRegistry pure tests
@@ -870,7 +882,7 @@ elseif(UNIX)
   )
   target_include_directories(chat_channel_registry_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(chat_channel_registry_tests PRIVATE engine_core spdlog::spdlog pthread)
-  target_compile_options(chat_channel_registry_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(chat_channel_registry_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME chat_channel_registry_tests COMMAND chat_channel_registry_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M22.4: Shard ticket validation tests
@@ -886,7 +898,7 @@ elseif(UNIX)
   )
   target_include_directories(shard_ticket_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(shard_ticket_tests PRIVATE engine_core OpenSSL::SSL)
-  target_compile_options(shard_ticket_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(shard_ticket_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME shard_ticket_tests COMMAND shard_ticket_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # Présence enrichie (v9) : round-trip du payload SHARD_HEARTBEAT avec tableau joueurs.
@@ -900,7 +912,7 @@ elseif(UNIX)
   )
   target_include_directories(shard_payloads_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(shard_payloads_tests PRIVATE engine_core)
-  target_compile_options(shard_payloads_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(shard_payloads_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME shard_payloads_tests COMMAND shard_payloads_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # Présence unifiée (Niveau 1) : ShardPresenceService — présence shard-locale.
@@ -910,7 +922,7 @@ elseif(UNIX)
   )
   target_include_directories(shard_presence_service_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(shard_presence_service_tests PRIVATE pthread)
-  target_compile_options(shard_presence_service_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(shard_presence_service_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME shard_presence_service_tests COMMAND shard_presence_service_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # Présence unifiée (Niveau 2) : ShardPlayerPresenceCache — agrégat master.
@@ -920,7 +932,7 @@ elseif(UNIX)
   )
   target_include_directories(shard_player_presence_cache_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(shard_player_presence_cache_tests PRIVATE pthread)
-  target_compile_options(shard_player_presence_cache_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(shard_player_presence_cache_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME shard_player_presence_cache_tests COMMAND shard_player_presence_cache_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M22.5: Server list and shard selection policy tests
@@ -935,7 +947,7 @@ elseif(UNIX)
   )
   target_include_directories(server_list_policy_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(server_list_policy_tests PRIVATE engine_core)
-  target_compile_options(server_list_policy_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(server_list_policy_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME server_list_policy_tests COMMAND server_list_policy_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # Wave 12: PacketLog ring buffer (debug RX/TX trace, opt-in) — pure unit tests.
@@ -949,7 +961,7 @@ elseif(UNIX)
   )
   target_include_directories(packet_log_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(packet_log_tests PRIVATE pthread)
-  target_compile_options(packet_log_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(packet_log_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
   add_test(NAME packet_log_tests COMMAND packet_log_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M22.6: Shard server (ticket handshake + enregistrement TLS/TCP vers le Master via ShardToMasterClient)

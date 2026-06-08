@@ -52,6 +52,12 @@ else()
   target_compile_options(zone_builder_lib PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+# Note tests : la branche GCC/Clang porte -UNDEBUG pour reactiver les assert()
+# en build Release (le preset CI linux-x64-release injecte -DNDEBUG qui les
+# transformerait sinon en no-op -> tests verts sans rien verifier). Meme
+# convention que lcdlln_add_simple_test. La branche MSVC n'en a pas besoin :
+# la CI Windows ne lance pas ctest (cf. .github/workflows/build-windows.yml).
+
 # M100.3 — Tests round-trip bit-à-bit (cf. tests/RoundtripTests.cpp en-tête).
 # Pure CPU, pas d'ImGui ni Vulkan : tournables en CI sans GPU.
 add_executable(zone_builder_roundtrip_tests tests/RoundtripTests.cpp)
@@ -60,7 +66,7 @@ target_include_directories(zone_builder_roundtrip_tests PRIVATE ${CMAKE_SOURCE_D
 if(MSVC)
   target_compile_options(zone_builder_roundtrip_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 else()
-  target_compile_options(zone_builder_roundtrip_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(zone_builder_roundtrip_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
 endif()
 add_test(NAME zone_builder_roundtrip_tests COMMAND zone_builder_roundtrip_tests)
 
@@ -71,6 +77,6 @@ target_include_directories(routines_segment_tests PRIVATE ${CMAKE_SOURCE_DIR})
 if(MSVC)
   target_compile_options(routines_segment_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 else()
-  target_compile_options(routines_segment_tests PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(routines_segment_tests PRIVATE -Wall -Wextra -Wpedantic -UNDEBUG)
 endif()
 add_test(NAME routines_segment_tests COMMAND routines_segment_tests)

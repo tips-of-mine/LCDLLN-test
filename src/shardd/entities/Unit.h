@@ -32,6 +32,20 @@ namespace engine::server::entities
 			, m_maxMana(kUnitFieldMaxMana, &Mask())
 			, m_level(kUnitFieldLevel, &Mask())
 			, m_faction(kUnitFieldFaction, &Mask())
+			, m_damage(kUnitFieldDamage, &Mask())
+			, m_accuracy(kUnitFieldAccuracy, &Mask())
+			, m_range(kUnitFieldRange, &Mask())
+			, m_critRate(kUnitFieldCritRate, &Mask())
+			, m_critMult(kUnitFieldCritMult, &Mask())
+			, m_speedWalk(kUnitFieldSpeedWalk, &Mask())
+			, m_speedRun(kUnitFieldSpeedRun, &Mask())
+			, m_speedSprint(kUnitFieldSpeedSprint, &Mask())
+			, m_stamina(kUnitFieldStamina, &Mask())
+			, m_maxStamina(kUnitFieldMaxStamina, &Mask())
+			, m_perception(kUnitFieldPerception, &Mask())
+			, m_stealth(kUnitFieldStealth, &Mask())
+			, m_secondaryResource(kUnitFieldSecondaryResource, &Mask())
+			, m_maxSecondaryResource(kUnitFieldMaxSecondaryResource, &Mask())
 		{}
 
 		~Unit() override = default;
@@ -68,6 +82,36 @@ namespace engine::server::entities
 		/// True si HP > 0.
 		bool IsAlive() const noexcept { return m_health.Get() > 0; }
 
+		// --- Stats étendues (Système de Personnages) ---
+		void SetDamage(uint32_t v) { m_damage.Set(v); }
+		uint32_t GetDamage() const noexcept { return m_damage.Get(); }
+		void SetAccuracy(float v) { m_accuracy.Set(v); }
+		float GetAccuracy() const noexcept { return m_accuracy.Get(); }
+		void SetRange(float v) { m_range.Set(v); }
+		float GetRange() const noexcept { return m_range.Get(); }
+		void SetCritRate(float v) { m_critRate.Set(v); }
+		float GetCritRate() const noexcept { return m_critRate.Get(); }
+		void SetCritMult(float v) { m_critMult.Set(v); }
+		float GetCritMult() const noexcept { return m_critMult.Get(); }
+		void SetSpeedWalk(float v) { m_speedWalk.Set(v); }
+		float GetSpeedWalk() const noexcept { return m_speedWalk.Get(); }
+		void SetSpeedRun(float v) { m_speedRun.Set(v); }
+		float GetSpeedRun() const noexcept { return m_speedRun.Get(); }
+		void SetSpeedSprint(float v) { m_speedSprint.Set(v); }
+		float GetSpeedSprint() const noexcept { return m_speedSprint.Get(); }
+		void SetStamina(uint32_t v) { m_stamina.Set(v); }
+		uint32_t GetStamina() const noexcept { return m_stamina.Get(); }
+		void SetMaxStamina(uint32_t v) { m_maxStamina.Set(v); }
+		uint32_t GetMaxStamina() const noexcept { return m_maxStamina.Get(); }
+		void SetPerception(float v) { m_perception.Set(v); }
+		float GetPerception() const noexcept { return m_perception.Get(); }
+		void SetStealth(float v) { m_stealth.Set(v); }
+		float GetStealth() const noexcept { return m_stealth.Get(); }
+		void SetSecondaryResource(uint32_t v) { m_secondaryResource.Set(v); }
+		uint32_t GetSecondaryResource() const noexcept { return m_secondaryResource.Get(); }
+		void SetMaxSecondaryResource(uint32_t v) { m_maxSecondaryResource.Set(v); }
+		uint32_t GetMaxSecondaryResource() const noexcept { return m_maxSecondaryResource.Get(); }
+
 	private:
 		UpdateField<uint32_t> m_health;
 		UpdateField<uint32_t> m_maxHealth;
@@ -75,5 +119,20 @@ namespace engine::server::entities
 		UpdateField<uint32_t> m_maxMana;
 		UpdateField<uint32_t> m_level;
 		UpdateField<uint32_t> m_faction;
+		// --- Stats étendues (Système de Personnages) ---
+		UpdateField<uint32_t> m_damage;
+		UpdateField<float>    m_accuracy;
+		UpdateField<float>    m_range;
+		UpdateField<float>    m_critRate;
+		UpdateField<float>    m_critMult;
+		UpdateField<float>    m_speedWalk;
+		UpdateField<float>    m_speedRun;
+		UpdateField<float>    m_speedSprint;
+		UpdateField<uint32_t> m_stamina;
+		UpdateField<uint32_t> m_maxStamina;
+		UpdateField<float>    m_perception;
+		UpdateField<float>    m_stealth;
+		UpdateField<uint32_t> m_secondaryResource;
+		UpdateField<uint32_t> m_maxSecondaryResource;
 	};
 }

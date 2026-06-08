@@ -120,6 +120,43 @@ namespace
 		assert(u.GetMapId() == 1);
 		std::puts("[OK] TestUnitHeriteWorldObject");
 	}
+
+	/// Stats étendues (Système de Personnages) : round-trip des nouveaux
+	/// UpdateField (entiers + flottants) et flag dirty via le mask.
+	void TestUnitNewStatFields()
+	{
+		ObjectGuid g(ObjectType::Creature, 9);
+		Unit u(g, kUnitFieldCount);
+		u.SetDamage(123u);
+		u.SetAccuracy(88.0f);
+		u.SetRange(30.0f);
+		u.SetCritRate(7.5f);
+		u.SetCritMult(1.8f);
+		u.SetSpeedWalk(2.0f);
+		u.SetSpeedRun(5.0f);
+		u.SetSpeedSprint(8.0f);
+		u.SetStamina(500u);
+		u.SetMaxStamina(800u);
+		u.SetPerception(12.5f);
+		u.SetStealth(9.0f);
+		u.SetSecondaryResource(40u);
+		u.SetMaxSecondaryResource(100u);
+
+		// Round-trip valeurs (entiers exacts, flottants avec tolerance).
+		assert(u.GetDamage() == 123u);
+		assert(u.GetCritRate() >= 7.49f && u.GetCritRate() <= 7.51f);
+		assert(u.GetCritMult() >= 1.79f && u.GetCritMult() <= 1.81f);
+		assert(u.GetMaxStamina() == 800u);
+		assert(u.GetSecondaryResource() == 40u);
+		assert(u.GetMaxSecondaryResource() == 100u);
+		assert(u.GetPerception() >= 12.49f && u.GetPerception() <= 12.51f);
+
+		// Le mask reflete les champs modifies.
+		assert(u.IsDirty());
+		assert(u.Mask().TestBit(kUnitFieldDamage));
+		assert(u.Mask().TestBit(kUnitFieldMaxSecondaryResource));
+		std::puts("[OK] TestUnitNewStatFields");
+	}
 }
 
 int main()
@@ -132,6 +169,7 @@ int main()
 	TestUnitOnReplicationSentClearsMask();
 	TestUnitIsAliveToggle();
 	TestUnitHeriteWorldObject();
+	TestUnitNewStatFields();
 	std::puts("All Unit tests passed");
 	return 0;
 }

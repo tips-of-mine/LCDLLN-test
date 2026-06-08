@@ -556,6 +556,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(formulas_tests
     ${CMAKE_SOURCE_DIR}/src/shared/formulas/FormulasTests.cpp)
 
+  # Character system PR1 — Config::LoadFromString : parsing JSON en mémoire (anti-triche).
+  lcdlln_add_simple_test(config_loadfromstring_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/core/ConfigLoadFromStringTests.cpp)
+
   # CMANGOS.34 (Phase 4.34a) : MetricRegistry (header-only).
   lcdlln_add_simple_test(metric_registry_tests
     ${CMAKE_SOURCE_DIR}/src/shared/metric/MetricRegistryTests.cpp)

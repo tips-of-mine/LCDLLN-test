@@ -540,13 +540,16 @@ namespace engine::core
 			return LoadIni(*this, in);
 		}
 
-		// Default to JSON when extension is unknown.
+		// Default to JSON when extension is unknown : on délègue au parseur mémoire.
 		std::stringstream ss;
 		ss << in.rdbuf();
-		const std::string text = ss.str();
+		return LoadFromString(ss.str());
+	}
 
+	bool Config::LoadFromString(std::string_view jsonText)
+	{
 		JsonValue root;
-		JsonParser parser(text);
+		JsonParser parser(jsonText);
 		if (!parser.Parse(root))
 		{
 			return false;
@@ -557,7 +560,7 @@ namespace engine::core
 		}
 
 		// Merge JSON into config by overriding defaults (file has higher priority than defaults).
-		// We flatten nested objects into dotted keys.
+		// On aplatit les objets imbriqués en clés pointées.
 		Config fileCfg;
 		MergeJsonFlatten(root, "", fileCfg);
 		for (const auto& [k, v] : fileCfg.m_values)

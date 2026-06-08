@@ -53,6 +53,9 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shared/net/ChatSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/net/ChatEmotes.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp
+    # Character system PR1 — moteur de stats (serveur-only, anti-triche).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/CurrencyConfig.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/VendorCatalog.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/PlayerWalletService.cpp
@@ -88,6 +91,9 @@ if(WIN32)
   # M32.1: no MySQL on WIN32 game shard — FriendSystem compiles in no-DB mode.
   # Do NOT define ENGINE_HAS_MYSQL so #if ENGINE_HAS_MYSQL evaluates to false.
   target_link_libraries(server_app PRIVATE ws2_32 engine_auth spdlog::spdlog)
+  # Character system PR1 — accès aux headers JSON embarqués (anti-triche).
+  add_dependencies(server_app lcdlln_gen_character_data)
+  target_include_directories(server_app PRIVATE ${CMAKE_SOURCE_DIR} ${LCDLLN_GEN_DIR})
 elseif(UNIX)
   find_package(OpenSSL REQUIRED)
   find_path(MYSQL_INCLUDE_DIR NAMES mysql.h mysql/mysql.h PATH_SUFFIXES mysql)
@@ -583,6 +589,21 @@ elseif(UNIX)
   lcdlln_add_simple_test(config_loadfromstring_tests
     ${CMAKE_SOURCE_DIR}/src/shared/core/ConfigLoadFromStringTests.cpp)
 
+  # Character system PR1 — CharacterStatsEngine : 11 stats déterministes depuis
+  # les tables JSON embarquées. Bloc explicite (pas lcdlln_add_simple_test) :
+  # le test a besoin du dossier des headers générés (${LCDLLN_GEN_DIR}) et de
+  # la dépendance au codegen lcdlln_gen_character_data, que le helper ne sait
+  # pas exprimer.
+  add_executable(character_stats_engine_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngineTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp)
+  add_dependencies(character_stats_engine_tests lcdlln_gen_character_data)
+  target_include_directories(character_stats_engine_tests PRIVATE ${CMAKE_SOURCE_DIR} ${LCDLLN_GEN_DIR})
+  target_link_libraries(character_stats_engine_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(character_stats_engine_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME character_stats_engine_tests COMMAND character_stats_engine_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # CMANGOS.34 (Phase 4.34a) : MetricRegistry (header-only).
   lcdlln_add_simple_test(metric_registry_tests
     ${CMAKE_SOURCE_DIR}/src/shared/metric/MetricRegistryTests.cpp)
@@ -1015,6 +1036,9 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildTabard.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildBank.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp
+    # Character system PR1 — moteur de stats (serveur-only, anti-triche).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/CurrencyConfig.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/VendorCatalog.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/PlayerWalletService.cpp
@@ -1041,7 +1065,9 @@ elseif(UNIX)
   # SHARD_POSITION_DB (et NON ENGINE_HAS_MYSQL) : n'active que le pont position dans
   # ServerApp, sans basculer les autres systèmes gameplay du shard en mode DB (ils restent
   # en mode fichier, config TA.2 prouvée linkable).
-  target_include_directories(shard_app PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
+  target_include_directories(shard_app PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR} ${LCDLLN_GEN_DIR})
+  # Character system PR1 — accès aux headers JSON embarqués (anti-triche).
+  add_dependencies(shard_app lcdlln_gen_character_data)
   target_compile_definitions(shard_app PRIVATE SHARD_POSITION_DB=1)
   target_link_libraries(shard_app PRIVATE engine_core OpenSSL::SSL pthread ${MYSQL_LIBRARY})
   target_compile_options(shard_app PRIVATE -Wall -Wextra -Wpedantic)

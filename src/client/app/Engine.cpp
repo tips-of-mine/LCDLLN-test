@@ -10402,45 +10402,93 @@ namespace engine
 			// que le ImGui::Render() finalise les deux draw lists en une seule passe.
 			if (m_inGamePauseMenuVisible)
 			{
-				const float menuW = 320.f;
-				const float menuH = 220.f;
+				const LnTheme::Palette& th = LnTheme::Active();
+				// Conversion couleur thème -> ImVec4 ImGui, locale au menu pause.
+				auto iv = [](const LnTheme::Rgba& c, float a) -> ImVec4 {
+					return ImVec4(c.r, c.g, c.b, a);
+				};
+				const float menuW = 340.f;
+				const float menuH = 250.f;
+				const float btnW = menuW - 64.f;
 				ImGui::SetNextWindowPos(ImVec2((dw - menuW) * 0.5f, (dh - menuH) * 0.5f), ImGuiCond_Always);
 				ImGui::SetNextWindowSize(ImVec2(menuW, menuH), ImGuiCond_Always);
-				ImGui::SetNextWindowBgAlpha(0.92f);
+				// Chrome variante C : fond panneau + cadre accentué (doré en Or royal,
+				// vert en Sylve émeraude). On retire SetNextWindowBgAlpha : il écraserait
+				// l'alpha du WindowBg ci-dessous.
+				ImGui::PushStyleColor(ImGuiCol_WindowBg, iv(th.panel, 0.96f));
+				ImGui::PushStyleColor(ImGuiCol_Border, iv(th.accent, 1.f));
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.5f);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.f);
 				ImGui::Begin("##ln_pause_menu", nullptr,
 					ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
 					| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse
 					| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav);
-				ImGui::SetWindowFontScale(1.2f);
+
+				// Titre PAUSE : couleur accent, centré sur la zone de contenu réelle
+				// (GetContentRegionAvail tient compte du padding -> centrage correct).
+				ImGui::SetWindowFontScale(1.3f);
+				ImGui::PushStyleColor(ImGuiCol_Text, iv(th.accent, 1.f));
 				const char* title = "PAUSE";
 				const float titleW = ImGui::CalcTextSize(title).x;
-				ImGui::SetCursorPosX((menuW - titleW) * 0.5f);
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (ImGui::GetContentRegionAvail().x - titleW) * 0.5f);
 				ImGui::TextUnformatted(title);
+				ImGui::PopStyleColor();
 				ImGui::SetWindowFontScale(1.f);
+
+				// Séparateur doré.
+				ImGui::PushStyleColor(ImGuiCol_Separator, iv(th.accent, 0.7f));
 				ImGui::Separator();
+				ImGui::PopStyleColor();
 				ImGui::Spacing();
-				const float btnW = menuW - 40.f;
-				if (ImGui::Button("Reprendre", ImVec2(btnW, 32.f)))
+				ImGui::Spacing();
+
+				// Bouton thémé centré, avec halo de bordure (accent, ou rouge danger)
+				// dessiné par-dessus au survol.
+				auto pauseButton = [&](const char* label, bool danger) -> bool {
+					const LnTheme::Rgba hov = danger ? th.errorCol : th.accent;
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (ImGui::GetContentRegionAvail().x - btnW) * 0.5f);
+					ImGui::PushStyleColor(ImGuiCol_Button, iv(th.surface, 1.f));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, iv(hov, 0.22f));
+					ImGui::PushStyleColor(ImGuiCol_ButtonActive, iv(hov, 0.35f));
+					ImGui::PushStyleColor(ImGuiCol_Border, iv(th.border, 1.f));
+					ImGui::PushStyleColor(ImGuiCol_Text, danger ? iv(th.errorCol, 1.f) : iv(th.text, 1.f));
+					ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.f);
+					ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
+					const bool pressed = ImGui::Button(label, ImVec2(btnW, 34.f));
+					if (ImGui::IsItemHovered())
+					{
+						ImGui::GetWindowDrawList()->AddRect(
+							ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+							ImGui::ColorConvertFloat4ToU32(iv(hov, 1.f)), 3.f, 0, 1.5f);
+					}
+					ImGui::PopStyleVar(2);
+					ImGui::PopStyleColor(5);
+					return pressed;
+				};
+
+				if (pauseButton("Reprendre", false))
 				{
 					m_inGamePauseMenuVisible = false;
 				}
 				ImGui::Spacing();
-				if (ImGui::Button("Options", ImVec2(btnW, 32.f)))
+				if (pauseButton("Options", false))
 				{
 					m_inGamePauseMenuVisible = false;
 					m_inGameOptionsPanelVisible = true;
 				}
 				ImGui::Spacing();
-				if (ImGui::Button("Se deconnecter", ImVec2(btnW, 32.f)))
+				if (pauseButton("Se deconnecter", false))
 				{
 					RequestLogoutToLoginScreen();
 				}
 				ImGui::Spacing();
-				if (ImGui::Button("Quitter le jeu", ImVec2(btnW, 32.f)))
+				if (pauseButton("Quitter le jeu", true))
 				{
 					OnQuit();
 				}
 				ImGui::End();
+				ImGui::PopStyleVar(2);
+				ImGui::PopStyleColor(2);
 			}
 			// Mini-panel Options in-game (ouvert via le bouton Options du menu pause).
 			// Contient les controles essentiels qu'on veut pouvoir ajuster sans

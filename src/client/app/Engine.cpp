@@ -4072,10 +4072,10 @@ namespace engine
 											const engine::render::DayNightCycle::State& dnIbl = m_dayNight.GetState();
 											for (int i = 0; i < 3; ++i)
 											{
-												iblSky.lightDir[i]     = dnIbl.lightDir[i];
+												iblSky.lightDir[i]     = dnIbl.sunDir[i];
 												iblSky.zenithColor[i]  = dnIbl.skyZenith[i];
 												iblSky.horizonColor[i] = dnIbl.skyHorizon[i];
-												iblSky.moonDir[i]      = -dnIbl.lightDir[i];
+												iblSky.moonDir[i]      = dnIbl.moonDir[i];
 											}
 											iblSky.moonIntensity    = dnIbl.isDaytime ? 0.0f : 1.0f;
 											iblSky.moonPhase        = static_cast<float>(dnIbl.moonPhase);
@@ -5552,19 +5552,19 @@ namespace engine
 													}
 
 													const auto& dn = m_dayNight.GetState();
-													skyPc.lightDir[0]      = dn.lightDir[0];
-													skyPc.lightDir[1]      = dn.lightDir[1];
-													skyPc.lightDir[2]      = dn.lightDir[2];
+													skyPc.lightDir[0]      = dn.sunDir[0];
+													skyPc.lightDir[1]      = dn.sunDir[1];
+													skyPc.lightDir[2]      = dn.sunDir[2];
 													skyPc.zenithColor[0]   = dn.skyZenith[0];
 													skyPc.zenithColor[1]   = dn.skyZenith[1];
 													skyPc.zenithColor[2]   = dn.skyZenith[2];
 													skyPc.horizonColor[0]  = dn.skyHorizon[0];
 													skyPc.horizonColor[1]  = dn.skyHorizon[1];
 													skyPc.horizonColor[2]  = dn.skyHorizon[2];
-													// Lune = direction opposee au soleil (convention LCDLLN).
-													skyPc.moonDir[0]       = -dn.lightDir[0];
-													skyPc.moonDir[1]       = -dn.lightDir[1];
-													skyPc.moonDir[2]       = -dn.lightDir[2];
+													// Lune : direction réelle de la lune (jour comme nuit).
+													skyPc.moonDir[0]       = dn.moonDir[0];
+													skyPc.moonDir[1]       = dn.moonDir[1];
+													skyPc.moonDir[2]       = dn.moonDir[2];
 													skyPc.moonIntensity    = dn.isDaytime ? 0.0f : 1.0f;
 													skyPc.moonPhase        = static_cast<float>(dn.moonPhase);
 													skyPc.moonIllumination = dn.moonIllumination;
@@ -7982,10 +7982,10 @@ namespace engine
 			engine::render::SkyCaptureParams iblSky{};
 			for (int i = 0; i < 3; ++i)
 			{
-				iblSky.lightDir[i]     =  dn.lightDir[i];
+				iblSky.lightDir[i]     =  dn.sunDir[i];
 				iblSky.zenithColor[i]  =  dn.skyZenith[i];
 				iblSky.horizonColor[i] =  dn.skyHorizon[i];
-				iblSky.moonDir[i]      = -dn.lightDir[i];
+				iblSky.moonDir[i]      =  dn.moonDir[i];
 			}
 			iblSky.moonIntensity    = dn.isDaytime ? 0.0f : 1.0f;
 			iblSky.moonPhase        = static_cast<float>(dn.moonPhase);

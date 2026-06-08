@@ -4,6 +4,7 @@
 #include "src/client/render/AuthImGuiRenderer.h"
 #include "src/client/render/auth/AuthImGuiCommon.h"
 #include "src/client/render/LnTheme.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -409,6 +410,35 @@ namespace engine::render
 				markDirty();
 			}
 			toggleRow("options.interface.tooltips", &m_optShowTooltipsUi, "options.interface.tooltips_hint");
+			// Thème de l'interface : application live (aperçu immédiat sur l'écran
+			// auth) + persistance ui_theme.json, comme le sélecteur in-game. Hors du
+			// modèle staged (Appliquer/Annuler) : un thème se prévisualise en direct.
+			{
+				auto themeLabel = [&](std::string_view id) -> std::string {
+					if (id == "or_royal") return tr("options.interface.theme.or_royal");
+					if (id == "sylve_emeraude") return tr("options.interface.theme.sylve_emeraude");
+					return std::string(id);
+				};
+				const std::string_view curTheme = LnTheme::ActiveName();
+				if (ImGui::BeginCombo(tr("options.interface.theme").c_str(), themeLabel(curTheme).c_str()))
+				{
+					for (std::string_view id : LnTheme::Names())
+					{
+						const bool selected = (id == curTheme);
+						if (ImGui::Selectable(themeLabel(id).c_str(), selected) && !selected)
+						{
+							LnTheme::SetActive(id);
+							const std::string js =
+								std::string("{\n  \"ui\": { \"theme\": \"")
+								+ std::string(LnTheme::ActiveName()) + "\" }\n}\n";
+							(void)engine::platform::FileSystem::WriteAllText("ui_theme.json", js);
+						}
+						if (selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+			}
 		}
 		else if (m_optionsTab == 5)
 		{

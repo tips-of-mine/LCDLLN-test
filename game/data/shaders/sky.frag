@@ -38,6 +38,7 @@ layout(push_constant) uniform SkyPC
     float moonPhase;         // 0..15
     float moonIllumination;  // 0..1
     vec2  _pad3;
+    vec4  cameraPos;         // xyz = position monde caméra (reconstruction viewDir)
 } pc;
 
 // -------------------------------------------------------------------------
@@ -122,10 +123,15 @@ vec3 RenderMoonDisk(vec3 viewDir, vec3 baseSky)
 void main()
 {
     // ---- Reconstruct view direction from NDC --------------------------------
-    // NDC is in [-1, +1]; we sample at z = 0 (near plane).
-    vec4 clipPos = vec4(vUV * 2.0 - 1.0, 0.0, 1.0);
+    // On échantillonne le PLAN LOINTAIN (z=1.0 en NDC Vulkan) puis on soustrait
+    // la position caméra pour obtenir un VRAI rayon de vue monde. Échantillonner
+    // le plan proche (z=0.0) sans soustraire la caméra donnait, dès que la caméra
+    // n'était pas à l'origine, un viewDir quasi constant sur tout l'écran → ciel
+    // uniforme et soleil/lune invisibles (les disques ne se localisaient nulle part).
+    vec4 clipPos   = vec4(vUV * 2.0 - 1.0, 1.0, 1.0);
     vec4 worldPos4 = pc.invViewProj * clipPos;
-    vec3 viewDir = normalize(worldPos4.xyz / worldPos4.w);
+    vec3 worldFar  = worldPos4.xyz / worldPos4.w;
+    vec3 viewDir   = normalize(worldFar - pc.cameraPos.xyz);
 
     // ---- Sky gradient via view-zenith angle ---------------------------------
     // viewDir.y is the sine of the elevation angle.

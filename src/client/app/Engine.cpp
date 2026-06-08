@@ -5582,6 +5582,12 @@ namespace engine
 													skyPc.moonIntensity    = dn.isDaytime ? 0.0f : 1.0f;
 													skyPc.moonPhase        = static_cast<float>(dn.moonPhase);
 													skyPc.moonIllumination = dn.moonIllumination;
+													// Position caméra : sert au sky.frag à reconstruire un vrai
+													// rayon de vue (sinon ciel uniforme, soleil/lune invisibles).
+													skyPc.cameraPos[0]     = rs.camera.position.x;
+													skyPc.cameraPos[1]     = rs.camera.position.y;
+													skyPc.cameraPos[2]     = rs.camera.position.z;
+													skyPc.cameraPos[3]     = 0.0f;
 
 													m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
 														m_vkDeviceContext.GetDevice(), cmd, reg,

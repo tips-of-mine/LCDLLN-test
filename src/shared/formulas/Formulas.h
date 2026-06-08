@@ -4,17 +4,23 @@
 
 #include <cstdint>
 #include <algorithm>
+#include <cmath>
 
 namespace engine::server::formulas
 {
 	/// XP requis pour passer du niveau \p level au level+1.
-	/// Approximation cubique douce : 100 * level^2 + 200 * level.
-	/// Cap a niveau 80 (XP = 0 au-dela).
-	inline uint32_t XpToNextLevel(uint8_t level)
+	/// Courbe du design : round(base * level^factor). Paramètres fournis par
+	/// l'appelant (issus de character_stats.json embarqué côté serveur) — JAMAIS
+	/// codés en dur ici. Renvoie 0 si level == 0 ou level >= levelMax (cap).
+	/// \param base   coefficient multiplicateur de la courbe.
+	/// \param factor exposant (2.6 dans le design).
+	/// \param levelMax niveau maximum (100) ; au-delà, plus de progression.
+	inline uint32_t XpToNextLevel(uint8_t level, double base, double factor, uint8_t levelMax)
 	{
-		if (level == 0 || level >= 80) return 0;
-		const uint32_t l = level;
-		return 100u * l * l + 200u * l;
+		if (level == 0 || level >= levelMax) return 0;
+		const double xp = base * std::pow(static_cast<double>(level), factor);
+		if (xp <= 0.0) return 0;
+		return static_cast<uint32_t>(xp + 0.5); // round-half-up
 	}
 
 	/// Distance d'agro (yards) selon difference de niveau (mob - player).

@@ -61,5 +61,16 @@ int main()
 		Check(std::fabs(lenMoon - 1.0f) < 1e-3f, "moonDir normalise");
 	}
 
+	// --- Nuit sombre mais pas noire, et moins claire que le jour ---
+	auto luminance = [](const float c[3]) { return 0.2126f*c[0] + 0.7152f*c[1] + 0.0722f*c[2]; };
+	dn.SetTime(0.0f);
+	const float ambNight = luminance(dn.GetState().ambientColor);
+	const float zenNight = luminance(dn.GetState().skyZenith);
+	dn.SetTime(12.0f);
+	const float ambDay = luminance(dn.GetState().ambientColor);
+	Check(ambNight > 0.0f, "nuit: ambiant non nul (navigable)");
+	Check(ambNight < ambDay, "nuit: ambiant plus sombre que le jour");
+	Check(zenNight < 0.02f, "nuit: zenith ciel sombre");
+
 	return s_fail == 0 ? 0 : 1;
 }

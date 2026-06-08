@@ -380,6 +380,14 @@ namespace engine::network
 					{
 						characters = std::move(parsed->entries);
 						listSuccess = true;
+						if (parsed->hasWorldClock)
+						{
+							result.has_world_clock = true;
+							result.world_clock = parsed->worldClock;
+							result.world_clock_client_recv_ms = static_cast<uint64_t>(
+								std::chrono::duration_cast<std::chrono::milliseconds>(
+									std::chrono::system_clock::now().time_since_epoch()).count());
+						}
 					}
 				}, m_timeoutMs))
 			{

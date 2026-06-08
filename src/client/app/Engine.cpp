@@ -44,6 +44,10 @@
 #include "src/client/render/BattleGroundImGuiRenderer.h"
 #include "src/client/render/OutdoorPvpImGuiRenderer.h"
 #include "src/client/render/WeatherImGuiRenderer.h"
+#include "src/client/render/clouds/WeatherKindMap.h"
+#include "src/client/render/clouds/CloudParams.h"
+#include "src/client/render/clouds/CloudWeatherMapper.h"
+#include "src/client/render/CloudPass.h"
 #include "src/client/render/GameEventImGuiRenderer.h"
 #include "src/client/render/GuildImGuiRenderer.h"
 #include "src/client/render/AuctionImGuiRenderer.h"
@@ -92,6 +96,7 @@
 #endif
 #include <windows.h>
 #	include "imgui.h"
+#	include "src/client/render/CompassHud.h"
 #endif
 
 namespace engine
@@ -2974,6 +2979,10 @@ namespace engine
 					return;
 				}
 				m_weatherUi.OnUpdateNotification(*parsed);
+				// Signal autoritaire unique -> pilote le visuel (particules + nuages).
+				// (Branchement absent jusqu'ici : la météo serveur n'affectait pas le rendu.)
+				m_weatherSystem.SetWeather(
+					engine::render::MapServerKindToWeatherState(parsed->kind));
 				return;
 			}
 			// CMANGOS.31 (Phase 5.31 step 3+4) — Dispatch des reponses
@@ -3953,6 +3962,11 @@ namespace engine
 										// TRANSFER_DST pour le passthrough vkCmdCopyImage). Lu en aval par
 										// Bloom_Prefilter / Bloom_Combine.
 										m_fgSceneColorFoggedId = m_frameGraph.createImage("SceneColor_HDR_Fogged", sceneColorHDRDesc);
+										// Nuages — SceneColor_HDR_Clouds : cible de la passe Clouds (composition
+										// des nuages volumétriques sur la scène brouillardée). Même desc que
+										// Fogged (R16G16B16A16_SFLOAT, extent swapchain). Lu en aval par Bloom
+										// (Prefilter / Combine) quand la passe nuages est active.
+										m_fgCloudsId = m_frameGraph.createImage("SceneColor_HDR_Clouds", sceneColorHDRDesc);
 										// M45.3 — SceneColor_HDR_Dof : cible de la passe DepthOfField (bokeh),
 										// ou copie passthrough si la passe DoF est invalide. Meme desc que
 										// WithBloom/Fogged (qui inclut deja TRANSFER_DST pour le passthrough
@@ -5914,6 +5928,28 @@ namespace engine
 												// M45.1 — force d'inscattering directionnel (slot ambientColor.w).
 												// Override config.json (world.fog.inscatter) sinon valeur per-zone.
 												lp.ambientColor[3] = static_cast<float>(m_cfg.GetDouble("world.fog.inscatter", static_cast<double>(m_zoneAtmosphere.aerialInscatter)));
+
+												// Nuages (Phase 3) — assombrissement "ciel couvert" : module le
+												// soleil directionnel / l'ambiant selon la couverture nuageuse
+												// courante (dérivée du WeatherSystem, même source que CloudPass).
+												// Modulation scalaire pure (aucun changement de pipeline/descriptor) ;
+												// couplée au flag nuages, désactivable via overcast_strength = 0.
+												if (m_cfg.GetBool("render.clouds.enabled", true))
+												{
+													const float overcastStrength = static_cast<float>(m_cfg.GetDouble("render.clouds.overcast_strength", 0.6));
+													engine::render::CloudParams ocCur = engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetCurrentState());
+													engine::render::CloudParams ocTgt = engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetTargetState());
+													engine::render::CloudParams ocp   = engine::render::CloudParams::Lerp(ocCur, ocTgt, m_weatherSystem.GetIntensity());
+													float overcast = ocp.coverage * (ocp.density * 0.5f) * overcastStrength;
+													overcast = overcast < 0.0f ? 0.0f : (overcast > 1.0f ? 1.0f : overcast);
+													const float sunFactor = 1.0f - 0.7f * overcast; // soleil atténué (jusqu'à -70%)
+													const float ambFactor = 1.0f + 0.4f * overcast; // ambiant diffus renforcé
+													for (int i = 0; i < 3; ++i)
+													{
+														lp.lightColor[i]   *= sunFactor;
+														lp.ambientColor[i] *= ambFactor;
+													}
+												}
 												// Couleur du ciel utilisée par lighting.frag pour les pixels
 												// sans géométrie (depth==1.0). Pilotée par DayNightCycle pour
 												// rendre le cycle jour/nuit visible sans skybox dédié.
@@ -6273,12 +6309,153 @@ namespace engine
 												});
 										}
 
+										// Nuages volumétriques — passe insérée entre VolumetricFog et Bloom.
+										// Lit la scène brouillardée + le depth, compose les nuages ray-marchés
+										// et écrit SceneColor_HDR_Clouds. Les matrices caméra (invViewProj +
+										// cameraPos) sont recalculées EXACTEMENT comme la passe fog ci-dessus
+										// (même rs.viewProjMatrix / rs.camera.position) ; l'apparence vient de
+										// l'état jour/nuit (m_dayNight) et de la météo (m_weatherSystem via
+										// CloudWeatherMapper). Si la passe nuages n'est pas prête, on garde
+										// SceneColor_HDR_Fogged comme source du bloom (cf sceneAfterClouds).
+										const bool cloudsEnabled = m_cfg.GetBool("render.clouds.enabled", true);
+										{
+											// Diagnostic one-shot : confirme si la passe nuages est active
+											// (enabled + SPIR-V chargé + pipeline OK). Tranche "build/spv" vs "réglage".
+											static bool s_cloudDiagLogged = false;
+											if (!s_cloudDiagLogged)
+											{
+												s_cloudDiagLogged = true;
+												LOG_INFO(Render, "[Clouds][diag] enabled={} cloudPassReady={}",
+													cloudsEnabled,
+													(m_pipeline && m_pipeline->IsCloudPassReady()));
+											}
+										}
+										if (cloudsEnabled && m_pipeline && m_pipeline->IsCloudPassReady())
+										{
+											m_frameGraph.addPass("Clouds",
+												[this](engine::render::PassBuilder& b) {
+													b.read(m_fgSceneColorFoggedId, engine::render::ImageUsage::SampledRead);
+													b.read(m_fgDepthId,            engine::render::ImageUsage::SampledRead);
+													b.write(m_fgCloudsId,          engine::render::ImageUsage::ColorWrite);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													if (!m_pipeline->GetCloudPass().IsValid()) return;
+													const engine::render::DayNightCycle::State& dn = m_dayNight.GetState();
+													engine::render::CloudParams target =
+														engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetTargetState());
+													engine::render::CloudParams current =
+														engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetCurrentState());
+													engine::render::CloudParams cp =
+														engine::render::CloudParams::Lerp(current, target, m_weatherSystem.GetIntensity());
+
+													// Surcharges LIVE (config.json, sans rebuild) pour le réglage visuel :
+													// échelle de couverture/densité + altitude/épaisseur de la couche.
+													float cloudCoverage = cp.coverage * static_cast<float>(m_cfg.GetDouble("render.clouds.coverage_scale", 1.0));
+													cloudCoverage = cloudCoverage < 0.0f ? 0.0f : (cloudCoverage > 1.0f ? 1.0f : cloudCoverage);
+													float cloudDensityV = cp.density * static_cast<float>(m_cfg.GetDouble("render.clouds.density_scale", 1.0));
+													if (cloudDensityV < 0.0f) cloudDensityV = 0.0f;
+													const double baseAltCfg = m_cfg.GetDouble("render.clouds.base_altitude_m", 0.0); // 0 = auto (météo)
+													const double thickCfg   = m_cfg.GetDouble("render.clouds.thickness_m", 0.0);     // 0 = auto
+													float cloudBaseAlt = baseAltCfg > 0.0 ? static_cast<float>(baseAltCfg) : cp.baseAltMeters;
+													float cloudTopAlt  = thickCfg   > 0.0 ? (cloudBaseAlt + static_cast<float>(thickCfg)) : cp.topAltMeters;
+													if (cloudTopAlt <= cloudBaseAlt) cloudTopAlt = cloudBaseAlt + 100.0f;
+
+													engine::render::CloudPass::CloudPushConstants pc{};
+													// invViewProj + cameraPos. On utilise la matrice NON-jitterée
+													// (viewProjMatrixUnjittered) : le raymarch nuages doit être stable
+													// temporellement, sinon le jitter TAA fait scintiller les nuages
+													// (haute fréquence, non reprojetables faute de vecteurs de mouvement).
+													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+													const engine::RenderState& rs = m_renderStates[readIdx];
+													const float* vp = rs.viewProjMatrixUnjittered.m;
+													const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
+													const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
+													const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
+													const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
+													const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
+													const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
+													const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
+													const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
+													const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+													if (det > 1e-7f || det < -1e-7f)
+													{
+														const float inv = 1.0f / det;
+														pc.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*inv;
+														pc.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*inv;
+														pc.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*inv;
+														pc.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*inv;
+														pc.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*inv;
+														pc.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*inv;
+														pc.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*inv;
+														pc.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*inv;
+														pc.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*inv;
+														pc.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*inv;
+														pc.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*inv;
+														pc.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*inv;
+														pc.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*inv;
+														pc.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*inv;
+														pc.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*inv;
+														pc.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*inv;
+													}
+													pc.cameraPos[0] = rs.camera.position.x;
+													pc.cameraPos[1] = rs.camera.position.y;
+													pc.cameraPos[2] = rs.camera.position.z;
+													// w = temps réel cumulé (s) : advection des nuages par le vent.
+													pc.cameraPos[3] = m_cloudTimeSeconds;
+
+													for (int i = 0; i < 3; ++i)
+													{
+														pc.sunDir[i]       = dn.lightDir[i];
+														pc.sunColor[i]     = dn.lightColor[i];
+														const float tint   = (i == 0 ? cp.tintR : (i == 1 ? cp.tintG : cp.tintB));
+														pc.zenithColor[i]  = dn.skyZenith[i]  * tint;
+														pc.horizonColor[i] = dn.skyHorizon[i] * tint;
+													}
+													pc.sunDir[3]       = cloudCoverage;
+													pc.sunColor[3]     = cloudDensityV;
+													pc.zenithColor[3]  = cloudBaseAlt;
+													pc.horizonColor[3] = cloudTopAlt;
+
+													pc.windParams[0] = 1.0f;
+													pc.windParams[1] = 0.3f;
+													pc.windParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.wind_scale", 6.0));
+													pc.windParams[3] = 0.2f;
+
+													pc.stepParams[0] = static_cast<float>(m_cfg.GetInt("render.clouds.raymarch_steps", 64));
+													pc.stepParams[1] = static_cast<float>(m_cfg.GetInt("render.clouds.light_steps", 6));
+													pc.stepParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.max_distance_meters", 60000.0));
+													pc.stepParams[3] = static_cast<float>(m_cfg.GetDouble("render.clouds.ambient_strength", 0.4));
+
+													// Phase 2 — force des ombres de nuages au sol (0 = désactivé).
+													pc.shadowParams[0] = static_cast<float>(m_cfg.GetDouble("render.clouds.shadow_strength", 0.5));
+													// y = plafond de luminosité des nuages (anti-blowout vers le soleil) ; 0 = off.
+													pc.shadowParams[1] = static_cast<float>(m_cfg.GetDouble("render.clouds.max_luminance", 1.3));
+													// z = distance (m) de début d'estompage des nuages lointains (perspective
+													// aérienne) ; évite le mur blanc à l'horizon. 0 = désactivé.
+													pc.shadowParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.fade_distance_m", 2500.0));
+													pc.shadowParams[3] = 0.0f;
+
+													m_pipeline->GetCloudPass().Record(
+														m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+														m_fgSceneColorFoggedId, m_fgDepthId, m_fgCloudsId, pc, m_currentFrame % 2);
+												});
+										}
+
+										// Source effective consommée par le bloom : sortie nuages si la passe
+										// Clouds est active, sinon la scène brouillardée. Les DEUX consommateurs
+										// aval de Fogged (Bloom_Prefilter ET Bloom_Combine) basculent dessus
+										// pour rester cohérents (sinon Combine recomposerait sur une base sans
+										// nuages).
+										const engine::render::ResourceId sceneAfterClouds =
+											(cloudsEnabled && m_pipeline && m_pipeline->IsCloudPassReady())
+												? m_fgCloudsId : m_fgSceneColorFoggedId;
+
 										m_frameGraph.addPass("Bloom_Prefilter",
-											[this](engine::render::PassBuilder& b) {
-												b.read(m_fgSceneColorFoggedId, engine::render::ImageUsage::SampledRead);
+											[this, sceneAfterClouds](engine::render::PassBuilder& b) {
+												b.read(sceneAfterClouds, engine::render::ImageUsage::SampledRead);
 												b.write(m_fgBloomDownMipIds[0], engine::render::ImageUsage::ColorWrite);
 											},
-											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+											[this, sceneAfterClouds](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												if (!m_pipeline->GetBloomPrefilterPass().IsValid()) return;
 												engine::render::BloomPrefilterPass::PrefilterParams pp{};
 												pp.threshold = static_cast<float>(m_cfg.GetDouble("bloom.threshold", 1.0));
@@ -6287,7 +6464,7 @@ namespace engine
 												m_pipeline->GetBloomPrefilterPass().Record(
 													m_vkDeviceContext.GetDevice(), cmd, reg,
 													m_vkSwapchain.GetExtent(),
-													m_fgSceneColorFoggedId, m_fgBloomDownMipIds[0], pp, frameIdx);
+													sceneAfterClouds, m_fgBloomDownMipIds[0], pp, frameIdx);
 											});
 
 										for (uint32_t i = 0; i < engine::render::kBloomMipCount - 1; ++i)
@@ -6335,21 +6512,22 @@ namespace engine
 										}
 
 										m_frameGraph.addPass("Bloom_Combine",
-											[this](engine::render::PassBuilder& b) {
-												// M45.2 — base de composition = SceneColor_HDR_Fogged (scene + fog
-												// volumique), pas PostWater, sinon le fog serait bypasse dans
-												// l'image finale (Combine produit l'image post-bloom consommee par
+											[this, sceneAfterClouds](engine::render::PassBuilder& b) {
+												// M45.2 — base de composition = scene + fog volumique (et nuages si
+												// la passe Clouds est active : sceneAfterClouds), pas PostWater,
+												// sinon le fog/les nuages seraient bypasses dans l'image finale
+												// (Combine produit l'image post-bloom consommee par
 												// AutoExposure/Tonemap).
-												b.read(m_fgSceneColorFoggedId,        engine::render::ImageUsage::SampledRead);
+												b.read(sceneAfterClouds,             engine::render::ImageUsage::SampledRead);
 												b.read(m_fgBloomUpMipIds[0],         engine::render::ImageUsage::SampledRead);
 												b.write(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::ColorWrite);
 											},
-											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+											[this, sceneAfterClouds](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												if (!m_pipeline->GetBloomCombinePass().IsValid()) return;
 												engine::render::BloomCombinePass::CombineParams cp{};
 												cp.intensity = static_cast<float>(m_cfg.GetDouble("bloom.intensity", 1.0));
 												const uint32_t frameIdx = m_currentFrame % 2;
-												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorFoggedId, m_fgBloomUpMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
+												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), sceneAfterClouds, m_fgBloomUpMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
 											});
 
 										m_frameGraph.addPass("AutoExposure_Luminance",
@@ -7928,6 +8106,9 @@ namespace engine
 
 	const double dt               = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
 
+	// Temps cumulé pour l'advection des nuages (vent). Continu, non cyclique.
+	m_cloudTimeSeconds += static_cast<float>(dt);
+
 	// M38.1 — Advance day/night cycle and propagate results into m_zoneAtmosphere
 	// so that the existing lighting path picks them up without further changes.
 	{
@@ -9460,6 +9641,11 @@ namespace engine
 
 		out.projMatrix = out.camera.ComputeProjectionMatrix();
 
+		// ViewProj non-jitterée (avant l'ajout du jitter TAA) : sert au raymarch des
+		// nuages pour qu'ils soient stables temporellement (pas de tremblement
+		// sous-pixel -> pas de scintillement via le TAA).
+		out.viewProjMatrixUnjittered = out.projMatrix * out.viewMatrix;
+
 		const uint32_t taaSampleIndex = m_currentFrame % engine::render::kTaaHaltonN;
 		float jitterX = 0.0f, jitterY = 0.0f;
 		if (!m_taaHistoryInvalid && m_width > 0 && m_height > 0)
@@ -9893,6 +10079,20 @@ namespace engine
 			}
 			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
 			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+#if defined(_WIN32)
+			// Boussole HUD : visible en jeu. Forward caméra = row 2 du view matrix.
+			// L'aiguille rouge pointe le Nord et tourne quand le joueur pivote.
+			if (m_authUi.IsInWorldShard())
+			{
+				const uint32_t rIdxHud = m_renderReadIndex.load(std::memory_order_acquire);
+				const engine::RenderState& rsHud = m_renderStates[rIdxHud];
+				const engine::render::DayNightCycle::State& dnHud = m_dayNight.GetState();
+				engine::render::DrawCompassHud(
+					rsHud.viewMatrix.m[2], rsHud.viewMatrix.m[10],
+					dnHud.timeOfDay, dnHud.isDaytime,
+					dw, dh);
+			}
+#endif
 			// Cellule de dialogue PNJ : fenêtre centrale dédiée (no-op si inactif).
 			// Partage la frame ImGui en cours (NewFrame déjà appelé plus haut).
 			if (m_dialogueImGui && m_dialogue.IsActive())
@@ -10483,14 +10683,16 @@ namespace engine
 	        // empêche l'auto-exposition de surcompenser une scène assombrie par les
 	        // ombres et de cramer le ciel/horizon en blanc. Réglable via config.
 	        const float minExp = static_cast<float>(m_cfg.GetDouble("exposure.min", 0.1));
-	        const float maxExpDay   = static_cast<float>(m_cfg.GetDouble("exposure.max", 3.0));
-	        const float maxExpNight = static_cast<float>(m_cfg.GetDouble("exposure.max_night", 1.0));
-	        // Plafond d'exposition lissé selon l'élévation du soleil : la nuit on
-	        // empêche l'auto-exposition de réhausser la luminance et d'annuler
-	        // l'assombrissement voulu. sunDir.y = sin(élévation) ∈ [-1,1].
-	        const float sunUpFactor = std::clamp(m_dayNight.GetState().sunDir[1] * 5.0f, 0.0f, 1.0f);
-	        const float maxExp = maxExpNight + (maxExpDay - maxExpNight) * sunUpFactor;
-	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed, minExp, maxExp, frameIndex);
+	        // Plafond d'exposition piloté par l'heure : bas la nuit (night_max),
+	        // normal le jour (max), interpolé linéairement via le facteur jour
+	        // (élévation solaire clampée [0,1]). À dayFactor=1, effectiveMax==dayMax
+	        // (jour inchangé). Comme tout passe par l'exposition, l'ambient IBL
+	        // nocturne est aussi assombri. Lu chaque frame → night_max réglable à chaud.
+	        const float dayMax    = static_cast<float>(m_cfg.GetDouble("exposure.max", 3.0));
+	        const float nightMax  = static_cast<float>(m_cfg.GetDouble("exposure.night_max", 0.8));
+	        const float dayFactor = m_dayNight.GetState().dayFactor; // 0=nuit, 1=jour
+	        const float effectiveMax = nightMax + (dayMax - nightMax) * dayFactor;
+	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed, minExp, effectiveMax, frameIndex);
 	    }
 	
 	    auto handleSuboptimal = [this](const char* phase)

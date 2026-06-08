@@ -62,8 +62,8 @@ vec3 RenderMoonDisk(vec3 viewDir, vec3 baseSky)
 {
     if (pc.moonIntensity < 0.001) return baseSky;
     float cosA = dot(viewDir, pc.moonDir);
-    const float kMoonRadius = 0.012;
-    if (cosA <= cos(kMoonRadius * 1.5)) return baseSky;
+    const float kMoonRadius = 0.020; // un peu plus gros pour être repérable
+    if (cosA <= cos(kMoonRadius * 4.0)) return baseSky; // marge pour le halo nocturne
 
     vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), pc.moonDir));
     vec3 up    = cross(pc.moonDir, right);
@@ -110,9 +110,13 @@ vec3 RenderMoonDisk(vec3 viewDir, vec3 baseSky)
         moonSurface += vec3(0.05, 0.06, 0.10) * (1.0 - shadowMask);
     }
 
-    // Halo doux : transition smoothstep entre baseSky et moonSurface.
+    // Disque + halo serré : transition smoothstep entre baseSky et moonSurface.
     float haloFalloff = smoothstep(cos(kMoonRadius * 1.5), cos(kMoonRadius), cosA);
-    return mix(baseSky, moonSurface * pc.moonIntensity, haloFalloff);
+    vec3 withDisk = mix(baseSky, moonSurface * pc.moonIntensity, haloFalloff);
+
+    // Halo nocturne large bleuté autour de la lune -> repérable dans le ciel sombre.
+    float glow = smoothstep(cos(kMoonRadius * 4.0), cos(kMoonRadius * 1.2), cosA) * 0.18;
+    return withDisk + vec3(0.55, 0.60, 0.75) * glow * pc.moonIntensity;
 }
 
 void main()
@@ -133,23 +137,26 @@ void main()
     float blendFactor = pow(t, 0.6);
     vec3 skyColor = mix(pc.horizonColor, pc.zenithColor, blendFactor);
 
-    // ---- Mie-scatter-like sun glow ------------------------------------------
-    // Soft glow around the sun disk; modelled as (dot^n) which approximates the
-    // Henyey-Greenstein phase function used in Rayleigh/Mie scattering.
+    // ---- Disque solaire NET + couronne + halo atmosphérique -----------------
+    // Disque circulaire à bord net (au lieu d'un blob mou), couleur chaude qui
+    // vire à l'orange quand le soleil est bas (lever/coucher) -> soleil reconnaissable.
     float sunDot = max(dot(viewDir, pc.lightDir), 0.0);
+    float sunAng = acos(clamp(sunDot, -1.0, 1.0)); // angle au centre du soleil (rad)
 
-    // Sun disk: tight halo.
-    float sunGlow = pow(sunDot, 256.0);
+    const float kSunRadius = 0.045;                       // ~2.5°, nettement visible
+    float sunDisk  = smoothstep(kSunRadius, kSunRadius * 0.8, sunAng); // disque net
+    float corona   = pow(sunDot, 90.0) * 0.9;             // couronne large
+    float haloGlow = pow(sunDot, 7.0)  * 0.40;            // bloom atmosphérique
 
-    // Atmospheric halo: wide bloom around sun.
-    float haloGlow = pow(sunDot, 8.0) * 0.35;
+    // Élévation du soleil (lightDir.y) : bas -> orange, haut -> jaune-blanc chaud.
+    float sunElev  = clamp(pc.lightDir.y, 0.0, 1.0);
+    vec3  sunCore  = mix(vec3(1.0, 0.45, 0.15), vec3(1.0, 0.92, 0.72), sunElev);
+    vec3  haloCol  = mix(vec3(1.0, 0.40, 0.15), pc.horizonColor, sunElev);
+    // Disque sur-lumineux (HDR > 1) -> ressort du ciel et alimente le bloom.
+    vec3  sunContrib = sunCore * (sunDisk * 2.5 + corona) + haloCol * haloGlow;
 
-    // Sun/moon colour: white tint (actual colour is on the directional light, not the sky).
-    vec3 sunContrib = vec3(1.0, 0.95, 0.85) * sunGlow
-                    + pc.horizonColor       * haloGlow;
-
-    // Only add sun glow above the horizon.
-    if (viewDir.y < 0.02)
+    // Pas de soleil quand il est sous l'horizon.
+    if (pc.lightDir.y < -0.02)
     {
         sunContrib = vec3(0.0);
     }

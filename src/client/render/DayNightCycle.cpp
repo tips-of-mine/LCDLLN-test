@@ -250,6 +250,11 @@ namespace engine::render
 		// sunElevation in [−1, +1]; map to [0, 1] for day blend.
 		const float dayT = Clamp(sunElevation, 0.0f, 1.0f);
 
+		// Facteur jour exposé tel quel (réutilise la courbe d'élévation déjà
+		// clampée) : 0 = nuit profonde, 1 = plein jour. Pilote le plafond
+		// d'auto-exposition côté Engine pour assombrir la nuit.
+		m_state.dayFactor = dayT;
+
 		if (isSunUp)
 		{
 			// Sunrise/sunset transition zone: elevation in [0, 0.25] → warm orange.

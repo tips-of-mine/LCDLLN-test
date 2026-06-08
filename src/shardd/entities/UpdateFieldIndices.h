@@ -76,11 +76,11 @@ namespace engine::server::entities
 	/// Indices pour Player (extends Unit). Demarre apres Unit end.
 	enum PlayerFieldIdx : size_t
 	{
-		kPlayerFieldAccountId    = kUnitFieldEnd,      // 17
-		kPlayerFieldCharacterId  = kUnitFieldEnd + 1,  // 18
-		kPlayerFieldXp           = kUnitFieldEnd + 2,  // 19
+		kPlayerFieldAccountId    = kUnitFieldEnd,      // 31
+		kPlayerFieldCharacterId  = kUnitFieldEnd + 1,  // 32
+		kPlayerFieldXp           = kUnitFieldEnd + 2,  // 33
 
-		kPlayerFieldEnd          = kUnitFieldEnd + 3   // 20
+		kPlayerFieldEnd          = kUnitFieldEnd + 3   // 34
 	};
 
 	static constexpr size_t kPlayerFieldCount = kPlayerFieldEnd;
@@ -88,10 +88,10 @@ namespace engine::server::entities
 	/// Indices pour Creature (extends Unit). Demarre apres Unit end (parallele a Player).
 	enum CreatureFieldIdx : size_t
 	{
-		kCreatureFieldTemplateEntry = kUnitFieldEnd,      // 17
-		kCreatureFieldSpawnId       = kUnitFieldEnd + 1,  // 18
+		kCreatureFieldTemplateEntry = kUnitFieldEnd,      // 31
+		kCreatureFieldSpawnId       = kUnitFieldEnd + 1,  // 32
 
-		kCreatureFieldEnd           = kUnitFieldEnd + 2   // 19
+		kCreatureFieldEnd           = kUnitFieldEnd + 2   // 33
 	};
 
 	static constexpr size_t kCreatureFieldCount = kCreatureFieldEnd;

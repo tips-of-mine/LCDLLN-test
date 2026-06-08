@@ -14,6 +14,29 @@ set(CMAKE_CXX_STANDARD 20)
 #   include(LCDLLNHelpers)
 # Le helper est donc disponible ici sans redefinition.
 
+# ── Embarquement anti-triche : JSON game/data → headers const (générés au build).
+set(LCDLLN_GEN_DIR ${CMAKE_BINARY_DIR}/generated)
+file(MAKE_DIRECTORY ${LCDLLN_GEN_DIR})
+
+set(STATS_JSON    ${CMAKE_SOURCE_DIR}/game/data/gameplay/character_stats.json)
+set(STATS_HDR     ${LCDLLN_GEN_DIR}/CharacterStatsData.h)
+set(FACTIONS_JSON ${CMAKE_SOURCE_DIR}/game/data/races/factions.json)
+set(FACTIONS_HDR  ${LCDLLN_GEN_DIR}/FactionsData.h)
+
+add_custom_command(
+  OUTPUT  ${STATS_HDR}
+  COMMAND ${CMAKE_COMMAND} -DINPUT=${STATS_JSON} -DOUTPUT=${STATS_HDR} -DSYMBOL=kCharacterStatsJson -P ${CMAKE_SOURCE_DIR}/cmake/EmbedJson.cmake
+  DEPENDS ${STATS_JSON} ${CMAKE_SOURCE_DIR}/cmake/EmbedJson.cmake
+  COMMENT "Embedding character_stats.json -> CharacterStatsData.h")
+
+add_custom_command(
+  OUTPUT  ${FACTIONS_HDR}
+  COMMAND ${CMAKE_COMMAND} -DINPUT=${FACTIONS_JSON} -DOUTPUT=${FACTIONS_HDR} -DSYMBOL=kFactionsJson -P ${CMAKE_SOURCE_DIR}/cmake/EmbedJson.cmake
+  DEPENDS ${FACTIONS_JSON} ${CMAKE_SOURCE_DIR}/cmake/EmbedJson.cmake
+  COMMENT "Embedding factions.json -> FactionsData.h")
+
+add_custom_target(lcdlln_gen_character_data DEPENDS ${STATS_HDR} ${FACTIONS_HDR})
+
 if(WIN32)
   add_executable(server_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_win.cpp

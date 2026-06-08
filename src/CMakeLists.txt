@@ -1084,3 +1084,11 @@ if(WIN32 AND DEFINED LCDLLN_OPENSSL_DLL_DIR AND NOT LCDLLN_OPENSSL_DLL_DIR STREQ
     COMMENT "Copie des DLL OpenSSL à côté de lcdlln_server.exe..."
   )
 endif()
+
+# Garde anti-NDEBUG : re-active les assert() pour TOUTES les cibles de test
+# de ce repertoire (helper lcdlln_add_simple_test + add_executable manuels).
+# En Release, NDEBUG desactiverait les assert et rendrait ces tests verts
+# sans rien verifier. A laisser en dernier (apres tous les add_test).
+# Idempotent (les tests via helper sont deja couverts). Cf.
+# lcdlln_keep_asserts_all_dir_tests dans cmake/LCDLLNHelpers.cmake.
+lcdlln_keep_asserts_all_dir_tests()

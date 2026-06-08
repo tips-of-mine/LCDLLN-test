@@ -74,3 +74,8 @@ else()
   target_compile_options(routines_segment_tests PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 add_test(NAME routines_segment_tests COMMAND routines_segment_tests)
+
+# Garde anti-NDEBUG : re-active les assert() pour les cibles de test de ce
+# repertoire (sinon vertes sans rien verifier en Release). A laisser apres
+# tous les add_test. Cf. lcdlln_keep_asserts_all_dir_tests.
+lcdlln_keep_asserts_all_dir_tests()

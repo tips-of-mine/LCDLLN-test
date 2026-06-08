@@ -1994,3 +1994,11 @@ add_subdirectory(tools/load_tester)
 # visuellement distinct pour le shader 8-layer terrain en attendant les vrais
 # assets PBR. Pas de dépendance zlib externe (deflate stored block).
 add_subdirectory(tools/gen_terrain_placeholders)
+
+# Garde anti-NDEBUG : re-active les assert() pour TOUTES les cibles de test
+# declarees « manuellement » (add_executable + add_test) dans ce fichier.
+# En Release, NDEBUG desactiverait les assert et rendrait ces tests verts
+# sans rien verifier. A laisser en dernier (apres tous les add_test de ce
+# repertoire). Les tests crees via lcdlln_add_simple_test sont deja couverts
+# par le helper ; l'appel est idempotent. Cf. lcdlln_keep_asserts_all_dir_tests.
+lcdlln_keep_asserts_all_dir_tests()

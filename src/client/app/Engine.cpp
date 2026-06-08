@@ -56,6 +56,7 @@
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
+#include "src/client/render/LnTheme.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/client/render/DeferredPipeline.h"
 #include "src/client/render/ShaderCompiler.h"
@@ -802,6 +803,16 @@ namespace engine
 			// fichier dedie => un echec ne corrompt jamais user_settings.json.
 			if (cfg.LoadFromFile("keybinds.json"))
 				LOG_INFO(Core, "[Boot] keybinds.json applique (binds clavier persistants)");
+
+			// ui_theme.json : préférence de thème UI (fichier dédié écrit par le
+			// panneau Options, comme keybinds.json). Merge dans cfg puis applique.
+			if (cfg.LoadFromFile("ui_theme.json"))
+				LOG_INFO(Core, "[Boot] ui_theme.json applique (theme UI persistant)");
+			// Applique le thème lu ; défaut or_royal si absent ou nom invalide
+			// (SetActive renvoie false et conserve or_royal dans ce cas).
+			const std::string uiTheme = cfg.GetString("ui.theme", "or_royal");
+			if (!LnTheme::SetActive(uiTheme))
+				LOG_WARN(Core, "[Boot] theme '{}' inconnu -> or_royal", uiTheme);
 
 			// Apparence persistante (client.character_creation.gender) : fichier
 			// dedie character_appearance.json, ecrit par le selecteur de genre de
@@ -10478,6 +10489,36 @@ namespace engine
 				if (ImGui::SliderFloat("Sensibilite souris", &sens, 0.0005f, 0.01f, "%.4f rad/px"))
 				{
 					m_cfg.SetValue("controls.mouse_sensitivity", static_cast<double>(sens));
+				}
+
+				// --- Thème de l'interface (recolore tout l'UI in-game) ---
+				// Libellés ASCII volontaires : la police in-game (Windlass) n'a
+				// pas tous les glyphes accentués (cf. "Se deconnecter" du menu pause).
+				auto prettyTheme = [](std::string_view n) -> const char* {
+					if (n == "or_royal") return "Or royal";
+					if (n == "sylve_emeraude") return "Sylve emeraude";
+					return "?";
+				};
+				const std::string_view curTheme = LnTheme::ActiveName();
+				if (ImGui::BeginCombo("Theme de l'interface", prettyTheme(curTheme)))
+				{
+					for (std::string_view n : LnTheme::Names())
+					{
+						const bool selected = (n == curTheme);
+						if (ImGui::Selectable(prettyTheme(n), selected) && !selected)
+						{
+							LnTheme::SetActive(n);
+							// Persistance : fichier dédié mergé au boot (comme keybinds.json).
+							const std::string js =
+								std::string("{\n  \"ui\": { \"theme\": \"")
+								+ std::string(LnTheme::ActiveName()) + "\" }\n}\n";
+							if (!engine::platform::FileSystem::WriteAllText("ui_theme.json", js))
+								LOG_WARN(Core, "[Options] ui_theme.json non ecrit (theme non persiste)");
+						}
+						if (selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
 				}
 
 				// --- Controles : touches d'action remappables (controls.keybind.*) ---

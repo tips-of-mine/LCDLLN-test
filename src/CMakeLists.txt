@@ -590,6 +590,13 @@ elseif(UNIX)
   target_link_libraries(world_clock_tests PRIVATE engine_core)
   add_test(NAME world_clock_tests COMMAND world_clock_tests)
 
+  # Theming runtime (sous-projet 1) : registre de palettes LnTheme (header-only).
+  # engine_core fournit l'include path ${CMAKE_SOURCE_DIR} pour resoudre "src/...".
+  add_executable(ln_theme_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/tests/LnThemeTests.cpp)
+  target_link_libraries(ln_theme_tests PRIVATE engine_core)
+  add_test(NAME ln_theme_tests COMMAND ln_theme_tests)
+
   # CMANGOS.21 (Phase 3.21a) : GuildPermissionMatrix (header-only).
   lcdlln_add_simple_test(guild_permission_matrix_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/guild/GuildPermissionMatrixTests.cpp)

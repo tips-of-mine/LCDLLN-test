@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Menu Pause — directions visuelles</title>
+<style>
+  :root{
+    /* Palette LnTheme (src/client/render/LnTheme.h) */
+    --primary:#4A7BB8;
+    --primary-hover:#638fd1;
+    --secondary:#5C6B8C;
+    --accent:#E8C56E;
+    --background:#0A0D12;
+    --surface:#121822;
+    --panel:#141C28;
+    --text:#F2F4F8;
+    --muted:#9BA8B8;
+    --border:#3D4F66;
+    --error:#C44040;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:"Segoe UI",system-ui,sans-serif;
+    background:#1a1f26; color:var(--text);
+  }
+  /* Police décorative approximant Windlass (serif à empattements, capitales) */
+  .deco{font-family:"Trajan Pro","Cinzel",Georgia,"Times New Roman",serif; letter-spacing:.06em;}
+  h1.page{font-weight:400; text-align:center; padding:24px 0 4px; letter-spacing:.04em;}
+  p.sub{text-align:center; color:var(--muted); margin:0 0 28px; font-size:14px;}
+
+  .grid{
+    display:flex; flex-wrap:wrap; gap:32px; justify-content:center;
+    padding:0 24px 60px; align-items:flex-start;
+  }
+  .col{width:430px;}
+  .col h2{font-size:16px; font-weight:600; text-align:center; color:var(--accent); margin:0 0 6px;}
+  .col .note{font-size:12.5px; color:var(--muted); text-align:center; min-height:48px; margin:0 0 14px; line-height:1.5;}
+
+  /* Scène : fond ciel + avatar pour simuler l'in-game */
+  .scene{
+    position:relative; height:340px; border-radius:8px; overflow:hidden;
+    background:linear-gradient(180deg,#8fb4d6 0%, #a9c4dd 55%, #c7d6e2 100%);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  .scene::after{ /* silhouette avatar */
+    content:""; position:absolute; bottom:0; left:50%; width:90px; height:150px;
+    transform:translateX(-50%);
+    background:radial-gradient(ellipse at 50% 30%, #3a4a3a 0%, #2a3528 60%, transparent 70%);
+    opacity:.55;
+  }
+
+  /* ---- Panneau de base commun ---- */
+  .panel{
+    position:relative; z-index:2; width:300px; padding:18px 22px 22px;
+    text-align:center;
+  }
+  .panel .title{font-size:26px; margin:2px 0 10px;}
+  .sep{height:1px; border:0; margin:0 0 16px;}
+  .btn{
+    display:block; width:100%; margin:0 auto 12px; padding:11px 0;
+    font-size:16px; text-align:center; cursor:pointer; border:1px solid transparent;
+    transition:all .12s ease; font-family:inherit;
+  }
+  .btn:last-child{margin-bottom:0;}
+
+  /* =========================================================
+     A — Sobre cohérent (charte auth, boutons fantôme uniformes)
+     ========================================================= */
+  .A .panel{
+    background:rgba(20,28,40,.92); border:1px solid var(--border); border-radius:8px;
+  }
+  .A .title{color:var(--text);}
+  .A .sep{background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  .A .btn{
+    background:var(--surface); border-color:var(--border); color:var(--text); border-radius:6px;
+  }
+  .A .btn:hover{border-color:var(--accent); background:#1a2433;}
+
+  /* =========================================================
+     B — Hiérarchisé (couleurs sémantiques)
+     ========================================================= */
+  .B .panel{
+    background:rgba(20,28,40,.94); border:1px solid var(--border); border-radius:8px;
+  }
+  .B .title{color:var(--accent); text-shadow:0 1px 3px rgba(0,0,0,.5);}
+  .B .sep{background:linear-gradient(90deg,transparent,var(--accent),transparent); opacity:.7;}
+  .B .btn{border-radius:6px;}
+  .B .btn.primary{background:var(--primary); border-color:var(--primary); color:#fff;}
+  .B .btn.primary:hover{background:var(--primary-hover);}
+  .B .btn.ghost{background:var(--surface); border-color:var(--border); color:var(--text);}
+  .B .btn.ghost:hover{border-color:var(--accent); background:#1a2433;}
+  .B .btn.danger{background:transparent; border-color:var(--error); color:#e08585;}
+  .B .btn.danger:hover{background:var(--error); color:#fff;}
+
+  /* =========================================================
+     C — Médiéval accentué (cadre doré, boutons ornés)
+     ========================================================= */
+  .C .panel{
+    background:rgba(16,22,32,.95);
+    border:1px solid var(--accent); border-radius:4px;
+    box-shadow:0 0 0 1px rgba(0,0,0,.6), inset 0 0 24px rgba(232,197,110,.06);
+  }
+  .C .title{color:var(--accent); letter-spacing:.14em; font-size:24px;
+    text-shadow:0 0 10px rgba(232,197,110,.35);}
+  .C .sep{background:linear-gradient(90deg,transparent,var(--accent),transparent);
+    box-shadow:0 0 6px rgba(232,197,110,.4);}
+  .C .btn{
+    background:linear-gradient(180deg,#1c2738,#141c28);
+    border-color:var(--border); color:var(--text); border-radius:3px; letter-spacing:.05em;
+  }
+  .C .btn:hover{
+    border-color:var(--accent); color:var(--accent);
+    box-shadow:0 0 10px rgba(232,197,110,.25), inset 0 0 12px rgba(232,197,110,.08);
+  }
+  .C .btn.quit:hover{border-color:var(--error); color:#e08585; box-shadow:0 0 10px rgba(196,64,64,.3);}
+
+  .legend{max-width:900px; margin:0 auto 50px; padding:0 24px; color:var(--muted); font-size:13px; line-height:1.7;}
+  .legend code{color:var(--accent); background:rgba(232,197,110,.08); padding:1px 5px; border-radius:3px;}
+</style>
+</head>
+<body>
+  <h1 class="page deco">Menu Pause — 3 directions visuelles</h1>
+  <p class="sub">Toutes correctement centrées · palette réelle du jeu (LnTheme) · police décorative simulée (≈ Windlass)</p>
+
+  <div class="grid">
+    <!-- A -->
+    <div class="col A">
+      <h2>A · Sobre cohérent</h2>
+      <p class="note">Reprend exactement la charte des écrans auth. Boutons fantôme uniformes. Discret, sûr, zéro surprise.</p>
+      <div class="scene">
+        <div class="panel">
+          <div class="title deco">PAUSE</div>
+          <hr class="sep">
+          <button class="btn deco">Reprendre</button>
+          <button class="btn deco">Options</button>
+          <button class="btn deco">Se déconnecter</button>
+          <button class="btn deco">Quitter le jeu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- B -->
+    <div class="col B">
+      <h2>B · Hiérarchisé</h2>
+      <p class="note">Couleurs sémantiques : Reprendre en primaire bleu, Quitter en rouge danger. Guide l'œil vers l'action principale.</p>
+      <div class="scene">
+        <div class="panel">
+          <div class="title deco">PAUSE</div>
+          <hr class="sep">
+          <button class="btn primary deco">Reprendre</button>
+          <button class="btn ghost deco">Options</button>
+          <button class="btn ghost deco">Se déconnecter</button>
+          <button class="btn danger deco">Quitter le jeu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- C -->
+    <div class="col C">
+      <h2>C · Médiéval accentué</h2>
+      <p class="note">Cadre doré, titre lumineux, boutons à dégradé avec halo doré au survol. Le plus proche du thème Windlass.</p>
+      <div class="scene">
+        <div class="panel">
+          <div class="title deco">PAUSE</div>
+          <hr class="sep">
+          <button class="btn deco">Reprendre</button>
+          <button class="btn deco">Options</button>
+          <button class="btn deco">Se déconnecter</button>
+          <button class="btn quit deco">Quitter le jeu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <p><strong>À savoir sur le rendu réel (ImGui / Vulkan)</strong> — la police en jeu est <code>Windlass</code> (décorative, capitales) ;
+    ici j'utilise un serif système pour l'approcher. Les dégradés et halos de la variante C sont possibles en ImGui mais via
+    <code>ImDrawList</code> custom (comme le toggle auth) ; A et B sont réalisables avec les helpers existants
+    (<code>DrawAuthButtonPrimary</code>, <code>DrawAuthButtonGhost</code>, <code>DrawAuthButtonDanger</code>) presque tels quels.</p>
+    <p>Le centrage est corrigé dans les trois cas : largeur de bouton fixe, posée à <code>X = (largeur_contenu − largeur_bouton) / 2</code>,
+    titre centré sur la zone de contenu réelle (padding inclus).</p>
+  </div>
+</body>
+</html>

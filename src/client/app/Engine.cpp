@@ -8367,13 +8367,27 @@ namespace engine
 						engine::network::kOpcodeLunarStateRequest, lunarPayload);
 				}
 
-				// WorldClock sync (Task 6.2) — fetch l'etat horloge serveur a
-				// l'entree monde (master-authoritative). Le master repond via
-				// opcode 204 (WorldClockStateResponse) dispatche dans le push
-				// handler ci-dessus -> m_dayNight.SetServerClock (mode driven).
-				// Le push 205 arrive ensuite a chaque changement admin, et une
-				// re-sync 204 periodique (controle de derive) est declenchee par
-				// Update() toutes les game.worldclock.drift_check_sec.
+				// WorldClock sync — l'horloge est désormais reçue en piggyback de
+				// la réponse liste des personnages (opcode 40) et stockée dans
+				// l'AuthUi. On l'applique ici (main thread) au lieu d'envoyer une
+				// requête 203 séparée. Repli : si aucune horloge piggyback (vieux
+				// master / requête liste échouée), on garde l'ancien comportement
+				// (requête 203) pour ne pas régresser le solo/compat.
+				if (m_authUi.HasWorldClock())
+				{
+					const auto& wc = m_authUi.WorldClock();
+					engine::world::WorldClockParams p;
+					p.epochRefUnixMs         = wc.epochRefUnixMs;
+					p.timeScaleRealMinPerDay = wc.timeScaleRealMinPerDay;
+					p.offsetGameSec          = wc.offsetGameSec;
+					p.paused                 = (wc.paused != 0u);
+					p.pausedAtGameSec        = wc.pausedAtGameSec;
+					p.lunarPeriodGameSec     = wc.lunarPeriodGameSec;
+					m_dayNight.SetServerClock(p, wc.serverTimeUnixMs, m_authUi.WorldClockClientRecvMs());
+					m_authUi.ClearWorldClock();
+					LOG_INFO(Render, "[Engine] WorldClock applique depuis le piggyback liste perso");
+				}
+				else
 				{
 					std::vector<uint8_t> wcReq;
 					engine::network::worldclock::BuildWorldClockStateRequestPayload(wcReq);

@@ -52,6 +52,7 @@
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
+#include "src/client/render/LnTheme.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/client/render/DeferredPipeline.h"
 #include "src/client/render/ShaderCompiler.h"
@@ -797,6 +798,15 @@ namespace engine
 			// fichier dedie => un echec ne corrompt jamais user_settings.json.
 			if (cfg.LoadFromFile("keybinds.json"))
 				LOG_INFO(Core, "[Boot] keybinds.json applique (binds clavier persistants)");
+
+			// ui_theme.json : préférence de thème UI (fichier dédié écrit par le
+			// panneau Options, comme keybinds.json). Merge dans cfg puis applique.
+			if (cfg.LoadFromFile("ui_theme.json"))
+				LOG_INFO(Core, "[Boot] ui_theme.json applique");
+			// Applique le thème lu ; défaut or_royal si absent ou nom invalide
+			// (SetActive renvoie false et conserve or_royal dans ce cas).
+			if (!LnTheme::SetActive(cfg.GetString("ui.theme", "or_royal")))
+				LOG_WARN(Core, "[Boot] theme '{}' inconnu -> or_royal", cfg.GetString("ui.theme", "or_royal"));
 
 			// Apparence persistante (client.character_creation.gender) : fichier
 			// dedie character_appearance.json, ecrit par le selecteur de genre de

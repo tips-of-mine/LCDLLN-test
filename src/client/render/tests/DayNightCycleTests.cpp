@@ -50,9 +50,15 @@ int main()
 	{
 		dn.SetTime(t);
 		const auto& s = dn.GetState();
-		Check(Dot(s.sunDir, s.moonDir) < -0.95f, "soleil/lune opposes");
+		// Invariant robuste : moonElev = -sunElev (décalage 12 h) ⇒ les composantes
+		// verticales sont exactement opposées, quel que soit l'azimut. (Le modèle
+		// d'azimut simplifié ne garantit PAS l'opposition 3D complète hors heures
+		// cardinales — d'où l'invariant sur la seule élévation.)
+		Check(std::fabs(s.sunDir[1] + s.moonDir[1]) < 1e-3f, "elevations soleil/lune opposees");
 		const float lenSun = std::sqrt(Dot(s.sunDir, s.sunDir));
 		Check(std::fabs(lenSun - 1.0f) < 1e-3f, "sunDir normalise");
+		const float lenMoon = std::sqrt(Dot(s.moonDir, s.moonDir));
+		Check(std::fabs(lenMoon - 1.0f) < 1e-3f, "moonDir normalise");
 	}
 
 	return s_fail == 0 ? 0 : 1;

@@ -414,10 +414,11 @@ namespace engine::render
 			// auth) + persistance ui_theme.json, comme le sélecteur in-game. Hors du
 			// modèle staged (Appliquer/Annuler) : un thème se prévisualise en direct.
 			{
+				// Clé i18n dérivée de l'id du thème (data-driven) : un nouveau thème
+				// dans le registre s'affiche sans toucher ce code dès que sa clé
+				// "options.interface.theme.<id>" existe ; sinon tr() renvoie la clé.
 				auto themeLabel = [&](std::string_view id) -> std::string {
-					if (id == "or_royal") return tr("options.interface.theme.or_royal");
-					if (id == "sylve_emeraude") return tr("options.interface.theme.sylve_emeraude");
-					return std::string(id);
+					return tr(("options.interface.theme." + std::string(id)).c_str());
 				};
 				const std::string_view curTheme = LnTheme::ActiveName();
 				if (ImGui::BeginCombo(tr("options.interface.theme").c_str(), themeLabel(curTheme).c_str()))

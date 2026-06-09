@@ -56,6 +56,8 @@ if(WIN32)
     # Character system PR1 — moteur de stats (serveur-only, anti-triche).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
+    # Character system R1-A — résolveur PV enter-world (dérive depuis le moteur).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/SpawnStatsResolver.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/CurrencyConfig.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/VendorCatalog.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/PlayerWalletService.cpp
@@ -633,6 +635,21 @@ elseif(UNIX)
   target_compile_options(character_stats_engine_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME character_stats_engine_tests COMMAND character_stats_engine_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # Character system R1-A — SpawnStatsResolver : PV (max+courants) dérivés à
+  # l'enter-world. Bloc explicite (comme character_stats_engine_tests) : besoin
+  # du dossier des headers générés (${LCDLLN_GEN_DIR}) et de la dépendance au
+  # codegen lcdlln_gen_character_data.
+  add_executable(spawn_stats_resolver_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/SpawnStatsResolverTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/SpawnStatsResolver.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp)
+  add_dependencies(spawn_stats_resolver_tests lcdlln_gen_character_data)
+  target_include_directories(spawn_stats_resolver_tests PRIVATE ${CMAKE_SOURCE_DIR} ${LCDLLN_GEN_DIR})
+  target_link_libraries(spawn_stats_resolver_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(spawn_stats_resolver_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME spawn_stats_resolver_tests COMMAND spawn_stats_resolver_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # CMANGOS.34 (Phase 4.34a) : MetricRegistry (header-only).
   lcdlln_add_simple_test(metric_registry_tests
     ${CMAKE_SOURCE_DIR}/src/shared/metric/MetricRegistryTests.cpp)
@@ -1086,6 +1103,8 @@ elseif(UNIX)
     # Character system PR1 — moteur de stats (serveur-only, anti-triche).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
+    # Character system R1-A — résolveur PV enter-world (appelé par HandleHello).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/SpawnStatsResolver.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/CurrencyConfig.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/VendorCatalog.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/PlayerWalletService.cpp

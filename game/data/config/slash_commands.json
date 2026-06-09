@@ -445,6 +445,18 @@
       "notes": "Commande admin horloge monde : le master appelle WorldClockHandler::SetPaused (true si on, false si off) puis broadcast 205. Argument hors {on,off} -> InvalidArgs."
     },
     {
+      "command": "/setlevel <player> <level>",
+      "aliases": [],
+      "description": "Fixe le niveau d'un joueur en ligne, recalcule ses stats (soin complet), re-pousse la fiche et persiste. Commande de test du level-up.",
+      "category": "admin",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shardd_routed",
+      "implementation_file": "src/shardd/gameplay/chat/ChatCommandParser.cpp",
+      "notes": "Level-up runtime : parsee par shardd ChatCommandParser, traitee dans ServerApp::HandleChatSlashCommand. Recalcule via CharacterStatsEngine::ComputeStats, soin complet, SendPlayerStats + SaveConnectedClient(admin_setlevel). Audit serveur via AuditLogModeration(SETLEVEL). Gating shard reel = ConnectedClient.chatModeratorRole (aucun flag admin/GM distinct n'existe au niveau shard) ; minRole=administrator exprime l'intention (commande de triche)."
+    },
+    {
       "command": "/settimescale <minutes reelles par jour>",
       "aliases": [],
       "description": "Vitesse du cycle jour/nuit (1..1440 ; 60 = 1 jour de jeu par heure reelle).",

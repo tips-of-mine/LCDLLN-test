@@ -88,6 +88,8 @@ namespace engine::server
 		outState.positionMetersY = static_cast<float>(persisted.GetDouble("character.position_y", 0.0));
 		outState.positionMetersZ = static_cast<float>(persisted.GetDouble("character.position_z", 0.0));
 		outState.experiencePoints = static_cast<uint32_t>(persisted.GetInt("character.experience_points", 0));
+		// Niveau : défaut 0 = absent du fichier (legacy) → l'enter-world préfère le niveau DB.
+		outState.level = static_cast<uint32_t>(persisted.GetInt("character.level", 0));
 		outState.gold = static_cast<uint32_t>(persisted.GetInt("character.gold", 0));
 		outState.honor = static_cast<uint32_t>(persisted.GetInt("character.honor", 0));
 		outState.badges = static_cast<uint32_t>(persisted.GetInt("character.badges", 0));
@@ -224,6 +226,7 @@ namespace engine::server
 		output << "character.position_y=" << state.positionMetersY << "\n";
 		output << "character.position_z=" << state.positionMetersZ << "\n";
 		output << "character.experience_points=" << state.experiencePoints << "\n";
+		output << "character.level=" << state.level << "\n";
 		output << "character.gold=" << state.gold << "\n";
 		output << "character.honor=" << state.honor << "\n";
 		output << "character.badges=" << state.badges << "\n";

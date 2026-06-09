@@ -91,6 +91,20 @@ le statut de chacune :
 - **`implemented`** : commande qui suit le pattern complet RBAC + log.
 - **`planned`** : déclaration JSON présente mais pas encore implémentée.
 
+### Commandes admin de test (level-up runtime)
+
+| Commande | minRole (intention) | Gate shard réel | Audit | Statut |
+|---|---|---|---|---|
+| `/setlevel <player> <level>` | `administrator` | `ConnectedClient.chatModeratorRole` | `AuditLogModeration("SETLEVEL", ...)` | `shardd_routed` |
+
+`/setlevel` fixe le niveau d'un joueur en ligne, recalcule ses stats (soin
+complet via `CharacterStatsEngine::ComputeStats`), re-pousse la fiche
+(`SendPlayerStats`) et persiste (`SaveConnectedClient("admin_setlevel")`).
+Commande de triche destinée au test du système de level-up. Le `minRole`
+JSON (`administrator`) exprime l'intention ; au niveau shard, le seul flag
+de rôle disponible sur `ConnectedClient` est `chatModeratorRole` (aucun flag
+admin/GM distinct n'existe à ce niveau), c'est donc lui qui garde la commande.
+
 ## Plan de migration
 
 Les ~21 commandes actuellement marquées `client_only_legacy` doivent être

@@ -21,6 +21,9 @@ namespace engine::server
 		float positionMetersY = 0.0f;
 		float positionMetersZ = 0.0f;
 		uint32_t experiencePoints = 0;
+		/// Niveau du personnage. 0 = absent du fichier (legacy / non encore écrit) →
+		/// l'enter-world retombe sur le niveau de la DB. Renseigné par les level-ups runtime.
+		uint32_t level = 0;
 		uint32_t gold = 0;
 		/// M35.1 — additional wallet currencies (mirrors MySQL player_wallet when present).
 		uint32_t honor = 0;

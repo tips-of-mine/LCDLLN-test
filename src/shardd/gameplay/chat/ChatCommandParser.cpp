@@ -77,6 +77,8 @@ namespace engine::server
 		return "/pkick";
 	case ChatSlashCommandKind::Trade:
 		return "/trade";
+	case ChatSlashCommandKind::SetLevel:
+		return "/setlevel";
 	case ChatSlashCommandKind::None:
 		break;
 	}
@@ -231,6 +233,15 @@ namespace engine::server
 		{
 			set(ChatSlashCommandKind::Trade, remainder);
 			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {} (args_len={})", ChatSlashCommandLabel(ChatSlashCommandKind::Trade), remainder.size());
+			return true;
+		}
+
+		// Level-up runtime — Commande admin de test : /setlevel <joueur> <niveau>.
+		// argsRemainder porte la chaîne « <joueur> <niveau> » (parsée côté handler).
+		if (cmdToken == "/setlevel")
+		{
+			set(ChatSlashCommandKind::SetLevel, remainder);
+			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {} (args_len={})", ChatSlashCommandLabel(ChatSlashCommandKind::SetLevel), remainder.size());
 			return true;
 		}
 

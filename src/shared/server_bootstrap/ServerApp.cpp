@@ -14,6 +14,9 @@
 #include "CharacterStatsData.h"
 #include "FactionsData.h"
 
+// Level-up runtime — courbe XP -> niveau (séparée de la boucle réseau, pure et testable).
+#include "src/shardd/gameplay/character/LevelProgression.h"
+
 // TA.4 — pont position : compilé uniquement pour la cible shard Linux (SHARD_POSITION_DB),
 // pas pour le build Windows (ServerApp.cpp est partagé). Macro dédié plutôt qu'ENGINE_HAS_MYSQL
 // pour ne PAS basculer les autres systèmes gameplay du shard en mode DB.
@@ -1271,6 +1274,15 @@ namespace engine::server
 			}
 		}
 
+		// Level-up runtime : le niveau persisté (fichier) préserve les level-ups gagnés en
+		// jeu tant que la colonne `level` de la table `characters` (master) n'est pas
+		// synchronisée. On préfère le plus haut des deux (DB vs fichier). Placé AVANT le bloc
+		// R1-A pour que les PV soient calculés à partir du niveau final.
+		if (persistedState.level > 0u)
+		{
+			acceptedClient.level = std::max(acceptedClient.level, persistedState.level);
+		}
+
 		// R1-A — PV calculés depuis le moteur de stats (faction/classe/sexe/niveau). Placé
 		// après le merge de l'état persisté (acceptedClient.stats fait foi) ET après la
 		// résolution niveau/faction/classe (LoadSpawnFromDb ci-dessus). Le resolver clamp
@@ -1747,6 +1759,7 @@ namespace engine::server
 		state.positionMetersY = client.positionMetersY;
 		state.positionMetersZ = client.positionMetersZ;
 		state.experiencePoints = client.experiencePoints;
+		state.level = client.level;
 		state.gold = client.gold;
 		state.honor = client.honor;
 		state.badges = client.badges;
@@ -2334,7 +2347,7 @@ namespace engine::server
 					continue;
 				}
 
-				client.experiencePoints += rewards.experience;
+				ApplyLevelUpsAfterXp(client, rewards.experience);
 				if (rewards.gold != 0u)
 				{
 					std::string walletErr;
@@ -3451,7 +3464,7 @@ namespace engine::server
 		{
 			if (delta.rewardExperience != 0 || delta.rewardGold != 0 || !delta.rewardItems.empty())
 			{
-				client.experiencePoints += delta.rewardExperience;
+				ApplyLevelUpsAfterXp(client, delta.rewardExperience);
 				if (delta.rewardGold != 0u)
 				{
 					std::string walletErr;
@@ -4932,6 +4945,97 @@ namespace engine::server
 	case ChatSlashCommandKind::Trade:
 		return HandleTradeCommand(sender, command.argsRemainder);
 
+	// Level-up runtime — Commande admin de test : /setlevel <joueur> <niveau>.
+	// Fixe le niveau d'un joueur en ligne, recalcule ses stats (soin complet),
+	// re-pousse la fiche et persiste. Commande de triche puissante → gardée par
+	// le rôle le plus strict disponible sur ConnectedClient (chatModeratorRole ;
+	// aucun flag admin/GM distinct n'existe au niveau shard) + audit serveur.
+	case ChatSlashCommandKind::SetLevel:
+	{
+		if (!sender.chatModeratorRole)
+		{
+			SendChatSystemNotice(sender, "Permission refusée.");
+			LOG_WARN(Net,
+				"[ServerApp] /setlevel refusé : rôle insuffisant (client_id={})",
+				sender.clientId);
+			return true;
+		}
+
+		// argsRemainder = « <joueur> <niveau> ».
+		const auto [targetName, levelArg] = SplitFirstChatArg(command.argsRemainder);
+		if (targetName.empty() || levelArg.empty())
+		{
+			SendChatSystemNotice(sender, "Usage: /setlevel <joueur> <niveau>");
+			LOG_WARN(Net, "[ServerApp] /setlevel rejeté : arguments manquants (client_id={})", sender.clientId);
+			return true;
+		}
+
+		// Parse du niveau (entier strictement positif).
+		char* endPtr = nullptr;
+		const long parsedLevel = std::strtol(levelArg.c_str(), &endPtr, 10);
+		if (endPtr == levelArg.c_str() || *endPtr != '\0' || parsedLevel < 1)
+		{
+			SendChatSystemNotice(sender, "Usage: /setlevel <joueur> <niveau>");
+			LOG_WARN(Net, "[ServerApp] /setlevel rejeté : niveau invalide (client_id={}, arg={})", sender.clientId, levelArg);
+			return true;
+		}
+
+		// Clamp dans [1, levelMax] (fallback 100 si tables absentes).
+		const uint32_t levelMax = m_statsTables ? m_statsTables->levelMax : 100u;
+		uint32_t newLevel = static_cast<uint32_t>(parsedLevel);
+		if (newLevel > levelMax)
+		{
+			newLevel = levelMax;
+		}
+
+		ConnectedClient* target = FindConnectedClientByChatDisplayName(targetName);
+		if (target == nullptr)
+		{
+			SendChatSystemNotice(sender, "Cible hors ligne.");
+			LOG_WARN(Net, "[ServerApp] /setlevel rejeté : cible hors ligne (client_id={}, target={})", sender.clientId, targetName);
+			return true;
+		}
+
+		const std::string targetLabel = "P" + std::to_string(target->clientId);
+
+		// Application : niveau + reset XP dans le niveau.
+		target->level = newLevel;
+		target->experiencePoints = 0;
+
+		if (m_statsTables)
+		{
+			// Recalcul des stats au nouveau niveau + soin complet (mirroir level-up).
+			const engine::server::gameplay::Sex sex =
+				(target->gender == "female") ? engine::server::gameplay::Sex::Female
+				                             : engine::server::gameplay::Sex::Male;
+			const auto d = engine::server::gameplay::ComputeStats(
+				*m_statsTables, target->factionId, target->classId, sex, target->level);
+			if (d)
+			{
+				target->stats.maxHealth = d->hp;
+				target->stats.currentHealth = d->hp;   // soin complet.
+			}
+			(void)SendPlayerStats(*target);
+			SaveConnectedClient(*target, "admin_setlevel");
+		}
+		else
+		{
+			// Tables absentes : on a quand même fixé le niveau, mais sans recalcul de stats.
+			SaveConnectedClient(*target, "admin_setlevel");
+			SendChatSystemNotice(sender, "Niveau fixé (stats non recalculées : tables absentes).");
+		}
+
+		// Audit serveur (même fonction/format que les commandes de modération).
+		AuditLogModeration("SETLEVEL", actorLabel, targetLabel, "level=" + std::to_string(newLevel));
+
+		SendChatSystemNotice(sender, "Niveau de " + targetLabel + " fixé à " + std::to_string(newLevel) + ".");
+		SendChatSystemNotice(*target, "Votre niveau a été fixé à " + std::to_string(newLevel) + " par un administrateur.");
+		LOG_INFO(Net,
+			"[ServerApp] /setlevel appliqué (actor_client_id={}, target_client_id={}, level={}, maxHp={})",
+			sender.clientId, target->clientId, newLevel, target->stats.maxHealth);
+		return true;
+	}
+
 	case ChatSlashCommandKind::None:
 	default:
 		LOG_WARN(Net, "[ServerApp] Chat slash command ignored: kind=None (client_id={})", sender.clientId);
@@ -5385,6 +5489,37 @@ namespace engine::server
 		return true;
 	}
 
+	void ServerApp::ApplyLevelUpsAfterXp(ConnectedClient& client, uint32_t gainedXp)
+	{
+		if (!m_statsTables)
+		{
+			client.experiencePoints += gainedXp;   // fallback : comportement legacy (XP brute).
+			return;
+		}
+		const auto r = engine::server::gameplay::ApplyXpGain(
+			client.level, client.experiencePoints, gainedXp,
+			m_statsTables->xpBase, m_statsTables->xpFactor, m_statsTables->levelMax);
+		client.level = r.newLevel;
+		client.experiencePoints = r.newXpIntoLevel;
+		if (r.levelsGained == 0u)
+			return;
+		// Recalcul des stats au nouveau niveau + soin complet.
+		const engine::server::gameplay::Sex sex =
+			(client.gender == "female") ? engine::server::gameplay::Sex::Female
+			                            : engine::server::gameplay::Sex::Male;
+		const auto d = engine::server::gameplay::ComputeStats(
+			*m_statsTables, client.factionId, client.classId, sex, client.level);
+		if (d)
+		{
+			client.stats.maxHealth = d->hp;
+			client.stats.currentHealth = d->hp;   // soin complet au level-up.
+		}
+		(void)SendPlayerStats(client);
+		SaveConnectedClient(client, "level_up");
+		LOG_INFO(Net, "[ServerApp] LEVEL UP (client_id={}, +{} niveaux -> level={}, maxHp={})",
+			client.clientId, r.levelsGained, client.level, client.stats.maxHealth);
+	}
+
 	void ServerApp::DistributePartyXp(ConnectedClient& attacker,
 	                                   float            killPosX,
 	                                   float            killPosZ,
@@ -5394,7 +5529,7 @@ namespace engine::server
 		if (party == nullptr || party->members.size() <= 1)
 		{
 			// Solo player: grant full XP.
-			attacker.experiencePoints += baseXp;
+			ApplyLevelUpsAfterXp(attacker, baseXp);
 			LOG_DEBUG(Net, "[ServerApp] XP granted solo (client_id={}, xp={}, total_xp={})",
 			    attacker.clientId, baseXp, attacker.experiencePoints);
 			return;
@@ -5423,7 +5558,7 @@ namespace engine::server
 
 		if (inRange.empty())
 		{
-			attacker.experiencePoints += baseXp;
+			ApplyLevelUpsAfterXp(attacker, baseXp);
 			return;
 		}
 
@@ -5436,7 +5571,7 @@ namespace engine::server
 			{
 				if (c.clientId == memberId)
 				{
-					c.experiencePoints += share;
+					ApplyLevelUpsAfterXp(c, share);
 					LOG_DEBUG(Net, "[ServerApp] Party XP share granted (client_id={}, share={}, total_xp={})",
 					    c.clientId, share, c.experiencePoints);
 					break;

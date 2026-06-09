@@ -18,14 +18,18 @@ namespace engine::render
 	{
 		ImVec4 IV(const LnTheme::Rgba& c) { return ImVec4(c.r, c.g, c.b, c.a); }
 
-		/// Met la premiere lettre d'une cle de ressource en majuscule pour
-		/// l'affichage (ex. "rage" -> "Rage"). Pas de table de libelles codee
-		/// en dur : on derive l'etiquette de la cle brute envoyee par le serveur.
-		std::string CapitalizeKey(const std::string& key)
+		/// Transforme une cle de ressource snake_case en libelle affichable :
+		/// chaque '_' devient une espace, la premiere lettre passe en majuscule,
+		/// le reste est laisse tel quel (ex. "magie_base" -> "Magie base",
+		/// "flamme_draconique" -> "Flamme draconique"). Pas de table de libelles
+		/// codee en dur : on derive l'etiquette de la cle brute envoyee par le
+		/// serveur. Cle vide -> libelle generique "Ressource".
+		std::string PrettyResourceLabel(const std::string& key)
 		{
 			if (key.empty())
 				return "Ressource";
 			std::string out = key;
+			std::replace(out.begin(), out.end(), '_', ' ');
 			out[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(out[0])));
 			return out;
 		}
@@ -85,14 +89,16 @@ namespace engine::render
 					ImGui::TableSetupColumn("Valeur", ImGuiTableColumnFlags_WidthFixed, 110.f);
 
 					// Le serveur envoie range == 0 pour une classe melee pure :
-					// precision et portee n'ont alors pas de sens, on affiche "—".
+					// precision et portee n'ont alors pas de sens, on affiche "-".
+					// Tiret ASCII (pas d'em-dash) : la couverture de glyphe de la
+					// police HUD pour l'em-dash n'est pas garantie, on reste sur "-".
 					const bool melee = (s.range == 0.0f);
-					const char* kDash = "\xE2\x80\x94"; // — (em dash UTF-8)
+					const char* kDash = "-"; // tiret ASCII (toujours rendu)
 
 					BeginStatRow("PV max");
 					ImGui::Text("%u", static_cast<unsigned>(s.sheetMaxHealth));
 
-					const std::string resLabel = CapitalizeKey(s.secondaryResourceKey);
+					const std::string resLabel = PrettyResourceLabel(s.secondaryResourceKey);
 					BeginStatRow(resLabel.c_str());
 					ImGui::Text("%u", static_cast<unsigned>(s.secondaryResourceMax));
 

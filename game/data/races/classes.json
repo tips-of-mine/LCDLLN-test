@@ -24,7 +24,7 @@
         "Téléportation : se déplace instantanément"
       ],
       "primaryAttribute": "intelligence",
-      "allowedRaces": ["humains", "elfes", "morts_vivants", "corrompus", "divins"]
+      "allowedRaces": ["humains", "elfes", "morts_vivants", "divins"]
     },
     {
       "id": "rogue",
@@ -37,7 +37,7 @@
         "Lancer de couteau : attaque à distance"
       ],
       "primaryAttribute": "agilite",
-      "allowedRaces": ["humains", "elfes", "orcs", "morts_vivants", "corrompus"]
+      "allowedRaces": ["humains", "elfes", "orcs", "morts_vivants"]
     },
     {
       "id": "priest",
@@ -89,7 +89,7 @@
         "Malédiction : réduit les résistances de la cible"
       ],
       "primaryAttribute": "intelligence",
-      "allowedRaces": ["morts_vivants", "corrompus", "demons"]
+      "allowedRaces": ["morts_vivants", "demons"]
     },
     {
       "id": "shaman",

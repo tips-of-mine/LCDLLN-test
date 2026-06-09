@@ -1048,7 +1048,8 @@ namespace engine::server
 		{
 			m_statsTablesLoadAttempted = true;
 			m_statsTables = engine::server::gameplay::CharacterStatsTables::FromEmbedded(
-				kCharacterStatsJson, kFactionsJson);
+				engine::server::gameplay::kCharacterStatsJson,
+				engine::server::gameplay::kFactionsJson);
 			if (!m_statsTables)
 			{
 				LOG_WARN(Net,

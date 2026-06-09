@@ -2,6 +2,8 @@
 
 #include "src/shardd/gameplay/auction/AuctionHouse.h"
 #include "src/shardd/gameplay/character/CharacterPersistence.h"
+#include "src/shardd/gameplay/character/CharacterStatsTables.h"
+#include "src/shardd/gameplay/character/SpawnStatsResolver.h"
 #include "src/shardd/gameplay/crafting/CraftingSystem.h"
 #include "src/shardd/gameplay/economy/CurrencyConfig.h"
 #include "src/shardd/gameplay/gathering/GatheringSystem.h"
@@ -32,6 +34,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <span>
 #include <string_view>
@@ -110,6 +113,12 @@ namespace engine::server
 		/// AdmittedCharacterRegistry::AdmittedGender. Recopié dans chaque SnapshotEntity
 		/// pour permettre au client de sélectionner le mesh skinné des avatars distants.
 		std::string gender;
+		/// R1-A — faction et classe du personnage (table characters.faction/class, chargées au
+		/// Hello via LoadSpawnFromDb). Alimentent le moteur de stats (ResolveSpawnHealth) pour
+		/// calculer les PV max à l'enter-world. Vides si char legacy / mode no-DB → le resolver
+		/// renvoie resolved=false et les PV par défaut (kDefaultPlayerHealth) sont conservés.
+		std::string factionId;
+		std::string classId;
 		uint32_t experiencePoints = 0;
 		/// Compte propriétaire (résolu au Hello via AdmittedCharacterRegistry). Clé de la
 		/// présence unifiée (ShardPresenceService) ; 0 si non résolu (registre absent).
@@ -326,8 +335,11 @@ namespace engine::server
 		/// `name` pour le porter dans le SnapshotEntity (plaque de nom des avatars distants).
 		/// Renvoie false si pas de pool DB (Windows / DB non configurée) ou si character
 		/// introuvable ; dans ce cas les out-params ne sont pas modifiés.
+		/// R1-A — récupère aussi `faction` et `class` (out-params) pour alimenter le moteur de
+		/// stats (PV à l'enter-world). Vides si la colonne est NULL/absente.
 		bool LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg,
-		std::string& outName, std::string& outGender, uint32_t& outLevel);
+		std::string& outName, std::string& outGender, uint32_t& outLevel,
+		std::string& outFactionId, std::string& outClassId);
 
 		/// Accept a new client or refresh an existing handshake.
 		/// Phase 3.7.5 — \p helloNonce élargi à uint64 (character_id complet).
@@ -825,6 +837,13 @@ namespace engine::server
 
 		engine::core::Config m_config;
 		CharacterPersistenceStore m_characterPersistence;
+		/// R1-A — tables de stats du personnage (JSON embarqué), chargées une seule fois
+		/// (lazy, au 1er HandleHello) via CharacterStatsTables::FromEmbedded. nullopt si le
+		/// JSON est invalide → les PV par défaut sont conservés (pas de régression).
+		std::optional<engine::server::gameplay::CharacterStatsTables> m_statsTables;
+		/// R1-A — passe à true une fois la tentative de chargement de m_statsTables effectuée
+		/// (évite de réessayer + de logguer l'avertissement à chaque Hello si elle échoue).
+		bool m_statsTablesLoadAttempted = false;
 		AuctionHouseService m_auctionHouse;
 		/// M35.1 — currency definitions + validation caps (config/currencies.json).
 		CurrencyConfig m_currencyConfig{};

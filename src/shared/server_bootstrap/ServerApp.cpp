@@ -8,6 +8,12 @@
 #include "src/shardd/world/AdmittedCharacterRegistry.h"
 #include "src/shared/network/ServerProtocol.h"
 
+// R1-A — JSON embarqués (générés au build) pour le moteur de stats des personnages.
+// Symboles const char* kCharacterStatsJson / kFactionsJson. Atteignables sur les targets
+// de ServerApp (server_app, shard_app) via ${LCDLLN_GEN_DIR} sur leur include path.
+#include "CharacterStatsData.h"
+#include "FactionsData.h"
+
 // TA.4 — pont position : compilé uniquement pour la cible shard Linux (SHARD_POSITION_DB),
 // pas pour le build Windows (ServerApp.cpp est partagé). Macro dédié plutôt qu'ENGINE_HAS_MYSQL
 // pour ne PAS basculer les autres systèmes gameplay du shard en mode DB.
@@ -985,7 +991,8 @@ namespace engine::server
 	}
 
 	bool ServerApp::LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg,
-		std::string& outName, std::string& outGender, uint32_t& outLevel)
+		std::string& outName, std::string& outGender, uint32_t& outLevel,
+		std::string& outFactionId, std::string& outClassId)
 	{
 #if defined(SHARD_POSITION_DB)
 		if (m_characterDbPool == nullptr || characterId == 0u)
@@ -1003,8 +1010,11 @@ namespace engine::server
 		// TD.6 — et `gender` (migration 0067) pour le rendu de l'avatar distant.
 		// Présence enrichie — `level` (migration 0004) pour la présence web-portal.
 		// N1-I : prepared statement (bind characterId). Floats lus via GetString + strtof.
+		// R1-A — `faction_str`/`class_str` (cf. migrations 0040/0033) ajoutés EN FIN de SELECT
+		// (indices 7/8) pour ne pas décaler les indices des colonnes existantes (0..6).
+		// Alimentent le moteur de stats (PV à l'enter-world).
 		auto* stmt = cache->Acquire(mysql,
-			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender, level FROM characters "
+			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender, level, faction_str, class_str FROM characters "
 			"WHERE id = ? AND deleted_at IS NULL");
 		if (!stmt || !stmt->Bind(0, characterId) || !stmt->Execute() || !stmt->FetchRow())
 		{
@@ -1019,15 +1029,34 @@ namespace engine::server
 		outLevel = static_cast<uint32_t>(std::strtoul(stmt->GetString(6).c_str(), nullptr, 10));
 		if (outLevel == 0u)
 			outLevel = 1u; // garde-fou : niveau minimal 1.
+		outFactionId = stmt->GetString(7);
+		outClassId = stmt->GetString(8);
 		return true;
 #else
 		(void)characterId; (void)x; (void)y; (void)z; (void)yawDeg; (void)outName; (void)outGender; (void)outLevel;
+		(void)outFactionId; (void)outClassId;
 		return false;
 #endif
 	}
 
 	void ServerApp::HandleHello(const Endpoint& endpoint, uint64_t helloNonce)
 	{
+		// R1-A — charge les tables de stats une seule fois (lazy). FromEmbedded renvoie
+		// directement un std::optional ; en cas d'échec on logue une fois et on garde nullopt
+		// (les PV par défaut s'appliqueront → pas de régression).
+		if (!m_statsTablesLoadAttempted)
+		{
+			m_statsTablesLoadAttempted = true;
+			m_statsTables = engine::server::gameplay::CharacterStatsTables::FromEmbedded(
+				kCharacterStatsJson, kFactionsJson);
+			if (!m_statsTables)
+			{
+				LOG_WARN(Net,
+					"[ServerApp] R1-A : moteur de stats indisponible (FromEmbedded a échoué) — "
+					"PV par défaut conservés à l'enter-world.");
+			}
+		}
+
 		// Phase 3.7.5 — tentativeCharacterKey élargi à uint64. Fallback sur m_nextClientId
 		// (uint32) si le client n'a pas envoyé de character_id ; cast widening explicite.
 		const uint64_t tentativeCharacterKey = helloNonce != 0u
@@ -1181,7 +1210,9 @@ namespace engine::server
 			std::string dbName;
 			std::string dbGender;
 			uint32_t dbLevel = 1u;
-			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg, dbName, dbGender, dbLevel))
+			std::string dbFactionId;
+			std::string dbClassId;
+			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg, dbName, dbGender, dbLevel, dbFactionId, dbClassId))
 			{
 				acceptedClient.positionMetersX = dbX;
 				acceptedClient.positionMetersY = dbY;
@@ -1193,6 +1224,9 @@ namespace engine::server
 				acceptedClient.gender = std::move(dbGender);
 				// Présence enrichie — niveau (table characters) reporté au master via heartbeat.
 				acceptedClient.level = dbLevel;
+				// R1-A — faction/classe pour le moteur de stats (PV à l'enter-world).
+				acceptedClient.factionId = std::move(dbFactionId);
+				acceptedClient.classId = std::move(dbClassId);
 				LOG_INFO(Net,
 					"[ServerApp] Spawn position chargee depuis la DB (character_key={}, name=\"{}\", gender=\"{}\", pos=({:.2f}, {:.2f}, {:.2f}))",
 					acceptedClient.persistenceCharacterKey, acceptedClient.characterName, acceptedClient.gender, dbX, dbY, dbZ);
@@ -1233,6 +1267,34 @@ namespace engine::server
 							acceptedClient.persistenceCharacterKey, acceptedClient.gender);
 					}
 				}
+			}
+		}
+
+		// R1-A — PV calculés depuis le moteur de stats (faction/classe/sexe/niveau). Placé
+		// après le merge de l'état persisté (acceptedClient.stats fait foi) ET après la
+		// résolution niveau/faction/classe (LoadSpawnFromDb ci-dessus). Le resolver clamp
+		// les PV courants persistés sur le nouveau max. Faction/classe vides (char legacy ou
+		// mode no-DB) → resolved=false → PV par défaut conservés (pas de régression).
+		if (m_statsTables)
+		{
+			const engine::server::gameplay::Sex sex =
+				(acceptedClient.gender == "female") ? engine::server::gameplay::Sex::Female
+				                                    : engine::server::gameplay::Sex::Male;
+			const engine::server::gameplay::SpawnHealth sh = engine::server::gameplay::ResolveSpawnHealth(
+				*m_statsTables, acceptedClient.factionId, acceptedClient.classId,
+				sex, acceptedClient.level, acceptedClient.stats.currentHealth);
+			if (sh.resolved)
+			{
+				acceptedClient.stats.maxHealth = sh.maxHealth;
+				acceptedClient.stats.currentHealth = sh.currentHealth;
+				LOG_INFO(Net,
+					"[ServerApp] R1-A enter-world stats (client_id={}, faction={}, class={}, level={}) -> maxHealth={}, currentHealth={}",
+					acceptedClient.clientId,
+					acceptedClient.factionId,
+					acceptedClient.classId,
+					acceptedClient.level,
+					sh.maxHealth,
+					sh.currentHealth);
 			}
 		}
 

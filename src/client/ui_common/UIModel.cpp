@@ -602,6 +602,9 @@ namespace engine::client
 			return ApplyCraftComplete(packet);
 		case engine::server::MessageKind::CraftCancelled:
 			return ApplyCraftCancelled(packet);
+		// R1-B — feuille de personnage (stats dérivées poussées à l'enter-world)
+		case engine::server::MessageKind::PlayerStats:
+			return ApplyPlayerStats(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -1098,6 +1101,45 @@ namespace engine::client
 			m_walletScratch.premiumCurrency);
 
 		NotifyObservers(UIModelChangeWallet);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyPlayerStats(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodePlayerStats(packet, m_playerStatsScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] PlayerStats FAILED: decode error");
+			return false;
+		}
+
+		// R1-B — recopie la feuille de stats dérivées dans la section stats du modèle.
+		// Champs distincts du snapshot (health/mana courants) : ici ce sont les maxima
+		// et stats statiques calculées par le shard à l'enter-world.
+		m_model.playerStats.hasSheet = true;
+		m_model.playerStats.sheetMaxHealth = m_playerStatsScratch.maxHealth;
+		m_model.playerStats.secondaryResourceMax = m_playerStatsScratch.resource;
+		m_model.playerStats.staminaMax = m_playerStatsScratch.stamina;
+		m_model.playerStats.damage = m_playerStatsScratch.damage;
+		m_model.playerStats.accuracy = m_playerStatsScratch.accuracy;
+		m_model.playerStats.range = m_playerStatsScratch.range;
+		m_model.playerStats.critRate = m_playerStatsScratch.critRate;
+		m_model.playerStats.critMult = m_playerStatsScratch.critMult;
+		m_model.playerStats.speedWalk = m_playerStatsScratch.speedWalk;
+		m_model.playerStats.speedRun = m_playerStatsScratch.speedRun;
+		m_model.playerStats.speedSprint = m_playerStatsScratch.speedSprint;
+		m_model.playerStats.perception = m_playerStatsScratch.perception;
+		m_model.playerStats.stealth = m_playerStatsScratch.stealth;
+		m_model.playerStats.secondaryResourceKey = m_playerStatsScratch.resourceKey;
+
+		LOG_INFO(Net,
+			"[UIModelBinding] PlayerStats applied (client_id={}, max_health={}, resource={}, stamina={}, damage={})",
+			m_playerStatsScratch.clientId,
+			m_playerStatsScratch.maxHealth,
+			m_playerStatsScratch.resource,
+			m_playerStatsScratch.stamina,
+			m_playerStatsScratch.damage);
+
+		NotifyObservers(UIModelChangeStats);
 		return true;
 	}
 

@@ -201,6 +201,22 @@ namespace engine::client
 		bool hasMana = false;
 		bool hasCombo = false;
 		bool hasSnapshot = false;
+		// R1-B — feuille de personnage (poussée via MessageKind::PlayerStats à l'enter-world).
+		bool     hasSheet = false;
+		uint32_t sheetMaxHealth = 0;
+		uint32_t secondaryResourceMax = 0;
+		uint32_t staminaMax = 0;
+		uint32_t damage = 0;
+		float    accuracy = 0.0f;
+		float    range = 0.0f;
+		float    critRate = 0.0f;
+		float    critMult = 0.0f;
+		float    speedWalk = 0.0f;
+		float    speedRun = 0.0f;
+		float    speedSprint = 0.0f;
+		float    perception = 0.0f;
+		float    stealth = 0.0f;
+		std::string secondaryResourceKey;
 	};
 
 	/// Current combat target resolved from the latest player-originated combat event.
@@ -496,6 +512,9 @@ namespace engine::client
 		/// Apply one decoded CraftCancelled message (M36.2).
 		bool ApplyCraftCancelled(std::span<const std::byte> packet);
 
+		/// Applique un message PlayerStats (feuille de perso dérivée) à la section stats (R1-B).
+		bool ApplyPlayerStats(std::span<const std::byte> packet);
+
 		/// Advance world presenter ages (wall clock clamped).
 		void PumpWorldPresenterAge();
 
@@ -540,6 +559,7 @@ namespace engine::client
 		engine::server::CraftStartMessage          m_craftStartScratch{};
 		engine::server::CraftCompleteMessage       m_craftCompleteScratch{};
 		engine::server::CraftCancelledMessage      m_craftCancelledScratch{};
+		engine::server::PlayerStatsMessage         m_playerStatsScratch{};
 		ChatWorldVisualPresenter m_chatWorld{};
 		size_t m_nextObserverHandle = 1;
 		bool m_initialized = false;

@@ -50,8 +50,9 @@ namespace engine::client
 			Shutdown();
 
 		// Content-relative paths (overridable from config.json).
-		const std::string racesRel   = config.GetString("char_creation.races_path",   "races/races.json");
-		const std::string classesRel = config.GetString("char_creation.classes_path", "races/classes.json");
+		const std::string racesRel    = config.GetString("char_creation.races_path",    "races/races.json");
+		const std::string classesRel  = config.GetString("char_creation.classes_path",  "races/classes.json");
+		const std::string factionsRel = config.GetString("char_creation.factions_path", "races/factions.json");
 
 		if (!LoadRaces(config, racesRel))
 		{
@@ -62,6 +63,13 @@ namespace engine::client
 		if (!LoadClasses(config, classesRel))
 		{
 			LOG_WARN(Core, "[CharacterCreation] Init: could not load classes from '{}' — using empty list", classesRel);
+		}
+
+		// Système de personnages PR2 — modèle factions (faction → classes). Non-fatal :
+		// si absent, BuildRequestPayload retombe sur l'ancien modèle race/classe.
+		if (!LoadFactions(config, factionsRel))
+		{
+			LOG_WARN(Core, "[CharacterCreation] Init: could not load factions from '{}' — using empty list", factionsRel);
 		}
 
 		// Système de customisation (limites par race + presets de proportions),
@@ -89,6 +97,7 @@ namespace engine::client
 	{
 		m_races.clear();
 		m_classes.clear();
+		m_factions.clear();
 		m_state = CharacterCreationState{};
 		m_initialized = false;
 		LOG_INFO(Core, "[CharacterCreation] Shutdown complete");
@@ -255,6 +264,36 @@ namespace engine::client
 	}
 
 	// =========================================================================
+	// Faction selection (Système de personnages PR2)
+	// =========================================================================
+
+	std::vector<uint32_t> CharacterCreationPresenter::GetSelectableFactionIndices() const
+	{
+		std::vector<uint32_t> out;
+		for (size_t i = 0; i < m_factions.size(); ++i)
+		{
+			if (m_factions[i].selectable)
+				out.push_back(static_cast<uint32_t>(i));
+		}
+		return out;
+	}
+
+	const std::vector<FactionClass>*
+	CharacterCreationPresenter::GetFactionClasses(uint32_t factionIndex) const
+	{
+		if (factionIndex >= m_factions.size())
+			return nullptr;
+		return &m_factions[factionIndex].classes;
+	}
+
+	std::string CharacterCreationPresenter::GetRaceIdForFaction(uint32_t factionIndex) const
+	{
+		if (factionIndex >= m_factions.size())
+			return std::string{};
+		return m_factions[factionIndex].raceId;
+	}
+
+	// =========================================================================
 	// Customization
 	// =========================================================================
 
@@ -390,10 +429,27 @@ namespace engine::client
 		engine::network::CharacterCreateRequestPayload payload;
 		payload.name = m_state.characterName;
 
-		const RaceDefinition*  race = GetSelectedRace();
-		const ClassDefinition* cls  = GetSelectedClass();
-		payload.raceId  = race ? race->id  : "";
-		payload.classId = cls  ? cls->id   : "";
+		// Système de personnages PR2 — quand le modèle factions est chargé, faction
+		// + classe + race proviennent de la faction sélectionnée (bornes gardées).
+		// Sinon, on retombe sur l'ancien modèle race/classe (aucune régression).
+		if (!m_factions.empty()
+		    && m_state.selectedFactionIndex < m_factions.size())
+		{
+			const FactionDefinition& f = m_factions[m_state.selectedFactionIndex];
+			payload.factionId = f.id;
+			payload.raceId    = f.raceId;
+			if (m_state.selectedFactionClassIndex < f.classes.size())
+				payload.classId = f.classes[m_state.selectedFactionClassIndex].id;
+			else
+				payload.classId = "";
+		}
+		else
+		{
+			const RaceDefinition*  race = GetSelectedRace();
+			const ClassDefinition* cls  = GetSelectedClass();
+			payload.raceId  = race ? race->id  : "";
+			payload.classId = cls  ? cls->id   : "";
+		}
 
 		payload.customization.faceType     = m_state.faceType;
 		payload.customization.hairStyle    = m_state.hairStyle;
@@ -480,6 +536,9 @@ namespace engine::client
 			def.meshPath     = raceCfg.GetString(pfx + ".meshPath", "");
 			def.importScale  = static_cast<float>(raceCfg.GetDouble(pfx + ".importScale", 1.0));
 			def.importRotXDeg = static_cast<float>(raceCfg.GetDouble(pfx + ".importRotXDeg", 0.0));
+			// Système de personnages PR2 — race jouable ou non (défaut true : une
+			// clé absente reste sélectionnable, pas de régression sur races.json).
+			def.enabled       = raceCfg.GetBool(pfx + ".enabled", true);
 
 			if (!def.id.empty())
 			{
@@ -548,6 +607,47 @@ namespace engine::client
 
 		LOG_INFO(Core, "[CharacterCreation] Loaded {} class(es) from '{}'", m_classes.size(), fullPath);
 		return true;
+	}
+
+	bool CharacterCreationPresenter::LoadFactions(const engine::core::Config& config,
+	                                              const std::string&          relPath)
+	{
+		m_factions.clear();
+		const std::string contentRoot = config.GetString("paths.content", "game/data");
+		const std::string fullPath    = contentRoot + "/" + relPath;
+		engine::core::Config cfg;
+		if (!cfg.LoadFromFile(fullPath))
+		{
+			LOG_WARN(Core, "[CharacterCreation] LoadFactions FAILED: cannot open '{}'", fullPath);
+			return false;
+		}
+		size_t i = 0;
+		while (cfg.Has("factions[" + std::to_string(i) + "].id"))
+		{
+			const std::string fp = "factions[" + std::to_string(i) + "]";
+			FactionDefinition f;
+			f.id          = cfg.GetString(fp + ".id", "");
+			f.displayName = cfg.GetString(fp + ".name", f.id);
+			f.raceId      = cfg.GetString(fp + ".race", "");
+			f.selectable  = cfg.GetBool(fp + ".selectable", false);
+			size_t j = 0;
+			while (cfg.Has(fp + ".classes[" + std::to_string(j) + "].id"))
+			{
+				const std::string cp = fp + ".classes[" + std::to_string(j) + "]";
+				FactionClass c;
+				c.id          = cfg.GetString(cp + ".id", "");
+				c.displayName = cfg.GetString(cp + ".name", c.id);
+				c.subclass    = cfg.GetString(cp + ".subclass", "");
+				c.profile     = cfg.GetString(cp + ".profile", "");
+				c.resourceKey = cfg.GetString(cp + ".resource", "");
+				if (!c.id.empty()) f.classes.push_back(std::move(c));
+				++j;
+			}
+			if (!f.id.empty()) m_factions.push_back(std::move(f));
+			++i;
+		}
+		LOG_INFO(Core, "[CharacterCreation] Loaded {} faction(s) from '{}'", m_factions.size(), fullPath);
+		return !m_factions.empty();
 	}
 
 } // namespace engine::client

@@ -4945,6 +4945,97 @@ namespace engine::server
 	case ChatSlashCommandKind::Trade:
 		return HandleTradeCommand(sender, command.argsRemainder);
 
+	// Level-up runtime — Commande admin de test : /setlevel <joueur> <niveau>.
+	// Fixe le niveau d'un joueur en ligne, recalcule ses stats (soin complet),
+	// re-pousse la fiche et persiste. Commande de triche puissante → gardée par
+	// le rôle le plus strict disponible sur ConnectedClient (chatModeratorRole ;
+	// aucun flag admin/GM distinct n'existe au niveau shard) + audit serveur.
+	case ChatSlashCommandKind::SetLevel:
+	{
+		if (!sender.chatModeratorRole)
+		{
+			SendChatSystemNotice(sender, "Permission refusée.");
+			LOG_WARN(Net,
+				"[ServerApp] /setlevel refusé : rôle insuffisant (client_id={})",
+				sender.clientId);
+			return true;
+		}
+
+		// argsRemainder = « <joueur> <niveau> ».
+		const auto [targetName, levelArg] = SplitFirstChatArg(command.argsRemainder);
+		if (targetName.empty() || levelArg.empty())
+		{
+			SendChatSystemNotice(sender, "Usage: /setlevel <joueur> <niveau>");
+			LOG_WARN(Net, "[ServerApp] /setlevel rejeté : arguments manquants (client_id={})", sender.clientId);
+			return true;
+		}
+
+		// Parse du niveau (entier strictement positif).
+		char* endPtr = nullptr;
+		const long parsedLevel = std::strtol(levelArg.c_str(), &endPtr, 10);
+		if (endPtr == levelArg.c_str() || *endPtr != '\0' || parsedLevel < 1)
+		{
+			SendChatSystemNotice(sender, "Usage: /setlevel <joueur> <niveau>");
+			LOG_WARN(Net, "[ServerApp] /setlevel rejeté : niveau invalide (client_id={}, arg={})", sender.clientId, levelArg);
+			return true;
+		}
+
+		// Clamp dans [1, levelMax] (fallback 100 si tables absentes).
+		const uint32_t levelMax = m_statsTables ? m_statsTables->levelMax : 100u;
+		uint32_t newLevel = static_cast<uint32_t>(parsedLevel);
+		if (newLevel > levelMax)
+		{
+			newLevel = levelMax;
+		}
+
+		ConnectedClient* target = FindConnectedClientByChatDisplayName(targetName);
+		if (target == nullptr)
+		{
+			SendChatSystemNotice(sender, "Cible hors ligne.");
+			LOG_WARN(Net, "[ServerApp] /setlevel rejeté : cible hors ligne (client_id={}, target={})", sender.clientId, targetName);
+			return true;
+		}
+
+		const std::string targetLabel = "P" + std::to_string(target->clientId);
+
+		// Application : niveau + reset XP dans le niveau.
+		target->level = newLevel;
+		target->experiencePoints = 0;
+
+		if (m_statsTables)
+		{
+			// Recalcul des stats au nouveau niveau + soin complet (mirroir level-up).
+			const engine::server::gameplay::Sex sex =
+				(target->gender == "female") ? engine::server::gameplay::Sex::Female
+				                             : engine::server::gameplay::Sex::Male;
+			const auto d = engine::server::gameplay::ComputeStats(
+				*m_statsTables, target->factionId, target->classId, sex, target->level);
+			if (d)
+			{
+				target->stats.maxHealth = d->hp;
+				target->stats.currentHealth = d->hp;   // soin complet.
+			}
+			(void)SendPlayerStats(*target);
+			SaveConnectedClient(*target, "admin_setlevel");
+		}
+		else
+		{
+			// Tables absentes : on a quand même fixé le niveau, mais sans recalcul de stats.
+			SaveConnectedClient(*target, "admin_setlevel");
+			SendChatSystemNotice(sender, "Niveau fixé (stats non recalculées : tables absentes).");
+		}
+
+		// Audit serveur (même fonction/format que les commandes de modération).
+		AuditLogModeration("SETLEVEL", actorLabel, targetLabel, "level=" + std::to_string(newLevel));
+
+		SendChatSystemNotice(sender, "Niveau de " + targetLabel + " fixé à " + std::to_string(newLevel) + ".");
+		SendChatSystemNotice(*target, "Votre niveau a été fixé à " + std::to_string(newLevel) + " par un administrateur.");
+		LOG_INFO(Net,
+			"[ServerApp] /setlevel appliqué (actor_client_id={}, target_client_id={}, level={}, maxHp={})",
+			sender.clientId, target->clientId, newLevel, target->stats.maxHealth);
+		return true;
+	}
+
 	case ChatSlashCommandKind::None:
 	default:
 		LOG_WARN(Net, "[ServerApp] Chat slash command ignored: kind=None (client_id={})", sender.clientId);

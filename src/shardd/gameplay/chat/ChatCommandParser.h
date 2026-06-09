@@ -29,7 +29,10 @@ namespace engine::server
 		/// M32.2 — Party kick (leader only): /pkick <name>
 		PartyKick,
 		/// M35.3 — Initiate a direct trade with another player: /trade <name>
-		Trade
+		Trade,
+		/// Level-up runtime — Commande admin de test : /setlevel <joueur> <niveau>.
+		/// Fixe le niveau d'un joueur, recalcule ses stats (soin complet) et persiste.
+		SetLevel
 	};
 
 	/// Sub-command for ChatSlashCommandKind::Friend (M32.1).

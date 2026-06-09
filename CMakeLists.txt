@@ -598,6 +598,7 @@ add_library(engine_core
   src/client/render/MailImGuiRenderer.cpp
   src/client/render/GmTicketImGuiRenderer.cpp
   src/client/render/ReputationImGuiRenderer.cpp
+  src/client/render/CharacterSheetImGuiRenderer.cpp
   src/client/render/ArenaImGuiRenderer.cpp
   src/client/render/BattleGroundImGuiRenderer.cpp
   src/client/render/OutdoorPvpImGuiRenderer.cpp

@@ -110,6 +110,7 @@ namespace engine::render
 	class MailImGuiRenderer;
 	class GmTicketImGuiRenderer;
 	class ReputationImGuiRenderer;
+	class CharacterSheetImGuiRenderer;
 	class LfgImGuiRenderer;
 	class CinematicImGuiRenderer;
 	class SkillBookImGuiRenderer;
@@ -1114,6 +1115,13 @@ namespace engine
 		/// CMANGOS.24 (Phase 3.24 step 3+4) — Visibilite du panneau Reputation
 		/// (toggle via slash command \c /rep ou \c /reputation). Faux par defaut.
 		bool                                  m_reputationVisible = false;
+		/// R1-B (Task 4) — Renderer ImGui de la feuille de personnage (stats
+		/// derivees). Lit directement \c m_uiModelBinding.GetModel().playerStats
+		/// (pas de presenter dedie). Instancie avec les autres renderers ImGui.
+		std::unique_ptr<engine::render::CharacterSheetImGuiRenderer> m_characterSheetImGui;
+		/// R1-B (Task 4) — Visibilite de la feuille de personnage (toggle touche X
+		/// hors combat). Faux par defaut.
+		bool                                  m_characterSheetVisible = false;
 		/// CMANGOS.33 (Phase 5.33 step 3+4) — Presenter de la fenetre LFG
 		/// (LookForGroup). Recoit les responses opcodes 101/103/105 et la push
 		/// notification 106 via le push handler du master ; fire-and-forget des

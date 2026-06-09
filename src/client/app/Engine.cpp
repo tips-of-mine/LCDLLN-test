@@ -40,6 +40,7 @@
 #include "src/client/render/MailImGuiRenderer.h"
 #include "src/client/render/GmTicketImGuiRenderer.h"
 #include "src/client/render/ReputationImGuiRenderer.h"
+#include "src/client/render/CharacterSheetImGuiRenderer.h"
 #include "src/client/render/ArenaImGuiRenderer.h"
 #include "src/client/render/BattleGroundImGuiRenderer.h"
 #include "src/client/render/OutdoorPvpImGuiRenderer.h"
@@ -7698,6 +7699,19 @@ namespace engine
 				m_lootRollVisible = !m_lootRollVisible;
 				LOG_INFO(Core, "[Engine] L toggle loot roll (visible={})", m_lootRollVisible);
 			}
+			// R1-B (Task 4) — Touche X : toggle la feuille de personnage (stats
+			// derivees). Pas de fetch a l'ouverture : playerStats est deja peuple
+			// dans le modele UI a l'enter-world. La touche C (mnemonique naturel)
+			// est deja prise par l'action "punch" (controls.keybind.punch), et le
+			// jeu de touches plateforme n'expose pas K/J ; X est libre. Memes
+			// guards que les autres toggles (chat focus, pause, editor, auth flow).
+			if (inGameNoMenu && !chatBlocks
+				&& !m_input.IsDown(engine::platform::Key::Control)
+				&& m_input.WasPressed(engine::platform::Key::X))
+			{
+				m_characterSheetVisible = !m_characterSheetVisible;
+				LOG_INFO(Core, "[Engine] X toggle character sheet (visible={})", m_characterSheetVisible);
+			}
 		}
 
 		// M100.2 — Dispatch des raccourcis éditeur monde vers le shell. Ctrl+Z
@@ -7977,6 +7991,11 @@ namespace engine
 				// La taille viewport est mise a jour dans la boucle Render plus bas.
 				m_reputationImGui = std::make_unique<engine::render::ReputationImGuiRenderer>();
 				m_reputationImGui->SetPresenter(&m_reputationUi);
+				// R1-B (Task 4) — Renderer ImGui de la feuille de personnage. Lit
+				// directement m_uiModelBinding.GetModel().playerStats (pas de
+				// presenter). Visible quand m_characterSheetVisible (toggle touche C
+				// hors combat). Taille viewport mise a jour dans la boucle Render.
+				m_characterSheetImGui = std::make_unique<engine::render::CharacterSheetImGuiRenderer>();
 				// CMANGOS.33 (Phase 5.33 step 3+4) — Renderer ImGui du panneau LFG.
 				// Partage le contexte ImGui avec auth/chat/mail/gmtickets/reputation.
 				// Visible uniquement quand m_lfgVisible (toggle via /lfg).
@@ -10281,6 +10300,15 @@ namespace engine
 				m_reputationImGui->SetEnabled(true);
 				m_reputationImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_reputationImGui->Render();
+			}
+			// R1-B (Task 4) — Render de la feuille de personnage si visible. Lit
+			// directement le modele UI (playerStats) ; le renderer gere lui-meme
+			// le cas hasSheet == false (affiche "Statistiques indisponibles").
+			if (m_characterSheetVisible && m_characterSheetImGui)
+			{
+				m_characterSheetImGui->SetEnabled(true);
+				m_characterSheetImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_characterSheetImGui->Render(m_uiModelBinding.GetModel());
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Render du panneau LFG si visible.
 			// Le modal proposal s'affiche aussi quand hasProposal == true (meme si

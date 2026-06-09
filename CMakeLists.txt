@@ -598,6 +598,7 @@ add_library(engine_core
   src/client/render/MailImGuiRenderer.cpp
   src/client/render/GmTicketImGuiRenderer.cpp
   src/client/render/ReputationImGuiRenderer.cpp
+  src/client/render/CharacterSheetImGuiRenderer.cpp
   src/client/render/ArenaImGuiRenderer.cpp
   src/client/render/BattleGroundImGuiRenderer.cpp
   src/client/render/OutdoorPvpImGuiRenderer.cpp
@@ -1130,6 +1131,11 @@ add_test(NAME character_save_position_payloads_tests COMMAND character_save_posi
 add_executable(character_create_payloads_tests src/shared/network/CharacterCreatePayloadsTests.cpp)
 target_link_libraries(character_create_payloads_tests PRIVATE engine_core)
 add_test(NAME character_create_payloads_tests COMMAND character_create_payloads_tests)
+
+# R1-B: PLAYER_STATS gameplay message encode/decode round-trip test
+add_executable(player_stats_message_tests src/shared/network/PlayerStatsMessageTests.cpp)
+target_link_libraries(player_stats_message_tests PRIVATE engine_core)
+add_test(NAME player_stats_message_tests COMMAND player_stats_message_tests)
 
 # Chat MVP: CHAT_SEND_REQUEST / CHAT_RELAY payload round-trip tests
 add_executable(chat_payloads_tests src/shared/network/ChatPayloadsTests.cpp)

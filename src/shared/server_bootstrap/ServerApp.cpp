@@ -1324,6 +1324,7 @@ namespace engine::server
 			UdpTransport::EndpointToString(endpoint),
 			m_clients.size());
 		(void)SendWelcome(acceptedClient);
+		(void)SendPlayerStats(acceptedClient);
 		SendDynamicEventBootstrap(acceptedClient);
 		SendQuestStateBootstrap(acceptedClient);
 		(void)SendWalletUpdate(acceptedClient);
@@ -4195,6 +4196,45 @@ namespace engine::server
 			UdpTransport::EndpointToString(client.endpoint),
 			m_tickHz,
 			m_snapshotHz);
+		return true;
+	}
+
+	bool ServerApp::SendPlayerStats(const ConnectedClient& client)
+	{
+		if (!m_statsTables) return false;
+		if (client.factionId.empty() || client.classId.empty()) return false;
+		const engine::server::gameplay::Sex sex =
+			(client.gender == "female") ? engine::server::gameplay::Sex::Female
+			                            : engine::server::gameplay::Sex::Male;
+		const auto d = engine::server::gameplay::ComputeStats(
+			*m_statsTables, client.factionId, client.classId, sex, client.level);
+		if (!d) return false;
+
+		PlayerStatsMessage msg{};
+		msg.clientId    = client.clientId;
+		msg.maxHealth   = d->hp;
+		msg.resource    = d->resource;
+		msg.stamina     = d->stamina;
+		msg.damage      = d->damage;
+		msg.accuracy    = d->accuracy;
+		msg.range       = d->range;
+		msg.critRate    = d->critRate;
+		msg.critMult    = d->critMult;
+		msg.speedWalk   = d->speedWalk;
+		msg.speedRun    = d->speedRun;
+		msg.speedSprint = d->speedSprint;
+		msg.perception  = d->perception;
+		msg.stealth     = d->stealth;
+		msg.resourceKey = d->resourceKey;
+
+		const std::vector<std::byte> packet = EncodePlayerStats(msg);
+		if (!m_transport.Send(client.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] SendPlayerStats failed (client_id={})", client.clientId);
+			return false;
+		}
+		LOG_INFO(Net, "[ServerApp] PlayerStats sent (client_id={}, faction={}, class={}, level={}, maxHp={})",
+			client.clientId, client.factionId, client.classId, client.level, d->hp);
 		return true;
 	}
 

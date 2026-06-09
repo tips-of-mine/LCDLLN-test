@@ -207,7 +207,11 @@ namespace engine::server
 		/// shard d'évincer immédiatement l'entité au lieu d'attendre le timeout d'inactivité
 		/// (sinon l'avatar du joueur parti reste un « fantôme » visible des autres). Ajout
 		/// rétro-compatible : un shard qui ne connaît pas cet opcode l'ignore (fallback timeout).
-		Goodbye = 78
+		Goodbye = 78,
+		/// Server → client: stats dérivées complètes du joueur local (R1-B). Poussé à
+		/// l'enter-world. Ajout rétro-additif : un vieux client qui ne connaît pas cet
+		/// opcode l'ignore (pas de bump de `kProtocolVersion`).
+		PlayerStats = 79
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -248,6 +252,27 @@ namespace engine::server
 	struct GoodbyeMessage
 	{
 		uint32_t clientId = 0;
+	};
+
+	/// Stats dérivées complètes du joueur local (R1-B). Poussé à l'enter-world.
+	/// Type de message rétro-additif (vieux clients l'ignorent ; pas de bump de version).
+	struct PlayerStatsMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t maxHealth = 0;
+		uint32_t resource = 0;   ///< ressource secondaire max
+		uint32_t stamina = 0;    ///< endurance max
+		uint32_t damage = 0;
+		float    accuracy = 0.0f;
+		float    range = 0.0f;
+		float    critRate = 0.0f;
+		float    critMult = 0.0f;
+		float    speedWalk = 0.0f;
+		float    speedRun = 0.0f;
+		float    speedSprint = 0.0f;
+		float    perception = 0.0f;
+		float    stealth = 0.0f;
+		std::string resourceKey; ///< ex. "ferveur" (libellé résolu côté client)
 	};
 
 	/// Snapshot envelope carrying timing, connection stats and entity state count.
@@ -406,6 +431,12 @@ namespace engine::server
 
 	/// Decode a welcome packet and validate the protocol header.
 	bool DecodeWelcome(std::span<const std::byte> packet, WelcomeMessage& outMessage);
+
+	/// Encode un PLAYER_STATS (shard→client) : stats dérivées complètes du joueur (R1-B).
+	std::vector<std::byte> EncodePlayerStats(const PlayerStatsMessage& message);
+
+	/// Decode un PLAYER_STATS et valide le header partagé du protocole (R1-B).
+	bool DecodePlayerStats(std::span<const std::byte> packet, PlayerStatsMessage& outMessage);
 
 	/// Encode a snapshot packet with the protocol header.
 	std::vector<std::byte> EncodeSnapshot(const SnapshotMessage& message, std::span<const SnapshotEntity> entities);

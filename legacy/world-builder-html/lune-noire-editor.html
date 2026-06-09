@@ -1655,7 +1655,8 @@ function buildExportSchema() {
       return Object.assign({}, f, {
         id: f.id||'', name: f.name||'', type: f.type||'',
         alignment: f.alignment||'', playable: !!f.playable,
-        region_id: f.region_id||'',
+        region_ids: (f.region_ids&&f.region_ids.length)?f.region_ids:(f.region_id?[f.region_id]:[]),
+        region_id: (f.region_ids&&f.region_ids[0])||f.region_id||'',
         visual_identity: f.visual_identity||null,
         leadership: f.leadership||null,
         territory: f.territory||null,
@@ -1824,7 +1825,7 @@ function sanitizeDb() {
     'for_factions','for_races','for_classes','required_classes','unlock_conditions',
     'variants','level_titles','invocable_by','lines','world_map_notes','prophecies',
     'incantations_known','schools','points_of_interest','connects_to','creature_ids',
-    'visual_elements'];
+    'visual_elements','region_ids'];
   function fix(obj) {
     if (Array.isArray(obj)) { obj.forEach(fix); return; }
     if (obj && typeof obj === 'object') {
@@ -2175,7 +2176,8 @@ function renderFactions(el) {
     c += '<button class="btn btn-danger" onclick="deleteFaction(' + gi + ')">✕</button></div></div>';
     var fRow1 = badge(ab.label,ab.color) + (f.playable ? badge('Jouable','#7ac08a') : badge('Non jouable','#a05060'));
     c += cardRow('Statut', fRow1, true);
-    if(f.region_id){ var frg=(db.regions||[]).find(function(x){return x.id===f.region_id;}); c += cardRow('Région', badge('🗺️ '+esc(frg?frg.name:f.region_id), regionColor(f.region_id)), false); }
+    var fRegs = (f.region_ids&&f.region_ids.length)?f.region_ids:(f.region_id?[f.region_id]:[]);
+    if(fRegs.length){ var rgB=''; fRegs.forEach(function(rid){ var frg=(db.regions||[]).find(function(x){return x.id===rid;}); rgB+=badge('🗺️ '+esc(frg?frg.name:rid), regionColor(rid)); }); c += cardRow(fRegs.length>1?'Régions':'Région', rgB, false); }
     c += notesBadgesHTML(f.notes);
     c += relationsHTML(f.faction_relations);
     c += villeRelationsHTML(f.ville_relations);
@@ -2201,8 +2203,10 @@ function openFactionForm(idx) {
   var facRelOpts = '<option value="">Choisir une faction…</option>';
   (db.factions||[]).forEach(function(x){ if(x.id!==f.id) facRelOpts += '<option value="' + esc(x.id) + '">' + esc(x.name) + '</option>'; });
 
-  var fRgOpts = '<option value="">— Aucune région de référence —</option>';
-  (db.regions||[]).forEach(function(rg){ fRgOpts += '<option value="' + esc(rg.id) + '"' + (f.region_id===rg.id?' selected':'') + '>' + esc(rg.name) + '</option>'; });
+  // Migration : ancienne donnée mono-région (region_id) → tableau region_ids.
+  window._currentFactionRegions = (f.region_ids && f.region_ids.length) ? f.region_ids.slice() : (f.region_id ? [f.region_id] : []);
+  var fRgOpts = '<option value="">Choisir une région…</option>';
+  (db.regions||[]).forEach(function(rg){ fRgOpts += '<option value="' + esc(rg.id) + '">' + esc(rg.name) + '</option>'; });
 
   var villeOpts = '<option value="">Choisir une ville…</option>';
   (db.villes||[]).forEach(function(v){ villeOpts += '<option value="' + esc(v.id) + '">' + esc(v.name) + (v.cell?' ('+v.cell+')':'') + '</option>'; });
@@ -2222,8 +2226,10 @@ function openFactionForm(idx) {
 
     '<div class="form-group"><label class="form-label">Alignement</label>' +
     '<select class="form-select" id="f_align">' + alignOpts + '</select></div></div>' +
-    '<div class="form-group"><label class="form-label">Région de référence</label>' +
-    '<select class="form-select" id="f_region">' + fRgOpts + '</select></div>' +
+    '<div class="form-group"><label class="form-label">Régions de référence <span style="font-size:0.7rem;color:var(--text-dim)">(une faction peut en avoir plusieurs)</span></label>' +
+    '<div style="display:flex;gap:0.5rem;margin-bottom:0.4rem"><select class="form-select" id="f_region_sel">' + fRgOpts + '</select>' +
+    '<button class="btn btn-primary btn-sm" onclick="addFactionRegion()">+</button></div>' +
+    '<div id="factionRegionsList"></div></div>' +
     '<div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">' +
     '<input type="checkbox" id="f_playable"' + (f.playable?' checked':'') + ' style="accent-color:var(--accent-gold)"> Jouable</label></div>' +
     '<div class="form-group"><label class="form-label">Notes</label>' +
@@ -2245,12 +2251,32 @@ function openFactionForm(idx) {
     '<button class="btn btn-primary btn-sm" onclick="addVilleRelation()">+</button></div>' +
     '<div id="villeRelationsList"></div></div>';
 
-  renderNotesList(); renderFactionRelationsList(); renderVilleRelationsList();
+  renderNotesList(); renderFactionRegionsList(); renderFactionRelationsList(); renderVilleRelationsList();
   document.getElementById('modalFooter').innerHTML =
     '<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>' +
     '<button class="btn btn-gold" onclick="saveFaction(' + (isEdit?idx:'undefined') + ')">💾 Enregistrer</button>';
   document.getElementById('noteInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){addCurrentNote();e.preventDefault();} });
   openModal();
+}
+
+function addFactionRegion() {
+  var rid = document.getElementById('f_region_sel').value;
+  if (!rid) { toast('Choisissez une région'); return; }
+  if (window._currentFactionRegions.indexOf(rid) !== -1) { toast('Région déjà ajoutée'); return; }
+  window._currentFactionRegions.push(rid);
+  document.getElementById('f_region_sel').value = '';
+  renderFactionRegionsList();
+}
+function renderFactionRegionsList() {
+  var el = document.getElementById('factionRegionsList'); if (!el) return;
+  var arr = window._currentFactionRegions || [];
+  if (!arr.length) { el.innerHTML = '<div style="padding:0.3rem 0.5rem;font-size:0.8rem;color:var(--text-dim)">Aucune région de référence</div>'; return; }
+  el.innerHTML = arr.map(function(rid, i) {
+    var rg = (db.regions||[]).find(function(x){ return x.id===rid; });
+    var col = regionColor(rid);
+    return '<div class="note-edit-item"><span style="color:' + col + '">🗺️ ' + esc(rg?rg.name:rid) + '</span>' +
+      '<button class="note-del-btn" onclick="window._currentFactionRegions.splice(' + i + ',1);renderFactionRegionsList()">✕</button></div>';
+  }).join('');
 }
 
 function addFactionRelation() {
@@ -2320,7 +2346,8 @@ function saveFaction(idx) {
     type:      document.getElementById('f_type').value.trim(),
 
     alignment: document.getElementById('f_align').value,
-    region_id: (document.getElementById('f_region')||{value:''}).value,
+    region_ids: (window._currentFactionRegions||[]).slice(),
+    region_id: (window._currentFactionRegions && window._currentFactionRegions[0]) || '',
     playable:  document.getElementById('f_playable').checked,
     notes:     window._currentNotes.slice(),
     faction_relations: window._currentFactionRelations.slice(),

@@ -619,6 +619,12 @@ namespace engine::server
 		/// Send a welcome packet to the given connected client.
 		bool SendWelcome(const ConnectedClient& client);
 
+		/// R1-B — pousse les stats dérivées complètes (PLAYER_STATS) au client à
+		/// l'enter-world. Recalcule depuis le moteur (faction/classe/sexe/niveau).
+		/// Retourne false si tables absentes, char legacy (faction/classe vides) ou
+		/// calcul/envoi échoué — non fatal pour le handshake (log seulement).
+		bool SendPlayerStats(const ConnectedClient& client);
+
 		/// Send one empty snapshot packet to the given connected client.
 		bool SendSnapshot(const ConnectedClient& client);
 

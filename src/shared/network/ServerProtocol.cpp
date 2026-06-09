@@ -450,6 +450,66 @@ namespace engine::server
 		return packet;
 	}
 
+	std::vector<std::byte> EncodePlayerStats(const PlayerStatsMessage& message)
+	{
+		// R1-B — payload : 5 u32 (clientId, maxHealth, resource, stamina, damage) + 9 f32
+		// (accuracy, range, critRate, critMult, speedWalk, speedRun, speedSprint, perception,
+		// stealth) + 1 chaîne taillée (resourceKey, préfixe u16). Estimation pour reserve.
+		std::vector<std::byte> packet = BeginPacket(
+			MessageKind::PlayerStats, 5 * 4 + 9 * 4 + 2 + message.resourceKey.size());
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.maxHealth);
+		WriteU32(packet, message.resource);
+		WriteU32(packet, message.stamina);
+		WriteU32(packet, message.damage);
+		WriteF32(packet, message.accuracy);
+		WriteF32(packet, message.range);
+		WriteF32(packet, message.critRate);
+		WriteF32(packet, message.critMult);
+		WriteF32(packet, message.speedWalk);
+		WriteF32(packet, message.speedRun);
+		WriteF32(packet, message.speedSprint);
+		WriteF32(packet, message.perception);
+		WriteF32(packet, message.stealth);
+		WriteSizedString(packet, message.resourceKey);
+		return packet;
+	}
+
+	bool DecodePlayerStats(std::span<const std::byte> packet, PlayerStatsMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		// Taille fixe minimale : 5 u32 + 9 f32 + 2 octets de préfixe de chaîne = 58 octets.
+		if (!DecodeHeader(packet, MessageKind::PlayerStats, payload) || payload.size() < 58)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.maxHealth = ReadU32(payload, 4);
+		outMessage.resource = ReadU32(payload, 8);
+		outMessage.stamina = ReadU32(payload, 12);
+		outMessage.damage = ReadU32(payload, 16);
+		outMessage.accuracy = ReadF32(payload, 20);
+		outMessage.range = ReadF32(payload, 24);
+		outMessage.critRate = ReadF32(payload, 28);
+		outMessage.critMult = ReadF32(payload, 32);
+		outMessage.speedWalk = ReadF32(payload, 36);
+		outMessage.speedRun = ReadF32(payload, 40);
+		outMessage.speedSprint = ReadF32(payload, 44);
+		outMessage.perception = ReadF32(payload, 48);
+		outMessage.stealth = ReadF32(payload, 52);
+		size_t offset = 56;
+		if (!ReadSizedString(payload, offset, outMessage.resourceKey))
+		{
+			return false;
+		}
+		if (offset != payload.size())
+		{
+			return false;
+		}
+		return true;
+	}
+
 	std::vector<std::byte> EncodeSnapshot(const SnapshotMessage& message, std::span<const SnapshotEntity> entities)
 	{
 		// TD.6/TD.8 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId)

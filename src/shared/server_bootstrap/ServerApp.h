@@ -735,6 +735,12 @@ namespace engine::server
 		                       float killPosZ,
 		                       uint32_t baseXp);
 
+		/// Applique un gain d'XP à \p client en franchissant les seuils de niveau.
+		/// Sans tables de stats chargées, accumule simplement l'XP (comportement legacy).
+		/// À chaque level-up : recalcul des stats au nouveau niveau, soin complet,
+		/// re-push de la feuille de stats au client et persistance du personnage.
+		void ApplyLevelUpsAfterXp(ConnectedClient& client, uint32_t gainedXp);
+
 		/// Apply the current party loot mode when spawning a loot bag for \p killerClient.
 		/// Returns the entityId that should own the bag (0 = public/FFA).
 		EntityId ResolvePartyLooterEntityId(const ConnectedClient& killerClient);

@@ -14,6 +14,9 @@
 #include "CharacterStatsData.h"
 #include "FactionsData.h"
 
+// Level-up runtime — courbe XP -> niveau (séparée de la boucle réseau, pure et testable).
+#include "src/shardd/gameplay/character/LevelProgression.h"
+
 // TA.4 — pont position : compilé uniquement pour la cible shard Linux (SHARD_POSITION_DB),
 // pas pour le build Windows (ServerApp.cpp est partagé). Macro dédié plutôt qu'ENGINE_HAS_MYSQL
 // pour ne PAS basculer les autres systèmes gameplay du shard en mode DB.
@@ -1271,6 +1274,15 @@ namespace engine::server
 			}
 		}
 
+		// Level-up runtime : le niveau persisté (fichier) préserve les level-ups gagnés en
+		// jeu tant que la colonne `level` de la table `characters` (master) n'est pas
+		// synchronisée. On préfère le plus haut des deux (DB vs fichier). Placé AVANT le bloc
+		// R1-A pour que les PV soient calculés à partir du niveau final.
+		if (persistedState.level > 0u)
+		{
+			acceptedClient.level = std::max(acceptedClient.level, persistedState.level);
+		}
+
 		// R1-A — PV calculés depuis le moteur de stats (faction/classe/sexe/niveau). Placé
 		// après le merge de l'état persisté (acceptedClient.stats fait foi) ET après la
 		// résolution niveau/faction/classe (LoadSpawnFromDb ci-dessus). Le resolver clamp
@@ -1747,6 +1759,7 @@ namespace engine::server
 		state.positionMetersY = client.positionMetersY;
 		state.positionMetersZ = client.positionMetersZ;
 		state.experiencePoints = client.experiencePoints;
+		state.level = client.level;
 		state.gold = client.gold;
 		state.honor = client.honor;
 		state.badges = client.badges;
@@ -2334,7 +2347,7 @@ namespace engine::server
 					continue;
 				}
 
-				client.experiencePoints += rewards.experience;
+				ApplyLevelUpsAfterXp(client, rewards.experience);
 				if (rewards.gold != 0u)
 				{
 					std::string walletErr;
@@ -3451,7 +3464,7 @@ namespace engine::server
 		{
 			if (delta.rewardExperience != 0 || delta.rewardGold != 0 || !delta.rewardItems.empty())
 			{
-				client.experiencePoints += delta.rewardExperience;
+				ApplyLevelUpsAfterXp(client, delta.rewardExperience);
 				if (delta.rewardGold != 0u)
 				{
 					std::string walletErr;
@@ -5385,6 +5398,37 @@ namespace engine::server
 		return true;
 	}
 
+	void ServerApp::ApplyLevelUpsAfterXp(ConnectedClient& client, uint32_t gainedXp)
+	{
+		if (!m_statsTables)
+		{
+			client.experiencePoints += gainedXp;   // fallback : comportement legacy (XP brute).
+			return;
+		}
+		const auto r = engine::server::gameplay::ApplyXpGain(
+			client.level, client.experiencePoints, gainedXp,
+			m_statsTables->xpBase, m_statsTables->xpFactor, m_statsTables->levelMax);
+		client.level = r.newLevel;
+		client.experiencePoints = r.newXpIntoLevel;
+		if (r.levelsGained == 0u)
+			return;
+		// Recalcul des stats au nouveau niveau + soin complet.
+		const engine::server::gameplay::Sex sex =
+			(client.gender == "female") ? engine::server::gameplay::Sex::Female
+			                            : engine::server::gameplay::Sex::Male;
+		const auto d = engine::server::gameplay::ComputeStats(
+			*m_statsTables, client.factionId, client.classId, sex, client.level);
+		if (d)
+		{
+			client.stats.maxHealth = d->hp;
+			client.stats.currentHealth = d->hp;   // soin complet au level-up.
+		}
+		(void)SendPlayerStats(client);
+		SaveConnectedClient(client, "level_up");
+		LOG_INFO(Net, "[ServerApp] LEVEL UP (client_id={}, +{} niveaux -> level={}, maxHp={})",
+			client.clientId, r.levelsGained, client.level, client.stats.maxHealth);
+	}
+
 	void ServerApp::DistributePartyXp(ConnectedClient& attacker,
 	                                   float            killPosX,
 	                                   float            killPosZ,
@@ -5394,7 +5438,7 @@ namespace engine::server
 		if (party == nullptr || party->members.size() <= 1)
 		{
 			// Solo player: grant full XP.
-			attacker.experiencePoints += baseXp;
+			ApplyLevelUpsAfterXp(attacker, baseXp);
 			LOG_DEBUG(Net, "[ServerApp] XP granted solo (client_id={}, xp={}, total_xp={})",
 			    attacker.clientId, baseXp, attacker.experiencePoints);
 			return;
@@ -5423,7 +5467,7 @@ namespace engine::server
 
 		if (inRange.empty())
 		{
-			attacker.experiencePoints += baseXp;
+			ApplyLevelUpsAfterXp(attacker, baseXp);
 			return;
 		}
 
@@ -5436,7 +5480,7 @@ namespace engine::server
 			{
 				if (c.clientId == memberId)
 				{
-					c.experiencePoints += share;
+					ApplyLevelUpsAfterXp(c, share);
 					LOG_DEBUG(Net, "[ServerApp] Party XP share granted (client_id={}, share={}, total_xp={})",
 					    c.clientId, share, c.experiencePoints);
 					break;

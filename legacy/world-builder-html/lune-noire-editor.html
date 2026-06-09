@@ -281,6 +281,9 @@
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1rem;
   }
+  /* Une vue liste injectée dans .cards-grid doit occuper toute la largeur
+     (sinon elle est contrainte à la largeur d'une seule colonne de cartes). */
+  .cards-grid > .list-view { grid-column: 1 / -1; }
 
   /* Individual card */
   .card {
@@ -2383,6 +2386,7 @@ function renderClasses(el) {
   var grid = el.querySelector('#classesGrid');
   var list = (db.classes||[]).filter(function(c){ return !q || c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q); });
   if (!list.length) { grid.innerHTML = '<div class="empty-state">Aucune classe trouvée</div>'; return; }
+  if (getViewMode('classes')==='list') { grid.innerHTML=renderListView('classes',list); return; }
   grid.innerHTML = list.map(function(c) {
     var gi = db.classes.indexOf(c);
     var tc = CLASS_TYPE_COLORS[c.type]||'#4a6fa5';
@@ -7870,7 +7874,15 @@ function renderFactions(el) {
     c += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.2rem">';
     c += badge(ab.label,ab.color);
     c += (f.playable ? badge('Jouable','#7ac08a') : badge('Non jouable','#a05060'));
+    if (f.type) c += badge(esc(f.type), '#6a6f78');
     c += '</div></div>';
+
+    // Régions de référence (mono ou multi)
+    var fRegs=(f.region_ids&&f.region_ids.length)?f.region_ids:(f.region_id?[f.region_id]:[]);
+    if (fRegs.length) {
+      var rgB=''; fRegs.forEach(function(rid){ var rg=(db.regions||[]).find(function(x){return x.id===rid;}); rgB+=badge('🗺️ '+esc(rg?rg.name:rid),regionColor(rid)); });
+      c += cardRow(fRegs.length>1?'Régions':'Région', rgB, true);
+    }
 
     // Visual identity snippet
     if (f.visual_identity) {
@@ -7898,6 +7910,16 @@ function renderFactions(el) {
       if (f.politics.stance_on_black_moon) polParts.push(f.politics.stance_on_black_moon.substring(0,40));
       if (polParts.length) c += '<div style="font-size:0.72rem;color:var(--text-dim);margin-top:0.25rem;border-top:1px solid var(--border);padding-top:0.25rem">⚖️ '+esc(polParts[0])+'</div>';
     }
+
+    // Ligne de statistiques (relations, villes contrôlées, classes/races affiliées)
+    var sAll=(f.faction_relations||[]).filter(function(r){return r.relation==='allied'||r.relation==='ally';}).length;
+    var sEne=(f.faction_relations||[]).filter(function(r){return r.relation==='enemy'||r.relation==='hostile';}).length;
+    var sVil=(db.villes||[]).filter(function(v){return v.faction_control===f.id;}).length;
+    var sCls=(db.classes||[]).filter(function(cc){return (cc.faction_affiliations||[]).some(function(a){return a.faction_id===f.id;});}).length;
+    var sRac=(db.races||[]).filter(function(rr){return (rr.faction_affiliations||[]).some(function(a){return a.faction_id===f.id;});}).length;
+    c += '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;padding-top:0.4rem;border-top:1px solid var(--border);font-size:0.68rem;color:var(--text-dim)">';
+    c += '<span title="Factions alliées">🤝 '+sAll+'</span><span title="Factions ennemies">⚔️ '+sEne+'</span><span title="Villes contrôlées">🏙️ '+sVil+'</span><span title="Classes affiliées">🛡️ '+sCls+'</span><span title="Races affiliées">🧬 '+sRac+'</span>';
+    c += '</div>';
 
     c += '<div class="card-actions">';
     c += '<button class="btn btn-ghost btn-sm" onclick="openFactionDetail('+gi+')" title="Détail BD">📖</button>';
@@ -9023,6 +9045,14 @@ function buildListRow(section, item, idx) {
       icon = '⚜️';
       var ab = ALIGNMENT_MAP[item.alignment]||{label:item.alignment||'—',color:'#708090'};
       badges = badge(ab.label,ab.color) + (item.playable?badge('Jouable','#7ac08a'):badge('Non jouable','#a05060'));
+      if(item.type) badges += badge(esc(item.type),'#6a6f78');
+      var fRegs=(item.region_ids&&item.region_ids.length)?item.region_ids:(item.region_id?[item.region_id]:[]);
+      fRegs.forEach(function(rid){ var rg=(db.regions||[]).find(function(x){return x.id===rid;}); badges+=badge('🗺️ '+esc(rg?rg.name:rid),regionColor(rid)); });
+      var nAll=(item.faction_relations||[]).filter(function(r){return r.relation==='allied'||r.relation==='ally';}).length;
+      var nEne=(item.faction_relations||[]).filter(function(r){return r.relation==='enemy'||r.relation==='hostile';}).length;
+      var nVilF=(db.villes||[]).filter(function(v){return v.faction_control===item.id;}).length;
+      var nClsF=(db.classes||[]).filter(function(c){return (c.faction_affiliations||[]).some(function(a){return a.faction_id===item.id;});}).length;
+      desc = nAll+' alliée(s) · '+nEne+' ennemie(s) · '+nVilF+' ville(s) · '+nClsF+' classe(s)';
       actions = '<button class="btn btn-ghost btn-sm" style="font-size:0.6rem" onclick="showRelations(\'factions\',\''+esc(item.id)+'\')" title="Relations">🔗</button>'
               + '<button class="btn btn-ghost btn-sm" onclick="openFactionForm('+idx+')">✎</button>'
               + '<button class="btn btn-danger" onclick="deleteFaction('+idx+')">✕</button>';
@@ -9032,6 +9062,12 @@ function buildListRow(section, item, idx) {
       icon = '⚔️';
       var cl_tl = CLASS_TYPE_LABELS[item.type]||item.type||'—';
       badges = badge(cl_tl, col);
+      if(item.life_gauge)      badges += badge('❤️ '+esc(item.life_gauge),'#c05060');
+      if(item.endurance_gauge) badges += badge('💪 '+esc(item.endurance_gauge),'#7ac08a');
+      if(item.specific_gauge)  badges += badge('✨ '+esc(item.specific_gauge),'#9060c0');
+      var nFacC=(item.faction_affiliations||[]).length, nVarC=(item.variants||[]).length, nTitC=(item.level_titles||[]).length;
+      var clsParts=[nFacC?nFacC+' faction(s)':'Universelle']; if(nVarC)clsParts.push(nVarC+' variante(s)'); if(nTitC)clsParts.push(nTitC+' titre(s)');
+      desc = clsParts.join(' · ');
       actions = '<button class="btn btn-ghost btn-sm" onclick="openClassForm('+idx+')">✎</button>'
               + '<button class="btn btn-danger" onclick="deleteClass('+idx+')">✕</button>';
       break;
@@ -9046,7 +9082,14 @@ function buildListRow(section, item, idx) {
     case 'races':
       col = raceColor(item.id);
       icon = '🧬';
-      badges = (item.playable?badge('Jouable','#7ac08a'):'') + (item.npc?badge('PNJ','#7090c0'):'');
+      badges = (item.playable?badge('Jouable','#7ac08a'):'') + (item.npc?badge('PNJ','#7090c0'):'') + (item.companion?badge('Compagnon','#9060c0'):'');
+      if(!item.playable&&!item.npc&&!item.companion) badges += badge('Non jouable','#a05060');
+      var rGenders=Array.isArray(item.genders)?item.genders:(item.gender&&item.gender!=='unspecified'?[item.gender]:[]);
+      rGenders.forEach(function(g){ var gd=GENDER_OPTIONS.find(function(x){return x.value===g;}); if(gd) badges+=badge(gd.label,gd.color); });
+      (item.faction_affiliations||[]).slice(0,3).forEach(function(a){ var f=(db.factions||[]).find(function(x){return x.id===a.faction_id;}); badges+=badge('⚜️ '+esc(f?f.name:a.faction_id),factionColor(a.faction_id)); });
+      var rParts=[]; var nFacR=(item.faction_affiliations||[]).length, nTraitsR=(item.abilities_traits||[]).length, nClsAcc=(item.class_access||[]).length;
+      if(nFacR)rParts.push(nFacR+' faction(s)'); if(nTraitsR)rParts.push(nTraitsR+' trait(s)'); if(nClsAcc)rParts.push(nClsAcc+' classe(s)');
+      desc = rParts.join(' · ') || ((item.origins&&item.origins.summary)||'');
       actions = '<button class="btn btn-ghost btn-sm" style="font-size:0.6rem" onclick="showRelations(\'races\',\''+esc(item.id)+'\')" title="Relations">🔗</button>'
               + '<button class="btn btn-ghost btn-sm" onclick="openRaceForm('+idx+')">✎</button>'
               + '<button class="btn btn-danger" onclick="deleteRace('+idx+')">✕</button>';

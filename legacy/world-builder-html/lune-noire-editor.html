@@ -4222,6 +4222,11 @@ function renderRegions(el) {
   var grid = el.querySelector('#regionsGrid');
   if(!list.length){ grid.innerHTML = '<div class="empty-state">Aucune région trouvée</div>'; return; }
       if (getViewMode('regions')==='list') { grid.innerHTML=renderListView('regions',list); return; }
+    // Taille estimée par région : recalculée à chaque rendu à partir de db.cells,
+    // donc à jour dès qu'on revient sur l'onglet après une édition dans la Carte.
+    var cellCountByRegion = {}, totalMapped = 0;
+    (db.cells||[]).forEach(function(c){ if(c.region_id){ cellCountByRegion[c.region_id]=(cellCountByRegion[c.region_id]||0)+1; totalMapped++; } });
+    var areaPerCell = CARTE_CELL_SIDE_KM*CARTE_CELL_SIDE_KM;
     grid.innerHTML = list.map(function(rg) {
     var gi = db.regions.indexOf(rg);
     var col = regionColor(rg.id);
@@ -4230,6 +4235,18 @@ function renderRegions(el) {
     card += '<div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openRegionForm('+gi+')">✎</button>';
     card += '<button class="btn btn-danger" onclick="deleteRegion('+gi+')">✕</button></div></div>';
     if(rg.description) card += '<div style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.35rem;font-style:italic">'+esc(rg.description.substring(0,120))+(rg.description.length>120?'…':'')+'</div>';
+    // Taille estimée d'après le nombre de cellules rattachées à la région.
+    var nCells = cellCountByRegion[rg.id]||0;
+    var areaKm2 = nCells*areaPerCell;
+    var pct = totalMapped ? Math.round(nCells/totalMapped*100) : 0;
+    card += '<div style="margin-top:0.45rem;display:flex;align-items:center;gap:0.4rem;font-size:0.78rem">';
+    card += '<span style="color:'+col+'">📐 '+nCells+' cellule'+(nCells>1?'s':'')+'</span>';
+    card += '<span style="color:var(--text-dim)">~'+areaKm2.toLocaleString('fr-FR')+' km²</span>';
+    if(totalMapped) card += '<span style="color:var(--text-dim);font-size:0.7rem">('+pct+'% du territoire cartographié)</span>';
+    card += '</div>';
+    if(nCells){
+      card += '<div style="margin-top:0.25rem;height:5px;border-radius:3px;background:var(--bg-deep);overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+col+'"></div></div>';
+    }
     var cities = (db.villes||[]).filter(function(v){ return v.region_id === rg.id; });
     if(cities.length) {
       card += '<div style="margin-top:0.5rem;border-top:1px solid '+col+'30;padding-top:0.4rem">';
@@ -4352,6 +4369,9 @@ function terrainLabel(t) { return TERRAIN_LABELS[t] || (t || '—'); }
 // Conservé hors de renderCarte pour survivre aux re-rendus (showSection).
 var BASE_CELL_SIZE = 14;      // taille d'une cellule à zoom ×1 (px)
 var MAX_CARTE_ZOOM = 12;      // zoom maximum demandé : ×12
+// Côté physique d'une cellule (km), repris de map-viewer-v23 (cellSizeKm). Sert
+// à estimer la surface d'une région : nb_cellules × CARTE_CELL_SIDE_KM².
+var CARTE_CELL_SIDE_KM = 10;
 window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null,
   filters:{ villes:true, routes:true, poi:true, regions:false, water:true, islands:true } };
 if (!window._carteState.filters) window._carteState.filters = { villes:true, routes:true, poi:true, regions:false, water:true, islands:true };

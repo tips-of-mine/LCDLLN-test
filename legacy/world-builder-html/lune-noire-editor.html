@@ -1807,7 +1807,7 @@ function buildExportSchema() {
     tomes_config: (db.tomes_config||[]).map(function(t){return{id:t.id||'',label:t.label||''};}),
     competences: (db.competences||[]).map(function(c){return{id:c.id||'',name:c.name||'',school:c.school||'',usable_by:c.usable_by||[],prerequisite:c.prerequisite||'',description:c.description||'',progression:c.progression||[],effects:c.effects||[],incantation:c.incantation||c.incantation_known||'',training_steps:c.training_steps||c.learning_steps||[],source:c.source||'',notes:c.notes||[]};}),
     regles_transverses: (db.regles_transverses||[]).map(function(r){return{id:r.id||'',name:r.name||'',category:r.category||'',description:r.description||'',applies_to:r.applies_to||[],mechanique_jeu:r.mechanique_jeu||'',apparition_window:r.apparition_window||'',incantations_connues:r.incantations_connues||[],training_minimum:r.training_minimum||'',source:r.source||'',notes:r.notes||[]};}),
-    weapons: (db.weapons||[]).map(function(w){return{id:w.id||'',name:w.name||'',type:w.type||'',eligible_races:w.eligible_races||[],eligible_factions:w.eligible_factions||[],eligible_classes:w.eligible_classes||[],notes:w.notes||[]};}),
+    weapons: (db.weapons||[]).map(function(w){return{id:w.id||'',name:w.name||'',type:w.type||'',hands:w.hands||'one',dual_wield:!!w.dual_wield,eligible_races:w.eligible_races||[],eligible_factions:w.eligible_factions||[],eligible_classes:w.eligible_classes||[],notes:w.notes||[]};}),
     server_commands: (db.server_commands||[]).map(function(c){return{id:c.id||'',name:c.name||'',rbac_level:c.rbac_level||'player',description:c.description||'',notes:c.notes||[]};})
   };
   return Object.assign(_out, _schema);
@@ -4838,6 +4838,9 @@ function renderWeapons(el) {
     card += '<div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openWeaponForm(' + gi + ')">✎</button>';
     card += '<button class="btn btn-danger" onclick="deleteWeapon(' + gi + ')">✕</button></div></div>';
     card += cardRow('Type', badge(weaponTypeLabel(w.type),'#b5895a'), true);
+    var handsB = badge(w.hands==='two'?'🙌 Deux mains':'✋ Une main', '#8a8050');
+    if(w.hands!=='two' && w.dual_wield) handsB += badge('⚔️⚔️ Une dans chaque main', '#c0904a');
+    card += cardRow('Maniement', handsB, false);
     var racB=''; (w.eligible_races||[]).forEach(function(id){ var r=(db.races||[]).find(function(x){return x.id===id;}); racB+=badge('🧬 '+esc(r?r.name:id),'#a06040'); });
     if(racB) card += cardRow('Races', racB, false);
     var facB=''; (w.eligible_factions||[]).forEach(function(id){ var f=(db.factions||[]).find(function(x){return x.id===id;}); facB+=badge('⚜️ '+esc(f?f.name:id),factionColor(id)); });
@@ -4869,6 +4872,13 @@ function openWeaponForm(idx) {
     '<div class="form-group"><label class="form-label">Identifiant (ID)*</label><input class="form-input" id="wp_id" value="' + esc(w.id) + '" placeholder="weapon_example" oninput="lockIdField(\'wp_id\')"></div>' +
     '<div class="form-group"><label class="form-label">Nom*</label><input class="form-input" id="wp_name" value="' + esc(w.name) + '" placeholder="Nom de l\'arme" oninput="autoGenId(this,\'wp_id\')"></div></div>' +
     '<div class="form-group"><label class="form-label">Type</label><select class="form-select" id="wp_type">' + typeOpts + '</select></div>' +
+    '<div class="form-group"><label class="form-label">Maniement</label>' +
+    '<div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap">' +
+    '<select class="form-select" id="wp_hands" style="max-width:200px" onchange="wpToggleDual()">' +
+    '<option value="one"'+(w.hands!=='two'?' selected':'')+'>✋ Une main</option>' +
+    '<option value="two"'+(w.hands==='two'?' selected':'')+'>🙌 Deux mains</option></select>' +
+    '<label id="wp_dual_wrap" style="display:'+(w.hands==='two'?'none':'flex')+';align-items:center;gap:0.4rem;cursor:pointer;font-size:0.84rem"><input type="checkbox" id="wp_dual"'+(w.dual_wield?' checked':'')+' style="accent-color:var(--accent-gold)"> Une dans chaque main (deux armes)</label>' +
+    '</div></div>' +
     '<div class="form-group"><label class="form-label">Races autorisées <span style="font-size:0.7rem;color:var(--text-dim)">(vide = toutes)</span></label>' +
     '<div style="display:flex;gap:0.5rem;margin-bottom:0.4rem"><select class="form-select" id="wpRaceSel">' + rOpts + '</select><button class="btn btn-primary btn-sm" onclick="addWeaponTarget(\'race\')">+</button></div><div id="wpRaceList"></div></div>' +
     '<div class="form-group"><label class="form-label">Factions autorisées <span style="font-size:0.7rem;color:var(--text-dim)">(vide = toutes)</span></label>' +
@@ -4884,6 +4894,12 @@ function openWeaponForm(idx) {
     '<button class="btn btn-gold" onclick="saveWeapon(' + (isEdit?idx:'undefined') + ')">💾 Enregistrer</button>';
   document.getElementById('noteInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){addCurrentNote();e.preventDefault();} });
   openModal();
+}
+// Masque l'option « une dans chaque main » quand l'arme est à deux mains.
+function wpToggleDual() {
+  var h=document.getElementById('wp_hands').value;
+  var wrap=document.getElementById('wp_dual_wrap'); if(wrap) wrap.style.display=(h==='two')?'none':'flex';
+  if(h==='two'){ var d=document.getElementById('wp_dual'); if(d) d.checked=false; }
 }
 // Ajoute une cible (race/faction/classe) à l'arme en cours d'édition.
 function addWeaponTarget(type) {
@@ -4910,9 +4926,11 @@ function renderWeaponTargetList(type) {
 }
 function saveWeapon(idx) {
   var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.weapons[idx])):{};
+  var hands=document.getElementById('wp_hands').value;
   var obj=Object.assign(base,{
     id:document.getElementById('wp_id').value.trim(), name:document.getElementById('wp_name').value.trim(),
     type:document.getElementById('wp_type').value,
+    hands:hands, dual_wield:(hands==='one' && document.getElementById('wp_dual').checked),
     eligible_races:window._wpRaces.slice(), eligible_factions:window._wpFactions.slice(), eligible_classes:window._wpClasses.slice(),
     notes:window._currentNotes.slice()});
   if(!obj.id||!obj.name){ toast('ID et Nom obligatoires'); return; }

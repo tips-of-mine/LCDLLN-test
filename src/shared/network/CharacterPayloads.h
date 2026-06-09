@@ -34,6 +34,10 @@ namespace engine::network
 		std::string           classId;   ///< M39.1 — class identifier (e.g. "warrior").
 		CharacterCustomization customization{}; ///< M39.1 — appearance options.
 		std::string           gender;    ///< "male"/"female" (#1 serveur). Vide => 'male' côté serveur.
+		// Système de personnages PR2 — faction choisie à la création (id court, ex.
+		// "elfe"). Appendue après gender (wire-breaking, client/master en lock-step).
+		// Vide si client ancien (forward-compat) => défaut côté serveur.
+		std::string           factionId;
 	};
 
 	struct CharacterCreateResponsePayload
@@ -47,7 +51,8 @@ namespace engine::network
 	                                                        std::string_view raceId  = {},
 	                                                        std::string_view classId = {},
 	                                                        const CharacterCustomization& customization = {},
-	                                                        std::string_view gender = {});
+	                                                        std::string_view gender = {},
+	                                                        std::string_view factionId = {});
 
 	std::optional<CharacterCreateResponsePayload> ParseCharacterCreateResponsePayload(const uint8_t* payload, size_t payloadSize);
 	std::vector<uint8_t> BuildCharacterCreateResponsePacket(uint8_t success, uint64_t characterId, uint32_t requestId, uint64_t sessionIdHeader);
@@ -94,6 +99,10 @@ namespace engine::network
 		// Teinte de peau (0 = claire, 1 = foncée). Appendu après gender (wire-breaking,
 		// client + master déployés ensemble). 0 par défaut (perso pré-migration 0068).
 		uint8_t skin_color_idx = 0;
+		// Système de personnages PR2 — id court de faction (ex. "elfe"). Appendu
+		// après skin_color_idx (wire-breaking, client/master en lock-step). Vide
+		// si character créé pré-PR2 (forward-compat).
+		std::string faction_str;
 	};
 
 	struct CharacterListResponsePayload

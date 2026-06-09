@@ -47,11 +47,11 @@ namespace
 	{
 		CharacterCustomizationSystem sys;
 		InitSystem(sys);
-		// Au moins les 8 races existantes de races.json.
-		REQUIRE(sys.RaceCount() >= 8);
+		// Au moins les 7 races existantes de races.json (corrompus retirée — PR2).
+		REQUIRE(sys.RaceCount() >= 7);
 
-		const char* expected[] = {"humains", "elfes",         "orcs",   "nains",
-		                          "demons",  "morts_vivants", "corrompus", "divins"};
+		const char* expected[] = {"humains", "elfes",         "orcs", "nains",
+		                          "demons",  "morts_vivants", "divins"};
 		for (const char* id : expected)
 		{
 			REQUIRE(sys.GetRaceConfig(id) != nullptr);

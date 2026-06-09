@@ -262,7 +262,47 @@ namespace engine::server
 			// humains, elfes, nains : faction(s) a choisir / pas encore definie -> vide.
 			return "";
 		};
-		const std::string factionStr = factionFromRace(raceIdTruncated);
+		// PR2 — validateur d'identifiant de faction provenant du payload client.
+		// Accepte : non-vide, uniquement alphanumérique + underscore, longueur [1, 32].
+		// Même jeu de caractères que les noms de personnages (IsValidCharacterName),
+		// sans contrainte de longueur minimale à 3 — un id court comme "lune" est valide.
+		auto isValidFactionId = [](std::string_view id) -> bool {
+			if (id.empty() || id.size() > 32u)
+				return false;
+			for (unsigned char c : id)
+			{
+				if (!std::isalnum(c) && c != '_')
+					return false;
+			}
+			return true;
+		};
+		// PR2 — source de la faction : préférer factionId du payload (choix explicite du
+		// joueur via l'UI de sélection de faction) ; replier sur la dérivation par race
+		// pour les anciens clients ou les races à faction unique non encore sélectionnée.
+		// Si factionId est non-vide mais de charset invalide, on replie aussi (lenient) et
+		// on loggue un avertissement pour diagnostiquer d'éventuels bugs client.
+		std::string factionStr;
+		const char* factionSource = nullptr;
+		if (!parsed->factionId.empty())
+		{
+			if (isValidFactionId(parsed->factionId))
+			{
+				factionStr    = truncate(parsed->factionId);
+				factionSource = "payload";
+			}
+			else
+			{
+				LOG_WARN(Net, "[CharacterCreateHandler] factionId payload invalide (charset/taille) : '{}' — repli sur dérivation par race",
+					parsed->factionId);
+				factionStr    = factionFromRace(raceIdTruncated);
+				factionSource = "derived(invalid_payload)";
+			}
+		}
+		else
+		{
+			factionStr    = factionFromRace(raceIdTruncated);
+			factionSource = "derived";
+		}
 		// #1 serveur — genre du personnage (validé male/female, défaut male).
 		const std::string genderStr = (parsed->gender == "female") ? "female" : "male";
 		// Teinte de peau (skinColorIdx) : entier non signé borné [0, 255] (0 = claire).
@@ -311,9 +351,10 @@ namespace engine::server
 		auto pkt = BuildCharacterCreateResponsePacket(1u, characterId, requestId, sessionIdHeader);
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
-		LOG_INFO(Auth, "[CharacterCreateHandler] Character created (account_id={}, character_id={}, server_id={}, slot={}, name={}, race='{}', class='{}', faction='{}', spawn=({}, {}, {}))",
+		LOG_INFO(Auth, "[CharacterCreateHandler] Character created (account_id={}, character_id={}, server_id={}, slot={}, name={}, race='{}', class='{}', faction='{}', faction_source={}, spawn=({}, {}, {}))",
 			*accountId, characterId, serverId, slot, parsed->name, raceIdTruncated, classIdTruncated,
 			factionStr.empty() ? "(unaligned)" : factionStr,
+			factionSource,
 			spawnX, spawnY, spawnZ);
 	}
 }

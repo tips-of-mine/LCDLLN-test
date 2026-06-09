@@ -876,6 +876,14 @@ elseif(UNIX)
   lcdlln_add_simple_test(character_customization_tests
     ${CMAKE_SOURCE_DIR}/src/client/character_creation/tests/CharacterCustomizationTests.cpp)
 
+  # Système de personnages PR2 : factions (faction → classes + race) chargées
+  # depuis game/data/races/factions.json. Valide 10 factions (9 sélectionnables
+  # + empire_hynn masquée), classes distinctes, mapping faction→race.
+  # Note : CharacterCreationUi.cpp est déjà linké via engine_core (CMakeLists
+  # racine), donc ne pas le re-ajouter ici (multiple definition).
+  lcdlln_add_simple_test(faction_definition_tests
+    ${CMAKE_SOURCE_DIR}/src/client/character_creation/tests/FactionDefinitionTests.cpp)
+
   # Dialogue PNJ : modele d'arbre, presenter (navigation/choix/distance/auto-scroll),
   # journal de conversation. DialogueTree.cpp, DialoguePresenter.cpp,
   # QuestConversationJournal.cpp, DialogueConfigLoader.cpp sont deja linkes via

@@ -26,7 +26,7 @@ namespace engine::client
 		std::vector<std::string> eyeColorHex;      ///< Available eye colour hex strings.
 		/// Sous-projet C MVP — Chemin relatif (depuis `paths.content`) vers le .glb
 		/// du mesh skinned de cette race. Vide si la race n'a pas de mesh assigné
-		/// (cas hors-MVP : elfes, morts_vivants, corrompus, divins, démons).
+		/// (cas hors-MVP : elfes, morts_vivants, divins, démons).
 		/// `Engine` fallback sur le mesh "humains" pour ces races à EnterWorld.
 		std::string              meshPath;
 		/// Migration UE5 — correction d'import du mesh (échelle/orientation).
@@ -36,6 +36,33 @@ namespace engine::client
 		/// (moteur), typiquement -90. Réglables dans races.json sans recompiler.
 		float                    importScale    = 1.0f;
 		float                    importRotXDeg  = 0.0f;
+		/// Système de personnages PR2 — race jouable ou non. Défaut true (une
+		/// race absente de la clé `enabled` reste sélectionnable, pas de régression).
+		bool                     enabled        = true;
+	};
+
+	// -------------------------------------------------------------------------
+	// Faction model (game/data/races/factions.json) — Système de personnages PR2
+	// -------------------------------------------------------------------------
+
+	/// One class within a faction (game/data/races/factions.json).
+	struct FactionClass
+	{
+		std::string id;          ///< stable id within the faction (e.g. "guerrier").
+		std::string displayName; ///< "Guerrier".
+		std::string subclass;    ///< optional ("Châtieur"), empty if none.
+		std::string profile;     ///< stat archetype name (melee/lanceur/...).
+		std::string resourceKey; ///< secondary-resource key ("ferveur").
+	};
+
+	/// One faction (game/data/races/factions.json).
+	struct FactionDefinition
+	{
+		std::string                id;          ///< "lumiere".
+		std::string                displayName; ///< "Chevaliers de la Lumière".
+		std::string                raceId;      ///< fixed race for this faction.
+		bool                       selectable = true;
+		std::vector<FactionClass>  classes;
 	};
 
 	/// One class entry loaded from game/data/races/classes.json (M39.1).
@@ -73,6 +100,10 @@ namespace engine::client
 		// ---- Selections ----
 		uint32_t selectedRaceIndex  = 0; ///< Index into m_races.
 		uint32_t selectedClassIndex = 0; ///< Index into the filtered class list.
+
+		// ---- Faction selections (Système de personnages PR2) ----
+		uint32_t selectedFactionIndex      = 0; ///< Index into GetFactions().
+		uint32_t selectedFactionClassIndex = 0; ///< Index into the faction's classes.
 
 		// ---- Customization (M39.1 spec: face, hair, skin, hair color, eye color) ----
 		uint8_t faceType     = 0;
@@ -172,6 +203,17 @@ namespace engine::client
 		/// Currently selected class, or nullptr.
 		const ClassDefinition* GetSelectedClass() const;
 
+		// ---- Faction selection (Système de personnages PR2) ----
+
+		/// All loaded factions (including non-selectable).
+		const std::vector<FactionDefinition>& GetFactions() const { return m_factions; }
+		/// Indices (into GetFactions()) of selectable factions only.
+		std::vector<uint32_t> GetSelectableFactionIndices() const;
+		/// Classes of faction at index, or empty if out of range.
+		const std::vector<FactionClass>* GetFactionClasses(uint32_t factionIndex) const;
+		/// Race id for faction at index, empty if out of range.
+		std::string GetRaceIdForFaction(uint32_t factionIndex) const;
+
 		// ---- Customization ----
 
 		void SetFaceType(uint8_t v);
@@ -235,6 +277,10 @@ namespace engine::client
 		/// Load classes from the content-relative JSON path.
 		bool LoadClasses(const engine::core::Config& config, const std::string& relPath);
 
+		/// Load factions (faction → classes) from the content-relative JSON path
+		/// (Système de personnages PR2 — game/data/races/factions.json).
+		bool LoadFactions(const engine::core::Config& config, const std::string& relPath);
+
 		/// Validate \p name according to ticket spec (3-12 chars, alphanumeric+_, profanity).
 		/// Fills \p outError with a human-readable message when invalid.
 		bool ValidateName(const std::string& name, std::string& outError) const;
@@ -242,8 +288,9 @@ namespace engine::client
 		/// Static profanity blacklist (English + common variants).
 		static bool IsProfane(const std::string& lower);
 
-		std::vector<RaceDefinition>  m_races;
-		std::vector<ClassDefinition> m_classes;
+		std::vector<RaceDefinition>     m_races;
+		std::vector<ClassDefinition>    m_classes;
+		std::vector<FactionDefinition>  m_factions; ///< Système de personnages PR2.
 		CharacterCustomizationSystem m_customization; ///< Limites + presets (configuration/).
 		uint32_t m_selectedClassFiltered = 0; ///< Index within filtered class list.
 		CharacterCreationState m_state{};

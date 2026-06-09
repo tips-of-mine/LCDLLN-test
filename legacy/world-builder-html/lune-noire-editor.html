@@ -4352,7 +4352,9 @@ function terrainLabel(t) { return TERRAIN_LABELS[t] || (t || '—'); }
 // Conservé hors de renderCarte pour survivre aux re-rendus (showSection).
 var BASE_CELL_SIZE = 14;      // taille d'une cellule à zoom ×1 (px)
 var MAX_CARTE_ZOOM = 12;      // zoom maximum demandé : ×12
-window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null };
+window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null,
+  filters:{ villes:true, routes:true, poi:true, regions:false, water:true } };
+if (!window._carteState.filters) window._carteState.filters = { villes:true, routes:true, poi:true, regions:false, water:true };
 var _carteGeo = null;         // { byKey, minLat, maxLat, minLon, maxLon, cols, rows, villeByCell }
 
 // Recalcule la géométrie de la grille à partir de db.cells / db.villes.
@@ -4418,8 +4420,29 @@ function renderCarte(el) {
   Object.keys(ROUTE_TYPES).forEach(function(rt){ var d=ROUTE_TYPES[rt]; h += '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.7rem;color:var(--text-secondary)"><span style="width:18px;height:0;border-top:3px '+(d.dash?'dashed':'solid')+' '+d.color+'"></span>'+d.icon+' '+esc(d.label)+'</span>'; });
   h += '</div>';
 
-  // Canvas dans un conteneur scrollable
-  h += '<div id="carteScroll" style="overflow:auto;max-height:62vh;border:1px solid var(--border,#33333a);border-radius:6px;background:#0a0a10">';
+  // Filtres d'affichage (couches)
+  var fl = st.filters;
+  function flChk(key,label){ return '<label style="display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.74rem;color:var(--text-secondary)"><input type="checkbox"'+(fl[key]?' checked':'')+' style="accent-color:var(--accent-gold)" onchange="carteToggleFilter(\''+key+'\',this.checked)"> '+label+'</label>'; }
+  h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem 1rem;margin-bottom:0.75rem;padding:0.4rem 0.6rem;background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;align-items:center">';
+  h += '<span style="font-family:Cinzel,serif;font-size:0.58rem;text-transform:uppercase;color:var(--text-dim)">Filtres</span>';
+  h += flChk('villes','🏙️ Villes') + flChk('routes','🛣️ Routes') + flChk('poi','📍 Points importants') + flChk('water','💧 Lacs & rivières') + flChk('regions','🗺️ Régions (teinte)');
+  h += '</div>';
+
+  // Légende des régions (visible quand la couche Régions est active)
+  if (fl.regions) {
+    var regCells = {}; cells.forEach(function(c){ if(c.region_id) regCells[c.region_id]=(regCells[c.region_id]||0)+1; });
+    var regIds = Object.keys(regCells).sort(function(a,b){return regCells[b]-regCells[a];});
+    if (regIds.length) {
+      h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem 0.8rem;margin-bottom:0.75rem;align-items:center">';
+      regIds.forEach(function(rid){ var rg=(db.regions||[]).find(function(x){return x.id===rid;});
+        h += '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.7rem;color:var(--text-secondary)"><span style="width:13px;height:13px;border-radius:2px;background:'+regionColor(rid)+'"></span>'+esc(rg?rg.name:rid)+' ('+regCells[rid]+')</span>';
+      });
+      h += '</div>';
+    }
+  }
+
+  // Canvas dans un conteneur scrollable (hauteur étendue, scroll H/V au besoin)
+  h += '<div id="carteScroll" style="overflow:auto;height:76vh;border:1px solid var(--border,#33333a);border-radius:6px;background:#0a0a10;resize:vertical">';
   h += '<canvas id="carteCanvas" style="display:block;cursor:pointer"></canvas></div>';
   h += '<div id="carteStatus" style="font-size:0.72rem;color:var(--text-dim);margin-top:0.4rem;font-family:monospace">&nbsp;</div>';
 
@@ -4455,6 +4478,7 @@ function drawCarte() {
   canvas.width = W; canvas.height = H;
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,W,H);
+  var fl = st.filters || {};
 
   // Cellules
   for (var lat=_carteGeo.maxLat; lat>=_carteGeo.minLat; lat--) {
@@ -4464,22 +4488,27 @@ function drawCarte() {
       if (!c) { ctx.fillStyle='#0a0a10'; ctx.fillRect(x,y,px,px); continue; }
       ctx.fillStyle = terrainColor(c.terrain_type);
       ctx.fillRect(x,y,px,px);
+      // Teinte région (couche optionnelle) : superpose la couleur de la région.
+      if (fl.regions && c.region_id) {
+        ctx.fillStyle = regionColor(c.region_id); ctx.globalAlpha = 0.5;
+        ctx.fillRect(x,y,px,px); ctx.globalAlpha = 1;
+      }
       // grille fine
       if (px>=8) { ctx.strokeStyle='rgba(0,0,0,0.22)'; ctx.lineWidth=1; ctx.strokeRect(x+0.5,y+0.5,px-1,px-1); }
-      // indices visuels (rivière / lac / montagne) quand la cellule est assez grande
-      if (px>=18) {
+      // Lacs & rivières (couche optionnelle) : tracé réel.
+      if (fl.water) drawCarteWater(ctx, c, x, y, px);
+      // Montagne : repère léger.
+      if (px>=18 && c.has_mountain_range) {
         ctx.font = Math.floor(px*0.4)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-        var sym=''; if(c.has_mountain_range)sym='▲'; else if(c.has_lake)sym='●'; else if(c.has_river)sym='≈';
-        if(sym){ ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.fillText(sym, x+px*0.5, y+px*0.32); }
+        ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.fillText('▲', x+px*0.5, y+px*0.3);
       }
-      // POI
-      var pois = c.points_of_interest;
-      if (pois && pois.length) { drawCartePoi(ctx, pois, x+px*0.72, y+px*0.28, px); }
+      // POI (couche optionnelle)
+      if (fl.poi && c.points_of_interest && c.points_of_interest.length) drawCartePoi(ctx, c.points_of_interest, x+px*0.72, y+px*0.28, px);
     }
   }
 
-  // Routes
-  (db.routes||[]).forEach(function(r){
+  // Routes (couche optionnelle)
+  if (fl.routes) (db.routes||[]).forEach(function(r){
     var a=carteCellCenter(r.from_place), b=carteCellCenter(r.to_place);
     if(!a||!b) return;
     var d=routeTypeDef(r.type);
@@ -4489,8 +4518,8 @@ function drawCarte() {
     ctx.setLineDash([]);
   });
 
-  // Villes
-  Object.keys(_carteGeo.villeByCell).forEach(function(cellId){
+  // Villes (couche optionnelle)
+  if (fl.villes) Object.keys(_carteGeo.villeByCell).forEach(function(cellId){
     var ctr=carteCellCenter(cellId); if(!ctr) return;
     var r=Math.max(3,px*0.22);
     ctx.fillStyle='#ffd700'; ctx.strokeStyle='#1a1a22'; ctx.lineWidth=Math.max(1,px*0.05);
@@ -4523,6 +4552,32 @@ function drawCartePoi(ctx, pois, cx, cy, px) {
   });
 }
 
+// Dessine lacs et rivières d'une cellule (style repris de map-viewer-v23).
+// Déclenché par les flags has_river / has_lake OU par les terrains *_with_river /
+// *_with_lake / lake. La rivière est une courbe bleue verticale ; le lac une
+// ellipse bleue. Rien n'est tracé si la cellule est trop petite (px < 6).
+function drawCarteWater(ctx, c, x, y, px) {
+  if (px < 6) return;
+  var t = c.terrain_type || '';
+  var hasRiver = c.has_river || /_with_river$/.test(t);
+  var hasLake  = c.has_lake  || /_with_lake$/.test(t) || t === 'lake';
+  if (hasRiver) {
+    ctx.strokeStyle = 'rgba(40,120,200,0.85)';
+    ctx.lineWidth = Math.max(1.2, px*0.16); ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x+px*0.5, y);
+    ctx.bezierCurveTo(x+px*0.3, y+px*0.4, x+px*0.7, y+px*0.6, x+px*0.5, y+px);
+    ctx.stroke();
+  }
+  if (hasLake) {
+    ctx.fillStyle = 'rgba(58,134,180,0.85)';
+    ctx.beginPath();
+    ctx.ellipse(x+px*0.5, y+px*0.52, px*0.28, px*0.2, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(20,70,120,0.7)'; ctx.lineWidth = Math.max(0.5, px*0.03); ctx.stroke();
+  }
+}
+
 // Convertit un événement souris en cellule (ou null hors grille).
 function carteEventToCell(e) {
   var canvas=document.getElementById('carteCanvas'); if(!canvas||!_carteGeo) return null;
@@ -4552,6 +4607,12 @@ function carteOnClick(e) {
   }
 }
 function carteSetMode(m) { window._carteState.mode=m; window._carteState.routeFrom=null; showSection('carte'); }
+// Active/désactive une couche d'affichage. La couche « régions » modifie aussi
+// la légende → re-rendu complet ; les autres se contentent d'un redraw canvas.
+function carteToggleFilter(key, on) {
+  window._carteState.filters[key]=on;
+  if (key==='regions') showSection('carte'); else drawCarte();
+}
 function carteZoomBy(delta) {
   var st=window._carteState; st.zoom=Math.max(1,Math.min(MAX_CARTE_ZOOM, st.zoom+delta));
   var lbl=document.getElementById('carteZoomLabel'); if(lbl) lbl.textContent='×'+st.zoom;

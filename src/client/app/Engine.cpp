@@ -7699,18 +7699,17 @@ namespace engine
 				m_lootRollVisible = !m_lootRollVisible;
 				LOG_INFO(Core, "[Engine] L toggle loot roll (visible={})", m_lootRollVisible);
 			}
-			// R1-B (Task 4) — Touche X : toggle la feuille de personnage (stats
-			// derivees). Pas de fetch a l'ouverture : playerStats est deja peuple
-			// dans le modele UI a l'enter-world. La touche C (mnemonique naturel)
-			// est deja prise par l'action "punch" (controls.keybind.punch), et le
-			// jeu de touches plateforme n'expose pas K/J ; X est libre. Memes
-			// guards que les autres toggles (chat focus, pause, editor, auth flow).
+			// R1-B (Task 4) — Touche C (mnemonique naturel « Character ») : toggle la
+			// feuille de personnage (stats derivees). Pas de fetch a l'ouverture :
+			// playerStats est deja peuple dans le modele UI a l'enter-world. L'action
+			// "punch" (controls.keybind.punch) a ete deplacee sur X pour liberer C.
+			// Memes guards que les autres toggles (chat focus, pause, editor, auth flow).
 			if (inGameNoMenu && !chatBlocks
 				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::X))
+				&& m_input.WasPressed(engine::platform::Key::C))
 			{
 				m_characterSheetVisible = !m_characterSheetVisible;
-				LOG_INFO(Core, "[Engine] X toggle character sheet (visible={})", m_characterSheetVisible);
+				LOG_INFO(Core, "[Engine] C toggle character sheet (visible={})", m_characterSheetVisible);
 			}
 		}
 
@@ -8986,7 +8985,7 @@ namespace engine
 				const engine::platform::Key interactKey =
 					KeyFromName(m_cfg.GetString("controls.keybind.interact", "E"), engine::platform::Key::E);
 				const engine::platform::Key punchKey =
-					KeyFromName(m_cfg.GetString("controls.keybind.punch", "C"), engine::platform::Key::C);
+					KeyFromName(m_cfg.GetString("controls.keybind.punch", "X"), engine::platform::Key::X);
 				// Vue 3eme personne : controleur orbital pur (camera derriere la
 				// cible). Souris libre par defaut ; clic droit maintenu = rotate
 				// camera autour de la cible (yaw/pitch) ; molette = zoom.
@@ -9126,7 +9125,7 @@ namespace engine
 					const bool interactPressed =
 						m_input.WasPressed(interactKey);
 
-					// Coup de poing : 2e attaque melee, touche remappable (controls.keybind.punch, def. C).
+					// Coup de poing : 2e attaque melee, touche remappable (controls.keybind.punch, def. X).
 					const bool punchPressed =
 						m_input.WasPressed(punchKey) && !m_dialogueActive;
 
@@ -10654,7 +10653,7 @@ namespace engine
 										+ "      \"crouch\": \"" + m_cfg.GetString("controls.keybind.crouch", "Ctrl") + "\",\n"
 										+ "      \"cast\": \"" + m_cfg.GetString("controls.keybind.cast", "R") + "\",\n"
 										+ "      \"interact\": \"" + m_cfg.GetString("controls.keybind.interact", "E") + "\",\n"
-										+ "      \"punch\": \"" + m_cfg.GetString("controls.keybind.punch", "C") + "\"\n"
+										+ "      \"punch\": \"" + m_cfg.GetString("controls.keybind.punch", "X") + "\"\n"
 										+ "    }\n  }\n}\n";
 									if (!engine::platform::FileSystem::WriteAllText("keybinds.json", kb))
 										LOG_WARN(Core, "[Options] keybinds.json non ecrit (rebind non persiste)");
@@ -10683,7 +10682,7 @@ namespace engine
 				rebindRow("Accroupi", "controls.keybind.crouch", "Ctrl", 2);
 				rebindRow("Sort", "controls.keybind.cast", "R", 3);
 				rebindRow("Interagir", "controls.keybind.interact", "E", 4);
-				rebindRow("Coup de poing", "controls.keybind.punch", "C", 5);
+				rebindRow("Coup de poing", "controls.keybind.punch", "X", 5);
 				ImGui::TextDisabled("Roulade : double-appui sur la touche Accroupi");
 				ImGui::TextDisabled("Attaque : clic gauche (non remappable)");
 				if (!m_keybindWarning.empty())

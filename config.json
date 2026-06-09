@@ -124,7 +124,7 @@
             "crouch": "Ctrl",
             "cast": "R",
             "interact": "E",
-            "punch": "C",
+            "punch": "X",
             "attack": ""
         }
     },

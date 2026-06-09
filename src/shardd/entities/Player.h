@@ -12,6 +12,7 @@
 #include "src/shardd/entities/Unit.h"
 #include "src/shardd/entities/UpdateField.h"
 #include "src/shardd/entities/UpdateFieldIndices.h"
+#include "src/shardd/gameplay/character/CharacterStatsEngine.h"
 
 #include <cstdint>
 #include <cstddef>
@@ -50,6 +51,16 @@ namespace engine::server::entities
 
 		void SetXp(uint32_t xp) { m_xp.Set(xp); }
 		uint32_t GetXp() const noexcept { return m_xp.Get(); }
+
+		/// Recalcule et applique les 11 stats dérivées pour ce joueur depuis les
+		/// tables embarquées + (faction, classe, sexe, niveau courant). Remplit les
+		/// UpdateField (MarkDirty implicite via Set). HP et ressource sont mis au
+		/// plein. À appeler après chargement DB et à chaque level-up.
+		/// \return false si (faction, classe) est inconnue dans les tables.
+		bool ApplyDerivedStats(const engine::server::gameplay::CharacterStatsTables& tables,
+		                       const std::string& factionId,
+		                       const std::string& classId,
+		                       engine::server::gameplay::Sex sex);
 
 	private:
 		UpdateField<uint64_t> m_accountId;

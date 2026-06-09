@@ -50,6 +50,13 @@ namespace engine::core
 		/// Load values from a JSON/INI file (returns false if file is missing/unreadable).
 		bool LoadFromFile(std::string_view filePath);
 
+		/// Parse un document JSON depuis un buffer mémoire (aucun accès disque).
+		/// Même sémantique que LoadFromFile pour du JSON : aplatit les objets en
+		/// clés pointées, les tableaux en indices `[i]`. Retourne false si le
+		/// texte n'est pas un JSON dont la racine est un objet.
+		/// Effet : fusionne les valeurs (priorité sur les défauts), comme LoadFromFile.
+		bool LoadFromString(std::string_view jsonText);
+
 		/// Écrit toutes les valeurs scalaires courantes dans un fichier JSON
 		/// **plat** (clés pointées au niveau racine, valeurs scalaires). Conçu
 		/// pour round-tripper avec \ref LoadFromFile (qui aplatit les objets en

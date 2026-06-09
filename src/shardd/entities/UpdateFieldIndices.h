@@ -52,8 +52,23 @@ namespace engine::server::entities
 		kUnitFieldMaxMana     = kWorldObjectFieldEnd + 3,  // 14
 		kUnitFieldLevel       = kWorldObjectFieldEnd + 4,  // 15
 		kUnitFieldFaction     = kWorldObjectFieldEnd + 5,  // 16
+		// --- Stats étendues (Système de Personnages) ---
+		kUnitFieldDamage              = kWorldObjectFieldEnd + 6,  // 17
+		kUnitFieldAccuracy            = kWorldObjectFieldEnd + 7,  // 18
+		kUnitFieldRange               = kWorldObjectFieldEnd + 8,  // 19
+		kUnitFieldCritRate            = kWorldObjectFieldEnd + 9,  // 20
+		kUnitFieldCritMult            = kWorldObjectFieldEnd + 10, // 21
+		kUnitFieldSpeedWalk           = kWorldObjectFieldEnd + 11, // 22
+		kUnitFieldSpeedRun            = kWorldObjectFieldEnd + 12, // 23
+		kUnitFieldSpeedSprint         = kWorldObjectFieldEnd + 13, // 24
+		kUnitFieldStamina             = kWorldObjectFieldEnd + 14, // 25
+		kUnitFieldMaxStamina          = kWorldObjectFieldEnd + 15, // 26
+		kUnitFieldPerception          = kWorldObjectFieldEnd + 16, // 27
+		kUnitFieldStealth             = kWorldObjectFieldEnd + 17, // 28
+		kUnitFieldSecondaryResource   = kWorldObjectFieldEnd + 18, // 29
+		kUnitFieldMaxSecondaryResource= kWorldObjectFieldEnd + 19, // 30
 
-		kUnitFieldEnd         = kWorldObjectFieldEnd + 6   // 17
+		kUnitFieldEnd         = kWorldObjectFieldEnd + 20   // 31
 	};
 
 	static constexpr size_t kUnitFieldCount = kUnitFieldEnd;
@@ -61,11 +76,11 @@ namespace engine::server::entities
 	/// Indices pour Player (extends Unit). Demarre apres Unit end.
 	enum PlayerFieldIdx : size_t
 	{
-		kPlayerFieldAccountId    = kUnitFieldEnd,      // 17
-		kPlayerFieldCharacterId  = kUnitFieldEnd + 1,  // 18
-		kPlayerFieldXp           = kUnitFieldEnd + 2,  // 19
+		kPlayerFieldAccountId    = kUnitFieldEnd,      // 31
+		kPlayerFieldCharacterId  = kUnitFieldEnd + 1,  // 32
+		kPlayerFieldXp           = kUnitFieldEnd + 2,  // 33
 
-		kPlayerFieldEnd          = kUnitFieldEnd + 3   // 20
+		kPlayerFieldEnd          = kUnitFieldEnd + 3   // 34
 	};
 
 	static constexpr size_t kPlayerFieldCount = kPlayerFieldEnd;
@@ -73,10 +88,10 @@ namespace engine::server::entities
 	/// Indices pour Creature (extends Unit). Demarre apres Unit end (parallele a Player).
 	enum CreatureFieldIdx : size_t
 	{
-		kCreatureFieldTemplateEntry = kUnitFieldEnd,      // 17
-		kCreatureFieldSpawnId       = kUnitFieldEnd + 1,  // 18
+		kCreatureFieldTemplateEntry = kUnitFieldEnd,      // 31
+		kCreatureFieldSpawnId       = kUnitFieldEnd + 1,  // 32
 
-		kCreatureFieldEnd           = kUnitFieldEnd + 2   // 19
+		kCreatureFieldEnd           = kUnitFieldEnd + 2   // 33
 	};
 
 	static constexpr size_t kCreatureFieldCount = kCreatureFieldEnd;

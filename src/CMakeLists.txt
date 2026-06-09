@@ -14,6 +14,29 @@ set(CMAKE_CXX_STANDARD 20)
 #   include(LCDLLNHelpers)
 # Le helper est donc disponible ici sans redefinition.
 
+# ── Embarquement anti-triche : JSON game/data → headers const (générés au build).
+set(LCDLLN_GEN_DIR ${CMAKE_BINARY_DIR}/generated)
+file(MAKE_DIRECTORY ${LCDLLN_GEN_DIR})
+
+set(STATS_JSON    ${CMAKE_SOURCE_DIR}/game/data/gameplay/character_stats.json)
+set(STATS_HDR     ${LCDLLN_GEN_DIR}/CharacterStatsData.h)
+set(FACTIONS_JSON ${CMAKE_SOURCE_DIR}/game/data/races/factions.json)
+set(FACTIONS_HDR  ${LCDLLN_GEN_DIR}/FactionsData.h)
+
+add_custom_command(
+  OUTPUT  ${STATS_HDR}
+  COMMAND ${CMAKE_COMMAND} -DINPUT=${STATS_JSON} -DOUTPUT=${STATS_HDR} -DSYMBOL=kCharacterStatsJson -P ${CMAKE_SOURCE_DIR}/cmake/EmbedJson.cmake
+  DEPENDS ${STATS_JSON} ${CMAKE_SOURCE_DIR}/cmake/EmbedJson.cmake
+  COMMENT "Embedding character_stats.json -> CharacterStatsData.h")
+
+add_custom_command(
+  OUTPUT  ${FACTIONS_HDR}
+  COMMAND ${CMAKE_COMMAND} -DINPUT=${FACTIONS_JSON} -DOUTPUT=${FACTIONS_HDR} -DSYMBOL=kFactionsJson -P ${CMAKE_SOURCE_DIR}/cmake/EmbedJson.cmake
+  DEPENDS ${FACTIONS_JSON} ${CMAKE_SOURCE_DIR}/cmake/EmbedJson.cmake
+  COMMENT "Embedding factions.json -> FactionsData.h")
+
+add_custom_target(lcdlln_gen_character_data DEPENDS ${STATS_HDR} ${FACTIONS_HDR})
+
 if(WIN32)
   add_executable(server_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_win.cpp
@@ -30,6 +53,9 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shared/net/ChatSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/net/ChatEmotes.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp
+    # Character system PR1 — moteur de stats (serveur-only, anti-triche).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/CurrencyConfig.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/VendorCatalog.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/PlayerWalletService.cpp
@@ -65,6 +91,9 @@ if(WIN32)
   # M32.1: no MySQL on WIN32 game shard — FriendSystem compiles in no-DB mode.
   # Do NOT define ENGINE_HAS_MYSQL so #if ENGINE_HAS_MYSQL evaluates to false.
   target_link_libraries(server_app PRIVATE ws2_32 engine_auth spdlog::spdlog)
+  # Character system PR1 — accès aux headers JSON embarqués (anti-triche).
+  add_dependencies(server_app lcdlln_gen_character_data)
+  target_include_directories(server_app PRIVATE ${CMAKE_SOURCE_DIR} ${LCDLLN_GEN_DIR})
 elseif(UNIX)
   find_package(OpenSSL REQUIRED)
   find_path(MYSQL_INCLUDE_DIR NAMES mysql.h mysql/mysql.h PATH_SUFFIXES mysql)
@@ -224,8 +253,15 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Player.cpp
     # Wave 17 Entities suite : Creature (Unit + templateEntry/spawnId).
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Creature.cpp
+    # Character system PR1 — Player::ApplyDerivedStats référence le moteur de
+    # stats ; ce server_app (master Linux) compile Player.cpp, il doit donc
+    # aussi compiler le moteur sinon LINK FAILURE (ComputeStats/FromEmbedded).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
   )
-  target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
+  # Character system PR1 — accès aux headers JSON embarqués (anti-triche).
+  add_dependencies(server_app lcdlln_gen_character_data)
+  target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR} ${LCDLLN_GEN_DIR})
   # M32.1: MySQL available on UNIX — FriendSystem compiles with full DB support.
   target_compile_definitions(server_app PRIVATE ENGINE_HAS_MYSQL=1)
   target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth spdlog::spdlog ${MYSQL_LIBRARY})
@@ -426,12 +462,23 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
 
   # Wave 17 Entities suite : Player tests (accountId/characterId/name/xp + heritage Unit).
-  lcdlln_add_simple_test(player_tests
+  # Character system PR1 — depuis Player::ApplyDerivedStats, PlayerTests référence
+  # le moteur de stats : bloc explicite (pas lcdlln_add_simple_test) pour ajouter
+  # les sources du moteur, la dépendance au codegen et le dossier des headers
+  # générés (${LCDLLN_GEN_DIR}), que le helper ne sait pas exprimer.
+  add_executable(player_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/PlayerTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Player.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp)
+  add_dependencies(player_tests lcdlln_gen_character_data)
+  target_include_directories(player_tests PRIVATE ${CMAKE_SOURCE_DIR} ${LCDLLN_GEN_DIR})
+  target_link_libraries(player_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(player_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME player_tests COMMAND player_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # Wave 17 Entities suite : Creature tests (templateEntry/spawnId + heritage Unit).
   lcdlln_add_simple_test(creature_tests
@@ -444,13 +491,24 @@ elseif(UNIX)
   # Wave 17 Entities suite : UpdateMask delta tests cross-classe.
   # Verifie que les modifications sur Unit/Player/Creature ne marquent que
   # les champs effectivement changes (critique pour delta replication).
-  lcdlln_add_simple_test(update_mask_delta_tests
+  # Character system PR1 — compile Player.cpp donc référence Player::ApplyDerivedStats
+  # -> doit lier le moteur de stats (ComputeStats/FromEmbedded) sinon LINK FAILURE.
+  # Bloc explicite (pas lcdlln_add_simple_test) pour ajouter les sources moteur +
+  # la dépendance au codegen.
+  add_executable(update_mask_delta_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/UpdateMaskDeltaTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Creature.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Player.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp)
+  add_dependencies(update_mask_delta_tests lcdlln_gen_character_data)
+  target_include_directories(update_mask_delta_tests PRIVATE ${CMAKE_SOURCE_DIR} ${LCDLLN_GEN_DIR})
+  target_link_libraries(update_mask_delta_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(update_mask_delta_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME update_mask_delta_tests COMMAND update_mask_delta_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # TA.1 (replication des joueurs) : UdpTransport rendu cross-platform (Winsock +
   # BSD sockets POSIX). Le test loopback 127.0.0.1 valide le chemin POSIX a
@@ -555,6 +613,25 @@ elseif(UNIX)
   # CMANGOS.40 (Phase 4.40a) : Formulas (header-only).
   lcdlln_add_simple_test(formulas_tests
     ${CMAKE_SOURCE_DIR}/src/shared/formulas/FormulasTests.cpp)
+
+  # Character system PR1 — Config::LoadFromString : parsing JSON en mémoire (anti-triche).
+  lcdlln_add_simple_test(config_loadfromstring_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/core/ConfigLoadFromStringTests.cpp)
+
+  # Character system PR1 — CharacterStatsEngine : 11 stats déterministes depuis
+  # les tables JSON embarquées. Bloc explicite (pas lcdlln_add_simple_test) :
+  # le test a besoin du dossier des headers générés (${LCDLLN_GEN_DIR}) et de
+  # la dépendance au codegen lcdlln_gen_character_data, que le helper ne sait
+  # pas exprimer.
+  add_executable(character_stats_engine_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngineTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp)
+  add_dependencies(character_stats_engine_tests lcdlln_gen_character_data)
+  target_include_directories(character_stats_engine_tests PRIVATE ${CMAKE_SOURCE_DIR} ${LCDLLN_GEN_DIR})
+  target_link_libraries(character_stats_engine_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(character_stats_engine_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME character_stats_engine_tests COMMAND character_stats_engine_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.34 (Phase 4.34a) : MetricRegistry (header-only).
   lcdlln_add_simple_test(metric_registry_tests
@@ -1006,6 +1083,9 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildTabard.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildBank.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp
+    # Character system PR1 — moteur de stats (serveur-only, anti-triche).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/CurrencyConfig.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/VendorCatalog.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/PlayerWalletService.cpp
@@ -1032,7 +1112,9 @@ elseif(UNIX)
   # SHARD_POSITION_DB (et NON ENGINE_HAS_MYSQL) : n'active que le pont position dans
   # ServerApp, sans basculer les autres systèmes gameplay du shard en mode DB (ils restent
   # en mode fichier, config TA.2 prouvée linkable).
-  target_include_directories(shard_app PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
+  target_include_directories(shard_app PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR} ${LCDLLN_GEN_DIR})
+  # Character system PR1 — accès aux headers JSON embarqués (anti-triche).
+  add_dependencies(shard_app lcdlln_gen_character_data)
   target_compile_definitions(shard_app PRIVATE SHARD_POSITION_DB=1)
   target_link_libraries(shard_app PRIVATE engine_core OpenSSL::SSL pthread ${MYSQL_LIBRARY})
   target_compile_options(shard_app PRIVATE -Wall -Wextra -Wpedantic)

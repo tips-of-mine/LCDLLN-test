@@ -3,6 +3,11 @@
 // Cible CTest : player_tests (cf. src/CMakeLists.txt).
 
 #include "src/shardd/entities/Player.h"
+#include "src/shardd/gameplay/character/CharacterStatsEngine.h"
+#include "src/shardd/gameplay/character/CharacterStatsTables.h"
+
+#include "CharacterStatsData.h"  // kCharacterStatsJson (généré)
+#include "FactionsData.h"        // kFactionsJson (généré)
 
 #include <cassert>
 #include <cstdio>
@@ -91,6 +96,57 @@ namespace
 		assert(p.GetMapId() == 1);
 		std::puts("[OK] TestPlayerHeriteWorldObject");
 	}
+
+	/// Câblage moteur de stats -> UpdateField via Player::ApplyDerivedStats.
+	/// Voleur Ténébreux Elfe Femme niv.1 -> hp attendu 81 (ancre vérifiée dans
+	/// CharacterStatsEngineTests : 100 * 0.90 * 0.90 = 81). Renvoie un bool et
+	/// N'UTILISE PAS assert (désactivé sous NDEBUG en CI Release) : le résultat
+	/// est propagé à main() qui sort en code non nul en cas d'échec.
+	bool TestApplyDerivedStats()
+	{
+		using namespace engine::server::gameplay;
+
+		auto tables = CharacterStatsTables::FromEmbedded(kCharacterStatsJson, kFactionsJson);
+		if (!tables) { std::fprintf(stderr, "[FAIL] TestApplyDerivedStats: FromEmbedded\n"); return false; }
+
+		ObjectGuid g(ObjectType::Player, 7);
+		Player p(g, /*accountId*/2002, /*characterId*/7, /*name*/"Ombre");
+		p.SetLevel(1);
+		if (!p.ApplyDerivedStats(*tables, "elfe", "voleur_tenebreux", Sex::Female))
+		{
+			std::fprintf(stderr, "[FAIL] TestApplyDerivedStats: ApplyDerivedStats returned false\n");
+			return false;
+		}
+		if (p.GetMaxHealth() != 81u)
+		{
+			std::fprintf(stderr, "[FAIL] TestApplyDerivedStats: maxHealth=%u (attendu 81)\n", p.GetMaxHealth());
+			return false;
+		}
+		if (p.GetHealth() != 81u)
+		{
+			std::fprintf(stderr, "[FAIL] TestApplyDerivedStats: health=%u (attendu 81)\n", p.GetHealth());
+			return false;
+		}
+		if (p.GetSecondaryResource() != p.GetMaxSecondaryResource())
+		{
+			std::fprintf(stderr, "[FAIL] TestApplyDerivedStats: resource %u != max %u\n",
+			             p.GetSecondaryResource(), p.GetMaxSecondaryResource());
+			return false;
+		}
+		if (p.GetMaxSecondaryResource() == 0u)
+		{
+			std::fprintf(stderr, "[FAIL] TestApplyDerivedStats: maxSecondaryResource == 0\n");
+			return false;
+		}
+		// Stat inconnue -> false, sans modifier l'état déjà appliqué.
+		if (p.ApplyDerivedStats(*tables, "faction_inexistante", "classe_bidon", Sex::Male))
+		{
+			std::fprintf(stderr, "[FAIL] TestApplyDerivedStats: faction inconnue aurait dû renvoyer false\n");
+			return false;
+		}
+		std::puts("[OK] TestApplyDerivedStats");
+		return true;
+	}
 }
 
 int main()
@@ -101,6 +157,9 @@ int main()
 	TestPlayerXp();
 	TestPlayerHeriteUnit();
 	TestPlayerHeriteWorldObject();
+	// Test robuste sous NDEBUG : échec signalé par le code de sortie process.
+	if (!TestApplyDerivedStats())
+		return 1;
 	std::puts("All Player tests passed");
 	return 0;
 }

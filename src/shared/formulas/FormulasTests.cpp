@@ -7,12 +7,23 @@ namespace
 
 	bool TestXpProgression()
 	{
-		if (XpToNextLevel(0)  != 0) return false;
-		if (XpToNextLevel(80) != 0) return false;
-		if (XpToNextLevel(100)!= 0) return false;
-		// progression : level 1 < level 2 < level 79
-		if (!(XpToNextLevel(1) < XpToNextLevel(2))) return false;
-		if (!(XpToNextLevel(2) < XpToNextLevel(79))) return false;
+		// Params du design (character_stats.json) passés explicitement.
+		constexpr double kBase = 6.185;
+		constexpr double kFactor = 2.6;
+		constexpr uint8_t kMax = 100;
+
+		// Cap : 0 hors plage et au niveau max.
+		if (XpToNextLevel(0,   kBase, kFactor, kMax) != 0) return false;
+		if (XpToNextLevel(100, kBase, kFactor, kMax) != 0) return false;
+		// Positivité sur 1..99.
+		if (XpToNextLevel(1,  kBase, kFactor, kMax) == 0) return false;
+		if (XpToNextLevel(99, kBase, kFactor, kMax) == 0) return false;
+		// Monotonie stricte.
+		if (!(XpToNextLevel(1, kBase, kFactor, kMax) < XpToNextLevel(2, kBase, kFactor, kMax))) return false;
+		if (!(XpToNextLevel(2, kBase, kFactor, kMax) < XpToNextLevel(99, kBase, kFactor, kMax))) return false;
+		// Ancrage forme : XP(10) ~= round(6.185 * 10^2.6) = round(6.185 * 398.107) = 2463.
+		const uint32_t x10 = XpToNextLevel(10, kBase, kFactor, kMax);
+		if (x10 < 2460u || x10 > 2466u) return false;
 		LOG_INFO(Core, "[FormulasTests] xp progression OK");
 		return true;
 	}

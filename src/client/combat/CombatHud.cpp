@@ -3,6 +3,7 @@
 #include "src/shared/core/Log.h"
 
 #include <algorithm>
+#include <cctype>
 #include <string>
 #include <utility>
 
@@ -11,6 +12,22 @@ namespace engine::client
 	namespace
 	{
 		inline constexpr float kAutoAttackCooldownSeconds = 0.5f;
+
+		/// Formate une clef de ressource snake_case en libellé lisible « Titre » :
+		/// remplace les '_' par des espaces et met la 1re lettre en majuscule
+		/// (ex. "magie_base" -> "Magie base"). Clef vide -> "Ressource".
+		std::string FormatResourceLabel(const std::string& key)
+		{
+			if (key.empty())
+			{
+				return "Ressource";
+			}
+
+			std::string label = key;
+			std::replace(label.begin(), label.end(), '_', ' ');
+			label[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(label[0])));
+			return label;
+		}
 
 		/// Build one short combat log label from a retained combat entry.
 		std::string BuildCombatLogText(const UICombatLogEntry& entry)
@@ -214,10 +231,26 @@ namespace engine::client
 		m_state.playerHealthBar.maxValue = model.playerStats.maxHealth;
 		m_state.playerHealthBar.visible = model.playerStats.hasSnapshot;
 
-		m_state.playerManaBar.label = model.playerStats.hasMana ? "Mana" : "Mana (N/A)";
-		m_state.playerManaBar.currentValue = model.playerStats.hasMana ? model.playerStats.currentMana : 0u;
-		m_state.playerManaBar.maxValue = model.playerStats.hasMana ? model.playerStats.maxMana : 0u;
-		m_state.playerManaBar.visible = model.playerStats.hasSnapshot;
+		// La barre « mana » est conceptuellement la barre de ressource secondaire.
+		// R1-B : quand la feuille de perso est presente (PlayerStats a l'enter-world),
+		// on alimente la barre depuis les stats calculees (secondaryResourceMax/Key)
+		// plutot que depuis le snapshot mana (non peuple par le systeme de stats).
+		// Pas de systeme de consommation de ressource a l'execution pour l'instant :
+		// on affiche donc current = max (barre pleine) jusqu'a ce qu'il existe.
+		if (model.playerStats.hasSheet)
+		{
+			m_state.playerManaBar.label = FormatResourceLabel(model.playerStats.secondaryResourceKey);
+			m_state.playerManaBar.maxValue = model.playerStats.secondaryResourceMax;
+			m_state.playerManaBar.currentValue = model.playerStats.secondaryResourceMax;
+			m_state.playerManaBar.visible = true;
+		}
+		else
+		{
+			m_state.playerManaBar.label = model.playerStats.hasMana ? "Mana" : "Mana (N/A)";
+			m_state.playerManaBar.currentValue = model.playerStats.hasMana ? model.playerStats.currentMana : 0u;
+			m_state.playerManaBar.maxValue = model.playerStats.hasMana ? model.playerStats.maxMana : 0u;
+			m_state.playerManaBar.visible = model.playerStats.hasSnapshot;
+		}
 
 		m_state.playerHasCombo = model.playerStats.hasCombo;
 		m_state.playerComboPoints = model.playerStats.hasCombo ? model.playerStats.comboPoints : 0u;

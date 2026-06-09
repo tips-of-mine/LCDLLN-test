@@ -14,7 +14,7 @@
 ///
 /// Aligné sur le modèle de races existant : les `raceId` sont ceux de
 /// `game/data/races/races.json` (humains, elfes, orcs, nains, morts_vivants,
-/// corrompus, divins, demons) — pas une taxonomie parallèle.
+/// divins, demons) — pas une taxonomie parallèle.
 
 #include <cstdint>
 #include <optional>

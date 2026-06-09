@@ -26,7 +26,7 @@ namespace engine::client
 		std::vector<std::string> eyeColorHex;      ///< Available eye colour hex strings.
 		/// Sous-projet C MVP — Chemin relatif (depuis `paths.content`) vers le .glb
 		/// du mesh skinned de cette race. Vide si la race n'a pas de mesh assigné
-		/// (cas hors-MVP : elfes, morts_vivants, corrompus, divins, démons).
+		/// (cas hors-MVP : elfes, morts_vivants, divins, démons).
 		/// `Engine` fallback sur le mesh "humains" pour ces races à EnterWorld.
 		std::string              meshPath;
 		/// Migration UE5 — correction d'import du mesh (échelle/orientation).

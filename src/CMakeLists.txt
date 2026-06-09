@@ -56,6 +56,8 @@ if(WIN32)
     # Character system PR1 — moteur de stats (serveur-only, anti-triche).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
+    # Level-up runtime — helper de progression d'XP/niveau (pur, server-only).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/LevelProgression.cpp
     # Character system R1-A — résolveur PV enter-world (dérive depuis le moteur).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/SpawnStatsResolver.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/CurrencyConfig.cpp
@@ -650,6 +652,22 @@ elseif(UNIX)
   target_compile_options(spawn_stats_resolver_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME spawn_stats_resolver_tests COMMAND spawn_stats_resolver_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # Level-up runtime — LevelProgression : helper de montée de niveau pur, ancré
+  # sur la vraie courbe XpToNextLevel. Bloc explicite (comme
+  # character_stats_engine_tests) : besoin du dossier des headers générés
+  # (${LCDLLN_GEN_DIR}) et de la dépendance au codegen lcdlln_gen_character_data
+  # (le test charge xpBase/xpFactor/levelMax depuis le JSON embarqué).
+  add_executable(level_progression_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/LevelProgressionTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/LevelProgression.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp)
+  add_dependencies(level_progression_tests lcdlln_gen_character_data)
+  target_include_directories(level_progression_tests PRIVATE ${CMAKE_SOURCE_DIR} ${LCDLLN_GEN_DIR})
+  target_link_libraries(level_progression_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(level_progression_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME level_progression_tests COMMAND level_progression_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # CMANGOS.34 (Phase 4.34a) : MetricRegistry (header-only).
   lcdlln_add_simple_test(metric_registry_tests
     ${CMAKE_SOURCE_DIR}/src/shared/metric/MetricRegistryTests.cpp)
@@ -1111,6 +1129,8 @@ elseif(UNIX)
     # Character system PR1 — moteur de stats (serveur-only, anti-triche).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
+    # Level-up runtime — helper de progression d'XP/niveau (pur, server-only).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/LevelProgression.cpp
     # Character system R1-A — résolveur PV enter-world (appelé par HandleHello).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/SpawnStatsResolver.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/CurrencyConfig.cpp

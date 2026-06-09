@@ -4353,8 +4353,9 @@ function terrainLabel(t) { return TERRAIN_LABELS[t] || (t || '—'); }
 var BASE_CELL_SIZE = 14;      // taille d'une cellule à zoom ×1 (px)
 var MAX_CARTE_ZOOM = 12;      // zoom maximum demandé : ×12
 window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null,
-  filters:{ villes:true, routes:true, poi:true, regions:false, water:true } };
-if (!window._carteState.filters) window._carteState.filters = { villes:true, routes:true, poi:true, regions:false, water:true };
+  filters:{ villes:true, routes:true, poi:true, regions:false, water:true, islands:true } };
+if (!window._carteState.filters) window._carteState.filters = { villes:true, routes:true, poi:true, regions:false, water:true, islands:true };
+if (window._carteState.filters.islands === undefined) window._carteState.filters.islands = true;
 var _carteGeo = null;         // { byKey, minLat, maxLat, minLon, maxLon, cols, rows, villeByCell }
 
 // Recalcule la géométrie de la grille à partir de db.cells / db.villes.
@@ -4425,7 +4426,7 @@ function renderCarte(el) {
   function flChk(key,label){ return '<label style="display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.74rem;color:var(--text-secondary)"><input type="checkbox"'+(fl[key]?' checked':'')+' style="accent-color:var(--accent-gold)" onchange="carteToggleFilter(\''+key+'\',this.checked)"> '+label+'</label>'; }
   h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem 1rem;margin-bottom:0.75rem;padding:0.4rem 0.6rem;background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;align-items:center">';
   h += '<span style="font-family:Cinzel,serif;font-size:0.58rem;text-transform:uppercase;color:var(--text-dim)">Filtres</span>';
-  h += flChk('villes','🏙️ Villes') + flChk('routes','🛣️ Routes') + flChk('poi','📍 Points importants') + flChk('water','💧 Lacs & rivières') + flChk('regions','🗺️ Régions (teinte)');
+  h += flChk('villes','🏙️ Villes') + flChk('routes','🛣️ Routes') + flChk('poi','📍 Points importants') + flChk('water','💧 Lacs & rivières') + flChk('islands','🏝️ Îles') + flChk('regions','🗺️ Régions (teinte)');
   h += '</div>';
 
   // Légende des régions (visible quand la couche Régions est active)
@@ -4486,8 +4487,14 @@ function drawCarte() {
       var c = _carteGeo.byKey[lat+','+lon];
       var x=(lon-_carteGeo.minLon)*px, y=(_carteGeo.maxLat-lat)*px;
       if (!c) { ctx.fillStyle='#0a0a10'; ctx.fillRect(x,y,px,px); continue; }
-      ctx.fillStyle = terrainColor(c.terrain_type);
+      // Filtre « Îles » désactivé → la cellule île est rendue comme la mer.
+      var hideIsland = (c.terrain_type==='island' && !fl.islands);
+      ctx.fillStyle = hideIsland ? terrainColor('deep_sea') : terrainColor(c.terrain_type);
       ctx.fillRect(x,y,px,px);
+      if (hideIsland) {
+        if (px>=8) { ctx.strokeStyle='rgba(0,0,0,0.22)'; ctx.lineWidth=1; ctx.strokeRect(x+0.5,y+0.5,px-1,px-1); }
+        continue;
+      }
       // Teinte région (couche optionnelle) : superpose la couleur de la région.
       if (fl.regions && c.region_id) {
         ctx.fillStyle = regionColor(c.region_id); ctx.globalAlpha = 0.5;

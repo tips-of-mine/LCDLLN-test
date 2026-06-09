@@ -69,6 +69,14 @@ namespace engine::network
 				return std::nullopt;
 		}
 
+		// Système de personnages PR2 — factionId (string), optionnel : absent sur
+		// ancien client (forward-compat) => reste vide.
+		if (r.Remaining() > 0)
+		{
+			if (!r.ReadString(out.factionId))
+				return std::nullopt;
+		}
+
 		return out;
 	}
 
@@ -80,7 +88,8 @@ namespace engine::network
 	                                                        std::string_view raceId,
 	                                                        std::string_view classId,
 	                                                        const CharacterCustomization& customization,
-	                                                        std::string_view gender)
+	                                                        std::string_view gender,
+	                                                        std::string_view factionId)
 	{
 		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
 		ByteWriter w(buf.data(), buf.size());
@@ -107,6 +116,10 @@ namespace engine::network
 
 		// #1 serveur — genre (string), appendu après la customization.
 		if (!w.WriteString(gender))
+			return {};
+
+		// Système de personnages PR2 — factionId (string), appendu après gender.
+		if (!w.WriteString(factionId))
 			return {};
 
 		buf.resize(w.Offset());
@@ -230,6 +243,13 @@ namespace engine::network
 			// Teinte de peau (1 octet), appendu après gender (wire-breaking).
 			if (!r.ReadBytes(&e.skin_color_idx, 1u))
 				return std::nullopt;
+			// Système de personnages PR2 — faction_str (string), appendu après
+			// skin_color_idx (wire-breaking, client/master en lock-step). Lecture
+			// stricte comme les champs précédents de l'entrée : le serveur écrit
+			// toujours ce champ (vide pour les rows pré-PR2), donc le wire reste
+			// non-ambigu dans la boucle d'entrées.
+			if (!r.ReadString(e.faction_str))
+				return std::nullopt;
 			out.entries.push_back(std::move(e));
 		}
 		// Bloc horloge piggyback (optionnel, en fin de payload). Tolérant à
@@ -299,6 +319,10 @@ namespace engine::network
 					return {};
 				// Teinte de peau (1 octet), appendu après gender.
 				if (!w.WriteBytes(&e.skin_color_idx, 1u))
+					return {};
+				// Système de personnages PR2 — faction_str (string), appendu après
+				// skin_color_idx.
+				if (!w.WriteString(e.faction_str))
 					return {};
 			}
 			// Bloc horloge piggyback : 1 octet flag + (si présent) 46 octets WorldClock.

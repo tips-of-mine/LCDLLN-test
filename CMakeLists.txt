@@ -1126,6 +1126,11 @@ add_executable(character_save_position_payloads_tests src/shared/network/Charact
 target_link_libraries(character_save_position_payloads_tests PRIVATE engine_core)
 add_test(NAME character_save_position_payloads_tests COMMAND character_save_position_payloads_tests)
 
+# Système de personnages PR2 : CHARACTER_CREATE factionId + faction_str round-trip tests
+add_executable(character_create_payloads_tests src/shared/network/CharacterCreatePayloadsTests.cpp)
+target_link_libraries(character_create_payloads_tests PRIVATE engine_core)
+add_test(NAME character_create_payloads_tests COMMAND character_create_payloads_tests)
+
 # Chat MVP: CHAT_SEND_REQUEST / CHAT_RELAY payload round-trip tests
 add_executable(chat_payloads_tests src/shared/network/ChatPayloadsTests.cpp)
 target_link_libraries(chat_payloads_tests PRIVATE engine_core)

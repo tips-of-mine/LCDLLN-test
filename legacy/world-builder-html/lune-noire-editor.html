@@ -4153,6 +4153,140 @@ function deleteRegion(idx) {
 }
 
 // ─────────────────────────────────────────────
+// Carte (cells / routes)
+// ─────────────────────────────────────────────
+// Couleurs par type de terrain. Sert à la fois à la grille et à la légende.
+// Tout type absent retombe sur CARTE_DEFAULT_COLOR.
+var TERRAIN_COLORS = {
+  plain:'#9bbf6a', plain_with_river:'#7fb286',
+  forest:'#3f7a3f', forest_edge:'#5f9a4f', forest_with_river:'#4f8a6a', forest_with_lake:'#3f8a6f',
+  desert:'#d8c070', arid_land:'#c8a860', arid_land_with_lake:'#b8aa78',
+  mountain:'#8a7a6a', mountain_range:'#6a5a4a', snow_mountain:'#e2e2ec', volcanic_area:'#8a3a2a',
+  swamp:'#6a7a4a', swamp_with_river:'#5a7a5a',
+  beach:'#e8d9a0', coast:'#6fa8c8', shallow_sea:'#4a7ab0', deep_sea:'#2c4a7a', island:'#c0b070'
+};
+var CARTE_DEFAULT_COLOR = '#555555';
+// Libellés FR pour la légende (fallback : l'identifiant brut du terrain).
+var TERRAIN_LABELS = {
+  plain:'Plaine', plain_with_river:'Plaine (rivière)',
+  forest:'Forêt', forest_edge:'Lisière', forest_with_river:'Forêt (rivière)', forest_with_lake:'Forêt (lac)',
+  desert:'Désert', arid_land:'Terre aride', arid_land_with_lake:'Terre aride (lac)',
+  mountain:'Montagne', mountain_range:'Chaîne de montagnes', snow_mountain:'Montagne enneigée', volcanic_area:'Zone volcanique',
+  swamp:'Marais', swamp_with_river:'Marais (rivière)',
+  beach:'Plage', coast:'Côte', shallow_sea:'Mer peu profonde', deep_sea:'Mer profonde', island:'Île'
+};
+
+/// Déduit la position grille d'une cellule depuis son identifiant.
+/// Les ids suivent le format "N018_W019" → latitude (N positif / S négatif),
+/// longitude (E positif / W négatif). Retourne {lat,lon} ou null si non parsable.
+function parseCellCoord(id) {
+  var m = /^([NS])(\d+)_([WE])(\d+)$/.exec(id || '');
+  if (!m) return null;
+  return {
+    lat: parseInt(m[2], 10) * (m[1] === 'N' ? 1 : -1),
+    lon: parseInt(m[4], 10) * (m[3] === 'E' ? 1 : -1)
+  };
+}
+
+function terrainColor(t) { return TERRAIN_COLORS[t] || CARTE_DEFAULT_COLOR; }
+function terrainLabel(t) { return TERRAIN_LABELS[t] || (t || '—'); }
+
+// Rend la section « Carte » : statistiques, légende des terrains et grille
+// colorée. La grille est en lecture seule (l'édition cellule par cellule n'est
+// pas exposée ici) ; au survol, le titre HTML affiche id/terrain/région/flags.
+// Les villes rattachées à une cellule (champ ville.cell) sont signalées par un
+// liseré doré.
+function renderCarte(el) {
+  var cells = db.cells || [];
+  var routes = db.routes || [];
+
+  var h = '<div class="panel-header"><div class="panel-title">🗺 Carte</div></div>';
+
+  if (!cells.length) {
+    el.innerHTML = h + '<div class="empty-state">Aucune cellule de carte dans ce jeu de données.</div>';
+    return;
+  }
+
+  // — Bornes de la grille à partir des coordonnées déduites des ids —
+  var minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+  var byKey = {};
+  cells.forEach(function(c) {
+    var p = parseCellCoord(c.id);
+    if (!p) return;
+    byKey[p.lat + ',' + p.lon] = c;
+    if (p.lat < minLat) minLat = p.lat;
+    if (p.lat > maxLat) maxLat = p.lat;
+    if (p.lon < minLon) minLon = p.lon;
+    if (p.lon > maxLon) maxLon = p.lon;
+  });
+
+  // — Index des villes par cellule (pour le liseré doré) —
+  var villeByCell = {};
+  (db.villes || []).forEach(function(v) { if (v.cell) (villeByCell[v.cell] = villeByCell[v.cell] || []).push(v.name); });
+
+  // — Statistiques —
+  var nRegion = 0, nRiver = 0, nMountain = 0, nLake = 0;
+  var terrainCounts = {};
+  cells.forEach(function(c) {
+    if (c.region_id) nRegion++;
+    if (c.has_river) nRiver++;
+    if (c.has_mountain_range) nMountain++;
+    if (c.has_lake) nLake++;
+    var t = c.terrain_type || '';
+    terrainCounts[t] = (terrainCounts[t] || 0) + 1;
+  });
+
+  function stat(num, label) {
+    return '<div class="stat-item"><span class="stat-number">' + num + '</span><span class="stat-label">' + label + '</span></div>';
+  }
+  h += '<div class="stats-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem">';
+  h += stat(cells.length, 'Cellules');
+  h += stat(routes.length, 'Routes');
+  h += stat(nRegion, 'Avec région');
+  h += stat(nRiver, 'Avec rivière');
+  h += stat(nMountain, 'Avec montagne');
+  h += stat(nLake, 'Avec lac');
+  h += '</div>';
+
+  // — Légende (uniquement les terrains présents, triés par fréquence) —
+  var present = Object.keys(terrainCounts).filter(function(t){ return t; })
+    .sort(function(a, b){ return terrainCounts[b] - terrainCounts[a]; });
+  h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem">';
+  present.forEach(function(t) {
+    h += '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.72rem;color:var(--text-secondary)">'
+      + '<span style="width:14px;height:14px;border-radius:3px;background:' + terrainColor(t) + ';display:inline-block"></span>'
+      + esc(terrainLabel(t)) + ' (' + terrainCounts[t] + ')</span>';
+  });
+  h += '</div>';
+
+  // — Grille —
+  // Latitudes de haut (Nord, max) en bas (Sud, min) ; longitudes de gauche
+  // (Ouest, min) à droite (Est, max).
+  var cols = maxLon - minLon + 1;
+  var CELL = 15;
+  h += '<div style="overflow:auto;border:1px solid var(--border,#33333a);border-radius:6px;padding:6px;background:#0d0d12">';
+  h += '<div style="display:grid;grid-template-columns:repeat(' + cols + ',' + CELL + 'px);grid-auto-rows:' + CELL + 'px;gap:1px;width:max-content">';
+  for (var lat = maxLat; lat >= minLat; lat--) {
+    for (var lon = minLon; lon <= maxLon; lon++) {
+      var c = byKey[lat + ',' + lon];
+      if (!c) { h += '<div></div>'; continue; }
+      var villes = villeByCell[c.id];
+      var tip = c.id + ' — ' + terrainLabel(c.terrain_type);
+      if (c.region_id) tip += ' [' + c.region_id + ']';
+      if (c.has_river) tip += ' ~rivière';
+      if (c.has_mountain_range) tip += ' ▲montagne';
+      if (c.has_lake) tip += ' ●lac';
+      if (villes) tip += ' • ' + villes.join(', ');
+      var border = villes ? 'box-shadow:inset 0 0 0 2px #c9a84c;' : '';
+      h += '<div title="' + esc(tip) + '" style="background:' + terrainColor(c.terrain_type) + ';' + border + 'border-radius:1px"></div>';
+    }
+  }
+  h += '</div></div>';
+
+  el.innerHTML = h;
+}
+
+// ─────────────────────────────────────────────
 // Loots
 // ─────────────────────────────────────────────
 var LOOT_TYPES = {weapon:'⚔️ Arme',armor:'🛡️ Armure',accessory:'💍 Accessoire',consumable:'🧪 Consommable',material:'🪨 Matériau',quest_item:'📜 Objet de quête',key:'🗝️ Clé',other:'❓ Autre'};

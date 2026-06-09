@@ -58,6 +58,16 @@ namespace engine::render
 			return;
 		}
 
+		// Localisation : meme mecanisme que les autres ecrans auth (UiTranslate du
+		// presenter). Repli sur la cle brute si le presenter est absent ou si la
+		// traduction est vide (evite d'afficher du vide a l'ecran).
+		auto tr = [this](const std::string& key) -> std::string {
+			if (m_authPresenter == nullptr)
+				return std::string();
+			std::string s = m_authPresenter->UiTranslate(key);
+			return s; // peut etre vide : le caller decide d'afficher ou non
+		};
+
 		// Presenter + liste des races (data-driven, cf. races.json) + systeme de
 		// customisation (limites par race + presets de proportions).
 		const auto* ccPresenter =
@@ -69,6 +79,19 @@ namespace engine::render
 		const bool hasRaces = (races && !races->empty());
 		if (hasRaces && (m_charRaceIdx < 0 || m_charRaceIdx >= static_cast<int>(races->size())))
 			m_charRaceIdx = 0;
+
+		// Systeme de personnages PR2 — factions selectionnables (combo FACTION ->
+		// CLASSE). La race est deduite de la faction. Si aucune faction n'est
+		// chargee, on retombe sur l'ancien combo RACE (cf. plus bas, guards).
+		const std::vector<engine::client::FactionDefinition>* factions =
+			ccPresenter ? &ccPresenter->GetFactions() : nullptr;
+		std::vector<uint32_t> selectableFactionIdx =
+			ccPresenter ? ccPresenter->GetSelectableFactionIndices() : std::vector<uint32_t>{};
+		const bool hasFactions = (factions && !selectableFactionIdx.empty());
+		// Borne l'index combo (sur la liste des factions selectionnables).
+		if (hasFactions &&
+		    (m_charFactionIdx < 0 || m_charFactionIdx >= static_cast<int>(selectableFactionIdx.size())))
+			m_charFactionIdx = 0;
 
 		// Disposition 2 colonnes : [apercu 3D (largeur fixe) | options (etire)].
 		if (ImGui::BeginTable("##cc_layout", 2, ImGuiTableFlags_BordersInnerV, ImVec2(0.f, 0.f)))
@@ -109,15 +132,131 @@ namespace engine::render
 				ImGui::PopStyleColor();
 			}
 
-			// Race (combo data-driven) + Genre (toggle). Le push du mesh d'apercu
-			// se fait apres les deux controles : la colonne gauche affiche le rendu
-			// race+genre correspondant (1 frame de latence au changement).
-			ImGui::Spacing();
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			ImGui::TextUnformatted("RACE");
-			ImGui::PopStyleColor();
-			if (hasRaces)
+			// Systeme de personnages PR2 — FACTION (combo) -> CLASSE (combo). La
+			// race est deduite de la faction. Si aucune faction n'est chargee, on
+			// retombe sur l'ancien combo RACE pur (compatibilite / robustesse).
+			//
+			// Le push du mesh d'apercu se fait apres les controles : la colonne
+			// gauche affiche le rendu race+genre correspondant (1 frame de latence).
+
+			// Id reels (faction/classe) resolus ce frame, utilises pour la
+			// description localisee et la soumission.
+			std::string selectedFactionId;
+			std::string selectedClassId;
+
+			if (hasFactions)
 			{
+				// ---- Combo FACTION (seulement les factions selectionnables) ----
+				ImGui::Spacing();
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::TextUnformatted("FACTION");
+				ImGui::PopStyleColor();
+
+				std::vector<const char*> factionLabels;
+				factionLabels.reserve(selectableFactionIdx.size());
+				for (uint32_t realIdx : selectableFactionIdx)
+					factionLabels.push_back((*factions)[realIdx].displayName.c_str());
+				ImGui::SetNextItemWidth(-FLT_MIN);
+				const int prevFactionIdx = m_charFactionIdx;
+				ImGui::Combo("##charcreate_faction", &m_charFactionIdx, factionLabels.data(),
+				             static_cast<int>(factionLabels.size()));
+				if (m_charFactionIdx != prevFactionIdx)
+					m_charClassIdx = 0; // changement de faction -> reset de la classe
+
+				// Faction reelle selectionnee (index dans GetFactions()).
+				const uint32_t realFactionIdx = selectableFactionIdx[static_cast<size_t>(m_charFactionIdx)];
+				const engine::client::FactionDefinition& fac = (*factions)[realFactionIdx];
+				selectedFactionId = fac.id;
+
+				// ---- Race deduite de la faction : resync m_charRaceIdx ----
+				// On cherche l'index de la race de la faction dans la liste des races
+				// du presenter pour que l'apercu 3D et les sliders restent fonctionnels.
+				const std::string facRaceId = ccPresenter->GetRaceIdForFaction(realFactionIdx);
+				if (hasRaces && !facRaceId.empty())
+				{
+					for (size_t ri = 0; ri < races->size(); ++ri)
+					{
+						if ((*races)[ri].id == facRaceId)
+						{
+							m_charRaceIdx = static_cast<int>(ri);
+							break;
+						}
+					}
+				}
+				// Affiche la race deduite en lecture seule (pas de combo race).
+				if (hasRaces && m_charRaceIdx >= 0 && m_charRaceIdx < static_cast<int>(races->size()))
+				{
+					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+					ImGui::Text("Race : %s", (*races)[m_charRaceIdx].displayName.c_str());
+					ImGui::PopStyleColor();
+				}
+
+				// ---- Combo CLASSE (classes de la faction) ----
+				const std::vector<engine::client::FactionClass>* facClasses =
+					ccPresenter->GetFactionClasses(realFactionIdx);
+				ImGui::Spacing();
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::TextUnformatted("CLASSE");
+				ImGui::PopStyleColor();
+				if (facClasses && !facClasses->empty())
+				{
+					if (m_charClassIdx < 0 || m_charClassIdx >= static_cast<int>(facClasses->size()))
+						m_charClassIdx = 0;
+					// Libelles stables (storage local vivant pendant l'appel Combo) :
+					// "Nom" ou "Nom - Sous-classe" si la sous-classe est renseignee.
+					std::vector<std::string> classLabelStorage;
+					classLabelStorage.reserve(facClasses->size());
+					for (const auto& c : *facClasses)
+					{
+						std::string lbl = c.displayName;
+						if (!c.subclass.empty())
+							lbl += " - " + c.subclass;
+						classLabelStorage.push_back(std::move(lbl));
+					}
+					std::vector<const char*> classLabels;
+					classLabels.reserve(classLabelStorage.size());
+					for (const auto& s : classLabelStorage)
+						classLabels.push_back(s.c_str());
+					ImGui::SetNextItemWidth(-FLT_MIN);
+					ImGui::Combo("##charcreate_class", &m_charClassIdx, classLabels.data(),
+					             static_cast<int>(classLabels.size()));
+					selectedClassId = (*facClasses)[static_cast<size_t>(m_charClassIdx)].id;
+				}
+				else
+				{
+					ImGui::TextDisabled("(aucune classe pour cette faction)");
+				}
+
+				// ---- Descriptions localisees (faction puis classe) ----
+				// Cles : "faction.<factionId>.desc" et
+				// "class.<factionId>.<classId>.desc". Affichees seulement si la
+				// traduction est non vide (pas de texte en dur).
+				const std::string facDesc =
+					selectedFactionId.empty() ? std::string() : tr("faction." + selectedFactionId + ".desc");
+				const std::string clsDesc =
+					(selectedFactionId.empty() || selectedClassId.empty())
+						? std::string()
+						: tr("class." + selectedFactionId + "." + selectedClassId + ".desc");
+				if (!facDesc.empty() || !clsDesc.empty())
+				{
+					ImGui::Spacing();
+					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+					if (!facDesc.empty())
+						ImGui::TextWrapped("%s", facDesc.c_str());
+					if (!facDesc.empty() && !clsDesc.empty())
+						ImGui::Spacing();
+					if (!clsDesc.empty())
+						ImGui::TextWrapped("%s", clsDesc.c_str());
+					ImGui::PopStyleColor();
+				}
+			}
+			else if (hasRaces)
+			{
+				// Repli : ancien combo RACE pur (aucune faction chargee).
+				ImGui::Spacing();
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::TextUnformatted("RACE");
+				ImGui::PopStyleColor();
 				std::vector<const char*> labels;
 				labels.reserve(races->size());
 				for (const auto& r : *races)
@@ -128,6 +267,10 @@ namespace engine::render
 			}
 			else
 			{
+				ImGui::Spacing();
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::TextUnformatted("RACE");
+				ImGui::PopStyleColor();
 				ImGui::TextDisabled("(liste des races indisponible)");
 				if (m_charRaceIdx < 0)
 					m_charRaceIdx = 0;
@@ -278,16 +421,45 @@ namespace engine::render
 		{
 			// Resout le raceId depuis le presenter (fallback "humains").
 			std::string raceId = "humains";
+			// Systeme de personnages PR2 — faction + classe choisies, re-resolues
+			// depuis le presenter (le scope des combos est interne au tableau).
+			std::string factionId;
+			std::string classId;
 			const auto* presenterForSubmit = m_authPresenter->GetCharacterCreationPresenter();
 			if (presenterForSubmit)
 			{
-				const auto& submitRaces = presenterForSubmit->GetRaces();
-				if (m_charRaceIdx >= 0 && m_charRaceIdx < static_cast<int>(submitRaces.size()))
-					raceId = submitRaces[m_charRaceIdx].id;
+				// Faction + race deduite (prioritaire si des factions sont chargees).
+				const auto& submitFactions = presenterForSubmit->GetFactions();
+				const std::vector<uint32_t> submitSelectable =
+					presenterForSubmit->GetSelectableFactionIndices();
+				if (!submitSelectable.empty() && m_charFactionIdx >= 0 &&
+				    m_charFactionIdx < static_cast<int>(submitSelectable.size()))
+				{
+					const uint32_t realFactionIdx = submitSelectable[static_cast<size_t>(m_charFactionIdx)];
+					if (realFactionIdx < submitFactions.size())
+					{
+						factionId = submitFactions[realFactionIdx].id;
+						// Race deduite de la faction (prioritaire sur m_charRaceIdx).
+						const std::string facRaceId = presenterForSubmit->GetRaceIdForFaction(realFactionIdx);
+						if (!facRaceId.empty())
+							raceId = facRaceId;
+						const auto* submitClasses = presenterForSubmit->GetFactionClasses(realFactionIdx);
+						if (submitClasses && m_charClassIdx >= 0 &&
+						    m_charClassIdx < static_cast<int>(submitClasses->size()))
+							classId = (*submitClasses)[static_cast<size_t>(m_charClassIdx)].id;
+					}
+				}
+				else
+				{
+					// Repli : aucune faction chargee -> raceId via le combo race pur.
+					const auto& submitRaces = presenterForSubmit->GetRaces();
+					if (m_charRaceIdx >= 0 && m_charRaceIdx < static_cast<int>(submitRaces.size()))
+						raceId = submitRaces[m_charRaceIdx].id;
+				}
 			}
 			const char* genderId = (m_charGender == 1) ? "female" : "male";
 			const uint8_t skinTone = static_cast<uint8_t>((m_charSkinTone == 1) ? 1 : 0);
-				m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName, raceId.c_str(), genderId, skinTone);
+				m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName, raceId.c_str(), genderId, skinTone, factionId.c_str(), classId.c_str());
 		}
 		EndPanel();
 		ImGui::EndChild();

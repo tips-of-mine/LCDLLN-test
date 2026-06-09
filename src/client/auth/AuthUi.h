@@ -671,7 +671,12 @@ namespace engine::client
 		///                   (SetAvatarGender -> mesh + peau in-world + persistance)
 		///                   avant la soumission, pour que l'EnterWorld qui suit
 		///                   utilise le bon avatar.
-		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8 = "", const char* genderUtf8 = "male", uint8_t skinColorIdx = 0u);
+		/// \param factionIdUtf8 Systeme de personnages PR2 — id de faction choisi
+		///                      (ex. "lumiere"), envoye au master. Vide = legacy.
+		/// \param classIdUtf8   Systeme de personnages PR2 — id de classe choisi
+		///                      au sein de la faction (ex. "guerrier"), envoye au
+		///                      master. Vide = legacy.
+		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8 = "", const char* genderUtf8 = "male", uint8_t skinColorIdx = 0u, const char* factionIdUtf8 = "", const char* classIdUtf8 = "");
 
 		/// Sous-projet C MVP (Task 12) — Accesseur vers le presenter de
 		/// creation de personnage detenu par AuthUiPresenter. Permet a
@@ -913,6 +918,14 @@ namespace engine::client
 		/// Vide = race non sélectionnée (le serveur recevra une chaîne vide et
 		/// stockera race_str = ""). Aligné sur la table `races` (cf. migration 0036).
 		std::string m_characterRaceId;
+		/// Système de personnages PR2 — id de faction choisi sur l'écran
+		/// CharacterCreate (ex. "lumiere"), envoyé au master dans
+		/// CharacterCreateRequestPayload.factionId. Vide = legacy/non choisi.
+		std::string m_characterFactionId;
+		/// Système de personnages PR2 — id de classe choisi (au sein de la
+		/// faction, ex. "guerrier"), envoyé au master dans
+		/// CharacterCreateRequestPayload.classId. Vide = legacy/non choisi.
+		std::string m_characterClassId;
 		/// #1 serveur — genre choisi sur l'écran CharacterCreate ("male"/"female"),
 		/// envoyé au master dans CharacterCreateRequestPayload.gender. Défaut "male".
 		std::string m_characterGender = "male";

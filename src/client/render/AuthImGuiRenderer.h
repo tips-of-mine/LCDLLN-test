@@ -80,6 +80,15 @@ namespace engine::render
 		/// Index dans la liste des races jouables (cf. RenderCharCreateScreen).
 		/// 0 = humains, 1 = elfes, 2 = orcs, 3 = nains, 4 = demons, 5 = chevaliers_dragons.
 		int m_charRaceIdx = 0;
+		/// Systeme de personnages PR2 — index dans la liste des factions
+		/// *selectionnables* du presenter (combo "FACTION"). La race est deduite
+		/// de la faction (GetRaceIdForFaction) ; m_charRaceIdx est resynchronise
+		/// sur la race correspondante pour conserver l'apercu 3D.
+		int m_charFactionIdx = 0;
+		/// Systeme de personnages PR2 — index de la classe choisie dans les classes
+		/// de la faction selectionnee (GetFactionClasses). Remis a 0 a chaque
+		/// changement de faction.
+		int m_charClassIdx = 0;
 
 		/// Genre choisi dans l'ecran de creation : 0 = Homme (male), 1 = Femme
 		/// (female). Pilote l'apercu 3D (mesh genre) et est transmis a la creation.

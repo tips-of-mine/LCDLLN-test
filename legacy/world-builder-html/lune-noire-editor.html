@@ -1263,6 +1263,10 @@
         <span class="nav-icon">📋</span> Règles transverses
         <span class="count-badge" id="cnt-regles_transverses">0</span>
       </div>
+      <div class="sidebar-item" onclick="showSection('weapons')" id="nav-weapons">
+        <span class="nav-icon">🗡️</span> Armes
+        <span class="count-badge" id="cnt-weapons">0</span>
+      </div>
       <div class="sidebar-item" onclick="showSection('loots')" id="nav-loots">
         <span class="nav-icon">💎</span> Loots
         <span class="count-badge" id="cnt-loots">0</span>
@@ -1275,6 +1279,15 @@
       </div>
       <div class="sidebar-item" onclick="showSection('crossrules')" id="nav-crossrules">
         <span class="nav-icon">⚖️</span> Règles (legacy)
+      </div>
+    </div>
+
+    <!-- ══ Serveur ══ -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Serveur</div>
+      <div class="sidebar-item" onclick="showSection('server_commands')" id="nav-server_commands">
+        <span class="nav-icon">⌨️</span> Commandes serveur
+        <span class="count-badge" id="cnt-server_commands">0</span>
       </div>
     </div>
 
@@ -1627,16 +1640,22 @@ function villeRelationsHTML(ville_relations) {
 // Full-schema export builder
 // ─────────────────────────────────────────────
 function buildExportSchema() {
-  return {
+  // On part d'un clone complet de db pour ne JAMAIS perdre les champs/collections
+  // non explicitement listés ci-dessous (cells, routes, game_design, alignments,
+  // terrain_types, et toute clé future). Le schéma normalisé est ensuite superposé.
+  var _out = JSON.parse(JSON.stringify(db||{}));
+  var _schema = {
     meta: {
       source:  (db.meta && db.meta.source)  || "",
       version: (db.meta && db.meta.version) || "0.1.0",
       notes:   (db.meta && db.meta.notes)   || []
     },
     factions: (db.factions||[]).map(function(f) {
-      return {
+      // Object.assign({}, f, …) préserve les champs riches éventuels (game_design…).
+      return Object.assign({}, f, {
         id: f.id||'', name: f.name||'', type: f.type||'',
         alignment: f.alignment||'', playable: !!f.playable,
+        region_id: f.region_id||'',
         visual_identity: f.visual_identity||null,
         leadership: f.leadership||null,
         territory: f.territory||null,
@@ -1649,15 +1668,17 @@ function buildExportSchema() {
         ville_relations: (f.ville_relations||[]).map(function(r){
           return { ville_id: r.ville_id||'', relation: r.relation||'neutral' };
         })
-      };
+      });
     }),
     classes: (db.classes||[]).map(function(c) {
-      return {
+      // Préserve game_design (weapons_by_faction, profil_stats…).
+      return Object.assign({}, c, {
         id: c.id||"", name: c.name||"", type: c.type||"", notes: c.notes||[],
+        life_gauge: c.life_gauge||"", endurance_gauge: c.endurance_gauge||"", specific_gauge: c.specific_gauge||"",
         variants: (c.variants||[]).map(function(v){ return {id:v.id||"",name:v.name||"",notes:v.notes||[]}; }),
         faction_affiliations: (c.faction_affiliations||[]).map(function(a){ return {faction_id:a.faction_id||"",exclusivity:a.exclusivity||"shared",notes:a.notes||""}; }),
         level_titles: (c.level_titles||[]).map(function(t){ return {level:t.level||0,title:t.title||""}; })
-      };
+      });
     }),
     races: (db.races||[]).map(function(r) {
       return {
@@ -1685,12 +1706,14 @@ function buildExportSchema() {
       };
     }),
     villes: (db.villes||[]).map(function(v) {
-      return {
+      // Préserve type, alias, importance, services, features, population, etc.
+      return Object.assign({}, v, {
         id: v.id||"", name: v.name||"", cell: v.cell||"",
         coord_x: (v.coord_x!==null && v.coord_x!==undefined) ? v.coord_x : null,
         coord_y: (v.coord_y!==null && v.coord_y!==undefined) ? v.coord_y : null,
+        faction_control: v.faction_control||"", region_id: v.region_id||"",
         notes: v.notes||[]
-      };
+      });
     }),
     exploits: (db.exploits||[]).map(function(ex) {
       return {
@@ -1715,17 +1738,20 @@ function buildExportSchema() {
       };
     }),
     quests: (db.quests||[]).map(function(q) {
-      return {
+      return Object.assign({}, q, {
         id: q.id||'', name: q.name||'', description: q.description||'',
         category: q.category||'', tags: q.tags||[], difficulty: q.difficulty||1,
         repeatable: !!q.repeatable, type: q.type||'',
+        quest_kind: q.quest_kind||'',
+        has_counter_quest: !!(q.has_counter_quest||q.counter_quest_id),
+        counter_quest_id: q.counter_quest_id||'',
         steps: q.steps||[], source_lore: q.source_lore||[], rewards: q.rewards||{},
         min_players: q.min_players||1,
         required_classes: q.required_classes||[],
         for_factions: q.for_factions||[], for_races: q.for_races||[], for_classes: q.for_classes||[],
         unlock_conditions: q.unlock_conditions||[], region_id: q.region_id||'',
         notes: q.notes||[]
-      };
+      });
     }),
     mounts: (db.mounts||[]).map(function(m) {
       return {
@@ -1779,8 +1805,11 @@ function buildExportSchema() {
     quest_categories: db.quest_categories||[],
     tomes_config: (db.tomes_config||[]).map(function(t){return{id:t.id||'',label:t.label||''};}),
     competences: (db.competences||[]).map(function(c){return{id:c.id||'',name:c.name||'',school:c.school||'',usable_by:c.usable_by||[],prerequisite:c.prerequisite||'',description:c.description||'',progression:c.progression||[],effects:c.effects||[],incantation:c.incantation||c.incantation_known||'',training_steps:c.training_steps||c.learning_steps||[],source:c.source||'',notes:c.notes||[]};}),
-    regles_transverses: (db.regles_transverses||[]).map(function(r){return{id:r.id||'',name:r.name||'',category:r.category||'',description:r.description||'',applies_to:r.applies_to||[],mechanique_jeu:r.mechanique_jeu||'',apparition_window:r.apparition_window||'',incantations_connues:r.incantations_connues||[],training_minimum:r.training_minimum||'',source:r.source||'',notes:r.notes||[]};})
+    regles_transverses: (db.regles_transverses||[]).map(function(r){return{id:r.id||'',name:r.name||'',category:r.category||'',description:r.description||'',applies_to:r.applies_to||[],mechanique_jeu:r.mechanique_jeu||'',apparition_window:r.apparition_window||'',incantations_connues:r.incantations_connues||[],training_minimum:r.training_minimum||'',source:r.source||'',notes:r.notes||[]};}),
+    weapons: (db.weapons||[]).map(function(w){return{id:w.id||'',name:w.name||'',type:w.type||'',eligible_races:w.eligible_races||[],eligible_factions:w.eligible_factions||[],eligible_classes:w.eligible_classes||[],notes:w.notes||[]};}),
+    server_commands: (db.server_commands||[]).map(function(c){return{id:c.id||'',name:c.name||'',rbac_level:c.rbac_level||'player',description:c.description||'',notes:c.notes||[]};})
   };
+  return Object.assign(_out, _schema);
 }
 
 
@@ -1847,6 +1876,8 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
       if (!db.lore)             db.lore             = null;
       if (!db.competences)      db.competences      = [];
       if (!db.regles_transverses) db.regles_transverses = [];
+      if (!db.weapons)          db.weapons          = [];
+      if (!db.server_commands)  db.server_commands  = [];
       if (!db.tomes_config || !db.tomes_config.length) db.tomes_config = [
     {id:"t00",label:"Tome 00",color:"#508cd2"},
     {id:"t01",label:"Tome 01",color:"#598dc4"},
@@ -1943,13 +1974,15 @@ function showSection(section) {
     lore: renderLore,
     competences: renderCompetences,
     regles_transverses: renderReglesTransverses,
-    carte: renderCarte
+    carte: renderCarte,
+    weapons: renderWeapons,
+    server_commands: renderServerCommands
   };
   if (renders[section]) renders[section](el);
 }
 
 function updateCounts() {
-  ['factions','classes','races','companions','villes','exploits','quests','mounts','raids','regions','loots','dialogues','creatures','timeline','persons','zones','competences','regles_transverses'].forEach(function(k) {
+  ['factions','classes','races','companions','villes','exploits','quests','mounts','raids','regions','loots','dialogues','creatures','timeline','persons','zones','competences','regles_transverses','weapons','server_commands'].forEach(function(k) {
     var el = document.getElementById('cnt-' + k);
     if (el) el.textContent = (db[k]||[]).length;
   });
@@ -2141,6 +2174,7 @@ function renderFactions(el) {
     c += '<button class="btn btn-danger" onclick="deleteFaction(' + gi + ')">✕</button></div></div>';
     var fRow1 = badge(ab.label,ab.color) + (f.playable ? badge('Jouable','#7ac08a') : badge('Non jouable','#a05060'));
     c += cardRow('Statut', fRow1, true);
+    if(f.region_id){ var frg=(db.regions||[]).find(function(x){return x.id===f.region_id;}); c += cardRow('Région', badge('🗺️ '+esc(frg?frg.name:f.region_id), regionColor(f.region_id)), false); }
     c += notesBadgesHTML(f.notes);
     c += relationsHTML(f.faction_relations);
     c += villeRelationsHTML(f.ville_relations);
@@ -2166,6 +2200,9 @@ function openFactionForm(idx) {
   var facRelOpts = '<option value="">Choisir une faction…</option>';
   (db.factions||[]).forEach(function(x){ if(x.id!==f.id) facRelOpts += '<option value="' + esc(x.id) + '">' + esc(x.name) + '</option>'; });
 
+  var fRgOpts = '<option value="">— Aucune région de référence —</option>';
+  (db.regions||[]).forEach(function(rg){ fRgOpts += '<option value="' + esc(rg.id) + '"' + (f.region_id===rg.id?' selected':'') + '>' + esc(rg.name) + '</option>'; });
+
   var villeOpts = '<option value="">Choisir une ville…</option>';
   (db.villes||[]).forEach(function(v){ villeOpts += '<option value="' + esc(v.id) + '">' + esc(v.name) + (v.cell?' ('+v.cell+')':'') + '</option>'; });
 
@@ -2184,6 +2221,8 @@ function openFactionForm(idx) {
 
     '<div class="form-group"><label class="form-label">Alignement</label>' +
     '<select class="form-select" id="f_align">' + alignOpts + '</select></div></div>' +
+    '<div class="form-group"><label class="form-label">Région de référence</label>' +
+    '<select class="form-select" id="f_region">' + fRgOpts + '</select></div>' +
     '<div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">' +
     '<input type="checkbox" id="f_playable"' + (f.playable?' checked':'') + ' style="accent-color:var(--accent-gold)"> Jouable</label></div>' +
     '<div class="form-group"><label class="form-label">Notes</label>' +
@@ -2271,17 +2310,21 @@ function renderVilleRelationsList() {
 }
 
 function saveFaction(idx) {
-  var obj = {
+  // Préserve les champs riches (visual_identity, leadership, territory, politics,
+  // game_design…) absents de ce formulaire.
+  var base = (idx!==undefined) ? JSON.parse(JSON.stringify(db.factions[idx])) : {};
+  var obj = Object.assign(base, {
     id:        document.getElementById('f_id').value.trim(),
     name:      document.getElementById('f_name').value.trim(),
     type:      document.getElementById('f_type').value.trim(),
 
     alignment: document.getElementById('f_align').value,
+    region_id: (document.getElementById('f_region')||{value:''}).value,
     playable:  document.getElementById('f_playable').checked,
     notes:     window._currentNotes.slice(),
     faction_relations: window._currentFactionRelations.slice(),
     ville_relations:   window._currentVilleRelations.slice()
-  };
+  });
   if (!obj.id || !obj.name) { toast('ID et Nom obligatoires'); return; }
   var dupW=checkDuplicateOnSave(obj.id,obj.name,db.factions,idx);if(dupW.length){toast(dupW[0]);return;}
   var prev = currentSection;
@@ -2321,6 +2364,11 @@ function renderClasses(el) {
     card += '<button class="btn btn-danger" onclick="deleteClass(' + gi + ')">✕</button></div></div>';
     var cl_tl = CLASS_TYPE_LABELS[c.type]||c.type||'—'; var cl_tc = CLASS_TYPE_COLORS[c.type]||tc;
     card += cardRow('Type', badge(cl_tl,cl_tc), true);
+    var gaugeBadges = '';
+    if(c.life_gauge)      gaugeBadges += badge('❤️ '+esc(c.life_gauge),'#c05060');
+    if(c.endurance_gauge) gaugeBadges += badge('💪 '+esc(c.endurance_gauge),'#7ac08a');
+    if(c.specific_gauge)  gaugeBadges += badge('✨ '+esc(c.specific_gauge),'#9060c0');
+    if(gaugeBadges) card += cardRow('Jauges', gaugeBadges, false);
     if(c.faction_affiliations&&c.faction_affiliations.length){
       var facBadges='';
       c.faction_affiliations.forEach(function(a){
@@ -2373,6 +2421,18 @@ function buildClassLikeForm(kind, idx, collection, saveFn) {
     '<input class="form-input" id="item_name" value="' + esc(item.name) + '" placeholder="' + L.namePH + '" oninput="autoGenId(this,\'item_id\')"></div>' +
     '<div class="form-group"><label class="form-label">Type</label>' +
     '<select class="form-select" id="item_type">' + typeOpts + '</select></div>' +
+
+    (kind==='class' ?
+    '<div class="form-group"><label class="form-label">Jauges de la classe <span style="font-size:0.7rem;color:var(--text-dim)">(nom affiché en jeu)</span></label>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem">' +
+    '<div><label style="font-size:0.7rem;color:var(--text-dim)">Jauge de vie</label>' +
+    '<input class="form-input" id="item_life_gauge" value="' + esc(item.life_gauge||'') + '" placeholder="Ex : Vie, Points de vie"></div>' +
+    '<div><label style="font-size:0.7rem;color:var(--text-dim)">Jauge d\'endurance</label>' +
+    '<input class="form-input" id="item_endurance_gauge" value="' + esc(item.endurance_gauge||'') + '" placeholder="Ex : Endurance"></div>' +
+    '<div><label style="font-size:0.7rem;color:var(--text-dim)">Jauge spécifique</label>' +
+    '<input class="form-input" id="item_specific_gauge" value="' + esc(item.specific_gauge|| ((item.game_design||{}).ressource_secondaire) || '') + '" placeholder="Ex : Ferveur, Corruption…"></div>' +
+    '</div></div>'
+    : '') +
 
     '<div class="form-group"><label class="form-label">Notes</label>' +
     '<div class="notes-editor"><div class="note-input-row"><input type="text" id="noteInput" placeholder="Ajouter une note…">' +
@@ -2481,12 +2541,17 @@ function renderLevelTitlesList() {
   }).join('');
 }
 function saveClass(idx) {
-  var obj = { id:document.getElementById('item_id').value.trim(), name:document.getElementById('item_name').value.trim(),
+  // On part de l'objet existant (édition) pour préserver les champs riches non
+  // gérés par ce formulaire (game_design, weapons_by_faction, sous_classes…).
+  var base = (idx!==undefined) ? JSON.parse(JSON.stringify(db.classes[idx])) : {};
+  var obj = Object.assign(base, { id:document.getElementById('item_id').value.trim(), name:document.getElementById('item_name').value.trim(),
     type:document.getElementById('item_type').value,
-
+    life_gauge:document.getElementById('item_life_gauge').value.trim(),
+    endurance_gauge:document.getElementById('item_endurance_gauge').value.trim(),
+    specific_gauge:document.getElementById('item_specific_gauge').value.trim(),
     notes:window._currentNotes.slice(),
     faction_affiliations:window._currentClassFactions.slice(),
-    variants:window._currentVariants.slice(), level_titles:window._currentLevelTitles.slice() };
+    variants:window._currentVariants.slice(), level_titles:window._currentLevelTitles.slice() });
   if(!obj.id||!obj.name){ toast('ID et Nom obligatoires'); return; }
   if(idx!==undefined) db.classes[idx]=obj; else db.classes.push(obj);
   closeModal(); showSection('classes'); toast(idx!==undefined?'Classe modifiée':'Classe ajoutée');
@@ -2899,11 +2964,43 @@ function renderVilles(el) {
       card+='</div>';
     }
     if(v.features&&v.features.length){card+='<div style="margin-top:0.4rem;display:flex;flex-wrap:wrap;gap:0.2rem">';v.features.slice(0,4).forEach(function(f){card+='<span style="font-size:0.7rem;background:var(--bg-deep);border:1px solid #e8a44a30;border-radius:2px;padding:0.05rem 0.35rem;color:var(--text-dim)">'+esc(f)+'</span>';});if(v.features.length>4)card+='<span style="font-size:0.7rem;color:var(--text-dim)">+'+(v.features.length-4)+'</span>';card+='</div>';}
-    if(v.faction_control)card+='<div style="margin-top:0.25rem;font-size:0.72rem;color:var(--text-dim)">🏴 '+esc(v.faction_control)+'</div>';
+    card+=villeFactionStanceHTML(v);
     card+=notesBadgesHTML(v.notes);
     return card+'</div>';
   });
 }
+// Détermine la posture (allié / neutre / ennemi) d'une ville vis-à-vis de chaque
+// faction, à partir de sa faction de référence (v.faction_control) et des
+// faction_relations de cette faction. Retourne un bloc HTML compact : alliées
+// en vert, ennemies en rouge ; les neutres sont comptées mais pas listées pour
+// rester lisible. Renvoie '' si aucune faction de référence n'est définie.
+function villeFactionStanceHTML(v) {
+  if (!v || !v.faction_control) return '';
+  var ref = (db.factions||[]).find(function(f){ return f.id===v.faction_control; });
+  var refName = ref ? ref.name : v.faction_control;
+  var h = '<div style="margin-top:0.4rem"><div style="font-family:Cinzel,serif;font-size:0.58rem;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.2rem">Faction de référence</div>';
+  h += '<span style="font-size:0.72rem;background:var(--bg-deep);border:1px solid '+factionColor(v.faction_control)+'60;border-radius:2px;padding:0.1rem 0.4rem;color:'+factionColor(v.faction_control)+'">🏴 '+esc(refName)+'</span>';
+  if (ref) {
+    var relMap = {}; (ref.faction_relations||[]).forEach(function(r){ relMap[r.faction_id]=r.relation; });
+    var allied = [], enemy = [], neutral = 0;
+    (db.factions||[]).forEach(function(g){
+      if (g.id===ref.id) return;
+      var rel = relMap[g.id]||'neutral';
+      if (rel==='allied'||rel==='ally') allied.push(g);
+      else if (rel==='enemy'||rel==='hostile') enemy.push(g);
+      else neutral++;
+    });
+    if (allied.length||enemy.length) {
+      h += '<div style="margin-top:0.3rem;display:flex;flex-wrap:wrap;gap:0.2rem">';
+      allied.forEach(function(g){ h += '<span title="Alliée" style="font-size:0.68rem;color:#7ac08a;border:1px solid #7ac08a40;border-radius:2px;padding:0.05rem 0.3rem">✚ '+esc(g.name)+'</span>'; });
+      enemy.forEach(function(g){ h += '<span title="Ennemie" style="font-size:0.68rem;color:#c05060;border:1px solid #c0506040;border-radius:2px;padding:0.05rem 0.3rem">✕ '+esc(g.name)+'</span>'; });
+      h += '</div>';
+      h += '<div style="font-size:0.64rem;color:var(--text-dim);margin-top:0.15rem">'+allied.length+' alliée(s) · '+enemy.length+' ennemie(s) · '+neutral+' neutre(s)</div>';
+    }
+  }
+  return h + '</div>';
+}
+
 function openVilleForm(idx) {
   var isEdit=idx!==undefined;
   var v=isEdit?JSON.parse(JSON.stringify(db.villes[idx])):{id:'',name:'',alias:'',type:'',cell:'',coord_x:null,coord_y:null,importance:'',faction_control:'',region_id:'',housing_count:null,population:null,services:[],features:[],notes:[]};
@@ -2934,6 +3031,7 @@ function openVilleForm(idx) {
 
   var typeOpts='<option value="">— Type de localité —</option>'+Object.keys(VLABELS).map(function(k){return '<option value="'+k+'"'+(v.type===k?' selected':'')+' style="color:'+(VCOLORS[k]||'#e8a44a')+'">'+VLABELS[k]+'</option>';}).join('');
   var rgOpts='<option value="">Sans région</option>';(db.regions||[]).forEach(function(rg){rgOpts+='<option value="'+esc(rg.id)+'"'+(v.region_id===rg.id?' selected':'')+' style="color:'+(rg.color||'#708090')+'">'+esc(rg.name)+'</option>';});
+  var vFacOpts='<option value="">— Aucune faction —</option>';(db.factions||[]).forEach(function(f){vFacOpts+='<option value="'+esc(f.id)+'"'+(v.faction_control===f.id?' selected':'')+'>'+esc(f.name)+'</option>';});
 
   function buildSvcHTML(curSvc, hc) {
     var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.25rem 0.75rem">';
@@ -2964,8 +3062,8 @@ function openVilleForm(idx) {
     '<div style="display:grid;grid-template-columns:2fr 1fr;gap:0.75rem">'+
     '<div class="form-group"><label class="form-label">Type de localité</label>'+
     '<select class="form-select" id="v_type" onchange="(function(){var t=document.getElementById(\'v_type\').value;var lim={hameau:{min:5,max:30},village:{min:31,max:80},major_city:{min:81,max:500},capital_city:{min:200,max:9999},fortress_city:{min:50,max:500},neutral_city:{min:40,max:500},arcane_tower_city:{min:10,max:100},training_city:{min:20,max:200},gladiator_city:{min:30,max:300},passage_poi:{min:0,max:20},other:{min:0,max:9999}};var VLABELS2={hameau:\'Hameau\',village:\'Village\',major_city:\'Grande Ville\',capital_city:\'Capitale\',fortress_city:\'Forteresse\',neutral_city:\'Cité Neutre\',arcane_tower_city:\'Tour Arcane\',training_city:\'Cité Entr.\',gladiator_city:\'Cité Glad.\',passage_poi:\'Passage\',other:\'Autre\'};var d=lim[t];var hint=document.getElementById(\'v_housing_hint\');if(hint&&d)hint.textContent=(d.max<9999?d.min+\' à \'+d.max:d.min+\'+ \')+\'logements\';document.getElementById(\'v_services_wrap\').innerHTML=buildVilleServices(Array.from(document.querySelectorAll(\'input[name=v_service]:checked\')).map(function(c){return c.value;}),parseInt(document.getElementById(\'v_housing\').value)||0);})()">'+typeOpts+'</select></div>'+
-    '<div class="form-group"><label class="form-label">Contrôle de faction</label>'+
-    '<input class="form-input" id="v_faction_control" value="'+esc(v.faction_control||'')+'" placeholder="faction_id"></div></div>'+
+    '<div class="form-group"><label class="form-label">Faction de référence</label>'+
+    '<select class="form-select" id="v_faction_control">'+vFacOpts+'</select></div></div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
     '<div class="form-group"><label class="form-label">Nb. logements'+
     (v.type&&VLIMITS[v.type]?' <span style="font-size:0.68rem;color:var(--text-dim)">('+VLIMITS[v.type].min+(VLIMITS[v.type].max<9999?' à '+VLIMITS[v.type].max:'+')+' pour '+(VLABELS[v.type]||v.type)+')</span>':'')+
@@ -3366,6 +3464,11 @@ function renderQuests(el) {
     card+='<div class="card-header"><div><div class="card-title">📜 ' + esc(qt.name) + '</div><div class="card-id">' + esc(qt.id) + '</div></div>';
     card+='<div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openQuestForm(' + gi + ')">✎</button>';
     card+='<button class="btn btn-danger" onclick="deleteQuest(' + gi + ')">✕</button></div></div>';
+    var kindB='';
+    if(qt.quest_kind==='principal') kindB=badge('⭐ Principale','#c9a84c');
+    else if(qt.quest_kind==='secondaire') kindB=badge('◇ Secondaire','#7090c0');
+    if(qt.has_counter_quest||qt.counter_quest_id){ var cq=(db.quests||[]).find(function(x){return x.id===qt.counter_quest_id;}); kindB+=badge('⚔ Contre-quête'+(cq?' : '+esc(cq.name):''),'#c05060'); }
+    if(kindB) card+=cardRow('Type', kindB, true);
     if(qt.description) card+='<div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.4rem;font-style:italic">' + esc(qt.description.substring(0,120)) + (qt.description.length>120?'…':'') + '</div>';
     // Prérequis row
     var prereqB='';
@@ -3398,13 +3501,28 @@ function openQuestForm(idx) {
   var rOpts='<option value="">Race…</option>';    (db.races||[]).forEach(function(r){rOpts+='<option value="' + esc(r.id) + '">' + esc(r.name) + '</option>';});
   var cOpts='<option value="">Classe…</option>';  (db.classes||[]).forEach(function(c){cOpts+='<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>';});
   var qtRgOpts='<option value="">Aucune région</option>';(db.regions||[]).forEach(function(rg){qtRgOpts+='<option value="'+esc(rg.id)+'"'+(qt.region_id===rg.id?' selected':'')+'>'+esc(rg.name)+'</option>';});
+  var qKind=qt.quest_kind||'';
+  var qKindOpts='<option value="">— Non précisé —</option>'+
+    '<option value="principal"'+(qKind==='principal'?' selected':'')+'>⭐ Principale</option>'+
+    '<option value="secondaire"'+(qKind==='secondaire'?' selected':'')+'>◇ Secondaire</option>';
+  var hasCounter=!!(qt.has_counter_quest||qt.counter_quest_id);
+  var qCounterOpts='<option value="">— Choisir la contre-quête —</option>';(db.quests||[]).forEach(function(qq){ if(qq.id!==qt.id) qCounterOpts+='<option value="'+esc(qq.id)+'"'+(qt.counter_quest_id===qq.id?' selected':'')+'>'+esc(qq.name)+'</option>'; });
   document.getElementById('modalTitle').textContent=isEdit?'Modifier la Quête':'Nouvelle Quête';
   document.getElementById('modalBody').innerHTML=
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">' +
     '<div class="form-group"><label class="form-label">Identifiant (ID)*</label><input class="form-input" id="qt_id" value="' + esc(qt.id) + '" placeholder="quest_example"></div>' +
     '<div class="form-group"><label class="form-label">Nom*</label><input class="form-input" id="qt_name" value="' + esc(qt.name) + '" oninput="autoGenId(this,\'qt_id\')" placeholder="Nom de la quête"></div></div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">' +
     '<div class="form-group"><label class="form-label">Région</label>' +
     '<select class="form-select" id="qt_region">' + qtRgOpts + '</select></div>' +
+    '<div class="form-group"><label class="form-label">Type de quête</label>' +
+    '<select class="form-select" id="qt_kind">' + qKindOpts + '</select></div></div>' +
+    '<div class="form-group" style="background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;padding:0.6rem 0.75rem">' +
+    '<label class="form-label" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">' +
+    '<input type="checkbox" id="qt_has_counter"' + (hasCounter?' checked':'') + ' style="accent-color:var(--accent-gold)" onchange="document.getElementById(\'qt_counter_wrap\').style.display=this.checked?\'block\':\'none\'"> Dispose d\'une contre-quête</label>' +
+    '<div id="qt_counter_wrap" style="margin-top:0.5rem;display:' + (hasCounter?'block':'none') + '">' +
+    '<label class="form-label" style="font-size:0.7rem;color:var(--text-dim)">Contre-quête associée</label>' +
+    '<select class="form-select" id="qt_counter_id">' + qCounterOpts + '</select></div></div>' +
     '<div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="qt_desc" placeholder="Décrivez la quête…">' + esc(qt.description||'') + '</textarea></div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">' +
     '<div class="form-group"><label class="form-label">Joueurs minimum requis</label>' +
@@ -3471,13 +3589,20 @@ function renderReqClassList() {
 }
 function saveQuest(idx) {
   var mp=document.getElementById('qt_min_players').value;
-  var obj={id:document.getElementById('qt_id').value.trim(), name:document.getElementById('qt_name').value.trim(),
+  // Préserve les champs riches non gérés ici (category, tags, difficulty, type,
+  // steps, source_lore, rewards, repeatable…).
+  var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.quests[idx])):{};
+  var hasCounter=document.getElementById('qt_has_counter').checked;
+  var counterId=hasCounter?(document.getElementById('qt_counter_id')||{value:''}).value:'';
+  var obj=Object.assign(base,{id:document.getElementById('qt_id').value.trim(), name:document.getElementById('qt_name').value.trim(),
     description:document.getElementById('qt_desc').value.trim(),
     min_players: mp!==''?parseInt(mp,10):1,
+    quest_kind:(document.getElementById('qt_kind')||{value:''}).value,
+    has_counter_quest:hasCounter, counter_quest_id:counterId,
     required_classes: window._currentRequiredClasses.slice(),
     for_factions:window._currentQuestFactions.slice(), for_races:window._currentQuestRaces.slice(),
     region_id:(document.getElementById('qt_region')||{value:''}).value,
-    for_classes:window._currentQuestClasses.slice(), unlock_conditions:(window.qtConditions||[]).slice(), notes:window._currentNotes.slice()};
+    for_classes:window._currentQuestClasses.slice(), unlock_conditions:(window.qtConditions||[]).slice(), notes:window._currentNotes.slice()});
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   if(idx!==undefined) db.quests[idx]=obj; else db.quests.push(obj);
   closeModal(); showSection('quests'); toast(idx!==undefined?'Quête modifiée':'Quête ajoutée');
@@ -4284,6 +4409,198 @@ function renderCarte(el) {
   h += '</div></div>';
 
   el.innerHTML = h;
+}
+
+// ─────────────────────────────────────────────
+// Armes
+// ─────────────────────────────────────────────
+// Types d'arme proposés dans le formulaire (libellé affiché ↔ valeur stockée).
+var WEAPON_TYPES = {
+  epee:'⚔️ Épée', petite_epee:'🗡️ Petite épée', hache:'🪓 Hache', hache_double:'🪓 Hache double',
+  masse:'🔨 Masse', lance:'🔱 Lance', faux:'🌾 Faux', dague:'🔪 Dague', arc:'🏹 Arc',
+  arbalete:'🎯 Arbalète', baton:'🪄 Bâton', sceptre:'🔮 Sceptre', bouclier:'🛡️ Bouclier', autre:'❓ Autre'
+};
+function weaponTypeLabel(t){ return WEAPON_TYPES[t]||t||'—'; }
+
+function renderWeapons(el) {
+  var h = '<div class="panel-header"><div class="panel-title">🗡️ Armes</div>';
+  h += '<div style="display:flex;gap:0.75rem;align-items:center">';
+  h += '<div class="search-bar"><input type="text" placeholder="Rechercher..." id="searchWeapon" oninput="renderWeapons(document.getElementById(\'sectionContent\'))"></div>';
+  h += '<button class="btn btn-gold btn-sm" onclick="openWeaponForm()">+ Ajouter</button></div></div>';
+  h += '<div class="cards-grid" id="weaponsGrid"></div>';
+  var q = document.getElementById('searchWeapon') ? document.getElementById('searchWeapon').value.toLowerCase() : '';
+  el.innerHTML = h;
+  var _sf = document.getElementById('searchWeapon'); if(_sf&&q){ _sf.value=q; _sf.focus(); _sf.setSelectionRange(q.length,q.length); }
+  var grid = el.querySelector('#weaponsGrid');
+  var list = (db.weapons||[]).filter(function(w){ return !q || (w.name||'').toLowerCase().includes(q) || (w.id||'').toLowerCase().includes(q); });
+  if(!list.length){ grid.innerHTML = '<div class="empty-state">Aucune arme — cliquez sur « + Ajouter » pour en créer une.</div>'; return; }
+  grid.innerHTML = list.map(function(w) {
+    var gi = db.weapons.indexOf(w);
+    var card = '<div class="card" style="--card-accent:#b5895a">';
+    card += '<div class="card-header"><div><div class="card-title">🗡️ ' + esc(w.name) + '</div><div class="card-id">' + esc(w.id) + '</div></div>';
+    card += '<div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openWeaponForm(' + gi + ')">✎</button>';
+    card += '<button class="btn btn-danger" onclick="deleteWeapon(' + gi + ')">✕</button></div></div>';
+    card += cardRow('Type', badge(weaponTypeLabel(w.type),'#b5895a'), true);
+    var racB=''; (w.eligible_races||[]).forEach(function(id){ var r=(db.races||[]).find(function(x){return x.id===id;}); racB+=badge('🧬 '+esc(r?r.name:id),'#a06040'); });
+    if(racB) card += cardRow('Races', racB, false);
+    var facB=''; (w.eligible_factions||[]).forEach(function(id){ var f=(db.factions||[]).find(function(x){return x.id===id;}); facB+=badge('⚜️ '+esc(f?f.name:id),factionColor(id)); });
+    if(facB) card += cardRow('Factions', facB, false);
+    var clsB=''; (w.eligible_classes||[]).forEach(function(id){ var c=(db.classes||[]).find(function(x){return x.id===id;}); clsB+=badge('⚔️ '+esc(c?c.name:id),'#4a6fa5'); });
+    if(clsB) card += cardRow('Classes', clsB, false);
+    if(!racB&&!facB&&!clsB) card += '<div style="font-size:0.72rem;color:var(--text-dim);margin-top:0.3rem">Utilisable par tous (aucune restriction)</div>';
+    card += notesBadgesHTML(w.notes);
+    return card + '</div>';
+  }).join('');
+}
+
+function openWeaponForm(idx) {
+  var isEdit = idx!==undefined;
+  var w = isEdit ? JSON.parse(JSON.stringify(db.weapons[idx])) : {id:'',name:'',type:'',eligible_races:[],eligible_factions:[],eligible_classes:[],notes:[]};
+  window._currentNotes = toArr(w.notes).slice();
+  window._wpRaces    = (w.eligible_races||[]).slice();
+  window._wpFactions = (w.eligible_factions||[]).slice();
+  window._wpClasses  = (w.eligible_classes||[]).slice();
+  var typeOpts = '<option value="">— Type —</option>' + Object.keys(WEAPON_TYPES).map(function(k){ return '<option value="'+k+'"'+(w.type===k?' selected':'')+'>'+WEAPON_TYPES[k]+'</option>'; }).join('');
+  if(w.type && !WEAPON_TYPES[w.type]) typeOpts += '<option value="'+esc(w.type)+'" selected>'+esc(w.type)+'</option>';
+  var rOpts='<option value="">Race…</option>';    (db.races||[]).forEach(function(r){rOpts+='<option value="'+esc(r.id)+'">'+esc(r.name)+'</option>';});
+  var fOpts='<option value="">Faction…</option>'; (db.factions||[]).forEach(function(f){fOpts+='<option value="'+esc(f.id)+'">'+esc(f.name)+'</option>';});
+  var cOpts='<option value="">Classe…</option>';  (db.classes||[]).forEach(function(c){cOpts+='<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';});
+
+  document.getElementById('modalTitle').textContent = isEdit?'Modifier l\'Arme':'Nouvelle Arme';
+  document.getElementById('modalBody').innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">' +
+    '<div class="form-group"><label class="form-label">Identifiant (ID)*</label><input class="form-input" id="wp_id" value="' + esc(w.id) + '" placeholder="weapon_example" oninput="lockIdField(\'wp_id\')"></div>' +
+    '<div class="form-group"><label class="form-label">Nom*</label><input class="form-input" id="wp_name" value="' + esc(w.name) + '" placeholder="Nom de l\'arme" oninput="autoGenId(this,\'wp_id\')"></div></div>' +
+    '<div class="form-group"><label class="form-label">Type</label><select class="form-select" id="wp_type">' + typeOpts + '</select></div>' +
+    '<div class="form-group"><label class="form-label">Races autorisées <span style="font-size:0.7rem;color:var(--text-dim)">(vide = toutes)</span></label>' +
+    '<div style="display:flex;gap:0.5rem;margin-bottom:0.4rem"><select class="form-select" id="wpRaceSel">' + rOpts + '</select><button class="btn btn-primary btn-sm" onclick="addWeaponTarget(\'race\')">+</button></div><div id="wpRaceList"></div></div>' +
+    '<div class="form-group"><label class="form-label">Factions autorisées <span style="font-size:0.7rem;color:var(--text-dim)">(vide = toutes)</span></label>' +
+    '<div style="display:flex;gap:0.5rem;margin-bottom:0.4rem"><select class="form-select" id="wpFacSel">' + fOpts + '</select><button class="btn btn-primary btn-sm" onclick="addWeaponTarget(\'faction\')">+</button></div><div id="wpFacList"></div></div>' +
+    '<div class="form-group"><label class="form-label">Classes autorisées <span style="font-size:0.7rem;color:var(--text-dim)">(vide = toutes)</span></label>' +
+    '<div style="display:flex;gap:0.5rem;margin-bottom:0.4rem"><select class="form-select" id="wpClsSel">' + cOpts + '</select><button class="btn btn-primary btn-sm" onclick="addWeaponTarget(\'class\')">+</button></div><div id="wpClsList"></div></div>' +
+    '<div class="form-group"><label class="form-label">Notes</label>' +
+    '<div class="notes-editor"><div class="note-input-row"><input type="text" id="noteInput" placeholder="Ajouter une note…"><button class="btn btn-primary btn-sm" onclick="addCurrentNote()">+ Ajouter</button></div>' +
+    '<div class="notes-list-edit" id="notesList"></div></div></div>';
+  renderNotesList(); renderWeaponTargetList('race'); renderWeaponTargetList('faction'); renderWeaponTargetList('class');
+  document.getElementById('modalFooter').innerHTML =
+    '<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>' +
+    '<button class="btn btn-gold" onclick="saveWeapon(' + (isEdit?idx:'undefined') + ')">💾 Enregistrer</button>';
+  document.getElementById('noteInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){addCurrentNote();e.preventDefault();} });
+  openModal();
+}
+// Ajoute une cible (race/faction/classe) à l'arme en cours d'édition.
+function addWeaponTarget(type) {
+  var selMap={race:'wpRaceSel',faction:'wpFacSel',class:'wpClsSel'};
+  var arrMap={race:window._wpRaces,faction:window._wpFactions,class:window._wpClasses};
+  var val=document.getElementById(selMap[type]).value; if(!val) return;
+  if(arrMap[type].indexOf(val)!==-1){ toast('Déjà ajouté'); return; }
+  arrMap[type].push(val); document.getElementById(selMap[type]).value=''; renderWeaponTargetList(type);
+}
+function renderWeaponTargetList(type) {
+  var elMap={race:'wpRaceList',faction:'wpFacList',class:'wpClsList'};
+  var arrMap={race:window._wpRaces,faction:window._wpFactions,class:window._wpClasses};
+  var winMap={race:'_wpRaces',faction:'_wpFactions',class:'_wpClasses'};
+  var dbMap={race:db.races||[],faction:db.factions||[],class:db.classes||[]};
+  var colMap={race:'#a06040',faction:'var(--accent-moon)',class:'#4a6fa5'};
+  var el=document.getElementById(elMap[type]); if(!el) return;
+  var arr=arrMap[type]||[];
+  if(!arr.length){ el.innerHTML='<div style="padding:0.3rem 0.5rem;font-size:0.8rem;color:var(--text-dim)">Aucune restriction</div>'; return; }
+  el.innerHTML=arr.map(function(id,i){
+    var item=dbMap[type].find(function(x){return x.id===id;});
+    return '<div class="note-edit-item"><span style="color:'+colMap[type]+'">'+esc(item?item.name:id)+'</span>' +
+      '<button class="note-del-btn" onclick="window.'+winMap[type]+'.splice('+i+',1);renderWeaponTargetList(\''+type+'\')">✕</button></div>';
+  }).join('');
+}
+function saveWeapon(idx) {
+  var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.weapons[idx])):{};
+  var obj=Object.assign(base,{
+    id:document.getElementById('wp_id').value.trim(), name:document.getElementById('wp_name').value.trim(),
+    type:document.getElementById('wp_type').value,
+    eligible_races:window._wpRaces.slice(), eligible_factions:window._wpFactions.slice(), eligible_classes:window._wpClasses.slice(),
+    notes:window._currentNotes.slice()});
+  if(!obj.id||!obj.name){ toast('ID et Nom obligatoires'); return; }
+  if(!db.weapons) db.weapons=[];
+  if(idx!==undefined) db.weapons[idx]=obj; else db.weapons.push(obj);
+  closeModal(); showSection('weapons'); toast(idx!==undefined?'Arme modifiée':'Arme ajoutée');
+}
+function deleteWeapon(idx) {
+  confirmDelete('Supprimer « '+db.weapons[idx].name+' » ?', function(){ db.weapons.splice(idx,1); showSection('weapons'); toast('Arme supprimée'); });
+}
+
+// ─────────────────────────────────────────────
+// Commandes serveur (avec niveau RBAC)
+// ─────────────────────────────────────────────
+// Niveaux RBAC, du plus privilégié au moins privilégié.
+var RBAC_LEVELS = [
+  {v:'admin',       l:'Administrateur', c:'#c05060'},
+  {v:'moderator',   l:'Modérateur',     c:'#e8a44a'},
+  {v:'game_master', l:'Game Master',    c:'#9060c0'},
+  {v:'player',      l:'Joueur',         c:'#7ac08a'}
+];
+function rbacDef(v){ return RBAC_LEVELS.find(function(x){return x.v===v;}) || {v:v,l:v||'—',c:'#708090'}; }
+
+function renderServerCommands(el) {
+  var h = '<div class="panel-header"><div class="panel-title">⌨️ Commandes serveur</div>';
+  h += '<div style="display:flex;gap:0.75rem;align-items:center">';
+  h += '<div class="search-bar"><input type="text" placeholder="Rechercher..." id="searchCmd" oninput="renderServerCommands(document.getElementById(\'sectionContent\'))"></div>';
+  h += '<button class="btn btn-gold btn-sm" onclick="openServerCommandForm()">+ Ajouter</button></div></div>';
+  h += '<div class="cards-grid" id="cmdGrid"></div>';
+  var q = document.getElementById('searchCmd') ? document.getElementById('searchCmd').value.toLowerCase() : '';
+  el.innerHTML = h;
+  var _sf = document.getElementById('searchCmd'); if(_sf&&q){ _sf.value=q; _sf.focus(); _sf.setSelectionRange(q.length,q.length); }
+  var grid = el.querySelector('#cmdGrid');
+  var list = (db.server_commands||[]).filter(function(c){ return !q || (c.name||'').toLowerCase().includes(q) || (c.id||'').toLowerCase().includes(q); });
+  if(!list.length){ grid.innerHTML = '<div class="empty-state">Aucune commande serveur — cliquez sur « + Ajouter ».</div>'; return; }
+  grid.innerHTML = list.map(function(c) {
+    var gi = db.server_commands.indexOf(c);
+    var rb = rbacDef(c.rbac_level);
+    var card = '<div class="card" style="--card-accent:' + rb.c + '">';
+    card += '<div class="card-header"><div><div class="card-title">⌨️ ' + esc(c.name) + '</div><div class="card-id">' + esc(c.id) + '</div></div>';
+    card += '<div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openServerCommandForm(' + gi + ')">✎</button>';
+    card += '<button class="btn btn-danger" onclick="deleteServerCommand(' + gi + ')">✕</button></div></div>';
+    card += cardRow('Accès RBAC', badge('🔑 '+esc(rb.l), rb.c), true);
+    if(c.description) card += '<div style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.35rem">' + esc(c.description) + '</div>';
+    card += notesBadgesHTML(c.notes);
+    return card + '</div>';
+  }).join('');
+}
+
+function openServerCommandForm(idx) {
+  var isEdit = idx!==undefined;
+  var c = isEdit ? JSON.parse(JSON.stringify(db.server_commands[idx])) : {id:'',name:'',description:'',rbac_level:'player',notes:[]};
+  window._currentNotes = toArr(c.notes).slice();
+  var rbacOpts = RBAC_LEVELS.map(function(r){ return '<option value="'+r.v+'"'+(c.rbac_level===r.v?' selected':'')+'>'+r.l+'</option>'; }).join('');
+  document.getElementById('modalTitle').textContent = isEdit?'Modifier la Commande':'Nouvelle Commande serveur';
+  document.getElementById('modalBody').innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">' +
+    '<div class="form-group"><label class="form-label">Identifiant (ID)*</label><input class="form-input" id="cmd_id" value="' + esc(c.id) + '" placeholder="cmd_kick" oninput="lockIdField(\'cmd_id\')"></div>' +
+    '<div class="form-group"><label class="form-label">Commande*</label><input class="form-input" id="cmd_name" value="' + esc(c.name) + '" placeholder="/kick &lt;joueur&gt;" oninput="autoGenId(this,\'cmd_id\')"></div></div>' +
+    '<div class="form-group"><label class="form-label">Niveau d\'accès (RBAC)</label><select class="form-select" id="cmd_rbac">' + rbacOpts + '</select></div>' +
+    '<div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="cmd_desc" placeholder="Que fait cette commande…">' + esc(c.description||'') + '</textarea></div>' +
+    '<div class="form-group"><label class="form-label">Notes</label>' +
+    '<div class="notes-editor"><div class="note-input-row"><input type="text" id="noteInput" placeholder="Ajouter une note…"><button class="btn btn-primary btn-sm" onclick="addCurrentNote()">+ Ajouter</button></div>' +
+    '<div class="notes-list-edit" id="notesList"></div></div></div>';
+  renderNotesList();
+  document.getElementById('modalFooter').innerHTML =
+    '<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>' +
+    '<button class="btn btn-gold" onclick="saveServerCommand(' + (isEdit?idx:'undefined') + ')">💾 Enregistrer</button>';
+  document.getElementById('noteInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){addCurrentNote();e.preventDefault();} });
+  openModal();
+}
+function saveServerCommand(idx) {
+  var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.server_commands[idx])):{};
+  var obj=Object.assign(base,{
+    id:document.getElementById('cmd_id').value.trim(), name:document.getElementById('cmd_name').value.trim(),
+    rbac_level:document.getElementById('cmd_rbac').value,
+    description:document.getElementById('cmd_desc').value.trim(),
+    notes:window._currentNotes.slice()});
+  if(!obj.id||!obj.name){ toast('ID et Commande obligatoires'); return; }
+  if(!db.server_commands) db.server_commands=[];
+  if(idx!==undefined) db.server_commands[idx]=obj; else db.server_commands.push(obj);
+  closeModal(); showSection('server_commands'); toast(idx!==undefined?'Commande modifiée':'Commande ajoutée');
+}
+function deleteServerCommand(idx) {
+  confirmDelete('Supprimer « '+db.server_commands[idx].name+' » ?', function(){ db.server_commands.splice(idx,1); showSection('server_commands'); toast('Commande supprimée'); });
 }
 
 // ─────────────────────────────────────────────

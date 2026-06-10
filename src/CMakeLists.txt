@@ -69,6 +69,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/auction/AuctionHouse.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
+    # Combat SP1 — catalogue d'archétypes de créatures (stats data-driven).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibrary.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/event/EventRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp
@@ -525,6 +527,11 @@ elseif(UNIX)
   # + Hello. ServerProtocol.cpp est fourni par engine_core (lié par le helper).
   lcdlln_add_simple_test(server_protocol_tests
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerProtocolTests.cpp)
+
+  # Combat SP1 : catalogue d'archétypes de créatures (parse + validation JSON).
+  lcdlln_add_simple_test(creature_archetype_library_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibraryTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibrary.cpp)
 
   # TA.3 (replication des joueurs) : registre des personnages admis (gate de la
   # session UDP, lié au character_id authentifié du ticket). Pure logique testable.
@@ -1142,6 +1149,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/auction/AuctionHouse.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
+    # Combat SP1 — catalogue d'archétypes de créatures (stats data-driven).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibrary.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/event/EventRuntime.cpp
     # TA.4 : accès MySQL pour le pont position (lecture characters.spawn_x/y/z).

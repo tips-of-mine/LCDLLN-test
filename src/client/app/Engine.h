@@ -630,6 +630,17 @@ namespace engine
 		/// Le shell appelle ImGui (Windows-only) — toujours nul sur Linux.
 		std::unique_ptr<engine::editor::world::WorldEditorShell> m_worldEditorShell;
 
+		/// Lot 0 (Phase C) — état du drag « marquee » de l'outil Select : actif
+		/// entre le press et le release gauche, avec le point de sol (X/Z monde)
+		/// capturé au press. Sert à distinguer clic simple / rectangle.
+		bool  m_editorMarqueeActive = false;
+		float m_editorMarqueeStartX = 0.0f;
+		float m_editorMarqueeStartZ = 0.0f;
+		/// Lot 0 (Phase C) — masque de visibilité des marqueurs layoutInstances
+		/// (1 = caché car calque masqué), aligné sur l'index d'instance. Reconstruit
+		/// chaque frame ; durée de vie ≥ la frame (lu par l'overlay ImGui).
+		std::vector<uint8_t> m_editorLayoutHiddenMask;
+
 		/// M100.34 incrément 1 — Cible offscreen R8G8B8A8 dédiée au viewport
 		/// éditeur. Possédée par Engine, init après VkDeviceContext valide
 		/// + ImGui_ImplVulkan_Init OK, détruite avant le shutdown Vulkan.

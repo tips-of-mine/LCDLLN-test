@@ -10032,21 +10032,48 @@ namespace engine
 				}
 				else if (tool == engine::editor::world::ActiveTool::Select)
 				{
-					// Lot 0 (Phase C) — outil Sélection : clic simple = pick de
-					// l'entité la plus proche (X/Z) sous le rayon de pick ; clic
-					// dans le vide = désélection. Marque modernEditActive pour
-					// neutraliser le pinceau legacy.
+					// Lot 0 (Phase C) — outil Sélection : press = début du drag
+					// (capture du point sol) ; release = clic simple (pick) si le
+					// déplacement est négligeable, sinon rectangle (marquee).
+					// Shift = additif (toggle au set existant). Marque
+					// modernEditActive pour neutraliser le pinceau legacy.
 					modernEditActive = true;
-					if (freeClick && terrainPick
-						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					if (freeClick && terrainPick)
 					{
-						const auto cands = buildSelectables();
-						const float radius = m_worldEditorShell->GetSelectPickRadiusMeters();
-						auto hit = engine::editor::scene::PickNearest(cands, pickX, pickZ, radius);
-						if (hit.has_value())
-							m_worldEditorShell->MutableSelection().Select(*hit);
-						else
-							m_worldEditorShell->MutableSelection().Clear();
+						const bool shift = m_input.IsDown(engine::platform::Key::Shift);
+						if (m_input.WasMousePressed(engine::platform::MouseButton::Left))
+						{
+							m_editorMarqueeActive = true;
+							m_editorMarqueeStartX = pickX;
+							m_editorMarqueeStartZ = pickZ;
+						}
+						if (m_editorMarqueeActive
+							&& m_input.WasMouseReleased(engine::platform::MouseButton::Left))
+						{
+							m_editorMarqueeActive = false;
+							const float dx = pickX - m_editorMarqueeStartX;
+							const float dz = pickZ - m_editorMarqueeStartZ;
+							const auto cands = buildSelectables();
+							const float radius = m_worldEditorShell->GetSelectPickRadiusMeters();
+							// Drag négligeable -> clic simple ; sinon -> rectangle.
+							if (dx * dx + dz * dz < radius * radius)
+							{
+								auto hit = engine::editor::scene::PickNearest(cands, pickX, pickZ, radius);
+								if (hit.has_value()) m_worldEditorShell->MutableSelection().Select(*hit);
+								else if (!shift) m_worldEditorShell->MutableSelection().Clear();
+							}
+							else
+							{
+								engine::editor::world::SelectionRect rect;
+								rect.minX = m_editorMarqueeStartX; rect.maxX = pickX;
+								rect.minZ = m_editorMarqueeStartZ; rect.maxZ = pickZ;
+								auto ids = engine::editor::scene::PickInRect(cands, rect);
+								if (shift)
+									for (const auto& id : ids) m_worldEditorShell->MutableSelection().ToggleInSelection(id);
+								else
+									m_worldEditorShell->MutableSelection().SelectMany(ids);
+							}
+						}
 					}
 				}
 			}

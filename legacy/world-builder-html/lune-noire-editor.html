@@ -1721,6 +1721,7 @@ function buildExportSchema() {
         repeatable: !!q.repeatable, type: q.type||'',
         steps: q.steps||[], source_lore: q.source_lore||[], rewards: q.rewards||{},
         min_players: q.min_players||1,
+        duration_value: q.duration_value||0, duration_unit: q.duration_unit||'minutes',
         required_classes: q.required_classes||[],
         for_factions: q.for_factions||[], for_races: q.for_races||[], for_classes: q.for_classes||[],
         unlock_conditions: q.unlock_conditions||[], region_id: q.region_id||'',
@@ -1752,6 +1753,7 @@ function buildExportSchema() {
         min_teams: r.min_teams||2,
         min_players_per_team: r.min_players_per_team||1,
         min_players_total: r.min_players_total||2,
+        duration_value: r.duration_value||0, duration_unit: r.duration_unit||'minutes',
         required_classes: r.required_classes||[],
         for_factions: r.for_factions||[],
         for_races:    r.for_races||[],
@@ -1908,6 +1910,30 @@ function exportJSON() {
     (db.quests||[]).length + ' quêtes'
   ].filter(function(s){ return s[0] !== '0'; });
   toast('JSON exporté — ' + (counts.join(', ') || 'base vide'));
+}
+
+// ─────────────────────────────────────────────
+// Carte du monde
+// La section « Carte » était référencée dans le menu (nav + table `renders`)
+// sans implémentation : `renderCarte` n'existait pas, donc construire l'objet
+// `renders` dans showSection levait « renderCarte is not defined », ce qui
+// faisait échouer l'import JSON (capturé en « JSON invalide »).
+// Affiche les notes de carte du monde (db.lore.world_map_notes), seule donnée
+// « carte » du modèle ; l'édition se fait via la fiche Lore.
+// ─────────────────────────────────────────────
+function renderCarte(el) {
+  var lore = db.lore || {};
+  var notes = lore.world_map_notes || [];
+  var h = '<div class="panel-header"><div class="panel-title">🗺️ Carte du monde</div></div>';
+  if (!notes.length) {
+    h += '<div class="empty-state">Aucune note de carte. Ajoutez-les depuis la fiche « Lore » (champ « Notes de carte du monde »).</div>';
+  } else {
+    h += '<div class="dash-chart-card"><div class="dash-chart-title">🗺️ Notes de Carte</div>';
+    h += '<ul style="margin:0;padding-left:1.2rem">' +
+      notes.map(function(n){ return '<li style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.4rem;line-height:1.5">' + esc(n) + '</li>'; }).join('') +
+      '</ul></div>';
+  }
+  el.innerHTML = h;
 }
 
 // ─────────────────────────────────────────────
@@ -3344,6 +3370,45 @@ function deleteExploit(idx) {
 }
 
 // ─────────────────────────────────────────────
+// Durée estimée (quêtes & raids)
+// Temps indicatif pour boucler le contenu ; purement informatif.
+// Stockage structuré : duration_value (nombre) + duration_unit (clé d'unité).
+// ─────────────────────────────────────────────
+var DURATION_UNITS = {
+  minutes: {label:'minutes', short:'min'},
+  hours:   {label:'heures',  short:'h'},
+  days:    {label:'jours',   short:'j'}
+};
+// Construit les <option> d'unité de durée, en présélectionnant `sel`.
+function durationUnitOptions(sel){
+  return Object.keys(DURATION_UNITS).map(function(k){
+    return '<option value="'+k+'"'+(sel===k?' selected':'')+'>'+DURATION_UNITS[k].label+'</option>';
+  }).join('');
+}
+// Rend le bloc formulaire « Durée estimée » : champ nombre + sélecteur d'unité.
+// prefix = préfixe d'id du formulaire ('qt' pour quête, 'rd' pour raid).
+function durationFieldHTML(prefix, val, unit){
+  return '<div class="form-group"><label class="form-label">Durée estimée <span style="font-size:0.7rem;color:var(--text-dim)">(temps indicatif pour terminer)</span></label>'+
+    '<div style="display:flex;gap:0.5rem">'+
+    '<input class="form-input" id="'+prefix+'_dur_val" type="number" min="0" step="1" value="'+(val||0)+'" placeholder="0" style="flex:1">'+
+    '<select class="form-select" id="'+prefix+'_dur_unit" style="flex:1">'+durationUnitOptions(unit||'minutes')+'</select></div></div>';
+}
+// Lit les champs durée d'un formulaire et renvoie {duration_value, duration_unit}.
+function readDurationFields(prefix){
+  var dv=(document.getElementById(prefix+'_dur_val')||{value:''}).value;
+  return {
+    duration_value: dv!==''?Math.max(0,parseInt(dv,10)||0):0,
+    duration_unit: (document.getElementById(prefix+'_dur_unit')||{value:'minutes'}).value||'minutes'
+  };
+}
+// Formatte une durée pour un badge ; renvoie '' si non renseignée (val<=0).
+function durationLabel(val, unit){
+  if(!val||val<=0) return '';
+  var u=DURATION_UNITS[unit]||DURATION_UNITS.minutes;
+  return '⏱️ ~'+val+' '+u.short;
+}
+
+// ─────────────────────────────────────────────
 // Quêtes
 // ─────────────────────────────────────────────
 function renderQuests(el) {
@@ -3367,6 +3432,8 @@ function renderQuests(el) {
     card+='<div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openQuestForm(' + gi + ')">✎</button>';
     card+='<button class="btn btn-danger" onclick="deleteQuest(' + gi + ')">✕</button></div></div>';
     if(qt.description) card+='<div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.4rem;font-style:italic">' + esc(qt.description.substring(0,120)) + (qt.description.length>120?'…':'') + '</div>';
+    var qtDurL=durationLabel(qt.duration_value, qt.duration_unit);
+    if(qtDurL) card+='<div style="margin-top:0.35rem">'+badge(qtDurL,'#6fa0a0')+'</div>';
     // Prérequis row
     var prereqB='';
     if(qt.min_players && qt.min_players>1) prereqB+=badge('👥 min. '+qt.min_players+' joueur'+(qt.min_players>1?'s':''),'#7090c0');
@@ -3387,7 +3454,7 @@ function renderQuests(el) {
 }
 function openQuestForm(idx) {
   var isEdit=idx!==undefined;
-  var qt=isEdit?JSON.parse(JSON.stringify(db.quests[idx])):{id:'',name:'',description:'',min_players:1,required_classes:[],for_factions:[],for_races:[],for_classes:[],unlock_conditions:[],notes:[]};
+  var qt=isEdit?JSON.parse(JSON.stringify(db.quests[idx])):{id:'',name:'',description:'',min_players:1,duration_value:0,duration_unit:'minutes',required_classes:[],for_factions:[],for_races:[],for_classes:[],unlock_conditions:[],notes:[]};
   window.qtConditions=JSON.parse(JSON.stringify(qt.unlock_conditions||[]));
   window._currentNotes=toArr(qt.notes).slice();
   window._currentRequiredClasses=(qt.required_classes||[]).slice();
@@ -3406,6 +3473,7 @@ function openQuestForm(idx) {
     '<div class="form-group"><label class="form-label">Région</label>' +
     '<select class="form-select" id="qt_region">' + qtRgOpts + '</select></div>' +
     '<div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="qt_desc" placeholder="Décrivez la quête…">' + esc(qt.description||'') + '</textarea></div>' +
+    durationFieldHTML('qt', qt.duration_value, qt.duration_unit) +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">' +
     '<div class="form-group"><label class="form-label">Joueurs minimum requis</label>' +
     '<input class="form-input" id="qt_min_players" type="number" min="1" value="' + (qt.min_players||1) + '" placeholder="1"></div>' +
@@ -3471,9 +3539,11 @@ function renderReqClassList() {
 }
 function saveQuest(idx) {
   var mp=document.getElementById('qt_min_players').value;
+  var qtDur=readDurationFields('qt');
   var obj={id:document.getElementById('qt_id').value.trim(), name:document.getElementById('qt_name').value.trim(),
     description:document.getElementById('qt_desc').value.trim(),
     min_players: mp!==''?parseInt(mp,10):1,
+    duration_value: qtDur.duration_value, duration_unit: qtDur.duration_unit,
     required_classes: window._currentRequiredClasses.slice(),
     for_factions:window._currentQuestFactions.slice(), for_races:window._currentQuestRaces.slice(),
     region_id:(document.getElementById('qt_region')||{value:''}).value,
@@ -3955,6 +4025,8 @@ function renderRaids(el) {
     if(r.difficulty) card+=badge(diff.label,diff.color);
     if(r.min_teams) card+=badge('🛡️ '+r.min_teams+' \u00e9quipe'+(r.min_teams>1?'s':''),'#708090');
     if(r.min_players_total>1) card+=badge('👥 '+r.min_players_total+' joueurs min.','#7090c0');
+    var rdDurL=durationLabel(r.duration_value, r.duration_unit);
+    if(rdDurL) card+=badge(rdDurL,'#6fa0a0');
     if(r.description) card+='<div style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.4rem;font-style:italic">'+esc(r.description.substring(0,120))+(r.description.length>120?'\u2026':'')+'</div>';
     var parts=[];
     ((r.required_classes)||[]).forEach(function(cid){var c=(db.classes||[]).find(function(x){return x.id===cid;});if(c)parts.push(badge('★ '+c.name+' requis',classColor(cid)));});
@@ -3978,7 +4050,7 @@ function renderRaids(el) {
 }
 function openRaidForm(idx) {
   var isEdit=idx!==undefined;
-  var r=isEdit?JSON.parse(JSON.stringify(db.raids[idx])):{id:'',name:'',description:'',min_teams:2,min_players_per_team:5,min_players_total:10,required_classes:[],for_factions:[],for_races:[],difficulty:'heroic',location_ville_id:'',unlock_conditions:[],rewards:{title:'',reward:'',power:''},notes:[]};
+  var r=isEdit?JSON.parse(JSON.stringify(db.raids[idx])):{id:'',name:'',description:'',min_teams:2,min_players_per_team:5,min_players_total:10,duration_value:0,duration_unit:'minutes',required_classes:[],for_factions:[],for_races:[],difficulty:'heroic',location_ville_id:'',unlock_conditions:[],rewards:{title:'',reward:'',power:''},notes:[]};
   window.rdConditions=JSON.parse(JSON.stringify(r.unlock_conditions||[]));
   window._currentNotes=(r.notes||[]).slice();
   window._currentRaidReqClasses=(r.required_classes||[]).slice();
@@ -4004,6 +4076,7 @@ function openRaidForm(idx) {
     '<div class="form-group"><label class="form-label">Nb \u00e9quipes min.</label><input class="form-input" id="rd_teams" type="number" min="1" value="'+(r.min_teams||2)+'" placeholder="2"></div>'+
     '<div class="form-group"><label class="form-label">Joueurs / \u00e9quipe</label><input class="form-input" id="rd_ppt" type="number" min="1" value="'+(r.min_players_per_team||5)+'" placeholder="5"></div>'+
     '<div class="form-group"><label class="form-label">Total joueurs min.</label><input class="form-input" id="rd_total" type="number" min="1" value="'+(r.min_players_total||10)+'" placeholder="10"></div></div>'+
+    durationFieldHTML('rd', r.duration_value, r.duration_unit)+
     '<div class="form-group"><label class="form-label">Ville / Localisation</label><select class="form-select" id="rd_ville">'+vOpts+'</select></div>'+
     '<div class="form-group"><label class="form-label">Classe(s) requise(s) <span style="font-size:0.7rem;color:var(--text-dim)">(obligatoires dans l\u0027\u00e9quipe)</span></label>'+
     '<div style="display:flex;gap:0.5rem;margin-bottom:0.4rem"><select class="form-select" id="rdClsSel">'+cOpts+'</select><button class="btn btn-primary btn-sm" onclick="addRaidReqClass()">+</button></div><div id="rdClsList"></div></div>'+
@@ -4055,12 +4128,14 @@ function renderRaidTargetList(type){
   el.innerHTML=arr.map(function(id,i){var item=dbMap[type].find(function(x){return x.id===id;});return '<div class="note-edit-item"><span style="color:'+colMap[type]+'">'+esc(item?item.name:id)+'</span><button class="note-del-btn" onclick="window.'+winMap[type]+'.splice('+i+',1);renderRaidTargetList(\''+type+'\')">✕</button></div>';}).join('');
 }
 function saveRaid(idx){
+  var rdDur=readDurationFields('rd');
   var obj={id:document.getElementById('rd_id').value.trim(), name:document.getElementById('rd_name').value.trim(),
     description:document.getElementById('rd_desc').value.trim(),
     difficulty:document.getElementById('rd_diff').value,
     min_teams:parseInt(document.getElementById('rd_teams').value||2,10),
     min_players_per_team:parseInt(document.getElementById('rd_ppt').value||5,10),
     min_players_total:parseInt(document.getElementById('rd_total').value||10,10),
+    duration_value:rdDur.duration_value, duration_unit:rdDur.duration_unit,
     location_ville_id:document.getElementById('rd_ville').value,
     required_classes:window._currentRaidReqClasses.slice(),
     region_id:(document.getElementById('rd_region')||{value:''}).value,

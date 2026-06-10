@@ -321,6 +321,7 @@ namespace engine::editor::world
 			case ActiveTool::Overhang:            name = "Overhang"; break;
 			case ActiveTool::Arch:                name = "Arch"; break;
 			case ActiveTool::DungeonPortal:       name = "DungeonPortal"; break;
+			case ActiveTool::Select:              name = "Select"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);

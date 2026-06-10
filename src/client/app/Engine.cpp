@@ -7,6 +7,12 @@
 #include "src/world_editor/ui/WorldEditorSession.h"
 #include "src/world_editor/core/WorldEditorShell.h"
 #include "src/world_editor/panels/ScenePanel.h"
+// Lot 0 — câblage sélection / suppression éditeur (Phase C). Cœur pur tiré
+// directement (non garanti transitivement par WorldEditorShell.h).
+#include "src/world_editor/scene/EntityKey.h"
+#include "src/world_editor/scene/SelectionQuery.h"
+#include "src/world_editor/scene/DeleteEntitiesCommand.h"
+#include "src/world_editor/scene/DeleteEntitiesOps.h"
 #include "src/shared/core/memory/Memory.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/network/ChatPayloads.h"
@@ -8960,6 +8966,37 @@ namespace engine
 							}
 						}
 					});
+
+				// Lot 0 (Phase C) — résolveur EntityId -> entityKey (clé stable de
+				// calque). Capture [this] : seul l'Engine connaît les guids des
+				// docs concrets. Calque sur le pattern de SetTransformWriter.
+				m_worldEditorShell->SetEntityKeyResolver(
+					[this](engine::editor::scene::EntityId id) -> uint64_t
+					{
+						using K = engine::editor::scene::EntityKind;
+						if (id.kind == K::LayoutInstance && m_worldEditorSession)
+						{
+							const auto& insts = m_worldEditorSession->Doc().layoutInstances;
+							if (id.index < insts.size())
+								return engine::editor::scene::MakeEntityKeyFromString(
+									K::LayoutInstance, insts[id.index].guid);
+						}
+						else if (id.kind == K::MeshInsert && m_worldEditorShell)
+						{
+							const auto& all = m_worldEditorShell->GetMeshInsertDocument().All();
+							if (id.index < all.size())
+								return engine::editor::scene::MakeEntityKeyFromGuid(
+									K::MeshInsert, all[id.index].guid);
+						}
+						else if (id.kind == K::DungeonPortal && m_worldEditorShell)
+						{
+							const auto& all = m_worldEditorShell->GetDungeonPortalDocument().All();
+							if (id.index < all.size())
+								return engine::editor::scene::MakeEntityKeyFromGuid(
+									K::DungeonPortal, all[id.index].guid);
+						}
+						return 0ull;
+					});
 			}
 			m_worldEditorShell->RenderFrame();
 		}
@@ -9907,6 +9944,37 @@ namespace engine
 				const engine::editor::world::ActiveTool tool = m_worldEditorShell->GetActiveTool();
 				const bool freeClick = !m_worldEditorImGui->WantsCaptureMouse()
 					&& !m_input.IsDown(engine::platform::Key::Control);
+
+				// Lot 0 (Phase C) — construit la liste des candidats sélectionnables
+				// (positions X/Z monde), en excluant ceux des calques cachés ou
+				// verrouillés. Recalculée à la demande (pick / marquee) : l'index
+				// retourné (EntityId.index) reste cohérent avec le Doc de la frame.
+				auto buildSelectables = [this]() -> std::vector<engine::editor::scene::SelectableEntity>
+				{
+					using K = engine::editor::scene::EntityKind;
+					std::vector<engine::editor::scene::SelectableEntity> cands;
+					if (!m_worldEditorSession || !m_worldEditorShell) return cands;
+					const auto& layers = m_worldEditorShell->GetLayersDocument();
+					auto pushIf = [&](engine::editor::scene::EntityId id, float x, float z)
+					{
+						const uint64_t key = m_worldEditorShell->EntityKeyFor(id);
+						if (key != 0ull && (!layers.IsEntityVisible(key) || layers.IsEntityLocked(key)))
+							return; // caché ou verrouillé -> non sélectionnable
+						cands.push_back({ id, x, z });
+					};
+					const auto& insts = m_worldEditorSession->Doc().layoutInstances;
+					for (uint32_t i = 0; i < insts.size(); ++i)
+						pushIf({ K::LayoutInstance, i },
+							static_cast<float>(insts[i].worldX), static_cast<float>(insts[i].worldZ));
+					const auto& mesh = m_worldEditorShell->GetMeshInsertDocument().All();
+					for (uint32_t i = 0; i < mesh.size(); ++i)
+						pushIf({ K::MeshInsert, i }, mesh[i].worldPosition.x, mesh[i].worldPosition.z);
+					const auto& dung = m_worldEditorShell->GetDungeonPortalDocument().All();
+					for (uint32_t i = 0; i < dung.size(); ++i)
+						pushIf({ K::DungeonPortal, i }, dung[i].worldPosition.x, dung[i].worldPosition.z);
+					return cands;
+				};
+
 				if (tool == engine::editor::world::ActiveTool::TerrainSculpt)
 				{
 					modernEditActive = true;
@@ -9960,6 +10028,25 @@ namespace engine
 						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
 					{
 						m_worldEditorShell->MutableValleyChainTool().AddVertex(pickX, pickZ);
+					}
+				}
+				else if (tool == engine::editor::world::ActiveTool::Select)
+				{
+					// Lot 0 (Phase C) — outil Sélection : clic simple = pick de
+					// l'entité la plus proche (X/Z) sous le rayon de pick ; clic
+					// dans le vide = désélection. Marque modernEditActive pour
+					// neutraliser le pinceau legacy.
+					modernEditActive = true;
+					if (freeClick && terrainPick
+						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						const auto cands = buildSelectables();
+						const float radius = m_worldEditorShell->GetSelectPickRadiusMeters();
+						auto hit = engine::editor::scene::PickNearest(cands, pickX, pickZ, radius);
+						if (hit.has_value())
+							m_worldEditorShell->MutableSelection().Select(*hit);
+						else
+							m_worldEditorShell->MutableSelection().Clear();
 					}
 				}
 			}

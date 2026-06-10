@@ -9950,6 +9950,24 @@ namespace engine
 				}
 				overlay.layoutInstancesOverlay = &m_worldEditorSession->MutableDoc().layoutInstances;
 				overlay.selectedLayoutInstanceOverlay = m_worldEditorSession->SelectedLayoutInstanceIndex();
+
+				// Lot 0 (Phase C) — masque de visibilité des marqueurs par calque.
+				// Reconstruit dans un membre Engine (durée de vie ≥ la frame) puis
+				// publié à l'overlay. Requiert le shell (résolveur de clé + calques).
+				if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
+				{
+					const auto& insts = m_worldEditorSession->Doc().layoutInstances;
+					const auto& layers = m_worldEditorShell->GetLayersDocument();
+					m_editorLayoutHiddenMask.assign(insts.size(), 0u);
+					for (uint32_t i = 0; i < insts.size(); ++i)
+					{
+						const uint64_t key = m_worldEditorShell->EntityKeyFor(
+							{ engine::editor::scene::EntityKind::LayoutInstance, i });
+						if (key != 0ull && !layers.IsEntityVisible(key))
+							m_editorLayoutHiddenMask[i] = 1u;
+					}
+					overlay.layoutInstanceHiddenMask = &m_editorLayoutHiddenMask;
+				}
 			}
 
 			m_worldEditorImGui->BuildUi(&overlay);

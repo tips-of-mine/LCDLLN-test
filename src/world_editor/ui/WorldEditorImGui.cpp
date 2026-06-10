@@ -345,6 +345,11 @@ namespace engine::editor
 				for (size_t ii = 0; ii < d.layoutInstancesOverlay->size(); ++ii)
 				{
 					const engine::editor::WorldMapEditLayoutInstance& inst = (*d.layoutInstancesOverlay)[ii];
+					// Lot 0 (Phase C) — saute le marqueur si son calque est masqué.
+					if (d.layoutInstanceHiddenMask != nullptr
+						&& ii < d.layoutInstanceHiddenMask->size()
+						&& (*d.layoutInstanceHiddenMask)[ii] != 0)
+						continue;
 					const float wx = static_cast<float>(inst.worldX);
 					const float wy = static_cast<float>(inst.worldY);
 					const float wz = static_cast<float>(inst.worldZ);

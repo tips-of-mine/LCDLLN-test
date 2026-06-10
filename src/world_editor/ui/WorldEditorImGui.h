@@ -66,6 +66,10 @@ namespace engine::editor
 		/// Marqueurs debug instances (monde m). Nullptr = rien à dessiner.
 		const std::vector<WorldMapEditLayoutInstance>* layoutInstancesOverlay = nullptr;
 		int selectedLayoutInstanceOverlay = -1;
+		/// Lot 0 (Phase C) — masque de visibilité des marqueurs, aligné sur
+		/// l'index d'instance (1 = caché car calque masqué). Pointeur non
+		/// possédé ; nullptr = tous les marqueurs visibles.
+		const std::vector<uint8_t>* layoutInstanceHiddenMask = nullptr;
 	};
 
 	/// ImGui + Vulkan (rendu dynamique) pour \c lcdlln_world_editor.exe uniquement (Windows).

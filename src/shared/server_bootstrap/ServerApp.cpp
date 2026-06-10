@@ -173,6 +173,27 @@ namespace engine::server
 			return component;
 		}
 
+		/// Combat SP1 — applique les stats data-driven d'un archétype au mob
+		/// fraîchement construit (PV, dégâts, portée, cadence d'attaque en ticks,
+		/// XP au kill). \p archetype peut être nullptr (garde défensive : les
+		/// références sont validées à l'init) → le mob garde les constantes MVP.
+		void ApplyArchetypeStatsToMob(MobEntity& mob, const CreatureArchetype* archetype, uint16_t tickHz)
+		{
+			const uint32_t mobHealth = (archetype != nullptr) ? archetype->hp : kDefaultMobHealth;
+			const uint32_t mobDamage = (archetype != nullptr) ? archetype->damage : kDefaultMobDamage;
+			mob.stats.currentHealth = mobHealth;
+			mob.stats.maxHealth = mobHealth;
+			mob.combat = BuildDefaultCombatComponent(tickHz, mobDamage);
+			if (archetype != nullptr)
+			{
+				mob.combat.attackRangeMeters = archetype->rangeMeters;
+				// attackPeriodMs → ticks (arrondi au tick supérieur, minimum 1 tick).
+				mob.combat.cooldownTicks = std::max<uint32_t>(1u,
+					(archetype->attackPeriodMs * static_cast<uint32_t>(tickHz) + 999u) / 1000u);
+				mob.xpReward = archetype->xpReward;
+			}
+		}
+
 		/// Return the squared XZ distance used by the range validation.
 		float DistanceSquaredXZ(float ax, float az, float bx, float bz)
 		{
@@ -248,6 +269,7 @@ namespace engine::server
 		, m_eventRuntime(m_config)
 		, m_questRuntime(m_config)
 		, m_spawnerRuntime(m_config)
+		, m_archetypeLibrary(m_config)
 	{
 		LOG_INFO(Core, "[ServerApp] Constructed");
 	}
@@ -1583,6 +1605,15 @@ namespace engine::server
 	{
 		m_mobs.clear();
 		m_spawners.clear();
+		// Combat SP1 — le catalogue d'archétypes doit être chargé avant les
+		// spawners pour valider leurs références (politique stricte : catalogue
+		// absent/corrompu = le shard ne boote pas).
+		if (!m_archetypeLibrary.Init())
+		{
+			LOG_ERROR(Net, "[ServerApp] Spawner init FAILED: archetype library load failed");
+			return false;
+		}
+
 		if (!m_spawnerRuntime.Init())
 		{
 			LOG_ERROR(Net, "[ServerApp] Spawner init FAILED: runtime load failed");
@@ -1591,6 +1622,17 @@ namespace engine::server
 
 		for (const SpawnerDefinition& definition : m_spawnerRuntime.GetDefinitions())
 		{
+			// Combat SP1 — tout spawner référençant un archétype inconnu est une
+			// erreur de données : échec d'init plutôt qu'un mob aux stats MVP.
+			if (m_archetypeLibrary.Find(definition.archetypeId) == nullptr)
+			{
+				LOG_ERROR(Net, "[ServerApp] Spawner init FAILED: unknown archetype (spawner_id={}, archetype_id={})",
+					definition.spawnerId,
+					definition.archetypeId);
+				m_spawners.clear();
+				return false;
+			}
+
 			CellGrid* zoneGrid = GetOrCreateZoneGrid(definition.zoneId);
 			if (zoneGrid == nullptr)
 			{
@@ -1973,9 +2015,8 @@ namespace engine::server
 		mob.positionMetersX = spawner.definition.positionMetersX;
 		mob.positionMetersY = spawner.definition.positionMetersY;
 		mob.positionMetersZ = spawner.definition.positionMetersZ;
-		mob.stats.currentHealth = kDefaultMobHealth;
-		mob.stats.maxHealth = kDefaultMobHealth;
-		mob.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultMobDamage);
+		// Combat SP1 — stats data-driven (archétype validé à l'init des spawners).
+		ApplyArchetypeStatsToMob(mob, m_archetypeLibrary.Find(mob.archetypeId), m_tickHz);
 		mob.homePositionMetersX = mob.positionMetersX;
 		mob.homePositionMetersY = mob.positionMetersY;
 		mob.homePositionMetersZ = mob.positionMetersZ;
@@ -2247,9 +2288,9 @@ namespace engine::server
 		mob.positionMetersX = spawnDefinition.positionMetersX;
 		mob.positionMetersY = spawnDefinition.positionMetersY;
 		mob.positionMetersZ = spawnDefinition.positionMetersZ;
-		mob.stats.currentHealth = kDefaultMobHealth;
-		mob.stats.maxHealth = kDefaultMobHealth;
-		mob.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultMobDamage);
+		// Combat SP1 — stats data-driven ; un événement peut référencer un
+		// archétype absent du catalogue (non validé à l'init) → fallback MVP.
+		ApplyArchetypeStatsToMob(mob, m_archetypeLibrary.Find(mob.archetypeId), m_tickHz);
 		mob.homePositionMetersX = mob.positionMetersX;
 		mob.homePositionMetersY = mob.positionMetersY;
 		mob.homePositionMetersZ = mob.positionMetersZ;
@@ -2723,10 +2764,12 @@ namespace engine::server
 				SpawnLootBagForMob(*target, looterEntityId != 0 ? looterEntityId : client->entityId);
 			}
 			// M32.2 — Distribute XP to party members in range.
+			// Combat SP1 — XP data-driven par archétype (fallback constante MVP
+			// pour un mob dont l'archétype ne définit pas de récompense).
 			DistributePartyXp(*client,
 			    target->positionMetersX,
 			    target->positionMetersZ,
-			    kBaseXpPerMobKill);
+			    target->xpReward != 0u ? target->xpReward : kBaseXpPerMobKill);
 			ApplyQuestEvent(*client, QuestStepType::Kill, std::string("mob:") + std::to_string(target->archetypeId), 1, "kill");
 		}
 

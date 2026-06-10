@@ -379,6 +379,7 @@ add_library(engine_core
   # Sous-projet 1, bloc B — modele de scene + selection partagee.
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
+  src/world_editor/scene/EntityKey.cpp
   # Sous-projet 1, bloc D — commande undoable d'edition de transform.
   src/world_editor/inspector/SetEntityTransformCommand.cpp
   src/world_editor/terrain/TerrainDocument.cpp
@@ -1371,6 +1372,15 @@ if(MSVC)
   target_compile_options(editor_scene_model_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME editor_scene_model_tests COMMAND editor_scene_model_tests)
+
+# Lot 0 — Tests CPU pour EntityKey (clé stable de calque). Pur, ctest Linux.
+add_executable(entity_key_tests src/world_editor/tests/EntityKeyTests.cpp)
+target_include_directories(entity_key_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(entity_key_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(entity_key_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME entity_key_tests COMMAND entity_key_tests)
 
 # Sous-projet 1, bloc D — Tests CPU pour SetEntityTransformCommand (Execute/Undo,
 # TryMerge meme entite, coalescing via CommandStack). Pur CPU, non gate.

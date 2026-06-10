@@ -380,6 +380,7 @@ add_library(engine_core
   src/world_editor/scene/EditorSelection.cpp
   src/world_editor/scene/EditorSceneModel.cpp
   src/world_editor/scene/EntityKey.cpp
+  src/world_editor/scene/SelectionQuery.cpp
   # Sous-projet 1, bloc D — commande undoable d'edition de transform.
   src/world_editor/inspector/SetEntityTransformCommand.cpp
   src/world_editor/terrain/TerrainDocument.cpp
@@ -1381,6 +1382,15 @@ if(MSVC)
   target_compile_options(entity_key_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME entity_key_tests COMMAND entity_key_tests)
+
+# Lot 0 — Tests CPU pour SelectionQuery (encode/décode, pick, rect/lasso). ctest Linux.
+add_executable(selection_query_tests src/world_editor/tests/SelectionQueryTests.cpp)
+target_include_directories(selection_query_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(selection_query_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(selection_query_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME selection_query_tests COMMAND selection_query_tests)
 
 # Sous-projet 1, bloc D — Tests CPU pour SetEntityTransformCommand (Execute/Undo,
 # TryMerge meme entite, coalescing via CommandStack). Pur CPU, non gate.

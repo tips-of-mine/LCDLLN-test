@@ -10,6 +10,7 @@
 #include "src/world_editor/panels/HistoryPanel.h"
 #include "src/world_editor/panels/SurfaceTablePanel.h"
 #include "src/world_editor/panels/CollisionEditorPanel.h"
+#include "src/world_editor/panels/LayersPanel.h"
 #include "src/world_editor/routine/RoutineGraphPanel.h"
 #include "src/world_editor/ui/EditorToolbar.h"
 
@@ -112,6 +113,14 @@ namespace engine::editor::world
 		// les indices fixes (Scene=0, ToolProperties=5). Caché par défaut,
 		// toggle via le menu View. Partage la pile undo/redo du shell.
 		m_panels.emplace_back(std::make_unique<RoutineGraphPanel>(&m_commandStack));
+		// Lot 0 — Panel des 16 calques. AJOUTÉ EN FIN pour ne pas décaler les
+		// indices fixes (Scene=0, ToolProperties=5). On capture le pointeur
+		// localement avant le `move` pour injecter le shell (pas d'index fixe).
+		{
+			auto layersPanel = std::make_unique<panels::LayersPanel>();
+			layersPanel->SetShell(this);
+			m_panels.emplace_back(std::move(layersPanel));
+		}
 
 #if defined(_WIN32)
 		std::error_code ec;

@@ -564,6 +564,7 @@ add_library(engine_core
   src/world_editor/panels/HistoryPanel.cpp
   src/world_editor/panels/SurfaceTablePanel.cpp
   src/world_editor/panels/CollisionEditorPanel.cpp
+  src/world_editor/panels/LayersPanel.cpp
   src/client/app/Engine.cpp
   src/shared/platform/FileSystem.cpp
   src/shared/platform/FileWatcher.cpp

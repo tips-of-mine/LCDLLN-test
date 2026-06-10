@@ -4978,6 +4978,10 @@ namespace engine
 													if (m_avatarGender != "male" && m_avatarGender != "female")
 														m_avatarGender = "male";
 
+													// Combat SP1 — catalogue d'apparences de creatures (non bloquant :
+													// catalogue absent/corrompu = mobs rendus en fallback humains).
+													m_creatureCatalog.Init(m_cfg);
+
 													// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le
 													// perso n'est pas encore "in world" avant EnterWorld, mais Engine
 													// peut etre questionne sur ce mesh pour des previews/tests).

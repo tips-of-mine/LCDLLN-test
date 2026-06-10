@@ -62,6 +62,7 @@
 #include "src/shared/math/Frustum.h"
 #include "src/shared/math/Math.h"
 #include "src/client/world/WorldModel.h"
+#include "src/client/world/CreatureCatalog.h"
 #include "src/client/world/ChunkBudgetStats.h"
 #include "src/client/world/LodConfig.h"
 #include "src/client/world/HlodRuntime.h"
@@ -701,6 +702,11 @@ namespace engine
 		/// les pointeurs `m_currentSkinnedMesh` restent stables tant que la map
 		/// n'est pas modifiee apres le boot (pas de rehash apres le remplissage).
 		std::unordered_map<std::string, engine::render::skinned::SkinnedMesh> m_raceMeshes;
+		/// Combat SP1 — apparences d'archétypes de créatures (nom/niveau/mesh/
+		/// échelle), chargées au boot depuis creatures/archetypes.json (tolérant :
+		/// catalogue vide = rendu mob en fallback). Consommé par la plaque de nom
+		/// et RecordRemoteAvatars pour les entités archetypeId != 0.
+		engine::client::CreatureCatalog                           m_creatureCatalog;
 		std::chrono::steady_clock::time_point                     m_playerAnimStartTime;
 		/// True une fois SkinnedRenderer::Init OK + SkinnedMeshLoader::Load OK.
 		/// Sert de gate per-frame : si false, on dessine le cube placeholder.

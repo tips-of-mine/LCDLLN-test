@@ -1,0 +1,20 @@
+{
+  "archetypes": [
+    {
+      "id": 100,
+      "name": "Sanglier des collines",
+      "level": 2,
+      "stats": {
+        "hp": 60,
+        "damage": 5,
+        "accuracy": 80.0,
+        "rangeMeters": 2.5,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 2000
+      },
+      "xpReward": 10,
+      "model": { "mesh": "orcs", "scale": 0.9 }
+    }
+  ]
+}

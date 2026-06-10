@@ -21,6 +21,8 @@
 #include "src/world_editor/terrain/ValleyChainTool.h"
 #include "src/world_editor/water/WaterDocument.h"
 #include "src/world_editor/scene/EditorSceneModel.h" // sous-projet 1, bloc B (selection + scene)
+#include "src/world_editor/LayersDocument.h"          // Lot 0 — 16 calques
+#include "src/world_editor/scene/EditorSelection.h"   // Lot 0 — EntityId (déjà tiré indirectement)
 
 #include <functional>
 #include <memory>
@@ -190,6 +192,27 @@ namespace engine::editor::world
 		engine::editor::scene::EditorSelection&       MutableSelection()       { return m_selection; }
 		const engine::editor::scene::EditorSelection& GetSelection()     const { return m_selection; }
 
+		/// Lot 0 — Document des 16 calques (visibilité / verrou / couleur +
+		/// assignement par entityKey). Source d'autorité runtime ; non persisté
+		/// (cf. spec : persistance d'un layerIndex différée).
+		LayersDocument&       MutableLayersDocument()       { return m_layersDoc; }
+		const LayersDocument& GetLayersDocument()     const { return m_layersDoc; }
+
+		/// Lot 0 — Type du résolveur EntityId -> entityKey (clé stable de calque).
+		/// Installé par l'Engine, qui seul connaît les guids des documents concrets.
+		using EntityKeyResolver = std::function<uint64_t(engine::editor::scene::EntityId)>;
+
+		/// Lot 0 — Installe le résolveur de clé d'entité (appelé par l'Engine).
+		/// \param r foncteur capturant les documents concrets pour lire le guid.
+		void SetEntityKeyResolver(EntityKeyResolver r) { m_entityKeyResolver = std::move(r); }
+
+		/// Lot 0 — Résout la clé stable de calque d'une entité.
+		/// \return 0 si le résolveur n'est pas installé ou si l'entité est inconnue.
+		uint64_t EntityKeyFor(engine::editor::scene::EntityId id) const
+		{
+			return m_entityKeyResolver ? m_entityKeyResolver(id) : 0ull;
+		}
+
 		/// Sous-projet 1, bloc B/C — Accès à la vue agrégée des entités de la
 		/// zone. L'Engine la lie aux documents sources (layout = session,
 		/// mesh/donjon = shell) et la reconstruit chaque frame avant le rendu
@@ -349,6 +372,8 @@ namespace engine::editor::world
 		engine::editor::scene::EditorSelection  m_selection;  // sous-projet 1, bloc B
 		engine::editor::scene::EditorSceneModel m_sceneModel; // sous-projet 1, bloc B
 		TransformWriter m_transformWriter;                    // sous-projet 1, bloc D
+		LayersDocument m_layersDoc;                           // Lot 0
+		EntityKeyResolver m_entityKeyResolver;                // Lot 0
 		TerrainSculptTool m_sculptTool;
 		TerrainStampTool m_stampTool;
 		SplatPaintTool m_splatPaintTool;

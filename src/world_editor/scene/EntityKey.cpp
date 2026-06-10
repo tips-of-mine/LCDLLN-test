@@ -1,5 +1,7 @@
 #include "src/world_editor/scene/EntityKey.h"
 
+#include <cstddef>
+
 namespace engine::editor::scene
 {
 	namespace

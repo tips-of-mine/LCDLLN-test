@@ -1,5 +1,7 @@
 #include "src/world_editor/scene/DeleteEntitiesCommand.h"
 
+#include <cstddef>
+
 namespace engine::editor::scene
 {
 	void DeleteEntitiesCommand::Execute()

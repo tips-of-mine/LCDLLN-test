@@ -57,6 +57,7 @@ namespace engine::editor::world
 		Overhang            = 13,  // M100.41 — raccourci Ctrl+Shift+O (Overhang)
 		Arch                = 14,  // M100.42 — raccourci Ctrl+Shift+A (Arche)
 		DungeonPortal       = 15,  // M100.43 — raccourci Ctrl+Shift+D (Donjon)
+		Select              = 16,  // Lot 0 — sélection (clic + marquee), raccourci Q
 	};
 
 	/// Coquille principale de l'éditeur de monde 3D (M100.1). Instanciée une

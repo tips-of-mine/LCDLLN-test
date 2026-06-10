@@ -27,6 +27,7 @@ namespace engine::editor::world
 			ActiveTool::Overhang,           // M100.41
 			ActiveTool::Arch,               // M100.42
 			ActiveTool::DungeonPortal,      // M100.43
+			ActiveTool::Select,             // Lot 0 — sélection / suppression
 		};
 	}
 

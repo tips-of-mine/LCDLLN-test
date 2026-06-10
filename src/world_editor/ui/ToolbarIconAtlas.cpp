@@ -38,6 +38,8 @@ namespace engine::editor::world
 				return { 0xFF5A4A36u, "A", "Placer une arche naturelle (Phase 11)", true };
 			case ActiveTool::DungeonPortal:
 				return { 0xFF6A2E5Au, "D", "Placer un portail de donjon (Phase 11)", true };
+			case ActiveTool::Select:
+				return { 0xFF3A6EA5u, "S", "Sélection (clic / rectangle) — Suppr pour supprimer", true };
 		}
 		// Fallback générique pour outils futurs non encore mappés : carré
 		// neutre, désactivé, tooltip standard "Bientôt disponible".

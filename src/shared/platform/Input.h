@@ -43,6 +43,7 @@ namespace engine::platform
 		Y = 'Y',
 		Z = 'Z',
 		Escape = 0x1B,
+		Delete = 0x2E, ///< VK_DELETE — suppression de la sélection (éditeur).
 		Tab = 0x09,
 		Control = 0x11,
 		Alt = 0x12, ///< VK_MENU (gauche ou droite) — capturé via WM_SYSKEYDOWN. Sprint (CHAR-MODEL).

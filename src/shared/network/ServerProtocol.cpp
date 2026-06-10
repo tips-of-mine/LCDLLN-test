@@ -316,11 +316,12 @@ namespace engine::server
 		outMessage.chunkCount = ReadU16(payload, 22);
 
 		const size_t entityCount = static_cast<size_t>(outMessage.entityCount);
-		// TD.6/TD.8 — taille variable par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId)
-		// + 2 (nameLen) + N (name) + 2 (genderLen) + M (gender) + 1 (animationState) octets. On vérifie
-		// un minimum (57 par entité, nom et genre vides), puis on parse sequentiellement et on rejette
-		// si on dépasse la fin du payload en cours de route. TG.1 — header a 24 octets.
-		const size_t minimumPayloadSize = 24 + (entityCount * 57);
+		// TD.6/TD.8/SP1 — taille variable par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId)
+		// + 2 (nameLen) + N (name) + 2 (genderLen) + M (gender) + 1 (animationState) + 4 (archetypeId)
+		// octets. On vérifie un minimum (61 par entité, nom et genre vides), puis on parse
+		// sequentiellement et on rejette si on dépasse la fin du payload en cours de route.
+		// TG.1 — header a 24 octets.
+		const size_t minimumPayloadSize = 24 + (entityCount * 61);
 		if (payload.size() < minimumPayloadSize)
 		{
 			return false;
@@ -359,7 +360,7 @@ namespace engine::server
 				return false;
 			}
 			// TD.8 : état d'animation (1 octet) après le genre. ReadSizedString a avancé offset ;
-			// le minimum (57/entité, chaînes vides) garantit qu'il reste au moins 1 octet, mais
+			// le minimum (61/entité, chaînes vides) garantit qu'il reste au moins 5 octets, mais
 			// avec des chaînes non vides on peut dépasser : on vérifie explicitement la borne.
 			if (offset + 1u > payload.size())
 			{
@@ -368,6 +369,15 @@ namespace engine::server
 			}
 			entity.animationState = static_cast<AvatarAnimState>(ReadU8(payload, offset));
 			offset += 1u;
+			// Combat SP1 (wire v9) : archétype de créature (u32) après animationState.
+			// 0 = joueur / loot bag ; ≠ 0 = mob (résolu par le CreatureCatalog client).
+			if (offset + 4u > payload.size())
+			{
+				outEntities.clear();
+				return false;
+			}
+			entity.archetypeId = ReadU32(payload, offset);
+			offset += 4u;
 		}
 
 		return true;
@@ -512,13 +522,14 @@ namespace engine::server
 
 	std::vector<std::byte> EncodeSnapshot(const SnapshotMessage& message, std::span<const SnapshotEntity> entities)
 	{
-		// TD.6/TD.8 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId)
-		// + 2 (nameLen) + N (name bytes) + 2 (genderLen) + M (gender bytes) + 1 (animationState) octets.
-		// Wire-bump v7→v8 : ajout de l'état d'animation (1 octet) après le genre. Pour le sizing :
-		// estimation à 8 + 40 + 4 + 2 + 2 + 1 = 57 par entité (nom et genre vides). BeginPacket.reserve
-		// est juste un hint, pas une borne stricte (le vector grandit à l'append).
+		// TD.6/TD.8/SP1 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId)
+		// + 2 (nameLen) + N (name bytes) + 2 (genderLen) + M (gender bytes) + 1 (animationState)
+		// + 4 (archetypeId) octets. Wire-bump v8→v9 : ajout de l'archétype (u32) après l'état
+		// d'animation. Pour le sizing : estimation à 8 + 40 + 4 + 2 + 2 + 1 + 4 = 61 par entité
+		// (nom et genre vides). BeginPacket.reserve est juste un hint, pas une borne stricte
+		// (le vector grandit à l'append).
 		// TG.1 — header passe de 20 → 24 octets (ajout chunkIndex + chunkCount uint16 × 2).
-		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 24 + (entities.size() * 57));
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 24 + (entities.size() * 61));
 		WriteU32(packet, message.clientId);
 		WriteU32(packet, message.serverTick);
 		WriteU16(packet, message.connectedClients);
@@ -541,6 +552,8 @@ namespace engine::server
 			WriteSizedString(packet, entity.gender);
 			// TD.8 : état d'animation (1 octet). Idle (0) pour les mobs / lootbags.
 			WriteU8(packet, static_cast<uint8_t>(entity.animationState));
+			// Combat SP1 (wire v9) : archétype de créature (0 = joueur / loot bag).
+			WriteU32(packet, entity.archetypeId);
 		}
 		return packet;
 	}

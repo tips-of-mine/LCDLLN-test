@@ -34,9 +34,14 @@ namespace engine::server
 	/// en QUEUE de payload. C'est rétro-compatible : un master legacy lit les 16 octets
 	/// fixes et ignore la queue ; un master neuf lit la queue si présente ; un heartbeat
 	/// legacy (sans queue) reste valide. Comme `kProtocolVersion` borne aussi le framing
-	/// client↔master, le laisser à 8 évite de casser les clients v8 déjà distribués
+	/// client↔master, le laisser à 8 évitait de casser les clients v8 déjà distribués
 	/// (le bump 8→9 initial, PR #770, était inutile et a été annulé ici).
-	inline constexpr uint16_t kProtocolVersion = 8;
+	/// Combat SP1 — bump 8 → 9 : `SnapshotEntity` gagne `archetypeId` (uint32,
+	/// shard→clients) — 0 = joueur/loot bag, ≠ 0 = mob ; le client résout
+	/// nom/niveau/mesh/échelle dans son CreatureCatalog pour rendre la créature.
+	/// Wire-breaking : ce bump invalide AUSSI le framing client↔master (version
+	/// partagée) → déployer master + shardd + client en lock-step.
+	inline constexpr uint16_t kProtocolVersion = 9;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t

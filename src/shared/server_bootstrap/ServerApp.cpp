@@ -4056,6 +4056,9 @@ namespace engine::server
 			outEntity.entityId = mob->entityId;
 			outEntity.state = BuildEntityState(*mob);
 			// playerClientId reste 0 par defaut (entite non-joueur, pas de plaque de nom).
+			// Combat SP1 (wire v9) : l'archetypeId permet au client de rendre le mob
+			// (mesh/nom/niveau/échelle résolus dans son CreatureCatalog).
+			outEntity.archetypeId = mob->archetypeId;
 			return true;
 		}
 
@@ -4310,10 +4313,10 @@ namespace engine::server
 
 		// TG.1 — chunking : decoupe le snapshot pour rester sous ~1200 octets MTU UDP.
 		// Le header est borne par BeginPacket (16 o) + meta SnapshotMessage (24 o, TG.1)
-		// = 40 o constants. Une entite = 52 o (TD.4). Budget restant pour les entites :
-		// 1200 - 40 = 1160 o ⇒ max 22 entites/chunk (1160 / 52). On garde une marge
-		// confortable en visant 20 entites par chunk.
-		constexpr size_t kMaxEntitiesPerChunk = 20u;
+		// = 40 o constants. Une entite = 61 o minimum (SP1, wire v9, chaines vides).
+		// Budget restant pour les entites : 1200 - 40 = 1160 o ⇒ max 19 entites/chunk
+		// (1160 / 61). On vise 18 pour garder la marge (noms/genres non vides).
+		constexpr size_t kMaxEntitiesPerChunk = 18u;
 		const size_t totalEntities = m_snapshotEntitiesScratch.size();
 		const size_t chunkCountSize = (totalEntities == 0u)
 			? 1u

@@ -114,5 +114,9 @@ namespace engine::server
 		/// TD.8 — état d'animation courant du joueur (Idle pour les mobs/lootbags).
 		/// Wire-bump v7→v8 : 1 octet ajouté après le genre dans chaque entité du Snapshot.
 		AvatarAnimState animationState = AvatarAnimState::Idle;
+		/// Combat SP1 — archétype de créature (0 = joueur ou loot bag). Permet au
+		/// client de résoudre nom/niveau/mesh/échelle dans son CreatureCatalog.
+		/// Wire-bump v8→v9 : u32 ajouté après animationState dans chaque entité.
+		uint32_t archetypeId = 0;
 	};
 }

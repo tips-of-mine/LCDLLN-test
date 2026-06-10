@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <functional>
 #include <utility>
+#include <vector>
 
 namespace engine::editor::scene
 {
@@ -53,6 +54,21 @@ namespace engine::editor::scene
 		/// Effet de bord : invoque le callback OnChanged si la sélection change.
 		void Clear();
 
+		/// Remplace la sélection par `ids` (ordre préservé). Le primaire devient
+		/// le premier élément (ou None si `ids` est vide). Notifie si changement.
+		void SelectMany(const std::vector<EntityId>& ids);
+
+		/// Ajoute `id` au set s'il est absent, l'en retire sinon. Ajuste le
+		/// primaire (reste valide ; se reporte sur un élément restant après un
+		/// retrait du primaire ; None si le set devient vide). Notifie.
+		void ToggleInSelection(EntityId id);
+
+		/// Set courant des entités sélectionnées (le primaire en fait partie).
+		const std::vector<EntityId>& SelectedSet() const { return m_set; }
+
+		/// true si `id` appartient au set.
+		bool IsSelected(EntityId id) const;
+
 		/// Sélection courante (kind = None si aucune).
 		EntityId Current() const { return m_current; }
 
@@ -64,6 +80,7 @@ namespace engine::editor::scene
 
 	private:
 		EntityId m_current{};
+		std::vector<EntityId> m_set; ///< Set de sélection (primaire = m_current).
 		OnChangedCallback m_onChanged;
 	};
 }

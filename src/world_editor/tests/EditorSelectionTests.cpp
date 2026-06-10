@@ -52,11 +52,58 @@ namespace
 		sel.Clear();
 		REQUIRE(calls == 3);
 	}
+
+	void Test_MultiSelection()
+	{
+		EditorSelection sel;
+		int calls = 0;
+		sel.SetOnChanged([&](EntityId) { ++calls; });
+
+		const EntityId a{EntityKind::LayoutInstance, 1};
+		const EntityId b{EntityKind::LayoutInstance, 2};
+		const EntityId c{EntityKind::MeshInsert, 0};
+
+		// SelectMany : set = {a,b,c}, primaire = premier (a).
+		sel.SelectMany({a, b, c});
+		REQUIRE(calls == 1);
+		REQUIRE(sel.SelectedSet().size() == 3);
+		REQUIRE(sel.Current() == a);
+		REQUIRE(sel.IsSelected(b));
+		REQUIRE(sel.IsSelected(c));
+
+		// Select mono : set = {b}, primaire = b.
+		sel.Select(b);
+		REQUIRE(sel.SelectedSet().size() == 1);
+		REQUIRE(sel.Current() == b);
+		REQUIRE(!sel.IsSelected(a));
+
+		// Toggle : ajoute a -> {b,a}.
+		sel.ToggleInSelection(a);
+		REQUIRE(sel.SelectedSet().size() == 2);
+		REQUIRE(sel.IsSelected(a));
+		// Toggle : retire b ; primaire se reporte sur un restant (a).
+		sel.ToggleInSelection(b);
+		REQUIRE(sel.SelectedSet().size() == 1);
+		REQUIRE(!sel.IsSelected(b));
+		REQUIRE(sel.Current() == a);
+
+		// Clear vide le set + le primaire.
+		sel.Clear();
+		REQUIRE(sel.SelectedSet().empty());
+		REQUIRE(!sel.HasSelection());
+
+		// SelectMany vide = Clear sémantique (set vide, primaire None).
+		sel.SelectMany({a});
+		sel.SelectMany({});
+		REQUIRE(sel.SelectedSet().empty());
+		REQUIRE(sel.Current().kind == EntityKind::None);
+	}
 }
 
 int main()
 {
 	Test_SelectionNotifiesOnChange();
+	Test_MultiSelection();
 
 	if (g_failed == 0)
 	{

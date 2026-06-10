@@ -2171,6 +2171,21 @@ namespace engine::editor::world::panels
 				ImGui::Separator();
 				RenderDungeonPortalParams(*m_shell, m_shell->MutableDungeonPortalTool());
 			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::Select)
+			{
+				// Lot 0 — Outil de sélection : rayon de pick (porté par le shell,
+				// lu par l'Engine), aide-mémoire et compteur de sélection.
+				ImGui::TextUnformatted("Outil : Sélection");
+				ImGui::Separator();
+				float r = m_shell->GetSelectPickRadiusMeters();
+				if (ImGui::SliderFloat("Rayon de pick (m)", &r, 0.25f, 20.0f, "%.2f"))
+					m_shell->SetSelectPickRadiusMeters(r);
+				ImGui::TextDisabled("Clic : sélectionne la plus proche.");
+				ImGui::TextDisabled("Glisser : rectangle (multi). Suppr : supprime.");
+				ImGui::Text("Sélection : %d entité(s)",
+					static_cast<int>(m_shell->GetSelection().SelectedSet().size()));
+			}
 			else
 			{
 				ImGui::TextDisabled("Tool Properties — placeholder M100.1.");

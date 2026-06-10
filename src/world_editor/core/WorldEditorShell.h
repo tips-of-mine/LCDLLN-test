@@ -213,6 +213,10 @@ namespace engine::editor::world
 			return m_entityKeyResolver ? m_entityKeyResolver(id) : 0ull;
 		}
 
+		/// Lot 0 — Rayon de pick de l'outil Select (mètres monde), lu par l'Engine.
+		float  GetSelectPickRadiusMeters() const { return m_selectPickRadiusM; }
+		void   SetSelectPickRadiusMeters(float r) { m_selectPickRadiusM = r; }
+
 		/// Sous-projet 1, bloc B/C — Accès à la vue agrégée des entités de la
 		/// zone. L'Engine la lie aux documents sources (layout = session,
 		/// mesh/donjon = shell) et la reconstruit chaque frame avant le rendu
@@ -374,6 +378,7 @@ namespace engine::editor::world
 		TransformWriter m_transformWriter;                    // sous-projet 1, bloc D
 		LayersDocument m_layersDoc;                           // Lot 0
 		EntityKeyResolver m_entityKeyResolver;                // Lot 0
+		float m_selectPickRadiusM = 2.0f;                     // Lot 0
 		TerrainSculptTool m_sculptTool;
 		TerrainStampTool m_stampTool;
 		SplatPaintTool m_splatPaintTool;

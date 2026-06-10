@@ -33,13 +33,23 @@ namespace engine::editor::world::panels
 		for (const scene::SceneEntity& e : entities)
 		{
 			if (e.id.kind != kind) continue;
-			const bool selected = (m_selection != nullptr) && (m_selection->Current() == e.id);
+			// Lot 0 — surbrillance sur toute la multi-sélection (et plus
+			// seulement le primaire) : on teste l'appartenance au set.
+			const bool selected = (m_selection != nullptr) && m_selection->IsSelected(e.id);
 			// ID ImGui unique : combine kind (bits hauts) et index.
 			ImGui::PushID(static_cast<int>(e.id.index)
 				| (static_cast<int>(kind) << 24));
 			if (ImGui::Selectable(e.label.c_str(), selected))
 			{
-				if (m_selection != nullptr) m_selection->Select(e.id);
+				if (m_selection != nullptr)
+				{
+					// Ctrl+clic : bascule l'entité dans le set (multi) ;
+					// clic simple : sélection mono.
+					if (ImGui::GetIO().KeyCtrl)
+						m_selection->ToggleInSelection(e.id);
+					else
+						m_selection->Select(e.id);
+				}
 			}
 			ImGui::PopID();
 		}

@@ -381,6 +381,7 @@ add_library(engine_core
   src/world_editor/scene/EditorSceneModel.cpp
   src/world_editor/scene/EntityKey.cpp
   src/world_editor/scene/SelectionQuery.cpp
+  src/world_editor/scene/DeleteEntitiesCommand.cpp
   # Sous-projet 1, bloc D — commande undoable d'edition de transform.
   src/world_editor/inspector/SetEntityTransformCommand.cpp
   src/world_editor/terrain/TerrainDocument.cpp
@@ -1400,6 +1401,15 @@ if(MSVC)
   target_compile_options(delete_entities_ops_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME delete_entities_ops_tests COMMAND delete_entities_ops_tests)
+
+# Lot 0 — Tests CPU pour DeleteEntitiesCommand (Execute/Undo/Redo). ctest Linux.
+add_executable(delete_entities_command_tests src/world_editor/tests/DeleteEntitiesCommandTests.cpp)
+target_include_directories(delete_entities_command_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(delete_entities_command_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(delete_entities_command_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME delete_entities_command_tests COMMAND delete_entities_command_tests)
 
 # Sous-projet 1, bloc D — Tests CPU pour SetEntityTransformCommand (Execute/Undo,
 # TryMerge meme entite, coalescing via CommandStack). Pur CPU, non gate.

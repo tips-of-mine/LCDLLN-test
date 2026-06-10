@@ -2131,3 +2131,31 @@ aussi les confusions « je vois quelqu'un de déjà parti » et « reconnexion r
   immédiate (nouveau handler). **Non lock-step / non wire-breaking** : client neuf ↔
   shard ancien (ou inverse) fonctionnent, mais sans l'éviction immédiate tant que le
   shard n'est pas redéployé (fallback timeout).
+
+## Combat SP1 — créatures visibles (2026-06-10)
+
+Spec : `docs/superpowers/specs/2026-06-10-combat-system-design.md` (chantier combat SP1→SP4,
+ordre validé : combat → groupes → métiers/récolte → prédiction client). Plan SP1 :
+`docs/superpowers/plans/2026-06-10-combat-sp1-creatures-visibles.md`. Audit global 4 parties :
+`docs/audit/2026-06-10-audit-global-4-parties.md`.
+
+### PR-A (serveur)
+- `game/data/creatures/archetypes.json` — catalogue d''archétypes de créatures (id=100 « Sanglier
+  des collines ») : stats (hp/damage/accuracy/rangeMeters/critRate/critMult/attackPeriodMs),
+  `xpReward`, `model.mesh` (clé d''un set de mesh de race existant) + `model.scale`.
+- `src/shardd/gameplay/creature/CreatureArchetypeLibrary.{h,cpp}` — loader strict (pattern
+  SpawnerRuntime, parseur JSON local) ; `Init()` lit `creatures/archetypes.json`, `Find(id)`.
+  Chargé par `ServerApp::InitSpawners` AVANT les spawners ; spawner → archétype inconnu = échec boot.
+- `ServerApp` : `ApplyArchetypeStatsToMob` (namespace anonyme) applique hp/damage/range/cadence
+  aux 2 sites de spawn (spawner + événement dynamique) ; `MobEntity.xpReward` remplace
+  `kBaseXpPerMobKill` au kill (fallback si 0). Constantes `kDefaultMob*` conservées en fallback.
+- **Wire v8→v9** : `SnapshotEntity.archetypeId` (u32, 0 = joueur/loot bag) après `animationState` ;
+  entité min 57→61 octets, `kMaxEntitiesPerChunk` 20→18. Tests `server_protocol_tests` étendus +
+  `creature_archetype_library_tests` (nouveau).
+- **Déploiement** : ⚠️ wire-breaking — master + shardd + client en **lock-step** (kProtocolVersion
+  partagé par le framing client↔master).
+
+### PR-B (client) — stackée
+- `src/client/world/CreatureCatalog.{h,cpp}` — lecture tolérante du même JSON (name/level/mesh/scale).
+- `UIRemoteEntity.archetypeId` + copie dans `ApplySnapshot` ; rendu mobs dans Engine
+  (mesh via `GetRaceMesh(meshKey, "male")`, nameplate « Nom (niv. N) PV/PVmax »).

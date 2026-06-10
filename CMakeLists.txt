@@ -1392,6 +1392,15 @@ if(MSVC)
 endif()
 add_test(NAME selection_query_tests COMMAND selection_query_tests)
 
+# Lot 0 — Tests CPU pour DeleteEntitiesOps (remove/restore par index). ctest Linux.
+add_executable(delete_entities_ops_tests src/world_editor/tests/DeleteEntitiesOpsTests.cpp)
+target_include_directories(delete_entities_ops_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(delete_entities_ops_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(delete_entities_ops_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME delete_entities_ops_tests COMMAND delete_entities_ops_tests)
+
 # Sous-projet 1, bloc D — Tests CPU pour SetEntityTransformCommand (Execute/Undo,
 # TryMerge meme entite, coalescing via CommandStack). Pur CPU, non gate.
 add_executable(set_entity_transform_command_tests src/world_editor/tests/SetEntityTransformCommandTests.cpp)

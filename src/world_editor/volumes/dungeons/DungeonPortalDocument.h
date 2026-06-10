@@ -29,9 +29,18 @@ namespace engine::editor::world::volumes::dungeons
 
 		const DungeonPortalInstance* GetByGuid(uint64_t guid) const;
 		const std::vector<DungeonPortalInstance>& All() const { return m_instances; }
+
+		/// Lot 0 (Phase C) — Accès mutable au vecteur d'instances pour la
+		/// suppression réversible par index (DeleteEntitiesCommand). Le caller
+		/// est responsable d'appeler `MarkDirty()` après mutation.
+		std::vector<DungeonPortalInstance>& Mutable() { return m_instances; }
+
 		size_t Size() const { return m_instances.size(); }
 
 		bool IsDirty() const noexcept { return m_dirty; }
+		/// Lot 0 (Phase C) — Marque le document modifié (suppression / restauration
+		/// par index). Symétrique de `MeshInsertDocument::MarkDirty()`.
+		void MarkDirty() noexcept     { m_dirty = true; }
 		void ClearDirty() noexcept    { m_dirty = false; }
 
 		/// M100.46 — Vide intégralement le document. Marque `m_dirty`.

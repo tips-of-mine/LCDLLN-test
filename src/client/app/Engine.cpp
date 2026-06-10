@@ -7731,6 +7731,65 @@ namespace engine
 				m_worldEditorShell->HandleShortcut('Z', ctrl, shift);
 			if (m_input.WasPressed(engine::platform::Key::Y))
 				m_worldEditorShell->HandleShortcut('Y', ctrl, shift);
+
+			// Lot 0 (Phase C) — Suppr : supprime la sélection courante via une
+			// DeleteEntitiesCommand réversible (callbacks capturant [this]).
+			// Uniquement quand l'outil Select est actif, la session présente,
+			// et la sélection non vide. Les entités sur calque verrouillé sont
+			// ignorées. La pile undo/redo est linéaire immédiat (cf. spec §4.4).
+			if (m_input.WasPressed(engine::platform::Key::Delete)
+				&& m_worldEditorShell->GetActiveTool() == engine::editor::world::ActiveTool::Select
+				&& m_worldEditorSession)
+			{
+				const auto& set = m_worldEditorShell->GetSelection().SelectedSet();
+				if (!set.empty())
+				{
+					std::vector<engine::editor::scene::EntityId> ids(set.begin(), set.end());
+
+					auto remove = [this](const std::vector<engine::editor::scene::EntityId>& sel)
+						-> engine::editor::scene::DeletedEntities
+					{
+						using K = engine::editor::scene::EntityKind;
+						std::vector<uint32_t> layoutIdx, meshIdx, dungIdx;
+						const auto& layers = m_worldEditorShell->GetLayersDocument();
+						for (const auto& id : sel)
+						{
+							const uint64_t key = m_worldEditorShell->EntityKeyFor(id);
+							if (key != 0ull && layers.IsEntityLocked(key)) continue; // calque verrouillé
+							if (id.kind == K::LayoutInstance) layoutIdx.push_back(id.index);
+							else if (id.kind == K::MeshInsert)  meshIdx.push_back(id.index);
+							else if (id.kind == K::DungeonPortal) dungIdx.push_back(id.index);
+						}
+						engine::editor::scene::DeletedEntities snap;
+						snap.layout = engine::editor::scene::RemoveByIndexDescending(
+							m_worldEditorSession->MutableDoc().layoutInstances, layoutIdx);
+						snap.mesh = engine::editor::scene::RemoveByIndexDescending(
+							m_worldEditorShell->MutableMeshInsertDocument().Mutable(), meshIdx);
+						snap.dungeon = engine::editor::scene::RemoveByIndexDescending(
+							m_worldEditorShell->MutableDungeonPortalDocument().Mutable(), dungIdx);
+						m_worldEditorShell->MutableMeshInsertDocument().MarkDirty();
+						m_worldEditorShell->MutableDungeonPortalDocument().MarkDirty();
+						return snap;
+					};
+					auto restore = [this](const engine::editor::scene::DeletedEntities& snap)
+					{
+						engine::editor::scene::RestoreByIndexAscending(
+							m_worldEditorSession->MutableDoc().layoutInstances, snap.layout);
+						engine::editor::scene::RestoreByIndexAscending(
+							m_worldEditorShell->MutableMeshInsertDocument().Mutable(), snap.mesh);
+						engine::editor::scene::RestoreByIndexAscending(
+							m_worldEditorShell->MutableDungeonPortalDocument().Mutable(), snap.dungeon);
+						m_worldEditorShell->MutableMeshInsertDocument().MarkDirty();
+						m_worldEditorShell->MutableDungeonPortalDocument().MarkDirty();
+					};
+
+					m_worldEditorShell->MutableCommandStack().Push(
+						std::make_unique<engine::editor::scene::DeleteEntitiesCommand>(
+							std::move(ids), std::move(remove), std::move(restore)));
+					m_worldEditorShell->MutableSelection().Clear();
+					m_worldEditorShell->MarkDirty("delete selection");
+				}
+			}
 		}
 
 		m_shaderHotReload.Poll(m_cfg);

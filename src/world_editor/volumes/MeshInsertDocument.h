@@ -45,6 +45,12 @@ namespace engine::editor::world::volumes
 		std::vector<MeshInsertInstance> GetByCategory(const std::string& category) const;
 
 		const std::vector<MeshInsertInstance>& All() const { return m_instances; }
+
+		/// Lot 0 (Phase C) — Accès mutable au vecteur d'instances pour la
+		/// suppression réversible par index (DeleteEntitiesCommand). Le caller
+		/// est responsable d'appeler `MarkDirty()` après mutation.
+		std::vector<MeshInsertInstance>& Mutable() { return m_instances; }
+
 		size_t Size() const { return m_instances.size(); }
 
 		bool IsDirty() const noexcept { return m_dirty; }

@@ -281,6 +281,9 @@
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1rem;
   }
+  /* Une vue liste injectée dans .cards-grid doit occuper toute la largeur
+     (sinon elle est contrainte à la largeur d'une seule colonne de cartes). */
+  .cards-grid > .list-view { grid-column: 1 / -1; }
 
   /* Individual card */
   .card {
@@ -1655,7 +1658,8 @@ function buildExportSchema() {
       return Object.assign({}, f, {
         id: f.id||'', name: f.name||'', type: f.type||'',
         alignment: f.alignment||'', playable: !!f.playable,
-        region_id: f.region_id||'',
+        region_ids: (f.region_ids&&f.region_ids.length)?f.region_ids:(f.region_id?[f.region_id]:[]),
+        region_id: (f.region_ids&&f.region_ids[0])||f.region_id||'',
         visual_identity: f.visual_identity||null,
         leadership: f.leadership||null,
         territory: f.territory||null,
@@ -1806,7 +1810,7 @@ function buildExportSchema() {
     tomes_config: (db.tomes_config||[]).map(function(t){return{id:t.id||'',label:t.label||''};}),
     competences: (db.competences||[]).map(function(c){return{id:c.id||'',name:c.name||'',school:c.school||'',usable_by:c.usable_by||[],prerequisite:c.prerequisite||'',description:c.description||'',progression:c.progression||[],effects:c.effects||[],incantation:c.incantation||c.incantation_known||'',training_steps:c.training_steps||c.learning_steps||[],source:c.source||'',notes:c.notes||[]};}),
     regles_transverses: (db.regles_transverses||[]).map(function(r){return{id:r.id||'',name:r.name||'',category:r.category||'',description:r.description||'',applies_to:r.applies_to||[],mechanique_jeu:r.mechanique_jeu||'',apparition_window:r.apparition_window||'',incantations_connues:r.incantations_connues||[],training_minimum:r.training_minimum||'',source:r.source||'',notes:r.notes||[]};}),
-    weapons: (db.weapons||[]).map(function(w){return{id:w.id||'',name:w.name||'',type:w.type||'',eligible_races:w.eligible_races||[],eligible_factions:w.eligible_factions||[],eligible_classes:w.eligible_classes||[],notes:w.notes||[]};}),
+    weapons: (db.weapons||[]).map(function(w){return{id:w.id||'',name:w.name||'',type:w.type||'',hands:w.hands||'one',dual_wield:!!w.dual_wield,eligible_races:w.eligible_races||[],eligible_factions:w.eligible_factions||[],eligible_classes:w.eligible_classes||[],notes:w.notes||[]};}),
     server_commands: (db.server_commands||[]).map(function(c){return{id:c.id||'',name:c.name||'',rbac_level:c.rbac_level||'player',description:c.description||'',notes:c.notes||[]};})
   };
   return Object.assign(_out, _schema);
@@ -1823,7 +1827,8 @@ function sanitizeDb() {
     'features','dialogue_ids','ville_ids','zone_ids','relationships','drops',
     'for_factions','for_races','for_classes','required_classes','unlock_conditions',
     'variants','level_titles','invocable_by','lines','world_map_notes','prophecies',
-    'incantations_known','schools'];
+    'incantations_known','schools','points_of_interest','connects_to','creature_ids',
+    'visual_elements','region_ids'];
   function fix(obj) {
     if (Array.isArray(obj)) { obj.forEach(fix); return; }
     if (obj && typeof obj === 'object') {
@@ -2174,7 +2179,8 @@ function renderFactions(el) {
     c += '<button class="btn btn-danger" onclick="deleteFaction(' + gi + ')">✕</button></div></div>';
     var fRow1 = badge(ab.label,ab.color) + (f.playable ? badge('Jouable','#7ac08a') : badge('Non jouable','#a05060'));
     c += cardRow('Statut', fRow1, true);
-    if(f.region_id){ var frg=(db.regions||[]).find(function(x){return x.id===f.region_id;}); c += cardRow('Région', badge('🗺️ '+esc(frg?frg.name:f.region_id), regionColor(f.region_id)), false); }
+    var fRegs = (f.region_ids&&f.region_ids.length)?f.region_ids:(f.region_id?[f.region_id]:[]);
+    if(fRegs.length){ var rgB=''; fRegs.forEach(function(rid){ var frg=(db.regions||[]).find(function(x){return x.id===rid;}); rgB+=badge('🗺️ '+esc(frg?frg.name:rid), regionColor(rid)); }); c += cardRow(fRegs.length>1?'Régions':'Région', rgB, false); }
     c += notesBadgesHTML(f.notes);
     c += relationsHTML(f.faction_relations);
     c += villeRelationsHTML(f.ville_relations);
@@ -2200,8 +2206,10 @@ function openFactionForm(idx) {
   var facRelOpts = '<option value="">Choisir une faction…</option>';
   (db.factions||[]).forEach(function(x){ if(x.id!==f.id) facRelOpts += '<option value="' + esc(x.id) + '">' + esc(x.name) + '</option>'; });
 
-  var fRgOpts = '<option value="">— Aucune région de référence —</option>';
-  (db.regions||[]).forEach(function(rg){ fRgOpts += '<option value="' + esc(rg.id) + '"' + (f.region_id===rg.id?' selected':'') + '>' + esc(rg.name) + '</option>'; });
+  // Migration : ancienne donnée mono-région (region_id) → tableau region_ids.
+  window._currentFactionRegions = (f.region_ids && f.region_ids.length) ? f.region_ids.slice() : (f.region_id ? [f.region_id] : []);
+  var fRgOpts = '<option value="">Choisir une région…</option>';
+  (db.regions||[]).forEach(function(rg){ fRgOpts += '<option value="' + esc(rg.id) + '">' + esc(rg.name) + '</option>'; });
 
   var villeOpts = '<option value="">Choisir une ville…</option>';
   (db.villes||[]).forEach(function(v){ villeOpts += '<option value="' + esc(v.id) + '">' + esc(v.name) + (v.cell?' ('+v.cell+')':'') + '</option>'; });
@@ -2221,8 +2229,10 @@ function openFactionForm(idx) {
 
     '<div class="form-group"><label class="form-label">Alignement</label>' +
     '<select class="form-select" id="f_align">' + alignOpts + '</select></div></div>' +
-    '<div class="form-group"><label class="form-label">Région de référence</label>' +
-    '<select class="form-select" id="f_region">' + fRgOpts + '</select></div>' +
+    '<div class="form-group"><label class="form-label">Régions de référence <span style="font-size:0.7rem;color:var(--text-dim)">(une faction peut en avoir plusieurs)</span></label>' +
+    '<div style="display:flex;gap:0.5rem;margin-bottom:0.4rem"><select class="form-select" id="f_region_sel">' + fRgOpts + '</select>' +
+    '<button class="btn btn-primary btn-sm" onclick="addFactionRegion()">+</button></div>' +
+    '<div id="factionRegionsList"></div></div>' +
     '<div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">' +
     '<input type="checkbox" id="f_playable"' + (f.playable?' checked':'') + ' style="accent-color:var(--accent-gold)"> Jouable</label></div>' +
     '<div class="form-group"><label class="form-label">Notes</label>' +
@@ -2244,12 +2254,32 @@ function openFactionForm(idx) {
     '<button class="btn btn-primary btn-sm" onclick="addVilleRelation()">+</button></div>' +
     '<div id="villeRelationsList"></div></div>';
 
-  renderNotesList(); renderFactionRelationsList(); renderVilleRelationsList();
+  renderNotesList(); renderFactionRegionsList(); renderFactionRelationsList(); renderVilleRelationsList();
   document.getElementById('modalFooter').innerHTML =
     '<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>' +
     '<button class="btn btn-gold" onclick="saveFaction(' + (isEdit?idx:'undefined') + ')">💾 Enregistrer</button>';
   document.getElementById('noteInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){addCurrentNote();e.preventDefault();} });
   openModal();
+}
+
+function addFactionRegion() {
+  var rid = document.getElementById('f_region_sel').value;
+  if (!rid) { toast('Choisissez une région'); return; }
+  if (window._currentFactionRegions.indexOf(rid) !== -1) { toast('Région déjà ajoutée'); return; }
+  window._currentFactionRegions.push(rid);
+  document.getElementById('f_region_sel').value = '';
+  renderFactionRegionsList();
+}
+function renderFactionRegionsList() {
+  var el = document.getElementById('factionRegionsList'); if (!el) return;
+  var arr = window._currentFactionRegions || [];
+  if (!arr.length) { el.innerHTML = '<div style="padding:0.3rem 0.5rem;font-size:0.8rem;color:var(--text-dim)">Aucune région de référence</div>'; return; }
+  el.innerHTML = arr.map(function(rid, i) {
+    var rg = (db.regions||[]).find(function(x){ return x.id===rid; });
+    var col = regionColor(rid);
+    return '<div class="note-edit-item"><span style="color:' + col + '">🗺️ ' + esc(rg?rg.name:rid) + '</span>' +
+      '<button class="note-del-btn" onclick="window._currentFactionRegions.splice(' + i + ',1);renderFactionRegionsList()">✕</button></div>';
+  }).join('');
 }
 
 function addFactionRelation() {
@@ -2319,7 +2349,8 @@ function saveFaction(idx) {
     type:      document.getElementById('f_type').value.trim(),
 
     alignment: document.getElementById('f_align').value,
-    region_id: (document.getElementById('f_region')||{value:''}).value,
+    region_ids: (window._currentFactionRegions||[]).slice(),
+    region_id: (window._currentFactionRegions && window._currentFactionRegions[0]) || '',
     playable:  document.getElementById('f_playable').checked,
     notes:     window._currentNotes.slice(),
     faction_relations: window._currentFactionRelations.slice(),
@@ -2355,6 +2386,7 @@ function renderClasses(el) {
   var grid = el.querySelector('#classesGrid');
   var list = (db.classes||[]).filter(function(c){ return !q || c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q); });
   if (!list.length) { grid.innerHTML = '<div class="empty-state">Aucune classe trouvée</div>'; return; }
+  if (getViewMode('classes')==='list') { grid.innerHTML=renderListView('classes',list); return; }
   grid.innerHTML = list.map(function(c) {
     var gi = db.classes.indexOf(c);
     var tc = CLASS_TYPE_COLORS[c.type]||'#4a6fa5';
@@ -4221,6 +4253,11 @@ function renderRegions(el) {
   var grid = el.querySelector('#regionsGrid');
   if(!list.length){ grid.innerHTML = '<div class="empty-state">Aucune région trouvée</div>'; return; }
       if (getViewMode('regions')==='list') { grid.innerHTML=renderListView('regions',list); return; }
+    // Taille estimée par région : recalculée à chaque rendu à partir de db.cells,
+    // donc à jour dès qu'on revient sur l'onglet après une édition dans la Carte.
+    var cellCountByRegion = {}, totalMapped = 0;
+    (db.cells||[]).forEach(function(c){ if(c.region_id){ cellCountByRegion[c.region_id]=(cellCountByRegion[c.region_id]||0)+1; totalMapped++; } });
+    var areaPerCell = CARTE_CELL_SIDE_KM*CARTE_CELL_SIDE_KM;
     grid.innerHTML = list.map(function(rg) {
     var gi = db.regions.indexOf(rg);
     var col = regionColor(rg.id);
@@ -4229,6 +4266,18 @@ function renderRegions(el) {
     card += '<div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openRegionForm('+gi+')">✎</button>';
     card += '<button class="btn btn-danger" onclick="deleteRegion('+gi+')">✕</button></div></div>';
     if(rg.description) card += '<div style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.35rem;font-style:italic">'+esc(rg.description.substring(0,120))+(rg.description.length>120?'…':'')+'</div>';
+    // Taille estimée d'après le nombre de cellules rattachées à la région.
+    var nCells = cellCountByRegion[rg.id]||0;
+    var areaKm2 = nCells*areaPerCell;
+    var pct = totalMapped ? Math.round(nCells/totalMapped*100) : 0;
+    card += '<div style="margin-top:0.45rem;display:flex;align-items:center;gap:0.4rem;font-size:0.78rem">';
+    card += '<span style="color:'+col+'">📐 '+nCells+' cellule'+(nCells>1?'s':'')+'</span>';
+    card += '<span style="color:var(--text-dim)">~'+areaKm2.toLocaleString('fr-FR')+' km²</span>';
+    if(totalMapped) card += '<span style="color:var(--text-dim);font-size:0.7rem">('+pct+'% du territoire cartographié)</span>';
+    card += '</div>';
+    if(nCells){
+      card += '<div style="margin-top:0.25rem;height:5px;border-radius:3px;background:var(--bg-deep);overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+col+'"></div></div>';
+    }
     var cities = (db.villes||[]).filter(function(v){ return v.region_id === rg.id; });
     if(cities.length) {
       card += '<div style="margin-top:0.5rem;border-top:1px solid '+col+'30;padding-top:0.4rem">';
@@ -4280,26 +4329,57 @@ function deleteRegion(idx) {
 // ─────────────────────────────────────────────
 // Carte (cells / routes)
 // ─────────────────────────────────────────────
-// Couleurs par type de terrain. Sert à la fois à la grille et à la légende.
-// Tout type absent retombe sur CARTE_DEFAULT_COLOR.
+// Couleurs par type de terrain (reprises de l'éditeur de carte v23). Sert à la
+// grille canvas et à la légende. Tout type absent retombe sur CARTE_DEFAULT_COLOR.
 var TERRAIN_COLORS = {
-  plain:'#9bbf6a', plain_with_river:'#7fb286',
-  forest:'#3f7a3f', forest_edge:'#5f9a4f', forest_with_river:'#4f8a6a', forest_with_lake:'#3f8a6f',
-  desert:'#d8c070', arid_land:'#c8a860', arid_land_with_lake:'#b8aa78',
-  mountain:'#8a7a6a', mountain_range:'#6a5a4a', snow_mountain:'#e2e2ec', volcanic_area:'#8a3a2a',
-  swamp:'#6a7a4a', swamp_with_river:'#5a7a5a',
-  beach:'#e8d9a0', coast:'#6fa8c8', shallow_sea:'#4a7ab0', deep_sea:'#2c4a7a', island:'#c0b070'
+  plain:'#6db35a', plain_with_river:'#6db35a', plain_with_lake:'#6db35a',
+  forest:'#2a5e28', forest_edge:'#4a8a3e', forest_with_river:'#2a5e28', forest_with_lake:'#2a5e28',
+  desert:'#d4b44a', arid_land:'#b8944a', arid_land_with_lake:'#b8944a',
+  mountain:'#7a7d82', mountain_range:'#5c5f64', snow_mountain:'#dce8f0', volcanic_area:'#3a1010',
+  swamp:'#4a5e2a', swamp_with_river:'#4a5e2a',
+  beach:'#e8943a', coast:'#3a7ab0', shallow_sea:'#2a5a8e', deep_sea:'#0d1e35',
+  island:'#5a9e42', lake:'#3a86b4', cliff:'#6a6e72', ruins:'#6a3a8e'
 };
 var CARTE_DEFAULT_COLOR = '#555555';
 // Libellés FR pour la légende (fallback : l'identifiant brut du terrain).
 var TERRAIN_LABELS = {
-  plain:'Plaine', plain_with_river:'Plaine (rivière)',
+  plain:'Plaine', plain_with_river:'Plaine (rivière)', plain_with_lake:'Plaine (lac)',
   forest:'Forêt', forest_edge:'Lisière', forest_with_river:'Forêt (rivière)', forest_with_lake:'Forêt (lac)',
   desert:'Désert', arid_land:'Terre aride', arid_land_with_lake:'Terre aride (lac)',
   mountain:'Montagne', mountain_range:'Chaîne de montagnes', snow_mountain:'Montagne enneigée', volcanic_area:'Zone volcanique',
   swamp:'Marais', swamp_with_river:'Marais (rivière)',
-  beach:'Plage', coast:'Côte', shallow_sea:'Mer peu profonde', deep_sea:'Mer profonde', island:'Île'
+  beach:'Plage', coast:'Côte', shallow_sea:'Mer peu profonde', deep_sea:'Mer profonde',
+  island:'Île', lake:'Lac', cliff:'Falaise', ruins:'Ruines'
 };
+// Liste ordonnée des terrains proposés à l'édition (toutes les clés connues).
+var CARTE_TERRAINS = Object.keys(TERRAIN_LABELS);
+
+// Types de route (repris de LINK_TYPES de l'éditeur v23) : libellé, couleur,
+// icône, et style de trait (tireté pour sentier / passage secret).
+var ROUTE_TYPES = {
+  road:        {label:'Route terrestre',  color:'#c9a96e', icon:'🛣️', dash:false},
+  sea_route:   {label:'Route maritime',   color:'#4a9ad0', icon:'⛵', dash:true},
+  path:        {label:'Sentier',          color:'#a08050', icon:'🥾', dash:true},
+  bridge:      {label:'Pont',             color:'#d0a060', icon:'🌉', dash:false},
+  trade_route: {label:'Voie commerciale', color:'#d4b040', icon:'💰', dash:false},
+  secret_path: {label:'Passage secret',   color:'#9060c0', icon:'👁️', dash:true}
+};
+function routeTypeDef(t){ return ROUTE_TYPES[t] || ROUTE_TYPES.road; }
+
+// Types de point important (POI) éditables sur une cellule.
+var CARTE_POI_TYPES = {
+  city:     {label:'Ville / Cité',     color:'#ffd700', icon:'🏙️'},
+  fortress: {label:'Forteresse',       color:'#c96e6e', icon:'🏰'},
+  tower:    {label:'Tour',             color:'#9a6ace', icon:'🗼'},
+  dungeon:  {label:'Donjon',           color:'#c0504a', icon:'⚔️'},
+  shrine:   {label:'Sanctuaire',       color:'#c9a96e', icon:'⛩️'},
+  ruins:    {label:'Ruines',           color:'#7a6a8a', icon:'🏛️'},
+  camp:     {label:'Camp',             color:'#9a8060', icon:'⛺'},
+  passage:  {label:'Passage',          color:'#c9a96e', icon:'🚪'},
+  landmark: {label:'Point de repère',  color:'#7ec98e', icon:'📍'},
+  other:    {label:'Autre',            color:'#a0a0a0', icon:'❓'}
+};
+function poiTypeDef(t){ return CARTE_POI_TYPES[t] || CARTE_POI_TYPES.landmark; }
 
 /// Déduit la position grille d'une cellule depuis son identifiant.
 /// Les ids suivent le format "N018_W019" → latitude (N positif / S négatif),
@@ -4316,99 +4396,420 @@ function parseCellCoord(id) {
 function terrainColor(t) { return TERRAIN_COLORS[t] || CARTE_DEFAULT_COLOR; }
 function terrainLabel(t) { return TERRAIN_LABELS[t] || (t || '—'); }
 
-// Rend la section « Carte » : statistiques, légende des terrains et grille
-// colorée. La grille est en lecture seule (l'édition cellule par cellule n'est
-// pas exposée ici) ; au survol, le titre HTML affiche id/terrain/région/flags.
-// Les villes rattachées à une cellule (champ ville.cell) sont signalées par un
-// liseré doré.
+// ── État persistant de la carte (zoom, mode, géométrie courante) ──
+// Conservé hors de renderCarte pour survivre aux re-rendus (showSection).
+var BASE_CELL_SIZE = 14;      // taille d'une cellule à zoom ×1 (px)
+var MAX_CARTE_ZOOM = 12;      // zoom maximum demandé : ×12
+// Côté physique d'une cellule (km), repris de map-viewer-v23 (cellSizeKm). Sert
+// à estimer la surface d'une région : nb_cellules × CARTE_CELL_SIDE_KM².
+var CARTE_CELL_SIDE_KM = 10;
+window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null,
+  filters:{ villes:true, routes:true, poi:true, regions:false, water:true, islands:true } };
+if (!window._carteState.filters) window._carteState.filters = { villes:true, routes:true, poi:true, regions:false, water:true, islands:true };
+if (window._carteState.filters.islands === undefined) window._carteState.filters.islands = true;
+var _carteGeo = null;         // { byKey, minLat, maxLat, minLon, maxLon, cols, rows, villeByCell }
+
+// Recalcule la géométrie de la grille à partir de db.cells / db.villes.
+function carteComputeGeo() {
+  var cells = db.cells || [];
+  var minLat=Infinity, maxLat=-Infinity, minLon=Infinity, maxLon=-Infinity, byKey={};
+  cells.forEach(function(c){
+    var p = parseCellCoord(c.id); if(!p) return;
+    byKey[p.lat+','+p.lon] = c;
+    if(p.lat<minLat)minLat=p.lat; if(p.lat>maxLat)maxLat=p.lat;
+    if(p.lon<minLon)minLon=p.lon; if(p.lon>maxLon)maxLon=p.lon;
+  });
+  var villeByCell = {};
+  (db.villes||[]).forEach(function(v){ if(v.cell) (villeByCell[v.cell]=villeByCell[v.cell]||[]).push(v); });
+  _carteGeo = { byKey:byKey, minLat:minLat, maxLat:maxLat, minLon:minLon, maxLon:maxLon,
+    cols:(maxLon-minLon+1), rows:(maxLat-minLat+1), villeByCell:villeByCell };
+  return _carteGeo;
+}
+
+// Centre pixel d'une cellule (par son id) dans le canvas courant.
+function carteCellCenter(cellId) {
+  var p = parseCellCoord(cellId); if(!p||!_carteGeo) return null;
+  var px = BASE_CELL_SIZE * window._carteState.zoom;
+  return { x:(p.lon-_carteGeo.minLon+0.5)*px, y:(_carteGeo.maxLat-p.lat+0.5)*px };
+}
+
+// Rend la section « Carte » : barre d'outils (mode, zoom), légende, et un canvas
+// interactif. Clic sur une cellule = édition (mode Sélection) ou point d'une
+// nouvelle route (mode Route). Voir openCellEditor / openRouteForm.
 function renderCarte(el) {
   var cells = db.cells || [];
-  var routes = db.routes || [];
-
-  var h = '<div class="panel-header"><div class="panel-title">🗺 Carte</div></div>';
-
   if (!cells.length) {
-    el.innerHTML = h + '<div class="empty-state">Aucune cellule de carte dans ce jeu de données.</div>';
+    el.innerHTML = '<div class="panel-header"><div class="panel-title">🗺 Carte</div></div>'
+      + '<div class="empty-state">Aucune cellule de carte dans ce jeu de données.</div>';
     return;
   }
+  carteComputeGeo();
+  var st = window._carteState;
 
-  // — Bornes de la grille à partir des coordonnées déduites des ids —
-  var minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
-  var byKey = {};
-  cells.forEach(function(c) {
-    var p = parseCellCoord(c.id);
-    if (!p) return;
-    byKey[p.lat + ',' + p.lon] = c;
-    if (p.lat < minLat) minLat = p.lat;
-    if (p.lat > maxLat) maxLat = p.lat;
-    if (p.lon < minLon) minLon = p.lon;
-    if (p.lon > maxLon) maxLon = p.lon;
-  });
+  var h = '<div class="panel-header"><div class="panel-title">🗺 Carte</div>';
+  h += '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">';
+  // Modes
+  h += '<button class="btn btn-sm '+(st.mode==='select'?'btn-gold':'btn-ghost')+'" onclick="carteSetMode(\'select\')">✎ Sélection</button>';
+  h += '<button class="btn btn-sm '+(st.mode==='route'?'btn-gold':'btn-ghost')+'" onclick="carteSetMode(\'route\')">🛣️ Créer une route</button>';
+  // Zoom
+  h += '<span style="display:inline-flex;gap:0.25rem;align-items:center;margin-left:0.5rem">';
+  h += '<button class="btn btn-ghost btn-sm" onclick="carteZoomBy(-1)">−</button>';
+  h += '<span id="carteZoomLabel" style="min-width:42px;text-align:center;font-size:0.78rem;color:var(--text-secondary)">×'+st.zoom+'</span>';
+  h += '<button class="btn btn-ghost btn-sm" onclick="carteZoomBy(1)">+</button>';
+  h += '<button class="btn btn-ghost btn-sm" onclick="carteFit()">Ajuster</button>';
+  h += '</span></div></div>';
 
-  // — Index des villes par cellule (pour le liseré doré) —
-  var villeByCell = {};
-  (db.villes || []).forEach(function(v) { if (v.cell) (villeByCell[v.cell] = villeByCell[v.cell] || []).push(v.name); });
+  // Bandeau d'aide / état du mode
+  h += '<div id="carteHint" style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.5rem">'+carteHintText()+'</div>';
 
-  // — Statistiques —
-  var nRegion = 0, nRiver = 0, nMountain = 0, nLake = 0;
-  var terrainCounts = {};
-  cells.forEach(function(c) {
-    if (c.region_id) nRegion++;
-    if (c.has_river) nRiver++;
-    if (c.has_mountain_range) nMountain++;
-    if (c.has_lake) nLake++;
-    var t = c.terrain_type || '';
-    terrainCounts[t] = (terrainCounts[t] || 0) + 1;
-  });
-
-  function stat(num, label) {
-    return '<div class="stat-item"><span class="stat-number">' + num + '</span><span class="stat-label">' + label + '</span></div>';
-  }
-  h += '<div class="stats-row" style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem">';
-  h += stat(cells.length, 'Cellules');
-  h += stat(routes.length, 'Routes');
-  h += stat(nRegion, 'Avec région');
-  h += stat(nRiver, 'Avec rivière');
-  h += stat(nMountain, 'Avec montagne');
-  h += stat(nLake, 'Avec lac');
+  // Légende terrains + routes + POI
+  var terrainCounts={}; cells.forEach(function(c){ var t=c.terrain_type||''; terrainCounts[t]=(terrainCounts[t]||0)+1; });
+  var present=Object.keys(terrainCounts).filter(function(t){return t;}).sort(function(a,b){return terrainCounts[b]-terrainCounts[a];});
+  h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem 0.8rem;margin-bottom:0.75rem;align-items:center">';
+  present.forEach(function(t){ h += '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.7rem;color:var(--text-secondary)"><span style="width:13px;height:13px;border-radius:2px;background:'+terrainColor(t)+'"></span>'+esc(terrainLabel(t))+' ('+terrainCounts[t]+')</span>'; });
+  h += '</div>';
+  h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem 0.8rem;margin-bottom:0.75rem;align-items:center">';
+  Object.keys(ROUTE_TYPES).forEach(function(rt){ var d=ROUTE_TYPES[rt]; h += '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.7rem;color:var(--text-secondary)"><span style="width:18px;height:0;border-top:3px '+(d.dash?'dashed':'solid')+' '+d.color+'"></span>'+d.icon+' '+esc(d.label)+'</span>'; });
   h += '</div>';
 
-  // — Légende (uniquement les terrains présents, triés par fréquence) —
-  var present = Object.keys(terrainCounts).filter(function(t){ return t; })
-    .sort(function(a, b){ return terrainCounts[b] - terrainCounts[a]; });
-  h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem">';
-  present.forEach(function(t) {
-    h += '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.72rem;color:var(--text-secondary)">'
-      + '<span style="width:14px;height:14px;border-radius:3px;background:' + terrainColor(t) + ';display:inline-block"></span>'
-      + esc(terrainLabel(t)) + ' (' + terrainCounts[t] + ')</span>';
-  });
+  // Filtres d'affichage (couches)
+  var fl = st.filters;
+  function flChk(key,label){ return '<label style="display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.74rem;color:var(--text-secondary)"><input type="checkbox"'+(fl[key]?' checked':'')+' style="accent-color:var(--accent-gold)" onchange="carteToggleFilter(\''+key+'\',this.checked)"> '+label+'</label>'; }
+  h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem 1rem;margin-bottom:0.75rem;padding:0.4rem 0.6rem;background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;align-items:center">';
+  h += '<span style="font-family:Cinzel,serif;font-size:0.58rem;text-transform:uppercase;color:var(--text-dim)">Filtres</span>';
+  h += flChk('villes','🏙️ Villes') + flChk('routes','🛣️ Routes') + flChk('poi','📍 Points importants') + flChk('water','💧 Lacs & rivières') + flChk('islands','🏝️ Îles') + flChk('regions','🗺️ Régions (teinte)');
   h += '</div>';
 
-  // — Grille —
-  // Latitudes de haut (Nord, max) en bas (Sud, min) ; longitudes de gauche
-  // (Ouest, min) à droite (Est, max).
-  var cols = maxLon - minLon + 1;
-  var CELL = 15;
-  h += '<div style="overflow:auto;border:1px solid var(--border,#33333a);border-radius:6px;padding:6px;background:#0d0d12">';
-  h += '<div style="display:grid;grid-template-columns:repeat(' + cols + ',' + CELL + 'px);grid-auto-rows:' + CELL + 'px;gap:1px;width:max-content">';
-  for (var lat = maxLat; lat >= minLat; lat--) {
-    for (var lon = minLon; lon <= maxLon; lon++) {
-      var c = byKey[lat + ',' + lon];
-      if (!c) { h += '<div></div>'; continue; }
-      var villes = villeByCell[c.id];
-      var tip = c.id + ' — ' + terrainLabel(c.terrain_type);
-      if (c.region_id) tip += ' [' + c.region_id + ']';
-      if (c.has_river) tip += ' ~rivière';
-      if (c.has_mountain_range) tip += ' ▲montagne';
-      if (c.has_lake) tip += ' ●lac';
-      if (villes) tip += ' • ' + villes.join(', ');
-      var border = villes ? 'box-shadow:inset 0 0 0 2px #c9a84c;' : '';
-      h += '<div title="' + esc(tip) + '" style="background:' + terrainColor(c.terrain_type) + ';' + border + 'border-radius:1px"></div>';
+  // Légende des régions (visible quand la couche Régions est active)
+  if (fl.regions) {
+    var regCells = {}; cells.forEach(function(c){ if(c.region_id) regCells[c.region_id]=(regCells[c.region_id]||0)+1; });
+    var regIds = Object.keys(regCells).sort(function(a,b){return regCells[b]-regCells[a];});
+    if (regIds.length) {
+      h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem 0.8rem;margin-bottom:0.75rem;align-items:center">';
+      regIds.forEach(function(rid){ var rg=(db.regions||[]).find(function(x){return x.id===rid;});
+        h += '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.7rem;color:var(--text-secondary)"><span style="width:13px;height:13px;border-radius:2px;background:'+regionColor(rid)+'"></span>'+esc(rg?rg.name:rid)+' ('+regCells[rid]+')</span>';
+      });
+      h += '</div>';
     }
   }
-  h += '</div></div>';
+
+  // Canvas dans un conteneur scrollable (hauteur étendue, scroll H/V au besoin)
+  h += '<div id="carteScroll" style="overflow:auto;height:76vh;border:1px solid var(--border,#33333a);border-radius:6px;background:#0a0a10;resize:vertical">';
+  h += '<canvas id="carteCanvas" style="display:block;cursor:pointer"></canvas></div>';
+  h += '<div id="carteStatus" style="font-size:0.72rem;color:var(--text-dim);margin-top:0.4rem;font-family:monospace">&nbsp;</div>';
+
+  // Liste des routes
+  h += '<div style="margin-top:1rem"><div style="font-family:Cinzel,serif;font-size:0.62rem;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.4rem">Routes ('+(db.routes||[]).length+')</div>';
+  h += '<div id="carteRoutesList"></div></div>';
 
   el.innerHTML = h;
+  document.getElementById('carteRoutesList').innerHTML = carteRoutesListHTML();
+
+  var canvas = document.getElementById('carteCanvas');
+  drawCarte();
+  canvas.addEventListener('click', carteOnClick);
+  canvas.addEventListener('mousemove', carteOnHover);
+}
+
+function carteHintText() {
+  var st = window._carteState;
+  if (st.mode==='route') {
+    return st.routeFrom
+      ? '🛣️ Route : départ « '+st.routeFrom+' » choisi — cliquez la cellule d\'arrivée.'
+      : '🛣️ Mode route : cliquez la cellule de départ, puis la cellule d\'arrivée.';
+  }
+  return '✎ Mode sélection : cliquez une cellule pour éditer son terrain, sa ville et ses points importants.';
+}
+
+// Dessine la grille, les routes, les villes et les POI sur le canvas.
+function drawCarte() {
+  var canvas = document.getElementById('carteCanvas'); if(!canvas||!_carteGeo) return;
+  var st = window._carteState;
+  var px = BASE_CELL_SIZE * st.zoom;
+  var W = _carteGeo.cols*px, H = _carteGeo.rows*px;
+  canvas.width = W; canvas.height = H;
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  var fl = st.filters || {};
+
+  // Cellules
+  for (var lat=_carteGeo.maxLat; lat>=_carteGeo.minLat; lat--) {
+    for (var lon=_carteGeo.minLon; lon<=_carteGeo.maxLon; lon++) {
+      var c = _carteGeo.byKey[lat+','+lon];
+      var x=(lon-_carteGeo.minLon)*px, y=(_carteGeo.maxLat-lat)*px;
+      if (!c) { ctx.fillStyle='#0a0a10'; ctx.fillRect(x,y,px,px); continue; }
+      // Filtre « Îles » désactivé → la cellule île est rendue comme la mer.
+      var hideIsland = (c.terrain_type==='island' && !fl.islands);
+      ctx.fillStyle = hideIsland ? terrainColor('deep_sea') : terrainColor(c.terrain_type);
+      ctx.fillRect(x,y,px,px);
+      if (hideIsland) {
+        if (px>=8) { ctx.strokeStyle='rgba(0,0,0,0.22)'; ctx.lineWidth=1; ctx.strokeRect(x+0.5,y+0.5,px-1,px-1); }
+        continue;
+      }
+      // Teinte région (couche optionnelle) : superpose la couleur de la région.
+      if (fl.regions && c.region_id) {
+        ctx.fillStyle = regionColor(c.region_id); ctx.globalAlpha = 0.5;
+        ctx.fillRect(x,y,px,px); ctx.globalAlpha = 1;
+      }
+      // grille fine
+      if (px>=8) { ctx.strokeStyle='rgba(0,0,0,0.22)'; ctx.lineWidth=1; ctx.strokeRect(x+0.5,y+0.5,px-1,px-1); }
+      // Lacs & rivières (couche optionnelle) : tracé réel.
+      if (fl.water) drawCarteWater(ctx, c, x, y, px);
+      // Montagne : repère léger.
+      if (px>=18 && c.has_mountain_range) {
+        ctx.font = Math.floor(px*0.4)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.fillText('▲', x+px*0.5, y+px*0.3);
+      }
+      // POI (couche optionnelle)
+      if (fl.poi && c.points_of_interest && c.points_of_interest.length) drawCartePoi(ctx, c.points_of_interest, x+px*0.72, y+px*0.28, px);
+    }
+  }
+
+  // Routes (couche optionnelle)
+  if (fl.routes) (db.routes||[]).forEach(function(r){
+    var a=carteCellCenter(r.from_place), b=carteCellCenter(r.to_place);
+    if(!a||!b) return;
+    var d=routeTypeDef(r.type);
+    ctx.strokeStyle=d.color; ctx.lineWidth=Math.max(2,px*0.14); ctx.lineCap='round';
+    ctx.setLineDash(d.dash?[Math.max(4,px*0.3),Math.max(3,px*0.22)]:[]);
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Villes (couche optionnelle)
+  if (fl.villes) Object.keys(_carteGeo.villeByCell).forEach(function(cellId){
+    var ctr=carteCellCenter(cellId); if(!ctr) return;
+    var r=Math.max(3,px*0.22);
+    ctx.fillStyle='#ffd700'; ctx.strokeStyle='#1a1a22'; ctx.lineWidth=Math.max(1,px*0.05);
+    ctx.beginPath(); ctx.arc(ctr.x,ctr.y,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    if (px>=26) {
+      var nm=_carteGeo.villeByCell[cellId][0].name||'';
+      ctx.font='bold '+Math.floor(px*0.26)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillStyle='#fff'; ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=3;
+      ctx.strokeText(nm, ctr.x, ctr.y+r+1); ctx.fillText(nm, ctr.x, ctr.y+r+1);
+    }
+  });
+
+  // Surbrillance de la cellule de départ de route
+  if (st.mode==='route' && st.routeFrom) {
+    var f=carteCellCenter(st.routeFrom);
+    if(f){ ctx.strokeStyle='#c9a84c'; ctx.lineWidth=3; ctx.strokeRect(f.x-px/2+1.5,f.y-px/2+1.5,px-3,px-3); }
+  }
+}
+
+// Dessine les pastilles POI d'une cellule (jusqu'à 3 visibles).
+function drawCartePoi(ctx, pois, cx, cy, px) {
+  var r=Math.max(2,px*0.12);
+  pois.slice(0,3).forEach(function(p,i){
+    var d=poiTypeDef(p.type);
+    ctx.fillStyle=d.color; ctx.strokeStyle='#1a1a22'; ctx.lineWidth=1;
+    ctx.beginPath();
+    var ox=cx-i*(r*2.2), oy=cy;
+    ctx.moveTo(ox,oy-r); ctx.lineTo(ox+r,oy); ctx.lineTo(ox,oy+r); ctx.lineTo(ox-r,oy); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+  });
+}
+
+// Dessine lacs et rivières d'une cellule (style repris de map-viewer-v23).
+// Déclenché par les flags has_river / has_lake OU par les terrains *_with_river /
+// *_with_lake / lake. La rivière est une courbe bleue verticale ; le lac une
+// ellipse bleue. Rien n'est tracé si la cellule est trop petite (px < 6).
+function drawCarteWater(ctx, c, x, y, px) {
+  if (px < 6) return;
+  var t = c.terrain_type || '';
+  var hasRiver = c.has_river || /_with_river$/.test(t);
+  var hasLake  = c.has_lake  || /_with_lake$/.test(t) || t === 'lake';
+  if (hasRiver) {
+    ctx.strokeStyle = 'rgba(40,120,200,0.85)';
+    ctx.lineWidth = Math.max(1.2, px*0.16); ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x+px*0.5, y);
+    ctx.bezierCurveTo(x+px*0.3, y+px*0.4, x+px*0.7, y+px*0.6, x+px*0.5, y+px);
+    ctx.stroke();
+  }
+  if (hasLake) {
+    ctx.fillStyle = 'rgba(58,134,180,0.85)';
+    ctx.beginPath();
+    ctx.ellipse(x+px*0.5, y+px*0.52, px*0.28, px*0.2, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(20,70,120,0.7)'; ctx.lineWidth = Math.max(0.5, px*0.03); ctx.stroke();
+  }
+}
+
+// Convertit un événement souris en cellule (ou null hors grille).
+function carteEventToCell(e) {
+  var canvas=document.getElementById('carteCanvas'); if(!canvas||!_carteGeo) return null;
+  var rect=canvas.getBoundingClientRect();
+  var px=BASE_CELL_SIZE*window._carteState.zoom;
+  var col=Math.floor((e.clientX-rect.left)/px), row=Math.floor((e.clientY-rect.top)/px);
+  if(col<0||row<0||col>=_carteGeo.cols||row>=_carteGeo.rows) return null;
+  var lon=_carteGeo.minLon+col, lat=_carteGeo.maxLat-row;
+  return _carteGeo.byKey[lat+','+lon]||null;
+}
+function carteOnHover(e) {
+  var c=carteEventToCell(e); var s=document.getElementById('carteStatus'); if(!s) return;
+  if(!c){ s.innerHTML='&nbsp;'; return; }
+  var vs=(_carteGeo.villeByCell[c.id]||[]).map(function(v){return v.name;});
+  s.textContent = c.id+' — '+terrainLabel(c.terrain_type)+(c.region_id?' ['+c.region_id+']':'')
+    +(vs.length?' • 🏙️ '+vs.join(', '):'')
+    +((c.points_of_interest&&c.points_of_interest.length)?' • '+c.points_of_interest.length+' POI':'');
+}
+function carteOnClick(e) {
+  var c=carteEventToCell(e); if(!c) return;
+  var st=window._carteState;
+  if (st.mode==='route') {
+    if(!st.routeFrom){ st.routeFrom=c.id; document.getElementById('carteHint').innerHTML=carteHintText(); drawCarte(); }
+    else { var from=st.routeFrom; st.routeFrom=null; openRouteForm(from, c.id); }
+  } else {
+    openCellEditor(c.id);
+  }
+}
+function carteSetMode(m) { window._carteState.mode=m; window._carteState.routeFrom=null; showSection('carte'); }
+// Active/désactive une couche d'affichage. La couche « régions » modifie aussi
+// la légende → re-rendu complet ; les autres se contentent d'un redraw canvas.
+function carteToggleFilter(key, on) {
+  window._carteState.filters[key]=on;
+  if (key==='regions') showSection('carte'); else drawCarte();
+}
+function carteZoomBy(delta) {
+  var st=window._carteState; st.zoom=Math.max(1,Math.min(MAX_CARTE_ZOOM, st.zoom+delta));
+  var lbl=document.getElementById('carteZoomLabel'); if(lbl) lbl.textContent='×'+st.zoom;
+  drawCarte();
+}
+function carteFit() {
+  var scroll=document.getElementById('carteScroll'); if(!scroll||!_carteGeo) return;
+  var avail=scroll.clientWidth-4;
+  var z=Math.max(1,Math.min(MAX_CARTE_ZOOM, Math.floor(avail/(_carteGeo.cols*BASE_CELL_SIZE))));
+  window._carteState.zoom=z||1;
+  var lbl=document.getElementById('carteZoomLabel'); if(lbl) lbl.textContent='×'+window._carteState.zoom;
+  drawCarte();
+}
+
+// ── Éditeur de cellule (terrain, ville+position, points importants) ──
+function openCellEditor(cellId) {
+  var c=(db.cells||[]).find(function(x){return x.id===cellId;}); if(!c) return;
+  window._carteEditCellId=cellId;
+  // POI de travail (clone)
+  window._cartePoi = JSON.parse(JSON.stringify(c.points_of_interest||[]));
+  // Ville actuellement sur la cellule
+  var curVille=(db.villes||[]).find(function(v){return v.cell===cellId;});
+
+  var terrainOpts=CARTE_TERRAINS.map(function(t){return '<option value="'+t+'"'+(c.terrain_type===t?' selected':'')+'>'+esc(terrainLabel(t))+'</option>';}).join('');
+  if(c.terrain_type && CARTE_TERRAINS.indexOf(c.terrain_type)===-1) terrainOpts+='<option value="'+esc(c.terrain_type)+'" selected>'+esc(c.terrain_type)+'</option>';
+  var villeOpts='<option value="">— Aucune ville —</option>'+(db.villes||[]).map(function(v){return '<option value="'+esc(v.id)+'"'+(curVille&&curVille.id===v.id?' selected':'')+'>'+esc(v.name)+'</option>';}).join('');
+  var rgOpts='<option value="">— Aucune région —</option>'+(db.regions||[]).map(function(rg){return '<option value="'+esc(rg.id)+'"'+(c.region_id===rg.id?' selected':'')+'>'+esc(rg.name)+'</option>';}).join('');
+  var cx=curVille&&curVille.coord_x!=null?curVille.coord_x:'';
+  var cy=curVille&&curVille.coord_y!=null?curVille.coord_y:'';
+
+  document.getElementById('modalTitle').textContent='Cellule '+cellId;
+  document.getElementById('modalBody').innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
+    '<div class="form-group"><label class="form-label">Terrain par défaut</label><select class="form-select" id="cell_terrain">'+terrainOpts+'</select></div>'+
+    '<div class="form-group"><label class="form-label">Région</label><select class="form-select" id="cell_region">'+rgOpts+'</select></div></div>'+
+    '<div class="form-group"><label class="form-label">Reliefs</label><div style="display:flex;gap:1rem;flex-wrap:wrap">'+
+    '<label style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;font-size:0.82rem"><input type="checkbox" id="cell_river"'+(c.has_river?' checked':'')+' style="accent-color:var(--accent-gold)"> Rivière</label>'+
+    '<label style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;font-size:0.82rem"><input type="checkbox" id="cell_lake"'+(c.has_lake?' checked':'')+' style="accent-color:var(--accent-gold)"> Lac</label>'+
+    '<label style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;font-size:0.82rem"><input type="checkbox" id="cell_mountain"'+(c.has_mountain_range?' checked':'')+' style="accent-color:var(--accent-gold)"> Chaîne de montagnes</label>'+
+    '</div></div>'+
+    '<div class="form-group" style="background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;padding:0.6rem 0.75rem">'+
+    '<label class="form-label">Ville sur cette cellule</label>'+
+    '<select class="form-select" id="cell_ville">'+villeOpts+'</select>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:0.5rem">'+
+    '<div><label style="font-size:0.7rem;color:var(--text-dim)">Position X</label><input class="form-input" id="cell_ville_x" type="number" value="'+cx+'" placeholder="coord. X"></div>'+
+    '<div><label style="font-size:0.7rem;color:var(--text-dim)">Position Y</label><input class="form-input" id="cell_ville_y" type="number" value="'+cy+'" placeholder="coord. Y"></div></div>'+
+    '<div style="font-size:0.66rem;color:var(--text-dim);margin-top:0.3rem">La ville choisie sera rattachée à cette cellule (ville.cell). X/Y = position fine optionnelle.</div></div>'+
+    '<div class="form-group"><label class="form-label">Points importants</label>'+
+    '<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">'+
+    '<input type="text" id="poi_name" placeholder="Nom du point…" style="flex:1">'+
+    '<select class="form-select" id="poi_type" style="max-width:160px">'+Object.keys(CARTE_POI_TYPES).map(function(k){return '<option value="'+k+'">'+CARTE_POI_TYPES[k].icon+' '+esc(CARTE_POI_TYPES[k].label)+'</option>';}).join('')+'</select>'+
+    '<button class="btn btn-primary btn-sm" onclick="addCartePoi()">+</button></div>'+
+    '<div id="poiList"></div></div>';
+  renderCartePoiList();
+  document.getElementById('modalFooter').innerHTML=
+    '<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>'+
+    '<button class="btn btn-gold" onclick="saveCellEdit()">💾 Enregistrer</button>';
+  var pn=document.getElementById('poi_name'); if(pn) pn.addEventListener('keydown',function(e){if(e.key==='Enter'){addCartePoi();e.preventDefault();}});
+  openModal();
+}
+function addCartePoi() {
+  var nm=document.getElementById('poi_name').value.trim(); if(!nm){toast('Nom du point requis');return;}
+  var ty=document.getElementById('poi_type').value;
+  window._cartePoi.push({name:nm, type:ty});
+  document.getElementById('poi_name').value=''; renderCartePoiList();
+}
+function renderCartePoiList() {
+  var el=document.getElementById('poiList'); if(!el) return;
+  var arr=window._cartePoi||[];
+  if(!arr.length){ el.innerHTML='<div style="padding:0.3rem 0.5rem;font-size:0.8rem;color:var(--text-dim)">Aucun point important</div>'; return; }
+  el.innerHTML=arr.map(function(p,i){ var d=poiTypeDef(p.type);
+    return '<div class="note-edit-item"><span style="color:'+d.color+'">'+d.icon+' '+esc(p.name)+' <span style="font-size:0.7rem;color:var(--text-dim)">('+esc(d.label)+')</span></span>'+
+      '<button class="note-del-btn" onclick="window._cartePoi.splice('+i+',1);renderCartePoiList()">✕</button></div>';
+  }).join('');
+}
+function saveCellEdit() {
+  var cellId=window._carteEditCellId;
+  var c=(db.cells||[]).find(function(x){return x.id===cellId;}); if(!c) return;
+  c.terrain_type=document.getElementById('cell_terrain').value;
+  c.region_id=document.getElementById('cell_region').value;
+  c.has_river=document.getElementById('cell_river').checked;
+  c.has_lake=document.getElementById('cell_lake').checked;
+  c.has_mountain_range=document.getElementById('cell_mountain').checked;
+  c.points_of_interest=(window._cartePoi||[]).slice();
+  // Ville : rattache la ville choisie à cette cellule ; détache toute autre
+  // ville précédemment sur cette cellule.
+  var chosenId=document.getElementById('cell_ville').value;
+  (db.villes||[]).forEach(function(v){ if(v.cell===cellId && v.id!==chosenId) v.cell=''; });
+  if(chosenId){
+    var v=(db.villes||[]).find(function(x){return x.id===chosenId;});
+    if(v){ v.cell=cellId;
+      var vx=document.getElementById('cell_ville_x').value, vy=document.getElementById('cell_ville_y').value;
+      v.coord_x = vx!==''?parseFloat(vx):null; v.coord_y = vy!==''?parseFloat(vy):null;
+    }
+  }
+  closeModal(); showSection('carte'); toast('Cellule '+cellId+' enregistrée');
+}
+
+// ── Création / suppression de routes ──
+function openRouteForm(fromId, toId) {
+  var geo=_carteGeo||carteComputeGeo();
+  function villeNameOn(id){ var vs=geo.villeByCell[id]; return vs&&vs.length?vs[0].name:''; }
+  function villeIdOn(id){ var vs=geo.villeByCell[id]; return vs&&vs.length?vs[0].id:''; }
+  var typeOpts=Object.keys(ROUTE_TYPES).map(function(k){return '<option value="'+k+'">'+ROUTE_TYPES[k].icon+' '+esc(ROUTE_TYPES[k].label)+'</option>';}).join('');
+  document.getElementById('modalTitle').textContent='Nouvelle route';
+  document.getElementById('modalBody').innerHTML=
+    '<div class="form-group"><label class="form-label">Tracé</label>'+
+    '<div style="font-size:0.85rem;color:var(--text-secondary)">De <b>'+esc(fromId)+'</b>'+(villeNameOn(fromId)?' ('+esc(villeNameOn(fromId))+')':'')+' → vers <b>'+esc(toId)+'</b>'+(villeNameOn(toId)?' ('+esc(villeNameOn(toId))+')':'')+'</div></div>'+
+    '<div class="form-group"><label class="form-label">Type de route</label><select class="form-select" id="route_type">'+typeOpts+'</select></div>'+
+    '<div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="route_desc" placeholder="Description optionnelle…"></textarea></div>';
+  document.getElementById('modalFooter').innerHTML=
+    '<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>'+
+    '<button class="btn btn-gold" onclick="saveRoute(\''+fromId+'\',\''+toId+'\')">💾 Créer la route</button>';
+  openModal();
+  window._routeVilleFrom=villeIdOn(fromId); window._routeVilleTo=villeIdOn(toId);
+}
+function saveRoute(fromId, toId) {
+  if(!db.routes) db.routes=[];
+  // Génère un id numérique zéro-paddé non utilisé.
+  var maxN=0; db.routes.forEach(function(r){ var n=parseInt(r.id,10); if(!isNaN(n)&&n>maxN)maxN=n; });
+  var newId=String(maxN+1).padStart(6,'0');
+  db.routes.push({
+    id:newId, type:document.getElementById('route_type').value,
+    from_place:fromId, from_ville_id:window._routeVilleFrom||'',
+    to_place:toId, to_ville_id:window._routeVilleTo||'',
+    description:document.getElementById('route_desc').value.trim(), notes:[]
+  });
+  closeModal(); showSection('carte'); toast('Route créée ('+fromId+' → '+toId+')');
+}
+function carteRoutesListHTML() {
+  var routes=db.routes||[];
+  if(!routes.length) return '<div style="font-size:0.8rem;color:var(--text-dim)">Aucune route. Passez en mode « Créer une route » et cliquez deux cellules.</div>';
+  return routes.map(function(r){ var gi=db.routes.indexOf(r); var d=routeTypeDef(r.type);
+    return '<div class="note-edit-item"><span><span style="color:'+d.color+'">'+d.icon+' '+esc(d.label)+'</span> <span style="font-family:monospace;font-size:0.75rem;color:var(--text-secondary)">'+esc(r.from_place)+' → '+esc(r.to_place)+'</span></span>'+
+      '<button class="note-del-btn" onclick="deleteRoute('+gi+')">✕</button></div>';
+  }).join('');
+}
+function deleteRoute(idx) {
+  confirmDelete('Supprimer cette route ?', function(){ db.routes.splice(idx,1); showSection('carte'); toast('Route supprimée'); });
 }
 
 // ─────────────────────────────────────────────
@@ -4441,6 +4842,9 @@ function renderWeapons(el) {
     card += '<div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openWeaponForm(' + gi + ')">✎</button>';
     card += '<button class="btn btn-danger" onclick="deleteWeapon(' + gi + ')">✕</button></div></div>';
     card += cardRow('Type', badge(weaponTypeLabel(w.type),'#b5895a'), true);
+    var handsB = badge(w.hands==='two'?'🙌 Deux mains':'✋ Une main', '#8a8050');
+    if(w.hands!=='two' && w.dual_wield) handsB += badge('⚔️⚔️ Une dans chaque main', '#c0904a');
+    card += cardRow('Maniement', handsB, false);
     var racB=''; (w.eligible_races||[]).forEach(function(id){ var r=(db.races||[]).find(function(x){return x.id===id;}); racB+=badge('🧬 '+esc(r?r.name:id),'#a06040'); });
     if(racB) card += cardRow('Races', racB, false);
     var facB=''; (w.eligible_factions||[]).forEach(function(id){ var f=(db.factions||[]).find(function(x){return x.id===id;}); facB+=badge('⚜️ '+esc(f?f.name:id),factionColor(id)); });
@@ -4472,6 +4876,13 @@ function openWeaponForm(idx) {
     '<div class="form-group"><label class="form-label">Identifiant (ID)*</label><input class="form-input" id="wp_id" value="' + esc(w.id) + '" placeholder="weapon_example" oninput="lockIdField(\'wp_id\')"></div>' +
     '<div class="form-group"><label class="form-label">Nom*</label><input class="form-input" id="wp_name" value="' + esc(w.name) + '" placeholder="Nom de l\'arme" oninput="autoGenId(this,\'wp_id\')"></div></div>' +
     '<div class="form-group"><label class="form-label">Type</label><select class="form-select" id="wp_type">' + typeOpts + '</select></div>' +
+    '<div class="form-group"><label class="form-label">Maniement</label>' +
+    '<div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap">' +
+    '<select class="form-select" id="wp_hands" style="max-width:200px" onchange="wpToggleDual()">' +
+    '<option value="one"'+(w.hands!=='two'?' selected':'')+'>✋ Une main</option>' +
+    '<option value="two"'+(w.hands==='two'?' selected':'')+'>🙌 Deux mains</option></select>' +
+    '<label id="wp_dual_wrap" style="display:'+(w.hands==='two'?'none':'flex')+';align-items:center;gap:0.4rem;cursor:pointer;font-size:0.84rem"><input type="checkbox" id="wp_dual"'+(w.dual_wield?' checked':'')+' style="accent-color:var(--accent-gold)"> Une dans chaque main (deux armes)</label>' +
+    '</div></div>' +
     '<div class="form-group"><label class="form-label">Races autorisées <span style="font-size:0.7rem;color:var(--text-dim)">(vide = toutes)</span></label>' +
     '<div style="display:flex;gap:0.5rem;margin-bottom:0.4rem"><select class="form-select" id="wpRaceSel">' + rOpts + '</select><button class="btn btn-primary btn-sm" onclick="addWeaponTarget(\'race\')">+</button></div><div id="wpRaceList"></div></div>' +
     '<div class="form-group"><label class="form-label">Factions autorisées <span style="font-size:0.7rem;color:var(--text-dim)">(vide = toutes)</span></label>' +
@@ -4487,6 +4898,12 @@ function openWeaponForm(idx) {
     '<button class="btn btn-gold" onclick="saveWeapon(' + (isEdit?idx:'undefined') + ')">💾 Enregistrer</button>';
   document.getElementById('noteInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){addCurrentNote();e.preventDefault();} });
   openModal();
+}
+// Masque l'option « une dans chaque main » quand l'arme est à deux mains.
+function wpToggleDual() {
+  var h=document.getElementById('wp_hands').value;
+  var wrap=document.getElementById('wp_dual_wrap'); if(wrap) wrap.style.display=(h==='two')?'none':'flex';
+  if(h==='two'){ var d=document.getElementById('wp_dual'); if(d) d.checked=false; }
 }
 // Ajoute une cible (race/faction/classe) à l'arme en cours d'édition.
 function addWeaponTarget(type) {
@@ -4513,9 +4930,11 @@ function renderWeaponTargetList(type) {
 }
 function saveWeapon(idx) {
   var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.weapons[idx])):{};
+  var hands=document.getElementById('wp_hands').value;
   var obj=Object.assign(base,{
     id:document.getElementById('wp_id').value.trim(), name:document.getElementById('wp_name').value.trim(),
     type:document.getElementById('wp_type').value,
+    hands:hands, dual_wield:(hands==='one' && document.getElementById('wp_dual').checked),
     eligible_races:window._wpRaces.slice(), eligible_factions:window._wpFactions.slice(), eligible_classes:window._wpClasses.slice(),
     notes:window._currentNotes.slice()});
   if(!obj.id||!obj.name){ toast('ID et Nom obligatoires'); return; }
@@ -7455,7 +7874,15 @@ function renderFactions(el) {
     c += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.2rem">';
     c += badge(ab.label,ab.color);
     c += (f.playable ? badge('Jouable','#7ac08a') : badge('Non jouable','#a05060'));
+    if (f.type) c += badge(esc(f.type), '#6a6f78');
     c += '</div></div>';
+
+    // Régions de référence (mono ou multi)
+    var fRegs=(f.region_ids&&f.region_ids.length)?f.region_ids:(f.region_id?[f.region_id]:[]);
+    if (fRegs.length) {
+      var rgB=''; fRegs.forEach(function(rid){ var rg=(db.regions||[]).find(function(x){return x.id===rid;}); rgB+=badge('🗺️ '+esc(rg?rg.name:rid),regionColor(rid)); });
+      c += cardRow(fRegs.length>1?'Régions':'Région', rgB, true);
+    }
 
     // Visual identity snippet
     if (f.visual_identity) {
@@ -7483,6 +7910,16 @@ function renderFactions(el) {
       if (f.politics.stance_on_black_moon) polParts.push(f.politics.stance_on_black_moon.substring(0,40));
       if (polParts.length) c += '<div style="font-size:0.72rem;color:var(--text-dim);margin-top:0.25rem;border-top:1px solid var(--border);padding-top:0.25rem">⚖️ '+esc(polParts[0])+'</div>';
     }
+
+    // Ligne de statistiques (relations, villes contrôlées, classes/races affiliées)
+    var sAll=(f.faction_relations||[]).filter(function(r){return r.relation==='allied'||r.relation==='ally';}).length;
+    var sEne=(f.faction_relations||[]).filter(function(r){return r.relation==='enemy'||r.relation==='hostile';}).length;
+    var sVil=(db.villes||[]).filter(function(v){return v.faction_control===f.id;}).length;
+    var sCls=(db.classes||[]).filter(function(cc){return (cc.faction_affiliations||[]).some(function(a){return a.faction_id===f.id;});}).length;
+    var sRac=(db.races||[]).filter(function(rr){return (rr.faction_affiliations||[]).some(function(a){return a.faction_id===f.id;});}).length;
+    c += '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;padding-top:0.4rem;border-top:1px solid var(--border);font-size:0.68rem;color:var(--text-dim)">';
+    c += '<span title="Factions alliées">🤝 '+sAll+'</span><span title="Factions ennemies">⚔️ '+sEne+'</span><span title="Villes contrôlées">🏙️ '+sVil+'</span><span title="Classes affiliées">🛡️ '+sCls+'</span><span title="Races affiliées">🧬 '+sRac+'</span>';
+    c += '</div>';
 
     c += '<div class="card-actions">';
     c += '<button class="btn btn-ghost btn-sm" onclick="openFactionDetail('+gi+')" title="Détail BD">📖</button>';
@@ -8608,6 +9045,14 @@ function buildListRow(section, item, idx) {
       icon = '⚜️';
       var ab = ALIGNMENT_MAP[item.alignment]||{label:item.alignment||'—',color:'#708090'};
       badges = badge(ab.label,ab.color) + (item.playable?badge('Jouable','#7ac08a'):badge('Non jouable','#a05060'));
+      if(item.type) badges += badge(esc(item.type),'#6a6f78');
+      var fRegs=(item.region_ids&&item.region_ids.length)?item.region_ids:(item.region_id?[item.region_id]:[]);
+      fRegs.forEach(function(rid){ var rg=(db.regions||[]).find(function(x){return x.id===rid;}); badges+=badge('🗺️ '+esc(rg?rg.name:rid),regionColor(rid)); });
+      var nAll=(item.faction_relations||[]).filter(function(r){return r.relation==='allied'||r.relation==='ally';}).length;
+      var nEne=(item.faction_relations||[]).filter(function(r){return r.relation==='enemy'||r.relation==='hostile';}).length;
+      var nVilF=(db.villes||[]).filter(function(v){return v.faction_control===item.id;}).length;
+      var nClsF=(db.classes||[]).filter(function(c){return (c.faction_affiliations||[]).some(function(a){return a.faction_id===item.id;});}).length;
+      desc = nAll+' alliée(s) · '+nEne+' ennemie(s) · '+nVilF+' ville(s) · '+nClsF+' classe(s)';
       actions = '<button class="btn btn-ghost btn-sm" style="font-size:0.6rem" onclick="showRelations(\'factions\',\''+esc(item.id)+'\')" title="Relations">🔗</button>'
               + '<button class="btn btn-ghost btn-sm" onclick="openFactionForm('+idx+')">✎</button>'
               + '<button class="btn btn-danger" onclick="deleteFaction('+idx+')">✕</button>';
@@ -8617,6 +9062,12 @@ function buildListRow(section, item, idx) {
       icon = '⚔️';
       var cl_tl = CLASS_TYPE_LABELS[item.type]||item.type||'—';
       badges = badge(cl_tl, col);
+      if(item.life_gauge)      badges += badge('❤️ '+esc(item.life_gauge),'#c05060');
+      if(item.endurance_gauge) badges += badge('💪 '+esc(item.endurance_gauge),'#7ac08a');
+      if(item.specific_gauge)  badges += badge('✨ '+esc(item.specific_gauge),'#9060c0');
+      var nFacC=(item.faction_affiliations||[]).length, nVarC=(item.variants||[]).length, nTitC=(item.level_titles||[]).length;
+      var clsParts=[nFacC?nFacC+' faction(s)':'Universelle']; if(nVarC)clsParts.push(nVarC+' variante(s)'); if(nTitC)clsParts.push(nTitC+' titre(s)');
+      desc = clsParts.join(' · ');
       actions = '<button class="btn btn-ghost btn-sm" onclick="openClassForm('+idx+')">✎</button>'
               + '<button class="btn btn-danger" onclick="deleteClass('+idx+')">✕</button>';
       break;
@@ -8631,7 +9082,14 @@ function buildListRow(section, item, idx) {
     case 'races':
       col = raceColor(item.id);
       icon = '🧬';
-      badges = (item.playable?badge('Jouable','#7ac08a'):'') + (item.npc?badge('PNJ','#7090c0'):'');
+      badges = (item.playable?badge('Jouable','#7ac08a'):'') + (item.npc?badge('PNJ','#7090c0'):'') + (item.companion?badge('Compagnon','#9060c0'):'');
+      if(!item.playable&&!item.npc&&!item.companion) badges += badge('Non jouable','#a05060');
+      var rGenders=Array.isArray(item.genders)?item.genders:(item.gender&&item.gender!=='unspecified'?[item.gender]:[]);
+      rGenders.forEach(function(g){ var gd=GENDER_OPTIONS.find(function(x){return x.value===g;}); if(gd) badges+=badge(gd.label,gd.color); });
+      (item.faction_affiliations||[]).slice(0,3).forEach(function(a){ var f=(db.factions||[]).find(function(x){return x.id===a.faction_id;}); badges+=badge('⚜️ '+esc(f?f.name:a.faction_id),factionColor(a.faction_id)); });
+      var rParts=[]; var nFacR=(item.faction_affiliations||[]).length, nTraitsR=(item.abilities_traits||[]).length, nClsAcc=(item.class_access||[]).length;
+      if(nFacR)rParts.push(nFacR+' faction(s)'); if(nTraitsR)rParts.push(nTraitsR+' trait(s)'); if(nClsAcc)rParts.push(nClsAcc+' classe(s)');
+      desc = rParts.join(' · ') || ((item.origins&&item.origins.summary)||'');
       actions = '<button class="btn btn-ghost btn-sm" style="font-size:0.6rem" onclick="showRelations(\'races\',\''+esc(item.id)+'\')" title="Relations">🔗</button>'
               + '<button class="btn btn-ghost btn-sm" onclick="openRaceForm('+idx+')">✎</button>'
               + '<button class="btn btn-danger" onclick="deleteRace('+idx+')">✕</button>';

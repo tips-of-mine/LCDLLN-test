@@ -331,6 +331,10 @@ namespace engine::client
 		/// TD.8 : état d'animation (valeur d'AvatarAnimState) propagé via le SnapshotEntity.
 		/// Consommé par RecordRemoteAvatars pour jouer le bon clip (emote/roulade/run/…).
 		uint8_t animationState = 0;
+		/// Combat SP1 : archétype de créature propagé via le SnapshotEntity (wire v9).
+		/// 0 pour les joueurs et loot bags ; ≠ 0 pour les mobs — le rendu résout
+		/// nom/niveau/mesh/échelle via Engine::m_creatureCatalog.
+		uint32_t archetypeId = 0;
 	};
 
 	/// Pure data model consumed by UI views and debug panels.

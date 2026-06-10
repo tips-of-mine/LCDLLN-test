@@ -10190,8 +10190,13 @@ namespace engine
 					const auto& remotes = m_uiModelBinding.GetModel().remoteEntities;
 					for (const engine::client::UIRemoteEntity& re : remotes)
 					{
-						if (re.playerClientId == 0u)
-							continue; // mob / loot bag : pas de nameplate
+						// Combat SP1 : les mobs (archetypeId != 0) ont desormais leur
+						// plaque ; seuls les loot bags (les deux ids a 0) restent muets.
+						if (re.playerClientId == 0u && re.archetypeId == 0u)
+							continue; // loot bag : pas de nameplate
+						// Mob mort en attente de despawn : pas de plaque (kEntityStateDead).
+						if (re.playerClientId == 0u && (re.stateFlags & 1u) != 0u)
+							continue;
 						float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
 						const auto sit = m_remoteSmoothed.find(re.entityId);
 						if (sit != m_remoteSmoothed.end() && sit->second.valid)
@@ -10205,9 +10210,27 @@ namespace engine
 						// la DB serveur et propagé via le SnapshotEntity). Sinon, fallback sur
 						// "P<clientId>" — utile quand la DB serveur ne sert pas (Windows / DB
 						// indisponible) ou pour identifier l'entité dans un log.
-						const std::string label = !re.displayName.empty()
-							? re.displayName
-							: ("P" + std::to_string(re.playerClientId));
+						// Combat SP1 : plaque mob "Nom (niv. N)  PV/PVmax" résolue via le
+						// CreatureCatalog ; fallback générique si l'archétype est inconnu
+						// du catalogue client (catalogue absent ou désynchronisé).
+						std::string label;
+						if (re.playerClientId != 0u)
+						{
+							label = !re.displayName.empty()
+								? re.displayName
+								: ("P" + std::to_string(re.playerClientId));
+						}
+						else
+						{
+							const engine::client::CreatureAppearance* appearance =
+								m_creatureCatalog.Find(re.archetypeId);
+							const std::string mobName = (appearance != nullptr)
+								? appearance->name
+								: ("Creature " + std::to_string(re.archetypeId));
+							const uint32_t mobLevel = (appearance != nullptr) ? appearance->level : 1u;
+							label = mobName + " (niv. " + std::to_string(mobLevel) + ")  "
+								+ std::to_string(re.currentHealth) + "/" + std::to_string(re.maxHealth);
+						}
 						const ImVec2 ts = ImGui::CalcTextSize(label.c_str());
 						// Halo noir derriere le texte pour la lisibilite sur fond clair (ciel).
 						fg->AddRectFilled(
@@ -11864,16 +11887,47 @@ namespace engine
 		for (const engine::client::UIRemoteEntity& re : remotes)
 		{
 			// remoteEntities contient TOUTES les entités distantes (joueurs + mobs + lootbags).
-			// Les mobs ont leur propre pipeline de rendu (mesh dédié), donc ici on ne dessine
-			// le mesh humanoïde que pour les joueurs distants (playerClientId != 0). Même
-			// critère que la plaque de nom (cf. boucle TD.4 dans le HUD in-game).
-			if (re.playerClientId == 0u)
-				continue;
-			// TD.6 — genre du personnage propagé par le snapshot. Fallback "male" si vide
-			// (master sans migration 0067 ou avatar legacy). Récupère le mesh correspondant
-			// dans le registre m_raceMeshes (clé "humains|male" / "humains|female").
-			const std::string gender = (re.gender == "male" || re.gender == "female") ? re.gender : std::string{"male"};
-			engine::render::skinned::SkinnedMesh* remoteMesh = GetRaceMesh("humains", gender);
+			// Combat SP1 : les mobs (archetypeId != 0) réutilisent un mesh de race
+			// existant déclaré par le catalogue (cf. CreatureCatalog) ; seuls les loot
+			// bags (les deux ids à 0) gardent leur pipeline dédié (pas de mesh humanoïde).
+			// Attention budget : chaque mob = 1 draw skinné dans le ring SSBO partagé
+			// (kFrameSlots=32, cf. SkinnedRenderer.h) — au-delà de ~16 draws skinnés
+			// par frame le ring se réécrit pendant une frame en vol (limite connue,
+			// audit 2026-06-10) ; zone actuelle = 1 mob, marge OK.
+			std::string meshRace;
+			std::string gender;
+			float meshScale = 1.0f;
+			if (re.playerClientId != 0u)
+			{
+				// TD.6 — genre du personnage propagé par le snapshot. Fallback "male" si vide
+				// (master sans migration 0067 ou avatar legacy). Récupère le mesh correspondant
+				// dans le registre m_raceMeshes (clé "humains|male" / "humains|female").
+				meshRace = "humains";
+				gender = (re.gender == "male" || re.gender == "female") ? re.gender : std::string{"male"};
+			}
+			else if (re.archetypeId != 0u)
+			{
+				// Mob mort en attente de despawn : pas de rendu (kEntityStateDead).
+				if ((re.stateFlags & 1u) != 0u)
+					continue;
+				const engine::client::CreatureAppearance* appearance = m_creatureCatalog.Find(re.archetypeId);
+				meshRace = (appearance != nullptr && !appearance->meshKey.empty())
+					? appearance->meshKey
+					: std::string{"humains"};
+				gender = "male";
+				meshScale = (appearance != nullptr) ? appearance->scale : 1.0f;
+			}
+			else
+			{
+				continue; // loot bag : pipeline dédié, pas de mesh humanoïde
+			}
+			engine::render::skinned::SkinnedMesh* remoteMesh = GetRaceMesh(meshRace, gender);
+			if (remoteMesh == nullptr && re.archetypeId != 0u)
+			{
+				// Fallback mob : la race du catalogue n'est pas chargée dans
+				// m_raceMeshes (asset absent) → on retombe sur le mesh humain.
+				remoteMesh = GetRaceMesh("humains", "male");
+			}
 			if (remoteMesh == nullptr)
 			{
 				// Aucun mesh chargé pour cette combo race+genre → on saute. Pas de fallback
@@ -11930,9 +11984,17 @@ namespace engine
 				remoteMesh->skeleton, globals);
 			// Pieds au sol : le serveur réplique la position « centre capsule » comme pour
 			// l'avatar local (feetPos = ccPos.y - 0.9). Même offset ici pour la cohérence.
+			// Combat SP1 : échelle uniforme d'archétype (1.0 pour les joueurs) appliquée
+			// entre la rotation et l'importTransform — Mat4 n'a pas de helper Scale,
+			// on construit la diagonale (column-major) à la main.
+			engine::math::Mat4 scaleMat;
+			scaleMat.m[0] = meshScale;
+			scaleMat.m[5] = meshScale;
+			scaleMat.m[10] = meshScale;
 			const engine::math::Mat4 model =
 				engine::math::Mat4::Translate(engine::math::Vec3{ px, py - 0.9f, pz }) *
 				engine::math::Mat4::RotateY(yaw) *
+				scaleMat *
 				(remoteMesh->importTransform);
 			// Matériau : on prend le même matériau habit (m_avatarMaterialId) que l'avatar
 			// local. Pas encore de skin par-personnage côté serveur — toute la flotte distante

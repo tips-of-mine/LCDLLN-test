@@ -515,6 +515,7 @@ namespace engine::client
 			spell.spellId = idValue->stringValue;
 			spell.name = nameValue->stringValue;
 			spell.needsEnemyTarget = (targetValue->stringValue == "SingleEnemy");
+			spell.targetsAlly = (targetValue->stringValue == "SingleAlly");
 			kit.push_back(std::move(spell));
 		}
 

@@ -35,6 +35,8 @@
 #include "src/client/gameplay/SpellKitCatalog.h"
 // Combat SP4 — FX visuels d'auras (halo aux pieds des entités).
 #include "src/client/combat/AuraFXSystem.h"
+// Groupes SP1 — cadres de groupe (M32.2 enfin câblé).
+#include "src/client/social/PartyHud.h"
 #include "src/client/debug/ProfilerHud.h"
 #include "src/client/economy/ShopUi.h"
 #include "src/client/ui_common/UIModel.h"
@@ -1281,6 +1283,12 @@ namespace engine
 		/// Combat SP4 — FX d'auras (couche données ; rendu = halo écran-espace
 		/// coloré aux pieds, couleur résolue par ResolveAuraVisuals).
 		engine::client::AuraFXSystem m_auraFx{};
+		/// Groupes SP1 — cadres de groupe (PV/mana/nom/chef) + ciblage allié.
+		engine::client::PartyHudPresenter m_partyHud{};
+		/// Groupes SP1 — allié sélectionné au clic sur un cadre (entityId ==
+		/// clientId pour les joueurs, invariant ServerApp::HandleHello) ; 0 = soi.
+		/// Consommé par les sorts SingleAlly de la barre d'action (SP3).
+		uint64_t m_selectedAllyEntityId = 0;
 		/// Combat SP3 — cooldowns AFFICHÉS de la barre d'action (spellId → fin en
 		/// secondes EngineNowSec) ; purement cosmétique, le serveur fait foi.
 		std::unordered_map<std::string, float> m_spellCooldownUiUntilSec;

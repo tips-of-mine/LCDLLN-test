@@ -237,6 +237,13 @@ namespace engine::client
 		uint64_t startedAtNs = 0;
 	};
 
+	/// Groupes SP1 — invitation de groupe en attente (PartyInviteNotify, M32.2).
+	struct UIPartyInviteState
+	{
+		bool pending = false;
+		std::string inviterName;
+	};
+
 	/// Combat SP4 — une entrée de menace répliquée (ThreatUpdate, wire v12).
 	struct UIThreatEntry
 	{
@@ -398,6 +405,8 @@ namespace engine::client
 		/// TD.1 : avatars distants (≠ joueur local) reçus dans le dernier snapshot AoI.
 		/// Reconstruit à chaque ApplySnapshot. Consommé par le rendu monde (TD.2).
 		std::vector<UIRemoteEntity> remoteEntities;
+		/// Groupes SP1 — invitation en attente (popup Accepter/Refuser).
+		UIPartyInviteState partyInvite{};
 		/// M32.2: True when the local player is currently in a party.
 		bool        inParty          = false;
 		/// M32.2: Human-readable loot mode label received in the last PartyUpdate (e.g. "FreeForAll").
@@ -486,6 +495,10 @@ namespace engine::client
 		/// Combat SP2 — efface la cible courante (notifie UIModelChangeCombat).
 		void ClearLocalTarget();
 
+		/// Groupes SP1 — consomme l'invitation en attente (après Accepter/Refuser).
+		/// Notifie UIModelChangeParty. Main thread uniquement.
+		void ClearPartyInvite();
+
 		/// M29.3: Refresh billboard projections (call from render/game thread with camera + viewport).
 		void TickChatWorldVisuals(
 			const engine::math::Vec3& cameraWorld,
@@ -524,6 +537,9 @@ namespace engine::client
 
 		/// Combat SP4 — remplace la table de menace d'un mob (ThreatUpdate).
 		bool ApplyThreatUpdate(std::span<const std::byte> packet);
+
+		/// Groupes SP1 — invitation de groupe entrante (PartyInviteNotify).
+		bool ApplyPartyInviteNotify(std::span<const std::byte> packet);
 
 		/// Apply one decoded zone change packet to the world section of the UI model.
 		bool ApplyZoneChange(std::span<const std::byte> packet);
@@ -620,6 +636,7 @@ namespace engine::client
 		engine::server::CastBarUpdateMessage m_castBarUpdateMessage{};
 		engine::server::AuraUpdateMessage m_auraUpdateMessage{};
 		engine::server::ThreatUpdateMessage m_threatUpdateMessage{};
+		engine::server::PartyInviteNotifyMessage m_partyInviteNotifyMessage{};
 		engine::server::ZoneChangeMessage m_zoneChangeMessage{};
 		engine::server::InventoryDeltaMessage m_inventoryMessage{};
 		engine::server::QuestDeltaMessage m_questMessage{};

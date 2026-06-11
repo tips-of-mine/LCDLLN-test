@@ -2233,3 +2233,20 @@ kind `ThreatUpdate = 85` (table de menace d''un mob, liste complète idempotente
   validés — sera branché avec le premier sort AreaAtTarget). Cf. plan.
 - L''IA d''agro (poursuite/leash/evade/threat tick) existait déjà (Waves 8/19).
 - **Déploiement** : ⚠️ wire v12 — lock-step master + shardd + client (avec SP1-SP3).
+
+## Groupes SP1 — PartyHud + invitations + ciblage allié (2026-06-11)
+
+Plan : `docs/superpowers/plans/2026-06-11-party-sp1-hud-invitations.md`. **100 % client, AUCUN
+changement wire** (kinds party 25-32 de M32.2 déjà complets côté serveur — le serveur partage
+déjà l''XP et broadcast PartyUpdate).
+
+- Bug d''usage corrigé : le client IGNORAIT `PartyInviteNotify` (kind 26 non routé) et
+  n''émettait jamais PartyAccept/Decline — l''invité ne pouvait pas rejoindre. Routage +
+  popup « X vous invite » [Accepter]/[Refuser] + `SendPartyAccept/Decline`.
+- `PartyHudPresenter` (M32.2, orphelin de l''audit) câblé : cadres à gauche (nom, badge [C]
+  chef, barres PV/mana, label loot mode), rendu depuis `GetState().frames[]`.
+- **Ciblage allié** : clic sur un cadre = allié sélectionné (bordure or) → les sorts
+  `SingleAlly` (SP3) envoient son entityId (== clientId, invariant HandleHello) ; re-clic =
+  désélection ; le pick de mob ignore les clics sur les cadres.
+- Hors périmètre : persistance des groupes (tables 0060) — session-scoped, documenté.
+- **Déploiement** : ✅ client uniquement (au-dessus du lock-step v12 du chantier combat).

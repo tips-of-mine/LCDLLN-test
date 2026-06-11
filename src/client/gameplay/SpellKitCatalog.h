@@ -23,6 +23,9 @@ namespace engine::client
 		uint32_t resourceCostPercent = 0;
 		/// true si le sort exige une cible ennemie (targetType SingleEnemy).
 		bool needsEnemyTarget = false;
+		/// Groupes SP1 — true si le sort vise un allié (targetType SingleAlly) :
+		/// la barre d'action envoie alors l'allié sélectionné au cadre de groupe.
+		bool targetsAlly = false;
 	};
 
 	/// Combat SP3 — catalogue client des kits de sorts (même

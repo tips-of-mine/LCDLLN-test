@@ -619,6 +619,9 @@ namespace engine::client
 			return ApplyAuraUpdate(packet);
 		case engine::server::MessageKind::ThreatUpdate:
 			return ApplyThreatUpdate(packet);
+		// Groupes SP1 — invitation entrante (le reste du flux party était déjà routé).
+		case engine::server::MessageKind::PartyInviteNotify:
+			return ApplyPartyInviteNotify(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -989,6 +992,35 @@ namespace engine::client
 		return true;
 	}
 
+	bool UIModelBinding::ApplyPartyInviteNotify(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodePartyInviteNotify(packet, m_partyInviteNotifyMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] PartyInviteNotify FAILED: decode error");
+			return false;
+		}
+
+		m_model.partyInvite.pending = true;
+		m_model.partyInvite.inviterName = m_partyInviteNotifyMessage.inviterName;
+		LOG_INFO(Net, "[UIModelBinding] Party invite received (inviter={})", m_model.partyInvite.inviterName);
+		NotifyObservers(UIModelChangeParty);
+		return true;
+	}
+
+	void UIModelBinding::ClearPartyInvite()
+	{
+		if (!ValidateMainThread("ClearPartyInvite"))
+		{
+			return;
+		}
+		if (!m_model.partyInvite.pending)
+		{
+			return;
+		}
+		m_model.partyInvite = UIPartyInviteState{};
+		NotifyObservers(UIModelChangeParty);
+	}
+
 	bool UIModelBinding::SetLocalTarget(engine::server::EntityId entityId)
 	{
 		if (!ValidateMainThread("SetLocalTarget"))
@@ -1261,6 +1293,11 @@ namespace engine::client
 		m_model.partyMembers.reserve(msg.members.size());
 		m_model.partyLeaderId = msg.leaderId;
 		m_model.inParty       = !msg.members.empty();
+		// Groupes SP1 — rejoindre un groupe consomme l'invitation en attente.
+		if (m_model.inParty)
+		{
+			m_model.partyInvite = UIPartyInviteState{};
+		}
 
 		switch (msg.lootMode)
 		{

@@ -10272,6 +10272,29 @@ namespace engine
 					{
 						constexpr float kPickRadiusPx = 40.0f;
 						const ImVec2 mousePos = ImGui::GetIO().MousePos;
+						// Groupes SP1 — un clic sur un cadre de groupe est une sélection
+						// d'allié (gérée plus bas), jamais un pick de mob.
+						bool overPartyFrame = false;
+						if (uiModel.inParty)
+						{
+							const engine::client::PartyHudState& partyPickState = m_partyHud.GetState();
+							for (size_t pickFrame = 0; pickFrame < engine::client::kMaxPartyFrames; ++pickFrame)
+							{
+								const engine::client::PartyMemberFrame& pframe = partyPickState.frames[pickFrame];
+								if (!pframe.visible)
+								{
+									continue;
+								}
+								if (mousePos.x >= pframe.frameBounds.x
+									&& mousePos.x <= pframe.frameBounds.x + pframe.frameBounds.width
+									&& mousePos.y >= pframe.frameBounds.y
+									&& mousePos.y <= pframe.frameBounds.y + pframe.frameBounds.height)
+								{
+									overPartyFrame = true;
+									break;
+								}
+							}
+						}
 						engine::server::EntityId pickedId = 0;
 						float bestDistSq = kPickRadiusPx * kPickRadiusPx;
 						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
@@ -10297,7 +10320,7 @@ namespace engine
 								pickedId = re.entityId;
 							}
 						}
-						if (pickedId != 0)
+						if (pickedId != 0 && !overPartyFrame)
 							(void)m_uiModelBinding.SetLocalTarget(pickedId);
 					}
 
@@ -10547,9 +10570,17 @@ namespace engine
 								const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
 								if (targetOk && ready && gameplayClientId != 0u)
 								{
-									const uint64_t castTarget = spell.needsEnemyTarget
-										? uiModel.targetStats.entityId
-										: 0ull;
+									// Groupes SP1 — sorts d'allié : envoie l'allié sélectionné au
+									// cadre de groupe (0 = soi, défaut serveur).
+									uint64_t castTarget = 0ull;
+									if (spell.needsEnemyTarget)
+									{
+										castTarget = uiModel.targetStats.entityId;
+									}
+									else if (spell.targetsAlly)
+									{
+										castTarget = m_selectedAllyEntityId;
+									}
 									(void)m_gameplayUdp.SendCastRequest(gameplayClientId, castTarget, spell.spellId);
 									if (spell.cooldownMs > 0u)
 									{
@@ -10770,6 +10801,128 @@ namespace engine
 								fg->AddCircle(ImVec2(haloX, haloY), 20.0f, haloColor, 24, 2.5f);
 							}
 						}
+					}
+
+					// --- Groupes SP1 : cadres de groupe (PartyHudPresenter M32.2 enfin
+					// câblé) + ciblage allié au clic (consommé par les sorts SingleAlly).
+					if (uiModel.inParty)
+					{
+						const engine::client::PartyHudState& partyState = m_partyHud.GetState();
+						// Mapping cadre → membre : même ordre que le présentateur
+						// (slot 0 = joueur local, puis l'ordre de partyMembers).
+						std::vector<uint32_t> frameClientIds;
+						frameClientIds.push_back(uiModel.playerStats.clientId);
+						for (const engine::client::UIPartyMemberEntry& member : uiModel.partyMembers)
+						{
+							if (member.clientId != uiModel.playerStats.clientId)
+							{
+								frameClientIds.push_back(member.clientId);
+							}
+						}
+						const bool clickThisFrame = mouseAllowed
+							&& m_input.WasMousePressed(engine::platform::MouseButton::Left);
+						const ImVec2 mousePosParty = ImGui::GetIO().MousePos;
+						for (size_t frameIndex = 0; frameIndex < engine::client::kMaxPartyFrames; ++frameIndex)
+						{
+							const engine::client::PartyMemberFrame& frame = partyState.frames[frameIndex];
+							if (!frame.visible)
+							{
+								continue;
+							}
+							const engine::client::HudRect& fb = frame.frameBounds;
+							// entityId == clientId pour les joueurs (invariant HandleHello).
+							const uint64_t memberEntityId = (frameIndex < frameClientIds.size())
+								? static_cast<uint64_t>(frameClientIds[frameIndex])
+								: 0ull;
+							const bool isSelectedAlly = (memberEntityId != 0ull
+								&& memberEntityId == m_selectedAllyEntityId);
+							fg->AddRectFilled(ImVec2(fb.x, fb.y), ImVec2(fb.x + fb.width, fb.y + fb.height),
+								IM_COL32(12, 14, 20, 205), 5.0f);
+							fg->AddRect(ImVec2(fb.x, fb.y), ImVec2(fb.x + fb.width, fb.y + fb.height),
+								isSelectedAlly ? IM_COL32(220, 190, 90, 240) : IM_COL32(80, 84, 96, 200),
+								5.0f, 0, isSelectedAlly ? 2.5f : 1.5f);
+							std::string memberLabel = frame.displayName;
+							if (frame.isLeader)
+							{
+								memberLabel += "  [C]";
+							}
+							fg->AddText(ImVec2(fb.x + 6.0f, fb.y + 4.0f), IM_COL32(230, 230, 230, 255), memberLabel.c_str());
+							// Barres PV / mana depuis les widgets du présentateur.
+							auto drawMemberBar = [fg](const engine::client::HudBarWidget& bar, ImU32 fillColor)
+							{
+								if (!bar.visible || bar.bounds.width <= 0.0f)
+								{
+									return;
+								}
+								const float fillFraction = (bar.maxValue > 0u)
+									? std::clamp(static_cast<float>(bar.currentValue) / static_cast<float>(bar.maxValue), 0.0f, 1.0f)
+									: 0.0f;
+								fg->AddRectFilled(ImVec2(bar.bounds.x, bar.bounds.y),
+									ImVec2(bar.bounds.x + bar.bounds.width, bar.bounds.y + bar.bounds.height),
+									IM_COL32(34, 36, 42, 220), 2.0f);
+								fg->AddRectFilled(ImVec2(bar.bounds.x, bar.bounds.y),
+									ImVec2(bar.bounds.x + bar.bounds.width * fillFraction, bar.bounds.y + bar.bounds.height),
+									fillColor, 2.0f);
+							};
+							drawMemberBar(frame.hpBar, IM_COL32(70, 170, 80, 235));
+							drawMemberBar(frame.manaBar, IM_COL32(70, 110, 200, 235));
+							// Clic sur le cadre = sélection/désélection de l'allié (soins).
+							if (clickThisFrame && memberEntityId != 0ull
+								&& mousePosParty.x >= fb.x && mousePosParty.x <= fb.x + fb.width
+								&& mousePosParty.y >= fb.y && mousePosParty.y <= fb.y + fb.height)
+							{
+								m_selectedAllyEntityId = isSelectedAlly ? 0ull : memberEntityId;
+								LOG_INFO(Core, "[Engine] Allié sélectionné (entity_id={})", m_selectedAllyEntityId);
+							}
+						}
+						// Label du mode de loot sous les cadres.
+						if (partyState.visibleCount > 0u)
+						{
+							const engine::client::HudRect& lastFrame =
+								partyState.frames[partyState.visibleCount - 1u].frameBounds;
+							const std::string lootLabel = "Loot: " + partyState.lootModeLabel;
+							fg->AddText(ImVec2(lastFrame.x, lastFrame.y + lastFrame.height + 6.0f),
+								IM_COL32(190, 190, 190, 220), lootLabel.c_str());
+						}
+					}
+					else if (m_selectedAllyEntityId != 0ull)
+					{
+						// Sorti du groupe : plus d'allié sélectionnable.
+						m_selectedAllyEntityId = 0ull;
+					}
+
+					// --- Groupes SP1 : popup d'invitation (Accepter / Refuser).
+					// Modale souris : affichée même pendant un cast ou un menu.
+					if (uiModel.partyInvite.pending)
+					{
+						const float inviteW = 380.0f;
+						const float inviteH = 140.0f;
+						ImGui::SetNextWindowPos(ImVec2((dw - inviteW) * 0.5f, dh * 0.22f), ImGuiCond_Always);
+						ImGui::SetNextWindowSize(ImVec2(inviteW, inviteH), ImGuiCond_Always);
+						ImGui::SetNextWindowBgAlpha(0.96f);
+						ImGui::Begin("##ln_party_invite", nullptr,
+							ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
+							| ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav);
+						const std::string inviteText = uiModel.partyInvite.inviterName + " vous invite dans un groupe";
+						const float inviteTextW = ImGui::CalcTextSize(inviteText.c_str()).x;
+						ImGui::SetCursorPosX((inviteW - inviteTextW) * 0.5f);
+						ImGui::TextUnformatted(inviteText.c_str());
+						ImGui::Separator();
+						ImGui::Spacing();
+						const uint32_t inviteClientId = m_gameplayUdp.ServerClientId();
+						ImGui::SetCursorPosX((inviteW - 2.0f * 150.0f - 12.0f) * 0.5f);
+						if (ImGui::Button("Accepter", ImVec2(150.0f, 36.0f)) && inviteClientId != 0u)
+						{
+							(void)m_gameplayUdp.SendPartyAccept(inviteClientId);
+							m_uiModelBinding.ClearPartyInvite();
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("Refuser", ImVec2(150.0f, 36.0f)) && inviteClientId != 0u)
+						{
+							(void)m_gameplayUdp.SendPartyDecline(inviteClientId);
+							m_uiModelBinding.ClearPartyInvite();
+						}
+						ImGui::End();
 					}
 
 					// --- Ecran de mort : overlay sombre + bouton Reapparaitre →
@@ -12724,6 +12877,11 @@ namespace engine
 		{
 			LOG_WARN(Core, "[GameplayNet] AuraFXSystem Init FAILED — FX d'auras désactivés");
 		}
+		// Groupes SP1 — cadres de groupe (M32.2).
+		if (!m_partyHud.Init())
+		{
+			LOG_WARN(Core, "[GameplayNet] PartyHudPresenter Init FAILED — cadres de groupe désactivés");
+		}
 
 		const uint32_t vw = static_cast<uint32_t>(std::max(1, m_width));
 		const uint32_t vh = static_cast<uint32_t>(std::max(1, m_height));
@@ -12749,6 +12907,11 @@ namespace engine
 		{
 			LOG_WARN(Core, "[GameplayNet] BuffBarPresenter viewport FAILED — using fallback layout");
 		}
+		// Groupes SP1 — layout pixel des cadres de groupe.
+		if (!m_partyHud.SetViewportSize(vw, vh))
+		{
+			LOG_WARN(Core, "[GameplayNet] PartyHudPresenter viewport FAILED — using fallback layout");
+		}
 
 		m_uiObserverHandle = m_uiModelBinding.AddObserver(
 			[this](const engine::client::UIModel& model, uint32_t changeMask)
@@ -12760,6 +12923,8 @@ namespace engine
 				// (combat log, cadre cible, DPS meter) et Stats (PV joueur).
 				(void)m_combatHud.ApplyModel(model, changeMask);
 				m_advancedCombat.ApplyModel(model, changeMask);
+				// Groupes SP1 — cadres de groupe (UIModelChangeParty).
+				(void)m_partyHud.ApplyModel(model, changeMask);
 			});
 		if (m_uiObserverHandle == 0u)
 		{
@@ -12826,7 +12991,9 @@ namespace engine
 			m_uiObserverHandle = 0;
 		}
 
-		// Combat SP2/SP3/SP4 — symétrie d'Init (présentateurs combat + BuffBar + FX).
+		// Combat SP2/SP3/SP4 + Groupes SP1 — symétrie d'Init.
+		m_partyHud.Shutdown();
+		m_selectedAllyEntityId = 0;
 		m_auraFx.Shutdown();
 		m_buffBar.Shutdown();
 		m_spellCooldownUiUntilSec.clear();

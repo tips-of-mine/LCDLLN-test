@@ -317,6 +317,40 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendPartyAccept(uint32_t clientId)
+	{
+		engine::server::PartyAcceptMessage msg{};
+		msg.clientId = clientId;
+		const std::vector<std::byte> packet = engine::server::EncodePartyAccept(msg);
+		const bool ok = SendBytes(packet);
+		if (ok)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] PartyAccept sent (client_id={})", clientId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] PartyAccept FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
+	bool GameplayUdpClient::SendPartyDecline(uint32_t clientId)
+	{
+		engine::server::PartyDeclineMessage msg{};
+		msg.clientId = clientId;
+		const std::vector<std::byte> packet = engine::server::EncodePartyDecline(msg);
+		const bool ok = SendBytes(packet);
+		if (ok)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] PartyDecline sent (client_id={})", clientId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] PartyDecline FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
 	bool GameplayUdpClient::SendShopBuyRequest(uint32_t clientId, uint32_t vendorId, uint32_t itemId, uint32_t quantity)
 	{
 		engine::server::ShopBuyRequestMessage msg{};

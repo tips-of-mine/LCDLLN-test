@@ -63,6 +63,12 @@ namespace engine::client
 		/// cible, portée).
 		bool SendCastRequest(uint32_t clientId, uint64_t targetEntityId, std::string_view spellId);
 
+		/// Groupes SP1 — accepte l'invitation de groupe en attente (M32.2).
+		bool SendPartyAccept(uint32_t clientId);
+
+		/// Groupes SP1 — refuse l'invitation de groupe en attente (M32.2).
+		bool SendPartyDecline(uint32_t clientId);
+
 		bool SendShopBuyRequest(uint32_t clientId, uint32_t vendorId, uint32_t itemId, uint32_t quantity);
 
 		bool SendShopSellRequest(uint32_t clientId, uint32_t vendorId, uint32_t itemId, uint32_t quantity);

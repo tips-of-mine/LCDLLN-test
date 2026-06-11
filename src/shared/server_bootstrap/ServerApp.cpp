@@ -17,6 +17,9 @@
 // Level-up runtime — courbe XP -> niveau (séparée de la boucle réseau, pure et testable).
 #include "src/shardd/gameplay/character/LevelProgression.h"
 
+// Combat SP2 — résolveur d'attaque pur (précision / critique, RNG injecté).
+#include "src/shardd/gameplay/combat/AttackResolver.h"
+
 // TA.4 — pont position : compilé uniquement pour la cible shard Linux (SHARD_POSITION_DB),
 // pas pour le build Windows (ServerApp.cpp est partagé). Macro dédié plutôt qu'ENGINE_HAS_MYSQL
 // pour ne PAS basculer les autres systèmes gameplay du shard en mode DB.
@@ -286,6 +289,7 @@ namespace engine::server
 		, m_questRuntime(m_config)
 		, m_spawnerRuntime(m_config)
 		, m_archetypeLibrary(m_config)
+		, m_combatRng(std::random_device{}())
 	{
 		LOG_INFO(Core, "[ServerApp] Constructed");
 	}
@@ -2753,7 +2757,37 @@ namespace engine::server
 			return;
 		}
 
-		const uint32_t appliedDamage = std::min(client->combat.damagePerHit, target->stats.currentHealth);
+		// Combat SP2 — le cooldown est consommé même sur un raté (le coup est parti).
+		client->combat.nextAttackTick = m_currentTick + client->combat.cooldownTicks;
+		const combat::AttackRollResult roll = combat::ResolveAttackRoll(
+			client->combat.damagePerHit,
+			client->combat.accuracy,
+			client->combat.critRate,
+			client->combat.critMult,
+			NextCombatRoll01(),
+			NextCombatRoll01());
+		uint32_t eventFlags = 0u;
+		if (roll.miss) eventFlags |= kCombatEventFlagMiss;
+		if (roll.crit) eventFlags |= kCombatEventFlagCrit;
+		if (roll.miss)
+		{
+			// Raté : aucun dégât, mais l'événement part quand même (combat log/HUD).
+			CombatEventMessage missEvent{};
+			missEvent.attackerEntityId = client->entityId;
+			missEvent.targetEntityId = target->entityId;
+			missEvent.damage = 0u;
+			missEvent.targetCurrentHealth = target->stats.currentHealth;
+			missEvent.targetMaxHealth = target->stats.maxHealth;
+			missEvent.targetStateFlags = target->stateFlags;
+			missEvent.flags = eventFlags;
+			LOG_INFO(Net, "[ServerApp] Attack missed (attacker_entity_id={}, target_entity_id={})",
+				missEvent.attackerEntityId,
+				missEvent.targetEntityId);
+			BroadcastCombatEvent(missEvent);
+			return;
+		}
+
+		const uint32_t appliedDamage = std::min(roll.damage, target->stats.currentHealth);
 		if (appliedDamage == 0)
 		{
 			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: zero damage after validation (client_id={}, target_entity_id={})",
@@ -2762,7 +2796,6 @@ namespace engine::server
 			return;
 		}
 
-		client->combat.nextAttackTick = m_currentTick + client->combat.cooldownTicks;
 		target->stats.currentHealth -= appliedDamage;
 		if (target->isDynamicEventMob && target->owningEventIndex < m_dynamicEvents.size())
 		{
@@ -2815,6 +2848,8 @@ namespace engine::server
 		combatEvent.targetCurrentHealth = target->stats.currentHealth;
 		combatEvent.targetMaxHealth = target->stats.maxHealth;
 		combatEvent.targetStateFlags = target->stateFlags;
+		// Combat SP2 — bit critique éventuel (le raté est parti plus haut).
+		combatEvent.flags = eventFlags;
 		LOG_INFO(Net,
 			"[ServerApp] Attack applied (attacker_entity_id={}, target_entity_id={}, damage={}, hp={}/{}, next_attack_tick={})",
 			combatEvent.attackerEntityId,
@@ -3448,6 +3483,38 @@ namespace engine::server
 			clearedCount);
 	}
 
+	void ServerApp::PurgeThreatForEntity(EntityId entityId)
+	{
+		size_t purgedMobs = 0;
+		for (MobEntity& mob : m_mobs)
+		{
+			const size_t before = mob.threatTable.size();
+			mob.threatTable.erase(
+				std::remove_if(mob.threatTable.begin(), mob.threatTable.end(),
+					[entityId](const ThreatEntry& entry) { return entry.entityId == entityId; }),
+				mob.threatTable.end());
+			if (mob.aggroTargetEntityId == entityId)
+			{
+				mob.aggroTargetEntityId = 0;
+			}
+			if (mob.threatTable.size() != before)
+			{
+				++purgedMobs;
+			}
+		}
+		if (purgedMobs > 0)
+		{
+			LOG_INFO(Net, "[ServerApp] Threat purged for entity (entity_id={}, mobs={})", entityId, purgedMobs);
+		}
+	}
+
+	float ServerApp::NextCombatRoll01()
+	{
+		// distribution locale (stateless) : [0,1), borne haute exclue.
+		std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+		return distribution(m_combatRng);
+	}
+
 	bool ServerApp::TryMobAttackPlayer(MobEntity& mob, ConnectedClient& target)
 	{
 		if (m_currentTick < mob.combat.nextAttackTick)
@@ -3466,20 +3533,39 @@ namespace engine::server
 			return false;
 		}
 
-		const uint32_t appliedDamage = std::min(mob.combat.damagePerHit, target.stats.currentHealth);
-		if (appliedDamage == 0)
+		// Combat SP2 — le mob rate/critique aussi (stats d'archétype) ; cooldown
+		// consommé même sur un raté.
+		mob.combat.nextAttackTick = m_currentTick + mob.combat.cooldownTicks;
+		const combat::AttackRollResult roll = combat::ResolveAttackRoll(
+			mob.combat.damagePerHit,
+			mob.combat.accuracy,
+			mob.combat.critRate,
+			mob.combat.critMult,
+			NextCombatRoll01(),
+			NextCombatRoll01());
+		uint32_t eventFlags = 0u;
+		if (roll.miss) eventFlags |= kCombatEventFlagMiss;
+		if (roll.crit) eventFlags |= kCombatEventFlagCrit;
+
+		const uint32_t appliedDamage = roll.miss ? 0u : std::min(roll.damage, target.stats.currentHealth);
+		if (!roll.miss && appliedDamage == 0)
 		{
 			return false;
 		}
 
-		mob.combat.nextAttackTick = m_currentTick + mob.combat.cooldownTicks;
-		target.stats.currentHealth -= appliedDamage;
+		if (appliedDamage > 0)
+		{
+			target.stats.currentHealth -= appliedDamage;
+		}
 		if (target.stats.currentHealth == 0)
 		{
 			target.stateFlags |= kEntityStateDead;
 			LOG_INFO(Net, "[ServerApp] Player died (entity_id={}, attacker_entity_id={})",
 				target.entityId,
 				mob.entityId);
+			// Combat SP2 — un joueur mort sort de toutes les tables de menace ;
+			// les mobs repassent en patrouille au prochain tick d'IA.
+			PurgeThreatForEntity(target.entityId);
 			SaveConnectedClient(target, "player_death");
 		}
 
@@ -3490,6 +3576,7 @@ namespace engine::server
 		combatEvent.targetCurrentHealth = target.stats.currentHealth;
 		combatEvent.targetMaxHealth = target.stats.maxHealth;
 		combatEvent.targetStateFlags = target.stateFlags;
+		combatEvent.flags = eventFlags;
 		LOG_INFO(Net,
 			"[ServerApp] Mob attack applied (attacker_entity_id={}, target_entity_id={}, damage={}, hp={}/{}, next_attack_tick={})",
 			combatEvent.attackerEntityId,

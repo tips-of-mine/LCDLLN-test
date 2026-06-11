@@ -36,6 +36,7 @@
 #include <cstddef>
 #include <mutex>
 #include <optional>
+#include <random>
 #include <string>
 #include <span>
 #include <string_view>
@@ -496,6 +497,17 @@ namespace engine::server
 		/// Clear one mob threat table and active aggro target.
 		void ResetMobThreat(MobEntity& mob);
 
+		/// Combat SP2 — retire une entité de toutes les tables de menace des mobs
+		/// (mort ou respawn du joueur) ; les mobs qui la ciblaient repassent en
+		/// patrouille au prochain tick d'IA.
+		void PurgeThreatForEntity(EntityId entityId);
+
+		/// Combat SP2 — tire un jet uniforme [0,1) sur le RNG combat du serveur.
+		/// Les jets sont consommés par AttackResolver (pur) ; le RNG n'est PAS
+		/// déterministe (seed random_device au boot) — les tests passent par
+		/// ResolveAttackRoll directement.
+		float NextCombatRoll01();
+
 		/// Apply one mob attack against its current target when in range.
 		bool TryMobAttackPlayer(MobEntity& mob, ConnectedClient& target);
 
@@ -873,6 +885,9 @@ namespace engine::server
 		/// Combat SP1 — catalogue d'archétypes de créatures (stats data-driven,
 		/// initialisé par InitSpawners avant le chargement des spawners).
 		CreatureArchetypeLibrary m_archetypeLibrary;
+		/// Combat SP2 — RNG des jets d'attaque (précision/critique), seedé au
+		/// constructeur. Main thread du tick monde uniquement (pas de verrou).
+		std::mt19937 m_combatRng;
 		ZoneTransitionMap m_zoneTransitionMap;
 		TickScheduler m_tickScheduler;
 		UdpTransport m_transport;

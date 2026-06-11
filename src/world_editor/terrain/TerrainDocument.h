@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 namespace engine::core { class Config; }
 
@@ -27,8 +28,25 @@ namespace engine::editor::world
 	class TerrainDocument
 	{
 	public:
+		/// Lot B3 (audit 2026-06-10 §4.2) — Définit l'identifiant de la zone
+		/// éditée, utilisé pour namespacer les chemins disque des chunks
+		/// (`chunks/zone_<zoneId>/chunk_<i>_<j>/…`). \p zoneId doit être déjà
+		/// sanitizé (`SanitizeZoneId` : a-z, 0-9, _). Chaîne vide = chemins
+		/// legacy plats (`chunks/chunk_<i>_<j>/…`), comportement pré-B3
+		/// conservé pour les tests. À appeler à CHAQUE changement de carte
+		/// (nouvelle carte / chargement), AVANT tout `EnsureLoaded` /
+		/// `Save*ToDisk` — sinon les chunks seraient lus/écrits dans le
+		/// namespace de la carte précédente.
+		void SetZoneId(std::string zoneId) { m_zoneId = std::move(zoneId); }
+
+		/// Identifiant de zone courant ("" = chemins legacy plats).
+		const std::string& GetZoneId() const { return m_zoneId; }
+
 		/// Charge le chunk `(chunkX, chunkZ)` depuis disque si présent dans
-		/// `<paths.content>/chunks/chunk_<i>_<j>/terrain.bin`, sinon crée un
+		/// `<paths.content>/chunks/zone_<zoneId>/chunk_<i>_<j>/terrain.bin`
+		/// (fallback LECTURE sur l'ancien chemin plat
+		/// `chunks/chunk_<i>_<j>/terrain.bin` si le namespacé n'existe pas —
+		/// migration douce lot B3), sinon crée un
 		/// chunk plat à 0 m. Met le chunk en cache RAM dans `m_chunks` et
 		/// retourne le shared_ptr stable. Idempotent : appels successifs avec
 		/// les mêmes coords retournent le même pointeur.
@@ -46,7 +64,9 @@ namespace engine::editor::world
 		bool HasDirtyChunks() const;
 
 		/// Sauvegarde sur disque tous les chunks dirty, sous
-		/// `<paths.content>/chunks/chunk_<i>_<j>/terrain.bin`. Crée le dossier
+		/// `<paths.content>/chunks/zone_<zoneId>/chunk_<i>_<j>/terrain.bin`
+		/// (toujours le chemin namespacé en ÉCRITURE — lot B3 ; chemin plat
+		/// legacy seulement si `m_zoneId` est vide). Crée le dossier
 		/// parent au besoin.
 		/// \param config Source de la clé `paths.content`.
 		/// \return nombre de chunks effectivement écrits.
@@ -97,7 +117,8 @@ namespace engine::editor::world
 		void OnCommit(engine::world::GlobalChunkCoord coord);
 
 		/// Charge la `SplatMap` du chunk `(chunkX, chunkZ)` depuis disque
-		/// (`<paths.content>/chunks/chunk_<i>_<j>/splat.bin`) si présente,
+		/// (`<paths.content>/chunks/zone_<zoneId>/chunk_<i>_<j>/splat.bin`,
+		/// fallback LECTURE sur le chemin plat legacy — lot B3) si présente,
 		/// sinon crée une splat-map uniforme layer 0 (= "dirt"). Met en cache
 		/// dans `m_splats`. Idempotent (M100.9).
 		std::shared_ptr<engine::world::terrain::SplatMap> EnsureSplatLoaded(
@@ -144,6 +165,9 @@ namespace engine::editor::world
 		static uint64_t PackCoord(engine::world::GlobalChunkCoord c);
 
 		std::unordered_map<uint64_t, ChunkSlot> m_chunks;
+		/// Lot B3 — identifiant (sanitizé) de la zone éditée, namespace des
+		/// chemins disque. "" = chemins legacy plats (tests, boot).
+		std::string m_zoneId;
 		engine::world::terrain::TerrainLodWorker* m_lodWorker = nullptr;
 		std::string m_contentRootForLods;
 		OnChunkChangedCallback m_onChunkChanged;

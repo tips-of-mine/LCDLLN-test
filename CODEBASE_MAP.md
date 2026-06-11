@@ -2301,6 +2301,7 @@ Et purge opportuniste de l''anti-rejeu `ShardTicketValidator::m_used_ticket_ids`
 (set → map ticket_id→expires_at ; l''ancien set grossissait sans fin).
 **Déploiement** : ⚠️ master + shardd — porté par la fenêtre lock-step v12.
 
+
 ## Audit Lot B2 — caches framebuffer des passes de post-process (2026-06-12)
 
 Correctif du 2e constat majeur de l''audit 2026-06-10 (client) : 12 classes de passes
@@ -2314,3 +2315,23 @@ Engine, nettoyage au Destroy). Bonus perf : plus de create/destroy par frame.
 Constat annexe : `Engine::m_underwaterPass` est DORMANT (jamais Init/Record — M37.3
 non câblé au frame graph) ; corrigé quand même, à câbler ou supprimer (Lot C).
 **Déploiement** : ✅ client uniquement.
+
+## Audit Lot B3 — intégrité des données de l''éditeur monde (2026-06-12)
+
+Correctif des 4 constats 🔴 d''intégrité de l''audit 2026-06-10 §4.2 :
+1. **Reset au load** : RequestZoneDocumentsReload (Session) → WorldEditorShell::ResetForZoneChange
+   (réutilise TerrainDocument::Reset + zone_presets::ResetEditedZoneDocuments) — fini la
+   heightmap de la carte A réécrite sur la carte B.
+2. **Undo trans-cartes** : CommandStack::Clear() (existant, jamais appelé) câblé au
+   new/load via ResetForZoneChange + InitNewZoneTerrain.
+3. **Save eau/mesh/portails** : SaveToDisk des 3 documents (zéro appelant avant !) câblé
+   au point de save terrain (SaveZoneDocuments) + LoadZoneDocuments au chargement
+   (subtilité : dirty flag eau consommé par le rebuild GPU → save inconditionnel,
+   MarkDirty re-armé après load).
+4. **Namespacing par zone** : `core/ZonePaths.h` (helpers purs documentés) — écriture
+   `chunks/zone_<id>/…` + `instances/zone_<id>/…`, lecture avec fallback legacy plat
+   (migration douce), zoneId vide = legacy intégral. Test ctest ajouté
+   (Test_ZoneNamespacedPathsAndLegacyFallback).
+Suivi possible : StreamCache runtime lit encore les chemins plats (livraison normale =
+ExportRuntimeBundle) — rendre StreamCache zone-aware si partage direct éditeur→jeu voulu.
+**Déploiement** : ✅ client uniquement (éditeur monde).

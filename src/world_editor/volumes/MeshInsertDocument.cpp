@@ -1,6 +1,7 @@
 #include "src/world_editor/volumes/MeshInsertDocument.h"
 
 #include "src/shared/core/Config.h"
+#include "src/world_editor/core/ZonePaths.h"
 #include "src/world_editor/volumes/MeshInsertIo.h"
 
 #include <algorithm>
@@ -71,9 +72,10 @@ namespace engine::editor::world::volumes
 	bool MeshInsertDocument::SaveToDisk(const engine::core::Config& cfg,
 		std::string& outError)
 	{
+		// Lot B3 — ÉCRITURE toujours sur le chemin namespacé par zone.
 		const std::string contentRoot = cfg.GetString("paths.content", "game/data");
 		const std::filesystem::path path =
-			std::filesystem::path(contentRoot) / "instances" / "mesh_inserts.bin";
+			zone_paths::ZoneInstancesFile(contentRoot, m_zoneId, "mesh_inserts.bin");
 		std::error_code ec;
 		std::filesystem::create_directories(path.parent_path(), ec);
 		if (ec)
@@ -105,9 +107,11 @@ namespace engine::editor::world::volumes
 	bool MeshInsertDocument::LoadFromDisk(const engine::core::Config& cfg,
 		std::string& outError)
 	{
+		// Lot B3 — LECTURE : chemin namespacé s'il existe, sinon fallback
+		// sur l'ancien chemin plat (migration douce).
 		const std::string contentRoot = cfg.GetString("paths.content", "game/data");
 		const std::filesystem::path path =
-			std::filesystem::path(contentRoot) / "instances" / "mesh_inserts.bin";
+			zone_paths::ResolveInstancesFileForRead(contentRoot, m_zoneId, "mesh_inserts.bin");
 
 		std::ifstream f(path, std::ios::binary | std::ios::ate);
 		if (!f.good())

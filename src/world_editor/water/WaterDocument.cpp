@@ -1,6 +1,8 @@
 // src/world_editor/water/WaterDocument.cpp
 #include "src/world_editor/water/WaterDocument.h"
 
+#include "src/world_editor/core/ZonePaths.h"
+
 #include "src/shared/core/Config.h"
 
 #include <filesystem>
@@ -10,9 +12,11 @@ namespace engine::editor::world
 {
 	bool WaterDocument::SaveToDisk(const engine::core::Config& cfg, std::string& outError)
 	{
+		// Lot B3 — ÉCRITURE toujours sur le chemin namespacé par zone
+		// (instances/zone_<id>/water.bin) ; chemin plat si zoneId vide.
 		const std::string contentRoot = cfg.GetString("paths.content", "game/data");
 		const std::filesystem::path path =
-			std::filesystem::path(contentRoot) / "instances" / "water.bin";
+			zone_paths::ZoneInstancesFile(contentRoot, m_zoneId, "water.bin");
 
 		std::error_code ec;
 		std::filesystem::create_directories(path.parent_path(), ec);
@@ -55,9 +59,11 @@ namespace engine::editor::world
 
 	bool WaterDocument::LoadFromDisk(const engine::core::Config& cfg, std::string& outError)
 	{
+		// Lot B3 — LECTURE : chemin namespacé par zone s'il existe, sinon
+		// fallback sur l'ancien chemin plat (migration douce).
 		const std::string contentRoot = cfg.GetString("paths.content", "game/data");
 		const std::filesystem::path path =
-			std::filesystem::path(contentRoot) / "instances" / "water.bin";
+			zone_paths::ResolveInstancesFileForRead(contentRoot, m_zoneId, "water.bin");
 
 		std::ifstream f(path, std::ios::binary | std::ios::ate);
 		if (!f.good())

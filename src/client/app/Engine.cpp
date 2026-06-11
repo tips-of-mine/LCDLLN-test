@@ -5,6 +5,7 @@
 #include "src/world_editor/ui/EditorMode.h"
 #include "src/world_editor/ui/WorldEditorImGui.h"
 #include "src/world_editor/ui/WorldEditorSession.h"
+#include "src/world_editor/ui/WorldMapIo.h" // lot B3 : SanitizeZoneId (namespacing zone)
 #include "src/world_editor/core/WorldEditorShell.h"
 #include "src/world_editor/panels/ScenePanel.h"
 #include "src/shared/core/memory/Memory.h"
@@ -8110,7 +8111,30 @@ namespace engine
 				const float heightScale =
 					static_cast<float>(m_cfg.GetDouble("terrain.height_scale", 200.0));
 				const float flatHeightMeters = (32768.0f / 65535.0f) * heightScale;
+				// Lot B3 (audit 2026-06-10 §4.2, correctifs 1-2-4) — Nouvelle carte
+				// = changement de monde : vide la pile undo, reinitialise les 4
+				// documents (terrain/eau/mesh/portails) et propage le zoneId
+				// (namespacing disque chunks/zone_<id>/...) AVANT l'init des
+				// chunks plats. Pas de LoadZoneDocuments ici : une zone neuve
+				// demarre avec des documents vides.
+				m_worldEditorShell->ResetForZoneChange(
+					engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
 				m_worldEditorShell->InitNewZoneTerrain(chunksPerAxis, flatHeightMeters);
+			}
+			// Lot B3 (correctifs 1+3) — Chargement d'une carte EXISTANTE :
+			// reinitialise les documents (les chunks de la carte precedente
+			// restaient en RAM et reecrivaient la heightmap de la nouvelle via
+			// SyncWorldEditorHeightmapFromDocument), vide l'undo, propage le
+			// zoneId, puis recharge eau / mesh inserts / portails depuis les
+			// chemins namespaces (fallback legacy plat en lecture). Place AVANT
+			// la consommation du reload GPU pour que le rebuild parte d'un
+			// etat document coherent.
+			if (m_worldEditorSession->ConsumeZoneDocumentsReloadRequest()
+				&& m_worldEditorShell && m_worldEditorShell->IsInitialized())
+			{
+				m_worldEditorShell->ResetForZoneChange(
+					engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
+				m_worldEditorShell->LoadZoneDocuments(m_cfg);
 			}
 			if (m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
 			{
@@ -8122,8 +8146,21 @@ namespace engine
 			if (m_worldEditorSession->ConsumeTerrainChunksSaveRequest()
 				&& m_worldEditorShell && m_worldEditorShell->IsInitialized())
 			{
+				// Lot B3 (correctif 4) — re-propage le zoneId courant avant la
+				// persistance : couvre le « save sous un autre nom de zone »
+				// (ActionSaveCurrentMap re-sanitize m_doc.zoneId depuis le
+				// buffer UI juste avant d'armer la requete de save).
+				m_worldEditorShell->PropagateZoneIdToDocuments(
+					engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
 				const size_t nWritten = m_worldEditorShell->SaveTerrainChunks(m_cfg);
-				LOG_INFO(EditorWorld, "[Engine] Persisted {} terrain chunk file(s)", nWritten);
+				// Lot B3 (correctif 3) — persiste aussi les documents annexes
+				// (eau, mesh inserts, portails de donjon) : avant ce fix, aucun
+				// SaveToDisk n'etait appele hors tests -> lacs/rivieres/grottes/
+				// arches/portails places etaient perdus a la fermeture.
+				const size_t nDocs = m_worldEditorShell->SaveZoneDocuments(m_cfg);
+				LOG_INFO(EditorWorld,
+					"[Engine] Persisted {} terrain chunk file(s) + {} zone document(s)",
+					nWritten, nDocs);
 			}
 		}
 		// M100.46+ — Pont TerrainDocument → HeightmapData GPU. Consomme le

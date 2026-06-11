@@ -1,5 +1,7 @@
 #include "src/world_editor/terrain/TerrainDocument.h"
 
+#include "src/world_editor/core/ZonePaths.h"
+
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
 #include "src/client/world/terrain/TerrainChunkLoader.h"
@@ -7,7 +9,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include <sstream>
 #include <utility>
 
 namespace engine::editor::world
@@ -58,12 +59,24 @@ namespace engine::editor::world
 		auto it = m_chunks.find(key);
 		if (it != m_chunks.end()) return it->second.chunk;
 
-		// Tentative de chargement disque via la clé canonique.
+		// Lot B3 — Tentative de chargement disque via la clé canonique
+		// namespacée par zone (`chunks/zone_<id>/chunk_X_Z/terrain.bin`).
+		// Fallback LECTURE sur l'ancien chemin plat si le fichier namespacé
+		// n'existe pas (migration douce des cartes d'avant le namespacing —
+		// elles seront ré-écrites au format namespacé au prochain save).
 		const std::string contentRoot = config.GetString("paths.content", "game/data");
-		std::ostringstream pathStream;
-		pathStream << contentRoot << "/chunks/chunk_" << chunkX << "_" << chunkZ
-		           << "/terrain.bin";
-		const std::string fullPath = pathStream.str();
+		std::filesystem::path filePath =
+			zone_paths::ZoneChunkDir(contentRoot, m_zoneId, chunkX, chunkZ) / "terrain.bin";
+		if (!m_zoneId.empty())
+		{
+			std::error_code ec;
+			if (!std::filesystem::exists(filePath, ec))
+			{
+				filePath = zone_paths::LegacyChunkDir(contentRoot, chunkX, chunkZ)
+					/ "terrain.bin";
+			}
+		}
+		const std::string fullPath = filePath.string();
 
 		std::shared_ptr<engine::world::terrain::TerrainChunk> chunk;
 		std::ifstream f(fullPath, std::ios::binary);
@@ -135,9 +148,10 @@ namespace engine::editor::world
 			const int chunkX = static_cast<int>(static_cast<int32_t>(hi));
 			const int chunkZ = static_cast<int>(static_cast<int32_t>(lo));
 
-			std::ostringstream dirStream;
-			dirStream << contentRoot << "/chunks/chunk_" << chunkX << "_" << chunkZ;
-			const std::filesystem::path dir(dirStream.str());
+			// Lot B3 — ÉCRITURE toujours sur le chemin namespacé par zone
+			// (jamais de fallback en écriture ; "" = legacy plat, tests).
+			const std::filesystem::path dir =
+				zone_paths::ZoneChunkDir(contentRoot, m_zoneId, chunkX, chunkZ);
 			std::error_code ec;
 			std::filesystem::create_directories(dir, ec);
 			if (ec)
@@ -204,15 +218,17 @@ namespace engine::editor::world
 		// Copie défensive du chunk pour que le worker travaille sur un snapshot
 		// indépendant des éditions ultérieures.
 		engine::world::terrain::TerrainChunk lod0 = *chunk;
-		const std::string contentRoot = m_contentRootForLods;
+		// Lot B3 — le répertoire (namespacé par zone) est résolu ICI, sur le
+		// main thread, pour capturer un chemin cohérent avec m_zoneId au
+		// moment du commit (le worker ne doit pas lire m_zoneId en concurrence).
+		const std::filesystem::path lodDir =
+			zone_paths::ZoneChunkDir(m_contentRootForLods, m_zoneId, coord.x, coord.z);
 		m_lodWorker->Enqueue(coord, std::move(lod0),
-			[contentRoot](engine::world::GlobalChunkCoord c,
+			[lodDir](engine::world::GlobalChunkCoord c,
 				engine::world::terrain::TerrainLodChain chain)
 			{
 				// Callback exécuté sur un thread worker — on peut faire de l'IO.
-				std::ostringstream dirStream;
-				dirStream << contentRoot << "/chunks/chunk_" << c.x << "_" << c.z;
-				const std::filesystem::path dir(dirStream.str());
+				const std::filesystem::path& dir = lodDir;
 				std::error_code ec;
 				std::filesystem::create_directories(dir, ec);
 				if (ec)
@@ -250,11 +266,21 @@ namespace engine::editor::world
 		auto it = m_splats.find(key);
 		if (it != m_splats.end()) return it->second.splat;
 
+		// Lot B3 — même résolution de chemin que EnsureLoaded : namespacé par
+		// zone en priorité, fallback LECTURE sur le chemin plat legacy.
 		const std::string contentRoot = config.GetString("paths.content", "game/data");
-		std::ostringstream pathStream;
-		pathStream << contentRoot << "/chunks/chunk_" << chunkX << "_" << chunkZ
-		           << "/splat.bin";
-		const std::string fullPath = pathStream.str();
+		std::filesystem::path filePath =
+			zone_paths::ZoneChunkDir(contentRoot, m_zoneId, chunkX, chunkZ) / "splat.bin";
+		if (!m_zoneId.empty())
+		{
+			std::error_code ec;
+			if (!std::filesystem::exists(filePath, ec))
+			{
+				filePath = zone_paths::LegacyChunkDir(contentRoot, chunkX, chunkZ)
+					/ "splat.bin";
+			}
+		}
+		const std::string fullPath = filePath.string();
 
 		std::shared_ptr<engine::world::terrain::SplatMap> splat;
 		std::ifstream f(fullPath, std::ios::binary);
@@ -318,9 +344,9 @@ namespace engine::editor::world
 			const int chunkX = static_cast<int>(static_cast<int32_t>(hi));
 			const int chunkZ = static_cast<int>(static_cast<int32_t>(lo));
 
-			std::ostringstream dirStream;
-			dirStream << contentRoot << "/chunks/chunk_" << chunkX << "_" << chunkZ;
-			const std::filesystem::path dir(dirStream.str());
+			// Lot B3 — ÉCRITURE toujours sur le chemin namespacé par zone.
+			const std::filesystem::path dir =
+				zone_paths::ZoneChunkDir(contentRoot, m_zoneId, chunkX, chunkZ);
 			std::error_code ec;
 			std::filesystem::create_directories(dir, ec);
 			if (ec)

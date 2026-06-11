@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace engine::core { class Config; }
@@ -14,12 +15,24 @@ namespace engine::editor::world::volumes::dungeons
 	/// Document éditeur portant les portails de donjon (M100.43). Distinct
 	/// du `MeshInsertDocument` (M100.40) car porte des metadata gameplay
 	/// (template id, difficulty range, level gating). Persiste dans
-	/// `instances/dungeon_portals.bin` (LCDP v1).
+	/// `instances/zone_<zoneId>/dungeon_portals.bin` (LCDP v1 ; lot B3 —
+	/// chemin plat legacy en fallback de lecture / zoneId vide).
 	class DungeonPortalDocument
 	{
 	public:
 		using ChangeCallback = std::function<void(const DungeonPortalInstance&)>;
 		using RemoveCallback = std::function<void(uint64_t)>;
+
+		/// Lot B3 (audit 2026-06-10 §4.2) — Définit l'identifiant (sanitizé)
+		/// de la zone éditée : les chemins disque deviennent
+		/// `instances/zone_<zoneId>/dungeon_portals.bin` (écriture toujours
+		/// namespacée ; lecture avec fallback sur l'ancien chemin plat).
+		/// Chaîne vide = chemins legacy plats (tests, boot). À appeler à
+		/// chaque changement de carte, AVANT Save/LoadFromDisk.
+		void SetZoneId(std::string zoneId) { m_zoneId = std::move(zoneId); }
+
+		/// Identifiant de zone courant ("" = chemins legacy plats).
+		const std::string& GetZoneId() const { return m_zoneId; }
 
 		uint64_t NextGuid() { return ++m_nextGuid; }
 
@@ -43,10 +56,12 @@ namespace engine::editor::world::volumes::dungeons
 			m_dirty    = true;
 		}
 
-		/// Sauve dans `<paths.content>/instances/dungeon_portals.bin`.
+		/// Sauve dans `<paths.content>/instances/zone_<zoneId>/dungeon_portals.bin`
+		/// (chemin plat legacy si zoneId vide — lot B3).
 		bool SaveToDisk(const engine::core::Config& cfg, std::string& outError);
-		/// Charge depuis `<paths.content>/instances/dungeon_portals.bin`.
-		/// Si absent : doc vide, pas d'erreur.
+		/// Charge depuis `<paths.content>/instances/zone_<zoneId>/dungeon_portals.bin`
+		/// (fallback LECTURE sur le chemin plat legacy si le fichier
+		/// namespacé n'existe pas — lot B3). Si absent : doc vide, pas d'erreur.
 		bool LoadFromDisk(const engine::core::Config& cfg, std::string& outError);
 
 		void SetOnAdded(ChangeCallback cb)   { m_onAdded   = std::move(cb); }
@@ -55,6 +70,8 @@ namespace engine::editor::world::volumes::dungeons
 
 	private:
 		std::vector<DungeonPortalInstance> m_instances;
+		/// Lot B3 — identifiant (sanitizé) de la zone, namespace des chemins.
+		std::string m_zoneId;
 		uint64_t m_nextGuid = 0u;
 		bool     m_dirty    = false;
 

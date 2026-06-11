@@ -149,6 +149,20 @@ namespace engine::editor
 		/// \return true une fois par demande consommee (pour l'Engine).
 		bool ConsumeTerrainChunksSaveRequest();
 
+		/// Lot B3 (audit 2026-06-10 §4.2) — Demande la reinitialisation + le
+		/// rechargement des documents editeur dependant de la zone (terrain,
+		/// eau, mesh inserts, portails de donjon). Set par ActionLoadEditJson
+		/// et ActionLoadMapByZoneId (chargement d'une carte EXISTANTE).
+		/// L'Engine consomme ce flag pour appeler
+		/// `WorldEditorShell::ResetForZoneChange` (chunks/undo de la carte
+		/// precedente evinces, zoneId propage pour le namespacing disque)
+		/// puis `WorldEditorShell::LoadZoneDocuments` (eau/mesh/portails
+		/// recharges depuis disque). Sans ce flux, les chunks de la carte A
+		/// restaient en RAM et reecrivaient la heightmap de la carte B.
+		void RequestZoneDocumentsReload();
+		/// \return true une fois par demande consommee (pour l'Engine).
+		bool ConsumeZoneDocumentsReloadRequest();
+
 		/// Marque les references de textures de layer (splatLayerTextureRefs)
 		/// comme modifiees. A appeler par les UIs apres avoir change un element
 		/// du tableau (combo Peindre, vignette Bibliotheque). Engine::ProcessSplatRefsDirty
@@ -215,6 +229,7 @@ namespace engine::editor
 		bool m_terrainGpuReloadRequested = false;
 		bool m_newZoneChunkInitRequested = false; // sous-projet 1 (zone neuve)
 		bool m_terrainChunksSaveRequested = false; // sous-projet 1 (save chunks)
+		bool m_zoneDocumentsReloadRequested = false; // lot B3 (chargement carte)
 		bool m_splatRefsDirty = false;
 
 		std::vector<std::string> m_recentlyImported;

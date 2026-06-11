@@ -68,6 +68,68 @@ namespace
 		REQUIRE(doc.HasDirtyChunks());
 	}
 
+	/// Lot B3 (audit 2026-06-10 §4.2) — Namespacing des chunks par zone :
+	///   - ÉCRITURE : `chunks/zone_<id>/chunk_X_Z/terrain.bin` dès que le
+	///     zoneId est posé (chemin plat legacy seulement si zoneId vide) ;
+	///   - LECTURE : namespacé en priorité, fallback sur l'ancien chemin
+	///     plat si le fichier namespacé n'existe pas (migration douce des
+	///     cartes d'avant le namespacing) ;
+	///   - deux zones distinctes ne s'écrasent plus mutuellement au save.
+	void Test_ZoneNamespacedPathsAndLegacyFallback()
+	{
+		const std::filesystem::path tmp = MakeTempContentDir();
+		engine::core::Config cfg;
+		cfg.SetValue("paths.content", engine::core::Config::Value{ tmp.string() });
+
+		// 1) Écriture legacy (zoneId vide) : chemin plat, comportement pré-B3.
+		TerrainDocument legacy;
+		legacy.InitFlatZone(1, 0.0f);
+		auto cl = legacy.Find(engine::world::GlobalChunkCoord{0, 0});
+		REQUIRE(cl != nullptr);
+		cl->heights[0] = 3.0f;
+		cl->RecomputeBounds();
+		legacy.MarkDirty(engine::world::GlobalChunkCoord{0, 0});
+		REQUIRE(legacy.SaveDirtyToDisk(cfg) == 1u);
+		REQUIRE(std::filesystem::exists(tmp / "chunks" / "chunk_0_0" / "terrain.bin"));
+
+		// 2) Zone A : écriture namespacée, ne touche pas le fichier plat.
+		TerrainDocument zoneA;
+		zoneA.SetZoneId("map_a");
+		zoneA.InitFlatZone(1, 0.0f);
+		auto ca = zoneA.Find(engine::world::GlobalChunkCoord{0, 0});
+		REQUIRE(ca != nullptr);
+		ca->heights[0] = 7.0f;
+		ca->RecomputeBounds();
+		zoneA.MarkDirty(engine::world::GlobalChunkCoord{0, 0});
+		REQUIRE(zoneA.SaveDirtyToDisk(cfg) == 1u);
+		REQUIRE(std::filesystem::exists(
+			tmp / "chunks" / "zone_map_a" / "chunk_0_0" / "terrain.bin"));
+
+		// 3) Relecture zone A : prend le fichier namespacé (7), pas le plat (3).
+		TerrainDocument zoneA2;
+		zoneA2.SetZoneId("map_a");
+		auto ca2 = zoneA2.EnsureLoaded(cfg, 0, 0);
+		REQUIRE(ca2 != nullptr);
+		REQUIRE(ca2->heights[0] == 7.0f);
+
+		// 4) Fallback LECTURE : zone B sans fichier namespacé -> chemin plat (3).
+		TerrainDocument zoneB;
+		zoneB.SetZoneId("map_b");
+		auto cb = zoneB.EnsureLoaded(cfg, 0, 0);
+		REQUIRE(cb != nullptr);
+		REQUIRE(cb->heights[0] == 3.0f);
+
+		// 5) Le fichier plat d'origine n'a pas été modifié par les saves
+		//    namespacés (les zones ne s'écrasent plus mutuellement).
+		TerrainDocument legacy2;
+		auto cl2 = legacy2.EnsureLoaded(cfg, 0, 0);
+		REQUIRE(cl2 != nullptr);
+		REQUIRE(cl2->heights[0] == 3.0f);
+
+		std::error_code ec;
+		std::filesystem::remove_all(tmp, ec);
+	}
+
 	/// Round-trip disque : édition d'une hauteur -> save -> reload identique.
 	void Test_ChunkSaveLoadRoundTrip()
 	{
@@ -102,6 +164,7 @@ namespace
 int main()
 {
 	Test_InitFlatZoneAllocatesNxNFlatChunks();
+	Test_ZoneNamespacedPathsAndLegacyFallback();
 	Test_ChunkSaveLoadRoundTrip();
 
 	if (g_failed == 0)

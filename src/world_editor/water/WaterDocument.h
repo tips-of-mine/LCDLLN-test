@@ -5,13 +5,16 @@
 #include "src/world_editor/water/OceanSettings.h"
 
 #include <string>
+#include <utility>
 
 namespace engine::core { class Config; }
 
 namespace engine::editor::world
 {
 	/// État des plans d'eau de la zone éditée (M100.13, étendu M100.36).
-	/// Persiste dans `<paths.content>/instances/water.bin` (format v2). Un
+	/// Persiste dans `<paths.content>/instances/zone_<zoneId>/water.bin`
+	/// (lot B3 — chemin plat legacy `instances/water.bin` en fallback de
+	/// lecture et quand le zoneId est vide). Un
 	/// seul WaterScene par éditeur (chunk-level partitioning vient avec
 	/// M100.34).
 	///
@@ -22,6 +25,18 @@ namespace engine::editor::world
 	class WaterDocument
 	{
 	public:
+		/// Lot B3 (audit 2026-06-10 §4.2) — Définit l'identifiant (sanitizé)
+		/// de la zone éditée : les chemins disque deviennent
+		/// `instances/zone_<zoneId>/water.bin` (écriture toujours namespacée ;
+		/// lecture avec fallback sur l'ancien chemin plat `instances/water.bin`).
+		/// Chaîne vide = chemins legacy plats (tests, boot avant chargement
+		/// d'une carte). À appeler à chaque changement de carte, AVANT
+		/// Save/LoadFromDisk.
+		void SetZoneId(std::string zoneId) { m_zoneId = std::move(zoneId); }
+
+		/// Identifiant de zone courant ("" = chemins legacy plats).
+		const std::string& GetZoneId() const { return m_zoneId; }
+
 		/// Accès mutable à la scene (modification par les outils de l'éditeur).
 		engine::world::water::WaterScene&       Mutable()       { return m_scene; }
 		/// Accès lecture seule à la scene (rendu, sérialisation).
@@ -60,11 +75,14 @@ namespace engine::editor::world
 			m_dirty = true;
 		}
 
-		/// Sauvegarde dans `<paths.content>/instances/water.bin`. Reset m_dirty.
+		/// Sauvegarde dans `<paths.content>/instances/zone_<zoneId>/water.bin`
+		/// (chemin plat legacy si zoneId vide — lot B3). Reset m_dirty.
 		/// Écrit toujours en format v2 (avec `m_ocean.seaLevelMeters`).
 		bool SaveToDisk(const engine::core::Config& cfg, std::string& outError);
 
-		/// Charge depuis `<paths.content>/instances/water.bin`. Accepte v1
+		/// Charge depuis `<paths.content>/instances/zone_<zoneId>/water.bin`
+		/// (fallback LECTURE sur le chemin plat legacy si le fichier
+		/// namespacé n'existe pas — lot B3). Accepte v1
 		/// (sans section ocean → `m_ocean` reste au défaut) ou v2. Si fichier
 		/// absent, retourne true avec scene vide (premier lancement) et
 		/// `m_ocean` au défaut. Reset m_dirty.
@@ -73,6 +91,8 @@ namespace engine::editor::world
 	private:
 		engine::world::water::WaterScene m_scene;
 		OceanSettings                    m_ocean;  // M100.36
+		/// Lot B3 — identifiant (sanitizé) de la zone, namespace des chemins.
+		std::string m_zoneId;
 		bool m_dirty = false;
 	};
 }

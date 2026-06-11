@@ -332,6 +332,25 @@ namespace engine::editor
 		return true;
 	}
 
+	// Lot B3 — arme le flag de reinitialisation/rechargement des documents
+	// de zone (consomme par l'Engine au tick suivant). Cf. doc du header.
+	void WorldEditorSession::RequestZoneDocumentsReload()
+	{
+		m_zoneDocumentsReloadRequested = true;
+	}
+
+	// Lot B3 — consommation one-shot du flag ci-dessus (pattern identique aux
+	// autres requetes session -> Engine).
+	bool WorldEditorSession::ConsumeZoneDocumentsReloadRequest()
+	{
+		if (!m_zoneDocumentsReloadRequested)
+		{
+			return false;
+		}
+		m_zoneDocumentsReloadRequested = false;
+		return true;
+	}
+
 	bool WorldEditorSession::ActionNewMap(const engine::core::Config& cfg)
 	{
 		SyncDocIdFromBuffer();
@@ -502,6 +521,10 @@ namespace engine::editor
 		m_routeDraftXz.clear();
 		m_routeApplyDraftRequested = false;
 		EnsureTreeCatalogLoaded(cfg);
+		// Lot B3 — changement de monde : l'Engine doit reinitialiser les
+		// documents editeur (chunks/undo de la carte precedente) puis
+		// recharger eau/mesh/portails de la carte chargee.
+		RequestZoneDocumentsReload();
 		RequestTerrainGpuReload();
 		SyncBuffersFromDoc();
 		return true;
@@ -644,6 +667,10 @@ namespace engine::editor
 		m_routeDraftXz.clear();
 		m_routeApplyDraftRequested = false;
 		EnsureTreeCatalogLoaded(cfg);
+		// Lot B3 — changement de monde : l'Engine doit reinitialiser les
+		// documents editeur (chunks/undo de la carte precedente) puis
+		// recharger eau/mesh/portails de la carte chargee.
+		RequestZoneDocumentsReload();
 		RequestTerrainGpuReload();
 		SyncBuffersFromDoc();
 		RefreshAvailableMaps(cfg);

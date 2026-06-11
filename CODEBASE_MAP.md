@@ -2217,3 +2217,19 @@ kinds `CastRequest=81`, `ResourceUpdate=82`, `CastBarUpdate=83`, `AuraUpdate=84`
 - Persistance des auras : ABANDONNÉE en V1 (toutes ≤ 12 s) — cf. plan Task 7.
 - Reste : SP3-B client (barre d''action 1-4, barre de cast, BuffBar via StatusEffectManager).
 - **Déploiement** : ⚠️ wire v11 — lock-step master + shardd + client (avec SP3-B).
+
+## Combat SP4 — menace répliquée + FX d''auras (2026-06-11) — CLÔT LE CHANTIER COMBAT
+
+Plan : `docs/superpowers/plans/2026-06-11-combat-sp4-menace-fx.md`. **Wire v11→v12** :
+kind `ThreatUpdate = 85` (table de menace d''un mob, liste complète idempotente, vide = effacement).
+
+- Serveur : `PushThreatUpdates` dans Simulate (throttle 1 s/mob + hash de changement) ;
+  push vide immédiat à la mort du mob et à l''evade (`ResetMobThreat`).
+- Client : `UIModel.threatByMob` (purge AoI) → `AdvancedCombatPresenter::UpdateThreat`
+  (threat meter du panneau J : nom/%/barre vert-jaune-rouge, « Vous » pour le local) ;
+  `AuraFXSystem` (M39.4) câblé — couche données Sync depuis entityAuras, rendu halo
+  écran-espace coloré aux pieds (couleur ResolveAuraVisuals, pas de nouvel asset).
+- AoEPreviewSystem : volontairement NON câblé (aucun sort ciblé-sol dans les kits
+  validés — sera branché avec le premier sort AreaAtTarget). Cf. plan.
+- L''IA d''agro (poursuite/leash/evade/threat tick) existait déjà (Waves 8/19).
+- **Déploiement** : ⚠️ wire v12 — lock-step master + shardd + client (avec SP1-SP3).

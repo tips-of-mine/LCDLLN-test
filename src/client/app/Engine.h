@@ -27,6 +27,9 @@
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
 #include "src/client/inventory/InventoryUi.h"
+// Combat SP2 — présentateurs combat câblés (HUD cible/log + panneau avancé).
+#include "src/client/combat/CombatHud.h"
+#include "src/client/combat/AdvancedCombatUi.h"
 #include "src/client/debug/ProfilerHud.h"
 #include "src/client/economy/ShopUi.h"
 #include "src/client/ui_common/UIModel.h"
@@ -1255,6 +1258,21 @@ namespace engine
 		engine::client::ShopUiPresenter m_shopUi{};
 		engine::client::AuctionUiPresenter m_auctionUi{};
 		engine::client::InventoryUiPresenter m_invUi{};
+		// ---------------------------------------------------------------------
+		// Combat SP2 — binds combat (embryon du registre central, Lot E) :
+		//   clic gauche = sélection de cible (pick écran-espace sur les mobs)
+		//   Tab         = cycle de cible (mobs vivants par distance croissante)
+		//   T           = attaque de la cible courante (AttackRequest)
+		//   J           = panneau combat avancé (DPS meter + log filtrable)
+		// Présentateurs : écrits en M16.2/M39.4, câblés ici pour la première fois.
+		// ---------------------------------------------------------------------
+		engine::client::CombatHudPresenter m_combatHud{};
+		engine::client::AdvancedCombatPresenter m_advancedCombat{};
+		/// Combat SP2 — visibilité du panneau combat avancé (touche J).
+		bool m_advancedCombatVisible = false;
+		/// Combat SP2 — throttle local d'envoi d'AttackRequest (le serveur reste
+		/// l'autorité du cooldown réel ; ceci évite juste le spam réseau).
+		float m_attackSendCooldownSec = 0.0f;
 		engine::client::GameplayUdpClient m_gameplayUdp{};
 		size_t m_uiObserverHandle = 0;
 		bool m_pendingSellActive = false;

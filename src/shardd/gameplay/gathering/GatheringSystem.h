@@ -149,6 +149,10 @@ namespace engine::server
 
 		bool IsInitialized() const { return m_initialized; }
 
+		/// Métiers SP1 — vue lecture seule de tous les nodes (réplication : la
+		/// grille d'intérêt et TryBuildSnapshotEntity en ont besoin côté ServerApp).
+		const std::vector<ResourceNodeRuntimeState>& Nodes() const { return m_nodes; }
+
 		size_t NodeCount()    const { return m_nodes.size(); }
 		size_t SessionCount() const { return m_sessions.size(); }
 

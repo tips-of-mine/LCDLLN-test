@@ -499,6 +499,10 @@ namespace engine::client
 		/// Notifie UIModelChangeParty. Main thread uniquement.
 		void ClearPartyInvite();
 
+		/// Métiers SP1 — sélectionne une recette du panneau d'artisanat (0-based).
+		/// Notifie UIModelChangeCrafting. Main thread uniquement.
+		bool SelectCraftRecipe(uint32_t rowIndex);
+
 		/// M29.3: Refresh billboard projections (call from render/game thread with camera + viewport).
 		void TickChatWorldVisuals(
 			const engine::math::Vec3& cameraWorld,

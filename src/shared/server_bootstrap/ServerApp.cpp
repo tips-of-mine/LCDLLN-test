@@ -5060,6 +5060,24 @@ namespace engine::server
 			return true;
 		}
 
+		// Métiers SP1 — nodes de récolte : position statique, archetypeId dans la
+		// plage réservée (base + typeId), flag dead = épuisé (label grisé client).
+		if (m_gatheringSystem.IsInitialized())
+		{
+			if (const ResourceNodeRuntimeState* node = m_gatheringSystem.FindNode(entityId))
+			{
+				outEntity.entityId = node->entityId;
+				outEntity.state.positionX = node->definition.positionMetersX;
+				outEntity.state.positionY = node->definition.positionMetersY;
+				outEntity.state.positionZ = node->definition.positionMetersZ;
+				outEntity.state.currentHealth = node->available ? 1u : 0u;
+				outEntity.state.maxHealth = 1u;
+				outEntity.state.stateFlags = node->available ? 0u : kEntityStateDead;
+				outEntity.archetypeId = kGatheringNodeArchetypeBase + node->definition.typeId;
+				return true;
+			}
+		}
+
 		LOG_WARN(Net, "[ServerApp] Snapshot build ignored: unknown entity_id={}", entityId);
 		return false;
 	}
@@ -7777,6 +7795,26 @@ namespace engine::server
 		{
 			LOG_WARN(Core, "[ServerApp] GatheringSystem Init FAILED — harvesting disabled");
 			return false;
+		}
+		// Métiers SP1 — les nodes entrent dans la grille d'intérêt de leur zone :
+		// ils sont alors répliqués par les snapshots (TryBuildSnapshotEntity) et
+		// le client peut les afficher et cibler leur entityId au HarvestRequest.
+		for (const ResourceNodeRuntimeState& node : m_gatheringSystem.Nodes())
+		{
+			CellGrid* zoneGrid = GetOrCreateZoneGrid(node.definition.zoneId);
+			if (zoneGrid == nullptr)
+			{
+				LOG_WARN(Net, "[ServerApp] Gathering node grid skipped: no zone grid (node={}, zone_id={})",
+					node.definition.nodeId,
+					node.definition.zoneId);
+				continue;
+			}
+			CellCoord nodeCell{};
+			if (!zoneGrid->UpsertEntity(node.entityId,
+				node.definition.positionMetersX, node.definition.positionMetersZ, nodeCell))
+			{
+				LOG_WARN(Net, "[ServerApp] Gathering node grid insert FAILED (node={})", node.definition.nodeId);
+			}
 		}
 		LOG_INFO(Core, "[ServerApp] GatheringSystem Init OK (nodes={})", m_gatheringSystem.NodeCount());
 		return true;

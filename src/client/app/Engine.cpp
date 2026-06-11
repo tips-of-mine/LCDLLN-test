@@ -10203,7 +10203,10 @@ namespace engine
 						if (re.playerClientId == 0u && re.archetypeId == 0u)
 							continue; // loot bag : pas de nameplate
 						// Mob mort en attente de despawn : pas de plaque (kEntityStateDead).
-						if (re.playerClientId == 0u && (re.stateFlags & 1u) != 0u)
+						// Métiers SP1 — les nodes échappent à ce skip : un node épuisé
+						// garde sa plaque, grisée avec le suffixe « (epuise) ».
+						if (re.playerClientId == 0u && (re.stateFlags & 1u) != 0u
+							&& re.archetypeId < engine::server::kGatheringNodeArchetypeBase)
 							continue;
 						float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
 						const auto sit = m_remoteSmoothed.find(re.entityId);
@@ -10227,6 +10230,38 @@ namespace engine
 							label = !re.displayName.empty()
 								? re.displayName
 								: ("P" + std::to_string(re.playerClientId));
+						}
+						else if (re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
+						{
+							// Métiers SP1 — label de node de récolte : nom FR par type
+							// (V1 : map locale ; les noms en data = amélioration future)
+							// + « [E] » si disponible et à portée de récolte (~5 m).
+							const uint32_t nodeTypeId =
+								re.archetypeId - engine::server::kGatheringNodeArchetypeBase;
+							const char* nodeName = "Ressource";
+							switch (nodeTypeId)
+							{
+							case 1u: nodeName = "Filon de minerai"; break;
+							case 2u: nodeName = "Herbes sauvages"; break;
+							case 3u: nodeName = "Arbre a abattre"; break;
+							case 4u: nodeName = "Carcasse"; break;
+							default: break;
+							}
+							label = nodeName;
+							if ((re.stateFlags & 1u) != 0u)
+							{
+								label += " (epuise)";
+							}
+							else
+							{
+								const engine::math::Vec3 playerPosNode = m_characterController.GetPosition();
+								const float dxNode = re.positionX - playerPosNode.x;
+								const float dzNode = re.positionZ - playerPosNode.z;
+								if ((dxNode * dxNode + dzNode * dzNode) <= 25.0f)
+								{
+									label += " [E]";
+								}
+							}
 						}
 						else
 						{
@@ -10299,8 +10334,10 @@ namespace engine
 						float bestDistSq = kPickRadiusPx * kPickRadiusPx;
 						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
 						{
-							// V1 : seuls les mobs vivants sont ciblables (pas de PvP).
-							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u)
+							// V1 : seuls les mobs vivants sont ciblables (pas de PvP ;
+							// les nodes de récolte — plage réservée — sont exclus).
+							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u
+								|| re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
 								continue;
 							float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
 							const auto sit = m_remoteSmoothed.find(re.entityId);
@@ -10331,7 +10368,8 @@ namespace engine
 						std::vector<std::pair<float, engine::server::EntityId>> candidates;
 						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
 						{
-							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u)
+							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u
+								|| re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
 								continue;
 							const float dxc = re.positionX - playerPos.x;
 							const float dzc = re.positionZ - playerPos.z;
@@ -10921,6 +10959,157 @@ namespace engine
 						{
 							(void)m_gameplayUdp.SendPartyDecline(inviteClientId);
 							m_uiModelBinding.ClearPartyInvite();
+						}
+						ImGui::End();
+					}
+
+					// --- Métiers SP1 : récolte — touche E sur le node disponible le
+					// plus proche (~5 m) ; les interactibles locaux gardent la priorité.
+					{
+						const engine::math::Vec3 playerPosHarvest = m_characterController.GetPosition();
+						uint64_t nearestNodeId = 0;
+						float nearestNodeDistSq = 25.0f; // 5 m de portée de récolte V1.
+						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						{
+							if (re.archetypeId < engine::server::kGatheringNodeArchetypeBase)
+								continue;
+							if ((re.stateFlags & 1u) != 0u)
+								continue; // épuisé
+							const float dxn = re.positionX - playerPosHarvest.x;
+							const float dzn = re.positionZ - playerPosHarvest.z;
+							const float distSqN = dxn * dxn + dzn * dzn;
+							if (distSqN < nearestNodeDistSq)
+							{
+								nearestNodeDistSq = distSqN;
+								nearestNodeId = re.entityId;
+							}
+						}
+						if (keysAllowed && nearestNodeId != 0ull
+							&& m_interactableInRange < 0
+							&& !uiModel.harvest.inProgress
+							&& m_input.WasPressed(engine::platform::Key::E))
+						{
+							const uint32_t harvestClientId = m_gameplayUdp.ServerClientId();
+							if (harvestClientId != 0u)
+								(void)m_gameplayUdp.SendHarvestRequest(harvestClientId, nearestNodeId);
+						}
+						// Barre de progression de récolte (présentateur M36.1).
+						const engine::client::HarvestCastBarState& harvestState = m_harvestBar.GetState();
+						if (harvestState.visible)
+						{
+							fg->AddRectFilled(ImVec2(harvestState.barX, harvestState.barY),
+								ImVec2(harvestState.barX + harvestState.barWidth,
+									harvestState.barY + harvestState.barHeight),
+								IM_COL32(20, 22, 28, 220), 4.0f);
+							fg->AddRectFilled(ImVec2(harvestState.barX, harvestState.barY),
+								ImVec2(harvestState.barX + harvestState.barWidth
+										* std::clamp(harvestState.fillFraction, 0.0f, 1.0f),
+									harvestState.barY + harvestState.barHeight),
+								IM_COL32(120, 200, 120, 230), 4.0f);
+							fg->AddText(ImVec2(harvestState.barX, harvestState.barY - 18.0f),
+								IM_COL32(230, 230, 230, 255), harvestState.label.c_str());
+						}
+					}
+
+					// --- Métiers SP1 : panneau d'artisanat (touche K, M36.2/M36.3).
+					if (keysAllowed && m_input.WasPressed(engine::platform::Key::K))
+					{
+						m_craftingVisible = !m_craftingVisible;
+						// Première ouverture : charge la liste du premier métier connu.
+						if (m_craftingVisible && !uiModel.crafting.professions.empty()
+							&& uiModel.crafting.recipes.empty())
+						{
+							const uint32_t craftClientId = m_gameplayUdp.ServerClientId();
+							if (craftClientId != 0u)
+								(void)m_gameplayUdp.SendCraftRecipeListRequest(craftClientId,
+									uiModel.crafting.professions.front().professionKey);
+						}
+					}
+					if (m_craftingVisible)
+					{
+						ImGui::SetNextWindowPos(ImVec2(dw * 0.5f - 230.0f, 120.0f), ImGuiCond_FirstUseEver);
+						ImGui::SetNextWindowSize(ImVec2(460.0f, 430.0f), ImGuiCond_FirstUseEver);
+						if (ImGui::Begin("Artisanat", &m_craftingVisible))
+						{
+							const uint32_t craftClientId = m_gameplayUdp.ServerClientId();
+							if (uiModel.crafting.professions.empty())
+							{
+								ImGui::TextUnformatted("Aucun metier connu.");
+							}
+							// Onglets métiers → demande de liste de recettes.
+							for (size_t professionIndex = 0;
+								professionIndex < uiModel.crafting.professions.size(); ++professionIndex)
+							{
+								const engine::client::UIProfessionEntry& prof =
+									uiModel.crafting.professions[professionIndex];
+								if (professionIndex > 0)
+									ImGui::SameLine();
+								const std::string tabLabel = prof.professionKey
+									+ " (" + std::to_string(prof.skillLevel) + ")";
+								if (ImGui::SmallButton(tabLabel.c_str())
+									&& prof.professionKey != uiModel.crafting.activeProfessionKey
+									&& craftClientId != 0u)
+								{
+									(void)m_gameplayUdp.SendCraftRecipeListRequest(
+										craftClientId, prof.professionKey);
+								}
+							}
+							ImGui::Separator();
+							// Liste des recettes (clic = sélection).
+							ImGui::BeginChild("##ln_craft_recipes", ImVec2(0.0f, 220.0f), true);
+							for (size_t recipeIndex = 0;
+								recipeIndex < uiModel.crafting.recipes.size(); ++recipeIndex)
+							{
+								const engine::client::UICraftRecipeRow& recipe =
+									uiModel.crafting.recipes[recipeIndex];
+								const bool selected = (uiModel.crafting.selectedRecipeIndex
+									== static_cast<uint32_t>(recipeIndex));
+								const std::string rowLabel = recipe.recipeId
+									+ "  (comp. " + std::to_string(recipe.skillRequired)
+									+ ", x" + std::to_string(recipe.outputQuantity) + ")";
+								if (ImGui::Selectable(rowLabel.c_str(), selected))
+								{
+									(void)m_uiModelBinding.SelectCraftRecipe(
+										static_cast<uint32_t>(recipeIndex));
+								}
+							}
+							ImGui::EndChild();
+							// Fabrication : bouton + annulation + cast bar + qualité.
+							const bool craftInProgress = uiModel.crafting.craftFillFraction > 0.0f;
+							const bool canCraft = !craftInProgress
+								&& uiModel.crafting.selectedRecipeIndex < uiModel.crafting.recipes.size();
+							if (ImGui::Button("Fabriquer", ImVec2(150.0f, 32.0f))
+								&& canCraft && craftClientId != 0u)
+							{
+								(void)m_gameplayUdp.SendCraftRequest(craftClientId,
+									uiModel.crafting.recipes[uiModel.crafting.selectedRecipeIndex].recipeId);
+							}
+							if (craftInProgress)
+							{
+								ImGui::SameLine();
+								if (ImGui::Button("Annuler", ImVec2(110.0f, 32.0f)) && craftClientId != 0u)
+								{
+									(void)m_gameplayUdp.SendCraftCancelRequest(craftClientId);
+								}
+								ImGui::ProgressBar(uiModel.crafting.craftFillFraction, ImVec2(-1.0f, 10.0f), "");
+							}
+							else if (!canCraft)
+							{
+								ImGui::TextUnformatted("Selectionnez une recette.");
+							}
+							// Qualité du dernier craft (M36.3) via le présentateur câblé.
+							const engine::client::CraftingPanelState& craftState = m_craftingUi.GetState();
+							if (!craftState.lastQualityLabel.empty())
+							{
+								ImGui::TextColored(
+									ImVec4(craftState.lastQualityColor.r, craftState.lastQualityColor.g,
+										craftState.lastQualityColor.b, 1.0f),
+									"Derniere fabrication : %s", craftState.lastQualityLabel.c_str());
+							}
+							if (!craftState.statusText.empty())
+							{
+								ImGui::TextUnformatted(craftState.statusText.c_str());
+							}
 						}
 						ImGui::End();
 					}
@@ -12623,6 +12812,11 @@ namespace engine
 				meshRace = "humains";
 				gender = (re.gender == "male" || re.gender == "female") ? re.gender : std::string{"male"};
 			}
+			else if (re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
+			{
+				// Métiers SP1 — node de récolte : pas de mesh (label flottant seul).
+				continue;
+			}
 			else if (re.archetypeId != 0u)
 			{
 				// Mob mort en attente de despawn : pas de rendu (kEntityStateDead).
@@ -12882,6 +13076,15 @@ namespace engine
 		{
 			LOG_WARN(Core, "[GameplayNet] PartyHudPresenter Init FAILED — cadres de groupe désactivés");
 		}
+		// Métiers SP1 — barre de récolte + panneau d'artisanat.
+		if (!m_harvestBar.Init())
+		{
+			LOG_WARN(Core, "[GameplayNet] HarvestCastBarPresenter Init FAILED — barre de récolte désactivée");
+		}
+		if (!m_craftingUi.Init())
+		{
+			LOG_WARN(Core, "[GameplayNet] CraftingUiPresenter Init FAILED — panneau d'artisanat désactivé");
+		}
 
 		const uint32_t vw = static_cast<uint32_t>(std::max(1, m_width));
 		const uint32_t vh = static_cast<uint32_t>(std::max(1, m_height));
@@ -12912,6 +13115,15 @@ namespace engine
 		{
 			LOG_WARN(Core, "[GameplayNet] PartyHudPresenter viewport FAILED — using fallback layout");
 		}
+		// Métiers SP1 — layouts récolte + artisanat.
+		if (!m_harvestBar.SetViewportSize(vw, vh))
+		{
+			LOG_WARN(Core, "[GameplayNet] HarvestCastBarPresenter viewport FAILED — using fallback layout");
+		}
+		if (!m_craftingUi.SetViewportSize(vw, vh))
+		{
+			LOG_WARN(Core, "[GameplayNet] CraftingUiPresenter viewport FAILED — using fallback layout");
+		}
 
 		m_uiObserverHandle = m_uiModelBinding.AddObserver(
 			[this](const engine::client::UIModel& model, uint32_t changeMask)
@@ -12925,6 +13137,9 @@ namespace engine
 				m_advancedCombat.ApplyModel(model, changeMask);
 				// Groupes SP1 — cadres de groupe (UIModelChangeParty).
 				(void)m_partyHud.ApplyModel(model, changeMask);
+				// Métiers SP1 — récolte (UIModelChangeHarvest) + artisanat (Crafting).
+				(void)m_harvestBar.ApplyModel(model, changeMask);
+				(void)m_craftingUi.ApplyModel(model, changeMask);
 			});
 		if (m_uiObserverHandle == 0u)
 		{
@@ -12991,7 +13206,10 @@ namespace engine
 			m_uiObserverHandle = 0;
 		}
 
-		// Combat SP2/SP3/SP4 + Groupes SP1 — symétrie d'Init.
+		// Combat SP2/SP3/SP4 + Groupes/Métiers SP1 — symétrie d'Init.
+		m_craftingUi.Shutdown();
+		m_harvestBar.Shutdown();
+		m_craftingVisible = false;
 		m_partyHud.Shutdown();
 		m_selectedAllyEntityId = 0;
 		m_auraFx.Shutdown();
@@ -13054,6 +13272,9 @@ namespace engine
 		// fenêtre DPS) et le throttle local d'envoi d'attaque.
 		(void)m_combatHud.Tick(deltaSeconds);
 		m_advancedCombat.Tick(deltaSeconds);
+		// Métiers SP1 — progression des cast bars récolte/artisanat.
+		(void)m_harvestBar.Tick(deltaSeconds);
+		(void)m_craftingUi.Tick(deltaSeconds);
 		if (m_attackSendCooldownSec > 0.0f)
 		{
 			m_attackSendCooldownSec -= deltaSeconds;

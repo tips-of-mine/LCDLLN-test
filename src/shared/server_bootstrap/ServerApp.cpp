@@ -1740,6 +1740,8 @@ namespace engine::server
 		RegenerateResources();
 		TickActiveCasts();
 		TickAuras();
+		// Combat SP4 — réplication des tables de menace modifiées (≤ 1/s par mob).
+		PushThreatUpdates();
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
 	}
 
@@ -2921,6 +2923,8 @@ namespace engine::server
 			target.threatTable.clear();
 			// Combat SP3 — plus rien à ticker sur un mob mort.
 			target.auras.clear();
+			// Combat SP4 — effacement immédiat du threat meter côté clients.
+			BroadcastThreatUpdate(target);
 			if (target.isDynamicEventMob && target.owningEventIndex < m_dynamicEvents.size())
 			{
 				DynamicEventState& eventState = m_dynamicEvents[target.owningEventIndex];
@@ -3645,6 +3649,11 @@ namespace engine::server
 		const size_t clearedCount = mob.threatTable.size();
 		mob.threatTable.clear();
 		mob.aggroTargetEntityId = 0;
+		// Combat SP4 — effacement immédiat du threat meter côté clients.
+		if (clearedCount > 0)
+		{
+			BroadcastThreatUpdate(mob);
+		}
 		LOG_INFO(Net, "[ServerApp] Mob threat reset (mob_entity_id={}, cleared_entries={})",
 			mob.entityId,
 			clearedCount);
@@ -4266,6 +4275,73 @@ namespace engine::server
 				BroadcastAuraUpdate(mob.entityId, mob.auras);
 			}
 		}
+	}
+
+	void ServerApp::PushThreatUpdates()
+	{
+		const uint64_t nowMs = NowMonotonicMs();
+		for (MobEntity& mob : m_mobs)
+		{
+			if (mob.pendingDespawn || (mob.stateFlags & kEntityStateDead) != 0u)
+			{
+				continue; // l'effacement a été poussé au moment de la mort/evade.
+			}
+			if (mob.threatTable.empty() && mob.lastThreatHash == 0u)
+			{
+				continue; // jamais engagé : rien à pousser ni à effacer.
+			}
+			if ((nowMs - mob.lastThreatPushMs) < 1000u)
+			{
+				continue;
+			}
+			// Hash d'état (FNV-ish) : push uniquement si la table a changé.
+			uint64_t hash = 1469598103934665603ull;
+			for (const ThreatEntry& entry : mob.threatTable)
+			{
+				hash = (hash ^ entry.entityId) * 1099511628211ull;
+				hash = (hash ^ static_cast<uint64_t>(entry.threat)) * 1099511628211ull;
+			}
+			if (mob.threatTable.empty())
+			{
+				hash = 0u;
+			}
+			if (hash == mob.lastThreatHash)
+			{
+				continue;
+			}
+			BroadcastThreatUpdate(mob);
+		}
+	}
+
+	void ServerApp::BroadcastThreatUpdate(MobEntity& mob)
+	{
+		ThreatUpdateMessage message{};
+		message.mobEntityId = mob.entityId;
+		for (const ThreatEntry& entry : mob.threatTable)
+		{
+			message.entries.push_back(ThreatWireEntry{ entry.entityId, entry.threat });
+		}
+
+		const std::vector<std::byte> packet = EncodeThreatUpdate(message);
+		for (const ConnectedClient& receiver : m_clients)
+		{
+			if (receiver.entityId != mob.entityId
+				&& !ContainsEntityId(receiver.interestEntityIds, mob.entityId))
+			{
+				continue;
+			}
+			(void)m_transport.Send(receiver.endpoint, packet);
+		}
+
+		const uint64_t nowMs = NowMonotonicMs();
+		mob.lastThreatPushMs = nowMs;
+		uint64_t hash = 1469598103934665603ull;
+		for (const ThreatEntry& entry : mob.threatTable)
+		{
+			hash = (hash ^ entry.entityId) * 1099511628211ull;
+			hash = (hash ^ static_cast<uint64_t>(entry.threat)) * 1099511628211ull;
+		}
+		mob.lastThreatHash = mob.threatTable.empty() ? 0u : hash;
 	}
 
 	void ServerApp::BroadcastAuraUpdate(EntityId entityId, const std::vector<ActiveAura>& auras)

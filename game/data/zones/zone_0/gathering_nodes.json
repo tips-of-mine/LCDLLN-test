@@ -1,0 +1,8 @@
+{
+  "zoneId": 0,
+  "nodes": [
+    { "id": "zone_0_ore_01", "type_id": 1, "position": [102.0, 0.0, 90.0] },
+    { "id": "zone_0_herb_01", "type_id": 2, "position": [88.0, 0.0, 100.0] },
+    { "id": "zone_0_tree_01", "type_id": 3, "position": [110.0, 0.0, 104.0] }
+  ]
+}

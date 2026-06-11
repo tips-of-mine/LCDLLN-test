@@ -11,6 +11,12 @@ namespace engine::server
 	/// Replicated state flag set when an entity reached 0 HP.
 	inline constexpr uint32_t kEntityStateDead = 1u << 0;
 
+	/// Métiers SP1 — plage d'archetypeId réservée aux NODES DE RÉCOLTE répliqués
+	/// (archetypeId = base + typeId du node). Jamais un archétype de créature :
+	/// le client rend un label flottant [E] au lieu d'un mesh, et le ciblage
+	/// combat les ignore. `kEntityStateDead` sur un node = épuisé (grisé).
+	inline constexpr uint32_t kGatheringNodeArchetypeBase = 1000000u;
+
 	/// Minimal authoritative stats component shared by players and mobs.
 	struct StatsComponent
 	{

@@ -46,6 +46,7 @@ namespace engine::server
 
 	std::string PasswordResetStore::CreateResetToken(uint64_t account_id)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		std::string token = GenerateHexToken();
 		if (token.empty())
 		{
@@ -64,6 +65,7 @@ namespace engine::server
 
 	std::optional<uint64_t> PasswordResetStore::ValidateResetToken(const std::string& token) const
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		auto it = m_reset_tokens.find(token);
 		if (it == m_reset_tokens.end())
 		{
@@ -85,6 +87,7 @@ namespace engine::server
 
 	bool PasswordResetStore::MarkResetTokenUsed(const std::string& token)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		auto it = m_reset_tokens.find(token);
 		if (it == m_reset_tokens.end())
 		{
@@ -98,6 +101,7 @@ namespace engine::server
 
 	std::string PasswordResetStore::CreateVerificationCode(uint64_t account_id)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		std::string code = GenerateSixDigitCode();
 		if (code.empty())
 		{
@@ -116,6 +120,7 @@ namespace engine::server
 
 	bool PasswordResetStore::ValidateVerificationCode(uint64_t account_id, const std::string& code) const
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		auto it = m_verifications.find(account_id);
 		if (it == m_verifications.end())
 		{
@@ -142,6 +147,7 @@ namespace engine::server
 
 	bool PasswordResetStore::MarkEmailVerified(uint64_t account_id)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		auto it = m_verifications.find(account_id);
 		if (it == m_verifications.end())
 		{
@@ -155,6 +161,7 @@ namespace engine::server
 
 	bool PasswordResetStore::CanSendEmail(uint64_t account_id) const
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		auto it = m_email_rate.find(account_id);
 		if (it == m_email_rate.end())
 			return true;
@@ -170,6 +177,7 @@ namespace engine::server
 
 	void PasswordResetStore::RecordEmailSent(uint64_t account_id)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		using namespace std::chrono;
 		auto& entry = m_email_rate[account_id];
 		if (!entry.window_start || Clock::now() - *entry.window_start >= hours(1))

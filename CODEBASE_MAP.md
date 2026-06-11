@@ -2269,6 +2269,7 @@ Plan : `docs/superpowers/plans/2026-06-11-metiers-sp1-recolte-artisanat.md`. **P
   qualité M36.3). Touche K ajoutée à l''enum Key (leçon SP2).
 - **Déploiement** : ⚠️ shardd (réplication nodes) — porté par la fenêtre lock-step v12.
 
+
 ## Correction SP1 — canal ForcePosition serveur→client (2026-06-12) — CLÔT LES 4 CHANTIERS
 
 Plan : `docs/superpowers/plans/2026-06-12-correction-sp1-force-position.md`. Chantier n°4
@@ -2286,3 +2287,15 @@ gagne un canal pour IMPOSER une position. Kind `ForcePosition = 86` **rétro-add
   prédiction-réconciliation d''un mouvement SERVEUR-autoritaire (inputs → simulation
   serveur), l''inverse de T0.1. Socle d''un éventuel futur passage serveur-autoritaire.
 - **Déploiement** : ⚠️ shardd (producteurs) — fenêtre lock-step v12 déjà requise.
+
+## Audit Lot B1 — thread-safety du master + purge anti-rejeu (2026-06-12)
+
+Correctifs du constat majeur de l''audit 2026-06-10 : le NetServer dispatche les
+handlers sur un pool de workers (défaut 4) mais plusieurs systèmes à état RAM
+n''avaient AUCUN verrou. Ajout d''un `std::mutex` (méthodes publiques verrouillées,
+helpers privés « Unlocked » quand une publique en appelait une autre) sur :
+`LfgQueue`, `GmTicketSystem`, `QuestStateTracker`, `MailManager` (sérialise les
+séquences Find→Update du store), `RateLimitAndBan`, `PasswordResetStore`.
+Et purge opportuniste de l''anti-rejeu `ShardTicketValidator::m_used_ticket_ids`
+(set → map ticket_id→expires_at ; l''ancien set grossissait sans fin).
+**Déploiement** : ⚠️ master + shardd — porté par la fenêtre lock-step v12.

@@ -4,6 +4,7 @@
 #include "src/shared/core/Log.h"
 
 #include <chrono>
+#include <iterator>
 #include <sstream>
 #include <iomanip>
 
@@ -63,12 +64,20 @@ namespace engine::server
 		std::string key = TicketIdToKey(data->ticket_id);
 		{
 			std::lock_guard<std::mutex> lock(m_mutex);
+			// Audit Lot B1 — purge opportuniste des entrées expirées : un ticket
+			// expiré est de toute façon rejeté plus haut (expires_at <= now),
+			// son id n'a plus besoin d'être retenu pour l'anti-rejeu. Sans cette
+			// purge, l'ensemble grossissait sans fin (fuite mémoire lente).
+			for (auto it = m_used_ticket_ids.begin(); it != m_used_ticket_ids.end(); )
+			{
+				it = (it->second <= now) ? m_used_ticket_ids.erase(it) : std::next(it);
+			}
 			if (m_used_ticket_ids.count(key) != 0)
 			{
 				LOG_WARN(Core, "[ShardTicketValidator] VerifyAndConsume: ticket already used (account_id={})", data->account_id);
 				return std::nullopt;
 			}
-			m_used_ticket_ids.insert(key);
+			m_used_ticket_ids.emplace(key, data->expires_at);
 		}
 		ShardTicketAccept accept;
 		accept.account_id = data->account_id;

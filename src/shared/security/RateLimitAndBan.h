@@ -5,6 +5,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -36,6 +37,9 @@ namespace engine::server
 	};
 
 	/// Token bucket + failure count + IP ban. Apply before costly auth/DB. In-memory + periodic purge.
+	/// Audit 2026-06-10 (Lot B1) — THREAD-SAFE : appelée depuis les workers
+	/// NetServer (AuthRegisterHandler…) ; chaque méthode publique verrouille
+	/// m_mutex (lecture interne via isBannedUnlocked, jamais de double lock).
 	class RateLimitAndBan
 	{
 	public:
@@ -86,6 +90,8 @@ namespace engine::server
 			int failure_count = 0;
 		};
 
+		/// Audit Lot B1 — protège maps/compteurs contre les workers concurrents.
+		mutable std::mutex m_mutex;
 		RateLimitAndBanConfig m_config;
 		mutable SecurityCounters m_counters;
 		std::unordered_map<std::string, AuthState> m_by_ip;
@@ -96,5 +102,7 @@ namespace engine::server
 		bool tryConsume(TokenBucket& bucket, double capacity, double refill_per_sec);
 		AuthState& getOrCreateState(const std::string& key);
 		void purgeOldEntries();
+		/// Lecture interne SANS verrou — appelée uniquement sous m_mutex.
+		bool isBannedUnlocked(std::string_view ip) const;
 	};
 }

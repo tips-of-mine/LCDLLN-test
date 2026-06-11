@@ -8,10 +8,16 @@
 // InMemoryMailStore). La couche reseau (MailHandler + opcodes wire)
 // + la persistance MySQL viendront en sub-PRs ulterieures.
 
+// Audit 2026-06-10 (Lot B1) — THREAD-SAFE : les handlers du master sont
+// dispatchés sur un pool de workers NetServer (défaut 4) ; chaque méthode
+// publique du manager verrouille m_mutex (sérialise les séquences
+// lecture-modification-écriture sur le store, quel qu'il soit).
+
 #include "src/masterd/mail/Mail.h"
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string_view>
 #include <vector>
@@ -118,6 +124,9 @@ namespace engine::server::mail
 		std::vector<uint64_t> ResolveExpired(uint64_t nowMs) const;
 
 	private:
+		/// Audit Lot B1 — sérialise les opérations mail entre workers (les
+		/// séquences Find→Update du store ne sont pas atomiques sans ça).
+		mutable std::mutex m_mutex;
 		IMailStore*       m_store;
 		MailManagerConfig m_cfg;
 	};

@@ -1,10 +1,15 @@
 #pragma once
 
 // M33.2 — In-memory store for password reset tokens and email verification codes.
-// All methods are single-threaded; caller must serialise access.
+//
+// Audit 2026-06-10 (Lot B1) — THREAD-SAFE : appelé depuis les workers NetServer
+// (PasswordResetHandler) ; l'ancien contrat « caller must serialise access »
+// n'était pas honoré. Chaque méthode publique verrouille m_mutex (aucune
+// méthode publique n'en appelle une autre).
 
 #include <chrono>
 #include <cstdint>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -84,6 +89,8 @@ namespace engine::server
 			std::optional<Clock::time_point> window_start;
 		};
 
+		/// Audit Lot B1 — protège les 3 maps contre les workers concurrents.
+		mutable std::mutex m_mutex;
 		/// token string → entry
 		std::unordered_map<std::string, ResetTokenEntry> m_reset_tokens;
 		/// account_id → verification entry (one active per account)

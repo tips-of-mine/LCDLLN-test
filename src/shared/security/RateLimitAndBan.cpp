@@ -19,6 +19,7 @@ namespace engine::server
 
 	void RateLimitAndBan::SetConfig(const RateLimitAndBanConfig& config)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		m_config = config;
 		LOG_DEBUG(Net, "[RateLimitAndBan] Config set: auth_per_min={} register_per_hour={} max_failures={} ban_duration_sec={}",
 			m_config.auth_per_minute, m_config.register_per_hour, m_config.max_failures_before_ban, m_config.ban_duration_sec);
@@ -73,8 +74,9 @@ namespace engine::server
 
 	bool RateLimitAndBan::TryConsumeAuth(std::string_view ip)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		std::string key(ip);
-		if (IsBanned(ip))
+		if (isBannedUnlocked(ip))
 			return false;
 		double capacity = static_cast<double>(m_config.auth_per_minute);
 		double refill_per_sec = capacity / 60.0;
@@ -90,8 +92,9 @@ namespace engine::server
 
 	bool RateLimitAndBan::TryConsumeRegister(std::string_view ip)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		std::string key(ip);
-		if (IsBanned(ip))
+		if (isBannedUnlocked(ip))
 			return false;
 		double capacity = static_cast<double>(m_config.register_per_hour);
 		double refill_per_sec = capacity / 3600.0;
@@ -107,6 +110,7 @@ namespace engine::server
 
 	void RateLimitAndBan::RecordAuthFailure(std::string_view ip)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		std::string key(ip);
 		AuthState& state = getOrCreateState(key);
 		state.failure_count++;
@@ -121,6 +125,12 @@ namespace engine::server
 	}
 
 	bool RateLimitAndBan::IsBanned(std::string_view ip) const
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		return isBannedUnlocked(ip);
+	}
+
+	bool RateLimitAndBan::isBannedUnlocked(std::string_view ip) const
 	{
 		auto it = m_banned_until.find(std::string(ip));
 		if (it == m_banned_until.end())
@@ -154,6 +164,7 @@ namespace engine::server
 
 	void RateLimitAndBan::PurgeExpired()
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		auto now = clock().Now();
 		for (auto it = m_banned_until.begin(); it != m_banned_until.end(); )
 		{
@@ -167,6 +178,7 @@ namespace engine::server
 
 	void RateLimitAndBan::GetCounters(SecurityCounters& out) const
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		out = m_counters;
 		out.bans_active = 0;
 		auto now = clock().Now();

@@ -6,7 +6,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
-#include <unordered_set>
+#include <unordered_map>
 
 namespace engine::server
 {
@@ -37,7 +37,10 @@ namespace engine::server
 		mutable std::mutex m_mutex;
 		std::string m_secret;
 		uint32_t m_shard_id = 0;
-		std::unordered_set<std::string> m_used_ticket_ids;
+		/// Audit 2026-06-10 (Lot B1) — anti-rejeu : ticket_id consommé →
+		/// expires_at. Purgé opportunément à chaque VerifyAndConsume (les
+		/// tickets expirent en ~60 s ; l'ancien set grossissait sans fin).
+		std::unordered_map<std::string, uint64_t> m_used_ticket_ids;
 		static std::string TicketIdToKey(const engine::network::ShardTicketId& id);
 	};
 }

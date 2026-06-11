@@ -2159,3 +2159,34 @@ ordre validé : combat → groupes → métiers/récolte → prédiction client)
 - `src/client/world/CreatureCatalog.{h,cpp}` — lecture tolérante du même JSON (name/level/mesh/scale).
 - `UIRemoteEntity.archetypeId` + copie dans `ApplySnapshot` ; rendu mobs dans Engine
   (mesh via `GetRaceMesh(meshKey, "male")`, nameplate « Nom (niv. N) PV/PVmax »).
+
+## Combat SP2 — attaque, précision/critique, mort/respawn (2026-06-11)
+
+Plan : `docs/superpowers/plans/2026-06-11-combat-sp2-attaque-mort.md` (spec §5 révisée §3.bis).
+1 PR serveur+client (lock-step). **Wire v9→v10** : `CombatEventMessage.flags` (bit0 crit,
+bit1 miss, payload 32→36 o) + kind `RespawnRequest = 80`.
+
+### Serveur
+- `src/shardd/gameplay/combat/AttackResolver.h` — résolveur PUR (jets [0,1) injectés) :
+  précision (accuracy %), critique (critRate % × critMult, plancher 1.0) ; tests
+  `attack_resolver_tests`.
+- `CombatComponent` étendu (accuracy/critRate/critMult, serveur only, pas sur le wire).
+- Enter-world + level-up : `ApplyDerivedCombatStats` injecte damage/range/accuracy/crit
+  des 11 stats calculées dans le composant combat (fini `kDefaultPlayerDamage`).
+- `HandleAttackRequest` + `TryMobAttackPlayer` : jets via `m_combatRng` (mt19937) ; un raté
+  émet quand même le CombatEvent (flags miss, damage 0) ; cooldown consommé.
+- Mort joueur : `PurgeThreatForEntity` (toutes tables de menace) ; `HandleRespawnRequest` :
+  mort uniquement → téléport au `spawnPositionMeters*` (mémorisé à l'admission), PV pleins,
+  flag dead retiré, save "respawn".
+
+### Client
+- `GameplayUdpClient::SendAttackRequest/SendRespawnRequest` ; `EncodeAttackRequest` +
+  `Encode/DecodeRespawnRequest` (ServerProtocol).
+- `UIModelBinding::SetLocalTarget/ClearLocalTarget` (sélection locale → targetStats +
+  notification Combat) ; la cible suit PV/flags des snapshots ; `UICombatLogEntry.wasCrit/wasMiss`.
+- Engine : **binds combat** (clic = pick écran-espace des mobs vivants via WorldToScreenPx,
+  Tab = cycle par distance, T = attaque avec throttle 250 ms, J = panneau combat avancé) ;
+  **CombatHudPresenter + AdvancedCombatPresenter enfin câblés** (observer + Tick + rendu :
+  cadre cible haut-centre, log combat bas-droite, panneau DPS/log filtrable) ; **écran de
+  mort** (overlay + bouton Réapparaître → RespawnRequest) ; mouvement bloqué pendant la mort.
+- **Déploiement** : ⚠️ wire-breaking v10 — master + shardd + client en lock-step.

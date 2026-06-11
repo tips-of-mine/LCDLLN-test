@@ -6,10 +6,37 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
+#include <unordered_map>
 #include <vector>
 
 namespace engine::render
 {
+	/// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+	/// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
+	/// Clé partagée par les 4 sous-passes bloom (chaque sous-passe a SA map :
+	/// la vue de sortie + l'extent suffisent à différencier les cibles/mips).
+	struct BloomFramebufferKey
+	{
+		VkImageView outputView = VK_NULL_HANDLE;
+		uint32_t width = 0;
+		uint32_t height = 0;
+		bool operator==(const BloomFramebufferKey& o) const noexcept
+		{
+			return outputView == o.outputView && width == o.width && height == o.height;
+		}
+	};
+	struct BloomFramebufferKeyHash
+	{
+		size_t operator()(const BloomFramebufferKey& k) const noexcept
+		{
+			const size_t hView = std::hash<uintptr_t>{}(reinterpret_cast<uintptr_t>(k.outputView));
+			const size_t hW = std::hash<uint32_t>{}(k.width);
+			const size_t hH = std::hash<uint32_t>{}(k.height);
+			return hView ^ (hW + 0x9e3779b9u) ^ (hH + 0x85ebca6bu);
+		}
+	};
+
 	/// Bloom prefilter pass (M08.1): samples SceneColor_HDR, applies soft threshold (threshold + knee),
 	/// writes BloomMip0 (HDR). Fullscreen triangle, one combined image sampler, push constants (threshold, knee).
 	class BloomPrefilterPass
@@ -41,9 +68,16 @@ namespace engine::render
 			const PrefilterParams& params, uint32_t frameIndex);
 
 		void Destroy(VkDevice device);
+
+		/// Détruit les framebuffers cachés (appeler au resize avant FG destroy).
+		void InvalidateFramebufferCache(VkDevice device);
+
 		bool IsValid() const { return m_pipeline != VK_NULL_HANDLE; }
 
 	private:
+		/// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass).
+		std::unordered_map<BloomFramebufferKey, VkFramebuffer, BloomFramebufferKeyHash> m_framebufferCache;
+
 		VkRenderPass          m_renderPass          = VK_NULL_HANDLE;
 		VkDescriptorSetLayout  m_descriptorSetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool      m_descriptorPool      = VK_NULL_HANDLE;
@@ -77,9 +111,16 @@ namespace engine::render
 			uint32_t frameIndex);
 
 		void Destroy(VkDevice device);
+
+		/// Détruit les framebuffers cachés (appeler au resize avant FG destroy).
+		void InvalidateFramebufferCache(VkDevice device);
+
 		bool IsValid() const { return m_pipeline != VK_NULL_HANDLE; }
 
 	private:
+		/// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass).
+		std::unordered_map<BloomFramebufferKey, VkFramebuffer, BloomFramebufferKeyHash> m_framebufferCache;
+
 		VkRenderPass          m_renderPass          = VK_NULL_HANDLE;
 		VkDescriptorSetLayout  m_descriptorSetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool      m_descriptorPool      = VK_NULL_HANDLE;
@@ -114,9 +155,16 @@ namespace engine::render
 			uint32_t frameIndex);
 
 		void Destroy(VkDevice device);
+
+		/// Détruit les framebuffers cachés (appeler au resize avant FG destroy).
+		void InvalidateFramebufferCache(VkDevice device);
+
 		bool IsValid() const { return m_pipeline != VK_NULL_HANDLE; }
 
 	private:
+		/// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass).
+		std::unordered_map<BloomFramebufferKey, VkFramebuffer, BloomFramebufferKeyHash> m_framebufferCache;
+
 		VkRenderPass          m_renderPass          = VK_NULL_HANDLE;
 		VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool      m_descriptorPool      = VK_NULL_HANDLE;
@@ -156,9 +204,16 @@ namespace engine::render
 			const CombineParams& params, uint32_t frameIndex);
 
 		void Destroy(VkDevice device);
+
+		/// Détruit les framebuffers cachés (appeler au resize avant FG destroy).
+		void InvalidateFramebufferCache(VkDevice device);
+
 		bool IsValid() const { return m_pipeline != VK_NULL_HANDLE; }
 
 	private:
+		/// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass).
+		std::unordered_map<BloomFramebufferKey, VkFramebuffer, BloomFramebufferKeyHash> m_framebufferCache;
+
 		VkRenderPass          m_renderPass          = VK_NULL_HANDLE;
 		VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool      m_descriptorPool      = VK_NULL_HANDLE;

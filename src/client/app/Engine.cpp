@@ -7753,6 +7753,10 @@ namespace engine
 				// VkImageView source : un resize détruit toutes les vues FG → cache
 				// stale. Invalidation au même endroit que terrain/pipeline.
 				m_waterPass.InvalidateFramebufferCache(m_vkDeviceContext.GetDevice());
+				// Audit 2026-06-10 (Lot B2) — UnderwaterPass cache désormais son
+				// framebuffer (pattern WaterPass) ; pas membre de DeferredPipeline,
+				// donc invalidation ici comme m_waterPass.
+				m_underwaterPass.InvalidateFramebufferCache(m_vkDeviceContext.GetDevice());
 
 				m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
 				// All frame-graph images are recreated after a resize/out-of-date event, so the

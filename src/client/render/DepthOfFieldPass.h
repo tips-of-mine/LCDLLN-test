@@ -6,6 +6,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
+#include <unordered_map>
 #include <vector>
 
 namespace engine::render
@@ -23,8 +25,8 @@ namespace engine::render
 	/// Structure calquée EXACTEMENT sur VolumetricFogPass : render pass 1 attachment
 	/// color (load DONT_CARE, on réécrit tout le plein écran), descriptor set 0 de N
 	/// combined image samplers, push constants fragment, pipeline fullscreen triangle
-	/// (3 sommets, pas de vertex input, pas de depth test), framebuffer temporaire
-	/// créé/détruit dans Record.
+	/// (3 sommets, pas de vertex input, pas de depth test), framebuffer mis en cache
+	/// dans Record (pattern WaterPass).
 	///
 	/// Descriptor set 0 : 2 combined image samplers
 	///   binding 0 = scene color HDR post-bloom (sampler LINÉAIRE clamp)
@@ -64,9 +66,8 @@ namespace engine::render
 
 		/// Enregistre la passe profondeur de champ dans cmd.
 		/// Met à jour le descriptor set de la frame avec les 2 vues (scene color, depth),
-		/// crée un framebuffer temporaire sur idColorOut, ouvre la render pass, push les
-		/// DofParams, dessine le triangle plein écran, ferme la render pass et détruit le
-		/// framebuffer immédiatement.
+		/// récupère (ou crée) le framebuffer dans le cache interne, ouvre la render pass,
+		/// push les DofParams, dessine le triangle plein écran et ferme la render pass.
 		/// \param idColorIn   SceneColor HDR post-bloom (lu en entrée, sampler linéaire).
 		/// \param idDepth     Depth scene (D32_SFLOAT, sampler nearest).
 		/// \param idColorOut  Cible de sortie (SceneColor HDR floutée).
@@ -78,10 +79,37 @@ namespace engine::render
 		/// Libère toutes les ressources Vulkan. Sûr à appeler même si non initialisé.
 		void Destroy(VkDevice device);
 
+		/// Détruit les framebuffers cachés (appeler au resize avant FG destroy).
+		void InvalidateFramebufferCache(VkDevice device);
+
 		/// Renvoie true si le pipeline et la render pass sont valides.
 		bool IsValid() const { return m_pipeline != VK_NULL_HANDLE; }
 
 	private:
+		// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+		// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
+		struct FramebufferKey
+		{
+			VkImageView outputView = VK_NULL_HANDLE;
+			uint32_t width = 0;
+			uint32_t height = 0;
+			bool operator==(const FramebufferKey& o) const noexcept
+			{
+				return outputView == o.outputView && width == o.width && height == o.height;
+			}
+		};
+		struct FramebufferKeyHash
+		{
+			size_t operator()(const FramebufferKey& k) const noexcept
+			{
+				const size_t hView = std::hash<uintptr_t>{}(reinterpret_cast<uintptr_t>(k.outputView));
+				const size_t hW = std::hash<uint32_t>{}(k.width);
+				const size_t hH = std::hash<uint32_t>{}(k.height);
+				return hView ^ (hW + 0x9e3779b9u) ^ (hH + 0x85ebca6bu);
+			}
+		};
+		std::unordered_map<FramebufferKey, VkFramebuffer, FramebufferKeyHash> m_framebufferCache;
+
 		VkRenderPass          m_renderPass          = VK_NULL_HANDLE;
 		VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool      m_descriptorPool      = VK_NULL_HANDLE;

@@ -6,6 +6,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
+#include <unordered_map>
 #include <vector>
 
 namespace engine::render
@@ -49,9 +51,8 @@ namespace engine::render
 
 		/// Records the tonemap pass into cmd.
 		/// Updates the frame descriptor set with the current HDR image view,
-		/// creates a temporary framebuffer, begins the render pass, draws the
-		/// fullscreen triangle, and ends the render pass (framebuffer is
-		/// destroyed immediately after).
+		/// fetches (or creates) the framebuffer from the internal cache, begins
+		/// the render pass, draws the fullscreen triangle, and ends the render pass.
 		/// \param frameIndex  Current in-flight frame index (0 .. maxFrames-1).
 		/// \param lutView     Optional LUT texture view (256x16 strip or 32^3). If VK_NULL_HANDLE, LUT is disabled (binding 1 uses HDR view as fallback).
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry,
@@ -65,10 +66,37 @@ namespace engine::render
 		/// Releases all Vulkan resources. Safe to call even when not initialized.
 		void Destroy(VkDevice device);
 
+		/// Détruit les framebuffers cachés (appeler au resize avant FG destroy).
+		void InvalidateFramebufferCache(VkDevice device);
+
 		/// Returns true if the pipeline and render pass are valid.
 		bool IsValid() const { return m_pipeline != VK_NULL_HANDLE; }
 
 	private:
+		// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+		// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
+		struct FramebufferKey
+		{
+			VkImageView outputView = VK_NULL_HANDLE;
+			uint32_t width = 0;
+			uint32_t height = 0;
+			bool operator==(const FramebufferKey& o) const noexcept
+			{
+				return outputView == o.outputView && width == o.width && height == o.height;
+			}
+		};
+		struct FramebufferKeyHash
+		{
+			size_t operator()(const FramebufferKey& k) const noexcept
+			{
+				const size_t hView = std::hash<uintptr_t>{}(reinterpret_cast<uintptr_t>(k.outputView));
+				const size_t hW = std::hash<uint32_t>{}(k.width);
+				const size_t hH = std::hash<uint32_t>{}(k.height);
+				return hView ^ (hW + 0x9e3779b9u) ^ (hH + 0x85ebca6bu);
+			}
+		};
+		std::unordered_map<FramebufferKey, VkFramebuffer, FramebufferKeyHash> m_framebufferCache;
+
 		VkRenderPass          m_renderPass          = VK_NULL_HANDLE;
 		VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool      m_descriptorPool      = VK_NULL_HANDLE;

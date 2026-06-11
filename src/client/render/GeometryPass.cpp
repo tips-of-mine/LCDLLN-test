@@ -1000,19 +1000,37 @@ namespace engine::render
 		if (!viewA || !viewB || !viewC || !viewVel || !viewDepth)
 			return;
 
-		VkImageView views[5] = { viewA, viewB, viewC, viewVel, viewDepth };
-		VkFramebufferCreateInfo fbInfo = {};
-		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass = activeRp;
-		fbInfo.attachmentCount = 5;
-		fbInfo.pAttachments = views;
-		fbInfo.width = extent.width;
-		fbInfo.height = extent.height;
-		fbInfo.layers = 1;
+		// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+		// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
+		// RecordInstanced réutilise le m_fbCache existant des autres Record.
+		FramebufferKey key{};
+		key.renderPass = activeRp;
+		key.views[0]   = viewA;
+		key.views[1]   = viewB;
+		key.views[2]   = viewC;
+		key.views[3]   = viewVel;
+		key.views[4]   = viewDepth;
+		key.width      = extent.width;
+		key.height     = extent.height;
 
-		VkFramebuffer fb = VK_NULL_HANDLE;
-		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS)
-			return;
+		auto it = m_fbCache.find(key);
+		if (it == m_fbCache.end())
+		{
+			VkImageView views[5] = { viewA, viewB, viewC, viewVel, viewDepth };
+			VkFramebufferCreateInfo fbInfo = {};
+			fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass = activeRp;
+			fbInfo.attachmentCount = 5;
+			fbInfo.pAttachments = views;
+			fbInfo.width = extent.width;
+			fbInfo.height = extent.height;
+			fbInfo.layers = 1;
+			VkFramebuffer created = VK_NULL_HANDLE;
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &created) != VK_SUCCESS)
+				return;
+			it = m_fbCache.emplace(key, created).first;
+		}
+		VkFramebuffer fb = it->second;
 
 		VkClearValue clearValues[5] = {};
 		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
@@ -1072,7 +1090,6 @@ namespace engine::render
 		}
 
 		vkCmdEndRenderPass(cmd);
-		vkDestroyFramebuffer(device, fb, nullptr);
 	}
 
 } // namespace engine::render

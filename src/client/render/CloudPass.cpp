@@ -296,19 +296,31 @@ namespace engine::render
 		}
 		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 
-		VkFramebufferCreateInfo fbInfo{};
-		fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass      = m_renderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments    = &viewOut;
-		fbInfo.width           = extent.width;
-		fbInfo.height          = extent.height;
-		fbInfo.layers          = 1;
+		// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+		// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
+		FramebufferKey fbKey{ viewOut, extent.width, extent.height };
 		VkFramebuffer fb = VK_NULL_HANDLE;
-		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS)
+		auto fbIt = m_framebufferCache.find(fbKey);
+		if (fbIt != m_framebufferCache.end())
 		{
-			LOG_ERROR(Render, "CloudPass::Record: vkCreateFramebuffer failed");
-			return;
+			fb = fbIt->second;
+		}
+		else
+		{
+			VkFramebufferCreateInfo fbInfo{};
+			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass      = m_renderPass;
+			fbInfo.attachmentCount = 1;
+			fbInfo.pAttachments    = &viewOut;
+			fbInfo.width           = extent.width;
+			fbInfo.height          = extent.height;
+			fbInfo.layers          = 1;
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass::Record: vkCreateFramebuffer failed");
+				return;
+			}
+			m_framebufferCache[fbKey] = fb;
 		}
 
 		VkClearValue clearVal{};
@@ -337,12 +349,26 @@ namespace engine::render
 			0, static_cast<uint32_t>(sizeof(CloudPushConstants)), &params);
 		vkCmdDraw(cmd, 3, 1, 0, 0);
 		vkCmdEndRenderPass(cmd);
-		vkDestroyFramebuffer(device, fb, nullptr);
+	}
+
+	// Audit 2026-06-10 (Lot B2) — détruit les framebuffers cachés (pattern WaterPass).
+	void CloudPass::InvalidateFramebufferCache(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+
+		for (auto& kv : m_framebufferCache)
+		{
+			if (kv.second != VK_NULL_HANDLE)
+				vkDestroyFramebuffer(device, kv.second, nullptr);
+		}
+		m_framebufferCache.clear();
 	}
 
 	void CloudPass::Destroy(VkDevice device)
 	{
 		if (device == VK_NULL_HANDLE) { LOG_INFO(Render, "[CloudPass] Destroyed"); return; }
+		// Lot B2 : vider le cache de framebuffers avant de détruire le render pass.
+		InvalidateFramebufferCache(device);
 		if (m_pipeline)            { vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
 		if (m_pipelineLayout)      { vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr); m_pipelineLayout = VK_NULL_HANDLE; }
 		if (m_nearestSampler)      { vkDestroySampler(device, m_nearestSampler, nullptr); m_nearestSampler = VK_NULL_HANDLE; }

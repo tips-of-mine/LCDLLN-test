@@ -314,17 +314,28 @@ namespace engine::render
 		write.pImageInfo      = &imageInfo;
 		vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
 
-		VkFramebufferCreateInfo fbInfo{};
-		fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass      = m_renderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments    = &viewDst;
-		fbInfo.width           = extent.width;
-		fbInfo.height          = extent.height;
-		fbInfo.layers          = 1;
-
+		// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+		// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
+		BloomFramebufferKey fbKey{ viewDst, extent.width, extent.height };
 		VkFramebuffer fb = VK_NULL_HANDLE;
-		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS) return;
+		auto fbIt = m_framebufferCache.find(fbKey);
+		if (fbIt != m_framebufferCache.end())
+		{
+			fb = fbIt->second;
+		}
+		else
+		{
+			VkFramebufferCreateInfo fbInfo{};
+			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass      = m_renderPass;
+			fbInfo.attachmentCount = 1;
+			fbInfo.pAttachments    = &viewDst;
+			fbInfo.width           = extent.width;
+			fbInfo.height          = extent.height;
+			fbInfo.layers          = 1;
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS) return;
+			m_framebufferCache[fbKey] = fb;
+		}
 
 		VkClearValue clearVal{};
 		clearVal.color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
@@ -354,13 +365,27 @@ namespace engine::render
 			0, static_cast<uint32_t>(sizeof(PrefilterParams)), &params);
 		vkCmdDraw(cmd, 3, 1, 0, 0);
 		vkCmdEndRenderPass(cmd);
-		vkDestroyFramebuffer(device, fb, nullptr);
+	}
+
+	// Audit 2026-06-10 (Lot B2) — détruit les framebuffers cachés (pattern WaterPass).
+	void BloomPrefilterPass::InvalidateFramebufferCache(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+
+		for (auto& kv : m_framebufferCache)
+		{
+			if (kv.second != VK_NULL_HANDLE)
+				vkDestroyFramebuffer(device, kv.second, nullptr);
+		}
+		m_framebufferCache.clear();
 	}
 
 	void BloomPrefilterPass::Destroy(VkDevice device)
 	{
 		LOG_DEBUG(Render, "[BLOOM] BloomPrefilterPass::Destroy enter");
 		if (device == VK_NULL_HANDLE) return;
+		// Lot B2 : vider le cache de framebuffers avant de détruire le render pass.
+		InvalidateFramebufferCache(device);
 		if (m_pipeline != VK_NULL_HANDLE)
 			{ vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
 		if (m_pipelineLayout != VK_NULL_HANDLE)
@@ -662,17 +687,28 @@ namespace engine::render
 		write.pImageInfo      = &imageInfo;
 		vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
 
-		VkFramebufferCreateInfo fbInfo{};
-		fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass      = m_renderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments    = &viewDst;
-		fbInfo.width           = extentDst.width;
-		fbInfo.height          = extentDst.height;
-		fbInfo.layers          = 1;
-
+		// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+		// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
+		BloomFramebufferKey fbKey{ viewDst, extentDst.width, extentDst.height };
 		VkFramebuffer fb = VK_NULL_HANDLE;
-		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS) return;
+		auto fbIt = m_framebufferCache.find(fbKey);
+		if (fbIt != m_framebufferCache.end())
+		{
+			fb = fbIt->second;
+		}
+		else
+		{
+			VkFramebufferCreateInfo fbInfo{};
+			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass      = m_renderPass;
+			fbInfo.attachmentCount = 1;
+			fbInfo.pAttachments    = &viewDst;
+			fbInfo.width           = extentDst.width;
+			fbInfo.height          = extentDst.height;
+			fbInfo.layers          = 1;
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS) return;
+			m_framebufferCache[fbKey] = fb;
+		}
 
 		VkClearValue clearVal{};
 		clearVal.color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
@@ -700,13 +736,27 @@ namespace engine::render
 
 		vkCmdDraw(cmd, 3, 1, 0, 0);
 		vkCmdEndRenderPass(cmd);
-		vkDestroyFramebuffer(device, fb, nullptr);
+	}
+
+	// Audit 2026-06-10 (Lot B2) — détruit les framebuffers cachés (pattern WaterPass).
+	void BloomDownsamplePass::InvalidateFramebufferCache(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+
+		for (auto& kv : m_framebufferCache)
+		{
+			if (kv.second != VK_NULL_HANDLE)
+				vkDestroyFramebuffer(device, kv.second, nullptr);
+		}
+		m_framebufferCache.clear();
 	}
 
 	void BloomDownsamplePass::Destroy(VkDevice device)
 	{
 		LOG_DEBUG(Render, "[BLOOM] BloomDownsamplePass::Destroy enter");
 		if (device == VK_NULL_HANDLE) return;
+		// Lot B2 : vider le cache de framebuffers avant de détruire le render pass.
+		InvalidateFramebufferCache(device);
 		if (m_pipeline != VK_NULL_HANDLE)
 			{ vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
 		if (m_pipelineLayout != VK_NULL_HANDLE)
@@ -1014,17 +1064,28 @@ namespace engine::render
 		write.pImageInfo      = &imageInfo;
 		vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
 
-		VkFramebufferCreateInfo fbInfo{};
-		fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass      = m_renderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments    = &viewDst;
-		fbInfo.width           = extentDst.width;
-		fbInfo.height          = extentDst.height;
-		fbInfo.layers          = 1;
-
+		// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+		// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
+		BloomFramebufferKey fbKey{ viewDst, extentDst.width, extentDst.height };
 		VkFramebuffer fb = VK_NULL_HANDLE;
-		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS) return;
+		auto fbIt = m_framebufferCache.find(fbKey);
+		if (fbIt != m_framebufferCache.end())
+		{
+			fb = fbIt->second;
+		}
+		else
+		{
+			VkFramebufferCreateInfo fbInfo{};
+			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass      = m_renderPass;
+			fbInfo.attachmentCount = 1;
+			fbInfo.pAttachments    = &viewDst;
+			fbInfo.width           = extentDst.width;
+			fbInfo.height          = extentDst.height;
+			fbInfo.layers          = 1;
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS) return;
+			m_framebufferCache[fbKey] = fb;
+		}
 
 		VkRenderPassBeginInfo rpBegin{};
 		rpBegin.sType       = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -1050,13 +1111,27 @@ namespace engine::render
 
 		vkCmdDraw(cmd, 3, 1, 0, 0);
 		vkCmdEndRenderPass(cmd);
-		vkDestroyFramebuffer(device, fb, nullptr);
+	}
+
+	// Audit 2026-06-10 (Lot B2) — détruit les framebuffers cachés (pattern WaterPass).
+	void BloomUpsamplePass::InvalidateFramebufferCache(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+
+		for (auto& kv : m_framebufferCache)
+		{
+			if (kv.second != VK_NULL_HANDLE)
+				vkDestroyFramebuffer(device, kv.second, nullptr);
+		}
+		m_framebufferCache.clear();
 	}
 
 	void BloomUpsamplePass::Destroy(VkDevice device)
 	{
 		LOG_DEBUG(Render, "[BLOOM] BloomUpsamplePass::Destroy enter");
 		if (device == VK_NULL_HANDLE) return;
+		// Lot B2 : vider le cache de framebuffers avant de détruire le render pass.
+		InvalidateFramebufferCache(device);
 		if (m_pipeline != VK_NULL_HANDLE)
 			{ vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
 		if (m_pipelineLayout != VK_NULL_HANDLE)
@@ -1380,17 +1455,28 @@ namespace engine::render
 		writes[1].pImageInfo      = &imageInfos[1];
 		vkUpdateDescriptorSets(device, 2, writes, 0, nullptr);
 
-		VkFramebufferCreateInfo fbInfo{};
-		fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass      = m_renderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments    = &viewDst;
-		fbInfo.width           = extent.width;
-		fbInfo.height          = extent.height;
-		fbInfo.layers          = 1;
-
+		// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+		// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
+		BloomFramebufferKey fbKey{ viewDst, extent.width, extent.height };
 		VkFramebuffer fb = VK_NULL_HANDLE;
-		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS) return;
+		auto fbIt = m_framebufferCache.find(fbKey);
+		if (fbIt != m_framebufferCache.end())
+		{
+			fb = fbIt->second;
+		}
+		else
+		{
+			VkFramebufferCreateInfo fbInfo{};
+			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass      = m_renderPass;
+			fbInfo.attachmentCount = 1;
+			fbInfo.pAttachments    = &viewDst;
+			fbInfo.width           = extent.width;
+			fbInfo.height          = extent.height;
+			fbInfo.layers          = 1;
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS) return;
+			m_framebufferCache[fbKey] = fb;
+		}
 
 		VkClearValue clearVal{};
 		clearVal.color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
@@ -1420,13 +1506,27 @@ namespace engine::render
 			0, static_cast<uint32_t>(sizeof(CombineParams)), &params);
 		vkCmdDraw(cmd, 3, 1, 0, 0);
 		vkCmdEndRenderPass(cmd);
-		vkDestroyFramebuffer(device, fb, nullptr);
+	}
+
+	// Audit 2026-06-10 (Lot B2) — détruit les framebuffers cachés (pattern WaterPass).
+	void BloomCombinePass::InvalidateFramebufferCache(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+
+		for (auto& kv : m_framebufferCache)
+		{
+			if (kv.second != VK_NULL_HANDLE)
+				vkDestroyFramebuffer(device, kv.second, nullptr);
+		}
+		m_framebufferCache.clear();
 	}
 
 	void BloomCombinePass::Destroy(VkDevice device)
 	{
 		LOG_DEBUG(Render, "[BLOOM] BloomCombinePass::Destroy enter");
 		if (device == VK_NULL_HANDLE) return;
+		// Lot B2 : vider le cache de framebuffers avant de détruire le render pass.
+		InvalidateFramebufferCache(device);
 		if (m_pipeline != VK_NULL_HANDLE)
 			{ vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
 		if (m_pipelineLayout != VK_NULL_HANDLE)

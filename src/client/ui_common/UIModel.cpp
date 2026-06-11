@@ -734,6 +734,8 @@ namespace engine::client
 			remote.gender = entity.gender;
 			// TD.8 : état d'animation pour jouer le bon clip sur l'avatar distant.
 			remote.animationState = static_cast<uint8_t>(entity.animationState);
+			// Combat SP1 : archétype de créature (0 = joueur/loot bag, ≠ 0 = mob).
+			remote.archetypeId = entity.archetypeId;
 			m_model.remoteEntities.push_back(remote);
 		}
 

@@ -81,6 +81,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <list>
 #include <filesystem>
 #include <optional>
 #include <span>
@@ -4981,6 +4982,9 @@ namespace engine
 													// Combat SP1 — catalogue d'apparences de creatures (non bloquant :
 													// catalogue absent/corrompu = mobs rendus en fallback humains).
 													m_creatureCatalog.Init(m_cfg);
+													// Combat SP3 — catalogue d'affichage des kits de sorts (non
+													// bloquant : absent = barre d'action masquée).
+													m_spellCatalog.Init(m_cfg);
 
 													// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le
 													// perso n'est pas encore "in world" avant EnterWorld, mais Engine
@@ -10458,6 +10462,203 @@ namespace engine
 						ImGui::End();
 					}
 
+					// --- Combat SP3 : barre d'action (touches 1-4, sorts du profil).
+					// Cooldowns affichés localement (cosmétique) ; le serveur revalide
+					// kit/cooldown/coût/cible/portée à chaque CastRequest.
+					const std::vector<engine::client::SpellDisplay>* actionKit =
+						uiModel.playerStats.profileId.empty()
+							? nullptr
+							: m_spellCatalog.FindKit(uiModel.playerStats.profileId);
+					if (actionKit != nullptr && !actionKit->empty())
+					{
+						const float nowSec = EngineNowSec();
+						const float slotSize = 58.0f;
+						const float slotGap = 8.0f;
+						const size_t slotCount = std::min<size_t>(actionKit->size(), 4u);
+						const float barWidth = slotSize * static_cast<float>(slotCount)
+							+ slotGap * static_cast<float>(slotCount - 1);
+						const float barX = (dw - barWidth) * 0.5f;
+						const float barY = dh - slotSize - 16.0f;
+						for (size_t slotIndex = 0; slotIndex < slotCount; ++slotIndex)
+						{
+							const engine::client::SpellDisplay& spell = (*actionKit)[slotIndex];
+							const float sx0 = barX + static_cast<float>(slotIndex) * (slotSize + slotGap);
+							// Coût payable + cooldown : visuel grisé si indisponible.
+							const uint32_t cost = spell.resourceCostPercent
+								* uiModel.playerStats.secondaryResourceMax / 100u;
+							const bool affordable = uiModel.playerStats.secondaryResourceCurrent >= cost;
+							const auto cooldownIt = m_spellCooldownUiUntilSec.find(spell.spellId);
+							const float cooldownRemaining = (cooldownIt != m_spellCooldownUiUntilSec.end())
+								? std::max(0.0f, cooldownIt->second - nowSec)
+								: 0.0f;
+							const bool ready = affordable && cooldownRemaining <= 0.0f;
+							fg->AddRectFilled(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+								IM_COL32(14, 16, 22, 215), 6.0f);
+							fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+								ready ? IM_COL32(200, 180, 90, 220) : IM_COL32(90, 90, 96, 200), 6.0f, 0, 2.0f);
+							// Numéro de touche (haut-gauche) + nom du sort (bas, tronqué).
+							const std::string keyLabel = std::to_string(slotIndex + 1);
+							fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f), IM_COL32(255, 230, 150, 230), keyLabel.c_str());
+							std::string spellLabel = spell.name.substr(0, 9);
+							fg->AddText(ImVec2(sx0 + 4.0f, barY + slotSize - 18.0f),
+								ready ? IM_COL32(225, 225, 225, 255) : IM_COL32(140, 140, 140, 255),
+								spellLabel.c_str());
+							// Voile + décompte pendant le cooldown affiché.
+							if (cooldownRemaining > 0.0f)
+							{
+								const float fillFraction = (spell.cooldownMs > 0u)
+									? std::clamp(cooldownRemaining / (static_cast<float>(spell.cooldownMs) / 1000.0f), 0.0f, 1.0f)
+									: 0.0f;
+								fg->AddRectFilled(
+									ImVec2(sx0, barY + slotSize * (1.0f - fillFraction)),
+									ImVec2(sx0 + slotSize, barY + slotSize),
+									IM_COL32(0, 0, 0, 150), 6.0f);
+								char cooldownText[16];
+								std::snprintf(cooldownText, sizeof(cooldownText), "%.0f", cooldownRemaining);
+								const ImVec2 cdTs = ImGui::CalcTextSize(cooldownText);
+								fg->AddText(ImVec2(sx0 + (slotSize - cdTs.x) * 0.5f, barY + (slotSize - cdTs.y) * 0.5f),
+									IM_COL32(255, 255, 255, 255), cooldownText);
+							}
+							// Touche 1-4 : envoi du CastRequest (Digit1..Digit4 = '1'..'4').
+							if (keysAllowed
+								&& m_input.WasPressed(static_cast<engine::platform::Key>('1' + static_cast<int>(slotIndex))))
+							{
+								const bool targetOk = !spell.needsEnemyTarget
+									|| (uiModel.targetStats.hasTarget
+										&& (uiModel.targetStats.stateFlags & 1u) == 0u);
+								const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
+								if (targetOk && ready && gameplayClientId != 0u)
+								{
+									const uint64_t castTarget = spell.needsEnemyTarget
+										? uiModel.targetStats.entityId
+										: 0ull;
+									(void)m_gameplayUdp.SendCastRequest(gameplayClientId, castTarget, spell.spellId);
+									if (spell.cooldownMs > 0u)
+									{
+										m_spellCooldownUiUntilSec[spell.spellId] =
+											nowSec + static_cast<float>(spell.cooldownMs) / 1000.0f;
+									}
+								}
+							}
+						}
+
+						// --- Barre de cast (au-dessus de la barre d'action) pilotée
+						// par CastBarUpdate ; progression calculée localement.
+						if (uiModel.castBar.active && uiModel.castBar.durationMs > 0u)
+						{
+							const uint64_t nowNs = static_cast<uint64_t>(
+								std::chrono::duration_cast<std::chrono::nanoseconds>(
+									std::chrono::steady_clock::now().time_since_epoch()).count());
+							const float elapsedSec = static_cast<float>(nowNs - uiModel.castBar.startedAtNs) / 1.0e9f;
+							const float durationSec = static_cast<float>(uiModel.castBar.durationMs) / 1000.0f;
+							const float progress = std::clamp(elapsedSec / durationSec, 0.0f, 1.0f);
+							const float castBarWidth = 260.0f;
+							const float castBarHeight = 18.0f;
+							const float cbx = (dw - castBarWidth) * 0.5f;
+							const float cby = barY - castBarHeight - 10.0f;
+							fg->AddRectFilled(ImVec2(cbx, cby), ImVec2(cbx + castBarWidth, cby + castBarHeight),
+								IM_COL32(20, 22, 28, 220), 4.0f);
+							fg->AddRectFilled(ImVec2(cbx, cby), ImVec2(cbx + castBarWidth * progress, cby + castBarHeight),
+								IM_COL32(120, 170, 230, 230), 4.0f);
+							const std::string castLabel = m_spellCatalog.ResolveSpellName(uiModel.castBar.spellId);
+							const ImVec2 castTs = ImGui::CalcTextSize(castLabel.c_str());
+							fg->AddText(ImVec2(cbx + (castBarWidth - castTs.x) * 0.5f, cby + 1.0f),
+								IM_COL32(255, 255, 255, 255), castLabel.c_str());
+						}
+					}
+
+					// --- Combat SP3 : BuffBar (M31.2 enfin câblée) — auras du joueur
+					// (au-dessus de la barre d'action) et de la cible (sous le cadre).
+					{
+						const uint64_t nowNs = static_cast<uint64_t>(
+							std::chrono::duration_cast<std::chrono::nanoseconds>(
+								std::chrono::steady_clock::now().time_since_epoch()).count());
+						// Construit la liste StatusEffect d'une entité depuis le modèle
+						// (les timers décrémentent localement entre deux AuraUpdate).
+						auto buildEffects = [&uiModel, nowNs](engine::server::EntityId entityId,
+							std::list<engine::gameplay::StatusEffect>& outEffects)
+						{
+							const auto auraIt = uiModel.entityAuras.find(entityId);
+							if (auraIt == uiModel.entityAuras.end())
+							{
+								return;
+							}
+							for (const engine::client::UIAuraEntry& aura : auraIt->second)
+							{
+								engine::gameplay::StatusEffect effect{};
+								effect.effectId = aura.spellId;
+								effect.targetId = entityId;
+								effect.stacks = aura.stacks;
+								// Mapping wire (SpellEffectType serveur) → type client.
+								switch (aura.effectType)
+								{
+								case 1u: effect.type = engine::gameplay::StatusEffectType::DoT; break;
+								case 3u: effect.type = engine::gameplay::StatusEffectType::HoT; break;
+								case 5u: effect.type = engine::gameplay::StatusEffectType::Debuff; break;
+								case 7u: effect.type = engine::gameplay::StatusEffectType::Slow; break;
+								default: effect.type = engine::gameplay::StatusEffectType::Buff; break;
+								}
+								effect.startTimeNs = aura.receivedAtNs;
+								effect.durationSeconds = static_cast<float>(aura.remainingMs) / 1000.0f;
+								effect.expireTimeNs = aura.receivedAtNs
+									+ static_cast<uint64_t>(aura.remainingMs) * 1000000ull;
+								outEffects.push_back(std::move(effect));
+							}
+						};
+						std::list<engine::gameplay::StatusEffect> playerEffects;
+						buildEffects(static_cast<engine::server::EntityId>(uiModel.playerStats.playerEntityId), playerEffects);
+						m_buffBar.UpdatePlayer(playerEffects.empty() ? nullptr : &playerEffects, nowNs);
+						std::list<engine::gameplay::StatusEffect> targetEffects;
+						if (uiModel.targetStats.hasTarget)
+						{
+							buildEffects(uiModel.targetStats.entityId, targetEffects);
+						}
+						m_buffBar.UpdateTarget(targetEffects.empty() ? nullptr : &targetEffects, nowNs);
+
+						// Rendu en pastilles texte (icônes graphiques = chantier atlas).
+						auto drawBar = [this, fg](const engine::client::BuffBarWidget& bar, float x, float y, bool harmful)
+						{
+							if (!bar.visible)
+							{
+								return;
+							}
+							float cursorX = x;
+							for (const engine::client::BuffIconWidget& icon : bar.icons)
+							{
+								if (!icon.visible)
+								{
+									continue;
+								}
+								std::string chip = m_spellCatalog.ResolveSpellName(icon.effectId);
+								if (!icon.isPermanent && icon.remainingSeconds > 0.0f)
+								{
+									char timerText[16];
+									std::snprintf(timerText, sizeof(timerText), " %.0fs", icon.remainingSeconds);
+									chip += timerText;
+								}
+								if (icon.stacks > 1u)
+								{
+									chip += " x" + std::to_string(icon.stacks);
+								}
+								const ImVec2 chipTs = ImGui::CalcTextSize(chip.c_str());
+								fg->AddRectFilled(ImVec2(cursorX, y), ImVec2(cursorX + chipTs.x + 10.0f, y + chipTs.y + 6.0f),
+									harmful ? IM_COL32(70, 20, 20, 210) : IM_COL32(20, 50, 25, 210), 4.0f);
+								fg->AddText(ImVec2(cursorX + 5.0f, y + 3.0f), IM_COL32(230, 230, 230, 255), chip.c_str());
+								cursorX += chipTs.x + 16.0f;
+							}
+						};
+						const engine::client::BuffBarState& playerBuffState = m_buffBar.GetPlayerState();
+						drawBar(playerBuffState.buffBar, 18.0f, dh - 120.0f, false);
+						drawBar(playerBuffState.debuffBar, 18.0f, dh - 92.0f, true);
+						if (uiModel.targetStats.hasTarget)
+						{
+							const engine::client::BuffBarState& targetBuffState = m_buffBar.GetTargetState();
+							// Sous le cadre cible (haut-centre, cf. bloc SP2 : fy 56 + 54).
+							drawBar(targetBuffState.buffBar, (dw - 260.0f) * 0.5f, 118.0f, false);
+							drawBar(targetBuffState.debuffBar, (dw - 260.0f) * 0.5f, 144.0f, true);
+						}
+					}
+
 					// --- Ecran de mort : overlay sombre + bouton Reapparaitre →
 					// RespawnRequest (le serveur ne l'honore que si le flag dead est pose ;
 					// l'overlay disparait quand le snapshot post-respawn retire le flag).
@@ -12400,6 +12601,11 @@ namespace engine
 		{
 			LOG_WARN(Core, "[GameplayNet] AdvancedCombatPresenter Init FAILED — panneau combat désactivé");
 		}
+		// Combat SP3 — BuffBar (auras du joueur / de la cible).
+		if (!m_buffBar.Init())
+		{
+			LOG_WARN(Core, "[GameplayNet] BuffBarPresenter Init FAILED — BuffBar désactivée");
+		}
 
 		const uint32_t vw = static_cast<uint32_t>(std::max(1, m_width));
 		const uint32_t vh = static_cast<uint32_t>(std::max(1, m_height));
@@ -12419,6 +12625,11 @@ namespace engine
 		if (!m_combatHud.SetViewportSize(vw, vh))
 		{
 			LOG_WARN(Core, "[GameplayNet] CombatHudPresenter viewport FAILED — using fallback layout");
+		}
+		// Combat SP3 — layout pixel de la BuffBar.
+		if (!m_buffBar.SetViewportSize(vw, vh))
+		{
+			LOG_WARN(Core, "[GameplayNet] BuffBarPresenter viewport FAILED — using fallback layout");
 		}
 
 		m_uiObserverHandle = m_uiModelBinding.AddObserver(
@@ -12497,7 +12708,9 @@ namespace engine
 			m_uiObserverHandle = 0;
 		}
 
-		// Combat SP2 — symétrie d'Init (présentateurs combat).
+		// Combat SP2/SP3 — symétrie d'Init (présentateurs combat + BuffBar).
+		m_buffBar.Shutdown();
+		m_spellCooldownUiUntilSec.clear();
 		m_advancedCombat.Shutdown();
 		m_combatHud.Shutdown();
 		m_advancedCombatVisible = false;

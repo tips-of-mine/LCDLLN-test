@@ -674,6 +674,8 @@ add_library(engine_core
   src/client/gameplay/CompositeWorldCollider.cpp
   src/client/gameplay/ThirdPersonCamera.cpp
   src/client/gameplay/SkillSystem.cpp
+  # Combat SP3 — métadonnées d'affichage des kits de sorts (barre d'action).
+  src/client/gameplay/SpellKitCatalog.cpp
   src/client/gameplay/ClientPrediction.cpp
   src/client/gameplay/StatusEffect.cpp
   src/client/world/WorldModel.cpp

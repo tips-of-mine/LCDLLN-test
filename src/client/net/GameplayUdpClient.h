@@ -58,6 +58,11 @@ namespace engine::client
 		/// Combat SP2 — demande de réapparition (joueur mort uniquement, validé serveur).
 		bool SendRespawnRequest(uint32_t clientId);
 
+		/// Combat SP3 — cast d'un sort du kit du profil. targetEntityId = 0 pour
+		/// les sorts sans cible (le serveur revalide tout : kit, cooldown, coût,
+		/// cible, portée).
+		bool SendCastRequest(uint32_t clientId, uint64_t targetEntityId, std::string_view spellId);
+
 		bool SendShopBuyRequest(uint32_t clientId, uint32_t vendorId, uint32_t itemId, uint32_t quantity);
 
 		bool SendShopSellRequest(uint32_t clientId, uint32_t vendorId, uint32_t itemId, uint32_t quantity);

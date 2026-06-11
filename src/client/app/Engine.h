@@ -30,6 +30,9 @@
 // Combat SP2 — présentateurs combat câblés (HUD cible/log + panneau avancé).
 #include "src/client/combat/CombatHud.h"
 #include "src/client/combat/AdvancedCombatUi.h"
+// Combat SP3 — barre d'action (kits de sorts) + BuffBar (auras répliquées).
+#include "src/client/combat/BuffBarPresenter.h"
+#include "src/client/gameplay/SpellKitCatalog.h"
 #include "src/client/debug/ProfilerHud.h"
 #include "src/client/economy/ShopUi.h"
 #include "src/client/ui_common/UIModel.h"
@@ -1268,6 +1271,14 @@ namespace engine
 		// ---------------------------------------------------------------------
 		engine::client::CombatHudPresenter m_combatHud{};
 		engine::client::AdvancedCombatPresenter m_advancedCombat{};
+		/// Combat SP3 — binds : touches 1-4 = sorts du kit du profil (slots 1-4).
+		/// Catalogue d'affichage des sorts (même JSON que le serveur, tolérant).
+		engine::client::SpellKitCatalog m_spellCatalog{};
+		/// Combat SP3 — BuffBar (M31.2) : auras du joueur et de la cible.
+		engine::client::BuffBarPresenter m_buffBar{};
+		/// Combat SP3 — cooldowns AFFICHÉS de la barre d'action (spellId → fin en
+		/// secondes EngineNowSec) ; purement cosmétique, le serveur fait foi.
+		std::unordered_map<std::string, float> m_spellCooldownUiUntilSec;
 		/// Combat SP2 — visibilité du panneau combat avancé (touche J).
 		bool m_advancedCombatVisible = false;
 		/// Combat SP2 — throttle local d'envoi d'AttackRequest (le serveur reste

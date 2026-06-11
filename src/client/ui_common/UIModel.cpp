@@ -83,6 +83,9 @@ namespace engine::client
 			entry.damage = message.damage;
 			entry.playerWasAttacker = (message.attackerEntityId == playerEntityId);
 			entry.playerWasTarget = (message.targetEntityId == playerEntityId);
+			// Combat SP2 — critique / raté propagés au log (wire v10).
+			entry.wasCrit = (message.flags & engine::server::kCombatEventFlagCrit) != 0u;
+			entry.wasMiss = (message.flags & engine::server::kCombatEventFlagMiss) != 0u;
 			entry.sequence = combatLog.empty() ? 1u : (combatLog.back().sequence + 1u);
 			combatLog.push_back(entry);
 			if (combatLog.size() > kMaxCombatLogEntries)
@@ -753,6 +756,11 @@ namespace engine::client
 				m_model.targetStats.positionY = entity.state.positionY;
 				m_model.targetStats.positionZ = entity.state.positionZ;
 				m_model.targetStats.hasPosition = true;
+				// Combat SP2 — la cible suit aussi ses PV/flags entre deux
+				// CombatEvent (régénération, dégâts d'un autre joueur, mort).
+				m_model.targetStats.currentHealth = entity.state.currentHealth;
+				m_model.targetStats.maxHealth = entity.state.maxHealth;
+				m_model.targetStats.stateFlags = entity.state.stateFlags;
 				break;
 			}
 		}
@@ -826,6 +834,56 @@ namespace engine::client
 			m_combatEventMessage.damage,
 			playerWasAttacker ? "attacker" : "target");
 		return true;
+	}
+
+	bool UIModelBinding::SetLocalTarget(engine::server::EntityId entityId)
+	{
+		if (!ValidateMainThread("SetLocalTarget"))
+		{
+			return false;
+		}
+
+		for (const UIRemoteEntity& remote : m_model.remoteEntities)
+		{
+			if (remote.entityId != entityId)
+			{
+				continue;
+			}
+
+			m_model.targetStats.entityId = remote.entityId;
+			m_model.targetStats.currentHealth = remote.currentHealth;
+			m_model.targetStats.maxHealth = remote.maxHealth;
+			m_model.targetStats.stateFlags = remote.stateFlags;
+			m_model.targetStats.positionX = remote.positionX;
+			m_model.targetStats.positionY = remote.positionY;
+			m_model.targetStats.positionZ = remote.positionZ;
+			m_model.targetStats.hasTarget = true;
+			m_model.targetStats.hasPosition = true;
+			NotifyObservers(UIModelChangeCombat);
+			LOG_INFO(Net, "[UIModelBinding] Local target set (entity_id={}, hp={}/{})",
+				remote.entityId, remote.currentHealth, remote.maxHealth);
+			return true;
+		}
+
+		LOG_DEBUG(Net, "[UIModelBinding] SetLocalTarget ignored: entity {} not in AoI", entityId);
+		return false;
+	}
+
+	void UIModelBinding::ClearLocalTarget()
+	{
+		if (!ValidateMainThread("ClearLocalTarget"))
+		{
+			return;
+		}
+
+		if (!m_model.targetStats.hasTarget)
+		{
+			return;
+		}
+
+		m_model.targetStats = UITargetStats{};
+		NotifyObservers(UIModelChangeCombat);
+		LOG_INFO(Net, "[UIModelBinding] Local target cleared");
 	}
 
 	bool UIModelBinding::ApplyZoneChange(std::span<const std::byte> packet)

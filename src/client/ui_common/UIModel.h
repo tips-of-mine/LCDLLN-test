@@ -242,6 +242,9 @@ namespace engine::client
 		bool playerWasAttacker = false;
 		bool playerWasTarget = false;
 		uint64_t sequence = 0;
+		/// Combat SP2 (wire v10) — coup critique / raté, depuis CombatEventMessage::flags.
+		bool wasCrit = false;
+		bool wasMiss = false;
 	};
 
 	/// One quest step displayed by the UI model.
@@ -425,6 +428,15 @@ namespace engine::client
 
 		/// Return the current immutable UI model snapshot.
 		const UIModel& GetModel() const { return m_model; }
+
+		/// Combat SP2 — sélection LOCALE de cible (clic / Tab). Cherche l'entité
+		/// dans les remoteEntities du dernier snapshot, remplit targetStats
+		/// (PV/flags/position) et notifie UIModelChangeCombat. Retourne false si
+		/// l'entité n'est pas (ou plus) dans l'AoI. Main thread uniquement.
+		bool SetLocalTarget(engine::server::EntityId entityId);
+
+		/// Combat SP2 — efface la cible courante (notifie UIModelChangeCombat).
+		void ClearLocalTarget();
 
 		/// M29.3: Refresh billboard projections (call from render/game thread with camera + viewport).
 		void TickChatWorldVisuals(

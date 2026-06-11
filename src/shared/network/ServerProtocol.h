@@ -50,7 +50,10 @@ namespace engine::server
 	/// `PlayerStatsMessage` gagne `profileId` (chaîne préfixée u16 en queue —
 	/// le client résout son kit de sorts gameplay/spells/<profil>.json).
 	/// Wire-breaking : lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 11;
+	/// Combat SP4 — bump 11 → 12 : nouveau kind `ThreatUpdate` (85, shard →
+	/// clients intéressés) — table de menace d'un mob répliquée (threat meter).
+	/// Wire-breaking : lock-step master + shardd + client.
+	inline constexpr uint16_t kProtocolVersion = 12;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -241,7 +244,11 @@ namespace engine::server
 		CastBarUpdate = 83,
 		/// Shard → clients intéressés : liste complète des auras d'une entité
 		/// (idempotent — remplace l'état précédent côté client).
-		AuraUpdate = 84
+		AuraUpdate = 84,
+		/// Combat SP4 — shard → clients intéressés : table de menace d'un mob
+		/// (liste complète idempotente, vide = effacement). Alimente le threat
+		/// meter (AdvancedCombatUi). Bump v11→v12.
+		ThreatUpdate = 85
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -420,6 +427,21 @@ namespace engine::server
 		std::vector<AuraWireEntry> auras;
 	};
 
+	/// Combat SP4 — une entrée de menace répliquée (joueur → valeur brute).
+	struct ThreatWireEntry
+	{
+		EntityId playerEntityId = 0;
+		uint32_t threatValue = 0;
+	};
+
+	/// Combat SP4 — table de menace d'un mob (liste complète idempotente ;
+	/// vide = le client efface — mort, evade, reset).
+	struct ThreatUpdateMessage
+	{
+		EntityId mobEntityId = 0;
+		std::vector<ThreatWireEntry> entries;
+	};
+
 	/// Client request asking the authoritative server to pick up one loot bag entity.
 	struct PickupRequestMessage
 	{
@@ -577,6 +599,10 @@ namespace engine::server
 	bool DecodeCastBarUpdate(std::span<const std::byte> packet, CastBarUpdateMessage& outMessage);
 	std::vector<std::byte> EncodeAuraUpdate(const AuraUpdateMessage& message);
 	bool DecodeAuraUpdate(std::span<const std::byte> packet, AuraUpdateMessage& outMessage);
+
+	/// Combat SP4 — encode/decode de la table de menace répliquée (wire v12).
+	std::vector<std::byte> EncodeThreatUpdate(const ThreatUpdateMessage& message);
+	bool DecodeThreatUpdate(std::span<const std::byte> packet, ThreatUpdateMessage& outMessage);
 
 	/// Encode a combat event packet with the protocol header.
 	std::vector<std::byte> EncodeCombatEvent(const CombatEventMessage& message);

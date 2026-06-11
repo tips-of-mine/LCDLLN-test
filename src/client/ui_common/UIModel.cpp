@@ -617,6 +617,8 @@ namespace engine::client
 			return ApplyCastBarUpdate(packet);
 		case engine::server::MessageKind::AuraUpdate:
 			return ApplyAuraUpdate(packet);
+		case engine::server::MessageKind::ThreatUpdate:
+			return ApplyThreatUpdate(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -771,6 +773,23 @@ namespace engine::client
 					}
 				}
 				auraIt = stillPresent ? std::next(auraIt) : m_model.entityAuras.erase(auraIt);
+			}
+		}
+		// Combat SP4 — même purge AoI pour les tables de menace répliquées.
+		if (!m_model.threatByMob.empty())
+		{
+			for (auto threatIt = m_model.threatByMob.begin(); threatIt != m_model.threatByMob.end();)
+			{
+				bool mobPresent = false;
+				for (const UIRemoteEntity& remote : m_model.remoteEntities)
+				{
+					if (remote.entityId == threatIt->first)
+					{
+						mobPresent = true;
+						break;
+					}
+				}
+				threatIt = mobPresent ? std::next(threatIt) : m_model.threatByMob.erase(threatIt);
 			}
 		}
 
@@ -938,6 +957,32 @@ namespace engine::client
 				entry.stacks = wireAura.stacks;
 				entry.receivedAtNs = nowNs;
 				auraList.push_back(std::move(entry));
+			}
+		}
+		NotifyObservers(UIModelChangeCombat);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyThreatUpdate(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeThreatUpdate(packet, m_threatUpdateMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] ThreatUpdate FAILED: decode error");
+			return false;
+		}
+
+		if (m_threatUpdateMessage.entries.empty())
+		{
+			m_model.threatByMob.erase(m_threatUpdateMessage.mobEntityId);
+		}
+		else
+		{
+			std::vector<UIThreatEntry>& threatList = m_model.threatByMob[m_threatUpdateMessage.mobEntityId];
+			threatList.clear();
+			threatList.reserve(m_threatUpdateMessage.entries.size());
+			for (const engine::server::ThreatWireEntry& wireEntry : m_threatUpdateMessage.entries)
+			{
+				threatList.push_back(UIThreatEntry{ wireEntry.playerEntityId, wireEntry.threatValue });
 			}
 		}
 		NotifyObservers(UIModelChangeCombat);

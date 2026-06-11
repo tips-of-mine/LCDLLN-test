@@ -10434,6 +10434,24 @@ namespace engine
 								ImGui::Text("%.1f dps", row.dps);
 								ImGui::ProgressBar(row.barFraction, ImVec2(-1.0f, 6.0f), "");
 							}
+							// Combat SP4 — menace sur la cible courante (ThreatUpdate).
+							if (acs.threatMeterVisible && !acs.threatMeter.empty())
+							{
+								ImGui::Separator();
+								ImGui::TextUnformatted("Menace");
+								for (const engine::client::ThreatMeterEntry& threatRow : acs.threatMeter)
+								{
+									const ImVec4 rowColor = (threatRow.color == engine::client::ThreatColor::Red)
+										? ImVec4(0.9f, 0.3f, 0.25f, 1.0f)
+										: (threatRow.color == engine::client::ThreatColor::Yellow)
+											? ImVec4(0.9f, 0.8f, 0.3f, 1.0f)
+											: ImVec4(0.4f, 0.8f, 0.4f, 1.0f);
+									ImGui::TextColored(rowColor, "%s", threatRow.displayName.c_str());
+									ImGui::SameLine(200.0f);
+									ImGui::TextColored(rowColor, "%.0f %%", threatRow.threatPercent);
+									ImGui::ProgressBar(threatRow.barFraction, ImVec2(-1.0f, 6.0f), "");
+								}
+							}
 							ImGui::Separator();
 							uint32_t filter = acs.activeFilter;
 							bool filterChanged = false;
@@ -10656,6 +10674,101 @@ namespace engine
 							// Sous le cadre cible (haut-centre, cf. bloc SP2 : fy 56 + 54).
 							drawBar(targetBuffState.buffBar, (dw - 260.0f) * 0.5f, 118.0f, false);
 							drawBar(targetBuffState.debuffBar, (dw - 260.0f) * 0.5f, 144.0f, true);
+						}
+
+						// --- Combat SP4 : threat meter — alimente le présentateur pour la
+						// cible courante (rebuild complet, ≤ 5 entrées : coût négligeable).
+						if (uiModel.targetStats.hasTarget)
+						{
+							m_advancedCombat.ClearThreat(uiModel.targetStats.entityId);
+							const auto threatIt = uiModel.threatByMob.find(uiModel.targetStats.entityId);
+							if (threatIt != uiModel.threatByMob.end())
+							{
+								for (const engine::client::UIThreatEntry& threatEntry : threatIt->second)
+								{
+									std::string threatName = "Joueur";
+									if (threatEntry.playerEntityId == uiModel.playerStats.playerEntityId)
+									{
+										threatName = "Vous";
+									}
+									else
+									{
+										for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+										{
+											if (re.entityId == threatEntry.playerEntityId)
+											{
+												threatName = !re.displayName.empty()
+													? re.displayName
+													: ("P" + std::to_string(re.playerClientId));
+												break;
+											}
+										}
+									}
+									m_advancedCombat.UpdateThreat(uiModel.targetStats.entityId,
+										threatEntry.playerEntityId, threatName, threatEntry.threatValue);
+								}
+							}
+						}
+
+						// --- Combat SP4 : FX d'auras — sync de la couche données
+						// (AuraFXSystem, M39.4 enfin câblé) puis halo écran-espace coloré
+						// aux pieds de chaque entité sous aura (couleur ResolveAuraVisuals).
+						{
+							const engine::math::Vec3 localFxPos = m_characterController.GetPosition();
+							std::list<engine::gameplay::StatusEffect> fxEffects;
+							for (const auto& auraPair : uiModel.entityAuras)
+							{
+								const engine::server::EntityId fxEntityId = auraPair.first;
+								float fxX = localFxPos.x, fxY = localFxPos.y, fxZ = localFxPos.z;
+								if (fxEntityId != uiModel.playerStats.playerEntityId)
+								{
+									const auto smoothedIt = m_remoteSmoothed.find(fxEntityId);
+									if (smoothedIt == m_remoteSmoothed.end() || !smoothedIt->second.valid)
+									{
+										continue; // entité sans position connue : pas de FX ce frame.
+									}
+									fxX = smoothedIt->second.x;
+									fxY = smoothedIt->second.y;
+									fxZ = smoothedIt->second.z;
+								}
+								fxEffects.clear();
+								buildEffects(fxEntityId, fxEffects);
+								m_auraFx.Sync(fxEntityId, fxEffects.empty() ? nullptr : &fxEffects, fxX, fxY, fxZ);
+							}
+							// Purge des FX d'entités qui n'ont plus aucune aura répliquée.
+							std::vector<uint64_t> staleFxEntities;
+							for (const engine::client::ActiveAura& fxAura : m_auraFx.GetAuras())
+							{
+								if (uiModel.entityAuras.find(fxAura.entityId) == uiModel.entityAuras.end())
+								{
+									staleFxEntities.push_back(fxAura.entityId);
+								}
+							}
+							for (const uint64_t staleEntityId : staleFxEntities)
+							{
+								m_auraFx.RemoveEntity(staleEntityId);
+							}
+							// Rendu : un anneau par aura, aux pieds de l'entité.
+							for (const engine::client::ActiveAura& fxAura : m_auraFx.GetAuras())
+							{
+								if (!fxAura.alive)
+								{
+									continue;
+								}
+								float haloX = 0.0f, haloY = 0.0f;
+								if (!WorldToScreenPx(out.viewProjMatrix.m,
+									fxAura.positionX, fxAura.positionY - 0.85f, fxAura.positionZ,
+									ivw, ivh, haloX, haloY))
+								{
+									continue;
+								}
+								const ImU32 haloColor = IM_COL32(
+									static_cast<int>(fxAura.glowColor.r * 255.0f),
+									static_cast<int>(fxAura.glowColor.g * 255.0f),
+									static_cast<int>(fxAura.glowColor.b * 255.0f),
+									190);
+								fg->AddCircle(ImVec2(haloX, haloY), 20.0f, haloColor, 24, 2.5f);
+							}
 						}
 					}
 
@@ -12606,6 +12719,11 @@ namespace engine
 		{
 			LOG_WARN(Core, "[GameplayNet] BuffBarPresenter Init FAILED — BuffBar désactivée");
 		}
+		// Combat SP4 — FX d'auras (halo aux pieds des entités sous aura).
+		if (!m_auraFx.Init())
+		{
+			LOG_WARN(Core, "[GameplayNet] AuraFXSystem Init FAILED — FX d'auras désactivés");
+		}
 
 		const uint32_t vw = static_cast<uint32_t>(std::max(1, m_width));
 		const uint32_t vh = static_cast<uint32_t>(std::max(1, m_height));
@@ -12708,7 +12826,8 @@ namespace engine
 			m_uiObserverHandle = 0;
 		}
 
-		// Combat SP2/SP3 — symétrie d'Init (présentateurs combat + BuffBar).
+		// Combat SP2/SP3/SP4 — symétrie d'Init (présentateurs combat + BuffBar + FX).
+		m_auraFx.Shutdown();
 		m_buffBar.Shutdown();
 		m_spellCooldownUiUntilSec.clear();
 		m_advancedCombat.Shutdown();

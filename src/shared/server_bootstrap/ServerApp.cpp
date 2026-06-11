@@ -1545,6 +1545,15 @@ namespace engine::server
 				LOG_WARN(AntiCheat,
 					"[ServerApp] Input rejete par anti-triche (verdict={}, client_id={}, character_key={}, pos=({:.2f},{:.2f}), seq={})",
 					static_cast<int>(verdict), client->clientId, client->persistenceCharacterKey, positionMetersX, positionMetersZ, inputSequence);
+				// Correction SP1 — informe le client de sa vraie position (dernière
+				// valide côté serveur) au lieu de le laisser désynchronisé en
+				// silence. Throttlé à 1 / 500 ms (un hack soutenu spammerait).
+				const uint64_t forceNowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::steady_clock::now().time_since_epoch()).count());
+				if ((forceNowMs - client->lastForcePositionSentMs) >= 500u)
+				{
+					SendForcePosition(*client, kForcePositionReasonAntiCheat);
+				}
 				return;
 			}
 		}
@@ -3015,6 +3024,13 @@ namespace engine::server
 		// Sécurité : plus aucune menace résiduelle ne doit pointer sur le ressuscité
 		// (déjà purgée à la mort, mais un mob a pu être spawné entre-temps).
 		PurgeThreatForEntity(client->entityId);
+		// Correction SP1 — (1) reset de l'état anti-triche : sans ça, le premier
+		// Input émis depuis le spawn serait vu comme un TeleportHack (la trace
+		// anti-triche pointe encore le lieu de mort) ; (2) position IMPOSÉE au
+		// client : le mouvement étant client-autoritaire, sans ce message le
+		// client écraserait la téléportation au tick suivant (bug SP2 corrigé).
+		m_antiCheat.Reset(client->persistenceCharacterKey);
+		SendForcePosition(*client, kForcePositionReasonRespawn);
 		UpdateClientInterest(*client);
 		SaveConnectedClient(*client, "respawn");
 		LOG_INFO(Net,
@@ -3026,6 +3042,27 @@ namespace engine::server
 			client->positionMetersZ,
 			client->stats.currentHealth,
 			client->stats.maxHealth);
+	}
+
+	void ServerApp::SendForcePosition(ConnectedClient& client, uint8_t reason)
+	{
+		ForcePositionMessage message{};
+		message.clientId = client.clientId;
+		message.positionX = client.positionMetersX;
+		message.positionY = client.positionMetersY;
+		message.positionZ = client.positionMetersZ;
+		message.yawRadians = client.yawRadians;
+		message.reason = reason;
+		if (!m_transport.Send(client.endpoint, EncodeForcePosition(message)))
+		{
+			LOG_WARN(Net, "[ServerApp] ForcePosition send failed (client_id={}, reason={})",
+				client.clientId, reason);
+			return;
+		}
+		client.lastForcePositionSentMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
+		LOG_INFO(Net, "[ServerApp] ForcePosition sent (client_id={}, pos=({:.1f},{:.1f},{:.1f}), reason={})",
+			client.clientId, message.positionX, message.positionY, message.positionZ, reason);
 	}
 
 	void ServerApp::HandlePickupRequest(const Endpoint& endpoint, uint32_t clientId, EntityId lootBagEntityId)

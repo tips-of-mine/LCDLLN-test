@@ -622,6 +622,9 @@ namespace engine::client
 		// Groupes SP1 — invitation entrante (le reste du flux party était déjà routé).
 		case engine::server::MessageKind::PartyInviteNotify:
 			return ApplyPartyInviteNotify(packet);
+		// Correction SP1 — position imposée par le serveur (respawn/anti-triche).
+		case engine::server::MessageKind::ForcePosition:
+			return ApplyForcePosition(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -990,6 +993,36 @@ namespace engine::client
 		}
 		NotifyObservers(UIModelChangeCombat);
 		return true;
+	}
+
+	bool UIModelBinding::ApplyForcePosition(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeForcePosition(packet, m_forcePositionMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] ForcePosition FAILED: decode error");
+			return false;
+		}
+
+		m_model.forcedPosition.pending = true;
+		m_model.forcedPosition.x = m_forcePositionMessage.positionX;
+		m_model.forcedPosition.y = m_forcePositionMessage.positionY;
+		m_model.forcedPosition.z = m_forcePositionMessage.positionZ;
+		m_model.forcedPosition.yawRadians = m_forcePositionMessage.yawRadians;
+		m_model.forcedPosition.reason = m_forcePositionMessage.reason;
+		LOG_INFO(Net, "[UIModelBinding] ForcePosition received (pos=({:.1f},{:.1f},{:.1f}), reason={})",
+			m_model.forcedPosition.x, m_model.forcedPosition.y, m_model.forcedPosition.z,
+			m_model.forcedPosition.reason);
+		NotifyObservers(UIModelChangeWorld);
+		return true;
+	}
+
+	void UIModelBinding::ClearForcedPosition()
+	{
+		if (!ValidateMainThread("ClearForcedPosition"))
+		{
+			return;
+		}
+		m_model.forcedPosition = UIForcedPosition{};
 	}
 
 	bool UIModelBinding::ApplyPartyInviteNotify(std::span<const std::byte> packet)

@@ -173,7 +173,62 @@ namespace engine::editor::world
 		///        (`SyncWorldEditorHeightmapFromDocument`) reecrit toute la
 		///        heightmap a la hauteur du chunk et fait « chuter » le sol hors
 		///        champ des la 1ere edition (regression terrain invisible).
+		/// Effet de bord (lot B3, correctif 2) : vide aussi la pile undo/redo
+		/// (`CommandStack::Clear`) — les commandes mémorisées pointent vers les
+		/// chunks de la carte précédente et rejoueraient ses deltas au Ctrl+Z.
 		void InitNewZoneTerrain(int chunksPerAxis, float flatHeightMeters);
+
+		/// Lot B3 (audit 2026-06-10 §4.2, correctifs 1-2-4) — Remise à zéro de
+		/// tout l'état d'édition dépendant de la carte. À appeler à CHAQUE
+		/// changement de monde (« Nouvelle carte » ET chargement d'une carte) :
+		///   1. vide la pile undo/redo (`CommandStack::Clear`) — sinon Ctrl+Z
+		///      rejouerait les deltas de la carte précédente sur la nouvelle ;
+		///   2. réinitialise les 4 documents (terrain, eau, mesh inserts,
+		///      portails de donjon) via `zone_presets::ResetEditedZoneDocuments`
+		///      — sinon les chunks de la carte A restent en RAM et réécrivent
+		///      la heightmap de la carte B à la première commande (via
+		///      `Engine::SyncWorldEditorHeightmapFromDocument`) ;
+		///   3. propage \p zoneId aux 4 documents pour le namespacing disque
+		///      (`chunks/zone_<id>/…`, `instances/zone_<id>/…`) via
+		///      `PropagateZoneIdToDocuments`.
+		/// \param zoneId identifiant de zone DÉJÀ sanitizé (`SanitizeZoneId`).
+		/// Effet de bord : détruit toutes les commandes undo/redo ; marque les
+		/// 4 documents dirty (cf. leurs `Reset()`).
+		/// Contrainte thread : main thread (comme tout le shell).
+		void ResetForZoneChange(const std::string& zoneId);
+
+		/// Lot B3 (correctif 4) — Propage \p zoneId (déjà sanitizé) aux 4
+		/// documents (terrain, eau, mesh inserts, portails) SANS toucher à
+		/// leur contenu ni à la pile undo. Utilisé par `ResetForZoneChange`
+		/// et, côté Engine, juste avant la persistance pour suivre un
+		/// éventuel « save sous un autre nom de zone ».
+		void PropagateZoneIdToDocuments(const std::string& zoneId);
+
+		/// Lot B3 (correctif 3) — Recharge depuis disque les documents annexes
+		/// de la zone courante (eau, mesh inserts, portails de donjon), avec
+		/// les chemins namespacés posés par `ResetForZoneChange` (fallback
+		/// LECTURE sur les anciens chemins plats). À appeler au CHARGEMENT
+		/// d'une carte, APRÈS `ResetForZoneChange`. Les chunks terrain, eux,
+		/// se rechargent en lazy via `TerrainDocument::EnsureLoaded`.
+		/// \param cfg source de `paths.content`.
+		/// Effet de bord : re-marque le WaterDocument dirty après chargement —
+		/// son flag dirty sert aussi de signal de rebuild GPU eau
+		/// (Engine::Render → ClearDirty) et `LoadFromDisk` le remet à false ;
+		/// sans ce re-arm la scène d'eau chargée ne s'afficherait pas.
+		void LoadZoneDocuments(const engine::core::Config& cfg);
+
+		/// Lot B3 (correctif 3) — Persiste sur disque les documents annexes de
+		/// la zone (eau, mesh inserts, portails de donjon), au même point de
+		/// save que `SaveTerrainChunks`. Avant ce fix, aucun `SaveToDisk`
+		/// n'était appelé hors tests : lacs/rivières/grottes/arches/portails
+		/// étaient perdus à la fermeture. Sauvegarde inconditionnelle (pas de
+		/// gating sur IsDirty) : le flag dirty du WaterDocument est consommé
+		/// par le rebuild GPU eau (Engine::Render → ClearDirty) et ne peut
+		/// donc pas servir de critère de persistance.
+		/// \param cfg source de `paths.content`.
+		/// \return nombre de documents écrits avec succès (0 à 3).
+		/// Effet de bord : écriture disque + LOG_WARN par document en échec.
+		size_t SaveZoneDocuments(const engine::core::Config& cfg);
 
 		/// Sous-projet 1 — Persiste sur disque les chunks terrain + splat dirty
 		/// (source de verite de la zone) sous `<paths.content>/chunks/`. Appelee

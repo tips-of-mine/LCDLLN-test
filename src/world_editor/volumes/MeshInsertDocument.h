@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace engine::core { class Config; }
@@ -13,7 +14,8 @@ namespace engine::editor::world::volumes
 {
 	/// Document éditeur portant les instances de mesh inserts (M100.40).
 	/// CRUD + events pour les panels (Outliner, Inspector). Persiste dans
-	/// `instances/mesh_inserts.bin` via `MeshInsertIo`.
+	/// `instances/zone_<zoneId>/mesh_inserts.bin` via `MeshInsertIo` (lot B3
+	/// — chemin plat legacy en fallback de lecture / zoneId vide).
 	///
 	/// Le générateur de Guid est un compteur monotone initialisé à 1 ;
 	/// `kInvalidMeshInsertGuid` (0) reste réservé comme sentinelle.
@@ -22,6 +24,17 @@ namespace engine::editor::world::volumes
 	public:
 		using ChangeCallback = std::function<void(const MeshInsertInstance&)>;
 		using RemoveCallback = std::function<void(uint64_t /*removedGuid*/)>;
+
+		/// Lot B3 (audit 2026-06-10 §4.2) — Définit l'identifiant (sanitizé)
+		/// de la zone éditée : les chemins disque deviennent
+		/// `instances/zone_<zoneId>/mesh_inserts.bin` (écriture toujours
+		/// namespacée ; lecture avec fallback sur l'ancien chemin plat).
+		/// Chaîne vide = chemins legacy plats (tests, boot). À appeler à
+		/// chaque changement de carte, AVANT Save/LoadFromDisk.
+		void SetZoneId(std::string zoneId) { m_zoneId = std::move(zoneId); }
+
+		/// Identifiant de zone courant ("" = chemins legacy plats).
+		const std::string& GetZoneId() const { return m_zoneId; }
 
 		/// Génère un nouveau guid unique pour cette instance de document.
 		/// Thread-safe : non (main thread).
@@ -61,11 +74,13 @@ namespace engine::editor::world::volumes
 			m_dirty    = true;
 		}
 
-		/// Sauvegarde dans `<paths.content>/instances/mesh_inserts.bin`. Reset
-		/// `m_dirty`.
+		/// Sauvegarde dans `<paths.content>/instances/zone_<zoneId>/mesh_inserts.bin`
+		/// (chemin plat legacy si zoneId vide — lot B3). Reset `m_dirty`.
 		bool SaveToDisk(const engine::core::Config& cfg, std::string& outError);
 
-		/// Charge depuis `<paths.content>/instances/mesh_inserts.bin`. Si
+		/// Charge depuis `<paths.content>/instances/zone_<zoneId>/mesh_inserts.bin`
+		/// (fallback LECTURE sur le chemin plat legacy si le fichier namespacé
+		/// n'existe pas — lot B3). Si
 		/// fichier absent : retourne true avec doc vide (premier lancement).
 		/// Reset `m_dirty`. Initialise le compteur Guid au max+1 des
 		/// instances chargées.
@@ -79,6 +94,8 @@ namespace engine::editor::world::volumes
 
 	private:
 		std::vector<MeshInsertInstance> m_instances;
+		/// Lot B3 — identifiant (sanitizé) de la zone, namespace des chemins.
+		std::string m_zoneId;
 		uint64_t m_nextGuid = 0u;
 		bool     m_dirty    = false;
 

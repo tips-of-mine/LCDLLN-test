@@ -20,6 +20,7 @@
 #include "src/world_editor/prefs/UserPrefsStore.h"
 #include "src/world_editor/presets/ToolPresetRegistry.h"
 #include "src/world_editor/help/HelpContentStore.h"
+#include "src/world_editor/zone_presets/WorldMapEditDocumentReset.h"
 #include "src/world_editor/zone_presets/ZonePresetRegistry.h"
 
 #if defined(_WIN32)
@@ -751,10 +752,100 @@ namespace engine::editor::world
 
 	void WorldEditorShell::InitNewZoneTerrain(int chunksPerAxis, float flatHeightMeters)
 	{
+		// Lot B3 (correctif 2) — toute création de zone invalide l'historique
+		// undo/redo : les commandes mémorisées référencent les chunks de la
+		// carte précédente et rejoueraient ses deltas au Ctrl+Z. Idempotent
+		// si ResetForZoneChange a déjà vidé la pile juste avant.
+		m_commandStack.Clear();
 		m_terrainDoc.InitFlatZone(chunksPerAxis, flatHeightMeters);
 		LOG_INFO(EditorWorld,
 			"[WorldEditorShell] Init new zone terrain: {}x{} flat chunks at {:.1f} m",
 			chunksPerAxis, chunksPerAxis, flatHeightMeters);
+	}
+
+	void WorldEditorShell::PropagateZoneIdToDocuments(const std::string& zoneId)
+	{
+		m_terrainDoc.SetZoneId(zoneId);
+		m_waterDoc.SetZoneId(zoneId);
+		m_meshInsertDoc.SetZoneId(zoneId);
+		m_dungeonPortalDoc.SetZoneId(zoneId);
+	}
+
+	void WorldEditorShell::ResetForZoneChange(const std::string& zoneId)
+	{
+		// Correctif 2 — l'historique undo/redo appartient à la carte qui se
+		// ferme : on le détruit avant toute autre opération.
+		m_commandStack.Clear();
+		// Correctif 1 — évince de la RAM les chunks/instances de la carte
+		// précédente (sinon SyncWorldEditorHeightmapFromDocument réécrirait
+		// la heightmap de la nouvelle carte avec les hauteurs de l'ancienne).
+		zone_presets::ResetEditedZoneDocuments(
+			m_terrainDoc, m_waterDoc, m_meshInsertDoc, m_dungeonPortalDoc);
+		// Correctif 4 — namespace disque de la nouvelle carte.
+		PropagateZoneIdToDocuments(zoneId);
+		LOG_INFO(EditorWorld,
+			"[WorldEditorShell] Reset for zone change: zone='{}' (undo vide, documents reinitialises)",
+			zoneId);
+	}
+
+	void WorldEditorShell::LoadZoneDocuments(const engine::core::Config& cfg)
+	{
+		std::string err;
+		if (!m_waterDoc.LoadFromDisk(cfg, err))
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Water LoadFromDisk failed: {}", err);
+		}
+		// Le flag dirty du WaterDocument sert aussi de signal « rebuild GPU »
+		// (Engine::Render) ; LoadFromDisk le remet à false, on le ré-arme pour
+		// que la scène d'eau chargée s'affiche au prochain tick.
+		m_waterDoc.MarkDirty();
+		err.clear();
+		if (!m_meshInsertDoc.LoadFromDisk(cfg, err))
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] MeshInsert LoadFromDisk failed: {}", err);
+		}
+		err.clear();
+		if (!m_dungeonPortalDoc.LoadFromDisk(cfg, err))
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] DungeonPortal LoadFromDisk failed: {}", err);
+		}
+		LOG_INFO(EditorWorld,
+			"[WorldEditorShell] Loaded zone documents: {} lake(s)/{} river(s), {} mesh insert(s), {} portal(s)",
+			m_waterDoc.Get().lakes.size(), m_waterDoc.Get().rivers.size(),
+			m_meshInsertDoc.Size(), m_dungeonPortalDoc.Size());
+	}
+
+	size_t WorldEditorShell::SaveZoneDocuments(const engine::core::Config& cfg)
+	{
+		size_t written = 0;
+		std::string err;
+		if (m_waterDoc.SaveToDisk(cfg, err)) { ++written; }
+		else
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Water SaveToDisk failed: {}", err);
+		}
+		err.clear();
+		if (m_meshInsertDoc.SaveToDisk(cfg, err)) { ++written; }
+		else
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] MeshInsert SaveToDisk failed: {}", err);
+		}
+		err.clear();
+		if (m_dungeonPortalDoc.SaveToDisk(cfg, err)) { ++written; }
+		else
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] DungeonPortal SaveToDisk failed: {}", err);
+		}
+		LOG_INFO(EditorWorld,
+			"[WorldEditorShell] Saved zone documents: {}/3 (eau, mesh inserts, portails)",
+			written);
+		return written;
 	}
 
 	size_t WorldEditorShell::SaveTerrainChunks(const engine::core::Config& cfg)

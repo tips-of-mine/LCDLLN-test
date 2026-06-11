@@ -2250,3 +2250,21 @@ déjà l''XP et broadcast PartyUpdate).
   désélection ; le pick de mob ignore les clics sur les cadres.
 - Hors périmètre : persistance des groupes (tables 0060) — session-scoped, documenté.
 - **Déploiement** : ✅ client uniquement (au-dessus du lock-step v12 du chantier combat).
+
+## Métiers SP1 — récolte + artisanat de bout en bout (2026-06-11)
+
+Plan : `docs/superpowers/plans/2026-06-11-metiers-sp1-recolte-artisanat.md`. **Pas de bump wire**
+(kinds 64-68/70-77 de M36.x déjà complets) — serveur touché = réplication des nodes (additif).
+
+- Constat : nodes de récolte non répliqués (« no replication » d''origine), AUCUNE donnée de
+  zone, client n''émettant aucun message métiers, présentateurs orphelins.
+- Données : `game/data/zones/zone_0/gathering_nodes.json` (3 nodes : minerai/herbe/arbre).
+- Serveur : nodes dans la grille d''intérêt + branche `TryBuildSnapshotEntity` —
+  `archetypeId = kGatheringNodeArchetypeBase (1 000 000) + typeId` (plage réservée,
+  ReplicationTypes.h), flag dead = épuisé.
+- Client : labels flottants des nodes (noms FR par type + [E] à portée, grisé épuisé),
+  exclus du mesh/ciblage combat ; **E** = HarvestRequest (priorité interactibles) ;
+  `HarvestCastBarPresenter` câblé ; **K** = panneau Artisanat (`CraftingUiPresenter` câblé :
+  onglets métiers → CraftRecipeListRequest, sélection → CraftRequest, annulation, cast bar,
+  qualité M36.3). Touche K ajoutée à l''enum Key (leçon SP2).
+- **Déploiement** : ⚠️ shardd (réplication nodes) — porté par la fenêtre lock-step v12.

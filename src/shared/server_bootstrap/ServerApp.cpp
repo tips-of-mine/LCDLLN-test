@@ -191,7 +191,23 @@ namespace engine::server
 				mob.combat.cooldownTicks = std::max<uint32_t>(1u,
 					(archetype->attackPeriodMs * static_cast<uint32_t>(tickHz) + 999u) / 1000u);
 				mob.xpReward = archetype->xpReward;
+				// Combat SP2 — jets de précision/critique data-driven (cf. AttackResolver).
+				mob.combat.accuracy = archetype->accuracy;
+				mob.combat.critRate = archetype->critRate;
+				mob.combat.critMult = archetype->critMult;
 			}
+		}
+
+		/// Combat SP2 — copie les stats dérivées du moteur de personnages dans le
+		/// composant combat du joueur (enter-world + level-up). range 0 = mêlée
+		/// pure → on conserve la portée de mêlée MVP (kDefaultAttackRangeMeters).
+		void ApplyDerivedCombatStats(ConnectedClient& client, const engine::server::gameplay::DerivedStats& derived)
+		{
+			client.combat.damagePerHit = derived.damage;
+			client.combat.attackRangeMeters = (derived.range > 0.0f) ? derived.range : kDefaultAttackRangeMeters;
+			client.combat.accuracy = derived.accuracy;
+			client.combat.critRate = derived.critRate;
+			client.combat.critMult = derived.critMult;
 		}
 
 		/// Return the squared XZ distance used by the range validation.
@@ -1330,6 +1346,25 @@ namespace engine::server
 					acceptedClient.level,
 					sh.maxHealth,
 					sh.currentHealth);
+			}
+			// Combat SP2 — injecte aussi les stats offensives calculées (damage,
+			// portée, précision, critique) dans le composant combat, à la place
+			// des constantes MVP. Faction/classe vides → ComputeStats nullopt →
+			// le composant MVP est conservé (pas de régression mode no-DB).
+			const auto derived = engine::server::gameplay::ComputeStats(
+				*m_statsTables, acceptedClient.factionId, acceptedClient.classId,
+				sex, acceptedClient.level);
+			if (derived)
+			{
+				ApplyDerivedCombatStats(acceptedClient, *derived);
+				LOG_INFO(Net,
+					"[ServerApp] SP2 enter-world combat stats (client_id={}, damage={}, range={:.1f}, accuracy={:.1f}, crit={:.1f}%x{:.2f})",
+					acceptedClient.clientId,
+					acceptedClient.combat.damagePerHit,
+					acceptedClient.combat.attackRangeMeters,
+					acceptedClient.combat.accuracy,
+					acceptedClient.combat.critRate,
+					acceptedClient.combat.critMult);
 			}
 		}
 
@@ -5559,6 +5594,8 @@ namespace engine::server
 		{
 			client.stats.maxHealth = d->hp;
 			client.stats.currentHealth = d->hp;   // soin complet au level-up.
+			// Combat SP2 — les stats offensives suivent aussi le niveau.
+			ApplyDerivedCombatStats(client, *d);
 		}
 		(void)SendPlayerStats(client);
 		SaveConnectedClient(client, "level_up");

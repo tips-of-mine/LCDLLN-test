@@ -351,6 +351,84 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendHarvestRequest(uint32_t clientId, uint64_t nodeEntityId)
+	{
+		engine::server::HarvestRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.nodeEntityId = nodeEntityId;
+		const bool ok = SendBytes(engine::server::EncodeHarvestRequest(msg));
+		if (ok)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] HarvestRequest sent (client_id={}, node_entity_id={})",
+				clientId, nodeEntityId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] HarvestRequest FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
+	bool GameplayUdpClient::SendHarvestCancelRequest(uint32_t clientId)
+	{
+		engine::server::HarvestCancelRequestMessage msg{};
+		msg.clientId = clientId;
+		const bool ok = SendBytes(engine::server::EncodeHarvestCancelRequest(msg));
+		if (!ok)
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] HarvestCancelRequest FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
+	bool GameplayUdpClient::SendCraftRecipeListRequest(uint32_t clientId, std::string_view professionKey)
+	{
+		engine::server::CraftRecipeListRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.professionKey = std::string(professionKey);
+		const bool ok = SendBytes(engine::server::EncodeCraftRecipeListRequest(msg));
+		if (ok)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] CraftRecipeListRequest sent (client_id={}, profession={})",
+				clientId, msg.professionKey);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] CraftRecipeListRequest FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
+	bool GameplayUdpClient::SendCraftRequest(uint32_t clientId, std::string_view recipeId)
+	{
+		engine::server::CraftRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.recipeId = std::string(recipeId);
+		const bool ok = SendBytes(engine::server::EncodeCraftRequest(msg));
+		if (ok)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] CraftRequest sent (client_id={}, recipe={})",
+				clientId, msg.recipeId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] CraftRequest FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
+	bool GameplayUdpClient::SendCraftCancelRequest(uint32_t clientId)
+	{
+		engine::server::CraftCancelRequestMessage msg{};
+		msg.clientId = clientId;
+		const bool ok = SendBytes(engine::server::EncodeCraftCancelRequest(msg));
+		if (!ok)
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] CraftCancelRequest FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
 	bool GameplayUdpClient::SendShopBuyRequest(uint32_t clientId, uint32_t vendorId, uint32_t itemId, uint32_t quantity)
 	{
 		engine::server::ShopBuyRequestMessage msg{};

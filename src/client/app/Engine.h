@@ -37,6 +37,9 @@
 #include "src/client/combat/AuraFXSystem.h"
 // Groupes SP1 — cadres de groupe (M32.2 enfin câblé).
 #include "src/client/social/PartyHud.h"
+// Métiers SP1 — barre de récolte (M36.1) + panneau d'artisanat (M36.2).
+#include "src/client/crafting/HarvestCastBar.h"
+#include "src/client/crafting/CraftingUi.h"
 #include "src/client/debug/ProfilerHud.h"
 #include "src/client/economy/ShopUi.h"
 #include "src/client/ui_common/UIModel.h"
@@ -1289,6 +1292,11 @@ namespace engine
 		/// clientId pour les joueurs, invariant ServerApp::HandleHello) ; 0 = soi.
 		/// Consommé par les sorts SingleAlly de la barre d'action (SP3).
 		uint64_t m_selectedAllyEntityId = 0;
+		/// Métiers SP1 — binds : E = récolter le node à portée (priorité aux
+		/// interactibles locaux), K = panneau d'artisanat.
+		engine::client::HarvestCastBarPresenter m_harvestBar{};
+		engine::client::CraftingUiPresenter m_craftingUi{};
+		bool m_craftingVisible = false;
 		/// Combat SP3 — cooldowns AFFICHÉS de la barre d'action (spellId → fin en
 		/// secondes EngineNowSec) ; purement cosmétique, le serveur fait foi.
 		std::unordered_map<std::string, float> m_spellCooldownUiUntilSec;

@@ -69,6 +69,22 @@ namespace engine::client
 		/// Groupes SP1 — refuse l'invitation de groupe en attente (M32.2).
 		bool SendPartyDecline(uint32_t clientId);
 
+		/// Métiers SP1 — démarre une récolte sur un node répliqué (M36.1, le
+		/// serveur valide disponibilité/portée/session unique).
+		bool SendHarvestRequest(uint32_t clientId, uint64_t nodeEntityId);
+
+		/// Métiers SP1 — annule la récolte en cours (M36.1).
+		bool SendHarvestCancelRequest(uint32_t clientId);
+
+		/// Métiers SP1 — demande la liste des recettes d'un métier (M36.2).
+		bool SendCraftRecipeListRequest(uint32_t clientId, std::string_view professionKey);
+
+		/// Métiers SP1 — lance la fabrication d'une recette (M36.2).
+		bool SendCraftRequest(uint32_t clientId, std::string_view recipeId);
+
+		/// Métiers SP1 — annule la fabrication en cours (M36.2).
+		bool SendCraftCancelRequest(uint32_t clientId);
+
 		bool SendShopBuyRequest(uint32_t clientId, uint32_t vendorId, uint32_t itemId, uint32_t quantity);
 
 		bool SendShopSellRequest(uint32_t clientId, uint32_t vendorId, uint32_t itemId, uint32_t quantity);

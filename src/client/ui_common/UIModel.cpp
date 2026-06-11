@@ -1007,6 +1007,21 @@ namespace engine::client
 		return true;
 	}
 
+	bool UIModelBinding::SelectCraftRecipe(uint32_t rowIndex)
+	{
+		if (!ValidateMainThread("SelectCraftRecipe"))
+		{
+			return false;
+		}
+		if (rowIndex >= m_model.crafting.recipes.size())
+		{
+			return false;
+		}
+		m_model.crafting.selectedRecipeIndex = rowIndex;
+		NotifyObservers(UIModelChangeCrafting);
+		return true;
+	}
+
 	void UIModelBinding::ClearPartyInvite()
 	{
 		if (!ValidateMainThread("ClearPartyInvite"))

@@ -46,6 +46,8 @@ namespace engine::platform
 		// Valeurs = codes ASCII majuscules (== VK_* Windows), comme le reste.
 		T = 'T',
 		J = 'J',
+		// Métiers SP1 — panneau d'artisanat (K).
+		K = 'K',
 		Escape = 0x1B,
 		Tab = 0x09,
 		Control = 0x11,

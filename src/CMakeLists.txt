@@ -71,6 +71,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
     # Combat SP1 — catalogue d'archétypes de créatures (stats data-driven).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibrary.cpp
+    # Combat SP3 — kits de sorts par profil (data-driven).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/SpellKitLibrary.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/event/EventRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp
@@ -536,6 +538,11 @@ elseif(UNIX)
   # Combat SP2 : résolveur d'attaque pur (précision / critique, header-only).
   lcdlln_add_simple_test(attack_resolver_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/combat/AttackResolverTests.cpp)
+
+  # Combat SP3 : kits de sorts par profil (parse + validation JSON).
+  lcdlln_add_simple_test(spell_kit_library_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/SpellKitLibraryTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/SpellKitLibrary.cpp)
 
   # TA.3 (replication des joueurs) : registre des personnages admis (gate de la
   # session UDP, lié au character_id authentifié du ticket). Pure logique testable.
@@ -1155,6 +1162,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
     # Combat SP1 — catalogue d'archétypes de créatures (stats data-driven).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibrary.cpp
+    # Combat SP3 — kits de sorts par profil (data-driven).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/SpellKitLibrary.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/event/EventRuntime.cpp
     # TA.4 : accès MySQL pour le pont position (lecture characters.spawn_x/y/z).

@@ -533,6 +533,10 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibraryTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibrary.cpp)
 
+  # Combat SP2 : résolveur d'attaque pur (précision / critique, header-only).
+  lcdlln_add_simple_test(attack_resolver_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/combat/AttackResolverTests.cpp)
+
   # TA.3 (replication des joueurs) : registre des personnages admis (gate de la
   # session UDP, lié au character_id authentifié du ticket). Pure logique testable.
   lcdlln_add_simple_test(admitted_character_registry_tests

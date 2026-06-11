@@ -16,6 +16,7 @@
 #include "src/shardd/gameplay/quest/QuestRuntime.h"
 #include "src/shardd/gameplay/spawner/SpawnerRuntime.h"
 #include "src/shardd/gameplay/creature/CreatureArchetypeLibrary.h"
+#include "src/shardd/gameplay/spell/SpellKitLibrary.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/net/ChatSystem.h"
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
@@ -109,6 +110,19 @@ namespace engine::server
 		float spawnPositionMetersX = 0.0f;
 		float spawnPositionMetersY = 0.0f;
 		float spawnPositionMetersZ = 0.0f;
+		/// Combat SP3 — profil de classe ("melee", "tank", …) résolu à l'enter-world
+		/// via factions.json ; vide = pas de kit de sorts (perso legacy / no-DB).
+		std::string profileId;
+		/// Combat SP3 — ressource secondaire runtime (le coût des sorts est en %
+		/// du max ; régénérée par RegenerateResources : 5 %/s hors combat, 2 %/s
+		/// en combat — décision utilisateur).
+		uint32_t currentResource = 0;
+		uint32_t maxResource = 0;
+		/// Accumulateur fractionnaire de régénération (la régén par tick < 1).
+		float resourceRegenCarry = 0.0f;
+		/// Timestamp ms de la dernière implication dans un CombatEvent (attaquant
+		/// ou cible) ; « en combat » = moins de 5 s.
+		uint64_t lastCombatInvolvementMs = 0;
 		/// TD.5 — nom du personnage choisi par le joueur (cf. table SQL characters.name).
 		/// Chargé depuis la DB (LoadSpawnFromDb) si le shard a un pool MySQL configuré ;
 		/// sinon (mode no-DB) repris du push master AdmitCharacter via
@@ -518,6 +532,11 @@ namespace engine::server
 		/// ResolveAttackRoll directement.
 		float NextCombatRoll01();
 
+		/// Combat SP3 — régénère la ressource secondaire de chaque joueur connecté
+		/// (par tick : 5 %/s hors combat, 2 %/s en combat, accumulé en fractionnaire).
+		/// Appelée depuis Simulate (main thread du tick monde).
+		void RegenerateResources();
+
 		/// Apply one mob attack against its current target when in range.
 		bool TryMobAttackPlayer(MobEntity& mob, ConnectedClient& target);
 
@@ -895,6 +914,8 @@ namespace engine::server
 		/// Combat SP1 — catalogue d'archétypes de créatures (stats data-driven,
 		/// initialisé par InitSpawners avant le chargement des spawners).
 		CreatureArchetypeLibrary m_archetypeLibrary;
+		/// Combat SP3 — kits de sorts par profil (gameplay/spells/*.json), strict.
+		SpellKitLibrary m_spellKits;
 		/// Combat SP2 — RNG des jets d'attaque (précision/critique), seedé au
 		/// constructeur. Main thread du tick monde uniquement (pas de verrou).
 		std::mt19937 m_combatRng;

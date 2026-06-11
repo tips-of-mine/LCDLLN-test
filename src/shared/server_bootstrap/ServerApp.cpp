@@ -289,6 +289,7 @@ namespace engine::server
 		, m_questRuntime(m_config)
 		, m_spawnerRuntime(m_config)
 		, m_archetypeLibrary(m_config)
+		, m_spellKits(m_config)
 		, m_combatRng(std::random_device{}())
 	{
 		LOG_INFO(Core, "[ServerApp] Constructed");
@@ -413,6 +414,14 @@ namespace engine::server
 		if (!InitSpawners())
 		{
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: spawner bootstrap failed");
+			Shutdown();
+			return false;
+		}
+
+		// Combat SP3 — kits de sorts par profil (strict : kit corrompu = pas de boot).
+		if (!m_spellKits.Init())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: spell kit library startup failed");
 			Shutdown();
 			return false;
 		}
@@ -1369,14 +1378,28 @@ namespace engine::server
 			if (derived)
 			{
 				ApplyDerivedCombatStats(acceptedClient, *derived);
+				// Combat SP3 — profil de classe (kit de sorts) + ressource runtime.
+				const auto factionIt = m_statsTables->factions.find(acceptedClient.factionId);
+				if (factionIt != m_statsTables->factions.end())
+				{
+					const auto classIt = factionIt->second.classesById.find(acceptedClient.classId);
+					if (classIt != factionIt->second.classesById.end())
+					{
+						acceptedClient.profileId = classIt->second.profile;
+					}
+				}
+				acceptedClient.maxResource = derived->resource;
+				acceptedClient.currentResource = acceptedClient.maxResource;
 				LOG_INFO(Net,
-					"[ServerApp] SP2 enter-world combat stats (client_id={}, damage={}, range={:.1f}, accuracy={:.1f}, crit={:.1f}%x{:.2f})",
+					"[ServerApp] SP2 enter-world combat stats (client_id={}, damage={}, range={:.1f}, accuracy={:.1f}, crit={:.1f}%x{:.2f}, profile={}, resource={})",
 					acceptedClient.clientId,
 					acceptedClient.combat.damagePerHit,
 					acceptedClient.combat.attackRangeMeters,
 					acceptedClient.combat.accuracy,
 					acceptedClient.combat.critRate,
-					acceptedClient.combat.critMult);
+					acceptedClient.combat.critMult,
+					acceptedClient.profileId.empty() ? "<none>" : acceptedClient.profileId.c_str(),
+					acceptedClient.maxResource);
 			}
 		}
 
@@ -1652,6 +1675,8 @@ namespace engine::server
 		ProcessAuctionHouseTick();
 		TickGathering();
 		TickCrafting();
+		// Combat SP3 — régénération de la ressource secondaire des joueurs.
+		RegenerateResources();
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
 	}
 
@@ -2908,6 +2933,8 @@ namespace engine::server
 		client->velocityMetersPerSecondY = 0.0f;
 		client->velocityMetersPerSecondZ = 0.0f;
 		client->stats.currentHealth = client->stats.maxHealth;
+		// Combat SP3 — la ressource revient aussi à plein au respawn.
+		client->currentResource = client->maxResource;
 		client->stateFlags &= ~kEntityStateDead;
 		// Sécurité : plus aucune menace résiduelle ne doit pointer sur le ressuscité
 		// (déjà purgée à la mort, mais un mob a pu être spawné entre-temps).
@@ -3577,6 +3604,44 @@ namespace engine::server
 		// distribution locale (stateless) : [0,1), borne haute exclue.
 		std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
 		return distribution(m_combatRng);
+	}
+
+	void ServerApp::RegenerateResources()
+	{
+		if (m_tickHz == 0)
+		{
+			return;
+		}
+
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
+		for (ConnectedClient& client : m_clients)
+		{
+			if (client.maxResource == 0 || client.currentResource >= client.maxResource)
+			{
+				continue;
+			}
+			// Pas de régénération pour un joueur mort (le respawn refill à plein).
+			if ((client.stateFlags & kEntityStateDead) != 0u)
+			{
+				continue;
+			}
+
+			// 5 %/s hors combat, 2 %/s en combat (décision utilisateur SP3) ;
+			// « en combat » = impliqué dans un CombatEvent depuis < 5 s.
+			const bool inCombat = (nowMs - client.lastCombatInvolvementMs) < 5000u;
+			const float ratePerSecond = inCombat ? 0.02f : 0.05f;
+			client.resourceRegenCarry +=
+				static_cast<float>(client.maxResource) * ratePerSecond / static_cast<float>(m_tickHz);
+			if (client.resourceRegenCarry < 1.0f)
+			{
+				continue;
+			}
+
+			const uint32_t whole = static_cast<uint32_t>(client.resourceRegenCarry);
+			client.resourceRegenCarry -= static_cast<float>(whole);
+			client.currentResource = std::min(client.maxResource, client.currentResource + whole);
+		}
 	}
 
 	bool ServerApp::TryMobAttackPlayer(MobEntity& mob, ConnectedClient& target)
@@ -4273,6 +4338,19 @@ namespace engine::server
 	void ServerApp::BroadcastCombatEvent(const CombatEventMessage& message)
 	{
 		UpdateThreatFromCombatEvent(message);
+
+		// Combat SP3 — tamponne l'implication au combat des joueurs concernés
+		// (la régénération de ressource passe en cadence « en combat » 5 s).
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
+		if (ConnectedClient* attacker = FindClientByEntityId(message.attackerEntityId))
+		{
+			attacker->lastCombatInvolvementMs = nowMs;
+		}
+		if (ConnectedClient* target = FindClientByEntityId(message.targetEntityId))
+		{
+			target->lastCombatInvolvementMs = nowMs;
+		}
 
 		size_t recipientCount = 0;
 		for (const ConnectedClient& client : m_clients)
@@ -5747,6 +5825,9 @@ namespace engine::server
 			client.stats.currentHealth = d->hp;   // soin complet au level-up.
 			// Combat SP2 — les stats offensives suivent aussi le niveau.
 			ApplyDerivedCombatStats(client, *d);
+			// Combat SP3 — la ressource max suit le niveau (refill complet).
+			client.maxResource = d->resource;
+			client.currentResource = client.maxResource;
 		}
 		(void)SendPlayerStats(client);
 		SaveConnectedClient(client, "level_up");

@@ -1987,7 +1987,7 @@ function showSection(section) {
 }
 
 function updateCounts() {
-  ['factions','classes','races','companions','villes','exploits','quests','mounts','raids','regions','loots','dialogues','creatures','timeline','persons','zones','competences','regles_transverses','weapons','server_commands'].forEach(function(k) {
+  ['factions','classes','races','companions','villes','exploits','quests','mounts','raids','regions','loots','dialogues','creatures','timeline','persons','zones','skill_trees','competences','regles_transverses','weapons','server_commands'].forEach(function(k) {
     var el = document.getElementById('cnt-' + k);
     if (el) el.textContent = (db[k]||[]).length;
   });
@@ -6021,9 +6021,70 @@ function deleteTimelineEvent(idx) {
 // ARBRE DE COMPÉTENCES
 // ═══════════════════════════════════════════════════════════
 
+/// Libellé lisible du type de cible d'une compétence.
+/// \param t valeur brute stockée ('unitaire' | 'zone' | autre/vide)
+/// \return chaîne avec icône, ou '' si le type n'est pas renseigné.
+function skillTargetLabel(t){ return t==='zone' ? '🌐 Zone' : (t==='unitaire' ? '🎯 Unitaire' : ''); }
+
+/// Libellé lisible des dégâts ou du soin d'une compétence.
+/// \param skill objet compétence (lit power_kind = 'damage'|'heal'|'none' et power_value)
+/// \return ex. '⚔️ 120 dégâts' ou '💚 80 PV rendus', '' si rien à afficher.
+function skillPowerLabel(skill){
+  if(skill.power_kind==='damage' && (skill.power_value||skill.power_value===0)) return '⚔️ '+skill.power_value+' dégâts';
+  if(skill.power_kind==='heal'   && (skill.power_value||skill.power_value===0)) return '💚 '+skill.power_value+' PV rendus';
+  return '';
+}
+
+/// Renvoie les effets d'une compétence sous forme de chaîne, que la donnée
+/// soit une chaîne ou un tableau. À l'import, sanitizeDb() convertit le champ
+/// `effects` en tableau (nécessaire pour les Compétences BD) ; les nœuds
+/// d'arbre stockent au contraire une chaîne. Ce helper absorbe les deux cas
+/// pour éviter un TypeError sur `.substring` qui ferait planter tout le rendu.
+function skillEffectsStr(skill){
+  var e = skill ? skill.effects : '';
+  if (Array.isArray(e)) return e.filter(Boolean).join(' · ');
+  return e == null ? '' : String(e);
+}
+
+/// Ligne compacte (cible + dégâts/soin) affichée sous un nœud de l'arbre.
+/// \return HTML prêt à concaténer, ou '' si la compétence n'a ni cible ni puissance.
+function skillNodePowerLine(skill){
+  var parts=[];
+  var tl=skillTargetLabel(skill.target_type); if(tl) parts.push(tl);
+  var pl=skillPowerLabel(skill); if(pl) parts.push(pl);
+  if(!parts.length) return '';
+  return '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.2rem;display:flex;gap:0.45rem;flex-wrap:wrap">'+parts.map(esc).join(' ')+'</div>';
+}
+
+/// Crée un arbre à 2 branches (Offensive / Défensive) pour chaque classe qui
+/// n'en a pas déjà un avec au moins 2 branches. Opération NON destructive :
+/// les arbres existants déjà pourvus de 2 branches ou plus sont laissés intacts.
+/// Effet de bord : modifie db.skill_trees puis réaffiche la section.
+function scaffoldAllSkillTrees(){
+  if(!(db.classes||[]).length){ toast('Créez d\'abord des classes'); return; }
+  if(!db.skill_trees) db.skill_trees=[];
+  var created=0, completed=0, skipped=0;
+  (db.classes||[]).forEach(function(c){
+    var tree=db.skill_trees.find(function(t){return t.class_id===c.id;});
+    if(tree && (tree.branches||[]).length>=2){ skipped++; return; }
+    if(!tree){ tree={class_id:c.id,branches:[],skills:[]}; db.skill_trees.push(tree); created++; }
+    else completed++;
+    if(!tree.branches) tree.branches=[];
+    var col=classColor(c.id);
+    var defaults=[
+      {id:'offensive',name:'Offensive',icon:'⚔️',color:col},
+      {id:'defensive',name:'Défensive',icon:'🛡️',color:'#6b8e7f'}
+    ];
+    defaults.forEach(function(d){ if(!(tree.branches||[]).find(function(b){return b.id===d.id;})) tree.branches.push(d); });
+  });
+  showSection('skill_trees');
+  toast('Arbres 2 branches — '+created+' créé(s), '+completed+' complété(s)'+(skipped?', '+skipped+' déjà OK':''));
+}
+
 function renderSkillTrees(el) {
   var h = '<div class="panel-header"><div class="panel-title">🌳 Compétences</div>';
   h += '<div style="display:flex;gap:0.75rem;align-items:center">';
+  h += '<button class="btn btn-ghost btn-sm" onclick="scaffoldAllSkillTrees()" title="Crée un arbre à 2 branches (Offensive / Défensive) pour chaque classe qui n\'en a pas encore">🌿 Générer un arbre 2 branches / classe</button>';
   h += '<button class="btn btn-gold btn-sm" onclick="openSkillTreeEditor()">+ Créer / Modifier un arbre</button></div></div>';
 
   if (!(db.classes||[]).length) {
@@ -6042,6 +6103,15 @@ function renderSkillTrees(el) {
   h += '</div>';
   h += '<div id="skillTreeView"><div class="empty-state" style="padding:2rem">Sélectionnez une classe ci-dessus pour voir son arbre.</div></div>';
   el.innerHTML = h;
+
+  // Affiche automatiquement le premier arbre non vide pour qu'un JSON importé
+  // montre tout de suite ses compétences (sinon l'utilisateur ne voit rien
+  // tant qu'il n'a pas cliqué sur un onglet de classe).
+  var firstWithSkills = (db.classes||[]).find(function(c){
+    var t = (db.skill_trees||[]).find(function(t){return t.class_id===c.id;});
+    return t && (t.skills||[]).length;
+  });
+  if (firstWithSkills) renderSkillTreeView(document.getElementById('skillTreeView'), firstWithSkills.id);
 }
 
 function renderSkillTreeView(container, classId) {
@@ -6098,11 +6168,13 @@ function renderSkillTreeView(container, classId) {
         var hasPrereq = (skill.prerequisites||[]).length > 0;
         var prereqMet = (skill.prerequisites||[]).every(function(pid){ return skills.find(function(s){return s.id===pid;}); });
         h += '<div class="skill-node'+(hasPrereq&&!prereqMet?' skill-locked':'')+'" style="border-color:'+bColor+'44;border-top:2px solid '+bColor+'" onclick="openSkillDetail('+si+','+ski+')">';
-        h += '<div class="skill-node-tier">T'+tier+'</div>';
+        var nDesc = String(skill.description||''), nFx = skillEffectsStr(skill);
+        h += '<div class="skill-node-tier">T'+tier+(skill.level?' · Niv.'+skill.level:'')+'</div>';
         h += '<div class="skill-node-name" style="color:'+bColor+'">'+esc(skill.icon||'✦')+' '+esc(skill.name)+'</div>';
-        if(skill.description) h += '<div class="skill-node-desc">'+esc(skill.description.substring(0,80))+(skill.description.length>80?'…':'')+'</div>';
+        if(nDesc) h += '<div class="skill-node-desc">'+esc(nDesc.substring(0,80))+(nDesc.length>80?'…':'')+'</div>';
+        h += skillNodePowerLine(skill);
         if(skill.cost) h += '<span class="skill-node-cost">'+skill.cost+' pt'+(skill.cost>1?'s':'')+'</span>';
-        if(skill.effects) h += '<div style="font-size:0.65rem;color:var(--accent-gold);margin-top:0.15rem">'+esc(skill.effects.substring(0,60))+'</div>';
+        if(nFx) h += '<div style="font-size:0.65rem;color:var(--accent-gold);margin-top:0.15rem">'+esc(nFx.substring(0,60))+'</div>';
         h += '</div>';
       });
     });
@@ -6112,12 +6184,18 @@ function renderSkillTreeView(container, classId) {
   // Skills without a branch
   var unassigned = skills.filter(function(s){ return !branches.find(function(b){return b.id===s.branch_id;}); });
   if (unassigned.length) {
+    var siTree = (db.skill_trees||[]).indexOf(tree);
     h += '<div class="skill-branch">';
     h += '<div class="skill-branch-label" style="color:#708090;border-color:#708090">❓ Non assigné</div>';
     unassigned.forEach(function(skill){
-      h += '<div class="skill-node" style="border-top:2px solid #708090">';
+      var ski = tree.skills.indexOf(skill);
+      var uDesc = String(skill.description||''), uFx = skillEffectsStr(skill);
+      h += '<div class="skill-node" style="border-top:2px solid #708090" onclick="openSkillDetail('+siTree+','+ski+')">';
+      if(skill.tier||skill.level) h += '<div class="skill-node-tier">'+(skill.tier?'T'+skill.tier:'')+(skill.level?(skill.tier?' · ':'')+'Niv.'+skill.level:'')+'</div>';
       h += '<div class="skill-node-name">'+esc(skill.icon||'✦')+' '+esc(skill.name)+'</div>';
-      if(skill.description) h += '<div class="skill-node-desc">'+esc(skill.description.substring(0,80))+'</div>';
+      if(uDesc) h += '<div class="skill-node-desc">'+esc(uDesc.substring(0,80))+(uDesc.length>80?'…':'')+'</div>';
+      h += skillNodePowerLine(skill);
+      if(uFx) h += '<div style="font-size:0.65rem;color:var(--accent-gold);margin-top:0.15rem">'+esc(uFx.substring(0,60))+'</div>';
       h += '</div>';
     });
     h += '</div>';
@@ -6145,12 +6223,15 @@ function openSkillDetail(treeIdx, skillIdx) {
   document.getElementById('modalBody').innerHTML =
     '<div style="display:flex;flex-direction:column;gap:0.75rem;padding:0.25rem 0">'+
     (branch?'<div>'+badge(branch.icon+' '+branch.name,bColor)+'</div>':'')+
-    '<div style="display:flex;gap:0.5rem">'+
-    badge('Palier '+skill.tier, bColor)+
+    '<div style="display:flex;gap:0.5rem;flex-wrap:wrap">'+
+    badge('Palier '+(skill.tier||1), bColor)+
+    (skill.level?badge('Niv. obtention '+skill.level, '#7a9ec2'):'')+
     (skill.cost?badge(skill.cost+' point'+(skill.cost>1?'s':''),  '#c9a84c'):'')+
+    (skill.target_type?badge(skillTargetLabel(skill.target_type), skill.target_type==='zone'?'#c08a3a':'#6fa36f'):'')+
+    (skillPowerLabel(skill)?badge(skillPowerLabel(skill), skill.power_kind==='heal'?'#5fae6a':'#c0563a'):'')+
     '</div>'+
     (skill.description?'<div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6">'+esc(skill.description)+'</div>':'')+
-    (skill.effects?'<div style="background:var(--bg-deep);border:1px solid '+bColor+'44;border-radius:3px;padding:0.6rem 0.75rem"><div style="font-size:0.6rem;font-family:Cinzel,serif;text-transform:uppercase;letter-spacing:0.12em;color:'+bColor+';margin-bottom:0.25rem">Effets</div><div style="font-size:0.82rem;color:var(--text-primary)">'+esc(skill.effects)+'</div></div>':'')+
+    (skillEffectsStr(skill)?'<div style="background:var(--bg-deep);border:1px solid '+bColor+'44;border-radius:3px;padding:0.6rem 0.75rem"><div style="font-size:0.6rem;font-family:Cinzel,serif;text-transform:uppercase;letter-spacing:0.12em;color:'+bColor+';margin-bottom:0.25rem">Effets</div><div style="font-size:0.82rem;color:var(--text-primary)">'+esc(skillEffectsStr(skill))+'</div></div>':'')+
     (prereqList?'<div style="font-size:0.75rem;color:var(--text-dim)">Prérequis : '+esc(prereqList)+'</div>':'')+
     '</div>';
   document.getElementById('modalFooter').innerHTML =
@@ -6219,7 +6300,7 @@ function renderSkillEditorBody() {
       h += '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.35rem 0.6rem;border-bottom:1px solid var(--border)">';
       h += '<span style="color:'+bc+';font-size:0.8rem;width:1.2rem">'+esc(s.icon||'✦')+'</span>';
       h += '<span style="flex:2;font-size:0.8rem">'+esc(s.name)+'</span>';
-      h += '<span style="font-size:0.7rem;color:var(--text-dim)">T'+s.tier+(b?' · '+b.name:'')+'</span>';
+      h += '<span style="font-size:0.7rem;color:var(--text-dim)">T'+s.tier+(s.level?' · Niv.'+s.level:'')+(b?' · '+b.name:'')+'</span>';
       h += '<button class="btn btn-ghost btn-sm" style="padding:0.1rem 0.4rem" onclick="editSkillInline('+si+')">✎</button>';
       h += '<button class="note-del-btn" onclick="window._editTree.skills.splice('+si+',1);renderSkillEditorBody()">✕</button>';
       h += '</div>';
@@ -6233,7 +6314,12 @@ function renderSkillEditorBody() {
   h += '<input class="form-input" id="sk_icon" placeholder="Icône (ex: 🔥)" style="padding:0.2rem 0.4rem">';
   h += '<input class="form-input" id="sk_name" placeholder="Nom*" style="padding:0.2rem 0.4rem">';
   h += '<select class="form-select" id="sk_branch" style="padding:0.2rem 0.4rem">'+branchOpts+'</select>';
-  h += '<div style="display:flex;gap:0.3rem"><input class="form-input" id="sk_tier" type="number" min="1" max="10" value="1" placeholder="T" style="width:50px;padding:0.2rem 0.4rem"><input class="form-input" id="sk_cost" type="number" min="1" value="1" placeholder="Pts" style="flex:1;padding:0.2rem 0.4rem"></div>';
+  h += '<div style="display:flex;gap:0.3rem"><input class="form-input" id="sk_tier" type="number" min="1" max="10" value="1" placeholder="T" style="width:50px;padding:0.2rem 0.4rem" title="Palier dans l\'arbre"><input class="form-input" id="sk_cost" type="number" min="1" value="1" placeholder="Pts" style="flex:1;padding:0.2rem 0.4rem" title="Coût en points"></div>';
+  h += '</div>';
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:0.4rem;margin-bottom:0.4rem">';
+  h += '<input class="form-input" id="sk_level" type="number" min="1" placeholder="Niveau d\'obtention" style="padding:0.2rem 0.4rem" title="Niveau du personnage requis pour obtenir cette étape">';
+  h += '<select class="form-select" id="sk_target" style="padding:0.2rem 0.4rem" title="Portée de la compétence"><option value="">— Cible —</option><option value="unitaire">🎯 Unitaire</option><option value="zone">🌐 Zone</option></select>';
+  h += '<div style="display:flex;gap:0.3rem"><select class="form-select" id="sk_power_kind" style="flex:1;padding:0.2rem 0.4rem" title="Type d\'effet chiffré"><option value="none">— Aucun —</option><option value="damage">⚔️ Dégâts</option><option value="heal">💚 Soin</option></select><input class="form-input" id="sk_power_value" type="number" min="0" placeholder="Valeur" style="width:70px;padding:0.2rem 0.4rem" title="Dégâts infligés ou PV rendus"></div>';
   h += '</div>';
   h += '<input class="form-input" id="sk_desc" placeholder="Description…" style="margin-bottom:0.3rem;padding:0.2rem 0.4rem">';
   h += '<input class="form-input" id="sk_effects" placeholder="Effets en jeu…" style="margin-bottom:0.4rem;padding:0.2rem 0.4rem">';
@@ -6254,6 +6340,10 @@ function addSkillToTree() {
     branch_id: document.getElementById('sk_branch').value,
     tier: parseInt(document.getElementById('sk_tier').value||1,10),
     cost: parseInt(document.getElementById('sk_cost').value||1,10),
+    level: parseInt(document.getElementById('sk_level').value,10) || null,
+    target_type: document.getElementById('sk_target').value || '',
+    power_kind: document.getElementById('sk_power_kind').value || 'none',
+    power_value: parseInt(document.getElementById('sk_power_value').value,10) || null,
     description: (document.getElementById('sk_desc').value||'').trim(),
     effects: (document.getElementById('sk_effects').value||'').trim(),
     prerequisites: []
@@ -6276,10 +6366,21 @@ function editSkillInline(si) {
     '<input class="form-input" id="eskill_name" value="'+esc(skill.name)+'" placeholder="Nom*"></div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.5rem">'+
     '<select class="form-select" id="eskill_branch">'+branchOpts+'</select>'+
-    '<input class="form-input" id="eskill_tier" type="number" min="1" max="10" value="'+(skill.tier||1)+'" placeholder="Palier">'+
-    '<input class="form-input" id="eskill_cost" type="number" min="0" value="'+(skill.cost||1)+'" placeholder="Coût"></div>'+
+    '<input class="form-input" id="eskill_tier" type="number" min="1" max="10" value="'+(skill.tier||1)+'" placeholder="Palier" title="Palier dans l\'arbre">'+
+    '<input class="form-input" id="eskill_cost" type="number" min="0" value="'+(skill.cost||1)+'" placeholder="Coût" title="Coût en points"></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:0.5rem;margin-bottom:0.5rem">'+
+    '<input class="form-input" id="eskill_level" type="number" min="1" value="'+(skill.level||'')+'" placeholder="Niveau d\'obtention" title="Niveau du personnage requis">'+
+    '<select class="form-select" id="eskill_target" title="Portée">'+
+      '<option value=""'+(!skill.target_type?' selected':'')+'>— Cible —</option>'+
+      '<option value="unitaire"'+(skill.target_type==='unitaire'?' selected':'')+'>🎯 Unitaire</option>'+
+      '<option value="zone"'+(skill.target_type==='zone'?' selected':'')+'>🌐 Zone</option></select>'+
+    '<div style="display:flex;gap:0.3rem"><select class="form-select" id="eskill_power_kind" style="flex:1" title="Type d\'effet chiffré">'+
+      '<option value="none"'+(!skill.power_kind||skill.power_kind==='none'?' selected':'')+'>— Aucun —</option>'+
+      '<option value="damage"'+(skill.power_kind==='damage'?' selected':'')+'>⚔️ Dégâts</option>'+
+      '<option value="heal"'+(skill.power_kind==='heal'?' selected':'')+'>💚 Soin</option></select>'+
+      '<input class="form-input" id="eskill_power_value" type="number" min="0" value="'+(skill.power_value||'')+'" placeholder="Valeur" style="width:70px" title="Dégâts infligés ou PV rendus"></div></div>'+
     '<textarea class="form-textarea" id="eskill_desc" style="height:55px" placeholder="Description">'+esc(skill.description||'')+'</textarea>'+
-    '<textarea class="form-textarea" id="eskill_fx" style="height:55px;margin-top:0.4rem" placeholder="Effets en jeu">'+esc(skill.effects||'')+'</textarea>';
+    '<textarea class="form-textarea" id="eskill_fx" style="height:55px;margin-top:0.4rem" placeholder="Effets en jeu">'+esc(skillEffectsStr(skill))+'</textarea>';
   document.getElementById('modalFooter').innerHTML =
     '<button class="btn btn-ghost" onclick="document.getElementById(\'modalBody\').innerHTML=\'\'">Retour</button>'+
     '<button class="btn btn-gold" onclick="(function(){'+
@@ -6288,6 +6389,10 @@ function editSkillInline(si) {
     'window._editTree.skills['+si+'].branch_id=document.getElementById(\'eskill_branch\').value;'+
     'window._editTree.skills['+si+'].tier=parseInt(document.getElementById(\'eskill_tier\').value||1,10);'+
     'window._editTree.skills['+si+'].cost=parseInt(document.getElementById(\'eskill_cost\').value||1,10);'+
+    'window._editTree.skills['+si+'].level=parseInt(document.getElementById(\'eskill_level\').value,10)||null;'+
+    'window._editTree.skills['+si+'].target_type=document.getElementById(\'eskill_target\').value||\'\';'+
+    'window._editTree.skills['+si+'].power_kind=document.getElementById(\'eskill_power_kind\').value||\'none\';'+
+    'window._editTree.skills['+si+'].power_value=parseInt(document.getElementById(\'eskill_power_value\').value,10)||null;'+
     'window._editTree.skills['+si+'].description=document.getElementById(\'eskill_desc\').value;'+
     'window._editTree.skills['+si+'].effects=document.getElementById(\'eskill_fx\').value;'+
     'openSkillTreeEditor(window._editTree.class_id);})()">💾 OK</button>';

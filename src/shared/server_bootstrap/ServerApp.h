@@ -103,6 +103,12 @@ namespace engine::server
 		/// Phase 3.7.5 — élargi à uint64 pour porter le character_id complet.
 		uint64_t helloNonce = 0;
 		uint64_t persistenceCharacterKey = 0;
+		/// Combat SP2 — position de réapparition (mémorisée en fin d'admission,
+		/// après résolution de la position persistée/DB). Utilisée par
+		/// HandleRespawnRequest ; le « spawn de zone » V1 = point d'entrée en monde.
+		float spawnPositionMetersX = 0.0f;
+		float spawnPositionMetersY = 0.0f;
+		float spawnPositionMetersZ = 0.0f;
 		/// TD.5 — nom du personnage choisi par le joueur (cf. table SQL characters.name).
 		/// Chargé depuis la DB (LoadSpawnFromDb) si le shard a un pool MySQL configuré ;
 		/// sinon (mode no-DB) repris du push master AdmitCharacter via
@@ -466,6 +472,10 @@ namespace engine::server
 
 		/// Validate one attack request, apply damage and broadcast the authoritative event.
 		void HandleAttackRequest(const Endpoint& endpoint, uint32_t clientId, EntityId targetEntityId);
+
+		/// Combat SP2 — réapparition d'un joueur mort : téléport au spawn mémorisé
+		/// à l'admission, PV pleins, flag dead retiré. Ignoré si le joueur est vivant.
+		void HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId);
 
 		/// Validate one pickup request, update the inventory and despawn the bag.
 		void HandlePickupRequest(const Endpoint& endpoint, uint32_t clientId, EntityId lootBagEntityId);

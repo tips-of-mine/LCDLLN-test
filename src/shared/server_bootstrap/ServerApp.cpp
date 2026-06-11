@@ -735,6 +735,14 @@ namespace engine::server
 			return;
 		}
 
+		// Combat SP2 — réapparition d'un joueur mort.
+		RespawnRequestMessage respawnRequest{};
+		if (DecodeRespawnRequest(packetBytes, respawnRequest))
+		{
+			HandleRespawnRequest(datagram.endpoint, respawnRequest.clientId);
+			return;
+		}
+
 		PickupRequestMessage pickupRequest{};
 		if (DecodePickupRequest(packetBytes, pickupRequest))
 		{
@@ -1387,6 +1395,13 @@ namespace engine::server
 			LOG_WARN(Net, "[ServerApp] Quest state bootstrap skipped: runtime sync failed (client_id={})",
 				acceptedClient.clientId);
 		}
+
+		// Combat SP2 — mémorise la position d'entrée en monde comme point de
+		// réapparition (la position finale est résolue à ce stade : persistance
+		// fichier, pont DB et défauts ont tous été appliqués).
+		acceptedClient.spawnPositionMetersX = acceptedClient.positionMetersX;
+		acceptedClient.spawnPositionMetersY = acceptedClient.positionMetersY;
+		acceptedClient.spawnPositionMetersZ = acceptedClient.positionMetersZ;
 
 		UpdateClientInterest(acceptedClient);
 		LOG_INFO(Net, "[ServerApp] Client accepted (client_id={}, entity_id={}, zone_id={}, hp={}, endpoint={}, total_clients={})",
@@ -2859,6 +2874,55 @@ namespace engine::server
 			combatEvent.targetMaxHealth,
 			client->combat.nextAttackTick);
 		BroadcastCombatEvent(combatEvent);
+	}
+
+	void ServerApp::HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] RespawnRequest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] RespawnRequest ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				clientId);
+			return;
+		}
+
+		if ((client->stateFlags & kEntityStateDead) == 0u)
+		{
+			LOG_WARN(Net, "[ServerApp] RespawnRequest ignored: player is alive (client_id={})", client->clientId);
+			return;
+		}
+
+		// Téléport au point d'entrée en monde, soin complet, retour à la vie.
+		client->positionMetersX = client->spawnPositionMetersX;
+		client->positionMetersY = client->spawnPositionMetersY;
+		client->positionMetersZ = client->spawnPositionMetersZ;
+		client->velocityMetersPerSecondX = 0.0f;
+		client->velocityMetersPerSecondY = 0.0f;
+		client->velocityMetersPerSecondZ = 0.0f;
+		client->stats.currentHealth = client->stats.maxHealth;
+		client->stateFlags &= ~kEntityStateDead;
+		// Sécurité : plus aucune menace résiduelle ne doit pointer sur le ressuscité
+		// (déjà purgée à la mort, mais un mob a pu être spawné entre-temps).
+		PurgeThreatForEntity(client->entityId);
+		UpdateClientInterest(*client);
+		SaveConnectedClient(*client, "respawn");
+		LOG_INFO(Net,
+			"[ServerApp] Player respawned (client_id={}, entity_id={}, pos=({:.1f}, {:.1f}, {:.1f}), hp={}/{})",
+			client->clientId,
+			client->entityId,
+			client->positionMetersX,
+			client->positionMetersY,
+			client->positionMetersZ,
+			client->stats.currentHealth,
+			client->stats.maxHealth);
 	}
 
 	void ServerApp::HandlePickupRequest(const Endpoint& endpoint, uint32_t clientId, EntityId lootBagEntityId)

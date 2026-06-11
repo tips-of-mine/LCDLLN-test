@@ -475,17 +475,30 @@ namespace engine::client
 		const std::string tgt   = MakeDisplayName(entry.targetEntityId);
 		const std::string dmgStr = std::to_string(entry.damage);
 
+		// Combat SP2 — libellés raté/critique depuis les flags wire v10.
+		const std::string critSuffix = entry.wasCrit ? " (CRIT)" : "";
+		if (entry.wasMiss)
+		{
+			if (entry.playerWasAttacker)
+				line.text = ts + " You miss " + tgt;
+			else if (entry.playerWasTarget)
+				line.text = ts + " " + atk + " misses you";
+			else
+				line.text = ts + " " + atk + " misses " + tgt;
+			return line;
+		}
+
 		if (entry.playerWasAttacker)
 		{
-			line.text = ts + " You hit " + tgt + " for " + dmgStr;
+			line.text = ts + " You hit " + tgt + " for " + dmgStr + critSuffix;
 		}
 		else if (entry.playerWasTarget)
 		{
-			line.text = ts + " " + atk + " hits you for " + dmgStr;
+			line.text = ts + " " + atk + " hits you for " + dmgStr + critSuffix;
 		}
 		else
 		{
-			line.text = ts + " " + atk + " hits " + tgt + " for " + dmgStr;
+			line.text = ts + " " + atk + " hits " + tgt + " for " + dmgStr + critSuffix;
 		}
 
 		return line;

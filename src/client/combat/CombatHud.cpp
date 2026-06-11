@@ -30,16 +30,26 @@ namespace engine::client
 		}
 
 		/// Build one short combat log label from a retained combat entry.
+		/// Combat SP2 — libellés raté/critique depuis les flags wire v10.
 		std::string BuildCombatLogText(const UICombatLogEntry& entry)
 		{
+			const char* critSuffix = entry.wasCrit ? " (CRITIQUE)" : "";
 			if (entry.playerWasAttacker)
 			{
-				return "Hit target " + std::to_string(entry.targetEntityId) + " for " + std::to_string(entry.damage);
+				if (entry.wasMiss)
+				{
+					return "Rate la cible " + std::to_string(entry.targetEntityId);
+				}
+				return "Hit target " + std::to_string(entry.targetEntityId) + " for " + std::to_string(entry.damage) + critSuffix;
 			}
 
 			if (entry.playerWasTarget)
 			{
-				return "Took " + std::to_string(entry.damage) + " from " + std::to_string(entry.attackerEntityId);
+				if (entry.wasMiss)
+				{
+					return std::to_string(entry.attackerEntityId) + " vous rate";
+				}
+				return "Took " + std::to_string(entry.damage) + " from " + std::to_string(entry.attackerEntityId) + critSuffix;
 			}
 
 			return "Combat " + std::to_string(entry.damage);

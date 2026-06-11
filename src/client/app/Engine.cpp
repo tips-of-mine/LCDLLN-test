@@ -9011,7 +9011,11 @@ namespace engine
 				// nowSec de la state machine n'est pas encore en portée à ce point) ;
 				// l'écart sub-ms avec la garde roulade plus bas est sans effet visible.
 				const bool moveLocked = EngineNowSec() < m_avatarMoveLockUntilSec;
-				if (m_dialogueActive || moveLocked)
+				// Combat SP2 — un joueur mort ne bouge plus (overlay « Vous êtes
+				// mort » affiché ; le respawn rend la main). kEntityStateDead = bit 0.
+				const bool localPlayerDead = m_gameplayNetInitialized
+					&& (m_uiModelBinding.GetModel().playerStats.stateFlags & 1u) != 0u;
+				if (m_dialogueActive || moveLocked || localPlayerDead)
 					moveInput = engine::gameplay::MoveInput{};
 				// Collisionneur composite : terrain (sol + eau) + cylindres des props/décor.
 				m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
@@ -10238,6 +10242,253 @@ namespace engine
 							ImVec2(sxp + ts.x * 0.5f + 4.0f, syp + 2.0f),
 							IM_COL32(0, 0, 0, 140), 3.0f);
 						fg->AddText(ImVec2(sxp - ts.x * 0.5f, syp - ts.y), IM_COL32(220, 230, 255, 255), label.c_str());
+					}
+				}
+				// =============================================================
+				// Combat SP2 — ciblage (clic / Tab), attaque (T), cadre cible,
+				// log combat HUD, panneau avance (J) et ecran de mort. Touches
+				// declarees dans le registre de binds combat (cf. Engine.h).
+				// Libelles ASCII : la police in-game (Windlass) n'a pas tous
+				// les glyphes accentues (convention du menu pause).
+				// =============================================================
+				if (m_gameplayNetInitialized && m_authUi.IsInWorldShard())
+				{
+					const engine::client::UIModel& uiModel = m_uiModelBinding.GetModel();
+					const bool localDead = (uiModel.playerStats.stateFlags & 1u) != 0u;
+					const bool chatFocus = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
+					const bool menuOpen = m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible;
+					const bool keysAllowed = !menuOpen && !chatFocus && !localDead
+						&& !ImGui::GetIO().WantCaptureKeyboard;
+					const bool mouseAllowed = !menuOpen && !chatFocus && !localDead
+						&& !ImGui::GetIO().WantCaptureMouse;
+
+					// --- Selection a la souris : pick ecran-espace du mob vivant le
+					// plus proche du curseur (rayon kPickRadiusPx), sans raycast 3D.
+					if (mouseAllowed && m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						constexpr float kPickRadiusPx = 40.0f;
+						const ImVec2 mousePos = ImGui::GetIO().MousePos;
+						engine::server::EntityId pickedId = 0;
+						float bestDistSq = kPickRadiusPx * kPickRadiusPx;
+						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						{
+							// V1 : seuls les mobs vivants sont ciblables (pas de PvP).
+							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u)
+								continue;
+							float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
+							const auto sit = m_remoteSmoothed.find(re.entityId);
+							if (sit != m_remoteSmoothed.end() && sit->second.valid)
+							{
+								wx = sit->second.x; wy = sit->second.y; wz = sit->second.z;
+							}
+							float sxp = 0.0f, syp = 0.0f;
+							if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 0.5f, wz, ivw, ivh, sxp, syp))
+								continue;
+							const float dxPick = sxp - mousePos.x;
+							const float dyPick = syp - mousePos.y;
+							const float distSq = dxPick * dxPick + dyPick * dyPick;
+							if (distSq < bestDistSq)
+							{
+								bestDistSq = distSq;
+								pickedId = re.entityId;
+							}
+						}
+						if (pickedId != 0)
+							(void)m_uiModelBinding.SetLocalTarget(pickedId);
+					}
+
+					// --- Tab : cycle des mobs vivants par distance croissante au joueur.
+					if (keysAllowed && m_input.WasPressed(engine::platform::Key::Tab))
+					{
+						const engine::math::Vec3 playerPos = m_characterController.GetPosition();
+						std::vector<std::pair<float, engine::server::EntityId>> candidates;
+						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						{
+							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u)
+								continue;
+							const float dxc = re.positionX - playerPos.x;
+							const float dzc = re.positionZ - playerPos.z;
+							candidates.emplace_back(dxc * dxc + dzc * dzc, re.entityId);
+						}
+						if (!candidates.empty())
+						{
+							std::sort(candidates.begin(), candidates.end());
+							// Suivant de la cible courante (wrap) ; sans cible : la plus proche.
+							size_t nextIndex = 0;
+							if (uiModel.targetStats.hasTarget)
+							{
+								for (size_t ci = 0; ci < candidates.size(); ++ci)
+								{
+									if (candidates[ci].second == uiModel.targetStats.entityId)
+									{
+										nextIndex = (ci + 1u) % candidates.size();
+										break;
+									}
+								}
+							}
+							(void)m_uiModelBinding.SetLocalTarget(candidates[nextIndex].second);
+						}
+					}
+
+					// --- T : attaque de la cible courante. Throttle local anti-spam
+					// uniquement : portee, cooldown reel et cible vivante sont
+					// revalides par le serveur (HandleAttackRequest).
+					if (keysAllowed && m_input.WasPressed(engine::platform::Key::T)
+						&& uiModel.targetStats.hasTarget
+						&& (uiModel.targetStats.stateFlags & 1u) == 0u
+						&& m_attackSendCooldownSec <= 0.0f)
+					{
+						const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
+						if (gameplayClientId != 0u)
+						{
+							(void)m_gameplayUdp.SendAttackRequest(gameplayClientId, uiModel.targetStats.entityId);
+							m_attackSendCooldownSec = 0.25f;
+						}
+					}
+
+					// --- J : panneau combat avance (DPS meter + log filtrable).
+					if (keysAllowed && m_input.WasPressed(engine::platform::Key::J))
+					{
+						m_advancedCombatVisible = !m_advancedCombatVisible;
+					}
+
+					// --- Cadre cible (haut-centre) : nom + barre de PV. Les PV de la
+					// cible suivent les snapshots (cf. UIModelBinding::ApplySnapshot).
+					if (uiModel.targetStats.hasTarget)
+					{
+						const float frameW = 260.0f;
+						const float frameH = 54.0f;
+						const float fx = (dw - frameW) * 0.5f;
+						const float fy = 56.0f;
+						const bool targetDead = (uiModel.targetStats.stateFlags & 1u) != 0u;
+						// Nom : catalogue creatures (la cible V1 est toujours un mob).
+						std::string targetName = "Cible";
+						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						{
+							if (re.entityId != uiModel.targetStats.entityId)
+								continue;
+							const engine::client::CreatureAppearance* app = m_creatureCatalog.Find(re.archetypeId);
+							if (app != nullptr)
+								targetName = app->name;
+							break;
+						}
+						if (targetDead)
+							targetName += "  (MORT)";
+						fg->AddRectFilled(ImVec2(fx, fy), ImVec2(fx + frameW, fy + frameH), IM_COL32(10, 12, 16, 200), 6.0f);
+						fg->AddRect(ImVec2(fx, fy), ImVec2(fx + frameW, fy + frameH),
+							targetDead ? IM_COL32(120, 120, 120, 200) : IM_COL32(200, 60, 50, 220), 6.0f, 0, 2.0f);
+						fg->AddText(ImVec2(fx + 10.0f, fy + 6.0f),
+							targetDead ? IM_COL32(150, 150, 150, 255) : IM_COL32(235, 235, 235, 255), targetName.c_str());
+						const float barX = fx + 10.0f, barY = fy + 30.0f, barW = frameW - 20.0f, barH = 14.0f;
+						const float hpFrac = (uiModel.targetStats.maxHealth > 0u)
+							? std::clamp(static_cast<float>(uiModel.targetStats.currentHealth)
+								/ static_cast<float>(uiModel.targetStats.maxHealth), 0.0f, 1.0f)
+							: 0.0f;
+						fg->AddRectFilled(ImVec2(barX, barY), ImVec2(barX + barW, barY + barH), IM_COL32(40, 40, 44, 220), 3.0f);
+						fg->AddRectFilled(ImVec2(barX, barY), ImVec2(barX + barW * hpFrac, barY + barH),
+							targetDead ? IM_COL32(110, 110, 110, 230) : IM_COL32(190, 50, 40, 230), 3.0f);
+						const std::string hpText = std::to_string(uiModel.targetStats.currentHealth) + "/"
+							+ std::to_string(uiModel.targetStats.maxHealth);
+						const ImVec2 hpTs = ImGui::CalcTextSize(hpText.c_str());
+						fg->AddText(ImVec2(barX + (barW - hpTs.x) * 0.5f, barY - 1.0f), IM_COL32(255, 255, 255, 255), hpText.c_str());
+					}
+
+					// --- Log combat HUD (bas-droite) : dernieres lignes formatees par
+					// le CombatHudPresenter (suffixes critique/rate inclus).
+					const engine::client::CombatHudState& hudState = m_combatHud.GetState();
+					if (!hudState.combatLogLines.empty())
+					{
+						constexpr size_t kHudLogMaxLines = 6u;
+						const size_t lineCount = std::min(hudState.combatLogLines.size(), kHudLogMaxLines);
+						const float lineH = ImGui::GetTextLineHeight() + 2.0f;
+						float ly = dh - 140.0f - lineH * static_cast<float>(lineCount);
+						for (size_t li = hudState.combatLogLines.size() - lineCount; li < hudState.combatLogLines.size(); ++li)
+						{
+							const engine::client::HudCombatLogLine& logLine = hudState.combatLogLines[li];
+							const ImU32 col = logLine.incoming ? IM_COL32(255, 140, 120, 230) : IM_COL32(220, 220, 180, 230);
+							const ImVec2 lts = ImGui::CalcTextSize(logLine.text.c_str());
+							fg->AddText(ImVec2(dw - lts.x - 24.0f, ly), col, logLine.text.c_str());
+							ly += lineH;
+						}
+					}
+
+					// --- Panneau combat avance (J) : DPS meter + log filtrable (M39.4).
+					if (m_advancedCombatVisible)
+					{
+						const engine::client::AdvancedCombatState& acs = m_advancedCombat.GetState();
+						ImGui::SetNextWindowPos(ImVec2(dw - 420.0f, 90.0f), ImGuiCond_FirstUseEver);
+						ImGui::SetNextWindowSize(ImVec2(380.0f, 420.0f), ImGuiCond_FirstUseEver);
+						if (ImGui::Begin("Combat avance", &m_advancedCombatVisible))
+						{
+							ImGui::Text("Combat : %s  (%.1f s)", acs.inCombat ? "en cours" : "inactif", acs.fightElapsedSec);
+							ImGui::Separator();
+							ImGui::TextUnformatted("DPS");
+							for (const engine::client::DpsMeterEntry& row : acs.dpsMeter)
+							{
+								ImGui::Text("%u. %s", row.rank, row.displayName.c_str());
+								ImGui::SameLine(200.0f);
+								ImGui::Text("%.1f dps", row.dps);
+								ImGui::ProgressBar(row.barFraction, ImVec2(-1.0f, 6.0f), "");
+							}
+							ImGui::Separator();
+							uint32_t filter = acs.activeFilter;
+							bool filterChanged = false;
+							auto toggleChip = [&filter, &filterChanged](const char* lbl, uint32_t mask)
+							{
+								bool on = (filter & mask) != 0u;
+								if (ImGui::Checkbox(lbl, &on))
+								{
+									filter = on ? (filter | mask) : (filter & ~mask);
+									filterChanged = true;
+								}
+								ImGui::SameLine();
+							};
+							toggleChip("Degats", engine::client::CombatLogFilterDamage);
+							toggleChip("Soins", engine::client::CombatLogFilterHealing);
+							toggleChip("Morts", engine::client::CombatLogFilterDeaths);
+							ImGui::NewLine();
+							if (filterChanged)
+								m_advancedCombat.SetLogFilter(filter);
+							ImGui::Separator();
+							ImGui::BeginChild("##ln_combat_log", ImVec2(0.0f, 0.0f), true);
+							for (const engine::client::CombatLogLine& logLine : acs.visibleLogLines)
+								ImGui::TextUnformatted(logLine.text.c_str());
+							ImGui::EndChild();
+						}
+						ImGui::End();
+					}
+
+					// --- Ecran de mort : overlay sombre + bouton Reapparaitre →
+					// RespawnRequest (le serveur ne l'honore que si le flag dead est pose ;
+					// l'overlay disparait quand le snapshot post-respawn retire le flag).
+					if (localDead)
+					{
+						fg->AddRectFilled(ImVec2(0.0f, 0.0f), ImVec2(dw, dh), IM_COL32(10, 0, 0, 140));
+						const float panelW = 360.0f;
+						const float panelH = 170.0f;
+						ImGui::SetNextWindowPos(ImVec2((dw - panelW) * 0.5f, (dh - panelH) * 0.5f), ImGuiCond_Always);
+						ImGui::SetNextWindowSize(ImVec2(panelW, panelH), ImGuiCond_Always);
+						ImGui::SetNextWindowBgAlpha(0.95f);
+						ImGui::Begin("##ln_death_overlay", nullptr,
+							ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
+							| ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav);
+						ImGui::SetWindowFontScale(1.3f);
+						const char* deadTitle = "VOUS ETES MORT";
+						const float deadTitleW = ImGui::CalcTextSize(deadTitle).x;
+						ImGui::SetCursorPosX((panelW - deadTitleW) * 0.5f);
+						ImGui::TextUnformatted(deadTitle);
+						ImGui::SetWindowFontScale(1.0f);
+						ImGui::Separator();
+						ImGui::Spacing();
+						ImGui::Spacing();
+						ImGui::SetCursorPosX((panelW - 200.0f) * 0.5f);
+						if (ImGui::Button("Reapparaitre", ImVec2(200.0f, 40.0f)))
+						{
+							const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
+							if (gameplayClientId != 0u)
+								(void)m_gameplayUdp.SendRespawnRequest(gameplayClientId);
+						}
+						ImGui::End();
 					}
 				}
 			}
@@ -12139,6 +12390,17 @@ namespace engine
 			return;
 		}
 
+		// Combat SP2 — présentateurs combat (non bloquants : un échec d'Init
+		// désactive juste le HUD combat, le gameplay réseau reste fonctionnel).
+		if (!m_combatHud.Init())
+		{
+			LOG_WARN(Core, "[GameplayNet] CombatHudPresenter Init FAILED — HUD combat désactivé");
+		}
+		if (!m_advancedCombat.Init())
+		{
+			LOG_WARN(Core, "[GameplayNet] AdvancedCombatPresenter Init FAILED — panneau combat désactivé");
+		}
+
 		const uint32_t vw = static_cast<uint32_t>(std::max(1, m_width));
 		const uint32_t vh = static_cast<uint32_t>(std::max(1, m_height));
 		if (!m_shopUi.SetViewportSize(vw, vh))
@@ -12153,6 +12415,11 @@ namespace engine
 		{
 			LOG_WARN(Core, "[GameplayNet] InventoryUiPresenter viewport FAILED — using fallback layout");
 		}
+		// Combat SP2 — layout pixel du HUD combat (cadre cible, log, cooldowns).
+		if (!m_combatHud.SetViewportSize(vw, vh))
+		{
+			LOG_WARN(Core, "[GameplayNet] CombatHudPresenter viewport FAILED — using fallback layout");
+		}
 
 		m_uiObserverHandle = m_uiModelBinding.AddObserver(
 			[this](const engine::client::UIModel& model, uint32_t changeMask)
@@ -12160,6 +12427,10 @@ namespace engine
 				(void)m_shopUi.ApplyModel(model, changeMask);
 				(void)m_auctionUi.ApplyModel(model, changeMask);
 				(void)m_invUi.ApplyModel(model, changeMask);
+				// Combat SP2 — les présentateurs combat consomment UIModelChangeCombat
+				// (combat log, cadre cible, DPS meter) et Stats (PV joueur).
+				(void)m_combatHud.ApplyModel(model, changeMask);
+				m_advancedCombat.ApplyModel(model, changeMask);
 			});
 		if (m_uiObserverHandle == 0u)
 		{
@@ -12226,6 +12497,11 @@ namespace engine
 			m_uiObserverHandle = 0;
 		}
 
+		// Combat SP2 — symétrie d'Init (présentateurs combat).
+		m_advancedCombat.Shutdown();
+		m_combatHud.Shutdown();
+		m_advancedCombatVisible = false;
+		m_attackSendCooldownSec = 0.0f;
 		m_invUi.Shutdown();
 		m_auctionUi.Shutdown();
 		m_shopUi.Shutdown();
@@ -12273,6 +12549,15 @@ namespace engine
 		if (clientId == 0u)
 		{
 			return;
+		}
+
+		// Combat SP2 — avance les timers des présentateurs combat (cooldowns HUD,
+		// fenêtre DPS) et le throttle local d'envoi d'attaque.
+		(void)m_combatHud.Tick(deltaSeconds);
+		m_advancedCombat.Tick(deltaSeconds);
+		if (m_attackSendCooldownSec > 0.0f)
+		{
+			m_attackSendCooldownSec -= deltaSeconds;
 		}
 
 		// TC.2 — émet la position + orientation de l'avatar local au shard, à la cadence

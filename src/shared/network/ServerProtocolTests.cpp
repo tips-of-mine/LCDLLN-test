@@ -286,6 +286,83 @@ namespace
 		std::puts("[OK] TestGoodbyeRoundTrip");
 	}
 
+	/// Combat SP2 (wire v10) — un CombatEvent encodé puis décodé restitue les flags
+	/// critique/raté en plus des champs historiques.
+	void TestCombatEventRoundTripWithFlags()
+	{
+		engine::server::CombatEventMessage in{};
+		in.attackerEntityId = 0x200000001ull;
+		in.targetEntityId = 0x300000005ull;
+		in.damage = 75u;
+		in.targetCurrentHealth = 25u;
+		in.targetMaxHealth = 100u;
+		in.targetStateFlags = 0u;
+		in.flags = engine::server::kCombatEventFlagCrit;
+
+		const std::vector<std::byte> packet = engine::server::EncodeCombatEvent(in);
+		assert(!packet.empty());
+
+		engine::server::CombatEventMessage out{};
+		assert(engine::server::DecodeCombatEvent(packet, out));
+		assert(out.attackerEntityId == in.attackerEntityId);
+		assert(out.targetEntityId == in.targetEntityId);
+		assert(out.damage == 75u);
+		assert(out.targetCurrentHealth == 25u);
+		assert(out.targetMaxHealth == 100u);
+		assert(out.flags == engine::server::kCombatEventFlagCrit);
+
+		// Raté : damage 0 + bit miss.
+		in.damage = 0u;
+		in.flags = engine::server::kCombatEventFlagMiss;
+		const std::vector<std::byte> missPacket = engine::server::EncodeCombatEvent(in);
+		assert(engine::server::DecodeCombatEvent(missPacket, out));
+		assert(out.damage == 0u);
+		assert((out.flags & engine::server::kCombatEventFlagMiss) != 0u);
+
+		// Paquet tronqué (ancien format 32 octets) rejeté.
+		std::vector<std::byte> truncated = missPacket;
+		truncated.resize(truncated.size() - 4u);
+		assert(!engine::server::DecodeCombatEvent(truncated, out));
+		std::puts("[OK] TestCombatEventRoundTripWithFlags");
+	}
+
+	/// Combat SP2 — l'AttackRequest gagne son encodeur côté client : round-trip
+	/// contre le décodeur serveur existant.
+	void TestAttackRequestRoundTrip()
+	{
+		engine::server::AttackRequestMessage in{};
+		in.clientId = 7u;
+		in.targetEntityId = 0x300000005ull;
+
+		const std::vector<std::byte> packet = engine::server::EncodeAttackRequest(in);
+		assert(!packet.empty());
+
+		engine::server::AttackRequestMessage out{};
+		assert(engine::server::DecodeAttackRequest(packet, out));
+		assert(out.clientId == 7u);
+		assert(out.targetEntityId == 0x300000005ull);
+		std::puts("[OK] TestAttackRequestRoundTrip");
+	}
+
+	/// Combat SP2 — round-trip RespawnRequest + rejet d'un payload tronqué.
+	void TestRespawnRequestRoundTrip()
+	{
+		engine::server::RespawnRequestMessage in{};
+		in.clientId = 42u;
+
+		const std::vector<std::byte> packet = engine::server::EncodeRespawnRequest(in);
+		assert(!packet.empty());
+
+		engine::server::RespawnRequestMessage out{};
+		assert(engine::server::DecodeRespawnRequest(packet, out));
+		assert(out.clientId == 42u);
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 2u);
+		assert(!engine::server::DecodeRespawnRequest(truncated, out));
+		std::puts("[OK] TestRespawnRequestRoundTrip");
+	}
+
 int main()
 {
 	TestInputRoundTrip();
@@ -296,6 +373,9 @@ int main()
 	TestSnapshotRejectsTruncatedPayload();
 	TestSnapshotRoundTripWithChunking();
 	TestSnapshotMonoChunkDefaultsRoundTrip();
+	TestCombatEventRoundTripWithFlags();
+	TestAttackRequestRoundTrip();
+	TestRespawnRequestRoundTrip();
 	std::puts("All ServerProtocol tests passed");
 	return 0;
 }

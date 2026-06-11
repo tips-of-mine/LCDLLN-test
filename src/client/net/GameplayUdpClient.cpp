@@ -261,6 +261,42 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendAttackRequest(uint32_t clientId, uint64_t targetEntityId)
+	{
+		engine::server::AttackRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.targetEntityId = targetEntityId;
+		const std::vector<std::byte> packet = engine::server::EncodeAttackRequest(msg);
+		const bool ok = SendBytes(packet);
+		if (ok)
+		{
+			LOG_DEBUG(Net, "[GameplayUdpClient] AttackRequest sent (client_id={}, target_entity_id={})",
+				clientId, targetEntityId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] AttackRequest FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
+	bool GameplayUdpClient::SendRespawnRequest(uint32_t clientId)
+	{
+		engine::server::RespawnRequestMessage msg{};
+		msg.clientId = clientId;
+		const std::vector<std::byte> packet = engine::server::EncodeRespawnRequest(msg);
+		const bool ok = SendBytes(packet);
+		if (ok)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] RespawnRequest sent (client_id={})", clientId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] RespawnRequest FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
 	bool GameplayUdpClient::SendShopBuyRequest(uint32_t clientId, uint32_t vendorId, uint32_t itemId, uint32_t quantity)
 	{
 		engine::server::ShopBuyRequestMessage msg{};

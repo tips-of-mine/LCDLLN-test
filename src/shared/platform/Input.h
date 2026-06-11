@@ -42,6 +42,10 @@ namespace engine::platform
 		X = 'X',
 		Y = 'Y',
 		Z = 'Z',
+		// Combat SP2 — touches d'attaque (T) et de panneau combat avancé (J).
+		// Valeurs = codes ASCII majuscules (== VK_* Windows), comme le reste.
+		T = 'T',
+		J = 'J',
 		Escape = 0x1B,
 		Tab = 0x09,
 		Control = 0x11,

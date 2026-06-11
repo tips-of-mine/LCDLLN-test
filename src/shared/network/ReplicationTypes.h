@@ -19,12 +19,21 @@ namespace engine::server
 	};
 
 	/// Minimal combat component used by the authoritative attack validation.
+	/// Combat SP2 — accuracy/critRate/critMult alimentent les jets de précision
+	/// et de critique (cf. AttackResolver). Composant purement serveur : ces
+	/// champs ne transitent JAMAIS sur le wire (pas d'impact protocole).
 	struct CombatComponent
 	{
 		uint32_t damagePerHit = 0;
 		float attackRangeMeters = 0.0f;
 		uint32_t cooldownTicks = 0;
 		uint32_t nextAttackTick = 0;
+		/// Précision en % [0,100] — 100 = ne rate jamais (défaut conservateur).
+		float accuracy = 100.0f;
+		/// Taux de critique en % [0,100].
+		float critRate = 0.0f;
+		/// Multiplicateur de dégâts critiques (plancher 1.0 à la résolution).
+		float critMult = 1.5f;
 	};
 
 	/// Minimal item stack used by loot bags and player inventory.

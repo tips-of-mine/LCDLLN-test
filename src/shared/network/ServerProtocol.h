@@ -41,7 +41,11 @@ namespace engine::server
 	/// nom/niveau/mesh/échelle dans son CreatureCatalog pour rendre la créature.
 	/// Wire-breaking : ce bump invalide AUSSI le framing client↔master (version
 	/// partagée) → déployer master + shardd + client en lock-step.
-	inline constexpr uint16_t kProtocolVersion = 9;
+	/// Combat SP2 — bump 9 → 10 : `CombatEventMessage` gagne `flags` (uint32 :
+	/// bit0 critique, bit1 raté ; payload 32 → 36 o) et nouveau kind
+	/// `RespawnRequest` (80, client→shard, réapparition d'un joueur mort).
+	/// Wire-breaking : même contrainte lock-step master + shardd + client.
+	inline constexpr uint16_t kProtocolVersion = 10;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -216,7 +220,11 @@ namespace engine::server
 		/// Server → client: stats dérivées complètes du joueur local (R1-B). Poussé à
 		/// l'enter-world. Ajout rétro-additif : un vieux client qui ne connaît pas cet
 		/// opcode l'ignore (pas de bump de `kProtocolVersion`).
-		PlayerStats = 79
+		PlayerStats = 79,
+		/// Combat SP2 — client → shard : réapparition d'un joueur mort (téléport au
+		/// spawn mémorisé à l'admission, PV pleins, flag dead retiré). Refusé si le
+		/// joueur n'est pas mort. Livré avec le bump v9→v10.
+		RespawnRequest = 80
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -314,7 +322,13 @@ namespace engine::server
 		EntityId targetEntityId = 0;
 	};
 
+	/// Combat SP2 — bits du champ `CombatEventMessage::flags` (wire v10).
+	inline constexpr uint32_t kCombatEventFlagCrit = 1u << 0;
+	inline constexpr uint32_t kCombatEventFlagMiss = 1u << 1;
+
 	/// Authoritative combat result broadcast to interested clients.
+	/// Combat SP2 (wire v10) — `flags` porte critique/raté (cf. kCombatEventFlag*) ;
+	/// un raté a `damage == 0` et des PV cible inchangés.
 	struct CombatEventMessage
 	{
 		EntityId attackerEntityId = 0;
@@ -323,6 +337,14 @@ namespace engine::server
 		uint32_t targetCurrentHealth = 0;
 		uint32_t targetMaxHealth = 0;
 		uint32_t targetStateFlags = 0;
+		uint32_t flags = 0;
+	};
+
+	/// Combat SP2 — demande de réapparition d'un joueur mort (client → shard).
+	/// Le serveur ne l'honore que si le joueur porte kEntityStateDead.
+	struct RespawnRequestMessage
+	{
+		uint32_t clientId = 0;
 	};
 
 	/// Client request asking the authoritative server to pick up one loot bag entity.
@@ -463,6 +485,15 @@ namespace engine::server
 
 	/// Decode an attack request packet and validate the protocol header.
 	bool DecodeAttackRequest(std::span<const std::byte> packet, AttackRequestMessage& outMessage);
+
+	/// Combat SP2 — encode an attack request packet (client → server).
+	std::vector<std::byte> EncodeAttackRequest(const AttackRequestMessage& message);
+
+	/// Combat SP2 — encode a respawn request packet (client → server).
+	std::vector<std::byte> EncodeRespawnRequest(const RespawnRequestMessage& message);
+
+	/// Combat SP2 — decode a respawn request packet and validate the protocol header.
+	bool DecodeRespawnRequest(std::span<const std::byte> packet, RespawnRequestMessage& outMessage);
 
 	/// Encode a combat event packet with the protocol header.
 	std::vector<std::byte> EncodeCombatEvent(const CombatEventMessage& message);

@@ -36,6 +36,7 @@
 #include <cstddef>
 #include <mutex>
 #include <optional>
+#include <random>
 #include <string>
 #include <span>
 #include <string_view>
@@ -102,6 +103,12 @@ namespace engine::server
 		/// Phase 3.7.5 — élargi à uint64 pour porter le character_id complet.
 		uint64_t helloNonce = 0;
 		uint64_t persistenceCharacterKey = 0;
+		/// Combat SP2 — position de réapparition (mémorisée en fin d'admission,
+		/// après résolution de la position persistée/DB). Utilisée par
+		/// HandleRespawnRequest ; le « spawn de zone » V1 = point d'entrée en monde.
+		float spawnPositionMetersX = 0.0f;
+		float spawnPositionMetersY = 0.0f;
+		float spawnPositionMetersZ = 0.0f;
 		/// TD.5 — nom du personnage choisi par le joueur (cf. table SQL characters.name).
 		/// Chargé depuis la DB (LoadSpawnFromDb) si le shard a un pool MySQL configuré ;
 		/// sinon (mode no-DB) repris du push master AdmitCharacter via
@@ -466,6 +473,10 @@ namespace engine::server
 		/// Validate one attack request, apply damage and broadcast the authoritative event.
 		void HandleAttackRequest(const Endpoint& endpoint, uint32_t clientId, EntityId targetEntityId);
 
+		/// Combat SP2 — réapparition d'un joueur mort : téléport au spawn mémorisé
+		/// à l'admission, PV pleins, flag dead retiré. Ignoré si le joueur est vivant.
+		void HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId);
+
 		/// Validate one pickup request, update the inventory and despawn the bag.
 		void HandlePickupRequest(const Endpoint& endpoint, uint32_t clientId, EntityId lootBagEntityId);
 
@@ -495,6 +506,17 @@ namespace engine::server
 
 		/// Clear one mob threat table and active aggro target.
 		void ResetMobThreat(MobEntity& mob);
+
+		/// Combat SP2 — retire une entité de toutes les tables de menace des mobs
+		/// (mort ou respawn du joueur) ; les mobs qui la ciblaient repassent en
+		/// patrouille au prochain tick d'IA.
+		void PurgeThreatForEntity(EntityId entityId);
+
+		/// Combat SP2 — tire un jet uniforme [0,1) sur le RNG combat du serveur.
+		/// Les jets sont consommés par AttackResolver (pur) ; le RNG n'est PAS
+		/// déterministe (seed random_device au boot) — les tests passent par
+		/// ResolveAttackRoll directement.
+		float NextCombatRoll01();
 
 		/// Apply one mob attack against its current target when in range.
 		bool TryMobAttackPlayer(MobEntity& mob, ConnectedClient& target);
@@ -873,6 +895,9 @@ namespace engine::server
 		/// Combat SP1 — catalogue d'archétypes de créatures (stats data-driven,
 		/// initialisé par InitSpawners avant le chargement des spawners).
 		CreatureArchetypeLibrary m_archetypeLibrary;
+		/// Combat SP2 — RNG des jets d'attaque (précision/critique), seedé au
+		/// constructeur. Main thread du tick monde uniquement (pas de verrou).
+		std::mt19937 m_combatRng;
 		ZoneTransitionMap m_zoneTransitionMap;
 		TickScheduler m_tickScheduler;
 		UdpTransport m_transport;

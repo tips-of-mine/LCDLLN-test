@@ -50,6 +50,14 @@ namespace engine::client
 		/// Send TalkRequest (e.g. `vendor:1` to open shop).
 		bool SendTalkRequest(uint32_t clientId, std::string_view targetId);
 
+		/// Combat SP2 — demande d'attaque sur une entité ciblée. Le serveur
+		/// revalide tout (portée, cooldown, cible vivante) ; le client peut
+		/// throttler mais n'a pas d'autorité.
+		bool SendAttackRequest(uint32_t clientId, uint64_t targetEntityId);
+
+		/// Combat SP2 — demande de réapparition (joueur mort uniquement, validé serveur).
+		bool SendRespawnRequest(uint32_t clientId);
+
 		bool SendShopBuyRequest(uint32_t clientId, uint32_t vendorId, uint32_t itemId, uint32_t quantity);
 
 		bool SendShopSellRequest(uint32_t clientId, uint32_t vendorId, uint32_t itemId, uint32_t quantity);

@@ -17,6 +17,9 @@
 // Level-up runtime — courbe XP -> niveau (séparée de la boucle réseau, pure et testable).
 #include "src/shardd/gameplay/character/LevelProgression.h"
 
+// Combat SP2 — résolveur d'attaque pur (précision / critique, RNG injecté).
+#include "src/shardd/gameplay/combat/AttackResolver.h"
+
 // TA.4 — pont position : compilé uniquement pour la cible shard Linux (SHARD_POSITION_DB),
 // pas pour le build Windows (ServerApp.cpp est partagé). Macro dédié plutôt qu'ENGINE_HAS_MYSQL
 // pour ne PAS basculer les autres systèmes gameplay du shard en mode DB.
@@ -191,7 +194,23 @@ namespace engine::server
 				mob.combat.cooldownTicks = std::max<uint32_t>(1u,
 					(archetype->attackPeriodMs * static_cast<uint32_t>(tickHz) + 999u) / 1000u);
 				mob.xpReward = archetype->xpReward;
+				// Combat SP2 — jets de précision/critique data-driven (cf. AttackResolver).
+				mob.combat.accuracy = archetype->accuracy;
+				mob.combat.critRate = archetype->critRate;
+				mob.combat.critMult = archetype->critMult;
 			}
+		}
+
+		/// Combat SP2 — copie les stats dérivées du moteur de personnages dans le
+		/// composant combat du joueur (enter-world + level-up). range 0 = mêlée
+		/// pure → on conserve la portée de mêlée MVP (kDefaultAttackRangeMeters).
+		void ApplyDerivedCombatStats(ConnectedClient& client, const engine::server::gameplay::DerivedStats& derived)
+		{
+			client.combat.damagePerHit = derived.damage;
+			client.combat.attackRangeMeters = (derived.range > 0.0f) ? derived.range : kDefaultAttackRangeMeters;
+			client.combat.accuracy = derived.accuracy;
+			client.combat.critRate = derived.critRate;
+			client.combat.critMult = derived.critMult;
 		}
 
 		/// Return the squared XZ distance used by the range validation.
@@ -270,6 +289,7 @@ namespace engine::server
 		, m_questRuntime(m_config)
 		, m_spawnerRuntime(m_config)
 		, m_archetypeLibrary(m_config)
+		, m_combatRng(std::random_device{}())
 	{
 		LOG_INFO(Core, "[ServerApp] Constructed");
 	}
@@ -712,6 +732,14 @@ namespace engine::server
 		if (DecodeAttackRequest(packetBytes, attackRequest))
 		{
 			HandleAttackRequest(datagram.endpoint, attackRequest.clientId, attackRequest.targetEntityId);
+			return;
+		}
+
+		// Combat SP2 — réapparition d'un joueur mort.
+		RespawnRequestMessage respawnRequest{};
+		if (DecodeRespawnRequest(packetBytes, respawnRequest))
+		{
+			HandleRespawnRequest(datagram.endpoint, respawnRequest.clientId);
 			return;
 		}
 
@@ -1331,6 +1359,25 @@ namespace engine::server
 					sh.maxHealth,
 					sh.currentHealth);
 			}
+			// Combat SP2 — injecte aussi les stats offensives calculées (damage,
+			// portée, précision, critique) dans le composant combat, à la place
+			// des constantes MVP. Faction/classe vides → ComputeStats nullopt →
+			// le composant MVP est conservé (pas de régression mode no-DB).
+			const auto derived = engine::server::gameplay::ComputeStats(
+				*m_statsTables, acceptedClient.factionId, acceptedClient.classId,
+				sex, acceptedClient.level);
+			if (derived)
+			{
+				ApplyDerivedCombatStats(acceptedClient, *derived);
+				LOG_INFO(Net,
+					"[ServerApp] SP2 enter-world combat stats (client_id={}, damage={}, range={:.1f}, accuracy={:.1f}, crit={:.1f}%x{:.2f})",
+					acceptedClient.clientId,
+					acceptedClient.combat.damagePerHit,
+					acceptedClient.combat.attackRangeMeters,
+					acceptedClient.combat.accuracy,
+					acceptedClient.combat.critRate,
+					acceptedClient.combat.critMult);
+			}
 		}
 
 		std::vector<QuestProgressDelta> questSyncDeltas;
@@ -1348,6 +1395,13 @@ namespace engine::server
 			LOG_WARN(Net, "[ServerApp] Quest state bootstrap skipped: runtime sync failed (client_id={})",
 				acceptedClient.clientId);
 		}
+
+		// Combat SP2 — mémorise la position d'entrée en monde comme point de
+		// réapparition (la position finale est résolue à ce stade : persistance
+		// fichier, pont DB et défauts ont tous été appliqués).
+		acceptedClient.spawnPositionMetersX = acceptedClient.positionMetersX;
+		acceptedClient.spawnPositionMetersY = acceptedClient.positionMetersY;
+		acceptedClient.spawnPositionMetersZ = acceptedClient.positionMetersZ;
 
 		UpdateClientInterest(acceptedClient);
 		LOG_INFO(Net, "[ServerApp] Client accepted (client_id={}, entity_id={}, zone_id={}, hp={}, endpoint={}, total_clients={})",
@@ -2718,7 +2772,37 @@ namespace engine::server
 			return;
 		}
 
-		const uint32_t appliedDamage = std::min(client->combat.damagePerHit, target->stats.currentHealth);
+		// Combat SP2 — le cooldown est consommé même sur un raté (le coup est parti).
+		client->combat.nextAttackTick = m_currentTick + client->combat.cooldownTicks;
+		const combat::AttackRollResult roll = combat::ResolveAttackRoll(
+			client->combat.damagePerHit,
+			client->combat.accuracy,
+			client->combat.critRate,
+			client->combat.critMult,
+			NextCombatRoll01(),
+			NextCombatRoll01());
+		uint32_t eventFlags = 0u;
+		if (roll.miss) eventFlags |= kCombatEventFlagMiss;
+		if (roll.crit) eventFlags |= kCombatEventFlagCrit;
+		if (roll.miss)
+		{
+			// Raté : aucun dégât, mais l'événement part quand même (combat log/HUD).
+			CombatEventMessage missEvent{};
+			missEvent.attackerEntityId = client->entityId;
+			missEvent.targetEntityId = target->entityId;
+			missEvent.damage = 0u;
+			missEvent.targetCurrentHealth = target->stats.currentHealth;
+			missEvent.targetMaxHealth = target->stats.maxHealth;
+			missEvent.targetStateFlags = target->stateFlags;
+			missEvent.flags = eventFlags;
+			LOG_INFO(Net, "[ServerApp] Attack missed (attacker_entity_id={}, target_entity_id={})",
+				missEvent.attackerEntityId,
+				missEvent.targetEntityId);
+			BroadcastCombatEvent(missEvent);
+			return;
+		}
+
+		const uint32_t appliedDamage = std::min(roll.damage, target->stats.currentHealth);
 		if (appliedDamage == 0)
 		{
 			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: zero damage after validation (client_id={}, target_entity_id={})",
@@ -2727,7 +2811,6 @@ namespace engine::server
 			return;
 		}
 
-		client->combat.nextAttackTick = m_currentTick + client->combat.cooldownTicks;
 		target->stats.currentHealth -= appliedDamage;
 		if (target->isDynamicEventMob && target->owningEventIndex < m_dynamicEvents.size())
 		{
@@ -2780,6 +2863,8 @@ namespace engine::server
 		combatEvent.targetCurrentHealth = target->stats.currentHealth;
 		combatEvent.targetMaxHealth = target->stats.maxHealth;
 		combatEvent.targetStateFlags = target->stateFlags;
+		// Combat SP2 — bit critique éventuel (le raté est parti plus haut).
+		combatEvent.flags = eventFlags;
 		LOG_INFO(Net,
 			"[ServerApp] Attack applied (attacker_entity_id={}, target_entity_id={}, damage={}, hp={}/{}, next_attack_tick={})",
 			combatEvent.attackerEntityId,
@@ -2789,6 +2874,55 @@ namespace engine::server
 			combatEvent.targetMaxHealth,
 			client->combat.nextAttackTick);
 		BroadcastCombatEvent(combatEvent);
+	}
+
+	void ServerApp::HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] RespawnRequest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] RespawnRequest ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				clientId);
+			return;
+		}
+
+		if ((client->stateFlags & kEntityStateDead) == 0u)
+		{
+			LOG_WARN(Net, "[ServerApp] RespawnRequest ignored: player is alive (client_id={})", client->clientId);
+			return;
+		}
+
+		// Téléport au point d'entrée en monde, soin complet, retour à la vie.
+		client->positionMetersX = client->spawnPositionMetersX;
+		client->positionMetersY = client->spawnPositionMetersY;
+		client->positionMetersZ = client->spawnPositionMetersZ;
+		client->velocityMetersPerSecondX = 0.0f;
+		client->velocityMetersPerSecondY = 0.0f;
+		client->velocityMetersPerSecondZ = 0.0f;
+		client->stats.currentHealth = client->stats.maxHealth;
+		client->stateFlags &= ~kEntityStateDead;
+		// Sécurité : plus aucune menace résiduelle ne doit pointer sur le ressuscité
+		// (déjà purgée à la mort, mais un mob a pu être spawné entre-temps).
+		PurgeThreatForEntity(client->entityId);
+		UpdateClientInterest(*client);
+		SaveConnectedClient(*client, "respawn");
+		LOG_INFO(Net,
+			"[ServerApp] Player respawned (client_id={}, entity_id={}, pos=({:.1f}, {:.1f}, {:.1f}), hp={}/{})",
+			client->clientId,
+			client->entityId,
+			client->positionMetersX,
+			client->positionMetersY,
+			client->positionMetersZ,
+			client->stats.currentHealth,
+			client->stats.maxHealth);
 	}
 
 	void ServerApp::HandlePickupRequest(const Endpoint& endpoint, uint32_t clientId, EntityId lootBagEntityId)
@@ -3413,6 +3547,38 @@ namespace engine::server
 			clearedCount);
 	}
 
+	void ServerApp::PurgeThreatForEntity(EntityId entityId)
+	{
+		size_t purgedMobs = 0;
+		for (MobEntity& mob : m_mobs)
+		{
+			const size_t before = mob.threatTable.size();
+			mob.threatTable.erase(
+				std::remove_if(mob.threatTable.begin(), mob.threatTable.end(),
+					[entityId](const ThreatEntry& entry) { return entry.entityId == entityId; }),
+				mob.threatTable.end());
+			if (mob.aggroTargetEntityId == entityId)
+			{
+				mob.aggroTargetEntityId = 0;
+			}
+			if (mob.threatTable.size() != before)
+			{
+				++purgedMobs;
+			}
+		}
+		if (purgedMobs > 0)
+		{
+			LOG_INFO(Net, "[ServerApp] Threat purged for entity (entity_id={}, mobs={})", entityId, purgedMobs);
+		}
+	}
+
+	float ServerApp::NextCombatRoll01()
+	{
+		// distribution locale (stateless) : [0,1), borne haute exclue.
+		std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+		return distribution(m_combatRng);
+	}
+
 	bool ServerApp::TryMobAttackPlayer(MobEntity& mob, ConnectedClient& target)
 	{
 		if (m_currentTick < mob.combat.nextAttackTick)
@@ -3431,20 +3597,39 @@ namespace engine::server
 			return false;
 		}
 
-		const uint32_t appliedDamage = std::min(mob.combat.damagePerHit, target.stats.currentHealth);
-		if (appliedDamage == 0)
+		// Combat SP2 — le mob rate/critique aussi (stats d'archétype) ; cooldown
+		// consommé même sur un raté.
+		mob.combat.nextAttackTick = m_currentTick + mob.combat.cooldownTicks;
+		const combat::AttackRollResult roll = combat::ResolveAttackRoll(
+			mob.combat.damagePerHit,
+			mob.combat.accuracy,
+			mob.combat.critRate,
+			mob.combat.critMult,
+			NextCombatRoll01(),
+			NextCombatRoll01());
+		uint32_t eventFlags = 0u;
+		if (roll.miss) eventFlags |= kCombatEventFlagMiss;
+		if (roll.crit) eventFlags |= kCombatEventFlagCrit;
+
+		const uint32_t appliedDamage = roll.miss ? 0u : std::min(roll.damage, target.stats.currentHealth);
+		if (!roll.miss && appliedDamage == 0)
 		{
 			return false;
 		}
 
-		mob.combat.nextAttackTick = m_currentTick + mob.combat.cooldownTicks;
-		target.stats.currentHealth -= appliedDamage;
+		if (appliedDamage > 0)
+		{
+			target.stats.currentHealth -= appliedDamage;
+		}
 		if (target.stats.currentHealth == 0)
 		{
 			target.stateFlags |= kEntityStateDead;
 			LOG_INFO(Net, "[ServerApp] Player died (entity_id={}, attacker_entity_id={})",
 				target.entityId,
 				mob.entityId);
+			// Combat SP2 — un joueur mort sort de toutes les tables de menace ;
+			// les mobs repassent en patrouille au prochain tick d'IA.
+			PurgeThreatForEntity(target.entityId);
 			SaveConnectedClient(target, "player_death");
 		}
 
@@ -3455,6 +3640,7 @@ namespace engine::server
 		combatEvent.targetCurrentHealth = target.stats.currentHealth;
 		combatEvent.targetMaxHealth = target.stats.maxHealth;
 		combatEvent.targetStateFlags = target.stateFlags;
+		combatEvent.flags = eventFlags;
 		LOG_INFO(Net,
 			"[ServerApp] Mob attack applied (attacker_entity_id={}, target_entity_id={}, damage={}, hp={}/{}, next_attack_tick={})",
 			combatEvent.attackerEntityId,
@@ -5559,6 +5745,8 @@ namespace engine::server
 		{
 			client.stats.maxHealth = d->hp;
 			client.stats.currentHealth = d->hp;   // soin complet au level-up.
+			// Combat SP2 — les stats offensives suivent aussi le niveau.
+			ApplyDerivedCombatStats(client, *d);
 		}
 		(void)SendPlayerStats(client);
 		SaveConnectedClient(client, "level_up");

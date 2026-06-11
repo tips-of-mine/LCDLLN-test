@@ -64,6 +64,24 @@ namespace engine::server
 		uint32_t threat = 0;
 	};
 
+	/// Combat SP3 — une aura active sur une entité (joueur ou mob). Les montants
+	/// périodiques (`tickAmount`) sont FIGÉS à l'application (snapshot des stats
+	/// du casteur) : un casteur déconnecté ne casse pas le tick.
+	struct ActiveAura
+	{
+		std::string spellId;
+		SpellEffectType type = SpellEffectType::DirectDamage;
+		/// Pourcentage (Buff/Debuff/Slow) — 0 pour les effets périodiques.
+		float percent = 0.0f;
+		/// Montant par tick (DoT = dégâts, HoT = soin) — 0 pour les effets %.
+		uint32_t tickAmount = 0;
+		uint32_t tickPeriodMs = 0;
+		uint64_t expiresAtMs = 0;
+		uint64_t nextTickAtMs = 0;
+		uint8_t stacks = 1;
+		EntityId casterEntityId = 0;
+	};
+
 	/// Visibility mode applied to one authoritative loot bag.
 	enum class LootVisibility : uint8_t
 	{
@@ -123,6 +141,20 @@ namespace engine::server
 		/// Timestamp ms de la dernière implication dans un CombatEvent (attaquant
 		/// ou cible) ; « en combat » = moins de 5 s.
 		uint64_t lastCombatInvolvementMs = 0;
+		/// Combat SP3 — throttle d'envoi des ResourceUpdate (au plus 1 / 500 ms).
+		uint64_t lastResourceUpdateSentMs = 0;
+		uint32_t lastResourceUpdateSentValue = 0;
+		/// Combat SP3 — auras actives (buffs, HoT, debuffs subis).
+		std::vector<ActiveAura> auras;
+		/// Combat SP3 — cast en cours (vide = aucun). Annulé si le joueur meurt ou
+		/// se déplace de plus de 0,5 m pendant l'incantation.
+		std::string activeCastSpellId;
+		uint64_t castFinishAtMs = 0;
+		float castStartPosX = 0.0f;
+		float castStartPosZ = 0.0f;
+		EntityId castTargetEntityId = 0;
+		/// Combat SP3 — cooldowns par sort (spellId → fin de cooldown en ms).
+		std::unordered_map<std::string, uint64_t> spellCooldownUntilMs;
 		/// TD.5 — nom du personnage choisi par le joueur (cf. table SQL characters.name).
 		/// Chargé depuis la DB (LoadSpawnFromDb) si le shard a un pool MySQL configuré ;
 		/// sinon (mode no-DB) repris du push master AdmitCharacter via
@@ -223,6 +255,8 @@ namespace engine::server
 		/// Combat SP1 — XP attribuée au(x) tueur(s), copiée depuis l'archétype au
 		/// spawn (0 = fallback sur kBaseXpPerMobKill, mob d'avant le catalogue).
 		uint32_t xpReward = 0;
+		/// Combat SP3 — auras actives (DoT, ralentissements, debuffs).
+		std::vector<ActiveAura> auras;
 	};
 
 	/// One spawn slot tracked by the authoritative spawner runtime.
@@ -536,6 +570,36 @@ namespace engine::server
 		/// (par tick : 5 %/s hors combat, 2 %/s en combat, accumulé en fractionnaire).
 		/// Appelée depuis Simulate (main thread du tick monde).
 		void RegenerateResources();
+
+		/// Combat SP3 — pousse la ressource courante au casteur (throttle 500 ms,
+		/// sauf \p force pour les débits de cast — feedback immédiat).
+		void SendResourceUpdate(ConnectedClient& client, bool force);
+
+		/// Combat SP3 — demande de cast d'un sort du kit du profil du joueur.
+		/// Valide profil/sort/cooldown/ressource/cible/portée ; instant = résolution
+		/// immédiate, sinon cast armé (résolu/annulé par TickActiveCasts).
+		void HandleCastRequest(const Endpoint& endpoint, const CastRequestMessage& message);
+
+		/// Combat SP3 — avance les casts en cours (annulation mort/déplacement,
+		/// résolution à l'échéance). Appelée depuis Simulate.
+		void TickActiveCasts();
+
+		/// Combat SP3 — tick des auras (DoT/HoT dus, expirations) des joueurs et
+		/// des mobs + broadcast AuraUpdate sur changement. Appelée depuis Simulate.
+		void TickAuras();
+
+		/// Combat SP3 — applique tous les effets d'un sort validé (débit ressource,
+		/// cooldown, dégâts/soins/auras/menace) et émet les messages associés.
+		void ResolveSpellCast(ConnectedClient& client, const SpellDef& spell, EntityId targetEntityId);
+
+		/// Combat SP2/SP3 — applique des dégâts (déjà jetés/multipliés) d'un joueur
+		/// sur un mob : PV, événement dynamique, mort/loot/XP, CombatEvent broadcast.
+		/// Factorisé entre l'auto-attaque (HandleAttackRequest) et les sorts.
+		void ApplyPlayerDamageToMob(ConnectedClient& attacker, MobEntity& target, uint32_t rolledDamage, uint32_t eventFlags);
+
+		/// Combat SP3 — broadcast la liste complète des auras d'une entité aux
+		/// clients intéressés (idempotent côté client).
+		void BroadcastAuraUpdate(EntityId entityId, const std::vector<ActiveAura>& auras);
 
 		/// Apply one mob attack against its current target when in range.
 		bool TryMobAttackPlayer(MobEntity& mob, ConnectedClient& target);

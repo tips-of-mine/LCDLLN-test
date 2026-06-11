@@ -201,6 +201,58 @@ namespace engine::server
 			}
 		}
 
+		/// Combat SP3 — horloge monotone en millisecondes (référence commune des
+		/// cooldowns de sorts, casts et expirations d'auras).
+		uint64_t NowMonotonicMs()
+		{
+			return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now().time_since_epoch()).count());
+		}
+
+		/// Combat SP3 — somme des pourcentages des auras d'un type donné (0 si aucune).
+		float SumAuraPercent(const std::vector<ActiveAura>& auras, SpellEffectType type)
+		{
+			float total = 0.0f;
+			for (const ActiveAura& aura : auras)
+			{
+				if (aura.type == type)
+				{
+					total += aura.percent;
+				}
+			}
+			return total;
+		}
+
+		/// Combat SP3 — applique les modificateurs d'auras à un jet de dégâts :
+		/// × (1 + buffs de dégâts de l'attaquant) × (1 + dégâts subis de la cible).
+		uint32_t ApplyAuraDamageModifiers(
+			uint32_t baseDamage,
+			const std::vector<ActiveAura>& attackerAuras,
+			const std::vector<ActiveAura>& targetAuras)
+		{
+			const float attackerBonus = SumAuraPercent(attackerAuras, SpellEffectType::BuffDamagePercent);
+			const float takenBonus = SumAuraPercent(targetAuras, SpellEffectType::DebuffDamageTakenPercent);
+			const double modified = static_cast<double>(baseDamage)
+				* (1.0 + static_cast<double>(attackerBonus) / 100.0)
+				* (1.0 + static_cast<double>(takenBonus) / 100.0);
+			return static_cast<uint32_t>(std::llround(modified));
+		}
+
+		/// Combat SP3 — insère ou rafraîchit une aura (même spellId + même casteur
+		/// = refresh de la durée, pas d'empilement en V1).
+		void UpsertAura(std::vector<ActiveAura>& auras, ActiveAura&& aura)
+		{
+			for (ActiveAura& existing : auras)
+			{
+				if (existing.spellId == aura.spellId && existing.casterEntityId == aura.casterEntityId)
+				{
+					existing = std::move(aura);
+					return;
+				}
+			}
+			auras.push_back(std::move(aura));
+		}
+
 		/// Combat SP2 — copie les stats dérivées du moteur de personnages dans le
 		/// composant combat du joueur (enter-world + level-up). range 0 = mêlée
 		/// pure → on conserve la portée de mêlée MVP (kDefaultAttackRangeMeters).
@@ -749,6 +801,14 @@ namespace engine::server
 		if (DecodeRespawnRequest(packetBytes, respawnRequest))
 		{
 			HandleRespawnRequest(datagram.endpoint, respawnRequest.clientId);
+			return;
+		}
+
+		// Combat SP3 — cast d'un sort du kit du profil.
+		CastRequestMessage castRequest{};
+		if (DecodeCastRequest(packetBytes, castRequest))
+		{
+			HandleCastRequest(datagram.endpoint, castRequest);
 			return;
 		}
 
@@ -1675,8 +1735,11 @@ namespace engine::server
 		ProcessAuctionHouseTick();
 		TickGathering();
 		TickCrafting();
-		// Combat SP3 — régénération de la ressource secondaire des joueurs.
+		// Combat SP3 — régénération de la ressource secondaire des joueurs,
+		// avancement des casts en cours et tick des auras (DoT/HoT/expirations).
 		RegenerateResources();
+		TickActiveCasts();
+		TickAuras();
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
 	}
 
@@ -2827,30 +2890,40 @@ namespace engine::server
 			return;
 		}
 
-		const uint32_t appliedDamage = std::min(roll.damage, target->stats.currentHealth);
+		// Combat SP3 — modificateurs d'auras (buff de l'attaquant, debuff de la
+		// cible) appliqués au jet, puis chemin commun dégâts/mort/loot/XP.
+		const uint32_t modifiedDamage = ApplyAuraDamageModifiers(roll.damage, client->auras, target->auras);
+		ApplyPlayerDamageToMob(*client, *target, modifiedDamage, eventFlags);
+	}
+
+	void ServerApp::ApplyPlayerDamageToMob(ConnectedClient& attacker, MobEntity& target, uint32_t rolledDamage, uint32_t eventFlags)
+	{
+		const uint32_t appliedDamage = std::min(rolledDamage, target.stats.currentHealth);
 		if (appliedDamage == 0)
 		{
-			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: zero damage after validation (client_id={}, target_entity_id={})",
-				client->clientId,
-				target->entityId);
+			LOG_DEBUG(Net, "[ServerApp] Damage ignored: zero after clamp (client_id={}, target_entity_id={})",
+				attacker.clientId,
+				target.entityId);
 			return;
 		}
 
-		target->stats.currentHealth -= appliedDamage;
-		if (target->isDynamicEventMob && target->owningEventIndex < m_dynamicEvents.size())
+		target.stats.currentHealth -= appliedDamage;
+		if (target.isDynamicEventMob && target.owningEventIndex < m_dynamicEvents.size())
 		{
-			DynamicEventState& eventState = m_dynamicEvents[target->owningEventIndex];
-			AddDynamicEventParticipant(eventState, *client);
+			DynamicEventState& eventState = m_dynamicEvents[target.owningEventIndex];
+			AddDynamicEventParticipant(eventState, attacker);
 		}
-		if (target->stats.currentHealth == 0)
+		if (target.stats.currentHealth == 0)
 		{
-			target->stateFlags |= kEntityStateDead;
-			target->pendingDespawn = true;
-			target->aggroTargetEntityId = 0;
-			target->threatTable.clear();
-			if (target->isDynamicEventMob && target->owningEventIndex < m_dynamicEvents.size())
+			target.stateFlags |= kEntityStateDead;
+			target.pendingDespawn = true;
+			target.aggroTargetEntityId = 0;
+			target.threatTable.clear();
+			// Combat SP3 — plus rien à ticker sur un mob mort.
+			target.auras.clear();
+			if (target.isDynamicEventMob && target.owningEventIndex < m_dynamicEvents.size())
 			{
-				DynamicEventState& eventState = m_dynamicEvents[target->owningEventIndex];
+				DynamicEventState& eventState = m_dynamicEvents[target.owningEventIndex];
 				if (eventState.currentPhaseIndex < eventState.definition.phases.size())
 				{
 					++eventState.currentPhaseProgress;
@@ -2863,41 +2936,40 @@ namespace engine::server
 					BroadcastDynamicEventState(eventState, phase.notificationText, 0, 0, 0, {});
 				}
 			}
-			LOG_INFO(Net, "[ServerApp] Mob died (entity_id={}, attacker_entity_id={})", target->entityId, client->entityId);
-			if (!target->hasSpawnedLoot)
+			LOG_INFO(Net, "[ServerApp] Mob died (entity_id={}, attacker_entity_id={})", target.entityId, attacker.entityId);
+			if (!target.hasSpawnedLoot)
 			{
-				target->hasSpawnedLoot = true;
+				target.hasSpawnedLoot = true;
 				// M32.2 — Resolve loot owner based on party loot mode.
-				const EntityId looterEntityId = ResolvePartyLooterEntityId(*client);
-				SpawnLootBagForMob(*target, looterEntityId != 0 ? looterEntityId : client->entityId);
+				const EntityId looterEntityId = ResolvePartyLooterEntityId(attacker);
+				SpawnLootBagForMob(target, looterEntityId != 0 ? looterEntityId : attacker.entityId);
 			}
 			// M32.2 — Distribute XP to party members in range.
 			// Combat SP1 — XP data-driven par archétype (fallback constante MVP
 			// pour un mob dont l'archétype ne définit pas de récompense).
-			DistributePartyXp(*client,
-			    target->positionMetersX,
-			    target->positionMetersZ,
-			    target->xpReward != 0u ? target->xpReward : kBaseXpPerMobKill);
-			ApplyQuestEvent(*client, QuestStepType::Kill, std::string("mob:") + std::to_string(target->archetypeId), 1, "kill");
+			DistributePartyXp(attacker,
+			    target.positionMetersX,
+			    target.positionMetersZ,
+			    target.xpReward != 0u ? target.xpReward : kBaseXpPerMobKill);
+			ApplyQuestEvent(attacker, QuestStepType::Kill, std::string("mob:") + std::to_string(target.archetypeId), 1, "kill");
 		}
 
 		CombatEventMessage combatEvent{};
-		combatEvent.attackerEntityId = client->entityId;
-		combatEvent.targetEntityId = target->entityId;
+		combatEvent.attackerEntityId = attacker.entityId;
+		combatEvent.targetEntityId = target.entityId;
 		combatEvent.damage = appliedDamage;
-		combatEvent.targetCurrentHealth = target->stats.currentHealth;
-		combatEvent.targetMaxHealth = target->stats.maxHealth;
-		combatEvent.targetStateFlags = target->stateFlags;
+		combatEvent.targetCurrentHealth = target.stats.currentHealth;
+		combatEvent.targetMaxHealth = target.stats.maxHealth;
+		combatEvent.targetStateFlags = target.stateFlags;
 		// Combat SP2 — bit critique éventuel (le raté est parti plus haut).
 		combatEvent.flags = eventFlags;
 		LOG_INFO(Net,
-			"[ServerApp] Attack applied (attacker_entity_id={}, target_entity_id={}, damage={}, hp={}/{}, next_attack_tick={})",
+			"[ServerApp] Attack applied (attacker_entity_id={}, target_entity_id={}, damage={}, hp={}/{})",
 			combatEvent.attackerEntityId,
 			combatEvent.targetEntityId,
 			combatEvent.damage,
 			combatEvent.targetCurrentHealth,
-			combatEvent.targetMaxHealth,
-			client->combat.nextAttackTick);
+			combatEvent.targetMaxHealth);
 		BroadcastCombatEvent(combatEvent);
 	}
 
@@ -3501,7 +3573,11 @@ namespace engine::server
 
 		const uint32_t intervalTicks = ResolveMobAiIntervalTicks();
 		const float simulationDt = static_cast<float>(intervalTicks) / static_cast<float>(m_tickHz);
-		const float maxStep = mob.moveSpeedMetersPerSecond * simulationDt;
+		// Combat SP3 — ralentissements actifs (SlowMobPercent cumulés, plancher
+		// 10 % de la vitesse de base ; la valeur de base n'est jamais écrasée).
+		const float slowFactor = std::clamp(
+			1.0f - SumAuraPercent(mob.auras, SpellEffectType::SlowMobPercent) / 100.0f, 0.1f, 1.0f);
+		const float maxStep = mob.moveSpeedMetersPerSecond * slowFactor * simulationDt;
 		const float distance = std::sqrt(distanceSquared);
 		if (distance <= maxStep)
 		{
@@ -3641,6 +3717,582 @@ namespace engine::server
 			const uint32_t whole = static_cast<uint32_t>(client.resourceRegenCarry);
 			client.resourceRegenCarry -= static_cast<float>(whole);
 			client.currentResource = std::min(client.maxResource, client.currentResource + whole);
+			// Push throttlé (≤ 1 / 500 ms) — le débit d'un cast force l'envoi, lui.
+			SendResourceUpdate(client, false);
+		}
+	}
+
+	void ServerApp::SendResourceUpdate(ConnectedClient& client, bool force)
+	{
+		const uint64_t nowMs = NowMonotonicMs();
+		if (!force)
+		{
+			if ((nowMs - client.lastResourceUpdateSentMs) < 500u)
+			{
+				return;
+			}
+			if (client.currentResource == client.lastResourceUpdateSentValue)
+			{
+				return;
+			}
+		}
+
+		ResourceUpdateMessage message{};
+		message.clientId = client.clientId;
+		message.currentResource = client.currentResource;
+		message.maxResource = client.maxResource;
+		if (!m_transport.Send(client.endpoint, EncodeResourceUpdate(message)))
+		{
+			LOG_WARN(Net, "[ServerApp] ResourceUpdate send failed (client_id={})", client.clientId);
+			return;
+		}
+		client.lastResourceUpdateSentMs = nowMs;
+		client.lastResourceUpdateSentValue = client.currentResource;
+	}
+
+	void ServerApp::HandleCastRequest(const Endpoint& endpoint, const CastRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] CastRequest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] CastRequest ignored: client_id mismatch (expected={}, got={})",
+				client->clientId, message.clientId);
+			return;
+		}
+
+		if ((client->stateFlags & kEntityStateDead) != 0u)
+		{
+			LOG_WARN(Net, "[ServerApp] CastRequest ignored: caster is dead (client_id={})", client->clientId);
+			return;
+		}
+
+		if (client->profileId.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] CastRequest ignored: no class profile (client_id={})", client->clientId);
+			return;
+		}
+
+		const SpellDef* spell = m_spellKits.FindSpell(client->profileId, message.spellId);
+		if (spell == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] CastRequest ignored: spell '{}' not in kit '{}' (client_id={})",
+				message.spellId, client->profileId, client->clientId);
+			return;
+		}
+
+		if (!client->activeCastSpellId.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] CastRequest ignored: cast already in progress (client_id={})", client->clientId);
+			return;
+		}
+
+		const uint64_t nowMs = NowMonotonicMs();
+		const auto cooldownIt = client->spellCooldownUntilMs.find(spell->spellId);
+		if (cooldownIt != client->spellCooldownUntilMs.end() && nowMs < cooldownIt->second)
+		{
+			LOG_WARN(Net, "[ServerApp] CastRequest ignored: spell on cooldown (client_id={}, spell={})",
+				client->clientId, spell->spellId);
+			return;
+		}
+
+		const uint32_t cost = spell->resourceCostPercent * client->maxResource / 100u;
+		if (client->currentResource < cost)
+		{
+			LOG_WARN(Net, "[ServerApp] CastRequest ignored: not enough resource (client_id={}, spell={}, cost={}, current={})",
+				client->clientId, spell->spellId, cost, client->currentResource);
+			return;
+		}
+
+		// Résolution et validation de la cible selon le type du sort.
+		// rangeMeters 0 = mêlée → portée d'auto-attaque du joueur.
+		const float range = (spell->rangeMeters > 0.0f) ? spell->rangeMeters : client->combat.attackRangeMeters;
+		EntityId resolvedTarget = 0;
+		if (spell->targetType == SpellTargetKind::SingleEnemy)
+		{
+			MobEntity* target = FindMobByEntityId(message.targetEntityId);
+			if (target == nullptr || target->zoneId != client->zoneId
+				|| (target->stateFlags & kEntityStateDead) != 0u || target->stats.currentHealth == 0)
+			{
+				LOG_WARN(Net, "[ServerApp] CastRequest ignored: invalid enemy target (client_id={}, target_entity_id={})",
+					client->clientId, message.targetEntityId);
+				return;
+			}
+			const float distanceSquared = DistanceSquaredXZ(
+				client->positionMetersX, client->positionMetersZ,
+				target->positionMetersX, target->positionMetersZ);
+			if (distanceSquared > range * range)
+			{
+				LOG_WARN(Net, "[ServerApp] CastRequest ignored: target out of range (client_id={}, spell={})",
+					client->clientId, spell->spellId);
+				return;
+			}
+			resolvedTarget = target->entityId;
+		}
+		else if (spell->targetType == SpellTargetKind::SingleAlly)
+		{
+			// Défaut : soi. Un membre du même groupe vivant et à portée est accepté.
+			resolvedTarget = client->entityId;
+			if (message.targetEntityId != 0 && message.targetEntityId != client->entityId)
+			{
+				if (ConnectedClient* ally = FindClientByEntityId(message.targetEntityId))
+				{
+					const Party* casterParty = m_partySystem.FindPartyByMember(client->clientId);
+					const bool sameParty = casterParty != nullptr
+						&& m_partySystem.FindPartyByMember(ally->clientId) == casterParty;
+					const float allyDistanceSquared = DistanceSquaredXZ(
+						client->positionMetersX, client->positionMetersZ,
+						ally->positionMetersX, ally->positionMetersZ);
+					if (sameParty && (ally->stateFlags & kEntityStateDead) == 0u
+						&& allyDistanceSquared <= range * range)
+					{
+						resolvedTarget = ally->entityId;
+					}
+				}
+			}
+		}
+		// SelfOnly / AreaAroundSelf : pas de cible (résolus autour du casteur).
+
+		if (spell->castTimeMs == 0)
+		{
+			ResolveSpellCast(*client, *spell, resolvedTarget);
+			return;
+		}
+
+		// Cast à incantation : armé, résolu/annulé par TickActiveCasts.
+		client->activeCastSpellId = spell->spellId;
+		client->castFinishAtMs = nowMs + spell->castTimeMs;
+		client->castStartPosX = client->positionMetersX;
+		client->castStartPosZ = client->positionMetersZ;
+		client->castTargetEntityId = resolvedTarget;
+
+		CastBarUpdateMessage castBar{};
+		castBar.clientId = client->clientId;
+		castBar.status = kCastBarStatusStart;
+		castBar.durationMs = spell->castTimeMs;
+		castBar.spellId = spell->spellId;
+		(void)m_transport.Send(client->endpoint, EncodeCastBarUpdate(castBar));
+		LOG_INFO(Net, "[ServerApp] Cast started (client_id={}, spell={}, duration_ms={})",
+			client->clientId, spell->spellId, spell->castTimeMs);
+	}
+
+	void ServerApp::TickActiveCasts()
+	{
+		const uint64_t nowMs = NowMonotonicMs();
+		for (ConnectedClient& client : m_clients)
+		{
+			if (client.activeCastSpellId.empty())
+			{
+				continue;
+			}
+
+			const bool casterDead = (client.stateFlags & kEntityStateDead) != 0u;
+			const float dx = client.positionMetersX - client.castStartPosX;
+			const float dz = client.positionMetersZ - client.castStartPosZ;
+			// Annulation au déplacement > 0,5 m (décision plan SP3) ou à la mort.
+			const bool moved = (dx * dx + dz * dz) > 0.25f;
+			if (casterDead || moved)
+			{
+				CastBarUpdateMessage cancel{};
+				cancel.clientId = client.clientId;
+				cancel.status = kCastBarStatusCancel;
+				cancel.spellId = client.activeCastSpellId;
+				(void)m_transport.Send(client.endpoint, EncodeCastBarUpdate(cancel));
+				LOG_INFO(Net, "[ServerApp] Cast cancelled (client_id={}, spell={}, reason={})",
+					client.clientId, client.activeCastSpellId, casterDead ? "dead" : "moved");
+				client.activeCastSpellId.clear();
+				client.castFinishAtMs = 0;
+				client.castTargetEntityId = 0;
+				continue;
+			}
+
+			if (nowMs < client.castFinishAtMs)
+			{
+				continue;
+			}
+
+			const SpellDef* spell = m_spellKits.FindSpell(client.profileId, client.activeCastSpellId);
+			const EntityId target = client.castTargetEntityId;
+			const std::string finishedSpellId = client.activeCastSpellId;
+			client.activeCastSpellId.clear();
+			client.castFinishAtMs = 0;
+			client.castTargetEntityId = 0;
+			if (spell == nullptr)
+			{
+				continue;
+			}
+
+			CastBarUpdateMessage complete{};
+			complete.clientId = client.clientId;
+			complete.status = kCastBarStatusComplete;
+			complete.spellId = finishedSpellId;
+			(void)m_transport.Send(client.endpoint, EncodeCastBarUpdate(complete));
+			ResolveSpellCast(client, *spell, target);
+		}
+	}
+
+	void ServerApp::ResolveSpellCast(ConnectedClient& client, const SpellDef& spell, EntityId targetEntityId)
+	{
+		const uint64_t nowMs = NowMonotonicMs();
+		// Débit (clamp défensif : la ressource a pu varier pendant l'incantation)
+		// + cooldown. Validations de cible faites à la demande ; une cible morte
+		// entre-temps rend les effets ciblés no-op (le coût reste dû).
+		const uint32_t cost = spell.resourceCostPercent * client.maxResource / 100u;
+		client.currentResource = (client.currentResource >= cost) ? (client.currentResource - cost) : 0u;
+		SendResourceUpdate(client, true);
+		if (spell.cooldownMs > 0)
+		{
+			client.spellCooldownUntilMs[spell.spellId] = nowMs + spell.cooldownMs;
+		}
+
+		bool casterAurasChanged = false;
+		for (const SpellEffectDef& effect : spell.effects)
+		{
+			switch (effect.type)
+			{
+			case SpellEffectType::DirectDamage:
+			{
+				const uint32_t baseDamage = static_cast<uint32_t>(
+					std::llround(static_cast<double>(effect.mult) * static_cast<double>(client.combat.damagePerHit)));
+				if (spell.targetType == SpellTargetKind::AreaAroundSelf)
+				{
+					const float radiusSquared = spell.areaRadiusMeters * spell.areaRadiusMeters;
+					for (MobEntity& mob : m_mobs)
+					{
+						if (mob.zoneId != client.zoneId || mob.pendingDespawn
+							|| (mob.stateFlags & kEntityStateDead) != 0u || mob.stats.currentHealth == 0)
+						{
+							continue;
+						}
+						const float distanceSquared = DistanceSquaredXZ(
+							client.positionMetersX, client.positionMetersZ,
+							mob.positionMetersX, mob.positionMetersZ);
+						if (distanceSquared > radiusSquared)
+						{
+							continue;
+						}
+						const combat::AttackRollResult roll = combat::ResolveAttackRoll(
+							baseDamage, client.combat.accuracy, client.combat.critRate,
+							client.combat.critMult, NextCombatRoll01(), NextCombatRoll01());
+						if (roll.miss)
+						{
+							continue; // V1 : pas d'event raté par cible AoE (anti-spam log).
+						}
+						uint32_t eventFlags = roll.crit ? kCombatEventFlagCrit : 0u;
+						ApplyPlayerDamageToMob(client, mob,
+							ApplyAuraDamageModifiers(roll.damage, client.auras, mob.auras), eventFlags);
+					}
+				}
+				else if (MobEntity* target = FindMobByEntityId(targetEntityId))
+				{
+					if ((target->stateFlags & kEntityStateDead) == 0u && target->stats.currentHealth > 0)
+					{
+						const combat::AttackRollResult roll = combat::ResolveAttackRoll(
+							baseDamage, client.combat.accuracy, client.combat.critRate,
+							client.combat.critMult, NextCombatRoll01(), NextCombatRoll01());
+						uint32_t eventFlags = 0u;
+						if (roll.miss) eventFlags |= kCombatEventFlagMiss;
+						if (roll.crit) eventFlags |= kCombatEventFlagCrit;
+						if (roll.miss)
+						{
+							CombatEventMessage missEvent{};
+							missEvent.attackerEntityId = client.entityId;
+							missEvent.targetEntityId = target->entityId;
+							missEvent.targetCurrentHealth = target->stats.currentHealth;
+							missEvent.targetMaxHealth = target->stats.maxHealth;
+							missEvent.targetStateFlags = target->stateFlags;
+							missEvent.flags = eventFlags;
+							BroadcastCombatEvent(missEvent);
+						}
+						else
+						{
+							ApplyPlayerDamageToMob(client, *target,
+								ApplyAuraDamageModifiers(roll.damage, client.auras, target->auras), eventFlags);
+						}
+					}
+				}
+				break;
+			}
+			case SpellEffectType::DamageOverTime:
+			case SpellEffectType::SlowMobPercent:
+			case SpellEffectType::DebuffDamageTakenPercent:
+			{
+				MobEntity* target = FindMobByEntityId(targetEntityId);
+				if (target == nullptr || (target->stateFlags & kEntityStateDead) != 0u)
+				{
+					break;
+				}
+				ActiveAura aura{};
+				aura.spellId = spell.spellId;
+				aura.type = effect.type;
+				aura.percent = effect.percent;
+				aura.tickPeriodMs = effect.tickPeriodMs;
+				aura.expiresAtMs = nowMs + effect.durationMs;
+				aura.nextTickAtMs = nowMs + effect.tickPeriodMs;
+				aura.casterEntityId = client.entityId;
+				if (effect.type == SpellEffectType::DamageOverTime)
+				{
+					aura.tickAmount = static_cast<uint32_t>(std::llround(
+						static_cast<double>(effect.mult) * static_cast<double>(client.combat.damagePerHit)));
+				}
+				UpsertAura(target->auras, std::move(aura));
+				BroadcastAuraUpdate(target->entityId, target->auras);
+				break;
+			}
+			case SpellEffectType::TauntThreatMult:
+			{
+				MobEntity* target = FindMobByEntityId(targetEntityId);
+				if (target == nullptr || (target->stateFlags & kEntityStateDead) != 0u)
+				{
+					break;
+				}
+				// Taunt : menace du casteur = mult × menace max courante (plancher
+				// 100 pour engager un mob encore vierge), agro forcée immédiate.
+				uint32_t maxThreat = 0;
+				for (const ThreatEntry& entry : target->threatTable)
+				{
+					maxThreat = std::max(maxThreat, entry.threat);
+				}
+				const uint32_t tauntThreat = std::max(100u, static_cast<uint32_t>(
+					std::llround(static_cast<double>(maxThreat) * static_cast<double>(effect.mult))));
+				bool found = false;
+				for (ThreatEntry& entry : target->threatTable)
+				{
+					if (entry.entityId == client.entityId)
+					{
+						entry.threat = std::max(entry.threat, tauntThreat);
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+				{
+					target->threatTable.push_back(ThreatEntry{ client.entityId, tauntThreat });
+				}
+				target->aggroTargetEntityId = client.entityId;
+				LOG_INFO(Net, "[ServerApp] Taunt applied (client_id={}, mob_entity_id={}, threat={})",
+					client.clientId, target->entityId, tauntThreat);
+				break;
+			}
+			case SpellEffectType::ThreatReducePercent:
+			{
+				// Dérobade : réduit la menace du casteur sur TOUS les mobs engagés.
+				const double keepFactor = 1.0 - static_cast<double>(effect.percent) / 100.0;
+				for (MobEntity& mob : m_mobs)
+				{
+					for (ThreatEntry& entry : mob.threatTable)
+					{
+						if (entry.entityId == client.entityId)
+						{
+							entry.threat = static_cast<uint32_t>(std::llround(
+								static_cast<double>(entry.threat) * keepFactor));
+						}
+					}
+				}
+				LOG_INFO(Net, "[ServerApp] Threat reduced (client_id={}, percent={})",
+					client.clientId, effect.percent);
+				break;
+			}
+			case SpellEffectType::DirectHeal:
+			case SpellEffectType::HealOverTime:
+			case SpellEffectType::BuffDamagePercent:
+			{
+				// Cible alliée : soi par défaut, ou l'allié validé à la demande.
+				ConnectedClient* ally = &client;
+				if (targetEntityId != 0 && targetEntityId != client.entityId)
+				{
+					if (ConnectedClient* other = FindClientByEntityId(targetEntityId))
+					{
+						ally = other;
+					}
+				}
+				if ((ally->stateFlags & kEntityStateDead) != 0u)
+				{
+					break; // pas de soin/buff sur un mort (résurrection = hors V1).
+				}
+				if (effect.type == SpellEffectType::DirectHeal)
+				{
+					const uint32_t heal = static_cast<uint32_t>(std::llround(
+						static_cast<double>(effect.mult) * static_cast<double>(client.combat.damagePerHit)));
+					ally->stats.currentHealth = std::min(ally->stats.maxHealth, ally->stats.currentHealth + heal);
+					LOG_INFO(Net, "[ServerApp] Heal applied (caster={}, target_entity_id={}, heal={}, hp={}/{})",
+						client.clientId, ally->entityId, heal, ally->stats.currentHealth, ally->stats.maxHealth);
+				}
+				else
+				{
+					ActiveAura aura{};
+					aura.spellId = spell.spellId;
+					aura.type = effect.type;
+					aura.percent = effect.percent;
+					aura.tickPeriodMs = effect.tickPeriodMs;
+					aura.expiresAtMs = nowMs + effect.durationMs;
+					aura.nextTickAtMs = nowMs + effect.tickPeriodMs;
+					aura.casterEntityId = client.entityId;
+					if (effect.type == SpellEffectType::HealOverTime)
+					{
+						// % PV max de la CIBLE prioritaire (« Second souffle »),
+						// sinon mult × damage du casteur.
+						aura.tickAmount = (effect.percentMaxHpPerTick > 0.0f)
+							? static_cast<uint32_t>(std::llround(
+								static_cast<double>(ally->stats.maxHealth)
+								* static_cast<double>(effect.percentMaxHpPerTick) / 100.0))
+							: static_cast<uint32_t>(std::llround(
+								static_cast<double>(effect.mult) * static_cast<double>(client.combat.damagePerHit)));
+					}
+					UpsertAura(ally->auras, std::move(aura));
+					if (ally == &client)
+					{
+						casterAurasChanged = true;
+					}
+					else
+					{
+						BroadcastAuraUpdate(ally->entityId, ally->auras);
+					}
+				}
+				break;
+			}
+			}
+		}
+
+		if (casterAurasChanged)
+		{
+			BroadcastAuraUpdate(client.entityId, client.auras);
+		}
+		LOG_INFO(Net, "[ServerApp] Spell cast resolved (client_id={}, spell={}, cost={}, resource={}/{})",
+			client.clientId, spell.spellId, cost, client.currentResource, client.maxResource);
+	}
+
+	void ServerApp::TickAuras()
+	{
+		const uint64_t nowMs = NowMonotonicMs();
+
+		// Joueurs : HoT/buffs (aucune source de DoT sur joueur en V1).
+		for (ConnectedClient& client : m_clients)
+		{
+			if (client.auras.empty())
+			{
+				continue;
+			}
+			const bool clientDead = (client.stateFlags & kEntityStateDead) != 0u;
+			for (ActiveAura& aura : client.auras)
+			{
+				if (aura.tickPeriodMs == 0 || nowMs < aura.nextTickAtMs || nowMs >= aura.expiresAtMs)
+				{
+					continue;
+				}
+				aura.nextTickAtMs += aura.tickPeriodMs;
+				if (aura.type == SpellEffectType::HealOverTime && !clientDead)
+				{
+					client.stats.currentHealth = std::min(
+						client.stats.maxHealth, client.stats.currentHealth + aura.tickAmount);
+				}
+			}
+			const size_t beforeCount = client.auras.size();
+			client.auras.erase(
+				std::remove_if(client.auras.begin(), client.auras.end(),
+					[nowMs](const ActiveAura& aura) { return nowMs >= aura.expiresAtMs; }),
+				client.auras.end());
+			if (client.auras.size() != beforeCount)
+			{
+				BroadcastAuraUpdate(client.entityId, client.auras);
+			}
+		}
+
+		// Mobs : DoT (via le chemin commun dégâts/mort/loot/XP si le casteur est
+		// encore connecté) + expirations (slow/debuff).
+		for (MobEntity& mob : m_mobs)
+		{
+			if (mob.auras.empty())
+			{
+				continue;
+			}
+			if (mob.pendingDespawn || (mob.stateFlags & kEntityStateDead) != 0u)
+			{
+				mob.auras.clear();
+				continue;
+			}
+			for (ActiveAura& aura : mob.auras)
+			{
+				if (aura.type != SpellEffectType::DamageOverTime
+					|| aura.tickPeriodMs == 0 || nowMs < aura.nextTickAtMs || nowMs >= aura.expiresAtMs)
+				{
+					continue;
+				}
+				aura.nextTickAtMs += aura.tickPeriodMs;
+				if (ConnectedClient* caster = FindClientByEntityId(aura.casterEntityId))
+				{
+					// Le tick profite des debuffs « dégâts subis » de la cible mais
+					// pas des buffs du casteur (montant figé à l'application).
+					ApplyPlayerDamageToMob(*caster, mob,
+						ApplyAuraDamageModifiers(aura.tickAmount, {}, mob.auras), 0u);
+				}
+				else
+				{
+					// Casteur déconnecté : dégâts secs, sans loot/XP ni événement.
+					const uint32_t applied = std::min(aura.tickAmount, mob.stats.currentHealth);
+					mob.stats.currentHealth -= applied;
+					if (mob.stats.currentHealth == 0)
+					{
+						mob.stateFlags |= kEntityStateDead;
+						mob.pendingDespawn = true;
+						mob.aggroTargetEntityId = 0;
+						mob.threatTable.clear();
+						LOG_INFO(Net, "[ServerApp] Mob died from orphan DoT (entity_id={})", mob.entityId);
+					}
+				}
+				if ((mob.stateFlags & kEntityStateDead) != 0u)
+				{
+					break; // mort pendant le tick : les auras seront purgées ci-dessous.
+				}
+			}
+			if (mob.pendingDespawn || (mob.stateFlags & kEntityStateDead) != 0u)
+			{
+				mob.auras.clear();
+				continue;
+			}
+			const size_t beforeCount = mob.auras.size();
+			mob.auras.erase(
+				std::remove_if(mob.auras.begin(), mob.auras.end(),
+					[nowMs](const ActiveAura& aura) { return nowMs >= aura.expiresAtMs; }),
+				mob.auras.end());
+			if (mob.auras.size() != beforeCount)
+			{
+				BroadcastAuraUpdate(mob.entityId, mob.auras);
+			}
+		}
+	}
+
+	void ServerApp::BroadcastAuraUpdate(EntityId entityId, const std::vector<ActiveAura>& auras)
+	{
+		AuraUpdateMessage message{};
+		message.targetEntityId = entityId;
+		const uint64_t nowMs = NowMonotonicMs();
+		for (const ActiveAura& aura : auras)
+		{
+			AuraWireEntry entry{};
+			entry.spellId = aura.spellId;
+			entry.effectType = static_cast<uint8_t>(aura.type);
+			entry.remainingMs = (aura.expiresAtMs > nowMs)
+				? static_cast<uint32_t>(aura.expiresAtMs - nowMs)
+				: 0u;
+			entry.stacks = aura.stacks;
+			message.auras.push_back(std::move(entry));
+		}
+
+		const std::vector<std::byte> packet = EncodeAuraUpdate(message);
+		for (const ConnectedClient& receiver : m_clients)
+		{
+			if (receiver.entityId != entityId && !ContainsEntityId(receiver.interestEntityIds, entityId))
+			{
+				continue;
+			}
+			(void)m_transport.Send(receiver.endpoint, packet);
 		}
 	}
 
@@ -3676,7 +4328,12 @@ namespace engine::server
 		if (roll.miss) eventFlags |= kCombatEventFlagMiss;
 		if (roll.crit) eventFlags |= kCombatEventFlagCrit;
 
-		const uint32_t appliedDamage = roll.miss ? 0u : std::min(roll.damage, target.stats.currentHealth);
+		// Combat SP3 — modificateurs d'auras (debuff « dégâts subis » de la cible ;
+		// les mobs n'ont pas de buffs de dégâts en V1 mais le chemin est commun).
+		const uint32_t modifiedDamage = roll.miss
+			? 0u
+			: ApplyAuraDamageModifiers(roll.damage, mob.auras, target.auras);
+		const uint32_t appliedDamage = roll.miss ? 0u : std::min(modifiedDamage, target.stats.currentHealth);
 		if (!roll.miss && appliedDamage == 0)
 		{
 			return false;
@@ -3695,6 +4352,13 @@ namespace engine::server
 			// Combat SP2 — un joueur mort sort de toutes les tables de menace ;
 			// les mobs repassent en patrouille au prochain tick d'IA.
 			PurgeThreatForEntity(target.entityId);
+			// Combat SP3 — les auras du mort tombent (le cast en cours est annulé
+			// par TickActiveCasts via le flag dead).
+			if (!target.auras.empty())
+			{
+				target.auras.clear();
+				BroadcastAuraUpdate(target.entityId, target.auras);
+			}
 			SaveConnectedClient(target, "player_death");
 		}
 

@@ -120,12 +120,12 @@ Schéma (valeurs = kits VALIDÉS, recopier depuis la proposition §2) :
 - Encode/Decode + tests roundtrip chacun + rejets tronqués (pattern TestRespawnRequestRoundTrip).
 - `AuraUpdate` broadcast aux clients intéressés (même périmètre que CombatEvent) à chaque apply/refresh/expire ; payload = liste complète des auras de l'entité (idempotent, pas de delta).
 
-### Task 7: Persistance des auras (serveur)
+### Task 7: Persistance des auras (serveur) — ABANDONNÉE en V1 (décision d'exécution)
 
-**Files:** Modify `src/shardd/gameplay/character/CharacterPersistence.{h,cpp}` + ServerApp.cpp.
-
-- `struct PersistedAura { std::string spellId; uint8_t type; float value; float percentMaxHpPerTick; uint32_t remainingMs; uint32_t tickPeriodMs; float tickAmount; }` ; `std::vector<PersistedAura> auras;` dans PersistedCharacterState ; sérialisation dans le format fichier existant (suivre le pattern de `professions`).
-- Save : à chaque `SaveConnectedClient` (remainingMs = expiresAtMs - now). Load : réapplication à l'enter-world (expiresAt = now + remainingMs).
+Toutes les auras des kits validés durent ≤ 12 s : persister un effet de quelques
+secondes à travers un logout/login n'a aucun intérêt joueur et ajouterait un
+format de sérialisation à maintenir. Reportée à l'arrivée de buffs longs
+(heures) — la table `character_auras` (0061) reste réservée à cet usage.
 
 ### Task 8: PR SP3-A
 

@@ -1,0 +1,44 @@
+{
+  "profile": "tank",
+  "spells": [
+    {
+      "id": "tank_provocation",
+      "name": "Provocation",
+      "slot": 1,
+      "castTimeMs": 0,
+      "cooldownMs": 8000,
+      "resourceCostPercent": 10,
+      "rangeMeters": 10,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "TauntThreatMult", "mult": 3.0 } ]
+    },
+    {
+      "id": "tank_coup_de_bouclier",
+      "name": "Coup de bouclier",
+      "slot": 2,
+      "castTimeMs": 0,
+      "cooldownMs": 12000,
+      "resourceCostPercent": 20,
+      "rangeMeters": 0,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [
+        { "type": "DirectDamage", "mult": 1.0 },
+        { "type": "SlowMobPercent", "percent": 30, "durationMs": 4000 }
+      ]
+    },
+    {
+      "id": "tank_second_souffle",
+      "name": "Second souffle",
+      "slot": 3,
+      "castTimeMs": 0,
+      "cooldownMs": 30000,
+      "resourceCostPercent": 30,
+      "rangeMeters": 0,
+      "targetType": "SelfOnly",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "HealOverTime", "mult": 0, "percentMaxHpPerTick": 3, "tickPeriodMs": 2000, "durationMs": 10000 } ]
+    }
+  ]
+}

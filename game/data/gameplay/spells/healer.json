@@ -1,0 +1,41 @@
+{
+  "profile": "healer",
+  "spells": [
+    {
+      "id": "healer_soin_rapide",
+      "name": "Soin rapide",
+      "slot": 1,
+      "castTimeMs": 1500,
+      "cooldownMs": 0,
+      "resourceCostPercent": 25,
+      "rangeMeters": 30,
+      "targetType": "SingleAlly",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DirectHeal", "mult": 2.0 } ]
+    },
+    {
+      "id": "healer_remission",
+      "name": "Remission",
+      "slot": 2,
+      "castTimeMs": 0,
+      "cooldownMs": 8000,
+      "resourceCostPercent": 25,
+      "rangeMeters": 30,
+      "targetType": "SingleAlly",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "HealOverTime", "mult": 0.5, "tickPeriodMs": 2000, "durationMs": 10000 } ]
+    },
+    {
+      "id": "healer_chatiment",
+      "name": "Chatiment",
+      "slot": 3,
+      "castTimeMs": 1500,
+      "cooldownMs": 4000,
+      "resourceCostPercent": 15,
+      "rangeMeters": 30,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DirectDamage", "mult": 1.0 } ]
+    }
+  ]
+}

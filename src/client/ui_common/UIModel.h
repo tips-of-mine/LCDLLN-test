@@ -237,6 +237,13 @@ namespace engine::client
 		uint64_t startedAtNs = 0;
 	};
 
+	/// Combat SP4 — une entrée de menace répliquée (ThreatUpdate, wire v12).
+	struct UIThreatEntry
+	{
+		engine::server::EntityId playerEntityId = 0;
+		uint32_t threatValue = 0;
+	};
+
 	/// Combat SP3 — une aura active répliquée (AuraUpdate, wire v11).
 	struct UIAuraEntry
 	{
@@ -415,6 +422,9 @@ namespace engine::client
 		/// intégralement à chaque AuraUpdate de l'entité. Une entité qui sort de
 		/// l'AoI garde une entrée périmée jusqu'au prochain ApplySnapshot (purge).
 		std::unordered_map<engine::server::EntityId, std::vector<UIAuraEntry>> entityAuras;
+		/// Combat SP4 — table de menace par mob (remplacée intégralement à chaque
+		/// ThreatUpdate ; liste vide reçue = entrée supprimée). Purgée avec l'AoI.
+		std::unordered_map<engine::server::EntityId, std::vector<UIThreatEntry>> threatByMob;
 		std::string debugDump;
 
 		/// Build a text dump suitable for a debug widget or logs.
@@ -512,6 +522,9 @@ namespace engine::client
 		/// Combat SP3 — remplace les auras d'une entité (AuraUpdate, idempotent).
 		bool ApplyAuraUpdate(std::span<const std::byte> packet);
 
+		/// Combat SP4 — remplace la table de menace d'un mob (ThreatUpdate).
+		bool ApplyThreatUpdate(std::span<const std::byte> packet);
+
 		/// Apply one decoded zone change packet to the world section of the UI model.
 		bool ApplyZoneChange(std::span<const std::byte> packet);
 
@@ -606,6 +619,7 @@ namespace engine::client
 		engine::server::ResourceUpdateMessage m_resourceUpdateMessage{};
 		engine::server::CastBarUpdateMessage m_castBarUpdateMessage{};
 		engine::server::AuraUpdateMessage m_auraUpdateMessage{};
+		engine::server::ThreatUpdateMessage m_threatUpdateMessage{};
 		engine::server::ZoneChangeMessage m_zoneChangeMessage{};
 		engine::server::InventoryDeltaMessage m_inventoryMessage{};
 		engine::server::QuestDeltaMessage m_questMessage{};

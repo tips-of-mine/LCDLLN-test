@@ -33,6 +33,8 @@
 // Combat SP3 — barre d'action (kits de sorts) + BuffBar (auras répliquées).
 #include "src/client/combat/BuffBarPresenter.h"
 #include "src/client/gameplay/SpellKitCatalog.h"
+// Combat SP4 — FX visuels d'auras (halo aux pieds des entités).
+#include "src/client/combat/AuraFXSystem.h"
 #include "src/client/debug/ProfilerHud.h"
 #include "src/client/economy/ShopUi.h"
 #include "src/client/ui_common/UIModel.h"
@@ -1276,6 +1278,9 @@ namespace engine
 		engine::client::SpellKitCatalog m_spellCatalog{};
 		/// Combat SP3 — BuffBar (M31.2) : auras du joueur et de la cible.
 		engine::client::BuffBarPresenter m_buffBar{};
+		/// Combat SP4 — FX d'auras (couche données ; rendu = halo écran-espace
+		/// coloré aux pieds, couleur résolue par ResolveAuraVisuals).
+		engine::client::AuraFXSystem m_auraFx{};
 		/// Combat SP3 — cooldowns AFFICHÉS de la barre d'action (spellId → fin en
 		/// secondes EngineNowSec) ; purement cosmétique, le serveur fait foi.
 		std::unordered_map<std::string, float> m_spellCooldownUiUntilSec;

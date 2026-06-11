@@ -248,7 +248,13 @@ namespace engine::server
 		/// Combat SP4 — shard → clients intéressés : table de menace d'un mob
 		/// (liste complète idempotente, vide = effacement). Alimente le threat
 		/// meter (AdvancedCombatUi). Bump v11→v12.
-		ThreatUpdate = 85
+		ThreatUpdate = 85,
+		/// Correction SP1 — shard → client : position IMPOSÉE par le serveur
+		/// (respawn, rejet anti-triche, téléport). Le mouvement reste
+		/// client-autoritaire (T0.1) ; ce kind est le canal de correction.
+		/// Ajout rétro-additif : un client qui ne le connaît pas l'ignore
+		/// (pas de bump de kProtocolVersion).
+		ForcePosition = 86
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -442,6 +448,24 @@ namespace engine::server
 		std::vector<ThreatWireEntry> entries;
 	};
 
+	/// Correction SP1 — raisons d'une position imposée (ForcePositionMessage::reason).
+	inline constexpr uint8_t kForcePositionReasonRespawn = 0;
+	inline constexpr uint8_t kForcePositionReasonAntiCheat = 1;
+	inline constexpr uint8_t kForcePositionReasonTeleport = 2;
+
+	/// Correction SP1 — shard → client : position imposée par le serveur. Le
+	/// client téléporte son CharacterController (le mouvement client-autoritaire
+	/// reprend ensuite depuis cette position). Payload fixe 21 octets.
+	struct ForcePositionMessage
+	{
+		uint32_t clientId = 0;
+		float positionX = 0.0f;
+		float positionY = 0.0f;
+		float positionZ = 0.0f;
+		float yawRadians = 0.0f;
+		uint8_t reason = kForcePositionReasonTeleport;
+	};
+
 	/// Client request asking the authoritative server to pick up one loot bag entity.
 	struct PickupRequestMessage
 	{
@@ -603,6 +627,10 @@ namespace engine::server
 	/// Combat SP4 — encode/decode de la table de menace répliquée (wire v12).
 	std::vector<std::byte> EncodeThreatUpdate(const ThreatUpdateMessage& message);
 	bool DecodeThreatUpdate(std::span<const std::byte> packet, ThreatUpdateMessage& outMessage);
+
+	/// Correction SP1 — encode/decode de la position imposée (rétro-additif).
+	std::vector<std::byte> EncodeForcePosition(const ForcePositionMessage& message);
+	bool DecodeForcePosition(std::span<const std::byte> packet, ForcePositionMessage& outMessage);
 
 	/// Encode a combat event packet with the protocol header.
 	std::vector<std::byte> EncodeCombatEvent(const CombatEventMessage& message);

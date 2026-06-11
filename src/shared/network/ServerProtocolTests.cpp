@@ -514,6 +514,37 @@ namespace
 		std::puts("[OK] TestPlayerStatsRoundTripWithProfile");
 	}
 
+	/// Correction SP1 — round-trip ForcePosition + rejets (tronqué, reason hors domaine).
+	void TestForcePositionRoundTrip()
+	{
+		engine::server::ForcePositionMessage in{};
+		in.clientId = 7u;
+		in.positionX = 96.0f;
+		in.positionY = 1.5f;
+		in.positionZ = 96.0f;
+		in.yawRadians = 1.57f;
+		in.reason = engine::server::kForcePositionReasonRespawn;
+
+		const std::vector<std::byte> packet = engine::server::EncodeForcePosition(in);
+		engine::server::ForcePositionMessage out{};
+		assert(engine::server::DecodeForcePosition(packet, out));
+		assert(out.clientId == 7u);
+		assert(out.positionX == 96.0f && out.positionY == 1.5f && out.positionZ == 96.0f);
+		assert(out.yawRadians == 1.57f);
+		assert(out.reason == engine::server::kForcePositionReasonRespawn);
+
+		// Paquet tronqué rejeté.
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 2u);
+		assert(!engine::server::DecodeForcePosition(truncated, out));
+
+		// Reason hors domaine rejeté (octet 20 du payload, après le header 8 o).
+		std::vector<std::byte> badReason = packet;
+		badReason[8 + 20] = static_cast<std::byte>(9);
+		assert(!engine::server::DecodeForcePosition(badReason, out));
+		std::puts("[OK] TestForcePositionRoundTrip");
+	}
+
 int main()
 {
 	TestInputRoundTrip();
@@ -533,6 +564,7 @@ int main()
 	TestAuraUpdateRoundTrip();
 	TestThreatUpdateRoundTrip();
 	TestPlayerStatsRoundTripWithProfile();
+	TestForcePositionRoundTrip();
 	std::puts("All ServerProtocol tests passed");
 	return 0;
 }

@@ -13275,6 +13275,26 @@ namespace engine
 		// Métiers SP1 — progression des cast bars récolte/artisanat.
 		(void)m_harvestBar.Tick(deltaSeconds);
 		(void)m_craftingUi.Tick(deltaSeconds);
+
+		// Correction SP1 — position imposée par le serveur (respawn, rejet
+		// anti-triche, téléport) : téléporte le CharacterController AVANT
+		// l'envoi du prochain Input — le mouvement client-autoritaire reprend
+		// depuis la position imposée au lieu d'écraser la téléportation serveur
+		// (c'était le bug du respawn SP2 : « Réapparaître » soignait sur place).
+		{
+			const engine::client::UIForcedPosition& forced = m_uiModelBinding.GetModel().forcedPosition;
+			if (forced.pending)
+			{
+				const engine::math::Vec3 forcedPos{ forced.x, forced.y, forced.z };
+				(void)m_characterController.Init(forcedPos);
+				m_orbitalCameraController.SetTargetPosition(forcedPos);
+				m_avatarYaw = forced.yawRadians;
+				LOG_INFO(Core,
+					"[Engine] Position imposée par le serveur appliquée (pos=({:.1f},{:.1f},{:.1f}), reason={})",
+					forced.x, forced.y, forced.z, forced.reason);
+				m_uiModelBinding.ClearForcedPosition();
+			}
+		}
 		if (m_attackSendCooldownSec > 0.0f)
 		{
 			m_attackSendCooldownSec -= deltaSeconds;

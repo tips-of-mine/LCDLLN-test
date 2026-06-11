@@ -237,6 +237,19 @@ namespace engine::client
 		uint64_t startedAtNs = 0;
 	};
 
+	/// Correction SP1 — position imposée par le serveur (ForcePosition) en
+	/// attente d'application par Engine (téléport du CharacterController).
+	struct UIForcedPosition
+	{
+		bool pending = false;
+		float x = 0.0f;
+		float y = 0.0f;
+		float z = 0.0f;
+		float yawRadians = 0.0f;
+		/// kForcePositionReason* (0 respawn, 1 anti-triche, 2 téléport).
+		uint8_t reason = 0;
+	};
+
 	/// Groupes SP1 — invitation de groupe en attente (PartyInviteNotify, M32.2).
 	struct UIPartyInviteState
 	{
@@ -405,6 +418,8 @@ namespace engine::client
 		/// TD.1 : avatars distants (≠ joueur local) reçus dans le dernier snapshot AoI.
 		/// Reconstruit à chaque ApplySnapshot. Consommé par le rendu monde (TD.2).
 		std::vector<UIRemoteEntity> remoteEntities;
+		/// Correction SP1 — position imposée par le serveur (consommée par Engine).
+		UIForcedPosition forcedPosition{};
 		/// Groupes SP1 — invitation en attente (popup Accepter/Refuser).
 		UIPartyInviteState partyInvite{};
 		/// M32.2: True when the local player is currently in a party.
@@ -503,6 +518,10 @@ namespace engine::client
 		/// Notifie UIModelChangeCrafting. Main thread uniquement.
 		bool SelectCraftRecipe(uint32_t rowIndex);
 
+		/// Correction SP1 — consomme la position imposée (après application par
+		/// Engine au CharacterController). Main thread uniquement.
+		void ClearForcedPosition();
+
 		/// M29.3: Refresh billboard projections (call from render/game thread with camera + viewport).
 		void TickChatWorldVisuals(
 			const engine::math::Vec3& cameraWorld,
@@ -544,6 +563,9 @@ namespace engine::client
 
 		/// Groupes SP1 — invitation de groupe entrante (PartyInviteNotify).
 		bool ApplyPartyInviteNotify(std::span<const std::byte> packet);
+
+		/// Correction SP1 — position imposée par le serveur (ForcePosition).
+		bool ApplyForcePosition(std::span<const std::byte> packet);
 
 		/// Apply one decoded zone change packet to the world section of the UI model.
 		bool ApplyZoneChange(std::span<const std::byte> packet);
@@ -641,6 +663,7 @@ namespace engine::client
 		engine::server::AuraUpdateMessage m_auraUpdateMessage{};
 		engine::server::ThreatUpdateMessage m_threatUpdateMessage{};
 		engine::server::PartyInviteNotifyMessage m_partyInviteNotifyMessage{};
+		engine::server::ForcePositionMessage m_forcePositionMessage{};
 		engine::server::ZoneChangeMessage m_zoneChangeMessage{};
 		engine::server::InventoryDeltaMessage m_inventoryMessage{};
 		engine::server::QuestDeltaMessage m_questMessage{};

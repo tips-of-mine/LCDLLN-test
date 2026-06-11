@@ -2268,3 +2268,21 @@ Plan : `docs/superpowers/plans/2026-06-11-metiers-sp1-recolte-artisanat.md`. **P
   onglets métiers → CraftRecipeListRequest, sélection → CraftRequest, annulation, cast bar,
   qualité M36.3). Touche K ajoutée à l''enum Key (leçon SP2).
 - **Déploiement** : ⚠️ shardd (réplication nodes) — porté par la fenêtre lock-step v12.
+
+## Correction SP1 — canal ForcePosition serveur→client (2026-06-12) — CLÔT LES 4 CHANTIERS
+
+Plan : `docs/superpowers/plans/2026-06-12-correction-sp1-force-position.md`. Chantier n°4
+re-cadré avec l''utilisateur : le mouvement reste client-autoritaire (T0.1) ; le serveur
+gagne un canal pour IMPOSER une position. Kind `ForcePosition = 86` **rétro-additif**
+(pas de bump — un client ancien l''ignore).
+
+- **Bug SP2 corrigé** : « Réapparaître » soignait SUR PLACE — le serveur téléportait au
+  spawn mais le client (autoritaire) écrasait la téléportation au tick suivant. Désormais :
+  reset anti-triche (sinon TeleportHack au 1er input depuis le spawn) + ForcePosition →
+  le client ré-Init son CharacterController (le téléport de facto, cf. Engine.cpp:8458).
+- **Désync anti-triche corrigée** : un input rejeté renvoie désormais la dernière position
+  valide au client (throttle 500 ms) au lieu de le laisser désynchronisé en silence.
+- **`ClientPredictionSystem` (M30.1/M30.2) : ARCHIVÉ, non câblé** — c''est la
+  prédiction-réconciliation d''un mouvement SERVEUR-autoritaire (inputs → simulation
+  serveur), l''inverse de T0.1. Socle d''un éventuel futur passage serveur-autoritaire.
+- **Déploiement** : ⚠️ shardd (producteurs) — fenêtre lock-step v12 déjà requise.

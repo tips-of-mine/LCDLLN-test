@@ -783,6 +783,36 @@ namespace engine::server
 		return true;
 	}
 
+	std::vector<std::byte> EncodeForcePosition(const ForcePositionMessage& message)
+	{
+		// Correction SP1 — payload fixe : clientId (4) + x/y/z/yaw (4×4) + reason (1) = 21 o.
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ForcePosition, 21);
+		WriteU32(packet, message.clientId);
+		WriteF32(packet, message.positionX);
+		WriteF32(packet, message.positionY);
+		WriteF32(packet, message.positionZ);
+		WriteF32(packet, message.yawRadians);
+		WriteU8(packet, message.reason);
+		return packet;
+	}
+
+	bool DecodeForcePosition(std::span<const std::byte> packet, ForcePositionMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ForcePosition, payload) || payload.size() != 21)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.positionX = ReadF32(payload, 4);
+		outMessage.positionY = ReadF32(payload, 8);
+		outMessage.positionZ = ReadF32(payload, 12);
+		outMessage.yawRadians = ReadF32(payload, 16);
+		outMessage.reason = ReadU8(payload, 20);
+		return outMessage.reason <= kForcePositionReasonTeleport;
+	}
+
 	std::vector<std::byte> EncodeAuraUpdate(const AuraUpdateMessage& message)
 	{
 		// Combat SP3 — payload : targetEntityId (8) + count (1) puis par aura :

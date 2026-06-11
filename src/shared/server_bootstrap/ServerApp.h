@@ -144,6 +144,9 @@ namespace engine::server
 		/// Combat SP3 — throttle d'envoi des ResourceUpdate (au plus 1 / 500 ms).
 		uint64_t lastResourceUpdateSentMs = 0;
 		uint32_t lastResourceUpdateSentValue = 0;
+		/// Correction SP1 — throttle d'envoi des ForcePosition anti-triche
+		/// (au plus 1 / 500 ms ; les respawns/téléports ne sont pas throttlés).
+		uint64_t lastForcePositionSentMs = 0;
 		/// Combat SP3 — auras actives (buffs, HoT, debuffs subis).
 		std::vector<ActiveAura> auras;
 		/// Combat SP3 — cast en cours (vide = aucun). Annulé si le joueur meurt ou
@@ -527,6 +530,11 @@ namespace engine::server
 		/// Combat SP2 — réapparition d'un joueur mort : téléport au spawn mémorisé
 		/// à l'admission, PV pleins, flag dead retiré. Ignoré si le joueur est vivant.
 		void HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId);
+
+		/// Correction SP1 — impose la position serveur courante au client
+		/// (cf. MessageKind::ForcePosition). Le mouvement client-autoritaire
+		/// reprend ensuite depuis cette position.
+		void SendForcePosition(ConnectedClient& client, uint8_t reason);
 
 		/// Validate one pickup request, update the inventory and despawn the bag.
 		void HandlePickupRequest(const Endpoint& endpoint, uint32_t clientId, EntityId lootBagEntityId);

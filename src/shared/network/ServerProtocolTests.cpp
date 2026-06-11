@@ -419,9 +419,10 @@ namespace
 		assert(out.durationMs == 1500u);
 		assert(out.spellId == "distance_tir_vise");
 
-		// status hors domaine rejeté (octet 4 du payload, après le header 16 o).
+		// status hors domaine rejeté. Offset absolu = header 8 octets (magic u32
+		// + version u16 + kind u16, cf. kHeaderSize) + 4 (clientId) = 12.
 		std::vector<std::byte> badStatus = packet;
-		badStatus[16 + 4] = static_cast<std::byte>(9);
+		badStatus[8 + 4] = static_cast<std::byte>(9);
 		assert(!engine::server::DecodeCastBarUpdate(badStatus, out));
 		std::puts("[OK] TestCastBarUpdateRoundTrip");
 	}

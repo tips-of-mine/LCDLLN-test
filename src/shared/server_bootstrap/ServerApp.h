@@ -15,6 +15,7 @@
 #include "src/shardd/gameplay/social/PartySystem.h"
 #include "src/shardd/gameplay/quest/QuestRuntime.h"
 #include "src/shardd/gameplay/spawner/SpawnerRuntime.h"
+#include "src/shardd/gameplay/creature/CreatureArchetypeLibrary.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/net/ChatSystem.h"
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
@@ -198,6 +199,9 @@ namespace engine::server
 		bool isDynamicEventMob = false;
 		std::vector<ThreatEntry> threatTable;
 		bool hasSpawnedLoot = false;
+		/// Combat SP1 — XP attribuée au(x) tueur(s), copiée depuis l'archétype au
+		/// spawn (0 = fallback sur kBaseXpPerMobKill, mob d'avant le catalogue).
+		uint32_t xpReward = 0;
 	};
 
 	/// One spawn slot tracked by the authoritative spawner runtime.
@@ -866,6 +870,9 @@ namespace engine::server
 		EventRuntime m_eventRuntime;
 		QuestRuntime m_questRuntime;
 		SpawnerRuntime m_spawnerRuntime;
+		/// Combat SP1 — catalogue d'archétypes de créatures (stats data-driven,
+		/// initialisé par InitSpawners avant le chargement des spawners).
+		CreatureArchetypeLibrary m_archetypeLibrary;
 		ZoneTransitionMap m_zoneTransitionMap;
 		TickScheduler m_tickScheduler;
 		UdpTransport m_transport;

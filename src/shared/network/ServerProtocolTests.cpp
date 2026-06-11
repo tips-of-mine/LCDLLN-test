@@ -135,6 +135,7 @@ namespace
 		eMob.state.maxHealth = 100u;
 		eMob.playerClientId = 0u; // mob => pas de nameplate
 		// characterName et gender restent vides pour les mobs / lootbags (TD.5/TD.6).
+		eMob.archetypeId = 100u; // Combat SP1 (wire v9) : archétype résolu côté client
 		in.push_back(eMob);
 
 		const std::vector<std::byte> packet = EncodeSnapshot(inMsg, in);
@@ -157,6 +158,7 @@ namespace
 		assert(out[0].characterName == "homme"); // TD.5
 		assert(out[0].gender == "male");          // TD.6
 		assert(out[0].animationState == engine::server::AvatarAnimState::Emote); // TD.8
+		assert(out[0].archetypeId == 0u); // Combat SP1 : joueur => pas d'archétype
 
 		assert(out[1].entityId == ePlayerB.entityId);
 		assert(out[1].state.positionX == ePlayerB.state.positionX);
@@ -172,15 +174,16 @@ namespace
 		assert(out[2].characterName.empty()); // TD.5 : mob => pas de nom
 		assert(out[2].gender.empty());        // TD.6 : mob => pas de genre
 		assert(out[2].animationState == engine::server::AvatarAnimState::Idle); // TD.8 : défaut
+		assert(out[2].archetypeId == 100u); // Combat SP1 (wire v9) : archétype du mob
 		std::puts("[OK] TestSnapshotRoundTripWithPlayerClientId");
 	}
 
 	/// TD.6 — un Snapshot dont la taille de payload est inferieure au minimum attendu
-	/// (57 octets/entité = 8 entityId + 40 EntityState + 4 playerClientId + 2 nameLen=0
-	/// + 2 genderLen=0 + 1 animationState, au-delà de l'entête 24 octets) doit être rejeté.
-	/// Defense en profondeur contre un pair qui parlerait une version antérieure du wire. Le
-	/// bump kProtocolVersion à v8 filtre déjà la plupart des cas dans DecodeHeader, ce test
-	/// couvre une corruption après header valide.
+	/// (61 octets/entité = 8 entityId + 40 EntityState + 4 playerClientId + 2 nameLen=0
+	/// + 2 genderLen=0 + 1 animationState + 4 archetypeId, au-delà de l'entête 24 octets)
+	/// doit être rejeté. Defense en profondeur contre un pair qui parlerait une version
+	/// antérieure du wire. Le bump kProtocolVersion à v9 filtre déjà la plupart des cas
+	/// dans DecodeHeader, ce test couvre une corruption après header valide.
 	void TestSnapshotRejectsTruncatedPayload()
 	{
 		SnapshotMessage inMsg{};

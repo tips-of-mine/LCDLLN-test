@@ -593,13 +593,16 @@ namespace engine::server
 		WriteU32(packet, message.targetCurrentHealth);
 		WriteU32(packet, message.targetMaxHealth);
 		WriteU32(packet, message.targetStateFlags);
+		// Combat SP2 (wire v10) : flags critique/raté en queue de payload (32 → 36 o).
+		WriteU32(packet, message.flags);
 		return packet;
 	}
 
 	bool DecodeCombatEvent(std::span<const std::byte> packet, CombatEventMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
-		if (!DecodeHeader(packet, MessageKind::CombatEvent, payload) || payload.size() != 32)
+		// Combat SP2 (wire v10) : payload passe de 32 à 36 octets (champ flags).
+		if (!DecodeHeader(packet, MessageKind::CombatEvent, payload) || payload.size() != 36)
 		{
 			return false;
 		}
@@ -610,6 +613,37 @@ namespace engine::server
 		outMessage.targetCurrentHealth = ReadU32(payload, 20);
 		outMessage.targetMaxHealth = ReadU32(payload, 24);
 		outMessage.targetStateFlags = ReadU32(payload, 28);
+		outMessage.flags = ReadU32(payload, 32);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeAttackRequest(const AttackRequestMessage& message)
+	{
+		// Combat SP2 — symétrique de DecodeAttackRequest (payload 12 octets) ;
+		// jusqu'ici seul le serveur décodait, le client n'émettait pas.
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AttackRequest, 12);
+		WriteU32(packet, message.clientId);
+		WriteU64(packet, message.targetEntityId);
+		return packet;
+	}
+
+	std::vector<std::byte> EncodeRespawnRequest(const RespawnRequestMessage& message)
+	{
+		// Combat SP2 — demande de réapparition (payload 4 octets).
+		std::vector<std::byte> packet = BeginPacket(MessageKind::RespawnRequest, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeRespawnRequest(std::span<const std::byte> packet, RespawnRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::RespawnRequest, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
 		return true;
 	}
 

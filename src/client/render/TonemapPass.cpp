@@ -375,23 +375,33 @@ namespace engine::render
 		vkUpdateDescriptorSets(device, 2, writes, 0, nullptr);
 
 		// ------------------------------------------------------------------
-		// Create a temporary framebuffer for the LDR output this frame.
+		// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+		// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
 		// ------------------------------------------------------------------
-		VkFramebufferCreateInfo fbInfo{};
-		fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass      = m_renderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments    = &viewLDR;
-		fbInfo.width           = extent.width;
-		fbInfo.height          = extent.height;
-		fbInfo.layers          = 1;
-
+		FramebufferKey fbKey{ viewLDR, extent.width, extent.height };
 		VkFramebuffer fb = VK_NULL_HANDLE;
-		VkResult res = vkCreateFramebuffer(device, &fbInfo, nullptr, &fb);
-		if (res != VK_SUCCESS)
+		auto fbIt = m_framebufferCache.find(fbKey);
+		if (fbIt != m_framebufferCache.end())
 		{
-			LOG_ERROR(Render, "TonemapPass::Record: vkCreateFramebuffer failed: {}", static_cast<int>(res));
-			return;
+			fb = fbIt->second;
+		}
+		else
+		{
+			VkFramebufferCreateInfo fbInfo{};
+			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass      = m_renderPass;
+			fbInfo.attachmentCount = 1;
+			fbInfo.pAttachments    = &viewLDR;
+			fbInfo.width           = extent.width;
+			fbInfo.height          = extent.height;
+			fbInfo.layers          = 1;
+			VkResult res = vkCreateFramebuffer(device, &fbInfo, nullptr, &fb);
+			if (res != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "TonemapPass::Record: vkCreateFramebuffer failed: {}", static_cast<int>(res));
+				return;
+			}
+			m_framebufferCache[fbKey] = fb;
 		}
 
 		// ------------------------------------------------------------------
@@ -430,9 +440,23 @@ namespace engine::render
 		vkCmdDraw(cmd, 3, 1, 0, 0);
 
 		vkCmdEndRenderPass(cmd);
+	}
 
-		// Destroy the temporary framebuffer immediately.
-		vkDestroyFramebuffer(device, fb, nullptr);
+	// -------------------------------------------------------------------------
+	// TonemapPass::InvalidateFramebufferCache
+	// -------------------------------------------------------------------------
+
+	// Audit 2026-06-10 (Lot B2) — détruit les framebuffers cachés (pattern WaterPass).
+	void TonemapPass::InvalidateFramebufferCache(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+
+		for (auto& kv : m_framebufferCache)
+		{
+			if (kv.second != VK_NULL_HANDLE)
+				vkDestroyFramebuffer(device, kv.second, nullptr);
+		}
+		m_framebufferCache.clear();
 	}
 
 	// -------------------------------------------------------------------------
@@ -444,6 +468,9 @@ namespace engine::render
 		LOG_DEBUG(Render, "[TONEMAP] Destroy enter");
 		if (device == VK_NULL_HANDLE)
 			return;
+
+		// Lot B2 : vider le cache de framebuffers avant de détruire le render pass.
+		InvalidateFramebufferCache(device);
 
 		if (m_pipeline != VK_NULL_HANDLE)
 		{

@@ -405,22 +405,32 @@ namespace engine::render
 		writes[1].pImageInfo      = &imageInfos[1];
 		vkUpdateDescriptorSets(device, 2, writes, 0, nullptr);
 
-		// Create a temporary framebuffer for the underwater output RT.
-		VkFramebufferCreateInfo fbInfo{};
-		fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass      = m_renderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments    = &viewUnderwaterOut;
-		fbInfo.width           = extent.width;
-		fbInfo.height          = extent.height;
-		fbInfo.layers          = 1;
-
+		// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+		// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
+		FramebufferKey fbKey{ viewUnderwaterOut, extent.width, extent.height };
 		VkFramebuffer fb = VK_NULL_HANDLE;
-		VkResult res = vkCreateFramebuffer(device, &fbInfo, nullptr, &fb);
-		if (res != VK_SUCCESS)
+		auto fbIt = m_framebufferCache.find(fbKey);
+		if (fbIt != m_framebufferCache.end())
 		{
-			LOG_ERROR(Render, "[UnderwaterPass] vkCreateFramebuffer failed: {}", static_cast<int>(res));
-			return;
+			fb = fbIt->second;
+		}
+		else
+		{
+			VkFramebufferCreateInfo fbInfo{};
+			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass      = m_renderPass;
+			fbInfo.attachmentCount = 1;
+			fbInfo.pAttachments    = &viewUnderwaterOut;
+			fbInfo.width           = extent.width;
+			fbInfo.height          = extent.height;
+			fbInfo.layers          = 1;
+			VkResult res = vkCreateFramebuffer(device, &fbInfo, nullptr, &fb);
+			if (res != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "[UnderwaterPass] vkCreateFramebuffer failed: {}", static_cast<int>(res));
+				return;
+			}
+			m_framebufferCache[fbKey] = fb;
 		}
 
 		VkRenderPassBeginInfo rpBegin{};
@@ -453,9 +463,24 @@ namespace engine::render
 
 		vkCmdEndRenderPass(cmd);
 
-		vkDestroyFramebuffer(device, fb, nullptr);
-
 		LOG_TRACE(Render, "[UnderwaterPass] Record OK (underwaterFactor={:.2f})", params.underwaterFactor);
+	}
+
+	// -------------------------------------------------------------------------
+	// UnderwaterPass::InvalidateFramebufferCache
+	// -------------------------------------------------------------------------
+
+	// Audit 2026-06-10 (Lot B2) — détruit les framebuffers cachés (pattern WaterPass).
+	void UnderwaterPass::InvalidateFramebufferCache(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+
+		for (auto& kv : m_framebufferCache)
+		{
+			if (kv.second != VK_NULL_HANDLE)
+				vkDestroyFramebuffer(device, kv.second, nullptr);
+		}
+		m_framebufferCache.clear();
 	}
 
 	// -------------------------------------------------------------------------
@@ -466,6 +491,9 @@ namespace engine::render
 	{
 		if (device == VK_NULL_HANDLE)
 			return;
+
+		// Lot B2 : vider le cache de framebuffers avant de détruire le render pass.
+		InvalidateFramebufferCache(device);
 
 		if (m_pipeline != VK_NULL_HANDLE)
 		{

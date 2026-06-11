@@ -556,5 +556,20 @@ namespace engine::render
 		m_geometryPass.InvalidateFramebufferCache(device);
 		m_shadowMapPass.InvalidateFramebufferCache(device);
 		m_decalPass.InvalidateFramebufferCache(device);
+		// Audit 2026-06-10 (Lot B2) — toutes les passes post-process cachent
+		// désormais leur framebuffer (pattern WaterPass) : invalider au resize
+		// car les VkImageView du frame graph sont détruites/recréées.
+		m_ssaoPass.InvalidateFramebufferCache(device);
+		m_ssaoBlurPass.InvalidateFramebufferCache(device);
+		m_lightingPass.InvalidateFramebufferCache(device);
+		m_volumetricFogPass.InvalidateFramebufferCache(device);
+		m_cloudPass.InvalidateFramebufferCache(device);
+		m_depthOfFieldPass.InvalidateFramebufferCache(device);
+		m_tonemapPass.InvalidateFramebufferCache(device);
+		m_bloomPrefilterPass.InvalidateFramebufferCache(device);
+		m_bloomDownsamplePass.InvalidateFramebufferCache(device);
+		m_bloomUpsamplePass.InvalidateFramebufferCache(device);
+		m_bloomCombinePass.InvalidateFramebufferCache(device);
+		m_taaPass.InvalidateFramebufferCache(device);
 	}
 }

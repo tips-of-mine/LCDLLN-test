@@ -2288,6 +2288,7 @@ gagne un canal pour IMPOSER une position. Kind `ForcePosition = 86` **rétro-add
   serveur), l''inverse de T0.1. Socle d''un éventuel futur passage serveur-autoritaire.
 - **Déploiement** : ⚠️ shardd (producteurs) — fenêtre lock-step v12 déjà requise.
 
+
 ## Audit Lot B1 — thread-safety du master + purge anti-rejeu (2026-06-12)
 
 Correctifs du constat majeur de l''audit 2026-06-10 : le NetServer dispatche les
@@ -2299,3 +2300,17 @@ séquences Find→Update du store), `RateLimitAndBan`, `PasswordResetStore`.
 Et purge opportuniste de l''anti-rejeu `ShardTicketValidator::m_used_ticket_ids`
 (set → map ticket_id→expires_at ; l''ancien set grossissait sans fin).
 **Déploiement** : ⚠️ master + shardd — porté par la fenêtre lock-step v12.
+
+## Audit Lot B2 — caches framebuffer des passes de post-process (2026-06-12)
+
+Correctif du 2e constat majeur de l''audit 2026-06-10 (client) : 12 classes de passes
+(Lighting, Tonemap, Ssao, SsaoBlur, Taa, Bloom×4 — un 4e site BloomCombine non vu par
+l''audit, Cloud, Underwater, VolumetricFog, DepthOfField + site instanced résiduel de
+GeometryPass) créaient un framebuffer temporaire dans Record() puis le DÉTRUISAIENT
+avant le vkQueueSubmit (UB, toléré par le driver actuel). Toutes passent au pattern
+cache de WaterPass (clé = vues d''attachement + extent, invalidation au resize via
+DeferredPipeline::InvalidateFramebufferCaches — 15 appels — + m_underwaterPass côté
+Engine, nettoyage au Destroy). Bonus perf : plus de create/destroy par frame.
+Constat annexe : `Engine::m_underwaterPass` est DORMANT (jamais Init/Record — M37.3
+non câblé au frame graph) ; corrigé quand même, à câbler ou supprimer (Lot C).
+**Déploiement** : ✅ client uniquement.

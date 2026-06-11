@@ -276,17 +276,29 @@ namespace engine::render
 		params.horizontal = horizontal ? 1.0f : 0.0f;
 		params._pad = 0.0f;
 
-		VkFramebufferCreateInfo fbInfo{};
-		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass = m_renderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments = &viewOut;
-		fbInfo.width = extent.width;
-		fbInfo.height = extent.height;
-		fbInfo.layers = 1;
+		// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+		// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
+		FramebufferKey fbKey{ viewOut, extent.width, extent.height };
 		VkFramebuffer fb = VK_NULL_HANDLE;
-		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS)
-			return;
+		auto fbIt = m_framebufferCache.find(fbKey);
+		if (fbIt != m_framebufferCache.end())
+		{
+			fb = fbIt->second;
+		}
+		else
+		{
+			VkFramebufferCreateInfo fbInfo{};
+			fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass = m_renderPass;
+			fbInfo.attachmentCount = 1;
+			fbInfo.pAttachments = &viewOut;
+			fbInfo.width = extent.width;
+			fbInfo.height = extent.height;
+			fbInfo.layers = 1;
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS)
+				return;
+			m_framebufferCache[fbKey] = fb;
+		}
 
 		VkRenderPassBeginInfo rpBegin{};
 		rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -310,12 +322,26 @@ namespace engine::render
 
 		vkCmdDraw(cmd, 3, 1, 0, 0);
 		vkCmdEndRenderPass(cmd);
-		vkDestroyFramebuffer(device, fb, nullptr);
+	}
+
+	// Audit 2026-06-10 (Lot B2) — détruit les framebuffers cachés (pattern WaterPass).
+	void SsaoBlurPass::InvalidateFramebufferCache(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+
+		for (auto& kv : m_framebufferCache)
+		{
+			if (kv.second != VK_NULL_HANDLE)
+				vkDestroyFramebuffer(device, kv.second, nullptr);
+		}
+		m_framebufferCache.clear();
 	}
 
 	void SsaoBlurPass::Destroy(VkDevice device)
 	{
 		if (device == VK_NULL_HANDLE) return;
+		// Lot B2 : vider le cache de framebuffers avant de détruire le render pass.
+		InvalidateFramebufferCache(device);
 		if (m_pipeline != VK_NULL_HANDLE) { vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
 		if (m_pipelineLayout != VK_NULL_HANDLE) { vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr); m_pipelineLayout = VK_NULL_HANDLE; }
 		if (m_sampler != VK_NULL_HANDLE) { vkDestroySampler(device, m_sampler, nullptr); m_sampler = VK_NULL_HANDLE; }

@@ -2,7 +2,7 @@
 // Passe GRAPHIQUE plein écran de nuages volumétriques ray-marchés (fragment shader).
 // Calquée EXACTEMENT sur VolumetricFogPass : render pass 1 attachment color,
 // descriptor set 0 de 2 combined image samplers (scene color, depth), push
-// constants fragment, pipeline fullscreen triangle, framebuffer temporaire dans Record.
+// constants fragment, pipeline fullscreen triangle, framebuffer mis en cache dans Record.
 //
 // Descriptor set 0 :
 //   binding 0 = scene color HDR (post-fog)  (sampler linéaire clamp)
@@ -14,6 +14,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
+#include <unordered_map>
 #include <vector>
 
 namespace engine::render
@@ -60,9 +62,37 @@ namespace engine::render
 			ResourceId idSceneColorOut, const CloudPushConstants& params, uint32_t frameIndex);
 
 		void Destroy(VkDevice device);
+
+		/// Détruit les framebuffers cachés (appeler au resize avant FG destroy).
+		void InvalidateFramebufferCache(VkDevice device);
+
 		bool IsValid() const { return m_pipeline != VK_NULL_HANDLE; }
 
 	private:
+		// Audit 2026-06-10 (Lot B2) — cache framebuffer (pattern WaterPass) :
+		// l'ancien framebuffer temporaire était détruit avant le vkQueueSubmit (UB).
+		struct FramebufferKey
+		{
+			VkImageView outputView = VK_NULL_HANDLE;
+			uint32_t width = 0;
+			uint32_t height = 0;
+			bool operator==(const FramebufferKey& o) const noexcept
+			{
+				return outputView == o.outputView && width == o.width && height == o.height;
+			}
+		};
+		struct FramebufferKeyHash
+		{
+			size_t operator()(const FramebufferKey& k) const noexcept
+			{
+				const size_t hView = std::hash<uintptr_t>{}(reinterpret_cast<uintptr_t>(k.outputView));
+				const size_t hW = std::hash<uint32_t>{}(k.width);
+				const size_t hH = std::hash<uint32_t>{}(k.height);
+				return hView ^ (hW + 0x9e3779b9u) ^ (hH + 0x85ebca6bu);
+			}
+		};
+		std::unordered_map<FramebufferKey, VkFramebuffer, FramebufferKeyHash> m_framebufferCache;
+
 		VkRenderPass          m_renderPass          = VK_NULL_HANDLE;
 		VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool      m_descriptorPool      = VK_NULL_HANDLE;

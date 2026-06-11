@@ -45,7 +45,12 @@ namespace engine::server
 	/// bit0 critique, bit1 raté ; payload 32 → 36 o) et nouveau kind
 	/// `RespawnRequest` (80, client→shard, réapparition d'un joueur mort).
 	/// Wire-breaking : même contrainte lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 10;
+	/// Combat SP3 — bump 10 → 11 : sorts et auras. Nouveaux kinds `CastRequest`
+	/// (81), `ResourceUpdate` (82), `CastBarUpdate` (83), `AuraUpdate` (84) ;
+	/// `PlayerStatsMessage` gagne `profileId` (chaîne préfixée u16 en queue —
+	/// le client résout son kit de sorts gameplay/spells/<profil>.json).
+	/// Wire-breaking : lock-step master + shardd + client.
+	inline constexpr uint16_t kProtocolVersion = 11;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -224,7 +229,19 @@ namespace engine::server
 		/// Combat SP2 — client → shard : réapparition d'un joueur mort (téléport au
 		/// spawn mémorisé à l'admission, PV pleins, flag dead retiré). Refusé si le
 		/// joueur n'est pas mort. Livré avec le bump v9→v10.
-		RespawnRequest = 80
+		RespawnRequest = 80,
+
+		// Combat SP3 — sorts et auras (bump v10→v11) ------------------------
+
+		/// Client → shard : cast d'un sort du kit du profil (spellId + cible).
+		CastRequest = 81,
+		/// Shard → casteur : ressource secondaire courante/max (régén, coûts).
+		ResourceUpdate = 82,
+		/// Shard → casteur : barre de cast (début / fin / annulation).
+		CastBarUpdate = 83,
+		/// Shard → clients intéressés : liste complète des auras d'une entité
+		/// (idempotent — remplace l'état précédent côté client).
+		AuraUpdate = 84
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -286,6 +303,10 @@ namespace engine::server
 		float    perception = 0.0f;
 		float    stealth = 0.0f;
 		std::string resourceKey; ///< ex. "ferveur" (libellé résolu côté client)
+		/// Combat SP3 (wire v11) — profil de classe ("melee", "tank", …) ; le
+		/// client résout son kit de sorts gameplay/spells/<profil>.json. Vide =
+		/// perso legacy sans faction/classe → pas de barre d'action.
+		std::string profileId;
 	};
 
 	/// Snapshot envelope carrying timing, connection stats and entity state count.
@@ -345,6 +366,58 @@ namespace engine::server
 	struct RespawnRequestMessage
 	{
 		uint32_t clientId = 0;
+	};
+
+	// Combat SP3 — sorts et auras (wire v11) --------------------------------
+
+	/// Client → shard : cast d'un sort du kit du profil du joueur.
+	/// targetEntityId = 0 pour les sorts sans cible (SelfOnly / AreaAroundSelf) ;
+	/// pour SingleAlly, 0 = soi.
+	struct CastRequestMessage
+	{
+		uint32_t clientId = 0;
+		EntityId targetEntityId = 0;
+		std::string spellId;
+	};
+
+	/// Shard → casteur : ressource secondaire courante (poussée sur variation).
+	struct ResourceUpdateMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t currentResource = 0;
+		uint32_t maxResource = 0;
+	};
+
+	/// Combat SP3 — états de la barre de cast (CastBarUpdateMessage::status).
+	inline constexpr uint8_t kCastBarStatusStart = 0;
+	inline constexpr uint8_t kCastBarStatusComplete = 1;
+	inline constexpr uint8_t kCastBarStatusCancel = 2;
+
+	/// Shard → casteur : début / fin / annulation d'un cast à temps d'incantation.
+	struct CastBarUpdateMessage
+	{
+		uint32_t clientId = 0;
+		uint8_t status = kCastBarStatusStart;
+		/// Durée totale du cast en ms (status Start) ; 0 sinon.
+		uint32_t durationMs = 0;
+		std::string spellId;
+	};
+
+	/// Une aura active répliquée (cf. SpellEffectType côté shardd pour effectType).
+	struct AuraWireEntry
+	{
+		std::string spellId;
+		uint8_t effectType = 0;
+		uint32_t remainingMs = 0;
+		uint8_t stacks = 1;
+	};
+
+	/// Shard → clients intéressés : liste COMPLÈTE des auras d'une entité
+	/// (le client remplace son état local — pas de delta, idempotent).
+	struct AuraUpdateMessage
+	{
+		EntityId targetEntityId = 0;
+		std::vector<AuraWireEntry> auras;
 	};
 
 	/// Client request asking the authoritative server to pick up one loot bag entity.
@@ -494,6 +567,16 @@ namespace engine::server
 
 	/// Combat SP2 — decode a respawn request packet and validate the protocol header.
 	bool DecodeRespawnRequest(std::span<const std::byte> packet, RespawnRequestMessage& outMessage);
+
+	/// Combat SP3 — encode/decode des messages sorts et auras (wire v11).
+	std::vector<std::byte> EncodeCastRequest(const CastRequestMessage& message);
+	bool DecodeCastRequest(std::span<const std::byte> packet, CastRequestMessage& outMessage);
+	std::vector<std::byte> EncodeResourceUpdate(const ResourceUpdateMessage& message);
+	bool DecodeResourceUpdate(std::span<const std::byte> packet, ResourceUpdateMessage& outMessage);
+	std::vector<std::byte> EncodeCastBarUpdate(const CastBarUpdateMessage& message);
+	bool DecodeCastBarUpdate(std::span<const std::byte> packet, CastBarUpdateMessage& outMessage);
+	std::vector<std::byte> EncodeAuraUpdate(const AuraUpdateMessage& message);
+	bool DecodeAuraUpdate(std::span<const std::byte> packet, AuraUpdateMessage& outMessage);
 
 	/// Encode a combat event packet with the protocol header.
 	std::vector<std::byte> EncodeCombatEvent(const CombatEventMessage& message);

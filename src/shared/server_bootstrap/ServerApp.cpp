@@ -4549,6 +4549,8 @@ namespace engine::server
 		msg.perception  = d->perception;
 		msg.stealth     = d->stealth;
 		msg.resourceKey = d->resourceKey;
+		// Combat SP3 (wire v11) — le client résout son kit de sorts via le profil.
+		msg.profileId = client.profileId;
 
 		const std::vector<std::byte> packet = EncodePlayerStats(msg);
 		if (!m_transport.Send(client.endpoint, packet))

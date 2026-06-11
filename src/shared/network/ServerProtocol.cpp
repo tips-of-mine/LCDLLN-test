@@ -482,6 +482,8 @@ namespace engine::server
 		WriteF32(packet, message.perception);
 		WriteF32(packet, message.stealth);
 		WriteSizedString(packet, message.resourceKey);
+		// Combat SP3 (wire v11) : profil de classe en queue (chaîne préfixée u16).
+		WriteSizedString(packet, message.profileId);
 		return packet;
 	}
 
@@ -510,6 +512,11 @@ namespace engine::server
 		outMessage.stealth = ReadF32(payload, 52);
 		size_t offset = 56;
 		if (!ReadSizedString(payload, offset, outMessage.resourceKey))
+		{
+			return false;
+		}
+		// Combat SP3 (wire v11) : profil de classe en queue.
+		if (!ReadSizedString(payload, offset, outMessage.profileId))
 		{
 			return false;
 		}
@@ -645,6 +652,156 @@ namespace engine::server
 
 		outMessage.clientId = ReadU32(payload, 0);
 		return true;
+	}
+
+	std::vector<std::byte> EncodeCastRequest(const CastRequestMessage& message)
+	{
+		// Combat SP3 — payload : clientId (4) + targetEntityId (8) + spellId (2 + N).
+		std::vector<std::byte> packet = BeginPacket(MessageKind::CastRequest, 14 + message.spellId.size());
+		WriteU32(packet, message.clientId);
+		WriteU64(packet, message.targetEntityId);
+		WriteSizedString(packet, message.spellId);
+		return packet;
+	}
+
+	bool DecodeCastRequest(std::span<const std::byte> packet, CastRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::CastRequest, payload) || payload.size() < 14)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.targetEntityId = ReadU64(payload, 4);
+		size_t offset = 12;
+		// Borne dure défensive : un spellId fait < 64 octets (ids snake_case).
+		if (!ReadSizedString(payload, offset, outMessage.spellId)
+			|| outMessage.spellId.empty()
+			|| outMessage.spellId.size() > 64u
+			|| offset != payload.size())
+		{
+			return false;
+		}
+		return true;
+	}
+
+	std::vector<std::byte> EncodeResourceUpdate(const ResourceUpdateMessage& message)
+	{
+		// Combat SP3 — payload fixe 12 octets.
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ResourceUpdate, 12);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.currentResource);
+		WriteU32(packet, message.maxResource);
+		return packet;
+	}
+
+	bool DecodeResourceUpdate(std::span<const std::byte> packet, ResourceUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ResourceUpdate, payload) || payload.size() != 12)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.currentResource = ReadU32(payload, 4);
+		outMessage.maxResource = ReadU32(payload, 8);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeCastBarUpdate(const CastBarUpdateMessage& message)
+	{
+		// Combat SP3 — payload : clientId (4) + status (1) + durationMs (4) + spellId (2 + N).
+		std::vector<std::byte> packet = BeginPacket(MessageKind::CastBarUpdate, 11 + message.spellId.size());
+		WriteU32(packet, message.clientId);
+		WriteU8(packet, message.status);
+		WriteU32(packet, message.durationMs);
+		WriteSizedString(packet, message.spellId);
+		return packet;
+	}
+
+	bool DecodeCastBarUpdate(std::span<const std::byte> packet, CastBarUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::CastBarUpdate, payload) || payload.size() < 11)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.status = ReadU8(payload, 4);
+		outMessage.durationMs = ReadU32(payload, 5);
+		size_t offset = 9;
+		if (!ReadSizedString(payload, offset, outMessage.spellId)
+			|| outMessage.spellId.size() > 64u
+			|| offset != payload.size())
+		{
+			return false;
+		}
+		return outMessage.status <= kCastBarStatusCancel;
+	}
+
+	std::vector<std::byte> EncodeAuraUpdate(const AuraUpdateMessage& message)
+	{
+		// Combat SP3 — payload : targetEntityId (8) + count (1) puis par aura :
+		// spellId (2 + N) + effectType (1) + remainingMs (4) + stacks (1).
+		size_t payloadSize = 9;
+		for (const AuraWireEntry& aura : message.auras)
+		{
+			payloadSize += 2 + aura.spellId.size() + 6;
+		}
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AuraUpdate, payloadSize);
+		WriteU64(packet, message.targetEntityId);
+		WriteU8(packet, static_cast<uint8_t>(std::min<size_t>(message.auras.size(), 0xFFu)));
+		for (const AuraWireEntry& aura : message.auras)
+		{
+			WriteSizedString(packet, aura.spellId);
+			WriteU8(packet, aura.effectType);
+			WriteU32(packet, aura.remainingMs);
+			WriteU8(packet, aura.stacks);
+		}
+		return packet;
+	}
+
+	bool DecodeAuraUpdate(std::span<const std::byte> packet, AuraUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AuraUpdate, payload) || payload.size() < 9)
+		{
+			return false;
+		}
+
+		outMessage.targetEntityId = ReadU64(payload, 0);
+		const size_t auraCount = static_cast<size_t>(ReadU8(payload, 8));
+		size_t offset = 9;
+		outMessage.auras.clear();
+		outMessage.auras.reserve(auraCount);
+		for (size_t index = 0; index < auraCount; ++index)
+		{
+			AuraWireEntry aura{};
+			if (!ReadSizedString(payload, offset, aura.spellId)
+				|| aura.spellId.empty()
+				|| aura.spellId.size() > 64u)
+			{
+				outMessage.auras.clear();
+				return false;
+			}
+			if (offset + 6u > payload.size())
+			{
+				outMessage.auras.clear();
+				return false;
+			}
+			aura.effectType = ReadU8(payload, offset);
+			offset += 1;
+			aura.remainingMs = ReadU32(payload, offset);
+			offset += 4;
+			aura.stacks = ReadU8(payload, offset);
+			offset += 1;
+			outMessage.auras.push_back(std::move(aura));
+		}
+
+		return offset == payload.size();
 	}
 
 	std::vector<std::byte> EncodeInventoryDelta(const InventoryDeltaMessage& message, std::span<const ItemStack> items)

@@ -297,6 +297,26 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendCastRequest(uint32_t clientId, uint64_t targetEntityId, std::string_view spellId)
+	{
+		engine::server::CastRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.targetEntityId = targetEntityId;
+		msg.spellId = std::string(spellId);
+		const std::vector<std::byte> packet = engine::server::EncodeCastRequest(msg);
+		const bool ok = SendBytes(packet);
+		if (ok)
+		{
+			LOG_DEBUG(Net, "[GameplayUdpClient] CastRequest sent (client_id={}, spell={}, target_entity_id={})",
+				clientId, msg.spellId, targetEntityId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] CastRequest FAILED (client_id={}, spell={})", clientId, msg.spellId);
+		}
+		return ok;
+	}
+
 	bool GameplayUdpClient::SendShopBuyRequest(uint32_t clientId, uint32_t vendorId, uint32_t itemId, uint32_t quantity)
 	{
 		engine::server::ShopBuyRequestMessage msg{};

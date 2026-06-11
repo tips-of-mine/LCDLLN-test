@@ -11,6 +11,7 @@
 #include <span>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 namespace engine::client
@@ -217,6 +218,37 @@ namespace engine::client
 		float    perception = 0.0f;
 		float    stealth = 0.0f;
 		std::string secondaryResourceKey;
+		/// Combat SP3 — ressource secondaire COURANTE (poussée par ResourceUpdate,
+		/// régén/débits serveur-autoritaires). Max = secondaryResourceMax.
+		uint32_t secondaryResourceCurrent = 0;
+		/// Combat SP3 — profil de classe ("melee", "tank", …) reçu via PlayerStats
+		/// (wire v11) ; résout le kit de la barre d'action. Vide = pas de barre.
+		std::string profileId;
+	};
+
+	/// Combat SP3 — état de la barre de cast du joueur local (CastBarUpdate).
+	struct UICastBarState
+	{
+		bool active = false;
+		std::string spellId;
+		uint32_t durationMs = 0;
+		/// Horodatage monotone (ns) de la réception du Start — le rendu calcule
+		/// la progression localement (pas de re-push serveur par frame).
+		uint64_t startedAtNs = 0;
+	};
+
+	/// Combat SP3 — une aura active répliquée (AuraUpdate, wire v11).
+	struct UIAuraEntry
+	{
+		std::string spellId;
+		/// Valeur de l'enum serveur SpellEffectType (1=DoT, 3=HoT, 4=Buff dégâts,
+		/// 5=Debuff dégâts subis, 7=Slow…).
+		uint8_t effectType = 0;
+		uint32_t remainingMs = 0;
+		uint8_t stacks = 1;
+		/// Horodatage monotone (ns) de réception — le timer affiché décrémente
+		/// localement entre deux AuraUpdate.
+		uint64_t receivedAtNs = 0;
 	};
 
 	/// Current combat target resolved from the latest player-originated combat event.
@@ -377,6 +409,12 @@ namespace engine::client
 		UIHarvestProgress harvest{};
 		/// M36.2 — crafting panel state (professions, recipe list, cast bar).
 		UICraftingState crafting{};
+		/// Combat SP3 — barre de cast du joueur local (sorts à incantation).
+		UICastBarState castBar{};
+		/// Combat SP3 — auras actives par entité (joueur local inclus), remplacées
+		/// intégralement à chaque AuraUpdate de l'entité. Une entité qui sort de
+		/// l'AoI garde une entrée périmée jusqu'au prochain ApplySnapshot (purge).
+		std::unordered_map<engine::server::EntityId, std::vector<UIAuraEntry>> entityAuras;
 		std::string debugDump;
 
 		/// Build a text dump suitable for a debug widget or logs.
@@ -464,6 +502,15 @@ namespace engine::client
 
 		/// Apply one decoded combat event to the stats section of the UI model.
 		bool ApplyCombatEvent(std::span<const std::byte> packet);
+
+		/// Combat SP3 — ressource secondaire courante du joueur (ResourceUpdate).
+		bool ApplyResourceUpdate(std::span<const std::byte> packet);
+
+		/// Combat SP3 — barre de cast du joueur local (CastBarUpdate start/complete/cancel).
+		bool ApplyCastBarUpdate(std::span<const std::byte> packet);
+
+		/// Combat SP3 — remplace les auras d'une entité (AuraUpdate, idempotent).
+		bool ApplyAuraUpdate(std::span<const std::byte> packet);
 
 		/// Apply one decoded zone change packet to the world section of the UI model.
 		bool ApplyZoneChange(std::span<const std::byte> packet);
@@ -555,6 +602,10 @@ namespace engine::client
 		};
 		ChunkedSnapshotAccumulator m_chunkAccumulator{};
 		engine::server::CombatEventMessage m_combatEventMessage{};
+		/// Combat SP3 — scratch des messages sorts/auras (réutilisés par paquet).
+		engine::server::ResourceUpdateMessage m_resourceUpdateMessage{};
+		engine::server::CastBarUpdateMessage m_castBarUpdateMessage{};
+		engine::server::AuraUpdateMessage m_auraUpdateMessage{};
 		engine::server::ZoneChangeMessage m_zoneChangeMessage{};
 		engine::server::InventoryDeltaMessage m_inventoryMessage{};
 		engine::server::QuestDeltaMessage m_questMessage{};

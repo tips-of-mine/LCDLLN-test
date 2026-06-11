@@ -3,6 +3,8 @@
 #include "src/shared/core/Log.h"
 
 #include <algorithm>
+#include <chrono>
+#include <iterator>
 #include <string_view>
 #include <utility>
 
@@ -608,6 +610,13 @@ namespace engine::client
 		// R1-B — feuille de personnage (stats dérivées poussées à l'enter-world)
 		case engine::server::MessageKind::PlayerStats:
 			return ApplyPlayerStats(packet);
+		// Combat SP3 — sorts et auras (wire v11)
+		case engine::server::MessageKind::ResourceUpdate:
+			return ApplyResourceUpdate(packet);
+		case engine::server::MessageKind::CastBarUpdate:
+			return ApplyCastBarUpdate(packet);
+		case engine::server::MessageKind::AuraUpdate:
+			return ApplyAuraUpdate(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -742,6 +751,29 @@ namespace engine::client
 			m_model.remoteEntities.push_back(remote);
 		}
 
+		// Combat SP3 — purge des auras des entités sorties de l'AoI (le joueur
+		// local garde les siennes, les autres suivent le contenu du snapshot).
+		if (!m_model.entityAuras.empty())
+		{
+			for (auto auraIt = m_model.entityAuras.begin(); auraIt != m_model.entityAuras.end();)
+			{
+				const engine::server::EntityId auraEntityId = auraIt->first;
+				bool stillPresent = (auraEntityId == stats.playerEntityId);
+				if (!stillPresent)
+				{
+					for (const UIRemoteEntity& remote : m_model.remoteEntities)
+					{
+						if (remote.entityId == auraEntityId)
+						{
+							stillPresent = true;
+							break;
+						}
+					}
+				}
+				auraIt = stillPresent ? std::next(auraIt) : m_model.entityAuras.erase(auraIt);
+			}
+		}
+
 		if (m_model.targetStats.hasTarget)
 		{
 			m_model.targetStats.hasPosition = false;
@@ -833,6 +865,82 @@ namespace engine::client
 			m_combatEventMessage.targetEntityId,
 			m_combatEventMessage.damage,
 			playerWasAttacker ? "attacker" : "target");
+		return true;
+	}
+
+	bool UIModelBinding::ApplyResourceUpdate(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeResourceUpdate(packet, m_resourceUpdateMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] ResourceUpdate FAILED: decode error");
+			return false;
+		}
+
+		m_model.playerStats.secondaryResourceCurrent = m_resourceUpdateMessage.currentResource;
+		m_model.playerStats.secondaryResourceMax = m_resourceUpdateMessage.maxResource;
+		NotifyObservers(UIModelChangeStats);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyCastBarUpdate(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeCastBarUpdate(packet, m_castBarUpdateMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] CastBarUpdate FAILED: decode error");
+			return false;
+		}
+
+		if (m_castBarUpdateMessage.status == engine::server::kCastBarStatusStart)
+		{
+			m_model.castBar.active = true;
+			m_model.castBar.spellId = m_castBarUpdateMessage.spellId;
+			m_model.castBar.durationMs = m_castBarUpdateMessage.durationMs;
+			m_model.castBar.startedAtNs = static_cast<uint64_t>(
+				std::chrono::duration_cast<std::chrono::nanoseconds>(
+					std::chrono::steady_clock::now().time_since_epoch()).count());
+		}
+		else
+		{
+			// Complete et Cancel masquent la barre (le résultat du sort arrive
+			// par CombatEvent / AuraUpdate / ResourceUpdate, pas par cette voie).
+			m_model.castBar = UICastBarState{};
+		}
+		NotifyObservers(UIModelChangeCombat);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyAuraUpdate(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeAuraUpdate(packet, m_auraUpdateMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] AuraUpdate FAILED: decode error");
+			return false;
+		}
+
+		if (m_auraUpdateMessage.auras.empty())
+		{
+			m_model.entityAuras.erase(m_auraUpdateMessage.targetEntityId);
+		}
+		else
+		{
+			const uint64_t nowNs = static_cast<uint64_t>(
+				std::chrono::duration_cast<std::chrono::nanoseconds>(
+					std::chrono::steady_clock::now().time_since_epoch()).count());
+			std::vector<UIAuraEntry>& auraList = m_model.entityAuras[m_auraUpdateMessage.targetEntityId];
+			auraList.clear();
+			auraList.reserve(m_auraUpdateMessage.auras.size());
+			for (const engine::server::AuraWireEntry& wireAura : m_auraUpdateMessage.auras)
+			{
+				UIAuraEntry entry{};
+				entry.spellId = wireAura.spellId;
+				entry.effectType = wireAura.effectType;
+				entry.remainingMs = wireAura.remainingMs;
+				entry.stacks = wireAura.stacks;
+				entry.receivedAtNs = nowNs;
+				auraList.push_back(std::move(entry));
+			}
+		}
+		NotifyObservers(UIModelChangeCombat);
 		return true;
 	}
 
@@ -1190,6 +1298,11 @@ namespace engine::client
 		m_model.playerStats.perception = m_playerStatsScratch.perception;
 		m_model.playerStats.stealth = m_playerStatsScratch.stealth;
 		m_model.playerStats.secondaryResourceKey = m_playerStatsScratch.resourceKey;
+		// Combat SP3 — profil de classe (kit de la barre d'action) ; la ressource
+		// courante part de son max (pleine à l'enter-world, le serveur ne pousse
+		// un ResourceUpdate que sur variation).
+		m_model.playerStats.profileId = m_playerStatsScratch.profileId;
+		m_model.playerStats.secondaryResourceCurrent = m_playerStatsScratch.resource;
 
 		LOG_INFO(Net,
 			"[UIModelBinding] PlayerStats applied (client_id={}, max_health={}, resource={}, stamina={}, damage={})",

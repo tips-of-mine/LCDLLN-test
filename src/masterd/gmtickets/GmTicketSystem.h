@@ -1,8 +1,13 @@
 #pragma once
 // CMANGOS.32 (Phase 5.32a) — GmTicketSystem : queue de tickets joueurs
 // pour le support GM. Header-only.
+//
+// Audit 2026-06-10 (Lot B1) — THREAD-SAFE : les handlers du master sont
+// dispatchés sur un pool de workers NetServer (défaut 4) ; chaque méthode
+// publique verrouille m_mutex (aucune méthode publique n'en appelle une autre).
 
 #include <cstdint>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -37,6 +42,7 @@ namespace engine::server::gmtickets
 	public:
 		TicketId Open(AccountId reporter, std::string body, uint64_t nowMs)
 		{
+			std::lock_guard<std::mutex> lock(m_mutex);
 			GmTicket t;
 			t.id           = m_nextId++;
 			t.reporter     = reporter;
@@ -48,6 +54,7 @@ namespace engine::server::gmtickets
 
 		bool Assign(TicketId id, AccountId gm)
 		{
+			std::lock_guard<std::mutex> lock(m_mutex);
 			auto it = m_tickets.find(id);
 			if (it == m_tickets.end()) return false;
 			if (it->second.state != TicketState::Open) return false;
@@ -58,6 +65,7 @@ namespace engine::server::gmtickets
 
 		bool Resolve(TicketId id, uint64_t nowMs)
 		{
+			std::lock_guard<std::mutex> lock(m_mutex);
 			auto it = m_tickets.find(id);
 			if (it == m_tickets.end()) return false;
 			if (it->second.state == TicketState::Resolved
@@ -70,6 +78,7 @@ namespace engine::server::gmtickets
 
 		bool Cancel(TicketId id)
 		{
+			std::lock_guard<std::mutex> lock(m_mutex);
 			auto it = m_tickets.find(id);
 			if (it == m_tickets.end()) return false;
 			it->second.state = TicketState::Cancelled;
@@ -78,12 +87,14 @@ namespace engine::server::gmtickets
 
 		std::optional<GmTicket> Find(TicketId id) const
 		{
+			std::lock_guard<std::mutex> lock(m_mutex);
 			auto it = m_tickets.find(id);
 			return (it == m_tickets.end()) ? std::nullopt : std::optional<GmTicket>(it->second);
 		}
 
 		std::vector<GmTicket> OpenQueue() const
 		{
+			std::lock_guard<std::mutex> lock(m_mutex);
 			std::vector<GmTicket> out;
 			for (const auto& [id, t] : m_tickets)
 				if (t.state == TicketState::Open) out.push_back(t);
@@ -91,6 +102,8 @@ namespace engine::server::gmtickets
 		}
 
 	private:
+		/// Audit Lot B1 — protège m_tickets/m_nextId contre les workers concurrents.
+		mutable std::mutex m_mutex;
 		std::unordered_map<TicketId, GmTicket> m_tickets;
 		TicketId m_nextId = 1;
 	};

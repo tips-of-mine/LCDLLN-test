@@ -14,6 +14,7 @@ namespace engine::server::mail
 		uint64_t nowMs, uint64_t expiresTsMs,
 		MailOpResult* outErr)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		if (!m_store) return 0;
 
 		if (subject.size() > kMaxMailSubjectBytes)
@@ -51,6 +52,7 @@ namespace engine::server::mail
 
 	MailOpResult MailManager::MarkRead(uint64_t mailId, uint64_t receiverAccountId)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		if (!m_store) return MailOpResult::MailNotFound;
 		auto opt = m_store->Find(mailId);
 		if (!opt) return MailOpResult::MailNotFound;
@@ -67,6 +69,7 @@ namespace engine::server::mail
 	MailOpResult MailManager::TakeItems(uint64_t mailId, uint64_t receiverAccountId,
 		uint64_t paidCopper, std::vector<MailItemAttachment>& outItems)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		outItems.clear();
 		if (!m_store) return MailOpResult::MailNotFound;
 		auto opt = m_store->Find(mailId);
@@ -92,6 +95,7 @@ namespace engine::server::mail
 	MailOpResult MailManager::TakeGold(uint64_t mailId, uint64_t receiverAccountId,
 		uint64_t& outCopper)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		outCopper = 0;
 		if (!m_store) return MailOpResult::MailNotFound;
 		auto opt = m_store->Find(mailId);
@@ -110,6 +114,7 @@ namespace engine::server::mail
 
 	MailOpResult MailManager::Delete(uint64_t mailId, uint64_t receiverAccountId)
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		if (!m_store) return MailOpResult::MailNotFound;
 		auto opt = m_store->Find(mailId);
 		if (!opt) return MailOpResult::MailNotFound;
@@ -123,6 +128,7 @@ namespace engine::server::mail
 
 	std::vector<Mail> MailManager::Inbox(uint64_t receiverAccountId) const
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		if (!m_store) return {};
 		auto v = m_store->ListInbox(receiverAccountId);
 		// Tri par sentTsMs decroissant (plus recent d'abord).
@@ -133,6 +139,7 @@ namespace engine::server::mail
 
 	std::vector<uint64_t> MailManager::ResolveExpired(uint64_t nowMs) const
 	{
+		std::lock_guard<std::mutex> lock(m_mutex);
 		if (!m_store) return {};
 		return m_store->FindExpired(nowMs);
 	}

@@ -2,10 +2,15 @@
 // CMANGOS.33 (Phase 5.33a) — LfgQueue : queue de matchmaking pour
 // donjons. Players join + role (Tank/Healer/Damage), queue forme un
 // groupe avec 1T+1H+3D. Header-only.
+//
+// Audit 2026-06-10 (Lot B1) — THREAD-SAFE : les handlers du master sont
+// dispatchés sur un pool de workers NetServer (défaut 4) ; chaque méthode
+// publique verrouille m_mutex (aucune méthode publique n'en appelle une autre).
 
 #include <algorithm>
 #include <cstdint>
 #include <functional>
+#include <mutex>
 #include <optional>
 #include <unordered_map>
 #include <unordered_set>
@@ -41,12 +46,14 @@ namespace engine::server::lfg
 	public:
 		void Join(DungeonId dungeon, PlayerId player, LfgRole role, uint64_t nowMs)
 		{
+			std::lock_guard<std::mutex> lock(m_mutex);
 			LfgEntry e{player, role, nowMs};
 			m_byDungeon[dungeon].push_back(e);
 		}
 
 		bool Leave(DungeonId dungeon, PlayerId player)
 		{
+			std::lock_guard<std::mutex> lock(m_mutex);
 			auto it = m_byDungeon.find(dungeon);
 			if (it == m_byDungeon.end()) return false;
 			auto& v = it->second;
@@ -59,6 +66,7 @@ namespace engine::server::lfg
 
 		size_t QueueSize(DungeonId dungeon) const
 		{
+			std::lock_guard<std::mutex> lock(m_mutex);
 			auto it = m_byDungeon.find(dungeon);
 			return (it == m_byDungeon.end()) ? 0 : it->second.size();
 		}
@@ -67,6 +75,7 @@ namespace engine::server::lfg
 		/// le groupe formé (et retire les membres de la queue) ou nullopt.
 		std::optional<LfgGroup> TryMatch(DungeonId dungeon)
 		{
+			std::lock_guard<std::mutex> lock(m_mutex);
 			auto it = m_byDungeon.find(dungeon);
 			if (it == m_byDungeon.end()) return std::nullopt;
 			auto& q = it->second;
@@ -97,6 +106,8 @@ namespace engine::server::lfg
 		}
 
 	private:
+		/// Audit Lot B1 — protège m_byDungeon contre les workers concurrents.
+		mutable std::mutex m_mutex;
 		std::unordered_map<DungeonId, std::vector<LfgEntry>> m_byDungeon;
 	};
 }

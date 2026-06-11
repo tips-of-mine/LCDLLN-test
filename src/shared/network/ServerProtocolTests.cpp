@@ -465,6 +465,34 @@ namespace
 		std::puts("[OK] TestAuraUpdateRoundTrip");
 	}
 
+	/// Combat SP4 (wire v12) — round-trip de la table de menace + liste vide + tronqué.
+	void TestThreatUpdateRoundTrip()
+	{
+		engine::server::ThreatUpdateMessage in{};
+		in.mobEntityId = 0x300000005ull;
+		in.entries.push_back(engine::server::ThreatWireEntry{ 0x200000001ull, 450u });
+		in.entries.push_back(engine::server::ThreatWireEntry{ 0x200000002ull, 120u });
+
+		const std::vector<std::byte> packet = engine::server::EncodeThreatUpdate(in);
+		engine::server::ThreatUpdateMessage out{};
+		assert(engine::server::DecodeThreatUpdate(packet, out));
+		assert(out.mobEntityId == in.mobEntityId);
+		assert(out.entries.size() == 2u);
+		assert(out.entries[0].playerEntityId == 0x200000001ull && out.entries[0].threatValue == 450u);
+		assert(out.entries[1].threatValue == 120u);
+
+		// Liste vide = effacement côté client : valide.
+		engine::server::ThreatUpdateMessage empty{};
+		empty.mobEntityId = 42u;
+		assert(engine::server::DecodeThreatUpdate(engine::server::EncodeThreatUpdate(empty), out));
+		assert(out.mobEntityId == 42u && out.entries.empty());
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 4u);
+		assert(!engine::server::DecodeThreatUpdate(truncated, out));
+		std::puts("[OK] TestThreatUpdateRoundTrip");
+	}
+
 	/// Combat SP3 (wire v11) — PlayerStats porte désormais profileId en queue.
 	void TestPlayerStatsRoundTripWithProfile()
 	{
@@ -503,6 +531,7 @@ int main()
 	TestResourceUpdateRoundTrip();
 	TestCastBarUpdateRoundTrip();
 	TestAuraUpdateRoundTrip();
+	TestThreatUpdateRoundTrip();
 	TestPlayerStatsRoundTripWithProfile();
 	std::puts("All ServerProtocol tests passed");
 	return 0;

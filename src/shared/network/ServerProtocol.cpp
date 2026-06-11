@@ -742,6 +742,47 @@ namespace engine::server
 		return outMessage.status <= kCastBarStatusCancel;
 	}
 
+	std::vector<std::byte> EncodeThreatUpdate(const ThreatUpdateMessage& message)
+	{
+		// Combat SP4 — payload : mobEntityId (8) + count (1) + n × (playerEntityId 8 + threat 4).
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ThreatUpdate, 9 + message.entries.size() * 12);
+		WriteU64(packet, message.mobEntityId);
+		WriteU8(packet, static_cast<uint8_t>(std::min<size_t>(message.entries.size(), 0xFFu)));
+		for (const ThreatWireEntry& entry : message.entries)
+		{
+			WriteU64(packet, entry.playerEntityId);
+			WriteU32(packet, entry.threatValue);
+		}
+		return packet;
+	}
+
+	bool DecodeThreatUpdate(std::span<const std::byte> packet, ThreatUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ThreatUpdate, payload) || payload.size() < 9)
+		{
+			return false;
+		}
+
+		outMessage.mobEntityId = ReadU64(payload, 0);
+		const size_t entryCount = static_cast<size_t>(ReadU8(payload, 8));
+		if (payload.size() != 9 + entryCount * 12)
+		{
+			return false;
+		}
+
+		outMessage.entries.clear();
+		outMessage.entries.resize(entryCount);
+		size_t offset = 9;
+		for (size_t index = 0; index < entryCount; ++index)
+		{
+			outMessage.entries[index].playerEntityId = ReadU64(payload, offset);
+			outMessage.entries[index].threatValue = ReadU32(payload, offset + 8);
+			offset += 12;
+		}
+		return true;
+	}
+
 	std::vector<std::byte> EncodeAuraUpdate(const AuraUpdateMessage& message)
 	{
 		// Combat SP3 — payload : targetEntityId (8) + count (1) puis par aura :

@@ -257,6 +257,9 @@ namespace engine::server
 		uint32_t xpReward = 0;
 		/// Combat SP3 — auras actives (DoT, ralentissements, debuffs).
 		std::vector<ActiveAura> auras;
+		/// Combat SP4 — throttle du push ThreatUpdate (≤ 1/s et sur changement).
+		uint64_t lastThreatPushMs = 0;
+		uint64_t lastThreatHash = 0;
 	};
 
 	/// One spawn slot tracked by the authoritative spawner runtime.
@@ -600,6 +603,14 @@ namespace engine::server
 		/// Combat SP3 — broadcast la liste complète des auras d'une entité aux
 		/// clients intéressés (idempotent côté client).
 		void BroadcastAuraUpdate(EntityId entityId, const std::vector<ActiveAura>& auras);
+
+		/// Combat SP4 — pousse les tables de menace modifiées (≤ 1/s par mob).
+		/// Appelée depuis Simulate.
+		void PushThreatUpdates();
+
+		/// Combat SP4 — broadcast immédiat de la table de menace d'un mob (liste
+		/// vide = effacement côté client : mort, evade, reset).
+		void BroadcastThreatUpdate(MobEntity& mob);
 
 		/// Apply one mob attack against its current target when in range.
 		bool TryMobAttackPlayer(MobEntity& mob, ConnectedClient& target);

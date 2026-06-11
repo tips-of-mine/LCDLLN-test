@@ -2190,3 +2190,30 @@ bit1 miss, payload 32→36 o) + kind `RespawnRequest = 80`.
   cadre cible haut-centre, log combat bas-droite, panneau DPS/log filtrable) ; **écran de
   mort** (overlay + bouton Réapparaître → RespawnRequest) ; mouvement bloqué pendant la mort.
 - **Déploiement** : ⚠️ wire-breaking v10 — master + shardd + client en lock-step.
+
+## Combat SP3-A — sorts et auras, volet serveur (2026-06-11)
+
+Kits VALIDÉS : `docs/superpowers/specs/2026-06-11-combat-sp3-kits-starter-proposal.md` ;
+plan : `docs/superpowers/plans/2026-06-11-combat-sp3-sorts-auras.md`. **Wire v10→v11** :
+kinds `CastRequest=81`, `ResourceUpdate=82`, `CastBarUpdate=83`, `AuraUpdate=84` +
+`PlayerStatsMessage.profileId`.
+
+- **Données** : `game/data/gameplay/spells/<profil>.json` × 8 (3 sorts/profil, slots 1-4,
+  coûts en % ressource max, 9 types d''effets). Noms ASCII (police Windlass).
+- **`SpellKitLibrary`** (`src/shardd/gameplay/spell/`) : chargeur strict (kit corrompu =
+  pas de boot), tri par slot, validation par type d''effet ; tests `spell_kit_library_tests`.
+- **Ressource runtime** : `ConnectedClient.currentResource/maxResource` (depuis les stats
+  calculées), régén 5 %/s hors combat / 2 %/s en combat (CombatEvent < 5 s),
+  `ResourceUpdate` throttlé 500 ms (forcé au débit d''un cast).
+- **Cast** : `HandleCastRequest` (profil→kit, cooldown/sort, coût, cible par targetType,
+  portée) ; cast time → `TickActiveCasts` (annulation mort/déplacement > 0,5 m,
+  `CastBarUpdate` start/complete/cancel).
+- **Effets** : DirectDamage (jets SP2 + AoE AreaAroundSelf), DoT/HoT (`ActiveAura`
+  tickées dans Simulate, montants figés à l''application), Buff/Debuff de dégâts
+  (`ApplyAuraDamageModifiers` dans les deux sens), Slow (vitesse mob, plancher 10 %),
+  Taunt (menace ×N + agro forcée), Dérobade (menace −N % partout).
+- **Factorisation** : `ApplyPlayerDamageToMob` partagé auto-attaque/sorts/DoT (PV,
+  événement dynamique, mort/loot/XP, CombatEvent).
+- Persistance des auras : ABANDONNÉE en V1 (toutes ≤ 12 s) — cf. plan Task 7.
+- Reste : SP3-B client (barre d''action 1-4, barre de cast, BuffBar via StatusEffectManager).
+- **Déploiement** : ⚠️ wire v11 — lock-step master + shardd + client (avec SP3-B).

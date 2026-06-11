@@ -1,0 +1,41 @@
+{
+  "profile": "sacre",
+  "spells": [
+    {
+      "id": "sacre_marteau_sacre",
+      "name": "Marteau sacre",
+      "slot": 1,
+      "castTimeMs": 0,
+      "cooldownMs": 6000,
+      "resourceCostPercent": 15,
+      "rangeMeters": 0,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DirectDamage", "mult": 1.3 } ]
+    },
+    {
+      "id": "sacre_imposition_des_mains",
+      "name": "Imposition des mains",
+      "slot": 2,
+      "castTimeMs": 0,
+      "cooldownMs": 60000,
+      "resourceCostPercent": 40,
+      "rangeMeters": 10,
+      "targetType": "SingleAlly",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DirectHeal", "mult": 3.0 } ]
+    },
+    {
+      "id": "sacre_aura_de_zele",
+      "name": "Aura de zele",
+      "slot": 3,
+      "castTimeMs": 0,
+      "cooldownMs": 24000,
+      "resourceCostPercent": 20,
+      "rangeMeters": 0,
+      "targetType": "SelfOnly",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "BuffDamagePercent", "percent": 10, "durationMs": 12000 } ]
+    }
+  ]
+}

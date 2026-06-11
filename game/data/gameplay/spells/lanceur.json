@@ -1,0 +1,41 @@
+{
+  "profile": "lanceur",
+  "spells": [
+    {
+      "id": "lanceur_trait_de_feu",
+      "name": "Trait de feu",
+      "slot": 1,
+      "castTimeMs": 1500,
+      "cooldownMs": 4000,
+      "resourceCostPercent": 20,
+      "rangeMeters": 30,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DirectDamage", "mult": 1.6 } ]
+    },
+    {
+      "id": "lanceur_brulure",
+      "name": "Brulure",
+      "slot": 2,
+      "castTimeMs": 0,
+      "cooldownMs": 10000,
+      "resourceCostPercent": 20,
+      "rangeMeters": 30,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DamageOverTime", "mult": 0.35, "tickPeriodMs": 2000, "durationMs": 8000 } ]
+    },
+    {
+      "id": "lanceur_nova",
+      "name": "Nova",
+      "slot": 3,
+      "castTimeMs": 0,
+      "cooldownMs": 15000,
+      "resourceCostPercent": 30,
+      "rangeMeters": 0,
+      "targetType": "AreaAroundSelf",
+      "areaRadiusMeters": 8,
+      "effects": [ { "type": "DirectDamage", "mult": 0.9 } ]
+    }
+  ]
+}

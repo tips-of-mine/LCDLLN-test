@@ -1,0 +1,41 @@
+{
+  "profile": "melee",
+  "spells": [
+    {
+      "id": "melee_frappe_brutale",
+      "name": "Frappe brutale",
+      "slot": 1,
+      "castTimeMs": 0,
+      "cooldownMs": 6000,
+      "resourceCostPercent": 15,
+      "rangeMeters": 0,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DirectDamage", "mult": 1.4 } ]
+    },
+    {
+      "id": "melee_entaille",
+      "name": "Entaille",
+      "slot": 2,
+      "castTimeMs": 0,
+      "cooldownMs": 10000,
+      "resourceCostPercent": 20,
+      "rangeMeters": 0,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DamageOverTime", "mult": 0.25, "tickPeriodMs": 2000, "durationMs": 8000 } ]
+    },
+    {
+      "id": "melee_cri_de_guerre",
+      "name": "Cri de guerre",
+      "slot": 3,
+      "castTimeMs": 0,
+      "cooldownMs": 30000,
+      "resourceCostPercent": 25,
+      "rangeMeters": 0,
+      "targetType": "SelfOnly",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "BuffDamagePercent", "percent": 15, "durationMs": 10000 } ]
+    }
+  ]
+}

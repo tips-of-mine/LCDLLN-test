@@ -1,0 +1,41 @@
+{
+  "profile": "distance",
+  "spells": [
+    {
+      "id": "distance_tir_vise",
+      "name": "Tir vise",
+      "slot": 1,
+      "castTimeMs": 1500,
+      "cooldownMs": 8000,
+      "resourceCostPercent": 20,
+      "rangeMeters": 30,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DirectDamage", "mult": 1.6 } ]
+    },
+    {
+      "id": "distance_fleche_barbelee",
+      "name": "Fleche barbelee",
+      "slot": 2,
+      "castTimeMs": 0,
+      "cooldownMs": 12000,
+      "resourceCostPercent": 20,
+      "rangeMeters": 30,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DamageOverTime", "mult": 0.3, "tickPeriodMs": 2000, "durationMs": 8000 } ]
+    },
+    {
+      "id": "distance_tir_rapide",
+      "name": "Tir rapide",
+      "slot": 3,
+      "castTimeMs": 0,
+      "cooldownMs": 3000,
+      "resourceCostPercent": 15,
+      "rangeMeters": 30,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DirectDamage", "mult": 0.8 } ]
+    }
+  ]
+}

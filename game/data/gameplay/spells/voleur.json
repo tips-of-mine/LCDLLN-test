@@ -1,0 +1,41 @@
+{
+  "profile": "voleur",
+  "spells": [
+    {
+      "id": "voleur_attaque_sournoise",
+      "name": "Attaque sournoise",
+      "slot": 1,
+      "castTimeMs": 0,
+      "cooldownMs": 10000,
+      "resourceCostPercent": 25,
+      "rangeMeters": 0,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DirectDamage", "mult": 1.7 } ]
+    },
+    {
+      "id": "voleur_lame_empoisonnee",
+      "name": "Lame empoisonnee",
+      "slot": 2,
+      "castTimeMs": 0,
+      "cooldownMs": 12000,
+      "resourceCostPercent": 20,
+      "rangeMeters": 0,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DamageOverTime", "mult": 0.35, "tickPeriodMs": 2000, "durationMs": 10000 } ]
+    },
+    {
+      "id": "voleur_derobade",
+      "name": "Derobade",
+      "slot": 3,
+      "castTimeMs": 0,
+      "cooldownMs": 25000,
+      "resourceCostPercent": 20,
+      "rangeMeters": 0,
+      "targetType": "SelfOnly",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "ThreatReducePercent", "percent": 50 } ]
+    }
+  ]
+}

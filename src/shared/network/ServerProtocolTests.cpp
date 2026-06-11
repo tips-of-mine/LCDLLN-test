@@ -363,6 +363,129 @@ namespace
 		std::puts("[OK] TestRespawnRequestRoundTrip");
 	}
 
+	/// Combat SP3 (wire v11) — round-trips des messages sorts/auras + rejets tronqués.
+	void TestCastRequestRoundTrip()
+	{
+		engine::server::CastRequestMessage in{};
+		in.clientId = 7u;
+		in.targetEntityId = 0x300000005ull;
+		in.spellId = "melee_frappe_brutale";
+
+		const std::vector<std::byte> packet = engine::server::EncodeCastRequest(in);
+		assert(!packet.empty());
+
+		engine::server::CastRequestMessage out{};
+		assert(engine::server::DecodeCastRequest(packet, out));
+		assert(out.clientId == 7u);
+		assert(out.targetEntityId == 0x300000005ull);
+		assert(out.spellId == "melee_frappe_brutale");
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 3u);
+		assert(!engine::server::DecodeCastRequest(truncated, out));
+		std::puts("[OK] TestCastRequestRoundTrip");
+	}
+
+	void TestResourceUpdateRoundTrip()
+	{
+		engine::server::ResourceUpdateMessage in{};
+		in.clientId = 7u;
+		in.currentResource = 120u;
+		in.maxResource = 200u;
+
+		const std::vector<std::byte> packet = engine::server::EncodeResourceUpdate(in);
+		engine::server::ResourceUpdateMessage out{};
+		assert(engine::server::DecodeResourceUpdate(packet, out));
+		assert(out.clientId == 7u && out.currentResource == 120u && out.maxResource == 200u);
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 2u);
+		assert(!engine::server::DecodeResourceUpdate(truncated, out));
+		std::puts("[OK] TestResourceUpdateRoundTrip");
+	}
+
+	void TestCastBarUpdateRoundTrip()
+	{
+		engine::server::CastBarUpdateMessage in{};
+		in.clientId = 7u;
+		in.status = engine::server::kCastBarStatusStart;
+		in.durationMs = 1500u;
+		in.spellId = "distance_tir_vise";
+
+		const std::vector<std::byte> packet = engine::server::EncodeCastBarUpdate(in);
+		engine::server::CastBarUpdateMessage out{};
+		assert(engine::server::DecodeCastBarUpdate(packet, out));
+		assert(out.status == engine::server::kCastBarStatusStart);
+		assert(out.durationMs == 1500u);
+		assert(out.spellId == "distance_tir_vise");
+
+		// status hors domaine rejeté. Offset absolu = header 8 octets (magic u32
+		// + version u16 + kind u16, cf. kHeaderSize) + 4 (clientId) = 12.
+		std::vector<std::byte> badStatus = packet;
+		badStatus[8 + 4] = static_cast<std::byte>(9);
+		assert(!engine::server::DecodeCastBarUpdate(badStatus, out));
+		std::puts("[OK] TestCastBarUpdateRoundTrip");
+	}
+
+	void TestAuraUpdateRoundTrip()
+	{
+		engine::server::AuraUpdateMessage in{};
+		in.targetEntityId = 0x300000005ull;
+		engine::server::AuraWireEntry dot{};
+		dot.spellId = "melee_entaille";
+		dot.effectType = 1u; // DamageOverTime
+		dot.remainingMs = 6000u;
+		dot.stacks = 1u;
+		in.auras.push_back(dot);
+		engine::server::AuraWireEntry slow{};
+		slow.spellId = "tank_coup_de_bouclier";
+		slow.effectType = 7u; // SlowMobPercent
+		slow.remainingMs = 4000u;
+		slow.stacks = 1u;
+		in.auras.push_back(slow);
+
+		const std::vector<std::byte> packet = engine::server::EncodeAuraUpdate(in);
+		engine::server::AuraUpdateMessage out{};
+		assert(engine::server::DecodeAuraUpdate(packet, out));
+		assert(out.targetEntityId == in.targetEntityId);
+		assert(out.auras.size() == 2u);
+		assert(out.auras[0].spellId == "melee_entaille" && out.auras[0].remainingMs == 6000u);
+		assert(out.auras[1].effectType == 7u);
+
+		// Liste vide : valide (toutes les auras expirées → le client purge).
+		engine::server::AuraUpdateMessage empty{};
+		empty.targetEntityId = 42u;
+		const std::vector<std::byte> emptyPacket = engine::server::EncodeAuraUpdate(empty);
+		assert(engine::server::DecodeAuraUpdate(emptyPacket, out));
+		assert(out.targetEntityId == 42u && out.auras.empty());
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 1u);
+		assert(!engine::server::DecodeAuraUpdate(truncated, out));
+		std::puts("[OK] TestAuraUpdateRoundTrip");
+	}
+
+	/// Combat SP3 (wire v11) — PlayerStats porte désormais profileId en queue.
+	void TestPlayerStatsRoundTripWithProfile()
+	{
+		engine::server::PlayerStatsMessage in{};
+		in.clientId = 7u;
+		in.maxHealth = 250u;
+		in.resource = 120u;
+		in.damage = 22u;
+		in.accuracy = 82.5f;
+		in.resourceKey = "ferveur";
+		in.profileId = "sacre";
+
+		const std::vector<std::byte> packet = engine::server::EncodePlayerStats(in);
+		engine::server::PlayerStatsMessage out{};
+		assert(engine::server::DecodePlayerStats(packet, out));
+		assert(out.clientId == 7u && out.maxHealth == 250u && out.resource == 120u);
+		assert(out.resourceKey == "ferveur");
+		assert(out.profileId == "sacre");
+		std::puts("[OK] TestPlayerStatsRoundTripWithProfile");
+	}
+
 int main()
 {
 	TestInputRoundTrip();
@@ -376,6 +499,11 @@ int main()
 	TestCombatEventRoundTripWithFlags();
 	TestAttackRequestRoundTrip();
 	TestRespawnRequestRoundTrip();
+	TestCastRequestRoundTrip();
+	TestResourceUpdateRoundTrip();
+	TestCastBarUpdateRoundTrip();
+	TestAuraUpdateRoundTrip();
+	TestPlayerStatsRoundTripWithProfile();
 	std::puts("All ServerProtocol tests passed");
 	return 0;
 }

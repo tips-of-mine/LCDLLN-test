@@ -1,0 +1,44 @@
+{
+  "profile": "pisteur",
+  "spells": [
+    {
+      "id": "pisteur_tir_de_chasse",
+      "name": "Tir de chasse",
+      "slot": 1,
+      "castTimeMs": 1500,
+      "cooldownMs": 8000,
+      "resourceCostPercent": 20,
+      "rangeMeters": 30,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DirectDamage", "mult": 1.5 } ]
+    },
+    {
+      "id": "pisteur_marque_du_chasseur",
+      "name": "Marque du chasseur",
+      "slot": 2,
+      "castTimeMs": 0,
+      "cooldownMs": 12000,
+      "resourceCostPercent": 15,
+      "rangeMeters": 30,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [ { "type": "DebuffDamageTakenPercent", "percent": 15, "durationMs": 10000 } ]
+    },
+    {
+      "id": "pisteur_morsure_du_piege",
+      "name": "Morsure du piege",
+      "slot": 3,
+      "castTimeMs": 0,
+      "cooldownMs": 15000,
+      "resourceCostPercent": 25,
+      "rangeMeters": 25,
+      "targetType": "SingleEnemy",
+      "areaRadiusMeters": 0,
+      "effects": [
+        { "type": "DamageOverTime", "mult": 0.3, "tickPeriodMs": 2000, "durationMs": 8000 },
+        { "type": "SlowMobPercent", "percent": 20, "durationMs": 4000 }
+      ]
+    }
+  ]
+}

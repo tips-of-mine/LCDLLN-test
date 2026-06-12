@@ -10397,11 +10397,52 @@ namespace engine
 					const bool mouseAllowed = !menuOpen && !chatFocus && !localDead
 						&& !ImGui::GetIO().WantCaptureMouse;
 
-					// --- Selection a la souris : pick ecran-espace du mob vivant le
-					// plus proche du curseur (rayon kPickRadiusPx), sans raycast 3D.
+					// --- Selection / attaque a la souris. Pick ecran-espace du mob
+					// vivant le plus proche du curseur (rayon kPickRadiusPx), sans
+					// raycast 3D. Factorise : utilise par le clic GAUCHE (selection)
+					// et par le clic DROIT relache sans drag (selection + attaque
+					// auto — le drag droit reste le mouselook camera).
+					constexpr float kPickRadiusPx = 40.0f;
+					const auto pickMobAtScreen = [&](const ImVec2& screenPos) -> engine::server::EntityId
+					{
+						engine::server::EntityId bestId = 0;
+						float bestPickDistSq = kPickRadiusPx * kPickRadiusPx;
+						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						{
+							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u
+								|| re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
+								continue;
+							float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
+							const auto sit = m_remoteSmoothed.find(re.entityId);
+							if (sit != m_remoteSmoothed.end() && sit->second.valid)
+							{
+								wx = sit->second.x; wy = sit->second.y; wz = sit->second.z;
+							}
+							wy = ResolveRemoteDisplayCenterY(false, wy, wx, wz);
+							float sxp = 0.0f, syp = 0.0f;
+							if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 0.5f, wz, ivw, ivh, sxp, syp))
+								continue;
+							const float dxPick = sxp - screenPos.x;
+							const float dyPick = syp - screenPos.y;
+							const float distSq = dxPick * dxPick + dyPick * dyPick;
+							if (distSq < bestPickDistSq)
+							{
+								bestPickDistSq = distSq;
+								bestId = re.entityId;
+							}
+						}
+						// Diagnostic du pick (selection souris rapportee inoperante) :
+						// une ligne par clic monde — a lire dans le log client.
+						LOG_INFO(Core,
+							"[CombatPick] clic=({:.0f},{:.0f}) picked_entity_id={} best_dist_px={:.1f} entites={}",
+							screenPos.x, screenPos.y, bestId,
+							(bestId != 0) ? std::sqrt(bestPickDistSq) : -1.0f,
+							static_cast<int>(uiModel.remoteEntities.size()));
+						return bestId;
+					};
+
 					if (mouseAllowed && m_input.WasMousePressed(engine::platform::MouseButton::Left))
 					{
-						constexpr float kPickRadiusPx = 40.0f;
 						const ImVec2 mousePos = ImGui::GetIO().MousePos;
 						// Groupes SP1 — un clic sur un cadre de groupe est une sélection
 						// d'allié (gérée plus bas), jamais un pick de mob.
@@ -10426,50 +10467,82 @@ namespace engine
 								}
 							}
 						}
-						engine::server::EntityId pickedId = 0;
-						float bestDistSq = kPickRadiusPx * kPickRadiusPx;
-						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						if (!overPartyFrame)
 						{
-							// V1 : seuls les mobs vivants sont ciblables (pas de PvP ;
-							// les nodes de récolte — plage réservée — sont exclus).
-							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u
-								|| re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
-								continue;
-							float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
-							const auto sit = m_remoteSmoothed.find(re.entityId);
-							if (sit != m_remoteSmoothed.end() && sit->second.valid)
+							const engine::server::EntityId pickedId = pickMobAtScreen(mousePos);
+							if (pickedId != 0)
+								(void)m_uiModelBinding.SetLocalTarget(pickedId);
+						}
+					}
+
+					// --- Clic droit « court » = cibler + ATTAQUE AUTO (le drag droit
+					// reste le mouselook caméra : on discrimine au relâchement par la
+					// dérive du curseur depuis la pression).
+					constexpr float kRmbClickMaxDriftPx = 6.0f;
+					if (mouseAllowed && m_input.WasMousePressed(engine::platform::MouseButton::Right))
+					{
+						const ImVec2 rmbPos = ImGui::GetIO().MousePos;
+						m_rmbPressMouseX = rmbPos.x;
+						m_rmbPressMouseY = rmbPos.y;
+						m_rmbClickCandidate = true;
+					}
+					if (m_input.WasMouseReleased(engine::platform::MouseButton::Right))
+					{
+						const ImVec2 rmbPos = ImGui::GetIO().MousePos;
+						const float driftX = rmbPos.x - m_rmbPressMouseX;
+						const float driftY = rmbPos.y - m_rmbPressMouseY;
+						const bool isClick = m_rmbClickCandidate && mouseAllowed
+							&& (driftX * driftX + driftY * driftY)
+								<= kRmbClickMaxDriftPx * kRmbClickMaxDriftPx;
+						m_rmbClickCandidate = false;
+						if (isClick)
+						{
+							const engine::server::EntityId pickedId = pickMobAtScreen(rmbPos);
+							if (pickedId != 0)
 							{
-								wx = sit->second.x; wy = sit->second.y; wz = sit->second.z;
-							}
-							// Combat SP1 fix — même snap visuel au sol que la plaque : le
-							// point d'ancrage du pick doit correspondre à ce que voit le
-							// joueur (cf. ResolveRemoteDisplayCenterY).
-							wy = ResolveRemoteDisplayCenterY(false, wy, wx, wz);
-							float sxp = 0.0f, syp = 0.0f;
-							if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 0.5f, wz, ivw, ivh, sxp, syp))
-								continue;
-							const float dxPick = sxp - mousePos.x;
-							const float dyPick = syp - mousePos.y;
-							const float distSq = dxPick * dxPick + dyPick * dyPick;
-							if (distSq < bestDistSq)
-							{
-								bestDistSq = distSq;
-								pickedId = re.entityId;
+								(void)m_uiModelBinding.SetLocalTarget(pickedId);
+								m_autoAttackTargetId = pickedId;
 							}
 						}
-						if (pickedId != 0 && !overPartyFrame)
-							(void)m_uiModelBinding.SetLocalTarget(pickedId);
-						// Validation v12 — diagnostic du pick : la sélection souris est
-						// rapportée inopérante en jeu alors que le code est statiquement
-						// sain. Une ligne par clic monde : position, meilleur candidat et
-						// distance écran — à lire dans le log client pour trancher entre
-						// « pas d'événement clic », « candidat trop loin » et « gate ».
-						LOG_INFO(Core,
-							"[CombatPick] clic=({:.0f},{:.0f}) picked_entity_id={} best_dist_px={:.1f} over_party_frame={} mobs_candidats={}",
-							mousePos.x, mousePos.y, pickedId,
-							(pickedId != 0) ? std::sqrt(bestDistSq) : -1.0f,
-							overPartyFrame,
-							static_cast<int>(uiModel.remoteEntities.size()));
+					}
+
+					// --- Attaque auto : tant que la cible engagée est vivante et
+					// ciblée, renvoie une AttackRequest à chaque expiration du
+					// throttle, UNIQUEMENT à portée de mêlée (pas de spam du serveur
+					// ni de l'indication « Hors de portee » pendant l'approche —
+					// l'attaque reprend toute seule dès qu'on est au contact).
+					if (m_autoAttackTargetId != 0ull)
+					{
+						const bool targetStillValid = uiModel.targetStats.hasTarget
+							&& uiModel.targetStats.entityId == m_autoAttackTargetId
+							&& (uiModel.targetStats.stateFlags & 1u) == 0u;
+						if (!targetStillValid || localDead)
+						{
+							m_autoAttackTargetId = 0ull; // cible morte/perdue : désengage.
+						}
+						else if (m_attackSendCooldownSec <= 0.0f)
+						{
+							constexpr float kAutoAttackRangeMeters = 4.0f;
+							const engine::math::Vec3 playerPosAuto = m_characterController.GetPosition();
+							for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+							{
+								if (re.entityId != m_autoAttackTargetId)
+									continue;
+								const float dxAuto = re.positionX - playerPosAuto.x;
+								const float dzAuto = re.positionZ - playerPosAuto.z;
+								if ((dxAuto * dxAuto + dzAuto * dzAuto)
+									<= kAutoAttackRangeMeters * kAutoAttackRangeMeters)
+								{
+									const uint32_t autoClientId = m_gameplayUdp.ServerClientId();
+									if (autoClientId != 0u)
+									{
+										(void)m_gameplayUdp.SendAttackRequest(autoClientId, m_autoAttackTargetId);
+										m_attackSendCooldownSec = 0.5f;
+									}
+								}
+								break;
+							}
+						}
 					}
 
 					// --- Tab : cycle des mobs vivants par distance croissante au joueur.
@@ -13411,6 +13484,9 @@ namespace engine
 		m_combatHud.Shutdown();
 		m_advancedCombatVisible = false;
 		m_attackSendCooldownSec = 0.0f;
+		m_outOfRangeHintSec = 0.0f;
+		m_autoAttackTargetId = 0ull;
+		m_rmbClickCandidate = false;
 		m_invUi.Shutdown();
 		m_auctionUi.Shutdown();
 		m_shopUi.Shutdown();

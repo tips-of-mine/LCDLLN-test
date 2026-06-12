@@ -1320,6 +1320,17 @@ namespace engine
 		/// EN SILENCE (aucun message wire de rejet), sans cette indication le
 		/// joueur ne comprend pas pourquoi « rien ne se passe ».
 		float m_outOfRangeHintSec = 0.0f;
+		/// Validation v12 — combat à la souris. Le clic droit MAINTENU pilote
+		/// la caméra (mouselook) : un « clic » droit = pression relâchée sans
+		/// mouvement (≤ kRmbClickMaxDriftPx). On mémorise la position de la
+		/// pression pour discriminer clic et drag au relâchement.
+		float m_rmbPressMouseX = 0.0f;
+		float m_rmbPressMouseY = 0.0f;
+		bool m_rmbClickCandidate = false;
+		/// Validation v12 — attaque automatique : engagée par clic droit sur un
+		/// mob, renvoie une AttackRequest à chaque expiration du throttle tant
+		/// que la cible (vivante) reste celle-ci et à portée de mêlée. 0 = off.
+		uint64_t m_autoAttackTargetId = 0;
 		/// Combat SP3 — cooldowns AFFICHÉS de la barre d'action (spellId → fin en
 		/// secondes EngineNowSec) ; purement cosmétique, le serveur fait foi.
 		std::unordered_map<std::string, float> m_spellCooldownUiUntilSec;

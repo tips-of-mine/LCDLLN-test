@@ -11301,14 +11301,97 @@ namespace engine
 						{
 							if (re.entityId != uiModel.targetStats.entityId)
 								continue;
-							float tgx = re.positionX, tgz = re.positionZ;
+							float tgx = re.positionX, tgz = re.positionZ, tgyaw = re.yawRadians;
 							const auto sit = m_remoteSmoothed.find(re.entityId);
 							if (sit != m_remoteSmoothed.end() && sit->second.valid)
 							{
-								tgx = sit->second.x; tgz = sit->second.z;
+								tgx = sit->second.x; tgz = sit->second.z; tgyaw = sit->second.yaw;
 							}
-							drawGroundRing(tgx, tgz, 0.95f, IM_COL32(235, 190, 60, 230), 3.0f);
-							drawGroundRing(tgx, tgz, 0.70f, IM_COL32(235, 190, 60, 110), 1.5f);
+							// Cercle de sélection enrichi :
+							// 1. OCCLUSION par le corps du mob : un segment dont le rayon
+							//    caméra→point traverse le cylindre du mob (r=0.4 m) est
+							//    masqué — le mob reste visuellement AU PREMIER PLAN.
+							// 2. CÔNE DE VISION 120° : la portion du cercle face au regard
+							//    du mob (yaw répliqué) est rouge sombre + secteur rempli —
+							//    le joueur voit où l'ennemi regarde.
+							constexpr int kSelSegments = 36;
+							constexpr float kSelRadius = 0.95f;
+							constexpr float kMobBodyRadius = 0.4f;
+							constexpr float kHalfConeRad = 1.0471976f; // 60° (cône 120°).
+							const float camX = out.camera.position.x;
+							const float camZ = out.camera.position.z;
+							// Direction du regard : yaw = atan2(vx, vz) → (sin, cos) en XZ,
+							// soit un angle paramétrique atan2(cos(yaw), sin(yaw)).
+							const float facingParamAngle = std::atan2(std::cos(tgyaw), std::sin(tgyaw));
+							// Teste si le point monde (px, pz) est caché par le cylindre du
+							// mob depuis la caméra (test 2D XZ : M proche du segment C→P).
+							const auto segmentOccluded = [&](float px, float pz) -> bool
+							{
+								const float rayDx = px - camX, rayDz = pz - camZ;
+								const float rayLenSq = rayDx * rayDx + rayDz * rayDz;
+								if (rayLenSq <= 0.0001f)
+									return false;
+								const float t = ((tgx - camX) * rayDx + (tgz - camZ) * rayDz) / rayLenSq;
+								if (t <= 0.0f || t >= 1.0f)
+									return false; // mob pas entre la caméra et le point.
+								const float closestX = camX + rayDx * t;
+								const float closestZ = camZ + rayDz * t;
+								const float perpDx = tgx - closestX, perpDz = tgz - closestZ;
+								return (perpDx * perpDx + perpDz * perpDz) < kMobBodyRadius * kMobBodyRadius;
+							};
+							// Secteur de vision rempli (éventail centre + arc, alpha doux).
+							{
+								ImVec2 conePoints[16];
+								int coneCount = 0;
+								float csx = 0.0f, csy = 0.0f;
+								const float coneCenterY = m_terrain.SampleHeightAtWorldXZ(tgx, tgz) + 0.05f;
+								if (WorldToScreenPx(out.viewProjMatrix.m, tgx, coneCenterY, tgz, ivw, ivh, csx, csy))
+								{
+									conePoints[coneCount++] = ImVec2(csx, csy);
+									bool coneVisible = true;
+									for (int cseg = 0; cseg <= 12 && coneVisible; ++cseg)
+									{
+										const float angle = facingParamAngle - kHalfConeRad
+											+ (static_cast<float>(cseg) / 12.0f) * (2.0f * kHalfConeRad);
+										const float wxc = tgx + std::cos(angle) * kSelRadius;
+										const float wzc = tgz + std::sin(angle) * kSelRadius;
+										const float wyc = m_terrain.SampleHeightAtWorldXZ(wxc, wzc) + 0.05f;
+										float sxc = 0.0f, syc = 0.0f;
+										coneVisible = WorldToScreenPx(out.viewProjMatrix.m, wxc, wyc, wzc, ivw, ivh, sxc, syc);
+										if (coneVisible)
+											conePoints[coneCount++] = ImVec2(sxc, syc);
+									}
+									if (coneVisible && coneCount >= 3)
+										fg->AddConvexPolyFilled(conePoints, coneCount, IM_COL32(180, 45, 30, 55));
+								}
+							}
+							// Anneau segment par segment : couleur selon le cône, segments
+							// occlus par le corps non tracés.
+							ImVec2 prevPoint{};
+							bool prevValid = false;
+							for (int seg = 0; seg <= kSelSegments; ++seg)
+							{
+								const float angle = (static_cast<float>(seg % kSelSegments) / kSelSegments) * 6.2831853f;
+								const float wxr = tgx + std::cos(angle) * kSelRadius;
+								const float wzr = tgz + std::sin(angle) * kSelRadius;
+								const float wyr = m_terrain.SampleHeightAtWorldXZ(wxr, wzr) + 0.05f;
+								float sxr = 0.0f, syr = 0.0f;
+								const bool projected = WorldToScreenPx(out.viewProjMatrix.m, wxr, wyr, wzr, ivw, ivh, sxr, syr)
+									&& !segmentOccluded(wxr, wzr);
+								if (projected && prevValid)
+								{
+									// Delta d'angle au regard, replié sur [-pi, pi].
+									float coneDelta = angle - facingParamAngle;
+									while (coneDelta > 3.1415927f) coneDelta -= 6.2831853f;
+									while (coneDelta < -3.1415927f) coneDelta += 6.2831853f;
+									const bool inCone = std::fabs(coneDelta) <= kHalfConeRad;
+									fg->AddLine(prevPoint, ImVec2(sxr, syr),
+										inCone ? IM_COL32(150, 35, 25, 240) : IM_COL32(235, 190, 60, 230),
+										inCone ? 4.0f : 3.0f);
+								}
+								prevPoint = ImVec2(sxr, syr);
+								prevValid = projected;
+							}
 							break;
 						}
 					}

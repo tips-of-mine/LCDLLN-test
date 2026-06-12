@@ -536,6 +536,13 @@ namespace engine::server
 		/// reprend ensuite depuis cette position.
 		void SendForcePosition(ConnectedClient& client, uint8_t reason);
 
+		/// Validation v12 — butin AUTOMATIQUE : à la mort d'un mob, crédite
+		/// directement l'inventaire du looter (résolu en amont par le mode de
+		/// loot du groupe) et pousse InventoryDelta + LootNotify (fenêtre de
+		/// butin client). Plus de sac à ramasser au clavier ; si le looter
+		/// n'est plus connecté, retombe sur l'ancien SpawnLootBagForMob.
+		void AutoLootMobToKiller(const MobEntity& mob, EntityId looterEntityId);
+
 		/// Validate one pickup request, update the inventory and despawn the bag.
 		void HandlePickupRequest(const Endpoint& endpoint, uint32_t clientId, EntityId lootBagEntityId);
 

@@ -254,7 +254,12 @@ namespace engine::server
 		/// client-autoritaire (T0.1) ; ce kind est le canal de correction.
 		/// Ajout rétro-additif : un client qui ne le connaît pas l'ignore
 		/// (pas de bump de kProtocolVersion).
-		ForcePosition = 86
+		ForcePosition = 86,
+		/// Validation v12 — shard → client : butin auto-crédité à la mort d'un
+		/// mob (liste des objets gagnés). Le client ouvre/abonde la fenêtre de
+		/// butin ; l'état d'inventaire transite séparément (InventoryDelta).
+		/// Ajout rétro-additif (pas de bump).
+		LootNotify = 87
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -631,6 +636,16 @@ namespace engine::server
 	/// Correction SP1 — encode/decode de la position imposée (rétro-additif).
 	std::vector<std::byte> EncodeForcePosition(const ForcePositionMessage& message);
 	bool DecodeForcePosition(std::span<const std::byte> packet, ForcePositionMessage& outMessage);
+
+	/// Validation v12 — butin auto-crédité à la mort (rétro-additif).
+	/// Payload : clientId (4) + count (1) puis par objet itemId (4) + quantity (4).
+	struct LootNotifyMessage
+	{
+		uint32_t clientId = 0;
+		std::vector<ItemStack> items;
+	};
+	std::vector<std::byte> EncodeLootNotify(const LootNotifyMessage& message);
+	bool DecodeLootNotify(std::span<const std::byte> packet, LootNotifyMessage& outMessage);
 
 	/// Encode a combat event packet with the protocol header.
 	std::vector<std::byte> EncodeCombatEvent(const CombatEventMessage& message);

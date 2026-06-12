@@ -10506,47 +10506,34 @@ namespace engine
 							const engine::server::EntityId pickedId = pickMobAtScreen(rmbPos);
 							if (pickedId != 0)
 							{
+								// Validation v12 (décision design) — PAS d'attaque auto :
+								// chaque clic droit = cibler + UN coup (le serveur revalide
+								// portée/cooldown ; indication « Hors de portee » si loin).
 								(void)m_uiModelBinding.SetLocalTarget(pickedId);
-								m_autoAttackTargetId = pickedId;
-							}
-						}
-					}
-
-					// --- Attaque auto : tant que la cible engagée est vivante et
-					// ciblée, renvoie une AttackRequest à chaque expiration du
-					// throttle, UNIQUEMENT à portée de mêlée (pas de spam du serveur
-					// ni de l'indication « Hors de portee » pendant l'approche —
-					// l'attaque reprend toute seule dès qu'on est au contact).
-					if (m_autoAttackTargetId != 0ull)
-					{
-						const bool targetStillValid = uiModel.targetStats.hasTarget
-							&& uiModel.targetStats.entityId == m_autoAttackTargetId
-							&& (uiModel.targetStats.stateFlags & 1u) == 0u;
-						if (!targetStillValid || localDead)
-						{
-							m_autoAttackTargetId = 0ull; // cible morte/perdue : désengage.
-						}
-						else if (m_attackSendCooldownSec <= 0.0f)
-						{
-							constexpr float kAutoAttackRangeMeters = 4.0f;
-							const engine::math::Vec3 playerPosAuto = m_characterController.GetPosition();
-							for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
-							{
-								if (re.entityId != m_autoAttackTargetId)
-									continue;
-								const float dxAuto = re.positionX - playerPosAuto.x;
-								const float dzAuto = re.positionZ - playerPosAuto.z;
-								if ((dxAuto * dxAuto + dzAuto * dzAuto)
-									<= kAutoAttackRangeMeters * kAutoAttackRangeMeters)
+								if (m_attackSendCooldownSec <= 0.0f)
 								{
-									const uint32_t autoClientId = m_gameplayUdp.ServerClientId();
-									if (autoClientId != 0u)
+									const uint32_t rmbClientId = m_gameplayUdp.ServerClientId();
+									if (rmbClientId != 0u)
 									{
-										(void)m_gameplayUdp.SendAttackRequest(autoClientId, m_autoAttackTargetId);
-										m_attackSendCooldownSec = 0.5f;
+										(void)m_gameplayUdp.SendAttackRequest(rmbClientId, pickedId);
+										m_attackSendCooldownSec = 0.25f;
+										constexpr float kMeleeRangeHintMetersRmb = 4.0f;
+										const engine::math::Vec3 playerPosRmb = m_characterController.GetPosition();
+										for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+										{
+											if (re.entityId != pickedId)
+												continue;
+											const float dxr = re.positionX - playerPosRmb.x;
+											const float dzr = re.positionZ - playerPosRmb.z;
+											if ((dxr * dxr + dzr * dzr)
+												> kMeleeRangeHintMetersRmb * kMeleeRangeHintMetersRmb)
+											{
+												m_outOfRangeHintSec = 1.2f;
+											}
+											break;
+										}
 									}
 								}
-								break;
 							}
 						}
 					}
@@ -11289,6 +11276,36 @@ namespace engine
 								IM_COL32(120, 200, 120, 230), 4.0f);
 							fg->AddText(ImVec2(harvestState.barX, harvestState.barY - 18.0f),
 								IM_COL32(230, 230, 230, 255), harvestState.label.c_str());
+						}
+					}
+
+					// --- Validation v12 : fenêtre de butin AUTOMATIQUE. S'ouvre seule
+					// dès qu'un LootNotify arrive (mort d'un mob avec loot, objets déjà
+					// crédités à l'inventaire par le serveur) ; les morts suivantes
+					// ABONDENT la même fenêtre (cumul par objet) ; « Fermer » la vide.
+					if (uiModel.lootWindow.visible)
+					{
+						ImGui::SetNextWindowPos(ImVec2(dw - 320.0f, dh * 0.5f - 120.0f), ImGuiCond_FirstUseEver);
+						ImGui::SetNextWindowSize(ImVec2(280.0f, 0.0f), ImGuiCond_Always);
+						bool lootOpen = true;
+						if (ImGui::Begin("Butin", &lootOpen,
+							ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse))
+						{
+							for (const engine::server::ItemStack& lootEntry : uiModel.lootWindow.entries)
+							{
+								ImGui::TextUnformatted(
+									m_invUi.ResolveItemLabel(lootEntry.itemId, lootEntry.quantity).c_str());
+							}
+							ImGui::Separator();
+							if (ImGui::Button("Fermer", ImVec2(-1.0f, 26.0f)))
+							{
+								lootOpen = false;
+							}
+						}
+						ImGui::End();
+						if (!lootOpen)
+						{
+							m_uiModelBinding.CloseLootWindow();
 						}
 					}
 
@@ -13521,7 +13538,6 @@ namespace engine
 		m_advancedCombatVisible = false;
 		m_attackSendCooldownSec = 0.0f;
 		m_outOfRangeHintSec = 0.0f;
-		m_autoAttackTargetId = 0ull;
 		m_rmbClickCandidate = false;
 		m_invUi.Shutdown();
 		m_auctionUi.Shutdown();

@@ -625,6 +625,9 @@ namespace engine::client
 		// Correction SP1 — position imposée par le serveur (respawn/anti-triche).
 		case engine::server::MessageKind::ForcePosition:
 			return ApplyForcePosition(packet);
+		// Validation v12 — butin auto-crédité à la mort d'un mob.
+		case engine::server::MessageKind::LootNotify:
+			return ApplyLootNotify(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -1023,6 +1026,50 @@ namespace engine::client
 			return;
 		}
 		m_model.forcedPosition = UIForcedPosition{};
+	}
+
+	bool UIModelBinding::ApplyLootNotify(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeLootNotify(packet, m_lootNotifyMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] LootNotify FAILED: decode error");
+			return false;
+		}
+
+		// Cumul : plusieurs mobs morts coup sur coup abondent la MÊME fenêtre
+		// (les quantités d'un itemId déjà présent s'additionnent).
+		for (const engine::server::ItemStack& item : m_lootNotifyMessage.items)
+		{
+			bool merged = false;
+			for (engine::server::ItemStack& existing : m_model.lootWindow.entries)
+			{
+				if (existing.itemId == item.itemId)
+				{
+					existing.quantity += item.quantity;
+					merged = true;
+					break;
+				}
+			}
+			if (!merged)
+			{
+				m_model.lootWindow.entries.push_back(item);
+			}
+		}
+		m_model.lootWindow.visible = !m_model.lootWindow.entries.empty();
+		LOG_INFO(Net, "[UIModelBinding] LootNotify applied (items={}, total_entries={})",
+			m_lootNotifyMessage.items.size(), m_model.lootWindow.entries.size());
+		NotifyObservers(UIModelChangeInventory);
+		return true;
+	}
+
+	void UIModelBinding::CloseLootWindow()
+	{
+		if (!ValidateMainThread("CloseLootWindow"))
+		{
+			return;
+		}
+		m_model.lootWindow = UILootWindowState{};
+		NotifyObservers(UIModelChangeInventory);
 	}
 
 	bool UIModelBinding::ApplyPartyInviteNotify(std::span<const std::byte> packet)

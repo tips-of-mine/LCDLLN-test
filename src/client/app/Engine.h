@@ -1314,6 +1314,41 @@ namespace engine
 		engine::client::HarvestCastBarPresenter m_harvestBar{};
 		engine::client::CraftingUiPresenter m_craftingUi{};
 		bool m_craftingVisible = false;
+		/// Validation v12 — compte à rebours (s) de l'indication « Hors de
+		/// portee » sous le cadre cible. Armé quand T part alors que la cible
+		/// est au-delà de la portée de mêlée : le serveur rejette ces attaques
+		/// EN SILENCE (aucun message wire de rejet), sans cette indication le
+		/// joueur ne comprend pas pourquoi « rien ne se passe ».
+		float m_outOfRangeHintSec = 0.0f;
+		/// Validation v12 — combat à la souris. Le clic droit MAINTENU pilote
+		/// la caméra (mouselook) : un « clic » droit = pression relâchée sans
+		/// mouvement (≤ kRmbClickMaxDriftPx). On mémorise la position de la
+		/// pression pour discriminer clic et drag au relâchement.
+		float m_rmbPressMouseX = 0.0f;
+		float m_rmbPressMouseY = 0.0f;
+		bool m_rmbClickCandidate = false;
+		/// Validation v12 — true tant que le clip de mort de l'avatar local est
+		/// posé (évite de le rejouer chaque frame ; la SM locomotion est gelée
+		/// pendant la mort et relancée sur Idle au respawn).
+		bool m_avatarDeathClipPlaying = false;
+
+		/// Validation v12 (wire v13) — marqueur monde d'un point de réapparition
+		/// (lecture CLIENT du même `respawn/respawn_points.txt` que le serveur :
+		/// label flottant + anneau au sol, pour rendre cimetières et auberges
+		/// visibles sur la carte de démo). Y résolu par la heightmap au rendu.
+		struct RespawnMarker
+		{
+			uint8_t destinationType = 0; ///< kRespawnDestination* (0 cimetière, 1 auberge).
+			uint32_t zoneId = 0;
+			float x = 0.0f;
+			float z = 0.0f;
+		};
+		std::vector<RespawnMarker> m_respawnMarkers;
+
+		/// Charge les marqueurs de réapparition depuis le fichier data partagé.
+		/// Tolérant : fichier absent/ligne invalide = marqueurs vides + WARN
+		/// (l'affichage est purement informatif, le serveur reste l'autorité).
+		void LoadRespawnMarkers();
 		/// Combat SP3 — cooldowns AFFICHÉS de la barre d'action (spellId → fin en
 		/// secondes EngineNowSec) ; purement cosmétique, le serveur fait foi.
 		std::unordered_map<std::string, float> m_spellCooldownUiUntilSec;

@@ -237,6 +237,16 @@ namespace engine::client
 		uint64_t startedAtNs = 0;
 	};
 
+	/// Validation v12 — fenêtre de butin automatique. Abondée par chaque
+	/// LootNotify (mort d'un mob avec loot) : les quantités d'un même objet
+	/// se CUMULENT (plusieurs morts proches = une seule fenêtre). Fermée par
+	/// le joueur via CloseLootWindow.
+	struct UILootWindowState
+	{
+		bool visible = false;
+		std::vector<engine::server::ItemStack> entries;
+	};
+
 	/// Correction SP1 — position imposée par le serveur (ForcePosition) en
 	/// attente d'application par Engine (téléport du CharacterController).
 	struct UIForcedPosition
@@ -420,6 +430,8 @@ namespace engine::client
 		std::vector<UIRemoteEntity> remoteEntities;
 		/// Correction SP1 — position imposée par le serveur (consommée par Engine).
 		UIForcedPosition forcedPosition{};
+		/// Validation v12 — fenêtre de butin automatique (LootNotify cumulés).
+		UILootWindowState lootWindow{};
 		/// Groupes SP1 — invitation en attente (popup Accepter/Refuser).
 		UIPartyInviteState partyInvite{};
 		/// M32.2: True when the local player is currently in a party.
@@ -522,6 +534,17 @@ namespace engine::client
 		/// Engine au CharacterController). Main thread uniquement.
 		void ClearForcedPosition();
 
+		/// Validation v12 — ferme et vide la fenêtre de butin (bouton Fermer).
+		/// Notifie UIModelChangeInventory. Main thread uniquement.
+		void CloseLootWindow();
+
+		/// Validation v12 — marque le joueur local VIVANT (flag mort retiré,
+		/// PV pleins). Appelé par Engine à la réception d'un ForcePosition de
+		/// raison « respawn » : c'est la ceinture-bretelles de l'événement de
+		/// résurrection (un seul des deux suffit à fermer l'écran de mort).
+		/// Notifie UIModelChangeStats. Main thread uniquement.
+		void MarkLocalPlayerResurrected();
+
 		/// M29.3: Refresh billboard projections (call from render/game thread with camera + viewport).
 		void TickChatWorldVisuals(
 			const engine::math::Vec3& cameraWorld,
@@ -566,6 +589,9 @@ namespace engine::client
 
 		/// Correction SP1 — position imposée par le serveur (ForcePosition).
 		bool ApplyForcePosition(std::span<const std::byte> packet);
+
+		/// Validation v12 — butin auto-crédité (LootNotify) : abonde la fenêtre.
+		bool ApplyLootNotify(std::span<const std::byte> packet);
 
 		/// Apply one decoded zone change packet to the world section of the UI model.
 		bool ApplyZoneChange(std::span<const std::byte> packet);
@@ -664,6 +690,7 @@ namespace engine::client
 		engine::server::ThreatUpdateMessage m_threatUpdateMessage{};
 		engine::server::PartyInviteNotifyMessage m_partyInviteNotifyMessage{};
 		engine::server::ForcePositionMessage m_forcePositionMessage{};
+		engine::server::LootNotifyMessage m_lootNotifyMessage{};
 		engine::server::ZoneChangeMessage m_zoneChangeMessage{};
 		engine::server::InventoryDeltaMessage m_inventoryMessage{};
 		engine::server::QuestDeltaMessage m_questMessage{};

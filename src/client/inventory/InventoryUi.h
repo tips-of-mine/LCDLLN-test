@@ -114,6 +114,11 @@ namespace engine::client
 		/// Valid when \ref IsDragging.
 		bool GetDragSource(uint32_t& outSlotIndex, uint32_t& outItemId, uint32_t& outQty) const;
 
+		/// Validation v12 — libellé d'affichage d'un objet (« Nom xN », repli
+		/// « Item <id> xN » sans métadonnée). Réutilisé par la fenêtre de butin
+		/// automatique d'Engine — même source de vérité que les slots.
+		std::string ResolveItemLabel(uint32_t itemId, uint32_t quantity) const;
+
 	private:
 		/// Load item metadata from the configured content-relative path.
 		bool LoadMetadata(const engine::core::Config& config);

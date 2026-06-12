@@ -86,6 +86,7 @@
 #include <filesystem>
 #include <optional>
 #include <span>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -4983,6 +4984,8 @@ namespace engine
 													// Combat SP1 — catalogue d'apparences de creatures (non bloquant :
 													// catalogue absent/corrompu = mobs rendus en fallback humains).
 													m_creatureCatalog.Init(m_cfg);
+													// Validation v12 (wire v13) — marqueurs cimetière/auberge.
+													LoadRespawnMarkers();
 													// Combat SP3 — catalogue d'affichage des kits de sorts (non
 													// bloquant : absent = barre d'action masquée).
 													m_spellCatalog.Init(m_cfg);
@@ -9479,7 +9482,65 @@ namespace engine
 						else                  newState = AvatarLocomotionState::Idle;
 					}
 
-					if (newState != m_avatarLocoState)
+					// Validation v12 — avatar MORT : il restait DEBOUT (la SM n'a pas
+					// d'état Dead). On joue le clip « Death » du mesh s'il existe
+					// (une fois, clampé sur la dernière frame), et on GÈLE la machine
+					// d'états tant que le joueur est mort (sinon une transition vers
+					// Idle écraserait la pose). Au respawn : retour Idle immédiat.
+					const bool avatarDead =
+						(m_uiModelBinding.GetModel().playerStats.stateFlags & 1u) != 0u;
+					if (avatarDead && !m_avatarDeathClipPlaying)
+					{
+						// Validation v12 — recherche TOLÉRANTE du clip de mort : le mesh
+						// humain a 63 clips mais aucun nommé exactement Death/Die/Dead
+						// (constat log client). On cherche par sous-chaîne insensible à
+						// la casse ; sans candidat, on liste les clips disponibles UNE
+						// fois pour identifier l'asset à compléter.
+						const engine::render::skinned::AnimationClip* deathClip = nullptr;
+						for (const engine::render::skinned::AnimationClip& candidateClip : m_currentSkinnedMesh->clips)
+						{
+							std::string lowered = candidateClip.name;
+							std::transform(lowered.begin(), lowered.end(), lowered.begin(),
+								[](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+							if (lowered.find("death") != std::string::npos
+								|| lowered.find("die") != std::string::npos
+								|| lowered.find("dead") != std::string::npos
+								|| lowered.find("knock") != std::string::npos)
+							{
+								deathClip = &candidateClip;
+								break;
+							}
+						}
+						if (deathClip != nullptr)
+						{
+							m_avatarCrossfade.Play(*deathClip, /*loops=*/false, nowSec);
+							LOG_INFO(Render, "[Avatar SM] Mort : clip '{}' joue (clamp)", deathClip->name);
+						}
+						else
+						{
+							std::string clipList;
+							for (const engine::render::skinned::AnimationClip& availableClip : m_currentSkinnedMesh->clips)
+							{
+								if (!clipList.empty()) clipList += ", ";
+								clipList += availableClip.name;
+							}
+							LOG_WARN(Render,
+								"[Avatar SM] Mort : aucun clip de mort dans le mesh — pose Idle conservee. Clips disponibles : {}",
+								clipList);
+						}
+						m_avatarDeathClipPlaying = true;
+					}
+					else if (!avatarDead && m_avatarDeathClipPlaying)
+					{
+						m_avatarDeathClipPlaying = false;
+						if (const engine::render::skinned::AnimationClip* idleClip = m_currentSkinnedMesh->FindClip("Idle"))
+						{
+							m_avatarCrossfade.Play(*idleClip, /*loops=*/true, nowSec);
+						}
+						m_avatarLocoState = AvatarLocomotionState::Idle;
+					}
+
+					if (!avatarDead && newState != m_avatarLocoState)
 					{
 						// DEBUG B.1 : log chaque transition d'etat pour diagnostiquer
 						// "modèle qui saute toujours". Une fois le bug compris, retirer.
@@ -10239,10 +10300,11 @@ namespace engine
 					const auto& remotes = m_uiModelBinding.GetModel().remoteEntities;
 					for (const engine::client::UIRemoteEntity& re : remotes)
 					{
-						// Combat SP1 : les mobs (archetypeId != 0) ont desormais leur
-						// plaque ; seuls les loot bags (les deux ids a 0) restent muets.
-						if (re.playerClientId == 0u && re.archetypeId == 0u)
-							continue; // loot bag : pas de nameplate
+						// Combat SP1 : les mobs (archetypeId != 0) ont leur plaque.
+						// Validation v12 — les loot bags (les deux ids à 0) aussi :
+						// « Butin [F] » au sol (le serveur les répliquait depuis M28
+						// mais le client ne les montrait jamais — butin imperdable
+						// mais invisible). Ramassage : touche F, bloc combat plus bas.
 						// Mob mort en attente de despawn : pas de plaque (kEntityStateDead).
 						// Métiers SP1 — les nodes échappent à ce skip : un node épuisé
 						// garde sa plaque, grisée avec le suffixe « (epuise) ».
@@ -10270,11 +10332,19 @@ namespace engine
 						// CreatureCatalog ; fallback générique si l'archétype est inconnu
 						// du catalogue client (catalogue absent ou désynchronisé).
 						std::string label;
+						// Validation v12 — armé par la branche mob ci-dessous : dessine la
+						// barre de vie sous la plaque (jamais pour joueurs/nodes).
+						bool drawMobHealthBar = false;
 						if (re.playerClientId != 0u)
 						{
 							label = !re.displayName.empty()
 								? re.displayName
 								: ("P" + std::to_string(re.playerClientId));
+						}
+						else if (re.archetypeId == 0u)
+						{
+							// Validation v12 — sac de butin au sol.
+							label = "Butin [F]";
 						}
 						else if (re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
 						{
@@ -10316,8 +10386,10 @@ namespace engine
 								? appearance->name
 								: ("Creature " + std::to_string(re.archetypeId));
 							const uint32_t mobLevel = (appearance != nullptr) ? appearance->level : 1u;
-							label = mobName + " (niv. " + std::to_string(mobLevel) + ")  "
-								+ std::to_string(re.currentHealth) + "/" + std::to_string(re.maxHealth);
+							// Validation v12 — les PV chiffrés quittent le label : ils sont
+							// désormais portés par la barre de vie dessinée sous la plaque.
+							label = mobName + " (niv. " + std::to_string(mobLevel) + ")";
+							drawMobHealthBar = (re.maxHealth > 0u);
 						}
 						const ImVec2 ts = ImGui::CalcTextSize(label.c_str());
 						// Halo noir derriere le texte pour la lisibilite sur fond clair (ciel).
@@ -10325,7 +10397,53 @@ namespace engine
 							ImVec2(sxp - ts.x * 0.5f - 4.0f, syp - ts.y - 2.0f),
 							ImVec2(sxp + ts.x * 0.5f + 4.0f, syp + 2.0f),
 							IM_COL32(0, 0, 0, 140), 3.0f);
+						// Validation v12 — surbrillance de la CIBLE courante : avec
+						// plusieurs mobs au même nom et aux mêmes PV, la bascule Tab
+						// était invisible (le cadre cible affichait la même chose).
+						// Bordure dorée autour de la plaque du mob ciblé.
+						{
+							const engine::client::UIModel& plateModel = m_uiModelBinding.GetModel();
+							if (plateModel.targetStats.hasTarget
+								&& plateModel.targetStats.entityId == re.entityId)
+							{
+								fg->AddRect(
+									ImVec2(sxp - ts.x * 0.5f - 6.0f, syp - ts.y - 4.0f),
+									ImVec2(sxp + ts.x * 0.5f + 6.0f, syp + 4.0f),
+									IM_COL32(235, 190, 60, 255), 3.0f, 0, 2.0f);
+							}
+						}
 						fg->AddText(ImVec2(sxp - ts.x * 0.5f, syp - ts.y), IM_COL32(220, 230, 255, 255), label.c_str());
+						// Validation v12 — barre de vie du mob sous la plaque, alimentée
+						// par currentHealth/maxHealth du snapshot (10 Hz) : elle descend
+						// donc en direct à chaque coup porté. Couleur par tiers de PV
+						// (vert > 50 %, orange > 25 %, rouge en dessous).
+						if (drawMobHealthBar)
+						{
+							const float hpFrac = std::clamp(
+								static_cast<float>(re.currentHealth) / static_cast<float>(re.maxHealth),
+								0.0f, 1.0f);
+							const float barW = std::max(64.0f, ts.x);
+							const float barH = 5.0f;
+							const float barLeft = sxp - barW * 0.5f;
+							const float barTop = syp + 4.0f;
+							const ImU32 fillColor = (hpFrac > 0.5f)
+								? IM_COL32(80, 200, 80, 230)
+								: ((hpFrac > 0.25f)
+									? IM_COL32(230, 160, 40, 230)
+									: IM_COL32(210, 60, 50, 230));
+							fg->AddRectFilled(ImVec2(barLeft, barTop),
+								ImVec2(barLeft + barW, barTop + barH), IM_COL32(20, 22, 26, 200), 2.0f);
+							fg->AddRectFilled(ImVec2(barLeft, barTop),
+								ImVec2(barLeft + barW * hpFrac, barTop + barH), fillColor, 2.0f);
+							fg->AddRect(ImVec2(barLeft, barTop),
+								ImVec2(barLeft + barW, barTop + barH), IM_COL32(0, 0, 0, 160), 2.0f);
+							// PV chiffrés compacts au-dessus de la barre, à droite.
+							const std::string hpText = std::to_string(re.currentHealth) + "/"
+								+ std::to_string(re.maxHealth);
+							const ImVec2 hpTs = ImGui::CalcTextSize(hpText.c_str());
+							fg->AddText(ImVec2(barLeft + barW - hpTs.x, barTop + barH + 1.0f),
+								IM_COL32(200, 205, 215, 220), hpText.c_str());
+						}
 					}
 				}
 				// =============================================================
@@ -10346,11 +10464,55 @@ namespace engine
 					const bool mouseAllowed = !menuOpen && !chatFocus && !localDead
 						&& !ImGui::GetIO().WantCaptureMouse;
 
-					// --- Selection a la souris : pick ecran-espace du mob vivant le
-					// plus proche du curseur (rayon kPickRadiusPx), sans raycast 3D.
+					// --- Selection / attaque a la souris. Pick ecran-espace du mob
+					// vivant le plus proche du curseur (rayon kPickRadiusPx), sans
+					// raycast 3D. Factorise : utilise par le clic GAUCHE (selection)
+					// et par le clic DROIT relache sans drag (selection + attaque
+					// auto — le drag droit reste le mouselook camera).
+					// Validation v12 — rayon élargi (40 → 70 px : le joueur clique le
+					// CORPS du mob, pas le point d'ancrage projeté) et ancre abaissée
+					// vers le torse (+0.2 m au lieu de +0.5).
+					constexpr float kPickRadiusPx = 70.0f;
+					const auto pickMobAtScreen = [&](const ImVec2& screenPos) -> engine::server::EntityId
+					{
+						engine::server::EntityId bestId = 0;
+						float bestPickDistSq = kPickRadiusPx * kPickRadiusPx;
+						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						{
+							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u
+								|| re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
+								continue;
+							float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
+							const auto sit = m_remoteSmoothed.find(re.entityId);
+							if (sit != m_remoteSmoothed.end() && sit->second.valid)
+							{
+								wx = sit->second.x; wy = sit->second.y; wz = sit->second.z;
+							}
+							wy = ResolveRemoteDisplayCenterY(false, wy, wx, wz);
+							float sxp = 0.0f, syp = 0.0f;
+							if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 0.2f, wz, ivw, ivh, sxp, syp))
+								continue;
+							const float dxPick = sxp - screenPos.x;
+							const float dyPick = syp - screenPos.y;
+							const float distSq = dxPick * dxPick + dyPick * dyPick;
+							if (distSq < bestPickDistSq)
+							{
+								bestPickDistSq = distSq;
+								bestId = re.entityId;
+							}
+						}
+						// Diagnostic du pick (selection souris rapportee inoperante) :
+						// une ligne par clic monde — a lire dans le log client.
+						LOG_INFO(Core,
+							"[CombatPick] clic=({:.0f},{:.0f}) picked_entity_id={} best_dist_px={:.1f} entites={}",
+							screenPos.x, screenPos.y, bestId,
+							(bestId != 0) ? std::sqrt(bestPickDistSq) : -1.0f,
+							static_cast<int>(uiModel.remoteEntities.size()));
+						return bestId;
+					};
+
 					if (mouseAllowed && m_input.WasMousePressed(engine::platform::MouseButton::Left))
 					{
-						constexpr float kPickRadiusPx = 40.0f;
 						const ImVec2 mousePos = ImGui::GetIO().MousePos;
 						// Groupes SP1 — un clic sur un cadre de groupe est une sélection
 						// d'allié (gérée plus bas), jamais un pick de mob.
@@ -10375,39 +10537,98 @@ namespace engine
 								}
 							}
 						}
-						engine::server::EntityId pickedId = 0;
-						float bestDistSq = kPickRadiusPx * kPickRadiusPx;
-						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						if (!overPartyFrame)
 						{
-							// V1 : seuls les mobs vivants sont ciblables (pas de PvP ;
-							// les nodes de récolte — plage réservée — sont exclus).
-							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u
-								|| re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
-								continue;
-							float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
-							const auto sit = m_remoteSmoothed.find(re.entityId);
-							if (sit != m_remoteSmoothed.end() && sit->second.valid)
+							const engine::server::EntityId pickedId = pickMobAtScreen(mousePos);
+							if (pickedId != 0)
 							{
-								wx = sit->second.x; wy = sit->second.y; wz = sit->second.z;
-							}
-							// Combat SP1 fix — même snap visuel au sol que la plaque : le
-							// point d'ancrage du pick doit correspondre à ce que voit le
-							// joueur (cf. ResolveRemoteDisplayCenterY).
-							wy = ResolveRemoteDisplayCenterY(false, wy, wx, wz);
-							float sxp = 0.0f, syp = 0.0f;
-							if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 0.5f, wz, ivw, ivh, sxp, syp))
-								continue;
-							const float dxPick = sxp - mousePos.x;
-							const float dyPick = syp - mousePos.y;
-							const float distSq = dxPick * dxPick + dyPick * dyPick;
-							if (distSq < bestDistSq)
-							{
-								bestDistSq = distSq;
-								pickedId = re.entityId;
+								// Validation v12 (décision design) — le clic GAUCHE sur un
+								// mob cible ET attaque (un coup), comme le clic droit bref :
+								// le combat se joue entièrement à la souris.
+								(void)m_uiModelBinding.SetLocalTarget(pickedId);
+								if (m_attackSendCooldownSec <= 0.0f)
+								{
+									const uint32_t lmbClientId = m_gameplayUdp.ServerClientId();
+									if (lmbClientId != 0u)
+									{
+										(void)m_gameplayUdp.SendAttackRequest(lmbClientId, pickedId);
+										m_attackSendCooldownSec = 0.25f;
+										constexpr float kMeleeRangeHintMetersLmb = 4.0f;
+										const engine::math::Vec3 playerPosLmb = m_characterController.GetPosition();
+										for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+										{
+											if (re.entityId != pickedId)
+												continue;
+											const float dxl = re.positionX - playerPosLmb.x;
+											const float dzl = re.positionZ - playerPosLmb.z;
+											if ((dxl * dxl + dzl * dzl)
+												> kMeleeRangeHintMetersLmb * kMeleeRangeHintMetersLmb)
+											{
+												m_outOfRangeHintSec = 1.2f;
+											}
+											break;
+										}
+									}
+								}
 							}
 						}
-						if (pickedId != 0 && !overPartyFrame)
-							(void)m_uiModelBinding.SetLocalTarget(pickedId);
+					}
+
+					// --- Clic droit « court » = cibler + ATTAQUE AUTO (le drag droit
+					// reste le mouselook caméra : on discrimine au relâchement par la
+					// dérive du curseur depuis la pression).
+					constexpr float kRmbClickMaxDriftPx = 6.0f;
+					if (mouseAllowed && m_input.WasMousePressed(engine::platform::MouseButton::Right))
+					{
+						const ImVec2 rmbPos = ImGui::GetIO().MousePos;
+						m_rmbPressMouseX = rmbPos.x;
+						m_rmbPressMouseY = rmbPos.y;
+						m_rmbClickCandidate = true;
+					}
+					if (m_input.WasMouseReleased(engine::platform::MouseButton::Right))
+					{
+						const ImVec2 rmbPos = ImGui::GetIO().MousePos;
+						const float driftX = rmbPos.x - m_rmbPressMouseX;
+						const float driftY = rmbPos.y - m_rmbPressMouseY;
+						const bool isClick = m_rmbClickCandidate && mouseAllowed
+							&& (driftX * driftX + driftY * driftY)
+								<= kRmbClickMaxDriftPx * kRmbClickMaxDriftPx;
+						m_rmbClickCandidate = false;
+						if (isClick)
+						{
+							const engine::server::EntityId pickedId = pickMobAtScreen(rmbPos);
+							if (pickedId != 0)
+							{
+								// Validation v12 (décision design) — PAS d'attaque auto :
+								// chaque clic droit = cibler + UN coup (le serveur revalide
+								// portée/cooldown ; indication « Hors de portee » si loin).
+								(void)m_uiModelBinding.SetLocalTarget(pickedId);
+								if (m_attackSendCooldownSec <= 0.0f)
+								{
+									const uint32_t rmbClientId = m_gameplayUdp.ServerClientId();
+									if (rmbClientId != 0u)
+									{
+										(void)m_gameplayUdp.SendAttackRequest(rmbClientId, pickedId);
+										m_attackSendCooldownSec = 0.25f;
+										constexpr float kMeleeRangeHintMetersRmb = 4.0f;
+										const engine::math::Vec3 playerPosRmb = m_characterController.GetPosition();
+										for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+										{
+											if (re.entityId != pickedId)
+												continue;
+											const float dxr = re.positionX - playerPosRmb.x;
+											const float dzr = re.positionZ - playerPosRmb.z;
+											if ((dxr * dxr + dzr * dzr)
+												> kMeleeRangeHintMetersRmb * kMeleeRangeHintMetersRmb)
+											{
+												m_outOfRangeHintSec = 1.2f;
+											}
+											break;
+										}
+									}
+								}
+							}
+						}
 					}
 
 					// --- Tab : cycle des mobs vivants par distance croissante au joueur.
@@ -10457,6 +10678,26 @@ namespace engine
 						{
 							(void)m_gameplayUdp.SendAttackRequest(gameplayClientId, uiModel.targetStats.entityId);
 							m_attackSendCooldownSec = 0.25f;
+							// Validation v12 — le rejet « hors de portée » du serveur est
+							// SILENCIEUX (aucun message wire). Indication locale : si la
+							// cible est au-delà de la portée de mêlée (4 m, doit suivre
+							// kDefaultAttackRangeMeters de ServerApp.cpp), on affiche
+							// « Hors de portee » 1,2 s sous le cadre cible. Le serveur
+							// reste l'autorité : la requête est envoyée quand même.
+							constexpr float kMeleeRangeHintMeters = 4.0f;
+							const engine::math::Vec3 playerPosAtk = m_characterController.GetPosition();
+							for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+							{
+								if (re.entityId != uiModel.targetStats.entityId)
+									continue;
+								const float dxa = re.positionX - playerPosAtk.x;
+								const float dza = re.positionZ - playerPosAtk.z;
+								if ((dxa * dxa + dza * dza) > kMeleeRangeHintMeters * kMeleeRangeHintMeters)
+								{
+									m_outOfRangeHintSec = 1.2f;
+								}
+								break;
+							}
 						}
 					}
 
@@ -10493,6 +10734,27 @@ namespace engine
 							targetDead ? IM_COL32(120, 120, 120, 200) : IM_COL32(200, 60, 50, 220), 6.0f, 0, 2.0f);
 						fg->AddText(ImVec2(fx + 10.0f, fy + 6.0f),
 							targetDead ? IM_COL32(150, 150, 150, 255) : IM_COL32(235, 235, 235, 255), targetName.c_str());
+						// Validation v12 — distance XZ joueur→cible dans le cadre :
+						// désambiguïse deux mobs identiques et rend la portée de mêlée
+						// lisible (orange au-delà de 4 m, cohérent avec « Hors de portee »).
+						{
+							const engine::math::Vec3 playerPosFrame = m_characterController.GetPosition();
+							for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+							{
+								if (re.entityId != uiModel.targetStats.entityId)
+									continue;
+								const float dxf = re.positionX - playerPosFrame.x;
+								const float dzf = re.positionZ - playerPosFrame.z;
+								const float distM = std::sqrt(dxf * dxf + dzf * dzf);
+								const std::string distText =
+									std::to_string(static_cast<int>(std::lround(distM))) + " m";
+								const ImVec2 distTs = ImGui::CalcTextSize(distText.c_str());
+								fg->AddText(ImVec2(fx + frameW - distTs.x - 10.0f, fy + 6.0f),
+									(distM > 4.0f) ? IM_COL32(240, 170, 60, 255) : IM_COL32(170, 220, 170, 255),
+									distText.c_str());
+								break;
+							}
+						}
 						const float barX = fx + 10.0f, barY = fy + 30.0f, barW = frameW - 20.0f, barH = 14.0f;
 						const float hpFrac = (uiModel.targetStats.maxHealth > 0u)
 							? std::clamp(static_cast<float>(uiModel.targetStats.currentHealth)
@@ -10505,6 +10767,15 @@ namespace engine
 							+ std::to_string(uiModel.targetStats.maxHealth);
 						const ImVec2 hpTs = ImGui::CalcTextSize(hpText.c_str());
 						fg->AddText(ImVec2(barX + (barW - hpTs.x) * 0.5f, barY - 1.0f), IM_COL32(255, 255, 255, 255), hpText.c_str());
+						// Validation v12 — indication transitoire « Hors de portee »
+						// (cf. armement dans le bloc T ci-dessus).
+						if (m_outOfRangeHintSec > 0.0f)
+						{
+							const char* rangeHint = "Hors de portee  (approchez-vous)";
+							const ImVec2 hintTs = ImGui::CalcTextSize(rangeHint);
+							fg->AddText(ImVec2(fx + (frameW - hintTs.x) * 0.5f, fy + frameH + 6.0f),
+								IM_COL32(240, 170, 60, 255), rangeHint);
+						}
 					}
 
 					// --- Log combat HUD (bas-droite) : dernieres lignes formatees par
@@ -11023,6 +11294,188 @@ namespace engine
 						ImGui::End();
 					}
 
+					// --- Validation v12 : cercle de sélection AU SOL, À PLAT (espace
+					// monde, posé sur le terrain, centré sur le mob) — un AddCircle
+					// écran-espace dessinait un rond « vertical » face caméra. On
+					// projette 28 points d'un cercle monde et on trace la polyligne.
+					const auto drawGroundRing = [&](float centerX, float centerZ,
+						float radiusMeters, ImU32 ringColor, float thicknessPx)
+					{
+						constexpr int kRingSegments = 28;
+						ImVec2 ringPoints[kRingSegments];
+						int validPoints = 0;
+						for (int seg = 0; seg < kRingSegments; ++seg)
+						{
+							const float angle = (static_cast<float>(seg) / kRingSegments) * 6.2831853f;
+							const float wxr = centerX + std::cos(angle) * radiusMeters;
+							const float wzr = centerZ + std::sin(angle) * radiusMeters;
+							// Y échantillonné PAR POINT : le cercle épouse la pente du terrain.
+							const float wyr = m_terrain.SampleHeightAtWorldXZ(wxr, wzr) + 0.05f;
+							float sxr = 0.0f, syr = 0.0f;
+							if (!WorldToScreenPx(out.viewProjMatrix.m, wxr, wyr, wzr, ivw, ivh, sxr, syr))
+								return; // partiellement hors champ : pas de rendu ce frame.
+							ringPoints[validPoints++] = ImVec2(sxr, syr);
+						}
+						fg->AddPolyline(ringPoints, validPoints, ringColor, ImDrawFlags_Closed, thicknessPx);
+					};
+
+					if (uiModel.targetStats.hasTarget)
+					{
+						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						{
+							if (re.entityId != uiModel.targetStats.entityId)
+								continue;
+							float tgx = re.positionX, tgz = re.positionZ, tgyaw = re.yawRadians;
+							const auto sit = m_remoteSmoothed.find(re.entityId);
+							if (sit != m_remoteSmoothed.end() && sit->second.valid)
+							{
+								tgx = sit->second.x; tgz = sit->second.z; tgyaw = sit->second.yaw;
+							}
+							// Cercle de sélection enrichi :
+							// 1. OCCLUSION par le corps du mob : un segment dont le rayon
+							//    caméra→point traverse le cylindre du mob (r=0.4 m) est
+							//    masqué — le mob reste visuellement AU PREMIER PLAN.
+							// 2. CÔNE DE VISION 120° : la portion du cercle face au regard
+							//    du mob (yaw répliqué) est rouge sombre + secteur rempli —
+							//    le joueur voit où l'ennemi regarde.
+							constexpr int kSelSegments = 36;
+							constexpr float kSelRadius = 0.95f;
+							constexpr float kMobBodyRadius = 0.4f;
+							constexpr float kHalfConeRad = 1.0471976f; // 60° (cône 120°).
+							const float camX = out.camera.position.x;
+							const float camZ = out.camera.position.z;
+							// Direction du regard : yaw = atan2(vx, vz) → (sin, cos) en XZ,
+							// soit un angle paramétrique atan2(cos(yaw), sin(yaw)).
+							const float facingParamAngle = std::atan2(std::cos(tgyaw), std::sin(tgyaw));
+							// Teste si le point monde (px, pz) est caché par le cylindre du
+							// mob depuis la caméra (test 2D XZ : M proche du segment C→P).
+							const auto segmentOccluded = [&](float px, float pz) -> bool
+							{
+								const float rayDx = px - camX, rayDz = pz - camZ;
+								const float rayLenSq = rayDx * rayDx + rayDz * rayDz;
+								if (rayLenSq <= 0.0001f)
+									return false;
+								const float t = ((tgx - camX) * rayDx + (tgz - camZ) * rayDz) / rayLenSq;
+								if (t <= 0.0f || t >= 1.0f)
+									return false; // mob pas entre la caméra et le point.
+								const float closestX = camX + rayDx * t;
+								const float closestZ = camZ + rayDz * t;
+								const float perpDx = tgx - closestX, perpDz = tgz - closestZ;
+								return (perpDx * perpDx + perpDz * perpDz) < kMobBodyRadius * kMobBodyRadius;
+							};
+							// Secteur de vision rempli (éventail centre + arc, alpha doux).
+							{
+								ImVec2 conePoints[16];
+								int coneCount = 0;
+								float csx = 0.0f, csy = 0.0f;
+								const float coneCenterY = m_terrain.SampleHeightAtWorldXZ(tgx, tgz) + 0.05f;
+								if (WorldToScreenPx(out.viewProjMatrix.m, tgx, coneCenterY, tgz, ivw, ivh, csx, csy))
+								{
+									conePoints[coneCount++] = ImVec2(csx, csy);
+									bool coneVisible = true;
+									for (int cseg = 0; cseg <= 12 && coneVisible; ++cseg)
+									{
+										const float angle = facingParamAngle - kHalfConeRad
+											+ (static_cast<float>(cseg) / 12.0f) * (2.0f * kHalfConeRad);
+										const float wxc = tgx + std::cos(angle) * kSelRadius;
+										const float wzc = tgz + std::sin(angle) * kSelRadius;
+										const float wyc = m_terrain.SampleHeightAtWorldXZ(wxc, wzc) + 0.05f;
+										float sxc = 0.0f, syc = 0.0f;
+										coneVisible = WorldToScreenPx(out.viewProjMatrix.m, wxc, wyc, wzc, ivw, ivh, sxc, syc);
+										if (coneVisible)
+											conePoints[coneCount++] = ImVec2(sxc, syc);
+									}
+									if (coneVisible && coneCount >= 3)
+										fg->AddConvexPolyFilled(conePoints, coneCount, IM_COL32(180, 45, 30, 55));
+								}
+							}
+							// Anneau segment par segment : couleur selon le cône, segments
+							// occlus par le corps non tracés.
+							ImVec2 prevPoint{};
+							bool prevValid = false;
+							for (int seg = 0; seg <= kSelSegments; ++seg)
+							{
+								const float angle = (static_cast<float>(seg % kSelSegments) / kSelSegments) * 6.2831853f;
+								const float wxr = tgx + std::cos(angle) * kSelRadius;
+								const float wzr = tgz + std::sin(angle) * kSelRadius;
+								const float wyr = m_terrain.SampleHeightAtWorldXZ(wxr, wzr) + 0.05f;
+								float sxr = 0.0f, syr = 0.0f;
+								const bool projected = WorldToScreenPx(out.viewProjMatrix.m, wxr, wyr, wzr, ivw, ivh, sxr, syr)
+									&& !segmentOccluded(wxr, wzr);
+								if (projected && prevValid)
+								{
+									// Delta d'angle au regard, replié sur [-pi, pi].
+									float coneDelta = angle - facingParamAngle;
+									while (coneDelta > 3.1415927f) coneDelta -= 6.2831853f;
+									while (coneDelta < -3.1415927f) coneDelta += 6.2831853f;
+									const bool inCone = std::fabs(coneDelta) <= kHalfConeRad;
+									fg->AddLine(prevPoint, ImVec2(sxr, syr),
+										inCone ? IM_COL32(150, 35, 25, 240) : IM_COL32(235, 190, 60, 230),
+										inCone ? 4.0f : 3.0f);
+								}
+								prevPoint = ImVec2(sxr, syr);
+								prevValid = projected;
+							}
+							break;
+						}
+					}
+
+					// --- Validation v12 (wire v13) : marqueurs monde des points de
+					// réapparition (label + anneau au sol) — rend cimetières et
+					// auberges visibles sur la carte de démo. Couleur : gris pierre
+					// (cimetière) / ambre chaleureux (auberge).
+					for (const RespawnMarker& marker : m_respawnMarkers)
+					{
+						const float markerGroundY = m_terrain.SampleHeightAtWorldXZ(marker.x, marker.z);
+						float markerSx = 0.0f, markerSy = 0.0f;
+						if (!WorldToScreenPx(out.viewProjMatrix.m, marker.x, markerGroundY + 1.8f, marker.z,
+							ivw, ivh, markerSx, markerSy))
+							continue;
+						const bool isInn = (marker.destinationType == engine::server::kRespawnDestinationInn);
+						const ImU32 markerColor = isInn
+							? IM_COL32(240, 180, 90, 235)
+							: IM_COL32(180, 185, 200, 235);
+						const char* markerLabel = isInn ? "Auberge" : "Cimetiere";
+						const ImVec2 markerTs = ImGui::CalcTextSize(markerLabel);
+						fg->AddRectFilled(
+							ImVec2(markerSx - markerTs.x * 0.5f - 5.0f, markerSy - markerTs.y - 3.0f),
+							ImVec2(markerSx + markerTs.x * 0.5f + 5.0f, markerSy + 3.0f),
+							IM_COL32(0, 0, 0, 150), 3.0f);
+						fg->AddText(ImVec2(markerSx - markerTs.x * 0.5f, markerSy - markerTs.y), markerColor, markerLabel);
+						// Anneau à plat au sol (espace monde), comme la sélection.
+						drawGroundRing(marker.x, marker.z, 2.0f, markerColor, 2.5f);
+					}
+
+					// --- Validation v12 : ramassage du butin — touche F sur le sac
+					// le plus proche (~3 m, le serveur revalide). L'InventoryDelta
+					// de retour est déjà routé (UIModelBinding) : les objets
+					// apparaissent dans l'inventaire, le serveur despawne le sac.
+					{
+						const engine::math::Vec3 playerPosLoot = m_characterController.GetPosition();
+						uint64_t nearestBagId = 0;
+						float nearestBagDistSq = 3.0f * 3.0f;
+						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						{
+							if (re.playerClientId != 0u || re.archetypeId != 0u)
+								continue; // seuls les sacs de butin ont les deux ids à 0.
+							const float dxb = re.positionX - playerPosLoot.x;
+							const float dzb = re.positionZ - playerPosLoot.z;
+							const float distSqB = dxb * dxb + dzb * dzb;
+							if (distSqB < nearestBagDistSq)
+							{
+								nearestBagDistSq = distSqB;
+								nearestBagId = re.entityId;
+							}
+						}
+						if (keysAllowed && nearestBagId != 0ull
+							&& m_input.WasPressed(engine::platform::Key::F))
+						{
+							const uint32_t lootClientId = m_gameplayUdp.ServerClientId();
+							if (lootClientId != 0u)
+								(void)m_gameplayUdp.SendPickupRequest(lootClientId, nearestBagId);
+						}
+					}
+
 					// --- Métiers SP1 : récolte — touche E sur le node disponible le
 					// plus proche (~5 m) ; les interactibles locaux gardent la priorité.
 					{
@@ -11068,6 +11521,36 @@ namespace engine
 								IM_COL32(120, 200, 120, 230), 4.0f);
 							fg->AddText(ImVec2(harvestState.barX, harvestState.barY - 18.0f),
 								IM_COL32(230, 230, 230, 255), harvestState.label.c_str());
+						}
+					}
+
+					// --- Validation v12 : fenêtre de butin AUTOMATIQUE. S'ouvre seule
+					// dès qu'un LootNotify arrive (mort d'un mob avec loot, objets déjà
+					// crédités à l'inventaire par le serveur) ; les morts suivantes
+					// ABONDENT la même fenêtre (cumul par objet) ; « Fermer » la vide.
+					if (uiModel.lootWindow.visible)
+					{
+						ImGui::SetNextWindowPos(ImVec2(dw - 320.0f, dh * 0.5f - 120.0f), ImGuiCond_FirstUseEver);
+						ImGui::SetNextWindowSize(ImVec2(280.0f, 0.0f), ImGuiCond_Always);
+						bool lootOpen = true;
+						if (ImGui::Begin("Butin", &lootOpen,
+							ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse))
+						{
+							for (const engine::server::ItemStack& lootEntry : uiModel.lootWindow.entries)
+							{
+								ImGui::TextUnformatted(
+									m_invUi.ResolveItemLabel(lootEntry.itemId, lootEntry.quantity).c_str());
+							}
+							ImGui::Separator();
+							if (ImGui::Button("Fermer", ImVec2(-1.0f, 26.0f)))
+							{
+								lootOpen = false;
+							}
+						}
+						ImGui::End();
+						if (!lootOpen)
+						{
+							m_uiModelBinding.CloseLootWindow();
 						}
 					}
 
@@ -11174,6 +11657,58 @@ namespace engine
 						ImGui::End();
 					}
 
+					// --- Validation v12 : jauges du joueur (PV + ressource), bas-centre.
+					// PV rafraîchis en temps réel par les CombatEvent (chaque coup reçu)
+					// et l'événement de résurrection. Avant le premier coup reçu,
+					// maxHealth vaut 0 → on affiche la feuille de stats (pleine).
+					{
+						const uint32_t playerMaxHp = (uiModel.playerStats.maxHealth > 0u)
+							? uiModel.playerStats.maxHealth
+							: uiModel.playerStats.sheetMaxHealth;
+						if (playerMaxHp > 0u)
+						{
+							const uint32_t playerCurHp = (uiModel.playerStats.maxHealth > 0u)
+								? uiModel.playerStats.currentHealth
+								: playerMaxHp;
+							const float hpFracPlayer = std::clamp(
+								static_cast<float>(playerCurHp) / static_cast<float>(playerMaxHp), 0.0f, 1.0f);
+							const float gaugeW = 320.0f;
+							const float gaugeH = 18.0f;
+							const float gaugeX = (dw - gaugeW) * 0.5f;
+							const float gaugeY = dh - 152.0f;
+							const ImU32 hpColor = (hpFracPlayer > 0.5f)
+								? IM_COL32(80, 200, 80, 235)
+								: ((hpFracPlayer > 0.25f)
+									? IM_COL32(230, 160, 40, 235)
+									: IM_COL32(210, 60, 50, 235));
+							fg->AddRectFilled(ImVec2(gaugeX - 2.0f, gaugeY - 2.0f),
+								ImVec2(gaugeX + gaugeW + 2.0f, gaugeY + gaugeH + 2.0f), IM_COL32(0, 0, 0, 160), 4.0f);
+							fg->AddRectFilled(ImVec2(gaugeX, gaugeY),
+								ImVec2(gaugeX + gaugeW, gaugeY + gaugeH), IM_COL32(35, 38, 44, 230), 3.0f);
+							fg->AddRectFilled(ImVec2(gaugeX, gaugeY),
+								ImVec2(gaugeX + gaugeW * hpFracPlayer, gaugeY + gaugeH), hpColor, 3.0f);
+							const std::string playerHpText =
+								std::to_string(playerCurHp) + " / " + std::to_string(playerMaxHp);
+							const ImVec2 playerHpTs = ImGui::CalcTextSize(playerHpText.c_str());
+							fg->AddText(ImVec2(gaugeX + (gaugeW - playerHpTs.x) * 0.5f, gaugeY + 1.0f),
+								IM_COL32(255, 255, 255, 255), playerHpText.c_str());
+							// Ressource de classe (mana/énergie…) : barre fine dessous,
+							// alimentée par les ResourceUpdate (SP3).
+							if (uiModel.playerStats.secondaryResourceMax > 0u)
+							{
+								const float resFrac = std::clamp(
+									static_cast<float>(uiModel.playerStats.secondaryResourceCurrent)
+										/ static_cast<float>(uiModel.playerStats.secondaryResourceMax),
+									0.0f, 1.0f);
+								const float resY = gaugeY + gaugeH + 4.0f;
+								fg->AddRectFilled(ImVec2(gaugeX, resY),
+									ImVec2(gaugeX + gaugeW, resY + 8.0f), IM_COL32(35, 38, 44, 230), 3.0f);
+								fg->AddRectFilled(ImVec2(gaugeX, resY),
+									ImVec2(gaugeX + gaugeW * resFrac, resY + 8.0f), IM_COL32(70, 130, 220, 235), 3.0f);
+							}
+						}
+					}
+
 					// --- Ecran de mort : overlay sombre + bouton Reapparaitre →
 					// RespawnRequest (le serveur ne l'honore que si le flag dead est pose ;
 					// l'overlay disparait quand le snapshot post-respawn retire le flag).
@@ -11197,12 +11732,25 @@ namespace engine
 						ImGui::Separator();
 						ImGui::Spacing();
 						ImGui::Spacing();
-						ImGui::SetCursorPosX((panelW - 200.0f) * 0.5f);
-						if (ImGui::Button("Reapparaitre", ImVec2(200.0f, 40.0f)))
+						// Validation v12 (wire v13) — deux destinations : cimetière ou
+						// auberge la plus proche (le serveur choisit le point du type
+						// demandé le plus proche du lieu de mort).
+						const float deathBtnW = (panelW - 30.0f) * 0.5f;
+						ImGui::SetCursorPosX(10.0f);
+						if (ImGui::Button("Cimetiere le plus proche", ImVec2(deathBtnW, 40.0f)))
 						{
 							const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
 							if (gameplayClientId != 0u)
-								(void)m_gameplayUdp.SendRespawnRequest(gameplayClientId);
+								(void)m_gameplayUdp.SendRespawnRequest(gameplayClientId,
+									engine::server::kRespawnDestinationGraveyard);
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("Auberge la plus proche", ImVec2(deathBtnW, 40.0f)))
+						{
+							const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
+							if (gameplayClientId != 0u)
+								(void)m_gameplayUdp.SendRespawnRequest(gameplayClientId,
+									engine::server::kRespawnDestinationInn);
 						}
 						ImGui::End();
 					}
@@ -12171,6 +12719,39 @@ namespace engine
 		// 4. Boot rate : meme humains|male absent -> cube placeholder.
 		LOG_ERROR(Render, "[Engine] GetRaceMesh('{}','{}') ECHEC (humains|male absent)", raceId, gender);
 		return nullptr;
+	}
+
+	void Engine::LoadRespawnMarkers()
+	{
+		m_respawnMarkers.clear();
+		const std::string markersText = engine::platform::FileSystem::ReadAllTextContent(
+			m_cfg, m_cfg.GetString("server.respawn_points_path", "respawn/respawn_points.txt"));
+		if (markersText.empty())
+		{
+			LOG_WARN(Core, "[Engine] Marqueurs de réapparition absents (respawn/respawn_points.txt)");
+			return;
+		}
+		std::istringstream input(markersText);
+		std::string line;
+		while (std::getline(input, line))
+		{
+			if (line.empty() || line[0] == '#')
+				continue;
+			std::istringstream lineStream(line);
+			RespawnMarker marker{};
+			std::string typeToken;
+			float unusedY = 0.0f;
+			if (!(lineStream >> marker.zoneId >> typeToken >> marker.x >> unusedY >> marker.z))
+				continue;
+			if (typeToken == "graveyard")
+				marker.destinationType = 0;
+			else if (typeToken == "inn")
+				marker.destinationType = 1;
+			else
+				continue;
+			m_respawnMarkers.push_back(marker);
+		}
+		LOG_INFO(Core, "[Engine] Marqueurs de réapparition charges ({})", m_respawnMarkers.size());
 	}
 
 	float Engine::ResolveRemoteDisplayCenterY(bool isPlayer, float serverY,
@@ -13299,6 +13880,8 @@ namespace engine
 		m_combatHud.Shutdown();
 		m_advancedCombatVisible = false;
 		m_attackSendCooldownSec = 0.0f;
+		m_outOfRangeHintSec = 0.0f;
+		m_rmbClickCandidate = false;
 		m_invUi.Shutdown();
 		m_auctionUi.Shutdown();
 		m_shopUi.Shutdown();
@@ -13365,19 +13948,40 @@ namespace engine
 			const engine::client::UIForcedPosition& forced = m_uiModelBinding.GetModel().forcedPosition;
 			if (forced.pending)
 			{
-				const engine::math::Vec3 forcedPos{ forced.x, forced.y, forced.z };
+				// Validation v12 — collage au sol : le Y des points de réapparition
+				// (data) ou du serveur (sans heightfield) peut être SOUS le terrain
+				// local → le joueur réapparaissait sous la carte. On garantit au
+				// minimum sol + 0.9 (centre capsule) ; un Y data plus haut (tour,
+				// étage) reste respecté.
+				const float forcedGroundY =
+					m_terrain.SampleHeightAtWorldXZ(forced.x, forced.z) + 0.9f;
+				const engine::math::Vec3 forcedPos{
+					forced.x, std::max(forced.y, forcedGroundY), forced.z };
 				(void)m_characterController.Init(forcedPos);
 				m_orbitalCameraController.SetTargetPosition(forcedPos);
 				m_avatarYaw = forced.yawRadians;
 				LOG_INFO(Core,
 					"[Engine] Position imposée par le serveur appliquée (pos=({:.1f},{:.1f},{:.1f}), reason={})",
 					forced.x, forced.y, forced.z, forced.reason);
+				// Validation v12 — un ForcePosition « respawn » prouve la
+				// résurrection : on ferme l'écran de mort même si l'événement
+				// de résurrection se perdait (UDP) ou si le shardd déployé ne
+				// l'émettait pas encore (ceinture-bretelles).
+				if (forced.reason == engine::server::kForcePositionReasonRespawn)
+				{
+					m_uiModelBinding.MarkLocalPlayerResurrected();
+				}
 				m_uiModelBinding.ClearForcedPosition();
 			}
 		}
 		if (m_attackSendCooldownSec > 0.0f)
 		{
 			m_attackSendCooldownSec -= deltaSeconds;
+		}
+		// Validation v12 — fait expirer l'indication « Hors de portee ».
+		if (m_outOfRangeHintSec > 0.0f)
+		{
+			m_outOfRangeHintSec -= deltaSeconds;
 		}
 
 		// TC.2 — émet la position + orientation de l'avatar local au shard, à la cadence

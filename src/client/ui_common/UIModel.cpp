@@ -625,6 +625,9 @@ namespace engine::client
 		// Correction SP1 — position imposée par le serveur (respawn/anti-triche).
 		case engine::server::MessageKind::ForcePosition:
 			return ApplyForcePosition(packet);
+		// Validation v12 — butin auto-crédité à la mort d'un mob.
+		case engine::server::MessageKind::LootNotify:
+			return ApplyLootNotify(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -822,15 +825,19 @@ namespace engine::client
 			}
 		}
 
+		// Validation v12 — l'absence de l'entité du joueur dans son propre
+		// snapshot est NORMALE (le serveur exclut le self de l'AoI répliquée,
+		// cf. ServerApp::BuildRelevantEntityIds) : ses PV transitent par les
+		// CombatEvent/PlayerStats. Ce WARN partait à 10 Hz et inondait le log.
 		if (!stats.hasSnapshot)
 		{
-			LOG_WARN(Net, "[UIModelBinding] Snapshot applied without player entity (client_id={}, entities={})",
+			LOG_DEBUG(Net, "[UIModelBinding] Snapshot applied without player entity (client_id={}, entities={})",
 				stats.clientId,
 				m_snapshotScratch.size());
 		}
 		else
 		{
-			LOG_INFO(Net, "[UIModelBinding] Snapshot applied (client_id={}, hp={}/{}, entities={})",
+			LOG_DEBUG(Net, "[UIModelBinding] Snapshot applied (client_id={}, hp={}/{}, entities={})",
 				stats.clientId,
 				stats.currentHealth,
 				stats.maxHealth,
@@ -883,7 +890,12 @@ namespace engine::client
 			m_model.targetStats.hasPosition = false;
 		}
 
-		PushCombatLogEntry(m_model.combatLog, m_combatEventMessage, playerEntityId);
+		// Validation v12 — l'événement de RÉSURRECTION (respawn) rafraîchit les
+		// PV/flags ci-dessus mais ne doit pas polluer le log combat (« 0 dégât »).
+		if ((m_combatEventMessage.flags & engine::server::kCombatEventFlagResurrection) == 0u)
+		{
+			PushCombatLogEntry(m_model.combatLog, m_combatEventMessage, playerEntityId);
+		}
 		NotifyObservers(changeMask);
 		LOG_INFO(Net, "[UIModelBinding] CombatEvent applied (attacker={}, target={}, damage={}, player_role={})",
 			m_combatEventMessage.attackerEntityId,
@@ -1023,6 +1035,64 @@ namespace engine::client
 			return;
 		}
 		m_model.forcedPosition = UIForcedPosition{};
+	}
+
+	bool UIModelBinding::ApplyLootNotify(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeLootNotify(packet, m_lootNotifyMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] LootNotify FAILED: decode error");
+			return false;
+		}
+
+		// Cumul : plusieurs mobs morts coup sur coup abondent la MÊME fenêtre
+		// (les quantités d'un itemId déjà présent s'additionnent).
+		for (const engine::server::ItemStack& item : m_lootNotifyMessage.items)
+		{
+			bool merged = false;
+			for (engine::server::ItemStack& existing : m_model.lootWindow.entries)
+			{
+				if (existing.itemId == item.itemId)
+				{
+					existing.quantity += item.quantity;
+					merged = true;
+					break;
+				}
+			}
+			if (!merged)
+			{
+				m_model.lootWindow.entries.push_back(item);
+			}
+		}
+		m_model.lootWindow.visible = !m_model.lootWindow.entries.empty();
+		LOG_INFO(Net, "[UIModelBinding] LootNotify applied (items={}, total_entries={})",
+			m_lootNotifyMessage.items.size(), m_model.lootWindow.entries.size());
+		NotifyObservers(UIModelChangeInventory);
+		return true;
+	}
+
+	void UIModelBinding::CloseLootWindow()
+	{
+		if (!ValidateMainThread("CloseLootWindow"))
+		{
+			return;
+		}
+		m_model.lootWindow = UILootWindowState{};
+		NotifyObservers(UIModelChangeInventory);
+	}
+
+	void UIModelBinding::MarkLocalPlayerResurrected()
+	{
+		if (!ValidateMainThread("MarkLocalPlayerResurrected"))
+		{
+			return;
+		}
+		m_model.playerStats.stateFlags &= ~1u; // kEntityStateDead
+		if (m_model.playerStats.maxHealth > 0u)
+		{
+			m_model.playerStats.currentHealth = m_model.playerStats.maxHealth;
+		}
+		NotifyObservers(UIModelChangeStats);
 	}
 
 	bool UIModelBinding::ApplyPartyInviteNotify(std::span<const std::byte> packet)

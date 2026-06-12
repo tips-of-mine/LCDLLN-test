@@ -455,6 +455,8 @@ namespace engine::server
 			Shutdown();
 			return false;
 		}
+		// Validation v12 (wire v13) — points de réapparition (non bloquant).
+		InitRespawnPoints();
 
 		if (!InitQuests())
 		{
@@ -796,11 +798,11 @@ namespace engine::server
 			return;
 		}
 
-		// Combat SP2 — réapparition d'un joueur mort.
+		// Combat SP2 — réapparition d'un joueur mort (v13 : destination typée).
 		RespawnRequestMessage respawnRequest{};
 		if (DecodeRespawnRequest(packetBytes, respawnRequest))
 		{
-			HandleRespawnRequest(datagram.endpoint, respawnRequest.clientId);
+			HandleRespawnRequest(datagram.endpoint, respawnRequest.clientId, respawnRequest.destination);
 			return;
 		}
 
@@ -1881,6 +1883,51 @@ namespace engine::server
 		return true;
 	}
 
+	void ServerApp::InitRespawnPoints()
+	{
+		m_respawnPoints.clear();
+
+		const std::string relativePath = m_config.GetString("server.respawn_points_path", "respawn/respawn_points.txt");
+		const std::string pointsText = engine::platform::FileSystem::ReadAllTextContent(m_config, relativePath);
+		if (pointsText.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] Respawn points absent ({}): repli sur le point d'entrée en monde", relativePath);
+			return;
+		}
+
+		std::istringstream input(pointsText);
+		std::string line;
+		uint32_t lineNumber = 0;
+		while (std::getline(input, line))
+		{
+			++lineNumber;
+			if (line.empty() || line[0] == '#')
+				continue;
+
+			std::istringstream lineStream(line);
+			RespawnPointDefinition point{};
+			std::string typeToken;
+			if (!(lineStream >> point.zoneId >> typeToken
+				>> point.positionMetersX >> point.positionMetersY >> point.positionMetersZ))
+			{
+				LOG_WARN(Net, "[ServerApp] Respawn points: ligne {} invalide ignorée ({})", lineNumber, relativePath);
+				continue;
+			}
+			if (typeToken == "graveyard")
+				point.destinationType = kRespawnDestinationGraveyard;
+			else if (typeToken == "inn")
+				point.destinationType = kRespawnDestinationInn;
+			else
+			{
+				LOG_WARN(Net, "[ServerApp] Respawn points: type '{}' inconnu ligne {} (attendu graveyard|inn)", typeToken, lineNumber);
+				continue;
+			}
+			m_respawnPoints.push_back(point);
+		}
+
+		LOG_INFO(Net, "[ServerApp] Respawn points init OK (points={})", m_respawnPoints.size());
+	}
+
 	bool ServerApp::InitQuests()
 	{
 		if (!m_questRuntime.Init())
@@ -2035,12 +2082,23 @@ namespace engine::server
 
 		case MobAiState::Patrol:
 		{
-			const float targetX = mob.patrolForward ? mob.patrolTargetMetersX : mob.homePositionMetersX;
-			const float targetZ = mob.patrolForward ? mob.patrolTargetMetersZ : mob.homePositionMetersZ;
-			if (MoveMobTowards(mob, targetX, targetZ))
+			// Validation v12 — ERRANCE ALÉATOIRE : l'ancien aller-retour linéaire
+			// (cible fixe home+5 m, pause 0,2 s) faisait pivoter le mob sur place
+			// plusieurs fois par seconde (demi-tours incessants, amplifiés par la
+			// séparation entre mobs). Désormais : cible aléatoire autour du point
+			// d'attache + vraie pause (2 à 6 s) à l'arrivée — déplacement naturel.
+			if (MoveMobTowards(mob, mob.patrolTargetMetersX, mob.patrolTargetMetersZ))
 			{
-				mob.patrolForward = !mob.patrolForward;
-				mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
+				const float wanderAngle = NextCombatRoll01() * 6.2831853f;
+				const float wanderRadius = 1.5f
+					+ NextCombatRoll01() * std::max(0.5f, kDefaultMobPatrolDistanceMeters - 1.5f);
+				mob.patrolTargetMetersX = mob.homePositionMetersX + std::cos(wanderAngle) * wanderRadius;
+				mob.patrolTargetMetersZ = mob.homePositionMetersZ + std::sin(wanderAngle) * wanderRadius;
+				mob.velocityMetersPerSecondX = 0.0f;
+				mob.velocityMetersPerSecondZ = 0.0f;
+				// Pause 2-6 s avant la prochaine errance (en ticks d'IA).
+				const uint32_t pauseAiTicks = 20u + static_cast<uint32_t>(NextCombatRoll01() * 40.0f);
+				mob.nextPatrolTick = m_currentTick + ResolveMobAiIntervalTicks() * pauseAiTicks;
 				SetMobAiState(mob, MobAiState::Idle);
 			}
 			break;
@@ -2083,7 +2141,21 @@ namespace engine::server
 
 			if (!TryMobAttackPlayer(mob, *target))
 			{
-				(void)MoveMobTowards(mob, target->positionMetersX, target->positionMetersZ);
+				// Validation v12 — distance d'ARRÊT : le mob s'approche jusqu'à
+				// ~80 % de sa portée d'attaque mais ne marche jamais DANS le
+				// joueur (la superposition géographique provoquait un mob
+				// « collé » au même point que sa cible).
+				const float chaseDx = target->positionMetersX - mob.positionMetersX;
+				const float chaseDz = target->positionMetersZ - mob.positionMetersZ;
+				const float chaseDist = std::sqrt(chaseDx * chaseDx + chaseDz * chaseDz);
+				const float stopDistance = std::max(1.0f, mob.combat.attackRangeMeters * 0.8f);
+				if (chaseDist > stopDistance)
+				{
+					const float chaseRatio = (chaseDist - stopDistance) / chaseDist;
+					(void)MoveMobTowards(mob,
+						mob.positionMetersX + chaseDx * chaseRatio,
+						mob.positionMetersZ + chaseDz * chaseRatio);
+				}
 			}
 			break;
 		}
@@ -2954,8 +3026,10 @@ namespace engine::server
 			{
 				target.hasSpawnedLoot = true;
 				// M32.2 — Resolve loot owner based on party loot mode.
+				// Validation v12 — butin AUTOMATIQUE : crédit direct du looter
+				// (fenêtre de butin côté client) au lieu d'un sac à ramasser.
 				const EntityId looterEntityId = ResolvePartyLooterEntityId(attacker);
-				SpawnLootBagForMob(target, looterEntityId != 0 ? looterEntityId : attacker.entityId);
+				AutoLootMobToKiller(target, looterEntityId != 0 ? looterEntityId : attacker.entityId);
 			}
 			// M32.2 — Distribute XP to party members in range.
 			// Combat SP1 — XP data-driven par archétype (fallback constante MVP
@@ -2986,7 +3060,7 @@ namespace engine::server
 		BroadcastCombatEvent(combatEvent);
 	}
 
-	void ServerApp::HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId)
+	void ServerApp::HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId, uint8_t destination)
 	{
 		ConnectedClient* client = FindClient(endpoint);
 		if (client == nullptr)
@@ -3010,10 +3084,39 @@ namespace engine::server
 			return;
 		}
 
-		// Téléport au point d'entrée en monde, soin complet, retour à la vie.
-		client->positionMetersX = client->spawnPositionMetersX;
-		client->positionMetersY = client->spawnPositionMetersY;
-		client->positionMetersZ = client->spawnPositionMetersZ;
+		// Wire v13 — point de réapparition du type demandé (cimetière/auberge)
+		// LE PLUS PROCHE du lieu de mort ; repli : point d'entrée en monde.
+		float respawnX = client->spawnPositionMetersX;
+		float respawnY = client->spawnPositionMetersY;
+		float respawnZ = client->spawnPositionMetersZ;
+		{
+			float bestDistSq = std::numeric_limits<float>::max();
+			bool found = false;
+			for (const RespawnPointDefinition& point : m_respawnPoints)
+			{
+				if (point.zoneId != client->zoneId || point.destinationType != destination)
+					continue;
+				const float dxr = point.positionMetersX - client->positionMetersX;
+				const float dzr = point.positionMetersZ - client->positionMetersZ;
+				const float distSqR = dxr * dxr + dzr * dzr;
+				if (distSqR < bestDistSq)
+				{
+					bestDistSq = distSqR;
+					respawnX = point.positionMetersX;
+					respawnY = point.positionMetersY;
+					respawnZ = point.positionMetersZ;
+					found = true;
+				}
+			}
+			if (!found)
+			{
+				LOG_INFO(Net, "[ServerApp] Respawn fallback to enter-world spawn (client_id={}, destination={}, zone_id={})",
+					client->clientId, destination, client->zoneId);
+			}
+		}
+		client->positionMetersX = respawnX;
+		client->positionMetersY = respawnY;
+		client->positionMetersZ = respawnZ;
 		client->velocityMetersPerSecondX = 0.0f;
 		client->velocityMetersPerSecondY = 0.0f;
 		client->velocityMetersPerSecondZ = 0.0f;
@@ -3031,6 +3134,19 @@ namespace engine::server
 		// client écraserait la téléportation au tick suivant (bug SP2 corrigé).
 		m_antiCheat.Reset(client->persistenceCharacterKey);
 		SendForcePosition(*client, kForcePositionReasonRespawn);
+		// Validation v12 — événement de résurrection : les snapshots excluent
+		// l'entité du joueur lui-même, ses PV/flags ne sont rafraîchis que par
+		// les CombatEvent qui le ciblent. Sans cet événement, le client garde
+		// le flag mort → l'écran de mort ne se fermait JAMAIS après respawn.
+		CombatEventMessage resurrectionEvent{};
+		resurrectionEvent.attackerEntityId = 0;
+		resurrectionEvent.targetEntityId = client->entityId;
+		resurrectionEvent.damage = 0;
+		resurrectionEvent.targetCurrentHealth = client->stats.currentHealth;
+		resurrectionEvent.targetMaxHealth = client->stats.maxHealth;
+		resurrectionEvent.targetStateFlags = client->stateFlags;
+		resurrectionEvent.flags = kCombatEventFlagResurrection;
+		BroadcastCombatEvent(resurrectionEvent);
 		UpdateClientInterest(*client);
 		SaveConnectedClient(*client, "respawn");
 		LOG_INFO(Net,
@@ -3442,6 +3558,58 @@ namespace engine::server
 			sentOk);
 	}
 
+	void ServerApp::AutoLootMobToKiller(const MobEntity& mob, EntityId looterEntityId)
+	{
+		// Même collecte que SpawnLootBagForMob : toutes les entrées de la table
+		// pour cet archétype (la visibilité owner/public ne concerne que les
+		// sacs ; en crédit direct le looter du groupe a déjà été résolu).
+		std::vector<ItemStack> droppedItems;
+		for (const LootTableEntry& entry : m_lootTableEntries)
+		{
+			if (entry.sourceArchetypeId == mob.archetypeId)
+			{
+				droppedItems.push_back(entry.item);
+			}
+		}
+		if (droppedItems.empty())
+		{
+			// Pas de loot pour cet archétype : pas de fenêtre côté client.
+			LOG_DEBUG(Net, "[ServerApp] Auto-loot skipped: no loot table entry (mob_entity_id={}, archetype_id={})",
+				mob.entityId, mob.archetypeId);
+			return;
+		}
+
+		ConnectedClient* looter = FindClientByEntityId(looterEntityId);
+		if (looter == nullptr)
+		{
+			// Looter déconnecté entre le coup fatal et la mort : on retombe sur
+			// le sac au sol historique (ramassable plus tard, touche F).
+			LOG_WARN(Net, "[ServerApp] Auto-loot fallback to bag: looter not connected (looter_entity_id={})",
+				looterEntityId);
+			SpawnLootBagForMob(mob, looterEntityId);
+			return;
+		}
+
+		for (const ItemStack& item : droppedItems)
+		{
+			AddItemToInventory(*looter, item);
+			ApplyQuestEvent(*looter, QuestStepType::Collect,
+				std::string("item:") + std::to_string(item.itemId), item.quantity, "auto_loot");
+		}
+		SaveConnectedClient(*looter, "auto_loot");
+		(void)SendInventoryDelta(*looter, droppedItems);
+
+		LootNotifyMessage lootNotify{};
+		lootNotify.clientId = looter->clientId;
+		lootNotify.items = droppedItems;
+		if (!m_transport.Send(looter->endpoint, EncodeLootNotify(lootNotify)))
+		{
+			LOG_WARN(Net, "[ServerApp] LootNotify send failed (client_id={})", looter->clientId);
+		}
+		LOG_INFO(Net, "[ServerApp] Auto-loot credited (client_id={}, mob_entity_id={}, item_count={})",
+			looter->clientId, mob.entityId, droppedItems.size());
+	}
+
 	void ServerApp::SpawnLootBagForMob(const MobEntity& mob, EntityId ownerEntityId)
 	{
 		std::vector<ItemStack> droppedItems;
@@ -3626,7 +3794,13 @@ namespace engine::server
 			mob.velocityMetersPerSecondZ = dz / simulationDt;
 			mob.positionMetersX = targetPositionX;
 			mob.positionMetersZ = targetPositionZ;
-			mob.yawRadians = std::atan2(mob.velocityMetersPerSecondX, mob.velocityMetersPerSecondZ);
+			// Validation v12 — pas de mise à jour du yaw sur un micro-pas final
+			// (< 15 cm) : combiné aux corrections de séparation, le mob « vibrait »
+			// sur lui-même en recalculant son orientation sur des restes de pas.
+			if (distance > 0.15f)
+			{
+				mob.yawRadians = std::atan2(mob.velocityMetersPerSecondX, mob.velocityMetersPerSecondZ);
+			}
 			return UpdateMobSpatialState(mob);
 		}
 
@@ -3641,6 +3815,37 @@ namespace engine::server
 
 	bool ServerApp::UpdateMobSpatialState(MobEntity& mob)
 	{
+		// Validation v12 — séparation des mobs : plusieurs mobs poursuivant la
+		// même cible convergent vers le même point et se SUPERPOSENT (constat
+		// validation : deux sangliers fusionnés visuellement). On repousse ce
+		// mob hors du rayon personnel des autres mobs vivants de la zone
+		// (O(n²) acceptable : poignée de mobs par zone à ce stade).
+		constexpr float kMobSeparationMeters = 1.2f;
+		for (const MobEntity& other : m_mobs)
+		{
+			if (other.entityId == mob.entityId || other.zoneId != mob.zoneId)
+				continue;
+			if ((other.stateFlags & kEntityStateDead) != 0u)
+				continue;
+			const float sepDx = mob.positionMetersX - other.positionMetersX;
+			const float sepDz = mob.positionMetersZ - other.positionMetersZ;
+			const float sepDistSq = sepDx * sepDx + sepDz * sepDz;
+			if (sepDistSq >= kMobSeparationMeters * kMobSeparationMeters)
+				continue;
+			if (sepDistSq <= 0.0001f)
+			{
+				// Exactement superposés : direction déterministe dérivée des ids.
+				const float jitterAngle = static_cast<float>((mob.entityId % 8u)) * 0.7853981f;
+				mob.positionMetersX += std::cos(jitterAngle) * kMobSeparationMeters;
+				mob.positionMetersZ += std::sin(jitterAngle) * kMobSeparationMeters;
+				continue;
+			}
+			const float sepDist = std::sqrt(sepDistSq);
+			const float pushOut = (kMobSeparationMeters - sepDist);
+			mob.positionMetersX += (sepDx / sepDist) * pushOut;
+			mob.positionMetersZ += (sepDz / sepDist) * pushOut;
+		}
+
 		CellGrid* zoneGrid = GetOrCreateZoneGrid(mob.zoneId);
 		if (zoneGrid == nullptr)
 		{

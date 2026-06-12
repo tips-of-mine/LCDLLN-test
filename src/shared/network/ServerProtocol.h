@@ -53,7 +53,12 @@ namespace engine::server
 	/// Combat SP4 — bump 11 → 12 : nouveau kind `ThreatUpdate` (85, shard →
 	/// clients intéressés) — table de menace d'un mob répliquée (threat meter).
 	/// Wire-breaking : lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 12;
+	/// Validation v12 — bump 12 → 13 : `RespawnRequestMessage` gagne
+	/// `destination` (1 octet : cimetière/auberge le plus proche, payload
+	/// 4 → 5). Les kinds ForcePosition (86) et LootNotify (87) ajoutés pendant
+	/// la fenêtre v12 restaient rétro-additifs ; ce changement-ci modifie un
+	/// payload existant → wire-breaking : lock-step master + shardd + client.
+	inline constexpr uint16_t kProtocolVersion = 13;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -254,7 +259,12 @@ namespace engine::server
 		/// client-autoritaire (T0.1) ; ce kind est le canal de correction.
 		/// Ajout rétro-additif : un client qui ne le connaît pas l'ignore
 		/// (pas de bump de kProtocolVersion).
-		ForcePosition = 86
+		ForcePosition = 86,
+		/// Validation v12 — shard → client : butin auto-crédité à la mort d'un
+		/// mob (liste des objets gagnés). Le client ouvre/abonde la fenêtre de
+		/// butin ; l'état d'inventaire transite séparément (InventoryDelta).
+		/// Ajout rétro-additif (pas de bump).
+		LootNotify = 87
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -359,6 +369,12 @@ namespace engine::server
 	/// Combat SP2 — bits du champ `CombatEventMessage::flags` (wire v10).
 	inline constexpr uint32_t kCombatEventFlagCrit = 1u << 0;
 	inline constexpr uint32_t kCombatEventFlagMiss = 1u << 1;
+	/// Validation v12 — événement synthétique de RÉSURRECTION (respawn) : porte
+	/// les PV pleins et les stateFlags nettoyés du ressuscité. Les snapshots
+	/// excluant l'entité du joueur lui-même, c'est le seul canal qui rafraîchit
+	/// ses PV/flags — sans cet événement l'écran de mort ne se fermait jamais.
+	/// Le client met à jour les stats mais N'ÉCRIT PAS de ligne de log combat.
+	inline constexpr uint32_t kCombatEventFlagResurrection = 1u << 2;
 
 	/// Authoritative combat result broadcast to interested clients.
 	/// Combat SP2 (wire v10) — `flags` porte critique/raté (cf. kCombatEventFlag*) ;
@@ -374,11 +390,20 @@ namespace engine::server
 		uint32_t flags = 0;
 	};
 
+	/// Validation v12 (wire v13) — destinations de réapparition proposées par
+	/// l'écran de mort. Le serveur choisit le point du type demandé LE PLUS
+	/// PROCHE du lieu de mort (repli : point d'entrée en monde si la zone n'en
+	/// définit aucun — cf. game/data/respawn/respawn_points.txt).
+	inline constexpr uint8_t kRespawnDestinationGraveyard = 0;
+	inline constexpr uint8_t kRespawnDestinationInn = 1;
+
 	/// Combat SP2 — demande de réapparition d'un joueur mort (client → shard).
 	/// Le serveur ne l'honore que si le joueur porte kEntityStateDead.
+	/// Wire v13 : + destination (1 octet, kRespawnDestination*) — payload 4 → 5.
 	struct RespawnRequestMessage
 	{
 		uint32_t clientId = 0;
+		uint8_t destination = kRespawnDestinationGraveyard;
 	};
 
 	// Combat SP3 — sorts et auras (wire v11) --------------------------------
@@ -632,6 +657,16 @@ namespace engine::server
 	std::vector<std::byte> EncodeForcePosition(const ForcePositionMessage& message);
 	bool DecodeForcePosition(std::span<const std::byte> packet, ForcePositionMessage& outMessage);
 
+	/// Validation v12 — butin auto-crédité à la mort (rétro-additif).
+	/// Payload : clientId (4) + count (1) puis par objet itemId (4) + quantity (4).
+	struct LootNotifyMessage
+	{
+		uint32_t clientId = 0;
+		std::vector<ItemStack> items;
+	};
+	std::vector<std::byte> EncodeLootNotify(const LootNotifyMessage& message);
+	bool DecodeLootNotify(std::span<const std::byte> packet, LootNotifyMessage& outMessage);
+
 	/// Encode a combat event packet with the protocol header.
 	std::vector<std::byte> EncodeCombatEvent(const CombatEventMessage& message);
 
@@ -639,6 +674,9 @@ namespace engine::server
 	bool DecodeCombatEvent(std::span<const std::byte> packet, CombatEventMessage& outMessage);
 
 	/// Decode a pickup request packet and validate the protocol header.
+	/// Validation v12 — encodeur côté client (le serveur décodait depuis M28
+	/// mais le client n'émettait jamais : ramassage du butin enfin câblé).
+	std::vector<std::byte> EncodePickupRequest(const PickupRequestMessage& message);
 	bool DecodePickupRequest(std::span<const std::byte> packet, PickupRequestMessage& outMessage);
 
 	/// Encode an inventory delta packet with the protocol header.

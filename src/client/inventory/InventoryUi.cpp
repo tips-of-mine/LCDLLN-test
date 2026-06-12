@@ -461,6 +461,14 @@ namespace engine::client
 		m_state.tooltip.visible = true;
 	}
 
+	std::string InventoryUiPresenter::ResolveItemLabel(uint32_t itemId, uint32_t quantity) const
+	{
+		const InventoryItemMetadata* metadata = FindMetadata(itemId);
+		return metadata
+			? (metadata->displayName + " x" + std::to_string(quantity))
+			: ("Item " + std::to_string(itemId) + " x" + std::to_string(quantity));
+	}
+
 	const InventoryItemMetadata* InventoryUiPresenter::FindMetadata(uint32_t itemId) const
 	{
 		for (const InventoryItemMetadata& metadata : m_metadata)

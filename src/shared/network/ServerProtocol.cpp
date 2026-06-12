@@ -411,6 +411,56 @@ namespace engine::server
 		return true;
 	}
 
+	std::vector<std::byte> EncodeLootNotify(const LootNotifyMessage& message)
+	{
+		// Validation v12 — payload : clientId (4) + count (1) + count × (itemId 4 + quantity 4).
+		const size_t count = std::min<size_t>(message.items.size(), 255u);
+		std::vector<std::byte> packet = BeginPacket(MessageKind::LootNotify, 5 + count * 8);
+		WriteU32(packet, message.clientId);
+		WriteU8(packet, static_cast<uint8_t>(count));
+		for (size_t i = 0; i < count; ++i)
+		{
+			WriteU32(packet, message.items[i].itemId);
+			WriteU32(packet, message.items[i].quantity);
+		}
+		return packet;
+	}
+
+	bool DecodeLootNotify(std::span<const std::byte> packet, LootNotifyMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::LootNotify, payload) || payload.size() < 5)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
+		const uint8_t count = ReadU8(payload, 4);
+		if (payload.size() != 5u + static_cast<size_t>(count) * 8u)
+		{
+			return false;
+		}
+		outMessage.items.clear();
+		outMessage.items.reserve(count);
+		for (uint8_t i = 0; i < count; ++i)
+		{
+			ItemStack item{};
+			item.itemId = ReadU32(payload, 5 + static_cast<size_t>(i) * 8);
+			item.quantity = ReadU32(payload, 9 + static_cast<size_t>(i) * 8);
+			outMessage.items.push_back(item);
+		}
+		return true;
+	}
+
+	std::vector<std::byte> EncodePickupRequest(const PickupRequestMessage& message)
+	{
+		// Payload fixe : clientId (4) + lootBagEntityId (8) = 12 octets (miroir du décodeur).
+		std::vector<std::byte> packet = BeginPacket(MessageKind::PickupRequest, 12);
+		WriteU32(packet, message.clientId);
+		WriteU64(packet, message.lootBagEntityId);
+		return packet;
+	}
+
 	bool DecodePickupRequest(std::span<const std::byte> packet, PickupRequestMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
@@ -636,22 +686,24 @@ namespace engine::server
 
 	std::vector<std::byte> EncodeRespawnRequest(const RespawnRequestMessage& message)
 	{
-		// Combat SP2 — demande de réapparition (payload 4 octets).
-		std::vector<std::byte> packet = BeginPacket(MessageKind::RespawnRequest, 4);
+		// Wire v13 — payload : clientId (4) + destination (1) = 5 octets.
+		std::vector<std::byte> packet = BeginPacket(MessageKind::RespawnRequest, 5);
 		WriteU32(packet, message.clientId);
+		WriteU8(packet, message.destination);
 		return packet;
 	}
 
 	bool DecodeRespawnRequest(std::span<const std::byte> packet, RespawnRequestMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
-		if (!DecodeHeader(packet, MessageKind::RespawnRequest, payload) || payload.size() != 4)
+		if (!DecodeHeader(packet, MessageKind::RespawnRequest, payload) || payload.size() != 5)
 		{
 			return false;
 		}
 
 		outMessage.clientId = ReadU32(payload, 0);
-		return true;
+		outMessage.destination = ReadU8(payload, 4);
+		return outMessage.destination <= kRespawnDestinationInn;
 	}
 
 	std::vector<std::byte> EncodeCastRequest(const CastRequestMessage& message)

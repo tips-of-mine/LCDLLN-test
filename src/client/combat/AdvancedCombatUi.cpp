@@ -190,7 +190,10 @@ namespace engine::client
 				m_state.threatMeter.clear();
 			}
 		}
-		LOG_INFO(Core, "[AdvancedCombatUi] Threat cleared (targetId={})", targetId);
+		// Validation v12 — Engine appelle ClearThreat à CHAQUE frame avant de
+		// repousser la table de menace courante : ce log en INFO inondait le
+		// fichier (constat log client : des milliers de lignes par minute).
+		LOG_DEBUG(Core, "[AdvancedCombatUi] Threat cleared (targetId={})", targetId);
 	}
 
 	// =========================================================================

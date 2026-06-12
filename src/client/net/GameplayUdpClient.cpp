@@ -280,15 +280,16 @@ namespace engine::client
 		return ok;
 	}
 
-	bool GameplayUdpClient::SendRespawnRequest(uint32_t clientId)
+	bool GameplayUdpClient::SendRespawnRequest(uint32_t clientId, uint8_t destination)
 	{
 		engine::server::RespawnRequestMessage msg{};
 		msg.clientId = clientId;
+		msg.destination = destination;
 		const std::vector<std::byte> packet = engine::server::EncodeRespawnRequest(msg);
 		const bool ok = SendBytes(packet);
 		if (ok)
 		{
-			LOG_INFO(Net, "[GameplayUdpClient] RespawnRequest sent (client_id={})", clientId);
+			LOG_INFO(Net, "[GameplayUdpClient] RespawnRequest sent (client_id={}, destination={})", clientId, destination);
 		}
 		else
 		{
@@ -347,6 +348,24 @@ namespace engine::client
 		else
 		{
 			LOG_WARN(Net, "[GameplayUdpClient] PartyDecline FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
+	bool GameplayUdpClient::SendPickupRequest(uint32_t clientId, uint64_t lootBagEntityId)
+	{
+		engine::server::PickupRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.lootBagEntityId = lootBagEntityId;
+		const bool ok = SendBytes(engine::server::EncodePickupRequest(msg));
+		if (ok)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] PickupRequest sent (client_id={}, loot_bag_entity_id={})",
+				clientId, lootBagEntityId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] PickupRequest FAILED (client_id={})", clientId);
 		}
 		return ok;
 	}

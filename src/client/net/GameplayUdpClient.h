@@ -55,8 +55,10 @@ namespace engine::client
 		/// throttler mais n'a pas d'autorité.
 		bool SendAttackRequest(uint32_t clientId, uint64_t targetEntityId);
 
-		/// Combat SP2 — demande de réapparition (joueur mort uniquement, validé serveur).
-		bool SendRespawnRequest(uint32_t clientId);
+		/// Combat SP2 — demande de réapparition (joueur mort uniquement, validé
+		/// serveur). Wire v13 : \p destination = kRespawnDestination* (cimetière
+		/// ou auberge le plus proche du lieu de mort).
+		bool SendRespawnRequest(uint32_t clientId, uint8_t destination);
 
 		/// Combat SP3 — cast d'un sort du kit du profil. targetEntityId = 0 pour
 		/// les sorts sans cible (le serveur revalide tout : kit, cooldown, coût,
@@ -68,6 +70,10 @@ namespace engine::client
 
 		/// Groupes SP1 — refuse l'invitation de groupe en attente (M32.2).
 		bool SendPartyDecline(uint32_t clientId);
+
+		/// Validation v12 — ramasse un sac de butin répliqué (le serveur valide
+		/// proximité et propriété, puis pousse l'InventoryDelta).
+		bool SendPickupRequest(uint32_t clientId, uint64_t lootBagEntityId);
 
 		/// Métiers SP1 — démarre une récolte sur un node répliqué (M36.1, le
 		/// serveur valide disponibilité/portée/session unique).

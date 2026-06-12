@@ -349,6 +349,7 @@ namespace
 	{
 		engine::server::RespawnRequestMessage in{};
 		in.clientId = 42u;
+		in.destination = engine::server::kRespawnDestinationInn; // wire v13
 
 		const std::vector<std::byte> packet = engine::server::EncodeRespawnRequest(in);
 		assert(!packet.empty());
@@ -356,10 +357,16 @@ namespace
 		engine::server::RespawnRequestMessage out{};
 		assert(engine::server::DecodeRespawnRequest(packet, out));
 		assert(out.clientId == 42u);
+		assert(out.destination == engine::server::kRespawnDestinationInn);
 
 		std::vector<std::byte> truncated = packet;
 		truncated.resize(truncated.size() - 2u);
 		assert(!engine::server::DecodeRespawnRequest(truncated, out));
+
+		// Destination hors domaine rejetée (octet 4 du payload, après header 8 o).
+		std::vector<std::byte> badDestination = packet;
+		badDestination[8 + 4] = static_cast<std::byte>(7);
+		assert(!engine::server::DecodeRespawnRequest(badDestination, out));
 		std::puts("[OK] TestRespawnRequestRoundTrip");
 	}
 
@@ -545,6 +552,29 @@ namespace
 		std::puts("[OK] TestForcePositionRoundTrip");
 	}
 
+	/// Validation v12 — round-trip LootNotify (butin auto) + rejet tronqué.
+	void TestLootNotifyRoundTrip()
+	{
+		engine::server::LootNotifyMessage in{};
+		in.clientId = 7u;
+		in.items.push_back(engine::server::ItemStack{ 2001u, 1u });
+		in.items.push_back(engine::server::ItemStack{ 2002u, 3u });
+
+		const std::vector<std::byte> packet = engine::server::EncodeLootNotify(in);
+		engine::server::LootNotifyMessage out{};
+		assert(engine::server::DecodeLootNotify(packet, out));
+		assert(out.clientId == 7u);
+		assert(out.items.size() == 2u);
+		assert(out.items[0].itemId == 2001u && out.items[0].quantity == 1u);
+		assert(out.items[1].itemId == 2002u && out.items[1].quantity == 3u);
+
+		// Paquet tronqué rejeté (count annonce 2 objets, payload amputé).
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 3u);
+		assert(!engine::server::DecodeLootNotify(truncated, out));
+		std::puts("[OK] TestLootNotifyRoundTrip");
+	}
+
 int main()
 {
 	TestInputRoundTrip();
@@ -565,6 +595,7 @@ int main()
 	TestThreatUpdateRoundTrip();
 	TestPlayerStatsRoundTripWithProfile();
 	TestForcePositionRoundTrip();
+	TestLootNotifyRoundTrip();
 	std::puts("All ServerProtocol tests passed");
 	return 0;
 }

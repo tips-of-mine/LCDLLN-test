@@ -9491,18 +9491,42 @@ namespace engine
 						(m_uiModelBinding.GetModel().playerStats.stateFlags & 1u) != 0u;
 					if (avatarDead && !m_avatarDeathClipPlaying)
 					{
-						const char* deathClipName = "Death";
-						const engine::render::skinned::AnimationClip* deathClip = m_currentSkinnedMesh->FindClip(deathClipName);
-						if (deathClip == nullptr) { deathClipName = "Die"; deathClip = m_currentSkinnedMesh->FindClip(deathClipName); }
-						if (deathClip == nullptr) { deathClipName = "Dead"; deathClip = m_currentSkinnedMesh->FindClip(deathClipName); }
+						// Validation v12 — recherche TOLÉRANTE du clip de mort : le mesh
+						// humain a 63 clips mais aucun nommé exactement Death/Die/Dead
+						// (constat log client). On cherche par sous-chaîne insensible à
+						// la casse ; sans candidat, on liste les clips disponibles UNE
+						// fois pour identifier l'asset à compléter.
+						const engine::render::skinned::AnimationClip* deathClip = nullptr;
+						for (const engine::render::skinned::AnimationClip& candidateClip : m_currentSkinnedMesh->clips)
+						{
+							std::string lowered = candidateClip.name;
+							std::transform(lowered.begin(), lowered.end(), lowered.begin(),
+								[](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+							if (lowered.find("death") != std::string::npos
+								|| lowered.find("die") != std::string::npos
+								|| lowered.find("dead") != std::string::npos
+								|| lowered.find("knock") != std::string::npos)
+							{
+								deathClip = &candidateClip;
+								break;
+							}
+						}
 						if (deathClip != nullptr)
 						{
 							m_avatarCrossfade.Play(*deathClip, /*loops=*/false, nowSec);
-							LOG_INFO(Render, "[Avatar SM] Mort : clip '{}' joue (clamp)", deathClipName);
+							LOG_INFO(Render, "[Avatar SM] Mort : clip '{}' joue (clamp)", deathClip->name);
 						}
 						else
 						{
-							LOG_WARN(Render, "[Avatar SM] Mort : aucun clip Death/Die/Dead dans le mesh — pose Idle conservee");
+							std::string clipList;
+							for (const engine::render::skinned::AnimationClip& availableClip : m_currentSkinnedMesh->clips)
+							{
+								if (!clipList.empty()) clipList += ", ";
+								clipList += availableClip.name;
+							}
+							LOG_WARN(Render,
+								"[Avatar SM] Mort : aucun clip de mort dans le mesh — pose Idle conservee. Clips disponibles : {}",
+								clipList);
 						}
 						m_avatarDeathClipPlaying = true;
 					}

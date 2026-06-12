@@ -825,15 +825,19 @@ namespace engine::client
 			}
 		}
 
+		// Validation v12 — l'absence de l'entité du joueur dans son propre
+		// snapshot est NORMALE (le serveur exclut le self de l'AoI répliquée,
+		// cf. ServerApp::BuildRelevantEntityIds) : ses PV transitent par les
+		// CombatEvent/PlayerStats. Ce WARN partait à 10 Hz et inondait le log.
 		if (!stats.hasSnapshot)
 		{
-			LOG_WARN(Net, "[UIModelBinding] Snapshot applied without player entity (client_id={}, entities={})",
+			LOG_DEBUG(Net, "[UIModelBinding] Snapshot applied without player entity (client_id={}, entities={})",
 				stats.clientId,
 				m_snapshotScratch.size());
 		}
 		else
 		{
-			LOG_INFO(Net, "[UIModelBinding] Snapshot applied (client_id={}, hp={}/{}, entities={})",
+			LOG_DEBUG(Net, "[UIModelBinding] Snapshot applied (client_id={}, hp={}/{}, entities={})",
 				stats.clientId,
 				stats.currentHealth,
 				stats.maxHealth,

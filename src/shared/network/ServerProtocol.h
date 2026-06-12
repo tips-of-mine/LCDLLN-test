@@ -53,7 +53,12 @@ namespace engine::server
 	/// Combat SP4 — bump 11 → 12 : nouveau kind `ThreatUpdate` (85, shard →
 	/// clients intéressés) — table de menace d'un mob répliquée (threat meter).
 	/// Wire-breaking : lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 12;
+	/// Validation v12 — bump 12 → 13 : `RespawnRequestMessage` gagne
+	/// `destination` (1 octet : cimetière/auberge le plus proche, payload
+	/// 4 → 5). Les kinds ForcePosition (86) et LootNotify (87) ajoutés pendant
+	/// la fenêtre v12 restaient rétro-additifs ; ce changement-ci modifie un
+	/// payload existant → wire-breaking : lock-step master + shardd + client.
+	inline constexpr uint16_t kProtocolVersion = 13;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -385,11 +390,20 @@ namespace engine::server
 		uint32_t flags = 0;
 	};
 
+	/// Validation v12 (wire v13) — destinations de réapparition proposées par
+	/// l'écran de mort. Le serveur choisit le point du type demandé LE PLUS
+	/// PROCHE du lieu de mort (repli : point d'entrée en monde si la zone n'en
+	/// définit aucun — cf. game/data/respawn/respawn_points.txt).
+	inline constexpr uint8_t kRespawnDestinationGraveyard = 0;
+	inline constexpr uint8_t kRespawnDestinationInn = 1;
+
 	/// Combat SP2 — demande de réapparition d'un joueur mort (client → shard).
 	/// Le serveur ne l'honore que si le joueur porte kEntityStateDead.
+	/// Wire v13 : + destination (1 octet, kRespawnDestination*) — payload 4 → 5.
 	struct RespawnRequestMessage
 	{
 		uint32_t clientId = 0;
+		uint8_t destination = kRespawnDestinationGraveyard;
 	};
 
 	// Combat SP3 — sorts et auras (wire v11) --------------------------------

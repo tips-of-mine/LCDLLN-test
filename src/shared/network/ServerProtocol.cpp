@@ -686,22 +686,24 @@ namespace engine::server
 
 	std::vector<std::byte> EncodeRespawnRequest(const RespawnRequestMessage& message)
 	{
-		// Combat SP2 — demande de réapparition (payload 4 octets).
-		std::vector<std::byte> packet = BeginPacket(MessageKind::RespawnRequest, 4);
+		// Wire v13 — payload : clientId (4) + destination (1) = 5 octets.
+		std::vector<std::byte> packet = BeginPacket(MessageKind::RespawnRequest, 5);
 		WriteU32(packet, message.clientId);
+		WriteU8(packet, message.destination);
 		return packet;
 	}
 
 	bool DecodeRespawnRequest(std::span<const std::byte> packet, RespawnRequestMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
-		if (!DecodeHeader(packet, MessageKind::RespawnRequest, payload) || payload.size() != 4)
+		if (!DecodeHeader(packet, MessageKind::RespawnRequest, payload) || payload.size() != 5)
 		{
 			return false;
 		}
 
 		outMessage.clientId = ReadU32(payload, 0);
-		return true;
+		outMessage.destination = ReadU8(payload, 4);
+		return outMessage.destination <= kRespawnDestinationInn;
 	}
 
 	std::vector<std::byte> EncodeCastRequest(const CastRequestMessage& message)

@@ -455,6 +455,8 @@ namespace engine::server
 			Shutdown();
 			return false;
 		}
+		// Validation v12 (wire v13) — points de réapparition (non bloquant).
+		InitRespawnPoints();
 
 		if (!InitQuests())
 		{
@@ -796,11 +798,11 @@ namespace engine::server
 			return;
 		}
 
-		// Combat SP2 — réapparition d'un joueur mort.
+		// Combat SP2 — réapparition d'un joueur mort (v13 : destination typée).
 		RespawnRequestMessage respawnRequest{};
 		if (DecodeRespawnRequest(packetBytes, respawnRequest))
 		{
-			HandleRespawnRequest(datagram.endpoint, respawnRequest.clientId);
+			HandleRespawnRequest(datagram.endpoint, respawnRequest.clientId, respawnRequest.destination);
 			return;
 		}
 
@@ -1879,6 +1881,51 @@ namespace engine::server
 
 		LOG_INFO(Net, "[ServerApp] Loot table init OK (path={}, entries={})", relativePath, m_lootTableEntries.size());
 		return true;
+	}
+
+	void ServerApp::InitRespawnPoints()
+	{
+		m_respawnPoints.clear();
+
+		const std::string relativePath = m_config.GetString("server.respawn_points_path", "respawn/respawn_points.txt");
+		const std::string pointsText = engine::platform::FileSystem::ReadAllTextContent(m_config, relativePath);
+		if (pointsText.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] Respawn points absent ({}): repli sur le point d'entrée en monde", relativePath);
+			return;
+		}
+
+		std::istringstream input(pointsText);
+		std::string line;
+		uint32_t lineNumber = 0;
+		while (std::getline(input, line))
+		{
+			++lineNumber;
+			if (line.empty() || line[0] == '#')
+				continue;
+
+			std::istringstream lineStream(line);
+			RespawnPointDefinition point{};
+			std::string typeToken;
+			if (!(lineStream >> point.zoneId >> typeToken
+				>> point.positionMetersX >> point.positionMetersY >> point.positionMetersZ))
+			{
+				LOG_WARN(Net, "[ServerApp] Respawn points: ligne {} invalide ignorée ({})", lineNumber, relativePath);
+				continue;
+			}
+			if (typeToken == "graveyard")
+				point.destinationType = kRespawnDestinationGraveyard;
+			else if (typeToken == "inn")
+				point.destinationType = kRespawnDestinationInn;
+			else
+			{
+				LOG_WARN(Net, "[ServerApp] Respawn points: type '{}' inconnu ligne {} (attendu graveyard|inn)", typeToken, lineNumber);
+				continue;
+			}
+			m_respawnPoints.push_back(point);
+		}
+
+		LOG_INFO(Net, "[ServerApp] Respawn points init OK (points={})", m_respawnPoints.size());
 	}
 
 	bool ServerApp::InitQuests()
@@ -2988,7 +3035,7 @@ namespace engine::server
 		BroadcastCombatEvent(combatEvent);
 	}
 
-	void ServerApp::HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId)
+	void ServerApp::HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId, uint8_t destination)
 	{
 		ConnectedClient* client = FindClient(endpoint);
 		if (client == nullptr)
@@ -3012,10 +3059,39 @@ namespace engine::server
 			return;
 		}
 
-		// Téléport au point d'entrée en monde, soin complet, retour à la vie.
-		client->positionMetersX = client->spawnPositionMetersX;
-		client->positionMetersY = client->spawnPositionMetersY;
-		client->positionMetersZ = client->spawnPositionMetersZ;
+		// Wire v13 — point de réapparition du type demandé (cimetière/auberge)
+		// LE PLUS PROCHE du lieu de mort ; repli : point d'entrée en monde.
+		float respawnX = client->spawnPositionMetersX;
+		float respawnY = client->spawnPositionMetersY;
+		float respawnZ = client->spawnPositionMetersZ;
+		{
+			float bestDistSq = std::numeric_limits<float>::max();
+			bool found = false;
+			for (const RespawnPointDefinition& point : m_respawnPoints)
+			{
+				if (point.zoneId != client->zoneId || point.destinationType != destination)
+					continue;
+				const float dxr = point.positionMetersX - client->positionMetersX;
+				const float dzr = point.positionMetersZ - client->positionMetersZ;
+				const float distSqR = dxr * dxr + dzr * dzr;
+				if (distSqR < bestDistSq)
+				{
+					bestDistSq = distSqR;
+					respawnX = point.positionMetersX;
+					respawnY = point.positionMetersY;
+					respawnZ = point.positionMetersZ;
+					found = true;
+				}
+			}
+			if (!found)
+			{
+				LOG_INFO(Net, "[ServerApp] Respawn fallback to enter-world spawn (client_id={}, destination={}, zone_id={})",
+					client->clientId, destination, client->zoneId);
+			}
+		}
+		client->positionMetersX = respawnX;
+		client->positionMetersY = respawnY;
+		client->positionMetersZ = respawnZ;
 		client->velocityMetersPerSecondX = 0.0f;
 		client->velocityMetersPerSecondY = 0.0f;
 		client->velocityMetersPerSecondZ = 0.0f;

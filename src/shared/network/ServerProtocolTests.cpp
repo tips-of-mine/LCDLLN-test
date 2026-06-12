@@ -349,6 +349,7 @@ namespace
 	{
 		engine::server::RespawnRequestMessage in{};
 		in.clientId = 42u;
+		in.destination = engine::server::kRespawnDestinationInn; // wire v13
 
 		const std::vector<std::byte> packet = engine::server::EncodeRespawnRequest(in);
 		assert(!packet.empty());
@@ -356,10 +357,16 @@ namespace
 		engine::server::RespawnRequestMessage out{};
 		assert(engine::server::DecodeRespawnRequest(packet, out));
 		assert(out.clientId == 42u);
+		assert(out.destination == engine::server::kRespawnDestinationInn);
 
 		std::vector<std::byte> truncated = packet;
 		truncated.resize(truncated.size() - 2u);
 		assert(!engine::server::DecodeRespawnRequest(truncated, out));
+
+		// Destination hors domaine rejetée (octet 4 du payload, après header 8 o).
+		std::vector<std::byte> badDestination = packet;
+		badDestination[8 + 4] = static_cast<std::byte>(7);
+		assert(!engine::server::DecodeRespawnRequest(badDestination, out));
 		std::puts("[OK] TestRespawnRequestRoundTrip");
 	}
 

@@ -538,6 +538,13 @@ namespace engine::client
 		/// Notifie UIModelChangeInventory. Main thread uniquement.
 		void CloseLootWindow();
 
+		/// Validation v12 — marque le joueur local VIVANT (flag mort retiré,
+		/// PV pleins). Appelé par Engine à la réception d'un ForcePosition de
+		/// raison « respawn » : c'est la ceinture-bretelles de l'événement de
+		/// résurrection (un seul des deux suffit à fermer l'écran de mort).
+		/// Notifie UIModelChangeStats. Main thread uniquement.
+		void MarkLocalPlayerResurrected();
+
 		/// M29.3: Refresh billboard projections (call from render/game thread with camera + viewport).
 		void TickChatWorldVisuals(
 			const engine::math::Vec3& cameraWorld,

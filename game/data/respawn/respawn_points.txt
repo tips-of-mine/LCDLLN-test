@@ -1,0 +1,7 @@
+# Points de réapparition par zone (validation v12, wire v13).
+# Format : zone_id type x y z   — type ∈ {graveyard, inn}
+# Le serveur choisit le point du type demandé LE PLUS PROCHE du lieu de mort ;
+# s'il n'y a aucun point du type demandé dans la zone, repli sur le point
+# d'entrée en monde mémorisé à l'admission.
+0 graveyard 120.0 1.5 120.0
+0 inn 88.0 1.5 100.0

@@ -451,6 +451,11 @@ namespace engine::server
 		/// Load the authoritative loot table data required by the ticket.
 		bool InitLootTables();
 
+		/// Validation v12 (wire v13) — charge `respawn/respawn_points.txt`
+		/// (cimetières/auberges par zone). NON bloquant : fichier absent =
+		/// aucun point, le respawn retombe sur le point d'entrée en monde.
+		void InitRespawnPoints();
+
 		/// Load the data-driven quest definitions required by M15.1.
 		bool InitQuests();
 
@@ -527,9 +532,12 @@ namespace engine::server
 		/// Validate one attack request, apply damage and broadcast the authoritative event.
 		void HandleAttackRequest(const Endpoint& endpoint, uint32_t clientId, EntityId targetEntityId);
 
-		/// Combat SP2 — réapparition d'un joueur mort : téléport au spawn mémorisé
-		/// à l'admission, PV pleins, flag dead retiré. Ignoré si le joueur est vivant.
-		void HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId);
+		/// Combat SP2 — réapparition d'un joueur mort : PV pleins, flag dead
+		/// retiré. Wire v13 : téléport au point de réapparition du type demandé
+		/// (\p destination, kRespawnDestination*) le plus proche du lieu de
+		/// mort ; repli sur le spawn mémorisé à l'admission si la zone n'en
+		/// définit aucun. Ignoré si le joueur est vivant.
+		void HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId, uint8_t destination);
 
 		/// Correction SP1 — impose la position serveur courante au client
 		/// (cf. MessageKind::ForcePosition). Le mouvement client-autoritaire
@@ -1029,6 +1037,17 @@ namespace engine::server
 		std::vector<MobEntity> m_mobs;
 		std::vector<LootBagEntity> m_lootBags;
 		std::vector<LootTableEntry> m_lootTableEntries;
+
+		/// Validation v12 (wire v13) — un point de réapparition typé d'une zone.
+		struct RespawnPointDefinition
+		{
+			uint32_t zoneId = 0;
+			uint8_t destinationType = 0; ///< kRespawnDestination* (0 cimetière, 1 auberge).
+			float positionMetersX = 0.0f;
+			float positionMetersY = 0.0f;
+			float positionMetersZ = 0.0f;
+		};
+		std::vector<RespawnPointDefinition> m_respawnPoints;
 		std::vector<DynamicEventState> m_dynamicEvents;
 		std::vector<SpawnerRuntimeState> m_spawners;
 		std::unordered_map<uint32_t, CellGrid> m_zoneGrids;

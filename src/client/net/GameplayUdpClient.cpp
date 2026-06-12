@@ -280,15 +280,16 @@ namespace engine::client
 		return ok;
 	}
 
-	bool GameplayUdpClient::SendRespawnRequest(uint32_t clientId)
+	bool GameplayUdpClient::SendRespawnRequest(uint32_t clientId, uint8_t destination)
 	{
 		engine::server::RespawnRequestMessage msg{};
 		msg.clientId = clientId;
+		msg.destination = destination;
 		const std::vector<std::byte> packet = engine::server::EncodeRespawnRequest(msg);
 		const bool ok = SendBytes(packet);
 		if (ok)
 		{
-			LOG_INFO(Net, "[GameplayUdpClient] RespawnRequest sent (client_id={})", clientId);
+			LOG_INFO(Net, "[GameplayUdpClient] RespawnRequest sent (client_id={}, destination={})", clientId, destination);
 		}
 		else
 		{

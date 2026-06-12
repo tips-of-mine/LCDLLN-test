@@ -10442,7 +10442,10 @@ namespace engine
 					// raycast 3D. Factorise : utilise par le clic GAUCHE (selection)
 					// et par le clic DROIT relache sans drag (selection + attaque
 					// auto — le drag droit reste le mouselook camera).
-					constexpr float kPickRadiusPx = 40.0f;
+					// Validation v12 — rayon élargi (40 → 70 px : le joueur clique le
+					// CORPS du mob, pas le point d'ancrage projeté) et ancre abaissée
+					// vers le torse (+0.2 m au lieu de +0.5).
+					constexpr float kPickRadiusPx = 70.0f;
 					const auto pickMobAtScreen = [&](const ImVec2& screenPos) -> engine::server::EntityId
 					{
 						engine::server::EntityId bestId = 0;
@@ -10460,7 +10463,7 @@ namespace engine
 							}
 							wy = ResolveRemoteDisplayCenterY(false, wy, wx, wz);
 							float sxp = 0.0f, syp = 0.0f;
-							if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 0.5f, wz, ivw, ivh, sxp, syp))
+							if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 0.2f, wz, ivw, ivh, sxp, syp))
 								continue;
 							const float dxPick = sxp - screenPos.x;
 							const float dyPick = syp - screenPos.y;
@@ -10511,7 +10514,36 @@ namespace engine
 						{
 							const engine::server::EntityId pickedId = pickMobAtScreen(mousePos);
 							if (pickedId != 0)
+							{
+								// Validation v12 (décision design) — le clic GAUCHE sur un
+								// mob cible ET attaque (un coup), comme le clic droit bref :
+								// le combat se joue entièrement à la souris.
 								(void)m_uiModelBinding.SetLocalTarget(pickedId);
+								if (m_attackSendCooldownSec <= 0.0f)
+								{
+									const uint32_t lmbClientId = m_gameplayUdp.ServerClientId();
+									if (lmbClientId != 0u)
+									{
+										(void)m_gameplayUdp.SendAttackRequest(lmbClientId, pickedId);
+										m_attackSendCooldownSec = 0.25f;
+										constexpr float kMeleeRangeHintMetersLmb = 4.0f;
+										const engine::math::Vec3 playerPosLmb = m_characterController.GetPosition();
+										for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+										{
+											if (re.entityId != pickedId)
+												continue;
+											const float dxl = re.positionX - playerPosLmb.x;
+											const float dzl = re.positionZ - playerPosLmb.z;
+											if ((dxl * dxl + dzl * dzl)
+												> kMeleeRangeHintMetersLmb * kMeleeRangeHintMetersLmb)
+											{
+												m_outOfRangeHintSec = 1.2f;
+											}
+											break;
+										}
+									}
+								}
+							}
 						}
 					}
 
@@ -11521,12 +11553,25 @@ namespace engine
 						ImGui::Separator();
 						ImGui::Spacing();
 						ImGui::Spacing();
-						ImGui::SetCursorPosX((panelW - 200.0f) * 0.5f);
-						if (ImGui::Button("Reapparaitre", ImVec2(200.0f, 40.0f)))
+						// Validation v12 (wire v13) — deux destinations : cimetière ou
+						// auberge la plus proche (le serveur choisit le point du type
+						// demandé le plus proche du lieu de mort).
+						const float deathBtnW = (panelW - 30.0f) * 0.5f;
+						ImGui::SetCursorPosX(10.0f);
+						if (ImGui::Button("Cimetiere le plus proche", ImVec2(deathBtnW, 40.0f)))
 						{
 							const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
 							if (gameplayClientId != 0u)
-								(void)m_gameplayUdp.SendRespawnRequest(gameplayClientId);
+								(void)m_gameplayUdp.SendRespawnRequest(gameplayClientId,
+									engine::server::kRespawnDestinationGraveyard);
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("Auberge la plus proche", ImVec2(deathBtnW, 40.0f)))
+						{
+							const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
+							if (gameplayClientId != 0u)
+								(void)m_gameplayUdp.SendRespawnRequest(gameplayClientId,
+									engine::server::kRespawnDestinationInn);
 						}
 						ImGui::End();
 					}
@@ -13698,6 +13743,14 @@ namespace engine
 				LOG_INFO(Core,
 					"[Engine] Position imposée par le serveur appliquée (pos=({:.1f},{:.1f},{:.1f}), reason={})",
 					forced.x, forced.y, forced.z, forced.reason);
+				// Validation v12 — un ForcePosition « respawn » prouve la
+				// résurrection : on ferme l'écran de mort même si l'événement
+				// de résurrection se perdait (UDP) ou si le shardd déployé ne
+				// l'émettait pas encore (ceinture-bretelles).
+				if (forced.reason == engine::server::kForcePositionReasonRespawn)
+				{
+					m_uiModelBinding.MarkLocalPlayerResurrected();
+				}
 				m_uiModelBinding.ClearForcedPosition();
 			}
 		}

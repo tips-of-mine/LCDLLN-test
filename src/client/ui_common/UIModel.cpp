@@ -1077,6 +1077,20 @@ namespace engine::client
 		NotifyObservers(UIModelChangeInventory);
 	}
 
+	void UIModelBinding::MarkLocalPlayerResurrected()
+	{
+		if (!ValidateMainThread("MarkLocalPlayerResurrected"))
+		{
+			return;
+		}
+		m_model.playerStats.stateFlags &= ~1u; // kEntityStateDead
+		if (m_model.playerStats.maxHealth > 0u)
+		{
+			m_model.playerStats.currentHealth = m_model.playerStats.maxHealth;
+		}
+		NotifyObservers(UIModelChangeStats);
+	}
+
 	bool UIModelBinding::ApplyPartyInviteNotify(std::span<const std::byte> packet)
 	{
 		if (!engine::server::DecodePartyInviteNotify(packet, m_partyInviteNotifyMessage))

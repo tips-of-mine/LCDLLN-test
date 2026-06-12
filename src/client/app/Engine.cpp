@@ -10330,6 +10330,21 @@ namespace engine
 							ImVec2(sxp - ts.x * 0.5f - 4.0f, syp - ts.y - 2.0f),
 							ImVec2(sxp + ts.x * 0.5f + 4.0f, syp + 2.0f),
 							IM_COL32(0, 0, 0, 140), 3.0f);
+						// Validation v12 — surbrillance de la CIBLE courante : avec
+						// plusieurs mobs au même nom et aux mêmes PV, la bascule Tab
+						// était invisible (le cadre cible affichait la même chose).
+						// Bordure dorée autour de la plaque du mob ciblé.
+						{
+							const engine::client::UIModel& plateModel = m_uiModelBinding.GetModel();
+							if (plateModel.targetStats.hasTarget
+								&& plateModel.targetStats.entityId == re.entityId)
+							{
+								fg->AddRect(
+									ImVec2(sxp - ts.x * 0.5f - 6.0f, syp - ts.y - 4.0f),
+									ImVec2(sxp + ts.x * 0.5f + 6.0f, syp + 4.0f),
+									IM_COL32(235, 190, 60, 255), 3.0f, 0, 2.0f);
+							}
+						}
 						fg->AddText(ImVec2(sxp - ts.x * 0.5f, syp - ts.y), IM_COL32(220, 230, 255, 255), label.c_str());
 						// Validation v12 — barre de vie du mob sous la plaque, alimentée
 						// par currentHealth/maxHealth du snapshot (10 Hz) : elle descend
@@ -10560,6 +10575,27 @@ namespace engine
 							targetDead ? IM_COL32(120, 120, 120, 200) : IM_COL32(200, 60, 50, 220), 6.0f, 0, 2.0f);
 						fg->AddText(ImVec2(fx + 10.0f, fy + 6.0f),
 							targetDead ? IM_COL32(150, 150, 150, 255) : IM_COL32(235, 235, 235, 255), targetName.c_str());
+						// Validation v12 — distance XZ joueur→cible dans le cadre :
+						// désambiguïse deux mobs identiques et rend la portée de mêlée
+						// lisible (orange au-delà de 4 m, cohérent avec « Hors de portee »).
+						{
+							const engine::math::Vec3 playerPosFrame = m_characterController.GetPosition();
+							for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+							{
+								if (re.entityId != uiModel.targetStats.entityId)
+									continue;
+								const float dxf = re.positionX - playerPosFrame.x;
+								const float dzf = re.positionZ - playerPosFrame.z;
+								const float distM = std::sqrt(dxf * dxf + dzf * dzf);
+								const std::string distText =
+									std::to_string(static_cast<int>(std::lround(distM))) + " m";
+								const ImVec2 distTs = ImGui::CalcTextSize(distText.c_str());
+								fg->AddText(ImVec2(fx + frameW - distTs.x - 10.0f, fy + 6.0f),
+									(distM > 4.0f) ? IM_COL32(240, 170, 60, 255) : IM_COL32(170, 220, 170, 255),
+									distText.c_str());
+								break;
+							}
+						}
 						const float barX = fx + 10.0f, barY = fy + 30.0f, barW = frameW - 20.0f, barH = 14.0f;
 						const float hpFrac = (uiModel.targetStats.maxHealth > 0u)
 							? std::clamp(static_cast<float>(uiModel.targetStats.currentHealth)

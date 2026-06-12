@@ -2082,12 +2082,23 @@ namespace engine::server
 
 		case MobAiState::Patrol:
 		{
-			const float targetX = mob.patrolForward ? mob.patrolTargetMetersX : mob.homePositionMetersX;
-			const float targetZ = mob.patrolForward ? mob.patrolTargetMetersZ : mob.homePositionMetersZ;
-			if (MoveMobTowards(mob, targetX, targetZ))
+			// Validation v12 — ERRANCE ALÉATOIRE : l'ancien aller-retour linéaire
+			// (cible fixe home+5 m, pause 0,2 s) faisait pivoter le mob sur place
+			// plusieurs fois par seconde (demi-tours incessants, amplifiés par la
+			// séparation entre mobs). Désormais : cible aléatoire autour du point
+			// d'attache + vraie pause (2 à 6 s) à l'arrivée — déplacement naturel.
+			if (MoveMobTowards(mob, mob.patrolTargetMetersX, mob.patrolTargetMetersZ))
 			{
-				mob.patrolForward = !mob.patrolForward;
-				mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
+				const float wanderAngle = NextCombatRoll01() * 6.2831853f;
+				const float wanderRadius = 1.5f
+					+ NextCombatRoll01() * std::max(0.5f, kDefaultMobPatrolDistanceMeters - 1.5f);
+				mob.patrolTargetMetersX = mob.homePositionMetersX + std::cos(wanderAngle) * wanderRadius;
+				mob.patrolTargetMetersZ = mob.homePositionMetersZ + std::sin(wanderAngle) * wanderRadius;
+				mob.velocityMetersPerSecondX = 0.0f;
+				mob.velocityMetersPerSecondZ = 0.0f;
+				// Pause 2-6 s avant la prochaine errance (en ticks d'IA).
+				const uint32_t pauseAiTicks = 20u + static_cast<uint32_t>(NextCombatRoll01() * 40.0f);
+				mob.nextPatrolTick = m_currentTick + ResolveMobAiIntervalTicks() * pauseAiTicks;
 				SetMobAiState(mob, MobAiState::Idle);
 			}
 			break;
@@ -3783,7 +3794,13 @@ namespace engine::server
 			mob.velocityMetersPerSecondZ = dz / simulationDt;
 			mob.positionMetersX = targetPositionX;
 			mob.positionMetersZ = targetPositionZ;
-			mob.yawRadians = std::atan2(mob.velocityMetersPerSecondX, mob.velocityMetersPerSecondZ);
+			// Validation v12 — pas de mise à jour du yaw sur un micro-pas final
+			// (< 15 cm) : combiné aux corrections de séparation, le mob « vibrait »
+			// sur lui-même en recalculant son orientation sur des restes de pas.
+			if (distance > 0.15f)
+			{
+				mob.yawRadians = std::atan2(mob.velocityMetersPerSecondX, mob.velocityMetersPerSecondZ);
+			}
 			return UpdateMobSpatialState(mob);
 		}
 

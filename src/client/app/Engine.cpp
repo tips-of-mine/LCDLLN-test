@@ -10270,6 +10270,9 @@ namespace engine
 						// CreatureCatalog ; fallback générique si l'archétype est inconnu
 						// du catalogue client (catalogue absent ou désynchronisé).
 						std::string label;
+						// Validation v12 — armé par la branche mob ci-dessous : dessine la
+						// barre de vie sous la plaque (jamais pour joueurs/nodes).
+						bool drawMobHealthBar = false;
 						if (re.playerClientId != 0u)
 						{
 							label = !re.displayName.empty()
@@ -10316,8 +10319,10 @@ namespace engine
 								? appearance->name
 								: ("Creature " + std::to_string(re.archetypeId));
 							const uint32_t mobLevel = (appearance != nullptr) ? appearance->level : 1u;
-							label = mobName + " (niv. " + std::to_string(mobLevel) + ")  "
-								+ std::to_string(re.currentHealth) + "/" + std::to_string(re.maxHealth);
+							// Validation v12 — les PV chiffrés quittent le label : ils sont
+							// désormais portés par la barre de vie dessinée sous la plaque.
+							label = mobName + " (niv. " + std::to_string(mobLevel) + ")";
+							drawMobHealthBar = (re.maxHealth > 0u);
 						}
 						const ImVec2 ts = ImGui::CalcTextSize(label.c_str());
 						// Halo noir derriere le texte pour la lisibilite sur fond clair (ciel).
@@ -10326,6 +10331,37 @@ namespace engine
 							ImVec2(sxp + ts.x * 0.5f + 4.0f, syp + 2.0f),
 							IM_COL32(0, 0, 0, 140), 3.0f);
 						fg->AddText(ImVec2(sxp - ts.x * 0.5f, syp - ts.y), IM_COL32(220, 230, 255, 255), label.c_str());
+						// Validation v12 — barre de vie du mob sous la plaque, alimentée
+						// par currentHealth/maxHealth du snapshot (10 Hz) : elle descend
+						// donc en direct à chaque coup porté. Couleur par tiers de PV
+						// (vert > 50 %, orange > 25 %, rouge en dessous).
+						if (drawMobHealthBar)
+						{
+							const float hpFrac = std::clamp(
+								static_cast<float>(re.currentHealth) / static_cast<float>(re.maxHealth),
+								0.0f, 1.0f);
+							const float barW = std::max(64.0f, ts.x);
+							const float barH = 5.0f;
+							const float barLeft = sxp - barW * 0.5f;
+							const float barTop = syp + 4.0f;
+							const ImU32 fillColor = (hpFrac > 0.5f)
+								? IM_COL32(80, 200, 80, 230)
+								: ((hpFrac > 0.25f)
+									? IM_COL32(230, 160, 40, 230)
+									: IM_COL32(210, 60, 50, 230));
+							fg->AddRectFilled(ImVec2(barLeft, barTop),
+								ImVec2(barLeft + barW, barTop + barH), IM_COL32(20, 22, 26, 200), 2.0f);
+							fg->AddRectFilled(ImVec2(barLeft, barTop),
+								ImVec2(barLeft + barW * hpFrac, barTop + barH), fillColor, 2.0f);
+							fg->AddRect(ImVec2(barLeft, barTop),
+								ImVec2(barLeft + barW, barTop + barH), IM_COL32(0, 0, 0, 160), 2.0f);
+							// PV chiffrés compacts au-dessus de la barre, à droite.
+							const std::string hpText = std::to_string(re.currentHealth) + "/"
+								+ std::to_string(re.maxHealth);
+							const ImVec2 hpTs = ImGui::CalcTextSize(hpText.c_str());
+							fg->AddText(ImVec2(barLeft + barW - hpTs.x, barTop + barH + 1.0f),
+								IM_COL32(200, 205, 215, 220), hpText.c_str());
+						}
 					}
 				}
 				// =============================================================

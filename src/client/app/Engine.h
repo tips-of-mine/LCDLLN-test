@@ -1331,6 +1331,24 @@ namespace engine
 		/// posé (évite de le rejouer chaque frame ; la SM locomotion est gelée
 		/// pendant la mort et relancée sur Idle au respawn).
 		bool m_avatarDeathClipPlaying = false;
+
+		/// Validation v12 (wire v13) — marqueur monde d'un point de réapparition
+		/// (lecture CLIENT du même `respawn/respawn_points.txt` que le serveur :
+		/// label flottant + anneau au sol, pour rendre cimetières et auberges
+		/// visibles sur la carte de démo). Y résolu par la heightmap au rendu.
+		struct RespawnMarker
+		{
+			uint8_t destinationType = 0; ///< kRespawnDestination* (0 cimetière, 1 auberge).
+			uint32_t zoneId = 0;
+			float x = 0.0f;
+			float z = 0.0f;
+		};
+		std::vector<RespawnMarker> m_respawnMarkers;
+
+		/// Charge les marqueurs de réapparition depuis le fichier data partagé.
+		/// Tolérant : fichier absent/ligne invalide = marqueurs vides + WARN
+		/// (l'affichage est purement informatif, le serveur reste l'autorité).
+		void LoadRespawnMarkers();
 		/// Combat SP3 — cooldowns AFFICHÉS de la barre d'action (spellId → fin en
 		/// secondes EngineNowSec) ; purement cosmétique, le serveur fait foi.
 		std::unordered_map<std::string, float> m_spellCooldownUiUntilSec;

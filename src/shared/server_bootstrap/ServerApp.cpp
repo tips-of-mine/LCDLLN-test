@@ -2130,7 +2130,21 @@ namespace engine::server
 
 			if (!TryMobAttackPlayer(mob, *target))
 			{
-				(void)MoveMobTowards(mob, target->positionMetersX, target->positionMetersZ);
+				// Validation v12 — distance d'ARRÊT : le mob s'approche jusqu'à
+				// ~80 % de sa portée d'attaque mais ne marche jamais DANS le
+				// joueur (la superposition géographique provoquait un mob
+				// « collé » au même point que sa cible).
+				const float chaseDx = target->positionMetersX - mob.positionMetersX;
+				const float chaseDz = target->positionMetersZ - mob.positionMetersZ;
+				const float chaseDist = std::sqrt(chaseDx * chaseDx + chaseDz * chaseDz);
+				const float stopDistance = std::max(1.0f, mob.combat.attackRangeMeters * 0.8f);
+				if (chaseDist > stopDistance)
+				{
+					const float chaseRatio = (chaseDist - stopDistance) / chaseDist;
+					(void)MoveMobTowards(mob,
+						mob.positionMetersX + chaseDx * chaseRatio,
+						mob.positionMetersZ + chaseDz * chaseRatio);
+				}
 			}
 			break;
 		}

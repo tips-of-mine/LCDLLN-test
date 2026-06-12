@@ -86,6 +86,7 @@
 #include <filesystem>
 #include <optional>
 #include <span>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -4983,6 +4984,8 @@ namespace engine
 													// Combat SP1 — catalogue d'apparences de creatures (non bloquant :
 													// catalogue absent/corrompu = mobs rendus en fallback humains).
 													m_creatureCatalog.Init(m_cfg);
+													// Validation v12 (wire v13) — marqueurs cimetière/auberge.
+													LoadRespawnMarkers();
 													// Combat SP3 — catalogue d'affichage des kits de sorts (non
 													// bloquant : absent = barre d'action masquée).
 													m_spellCatalog.Init(m_cfg);
@@ -11267,6 +11270,62 @@ namespace engine
 						ImGui::End();
 					}
 
+					// --- Validation v12 : ANNEAU DE SÉLECTION au sol sous la cible
+					// courante (feedback immédiat du clic/Tab : double cercle doré
+					// aux pieds du mob, en plus de la bordure dorée de sa plaque).
+					if (uiModel.targetStats.hasTarget)
+					{
+						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						{
+							if (re.entityId != uiModel.targetStats.entityId)
+								continue;
+							float tgx = re.positionX, tgy = re.positionY, tgz = re.positionZ;
+							const auto sit = m_remoteSmoothed.find(re.entityId);
+							if (sit != m_remoteSmoothed.end() && sit->second.valid)
+							{
+								tgx = sit->second.x; tgy = sit->second.y; tgz = sit->second.z;
+							}
+							tgy = ResolveRemoteDisplayCenterY(false, tgy, tgx, tgz);
+							float ringX = 0.0f, ringY = 0.0f;
+							if (WorldToScreenPx(out.viewProjMatrix.m, tgx, tgy - 0.85f, tgz, ivw, ivh, ringX, ringY))
+							{
+								fg->AddCircle(ImVec2(ringX, ringY), 26.0f, IM_COL32(235, 190, 60, 230), 28, 3.0f);
+								fg->AddCircle(ImVec2(ringX, ringY), 19.0f, IM_COL32(235, 190, 60, 120), 28, 1.5f);
+							}
+							break;
+						}
+					}
+
+					// --- Validation v12 (wire v13) : marqueurs monde des points de
+					// réapparition (label + anneau au sol) — rend cimetières et
+					// auberges visibles sur la carte de démo. Couleur : gris pierre
+					// (cimetière) / ambre chaleureux (auberge).
+					for (const RespawnMarker& marker : m_respawnMarkers)
+					{
+						const float markerGroundY = m_terrain.SampleHeightAtWorldXZ(marker.x, marker.z);
+						float markerSx = 0.0f, markerSy = 0.0f;
+						if (!WorldToScreenPx(out.viewProjMatrix.m, marker.x, markerGroundY + 1.8f, marker.z,
+							ivw, ivh, markerSx, markerSy))
+							continue;
+						const bool isInn = (marker.destinationType == engine::server::kRespawnDestinationInn);
+						const ImU32 markerColor = isInn
+							? IM_COL32(240, 180, 90, 235)
+							: IM_COL32(180, 185, 200, 235);
+						const char* markerLabel = isInn ? "Auberge" : "Cimetiere";
+						const ImVec2 markerTs = ImGui::CalcTextSize(markerLabel);
+						fg->AddRectFilled(
+							ImVec2(markerSx - markerTs.x * 0.5f - 5.0f, markerSy - markerTs.y - 3.0f),
+							ImVec2(markerSx + markerTs.x * 0.5f + 5.0f, markerSy + 3.0f),
+							IM_COL32(0, 0, 0, 150), 3.0f);
+						fg->AddText(ImVec2(markerSx - markerTs.x * 0.5f, markerSy - markerTs.y), markerColor, markerLabel);
+						float markerGx = 0.0f, markerGy = 0.0f;
+						if (WorldToScreenPx(out.viewProjMatrix.m, marker.x, markerGroundY + 0.05f, marker.z,
+							ivw, ivh, markerGx, markerGy))
+						{
+							fg->AddCircle(ImVec2(markerGx, markerGy), 30.0f, markerColor, 32, 2.5f);
+						}
+					}
+
 					// --- Validation v12 : ramassage du butin — touche F sur le sac
 					// le plus proche (~3 m, le serveur revalide). L'InventoryDelta
 					// de retour est déjà routé (UIModelBinding) : les objets
@@ -12540,6 +12599,39 @@ namespace engine
 		// 4. Boot rate : meme humains|male absent -> cube placeholder.
 		LOG_ERROR(Render, "[Engine] GetRaceMesh('{}','{}') ECHEC (humains|male absent)", raceId, gender);
 		return nullptr;
+	}
+
+	void Engine::LoadRespawnMarkers()
+	{
+		m_respawnMarkers.clear();
+		const std::string markersText = engine::platform::FileSystem::ReadAllTextContent(
+			m_cfg, m_cfg.GetString("server.respawn_points_path", "respawn/respawn_points.txt"));
+		if (markersText.empty())
+		{
+			LOG_WARN(Core, "[Engine] Marqueurs de réapparition absents (respawn/respawn_points.txt)");
+			return;
+		}
+		std::istringstream input(markersText);
+		std::string line;
+		while (std::getline(input, line))
+		{
+			if (line.empty() || line[0] == '#')
+				continue;
+			std::istringstream lineStream(line);
+			RespawnMarker marker{};
+			std::string typeToken;
+			float unusedY = 0.0f;
+			if (!(lineStream >> marker.zoneId >> typeToken >> marker.x >> unusedY >> marker.z))
+				continue;
+			if (typeToken == "graveyard")
+				marker.destinationType = 0;
+			else if (typeToken == "inn")
+				marker.destinationType = 1;
+			else
+				continue;
+			m_respawnMarkers.push_back(marker);
+		}
+		LOG_INFO(Core, "[Engine] Marqueurs de réapparition charges ({})", m_respawnMarkers.size());
 	}
 
 	float Engine::ResolveRemoteDisplayCenterY(bool isPlayer, float serverY,

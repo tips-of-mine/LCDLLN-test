@@ -69,6 +69,10 @@ namespace engine::client
 		/// Groupes SP1 — refuse l'invitation de groupe en attente (M32.2).
 		bool SendPartyDecline(uint32_t clientId);
 
+		/// Validation v12 — ramasse un sac de butin répliqué (le serveur valide
+		/// proximité et propriété, puis pousse l'InventoryDelta).
+		bool SendPickupRequest(uint32_t clientId, uint64_t lootBagEntityId);
+
 		/// Métiers SP1 — démarre une récolte sur un node répliqué (M36.1, le
 		/// serveur valide disponibilité/portée/session unique).
 		bool SendHarvestRequest(uint32_t clientId, uint64_t nodeEntityId);

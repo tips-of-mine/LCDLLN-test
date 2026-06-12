@@ -10239,10 +10239,11 @@ namespace engine
 					const auto& remotes = m_uiModelBinding.GetModel().remoteEntities;
 					for (const engine::client::UIRemoteEntity& re : remotes)
 					{
-						// Combat SP1 : les mobs (archetypeId != 0) ont desormais leur
-						// plaque ; seuls les loot bags (les deux ids a 0) restent muets.
-						if (re.playerClientId == 0u && re.archetypeId == 0u)
-							continue; // loot bag : pas de nameplate
+						// Combat SP1 : les mobs (archetypeId != 0) ont leur plaque.
+						// Validation v12 — les loot bags (les deux ids à 0) aussi :
+						// « Butin [F] » au sol (le serveur les répliquait depuis M28
+						// mais le client ne les montrait jamais — butin imperdable
+						// mais invisible). Ramassage : touche F, bloc combat plus bas.
 						// Mob mort en attente de despawn : pas de plaque (kEntityStateDead).
 						// Métiers SP1 — les nodes échappent à ce skip : un node épuisé
 						// garde sa plaque, grisée avec le suffixe « (epuise) ».
@@ -10278,6 +10279,11 @@ namespace engine
 							label = !re.displayName.empty()
 								? re.displayName
 								: ("P" + std::to_string(re.playerClientId));
+						}
+						else if (re.archetypeId == 0u)
+						{
+							// Validation v12 — sac de butin au sol.
+							label = "Butin [F]";
 						}
 						else if (re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
 						{
@@ -11206,6 +11212,36 @@ namespace engine
 							m_uiModelBinding.ClearPartyInvite();
 						}
 						ImGui::End();
+					}
+
+					// --- Validation v12 : ramassage du butin — touche F sur le sac
+					// le plus proche (~3 m, le serveur revalide). L'InventoryDelta
+					// de retour est déjà routé (UIModelBinding) : les objets
+					// apparaissent dans l'inventaire, le serveur despawne le sac.
+					{
+						const engine::math::Vec3 playerPosLoot = m_characterController.GetPosition();
+						uint64_t nearestBagId = 0;
+						float nearestBagDistSq = 3.0f * 3.0f;
+						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						{
+							if (re.playerClientId != 0u || re.archetypeId != 0u)
+								continue; // seuls les sacs de butin ont les deux ids à 0.
+							const float dxb = re.positionX - playerPosLoot.x;
+							const float dzb = re.positionZ - playerPosLoot.z;
+							const float distSqB = dxb * dxb + dzb * dzb;
+							if (distSqB < nearestBagDistSq)
+							{
+								nearestBagDistSq = distSqB;
+								nearestBagId = re.entityId;
+							}
+						}
+						if (keysAllowed && nearestBagId != 0ull
+							&& m_input.WasPressed(engine::platform::Key::F))
+						{
+							const uint32_t lootClientId = m_gameplayUdp.ServerClientId();
+							if (lootClientId != 0u)
+								(void)m_gameplayUdp.SendPickupRequest(lootClientId, nearestBagId);
+						}
 					}
 
 					// --- Métiers SP1 : récolte — touche E sur le node disponible le

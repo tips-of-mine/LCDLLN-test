@@ -639,6 +639,9 @@ namespace engine::server
 	bool DecodeCombatEvent(std::span<const std::byte> packet, CombatEventMessage& outMessage);
 
 	/// Decode a pickup request packet and validate the protocol header.
+	/// Validation v12 — encodeur côté client (le serveur décodait depuis M28
+	/// mais le client n'émettait jamais : ramassage du butin enfin câblé).
+	std::vector<std::byte> EncodePickupRequest(const PickupRequestMessage& message);
 	bool DecodePickupRequest(std::span<const std::byte> packet, PickupRequestMessage& outMessage);
 
 	/// Encode an inventory delta packet with the protocol header.

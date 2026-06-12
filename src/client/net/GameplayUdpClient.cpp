@@ -351,6 +351,24 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendPickupRequest(uint32_t clientId, uint64_t lootBagEntityId)
+	{
+		engine::server::PickupRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.lootBagEntityId = lootBagEntityId;
+		const bool ok = SendBytes(engine::server::EncodePickupRequest(msg));
+		if (ok)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] PickupRequest sent (client_id={}, loot_bag_entity_id={})",
+				clientId, lootBagEntityId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] PickupRequest FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
 	bool GameplayUdpClient::SendHarvestRequest(uint32_t clientId, uint64_t nodeEntityId)
 	{
 		engine::server::HarvestRequestMessage msg{};

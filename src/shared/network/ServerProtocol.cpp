@@ -411,6 +411,15 @@ namespace engine::server
 		return true;
 	}
 
+	std::vector<std::byte> EncodePickupRequest(const PickupRequestMessage& message)
+	{
+		// Payload fixe : clientId (4) + lootBagEntityId (8) = 12 octets (miroir du décodeur).
+		std::vector<std::byte> packet = BeginPacket(MessageKind::PickupRequest, 12);
+		WriteU32(packet, message.clientId);
+		WriteU64(packet, message.lootBagEntityId);
+		return packet;
+	}
+
 	bool DecodePickupRequest(std::span<const std::byte> packet, PickupRequestMessage& outMessage)
 	{
 		std::span<const std::byte> payload;

@@ -403,6 +403,7 @@ namespace engine::render
 			params.halfExtents[2] = decal.halfExtents.z;
 			params.halfExtents[3] = 0.0f;
 			params.fadeAlpha = decal.fadeAlpha;
+			params.yawRadians = decal.yawRadians;
 
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &ds, 0, nullptr);
 			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, static_cast<uint32_t>(sizeof(DecalParams)), &params);

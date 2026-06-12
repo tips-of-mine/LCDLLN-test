@@ -3845,6 +3845,34 @@ namespace engine
 										}
 										m_decalSystem.Init(m_cfg, m_assetRegistry);
 
+										// Réticule de ciblage au sol (cercles concentriques + cône de
+										// vision 120°) : decal orienté projeté sur le terrain — remplace
+										// le rendu provisoire ImGui (« cercle de sélection enrichi »).
+										// Hauteur sol = m_terrain (source de vérité client) ; yaw/position
+										// = état lissé m_remoteSmoothed (repli : snapshot brut 10 Hz).
+										{
+											auto sampleGround = [this](float worldX, float worldZ) -> float
+											{
+												return m_terrain.SampleHeightAtWorldXZ(worldX, worldZ);
+											};
+											auto resolveSmoothed = [this](engine::server::EntityId entityId,
+												float& outX, float& outZ, float& outYaw) -> bool
+											{
+												const auto it = m_remoteSmoothed.find(entityId);
+												if (it == m_remoteSmoothed.end() || !it->second.valid)
+													return false;
+												outX = it->second.x;
+												outZ = it->second.z;
+												outYaw = it->second.yaw;
+												return true;
+											};
+											if (!m_targetReticle.Init(m_cfg, m_decalSystem, m_assetRegistry,
+												sampleGround, resolveSmoothed))
+											{
+												LOG_WARN(Render, "[Boot] TargetReticleSystem Init FAILED — réticule de ciblage désactivé");
+											}
+										}
+
 										{
 											std::string lutPath = m_cfg.GetString("color_grading.lut_path", "");
 											if (!lutPath.empty())
@@ -7442,6 +7470,9 @@ namespace engine
 			m_profilerHud.Shutdown();
 			m_profiler.Shutdown(m_vkDeviceContext.GetDevice());
 			m_audioEngine.Shutdown();
+			// Le réticule détient un handle de decal persistant : à retirer AVANT
+			// le Shutdown du DecalSystem (sa texture appartient à l'AssetRegistry).
+			m_targetReticle.Shutdown();
 			m_decalSystem.Shutdown();
 			m_assetRegistry.Destroy();
 			m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
@@ -9778,6 +9809,13 @@ namespace engine
 		m_audioEngine.SetListener(out.camera.position, listenerVelocity);
 		m_audioEngine.Tick(static_cast<float>(dt));
 		m_decalSystem.Tick(static_cast<float>(dt));
+		// Réticule de ciblage : suit la cible (position/yaw lissés) et pilote le
+		// decal persistant (fade in/out). APRÈS UpdateGameplayNet (m_remoteSmoothed
+		// et UIModel à jour), AVANT l'enregistrement de la frame (BuildVisibleList).
+		if (m_gameplayNetInitialized)
+		{
+			m_targetReticle.Update(m_uiModelBinding.GetModel(), out.camera, static_cast<float>(dt));
+		}
 
 		out.viewMatrix = out.camera.ComputeViewMatrix();
 		{
@@ -11294,10 +11332,12 @@ namespace engine
 						ImGui::End();
 					}
 
-					// --- Validation v12 : cercle de sélection AU SOL, À PLAT (espace
-					// monde, posé sur le terrain, centré sur le mob) — un AddCircle
-					// écran-espace dessinait un rond « vertical » face caméra. On
-					// projette 28 points d'un cercle monde et on trace la polyligne.
+					// --- Validation v12 : anneau AU SOL, À PLAT (espace monde, posé
+					// sur le terrain) — un AddCircle écran-espace dessinait un rond
+					// « vertical » face caméra. On projette 28 points d'un cercle
+					// monde et on trace la polyligne. Utilisé par les marqueurs de
+					// réapparition ci-dessous. (Le cercle de sélection de cible est
+					// désormais rendu par TargetReticleSystem — decal orienté.)
 					const auto drawGroundRing = [&](float centerX, float centerZ,
 						float radiusMeters, ImU32 ringColor, float thicknessPx)
 					{
@@ -11319,106 +11359,9 @@ namespace engine
 						fg->AddPolyline(ringPoints, validPoints, ringColor, ImDrawFlags_Closed, thicknessPx);
 					};
 
-					if (uiModel.targetStats.hasTarget)
-					{
-						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
-						{
-							if (re.entityId != uiModel.targetStats.entityId)
-								continue;
-							float tgx = re.positionX, tgz = re.positionZ, tgyaw = re.yawRadians;
-							const auto sit = m_remoteSmoothed.find(re.entityId);
-							if (sit != m_remoteSmoothed.end() && sit->second.valid)
-							{
-								tgx = sit->second.x; tgz = sit->second.z; tgyaw = sit->second.yaw;
-							}
-							// Cercle de sélection enrichi :
-							// 1. OCCLUSION par le corps du mob : un segment dont le rayon
-							//    caméra→point traverse le cylindre du mob (r=0.4 m) est
-							//    masqué — le mob reste visuellement AU PREMIER PLAN.
-							// 2. CÔNE DE VISION 120° : la portion du cercle face au regard
-							//    du mob (yaw répliqué) est rouge sombre + secteur rempli —
-							//    le joueur voit où l'ennemi regarde.
-							constexpr int kSelSegments = 36;
-							constexpr float kSelRadius = 0.95f;
-							constexpr float kMobBodyRadius = 0.4f;
-							constexpr float kHalfConeRad = 1.0471976f; // 60° (cône 120°).
-							const float camX = out.camera.position.x;
-							const float camZ = out.camera.position.z;
-							// Direction du regard : yaw = atan2(vx, vz) → (sin, cos) en XZ,
-							// soit un angle paramétrique atan2(cos(yaw), sin(yaw)).
-							const float facingParamAngle = std::atan2(std::cos(tgyaw), std::sin(tgyaw));
-							// Teste si le point monde (px, pz) est caché par le cylindre du
-							// mob depuis la caméra (test 2D XZ : M proche du segment C→P).
-							const auto segmentOccluded = [&](float px, float pz) -> bool
-							{
-								const float rayDx = px - camX, rayDz = pz - camZ;
-								const float rayLenSq = rayDx * rayDx + rayDz * rayDz;
-								if (rayLenSq <= 0.0001f)
-									return false;
-								const float t = ((tgx - camX) * rayDx + (tgz - camZ) * rayDz) / rayLenSq;
-								if (t <= 0.0f || t >= 1.0f)
-									return false; // mob pas entre la caméra et le point.
-								const float closestX = camX + rayDx * t;
-								const float closestZ = camZ + rayDz * t;
-								const float perpDx = tgx - closestX, perpDz = tgz - closestZ;
-								return (perpDx * perpDx + perpDz * perpDz) < kMobBodyRadius * kMobBodyRadius;
-							};
-							// Secteur de vision rempli (éventail centre + arc, alpha doux).
-							{
-								ImVec2 conePoints[16];
-								int coneCount = 0;
-								float csx = 0.0f, csy = 0.0f;
-								const float coneCenterY = m_terrain.SampleHeightAtWorldXZ(tgx, tgz) + 0.05f;
-								if (WorldToScreenPx(out.viewProjMatrix.m, tgx, coneCenterY, tgz, ivw, ivh, csx, csy))
-								{
-									conePoints[coneCount++] = ImVec2(csx, csy);
-									bool coneVisible = true;
-									for (int cseg = 0; cseg <= 12 && coneVisible; ++cseg)
-									{
-										const float angle = facingParamAngle - kHalfConeRad
-											+ (static_cast<float>(cseg) / 12.0f) * (2.0f * kHalfConeRad);
-										const float wxc = tgx + std::cos(angle) * kSelRadius;
-										const float wzc = tgz + std::sin(angle) * kSelRadius;
-										const float wyc = m_terrain.SampleHeightAtWorldXZ(wxc, wzc) + 0.05f;
-										float sxc = 0.0f, syc = 0.0f;
-										coneVisible = WorldToScreenPx(out.viewProjMatrix.m, wxc, wyc, wzc, ivw, ivh, sxc, syc);
-										if (coneVisible)
-											conePoints[coneCount++] = ImVec2(sxc, syc);
-									}
-									if (coneVisible && coneCount >= 3)
-										fg->AddConvexPolyFilled(conePoints, coneCount, IM_COL32(180, 45, 30, 55));
-								}
-							}
-							// Anneau segment par segment : couleur selon le cône, segments
-							// occlus par le corps non tracés.
-							ImVec2 prevPoint{};
-							bool prevValid = false;
-							for (int seg = 0; seg <= kSelSegments; ++seg)
-							{
-								const float angle = (static_cast<float>(seg % kSelSegments) / kSelSegments) * 6.2831853f;
-								const float wxr = tgx + std::cos(angle) * kSelRadius;
-								const float wzr = tgz + std::sin(angle) * kSelRadius;
-								const float wyr = m_terrain.SampleHeightAtWorldXZ(wxr, wzr) + 0.05f;
-								float sxr = 0.0f, syr = 0.0f;
-								const bool projected = WorldToScreenPx(out.viewProjMatrix.m, wxr, wyr, wzr, ivw, ivh, sxr, syr)
-									&& !segmentOccluded(wxr, wzr);
-								if (projected && prevValid)
-								{
-									// Delta d'angle au regard, replié sur [-pi, pi].
-									float coneDelta = angle - facingParamAngle;
-									while (coneDelta > 3.1415927f) coneDelta -= 6.2831853f;
-									while (coneDelta < -3.1415927f) coneDelta += 6.2831853f;
-									const bool inCone = std::fabs(coneDelta) <= kHalfConeRad;
-									fg->AddLine(prevPoint, ImVec2(sxr, syr),
-										inCone ? IM_COL32(150, 35, 25, 240) : IM_COL32(235, 190, 60, 230),
-										inCone ? 4.0f : 3.0f);
-								}
-								prevPoint = ImVec2(sxr, syr);
-								prevValid = projected;
-							}
-							break;
-						}
-					}
+					// (Le cercle de sélection provisoire — anneau + cône de vision en
+					// ImGui foreground — a été remplacé par TargetReticleSystem :
+					// decal orienté au sol, mis à jour chaque frame côté Update.)
 
 					// --- Validation v12 (wire v13) : marqueurs monde des points de
 					// réapparition (label + anneau au sol) — rend cimetières et

@@ -1314,6 +1314,12 @@ namespace engine
 		engine::client::HarvestCastBarPresenter m_harvestBar{};
 		engine::client::CraftingUiPresenter m_craftingUi{};
 		bool m_craftingVisible = false;
+		/// Validation v12 — compte à rebours (s) de l'indication « Hors de
+		/// portee » sous le cadre cible. Armé quand T part alors que la cible
+		/// est au-delà de la portée de mêlée : le serveur rejette ces attaques
+		/// EN SILENCE (aucun message wire de rejet), sans cette indication le
+		/// joueur ne comprend pas pourquoi « rien ne se passe ».
+		float m_outOfRangeHintSec = 0.0f;
 		/// Combat SP3 — cooldowns AFFICHÉS de la barre d'action (spellId → fin en
 		/// secondes EngineNowSec) ; purement cosmétique, le serveur fait foi.
 		std::unordered_map<std::string, float> m_spellCooldownUiUntilSec;

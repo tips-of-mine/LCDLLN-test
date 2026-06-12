@@ -10444,6 +10444,17 @@ namespace engine
 						}
 						if (pickedId != 0 && !overPartyFrame)
 							(void)m_uiModelBinding.SetLocalTarget(pickedId);
+						// Validation v12 — diagnostic du pick : la sélection souris est
+						// rapportée inopérante en jeu alors que le code est statiquement
+						// sain. Une ligne par clic monde : position, meilleur candidat et
+						// distance écran — à lire dans le log client pour trancher entre
+						// « pas d'événement clic », « candidat trop loin » et « gate ».
+						LOG_INFO(Core,
+							"[CombatPick] clic=({:.0f},{:.0f}) picked_entity_id={} best_dist_px={:.1f} over_party_frame={} mobs_candidats={}",
+							mousePos.x, mousePos.y, pickedId,
+							(pickedId != 0) ? std::sqrt(bestDistSq) : -1.0f,
+							overPartyFrame,
+							static_cast<int>(uiModel.remoteEntities.size()));
 					}
 
 					// --- Tab : cycle des mobs vivants par distance croissante au joueur.
@@ -10493,6 +10504,26 @@ namespace engine
 						{
 							(void)m_gameplayUdp.SendAttackRequest(gameplayClientId, uiModel.targetStats.entityId);
 							m_attackSendCooldownSec = 0.25f;
+							// Validation v12 — le rejet « hors de portée » du serveur est
+							// SILENCIEUX (aucun message wire). Indication locale : si la
+							// cible est au-delà de la portée de mêlée (4 m, doit suivre
+							// kDefaultAttackRangeMeters de ServerApp.cpp), on affiche
+							// « Hors de portee » 1,2 s sous le cadre cible. Le serveur
+							// reste l'autorité : la requête est envoyée quand même.
+							constexpr float kMeleeRangeHintMeters = 4.0f;
+							const engine::math::Vec3 playerPosAtk = m_characterController.GetPosition();
+							for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+							{
+								if (re.entityId != uiModel.targetStats.entityId)
+									continue;
+								const float dxa = re.positionX - playerPosAtk.x;
+								const float dza = re.positionZ - playerPosAtk.z;
+								if ((dxa * dxa + dza * dza) > kMeleeRangeHintMeters * kMeleeRangeHintMeters)
+								{
+									m_outOfRangeHintSec = 1.2f;
+								}
+								break;
+							}
 						}
 					}
 
@@ -10541,6 +10572,15 @@ namespace engine
 							+ std::to_string(uiModel.targetStats.maxHealth);
 						const ImVec2 hpTs = ImGui::CalcTextSize(hpText.c_str());
 						fg->AddText(ImVec2(barX + (barW - hpTs.x) * 0.5f, barY - 1.0f), IM_COL32(255, 255, 255, 255), hpText.c_str());
+						// Validation v12 — indication transitoire « Hors de portee »
+						// (cf. armement dans le bloc T ci-dessus).
+						if (m_outOfRangeHintSec > 0.0f)
+						{
+							const char* rangeHint = "Hors de portee  (approchez-vous)";
+							const ImVec2 hintTs = ImGui::CalcTextSize(rangeHint);
+							fg->AddText(ImVec2(fx + (frameW - hintTs.x) * 0.5f, fy + frameH + 6.0f),
+								IM_COL32(240, 170, 60, 255), rangeHint);
+						}
 					}
 
 					// --- Log combat HUD (bas-droite) : dernieres lignes formatees par
@@ -13414,6 +13454,11 @@ namespace engine
 		if (m_attackSendCooldownSec > 0.0f)
 		{
 			m_attackSendCooldownSec -= deltaSeconds;
+		}
+		// Validation v12 — fait expirer l'indication « Hors de portee ».
+		if (m_outOfRangeHintSec > 0.0f)
+		{
+			m_outOfRangeHintSec -= deltaSeconds;
 		}
 
 		// TC.2 — émet la position + orientation de l'avatar local au shard, à la cadence

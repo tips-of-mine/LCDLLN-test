@@ -11270,28 +11270,45 @@ namespace engine
 						ImGui::End();
 					}
 
-					// --- Validation v12 : ANNEAU DE SÉLECTION au sol sous la cible
-					// courante (feedback immédiat du clic/Tab : double cercle doré
-					// aux pieds du mob, en plus de la bordure dorée de sa plaque).
+					// --- Validation v12 : cercle de sélection AU SOL, À PLAT (espace
+					// monde, posé sur le terrain, centré sur le mob) — un AddCircle
+					// écran-espace dessinait un rond « vertical » face caméra. On
+					// projette 28 points d'un cercle monde et on trace la polyligne.
+					const auto drawGroundRing = [&](float centerX, float centerZ,
+						float radiusMeters, ImU32 ringColor, float thicknessPx)
+					{
+						constexpr int kRingSegments = 28;
+						ImVec2 ringPoints[kRingSegments];
+						int validPoints = 0;
+						for (int seg = 0; seg < kRingSegments; ++seg)
+						{
+							const float angle = (static_cast<float>(seg) / kRingSegments) * 6.2831853f;
+							const float wxr = centerX + std::cos(angle) * radiusMeters;
+							const float wzr = centerZ + std::sin(angle) * radiusMeters;
+							// Y échantillonné PAR POINT : le cercle épouse la pente du terrain.
+							const float wyr = m_terrain.SampleHeightAtWorldXZ(wxr, wzr) + 0.05f;
+							float sxr = 0.0f, syr = 0.0f;
+							if (!WorldToScreenPx(out.viewProjMatrix.m, wxr, wyr, wzr, ivw, ivh, sxr, syr))
+								return; // partiellement hors champ : pas de rendu ce frame.
+							ringPoints[validPoints++] = ImVec2(sxr, syr);
+						}
+						fg->AddPolyline(ringPoints, validPoints, ringColor, ImDrawFlags_Closed, thicknessPx);
+					};
+
 					if (uiModel.targetStats.hasTarget)
 					{
 						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
 						{
 							if (re.entityId != uiModel.targetStats.entityId)
 								continue;
-							float tgx = re.positionX, tgy = re.positionY, tgz = re.positionZ;
+							float tgx = re.positionX, tgz = re.positionZ;
 							const auto sit = m_remoteSmoothed.find(re.entityId);
 							if (sit != m_remoteSmoothed.end() && sit->second.valid)
 							{
-								tgx = sit->second.x; tgy = sit->second.y; tgz = sit->second.z;
+								tgx = sit->second.x; tgz = sit->second.z;
 							}
-							tgy = ResolveRemoteDisplayCenterY(false, tgy, tgx, tgz);
-							float ringX = 0.0f, ringY = 0.0f;
-							if (WorldToScreenPx(out.viewProjMatrix.m, tgx, tgy - 0.85f, tgz, ivw, ivh, ringX, ringY))
-							{
-								fg->AddCircle(ImVec2(ringX, ringY), 26.0f, IM_COL32(235, 190, 60, 230), 28, 3.0f);
-								fg->AddCircle(ImVec2(ringX, ringY), 19.0f, IM_COL32(235, 190, 60, 120), 28, 1.5f);
-							}
+							drawGroundRing(tgx, tgz, 0.95f, IM_COL32(235, 190, 60, 230), 3.0f);
+							drawGroundRing(tgx, tgz, 0.70f, IM_COL32(235, 190, 60, 110), 1.5f);
 							break;
 						}
 					}
@@ -11318,12 +11335,8 @@ namespace engine
 							ImVec2(markerSx + markerTs.x * 0.5f + 5.0f, markerSy + 3.0f),
 							IM_COL32(0, 0, 0, 150), 3.0f);
 						fg->AddText(ImVec2(markerSx - markerTs.x * 0.5f, markerSy - markerTs.y), markerColor, markerLabel);
-						float markerGx = 0.0f, markerGy = 0.0f;
-						if (WorldToScreenPx(out.viewProjMatrix.m, marker.x, markerGroundY + 0.05f, marker.z,
-							ivw, ivh, markerGx, markerGy))
-						{
-							fg->AddCircle(ImVec2(markerGx, markerGy), 30.0f, markerColor, 32, 2.5f);
-						}
+						// Anneau à plat au sol (espace monde), comme la sélection.
+						drawGroundRing(marker.x, marker.z, 2.0f, markerColor, 2.5f);
 					}
 
 					// --- Validation v12 : ramassage du butin — touche F sur le sac
@@ -13828,7 +13841,15 @@ namespace engine
 			const engine::client::UIForcedPosition& forced = m_uiModelBinding.GetModel().forcedPosition;
 			if (forced.pending)
 			{
-				const engine::math::Vec3 forcedPos{ forced.x, forced.y, forced.z };
+				// Validation v12 — collage au sol : le Y des points de réapparition
+				// (data) ou du serveur (sans heightfield) peut être SOUS le terrain
+				// local → le joueur réapparaissait sous la carte. On garantit au
+				// minimum sol + 0.9 (centre capsule) ; un Y data plus haut (tour,
+				// étage) reste respecté.
+				const float forcedGroundY =
+					m_terrain.SampleHeightAtWorldXZ(forced.x, forced.z) + 0.9f;
+				const engine::math::Vec3 forcedPos{
+					forced.x, std::max(forced.y, forcedGroundY), forced.z };
 				(void)m_characterController.Init(forcedPos);
 				m_orbitalCameraController.SetTargetPosition(forcedPos);
 				m_avatarYaw = forced.yawRadians;

@@ -3033,6 +3033,19 @@ namespace engine::server
 		// client écraserait la téléportation au tick suivant (bug SP2 corrigé).
 		m_antiCheat.Reset(client->persistenceCharacterKey);
 		SendForcePosition(*client, kForcePositionReasonRespawn);
+		// Validation v12 — événement de résurrection : les snapshots excluent
+		// l'entité du joueur lui-même, ses PV/flags ne sont rafraîchis que par
+		// les CombatEvent qui le ciblent. Sans cet événement, le client garde
+		// le flag mort → l'écran de mort ne se fermait JAMAIS après respawn.
+		CombatEventMessage resurrectionEvent{};
+		resurrectionEvent.attackerEntityId = 0;
+		resurrectionEvent.targetEntityId = client->entityId;
+		resurrectionEvent.damage = 0;
+		resurrectionEvent.targetCurrentHealth = client->stats.currentHealth;
+		resurrectionEvent.targetMaxHealth = client->stats.maxHealth;
+		resurrectionEvent.targetStateFlags = client->stateFlags;
+		resurrectionEvent.flags = kCombatEventFlagResurrection;
+		BroadcastCombatEvent(resurrectionEvent);
 		UpdateClientInterest(*client);
 		SaveConnectedClient(*client, "respawn");
 		LOG_INFO(Net,
@@ -3695,6 +3708,37 @@ namespace engine::server
 
 	bool ServerApp::UpdateMobSpatialState(MobEntity& mob)
 	{
+		// Validation v12 — séparation des mobs : plusieurs mobs poursuivant la
+		// même cible convergent vers le même point et se SUPERPOSENT (constat
+		// validation : deux sangliers fusionnés visuellement). On repousse ce
+		// mob hors du rayon personnel des autres mobs vivants de la zone
+		// (O(n²) acceptable : poignée de mobs par zone à ce stade).
+		constexpr float kMobSeparationMeters = 1.2f;
+		for (const MobEntity& other : m_mobs)
+		{
+			if (other.entityId == mob.entityId || other.zoneId != mob.zoneId)
+				continue;
+			if ((other.stateFlags & kEntityStateDead) != 0u)
+				continue;
+			const float sepDx = mob.positionMetersX - other.positionMetersX;
+			const float sepDz = mob.positionMetersZ - other.positionMetersZ;
+			const float sepDistSq = sepDx * sepDx + sepDz * sepDz;
+			if (sepDistSq >= kMobSeparationMeters * kMobSeparationMeters)
+				continue;
+			if (sepDistSq <= 0.0001f)
+			{
+				// Exactement superposés : direction déterministe dérivée des ids.
+				const float jitterAngle = static_cast<float>((mob.entityId % 8u)) * 0.7853981f;
+				mob.positionMetersX += std::cos(jitterAngle) * kMobSeparationMeters;
+				mob.positionMetersZ += std::sin(jitterAngle) * kMobSeparationMeters;
+				continue;
+			}
+			const float sepDist = std::sqrt(sepDistSq);
+			const float pushOut = (kMobSeparationMeters - sepDist);
+			mob.positionMetersX += (sepDx / sepDist) * pushOut;
+			mob.positionMetersZ += (sepDz / sepDist) * pushOut;
+		}
+
 		CellGrid* zoneGrid = GetOrCreateZoneGrid(mob.zoneId);
 		if (zoneGrid == nullptr)
 		{

@@ -1327,6 +1327,10 @@ namespace engine
 		float m_rmbPressMouseX = 0.0f;
 		float m_rmbPressMouseY = 0.0f;
 		bool m_rmbClickCandidate = false;
+		/// Validation v12 — true tant que le clip de mort de l'avatar local est
+		/// posé (évite de le rejouer chaque frame ; la SM locomotion est gelée
+		/// pendant la mort et relancée sur Idle au respawn).
+		bool m_avatarDeathClipPlaying = false;
 		/// Combat SP3 — cooldowns AFFICHÉS de la barre d'action (spellId → fin en
 		/// secondes EngineNowSec) ; purement cosmétique, le serveur fait foi.
 		std::unordered_map<std::string, float> m_spellCooldownUiUntilSec;

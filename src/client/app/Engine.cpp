@@ -9479,7 +9479,41 @@ namespace engine
 						else                  newState = AvatarLocomotionState::Idle;
 					}
 
-					if (newState != m_avatarLocoState)
+					// Validation v12 — avatar MORT : il restait DEBOUT (la SM n'a pas
+					// d'état Dead). On joue le clip « Death » du mesh s'il existe
+					// (une fois, clampé sur la dernière frame), et on GÈLE la machine
+					// d'états tant que le joueur est mort (sinon une transition vers
+					// Idle écraserait la pose). Au respawn : retour Idle immédiat.
+					const bool avatarDead =
+						(m_uiModelBinding.GetModel().playerStats.stateFlags & 1u) != 0u;
+					if (avatarDead && !m_avatarDeathClipPlaying)
+					{
+						const char* deathClipName = "Death";
+						const engine::render::skinned::AnimationClip* deathClip = m_currentSkinnedMesh->FindClip(deathClipName);
+						if (deathClip == nullptr) { deathClipName = "Die"; deathClip = m_currentSkinnedMesh->FindClip(deathClipName); }
+						if (deathClip == nullptr) { deathClipName = "Dead"; deathClip = m_currentSkinnedMesh->FindClip(deathClipName); }
+						if (deathClip != nullptr)
+						{
+							m_avatarCrossfade.Play(*deathClip, /*loops=*/false, nowSec);
+							LOG_INFO(Render, "[Avatar SM] Mort : clip '{}' joue (clamp)", deathClipName);
+						}
+						else
+						{
+							LOG_WARN(Render, "[Avatar SM] Mort : aucun clip Death/Die/Dead dans le mesh — pose Idle conservee");
+						}
+						m_avatarDeathClipPlaying = true;
+					}
+					else if (!avatarDead && m_avatarDeathClipPlaying)
+					{
+						m_avatarDeathClipPlaying = false;
+						if (const engine::render::skinned::AnimationClip* idleClip = m_currentSkinnedMesh->FindClip("Idle"))
+						{
+							m_avatarCrossfade.Play(*idleClip, /*loops=*/true, nowSec);
+						}
+						m_avatarLocoState = AvatarLocomotionState::Idle;
+					}
+
+					if (!avatarDead && newState != m_avatarLocoState)
 					{
 						// DEBUG B.1 : log chaque transition d'etat pour diagnostiquer
 						// "modèle qui saute toujours". Une fois le bug compris, retirer.
@@ -11410,6 +11444,58 @@ namespace engine
 							}
 						}
 						ImGui::End();
+					}
+
+					// --- Validation v12 : jauges du joueur (PV + ressource), bas-centre.
+					// PV rafraîchis en temps réel par les CombatEvent (chaque coup reçu)
+					// et l'événement de résurrection. Avant le premier coup reçu,
+					// maxHealth vaut 0 → on affiche la feuille de stats (pleine).
+					{
+						const uint32_t playerMaxHp = (uiModel.playerStats.maxHealth > 0u)
+							? uiModel.playerStats.maxHealth
+							: uiModel.playerStats.sheetMaxHealth;
+						if (playerMaxHp > 0u)
+						{
+							const uint32_t playerCurHp = (uiModel.playerStats.maxHealth > 0u)
+								? uiModel.playerStats.currentHealth
+								: playerMaxHp;
+							const float hpFracPlayer = std::clamp(
+								static_cast<float>(playerCurHp) / static_cast<float>(playerMaxHp), 0.0f, 1.0f);
+							const float gaugeW = 320.0f;
+							const float gaugeH = 18.0f;
+							const float gaugeX = (dw - gaugeW) * 0.5f;
+							const float gaugeY = dh - 152.0f;
+							const ImU32 hpColor = (hpFracPlayer > 0.5f)
+								? IM_COL32(80, 200, 80, 235)
+								: ((hpFracPlayer > 0.25f)
+									? IM_COL32(230, 160, 40, 235)
+									: IM_COL32(210, 60, 50, 235));
+							fg->AddRectFilled(ImVec2(gaugeX - 2.0f, gaugeY - 2.0f),
+								ImVec2(gaugeX + gaugeW + 2.0f, gaugeY + gaugeH + 2.0f), IM_COL32(0, 0, 0, 160), 4.0f);
+							fg->AddRectFilled(ImVec2(gaugeX, gaugeY),
+								ImVec2(gaugeX + gaugeW, gaugeY + gaugeH), IM_COL32(35, 38, 44, 230), 3.0f);
+							fg->AddRectFilled(ImVec2(gaugeX, gaugeY),
+								ImVec2(gaugeX + gaugeW * hpFracPlayer, gaugeY + gaugeH), hpColor, 3.0f);
+							const std::string playerHpText =
+								std::to_string(playerCurHp) + " / " + std::to_string(playerMaxHp);
+							const ImVec2 playerHpTs = ImGui::CalcTextSize(playerHpText.c_str());
+							fg->AddText(ImVec2(gaugeX + (gaugeW - playerHpTs.x) * 0.5f, gaugeY + 1.0f),
+								IM_COL32(255, 255, 255, 255), playerHpText.c_str());
+							// Ressource de classe (mana/énergie…) : barre fine dessous,
+							// alimentée par les ResourceUpdate (SP3).
+							if (uiModel.playerStats.secondaryResourceMax > 0u)
+							{
+								const float resFrac = std::clamp(
+									static_cast<float>(uiModel.playerStats.secondaryResourceCurrent)
+										/ static_cast<float>(uiModel.playerStats.secondaryResourceMax),
+									0.0f, 1.0f);
+								const float resY = gaugeY + gaugeH + 4.0f;
+								fg->AddRectFilled(ImVec2(gaugeX, resY),
+									ImVec2(gaugeX + gaugeW, resY + 8.0f), IM_COL32(35, 38, 44, 230), 3.0f);
+								fg->AddRectFilled(ImVec2(gaugeX, resY),
+									ImVec2(gaugeX + gaugeW * resFrac, resY + 8.0f), IM_COL32(70, 130, 220, 235), 3.0f);
+							}
+						}
 					}
 
 					// --- Ecran de mort : overlay sombre + bouton Reapparaitre →

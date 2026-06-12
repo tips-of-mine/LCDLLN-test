@@ -886,7 +886,12 @@ namespace engine::client
 			m_model.targetStats.hasPosition = false;
 		}
 
-		PushCombatLogEntry(m_model.combatLog, m_combatEventMessage, playerEntityId);
+		// Validation v12 — l'événement de RÉSURRECTION (respawn) rafraîchit les
+		// PV/flags ci-dessus mais ne doit pas polluer le log combat (« 0 dégât »).
+		if ((m_combatEventMessage.flags & engine::server::kCombatEventFlagResurrection) == 0u)
+		{
+			PushCombatLogEntry(m_model.combatLog, m_combatEventMessage, playerEntityId);
+		}
 		NotifyObservers(changeMask);
 		LOG_INFO(Net, "[UIModelBinding] CombatEvent applied (attacker={}, target={}, damage={}, player_role={})",
 			m_combatEventMessage.attackerEntityId,

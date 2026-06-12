@@ -364,6 +364,12 @@ namespace engine::server
 	/// Combat SP2 — bits du champ `CombatEventMessage::flags` (wire v10).
 	inline constexpr uint32_t kCombatEventFlagCrit = 1u << 0;
 	inline constexpr uint32_t kCombatEventFlagMiss = 1u << 1;
+	/// Validation v12 — événement synthétique de RÉSURRECTION (respawn) : porte
+	/// les PV pleins et les stateFlags nettoyés du ressuscité. Les snapshots
+	/// excluant l'entité du joueur lui-même, c'est le seul canal qui rafraîchit
+	/// ses PV/flags — sans cet événement l'écran de mort ne se fermait jamais.
+	/// Le client met à jour les stats mais N'ÉCRIT PAS de ligne de log combat.
+	inline constexpr uint32_t kCombatEventFlagResurrection = 1u << 2;
 
 	/// Authoritative combat result broadcast to interested clients.
 	/// Combat SP2 (wire v10) — `flags` porte critique/raté (cf. kCombatEventFlag*) ;

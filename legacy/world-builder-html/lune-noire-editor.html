@@ -6046,12 +6046,26 @@ function skillEffectsStr(skill){
   return e == null ? '' : String(e);
 }
 
+/// Libellés de portée d'une compétence, prêts à afficher (chaînes simples) :
+/// distance maximale d'utilisation (range_m), rayon d'effet de zone (radius_m,
+/// uniquement pour une cible 'zone' et si > 0) et libellé libre (range_label).
+/// \return tableau de chaînes, éventuellement vide.
+function skillRangeParts(skill){
+  if(!skill) return [];
+  var parts=[];
+  if(skill.range_m!=null && skill.range_m!=='') parts.push('📏 '+skill.range_m+' m');
+  if(skill.target_type==='zone' && skill.radius_m!=null && skill.radius_m!=='' && Number(skill.radius_m)>0) parts.push('⭕ '+skill.radius_m+' m');
+  if(skill.range_label) parts.push(String(skill.range_label));
+  return parts;
+}
+
 /// Ligne compacte (cible + dégâts/soin) affichée sous un nœud de l'arbre.
 /// \return HTML prêt à concaténer, ou '' si la compétence n'a ni cible ni puissance.
 function skillNodePowerLine(skill){
   var parts=[];
   var tl=skillTargetLabel(skill.target_type); if(tl) parts.push(tl);
   var pl=skillPowerLabel(skill); if(pl) parts.push(pl);
+  skillRangeParts(skill).forEach(function(p){ parts.push(p); });
   if(!parts.length) return '';
   return '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.2rem;display:flex;gap:0.45rem;flex-wrap:wrap">'+parts.map(esc).join(' ')+'</div>';
 }
@@ -6229,6 +6243,9 @@ function openSkillDetail(treeIdx, skillIdx) {
     (skill.cost?badge(skill.cost+' point'+(skill.cost>1?'s':''),  '#c9a84c'):'')+
     (skill.target_type?badge(skillTargetLabel(skill.target_type), skill.target_type==='zone'?'#c08a3a':'#6fa36f'):'')+
     (skillPowerLabel(skill)?badge(skillPowerLabel(skill), skill.power_kind==='heal'?'#5fae6a':'#c0563a'):'')+
+    (skill.range_m!=null&&skill.range_m!==''?badge('📏 Portée '+skill.range_m+' m', '#8a8f98'):'')+
+    (skill.target_type==='zone'&&skill.radius_m!=null&&skill.radius_m!==''&&Number(skill.radius_m)>0?badge('⭕ Rayon '+skill.radius_m+' m', '#8a8f98'):'')+
+    (skill.range_label?badge(skill.range_label, '#8a8f98'):'')+
     '</div>'+
     (skill.description?'<div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6">'+esc(skill.description)+'</div>':'')+
     (skillEffectsStr(skill)?'<div style="background:var(--bg-deep);border:1px solid '+bColor+'44;border-radius:3px;padding:0.6rem 0.75rem"><div style="font-size:0.6rem;font-family:Cinzel,serif;text-transform:uppercase;letter-spacing:0.12em;color:'+bColor+';margin-bottom:0.25rem">Effets</div><div style="font-size:0.82rem;color:var(--text-primary)">'+esc(skillEffectsStr(skill))+'</div></div>':'')+
@@ -6300,7 +6317,7 @@ function renderSkillEditorBody() {
       h += '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.35rem 0.6rem;border-bottom:1px solid var(--border)">';
       h += '<span style="color:'+bc+';font-size:0.8rem;width:1.2rem">'+esc(s.icon||'✦')+'</span>';
       h += '<span style="flex:2;font-size:0.8rem">'+esc(s.name)+'</span>';
-      h += '<span style="font-size:0.7rem;color:var(--text-dim)">T'+s.tier+(s.level?' · Niv.'+s.level:'')+(b?' · '+b.name:'')+'</span>';
+      h += '<span style="font-size:0.7rem;color:var(--text-dim)">T'+s.tier+(s.level?' · Niv.'+s.level:'')+(s.range_m!=null&&s.range_m!==''?' · '+s.range_m+'m':'')+(b?' · '+b.name:'')+'</span>';
       h += '<button class="btn btn-ghost btn-sm" style="padding:0.1rem 0.4rem" onclick="editSkillInline('+si+')">✎</button>';
       h += '<button class="note-del-btn" onclick="window._editTree.skills.splice('+si+',1);renderSkillEditorBody()">✕</button>';
       h += '</div>';
@@ -6320,6 +6337,11 @@ function renderSkillEditorBody() {
   h += '<input class="form-input" id="sk_level" type="number" min="1" placeholder="Niveau d\'obtention" style="padding:0.2rem 0.4rem" title="Niveau du personnage requis pour obtenir cette étape">';
   h += '<select class="form-select" id="sk_target" style="padding:0.2rem 0.4rem" title="Portée de la compétence"><option value="">— Cible —</option><option value="unitaire">🎯 Unitaire</option><option value="zone">🌐 Zone</option></select>';
   h += '<div style="display:flex;gap:0.3rem"><select class="form-select" id="sk_power_kind" style="flex:1;padding:0.2rem 0.4rem" title="Type d\'effet chiffré"><option value="none">— Aucun —</option><option value="damage">⚔️ Dégâts</option><option value="heal">💚 Soin</option></select><input class="form-input" id="sk_power_value" type="number" min="0" placeholder="Valeur" style="width:70px;padding:0.2rem 0.4rem" title="Dégâts infligés ou PV rendus"></div>';
+  h += '</div>';
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:0.4rem;margin-bottom:0.4rem">';
+  h += '<input class="form-input" id="sk_range_m" type="number" min="0" step="0.5" placeholder="Distance max (m)" style="padding:0.2rem 0.4rem" title="Distance maximale à laquelle la compétence peut être utilisée (mètres)">';
+  h += '<input class="form-input" id="sk_radius_m" type="number" min="0" step="0.5" placeholder="Rayon zone (m)" style="padding:0.2rem 0.4rem" title="Rayon d\'effet pour une compétence de zone (mètres)">';
+  h += '<input class="form-input" id="sk_range_label" placeholder="Libellé portée (ex: corps-à-corps)" style="padding:0.2rem 0.4rem" title="Libellé libre de portée">';
   h += '</div>';
   h += '<input class="form-input" id="sk_desc" placeholder="Description…" style="margin-bottom:0.3rem;padding:0.2rem 0.4rem">';
   h += '<input class="form-input" id="sk_effects" placeholder="Effets en jeu…" style="margin-bottom:0.4rem;padding:0.2rem 0.4rem">';
@@ -6344,6 +6366,9 @@ function addSkillToTree() {
     target_type: document.getElementById('sk_target').value || '',
     power_kind: document.getElementById('sk_power_kind').value || 'none',
     power_value: parseInt(document.getElementById('sk_power_value').value,10) || null,
+    range_m: (isNaN(parseFloat(document.getElementById('sk_range_m').value)) ? null : parseFloat(document.getElementById('sk_range_m').value)),
+    radius_m: (isNaN(parseFloat(document.getElementById('sk_radius_m').value)) ? null : parseFloat(document.getElementById('sk_radius_m').value)),
+    range_label: (document.getElementById('sk_range_label').value||'').trim(),
     description: (document.getElementById('sk_desc').value||'').trim(),
     effects: (document.getElementById('sk_effects').value||'').trim(),
     prerequisites: []
@@ -6379,6 +6404,10 @@ function editSkillInline(si) {
       '<option value="damage"'+(skill.power_kind==='damage'?' selected':'')+'>⚔️ Dégâts</option>'+
       '<option value="heal"'+(skill.power_kind==='heal'?' selected':'')+'>💚 Soin</option></select>'+
       '<input class="form-input" id="eskill_power_value" type="number" min="0" value="'+(skill.power_value||'')+'" placeholder="Valeur" style="width:70px" title="Dégâts infligés ou PV rendus"></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:0.5rem;margin-bottom:0.5rem">'+
+    '<input class="form-input" id="eskill_range_m" type="number" min="0" step="0.5" value="'+(skill.range_m!=null&&skill.range_m!==''?skill.range_m:'')+'" placeholder="Distance max (m)" title="Distance maximale d\'utilisation (mètres)">'+
+    '<input class="form-input" id="eskill_radius_m" type="number" min="0" step="0.5" value="'+(skill.radius_m!=null&&skill.radius_m!==''?skill.radius_m:'')+'" placeholder="Rayon zone (m)" title="Rayon d\'effet de zone (mètres)">'+
+    '<input class="form-input" id="eskill_range_label" value="'+esc(skill.range_label||'')+'" placeholder="Libellé portée (ex: corps-à-corps)" title="Libellé libre de portée"></div>'+
     '<textarea class="form-textarea" id="eskill_desc" style="height:55px" placeholder="Description">'+esc(skill.description||'')+'</textarea>'+
     '<textarea class="form-textarea" id="eskill_fx" style="height:55px;margin-top:0.4rem" placeholder="Effets en jeu">'+esc(skillEffectsStr(skill))+'</textarea>';
   document.getElementById('modalFooter').innerHTML =
@@ -6393,6 +6422,9 @@ function editSkillInline(si) {
     'window._editTree.skills['+si+'].target_type=document.getElementById(\'eskill_target\').value||\'\';'+
     'window._editTree.skills['+si+'].power_kind=document.getElementById(\'eskill_power_kind\').value||\'none\';'+
     'window._editTree.skills['+si+'].power_value=parseInt(document.getElementById(\'eskill_power_value\').value,10)||null;'+
+    'window._editTree.skills['+si+'].range_m=(isNaN(parseFloat(document.getElementById(\'eskill_range_m\').value))?null:parseFloat(document.getElementById(\'eskill_range_m\').value));'+
+    'window._editTree.skills['+si+'].radius_m=(isNaN(parseFloat(document.getElementById(\'eskill_radius_m\').value))?null:parseFloat(document.getElementById(\'eskill_radius_m\').value));'+
+    'window._editTree.skills['+si+'].range_label=(document.getElementById(\'eskill_range_label\').value||\'\').trim();'+
     'window._editTree.skills['+si+'].description=document.getElementById(\'eskill_desc\').value;'+
     'window._editTree.skills['+si+'].effects=document.getElementById(\'eskill_fx\').value;'+
     'openSkillTreeEditor(window._editTree.class_id);})()">💾 OK</button>';

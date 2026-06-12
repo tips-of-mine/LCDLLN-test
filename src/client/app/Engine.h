@@ -252,6 +252,23 @@ namespace engine
 		/// boot). Sans effet si gender invalide. Appele par le selecteur de creation.
 		void SetAvatarGender(const std::string& gender);
 
+		/// Combat SP1 fix — Y d'affichage « équivalent centre capsule » d'une
+		/// entité distante. Les JOUEURS répliquent un centre capsule fiable
+		/// (positionY serveur reprise telle quelle). Les MOBS, NODES de récolte
+		/// et LOOT BAGS répliquent le Y brut de leur donnée de spawn (souvent
+		/// 0.0) que le serveur ne colle jamais au terrain (pas de heightfield
+		/// serveur) : sans correction ils se dessinent SOUS le terrain — mesh
+		/// invisible (depth-testé) et plaque flottante au ras du sol (foreground
+		/// sans depth test). On échantillonne donc la heightmap CLIENT et on
+		/// renvoie sol + 0.9 m, cohérent avec l'offset -0.9 (centre→pieds) du
+		/// rendu skinné. Affichage uniquement : le Y serveur reste l'autorité
+		/// gameplay (les tests de portée serveur sont en XZ).
+		/// \param isPlayer    true si l'entité est un joueur (playerClientId != 0).
+		/// \param serverY     Y répliqué par le serveur (mètres monde).
+		/// \param worldX,worldZ  position horizontale pour l'échantillon terrain.
+		float ResolveRemoteDisplayCenterY(bool isPlayer, float serverY,
+		                                  float worldX, float worldZ) const;
+
 		/// Persiste et applique le genre d'un personnage donne, par NOM
 		/// (fix client interim #1 : le genre n'est pas encore stocke serveur).
 		/// Met a jour m_avatarGender pour la session ET ecrit

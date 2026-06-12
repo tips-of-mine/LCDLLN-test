@@ -10255,6 +10255,10 @@ namespace engine
 						{
 							wx = sit->second.x; wy = sit->second.y; wz = sit->second.z;
 						}
+						// Combat SP1 fix — mobs/nodes : Y de spawn brut (souvent 0, jamais
+						// collé au terrain par le serveur) → snap visuel au sol client,
+						// sinon la plaque flotte au ras du sol (cf. ResolveRemoteDisplayCenterY).
+						wy = ResolveRemoteDisplayCenterY(re.playerClientId != 0u, wy, wx, wz);
 						float sxp = 0.0f, syp = 0.0f;
 						if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 1.2f, wz, ivw, ivh, sxp, syp))
 							continue;
@@ -10386,6 +10390,10 @@ namespace engine
 							{
 								wx = sit->second.x; wy = sit->second.y; wz = sit->second.z;
 							}
+							// Combat SP1 fix — même snap visuel au sol que la plaque : le
+							// point d'ancrage du pick doit correspondre à ce que voit le
+							// joueur (cf. ResolveRemoteDisplayCenterY).
+							wy = ResolveRemoteDisplayCenterY(false, wy, wx, wz);
 							float sxp = 0.0f, syp = 0.0f;
 							if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 0.5f, wz, ivw, ivh, sxp, syp))
 								continue;
@@ -10840,6 +10848,17 @@ namespace engine
 									fxX = smoothedIt->second.x;
 									fxY = smoothedIt->second.y;
 									fxZ = smoothedIt->second.z;
+									// Combat SP1 fix — un halo de mob doit suivre le snap visuel
+									// au sol (sinon l'anneau se projette sous le terrain). On
+									// retrouve l'entité pour distinguer joueur (Y fiable) / mob.
+									for (const engine::client::UIRemoteEntity& fxRe : uiModel.remoteEntities)
+									{
+										if (fxRe.entityId != fxEntityId)
+											continue;
+										fxY = ResolveRemoteDisplayCenterY(
+											fxRe.playerClientId != 0u, fxY, fxX, fxZ);
+										break;
+									}
 								}
 								fxEffects.clear();
 								buildEffects(fxEntityId, fxEffects);
@@ -12154,6 +12173,19 @@ namespace engine
 		return nullptr;
 	}
 
+	float Engine::ResolveRemoteDisplayCenterY(bool isPlayer, float serverY,
+	                                          float worldX, float worldZ) const
+	{
+		if (isPlayer)
+		{
+			return serverY; // joueur : centre capsule fiable répliqué par le shard
+		}
+		// Mob / node / loot bag : Y de spawn brut (souvent 0) → snap visuel au sol
+		// client. SampleHeightAtWorldXZ retombe sur 0 si la heightmap n'est pas
+		// chargée — comportement identique à l'ancien rendu dans ce cas.
+		return m_terrain.SampleHeightAtWorldXZ(worldX, worldZ) + 0.9f;
+	}
+
 	void Engine::SetAvatarGender(const std::string& gender)
 	{
 		if (gender != "male" && gender != "female") {
@@ -12896,6 +12928,13 @@ namespace engine
 			{
 				px = sit->second.x; py = sit->second.y; pz = sit->second.z; yaw = sit->second.yaw;
 			}
+			// Combat SP1 fix — mobs : le serveur réplique le Y BRUT du spawner
+			// (souvent 0.0, jamais collé au terrain — pas de heightfield serveur).
+			// Avec l'offset -0.9 « centre → pieds » ci-dessous, le mesh se dessinait
+			// SOUS le terrain (sanglier invisible, plaque flottante). Snap visuel au
+			// sol client : ResolveRemoteDisplayCenterY renvoie sol + 0.9 pour les
+			// non-joueurs, que le -0.9 ramène exactement au niveau des pieds.
+			py = ResolveRemoteDisplayCenterY(re.playerClientId != 0u, py, px, pz);
 			// TD.7 — état d'animation par avatar distant. Crée l'entrée à la première frame
 			// où on voit cet entityId. L'horloge utilisée pour Sample() / Play() est la même
 			// (nowSec) pour tous les avatars : crossfade et boucle restent en phase.

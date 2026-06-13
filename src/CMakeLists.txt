@@ -1126,6 +1126,14 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/anticheat/AntiCheatGameplayRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/spell/SpellFamilyRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/maps/InstanceManagerRuntime.cpp
+    # Lot C (vague 5) : cablage boot des managers globals data-driven (SHARD-ONLY,
+    # namespace engine::server::shard::globals). Charges au boot depuis les tables
+    # de la migration 0042 (conditions/graveyards/locale_strings) si la DB est
+    # configuree. NE PAS ajouter a server_app (master) : symboles shard uniquement.
+    # ConnectionPool/DbHelpers/SqlPreparedStatement sont deja linkes plus bas (TA.4).
+    ${CMAKE_SOURCE_DIR}/src/shardd/internals/globals/ConditionMgr.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/internals/globals/GraveyardManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/internals/globals/LocaleStrings.cpp
     # TA.2 (replication des joueurs) : replication AoI executable sous Linux.
     # On ajoute ServerApp + la grille AoI + le transport UDP (porte POSIX en TA.1)
     # + les systemes gameplay que ServerApp instancie. On N'AJOUTE PAS ce que

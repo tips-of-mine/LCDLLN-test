@@ -24,10 +24,16 @@
 #include "src/shardd/anticheat/AntiCheatGameplayRuntime.h"
 #include "src/shardd/spell/SpellFamilyRuntime.h"
 #include "src/shardd/maps/InstanceManagerRuntime.h"
+// Lot C (vague 5) — Cablage boot des managers globals data-driven (chargement
+// defensif depuis la DB de la migration 0042 ; consommation gameplay differee).
+#include "src/shardd/internals/globals/ConditionMgr.h"
+#include "src/shardd/internals/globals/GraveyardManager.h"
+#include "src/shardd/internals/globals/LocaleStrings.h"
 
 #include <csignal>
 #include <chrono>
 #include <algorithm>
+#include <exception>
 #include <memory>
 #include <thread>
 
@@ -199,7 +205,11 @@ int main(int argc, char** argv)
 	// Injecte dans ServerApp pour lire characters.spawn_x/y/z au HandleHello. DB non
 	// configuree => Init false => spawn depuis le fichier (pont inactif, non bloquant).
 	engine::server::db::ConnectionPool characterDbPool;
-	if (characterDbPool.Init(config))
+	// Lot C (vague 5) : on memorise l'etat d'init du pool pour le reutiliser plus
+	// bas (chargement defensif des managers globals — ils n'accedent a la DB que si
+	// elle est reellement configuree).
+	const bool characterDbReady = characterDbPool.Init(config);
+	if (characterDbReady)
 	{
 		gameplayApp.SetCharacterDbPool(&characterDbPool);
 		LOG_INFO(Net, "[ShardMain] Pont position DB actif (spawn depuis characters)");
@@ -264,6 +274,57 @@ int main(int argc, char** argv)
 	engine::server::maps::InstanceManagerRuntime instanceMgr;
 	instanceMgr.SeedV1Maps();
 	LOG_INFO(Maps, "[InstanceManager] {} maps registered at boot", instanceMgr.MapCount());
+
+	// Lot C (vague 5) — Cablage boot des 3 managers globals data-driven :
+	// ConditionMgr, GraveyardManager, LocaleStrings. PERIMETRE STRICT : link +
+	// instanciation + Load() defensif + log de preuve. AUCUNE consommation gameplay
+	// ici (ClosestGraveyard mort/respawn, ConditionMgr quetes/spawns, LocaleStrings
+	// messages = follow-up). Les donnees viennent des tables de la migration 0042.
+	//
+	// DEFENSIF : ces managers sont OPTIONNELS a ce stade. Si la DB n'est pas
+	// configuree => on skip le Load (les compteurs restent a 0). Si un Load echoue
+	// ou leve => on logge et on CONTINUE le boot ; le shard ne doit jamais planter
+	// a cause d'eux. On les declare ici (duree de vie = main()) pour que de futurs
+	// systemes puissent s'y brancher.
+	engine::server::shard::globals::ConditionMgr conditionMgr;
+	engine::server::shard::globals::GraveyardManager graveyardMgr;
+	engine::server::shard::globals::LocaleStrings localeStrings;
+	if (characterDbReady)
+	{
+		// Locale par defaut lue depuis la config (clé server.locale.default) ; 0
+		// (= fr_FR, default LCDLLN) si la clé est absente. On borne a l'octet car
+		// LocaleId est un uint8_t.
+		const auto defaultLocale = static_cast<engine::server::shard::globals::LocaleId>(
+			config.GetInt("server.locale.default", 0) & 0xFF);
+		try
+		{
+			const bool condOk   = conditionMgr.Load(characterDbPool);
+			const bool graveOk  = graveyardMgr.Load(characterDbPool);
+			const bool localeOk = localeStrings.Load(characterDbPool, defaultLocale);
+			LOG_INFO(Globals,
+				"[Globals] charges au boot : ConditionMgr {} conditions / {} groups (ok={}), "
+				"GraveyardManager {} graveyards (ok={}), LocaleStrings {} strings (locale par defaut {}, ok={})",
+				conditionMgr.ConditionCount(), conditionMgr.GroupCount(), condOk,
+				graveyardMgr.Size(), graveOk,
+				localeStrings.Size(), static_cast<unsigned>(defaultLocale), localeOk);
+		}
+		catch (const std::exception& e)
+		{
+			LOG_ERROR(Globals,
+				"[Globals] echec du chargement (exception : {}) — boot poursuivi, managers vides",
+				e.what());
+		}
+		catch (...)
+		{
+			LOG_ERROR(Globals,
+				"[Globals] echec du chargement (exception inconnue) — boot poursuivi, managers vides");
+		}
+	}
+	else
+	{
+		LOG_WARN(Globals,
+			"[Globals] DB non configuree — ConditionMgr/GraveyardManager/LocaleStrings NON charges (skip defensif)");
+	}
 
 	// Tick periodique EventAI : intervalle 1s. La boucle principale tourne
 	// a 100ms (sleep_for(100ms) ci-dessous) donc on filtre via

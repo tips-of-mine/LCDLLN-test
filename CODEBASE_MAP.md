@@ -2335,3 +2335,17 @@ Correctif des 4 constats 🔴 d''intégrité de l''audit 2026-06-10 §4.2 :
 Suivi possible : StreamCache runtime lit encore les chemins plats (livraison normale =
 ExportRuntimeBundle) — rendre StreamCache zone-aware si partage direct éditeur→jeu voulu.
 **Déploiement** : ✅ client uniquement (éditeur monde).
+
+## Enchères côté client : DEUX systèmes distincts (ne pas confondre)
+
+> Décision 2026-06-13 (audit Lot C) : les deux UI d'enchères ne sont **pas** des
+> doublons à consolider — ce sont **deux fonctionnalités sur deux transports** :
+
+| UI | Membre `Engine` | Transport | Rôle |
+|---|---|---|---|
+| `auction/AuctionUi.h` — `AuctionHousePresenter` | `m_auctionHouseUi` | **master TCP** (opcodes 173-181, `SendGenericRequestAsync`) | Hôtel des ventes complet (panneau ImGui via `AuctionImGuiRenderer`, toggle touche **H** / `/ah`). |
+| `economy/AuctionUi.h` — `AuctionUiPresenter` | `m_auctionUi` | **shard gameplay UDP** (`SendAuctionListItemRequest`, `ui.auction.isOpen`) | Enchères in-world (drag-drop depuis l'inventaire, HUD). |
+
+Les deux sont instanciés volontairement. Toute « consolidation » serait une décision
+d'**architecture** (choisir le transport canonique master TCP ↔ shard UDP) avec impact
+wire/serveur — **pas** un simple reroutage UI. Statu quo retenu : on garde les deux.

@@ -1,5 +1,5 @@
 import { getSession, type Session } from '@/lib/auth/session'
-import { isStaff } from '@/lib/auth/roles'
+import { hasAtLeast, isStaff, type AccountRole } from '@/lib/auth/roles'
 
 // Helper unifié pour les 14 routes /api/admin/*. Avant cette refactor,
 // chaque route déclarait localement un `checkAdmin()` qui faisait
@@ -21,5 +21,22 @@ export async function requireAdmin(): Promise<Session> {
   const session = await getSession()
   if (!session) return null
   if (!isStaff(session.role)) return null
+  return session
+}
+
+// Variante granulaire : exige un rôle >= `minimum` dans la hiérarchie
+// player(0) < moderator(1) < game_master(2) < administrator(3).
+// Le rôle est re-lu en base par getSession() (le cookie ne porte aucune autorité).
+// Durcir une route avec un `minimum` plus élevé ne peut que RESTREINDRE l'accès :
+// les comptes staff hérités sont 'administrator' (migration 0043), donc aucun
+// verrouillage des admins existants ; la granularité ne s'active que pour des
+// comptes explicitement créés en 'moderator'/'game_master'.
+//
+// Retourne null si non authentifié OU rôle insuffisant (le caller renvoie alors
+// un 403), la Session complète sinon.
+export async function requireRole(minimum: AccountRole): Promise<Session> {
+  const session = await getSession()
+  if (!session) return null
+  if (!hasAtLeast(session.role, minimum)) return null
   return session
 }

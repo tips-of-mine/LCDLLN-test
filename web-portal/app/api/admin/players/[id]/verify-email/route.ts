@@ -1,10 +1,10 @@
 ﻿import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth/admin'
+import { requireRole } from '@/lib/auth/admin'
 import { query } from '@/lib/db/connection'
 import { logError } from '@/lib/log'
 
 export async function PATCH(_req: Request, { params }: { params: { id: string } }) {
-  if (!(await requireAdmin())) return NextResponse.json({ ok: false }, { status: 403 })
+  if (!(await requireRole('administrator'))) return NextResponse.json({ ok: false }, { status: 403 })
   const id = parseInt(params.id, 10)
   if (isNaN(id)) return NextResponse.json({ ok: false }, { status: 400 })
   try {

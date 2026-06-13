@@ -2,13 +2,13 @@
 // Body: { versionLabel, titleFr, contentFr, titleEn?, contentEn? }
 // Creates a new terms_edition (status='draft') + terms_localizations entries
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth/admin'
+import { requireRole } from '@/lib/auth/admin'
 import { query } from '@/lib/db/connection'
 import { logError } from '@/lib/log'
 import type { ResultSetHeader } from 'mysql2/promise'
 
 export async function POST(request: Request) {
-  if (!(await requireAdmin())) return NextResponse.json({ ok: false }, { status: 403 })
+  if (!(await requireRole('game_master'))) return NextResponse.json({ ok: false }, { status: 403 })
 
   try {
     const body = await request.json() as {

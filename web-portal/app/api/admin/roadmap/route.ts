@@ -1,13 +1,13 @@
 // GET /api/admin/roadmap — returns all roadmap items ordered by display_order
 // POST /api/admin/roadmap — creates a new roadmap item
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth/admin'
+import { requireRole } from '@/lib/auth/admin'
 import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
 import { logError } from '@/lib/log'
 
 export async function GET() {
-  if (!(await requireAdmin())) {
+  if (!(await requireRole('game_master'))) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
   try {
@@ -22,7 +22,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!(await requireAdmin())) {
+  if (!(await requireRole('game_master'))) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
   try {

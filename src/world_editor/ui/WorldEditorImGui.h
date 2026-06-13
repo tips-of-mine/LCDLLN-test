@@ -24,6 +24,14 @@
 #include "src/world_editor/diagnostic/DiagnosticRuleRegistry.h"
 #include "src/world_editor/diagnostic/DiagnosticSystem.h"
 #include "src/world_editor/diagnostic/IDiagnosticRule.h"
+// Lot C vague 4 — assistant « Nouvelle zone » (QuickStartWizard) : machine d'état
+// 5 étapes + résolveur de template. Inclus en entier (objets-valeur membres du
+// `WorldEditorImGui`, taille requise à la déclaration). Le résolveur transforme
+// les choix du wizard en `ZonePreset`, exécuté ensuite par le MÊME chemin que le
+// `ZonePresetDialog` (ZonePresetExecutor + CommandStack du Shell).
+#include "src/world_editor/wizard/QuickStartWizard.h"
+#include "src/world_editor/wizard/WizardTemplateResolver.h"
+#include "src/world_editor/zone_presets/ZonePresetExecutor.h" // ExecutionSummary (membre valeur)
 
 namespace engine::core
 {
@@ -264,6 +272,33 @@ namespace engine::editor
 		/// « aucune analyse lancée » plutôt qu'un rapport vide trompeur).
 		bool m_diagnosticHasRun = false;
 
+		// ── Lot C vague 4 : assistant « Nouvelle zone » (QuickStartWizard) ─────
+		/// Machine d'état des 5 étapes guidées (Climat / Relief / Côte / POI /
+		/// Aperçu). Logique pure, sans dépendance ImGui : l'UI ci-dessous ne fait
+		/// que la piloter (SetChoiceForCurrentStep, Next/Prev, SetSeed).
+		engine::editor::world::wizard::QuickStartWizard m_wizard;
+		/// Résolveur choix → `ZonePreset`. Sans état : instancié une fois comme
+		/// membre valeur, `Resolve` appelé au moment de la génération.
+		engine::editor::world::wizard::WizardTemplateResolver m_wizardResolver;
+		/// Flag de visibilité de la fenêtre wizard (ouvert par Fichier > « Nouvelle
+		/// zone (assistant)... », fermé par le bouton Fermer/Annuler ou la croix).
+		bool m_showWizard = false;
+		/// True quand la modale de confirmation de génération est demandée : posée
+		/// par le bouton « Générer » de l'étape Aperçu, consommée une seule fois par
+		/// `RenderWizardWindow` qui pousse l'`ImGui::OpenPopup` correspondant.
+		bool m_wizardConfirmRequested = false;
+		/// Champ seed édité dans l'UI (étape Aperçu). Recopié dans le wizard via
+		/// `SetSeed` à chaque modification — `int` car `ImGui::InputInt` l'exige.
+		int m_wizardSeed = 42;
+		/// Résumé de la dernière génération via le wizard (commandes poussées /
+		/// ignorées / échecs). `totalSteps == 0` → aucune génération encore lancée.
+		engine::editor::world::zone_presets::ExecutionSummary m_wizardLastSummary{};
+		/// True dès qu'une génération a été lancée depuis le wizard (alimente le
+		/// bandeau de résumé en bas de l'étape Aperçu).
+		bool m_wizardHasGenerated = false;
+		/// Id du preset effectivement résolu+exécuté (affiché dans le résumé).
+		std::string m_wizardLastPresetId;
+
 		/// Lot C vague 4 — Construit un `ValidationContext` (vues lecture seule)
 		/// depuis les documents du shell branché puis exécute `m_zoneValidator`,
 		/// stockant le résultat dans `m_lastValidationReport`. No-op si `m_shell`
@@ -313,6 +348,42 @@ namespace engine::editor
 		/// `m_lastDiagnosticReport`/`m_diagnosticHasRun` à jour au clic « Analyser ».
 		/// Doit être appelée pendant la frame UI (entre NewFrame et Render).
 		void RenderDiagnosticPanel();
+
+		/// Lot C vague 4 — Rend la fenêtre de l'assistant « Nouvelle zone »
+		/// (5 étapes : Climat / Relief / Côte / POI / Aperçu). Cartes de choix
+		/// pilotant `m_wizard.SetChoiceForCurrentStep`, navigation Précédent/
+		/// Suivant gardée par `CanProceed`, champ seed (`SetSeed`). À l'étape
+		/// Aperçu, le bouton « Générer » (actif seulement si `IsReadyToGenerate()`)
+		/// demande la modale de confirmation. No-op si `m_showWizard` est faux.
+		/// Effet de bord : ImGui state ; peut déclencher `RunWizardGeneration` à la
+		/// confirmation. À appeler pendant la frame UI (entre NewFrame et Render).
+		/// Contrainte thread : main thread (ImGui + accès documents au moment de
+		/// la génération).
+		void RenderWizardWindow();
+
+		/// Lot C vague 4 — Réinitialise l'état de l'assistant à son défaut
+		/// (étape 1 = Climat, choix par défaut, seed 42, flags de confirmation
+		/// et bandeau de résumé remis à zéro). Appelée UNIQUEMENT à la transition
+		/// fermé→ouvert de la fenêtre (entrée menu « Nouvelle zone (assistant)… »)
+		/// pour que chaque réouverture reparte du début, jamais à chaque frame.
+		/// Effet de bord : remplace `m_wizard` par une instance neuve et remet
+		/// `m_wizardSeed`/`m_wizardConfirmRequested`/`m_wizardHasGenerated`.
+		void ResetWizardState();
+
+		/// Lot C vague 4 — Résout les choix du wizard en `ZonePreset`
+		/// (`m_wizardResolver.Resolve`) puis l'exécute par le MÊME chemin que le
+		/// `ZonePresetDialog` : construction du `DispatchContext` depuis les refs
+		/// du Shell, `ZonePresetExecutor::Execute` sur le `CommandStack` du Shell.
+		/// DESTRUCTIF : l'executor vide d'abord les 4 documents de la zone
+		/// (`ResetEditedZoneDocuments`) — irréversible, c'est le P0 connu partagé
+		/// avec le dialog (cf. note `///` dans le .cpp). Renseigne
+		/// `m_wizardLastSummary`/`m_wizardLastPresetId`/`m_wizardHasGenerated`.
+		/// No-op si `m_shell` est nul. Effet de bord : vide+repeuple les documents
+		/// terrain/water/mesh/donjon, pousse des commandes sur le CommandStack.
+		/// Compilée CROSS-PLATFORM (hors garde `_WIN32`, comme `RunZoneValidation`)
+		/// : tous les types y sont pleinement qualifiés pour le build Linux.
+		/// Contrainte thread : main thread (accès documents non thread-safe).
+		void RunWizardGeneration();
 
 #if defined(_WIN32)
 		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;

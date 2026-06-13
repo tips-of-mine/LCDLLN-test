@@ -1910,7 +1910,7 @@ namespace engine::editor
 		// La largeur d'un chunk est (resolution-1) cellules = 256 m (kTerrain*).
 		val::ValidationContext ctx;
 
-		TerrainDocument& terrainDoc = m_shell->MutableTerrainDocument();
+		auto& terrainDoc = m_shell->MutableTerrainDocument();
 		const float chunkSpanMeters =
 			static_cast<float>(terr::kTerrainResolution - 1u) * terr::kTerrainCellSizeMeters;
 		// Mémorise la coord du 1er chunk chargé pour relier sa splat ensuite.

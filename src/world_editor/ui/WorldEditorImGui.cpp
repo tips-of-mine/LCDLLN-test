@@ -760,6 +760,14 @@ namespace engine::editor
 			m_validationRegistered = true;
 		}
 
+		// Lot C vague 4 — Idem pour les règles de diagnostic workflow MVP (mêmes
+		// raisons : ownership pris par le registre, enregistrement idempotent).
+		if (!m_diagnosticRegistered)
+		{
+			engine::editor::world::diagnostic::RegisterMvpDiagnosticRules(m_diagnosticRegistry);
+			m_diagnosticRegistered = true;
+		}
+
 		// Lot C vague 4 — Début de frame : vide le registre de rectangles-cibles.
 		// Chaque widget-cible (bouton Valider, entrée menu export) réenregistre son
 		// rectangle après son rendu, plus bas dans cette frame.
@@ -958,6 +966,16 @@ namespace engine::editor
 					}
 					ImGui::EndMenu();
 				}
+				ImGui::EndMenu();
+			}
+			// Lot C vague 4 — Menu « Aide » : ouvre le panneau Diagnostic
+			// (« Pourquoi ca ne marche pas ? »). Distinct du menu Vue (reserve
+			// aux toggles de panneaux/disposition) car le diagnostic releve de
+			// l'assistance contextuelle (jumeau du futur tutoriel/guidance).
+			if (ImGui::BeginMenu("Aide"))
+			{
+				ImGui::MenuItem("Diagnostic (pourquoi ca ne marche pas ?)", nullptr,
+					&m_showDiagnosticPanel);
 				ImGui::EndMenu();
 			}
 			// Barre d'outils rapide a droite du menu : sauvegarde 1-clic + chargement carte.
@@ -1873,6 +1891,10 @@ namespace engine::editor
 		// active). Dessinés en fin de frame : l'overlay est posé tout en haut via
 		// le foreground draw list, par-dessus tous les panneaux ci-dessus.
 		RenderValidationPanel();
+		// Lot C vague 4 — Panneau Diagnostic (« Pourquoi ça ne marche pas ? »).
+		// Rendu avant l'overlay de guidance pour que ce dernier (foreground draw
+		// list) puisse, le cas échéant, le surligner comme cible de tutoriel.
+		RenderDiagnosticPanel();
 		RenderGuidanceOverlay();
 
 		ImGui::Render();
@@ -1966,6 +1988,122 @@ namespace engine::editor
 			m_lastValidationReport.errorCount, m_lastValidationReport.warningCount,
 			m_lastValidationReport.hintCount, ctx.terrainChunks.size(),
 			ctx.meshInserts ? ctx.meshInserts->size() : static_cast<size_t>(0));
+	}
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// Lot C vague 4 — Diagnostic « Pourquoi ça ne marche pas ? ».
+	// BuildDiagnosticContext est CROSS-PLATFORM (hors garde _WIN32, comme
+	// RunZoneValidation) : tous les types y sont pleinement qualifiés (le build
+	// Linux compile cette fonction).
+	// ─────────────────────────────────────────────────────────────────────────
+
+	engine::editor::world::diagnostic::DiagnosticContext
+	WorldEditorImGui::BuildDiagnosticContext() const
+	{
+		namespace diag  = engine::editor::world::diagnostic;
+		namespace world = engine::editor::world;
+
+		diag::DiagnosticContext ctx;
+
+		// Sans shell branché : aucun état d'usage à inspecter, on renvoie un
+		// contexte vide (la règle « aucun outil sélectionné » se déclenchera, ce
+		// qui est le bon message dans cet état).
+		if (m_shell == nullptr)
+		{
+			return ctx;
+		}
+
+		// --- Outil actif → bool + identifiant chaîne ---------------------------
+		// On mappe l'enum `ActiveTool` du shell vers les ids attendus par les
+		// règles (chaînes courtes, ex. "coastline"). `None` => pas d'outil actif.
+		const world::ActiveTool tool = m_shell->GetActiveTool();
+		ctx.hasActiveTool = (tool != world::ActiveTool::None);
+		switch (tool)
+		{
+		case world::ActiveTool::TerrainSculpt:      ctx.activeToolId = "terrain_sculpt"; break;
+		case world::ActiveTool::TerrainStamp:       ctx.activeToolId = "terrain_stamp";  break;
+		case world::ActiveTool::SplatPaint:         ctx.activeToolId = "splat_paint";    break;
+		case world::ActiveTool::Lake:               ctx.activeToolId = "lake";           break;
+		case world::ActiveTool::River:              ctx.activeToolId = "river";          break;
+		case world::ActiveTool::MountainRange:      ctx.activeToolId = "mountain_range"; break;
+		case world::ActiveTool::ValleyChain:        ctx.activeToolId = "valley_chain";   break;
+		case world::ActiveTool::RiverNetwork:       ctx.activeToolId = "river_network";  break;
+		case world::ActiveTool::Coastline:          ctx.activeToolId = "coastline";      break;
+		case world::ActiveTool::HydraulicErosion:   ctx.activeToolId = "hydraulic";      break;
+		case world::ActiveTool::ThermalWindErosion: ctx.activeToolId = "thermal_wind";   break;
+		case world::ActiveTool::Cave:               ctx.activeToolId = "cave";           break;
+		case world::ActiveTool::Overhang:           ctx.activeToolId = "overhang";       break;
+		case world::ActiveTool::Arch:               ctx.activeToolId = "arch";           break;
+		case world::ActiveTool::DungeonPortal:      ctx.activeToolId = "dungeon_portal"; break;
+		case world::ActiveTool::None:               break; // ctx.activeToolId reste vide
+		}
+		// Drapeau spécifique consommé par NoSeaLevelSetRule.
+		ctx.coastlineToolActive = (tool == world::ActiveTool::Coastline);
+
+		// --- Nombre de chunks chargés ------------------------------------------
+		// Source fiable : compteur exposé par le TerrainDocument (chunks résidents
+		// en RAM). Lecture seule — pas de chargement disque ici (contrairement à
+		// RunZoneValidation), pour qu'un simple « Analyser » reste sans effet de bord.
+		ctx.chunkCount = static_cast<uint32_t>(
+			m_shell->MutableTerrainDocument().LoadedChunkCount());
+
+		// --- Profondeur undo → proxy de « commandes depuis la dernière save » --
+		// Le CommandStack n'expose AUCUN marqueur de sauvegarde (pas de compteur
+		// « depuis le dernier save »). On utilise `UndoSize()` comme PROXY : c'est
+		// la profondeur totale de la pile undo, pas strictement le nombre de
+		// modifications depuis le dernier save (un save ne réinitialise pas la
+		// pile). Suffisant pour la règle « modifications non sauvegardées » (seuil
+		// > 30) ; un vrai marqueur de save est à instrumenter en 2e passe.
+		ctx.commandsSinceLastSave = static_cast<uint32_t>(
+			m_shell->GetCommandStack().UndoSize());
+
+		// --- Sea level défini --------------------------------------------------
+		// `seaLevelMeters` vaut TOUJOURS 50 par défaut : il n'existe pas d'état
+		// « défini vs non défini » sur cette valeur. On utilise `OceanSettings::
+		// enabled` comme PROXY de « niveau de mer défini » (océan activé = côte a
+		// une référence d'altitude). Heuristique, pas un signal exact — à affiner
+		// en 2e passe si un vrai flag « sea level explicitement posé » est ajouté.
+		ctx.seaLevelSet = m_shell->GetWaterDocument().GetOcean().enabled;
+
+		// --- Mode éditeur Simple/Avancé ----------------------------------------
+		// Source fiable : le singleton EditorModeRegistry (même source que le
+		// toggle « Mode editeur » du menu Options). `attemptedAdvancedFeature` n'a
+		// en revanche PAS de source de suivi — il reste à son défaut neutre (false),
+		// donc SimpleModeAdvancedAttemptedRule ne se déclenchera pas tant que ce
+		// signal n'est pas instrumenté (2e passe).
+		ctx.simpleModeActive =
+			(world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== world::modes::EditorMode::Simple);
+
+		// --- Validation (peuple validationErrorCount depuis le dernier rapport) -
+		// On ne relie PAS `ctx.validation` : ce pointeur attend un
+		// `ValidationContext` (vues documents), or on ne conserve entre frames que
+		// le `ZoneValidator::Report` (`m_lastValidationReport`), pas le contexte
+		// source (construit localement et détruit dans RunZoneValidation). On
+		// transfère donc seulement le compteur d'erreurs, suffisant pour
+		// ExportAttemptedWithErrorsRule.
+		if (m_validationHasRun)
+		{
+			ctx.validationErrorCount = m_lastValidationReport.errorCount;
+		}
+
+		// --- Champs SANS source de suivi runtime fiable : défauts neutres ------
+		// Les champs ci-dessous n'ont pas de source d'instrumentation à ce stade ;
+		// on les laisse à leur valeur par défaut sûre (pas de fausse donnée) — à
+		// instrumenter en 2e passe (suivi temporel + journal d'actions d'usage) :
+		//   - hasOpenedDialog               : pas de suivi d'ouverture de dialogue.
+		//   - secondsSinceToolSelected      : pas d'horodatage de sélection d'outil.
+		//   - commandsSinceToolSelected     : pas de compteur ré-armé à la sélection.
+		//   - presetJustAppliedNotSaved     : pas de signal « preset appliqué ».
+		//   - hasUserAttemptedExport        : pas de trace de tentative d'export.
+		//   - erosionAppliedAfterRivers     : pas de suivi d'ordre érosion/rivières.
+		//   - cavePlacedWithoutCamouflage   : pas d'analyse jointure grotte/splat.
+		//   - attemptedAdvancedFeature      : pas de trace d'accès param avancé.
+		//   - recentCommandHistory          : pas d'historique de labels exposé.
+		// Conséquence : les règles dépendant uniquement de ces champs restent
+		// silencieuses (comportement voulu — mieux que des suggestions fantaisistes).
+
+		return ctx;
 	}
 
 #if defined(_WIN32)
@@ -2115,9 +2253,98 @@ namespace engine::editor
 			IM_COL32(230, 230, 230, 255),
 			instr.bodyFr.c_str(), nullptr, bubbleW - pad.x * 2.f);
 	}
+
+	void WorldEditorImGui::RenderDiagnosticPanel()
+	{
+		if (!m_showDiagnosticPanel)
+		{
+			return;
+		}
+		namespace diag = engine::editor::world::diagnostic;
+
+		ImGui::Begin("Diagnostic", &m_showDiagnosticPanel);
+
+		ImGui::TextWrapped(
+			"Analyse l'etat d'usage courant (outil, zone, sauvegarde) et propose "
+			"des pistes pour debloquer ton workflow.");
+		ImGui::Separator();
+
+		// Bouton « Analyser » : (re)calcule le rapport. L'analyse N'A LIEU qu'au
+		// clic (pas chaque frame) pour rester explicite et bon marché.
+		if (ImGui::Button("Analyser"))
+		{
+			m_lastDiagnosticReport = m_diagnosticSystem.Analyze(BuildDiagnosticContext());
+			m_diagnosticHasRun = true;
+			LOG_INFO(Render,
+				"[WorldEditorImGui] Diagnostic : {} critique(s), {} forte(s), {} astuce(s).",
+				m_lastDiagnosticReport.criticalCount, m_lastDiagnosticReport.strongCount,
+				m_lastDiagnosticReport.tipCount);
+		}
+		ImGui::SameLine();
+		if (!m_diagnosticHasRun)
+		{
+			ImGui::TextDisabled("Aucune analyse lancee.");
+			ImGui::End();
+			return;
+		}
+
+		const diag::DiagnosticSystem::Report& rep = m_lastDiagnosticReport;
+
+		// Compteurs colorés par importance (Critical rouge / Strong ambre / Tip gris).
+		ImGui::TextColored(ImVec4(1.f, 0.4f, 0.35f, 1.f), "Critiques : %u", rep.criticalCount);
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(1.f, 0.82f, 0.35f, 1.f), "Fortes : %u", rep.strongCount);
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.f), "Astuces : %u", rep.tipCount);
+		ImGui::Separator();
+
+		if (rep.IsClean())
+		{
+			ImGui::TextColored(ImVec4(0.5f, 0.95f, 0.55f, 1.f),
+				"Tu as l'air sur les bons rails ! Aucune suggestion.");
+			ImGui::End();
+			return;
+		}
+
+		// Liste triée par importance décroissante (garanti par DiagnosticSystem).
+		// AFFICHAGE SEUL : le libellé d'action « one-click » est montré tel quel,
+		// AUCUNE exécution n'est câblée ici (action réelle = passe UI séparée).
+		for (size_t i = 0; i < rep.suggestions.size(); ++i)
+		{
+			const diag::DiagnosticSuggestion& sug = rep.suggestions[i];
+			ImVec4 impColor;
+			const char* impLabel;
+			switch (sug.importance)
+			{
+			case diag::SuggestionImportance::Critical: impColor = ImVec4(1.f, 0.4f, 0.35f, 1.f);  impLabel = "[CRITIQUE]"; break;
+			case diag::SuggestionImportance::Strong:   impColor = ImVec4(1.f, 0.82f, 0.35f, 1.f); impLabel = "[FORT]";     break;
+			default:                                   impColor = ImVec4(0.7f, 0.7f, 0.7f, 1.f);  impLabel = "[ASTUCE]";   break;
+			}
+			ImGui::PushID(static_cast<int>(i));
+			ImGui::TextColored(impColor, "%s", impLabel);
+			ImGui::SameLine();
+			ImGui::TextWrapped("%s", sug.titleFr.c_str());
+			if (!sug.explanationFr.empty())
+			{
+				ImGui::TextWrapped("%s", sug.explanationFr.c_str());
+			}
+			// Libellé d'action PROPOSÉE — affiché en italique grisé, désactivé :
+			// le câblage de l'action effective + la modale de confirmation sont
+			// une passe UI séparée. On ne propose donc PAS de bouton cliquable.
+			if (!sug.oneClickActionLabelFr.empty())
+			{
+				ImGui::TextDisabled("Action proposee : %s", sug.oneClickActionLabelFr.c_str());
+			}
+			ImGui::PopID();
+			ImGui::Separator();
+		}
+
+		ImGui::End();
+	}
 #else
 	void WorldEditorImGui::RenderValidationPanel() {}
 	void WorldEditorImGui::RenderGuidanceOverlay() {}
+	void WorldEditorImGui::RenderDiagnosticPanel() {}
 #endif
 
 	bool WorldEditorImGui::WantsCaptureMouse() const

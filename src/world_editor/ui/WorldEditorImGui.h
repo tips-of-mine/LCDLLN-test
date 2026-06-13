@@ -18,6 +18,12 @@
 #include "src/world_editor/validation/ZoneValidator.h"
 #include "src/world_editor/help/OverlayGuidanceSystem.h"
 #include "src/world_editor/help/WidgetTargetRegistry.h"
+// Lot C vague 4 — sous-système diagnostic (« Pourquoi ça ne marche pas ? ») :
+// registre de règles workflow + moteur d'analyse. Inclus en entier (objets-valeur
+// membres du `WorldEditorImGui`, taille requise à la déclaration).
+#include "src/world_editor/diagnostic/DiagnosticRuleRegistry.h"
+#include "src/world_editor/diagnostic/DiagnosticSystem.h"
+#include "src/world_editor/diagnostic/IDiagnosticRule.h"
 
 namespace engine::core
 {
@@ -234,6 +240,30 @@ namespace engine::editor
 		/// après le rendu de chaque widget-cible.
 		engine::editor::world::help::WidgetTargetRegistry m_widgetTargets;
 
+		// ── Lot C vague 4 : diagnostic « Pourquoi ça ne marche pas ? » ─────────
+		/// Registre des règles workflow MVP (10 règles, cf. RegisterMvpDiagnosticRules).
+		/// Rempli une seule fois au premier `BuildUi` (les règles sont sans état,
+		/// le registre prend l'ownership — réenregistrer empilerait des doublons,
+		/// d'où le flag `m_diagnosticRegistered`).
+		engine::editor::world::diagnostic::DiagnosticRuleRegistry m_diagnosticRegistry;
+		/// Moteur d'analyse référençant `m_diagnosticRegistry` (non-owning) ; déclaré
+		/// APRÈS le registre pour que sa durée de vie soit englobée (le système garde
+		/// une référence const sur le registre).
+		engine::editor::world::diagnostic::DiagnosticSystem m_diagnosticSystem{ m_diagnosticRegistry };
+		/// True après le 1er `RegisterMvpDiagnosticRules` — évite de réenregistrer
+		/// les règles à chaque frame.
+		bool m_diagnosticRegistered = false;
+		/// Flag de visibilité du panneau « Diagnostic » (toggle via menu Aide,
+		/// ouvert aussi par le bouton « Analyser »).
+		bool m_showDiagnosticPanel = false;
+		/// Dernier rapport produit par « Analyser ». Conservé entre frames pour
+		/// que le panneau affiche les suggestions sans réanalyser à chaque frame
+		/// (l'analyse n'a lieu qu'au clic sur « Analyser »).
+		engine::editor::world::diagnostic::DiagnosticSystem::Report m_lastDiagnosticReport;
+		/// True dès qu'au moins une analyse a été lancée (sinon le panneau affiche
+		/// « aucune analyse lancée » plutôt qu'un rapport vide trompeur).
+		bool m_diagnosticHasRun = false;
+
 		/// Lot C vague 4 — Construit un `ValidationContext` (vues lecture seule)
 		/// depuis les documents du shell branché puis exécute `m_zoneValidator`,
 		/// stockant le résultat dans `m_lastValidationReport`. No-op si `m_shell`
@@ -260,6 +290,29 @@ namespace engine::editor
 		/// À appeler en fin de frame UI, juste avant `ImGui::Render`.
 		/// Effet de bord : ImGui foreground draw list uniquement.
 		void RenderGuidanceOverlay();
+
+		/// Lot C vague 4 — Construit un `DiagnosticContext` (état d'USAGE courant)
+		/// depuis l'état runtime accessible via `m_shell` (outil actif, nombre de
+		/// chunks, profondeur undo) + le dernier rapport de validation. Lecture
+		/// seule : ne modifie aucun document (pas de chargement disque, contrairement
+		/// à `RunZoneValidation`). Les champs sans source de suivi fiable (timing,
+		/// pièges d'usage spécifiques, mode Simple) gardent leur défaut neutre — voir
+		/// commentaires inline (« à instrumenter en 2e passe »). Retourne un contexte
+		/// vide (tous champs défaut) si `m_shell` est nul.
+		/// Compilée CROSS-PLATFORM (hors garde `_WIN32`, comme `RunZoneValidation`) :
+		/// tous les types y sont pleinement qualifiés pour le build Linux.
+		/// Contrainte thread : main thread (accès documents du shell).
+		engine::editor::world::diagnostic::DiagnosticContext BuildDiagnosticContext() const;
+
+		/// Lot C vague 4 — Rend le panneau ImGui « Diagnostic » (« Pourquoi ça ne
+		/// marche pas ? ») : bouton « Analyser » (appelle `m_diagnosticSystem.Analyze`
+		/// sur `BuildDiagnosticContext()` et stocke le résultat), puis liste les
+		/// suggestions triées par importance (Critical → Tip) avec leur libellé
+		/// d'action PROPOSÉE — affichage seul, AUCUNE exécution one-click. No-op si
+		/// `m_showDiagnosticPanel` est faux. Effet de bord : ImGui state, met
+		/// `m_lastDiagnosticReport`/`m_diagnosticHasRun` à jour au clic « Analyser ».
+		/// Doit être appelée pendant la frame UI (entre NewFrame et Render).
+		void RenderDiagnosticPanel();
 
 #if defined(_WIN32)
 		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;

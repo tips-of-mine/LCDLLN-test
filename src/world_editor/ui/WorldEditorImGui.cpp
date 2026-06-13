@@ -20,9 +20,6 @@
 #include "src/world_editor/volumes/caves/CaveTool.h"
 #include "src/world_editor/volumes/dungeons/DungeonPortalTool.h"
 #include "src/world_editor/volumes/overhangs/OverhangTool.h"
-// Lot C vague 4 — loader du tutoriel « first_launch » (BuildFirstLaunchTutorial
-// via LoadTutorialById). Pur, compilé toutes plateformes.
-#include "src/world_editor/tutorial/TutorialIo.h"
 #include "src/client/render/DayNightCycle.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/platform/Window.h"
@@ -404,18 +401,7 @@ namespace engine::editor
 	// être visible ici pour que `std::unique_ptr<ZonePresetDialog>` puisse
 	// générer son cleanup d'exception. L'`#include` au top du fichier
 	// fournit le type complet.
-	WorldEditorImGui::WorldEditorImGui()
-	{
-		// Lot C vague 4 — Charge la définition du tutoriel « first_launch » dès la
-		// construction (logique pure, sans ImGui ni Vulkan : compilée sur toutes les
-		// plateformes). Le tutoriel n'est PAS démarré ici : le lancement est manuel
-		// via le menu « Aide → Lancer le tutoriel ». LoadTutorialById route vers
-		// BuildFirstLaunchTutorial pour le MVP (chargement JSON différé).
-		if (auto def = engine::editor::world::tutorial::LoadTutorialById("first_launch"))
-		{
-			m_tutorial.LoadTutorial(std::move(*def));
-		}
-	}
+	WorldEditorImGui::WorldEditorImGui() = default;
 
 	WorldEditorImGui::~WorldEditorImGui()
 	{
@@ -823,12 +809,6 @@ namespace engine::editor
 				m_widgetTargets.Register("menubar.file.export_runtime",
 					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
 					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
-				// Tutoriel — étape 8 (« Exporter ») cible l'id `menubar.file.export`
-				// (id exact de TutorialIo). Même widget que l'export runtime : on
-				// enregistre le rectangle sous ce second id pour le surlignage.
-				m_widgetTargets.Register("menubar.file.export",
-					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
-					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
 				if (exportBlocked && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
 				{
 					ImGui::SetTooltip("Export bloque : corrigez les erreurs de validation (panneau Validation).");
@@ -850,10 +830,6 @@ namespace engine::editor
 					&& m_shell)
 				{
 					m_showWizard = true;
-					// Tutoriel — étape 1 (« Ouvre le dialog ») : l'assistant
-					// « Nouvelle zone » est l'autre porte d'entrée vers la création
-					// de zone ; il valide la même action `zone_preset_dialog.opened`.
-					m_overlay.NotifyAction("zone_preset_dialog.opened");
 				}
 				m_widgetTargets.Register("menubar.file.new_zone_wizard",
 					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
@@ -866,16 +842,7 @@ namespace engine::editor
 					&& m_shell && m_zonePresetDialog)
 				{
 					m_zonePresetDialog->Open();
-					// Tutoriel — étape 1 (« Ouvre le dialog ») : l'ouverture du
-					// dialog preset valide l'action `zone_preset_dialog.opened`.
-					m_overlay.NotifyAction("zone_preset_dialog.opened");
 				}
-				// Tutoriel — étape 1 cible ce widget (`menubar.file.new_from_preset`,
-				// id exact de TutorialIo). On enregistre son rectangle pour que le
-				// surlignage de l'overlay le pointe.
-				m_widgetTargets.Register("menubar.file.new_from_preset",
-					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
-					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
 				ImGui::Separator();
 				if (ImGui::MenuItem("Importer une texture (PNG/JPG/TGA/BMP)...", nullptr, false, m_session != nullptr && m_cfg != nullptr)
 					&& m_session && m_cfg)
@@ -1031,17 +998,6 @@ namespace engine::editor
 			{
 				ImGui::MenuItem("Diagnostic (pourquoi ca ne marche pas ?)", nullptr,
 					&m_showDiagnosticPanel);
-				ImGui::Separator();
-				// Lot C vague 4 — Lance MANUELLEMENT le tutoriel interactif
-				// « first_launch » (8 étapes) via l'OverlayGuidanceSystem. Pas
-				// d'auto-lancement au premier démarrage dans cette tranche : la
-				// détection premier-lancement (UserPrefs) reste à câbler
-				// (auto-start différé). L'utilisateur peut TOUJOURS sortir via
-				// le bouton « Passer le tutoriel » du voile (cf. RenderGuidanceOverlay).
-				if (ImGui::MenuItem("Lancer le tutoriel (premier lancement)"))
-				{
-					m_tutorial.Start(m_overlay);
-				}
 				ImGui::EndMenu();
 			}
 			// Barre d'outils rapide a droite du menu : sauvegarde 1-clic + chargement carte.
@@ -1987,9 +1943,6 @@ namespace engine::editor
 			m_lastValidationReport = engine::editor::world::validation::ZoneValidator::Report{};
 			m_validationHasRun = true;
 			m_showValidationPanel = true;
-			// Tutoriel — étape 7 : même sans shell/config, le panneau Validation
-			// s'ouvre -> on valide l'action pour ne pas bloquer la progression.
-			m_overlay.NotifyAction("panel.validation.opened");
 			LOG_WARN(Render,
 				"[WorldEditorImGui] Validation impossible : shell ou config non branche.");
 			return;
@@ -2055,11 +2008,6 @@ namespace engine::editor
 		m_lastValidationReport = m_zoneValidator.Validate(ctx);
 		m_validationHasRun = true;
 		m_showValidationPanel = true;
-		// Tutoriel — étape 7 (« Valide ta zone ») : valider ouvre le panneau
-		// Validation -> valide l'action `panel.validation.opened`. Appel pur
-		// (logique seule) : compilé cross-plateforme comme cette fonction. No-op
-		// si aucune séquence tutoriel n'est active.
-		m_overlay.NotifyAction("panel.validation.opened");
 		LOG_INFO(Render,
 			"[WorldEditorImGui] Validation zone : {} erreur(s), {} avertissement(s), {} indice(s) "
 			"sur {} chunk(s) terrain, {} mesh insert(s).",
@@ -2264,12 +2212,6 @@ namespace engine::editor
 		m_wizardLastPresetId = preset.id;
 		m_wizardHasGenerated = true;
 
-		// Tutoriel — étape 3 (« Crée la zone ») : la génération via l'assistant
-		// produit effectivement la zone -> valide l'action `zone.created`. Appel
-		// pur (logique seule, sans ImGui) : compilé cross-plateforme comme le reste
-		// de cette fonction. No-op si aucune séquence tutoriel n'est active.
-		m_overlay.NotifyAction("zone.created");
-
 		LOG_INFO(Render,
 			"[WorldEditorImGui] Wizard '{}' termine (pushed={}, skipped={}, failed={}, annule={}).",
 			preset.id, m_wizardLastSummary.commandsPushed,
@@ -2423,47 +2365,6 @@ namespace engine::editor
 			ImVec2(bubbleMin.x + pad.x, bubbleMin.y + pad.y * 2.f + titleH),
 			IM_COL32(230, 230, 230, 255),
 			instr.bodyFr.c_str(), nullptr, bubbleW - pad.x * 2.f);
-
-		// ── PRINCIPE DE SÉCURITÉ : sorties manuelles TOUJOURS disponibles ──────
-		// Le voile pourrait sinon piéger l'utilisateur si un `NotifyAction` n'est
-		// jamais émis (étape dont le site UI n'est pas instrumenté). On expose donc
-		// EN PERMANENCE deux boutons cliquables :
-		//   - « Étape suivante » → `m_overlay.AdvanceStep()` (avance même sans action) ;
-		//   - « Passer le tutoriel » → `m_overlay.AbortSequence()` (sort du voile).
-		// Ces boutons sont des widgets ImGui réels (pas du draw-list brut) pour
-		// capter le clic. La fenêtre hôte est sans décoration, ancrée en bas-droite
-		// du viewport, au-dessus du voile (TopMost via le foreground n'étant pas
-		// cliquable, on s'appuie sur l'ordre de rendu : cette fenêtre est dessinée
-		// après le dockspace, donc reçoit les clics).
-		const float kBtnPanelW = 320.f;
-		const float kBtnPanelH = 56.f;
-		ImGui::SetNextWindowPos(
-			ImVec2(vpMax.x - kBtnPanelW - 24.f, vpMax.y - kBtnPanelH - 24.f),
-			ImGuiCond_Always);
-		ImGui::SetNextWindowSize(ImVec2(kBtnPanelW, kBtnPanelH), ImGuiCond_Always);
-		ImGui::SetNextWindowBgAlpha(0.92f);
-		const ImGuiWindowFlags ctrlFlags =
-			ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
-			ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavInputs |
-			ImGuiWindowFlags_NoDocking;
-		if (ImGui::Begin("##tutorial_controls", nullptr, ctrlFlags))
-		{
-			// Étape N/Total pour situer l'utilisateur (1-based à l'affichage).
-			ImGui::Text("Etape %zu / %zu",
-				m_overlay.CurrentIndex() + 1u, m_overlay.StepCount());
-			ImGui::SameLine();
-			if (ImGui::Button("Etape suivante"))
-			{
-				m_overlay.AdvanceStep();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Passer le tutoriel"))
-			{
-				m_overlay.AbortSequence();
-			}
-		}
-		ImGui::End();
 	}
 
 	void WorldEditorImGui::RenderDiagnosticPanel()

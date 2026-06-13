@@ -11,15 +11,6 @@
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/WorldEditorShell.h"
 #include "src/world_editor/zone_presets/ZonePresetDialog.h"
-// Lot C vague 4 — assistant « Nouvelle zone » : exécution d'un ZonePreset résolu
-// par le wizard via le MÊME chemin que le ZonePresetDialog (executor + dispatch
-// context construit depuis les outils/catalogs du Shell).
-#include "src/world_editor/zone_presets/OperationDispatcher.h"
-#include "src/world_editor/zone_presets/ZonePreset.h"
-#include "src/world_editor/volumes/arches/ArchTool.h"
-#include "src/world_editor/volumes/caves/CaveTool.h"
-#include "src/world_editor/volumes/dungeons/DungeonPortalTool.h"
-#include "src/world_editor/volumes/overhangs/OverhangTool.h"
 #include "src/client/render/DayNightCycle.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/platform/Window.h"
@@ -38,7 +29,6 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <utility>
 #include <vector>
 
 #if defined(_WIN32)
@@ -822,18 +812,6 @@ namespace engine::editor
 					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
 					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
 				ImGui::Separator();
-				// Lot C vague 4 — assistant « Nouvelle zone » (QuickStartWizard).
-				// Désactivé si le Shell n'est pas branché (la génération a besoin
-				// des 4 documents + catalogs + CommandStack, comme le dialog preset).
-				if (ImGui::MenuItem("Nouvelle zone (assistant)...", nullptr, false,
-					m_shell != nullptr)
-					&& m_shell)
-				{
-					m_showWizard = true;
-				}
-				m_widgetTargets.Register("menubar.file.new_zone_wizard",
-					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
-					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
 				// M100.46 incrément 3 — entrée menu pour appliquer un Zone
 				// Preset. Désactivée si le Shell n'est pas branché (le
 				// dialog a besoin des 4 documents + catalogs).
@@ -1917,10 +1895,6 @@ namespace engine::editor
 		// Rendu avant l'overlay de guidance pour que ce dernier (foreground draw
 		// list) puisse, le cas échéant, le surligner comme cible de tutoriel.
 		RenderDiagnosticPanel();
-		// Lot C vague 4 — Fenêtre de l'assistant « Nouvelle zone » (no-op si
-		// fermée). Rendue avant l'overlay de guidance pour que ce dernier puisse,
-		// le cas échéant, surligner ses widgets comme cibles de tutoriel.
-		RenderWizardWindow();
 		RenderGuidanceOverlay();
 
 		ImGui::Render();
@@ -2130,93 +2104,6 @@ namespace engine::editor
 		// silencieuses (comportement voulu — mieux que des suggestions fantaisistes).
 
 		return ctx;
-	}
-
-	// ─────────────────────────────────────────────────────────────────────────
-	// Lot C vague 4 — Assistant « Nouvelle zone » (QuickStartWizard).
-	// RunWizardGeneration est CROSS-PLATFORM (hors garde _WIN32, comme
-	// RunZoneValidation / BuildDiagnosticContext) : tous les types y sont
-	// pleinement qualifiés (le build Linux compile cette fonction).
-	//
-	// NOTE P0 (rollback transactionnel) — partagée avec le ZonePresetDialog :
-	// `ZonePresetExecutor::Execute` commence par VIDER les 4 documents de la
-	// zone (terrain / water / mesh inserts / portails de donjon) via
-	// `ResetEditedZoneDocuments`. Ce reset est DESTRUCTIF et NON annulable (il
-	// n'est pas poussé comme commande sur le CommandStack). Si l'exécution
-	// échoue en plein milieu, la zone précédente est déjà perdue. Un rollback
-	// transactionnel (snapshot avant reset + restauration sur échec/annulation)
-	// est un follow-up P0 qui bénéficierait aux DEUX points d'entrée — le dialog
-	// preset ET cet assistant — puisqu'ils partagent le même `ZonePresetExecutor`.
-	// En attendant, les deux UI affichent une modale de confirmation explicite
-	// recommandant de sauvegarder d'abord.
-	// ─────────────────────────────────────────────────────────────────────────
-	void WorldEditorImGui::RunWizardGeneration()
-	{
-		// Sans shell branché, aucun document cible : on ne génère rien (le menu
-		// est déjà désactivé dans ce cas, ceci est une garde défensive).
-		if (m_shell == nullptr)
-		{
-			LOG_WARN(Render,
-				"[WorldEditorImGui] Generation wizard impossible : shell non branche.");
-			return;
-		}
-
-		namespace zp     = engine::editor::world::zone_presets;
-		namespace wizard = engine::editor::world::wizard;
-
-		// 1) Choix du wizard → ZonePreset (résolution déterministe, id dérivé des
-		//    choix). Le seed UI est déjà recopié dans le wizard via SetSeed.
-		const wizard::WizardChoices& choices = m_wizard.Choices();
-		const zp::ZonePreset preset = m_wizardResolver.Resolve(choices);
-
-		// 2) Customisation : le wizard ne porte pas de curseurs relief/eau/dryness
-		//    (ils sont encodés dans le template résolu). On laisse les
-		//    multiplicateurs neutres (1.0) et on propage le seed du wizard, comme
-		//    le ZonePresetDialog le fait pour son propre champ seed.
-		zp::CustomizationParams custom;
-		custom.reliefMultiplier       = 1.0f;
-		custom.waterDensityMultiplier = 1.0f;
-		custom.drynessMultiplier      = 1.0f;
-		custom.seed                   = choices.seed;
-
-		// 3) DispatchContext construit EXACTEMENT comme dans
-		//    ZonePresetDialog::RunSelectedPreset (mêmes documents, mêmes catalogs,
-		//    même Config pour les 4 ops simulation). Réutilisation du chemin
-		//    canonique : aucune divergence de câblage entre dialog et wizard.
-		const zp::DispatchContext ctx{
-			m_shell->MutableTerrainDocument(),
-			m_shell->MutableWaterDocument(),
-			m_shell->MutableMeshInsertDocument(),
-			m_shell->MutableDungeonPortalDocument(),
-			m_shell->GetCaveTool().Catalog(),
-			m_shell->GetOverhangTool().Catalog(),
-			m_shell->GetArchTool().Catalog(),
-			m_shell->GetDungeonPortalTool().Catalog(),
-			m_cfg,  // requis par les 4 ops simulation ; si null elles renvoient Failed.
-		};
-
-		LOG_INFO(Render,
-			"[WorldEditorImGui] Wizard genere '{}' (climat={} relief={} cote={} poi={} seed={})",
-			preset.id, choices.climate, choices.relief, choices.coast, choices.poi,
-			choices.seed);
-
-		// 4) Exécution synchrone sur le CommandStack du Shell (main thread bloqué
-		//    le temps de l'exécution — convention single-thread éditeur, cf.
-		//    ZonePresetExecutor.h). Callback de progression inerte (on ne peut pas
-		//    pumper ImGui pendant Execute) ; la progression part au log.
-		zp::ZonePresetExecutor executor;
-		m_wizardLastSummary = executor.Execute(preset, custom,
-			m_shell->MutableCommandStack(), ctx,
-			[](const zp::ExecutionProgress&) { return true; });
-
-		m_wizardLastPresetId = preset.id;
-		m_wizardHasGenerated = true;
-
-		LOG_INFO(Render,
-			"[WorldEditorImGui] Wizard '{}' termine (pushed={}, skipped={}, failed={}, annule={}).",
-			preset.id, m_wizardLastSummary.commandsPushed,
-			m_wizardLastSummary.unsupportedSkipped, m_wizardLastSummary.failed,
-			m_wizardLastSummary.wasCancelled ? "oui" : "non");
 	}
 
 #if defined(_WIN32)
@@ -2454,236 +2341,10 @@ namespace engine::editor
 
 		ImGui::End();
 	}
-
-	namespace
-	{
-		/// Dessine une rangée de cartes de choix pour une étape du wizard.
-		/// Chaque carte est un `Selectable` qui, au clic, applique la valeur
-		/// associée via `SetChoiceForCurrentStep`. La carte correspondant à la
-		/// valeur courante est mise en évidence (cadre actif ImGui).
-		/// \param wizard       machine d'état du wizard (modifiée au clic).
-		/// \param currentValue valeur actuellement retenue pour cette étape
-		///                     (issue de `wizard.Choices()`), pour le surlignage.
-		/// \param options      paires {valeur interne, libellé FR affiché}.
-		/// Effet de bord : appelle `wizard.SetChoiceForCurrentStep` au clic
-		/// (modifie les choix). À appeler en main thread (rendu ImGui).
-		void DrawWizardChoiceCards(
-			engine::editor::world::wizard::QuickStartWizard& wizard,
-			const std::string& currentValue,
-			const std::vector<std::pair<const char*, const char*>>& options)
-		{
-			for (size_t i = 0; i < options.size(); ++i)
-			{
-				const char* value = options[i].first;
-				const char* label = options[i].second;
-				const bool selected = (currentValue == value);
-				ImGui::PushID(static_cast<int>(i));
-				// Carte de largeur fixe, alignées horizontalement (3-4 par étape).
-				if (ImGui::Selectable(label, selected, 0, ImVec2(150.0f, 60.0f)))
-				{
-					(void)wizard.SetChoiceForCurrentStep(value);
-				}
-				ImGui::PopID();
-				if (i + 1 < options.size())
-				{
-					ImGui::SameLine();
-				}
-			}
-		}
-	} // namespace
-
-	/// Rend la fenêtre de l'assistant « Nouvelle zone » (5 étapes) + sa modale
-	/// de confirmation de génération. Doit être appelée chaque frame depuis
-	/// BuildUi. Effet de bord : ImGui state ; déclenche `RunWizardGeneration`
-	/// à la confirmation de la modale.
-	void WorldEditorImGui::RenderWizardWindow()
-	{
-		if (!m_showWizard)
-		{
-			return;
-		}
-
-		namespace wizard = engine::editor::world::wizard;
-
-		ImGui::SetNextWindowSize(ImVec2(640.0f, 480.0f), ImGuiCond_FirstUseEver);
-		if (!ImGui::Begin("Nouvelle zone (assistant)", &m_showWizard,
-			ImGuiWindowFlags_NoSavedSettings))
-		{
-			ImGui::End();
-			return;
-		}
-
-		const wizard::WizardStep step = m_wizard.CurrentStep();
-		const wizard::WizardChoices& choices = m_wizard.Choices();
-
-		// En-tête : numéro et nom de l'étape courante (5 étapes au total).
-		static const char* kStepNames[5] = {
-			"1/5 - Climat", "2/5 - Relief", "3/5 - Cote", "4/5 - Points d'interet",
-			"5/5 - Apercu" };
-		const int stepIdx = static_cast<int>(step);
-		ImGui::TextColored(ImVec4(1.f, 0.82f, 0.35f, 1.f), "Etape %s",
-			kStepNames[stepIdx < 0 || stepIdx > 4 ? 4 : stepIdx]);
-		ImGui::Separator();
-
-		// Corps : cartes de choix selon l'étape, ou récapitulatif à l'Aperçu.
-		switch (step)
-		{
-		case wizard::WizardStep::Climate:
-			ImGui::TextWrapped("Choisis le climat dominant de la zone.");
-			ImGui::Spacing();
-			DrawWizardChoiceCards(m_wizard, choices.climate, {
-				{ "temperate", "Tempere" }, { "arid", "Aride" },
-				{ "polar", "Polaire" }, { "tropical", "Tropical" } });
-			break;
-		case wizard::WizardStep::Relief:
-			ImGui::TextWrapped("Choisis le relief general du terrain.");
-			ImGui::Spacing();
-			DrawWizardChoiceCards(m_wizard, choices.relief, {
-				{ "plains", "Plaines" }, { "hills", "Collines" },
-				{ "mountains", "Montagnes" }, { "escarped", "Escarpe" } });
-			break;
-		case wizard::WizardStep::Coast:
-			ImGui::TextWrapped("Quel rapport la zone a-t-elle a la cote ?");
-			ImGui::Spacing();
-			DrawWizardChoiceCards(m_wizard, choices.coast, {
-				{ "interior", "Interieur" }, { "moderate", "Cote moderee" },
-				{ "dramatic", "Cote spectaculaire" } });
-			break;
-		case wizard::WizardStep::Poi:
-			ImGui::TextWrapped("Ajoute un point d'interet principal (optionnel).");
-			ImGui::Spacing();
-			DrawWizardChoiceCards(m_wizard, choices.poi, {
-				{ "none", "Aucun" }, { "cave", "Grotte" },
-				{ "ruin", "Ruine" }, { "dungeon", "Donjon" } });
-			break;
-		case wizard::WizardStep::Preview:
-		default:
-			ImGui::TextWrapped("Recapitulatif des choix. Ajuste le seed puis genere "
-				"la zone.");
-			ImGui::Spacing();
-			ImGui::BulletText("Climat : %s", choices.climate.c_str());
-			ImGui::BulletText("Relief : %s", choices.relief.c_str());
-			ImGui::BulletText("Cote   : %s", choices.coast.c_str());
-			ImGui::BulletText("POI    : %s", choices.poi.c_str());
-			ImGui::Spacing();
-			// Champ seed → SetSeed (le wizard ne valide pas le seed).
-			if (ImGui::InputInt("Seed RNG", &m_wizardSeed, 1, 100))
-			{
-				if (m_wizardSeed < 0) m_wizardSeed = 0;
-				m_wizard.SetSeed(static_cast<uint32_t>(m_wizardSeed));
-			}
-			break;
-		}
-
-		// Pied de page : navigation + (à l'Aperçu) bouton Générer.
-		ImGui::Separator();
-
-		// Précédent : actif sauf à la 1re étape.
-		const bool canPrev = (step != wizard::WizardStep::Climate);
-		if (!canPrev) ImGui::BeginDisabled();
-		if (ImGui::Button("Precedent", ImVec2(120.0f, 0.0f)) && canPrev)
-		{
-			(void)m_wizard.Prev();
-		}
-		if (!canPrev) ImGui::EndDisabled();
-
-		ImGui::SameLine();
-
-		if (step != wizard::WizardStep::Preview)
-		{
-			// Suivant : gardé par CanProceed (choix valide pour l'étape courante).
-			const bool canNext = m_wizard.CanProceed();
-			if (!canNext) ImGui::BeginDisabled();
-			if (ImGui::Button("Suivant", ImVec2(120.0f, 0.0f)) && canNext)
-			{
-				(void)m_wizard.Next();
-			}
-			if (!canNext) ImGui::EndDisabled();
-			if (!canNext && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-			{
-				ImGui::SetTooltip("Selectionne un choix pour continuer.");
-			}
-		}
-		else
-		{
-			// Étape Aperçu : bouton Générer actif seulement si prêt.
-			const bool canGenerate = m_wizard.IsReadyToGenerate();
-			if (!canGenerate) ImGui::BeginDisabled();
-			if (ImGui::Button("Generer", ImVec2(120.0f, 0.0f)) && canGenerate)
-			{
-				// Demande la modale de confirmation (poussée plus bas, hors de la
-				// pile de widgets disabled).
-				m_wizardConfirmRequested = true;
-			}
-			if (!canGenerate) ImGui::EndDisabled();
-		}
-
-		ImGui::SameLine();
-		if (ImGui::Button("Fermer", ImVec2(120.0f, 0.0f)))
-		{
-			m_showWizard = false;
-		}
-
-		// Bandeau de résumé de la dernière génération (sous le pied de page).
-		if (m_wizardHasGenerated)
-		{
-			ImGui::Separator();
-			ImGui::Text("Derniere generation : '%s'", m_wizardLastPresetId.c_str());
-			ImGui::Text("Commandes poussees : %u  -  Ignorees : %u  -  Echecs : %u",
-				m_wizardLastSummary.commandsPushed,
-				m_wizardLastSummary.unsupportedSkipped,
-				m_wizardLastSummary.failed);
-			if (m_wizardLastSummary.unsupportedSkipped > 0u)
-			{
-				ImGui::TextWrapped("Note : %u operation(s) non supportee(s) ont ete "
-					"ignorees (coastline / river_network / hydraulic_erosion / "
-					"thermal_wind_erosion sans chemin d'execution complet ici).",
-					m_wizardLastSummary.unsupportedSkipped);
-			}
-		}
-
-		// Ouverture de la modale de confirmation (au prochain frame après le clic
-		// « Generer »). On la pousse hors de tout bloc disabled.
-		if (m_wizardConfirmRequested)
-		{
-			ImGui::OpenPopup("Confirmer la generation##wizard_confirm");
-			m_wizardConfirmRequested = false;
-		}
-
-		// Modale de confirmation : la génération RÉINITIALISE la zone courante
-		// (reset destructif de l'executor, non annulable — P0 connu partagé avec
-		// le ZonePresetDialog). On recommande de sauvegarder d'abord.
-		if (ImGui::BeginPopupModal("Confirmer la generation##wizard_confirm", nullptr,
-			ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
-		{
-			ImGui::TextColored(ImVec4(1.f, 0.82f, 0.35f, 1.f),
-				"ATTENTION : action destructive et NON annulable.");
-			ImGui::Spacing();
-			ImGui::TextWrapped("La generation VIDE la zone courante (terrain, eau, "
-				"mesh inserts, portails de donjon) avant de la reconstruire. Cette "
-				"reinitialisation n'est pas annulable (Ctrl+Z ne la restaurera pas). "
-				"Sauvegarde la zone avant de continuer si tu veux la conserver.");
-			ImGui::Separator();
-			if (ImGui::Button("Generer (vider et reconstruire)", ImVec2(260.0f, 0.0f)))
-			{
-				RunWizardGeneration();
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Annuler", ImVec2(120.0f, 0.0f)))
-			{
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::EndPopup();
-		}
-
-		ImGui::End();
-	}
 #else
 	void WorldEditorImGui::RenderValidationPanel() {}
 	void WorldEditorImGui::RenderGuidanceOverlay() {}
 	void WorldEditorImGui::RenderDiagnosticPanel() {}
-	void WorldEditorImGui::RenderWizardWindow() {}
 #endif
 
 	bool WorldEditorImGui::WantsCaptureMouse() const

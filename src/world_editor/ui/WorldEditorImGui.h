@@ -18,6 +18,10 @@
 #include "src/world_editor/validation/ZoneValidator.h"
 #include "src/world_editor/help/OverlayGuidanceSystem.h"
 #include "src/world_editor/help/WidgetTargetRegistry.h"
+// Lot C vague 4 — TutorialSystem : pilote le tutoriel interactif « first_launch »
+// via l'OverlayGuidanceSystem ci-dessus. Inclus en entier (objet-valeur membre
+// du `WorldEditorImGui`, taille requise à la déclaration).
+#include "src/world_editor/tutorial/TutorialSystem.h"
 // Lot C vague 4 — sous-système diagnostic (« Pourquoi ça ne marche pas ? ») :
 // registre de règles workflow + moteur d'analyse. Inclus en entier (objets-valeur
 // membres du `WorldEditorImGui`, taille requise à la déclaration).
@@ -247,6 +251,12 @@ namespace engine::editor
 		/// (`m_widgetTargets.Clear()`) et rerempli depuis les positions ImGui réelles
 		/// après le rendu de chaque widget-cible.
 		engine::editor::world::help::WidgetTargetRegistry m_widgetTargets;
+		/// Tutoriel interactif « first_launch » (8 étapes). Chargé une fois dans le
+		/// constructeur (`LoadTutorialById("first_launch")`), démarré MANUELLEMENT
+		/// via le menu « Aide → Lancer le tutoriel » (`m_tutorial.Start(m_overlay)`).
+		/// Aucun auto-lancement au premier démarrage dans cette tranche (la détection
+		/// premier-lancement via UserPrefs reste à câbler — auto-start différé).
+		engine::editor::world::tutorial::TutorialSystem m_tutorial;
 
 		// ── Lot C vague 4 : diagnostic « Pourquoi ça ne marche pas ? » ─────────
 		/// Registre des règles workflow MVP (10 règles, cf. RegisterMvpDiagnosticRules).

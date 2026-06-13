@@ -35,6 +35,8 @@
 #include "src/client/gameplay/SpellKitCatalog.h"
 // Combat SP4 — FX visuels d'auras (halo aux pieds des entités).
 #include "src/client/combat/AuraFXSystem.h"
+// Réticule de ciblage au sol (cercles + cône de vision 120°, decal orienté).
+#include "src/client/combat/TargetReticleSystem.h"
 // Groupes SP1 — cadres de groupe (M32.2 enfin câblé).
 #include "src/client/social/PartyHud.h"
 // Métiers SP1 — barre de récolte (M36.1) + panneau d'artisanat (M36.2).
@@ -1303,6 +1305,10 @@ namespace engine
 		/// Combat SP4 — FX d'auras (couche données ; rendu = halo écran-espace
 		/// coloré aux pieds, couleur résolue par ResolveAuraVisuals).
 		engine::client::AuraFXSystem m_auraFx{};
+		/// Réticule de ciblage au sol sous l'ennemi sélectionné : deux cercles
+		/// clairs + secteur de vision 120° foncé tournant avec le yaw répliqué.
+		/// Decal différé persistant (remplace le rendu provisoire ImGui v12).
+		engine::client::TargetReticleSystem m_targetReticle{};
 		/// Groupes SP1 — cadres de groupe (PV/mana/nom/chef) + ciblage allié.
 		engine::client::PartyHudPresenter m_partyHud{};
 		/// Groupes SP1 — allié sélectionné au clic sur un cadre (entityId ==

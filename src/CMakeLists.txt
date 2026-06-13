@@ -727,6 +727,13 @@ elseif(UNIX)
   target_link_libraries(ln_theme_tests PRIVATE engine_core)
   add_test(NAME ln_theme_tests COMMAND ln_theme_tests)
 
+  # Réticule de ciblage au sol (cercles + cône de vision 120°) : géométrie
+  # analytique, paramétrage target_reticle.*, bake texture et cycle de fondu —
+  # logique pure CPU (TargetReticleGeometry.cpp est fourni par engine_core,
+  # aucune dépendance Vulkan dans le test).
+  lcdlln_add_simple_test(target_reticle_tests
+    ${CMAKE_SOURCE_DIR}/src/client/combat/TargetReticleTests.cpp)
+
   # CMANGOS.21 (Phase 3.21a) : GuildPermissionMatrix (header-only).
   lcdlln_add_simple_test(guild_permission_matrix_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/guild/GuildPermissionMatrixTests.cpp)

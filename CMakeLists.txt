@@ -262,6 +262,8 @@ add_library(engine_core
   src/client/auth/screens/AuthScreenCharacterCreate.cpp
   src/client/auth/screens/AuthScreenCharacterSelect.cpp
   src/client/combat/AoEPreviewSystem.cpp
+  src/client/combat/TargetReticleGeometry.cpp
+  src/client/combat/TargetReticleSystem.cpp
   src/client/combat/BuffBarPresenter.cpp
   src/client/combat/AuraFXSystem.cpp
   src/client/fx/FXManager.cpp

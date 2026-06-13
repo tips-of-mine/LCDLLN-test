@@ -12,6 +12,10 @@ layout(push_constant) uniform PC
     vec4 center;
     vec4 halfExtents;
     float fadeAlpha;
+    // Rotation du decal autour de Y (radians). 0 = aligné monde (decals
+    // historiques inchangés). Utilisé par le réticule de ciblage pour faire
+    // tourner le cône de vision avec le yaw du PNJ ciblé.
+    float yawRadians;
 } pc;
 
 void main()
@@ -28,6 +32,12 @@ void main()
     worldPos /= worldPos.w;
 
     vec3 local = worldPos.xyz - pc.center.xyz;
+    // Rotation de -yaw autour de Y : exprime le point dans le repère LOCAL du
+    // decal (convention jeu : regard du PNJ = (sin yaw, 0, cos yaw) -> +Z local).
+    // Miroir GPU de WorldOffsetToReticleLocal (TargetReticleGeometry.cpp).
+    float cy = cos(pc.yawRadians);
+    float sy = sin(pc.yawRadians);
+    local = vec3(cy * local.x - sy * local.z, local.y, sy * local.x + cy * local.z);
     vec3 absLocal = abs(local);
     if (absLocal.x > pc.halfExtents.x || absLocal.y > pc.halfExtents.y || absLocal.z > pc.halfExtents.z)
     {

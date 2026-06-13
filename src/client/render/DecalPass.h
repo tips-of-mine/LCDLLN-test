@@ -20,7 +20,10 @@ namespace engine::render
 		float center[4];
 		float halfExtents[4];
 		float fadeAlpha = 1.0f;
-		float _pad[3]{};
+		/// Rotation du decal autour de Y (radians) — occupe un ancien float de
+		/// padding : la taille (112 octets) et le pipeline layout sont inchangés.
+		float yawRadians = 0.0f;
+		float _pad[2]{};
 	};
 	static_assert(sizeof(DecalParams) == 112, "DecalParams must be exactly 112 bytes");
 

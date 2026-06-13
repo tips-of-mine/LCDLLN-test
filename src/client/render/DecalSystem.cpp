@@ -29,6 +29,7 @@ namespace engine::render
 		m_assetRegistry = nullptr;
 		m_maxVisibleDistanceMeters = 64.0f;
 		m_initialized = false;
+		m_nextPersistentHandle = 1;
 		LOG_INFO(Render, "[DecalSystem] Shutdown complete");
 	}
 
@@ -65,6 +66,69 @@ namespace engine::render
 		return true;
 	}
 
+	uint32_t DecalSystem::SpawnPersistent(const DecalComponent& component, TextureHandle albedoTexture)
+	{
+		if (!m_initialized)
+		{
+			LOG_WARN(Render, "[DecalSystem] SpawnPersistent ignored: system not initialized");
+			return 0;
+		}
+		if (!albedoTexture.IsValid())
+		{
+			LOG_WARN(Render, "[DecalSystem] SpawnPersistent ignored: invalid texture handle");
+			return 0;
+		}
+
+		ActiveDecal decal{};
+		decal.component = component;
+		decal.component.lifetimeSeconds = 0.0f; // persistant : pas de vieillissement.
+		decal.component.fadeDurationSeconds = 0.0f;
+		decal.albedoTexture = albedoTexture;
+		decal.fadeAlpha = 0.0f; // naît caché : l'appelant pilote l'alpha via UpdatePersistent.
+		decal.active = true;
+		decal.persistentHandle = m_nextPersistentHandle++;
+		m_decals.push_back(std::move(decal));
+
+		LOG_INFO(Render, "[DecalSystem] Spawned persistent decal (handle={}, yaw={:.2f})",
+			m_decals.back().persistentHandle, component.yawRadians);
+		return m_decals.back().persistentHandle;
+	}
+
+	bool DecalSystem::UpdatePersistent(uint32_t handle, const engine::math::Vec3& center,
+		const engine::math::Vec3& halfExtents, float yawRadians, float alpha)
+	{
+		if (!m_initialized || handle == 0)
+			return false;
+		for (ActiveDecal& decal : m_decals)
+		{
+			if (!decal.active || decal.persistentHandle != handle)
+				continue;
+			decal.component.center = center;
+			decal.component.halfExtents = halfExtents;
+			decal.component.yawRadians = yawRadians;
+			decal.fadeAlpha = std::clamp(alpha, 0.0f, 1.0f);
+			return true;
+		}
+		LOG_WARN(Render, "[DecalSystem] UpdatePersistent: unknown handle {}", handle);
+		return false;
+	}
+
+	void DecalSystem::DespawnPersistent(uint32_t handle)
+	{
+		if (handle == 0)
+			return;
+		for (ActiveDecal& decal : m_decals)
+		{
+			if (decal.persistentHandle == handle)
+			{
+				decal.active = false;
+				decal.persistentHandle = 0;
+				LOG_INFO(Render, "[DecalSystem] Despawned persistent decal (handle={})", handle);
+				return;
+			}
+		}
+	}
+
 	bool DecalSystem::Tick(float deltaSeconds)
 	{
 		if (!m_initialized)
@@ -84,6 +148,14 @@ namespace engine::render
 		{
 			if (!decal.active)
 			{
+				continue;
+			}
+
+			// Decal persistant : pas de lifetime ni de fade automatique — son
+			// alpha est piloté par l'appelant (UpdatePersistent).
+			if (decal.persistentHandle != 0)
+			{
+				++activeCount;
 				continue;
 			}
 
@@ -129,6 +201,13 @@ namespace engine::render
 				continue;
 			}
 
+			// Invisible (ex. réticule en attente de cible) : inutile d'émettre un
+			// draw fullscreen qui sera entièrement discard par le shader.
+			if (decal.fadeAlpha <= 0.001f)
+			{
+				continue;
+			}
+
 			TextureAsset* texture = decal.albedoTexture.Get();
 			if (texture == nullptr || texture->view == VK_NULL_HANDLE)
 			{
@@ -149,6 +228,7 @@ namespace engine::render
 			visible.texture = texture;
 			visible.fadeAlpha = decal.fadeAlpha;
 			visible.distanceToCameraSq = distanceSq;
+			visible.yawRadians = decal.component.yawRadians;
 			outVisibleDecals.push_back(visible);
 		}
 

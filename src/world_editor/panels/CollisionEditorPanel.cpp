@@ -1,6 +1,8 @@
 // src/world_editor/panels/CollisionEditorPanel.cpp
 #include "src/world_editor/panels/CollisionEditorPanel.h"
 #include "src/client/world/collision/ProxyWireframe.h"
+#include "src/client/world/collision/AutoFitProxy.h"
+#include "src/client/world/collision/CollisionMeshCpu.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -17,6 +19,7 @@ namespace engine::editor::world::panels
 		using engine::world::collision::CollisionProxy;
 		using engine::world::collision::ProxyType;
 		using engine::world::collision::Edge3D;
+		using engine::world::collision::CollisionMeshCpu;
 
 		/// Mesh test : cube unitaire centré sur origine (8 verts, 12 arêtes).
 		std::vector<Edge3D> MakeCubeEdges()
@@ -129,6 +132,26 @@ namespace engine::editor::world::panels
 				default: return MakeCubeEdges();
 			}
 		}
+
+		/// Construit un CollisionMeshCpu (sommets seuls) à partir du mesh test
+		/// sélectionné, pour alimenter AutoFit. Les sommets sont dérivés des
+		/// arêtes de preview : les doublons d'extrémités sont tolérés car AutoFit
+		/// ne lit que le nombre de sommets et la bounding box (jamais la topologie).
+		/// \param index 0=Cube, 1=Cylinder, 2=Sphere, 3=Slab (fallback Cube).
+		/// \return Mesh CPU non statique prêt pour engine::world::collision::AutoFit.
+		CollisionMeshCpu BuildTestMeshCpu(int index)
+		{
+			CollisionMeshCpu cpu;
+			const auto edges = GetTestMeshEdges(index);
+			cpu.vertices.reserve(edges.size() * 2);
+			for (const auto& e : edges)
+			{
+				cpu.vertices.push_back(e.first);
+				cpu.vertices.push_back(e.second);
+			}
+			cpu.isStatic = false;
+			return cpu;
+		}
 	}
 #endif // _WIN32
 
@@ -208,12 +231,7 @@ namespace engine::editor::world::panels
 		else if (m_proxy.type == ProxyType::ConvexHull)
 		{
 			ImGui::Text("Vertex count: %zu", m_proxy.vertices.size());
-			ImGui::BeginDisabled(true);
-			ImGui::Button("Re-run AutoFit");
-			ImGui::EndDisabled();
-			// Tooltip sur item disabled : requiert AllowWhenDisabled flag.
-			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-				ImGui::SetTooltip("Requires mesh CPU data — wired with mesh import (M100.34 ou follow-up)");
+			ImGui::TextDisabled("(AutoFit disponible sous l'apercu)");
 		}
 		else // TriMesh
 		{
@@ -228,6 +246,17 @@ namespace engine::editor::world::panels
 		ImGui::Combo("Test mesh", &m_testMeshIndex, meshNames, 4);
 		ImGui::SameLine();
 		if (ImGui::Button("Reset Camera")) m_camera.Reset();
+		ImGui::SameLine();
+		// Câblage AutoFit (M100.12) : choisit automatiquement un proxy
+		// (Capsule / ConvexHull / TriMesh) depuis le mesh test sélectionné.
+		if (ImGui::Button("AutoFit depuis le mesh test"))
+		{
+			const CollisionMeshCpu cpu = BuildTestMeshCpu(m_testMeshIndex);
+			m_proxy = engine::world::collision::AutoFit(cpu);
+			m_currentPath.clear();  // proxy généré : ne pas écraser un fichier chargé au Save
+			m_status = "AutoFit \xE2\x9C\x93";
+			m_statusFramesLeft = 60;
+		}
 
 		const ImVec2 previewSize{ 300.0f, 200.0f };
 		ImGui::BeginChild("##preview", previewSize, true,

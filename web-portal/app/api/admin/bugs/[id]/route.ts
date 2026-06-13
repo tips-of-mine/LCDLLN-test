@@ -9,10 +9,11 @@
 //  4. Set exploit_awarded = 1 on the bug report.
 
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth/admin'
+import { requireRole } from '@/lib/auth/admin'
 import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
 import { logError } from '@/lib/log'
+import { bugReportThresholdsEligible } from '@/lib/exploits/exploitTier'
 
 const VALID_STATUSES = ['pending', 'confirmed', 'in_progress', 'resolved', 'not_a_bug'] as const
 type AdminStatus = (typeof VALID_STATUSES)[number]
@@ -36,7 +37,8 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const admin = await requireAdmin()
+  // Résolution de bug + attribution d'exploit = action de contenu modéré : game_master minimum.
+  const admin = await requireRole('game_master')
   if (!admin) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
@@ -104,6 +106,21 @@ export async function PATCH(
          ORDER BY e.threshold_value ASC`,
         [resolvedCount, accountId]
       )
+
+      // Garde-fou de cohérence : la table `exploits` (source de vérité SQL) ne devrait
+      // jamais renvoyer un palier absent de la liste canonique alignée sur le seed 0008.
+      // Une divergence signale une dérive seed SQL ↔ constante applicative (sans changer
+      // le comportement : la requête SQL reste l'autorité).
+      const canonicalThresholds = new Set(bugReportThresholdsEligible(resolvedCount))
+      for (const exploit of eligibleExploits) {
+        if (!canonicalThresholds.has(exploit.threshold_value)) {
+          logError(
+            'PATCH /api/admin/bugs/[id]',
+            'Dérive seed exploits bug_reports : palier SQL hors liste canonique',
+            { thresholdValue: exploit.threshold_value, resolvedCount }
+          )
+        }
+      }
 
       // Unlock each newly eligible exploit
       for (const exploit of eligibleExploits) {

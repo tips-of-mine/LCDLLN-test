@@ -8,6 +8,16 @@
 #include <vulkan/vulkan_core.h>
 
 #include "src/world_editor/ui/WorldMapEditDocument.h"
+// Lot C vague 4 — sous-systèmes câblés dans l'éditeur monde :
+//   - validation de zone (ZoneValidator) : registre + rapport trié par sévérité ;
+//   - guidance overlay (OverlayGuidanceSystem + WidgetTargetRegistry) : fondation
+//     du tutoriel interactif (rendu du voile/surlignage, aucune séquence lancée).
+// Inclus en entier (pas en forward-decl) car ces membres sont des objets-valeur
+// du `WorldEditorImGui` : leur taille doit être connue à la déclaration.
+#include "src/world_editor/validation/ValidationRuleRegistry.h"
+#include "src/world_editor/validation/ZoneValidator.h"
+#include "src/world_editor/help/OverlayGuidanceSystem.h"
+#include "src/world_editor/help/WidgetTargetRegistry.h"
 
 namespace engine::core
 {
@@ -189,6 +199,68 @@ namespace engine::editor
 		/// un drag de bord de fenetre, donnant une UI vide ou hors viewport).
 		float m_lastDockSpaceWidth  = 0.0f;
 		float m_lastDockSpaceHeight = 0.0f;
+
+		// ── Lot C vague 4 : validation de zone (ZoneValidator) ─────────────────
+		/// Registre des règles MVP (heightmap / splat / mesh inserts). Rempli une
+		/// fois par `RegisterMvpValidationRules` au premier `BuildUi` (les règles
+		/// sont sans état, l'enregistrement est idempotent côté éditeur grâce au
+		/// flag `m_validationRegistered`).
+		engine::editor::world::validation::ValidationRuleRegistry m_validationRegistry;
+		/// Validateur référençant `m_validationRegistry` (non-owning) ; déclaré
+		/// APRÈS le registre pour que sa durée de vie soit englobée (le validateur
+		/// garde une référence const sur le registre).
+		engine::editor::world::validation::ZoneValidator m_zoneValidator{ m_validationRegistry };
+		/// True après le 1er `RegisterMvpValidationRules` — évite de réenregistrer
+		/// les règles à chaque frame (le registre prend l'ownership et empilerait
+		/// des doublons sinon).
+		bool m_validationRegistered = false;
+		/// Dernier rapport produit par « Valider la zone ». Conservé entre frames
+		/// pour alimenter le panneau Validation et le gating de l'export runtime.
+		engine::editor::world::validation::ZoneValidator::Report m_lastValidationReport;
+		/// True dès qu'au moins une validation a été lancée (sinon le panneau
+		/// affiche « aucune validation lancée » plutôt qu'un rapport vide trompeur).
+		bool m_validationHasRun = false;
+		/// Flag de visibilité du panneau « Validation » (toggle via menu Vue et
+		/// ouvert automatiquement par le bouton « Valider la zone »).
+		bool m_showValidationPanel = false;
+
+		// ── Lot C vague 4 : guidance overlay (fondation tutoriel) ──────────────
+		/// Moteur de séquence d'instructions (logique pure). Aucune séquence n'est
+		/// lancée pour l'instant : `RenderGuidanceOverlay` ne dessine rien tant que
+		/// `IsActiveSequence()` est faux. Fondation pour le tutoriel interactif.
+		engine::editor::world::help::OverlayGuidanceSystem m_overlay;
+		/// Registre id → rectangle écran des widgets-cibles, vidé en début de frame
+		/// (`m_widgetTargets.Clear()`) et rerempli depuis les positions ImGui réelles
+		/// après le rendu de chaque widget-cible.
+		engine::editor::world::help::WidgetTargetRegistry m_widgetTargets;
+
+		/// Lot C vague 4 — Construit un `ValidationContext` (vues lecture seule)
+		/// depuis les documents du shell branché puis exécute `m_zoneValidator`,
+		/// stockant le résultat dans `m_lastValidationReport`. No-op si `m_shell`
+		/// ou `m_cfg` est nul (les chunks terrain ont besoin de la config pour le
+		/// chargement disque). Effet de bord : peut charger des chunks terrain en
+		/// RAM via `TerrainDocument::EnsureLoaded` ; met `m_validationHasRun` à
+		/// true et ouvre le panneau Validation.
+		/// Contrainte thread : main thread (accès documents + ImGui state ensuite).
+		void RunZoneValidation();
+
+		/// Lot C vague 4 — Rend le panneau ImGui « Validation » : compteurs
+		/// erreurs / warnings / hints + liste des problèmes triés par sévérité.
+		/// Un clic sur un problème logue sa position monde (le recentrage caméra
+		/// complet est différé — l'API caméra n'est pas exposée ici). No-op si
+		/// `m_showValidationPanel` est faux. Effet de bord : ImGui state, LOG_INFO
+		/// au clic. Doit être appelée pendant la frame UI (entre NewFrame et Render).
+		void RenderValidationPanel();
+
+		/// Lot C vague 4 — Si une séquence de guidance est active
+		/// (`m_overlay.IsActiveSequence()`), dessine via le foreground draw list :
+		/// un voile semi-transparent plein écran, un rectangle de surlignage autour
+		/// du widget-cible (rect lu dans `m_widgetTargets`), et une bulle
+		/// titre/texte. No-op (ne dessine RIEN) quand aucune séquence n'est active.
+		/// À appeler en fin de frame UI, juste avant `ImGui::Render`.
+		/// Effet de bord : ImGui foreground draw list uniquement.
+		void RenderGuidanceOverlay();
+
 #if defined(_WIN32)
 		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
 #endif

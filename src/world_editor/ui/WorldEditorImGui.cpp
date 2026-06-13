@@ -752,6 +752,19 @@ namespace engine::editor
 			return;
 		}
 
+		// Lot C vague 4 — Enregistre les règles de validation MVP une seule fois
+		// (le registre prend l'ownership : réenregistrer empilerait des doublons).
+		if (!m_validationRegistered)
+		{
+			engine::editor::world::validation::RegisterMvpValidationRules(m_validationRegistry);
+			m_validationRegistered = true;
+		}
+
+		// Lot C vague 4 — Début de frame : vide le registre de rectangles-cibles.
+		// Chaque widget-cible (bouton Valider, entrée menu export) réenregistre son
+		// rectangle après son rendu, plus bas dans cette frame.
+		m_widgetTargets.Clear();
+
 		if (ImGui::BeginMainMenuBar())
 		{
 			if (ImGui::BeginMenu("Fichier"))
@@ -761,11 +774,35 @@ namespace engine::editor
 				{
 					(void)m_session->ActionSaveCurrentMap(*m_cfg);
 				}
-				if (ImGui::MenuItem("Exporter en runtime", nullptr, false, m_session != nullptr && m_cfg != nullptr)
-					&& m_session && m_cfg)
+				// Lot C vague 4 — Export runtime BLOQUÉ si la dernière validation a
+				// remonté des erreurs. Le bouton est désactivé tant que
+				// `m_lastValidationReport.HasBlockingErrors()` ; il reste actif si
+				// aucune validation n'a encore tourné (l'utilisateur reste libre,
+				// mais le panneau Validation l'invite à valider avant export).
+				const bool exportBlocked = m_validationHasRun && m_lastValidationReport.HasBlockingErrors();
+				const bool exportEnabled = m_session != nullptr && m_cfg != nullptr && !exportBlocked;
+				if (ImGui::MenuItem("Exporter en runtime", nullptr, false, exportEnabled)
+					&& m_session && m_cfg && !exportBlocked)
 				{
 					(void)m_session->ActionExportRuntime(*m_cfg);
 				}
+				// Enregistre le rectangle de cette entrée menu pour le guidance
+				// overlay (id stable conforme à la convention <panel>.<sous>.<id>).
+				m_widgetTargets.Register("menubar.file.export_runtime",
+					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
+					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
+				if (exportBlocked && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+				{
+					ImGui::SetTooltip("Export bloque : corrigez les erreurs de validation (panneau Validation).");
+				}
+				// Lot C vague 4 — Bouton de validation de zone dans le menu Fichier.
+				if (ImGui::MenuItem("Valider la zone", nullptr, false, m_shell != nullptr))
+				{
+					RunZoneValidation();
+				}
+				m_widgetTargets.Register("toolbar.button.validate",
+					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
+					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
 				ImGui::Separator();
 				// M100.46 incrément 3 — entrée menu pour appliquer un Zone
 				// Preset. Désactivée si le Shell n'est pas branché (le
@@ -864,6 +901,9 @@ namespace engine::editor
 				// position monde, etc. Cachée par défaut pour ne pas
 				// polluer le dock (cf. #629).
 				ImGui::MenuItem("Aide camera (instructions WASD)", nullptr, &m_showCameraHelp);
+				// Lot C vague 4 — toggle du panneau Validation (ouvert aussi
+				// automatiquement à chaque « Valider la zone »).
+				ImGui::MenuItem("Validation de zone", nullptr, &m_showValidationPanel);
 				ImGui::Separator();
 				if (m_cfg)
 				{
@@ -1168,9 +1208,27 @@ namespace engine::editor
 				(void)m_session->ActionSaveCurrentMap(*m_cfg);
 			}
 			ImGui::SameLine();
+			// Lot C vague 4 — Bouton « Valider la zone » dans le panneau Carte.
+			if (m_shell != nullptr && ImGui::Button("Valider la zone"))
+			{
+				RunZoneValidation();
+			}
+			ImGui::SameLine();
+			// Lot C vague 4 — Export runtime bloqué si erreurs bloquantes.
+			const bool exportBlockedMap = m_validationHasRun && m_lastValidationReport.HasBlockingErrors();
+			if (exportBlockedMap)
+			{
+				ImGui::BeginDisabled();
+			}
 			if (ImGui::Button("Exporter runtime"))
 			{
 				(void)m_session->ActionExportRuntime(*m_cfg);
+			}
+			if (exportBlockedMap)
+			{
+				ImGui::EndDisabled();
+				ImGui::TextColored(ImVec4(1.f, 0.4f, 0.35f, 1.f),
+					"Export bloque : corrigez les erreurs (panneau Validation).");
 			}
 			if (!m_session->EditFileAbsolutePath().empty())
 			{
@@ -1810,11 +1868,257 @@ namespace engine::editor
 			engine::editor::DrawTextureLibrary(*m_session, m_texturePreviewCache, m_showTextureLibrary);
 		}
 
+		// Lot C vague 4 — Panneau Validation (rapport trié par sévérité) + voile
+		// de guidance overlay (no-op tant qu'aucune séquence de tutoriel n'est
+		// active). Dessinés en fin de frame : l'overlay est posé tout en haut via
+		// le foreground draw list, par-dessus tous les panneaux ci-dessus.
+		RenderValidationPanel();
+		RenderGuidanceOverlay();
+
 		ImGui::Render();
 #else
 		(void)viewportOverlay;
 #endif
 	}
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// Lot C vague 4 — Validation de zone (ZoneValidator) + guidance overlay.
+	// ─────────────────────────────────────────────────────────────────────────
+
+	void WorldEditorImGui::RunZoneValidation()
+	{
+		// Sans shell branché, aucun document à valider ; sans config, les chunks
+		// terrain ne peuvent pas être chargés depuis le disque (EnsureLoaded en a
+		// besoin). Dans ces deux cas, on produit un rapport vide marqué « lancé ».
+		if (m_shell == nullptr || m_cfg == nullptr)
+		{
+			m_lastValidationReport = engine::editor::world::validation::ZoneValidator::Report{};
+			m_validationHasRun = true;
+			m_showValidationPanel = true;
+			LOG_WARN(Render,
+				"[WorldEditorImGui] Validation impossible : shell ou config non branche.");
+			return;
+		}
+
+		namespace val = engine::editor::world::validation;
+		namespace terr = engine::world::terrain;
+
+		// Adaptateur documents -> ValidationContext (vues lecture seule). Les
+		// chunks terrain proviennent du TerrainDocument (source de vérité de la
+		// zone) : on itère ceux résidents en RAM via ForEachLoadedChunk et on
+		// situe chacun par l'origine monde de son coin (coord.x/z * largeur chunk).
+		// La largeur d'un chunk est (resolution-1) cellules = 256 m (kTerrain*).
+		val::ValidationContext ctx;
+
+		TerrainDocument& terrainDoc = m_shell->MutableTerrainDocument();
+		const float chunkSpanMeters =
+			static_cast<float>(terr::kTerrainResolution - 1u) * terr::kTerrainCellSizeMeters;
+		// Mémorise la coord du 1er chunk chargé pour relier sa splat ensuite.
+		bool hasFirstCoord = false;
+		engine::world::GlobalChunkCoord firstCoord{};
+		engine::math::Vec3 firstOriginWorld{ 0.0f, 0.0f, 0.0f };
+		terrainDoc.ForEachLoadedChunk(
+			[&](engine::world::GlobalChunkCoord coord,
+				const std::shared_ptr<terr::TerrainChunk>& chunk)
+			{
+				if (!chunk)
+				{
+					return;
+				}
+				val::ValidationContext::TerrainEntry entry;
+				entry.chunk = chunk.get();
+				entry.originWorld = engine::math::Vec3{
+					static_cast<float>(coord.x) * chunkSpanMeters,
+					0.0f,
+					static_cast<float>(coord.z) * chunkSpanMeters };
+				if (!hasFirstCoord)
+				{
+					hasFirstCoord = true;
+					firstCoord = coord;
+					firstOriginWorld = entry.originWorld;
+				}
+				ctx.terrainChunks.push_back(entry);
+			});
+
+		// Splat : le TerrainDocument stocke une SplatMap par chunk (pas de splat
+		// global unifié). Le ValidationContext n'expose qu'un seul pointeur splat
+		// (MVP mono-zone) : on relie la splat du 1er chunk chargé si présente,
+		// avec son origine monde. Les chunks sans splat chargée sont ignorés (la
+		// règle splat passe simplement). Le scan multi-chunk est différé (2e passe).
+		if (hasFirstCoord)
+		{
+			if (auto splat = terrainDoc.FindSplat(firstCoord))
+			{
+				ctx.splat = splat.get();
+				ctx.splatOriginWorld = firstOriginWorld;
+			}
+		}
+
+		// Mesh inserts : vue directe sur le vecteur du MeshInsertDocument.
+		ctx.meshInserts = &m_shell->GetMeshInsertDocument().All();
+
+		m_lastValidationReport = m_zoneValidator.Validate(ctx);
+		m_validationHasRun = true;
+		m_showValidationPanel = true;
+		LOG_INFO(Render,
+			"[WorldEditorImGui] Validation zone : {} erreur(s), {} avertissement(s), {} indice(s) "
+			"sur {} chunk(s) terrain, {} mesh insert(s).",
+			m_lastValidationReport.errorCount, m_lastValidationReport.warningCount,
+			m_lastValidationReport.hintCount, ctx.terrainChunks.size(),
+			ctx.meshInserts ? ctx.meshInserts->size() : static_cast<size_t>(0));
+	}
+
+#if defined(_WIN32)
+	void WorldEditorImGui::RenderValidationPanel()
+	{
+		if (!m_showValidationPanel)
+		{
+			return;
+		}
+		namespace val = engine::editor::world::validation;
+
+		ImGui::Begin("Validation", &m_showValidationPanel);
+
+		// Bouton de relance directement dans le panneau (en plus du menu/toolbar).
+		if (ImGui::Button("Revalider la zone"))
+		{
+			RunZoneValidation();
+		}
+		ImGui::SameLine();
+		if (!m_validationHasRun)
+		{
+			ImGui::TextDisabled("Aucune validation lancee.");
+			ImGui::End();
+			return;
+		}
+
+		const val::ZoneValidator::Report& rep = m_lastValidationReport;
+
+		// Compteurs colorés (erreurs rouge / warnings ambre / hints gris).
+		ImGui::TextColored(ImVec4(1.f, 0.4f, 0.35f, 1.f), "Erreurs : %u", rep.errorCount);
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(1.f, 0.82f, 0.35f, 1.f), "Avertissements : %u", rep.warningCount);
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.f), "Indices : %u", rep.hintCount);
+
+		if (rep.HasBlockingErrors())
+		{
+			ImGui::TextColored(ImVec4(1.f, 0.4f, 0.35f, 1.f),
+				"Export runtime BLOQUE tant que des erreurs subsistent.");
+		}
+		ImGui::Separator();
+
+		if (rep.issues.empty())
+		{
+			ImGui::TextColored(ImVec4(0.5f, 0.95f, 0.55f, 1.f),
+				"Aucun probleme detecte. La zone est exportable.");
+			ImGui::End();
+			return;
+		}
+
+		// Liste triée par sévérité décroissante (garanti par ZoneValidator).
+		// Un clic sur un problème logue sa position monde (« Aller a » caméra
+		// complet différé : l'API caméra n'est pas exposée à ce niveau).
+		for (size_t i = 0; i < rep.issues.size(); ++i)
+		{
+			const val::ValidationIssue& issue = rep.issues[i];
+			ImVec4 sevColor;
+			const char* sevLabel;
+			switch (issue.severity)
+			{
+			case val::Severity::Error:   sevColor = ImVec4(1.f, 0.4f, 0.35f, 1.f);  sevLabel = "[ERREUR]";  break;
+			case val::Severity::Warning: sevColor = ImVec4(1.f, 0.82f, 0.35f, 1.f); sevLabel = "[ATTENTION]"; break;
+			default:                     sevColor = ImVec4(0.7f, 0.7f, 0.7f, 1.f);  sevLabel = "[INDICE]";  break;
+			}
+			ImGui::PushID(static_cast<int>(i));
+			ImGui::TextColored(sevColor, "%s", sevLabel);
+			ImGui::SameLine();
+			// Selectable cliquable : logue la position pour situer le problème.
+			if (ImGui::Selectable(issue.title.empty() ? issue.ruleId.c_str() : issue.title.c_str()))
+			{
+				LOG_INFO(Render,
+					"[WorldEditorImGui] Probleme '{}' (regle {}) a la position monde ({:.1f}, {:.1f}, {:.1f}).",
+					issue.title, issue.ruleId,
+					issue.worldPosition.x, issue.worldPosition.y, issue.worldPosition.z);
+			}
+			if (!issue.description.empty())
+			{
+				ImGui::TextWrapped("%s", issue.description.c_str());
+			}
+			if (!issue.suggestedFix.empty())
+			{
+				ImGui::TextDisabled("Correctif suggere : %s", issue.suggestedFix.c_str());
+			}
+			ImGui::PopID();
+			ImGui::Separator();
+		}
+
+		ImGui::End();
+	}
+
+	void WorldEditorImGui::RenderGuidanceOverlay()
+	{
+		// Fondation tutoriel : tant qu'aucune séquence n'est lancée, on ne dessine
+		// strictement rien (pas de voile, pas de surlignage).
+		if (!m_overlay.IsActiveSequence())
+		{
+			return;
+		}
+
+		const engine::editor::world::help::OverlayInstruction& instr =
+			m_overlay.CurrentInstruction();
+
+		ImDrawList* fg = ImGui::GetForegroundDrawList();
+		const ImGuiViewport* vp = ImGui::GetMainViewport();
+		const ImVec2 vpMin = vp->Pos;
+		const ImVec2 vpMax = ImVec2(vp->Pos.x + vp->Size.x, vp->Pos.y + vp->Size.y);
+
+		// Voile semi-transparent plein écran (assombrit le reste de l'UI).
+		fg->AddRectFilled(vpMin, vpMax, IM_COL32(0, 0, 0, 110));
+
+		// Rectangle de surlignage autour de la cible (si le widget est enregistré
+		// cette frame et que son rectangle est valide).
+		bool found = false;
+		const engine::editor::world::help::WidgetRect rect =
+			m_widgetTargets.Get(instr.targetWidget, &found);
+		ImVec2 bubbleAnchor = ImVec2(vpMin.x + 40.f, vpMin.y + 80.f);
+		if (found && rect.Valid())
+		{
+			const ImVec2 rMin(rect.x0 - 4.f, rect.y0 - 4.f);
+			const ImVec2 rMax(rect.x1 + 4.f, rect.y1 + 4.f);
+			// « Trou » lumineux : on redessine la zone cible sans voile en la
+			// surlignant d'un cadre épais ambre.
+			fg->AddRect(rMin, rMax, IM_COL32(255, 209, 89, 255), 4.f, 0, 3.f);
+			bubbleAnchor = ImVec2(rMin.x, rMax.y + 8.f);
+		}
+
+		// Bulle titre/texte ancrée sous la cible (ou en haut-gauche par défaut).
+		const std::string title = instr.iconHint.empty()
+			? instr.titleFr
+			: (instr.iconHint + " " + instr.titleFr);
+		const float bubbleW = 360.f;
+		const ImVec2 pad(10.f, 8.f);
+		const float titleH = ImGui::GetTextLineHeight();
+		// Hauteur approximative : titre + corps wrappé (estimation simple).
+		const ImVec2 bodySize = ImGui::CalcTextSize(
+			instr.bodyFr.c_str(), nullptr, false, bubbleW - pad.x * 2.f);
+		const ImVec2 bubbleMin = bubbleAnchor;
+		const ImVec2 bubbleMax = ImVec2(
+			bubbleMin.x + bubbleW,
+			bubbleMin.y + titleH + bodySize.y + pad.y * 3.f);
+		fg->AddRectFilled(bubbleMin, bubbleMax, IM_COL32(28, 30, 38, 240), 6.f);
+		fg->AddRect(bubbleMin, bubbleMax, IM_COL32(255, 209, 89, 255), 6.f, 0, 1.5f);
+		fg->AddText(ImVec2(bubbleMin.x + pad.x, bubbleMin.y + pad.y),
+			IM_COL32(255, 224, 130, 255), title.c_str());
+		fg->AddText(nullptr, 0.f,
+			ImVec2(bubbleMin.x + pad.x, bubbleMin.y + pad.y * 2.f + titleH),
+			IM_COL32(230, 230, 230, 255),
+			instr.bodyFr.c_str(), nullptr, bubbleW - pad.x * 2.f);
+	}
+#else
+	void WorldEditorImGui::RenderValidationPanel() {}
+	void WorldEditorImGui::RenderGuidanceOverlay() {}
+#endif
 
 	bool WorldEditorImGui::WantsCaptureMouse() const
 	{

@@ -126,31 +126,16 @@ namespace
 		}
 	}
 
-	/// Traite les raccourcis clavier globaux de l'écran de connexion (Ctrl+R, Ctrl+F, Ctrl+O).
+	/// Raccourcis clavier de l'écran de connexion — retirés (Ctrl+R, Ctrl+F, Ctrl+O supprimés).
+	/// Les actions correspondantes restent accessibles via les boutons de l'écran.
 	void AuthUiPresenter::Update_LoginShortcuts(engine::platform::Input& input, const engine::core::Config& cfg,
 		engine::platform::Window& window, bool usingNativeAuth, bool authUiImguiMode)
 	{
+		(void)input;
+		(void)cfg;
+		(void)window;
+		(void)usingNativeAuth;
 		(void)authUiImguiMode;
-		if (usingNativeAuth || m_phase != Phase::Login)
-		{
-			return;
-		}
-		if (!input.IsDown(engine::platform::Key::Control))
-		{
-			return;
-		}
-		if (input.WasPressed(engine::platform::Key::R))
-		{
-			ImGuiNavigateToRegisterFromLogin();
-		}
-		if (input.WasPressed(engine::platform::Key::F))
-		{
-			ImGuiOpenForgotPasswordPortal(cfg, window);
-		}
-		if (input.WasPressed(engine::platform::Key::O))
-		{
-			OpenLanguageOptions();
-		}
 	}
 
 	/// Reçoit les identifiants saisis dans ImGui et déclenche la soumission du formulaire de connexion.

@@ -119,7 +119,11 @@ namespace engine::render
 					std::string key = prefix;
 					key += id;
 					std::string localized = m_authPresenter ? m_authPresenter->UiTranslate(key) : std::string{};
-					if (!localized.empty())
+					// UiTranslate renvoie la cle elle-meme quand aucune traduction n'existe :
+					// tester `!empty()` laissait donc passer la cle brute (ex.
+					// "auth.character_select.class.guerrier") a l'ecran. On exige que la valeur
+					// traduite differe de la cle, sinon on retombe sur la capitalisation de l'id.
+					if (!localized.empty() && localized != key)
 						return localized;
 					// Capitalisation simple du premier caractere ASCII (lettre minuscule -> majuscule).
 					std::string copy = id;

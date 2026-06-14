@@ -965,15 +965,16 @@ namespace engine::render
 
 	void AuthImGuiRenderer::DrawAuthTweaksPanel(float vpW, float vpH)
 	{
-		static constexpr const char* kRaceLabels[] = {"DEFAUT", "HUMAINS", "ELFES", "NAINS", "ORCS", "MORTS-V.", "CORROM.",
-			"DIVINS", "DEMONS"};
+		// Races jouables canoniques du jeu (factions.json) : humains, elfes, nains, orcs, demons.
+		// DEFAUT = theme UI neutre. Les anciennes entrees morts-vivants / divins / corrompus ont
+		// ete retirees : elles ne correspondaient a aucune race jouable (et "corrompus" n'avait
+		// meme pas de theme sur disque). Libelles desormais complets (plus de troncature).
+		static constexpr const char* kRaceLabels[] = {"DEFAUT", "HUMAINS", "ELFES", "NAINS", "ORCS", "DEMONS"};
 		const float winW = 272.f;
-		// Cadre retreci en hauteur et ancre en bas-droite : le contenu (label race + grille 3x3
-		// + label fond + paire de boutons) a 0.85x avec windowPadding 12 occupe environ 152 px.
-		// On dimensionne a 160 pour 8 px de marge interne, et la bordure inferieure est calee a
-		// `vpH - 10` (meme gap que la version precedente) > contenu naturellement colle au bas
-		// du cadre, plus d'espace mort visible.
-		const float winH = 160.f;
+		// Cadre ancre en bas-droite. Contenu a 0.85x (windowPadding 12) : label race + grille
+		// 3x2 (6 races) + label fond + paire de boutons ~= 126 px. On dimensionne a 134 pour
+		// ~8 px de marge interne ; bordure inferieure calee a `vpH - 10` (contenu colle au bas).
+		const float winH = 134.f;
 		const float bottomGap = 10.f;
 
 		// Le titre " TWEAKS " et son bouton de reduction (- / +) ont ete retires a la demande
@@ -1008,8 +1009,13 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.12f)));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
+		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
-		for (int r = 0; r < 3; ++r)
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
+		// Grille 3x2 (6 races). Etat selectionne : on reprend le style VALIDE du menu Pause
+		// in-game (cf. lambda `pauseButton` dans Engine.cpp) = contour dore trace par-dessus le
+		// bouton via AddRect (accent plein alpha, rounding 4, epaisseur 1.5) + texte en accent.
+		for (int r = 0; r < 2; ++r)
 		{
 			for (int c = 0; c < 3; ++c)
 			{
@@ -1019,21 +1025,23 @@ namespace engine::render
 				}
 				const int idx = r * 3 + c;
 				const bool sel = (m_langTweakRace == idx);
-				ImGui::PushStyleColor(ImGuiCol_Border, sel ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
 				ImGui::PushStyleColor(ImGuiCol_Text, sel ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
-				ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, sel ? 1.5f : 1.f);
 				char id[40];
 				std::snprintf(id, sizeof(id), "%s##race_%d", kRaceLabels[idx], idx);
 				if (ImGui::Button(id, ImVec2(btnW, 0.f)))
 				{
 					m_langTweakRace = idx;
 				}
-				ImGui::PopStyleVar(1);
-				ImGui::PopStyleColor(2);
+				if (sel)
+				{
+					ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+						ImGui::ColorConvertFloat4ToU32(IV(LnTheme::kAccent)), 4.f, 0, 1.5f);
+				}
+				ImGui::PopStyleColor(1);
 			}
 		}
-		ImGui::PopStyleVar(1);
-		ImGui::PopStyleColor(3);
+		ImGui::PopStyleVar(2);
+		ImGui::PopStyleColor(4);
 
 		ImGui::Spacing();
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
@@ -1043,36 +1051,38 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.12f)));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
+		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 		{
 			// Le toggle ACTIVE / DESACTIVE pilote le futur fond anime de l'ecran d'auth.
 			// Tant que l'animation n'est pas branchee cote Vulkan (passe de fond), seul le
 			// rendu visuel des deux boutons reflete l'etat choisi. Voir CODEBASE_MAP.md 13.
+			// Meme style selectionne que la grille de races : contour dore AddRect + texte accent.
 			const float half = (ImGui::GetContentRegionAvail().x - 6.f) * 0.5f;
-			const bool on = m_langTweakAnimBg;
-			ImGui::PushStyleColor(ImGuiCol_Border, on ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
-			ImGui::PushStyleColor(ImGuiCol_Text, on ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, on ? 1.5f : 1.f);
-			if (ImGui::Button("ACTIVE##lang_bg_on", ImVec2(half, 0.f)))
+			const auto drawToggle = [&](const char* label, bool active) -> bool {
+				ImGui::PushStyleColor(ImGuiCol_Text, active ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
+				const bool clicked = ImGui::Button(label, ImVec2(half, 0.f));
+				if (active)
+				{
+					ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+						ImGui::ColorConvertFloat4ToU32(IV(LnTheme::kAccent)), 4.f, 0, 1.5f);
+				}
+				ImGui::PopStyleColor(1);
+				return clicked;
+			};
+			if (drawToggle("ACTIVE##lang_bg_on", m_langTweakAnimBg))
 			{
 				m_langTweakAnimBg = true;
 			}
-			ImGui::PopStyleVar(1);
-			ImGui::PopStyleColor(2);
 			ImGui::SameLine(0.f, 6.f);
-			const bool off = !m_langTweakAnimBg;
-			ImGui::PushStyleColor(ImGuiCol_Border, off ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
-			ImGui::PushStyleColor(ImGuiCol_Text, off ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, off ? 1.5f : 1.f);
-			if (ImGui::Button("DESACTIVE##lang_bg_off", ImVec2(half, 0.f)))
+			if (drawToggle("DESACTIVE##lang_bg_off", !m_langTweakAnimBg))
 			{
 				m_langTweakAnimBg = false;
 			}
-			ImGui::PopStyleVar(1);
-			ImGui::PopStyleColor(2);
 		}
-		ImGui::PopStyleVar(1);
-		ImGui::PopStyleColor(3);
+		ImGui::PopStyleVar(2);
+		ImGui::PopStyleColor(4);
 
 		ImGui::SetWindowFontScale(1.f);
 		ImGui::End();

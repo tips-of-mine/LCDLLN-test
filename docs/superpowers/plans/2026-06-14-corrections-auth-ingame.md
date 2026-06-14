@@ -431,6 +431,14 @@ git commit -m "feat(client): thèmes de race auth (recolor live + persistance ui
 
 ## Task 6 (B2) : Unifier le menu d'options (réutiliser l'écran auth en jeu)
 
+> **⏸️ DIFFÉRÉ (décision 2026-06-14)** — L'investigation a montré que l'écran
+> d'options auth est verrouillé au flux pré-monde par 3 gardes (`Phase`,
+> `authGateActive`, `VisualState.active`), toutes fermées dès `m_flowComplete`.
+> Le réutiliser en jeu n'est PAS un remplacement de bloc mais un **refactor du
+> presenter `AuthUiPresenter`**. B2 est donc sorti de cette PR et traité dans une
+> **PR dédiée**. Détails du couplage : mémoire `project_ingame_options_menu_coupling`.
+> La PR courante livre A1-A4, B1, C (6 items).
+
 **Files:**
 - Read d'abord : `src/client/render/AuthImGuiRenderer.h` (signature `RenderOptionsScreen`, membres d'état options `m_opt*`, et comment l'écran lit/écrit la config + gère Retour/Appliquer).
 - Read d'abord : `src/client/app/Engine.cpp` autour de `m_authImGui->Render(...)` (comment l'auth construit le `RenderModel` + `VisualState` pour l'écran options).

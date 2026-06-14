@@ -3,6 +3,7 @@
 #include "src/client/localization/LocalizationService.h"
 #include "src/client/render/LnTheme.h"
 #include "src/client/render/SharedFontHandles.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
 #include <cmath>
@@ -1006,6 +1007,15 @@ namespace engine::render
 		// en accent), sinon l'utilisateur ne distingue pas l'etat actif. PushStyleColor(Text)
 		// par bouton pour ne pas ecraser l'etat des autres.
 		const float btnW = (ImGui::GetContentRegionAvail().x - 8.f) / 3.f;
+
+		// Refléter le thème actif dans la sélection de la grille (mapping inverse).
+		{
+			const std::string_view cur = LnTheme::ActiveName();
+			const char* order[] = {"or_royal", "humains", "elfes", "nains", "orkhs", "demons"};
+			for (int i = 0; i < 6; ++i)
+				if (cur == order[i]) { m_langTweakRace = i; break; }
+		}
+
 		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.12f)));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
@@ -1031,6 +1041,15 @@ namespace engine::render
 				if (ImGui::Button(id, ImVec2(btnW, 0.f)))
 				{
 					m_langTweakRace = idx;
+					// Mapping indice bouton -> id thème LnTheme. Ordre libellés : {DEFAUT,HUMAINS,ELFES,NAINS,ORCS,DEMONS}.
+					static constexpr const char* kRaceThemeIds[] = {"or_royal", "humains", "elfes", "nains", "orkhs", "demons"};
+					if (LnTheme::SetActive(kRaceThemeIds[idx]))
+					{
+						const std::string js =
+							std::string("{\n  \"ui\": { \"theme\": \"")
+							+ std::string(LnTheme::ActiveName()) + "\" }\n}\n";
+						(void)engine::platform::FileSystem::WriteAllText("ui_theme.json", js);
+					}
 				}
 				if (sel)
 				{

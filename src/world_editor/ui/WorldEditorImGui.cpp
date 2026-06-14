@@ -11,6 +11,15 @@
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/WorldEditorShell.h"
 #include "src/world_editor/zone_presets/ZonePresetDialog.h"
+// Lot C vague 4 — assistant « Nouvelle zone » : exécution d'un ZonePreset résolu
+// par le wizard via le MÊME chemin que le ZonePresetDialog (executor + dispatch
+// context construit depuis les outils/catalogs du Shell).
+#include "src/world_editor/zone_presets/OperationDispatcher.h"
+#include "src/world_editor/zone_presets/ZonePreset.h"
+#include "src/world_editor/volumes/arches/ArchTool.h"
+#include "src/world_editor/volumes/caves/CaveTool.h"
+#include "src/world_editor/volumes/dungeons/DungeonPortalTool.h"
+#include "src/world_editor/volumes/overhangs/OverhangTool.h"
 #include "src/client/render/DayNightCycle.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/platform/Window.h"
@@ -29,6 +38,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 #if defined(_WIN32)
@@ -752,6 +762,27 @@ namespace engine::editor
 			return;
 		}
 
+		// Lot C vague 4 — Enregistre les règles de validation MVP une seule fois
+		// (le registre prend l'ownership : réenregistrer empilerait des doublons).
+		if (!m_validationRegistered)
+		{
+			engine::editor::world::validation::RegisterMvpValidationRules(m_validationRegistry);
+			m_validationRegistered = true;
+		}
+
+		// Lot C vague 4 — Idem pour les règles de diagnostic workflow MVP (mêmes
+		// raisons : ownership pris par le registre, enregistrement idempotent).
+		if (!m_diagnosticRegistered)
+		{
+			engine::editor::world::diagnostic::RegisterMvpDiagnosticRules(m_diagnosticRegistry);
+			m_diagnosticRegistered = true;
+		}
+
+		// Lot C vague 4 — Début de frame : vide le registre de rectangles-cibles.
+		// Chaque widget-cible (bouton Valider, entrée menu export) réenregistre son
+		// rectangle après son rendu, plus bas dans cette frame.
+		m_widgetTargets.Clear();
+
 		if (ImGui::BeginMainMenuBar())
 		{
 			if (ImGui::BeginMenu("Fichier"))
@@ -761,12 +792,55 @@ namespace engine::editor
 				{
 					(void)m_session->ActionSaveCurrentMap(*m_cfg);
 				}
-				if (ImGui::MenuItem("Exporter en runtime", nullptr, false, m_session != nullptr && m_cfg != nullptr)
-					&& m_session && m_cfg)
+				// Lot C vague 4 — Export runtime BLOQUÉ si la dernière validation a
+				// remonté des erreurs. Le bouton est désactivé tant que
+				// `m_lastValidationReport.HasBlockingErrors()` ; il reste actif si
+				// aucune validation n'a encore tourné (l'utilisateur reste libre,
+				// mais le panneau Validation l'invite à valider avant export).
+				const bool exportBlocked = m_validationHasRun && m_lastValidationReport.HasBlockingErrors();
+				const bool exportEnabled = m_session != nullptr && m_cfg != nullptr && !exportBlocked;
+				if (ImGui::MenuItem("Exporter en runtime", nullptr, false, exportEnabled)
+					&& m_session && m_cfg && !exportBlocked)
 				{
 					(void)m_session->ActionExportRuntime(*m_cfg);
 				}
+				// Enregistre le rectangle de cette entrée menu pour le guidance
+				// overlay (id stable conforme à la convention <panel>.<sous>.<id>).
+				m_widgetTargets.Register("menubar.file.export_runtime",
+					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
+					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
+				if (exportBlocked && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+				{
+					ImGui::SetTooltip("Export bloque : corrigez les erreurs de validation (panneau Validation).");
+				}
+				// Lot C vague 4 — Bouton de validation de zone dans le menu Fichier.
+				if (ImGui::MenuItem("Valider la zone", nullptr, false, m_shell != nullptr))
+				{
+					RunZoneValidation();
+				}
+				m_widgetTargets.Register("toolbar.button.validate",
+					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
+					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
 				ImGui::Separator();
+				// Lot C vague 4 — assistant « Nouvelle zone » (QuickStartWizard).
+				// Désactivé si le Shell n'est pas branché (la génération a besoin
+				// des 4 documents + catalogs + CommandStack, comme le dialog preset).
+				if (ImGui::MenuItem("Nouvelle zone (assistant)...", nullptr, false,
+					m_shell != nullptr)
+					&& m_shell)
+				{
+					// Transition fermé→ouvert : on réinitialise l'assistant pour
+					// qu'il reparte de l'étape 1 (Climat), sans état résiduel d'une
+					// session précédente (choix, seed, bandeau de résumé).
+					if (!m_showWizard)
+					{
+						ResetWizardState();
+					}
+					m_showWizard = true;
+				}
+				m_widgetTargets.Register("menubar.file.new_zone_wizard",
+					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
+					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
 				// M100.46 incrément 3 — entrée menu pour appliquer un Zone
 				// Preset. Désactivée si le Shell n'est pas branché (le
 				// dialog a besoin des 4 documents + catalogs).
@@ -864,6 +938,9 @@ namespace engine::editor
 				// position monde, etc. Cachée par défaut pour ne pas
 				// polluer le dock (cf. #629).
 				ImGui::MenuItem("Aide camera (instructions WASD)", nullptr, &m_showCameraHelp);
+				// Lot C vague 4 — toggle du panneau Validation (ouvert aussi
+				// automatiquement à chaque « Valider la zone »).
+				ImGui::MenuItem("Validation de zone", nullptr, &m_showValidationPanel);
 				ImGui::Separator();
 				if (m_cfg)
 				{
@@ -918,6 +995,16 @@ namespace engine::editor
 					}
 					ImGui::EndMenu();
 				}
+				ImGui::EndMenu();
+			}
+			// Lot C vague 4 — Menu « Aide » : ouvre le panneau Diagnostic
+			// (« Pourquoi ca ne marche pas ? »). Distinct du menu Vue (reserve
+			// aux toggles de panneaux/disposition) car le diagnostic releve de
+			// l'assistance contextuelle (jumeau du futur tutoriel/guidance).
+			if (ImGui::BeginMenu("Aide"))
+			{
+				ImGui::MenuItem("Diagnostic (pourquoi ca ne marche pas ?)", nullptr,
+					&m_showDiagnosticPanel);
 				ImGui::EndMenu();
 			}
 			// Barre d'outils rapide a droite du menu : sauvegarde 1-clic + chargement carte.
@@ -1168,9 +1255,27 @@ namespace engine::editor
 				(void)m_session->ActionSaveCurrentMap(*m_cfg);
 			}
 			ImGui::SameLine();
+			// Lot C vague 4 — Bouton « Valider la zone » dans le panneau Carte.
+			if (m_shell != nullptr && ImGui::Button("Valider la zone"))
+			{
+				RunZoneValidation();
+			}
+			ImGui::SameLine();
+			// Lot C vague 4 — Export runtime bloqué si erreurs bloquantes.
+			const bool exportBlockedMap = m_validationHasRun && m_lastValidationReport.HasBlockingErrors();
+			if (exportBlockedMap)
+			{
+				ImGui::BeginDisabled();
+			}
 			if (ImGui::Button("Exporter runtime"))
 			{
 				(void)m_session->ActionExportRuntime(*m_cfg);
+			}
+			if (exportBlockedMap)
+			{
+				ImGui::EndDisabled();
+				ImGui::TextColored(ImVec4(1.f, 0.4f, 0.35f, 1.f),
+					"Export bloque : corrigez les erreurs (panneau Validation).");
 			}
 			if (!m_session->EditFileAbsolutePath().empty())
 			{
@@ -1810,11 +1915,802 @@ namespace engine::editor
 			engine::editor::DrawTextureLibrary(*m_session, m_texturePreviewCache, m_showTextureLibrary);
 		}
 
+		// Lot C vague 4 — Panneau Validation (rapport trié par sévérité) + voile
+		// de guidance overlay (no-op tant qu'aucune séquence de tutoriel n'est
+		// active). Dessinés en fin de frame : l'overlay est posé tout en haut via
+		// le foreground draw list, par-dessus tous les panneaux ci-dessus.
+		RenderValidationPanel();
+		// Lot C vague 4 — Panneau Diagnostic (« Pourquoi ça ne marche pas ? »).
+		// Rendu avant l'overlay de guidance pour que ce dernier (foreground draw
+		// list) puisse, le cas échéant, le surligner comme cible de tutoriel.
+		RenderDiagnosticPanel();
+		// Lot C vague 4 — Fenêtre de l'assistant « Nouvelle zone » (no-op si
+		// fermée). Rendue avant l'overlay de guidance pour que ce dernier puisse,
+		// le cas échéant, surligner ses widgets comme cibles de tutoriel.
+		RenderWizardWindow();
+		RenderGuidanceOverlay();
+
 		ImGui::Render();
 #else
 		(void)viewportOverlay;
 #endif
 	}
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// Lot C vague 4 — Validation de zone (ZoneValidator) + guidance overlay.
+	// ─────────────────────────────────────────────────────────────────────────
+
+	void WorldEditorImGui::RunZoneValidation()
+	{
+		// Sans shell branché, aucun document à valider ; sans config, les chunks
+		// terrain ne peuvent pas être chargés depuis le disque (EnsureLoaded en a
+		// besoin). Dans ces deux cas, on produit un rapport vide marqué « lancé ».
+		if (m_shell == nullptr || m_cfg == nullptr)
+		{
+			m_lastValidationReport = engine::editor::world::validation::ZoneValidator::Report{};
+			m_validationHasRun = true;
+			m_showValidationPanel = true;
+			LOG_WARN(Render,
+				"[WorldEditorImGui] Validation impossible : shell ou config non branche.");
+			return;
+		}
+
+		namespace val = engine::editor::world::validation;
+		namespace terr = engine::world::terrain;
+
+		// Adaptateur documents -> ValidationContext (vues lecture seule). Les
+		// chunks terrain proviennent du TerrainDocument (source de vérité de la
+		// zone) : on itère ceux résidents en RAM via ForEachLoadedChunk et on
+		// situe chacun par l'origine monde de son coin (coord.x/z * largeur chunk).
+		// La largeur d'un chunk est (resolution-1) cellules = 256 m (kTerrain*).
+		val::ValidationContext ctx;
+
+		auto& terrainDoc = m_shell->MutableTerrainDocument();
+		const float chunkSpanMeters =
+			static_cast<float>(terr::kTerrainResolution - 1u) * terr::kTerrainCellSizeMeters;
+		// Mémorise la coord du 1er chunk chargé pour relier sa splat ensuite.
+		bool hasFirstCoord = false;
+		engine::world::GlobalChunkCoord firstCoord{};
+		engine::math::Vec3 firstOriginWorld{ 0.0f, 0.0f, 0.0f };
+		terrainDoc.ForEachLoadedChunk(
+			[&](engine::world::GlobalChunkCoord coord,
+				const std::shared_ptr<terr::TerrainChunk>& chunk)
+			{
+				if (!chunk)
+				{
+					return;
+				}
+				val::ValidationContext::TerrainEntry entry;
+				entry.chunk = chunk.get();
+				entry.originWorld = engine::math::Vec3{
+					static_cast<float>(coord.x) * chunkSpanMeters,
+					0.0f,
+					static_cast<float>(coord.z) * chunkSpanMeters };
+				if (!hasFirstCoord)
+				{
+					hasFirstCoord = true;
+					firstCoord = coord;
+					firstOriginWorld = entry.originWorld;
+				}
+				ctx.terrainChunks.push_back(entry);
+			});
+
+		// Splat : le TerrainDocument stocke une SplatMap par chunk (pas de splat
+		// global unifié). Le ValidationContext n'expose qu'un seul pointeur splat
+		// (MVP mono-zone) : on relie la splat du 1er chunk chargé si présente,
+		// avec son origine monde. Les chunks sans splat chargée sont ignorés (la
+		// règle splat passe simplement). Le scan multi-chunk est différé (2e passe).
+		if (hasFirstCoord)
+		{
+			if (auto splat = terrainDoc.FindSplat(firstCoord))
+			{
+				ctx.splat = splat.get();
+				ctx.splatOriginWorld = firstOriginWorld;
+			}
+		}
+
+		// Mesh inserts : vue directe sur le vecteur du MeshInsertDocument.
+		ctx.meshInserts = &m_shell->GetMeshInsertDocument().All();
+
+		m_lastValidationReport = m_zoneValidator.Validate(ctx);
+		m_validationHasRun = true;
+		m_showValidationPanel = true;
+		LOG_INFO(Render,
+			"[WorldEditorImGui] Validation zone : {} erreur(s), {} avertissement(s), {} indice(s) "
+			"sur {} chunk(s) terrain, {} mesh insert(s).",
+			m_lastValidationReport.errorCount, m_lastValidationReport.warningCount,
+			m_lastValidationReport.hintCount, ctx.terrainChunks.size(),
+			ctx.meshInserts ? ctx.meshInserts->size() : static_cast<size_t>(0));
+	}
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// Lot C vague 4 — Diagnostic « Pourquoi ça ne marche pas ? ».
+	// BuildDiagnosticContext est CROSS-PLATFORM (hors garde _WIN32, comme
+	// RunZoneValidation) : tous les types y sont pleinement qualifiés (le build
+	// Linux compile cette fonction).
+	// ─────────────────────────────────────────────────────────────────────────
+
+	engine::editor::world::diagnostic::DiagnosticContext
+	WorldEditorImGui::BuildDiagnosticContext() const
+	{
+		namespace diag  = engine::editor::world::diagnostic;
+		namespace world = engine::editor::world;
+
+		diag::DiagnosticContext ctx;
+
+		// Sans shell branché : aucun état d'usage à inspecter, on renvoie un
+		// contexte vide (la règle « aucun outil sélectionné » se déclenchera, ce
+		// qui est le bon message dans cet état).
+		if (m_shell == nullptr)
+		{
+			return ctx;
+		}
+
+		// --- Outil actif → bool + identifiant chaîne ---------------------------
+		// On mappe l'enum `ActiveTool` du shell vers les ids attendus par les
+		// règles (chaînes courtes, ex. "coastline"). `None` => pas d'outil actif.
+		const world::ActiveTool tool = m_shell->GetActiveTool();
+		ctx.hasActiveTool = (tool != world::ActiveTool::None);
+		switch (tool)
+		{
+		case world::ActiveTool::TerrainSculpt:      ctx.activeToolId = "terrain_sculpt"; break;
+		case world::ActiveTool::TerrainStamp:       ctx.activeToolId = "terrain_stamp";  break;
+		case world::ActiveTool::SplatPaint:         ctx.activeToolId = "splat_paint";    break;
+		case world::ActiveTool::Lake:               ctx.activeToolId = "lake";           break;
+		case world::ActiveTool::River:              ctx.activeToolId = "river";          break;
+		case world::ActiveTool::MountainRange:      ctx.activeToolId = "mountain_range"; break;
+		case world::ActiveTool::ValleyChain:        ctx.activeToolId = "valley_chain";   break;
+		case world::ActiveTool::RiverNetwork:       ctx.activeToolId = "river_network";  break;
+		case world::ActiveTool::Coastline:          ctx.activeToolId = "coastline";      break;
+		case world::ActiveTool::HydraulicErosion:   ctx.activeToolId = "hydraulic";      break;
+		case world::ActiveTool::ThermalWindErosion: ctx.activeToolId = "thermal_wind";   break;
+		case world::ActiveTool::Cave:               ctx.activeToolId = "cave";           break;
+		case world::ActiveTool::Overhang:           ctx.activeToolId = "overhang";       break;
+		case world::ActiveTool::Arch:               ctx.activeToolId = "arch";           break;
+		case world::ActiveTool::DungeonPortal:      ctx.activeToolId = "dungeon_portal"; break;
+		case world::ActiveTool::None:               break; // ctx.activeToolId reste vide
+		}
+		// Drapeau spécifique consommé par NoSeaLevelSetRule.
+		ctx.coastlineToolActive = (tool == world::ActiveTool::Coastline);
+
+		// --- Nombre de chunks chargés ------------------------------------------
+		// Source fiable : compteur exposé par le TerrainDocument (chunks résidents
+		// en RAM). Lecture seule — pas de chargement disque ici (contrairement à
+		// RunZoneValidation), pour qu'un simple « Analyser » reste sans effet de bord.
+		ctx.chunkCount = static_cast<uint32_t>(
+			m_shell->MutableTerrainDocument().LoadedChunkCount());
+
+		// --- Profondeur undo → proxy de « commandes depuis la dernière save » --
+		// Le CommandStack n'expose AUCUN marqueur de sauvegarde (pas de compteur
+		// « depuis le dernier save »). On utilise `UndoSize()` comme PROXY : c'est
+		// la profondeur totale de la pile undo, pas strictement le nombre de
+		// modifications depuis le dernier save (un save ne réinitialise pas la
+		// pile). Suffisant pour la règle « modifications non sauvegardées » (seuil
+		// > 30) ; un vrai marqueur de save est à instrumenter en 2e passe.
+		ctx.commandsSinceLastSave = static_cast<uint32_t>(
+			m_shell->GetCommandStack().UndoSize());
+
+		// --- Sea level défini --------------------------------------------------
+		// `seaLevelMeters` vaut TOUJOURS 50 par défaut : il n'existe pas d'état
+		// « défini vs non défini » sur cette valeur. On utilise `OceanSettings::
+		// enabled` comme PROXY de « niveau de mer défini » (océan activé = côte a
+		// une référence d'altitude). Heuristique, pas un signal exact — à affiner
+		// en 2e passe si un vrai flag « sea level explicitement posé » est ajouté.
+		ctx.seaLevelSet = m_shell->GetWaterDocument().GetOcean().enabled;
+
+		// --- Mode éditeur Simple/Avancé ----------------------------------------
+		// Source fiable : le singleton EditorModeRegistry (même source que le
+		// toggle « Mode editeur » du menu Options). `attemptedAdvancedFeature` n'a
+		// en revanche PAS de source de suivi — il reste à son défaut neutre (false),
+		// donc SimpleModeAdvancedAttemptedRule ne se déclenchera pas tant que ce
+		// signal n'est pas instrumenté (2e passe).
+		ctx.simpleModeActive =
+			(world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== world::modes::EditorMode::Simple);
+
+		// --- Validation (peuple validationErrorCount depuis le dernier rapport) -
+		// On ne relie PAS `ctx.validation` : ce pointeur attend un
+		// `ValidationContext` (vues documents), or on ne conserve entre frames que
+		// le `ZoneValidator::Report` (`m_lastValidationReport`), pas le contexte
+		// source (construit localement et détruit dans RunZoneValidation). On
+		// transfère donc seulement le compteur d'erreurs, suffisant pour
+		// ExportAttemptedWithErrorsRule.
+		if (m_validationHasRun)
+		{
+			ctx.validationErrorCount = m_lastValidationReport.errorCount;
+		}
+
+		// --- Champs SANS source de suivi runtime fiable : défauts neutres ------
+		// Les champs ci-dessous n'ont pas de source d'instrumentation à ce stade ;
+		// on les laisse à leur valeur par défaut sûre (pas de fausse donnée) — à
+		// instrumenter en 2e passe (suivi temporel + journal d'actions d'usage) :
+		//   - hasOpenedDialog               : pas de suivi d'ouverture de dialogue.
+		//   - secondsSinceToolSelected      : pas d'horodatage de sélection d'outil.
+		//   - commandsSinceToolSelected     : pas de compteur ré-armé à la sélection.
+		//   - presetJustAppliedNotSaved     : pas de signal « preset appliqué ».
+		//   - hasUserAttemptedExport        : pas de trace de tentative d'export.
+		//   - erosionAppliedAfterRivers     : pas de suivi d'ordre érosion/rivières.
+		//   - cavePlacedWithoutCamouflage   : pas d'analyse jointure grotte/splat.
+		//   - attemptedAdvancedFeature      : pas de trace d'accès param avancé.
+		//   - recentCommandHistory          : pas d'historique de labels exposé.
+		// Conséquence : les règles dépendant uniquement de ces champs restent
+		// silencieuses (comportement voulu — mieux que des suggestions fantaisistes).
+
+		return ctx;
+	}
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// Lot C vague 4 — Assistant « Nouvelle zone » (QuickStartWizard).
+	// RunWizardGeneration est CROSS-PLATFORM (hors garde _WIN32, comme
+	// RunZoneValidation / BuildDiagnosticContext) : tous les types y sont
+	// pleinement qualifiés (le build Linux compile cette fonction).
+	//
+	// NOTE P0 (rollback transactionnel) — partagée avec le ZonePresetDialog :
+	// `ZonePresetExecutor::Execute` commence par VIDER les 4 documents de la
+	// zone (terrain / water / mesh inserts / portails de donjon) via
+	// `ResetEditedZoneDocuments`. Ce reset est DESTRUCTIF et NON annulable (il
+	// n'est pas poussé comme commande sur le CommandStack). Si l'exécution
+	// échoue en plein milieu, la zone précédente est déjà perdue. Un rollback
+	// transactionnel (snapshot avant reset + restauration sur échec/annulation)
+	// est un follow-up P0 qui bénéficierait aux DEUX points d'entrée — le dialog
+	// preset ET cet assistant — puisqu'ils partagent le même `ZonePresetExecutor`.
+	// En attendant, les deux UI affichent une modale de confirmation explicite
+	// recommandant de sauvegarder d'abord.
+	// ─────────────────────────────────────────────────────────────────────────
+	void WorldEditorImGui::RunWizardGeneration()
+	{
+		// Sans shell branché, aucun document cible : on ne génère rien (le menu
+		// est déjà désactivé dans ce cas, ceci est une garde défensive).
+		if (m_shell == nullptr)
+		{
+			LOG_WARN(Render,
+				"[WorldEditorImGui] Generation wizard impossible : shell non branche.");
+			return;
+		}
+
+		namespace zp     = engine::editor::world::zone_presets;
+		namespace wizard = engine::editor::world::wizard;
+
+		// 1) Choix du wizard → ZonePreset (résolution déterministe, id dérivé des
+		//    choix). Le seed UI est déjà recopié dans le wizard via SetSeed.
+		const wizard::WizardChoices& choices = m_wizard.Choices();
+		const zp::ZonePreset preset = m_wizardResolver.Resolve(choices);
+
+		// 2) Customisation : le wizard ne porte pas de curseurs relief/eau/dryness
+		//    (ils sont encodés dans le template résolu). On laisse les
+		//    multiplicateurs neutres (1.0) et on propage le seed du wizard, comme
+		//    le ZonePresetDialog le fait pour son propre champ seed.
+		zp::CustomizationParams custom;
+		custom.reliefMultiplier       = 1.0f;
+		custom.waterDensityMultiplier = 1.0f;
+		custom.drynessMultiplier      = 1.0f;
+		custom.seed                   = choices.seed;
+
+		// 3) DispatchContext construit EXACTEMENT comme dans
+		//    ZonePresetDialog::RunSelectedPreset (mêmes documents, mêmes catalogs,
+		//    même Config pour les 4 ops simulation). Réutilisation du chemin
+		//    canonique : aucune divergence de câblage entre dialog et wizard.
+		const zp::DispatchContext ctx{
+			m_shell->MutableTerrainDocument(),
+			m_shell->MutableWaterDocument(),
+			m_shell->MutableMeshInsertDocument(),
+			m_shell->MutableDungeonPortalDocument(),
+			m_shell->GetCaveTool().Catalog(),
+			m_shell->GetOverhangTool().Catalog(),
+			m_shell->GetArchTool().Catalog(),
+			m_shell->GetDungeonPortalTool().Catalog(),
+			m_cfg,  // requis par les 4 ops simulation ; si null elles renvoient Failed.
+		};
+
+		LOG_INFO(Render,
+			"[WorldEditorImGui] Wizard genere '{}' (climat={} relief={} cote={} poi={} seed={})",
+			preset.id, choices.climate, choices.relief, choices.coast, choices.poi,
+			choices.seed);
+
+		// 4) Exécution synchrone sur le CommandStack du Shell (main thread bloqué
+		//    le temps de l'exécution — convention single-thread éditeur, cf.
+		//    ZonePresetExecutor.h). Callback de progression inerte (on ne peut pas
+		//    pumper ImGui pendant Execute) ; la progression part au log.
+		zp::ZonePresetExecutor executor;
+		m_wizardLastSummary = executor.Execute(preset, custom,
+			m_shell->MutableCommandStack(), ctx,
+			[](const zp::ExecutionProgress&) { return true; });
+
+		m_wizardLastPresetId = preset.id;
+		m_wizardHasGenerated = true;
+
+		LOG_INFO(Render,
+			"[WorldEditorImGui] Wizard '{}' termine (pushed={}, skipped={}, failed={}, annule={}).",
+			preset.id, m_wizardLastSummary.commandsPushed,
+			m_wizardLastSummary.unsupportedSkipped, m_wizardLastSummary.failed,
+			m_wizardLastSummary.wasCancelled ? "oui" : "non");
+	}
+
+#if defined(_WIN32)
+	void WorldEditorImGui::RenderValidationPanel()
+	{
+		if (!m_showValidationPanel)
+		{
+			return;
+		}
+		namespace val = engine::editor::world::validation;
+
+		ImGui::Begin("Validation", &m_showValidationPanel);
+
+		// Bouton de relance directement dans le panneau (en plus du menu/toolbar).
+		if (ImGui::Button("Revalider la zone"))
+		{
+			RunZoneValidation();
+		}
+		ImGui::SameLine();
+		if (!m_validationHasRun)
+		{
+			ImGui::TextDisabled("Aucune validation lancee.");
+			ImGui::End();
+			return;
+		}
+
+		const val::ZoneValidator::Report& rep = m_lastValidationReport;
+
+		// Compteurs colorés (erreurs rouge / warnings ambre / hints gris).
+		ImGui::TextColored(ImVec4(1.f, 0.4f, 0.35f, 1.f), "Erreurs : %u", rep.errorCount);
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(1.f, 0.82f, 0.35f, 1.f), "Avertissements : %u", rep.warningCount);
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.f), "Indices : %u", rep.hintCount);
+
+		if (rep.HasBlockingErrors())
+		{
+			ImGui::TextColored(ImVec4(1.f, 0.4f, 0.35f, 1.f),
+				"Export runtime BLOQUE tant que des erreurs subsistent.");
+		}
+		ImGui::Separator();
+
+		if (rep.issues.empty())
+		{
+			ImGui::TextColored(ImVec4(0.5f, 0.95f, 0.55f, 1.f),
+				"Aucun probleme detecte. La zone est exportable.");
+			ImGui::End();
+			return;
+		}
+
+		// Liste triée par sévérité décroissante (garanti par ZoneValidator).
+		// Un clic sur un problème logue sa position monde (« Aller a » caméra
+		// complet différé : l'API caméra n'est pas exposée à ce niveau).
+		for (size_t i = 0; i < rep.issues.size(); ++i)
+		{
+			const val::ValidationIssue& issue = rep.issues[i];
+			ImVec4 sevColor;
+			const char* sevLabel;
+			switch (issue.severity)
+			{
+			case val::Severity::Error:   sevColor = ImVec4(1.f, 0.4f, 0.35f, 1.f);  sevLabel = "[ERREUR]";  break;
+			case val::Severity::Warning: sevColor = ImVec4(1.f, 0.82f, 0.35f, 1.f); sevLabel = "[ATTENTION]"; break;
+			default:                     sevColor = ImVec4(0.7f, 0.7f, 0.7f, 1.f);  sevLabel = "[INDICE]";  break;
+			}
+			ImGui::PushID(static_cast<int>(i));
+			ImGui::TextColored(sevColor, "%s", sevLabel);
+			ImGui::SameLine();
+			// Selectable cliquable : logue la position pour situer le problème.
+			if (ImGui::Selectable(issue.title.empty() ? issue.ruleId.c_str() : issue.title.c_str()))
+			{
+				LOG_INFO(Render,
+					"[WorldEditorImGui] Probleme '{}' (regle {}) a la position monde ({:.1f}, {:.1f}, {:.1f}).",
+					issue.title, issue.ruleId,
+					issue.worldPosition.x, issue.worldPosition.y, issue.worldPosition.z);
+			}
+			if (!issue.description.empty())
+			{
+				ImGui::TextWrapped("%s", issue.description.c_str());
+			}
+			if (!issue.suggestedFix.empty())
+			{
+				ImGui::TextDisabled("Correctif suggere : %s", issue.suggestedFix.c_str());
+			}
+			ImGui::PopID();
+			ImGui::Separator();
+		}
+
+		ImGui::End();
+	}
+
+	void WorldEditorImGui::RenderGuidanceOverlay()
+	{
+		// Fondation tutoriel : tant qu'aucune séquence n'est lancée, on ne dessine
+		// strictement rien (pas de voile, pas de surlignage).
+		if (!m_overlay.IsActiveSequence())
+		{
+			return;
+		}
+
+		const engine::editor::world::help::OverlayInstruction& instr =
+			m_overlay.CurrentInstruction();
+
+		ImDrawList* fg = ImGui::GetForegroundDrawList();
+		const ImGuiViewport* vp = ImGui::GetMainViewport();
+		const ImVec2 vpMin = vp->Pos;
+		const ImVec2 vpMax = ImVec2(vp->Pos.x + vp->Size.x, vp->Pos.y + vp->Size.y);
+
+		// Voile semi-transparent plein écran (assombrit le reste de l'UI).
+		fg->AddRectFilled(vpMin, vpMax, IM_COL32(0, 0, 0, 110));
+
+		// Rectangle de surlignage autour de la cible (si le widget est enregistré
+		// cette frame et que son rectangle est valide).
+		bool found = false;
+		const engine::editor::world::help::WidgetRect rect =
+			m_widgetTargets.Get(instr.targetWidget, &found);
+		ImVec2 bubbleAnchor = ImVec2(vpMin.x + 40.f, vpMin.y + 80.f);
+		if (found && rect.Valid())
+		{
+			const ImVec2 rMin(rect.x0 - 4.f, rect.y0 - 4.f);
+			const ImVec2 rMax(rect.x1 + 4.f, rect.y1 + 4.f);
+			// « Trou » lumineux : on redessine la zone cible sans voile en la
+			// surlignant d'un cadre épais ambre.
+			fg->AddRect(rMin, rMax, IM_COL32(255, 209, 89, 255), 4.f, 0, 3.f);
+			bubbleAnchor = ImVec2(rMin.x, rMax.y + 8.f);
+		}
+
+		// Bulle titre/texte ancrée sous la cible (ou en haut-gauche par défaut).
+		const std::string title = instr.iconHint.empty()
+			? instr.titleFr
+			: (instr.iconHint + " " + instr.titleFr);
+		const float bubbleW = 360.f;
+		const ImVec2 pad(10.f, 8.f);
+		const float titleH = ImGui::GetTextLineHeight();
+		// Hauteur approximative : titre + corps wrappé (estimation simple).
+		const ImVec2 bodySize = ImGui::CalcTextSize(
+			instr.bodyFr.c_str(), nullptr, false, bubbleW - pad.x * 2.f);
+		const ImVec2 bubbleMin = bubbleAnchor;
+		const ImVec2 bubbleMax = ImVec2(
+			bubbleMin.x + bubbleW,
+			bubbleMin.y + titleH + bodySize.y + pad.y * 3.f);
+		fg->AddRectFilled(bubbleMin, bubbleMax, IM_COL32(28, 30, 38, 240), 6.f);
+		fg->AddRect(bubbleMin, bubbleMax, IM_COL32(255, 209, 89, 255), 6.f, 0, 1.5f);
+		fg->AddText(ImVec2(bubbleMin.x + pad.x, bubbleMin.y + pad.y),
+			IM_COL32(255, 224, 130, 255), title.c_str());
+		fg->AddText(nullptr, 0.f,
+			ImVec2(bubbleMin.x + pad.x, bubbleMin.y + pad.y * 2.f + titleH),
+			IM_COL32(230, 230, 230, 255),
+			instr.bodyFr.c_str(), nullptr, bubbleW - pad.x * 2.f);
+	}
+
+	void WorldEditorImGui::RenderDiagnosticPanel()
+	{
+		if (!m_showDiagnosticPanel)
+		{
+			return;
+		}
+		namespace diag = engine::editor::world::diagnostic;
+
+		ImGui::Begin("Diagnostic", &m_showDiagnosticPanel);
+
+		ImGui::TextWrapped(
+			"Analyse l'etat d'usage courant (outil, zone, sauvegarde) et propose "
+			"des pistes pour debloquer ton workflow.");
+		ImGui::Separator();
+
+		// Bouton « Analyser » : (re)calcule le rapport. L'analyse N'A LIEU qu'au
+		// clic (pas chaque frame) pour rester explicite et bon marché.
+		if (ImGui::Button("Analyser"))
+		{
+			m_lastDiagnosticReport = m_diagnosticSystem.Analyze(BuildDiagnosticContext());
+			m_diagnosticHasRun = true;
+			LOG_INFO(Render,
+				"[WorldEditorImGui] Diagnostic : {} critique(s), {} forte(s), {} astuce(s).",
+				m_lastDiagnosticReport.criticalCount, m_lastDiagnosticReport.strongCount,
+				m_lastDiagnosticReport.tipCount);
+		}
+		ImGui::SameLine();
+		if (!m_diagnosticHasRun)
+		{
+			ImGui::TextDisabled("Aucune analyse lancee.");
+			ImGui::End();
+			return;
+		}
+
+		const diag::DiagnosticSystem::Report& rep = m_lastDiagnosticReport;
+
+		// Compteurs colorés par importance (Critical rouge / Strong ambre / Tip gris).
+		ImGui::TextColored(ImVec4(1.f, 0.4f, 0.35f, 1.f), "Critiques : %u", rep.criticalCount);
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(1.f, 0.82f, 0.35f, 1.f), "Fortes : %u", rep.strongCount);
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.f), "Astuces : %u", rep.tipCount);
+		ImGui::Separator();
+
+		if (rep.IsClean())
+		{
+			ImGui::TextColored(ImVec4(0.5f, 0.95f, 0.55f, 1.f),
+				"Tu as l'air sur les bons rails ! Aucune suggestion.");
+			ImGui::End();
+			return;
+		}
+
+		// Liste triée par importance décroissante (garanti par DiagnosticSystem).
+		// AFFICHAGE SEUL : le libellé d'action « one-click » est montré tel quel,
+		// AUCUNE exécution n'est câblée ici (action réelle = passe UI séparée).
+		for (size_t i = 0; i < rep.suggestions.size(); ++i)
+		{
+			const diag::DiagnosticSuggestion& sug = rep.suggestions[i];
+			ImVec4 impColor;
+			const char* impLabel;
+			switch (sug.importance)
+			{
+			case diag::SuggestionImportance::Critical: impColor = ImVec4(1.f, 0.4f, 0.35f, 1.f);  impLabel = "[CRITIQUE]"; break;
+			case diag::SuggestionImportance::Strong:   impColor = ImVec4(1.f, 0.82f, 0.35f, 1.f); impLabel = "[FORT]";     break;
+			default:                                   impColor = ImVec4(0.7f, 0.7f, 0.7f, 1.f);  impLabel = "[ASTUCE]";   break;
+			}
+			ImGui::PushID(static_cast<int>(i));
+			ImGui::TextColored(impColor, "%s", impLabel);
+			ImGui::SameLine();
+			ImGui::TextWrapped("%s", sug.titleFr.c_str());
+			if (!sug.explanationFr.empty())
+			{
+				ImGui::TextWrapped("%s", sug.explanationFr.c_str());
+			}
+			// Libellé d'action PROPOSÉE — affiché en italique grisé, désactivé :
+			// le câblage de l'action effective + la modale de confirmation sont
+			// une passe UI séparée. On ne propose donc PAS de bouton cliquable.
+			if (!sug.oneClickActionLabelFr.empty())
+			{
+				ImGui::TextDisabled("Action proposee : %s", sug.oneClickActionLabelFr.c_str());
+			}
+			ImGui::PopID();
+			ImGui::Separator();
+		}
+
+		ImGui::End();
+	}
+
+	namespace
+	{
+		/// Dessine une rangée de cartes de choix pour une étape du wizard.
+		/// Chaque carte est un `Selectable` qui, au clic, applique la valeur
+		/// associée via `SetChoiceForCurrentStep`. La carte correspondant à la
+		/// valeur courante est mise en évidence (cadre actif ImGui).
+		/// \param wizard       machine d'état du wizard (modifiée au clic).
+		/// \param currentValue valeur actuellement retenue pour cette étape
+		///                     (issue de `wizard.Choices()`), pour le surlignage.
+		/// \param options      paires {valeur interne, libellé FR affiché}.
+		/// Effet de bord : appelle `wizard.SetChoiceForCurrentStep` au clic
+		/// (modifie les choix). À appeler en main thread (rendu ImGui).
+		void DrawWizardChoiceCards(
+			engine::editor::world::wizard::QuickStartWizard& wizard,
+			const std::string& currentValue,
+			const std::vector<std::pair<const char*, const char*>>& options)
+		{
+			for (size_t i = 0; i < options.size(); ++i)
+			{
+				const char* value = options[i].first;
+				const char* label = options[i].second;
+				const bool selected = (currentValue == value);
+				ImGui::PushID(static_cast<int>(i));
+				// Carte de largeur fixe, alignées horizontalement (3-4 par étape).
+				if (ImGui::Selectable(label, selected, 0, ImVec2(150.0f, 60.0f)))
+				{
+					(void)wizard.SetChoiceForCurrentStep(value);
+				}
+				ImGui::PopID();
+				if (i + 1 < options.size())
+				{
+					ImGui::SameLine();
+				}
+			}
+		}
+	} // namespace
+
+	/// Réinitialise l'assistant à son état initial (étape Climat, choix par
+	/// défaut, seed 42). Voir le `///` de déclaration pour la sémantique et le
+	/// moment d'appel (transition fermé→ouvert uniquement). Effet de bord :
+	/// remplace `m_wizard` par une instance neuve et remet les flags/seed UI.
+	void WorldEditorImGui::ResetWizardState()
+	{
+		// Instance neuve : repart à WizardStep::Climate avec les WizardChoices
+		// par défaut (cf. QuickStartWizard.h : pas de Reset()/Restart() dédié).
+		m_wizard = engine::editor::world::wizard::QuickStartWizard{};
+		// Seed UI ré-aligné sur le défaut des WizardChoices (42), puis recopié
+		// dans le wizard pour que l'étape Aperçu et la génération soient cohérentes.
+		m_wizardSeed = 42;
+		m_wizard.SetSeed(static_cast<uint32_t>(m_wizardSeed));
+		// Flags transitoires : aucune confirmation en attente, pas de bandeau de
+		// résumé d'une génération précédente.
+		m_wizardConfirmRequested = false;
+		m_wizardHasGenerated = false;
+	}
+
+	/// Rend la fenêtre de l'assistant « Nouvelle zone » (5 étapes) + sa modale
+	/// de confirmation de génération. Doit être appelée chaque frame depuis
+	/// BuildUi. Effet de bord : ImGui state ; déclenche `RunWizardGeneration`
+	/// à la confirmation de la modale.
+	void WorldEditorImGui::RenderWizardWindow()
+	{
+		if (!m_showWizard)
+		{
+			return;
+		}
+
+		namespace wizard = engine::editor::world::wizard;
+
+		ImGui::SetNextWindowSize(ImVec2(640.0f, 480.0f), ImGuiCond_FirstUseEver);
+		if (!ImGui::Begin("Nouvelle zone (assistant)", &m_showWizard,
+			ImGuiWindowFlags_NoSavedSettings))
+		{
+			ImGui::End();
+			return;
+		}
+
+		const wizard::WizardStep step = m_wizard.CurrentStep();
+		const wizard::WizardChoices& choices = m_wizard.Choices();
+
+		// En-tête : numéro et nom de l'étape courante (5 étapes au total).
+		static const char* kStepNames[5] = {
+			"1/5 - Climat", "2/5 - Relief", "3/5 - Cote", "4/5 - Points d'interet",
+			"5/5 - Apercu" };
+		const int stepIdx = static_cast<int>(step);
+		ImGui::TextColored(ImVec4(1.f, 0.82f, 0.35f, 1.f), "Etape %s",
+			kStepNames[stepIdx < 0 || stepIdx > 4 ? 4 : stepIdx]);
+		ImGui::Separator();
+
+		// Corps : cartes de choix selon l'étape, ou récapitulatif à l'Aperçu.
+		switch (step)
+		{
+		case wizard::WizardStep::Climate:
+			ImGui::TextWrapped("Choisis le climat dominant de la zone.");
+			ImGui::Spacing();
+			DrawWizardChoiceCards(m_wizard, choices.climate, {
+				{ "temperate", "Tempere" }, { "arid", "Aride" },
+				{ "polar", "Polaire" }, { "tropical", "Tropical" } });
+			break;
+		case wizard::WizardStep::Relief:
+			ImGui::TextWrapped("Choisis le relief general du terrain.");
+			ImGui::Spacing();
+			DrawWizardChoiceCards(m_wizard, choices.relief, {
+				{ "plains", "Plaines" }, { "hills", "Collines" },
+				{ "mountains", "Montagnes" }, { "escarped", "Escarpe" } });
+			break;
+		case wizard::WizardStep::Coast:
+			ImGui::TextWrapped("Quel rapport la zone a-t-elle a la cote ?");
+			ImGui::Spacing();
+			DrawWizardChoiceCards(m_wizard, choices.coast, {
+				{ "interior", "Interieur" }, { "moderate", "Cote moderee" },
+				{ "dramatic", "Cote spectaculaire" } });
+			break;
+		case wizard::WizardStep::Poi:
+			ImGui::TextWrapped("Ajoute un point d'interet principal (optionnel).");
+			ImGui::Spacing();
+			DrawWizardChoiceCards(m_wizard, choices.poi, {
+				{ "none", "Aucun" }, { "cave", "Grotte" },
+				{ "ruin", "Ruine" }, { "dungeon", "Donjon" } });
+			break;
+		case wizard::WizardStep::Preview:
+		default:
+			ImGui::TextWrapped("Recapitulatif des choix. Ajuste le seed puis genere "
+				"la zone.");
+			ImGui::Spacing();
+			ImGui::BulletText("Climat : %s", choices.climate.c_str());
+			ImGui::BulletText("Relief : %s", choices.relief.c_str());
+			ImGui::BulletText("Cote   : %s", choices.coast.c_str());
+			ImGui::BulletText("POI    : %s", choices.poi.c_str());
+			ImGui::Spacing();
+			// Champ seed → SetSeed (le wizard ne valide pas le seed).
+			if (ImGui::InputInt("Seed RNG", &m_wizardSeed, 1, 100))
+			{
+				if (m_wizardSeed < 0) m_wizardSeed = 0;
+				m_wizard.SetSeed(static_cast<uint32_t>(m_wizardSeed));
+			}
+			break;
+		}
+
+		// Pied de page : navigation + (à l'Aperçu) bouton Générer.
+		ImGui::Separator();
+
+		// Précédent : actif sauf à la 1re étape.
+		const bool canPrev = (step != wizard::WizardStep::Climate);
+		if (!canPrev) ImGui::BeginDisabled();
+		if (ImGui::Button("Precedent", ImVec2(120.0f, 0.0f)) && canPrev)
+		{
+			(void)m_wizard.Prev();
+		}
+		if (!canPrev) ImGui::EndDisabled();
+
+		ImGui::SameLine();
+
+		if (step != wizard::WizardStep::Preview)
+		{
+			// Suivant : gardé par CanProceed (choix valide pour l'étape courante).
+			const bool canNext = m_wizard.CanProceed();
+			if (!canNext) ImGui::BeginDisabled();
+			if (ImGui::Button("Suivant", ImVec2(120.0f, 0.0f)) && canNext)
+			{
+				(void)m_wizard.Next();
+			}
+			if (!canNext) ImGui::EndDisabled();
+			if (!canNext && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			{
+				ImGui::SetTooltip("Selectionne un choix pour continuer.");
+			}
+		}
+		else
+		{
+			// Étape Aperçu : bouton Générer actif seulement si prêt.
+			const bool canGenerate = m_wizard.IsReadyToGenerate();
+			if (!canGenerate) ImGui::BeginDisabled();
+			if (ImGui::Button("Generer", ImVec2(120.0f, 0.0f)) && canGenerate)
+			{
+				// Demande la modale de confirmation (poussée plus bas, hors de la
+				// pile de widgets disabled).
+				m_wizardConfirmRequested = true;
+			}
+			if (!canGenerate) ImGui::EndDisabled();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Fermer", ImVec2(120.0f, 0.0f)))
+		{
+			m_showWizard = false;
+		}
+
+		// Bandeau de résumé de la dernière génération (sous le pied de page).
+		if (m_wizardHasGenerated)
+		{
+			ImGui::Separator();
+			ImGui::Text("Derniere generation : '%s'", m_wizardLastPresetId.c_str());
+			ImGui::Text("Commandes poussees : %u  -  Ignorees : %u  -  Echecs : %u",
+				m_wizardLastSummary.commandsPushed,
+				m_wizardLastSummary.unsupportedSkipped,
+				m_wizardLastSummary.failed);
+			if (m_wizardLastSummary.unsupportedSkipped > 0u)
+			{
+				ImGui::TextWrapped("Note : %u operation(s) non supportee(s) ont ete "
+					"ignorees (coastline / river_network / hydraulic_erosion / "
+					"thermal_wind_erosion sans chemin d'execution complet ici).",
+					m_wizardLastSummary.unsupportedSkipped);
+			}
+		}
+
+		// Ouverture de la modale de confirmation (au prochain frame après le clic
+		// « Generer »). On la pousse hors de tout bloc disabled.
+		if (m_wizardConfirmRequested)
+		{
+			ImGui::OpenPopup("Confirmer la generation##wizard_confirm");
+			m_wizardConfirmRequested = false;
+		}
+
+		// Modale de confirmation : la génération RÉINITIALISE la zone courante
+		// (reset destructif de l'executor, non annulable — P0 connu partagé avec
+		// le ZonePresetDialog). On recommande de sauvegarder d'abord.
+		if (ImGui::BeginPopupModal("Confirmer la generation##wizard_confirm", nullptr,
+			ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
+		{
+			ImGui::TextColored(ImVec4(1.f, 0.82f, 0.35f, 1.f),
+				"ATTENTION : action destructive et NON annulable.");
+			ImGui::Spacing();
+			ImGui::TextWrapped("La generation VIDE la zone courante (terrain, eau, "
+				"mesh inserts, portails de donjon) avant de la reconstruire. Cette "
+				"reinitialisation n'est pas annulable (Ctrl+Z ne la restaurera pas). "
+				"Sauvegarde la zone avant de continuer si tu veux la conserver.");
+			ImGui::Separator();
+			if (ImGui::Button("Generer (vider et reconstruire)", ImVec2(260.0f, 0.0f)))
+			{
+				RunWizardGeneration();
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Annuler", ImVec2(120.0f, 0.0f)))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+
+		ImGui::End();
+	}
+#else
+	void WorldEditorImGui::RenderValidationPanel() {}
+	void WorldEditorImGui::RenderGuidanceOverlay() {}
+	void WorldEditorImGui::RenderDiagnosticPanel() {}
+	void WorldEditorImGui::RenderWizardWindow() {}
+#endif
 
 	bool WorldEditorImGui::WantsCaptureMouse() const
 	{

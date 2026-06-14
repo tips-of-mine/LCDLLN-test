@@ -1219,7 +1219,12 @@ namespace engine
 		logSettings.level       = ParseLogLevelConfig(m_cfg.GetString("log.level", "Info"));
 		logSettings.rotation_size_mb = static_cast<size_t>(std::max(static_cast<int64_t>(0), m_cfg.GetInt("log.rotation_size_mb", 10)));
 		logSettings.retention_days   = static_cast<int>(m_cfg.GetInt("log.retention_days", 7));
-		logSettings.subsystemFiles   = m_cfg.GetStringMapUnderPrefix("log.subsystem_files");
+		// Les fichiers de log par sous-systeme (Smtp, gm_log, char_log...) sont une affaire
+		// SERVEUR (master/shard). Le client n'ecrit jamais dans ces sous-systemes ; on ne les
+		// route donc PAS cote client. Sinon Log::Init materialise des fichiers vides (ex.
+		// "lcdlln-SMTP.log") des le boot du jeu, uniquement parce que la cle existe dans le
+		// config.json partage entre client et serveur. subsystemFiles reste vide cote client
+		// (intentionnel) ; le master continue de lire log.subsystem_files via sa propre config.
 		// M44.4 — Format JSONL pour ingestion Loki/ELK (cf. tickets/issues/M44.4_*_Issue.md).
 		logSettings.jsonOutput       = m_cfg.GetBool("log.json", false);
 
@@ -10195,6 +10200,13 @@ namespace engine
 				const int ivw = static_cast<int>(dw);
 				const int ivh = static_cast<int>(dh);
 				ImDrawList* fg = ImGui::GetForegroundDrawList();
+				// Z-order : un menu modal (pause / options) doit recouvrir TOUT le monde.
+				// Les labels world-space (interactibles, plaques de nom) sont traces sur la
+				// foreground draw list ImGui, qu'ImGui composite TOUJOURS au-dessus des fenetres
+				// (dont le panneau du menu pause, qui est une simple fenetre). On suspend donc
+				// ces labels quand un menu modal est ouvert, sinon ils perforent le menu.
+				const bool modalMenuOpen = m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible;
+				if (!modalMenuOpen)
 				for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
 				{
 					const InteractableEntity& e = m_interactables[ii];
@@ -10235,6 +10247,7 @@ namespace engine
 				// snapshot brut si l'etat lisse n'existe pas encore (graceful) ;
 				// le `+ 1.2` est calibre sur la hauteur d'avatar (`py - 0.9` = pieds,
 				// donc tete ~ `py + 0.9`, plaque au-dessus = `py + 1.2`).
+				if (!modalMenuOpen)
 				{
 					const auto& remotes = m_uiModelBinding.GetModel().remoteEntities;
 					for (const engine::client::UIRemoteEntity& re : remotes)

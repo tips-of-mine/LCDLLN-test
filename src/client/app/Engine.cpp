@@ -11417,19 +11417,6 @@ namespace engine
 				LOG_INFO(Render, "[ChatDiag-InGameBranch] frame={} dw={} dh={} inWorldShard={} chatFocus={}",
 					m_currentFrame, dw, dh, m_authUi.IsInWorldShard(), m_chatUi.IsChatFocusActive());
 			}
-			// Pause / Options : voile plein ecran assombrissant le MONDE 3D derriere le menu.
-			// Couvre les elements rendus dans la SCENE 3D qui debordent autour du panneau
-			// (96% opaque) et donnaient l'impression d'etre "au-dessus" du menu : marqueurs de
-			// POI fixes de la carte (anneaux au sol + noms de lieux type "Auberge"/"Cimetiere"),
-			// avatar, terrain. Trace sur la background draw list ImGui = AU-DESSUS de la scene
-			// 3D composee mais SOUS toutes les fenetres ImGui (dont le panneau du menu) -> le
-			// menu reste au premier plan. (Les labels world-space ImGui interactibles/nameplates
-			// sont eux deja suspendus via modalMenuOpen plus haut.)
-			if (m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible)
-			{
-				ImGui::GetBackgroundDrawList()->AddRectFilled(
-					ImVec2(0.0f, 0.0f), ImVec2(dw, dh), IM_COL32(0, 0, 0, 190));
-			}
 			// Menu pause in-game superpose au chat HUD : meme branche de rendu pour
 			// que le ImGui::Render() finalise les deux draw lists en une seule passe.
 			if (m_inGamePauseMenuVisible)

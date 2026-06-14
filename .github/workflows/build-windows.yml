@@ -7,7 +7,10 @@ on:
     branches: [main, master]
 jobs:
   build-windows:
-    runs-on: windows-latest
+    # Epingle sur windows-2022 (= Visual Studio 2022 / v17). L'image `windows-latest`
+    # a derive vers Visual Studio 18, que le generateur CMake "Visual Studio 17 2022"
+    # (CMakePresets.json, preset vs2022-x64) ne trouve pas -> echec a la configuration.
+    runs-on: windows-2022
     steps:
       - name: Checkout
         uses: actions/checkout@v5

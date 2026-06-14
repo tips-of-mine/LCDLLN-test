@@ -11380,6 +11380,12 @@ namespace engine
 					// réapparition (label + anneau au sol) — rend cimetières et
 					// auberges visibles sur la carte de démo. Couleur : gris pierre
 					// (cimetière) / ambre chaleureux (auberge).
+					// Z-order : ces marqueurs (label + anneau au sol) sont traces sur la
+					// foreground draw list ImGui, qui passe AU-DESSUS de toutes les fenetres
+					// (dont le panneau du menu Pause/Options). On les masque donc quand un menu
+					// modal est ouvert, sinon ils perforent le menu (meme garde que les
+					// interactibles / nameplates plus haut).
+					if (!m_inGamePauseMenuVisible && !m_inGameOptionsPanelVisible)
 					for (const RespawnMarker& marker : m_respawnMarkers)
 					{
 						const float markerGroundY = m_terrain.SampleHeightAtWorldXZ(marker.x, marker.z);

@@ -11345,68 +11345,18 @@ namespace engine
 						ImGui::End();
 					}
 
-					// --- Validation v12 : anneau AU SOL, À PLAT (espace monde, posé
-					// sur le terrain) — un AddCircle écran-espace dessinait un rond
-					// « vertical » face caméra. On projette 28 points d'un cercle
-					// monde et on trace la polyligne. Utilisé par les marqueurs de
-					// réapparition ci-dessous. (Le cercle de sélection de cible est
-					// désormais rendu par TargetReticleSystem — decal orienté.)
-					const auto drawGroundRing = [&](float centerX, float centerZ,
-						float radiusMeters, ImU32 ringColor, float thicknessPx)
-					{
-						constexpr int kRingSegments = 28;
-						ImVec2 ringPoints[kRingSegments];
-						int validPoints = 0;
-						for (int seg = 0; seg < kRingSegments; ++seg)
-						{
-							const float angle = (static_cast<float>(seg) / kRingSegments) * 6.2831853f;
-							const float wxr = centerX + std::cos(angle) * radiusMeters;
-							const float wzr = centerZ + std::sin(angle) * radiusMeters;
-							// Y échantillonné PAR POINT : le cercle épouse la pente du terrain.
-							const float wyr = m_terrain.SampleHeightAtWorldXZ(wxr, wzr) + 0.05f;
-							float sxr = 0.0f, syr = 0.0f;
-							if (!WorldToScreenPx(out.viewProjMatrix.m, wxr, wyr, wzr, ivw, ivh, sxr, syr))
-								return; // partiellement hors champ : pas de rendu ce frame.
-							ringPoints[validPoints++] = ImVec2(sxr, syr);
-						}
-						fg->AddPolyline(ringPoints, validPoints, ringColor, ImDrawFlags_Closed, thicknessPx);
-					};
 
 					// (Le cercle de sélection provisoire — anneau + cône de vision en
 					// ImGui foreground — a été remplacé par TargetReticleSystem :
 					// decal orienté au sol, mis à jour chaque frame côté Update.)
 
-					// --- Validation v12 (wire v13) : marqueurs monde des points de
-					// réapparition (label + anneau au sol) — rend cimetières et
-					// auberges visibles sur la carte de démo. Couleur : gris pierre
-					// (cimetière) / ambre chaleureux (auberge).
-					// Z-order : ces marqueurs (label + anneau au sol) sont traces sur la
-					// foreground draw list ImGui, qui passe AU-DESSUS de toutes les fenetres
-					// (dont le panneau du menu Pause/Options). On les masque donc quand un menu
-					// modal est ouvert, sinon ils perforent le menu (meme garde que les
-					// interactibles / nameplates plus haut).
-					if (!m_inGamePauseMenuVisible && !m_inGameOptionsPanelVisible)
-					for (const RespawnMarker& marker : m_respawnMarkers)
-					{
-						const float markerGroundY = m_terrain.SampleHeightAtWorldXZ(marker.x, marker.z);
-						float markerSx = 0.0f, markerSy = 0.0f;
-						if (!WorldToScreenPx(out.viewProjMatrix.m, marker.x, markerGroundY + 1.8f, marker.z,
-							ivw, ivh, markerSx, markerSy))
-							continue;
-						const bool isInn = (marker.destinationType == engine::server::kRespawnDestinationInn);
-						const ImU32 markerColor = isInn
-							? IM_COL32(240, 180, 90, 235)
-							: IM_COL32(180, 185, 200, 235);
-						const char* markerLabel = isInn ? "Auberge" : "Cimetiere";
-						const ImVec2 markerTs = ImGui::CalcTextSize(markerLabel);
-						fg->AddRectFilled(
-							ImVec2(markerSx - markerTs.x * 0.5f - 5.0f, markerSy - markerTs.y - 3.0f),
-							ImVec2(markerSx + markerTs.x * 0.5f + 5.0f, markerSy + 3.0f),
-							IM_COL32(0, 0, 0, 150), 3.0f);
-						fg->AddText(ImVec2(markerSx - markerTs.x * 0.5f, markerSy - markerTs.y), markerColor, markerLabel);
-						// Anneau à plat au sol (espace monde), comme la sélection.
-						drawGroundRing(marker.x, marker.z, 2.0f, markerColor, 2.5f);
-					}
+					// Marqueurs de reapparition (cimetiere/auberge) : le rendu placeholder
+					// (label "Auberge"/"Cimetiere" + anneau au sol sur la foreground draw
+					// list) a ete RETIRE. Ces lieux sont desormais materialises par du DECOR
+					// physique pose dans world.scenery (cf. config.json, positions issues de
+					// respawn/respawn_points.txt : cimetiere ~120,120 ; auberge ~88,100).
+					// m_respawnMarkers reste charge par LoadRespawnMarkers() (donnees) mais
+					// n'est plus dessine cote client.
 
 					// --- Validation v12 : ramassage du butin — touche F sur le sac
 					// le plus proche (~3 m, le serveur revalide). L'InventoryDelta

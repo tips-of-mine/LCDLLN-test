@@ -306,6 +306,7 @@ add_library(engine_core
   src/client/lfg/LfgUi.cpp
   src/client/cinematics/CinematicUi.cpp
   src/client/skills/SkillBookUi.cpp
+  src/client/grimoire/GrimoireUi.cpp
   src/client/social/PartyHud.cpp
   src/client/world/ZonePreloadHook.cpp
   src/shared/net/ChatSystem.cpp

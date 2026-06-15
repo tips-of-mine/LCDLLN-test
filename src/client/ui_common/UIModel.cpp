@@ -615,6 +615,8 @@ namespace engine::client
 			return ApplyResourceUpdate(packet);
 		case engine::server::MessageKind::CastBarUpdate:
 			return ApplyCastBarUpdate(packet);
+		case engine::server::MessageKind::ActionBarLayoutUpdate:
+			return ApplyActionBarLayoutUpdate(packet);
 		case engine::server::MessageKind::AuraUpdate:
 			return ApplyAuraUpdate(packet);
 		case engine::server::MessageKind::ThreatUpdate:
@@ -943,6 +945,20 @@ namespace engine::client
 			m_model.castBar = UICastBarState{};
 		}
 		NotifyObservers(UIModelChangeCombat);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyActionBarLayoutUpdate(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeActionBarLayoutUpdate(packet, m_actionBarLayoutMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] ActionBarLayoutUpdate FAILED: decode error");
+			return false;
+		}
+		m_model.playerStats.actionBarLayout = m_actionBarLayoutMessage.slots;
+		LOG_INFO(Net, "[UIModelBinding] ActionBarLayoutUpdate applied (client_id={})",
+			m_actionBarLayoutMessage.clientId);
+		NotifyObservers(UIModelChangeStats);
 		return true;
 	}
 

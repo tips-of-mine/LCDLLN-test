@@ -5,6 +5,7 @@
 #include "src/shared/math/Math.h"
 #include "src/shared/network/ServerProtocol.h"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -224,6 +225,9 @@ namespace engine::client
 		/// Combat SP3 — profil de classe ("melee", "tank", …) reçu via PlayerStats
 		/// (wire v11) ; résout le kit de la barre d'action. Vide = pas de barre.
 		std::string profileId;
+		/// Grimoire — layout autoritaire des 10 slots (slot i → spellId, "" = vide),
+		/// reçu via ActionBarLayoutUpdate (enter-world / ACK serveur).
+		std::array<std::string, 10> actionBarLayout{};
 	};
 
 	/// Combat SP3 — état de la barre de cast du joueur local (CastBarUpdate).
@@ -578,6 +582,10 @@ namespace engine::client
 		/// Combat SP3 — barre de cast du joueur local (CastBarUpdate start/complete/cancel).
 		bool ApplyCastBarUpdate(std::span<const std::byte> packet);
 
+		/// Grimoire — layout autoritaire des 10 slots, reçu via ActionBarLayoutUpdate
+		/// (kind 89 ; poussé à l'enter-world ET en ACK de SetActionBarLayout).
+		bool ApplyActionBarLayoutUpdate(std::span<const std::byte> packet);
+
 		/// Combat SP3 — remplace les auras d'une entité (AuraUpdate, idempotent).
 		bool ApplyAuraUpdate(std::span<const std::byte> packet);
 
@@ -686,6 +694,8 @@ namespace engine::client
 		/// Combat SP3 — scratch des messages sorts/auras (réutilisés par paquet).
 		engine::server::ResourceUpdateMessage m_resourceUpdateMessage{};
 		engine::server::CastBarUpdateMessage m_castBarUpdateMessage{};
+		/// Grimoire — scratch du message de layout autoritaire (réutilisé par paquet).
+		engine::server::ActionBarLayoutUpdateMessage m_actionBarLayoutMessage{};
 		engine::server::AuraUpdateMessage m_auraUpdateMessage{};
 		engine::server::ThreatUpdateMessage m_threatUpdateMessage{};
 		engine::server::PartyInviteNotifyMessage m_partyInviteNotifyMessage{};

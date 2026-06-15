@@ -1,4 +1,4 @@
-#include "src/client/app/Engine.h"
+﻿#include "src/client/app/Engine.h"
 
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
 #include "src/shared/core/Log.h"
@@ -58,6 +58,7 @@
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
+#include "src/client/gameplay/ActionBarLayout.h"
 #include "src/client/render/LnTheme.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/client/render/DeferredPipeline.h"
@@ -10922,15 +10923,39 @@ namespace engine
 						const float nowSec = EngineNowSec();
 						const float slotSize = 58.0f;
 						const float slotGap = 8.0f;
-						const size_t slotCount = std::min<size_t>(actionKit->size(), 4u);
+						// Grimoire — layout effectif des 10 slots (slot i → spellId).
+						const std::array<std::string, 10> resolvedLayout =
+							engine::client::ResolveActionBarLayout(uiModel.playerStats.actionBarLayout, *actionKit);
+						const size_t slotCount = resolvedLayout.size(); // 10
 						const float barWidth = slotSize * static_cast<float>(slotCount)
 							+ slotGap * static_cast<float>(slotCount - 1);
 						const float barX = (dw - barWidth) * 0.5f;
 						const float barY = dh - slotSize - 16.0f;
 						for (size_t slotIndex = 0; slotIndex < slotCount; ++slotIndex)
 						{
-							const engine::client::SpellDisplay& spell = (*actionKit)[slotIndex];
+							const std::string& slotSpellId = resolvedLayout[slotIndex];
+							const engine::client::SpellDisplay* spellPtr =
+								slotSpellId.empty() ? nullptr : engine::client::FindSpellInKit(*actionKit, slotSpellId);
 							const float sx0 = barX + static_cast<float>(slotIndex) * (slotSize + slotGap);
+							// Touche du slot (remappable) : défaut Digit1..Digit9 puis Digit0.
+							const engine::platform::Key slotKey = KeyFromName(
+								m_cfg.GetString("controls.keybind.action_slot_" + std::to_string(slotIndex + 1),
+									(slotIndex < 9) ? std::string(1, static_cast<char>('1' + slotIndex)) : std::string("0")),
+								(slotIndex < 9)
+									? static_cast<engine::platform::Key>('1' + static_cast<int>(slotIndex))
+									: engine::platform::Key::Digit0);
+							if (spellPtr == nullptr)
+							{
+								// Slot vide : case grisée + glyphe touche, pas d'action.
+								fg->AddRectFilled(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+									IM_COL32(14, 16, 22, 160), 6.0f);
+								fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+									IM_COL32(70, 70, 76, 160), 6.0f, 0, 2.0f);
+								const std::string emptyKeyLabel = KeyGlyph(slotKey);
+								fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f), IM_COL32(150, 140, 110, 200), emptyKeyLabel.c_str());
+								continue;
+							}
+							const engine::client::SpellDisplay& spell = *spellPtr;
 							// Coût payable + cooldown : visuel grisé si indisponible.
 							const uint32_t cost = spell.resourceCostPercent
 								* uiModel.playerStats.secondaryResourceMax / 100u;
@@ -10945,7 +10970,7 @@ namespace engine
 							fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
 								ready ? IM_COL32(200, 180, 90, 220) : IM_COL32(90, 90, 96, 200), 6.0f, 0, 2.0f);
 							// Numéro de touche (haut-gauche) + nom du sort (bas, tronqué).
-							const std::string keyLabel = std::to_string(slotIndex + 1);
+							const std::string keyLabel = KeyGlyph(slotKey);
 							fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f), IM_COL32(255, 230, 150, 230), keyLabel.c_str());
 							std::string spellLabel = spell.name.substr(0, 9);
 							fg->AddText(ImVec2(sx0 + 4.0f, barY + slotSize - 18.0f),
@@ -10967,9 +10992,8 @@ namespace engine
 								fg->AddText(ImVec2(sx0 + (slotSize - cdTs.x) * 0.5f, barY + (slotSize - cdTs.y) * 0.5f),
 									IM_COL32(255, 255, 255, 255), cooldownText);
 							}
-							// Touche 1-4 : envoi du CastRequest (Digit1..Digit4 = '1'..'4').
-							if (keysAllowed
-								&& m_input.WasPressed(static_cast<engine::platform::Key>('1' + static_cast<int>(slotIndex))))
+							// Touche remappable du slot : envoi du CastRequest.
+							if (keysAllowed && m_input.WasPressed(slotKey))
 							{
 								const bool targetOk = !spell.needsEnemyTarget
 									|| (uiModel.targetStats.hasTarget

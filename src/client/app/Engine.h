@@ -984,14 +984,20 @@ namespace engine
 		/// entité distante / pas de mesh / pas de load pass.
 		void RecordRemoteAvatars(VkCommandBuffer cmd, engine::render::Registry& reg,
 		                         const engine::RenderState& rs);
-		/// Action en cours de remappage dans le panneau Options (capture clavier) :
-		/// 0 = aucune, 1 = sprint, 2 = crouch, 3 = sort. Tant que != 0, le panneau
-		/// attend une touche ; le bloc gameplay est suspendu (panneau Options ouvert).
-		int                                                      m_rebindingAction = 0;
-		/// Avertissement de conflit de touches affiché sous les lignes de rebind
-		/// (Options) : non vide si la dernière touche bindée était déjà sur une
-		/// autre action. Le bind reste appliqué (doublon autorisé, juste signalé).
-		std::string                                              m_keybindWarning;
+		/// B2/ST5 — Recharge les binds clavier persistés (keybinds.json) dans la
+		/// config runtime (m_cfg) pour une prise d'effet LIVE des remaps faits via
+		/// l'écran d'options unifié, sans redémarrage du client.
+		///
+		/// L'écran d'options écrit keybinds.json (controls.keybind.*) mais ne touche
+		/// pas m_cfg. Comme BuildMoveInput / la résolution des touches d'action lisent
+		/// m_cfg.GetString("controls.keybind.*") à chaque frame, re-merger le fichier
+		/// dans m_cfg suffit à appliquer les nouveaux binds immédiatement.
+		///
+		/// Réutilise le mécanisme de boot : Config::LoadFromFile merge (override) les
+		/// clés du fichier par-dessus les valeurs existantes — pas de duplication de
+		/// parseur. Fichier absent/malformé -> no-op (les binds courants sont conservés).
+		/// Effet de bord : modifie m_cfg ; à appeler en main thread (fermeture overlay).
+		void ReloadKeybindsFromDisk();
 		/// Instant d'entrée dans l'état courant. Utilisé pour :
 		///   - détecter la fin de StartWalking / Jump / Land (durée écoulée >= clip.duration).
 		///   - tracer la transition Jump -> Fall après 40% du clip Jump (takeoff).

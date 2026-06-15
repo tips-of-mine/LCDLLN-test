@@ -11896,6 +11896,9 @@ namespace engine
 				{
 					m_inGamePauseMenuVisible = false;
 					m_inGameOptionsPanelVisible = true;
+					// B2/ST5 — pose le contexte in-game et initialise les valeurs *Pending
+					// de l'écran d'options unifié (sans toucher la phase auth).
+					m_authUi.OpenLanguageOptionsInGame();
 				}
 				ImGui::Spacing();
 				if (pauseButton("Se deconnecter", false))
@@ -11911,182 +11914,19 @@ namespace engine
 				ImGui::PopStyleVar(2);
 				ImGui::PopStyleColor(2);
 			}
-			// Mini-panel Options in-game (ouvert via le bouton Options du menu pause).
-			// Contient les controles essentiels qu'on veut pouvoir ajuster sans
-			// quitter le jeu : volume master, plein ecran, vsync, sensibilite souris.
-			// Le full panel auth Options reste accessible via Se deconnecter -> Login -> Options.
+			// Menu Options en jeu : on réutilise EXACTEMENT l'écran d'options de l'auth
+			// (source unique, spec B2). Le menu Pause (ESC) reste inchangé ; seul son lien
+			// « Options » mène ici. RenderOptionsOverlay renvoie false à la fermeture.
 			if (m_inGameOptionsPanelVisible)
 			{
-				const float optW = 460.f;
-				const float optH = 560.f;
-				ImGui::SetNextWindowPos(ImVec2((dw - optW) * 0.5f, (dh - optH) * 0.5f), ImGuiCond_Always);
-				ImGui::SetNextWindowSize(ImVec2(optW, optH), ImGuiCond_Always);
-				ImGui::SetNextWindowBgAlpha(0.95f);
-				ImGui::Begin("##ln_ingame_options", nullptr,
-					ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
-					| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse
-					| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav);
-				ImGui::SetWindowFontScale(1.15f);
-				const char* optTitle = "OPTIONS";
-				const float optTitleW = ImGui::CalcTextSize(optTitle).x;
-				ImGui::SetCursorPosX((optW - optTitleW) * 0.5f);
-				ImGui::TextUnformatted(optTitle);
-				ImGui::SetWindowFontScale(1.f);
-				ImGui::Separator();
-				ImGui::Spacing();
-
-				// Lecture des valeurs actuelles depuis la config et ecriture in-place.
-				float vol = static_cast<float>(m_cfg.GetDouble("audio.master_volume", 1.0));
-				bool fullscreen = m_cfg.GetBool("video.fullscreen", false);
-				bool vsync = m_cfg.GetBool("render.vsync", true);
-				float sens = static_cast<float>(m_cfg.GetDouble("controls.mouse_sensitivity", 0.002));
-
-				if (ImGui::SliderFloat("Volume general", &vol, 0.0f, 1.0f, "%.2f"))
-				{
-					m_cfg.SetValue("audio.master_volume", static_cast<double>(vol));
-					(void)m_audioEngine.SetMasterVolume(vol);
-				}
-				if (ImGui::Checkbox("Plein ecran", &fullscreen))
-				{
-					m_cfg.SetValue("video.fullscreen", fullscreen);
-					// Nota : changement effectif au prochain restart (toggle live = autre PR).
-				}
-				if (ImGui::Checkbox("VSync", &vsync))
-				{
-					m_cfg.SetValue("render.vsync", vsync);
-				}
-				if (ImGui::SliderFloat("Sensibilite souris", &sens, 0.0005f, 0.01f, "%.4f rad/px"))
-				{
-					m_cfg.SetValue("controls.mouse_sensitivity", static_cast<double>(sens));
-				}
-
-				// --- Thème de l'interface (recolore tout l'UI in-game) ---
-				// Libellés ASCII volontaires : la police in-game (Windlass) n'a
-				// pas tous les glyphes accentués (cf. "Se deconnecter" du menu pause).
-				auto prettyTheme = [](std::string_view n) -> const char* {
-					if (n == "or_royal") return "Or royal";
-					if (n == "sylve_emeraude") return "Sylve emeraude";
-					return "?";
-				};
-				const std::string_view curTheme = LnTheme::ActiveName();
-				if (ImGui::BeginCombo("Theme de l'interface", prettyTheme(curTheme)))
-				{
-					for (std::string_view n : LnTheme::Names())
-					{
-						const bool selected = (n == curTheme);
-						if (ImGui::Selectable(prettyTheme(n), selected) && !selected)
-						{
-							LnTheme::SetActive(n);
-							// Persistance : fichier dédié mergé au boot (comme keybinds.json).
-							const std::string js =
-								std::string("{\n  \"ui\": { \"theme\": \"")
-								+ std::string(LnTheme::ActiveName()) + "\" }\n}\n";
-							if (!engine::platform::FileSystem::WriteAllText("ui_theme.json", js))
-								LOG_WARN(Core, "[Options] ui_theme.json non ecrit (theme non persiste)");
-						}
-						if (selected)
-							ImGui::SetItemDefaultFocus();
-					}
-					ImGui::EndCombo();
-				}
-
-				// --- Controles : touches d'action remappables (controls.keybind.*) ---
-				ImGui::Spacing();
-				ImGui::Separator();
-				ImGui::TextUnformatted("Controles");
-
-				// Capture du rebind en cours : la 1re touche connue pressee est affectee
-				// a l'action ciblee (Echap annule). Le bloc gameplay etant suspendu tant
-				// que ce panneau est ouvert, la touche capturee ne declenche pas l'action.
-				if (m_rebindingAction != 0)
-				{
-					if (m_input.WasPressed(engine::platform::Key::Escape))
-					{
-						m_rebindingAction = 0;
-					}
-					else
-					{
-						for (const auto& rk : kRebindableKeys)
-						{
-							if (m_input.WasPressed(rk.key))
-							{
-								const char* cfgKey =
-									(m_rebindingAction == 1) ? "controls.keybind.sprint"
-									: (m_rebindingAction == 2) ? "controls.keybind.crouch"
-									: (m_rebindingAction == 3) ? "controls.keybind.cast"
-									: (m_rebindingAction == 4) ? "controls.keybind.interact"
-									: "controls.keybind.punch";
-								// Detection de conflit : la touche choisie est-elle deja sur une autre
-								// action ? (doublon autorise, juste signale sous les lignes de rebind).
-								m_keybindWarning.clear();
-								{
-									struct Kb { int act; const char* key; const char* label; };
-									static const Kb kKb[] = {
-										{1,"controls.keybind.sprint","Sprint"}, {2,"controls.keybind.crouch","Accroupi"},
-										{3,"controls.keybind.cast","Sort"}, {4,"controls.keybind.interact","Interagir"},
-										{5,"controls.keybind.punch","Coup de poing"},
-									};
-									for (const auto& kb : kKb)
-										if (kb.act != m_rebindingAction && m_cfg.GetString(kb.key, "") == rk.name)
-										{
-											m_keybindWarning = std::string("Touche '") + rk.name + "' deja utilisee par " + kb.label + " (doublon).";
-											break;
-										}
-								}
-								m_cfg.SetValue(cfgKey, std::string(rk.name));
-								// Persistance : ecrit keybinds.json (fichier dedie, format controle ;
-								// valeurs = noms ASCII de kRebindableKeys -> pas d'echappement JSON requis).
-								{
-									const std::string kb =
-										std::string("{\n  \"controls\": {\n    \"keybind\": {\n")
-										+ "      \"sprint\": \"" + m_cfg.GetString("controls.keybind.sprint", "Alt") + "\",\n"
-										+ "      \"crouch\": \"" + m_cfg.GetString("controls.keybind.crouch", "Ctrl") + "\",\n"
-										+ "      \"cast\": \"" + m_cfg.GetString("controls.keybind.cast", "R") + "\",\n"
-										+ "      \"interact\": \"" + m_cfg.GetString("controls.keybind.interact", "E") + "\",\n"
-										+ "      \"punch\": \"" + m_cfg.GetString("controls.keybind.punch", "X") + "\"\n"
-										+ "    }\n  }\n}\n";
-									if (!engine::platform::FileSystem::WriteAllText("keybinds.json", kb))
-										LOG_WARN(Core, "[Options] keybinds.json non ecrit (rebind non persiste)");
-								}
-								m_rebindingAction = 0;
-								break;
-							}
-						}
-					}
-				}
-
-				auto rebindRow = [&](const char* label, const char* cfgKey,
-					const char* def, int action)
-				{
-					const std::string cur = m_cfg.GetString(cfgKey, def);
-					ImGui::Text("%s : %s", label, cur.c_str());
-					ImGui::SameLine(190.f);
-					ImGui::PushID(action);
-					if (m_rebindingAction == action)
-						ImGui::TextUnformatted("appuyez sur une touche (Echap = annuler)");
-					else if (ImGui::SmallButton("Modifier"))
-						m_rebindingAction = action;
-					ImGui::PopID();
-				};
-				rebindRow("Sprint", "controls.keybind.sprint", "Alt", 1);
-				rebindRow("Accroupi", "controls.keybind.crouch", "Ctrl", 2);
-				rebindRow("Sort", "controls.keybind.cast", "R", 3);
-				rebindRow("Interagir", "controls.keybind.interact", "E", 4);
-				rebindRow("Coup de poing", "controls.keybind.punch", "X", 5);
-				ImGui::TextDisabled("Roulade : double-appui sur la touche Accroupi");
-				ImGui::TextDisabled("Attaque : clic gauche (non remappable)");
-				if (!m_keybindWarning.empty())
-					ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "%s", m_keybindWarning.c_str());
-
-				ImGui::Spacing();
-				ImGui::Separator();
-				ImGui::Spacing();
-				const float optBtnW = optW - 40.f;
-				if (ImGui::Button("Fermer", ImVec2(optBtnW, 32.f)))
+				const bool stillOpen = m_authImGui->RenderOptionsOverlay(dw, dh);
+				if (!stillOpen)
 				{
 					m_inGameOptionsPanelVisible = false;
+					m_authUi.CloseLanguageOptionsInGame();
+					m_inGamePauseMenuVisible = true; // retour au menu Pause
+					ReloadKeybindsFromDisk(); // prise d'effet live des rebinds
 				}
-				ImGui::End();
 			}
 			ImGui::Render();
 		}
@@ -13496,6 +13336,18 @@ namespace engine
 	{
 		m_inGamePauseMenuVisible = !m_inGamePauseMenuVisible;
 		LOG_INFO(Core, "[InGamePauseMenu] toggled visible={}", m_inGamePauseMenuVisible);
+	}
+
+	void Engine::ReloadKeybindsFromDisk()
+	{
+		// Même mécanisme qu'au boot (ApplyUserSettingsOverrides) : Config::LoadFromFile
+		// merge (override) les clés du fichier par-dessus m_cfg. Re-charger keybinds.json
+		// réécrit donc controls.keybind.* dans m_cfg -> les binds remappés via l'écran
+		// d'options prennent effet à la frame suivante (BuildMoveInput lit m_cfg).
+		// Fichier absent/malformé -> LoadFromFile renvoie false : on garde les binds
+		// courants (jamais de corruption).
+		if (m_cfg.LoadFromFile("keybinds.json"))
+			LOG_INFO(Core, "[Options] keybinds.json rechargé en jeu (binds clavier live)");
 	}
 
 	void Engine::RequestLogoutToLoginScreen()

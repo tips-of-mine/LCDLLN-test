@@ -154,6 +154,27 @@ namespace engine::render
 		/// que l'utilisateur ferme l'écran.
 		bool m_optionsOverlayWasOpen = false;
 
+		/// B2/ST6 — Remap des touches (onglet Controls). Index de l'action en cours de
+		/// capture clavier : -1 = aucune capture, sinon 0..4 = indice dans la table des
+		/// actions remappables (cf. \c kRebindActions dans AuthImGuiOptions.cpp :
+		/// Sprint / Accroupi / Sort / Interagir / Coup de poing). En capture, la
+		/// prochaine touche ImGui pressée (hors Échap = annulation) est affectée à
+		/// l'action puis persistée dans \c keybinds.json.
+		int m_rebindActionIdx = -1;
+		/// B2/ST6 — Avertissement de conflit du dernier rebind (touche déjà affectée à
+		/// une autre action). Vide si aucun conflit. Affiché sous les lignes de remap.
+		std::string m_rebindWarning;
+		/// B2/ST6 — Miroirs locaux des touches courantes des 5 actions remappables,
+		/// dans l'ordre de \c kRebindActions. Initialisés depuis \c m_authCfg
+		/// (clés \c controls.keybind.*) au premier rendu de l'onglet, édités en direct
+		/// et persistés dans \c keybinds.json. Indispensables car \c m_authCfg est
+		/// \c const (lecture seule) — l'état d'édition vit ici.
+		std::string m_rebindKeys[5];
+		/// B2/ST6 — Flag « les miroirs \c m_rebindKeys ont été initialisés depuis la
+		/// config ». false force la (re)lecture depuis \c m_authCfg au prochain rendu
+		/// de l'onglet Controls (réinitialisé à l'ouverture de l'overlay in-game).
+		bool m_rebindKeysLoaded = false;
+
 		/// Réglages visuels locaux (maquette « Tweaks ») sur l’écran premier lancement.
 		/// `m_langTweakAnimBg` pilote (à terme) l’animation décorative du fond auth — voir
 		/// CODEBASE_MAP.md §13 « Tweaks d’auth ». Tant que l’animation n’existe pas, ce flag n’a

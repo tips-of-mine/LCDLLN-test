@@ -11917,9 +11917,12 @@ namespace engine
 			// Menu Options en jeu : on réutilise EXACTEMENT l'écran d'options de l'auth
 			// (source unique, spec B2). Le menu Pause (ESC) reste inchangé ; seul son lien
 			// « Options » mène ici. RenderOptionsOverlay renvoie false à la fermeture.
+			// Garde m_authImGui : aligne sur la défensive des autres panneaux in-game
+			// du même bloc (m_mailImGui &&, m_gmTicketImGui &&, …). m_authImGui null
+			// (shutdown) -> on referme proprement l'overlay plutôt que de déréférencer.
 			if (m_inGameOptionsPanelVisible)
 			{
-				const bool stillOpen = m_authImGui->RenderOptionsOverlay(dw, dh);
+				const bool stillOpen = m_authImGui && m_authImGui->RenderOptionsOverlay(dw, dh);
 				if (!stillOpen)
 				{
 					m_inGameOptionsPanelVisible = false;

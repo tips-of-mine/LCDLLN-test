@@ -1,4 +1,4 @@
-#include "src/client/app/Engine.h"
+﻿#include "src/client/app/Engine.h"
 
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
 #include "src/shared/core/Log.h"
@@ -58,6 +58,7 @@
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
 #include "src/client/render/GrimoireImGuiRenderer.h"
+#include "src/client/render/ClassSkillTreeImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/gameplay/ActionBarLayout.h"
 #include "src/client/render/LnTheme.h"
@@ -1603,6 +1604,24 @@ namespace engine
 			});
 		}
 
+		// SP-D — Init du presenter arbre de compétences par-classe + câblage
+		// du callback SendChooseClassSkill (GameplayUdpClient). Non bloquant.
+		if (!m_classSkillTreeUi.Init(&m_classSkillCatalog))
+		{
+			LOG_WARN(Core, "[Boot] ClassSkillTreeUiPresenter init FAILED — arbre de compétences désactivé");
+		}
+		else
+		{
+			m_classSkillTreeUi.SetChooseCallback([this](uint32_t level, const std::string& skillId) -> bool {
+				const uint32_t cid = m_gameplayUdp.ServerClientId();
+				if (cid == 0u)
+				{
+					return false;
+				}
+				return m_gameplayUdp.SendChooseClassSkill(cid, level, skillId);
+			});
+		}
+
 		// CMANGOS.21 (Phase 5.21 step 3+4) — Init du presenter Arena + cable
 		// du send callback pour les requetes 120/122/124/127. Reception
 		// dispatchee dans le push handler ci-dessous (responses 121/123/125/128
@@ -1921,6 +1940,16 @@ namespace engine
 			{
 				m_grimoireVisible = !m_grimoireVisible;
 				LOG_INFO(Core, "[Engine] /grimoire toggle (visible={})", m_grimoireVisible);
+				return true;
+			}
+			// SP-D — Slash commands /arbre et /competences pour l'arbre de compétences.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/arbre" || text == "/competences"
+				    || text.starts_with("/arbre ") || text.starts_with("/arbre	")
+				    || text.starts_with("/competences ") || text.starts_with("/competences	")))
+			{
+				m_classSkillTreeVisible = !m_classSkillTreeVisible;
+				LOG_INFO(Core, "[Engine] /arbre toggle (visible={})", m_classSkillTreeVisible);
 				return true;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Slash command /lfg pour
@@ -5076,6 +5105,17 @@ namespace engine
 													// Combat SP3 — catalogue d'affichage des kits de sorts (non
 													// bloquant : absent = barre d'action masquée).
 													m_spellCatalog.Init(m_cfg);
+													// SP-D — catalogue des compétences par-classe (non bloquant :
+													// catalogue vide si les fichiers sont absents).
+													if (m_classSkillCatalog.Init(m_cfg))
+													{
+														LOG_INFO(Core, "[Boot] ClassSkillCatalog chargé ({} classe(s))",
+															m_classSkillCatalog.ClassCount());
+													}
+													else
+													{
+														LOG_WARN(Core, "[Boot] ClassSkillCatalog init échoué — arbre de compétences désactivé");
+													}
 
 													// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le
 													// perso n'est pas encore "in world" avant EnterWorld, mais Engine
@@ -7592,6 +7632,7 @@ namespace engine
 		m_cinematicUi.Shutdown();
 		m_skillBookUi.Shutdown();
 		m_grimoireUi.Shutdown(); // Grimoire (Task 13)
+		m_classSkillTreeUi.Shutdown(); // SP-D
 		m_arenaUi.Shutdown();
 		m_battleGroundUi.Shutdown();
 		m_outdoorPvpUi.Shutdown();
@@ -7704,6 +7745,24 @@ namespace engine
 			{
 				m_grimoireVisible = !m_grimoireVisible;
 				LOG_INFO(Core, "[Engine] Grimoire toggle (visible={})", m_grimoireVisible);
+			}
+		}
+
+		// SP-D — Touche Y remappable post-auth toggle l'arbre de compétences par-classe.
+		// Même guards que Grimoire (chat + pause + editor).
+		{
+			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
+			const bool inGameNoMenu = !m_inGamePauseMenuVisible
+				&& !m_inGameOptionsPanelVisible
+				&& !m_editorEnabled
+				&& m_authUi.IsInitialized()
+				&& m_authUi.IsFlowComplete();
+			const engine::platform::Key treeKey =
+				KeyFromName(m_cfg.GetString("controls.keybind.skilltree", "Y"), engine::platform::Key::Y);
+			if (inGameNoMenu && !chatBlocks && m_input.WasPressed(treeKey))
+			{
+				m_classSkillTreeVisible = !m_classSkillTreeVisible;
+				LOG_INFO(Core, "[Engine] ClassSkillTree toggle (visible={})", m_classSkillTreeVisible);
 			}
 		}
 
@@ -8142,6 +8201,10 @@ namespace engine
 				// /sorts). Partage le contexte ImGui post-auth.
 				m_grimoireImGui = std::make_unique<engine::render::GrimoireImGuiRenderer>();
 				m_grimoireImGui->SetPresenter(&m_grimoireUi);
+				// SP-D — Renderer ImGui du panneau arbre de compétences par-classe.
+				// Visible quand m_classSkillTreeVisible (touche Y ou /arbre / /competences).
+				m_classSkillTreeImGui = std::make_unique<engine::render::ClassSkillTreeImGuiRenderer>();
+				m_classSkillTreeImGui->SetPresenter(&m_classSkillTreeUi);
 				// CMANGOS.21 (Phase 5.21 step 3+4) — Renderer ImGui du panneau
 				// Arena. Visible uniquement quand m_arenaVisible (toggle via
 				// /arena ou touche A). Le popup proposal s'affiche aussi quand
@@ -11885,6 +11948,18 @@ namespace engine
 				m_grimoireImGui->SetEnabled(true);
 				m_grimoireImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_grimoireImGui->Render();
+			}
+			// SP-D — Sync + render conditionnel de l'arbre de compétences par-classe.
+			// playerLevel absent de UIModel — on passe 60u (permissif, le serveur valide).
+			{
+				const engine::client::UIModel& treeModel = m_uiModelBinding.GetModel();
+				m_classSkillTreeUi.Sync(treeModel.classId, treeModel.knownSkillIds, 60u);
+				if (m_classSkillTreeVisible && m_classSkillTreeImGui && m_classSkillTreeUi.IsInitialized())
+				{
+					m_classSkillTreeImGui->SetEnabled(true);
+					m_classSkillTreeImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+					m_classSkillTreeImGui->Render();
+				}
 			}
 			// CMANGOS.21 (Phase 5.21 step 3+4) — Render du panneau Arena si
 			// visible. Le popup proposal s'affiche aussi quand pendingProposalId

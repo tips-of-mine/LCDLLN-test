@@ -163,6 +163,13 @@ namespace engine::server
 			}
 		}
 
+		// Grimoire — 10 slots de barre d'action (absent = "" = vide).
+		for (size_t slotIndex = 0; slotIndex < outState.actionBarLayout.size(); ++slotIndex)
+		{
+			outState.actionBarLayout[slotIndex] =
+				persisted.GetString("actionbar.slot." + std::to_string(slotIndex), "");
+		}
+
 	outState.mailboxGold = static_cast<uint32_t>(persisted.GetInt("mailbox.gold", 0));
 	outState.mailboxItems.clear();
 	const uint32_t mailboxItemCount = static_cast<uint32_t>(persisted.GetInt("mailbox.item_count", 0));
@@ -258,6 +265,13 @@ namespace engine::server
 		for (size_t ignoreIndex = 0; ignoreIndex < ignoreCountToSave; ++ignoreIndex)
 		{
 			output << "chat.ignore." << ignoreIndex << ".name=" << state.chatIgnoredDisplayNames[ignoreIndex] << "\n";
+		}
+
+		// Grimoire — 10 slots de barre d'action (clés fixes, "" = slot vide ;
+		// l'alignement positionnel est conservé, contrairement à chat.ignore).
+		for (size_t slotIndex = 0; slotIndex < state.actionBarLayout.size(); ++slotIndex)
+		{
+			output << "actionbar.slot." << slotIndex << "=" << state.actionBarLayout[slotIndex] << "\n";
 		}
 
 	output << "mailbox.gold=" << state.mailboxGold << "\n";

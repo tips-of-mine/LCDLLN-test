@@ -5,6 +5,7 @@
 #include "src/shardd/gameplay/quest/QuestRuntime.h"
 #include "src/shared/network/ReplicationTypes.h"
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -42,6 +43,8 @@ namespace engine::server
 		std::vector<ItemStack> mailboxItems;
 		/// M36.2 — known professions and skill levels (persisted per character).
 		std::vector<ProfessionEntry> professions;
+		/// Grimoire — 10 slots de barre d'action (slot i → spellId, "" = vide).
+		std::array<std::string, 10> actionBarLayout{};
 	};
 
 	/// Minimal file-backed character persistence store used by the server runtime.

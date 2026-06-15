@@ -557,6 +557,12 @@ elseif(UNIX)
   lcdlln_add_simple_test(action_bar_layout_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/ActionBarLayoutTests.cpp)
 
+  # SP-A : catalogue client tolérant des compétences par-classe.
+  # Note : ClassSkillCatalog.cpp est déjà dans engine_core (CMakeLists racine)
+  # → ne pas le re-lister ici (double définition de symboles au link).
+  lcdlln_add_simple_test(class_skill_catalog_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/ClassSkillCatalogTests.cpp)
+
   # TA.3 (replication des joueurs) : registre des personnages admis (gate de la
   # session UDP, lié au character_id authentifié du ticket). Pure logique testable.
   lcdlln_add_simple_test(admitted_character_registry_tests

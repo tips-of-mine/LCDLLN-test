@@ -544,6 +544,12 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/SpellKitLibraryTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/SpellKitLibrary.cpp)
 
+  # Grimoire — résolveur de layout des 10 slots de barre d'action (client, pur).
+  # Note : ActionBarLayout.cpp et SpellKitCatalog.cpp sont déjà dans engine_core
+  # (CMakeLists racine) → ne pas les re-lister ici (double définition de symboles).
+  lcdlln_add_simple_test(action_bar_layout_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/ActionBarLayoutTests.cpp)
+
   # TA.3 (replication des joueurs) : registre des personnages admis (gate de la
   # session UDP, lié au character_id authentifié du ticket). Pure logique testable.
   lcdlln_add_simple_test(admitted_character_registry_tests

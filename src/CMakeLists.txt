@@ -73,6 +73,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibrary.cpp
     # Combat SP3 — kits de sorts par profil (data-driven).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/SpellKitLibrary.cpp
+    # SP-A — catalogue strict des compétences par-classe (serveur).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/ClassSkillLibrary.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/event/EventRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp
@@ -543,6 +545,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(spell_kit_library_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/SpellKitLibraryTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/SpellKitLibrary.cpp)
+
+  # SP-A : catalogue strict des compétences par-classe (serveur, parse + validation JSON).
+  lcdlln_add_simple_test(class_skill_library_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/ClassSkillLibraryTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/ClassSkillLibrary.cpp)
 
   # Grimoire — résolveur de layout des 10 slots de barre d'action (client, pur).
   # Note : ActionBarLayout.cpp et SpellKitCatalog.cpp sont déjà dans engine_core
@@ -1185,6 +1192,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibrary.cpp
     # Combat SP3 — kits de sorts par profil (data-driven).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/SpellKitLibrary.cpp
+    # SP-A — catalogue strict des compétences par-classe (serveur).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/ClassSkillLibrary.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/event/EventRuntime.cpp
     # TA.4 : accès MySQL pour le pont position (lecture characters.spawn_x/y/z).

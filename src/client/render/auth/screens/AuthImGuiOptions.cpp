@@ -36,8 +36,11 @@ namespace engine::render
 	} // namespace
 
 	/// Affiche l'overlay Options complet : sidebar de navigation par onglets a gauche, panneau principal a droite avec les reglages de l'onglet actif, et barre de boutons Retour / Annuler / Appliquer en bas.
-	void AuthImGuiRenderer::RenderOptionsScreen(const RenderModel& rm, float vpW, float vpH)
+	/// \param inGame true quand l'ecran est reutilise en jeu (menu Pause) : on masque alors le decor auth (DrawAuthTweaksPanel « THEME DE RACE »). Le flag est aussi memorise dans m_optionsInGame pour le masquage d'onglets (ST6).
+	void AuthImGuiRenderer::RenderOptionsScreen(const RenderModel& rm, float vpW, float vpH, bool inGame)
 	{
+		// B2/ST4 — memorise le contexte pour les helpers internes (masquage onglets ST6).
+		m_optionsInGame = inGame;
 		const auto tr = [this](const char* key, const char* fallback = nullptr) -> std::string {
 			if (m_authPresenter == nullptr)
 			{
@@ -618,7 +621,51 @@ namespace engine::render
 			submitOptionsMirror();
 		}
 
-		DrawAuthTweaksPanel(vpW, vpH);
+		// Decor auth (« THEME DE RACE ») : uniquement hors contexte in-game.
+		if (!inGame)
+		{
+			DrawAuthTweaksPanel(vpW, vpH);
+		}
+	}
+
+	/// B2/ST4 — Rend l'ecran d'options reutilise EN JEU, independamment de vs.active.
+	/// Voir la doc d'en-tete (AuthImGuiRenderer.h) pour le contrat complet (main thread,
+	/// frame ImGui ouverte, valeur de retour). Detail d'implementation :
+	///  - 1ere frame d'ouverture (m_optionsOverlayWasOpen passe false->true) : on tire les
+	///    mirrors d'edition (m_opt*) depuis les *Pending prepares par OpenLanguageOptionsInGame.
+	///  - overlay opaque via BeginFullscreenOverlay(.., 1.0f), puis RenderOptionsScreen(inGame=true),
+	///    puis ImGui::End() — paire Begin/End equilibree.
+	///  - fermeture detectee via le presenter : RenderOptionsScreen appelle
+	///    ImGuiCloseLanguageOptionsWithoutApply() (Retour/Echap) qui, en in-game, pose
+	///    m_optionsOpenInGame=false ; on relit IsOptionsOpenInGame() pour la valeur de retour.
+	bool AuthImGuiRenderer::RenderOptionsOverlay(float vpW, float vpH)
+	{
+		if (m_authPresenter == nullptr)
+		{
+			return false;
+		}
+		// Premiere frame d'ouverture : initialiser les mirrors d'edition depuis les
+		// valeurs *Pending (deja preparees par OpenLanguageOptionsInGame au ST3).
+		if (!m_optionsOverlayWasOpen)
+		{
+			PullLanguageOptionsFromPresenter();
+			m_optionsOverlayWasOpen = true;
+		}
+
+		// RenderModel minimal : champs par defaut. authOptionsAccountLogin /
+		// authOptionsAccountTagId restent vides — l'onglet Account sera masque en jeu (ST6).
+		RenderModel rmMinimal{};
+		BeginFullscreenOverlay(vpW, vpH, 1.0f);
+		RenderOptionsScreen(rmMinimal, vpW, vpH, /*inGame=*/true);
+		ImGui::End();
+
+		// Etat d'ouverture cote presenter : true = encore ouvert, false = ferme (Retour/Echap).
+		const bool stillOpen = m_authPresenter->IsOptionsOpenInGame();
+		if (!stillOpen)
+		{
+			m_optionsOverlayWasOpen = false;
+		}
+		return stillOpen;
 	}
 } // namespace engine::render
 

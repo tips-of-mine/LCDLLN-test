@@ -125,10 +125,16 @@ namespace engine::client
 		}
 		// En contexte auth uniquement : restaurer la phase d'avant l'ouverture des
 		// options. En in-game on NE touche PAS m_phase (le presenter reste en état
-		// post-monde) — sinon l'écran d'auth réapparaîtrait par-dessus le jeu.
+		// post-monde) — sinon l'écran d'auth réapparaîtrait par-dessus le jeu — mais
+		// on dépose le drapeau in-game pour que le renderer (RenderOptionsOverlay)
+		// détecte la fermeture (IsOptionsOpenInGame() passe à false).
 		if (!m_optionsOpenInGame)
 		{
 			m_phase = m_phaseBeforeOptions;
+		}
+		else
+		{
+			CloseLanguageOptionsInGame();
 		}
 		LOG_INFO(Core, "[AuthUiPresenter] ImGui: options fermees sans appliquer");
 	}

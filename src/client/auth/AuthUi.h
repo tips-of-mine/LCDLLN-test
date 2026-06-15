@@ -606,6 +606,12 @@ namespace engine::client
 		/// rien n'est committé (les \c *Pending stagés sont abandonnés tels quels).
 		void CloseLanguageOptionsInGame();
 
+		/// Indique si l'écran d'options est actuellement ouvert en contexte in-game
+		/// (B2/ST4). Sert au renderer (\c RenderOptionsOverlay) pour savoir si l'écran
+		/// réutilisé en jeu doit rester affiché (true) ou a été fermé par l'utilisateur
+		/// (false, après Retour/Échap). Ne reflète QUE le drapeau in-game, pas la phase auth.
+		bool IsOptionsOpenInGame() const { return m_optionsOpenInGame; }
+
 		struct RegisterImGuiSubmit
 		{
 			const char* login = nullptr;

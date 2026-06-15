@@ -1521,12 +1521,13 @@ namespace engine::client
 		m_model.playerStats.secondaryResourceCurrent = m_playerStatsScratch.resource;
 
 		LOG_INFO(Net,
-			"[UIModelBinding] PlayerStats applied (client_id={}, max_health={}, resource={}, stamina={}, damage={})",
+			"[UIModelBinding] PlayerStats applied (client_id={}, max_health={}, resource={}, stamina={}, damage={}, profile='{}')",
 			m_playerStatsScratch.clientId,
 			m_playerStatsScratch.maxHealth,
 			m_playerStatsScratch.resource,
 			m_playerStatsScratch.stamina,
-			m_playerStatsScratch.damage);
+			m_playerStatsScratch.damage,
+			m_playerStatsScratch.profileId.empty() ? "<none>" : m_playerStatsScratch.profileId.c_str());
 
 		NotifyObservers(UIModelChangeStats);
 		return true;

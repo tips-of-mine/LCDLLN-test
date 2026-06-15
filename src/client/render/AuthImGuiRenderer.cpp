@@ -460,7 +460,7 @@ namespace engine::render
 		}
 		else if (vs.options || vs.languageOptions)
 		{
-			RenderOptionsScreen(rm, viewportW, viewportH);
+			RenderOptionsScreen(rm, viewportW, viewportH, /*inGame=*/false);
 		}
 		else if (vs.shardPick)
 		{

@@ -33,11 +33,101 @@ namespace engine::render
 
 		constexpr int kOptionsRes[][2] = {{1280, 720}, {1600, 900}, {1920, 1080}, {2560, 1440}, {3840, 2160}}; ///< Table des resolutions video proposees dans le combo graphique.
 		constexpr int kOptionsResCount = sizeof(kOptionsRes) / sizeof(kOptionsRes[0]); ///< Nombre d'entrees dans kOptionsRes, calcule statiquement.
+
+		/// B2/ST6 — Une action gameplay remappable depuis l'onglet Controls.
+		/// \c cfgKey : cle config \c controls.keybind.* (lue/ecrite, miroir local) ;
+		/// \c def : touche par defaut (nom ASCII) si la cle est absente ;
+		/// \c labelKey / \c labelFallback : libelle i18n affiche (avec repli).
+		struct RebindAction
+		{
+			const char* cfgKey;
+			const char* def;
+			const char* labelKey;
+			const char* labelFallback;
+		};
+
+		/// B2/ST6 — Table figee des 5 actions remappables, ordre = index dans
+		/// \c m_rebindKeys et valeur de \c m_rebindActionIdx. Doit rester aligne sur
+		/// la liste portee depuis le mini-panneau in-game (Engine.cpp) et sur le
+		/// format d'ecriture de keybinds.json (cf. WriteKeybindsJson plus bas).
+		constexpr RebindAction kRebindActions[] = {
+			{"controls.keybind.sprint", "Alt", "options.keybind.sprint", "Sprint"},
+			{"controls.keybind.crouch", "Ctrl", "options.keybind.crouch", "Accroupi"},
+			{"controls.keybind.cast", "R", "options.keybind.cast", "Sort"},
+			{"controls.keybind.interact", "E", "options.keybind.interact", "Interagir"},
+			{"controls.keybind.punch", "X", "options.keybind.punch", "Coup de poing"},
+		};
+		constexpr int kRebindActionCount = sizeof(kRebindActions) / sizeof(kRebindActions[0]); ///< Nombre d'actions remappables (= taille de m_rebindKeys).
+
+		/// B2/ST6 — Correspondance \c ImGuiKey -> nom ASCII attendu par keybinds.json.
+		/// Cohérent avec \c kRebindableKeys (Engine.cpp) : modificateurs gauches
+		/// ("Shift"/"Ctrl"/"Alt"), lettres A..Z, chiffres 0..9, "Espace", "Tab".
+		struct ImGuiKeyName
+		{
+			ImGuiKey key;
+			const char* name;
+		};
+		const ImGuiKeyName kImGuiKeyNames[] = {
+			{ImGuiKey_A, "A"}, {ImGuiKey_B, "B"}, {ImGuiKey_C, "C"}, {ImGuiKey_D, "D"},
+			{ImGuiKey_E, "E"}, {ImGuiKey_F, "F"}, {ImGuiKey_G, "G"}, {ImGuiKey_H, "H"},
+			{ImGuiKey_L, "L"}, {ImGuiKey_M, "M"}, {ImGuiKey_N, "N"}, {ImGuiKey_O, "O"},
+			{ImGuiKey_P, "P"}, {ImGuiKey_Q, "Q"}, {ImGuiKey_R, "R"}, {ImGuiKey_S, "S"},
+			{ImGuiKey_U, "U"}, {ImGuiKey_V, "V"}, {ImGuiKey_W, "W"}, {ImGuiKey_X, "X"},
+			{ImGuiKey_Y, "Y"}, {ImGuiKey_Z, "Z"},
+			{ImGuiKey_0, "0"}, {ImGuiKey_1, "1"}, {ImGuiKey_2, "2"}, {ImGuiKey_3, "3"},
+			{ImGuiKey_4, "4"}, {ImGuiKey_5, "5"}, {ImGuiKey_6, "6"}, {ImGuiKey_7, "7"},
+			{ImGuiKey_8, "8"}, {ImGuiKey_9, "9"},
+			{ImGuiKey_LeftCtrl, "Ctrl"}, {ImGuiKey_RightCtrl, "Ctrl"},
+			{ImGuiKey_LeftAlt, "Alt"}, {ImGuiKey_RightAlt, "Alt"},
+			{ImGuiKey_LeftShift, "Shift"}, {ImGuiKey_RightShift, "Shift"},
+			{ImGuiKey_Space, "Espace"}, {ImGuiKey_Tab, "Tab"},
+		};
+
+		/// B2/ST6 — Balaie les touches connues et renvoie le nom ASCII de la première
+		/// pressée cette frame (front montant, \c repeat=false), ou nullptr si aucune.
+		/// Sert à la capture de rebind via la couche clavier d'ImGui (l'écran d'options
+		/// n'a pas accès à \c m_input, contrairement au mini-panneau in-game).
+		const char* CapturePressedKeyName()
+		{
+			for (const auto& e : kImGuiKeyNames)
+			{
+				if (ImGui::IsKeyPressed(e.key, false))
+				{
+					return e.name;
+				}
+			}
+			return nullptr;
+		}
+
+		/// B2/ST6 — Sérialise les 5 touches remappées au format keybinds.json et l'écrit
+		/// sur disque (fichier dédié mergé au boot, comme ui_theme.json). \c keys est
+		/// indexé comme \c kRebindActions. Les valeurs étant des noms ASCII contrôlés,
+		/// aucun échappement JSON n'est requis. Effet de bord : écriture fichier.
+		void WriteKeybindsJson(const std::string keys[kRebindActionCount])
+		{
+			const std::string js =
+				std::string("{\n  \"controls\": {\n    \"keybind\": {\n")
+				+ "      \"sprint\": \"" + keys[0] + "\",\n"
+				+ "      \"crouch\": \"" + keys[1] + "\",\n"
+				+ "      \"cast\": \"" + keys[2] + "\",\n"
+				+ "      \"interact\": \"" + keys[3] + "\",\n"
+				+ "      \"punch\": \"" + keys[4] + "\"\n"
+				+ "    }\n  }\n}\n";
+			(void)engine::platform::FileSystem::WriteAllText("keybinds.json", js);
+		}
 	} // namespace
 
 	/// Affiche l'overlay Options complet : sidebar de navigation par onglets a gauche, panneau principal a droite avec les reglages de l'onglet actif, et barre de boutons Retour / Annuler / Appliquer en bas.
-	void AuthImGuiRenderer::RenderOptionsScreen(const RenderModel& rm, float vpW, float vpH)
+	/// \param inGame true quand l'ecran est reutilise en jeu (menu Pause) : on masque alors le decor auth (DrawAuthTweaksPanel « THEME DE RACE »). Le flag est aussi memorise dans m_optionsInGame pour le masquage d'onglets (ST6).
+	void AuthImGuiRenderer::RenderOptionsScreen(const RenderModel& rm, float vpW, float vpH, bool inGame)
 	{
+		// B2/ST4 — memorise le contexte pour les helpers internes (masquage onglets ST6).
+		m_optionsInGame = inGame;
+		// B2/ST6 — true si une capture de rebind était active au début de la frame.
+		// Le remap (onglet Controls) traite Échap pour annuler la capture ; on garde
+		// l'info ici pour que le handler Échap global (bas de fonction) ne ferme PAS
+		// l'overlay la même frame qu'une annulation de capture.
+		const bool rebindWasActive = (m_rebindActionIdx >= 0);
 		const auto tr = [this](const char* key, const char* fallback = nullptr) -> std::string {
 			if (m_authPresenter == nullptr)
 			{
@@ -72,6 +162,32 @@ namespace engine::render
 		// Anciennes icones Unicode (carre, note de musique, clavier, etc.) absentes de Windlass
 		// + ProggyClean fallback : rendaient toutes des '?'. Suppression au profit du libelle nu.
 		static constexpr int tabCount = 7;
+		// Indices des onglets : 0 Graphics, 1 Audio, 2 Controls, 3 Lang, 4 UI,
+		// 5 Network, 6 Account.
+		static constexpr int kTabNetwork = 5;
+		static constexpr int kTabAccount = 6;
+
+		// B2/ST6 — Liste des onglets visibles dans le contexte courant. En jeu
+		// (m_optionsInGame) on masque Network et Account : ces onglets dépendent du
+		// flux auth (serveur préféré, latence, compte connecté) sans objet en jeu.
+		// On itère ensuite sur cette liste pour la sidebar ET pour borner m_optionsTab,
+		// de sorte qu'aucun onglet masqué ne reste sélectionnable.
+		std::vector<int> visibleTabs;
+		visibleTabs.reserve(tabCount);
+		for (int i = 0; i < tabCount; ++i)
+		{
+			if (m_optionsInGame && (i == kTabNetwork || i == kTabAccount))
+			{
+				continue;
+			}
+			visibleTabs.push_back(i);
+		}
+		// Si l'onglet courant n'est plus visible (ex. on entre en jeu alors que
+		// l'onglet Account était actif), ramener sur le premier onglet visible.
+		if (std::find(visibleTabs.begin(), visibleTabs.end(), m_optionsTab) == visibleTabs.end())
+		{
+			m_optionsTab = visibleTabs.empty() ? 0 : visibleTabs.front();
+		}
 
 		// Sidebar haute = main haute (alignement vertical du cadre).
 		const float topMargin = 60.f;
@@ -96,7 +212,7 @@ namespace engine::render
 		ImGui::PopStyleColor();
 		DrawSeparator();
 
-		for (int i = 0; i < tabCount; ++i)
+		for (int i : visibleTabs)
 		{
 			const bool active = (m_optionsTab == i);
 			const std::string tabLabel = tr(kTabKeys[i]);
@@ -354,15 +470,102 @@ namespace engine::render
 			toggleRow("options.imgui.zqsd_layout", &m_optUseZqsd, "options.imgui.hint.zqsd");
 
 			sectionTitle("options.imgui.section.keybinds");
-			DrawAuthKeybind(tr("options.keybind.forward", "Avancer"), "Z / W");
-			DrawAuthKeybind(tr("options.keybind.strafe_left", "Gauche"), "Q / A");
-			DrawAuthKeybind(tr("options.keybind.backward", "Reculer"), "S");
-			DrawAuthKeybind(tr("options.keybind.strafe_right", "Droite"), "D");
-			DrawAuthKeybind(tr("options.keybind.interact", "Interagir"), "E");
-			DrawAuthKeybind(tr("options.keybind.spell1", "Sort 1"), "1");
-			DrawAuthKeybind(tr("options.keybind.spell2", "Sort 2"), "2");
-			DrawAuthKeybind(tr("options.keybind.inventory", "Inventaire"), "I");
-			DrawAuthKeybind(tr("options.keybind.map", "Carte"), "M");
+
+			// B2/ST6 — Remap interactif des 5 actions gameplay (Sprint / Accroupi /
+			// Sort / Interagir / Coup de poing), actif à l'auth ET en jeu. Porté du
+			// mini-panneau in-game (Engine.cpp) mais via la capture clavier d'ImGui :
+			// l'écran d'options (couche renderer) n'a pas accès à m_input.
+			//
+			// 1) Charge les miroirs locaux depuis la config au premier passage (m_authCfg
+			//    est const : l'état d'édition vit dans m_rebindKeys). 2) Si une capture
+			//    est en cours, affecte la prochaine touche pressée (Échap annule) et
+			//    persiste keybinds.json. 3) Affiche une ligne « Action : <touche> [Modifier] »
+			//    par action, avec signalement de conflit (touche déjà sur une autre action).
+			if (!m_rebindKeysLoaded)
+			{
+				for (int a = 0; a < kRebindActionCount; ++a)
+				{
+					m_rebindKeys[a] = (m_authCfg != nullptr)
+						? m_authCfg->GetString(kRebindActions[a].cfgKey, kRebindActions[a].def)
+						: std::string(kRebindActions[a].def);
+				}
+				m_rebindKeysLoaded = true;
+			}
+
+			// Capture en cours : balaye le clavier ImGui. Échap annule sans modifier.
+			if (m_rebindActionIdx >= 0 && m_rebindActionIdx < kRebindActionCount)
+			{
+				if (ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+				{
+					m_rebindActionIdx = -1;
+				}
+				else if (const char* pressed = CapturePressedKeyName())
+				{
+					// Détection de conflit : la touche choisie est-elle déjà affectée à
+					// une autre action ? (doublon autorisé, simplement signalé.)
+					m_rebindWarning.clear();
+					for (int a = 0; a < kRebindActionCount; ++a)
+					{
+						if (a != m_rebindActionIdx && m_rebindKeys[a] == pressed)
+						{
+							const std::string other = tr(kRebindActions[a].labelKey, kRebindActions[a].labelFallback);
+							m_rebindWarning = std::string("Touche '") + pressed + "' deja utilisee par " + other + " (doublon).";
+							break;
+						}
+					}
+					m_rebindKeys[m_rebindActionIdx] = pressed;
+					WriteKeybindsJson(m_rebindKeys);
+					m_rebindActionIdx = -1;
+				}
+			}
+
+			// Ligne éditable par action : libellé + touche courante, bouton « Modifier ».
+			const auto rebindRow = [&](int actionIdx) {
+				const RebindAction& act = kRebindActions[actionIdx];
+				const std::string label = tr(act.labelKey, act.labelFallback);
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+				ImGui::AlignTextToFramePadding();
+				ImGui::Text("%s : %s", label.c_str(), m_rebindKeys[actionIdx].c_str());
+				ImGui::PopStyleColor();
+				ImGui::SameLine(220.f);
+				ImGui::PushID(actionIdx);
+				if (m_rebindActionIdx == actionIdx)
+				{
+					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+					ImGui::TextUnformatted(tr("options.keybind.press_key", "appuyez sur une touche (Echap = annuler)").c_str());
+					ImGui::PopStyleColor();
+				}
+				else
+				{
+					// Bouton compact (largeur fixe) : DrawAuthButtonGhost s'étire sur
+					// toute la largeur restante (width -FLT_MIN), inadapté après SameLine.
+					ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.12f)));
+					ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
+					ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+					ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
+					ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
+					if (ImGui::Button(tr("options.keybind.rebind", "Modifier").c_str(), ImVec2(110.f, 28.f)))
+					{
+						m_rebindActionIdx = actionIdx;
+						m_rebindWarning.clear();
+					}
+					ImGui::PopStyleVar(2);
+					ImGui::PopStyleColor(5);
+				}
+				ImGui::PopID();
+			};
+			for (int a = 0; a < kRebindActionCount; ++a)
+			{
+				rebindRow(a);
+			}
+			if (!m_rebindWarning.empty())
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kWarning));
+				ImGui::TextWrapped("%s", m_rebindWarning.c_str());
+				ImGui::PopStyleColor();
+			}
 		}
 		else if (m_optionsTab == 3)
 		{
@@ -609,7 +812,10 @@ namespace engine::render
 
 		ImGui::EndChild();
 
-		if (ImGui::IsKeyPressed(ImGuiKey_Escape, false) && m_authPresenter != nullptr)
+		// B2/ST6 — ne pas fermer l'overlay si Échap vient d'annuler une capture de
+		// rebind (le remap a déjà consommé la touche cette frame).
+		if (ImGui::IsKeyPressed(ImGuiKey_Escape, false) && !rebindWasActive && m_rebindActionIdx < 0
+			&& m_authPresenter != nullptr)
 		{
 			m_authPresenter->ImGuiCloseLanguageOptionsWithoutApply();
 		}
@@ -618,7 +824,56 @@ namespace engine::render
 			submitOptionsMirror();
 		}
 
-		DrawAuthTweaksPanel(vpW, vpH);
+		// Decor auth (« THEME DE RACE ») : uniquement hors contexte in-game.
+		if (!inGame)
+		{
+			DrawAuthTweaksPanel(vpW, vpH);
+		}
+	}
+
+	/// B2/ST4 — Rend l'ecran d'options reutilise EN JEU, independamment de vs.active.
+	/// Voir la doc d'en-tete (AuthImGuiRenderer.h) pour le contrat complet (main thread,
+	/// frame ImGui ouverte, valeur de retour). Detail d'implementation :
+	///  - 1ere frame d'ouverture (m_optionsOverlayWasOpen passe false->true) : on tire les
+	///    mirrors d'edition (m_opt*) depuis les *Pending prepares par OpenLanguageOptionsInGame.
+	///  - overlay opaque via BeginFullscreenOverlay(.., 1.0f), puis RenderOptionsScreen(inGame=true),
+	///    puis ImGui::End() — paire Begin/End equilibree.
+	///  - fermeture detectee via le presenter : RenderOptionsScreen appelle
+	///    ImGuiCloseLanguageOptionsWithoutApply() (Retour/Echap) qui, en in-game, pose
+	///    m_optionsOpenInGame=false ; on relit IsOptionsOpenInGame() pour la valeur de retour.
+	bool AuthImGuiRenderer::RenderOptionsOverlay(float vpW, float vpH)
+	{
+		if (m_authPresenter == nullptr)
+		{
+			return false;
+		}
+		// Premiere frame d'ouverture : initialiser les mirrors d'edition depuis les
+		// valeurs *Pending (deja preparees par OpenLanguageOptionsInGame au ST3).
+		if (!m_optionsOverlayWasOpen)
+		{
+			PullLanguageOptionsFromPresenter();
+			// B2/ST6 — force la relecture des touches remappables depuis la config à
+			// chaque ouverture in-game (l'utilisateur a pu les changer au clavier ailleurs).
+			m_rebindKeysLoaded = false;
+			m_rebindActionIdx = -1;
+			m_rebindWarning.clear();
+			m_optionsOverlayWasOpen = true;
+		}
+
+		// RenderModel minimal : champs par defaut. authOptionsAccountLogin /
+		// authOptionsAccountTagId restent vides — l'onglet Account sera masque en jeu (ST6).
+		RenderModel rmMinimal{};
+		BeginFullscreenOverlay(vpW, vpH, 1.0f);
+		RenderOptionsScreen(rmMinimal, vpW, vpH, /*inGame=*/true);
+		ImGui::End();
+
+		// Etat d'ouverture cote presenter : true = encore ouvert, false = ferme (Retour/Echap).
+		const bool stillOpen = m_authPresenter->IsOptionsOpenInGame();
+		if (!stillOpen)
+		{
+			m_optionsOverlayWasOpen = false;
+		}
+		return stillOpen;
 	}
 } // namespace engine::render
 

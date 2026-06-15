@@ -44,6 +44,18 @@ namespace engine::render
 		void BindAuthUiBridge(engine::client::AuthUiPresenter* presenter, const engine::core::Config* cfg,
 			engine::platform::Window* window);
 
+		/// B2/ST4 — Rend l'écran d'options EXISTANT réutilisé EN JEU (menu Pause),
+		/// indépendamment de \c vs.active et SANS le décor auth (« THÈME DE RACE »).
+		/// Ouvre un overlay plein écran opaque, dessine l'écran d'options en mode
+		/// in-game, puis le referme. Effet de bord : émet des commandes ImGui (fenêtre
+		/// ##ln_auth_overlay) ; doit être appelée en MAIN THREAD, à l'intérieur d'une
+		/// frame ImGui déjà ouverte (entre NewFrame et Render). À la première frame
+		/// d'ouverture, initialise les mirrors d'édition depuis les valeurs *Pending
+		/// préparées par \c AuthUiPresenter::OpenLanguageOptionsInGame().
+		/// \return true tant que l'écran reste ouvert ; false dès que l'utilisateur a
+		/// demandé la fermeture (Retour/Échap) ou si aucun presenter n'est branché.
+		bool RenderOptionsOverlay(float vpW, float vpH);
+
 		/// Sous-projet C MVP (Task 12) — Branche le viewport offscreen
 		/// detenu par \c Engine pour l'apercu race dans l'ecran de
 		/// creation de personnage (\c AuthImGuiCharacterCreate). Pointer
@@ -131,6 +143,38 @@ namespace engine::render
 		bool m_optShowTooltipsUi = true;
 		int m_optPreferredServer = 2;
 
+		/// B2/ST4 — Drapeau « écran d'options rendu en contexte in-game » mis à jour
+		/// au début de \c RenderOptionsScreen. En in-game on masque le décor auth
+		/// (\c DrawAuthTweaksPanel) ; le masquage des onglets Network/Account viendra
+		/// au ST6 et s'appuiera sur ce même flag.
+		bool m_optionsInGame = false;
+		/// B2/ST4 — Suivi de l'état d'ouverture de l'overlay d'options in-game entre
+		/// frames. Passe à true à la première frame où \c RenderOptionsOverlay détecte
+		/// l'écran ouvert (déclenche le pull initial des mirrors), repasse à false dès
+		/// que l'utilisateur ferme l'écran.
+		bool m_optionsOverlayWasOpen = false;
+
+		/// B2/ST6 — Remap des touches (onglet Controls). Index de l'action en cours de
+		/// capture clavier : -1 = aucune capture, sinon 0..4 = indice dans la table des
+		/// actions remappables (cf. \c kRebindActions dans AuthImGuiOptions.cpp :
+		/// Sprint / Accroupi / Sort / Interagir / Coup de poing). En capture, la
+		/// prochaine touche ImGui pressée (hors Échap = annulation) est affectée à
+		/// l'action puis persistée dans \c keybinds.json.
+		int m_rebindActionIdx = -1;
+		/// B2/ST6 — Avertissement de conflit du dernier rebind (touche déjà affectée à
+		/// une autre action). Vide si aucun conflit. Affiché sous les lignes de remap.
+		std::string m_rebindWarning;
+		/// B2/ST6 — Miroirs locaux des touches courantes des 5 actions remappables,
+		/// dans l'ordre de \c kRebindActions. Initialisés depuis \c m_authCfg
+		/// (clés \c controls.keybind.*) au premier rendu de l'onglet, édités en direct
+		/// et persistés dans \c keybinds.json. Indispensables car \c m_authCfg est
+		/// \c const (lecture seule) — l'état d'édition vit ici.
+		std::string m_rebindKeys[5];
+		/// B2/ST6 — Flag « les miroirs \c m_rebindKeys ont été initialisés depuis la
+		/// config ». false force la (re)lecture depuis \c m_authCfg au prochain rendu
+		/// de l'onglet Controls (réinitialisé à l'ouverture de l'overlay in-game).
+		bool m_rebindKeysLoaded = false;
+
 		/// Réglages visuels locaux (maquette « Tweaks ») sur l’écran premier lancement.
 		/// `m_langTweakAnimBg` pilote (à terme) l’animation décorative du fond auth — voir
 		/// CODEBASE_MAP.md §13 « Tweaks d’auth ». Tant que l’animation n’existe pas, ce flag n’a
@@ -176,7 +220,7 @@ namespace engine::render
 		void RenderErrorScreen(const RenderModel& rm, float vpW, float vpH);
 		void RenderVerifyScreen(const RenderModel& rm, float vpW, float vpH);
 		void RenderEmailConfirmationScreen(const RenderModel& rm, float vpW, float vpH);
-		void RenderOptionsScreen(const RenderModel& rm, float vpW, float vpH);
+		void RenderOptionsScreen(const RenderModel& rm, float vpW, float vpH, bool inGame = false);
 		void RenderShardScreen(const RenderModel& rm, float vpW, float vpH);
 		void RenderForgotScreen(const RenderModel& rm, float vpW, float vpH);
 		void RenderTermsScreen(const RenderModel& rm, float vpW, float vpH);

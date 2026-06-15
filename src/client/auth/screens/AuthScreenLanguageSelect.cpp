@@ -73,8 +73,13 @@ namespace engine::client
 			SetPhase(Phase::Login);
 			m_activeField = 0;
 		}
-		else
+		else if (!m_optionsOpenInGame)
 		{
+			// Chemin apply depuis l'écran d'options (auth) : restaurer la phase
+			// d'avant l'ouverture. En contexte options in-game (m_optionsOpenInGame),
+			// la locale est bien appliquée ci-dessus (SetLocale, sauvegarde, bannière)
+			// mais on NE change PAS la phase : le presenter reste en état post-monde,
+			// sinon l'écran d'auth réapparaîtrait par-dessus le jeu.
 			SetPhase(m_phaseBeforeOptions);
 		}
 	}

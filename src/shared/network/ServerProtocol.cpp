@@ -738,6 +738,86 @@ namespace engine::server
 		return true;
 	}
 
+	std::vector<std::byte> EncodeSetActionBarLayout(const SetActionBarLayoutMessage& message)
+	{
+		// Grimoire — payload : clientId (4) + 10 chaînes préfixées u16 (slots).
+		size_t hint = 4;
+		for (const std::string& slot : message.slots)
+		{
+			hint += 2 + slot.size();
+		}
+		std::vector<std::byte> packet = BeginPacket(MessageKind::SetActionBarLayout, hint);
+		WriteU32(packet, message.clientId);
+		for (const std::string& slot : message.slots)
+		{
+			WriteSizedString(packet, slot);
+		}
+		return packet;
+	}
+
+	bool DecodeSetActionBarLayout(std::span<const std::byte> packet, SetActionBarLayoutMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::SetActionBarLayout, payload) || payload.size() < 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		for (std::string& slot : outMessage.slots)
+		{
+			// Borne dure défensive : un spellId fait < 64 octets (ids snake_case).
+			if (!ReadSizedString(payload, offset, slot) || slot.size() > 64u)
+			{
+				return false;
+			}
+		}
+		if (offset != payload.size())
+		{
+			return false;
+		}
+		return true;
+	}
+
+	std::vector<std::byte> EncodeActionBarLayoutUpdate(const ActionBarLayoutUpdateMessage& message)
+	{
+		size_t hint = 4;
+		for (const std::string& slot : message.slots)
+		{
+			hint += 2 + slot.size();
+		}
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ActionBarLayoutUpdate, hint);
+		WriteU32(packet, message.clientId);
+		for (const std::string& slot : message.slots)
+		{
+			WriteSizedString(packet, slot);
+		}
+		return packet;
+	}
+
+	bool DecodeActionBarLayoutUpdate(std::span<const std::byte> packet, ActionBarLayoutUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ActionBarLayoutUpdate, payload) || payload.size() < 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		for (std::string& slot : outMessage.slots)
+		{
+			if (!ReadSizedString(payload, offset, slot) || slot.size() > 64u)
+			{
+				return false;
+			}
+		}
+		if (offset != payload.size())
+		{
+			return false;
+		}
+		return true;
+	}
+
 	std::vector<std::byte> EncodeResourceUpdate(const ResourceUpdateMessage& message)
 	{
 		// Combat SP3 — payload fixe 12 octets.

@@ -393,6 +393,55 @@ namespace
 		std::puts("[OK] TestCastRequestRoundTrip");
 	}
 
+	void TestSetActionBarLayoutRoundTrip()
+	{
+		engine::server::SetActionBarLayoutMessage in{};
+		in.clientId = 42u;
+		in.slots[0] = "lanceur_trait_de_feu";
+		in.slots[1] = "lanceur_nova";
+		in.slots[9] = "lanceur_brulure";
+		// slots 2..8 restent vides ("")
+
+		const std::vector<std::byte> packet = engine::server::EncodeSetActionBarLayout(in);
+		assert(!packet.empty());
+
+		engine::server::SetActionBarLayoutMessage out{};
+		assert(engine::server::DecodeSetActionBarLayout(packet, out));
+		assert(out.clientId == 42u);
+		assert(out.slots[0] == "lanceur_trait_de_feu");
+		assert(out.slots[1] == "lanceur_nova");
+		assert(out.slots[2].empty());
+		assert(out.slots[9] == "lanceur_brulure");
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 2u);
+		assert(!engine::server::DecodeSetActionBarLayout(truncated, out));
+		std::puts("[OK] TestSetActionBarLayoutRoundTrip");
+	}
+
+	void TestActionBarLayoutUpdateRoundTrip()
+	{
+		engine::server::ActionBarLayoutUpdateMessage in{};
+		in.clientId = 7u;
+		in.slots[0] = "melee_frappe_brutale";
+		in.slots[3] = "melee_cri_de_guerre";
+
+		const std::vector<std::byte> packet = engine::server::EncodeActionBarLayoutUpdate(in);
+		assert(!packet.empty());
+
+		engine::server::ActionBarLayoutUpdateMessage out{};
+		assert(engine::server::DecodeActionBarLayoutUpdate(packet, out));
+		assert(out.clientId == 7u);
+		assert(out.slots[0] == "melee_frappe_brutale");
+		assert(out.slots[3] == "melee_cri_de_guerre");
+		assert(out.slots[1].empty());
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 2u);
+		assert(!engine::server::DecodeActionBarLayoutUpdate(truncated, out));
+		std::puts("[OK] TestActionBarLayoutUpdateRoundTrip");
+	}
+
 	void TestResourceUpdateRoundTrip()
 	{
 		engine::server::ResourceUpdateMessage in{};
@@ -589,6 +638,8 @@ int main()
 	TestAttackRequestRoundTrip();
 	TestRespawnRequestRoundTrip();
 	TestCastRequestRoundTrip();
+	TestSetActionBarLayoutRoundTrip();
+	TestActionBarLayoutUpdateRoundTrip();
 	TestResourceUpdateRoundTrip();
 	TestCastBarUpdateRoundTrip();
 	TestAuraUpdateRoundTrip();

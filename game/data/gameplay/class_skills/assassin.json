@@ -32,7 +32,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Disparition : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Disparition : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t1",
@@ -68,7 +68,7 @@
                    },
                    {
                        "id":  "assassin_def_t2",
-                       "name":  "Voile d\u0027Ombre  Aiguise",
+                       "name":  "Voile d'Ombre  Aiguise",
                        "branch":  "def",
                        "tier":  2,
                        "level":  2,
@@ -80,7 +80,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Voile d\u0027Ombre  Aiguise : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Voile d'Ombre  Aiguise : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t2",
@@ -128,7 +128,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Reflexe Mortel  Renforce : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Reflexe Mortel  Renforce : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t3",
@@ -176,7 +176,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Evanouissement  Affute : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Evanouissement  Affute : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t4",
@@ -224,7 +224,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Ombre Insaisissable  Brutal : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Ombre Insaisissable  Brutal : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t5",
@@ -272,7 +272,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Neant  Vorace : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Neant  Vorace : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t6",
@@ -320,7 +320,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Disparition  Implacable : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Disparition  Implacable : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t7",
@@ -356,7 +356,7 @@
                    },
                    {
                        "id":  "assassin_def_t8",
-                       "name":  "Voile d\u0027Ombre  Funeste",
+                       "name":  "Voile d'Ombre  Funeste",
                        "branch":  "def",
                        "tier":  8,
                        "level":  8,
@@ -368,7 +368,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Voile d\u0027Ombre  Funeste : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Voile d'Ombre  Funeste : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t8",
@@ -416,7 +416,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Reflexe Mortel  Cruel : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Reflexe Mortel  Cruel : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t9",
@@ -464,7 +464,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Evanouissement  Sanglant : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Evanouissement  Sanglant : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t10",
@@ -512,7 +512,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Ombre Insaisissable  Devastateur : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Ombre Insaisissable  Devastateur : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t11",
@@ -560,7 +560,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Neant  Foudroyant : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Neant  Foudroyant : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t12",
@@ -608,7 +608,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Disparition  Mortel : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Disparition  Mortel : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t13",
@@ -644,7 +644,7 @@
                    },
                    {
                        "id":  "assassin_def_t14",
-                       "name":  "Voile d\u0027Ombre  Inexorable",
+                       "name":  "Voile d'Ombre  Inexorable",
                        "branch":  "def",
                        "tier":  14,
                        "level":  14,
@@ -656,7 +656,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Voile d\u0027Ombre  Inexorable : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Voile d'Ombre  Inexorable : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t14",
@@ -704,7 +704,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Reflexe Mortel  Terrible : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Reflexe Mortel  Terrible : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t15",
@@ -752,7 +752,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Evanouissement  Souverain : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Evanouissement  Souverain : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t16",
@@ -800,7 +800,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Ombre Insaisissable  Legendaire : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Ombre Insaisissable  Legendaire : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t17",
@@ -848,7 +848,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Neant  Cataclysmique : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Neant  Cataclysmique : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t18",
@@ -896,7 +896,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Disparition  Apocalyptique : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Disparition  Apocalyptique : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t19",
@@ -932,7 +932,7 @@
                    },
                    {
                        "id":  "assassin_def_t20",
-                       "name":  "Voile d\u0027Ombre  Ultime",
+                       "name":  "Voile d'Ombre  Ultime",
                        "branch":  "def",
                        "tier":  20,
                        "level":  20,
@@ -944,7 +944,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Voile d\u0027Ombre  Ultime : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Voile d'Ombre  Ultime : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t20",
@@ -992,7 +992,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Reflexe Mortel  Maitrise 21 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Reflexe Mortel  Maitrise 21 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t21",
@@ -1040,7 +1040,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Evanouissement  Maitrise 22 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Evanouissement  Maitrise 22 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t22",
@@ -1088,7 +1088,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Ombre Insaisissable  Maitrise 23 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Ombre Insaisissable  Maitrise 23 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t23",
@@ -1136,7 +1136,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Neant  Maitrise 24 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Neant  Maitrise 24 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t24",
@@ -1184,7 +1184,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Disparition  Maitrise 25 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Disparition  Maitrise 25 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t25",
@@ -1220,7 +1220,7 @@
                    },
                    {
                        "id":  "assassin_def_t26",
-                       "name":  "Voile d\u0027Ombre  Maitrise 26",
+                       "name":  "Voile d'Ombre  Maitrise 26",
                        "branch":  "def",
                        "tier":  26,
                        "level":  26,
@@ -1232,7 +1232,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Voile d\u0027Ombre  Maitrise 26 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Voile d'Ombre  Maitrise 26 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t26",
@@ -1280,7 +1280,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Reflexe Mortel  Maitrise 27 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Reflexe Mortel  Maitrise 27 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t27",
@@ -1328,7 +1328,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Evanouissement  Maitrise 28 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Evanouissement  Maitrise 28 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t28",
@@ -1376,7 +1376,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Ombre Insaisissable  Maitrise 29 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Ombre Insaisissable  Maitrise 29 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t29",
@@ -1424,7 +1424,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Neant  Maitrise 30 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Neant  Maitrise 30 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t30",
@@ -1472,7 +1472,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Disparition  Maitrise 31 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Disparition  Maitrise 31 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t31",
@@ -1508,7 +1508,7 @@
                    },
                    {
                        "id":  "assassin_def_t32",
-                       "name":  "Voile d\u0027Ombre  Maitrise 32",
+                       "name":  "Voile d'Ombre  Maitrise 32",
                        "branch":  "def",
                        "tier":  32,
                        "level":  32,
@@ -1520,7 +1520,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Voile d\u0027Ombre  Maitrise 32 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Voile d'Ombre  Maitrise 32 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t32",
@@ -1568,7 +1568,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Reflexe Mortel  Maitrise 33 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Reflexe Mortel  Maitrise 33 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t33",
@@ -1616,7 +1616,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Evanouissement  Maitrise 34 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Evanouissement  Maitrise 34 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t34",
@@ -1664,7 +1664,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Ombre Insaisissable  Maitrise 35 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Ombre Insaisissable  Maitrise 35 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t35",
@@ -1712,7 +1712,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Neant  Maitrise 36 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Neant  Maitrise 36 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t36",
@@ -1760,7 +1760,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Disparition  Maitrise 37 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Disparition  Maitrise 37 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t37",
@@ -1796,7 +1796,7 @@
                    },
                    {
                        "id":  "assassin_def_t38",
-                       "name":  "Voile d\u0027Ombre  Maitrise 38",
+                       "name":  "Voile d'Ombre  Maitrise 38",
                        "branch":  "def",
                        "tier":  38,
                        "level":  38,
@@ -1808,7 +1808,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Voile d\u0027Ombre  Maitrise 38 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Voile d'Ombre  Maitrise 38 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t38",
@@ -1856,7 +1856,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Reflexe Mortel  Maitrise 39 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Reflexe Mortel  Maitrise 39 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t39",
@@ -1904,7 +1904,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Evanouissement  Maitrise 40 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Evanouissement  Maitrise 40 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t40",
@@ -1952,7 +1952,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Ombre Insaisissable  Maitrise 41 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Ombre Insaisissable  Maitrise 41 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t41",
@@ -2000,7 +2000,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Neant  Maitrise 42 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Neant  Maitrise 42 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t42",
@@ -2048,7 +2048,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Disparition  Maitrise 43 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Disparition  Maitrise 43 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t43",
@@ -2084,7 +2084,7 @@
                    },
                    {
                        "id":  "assassin_def_t44",
-                       "name":  "Voile d\u0027Ombre  Maitrise 44",
+                       "name":  "Voile d'Ombre  Maitrise 44",
                        "branch":  "def",
                        "tier":  44,
                        "level":  44,
@@ -2096,7 +2096,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Voile d\u0027Ombre  Maitrise 44 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Voile d'Ombre  Maitrise 44 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t44",
@@ -2144,7 +2144,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Reflexe Mortel  Maitrise 45 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Reflexe Mortel  Maitrise 45 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t45",
@@ -2192,7 +2192,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Evanouissement  Maitrise 46 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Evanouissement  Maitrise 46 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t46",
@@ -2240,7 +2240,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Ombre Insaisissable  Maitrise 47 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Ombre Insaisissable  Maitrise 47 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t47",
@@ -2288,7 +2288,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Neant  Maitrise 48 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Neant  Maitrise 48 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t48",
@@ -2336,7 +2336,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Disparition  Maitrise 49 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Disparition  Maitrise 49 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t49",
@@ -2372,7 +2372,7 @@
                    },
                    {
                        "id":  "assassin_def_t50",
-                       "name":  "Voile d\u0027Ombre  Maitrise 50",
+                       "name":  "Voile d'Ombre  Maitrise 50",
                        "branch":  "def",
                        "tier":  50,
                        "level":  50,
@@ -2384,7 +2384,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Voile d\u0027Ombre  Maitrise 50 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Voile d'Ombre  Maitrise 50 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t50",
@@ -2432,7 +2432,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Reflexe Mortel  Maitrise 51 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Reflexe Mortel  Maitrise 51 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t51",
@@ -2480,7 +2480,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Evanouissement  Maitrise 52 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Evanouissement  Maitrise 52 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t52",
@@ -2528,7 +2528,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Ombre Insaisissable  Maitrise 53 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Ombre Insaisissable  Maitrise 53 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t53",
@@ -2576,7 +2576,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Neant  Maitrise 54 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Neant  Maitrise 54 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t54",
@@ -2624,7 +2624,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Disparition  Maitrise 55 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Disparition  Maitrise 55 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t55",
@@ -2660,7 +2660,7 @@
                    },
                    {
                        "id":  "assassin_def_t56",
-                       "name":  "Voile d\u0027Ombre  Maitrise 56",
+                       "name":  "Voile d'Ombre  Maitrise 56",
                        "branch":  "def",
                        "tier":  56,
                        "level":  56,
@@ -2672,7 +2672,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Voile d\u0027Ombre  Maitrise 56 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Voile d'Ombre  Maitrise 56 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t56",
@@ -2720,7 +2720,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Reflexe Mortel  Maitrise 57 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Reflexe Mortel  Maitrise 57 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t57",
@@ -2768,7 +2768,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Evanouissement  Maitrise 58 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Evanouissement  Maitrise 58 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t58",
@@ -2816,7 +2816,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Ombre Insaisissable  Maitrise 59 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Ombre Insaisissable  Maitrise 59 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t59",
@@ -2864,7 +2864,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Neant  Maitrise 60 : se fond dans l\u0027ombre et esquive les attaques."
+                       "description":  "Neant  Maitrise 60 : se fond dans l'ombre et esquive les attaques."
                    },
                    {
                        "id":  "assassin_single_t60",

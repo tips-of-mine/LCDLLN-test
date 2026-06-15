@@ -52,7 +52,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t2",
-                       "name":  "Nuee d\u0027Insectes  Aiguise",
+                       "name":  "Nuee d'Insectes  Aiguise",
                        "branch":  "aoe",
                        "tier":  2,
                        "level":  2,
@@ -64,11 +64,11 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Nuee d\u0027Insectes  Aiguise : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Nuee d'Insectes  Aiguise : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t2",
-                       "name":  "Peau d\u0027Esprit  Aiguise",
+                       "name":  "Peau d'Esprit  Aiguise",
                        "branch":  "def",
                        "tier":  2,
                        "level":  2,
@@ -80,7 +80,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Peau d\u0027Esprit  Aiguise : protege grace aux esprits ancestraux."
+                       "description":  "Peau d'Esprit  Aiguise : protege grace aux esprits ancestraux."
                    },
                    {
                        "id":  "chaman_single_t2",
@@ -196,7 +196,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t5",
-                       "name":  "Maree d\u0027Esprits  Brutal",
+                       "name":  "Maree d'Esprits  Brutal",
                        "branch":  "aoe",
                        "tier":  5,
                        "level":  5,
@@ -208,7 +208,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Maree d\u0027Esprits  Brutal : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Maree d'Esprits  Brutal : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t5",
@@ -340,7 +340,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t8",
-                       "name":  "Nuee d\u0027Insectes  Funeste",
+                       "name":  "Nuee d'Insectes  Funeste",
                        "branch":  "aoe",
                        "tier":  8,
                        "level":  8,
@@ -352,11 +352,11 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Nuee d\u0027Insectes  Funeste : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Nuee d'Insectes  Funeste : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t8",
-                       "name":  "Peau d\u0027Esprit  Funeste",
+                       "name":  "Peau d'Esprit  Funeste",
                        "branch":  "def",
                        "tier":  8,
                        "level":  8,
@@ -368,7 +368,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Peau d\u0027Esprit  Funeste : protege grace aux esprits ancestraux."
+                       "description":  "Peau d'Esprit  Funeste : protege grace aux esprits ancestraux."
                    },
                    {
                        "id":  "chaman_single_t8",
@@ -484,7 +484,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t11",
-                       "name":  "Maree d\u0027Esprits  Devastateur",
+                       "name":  "Maree d'Esprits  Devastateur",
                        "branch":  "aoe",
                        "tier":  11,
                        "level":  11,
@@ -496,7 +496,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Maree d\u0027Esprits  Devastateur : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Maree d'Esprits  Devastateur : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t11",
@@ -628,7 +628,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t14",
-                       "name":  "Nuee d\u0027Insectes  Inexorable",
+                       "name":  "Nuee d'Insectes  Inexorable",
                        "branch":  "aoe",
                        "tier":  14,
                        "level":  14,
@@ -640,11 +640,11 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Nuee d\u0027Insectes  Inexorable : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Nuee d'Insectes  Inexorable : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t14",
-                       "name":  "Peau d\u0027Esprit  Inexorable",
+                       "name":  "Peau d'Esprit  Inexorable",
                        "branch":  "def",
                        "tier":  14,
                        "level":  14,
@@ -656,7 +656,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Peau d\u0027Esprit  Inexorable : protege grace aux esprits ancestraux."
+                       "description":  "Peau d'Esprit  Inexorable : protege grace aux esprits ancestraux."
                    },
                    {
                        "id":  "chaman_single_t14",
@@ -772,7 +772,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t17",
-                       "name":  "Maree d\u0027Esprits  Legendaire",
+                       "name":  "Maree d'Esprits  Legendaire",
                        "branch":  "aoe",
                        "tier":  17,
                        "level":  17,
@@ -784,7 +784,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Maree d\u0027Esprits  Legendaire : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Maree d'Esprits  Legendaire : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t17",
@@ -916,7 +916,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t20",
-                       "name":  "Nuee d\u0027Insectes  Ultime",
+                       "name":  "Nuee d'Insectes  Ultime",
                        "branch":  "aoe",
                        "tier":  20,
                        "level":  20,
@@ -928,11 +928,11 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Nuee d\u0027Insectes  Ultime : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Nuee d'Insectes  Ultime : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t20",
-                       "name":  "Peau d\u0027Esprit  Ultime",
+                       "name":  "Peau d'Esprit  Ultime",
                        "branch":  "def",
                        "tier":  20,
                        "level":  20,
@@ -944,7 +944,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Peau d\u0027Esprit  Ultime : protege grace aux esprits ancestraux."
+                       "description":  "Peau d'Esprit  Ultime : protege grace aux esprits ancestraux."
                    },
                    {
                        "id":  "chaman_single_t20",
@@ -1060,7 +1060,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t23",
-                       "name":  "Maree d\u0027Esprits  Maitrise 23",
+                       "name":  "Maree d'Esprits  Maitrise 23",
                        "branch":  "aoe",
                        "tier":  23,
                        "level":  23,
@@ -1072,7 +1072,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Maree d\u0027Esprits  Maitrise 23 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Maree d'Esprits  Maitrise 23 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t23",
@@ -1204,7 +1204,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t26",
-                       "name":  "Nuee d\u0027Insectes  Maitrise 26",
+                       "name":  "Nuee d'Insectes  Maitrise 26",
                        "branch":  "aoe",
                        "tier":  26,
                        "level":  26,
@@ -1216,11 +1216,11 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Nuee d\u0027Insectes  Maitrise 26 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Nuee d'Insectes  Maitrise 26 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t26",
-                       "name":  "Peau d\u0027Esprit  Maitrise 26",
+                       "name":  "Peau d'Esprit  Maitrise 26",
                        "branch":  "def",
                        "tier":  26,
                        "level":  26,
@@ -1232,7 +1232,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Peau d\u0027Esprit  Maitrise 26 : protege grace aux esprits ancestraux."
+                       "description":  "Peau d'Esprit  Maitrise 26 : protege grace aux esprits ancestraux."
                    },
                    {
                        "id":  "chaman_single_t26",
@@ -1348,7 +1348,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t29",
-                       "name":  "Maree d\u0027Esprits  Maitrise 29",
+                       "name":  "Maree d'Esprits  Maitrise 29",
                        "branch":  "aoe",
                        "tier":  29,
                        "level":  29,
@@ -1360,7 +1360,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Maree d\u0027Esprits  Maitrise 29 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Maree d'Esprits  Maitrise 29 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t29",
@@ -1492,7 +1492,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t32",
-                       "name":  "Nuee d\u0027Insectes  Maitrise 32",
+                       "name":  "Nuee d'Insectes  Maitrise 32",
                        "branch":  "aoe",
                        "tier":  32,
                        "level":  32,
@@ -1504,11 +1504,11 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Nuee d\u0027Insectes  Maitrise 32 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Nuee d'Insectes  Maitrise 32 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t32",
-                       "name":  "Peau d\u0027Esprit  Maitrise 32",
+                       "name":  "Peau d'Esprit  Maitrise 32",
                        "branch":  "def",
                        "tier":  32,
                        "level":  32,
@@ -1520,7 +1520,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Peau d\u0027Esprit  Maitrise 32 : protege grace aux esprits ancestraux."
+                       "description":  "Peau d'Esprit  Maitrise 32 : protege grace aux esprits ancestraux."
                    },
                    {
                        "id":  "chaman_single_t32",
@@ -1636,7 +1636,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t35",
-                       "name":  "Maree d\u0027Esprits  Maitrise 35",
+                       "name":  "Maree d'Esprits  Maitrise 35",
                        "branch":  "aoe",
                        "tier":  35,
                        "level":  35,
@@ -1648,7 +1648,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Maree d\u0027Esprits  Maitrise 35 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Maree d'Esprits  Maitrise 35 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t35",
@@ -1780,7 +1780,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t38",
-                       "name":  "Nuee d\u0027Insectes  Maitrise 38",
+                       "name":  "Nuee d'Insectes  Maitrise 38",
                        "branch":  "aoe",
                        "tier":  38,
                        "level":  38,
@@ -1792,11 +1792,11 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Nuee d\u0027Insectes  Maitrise 38 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Nuee d'Insectes  Maitrise 38 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t38",
-                       "name":  "Peau d\u0027Esprit  Maitrise 38",
+                       "name":  "Peau d'Esprit  Maitrise 38",
                        "branch":  "def",
                        "tier":  38,
                        "level":  38,
@@ -1808,7 +1808,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Peau d\u0027Esprit  Maitrise 38 : protege grace aux esprits ancestraux."
+                       "description":  "Peau d'Esprit  Maitrise 38 : protege grace aux esprits ancestraux."
                    },
                    {
                        "id":  "chaman_single_t38",
@@ -1924,7 +1924,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t41",
-                       "name":  "Maree d\u0027Esprits  Maitrise 41",
+                       "name":  "Maree d'Esprits  Maitrise 41",
                        "branch":  "aoe",
                        "tier":  41,
                        "level":  41,
@@ -1936,7 +1936,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Maree d\u0027Esprits  Maitrise 41 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Maree d'Esprits  Maitrise 41 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t41",
@@ -2068,7 +2068,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t44",
-                       "name":  "Nuee d\u0027Insectes  Maitrise 44",
+                       "name":  "Nuee d'Insectes  Maitrise 44",
                        "branch":  "aoe",
                        "tier":  44,
                        "level":  44,
@@ -2080,11 +2080,11 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Nuee d\u0027Insectes  Maitrise 44 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Nuee d'Insectes  Maitrise 44 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t44",
-                       "name":  "Peau d\u0027Esprit  Maitrise 44",
+                       "name":  "Peau d'Esprit  Maitrise 44",
                        "branch":  "def",
                        "tier":  44,
                        "level":  44,
@@ -2096,7 +2096,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Peau d\u0027Esprit  Maitrise 44 : protege grace aux esprits ancestraux."
+                       "description":  "Peau d'Esprit  Maitrise 44 : protege grace aux esprits ancestraux."
                    },
                    {
                        "id":  "chaman_single_t44",
@@ -2212,7 +2212,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t47",
-                       "name":  "Maree d\u0027Esprits  Maitrise 47",
+                       "name":  "Maree d'Esprits  Maitrise 47",
                        "branch":  "aoe",
                        "tier":  47,
                        "level":  47,
@@ -2224,7 +2224,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Maree d\u0027Esprits  Maitrise 47 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Maree d'Esprits  Maitrise 47 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t47",
@@ -2356,7 +2356,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t50",
-                       "name":  "Nuee d\u0027Insectes  Maitrise 50",
+                       "name":  "Nuee d'Insectes  Maitrise 50",
                        "branch":  "aoe",
                        "tier":  50,
                        "level":  50,
@@ -2368,11 +2368,11 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Nuee d\u0027Insectes  Maitrise 50 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Nuee d'Insectes  Maitrise 50 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t50",
-                       "name":  "Peau d\u0027Esprit  Maitrise 50",
+                       "name":  "Peau d'Esprit  Maitrise 50",
                        "branch":  "def",
                        "tier":  50,
                        "level":  50,
@@ -2384,7 +2384,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Peau d\u0027Esprit  Maitrise 50 : protege grace aux esprits ancestraux."
+                       "description":  "Peau d'Esprit  Maitrise 50 : protege grace aux esprits ancestraux."
                    },
                    {
                        "id":  "chaman_single_t50",
@@ -2500,7 +2500,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t53",
-                       "name":  "Maree d\u0027Esprits  Maitrise 53",
+                       "name":  "Maree d'Esprits  Maitrise 53",
                        "branch":  "aoe",
                        "tier":  53,
                        "level":  53,
@@ -2512,7 +2512,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Maree d\u0027Esprits  Maitrise 53 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Maree d'Esprits  Maitrise 53 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t53",
@@ -2644,7 +2644,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t56",
-                       "name":  "Nuee d\u0027Insectes  Maitrise 56",
+                       "name":  "Nuee d'Insectes  Maitrise 56",
                        "branch":  "aoe",
                        "tier":  56,
                        "level":  56,
@@ -2656,11 +2656,11 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Nuee d\u0027Insectes  Maitrise 56 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Nuee d'Insectes  Maitrise 56 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t56",
-                       "name":  "Peau d\u0027Esprit  Maitrise 56",
+                       "name":  "Peau d'Esprit  Maitrise 56",
                        "branch":  "def",
                        "tier":  56,
                        "level":  56,
@@ -2672,7 +2672,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Peau d\u0027Esprit  Maitrise 56 : protege grace aux esprits ancestraux."
+                       "description":  "Peau d'Esprit  Maitrise 56 : protege grace aux esprits ancestraux."
                    },
                    {
                        "id":  "chaman_single_t56",
@@ -2788,7 +2788,7 @@
                    },
                    {
                        "id":  "chaman_aoe_t59",
-                       "name":  "Maree d\u0027Esprits  Maitrise 59",
+                       "name":  "Maree d'Esprits  Maitrise 59",
                        "branch":  "aoe",
                        "tier":  59,
                        "level":  59,
@@ -2800,7 +2800,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Maree d\u0027Esprits  Maitrise 59 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
+                       "description":  "Maree d'Esprits  Maitrise 59 : dechaine les esprits sur plusieurs ennemis (degats reduits)."
                    },
                    {
                        "id":  "chaman_def_t59",

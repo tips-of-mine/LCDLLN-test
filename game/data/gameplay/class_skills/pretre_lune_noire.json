@@ -48,7 +48,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Rayon Tenebreux : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Rayon Tenebreux : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t2",
@@ -68,7 +68,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t2",
-                       "name":  "Linceul d\u0027Ombre  Aiguise",
+                       "name":  "Linceul d'Ombre  Aiguise",
                        "branch":  "def",
                        "tier":  2,
                        "level":  2,
@@ -80,7 +80,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Linceul d\u0027Ombre  Aiguise : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Aiguise : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t2",
@@ -96,7 +96,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Anatheme  Aiguise : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Anatheme  Aiguise : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t3",
@@ -144,7 +144,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Flamme Noire  Renforce : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Flamme Noire  Renforce : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t4",
@@ -192,7 +192,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Verbe de Haine  Affute : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Verbe de Haine  Affute : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t5",
@@ -212,7 +212,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t5",
-                       "name":  "Pacte d\u0027Ombre  Brutal",
+                       "name":  "Pacte d'Ombre  Brutal",
                        "branch":  "def",
                        "tier":  5,
                        "level":  5,
@@ -224,7 +224,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Pacte d\u0027Ombre  Brutal : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Brutal : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t5",
@@ -240,7 +240,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Damnation Lunaire  Brutal : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Damnation Lunaire  Brutal : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t6",
@@ -288,7 +288,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Sentence des Tenebres  Vorace : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Vorace : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t7",
@@ -336,7 +336,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Rayon Tenebreux  Implacable : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Implacable : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t8",
@@ -356,7 +356,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t8",
-                       "name":  "Linceul d\u0027Ombre  Funeste",
+                       "name":  "Linceul d'Ombre  Funeste",
                        "branch":  "def",
                        "tier":  8,
                        "level":  8,
@@ -368,7 +368,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Linceul d\u0027Ombre  Funeste : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Funeste : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t8",
@@ -384,7 +384,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Anatheme  Funeste : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Anatheme  Funeste : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t9",
@@ -432,7 +432,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Flamme Noire  Cruel : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Flamme Noire  Cruel : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t10",
@@ -480,7 +480,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Verbe de Haine  Sanglant : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Verbe de Haine  Sanglant : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t11",
@@ -500,7 +500,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t11",
-                       "name":  "Pacte d\u0027Ombre  Devastateur",
+                       "name":  "Pacte d'Ombre  Devastateur",
                        "branch":  "def",
                        "tier":  11,
                        "level":  11,
@@ -512,7 +512,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Pacte d\u0027Ombre  Devastateur : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Devastateur : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t11",
@@ -528,7 +528,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Damnation Lunaire  Devastateur : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Damnation Lunaire  Devastateur : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t12",
@@ -576,7 +576,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Sentence des Tenebres  Foudroyant : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Foudroyant : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t13",
@@ -624,7 +624,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Rayon Tenebreux  Mortel : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Mortel : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t14",
@@ -644,7 +644,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t14",
-                       "name":  "Linceul d\u0027Ombre  Inexorable",
+                       "name":  "Linceul d'Ombre  Inexorable",
                        "branch":  "def",
                        "tier":  14,
                        "level":  14,
@@ -656,7 +656,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Linceul d\u0027Ombre  Inexorable : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Inexorable : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t14",
@@ -672,7 +672,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Anatheme  Inexorable : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Anatheme  Inexorable : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t15",
@@ -720,7 +720,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Flamme Noire  Terrible : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Flamme Noire  Terrible : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t16",
@@ -768,7 +768,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Verbe de Haine  Souverain : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Verbe de Haine  Souverain : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t17",
@@ -788,7 +788,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t17",
-                       "name":  "Pacte d\u0027Ombre  Legendaire",
+                       "name":  "Pacte d'Ombre  Legendaire",
                        "branch":  "def",
                        "tier":  17,
                        "level":  17,
@@ -800,7 +800,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Pacte d\u0027Ombre  Legendaire : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Legendaire : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t17",
@@ -816,7 +816,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Damnation Lunaire  Legendaire : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Damnation Lunaire  Legendaire : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t18",
@@ -864,7 +864,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Sentence des Tenebres  Cataclysmique : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Cataclysmique : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t19",
@@ -912,7 +912,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Rayon Tenebreux  Apocalyptique : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Apocalyptique : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t20",
@@ -932,7 +932,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t20",
-                       "name":  "Linceul d\u0027Ombre  Ultime",
+                       "name":  "Linceul d'Ombre  Ultime",
                        "branch":  "def",
                        "tier":  20,
                        "level":  20,
@@ -944,7 +944,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Linceul d\u0027Ombre  Ultime : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Ultime : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t20",
@@ -960,7 +960,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Anatheme  Ultime : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Anatheme  Ultime : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t21",
@@ -1008,7 +1008,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Flamme Noire  Maitrise 21 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 21 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t22",
@@ -1056,7 +1056,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Verbe de Haine  Maitrise 22 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 22 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t23",
@@ -1076,7 +1076,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t23",
-                       "name":  "Pacte d\u0027Ombre  Maitrise 23",
+                       "name":  "Pacte d'Ombre  Maitrise 23",
                        "branch":  "def",
                        "tier":  23,
                        "level":  23,
@@ -1088,7 +1088,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Pacte d\u0027Ombre  Maitrise 23 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 23 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t23",
@@ -1104,7 +1104,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Damnation Lunaire  Maitrise 23 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 23 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t24",
@@ -1152,7 +1152,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Sentence des Tenebres  Maitrise 24 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 24 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t25",
@@ -1200,7 +1200,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Rayon Tenebreux  Maitrise 25 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Maitrise 25 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t26",
@@ -1220,7 +1220,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t26",
-                       "name":  "Linceul d\u0027Ombre  Maitrise 26",
+                       "name":  "Linceul d'Ombre  Maitrise 26",
                        "branch":  "def",
                        "tier":  26,
                        "level":  26,
@@ -1232,7 +1232,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Linceul d\u0027Ombre  Maitrise 26 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Maitrise 26 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t26",
@@ -1248,7 +1248,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Anatheme  Maitrise 26 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Anatheme  Maitrise 26 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t27",
@@ -1296,7 +1296,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Flamme Noire  Maitrise 27 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 27 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t28",
@@ -1344,7 +1344,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Verbe de Haine  Maitrise 28 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 28 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t29",
@@ -1364,7 +1364,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t29",
-                       "name":  "Pacte d\u0027Ombre  Maitrise 29",
+                       "name":  "Pacte d'Ombre  Maitrise 29",
                        "branch":  "def",
                        "tier":  29,
                        "level":  29,
@@ -1376,7 +1376,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Pacte d\u0027Ombre  Maitrise 29 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 29 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t29",
@@ -1392,7 +1392,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Damnation Lunaire  Maitrise 29 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 29 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t30",
@@ -1440,7 +1440,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Sentence des Tenebres  Maitrise 30 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 30 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t31",
@@ -1488,7 +1488,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Rayon Tenebreux  Maitrise 31 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Maitrise 31 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t32",
@@ -1508,7 +1508,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t32",
-                       "name":  "Linceul d\u0027Ombre  Maitrise 32",
+                       "name":  "Linceul d'Ombre  Maitrise 32",
                        "branch":  "def",
                        "tier":  32,
                        "level":  32,
@@ -1520,7 +1520,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Linceul d\u0027Ombre  Maitrise 32 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Maitrise 32 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t32",
@@ -1536,7 +1536,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Anatheme  Maitrise 32 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Anatheme  Maitrise 32 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t33",
@@ -1584,7 +1584,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Flamme Noire  Maitrise 33 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 33 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t34",
@@ -1632,7 +1632,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Verbe de Haine  Maitrise 34 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 34 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t35",
@@ -1652,7 +1652,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t35",
-                       "name":  "Pacte d\u0027Ombre  Maitrise 35",
+                       "name":  "Pacte d'Ombre  Maitrise 35",
                        "branch":  "def",
                        "tier":  35,
                        "level":  35,
@@ -1664,7 +1664,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Pacte d\u0027Ombre  Maitrise 35 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 35 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t35",
@@ -1680,7 +1680,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Damnation Lunaire  Maitrise 35 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 35 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t36",
@@ -1728,7 +1728,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Sentence des Tenebres  Maitrise 36 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 36 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t37",
@@ -1776,7 +1776,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Rayon Tenebreux  Maitrise 37 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Maitrise 37 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t38",
@@ -1796,7 +1796,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t38",
-                       "name":  "Linceul d\u0027Ombre  Maitrise 38",
+                       "name":  "Linceul d'Ombre  Maitrise 38",
                        "branch":  "def",
                        "tier":  38,
                        "level":  38,
@@ -1808,7 +1808,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Linceul d\u0027Ombre  Maitrise 38 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Maitrise 38 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t38",
@@ -1824,7 +1824,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Anatheme  Maitrise 38 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Anatheme  Maitrise 38 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t39",
@@ -1872,7 +1872,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Flamme Noire  Maitrise 39 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 39 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t40",
@@ -1920,7 +1920,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Verbe de Haine  Maitrise 40 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 40 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t41",
@@ -1940,7 +1940,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t41",
-                       "name":  "Pacte d\u0027Ombre  Maitrise 41",
+                       "name":  "Pacte d'Ombre  Maitrise 41",
                        "branch":  "def",
                        "tier":  41,
                        "level":  41,
@@ -1952,7 +1952,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Pacte d\u0027Ombre  Maitrise 41 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 41 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t41",
@@ -1968,7 +1968,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Damnation Lunaire  Maitrise 41 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 41 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t42",
@@ -2016,7 +2016,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Sentence des Tenebres  Maitrise 42 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 42 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t43",
@@ -2064,7 +2064,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Rayon Tenebreux  Maitrise 43 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Maitrise 43 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t44",
@@ -2084,7 +2084,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t44",
-                       "name":  "Linceul d\u0027Ombre  Maitrise 44",
+                       "name":  "Linceul d'Ombre  Maitrise 44",
                        "branch":  "def",
                        "tier":  44,
                        "level":  44,
@@ -2096,7 +2096,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Linceul d\u0027Ombre  Maitrise 44 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Maitrise 44 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t44",
@@ -2112,7 +2112,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Anatheme  Maitrise 44 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Anatheme  Maitrise 44 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t45",
@@ -2160,7 +2160,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Flamme Noire  Maitrise 45 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 45 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t46",
@@ -2208,7 +2208,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Verbe de Haine  Maitrise 46 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 46 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t47",
@@ -2228,7 +2228,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t47",
-                       "name":  "Pacte d\u0027Ombre  Maitrise 47",
+                       "name":  "Pacte d'Ombre  Maitrise 47",
                        "branch":  "def",
                        "tier":  47,
                        "level":  47,
@@ -2240,7 +2240,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Pacte d\u0027Ombre  Maitrise 47 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 47 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t47",
@@ -2256,7 +2256,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Damnation Lunaire  Maitrise 47 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 47 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t48",
@@ -2304,7 +2304,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Sentence des Tenebres  Maitrise 48 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 48 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t49",
@@ -2352,7 +2352,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Rayon Tenebreux  Maitrise 49 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Maitrise 49 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t50",
@@ -2372,7 +2372,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t50",
-                       "name":  "Linceul d\u0027Ombre  Maitrise 50",
+                       "name":  "Linceul d'Ombre  Maitrise 50",
                        "branch":  "def",
                        "tier":  50,
                        "level":  50,
@@ -2384,7 +2384,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Linceul d\u0027Ombre  Maitrise 50 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Maitrise 50 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t50",
@@ -2400,7 +2400,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Anatheme  Maitrise 50 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Anatheme  Maitrise 50 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t51",
@@ -2448,7 +2448,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Flamme Noire  Maitrise 51 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 51 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t52",
@@ -2496,7 +2496,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Verbe de Haine  Maitrise 52 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 52 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t53",
@@ -2516,7 +2516,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t53",
-                       "name":  "Pacte d\u0027Ombre  Maitrise 53",
+                       "name":  "Pacte d'Ombre  Maitrise 53",
                        "branch":  "def",
                        "tier":  53,
                        "level":  53,
@@ -2528,7 +2528,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Pacte d\u0027Ombre  Maitrise 53 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 53 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t53",
@@ -2544,7 +2544,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Damnation Lunaire  Maitrise 53 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 53 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t54",
@@ -2592,7 +2592,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Sentence des Tenebres  Maitrise 54 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 54 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t55",
@@ -2640,7 +2640,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Rayon Tenebreux  Maitrise 55 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Maitrise 55 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t56",
@@ -2660,7 +2660,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t56",
-                       "name":  "Linceul d\u0027Ombre  Maitrise 56",
+                       "name":  "Linceul d'Ombre  Maitrise 56",
                        "branch":  "def",
                        "tier":  56,
                        "level":  56,
@@ -2672,7 +2672,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Linceul d\u0027Ombre  Maitrise 56 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Maitrise 56 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t56",
@@ -2688,7 +2688,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Anatheme  Maitrise 56 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Anatheme  Maitrise 56 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t57",
@@ -2736,7 +2736,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Flamme Noire  Maitrise 57 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 57 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t58",
@@ -2784,7 +2784,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Verbe de Haine  Maitrise 58 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 58 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t59",
@@ -2804,7 +2804,7 @@
                    },
                    {
                        "id":  "pretre_lune_noire_def_t59",
-                       "name":  "Pacte d\u0027Ombre  Maitrise 59",
+                       "name":  "Pacte d'Ombre  Maitrise 59",
                        "branch":  "def",
                        "tier":  59,
                        "level":  59,
@@ -2816,7 +2816,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Pacte d\u0027Ombre  Maitrise 59 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 59 : octroie une protection tenebreuse a soi et aux fideles."
                    },
                    {
                        "id":  "pretre_lune_noire_single_t59",
@@ -2832,7 +2832,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Damnation Lunaire  Maitrise 59 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 59 : foudroie une cible d'energie tenebreuse."
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t60",
@@ -2880,7 +2880,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Sentence des Tenebres  Maitrise 60 : foudroie une cible d\u0027energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 60 : foudroie une cible d'energie tenebreuse."
                    }
                ]
 }

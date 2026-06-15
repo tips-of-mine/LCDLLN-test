@@ -32,7 +32,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Posture Defensive : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Posture Defensive : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t1",
@@ -52,7 +52,7 @@
                    },
                    {
                        "id":  "guerrier_aoe_t2",
-                       "name":  "Tourbillon d\u0027Acier  Aiguise",
+                       "name":  "Tourbillon d'Acier  Aiguise",
                        "branch":  "aoe",
                        "tier":  2,
                        "level":  2,
@@ -64,7 +64,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Tourbillon d\u0027Acier  Aiguise : frappe tous les ennemis proches (degats reduits)."
+                       "description":  "Tourbillon d'Acier  Aiguise : frappe tous les ennemis proches (degats reduits)."
                    },
                    {
                        "id":  "guerrier_def_t2",
@@ -80,7 +80,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Mur de Boucliers  Aiguise : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Mur de Boucliers  Aiguise : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t2",
@@ -128,7 +128,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Parade  Renforce : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Parade  Renforce : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t3",
@@ -176,7 +176,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Provocation  Affute : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Provocation  Affute : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t4",
@@ -224,7 +224,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Peau de Fer  Brutal : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Peau de Fer  Brutal : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t5",
@@ -272,7 +272,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Inebranlable  Vorace : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Inebranlable  Vorace : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t6",
@@ -320,7 +320,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Posture Defensive  Implacable : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Posture Defensive  Implacable : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t7",
@@ -340,7 +340,7 @@
                    },
                    {
                        "id":  "guerrier_aoe_t8",
-                       "name":  "Tourbillon d\u0027Acier  Funeste",
+                       "name":  "Tourbillon d'Acier  Funeste",
                        "branch":  "aoe",
                        "tier":  8,
                        "level":  8,
@@ -352,7 +352,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Tourbillon d\u0027Acier  Funeste : frappe tous les ennemis proches (degats reduits)."
+                       "description":  "Tourbillon d'Acier  Funeste : frappe tous les ennemis proches (degats reduits)."
                    },
                    {
                        "id":  "guerrier_def_t8",
@@ -368,7 +368,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Mur de Boucliers  Funeste : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Mur de Boucliers  Funeste : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t8",
@@ -416,7 +416,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Parade  Cruel : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Parade  Cruel : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t9",
@@ -464,7 +464,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Provocation  Sanglant : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Provocation  Sanglant : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t10",
@@ -512,7 +512,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Peau de Fer  Devastateur : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Peau de Fer  Devastateur : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t11",
@@ -560,7 +560,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Inebranlable  Foudroyant : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Inebranlable  Foudroyant : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t12",
@@ -608,7 +608,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Posture Defensive  Mortel : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Posture Defensive  Mortel : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t13",
@@ -628,7 +628,7 @@
                    },
                    {
                        "id":  "guerrier_aoe_t14",
-                       "name":  "Tourbillon d\u0027Acier  Inexorable",
+                       "name":  "Tourbillon d'Acier  Inexorable",
                        "branch":  "aoe",
                        "tier":  14,
                        "level":  14,
@@ -640,7 +640,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Tourbillon d\u0027Acier  Inexorable : frappe tous les ennemis proches (degats reduits)."
+                       "description":  "Tourbillon d'Acier  Inexorable : frappe tous les ennemis proches (degats reduits)."
                    },
                    {
                        "id":  "guerrier_def_t14",
@@ -656,7 +656,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Mur de Boucliers  Inexorable : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Mur de Boucliers  Inexorable : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t14",
@@ -704,7 +704,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Parade  Terrible : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Parade  Terrible : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t15",
@@ -752,7 +752,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Provocation  Souverain : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Provocation  Souverain : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t16",
@@ -800,7 +800,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Peau de Fer  Legendaire : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Peau de Fer  Legendaire : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t17",
@@ -848,7 +848,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Inebranlable  Cataclysmique : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Inebranlable  Cataclysmique : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t18",
@@ -896,7 +896,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Posture Defensive  Apocalyptique : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Posture Defensive  Apocalyptique : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t19",
@@ -916,7 +916,7 @@
                    },
                    {
                        "id":  "guerrier_aoe_t20",
-                       "name":  "Tourbillon d\u0027Acier  Ultime",
+                       "name":  "Tourbillon d'Acier  Ultime",
                        "branch":  "aoe",
                        "tier":  20,
                        "level":  20,
@@ -928,7 +928,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Tourbillon d\u0027Acier  Ultime : frappe tous les ennemis proches (degats reduits)."
+                       "description":  "Tourbillon d'Acier  Ultime : frappe tous les ennemis proches (degats reduits)."
                    },
                    {
                        "id":  "guerrier_def_t20",
@@ -944,7 +944,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Mur de Boucliers  Ultime : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Mur de Boucliers  Ultime : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t20",
@@ -992,7 +992,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Parade  Maitrise 21 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Parade  Maitrise 21 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t21",
@@ -1040,7 +1040,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Provocation  Maitrise 22 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Provocation  Maitrise 22 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t22",
@@ -1088,7 +1088,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Peau de Fer  Maitrise 23 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Peau de Fer  Maitrise 23 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t23",
@@ -1136,7 +1136,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Inebranlable  Maitrise 24 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Inebranlable  Maitrise 24 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t24",
@@ -1184,7 +1184,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Posture Defensive  Maitrise 25 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Posture Defensive  Maitrise 25 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t25",
@@ -1204,7 +1204,7 @@
                    },
                    {
                        "id":  "guerrier_aoe_t26",
-                       "name":  "Tourbillon d\u0027Acier  Maitrise 26",
+                       "name":  "Tourbillon d'Acier  Maitrise 26",
                        "branch":  "aoe",
                        "tier":  26,
                        "level":  26,
@@ -1216,7 +1216,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Tourbillon d\u0027Acier  Maitrise 26 : frappe tous les ennemis proches (degats reduits)."
+                       "description":  "Tourbillon d'Acier  Maitrise 26 : frappe tous les ennemis proches (degats reduits)."
                    },
                    {
                        "id":  "guerrier_def_t26",
@@ -1232,7 +1232,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Mur de Boucliers  Maitrise 26 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Mur de Boucliers  Maitrise 26 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t26",
@@ -1280,7 +1280,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Parade  Maitrise 27 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Parade  Maitrise 27 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t27",
@@ -1328,7 +1328,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Provocation  Maitrise 28 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Provocation  Maitrise 28 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t28",
@@ -1376,7 +1376,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Peau de Fer  Maitrise 29 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Peau de Fer  Maitrise 29 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t29",
@@ -1424,7 +1424,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Inebranlable  Maitrise 30 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Inebranlable  Maitrise 30 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t30",
@@ -1472,7 +1472,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Posture Defensive  Maitrise 31 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Posture Defensive  Maitrise 31 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t31",
@@ -1492,7 +1492,7 @@
                    },
                    {
                        "id":  "guerrier_aoe_t32",
-                       "name":  "Tourbillon d\u0027Acier  Maitrise 32",
+                       "name":  "Tourbillon d'Acier  Maitrise 32",
                        "branch":  "aoe",
                        "tier":  32,
                        "level":  32,
@@ -1504,7 +1504,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Tourbillon d\u0027Acier  Maitrise 32 : frappe tous les ennemis proches (degats reduits)."
+                       "description":  "Tourbillon d'Acier  Maitrise 32 : frappe tous les ennemis proches (degats reduits)."
                    },
                    {
                        "id":  "guerrier_def_t32",
@@ -1520,7 +1520,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Mur de Boucliers  Maitrise 32 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Mur de Boucliers  Maitrise 32 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t32",
@@ -1568,7 +1568,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Parade  Maitrise 33 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Parade  Maitrise 33 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t33",
@@ -1616,7 +1616,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Provocation  Maitrise 34 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Provocation  Maitrise 34 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t34",
@@ -1664,7 +1664,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Peau de Fer  Maitrise 35 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Peau de Fer  Maitrise 35 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t35",
@@ -1712,7 +1712,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Inebranlable  Maitrise 36 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Inebranlable  Maitrise 36 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t36",
@@ -1760,7 +1760,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Posture Defensive  Maitrise 37 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Posture Defensive  Maitrise 37 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t37",
@@ -1780,7 +1780,7 @@
                    },
                    {
                        "id":  "guerrier_aoe_t38",
-                       "name":  "Tourbillon d\u0027Acier  Maitrise 38",
+                       "name":  "Tourbillon d'Acier  Maitrise 38",
                        "branch":  "aoe",
                        "tier":  38,
                        "level":  38,
@@ -1792,7 +1792,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Tourbillon d\u0027Acier  Maitrise 38 : frappe tous les ennemis proches (degats reduits)."
+                       "description":  "Tourbillon d'Acier  Maitrise 38 : frappe tous les ennemis proches (degats reduits)."
                    },
                    {
                        "id":  "guerrier_def_t38",
@@ -1808,7 +1808,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Mur de Boucliers  Maitrise 38 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Mur de Boucliers  Maitrise 38 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t38",
@@ -1856,7 +1856,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Parade  Maitrise 39 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Parade  Maitrise 39 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t39",
@@ -1904,7 +1904,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Provocation  Maitrise 40 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Provocation  Maitrise 40 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t40",
@@ -1952,7 +1952,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Peau de Fer  Maitrise 41 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Peau de Fer  Maitrise 41 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t41",
@@ -2000,7 +2000,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Inebranlable  Maitrise 42 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Inebranlable  Maitrise 42 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t42",
@@ -2048,7 +2048,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Posture Defensive  Maitrise 43 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Posture Defensive  Maitrise 43 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t43",
@@ -2068,7 +2068,7 @@
                    },
                    {
                        "id":  "guerrier_aoe_t44",
-                       "name":  "Tourbillon d\u0027Acier  Maitrise 44",
+                       "name":  "Tourbillon d'Acier  Maitrise 44",
                        "branch":  "aoe",
                        "tier":  44,
                        "level":  44,
@@ -2080,7 +2080,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Tourbillon d\u0027Acier  Maitrise 44 : frappe tous les ennemis proches (degats reduits)."
+                       "description":  "Tourbillon d'Acier  Maitrise 44 : frappe tous les ennemis proches (degats reduits)."
                    },
                    {
                        "id":  "guerrier_def_t44",
@@ -2096,7 +2096,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Mur de Boucliers  Maitrise 44 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Mur de Boucliers  Maitrise 44 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t44",
@@ -2144,7 +2144,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Parade  Maitrise 45 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Parade  Maitrise 45 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t45",
@@ -2192,7 +2192,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Provocation  Maitrise 46 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Provocation  Maitrise 46 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t46",
@@ -2240,7 +2240,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Peau de Fer  Maitrise 47 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Peau de Fer  Maitrise 47 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t47",
@@ -2288,7 +2288,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Inebranlable  Maitrise 48 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Inebranlable  Maitrise 48 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t48",
@@ -2336,7 +2336,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Posture Defensive  Maitrise 49 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Posture Defensive  Maitrise 49 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t49",
@@ -2356,7 +2356,7 @@
                    },
                    {
                        "id":  "guerrier_aoe_t50",
-                       "name":  "Tourbillon d\u0027Acier  Maitrise 50",
+                       "name":  "Tourbillon d'Acier  Maitrise 50",
                        "branch":  "aoe",
                        "tier":  50,
                        "level":  50,
@@ -2368,7 +2368,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Tourbillon d\u0027Acier  Maitrise 50 : frappe tous les ennemis proches (degats reduits)."
+                       "description":  "Tourbillon d'Acier  Maitrise 50 : frappe tous les ennemis proches (degats reduits)."
                    },
                    {
                        "id":  "guerrier_def_t50",
@@ -2384,7 +2384,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Mur de Boucliers  Maitrise 50 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Mur de Boucliers  Maitrise 50 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t50",
@@ -2432,7 +2432,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Parade  Maitrise 51 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Parade  Maitrise 51 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t51",
@@ -2480,7 +2480,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Provocation  Maitrise 52 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Provocation  Maitrise 52 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t52",
@@ -2528,7 +2528,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Peau de Fer  Maitrise 53 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Peau de Fer  Maitrise 53 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t53",
@@ -2576,7 +2576,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Inebranlable  Maitrise 54 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Inebranlable  Maitrise 54 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t54",
@@ -2624,7 +2624,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Posture Defensive  Maitrise 55 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Posture Defensive  Maitrise 55 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t55",
@@ -2644,7 +2644,7 @@
                    },
                    {
                        "id":  "guerrier_aoe_t56",
-                       "name":  "Tourbillon d\u0027Acier  Maitrise 56",
+                       "name":  "Tourbillon d'Acier  Maitrise 56",
                        "branch":  "aoe",
                        "tier":  56,
                        "level":  56,
@@ -2656,7 +2656,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Tourbillon d\u0027Acier  Maitrise 56 : frappe tous les ennemis proches (degats reduits)."
+                       "description":  "Tourbillon d'Acier  Maitrise 56 : frappe tous les ennemis proches (degats reduits)."
                    },
                    {
                        "id":  "guerrier_def_t56",
@@ -2672,7 +2672,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Mur de Boucliers  Maitrise 56 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Mur de Boucliers  Maitrise 56 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t56",
@@ -2720,7 +2720,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Parade  Maitrise 57 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Parade  Maitrise 57 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t57",
@@ -2768,7 +2768,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Provocation  Maitrise 58 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Provocation  Maitrise 58 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t58",
@@ -2816,7 +2816,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Peau de Fer  Maitrise 59 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Peau de Fer  Maitrise 59 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t59",
@@ -2864,7 +2864,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Inebranlable  Maitrise 60 : reduit les degats subis et protege l\u0027allie."
+                       "description":  "Inebranlable  Maitrise 60 : reduit les degats subis et protege l'allie."
                    },
                    {
                        "id":  "guerrier_single_t60",

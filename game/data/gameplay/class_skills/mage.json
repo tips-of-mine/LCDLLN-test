@@ -100,7 +100,7 @@
                    },
                    {
                        "id":  "mage_aoe_t3",
-                       "name":  "Tempete d\u0027Eclairs  Renforce",
+                       "name":  "Tempete d'Eclairs  Renforce",
                        "branch":  "aoe",
                        "tier":  3,
                        "level":  3,
@@ -112,7 +112,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Tempete d\u0027Eclairs  Renforce : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Renforce : dechaine les elements sur une zone (degats reduits)."
                    },
                    {
                        "id":  "mage_def_t3",
@@ -388,7 +388,7 @@
                    },
                    {
                        "id":  "mage_aoe_t9",
-                       "name":  "Tempete d\u0027Eclairs  Cruel",
+                       "name":  "Tempete d'Eclairs  Cruel",
                        "branch":  "aoe",
                        "tier":  9,
                        "level":  9,
@@ -400,7 +400,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Tempete d\u0027Eclairs  Cruel : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Cruel : dechaine les elements sur une zone (degats reduits)."
                    },
                    {
                        "id":  "mage_def_t9",
@@ -676,7 +676,7 @@
                    },
                    {
                        "id":  "mage_aoe_t15",
-                       "name":  "Tempete d\u0027Eclairs  Terrible",
+                       "name":  "Tempete d'Eclairs  Terrible",
                        "branch":  "aoe",
                        "tier":  15,
                        "level":  15,
@@ -688,7 +688,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Tempete d\u0027Eclairs  Terrible : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Terrible : dechaine les elements sur une zone (degats reduits)."
                    },
                    {
                        "id":  "mage_def_t15",
@@ -964,7 +964,7 @@
                    },
                    {
                        "id":  "mage_aoe_t21",
-                       "name":  "Tempete d\u0027Eclairs  Maitrise 21",
+                       "name":  "Tempete d'Eclairs  Maitrise 21",
                        "branch":  "aoe",
                        "tier":  21,
                        "level":  21,
@@ -976,7 +976,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Tempete d\u0027Eclairs  Maitrise 21 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 21 : dechaine les elements sur une zone (degats reduits)."
                    },
                    {
                        "id":  "mage_def_t21",
@@ -1252,7 +1252,7 @@
                    },
                    {
                        "id":  "mage_aoe_t27",
-                       "name":  "Tempete d\u0027Eclairs  Maitrise 27",
+                       "name":  "Tempete d'Eclairs  Maitrise 27",
                        "branch":  "aoe",
                        "tier":  27,
                        "level":  27,
@@ -1264,7 +1264,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Tempete d\u0027Eclairs  Maitrise 27 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 27 : dechaine les elements sur une zone (degats reduits)."
                    },
                    {
                        "id":  "mage_def_t27",
@@ -1540,7 +1540,7 @@
                    },
                    {
                        "id":  "mage_aoe_t33",
-                       "name":  "Tempete d\u0027Eclairs  Maitrise 33",
+                       "name":  "Tempete d'Eclairs  Maitrise 33",
                        "branch":  "aoe",
                        "tier":  33,
                        "level":  33,
@@ -1552,7 +1552,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Tempete d\u0027Eclairs  Maitrise 33 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 33 : dechaine les elements sur une zone (degats reduits)."
                    },
                    {
                        "id":  "mage_def_t33",
@@ -1828,7 +1828,7 @@
                    },
                    {
                        "id":  "mage_aoe_t39",
-                       "name":  "Tempete d\u0027Eclairs  Maitrise 39",
+                       "name":  "Tempete d'Eclairs  Maitrise 39",
                        "branch":  "aoe",
                        "tier":  39,
                        "level":  39,
@@ -1840,7 +1840,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Tempete d\u0027Eclairs  Maitrise 39 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 39 : dechaine les elements sur une zone (degats reduits)."
                    },
                    {
                        "id":  "mage_def_t39",
@@ -2116,7 +2116,7 @@
                    },
                    {
                        "id":  "mage_aoe_t45",
-                       "name":  "Tempete d\u0027Eclairs  Maitrise 45",
+                       "name":  "Tempete d'Eclairs  Maitrise 45",
                        "branch":  "aoe",
                        "tier":  45,
                        "level":  45,
@@ -2128,7 +2128,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Tempete d\u0027Eclairs  Maitrise 45 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 45 : dechaine les elements sur une zone (degats reduits)."
                    },
                    {
                        "id":  "mage_def_t45",
@@ -2404,7 +2404,7 @@
                    },
                    {
                        "id":  "mage_aoe_t51",
-                       "name":  "Tempete d\u0027Eclairs  Maitrise 51",
+                       "name":  "Tempete d'Eclairs  Maitrise 51",
                        "branch":  "aoe",
                        "tier":  51,
                        "level":  51,
@@ -2416,7 +2416,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Tempete d\u0027Eclairs  Maitrise 51 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 51 : dechaine les elements sur une zone (degats reduits)."
                    },
                    {
                        "id":  "mage_def_t51",
@@ -2692,7 +2692,7 @@
                    },
                    {
                        "id":  "mage_aoe_t57",
-                       "name":  "Tempete d\u0027Eclairs  Maitrise 57",
+                       "name":  "Tempete d'Eclairs  Maitrise 57",
                        "branch":  "aoe",
                        "tier":  57,
                        "level":  57,
@@ -2704,7 +2704,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Tempete d\u0027Eclairs  Maitrise 57 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 57 : dechaine les elements sur une zone (degats reduits)."
                    },
                    {
                        "id":  "mage_def_t57",

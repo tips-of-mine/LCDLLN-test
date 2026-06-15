@@ -196,7 +196,7 @@
                    },
                    {
                        "id":  "tourmenteur_aoe_t5",
-                       "name":  "Recolte d\u0027Ames  Brutal",
+                       "name":  "Recolte d'Ames  Brutal",
                        "branch":  "aoe",
                        "tier":  5,
                        "level":  5,
@@ -208,7 +208,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Recolte d\u0027Ames  Brutal : torture plusieurs ennemis a la fois (degats reduits)."
+                       "description":  "Recolte d'Ames  Brutal : torture plusieurs ennemis a la fois (degats reduits)."
                    },
                    {
                        "id":  "tourmenteur_def_t5",
@@ -484,7 +484,7 @@
                    },
                    {
                        "id":  "tourmenteur_aoe_t11",
-                       "name":  "Recolte d\u0027Ames  Devastateur",
+                       "name":  "Recolte d'Ames  Devastateur",
                        "branch":  "aoe",
                        "tier":  11,
                        "level":  11,
@@ -496,7 +496,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Recolte d\u0027Ames  Devastateur : torture plusieurs ennemis a la fois (degats reduits)."
+                       "description":  "Recolte d'Ames  Devastateur : torture plusieurs ennemis a la fois (degats reduits)."
                    },
                    {
                        "id":  "tourmenteur_def_t11",
@@ -772,7 +772,7 @@
                    },
                    {
                        "id":  "tourmenteur_aoe_t17",
-                       "name":  "Recolte d\u0027Ames  Legendaire",
+                       "name":  "Recolte d'Ames  Legendaire",
                        "branch":  "aoe",
                        "tier":  17,
                        "level":  17,
@@ -784,7 +784,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Recolte d\u0027Ames  Legendaire : torture plusieurs ennemis a la fois (degats reduits)."
+                       "description":  "Recolte d'Ames  Legendaire : torture plusieurs ennemis a la fois (degats reduits)."
                    },
                    {
                        "id":  "tourmenteur_def_t17",
@@ -1060,7 +1060,7 @@
                    },
                    {
                        "id":  "tourmenteur_aoe_t23",
-                       "name":  "Recolte d\u0027Ames  Maitrise 23",
+                       "name":  "Recolte d'Ames  Maitrise 23",
                        "branch":  "aoe",
                        "tier":  23,
                        "level":  23,
@@ -1072,7 +1072,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Recolte d\u0027Ames  Maitrise 23 : torture plusieurs ennemis a la fois (degats reduits)."
+                       "description":  "Recolte d'Ames  Maitrise 23 : torture plusieurs ennemis a la fois (degats reduits)."
                    },
                    {
                        "id":  "tourmenteur_def_t23",
@@ -1348,7 +1348,7 @@
                    },
                    {
                        "id":  "tourmenteur_aoe_t29",
-                       "name":  "Recolte d\u0027Ames  Maitrise 29",
+                       "name":  "Recolte d'Ames  Maitrise 29",
                        "branch":  "aoe",
                        "tier":  29,
                        "level":  29,
@@ -1360,7 +1360,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Recolte d\u0027Ames  Maitrise 29 : torture plusieurs ennemis a la fois (degats reduits)."
+                       "description":  "Recolte d'Ames  Maitrise 29 : torture plusieurs ennemis a la fois (degats reduits)."
                    },
                    {
                        "id":  "tourmenteur_def_t29",
@@ -1636,7 +1636,7 @@
                    },
                    {
                        "id":  "tourmenteur_aoe_t35",
-                       "name":  "Recolte d\u0027Ames  Maitrise 35",
+                       "name":  "Recolte d'Ames  Maitrise 35",
                        "branch":  "aoe",
                        "tier":  35,
                        "level":  35,
@@ -1648,7 +1648,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Recolte d\u0027Ames  Maitrise 35 : torture plusieurs ennemis a la fois (degats reduits)."
+                       "description":  "Recolte d'Ames  Maitrise 35 : torture plusieurs ennemis a la fois (degats reduits)."
                    },
                    {
                        "id":  "tourmenteur_def_t35",
@@ -1924,7 +1924,7 @@
                    },
                    {
                        "id":  "tourmenteur_aoe_t41",
-                       "name":  "Recolte d\u0027Ames  Maitrise 41",
+                       "name":  "Recolte d'Ames  Maitrise 41",
                        "branch":  "aoe",
                        "tier":  41,
                        "level":  41,
@@ -1936,7 +1936,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Recolte d\u0027Ames  Maitrise 41 : torture plusieurs ennemis a la fois (degats reduits)."
+                       "description":  "Recolte d'Ames  Maitrise 41 : torture plusieurs ennemis a la fois (degats reduits)."
                    },
                    {
                        "id":  "tourmenteur_def_t41",
@@ -2212,7 +2212,7 @@
                    },
                    {
                        "id":  "tourmenteur_aoe_t47",
-                       "name":  "Recolte d\u0027Ames  Maitrise 47",
+                       "name":  "Recolte d'Ames  Maitrise 47",
                        "branch":  "aoe",
                        "tier":  47,
                        "level":  47,
@@ -2224,7 +2224,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Recolte d\u0027Ames  Maitrise 47 : torture plusieurs ennemis a la fois (degats reduits)."
+                       "description":  "Recolte d'Ames  Maitrise 47 : torture plusieurs ennemis a la fois (degats reduits)."
                    },
                    {
                        "id":  "tourmenteur_def_t47",
@@ -2500,7 +2500,7 @@
                    },
                    {
                        "id":  "tourmenteur_aoe_t53",
-                       "name":  "Recolte d\u0027Ames  Maitrise 53",
+                       "name":  "Recolte d'Ames  Maitrise 53",
                        "branch":  "aoe",
                        "tier":  53,
                        "level":  53,
@@ -2512,7 +2512,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Recolte d\u0027Ames  Maitrise 53 : torture plusieurs ennemis a la fois (degats reduits)."
+                       "description":  "Recolte d'Ames  Maitrise 53 : torture plusieurs ennemis a la fois (degats reduits)."
                    },
                    {
                        "id":  "tourmenteur_def_t53",
@@ -2788,7 +2788,7 @@
                    },
                    {
                        "id":  "tourmenteur_aoe_t59",
-                       "name":  "Recolte d\u0027Ames  Maitrise 59",
+                       "name":  "Recolte d'Ames  Maitrise 59",
                        "branch":  "aoe",
                        "tier":  59,
                        "level":  59,
@@ -2800,7 +2800,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Recolte d\u0027Ames  Maitrise 59 : torture plusieurs ennemis a la fois (degats reduits)."
+                       "description":  "Recolte d'Ames  Maitrise 59 : torture plusieurs ennemis a la fois (degats reduits)."
                    },
                    {
                        "id":  "tourmenteur_def_t59",

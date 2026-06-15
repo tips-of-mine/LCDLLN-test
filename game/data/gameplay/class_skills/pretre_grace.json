@@ -16,7 +16,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Chatiment : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Chatiment : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t1",
@@ -32,7 +32,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Bouclier de Foi : protege les allies d\u0027une aura benie."
+                       "description":  "Bouclier de Foi : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t1",
@@ -64,7 +64,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Eclair Sacre  Aiguise : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Eclair Sacre  Aiguise : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t2",
@@ -80,7 +80,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Aura Benie  Aiguise : protege les allies d\u0027une aura benie."
+                       "description":  "Aura Benie  Aiguise : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t2",
@@ -112,7 +112,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Verbe de Foi  Renforce : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Verbe de Foi  Renforce : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t3",
@@ -128,7 +128,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Protection Divine  Renforce : protege les allies d\u0027une aura benie."
+                       "description":  "Protection Divine  Renforce : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t3",
@@ -160,7 +160,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Flamme Sainte  Affute : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Flamme Sainte  Affute : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t4",
@@ -176,7 +176,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Cercle Sacre  Affute : protege les allies d\u0027une aura benie."
+                       "description":  "Cercle Sacre  Affute : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t4",
@@ -208,7 +208,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Jugement  Brutal : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Jugement  Brutal : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t5",
@@ -224,7 +224,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Refuge  Brutal : protege les allies d\u0027une aura benie."
+                       "description":  "Refuge  Brutal : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t5",
@@ -256,7 +256,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Colere Divine  Vorace : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Colere Divine  Vorace : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t6",
@@ -272,7 +272,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Inviolabilite  Vorace : protege les allies d\u0027une aura benie."
+                       "description":  "Inviolabilite  Vorace : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t6",
@@ -304,7 +304,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Chatiment  Implacable : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Chatiment  Implacable : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t7",
@@ -320,7 +320,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Bouclier de Foi  Implacable : protege les allies d\u0027une aura benie."
+                       "description":  "Bouclier de Foi  Implacable : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t7",
@@ -352,7 +352,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Eclair Sacre  Funeste : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Eclair Sacre  Funeste : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t8",
@@ -368,7 +368,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Aura Benie  Funeste : protege les allies d\u0027une aura benie."
+                       "description":  "Aura Benie  Funeste : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t8",
@@ -400,7 +400,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Verbe de Foi  Cruel : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Verbe de Foi  Cruel : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t9",
@@ -416,7 +416,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Protection Divine  Cruel : protege les allies d\u0027une aura benie."
+                       "description":  "Protection Divine  Cruel : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t9",
@@ -448,7 +448,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Flamme Sainte  Sanglant : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Flamme Sainte  Sanglant : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t10",
@@ -464,7 +464,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Cercle Sacre  Sanglant : protege les allies d\u0027une aura benie."
+                       "description":  "Cercle Sacre  Sanglant : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t10",
@@ -496,7 +496,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Jugement  Devastateur : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Jugement  Devastateur : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t11",
@@ -512,7 +512,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Refuge  Devastateur : protege les allies d\u0027une aura benie."
+                       "description":  "Refuge  Devastateur : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t11",
@@ -544,7 +544,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Colere Divine  Foudroyant : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Colere Divine  Foudroyant : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t12",
@@ -560,7 +560,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Inviolabilite  Foudroyant : protege les allies d\u0027une aura benie."
+                       "description":  "Inviolabilite  Foudroyant : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t12",
@@ -592,7 +592,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Chatiment  Mortel : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Chatiment  Mortel : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t13",
@@ -608,7 +608,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Bouclier de Foi  Mortel : protege les allies d\u0027une aura benie."
+                       "description":  "Bouclier de Foi  Mortel : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t13",
@@ -640,7 +640,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Eclair Sacre  Inexorable : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Eclair Sacre  Inexorable : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t14",
@@ -656,7 +656,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Aura Benie  Inexorable : protege les allies d\u0027une aura benie."
+                       "description":  "Aura Benie  Inexorable : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t14",
@@ -688,7 +688,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Verbe de Foi  Terrible : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Verbe de Foi  Terrible : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t15",
@@ -704,7 +704,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Protection Divine  Terrible : protege les allies d\u0027une aura benie."
+                       "description":  "Protection Divine  Terrible : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t15",
@@ -736,7 +736,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Flamme Sainte  Souverain : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Flamme Sainte  Souverain : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t16",
@@ -752,7 +752,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Cercle Sacre  Souverain : protege les allies d\u0027une aura benie."
+                       "description":  "Cercle Sacre  Souverain : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t16",
@@ -784,7 +784,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Jugement  Legendaire : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Jugement  Legendaire : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t17",
@@ -800,7 +800,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Refuge  Legendaire : protege les allies d\u0027une aura benie."
+                       "description":  "Refuge  Legendaire : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t17",
@@ -832,7 +832,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Colere Divine  Cataclysmique : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Colere Divine  Cataclysmique : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t18",
@@ -848,7 +848,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Inviolabilite  Cataclysmique : protege les allies d\u0027une aura benie."
+                       "description":  "Inviolabilite  Cataclysmique : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t18",
@@ -880,7 +880,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Chatiment  Apocalyptique : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Chatiment  Apocalyptique : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t19",
@@ -896,7 +896,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Bouclier de Foi  Apocalyptique : protege les allies d\u0027une aura benie."
+                       "description":  "Bouclier de Foi  Apocalyptique : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t19",
@@ -928,7 +928,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Eclair Sacre  Ultime : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Eclair Sacre  Ultime : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t20",
@@ -944,7 +944,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Aura Benie  Ultime : protege les allies d\u0027une aura benie."
+                       "description":  "Aura Benie  Ultime : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t20",
@@ -976,7 +976,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Verbe de Foi  Maitrise 21 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Verbe de Foi  Maitrise 21 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t21",
@@ -992,7 +992,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Protection Divine  Maitrise 21 : protege les allies d\u0027une aura benie."
+                       "description":  "Protection Divine  Maitrise 21 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t21",
@@ -1024,7 +1024,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Flamme Sainte  Maitrise 22 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Flamme Sainte  Maitrise 22 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t22",
@@ -1040,7 +1040,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Cercle Sacre  Maitrise 22 : protege les allies d\u0027une aura benie."
+                       "description":  "Cercle Sacre  Maitrise 22 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t22",
@@ -1072,7 +1072,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Jugement  Maitrise 23 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Jugement  Maitrise 23 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t23",
@@ -1088,7 +1088,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Refuge  Maitrise 23 : protege les allies d\u0027une aura benie."
+                       "description":  "Refuge  Maitrise 23 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t23",
@@ -1120,7 +1120,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Colere Divine  Maitrise 24 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Colere Divine  Maitrise 24 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t24",
@@ -1136,7 +1136,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Inviolabilite  Maitrise 24 : protege les allies d\u0027une aura benie."
+                       "description":  "Inviolabilite  Maitrise 24 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t24",
@@ -1168,7 +1168,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Chatiment  Maitrise 25 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Chatiment  Maitrise 25 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t25",
@@ -1184,7 +1184,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Bouclier de Foi  Maitrise 25 : protege les allies d\u0027une aura benie."
+                       "description":  "Bouclier de Foi  Maitrise 25 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t25",
@@ -1216,7 +1216,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Eclair Sacre  Maitrise 26 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Eclair Sacre  Maitrise 26 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t26",
@@ -1232,7 +1232,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Aura Benie  Maitrise 26 : protege les allies d\u0027une aura benie."
+                       "description":  "Aura Benie  Maitrise 26 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t26",
@@ -1264,7 +1264,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Verbe de Foi  Maitrise 27 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Verbe de Foi  Maitrise 27 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t27",
@@ -1280,7 +1280,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Protection Divine  Maitrise 27 : protege les allies d\u0027une aura benie."
+                       "description":  "Protection Divine  Maitrise 27 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t27",
@@ -1312,7 +1312,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Flamme Sainte  Maitrise 28 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Flamme Sainte  Maitrise 28 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t28",
@@ -1328,7 +1328,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Cercle Sacre  Maitrise 28 : protege les allies d\u0027une aura benie."
+                       "description":  "Cercle Sacre  Maitrise 28 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t28",
@@ -1360,7 +1360,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Jugement  Maitrise 29 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Jugement  Maitrise 29 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t29",
@@ -1376,7 +1376,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Refuge  Maitrise 29 : protege les allies d\u0027une aura benie."
+                       "description":  "Refuge  Maitrise 29 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t29",
@@ -1408,7 +1408,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Colere Divine  Maitrise 30 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Colere Divine  Maitrise 30 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t30",
@@ -1424,7 +1424,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Inviolabilite  Maitrise 30 : protege les allies d\u0027une aura benie."
+                       "description":  "Inviolabilite  Maitrise 30 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t30",
@@ -1456,7 +1456,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Chatiment  Maitrise 31 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Chatiment  Maitrise 31 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t31",
@@ -1472,7 +1472,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Bouclier de Foi  Maitrise 31 : protege les allies d\u0027une aura benie."
+                       "description":  "Bouclier de Foi  Maitrise 31 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t31",
@@ -1504,7 +1504,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Eclair Sacre  Maitrise 32 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Eclair Sacre  Maitrise 32 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t32",
@@ -1520,7 +1520,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Aura Benie  Maitrise 32 : protege les allies d\u0027une aura benie."
+                       "description":  "Aura Benie  Maitrise 32 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t32",
@@ -1552,7 +1552,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Verbe de Foi  Maitrise 33 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Verbe de Foi  Maitrise 33 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t33",
@@ -1568,7 +1568,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Protection Divine  Maitrise 33 : protege les allies d\u0027une aura benie."
+                       "description":  "Protection Divine  Maitrise 33 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t33",
@@ -1600,7 +1600,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Flamme Sainte  Maitrise 34 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Flamme Sainte  Maitrise 34 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t34",
@@ -1616,7 +1616,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Cercle Sacre  Maitrise 34 : protege les allies d\u0027une aura benie."
+                       "description":  "Cercle Sacre  Maitrise 34 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t34",
@@ -1648,7 +1648,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Jugement  Maitrise 35 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Jugement  Maitrise 35 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t35",
@@ -1664,7 +1664,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Refuge  Maitrise 35 : protege les allies d\u0027une aura benie."
+                       "description":  "Refuge  Maitrise 35 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t35",
@@ -1696,7 +1696,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Colere Divine  Maitrise 36 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Colere Divine  Maitrise 36 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t36",
@@ -1712,7 +1712,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Inviolabilite  Maitrise 36 : protege les allies d\u0027une aura benie."
+                       "description":  "Inviolabilite  Maitrise 36 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t36",
@@ -1744,7 +1744,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Chatiment  Maitrise 37 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Chatiment  Maitrise 37 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t37",
@@ -1760,7 +1760,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Bouclier de Foi  Maitrise 37 : protege les allies d\u0027une aura benie."
+                       "description":  "Bouclier de Foi  Maitrise 37 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t37",
@@ -1792,7 +1792,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Eclair Sacre  Maitrise 38 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Eclair Sacre  Maitrise 38 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t38",
@@ -1808,7 +1808,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Aura Benie  Maitrise 38 : protege les allies d\u0027une aura benie."
+                       "description":  "Aura Benie  Maitrise 38 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t38",
@@ -1840,7 +1840,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Verbe de Foi  Maitrise 39 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Verbe de Foi  Maitrise 39 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t39",
@@ -1856,7 +1856,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Protection Divine  Maitrise 39 : protege les allies d\u0027une aura benie."
+                       "description":  "Protection Divine  Maitrise 39 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t39",
@@ -1888,7 +1888,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Flamme Sainte  Maitrise 40 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Flamme Sainte  Maitrise 40 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t40",
@@ -1904,7 +1904,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Cercle Sacre  Maitrise 40 : protege les allies d\u0027une aura benie."
+                       "description":  "Cercle Sacre  Maitrise 40 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t40",
@@ -1936,7 +1936,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Jugement  Maitrise 41 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Jugement  Maitrise 41 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t41",
@@ -1952,7 +1952,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Refuge  Maitrise 41 : protege les allies d\u0027une aura benie."
+                       "description":  "Refuge  Maitrise 41 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t41",
@@ -1984,7 +1984,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Colere Divine  Maitrise 42 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Colere Divine  Maitrise 42 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t42",
@@ -2000,7 +2000,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Inviolabilite  Maitrise 42 : protege les allies d\u0027une aura benie."
+                       "description":  "Inviolabilite  Maitrise 42 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t42",
@@ -2032,7 +2032,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Chatiment  Maitrise 43 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Chatiment  Maitrise 43 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t43",
@@ -2048,7 +2048,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Bouclier de Foi  Maitrise 43 : protege les allies d\u0027une aura benie."
+                       "description":  "Bouclier de Foi  Maitrise 43 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t43",
@@ -2080,7 +2080,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Eclair Sacre  Maitrise 44 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Eclair Sacre  Maitrise 44 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t44",
@@ -2096,7 +2096,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Aura Benie  Maitrise 44 : protege les allies d\u0027une aura benie."
+                       "description":  "Aura Benie  Maitrise 44 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t44",
@@ -2128,7 +2128,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Verbe de Foi  Maitrise 45 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Verbe de Foi  Maitrise 45 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t45",
@@ -2144,7 +2144,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Protection Divine  Maitrise 45 : protege les allies d\u0027une aura benie."
+                       "description":  "Protection Divine  Maitrise 45 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t45",
@@ -2176,7 +2176,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Flamme Sainte  Maitrise 46 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Flamme Sainte  Maitrise 46 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t46",
@@ -2192,7 +2192,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Cercle Sacre  Maitrise 46 : protege les allies d\u0027une aura benie."
+                       "description":  "Cercle Sacre  Maitrise 46 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t46",
@@ -2224,7 +2224,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Jugement  Maitrise 47 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Jugement  Maitrise 47 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t47",
@@ -2240,7 +2240,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Refuge  Maitrise 47 : protege les allies d\u0027une aura benie."
+                       "description":  "Refuge  Maitrise 47 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t47",
@@ -2272,7 +2272,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Colere Divine  Maitrise 48 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Colere Divine  Maitrise 48 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t48",
@@ -2288,7 +2288,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Inviolabilite  Maitrise 48 : protege les allies d\u0027une aura benie."
+                       "description":  "Inviolabilite  Maitrise 48 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t48",
@@ -2320,7 +2320,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Chatiment  Maitrise 49 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Chatiment  Maitrise 49 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t49",
@@ -2336,7 +2336,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Bouclier de Foi  Maitrise 49 : protege les allies d\u0027une aura benie."
+                       "description":  "Bouclier de Foi  Maitrise 49 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t49",
@@ -2368,7 +2368,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Eclair Sacre  Maitrise 50 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Eclair Sacre  Maitrise 50 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t50",
@@ -2384,7 +2384,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Aura Benie  Maitrise 50 : protege les allies d\u0027une aura benie."
+                       "description":  "Aura Benie  Maitrise 50 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t50",
@@ -2416,7 +2416,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Verbe de Foi  Maitrise 51 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Verbe de Foi  Maitrise 51 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t51",
@@ -2432,7 +2432,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Protection Divine  Maitrise 51 : protege les allies d\u0027une aura benie."
+                       "description":  "Protection Divine  Maitrise 51 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t51",
@@ -2464,7 +2464,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Flamme Sainte  Maitrise 52 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Flamme Sainte  Maitrise 52 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t52",
@@ -2480,7 +2480,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Cercle Sacre  Maitrise 52 : protege les allies d\u0027une aura benie."
+                       "description":  "Cercle Sacre  Maitrise 52 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t52",
@@ -2512,7 +2512,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Jugement  Maitrise 53 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Jugement  Maitrise 53 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t53",
@@ -2528,7 +2528,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Refuge  Maitrise 53 : protege les allies d\u0027une aura benie."
+                       "description":  "Refuge  Maitrise 53 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t53",
@@ -2560,7 +2560,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Colere Divine  Maitrise 54 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Colere Divine  Maitrise 54 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t54",
@@ -2576,7 +2576,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Inviolabilite  Maitrise 54 : protege les allies d\u0027une aura benie."
+                       "description":  "Inviolabilite  Maitrise 54 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t54",
@@ -2608,7 +2608,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Chatiment  Maitrise 55 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Chatiment  Maitrise 55 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t55",
@@ -2624,7 +2624,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Bouclier de Foi  Maitrise 55 : protege les allies d\u0027une aura benie."
+                       "description":  "Bouclier de Foi  Maitrise 55 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t55",
@@ -2656,7 +2656,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Eclair Sacre  Maitrise 56 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Eclair Sacre  Maitrise 56 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t56",
@@ -2672,7 +2672,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Aura Benie  Maitrise 56 : protege les allies d\u0027une aura benie."
+                       "description":  "Aura Benie  Maitrise 56 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t56",
@@ -2704,7 +2704,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Verbe de Foi  Maitrise 57 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Verbe de Foi  Maitrise 57 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t57",
@@ -2720,7 +2720,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Protection Divine  Maitrise 57 : protege les allies d\u0027une aura benie."
+                       "description":  "Protection Divine  Maitrise 57 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t57",
@@ -2752,7 +2752,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Flamme Sainte  Maitrise 58 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Flamme Sainte  Maitrise 58 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t58",
@@ -2768,7 +2768,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Cercle Sacre  Maitrise 58 : protege les allies d\u0027une aura benie."
+                       "description":  "Cercle Sacre  Maitrise 58 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t58",
@@ -2800,7 +2800,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Jugement  Maitrise 59 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Jugement  Maitrise 59 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t59",
@@ -2816,7 +2816,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Refuge  Maitrise 59 : protege les allies d\u0027une aura benie."
+                       "description":  "Refuge  Maitrise 59 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t59",
@@ -2848,7 +2848,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Colere Divine  Maitrise 60 : punit l\u0027ennemi d\u0027une energie sacree."
+                       "description":  "Colere Divine  Maitrise 60 : punit l'ennemi d'une energie sacree."
                    },
                    {
                        "id":  "pretre_grace_def_t60",
@@ -2864,7 +2864,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Inviolabilite  Maitrise 60 : protege les allies d\u0027une aura benie."
+                       "description":  "Inviolabilite  Maitrise 60 : protege les allies d'une aura benie."
                    },
                    {
                        "id":  "pretre_grace_single_t60",

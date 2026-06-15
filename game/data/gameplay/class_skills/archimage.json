@@ -32,7 +32,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Bouclier Superieur : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t1",
@@ -80,7 +80,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Deviation  Aiguise : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Deviation  Aiguise : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t2",
@@ -128,7 +128,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Clignement Arcanique  Renforce : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Renforce : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t3",
@@ -176,7 +176,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Egide de Mana  Affute : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Affute : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t4",
@@ -224,7 +224,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Inversion de Sort  Brutal : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Brutal : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t5",
@@ -272,7 +272,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Forme Etheree  Vorace : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Vorace : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t6",
@@ -320,7 +320,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Bouclier Superieur  Implacable : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Implacable : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t7",
@@ -368,7 +368,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Deviation  Funeste : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Deviation  Funeste : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t8",
@@ -416,7 +416,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Clignement Arcanique  Cruel : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Cruel : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t9",
@@ -464,7 +464,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Egide de Mana  Sanglant : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Sanglant : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t10",
@@ -512,7 +512,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Inversion de Sort  Devastateur : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Devastateur : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t11",
@@ -560,7 +560,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Forme Etheree  Foudroyant : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Foudroyant : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t12",
@@ -608,7 +608,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Bouclier Superieur  Mortel : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Mortel : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t13",
@@ -656,7 +656,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Deviation  Inexorable : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Deviation  Inexorable : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t14",
@@ -704,7 +704,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Clignement Arcanique  Terrible : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Terrible : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t15",
@@ -752,7 +752,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Egide de Mana  Souverain : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Souverain : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t16",
@@ -800,7 +800,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Inversion de Sort  Legendaire : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Legendaire : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t17",
@@ -848,7 +848,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Forme Etheree  Cataclysmique : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Cataclysmique : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t18",
@@ -896,7 +896,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Bouclier Superieur  Apocalyptique : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Apocalyptique : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t19",
@@ -944,7 +944,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Deviation  Ultime : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Deviation  Ultime : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t20",
@@ -992,7 +992,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Clignement Arcanique  Maitrise 21 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 21 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t21",
@@ -1040,7 +1040,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Egide de Mana  Maitrise 22 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 22 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t22",
@@ -1088,7 +1088,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Inversion de Sort  Maitrise 23 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 23 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t23",
@@ -1136,7 +1136,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Forme Etheree  Maitrise 24 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 24 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t24",
@@ -1184,7 +1184,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Bouclier Superieur  Maitrise 25 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Maitrise 25 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t25",
@@ -1232,7 +1232,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Deviation  Maitrise 26 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Deviation  Maitrise 26 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t26",
@@ -1280,7 +1280,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Clignement Arcanique  Maitrise 27 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 27 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t27",
@@ -1328,7 +1328,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Egide de Mana  Maitrise 28 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 28 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t28",
@@ -1376,7 +1376,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Inversion de Sort  Maitrise 29 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 29 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t29",
@@ -1424,7 +1424,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Forme Etheree  Maitrise 30 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 30 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t30",
@@ -1472,7 +1472,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Bouclier Superieur  Maitrise 31 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Maitrise 31 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t31",
@@ -1520,7 +1520,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Deviation  Maitrise 32 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Deviation  Maitrise 32 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t32",
@@ -1568,7 +1568,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Clignement Arcanique  Maitrise 33 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 33 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t33",
@@ -1616,7 +1616,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Egide de Mana  Maitrise 34 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 34 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t34",
@@ -1664,7 +1664,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Inversion de Sort  Maitrise 35 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 35 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t35",
@@ -1712,7 +1712,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Forme Etheree  Maitrise 36 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 36 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t36",
@@ -1760,7 +1760,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Bouclier Superieur  Maitrise 37 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Maitrise 37 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t37",
@@ -1808,7 +1808,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Deviation  Maitrise 38 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Deviation  Maitrise 38 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t38",
@@ -1856,7 +1856,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Clignement Arcanique  Maitrise 39 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 39 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t39",
@@ -1904,7 +1904,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Egide de Mana  Maitrise 40 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 40 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t40",
@@ -1952,7 +1952,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Inversion de Sort  Maitrise 41 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 41 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t41",
@@ -2000,7 +2000,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Forme Etheree  Maitrise 42 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 42 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t42",
@@ -2048,7 +2048,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Bouclier Superieur  Maitrise 43 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Maitrise 43 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t43",
@@ -2096,7 +2096,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Deviation  Maitrise 44 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Deviation  Maitrise 44 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t44",
@@ -2144,7 +2144,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Clignement Arcanique  Maitrise 45 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 45 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t45",
@@ -2192,7 +2192,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Egide de Mana  Maitrise 46 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 46 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t46",
@@ -2240,7 +2240,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Inversion de Sort  Maitrise 47 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 47 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t47",
@@ -2288,7 +2288,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Forme Etheree  Maitrise 48 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 48 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t48",
@@ -2336,7 +2336,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Bouclier Superieur  Maitrise 49 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Maitrise 49 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t49",
@@ -2384,7 +2384,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Deviation  Maitrise 50 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Deviation  Maitrise 50 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t50",
@@ -2432,7 +2432,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Clignement Arcanique  Maitrise 51 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 51 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t51",
@@ -2480,7 +2480,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Egide de Mana  Maitrise 52 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 52 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t52",
@@ -2528,7 +2528,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Inversion de Sort  Maitrise 53 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 53 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t53",
@@ -2576,7 +2576,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Forme Etheree  Maitrise 54 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 54 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t54",
@@ -2624,7 +2624,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Bouclier Superieur  Maitrise 55 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Maitrise 55 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t55",
@@ -2672,7 +2672,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Deviation  Maitrise 56 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Deviation  Maitrise 56 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t56",
@@ -2720,7 +2720,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Clignement Arcanique  Maitrise 57 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 57 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t57",
@@ -2768,7 +2768,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Egide de Mana  Maitrise 58 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 58 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t58",
@@ -2816,7 +2816,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Inversion de Sort  Maitrise 59 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 59 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t59",
@@ -2864,7 +2864,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Forme Etheree  Maitrise 60 : manipule l\u0027arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 60 : manipule l'arcane pour annuler les degats."
                    },
                    {
                        "id":  "archimage_single_t60",

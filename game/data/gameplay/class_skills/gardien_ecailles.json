@@ -1,6 +1,6 @@
 {
     "classId":  "gardien_ecailles",
-    "sourceTree":  "Gardien d\u0027écailles",
+    "sourceTree":  "Gardien d'écailles",
     "skills":  [
                    {
                        "id":  "gardien_ecailles_aoe_t1",
@@ -68,7 +68,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_def_t2",
-                       "name":  "Mur d\u0027Ecailles  Aiguise",
+                       "name":  "Mur d'Ecailles  Aiguise",
                        "branch":  "def",
                        "tier":  2,
                        "level":  2,
@@ -80,7 +80,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Mur d\u0027Ecailles  Aiguise : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Aiguise : absorbe les degats pour soi et ses allies."
                    },
                    {
                        "id":  "gardien_ecailles_single_t2",
@@ -100,7 +100,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t3",
-                       "name":  "Vague d\u0027Ecailles  Renforce",
+                       "name":  "Vague d'Ecailles  Renforce",
                        "branch":  "aoe",
                        "tier":  3,
                        "level":  3,
@@ -112,7 +112,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Vague d\u0027Ecailles  Renforce : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Renforce : repousse et blesse les ennemis alentour (degats reduits)."
                    },
                    {
                        "id":  "gardien_ecailles_def_t3",
@@ -132,7 +132,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_single_t3",
-                       "name":  "Choc d\u0027Ecaille  Renforce",
+                       "name":  "Choc d'Ecaille  Renforce",
                        "branch":  "single",
                        "tier":  3,
                        "level":  3,
@@ -144,7 +144,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Choc d\u0027Ecaille  Renforce : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Renforce : contre-attaque une cible unique."
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t4",
@@ -356,7 +356,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_def_t8",
-                       "name":  "Mur d\u0027Ecailles  Funeste",
+                       "name":  "Mur d'Ecailles  Funeste",
                        "branch":  "def",
                        "tier":  8,
                        "level":  8,
@@ -368,7 +368,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Mur d\u0027Ecailles  Funeste : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Funeste : absorbe les degats pour soi et ses allies."
                    },
                    {
                        "id":  "gardien_ecailles_single_t8",
@@ -388,7 +388,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t9",
-                       "name":  "Vague d\u0027Ecailles  Cruel",
+                       "name":  "Vague d'Ecailles  Cruel",
                        "branch":  "aoe",
                        "tier":  9,
                        "level":  9,
@@ -400,7 +400,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Vague d\u0027Ecailles  Cruel : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Cruel : repousse et blesse les ennemis alentour (degats reduits)."
                    },
                    {
                        "id":  "gardien_ecailles_def_t9",
@@ -420,7 +420,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_single_t9",
-                       "name":  "Choc d\u0027Ecaille  Cruel",
+                       "name":  "Choc d'Ecaille  Cruel",
                        "branch":  "single",
                        "tier":  9,
                        "level":  9,
@@ -432,7 +432,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Choc d\u0027Ecaille  Cruel : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Cruel : contre-attaque une cible unique."
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t10",
@@ -644,7 +644,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_def_t14",
-                       "name":  "Mur d\u0027Ecailles  Inexorable",
+                       "name":  "Mur d'Ecailles  Inexorable",
                        "branch":  "def",
                        "tier":  14,
                        "level":  14,
@@ -656,7 +656,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Mur d\u0027Ecailles  Inexorable : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Inexorable : absorbe les degats pour soi et ses allies."
                    },
                    {
                        "id":  "gardien_ecailles_single_t14",
@@ -676,7 +676,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t15",
-                       "name":  "Vague d\u0027Ecailles  Terrible",
+                       "name":  "Vague d'Ecailles  Terrible",
                        "branch":  "aoe",
                        "tier":  15,
                        "level":  15,
@@ -688,7 +688,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Vague d\u0027Ecailles  Terrible : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Terrible : repousse et blesse les ennemis alentour (degats reduits)."
                    },
                    {
                        "id":  "gardien_ecailles_def_t15",
@@ -708,7 +708,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_single_t15",
-                       "name":  "Choc d\u0027Ecaille  Terrible",
+                       "name":  "Choc d'Ecaille  Terrible",
                        "branch":  "single",
                        "tier":  15,
                        "level":  15,
@@ -720,7 +720,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Choc d\u0027Ecaille  Terrible : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Terrible : contre-attaque une cible unique."
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t16",
@@ -932,7 +932,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_def_t20",
-                       "name":  "Mur d\u0027Ecailles  Ultime",
+                       "name":  "Mur d'Ecailles  Ultime",
                        "branch":  "def",
                        "tier":  20,
                        "level":  20,
@@ -944,7 +944,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Mur d\u0027Ecailles  Ultime : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Ultime : absorbe les degats pour soi et ses allies."
                    },
                    {
                        "id":  "gardien_ecailles_single_t20",
@@ -964,7 +964,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t21",
-                       "name":  "Vague d\u0027Ecailles  Maitrise 21",
+                       "name":  "Vague d'Ecailles  Maitrise 21",
                        "branch":  "aoe",
                        "tier":  21,
                        "level":  21,
@@ -976,7 +976,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Vague d\u0027Ecailles  Maitrise 21 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 21 : repousse et blesse les ennemis alentour (degats reduits)."
                    },
                    {
                        "id":  "gardien_ecailles_def_t21",
@@ -996,7 +996,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_single_t21",
-                       "name":  "Choc d\u0027Ecaille  Maitrise 21",
+                       "name":  "Choc d'Ecaille  Maitrise 21",
                        "branch":  "single",
                        "tier":  21,
                        "level":  21,
@@ -1008,7 +1008,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Choc d\u0027Ecaille  Maitrise 21 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 21 : contre-attaque une cible unique."
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t22",
@@ -1220,7 +1220,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_def_t26",
-                       "name":  "Mur d\u0027Ecailles  Maitrise 26",
+                       "name":  "Mur d'Ecailles  Maitrise 26",
                        "branch":  "def",
                        "tier":  26,
                        "level":  26,
@@ -1232,7 +1232,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Mur d\u0027Ecailles  Maitrise 26 : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Maitrise 26 : absorbe les degats pour soi et ses allies."
                    },
                    {
                        "id":  "gardien_ecailles_single_t26",
@@ -1252,7 +1252,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t27",
-                       "name":  "Vague d\u0027Ecailles  Maitrise 27",
+                       "name":  "Vague d'Ecailles  Maitrise 27",
                        "branch":  "aoe",
                        "tier":  27,
                        "level":  27,
@@ -1264,7 +1264,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Vague d\u0027Ecailles  Maitrise 27 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 27 : repousse et blesse les ennemis alentour (degats reduits)."
                    },
                    {
                        "id":  "gardien_ecailles_def_t27",
@@ -1284,7 +1284,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_single_t27",
-                       "name":  "Choc d\u0027Ecaille  Maitrise 27",
+                       "name":  "Choc d'Ecaille  Maitrise 27",
                        "branch":  "single",
                        "tier":  27,
                        "level":  27,
@@ -1296,7 +1296,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Choc d\u0027Ecaille  Maitrise 27 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 27 : contre-attaque une cible unique."
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t28",
@@ -1508,7 +1508,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_def_t32",
-                       "name":  "Mur d\u0027Ecailles  Maitrise 32",
+                       "name":  "Mur d'Ecailles  Maitrise 32",
                        "branch":  "def",
                        "tier":  32,
                        "level":  32,
@@ -1520,7 +1520,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Mur d\u0027Ecailles  Maitrise 32 : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Maitrise 32 : absorbe les degats pour soi et ses allies."
                    },
                    {
                        "id":  "gardien_ecailles_single_t32",
@@ -1540,7 +1540,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t33",
-                       "name":  "Vague d\u0027Ecailles  Maitrise 33",
+                       "name":  "Vague d'Ecailles  Maitrise 33",
                        "branch":  "aoe",
                        "tier":  33,
                        "level":  33,
@@ -1552,7 +1552,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Vague d\u0027Ecailles  Maitrise 33 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 33 : repousse et blesse les ennemis alentour (degats reduits)."
                    },
                    {
                        "id":  "gardien_ecailles_def_t33",
@@ -1572,7 +1572,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_single_t33",
-                       "name":  "Choc d\u0027Ecaille  Maitrise 33",
+                       "name":  "Choc d'Ecaille  Maitrise 33",
                        "branch":  "single",
                        "tier":  33,
                        "level":  33,
@@ -1584,7 +1584,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Choc d\u0027Ecaille  Maitrise 33 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 33 : contre-attaque une cible unique."
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t34",
@@ -1796,7 +1796,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_def_t38",
-                       "name":  "Mur d\u0027Ecailles  Maitrise 38",
+                       "name":  "Mur d'Ecailles  Maitrise 38",
                        "branch":  "def",
                        "tier":  38,
                        "level":  38,
@@ -1808,7 +1808,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Mur d\u0027Ecailles  Maitrise 38 : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Maitrise 38 : absorbe les degats pour soi et ses allies."
                    },
                    {
                        "id":  "gardien_ecailles_single_t38",
@@ -1828,7 +1828,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t39",
-                       "name":  "Vague d\u0027Ecailles  Maitrise 39",
+                       "name":  "Vague d'Ecailles  Maitrise 39",
                        "branch":  "aoe",
                        "tier":  39,
                        "level":  39,
@@ -1840,7 +1840,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Vague d\u0027Ecailles  Maitrise 39 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 39 : repousse et blesse les ennemis alentour (degats reduits)."
                    },
                    {
                        "id":  "gardien_ecailles_def_t39",
@@ -1860,7 +1860,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_single_t39",
-                       "name":  "Choc d\u0027Ecaille  Maitrise 39",
+                       "name":  "Choc d'Ecaille  Maitrise 39",
                        "branch":  "single",
                        "tier":  39,
                        "level":  39,
@@ -1872,7 +1872,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Choc d\u0027Ecaille  Maitrise 39 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 39 : contre-attaque une cible unique."
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t40",
@@ -2084,7 +2084,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_def_t44",
-                       "name":  "Mur d\u0027Ecailles  Maitrise 44",
+                       "name":  "Mur d'Ecailles  Maitrise 44",
                        "branch":  "def",
                        "tier":  44,
                        "level":  44,
@@ -2096,7 +2096,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Mur d\u0027Ecailles  Maitrise 44 : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Maitrise 44 : absorbe les degats pour soi et ses allies."
                    },
                    {
                        "id":  "gardien_ecailles_single_t44",
@@ -2116,7 +2116,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t45",
-                       "name":  "Vague d\u0027Ecailles  Maitrise 45",
+                       "name":  "Vague d'Ecailles  Maitrise 45",
                        "branch":  "aoe",
                        "tier":  45,
                        "level":  45,
@@ -2128,7 +2128,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Vague d\u0027Ecailles  Maitrise 45 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 45 : repousse et blesse les ennemis alentour (degats reduits)."
                    },
                    {
                        "id":  "gardien_ecailles_def_t45",
@@ -2148,7 +2148,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_single_t45",
-                       "name":  "Choc d\u0027Ecaille  Maitrise 45",
+                       "name":  "Choc d'Ecaille  Maitrise 45",
                        "branch":  "single",
                        "tier":  45,
                        "level":  45,
@@ -2160,7 +2160,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Choc d\u0027Ecaille  Maitrise 45 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 45 : contre-attaque une cible unique."
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t46",
@@ -2372,7 +2372,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_def_t50",
-                       "name":  "Mur d\u0027Ecailles  Maitrise 50",
+                       "name":  "Mur d'Ecailles  Maitrise 50",
                        "branch":  "def",
                        "tier":  50,
                        "level":  50,
@@ -2384,7 +2384,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Mur d\u0027Ecailles  Maitrise 50 : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Maitrise 50 : absorbe les degats pour soi et ses allies."
                    },
                    {
                        "id":  "gardien_ecailles_single_t50",
@@ -2404,7 +2404,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t51",
-                       "name":  "Vague d\u0027Ecailles  Maitrise 51",
+                       "name":  "Vague d'Ecailles  Maitrise 51",
                        "branch":  "aoe",
                        "tier":  51,
                        "level":  51,
@@ -2416,7 +2416,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Vague d\u0027Ecailles  Maitrise 51 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 51 : repousse et blesse les ennemis alentour (degats reduits)."
                    },
                    {
                        "id":  "gardien_ecailles_def_t51",
@@ -2436,7 +2436,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_single_t51",
-                       "name":  "Choc d\u0027Ecaille  Maitrise 51",
+                       "name":  "Choc d'Ecaille  Maitrise 51",
                        "branch":  "single",
                        "tier":  51,
                        "level":  51,
@@ -2448,7 +2448,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Choc d\u0027Ecaille  Maitrise 51 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 51 : contre-attaque une cible unique."
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t52",
@@ -2660,7 +2660,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_def_t56",
-                       "name":  "Mur d\u0027Ecailles  Maitrise 56",
+                       "name":  "Mur d'Ecailles  Maitrise 56",
                        "branch":  "def",
                        "tier":  56,
                        "level":  56,
@@ -2672,7 +2672,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Mur d\u0027Ecailles  Maitrise 56 : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Maitrise 56 : absorbe les degats pour soi et ses allies."
                    },
                    {
                        "id":  "gardien_ecailles_single_t56",
@@ -2692,7 +2692,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t57",
-                       "name":  "Vague d\u0027Ecailles  Maitrise 57",
+                       "name":  "Vague d'Ecailles  Maitrise 57",
                        "branch":  "aoe",
                        "tier":  57,
                        "level":  57,
@@ -2704,7 +2704,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Vague d\u0027Ecailles  Maitrise 57 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 57 : repousse et blesse les ennemis alentour (degats reduits)."
                    },
                    {
                        "id":  "gardien_ecailles_def_t57",
@@ -2724,7 +2724,7 @@
                    },
                    {
                        "id":  "gardien_ecailles_single_t57",
-                       "name":  "Choc d\u0027Ecaille  Maitrise 57",
+                       "name":  "Choc d'Ecaille  Maitrise 57",
                        "branch":  "single",
                        "tier":  57,
                        "level":  57,
@@ -2736,7 +2736,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Choc d\u0027Ecaille  Maitrise 57 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 57 : contre-attaque une cible unique."
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t58",

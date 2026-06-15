@@ -116,6 +116,11 @@ foreach ($classId in $MAP.Keys) {
 
   $doc = [ordered]@{ classId = $classId; sourceTree = $treeId; skills = $outSkills }
   $json = $doc | ConvertTo-Json -Depth 6
+  # ConvertTo-Json echappe ' & < > en \uXXXX. Les donnees sont deja en ASCII
+  # (translitterees) ; or le parseur JSON maison du jeu ne gere PAS \u. On
+  # de-echappe donc chaque \uXXXX en caractere litteral (ASCII), valide en JSON
+  # et lisible par le parseur (ex. ' -> ' ). Sans ca : Init shardd echoue.
+  $json = [regex]::Replace($json, '\\u([0-9a-fA-F]{4})', { param($m) [string][char][int]("0x" + $m.Groups[1].Value) })
   $outPath = Join-Path $OutputDir "$classId.json"
   [IO.File]::WriteAllText((Resolve-Path -LiteralPath (Split-Path $outPath -Parent)).Path + "\$classId.json", $json, (New-Object Text.UTF8Encoding($false)))
   Write-Output "OK $classId ($treeId) -> $($outSkills.Count) skills"

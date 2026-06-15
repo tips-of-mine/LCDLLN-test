@@ -16,7 +16,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Flamme du Jugement : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Flamme du Jugement : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t1",
@@ -64,7 +64,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Fer Rouge  Aiguise : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Fer Rouge  Aiguise : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t2",
@@ -112,7 +112,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Pyre  Renforce : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Pyre  Renforce : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t3",
@@ -160,7 +160,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Chatiment Ardent  Affute : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Chatiment Ardent  Affute : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t4",
@@ -208,7 +208,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Auto-da-fe  Brutal : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Auto-da-fe  Brutal : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t5",
@@ -256,7 +256,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Purification Totale  Vorace : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Purification Totale  Vorace : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t6",
@@ -304,7 +304,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Flamme du Jugement  Implacable : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Flamme du Jugement  Implacable : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t7",
@@ -352,7 +352,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Fer Rouge  Funeste : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Fer Rouge  Funeste : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t8",
@@ -400,7 +400,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Pyre  Cruel : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Pyre  Cruel : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t9",
@@ -448,7 +448,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Chatiment Ardent  Sanglant : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Chatiment Ardent  Sanglant : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t10",
@@ -496,7 +496,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Auto-da-fe  Devastateur : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Auto-da-fe  Devastateur : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t11",
@@ -544,7 +544,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Purification Totale  Foudroyant : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Purification Totale  Foudroyant : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t12",
@@ -592,7 +592,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Flamme du Jugement  Mortel : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Flamme du Jugement  Mortel : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t13",
@@ -640,7 +640,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Fer Rouge  Inexorable : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Fer Rouge  Inexorable : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t14",
@@ -688,7 +688,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Pyre  Terrible : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Pyre  Terrible : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t15",
@@ -736,7 +736,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Chatiment Ardent  Souverain : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Chatiment Ardent  Souverain : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t16",
@@ -784,7 +784,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Auto-da-fe  Legendaire : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Auto-da-fe  Legendaire : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t17",
@@ -832,7 +832,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Purification Totale  Cataclysmique : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Purification Totale  Cataclysmique : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t18",
@@ -880,7 +880,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Flamme du Jugement  Apocalyptique : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Flamme du Jugement  Apocalyptique : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t19",
@@ -928,7 +928,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Fer Rouge  Ultime : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Fer Rouge  Ultime : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t20",
@@ -976,7 +976,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Pyre  Maitrise 21 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Pyre  Maitrise 21 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t21",
@@ -1024,7 +1024,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Chatiment Ardent  Maitrise 22 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 22 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t22",
@@ -1072,7 +1072,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Auto-da-fe  Maitrise 23 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 23 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t23",
@@ -1120,7 +1120,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Purification Totale  Maitrise 24 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 24 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t24",
@@ -1168,7 +1168,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Flamme du Jugement  Maitrise 25 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Flamme du Jugement  Maitrise 25 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t25",
@@ -1216,7 +1216,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Fer Rouge  Maitrise 26 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Fer Rouge  Maitrise 26 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t26",
@@ -1264,7 +1264,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Pyre  Maitrise 27 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Pyre  Maitrise 27 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t27",
@@ -1312,7 +1312,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Chatiment Ardent  Maitrise 28 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 28 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t28",
@@ -1360,7 +1360,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Auto-da-fe  Maitrise 29 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 29 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t29",
@@ -1408,7 +1408,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Purification Totale  Maitrise 30 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 30 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t30",
@@ -1456,7 +1456,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Flamme du Jugement  Maitrise 31 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Flamme du Jugement  Maitrise 31 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t31",
@@ -1504,7 +1504,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Fer Rouge  Maitrise 32 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Fer Rouge  Maitrise 32 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t32",
@@ -1552,7 +1552,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Pyre  Maitrise 33 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Pyre  Maitrise 33 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t33",
@@ -1600,7 +1600,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Chatiment Ardent  Maitrise 34 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 34 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t34",
@@ -1648,7 +1648,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Auto-da-fe  Maitrise 35 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 35 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t35",
@@ -1696,7 +1696,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Purification Totale  Maitrise 36 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 36 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t36",
@@ -1744,7 +1744,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Flamme du Jugement  Maitrise 37 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Flamme du Jugement  Maitrise 37 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t37",
@@ -1792,7 +1792,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Fer Rouge  Maitrise 38 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Fer Rouge  Maitrise 38 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t38",
@@ -1840,7 +1840,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Pyre  Maitrise 39 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Pyre  Maitrise 39 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t39",
@@ -1888,7 +1888,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Chatiment Ardent  Maitrise 40 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 40 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t40",
@@ -1936,7 +1936,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Auto-da-fe  Maitrise 41 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 41 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t41",
@@ -1984,7 +1984,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Purification Totale  Maitrise 42 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 42 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t42",
@@ -2032,7 +2032,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Flamme du Jugement  Maitrise 43 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Flamme du Jugement  Maitrise 43 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t43",
@@ -2080,7 +2080,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Fer Rouge  Maitrise 44 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Fer Rouge  Maitrise 44 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t44",
@@ -2128,7 +2128,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Pyre  Maitrise 45 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Pyre  Maitrise 45 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t45",
@@ -2176,7 +2176,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Chatiment Ardent  Maitrise 46 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 46 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t46",
@@ -2224,7 +2224,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Auto-da-fe  Maitrise 47 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 47 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t47",
@@ -2272,7 +2272,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Purification Totale  Maitrise 48 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 48 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t48",
@@ -2320,7 +2320,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Flamme du Jugement  Maitrise 49 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Flamme du Jugement  Maitrise 49 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t49",
@@ -2368,7 +2368,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Fer Rouge  Maitrise 50 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Fer Rouge  Maitrise 50 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t50",
@@ -2416,7 +2416,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Pyre  Maitrise 51 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Pyre  Maitrise 51 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t51",
@@ -2464,7 +2464,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Chatiment Ardent  Maitrise 52 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 52 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t52",
@@ -2512,7 +2512,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Auto-da-fe  Maitrise 53 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 53 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t53",
@@ -2560,7 +2560,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Purification Totale  Maitrise 54 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 54 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t54",
@@ -2608,7 +2608,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Flamme du Jugement  Maitrise 55 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Flamme du Jugement  Maitrise 55 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t55",
@@ -2656,7 +2656,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Fer Rouge  Maitrise 56 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Fer Rouge  Maitrise 56 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t56",
@@ -2704,7 +2704,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Pyre  Maitrise 57 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Pyre  Maitrise 57 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t57",
@@ -2752,7 +2752,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Chatiment Ardent  Maitrise 58 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 58 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t58",
@@ -2800,7 +2800,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Auto-da-fe  Maitrise 59 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 59 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t59",
@@ -2848,7 +2848,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Purification Totale  Maitrise 60 : brule les heretiques d\u0027un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 60 : brule les heretiques d'un feu purificateur."
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t60",

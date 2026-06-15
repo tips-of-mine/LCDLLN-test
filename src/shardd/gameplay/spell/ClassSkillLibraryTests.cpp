@@ -18,7 +18,7 @@ namespace
 	    { "id": "pretre_grace_single_t1", "name": "Soin", "branch": "single", "tier": 1, "level": 1,
 	      "effectKind": "Heal", "target": "SingleAlly", "powerValue": 1.0, "rangeMeters": 6.0,
 	      "areaRadiusMeters": 0.0, "castTimeMs": 1000, "cooldownMs": 3000, "resourceCostPercent": 6,
-	      "description": "Restaure la vie." },
+	      "description": "Restaure la vie d'un allie (apostrophe litterale = format reel des donnees)." },
 	    { "id": "pretre_grace_def_t1", "name": "Garde", "branch": "def", "tier": 1, "level": 1,
 	      "effectKind": "Defense", "target": "SingleAlly", "powerValue": 1.0, "rangeMeters": 0.0,
 	      "areaRadiusMeters": 0.0, "castTimeMs": 0, "cooldownMs": 18000, "resourceCostPercent": 8,

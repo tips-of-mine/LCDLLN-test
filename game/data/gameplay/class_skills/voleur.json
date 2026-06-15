@@ -20,7 +20,7 @@
                    },
                    {
                        "id":  "voleur_def_t1",
-                       "name":  "Pas de l\u0027Ombre",
+                       "name":  "Pas de l'Ombre",
                        "branch":  "def",
                        "tier":  1,
                        "level":  1,
@@ -32,7 +32,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Pas de l\u0027Ombre : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t1",
@@ -80,7 +80,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Voile de Fumee  Aiguise : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Aiguise : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t2",
@@ -128,7 +128,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Reflexe Felin  Renforce : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Renforce : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t3",
@@ -176,7 +176,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Disparition  Affute : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Disparition  Affute : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t4",
@@ -224,7 +224,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Acrobatie  Brutal : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Brutal : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t5",
@@ -272,7 +272,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Echappee  Vorace : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Echappee  Vorace : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t6",
@@ -308,7 +308,7 @@
                    },
                    {
                        "id":  "voleur_def_t7",
-                       "name":  "Pas de l\u0027Ombre  Implacable",
+                       "name":  "Pas de l'Ombre  Implacable",
                        "branch":  "def",
                        "tier":  7,
                        "level":  7,
@@ -320,7 +320,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Pas de l\u0027Ombre  Implacable : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Implacable : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t7",
@@ -368,7 +368,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Voile de Fumee  Funeste : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Funeste : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t8",
@@ -416,7 +416,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Reflexe Felin  Cruel : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Cruel : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t9",
@@ -464,7 +464,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Disparition  Sanglant : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Disparition  Sanglant : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t10",
@@ -512,7 +512,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Acrobatie  Devastateur : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Devastateur : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t11",
@@ -560,7 +560,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Echappee  Foudroyant : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Echappee  Foudroyant : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t12",
@@ -596,7 +596,7 @@
                    },
                    {
                        "id":  "voleur_def_t13",
-                       "name":  "Pas de l\u0027Ombre  Mortel",
+                       "name":  "Pas de l'Ombre  Mortel",
                        "branch":  "def",
                        "tier":  13,
                        "level":  13,
@@ -608,7 +608,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Pas de l\u0027Ombre  Mortel : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Mortel : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t13",
@@ -656,7 +656,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Voile de Fumee  Inexorable : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Inexorable : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t14",
@@ -704,7 +704,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Reflexe Felin  Terrible : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Terrible : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t15",
@@ -752,7 +752,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Disparition  Souverain : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Disparition  Souverain : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t16",
@@ -800,7 +800,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Acrobatie  Legendaire : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Legendaire : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t17",
@@ -848,7 +848,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Echappee  Cataclysmique : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Echappee  Cataclysmique : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t18",
@@ -884,7 +884,7 @@
                    },
                    {
                        "id":  "voleur_def_t19",
-                       "name":  "Pas de l\u0027Ombre  Apocalyptique",
+                       "name":  "Pas de l'Ombre  Apocalyptique",
                        "branch":  "def",
                        "tier":  19,
                        "level":  19,
@@ -896,7 +896,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Pas de l\u0027Ombre  Apocalyptique : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Apocalyptique : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t19",
@@ -944,7 +944,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Voile de Fumee  Ultime : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Ultime : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t20",
@@ -992,7 +992,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Reflexe Felin  Maitrise 21 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 21 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t21",
@@ -1040,7 +1040,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Disparition  Maitrise 22 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 22 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t22",
@@ -1088,7 +1088,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Acrobatie  Maitrise 23 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 23 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t23",
@@ -1136,7 +1136,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Echappee  Maitrise 24 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 24 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t24",
@@ -1172,7 +1172,7 @@
                    },
                    {
                        "id":  "voleur_def_t25",
-                       "name":  "Pas de l\u0027Ombre  Maitrise 25",
+                       "name":  "Pas de l'Ombre  Maitrise 25",
                        "branch":  "def",
                        "tier":  25,
                        "level":  25,
@@ -1184,7 +1184,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Pas de l\u0027Ombre  Maitrise 25 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Maitrise 25 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t25",
@@ -1232,7 +1232,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Voile de Fumee  Maitrise 26 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Maitrise 26 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t26",
@@ -1280,7 +1280,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Reflexe Felin  Maitrise 27 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 27 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t27",
@@ -1328,7 +1328,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Disparition  Maitrise 28 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 28 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t28",
@@ -1376,7 +1376,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Acrobatie  Maitrise 29 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 29 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t29",
@@ -1424,7 +1424,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Echappee  Maitrise 30 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 30 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t30",
@@ -1460,7 +1460,7 @@
                    },
                    {
                        "id":  "voleur_def_t31",
-                       "name":  "Pas de l\u0027Ombre  Maitrise 31",
+                       "name":  "Pas de l'Ombre  Maitrise 31",
                        "branch":  "def",
                        "tier":  31,
                        "level":  31,
@@ -1472,7 +1472,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Pas de l\u0027Ombre  Maitrise 31 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Maitrise 31 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t31",
@@ -1520,7 +1520,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Voile de Fumee  Maitrise 32 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Maitrise 32 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t32",
@@ -1568,7 +1568,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Reflexe Felin  Maitrise 33 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 33 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t33",
@@ -1616,7 +1616,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Disparition  Maitrise 34 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 34 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t34",
@@ -1664,7 +1664,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Acrobatie  Maitrise 35 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 35 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t35",
@@ -1712,7 +1712,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Echappee  Maitrise 36 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 36 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t36",
@@ -1748,7 +1748,7 @@
                    },
                    {
                        "id":  "voleur_def_t37",
-                       "name":  "Pas de l\u0027Ombre  Maitrise 37",
+                       "name":  "Pas de l'Ombre  Maitrise 37",
                        "branch":  "def",
                        "tier":  37,
                        "level":  37,
@@ -1760,7 +1760,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Pas de l\u0027Ombre  Maitrise 37 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Maitrise 37 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t37",
@@ -1808,7 +1808,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Voile de Fumee  Maitrise 38 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Maitrise 38 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t38",
@@ -1856,7 +1856,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Reflexe Felin  Maitrise 39 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 39 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t39",
@@ -1904,7 +1904,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Disparition  Maitrise 40 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 40 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t40",
@@ -1952,7 +1952,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Acrobatie  Maitrise 41 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 41 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t41",
@@ -2000,7 +2000,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Echappee  Maitrise 42 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 42 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t42",
@@ -2036,7 +2036,7 @@
                    },
                    {
                        "id":  "voleur_def_t43",
-                       "name":  "Pas de l\u0027Ombre  Maitrise 43",
+                       "name":  "Pas de l'Ombre  Maitrise 43",
                        "branch":  "def",
                        "tier":  43,
                        "level":  43,
@@ -2048,7 +2048,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Pas de l\u0027Ombre  Maitrise 43 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Maitrise 43 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t43",
@@ -2096,7 +2096,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Voile de Fumee  Maitrise 44 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Maitrise 44 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t44",
@@ -2144,7 +2144,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Reflexe Felin  Maitrise 45 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 45 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t45",
@@ -2192,7 +2192,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Disparition  Maitrise 46 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 46 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t46",
@@ -2240,7 +2240,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Acrobatie  Maitrise 47 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 47 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t47",
@@ -2288,7 +2288,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Echappee  Maitrise 48 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 48 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t48",
@@ -2324,7 +2324,7 @@
                    },
                    {
                        "id":  "voleur_def_t49",
-                       "name":  "Pas de l\u0027Ombre  Maitrise 49",
+                       "name":  "Pas de l'Ombre  Maitrise 49",
                        "branch":  "def",
                        "tier":  49,
                        "level":  49,
@@ -2336,7 +2336,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Pas de l\u0027Ombre  Maitrise 49 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Maitrise 49 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t49",
@@ -2384,7 +2384,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Voile de Fumee  Maitrise 50 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Maitrise 50 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t50",
@@ -2432,7 +2432,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Reflexe Felin  Maitrise 51 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 51 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t51",
@@ -2480,7 +2480,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Disparition  Maitrise 52 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 52 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t52",
@@ -2528,7 +2528,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Acrobatie  Maitrise 53 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 53 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t53",
@@ -2576,7 +2576,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Echappee  Maitrise 54 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 54 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t54",
@@ -2612,7 +2612,7 @@
                    },
                    {
                        "id":  "voleur_def_t55",
-                       "name":  "Pas de l\u0027Ombre  Maitrise 55",
+                       "name":  "Pas de l'Ombre  Maitrise 55",
                        "branch":  "def",
                        "tier":  55,
                        "level":  55,
@@ -2624,7 +2624,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Pas de l\u0027Ombre  Maitrise 55 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Maitrise 55 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t55",
@@ -2672,7 +2672,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Voile de Fumee  Maitrise 56 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Maitrise 56 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t56",
@@ -2720,7 +2720,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Reflexe Felin  Maitrise 57 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 57 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t57",
@@ -2768,7 +2768,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Disparition  Maitrise 58 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 58 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t58",
@@ -2816,7 +2816,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Acrobatie  Maitrise 59 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 59 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t59",
@@ -2864,7 +2864,7 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Echappee  Maitrise 60 : augmente l\u0027esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 60 : augmente l'esquive et permet de rompre le combat."
                    },
                    {
                        "id":  "voleur_single_t60",

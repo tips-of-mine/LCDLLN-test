@@ -11,7 +11,7 @@ namespace
 	  { "id": "mage_single_t1", "name": "Eclair", "branch": "single", "tier": 1, "level": 1,
 	    "effectKind": "Damage", "target": "SingleEnemy", "powerValue": 1.1, "rangeMeters": 30.0,
 	    "areaRadiusMeters": 0.0, "castTimeMs": 1500, "cooldownMs": 3000, "resourceCostPercent": 6,
-	    "description": "Decharge arcanique." } ] }
+	    "description": "Decharge l'energie arcanique (apostrophe litterale = format reel)." } ] }
 	)JSON";
 
 	void TestLoadClass()

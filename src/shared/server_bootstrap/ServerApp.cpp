@@ -4165,26 +4165,13 @@ namespace engine::server
 				}
 				// AreaAroundSelf : pas de cible explicite (rayon résolu à l'effet).
 
-				if (cs->castTimeMs == 0)
-				{
-					// Résolution immédiate SP-C.
-					ResolveClassSkillCast(*client, *cs, csResolvedTarget);
-					return;
-				}
-
-				// Cast à incantation SP-C : armé dans la même structure que SP3.
-				// Le champ activeCastSpellId sert aussi d'identifiant pour TickActiveCasts ;
-				// on préfixe avec "cs:" pour distinguer un skill de classe d'un sort de kit
-				// dans le log (TickActiveCasts relit via m_spellKits — voir TODO ci-dessous).
-				// TODO SP-C : TickActiveCasts relit le spell fini via m_spellKits.FindSpell,
-				// ce qui ne trouvera rien pour un skill de classe. En V1, on n'arme donc les
-				// skills de classe instantanément (castTimeMs==0 uniquement) pour éviter un
-				// cast à incantation silencieux. Si cs->castTimeMs > 0 on laisse tomber dans
-				// le fallback kit profil (qui échoue aussi, mais sans armer de cast orphelin).
-				LOG_WARN(Net,
-					"[ServerApp] SP-C skill '{}' a castTimeMs={} > 0 : non supporté en V1 (TickActiveCasts), "
-					"cast ignoré pour client_id={}",
-					cs->skillId, cs->castTimeMs, client->clientId);
+				// V1 : compétences de classe résolues instantanément (castTimeMs ignoré ;
+				// barre de cast par-classe = amélioration future, cf. TickActiveCasts).
+				// TickActiveCasts relit les sorts via m_spellKits.FindSpell, qui ne couvre
+				// pas ClassSkillLibrary ; armer un cast à incantation SP-C produirait un
+				// cast orphelin sans résolution. La barre de cast par-classe sera introduite
+				// quand TickActiveCasts supportera nativement les ClassSkillDef.
+				ResolveClassSkillCast(*client, *cs, csResolvedTarget);
 				return;
 			}
 		}

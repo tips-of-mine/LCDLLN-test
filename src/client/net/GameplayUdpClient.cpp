@@ -318,6 +318,24 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendSetActionBarLayout(uint32_t clientId, const std::array<std::string, 10>& slots)
+	{
+		engine::server::SetActionBarLayoutMessage msg{};
+		msg.clientId = clientId;
+		msg.slots = slots;
+		const std::vector<std::byte> packet = engine::server::EncodeSetActionBarLayout(msg);
+		const bool ok = SendBytes(packet);
+		if (ok)
+		{
+			LOG_DEBUG(Net, "[GameplayUdpClient] SetActionBarLayout sent (client_id={})", clientId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] SetActionBarLayout FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
 	bool GameplayUdpClient::SendPartyAccept(uint32_t clientId)
 	{
 		engine::server::PartyAcceptMessage msg{};

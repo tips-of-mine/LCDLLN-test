@@ -60,7 +60,7 @@ techniques » pour les martiaux) qui :
 | Persistance | **Serveur** (shard, `PersistedCharacterState`) — Design A |
 | Wire | **Shard UDP**, bump `kProtocolVersion` (cohérent avec SP3 / `profileId`) |
 | Accès | **Toutes les classes**, thème adaptatif (Grimoire / Carnet) |
-| Slots barre d'action | **10** (touches **1-9 puis 0**) — set connu agnostique au nombre |
+| Slots barre d'action | **10** sur la **rangée du haut physique** (`VK_1..VK_0` ; AZERTY = `& é " ' ( - è _ ç à`) ; libellé adapté au clavier |
 | Liste de sorts | **Défilante** (barre de défilement) + **recherche** par nom |
 | Keybind | **K** pour ouvrir/fermer + slash commands `/grimoire` et `/sorts` |
 | Interaction | **Glisser-déposer** ImGui |
@@ -148,9 +148,18 @@ Sinon (tank, melee, voleur, pisteur, distance) → **Carnet de techniques**
 - Étendre la barre d'action SP3 (`Engine.cpp` ~10894) de **4 à 10 slots**.
 - Elle lit le **layout résolu** au lieu de l'ordre brut du catalogue : touche
   `index` → `layout[index]` → `spellId`.
-- Mapping touches : slots 0-8 → `Digit1..Digit9`, slot 9 → `Digit0` (l'enum
-  `Key::Digit0` existe déjà, cf. `Engine.cpp:424`). Remplace le `'1'+index`
-  actuel (valable seulement jusqu'à 9).
+- Mapping touches : slots 0-8 → `Digit1..Digit9`, slot 9 → `Digit0`. Ces
+  `Key::DigitN` valent les **codes de touches virtuels Win32 `VK_1..VK_0`**
+  (`src/shared/platform/Input.cpp` lit `wParam` de `WM_KEYDOWN`), assignés à la
+  **rangée du haut par position physique**, identique en QWERTY et AZERTY. La
+  barre répond donc déjà aux touches physiques `& é " ' ( - è _ ç à` d'un clavier
+  AZERTY (le caractère AZERTY n'arrive que via `WM_CHAR`, non utilisé ; le code
+  virtuel reste `VK_N`). Remplace le `'1'+index` actuel (valable seulement
+  jusqu'à 9 — slot 10 nécessite `Digit0`).
+- **Libellé de slot adapté au clavier** : afficher le glyphe réel de la touche
+  via `MapVirtualKey(VK_n, MAPVK_VK_TO_CHAR)` — AZERTY → `& é " ' ( - è _ ç à`,
+  QWERTY → `1 … 0` — au lieu d'un « 1..0 » en dur. Le même glyphe est affiché sur
+  la barre d'action **et** sur les slots du Grimoire (helper partagé client).
 - Slot vide → case vide, pas de cast sur cette touche.
 
 ### 7.3 `GrimoireUiPresenter` (`src/client/grimoire/`)

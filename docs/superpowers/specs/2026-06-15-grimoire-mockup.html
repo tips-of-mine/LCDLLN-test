@@ -103,7 +103,8 @@
   <button id="b-martial" onclick="setKit('martial')">Martial — Guerrier</button>
 </div>
 <div class="hint">
-  10 emplacements (touches 1-9 puis 0). Glisse une carte de sort sur un slot (drag &amp; drop).
+  10 emplacements sur la rangée du haut physique — en AZERTY : <b>&amp; é " ' ( - è _ ç à</b>.
+  Glisse une carte de sort sur un slot (drag &amp; drop).
   La liste de gauche défile (barre de défilement) et se filtre par la recherche.<br>
   Le titre/visuel s'adapte au profil. La barre d'action en bas reflète l'assignation en direct.
   <em>(Les sorts ci-dessous sont des exemples pour illustrer l'échelle ~60 sorts.)</em>
@@ -219,7 +220,10 @@ function setKit(k){
   render(); setStatus("");
 }
 function spellById(id){ return KITS[current].spells.find(s=>s.id===id); }
-function slotKey(i){ return i<9 ? String(i+1) : "0"; }
+// Libellés AZERTY de la rangée du haut (positions physiques VK_1..VK_0).
+// En jeu : glyphe résolu via MapVirtualKey(VK_n, MAPVK_VK_TO_CHAR) selon le clavier.
+const AZERTY_KEYS = ["&","é","\"","'","(","-","è","_","ç","à"];
+function slotKey(i){ return AZERTY_KEYS[i] || String(i+1); }
 
 function render(){
   const q=(document.getElementById("search").value||"").toLowerCase();

@@ -2386,3 +2386,33 @@ d'action passée de 4 à 10 slots).
 - **Déploiement** : ⚠️ **redéploiement shardd requis** (handler kind 88 + persistance).
   Kinds rétro-additifs → pas de rejet mutuel client/shard ancien↔neuf ; déployer
   PR-1 (serveur) puis PR-2 (client).
+
+## Compétences par-classe — SP-A : pipeline + catalogues (2026-06-15)
+
+Spec : `docs/superpowers/specs/2026-06-15-class-skills-pipeline-design.md` ;
+plan : `docs/superpowers/plans/2026-06-15-class-skills-pipeline-sp-a.md`. Importe
+les arbres de compétences de la référence externe lune-noire pour les **24 classes
+existantes** (180 skills/classe). **SP-A = données + catalogues, inerte** (aucun
+cast ; le combat reste sur les kits profil jusqu'à SP-C).
+
+- **Générateur** : `tools/skills/GenerateClassSkills.ps1` (PowerShell) lit la
+  référence **externe** (non versionnée) + table de mapping (24 classes →
+  arbres) + formules de synthèse coût/cooldown/castTime → émet
+  `game/data/gameplay/class_skills/<classId>.json` (24 fichiers × 180 skills,
+  ASCII). Déterministe ; relancer régénère à l'identique.
+- **Schéma skill** : id, name, branch (single/aoe/def), tier, level (1-60),
+  effectKind (Damage/Heal/Defense), target (SingleEnemy/AreaAroundSelf/SingleAlly),
+  powerValue, rangeMeters, areaRadiusMeters, castTimeMs, cooldownMs,
+  resourceCostPercent, description.
+- **Catalogues** : `ClassSkillLibrary` (`src/shardd/gameplay/spell/`, strict,
+  pattern SpellKitLibrary — boot strict) + `ClassSkillCatalog`
+  (`src/client/gameplay/`, tolérant, pattern SpellKitCatalog). Chargés par
+  `classId` depuis `gameplay/class_skills/`. Tests : `class_skill_library_tests`,
+  `class_skill_catalog_tests`.
+- **Aucune extension moteur en SP-A** (enum auto-contenu `ClassSkillEffectKind`) ;
+  l'effet combat `DamageReductionPercent` + le cast par set-connu = **SP-C**.
+- **Suite** : SP-B (wire classId + set connu + progression), SP-C (cast par
+  classe), SP-D (UI arbre). Mapping prêtres/inquisiteurs offensifs → arbre Paladin
+  (cf. spec §6).
+- **Déploiement** : ⚠️ redéploiement **shardd** (nouveau `ClassSkillLibrary` au
+  boot) mais **inerte** → pas de lock-step.

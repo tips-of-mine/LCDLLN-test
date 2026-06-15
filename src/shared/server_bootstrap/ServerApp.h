@@ -31,6 +31,7 @@
 #include "src/shardd/world/UdpTransport.h"
 #include "src/shardd/world/ZoneTransitions.h"
 
+#include <array>
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
@@ -217,6 +218,8 @@ namespace engine::server
 		uint32_t chatMutedUntilServerTick = 0;
 		/// M36.2: known crafting professions and skill levels.
 		std::vector<ProfessionEntry> professions;
+		/// Grimoire — 10 slots de barre d'action (slot i → spellId, "" = vide).
+		std::array<std::string, 10> actionBarLayout{};
 	};
 
 	/// Minimal authoritative mob replicated through the same interest system as players.

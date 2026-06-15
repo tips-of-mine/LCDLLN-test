@@ -1300,6 +1300,8 @@ namespace engine::server
 		acceptedClient.chatModeratorRole = persistedState.chatModeratorRole;
 		/// M36.2 — restore known professions.
 		acceptedClient.professions = std::move(persistedState.professions);
+		/// Grimoire — restore action bar layout (10 slots).
+		acceptedClient.actionBarLayout = std::move(persistedState.actionBarLayout);
 		acceptedClient.hasReplicatedState = true;
 			LOG_INFO(Net,
 				"[ServerApp] Character state restored (client_id={}, character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={})",
@@ -2015,6 +2017,8 @@ namespace engine::server
 		state.mailboxItems.clear();
 		/// M36.2 — persist profession skill progress.
 		state.professions = client.professions;
+		/// Grimoire — persist action bar layout.
+		state.actionBarLayout = client.actionBarLayout;
 		if (!m_characterPersistence.SaveCharacter(state))
 		{
 			LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",

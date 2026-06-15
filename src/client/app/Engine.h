@@ -316,6 +316,20 @@ namespace engine
 		void UpdateGameplayNet(float deltaSeconds);
 		/// Drains non-blocking UDP packets into \ref m_uiModelBinding (Welcome excluded; client id from handshake).
 		void PumpGameplayPackets();
+		/// Consomme et applique les commandes de réglages (vidéo / audio / contrôles / jeu)
+		/// stagées par l'écran d'options (\ref AuthUiPresenter). Idempotent : chaque
+		/// `ConsumePending*Settings()` renvoie une commande vide tant qu'aucun apply n'est
+		/// demandé, donc l'appel est sûr CHAQUE FRAME (auth comme in-game). C'est ce qui
+		/// permet de réutiliser l'écran d'options en jeu (refactor B2).
+		///
+		/// \param authGateActive true tant que le flux d'auth n'est pas terminé. Garde-fou
+		///        réseau : la (ré)initialisation / l'arrêt du réseau gameplay
+		///        (\ref InitGameplayNet / \ref ShutdownGameplayNet) déclenchés par un
+		///        changement de `client.gameplay_udp.enabled` ne sont effectués QUE pendant
+		///        l'auth, pour ne pas couper intempestivement une session gameplay active
+		///        si l'utilisateur applique des réglages en jeu. La persistance config et
+		///        les catégories vidéo/audio/contrôles sont appliquées inconditionnellement.
+		void ApplyConsumedSettingsCommands(bool authGateActive);
 		/// Load optional zone probe and atmosphere assets from content-relative paths.
 		void LoadZoneProbeAssets();
 		/// Charge un .spv terrain (même chargeur que l’éditeur monde).

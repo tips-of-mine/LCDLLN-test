@@ -8359,84 +8359,20 @@ namespace engine
 			LOG_DEBUG(Render, "[DIAG] authUi.Update begin frame={}", m_currentFrame);
 			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
 			LOG_DEBUG(Render, "[DIAG] authUi.Update done frame={}", m_currentFrame);
-			const engine::client::AuthUiPresenter::VideoSettingsCommand videoCmd = m_authUi.ConsumePendingVideoSettings();
-			const engine::client::AuthUiPresenter::AudioSettingsCommand audioCmd = m_authUi.ConsumePendingAudioSettings();
-			const engine::client::AuthUiPresenter::ControlSettingsCommand controlCmd = m_authUi.ConsumePendingControlSettings();
-			const engine::client::AuthUiPresenter::GameSettingsCommand gameCmd = m_authUi.ConsumePendingGameSettings();
-			if (videoCmd.applyRequested)
-			{
-				const bool fullscreenChanged = (videoCmd.fullscreen != m_window.IsFullscreen());
-				const bool vsyncChanged = (videoCmd.vsync != m_vsync);
-				m_cfg.SetValue("render.fullscreen", videoCmd.fullscreen);
-				m_cfg.SetValue("render.vsync", videoCmd.vsync);
-				m_cfg.SetValue("render.resolution_width", static_cast<int64_t>(videoCmd.resolutionWidth));
-				m_cfg.SetValue("render.resolution_height", static_cast<int64_t>(videoCmd.resolutionHeight));
-				m_cfg.SetValue("render.quality_preset", static_cast<int64_t>(videoCmd.qualityPreset));
-				m_cfg.SetValue("render.fov", static_cast<double>(videoCmd.fovDegrees));
-				m_vsync = videoCmd.vsync;
-				if (fullscreenChanged)
-				{
-					m_window.ToggleFullscreen();
-					LOG_INFO(Core, "[Options] Fullscreen applied ({})", videoCmd.fullscreen ? "on" : "off");
-				}
-				if (vsyncChanged)
-				{
-					m_swapchainResizeRequested = true;
-					LOG_INFO(Core, "[Options] VSync applied ({}) -> swapchain recreate requested", videoCmd.vsync ? "on" : "off");
-				}
-				int cw = 0, ch = 0;
-				m_window.GetClientSize(cw, ch);
-				const bool resChanged = (videoCmd.resolutionWidth > 0 && videoCmd.resolutionHeight > 0
-					&& (videoCmd.resolutionWidth != cw || videoCmd.resolutionHeight != ch));
-				if (resChanged)
-				{
-					m_swapchainResizeRequested = true;
-					LOG_INFO(Core, "[Options] Resolution persisted {}x{} (fenêtre actuelle {}x{} ; redimensionnement natif à brancher)",
-						videoCmd.resolutionWidth, videoCmd.resolutionHeight, cw, ch);
-				}
-				if (!fullscreenChanged && !vsyncChanged && !resChanged)
-				{
-					LOG_INFO(Core, "[Options] Video apply requested but window flags unchanged (qualité / FOV enregistrés dans la config)");
-				}
-			}
-			if (audioCmd.applyRequested)
-			{
-				m_cfg.SetValue("audio.master_volume", static_cast<double>(audioCmd.masterVolume));
-				m_cfg.SetValue("audio.music_volume", static_cast<double>(audioCmd.musicVolume));
-				m_cfg.SetValue("audio.sfx_volume", static_cast<double>(audioCmd.sfxVolume));
-				m_cfg.SetValue("audio.ui_volume", static_cast<double>(audioCmd.uiVolume));
-				const bool masterOk = m_audioEngine.SetMasterVolume(audioCmd.masterVolume);
-				const bool musicOk = m_audioEngine.SetBusVolume("Music", audioCmd.musicVolume);
-				const bool sfxOk = m_audioEngine.SetBusVolume("SFX", audioCmd.sfxVolume);
-				const bool uiOk = m_audioEngine.SetBusVolume("UI", audioCmd.uiVolume);
-				LOG_INFO(Core, "[Options] Audio applied (master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, ok={})",
-					audioCmd.masterVolume, audioCmd.musicVolume, audioCmd.sfxVolume, audioCmd.uiVolume,
-					(masterOk && musicOk && sfxOk && uiOk) ? "yes" : "partial");
-			}
-			if (controlCmd.applyRequested)
-			{
-				m_cfg.SetValue("camera.mouse_sensitivity", static_cast<double>(controlCmd.mouseSensitivity));
-				m_cfg.SetValue("controls.invert_y", controlCmd.invertY);
-				m_cfg.SetValue("controls.movement_layout", controlCmd.useZqsd ? std::string("zqsd") : std::string("wasd"));
-				LOG_INFO(Core, "[Options] Controls applied (sens={:.4f}, invert_y={}, layout={})",
-					controlCmd.mouseSensitivity, controlCmd.invertY, controlCmd.useZqsd ? "zqsd" : "wasd");
-			}
-			if (gameCmd.applyRequested)
-			{
-				const bool gameplayWasEnabled = m_cfg.GetBool("client.gameplay_udp.enabled", false);
-				m_cfg.SetValue("client.gameplay_udp.enabled", gameCmd.gameplayUdpEnabled);
-				m_cfg.SetValue("client.allow_insecure_dev", gameCmd.allowInsecureDev);
-				m_cfg.SetValue("client.auth_ui.timeout_ms", static_cast<int64_t>(gameCmd.authTimeoutMs));
-				if (gameplayWasEnabled != gameCmd.gameplayUdpEnabled)
-				{
-					if (gameCmd.gameplayUdpEnabled)
-						InitGameplayNet();
-					else
-						ShutdownGameplayNet();
-				}
-				LOG_INFO(Core, "[Options] Game applied (gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
-					gameCmd.gameplayUdpEnabled, gameCmd.allowInsecureDev, gameCmd.authTimeoutMs);
-			}
+		}
+
+		// Refactor B2 (ST1) — Le consume/application des réglages d'options doit tourner
+		// CHAQUE FRAME (auth comme in-game) pour pouvoir réutiliser l'écran d'options en
+		// jeu. Les ConsumePending*Settings() sont idempotents (commande vide tant qu'aucun
+		// apply n'est demandé), donc l'appel inconditionnel est sûr et ne ré-applique rien
+		// hors frame d'apply. Placé APRÈS m_authUi.Update pour consommer les commandes
+		// stagées par l'UI au cours de la frame courante (pas un cran de retard). La garde
+		// réseau (Init/ShutdownGameplayNet) reste conditionnée à authGateActive
+		// (cf. ApplyConsumedSettingsCommands).
+		ApplyConsumedSettingsCommands(authGateActive);
+
+		if (authGateActive)
+		{
 			if (m_chatUi.IsInitialized())
 			{
 				// PAS d'update du chat pendant les ecrans d'auth : sinon le Enter
@@ -13808,6 +13744,104 @@ namespace engine
 		m_gameplayVendorTalkTarget.clear();
 		m_gameplayAuctionTalkTarget.clear();
 		LOG_INFO(Core, "[GameplayNet] Shutdown complete");
+	}
+
+	// Refactor B2 (ST1) — Consomme et applique les commandes de réglages stagées par
+	// l'écran d'options (AuthUiPresenter). Idempotent : appelable chaque frame.
+	// Extrait verbatim de l'ancien bloc gardé par authGateActive dans la boucle de rendu,
+	// pour que l'application des options tourne aussi in-game (écran d'options réutilisé).
+	void Engine::ApplyConsumedSettingsCommands(bool authGateActive)
+	{
+		const engine::client::AuthUiPresenter::VideoSettingsCommand videoCmd = m_authUi.ConsumePendingVideoSettings();
+		const engine::client::AuthUiPresenter::AudioSettingsCommand audioCmd = m_authUi.ConsumePendingAudioSettings();
+		const engine::client::AuthUiPresenter::ControlSettingsCommand controlCmd = m_authUi.ConsumePendingControlSettings();
+		const engine::client::AuthUiPresenter::GameSettingsCommand gameCmd = m_authUi.ConsumePendingGameSettings();
+		if (videoCmd.applyRequested)
+		{
+			const bool fullscreenChanged = (videoCmd.fullscreen != m_window.IsFullscreen());
+			const bool vsyncChanged = (videoCmd.vsync != m_vsync);
+			m_cfg.SetValue("render.fullscreen", videoCmd.fullscreen);
+			m_cfg.SetValue("render.vsync", videoCmd.vsync);
+			m_cfg.SetValue("render.resolution_width", static_cast<int64_t>(videoCmd.resolutionWidth));
+			m_cfg.SetValue("render.resolution_height", static_cast<int64_t>(videoCmd.resolutionHeight));
+			m_cfg.SetValue("render.quality_preset", static_cast<int64_t>(videoCmd.qualityPreset));
+			m_cfg.SetValue("render.fov", static_cast<double>(videoCmd.fovDegrees));
+			m_vsync = videoCmd.vsync;
+			if (fullscreenChanged)
+			{
+				m_window.ToggleFullscreen();
+				LOG_INFO(Core, "[Options] Fullscreen applied ({})", videoCmd.fullscreen ? "on" : "off");
+			}
+			if (vsyncChanged)
+			{
+				m_swapchainResizeRequested = true;
+				LOG_INFO(Core, "[Options] VSync applied ({}) -> swapchain recreate requested", videoCmd.vsync ? "on" : "off");
+			}
+			int cw = 0, ch = 0;
+			m_window.GetClientSize(cw, ch);
+			const bool resChanged = (videoCmd.resolutionWidth > 0 && videoCmd.resolutionHeight > 0
+				&& (videoCmd.resolutionWidth != cw || videoCmd.resolutionHeight != ch));
+			if (resChanged)
+			{
+				m_swapchainResizeRequested = true;
+				LOG_INFO(Core, "[Options] Resolution persisted {}x{} (fenêtre actuelle {}x{} ; redimensionnement natif à brancher)",
+					videoCmd.resolutionWidth, videoCmd.resolutionHeight, cw, ch);
+			}
+			if (!fullscreenChanged && !vsyncChanged && !resChanged)
+			{
+				LOG_INFO(Core, "[Options] Video apply requested but window flags unchanged (qualité / FOV enregistrés dans la config)");
+			}
+		}
+		if (audioCmd.applyRequested)
+		{
+			m_cfg.SetValue("audio.master_volume", static_cast<double>(audioCmd.masterVolume));
+			m_cfg.SetValue("audio.music_volume", static_cast<double>(audioCmd.musicVolume));
+			m_cfg.SetValue("audio.sfx_volume", static_cast<double>(audioCmd.sfxVolume));
+			m_cfg.SetValue("audio.ui_volume", static_cast<double>(audioCmd.uiVolume));
+			const bool masterOk = m_audioEngine.SetMasterVolume(audioCmd.masterVolume);
+			const bool musicOk = m_audioEngine.SetBusVolume("Music", audioCmd.musicVolume);
+			const bool sfxOk = m_audioEngine.SetBusVolume("SFX", audioCmd.sfxVolume);
+			const bool uiOk = m_audioEngine.SetBusVolume("UI", audioCmd.uiVolume);
+			LOG_INFO(Core, "[Options] Audio applied (master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, ok={})",
+				audioCmd.masterVolume, audioCmd.musicVolume, audioCmd.sfxVolume, audioCmd.uiVolume,
+				(masterOk && musicOk && sfxOk && uiOk) ? "yes" : "partial");
+		}
+		if (controlCmd.applyRequested)
+		{
+			m_cfg.SetValue("camera.mouse_sensitivity", static_cast<double>(controlCmd.mouseSensitivity));
+			m_cfg.SetValue("controls.invert_y", controlCmd.invertY);
+			m_cfg.SetValue("controls.movement_layout", controlCmd.useZqsd ? std::string("zqsd") : std::string("wasd"));
+			LOG_INFO(Core, "[Options] Controls applied (sens={:.4f}, invert_y={}, layout={})",
+				controlCmd.mouseSensitivity, controlCmd.invertY, controlCmd.useZqsd ? "zqsd" : "wasd");
+		}
+		if (gameCmd.applyRequested)
+		{
+			const bool gameplayWasEnabled = m_cfg.GetBool("client.gameplay_udp.enabled", false);
+			m_cfg.SetValue("client.gameplay_udp.enabled", gameCmd.gameplayUdpEnabled);
+			m_cfg.SetValue("client.allow_insecure_dev", gameCmd.allowInsecureDev);
+			m_cfg.SetValue("client.auth_ui.timeout_ms", static_cast<int64_t>(gameCmd.authTimeoutMs));
+			// Garde-fou réseau (ST1, étape 4) : on ne (ré)initialise / n'arrête le réseau
+			// gameplay QUE pendant l'auth. En jeu (session active), appliquer un réglage
+			// "game settings" ne doit PAS couper la session UDP de façon intempestive via
+			// ShutdownGameplayNet (ni rouvrir un socket via InitGameplayNet hors handshake).
+			// La config est tout de même persistée ci-dessus ; le changement effectif de
+			// l'état réseau in-game sera traité par un chemin dédié dans une sous-tâche
+			// ultérieure du refactor B2.
+			if (authGateActive && gameplayWasEnabled != gameCmd.gameplayUdpEnabled)
+			{
+				if (gameCmd.gameplayUdpEnabled)
+					InitGameplayNet();
+				else
+					ShutdownGameplayNet();
+			}
+			else if (gameplayWasEnabled != gameCmd.gameplayUdpEnabled)
+			{
+				LOG_INFO(Core, "[Options] Game: changement gameplay_udp.enabled={} persisté en config mais état réseau inchangé (hors auth, session préservée)",
+					gameCmd.gameplayUdpEnabled);
+			}
+			LOG_INFO(Core, "[Options] Game applied (gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
+				gameCmd.gameplayUdpEnabled, gameCmd.allowInsecureDev, gameCmd.authTimeoutMs);
+		}
 	}
 
 	void Engine::PumpGameplayPackets()

@@ -2349,3 +2349,40 @@ ExportRuntimeBundle) — rendre StreamCache zone-aware si partage direct éditeu
 Les deux sont instanciés volontairement. Toute « consolidation » serait une décision
 d'**architecture** (choisir le transport canonique master TCP ↔ shard UDP) avec impact
 wire/serveur — **pas** un simple reroutage UI. Statu quo retenu : on garde les deux.
+
+## Grimoire / Carnet de techniques — livre de sorts + assignation de slots (2026-06-15)
+
+Spec : `docs/superpowers/specs/2026-06-15-grimoire-spellbook-design.md` ;
+plan : `docs/superpowers/plans/2026-06-15-grimoire-spellbook.md`. Panneau de
+référence des sorts du kit + réassignation des **10 slots** de barre d'action
+(glisser-déposer), assignation **persistée serveur**. Étend Combat SP3 (barre
+d'action passée de 4 à 10 slots).
+
+- **Wire (rétro-additif, PAS de bump `kProtocolVersion`)** : kinds
+  `SetActionBarLayout = 88` (client→shard) et `ActionBarLayoutUpdate = 89`
+  (shard→client, autoritaire : enter-world + ACK). Structs
+  `SetActionBarLayoutMessage`/`ActionBarLayoutUpdateMessage`
+  (`std::array<std::string,10> slots`), `src/shared/network/ServerProtocol.*`.
+- **Serveur (shardd)** : `PersistedCharacterState.actionBarLayout` (10 strings,
+  INI `actionbar.slot.N`), `ConnectedClient.actionBarLayout`,
+  `ServerApp::HandleSetActionBarLayout` (validation kit via `m_spellKits.FindSpell`
+  + unicité, save + ACK), `SendActionBarLayout` poussé à l'enter-world.
+- **Client** : résolveur pur `ResolveActionBarLayout`/`FindSpellInKit`
+  (`src/client/gameplay/ActionBarLayout.*`, tests `action_bar_layout_tests` :
+  défaut=ordre du kit, spellId obsolète/doublon → slot vidé) ;
+  `GrimoireUiPresenter` (`src/client/grimoire/`) + `GrimoireImGuiRenderer`
+  (`src/client/render/`, liste défilante + recherche + drag&drop) ;
+  `GameplayUdpClient::SendSetActionBarLayout` ; `UIModel.playerStats.actionBarLayout`
+  + `ApplyActionBarLayoutUpdate` (kind 89). Barre d'action Engine 4→10 slots,
+  touches **remappables** `controls.keybind.action_slot_1..10` (défaut `VK_1..VK_0`),
+  ouverture `controls.keybind.grimoire` (défaut **V**) + `/grimoire`,`/sorts`.
+- **Clavier** : helper `KeyGlyph` (affichage layout-aware via
+  `MapVirtualKey(VK_n, MAPVK_VK_TO_CHAR)` → AZERTY `& é " ' ( - è _ ç à`),
+  distinct du nom de config stable (`KeyName`/`KeyFromName`).
+- **Thème adaptatif** : `IsCasterProfile` (lanceur/healer/sacre → « Grimoire » ;
+  sinon « Carnet de techniques »).
+- **Hors périmètre** (chantier séparé) : contenu 180 sorts/classe + set connu
+  ~60/perso + progression ; le Grimoire est agnostique au nombre.
+- **Déploiement** : ⚠️ **redéploiement shardd requis** (handler kind 88 + persistance).
+  Kinds rétro-additifs → pas de rejet mutuel client/shard ancien↔neuf ; déployer
+  PR-1 (serveur) puis PR-2 (client).

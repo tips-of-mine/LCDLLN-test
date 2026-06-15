@@ -80,7 +80,10 @@ namespace engine::client
 
 	void AuthUiPresenter::ImGuiApplyLanguageOptionsMenu(const engine::core::Config& cfg, const LanguageOptionsImGuiMirror& mirror)
 	{
-		if (m_phase != Phase::LanguageOptions)
+		// En contexte options in-game (m_optionsOpenInGame), la phase reste post-monde
+		// (m_flowComplete == true) : on assouplit la garde pour permettre l'apply sans
+		// jamais toucher m_phase.
+		if (m_phase != Phase::LanguageOptions && !m_optionsOpenInGame)
 		{
 			return;
 		}
@@ -115,11 +118,18 @@ namespace engine::client
 
 	void AuthUiPresenter::ImGuiCloseLanguageOptionsWithoutApply()
 	{
-		if (m_phase != Phase::LanguageOptions)
+		// Idem apply : en in-game la phase reste post-monde, on assouplit la garde.
+		if (m_phase != Phase::LanguageOptions && !m_optionsOpenInGame)
 		{
 			return;
 		}
-		m_phase = m_phaseBeforeOptions;
+		// En contexte auth uniquement : restaurer la phase d'avant l'ouverture des
+		// options. En in-game on NE touche PAS m_phase (le presenter reste en état
+		// post-monde) — sinon l'écran d'auth réapparaîtrait par-dessus le jeu.
+		if (!m_optionsOpenInGame)
+		{
+			m_phase = m_phaseBeforeOptions;
+		}
 		LOG_INFO(Core, "[AuthUiPresenter] ImGui: options fermees sans appliquer");
 	}
 	void AuthUiPresenter::OpenLanguageOptions()

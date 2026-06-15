@@ -1002,6 +1002,13 @@ namespace engine::client
 		uint32_t m_optionsRootSelection = 0;
 		uint32_t m_optionsSubSelection = 0;
 		Phase m_phaseBeforeOptions = Phase::Login;
+		/// Vrai quand l'écran d'options est ouvert depuis le menu Pause en jeu
+		/// (auth déjà terminée, m_flowComplete == true). Assouplit les gardes de
+		/// phase des chemins apply/close pour autoriser l'application et la
+		/// fermeture des options sans JAMAIS modifier m_phase ni m_flowComplete
+		/// (sinon l'écran d'auth réapparaîtrait par-dessus le jeu). Posé par
+		/// OpenLanguageOptionsInGame() (ST3) ; reste false en contexte auth.
+		bool m_optionsOpenInGame = false;
 		std::string m_selectedLocale;
 		std::string m_persistedLocale;
 		bool m_videoFullscreen = false;

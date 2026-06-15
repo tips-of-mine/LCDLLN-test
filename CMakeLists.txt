@@ -613,6 +613,7 @@ add_library(engine_core
   src/client/render/LfgImGuiRenderer.cpp
   src/client/render/CinematicImGuiRenderer.cpp
   src/client/render/SkillBookImGuiRenderer.cpp
+  src/client/render/GrimoireImGuiRenderer.cpp
   src/client/render/EditorHubImGuiRenderer.cpp
   src/client/render/DecalSystem.cpp
   src/client/render/DecalPass.cpp

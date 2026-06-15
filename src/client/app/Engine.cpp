@@ -446,6 +446,28 @@ namespace engine
 			return fallback;
 		}
 
+		/// Glyphe d'AFFICHAGE d'une touche selon la disposition clavier active
+		/// (AZERTY → la rangée du haut donne & é " ' ( - è _ ç à). Distinct de
+		/// KeyName (nom de config stable/portable). Fallback : KeyName.
+		std::string KeyGlyph(engine::platform::Key k)
+		{
+#if defined(_WIN32)
+			const UINT vk = static_cast<UINT>(k); // l'enum Key == codes VK_* Win32
+			const UINT ch = ::MapVirtualKeyW(vk, MAPVK_VK_TO_CHAR) & 0x7FFFu;
+			if (ch != 0)
+			{
+				const wchar_t w = static_cast<wchar_t>(ch);
+				char utf8[8] = {0};
+				const int n = ::WideCharToMultiByte(CP_UTF8, 0, &w, 1, utf8, sizeof(utf8) - 1, nullptr, nullptr);
+				if (n > 0)
+				{
+					return std::string(utf8, static_cast<size_t>(n));
+				}
+			}
+#endif
+			return KeyName(k);
+		}
+
 		// Projette une position monde -> pixels ecran. Formule alignee sur
 		// WorldEditorImGui::WorldToScreen (viewProj col-major .m, convention Vulkan).
 		// false si derriere la camera ou hors near/far. Sert aux marqueurs interactibles.

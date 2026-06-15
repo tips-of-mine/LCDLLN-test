@@ -273,7 +273,12 @@ namespace engine::server
 		/// Grimoire — shard → client : layout autoritaire des 10 slots, poussé à
 		/// l'enter-world ET en réponse à un SetActionBarLayout (invalide = layout
 		/// inchangé renvoyé). Ajout rétro-additif (pas de bump).
-		ActionBarLayoutUpdate = 89
+		ActionBarLayoutUpdate = 89,
+		/// SP-B — shard → client : état autoritaire de progression (classId + skills connus),
+		/// poussé à l'enter-world et après chaque choix. Rétro-additif.
+		ClassProgressionUpdate = 90,
+		/// SP-B — client → shard : le joueur choisit 1 skill (parmi 3) à un niveau donné.
+		ChooseClassSkillRequest = 91
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -439,6 +444,23 @@ namespace engine::server
 	{
 		uint32_t clientId = 0;
 		std::array<std::string, 10> slots{};
+	};
+
+	/// SP-B — shard → client : état autoritaire de progression de classe (classId + skills connus).
+	/// Poussé à l'enter-world et après chaque choix validé. Rétro-additif.
+	struct ClassProgressionUpdateMessage
+	{
+		uint32_t clientId = 0;
+		std::string classId;
+		std::vector<std::string> knownSkillIds;
+	};
+
+	/// SP-B — client → shard : le joueur choisit 1 skill (parmi 3 proposés) à un niveau donné.
+	struct ChooseClassSkillRequestMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t level = 0;
+		std::string skillId;
 	};
 
 	/// Shard → casteur : ressource secondaire courante (poussée sur variation).
@@ -695,6 +717,14 @@ namespace engine::server
 	bool DecodeSetActionBarLayout(std::span<const std::byte> packet, SetActionBarLayoutMessage& outMessage);
 	std::vector<std::byte> EncodeActionBarLayoutUpdate(const ActionBarLayoutUpdateMessage& message);
 	bool DecodeActionBarLayoutUpdate(std::span<const std::byte> packet, ActionBarLayoutUpdateMessage& outMessage);
+
+	/// SP-B — encode/decode de la progression de classe (shard→client, rétro-additif).
+	std::vector<std::byte> EncodeClassProgressionUpdate(const ClassProgressionUpdateMessage& message);
+	bool DecodeClassProgressionUpdate(std::span<const std::byte> packet, ClassProgressionUpdateMessage& outMessage);
+
+	/// SP-B — encode/decode du choix de skill de classe (client→shard, rétro-additif).
+	std::vector<std::byte> EncodeChooseClassSkillRequest(const ChooseClassSkillRequestMessage& message);
+	bool DecodeChooseClassSkillRequest(std::span<const std::byte> packet, ChooseClassSkillRequestMessage& outMessage);
 
 	/// Encode a combat event packet with the protocol header.
 	std::vector<std::byte> EncodeCombatEvent(const CombatEventMessage& message);

@@ -491,6 +491,23 @@ namespace engine::editor
 			0x0061, 0x007A, // a-z
 			0,
 		};
+		// Plage etendue pour la fonte de repli riche (Arial). Couvre tout ce que
+		// Windlass (decorative, A-Z/a-z/0-9 uniquement) ne fournit pas :
+		//   - symboles ASCII : * [ ] @ % { } etc. ;
+		//   - supplement Latin-1 : accents FR (é è à ç û ï ô...) ;
+		//   - ponctuation generale : tiret cadratin/demi-cadratin (— –), apostrophes
+		//     et guillemets courbes (' ' " "), puce (•), points de suspension (…) ;
+		//   - euro et quelques fleches.
+		// Sans ces plages, ImGui rend '?' pour tout caractere non-ASCII — c'est la
+		// cause des '?' visibles dans TOUTES les interfaces in-game (titres de
+		// panneaux, separateurs, libelles accentues).
+		static const ImWchar kRichFallbackRanges[] = {
+			0x0020, 0x00FF, // ASCII + supplement Latin-1 (symboles + accents FR)
+			0x2010, 0x2027, // tirets, apostrophes/guillemets courbes, puce, points de suspension
+			0x20AC, 0x20AC, // € (euro)
+			0x2190, 0x2193, // fleches gauche/haut/droite/bas
+			0,
+		};
 		auto loadAuthFontFromConfig = [&io, cfg](std::string_view relativePath, float pixelHeight, const char* role) -> bool {
 			if (cfg == nullptr || relativePath.empty())
 			{
@@ -551,9 +568,11 @@ namespace engine::editor
 					void* atlasArial = IM_ALLOC(bytesArial.size());
 					std::memcpy(atlasArial, bytesArial.data(), bytesArial.size());
 					ImFontConfig acfg{};
-					// Range standard latin1 (couvre A-Z, a-z, 0-9, accents FR, ponctuation).
+					// Plage riche (A-Z, a-z, 0-9, accents FR, ponctuation typographique
+					// — tiret cadratin, guillemets courbes — et fleches) : evite les '?'
+					// dans l'editeur aussi (meme cause racine que l'in-game).
 					ImFont* arialFont = io.Fonts->AddFontFromMemoryTTF(atlasArial, static_cast<int>(bytesArial.size()),
-						arialPx, &acfg, io.Fonts->GetGlyphRangesDefault());
+						arialPx, &acfg, kRichFallbackRanges);
 					if (arialFont != nullptr)
 					{
 						arialLoaded = true;
@@ -602,10 +621,47 @@ namespace engine::editor
 			// accents et ponctuations etendues, pas besoin de fallback.
 			if (!arialLoaded)
 			{
-				ImFontConfig fallbackCfg{};
-				fallbackCfg.MergeMode = true;
-				io.Fonts->AddFontDefault(&fallbackCfg);
-				LOG_INFO(Render, "[WorldEditorImGui] Fallback ProggyClean merge sur Windlass (couvre * [ ] @ etc.)");
+				// Fonte de repli pour tous les glyphes hors Windlass. On merge en
+				// priorite Arial (Latin-1 complet + ponctuation typographique, present
+				// sur tout Windows) : c'est ce qui elimine les '?' affiches pour les
+				// accents et le tiret cadratin dans TOUTES les interfaces in-game.
+				// Si Arial est introuvable, repli sur ProggyClean (ASCII seulement —
+				// couvre * [ ] @ mais laisse accents/typographie en '?').
+				bool richFallbackLoaded = false;
+				const std::string fbArialPath = cfg->GetString("editor.font.arial_path", "C:/Windows/Fonts/arial.ttf");
+				std::vector<uint8_t> bytesFbArial = engine::platform::FileSystem::ReadAllBytes(std::filesystem::path(fbArialPath));
+				if (bytesFbArial.empty())
+				{
+					bytesFbArial = engine::platform::FileSystem::ReadAllBytesContent(*cfg, fbArialPath);
+				}
+				if (!bytesFbArial.empty())
+				{
+					// L'atlas prend la propriete du buffer (IM_FREE) → allouer via IM_ALLOC.
+					void* atlasFbArial = IM_ALLOC(bytesFbArial.size());
+					std::memcpy(atlasFbArial, bytesFbArial.data(), bytesFbArial.size());
+					ImFontConfig fbCfg{};
+					fbCfg.MergeMode = true; // fusionne dans la fonte Windlass par defaut
+					// Taille alignee sur la fonte UI Windlass pour une hauteur coherente.
+					ImFont* fbFont = io.Fonts->AddFontFromMemoryTTF(atlasFbArial, static_cast<int>(bytesFbArial.size()),
+						uiFontPx, &fbCfg, kRichFallbackRanges);
+					if (fbFont != nullptr)
+					{
+						richFallbackLoaded = true;
+						LOG_INFO(Render, "[WorldEditorImGui] Fallback Arial merge sur Windlass (accents FR + ponctuation typographique)");
+					}
+					else
+					{
+						IM_FREE(atlasFbArial);
+						LOG_WARN(Render, "[WorldEditorImGui] Fallback Arial : AddFontFromMemoryTTF a echoue ({})", fbArialPath);
+					}
+				}
+				if (!richFallbackLoaded)
+				{
+					ImFontConfig fallbackCfg{};
+					fallbackCfg.MergeMode = true;
+					io.Fonts->AddFontDefault(&fallbackCfg);
+					LOG_INFO(Render, "[WorldEditorImGui] Fallback ProggyClean merge sur Windlass (Arial absent ; accents/typographie restent en '?')");
+				}
 			}
 
 			const std::string valueFontPath = cfg->GetString("render.auth_ui.value_font_path", "");

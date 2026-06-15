@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquette — Grimoire / Carnet de techniques (LCDLLN)</title>
+<style>
+  :root{
+    --bg:#0d0f14; --panel:#141821; --panel2:#1b2030; --ink:#e6e3d8;
+    --muted:#8a8f9c; --gold:#c8b45a; --gold-bright:#ffe69a; --line:#2a3144;
+    --ok:#5fbf6a; --slot:#0e1016; --accent:#c8b45a;
+  }
+  body.martial{ --gold:#7fa8c8; --gold-bright:#bfe0ff; --accent:#7fa8c8; }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 700px at 50% -10%,#1a1f2e 0%,var(--bg) 60%);
+    color:var(--ink);font-family:"Segoe UI",Arial,sans-serif;padding:24px;min-height:100vh}
+  .topbar{display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:18px;flex-wrap:wrap}
+  .topbar button{background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+    padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px}
+  .topbar button.active{border-color:var(--accent);color:var(--gold-bright);box-shadow:0 0 0 1px var(--accent) inset}
+  .hint{color:var(--muted);font-size:12px;text-align:center;margin-bottom:18px}
+
+  .window{max-width:880px;margin:0 auto;background:linear-gradient(180deg,var(--panel) 0%,#10131b 100%);
+    border:1px solid var(--line);border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden}
+  .titlebar{display:flex;align-items:center;gap:12px;padding:14px 18px;
+    border-bottom:1px solid var(--line);background:linear-gradient(180deg,#1c2233,#141826)}
+  .crest{width:30px;height:30px;border-radius:6px;border:1px solid var(--accent);
+    display:grid;place-items:center;color:var(--gold-bright);font-size:18px;background:#0e1118}
+  .title{font-size:19px;letter-spacing:.5px;color:var(--gold-bright)}
+  .subtitle{font-size:12px;color:var(--muted)}
+  .titlebar .spacer{flex:1}
+  .keyhint{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:3px 7px}
+
+  .body{display:grid;grid-template-columns:1fr 300px;gap:0}
+  @media(max-width:760px){.body{grid-template-columns:1fr}}
+
+  .library{padding:16px;border-right:1px solid var(--line)}
+  .sectionlabel{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin:0 0 10px}
+  .spell{display:flex;gap:12px;padding:11px;border:1px solid var(--line);border-radius:8px;
+    background:var(--panel2);margin-bottom:10px;cursor:grab;transition:.12s}
+  .spell:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .spell.selected{border-color:var(--gold-bright);box-shadow:0 0 0 1px var(--gold-bright) inset}
+  .spell.assigned{opacity:.55}
+  .icon{width:46px;height:46px;border-radius:7px;flex:none;display:grid;place-items:center;
+    font-size:22px;border:1px solid var(--accent);background:#0e1118}
+  .spell .meta{flex:1;min-width:0}
+  .spell .name{font-size:15px;color:var(--gold-bright);margin-bottom:3px}
+  .spell .desc{font-size:12px;color:var(--muted);line-height:1.35;margin-bottom:6px}
+  .tags{display:flex;gap:6px;flex-wrap:wrap}
+  .tag{font-size:11px;color:var(--ink);background:#0e1320;border:1px solid var(--line);
+    border-radius:4px;padding:2px 7px}
+  .tag b{color:var(--gold-bright);font-weight:600}
+  .assignchip{font-size:10px;color:#0d0f14;background:var(--accent);border-radius:4px;
+    padding:2px 6px;align-self:flex-start;font-weight:700}
+
+  .barpane{padding:16px;background:#0e1118}
+  .slots{display:flex;flex-direction:column;gap:12px}
+  .slot{display:flex;align-items:center;gap:11px;padding:10px;border:1px dashed var(--line);
+    border-radius:8px;background:var(--slot);cursor:pointer;transition:.12s}
+  .slot:hover{border-color:var(--accent)}
+  .slot.filled{border-style:solid}
+  .slot.dropok{border-color:var(--gold-bright);background:#171b27}
+  .slotkey{width:26px;height:26px;border-radius:5px;flex:none;display:grid;place-items:center;
+    font-weight:700;color:var(--gold-bright);border:1px solid var(--accent);background:#0e1118;font-size:13px}
+  .slot .sname{font-size:13px;color:var(--ink)}
+  .slot .empty{font-size:12px;color:var(--muted);font-style:italic}
+  .slot .clear{margin-left:auto;color:var(--muted);font-size:14px;border:none;background:none;cursor:pointer}
+  .slot .clear:hover{color:#e08585}
+  .actionbar-note{margin-top:16px;font-size:11px;color:var(--muted);line-height:1.5;
+    border-top:1px solid var(--line);padding-top:12px}
+  .status{margin-top:10px;font-size:12px;color:var(--ok);min-height:16px}
+
+  /* mini barre d'action (aperçu in-game) */
+  .preview{max-width:880px;margin:18px auto 0;text-align:center}
+  .preview .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .gamebar{display:inline-flex;gap:8px;padding:10px;background:rgba(8,10,14,.7);
+    border:1px solid var(--line);border-radius:10px}
+  .gs{width:52px;height:52px;border-radius:6px;background:#0e1016;border:2px solid var(--accent);
+    position:relative;display:grid;place-items:center}
+  .gs .k{position:absolute;top:2px;left:4px;font-size:11px;color:var(--gold-bright)}
+  .gs .n{font-size:10px;color:#ddd;padding:0 3px;text-align:center;margin-top:8px;line-height:1.1}
+  .gs.empty{border-color:#3a3f4c}
+  .gs.empty .n{color:#555}
+</style>
+</head>
+<body class="caster">
+
+<div class="topbar">
+  <span style="color:var(--muted);font-size:12px">Profil&nbsp;:</span>
+  <button id="b-caster" class="active" onclick="setKit('caster')">Caster — Lanceur (Mage)</button>
+  <button id="b-martial" onclick="setKit('martial')">Martial — Melee (Guerrier)</button>
+</div>
+<div class="hint">
+  Clique un sort puis un slot pour l'assigner (ou imagine un glisser-déposer). Le ✕ d'un slot le vide.<br>
+  Le titre et le visuel s'adaptent au profil. La barre d'action en bas reflète l'assignation en temps réel.
+</div>
+
+<div class="window">
+  <div class="titlebar">
+    <div class="crest" id="crest">✦</div>
+    <div>
+      <div class="title" id="paneltitle">Grimoire</div>
+      <div class="subtitle" id="panelsub">Mage — sorts arcaniques · 4 emplacements de barre d'action</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="keyhint">Touche <b>K</b> pour ouvrir/fermer</div>
+  </div>
+
+  <div class="body">
+    <div class="library">
+      <p class="sectionlabel" id="liblabel">Sorts connus</p>
+      <div id="spelllist"></div>
+    </div>
+
+    <div class="barpane">
+      <p class="sectionlabel">Barre d'action</p>
+      <div class="slots" id="slots"></div>
+      <div class="status" id="status"></div>
+      <div class="actionbar-note">
+        L'ordre des slots est <b>persisté côté serveur</b> (suit le personnage).
+        Le serveur valide que chaque sort appartient bien au kit du profil.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="preview">
+  <div class="lbl">Aperçu in-game — barre d'action (bas de l'écran)</div>
+  <div class="gamebar" id="gamebar"></div>
+</div>
+
+<script>
+const KITS = {
+  caster: {
+    title:"Grimoire", crest:"✦",
+    sub:"Mage — sorts arcaniques · 4 emplacements de barre d'action",
+    liblabel:"Sorts connus",
+    spells:[
+      {id:"lanceur_trait_de_feu", name:"Trait de feu", icon:"🔥",
+       desc:"Projectile enflammé sur une cible ennemie.",
+       cost:"20%", cd:"4 s", cast:"1.5 s", range:"30 m", target:"Ennemi", effect:"Dégâts directs ×1.6"},
+      {id:"lanceur_brulure", name:"Brûlure", icon:"♨️",
+       desc:"Embrase la cible : dégâts sur la durée.",
+       cost:"20%", cd:"10 s", cast:"Instant", range:"30 m", target:"Ennemi", effect:"DoT ×0.35 / 2 s · 8 s"},
+      {id:"lanceur_nova", name:"Nova", icon:"❄️",
+       desc:"Explosion de givre autour de soi.",
+       cost:"30%", cd:"15 s", cast:"Instant", range:"8 m (zone)", target:"Zone", effect:"Dégâts ×0.9 (AoE)"}
+    ]
+  },
+  martial: {
+    title:"Carnet de techniques", crest:"⚔",
+    sub:"Guerrier — techniques martiales · 4 emplacements de barre d'action",
+    liblabel:"Techniques connues",
+    spells:[
+      {id:"melee_frappe_brutale", name:"Frappe brutale", icon:"🗡️",
+       desc:"Une frappe lourde au corps à corps.",
+       cost:"15%", cd:"6 s", cast:"Instant", range:"Mêlée", target:"Ennemi", effect:"Dégâts directs ×1.4"},
+      {id:"melee_entaille", name:"Entaille", icon:"🩸",
+       desc:"Lacère l'ennemi : saignement prolongé.",
+       cost:"20%", cd:"10 s", cast:"Instant", range:"Mêlée", target:"Ennemi", effect:"DoT ×0.25 / 2 s · 8 s"},
+      {id:"melee_cri_de_guerre", name:"Cri de guerre", icon:"📣",
+       desc:"Galvanise : augmente vos dégâts.",
+       cost:"25%", cd:"30 s", cast:"Instant", range:"Soi", target:"Soi", effect:"+15% dégâts · 10 s"}
+    ]
+  }
+};
+
+let current = "caster";
+let layout = [null,null,null,null];   // 4 slots -> spellId
+let selected = null;
+
+function setKit(k){
+  current = k;
+  document.body.className = (k==="caster") ? "caster" : "martial";
+  document.getElementById("b-caster").classList.toggle("active", k==="caster");
+  document.getElementById("b-martial").classList.toggle("active", k==="martial");
+  const kit = KITS[k];
+  document.getElementById("paneltitle").textContent = kit.title;
+  document.getElementById("panelsub").textContent = kit.sub;
+  document.getElementById("crest").textContent = kit.crest;
+  document.getElementById("liblabel").textContent = kit.liblabel;
+  // layout par défaut = ordre du kit (slot 1..n)
+  layout = [null,null,null,null];
+  kit.spells.forEach((s,i)=>{ if(i<4) layout[i]=s.id; });
+  selected = null;
+  render();
+  setStatus("");
+}
+
+function spellById(id){ return KITS[current].spells.find(s=>s.id===id); }
+
+function render(){
+  // library
+  const list = document.getElementById("spelllist");
+  list.innerHTML = "";
+  KITS[current].spells.forEach(s=>{
+    const assignedSlot = layout.indexOf(s.id);
+    const div = document.createElement("div");
+    div.className = "spell" + (selected===s.id?" selected":"") + (assignedSlot>=0?" assigned":"");
+    div.onclick = ()=>{ selected = (selected===s.id?null:s.id); render();
+      setStatus(selected?("« "+s.name+" » sélectionné — clique un slot."):""); };
+    div.innerHTML = `
+      <div class="icon">${s.icon}</div>
+      <div class="meta">
+        <div class="name">${s.name}</div>
+        <div class="desc">${s.desc}</div>
+        <div class="tags">
+          <span class="tag">Coût <b>${s.cost}</b></span>
+          <span class="tag">CD <b>${s.cd}</b></span>
+          <span class="tag">Incant. <b>${s.cast}</b></span>
+          <span class="tag">Portée <b>${s.range}</b></span>
+          <span class="tag">Cible <b>${s.target}</b></span>
+          <span class="tag">${s.effect}</span>
+          ${assignedSlot>=0?`<span class="assignchip">Slot ${assignedSlot+1}</span>`:""}
+        </div>
+      </div>`;
+    list.appendChild(div);
+  });
+  // slots
+  const slots = document.getElementById("slots");
+  slots.innerHTML = "";
+  for(let i=0;i<4;i++){
+    const sid = layout[i];
+    const s = sid?spellById(sid):null;
+    const div = document.createElement("div");
+    div.className = "slot" + (s?" filled":"") + (selected?" dropok":"");
+    div.onclick = ()=>assign(i);
+    div.innerHTML = `
+      <div class="slotkey">${i+1}</div>
+      ${s?`<span class="sname">${s.icon} ${s.name}</span>
+           <button class="clear" title="Vider" onclick="event.stopPropagation();clearSlot(${i})">✕</button>`
+         :`<span class="empty">— vide —</span>`}`;
+    slots.appendChild(div);
+  }
+  // aperçu barre d'action
+  const bar = document.getElementById("gamebar");
+  bar.innerHTML = "";
+  for(let i=0;i<4;i++){
+    const sid = layout[i]; const s = sid?spellById(sid):null;
+    const d = document.createElement("div");
+    d.className = "gs" + (s?"":" empty");
+    d.innerHTML = `<span class="k">${i+1}</span><span class="n">${s?s.name:"—"}</span>`;
+    bar.appendChild(d);
+  }
+}
+
+function assign(slot){
+  if(!selected){ setStatus("Sélectionne d'abord un sort dans la liste."); return; }
+  // retirer le sort d'un autre slot (un sort = un seul slot)
+  const prev = layout.indexOf(selected);
+  if(prev>=0) layout[prev]=null;
+  layout[slot]=selected;
+  const nm = spellById(selected).name;
+  selected=null;
+  render();
+  setStatus("✓ « "+nm+" » assigné au slot "+(slot+1)+" — envoyé au serveur (SetActionBarLayout).");
+}
+function clearSlot(i){ layout[i]=null; render(); setStatus("Slot "+(i+1)+" vidé — envoyé au serveur."); }
+function setStatus(t){ document.getElementById("status").textContent = t; }
+
+setKit("caster");
+</script>
+</body>
+</html>

@@ -644,6 +644,18 @@ namespace engine::server
 		/// cooldown, dégâts/soins/auras/menace) et émet les messages associés.
 		void ResolveSpellCast(ConnectedClient& client, const SpellDef& spell, EntityId targetEntityId);
 
+		/// SP-C — résout un cast validé par compétence de classe (chemin additif, jamais
+		/// appelé si le fallback kit profil SP3 s'applique). Effets :
+		///   Damage/SingleEnemy → DirectDamage × powerValue via ResolveAttackRoll/ApplyPlayerDamageToMob.
+		///   Damage/AreaAroundSelf → même chose sur tous les mobs dans areaRadiusMeters.
+		///   Heal/SingleAlly → soin direct × powerValue × damagePerHit (chemin DirectHeal SP3).
+		///   Defense → aura DamageReductionPercent 8 s sur le casteur (percent clampé [5,50]).
+		/// Débite la ressource, arme le cooldown, émet SendResourceUpdate et les CombatEvents.
+		/// \param client         Casteur autoritaire (non mort, ressource vérifiée avant appel).
+		/// \param cs             Définition immuable du skill (ptr non nul garanti par l'appelant).
+		/// \param targetEntityId Entité résolue par HandleCastRequest (0 = AoE/soi).
+		void ResolveClassSkillCast(ConnectedClient& client, const ClassSkillDef& cs, EntityId targetEntityId);
+
 		/// Combat SP2/SP3 — applique des dégâts (déjà jetés/multipliés) d'un joueur
 		/// sur un mob : PV, événement dynamique, mort/loot/XP, CombatEvent broadcast.
 		/// Factorisé entre l'auto-attaque (HandleAttackRequest) et les sorts.

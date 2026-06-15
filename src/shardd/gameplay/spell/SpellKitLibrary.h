@@ -24,6 +24,10 @@ namespace engine::server
 		TauntThreatMult = 6,
 		SlowMobPercent = 7,
 		ThreatReducePercent = 8,
+		/// SP-C — réduction des dégâts entrants sur l'entité qui subit
+		/// (appliquée dans ApplyAuraDamageModifiers côté cible). Analogue à
+		/// DebuffDamageTakenPercent mais en signe inverse (réduction, pas amplification).
+		DamageReductionPercent = 9,
 	};
 
 	/// Combat SP3 — type de cible d'un sort.

@@ -159,6 +159,16 @@ namespace engine::render
 			m_authPresenter->ImGuiSubmitLogin(*m_authCfg, m_loginId, m_loginPw, m_rememberMe);
 		}
 
+		// Touche Entree (clavier principal ou pave numerique) : declenche le meme chemin que le
+		// bouton « Se connecter », sous les memes conditions (champs non vides, pas de soumission
+		// en cours). Pattern identique a RenderVerifyEmailScreen (ImGuiKey_Enter, false).
+		if (m_authPresenter != nullptr && m_authCfg != nullptr && !vs.submitting
+			&& m_loginId[0] != '\0' && m_loginPw[0] != '\0'
+			&& (ImGui::IsKeyPressed(ImGuiKey_Enter, false) || ImGui::IsKeyPressed(ImGuiKey_KeypadEnter, false)))
+		{
+			m_authPresenter->ImGuiSubmitLogin(*m_authCfg, m_loginId, m_loginPw, m_rememberMe);
+		}
+
 		// Anciennement : DrawSeparator() + DrawLoginFooterChips(rm) qui affichaient les chips
 		// [Tab] champ suivant | [Entree] se connecter | [Echap] quitter. L'utilisateur veut ces
 		// rappels masques (les touches restent actives via ImGui InputText nav et le handler

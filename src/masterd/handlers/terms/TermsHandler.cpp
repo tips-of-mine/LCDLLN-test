@@ -122,10 +122,16 @@ namespace engine::server
 			}
 			auto sess = m_connMap->GetSessionId(connId);
 			if (!sess)
+			{
+				LOG_WARN(Auth, "[TermsHandler] accept: pas de session pour connId={}", connId);
 				return;
+			}
 			auto accOpt = m_sessions->GetAccountId(*sess);
 			if (!accOpt)
+			{
+				LOG_WARN(Auth, "[TermsHandler] accept: session sans account_id (connId={})", connId);
 				return;
+			}
 			if (!m_repo->IsEditionPendingForAccount(*accOpt, parsed->edition_id))
 			{
 				auto pkt = BuildTermsAcceptResponsePacket(fail, requestId, sessionIdHeader);
@@ -143,7 +149,16 @@ namespace engine::server
 			if (m_smtp && !m_smtp->host.empty() && m_accounts)
 			{
 				auto ar = m_accounts->FindByAccountId(*accOpt);
-				if (ar && !ar->email.empty())
+				if (!ar || ar->email.empty())
+				{
+					// Diagnostic Task 7 : l'acceptation a reussi mais le compte n'a pas
+					// d'e-mail reel relisible (placeholder @lcdlln.no-email.local, compte
+					// inscrit sans e-mail, ou lecture FindByAccountId infructueuse).
+					// Sans ce log le mail CGU etait saute SILENCIEUSEMENT — on le rend observable.
+					LOG_WARN(Auth, "[TermsHandler] mail CGU saute : email absent pour account_id={} (record_trouve={})",
+						*accOpt, (ar ? 1 : 0));
+				}
+				else
 				{
 					std::string ver;
 					if (!m_repo->GetEditionVersionLabel(parsed->edition_id, ver))
@@ -160,6 +175,14 @@ namespace engine::server
 					else
 						LOG_INFO(Auth, "[TermsHandler] email CGU envoyé (account_id={})", *accOpt);
 				}
+			}
+			else
+			{
+				// Diagnostic Task 7 : cablage SMTP/AccountStore absent ou smtp.host vide.
+				// D'apres main_linux.cpp le cablage est complet, donc ce log pointe plutot
+				// vers une config SMTP manquante (smtp.host vide) qu'un bug de wiring.
+				LOG_WARN(Auth, "[TermsHandler] mail CGU saute : smtp/accounts indisponibles (host_vide={} accounts_null={})",
+					(m_smtp ? (m_smtp->host.empty() ? 1 : 0) : 1), (m_accounts == nullptr ? 1 : 0));
 			}
 
 			auto pkt = BuildTermsAcceptResponsePacket(ok, requestId, sessionIdHeader);

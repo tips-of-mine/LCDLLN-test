@@ -70,6 +70,94 @@ namespace LnTheme
 			/*errorCol  */ {0.769f, 0.251f, 0.251f, 1.f}, // #C44040
 		};
 
+		// --- Thèmes de race (auth screen, sélecteur de race).
+		// Dérivation depuis la primary (p) de chaque race :
+		//   background = p × 0.10 ; surface = p × 0.16 ; panel = p × 0.20
+		//   secondary  = p + (1-p) × 0.30  (éclaircissement vers blanc)
+		//   border     = p × 0.70
+		// text / muted / success / warning / errorCol : copies de kOrRoyal
+		// (lisibilité + sémantique danger conservée quel que soit le thème de race).
+
+		// kRaceHumains : primary #4A6FA5, accent #C0C8D0.
+		inline constexpr Palette kRaceHumains{
+			/*primary   */ {0.290f, 0.435f, 0.647f, 1.f}, // #4A6FA5
+			/*secondary */ {0.503f, 0.605f, 0.753f, 1.f}, // +30% vers blanc
+			/*accent    */ {0.753f, 0.784f, 0.816f, 1.f}, // #C0C8D0
+			/*background */ {0.029f, 0.044f, 0.065f, 1.f}, // primary × 0.10
+			/*surface   */ {0.046f, 0.070f, 0.104f, 1.f}, // primary × 0.16
+			/*panel     */ {0.058f, 0.087f, 0.129f, 1.f}, // primary × 0.20
+			/*text      */ {0.949f, 0.957f, 0.973f, 1.f}, // = kOrRoyal
+			/*muted     */ {0.608f, 0.659f, 0.722f, 1.f}, // = kOrRoyal
+			/*border    */ {0.203f, 0.305f, 0.453f, 1.f}, // primary × 0.70
+			/*success   */ {0.373f, 0.722f, 0.431f, 1.f}, // = kOrRoyal
+			/*warning   */ {0.910f, 0.647f, 0.361f, 1.f}, // = kOrRoyal
+			/*errorCol  */ {0.769f, 0.251f, 0.251f, 1.f}, // = kOrRoyal
+		};
+
+		// kRaceOrkhs : primary #5A6B3B, accent #D8CFA8.
+		inline constexpr Palette kRaceOrkhs{
+			/*primary   */ {0.353f, 0.420f, 0.231f, 1.f}, // #5A6B3B
+			/*secondary */ {0.547f, 0.594f, 0.462f, 1.f}, // +30% vers blanc
+			/*accent    */ {0.847f, 0.812f, 0.659f, 1.f}, // #D8CFA8
+			/*background */ {0.035f, 0.042f, 0.023f, 1.f}, // primary × 0.10
+			/*surface   */ {0.056f, 0.067f, 0.037f, 1.f}, // primary × 0.16
+			/*panel     */ {0.071f, 0.084f, 0.046f, 1.f}, // primary × 0.20
+			/*text      */ {0.949f, 0.957f, 0.973f, 1.f}, // = kOrRoyal
+			/*muted     */ {0.608f, 0.659f, 0.722f, 1.f}, // = kOrRoyal
+			/*border    */ {0.247f, 0.294f, 0.162f, 1.f}, // primary × 0.70
+			/*success   */ {0.373f, 0.722f, 0.431f, 1.f}, // = kOrRoyal
+			/*warning   */ {0.910f, 0.647f, 0.361f, 1.f}, // = kOrRoyal
+			/*errorCol  */ {0.769f, 0.251f, 0.251f, 1.f}, // = kOrRoyal
+		};
+
+		// kRaceDemons : primary #8B1A1A, accent #FF5722.
+		inline constexpr Palette kRaceDemons{
+			/*primary   */ {0.545f, 0.102f, 0.102f, 1.f}, // #8B1A1A
+			/*secondary */ {0.682f, 0.371f, 0.371f, 1.f}, // +30% vers blanc
+			/*accent    */ {1.000f, 0.341f, 0.133f, 1.f}, // #FF5722
+			/*background */ {0.055f, 0.010f, 0.010f, 1.f}, // primary × 0.10
+			/*surface   */ {0.087f, 0.016f, 0.016f, 1.f}, // primary × 0.16
+			/*panel     */ {0.109f, 0.020f, 0.020f, 1.f}, // primary × 0.20
+			/*text      */ {0.949f, 0.957f, 0.973f, 1.f}, // = kOrRoyal
+			/*muted     */ {0.608f, 0.659f, 0.722f, 1.f}, // = kOrRoyal
+			/*border    */ {0.382f, 0.071f, 0.071f, 1.f}, // primary × 0.70
+			/*success   */ {0.373f, 0.722f, 0.431f, 1.f}, // = kOrRoyal
+			/*warning   */ {0.910f, 0.647f, 0.361f, 1.f}, // = kOrRoyal
+			/*errorCol  */ {0.769f, 0.251f, 0.251f, 1.f}, // = kOrRoyal
+		};
+
+		// kRaceNains : primary #8C5A2B, accent #D4A017.
+		inline constexpr Palette kRaceNains{
+			/*primary   */ {0.549f, 0.353f, 0.169f, 1.f}, // #8C5A2B
+			/*secondary */ {0.684f, 0.547f, 0.418f, 1.f}, // +30% vers blanc
+			/*accent    */ {0.831f, 0.627f, 0.090f, 1.f}, // #D4A017
+			/*background */ {0.055f, 0.035f, 0.017f, 1.f}, // primary × 0.10
+			/*surface   */ {0.088f, 0.056f, 0.027f, 1.f}, // primary × 0.16
+			/*panel     */ {0.110f, 0.071f, 0.034f, 1.f}, // primary × 0.20
+			/*text      */ {0.949f, 0.957f, 0.973f, 1.f}, // = kOrRoyal
+			/*muted     */ {0.608f, 0.659f, 0.722f, 1.f}, // = kOrRoyal
+			/*border    */ {0.384f, 0.247f, 0.118f, 1.f}, // primary × 0.70
+			/*success   */ {0.373f, 0.722f, 0.431f, 1.f}, // = kOrRoyal
+			/*warning   */ {0.910f, 0.647f, 0.361f, 1.f}, // = kOrRoyal
+			/*errorCol  */ {0.769f, 0.251f, 0.251f, 1.f}, // = kOrRoyal
+		};
+
+		// kRaceElfes : primary #5E4B8B, accent #C9BCE0.
+		inline constexpr Palette kRaceElfes{
+			/*primary   */ {0.369f, 0.294f, 0.545f, 1.f}, // #5E4B8B
+			/*secondary */ {0.558f, 0.506f, 0.682f, 1.f}, // +30% vers blanc
+			/*accent    */ {0.788f, 0.737f, 0.878f, 1.f}, // #C9BCE0
+			/*background */ {0.037f, 0.029f, 0.055f, 1.f}, // primary × 0.10
+			/*surface   */ {0.059f, 0.047f, 0.087f, 1.f}, // primary × 0.16
+			/*panel     */ {0.074f, 0.059f, 0.109f, 1.f}, // primary × 0.20
+			/*text      */ {0.949f, 0.957f, 0.973f, 1.f}, // = kOrRoyal
+			/*muted     */ {0.608f, 0.659f, 0.722f, 1.f}, // = kOrRoyal
+			/*border    */ {0.258f, 0.206f, 0.382f, 1.f}, // primary × 0.70
+			/*success   */ {0.373f, 0.722f, 0.431f, 1.f}, // = kOrRoyal
+			/*warning   */ {0.910f, 0.647f, 0.361f, 1.f}, // = kOrRoyal
+			/*errorCol  */ {0.769f, 0.251f, 0.251f, 1.f}, // = kOrRoyal
+		};
+
 		/// Une entrée du registre : nom interne (clé config) + palette.
 		struct Entry
 		{
@@ -78,11 +166,16 @@ namespace LnTheme
 		};
 
 		/// Registre ordonné des thèmes disponibles (ordre d'affichage UI).
-		inline const std::array<Entry, 2>& Registry()
+		inline const std::array<Entry, 7>& Registry()
 		{
-			static const std::array<Entry, 2> kRegistry{{
+			static const std::array<Entry, 7> kRegistry{{
 				{"or_royal", kOrRoyal},
 				{"sylve_emeraude", kSylveEmeraude},
+				{"humains", kRaceHumains},
+				{"orkhs", kRaceOrkhs},
+				{"demons", kRaceDemons},
+				{"nains", kRaceNains},
+				{"elfes", kRaceElfes},
 			}};
 			return kRegistry;
 		}
@@ -181,5 +274,16 @@ namespace LnTheme
 	inline Rgba BorderActive()
 	{
 		return Active().accent;
+	}
+
+	/// Fond plein écran de référence : le `background` du thème PAR DÉFAUT
+	/// (or_royal), INVARIANT au thème actif. L'écran d'auth l'utilise pour son
+	/// fond plein écran afin qu'il reste « comme à l'origine » quel que soit le
+	/// thème sélectionné ; seuls les panneaux (PanelBg / kSurface / kAccent…)
+	/// suivent le thème de race. Demande utilisateur : changer de thème ne doit
+	/// recolorer que les fenêtres, pas le fond.
+	inline const Rgba& AuthBackdrop()
+	{
+		return detail::kOrRoyal.background;
 	}
 } // namespace LnTheme

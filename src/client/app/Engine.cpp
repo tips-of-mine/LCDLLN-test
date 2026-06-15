@@ -10686,16 +10686,56 @@ namespace engine
 					if (keysAllowed && m_input.WasPressed(engine::platform::Key::Tab))
 					{
 						const engine::math::Vec3 playerPos = m_characterController.GetPosition();
+						// Filtre de visibilite : seuls les ennemis a l'ecran (dans le
+						// frustum camera) sont ciblables au Tab — un mob dans le dos ou
+						// hors champ ne doit pas etre selectionne. On reutilise la MEME
+						// matrice view-projection que le rendu monde de cette frame
+						// (out.viewProjMatrix = out.projMatrix * out.viewMatrix, cf. ~9852),
+						// column-major (m[col*4+row], cf. Math.h). Pas d'operateur
+						// Mat4*Vec4 dans Math.h : on projette le point a la main, comme
+						// WorldToScreenPx plus haut. Retourne false si l'ennemi est
+						// derriere la camera (w <= ~0) ou hors du carre NDC [-1,1]^2.
+						// On vise le torse (y + 1.0 m) plutot que les pieds : un mob dont
+						// les pieds tombent juste sous le bord bas mais dont le corps est
+						// visible reste ciblable.
+						const float* tabVp = out.viewProjMatrix.m;
+						auto isOnScreen = [tabVp](float wx, float wy, float wz) -> bool
+						{
+							const float cx = tabVp[0] * wx + tabVp[4] * wy + tabVp[8] * wz + tabVp[12];
+							const float cy = tabVp[1] * wx + tabVp[5] * wy + tabVp[9] * wz + tabVp[13];
+							const float cw = tabVp[3] * wx + tabVp[7] * wy + tabVp[11] * wz + tabVp[15];
+							if (cw <= 1e-5f)
+								return false; // derriere la camera (ou plan near degenere)
+							const float invW = 1.0f / cw;
+							const float ndcX = cx * invW;
+							const float ndcY = cy * invW;
+							return ndcX >= -1.0f && ndcX <= 1.0f
+								&& ndcY >= -1.0f && ndcY <= 1.0f;
+						};
 						std::vector<std::pair<float, engine::server::EntityId>> candidates;
 						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
 						{
 							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u
 								|| re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
 								continue;
+							// Rejet des ennemis non visibles (hors frustum / dans le dos).
+							if (!isOnScreen(re.positionX, re.positionY + 1.0f, re.positionZ))
+								continue;
 							const float dxc = re.positionX - playerPos.x;
 							const float dzc = re.positionZ - playerPos.z;
 							candidates.emplace_back(dxc * dxc + dzc * dzc, re.entityId);
 						}
+						// Diag (sur appui Tab uniquement, non spammy) : si l'utilisateur
+						// rapporte « Tab ne selectionne rien », ce log distingue les cas
+						// « aucune entite repliquee » / « aucun candidat visible » /
+						// « cible deja active ». L'analyse de code n'a revele aucun bug
+						// dans le filtre (archetype/mort/node) ni dans la propagation
+						// SetLocalTarget -> targetStats ; la cause racine d'une selection
+						// vide doit donc etre tranchee en jeu via ce compteur.
+						LOG_INFO(Core,
+							"[TabTarget] remoteEntities={} candidates_visibles={} hasTarget={}",
+							uiModel.remoteEntities.size(), candidates.size(),
+							uiModel.targetStats.hasTarget);
 						if (!candidates.empty())
 						{
 							std::sort(candidates.begin(), candidates.end());

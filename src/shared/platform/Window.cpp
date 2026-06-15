@@ -928,6 +928,24 @@ LOG_DEBUG(Platform, "[WINDOW] WM_SIZE wparam={} w={} h={}", (unsigned long long)
 			// Empêche le fond blanc Win32 qui cause un flash blanc au démarrage
 			// avant que Vulkan prenne le contrôle du rendu.
 			return 1;
+		case WM_SYSCOMMAND:
+			// Bloquer l'activation du menu système par ALT (SC_KEYMENU) : sans ça,
+			// DefWindowProc entre dans une boucle modale de menu à chaque appui ALT,
+			// ce qui fait perdre des frames -> saccadement visible quand ALT sert de
+			// touche de sprint. On laisse passer les autres SYSCOMMAND (déplacement,
+			// fermeture Alt+F4 = SC_CLOSE, etc.). Les bits bas de wParam sont réservés
+			// au système : masquer avec 0xFFF0 avant comparaison (doc Win32).
+			if ((wparam & 0xFFF0u) == SC_KEYMENU)
+			{
+				return 0; // consommé : pas de menu système
+			}
+			break;
+		case WM_SYSKEYDOWN:
+		case WM_SYSKEYUP:
+			// Input a déjà reçu le message via m_msgHook (avant ce switch). On retourne 0
+			// pour empêcher DefWindowProc de traiter ALT comme entrée de menu (évite le
+			// bip système et toute amorce de boucle menu). N'affecte pas la capture clavier.
+			return 0;
 		default:
 			break;
 		}

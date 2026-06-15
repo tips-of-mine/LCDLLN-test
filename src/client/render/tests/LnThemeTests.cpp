@@ -27,16 +27,28 @@ int main()
 {
     using namespace LnTheme;
 
-    // 1. Le registre expose les deux thèmes attendus.
+    // 1. Le registre expose les 7 thèmes attendus (2 de base + 5 de race).
     const std::vector<std::string_view> names = Names();
+    Expect(names.size() == 7, "Names().size() == 7");
     bool hasOr = false, hasSylve = false;
+    bool hasHumains = false, hasOrkhs = false, hasDemons = false, hasNains = false, hasElfes = false;
     for (std::string_view n : names)
     {
-        if (n == "or_royal") hasOr = true;
-        if (n == "sylve_emeraude") hasSylve = true;
+        if (n == "or_royal")        hasOr      = true;
+        if (n == "sylve_emeraude")  hasSylve   = true;
+        if (n == "humains")         hasHumains = true;
+        if (n == "orkhs")           hasOrkhs   = true;
+        if (n == "demons")          hasDemons  = true;
+        if (n == "nains")           hasNains   = true;
+        if (n == "elfes")           hasElfes   = true;
     }
-    Expect(hasOr, "Names() contient or_royal");
-    Expect(hasSylve, "Names() contient sylve_emeraude");
+    Expect(hasOr,      "Names() contient or_royal");
+    Expect(hasSylve,   "Names() contient sylve_emeraude");
+    Expect(hasHumains, "Names() contient humains");
+    Expect(hasOrkhs,   "Names() contient orkhs");
+    Expect(hasDemons,  "Names() contient demons");
+    Expect(hasNains,   "Names() contient nains");
+    Expect(hasElfes,   "Names() contient elfes");
 
     // 2. Défaut = or_royal, accent doré ~ #E8C56E.
     Expect(SetActive("or_royal"), "SetActive(or_royal) renvoie true");
@@ -58,7 +70,20 @@ int main()
     Expect(!SetActive("inconnu"), "SetActive(inconnu) renvoie false");
     Expect(ActiveName() == "sylve_emeraude", "theme inchange apres nom invalide");
 
-    // 6. Invariants palette : danger reste un rouge distinct de l'accent, alpha=1.
+    // 6a. Thème demons : primary.r ≈ 0.545 (sombre rouge), SetActive renvoie true.
+    Expect(SetActive("demons"), "SetActive(demons) renvoie true");
+    Expect(ActiveName() == "demons", "ActiveName == demons");
+    Expect(Near(Active().primary.r, 0.545f), "demons primary.r ~ 0.545");
+    Expect(Near(Active().primary.g, 0.102f), "demons primary.g ~ 0.102");
+
+    // 6b. Les alias-références suivent le changement de thème de race.
+    Expect(Near(kPrimary.r, 0.545f), "kPrimary.r suit demons apres SetActive");
+
+    // 6c. Restauration vers or_royal (thème par défaut).
+    Expect(SetActive("or_royal"), "restauration or_royal apres demons");
+    Expect(ActiveName() == "or_royal", "ActiveName == or_royal apres restauration");
+
+    // 6d. Invariants palette : danger reste un rouge distinct de l'accent, alpha=1.
     for (std::string_view n : names)
     {
         SetActive(n);

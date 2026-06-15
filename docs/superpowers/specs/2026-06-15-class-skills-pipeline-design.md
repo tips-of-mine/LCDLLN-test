@@ -71,7 +71,7 @@ requise pour que tous les skills soient mécaniquement représentables.
 | Périmètre classes | **24 classes existantes** uniquement (mapping §6) |
 | Génération | **Générateur déterministe** (PowerShell) lisant la référence **externe** → fichiers data **commités** |
 | Référence | Reste **externe** (non versionnée — 6,3 Mo, classes non-jeu exclues) |
-| Extension moteur | **1 seul** nouvel effet : `DamageReductionPercent` (défense) |
+| Extension moteur | **Aucune en SP-A** — le catalogue utilise un enum auto-contenu `ClassSkillEffectKind {Damage,Heal,Defense}` ; l'effet combat `DamageReductionPercent` est reporté à **SP-C** (raffinement vs §10.1 ci-dessous) |
 
 ## 6. Mapping classe (jeu) → arbre (référence)
 
@@ -172,9 +172,16 @@ Conversions :
 > Ces valeurs sont des **constantes nommées** dans le générateur (un seul endroit à
 > régler). Elles seront affinées en équilibrage (hors SP-A).
 
-## 10. Extension moteur
+## 10. Modèle de données & catalogues
 
-### 10.1 Nouvel effet `DamageReductionPercent`
+> **Raffinement (acté au plan)** : SP-A n'ajoute **AUCUN** effet moteur. Le
+> catalogue serveur utilise un enum **auto-contenu** `ClassSkillEffectKind
+> {Damage, Heal, Defense}` ; le client garde l'`effectKind` en string brute. La
+> sous-section §10.1 ci-dessous (effet `DamageReductionPercent` + mapping combat)
+> est **reportée à SP-C** (quand le cast est réellement branché) — SP-A reste
+> purement contenu + catalogues, zéro impact gameplay, zéro risque combat.
+
+### 10.1 (SP-C) Nouvel effet `DamageReductionPercent`
 
 - Ajouter `DamageReductionPercent` à `enum class SpellEffectType`
   (`src/shardd/gameplay/spell/SpellKitLibrary.h` — l'énum partagé des effets).

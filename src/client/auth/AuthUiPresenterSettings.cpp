@@ -142,6 +142,18 @@ namespace engine::client
 		}
 		m_phaseBeforeOptions = m_phase;
 		SetPhase(Phase::LanguageOptions);
+		InitOptionsPendingFromLive();
+		LOG_INFO(Core, "[AuthUiPresenter] Options opened (locale={}, fullscreen={}, vsync={}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
+			m_selectedLocale, m_videoFullscreenPending, m_videoVsyncPending,
+			m_mouseSensitivityPending, m_invertYPending, m_useZqsdPending ? "zqsd" : "wasd",
+			m_gameplayUdpEnabledPending, m_allowInsecureDevPending, m_authTimeoutMsPending);
+	}
+
+	// Bloc commun auth/in-game : copie l'état live vers les *Pending et calcule
+	// l'index de langue affiché. Aucune transition de phase ici.
+	void AuthUiPresenter::InitOptionsPendingFromLive()
+	{
+		const auto& locales = m_localization.GetAvailableLocales();
 		m_selectedLocale = CurrentLocale();
 		m_videoFullscreenPending = m_videoFullscreen;
 		m_videoVsyncPending = m_videoVsync;
@@ -168,10 +180,33 @@ namespace engine::client
 		m_optionsSubSelection = 0;
 		auto it = std::find(locales.begin(), locales.end(), m_selectedLocale);
 		m_languageSelectionIndex = it != locales.end() ? static_cast<uint32_t>(std::distance(locales.begin(), it)) : 0u;
-		LOG_INFO(Core, "[AuthUiPresenter] Options opened (locale={}, fullscreen={}, vsync={}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
+	}
+
+	void AuthUiPresenter::OpenLanguageOptionsInGame()
+	{
+		const auto& locales = m_localization.GetAvailableLocales();
+		if (locales.empty())
+		{
+			LOG_WARN(Core, "[AuthUiPresenter] OpenLanguageOptionsInGame ignored: no locales");
+			return;
+		}
+		// Contexte in-game : on NE touche NI m_phase NI m_phaseBeforeOptions. Le
+		// presenter reste en état post-monde (m_flowComplete == true). On se contente
+		// de poser le drapeau in-game et de préparer les valeurs affichées.
+		m_optionsOpenInGame = true;
+		InitOptionsPendingFromLive();
+		LOG_INFO(Core, "[AuthUiPresenter] Options in-game ouvertes (locale={}, fullscreen={}, vsync={}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
 			m_selectedLocale, m_videoFullscreenPending, m_videoVsyncPending,
 			m_mouseSensitivityPending, m_invertYPending, m_useZqsdPending ? "zqsd" : "wasd",
 			m_gameplayUdpEnabledPending, m_allowInsecureDevPending, m_authTimeoutMsPending);
+	}
+
+	void AuthUiPresenter::CloseLanguageOptionsInGame()
+	{
+		// Fermeture in-game : on dépose le drapeau, sans toucher m_phase. Pas de
+		// staging à annuler — fermer sans appliquer ne committe rien.
+		m_optionsOpenInGame = false;
+		LOG_INFO(Core, "[AuthUiPresenter] Options in-game fermees (sans appliquer)");
 	}
 
 	uint32_t AuthUiPresenter::OptionsSubmenuLineCount(OptionsSubMenu sub)

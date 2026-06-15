@@ -594,6 +594,18 @@ namespace engine::client
 		void ImGuiApplyLanguageOptionsMenu(const engine::core::Config& cfg, const LanguageOptionsImGuiMirror& mirror);
 		void ImGuiCloseLanguageOptionsWithoutApply();
 
+		/// Ouvre l'écran d'options en contexte in-game (B2/ST3) : pose
+		/// \c m_optionsOpenInGame et prépare les valeurs affichées (\c *Pending)
+		/// depuis l'état live, SANS aucune transition de phase. Contrairement à
+		/// \c OpenLanguageOptions(), ne touche ni \c m_phase ni \c m_phaseBeforeOptions :
+		/// le presenter reste en état post-monde (\c m_flowComplete == true) pour ne
+		/// pas faire réapparaître l'écran d'auth par-dessus le jeu.
+		void OpenLanguageOptionsInGame();
+		/// Ferme l'écran d'options in-game (B2/ST3) : dépose simplement
+		/// \c m_optionsOpenInGame. Ne touche PAS \c m_phase. Fermeture sans appliquer :
+		/// rien n'est committé (les \c *Pending stagés sont abandonnés tels quels).
+		void CloseLanguageOptionsInGame();
+
 		struct RegisterImGuiSubmit
 		{
 			const char* login = nullptr;
@@ -790,6 +802,12 @@ namespace engine::client
 		/// Persistance ciblée de \c client.locale dans user_settings.json (utilisé par \c ApplyLocaleSelection au premier lancement).
 		bool PatchPersistedLocaleKey(std::string_view locale);
 		void OpenLanguageOptions();
+		/// Initialise tous les réglages \c *Pending (et \c m_languageSelectionIndex)
+		/// depuis l'état live courant, pour que l'écran d'options affiche les valeurs
+		/// actuelles. Bloc commun à \c OpenLanguageOptions() (auth) et
+		/// \c OpenLanguageOptionsInGame() (in-game). Ne touche ni la phase ni
+		/// \c m_phaseBeforeOptions — purement préparation des valeurs affichées.
+		void InitOptionsPendingFromLive();
 		static uint32_t OptionsSubmenuLineCount(OptionsSubMenu sub);
 		void EnterOptionsSubmenuFromRoot(uint32_t categoryIndex);
 		std::string Tr(std::string_view key, const LocalizationService::Params& params = {}) const;

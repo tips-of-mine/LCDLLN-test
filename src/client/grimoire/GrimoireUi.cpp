@@ -57,13 +57,22 @@ namespace engine::client
 		{
 			return;
 		}
-		if (profileId != m_state.profileId)
+		const bool profileChanged = (profileId != m_state.profileId);
+		if (profileChanged)
 		{
 			m_state.profileId = profileId;
 			m_state.isCaster = IsCasterProfile(profileId);
 			RebuildSpells();
 		}
-		m_state.slots = ResolveActionBarLayout(serverLayout, m_state.spells);
+		// Ne re-résout les slots que si le layout serveur a réellement changé
+		// (nouvel ACK / enter-world) ou au premier Sync / changement de profil ;
+		// sinon on conserve l'assignation optimiste posée par AssignSlot.
+		if (!m_syncedOnce || profileChanged || serverLayout != m_lastServerLayout)
+		{
+			m_lastServerLayout = serverLayout;
+			m_syncedOnce = true;
+			m_state.slots = ResolveActionBarLayout(serverLayout, m_state.spells);
+		}
 	}
 
 	void GrimoireUiPresenter::AssignSlot(uint32_t slot, const std::string& spellId)

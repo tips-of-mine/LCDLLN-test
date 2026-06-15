@@ -61,7 +61,10 @@ namespace engine::client
 		const SpellKitCatalog* m_catalog = nullptr;
 		GrimoireState m_state{};
 		SendCallback m_send;
-		uint32_t m_clientId = 0;
+		/// Dernier layout serveur vu : Sync ne re-résout les slots que lorsqu'il
+		/// change (sinon l'assignation optimiste serait écrasée chaque frame).
+		std::array<std::string, 10> m_lastServerLayout{};
+		bool m_syncedOnce = false;
 	};
 
 	/// true si le profil est un profil de caster (lanceur/healer/sacre).

@@ -501,7 +501,10 @@ namespace engine::render
 		ImGui::SetNextWindowPos(ImVec2(0.f, 0.f));
 		ImGui::SetNextWindowSize(ImVec2(vpW, vpH));
 		ImGui::SetNextWindowBgAlpha(1.f);
-		ImVec4 bg = IV(LnTheme::kBackground);
+		// Fond plein écran FIGÉ sur le thème par défaut (or_royal), invariant au
+		// thème actif : changer de thème de race ne doit recolorer que les
+		// panneaux, pas le fond (demande utilisateur). Cf. LnTheme::AuthBackdrop.
+		ImVec4 bg = IV(LnTheme::AuthBackdrop());
 		bg.w = windowBgAlpha;
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, bg);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));

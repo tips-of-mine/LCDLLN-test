@@ -275,4 +275,15 @@ namespace LnTheme
 	{
 		return Active().accent;
 	}
+
+	/// Fond plein écran de référence : le `background` du thème PAR DÉFAUT
+	/// (or_royal), INVARIANT au thème actif. L'écran d'auth l'utilise pour son
+	/// fond plein écran afin qu'il reste « comme à l'origine » quel que soit le
+	/// thème sélectionné ; seuls les panneaux (PanelBg / kSurface / kAccent…)
+	/// suivent le thème de race. Demande utilisateur : changer de thème ne doit
+	/// recolorer que les fenêtres, pas le fond.
+	inline const Rgba& AuthBackdrop()
+	{
+		return detail::kOrRoyal.background;
+	}
 } // namespace LnTheme

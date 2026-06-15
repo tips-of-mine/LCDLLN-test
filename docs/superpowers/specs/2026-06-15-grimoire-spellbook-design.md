@@ -58,7 +58,7 @@ techniques » pour les martiaux) qui :
 |---|---|
 | Rôle | Référence (lecture détaillée) **+ assignation de slots** |
 | Persistance | **Serveur** (shard, `PersistedCharacterState`) — Design A |
-| Wire | **Shard UDP**, bump `kProtocolVersion` (cohérent avec SP3 / `profileId`) |
+| Wire | **Shard UDP**, **2 kinds rétro-additifs** (`SetActionBarLayout=88`, `ActionBarLayoutUpdate=89`) — **pas de bump** `kProtocolVersion` (= 13) |
 | Accès | **Toutes les classes**, thème adaptatif (Grimoire / Carnet) |
 | Slots barre d'action | **10** sur la **rangée du haut physique** ; **remappables** via `controls.keybind.action_slot_1..10` (défaut `VK_1..VK_0` ; AZERTY = `& é " ' ( - è _ ç à`) ; glyphe d'affichage adapté au clavier |
 | Liste de sorts | **Défilante** (barre de défilement) + **recherche** par nom |
@@ -120,12 +120,21 @@ Sinon (tank, melee, voleur, pisteur, distance) → **Carnet de techniques**
 
 ### 6.4 Wire (`src/shared/network/ServerProtocol.{h,cpp}`)
 
-- **Bump `kProtocolVersion`** (+ entrée d'historique).
-- Nouveau(x) kind(s) : `SetActionBarLayoutRequest` {clientId u32, **10** ×
-  spellId string u16-prefixed (vide = slot libre)} et son ACK
-  `SetActionBarLayoutResponse` {clientId u32, status u8 (Ok / Invalid)}.
-- Champ `actionBarLayout` (**10** spellId) ajouté au message d'enter-world /
-  stats, dans le même bump de version.
+> **Refinement implémentation** : `kProtocolVersion` vaut **13**, et la
+> convention du fichier est que de **nouveaux kinds en queue d'enum sont
+> rétro-additifs** (pas de bump, cf. `ForcePosition`/`LootNotify`). On ajoute donc
+> **2 kinds sans bumper** — un vieux client ignore les nouveaux kinds (pas de
+> lock-step global forcé), mais la feature exige le redéploiement shardd.
+
+- **`SetActionBarLayout` (kind 88, client→shard)** : {clientId u32, **10** ×
+  spellId string u16-prefixed (vide = slot libre)}.
+- **`ActionBarLayoutUpdate` (kind 89, shard→client)** : {clientId u32, **10** ×
+  spellId} — layout **autoritaire**, envoyé à l'enter-world **ET** en réponse à
+  un `SetActionBarLayout` (valide → nouveau layout ; invalide → layout inchangé
+  renvoyé → le client réconcilie/réverte ; pas de code d'erreur séparé).
+- Le layout n'étend **pas** `PlayerStatsMessage` (éviterait le « rétro-additif »)
+  — il transite par son propre kind 89, poussé juste après les stats à
+  l'enter-world.
 - Encode/Decode + tests roundtrip + rejets tronqués (pattern des tests SP3).
 
 > **Note CMakeLists** : tout nouveau `.cpp` partagé côté serveur doit être ajouté
@@ -247,18 +256,20 @@ en dur :
 
 ## 11. Déploiement
 
-- **PR-1** (serveur+wire) : ⚠️ **REDÉPLOIEMENT SERVEUR REQUIS** — bump
-  `kProtocolVersion`, nouveau handler shard, champ persistance. Un shard neuf
-  rejette les clients anciens (et inversement).
-- **PR-2** (client) : à déployer **en lock-step** avec PR-1 (client neuf ↔ shard
-  neuf). Merge PR-1 d'abord (CI verte), puis PR-2, puis déploiement simultané
-  shardd + client.
+- **PR-1** (serveur+wire) : ⚠️ **REDÉPLOIEMENT SHARDD REQUIS** — nouveau handler
+  `SetActionBarLayout` + champ persistance. Kinds **rétro-additifs (pas de bump)**
+  donc **pas** de rejet mutuel client/shard ancien↔neuf (un vieux client ignore
+  le kind 89, un nouveau client parlant à un vieux shard envoie le kind 88 dans
+  le vide — ignoré, layout non persisté).
+- **PR-2** (client) : la feature n'est fonctionnelle qu'avec PR-1 déployé →
+  déployer **après** PR-1. Merge PR-1 d'abord (CI verte), puis PR-2, puis
+  déploiement shardd puis client (ou simultané — pas de contrainte de rejet).
 
 ## 12. Découpage des PR
 
 | PR | Contenu | Déploiement |
 |---|---|---|
-| **PR-1 serveur+wire** | `kProtocolVersion`++ ; `actionBarLayout` (10) dans `PersistedCharacterState` ; restitution enter-world ; handler + validation `SetActionBarLayout` ; tests roundtrip/persistance ; CMake | ⚠️ redéploiement **shardd** |
+| **PR-1 serveur+wire** | 2 kinds rétro-additifs 88/89 (pas de bump) ; `actionBarLayout` (10) dans `PersistedCharacterState` + `ConnectedClient` ; restitution enter-world ; handler + validation `SetActionBarLayout` ; tests roundtrip wire | ⚠️ redéploiement **shardd** |
 | **PR-2 client** | barre d'action SP3 étendue 4→10 ; binds `controls.keybind.action_slot_1..10` (défaut `VK_1..VK_0`) + `controls.keybind.grimoire` (défaut V) + helper `KeyGlyph` layout-aware (Options inclus) ; état `ActionBarLayout` ; `GrimoireUiPresenter` + `GrimoireImGuiRenderer` (liste défilante + recherche + 10 slots + drag&drop) ; slash `/grimoire`/`/sorts` ; tests client | lock-step avec PR-1 |
 
 ## 13. Chantier séparé (prérequis futur, hors de ce design)

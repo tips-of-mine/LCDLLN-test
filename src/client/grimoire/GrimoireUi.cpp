@@ -53,21 +53,56 @@ namespace engine::client
 
 	void GrimoireUiPresenter::Sync(const std::string& profileId, const std::array<std::string, 10>& serverLayout)
 	{
+		// Surcharge sans kit explicite : delègue avec kit vide (fallback catalogue).
+		Sync(profileId, serverLayout, {});
+	}
+
+	void GrimoireUiPresenter::Sync(const std::string& profileId,
+		const std::array<std::string, 10>& serverLayout,
+		const std::vector<SpellDisplay>& explicitKit)
+	{
 		if (!m_initialized)
 		{
 			return;
 		}
 		const bool profileChanged = (profileId != m_state.profileId);
+		// SP-C — si un kit explicite est fourni, on détecte tout changement de son
+		// contenu (premier appel ou kit différent) pour déclencher la reconstruction.
+		const bool kitChanged = !explicitKit.empty()
+			&& (explicitKit.size() != m_state.spells.size()
+				|| [&]()
+				{
+					for (size_t i = 0; i < explicitKit.size(); ++i)
+					{
+						if (explicitKit[i].spellId != m_state.spells[i].spellId) { return true; }
+					}
+					return false;
+				}());
+
 		if (profileChanged)
 		{
 			m_state.profileId = profileId;
 			m_state.isCaster = IsCasterProfile(profileId);
-			RebuildSpells();
 		}
+
+		if (profileChanged || kitChanged)
+		{
+			if (!explicitKit.empty())
+			{
+				// Kit de compétences de classe connues : utilise directement le vecteur.
+				m_state.spells = explicitKit;
+			}
+			else
+			{
+				// Fallback : kit profil depuis le catalogue (comportement original).
+				RebuildSpells();
+			}
+		}
+
 		// Ne re-résout les slots que si le layout serveur a réellement changé
-		// (nouvel ACK / enter-world) ou au premier Sync / changement de profil ;
+		// (nouvel ACK / enter-world) ou au premier Sync / changement de profil / de kit ;
 		// sinon on conserve l'assignation optimiste posée par AssignSlot.
-		if (!m_syncedOnce || profileChanged || serverLayout != m_lastServerLayout)
+		if (!m_syncedOnce || profileChanged || kitChanged || serverLayout != m_lastServerLayout)
 		{
 			m_lastServerLayout = serverLayout;
 			m_syncedOnce = true;

@@ -45,6 +45,14 @@ namespace engine::client
 		/// reçu (UIModel) ; "" partout = défaut (ordre du kit).
 		void Sync(const std::string& profileId, const std::array<std::string, 10>& serverLayout);
 
+		/// SP-C — surcharge avec kit explicite (compétences de classe connues).
+		/// Si \p explicitKit est non vide, l'utilise comme source de sorts au lieu
+		/// de FindKit(profileId) ; sinon comportement identique à la surcharge sans kit.
+		/// Permet à la barre d'action et au Grimoire d'afficher les compétences de
+		/// classe connues avec fallback kit profil transparent.
+		void Sync(const std::string& profileId, const std::array<std::string, 10>& serverLayout,
+			const std::vector<SpellDisplay>& explicitKit);
+
 		/// Assigne \p spellId au \p slot (0-9) — mise à jour optimiste + envoi.
 		/// Retire \p spellId d'un autre slot (unicité). spellId "" = vider le slot.
 		void AssignSlot(uint32_t slot, const std::string& spellId);

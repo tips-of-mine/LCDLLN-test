@@ -1,5 +1,6 @@
 #pragma once
 
+#include "src/client/gameplay/SpellKitCatalog.h"
 #include "src/shared/core/Config.h"
 
 #include <cstdint>
@@ -29,6 +30,12 @@ namespace engine::client
 		uint32_t resourceCostPercent = 0;
 		std::string description;
 	};
+
+	/// SP-C — convertit une compétence de classe en SpellDisplay pour alimenter
+	/// la barre d'action et le Grimoire. slot est mis à 1 (sera résolu par
+	/// ResolveActionBarLayout) ; needsEnemyTarget et targetsAlly sont déduits du
+	/// champ target.
+	SpellDisplay ToSpellDisplay(const ClassSkillDisplay& s);
 
 	/// SP-A — catalogue client des compétences par-classe (mêmes fichiers
 	/// `gameplay/class_skills/*.json`). Politique TOLÉRANTE : fichier absent/invalide

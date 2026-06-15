@@ -11038,18 +11038,60 @@ namespace engine
 					// --- Combat SP3 : barre d'action (touches 1-4, sorts du profil).
 					// Cooldowns affichés localement (cosmétique) ; le serveur revalide
 					// kit/cooldown/coût/cible/portée à chaque CastRequest.
-					const std::vector<engine::client::SpellDisplay>* actionKit =
-						uiModel.playerStats.profileId.empty()
-							? nullptr
-							: m_spellCatalog.FindKit(uiModel.playerStats.profileId);
-					if (actionKit != nullptr && !actionKit->empty())
+					// SP-C — kit effectif : compétences de classe connues (fallback kit profil).
+					// BuildEffectiveKit retourne un vecteur valide pour toute la durée du bloc.
+					auto BuildEffectiveKit = [&]() -> std::vector<engine::client::SpellDisplay>
+					{
+						const std::string& classId    = uiModel.classId;
+						const std::string& profileId  = uiModel.playerStats.profileId;
+						const std::vector<std::string>& knownIds = uiModel.knownSkillIds;
+						// Chemin compétences de classe : classId connu + skills connus + catalogue disponible.
+						if (!classId.empty() && !knownIds.empty())
+						{
+							const std::vector<engine::client::ClassSkillDisplay>* classSkills =
+								m_classSkillCatalog.GetClassSkills(classId);
+							if (classSkills != nullptr)
+							{
+								std::vector<engine::client::SpellDisplay> kit;
+								kit.reserve(knownIds.size());
+								for (const std::string& skillId : knownIds)
+								{
+									for (const engine::client::ClassSkillDisplay& cs : *classSkills)
+									{
+										if (cs.skillId == skillId)
+										{
+											kit.push_back(engine::client::ToSpellDisplay(cs));
+											break;
+										}
+									}
+								}
+								if (!kit.empty())
+								{
+									return kit;
+								}
+							}
+						}
+						// Fallback : kit profil depuis le catalogue de sorts (comportement original).
+						if (!profileId.empty())
+						{
+							const std::vector<engine::client::SpellDisplay>* profileKit =
+								m_spellCatalog.FindKit(profileId);
+							if (profileKit != nullptr)
+							{
+								return *profileKit;
+							}
+						}
+						return {};
+					};
+					const std::vector<engine::client::SpellDisplay> effectiveKit = BuildEffectiveKit();
+					if (!effectiveKit.empty())
 					{
 						const float nowSec = EngineNowSec();
 						const float slotSize = 58.0f;
 						const float slotGap = 8.0f;
 						// Grimoire — layout effectif des 10 slots (slot i → spellId).
 						const std::array<std::string, 10> resolvedLayout =
-							engine::client::ResolveActionBarLayout(uiModel.playerStats.actionBarLayout, *actionKit);
+							engine::client::ResolveActionBarLayout(uiModel.playerStats.actionBarLayout, effectiveKit);
 						const size_t slotCount = resolvedLayout.size(); // 10
 						const float barWidth = slotSize * static_cast<float>(slotCount)
 							+ slotGap * static_cast<float>(slotCount - 1);
@@ -11059,7 +11101,7 @@ namespace engine
 						{
 							const std::string& slotSpellId = resolvedLayout[slotIndex];
 							const engine::client::SpellDisplay* spellPtr =
-								slotSpellId.empty() ? nullptr : engine::client::FindSpellInKit(*actionKit, slotSpellId);
+								slotSpellId.empty() ? nullptr : engine::client::FindSpellInKit(effectiveKit, slotSpellId);
 							const float sx0 = barX + static_cast<float>(slotIndex) * (slotSize + slotGap);
 							// Touche du slot (remappable) : défaut Digit1..Digit9 puis Digit0.
 							const engine::platform::Key slotKey = KeyFromName(
@@ -11941,8 +11983,35 @@ namespace engine
 			}
 			// Grimoire (Task 13) — Sync du presenter (profil + layout autoritaire)
 			// puis render conditionnel si le panneau est ouvert.
+			// SP-C — kit effectif : compétences de classe connues (fallback kit profil).
 			const engine::client::UIModel& grimoireModel = m_uiModelBinding.GetModel();
-			m_grimoireUi.Sync(grimoireModel.playerStats.profileId, grimoireModel.playerStats.actionBarLayout);
+			{
+				std::vector<engine::client::SpellDisplay> grimoireEffectiveKit;
+				const std::string& gClassId   = grimoireModel.classId;
+				const std::string& gProfileId = grimoireModel.playerStats.profileId;
+				const std::vector<std::string>& gKnownIds = grimoireModel.knownSkillIds;
+				if (!gClassId.empty() && !gKnownIds.empty())
+				{
+					const std::vector<engine::client::ClassSkillDisplay>* gClassSkills =
+						m_classSkillCatalog.GetClassSkills(gClassId);
+					if (gClassSkills != nullptr)
+					{
+						grimoireEffectiveKit.reserve(gKnownIds.size());
+						for (const std::string& skillId : gKnownIds)
+						{
+							for (const engine::client::ClassSkillDisplay& cs : *gClassSkills)
+							{
+								if (cs.skillId == skillId)
+								{
+									grimoireEffectiveKit.push_back(engine::client::ToSpellDisplay(cs));
+									break;
+								}
+							}
+						}
+					}
+				}
+				m_grimoireUi.Sync(gProfileId, grimoireModel.playerStats.actionBarLayout, grimoireEffectiveKit);
+			}
 			if (m_grimoireVisible && m_grimoireImGui && m_grimoireUi.IsInitialized())
 			{
 				m_grimoireImGui->SetEnabled(true);

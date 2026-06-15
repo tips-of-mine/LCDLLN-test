@@ -2,6 +2,7 @@
 
 #include "src/shared/core/Log.h"
 #include "src/shared/platform/FileSystem.h"
+#include "src/client/gameplay/SpellKitCatalog.h"
 
 #include <algorithm>
 #include <cctype>
@@ -410,6 +411,20 @@ namespace engine::client
 		}
 
 	} // namespace anonyme
+
+	SpellDisplay ToSpellDisplay(const ClassSkillDisplay& s)
+	{
+		SpellDisplay out{};
+		out.spellId              = s.skillId;
+		out.name                 = s.name;
+		out.slot                 = 1u; // résolu par ResolveActionBarLayout
+		out.castTimeMs           = s.castTimeMs;
+		out.cooldownMs           = s.cooldownMs;
+		out.resourceCostPercent  = s.resourceCostPercent;
+		out.needsEnemyTarget     = (s.target == "SingleEnemy");
+		out.targetsAlly          = (s.target == "SingleAlly");
+		return out;
+	}
 
 	const std::vector<ClassSkillDisplay>* ClassSkillCatalog::GetClassSkills(std::string_view classId) const
 	{

@@ -57,6 +57,7 @@
 #include "src/client/render/LfgImGuiRenderer.h"
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
+#include "src/client/render/GrimoireImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/gameplay/ActionBarLayout.h"
 #include "src/client/render/LnTheme.h"
@@ -1583,6 +1584,25 @@ namespace engine
 			});
 		}
 
+		// Grimoire (Task 13) — Init du presenter Grimoire + câblage du send callback
+		// vers GameplayUdpClient::SendSetActionBarLayout (kind 88). Le serveur renvoie
+		// un ActionBarLayoutUpdate (kind 89) autoritaire capturé par UIModel.
+		if (!m_grimoireUi.Init(&m_spellCatalog))
+		{
+			LOG_WARN(Core, "[Boot] GrimoireUiPresenter init FAILED — panneau Grimoire desactive");
+		}
+		else
+		{
+			m_grimoireUi.SetSendCallback([this](const std::array<std::string, 10>& slots) -> bool {
+				const uint32_t clientId = m_gameplayUdp.ServerClientId();
+				if (clientId == 0u)
+				{
+					return false;
+				}
+				return m_gameplayUdp.SendSetActionBarLayout(clientId, slots);
+			});
+		}
+
 		// CMANGOS.21 (Phase 5.21 step 3+4) — Init du presenter Arena + cable
 		// du send callback pour les requetes 120/122/124/127. Reception
 		// dispatchee dans le push handler ci-dessous (responses 121/123/125/128
@@ -1890,6 +1910,17 @@ namespace engine
 				}
 				LOG_INFO(Core, "[Engine] /skills toggle (visible={})", m_skillBookVisible);
 				sendAdminAudit("/skills");
+				return true;
+			}
+			// Grimoire (Task 13) — Slash commands /grimoire et /sorts pour
+			// ouvrir/fermer le panneau Grimoire. Équivalent à la touche V remappable.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/grimoire" || text == "/sorts"
+				    || text.starts_with("/grimoire ") || text.starts_with("/grimoire\t")
+				    || text.starts_with("/sorts ") || text.starts_with("/sorts\t")))
+			{
+				m_grimoireVisible = !m_grimoireVisible;
+				LOG_INFO(Core, "[Engine] /grimoire toggle (visible={})", m_grimoireVisible);
 				return true;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Slash command /lfg pour
@@ -7560,6 +7591,7 @@ namespace engine
 		m_lfgUi.Shutdown();
 		m_cinematicUi.Shutdown();
 		m_skillBookUi.Shutdown();
+		m_grimoireUi.Shutdown(); // Grimoire (Task 13)
 		m_arenaUi.Shutdown();
 		m_battleGroundUi.Shutdown();
 		m_outdoorPvpUi.Shutdown();
@@ -7654,6 +7686,24 @@ namespace engine
 					m_skillBookUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] B toggle skillbook (visible={})", m_skillBookVisible);
+			}
+		}
+
+		// Grimoire (Task 13) — Touche V remappable post-auth toggle le panneau
+		// Grimoire / Carnet de techniques. Même guards que B (chat + pause + editor).
+		{
+			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
+			const bool inGameNoMenu = !m_inGamePauseMenuVisible
+				&& !m_inGameOptionsPanelVisible
+				&& !m_editorEnabled
+				&& m_authUi.IsInitialized()
+				&& m_authUi.IsFlowComplete();
+			const engine::platform::Key grimoireKey =
+				KeyFromName(m_cfg.GetString("controls.keybind.grimoire", "V"), engine::platform::Key::V);
+			if (inGameNoMenu && !chatBlocks && m_input.WasPressed(grimoireKey))
+			{
+				m_grimoireVisible = !m_grimoireVisible;
+				LOG_INFO(Core, "[Engine] Grimoire toggle (visible={})", m_grimoireVisible);
 			}
 		}
 
@@ -8087,6 +8137,11 @@ namespace engine
 				// (toggle via /skills ou touche B).
 				m_skillBookImGui = std::make_unique<engine::render::SkillBookImGuiRenderer>();
 				m_skillBookImGui->SetPresenter(&m_skillBookUi);
+				// Grimoire (Task 13) — Renderer ImGui du panneau Grimoire / Carnet de
+				// techniques. Visible quand m_grimoireVisible (touche V ou /grimoire /
+				// /sorts). Partage le contexte ImGui post-auth.
+				m_grimoireImGui = std::make_unique<engine::render::GrimoireImGuiRenderer>();
+				m_grimoireImGui->SetPresenter(&m_grimoireUi);
 				// CMANGOS.21 (Phase 5.21 step 3+4) — Renderer ImGui du panneau
 				// Arena. Visible uniquement quand m_arenaVisible (toggle via
 				// /arena ou touche A). Le popup proposal s'affiche aussi quand
@@ -11814,6 +11869,15 @@ namespace engine
 				m_skillBookImGui->SetEnabled(true);
 				m_skillBookImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_skillBookImGui->Render();
+			}
+			// Grimoire (Task 13) — Sync du presenter (profil + layout autoritaire)
+			// puis render conditionnel si le panneau est ouvert.
+			m_grimoireUi.Sync(uiModel.playerStats.profileId, uiModel.playerStats.actionBarLayout);
+			if (m_grimoireVisible && m_grimoireImGui && m_grimoireUi.IsInitialized())
+			{
+				m_grimoireImGui->SetEnabled(true);
+				m_grimoireImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_grimoireImGui->Render();
 			}
 			// CMANGOS.21 (Phase 5.21 step 3+4) — Render du panneau Arena si
 			// visible. Le popup proposal s'affiche aussi quand pendingProposalId

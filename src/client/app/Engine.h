@@ -23,6 +23,7 @@
 #include "src/client/lfg/LfgUi.h"
 #include "src/client/cinematics/CinematicUi.h"
 #include "src/client/skills/SkillBookUi.h"
+#include "src/client/grimoire/GrimoireUi.h"
 #include "src/client/trade/TradeWindowUi.h"
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
@@ -130,6 +131,7 @@ namespace engine::render
 	class LfgImGuiRenderer;
 	class CinematicImGuiRenderer;
 	class SkillBookImGuiRenderer;
+	class GrimoireImGuiRenderer;
 	class ArenaImGuiRenderer;
 	class BattleGroundImGuiRenderer;
 	class OutdoorPvpImGuiRenderer;
@@ -614,6 +616,10 @@ namespace engine
 		/// Visible uniquement quand m_skillBookVisible (toggle via slash command
 		/// /skills ou touche B).
 		std::unique_ptr<engine::render::SkillBookImGuiRenderer> m_skillBookImGui;
+		/// Grimoire (Task 13) — Renderer ImGui du panneau Grimoire / Carnet de
+		/// techniques. Partage le contexte ImGui post-auth. Visible quand
+		/// m_grimoireVisible (toggle via touche V remappable ou /grimoire / /sorts).
+		std::unique_ptr<engine::render::GrimoireImGuiRenderer> m_grimoireImGui;
 		/// CMANGOS.21 (Phase 5.21 step 3+4) — Panneau "Arena" (post-auth, ImGui).
 		/// Partage le contexte ImGui avec les autres panneaux post-auth.
 		/// Visible uniquement quand m_arenaVisible (toggle via slash command
@@ -1208,6 +1214,13 @@ namespace engine
 		/// CMANGOS.39 (Phase 4.39 step 3+4) — Visibilite du panneau Skill Book
 		/// (toggle via slash command \c /skills ou touche B). Faux par defaut.
 		bool                                  m_skillBookVisible = false;
+		/// Grimoire (Task 13) — Presenter du panneau Grimoire / Carnet de techniques.
+		/// Reçoit le layout autoritaire via UIModel.actionBarLayout (kind 89 ACK).
+		/// Émet SetActionBarLayout via m_gameplayUdp.SendSetActionBarLayout (kind 88).
+		engine::client::GrimoireUiPresenter   m_grimoireUi;
+		/// Grimoire (Task 13) — Visibilite du panneau Grimoire (toggle touche V
+		/// remappable via controls.keybind.grimoire, ou /grimoire / /sorts). Faux par defaut.
+		bool                                  m_grimoireVisible = false;
 		/// CMANGOS.21 (Phase 5.21 step 3+4) — Presenter de la fenetre Arena.
 		/// Recoit les responses opcodes 121/123/125/128 et les push notifications
 		/// 126/129 via le push handler du master ; fire-and-forget des requetes

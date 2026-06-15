@@ -10885,44 +10885,10 @@ namespace engine
 
 					const engine::client::CombatHudState& hudState = m_combatHud.GetState();
 
-					// --- Barres HUD joueur (PV / ressource) + cooldowns : dessinées à
-					// partir des bounds calculés par le CombatHudPresenter (qui n'étaient
-					// auparavant jamais rendus — seul le log de combat l'était). Affichées
-					// dès que la donnée existe (maxValue > 0), indépendamment du flag de
-					// snapshot, pour une barre permanente.
-					auto drawHudBar = [&](const engine::client::HudBarWidget& bar, ImU32 fillCol)
-					{
-						if (bar.bounds.width <= 0.0f || bar.maxValue == 0u)
-							return;
-						const ImVec2 p0(bar.bounds.x, bar.bounds.y);
-						const ImVec2 p1(bar.bounds.x + bar.bounds.width, bar.bounds.y + bar.bounds.height);
-						const float frac = std::clamp(
-							static_cast<float>(bar.currentValue) / static_cast<float>(bar.maxValue), 0.0f, 1.0f);
-						fg->AddRectFilled(p0, p1, IM_COL32(18, 20, 28, 220), 3.0f);
-						fg->AddRectFilled(p0, ImVec2(bar.bounds.x + bar.bounds.width * frac, p1.y), fillCol, 3.0f);
-						fg->AddRect(p0, p1, IM_COL32(0, 0, 0, 180), 3.0f, 0, 1.5f);
-						char hudBarText[64];
-						std::snprintf(hudBarText, sizeof(hudBarText), "%s  %u/%u",
-							bar.label.c_str(), bar.currentValue, bar.maxValue);
-						const ImVec2 ts = ImGui::CalcTextSize(hudBarText);
-						fg->AddText(ImVec2(bar.bounds.x + (bar.bounds.width - ts.x) * 0.5f,
-							bar.bounds.y + (bar.bounds.height - ts.y) * 0.5f),
-							IM_COL32(235, 235, 235, 255), hudBarText);
-					};
-					drawHudBar(hudState.playerHealthBar, IM_COL32(180, 60, 60, 235));
-					drawHudBar(hudState.playerManaBar, IM_COL32(70, 110, 200, 235));
-					for (const engine::client::HudCooldownWidget& cd : hudState.cooldowns)
-					{
-						if (!cd.active || cd.bounds.width <= 0.0f)
-							continue;
-						const ImVec2 c0(cd.bounds.x, cd.bounds.y);
-						const ImVec2 c1(cd.bounds.x + cd.bounds.width, cd.bounds.y + cd.bounds.height);
-						fg->AddRectFilled(c0, c1, IM_COL32(20, 22, 30, 220), 4.0f);
-						const float cdFrac = (cd.durationSeconds > 0.0f)
-							? std::clamp(cd.remainingSeconds / cd.durationSeconds, 0.0f, 1.0f) : 0.0f;
-						fg->AddRectFilled(ImVec2(c0.x, c1.y - cd.bounds.height * cdFrac), c1, IM_COL32(0, 0, 0, 150), 4.0f);
-						fg->AddRect(c0, c1, IM_COL32(200, 180, 90, 200), 4.0f, 0, 1.5f);
-					}
+					// NB : les jauges PV/ressource du joueur sont rendues en bas-centre
+					// par le bloc « Validation v12 » plus bas (uiModel.playerStats) — ne
+					// PAS les redessiner ici depuis les bounds du presenter (bas-gauche),
+					// qui chevauchent le panneau de chat.
 
 					// --- Log combat HUD (bas-droite) : dernieres lignes formatees par
 					// le CombatHudPresenter (suffixes critique/rate inclus).

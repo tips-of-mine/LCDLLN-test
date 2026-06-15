@@ -411,14 +411,15 @@ namespace engine
 		///
 		/// Effet de bord : aucun. Pure projection input -> intention.
 		// Touches remappables (nom config <-> enum platform::Key). Limitee aux
-		// Key reellement definies dans l'enum (I/J/K/T n'y figurent pas). Sert au
-		// panneau Options (affichage + capture du rebind) et a la lecture des
-		// binds gameplay depuis controls.keybind.* (sprint / crouch / cast).
+		// Key reellement definies dans l'enum. Sert au panneau Options (affichage
+		// + capture du rebind) et a la lecture des binds gameplay depuis
+		// controls.keybind.* (sprint / crouch / cast / grimoire / skilltree).
 		struct RebindableKey { engine::platform::Key key; const char* name; };
 		const RebindableKey kRebindableKeys[] = {
 			{engine::platform::Key::A,"A"},{engine::platform::Key::B,"B"},{engine::platform::Key::C,"C"},
 			{engine::platform::Key::D,"D"},{engine::platform::Key::E,"E"},{engine::platform::Key::F,"F"},
-			{engine::platform::Key::G,"G"},{engine::platform::Key::H,"H"},{engine::platform::Key::L,"L"},
+			{engine::platform::Key::G,"G"},{engine::platform::Key::H,"H"},{engine::platform::Key::I,"I"},
+			{engine::platform::Key::L,"L"},
 			{engine::platform::Key::M,"M"},{engine::platform::Key::N,"N"},{engine::platform::Key::O,"O"},
 			{engine::platform::Key::P,"P"},{engine::platform::Key::Q,"Q"},{engine::platform::Key::R,"R"},
 			{engine::platform::Key::S,"S"},{engine::platform::Key::U,"U"},{engine::platform::Key::V,"V"},
@@ -7730,8 +7731,10 @@ namespace engine
 			}
 		}
 
-		// Grimoire (Task 13) — Touche V remappable post-auth toggle le panneau
+		// Grimoire (Task 13) — Touche I remappable post-auth toggle le panneau
 		// Grimoire / Carnet de techniques. Même guards que B (chat + pause + editor).
+		// Defaut = I : V etait en collision avec le talk marchand (SendTalkRequest,
+		// meme touche), ce qui ouvrait le Grimoire ET la boutique simultanement.
 		{
 			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
 			const bool inGameNoMenu = !m_inGamePauseMenuVisible
@@ -7740,7 +7743,7 @@ namespace engine
 				&& m_authUi.IsInitialized()
 				&& m_authUi.IsFlowComplete();
 			const engine::platform::Key grimoireKey =
-				KeyFromName(m_cfg.GetString("controls.keybind.grimoire", "V"), engine::platform::Key::V);
+				KeyFromName(m_cfg.GetString("controls.keybind.grimoire", "I"), engine::platform::Key::I);
 			if (inGameNoMenu && !chatBlocks && m_input.WasPressed(grimoireKey))
 			{
 				m_grimoireVisible = !m_grimoireVisible;
@@ -7748,8 +7751,12 @@ namespace engine
 			}
 		}
 
-		// SP-D — Touche Y remappable post-auth toggle l'arbre de compétences par-classe.
-		// Même guards que Grimoire (chat + pause + editor).
+		// SP-D — Touche W remappable post-auth toggle l'arbre de compétences par-classe.
+		// Même guards que Grimoire (chat + pause + editor). Defaut = W : Y etait en
+		// collision avec le panneau Meteo (meme touche Y), ce qui ouvrait l'arbre ET
+		// la meteo simultanement. W est libre en disposition ZQSD (deplacement = Z/Q/S/D)
+		// comme en AZERTY ; remappable via controls.keybind.skilltree pour les claviers
+		// QWERTY ou W sert au deplacement avant.
 		{
 			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
 			const bool inGameNoMenu = !m_inGamePauseMenuVisible
@@ -7758,7 +7765,7 @@ namespace engine
 				&& m_authUi.IsInitialized()
 				&& m_authUi.IsFlowComplete();
 			const engine::platform::Key treeKey =
-				KeyFromName(m_cfg.GetString("controls.keybind.skilltree", "Y"), engine::platform::Key::Y);
+				KeyFromName(m_cfg.GetString("controls.keybind.skilltree", "W"), engine::platform::Key::W);
 			if (inGameNoMenu && !chatBlocks && m_input.WasPressed(treeKey))
 			{
 				m_classSkillTreeVisible = !m_classSkillTreeVisible;

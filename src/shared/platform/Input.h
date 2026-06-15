@@ -30,6 +30,7 @@ namespace engine::platform
 		V = 'V',
 		G = 'G',
 		H = 'H',
+		I = 'I',
 		L = 'L',
 		R = 'R',
 		F = 'F',

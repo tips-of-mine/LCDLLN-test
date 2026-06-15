@@ -2375,7 +2375,10 @@ d'action passée de 4 à 10 slots).
   `GameplayUdpClient::SendSetActionBarLayout` ; `UIModel.playerStats.actionBarLayout`
   + `ApplyActionBarLayoutUpdate` (kind 89). Barre d'action Engine 4→10 slots,
   touches **remappables** `controls.keybind.action_slot_1..10` (défaut `VK_1..VK_0`),
-  ouverture `controls.keybind.grimoire` (défaut **V**) + `/grimoire`,`/sorts`.
+  ouverture `controls.keybind.grimoire` (défaut **I**) + `/grimoire`,`/sorts`.
+  Arbre de compétences par-classe : `controls.keybind.skilltree` (défaut **W**) +
+  `/arbre`,`/competences`. (Défauts **I**/**W** choisis pour éviter les collisions
+  de touche : V = talk marchand, Y = panneau Météo.)
 - **Clavier** : helper `KeyGlyph` (affichage layout-aware via
   `MapVirtualKey(VK_n, MAPVK_VK_TO_CHAR)` → AZERTY `& é " ' ( - è _ ç à`),
   distinct du nom de config stable (`KeyName`/`KeyFromName`).

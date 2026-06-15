@@ -307,6 +307,7 @@ add_library(engine_core
   src/client/cinematics/CinematicUi.cpp
   src/client/skills/SkillBookUi.cpp
   src/client/grimoire/GrimoireUi.cpp
+  src/client/skills/ClassSkillTreeUi.cpp
   src/client/social/PartyHud.cpp
   src/client/world/ZonePreloadHook.cpp
   src/shared/net/ChatSystem.cpp
@@ -614,6 +615,7 @@ add_library(engine_core
   src/client/render/CinematicImGuiRenderer.cpp
   src/client/render/SkillBookImGuiRenderer.cpp
   src/client/render/GrimoireImGuiRenderer.cpp
+  src/client/render/ClassSkillTreeImGuiRenderer.cpp
   src/client/render/EditorHubImGuiRenderer.cpp
   src/client/render/DecalSystem.cpp
   src/client/render/DecalPass.cpp

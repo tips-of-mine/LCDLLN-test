@@ -11872,7 +11872,8 @@ namespace engine
 			}
 			// Grimoire (Task 13) — Sync du presenter (profil + layout autoritaire)
 			// puis render conditionnel si le panneau est ouvert.
-			m_grimoireUi.Sync(uiModel.playerStats.profileId, uiModel.playerStats.actionBarLayout);
+			const engine::client::UIModel& grimoireModel = m_uiModelBinding.GetModel();
+			m_grimoireUi.Sync(grimoireModel.playerStats.profileId, grimoireModel.playerStats.actionBarLayout);
 			if (m_grimoireVisible && m_grimoireImGui && m_grimoireUi.IsInitialized())
 			{
 				m_grimoireImGui->SetEnabled(true);

@@ -1,5 +1,6 @@
 #include "src/client/render/GrimoireImGuiRenderer.h"
 #include "src/client/grimoire/GrimoireUi.h"
+#include "src/client/gameplay/ActionBarLayout.h" // engine::client::FindSpellInKit
 
 #if defined(_WIN32)
 #	include "imgui.h"

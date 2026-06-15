@@ -60,9 +60,9 @@ techniques » pour les martiaux) qui :
 | Persistance | **Serveur** (shard, `PersistedCharacterState`) — Design A |
 | Wire | **Shard UDP**, bump `kProtocolVersion` (cohérent avec SP3 / `profileId`) |
 | Accès | **Toutes les classes**, thème adaptatif (Grimoire / Carnet) |
-| Slots barre d'action | **10** sur la **rangée du haut physique** (`VK_1..VK_0` ; AZERTY = `& é " ' ( - è _ ç à`) ; libellé adapté au clavier |
+| Slots barre d'action | **10** sur la **rangée du haut physique** ; **remappables** via `controls.keybind.action_slot_1..10` (défaut `VK_1..VK_0` ; AZERTY = `& é " ' ( - è _ ç à`) ; glyphe d'affichage adapté au clavier |
 | Liste de sorts | **Défilante** (barre de défilement) + **recherche** par nom |
-| Keybind | **K** pour ouvrir/fermer + slash commands `/grimoire` et `/sorts` |
+| Keybind ouverture | **`controls.keybind.grimoire`** (défaut **V**, remappable) + slash `/grimoire`, `/sorts` |
 | Interaction | **Glisser-déposer** ImGui |
 | Contenu 180/connu 60 | **Découplé** — chantier séparé, le Grimoire le consomme sans retouche |
 | Livraison | **2 PR server-first**, lock-step shardd + client |
@@ -146,20 +146,12 @@ Sinon (tank, melee, voleur, pisteur, distance) → **Carnet de techniques**
 ### 7.2 Branchement barre d'action (modif SP3)
 
 - Étendre la barre d'action SP3 (`Engine.cpp` ~10894) de **4 à 10 slots**.
-- Elle lit le **layout résolu** au lieu de l'ordre brut du catalogue : touche
+- Elle lit le **layout résolu** au lieu de l'ordre brut du catalogue : slot
   `index` → `layout[index]` → `spellId`.
-- Mapping touches : slots 0-8 → `Digit1..Digit9`, slot 9 → `Digit0`. Ces
-  `Key::DigitN` valent les **codes de touches virtuels Win32 `VK_1..VK_0`**
-  (`src/shared/platform/Input.cpp` lit `wParam` de `WM_KEYDOWN`), assignés à la
-  **rangée du haut par position physique**, identique en QWERTY et AZERTY. La
-  barre répond donc déjà aux touches physiques `& é " ' ( - è _ ç à` d'un clavier
-  AZERTY (le caractère AZERTY n'arrive que via `WM_CHAR`, non utilisé ; le code
-  virtuel reste `VK_N`). Remplace le `'1'+index` actuel (valable seulement
-  jusqu'à 9 — slot 10 nécessite `Digit0`).
-- **Libellé de slot adapté au clavier** : afficher le glyphe réel de la touche
-  via `MapVirtualKey(VK_n, MAPVK_VK_TO_CHAR)` — AZERTY → `& é " ' ( - è _ ç à`,
-  QWERTY → `1 … 0` — au lieu d'un « 1..0 » en dur. Le même glyphe est affiché sur
-  la barre d'action **et** sur les slots du Grimoire (helper partagé client).
+- **Touches remappables** (cf. §7.6) : chaque slot lit sa touche depuis
+  `controls.keybind.action_slot_{index+1}` (défaut `VK_1..VK_9` puis `VK_0`),
+  **remplace** le `'1'+index` codé en dur (Engine.cpp:10950, valable seulement
+  jusqu'à 9 — le slot 10 nécessite `Digit0`).
 - Slot vide → case vide, pas de cast sur cette touche.
 
 ### 7.3 `GrimoireUiPresenter` (`src/client/grimoire/`)
@@ -188,16 +180,47 @@ Sinon (tank, melee, voleur, pisteur, distance) → **Carnet de techniques**
 
 ### 7.5 Ouverture / commandes
 
-- Keybind **K** (libre) → toggle `m_grimoireVisible` (pattern des autres toggles
-  Engine, cf. `m_guildVisible`).
+- Keybind `controls.keybind.grimoire` (défaut **V**, remappable, cf. §7.6) →
+  toggle `m_grimoireVisible` (pattern des autres toggles Engine, cf.
+  `m_guildVisible`).
 - Slash commands `/grimoire` et `/sorts` → même toggle.
 - Rendu conditionnel à `m_grimoireVisible` dans la boucle de rendu ImGui.
+
+### 7.6 Intégration au sous-système de raccourcis
+
+Le projet a déjà un sous-système de binds : `controls.keybind.*` (résolu via
+`KeyFromName`/`KeyName`, Engine.cpp ~415-447), rebindable depuis le menu Options
+(M39.2). Le Grimoire **réutilise** ce mécanisme plutôt que de coder des touches
+en dur :
+
+- **Ouverture** : `controls.keybind.grimoire` (défaut **V** — `K`/`B`/`J` sont
+  déjà pris par artisanat/SkillBook/combat-avancé) → toggle `m_grimoireVisible`.
+- **10 slots de cast** : `controls.keybind.action_slot_1..10` (défaut
+  `VK_1..VK_0`), exposés dans le menu Options comme les autres binds.
+- **Glyphe d'affichage adapté au clavier** : le **nom de config sérialisé reste
+  stable et portable** (la table `kRebindableKeys`/`KeyName` actuelle, ex.
+  « 1 ».. « 0 ») — **ne pas** le rendre layout-dépendant (sinon le round-trip
+  `KeyName↔KeyFromName` et le fichier de config cassent). Ajouter un **helper
+  d'affichage séparé** `KeyGlyph(Key)` qui résout le glyphe via
+  `MapVirtualKey(VK_n, MAPVK_VK_TO_CHAR)` → AZERTY `& é " ' ( - è _ ç à`,
+  QWERTY `1 … 0`. Ce glyphe est utilisé par la **barre d'action**, les **slots
+  du Grimoire** et l'**écran Options**.
+
+> **Dette connue (hors périmètre, à signaler)** : `default_keybindings.json`
+> est désynchronisé du code (il déclare `open_skills = K` alors qu'Engine câble
+> `B` = SkillBook et `K` = artisanat). On ne corrige pas cette dette ici ; le
+> Grimoire s'aligne sur le mécanisme **réellement utilisé** (`controls.keybind.*`).
+
+> **Caveat nommage** : le SkillBook existant s'intitule déjà « **Carnet de
+> sorts** » dans le menu (Engine.cpp:11657). Le thème martial du Grimoire reste
+> « **Carnet de techniques** » (distinct), mais surveiller la confusion ; un
+> renommage du SkillBook pourra être proposé hors de ce chantier.
 
 ## 8. Flux end-to-end
 
 1. **Enter-world** : shard → client, layout persisté (ou vide).
 2. Client résout `ActionBarLayout` (10) ; barre d'action + Grimoire le lisent.
-3. Joueur ouvre le Grimoire (K), glisse un sort sur un slot.
+3. Joueur ouvre le Grimoire (V par défaut), glisse un sort sur un slot.
 4. Client applique immédiatement (optimiste), envoie `SetActionBarLayoutRequest`.
 5. Shard valide (set connu/unicité), persiste, ACK Ok → confirmé ; sinon ACK
    Invalid → client réverte + message d'erreur.
@@ -236,7 +259,7 @@ Sinon (tank, melee, voleur, pisteur, distance) → **Carnet de techniques**
 | PR | Contenu | Déploiement |
 |---|---|---|
 | **PR-1 serveur+wire** | `kProtocolVersion`++ ; `actionBarLayout` (10) dans `PersistedCharacterState` ; restitution enter-world ; handler + validation `SetActionBarLayout` ; tests roundtrip/persistance ; CMake | ⚠️ redéploiement **shardd** |
-| **PR-2 client** | barre d'action SP3 étendue 4→10 (touches 1-9,0) ; état `ActionBarLayout` ; `GrimoireUiPresenter` + `GrimoireImGuiRenderer` (liste défilante + recherche + 10 slots + drag&drop) ; keybind K + `/grimoire`/`/sorts` ; tests client | lock-step avec PR-1 |
+| **PR-2 client** | barre d'action SP3 étendue 4→10 ; binds `controls.keybind.action_slot_1..10` (défaut `VK_1..VK_0`) + `controls.keybind.grimoire` (défaut V) + helper `KeyGlyph` layout-aware (Options inclus) ; état `ActionBarLayout` ; `GrimoireUiPresenter` + `GrimoireImGuiRenderer` (liste défilante + recherche + 10 slots + drag&drop) ; slash `/grimoire`/`/sorts` ; tests client | lock-step avec PR-1 |
 
 ## 13. Chantier séparé (prérequis futur, hors de ce design)
 

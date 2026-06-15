@@ -609,6 +609,16 @@ namespace engine::server
 		/// immédiate, sinon cast armé (résolu/annulé par TickActiveCasts).
 		void HandleCastRequest(const Endpoint& endpoint, const CastRequestMessage& message);
 
+		/// Grimoire — réassignation des 10 slots de barre d'action (kind 88).
+		/// Valide chaque spellId contre le kit du profil + unicité ; applique et
+		/// renvoie un ActionBarLayoutUpdate autoritaire. En cas de rejet, renvoie
+		/// le layout inchangé (réconciliation silencieuse côté client).
+		void HandleSetActionBarLayout(const Endpoint& endpoint, const SetActionBarLayoutMessage& message);
+
+		/// Grimoire — pousse le layout courant du client (enter-world ou ACK).
+		/// \return false si l'envoi UDP a échoué.
+		bool SendActionBarLayout(const ConnectedClient& client);
+
 		/// Combat SP3 — avance les casts en cours (annulation mort/déplacement,
 		/// résolution à l'échéance). Appelée depuis Simulate.
 		void TickActiveCasts();

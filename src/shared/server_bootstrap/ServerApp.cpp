@@ -814,6 +814,14 @@ namespace engine::server
 			return;
 		}
 
+		// Grimoire — réassignation des slots de barre d'action.
+		SetActionBarLayoutMessage setLayout{};
+		if (DecodeSetActionBarLayout(packetBytes, setLayout))
+		{
+			HandleSetActionBarLayout(datagram.endpoint, setLayout);
+			return;
+		}
+
 		PickupRequestMessage pickupRequest{};
 		if (DecodePickupRequest(packetBytes, pickupRequest))
 		{
@@ -1500,6 +1508,7 @@ namespace engine::server
 			m_clients.size());
 		(void)SendWelcome(acceptedClient);
 		(void)SendPlayerStats(acceptedClient);
+		(void)SendActionBarLayout(acceptedClient); // Grimoire — layout persisté (ou vide)
 		SendDynamicEventBootstrap(acceptedClient);
 		SendQuestStateBootstrap(acceptedClient);
 		(void)SendWalletUpdate(acceptedClient);
@@ -4135,6 +4144,73 @@ namespace engine::server
 		(void)m_transport.Send(client->endpoint, EncodeCastBarUpdate(castBar));
 		LOG_INFO(Net, "[ServerApp] Cast started (client_id={}, spell={}, duration_ms={})",
 			client->clientId, spell->spellId, spell->castTimeMs);
+	}
+
+	bool ServerApp::SendActionBarLayout(const ConnectedClient& client)
+	{
+		ActionBarLayoutUpdateMessage msg{};
+		msg.clientId = client.clientId;
+		msg.slots = client.actionBarLayout;
+		const std::vector<std::byte> packet = EncodeActionBarLayoutUpdate(msg);
+		if (!m_transport.Send(client.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] SendActionBarLayout failed (client_id={})", client.clientId);
+			return false;
+		}
+		return true;
+	}
+
+	void ServerApp::HandleSetActionBarLayout(const Endpoint& endpoint, const SetActionBarLayoutMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] SetActionBarLayout ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] SetActionBarLayout ignored: client_id mismatch (expected={}, got={})",
+				client->clientId, message.clientId);
+			return;
+		}
+
+		// Validation autoritaire : chaque slot non vide ∈ kit du profil + unicité.
+		std::array<std::string, 10> validated{};
+		for (size_t slotIndex = 0; slotIndex < message.slots.size(); ++slotIndex)
+		{
+			const std::string& spellId = message.slots[slotIndex];
+			if (spellId.empty())
+			{
+				continue; // slot vide autorisé
+			}
+			if (client->profileId.empty()
+				|| m_spellKits.FindSpell(client->profileId, spellId) == nullptr)
+			{
+				LOG_WARN(Net, "[ServerApp] SetActionBarLayout reject: spell '{}' not in kit '{}' (client_id={})",
+					spellId, client->profileId, client->clientId);
+				(void)SendActionBarLayout(*client); // renvoie l'état inchangé (réconciliation client)
+				return;
+			}
+			// Unicité : un sort ne peut occuper deux slots.
+			for (size_t prior = 0; prior < slotIndex; ++prior)
+			{
+				if (validated[prior] == spellId)
+				{
+					LOG_WARN(Net, "[ServerApp] SetActionBarLayout reject: duplicate spell '{}' (client_id={})",
+						spellId, client->clientId);
+					(void)SendActionBarLayout(*client);
+					return;
+				}
+			}
+			validated[slotIndex] = spellId;
+		}
+
+		client->actionBarLayout = validated;
+		SaveConnectedClient(*client, "actionbar_change");
+		(void)SendActionBarLayout(*client); // ACK autoritaire (layout validé)
+		LOG_INFO(Net, "[ServerApp] SetActionBarLayout applied (client_id={})", client->clientId);
 	}
 
 	void ServerApp::TickActiveCasts()

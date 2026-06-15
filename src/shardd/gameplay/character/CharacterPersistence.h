@@ -45,6 +45,8 @@ namespace engine::server
 		std::vector<ProfessionEntry> professions;
 		/// Grimoire — 10 slots de barre d'action (slot i → spellId, "" = vide).
 		std::array<std::string, 10> actionBarLayout{};
+		/// SP-B — compétences par-classe déjà choisies (un skill par tier/niveau débloqué).
+		std::vector<std::string> knownSkillIds;
 	};
 
 	/// Minimal file-backed character persistence store used by the server runtime.

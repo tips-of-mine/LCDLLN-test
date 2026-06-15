@@ -342,6 +342,7 @@ namespace engine::server
 		, m_spawnerRuntime(m_config)
 		, m_archetypeLibrary(m_config)
 		, m_spellKits(m_config)
+		, m_classSkills(m_config)
 		, m_combatRng(std::random_device{}())
 	{
 		LOG_INFO(Core, "[ServerApp] Constructed");
@@ -476,6 +477,14 @@ namespace engine::server
 		if (!m_spellKits.Init())
 		{
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: spell kit library startup failed");
+			Shutdown();
+			return false;
+		}
+
+		// SP-B — compétences par-classe (strict : fichier corrompu = pas de boot).
+		if (!m_classSkills.Init())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: class skill library startup failed");
 			Shutdown();
 			return false;
 		}
@@ -819,6 +828,14 @@ namespace engine::server
 		if (DecodeSetActionBarLayout(packetBytes, setLayout))
 		{
 			HandleSetActionBarLayout(datagram.endpoint, setLayout);
+			return;
+		}
+
+		// SP-B — choix d'une compétence par-classe (kind 91).
+		ChooseClassSkillRequestMessage chooseSkill{};
+		if (DecodeChooseClassSkillRequest(packetBytes, chooseSkill))
+		{
+			HandleChooseClassSkill(datagram.endpoint, chooseSkill);
 			return;
 		}
 
@@ -1310,6 +1327,8 @@ namespace engine::server
 		acceptedClient.professions = std::move(persistedState.professions);
 		/// Grimoire — restore action bar layout (10 slots).
 		acceptedClient.actionBarLayout = std::move(persistedState.actionBarLayout);
+		/// SP-B — restore known class skills.
+		acceptedClient.knownSkillIds = std::move(persistedState.knownSkillIds);
 		acceptedClient.hasReplicatedState = true;
 			LOG_INFO(Net,
 				"[ServerApp] Character state restored (client_id={}, character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={})",
@@ -1509,6 +1528,7 @@ namespace engine::server
 		(void)SendWelcome(acceptedClient);
 		(void)SendPlayerStats(acceptedClient);
 		(void)SendActionBarLayout(acceptedClient); // Grimoire — layout persisté (ou vide)
+		(void)SendClassProgression(acceptedClient); // SP-B — progression par-classe persistée (ou vide)
 		SendDynamicEventBootstrap(acceptedClient);
 		SendQuestStateBootstrap(acceptedClient);
 		(void)SendWalletUpdate(acceptedClient);
@@ -2028,6 +2048,8 @@ namespace engine::server
 		state.professions = client.professions;
 		/// Grimoire — persist action bar layout.
 		state.actionBarLayout = client.actionBarLayout;
+		/// SP-B — persist known class skills.
+		state.knownSkillIds = client.knownSkillIds;
 		if (!m_characterPersistence.SaveCharacter(state))
 		{
 			LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",
@@ -4211,6 +4233,84 @@ namespace engine::server
 		SaveConnectedClient(*client, "actionbar_change");
 		(void)SendActionBarLayout(*client); // ACK autoritaire (layout validé)
 		LOG_INFO(Net, "[ServerApp] SetActionBarLayout applied (client_id={})", client->clientId);
+	}
+
+	bool ServerApp::SendClassProgression(const ConnectedClient& client)
+	{
+		ClassProgressionUpdateMessage msg{};
+		msg.clientId = client.clientId;
+		msg.classId = client.classId;
+		msg.knownSkillIds = client.knownSkillIds;
+		const std::vector<std::byte> packet = EncodeClassProgressionUpdate(msg);
+		if (!m_transport.Send(client.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] SendClassProgression failed (client_id={})", client.clientId);
+			return false;
+		}
+		return true;
+	}
+
+	void ServerApp::HandleChooseClassSkill(const Endpoint& endpoint, const ChooseClassSkillRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] ChooseClassSkill ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] ChooseClassSkill ignored: client_id mismatch (expected={}, got={})",
+				client->clientId, message.clientId);
+			return;
+		}
+
+		// Joueur sans classe résolu (char legacy / no-DB) : rejeter silencieusement.
+		if (client->classId.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] ChooseClassSkill ignored: no class resolved (client_id={})", client->clientId);
+			return;
+		}
+
+		// Vérifier l'existence du skill dans la bibliothèque.
+		const ClassSkillDef* sk = m_classSkills.FindSkill(client->classId, message.skillId);
+		if (sk == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] ChooseClassSkill reject: skill '{}' unknown for class '{}' (client_id={})",
+				message.skillId, client->classId, client->clientId);
+			(void)SendClassProgression(*client);
+			return;
+		}
+
+		// Vérifier que le tier du skill correspond au niveau demandé et que le niveau est valide.
+		if (message.level == 0 || message.level > client->level || sk->tier != message.level)
+		{
+			LOG_WARN(Net, "[ServerApp] ChooseClassSkill reject: tier/level mismatch (skill='{}', tier={}, level_req={}, client_level={}, client_id={})",
+				message.skillId, sk->tier, message.level, client->level, client->clientId);
+			(void)SendClassProgression(*client);
+			return;
+		}
+
+		// Unicité par niveau : vérifier qu'aucun skill du même tier n'est déjà choisi.
+		for (const std::string& knownId : client->knownSkillIds)
+		{
+			const ClassSkillDef* knownSk = m_classSkills.FindSkill(client->classId, knownId);
+			if (knownSk != nullptr && knownSk->tier == message.level)
+			{
+				LOG_WARN(Net, "[ServerApp] ChooseClassSkill reject: skill already chosen for tier {} (existing='{}', client_id={})",
+					message.level, knownId, client->clientId);
+				(void)SendClassProgression(*client);
+				return;
+			}
+		}
+
+		// Choix validé : enregistrer et persister.
+		client->knownSkillIds.push_back(message.skillId);
+		SaveConnectedClient(*client, "skill_choice");
+		(void)SendClassProgression(*client);
+		LOG_INFO(Net, "[ServerApp] ChooseClassSkill applied (client_id={}, class='{}', skill='{}', tier={})",
+			client->clientId, client->classId, message.skillId, sk->tier);
 	}
 
 	void ServerApp::TickActiveCasts()

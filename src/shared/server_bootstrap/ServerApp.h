@@ -17,6 +17,7 @@
 #include "src/shardd/gameplay/spawner/SpawnerRuntime.h"
 #include "src/shardd/gameplay/creature/CreatureArchetypeLibrary.h"
 #include "src/shardd/gameplay/spell/SpellKitLibrary.h"
+#include "src/shardd/gameplay/spell/ClassSkillLibrary.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/net/ChatSystem.h"
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
@@ -220,6 +221,8 @@ namespace engine::server
 		std::vector<ProfessionEntry> professions;
 		/// Grimoire — 10 slots de barre d'action (slot i → spellId, "" = vide).
 		std::array<std::string, 10> actionBarLayout{};
+		/// SP-B — compétences par-classe déjà choisies (un skill par tier/niveau débloqué).
+		std::vector<std::string> knownSkillIds;
 	};
 
 	/// Minimal authoritative mob replicated through the same interest system as players.
@@ -618,6 +621,16 @@ namespace engine::server
 		/// Grimoire — pousse le layout courant du client (enter-world ou ACK).
 		/// \return false si l'envoi UDP a échoué.
 		bool SendActionBarLayout(const ConnectedClient& client);
+
+		/// SP-B — pousse l'état autoritaire de progression de classe (classId + skills connus)
+		/// au client (enter-world ou ACK après choix validé).
+		/// \return false si l'envoi UDP a échoué.
+		bool SendClassProgression(const ConnectedClient& client);
+
+		/// SP-B — traite un choix de compétence par-classe (kind 91 ChooseClassSkillRequest).
+		/// Valide le skill via ClassSkillLibrary, l'unicité par tier et le niveau requis.
+		/// En cas de rejet, renvoie l'état inchangé via SendClassProgression.
+		void HandleChooseClassSkill(const Endpoint& endpoint, const ChooseClassSkillRequestMessage& message);
 
 		/// Combat SP3 — avance les casts en cours (annulation mort/déplacement,
 		/// résolution à l'échéance). Appelée depuis Simulate.
@@ -1027,6 +1040,8 @@ namespace engine::server
 		CreatureArchetypeLibrary m_archetypeLibrary;
 		/// Combat SP3 — kits de sorts par profil (gameplay/spells/*.json), strict.
 		SpellKitLibrary m_spellKits;
+		/// SP-B — bibliothèque des compétences par-classe (gameplay/class_skills/*.json), stricte.
+		ClassSkillLibrary m_classSkills;
 		/// Combat SP2 — RNG des jets d'attaque (précision/critique), seedé au
 		/// constructeur. Main thread du tick monde uniquement (pas de verrou).
 		std::mt19937 m_combatRng;

@@ -458,6 +458,10 @@ namespace engine::client
 		UICraftingState crafting{};
 		/// Combat SP3 — barre de cast du joueur local (sorts à incantation).
 		UICastBarState castBar{};
+		/// SP-B — progression par-classe : identifiant de classe et liste des skills déjà choisis,
+		/// poussés par le shard à l'enter-world puis après chaque choix validé.
+		std::string classId;
+		std::vector<std::string> knownSkillIds;
 		/// Combat SP3 — auras actives par entité (joueur local inclus), remplacées
 		/// intégralement à chaque AuraUpdate de l'entité. Une entité qui sort de
 		/// l'AoI garde une entrée périmée jusqu'au prochain ApplySnapshot (purge).
@@ -586,6 +590,10 @@ namespace engine::client
 		/// (kind 89 ; poussé à l'enter-world ET en ACK de SetActionBarLayout).
 		bool ApplyActionBarLayoutUpdate(std::span<const std::byte> packet);
 
+		/// SP-B — progression de classe (ClassProgressionUpdate, kind 90) : met à jour
+		/// \ref UIModel::classId et \ref UIModel::knownSkillIds depuis le paquet shard.
+		bool ApplyClassProgressionUpdate(std::span<const std::byte> packet);
+
 		/// Combat SP3 — remplace les auras d'une entité (AuraUpdate, idempotent).
 		bool ApplyAuraUpdate(std::span<const std::byte> packet);
 
@@ -696,6 +704,8 @@ namespace engine::client
 		engine::server::CastBarUpdateMessage m_castBarUpdateMessage{};
 		/// Grimoire — scratch du message de layout autoritaire (réutilisé par paquet).
 		engine::server::ActionBarLayoutUpdateMessage m_actionBarLayoutMessage{};
+		/// SP-B — scratch du message de progression de classe (réutilisé par paquet).
+		engine::server::ClassProgressionUpdateMessage m_classProgressionMessage{};
 		engine::server::AuraUpdateMessage m_auraUpdateMessage{};
 		engine::server::ThreatUpdateMessage m_threatUpdateMessage{};
 		engine::server::PartyInviteNotifyMessage m_partyInviteNotifyMessage{};

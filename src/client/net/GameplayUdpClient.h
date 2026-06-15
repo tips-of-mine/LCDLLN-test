@@ -70,6 +70,11 @@ namespace engine::client
 		/// Le serveur valide (kit/unicité) et renvoie un ActionBarLayoutUpdate autoritaire.
 		bool SendSetActionBarLayout(uint32_t clientId, const std::array<std::string, 10>& slots);
 
+		/// SP-B — envoie un choix de skill de classe (ChooseClassSkillRequest, kind 91).
+		/// Le shard valide (niveau, unicité, appartenance au kit) et renvoie un
+		/// ClassProgressionUpdate autoritaire si le choix est accepté.
+		bool SendChooseClassSkill(uint32_t clientId, uint32_t level, std::string_view skillId);
+
 		/// Groupes SP1 — accepte l'invitation de groupe en attente (M32.2).
 		bool SendPartyAccept(uint32_t clientId);
 

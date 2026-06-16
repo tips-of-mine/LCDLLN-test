@@ -63,12 +63,12 @@ namespace engine::editor::world::panels
 						// reconstruit chaque frame par l'Engine).
 						const scene::EntityTransform cur = e->transform;
 						float pos[3]   = { cur.position.x, cur.position.y, cur.position.z };
-						float yaw      = cur.eulerDeg.y;
+						float rot[3]   = { cur.eulerDeg.x, cur.eulerDeg.y, cur.eulerDeg.z };
 						float scale    = cur.uniformScale;
 
 						bool changed = false;
 						changed |= ImGui::DragFloat3("Position (m)", pos, 0.1f);
-						changed |= ImGui::DragFloat("Rotation Y (deg)", &yaw, 0.5f);
+						changed |= ImGui::DragFloat3("Rotation XYZ (deg)", rot, 0.5f);
 						changed |= ImGui::DragFloat("Echelle", &scale, 0.01f, 0.01f, 1000.0f);
 
 						const bool canEdit = (m_commandStack != nullptr)
@@ -79,7 +79,9 @@ namespace engine::editor::world::panels
 							next.position.x   = pos[0];
 							next.position.y   = pos[1];
 							next.position.z   = pos[2];
-							next.eulerDeg.y   = yaw;
+							next.eulerDeg.x   = rot[0];
+							next.eulerDeg.y   = rot[1];
+							next.eulerDeg.z   = rot[2];
 							next.uniformScale = scale;
 							// Push chaque frame de drag : les commandes consecutives
 							// d'une meme entite fusionnent (1 item d'historique).

@@ -16,12 +16,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Nova Sacree : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Nova Sacree : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv01_Nova-Sacree.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t1",
-                       "name":  "Bouclier de Foi",
+                       "name":  "Bouclier",
                        "branch":  "def",
                        "tier":  1,
                        "level":  1,
@@ -33,46 +33,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Bouclier de Foi : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv01_Bouclier-de-Foi.png"
+                       "description":  "Bouclier : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv01_Bouclier.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t1",
-                       "name":  "Trait de Lumiere",
+                       "name":  "Lumiere Reparatrice",
                        "branch":  "single",
                        "tier":  1,
                        "level":  1,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1,
-                       "rangeMeters":  20,
+                       "rangeMeters":  18,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Trait de Lumiere : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv01_Trait-de-Lumiere.png"
+                       "description":  "Lumiere Reparatrice : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv01_Lumiere-Reparatrice.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t2",
-                       "name":  "Pluie de Lumiere  Aiguise",
+                       "name":  "Cercle Radieux  Aiguise",
                        "branch":  "aoe",
                        "tier":  2,
                        "level":  2,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.06,
                        "rangeMeters":  20.3,
                        "areaRadiusMeters":  3.1,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Pluie de Lumiere  Aiguise : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv02_Pluie-de-Lumiere-Aiguise.png"
+                       "description":  "Cercle Radieux  Aiguise : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv02_Cercle-Radieux-Aiguise.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t2",
-                       "name":  "Aura de Ferveur  Aiguise",
+                       "name":  "Barriere  Aiguise",
                        "branch":  "def",
                        "tier":  2,
                        "level":  2,
@@ -84,8 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Aura de Ferveur  Aiguise : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv02_Aura-de-Ferveur-Aiguise.png"
+                       "description":  "Barriere  Aiguise : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv02_Barriere-Aiguise.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t2",
@@ -101,7 +101,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Verbe de Jugement  Aiguise : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Verbe de Jugement  Aiguise : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv02_Verbe-de-Jugement-Aiguise.png"
                    },
                    {
@@ -118,12 +118,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Cercle de Jugement  Renforce : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Cercle de Jugement  Renforce : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv03_Cercle-de-Jugement-Renforce.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t3",
-                       "name":  "Garde Sacree  Renforce",
+                       "name":  "Garde  Renforce",
                        "branch":  "def",
                        "tier":  3,
                        "level":  3,
@@ -135,46 +135,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Garde Sacree  Renforce : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv03_Garde-Sacree-Renforce.png"
+                       "description":  "Garde  Renforce : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv03_Garde-Renforce.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t3",
-                       "name":  "Rayon Sacre  Renforce",
+                       "name":  "Onde de Salut  Renforce",
                        "branch":  "single",
                        "tier":  3,
                        "level":  3,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.12,
-                       "rangeMeters":  20.7,
+                       "rangeMeters":  18.4,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Rayon Sacre  Renforce : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv03_Rayon-Sacre-Renforce.png"
+                       "description":  "Onde de Salut  Renforce : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv03_Onde-de-Salut-Renforce.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t4",
-                       "name":  "Deflagration Sainte  Affute",
+                       "name":  "Aura de Salut  Affute",
                        "branch":  "aoe",
                        "tier":  4,
                        "level":  4,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.18,
                        "rangeMeters":  21,
                        "areaRadiusMeters":  3.2,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Deflagration Sainte  Affute : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv04_Deflagration-Sainte-Affute.png"
+                       "description":  "Aura de Salut  Affute : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv04_Aura-de-Salut-Affute.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t4",
-                       "name":  "Serment du Jugement  Affute",
+                       "name":  "Voile  Affute",
                        "branch":  "def",
                        "tier":  4,
                        "level":  4,
@@ -186,8 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Serment du Jugement  Affute : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv04_Serment-du-Jugement-Affute.png"
+                       "description":  "Voile  Affute : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv04_Voile-Affute.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t4",
@@ -203,7 +203,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Chatiment  Affute : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Chatiment  Affute : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv04_Chatiment-Affute.png"
                    },
                    {
@@ -220,12 +220,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Tempete Celeste  Brutal : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Tempete Celeste  Brutal : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv05_Tempete-Celeste-Brutal.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t5",
-                       "name":  "Rempart Radieux  Brutal",
+                       "name":  "Egide  Brutal",
                        "branch":  "def",
                        "tier":  5,
                        "level":  5,
@@ -237,46 +237,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Rempart Radieux  Brutal : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv05_Rempart-Radieux-Brutal.png"
+                       "description":  "Egide  Brutal : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv05_Egide-Brutal.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t5",
-                       "name":  "Foudre Divine  Brutal",
+                       "name":  "Baume Radieux  Brutal",
                        "branch":  "single",
                        "tier":  5,
                        "level":  5,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.24,
-                       "rangeMeters":  21.4,
+                       "rangeMeters":  18.8,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Foudre Divine  Brutal : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv05_Foudre-Divine-Brutal.png"
+                       "description":  "Baume Radieux  Brutal : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv05_Baume-Radieux-Brutal.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t6",
-                       "name":  "Apocalypse Radieuse  Vorace",
+                       "name":  "Aube Salvatrice  Vorace",
                        "branch":  "aoe",
                        "tier":  6,
                        "level":  6,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.3,
                        "rangeMeters":  21.7,
                        "areaRadiusMeters":  3.3,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Apocalypse Radieuse  Vorace : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv06_Apocalypse-Radieuse-Vorace.png"
+                       "description":  "Aube Salvatrice  Vorace : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv06_Aube-Salvatrice-Vorace.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t6",
-                       "name":  "Inviolabilite Divine  Vorace",
+                       "name":  "Sanctuaire  Vorace",
                        "branch":  "def",
                        "tier":  6,
                        "level":  6,
@@ -288,8 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Inviolabilite Divine  Vorace : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv06_Inviolabilite-Divine-Vorace.png"
+                       "description":  "Sanctuaire  Vorace : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv06_Sanctuaire-Vorace.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t6",
@@ -305,7 +305,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Sentence  Vorace : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Sentence  Vorace : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv06_Sentence-Vorace.png"
                    },
                    {
@@ -322,12 +322,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Nova Sacree  Implacable : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Nova Sacree  Implacable : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv07_Nova-Sacree-Implacable.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t7",
-                       "name":  "Bouclier de Foi  Implacable",
+                       "name":  "Bouclier  Implacable",
                        "branch":  "def",
                        "tier":  7,
                        "level":  7,
@@ -339,46 +339,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Bouclier de Foi  Implacable : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv07_Bouclier-de-Foi-Implacable.png"
+                       "description":  "Bouclier  Implacable : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv07_Bouclier-Implacable.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t7",
-                       "name":  "Trait de Lumiere  Implacable",
+                       "name":  "Lumiere Reparatrice  Implacable",
                        "branch":  "single",
                        "tier":  7,
                        "level":  7,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.36,
-                       "rangeMeters":  22,
+                       "rangeMeters":  19.2,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Trait de Lumiere  Implacable : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv07_Trait-de-Lumiere-Implacable.png"
+                       "description":  "Lumiere Reparatrice  Implacable : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv07_Lumiere-Reparatrice-Implacable.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t8",
-                       "name":  "Pluie de Lumiere  Funeste",
+                       "name":  "Cercle Radieux  Funeste",
                        "branch":  "aoe",
                        "tier":  8,
                        "level":  8,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.42,
                        "rangeMeters":  22.4,
                        "areaRadiusMeters":  3.5,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Pluie de Lumiere  Funeste : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv08_Pluie-de-Lumiere-Funeste.png"
+                       "description":  "Cercle Radieux  Funeste : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv08_Cercle-Radieux-Funeste.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t8",
-                       "name":  "Aura de Ferveur  Funeste",
+                       "name":  "Barriere  Funeste",
                        "branch":  "def",
                        "tier":  8,
                        "level":  8,
@@ -390,8 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Aura de Ferveur  Funeste : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv08_Aura-de-Ferveur-Funeste.png"
+                       "description":  "Barriere  Funeste : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv08_Barriere-Funeste.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t8",
@@ -407,7 +407,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Verbe de Jugement  Funeste : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Verbe de Jugement  Funeste : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv08_Verbe-de-Jugement-Funeste.png"
                    },
                    {
@@ -424,12 +424,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Cercle de Jugement  Cruel : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Cercle de Jugement  Cruel : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv09_Cercle-de-Jugement-Cruel.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t9",
-                       "name":  "Garde Sacree  Cruel",
+                       "name":  "Garde  Cruel",
                        "branch":  "def",
                        "tier":  9,
                        "level":  9,
@@ -441,46 +441,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Garde Sacree  Cruel : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv09_Garde-Sacree-Cruel.png"
+                       "description":  "Garde  Cruel : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv09_Garde-Cruel.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t9",
-                       "name":  "Rayon Sacre  Cruel",
+                       "name":  "Onde de Salut  Cruel",
                        "branch":  "single",
                        "tier":  9,
                        "level":  9,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.47,
-                       "rangeMeters":  22.7,
+                       "rangeMeters":  19.6,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Rayon Sacre  Cruel : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv09_Rayon-Sacre-Cruel.png"
+                       "description":  "Onde de Salut  Cruel : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv09_Onde-de-Salut-Cruel.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t10",
-                       "name":  "Deflagration Sainte  Sanglant",
+                       "name":  "Aura de Salut  Sanglant",
                        "branch":  "aoe",
                        "tier":  10,
                        "level":  10,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.53,
                        "rangeMeters":  23.1,
                        "areaRadiusMeters":  3.6,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Deflagration Sainte  Sanglant : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv10_Deflagration-Sainte-Sanglant.png"
+                       "description":  "Aura de Salut  Sanglant : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv10_Aura-de-Salut-Sanglant.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t10",
-                       "name":  "Serment du Jugement  Sanglant",
+                       "name":  "Voile  Sanglant",
                        "branch":  "def",
                        "tier":  10,
                        "level":  10,
@@ -492,8 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Serment du Jugement  Sanglant : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv10_Serment-du-Jugement-Sanglant.png"
+                       "description":  "Voile  Sanglant : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv10_Voile-Sanglant.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t10",
@@ -509,7 +509,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Chatiment  Sanglant : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Chatiment  Sanglant : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv10_Chatiment-Sanglant.png"
                    },
                    {
@@ -526,12 +526,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Tempete Celeste  Devastateur : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Tempete Celeste  Devastateur : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv11_Tempete-Celeste-Devastateur.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t11",
-                       "name":  "Rempart Radieux  Devastateur",
+                       "name":  "Egide  Devastateur",
                        "branch":  "def",
                        "tier":  11,
                        "level":  11,
@@ -543,46 +543,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Rempart Radieux  Devastateur : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv11_Rempart-Radieux-Devastateur.png"
+                       "description":  "Egide  Devastateur : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv11_Egide-Devastateur.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t11",
-                       "name":  "Foudre Divine  Devastateur",
+                       "name":  "Baume Radieux  Devastateur",
                        "branch":  "single",
                        "tier":  11,
                        "level":  11,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.59,
-                       "rangeMeters":  23.4,
+                       "rangeMeters":  20,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Foudre Divine  Devastateur : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv11_Foudre-Divine-Devastateur.png"
+                       "description":  "Baume Radieux  Devastateur : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv11_Baume-Radieux-Devastateur.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t12",
-                       "name":  "Apocalypse Radieuse  Foudroyant",
+                       "name":  "Aube Salvatrice  Foudroyant",
                        "branch":  "aoe",
                        "tier":  12,
                        "level":  12,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.65,
                        "rangeMeters":  23.7,
                        "areaRadiusMeters":  3.7,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Apocalypse Radieuse  Foudroyant : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv12_Apocalypse-Radieuse-Foudroyant.png"
+                       "description":  "Aube Salvatrice  Foudroyant : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv12_Aube-Salvatrice-Foudroyant.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t12",
-                       "name":  "Inviolabilite Divine  Foudroyant",
+                       "name":  "Sanctuaire  Foudroyant",
                        "branch":  "def",
                        "tier":  12,
                        "level":  12,
@@ -594,8 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Inviolabilite Divine  Foudroyant : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv12_Inviolabilite-Divine-Foudroyant.png"
+                       "description":  "Sanctuaire  Foudroyant : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv12_Sanctuaire-Foudroyant.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t12",
@@ -611,7 +611,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Sentence  Foudroyant : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Sentence  Foudroyant : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv12_Sentence-Foudroyant.png"
                    },
                    {
@@ -628,12 +628,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Nova Sacree  Mortel : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Nova Sacree  Mortel : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv13_Nova-Sacree-Mortel.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t13",
-                       "name":  "Bouclier de Foi  Mortel",
+                       "name":  "Bouclier  Mortel",
                        "branch":  "def",
                        "tier":  13,
                        "level":  13,
@@ -645,46 +645,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Bouclier de Foi  Mortel : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv13_Bouclier-de-Foi-Mortel.png"
+                       "description":  "Bouclier  Mortel : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv13_Bouclier-Mortel.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t13",
-                       "name":  "Trait de Lumiere  Mortel",
+                       "name":  "Lumiere Reparatrice  Mortel",
                        "branch":  "single",
                        "tier":  13,
                        "level":  13,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.71,
-                       "rangeMeters":  24.1,
+                       "rangeMeters":  20.4,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Trait de Lumiere  Mortel : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv13_Trait-de-Lumiere-Mortel.png"
+                       "description":  "Lumiere Reparatrice  Mortel : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv13_Lumiere-Reparatrice-Mortel.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t14",
-                       "name":  "Pluie de Lumiere  Inexorable",
+                       "name":  "Cercle Radieux  Inexorable",
                        "branch":  "aoe",
                        "tier":  14,
                        "level":  14,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.77,
                        "rangeMeters":  24.4,
                        "areaRadiusMeters":  3.9,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Pluie de Lumiere  Inexorable : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv14_Pluie-de-Lumiere-Inexorable.png"
+                       "description":  "Cercle Radieux  Inexorable : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv14_Cercle-Radieux-Inexorable.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t14",
-                       "name":  "Aura de Ferveur  Inexorable",
+                       "name":  "Barriere  Inexorable",
                        "branch":  "def",
                        "tier":  14,
                        "level":  14,
@@ -696,8 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Aura de Ferveur  Inexorable : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv14_Aura-de-Ferveur-Inexorable.png"
+                       "description":  "Barriere  Inexorable : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv14_Barriere-Inexorable.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t14",
@@ -713,7 +713,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Verbe de Jugement  Inexorable : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Verbe de Jugement  Inexorable : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv14_Verbe-de-Jugement-Inexorable.png"
                    },
                    {
@@ -730,12 +730,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Cercle de Jugement  Terrible : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Cercle de Jugement  Terrible : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv15_Cercle-de-Jugement-Terrible.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t15",
-                       "name":  "Garde Sacree  Terrible",
+                       "name":  "Garde  Terrible",
                        "branch":  "def",
                        "tier":  15,
                        "level":  15,
@@ -747,46 +747,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Garde Sacree  Terrible : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv15_Garde-Sacree-Terrible.png"
+                       "description":  "Garde  Terrible : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv15_Garde-Terrible.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t15",
-                       "name":  "Rayon Sacre  Terrible",
+                       "name":  "Onde de Salut  Terrible",
                        "branch":  "single",
                        "tier":  15,
                        "level":  15,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.83,
-                       "rangeMeters":  24.7,
+                       "rangeMeters":  20.8,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Rayon Sacre  Terrible : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv15_Rayon-Sacre-Terrible.png"
+                       "description":  "Onde de Salut  Terrible : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv15_Onde-de-Salut-Terrible.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t16",
-                       "name":  "Deflagration Sainte  Souverain",
+                       "name":  "Aura de Salut  Souverain",
                        "branch":  "aoe",
                        "tier":  16,
                        "level":  16,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.89,
                        "rangeMeters":  25.1,
                        "areaRadiusMeters":  4,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Deflagration Sainte  Souverain : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv16_Deflagration-Sainte-Souverain.png"
+                       "description":  "Aura de Salut  Souverain : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv16_Aura-de-Salut-Souverain.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t16",
-                       "name":  "Serment du Jugement  Souverain",
+                       "name":  "Voile  Souverain",
                        "branch":  "def",
                        "tier":  16,
                        "level":  16,
@@ -798,8 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Serment du Jugement  Souverain : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv16_Serment-du-Jugement-Souverain.png"
+                       "description":  "Voile  Souverain : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv16_Voile-Souverain.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t16",
@@ -815,7 +815,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Chatiment  Souverain : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Chatiment  Souverain : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv16_Chatiment-Souverain.png"
                    },
                    {
@@ -832,12 +832,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Tempete Celeste  Legendaire : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Tempete Celeste  Legendaire : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv17_Tempete-Celeste-Legendaire.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t17",
-                       "name":  "Rempart Radieux  Legendaire",
+                       "name":  "Egide  Legendaire",
                        "branch":  "def",
                        "tier":  17,
                        "level":  17,
@@ -849,46 +849,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Rempart Radieux  Legendaire : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv17_Rempart-Radieux-Legendaire.png"
+                       "description":  "Egide  Legendaire : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv17_Egide-Legendaire.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t17",
-                       "name":  "Foudre Divine  Legendaire",
+                       "name":  "Baume Radieux  Legendaire",
                        "branch":  "single",
                        "tier":  17,
                        "level":  17,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.95,
-                       "rangeMeters":  25.4,
+                       "rangeMeters":  21.3,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Foudre Divine  Legendaire : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv17_Foudre-Divine-Legendaire.png"
+                       "description":  "Baume Radieux  Legendaire : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv17_Baume-Radieux-Legendaire.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t18",
-                       "name":  "Apocalypse Radieuse  Cataclysmique",
+                       "name":  "Aube Salvatrice  Cataclysmique",
                        "branch":  "aoe",
                        "tier":  18,
                        "level":  18,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.01,
                        "rangeMeters":  25.8,
                        "areaRadiusMeters":  4.2,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Apocalypse Radieuse  Cataclysmique : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv18_Apocalypse-Radieuse-Cataclysmique.png"
+                       "description":  "Aube Salvatrice  Cataclysmique : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv18_Aube-Salvatrice-Cataclysmique.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t18",
-                       "name":  "Inviolabilite Divine  Cataclysmique",
+                       "name":  "Sanctuaire  Cataclysmique",
                        "branch":  "def",
                        "tier":  18,
                        "level":  18,
@@ -900,8 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Inviolabilite Divine  Cataclysmique : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv18_Inviolabilite-Divine-Cataclysmique.png"
+                       "description":  "Sanctuaire  Cataclysmique : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv18_Sanctuaire-Cataclysmique.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t18",
@@ -917,7 +917,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Sentence  Cataclysmique : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Sentence  Cataclysmique : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv18_Sentence-Cataclysmique.png"
                    },
                    {
@@ -934,12 +934,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Nova Sacree  Apocalyptique : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Nova Sacree  Apocalyptique : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv19_Nova-Sacree-Apocalyptique.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t19",
-                       "name":  "Bouclier de Foi  Apocalyptique",
+                       "name":  "Bouclier  Apocalyptique",
                        "branch":  "def",
                        "tier":  19,
                        "level":  19,
@@ -951,46 +951,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Bouclier de Foi  Apocalyptique : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv19_Bouclier-de-Foi-Apocalyptique.png"
+                       "description":  "Bouclier  Apocalyptique : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv19_Bouclier-Apocalyptique.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t19",
-                       "name":  "Trait de Lumiere  Apocalyptique",
+                       "name":  "Lumiere Reparatrice  Apocalyptique",
                        "branch":  "single",
                        "tier":  19,
                        "level":  19,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.07,
-                       "rangeMeters":  26.1,
+                       "rangeMeters":  21.7,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Trait de Lumiere  Apocalyptique : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv19_Trait-de-Lumiere-Apocalyptique.png"
+                       "description":  "Lumiere Reparatrice  Apocalyptique : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv19_Lumiere-Reparatrice-Apocalyptique.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t20",
-                       "name":  "Pluie de Lumiere  Ultime",
+                       "name":  "Cercle Radieux  Ultime",
                        "branch":  "aoe",
                        "tier":  20,
                        "level":  20,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.13,
                        "rangeMeters":  26.4,
                        "areaRadiusMeters":  4.3,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Pluie de Lumiere  Ultime : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv20_Pluie-de-Lumiere-Ultime.png"
+                       "description":  "Cercle Radieux  Ultime : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv20_Cercle-Radieux-Ultime.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t20",
-                       "name":  "Aura de Ferveur  Ultime",
+                       "name":  "Barriere  Ultime",
                        "branch":  "def",
                        "tier":  20,
                        "level":  20,
@@ -1002,8 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Aura de Ferveur  Ultime : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv20_Aura-de-Ferveur-Ultime.png"
+                       "description":  "Barriere  Ultime : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv20_Barriere-Ultime.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t20",
@@ -1019,7 +1019,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Verbe de Jugement  Ultime : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Verbe de Jugement  Ultime : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv20_Verbe-de-Jugement-Ultime.png"
                    },
                    {
@@ -1036,12 +1036,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Cercle de Jugement  Maitrise 21 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Cercle de Jugement  Maitrise 21 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv21_Cercle-de-Jugement-Maitrise-21.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t21",
-                       "name":  "Garde Sacree  Maitrise 21",
+                       "name":  "Garde  Maitrise 21",
                        "branch":  "def",
                        "tier":  21,
                        "level":  21,
@@ -1053,46 +1053,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Garde Sacree  Maitrise 21 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv21_Garde-Sacree-Maitrise-21.png"
+                       "description":  "Garde  Maitrise 21 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv21_Garde-Maitrise-21.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t21",
-                       "name":  "Rayon Sacre  Maitrise 21",
+                       "name":  "Onde de Salut  Maitrise 21",
                        "branch":  "single",
                        "tier":  21,
                        "level":  21,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.19,
-                       "rangeMeters":  26.8,
+                       "rangeMeters":  22.1,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Rayon Sacre  Maitrise 21 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv21_Rayon-Sacre-Maitrise-21.png"
+                       "description":  "Onde de Salut  Maitrise 21 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv21_Onde-de-Salut-Maitrise-21.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t22",
-                       "name":  "Deflagration Sainte  Maitrise 22",
+                       "name":  "Aura de Salut  Maitrise 22",
                        "branch":  "aoe",
                        "tier":  22,
                        "level":  22,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.25,
                        "rangeMeters":  27.1,
                        "areaRadiusMeters":  4.4,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Deflagration Sainte  Maitrise 22 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv22_Deflagration-Sainte-Maitrise-22.png"
+                       "description":  "Aura de Salut  Maitrise 22 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv22_Aura-de-Salut-Maitrise-22.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t22",
-                       "name":  "Serment du Jugement  Maitrise 22",
+                       "name":  "Voile  Maitrise 22",
                        "branch":  "def",
                        "tier":  22,
                        "level":  22,
@@ -1104,8 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Serment du Jugement  Maitrise 22 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv22_Serment-du-Jugement-Maitrise-22.png"
+                       "description":  "Voile  Maitrise 22 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv22_Voile-Maitrise-22.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t22",
@@ -1121,7 +1121,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Chatiment  Maitrise 22 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Chatiment  Maitrise 22 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv22_Chatiment-Maitrise-22.png"
                    },
                    {
@@ -1138,12 +1138,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Tempete Celeste  Maitrise 23 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Tempete Celeste  Maitrise 23 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv23_Tempete-Celeste-Maitrise-23.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t23",
-                       "name":  "Rempart Radieux  Maitrise 23",
+                       "name":  "Egide  Maitrise 23",
                        "branch":  "def",
                        "tier":  23,
                        "level":  23,
@@ -1155,46 +1155,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Rempart Radieux  Maitrise 23 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv23_Rempart-Radieux-Maitrise-23.png"
+                       "description":  "Egide  Maitrise 23 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv23_Egide-Maitrise-23.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t23",
-                       "name":  "Foudre Divine  Maitrise 23",
+                       "name":  "Baume Radieux  Maitrise 23",
                        "branch":  "single",
                        "tier":  23,
                        "level":  23,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.31,
-                       "rangeMeters":  27.5,
+                       "rangeMeters":  22.5,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Foudre Divine  Maitrise 23 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv23_Foudre-Divine-Maitrise-23.png"
+                       "description":  "Baume Radieux  Maitrise 23 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv23_Baume-Radieux-Maitrise-23.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t24",
-                       "name":  "Apocalypse Radieuse  Maitrise 24",
+                       "name":  "Aube Salvatrice  Maitrise 24",
                        "branch":  "aoe",
                        "tier":  24,
                        "level":  24,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.36,
                        "rangeMeters":  27.8,
                        "areaRadiusMeters":  4.6,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Apocalypse Radieuse  Maitrise 24 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv24_Apocalypse-Radieuse-Maitrise-24.png"
+                       "description":  "Aube Salvatrice  Maitrise 24 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv24_Aube-Salvatrice-Maitrise-24.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t24",
-                       "name":  "Inviolabilite Divine  Maitrise 24",
+                       "name":  "Sanctuaire  Maitrise 24",
                        "branch":  "def",
                        "tier":  24,
                        "level":  24,
@@ -1206,8 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Inviolabilite Divine  Maitrise 24 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv24_Inviolabilite-Divine-Maitrise-24.png"
+                       "description":  "Sanctuaire  Maitrise 24 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv24_Sanctuaire-Maitrise-24.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t24",
@@ -1223,7 +1223,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Sentence  Maitrise 24 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Sentence  Maitrise 24 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv24_Sentence-Maitrise-24.png"
                    },
                    {
@@ -1240,12 +1240,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Nova Sacree  Maitrise 25 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Nova Sacree  Maitrise 25 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv25_Nova-Sacree-Maitrise-25.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t25",
-                       "name":  "Bouclier de Foi  Maitrise 25",
+                       "name":  "Bouclier  Maitrise 25",
                        "branch":  "def",
                        "tier":  25,
                        "level":  25,
@@ -1257,46 +1257,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Bouclier de Foi  Maitrise 25 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv25_Bouclier-de-Foi-Maitrise-25.png"
+                       "description":  "Bouclier  Maitrise 25 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv25_Bouclier-Maitrise-25.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t25",
-                       "name":  "Trait de Lumiere  Maitrise 25",
+                       "name":  "Lumiere Reparatrice  Maitrise 25",
                        "branch":  "single",
                        "tier":  25,
                        "level":  25,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.42,
-                       "rangeMeters":  28.1,
+                       "rangeMeters":  22.9,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Trait de Lumiere  Maitrise 25 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv25_Trait-de-Lumiere-Maitrise-25.png"
+                       "description":  "Lumiere Reparatrice  Maitrise 25 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv25_Lumiere-Reparatrice-Maitrise-25.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t26",
-                       "name":  "Pluie de Lumiere  Maitrise 26",
+                       "name":  "Cercle Radieux  Maitrise 26",
                        "branch":  "aoe",
                        "tier":  26,
                        "level":  26,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.48,
                        "rangeMeters":  28.5,
                        "areaRadiusMeters":  4.7,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Pluie de Lumiere  Maitrise 26 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv26_Pluie-de-Lumiere-Maitrise-26.png"
+                       "description":  "Cercle Radieux  Maitrise 26 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv26_Cercle-Radieux-Maitrise-26.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t26",
-                       "name":  "Aura de Ferveur  Maitrise 26",
+                       "name":  "Barriere  Maitrise 26",
                        "branch":  "def",
                        "tier":  26,
                        "level":  26,
@@ -1308,8 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Aura de Ferveur  Maitrise 26 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv26_Aura-de-Ferveur-Maitrise-26.png"
+                       "description":  "Barriere  Maitrise 26 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv26_Barriere-Maitrise-26.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t26",
@@ -1325,7 +1325,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Verbe de Jugement  Maitrise 26 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Verbe de Jugement  Maitrise 26 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv26_Verbe-de-Jugement-Maitrise-26.png"
                    },
                    {
@@ -1342,12 +1342,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Cercle de Jugement  Maitrise 27 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Cercle de Jugement  Maitrise 27 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv27_Cercle-de-Jugement-Maitrise-27.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t27",
-                       "name":  "Garde Sacree  Maitrise 27",
+                       "name":  "Garde  Maitrise 27",
                        "branch":  "def",
                        "tier":  27,
                        "level":  27,
@@ -1359,46 +1359,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Garde Sacree  Maitrise 27 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv27_Garde-Sacree-Maitrise-27.png"
+                       "description":  "Garde  Maitrise 27 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv27_Garde-Maitrise-27.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t27",
-                       "name":  "Rayon Sacre  Maitrise 27",
+                       "name":  "Onde de Salut  Maitrise 27",
                        "branch":  "single",
                        "tier":  27,
                        "level":  27,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.54,
-                       "rangeMeters":  28.8,
+                       "rangeMeters":  23.3,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Rayon Sacre  Maitrise 27 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv27_Rayon-Sacre-Maitrise-27.png"
+                       "description":  "Onde de Salut  Maitrise 27 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv27_Onde-de-Salut-Maitrise-27.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t28",
-                       "name":  "Deflagration Sainte  Maitrise 28",
+                       "name":  "Aura de Salut  Maitrise 28",
                        "branch":  "aoe",
                        "tier":  28,
                        "level":  28,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.6,
                        "rangeMeters":  29.2,
                        "areaRadiusMeters":  4.8,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Deflagration Sainte  Maitrise 28 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv28_Deflagration-Sainte-Maitrise-28.png"
+                       "description":  "Aura de Salut  Maitrise 28 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv28_Aura-de-Salut-Maitrise-28.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t28",
-                       "name":  "Serment du Jugement  Maitrise 28",
+                       "name":  "Voile  Maitrise 28",
                        "branch":  "def",
                        "tier":  28,
                        "level":  28,
@@ -1410,8 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Serment du Jugement  Maitrise 28 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv28_Serment-du-Jugement-Maitrise-28.png"
+                       "description":  "Voile  Maitrise 28 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv28_Voile-Maitrise-28.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t28",
@@ -1427,7 +1427,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Chatiment  Maitrise 28 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Chatiment  Maitrise 28 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv28_Chatiment-Maitrise-28.png"
                    },
                    {
@@ -1444,12 +1444,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Tempete Celeste  Maitrise 29 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Tempete Celeste  Maitrise 29 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv29_Tempete-Celeste-Maitrise-29.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t29",
-                       "name":  "Rempart Radieux  Maitrise 29",
+                       "name":  "Egide  Maitrise 29",
                        "branch":  "def",
                        "tier":  29,
                        "level":  29,
@@ -1461,46 +1461,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Rempart Radieux  Maitrise 29 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv29_Rempart-Radieux-Maitrise-29.png"
+                       "description":  "Egide  Maitrise 29 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv29_Egide-Maitrise-29.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t29",
-                       "name":  "Foudre Divine  Maitrise 29",
+                       "name":  "Baume Radieux  Maitrise 29",
                        "branch":  "single",
                        "tier":  29,
                        "level":  29,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.66,
-                       "rangeMeters":  29.5,
+                       "rangeMeters":  23.7,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Foudre Divine  Maitrise 29 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv29_Foudre-Divine-Maitrise-29.png"
+                       "description":  "Baume Radieux  Maitrise 29 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv29_Baume-Radieux-Maitrise-29.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t30",
-                       "name":  "Apocalypse Radieuse  Maitrise 30",
+                       "name":  "Aube Salvatrice  Maitrise 30",
                        "branch":  "aoe",
                        "tier":  30,
                        "level":  30,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.72,
                        "rangeMeters":  29.8,
                        "areaRadiusMeters":  5,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Apocalypse Radieuse  Maitrise 30 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv30_Apocalypse-Radieuse-Maitrise-30.png"
+                       "description":  "Aube Salvatrice  Maitrise 30 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv30_Aube-Salvatrice-Maitrise-30.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t30",
-                       "name":  "Inviolabilite Divine  Maitrise 30",
+                       "name":  "Sanctuaire  Maitrise 30",
                        "branch":  "def",
                        "tier":  30,
                        "level":  30,
@@ -1512,8 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Inviolabilite Divine  Maitrise 30 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv30_Inviolabilite-Divine-Maitrise-30.png"
+                       "description":  "Sanctuaire  Maitrise 30 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv30_Sanctuaire-Maitrise-30.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t30",
@@ -1529,7 +1529,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Sentence  Maitrise 30 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Sentence  Maitrise 30 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv30_Sentence-Maitrise-30.png"
                    },
                    {
@@ -1546,12 +1546,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Nova Sacree  Maitrise 31 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Nova Sacree  Maitrise 31 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv31_Nova-Sacree-Maitrise-31.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t31",
-                       "name":  "Bouclier de Foi  Maitrise 31",
+                       "name":  "Bouclier  Maitrise 31",
                        "branch":  "def",
                        "tier":  31,
                        "level":  31,
@@ -1563,46 +1563,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Bouclier de Foi  Maitrise 31 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv31_Bouclier-de-Foi-Maitrise-31.png"
+                       "description":  "Bouclier  Maitrise 31 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv31_Bouclier-Maitrise-31.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t31",
-                       "name":  "Trait de Lumiere  Maitrise 31",
+                       "name":  "Lumiere Reparatrice  Maitrise 31",
                        "branch":  "single",
                        "tier":  31,
                        "level":  31,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.78,
-                       "rangeMeters":  30.2,
+                       "rangeMeters":  24.1,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Trait de Lumiere  Maitrise 31 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv31_Trait-de-Lumiere-Maitrise-31.png"
+                       "description":  "Lumiere Reparatrice  Maitrise 31 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv31_Lumiere-Reparatrice-Maitrise-31.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t32",
-                       "name":  "Pluie de Lumiere  Maitrise 32",
+                       "name":  "Cercle Radieux  Maitrise 32",
                        "branch":  "aoe",
                        "tier":  32,
                        "level":  32,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.84,
                        "rangeMeters":  30.5,
                        "areaRadiusMeters":  5.1,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Pluie de Lumiere  Maitrise 32 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv32_Pluie-de-Lumiere-Maitrise-32.png"
+                       "description":  "Cercle Radieux  Maitrise 32 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv32_Cercle-Radieux-Maitrise-32.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t32",
-                       "name":  "Aura de Ferveur  Maitrise 32",
+                       "name":  "Barriere  Maitrise 32",
                        "branch":  "def",
                        "tier":  32,
                        "level":  32,
@@ -1614,8 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Aura de Ferveur  Maitrise 32 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv32_Aura-de-Ferveur-Maitrise-32.png"
+                       "description":  "Barriere  Maitrise 32 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv32_Barriere-Maitrise-32.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t32",
@@ -1631,7 +1631,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Verbe de Jugement  Maitrise 32 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Verbe de Jugement  Maitrise 32 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv32_Verbe-de-Jugement-Maitrise-32.png"
                    },
                    {
@@ -1648,12 +1648,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Cercle de Jugement  Maitrise 33 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Cercle de Jugement  Maitrise 33 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv33_Cercle-de-Jugement-Maitrise-33.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t33",
-                       "name":  "Garde Sacree  Maitrise 33",
+                       "name":  "Garde  Maitrise 33",
                        "branch":  "def",
                        "tier":  33,
                        "level":  33,
@@ -1665,46 +1665,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Garde Sacree  Maitrise 33 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv33_Garde-Sacree-Maitrise-33.png"
+                       "description":  "Garde  Maitrise 33 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv33_Garde-Maitrise-33.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t33",
-                       "name":  "Rayon Sacre  Maitrise 33",
+                       "name":  "Onde de Salut  Maitrise 33",
                        "branch":  "single",
                        "tier":  33,
                        "level":  33,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.9,
-                       "rangeMeters":  30.8,
+                       "rangeMeters":  24.5,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Rayon Sacre  Maitrise 33 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv33_Rayon-Sacre-Maitrise-33.png"
+                       "description":  "Onde de Salut  Maitrise 33 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv33_Onde-de-Salut-Maitrise-33.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t34",
-                       "name":  "Deflagration Sainte  Maitrise 34",
+                       "name":  "Aura de Salut  Maitrise 34",
                        "branch":  "aoe",
                        "tier":  34,
                        "level":  34,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.96,
                        "rangeMeters":  31.2,
                        "areaRadiusMeters":  5.2,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Deflagration Sainte  Maitrise 34 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv34_Deflagration-Sainte-Maitrise-34.png"
+                       "description":  "Aura de Salut  Maitrise 34 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv34_Aura-de-Salut-Maitrise-34.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t34",
-                       "name":  "Serment du Jugement  Maitrise 34",
+                       "name":  "Voile  Maitrise 34",
                        "branch":  "def",
                        "tier":  34,
                        "level":  34,
@@ -1716,8 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Serment du Jugement  Maitrise 34 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv34_Serment-du-Jugement-Maitrise-34.png"
+                       "description":  "Voile  Maitrise 34 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv34_Voile-Maitrise-34.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t34",
@@ -1733,7 +1733,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Chatiment  Maitrise 34 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Chatiment  Maitrise 34 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv34_Chatiment-Maitrise-34.png"
                    },
                    {
@@ -1750,12 +1750,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Tempete Celeste  Maitrise 35 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Tempete Celeste  Maitrise 35 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv35_Tempete-Celeste-Maitrise-35.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t35",
-                       "name":  "Rempart Radieux  Maitrise 35",
+                       "name":  "Egide  Maitrise 35",
                        "branch":  "def",
                        "tier":  35,
                        "level":  35,
@@ -1767,46 +1767,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Rempart Radieux  Maitrise 35 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv35_Rempart-Radieux-Maitrise-35.png"
+                       "description":  "Egide  Maitrise 35 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv35_Egide-Maitrise-35.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t35",
-                       "name":  "Foudre Divine  Maitrise 35",
+                       "name":  "Baume Radieux  Maitrise 35",
                        "branch":  "single",
                        "tier":  35,
                        "level":  35,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.02,
-                       "rangeMeters":  31.5,
+                       "rangeMeters":  24.9,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Foudre Divine  Maitrise 35 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv35_Foudre-Divine-Maitrise-35.png"
+                       "description":  "Baume Radieux  Maitrise 35 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv35_Baume-Radieux-Maitrise-35.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t36",
-                       "name":  "Apocalypse Radieuse  Maitrise 36",
+                       "name":  "Aube Salvatrice  Maitrise 36",
                        "branch":  "aoe",
                        "tier":  36,
                        "level":  36,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.08,
                        "rangeMeters":  31.9,
                        "areaRadiusMeters":  5.4,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Apocalypse Radieuse  Maitrise 36 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv36_Apocalypse-Radieuse-Maitrise-36.png"
+                       "description":  "Aube Salvatrice  Maitrise 36 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv36_Aube-Salvatrice-Maitrise-36.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t36",
-                       "name":  "Inviolabilite Divine  Maitrise 36",
+                       "name":  "Sanctuaire  Maitrise 36",
                        "branch":  "def",
                        "tier":  36,
                        "level":  36,
@@ -1818,8 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Inviolabilite Divine  Maitrise 36 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv36_Inviolabilite-Divine-Maitrise-36.png"
+                       "description":  "Sanctuaire  Maitrise 36 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv36_Sanctuaire-Maitrise-36.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t36",
@@ -1835,7 +1835,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Sentence  Maitrise 36 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Sentence  Maitrise 36 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv36_Sentence-Maitrise-36.png"
                    },
                    {
@@ -1852,12 +1852,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Nova Sacree  Maitrise 37 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Nova Sacree  Maitrise 37 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv37_Nova-Sacree-Maitrise-37.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t37",
-                       "name":  "Bouclier de Foi  Maitrise 37",
+                       "name":  "Bouclier  Maitrise 37",
                        "branch":  "def",
                        "tier":  37,
                        "level":  37,
@@ -1869,46 +1869,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Bouclier de Foi  Maitrise 37 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv37_Bouclier-de-Foi-Maitrise-37.png"
+                       "description":  "Bouclier  Maitrise 37 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv37_Bouclier-Maitrise-37.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t37",
-                       "name":  "Trait de Lumiere  Maitrise 37",
+                       "name":  "Lumiere Reparatrice  Maitrise 37",
                        "branch":  "single",
                        "tier":  37,
                        "level":  37,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.14,
-                       "rangeMeters":  32.2,
+                       "rangeMeters":  25.3,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Trait de Lumiere  Maitrise 37 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv37_Trait-de-Lumiere-Maitrise-37.png"
+                       "description":  "Lumiere Reparatrice  Maitrise 37 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv37_Lumiere-Reparatrice-Maitrise-37.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t38",
-                       "name":  "Pluie de Lumiere  Maitrise 38",
+                       "name":  "Cercle Radieux  Maitrise 38",
                        "branch":  "aoe",
                        "tier":  38,
                        "level":  38,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.19,
                        "rangeMeters":  32.5,
                        "areaRadiusMeters":  5.5,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Pluie de Lumiere  Maitrise 38 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv38_Pluie-de-Lumiere-Maitrise-38.png"
+                       "description":  "Cercle Radieux  Maitrise 38 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv38_Cercle-Radieux-Maitrise-38.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t38",
-                       "name":  "Aura de Ferveur  Maitrise 38",
+                       "name":  "Barriere  Maitrise 38",
                        "branch":  "def",
                        "tier":  38,
                        "level":  38,
@@ -1920,8 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Aura de Ferveur  Maitrise 38 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv38_Aura-de-Ferveur-Maitrise-38.png"
+                       "description":  "Barriere  Maitrise 38 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv38_Barriere-Maitrise-38.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t38",
@@ -1937,7 +1937,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Verbe de Jugement  Maitrise 38 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Verbe de Jugement  Maitrise 38 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv38_Verbe-de-Jugement-Maitrise-38.png"
                    },
                    {
@@ -1954,12 +1954,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Cercle de Jugement  Maitrise 39 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Cercle de Jugement  Maitrise 39 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv39_Cercle-de-Jugement-Maitrise-39.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t39",
-                       "name":  "Garde Sacree  Maitrise 39",
+                       "name":  "Garde  Maitrise 39",
                        "branch":  "def",
                        "tier":  39,
                        "level":  39,
@@ -1971,46 +1971,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Garde Sacree  Maitrise 39 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv39_Garde-Sacree-Maitrise-39.png"
+                       "description":  "Garde  Maitrise 39 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv39_Garde-Maitrise-39.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t39",
-                       "name":  "Rayon Sacre  Maitrise 39",
+                       "name":  "Onde de Salut  Maitrise 39",
                        "branch":  "single",
                        "tier":  39,
                        "level":  39,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.25,
-                       "rangeMeters":  32.9,
+                       "rangeMeters":  25.7,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Rayon Sacre  Maitrise 39 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv39_Rayon-Sacre-Maitrise-39.png"
+                       "description":  "Onde de Salut  Maitrise 39 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv39_Onde-de-Salut-Maitrise-39.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t40",
-                       "name":  "Deflagration Sainte  Maitrise 40",
+                       "name":  "Aura de Salut  Maitrise 40",
                        "branch":  "aoe",
                        "tier":  40,
                        "level":  40,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.31,
                        "rangeMeters":  33.2,
                        "areaRadiusMeters":  5.6,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Deflagration Sainte  Maitrise 40 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv40_Deflagration-Sainte-Maitrise-40.png"
+                       "description":  "Aura de Salut  Maitrise 40 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv40_Aura-de-Salut-Maitrise-40.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t40",
-                       "name":  "Serment du Jugement  Maitrise 40",
+                       "name":  "Voile  Maitrise 40",
                        "branch":  "def",
                        "tier":  40,
                        "level":  40,
@@ -2022,8 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Serment du Jugement  Maitrise 40 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv40_Serment-du-Jugement-Maitrise-40.png"
+                       "description":  "Voile  Maitrise 40 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv40_Voile-Maitrise-40.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t40",
@@ -2039,7 +2039,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Chatiment  Maitrise 40 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Chatiment  Maitrise 40 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv40_Chatiment-Maitrise-40.png"
                    },
                    {
@@ -2056,12 +2056,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Tempete Celeste  Maitrise 41 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Tempete Celeste  Maitrise 41 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv41_Tempete-Celeste-Maitrise-41.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t41",
-                       "name":  "Rempart Radieux  Maitrise 41",
+                       "name":  "Egide  Maitrise 41",
                        "branch":  "def",
                        "tier":  41,
                        "level":  41,
@@ -2073,46 +2073,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Rempart Radieux  Maitrise 41 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv41_Rempart-Radieux-Maitrise-41.png"
+                       "description":  "Egide  Maitrise 41 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv41_Egide-Maitrise-41.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t41",
-                       "name":  "Foudre Divine  Maitrise 41",
+                       "name":  "Baume Radieux  Maitrise 41",
                        "branch":  "single",
                        "tier":  41,
                        "level":  41,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.37,
-                       "rangeMeters":  33.6,
+                       "rangeMeters":  26.1,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Foudre Divine  Maitrise 41 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv41_Foudre-Divine-Maitrise-41.png"
+                       "description":  "Baume Radieux  Maitrise 41 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv41_Baume-Radieux-Maitrise-41.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t42",
-                       "name":  "Apocalypse Radieuse  Maitrise 42",
+                       "name":  "Aube Salvatrice  Maitrise 42",
                        "branch":  "aoe",
                        "tier":  42,
                        "level":  42,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.43,
                        "rangeMeters":  33.9,
                        "areaRadiusMeters":  5.8,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Apocalypse Radieuse  Maitrise 42 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv42_Apocalypse-Radieuse-Maitrise-42.png"
+                       "description":  "Aube Salvatrice  Maitrise 42 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv42_Aube-Salvatrice-Maitrise-42.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t42",
-                       "name":  "Inviolabilite Divine  Maitrise 42",
+                       "name":  "Sanctuaire  Maitrise 42",
                        "branch":  "def",
                        "tier":  42,
                        "level":  42,
@@ -2124,8 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Inviolabilite Divine  Maitrise 42 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv42_Inviolabilite-Divine-Maitrise-42.png"
+                       "description":  "Sanctuaire  Maitrise 42 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv42_Sanctuaire-Maitrise-42.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t42",
@@ -2141,7 +2141,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Sentence  Maitrise 42 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Sentence  Maitrise 42 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv42_Sentence-Maitrise-42.png"
                    },
                    {
@@ -2158,12 +2158,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Nova Sacree  Maitrise 43 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Nova Sacree  Maitrise 43 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv43_Nova-Sacree-Maitrise-43.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t43",
-                       "name":  "Bouclier de Foi  Maitrise 43",
+                       "name":  "Bouclier  Maitrise 43",
                        "branch":  "def",
                        "tier":  43,
                        "level":  43,
@@ -2175,46 +2175,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Bouclier de Foi  Maitrise 43 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv43_Bouclier-de-Foi-Maitrise-43.png"
+                       "description":  "Bouclier  Maitrise 43 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv43_Bouclier-Maitrise-43.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t43",
-                       "name":  "Trait de Lumiere  Maitrise 43",
+                       "name":  "Lumiere Reparatrice  Maitrise 43",
                        "branch":  "single",
                        "tier":  43,
                        "level":  43,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.49,
-                       "rangeMeters":  34.2,
+                       "rangeMeters":  26.5,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Trait de Lumiere  Maitrise 43 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv43_Trait-de-Lumiere-Maitrise-43.png"
+                       "description":  "Lumiere Reparatrice  Maitrise 43 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv43_Lumiere-Reparatrice-Maitrise-43.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t44",
-                       "name":  "Pluie de Lumiere  Maitrise 44",
+                       "name":  "Cercle Radieux  Maitrise 44",
                        "branch":  "aoe",
                        "tier":  44,
                        "level":  44,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.55,
                        "rangeMeters":  34.6,
                        "areaRadiusMeters":  5.9,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Pluie de Lumiere  Maitrise 44 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv44_Pluie-de-Lumiere-Maitrise-44.png"
+                       "description":  "Cercle Radieux  Maitrise 44 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv44_Cercle-Radieux-Maitrise-44.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t44",
-                       "name":  "Aura de Ferveur  Maitrise 44",
+                       "name":  "Barriere  Maitrise 44",
                        "branch":  "def",
                        "tier":  44,
                        "level":  44,
@@ -2226,8 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Aura de Ferveur  Maitrise 44 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv44_Aura-de-Ferveur-Maitrise-44.png"
+                       "description":  "Barriere  Maitrise 44 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv44_Barriere-Maitrise-44.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t44",
@@ -2243,7 +2243,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Verbe de Jugement  Maitrise 44 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Verbe de Jugement  Maitrise 44 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv44_Verbe-de-Jugement-Maitrise-44.png"
                    },
                    {
@@ -2260,12 +2260,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Cercle de Jugement  Maitrise 45 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Cercle de Jugement  Maitrise 45 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv45_Cercle-de-Jugement-Maitrise-45.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t45",
-                       "name":  "Garde Sacree  Maitrise 45",
+                       "name":  "Garde  Maitrise 45",
                        "branch":  "def",
                        "tier":  45,
                        "level":  45,
@@ -2277,46 +2277,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Garde Sacree  Maitrise 45 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv45_Garde-Sacree-Maitrise-45.png"
+                       "description":  "Garde  Maitrise 45 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv45_Garde-Maitrise-45.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t45",
-                       "name":  "Rayon Sacre  Maitrise 45",
+                       "name":  "Onde de Salut  Maitrise 45",
                        "branch":  "single",
                        "tier":  45,
                        "level":  45,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.61,
-                       "rangeMeters":  34.9,
+                       "rangeMeters":  26.9,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Rayon Sacre  Maitrise 45 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv45_Rayon-Sacre-Maitrise-45.png"
+                       "description":  "Onde de Salut  Maitrise 45 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv45_Onde-de-Salut-Maitrise-45.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t46",
-                       "name":  "Deflagration Sainte  Maitrise 46",
+                       "name":  "Aura de Salut  Maitrise 46",
                        "branch":  "aoe",
                        "tier":  46,
                        "level":  46,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.67,
                        "rangeMeters":  35.3,
                        "areaRadiusMeters":  6.1,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Deflagration Sainte  Maitrise 46 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv46_Deflagration-Sainte-Maitrise-46.png"
+                       "description":  "Aura de Salut  Maitrise 46 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv46_Aura-de-Salut-Maitrise-46.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t46",
-                       "name":  "Serment du Jugement  Maitrise 46",
+                       "name":  "Voile  Maitrise 46",
                        "branch":  "def",
                        "tier":  46,
                        "level":  46,
@@ -2328,8 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Serment du Jugement  Maitrise 46 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv46_Serment-du-Jugement-Maitrise-46.png"
+                       "description":  "Voile  Maitrise 46 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv46_Voile-Maitrise-46.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t46",
@@ -2345,7 +2345,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Chatiment  Maitrise 46 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Chatiment  Maitrise 46 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv46_Chatiment-Maitrise-46.png"
                    },
                    {
@@ -2362,12 +2362,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Tempete Celeste  Maitrise 47 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Tempete Celeste  Maitrise 47 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv47_Tempete-Celeste-Maitrise-47.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t47",
-                       "name":  "Rempart Radieux  Maitrise 47",
+                       "name":  "Egide  Maitrise 47",
                        "branch":  "def",
                        "tier":  47,
                        "level":  47,
@@ -2379,46 +2379,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Rempart Radieux  Maitrise 47 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv47_Rempart-Radieux-Maitrise-47.png"
+                       "description":  "Egide  Maitrise 47 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv47_Egide-Maitrise-47.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t47",
-                       "name":  "Foudre Divine  Maitrise 47",
+                       "name":  "Baume Radieux  Maitrise 47",
                        "branch":  "single",
                        "tier":  47,
                        "level":  47,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.73,
-                       "rangeMeters":  35.6,
+                       "rangeMeters":  27.4,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Foudre Divine  Maitrise 47 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv47_Foudre-Divine-Maitrise-47.png"
+                       "description":  "Baume Radieux  Maitrise 47 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv47_Baume-Radieux-Maitrise-47.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t48",
-                       "name":  "Apocalypse Radieuse  Maitrise 48",
+                       "name":  "Aube Salvatrice  Maitrise 48",
                        "branch":  "aoe",
                        "tier":  48,
                        "level":  48,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.79,
                        "rangeMeters":  35.9,
                        "areaRadiusMeters":  6.2,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Apocalypse Radieuse  Maitrise 48 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv48_Apocalypse-Radieuse-Maitrise-48.png"
+                       "description":  "Aube Salvatrice  Maitrise 48 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv48_Aube-Salvatrice-Maitrise-48.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t48",
-                       "name":  "Inviolabilite Divine  Maitrise 48",
+                       "name":  "Sanctuaire  Maitrise 48",
                        "branch":  "def",
                        "tier":  48,
                        "level":  48,
@@ -2430,8 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Inviolabilite Divine  Maitrise 48 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv48_Inviolabilite-Divine-Maitrise-48.png"
+                       "description":  "Sanctuaire  Maitrise 48 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv48_Sanctuaire-Maitrise-48.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t48",
@@ -2447,7 +2447,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Sentence  Maitrise 48 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Sentence  Maitrise 48 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv48_Sentence-Maitrise-48.png"
                    },
                    {
@@ -2464,12 +2464,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Nova Sacree  Maitrise 49 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Nova Sacree  Maitrise 49 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv49_Nova-Sacree-Maitrise-49.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t49",
-                       "name":  "Bouclier de Foi  Maitrise 49",
+                       "name":  "Bouclier  Maitrise 49",
                        "branch":  "def",
                        "tier":  49,
                        "level":  49,
@@ -2481,46 +2481,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Bouclier de Foi  Maitrise 49 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv49_Bouclier-de-Foi-Maitrise-49.png"
+                       "description":  "Bouclier  Maitrise 49 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv49_Bouclier-Maitrise-49.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t49",
-                       "name":  "Trait de Lumiere  Maitrise 49",
+                       "name":  "Lumiere Reparatrice  Maitrise 49",
                        "branch":  "single",
                        "tier":  49,
                        "level":  49,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.85,
-                       "rangeMeters":  36.3,
+                       "rangeMeters":  27.8,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Trait de Lumiere  Maitrise 49 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv49_Trait-de-Lumiere-Maitrise-49.png"
+                       "description":  "Lumiere Reparatrice  Maitrise 49 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv49_Lumiere-Reparatrice-Maitrise-49.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t50",
-                       "name":  "Pluie de Lumiere  Maitrise 50",
+                       "name":  "Cercle Radieux  Maitrise 50",
                        "branch":  "aoe",
                        "tier":  50,
                        "level":  50,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.91,
                        "rangeMeters":  36.6,
                        "areaRadiusMeters":  6.3,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Pluie de Lumiere  Maitrise 50 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv50_Pluie-de-Lumiere-Maitrise-50.png"
+                       "description":  "Cercle Radieux  Maitrise 50 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv50_Cercle-Radieux-Maitrise-50.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t50",
-                       "name":  "Aura de Ferveur  Maitrise 50",
+                       "name":  "Barriere  Maitrise 50",
                        "branch":  "def",
                        "tier":  50,
                        "level":  50,
@@ -2532,8 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Aura de Ferveur  Maitrise 50 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv50_Aura-de-Ferveur-Maitrise-50.png"
+                       "description":  "Barriere  Maitrise 50 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv50_Barriere-Maitrise-50.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t50",
@@ -2549,7 +2549,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Verbe de Jugement  Maitrise 50 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Verbe de Jugement  Maitrise 50 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv50_Verbe-de-Jugement-Maitrise-50.png"
                    },
                    {
@@ -2566,12 +2566,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Cercle de Jugement  Maitrise 51 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Cercle de Jugement  Maitrise 51 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv51_Cercle-de-Jugement-Maitrise-51.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t51",
-                       "name":  "Garde Sacree  Maitrise 51",
+                       "name":  "Garde  Maitrise 51",
                        "branch":  "def",
                        "tier":  51,
                        "level":  51,
@@ -2583,46 +2583,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Garde Sacree  Maitrise 51 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv51_Garde-Sacree-Maitrise-51.png"
+                       "description":  "Garde  Maitrise 51 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv51_Garde-Maitrise-51.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t51",
-                       "name":  "Rayon Sacre  Maitrise 51",
+                       "name":  "Onde de Salut  Maitrise 51",
                        "branch":  "single",
                        "tier":  51,
                        "level":  51,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.97,
-                       "rangeMeters":  36.9,
+                       "rangeMeters":  28.2,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Rayon Sacre  Maitrise 51 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv51_Rayon-Sacre-Maitrise-51.png"
+                       "description":  "Onde de Salut  Maitrise 51 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv51_Onde-de-Salut-Maitrise-51.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t52",
-                       "name":  "Deflagration Sainte  Maitrise 52",
+                       "name":  "Aura de Salut  Maitrise 52",
                        "branch":  "aoe",
                        "tier":  52,
                        "level":  52,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.03,
                        "rangeMeters":  37.3,
                        "areaRadiusMeters":  6.5,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Deflagration Sainte  Maitrise 52 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv52_Deflagration-Sainte-Maitrise-52.png"
+                       "description":  "Aura de Salut  Maitrise 52 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv52_Aura-de-Salut-Maitrise-52.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t52",
-                       "name":  "Serment du Jugement  Maitrise 52",
+                       "name":  "Voile  Maitrise 52",
                        "branch":  "def",
                        "tier":  52,
                        "level":  52,
@@ -2634,8 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Serment du Jugement  Maitrise 52 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv52_Serment-du-Jugement-Maitrise-52.png"
+                       "description":  "Voile  Maitrise 52 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv52_Voile-Maitrise-52.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t52",
@@ -2651,7 +2651,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Chatiment  Maitrise 52 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Chatiment  Maitrise 52 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv52_Chatiment-Maitrise-52.png"
                    },
                    {
@@ -2668,12 +2668,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Tempete Celeste  Maitrise 53 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Tempete Celeste  Maitrise 53 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv53_Tempete-Celeste-Maitrise-53.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t53",
-                       "name":  "Rempart Radieux  Maitrise 53",
+                       "name":  "Egide  Maitrise 53",
                        "branch":  "def",
                        "tier":  53,
                        "level":  53,
@@ -2685,46 +2685,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Rempart Radieux  Maitrise 53 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv53_Rempart-Radieux-Maitrise-53.png"
+                       "description":  "Egide  Maitrise 53 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv53_Egide-Maitrise-53.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t53",
-                       "name":  "Foudre Divine  Maitrise 53",
+                       "name":  "Baume Radieux  Maitrise 53",
                        "branch":  "single",
                        "tier":  53,
                        "level":  53,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  4.08,
-                       "rangeMeters":  37.6,
+                       "rangeMeters":  28.6,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Foudre Divine  Maitrise 53 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv53_Foudre-Divine-Maitrise-53.png"
+                       "description":  "Baume Radieux  Maitrise 53 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv53_Baume-Radieux-Maitrise-53.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t54",
-                       "name":  "Apocalypse Radieuse  Maitrise 54",
+                       "name":  "Aube Salvatrice  Maitrise 54",
                        "branch":  "aoe",
                        "tier":  54,
                        "level":  54,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.14,
                        "rangeMeters":  38,
                        "areaRadiusMeters":  6.6,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Apocalypse Radieuse  Maitrise 54 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv54_Apocalypse-Radieuse-Maitrise-54.png"
+                       "description":  "Aube Salvatrice  Maitrise 54 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv54_Aube-Salvatrice-Maitrise-54.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t54",
-                       "name":  "Inviolabilite Divine  Maitrise 54",
+                       "name":  "Sanctuaire  Maitrise 54",
                        "branch":  "def",
                        "tier":  54,
                        "level":  54,
@@ -2736,8 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Inviolabilite Divine  Maitrise 54 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv54_Inviolabilite-Divine-Maitrise-54.png"
+                       "description":  "Sanctuaire  Maitrise 54 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv54_Sanctuaire-Maitrise-54.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t54",
@@ -2753,7 +2753,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Sentence  Maitrise 54 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Sentence  Maitrise 54 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv54_Sentence-Maitrise-54.png"
                    },
                    {
@@ -2770,12 +2770,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Nova Sacree  Maitrise 55 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Nova Sacree  Maitrise 55 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv55_Nova-Sacree-Maitrise-55.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t55",
-                       "name":  "Bouclier de Foi  Maitrise 55",
+                       "name":  "Bouclier  Maitrise 55",
                        "branch":  "def",
                        "tier":  55,
                        "level":  55,
@@ -2787,46 +2787,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Bouclier de Foi  Maitrise 55 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv55_Bouclier-de-Foi-Maitrise-55.png"
+                       "description":  "Bouclier  Maitrise 55 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv55_Bouclier-Maitrise-55.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t55",
-                       "name":  "Trait de Lumiere  Maitrise 55",
+                       "name":  "Lumiere Reparatrice  Maitrise 55",
                        "branch":  "single",
                        "tier":  55,
                        "level":  55,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  4.2,
-                       "rangeMeters":  38.3,
+                       "rangeMeters":  29,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Trait de Lumiere  Maitrise 55 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv55_Trait-de-Lumiere-Maitrise-55.png"
+                       "description":  "Lumiere Reparatrice  Maitrise 55 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv55_Lumiere-Reparatrice-Maitrise-55.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t56",
-                       "name":  "Pluie de Lumiere  Maitrise 56",
+                       "name":  "Cercle Radieux  Maitrise 56",
                        "branch":  "aoe",
                        "tier":  56,
                        "level":  56,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.26,
                        "rangeMeters":  38.6,
                        "areaRadiusMeters":  6.7,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Pluie de Lumiere  Maitrise 56 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv56_Pluie-de-Lumiere-Maitrise-56.png"
+                       "description":  "Cercle Radieux  Maitrise 56 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv56_Cercle-Radieux-Maitrise-56.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t56",
-                       "name":  "Aura de Ferveur  Maitrise 56",
+                       "name":  "Barriere  Maitrise 56",
                        "branch":  "def",
                        "tier":  56,
                        "level":  56,
@@ -2838,8 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Aura de Ferveur  Maitrise 56 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv56_Aura-de-Ferveur-Maitrise-56.png"
+                       "description":  "Barriere  Maitrise 56 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv56_Barriere-Maitrise-56.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t56",
@@ -2855,7 +2855,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Verbe de Jugement  Maitrise 56 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Verbe de Jugement  Maitrise 56 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv56_Verbe-de-Jugement-Maitrise-56.png"
                    },
                    {
@@ -2872,12 +2872,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Cercle de Jugement  Maitrise 57 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Cercle de Jugement  Maitrise 57 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv57_Cercle-de-Jugement-Maitrise-57.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t57",
-                       "name":  "Garde Sacree  Maitrise 57",
+                       "name":  "Garde  Maitrise 57",
                        "branch":  "def",
                        "tier":  57,
                        "level":  57,
@@ -2889,46 +2889,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Garde Sacree  Maitrise 57 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv57_Garde-Sacree-Maitrise-57.png"
+                       "description":  "Garde  Maitrise 57 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv57_Garde-Maitrise-57.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t57",
-                       "name":  "Rayon Sacre  Maitrise 57",
+                       "name":  "Onde de Salut  Maitrise 57",
                        "branch":  "single",
                        "tier":  57,
                        "level":  57,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  4.32,
-                       "rangeMeters":  39,
+                       "rangeMeters":  29.4,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Rayon Sacre  Maitrise 57 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv57_Rayon-Sacre-Maitrise-57.png"
+                       "description":  "Onde de Salut  Maitrise 57 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv57_Onde-de-Salut-Maitrise-57.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t58",
-                       "name":  "Deflagration Sainte  Maitrise 58",
+                       "name":  "Aura de Salut  Maitrise 58",
                        "branch":  "aoe",
                        "tier":  58,
                        "level":  58,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.38,
                        "rangeMeters":  39.3,
                        "areaRadiusMeters":  6.9,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Deflagration Sainte  Maitrise 58 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv58_Deflagration-Sainte-Maitrise-58.png"
+                       "description":  "Aura de Salut  Maitrise 58 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv58_Aura-de-Salut-Maitrise-58.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t58",
-                       "name":  "Serment du Jugement  Maitrise 58",
+                       "name":  "Voile  Maitrise 58",
                        "branch":  "def",
                        "tier":  58,
                        "level":  58,
@@ -2940,8 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Serment du Jugement  Maitrise 58 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv58_Serment-du-Jugement-Maitrise-58.png"
+                       "description":  "Voile  Maitrise 58 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv58_Voile-Maitrise-58.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t58",
@@ -2957,7 +2957,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Chatiment  Maitrise 58 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Chatiment  Maitrise 58 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv58_Chatiment-Maitrise-58.png"
                    },
                    {
@@ -2974,12 +2974,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Tempete Celeste  Maitrise 59 : abat la lumiere divine sur une zone (degats reduits).",
+                       "description":  "Tempete Celeste  Maitrise 59 : frappe les ennemis d'une zone.",
                        "iconFile":  "Pretre-du-Jugement_Zone_Niv59_Tempete-Celeste-Maitrise-59.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t59",
-                       "name":  "Rempart Radieux  Maitrise 59",
+                       "name":  "Egide  Maitrise 59",
                        "branch":  "def",
                        "tier":  59,
                        "level":  59,
@@ -2991,46 +2991,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Rempart Radieux  Maitrise 59 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv59_Rempart-Radieux-Maitrise-59.png"
+                       "description":  "Egide  Maitrise 59 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv59_Egide-Maitrise-59.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t59",
-                       "name":  "Foudre Divine  Maitrise 59",
+                       "name":  "Baume Radieux  Maitrise 59",
                        "branch":  "single",
                        "tier":  59,
                        "level":  59,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  4.44,
-                       "rangeMeters":  39.7,
+                       "rangeMeters":  29.8,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Foudre Divine  Maitrise 59 : foudroie une cible unique d'une lumiere punitive.",
-                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv59_Foudre-Divine-Maitrise-59.png"
+                       "description":  "Baume Radieux  Maitrise 59 : restaure la vie d'un allie par une lumiere de salut.",
+                       "iconFile":  "Pretre-du-Jugement_Unitaire_Niv59_Baume-Radieux-Maitrise-59.png"
                    },
                    {
                        "id":  "pretre_jugement_aoe_t60",
-                       "name":  "Apocalypse Radieuse  Maitrise 60",
+                       "name":  "Aube Salvatrice  Maitrise 60",
                        "branch":  "aoe",
                        "tier":  60,
                        "level":  60,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.5,
                        "rangeMeters":  40,
                        "areaRadiusMeters":  7,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Apocalypse Radieuse  Maitrise 60 : abat la lumiere divine sur une zone (degats reduits).",
-                       "iconFile":  "Pretre-du-Jugement_Zone_Niv60_Apocalypse-Radieuse-Maitrise-60.png"
+                       "description":  "Aube Salvatrice  Maitrise 60 : deverse une lumiere vitale sur les allies d'une zone.",
+                       "iconFile":  "Pretre-du-Jugement_Zone_Niv60_Aube-Salvatrice-Maitrise-60.png"
                    },
                    {
                        "id":  "pretre_jugement_def_t60",
-                       "name":  "Inviolabilite Divine  Maitrise 60",
+                       "name":  "Sanctuaire  Maitrise 60",
                        "branch":  "def",
                        "tier":  60,
                        "level":  60,
@@ -3042,8 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Inviolabilite Divine  Maitrise 60 : erige une protection sacree pour soi et ses allies proches.",
-                       "iconFile":  "Pretre-du-Jugement_Defense_Niv60_Inviolabilite-Divine-Maitrise-60.png"
+                       "description":  "Sanctuaire  Maitrise 60 : erige une protection.",
+                       "iconFile":  "Pretre-du-Jugement_Defense_Niv60_Sanctuaire-Maitrise-60.png"
                    },
                    {
                        "id":  "pretre_jugement_single_t60",
@@ -3059,7 +3059,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Sentence  Maitrise 60 : foudroie une cible unique d'une lumiere punitive.",
+                       "description":  "Sentence  Maitrise 60 : frappe une cible unique.",
                        "iconFile":  "Pretre-du-Jugement_Unitaire_Niv60_Sentence-Maitrise-60.png"
                    }
                ]

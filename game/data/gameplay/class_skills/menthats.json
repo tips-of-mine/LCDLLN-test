@@ -16,12 +16,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Hymne Noir : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Hymne Noir : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv01_Hymne-Noir.png"
                    },
                    {
                        "id":  "menthats_def_t1",
-                       "name":  "Garde Mentale",
+                       "name":  "Bouclier",
                        "branch":  "def",
                        "tier":  1,
                        "level":  1,
@@ -33,46 +33,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Garde Mentale : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv01_Garde-Mentale.png"
+                       "description":  "Bouclier : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv01_Bouclier.png"
                    },
                    {
                        "id":  "menthats_single_t1",
-                       "name":  "Mot de Douleur",
+                       "name":  "Don de la Gemme",
                        "branch":  "single",
                        "tier":  1,
                        "level":  1,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1,
-                       "rangeMeters":  20,
+                       "rangeMeters":  18,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Mot de Douleur : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv01_Mot-de-Douleur.png"
+                       "description":  "Don de la Gemme : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv01_Don-de-la-Gemme.png"
                    },
                    {
                        "id":  "menthats_aoe_t2",
-                       "name":  "Vague Psychique  Aiguise",
+                       "name":  "Cercle de la Gemme  Aiguise",
                        "branch":  "aoe",
                        "tier":  2,
                        "level":  2,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.06,
                        "rangeMeters":  20.3,
                        "areaRadiusMeters":  3.1,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Vague Psychique  Aiguise : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv02_Vague-Psychique-Aiguise.png"
+                       "description":  "Cercle de la Gemme  Aiguise : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv02_Cercle-de-la-Gemme-Aiguise.png"
                    },
                    {
                        "id":  "menthats_def_t2",
-                       "name":  "Sceau Frontal  Aiguise",
+                       "name":  "Barriere  Aiguise",
                        "branch":  "def",
                        "tier":  2,
                        "level":  2,
@@ -84,8 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Sceau Frontal  Aiguise : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv02_Sceau-Frontal-Aiguise.png"
+                       "description":  "Barriere  Aiguise : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv02_Barriere-Aiguise.png"
                    },
                    {
                        "id":  "menthats_single_t2",
@@ -101,7 +101,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Chatiment Mental  Aiguise : brise l'esprit d'une cible unique.",
+                       "description":  "Chatiment Mental  Aiguise : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv02_Chatiment-Mental-Aiguise.png"
                    },
                    {
@@ -118,12 +118,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Cercle d'Anatheme  Renforce : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Cercle d'Anatheme  Renforce : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv03_Cercle-d-Anatheme-Renforce.png"
                    },
                    {
                        "id":  "menthats_def_t3",
-                       "name":  "Litanie de Protection  Renforce",
+                       "name":  "Garde  Renforce",
                        "branch":  "def",
                        "tier":  3,
                        "level":  3,
@@ -135,46 +135,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Litanie de Protection  Renforce : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv03_Litanie-de-Protection-Renforce.png"
+                       "description":  "Garde  Renforce : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv03_Garde-Renforce.png"
                    },
                    {
                        "id":  "menthats_single_t3",
-                       "name":  "Fletrissure  Renforce",
+                       "name":  "Souffle Mental  Renforce",
                        "branch":  "single",
                        "tier":  3,
                        "level":  3,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.12,
-                       "rangeMeters":  20.7,
+                       "rangeMeters":  18.4,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Fletrissure  Renforce : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv03_Fletrissure-Renforce.png"
+                       "description":  "Souffle Mental  Renforce : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv03_Souffle-Mental-Renforce.png"
                    },
                    {
                        "id":  "menthats_aoe_t4",
-                       "name":  "Cantique de Mort  Affute",
+                       "name":  "Halo Interdit  Affute",
                        "branch":  "aoe",
                        "tier":  4,
                        "level":  4,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.18,
                        "rangeMeters":  21,
                        "areaRadiusMeters":  3.2,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Cantique de Mort  Affute : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv04_Cantique-de-Mort-Affute.png"
+                       "description":  "Halo Interdit  Affute : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv04_Halo-Interdit-Affute.png"
                    },
                    {
                        "id":  "menthats_def_t4",
-                       "name":  "Egide de Haazheel  Affute",
+                       "name":  "Voile  Affute",
                        "branch":  "def",
                        "tier":  4,
                        "level":  4,
@@ -186,8 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Egide de Haazheel  Affute : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv04_Egide-de-Haazheel-Affute.png"
+                       "description":  "Voile  Affute : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv04_Voile-Affute.png"
                    },
                    {
                        "id":  "menthats_single_t4",
@@ -203,7 +203,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Anatheme Supreme  Affute : brise l'esprit d'une cible unique.",
+                       "description":  "Anatheme Supreme  Affute : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv04_Anatheme-Supreme-Affute.png"
                    },
                    {
@@ -220,12 +220,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Chur de Ruine  Brutal : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Chur de Ruine  Brutal : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv05_Chur-de-Ruine-Brutal.png"
                    },
                    {
                        "id":  "menthats_def_t5",
-                       "name":  "Voile Inviolable  Brutal",
+                       "name":  "Egide  Brutal",
                        "branch":  "def",
                        "tier":  5,
                        "level":  5,
@@ -237,46 +237,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Voile Inviolable  Brutal : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv05_Voile-Inviolable-Brutal.png"
+                       "description":  "Egide  Brutal : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv05_Egide-Brutal.png"
                    },
                    {
                        "id":  "menthats_single_t5",
-                       "name":  "Brisure d'Ame  Brutal",
+                       "name":  "Etreinte de Haazheel  Brutal",
                        "branch":  "single",
                        "tier":  5,
                        "level":  5,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.24,
-                       "rangeMeters":  21.4,
+                       "rangeMeters":  18.8,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Brisure d'Ame  Brutal : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv05_Brisure-d-Ame-Brutal.png"
+                       "description":  "Etreinte de Haazheel  Brutal : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv05_Etreinte-de-Haazheel-Brutal.png"
                    },
                    {
                        "id":  "menthats_aoe_t6",
-                       "name":  "Apocalypse Mentale  Vorace",
+                       "name":  "Resurgence Voilee  Vorace",
                        "branch":  "aoe",
                        "tier":  6,
                        "level":  6,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.3,
                        "rangeMeters":  21.7,
                        "areaRadiusMeters":  3.3,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Apocalypse Mentale  Vorace : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv06_Apocalypse-Mentale-Vorace.png"
+                       "description":  "Resurgence Voilee  Vorace : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv06_Resurgence-Voilee-Vorace.png"
                    },
                    {
                        "id":  "menthats_def_t6",
-                       "name":  "Sanctuaire Interdit  Vorace",
+                       "name":  "Sanctuaire  Vorace",
                        "branch":  "def",
                        "tier":  6,
                        "level":  6,
@@ -288,8 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Sanctuaire Interdit  Vorace : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv06_Sanctuaire-Interdit-Vorace.png"
+                       "description":  "Sanctuaire  Vorace : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv06_Sanctuaire-Vorace.png"
                    },
                    {
                        "id":  "menthats_single_t6",
@@ -305,7 +305,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Sentence Finale  Vorace : brise l'esprit d'une cible unique.",
+                       "description":  "Sentence Finale  Vorace : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv06_Sentence-Finale-Vorace.png"
                    },
                    {
@@ -322,12 +322,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Hymne Noir  Implacable : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Hymne Noir  Implacable : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv07_Hymne-Noir-Implacable.png"
                    },
                    {
                        "id":  "menthats_def_t7",
-                       "name":  "Garde Mentale  Implacable",
+                       "name":  "Bouclier  Implacable",
                        "branch":  "def",
                        "tier":  7,
                        "level":  7,
@@ -339,46 +339,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Garde Mentale  Implacable : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv07_Garde-Mentale-Implacable.png"
+                       "description":  "Bouclier  Implacable : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv07_Bouclier-Implacable.png"
                    },
                    {
                        "id":  "menthats_single_t7",
-                       "name":  "Mot de Douleur  Implacable",
+                       "name":  "Don de la Gemme  Implacable",
                        "branch":  "single",
                        "tier":  7,
                        "level":  7,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.36,
-                       "rangeMeters":  22,
+                       "rangeMeters":  19.2,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Mot de Douleur  Implacable : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv07_Mot-de-Douleur-Implacable.png"
+                       "description":  "Don de la Gemme  Implacable : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv07_Don-de-la-Gemme-Implacable.png"
                    },
                    {
                        "id":  "menthats_aoe_t8",
-                       "name":  "Vague Psychique  Funeste",
+                       "name":  "Cercle de la Gemme  Funeste",
                        "branch":  "aoe",
                        "tier":  8,
                        "level":  8,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.42,
                        "rangeMeters":  22.4,
                        "areaRadiusMeters":  3.5,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Vague Psychique  Funeste : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv08_Vague-Psychique-Funeste.png"
+                       "description":  "Cercle de la Gemme  Funeste : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv08_Cercle-de-la-Gemme-Funeste.png"
                    },
                    {
                        "id":  "menthats_def_t8",
-                       "name":  "Sceau Frontal  Funeste",
+                       "name":  "Barriere  Funeste",
                        "branch":  "def",
                        "tier":  8,
                        "level":  8,
@@ -390,8 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Sceau Frontal  Funeste : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv08_Sceau-Frontal-Funeste.png"
+                       "description":  "Barriere  Funeste : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv08_Barriere-Funeste.png"
                    },
                    {
                        "id":  "menthats_single_t8",
@@ -407,7 +407,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Chatiment Mental  Funeste : brise l'esprit d'une cible unique.",
+                       "description":  "Chatiment Mental  Funeste : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv08_Chatiment-Mental-Funeste.png"
                    },
                    {
@@ -424,12 +424,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Cercle d'Anatheme  Cruel : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Cercle d'Anatheme  Cruel : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv09_Cercle-d-Anatheme-Cruel.png"
                    },
                    {
                        "id":  "menthats_def_t9",
-                       "name":  "Litanie de Protection  Cruel",
+                       "name":  "Garde  Cruel",
                        "branch":  "def",
                        "tier":  9,
                        "level":  9,
@@ -441,46 +441,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Litanie de Protection  Cruel : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv09_Litanie-de-Protection-Cruel.png"
+                       "description":  "Garde  Cruel : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv09_Garde-Cruel.png"
                    },
                    {
                        "id":  "menthats_single_t9",
-                       "name":  "Fletrissure  Cruel",
+                       "name":  "Souffle Mental  Cruel",
                        "branch":  "single",
                        "tier":  9,
                        "level":  9,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.47,
-                       "rangeMeters":  22.7,
+                       "rangeMeters":  19.6,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Fletrissure  Cruel : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv09_Fletrissure-Cruel.png"
+                       "description":  "Souffle Mental  Cruel : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv09_Souffle-Mental-Cruel.png"
                    },
                    {
                        "id":  "menthats_aoe_t10",
-                       "name":  "Cantique de Mort  Sanglant",
+                       "name":  "Halo Interdit  Sanglant",
                        "branch":  "aoe",
                        "tier":  10,
                        "level":  10,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.53,
                        "rangeMeters":  23.1,
                        "areaRadiusMeters":  3.6,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Cantique de Mort  Sanglant : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv10_Cantique-de-Mort-Sanglant.png"
+                       "description":  "Halo Interdit  Sanglant : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv10_Halo-Interdit-Sanglant.png"
                    },
                    {
                        "id":  "menthats_def_t10",
-                       "name":  "Egide de Haazheel  Sanglant",
+                       "name":  "Voile  Sanglant",
                        "branch":  "def",
                        "tier":  10,
                        "level":  10,
@@ -492,8 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Egide de Haazheel  Sanglant : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv10_Egide-de-Haazheel-Sanglant.png"
+                       "description":  "Voile  Sanglant : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv10_Voile-Sanglant.png"
                    },
                    {
                        "id":  "menthats_single_t10",
@@ -509,7 +509,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Anatheme Supreme  Sanglant : brise l'esprit d'une cible unique.",
+                       "description":  "Anatheme Supreme  Sanglant : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv10_Anatheme-Supreme-Sanglant.png"
                    },
                    {
@@ -526,12 +526,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Chur de Ruine  Devastateur : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Chur de Ruine  Devastateur : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv11_Chur-de-Ruine-Devastateur.png"
                    },
                    {
                        "id":  "menthats_def_t11",
-                       "name":  "Voile Inviolable  Devastateur",
+                       "name":  "Egide  Devastateur",
                        "branch":  "def",
                        "tier":  11,
                        "level":  11,
@@ -543,46 +543,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Voile Inviolable  Devastateur : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv11_Voile-Inviolable-Devastateur.png"
+                       "description":  "Egide  Devastateur : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv11_Egide-Devastateur.png"
                    },
                    {
                        "id":  "menthats_single_t11",
-                       "name":  "Brisure d'Ame  Devastateur",
+                       "name":  "Etreinte de Haazheel  Devastateur",
                        "branch":  "single",
                        "tier":  11,
                        "level":  11,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.59,
-                       "rangeMeters":  23.4,
+                       "rangeMeters":  20,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Brisure d'Ame  Devastateur : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv11_Brisure-d-Ame-Devastateur.png"
+                       "description":  "Etreinte de Haazheel  Devastateur : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv11_Etreinte-de-Haazheel-Devastateur.png"
                    },
                    {
                        "id":  "menthats_aoe_t12",
-                       "name":  "Apocalypse Mentale  Foudroyant",
+                       "name":  "Resurgence Voilee  Foudroyant",
                        "branch":  "aoe",
                        "tier":  12,
                        "level":  12,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.65,
                        "rangeMeters":  23.7,
                        "areaRadiusMeters":  3.7,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Apocalypse Mentale  Foudroyant : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv12_Apocalypse-Mentale-Foudroyant.png"
+                       "description":  "Resurgence Voilee  Foudroyant : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv12_Resurgence-Voilee-Foudroyant.png"
                    },
                    {
                        "id":  "menthats_def_t12",
-                       "name":  "Sanctuaire Interdit  Foudroyant",
+                       "name":  "Sanctuaire  Foudroyant",
                        "branch":  "def",
                        "tier":  12,
                        "level":  12,
@@ -594,8 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Sanctuaire Interdit  Foudroyant : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv12_Sanctuaire-Interdit-Foudroyant.png"
+                       "description":  "Sanctuaire  Foudroyant : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv12_Sanctuaire-Foudroyant.png"
                    },
                    {
                        "id":  "menthats_single_t12",
@@ -611,7 +611,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Sentence Finale  Foudroyant : brise l'esprit d'une cible unique.",
+                       "description":  "Sentence Finale  Foudroyant : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv12_Sentence-Finale-Foudroyant.png"
                    },
                    {
@@ -628,12 +628,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Hymne Noir  Mortel : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Hymne Noir  Mortel : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv13_Hymne-Noir-Mortel.png"
                    },
                    {
                        "id":  "menthats_def_t13",
-                       "name":  "Garde Mentale  Mortel",
+                       "name":  "Bouclier  Mortel",
                        "branch":  "def",
                        "tier":  13,
                        "level":  13,
@@ -645,46 +645,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Garde Mentale  Mortel : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv13_Garde-Mentale-Mortel.png"
+                       "description":  "Bouclier  Mortel : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv13_Bouclier-Mortel.png"
                    },
                    {
                        "id":  "menthats_single_t13",
-                       "name":  "Mot de Douleur  Mortel",
+                       "name":  "Don de la Gemme  Mortel",
                        "branch":  "single",
                        "tier":  13,
                        "level":  13,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.71,
-                       "rangeMeters":  24.1,
+                       "rangeMeters":  20.4,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Mot de Douleur  Mortel : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv13_Mot-de-Douleur-Mortel.png"
+                       "description":  "Don de la Gemme  Mortel : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv13_Don-de-la-Gemme-Mortel.png"
                    },
                    {
                        "id":  "menthats_aoe_t14",
-                       "name":  "Vague Psychique  Inexorable",
+                       "name":  "Cercle de la Gemme  Inexorable",
                        "branch":  "aoe",
                        "tier":  14,
                        "level":  14,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.77,
                        "rangeMeters":  24.4,
                        "areaRadiusMeters":  3.9,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Vague Psychique  Inexorable : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv14_Vague-Psychique-Inexorable.png"
+                       "description":  "Cercle de la Gemme  Inexorable : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv14_Cercle-de-la-Gemme-Inexorable.png"
                    },
                    {
                        "id":  "menthats_def_t14",
-                       "name":  "Sceau Frontal  Inexorable",
+                       "name":  "Barriere  Inexorable",
                        "branch":  "def",
                        "tier":  14,
                        "level":  14,
@@ -696,8 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Sceau Frontal  Inexorable : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv14_Sceau-Frontal-Inexorable.png"
+                       "description":  "Barriere  Inexorable : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv14_Barriere-Inexorable.png"
                    },
                    {
                        "id":  "menthats_single_t14",
@@ -713,7 +713,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Chatiment Mental  Inexorable : brise l'esprit d'une cible unique.",
+                       "description":  "Chatiment Mental  Inexorable : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv14_Chatiment-Mental-Inexorable.png"
                    },
                    {
@@ -730,12 +730,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Cercle d'Anatheme  Terrible : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Cercle d'Anatheme  Terrible : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv15_Cercle-d-Anatheme-Terrible.png"
                    },
                    {
                        "id":  "menthats_def_t15",
-                       "name":  "Litanie de Protection  Terrible",
+                       "name":  "Garde  Terrible",
                        "branch":  "def",
                        "tier":  15,
                        "level":  15,
@@ -747,46 +747,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Litanie de Protection  Terrible : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv15_Litanie-de-Protection-Terrible.png"
+                       "description":  "Garde  Terrible : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv15_Garde-Terrible.png"
                    },
                    {
                        "id":  "menthats_single_t15",
-                       "name":  "Fletrissure  Terrible",
+                       "name":  "Souffle Mental  Terrible",
                        "branch":  "single",
                        "tier":  15,
                        "level":  15,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.83,
-                       "rangeMeters":  24.7,
+                       "rangeMeters":  20.8,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Fletrissure  Terrible : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv15_Fletrissure-Terrible.png"
+                       "description":  "Souffle Mental  Terrible : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv15_Souffle-Mental-Terrible.png"
                    },
                    {
                        "id":  "menthats_aoe_t16",
-                       "name":  "Cantique de Mort  Souverain",
+                       "name":  "Halo Interdit  Souverain",
                        "branch":  "aoe",
                        "tier":  16,
                        "level":  16,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.89,
                        "rangeMeters":  25.1,
                        "areaRadiusMeters":  4,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Cantique de Mort  Souverain : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv16_Cantique-de-Mort-Souverain.png"
+                       "description":  "Halo Interdit  Souverain : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv16_Halo-Interdit-Souverain.png"
                    },
                    {
                        "id":  "menthats_def_t16",
-                       "name":  "Egide de Haazheel  Souverain",
+                       "name":  "Voile  Souverain",
                        "branch":  "def",
                        "tier":  16,
                        "level":  16,
@@ -798,8 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Egide de Haazheel  Souverain : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv16_Egide-de-Haazheel-Souverain.png"
+                       "description":  "Voile  Souverain : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv16_Voile-Souverain.png"
                    },
                    {
                        "id":  "menthats_single_t16",
@@ -815,7 +815,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Anatheme Supreme  Souverain : brise l'esprit d'une cible unique.",
+                       "description":  "Anatheme Supreme  Souverain : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv16_Anatheme-Supreme-Souverain.png"
                    },
                    {
@@ -832,12 +832,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Chur de Ruine  Legendaire : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Chur de Ruine  Legendaire : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv17_Chur-de-Ruine-Legendaire.png"
                    },
                    {
                        "id":  "menthats_def_t17",
-                       "name":  "Voile Inviolable  Legendaire",
+                       "name":  "Egide  Legendaire",
                        "branch":  "def",
                        "tier":  17,
                        "level":  17,
@@ -849,46 +849,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Voile Inviolable  Legendaire : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv17_Voile-Inviolable-Legendaire.png"
+                       "description":  "Egide  Legendaire : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv17_Egide-Legendaire.png"
                    },
                    {
                        "id":  "menthats_single_t17",
-                       "name":  "Brisure d'Ame  Legendaire",
+                       "name":  "Etreinte de Haazheel  Legendaire",
                        "branch":  "single",
                        "tier":  17,
                        "level":  17,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.95,
-                       "rangeMeters":  25.4,
+                       "rangeMeters":  21.3,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Brisure d'Ame  Legendaire : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv17_Brisure-d-Ame-Legendaire.png"
+                       "description":  "Etreinte de Haazheel  Legendaire : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv17_Etreinte-de-Haazheel-Legendaire.png"
                    },
                    {
                        "id":  "menthats_aoe_t18",
-                       "name":  "Apocalypse Mentale  Cataclysmique",
+                       "name":  "Resurgence Voilee  Cataclysmique",
                        "branch":  "aoe",
                        "tier":  18,
                        "level":  18,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.01,
                        "rangeMeters":  25.8,
                        "areaRadiusMeters":  4.2,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Apocalypse Mentale  Cataclysmique : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv18_Apocalypse-Mentale-Cataclysmique.png"
+                       "description":  "Resurgence Voilee  Cataclysmique : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv18_Resurgence-Voilee-Cataclysmique.png"
                    },
                    {
                        "id":  "menthats_def_t18",
-                       "name":  "Sanctuaire Interdit  Cataclysmique",
+                       "name":  "Sanctuaire  Cataclysmique",
                        "branch":  "def",
                        "tier":  18,
                        "level":  18,
@@ -900,8 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Sanctuaire Interdit  Cataclysmique : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv18_Sanctuaire-Interdit-Cataclysmique.png"
+                       "description":  "Sanctuaire  Cataclysmique : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv18_Sanctuaire-Cataclysmique.png"
                    },
                    {
                        "id":  "menthats_single_t18",
@@ -917,7 +917,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Sentence Finale  Cataclysmique : brise l'esprit d'une cible unique.",
+                       "description":  "Sentence Finale  Cataclysmique : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv18_Sentence-Finale-Cataclysmique.png"
                    },
                    {
@@ -934,12 +934,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Hymne Noir  Apocalyptique : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Hymne Noir  Apocalyptique : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv19_Hymne-Noir-Apocalyptique.png"
                    },
                    {
                        "id":  "menthats_def_t19",
-                       "name":  "Garde Mentale  Apocalyptique",
+                       "name":  "Bouclier  Apocalyptique",
                        "branch":  "def",
                        "tier":  19,
                        "level":  19,
@@ -951,46 +951,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Garde Mentale  Apocalyptique : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv19_Garde-Mentale-Apocalyptique.png"
+                       "description":  "Bouclier  Apocalyptique : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv19_Bouclier-Apocalyptique.png"
                    },
                    {
                        "id":  "menthats_single_t19",
-                       "name":  "Mot de Douleur  Apocalyptique",
+                       "name":  "Don de la Gemme  Apocalyptique",
                        "branch":  "single",
                        "tier":  19,
                        "level":  19,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.07,
-                       "rangeMeters":  26.1,
+                       "rangeMeters":  21.7,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Mot de Douleur  Apocalyptique : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv19_Mot-de-Douleur-Apocalyptique.png"
+                       "description":  "Don de la Gemme  Apocalyptique : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv19_Don-de-la-Gemme-Apocalyptique.png"
                    },
                    {
                        "id":  "menthats_aoe_t20",
-                       "name":  "Vague Psychique  Ultime",
+                       "name":  "Cercle de la Gemme  Ultime",
                        "branch":  "aoe",
                        "tier":  20,
                        "level":  20,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.13,
                        "rangeMeters":  26.4,
                        "areaRadiusMeters":  4.3,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Vague Psychique  Ultime : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv20_Vague-Psychique-Ultime.png"
+                       "description":  "Cercle de la Gemme  Ultime : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv20_Cercle-de-la-Gemme-Ultime.png"
                    },
                    {
                        "id":  "menthats_def_t20",
-                       "name":  "Sceau Frontal  Ultime",
+                       "name":  "Barriere  Ultime",
                        "branch":  "def",
                        "tier":  20,
                        "level":  20,
@@ -1002,8 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Sceau Frontal  Ultime : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv20_Sceau-Frontal-Ultime.png"
+                       "description":  "Barriere  Ultime : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv20_Barriere-Ultime.png"
                    },
                    {
                        "id":  "menthats_single_t20",
@@ -1019,7 +1019,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Chatiment Mental  Ultime : brise l'esprit d'une cible unique.",
+                       "description":  "Chatiment Mental  Ultime : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv20_Chatiment-Mental-Ultime.png"
                    },
                    {
@@ -1036,12 +1036,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Cercle d'Anatheme  Maitrise 21 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Cercle d'Anatheme  Maitrise 21 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv21_Cercle-d-Anatheme-Maitrise-21.png"
                    },
                    {
                        "id":  "menthats_def_t21",
-                       "name":  "Litanie de Protection  Maitrise 21",
+                       "name":  "Garde  Maitrise 21",
                        "branch":  "def",
                        "tier":  21,
                        "level":  21,
@@ -1053,46 +1053,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Litanie de Protection  Maitrise 21 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv21_Litanie-de-Protection-Maitrise-21.png"
+                       "description":  "Garde  Maitrise 21 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv21_Garde-Maitrise-21.png"
                    },
                    {
                        "id":  "menthats_single_t21",
-                       "name":  "Fletrissure  Maitrise 21",
+                       "name":  "Souffle Mental  Maitrise 21",
                        "branch":  "single",
                        "tier":  21,
                        "level":  21,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.19,
-                       "rangeMeters":  26.8,
+                       "rangeMeters":  22.1,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Fletrissure  Maitrise 21 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv21_Fletrissure-Maitrise-21.png"
+                       "description":  "Souffle Mental  Maitrise 21 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv21_Souffle-Mental-Maitrise-21.png"
                    },
                    {
                        "id":  "menthats_aoe_t22",
-                       "name":  "Cantique de Mort  Maitrise 22",
+                       "name":  "Halo Interdit  Maitrise 22",
                        "branch":  "aoe",
                        "tier":  22,
                        "level":  22,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.25,
                        "rangeMeters":  27.1,
                        "areaRadiusMeters":  4.4,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Cantique de Mort  Maitrise 22 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv22_Cantique-de-Mort-Maitrise-22.png"
+                       "description":  "Halo Interdit  Maitrise 22 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv22_Halo-Interdit-Maitrise-22.png"
                    },
                    {
                        "id":  "menthats_def_t22",
-                       "name":  "Egide de Haazheel  Maitrise 22",
+                       "name":  "Voile  Maitrise 22",
                        "branch":  "def",
                        "tier":  22,
                        "level":  22,
@@ -1104,8 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Egide de Haazheel  Maitrise 22 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv22_Egide-de-Haazheel-Maitrise-22.png"
+                       "description":  "Voile  Maitrise 22 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv22_Voile-Maitrise-22.png"
                    },
                    {
                        "id":  "menthats_single_t22",
@@ -1121,7 +1121,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Anatheme Supreme  Maitrise 22 : brise l'esprit d'une cible unique.",
+                       "description":  "Anatheme Supreme  Maitrise 22 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv22_Anatheme-Supreme-Maitrise-22.png"
                    },
                    {
@@ -1138,12 +1138,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Chur de Ruine  Maitrise 23 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Chur de Ruine  Maitrise 23 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv23_Chur-de-Ruine-Maitrise-23.png"
                    },
                    {
                        "id":  "menthats_def_t23",
-                       "name":  "Voile Inviolable  Maitrise 23",
+                       "name":  "Egide  Maitrise 23",
                        "branch":  "def",
                        "tier":  23,
                        "level":  23,
@@ -1155,46 +1155,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Voile Inviolable  Maitrise 23 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv23_Voile-Inviolable-Maitrise-23.png"
+                       "description":  "Egide  Maitrise 23 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv23_Egide-Maitrise-23.png"
                    },
                    {
                        "id":  "menthats_single_t23",
-                       "name":  "Brisure d'Ame  Maitrise 23",
+                       "name":  "Etreinte de Haazheel  Maitrise 23",
                        "branch":  "single",
                        "tier":  23,
                        "level":  23,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.31,
-                       "rangeMeters":  27.5,
+                       "rangeMeters":  22.5,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Brisure d'Ame  Maitrise 23 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv23_Brisure-d-Ame-Maitrise-23.png"
+                       "description":  "Etreinte de Haazheel  Maitrise 23 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv23_Etreinte-de-Haazheel-Maitrise-23.png"
                    },
                    {
                        "id":  "menthats_aoe_t24",
-                       "name":  "Apocalypse Mentale  Maitrise 24",
+                       "name":  "Resurgence Voilee  Maitrise 24",
                        "branch":  "aoe",
                        "tier":  24,
                        "level":  24,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.36,
                        "rangeMeters":  27.8,
                        "areaRadiusMeters":  4.6,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Apocalypse Mentale  Maitrise 24 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv24_Apocalypse-Mentale-Maitrise-24.png"
+                       "description":  "Resurgence Voilee  Maitrise 24 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv24_Resurgence-Voilee-Maitrise-24.png"
                    },
                    {
                        "id":  "menthats_def_t24",
-                       "name":  "Sanctuaire Interdit  Maitrise 24",
+                       "name":  "Sanctuaire  Maitrise 24",
                        "branch":  "def",
                        "tier":  24,
                        "level":  24,
@@ -1206,8 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Sanctuaire Interdit  Maitrise 24 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv24_Sanctuaire-Interdit-Maitrise-24.png"
+                       "description":  "Sanctuaire  Maitrise 24 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv24_Sanctuaire-Maitrise-24.png"
                    },
                    {
                        "id":  "menthats_single_t24",
@@ -1223,7 +1223,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Sentence Finale  Maitrise 24 : brise l'esprit d'une cible unique.",
+                       "description":  "Sentence Finale  Maitrise 24 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv24_Sentence-Finale-Maitrise-24.png"
                    },
                    {
@@ -1240,12 +1240,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Hymne Noir  Maitrise 25 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Hymne Noir  Maitrise 25 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv25_Hymne-Noir-Maitrise-25.png"
                    },
                    {
                        "id":  "menthats_def_t25",
-                       "name":  "Garde Mentale  Maitrise 25",
+                       "name":  "Bouclier  Maitrise 25",
                        "branch":  "def",
                        "tier":  25,
                        "level":  25,
@@ -1257,46 +1257,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Garde Mentale  Maitrise 25 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv25_Garde-Mentale-Maitrise-25.png"
+                       "description":  "Bouclier  Maitrise 25 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv25_Bouclier-Maitrise-25.png"
                    },
                    {
                        "id":  "menthats_single_t25",
-                       "name":  "Mot de Douleur  Maitrise 25",
+                       "name":  "Don de la Gemme  Maitrise 25",
                        "branch":  "single",
                        "tier":  25,
                        "level":  25,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.42,
-                       "rangeMeters":  28.1,
+                       "rangeMeters":  22.9,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Mot de Douleur  Maitrise 25 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv25_Mot-de-Douleur-Maitrise-25.png"
+                       "description":  "Don de la Gemme  Maitrise 25 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv25_Don-de-la-Gemme-Maitrise-25.png"
                    },
                    {
                        "id":  "menthats_aoe_t26",
-                       "name":  "Vague Psychique  Maitrise 26",
+                       "name":  "Cercle de la Gemme  Maitrise 26",
                        "branch":  "aoe",
                        "tier":  26,
                        "level":  26,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.48,
                        "rangeMeters":  28.5,
                        "areaRadiusMeters":  4.7,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Vague Psychique  Maitrise 26 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv26_Vague-Psychique-Maitrise-26.png"
+                       "description":  "Cercle de la Gemme  Maitrise 26 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv26_Cercle-de-la-Gemme-Maitrise-26.png"
                    },
                    {
                        "id":  "menthats_def_t26",
-                       "name":  "Sceau Frontal  Maitrise 26",
+                       "name":  "Barriere  Maitrise 26",
                        "branch":  "def",
                        "tier":  26,
                        "level":  26,
@@ -1308,8 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Sceau Frontal  Maitrise 26 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv26_Sceau-Frontal-Maitrise-26.png"
+                       "description":  "Barriere  Maitrise 26 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv26_Barriere-Maitrise-26.png"
                    },
                    {
                        "id":  "menthats_single_t26",
@@ -1325,7 +1325,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Chatiment Mental  Maitrise 26 : brise l'esprit d'une cible unique.",
+                       "description":  "Chatiment Mental  Maitrise 26 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv26_Chatiment-Mental-Maitrise-26.png"
                    },
                    {
@@ -1342,12 +1342,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Cercle d'Anatheme  Maitrise 27 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Cercle d'Anatheme  Maitrise 27 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv27_Cercle-d-Anatheme-Maitrise-27.png"
                    },
                    {
                        "id":  "menthats_def_t27",
-                       "name":  "Litanie de Protection  Maitrise 27",
+                       "name":  "Garde  Maitrise 27",
                        "branch":  "def",
                        "tier":  27,
                        "level":  27,
@@ -1359,46 +1359,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Litanie de Protection  Maitrise 27 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv27_Litanie-de-Protection-Maitrise-27.png"
+                       "description":  "Garde  Maitrise 27 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv27_Garde-Maitrise-27.png"
                    },
                    {
                        "id":  "menthats_single_t27",
-                       "name":  "Fletrissure  Maitrise 27",
+                       "name":  "Souffle Mental  Maitrise 27",
                        "branch":  "single",
                        "tier":  27,
                        "level":  27,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.54,
-                       "rangeMeters":  28.8,
+                       "rangeMeters":  23.3,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Fletrissure  Maitrise 27 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv27_Fletrissure-Maitrise-27.png"
+                       "description":  "Souffle Mental  Maitrise 27 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv27_Souffle-Mental-Maitrise-27.png"
                    },
                    {
                        "id":  "menthats_aoe_t28",
-                       "name":  "Cantique de Mort  Maitrise 28",
+                       "name":  "Halo Interdit  Maitrise 28",
                        "branch":  "aoe",
                        "tier":  28,
                        "level":  28,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.6,
                        "rangeMeters":  29.2,
                        "areaRadiusMeters":  4.8,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Cantique de Mort  Maitrise 28 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv28_Cantique-de-Mort-Maitrise-28.png"
+                       "description":  "Halo Interdit  Maitrise 28 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv28_Halo-Interdit-Maitrise-28.png"
                    },
                    {
                        "id":  "menthats_def_t28",
-                       "name":  "Egide de Haazheel  Maitrise 28",
+                       "name":  "Voile  Maitrise 28",
                        "branch":  "def",
                        "tier":  28,
                        "level":  28,
@@ -1410,8 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Egide de Haazheel  Maitrise 28 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv28_Egide-de-Haazheel-Maitrise-28.png"
+                       "description":  "Voile  Maitrise 28 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv28_Voile-Maitrise-28.png"
                    },
                    {
                        "id":  "menthats_single_t28",
@@ -1427,7 +1427,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Anatheme Supreme  Maitrise 28 : brise l'esprit d'une cible unique.",
+                       "description":  "Anatheme Supreme  Maitrise 28 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv28_Anatheme-Supreme-Maitrise-28.png"
                    },
                    {
@@ -1444,12 +1444,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Chur de Ruine  Maitrise 29 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Chur de Ruine  Maitrise 29 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv29_Chur-de-Ruine-Maitrise-29.png"
                    },
                    {
                        "id":  "menthats_def_t29",
-                       "name":  "Voile Inviolable  Maitrise 29",
+                       "name":  "Egide  Maitrise 29",
                        "branch":  "def",
                        "tier":  29,
                        "level":  29,
@@ -1461,46 +1461,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Voile Inviolable  Maitrise 29 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv29_Voile-Inviolable-Maitrise-29.png"
+                       "description":  "Egide  Maitrise 29 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv29_Egide-Maitrise-29.png"
                    },
                    {
                        "id":  "menthats_single_t29",
-                       "name":  "Brisure d'Ame  Maitrise 29",
+                       "name":  "Etreinte de Haazheel  Maitrise 29",
                        "branch":  "single",
                        "tier":  29,
                        "level":  29,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.66,
-                       "rangeMeters":  29.5,
+                       "rangeMeters":  23.7,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Brisure d'Ame  Maitrise 29 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv29_Brisure-d-Ame-Maitrise-29.png"
+                       "description":  "Etreinte de Haazheel  Maitrise 29 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv29_Etreinte-de-Haazheel-Maitrise-29.png"
                    },
                    {
                        "id":  "menthats_aoe_t30",
-                       "name":  "Apocalypse Mentale  Maitrise 30",
+                       "name":  "Resurgence Voilee  Maitrise 30",
                        "branch":  "aoe",
                        "tier":  30,
                        "level":  30,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.72,
                        "rangeMeters":  29.8,
                        "areaRadiusMeters":  5,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Apocalypse Mentale  Maitrise 30 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv30_Apocalypse-Mentale-Maitrise-30.png"
+                       "description":  "Resurgence Voilee  Maitrise 30 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv30_Resurgence-Voilee-Maitrise-30.png"
                    },
                    {
                        "id":  "menthats_def_t30",
-                       "name":  "Sanctuaire Interdit  Maitrise 30",
+                       "name":  "Sanctuaire  Maitrise 30",
                        "branch":  "def",
                        "tier":  30,
                        "level":  30,
@@ -1512,8 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Sanctuaire Interdit  Maitrise 30 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv30_Sanctuaire-Interdit-Maitrise-30.png"
+                       "description":  "Sanctuaire  Maitrise 30 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv30_Sanctuaire-Maitrise-30.png"
                    },
                    {
                        "id":  "menthats_single_t30",
@@ -1529,7 +1529,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Sentence Finale  Maitrise 30 : brise l'esprit d'une cible unique.",
+                       "description":  "Sentence Finale  Maitrise 30 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv30_Sentence-Finale-Maitrise-30.png"
                    },
                    {
@@ -1546,12 +1546,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Hymne Noir  Maitrise 31 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Hymne Noir  Maitrise 31 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv31_Hymne-Noir-Maitrise-31.png"
                    },
                    {
                        "id":  "menthats_def_t31",
-                       "name":  "Garde Mentale  Maitrise 31",
+                       "name":  "Bouclier  Maitrise 31",
                        "branch":  "def",
                        "tier":  31,
                        "level":  31,
@@ -1563,46 +1563,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Garde Mentale  Maitrise 31 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv31_Garde-Mentale-Maitrise-31.png"
+                       "description":  "Bouclier  Maitrise 31 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv31_Bouclier-Maitrise-31.png"
                    },
                    {
                        "id":  "menthats_single_t31",
-                       "name":  "Mot de Douleur  Maitrise 31",
+                       "name":  "Don de la Gemme  Maitrise 31",
                        "branch":  "single",
                        "tier":  31,
                        "level":  31,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.78,
-                       "rangeMeters":  30.2,
+                       "rangeMeters":  24.1,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Mot de Douleur  Maitrise 31 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv31_Mot-de-Douleur-Maitrise-31.png"
+                       "description":  "Don de la Gemme  Maitrise 31 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv31_Don-de-la-Gemme-Maitrise-31.png"
                    },
                    {
                        "id":  "menthats_aoe_t32",
-                       "name":  "Vague Psychique  Maitrise 32",
+                       "name":  "Cercle de la Gemme  Maitrise 32",
                        "branch":  "aoe",
                        "tier":  32,
                        "level":  32,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.84,
                        "rangeMeters":  30.5,
                        "areaRadiusMeters":  5.1,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Vague Psychique  Maitrise 32 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv32_Vague-Psychique-Maitrise-32.png"
+                       "description":  "Cercle de la Gemme  Maitrise 32 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv32_Cercle-de-la-Gemme-Maitrise-32.png"
                    },
                    {
                        "id":  "menthats_def_t32",
-                       "name":  "Sceau Frontal  Maitrise 32",
+                       "name":  "Barriere  Maitrise 32",
                        "branch":  "def",
                        "tier":  32,
                        "level":  32,
@@ -1614,8 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Sceau Frontal  Maitrise 32 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv32_Sceau-Frontal-Maitrise-32.png"
+                       "description":  "Barriere  Maitrise 32 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv32_Barriere-Maitrise-32.png"
                    },
                    {
                        "id":  "menthats_single_t32",
@@ -1631,7 +1631,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Chatiment Mental  Maitrise 32 : brise l'esprit d'une cible unique.",
+                       "description":  "Chatiment Mental  Maitrise 32 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv32_Chatiment-Mental-Maitrise-32.png"
                    },
                    {
@@ -1648,12 +1648,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Cercle d'Anatheme  Maitrise 33 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Cercle d'Anatheme  Maitrise 33 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv33_Cercle-d-Anatheme-Maitrise-33.png"
                    },
                    {
                        "id":  "menthats_def_t33",
-                       "name":  "Litanie de Protection  Maitrise 33",
+                       "name":  "Garde  Maitrise 33",
                        "branch":  "def",
                        "tier":  33,
                        "level":  33,
@@ -1665,46 +1665,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Litanie de Protection  Maitrise 33 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv33_Litanie-de-Protection-Maitrise-33.png"
+                       "description":  "Garde  Maitrise 33 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv33_Garde-Maitrise-33.png"
                    },
                    {
                        "id":  "menthats_single_t33",
-                       "name":  "Fletrissure  Maitrise 33",
+                       "name":  "Souffle Mental  Maitrise 33",
                        "branch":  "single",
                        "tier":  33,
                        "level":  33,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.9,
-                       "rangeMeters":  30.8,
+                       "rangeMeters":  24.5,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Fletrissure  Maitrise 33 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv33_Fletrissure-Maitrise-33.png"
+                       "description":  "Souffle Mental  Maitrise 33 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv33_Souffle-Mental-Maitrise-33.png"
                    },
                    {
                        "id":  "menthats_aoe_t34",
-                       "name":  "Cantique de Mort  Maitrise 34",
+                       "name":  "Halo Interdit  Maitrise 34",
                        "branch":  "aoe",
                        "tier":  34,
                        "level":  34,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.96,
                        "rangeMeters":  31.2,
                        "areaRadiusMeters":  5.2,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Cantique de Mort  Maitrise 34 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv34_Cantique-de-Mort-Maitrise-34.png"
+                       "description":  "Halo Interdit  Maitrise 34 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv34_Halo-Interdit-Maitrise-34.png"
                    },
                    {
                        "id":  "menthats_def_t34",
-                       "name":  "Egide de Haazheel  Maitrise 34",
+                       "name":  "Voile  Maitrise 34",
                        "branch":  "def",
                        "tier":  34,
                        "level":  34,
@@ -1716,8 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Egide de Haazheel  Maitrise 34 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv34_Egide-de-Haazheel-Maitrise-34.png"
+                       "description":  "Voile  Maitrise 34 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv34_Voile-Maitrise-34.png"
                    },
                    {
                        "id":  "menthats_single_t34",
@@ -1733,7 +1733,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Anatheme Supreme  Maitrise 34 : brise l'esprit d'une cible unique.",
+                       "description":  "Anatheme Supreme  Maitrise 34 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv34_Anatheme-Supreme-Maitrise-34.png"
                    },
                    {
@@ -1750,12 +1750,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Chur de Ruine  Maitrise 35 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Chur de Ruine  Maitrise 35 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv35_Chur-de-Ruine-Maitrise-35.png"
                    },
                    {
                        "id":  "menthats_def_t35",
-                       "name":  "Voile Inviolable  Maitrise 35",
+                       "name":  "Egide  Maitrise 35",
                        "branch":  "def",
                        "tier":  35,
                        "level":  35,
@@ -1767,46 +1767,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Voile Inviolable  Maitrise 35 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv35_Voile-Inviolable-Maitrise-35.png"
+                       "description":  "Egide  Maitrise 35 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv35_Egide-Maitrise-35.png"
                    },
                    {
                        "id":  "menthats_single_t35",
-                       "name":  "Brisure d'Ame  Maitrise 35",
+                       "name":  "Etreinte de Haazheel  Maitrise 35",
                        "branch":  "single",
                        "tier":  35,
                        "level":  35,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.02,
-                       "rangeMeters":  31.5,
+                       "rangeMeters":  24.9,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Brisure d'Ame  Maitrise 35 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv35_Brisure-d-Ame-Maitrise-35.png"
+                       "description":  "Etreinte de Haazheel  Maitrise 35 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv35_Etreinte-de-Haazheel-Maitrise-35.png"
                    },
                    {
                        "id":  "menthats_aoe_t36",
-                       "name":  "Apocalypse Mentale  Maitrise 36",
+                       "name":  "Resurgence Voilee  Maitrise 36",
                        "branch":  "aoe",
                        "tier":  36,
                        "level":  36,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.08,
                        "rangeMeters":  31.9,
                        "areaRadiusMeters":  5.4,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Apocalypse Mentale  Maitrise 36 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv36_Apocalypse-Mentale-Maitrise-36.png"
+                       "description":  "Resurgence Voilee  Maitrise 36 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv36_Resurgence-Voilee-Maitrise-36.png"
                    },
                    {
                        "id":  "menthats_def_t36",
-                       "name":  "Sanctuaire Interdit  Maitrise 36",
+                       "name":  "Sanctuaire  Maitrise 36",
                        "branch":  "def",
                        "tier":  36,
                        "level":  36,
@@ -1818,8 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Sanctuaire Interdit  Maitrise 36 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv36_Sanctuaire-Interdit-Maitrise-36.png"
+                       "description":  "Sanctuaire  Maitrise 36 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv36_Sanctuaire-Maitrise-36.png"
                    },
                    {
                        "id":  "menthats_single_t36",
@@ -1835,7 +1835,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Sentence Finale  Maitrise 36 : brise l'esprit d'une cible unique.",
+                       "description":  "Sentence Finale  Maitrise 36 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv36_Sentence-Finale-Maitrise-36.png"
                    },
                    {
@@ -1852,12 +1852,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Hymne Noir  Maitrise 37 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Hymne Noir  Maitrise 37 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv37_Hymne-Noir-Maitrise-37.png"
                    },
                    {
                        "id":  "menthats_def_t37",
-                       "name":  "Garde Mentale  Maitrise 37",
+                       "name":  "Bouclier  Maitrise 37",
                        "branch":  "def",
                        "tier":  37,
                        "level":  37,
@@ -1869,46 +1869,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Garde Mentale  Maitrise 37 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv37_Garde-Mentale-Maitrise-37.png"
+                       "description":  "Bouclier  Maitrise 37 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv37_Bouclier-Maitrise-37.png"
                    },
                    {
                        "id":  "menthats_single_t37",
-                       "name":  "Mot de Douleur  Maitrise 37",
+                       "name":  "Don de la Gemme  Maitrise 37",
                        "branch":  "single",
                        "tier":  37,
                        "level":  37,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.14,
-                       "rangeMeters":  32.2,
+                       "rangeMeters":  25.3,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Mot de Douleur  Maitrise 37 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv37_Mot-de-Douleur-Maitrise-37.png"
+                       "description":  "Don de la Gemme  Maitrise 37 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv37_Don-de-la-Gemme-Maitrise-37.png"
                    },
                    {
                        "id":  "menthats_aoe_t38",
-                       "name":  "Vague Psychique  Maitrise 38",
+                       "name":  "Cercle de la Gemme  Maitrise 38",
                        "branch":  "aoe",
                        "tier":  38,
                        "level":  38,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.19,
                        "rangeMeters":  32.5,
                        "areaRadiusMeters":  5.5,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Vague Psychique  Maitrise 38 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv38_Vague-Psychique-Maitrise-38.png"
+                       "description":  "Cercle de la Gemme  Maitrise 38 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv38_Cercle-de-la-Gemme-Maitrise-38.png"
                    },
                    {
                        "id":  "menthats_def_t38",
-                       "name":  "Sceau Frontal  Maitrise 38",
+                       "name":  "Barriere  Maitrise 38",
                        "branch":  "def",
                        "tier":  38,
                        "level":  38,
@@ -1920,8 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Sceau Frontal  Maitrise 38 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv38_Sceau-Frontal-Maitrise-38.png"
+                       "description":  "Barriere  Maitrise 38 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv38_Barriere-Maitrise-38.png"
                    },
                    {
                        "id":  "menthats_single_t38",
@@ -1937,7 +1937,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Chatiment Mental  Maitrise 38 : brise l'esprit d'une cible unique.",
+                       "description":  "Chatiment Mental  Maitrise 38 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv38_Chatiment-Mental-Maitrise-38.png"
                    },
                    {
@@ -1954,12 +1954,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Cercle d'Anatheme  Maitrise 39 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Cercle d'Anatheme  Maitrise 39 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv39_Cercle-d-Anatheme-Maitrise-39.png"
                    },
                    {
                        "id":  "menthats_def_t39",
-                       "name":  "Litanie de Protection  Maitrise 39",
+                       "name":  "Garde  Maitrise 39",
                        "branch":  "def",
                        "tier":  39,
                        "level":  39,
@@ -1971,46 +1971,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Litanie de Protection  Maitrise 39 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv39_Litanie-de-Protection-Maitrise-39.png"
+                       "description":  "Garde  Maitrise 39 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv39_Garde-Maitrise-39.png"
                    },
                    {
                        "id":  "menthats_single_t39",
-                       "name":  "Fletrissure  Maitrise 39",
+                       "name":  "Souffle Mental  Maitrise 39",
                        "branch":  "single",
                        "tier":  39,
                        "level":  39,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.25,
-                       "rangeMeters":  32.9,
+                       "rangeMeters":  25.7,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Fletrissure  Maitrise 39 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv39_Fletrissure-Maitrise-39.png"
+                       "description":  "Souffle Mental  Maitrise 39 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv39_Souffle-Mental-Maitrise-39.png"
                    },
                    {
                        "id":  "menthats_aoe_t40",
-                       "name":  "Cantique de Mort  Maitrise 40",
+                       "name":  "Halo Interdit  Maitrise 40",
                        "branch":  "aoe",
                        "tier":  40,
                        "level":  40,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.31,
                        "rangeMeters":  33.2,
                        "areaRadiusMeters":  5.6,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Cantique de Mort  Maitrise 40 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv40_Cantique-de-Mort-Maitrise-40.png"
+                       "description":  "Halo Interdit  Maitrise 40 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv40_Halo-Interdit-Maitrise-40.png"
                    },
                    {
                        "id":  "menthats_def_t40",
-                       "name":  "Egide de Haazheel  Maitrise 40",
+                       "name":  "Voile  Maitrise 40",
                        "branch":  "def",
                        "tier":  40,
                        "level":  40,
@@ -2022,8 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Egide de Haazheel  Maitrise 40 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv40_Egide-de-Haazheel-Maitrise-40.png"
+                       "description":  "Voile  Maitrise 40 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv40_Voile-Maitrise-40.png"
                    },
                    {
                        "id":  "menthats_single_t40",
@@ -2039,7 +2039,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Anatheme Supreme  Maitrise 40 : brise l'esprit d'une cible unique.",
+                       "description":  "Anatheme Supreme  Maitrise 40 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv40_Anatheme-Supreme-Maitrise-40.png"
                    },
                    {
@@ -2056,12 +2056,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Chur de Ruine  Maitrise 41 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Chur de Ruine  Maitrise 41 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv41_Chur-de-Ruine-Maitrise-41.png"
                    },
                    {
                        "id":  "menthats_def_t41",
-                       "name":  "Voile Inviolable  Maitrise 41",
+                       "name":  "Egide  Maitrise 41",
                        "branch":  "def",
                        "tier":  41,
                        "level":  41,
@@ -2073,46 +2073,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Voile Inviolable  Maitrise 41 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv41_Voile-Inviolable-Maitrise-41.png"
+                       "description":  "Egide  Maitrise 41 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv41_Egide-Maitrise-41.png"
                    },
                    {
                        "id":  "menthats_single_t41",
-                       "name":  "Brisure d'Ame  Maitrise 41",
+                       "name":  "Etreinte de Haazheel  Maitrise 41",
                        "branch":  "single",
                        "tier":  41,
                        "level":  41,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.37,
-                       "rangeMeters":  33.6,
+                       "rangeMeters":  26.1,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Brisure d'Ame  Maitrise 41 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv41_Brisure-d-Ame-Maitrise-41.png"
+                       "description":  "Etreinte de Haazheel  Maitrise 41 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv41_Etreinte-de-Haazheel-Maitrise-41.png"
                    },
                    {
                        "id":  "menthats_aoe_t42",
-                       "name":  "Apocalypse Mentale  Maitrise 42",
+                       "name":  "Resurgence Voilee  Maitrise 42",
                        "branch":  "aoe",
                        "tier":  42,
                        "level":  42,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.43,
                        "rangeMeters":  33.9,
                        "areaRadiusMeters":  5.8,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Apocalypse Mentale  Maitrise 42 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv42_Apocalypse-Mentale-Maitrise-42.png"
+                       "description":  "Resurgence Voilee  Maitrise 42 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv42_Resurgence-Voilee-Maitrise-42.png"
                    },
                    {
                        "id":  "menthats_def_t42",
-                       "name":  "Sanctuaire Interdit  Maitrise 42",
+                       "name":  "Sanctuaire  Maitrise 42",
                        "branch":  "def",
                        "tier":  42,
                        "level":  42,
@@ -2124,8 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Sanctuaire Interdit  Maitrise 42 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv42_Sanctuaire-Interdit-Maitrise-42.png"
+                       "description":  "Sanctuaire  Maitrise 42 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv42_Sanctuaire-Maitrise-42.png"
                    },
                    {
                        "id":  "menthats_single_t42",
@@ -2141,7 +2141,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Sentence Finale  Maitrise 42 : brise l'esprit d'une cible unique.",
+                       "description":  "Sentence Finale  Maitrise 42 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv42_Sentence-Finale-Maitrise-42.png"
                    },
                    {
@@ -2158,12 +2158,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Hymne Noir  Maitrise 43 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Hymne Noir  Maitrise 43 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv43_Hymne-Noir-Maitrise-43.png"
                    },
                    {
                        "id":  "menthats_def_t43",
-                       "name":  "Garde Mentale  Maitrise 43",
+                       "name":  "Bouclier  Maitrise 43",
                        "branch":  "def",
                        "tier":  43,
                        "level":  43,
@@ -2175,46 +2175,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Garde Mentale  Maitrise 43 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv43_Garde-Mentale-Maitrise-43.png"
+                       "description":  "Bouclier  Maitrise 43 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv43_Bouclier-Maitrise-43.png"
                    },
                    {
                        "id":  "menthats_single_t43",
-                       "name":  "Mot de Douleur  Maitrise 43",
+                       "name":  "Don de la Gemme  Maitrise 43",
                        "branch":  "single",
                        "tier":  43,
                        "level":  43,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.49,
-                       "rangeMeters":  34.2,
+                       "rangeMeters":  26.5,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Mot de Douleur  Maitrise 43 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv43_Mot-de-Douleur-Maitrise-43.png"
+                       "description":  "Don de la Gemme  Maitrise 43 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv43_Don-de-la-Gemme-Maitrise-43.png"
                    },
                    {
                        "id":  "menthats_aoe_t44",
-                       "name":  "Vague Psychique  Maitrise 44",
+                       "name":  "Cercle de la Gemme  Maitrise 44",
                        "branch":  "aoe",
                        "tier":  44,
                        "level":  44,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.55,
                        "rangeMeters":  34.6,
                        "areaRadiusMeters":  5.9,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Vague Psychique  Maitrise 44 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv44_Vague-Psychique-Maitrise-44.png"
+                       "description":  "Cercle de la Gemme  Maitrise 44 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv44_Cercle-de-la-Gemme-Maitrise-44.png"
                    },
                    {
                        "id":  "menthats_def_t44",
-                       "name":  "Sceau Frontal  Maitrise 44",
+                       "name":  "Barriere  Maitrise 44",
                        "branch":  "def",
                        "tier":  44,
                        "level":  44,
@@ -2226,8 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Sceau Frontal  Maitrise 44 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv44_Sceau-Frontal-Maitrise-44.png"
+                       "description":  "Barriere  Maitrise 44 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv44_Barriere-Maitrise-44.png"
                    },
                    {
                        "id":  "menthats_single_t44",
@@ -2243,7 +2243,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Chatiment Mental  Maitrise 44 : brise l'esprit d'une cible unique.",
+                       "description":  "Chatiment Mental  Maitrise 44 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv44_Chatiment-Mental-Maitrise-44.png"
                    },
                    {
@@ -2260,12 +2260,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Cercle d'Anatheme  Maitrise 45 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Cercle d'Anatheme  Maitrise 45 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv45_Cercle-d-Anatheme-Maitrise-45.png"
                    },
                    {
                        "id":  "menthats_def_t45",
-                       "name":  "Litanie de Protection  Maitrise 45",
+                       "name":  "Garde  Maitrise 45",
                        "branch":  "def",
                        "tier":  45,
                        "level":  45,
@@ -2277,46 +2277,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Litanie de Protection  Maitrise 45 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv45_Litanie-de-Protection-Maitrise-45.png"
+                       "description":  "Garde  Maitrise 45 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv45_Garde-Maitrise-45.png"
                    },
                    {
                        "id":  "menthats_single_t45",
-                       "name":  "Fletrissure  Maitrise 45",
+                       "name":  "Souffle Mental  Maitrise 45",
                        "branch":  "single",
                        "tier":  45,
                        "level":  45,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.61,
-                       "rangeMeters":  34.9,
+                       "rangeMeters":  26.9,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Fletrissure  Maitrise 45 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv45_Fletrissure-Maitrise-45.png"
+                       "description":  "Souffle Mental  Maitrise 45 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv45_Souffle-Mental-Maitrise-45.png"
                    },
                    {
                        "id":  "menthats_aoe_t46",
-                       "name":  "Cantique de Mort  Maitrise 46",
+                       "name":  "Halo Interdit  Maitrise 46",
                        "branch":  "aoe",
                        "tier":  46,
                        "level":  46,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.67,
                        "rangeMeters":  35.3,
                        "areaRadiusMeters":  6.1,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Cantique de Mort  Maitrise 46 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv46_Cantique-de-Mort-Maitrise-46.png"
+                       "description":  "Halo Interdit  Maitrise 46 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv46_Halo-Interdit-Maitrise-46.png"
                    },
                    {
                        "id":  "menthats_def_t46",
-                       "name":  "Egide de Haazheel  Maitrise 46",
+                       "name":  "Voile  Maitrise 46",
                        "branch":  "def",
                        "tier":  46,
                        "level":  46,
@@ -2328,8 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Egide de Haazheel  Maitrise 46 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv46_Egide-de-Haazheel-Maitrise-46.png"
+                       "description":  "Voile  Maitrise 46 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv46_Voile-Maitrise-46.png"
                    },
                    {
                        "id":  "menthats_single_t46",
@@ -2345,7 +2345,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Anatheme Supreme  Maitrise 46 : brise l'esprit d'une cible unique.",
+                       "description":  "Anatheme Supreme  Maitrise 46 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv46_Anatheme-Supreme-Maitrise-46.png"
                    },
                    {
@@ -2362,12 +2362,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Chur de Ruine  Maitrise 47 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Chur de Ruine  Maitrise 47 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv47_Chur-de-Ruine-Maitrise-47.png"
                    },
                    {
                        "id":  "menthats_def_t47",
-                       "name":  "Voile Inviolable  Maitrise 47",
+                       "name":  "Egide  Maitrise 47",
                        "branch":  "def",
                        "tier":  47,
                        "level":  47,
@@ -2379,46 +2379,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Voile Inviolable  Maitrise 47 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv47_Voile-Inviolable-Maitrise-47.png"
+                       "description":  "Egide  Maitrise 47 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv47_Egide-Maitrise-47.png"
                    },
                    {
                        "id":  "menthats_single_t47",
-                       "name":  "Brisure d'Ame  Maitrise 47",
+                       "name":  "Etreinte de Haazheel  Maitrise 47",
                        "branch":  "single",
                        "tier":  47,
                        "level":  47,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.73,
-                       "rangeMeters":  35.6,
+                       "rangeMeters":  27.4,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Brisure d'Ame  Maitrise 47 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv47_Brisure-d-Ame-Maitrise-47.png"
+                       "description":  "Etreinte de Haazheel  Maitrise 47 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv47_Etreinte-de-Haazheel-Maitrise-47.png"
                    },
                    {
                        "id":  "menthats_aoe_t48",
-                       "name":  "Apocalypse Mentale  Maitrise 48",
+                       "name":  "Resurgence Voilee  Maitrise 48",
                        "branch":  "aoe",
                        "tier":  48,
                        "level":  48,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.79,
                        "rangeMeters":  35.9,
                        "areaRadiusMeters":  6.2,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Apocalypse Mentale  Maitrise 48 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv48_Apocalypse-Mentale-Maitrise-48.png"
+                       "description":  "Resurgence Voilee  Maitrise 48 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv48_Resurgence-Voilee-Maitrise-48.png"
                    },
                    {
                        "id":  "menthats_def_t48",
-                       "name":  "Sanctuaire Interdit  Maitrise 48",
+                       "name":  "Sanctuaire  Maitrise 48",
                        "branch":  "def",
                        "tier":  48,
                        "level":  48,
@@ -2430,8 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Sanctuaire Interdit  Maitrise 48 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv48_Sanctuaire-Interdit-Maitrise-48.png"
+                       "description":  "Sanctuaire  Maitrise 48 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv48_Sanctuaire-Maitrise-48.png"
                    },
                    {
                        "id":  "menthats_single_t48",
@@ -2447,7 +2447,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Sentence Finale  Maitrise 48 : brise l'esprit d'une cible unique.",
+                       "description":  "Sentence Finale  Maitrise 48 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv48_Sentence-Finale-Maitrise-48.png"
                    },
                    {
@@ -2464,12 +2464,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Hymne Noir  Maitrise 49 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Hymne Noir  Maitrise 49 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv49_Hymne-Noir-Maitrise-49.png"
                    },
                    {
                        "id":  "menthats_def_t49",
-                       "name":  "Garde Mentale  Maitrise 49",
+                       "name":  "Bouclier  Maitrise 49",
                        "branch":  "def",
                        "tier":  49,
                        "level":  49,
@@ -2481,46 +2481,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Garde Mentale  Maitrise 49 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv49_Garde-Mentale-Maitrise-49.png"
+                       "description":  "Bouclier  Maitrise 49 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv49_Bouclier-Maitrise-49.png"
                    },
                    {
                        "id":  "menthats_single_t49",
-                       "name":  "Mot de Douleur  Maitrise 49",
+                       "name":  "Don de la Gemme  Maitrise 49",
                        "branch":  "single",
                        "tier":  49,
                        "level":  49,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.85,
-                       "rangeMeters":  36.3,
+                       "rangeMeters":  27.8,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Mot de Douleur  Maitrise 49 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv49_Mot-de-Douleur-Maitrise-49.png"
+                       "description":  "Don de la Gemme  Maitrise 49 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv49_Don-de-la-Gemme-Maitrise-49.png"
                    },
                    {
                        "id":  "menthats_aoe_t50",
-                       "name":  "Vague Psychique  Maitrise 50",
+                       "name":  "Cercle de la Gemme  Maitrise 50",
                        "branch":  "aoe",
                        "tier":  50,
                        "level":  50,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.91,
                        "rangeMeters":  36.6,
                        "areaRadiusMeters":  6.3,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Vague Psychique  Maitrise 50 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv50_Vague-Psychique-Maitrise-50.png"
+                       "description":  "Cercle de la Gemme  Maitrise 50 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv50_Cercle-de-la-Gemme-Maitrise-50.png"
                    },
                    {
                        "id":  "menthats_def_t50",
-                       "name":  "Sceau Frontal  Maitrise 50",
+                       "name":  "Barriere  Maitrise 50",
                        "branch":  "def",
                        "tier":  50,
                        "level":  50,
@@ -2532,8 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Sceau Frontal  Maitrise 50 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv50_Sceau-Frontal-Maitrise-50.png"
+                       "description":  "Barriere  Maitrise 50 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv50_Barriere-Maitrise-50.png"
                    },
                    {
                        "id":  "menthats_single_t50",
@@ -2549,7 +2549,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Chatiment Mental  Maitrise 50 : brise l'esprit d'une cible unique.",
+                       "description":  "Chatiment Mental  Maitrise 50 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv50_Chatiment-Mental-Maitrise-50.png"
                    },
                    {
@@ -2566,12 +2566,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Cercle d'Anatheme  Maitrise 51 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Cercle d'Anatheme  Maitrise 51 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv51_Cercle-d-Anatheme-Maitrise-51.png"
                    },
                    {
                        "id":  "menthats_def_t51",
-                       "name":  "Litanie de Protection  Maitrise 51",
+                       "name":  "Garde  Maitrise 51",
                        "branch":  "def",
                        "tier":  51,
                        "level":  51,
@@ -2583,46 +2583,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Litanie de Protection  Maitrise 51 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv51_Litanie-de-Protection-Maitrise-51.png"
+                       "description":  "Garde  Maitrise 51 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv51_Garde-Maitrise-51.png"
                    },
                    {
                        "id":  "menthats_single_t51",
-                       "name":  "Fletrissure  Maitrise 51",
+                       "name":  "Souffle Mental  Maitrise 51",
                        "branch":  "single",
                        "tier":  51,
                        "level":  51,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.97,
-                       "rangeMeters":  36.9,
+                       "rangeMeters":  28.2,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Fletrissure  Maitrise 51 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv51_Fletrissure-Maitrise-51.png"
+                       "description":  "Souffle Mental  Maitrise 51 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv51_Souffle-Mental-Maitrise-51.png"
                    },
                    {
                        "id":  "menthats_aoe_t52",
-                       "name":  "Cantique de Mort  Maitrise 52",
+                       "name":  "Halo Interdit  Maitrise 52",
                        "branch":  "aoe",
                        "tier":  52,
                        "level":  52,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.03,
                        "rangeMeters":  37.3,
                        "areaRadiusMeters":  6.5,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Cantique de Mort  Maitrise 52 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv52_Cantique-de-Mort-Maitrise-52.png"
+                       "description":  "Halo Interdit  Maitrise 52 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv52_Halo-Interdit-Maitrise-52.png"
                    },
                    {
                        "id":  "menthats_def_t52",
-                       "name":  "Egide de Haazheel  Maitrise 52",
+                       "name":  "Voile  Maitrise 52",
                        "branch":  "def",
                        "tier":  52,
                        "level":  52,
@@ -2634,8 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Egide de Haazheel  Maitrise 52 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv52_Egide-de-Haazheel-Maitrise-52.png"
+                       "description":  "Voile  Maitrise 52 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv52_Voile-Maitrise-52.png"
                    },
                    {
                        "id":  "menthats_single_t52",
@@ -2651,7 +2651,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Anatheme Supreme  Maitrise 52 : brise l'esprit d'une cible unique.",
+                       "description":  "Anatheme Supreme  Maitrise 52 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv52_Anatheme-Supreme-Maitrise-52.png"
                    },
                    {
@@ -2668,12 +2668,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Chur de Ruine  Maitrise 53 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Chur de Ruine  Maitrise 53 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv53_Chur-de-Ruine-Maitrise-53.png"
                    },
                    {
                        "id":  "menthats_def_t53",
-                       "name":  "Voile Inviolable  Maitrise 53",
+                       "name":  "Egide  Maitrise 53",
                        "branch":  "def",
                        "tier":  53,
                        "level":  53,
@@ -2685,46 +2685,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Voile Inviolable  Maitrise 53 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv53_Voile-Inviolable-Maitrise-53.png"
+                       "description":  "Egide  Maitrise 53 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv53_Egide-Maitrise-53.png"
                    },
                    {
                        "id":  "menthats_single_t53",
-                       "name":  "Brisure d'Ame  Maitrise 53",
+                       "name":  "Etreinte de Haazheel  Maitrise 53",
                        "branch":  "single",
                        "tier":  53,
                        "level":  53,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  4.08,
-                       "rangeMeters":  37.6,
+                       "rangeMeters":  28.6,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Brisure d'Ame  Maitrise 53 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv53_Brisure-d-Ame-Maitrise-53.png"
+                       "description":  "Etreinte de Haazheel  Maitrise 53 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv53_Etreinte-de-Haazheel-Maitrise-53.png"
                    },
                    {
                        "id":  "menthats_aoe_t54",
-                       "name":  "Apocalypse Mentale  Maitrise 54",
+                       "name":  "Resurgence Voilee  Maitrise 54",
                        "branch":  "aoe",
                        "tier":  54,
                        "level":  54,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.14,
                        "rangeMeters":  38,
                        "areaRadiusMeters":  6.6,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Apocalypse Mentale  Maitrise 54 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv54_Apocalypse-Mentale-Maitrise-54.png"
+                       "description":  "Resurgence Voilee  Maitrise 54 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv54_Resurgence-Voilee-Maitrise-54.png"
                    },
                    {
                        "id":  "menthats_def_t54",
-                       "name":  "Sanctuaire Interdit  Maitrise 54",
+                       "name":  "Sanctuaire  Maitrise 54",
                        "branch":  "def",
                        "tier":  54,
                        "level":  54,
@@ -2736,8 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Sanctuaire Interdit  Maitrise 54 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv54_Sanctuaire-Interdit-Maitrise-54.png"
+                       "description":  "Sanctuaire  Maitrise 54 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv54_Sanctuaire-Maitrise-54.png"
                    },
                    {
                        "id":  "menthats_single_t54",
@@ -2753,7 +2753,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Sentence Finale  Maitrise 54 : brise l'esprit d'une cible unique.",
+                       "description":  "Sentence Finale  Maitrise 54 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv54_Sentence-Finale-Maitrise-54.png"
                    },
                    {
@@ -2770,12 +2770,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Hymne Noir  Maitrise 55 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Hymne Noir  Maitrise 55 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv55_Hymne-Noir-Maitrise-55.png"
                    },
                    {
                        "id":  "menthats_def_t55",
-                       "name":  "Garde Mentale  Maitrise 55",
+                       "name":  "Bouclier  Maitrise 55",
                        "branch":  "def",
                        "tier":  55,
                        "level":  55,
@@ -2787,46 +2787,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Garde Mentale  Maitrise 55 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv55_Garde-Mentale-Maitrise-55.png"
+                       "description":  "Bouclier  Maitrise 55 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv55_Bouclier-Maitrise-55.png"
                    },
                    {
                        "id":  "menthats_single_t55",
-                       "name":  "Mot de Douleur  Maitrise 55",
+                       "name":  "Don de la Gemme  Maitrise 55",
                        "branch":  "single",
                        "tier":  55,
                        "level":  55,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  4.2,
-                       "rangeMeters":  38.3,
+                       "rangeMeters":  29,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Mot de Douleur  Maitrise 55 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv55_Mot-de-Douleur-Maitrise-55.png"
+                       "description":  "Don de la Gemme  Maitrise 55 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv55_Don-de-la-Gemme-Maitrise-55.png"
                    },
                    {
                        "id":  "menthats_aoe_t56",
-                       "name":  "Vague Psychique  Maitrise 56",
+                       "name":  "Cercle de la Gemme  Maitrise 56",
                        "branch":  "aoe",
                        "tier":  56,
                        "level":  56,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.26,
                        "rangeMeters":  38.6,
                        "areaRadiusMeters":  6.7,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Vague Psychique  Maitrise 56 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv56_Vague-Psychique-Maitrise-56.png"
+                       "description":  "Cercle de la Gemme  Maitrise 56 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv56_Cercle-de-la-Gemme-Maitrise-56.png"
                    },
                    {
                        "id":  "menthats_def_t56",
-                       "name":  "Sceau Frontal  Maitrise 56",
+                       "name":  "Barriere  Maitrise 56",
                        "branch":  "def",
                        "tier":  56,
                        "level":  56,
@@ -2838,8 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Sceau Frontal  Maitrise 56 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv56_Sceau-Frontal-Maitrise-56.png"
+                       "description":  "Barriere  Maitrise 56 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv56_Barriere-Maitrise-56.png"
                    },
                    {
                        "id":  "menthats_single_t56",
@@ -2855,7 +2855,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Chatiment Mental  Maitrise 56 : brise l'esprit d'une cible unique.",
+                       "description":  "Chatiment Mental  Maitrise 56 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv56_Chatiment-Mental-Maitrise-56.png"
                    },
                    {
@@ -2872,12 +2872,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Cercle d'Anatheme  Maitrise 57 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Cercle d'Anatheme  Maitrise 57 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv57_Cercle-d-Anatheme-Maitrise-57.png"
                    },
                    {
                        "id":  "menthats_def_t57",
-                       "name":  "Litanie de Protection  Maitrise 57",
+                       "name":  "Garde  Maitrise 57",
                        "branch":  "def",
                        "tier":  57,
                        "level":  57,
@@ -2889,46 +2889,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Litanie de Protection  Maitrise 57 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv57_Litanie-de-Protection-Maitrise-57.png"
+                       "description":  "Garde  Maitrise 57 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv57_Garde-Maitrise-57.png"
                    },
                    {
                        "id":  "menthats_single_t57",
-                       "name":  "Fletrissure  Maitrise 57",
+                       "name":  "Souffle Mental  Maitrise 57",
                        "branch":  "single",
                        "tier":  57,
                        "level":  57,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  4.32,
-                       "rangeMeters":  39,
+                       "rangeMeters":  29.4,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Fletrissure  Maitrise 57 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv57_Fletrissure-Maitrise-57.png"
+                       "description":  "Souffle Mental  Maitrise 57 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv57_Souffle-Mental-Maitrise-57.png"
                    },
                    {
                        "id":  "menthats_aoe_t58",
-                       "name":  "Cantique de Mort  Maitrise 58",
+                       "name":  "Halo Interdit  Maitrise 58",
                        "branch":  "aoe",
                        "tier":  58,
                        "level":  58,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.38,
                        "rangeMeters":  39.3,
                        "areaRadiusMeters":  6.9,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Cantique de Mort  Maitrise 58 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv58_Cantique-de-Mort-Maitrise-58.png"
+                       "description":  "Halo Interdit  Maitrise 58 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv58_Halo-Interdit-Maitrise-58.png"
                    },
                    {
                        "id":  "menthats_def_t58",
-                       "name":  "Egide de Haazheel  Maitrise 58",
+                       "name":  "Voile  Maitrise 58",
                        "branch":  "def",
                        "tier":  58,
                        "level":  58,
@@ -2940,8 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Egide de Haazheel  Maitrise 58 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv58_Egide-de-Haazheel-Maitrise-58.png"
+                       "description":  "Voile  Maitrise 58 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv58_Voile-Maitrise-58.png"
                    },
                    {
                        "id":  "menthats_single_t58",
@@ -2957,7 +2957,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Anatheme Supreme  Maitrise 58 : brise l'esprit d'une cible unique.",
+                       "description":  "Anatheme Supreme  Maitrise 58 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv58_Anatheme-Supreme-Maitrise-58.png"
                    },
                    {
@@ -2974,12 +2974,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Chur de Ruine  Maitrise 59 : psalmodie une litanie destructrice (degats reduits).",
+                       "description":  "Chur de Ruine  Maitrise 59 : frappe les ennemis d'une zone.",
                        "iconFile":  "Menthats_Zone_Niv59_Chur-de-Ruine-Maitrise-59.png"
                    },
                    {
                        "id":  "menthats_def_t59",
-                       "name":  "Voile Inviolable  Maitrise 59",
+                       "name":  "Egide  Maitrise 59",
                        "branch":  "def",
                        "tier":  59,
                        "level":  59,
@@ -2991,46 +2991,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Voile Inviolable  Maitrise 59 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv59_Voile-Inviolable-Maitrise-59.png"
+                       "description":  "Egide  Maitrise 59 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv59_Egide-Maitrise-59.png"
                    },
                    {
                        "id":  "menthats_single_t59",
-                       "name":  "Brisure d'Ame  Maitrise 59",
+                       "name":  "Etreinte de Haazheel  Maitrise 59",
                        "branch":  "single",
                        "tier":  59,
                        "level":  59,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  4.44,
-                       "rangeMeters":  39.7,
+                       "rangeMeters":  29.8,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Brisure d'Ame  Maitrise 59 : brise l'esprit d'une cible unique.",
-                       "iconFile":  "Menthats_Unitaire_Niv59_Brisure-d-Ame-Maitrise-59.png"
+                       "description":  "Etreinte de Haazheel  Maitrise 59 : restaure la vie d'un allie par une litanie interdite.",
+                       "iconFile":  "Menthats_Unitaire_Niv59_Etreinte-de-Haazheel-Maitrise-59.png"
                    },
                    {
                        "id":  "menthats_aoe_t60",
-                       "name":  "Apocalypse Mentale  Maitrise 60",
+                       "name":  "Resurgence Voilee  Maitrise 60",
                        "branch":  "aoe",
                        "tier":  60,
                        "level":  60,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.5,
                        "rangeMeters":  40,
                        "areaRadiusMeters":  7,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Apocalypse Mentale  Maitrise 60 : psalmodie une litanie destructrice (degats reduits).",
-                       "iconFile":  "Menthats_Zone_Niv60_Apocalypse-Mentale-Maitrise-60.png"
+                       "description":  "Resurgence Voilee  Maitrise 60 : psalmodie une litanie qui regenere les allies d'une zone.",
+                       "iconFile":  "Menthats_Zone_Niv60_Resurgence-Voilee-Maitrise-60.png"
                    },
                    {
                        "id":  "menthats_def_t60",
-                       "name":  "Sanctuaire Interdit  Maitrise 60",
+                       "name":  "Sanctuaire  Maitrise 60",
                        "branch":  "def",
                        "tier":  60,
                        "level":  60,
@@ -3042,8 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Sanctuaire Interdit  Maitrise 60 : protege grace aux sceaux des Menthats.",
-                       "iconFile":  "Menthats_Defense_Niv60_Sanctuaire-Interdit-Maitrise-60.png"
+                       "description":  "Sanctuaire  Maitrise 60 : erige une protection.",
+                       "iconFile":  "Menthats_Defense_Niv60_Sanctuaire-Maitrise-60.png"
                    },
                    {
                        "id":  "menthats_single_t60",
@@ -3059,7 +3059,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Sentence Finale  Maitrise 60 : brise l'esprit d'une cible unique.",
+                       "description":  "Sentence Finale  Maitrise 60 : frappe une cible unique.",
                        "iconFile":  "Menthats_Unitaire_Niv60_Sentence-Finale-Maitrise-60.png"
                    }
                ]

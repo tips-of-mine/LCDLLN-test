@@ -37,17 +37,22 @@ namespace engine::render
 			    state.playerLevel);
 			ImGui::Separator();
 
-			// 3 colonnes : une par branche (single / aoe / def).
-			ImGui::Columns(3, "##ln_skilltree_cols", true);
-
-			// Noms lisibles des branches.
+			// 3 colonnes ALIGNEES (single / aoe / def) via des child-windows côte à
+			// côte (SameLine) : l'ancienne API ImGui::Columns + un child par colonne
+			// décalait les en-têtes verticalement.
 			static const char* kBranchLabels[] = { "Branche : Single", "Branche : AoE", "Branche : Def" };
+			static const char* kBranchIds[]    = { "single", "aoe", "def" };
+			static const char* kWrapIds[]      = { "##skt_wrap_single", "##skt_wrap_aoe", "##skt_wrap_def" };
 			static const char* kChildIds[]     = { "##skt_col_single", "##skt_col_aoe", "##skt_col_def" };
+
+			const float kGap = 6.0f;
+			const float kColW = (ImGui::GetContentRegionAvail().x - 2.0f * kGap) / 3.0f;
+			const float kHeaderH = 52.0f;
 
 			for (int colIdx = 0; colIdx < 3; ++colIdx)
 			{
-				ImGui::TextUnformatted(kBranchLabels[colIdx]);
-				ImGui::Separator();
+				if (colIdx > 0) { ImGui::SameLine(0.0f, kGap); }
+				ImGui::BeginChild(kWrapIds[colIdx], ImVec2(kColW, 0.0f), false);
 
 				// Cherche la branche correspondante dans l'état.
 				const engine::client::SkillTreeBranch* branch = nullptr;
@@ -55,6 +60,29 @@ namespace engine::render
 				{
 					branch = &state.branches[static_cast<size_t>(colIdx)];
 				}
+				const char* branchId = (branch != nullptr && !branch->id.empty())
+					? branch->id.c_str() : kBranchIds[colIdx];
+
+				// En-tête de colonne : image de branche si disponible
+				// (icons/skills/branches/<branche>.png), sinon le libellé texte.
+				bool headerDrawn = false;
+				if (m_iconCache != nullptr)
+				{
+					const std::string branchIconPath =
+						std::string("icons/skills/branches/") + branchId + ".png";
+					const uint64_t bTex = m_iconCache->GetOrLoad(branchIconPath);
+					if (bTex != 0)
+					{
+						ImGui::Image(static_cast<ImTextureID>(bTex),
+							ImVec2(ImGui::GetContentRegionAvail().x, kHeaderH));
+						headerDrawn = true;
+					}
+				}
+				if (!headerDrawn)
+				{
+					ImGui::TextUnformatted(kBranchLabels[colIdx]);
+				}
+				ImGui::Separator();
 
 				// Zone défilante pour les 60 paliers.
 				ImGui::BeginChild(kChildIds[colIdx], ImVec2(0, 0), true);
@@ -83,8 +111,9 @@ namespace engine::render
 							}
 						}
 
-						// En-tête de palier : numéro de tier + nom du skill.
-						ImGui::Text("Tier %u — %s", cell.skill.tier, cell.skill.name.c_str());
+						// Nom du skill seul (sans préfixe « Tier N — » : l'ordre vertical
+						// de la colonne traduit déjà la progression).
+						ImGui::TextUnformatted(cell.skill.name.c_str());
 
 						// Tags compacts (coût / CD / effet).
 						const std::string tags =
@@ -122,15 +151,9 @@ namespace engine::render
 					}
 				}
 
-				ImGui::EndChild();
-
-				if (colIdx < 2)
-				{
-					ImGui::NextColumn();
-				}
+				ImGui::EndChild(); // zone défilante des paliers
+				ImGui::EndChild(); // wrapper de colonne (alignement)
 			}
-
-			ImGui::Columns(1);
 		}
 		ImGui::End();
 	}

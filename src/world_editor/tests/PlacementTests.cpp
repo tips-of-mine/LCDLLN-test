@@ -57,6 +57,38 @@ namespace
 		}
 	}
 
+	void Test_PropsBin_GroupId_V2_And_BackCompat()
+	{
+		using engine::world::instances::PropInstance;
+		// Round-trip v2 : groupId préservé.
+		std::vector<PropInstance> props;
+		PropInstance a; a.assetId = 5; a.instanceId = 1; a.groupId = 77;
+		PropInstance b; b.assetId = 6; b.instanceId = 2; b.groupId = 0;
+		props = { a, b };
+		std::vector<uint8_t> bytes = engine::world::instances::SavePropsBin(props);
+		std::vector<PropInstance> out; std::string err;
+		REQUIRE(engine::world::instances::LoadPropsBin(bytes, out, err));
+		REQUIRE(out.size() == 2);
+		if (out.size() == 2)
+		{
+			REQUIRE(out[0].groupId == 77);
+			REQUIRE(out[1].groupId == 0);
+		}
+
+		// Back-compat : forger un buffer "v1" depuis un v2 à 1 instance en
+		// patchant la version (offset 4) à 1 et en retirant les 4 derniers
+		// octets (le groupId de l'unique instance, écrit en dernier). LoadPropsBin
+		// doit alors accepter le buffer et laisser groupId à 0.
+		std::vector<PropInstance> single = { a };
+		std::vector<uint8_t> v2 = engine::world::instances::SavePropsBin(single);
+		v2[4] = 1; // version = 1
+		std::vector<uint8_t> v1(v2.begin(), v2.end() - 4);
+		std::vector<PropInstance> out1; std::string err1;
+		REQUIRE(engine::world::instances::LoadPropsBin(v1, out1, err1));
+		REQUIRE(out1.size() == 1);
+		if (out1.size() == 1) REQUIRE(out1[0].groupId == 0 && out1[0].assetId == 5);
+	}
+
 	void Test_DragLine_GeneratesCorrectSpacing()
 	{
 		auto pts = pg::GenerateDragLine(Vec3(0, 0, 0), Vec3(10, 0, 0), 2.0f);
@@ -145,6 +177,7 @@ namespace
 int main()
 {
 	Test_Roundtrip_PropsBin();
+	Test_PropsBin_GroupId_V2_And_BackCompat();
 	Test_DragLine_GeneratesCorrectSpacing();
 	Test_Scatter_RespectsCountAndRadius();
 	Test_RandomRotation_DeterministicWithSeed();

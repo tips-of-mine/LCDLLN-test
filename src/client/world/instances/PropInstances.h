@@ -30,10 +30,11 @@ namespace engine::world::instances
 		engine::math::Vec3 scale{ 1.0f, 1.0f, 1.0f };
 		uint32_t layerTag = 0;     // PlacementLayer
 		uint32_t instanceId = 0;   // incrémental, unique zone
+		uint32_t groupId = 0;      // 0 = isolé ; >0 = membre d'un groupe (auberge…)
 	};
 
 	constexpr uint32_t kPropsMagic = 0x504F5250u; // "PROP"
-	constexpr uint32_t kPropsVersion = 1u;
+	constexpr uint32_t kPropsVersion = 2u; // v2 : ajout groupId (lecture v1 rétro-compatible)
 	constexpr uint32_t kPropsBuilderVersion = 1u;
 	constexpr uint32_t kPropsEngineVersion = 1u;
 
@@ -89,6 +90,7 @@ namespace engine::world::instances
 			detail::PutF32(b, p.scale.x); detail::PutF32(b, p.scale.y); detail::PutF32(b, p.scale.z);
 			detail::PutU32(b, p.layerTag);
 			detail::PutU32(b, p.instanceId);
+			detail::PutU32(b, p.groupId);
 		}
 		return b;
 	}
@@ -114,6 +116,10 @@ namespace engine::world::instances
 			detail::GetF32(bytes, p, pr.scale.x); detail::GetF32(bytes, p, pr.scale.y); detail::GetF32(bytes, p, pr.scale.z);
 			detail::GetU32(bytes, p, pr.layerTag);
 			if (!detail::GetU32(bytes, p, pr.instanceId)) { err = "props.bin: tronque (instanceId)"; return false; }
+			if (version >= 2u)
+			{
+				if (!detail::GetU32(bytes, p, pr.groupId)) { err = "props.bin: tronque (groupId)"; return false; }
+			}
 			out.push_back(pr);
 		}
 		return true;

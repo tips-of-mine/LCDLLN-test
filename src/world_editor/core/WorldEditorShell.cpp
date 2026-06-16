@@ -15,6 +15,15 @@
 
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
+
+// Auberge éditable (T1/T3/T4) — câblage des panneaux + action d'export.
+#include "src/world_editor/DeleteCommand.h"
+#include "src/world_editor/volumes/MeshInsertInstance.h"
+#include "src/world_editor/structures/BuildingPreset.h"
+#include "src/world_editor/structures/BuildingPresetIo.h"
+#include "src/world_editor/structures/BuildingInstantiate.h"
+#include "src/world_editor/structures/SceneryExport.h"
 
 #include "src/world_editor/modes/EditorModeRegistry.h"
 #include "src/world_editor/prefs/UserPrefsStore.h"
@@ -86,11 +95,23 @@ namespace engine::editor::world
 		// foncteur d'écriture de transform (installé par l'Engine).
 		m_panels.emplace_back(std::make_unique<panels::InspectorPanel>(
 			&m_sceneModel, &m_selection, &m_commandStack, &m_transformWriter));
-		m_panels.emplace_back(std::make_unique<panels::AssetBrowserPanel>());
+		// Auberge T1 — capture le pointeur non possédant de l'AssetBrowser pour
+		// brancher Refresh / OnAssetPicked plus bas (après résolution contentRoot).
+		{
+			auto assetBrowser = std::make_unique<panels::AssetBrowserPanel>();
+			m_assetBrowser = assetBrowser.get();
+			m_panels.emplace_back(std::move(assetBrowser));
+		}
 		// Sous-projet 1, bloc C — Outliner réel : reçoit le modèle de scène + la
 		// sélection partagés (possédés par le Shell). L'Engine lie le modèle aux
 		// documents et le reconstruit chaque frame.
-		m_panels.emplace_back(std::make_unique<panels::OutlinerPanel>(&m_sceneModel, &m_selection));
+		// Auberge T3 — capture le pointeur non possédant pour brancher
+		// SetOnDeleteEntity plus bas.
+		{
+			auto outliner = std::make_unique<panels::OutlinerPanel>(&m_sceneModel, &m_selection);
+			m_outliner = outliner.get();
+			m_panels.emplace_back(std::move(outliner));
+		}
 		m_panels.emplace_back(std::make_unique<panels::ConsolePanel>());
 		m_panels.emplace_back(std::make_unique<panels::ToolPropertiesPanel>());
 		// M100.2 — Insère HistoryPanel après les 6 panneaux M100.1. L'ordre
@@ -280,6 +301,71 @@ namespace engine::editor::world
 			static_cast<panels::ToolPropertiesPanel*>(m_panels[5].get())->SetShell(this);
 		}
 
+		// Auberge éditable (T1/T3) — câblage des panneaux concrets aux documents
+		// et outils possédés par le shell. contentRoot est la même clé que les
+		// autres chargements d'assets ci-dessus (`paths.content`).
+		m_contentRoot = cfg.GetString("paths.content", "game/data");
+		if (m_assetBrowser)
+		{
+			// Scan des meshes props (dossier absolu) ; préfixe relatif pour que
+			// le chemin remonté soit directement posable (PlacementParams.assetPath
+			// / world.scenery mesh).
+			m_assetBrowser->Refresh(m_contentRoot + "/meshes/props", "meshes/props/");
+			m_assetBrowser->SetOnAssetPicked([this](const std::string& rel)
+			{
+				// Définit l'asset actif de l'outil de placement en préservant les
+				// autres paramètres (mode, snap, échelle…). `Params()` retourne une
+				// référence mutable : on n'écrase que `assetPath`.
+				m_placementTool.Params().assetPath = rel;
+				LOG_INFO(EditorWorld,
+					"[WorldEditorShell] Asset actif de placement -> {}", rel);
+			});
+		}
+		if (m_outliner)
+		{
+			m_outliner->SetOnDeleteEntity([this](engine::editor::scene::EntityId id)
+			{
+				using K = engine::editor::scene::EntityKind;
+				if (id.kind == K::LayoutInstance)
+				{
+					// Résout l'instanceId depuis la position (index) dans le
+					// document de placement possédé par le shell — même convention
+					// d'indexation que `EditorSceneModel::Rebuild` (EntityId.index
+					// = position dans la liste source au moment du Rebuild). Pousse
+					// un DeleteCommand réversible (undo/redo).
+					//
+					// NOTE (concern câblage) : l'Outliner reflète actuellement le
+					// document de layout lié par l'Engine
+					// (`WorldEditorSession::Doc().layoutInstances`,
+					// type WorldMapEditLayoutInstance), distinct de ce
+					// `m_placementDoc` (props PropInstance). La suppression n'opère
+					// donc proprement que sur les props placés via `m_placementDoc`.
+					// L'unification des deux sources de layout relève d'un suivi.
+					const auto& props = m_placementDoc.All();
+					if (id.index < props.size())
+					{
+						const uint32_t instanceId = props[id.index].instanceId;
+						m_commandStack.Push(std::make_unique<DeleteCommand>(
+							m_placementDoc.Mutable(),
+							std::vector<uint32_t>{ instanceId }));
+					}
+				}
+				else if (id.kind == K::MeshInsert)
+				{
+					// Résout le guid depuis la position dans le MeshInsertDocument
+					// (même indexation que le Rebuild). `Remove` est direct (pas de
+					// commande réversible dédiée pour les mesh inserts à ce stade).
+					const auto& all = m_meshInsertDoc.All();
+					if (id.index < all.size())
+					{
+						const uint64_t guid = all[id.index].guid;
+						m_meshInsertDoc.Remove(guid);
+					}
+				}
+				m_selection.Clear();
+			});
+		}
+
 		m_initialized = true;
 		LOG_INFO(EditorWorld, "WorldEditorShell init OK, {} panels, layout='{}', cameraMode='{}'",
 			m_panels.size(), m_layoutPath, lastMode);
@@ -336,6 +422,11 @@ namespace engine::editor::world
 		}
 		EnsureLayoutPersisted();
 		m_panels.clear();
+		// Auberge T1/T3 — les pointeurs non possédants pointent vers des panneaux
+		// que `m_panels.clear()` vient de détruire : on les remet à nullptr pour
+		// éviter tout déréférencement pendouillant (Init peut être rappelé).
+		m_assetBrowser = nullptr;
+		m_outliner = nullptr;
 		m_initialized = false;
 		LOG_INFO(EditorWorld, "WorldEditorShell shutdown (cameraMode='{}', persistance disque differee)",
 			finalMode);

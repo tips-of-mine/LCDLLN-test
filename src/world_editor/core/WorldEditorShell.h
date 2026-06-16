@@ -21,6 +21,8 @@
 #include "src/world_editor/terrain/ValleyChainTool.h"
 #include "src/world_editor/water/WaterDocument.h"
 #include "src/world_editor/scene/EditorSceneModel.h" // sous-projet 1, bloc B (selection + scene)
+#include "src/world_editor/PlacementDocument.h" // Auberge T1/T3 — props poses + groupes
+#include "src/world_editor/PlacementTool.h"     // Auberge T1 — asset actif de placement
 
 #include <functional>
 #include <memory>
@@ -33,6 +35,8 @@ namespace engine::core { class Config; }
 namespace engine::editor::world
 {
 	namespace panels { class ScenePanel; }
+	namespace panels { class AssetBrowserPanel; } // Auberge T1 — pointeur type non possedant
+	namespace panels { class OutlinerPanel; }     // Auberge T3 — pointeur type non possedant
 
 	/// Identifiant de l'outil actif dans le shell éditeur monde (M100.6+).
 	/// `None` est l'état initial après `Init`. `TerrainSculpt` est activé
@@ -390,6 +394,17 @@ namespace engine::editor::world
 		/// la visibilité de tous les panneaux à true.
 		void ResetLayoutToDefault();
 
+		/// Auberge T4 — Exporte l'auberge de démo vers `config.json > world.scenery`
+		/// + l'ancre de respawn `inn` de `respawn_points.txt`. Charge le preset
+		/// `<contentRoot>/assets/structures/presets/auberge_demo.json`, l'aplatit
+		/// au pivot fixe (88,100) yaw 0, et splice les deux fichiers. ABANDONNE
+		/// sans rien écrire si le preset ne comporte pas exactement 13 éléments
+		/// (préserve la numérotation contiguë 310..322 de `world.scenery` —
+		/// `LoadScenery` exige des clés 0..count-1). Effet de bord : lecture +
+		/// écriture disque (config.json à la racine cwd, respawn dans le contenu) ;
+		/// logs EditorWorld. Doit être appelée en main thread.
+		void ExportAubergeToConfig();
+
 		/// M100.4 — Helper privé : retourne le ScenePanel (index 0 dans
 		/// `m_panels`, ordre stable garanti par Init). Utilisé par
 		/// `HandleShortcut` pour brancher Numpad 1/3/7 → SetMode et par
@@ -421,6 +436,24 @@ namespace engine::editor::world
 		volumes::arches::ArchTool   m_archTool;               // M100.42
 		volumes::dungeons::DungeonPortalDocument m_dungeonPortalDoc;  // M100.43
 		volumes::dungeons::DungeonPortalTool     m_dungeonPortalTool; // M100.43
+
+		// Auberge éditable (T1/T2/T3) — Document de placement de props (auberge,
+		// bâtiments) + outil de placement universel portant l'asset actif. Le
+		// document est la cible des DeleteCommand (suppression réversible via
+		// l'Outliner) ; l'outil porte `PlacementParams.assetPath` que
+		// l'AssetBrowser met à jour au clic. Possédés par le shell.
+		PlacementDocument m_placementDoc;
+		PlacementTool     m_placementTool;
+		// Pointeurs NON possédants vers les deux panneaux concrets (l'unique_ptr
+		// de `m_panels` reste propriétaire). Capturés à la construction dans Init
+		// pour pouvoir brancher leurs callbacks après résolution de contentRoot.
+		panels::AssetBrowserPanel* m_assetBrowser = nullptr;
+		panels::OutlinerPanel*     m_outliner     = nullptr;
+		/// Auberge T4 — racine contenu (`paths.content`) mémorisée à Init pour
+		/// que l'action d'export (rendue depuis le menu, sans `Config` sous la
+		/// main) puisse résoudre les chemins preset / config.json / respawn.
+		std::string m_contentRoot;
+
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

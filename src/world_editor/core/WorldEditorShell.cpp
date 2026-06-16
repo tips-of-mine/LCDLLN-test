@@ -404,6 +404,123 @@ namespace engine::editor::world
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
 	}
 
+	/// Auberge T4 — Exporte l'auberge de démo vers config.json + respawn. Voir la
+	/// doc de la déclaration (WorldEditorShell.h). Logique pure d'IO + structures :
+	/// compilable et exécutable hors Windows (pas de dépendance ImGui).
+	void WorldEditorShell::ExportAubergeToConfig()
+	{
+		namespace st = engine::editor::world::structures;
+		namespace fs = engine::platform;
+
+		// 1) Charge le preset auberge depuis le contenu.
+		const std::string presetPath =
+			m_contentRoot + "/assets/structures/presets/auberge_demo.json";
+		const std::string presetText = fs::FileSystem::ReadAllText(presetPath);
+		if (presetText.empty())
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Export auberge: preset introuvable ou vide: {}",
+				presetPath);
+			return;
+		}
+		st::BuildingPreset preset;
+		std::string parseErr;
+		if (!st::ParseBuildingPresetJson(presetText, preset, parseErr))
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Export auberge: preset illisible: {}", parseErr);
+			return;
+		}
+
+		// 2) Pivot fixe (88,100) yaw 0 — emplacement de l'auberge de démo (v1).
+		// Un pivot issu d'un groupe auberge sélectionné serait un raffinement
+		// ultérieur ; (88,100) est verrouillé pour rester cohérent avec le bloc
+		// world.scenery existant + l'ancre respawn inn.
+		const float pivotX = 88.0f;
+		const float pivotZ = 100.0f;
+		const float groupYaw = 0.0f;
+
+		// 3) SÉCURITÉ contiguïté : le bloc auberge occupe les clés 310..322 (13
+		// entrées). LoadScenery exige des clés contiguës 0..count-1 : un nombre
+		// d'éléments différent décalerait la numérotation et corromprait
+		// config.json. On abandonne donc proprement si != 13 (renumérotation non
+		// implémentée en v1).
+		std::vector<st::SceneryEntry> entries =
+			st::BuildSceneryEntries(preset, pivotX, pivotZ, groupYaw);
+		if (entries.size() != 13)
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Export auberge: le preset doit comporter exactement "
+				"13 elements pour preserver la numerotation contigue de world.scenery "
+				"(310..322). Renumerotation non implementee en v1. (recu={})",
+				entries.size());
+			return;
+		}
+
+		// 4) Construit le bloc de remplacement (commentaire sentinelle de début +
+		// 13 entrées sérialisées à partir de l'index 310). `count` reste inchangé
+		// (toujours 13 entrées auberge → total identique).
+		const std::string block =
+			"            \"_comment_auberge\": \"AUBERGE (auto-export editeur). "
+			"Point de reapparition inn.\",\n"
+			+ st::SerializeSceneryEntries(entries, 310);
+
+		// 5) Splice dans config.json (lu à la racine du cwd : l'éditeur chdir à la
+		// racine du dépôt où vivent config.json + game/data — cf. world_editor/
+		// main.cpp). Si une sentinelle manque, on abandonne sans écrire.
+		const std::string configText = fs::FileSystem::ReadAllText("config.json");
+		if (configText.empty())
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Export auberge: config.json introuvable ou vide "
+				"(cwd attendu = racine depot)");
+			return;
+		}
+		std::string outConfig;
+		std::string spliceErr;
+		if (!st::SpliceSceneryBlock(configText, block, outConfig, spliceErr))
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Export auberge: splice config.json echoue: {}",
+				spliceErr);
+			return;
+		}
+		if (!fs::FileSystem::WriteAllText("config.json", outConfig))
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Export auberge: ecriture config.json echouee");
+			return;
+		}
+
+		// 6) Ancre respawn inn : pivot + spawnAnchor pivoté → splice de la ligne
+		// `0 inn x 1.5 z` dans respawn_points.txt (zone 0, carte démo).
+		const engine::math::Vec3 anchor = st::SpawnAnchorWorld(
+			preset, engine::math::Vec3(pivotX, 0.0f, pivotZ), groupYaw);
+		const std::string respawnRel = "respawn/respawn_points.txt";
+		const std::string respawnText = fs::FileSystem::ReadAllText(
+			m_contentRoot + "/" + respawnRel);
+		if (respawnText.empty())
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Export auberge: respawn_points.txt introuvable; "
+				"config.json a ete mis a jour mais pas l'ancre inn");
+			return;
+		}
+		const std::string newRespawn =
+			st::SpliceInnRespawn(respawnText, 0u, anchor.x, anchor.z);
+		if (!fs::FileSystem::WriteAllText(m_contentRoot + "/" + respawnRel, newRespawn))
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Export auberge: ecriture respawn_points.txt echouee");
+			return;
+		}
+
+		LOG_INFO(EditorWorld,
+			"[WorldEditorShell] Export auberge OK: 13 entrees world.scenery (310..322) "
+			"a ({:.1f},{:.1f}), ancre inn a ({:.1f},{:.1f}).",
+			pivotX, pivotZ, anchor.x, anchor.z);
+	}
+
 	/// Persiste le layout sur disque puis libère les panneaux. Idempotent.
 	/// M100.4 — Logge le mode caméra final pour traçabilité ; la persistance
 	/// disque de `editor.world.camera.lastMode` est différée à un follow-up
@@ -565,6 +682,13 @@ namespace engine::editor::world
 
 		if (ImGui::BeginMenu("Tools"))
 		{
+			// Auberge T4 — Action d'export de l'auberge de démo vers config.json
+			// (world.scenery) + ancre respawn inn. Pivot fixe (88,100) en v1.
+			if (ImGui::MenuItem("Exporter l'auberge (carte demo)"))
+			{
+				ExportAubergeToConfig();
+			}
+			ImGui::Separator();
 			ImGui::TextDisabled("(à remplir par les tickets outils)");
 			ImGui::EndMenu();
 		}

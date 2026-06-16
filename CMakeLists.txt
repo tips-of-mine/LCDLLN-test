@@ -344,6 +344,7 @@ add_library(engine_core
   src/world_editor/assets/AssetCatalog.cpp
   # Auberge editable (T2) — Preset de batiment (parsing JSON).
   src/world_editor/structures/BuildingPresetIo.cpp
+  src/world_editor/structures/BuildingInstantiate.cpp
   # M100.32 — Interactive Props (simulateur d'animation pur + panneau editeur ;
   # types/format/relais header-only ; payloads reseau partages).
   src/client/world/interactive/InteractiveSimulator.cpp

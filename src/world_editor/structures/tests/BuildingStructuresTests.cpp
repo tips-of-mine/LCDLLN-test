@@ -3,6 +3,7 @@
 
 #include "src/world_editor/structures/BuildingPreset.h"
 #include "src/world_editor/structures/BuildingPresetIo.h"
+#include "src/world_editor/structures/BuildingInstantiate.h"
 
 #include <cmath>
 #include <cstdio>
@@ -68,12 +69,55 @@ namespace
 			REQUIRE(Near(q.spawnAnchor.z, -2.0f));
 		}
 	}
+
+	void Test_RotateYaw()
+	{
+		using engine::math::Vec3;
+		// 90° : (1,0,0) -> (0,0,-1) avec la convention x'=x c + z s, z'=-x s + z c.
+		Vec3 r = RotateYaw(Vec3(1, 0, 0), 90.0f);
+		REQUIRE(Near(r.x, 0.0f, 1e-3f) && Near(r.z, -1.0f, 1e-3f));
+		// 0° : identité.
+		Vec3 r0 = RotateYaw(Vec3(2, 5, -3), 0.0f);
+		REQUIRE(Near(r0.x, 2.0f) && Near(r0.y, 5.0f) && Near(r0.z, -3.0f));
+	}
+
+	void Test_Instantiate()
+	{
+		using engine::math::Vec3;
+		BuildingPreset p; p.id = "x"; p.spawnAnchor = { 0, 0, 2 };
+		BuildingPresetElement a; a.meshPath = "meshes/props/Floor_WoodDark.gltf";
+		a.offset = { 0, 0, 0 };
+		BuildingPresetElement b; b.meshPath = "meshes/props/Wall_Plaster_Straight.gltf";
+		b.offset = { 1, 0, 0 };
+		p.elements = { a, b };
+
+		uint32_t next = 1;
+		auto alloc = [&next]() { return next++; };
+		// Pivot (10,0,20), pas de rotation.
+		auto insts = InstantiatePreset(p, Vec3(10, 0, 20), 0.0f, 42, alloc);
+		REQUIRE(insts.size() == 2);
+		if (insts.size() == 2)
+		{
+			REQUIRE(Near(insts[0].position.x, 10.0f) && Near(insts[0].position.z, 20.0f));
+			REQUIRE(Near(insts[1].position.x, 11.0f) && Near(insts[1].position.z, 20.0f));
+			REQUIRE(insts[0].groupId == 42 && insts[1].groupId == 42);
+			REQUIRE(insts[0].instanceId != insts[1].instanceId);
+			REQUIRE(insts[0].layerTag ==
+				static_cast<uint32_t>(engine::world::instances::PlacementLayer::Structures));
+			REQUIRE(insts[0].assetId != 0);
+		}
+		// Ancre spawn monde = pivot + (0,0,2).
+		Vec3 anchor = SpawnAnchorWorld(p, Vec3(10, 0, 20), 0.0f);
+		REQUIRE(Near(anchor.x, 10.0f) && Near(anchor.z, 22.0f));
+	}
 }
 
 int main()
 {
 	Test_ParsePreset();
 	Test_Preset_Roundtrip();
+	Test_RotateYaw();
+	Test_Instantiate();
 	if (g_failed == 0) std::fprintf(stderr, "[OK] BuildingStructuresTests\n");
 	else std::fprintf(stderr, "[FAIL] BuildingStructuresTests: %d\n", g_failed);
 	return g_failed;

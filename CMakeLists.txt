@@ -342,6 +342,8 @@ add_library(engine_core
   src/world_editor/PlacementTool.cpp
   # Auberge editable (T1) — Catalogue d'assets (scan disque props).
   src/world_editor/assets/AssetCatalog.cpp
+  # Auberge editable (T2) — Preset de batiment (parsing JSON).
+  src/world_editor/structures/BuildingPresetIo.cpp
   # M100.32 — Interactive Props (simulateur d'animation pur + panneau editeur ;
   # types/format/relais header-only ; payloads reseau partages).
   src/client/world/interactive/InteractiveSimulator.cpp
@@ -1033,6 +1035,11 @@ add_test(NAME placement_tests COMMAND placement_tests)
 add_executable(asset_catalog_tests src/world_editor/assets/tests/AssetCatalogTests.cpp)
 target_link_libraries(asset_catalog_tests PRIVATE engine_core)
 add_test(NAME asset_catalog_tests COMMAND asset_catalog_tests)
+
+# Auberge editable (T2/T4) — Tests structures (preset IO, instanciation, export).
+add_executable(building_structures_tests src/world_editor/structures/tests/BuildingStructuresTests.cpp)
+target_link_libraries(building_structures_tests PRIVATE engine_core)
+add_test(NAME building_structures_tests COMMAND building_structures_tests)
 
 # M100.18 — Tests foliage (library JSON + Poisson-disk + regles + round-trip).
 add_executable(foliage_tests src/client/world/foliage/tests/FoliageTests.cpp)

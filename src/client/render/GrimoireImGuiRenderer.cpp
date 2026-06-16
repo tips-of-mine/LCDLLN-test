@@ -1,6 +1,7 @@
 #include "src/client/render/GrimoireImGuiRenderer.h"
 #include "src/client/grimoire/GrimoireUi.h"
 #include "src/client/gameplay/ActionBarLayout.h" // engine::client::FindSpellInKit
+#include "src/client/render/SkillIconCache.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -63,6 +64,16 @@ namespace engine::render
 					}
 				}
 				ImGui::PushID(spell.spellId.c_str());
+				// Icône du sort à gauche du libellé (si disponible).
+				if (m_iconCache != nullptr && !spell.iconPath.empty())
+				{
+					const uint64_t texId = m_iconCache->GetOrLoad(spell.iconPath);
+					if (texId != 0)
+					{
+						ImGui::Image(static_cast<ImTextureID>(texId), ImVec2(22.0f, 22.0f));
+						ImGui::SameLine();
+					}
+				}
 				const std::string label = spell.name + "  (coût " + std::to_string(spell.resourceCostPercent)
 					+ "%, CD " + std::to_string(spell.cooldownMs / 1000u) + "s)";
 				ImGui::Selectable(label.c_str());

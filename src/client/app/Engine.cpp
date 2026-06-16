@@ -8223,6 +8223,7 @@ namespace engine
 					(void)m_skillIconCache.Init(m_vkDeviceContext.GetDevice(), &m_assetRegistry);
 				}
 				m_classSkillTreeImGui->SetIconCache(&m_skillIconCache);
+				if (m_grimoireImGui) { m_grimoireImGui->SetIconCache(&m_skillIconCache); }
 				// CMANGOS.21 (Phase 5.21 step 3+4) — Renderer ImGui du panneau
 				// Arena. Visible uniquement quand m_arenaVisible (toggle via
 				// /arena ou touche A). Le popup proposal s'affiche aussi quand

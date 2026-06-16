@@ -8575,6 +8575,10 @@ namespace engine
 				LOG_INFO(Core, "[EnterWorld] character_id={}, name='{}', shard_id={}, endpoint='{}'",
 					enterCmd.characterId, enterCmd.characterName, enterCmd.shardId, enterCmd.shardEndpoint);
 
+				// Niveau du perso (depuis CHARACTER_LIST) : sert a l'arbre de
+				// competences (verrouillage paliers + affichage « Niveau joueur »).
+				m_activeCharacterLevel = (enterCmd.level > 0u) ? enterCmd.level : 1u;
+
 				// Coupe la musique des ecrans d'auth/menu (Horns_of_the_Fallen_Bastion.mp3)
 				// au moment d'entrer dans le monde : le joueur entend desormais l'ambiance
 				// du shard (zone audio) et eventuellement de futures musiques in-game.
@@ -12115,10 +12119,11 @@ namespace engine
 				m_grimoireImGui->Render();
 			}
 			// SP-D — Sync + render conditionnel de l'arbre de compétences par-classe.
-			// playerLevel absent de UIModel — on passe 60u (permissif, le serveur valide).
+			// Niveau réel du perso (capturé à EnterWorld depuis CHARACTER_LIST) : verrouille
+			// les paliers > niveau et affiche le bon « Niveau joueur ». Le serveur revalide.
 			{
 				const engine::client::UIModel& treeModel = m_uiModelBinding.GetModel();
-				m_classSkillTreeUi.Sync(treeModel.classId, treeModel.knownSkillIds, 60u);
+				m_classSkillTreeUi.Sync(treeModel.classId, treeModel.knownSkillIds, m_activeCharacterLevel);
 				if (m_classSkillTreeVisible && m_classSkillTreeImGui && m_classSkillTreeUi.IsInitialized())
 				{
 					m_classSkillTreeImGui->SetEnabled(true);

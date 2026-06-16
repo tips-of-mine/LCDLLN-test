@@ -44,7 +44,9 @@ namespace engine::client
 		/// (depuis paths.content, ex. "icons/skills/<classId>/<fichier>.png"),
 		/// ou 0 si vide / introuvable / plafond atteint / non initialisé.
 		/// Chargement paresseux + mise en cache (succès comme échec mémorisés).
-		uint64_t GetOrLoad(const std::string& relPath);
+		/// \param outW,outH (optionnels) remplis avec la taille native en texels
+		/// (utile pour préserver le ratio à l'affichage) ; 0 si non chargée.
+		uint64_t GetOrLoad(const std::string& relPath, float* outW = nullptr, float* outH = nullptr);
 
 		bool IsInitialized() const { return m_sampler != VK_NULL_HANDLE; }
 
@@ -52,7 +54,9 @@ namespace engine::client
 		VkDevice m_device = VK_NULL_HANDLE;
 		engine::render::AssetRegistry* m_registry = nullptr;
 		VkSampler m_sampler = VK_NULL_HANDLE;
-		std::unordered_map<std::string, uint64_t> m_cache; ///< chemin -> ImTextureID (0 = échec mémorisé).
+		/// Entrée de cache : ImTextureID (0 = échec mémorisé) + taille native en texels.
+		struct IconEntry { uint64_t id = 0; float w = 0.0f; float h = 0.0f; };
+		std::unordered_map<std::string, IconEntry> m_cache; ///< chemin -> entrée.
 		std::vector<VkDescriptorSet> m_descriptors;        ///< descripteurs à libérer au Shutdown.
 		static constexpr size_t kMaxIcons = 900;           ///< < pool ImGui (1024 sets).
 	};

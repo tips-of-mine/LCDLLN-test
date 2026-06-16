@@ -16,12 +16,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Nova de Givre : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Nova de Givre : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv01_Nova-de-Givre.png"
                    },
                    {
                        "id":  "mage_def_t1",
-                       "name":  "Bouclier de Mana",
+                       "name":  "Bouclier",
                        "branch":  "def",
                        "tier":  1,
                        "level":  1,
@@ -33,46 +33,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Bouclier de Mana : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv01_Bouclier-de-Mana.png"
+                       "description":  "Bouclier : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv01_Bouclier.png"
                    },
                    {
                        "id":  "mage_single_t1",
-                       "name":  "Eclair Magique",
+                       "name":  "Transfert Vital",
                        "branch":  "single",
                        "tier":  1,
                        "level":  1,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1,
-                       "rangeMeters":  20,
+                       "rangeMeters":  18,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Eclair Magique : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv01_Eclair-Magique.png"
+                       "description":  "Transfert Vital : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv01_Transfert-Vital.png"
                    },
                    {
                        "id":  "mage_aoe_t2",
-                       "name":  "Boule de Feu  Aiguise",
+                       "name":  "Halo de Vie  Aiguise",
                        "branch":  "aoe",
                        "tier":  2,
                        "level":  2,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.06,
                        "rangeMeters":  20.3,
                        "areaRadiusMeters":  3.1,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Boule de Feu  Aiguise : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv02_Boule-de-Feu-Aiguise.png"
+                       "description":  "Halo de Vie  Aiguise : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv02_Halo-de-Vie-Aiguise.png"
                    },
                    {
                        "id":  "mage_def_t2",
-                       "name":  "Armure de Glace  Aiguise",
+                       "name":  "Barriere  Aiguise",
                        "branch":  "def",
                        "tier":  2,
                        "level":  2,
@@ -84,8 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Armure de Glace  Aiguise : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv02_Armure-de-Glace-Aiguise.png"
+                       "description":  "Barriere  Aiguise : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv02_Barriere-Aiguise.png"
                    },
                    {
                        "id":  "mage_single_t2",
@@ -101,7 +101,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Dard Arcanique  Aiguise : lance un projectile magique sur une cible unique.",
+                       "description":  "Dard Arcanique  Aiguise : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv02_Dard-Arcanique-Aiguise.png"
                    },
                    {
@@ -118,12 +118,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Tempete d'Eclairs  Renforce : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Tempete d'Eclairs  Renforce : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv03_Tempete-d-Eclairs-Renforce.png"
                    },
                    {
                        "id":  "mage_def_t3",
-                       "name":  "Teleportation Courte  Renforce",
+                       "name":  "Garde  Renforce",
                        "branch":  "def",
                        "tier":  3,
                        "level":  3,
@@ -135,46 +135,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Teleportation Courte  Renforce : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv03_Teleportation-Courte-Renforce.png"
+                       "description":  "Garde  Renforce : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv03_Garde-Renforce.png"
                    },
                    {
                        "id":  "mage_single_t3",
-                       "name":  "Trait de Givre  Renforce",
+                       "name":  "Flux de Vie Arcanique  Renforce",
                        "branch":  "single",
                        "tier":  3,
                        "level":  3,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.12,
-                       "rangeMeters":  20.7,
+                       "rangeMeters":  18.4,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Trait de Givre  Renforce : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv03_Trait-de-Givre-Renforce.png"
+                       "description":  "Flux de Vie Arcanique  Renforce : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv03_Flux-de-Vie-Arcanique-Renforce.png"
                    },
                    {
                        "id":  "mage_aoe_t4",
-                       "name":  "Pluie de Meteores  Affute",
+                       "name":  "Trame Collective  Affute",
                        "branch":  "aoe",
                        "tier":  4,
                        "level":  4,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.18,
                        "rangeMeters":  21,
                        "areaRadiusMeters":  3.2,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Pluie de Meteores  Affute : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv04_Pluie-de-Meteores-Affute.png"
+                       "description":  "Trame Collective  Affute : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv04_Trame-Collective-Affute.png"
                    },
                    {
                        "id":  "mage_def_t4",
-                       "name":  "Barriere Arcanique  Affute",
+                       "name":  "Voile  Affute",
                        "branch":  "def",
                        "tier":  4,
                        "level":  4,
@@ -186,8 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Barriere Arcanique  Affute : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv04_Barriere-Arcanique-Affute.png"
+                       "description":  "Voile  Affute : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv04_Voile-Affute.png"
                    },
                    {
                        "id":  "mage_single_t4",
@@ -203,7 +203,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Foudre Ciblee  Affute : lance un projectile magique sur une cible unique.",
+                       "description":  "Foudre Ciblee  Affute : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv04_Foudre-Ciblee-Affute.png"
                    },
                    {
@@ -220,12 +220,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Blizzard  Brutal : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Blizzard  Brutal : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv05_Blizzard-Brutal.png"
                    },
                    {
                        "id":  "mage_def_t5",
-                       "name":  "Reflet de Sort  Brutal",
+                       "name":  "Egide  Brutal",
                        "branch":  "def",
                        "tier":  5,
                        "level":  5,
@@ -237,46 +237,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Reflet de Sort  Brutal : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv05_Reflet-de-Sort-Brutal.png"
+                       "description":  "Egide  Brutal : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv05_Egide-Brutal.png"
                    },
                    {
                        "id":  "mage_single_t5",
-                       "name":  "Lance de Feu  Brutal",
+                       "name":  "Mot de Restauration  Brutal",
                        "branch":  "single",
                        "tier":  5,
                        "level":  5,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.24,
-                       "rangeMeters":  21.4,
+                       "rangeMeters":  18.8,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Lance de Feu  Brutal : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv05_Lance-de-Feu-Brutal.png"
+                       "description":  "Mot de Restauration  Brutal : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv05_Mot-de-Restauration-Brutal.png"
                    },
                    {
                        "id":  "mage_aoe_t6",
-                       "name":  "Cataclysme Arcanique  Vorace",
+                       "name":  "Resurgence Arcanique  Vorace",
                        "branch":  "aoe",
                        "tier":  6,
                        "level":  6,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.3,
                        "rangeMeters":  21.7,
                        "areaRadiusMeters":  3.3,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Cataclysme Arcanique  Vorace : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv06_Cataclysme-Arcanique-Vorace.png"
+                       "description":  "Resurgence Arcanique  Vorace : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv06_Resurgence-Arcanique-Vorace.png"
                    },
                    {
                        "id":  "mage_def_t6",
-                       "name":  "Sanctuaire Magique  Vorace",
+                       "name":  "Sanctuaire  Vorace",
                        "branch":  "def",
                        "tier":  6,
                        "level":  6,
@@ -288,8 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Sanctuaire Magique  Vorace : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv06_Sanctuaire-Magique-Vorace.png"
+                       "description":  "Sanctuaire  Vorace : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv06_Sanctuaire-Vorace.png"
                    },
                    {
                        "id":  "mage_single_t6",
@@ -305,7 +305,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Desintegration  Vorace : lance un projectile magique sur une cible unique.",
+                       "description":  "Desintegration  Vorace : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv06_Desintegration-Vorace.png"
                    },
                    {
@@ -322,12 +322,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Nova de Givre  Implacable : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Nova de Givre  Implacable : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv07_Nova-de-Givre-Implacable.png"
                    },
                    {
                        "id":  "mage_def_t7",
-                       "name":  "Bouclier de Mana  Implacable",
+                       "name":  "Bouclier  Implacable",
                        "branch":  "def",
                        "tier":  7,
                        "level":  7,
@@ -339,46 +339,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Bouclier de Mana  Implacable : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv07_Bouclier-de-Mana-Implacable.png"
+                       "description":  "Bouclier  Implacable : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv07_Bouclier-Implacable.png"
                    },
                    {
                        "id":  "mage_single_t7",
-                       "name":  "Eclair Magique  Implacable",
+                       "name":  "Transfert Vital  Implacable",
                        "branch":  "single",
                        "tier":  7,
                        "level":  7,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.36,
-                       "rangeMeters":  22,
+                       "rangeMeters":  19.2,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Eclair Magique  Implacable : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv07_Eclair-Magique-Implacable.png"
+                       "description":  "Transfert Vital  Implacable : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv07_Transfert-Vital-Implacable.png"
                    },
                    {
                        "id":  "mage_aoe_t8",
-                       "name":  "Boule de Feu  Funeste",
+                       "name":  "Halo de Vie  Funeste",
                        "branch":  "aoe",
                        "tier":  8,
                        "level":  8,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.42,
                        "rangeMeters":  22.4,
                        "areaRadiusMeters":  3.5,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Boule de Feu  Funeste : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv08_Boule-de-Feu-Funeste.png"
+                       "description":  "Halo de Vie  Funeste : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv08_Halo-de-Vie-Funeste.png"
                    },
                    {
                        "id":  "mage_def_t8",
-                       "name":  "Armure de Glace  Funeste",
+                       "name":  "Barriere  Funeste",
                        "branch":  "def",
                        "tier":  8,
                        "level":  8,
@@ -390,8 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Armure de Glace  Funeste : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv08_Armure-de-Glace-Funeste.png"
+                       "description":  "Barriere  Funeste : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv08_Barriere-Funeste.png"
                    },
                    {
                        "id":  "mage_single_t8",
@@ -407,7 +407,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Dard Arcanique  Funeste : lance un projectile magique sur une cible unique.",
+                       "description":  "Dard Arcanique  Funeste : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv08_Dard-Arcanique-Funeste.png"
                    },
                    {
@@ -424,12 +424,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Tempete d'Eclairs  Cruel : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Tempete d'Eclairs  Cruel : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv09_Tempete-d-Eclairs-Cruel.png"
                    },
                    {
                        "id":  "mage_def_t9",
-                       "name":  "Teleportation Courte  Cruel",
+                       "name":  "Garde  Cruel",
                        "branch":  "def",
                        "tier":  9,
                        "level":  9,
@@ -441,46 +441,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Teleportation Courte  Cruel : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv09_Teleportation-Courte-Cruel.png"
+                       "description":  "Garde  Cruel : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv09_Garde-Cruel.png"
                    },
                    {
                        "id":  "mage_single_t9",
-                       "name":  "Trait de Givre  Cruel",
+                       "name":  "Flux de Vie Arcanique  Cruel",
                        "branch":  "single",
                        "tier":  9,
                        "level":  9,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.47,
-                       "rangeMeters":  22.7,
+                       "rangeMeters":  19.6,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Trait de Givre  Cruel : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv09_Trait-de-Givre-Cruel.png"
+                       "description":  "Flux de Vie Arcanique  Cruel : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv09_Flux-de-Vie-Arcanique-Cruel.png"
                    },
                    {
                        "id":  "mage_aoe_t10",
-                       "name":  "Pluie de Meteores  Sanglant",
+                       "name":  "Trame Collective  Sanglant",
                        "branch":  "aoe",
                        "tier":  10,
                        "level":  10,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.53,
                        "rangeMeters":  23.1,
                        "areaRadiusMeters":  3.6,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Pluie de Meteores  Sanglant : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv10_Pluie-de-Meteores-Sanglant.png"
+                       "description":  "Trame Collective  Sanglant : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv10_Trame-Collective-Sanglant.png"
                    },
                    {
                        "id":  "mage_def_t10",
-                       "name":  "Barriere Arcanique  Sanglant",
+                       "name":  "Voile  Sanglant",
                        "branch":  "def",
                        "tier":  10,
                        "level":  10,
@@ -492,8 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Barriere Arcanique  Sanglant : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv10_Barriere-Arcanique-Sanglant.png"
+                       "description":  "Voile  Sanglant : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv10_Voile-Sanglant.png"
                    },
                    {
                        "id":  "mage_single_t10",
@@ -509,7 +509,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Foudre Ciblee  Sanglant : lance un projectile magique sur une cible unique.",
+                       "description":  "Foudre Ciblee  Sanglant : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv10_Foudre-Ciblee-Sanglant.png"
                    },
                    {
@@ -526,12 +526,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Blizzard  Devastateur : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Blizzard  Devastateur : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv11_Blizzard-Devastateur.png"
                    },
                    {
                        "id":  "mage_def_t11",
-                       "name":  "Reflet de Sort  Devastateur",
+                       "name":  "Egide  Devastateur",
                        "branch":  "def",
                        "tier":  11,
                        "level":  11,
@@ -543,46 +543,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Reflet de Sort  Devastateur : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv11_Reflet-de-Sort-Devastateur.png"
+                       "description":  "Egide  Devastateur : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv11_Egide-Devastateur.png"
                    },
                    {
                        "id":  "mage_single_t11",
-                       "name":  "Lance de Feu  Devastateur",
+                       "name":  "Mot de Restauration  Devastateur",
                        "branch":  "single",
                        "tier":  11,
                        "level":  11,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.59,
-                       "rangeMeters":  23.4,
+                       "rangeMeters":  20,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Lance de Feu  Devastateur : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv11_Lance-de-Feu-Devastateur.png"
+                       "description":  "Mot de Restauration  Devastateur : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv11_Mot-de-Restauration-Devastateur.png"
                    },
                    {
                        "id":  "mage_aoe_t12",
-                       "name":  "Cataclysme Arcanique  Foudroyant",
+                       "name":  "Resurgence Arcanique  Foudroyant",
                        "branch":  "aoe",
                        "tier":  12,
                        "level":  12,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.65,
                        "rangeMeters":  23.7,
                        "areaRadiusMeters":  3.7,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Cataclysme Arcanique  Foudroyant : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv12_Cataclysme-Arcanique-Foudroyant.png"
+                       "description":  "Resurgence Arcanique  Foudroyant : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv12_Resurgence-Arcanique-Foudroyant.png"
                    },
                    {
                        "id":  "mage_def_t12",
-                       "name":  "Sanctuaire Magique  Foudroyant",
+                       "name":  "Sanctuaire  Foudroyant",
                        "branch":  "def",
                        "tier":  12,
                        "level":  12,
@@ -594,8 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Sanctuaire Magique  Foudroyant : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv12_Sanctuaire-Magique-Foudroyant.png"
+                       "description":  "Sanctuaire  Foudroyant : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv12_Sanctuaire-Foudroyant.png"
                    },
                    {
                        "id":  "mage_single_t12",
@@ -611,7 +611,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Desintegration  Foudroyant : lance un projectile magique sur une cible unique.",
+                       "description":  "Desintegration  Foudroyant : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv12_Desintegration-Foudroyant.png"
                    },
                    {
@@ -628,12 +628,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Nova de Givre  Mortel : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Nova de Givre  Mortel : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv13_Nova-de-Givre-Mortel.png"
                    },
                    {
                        "id":  "mage_def_t13",
-                       "name":  "Bouclier de Mana  Mortel",
+                       "name":  "Bouclier  Mortel",
                        "branch":  "def",
                        "tier":  13,
                        "level":  13,
@@ -645,46 +645,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Bouclier de Mana  Mortel : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv13_Bouclier-de-Mana-Mortel.png"
+                       "description":  "Bouclier  Mortel : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv13_Bouclier-Mortel.png"
                    },
                    {
                        "id":  "mage_single_t13",
-                       "name":  "Eclair Magique  Mortel",
+                       "name":  "Transfert Vital  Mortel",
                        "branch":  "single",
                        "tier":  13,
                        "level":  13,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.71,
-                       "rangeMeters":  24.1,
+                       "rangeMeters":  20.4,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Eclair Magique  Mortel : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv13_Eclair-Magique-Mortel.png"
+                       "description":  "Transfert Vital  Mortel : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv13_Transfert-Vital-Mortel.png"
                    },
                    {
                        "id":  "mage_aoe_t14",
-                       "name":  "Boule de Feu  Inexorable",
+                       "name":  "Halo de Vie  Inexorable",
                        "branch":  "aoe",
                        "tier":  14,
                        "level":  14,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.77,
                        "rangeMeters":  24.4,
                        "areaRadiusMeters":  3.9,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Boule de Feu  Inexorable : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv14_Boule-de-Feu-Inexorable.png"
+                       "description":  "Halo de Vie  Inexorable : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv14_Halo-de-Vie-Inexorable.png"
                    },
                    {
                        "id":  "mage_def_t14",
-                       "name":  "Armure de Glace  Inexorable",
+                       "name":  "Barriere  Inexorable",
                        "branch":  "def",
                        "tier":  14,
                        "level":  14,
@@ -696,8 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Armure de Glace  Inexorable : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv14_Armure-de-Glace-Inexorable.png"
+                       "description":  "Barriere  Inexorable : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv14_Barriere-Inexorable.png"
                    },
                    {
                        "id":  "mage_single_t14",
@@ -713,7 +713,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Dard Arcanique  Inexorable : lance un projectile magique sur une cible unique.",
+                       "description":  "Dard Arcanique  Inexorable : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv14_Dard-Arcanique-Inexorable.png"
                    },
                    {
@@ -730,12 +730,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Tempete d'Eclairs  Terrible : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Tempete d'Eclairs  Terrible : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv15_Tempete-d-Eclairs-Terrible.png"
                    },
                    {
                        "id":  "mage_def_t15",
-                       "name":  "Teleportation Courte  Terrible",
+                       "name":  "Garde  Terrible",
                        "branch":  "def",
                        "tier":  15,
                        "level":  15,
@@ -747,46 +747,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Teleportation Courte  Terrible : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv15_Teleportation-Courte-Terrible.png"
+                       "description":  "Garde  Terrible : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv15_Garde-Terrible.png"
                    },
                    {
                        "id":  "mage_single_t15",
-                       "name":  "Trait de Givre  Terrible",
+                       "name":  "Flux de Vie Arcanique  Terrible",
                        "branch":  "single",
                        "tier":  15,
                        "level":  15,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.83,
-                       "rangeMeters":  24.7,
+                       "rangeMeters":  20.8,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Trait de Givre  Terrible : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv15_Trait-de-Givre-Terrible.png"
+                       "description":  "Flux de Vie Arcanique  Terrible : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv15_Flux-de-Vie-Arcanique-Terrible.png"
                    },
                    {
                        "id":  "mage_aoe_t16",
-                       "name":  "Pluie de Meteores  Souverain",
+                       "name":  "Trame Collective  Souverain",
                        "branch":  "aoe",
                        "tier":  16,
                        "level":  16,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  1.89,
                        "rangeMeters":  25.1,
                        "areaRadiusMeters":  4,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Pluie de Meteores  Souverain : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv16_Pluie-de-Meteores-Souverain.png"
+                       "description":  "Trame Collective  Souverain : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv16_Trame-Collective-Souverain.png"
                    },
                    {
                        "id":  "mage_def_t16",
-                       "name":  "Barriere Arcanique  Souverain",
+                       "name":  "Voile  Souverain",
                        "branch":  "def",
                        "tier":  16,
                        "level":  16,
@@ -798,8 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Barriere Arcanique  Souverain : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv16_Barriere-Arcanique-Souverain.png"
+                       "description":  "Voile  Souverain : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv16_Voile-Souverain.png"
                    },
                    {
                        "id":  "mage_single_t16",
@@ -815,7 +815,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Foudre Ciblee  Souverain : lance un projectile magique sur une cible unique.",
+                       "description":  "Foudre Ciblee  Souverain : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv16_Foudre-Ciblee-Souverain.png"
                    },
                    {
@@ -832,12 +832,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Blizzard  Legendaire : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Blizzard  Legendaire : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv17_Blizzard-Legendaire.png"
                    },
                    {
                        "id":  "mage_def_t17",
-                       "name":  "Reflet de Sort  Legendaire",
+                       "name":  "Egide  Legendaire",
                        "branch":  "def",
                        "tier":  17,
                        "level":  17,
@@ -849,46 +849,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Reflet de Sort  Legendaire : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv17_Reflet-de-Sort-Legendaire.png"
+                       "description":  "Egide  Legendaire : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv17_Egide-Legendaire.png"
                    },
                    {
                        "id":  "mage_single_t17",
-                       "name":  "Lance de Feu  Legendaire",
+                       "name":  "Mot de Restauration  Legendaire",
                        "branch":  "single",
                        "tier":  17,
                        "level":  17,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  1.95,
-                       "rangeMeters":  25.4,
+                       "rangeMeters":  21.3,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Lance de Feu  Legendaire : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv17_Lance-de-Feu-Legendaire.png"
+                       "description":  "Mot de Restauration  Legendaire : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv17_Mot-de-Restauration-Legendaire.png"
                    },
                    {
                        "id":  "mage_aoe_t18",
-                       "name":  "Cataclysme Arcanique  Cataclysmique",
+                       "name":  "Resurgence Arcanique  Cataclysmique",
                        "branch":  "aoe",
                        "tier":  18,
                        "level":  18,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.01,
                        "rangeMeters":  25.8,
                        "areaRadiusMeters":  4.2,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Cataclysme Arcanique  Cataclysmique : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv18_Cataclysme-Arcanique-Cataclysmique.png"
+                       "description":  "Resurgence Arcanique  Cataclysmique : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv18_Resurgence-Arcanique-Cataclysmique.png"
                    },
                    {
                        "id":  "mage_def_t18",
-                       "name":  "Sanctuaire Magique  Cataclysmique",
+                       "name":  "Sanctuaire  Cataclysmique",
                        "branch":  "def",
                        "tier":  18,
                        "level":  18,
@@ -900,8 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Sanctuaire Magique  Cataclysmique : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv18_Sanctuaire-Magique-Cataclysmique.png"
+                       "description":  "Sanctuaire  Cataclysmique : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv18_Sanctuaire-Cataclysmique.png"
                    },
                    {
                        "id":  "mage_single_t18",
@@ -917,7 +917,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Desintegration  Cataclysmique : lance un projectile magique sur une cible unique.",
+                       "description":  "Desintegration  Cataclysmique : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv18_Desintegration-Cataclysmique.png"
                    },
                    {
@@ -934,12 +934,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Nova de Givre  Apocalyptique : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Nova de Givre  Apocalyptique : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv19_Nova-de-Givre-Apocalyptique.png"
                    },
                    {
                        "id":  "mage_def_t19",
-                       "name":  "Bouclier de Mana  Apocalyptique",
+                       "name":  "Bouclier  Apocalyptique",
                        "branch":  "def",
                        "tier":  19,
                        "level":  19,
@@ -951,46 +951,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Bouclier de Mana  Apocalyptique : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv19_Bouclier-de-Mana-Apocalyptique.png"
+                       "description":  "Bouclier  Apocalyptique : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv19_Bouclier-Apocalyptique.png"
                    },
                    {
                        "id":  "mage_single_t19",
-                       "name":  "Eclair Magique  Apocalyptique",
+                       "name":  "Transfert Vital  Apocalyptique",
                        "branch":  "single",
                        "tier":  19,
                        "level":  19,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.07,
-                       "rangeMeters":  26.1,
+                       "rangeMeters":  21.7,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Eclair Magique  Apocalyptique : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv19_Eclair-Magique-Apocalyptique.png"
+                       "description":  "Transfert Vital  Apocalyptique : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv19_Transfert-Vital-Apocalyptique.png"
                    },
                    {
                        "id":  "mage_aoe_t20",
-                       "name":  "Boule de Feu  Ultime",
+                       "name":  "Halo de Vie  Ultime",
                        "branch":  "aoe",
                        "tier":  20,
                        "level":  20,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.13,
                        "rangeMeters":  26.4,
                        "areaRadiusMeters":  4.3,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Boule de Feu  Ultime : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv20_Boule-de-Feu-Ultime.png"
+                       "description":  "Halo de Vie  Ultime : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv20_Halo-de-Vie-Ultime.png"
                    },
                    {
                        "id":  "mage_def_t20",
-                       "name":  "Armure de Glace  Ultime",
+                       "name":  "Barriere  Ultime",
                        "branch":  "def",
                        "tier":  20,
                        "level":  20,
@@ -1002,8 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Armure de Glace  Ultime : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv20_Armure-de-Glace-Ultime.png"
+                       "description":  "Barriere  Ultime : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv20_Barriere-Ultime.png"
                    },
                    {
                        "id":  "mage_single_t20",
@@ -1019,7 +1019,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Dard Arcanique  Ultime : lance un projectile magique sur une cible unique.",
+                       "description":  "Dard Arcanique  Ultime : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv20_Dard-Arcanique-Ultime.png"
                    },
                    {
@@ -1036,12 +1036,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Tempete d'Eclairs  Maitrise 21 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Tempete d'Eclairs  Maitrise 21 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv21_Tempete-d-Eclairs-Maitrise-21.png"
                    },
                    {
                        "id":  "mage_def_t21",
-                       "name":  "Teleportation Courte  Maitrise 21",
+                       "name":  "Garde  Maitrise 21",
                        "branch":  "def",
                        "tier":  21,
                        "level":  21,
@@ -1053,46 +1053,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Teleportation Courte  Maitrise 21 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv21_Teleportation-Courte-Maitrise-21.png"
+                       "description":  "Garde  Maitrise 21 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv21_Garde-Maitrise-21.png"
                    },
                    {
                        "id":  "mage_single_t21",
-                       "name":  "Trait de Givre  Maitrise 21",
+                       "name":  "Flux de Vie Arcanique  Maitrise 21",
                        "branch":  "single",
                        "tier":  21,
                        "level":  21,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.19,
-                       "rangeMeters":  26.8,
+                       "rangeMeters":  22.1,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Trait de Givre  Maitrise 21 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv21_Trait-de-Givre-Maitrise-21.png"
+                       "description":  "Flux de Vie Arcanique  Maitrise 21 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv21_Flux-de-Vie-Arcanique-Maitrise-21.png"
                    },
                    {
                        "id":  "mage_aoe_t22",
-                       "name":  "Pluie de Meteores  Maitrise 22",
+                       "name":  "Trame Collective  Maitrise 22",
                        "branch":  "aoe",
                        "tier":  22,
                        "level":  22,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.25,
                        "rangeMeters":  27.1,
                        "areaRadiusMeters":  4.4,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Pluie de Meteores  Maitrise 22 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv22_Pluie-de-Meteores-Maitrise-22.png"
+                       "description":  "Trame Collective  Maitrise 22 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv22_Trame-Collective-Maitrise-22.png"
                    },
                    {
                        "id":  "mage_def_t22",
-                       "name":  "Barriere Arcanique  Maitrise 22",
+                       "name":  "Voile  Maitrise 22",
                        "branch":  "def",
                        "tier":  22,
                        "level":  22,
@@ -1104,8 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Barriere Arcanique  Maitrise 22 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv22_Barriere-Arcanique-Maitrise-22.png"
+                       "description":  "Voile  Maitrise 22 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv22_Voile-Maitrise-22.png"
                    },
                    {
                        "id":  "mage_single_t22",
@@ -1121,7 +1121,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Foudre Ciblee  Maitrise 22 : lance un projectile magique sur une cible unique.",
+                       "description":  "Foudre Ciblee  Maitrise 22 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv22_Foudre-Ciblee-Maitrise-22.png"
                    },
                    {
@@ -1138,12 +1138,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Blizzard  Maitrise 23 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Blizzard  Maitrise 23 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv23_Blizzard-Maitrise-23.png"
                    },
                    {
                        "id":  "mage_def_t23",
-                       "name":  "Reflet de Sort  Maitrise 23",
+                       "name":  "Egide  Maitrise 23",
                        "branch":  "def",
                        "tier":  23,
                        "level":  23,
@@ -1155,46 +1155,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Reflet de Sort  Maitrise 23 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv23_Reflet-de-Sort-Maitrise-23.png"
+                       "description":  "Egide  Maitrise 23 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv23_Egide-Maitrise-23.png"
                    },
                    {
                        "id":  "mage_single_t23",
-                       "name":  "Lance de Feu  Maitrise 23",
+                       "name":  "Mot de Restauration  Maitrise 23",
                        "branch":  "single",
                        "tier":  23,
                        "level":  23,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.31,
-                       "rangeMeters":  27.5,
+                       "rangeMeters":  22.5,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Lance de Feu  Maitrise 23 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv23_Lance-de-Feu-Maitrise-23.png"
+                       "description":  "Mot de Restauration  Maitrise 23 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv23_Mot-de-Restauration-Maitrise-23.png"
                    },
                    {
                        "id":  "mage_aoe_t24",
-                       "name":  "Cataclysme Arcanique  Maitrise 24",
+                       "name":  "Resurgence Arcanique  Maitrise 24",
                        "branch":  "aoe",
                        "tier":  24,
                        "level":  24,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.36,
                        "rangeMeters":  27.8,
                        "areaRadiusMeters":  4.6,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Cataclysme Arcanique  Maitrise 24 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv24_Cataclysme-Arcanique-Maitrise-24.png"
+                       "description":  "Resurgence Arcanique  Maitrise 24 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv24_Resurgence-Arcanique-Maitrise-24.png"
                    },
                    {
                        "id":  "mage_def_t24",
-                       "name":  "Sanctuaire Magique  Maitrise 24",
+                       "name":  "Sanctuaire  Maitrise 24",
                        "branch":  "def",
                        "tier":  24,
                        "level":  24,
@@ -1206,8 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Sanctuaire Magique  Maitrise 24 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv24_Sanctuaire-Magique-Maitrise-24.png"
+                       "description":  "Sanctuaire  Maitrise 24 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv24_Sanctuaire-Maitrise-24.png"
                    },
                    {
                        "id":  "mage_single_t24",
@@ -1223,7 +1223,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Desintegration  Maitrise 24 : lance un projectile magique sur une cible unique.",
+                       "description":  "Desintegration  Maitrise 24 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv24_Desintegration-Maitrise-24.png"
                    },
                    {
@@ -1240,12 +1240,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Nova de Givre  Maitrise 25 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Nova de Givre  Maitrise 25 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv25_Nova-de-Givre-Maitrise-25.png"
                    },
                    {
                        "id":  "mage_def_t25",
-                       "name":  "Bouclier de Mana  Maitrise 25",
+                       "name":  "Bouclier  Maitrise 25",
                        "branch":  "def",
                        "tier":  25,
                        "level":  25,
@@ -1257,46 +1257,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Bouclier de Mana  Maitrise 25 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv25_Bouclier-de-Mana-Maitrise-25.png"
+                       "description":  "Bouclier  Maitrise 25 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv25_Bouclier-Maitrise-25.png"
                    },
                    {
                        "id":  "mage_single_t25",
-                       "name":  "Eclair Magique  Maitrise 25",
+                       "name":  "Transfert Vital  Maitrise 25",
                        "branch":  "single",
                        "tier":  25,
                        "level":  25,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.42,
-                       "rangeMeters":  28.1,
+                       "rangeMeters":  22.9,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Eclair Magique  Maitrise 25 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv25_Eclair-Magique-Maitrise-25.png"
+                       "description":  "Transfert Vital  Maitrise 25 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv25_Transfert-Vital-Maitrise-25.png"
                    },
                    {
                        "id":  "mage_aoe_t26",
-                       "name":  "Boule de Feu  Maitrise 26",
+                       "name":  "Halo de Vie  Maitrise 26",
                        "branch":  "aoe",
                        "tier":  26,
                        "level":  26,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.48,
                        "rangeMeters":  28.5,
                        "areaRadiusMeters":  4.7,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Boule de Feu  Maitrise 26 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv26_Boule-de-Feu-Maitrise-26.png"
+                       "description":  "Halo de Vie  Maitrise 26 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv26_Halo-de-Vie-Maitrise-26.png"
                    },
                    {
                        "id":  "mage_def_t26",
-                       "name":  "Armure de Glace  Maitrise 26",
+                       "name":  "Barriere  Maitrise 26",
                        "branch":  "def",
                        "tier":  26,
                        "level":  26,
@@ -1308,8 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Armure de Glace  Maitrise 26 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv26_Armure-de-Glace-Maitrise-26.png"
+                       "description":  "Barriere  Maitrise 26 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv26_Barriere-Maitrise-26.png"
                    },
                    {
                        "id":  "mage_single_t26",
@@ -1325,7 +1325,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Dard Arcanique  Maitrise 26 : lance un projectile magique sur une cible unique.",
+                       "description":  "Dard Arcanique  Maitrise 26 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv26_Dard-Arcanique-Maitrise-26.png"
                    },
                    {
@@ -1342,12 +1342,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Tempete d'Eclairs  Maitrise 27 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Tempete d'Eclairs  Maitrise 27 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv27_Tempete-d-Eclairs-Maitrise-27.png"
                    },
                    {
                        "id":  "mage_def_t27",
-                       "name":  "Teleportation Courte  Maitrise 27",
+                       "name":  "Garde  Maitrise 27",
                        "branch":  "def",
                        "tier":  27,
                        "level":  27,
@@ -1359,46 +1359,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Teleportation Courte  Maitrise 27 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv27_Teleportation-Courte-Maitrise-27.png"
+                       "description":  "Garde  Maitrise 27 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv27_Garde-Maitrise-27.png"
                    },
                    {
                        "id":  "mage_single_t27",
-                       "name":  "Trait de Givre  Maitrise 27",
+                       "name":  "Flux de Vie Arcanique  Maitrise 27",
                        "branch":  "single",
                        "tier":  27,
                        "level":  27,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.54,
-                       "rangeMeters":  28.8,
+                       "rangeMeters":  23.3,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Trait de Givre  Maitrise 27 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv27_Trait-de-Givre-Maitrise-27.png"
+                       "description":  "Flux de Vie Arcanique  Maitrise 27 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv27_Flux-de-Vie-Arcanique-Maitrise-27.png"
                    },
                    {
                        "id":  "mage_aoe_t28",
-                       "name":  "Pluie de Meteores  Maitrise 28",
+                       "name":  "Trame Collective  Maitrise 28",
                        "branch":  "aoe",
                        "tier":  28,
                        "level":  28,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.6,
                        "rangeMeters":  29.2,
                        "areaRadiusMeters":  4.8,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Pluie de Meteores  Maitrise 28 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv28_Pluie-de-Meteores-Maitrise-28.png"
+                       "description":  "Trame Collective  Maitrise 28 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv28_Trame-Collective-Maitrise-28.png"
                    },
                    {
                        "id":  "mage_def_t28",
-                       "name":  "Barriere Arcanique  Maitrise 28",
+                       "name":  "Voile  Maitrise 28",
                        "branch":  "def",
                        "tier":  28,
                        "level":  28,
@@ -1410,8 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Barriere Arcanique  Maitrise 28 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv28_Barriere-Arcanique-Maitrise-28.png"
+                       "description":  "Voile  Maitrise 28 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv28_Voile-Maitrise-28.png"
                    },
                    {
                        "id":  "mage_single_t28",
@@ -1427,7 +1427,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Foudre Ciblee  Maitrise 28 : lance un projectile magique sur une cible unique.",
+                       "description":  "Foudre Ciblee  Maitrise 28 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv28_Foudre-Ciblee-Maitrise-28.png"
                    },
                    {
@@ -1444,12 +1444,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Blizzard  Maitrise 29 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Blizzard  Maitrise 29 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv29_Blizzard-Maitrise-29.png"
                    },
                    {
                        "id":  "mage_def_t29",
-                       "name":  "Reflet de Sort  Maitrise 29",
+                       "name":  "Egide  Maitrise 29",
                        "branch":  "def",
                        "tier":  29,
                        "level":  29,
@@ -1461,46 +1461,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Reflet de Sort  Maitrise 29 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv29_Reflet-de-Sort-Maitrise-29.png"
+                       "description":  "Egide  Maitrise 29 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv29_Egide-Maitrise-29.png"
                    },
                    {
                        "id":  "mage_single_t29",
-                       "name":  "Lance de Feu  Maitrise 29",
+                       "name":  "Mot de Restauration  Maitrise 29",
                        "branch":  "single",
                        "tier":  29,
                        "level":  29,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.66,
-                       "rangeMeters":  29.5,
+                       "rangeMeters":  23.7,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Lance de Feu  Maitrise 29 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv29_Lance-de-Feu-Maitrise-29.png"
+                       "description":  "Mot de Restauration  Maitrise 29 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv29_Mot-de-Restauration-Maitrise-29.png"
                    },
                    {
                        "id":  "mage_aoe_t30",
-                       "name":  "Cataclysme Arcanique  Maitrise 30",
+                       "name":  "Resurgence Arcanique  Maitrise 30",
                        "branch":  "aoe",
                        "tier":  30,
                        "level":  30,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.72,
                        "rangeMeters":  29.8,
                        "areaRadiusMeters":  5,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Cataclysme Arcanique  Maitrise 30 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv30_Cataclysme-Arcanique-Maitrise-30.png"
+                       "description":  "Resurgence Arcanique  Maitrise 30 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv30_Resurgence-Arcanique-Maitrise-30.png"
                    },
                    {
                        "id":  "mage_def_t30",
-                       "name":  "Sanctuaire Magique  Maitrise 30",
+                       "name":  "Sanctuaire  Maitrise 30",
                        "branch":  "def",
                        "tier":  30,
                        "level":  30,
@@ -1512,8 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Sanctuaire Magique  Maitrise 30 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv30_Sanctuaire-Magique-Maitrise-30.png"
+                       "description":  "Sanctuaire  Maitrise 30 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv30_Sanctuaire-Maitrise-30.png"
                    },
                    {
                        "id":  "mage_single_t30",
@@ -1529,7 +1529,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Desintegration  Maitrise 30 : lance un projectile magique sur une cible unique.",
+                       "description":  "Desintegration  Maitrise 30 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv30_Desintegration-Maitrise-30.png"
                    },
                    {
@@ -1546,12 +1546,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Nova de Givre  Maitrise 31 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Nova de Givre  Maitrise 31 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv31_Nova-de-Givre-Maitrise-31.png"
                    },
                    {
                        "id":  "mage_def_t31",
-                       "name":  "Bouclier de Mana  Maitrise 31",
+                       "name":  "Bouclier  Maitrise 31",
                        "branch":  "def",
                        "tier":  31,
                        "level":  31,
@@ -1563,46 +1563,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Bouclier de Mana  Maitrise 31 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv31_Bouclier-de-Mana-Maitrise-31.png"
+                       "description":  "Bouclier  Maitrise 31 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv31_Bouclier-Maitrise-31.png"
                    },
                    {
                        "id":  "mage_single_t31",
-                       "name":  "Eclair Magique  Maitrise 31",
+                       "name":  "Transfert Vital  Maitrise 31",
                        "branch":  "single",
                        "tier":  31,
                        "level":  31,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.78,
-                       "rangeMeters":  30.2,
+                       "rangeMeters":  24.1,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Eclair Magique  Maitrise 31 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv31_Eclair-Magique-Maitrise-31.png"
+                       "description":  "Transfert Vital  Maitrise 31 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv31_Transfert-Vital-Maitrise-31.png"
                    },
                    {
                        "id":  "mage_aoe_t32",
-                       "name":  "Boule de Feu  Maitrise 32",
+                       "name":  "Halo de Vie  Maitrise 32",
                        "branch":  "aoe",
                        "tier":  32,
                        "level":  32,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.84,
                        "rangeMeters":  30.5,
                        "areaRadiusMeters":  5.1,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Boule de Feu  Maitrise 32 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv32_Boule-de-Feu-Maitrise-32.png"
+                       "description":  "Halo de Vie  Maitrise 32 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv32_Halo-de-Vie-Maitrise-32.png"
                    },
                    {
                        "id":  "mage_def_t32",
-                       "name":  "Armure de Glace  Maitrise 32",
+                       "name":  "Barriere  Maitrise 32",
                        "branch":  "def",
                        "tier":  32,
                        "level":  32,
@@ -1614,8 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Armure de Glace  Maitrise 32 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv32_Armure-de-Glace-Maitrise-32.png"
+                       "description":  "Barriere  Maitrise 32 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv32_Barriere-Maitrise-32.png"
                    },
                    {
                        "id":  "mage_single_t32",
@@ -1631,7 +1631,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Dard Arcanique  Maitrise 32 : lance un projectile magique sur une cible unique.",
+                       "description":  "Dard Arcanique  Maitrise 32 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv32_Dard-Arcanique-Maitrise-32.png"
                    },
                    {
@@ -1648,12 +1648,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Tempete d'Eclairs  Maitrise 33 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Tempete d'Eclairs  Maitrise 33 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv33_Tempete-d-Eclairs-Maitrise-33.png"
                    },
                    {
                        "id":  "mage_def_t33",
-                       "name":  "Teleportation Courte  Maitrise 33",
+                       "name":  "Garde  Maitrise 33",
                        "branch":  "def",
                        "tier":  33,
                        "level":  33,
@@ -1665,46 +1665,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Teleportation Courte  Maitrise 33 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv33_Teleportation-Courte-Maitrise-33.png"
+                       "description":  "Garde  Maitrise 33 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv33_Garde-Maitrise-33.png"
                    },
                    {
                        "id":  "mage_single_t33",
-                       "name":  "Trait de Givre  Maitrise 33",
+                       "name":  "Flux de Vie Arcanique  Maitrise 33",
                        "branch":  "single",
                        "tier":  33,
                        "level":  33,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  2.9,
-                       "rangeMeters":  30.8,
+                       "rangeMeters":  24.5,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Trait de Givre  Maitrise 33 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv33_Trait-de-Givre-Maitrise-33.png"
+                       "description":  "Flux de Vie Arcanique  Maitrise 33 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv33_Flux-de-Vie-Arcanique-Maitrise-33.png"
                    },
                    {
                        "id":  "mage_aoe_t34",
-                       "name":  "Pluie de Meteores  Maitrise 34",
+                       "name":  "Trame Collective  Maitrise 34",
                        "branch":  "aoe",
                        "tier":  34,
                        "level":  34,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  2.96,
                        "rangeMeters":  31.2,
                        "areaRadiusMeters":  5.2,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Pluie de Meteores  Maitrise 34 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv34_Pluie-de-Meteores-Maitrise-34.png"
+                       "description":  "Trame Collective  Maitrise 34 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv34_Trame-Collective-Maitrise-34.png"
                    },
                    {
                        "id":  "mage_def_t34",
-                       "name":  "Barriere Arcanique  Maitrise 34",
+                       "name":  "Voile  Maitrise 34",
                        "branch":  "def",
                        "tier":  34,
                        "level":  34,
@@ -1716,8 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Barriere Arcanique  Maitrise 34 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv34_Barriere-Arcanique-Maitrise-34.png"
+                       "description":  "Voile  Maitrise 34 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv34_Voile-Maitrise-34.png"
                    },
                    {
                        "id":  "mage_single_t34",
@@ -1733,7 +1733,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Foudre Ciblee  Maitrise 34 : lance un projectile magique sur une cible unique.",
+                       "description":  "Foudre Ciblee  Maitrise 34 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv34_Foudre-Ciblee-Maitrise-34.png"
                    },
                    {
@@ -1750,12 +1750,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Blizzard  Maitrise 35 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Blizzard  Maitrise 35 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv35_Blizzard-Maitrise-35.png"
                    },
                    {
                        "id":  "mage_def_t35",
-                       "name":  "Reflet de Sort  Maitrise 35",
+                       "name":  "Egide  Maitrise 35",
                        "branch":  "def",
                        "tier":  35,
                        "level":  35,
@@ -1767,46 +1767,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Reflet de Sort  Maitrise 35 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv35_Reflet-de-Sort-Maitrise-35.png"
+                       "description":  "Egide  Maitrise 35 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv35_Egide-Maitrise-35.png"
                    },
                    {
                        "id":  "mage_single_t35",
-                       "name":  "Lance de Feu  Maitrise 35",
+                       "name":  "Mot de Restauration  Maitrise 35",
                        "branch":  "single",
                        "tier":  35,
                        "level":  35,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.02,
-                       "rangeMeters":  31.5,
+                       "rangeMeters":  24.9,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Lance de Feu  Maitrise 35 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv35_Lance-de-Feu-Maitrise-35.png"
+                       "description":  "Mot de Restauration  Maitrise 35 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv35_Mot-de-Restauration-Maitrise-35.png"
                    },
                    {
                        "id":  "mage_aoe_t36",
-                       "name":  "Cataclysme Arcanique  Maitrise 36",
+                       "name":  "Resurgence Arcanique  Maitrise 36",
                        "branch":  "aoe",
                        "tier":  36,
                        "level":  36,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.08,
                        "rangeMeters":  31.9,
                        "areaRadiusMeters":  5.4,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Cataclysme Arcanique  Maitrise 36 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv36_Cataclysme-Arcanique-Maitrise-36.png"
+                       "description":  "Resurgence Arcanique  Maitrise 36 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv36_Resurgence-Arcanique-Maitrise-36.png"
                    },
                    {
                        "id":  "mage_def_t36",
-                       "name":  "Sanctuaire Magique  Maitrise 36",
+                       "name":  "Sanctuaire  Maitrise 36",
                        "branch":  "def",
                        "tier":  36,
                        "level":  36,
@@ -1818,8 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Sanctuaire Magique  Maitrise 36 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv36_Sanctuaire-Magique-Maitrise-36.png"
+                       "description":  "Sanctuaire  Maitrise 36 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv36_Sanctuaire-Maitrise-36.png"
                    },
                    {
                        "id":  "mage_single_t36",
@@ -1835,7 +1835,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Desintegration  Maitrise 36 : lance un projectile magique sur une cible unique.",
+                       "description":  "Desintegration  Maitrise 36 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv36_Desintegration-Maitrise-36.png"
                    },
                    {
@@ -1852,12 +1852,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Nova de Givre  Maitrise 37 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Nova de Givre  Maitrise 37 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv37_Nova-de-Givre-Maitrise-37.png"
                    },
                    {
                        "id":  "mage_def_t37",
-                       "name":  "Bouclier de Mana  Maitrise 37",
+                       "name":  "Bouclier  Maitrise 37",
                        "branch":  "def",
                        "tier":  37,
                        "level":  37,
@@ -1869,46 +1869,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Bouclier de Mana  Maitrise 37 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv37_Bouclier-de-Mana-Maitrise-37.png"
+                       "description":  "Bouclier  Maitrise 37 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv37_Bouclier-Maitrise-37.png"
                    },
                    {
                        "id":  "mage_single_t37",
-                       "name":  "Eclair Magique  Maitrise 37",
+                       "name":  "Transfert Vital  Maitrise 37",
                        "branch":  "single",
                        "tier":  37,
                        "level":  37,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.14,
-                       "rangeMeters":  32.2,
+                       "rangeMeters":  25.3,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Eclair Magique  Maitrise 37 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv37_Eclair-Magique-Maitrise-37.png"
+                       "description":  "Transfert Vital  Maitrise 37 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv37_Transfert-Vital-Maitrise-37.png"
                    },
                    {
                        "id":  "mage_aoe_t38",
-                       "name":  "Boule de Feu  Maitrise 38",
+                       "name":  "Halo de Vie  Maitrise 38",
                        "branch":  "aoe",
                        "tier":  38,
                        "level":  38,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.19,
                        "rangeMeters":  32.5,
                        "areaRadiusMeters":  5.5,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Boule de Feu  Maitrise 38 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv38_Boule-de-Feu-Maitrise-38.png"
+                       "description":  "Halo de Vie  Maitrise 38 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv38_Halo-de-Vie-Maitrise-38.png"
                    },
                    {
                        "id":  "mage_def_t38",
-                       "name":  "Armure de Glace  Maitrise 38",
+                       "name":  "Barriere  Maitrise 38",
                        "branch":  "def",
                        "tier":  38,
                        "level":  38,
@@ -1920,8 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Armure de Glace  Maitrise 38 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv38_Armure-de-Glace-Maitrise-38.png"
+                       "description":  "Barriere  Maitrise 38 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv38_Barriere-Maitrise-38.png"
                    },
                    {
                        "id":  "mage_single_t38",
@@ -1937,7 +1937,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Dard Arcanique  Maitrise 38 : lance un projectile magique sur une cible unique.",
+                       "description":  "Dard Arcanique  Maitrise 38 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv38_Dard-Arcanique-Maitrise-38.png"
                    },
                    {
@@ -1954,12 +1954,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Tempete d'Eclairs  Maitrise 39 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Tempete d'Eclairs  Maitrise 39 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv39_Tempete-d-Eclairs-Maitrise-39.png"
                    },
                    {
                        "id":  "mage_def_t39",
-                       "name":  "Teleportation Courte  Maitrise 39",
+                       "name":  "Garde  Maitrise 39",
                        "branch":  "def",
                        "tier":  39,
                        "level":  39,
@@ -1971,46 +1971,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Teleportation Courte  Maitrise 39 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv39_Teleportation-Courte-Maitrise-39.png"
+                       "description":  "Garde  Maitrise 39 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv39_Garde-Maitrise-39.png"
                    },
                    {
                        "id":  "mage_single_t39",
-                       "name":  "Trait de Givre  Maitrise 39",
+                       "name":  "Flux de Vie Arcanique  Maitrise 39",
                        "branch":  "single",
                        "tier":  39,
                        "level":  39,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.25,
-                       "rangeMeters":  32.9,
+                       "rangeMeters":  25.7,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Trait de Givre  Maitrise 39 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv39_Trait-de-Givre-Maitrise-39.png"
+                       "description":  "Flux de Vie Arcanique  Maitrise 39 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv39_Flux-de-Vie-Arcanique-Maitrise-39.png"
                    },
                    {
                        "id":  "mage_aoe_t40",
-                       "name":  "Pluie de Meteores  Maitrise 40",
+                       "name":  "Trame Collective  Maitrise 40",
                        "branch":  "aoe",
                        "tier":  40,
                        "level":  40,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.31,
                        "rangeMeters":  33.2,
                        "areaRadiusMeters":  5.6,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Pluie de Meteores  Maitrise 40 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv40_Pluie-de-Meteores-Maitrise-40.png"
+                       "description":  "Trame Collective  Maitrise 40 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv40_Trame-Collective-Maitrise-40.png"
                    },
                    {
                        "id":  "mage_def_t40",
-                       "name":  "Barriere Arcanique  Maitrise 40",
+                       "name":  "Voile  Maitrise 40",
                        "branch":  "def",
                        "tier":  40,
                        "level":  40,
@@ -2022,8 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Barriere Arcanique  Maitrise 40 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv40_Barriere-Arcanique-Maitrise-40.png"
+                       "description":  "Voile  Maitrise 40 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv40_Voile-Maitrise-40.png"
                    },
                    {
                        "id":  "mage_single_t40",
@@ -2039,7 +2039,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Foudre Ciblee  Maitrise 40 : lance un projectile magique sur une cible unique.",
+                       "description":  "Foudre Ciblee  Maitrise 40 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv40_Foudre-Ciblee-Maitrise-40.png"
                    },
                    {
@@ -2056,12 +2056,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Blizzard  Maitrise 41 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Blizzard  Maitrise 41 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv41_Blizzard-Maitrise-41.png"
                    },
                    {
                        "id":  "mage_def_t41",
-                       "name":  "Reflet de Sort  Maitrise 41",
+                       "name":  "Egide  Maitrise 41",
                        "branch":  "def",
                        "tier":  41,
                        "level":  41,
@@ -2073,46 +2073,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Reflet de Sort  Maitrise 41 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv41_Reflet-de-Sort-Maitrise-41.png"
+                       "description":  "Egide  Maitrise 41 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv41_Egide-Maitrise-41.png"
                    },
                    {
                        "id":  "mage_single_t41",
-                       "name":  "Lance de Feu  Maitrise 41",
+                       "name":  "Mot de Restauration  Maitrise 41",
                        "branch":  "single",
                        "tier":  41,
                        "level":  41,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.37,
-                       "rangeMeters":  33.6,
+                       "rangeMeters":  26.1,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Lance de Feu  Maitrise 41 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv41_Lance-de-Feu-Maitrise-41.png"
+                       "description":  "Mot de Restauration  Maitrise 41 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv41_Mot-de-Restauration-Maitrise-41.png"
                    },
                    {
                        "id":  "mage_aoe_t42",
-                       "name":  "Cataclysme Arcanique  Maitrise 42",
+                       "name":  "Resurgence Arcanique  Maitrise 42",
                        "branch":  "aoe",
                        "tier":  42,
                        "level":  42,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.43,
                        "rangeMeters":  33.9,
                        "areaRadiusMeters":  5.8,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Cataclysme Arcanique  Maitrise 42 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv42_Cataclysme-Arcanique-Maitrise-42.png"
+                       "description":  "Resurgence Arcanique  Maitrise 42 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv42_Resurgence-Arcanique-Maitrise-42.png"
                    },
                    {
                        "id":  "mage_def_t42",
-                       "name":  "Sanctuaire Magique  Maitrise 42",
+                       "name":  "Sanctuaire  Maitrise 42",
                        "branch":  "def",
                        "tier":  42,
                        "level":  42,
@@ -2124,8 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Sanctuaire Magique  Maitrise 42 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv42_Sanctuaire-Magique-Maitrise-42.png"
+                       "description":  "Sanctuaire  Maitrise 42 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv42_Sanctuaire-Maitrise-42.png"
                    },
                    {
                        "id":  "mage_single_t42",
@@ -2141,7 +2141,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Desintegration  Maitrise 42 : lance un projectile magique sur une cible unique.",
+                       "description":  "Desintegration  Maitrise 42 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv42_Desintegration-Maitrise-42.png"
                    },
                    {
@@ -2158,12 +2158,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Nova de Givre  Maitrise 43 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Nova de Givre  Maitrise 43 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv43_Nova-de-Givre-Maitrise-43.png"
                    },
                    {
                        "id":  "mage_def_t43",
-                       "name":  "Bouclier de Mana  Maitrise 43",
+                       "name":  "Bouclier  Maitrise 43",
                        "branch":  "def",
                        "tier":  43,
                        "level":  43,
@@ -2175,46 +2175,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Bouclier de Mana  Maitrise 43 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv43_Bouclier-de-Mana-Maitrise-43.png"
+                       "description":  "Bouclier  Maitrise 43 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv43_Bouclier-Maitrise-43.png"
                    },
                    {
                        "id":  "mage_single_t43",
-                       "name":  "Eclair Magique  Maitrise 43",
+                       "name":  "Transfert Vital  Maitrise 43",
                        "branch":  "single",
                        "tier":  43,
                        "level":  43,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.49,
-                       "rangeMeters":  34.2,
+                       "rangeMeters":  26.5,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Eclair Magique  Maitrise 43 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv43_Eclair-Magique-Maitrise-43.png"
+                       "description":  "Transfert Vital  Maitrise 43 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv43_Transfert-Vital-Maitrise-43.png"
                    },
                    {
                        "id":  "mage_aoe_t44",
-                       "name":  "Boule de Feu  Maitrise 44",
+                       "name":  "Halo de Vie  Maitrise 44",
                        "branch":  "aoe",
                        "tier":  44,
                        "level":  44,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.55,
                        "rangeMeters":  34.6,
                        "areaRadiusMeters":  5.9,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Boule de Feu  Maitrise 44 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv44_Boule-de-Feu-Maitrise-44.png"
+                       "description":  "Halo de Vie  Maitrise 44 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv44_Halo-de-Vie-Maitrise-44.png"
                    },
                    {
                        "id":  "mage_def_t44",
-                       "name":  "Armure de Glace  Maitrise 44",
+                       "name":  "Barriere  Maitrise 44",
                        "branch":  "def",
                        "tier":  44,
                        "level":  44,
@@ -2226,8 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Armure de Glace  Maitrise 44 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv44_Armure-de-Glace-Maitrise-44.png"
+                       "description":  "Barriere  Maitrise 44 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv44_Barriere-Maitrise-44.png"
                    },
                    {
                        "id":  "mage_single_t44",
@@ -2243,7 +2243,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Dard Arcanique  Maitrise 44 : lance un projectile magique sur une cible unique.",
+                       "description":  "Dard Arcanique  Maitrise 44 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv44_Dard-Arcanique-Maitrise-44.png"
                    },
                    {
@@ -2260,12 +2260,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Tempete d'Eclairs  Maitrise 45 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Tempete d'Eclairs  Maitrise 45 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv45_Tempete-d-Eclairs-Maitrise-45.png"
                    },
                    {
                        "id":  "mage_def_t45",
-                       "name":  "Teleportation Courte  Maitrise 45",
+                       "name":  "Garde  Maitrise 45",
                        "branch":  "def",
                        "tier":  45,
                        "level":  45,
@@ -2277,46 +2277,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Teleportation Courte  Maitrise 45 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv45_Teleportation-Courte-Maitrise-45.png"
+                       "description":  "Garde  Maitrise 45 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv45_Garde-Maitrise-45.png"
                    },
                    {
                        "id":  "mage_single_t45",
-                       "name":  "Trait de Givre  Maitrise 45",
+                       "name":  "Flux de Vie Arcanique  Maitrise 45",
                        "branch":  "single",
                        "tier":  45,
                        "level":  45,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.61,
-                       "rangeMeters":  34.9,
+                       "rangeMeters":  26.9,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Trait de Givre  Maitrise 45 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv45_Trait-de-Givre-Maitrise-45.png"
+                       "description":  "Flux de Vie Arcanique  Maitrise 45 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv45_Flux-de-Vie-Arcanique-Maitrise-45.png"
                    },
                    {
                        "id":  "mage_aoe_t46",
-                       "name":  "Pluie de Meteores  Maitrise 46",
+                       "name":  "Trame Collective  Maitrise 46",
                        "branch":  "aoe",
                        "tier":  46,
                        "level":  46,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.67,
                        "rangeMeters":  35.3,
                        "areaRadiusMeters":  6.1,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Pluie de Meteores  Maitrise 46 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv46_Pluie-de-Meteores-Maitrise-46.png"
+                       "description":  "Trame Collective  Maitrise 46 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv46_Trame-Collective-Maitrise-46.png"
                    },
                    {
                        "id":  "mage_def_t46",
-                       "name":  "Barriere Arcanique  Maitrise 46",
+                       "name":  "Voile  Maitrise 46",
                        "branch":  "def",
                        "tier":  46,
                        "level":  46,
@@ -2328,8 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Barriere Arcanique  Maitrise 46 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv46_Barriere-Arcanique-Maitrise-46.png"
+                       "description":  "Voile  Maitrise 46 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv46_Voile-Maitrise-46.png"
                    },
                    {
                        "id":  "mage_single_t46",
@@ -2345,7 +2345,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Foudre Ciblee  Maitrise 46 : lance un projectile magique sur une cible unique.",
+                       "description":  "Foudre Ciblee  Maitrise 46 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv46_Foudre-Ciblee-Maitrise-46.png"
                    },
                    {
@@ -2362,12 +2362,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Blizzard  Maitrise 47 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Blizzard  Maitrise 47 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv47_Blizzard-Maitrise-47.png"
                    },
                    {
                        "id":  "mage_def_t47",
-                       "name":  "Reflet de Sort  Maitrise 47",
+                       "name":  "Egide  Maitrise 47",
                        "branch":  "def",
                        "tier":  47,
                        "level":  47,
@@ -2379,46 +2379,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Reflet de Sort  Maitrise 47 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv47_Reflet-de-Sort-Maitrise-47.png"
+                       "description":  "Egide  Maitrise 47 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv47_Egide-Maitrise-47.png"
                    },
                    {
                        "id":  "mage_single_t47",
-                       "name":  "Lance de Feu  Maitrise 47",
+                       "name":  "Mot de Restauration  Maitrise 47",
                        "branch":  "single",
                        "tier":  47,
                        "level":  47,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.73,
-                       "rangeMeters":  35.6,
+                       "rangeMeters":  27.4,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Lance de Feu  Maitrise 47 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv47_Lance-de-Feu-Maitrise-47.png"
+                       "description":  "Mot de Restauration  Maitrise 47 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv47_Mot-de-Restauration-Maitrise-47.png"
                    },
                    {
                        "id":  "mage_aoe_t48",
-                       "name":  "Cataclysme Arcanique  Maitrise 48",
+                       "name":  "Resurgence Arcanique  Maitrise 48",
                        "branch":  "aoe",
                        "tier":  48,
                        "level":  48,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.79,
                        "rangeMeters":  35.9,
                        "areaRadiusMeters":  6.2,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Cataclysme Arcanique  Maitrise 48 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv48_Cataclysme-Arcanique-Maitrise-48.png"
+                       "description":  "Resurgence Arcanique  Maitrise 48 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv48_Resurgence-Arcanique-Maitrise-48.png"
                    },
                    {
                        "id":  "mage_def_t48",
-                       "name":  "Sanctuaire Magique  Maitrise 48",
+                       "name":  "Sanctuaire  Maitrise 48",
                        "branch":  "def",
                        "tier":  48,
                        "level":  48,
@@ -2430,8 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Sanctuaire Magique  Maitrise 48 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv48_Sanctuaire-Magique-Maitrise-48.png"
+                       "description":  "Sanctuaire  Maitrise 48 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv48_Sanctuaire-Maitrise-48.png"
                    },
                    {
                        "id":  "mage_single_t48",
@@ -2447,7 +2447,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Desintegration  Maitrise 48 : lance un projectile magique sur une cible unique.",
+                       "description":  "Desintegration  Maitrise 48 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv48_Desintegration-Maitrise-48.png"
                    },
                    {
@@ -2464,12 +2464,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Nova de Givre  Maitrise 49 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Nova de Givre  Maitrise 49 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv49_Nova-de-Givre-Maitrise-49.png"
                    },
                    {
                        "id":  "mage_def_t49",
-                       "name":  "Bouclier de Mana  Maitrise 49",
+                       "name":  "Bouclier  Maitrise 49",
                        "branch":  "def",
                        "tier":  49,
                        "level":  49,
@@ -2481,46 +2481,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Bouclier de Mana  Maitrise 49 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv49_Bouclier-de-Mana-Maitrise-49.png"
+                       "description":  "Bouclier  Maitrise 49 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv49_Bouclier-Maitrise-49.png"
                    },
                    {
                        "id":  "mage_single_t49",
-                       "name":  "Eclair Magique  Maitrise 49",
+                       "name":  "Transfert Vital  Maitrise 49",
                        "branch":  "single",
                        "tier":  49,
                        "level":  49,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.85,
-                       "rangeMeters":  36.3,
+                       "rangeMeters":  27.8,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Eclair Magique  Maitrise 49 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv49_Eclair-Magique-Maitrise-49.png"
+                       "description":  "Transfert Vital  Maitrise 49 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv49_Transfert-Vital-Maitrise-49.png"
                    },
                    {
                        "id":  "mage_aoe_t50",
-                       "name":  "Boule de Feu  Maitrise 50",
+                       "name":  "Halo de Vie  Maitrise 50",
                        "branch":  "aoe",
                        "tier":  50,
                        "level":  50,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  3.91,
                        "rangeMeters":  36.6,
                        "areaRadiusMeters":  6.3,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Boule de Feu  Maitrise 50 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv50_Boule-de-Feu-Maitrise-50.png"
+                       "description":  "Halo de Vie  Maitrise 50 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv50_Halo-de-Vie-Maitrise-50.png"
                    },
                    {
                        "id":  "mage_def_t50",
-                       "name":  "Armure de Glace  Maitrise 50",
+                       "name":  "Barriere  Maitrise 50",
                        "branch":  "def",
                        "tier":  50,
                        "level":  50,
@@ -2532,8 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Armure de Glace  Maitrise 50 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv50_Armure-de-Glace-Maitrise-50.png"
+                       "description":  "Barriere  Maitrise 50 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv50_Barriere-Maitrise-50.png"
                    },
                    {
                        "id":  "mage_single_t50",
@@ -2549,7 +2549,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Dard Arcanique  Maitrise 50 : lance un projectile magique sur une cible unique.",
+                       "description":  "Dard Arcanique  Maitrise 50 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv50_Dard-Arcanique-Maitrise-50.png"
                    },
                    {
@@ -2566,12 +2566,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Tempete d'Eclairs  Maitrise 51 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Tempete d'Eclairs  Maitrise 51 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv51_Tempete-d-Eclairs-Maitrise-51.png"
                    },
                    {
                        "id":  "mage_def_t51",
-                       "name":  "Teleportation Courte  Maitrise 51",
+                       "name":  "Garde  Maitrise 51",
                        "branch":  "def",
                        "tier":  51,
                        "level":  51,
@@ -2583,46 +2583,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Teleportation Courte  Maitrise 51 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv51_Teleportation-Courte-Maitrise-51.png"
+                       "description":  "Garde  Maitrise 51 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv51_Garde-Maitrise-51.png"
                    },
                    {
                        "id":  "mage_single_t51",
-                       "name":  "Trait de Givre  Maitrise 51",
+                       "name":  "Flux de Vie Arcanique  Maitrise 51",
                        "branch":  "single",
                        "tier":  51,
                        "level":  51,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  3.97,
-                       "rangeMeters":  36.9,
+                       "rangeMeters":  28.2,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Trait de Givre  Maitrise 51 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv51_Trait-de-Givre-Maitrise-51.png"
+                       "description":  "Flux de Vie Arcanique  Maitrise 51 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv51_Flux-de-Vie-Arcanique-Maitrise-51.png"
                    },
                    {
                        "id":  "mage_aoe_t52",
-                       "name":  "Pluie de Meteores  Maitrise 52",
+                       "name":  "Trame Collective  Maitrise 52",
                        "branch":  "aoe",
                        "tier":  52,
                        "level":  52,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.03,
                        "rangeMeters":  37.3,
                        "areaRadiusMeters":  6.5,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Pluie de Meteores  Maitrise 52 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv52_Pluie-de-Meteores-Maitrise-52.png"
+                       "description":  "Trame Collective  Maitrise 52 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv52_Trame-Collective-Maitrise-52.png"
                    },
                    {
                        "id":  "mage_def_t52",
-                       "name":  "Barriere Arcanique  Maitrise 52",
+                       "name":  "Voile  Maitrise 52",
                        "branch":  "def",
                        "tier":  52,
                        "level":  52,
@@ -2634,8 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Barriere Arcanique  Maitrise 52 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv52_Barriere-Arcanique-Maitrise-52.png"
+                       "description":  "Voile  Maitrise 52 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv52_Voile-Maitrise-52.png"
                    },
                    {
                        "id":  "mage_single_t52",
@@ -2651,7 +2651,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Foudre Ciblee  Maitrise 52 : lance un projectile magique sur une cible unique.",
+                       "description":  "Foudre Ciblee  Maitrise 52 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv52_Foudre-Ciblee-Maitrise-52.png"
                    },
                    {
@@ -2668,12 +2668,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Blizzard  Maitrise 53 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Blizzard  Maitrise 53 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv53_Blizzard-Maitrise-53.png"
                    },
                    {
                        "id":  "mage_def_t53",
-                       "name":  "Reflet de Sort  Maitrise 53",
+                       "name":  "Egide  Maitrise 53",
                        "branch":  "def",
                        "tier":  53,
                        "level":  53,
@@ -2685,46 +2685,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Reflet de Sort  Maitrise 53 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv53_Reflet-de-Sort-Maitrise-53.png"
+                       "description":  "Egide  Maitrise 53 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv53_Egide-Maitrise-53.png"
                    },
                    {
                        "id":  "mage_single_t53",
-                       "name":  "Lance de Feu  Maitrise 53",
+                       "name":  "Mot de Restauration  Maitrise 53",
                        "branch":  "single",
                        "tier":  53,
                        "level":  53,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  4.08,
-                       "rangeMeters":  37.6,
+                       "rangeMeters":  28.6,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Lance de Feu  Maitrise 53 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv53_Lance-de-Feu-Maitrise-53.png"
+                       "description":  "Mot de Restauration  Maitrise 53 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv53_Mot-de-Restauration-Maitrise-53.png"
                    },
                    {
                        "id":  "mage_aoe_t54",
-                       "name":  "Cataclysme Arcanique  Maitrise 54",
+                       "name":  "Resurgence Arcanique  Maitrise 54",
                        "branch":  "aoe",
                        "tier":  54,
                        "level":  54,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.14,
                        "rangeMeters":  38,
                        "areaRadiusMeters":  6.6,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Cataclysme Arcanique  Maitrise 54 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv54_Cataclysme-Arcanique-Maitrise-54.png"
+                       "description":  "Resurgence Arcanique  Maitrise 54 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv54_Resurgence-Arcanique-Maitrise-54.png"
                    },
                    {
                        "id":  "mage_def_t54",
-                       "name":  "Sanctuaire Magique  Maitrise 54",
+                       "name":  "Sanctuaire  Maitrise 54",
                        "branch":  "def",
                        "tier":  54,
                        "level":  54,
@@ -2736,8 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Sanctuaire Magique  Maitrise 54 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv54_Sanctuaire-Magique-Maitrise-54.png"
+                       "description":  "Sanctuaire  Maitrise 54 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv54_Sanctuaire-Maitrise-54.png"
                    },
                    {
                        "id":  "mage_single_t54",
@@ -2753,7 +2753,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Desintegration  Maitrise 54 : lance un projectile magique sur une cible unique.",
+                       "description":  "Desintegration  Maitrise 54 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv54_Desintegration-Maitrise-54.png"
                    },
                    {
@@ -2770,12 +2770,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Nova de Givre  Maitrise 55 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Nova de Givre  Maitrise 55 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv55_Nova-de-Givre-Maitrise-55.png"
                    },
                    {
                        "id":  "mage_def_t55",
-                       "name":  "Bouclier de Mana  Maitrise 55",
+                       "name":  "Bouclier  Maitrise 55",
                        "branch":  "def",
                        "tier":  55,
                        "level":  55,
@@ -2787,46 +2787,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Bouclier de Mana  Maitrise 55 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv55_Bouclier-de-Mana-Maitrise-55.png"
+                       "description":  "Bouclier  Maitrise 55 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv55_Bouclier-Maitrise-55.png"
                    },
                    {
                        "id":  "mage_single_t55",
-                       "name":  "Eclair Magique  Maitrise 55",
+                       "name":  "Transfert Vital  Maitrise 55",
                        "branch":  "single",
                        "tier":  55,
                        "level":  55,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  4.2,
-                       "rangeMeters":  38.3,
+                       "rangeMeters":  29,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Eclair Magique  Maitrise 55 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv55_Eclair-Magique-Maitrise-55.png"
+                       "description":  "Transfert Vital  Maitrise 55 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv55_Transfert-Vital-Maitrise-55.png"
                    },
                    {
                        "id":  "mage_aoe_t56",
-                       "name":  "Boule de Feu  Maitrise 56",
+                       "name":  "Halo de Vie  Maitrise 56",
                        "branch":  "aoe",
                        "tier":  56,
                        "level":  56,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.26,
                        "rangeMeters":  38.6,
                        "areaRadiusMeters":  6.7,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Boule de Feu  Maitrise 56 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv56_Boule-de-Feu-Maitrise-56.png"
+                       "description":  "Halo de Vie  Maitrise 56 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv56_Halo-de-Vie-Maitrise-56.png"
                    },
                    {
                        "id":  "mage_def_t56",
-                       "name":  "Armure de Glace  Maitrise 56",
+                       "name":  "Barriere  Maitrise 56",
                        "branch":  "def",
                        "tier":  56,
                        "level":  56,
@@ -2838,8 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Armure de Glace  Maitrise 56 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv56_Armure-de-Glace-Maitrise-56.png"
+                       "description":  "Barriere  Maitrise 56 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv56_Barriere-Maitrise-56.png"
                    },
                    {
                        "id":  "mage_single_t56",
@@ -2855,7 +2855,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Dard Arcanique  Maitrise 56 : lance un projectile magique sur une cible unique.",
+                       "description":  "Dard Arcanique  Maitrise 56 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv56_Dard-Arcanique-Maitrise-56.png"
                    },
                    {
@@ -2872,12 +2872,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Tempete d'Eclairs  Maitrise 57 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Tempete d'Eclairs  Maitrise 57 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv57_Tempete-d-Eclairs-Maitrise-57.png"
                    },
                    {
                        "id":  "mage_def_t57",
-                       "name":  "Teleportation Courte  Maitrise 57",
+                       "name":  "Garde  Maitrise 57",
                        "branch":  "def",
                        "tier":  57,
                        "level":  57,
@@ -2889,46 +2889,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Teleportation Courte  Maitrise 57 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv57_Teleportation-Courte-Maitrise-57.png"
+                       "description":  "Garde  Maitrise 57 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv57_Garde-Maitrise-57.png"
                    },
                    {
                        "id":  "mage_single_t57",
-                       "name":  "Trait de Givre  Maitrise 57",
+                       "name":  "Flux de Vie Arcanique  Maitrise 57",
                        "branch":  "single",
                        "tier":  57,
                        "level":  57,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  4.32,
-                       "rangeMeters":  39,
+                       "rangeMeters":  29.4,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Trait de Givre  Maitrise 57 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv57_Trait-de-Givre-Maitrise-57.png"
+                       "description":  "Flux de Vie Arcanique  Maitrise 57 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv57_Flux-de-Vie-Arcanique-Maitrise-57.png"
                    },
                    {
                        "id":  "mage_aoe_t58",
-                       "name":  "Pluie de Meteores  Maitrise 58",
+                       "name":  "Trame Collective  Maitrise 58",
                        "branch":  "aoe",
                        "tier":  58,
                        "level":  58,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.38,
                        "rangeMeters":  39.3,
                        "areaRadiusMeters":  6.9,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Pluie de Meteores  Maitrise 58 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv58_Pluie-de-Meteores-Maitrise-58.png"
+                       "description":  "Trame Collective  Maitrise 58 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv58_Trame-Collective-Maitrise-58.png"
                    },
                    {
                        "id":  "mage_def_t58",
-                       "name":  "Barriere Arcanique  Maitrise 58",
+                       "name":  "Voile  Maitrise 58",
                        "branch":  "def",
                        "tier":  58,
                        "level":  58,
@@ -2940,8 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Barriere Arcanique  Maitrise 58 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv58_Barriere-Arcanique-Maitrise-58.png"
+                       "description":  "Voile  Maitrise 58 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv58_Voile-Maitrise-58.png"
                    },
                    {
                        "id":  "mage_single_t58",
@@ -2957,7 +2957,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Foudre Ciblee  Maitrise 58 : lance un projectile magique sur une cible unique.",
+                       "description":  "Foudre Ciblee  Maitrise 58 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv58_Foudre-Ciblee-Maitrise-58.png"
                    },
                    {
@@ -2974,12 +2974,12 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Blizzard  Maitrise 59 : dechaine les elements sur une zone (degats reduits).",
+                       "description":  "Blizzard  Maitrise 59 : frappe les ennemis d'une zone.",
                        "iconFile":  "Mage_Zone_Niv59_Blizzard-Maitrise-59.png"
                    },
                    {
                        "id":  "mage_def_t59",
-                       "name":  "Reflet de Sort  Maitrise 59",
+                       "name":  "Egide  Maitrise 59",
                        "branch":  "def",
                        "tier":  59,
                        "level":  59,
@@ -2991,46 +2991,46 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Reflet de Sort  Maitrise 59 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv59_Reflet-de-Sort-Maitrise-59.png"
+                       "description":  "Egide  Maitrise 59 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv59_Egide-Maitrise-59.png"
                    },
                    {
                        "id":  "mage_single_t59",
-                       "name":  "Lance de Feu  Maitrise 59",
+                       "name":  "Mot de Restauration  Maitrise 59",
                        "branch":  "single",
                        "tier":  59,
                        "level":  59,
-                       "effectKind":  "Damage",
-                       "target":  "SingleEnemy",
+                       "effectKind":  "Heal",
+                       "target":  "SingleAlly",
                        "powerValue":  4.44,
-                       "rangeMeters":  39.7,
+                       "rangeMeters":  29.8,
                        "areaRadiusMeters":  0,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Lance de Feu  Maitrise 59 : lance un projectile magique sur une cible unique.",
-                       "iconFile":  "Mage_Unitaire_Niv59_Lance-de-Feu-Maitrise-59.png"
+                       "description":  "Mot de Restauration  Maitrise 59 : restaure la vitalite d'un allie par un flux arcanique.",
+                       "iconFile":  "Mage_Unitaire_Niv59_Mot-de-Restauration-Maitrise-59.png"
                    },
                    {
                        "id":  "mage_aoe_t60",
-                       "name":  "Cataclysme Arcanique  Maitrise 60",
+                       "name":  "Resurgence Arcanique  Maitrise 60",
                        "branch":  "aoe",
                        "tier":  60,
                        "level":  60,
-                       "effectKind":  "Damage",
+                       "effectKind":  "Heal",
                        "target":  "AreaAroundSelf",
                        "powerValue":  4.5,
                        "rangeMeters":  40,
                        "areaRadiusMeters":  7,
-                       "castTimeMs":  1500,
+                       "castTimeMs":  1000,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Cataclysme Arcanique  Maitrise 60 : dechaine les elements sur une zone (degats reduits).",
-                       "iconFile":  "Mage_Zone_Niv60_Cataclysme-Arcanique-Maitrise-60.png"
+                       "description":  "Resurgence Arcanique  Maitrise 60 : diffuse une energie reparatrice sur les allies d'une zone.",
+                       "iconFile":  "Mage_Zone_Niv60_Resurgence-Arcanique-Maitrise-60.png"
                    },
                    {
                        "id":  "mage_def_t60",
-                       "name":  "Sanctuaire Magique  Maitrise 60",
+                       "name":  "Sanctuaire  Maitrise 60",
                        "branch":  "def",
                        "tier":  60,
                        "level":  60,
@@ -3042,8 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Sanctuaire Magique  Maitrise 60 : erige une barriere qui absorbe les degats.",
-                       "iconFile":  "Mage_Defense_Niv60_Sanctuaire-Magique-Maitrise-60.png"
+                       "description":  "Sanctuaire  Maitrise 60 : erige une protection.",
+                       "iconFile":  "Mage_Defense_Niv60_Sanctuaire-Maitrise-60.png"
                    },
                    {
                        "id":  "mage_single_t60",
@@ -3059,7 +3059,7 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Desintegration  Maitrise 60 : lance un projectile magique sur une cible unique.",
+                       "description":  "Desintegration  Maitrise 60 : frappe une cible unique.",
                        "iconFile":  "Mage_Unitaire_Niv60_Desintegration-Maitrise-60.png"
                    }
                ]

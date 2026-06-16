@@ -63,8 +63,10 @@ namespace engine::client
 		m_registry = nullptr;
 	}
 
-	uint64_t SkillIconCache::GetOrLoad(const std::string& relPath)
+	uint64_t SkillIconCache::GetOrLoad(const std::string& relPath, float* outW, float* outH)
 	{
+		if (outW) { *outW = 0.0f; }
+		if (outH) { *outH = 0.0f; }
 		if (relPath.empty() || m_sampler == VK_NULL_HANDLE || m_registry == nullptr)
 		{
 			return 0;
@@ -73,7 +75,9 @@ namespace engine::client
 		const auto it = m_cache.find(relPath);
 		if (it != m_cache.end())
 		{
-			return it->second; // succes OU echec deja memorise (0).
+			if (outW) { *outW = it->second.w; }
+			if (outH) { *outH = it->second.h; }
+			return it->second.id; // succes OU echec deja memorise (0).
 		}
 
 		// Plafond atteint : on ne charge plus (repli texte), sans memoriser pour
@@ -87,26 +91,31 @@ namespace engine::client
 		engine::render::TextureHandle handle = m_registry->LoadTexture(relPath, /*useSrgb=*/true);
 		if (!handle.IsValid())
 		{
-			m_cache[relPath] = 0; // fichier absent/illisible — memorise l'echec.
+			m_cache[relPath] = IconEntry{}; // fichier absent/illisible — memorise l'echec.
 			return 0;
 		}
 		engine::render::TextureAsset* tex = handle.Get();
 		if (tex == nullptr || tex->view == VK_NULL_HANDLE)
 		{
-			m_cache[relPath] = 0;
+			m_cache[relPath] = IconEntry{};
 			return 0;
 		}
 		VkDescriptorSet ds = ImGui_ImplVulkan_AddTexture(m_sampler, tex->view,
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		if (ds == VK_NULL_HANDLE)
 		{
-			m_cache[relPath] = 0;
+			m_cache[relPath] = IconEntry{};
 			return 0;
 		}
 		m_descriptors.push_back(ds);
-		const uint64_t id = reinterpret_cast<uint64_t>(ds);
-		m_cache[relPath] = id;
-		return id;
+		IconEntry entry{};
+		entry.id = reinterpret_cast<uint64_t>(ds);
+		entry.w  = static_cast<float>(tex->width);
+		entry.h  = static_cast<float>(tex->height);
+		m_cache[relPath] = entry;
+		if (outW) { *outW = entry.w; }
+		if (outH) { *outH = entry.h; }
+		return entry.id;
 #else
 		return 0;
 #endif

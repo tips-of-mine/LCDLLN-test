@@ -1317,6 +1317,10 @@ namespace engine
 		/// Phase 3.6.6 — Identité du personnage actif (renseignée à la consommation de
 		/// EnterWorldCommand). 0 = pas de perso actif (pré-EnterWorld ou post-Shutdown).
 		uint64_t                                     m_currentCharacterId = 0;
+		/// Niveau du personnage actif (renseigné à la consommation de EnterWorldCommand
+		/// depuis CHARACTER_LIST). Sert à l'arbre de compétences (paliers verrouillés +
+		/// affichage « Niveau joueur »). 1 par défaut (pré-EnterWorld / perso pré-migration).
+		uint32_t                                     m_activeCharacterLevel = 1;
 		/// Phase 3.6.6 — Prochain instant où la sauvegarde périodique de position sera envoyée.
 		/// Initialisé à now + intervalle au moment de la consommation EnterWorldCommand.
 		std::chrono::steady_clock::time_point        m_nextSavePositionTime{};

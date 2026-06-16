@@ -9111,6 +9111,15 @@ namespace engine
 								static_cast<size_t>(index));
 					});
 
+				// Auberge T1 — l'asset choisi dans l'AssetBrowser alimente le mode
+				// « poser un prop » de la session (placement au clic viewport).
+				m_worldEditorShell->SetPlacementAssetSetter(
+					[this](const std::string& meshRel)
+					{
+						if (m_worldEditorSession)
+							m_worldEditorSession->CustomPlacementMeshPath() = meshRel;
+					});
+
 				// Sous-projet 1, bloc D — foncteur d'écriture de transform consommé
 				// par l'Inspector (SetEntityTransformCommand). Écrit dans le
 				// document concret par EntityId.index (= position dans la liste

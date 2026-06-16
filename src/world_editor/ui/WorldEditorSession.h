@@ -60,6 +60,10 @@ namespace engine::editor
 		int& SplatLayer() { return m_splatLayer; }
 		/// 0 = arbre (catalogue **013**), 1 = rocher legacy (`zones/zone_1/zone_1.gltf`).
 		int& InstancePlacementKind() { return m_instancePlacementKind; }
+		/// Auberge T1 — Chemin de mesh (relatif contenu) à poser en mode « prop »
+		/// (choisi dans l'AssetBrowser). Non vide → prioritaire sur arbre/rocher
+		/// dans `PlaceOrMoveLayoutInstanceAtTerrainHit`. Vide = placement classique.
+		std::string& CustomPlacementMeshPath() { return m_customPlacementMeshPath; }
 		int& TreeSpeciesUiIndex() { return m_treeSpeciesUiIndex; }
 		int& TreeShapeVariantUiIndex() { return m_treeShapeVariantUiIndex; }
 		float& TreeScaleT01() { return m_treeScaleT01; }
@@ -208,6 +212,7 @@ namespace engine::editor
 		int m_terrainEditMode = 0;
 		int m_splatLayer = 0;
 		int m_instancePlacementKind = 0;
+		std::string m_customPlacementMeshPath; // Auberge T1 — prop choisi dans l'AssetBrowser
 		int m_treeSpeciesUiIndex = 0;
 		int m_treeShapeVariantUiIndex = 0;
 		float m_treeScaleT01 = 0.5f;

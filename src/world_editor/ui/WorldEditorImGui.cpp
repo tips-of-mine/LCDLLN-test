@@ -1828,8 +1828,22 @@ namespace engine::editor
 			const char* placeKinds[] = { "Arbre (catalogue 013)", "Rocher (legacy zone_1)" };
 			{
 				int& pk = m_session->InstancePlacementKind();
-				ImGui::Combo("Type a placer", &pk, placeKinds, IM_ARRAYSIZE(placeKinds));
+				if (ImGui::Combo("Type a placer", &pk, placeKinds, IM_ARRAYSIZE(placeKinds)))
+				{
+					// Auberge T1 — choisir explicitement Arbre/Rocher annule le mode
+					// prop (mesh choisi dans l'Asset Browser).
+					m_session->CustomPlacementMeshPath().clear();
+				}
 				pk = std::clamp(pk, 0, 1);
+				// Auberge T1 — bandeau d'info quand un prop Asset Browser est arme.
+				if (!m_session->CustomPlacementMeshPath().empty())
+				{
+					ImGui::TextWrapped(
+						"Mode prop (Asset Browser) actif : %s\n"
+						"Le clic pose ce prop. Changez 'Type a placer' pour revenir "
+						"aux arbres/rochers.",
+						m_session->CustomPlacementMeshPath().c_str());
+				}
 			}
 			if (m_session->InstancePlacementKind() == 0)
 			{

@@ -313,12 +313,11 @@ namespace engine::editor::world
 			m_assetBrowser->Refresh(m_contentRoot + "/meshes/props", "meshes/props/");
 			m_assetBrowser->SetOnAssetPicked([this](const std::string& rel)
 			{
-				// Définit l'asset actif de l'outil de placement en préservant les
-				// autres paramètres (mode, snap, échelle…). `Params()` retourne une
-				// référence mutable : on n'écrase que `assetPath`.
-				m_placementTool.Params().assetPath = rel;
+				// Pousse le mesh choisi vers le flux de placement de la session
+				// (mode « poser un prop »), via le foncteur installé par l'Engine.
+				if (m_placementAssetSetter) m_placementAssetSetter(rel);
 				LOG_INFO(EditorWorld,
-					"[WorldEditorShell] Asset actif de placement -> {}", rel);
+					"[WorldEditorShell] Asset de placement -> {}", rel);
 			});
 		}
 		if (m_outliner)

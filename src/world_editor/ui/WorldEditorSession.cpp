@@ -199,6 +199,24 @@ namespace engine::editor
 			SetStatus("Instance deplacee.");
 			return;
 		}
+		// Auberge T1 — Mode « poser un prop » : si l'AssetBrowser a fixé un mesh
+		// custom, on pose ce prop (prioritaire sur arbre/rocher). Additif : chemin
+		// vide => comportement de placement classique strictement inchangé.
+		if (!m_customPlacementMeshPath.empty())
+		{
+			WorldMapEditLayoutInstance prop{};
+			prop.guid = NewLayoutInstanceGuid();
+			prop.gltfContentRelativePath = m_customPlacementMeshPath;
+			prop.speciesId.clear();
+			prop.shapeVariantIndex = 0u;
+			prop.uniformScale = 1.0;
+			prop.worldX = worldX;
+			prop.worldY = worldY;
+			prop.worldZ = worldZ;
+			m_doc.layoutInstances.push_back(std::move(prop));
+			SetStatus("Prop place (Asset Browser).");
+			return;
+		}
 		const int kind = std::clamp(m_instancePlacementKind, 0, 1);
 		WorldMapEditLayoutInstance inst{};
 		inst.guid = NewLayoutInstanceGuid();
@@ -420,6 +438,7 @@ namespace engine::editor
 		m_routeApplyDraftRequested = false;
 		m_selectedLayoutInstance = -1;
 		m_instancePlacementKind = 0;
+		m_customPlacementMeshPath.clear();
 		m_treeSpeciesUiIndex = 0;
 		m_treeShapeVariantUiIndex = 0;
 		m_treeScaleT01 = 0.5f;

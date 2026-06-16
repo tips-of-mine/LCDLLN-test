@@ -292,6 +292,18 @@ namespace engine::editor::world
 			m_layoutInstanceRemover = std::move(fn);
 		}
 
+		/// Auberge T1 — Type du foncteur poussant l'asset choisi dans
+		/// l'AssetBrowser vers le flux de placement (la session, possédée par
+		/// l'Engine ; le shell n'y a pas accès direct, cf. LayoutInstanceRemover).
+		using PlacementAssetSetter = std::function<void(const std::string&)>;
+
+		/// Installe le foncteur de sélection d'asset de placement (appelé par
+		/// l'Engine, routé vers `WorldEditorSession::CustomPlacementMeshPath`).
+		void SetPlacementAssetSetter(PlacementAssetSetter fn)
+		{
+			m_placementAssetSetter = std::move(fn);
+		}
+
 		/// M100.6 — Accès mutable à l'outil de sculpt. Le panneau Tool
 		/// Properties l'utilise pour lire/écrire les paramètres de brosse
 		/// quand `m_activeTool == TerrainSculpt`.
@@ -454,13 +466,10 @@ namespace engine::editor::world
 		volumes::dungeons::DungeonPortalDocument m_dungeonPortalDoc;  // M100.43
 		volumes::dungeons::DungeonPortalTool     m_dungeonPortalTool; // M100.43
 
-		// Auberge éditable (T1/T2/T3) — Document de placement de props (auberge,
-		// bâtiments) + outil de placement universel portant l'asset actif. Le
-		// document est la cible des DeleteCommand (suppression réversible via
-		// l'Outliner) ; l'outil porte `PlacementParams.assetPath` que
-		// l'AssetBrowser met à jour au clic. Possédés par le shell.
-		PlacementDocument m_placementDoc;
-		PlacementTool     m_placementTool;
+		// Auberge T1 — Foncteur installé par l'Engine : pousse le chemin de mesh
+		// choisi dans l'AssetBrowser vers la session (mode « poser un prop »). Le
+		// shell n'a pas d'accès direct à la session (cf. m_layoutInstanceRemover).
+		PlacementAssetSetter m_placementAssetSetter;
 		// Pointeurs NON possédants vers les deux panneaux concrets (l'unique_ptr
 		// de `m_panels` reste propriétaire). Capturés à la construction dans Init
 		// pour pouvoir brancher leurs callbacks après résolution de contentRoot.

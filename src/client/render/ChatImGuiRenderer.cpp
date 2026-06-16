@@ -179,10 +179,20 @@ namespace engine::render
 					continue;
 
 				const ImVec4 color = ArgbToIm(engine::net::ChannelColorArgb(msg.channel));
-				const std::string hhmm = engine::net::FormatTimeHHMMUtc(msg.timestampUnixMs);
-				const char* tag = ChannelTag(msg.channel);
-				ImGui::TextColored(color, "%s %s %s: %s",
-					hhmm.c_str(), tag, msg.sender.c_str(), msg.text.c_str());
+				const std::string hhmm = engine::net::FormatTimeHHMMLocal(msg.timestampUnixMs);
+				// Format epure demande : canal Say (defaut) -> pas de tag, separateur
+				// « - » : "HH:MM - sender: text". Autres canaux -> tag entre crochets
+				// (l'info canal reste, en plus de la couleur).
+				if (msg.channel == ChatChannel::Say)
+				{
+					ImGui::TextColored(color, "%s - %s: %s",
+						hhmm.c_str(), msg.sender.c_str(), msg.text.c_str());
+				}
+				else
+				{
+					ImGui::TextColored(color, "%s [%s] %s: %s",
+						hhmm.c_str(), ChannelTag(msg.channel), msg.sender.c_str(), msg.text.c_str());
+				}
 			}
 
 			ImGui::PopTextWrapPos();

@@ -50,6 +50,10 @@ namespace engine::net
 	/// Format Unix epoch milliseconds as UTC HH:MM (chat timestamp).
 	std::string FormatTimeHHMMUtc(uint64_t unixMs);
 
+	/// Format Unix epoch milliseconds as LOCAL HH:MM (fuseau systeme du poste).
+	/// A privilegier pour l'affichage chat : l'heure suit le joueur, pas l'UTC.
+	std::string FormatTimeHHMMLocal(uint64_t unixMs);
+
 	/// Squared horizontal distance (XZ) between two world positions (meters).
 	float DistanceSquaredXZ(float ax, float az, float bx, float bz);
 

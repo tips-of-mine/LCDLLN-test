@@ -10932,9 +10932,10 @@ namespace engine
 							targetDead ? IM_COL32(120, 120, 120, 200) : IM_COL32(200, 60, 50, 220), 6.0f, 0, 2.0f);
 						fg->AddText(ImVec2(fx + 10.0f, fy + 6.0f),
 							targetDead ? IM_COL32(150, 150, 150, 255) : IM_COL32(235, 235, 235, 255), targetName.c_str());
-						// Validation v12 — distance XZ joueur→cible dans le cadre :
-						// désambiguïse deux mobs identiques et rend la portée de mêlée
-						// lisible (orange au-delà de 4 m, cohérent avec « Hors de portee »).
+						// Distance XZ joueur→cible : affichée SOUS le cadre, centrée et en
+						// plus petit (0.8x). Avant elle etait en haut a droite DANS le cadre
+						// et chevauchait le nom (souvent long) -> illisible. Orange au-dela
+						// de 4 m (coherent avec « Hors de portee »), vert sinon.
 						{
 							const engine::math::Vec3 playerPosFrame = m_characterController.GetPosition();
 							for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
@@ -10946,8 +10947,12 @@ namespace engine
 								const float distM = std::sqrt(dxf * dxf + dzf * dzf);
 								const std::string distText =
 									std::to_string(static_cast<int>(std::lround(distM))) + " m";
-								const ImVec2 distTs = ImGui::CalcTextSize(distText.c_str());
-								fg->AddText(ImVec2(fx + frameW - distTs.x - 10.0f, fy + 6.0f),
+								ImFont* distFont = ImGui::GetFont();
+								const float distFontSize = ImGui::GetFontSize() * 0.8f;
+								const ImVec2 distTs =
+									distFont->CalcTextSizeA(distFontSize, FLT_MAX, 0.0f, distText.c_str());
+								fg->AddText(distFont, distFontSize,
+									ImVec2(fx + (frameW - distTs.x) * 0.5f, fy + frameH + 2.0f),
 									(distM > 4.0f) ? IM_COL32(240, 170, 60, 255) : IM_COL32(170, 220, 170, 255),
 									distText.c_str());
 								break;

@@ -175,6 +175,36 @@ namespace engine::net
 		return std::string(buffer);
 	}
 
+	std::string FormatTimeHHMMLocal(uint64_t unixMs)
+	{
+		// Heure LOCALE du poste (fuseau systeme) : l'affichage chat doit suivre
+		// l'heure du joueur, pas l'UTC (sinon decalage, ex. -2h en France CEST).
+		const time_t seconds = static_cast<time_t>(unixMs / 1000ull);
+		std::tm calendar{};
+#if defined(_WIN32)
+		if (localtime_s(&calendar, &seconds) != 0)
+		{
+			LOG_WARN(Core, "[ChatSystem] FormatTimeHHMMLocal FAILED: localtime_s error");
+			return "??:??";
+		}
+#else
+		if (localtime_r(&seconds, &calendar) == nullptr)
+		{
+			LOG_WARN(Core, "[ChatSystem] FormatTimeHHMMLocal FAILED: localtime_r error");
+			return "??:??";
+		}
+#endif
+
+		char buffer[8]{};
+		if (std::snprintf(buffer, sizeof(buffer), "%02d:%02d", calendar.tm_hour, calendar.tm_min) <= 0)
+		{
+			LOG_WARN(Core, "[ChatSystem] FormatTimeHHMMLocal FAILED: snprintf");
+			return "??:??";
+		}
+
+		return std::string(buffer);
+	}
+
 	float DistanceSquaredXZ(float ax, float az, float bx, float bz)
 	{
 		const float dx = ax - bx;

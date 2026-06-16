@@ -196,15 +196,15 @@ namespace engine::render
 		const ImVec4 col = UseResultColor(result);
 		const char*  lab = UseResultLabel(result);
 
-		// Indicateur en haut centre de l'ecran, fade-out implicite (la fenetre
-		// disparait quand TickIndicator clear lastUseResult). Pas de NoInputs
-		// puisqu'on veut juste un overlay.
+		// Indicateur centre horizontalement, place SOUS la zone du cadre cible
+		// (cadre cible : y ~56..126 haut-centre) pour ne plus le chevaucher.
+		// Fade-out implicite (la fenetre disparait quand TickIndicator clear
+		// lastUseResult).
 		const float toastW = 280.f;
 		const float toastH = 70.f;
-		const float margin = 24.f;
 		const float vpW = (m_viewportW > 0) ? static_cast<float>(m_viewportW) : 1280.f;
 		const float posX = std::max(0.f, (vpW - toastW) * 0.5f);
-		const float posY = margin;
+		const float posY = 140.f; // sous le cadre cible (qui se termine vers y=126).
 
 		ImGui::SetNextWindowPos(ImVec2(posX, posY), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(ImVec2(toastW, toastH), ImGuiCond_Always);

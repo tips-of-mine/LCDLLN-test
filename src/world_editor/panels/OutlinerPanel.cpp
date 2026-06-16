@@ -68,6 +68,20 @@ namespace engine::editor::world::panels
 				RenderKindGroup("Instances (props / arbres)", scene::EntityKind::LayoutInstance);
 				RenderKindGroup("Volumes (grottes / arches / surplombs)", scene::EntityKind::MeshInsert);
 				RenderKindGroup("Donjons", scene::EntityKind::DungeonPortal);
+
+				// Suppression de l'entité sélectionnée (instances / volumes).
+				ImGui::Separator();
+				const bool canDelete = (m_selection != nullptr)
+					&& m_selection->HasSelection()
+					&& static_cast<bool>(m_onDelete)
+					&& (m_selection->Current().kind == scene::EntityKind::LayoutInstance
+					    || m_selection->Current().kind == scene::EntityKind::MeshInsert);
+				if (!canDelete) ImGui::BeginDisabled();
+				if (ImGui::Button("Supprimer la selection"))
+				{
+					m_onDelete(m_selection->Current());
+				}
+				if (!canDelete) ImGui::EndDisabled();
 			}
 		}
 		ImGui::End();

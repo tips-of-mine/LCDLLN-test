@@ -2,6 +2,9 @@
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/scene/EditorSceneModel.h"
 
+#include <functional>
+#include <utility>
+
 namespace engine::editor::world::panels
 {
 	/// Panneau Outliner du shell éditeur monde. Affiche la liste des entités de
@@ -29,6 +32,14 @@ namespace engine::editor::world::panels
 		bool IsVisible() const override { return m_visible; }
 		void SetVisible(bool visible) override { m_visible = visible; }
 
+		/// Callback de suppression d'une entité (branché par le Shell sur une
+		/// commande réversible : DeleteCommand pour les instances de layout,
+		/// MeshInsertDocument::Remove pour les volumes).
+		using OnDeleteEntity = std::function<void(engine::editor::scene::EntityId)>;
+
+		/// Installe l'observateur de suppression (remplace le précédent).
+		void SetOnDeleteEntity(OnDeleteEntity cb) { m_onDelete = std::move(cb); }
+
 	private:
 		/// Rend un en-tête repliable listant toutes les entités du `kind` donné
 		/// (Selectable → met à jour la sélection partagée ; surbrillance sur
@@ -39,5 +50,6 @@ namespace engine::editor::world::panels
 		engine::editor::scene::EditorSceneModel* m_sceneModel = nullptr;
 		engine::editor::scene::EditorSelection*  m_selection  = nullptr;
 		bool m_visible = true;
+		OnDeleteEntity m_onDelete;
 	};
 }

@@ -4,8 +4,12 @@
 #include "src/world_editor/structures/BuildingPreset.h"
 #include "src/world_editor/structures/BuildingPresetIo.h"
 #include "src/world_editor/structures/BuildingInstantiate.h"
+#include "src/world_editor/PlacementDocument.h"
+#include "src/world_editor/structures/MoveGroupCommand.h"
+#include "src/world_editor/core/CommandStack.h"
 
 #include <cmath>
+#include <memory>
 #include <cstdio>
 
 using namespace engine::editor::world::structures;
@@ -110,6 +114,52 @@ namespace
 		Vec3 anchor = SpawnAnchorWorld(p, Vec3(10, 0, 20), 0.0f);
 		REQUIRE(Near(anchor.x, 10.0f) && Near(anchor.z, 22.0f));
 	}
+
+	void Test_Group_MoveAndRemove()
+	{
+		using engine::editor::world::PlacementDocument;
+		using engine::editor::world::MoveGroupCommand;
+		using engine::editor::world::CommandStack;
+		using engine::math::Vec3;
+
+		PlacementDocument doc;
+		const uint32_t gid = doc.AllocGroupId();
+		REQUIRE(gid != 0);
+
+		BuildingPreset p; p.id = "x";
+		BuildingPresetElement a; a.meshPath = "meshes/props/Floor_WoodDark.gltf";
+		BuildingPresetElement b; b.meshPath = "meshes/props/Wall_Plaster_Straight.gltf";
+		b.offset = { 1, 0, 0 };
+		p.elements = { a, b };
+		auto alloc = [&doc]() { return doc.AllocInstanceId(); };
+		for (auto& inst : InstantiatePreset(p, Vec3(0, 0, 0), 0.0f, gid, alloc))
+			doc.Add(inst);
+		// Une instance isolée hors groupe ne doit pas bouger.
+		engine::world::instances::PropInstance solo;
+		solo.instanceId = doc.AllocInstanceId(); solo.position = { 100, 0, 100 };
+		doc.Add(solo);
+		REQUIRE(doc.All().size() == 3);
+
+		// Déplacer le groupe de (+5,0,+5).
+		CommandStack stack;
+		stack.Push(std::make_unique<MoveGroupCommand>(doc, gid, Vec3(5, 0, 5)));
+		for (const auto& inst : doc.All())
+		{
+			if (inst.groupId == gid)
+				REQUIRE(inst.position.x >= 5.0f - 1e-3f); // décalé
+			else
+				REQUIRE(Near(inst.position.x, 100.0f)); // intact
+		}
+		stack.Undo();
+		for (const auto& inst : doc.All())
+			if (inst.groupId == gid)
+				REQUIRE(inst.position.x <= 1.0f + 1e-3f); // revenu
+
+		// RemoveByGroup retire uniquement les membres du groupe.
+		doc.RemoveByGroup(gid);
+		REQUIRE(doc.All().size() == 1);
+		REQUIRE(doc.All()[0].groupId == 0);
+	}
 }
 
 int main()
@@ -118,6 +168,7 @@ int main()
 	Test_Preset_Roundtrip();
 	Test_RotateYaw();
 	Test_Instantiate();
+	Test_Group_MoveAndRemove();
 	if (g_failed == 0) std::fprintf(stderr, "[OK] BuildingStructuresTests\n");
 	else std::fprintf(stderr, "[FAIL] BuildingStructuresTests: %d\n", g_failed);
 	return g_failed;

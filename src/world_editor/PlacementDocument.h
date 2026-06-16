@@ -26,6 +26,18 @@ namespace engine::editor::world
 				{ return p.instanceId == instanceId; }), m_props.end());
 		}
 
+		/// Alloue un identifiant de groupe unique non nul (auberge, bâtiment…).
+		uint32_t AllocGroupId() { return m_nextGroupId++; }
+
+		/// Retire toutes les instances membres du groupe `groupId` (no-op si 0).
+		void RemoveByGroup(uint32_t groupId)
+		{
+			if (groupId == 0) return;
+			m_props.erase(std::remove_if(m_props.begin(), m_props.end(),
+				[groupId](const engine::world::instances::PropInstance& p)
+				{ return p.groupId == groupId; }), m_props.end());
+		}
+
 		const std::vector<engine::world::instances::PropInstance>& All() const { return m_props; }
 		std::vector<engine::world::instances::PropInstance>& Mutable() { return m_props; }
 
@@ -44,5 +56,6 @@ namespace engine::editor::world
 	private:
 		std::vector<engine::world::instances::PropInstance> m_props;
 		uint32_t m_nextInstanceId = 1;
+		uint32_t m_nextGroupId = 1;
 	};
 }

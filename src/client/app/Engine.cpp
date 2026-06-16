@@ -432,6 +432,10 @@ namespace engine
 			{engine::platform::Key::Control,"Ctrl"},{engine::platform::Key::Alt,"Alt"},
 			{engine::platform::Key::Shift,"Shift"},{engine::platform::Key::Space,"Espace"},
 			{engine::platform::Key::Tab,"Tab"},
+			{engine::platform::Key::F_1,"F1"},{engine::platform::Key::F_2,"F2"},{engine::platform::Key::F_3,"F3"},
+			{engine::platform::Key::F_4,"F4"},{engine::platform::Key::F_5,"F5"},{engine::platform::Key::F_6,"F6"},
+			{engine::platform::Key::F_7,"F7"},{engine::platform::Key::F_8,"F8"},{engine::platform::Key::F_9,"F9"},
+			{engine::platform::Key::F_10,"F10"},{engine::platform::Key::F_11,"F11"},{engine::platform::Key::F_12,"F12"},
 		};
 
 		/// Nom affichable/config d'une touche (ou "?" si hors table).
@@ -7723,14 +7727,14 @@ namespace engine
 				&& m_authUi.IsInitialized()
 				&& m_authUi.IsFlowComplete();
 			if (inGameNoMenu && !chatBlocks
-				&& m_input.WasPressed(engine::platform::Key::B))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.skillbook", "F2"), engine::platform::Key::F_2)))
 			{
 				m_skillBookVisible = !m_skillBookVisible;
 				if (m_skillBookVisible)
 				{
 					m_skillBookUi.RequestList();
 				}
-				LOG_INFO(Core, "[Engine] B toggle skillbook (visible={})", m_skillBookVisible);
+				LOG_INFO(Core, "[Engine] F2 toggle skillbook (visible={})", m_skillBookVisible);
 			}
 		}
 
@@ -7746,7 +7750,7 @@ namespace engine
 				&& m_authUi.IsInitialized()
 				&& m_authUi.IsFlowComplete();
 			const engine::platform::Key grimoireKey =
-				KeyFromName(m_cfg.GetString("controls.keybind.grimoire", "I"), engine::platform::Key::I);
+				KeyFromName(m_cfg.GetString("controls.keybind.grimoire", "F3"), engine::platform::Key::F_3);
 			if (inGameNoMenu && !chatBlocks && m_input.WasPressed(grimoireKey))
 			{
 				m_grimoireVisible = !m_grimoireVisible;
@@ -7768,7 +7772,7 @@ namespace engine
 				&& m_authUi.IsInitialized()
 				&& m_authUi.IsFlowComplete();
 			const engine::platform::Key treeKey =
-				KeyFromName(m_cfg.GetString("controls.keybind.skilltree", "W"), engine::platform::Key::W);
+				KeyFromName(m_cfg.GetString("controls.keybind.skilltree", "F4"), engine::platform::Key::F_4);
 			if (inGameNoMenu && !chatBlocks && m_input.WasPressed(treeKey))
 			{
 				m_classSkillTreeVisible = !m_classSkillTreeVisible;
@@ -7787,14 +7791,14 @@ namespace engine
 				&& m_authUi.IsInitialized()
 				&& m_authUi.IsFlowComplete();
 			if (inGameNoMenu && !chatBlocks
-				&& m_input.WasPressed(engine::platform::Key::A))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.arena", "F8"), engine::platform::Key::F_8)))
 			{
 				m_arenaVisible = !m_arenaVisible;
 				if (m_arenaVisible)
 				{
 					m_arenaUi.RequestTeams();
 				}
-				LOG_INFO(Core, "[Engine] A toggle arena (visible={})", m_arenaVisible);
+				LOG_INFO(Core, "[Engine] F8 toggle arena (visible={})", m_arenaVisible);
 			}
 		}
 
@@ -7809,7 +7813,7 @@ namespace engine
 				&& m_authUi.IsInitialized()
 				&& m_authUi.IsFlowComplete();
 			if (inGameNoMenu && !chatBlocks
-				&& m_input.WasPressed(engine::platform::Key::G))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.battleground", "F9"), engine::platform::Key::F_9)))
 			{
 				m_battleGroundVisible = !m_battleGroundVisible;
 				if (m_battleGroundVisible)
@@ -7821,14 +7825,14 @@ namespace engine
 			// CMANGOS.36 (Phase 5.36 step 3+4) — Touche P : toggle panneau
 			// OutdoorPvp + RequestList si on l'ouvre. Memes guards que A/G.
 			if (inGameNoMenu && !chatBlocks
-				&& m_input.WasPressed(engine::platform::Key::P))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.outdoorpvp", "F10"), engine::platform::Key::F_10)))
 			{
 				m_outdoorPvpVisible = !m_outdoorPvpVisible;
 				if (m_outdoorPvpVisible)
 				{
 					m_outdoorPvpUi.RequestList();
 				}
-				LOG_INFO(Core, "[Engine] P toggle outdoorpvp (visible={})", m_outdoorPvpVisible);
+				LOG_INFO(Core, "[Engine] F10 toggle outdoorpvp (visible={})", m_outdoorPvpVisible);
 			}
 			// CMANGOS.42 (Phase 4.42 step 3+4) — Touche Y : toggle panneau
 			// Weather + RequestList si on l'ouvre. Memes guards que A/G/P.
@@ -7837,15 +7841,14 @@ namespace engine
 			// !m_editorEnabled donc pas de conflit. WorldEditorShell traite
 			// Ctrl+Y / Ctrl+Shift+Y dans son propre bloc en aval.
 			if (inGameNoMenu && !chatBlocks
-				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::Y))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.weather", "F12"), engine::platform::Key::F_12)))
 			{
 				m_weatherVisible = !m_weatherVisible;
 				if (m_weatherVisible)
 				{
 					m_weatherUi.RequestList();
 				}
-				LOG_INFO(Core, "[Engine] Y toggle weather (visible={})", m_weatherVisible);
+				LOG_INFO(Core, "[Engine] F12 toggle weather (visible={})", m_weatherVisible);
 			}
 			// Touche E desormais LIBRE (reservee a une future action "interagir"
 			// hors combat). Le panneau GameEvents s'ouvre via la barre de menus
@@ -7855,28 +7858,27 @@ namespace engine
 			// E (chat focus, pause, editor). Pas de conflit Ctrl+U.
 			if (inGameNoMenu && !chatBlocks
 				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::U))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.guild", "F5"), engine::platform::Key::F_5)))
 			{
 				m_guildVisible = !m_guildVisible;
 				if (m_guildVisible)
 				{
 					m_guildUi.RequestList();
 				}
-				LOG_INFO(Core, "[Engine] U toggle guilds (visible={})", m_guildVisible);
+				LOG_INFO(Core, "[Engine] F5 toggle guilds (visible={})", m_guildVisible);
 			}
 			// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Touche H : toggle
 			// panneau Hotel des Ventes + RequestList si on l'ouvre. Memes
 			// guards que U. Pas de conflit Ctrl+H.
 			if (inGameNoMenu && !chatBlocks
-				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::H))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.auctionhouse", "F6"), engine::platform::Key::F_6)))
 			{
 				m_auctionHouseVisible = !m_auctionHouseVisible;
 				if (m_auctionHouseVisible)
 				{
 					m_auctionHouseUi.RequestList(0u);
 				}
-				LOG_INFO(Core, "[Engine] H toggle auction house (visible={})", m_auctionHouseVisible);
+				LOG_INFO(Core, "[Engine] F6 toggle auction house (visible={})", m_auctionHouseVisible);
 			}
 			// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Touche L : toggle
 			// fenetre Loot Roll. Memes guards que U. Pas de conflit Ctrl+L.
@@ -7884,10 +7886,10 @@ namespace engine
 			// push, le bouton Simulate sert pour la demo V1.
 			if (inGameNoMenu && !chatBlocks
 				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::L))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.lootroll", "F7"), engine::platform::Key::F_7)))
 			{
 				m_lootRollVisible = !m_lootRollVisible;
-				LOG_INFO(Core, "[Engine] L toggle loot roll (visible={})", m_lootRollVisible);
+				LOG_INFO(Core, "[Engine] F7 toggle loot roll (visible={})", m_lootRollVisible);
 			}
 			// R1-B (Task 4) — Touche C (mnemonique naturel « Character ») : toggle la
 			// feuille de personnage (stats derivees). Pas de fetch a l'ouverture :
@@ -7895,11 +7897,10 @@ namespace engine
 			// "punch" (controls.keybind.punch) a ete deplacee sur X pour liberer C.
 			// Memes guards que les autres toggles (chat focus, pause, editor, auth flow).
 			if (inGameNoMenu && !chatBlocks
-				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::C))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.charactersheet", "F1"), engine::platform::Key::F_1)))
 			{
 				m_characterSheetVisible = !m_characterSheetVisible;
-				LOG_INFO(Core, "[Engine] C toggle character sheet (visible={})", m_characterSheetVisible);
+				LOG_INFO(Core, "[Engine] F1 toggle character sheet (visible={})", m_characterSheetVisible);
 			}
 		}
 

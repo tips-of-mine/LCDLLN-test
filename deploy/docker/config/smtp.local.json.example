@@ -1,0 +1,14 @@
+{
+  "_comment": "Secrets SMTP du master (envoi des e-mails : inscription, verification, reset mot de passe, acceptation des CGU). NON versionne en prod : copier ce fichier en 'smtp.local.json' (sans .example) dans deploy/docker/config/ et renseigner les vraies valeurs, puis recreer le conteneur master (voir plus bas).",
+  "smtp": {
+    "host": "smtp.votre-fournisseur.tld",
+    "port": 587,
+    "user": "no-reply@votre-domaine.tld",
+    "password": "VOTRE_MOT_DE_PASSE_OU_CLE_API",
+    "from": "Les Chroniques de la Lune Noire <no-reply@votre-domaine.tld>",
+    "starttls": 1,
+    "timeout_sec": 10,
+    "reset_url_base": "https://votre-domaine.tld/reset"
+  },
+  "_apres_creation": "Le fichier est monte en lecture seule dans le conteneur (/app/smtp.local.json). Docker NE recharge PAS un montage de fichier a chaud : il faut RECREER le conteneur -> 'docker compose up -d --force-recreate master web-portal'. ATTENTION au piege Docker : si le fichier n'existait PAS au 1er 'up', Docker a cree un DOSSIER a sa place -> supprimer ce dossier ('rm -rf config/smtp.local.json') AVANT de creer le vrai fichier."
+}

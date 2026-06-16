@@ -30,7 +30,7 @@ namespace engine::server
 			return;
 		}
 
-		// Zone 1 : Hellfire Peninsula avec 3 objectifs (id 10, 11, 12).
+		// Zone 1 : Peninsule Ardente avec 3 objectifs (id 10, 11, 12).
 		{
 			Zone z;
 			z.id = kZoneHellfire;
@@ -38,10 +38,10 @@ namespace engine::server
 			z.objectives.push_back(Objective{11u, 0xFFu, 0u, 0xFFu});
 			z.objectives.push_back(Objective{12u, 0xFFu, 0u, 0xFFu});
 			m_manager.RegisterZone(z);
-			m_zoneNames[kZoneHellfire] = "Hellfire Peninsula";
+			m_zoneNames[kZoneHellfire] = "Peninsule Ardente";
 		}
 
-		// Zone 2 : Eastern Plaguelands avec 4 objectifs (id 20, 21, 22, 23).
+		// Zone 2 : Terres Maudites de l'Est avec 4 objectifs (id 20, 21, 22, 23).
 		{
 			Zone z;
 			z.id = kZoneEasternPlaguelands;
@@ -50,11 +50,11 @@ namespace engine::server
 			z.objectives.push_back(Objective{22u, 0xFFu, 0u, 0xFFu});
 			z.objectives.push_back(Objective{23u, 0xFFu, 0u, 0xFFu});
 			m_manager.RegisterZone(z);
-			m_zoneNames[kZoneEasternPlaguelands] = "Eastern Plaguelands";
+			m_zoneNames[kZoneEasternPlaguelands] = "Terres Maudites de l'Est";
 		}
 
 		m_seeded = true;
-		LOG_INFO(Net, "[OutdoorPvpHandler] V1 zones seeded : Hellfire (3 obj), Eastern Plaguelands (4 obj)");
+		LOG_INFO(Net, "[OutdoorPvpHandler] V1 zones seeded : Peninsule Ardente (3 obj), Terres Maudites de l'Est (4 obj)");
 
 		// Wave 5 : restaure l'etat persiste par-dessus le seed default. On
 		// applique les rows DB ; les objectifs non vus en DB conservent

@@ -53,22 +53,22 @@ static void TestListResponseEmpty()
 static void TestListResponseFull()
 {
 	std::vector<BgInfo> bgs;
-	bgs.push_back({1u, "Warsong Gulch", 10u, "warsong"});
-	bgs.push_back({2u, "Arathi Basin",  15u, "arathi"});
-	bgs.push_back({3u, "Alterac Valley", 40u, "alterac"});
+	bgs.push_back({1u, "Gorge de Feyhin", 10u, "gorge_feyhin"});
+	bgs.push_back({2u, "Bassin des Ombres",  15u, "bassin_ombres"});
+	bgs.push_back({3u, "Vallee Gelee", 40u, "vallee_gelee"});
 	auto buf = BuildBgListResponsePayload(0u, bgs);
 	auto parsed = ParseBgListResponsePayload(buf.data(), buf.size());
 	Assert(parsed.has_value(), "BgList response full parses");
 	if (parsed && parsed->battlegrounds.size() == 3u)
 	{
 		Assert(parsed->battlegrounds[0].bgType == 1u, "BG 1 bgType");
-		Assert(parsed->battlegrounds[0].name == "Warsong Gulch", "BG 1 name");
+		Assert(parsed->battlegrounds[0].name == "Gorge de Feyhin", "BG 1 name");
 		Assert(parsed->battlegrounds[0].teamSize == 10u, "BG 1 teamSize");
-		Assert(parsed->battlegrounds[0].mapName == "warsong", "BG 1 map");
+		Assert(parsed->battlegrounds[0].mapName == "gorge_feyhin", "BG 1 map");
 		Assert(parsed->battlegrounds[1].bgType == 2u, "BG 2 bgType");
 		Assert(parsed->battlegrounds[1].teamSize == 15u, "BG 2 teamSize");
 		Assert(parsed->battlegrounds[2].teamSize == 40u, "BG 3 teamSize");
-		Assert(parsed->battlegrounds[2].mapName == "alterac", "BG 3 map");
+		Assert(parsed->battlegrounds[2].mapName == "vallee_gelee", "BG 3 map");
 	}
 	else
 	{
@@ -132,7 +132,7 @@ static void TestQueueRequestBoundary()
 	auto bufA = BuildBgQueueRequestPayload(1u, 0u);
 	auto parsedA = ParseBgQueueRequestPayload(bufA.data(), bufA.size());
 	Assert(parsedA.has_value() && parsedA->bgType == 1u && parsedA->faction == 0u,
-		"BgQueue boundary: Warsong Alliance");
+		"BgQueue boundary: Gorge de Feyhin Alliance");
 	// Max bgType.
 	auto bufMax = BuildBgQueueRequestPayload(0xFFFFu, 1u);
 	auto parsedMax = ParseBgQueueRequestPayload(bufMax.data(), bufMax.size());
@@ -240,14 +240,14 @@ static void TestLeaveQueueResponsePacket()
 
 static void TestMatchStartRoundTrip()
 {
-	auto buf = BuildBgMatchStartNotificationPayload(123ull, 1u, "warsong", 10u, 10u);
+	auto buf = BuildBgMatchStartNotificationPayload(123ull, 1u, "gorge_feyhin", 10u, 10u);
 	auto parsed = ParseBgMatchStartNotificationPayload(buf.data(), buf.size());
 	Assert(parsed.has_value(), "BgMatchStart parses");
 	if (parsed)
 	{
 		Assert(parsed->matchId == 123ull, "MatchStart matchId");
 		Assert(parsed->bgType == 1u, "MatchStart bgType");
-		Assert(parsed->mapName == "warsong", "MatchStart map");
+		Assert(parsed->mapName == "gorge_feyhin", "MatchStart map");
 		Assert(parsed->allianceCount == 10u, "MatchStart alliance count");
 		Assert(parsed->hordeCount == 10u, "MatchStart horde count");
 	}
@@ -264,7 +264,7 @@ static void TestMatchStartEmptyMap()
 
 static void TestMatchStartLargeCounts()
 {
-	auto buf = BuildBgMatchStartNotificationPayload(0xDEADBEEFCAFEull, 3u, "alterac", 40u, 40u);
+	auto buf = BuildBgMatchStartNotificationPayload(0xDEADBEEFCAFEull, 3u, "vallee_gelee", 40u, 40u);
 	auto parsed = ParseBgMatchStartNotificationPayload(buf.data(), buf.size());
 	Assert(parsed.has_value() && parsed->matchId == 0xDEADBEEFCAFEull
 		&& parsed->allianceCount == 40u && parsed->hordeCount == 40u, "MatchStart large counts");
@@ -281,7 +281,7 @@ static void TestMatchStartRejectsShort()
 
 static void TestMatchStartPacket()
 {
-	auto pkt = BuildBgMatchStartNotificationPacket(42ull, 2u, "arathi", 15u, 15u, 0xC0DEull);
+	auto pkt = BuildBgMatchStartNotificationPacket(42ull, 2u, "bassin_ombres", 15u, 15u, 0xC0DEull);
 	Assert(!pkt.empty(), "MatchStart packet built");
 	PacketView view;
 	Assert(PacketView::Parse(pkt.data(), pkt.size(), view) == PacketParseResult::Ok,
@@ -291,7 +291,7 @@ static void TestMatchStartPacket()
 	Assert(view.SessionId() == 0xC0DEull, "MatchStart SessionId preserved");
 	auto parsed = ParseBgMatchStartNotificationPayload(view.Payload(), view.PayloadSize());
 	Assert(parsed.has_value() && parsed->matchId == 42ull
-		&& parsed->bgType == 2u && parsed->mapName == "arathi",
+		&& parsed->bgType == 2u && parsed->mapName == "bassin_ombres",
 		"MatchStart payload decodes");
 }
 

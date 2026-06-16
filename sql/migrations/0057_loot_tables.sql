@@ -1,12 +1,12 @@
 -- 0057 - Wave 5 Persistence Loot (Phase 3.17b) : tables loot_tables +
 -- loot_table_entries pour persister la definition des tables de loot
--- V1 (wolf_basic, rabbit_basic). Pattern similaire a game_events :
+-- V1 (loup_base, lapin_base). Pattern similaire a game_events :
 -- seed via INSERT IGNORE, lecture read-only au boot par le
 -- LootHandler (qui utilise actuellement un tableau hardcode 5 items).
 --
 -- loot_tables :
 --   - table_id : auto-increment PK. V1 ids 1..2 reserves au seed.
---   - name : identifiant logique unique (wolf_basic, rabbit_basic, ...).
+--   - name : identifiant logique unique (loup_base, lapin_base, ...).
 --
 -- loot_table_entries :
 --   - drop_chance_pct : 0..100, probabilite que l'item drop (V1 simple).
@@ -40,18 +40,18 @@ CREATE TABLE IF NOT EXISTS loot_table_entries (
         REFERENCES loot_tables(table_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Seed V1 : 2 tables de base (wolf_basic + rabbit_basic) avec 3 entries
+-- Seed V1 : 2 tables de base (loup_base + lapin_base) avec 3 entries
 -- au total. INSERT IGNORE rend la migration idempotente.
 INSERT IGNORE INTO loot_tables (table_id, name, description) VALUES
-    (1, 'wolf_basic',    'Standard wolf drops'),
-    (2, 'rabbit_basic',  'Standard rabbit drops');
+    (1, 'loup_base',   'Butin standard de loup'),
+    (2, 'lapin_base',  'Butin standard de lapin');
 
 -- entry_id explicite pour le seed (sinon AUTO_INCREMENT mais on prefere
 -- des ids stables a travers les re-applications).
--- Note : item_template_id 1 = Wolf Pelt (pas Iron Ore : on suppose
+-- Note : item_template_id 1 = Peau de loup (pas Minerai de fer : on suppose
 -- qu'a partir de la table loot_tables le master peut potentiellement
 -- avoir des noms d'items disjoints du LootHandler hardcode 1..5 actuel).
 INSERT IGNORE INTO loot_table_entries (entry_id, table_id, item_template_id, item_name, drop_chance_pct, min_count, max_count) VALUES
-    (1, 1, 1,   'Wolf Pelt',      80, 1, 2),
-    (2, 1, 100, 'Health Potion',  10, 1, 1),
-    (3, 2, 2,   'Rabbit Foot',    95, 1, 1);
+    (1, 1, 1,   'Peau de loup',    80, 1, 2),
+    (2, 1, 100, 'Potion de soin',  10, 1, 1),
+    (3, 2, 2,   'Patte de lapin',  95, 1, 1);

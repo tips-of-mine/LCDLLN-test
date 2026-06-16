@@ -27,8 +27,8 @@
 -- Les 2 guildes "Les Gardiens" (id=1) et "L Ombre" (id=2, sans
 -- apostrophe car ASCII safe MSVC) correspondent au seed hardcode de
 -- GuildHandler::SeedV1Guilds. Les noms de membres sont stockes via
--- account_id (1=Aragorn, 2=Legolas, 3=Gimli, 4=Frodo, 5=Saruman,
--- 6=Wormtongue) -- la resolution accountId -> name reste cote handler
+-- account_id (1=Garond, 2=Mirelle, 3=Tobrek, 4=Pernel, 5=Sylvane,
+-- 6=Verlin) -- la resolution accountId -> name reste cote handler
 -- (V1 lookup en memoire jusqu'a integration AccountStore).
 
 CREATE TABLE IF NOT EXISTS guilds_master (
@@ -77,8 +77,8 @@ INSERT IGNORE INTO guilds_master (guild_id, name, motd, leader_account_id, creat
     (2, 'L Ombre',      'Le pouvoir est tout', 5, 1767225600000);
 
 -- account_id mapping V1 (resolu cote handler via lookup local) :
---   1=Aragorn (GM), 2=Legolas (Officer), 3=Gimli (Member), 4=Frodo (Initiate)
---   5=Saruman (GM), 6=Wormtongue (Member)
+--   1=Garond (GM), 2=Mirelle (Officer), 3=Tobrek (Member), 4=Pernel (Initiate)
+--   5=Sylvane (GM), 6=Verlin (Member)
 INSERT IGNORE INTO guild_members_v2 (guild_id, account_id, rank_id, joined_at_unix_ms) VALUES
     (1, 1, 0, 1767225600000),
     (1, 2, 1, 1767225600000),
@@ -88,14 +88,14 @@ INSERT IGNORE INTO guild_members_v2 (guild_id, account_id, rank_id, joined_at_un
     (2, 6, 5, 1767225600000);
 
 -- Bank tab 0 : 5 items pour Les Gardiens, 2 items pour L Ombre.
--- itemTemplateId V1 : 1=Iron Ore, 2=Linen Cloth, 3=Mageweave,
--- 4=Health Potion, 5=Mana Potion, 6=Black Cloth, 7=Soul Shard.
+-- itemTemplateId V1 : 1=Minerai de fer, 2=Toile de lin, 3=Tissu mage,
+-- 4=Potion de soin, 5=Potion de mana, 6=Toile noire, 7=Eclat d'ame.
 -- (Aligne sur le seed in-memory hardcode de SeedV1Guilds.)
 INSERT IGNORE INTO guild_bank (guild_id, tab_index, slot_index, item_template_id, item_name, count) VALUES
-    (1, 0, 0, 1, 'Iron Ore',       100),
-    (1, 0, 1, 2, 'Linen Cloth',    250),
-    (1, 0, 2, 3, 'Mageweave',      80),
-    (1, 0, 3, 4, 'Health Potion',  30),
-    (1, 0, 4, 5, 'Mana Potion',    20),
-    (2, 0, 0, 6, 'Black Cloth',    50),
-    (2, 0, 1, 7, 'Soul Shard',     10);
+    (1, 0, 0, 1, 'Minerai de fer',  100),
+    (1, 0, 1, 2, 'Toile de lin',    250),
+    (1, 0, 2, 3, 'Tissu mage',      80),
+    (1, 0, 3, 4, 'Potion de soin',  30),
+    (1, 0, 4, 5, 'Potion de mana',  20),
+    (2, 0, 0, 6, 'Toile noire',     50),
+    (2, 0, 1, 7, 'Eclat d''ame',    10);

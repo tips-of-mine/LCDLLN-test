@@ -4,7 +4,7 @@
 // 0057_loot_tables.sql. Cible UNIX (master).
 //
 // Read-only V1 : les tables sont seedees via INSERT IGNORE dans la
-// migration (wolf_basic + rabbit_basic). Le LootHandler appelle
+// migration (loup_base + lapin_base). Le LootHandler appelle
 // LoadAllTables au boot pour preparer une future integration avec un
 // systeme de drop par creature (out-of-scope de cette PR cote wire).
 //

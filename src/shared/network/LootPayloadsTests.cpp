@@ -36,14 +36,14 @@ using namespace engine::network;
 
 static void TestRollNotificationRoundTrip()
 {
-	auto buf = BuildLootRollNotificationPayload(42ull, 1u, "Iron Ore", 5u, 30u);
+	auto buf = BuildLootRollNotificationPayload(42ull, 1u, "Minerai de fer", 5u, 30u);
 	auto parsed = ParseLootRollNotificationPayload(buf.data(), buf.size());
 	Assert(parsed.has_value(), "RollNotification round-trip parses");
 	if (parsed)
 	{
 		Assert(parsed->rollId == 42ull, "RollNotification rollId=42");
 		Assert(parsed->itemTemplateId == 1u, "RollNotification itemTemplateId=1");
-		Assert(parsed->itemName == "Iron Ore", "RollNotification itemName");
+		Assert(parsed->itemName == "Minerai de fer", "RollNotification itemName");
 		Assert(parsed->count == 5u, "RollNotification count=5");
 		Assert(parsed->durationSec == 30u, "RollNotification durationSec=30");
 	}
@@ -87,7 +87,7 @@ static void TestRollNotificationRejectsShort()
 
 static void TestRollNotificationPacket()
 {
-	auto pkt = BuildLootRollNotificationPacket(7ull, 3u, "Mageweave", 1u, 30u, 0xDEADBEEFull);
+	auto pkt = BuildLootRollNotificationPacket(7ull, 3u, "Tissu mage", 1u, 30u, 0xDEADBEEFull);
 	Assert(!pkt.empty(), "RollNotification packet built");
 	PacketView view;
 	Assert(PacketView::Parse(pkt.data(), pkt.size(), view) == PacketParseResult::Ok,
@@ -96,7 +96,7 @@ static void TestRollNotificationPacket()
 	Assert(view.RequestId() == 0u, "RollNotification RequestId is 0 (push)");
 	Assert(view.SessionId() == 0xDEADBEEFull, "RollNotification SessionId preserved");
 	auto parsed = ParseLootRollNotificationPayload(view.Payload(), view.PayloadSize());
-	Assert(parsed.has_value() && parsed->rollId == 7ull && parsed->itemName == "Mageweave",
+	Assert(parsed.has_value() && parsed->rollId == 7ull && parsed->itemName == "Tissu mage",
 		"RollNotification packet payload decodes");
 }
 
@@ -208,17 +208,17 @@ static void TestChoiceResponsePacket()
 static void TestRollResultNeedWinner()
 {
 	auto buf = BuildLootRollResultNotificationPayload(
-		42ull, "Aragorn", 2u /*Need*/, 87u, 1u, "Iron Ore", 5u);
+		42ull, "Garond", 2u /*Need*/, 87u, 1u, "Minerai de fer", 5u);
 	auto parsed = ParseLootRollResultNotificationPayload(buf.data(), buf.size());
 	Assert(parsed.has_value(), "RollResult Need winner parses");
 	if (parsed)
 	{
 		Assert(parsed->rollId == 42ull, "RollResult rollId=42");
-		Assert(parsed->winnerName == "Aragorn", "RollResult winnerName");
+		Assert(parsed->winnerName == "Garond", "RollResult winnerName");
 		Assert(parsed->winnerChoice == 2u, "RollResult winnerChoice=Need");
 		Assert(parsed->winnerRoll == 87u, "RollResult winnerRoll=87");
 		Assert(parsed->itemTemplateId == 1u, "RollResult itemTemplateId=1");
-		Assert(parsed->itemName == "Iron Ore", "RollResult itemName");
+		Assert(parsed->itemName == "Minerai de fer", "RollResult itemName");
 		Assert(parsed->count == 5u, "RollResult count=5");
 	}
 }
@@ -226,7 +226,7 @@ static void TestRollResultNeedWinner()
 static void TestRollResultGreedWinner()
 {
 	auto buf = BuildLootRollResultNotificationPayload(
-		7ull, "Legolas", 1u /*Greed*/, 50u, 4u, "Health Potion", 1u);
+		7ull, "Mirelle", 1u /*Greed*/, 50u, 4u, "Potion de soin", 1u);
 	auto parsed = ParseLootRollResultNotificationPayload(buf.data(), buf.size());
 	Assert(parsed.has_value() && parsed->winnerChoice == 1u && parsed->winnerRoll == 50u,
 		"RollResult Greed winner parses");
@@ -235,7 +235,7 @@ static void TestRollResultGreedWinner()
 static void TestRollResultAllPass()
 {
 	auto buf = BuildLootRollResultNotificationPayload(
-		99ull, "" /*personne*/, 0u /*Pass*/, 0u, 5u, "Mana Potion", 2u);
+		99ull, "" /*personne*/, 0u /*Pass*/, 0u, 5u, "Potion de mana", 2u);
 	auto parsed = ParseLootRollResultNotificationPayload(buf.data(), buf.size());
 	Assert(parsed.has_value(), "RollResult all Pass parses");
 	if (parsed)
@@ -294,7 +294,7 @@ static void TestRollResultRejectsShort()
 static void TestRollResultPacket()
 {
 	auto pkt = BuildLootRollResultNotificationPacket(
-		42ull, "Boss", 2u, 75u, 1u, "Mageweave", 3u, 0xBEEFull);
+		42ull, "Boss", 2u, 75u, 1u, "Tissu mage", 3u, 0xBEEFull);
 	PacketView view;
 	Assert(PacketView::Parse(pkt.data(), pkt.size(), view) == PacketParseResult::Ok,
 		"RollResult PacketView parse OK");

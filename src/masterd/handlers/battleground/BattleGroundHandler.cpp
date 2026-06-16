@@ -26,21 +26,21 @@ namespace engine::server
 		{
 		case kBgWarsong:
 			e.bgType   = kBgWarsong;
-			e.name     = "Warsong Gulch";
+			e.name     = "Gorge de Feyhin";
 			e.teamSize = 10u;
-			e.mapName  = "warsong";
+			e.mapName  = "gorge_feyhin";
 			break;
 		case kBgArathi:
 			e.bgType   = kBgArathi;
-			e.name     = "Arathi Basin";
+			e.name     = "Bassin des Ombres";
 			e.teamSize = 15u;
-			e.mapName  = "arathi";
+			e.mapName  = "bassin_ombres";
 			break;
 		case kBgAlterac:
 			e.bgType   = kBgAlterac;
-			e.name     = "Alterac Valley";
+			e.name     = "Vallee Gelee";
 			e.teamSize = 40u;
-			e.mapName  = "alterac";
+			e.mapName  = "vallee_gelee";
 			break;
 		default:
 			break;

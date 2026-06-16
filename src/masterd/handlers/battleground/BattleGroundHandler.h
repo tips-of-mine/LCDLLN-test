@@ -22,9 +22,9 @@
 //
 // Store in-memory V1 :
 //   - 3 BG hardcodes au boot :
-//       bgType=1 "Warsong Gulch"  teamSize=10 mapName="warsong"
-//       bgType=2 "Arathi Basin"   teamSize=15 mapName="arathi"
-//       bgType=3 "Alterac Valley" teamSize=40 mapName="alterac"
+//       bgType=1 "Gorge de Feyhin"   teamSize=10 mapName="gorge_feyhin"
+//       bgType=2 "Bassin des Ombres" teamSize=15 mapName="bassin_ombres"
+//       bgType=3 "Vallee Gelee"      teamSize=40 mapName="vallee_gelee"
 //   - Queue : map account_id -> QueueState. Un seul account ne peut etre
 //     que dans une seule queue (V1).
 //   - Matches actifs : map matchId -> ActiveMatch.
@@ -32,7 +32,7 @@
 //     LeaveMatch et eviter les doubles).
 //
 // V1 limitations :
-//   - 3 BG hardcodes (Warsong/Arathi/Alterac). Vrais BG via M40+ futur.
+//   - 3 BG hardcodes (Gorge de Feyhin/Bassin des Ombres/Vallee Gelee). Vrais BG via M40+ futur.
 //   - Match vs AI bot fictif (account 9999). Vrai matchmaking 2 factions
 //     a venir.
 //   - Score evolution simulee instantanee (V1) ; vrai gameplay BG via shardd futur.
@@ -105,7 +105,7 @@ namespace engine::server
 		/// \param connId        identifiant de connexion TCP cible (0 = no-op).
 		/// \param matchId       identifiant unique du match.
 		/// \param bgType        type de BG (1/2/3 V1).
-		/// \param mapName       nom de la map (V1 : "warsong"/"arathi"/"alterac").
+		/// \param mapName       nom de la map (V1 : "gorge_feyhin"/"bassin_ombres"/"vallee_gelee").
 		/// \param allianceCount nombre de joueurs cote Alliance.
 		/// \param hordeCount    nombre de joueurs cote Horde.
 		/// \return true si le packet a ete envoye, false si connId invalide ou server null.

@@ -57,7 +57,7 @@ static void TestListResponseSingleGuild()
 	g.name        = "Les Gardiens";
 	g.motd        = "Soyez courageux";
 	g.memberCount = 4u;
-	g.leaderName  = "Aragorn";
+	g.leaderName  = "Garond";
 	auto buf = BuildGuildListResponsePayload(0u, {g});
 	auto parsed = ParseGuildListResponsePayload(buf.data(), buf.size());
 	Assert(parsed.has_value(), "Guild List single guild parses");
@@ -67,7 +67,7 @@ static void TestListResponseSingleGuild()
 		Assert(parsed->guilds[0].name == "Les Gardiens", "Guild 1 name");
 		Assert(parsed->guilds[0].motd == "Soyez courageux", "Guild 1 motd");
 		Assert(parsed->guilds[0].memberCount == 4u, "Guild 1 memberCount");
-		Assert(parsed->guilds[0].leaderName == "Aragorn", "Guild 1 leader");
+		Assert(parsed->guilds[0].leaderName == "Garond", "Guild 1 leader");
 	}
 	else
 	{
@@ -83,7 +83,7 @@ static void TestListResponseTwoGuilds()
 	g1.name        = "Les Gardiens";
 	g1.motd        = "Soyez courageux";
 	g1.memberCount = 4u;
-	g1.leaderName  = "Aragorn";
+	g1.leaderName  = "Garond";
 	guilds.push_back(g1);
 
 	GuildSummary g2;
@@ -91,7 +91,7 @@ static void TestListResponseTwoGuilds()
 	g2.name        = "L'Ombre";
 	g2.motd        = "Le pouvoir est tout";
 	g2.memberCount = 2u;
-	g2.leaderName  = "Saruman";
+	g2.leaderName  = "Sylvane";
 	guilds.push_back(g2);
 
 	auto buf = BuildGuildListResponsePayload(0u, guilds);
@@ -101,7 +101,7 @@ static void TestListResponseTwoGuilds()
 	{
 		Assert(parsed->guilds[0].name == "Les Gardiens", "G[0] name");
 		Assert(parsed->guilds[1].name == "L'Ombre", "G[1] name");
-		Assert(parsed->guilds[1].leaderName == "Saruman", "G[1] leader");
+		Assert(parsed->guilds[1].leaderName == "Sylvane", "G[1] leader");
 	}
 }
 
@@ -207,10 +207,10 @@ static void TestMembersResponseEmpty()
 static void TestMembersResponseFour()
 {
 	std::vector<GuildMember> members;
-	GuildMember m1; m1.accountName = "Aragorn";  m1.rankId = 0u; m1.rankName = "Guild Master"; m1.online = true;  members.push_back(m1);
-	GuildMember m2; m2.accountName = "Legolas";  m2.rankId = 1u; m2.rankName = "Officer";       m2.online = true;  members.push_back(m2);
-	GuildMember m3; m3.accountName = "Gimli";    m3.rankId = 5u; m3.rankName = "Member";        m3.online = false; members.push_back(m3);
-	GuildMember m4; m4.accountName = "Frodo";    m4.rankId = 9u; m4.rankName = "Initiate";      m4.online = false; members.push_back(m4);
+	GuildMember m1; m1.accountName = "Garond";  m1.rankId = 0u; m1.rankName = "Guild Master"; m1.online = true;  members.push_back(m1);
+	GuildMember m2; m2.accountName = "Mirelle";  m2.rankId = 1u; m2.rankName = "Officer";       m2.online = true;  members.push_back(m2);
+	GuildMember m3; m3.accountName = "Tobrek";    m3.rankId = 5u; m3.rankName = "Member";        m3.online = false; members.push_back(m3);
+	GuildMember m4; m4.accountName = "Pernel";    m4.rankId = 9u; m4.rankName = "Initiate";      m4.online = false; members.push_back(m4);
 	auto buf = BuildGuildMembersResponsePayload(0u, members);
 	auto parsed = ParseGuildMembersResponsePayload(buf.data(), buf.size());
 	Assert(parsed.has_value() && parsed->members.size() == 4u, "Members 4 parses");
@@ -220,7 +220,7 @@ static void TestMembersResponseFour()
 			"M[0] GM online");
 		Assert(parsed->members[2].rankId == 5u && parsed->members[2].online == false,
 			"M[2] Member offline");
-		Assert(parsed->members[3].accountName == "Frodo", "M[3] name");
+		Assert(parsed->members[3].accountName == "Pernel", "M[3] name");
 	}
 }
 
@@ -345,20 +345,20 @@ static void TestBankResponseEmpty()
 static void TestBankResponseFiveItems()
 {
 	std::vector<GuildBankItem> items;
-	GuildBankItem it1; it1.slotIndex = 0u; it1.itemName = "Iron Ore";       it1.count = 100u; items.push_back(it1);
-	GuildBankItem it2; it2.slotIndex = 1u; it2.itemName = "Linen Cloth";    it2.count = 250u; items.push_back(it2);
-	GuildBankItem it3; it3.slotIndex = 2u; it3.itemName = "Mageweave";      it3.count = 80u;  items.push_back(it3);
-	GuildBankItem it4; it4.slotIndex = 3u; it4.itemName = "Health Potion";  it4.count = 30u;  items.push_back(it4);
-	GuildBankItem it5; it5.slotIndex = 4u; it5.itemName = "Mana Potion";    it5.count = 20u;  items.push_back(it5);
+	GuildBankItem it1; it1.slotIndex = 0u; it1.itemName = "Minerai de fer";  it1.count = 100u; items.push_back(it1);
+	GuildBankItem it2; it2.slotIndex = 1u; it2.itemName = "Toile de lin";    it2.count = 250u; items.push_back(it2);
+	GuildBankItem it3; it3.slotIndex = 2u; it3.itemName = "Tissu mage";      it3.count = 80u;  items.push_back(it3);
+	GuildBankItem it4; it4.slotIndex = 3u; it4.itemName = "Potion de soin";  it4.count = 30u;  items.push_back(it4);
+	GuildBankItem it5; it5.slotIndex = 4u; it5.itemName = "Potion de mana";  it5.count = 20u;  items.push_back(it5);
 	auto buf = BuildGuildBankResponsePayload(0u, items);
 	auto parsed = ParseGuildBankResponsePayload(buf.data(), buf.size());
 	Assert(parsed.has_value() && parsed->items.size() == 5u, "Bank 5 items parses");
 	if (parsed && parsed->items.size() == 5u)
 	{
-		Assert(parsed->items[0].itemName == "Iron Ore" && parsed->items[0].count == 100u,
-			"Bank[0] Iron Ore x100");
-		Assert(parsed->items[4].itemName == "Mana Potion" && parsed->items[4].count == 20u,
-			"Bank[4] Mana Potion x20");
+		Assert(parsed->items[0].itemName == "Minerai de fer" && parsed->items[0].count == 100u,
+			"Bank[0] Minerai de fer x100");
+		Assert(parsed->items[4].itemName == "Potion de mana" && parsed->items[4].count == 20u,
+			"Bank[4] Potion de mana x20");
 	}
 }
 

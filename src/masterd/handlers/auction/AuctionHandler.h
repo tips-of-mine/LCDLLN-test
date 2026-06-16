@@ -18,8 +18,8 @@
 // error=Unauthorized (code 1) dans la reponse type-specific.
 //
 // Store in-memory V1 (mutex protege) :
-//   - 8 auctions hardcodees au boot avec differents owners (Aragorn, Legolas,
-//     Gimli, Saruman) et expirations echelonnees (1h-48h).
+//   - 8 auctions hardcodees au boot avec differents owners (Garond, Mirelle,
+//     Tobrek, Sylvane) et expirations echelonnees (1h-48h).
 //   - Map item template id -> name (10 entries) pour les listings V1.
 //   - m_nextAuctionId (atomic) : incremente a chaque AuctionPostRequest.
 //
@@ -93,7 +93,7 @@ namespace engine::server
 		void SetAuctionStore(engine::server::auctions::MysqlAuctionStore* s) { m_store = s; }
 
 		/// Initialise le store V1 : enregistre 8 auctions hardcodees avec
-		/// differents owners (Aragorn, Legolas, Gimli, Saruman) et expirations
+		/// differents owners (Garond, Mirelle, Tobrek, Sylvane) et expirations
 		/// echelonnees (1h-48h). Idempotent : appelable a chaque boot.
 		void SeedV1Auctions();
 

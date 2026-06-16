@@ -32,12 +32,12 @@ namespace engine::server
 		{
 			switch (accountId)
 			{
-			case 1ull: return std::string("Aragorn");
-			case 2ull: return std::string("Legolas");
-			case 3ull: return std::string("Gimli");
-			case 4ull: return std::string("Frodo");
-			case 5ull: return std::string("Saruman");
-			case 6ull: return std::string("Wormtongue");
+			case 1ull: return std::string("Garond");
+			case 2ull: return std::string("Mirelle");
+			case 3ull: return std::string("Tobrek");
+			case 4ull: return std::string("Pernel");
+			case 5ull: return std::string("Sylvane");
+			case 6ull: return std::string("Verlin");
 			default:   break;
 			}
 			char buf[32]{};
@@ -138,22 +138,22 @@ namespace engine::server
 			g.guildId    = 1u;
 			g.name       = "Les Gardiens";
 			g.motd       = "Soyez courageux";
-			g.leaderName = "Aragorn";
+			g.leaderName = "Garond";
 
-			InMemoryGuildMember m1; m1.accountName = "Aragorn"; m1.rankId = 0u; m1.online = true;
-			InMemoryGuildMember m2; m2.accountName = "Legolas"; m2.rankId = 1u; m2.online = true;
-			InMemoryGuildMember m3; m3.accountName = "Gimli";   m3.rankId = 5u; m3.online = false;
-			InMemoryGuildMember m4; m4.accountName = "Frodo";   m4.rankId = 9u; m4.online = false;
+			InMemoryGuildMember m1; m1.accountName = "Garond";  m1.rankId = 0u; m1.online = true;
+			InMemoryGuildMember m2; m2.accountName = "Mirelle"; m2.rankId = 1u; m2.online = true;
+			InMemoryGuildMember m3; m3.accountName = "Tobrek";  m3.rankId = 5u; m3.online = false;
+			InMemoryGuildMember m4; m4.accountName = "Pernel";  m4.rankId = 9u; m4.online = false;
 			g.members.push_back(m1);
 			g.members.push_back(m2);
 			g.members.push_back(m3);
 			g.members.push_back(m4);
 
-			InMemoryGuildBankItem b1; b1.slotIndex = 0u; b1.itemName = "Iron Ore";       b1.count = 100u;
-			InMemoryGuildBankItem b2; b2.slotIndex = 1u; b2.itemName = "Linen Cloth";    b2.count = 250u;
-			InMemoryGuildBankItem b3; b3.slotIndex = 2u; b3.itemName = "Mageweave";      b3.count = 80u;
-			InMemoryGuildBankItem b4; b4.slotIndex = 3u; b4.itemName = "Health Potion";  b4.count = 30u;
-			InMemoryGuildBankItem b5; b5.slotIndex = 4u; b5.itemName = "Mana Potion";    b5.count = 20u;
+			InMemoryGuildBankItem b1; b1.slotIndex = 0u; b1.itemName = "Minerai de fer";  b1.count = 100u;
+			InMemoryGuildBankItem b2; b2.slotIndex = 1u; b2.itemName = "Toile de lin";    b2.count = 250u;
+			InMemoryGuildBankItem b3; b3.slotIndex = 2u; b3.itemName = "Tissu mage";      b3.count = 80u;
+			InMemoryGuildBankItem b4; b4.slotIndex = 3u; b4.itemName = "Potion de soin";  b4.count = 30u;
+			InMemoryGuildBankItem b5; b5.slotIndex = 4u; b5.itemName = "Potion de mana";  b5.count = 20u;
 			g.bank0.push_back(b1);
 			g.bank0.push_back(b2);
 			g.bank0.push_back(b3);
@@ -170,15 +170,15 @@ namespace engine::server
 			g.guildId    = 2u;
 			g.name       = "L'Ombre";
 			g.motd       = "Le pouvoir est tout";
-			g.leaderName = "Saruman";
+			g.leaderName = "Sylvane";
 
-			InMemoryGuildMember m1; m1.accountName = "Saruman";    m1.rankId = 0u; m1.online = true;
-			InMemoryGuildMember m2; m2.accountName = "Wormtongue"; m2.rankId = 5u; m2.online = false;
+			InMemoryGuildMember m1; m1.accountName = "Sylvane"; m1.rankId = 0u; m1.online = true;
+			InMemoryGuildMember m2; m2.accountName = "Verlin";  m2.rankId = 5u; m2.online = false;
 			g.members.push_back(m1);
 			g.members.push_back(m2);
 
-			InMemoryGuildBankItem b1; b1.slotIndex = 0u; b1.itemName = "Black Cloth"; b1.count = 50u;
-			InMemoryGuildBankItem b2; b2.slotIndex = 1u; b2.itemName = "Soul Shard";  b2.count = 10u;
+			InMemoryGuildBankItem b1; b1.slotIndex = 0u; b1.itemName = "Toile noire"; b1.count = 50u;
+			InMemoryGuildBankItem b2; b2.slotIndex = 1u; b2.itemName = "Eclat d'ame"; b2.count = 10u;
 			g.bank0.push_back(b1);
 			g.bank0.push_back(b2);
 

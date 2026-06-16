@@ -22,8 +22,8 @@
 //
 // Store in-memory V1 :
 //   - 2 zones contestees au boot :
-//       zoneId=1 "Hellfire Peninsula"   3 objectifs (10, 11, 12)
-//       zoneId=2 "Eastern Plaguelands"  4 objectifs (20, 21, 22, 23)
+//       zoneId=1 "Peninsule Ardente"        3 objectifs (10, 11, 12)
+//       zoneId=2 "Terres Maudites de l'Est" 4 objectifs (20, 21, 22, 23)
 //     Tous les objectifs commencent owner=0xFF (neutre), capturePct=0.
 //   - Subscriptions : map account_id -> set<zoneId>.
 //   - Pas de tracking des progressions actives (V1 capture = instantanee).
@@ -77,7 +77,7 @@ namespace engine::server
 		void SetOutdoorPvpStore(engine::server::outdoorpvp_db::MysqlOutdoorPvpStore* s) { m_store = s; }
 
 		/// Initialise le store V1 : enregistre les 2 zones contestees hardcodees
-		/// (Hellfire Peninsula 3 objectifs, Eastern Plaguelands 4 objectifs).
+		/// (Peninsule Ardente 3 objectifs, Terres Maudites de l'Est 4 objectifs).
 		/// Idempotent : appelable a chaque boot.
 		void SeedV1Zones();
 

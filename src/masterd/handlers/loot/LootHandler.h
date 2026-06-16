@@ -29,11 +29,11 @@
 // status=Unauthorized (code 1) dans la reponse type-specific.
 //
 // Items hardcode V1 :
-//   1 = Iron Ore
-//   2 = Linen Cloth
-//   3 = Mageweave
-//   4 = Health Potion
-//   5 = Mana Potion
+//   1 = Minerai de fer
+//   2 = Toile de lin
+//   3 = Tissu mage
+//   4 = Potion de soin
+//   5 = Potion de mana
 //
 // V1 limitations :
 //   - SimulateRoll = creator-only eligible (pas de groupe). Future PR :

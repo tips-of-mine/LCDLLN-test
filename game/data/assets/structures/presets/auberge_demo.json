@@ -1,0 +1,21 @@
+{
+  "id": "auberge_demo",
+  "displayName": "Auberge (démo)",
+  "_comment": "Auberge fermée composée à partir du kit modulaire meshes/props/. Offsets relatifs au pivot (centre du plancher, m). spawnAnchor = devant la porte d'entrée (face +Z). 13 éléments = plage d'index 310..322 de world.scenery (sans renumérotation du bloc cimetière). Ajuster offsets/échelle dans l'éditeur (preview).",
+  "spawnAnchor": { "x": 0.0, "y": 0.0, "z": 3.5 },
+  "elements": [
+    { "mesh": "meshes/props/Floor_WoodDark.gltf", "x": 0.0, "y": 0.0, "z": 0.0, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.0, "solid": false },
+    { "mesh": "meshes/props/Wall_Plaster_Door_Round.gltf", "x": 0.0, "y": 0.0, "z": 2.5, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.4, "solid": true },
+    { "mesh": "meshes/props/Wall_Plaster_Straight.gltf", "x": 0.0, "y": 0.0, "z": -2.5, "yaw_deg": 180.0, "scale": 1.0, "collision_radius": 0.4, "solid": true },
+    { "mesh": "meshes/props/Wall_Plaster_Window_Wide_Round.gltf", "x": 2.5, "y": 0.0, "z": 0.0, "yaw_deg": 90.0, "scale": 1.0, "collision_radius": 0.4, "solid": true },
+    { "mesh": "meshes/props/Wall_Plaster_Window_Wide_Round.gltf", "x": -2.5, "y": 0.0, "z": 0.0, "yaw_deg": 270.0, "scale": 1.0, "collision_radius": 0.4, "solid": true },
+    { "mesh": "meshes/props/Roof_RoundTiles_6x6.gltf", "x": 0.0, "y": 3.0, "z": 0.0, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.0, "solid": false },
+    { "mesh": "meshes/props/Table_Large.gltf", "x": 0.8, "y": 0.0, "z": 0.5, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.9, "solid": true },
+    { "mesh": "meshes/props/Bench.gltf", "x": 0.8, "y": 0.0, "z": 1.4, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.0, "solid": false },
+    { "mesh": "meshes/props/Bench.gltf", "x": 0.8, "y": 0.0, "z": -0.4, "yaw_deg": 180.0, "scale": 1.0, "collision_radius": 0.0, "solid": false },
+    { "mesh": "meshes/props/Barrel.gltf", "x": -1.6, "y": 0.0, "z": -1.6, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.4, "solid": true },
+    { "mesh": "meshes/props/Barrel_Apples.gltf", "x": -1.6, "y": 0.0, "z": -0.8, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.4, "solid": true },
+    { "mesh": "meshes/props/Lantern_Wall.gltf", "x": 0.3, "y": 1.8, "z": 2.4, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.0, "solid": false },
+    { "mesh": "meshes/props/Banner_1.gltf", "x": -0.3, "y": 1.8, "z": 2.4, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.0, "solid": false }
+  ]
+}

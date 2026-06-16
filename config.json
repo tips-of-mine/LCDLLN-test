@@ -563,6 +563,7 @@
             "320": { "mesh": "meshes/props/Banner_1.gltf", "x": 88.0, "z": 97.8, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.0, "solid": false },
             "321": { "mesh": "meshes/props/Torch_Metal.gltf", "x": 86.2, "z": 98.4, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.0, "solid": false },
             "322": { "mesh": "meshes/props/Torch_Metal.gltf", "x": 90.4, "z": 102.2, "yaw_deg": 0.0, "scale": 1.0, "collision_radius": 0.0, "solid": false },
+            "_comment_auberge_end": "Fin du bloc auberge regenerable (ne pas supprimer : marqueur d'export editeur, encadre les cles auberge avec _comment_auberge).",
             "_comment_cimetiere": "CIMETIERE (point de reapparition graveyard, ~120,120) : enclos sombre (arbres morts + dalles-tombes + torches + banniere + clotures partielles). Premiere passe a ajuster en jeu (notamment les clotures).",
             "323": { "mesh": "meshes/props/DeadTree_2.gltf", "x": 116.5, "z": 116.5, "yaw_deg": 30.0, "scale": 1.1, "collision_radius": 0.5, "solid": true },
             "324": { "mesh": "meshes/props/DeadTree_4.gltf", "x": 123.5, "z": 123.5, "yaw_deg": 200.0, "scale": 1.0, "collision_radius": 0.5, "solid": true },

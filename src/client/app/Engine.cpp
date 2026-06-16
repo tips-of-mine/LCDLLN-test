@@ -10456,6 +10456,10 @@ namespace engine
 				if (!worldOverlaysHidden)
 				{
 					const auto& remotes = m_uiModelBinding.GetModel().remoteEntities;
+						// Anti-chevauchement des plaques : boites deja posees cette frame
+						// (x,y,z,w = gauche,haut,droite,bas). Une nouvelle plaque qui en
+						// recouvre une est remontee d'une hauteur de plaque (empilement).
+						std::vector<ImVec4> placedLabelRects;
 					for (const engine::client::UIRemoteEntity& re : remotes)
 					{
 						// Combat SP1 : les mobs (archetypeId != 0) ont leur plaque.
@@ -10490,6 +10494,9 @@ namespace engine
 						// CreatureCatalog ; fallback générique si l'archétype est inconnu
 						// du catalogue client (catalogue absent ou désynchronisé).
 						std::string label;
+						// SP — suffixe « (niv. N) » des mobs, rendu en plus petit a droite
+						// du nom. Vide pour joueurs/nodes/butin (pas de niveau affiche).
+						std::string levelSuffix;
 						// Validation v12 — armé par la branche mob ci-dessous : dessine la
 						// barre de vie sous la plaque (jamais pour joueurs/nodes).
 						bool drawMobHealthBar = false;
@@ -10546,10 +10553,38 @@ namespace engine
 							const uint32_t mobLevel = (appearance != nullptr) ? appearance->level : 1u;
 							// Validation v12 — les PV chiffrés quittent le label : ils sont
 							// désormais portés par la barre de vie dessinée sous la plaque.
-							label = mobName + " (niv. " + std::to_string(mobLevel) + ")";
+							label = mobName;
+							levelSuffix = " (niv. " + std::to_string(mobLevel) + ")";
 							drawMobHealthBar = (re.maxHealth > 0u);
 						}
-						const ImVec2 ts = ImGui::CalcTextSize(label.c_str());
+						// Largeur TOTALE = nom (taille normale) + suffixe « (niv. N) » (0.78x).
+						ImFont* plateFont = ImGui::GetFont();
+						const float nivFontSize = ImGui::GetFontSize() * 0.78f;
+						const ImVec2 nameTs = ImGui::CalcTextSize(label.c_str());
+						const ImVec2 nivTs = levelSuffix.empty()
+							? ImVec2(0.0f, 0.0f)
+							: plateFont->CalcTextSizeA(nivFontSize, FLT_MAX, 0.0f, levelSuffix.c_str());
+						const ImVec2 ts(nameTs.x + nivTs.x, nameTs.y);
+						// Empilement vertical : remonte la plaque tant qu'elle recouvre une
+						// plaque deja posee cette frame (mobs superposes -> textes lisibles).
+						const float plateHalfW = ts.x * 0.5f + 6.0f;
+						const float plateH = ts.y + 2.0f + (drawMobHealthBar ? 24.0f : 4.0f);
+						for (int attempt = 0; attempt < 12; ++attempt)
+						{
+							const float top = syp - ts.y - 2.0f;
+							const float bot = syp + (drawMobHealthBar ? 24.0f : 4.0f);
+							bool overlap = false;
+							for (const ImVec4& r : placedLabelRects)
+							{
+								if ((sxp - plateHalfW) < r.z && (sxp + plateHalfW) > r.x
+									&& top < r.w && bot > r.y)
+								{ overlap = true; break; }
+							}
+							if (!overlap) break;
+							syp -= (plateH + 3.0f);
+						}
+						placedLabelRects.emplace_back(sxp - plateHalfW, syp - ts.y - 2.0f,
+							sxp + plateHalfW, syp + (drawMobHealthBar ? 24.0f : 4.0f));
 						// Halo noir derriere le texte pour la lisibilite sur fond clair (ciel).
 						fg->AddRectFilled(
 							ImVec2(sxp - ts.x * 0.5f - 4.0f, syp - ts.y - 2.0f),
@@ -10570,7 +10605,15 @@ namespace engine
 									IM_COL32(235, 190, 60, 255), 3.0f, 0, 2.0f);
 							}
 						}
-						fg->AddText(ImVec2(sxp - ts.x * 0.5f, syp - ts.y), IM_COL32(220, 230, 255, 255), label.c_str());
+						// Nom a taille normale, puis suffixe niveau plus petit, aligne en bas.
+						const float labelLeft = sxp - ts.x * 0.5f;
+						fg->AddText(ImVec2(labelLeft, syp - ts.y), IM_COL32(220, 230, 255, 255), label.c_str());
+						if (!levelSuffix.empty())
+						{
+							fg->AddText(plateFont, nivFontSize,
+								ImVec2(labelLeft + nameTs.x, syp - nivTs.y),
+								IM_COL32(180, 195, 225, 230), levelSuffix.c_str());
+						}
 						// Validation v12 — barre de vie du mob sous la plaque, alimentée
 						// par currentHealth/maxHealth du snapshot (10 Hz) : elle descend
 						// donc en direct à chaque coup porté. Couleur par tiers de PV

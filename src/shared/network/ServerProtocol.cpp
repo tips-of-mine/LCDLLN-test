@@ -738,6 +738,182 @@ namespace engine::server
 		return true;
 	}
 
+	std::vector<std::byte> EncodeSetActionBarLayout(const SetActionBarLayoutMessage& message)
+	{
+		// Grimoire — payload : clientId (4) + 10 chaînes préfixées u16 (slots).
+		size_t hint = 4;
+		for (const std::string& slot : message.slots)
+		{
+			hint += 2 + slot.size();
+		}
+		std::vector<std::byte> packet = BeginPacket(MessageKind::SetActionBarLayout, hint);
+		WriteU32(packet, message.clientId);
+		for (const std::string& slot : message.slots)
+		{
+			WriteSizedString(packet, slot);
+		}
+		return packet;
+	}
+
+	bool DecodeSetActionBarLayout(std::span<const std::byte> packet, SetActionBarLayoutMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::SetActionBarLayout, payload) || payload.size() < 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		for (std::string& slot : outMessage.slots)
+		{
+			// Borne dure défensive : un spellId fait < 64 octets (ids snake_case).
+			if (!ReadSizedString(payload, offset, slot) || slot.size() > 64u)
+			{
+				return false;
+			}
+		}
+		if (offset != payload.size())
+		{
+			return false;
+		}
+		return true;
+	}
+
+	std::vector<std::byte> EncodeActionBarLayoutUpdate(const ActionBarLayoutUpdateMessage& message)
+	{
+		size_t hint = 4;
+		for (const std::string& slot : message.slots)
+		{
+			hint += 2 + slot.size();
+		}
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ActionBarLayoutUpdate, hint);
+		WriteU32(packet, message.clientId);
+		for (const std::string& slot : message.slots)
+		{
+			WriteSizedString(packet, slot);
+		}
+		return packet;
+	}
+
+	bool DecodeActionBarLayoutUpdate(std::span<const std::byte> packet, ActionBarLayoutUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ActionBarLayoutUpdate, payload) || payload.size() < 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		for (std::string& slot : outMessage.slots)
+		{
+			if (!ReadSizedString(payload, offset, slot) || slot.size() > 64u)
+			{
+				return false;
+			}
+		}
+		if (offset != payload.size())
+		{
+			return false;
+		}
+		return true;
+	}
+
+	std::vector<std::byte> EncodeClassProgressionUpdate(const ClassProgressionUpdateMessage& message)
+	{
+		// SP-B — payload : clientId (4) + classId (u16+str) + count (u16) + N skillIds (u16+str).
+		size_t hint = 4 + 2 + message.classId.size() + 2;
+		for (const std::string& skillId : message.knownSkillIds)
+		{
+			hint += 2 + skillId.size();
+		}
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ClassProgressionUpdate, hint);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.classId);
+		WriteU16(packet, static_cast<uint16_t>(message.knownSkillIds.size()));
+		for (const std::string& skillId : message.knownSkillIds)
+		{
+			WriteSizedString(packet, skillId);
+		}
+		return packet;
+	}
+
+	bool DecodeClassProgressionUpdate(std::span<const std::byte> packet, ClassProgressionUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ClassProgressionUpdate, payload) || payload.size() < 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		// Lecture classId
+		if (!ReadSizedString(payload, offset, outMessage.classId) || outMessage.classId.size() > 64u)
+		{
+			return false;
+		}
+		// Lecture count (u16) + borne défensive
+		if ((offset + 2) > payload.size())
+		{
+			return false;
+		}
+		const uint16_t count = ReadU16(payload, offset);
+		offset += 2;
+		if (count > 256u)
+		{
+			return false;
+		}
+		outMessage.knownSkillIds.clear();
+		outMessage.knownSkillIds.reserve(count);
+		for (uint16_t i = 0; i < count; ++i)
+		{
+			std::string skillId;
+			if (!ReadSizedString(payload, offset, skillId) || skillId.size() > 64u)
+			{
+				return false;
+			}
+			outMessage.knownSkillIds.push_back(std::move(skillId));
+		}
+		if (offset != payload.size())
+		{
+			return false;
+		}
+		return true;
+	}
+
+	std::vector<std::byte> EncodeChooseClassSkillRequest(const ChooseClassSkillRequestMessage& message)
+	{
+		// SP-B — payload : clientId (4) + level (4) + skillId (u16+str).
+		const size_t hint = 4 + 4 + 2 + message.skillId.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ChooseClassSkillRequest, hint);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.level);
+		WriteSizedString(packet, message.skillId);
+		return packet;
+	}
+
+	bool DecodeChooseClassSkillRequest(std::span<const std::byte> packet, ChooseClassSkillRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ChooseClassSkillRequest, payload) || payload.size() < 8)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.level    = ReadU32(payload, 4);
+		size_t offset = 8;
+		if (!ReadSizedString(payload, offset, outMessage.skillId)
+			|| outMessage.skillId.empty()
+			|| outMessage.skillId.size() > 64u)
+		{
+			return false;
+		}
+		if (offset != payload.size())
+		{
+			return false;
+		}
+		return true;
+	}
+
 	std::vector<std::byte> EncodeResourceUpdate(const ResourceUpdateMessage& message)
 	{
 		// Combat SP3 — payload fixe 12 octets.

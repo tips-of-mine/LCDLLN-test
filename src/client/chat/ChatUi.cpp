@@ -423,7 +423,7 @@ namespace engine::client
 					static_cast<unsigned int>(argb));
 				panel += colorHex;
 				panel += "|";
-				panel += engine::net::FormatTimeHHMMUtc(line.timestampUnixMs);
+				panel += engine::net::FormatTimeHHMMLocal(line.timestampUnixMs);
 				panel += " [";
 				panel += ChannelTag(line.channel);
 				panel += "] ";
@@ -478,7 +478,7 @@ namespace engine::client
 			for (uint32_t i = begin; i < end; ++i)
 			{
 				const engine::net::ChatMessage& line = *filtered[i];
-				out += engine::net::FormatTimeHHMMUtc(line.timestampUnixMs);
+				out += engine::net::FormatTimeHHMMLocal(line.timestampUnixMs);
 				out += " [";
 				out += ChannelTag(line.channel);
 				out += "] ";

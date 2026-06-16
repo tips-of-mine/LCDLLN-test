@@ -54,7 +54,7 @@ static void TestZoneListResponseSingleZoneNoObjectives()
 {
 	OutdoorPvpZoneSummary z;
 	z.zoneId = 1u;
-	z.name = "Hellfire Peninsula";
+	z.name = "Peninsule Ardente";
 	z.allianceScore = 3u;
 	z.hordeScore = 2u;
 	auto buf = BuildOutdoorPvpZoneListResponsePayload(0u, {z});
@@ -63,7 +63,7 @@ static void TestZoneListResponseSingleZoneNoObjectives()
 	if (parsed && parsed->zones.size() == 1u)
 	{
 		Assert(parsed->zones[0].zoneId == 1u, "Zone 1 id");
-		Assert(parsed->zones[0].name == "Hellfire Peninsula", "Zone 1 name");
+		Assert(parsed->zones[0].name == "Peninsule Ardente", "Zone 1 name");
 		Assert(parsed->zones[0].allianceScore == 3u, "Zone 1 alliance score");
 		Assert(parsed->zones[0].hordeScore == 2u, "Zone 1 horde score");
 		Assert(parsed->zones[0].objectives.empty(), "Zone 1 no objectives");
@@ -80,7 +80,7 @@ static void TestZoneListResponseFullWithObjectives()
 
 	OutdoorPvpZoneSummary z1;
 	z1.zoneId = 1u;
-	z1.name = "Hellfire Peninsula";
+	z1.name = "Peninsule Ardente";
 	z1.allianceScore = 1u;
 	z1.hordeScore = 0u;
 	z1.objectives.push_back({10u, 0u, 50u, 1u});      // Alliance owner, 50% horde capturing
@@ -90,7 +90,7 @@ static void TestZoneListResponseFullWithObjectives()
 
 	OutdoorPvpZoneSummary z2;
 	z2.zoneId = 2u;
-	z2.name = "Eastern Plaguelands";
+	z2.name = "Terres Maudites de l'Est";
 	z2.allianceScore = 0u;
 	z2.hordeScore = 0u;
 	z2.objectives.push_back({20u, 0xFFu, 0u, 0xFFu});
@@ -105,7 +105,7 @@ static void TestZoneListResponseFullWithObjectives()
 	if (parsed && parsed->zones.size() == 2u)
 	{
 		Assert(parsed->zones[0].zoneId == 1u, "Zone[0] id 1");
-		Assert(parsed->zones[0].name == "Hellfire Peninsula", "Zone[0] name");
+		Assert(parsed->zones[0].name == "Peninsule Ardente", "Zone[0] name");
 		Assert(parsed->zones[0].objectives.size() == 3u, "Zone[0] 3 objectives");
 		Assert(parsed->zones[0].objectives[0].objectiveId == 10u, "Obj 10 id");
 		Assert(parsed->zones[0].objectives[0].owner == 0u, "Obj 10 owner Alliance");
@@ -116,7 +116,7 @@ static void TestZoneListResponseFullWithObjectives()
 		Assert(parsed->zones[0].objectives[2].owner == 1u, "Obj 12 owner Horde");
 		Assert(parsed->zones[0].objectives[2].capturePct == 100u, "Obj 12 pct 100");
 		Assert(parsed->zones[1].zoneId == 2u, "Zone[1] id 2");
-		Assert(parsed->zones[1].name == "Eastern Plaguelands", "Zone[1] name");
+		Assert(parsed->zones[1].name == "Terres Maudites de l'Est", "Zone[1] name");
 		Assert(parsed->zones[1].objectives.size() == 4u, "Zone[1] 4 objectives");
 	}
 	else

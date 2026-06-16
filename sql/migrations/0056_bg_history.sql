@@ -7,7 +7,7 @@
 --
 -- match_id : auto-increment, sert d'identifiant unique persistant
 -- (distinct du matchId in-memory atomic compteur qui reset au reboot).
--- bg_type : 1=Warsong, 2=Arathi, 3=Alterac V1.
+-- bg_type : 1=Gorge de Feyhin, 2=Bassin des Ombres, 3=Vallee Gelee V1.
 -- winner_faction : 0=Alliance, 1=Horde, 2=Draw.
 -- started_at_unix_ms : timestamp de creation du match (avant Push Start).
 -- duration_sec : duree totale entre Start et End push.

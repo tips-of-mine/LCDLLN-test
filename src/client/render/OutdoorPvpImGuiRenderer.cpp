@@ -24,8 +24,8 @@ namespace engine::render
 		{
 			switch (fac)
 			{
-			case 0:    return "Alliance";
-			case 1:    return "Horde";
+			case 0:    return "Lumiere";
+			case 1:    return "Lune Noire";
 			case 0xFF: return "Neutre";
 			default:   return "?";
 			}
@@ -82,7 +82,7 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
-		if (ImGui::Begin("Outdoor PvP##ln_outdoorpvp_panel", nullptr, flags))
+		if (ImGui::Begin("PvP exterieur (F10)##ln_outdoorpvp_panel", nullptr, flags))
 		{
 			// Erreur transitoire (rouge).
 			if (!state.lastErrorText.empty())
@@ -166,11 +166,11 @@ namespace engine::render
 					{
 						// Scores.
 						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.7f, 1.f, 1.f));
-						ImGui::Text("Alliance : %u", static_cast<unsigned>(z.allianceScore));
+						ImGui::Text("Lumiere : %u", static_cast<unsigned>(z.allianceScore));
 						ImGui::PopStyleColor();
 						ImGui::SameLine();
 						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.4f, 0.4f, 1.f));
-						ImGui::Text("Horde : %u", static_cast<unsigned>(z.hordeScore));
+						ImGui::Text("Lune Noire : %u", static_cast<unsigned>(z.hordeScore));
 						ImGui::PopStyleColor();
 
 						// Bouton Subscribe/Unsubscribe.
@@ -200,7 +200,7 @@ namespace engine::render
 						if (ImGui::BeginTable("##ln_outdoorpvp_objs", 4, tableFlags))
 						{
 							ImGui::TableSetupColumn("ID",      ImGuiTableColumnFlags_WidthFixed, 40.f);
-							ImGui::TableSetupColumn("Owner",   ImGuiTableColumnFlags_WidthFixed, 70.f);
+							ImGui::TableSetupColumn("Proprio", ImGuiTableColumnFlags_WidthFixed, 70.f);
 							ImGui::TableSetupColumn("Capture", ImGuiTableColumnFlags_WidthFixed, 80.f);
 							ImGui::TableSetupColumn("Action",  ImGuiTableColumnFlags_WidthStretch);
 							ImGui::TableHeadersRow();
@@ -232,12 +232,12 @@ namespace engine::render
 
 								ImGui::TableSetColumnIndex(3);
 								ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.20f, 0.40f, 0.70f, 1.f));
-								if (ImGui::Button("Cap. Alliance", ImVec2(110.f, 22.f)))
+								if (ImGui::Button("Cap. Lumiere", ImVec2(110.f, 22.f)))
 									m_presenter->StartCapture(z.zoneId, obj.objectiveId, 0u);
 								ImGui::PopStyleColor();
 								ImGui::SameLine();
 								ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.70f, 0.20f, 0.20f, 1.f));
-								if (ImGui::Button("Cap. Horde", ImVec2(100.f, 22.f)))
+								if (ImGui::Button("Cap. Lune Noire", ImVec2(120.f, 22.f)))
 									m_presenter->StartCapture(z.zoneId, obj.objectiveId, 1u);
 								ImGui::PopStyleColor();
 

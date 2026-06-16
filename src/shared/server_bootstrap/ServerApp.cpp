@@ -223,18 +223,26 @@ namespace engine::server
 			return total;
 		}
 
-		/// Combat SP3 — applique les modificateurs d'auras à un jet de dégâts :
-		/// × (1 + buffs de dégâts de l'attaquant) × (1 + dégâts subis de la cible).
+		/// Combat SP3/SP-C — applique les modificateurs d'auras à un jet de dégâts :
+		/// × (1 + buffs de dégâts de l'attaquant) × (1 + dégâts subis de la cible)
+		/// × (1 − réduction de dégâts de la cible). La réduction est plafonnée à 0
+		/// (un facteur négatif serait un soin involontaire — on refuse de descendre
+		/// sous 0).
 		uint32_t ApplyAuraDamageModifiers(
 			uint32_t baseDamage,
 			const std::vector<ActiveAura>& attackerAuras,
 			const std::vector<ActiveAura>& targetAuras)
 		{
-			const float attackerBonus = SumAuraPercent(attackerAuras, SpellEffectType::BuffDamagePercent);
-			const float takenBonus = SumAuraPercent(targetAuras, SpellEffectType::DebuffDamageTakenPercent);
+			const float attackerBonus   = SumAuraPercent(attackerAuras, SpellEffectType::BuffDamagePercent);
+			const float takenBonus      = SumAuraPercent(targetAuras,   SpellEffectType::DebuffDamageTakenPercent);
+			// SP-C — réduction des dégâts entrants portée par la cible (DamageReductionPercent).
+			// Somme clampée à [0, 100] : jamais de soin involontaire, jamais de sur-réduction.
+			const float reductionSum    = SumAuraPercent(targetAuras, SpellEffectType::DamageReductionPercent);
+			const float reductionFactor = 1.0f - std::min(100.0f, std::max(0.0f, reductionSum)) / 100.0f;
 			const double modified = static_cast<double>(baseDamage)
 				* (1.0 + static_cast<double>(attackerBonus) / 100.0)
-				* (1.0 + static_cast<double>(takenBonus) / 100.0);
+				* (1.0 + static_cast<double>(takenBonus) / 100.0)
+				* static_cast<double>(reductionFactor);
 			return static_cast<uint32_t>(std::llround(modified));
 		}
 
@@ -342,6 +350,7 @@ namespace engine::server
 		, m_spawnerRuntime(m_config)
 		, m_archetypeLibrary(m_config)
 		, m_spellKits(m_config)
+		, m_classSkills(m_config)
 		, m_combatRng(std::random_device{}())
 	{
 		LOG_INFO(Core, "[ServerApp] Constructed");
@@ -476,6 +485,14 @@ namespace engine::server
 		if (!m_spellKits.Init())
 		{
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: spell kit library startup failed");
+			Shutdown();
+			return false;
+		}
+
+		// SP-B — compétences par-classe (strict : fichier corrompu = pas de boot).
+		if (!m_classSkills.Init())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: class skill library startup failed");
 			Shutdown();
 			return false;
 		}
@@ -811,6 +828,22 @@ namespace engine::server
 		if (DecodeCastRequest(packetBytes, castRequest))
 		{
 			HandleCastRequest(datagram.endpoint, castRequest);
+			return;
+		}
+
+		// Grimoire — réassignation des slots de barre d'action.
+		SetActionBarLayoutMessage setLayout{};
+		if (DecodeSetActionBarLayout(packetBytes, setLayout))
+		{
+			HandleSetActionBarLayout(datagram.endpoint, setLayout);
+			return;
+		}
+
+		// SP-B — choix d'une compétence par-classe (kind 91).
+		ChooseClassSkillRequestMessage chooseSkill{};
+		if (DecodeChooseClassSkillRequest(packetBytes, chooseSkill))
+		{
+			HandleChooseClassSkill(datagram.endpoint, chooseSkill);
 			return;
 		}
 
@@ -1300,6 +1333,10 @@ namespace engine::server
 		acceptedClient.chatModeratorRole = persistedState.chatModeratorRole;
 		/// M36.2 — restore known professions.
 		acceptedClient.professions = std::move(persistedState.professions);
+		/// Grimoire — restore action bar layout (10 slots).
+		acceptedClient.actionBarLayout = std::move(persistedState.actionBarLayout);
+		/// SP-B — restore known class skills.
+		acceptedClient.knownSkillIds = std::move(persistedState.knownSkillIds);
 		acceptedClient.hasReplicatedState = true;
 			LOG_INFO(Net,
 				"[ServerApp] Character state restored (client_id={}, character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={})",
@@ -1498,6 +1535,8 @@ namespace engine::server
 			m_clients.size());
 		(void)SendWelcome(acceptedClient);
 		(void)SendPlayerStats(acceptedClient);
+		(void)SendActionBarLayout(acceptedClient); // Grimoire — layout persisté (ou vide)
+		(void)SendClassProgression(acceptedClient); // SP-B — progression par-classe persistée (ou vide)
 		SendDynamicEventBootstrap(acceptedClient);
 		SendQuestStateBootstrap(acceptedClient);
 		(void)SendWalletUpdate(acceptedClient);
@@ -2015,6 +2054,10 @@ namespace engine::server
 		state.mailboxItems.clear();
 		/// M36.2 — persist profession skill progress.
 		state.professions = client.professions;
+		/// Grimoire — persist action bar layout.
+		state.actionBarLayout = client.actionBarLayout;
+		/// SP-B — persist known class skills.
+		state.knownSkillIds = client.knownSkillIds;
 		if (!m_characterPersistence.SaveCharacter(state))
 		{
 			LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",
@@ -4030,6 +4073,110 @@ namespace engine::server
 			return;
 		}
 
+		// ── SP-C : cast par compétence de classe (chemin additif, AVANT le fallback kit profil) ──
+		// Conditions : le joueur a une classe résolue, le skillId est dans ses skills connus,
+		// et la bibliothèque reconnaît ce skill pour sa classe.
+		if (!client->classId.empty())
+		{
+			const bool skillKnown = std::find(
+				client->knownSkillIds.begin(),
+				client->knownSkillIds.end(),
+				message.spellId) != client->knownSkillIds.end();
+			const ClassSkillDef* cs = skillKnown
+				? m_classSkills.FindSkill(client->classId, message.spellId)
+				: nullptr;
+			if (cs != nullptr)
+			{
+				// Garde : pas de cast en cours (partagée avec le chemin kit profil).
+				if (!client->activeCastSpellId.empty())
+				{
+					LOG_WARN(Net, "[ServerApp] SP-C CastRequest ignored: cast already in progress (client_id={})",
+						client->clientId);
+					return;
+				}
+
+				const uint64_t nowMs = NowMonotonicMs();
+
+				// Garde cooldown : même map spellCooldownUntilMs que le kit profil.
+				const auto cooldownIt = client->spellCooldownUntilMs.find(cs->skillId);
+				if (cooldownIt != client->spellCooldownUntilMs.end() && nowMs < cooldownIt->second)
+				{
+					LOG_WARN(Net, "[ServerApp] SP-C CastRequest ignored: skill on cooldown (client_id={}, skill={})",
+						client->clientId, cs->skillId);
+					return;
+				}
+
+				// Garde ressource.
+				const uint32_t cost = cs->resourceCostPercent * client->maxResource / 100u;
+				if (client->currentResource < cost)
+				{
+					LOG_WARN(Net,
+						"[ServerApp] SP-C CastRequest ignored: not enough resource (client_id={}, skill={}, cost={}, current={})",
+						client->clientId, cs->skillId, cost, client->currentResource);
+					return;
+				}
+
+				// Résolution de cible selon ClassSkillTarget.
+				const float csRange = (cs->rangeMeters > 0.0f) ? cs->rangeMeters : client->combat.attackRangeMeters;
+				EntityId csResolvedTarget = 0;
+				if (cs->target == ClassSkillTarget::SingleEnemy)
+				{
+					MobEntity* target = FindMobByEntityId(message.targetEntityId);
+					if (target == nullptr || target->zoneId != client->zoneId
+						|| (target->stateFlags & kEntityStateDead) != 0u || target->stats.currentHealth == 0)
+					{
+						LOG_WARN(Net,
+							"[ServerApp] SP-C CastRequest ignored: invalid enemy target (client_id={}, target_entity_id={})",
+							client->clientId, message.targetEntityId);
+						return;
+					}
+					const float distSq = DistanceSquaredXZ(
+						client->positionMetersX, client->positionMetersZ,
+						target->positionMetersX, target->positionMetersZ);
+					if (distSq > csRange * csRange)
+					{
+						LOG_WARN(Net, "[ServerApp] SP-C CastRequest ignored: target out of range (client_id={}, skill={})",
+							client->clientId, cs->skillId);
+						return;
+					}
+					csResolvedTarget = target->entityId;
+				}
+				else if (cs->target == ClassSkillTarget::SingleAlly)
+				{
+					// Défaut : soi ; un allié vivant du même groupe à portée est accepté.
+					csResolvedTarget = client->entityId;
+					if (message.targetEntityId != 0 && message.targetEntityId != client->entityId)
+					{
+						if (ConnectedClient* ally = FindClientByEntityId(message.targetEntityId))
+						{
+							const Party* casterParty = m_partySystem.FindPartyByMember(client->clientId);
+							const bool sameParty = casterParty != nullptr
+								&& m_partySystem.FindPartyByMember(ally->clientId) == casterParty;
+							const float allyDistSq = DistanceSquaredXZ(
+								client->positionMetersX, client->positionMetersZ,
+								ally->positionMetersX, ally->positionMetersZ);
+							if (sameParty && (ally->stateFlags & kEntityStateDead) == 0u
+								&& allyDistSq <= csRange * csRange)
+							{
+								csResolvedTarget = ally->entityId;
+							}
+						}
+					}
+				}
+				// AreaAroundSelf : pas de cible explicite (rayon résolu à l'effet).
+
+				// V1 : compétences de classe résolues instantanément (castTimeMs ignoré ;
+				// barre de cast par-classe = amélioration future, cf. TickActiveCasts).
+				// TickActiveCasts relit les sorts via m_spellKits.FindSpell, qui ne couvre
+				// pas ClassSkillLibrary ; armer un cast à incantation SP-C produirait un
+				// cast orphelin sans résolution. La barre de cast par-classe sera introduite
+				// quand TickActiveCasts supportera nativement les ClassSkillDef.
+				ResolveClassSkillCast(*client, *cs, csResolvedTarget);
+				return;
+			}
+		}
+		// ── Fin SP-C ── Fallback : kit profil SP3 (chemin inchangé) ──
+
 		const SpellDef* spell = m_spellKits.FindSpell(client->profileId, message.spellId);
 		if (spell == nullptr)
 		{
@@ -4131,6 +4278,151 @@ namespace engine::server
 		(void)m_transport.Send(client->endpoint, EncodeCastBarUpdate(castBar));
 		LOG_INFO(Net, "[ServerApp] Cast started (client_id={}, spell={}, duration_ms={})",
 			client->clientId, spell->spellId, spell->castTimeMs);
+	}
+
+	bool ServerApp::SendActionBarLayout(const ConnectedClient& client)
+	{
+		ActionBarLayoutUpdateMessage msg{};
+		msg.clientId = client.clientId;
+		msg.slots = client.actionBarLayout;
+		const std::vector<std::byte> packet = EncodeActionBarLayoutUpdate(msg);
+		if (!m_transport.Send(client.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] SendActionBarLayout failed (client_id={})", client.clientId);
+			return false;
+		}
+		return true;
+	}
+
+	void ServerApp::HandleSetActionBarLayout(const Endpoint& endpoint, const SetActionBarLayoutMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] SetActionBarLayout ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] SetActionBarLayout ignored: client_id mismatch (expected={}, got={})",
+				client->clientId, message.clientId);
+			return;
+		}
+
+		// Validation autoritaire : chaque slot non vide ∈ kit du profil + unicité.
+		std::array<std::string, 10> validated{};
+		for (size_t slotIndex = 0; slotIndex < message.slots.size(); ++slotIndex)
+		{
+			const std::string& spellId = message.slots[slotIndex];
+			if (spellId.empty())
+			{
+				continue; // slot vide autorisé
+			}
+			if (client->profileId.empty()
+				|| m_spellKits.FindSpell(client->profileId, spellId) == nullptr)
+			{
+				LOG_WARN(Net, "[ServerApp] SetActionBarLayout reject: spell '{}' not in kit '{}' (client_id={})",
+					spellId, client->profileId, client->clientId);
+				(void)SendActionBarLayout(*client); // renvoie l'état inchangé (réconciliation client)
+				return;
+			}
+			// Unicité : un sort ne peut occuper deux slots.
+			for (size_t prior = 0; prior < slotIndex; ++prior)
+			{
+				if (validated[prior] == spellId)
+				{
+					LOG_WARN(Net, "[ServerApp] SetActionBarLayout reject: duplicate spell '{}' (client_id={})",
+						spellId, client->clientId);
+					(void)SendActionBarLayout(*client);
+					return;
+				}
+			}
+			validated[slotIndex] = spellId;
+		}
+
+		client->actionBarLayout = validated;
+		SaveConnectedClient(*client, "actionbar_change");
+		(void)SendActionBarLayout(*client); // ACK autoritaire (layout validé)
+		LOG_INFO(Net, "[ServerApp] SetActionBarLayout applied (client_id={})", client->clientId);
+	}
+
+	bool ServerApp::SendClassProgression(const ConnectedClient& client)
+	{
+		ClassProgressionUpdateMessage msg{};
+		msg.clientId = client.clientId;
+		msg.classId = client.classId;
+		msg.knownSkillIds = client.knownSkillIds;
+		const std::vector<std::byte> packet = EncodeClassProgressionUpdate(msg);
+		if (!m_transport.Send(client.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] SendClassProgression failed (client_id={})", client.clientId);
+			return false;
+		}
+		return true;
+	}
+
+	void ServerApp::HandleChooseClassSkill(const Endpoint& endpoint, const ChooseClassSkillRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] ChooseClassSkill ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] ChooseClassSkill ignored: client_id mismatch (expected={}, got={})",
+				client->clientId, message.clientId);
+			return;
+		}
+
+		// Joueur sans classe résolu (char legacy / no-DB) : rejeter silencieusement.
+		if (client->classId.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] ChooseClassSkill ignored: no class resolved (client_id={})", client->clientId);
+			return;
+		}
+
+		// Vérifier l'existence du skill dans la bibliothèque.
+		const ClassSkillDef* sk = m_classSkills.FindSkill(client->classId, message.skillId);
+		if (sk == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] ChooseClassSkill reject: skill '{}' unknown for class '{}' (client_id={})",
+				message.skillId, client->classId, client->clientId);
+			(void)SendClassProgression(*client);
+			return;
+		}
+
+		// Vérifier que le tier du skill correspond au niveau demandé et que le niveau est valide.
+		if (message.level == 0 || message.level > client->level || sk->tier != message.level)
+		{
+			LOG_WARN(Net, "[ServerApp] ChooseClassSkill reject: tier/level mismatch (skill='{}', tier={}, level_req={}, client_level={}, client_id={})",
+				message.skillId, sk->tier, message.level, client->level, client->clientId);
+			(void)SendClassProgression(*client);
+			return;
+		}
+
+		// Unicité par niveau : vérifier qu'aucun skill du même tier n'est déjà choisi.
+		for (const std::string& knownId : client->knownSkillIds)
+		{
+			const ClassSkillDef* knownSk = m_classSkills.FindSkill(client->classId, knownId);
+			if (knownSk != nullptr && knownSk->tier == message.level)
+			{
+				LOG_WARN(Net, "[ServerApp] ChooseClassSkill reject: skill already chosen for tier {} (existing='{}', client_id={})",
+					message.level, knownId, client->clientId);
+				(void)SendClassProgression(*client);
+				return;
+			}
+		}
+
+		// Choix validé : enregistrer et persister.
+		client->knownSkillIds.push_back(message.skillId);
+		SaveConnectedClient(*client, "skill_choice");
+		(void)SendClassProgression(*client);
+		LOG_INFO(Net, "[ServerApp] ChooseClassSkill applied (client_id={}, class='{}', skill='{}', tier={})",
+			client->clientId, client->classId, message.skillId, sk->tier);
 	}
 
 	void ServerApp::TickActiveCasts()
@@ -4417,6 +4709,160 @@ namespace engine::server
 		}
 		LOG_INFO(Net, "[ServerApp] Spell cast resolved (client_id={}, spell={}, cost={}, resource={}/{})",
 			client.clientId, spell.spellId, cost, client.currentResource, client.maxResource);
+	}
+
+	// SP-C — résolution d'un cast par compétence de classe (chemin additif).
+	// Pré-conditions : client non mort, ressource suffisante, cooldown écoulé (vérifiés
+	// par HandleCastRequest). La fonction débite la ressource et arme le cooldown elle-même.
+	void ServerApp::ResolveClassSkillCast(
+		ConnectedClient& client,
+		const ClassSkillDef& cs,
+		EntityId targetEntityId)
+	{
+		const uint64_t nowMs = NowMonotonicMs();
+
+		// ── Débit ressource + cooldown (pattern identique à ResolveSpellCast) ──
+		const uint32_t cost = cs.resourceCostPercent * client.maxResource / 100u;
+		client.currentResource = (client.currentResource >= cost) ? (client.currentResource - cost) : 0u;
+		SendResourceUpdate(client, true);
+		if (cs.cooldownMs > 0)
+		{
+			client.spellCooldownUntilMs[cs.skillId] = nowMs + cs.cooldownMs;
+		}
+
+		// ── Résolution de l'effet selon effectKind ──
+		switch (cs.effectKind)
+		{
+		case ClassSkillEffectKind::Damage:
+		{
+			// Dégâts directs : base = powerValue × damagePerHit du casteur.
+			const uint32_t baseDamage = static_cast<uint32_t>(
+				std::llround(static_cast<double>(cs.powerValue)
+					* static_cast<double>(client.combat.damagePerHit)));
+
+			if (cs.target == ClassSkillTarget::AreaAroundSelf)
+			{
+				// AoE — même boucle que DirectDamage/AreaAroundSelf de ResolveSpellCast.
+				const float radiusSquared = cs.areaRadiusMeters * cs.areaRadiusMeters;
+				for (MobEntity& mob : m_mobs)
+				{
+					if (mob.zoneId != client.zoneId || mob.pendingDespawn
+						|| (mob.stateFlags & kEntityStateDead) != 0u || mob.stats.currentHealth == 0)
+					{
+						continue;
+					}
+					const float distSq = DistanceSquaredXZ(
+						client.positionMetersX, client.positionMetersZ,
+						mob.positionMetersX, mob.positionMetersZ);
+					if (distSq > radiusSquared)
+					{
+						continue;
+					}
+					const combat::AttackRollResult roll = combat::ResolveAttackRoll(
+						baseDamage, client.combat.accuracy, client.combat.critRate,
+						client.combat.critMult, NextCombatRoll01(), NextCombatRoll01());
+					if (roll.miss)
+					{
+						continue; // pas d'event raté sur AoE (anti-spam, même règle que SP3).
+					}
+					const uint32_t eventFlags = roll.crit ? kCombatEventFlagCrit : 0u;
+					ApplyPlayerDamageToMob(client, mob,
+						ApplyAuraDamageModifiers(roll.damage, client.auras, mob.auras), eventFlags);
+				}
+			}
+			else
+			{
+				// SingleEnemy (seul cas restant validé par HandleCastRequest).
+				if (MobEntity* target = FindMobByEntityId(targetEntityId))
+				{
+					if ((target->stateFlags & kEntityStateDead) == 0u && target->stats.currentHealth > 0)
+					{
+						const combat::AttackRollResult roll = combat::ResolveAttackRoll(
+							baseDamage, client.combat.accuracy, client.combat.critRate,
+							client.combat.critMult, NextCombatRoll01(), NextCombatRoll01());
+						uint32_t eventFlags = 0u;
+						if (roll.miss) eventFlags |= kCombatEventFlagMiss;
+						if (roll.crit) eventFlags |= kCombatEventFlagCrit;
+						if (roll.miss)
+						{
+							CombatEventMessage missEvent{};
+							missEvent.attackerEntityId = client.entityId;
+							missEvent.targetEntityId   = target->entityId;
+							missEvent.targetCurrentHealth = target->stats.currentHealth;
+							missEvent.targetMaxHealth     = target->stats.maxHealth;
+							missEvent.targetStateFlags    = target->stateFlags;
+							missEvent.flags = eventFlags;
+							BroadcastCombatEvent(missEvent);
+						}
+						else
+						{
+							ApplyPlayerDamageToMob(client, *target,
+								ApplyAuraDamageModifiers(roll.damage, client.auras, target->auras),
+								eventFlags);
+						}
+					}
+				}
+			}
+			break;
+		}
+		case ClassSkillEffectKind::Heal:
+		{
+			// Soin direct — chemin calqué sur DirectHeal de ResolveSpellCast.
+			// Cible : soi par défaut, ou allié résolu par HandleCastRequest (targetEntityId).
+			ConnectedClient* ally = &client;
+			if (targetEntityId != 0 && targetEntityId != client.entityId)
+			{
+				if (ConnectedClient* other = FindClientByEntityId(targetEntityId))
+				{
+					ally = other;
+				}
+			}
+			if ((ally->stateFlags & kEntityStateDead) == 0u)
+			{
+				const uint32_t heal = static_cast<uint32_t>(
+					std::llround(static_cast<double>(cs.powerValue)
+						* static_cast<double>(client.combat.damagePerHit)));
+				ally->stats.currentHealth = std::min(ally->stats.maxHealth, ally->stats.currentHealth + heal);
+				// Cohérence V1 avec DirectHeal SP3 : pas de CombatEvent de soin (non défini
+				// dans le protocole wire v12). L'UI se met à jour via le snapshot HP suivant.
+				// TODO SP-C : définir kCombatEventFlagHeal dans ServerProtocol.h pour un vrai
+				// feedback visuel du soin sur le client (HUD floating number vert).
+				LOG_INFO(Net,
+					"[ServerApp] SP-C Heal applied (caster={}, target_entity_id={}, heal={}, hp={}/{})",
+					client.clientId, ally->entityId, heal,
+					ally->stats.currentHealth, ally->stats.maxHealth);
+			}
+			break;
+		}
+		case ClassSkillEffectKind::Defense:
+		{
+			// Défense — applique une aura DamageReductionPercent sur le casteur.
+			// percent = clamp(round(powerValue × 11), 5, 50), durée fixe 8 000 ms.
+			// L'aura utilise le même mécanisme UpsertAura que les buffs SP3.
+			const float rawPercent = std::round(cs.powerValue * 11.0f);
+			const float clampedPercent = std::min(50.0f, std::max(5.0f, rawPercent));
+			ActiveAura defAura{};
+			defAura.spellId         = cs.skillId;
+			defAura.type            = SpellEffectType::DamageReductionPercent;
+			defAura.percent         = clampedPercent;
+			defAura.tickPeriodMs    = 0u;       // pas de tick : aura passive de durée.
+			defAura.expiresAtMs     = nowMs + 8000u;
+			defAura.nextTickAtMs    = 0u;
+			defAura.casterEntityId  = client.entityId;
+			UpsertAura(client.auras, std::move(defAura));
+			BroadcastAuraUpdate(client.entityId, client.auras);
+			LOG_INFO(Net,
+				"[ServerApp] SP-C Defense aura applied (client_id={}, skill={}, percent={:.1f}, duration_ms=8000)",
+				client.clientId, cs.skillId, clampedPercent);
+			break;
+		}
+		}
+
+		LOG_INFO(Net,
+			"[ServerApp] SP-C skill cast resolved (client_id={}, skill={}, kind={}, cost={}, resource={}/{})",
+			client.clientId, cs.skillId,
+			static_cast<int>(cs.effectKind),
+			cost, client.currentResource, client.maxResource);
 	}
 
 	void ServerApp::TickAuras()

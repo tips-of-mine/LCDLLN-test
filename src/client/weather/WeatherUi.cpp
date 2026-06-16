@@ -15,12 +15,12 @@ namespace engine::client
 	{
 		switch (kind)
 		{
-		case 0: return "Clear";
-		case 1: return "Rain";
-		case 2: return "Snow";
-		case 3: return "Storm";
-		case 4: return "Sandstorm";
-		case 5: return "Fog";
+		case 0: return "Degage";
+		case 1: return "Pluie";
+		case 2: return "Neige";
+		case 3: return "Orage";
+		case 4: return "Tempete de sable";
+		case 5: return "Brouillard";
 		default: return "?";
 		}
 	}

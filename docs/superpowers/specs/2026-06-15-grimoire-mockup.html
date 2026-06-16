@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquette — Grimoire / Carnet de techniques (LCDLLN)</title>
+<style>
+  :root{
+    --bg:#0d0f14; --panel:#141821; --panel2:#1b2030; --ink:#e6e3d8;
+    --muted:#8a8f9c; --gold:#c8b45a; --gold-bright:#ffe69a; --line:#2a3144;
+    --ok:#5fbf6a; --slot:#0e1016; --accent:#c8b45a;
+  }
+  body.martial{ --gold:#7fa8c8; --gold-bright:#bfe0ff; --accent:#7fa8c8; }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 700px at 50% -10%,#1a1f2e 0%,var(--bg) 60%);
+    color:var(--ink);font-family:"Segoe UI",Arial,sans-serif;padding:24px;min-height:100vh}
+  .topbar{display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:18px;flex-wrap:wrap}
+  .topbar button{background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+    padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px}
+  .topbar button.active{border-color:var(--accent);color:var(--gold-bright);box-shadow:0 0 0 1px var(--accent) inset}
+  .hint{color:var(--muted);font-size:12px;text-align:center;margin-bottom:18px}
+
+  .window{max-width:900px;margin:0 auto;background:linear-gradient(180deg,var(--panel) 0%,#10131b 100%);
+    border:1px solid var(--line);border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden}
+  .titlebar{display:flex;align-items:center;gap:12px;padding:14px 18px;
+    border-bottom:1px solid var(--line);background:linear-gradient(180deg,#1c2233,#141826)}
+  .crest{width:30px;height:30px;border-radius:6px;border:1px solid var(--accent);
+    display:grid;place-items:center;color:var(--gold-bright);font-size:18px;background:#0e1118}
+  .title{font-size:19px;letter-spacing:.5px;color:var(--gold-bright)}
+  .subtitle{font-size:12px;color:var(--muted)}
+  .titlebar .spacer{flex:1}
+  .keyhint{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:3px 7px}
+
+  .body{display:grid;grid-template-columns:1fr 320px;gap:0}
+  @media(max-width:780px){.body{grid-template-columns:1fr}}
+
+  .library{padding:16px;border-right:1px solid var(--line);min-width:0}
+  .libhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .sectionlabel{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin:0}
+  .count{font-size:11px;color:var(--muted)}
+  .search{width:100%;margin-bottom:10px;padding:7px 10px;border-radius:6px;border:1px solid var(--line);
+    background:#0e1320;color:var(--ink);font-size:13px}
+  .search::placeholder{color:#5a606e}
+  /* zone défilante */
+  .scroll{max-height:430px;overflow-y:auto;padding-right:6px}
+  .scroll::-webkit-scrollbar{width:10px}
+  .scroll::-webkit-scrollbar-track{background:#0c0f16;border-radius:8px}
+  .scroll::-webkit-scrollbar-thumb{background:#2c3346;border-radius:8px;border:2px solid #0c0f16}
+  .scroll::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+  .spell{display:flex;gap:12px;padding:11px;border:1px solid var(--line);border-radius:8px;
+    background:var(--panel2);margin-bottom:10px;cursor:grab;transition:.12s}
+  .spell:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .spell.assigned{opacity:.5}
+  .icon{width:44px;height:44px;border-radius:7px;flex:none;display:grid;place-items:center;
+    font-size:21px;border:1px solid var(--accent);background:#0e1118}
+  .spell .meta{flex:1;min-width:0}
+  .spell .name{font-size:15px;color:var(--gold-bright);margin-bottom:3px}
+  .spell .desc{font-size:12px;color:var(--muted);line-height:1.35;margin-bottom:6px}
+  .tags{display:flex;gap:6px;flex-wrap:wrap}
+  .tag{font-size:11px;color:var(--ink);background:#0e1320;border:1px solid var(--line);
+    border-radius:4px;padding:2px 7px}
+  .tag b{color:var(--gold-bright);font-weight:600}
+  .assignchip{font-size:10px;color:#0d0f14;background:var(--accent);border-radius:4px;
+    padding:2px 6px;align-self:flex-start;font-weight:700}
+
+  .barpane{padding:16px;background:#0e1118}
+  .slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .slot{display:flex;align-items:center;gap:9px;padding:8px;border:1px dashed var(--line);
+    border-radius:7px;background:var(--slot);cursor:pointer;transition:.12s;min-width:0}
+  .slot:hover{border-color:var(--accent)}
+  .slot.filled{border-style:solid}
+  .slot.dropok{border-color:var(--gold-bright);background:#171b27}
+  .slotkey{width:24px;height:24px;border-radius:5px;flex:none;display:grid;place-items:center;
+    font-weight:700;color:var(--gold-bright);border:1px solid var(--accent);background:#0e1118;font-size:12px}
+  .slot .sname{font-size:12px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .slot .empty{font-size:11px;color:var(--muted);font-style:italic}
+  .slot .clear{margin-left:auto;color:var(--muted);font-size:13px;border:none;background:none;cursor:pointer;flex:none}
+  .slot .clear:hover{color:#e08585}
+  .actionbar-note{margin-top:14px;font-size:11px;color:var(--muted);line-height:1.5;
+    border-top:1px solid var(--line);padding-top:12px}
+  .status{margin-top:10px;font-size:12px;color:var(--ok);min-height:16px}
+
+  /* mini barre d'action (aperçu in-game) */
+  .preview{max-width:900px;margin:18px auto 0;text-align:center}
+  .preview .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .gamebar{display:inline-flex;gap:6px;padding:10px;background:rgba(8,10,14,.7);
+    border:1px solid var(--line);border-radius:10px;flex-wrap:wrap;justify-content:center}
+  .gs{width:48px;height:48px;border-radius:6px;background:#0e1016;border:2px solid var(--accent);
+    position:relative;display:grid;place-items:center}
+  .gs .k{position:absolute;top:2px;left:4px;font-size:10px;color:var(--gold-bright)}
+  .gs .n{font-size:9px;color:#ddd;padding:0 3px;text-align:center;margin-top:8px;line-height:1.1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46px}
+  .gs.empty{border-color:#3a3f4c}
+  .gs.empty .n{color:#555}
+</style>
+</head>
+<body class="caster">
+
+<div class="topbar">
+  <span style="color:var(--muted);font-size:12px">Profil&nbsp;:</span>
+  <button id="b-caster" class="active" onclick="setKit('caster')">Caster — Mage</button>
+  <button id="b-martial" onclick="setKit('martial')">Martial — Guerrier</button>
+</div>
+<div class="hint">
+  10 emplacements sur la rangée du haut physique — en AZERTY : <b>&amp; é " ' ( - è _ ç à</b>.
+  Glisse une carte de sort sur un slot (drag &amp; drop).
+  La liste de gauche défile (barre de défilement) et se filtre par la recherche.<br>
+  Le titre/visuel s'adapte au profil. La barre d'action en bas reflète l'assignation en direct.
+  <em>(Les sorts ci-dessous sont des exemples pour illustrer l'échelle ~60 sorts.)</em>
+</div>
+
+<div class="window">
+  <div class="titlebar">
+    <div class="crest" id="crest">✦</div>
+    <div>
+      <div class="title" id="paneltitle">Grimoire</div>
+      <div class="subtitle" id="panelsub">Mage — sorts arcaniques · 10 emplacements de barre d'action</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="keyhint">Touche <b>V</b> pour ouvrir/fermer (remappable)</div>
+  </div>
+
+  <div class="body">
+    <div class="library">
+      <div class="libhead">
+        <p class="sectionlabel" id="liblabel">Sorts connus</p>
+        <span class="count" id="count"></span>
+      </div>
+      <input class="search" id="search" placeholder="Rechercher un sort…" oninput="render()">
+      <div class="scroll" id="spelllist"></div>
+    </div>
+
+    <div class="barpane">
+      <p class="sectionlabel">Barre d'action — 10 slots</p>
+      <div class="slots" id="slots" style="margin-top:10px"></div>
+      <div class="status" id="status"></div>
+      <div class="actionbar-note">
+        L'assignation des 10 slots est <b>persistée côté serveur</b> (suit le personnage).
+        Le serveur valide que chaque sort appartient au set connu du personnage.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="preview">
+  <div class="lbl">Aperçu in-game — barre d'action (bas de l'écran, 10 slots)</div>
+  <div class="gamebar" id="gamebar"></div>
+</div>
+
+<script>
+// Générateur d'exemples (pour illustrer l'échelle ~60 sorts ; la donnée réelle
+// viendra du SpellKitCatalog côté client).
+function mk(prefix,icon,defs){
+  return defs.map((d,i)=>({
+    id:prefix+"_"+i, name:d.n, icon:icon,
+    desc:d.d, cost:d.c, cd:d.cd, cast:d.ct, range:d.r, target:d.t, effect:d.e
+  }));
+}
+const casterNames = [
+  {n:"Trait de feu",d:"Projectile enflammé sur une cible.",c:"20%",cd:"4 s",ct:"1.5 s",r:"30 m",t:"Ennemi",e:"Dégâts ×1.6"},
+  {n:"Brûlure",d:"Embrase la cible : dégâts sur la durée.",c:"20%",cd:"10 s",ct:"Instant",r:"30 m",t:"Ennemi",e:"DoT ×0.35"},
+  {n:"Nova de givre",d:"Explosion de givre autour de soi.",c:"30%",cd:"15 s",ct:"Instant",r:"8 m",t:"Zone",e:"Dégâts ×0.9 (AoE)"},
+  {n:"Éclair arcanique",d:"Décharge instantanée d'arcane.",c:"15%",cd:"3 s",ct:"Instant",r:"30 m",t:"Ennemi",e:"Dégâts ×1.1"},
+  {n:"Boule de feu",d:"Grosse charge enflammée.",c:"35%",cd:"0 s",ct:"2.5 s",r:"35 m",t:"Ennemi",e:"Dégâts ×2.2"},
+  {n:"Barrière de mana",d:"Bouclier absorbant.",c:"25%",cd:"30 s",ct:"Instant",r:"Soi",t:"Soi",e:"Absorbe 20%"},
+  {n:"Lenteur",d:"Ralentit la cible.",c:"15%",cd:"12 s",ct:"Instant",r:"30 m",t:"Ennemi",e:"Slow 40%"},
+  {n:"Blizzard",d:"Tempête de glace persistante.",c:"40%",cd:"20 s",ct:"1 s",r:"30 m",t:"Zone",e:"DoT zone"},
+  {n:"Téléportation",d:"Bond instantané.",c:"20%",cd:"25 s",ct:"Instant",r:"15 m",t:"Soi",e:"Déplacement"},
+  {n:"Comète",d:"Météore dévastateur.",c:"50%",cd:"45 s",ct:"3 s",r:"35 m",t:"Zone",e:"Dégâts ×3 (AoE)"},
+  {n:"Choc de givre",d:"Gèle brièvement la cible.",c:"18%",cd:"8 s",ct:"Instant",r:"25 m",t:"Ennemi",e:"Stun 1 s"},
+  {n:"Embrasement",d:"Augmente les dégâts de feu.",c:"22%",cd:"30 s",ct:"Instant",r:"Soi",t:"Soi",e:"+15% feu"},
+  {n:"Vol d'arcane",d:"Draine le mana ennemi.",c:"10%",cd:"15 s",ct:"Instant",r:"30 m",t:"Ennemi",e:"Drain mana"},
+  {n:"Anneau de feu",d:"Cercle de flammes au sol.",c:"30%",cd:"18 s",ct:"Instant",r:"10 m",t:"Zone",e:"DoT zone"}
+];
+const martialNames = [
+  {n:"Frappe brutale",d:"Frappe lourde au corps à corps.",c:"15%",cd:"6 s",ct:"Instant",r:"Mêlée",t:"Ennemi",e:"Dégâts ×1.4"},
+  {n:"Entaille",d:"Lacère : saignement prolongé.",c:"20%",cd:"10 s",ct:"Instant",r:"Mêlée",t:"Ennemi",e:"DoT ×0.25"},
+  {n:"Cri de guerre",d:"Galvanise : +dégâts.",c:"25%",cd:"30 s",ct:"Instant",r:"Soi",t:"Soi",e:"+15% dégâts"},
+  {n:"Charge",d:"Fonce sur l'ennemi.",c:"10%",cd:"15 s",ct:"Instant",r:"25 m",t:"Ennemi",e:"Étourdit"},
+  {n:"Coup de bouclier",d:"Frappe qui étourdit.",c:"15%",cd:"12 s",ct:"Instant",r:"Mêlée",t:"Ennemi",e:"Stun 2 s"},
+  {n:"Tourbillon",d:"Frappe tous les ennemis proches.",c:"30%",cd:"10 s",ct:"Instant",r:"8 m",t:"Zone",e:"Dégâts (AoE)"},
+  {n:"Provocation",d:"Force l'ennemi à attaquer.",c:"5%",cd:"8 s",ct:"Instant",r:"20 m",t:"Ennemi",e:"Taunt"},
+  {n:"Posture défensive",d:"Réduit les dégâts subis.",c:"0%",cd:"0 s",ct:"Instant",r:"Soi",t:"Soi",e:"-20% subis"},
+  {n:"Brise-armure",d:"Réduit l'armure ennemie.",c:"20%",cd:"18 s",ct:"Instant",r:"Mêlée",t:"Ennemi",e:"-25% armure"},
+  {n:"Second souffle",d:"Récupère des PV.",c:"25%",cd:"60 s",ct:"Instant",r:"Soi",t:"Soi",e:"HoT 3%/tick"},
+  {n:"Saisie",d:"Immobilise la cible.",c:"15%",cd:"20 s",ct:"Instant",r:"Mêlée",t:"Ennemi",e:"Root 3 s"},
+  {n:"Exécution",d:"Achève une cible affaiblie.",c:"35%",cd:"12 s",ct:"Instant",r:"Mêlée",t:"Ennemi",e:"Dégâts ×3"},
+  {n:"Riposte",d:"Contre-attaque automatique.",c:"10%",cd:"15 s",ct:"Instant",r:"Mêlée",t:"Soi",e:"Contre"},
+  {n:"Fracas",d:"Frappe au sol, onde de choc.",c:"30%",cd:"25 s",ct:"Instant",r:"6 m",t:"Zone",e:"Knockback"}
+];
+const KITS = {
+  caster:{ title:"Grimoire", crest:"✦", sub:"Mage — sorts arcaniques · 10 emplacements de barre d'action",
+    liblabel:"Sorts connus", spells:mk("c","✦",casterNames) },
+  martial:{ title:"Carnet de techniques", crest:"⚔", sub:"Guerrier — techniques martiales · 10 emplacements de barre d'action",
+    liblabel:"Techniques connues", spells:mk("m","⚔",martialNames) }
+};
+KITS.caster.spells.forEach((s,i)=>s.icon=["🔥","♨️","❄️","✨","🔥","🛡️","🐌","🌨️","✨","☄️","🧊","🔥","💠","🔥"][i]||"✦");
+KITS.martial.spells.forEach((s,i)=>s.icon=["🗡️","🩸","📣","🏃","🛡️","🌀","🎯","🛡️","⚒️","💨","✊","💀","↩️","💥"][i]||"⚔");
+
+const SLOT_COUNT = 10;
+let current="caster";
+let layout=Array(SLOT_COUNT).fill(null);
+let dragId=null;
+
+function setKit(k){
+  current=k;
+  document.body.className=(k==="caster")?"caster":"martial";
+  document.getElementById("b-caster").classList.toggle("active",k==="caster");
+  document.getElementById("b-martial").classList.toggle("active",k==="martial");
+  const kit=KITS[k];
+  document.getElementById("paneltitle").textContent=kit.title;
+  document.getElementById("panelsub").textContent=kit.sub;
+  document.getElementById("crest").textContent=kit.crest;
+  document.getElementById("liblabel").textContent=kit.liblabel;
+  // défaut : 10 premiers sorts du set
+  layout=Array(SLOT_COUNT).fill(null);
+  kit.spells.forEach((s,i)=>{ if(i<SLOT_COUNT) layout[i]=s.id; });
+  document.getElementById("search").value="";
+  render(); setStatus("");
+}
+function spellById(id){ return KITS[current].spells.find(s=>s.id===id); }
+// Libellés AZERTY de la rangée du haut (positions physiques VK_1..VK_0).
+// En jeu : glyphe résolu via MapVirtualKey(VK_n, MAPVK_VK_TO_CHAR) selon le clavier.
+const AZERTY_KEYS = ["&","é","\"","'","(","-","è","_","ç","à"];
+function slotKey(i){ return AZERTY_KEYS[i] || String(i+1); }
+
+function render(){
+  const q=(document.getElementById("search").value||"").toLowerCase();
+  const all=KITS[current].spells;
+  document.getElementById("count").textContent=all.length+" sorts connus";
+  const list=document.getElementById("spelllist"); list.innerHTML="";
+  all.filter(s=>s.name.toLowerCase().includes(q)).forEach(s=>{
+    const slot=layout.indexOf(s.id);
+    const div=document.createElement("div");
+    div.className="spell"+(slot>=0?" assigned":"");
+    div.draggable=true;
+    div.ondragstart=()=>{dragId=s.id;};
+    div.innerHTML=`
+      <div class="icon">${s.icon}</div>
+      <div class="meta">
+        <div class="name">${s.name}</div>
+        <div class="desc">${s.desc}</div>
+        <div class="tags">
+          <span class="tag">Coût <b>${s.cost}</b></span>
+          <span class="tag">CD <b>${s.cd}</b></span>
+          <span class="tag">Incant. <b>${s.cast}</b></span>
+          <span class="tag">Portée <b>${s.range}</b></span>
+          <span class="tag">Cible <b>${s.target}</b></span>
+          <span class="tag">${s.effect}</span>
+          ${slot>=0?`<span class="assignchip">Slot ${slotKey(slot)}</span>`:""}
+        </div>
+      </div>`;
+    list.appendChild(div);
+  });
+  const slots=document.getElementById("slots"); slots.innerHTML="";
+  for(let i=0;i<SLOT_COUNT;i++){
+    const sid=layout[i]; const s=sid?spellById(sid):null;
+    const div=document.createElement("div");
+    div.className="slot"+(s?" filled":"");
+    div.ondragover=(e)=>{e.preventDefault();div.classList.add("dropok");};
+    div.ondragleave=()=>div.classList.remove("dropok");
+    div.ondrop=(e)=>{e.preventDefault();drop(i);};
+    div.innerHTML=`
+      <div class="slotkey">${slotKey(i)}</div>
+      ${s?`<span class="sname">${s.icon} ${s.name}</span>
+           <button class="clear" title="Vider" onclick="event.stopPropagation();clearSlot(${i})">✕</button>`
+         :`<span class="empty">— vide —</span>`}`;
+    slots.appendChild(div);
+  }
+  const bar=document.getElementById("gamebar"); bar.innerHTML="";
+  for(let i=0;i<SLOT_COUNT;i++){
+    const sid=layout[i]; const s=sid?spellById(sid):null;
+    const d=document.createElement("div");
+    d.className="gs"+(s?"":" empty");
+    d.innerHTML=`<span class="k">${slotKey(i)}</span><span class="n">${s?s.name:"—"}</span>`;
+    bar.appendChild(d);
+  }
+}
+function drop(slot){
+  if(!dragId) return;
+  const prev=layout.indexOf(dragId);
+  if(prev>=0) layout[prev]=null;          // unicité : un sort = un seul slot
+  layout[slot]=dragId;
+  const nm=spellById(dragId).name; dragId=null;
+  render();
+  setStatus("✓ « "+nm+" » assigné au slot "+slotKey(slot)+" — envoyé au serveur (SetActionBarLayout).");
+}
+function clearSlot(i){ layout[i]=null; render(); setStatus("Slot "+slotKey(i)+" vidé — envoyé au serveur."); }
+function setStatus(t){ document.getElementById("status").textContent=t; }
+
+setKit("caster");
+</script>
+</body>
+</html>

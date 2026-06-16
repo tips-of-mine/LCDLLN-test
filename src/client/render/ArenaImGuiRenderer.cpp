@@ -62,7 +62,7 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
-		if (ImGui::Begin("Arena##ln_arena_panel", nullptr, flags))
+		if (ImGui::Begin("Arene (F8)##ln_arena_panel", nullptr, flags))
 		{
 			// Erreur transitoire (rouge).
 			if (!state.lastErrorText.empty())
@@ -134,8 +134,8 @@ namespace engine::render
 					{
 						ImGui::TableSetupColumn("Nom",    ImGuiTableColumnFlags_WidthStretch);
 						ImGui::TableSetupColumn("Mode",   ImGuiTableColumnFlags_WidthFixed, 50.f);
-						ImGui::TableSetupColumn("Rating", ImGuiTableColumnFlags_WidthFixed, 60.f);
-						ImGui::TableSetupColumn("W-L",    ImGuiTableColumnFlags_WidthFixed, 60.f);
+						ImGui::TableSetupColumn("Cote",   ImGuiTableColumnFlags_WidthFixed, 60.f);
+						ImGui::TableSetupColumn("V-D",    ImGuiTableColumnFlags_WidthFixed, 60.f);
 						ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthFixed, 80.f);
 						ImGui::TableHeadersRow();
 						for (const auto& t : state.teams)
@@ -155,7 +155,7 @@ namespace engine::render
 										? (t.weeklyGames - t.weeklyWins) : 0u));
 							ImGui::TableSetColumnIndex(4);
 							ImGui::PushID(static_cast<int>(t.teamId));
-							if (ImGui::Button("Queue", ImVec2(70.f, 22.f)))
+							if (ImGui::Button("Rejoindre", ImVec2(70.f, 22.f)))
 								m_presenter->Queue(t.teamId, t.size);
 							ImGui::PopID();
 						}
@@ -201,7 +201,7 @@ namespace engine::render
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.85f, 0.20f, 1.f));
 			ImGui::TextWrapped("Adversaire : %s", state.pendingOpponentName.c_str());
 			ImGui::PopStyleColor();
-			ImGui::Text("Rating : %u", static_cast<unsigned>(state.pendingOpponentRating));
+			ImGui::Text("Cote : %u", static_cast<unsigned>(state.pendingOpponentRating));
 			ImGui::Separator();
 
 			ImGui::TextWrapped(

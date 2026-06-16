@@ -1,4 +1,4 @@
-#include "src/client/app/Engine.h"
+﻿#include "src/client/app/Engine.h"
 
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
 #include "src/shared/core/Log.h"
@@ -57,7 +57,10 @@
 #include "src/client/render/LfgImGuiRenderer.h"
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
+#include "src/client/render/GrimoireImGuiRenderer.h"
+#include "src/client/render/ClassSkillTreeImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
+#include "src/client/gameplay/ActionBarLayout.h"
 #include "src/client/render/LnTheme.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/client/render/DeferredPipeline.h"
@@ -408,14 +411,15 @@ namespace engine
 		///
 		/// Effet de bord : aucun. Pure projection input -> intention.
 		// Touches remappables (nom config <-> enum platform::Key). Limitee aux
-		// Key reellement definies dans l'enum (I/J/K/T n'y figurent pas). Sert au
-		// panneau Options (affichage + capture du rebind) et a la lecture des
-		// binds gameplay depuis controls.keybind.* (sprint / crouch / cast).
+		// Key reellement definies dans l'enum. Sert au panneau Options (affichage
+		// + capture du rebind) et a la lecture des binds gameplay depuis
+		// controls.keybind.* (sprint / crouch / cast / grimoire / skilltree).
 		struct RebindableKey { engine::platform::Key key; const char* name; };
 		const RebindableKey kRebindableKeys[] = {
 			{engine::platform::Key::A,"A"},{engine::platform::Key::B,"B"},{engine::platform::Key::C,"C"},
 			{engine::platform::Key::D,"D"},{engine::platform::Key::E,"E"},{engine::platform::Key::F,"F"},
-			{engine::platform::Key::G,"G"},{engine::platform::Key::H,"H"},{engine::platform::Key::L,"L"},
+			{engine::platform::Key::G,"G"},{engine::platform::Key::H,"H"},{engine::platform::Key::I,"I"},
+			{engine::platform::Key::L,"L"},
 			{engine::platform::Key::M,"M"},{engine::platform::Key::N,"N"},{engine::platform::Key::O,"O"},
 			{engine::platform::Key::P,"P"},{engine::platform::Key::Q,"Q"},{engine::platform::Key::R,"R"},
 			{engine::platform::Key::S,"S"},{engine::platform::Key::U,"U"},{engine::platform::Key::V,"V"},
@@ -428,6 +432,10 @@ namespace engine
 			{engine::platform::Key::Control,"Ctrl"},{engine::platform::Key::Alt,"Alt"},
 			{engine::platform::Key::Shift,"Shift"},{engine::platform::Key::Space,"Espace"},
 			{engine::platform::Key::Tab,"Tab"},
+			{engine::platform::Key::F_1,"F1"},{engine::platform::Key::F_2,"F2"},{engine::platform::Key::F_3,"F3"},
+			{engine::platform::Key::F_4,"F4"},{engine::platform::Key::F_5,"F5"},{engine::platform::Key::F_6,"F6"},
+			{engine::platform::Key::F_7,"F7"},{engine::platform::Key::F_8,"F8"},{engine::platform::Key::F_9,"F9"},
+			{engine::platform::Key::F_10,"F10"},{engine::platform::Key::F_11,"F11"},{engine::platform::Key::F_12,"F12"},
 		};
 
 		/// Nom affichable/config d'une touche (ou "?" si hors table).
@@ -444,6 +452,28 @@ namespace engine
 			for (const auto& e : kRebindableKeys)
 				if (name == e.name) return e.key;
 			return fallback;
+		}
+
+		/// Glyphe d'AFFICHAGE d'une touche selon la disposition clavier active
+		/// (AZERTY → la rangée du haut donne & é " ' ( - è _ ç à). Distinct de
+		/// KeyName (nom de config stable/portable). Fallback : KeyName.
+		std::string KeyGlyph(engine::platform::Key k)
+		{
+#if defined(_WIN32)
+			const UINT vk = static_cast<UINT>(k); // l'enum Key == codes VK_* Win32
+			const UINT ch = ::MapVirtualKeyW(vk, MAPVK_VK_TO_CHAR) & 0x7FFFu;
+			if (ch != 0)
+			{
+				const wchar_t w = static_cast<wchar_t>(ch);
+				char utf8[8] = {0};
+				const int n = ::WideCharToMultiByte(CP_UTF8, 0, &w, 1, utf8, sizeof(utf8) - 1, nullptr, nullptr);
+				if (n > 0)
+				{
+					return std::string(utf8, static_cast<size_t>(n));
+				}
+			}
+#endif
+			return KeyName(k);
 		}
 
 		// Projette une position monde -> pixels ecran. Formule alignee sur
@@ -1560,6 +1590,43 @@ namespace engine
 			});
 		}
 
+		// Grimoire (Task 13) — Init du presenter Grimoire + câblage du send callback
+		// vers GameplayUdpClient::SendSetActionBarLayout (kind 88). Le serveur renvoie
+		// un ActionBarLayoutUpdate (kind 89) autoritaire capturé par UIModel.
+		if (!m_grimoireUi.Init(&m_spellCatalog))
+		{
+			LOG_WARN(Core, "[Boot] GrimoireUiPresenter init FAILED — panneau Grimoire desactive");
+		}
+		else
+		{
+			m_grimoireUi.SetSendCallback([this](const std::array<std::string, 10>& slots) -> bool {
+				const uint32_t clientId = m_gameplayUdp.ServerClientId();
+				if (clientId == 0u)
+				{
+					return false;
+				}
+				return m_gameplayUdp.SendSetActionBarLayout(clientId, slots);
+			});
+		}
+
+		// SP-D — Init du presenter arbre de compétences par-classe + câblage
+		// du callback SendChooseClassSkill (GameplayUdpClient). Non bloquant.
+		if (!m_classSkillTreeUi.Init(&m_classSkillCatalog))
+		{
+			LOG_WARN(Core, "[Boot] ClassSkillTreeUiPresenter init FAILED — arbre de compétences désactivé");
+		}
+		else
+		{
+			m_classSkillTreeUi.SetChooseCallback([this](uint32_t level, const std::string& skillId) -> bool {
+				const uint32_t cid = m_gameplayUdp.ServerClientId();
+				if (cid == 0u)
+				{
+					return false;
+				}
+				return m_gameplayUdp.SendChooseClassSkill(cid, level, skillId);
+			});
+		}
+
 		// CMANGOS.21 (Phase 5.21 step 3+4) — Init du presenter Arena + cable
 		// du send callback pour les requetes 120/122/124/127. Reception
 		// dispatchee dans le push handler ci-dessous (responses 121/123/125/128
@@ -1867,6 +1934,27 @@ namespace engine
 				}
 				LOG_INFO(Core, "[Engine] /skills toggle (visible={})", m_skillBookVisible);
 				sendAdminAudit("/skills");
+				return true;
+			}
+			// Grimoire (Task 13) — Slash commands /grimoire et /sorts pour
+			// ouvrir/fermer le panneau Grimoire. Équivalent à la touche V remappable.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/grimoire" || text == "/sorts"
+				    || text.starts_with("/grimoire ") || text.starts_with("/grimoire\t")
+				    || text.starts_with("/sorts ") || text.starts_with("/sorts\t")))
+			{
+				m_grimoireVisible = !m_grimoireVisible;
+				LOG_INFO(Core, "[Engine] /grimoire toggle (visible={})", m_grimoireVisible);
+				return true;
+			}
+			// SP-D — Slash commands /arbre et /competences pour l'arbre de compétences.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/arbre" || text == "/competences"
+				    || text.starts_with("/arbre ") || text.starts_with("/arbre	")
+				    || text.starts_with("/competences ") || text.starts_with("/competences	")))
+			{
+				m_classSkillTreeVisible = !m_classSkillTreeVisible;
+				LOG_INFO(Core, "[Engine] /arbre toggle (visible={})", m_classSkillTreeVisible);
 				return true;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Slash command /lfg pour
@@ -5022,6 +5110,17 @@ namespace engine
 													// Combat SP3 — catalogue d'affichage des kits de sorts (non
 													// bloquant : absent = barre d'action masquée).
 													m_spellCatalog.Init(m_cfg);
+													// SP-D — catalogue des compétences par-classe (non bloquant :
+													// catalogue vide si les fichiers sont absents).
+													if (m_classSkillCatalog.Init(m_cfg))
+													{
+														LOG_INFO(Core, "[Boot] ClassSkillCatalog chargé ({} classe(s))",
+															m_classSkillCatalog.ClassCount());
+													}
+													else
+													{
+														LOG_WARN(Core, "[Boot] ClassSkillCatalog init échoué — arbre de compétences désactivé");
+													}
 
 													// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le
 													// perso n'est pas encore "in world" avant EnterWorld, mais Engine
@@ -7384,6 +7483,9 @@ namespace engine
 			// -> access violation a la fermeture (SEH 0xC0000005). Idempotent :
 			// le 2e Shutdown plus bas est neutralise par la garde m_initialized.
 			if (m_worldEditorShell) m_worldEditorShell->Shutdown();
+			// SP-E — Libère les descripteurs d'icônes (ImGui_ImplVulkan_RemoveTexture)
+			// AVANT la destruction du backend ImGui Vulkan ci-dessous.
+			m_skillIconCache.Shutdown();
 			if (m_worldEditorImGui)
 			{
 				m_worldEditorImGui->DetachPlatformWindow(m_window);
@@ -7537,6 +7639,8 @@ namespace engine
 		m_lfgUi.Shutdown();
 		m_cinematicUi.Shutdown();
 		m_skillBookUi.Shutdown();
+		m_grimoireUi.Shutdown(); // Grimoire (Task 13)
+		m_classSkillTreeUi.Shutdown(); // SP-D
 		m_arenaUi.Shutdown();
 		m_battleGroundUi.Shutdown();
 		m_outdoorPvpUi.Shutdown();
@@ -7623,14 +7727,56 @@ namespace engine
 				&& m_authUi.IsInitialized()
 				&& m_authUi.IsFlowComplete();
 			if (inGameNoMenu && !chatBlocks
-				&& m_input.WasPressed(engine::platform::Key::B))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.skillbook", "F2"), engine::platform::Key::F_2)))
 			{
 				m_skillBookVisible = !m_skillBookVisible;
 				if (m_skillBookVisible)
 				{
 					m_skillBookUi.RequestList();
 				}
-				LOG_INFO(Core, "[Engine] B toggle skillbook (visible={})", m_skillBookVisible);
+				LOG_INFO(Core, "[Engine] F2 toggle skillbook (visible={})", m_skillBookVisible);
+			}
+		}
+
+		// Grimoire (Task 13) — Touche I remappable post-auth toggle le panneau
+		// Grimoire / Carnet de techniques. Même guards que B (chat + pause + editor).
+		// Defaut = I : V etait en collision avec le talk marchand (SendTalkRequest,
+		// meme touche), ce qui ouvrait le Grimoire ET la boutique simultanement.
+		{
+			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
+			const bool inGameNoMenu = !m_inGamePauseMenuVisible
+				&& !m_inGameOptionsPanelVisible
+				&& !m_editorEnabled
+				&& m_authUi.IsInitialized()
+				&& m_authUi.IsFlowComplete();
+			const engine::platform::Key grimoireKey =
+				KeyFromName(m_cfg.GetString("controls.keybind.grimoire", "F3"), engine::platform::Key::F_3);
+			if (inGameNoMenu && !chatBlocks && m_input.WasPressed(grimoireKey))
+			{
+				m_grimoireVisible = !m_grimoireVisible;
+				LOG_INFO(Core, "[Engine] Grimoire toggle (visible={})", m_grimoireVisible);
+			}
+		}
+
+		// SP-D — Touche W remappable post-auth toggle l'arbre de compétences par-classe.
+		// Même guards que Grimoire (chat + pause + editor). Defaut = W : Y etait en
+		// collision avec le panneau Meteo (meme touche Y), ce qui ouvrait l'arbre ET
+		// la meteo simultanement. W est libre en disposition ZQSD (deplacement = Z/Q/S/D)
+		// comme en AZERTY ; remappable via controls.keybind.skilltree pour les claviers
+		// QWERTY ou W sert au deplacement avant.
+		{
+			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
+			const bool inGameNoMenu = !m_inGamePauseMenuVisible
+				&& !m_inGameOptionsPanelVisible
+				&& !m_editorEnabled
+				&& m_authUi.IsInitialized()
+				&& m_authUi.IsFlowComplete();
+			const engine::platform::Key treeKey =
+				KeyFromName(m_cfg.GetString("controls.keybind.skilltree", "F4"), engine::platform::Key::F_4);
+			if (inGameNoMenu && !chatBlocks && m_input.WasPressed(treeKey))
+			{
+				m_classSkillTreeVisible = !m_classSkillTreeVisible;
+				LOG_INFO(Core, "[Engine] ClassSkillTree toggle (visible={})", m_classSkillTreeVisible);
 			}
 		}
 
@@ -7645,14 +7791,14 @@ namespace engine
 				&& m_authUi.IsInitialized()
 				&& m_authUi.IsFlowComplete();
 			if (inGameNoMenu && !chatBlocks
-				&& m_input.WasPressed(engine::platform::Key::A))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.arena", "F8"), engine::platform::Key::F_8)))
 			{
 				m_arenaVisible = !m_arenaVisible;
 				if (m_arenaVisible)
 				{
 					m_arenaUi.RequestTeams();
 				}
-				LOG_INFO(Core, "[Engine] A toggle arena (visible={})", m_arenaVisible);
+				LOG_INFO(Core, "[Engine] F8 toggle arena (visible={})", m_arenaVisible);
 			}
 		}
 
@@ -7667,7 +7813,7 @@ namespace engine
 				&& m_authUi.IsInitialized()
 				&& m_authUi.IsFlowComplete();
 			if (inGameNoMenu && !chatBlocks
-				&& m_input.WasPressed(engine::platform::Key::G))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.battleground", "F9"), engine::platform::Key::F_9)))
 			{
 				m_battleGroundVisible = !m_battleGroundVisible;
 				if (m_battleGroundVisible)
@@ -7679,14 +7825,14 @@ namespace engine
 			// CMANGOS.36 (Phase 5.36 step 3+4) — Touche P : toggle panneau
 			// OutdoorPvp + RequestList si on l'ouvre. Memes guards que A/G.
 			if (inGameNoMenu && !chatBlocks
-				&& m_input.WasPressed(engine::platform::Key::P))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.outdoorpvp", "F10"), engine::platform::Key::F_10)))
 			{
 				m_outdoorPvpVisible = !m_outdoorPvpVisible;
 				if (m_outdoorPvpVisible)
 				{
 					m_outdoorPvpUi.RequestList();
 				}
-				LOG_INFO(Core, "[Engine] P toggle outdoorpvp (visible={})", m_outdoorPvpVisible);
+				LOG_INFO(Core, "[Engine] F10 toggle outdoorpvp (visible={})", m_outdoorPvpVisible);
 			}
 			// CMANGOS.42 (Phase 4.42 step 3+4) — Touche Y : toggle panneau
 			// Weather + RequestList si on l'ouvre. Memes guards que A/G/P.
@@ -7695,15 +7841,14 @@ namespace engine
 			// !m_editorEnabled donc pas de conflit. WorldEditorShell traite
 			// Ctrl+Y / Ctrl+Shift+Y dans son propre bloc en aval.
 			if (inGameNoMenu && !chatBlocks
-				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::Y))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.weather", "F12"), engine::platform::Key::F_12)))
 			{
 				m_weatherVisible = !m_weatherVisible;
 				if (m_weatherVisible)
 				{
 					m_weatherUi.RequestList();
 				}
-				LOG_INFO(Core, "[Engine] Y toggle weather (visible={})", m_weatherVisible);
+				LOG_INFO(Core, "[Engine] F12 toggle weather (visible={})", m_weatherVisible);
 			}
 			// Touche E desormais LIBRE (reservee a une future action "interagir"
 			// hors combat). Le panneau GameEvents s'ouvre via la barre de menus
@@ -7713,28 +7858,27 @@ namespace engine
 			// E (chat focus, pause, editor). Pas de conflit Ctrl+U.
 			if (inGameNoMenu && !chatBlocks
 				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::U))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.guild", "F5"), engine::platform::Key::F_5)))
 			{
 				m_guildVisible = !m_guildVisible;
 				if (m_guildVisible)
 				{
 					m_guildUi.RequestList();
 				}
-				LOG_INFO(Core, "[Engine] U toggle guilds (visible={})", m_guildVisible);
+				LOG_INFO(Core, "[Engine] F5 toggle guilds (visible={})", m_guildVisible);
 			}
 			// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Touche H : toggle
 			// panneau Hotel des Ventes + RequestList si on l'ouvre. Memes
 			// guards que U. Pas de conflit Ctrl+H.
 			if (inGameNoMenu && !chatBlocks
-				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::H))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.auctionhouse", "F6"), engine::platform::Key::F_6)))
 			{
 				m_auctionHouseVisible = !m_auctionHouseVisible;
 				if (m_auctionHouseVisible)
 				{
 					m_auctionHouseUi.RequestList(0u);
 				}
-				LOG_INFO(Core, "[Engine] H toggle auction house (visible={})", m_auctionHouseVisible);
+				LOG_INFO(Core, "[Engine] F6 toggle auction house (visible={})", m_auctionHouseVisible);
 			}
 			// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Touche L : toggle
 			// fenetre Loot Roll. Memes guards que U. Pas de conflit Ctrl+L.
@@ -7742,10 +7886,10 @@ namespace engine
 			// push, le bouton Simulate sert pour la demo V1.
 			if (inGameNoMenu && !chatBlocks
 				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::L))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.lootroll", "F7"), engine::platform::Key::F_7)))
 			{
 				m_lootRollVisible = !m_lootRollVisible;
-				LOG_INFO(Core, "[Engine] L toggle loot roll (visible={})", m_lootRollVisible);
+				LOG_INFO(Core, "[Engine] F7 toggle loot roll (visible={})", m_lootRollVisible);
 			}
 			// R1-B (Task 4) — Touche C (mnemonique naturel « Character ») : toggle la
 			// feuille de personnage (stats derivees). Pas de fetch a l'ouverture :
@@ -7753,11 +7897,10 @@ namespace engine
 			// "punch" (controls.keybind.punch) a ete deplacee sur X pour liberer C.
 			// Memes guards que les autres toggles (chat focus, pause, editor, auth flow).
 			if (inGameNoMenu && !chatBlocks
-				&& !m_input.IsDown(engine::platform::Key::Control)
-				&& m_input.WasPressed(engine::platform::Key::C))
+				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.charactersheet", "F1"), engine::platform::Key::F_1)))
 			{
 				m_characterSheetVisible = !m_characterSheetVisible;
-				LOG_INFO(Core, "[Engine] C toggle character sheet (visible={})", m_characterSheetVisible);
+				LOG_INFO(Core, "[Engine] F1 toggle character sheet (visible={})", m_characterSheetVisible);
 			}
 		}
 
@@ -8064,6 +8207,24 @@ namespace engine
 				// (toggle via /skills ou touche B).
 				m_skillBookImGui = std::make_unique<engine::render::SkillBookImGuiRenderer>();
 				m_skillBookImGui->SetPresenter(&m_skillBookUi);
+				// Grimoire (Task 13) — Renderer ImGui du panneau Grimoire / Carnet de
+				// techniques. Visible quand m_grimoireVisible (touche V ou /grimoire /
+				// /sorts). Partage le contexte ImGui post-auth.
+				m_grimoireImGui = std::make_unique<engine::render::GrimoireImGuiRenderer>();
+				m_grimoireImGui->SetPresenter(&m_grimoireUi);
+				// SP-D — Renderer ImGui du panneau arbre de compétences par-classe.
+				// Visible quand m_classSkillTreeVisible (touche Y ou /arbre / /competences).
+				m_classSkillTreeImGui = std::make_unique<engine::render::ClassSkillTreeImGuiRenderer>();
+				m_classSkillTreeImGui->SetPresenter(&m_classSkillTreeUi);
+				// SP-E — Cache d'icônes de compétences (PNG icons/skills/<classId>/...).
+				// Init APRÈS ImGui_ImplVulkan_Init (assuré par m_worldEditorImGui->Init
+				// plus haut). Idempotent. Partagé avec le Grimoire / la barre d'action.
+				if (!m_skillIconCache.IsInitialized())
+				{
+					(void)m_skillIconCache.Init(m_vkDeviceContext.GetDevice(), &m_assetRegistry);
+				}
+				m_classSkillTreeImGui->SetIconCache(&m_skillIconCache);
+				if (m_grimoireImGui) { m_grimoireImGui->SetIconCache(&m_skillIconCache); }
 				// CMANGOS.21 (Phase 5.21 step 3+4) — Renderer ImGui du panneau
 				// Arena. Visible uniquement quand m_arenaVisible (toggle via
 				// /arena ou touche A). Le popup proposal s'affiche aussi quand
@@ -10240,8 +10401,18 @@ namespace engine
 				// foreground draw list ImGui, qu'ImGui composite TOUJOURS au-dessus des fenetres
 				// (dont le panneau du menu pause, qui est une simple fenetre). On suspend donc
 				// ces labels quand un menu modal est ouvert, sinon ils perforent le menu.
-				const bool modalMenuOpen = m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible;
-				if (!modalMenuOpen)
+				// Les plaques/labels monde (nameplates mobs, noms joueurs, butin) passent
+				// par le foreground draw list, donc AU-DESSUS des fenetres ImGui. On les
+				// masque des qu'un menu OU un panneau in-game est ouvert, sinon ils
+				// debordent par-dessus et rendent le panneau illisible (ex. le label
+				// « Sanglier des collines » au milieu de l'arbre de competences).
+				const bool worldOverlaysHidden = m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible
+					|| m_classSkillTreeVisible || m_grimoireVisible || m_skillBookVisible
+					|| m_auctionHouseVisible || m_arenaVisible || m_battleGroundVisible
+					|| m_outdoorPvpVisible || m_guildVisible || m_lootRollVisible
+					|| m_characterSheetVisible || m_craftingVisible || m_advancedCombatVisible
+					|| m_weatherVisible;
+				if (!worldOverlaysHidden)
 				for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
 				{
 					const InteractableEntity& e = m_interactables[ii];
@@ -10282,9 +10453,13 @@ namespace engine
 				// snapshot brut si l'etat lisse n'existe pas encore (graceful) ;
 				// le `+ 1.2` est calibre sur la hauteur d'avatar (`py - 0.9` = pieds,
 				// donc tete ~ `py + 0.9`, plaque au-dessus = `py + 1.2`).
-				if (!modalMenuOpen)
+				if (!worldOverlaysHidden)
 				{
 					const auto& remotes = m_uiModelBinding.GetModel().remoteEntities;
+						// Anti-chevauchement des plaques : boites deja posees cette frame
+						// (x,y,z,w = gauche,haut,droite,bas). Une nouvelle plaque qui en
+						// recouvre une est remontee d'une hauteur de plaque (empilement).
+						std::vector<ImVec4> placedLabelRects;
 					for (const engine::client::UIRemoteEntity& re : remotes)
 					{
 						// Combat SP1 : les mobs (archetypeId != 0) ont leur plaque.
@@ -10319,6 +10494,9 @@ namespace engine
 						// CreatureCatalog ; fallback générique si l'archétype est inconnu
 						// du catalogue client (catalogue absent ou désynchronisé).
 						std::string label;
+						// SP — suffixe « (niv. N) » des mobs, rendu en plus petit a droite
+						// du nom. Vide pour joueurs/nodes/butin (pas de niveau affiche).
+						std::string levelSuffix;
 						// Validation v12 — armé par la branche mob ci-dessous : dessine la
 						// barre de vie sous la plaque (jamais pour joueurs/nodes).
 						bool drawMobHealthBar = false;
@@ -10375,10 +10553,38 @@ namespace engine
 							const uint32_t mobLevel = (appearance != nullptr) ? appearance->level : 1u;
 							// Validation v12 — les PV chiffrés quittent le label : ils sont
 							// désormais portés par la barre de vie dessinée sous la plaque.
-							label = mobName + " (niv. " + std::to_string(mobLevel) + ")";
+							label = mobName;
+							levelSuffix = " (niv. " + std::to_string(mobLevel) + ")";
 							drawMobHealthBar = (re.maxHealth > 0u);
 						}
-						const ImVec2 ts = ImGui::CalcTextSize(label.c_str());
+						// Largeur TOTALE = nom (taille normale) + suffixe « (niv. N) » (0.78x).
+						ImFont* plateFont = ImGui::GetFont();
+						const float nivFontSize = ImGui::GetFontSize() * 0.78f;
+						const ImVec2 nameTs = ImGui::CalcTextSize(label.c_str());
+						const ImVec2 nivTs = levelSuffix.empty()
+							? ImVec2(0.0f, 0.0f)
+							: plateFont->CalcTextSizeA(nivFontSize, FLT_MAX, 0.0f, levelSuffix.c_str());
+						const ImVec2 ts(nameTs.x + nivTs.x, nameTs.y);
+						// Empilement vertical : remonte la plaque tant qu'elle recouvre une
+						// plaque deja posee cette frame (mobs superposes -> textes lisibles).
+						const float plateHalfW = ts.x * 0.5f + 6.0f;
+						const float plateH = ts.y + 2.0f + (drawMobHealthBar ? 24.0f : 4.0f);
+						for (int attempt = 0; attempt < 12; ++attempt)
+						{
+							const float top = syp - ts.y - 2.0f;
+							const float bot = syp + (drawMobHealthBar ? 24.0f : 4.0f);
+							bool overlap = false;
+							for (const ImVec4& r : placedLabelRects)
+							{
+								if ((sxp - plateHalfW) < r.z && (sxp + plateHalfW) > r.x
+									&& top < r.w && bot > r.y)
+								{ overlap = true; break; }
+							}
+							if (!overlap) break;
+							syp -= (plateH + 3.0f);
+						}
+						placedLabelRects.emplace_back(sxp - plateHalfW, syp - ts.y - 2.0f,
+							sxp + plateHalfW, syp + (drawMobHealthBar ? 24.0f : 4.0f));
 						// Halo noir derriere le texte pour la lisibilite sur fond clair (ciel).
 						fg->AddRectFilled(
 							ImVec2(sxp - ts.x * 0.5f - 4.0f, syp - ts.y - 2.0f),
@@ -10399,7 +10605,15 @@ namespace engine
 									IM_COL32(235, 190, 60, 255), 3.0f, 0, 2.0f);
 							}
 						}
-						fg->AddText(ImVec2(sxp - ts.x * 0.5f, syp - ts.y), IM_COL32(220, 230, 255, 255), label.c_str());
+						// Nom a taille normale, puis suffixe niveau plus petit, aligne en bas.
+						const float labelLeft = sxp - ts.x * 0.5f;
+						fg->AddText(ImVec2(labelLeft, syp - ts.y), IM_COL32(220, 230, 255, 255), label.c_str());
+						if (!levelSuffix.empty())
+						{
+							fg->AddText(plateFont, nivFontSize,
+								ImVec2(labelLeft + nameTs.x, syp - nivTs.y),
+								IM_COL32(180, 195, 225, 230), levelSuffix.c_str());
+						}
 						// Validation v12 — barre de vie du mob sous la plaque, alimentée
 						// par currentHealth/maxHealth du snapshot (10 Hz) : elle descend
 						// donc en direct à chaque coup porté. Couleur par tiers de PV
@@ -10761,9 +10975,10 @@ namespace engine
 							targetDead ? IM_COL32(120, 120, 120, 200) : IM_COL32(200, 60, 50, 220), 6.0f, 0, 2.0f);
 						fg->AddText(ImVec2(fx + 10.0f, fy + 6.0f),
 							targetDead ? IM_COL32(150, 150, 150, 255) : IM_COL32(235, 235, 235, 255), targetName.c_str());
-						// Validation v12 — distance XZ joueur→cible dans le cadre :
-						// désambiguïse deux mobs identiques et rend la portée de mêlée
-						// lisible (orange au-delà de 4 m, cohérent avec « Hors de portee »).
+						// Distance XZ joueur→cible : affichée SOUS le cadre, centrée et en
+						// plus petit (0.8x). Avant elle etait en haut a droite DANS le cadre
+						// et chevauchait le nom (souvent long) -> illisible. Orange au-dela
+						// de 4 m (coherent avec « Hors de portee »), vert sinon.
 						{
 							const engine::math::Vec3 playerPosFrame = m_characterController.GetPosition();
 							for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
@@ -10775,8 +10990,12 @@ namespace engine
 								const float distM = std::sqrt(dxf * dxf + dzf * dzf);
 								const std::string distText =
 									std::to_string(static_cast<int>(std::lround(distM))) + " m";
-								const ImVec2 distTs = ImGui::CalcTextSize(distText.c_str());
-								fg->AddText(ImVec2(fx + frameW - distTs.x - 10.0f, fy + 6.0f),
+								ImFont* distFont = ImGui::GetFont();
+								const float distFontSize = ImGui::GetFontSize() * 0.8f;
+								const ImVec2 distTs =
+									distFont->CalcTextSizeA(distFontSize, FLT_MAX, 0.0f, distText.c_str());
+								fg->AddText(distFont, distFontSize,
+									ImVec2(fx + (frameW - distTs.x) * 0.5f, fy + frameH + 2.0f),
 									(distM > 4.0f) ? IM_COL32(240, 170, 60, 255) : IM_COL32(170, 220, 170, 255),
 									distText.c_str());
 								break;
@@ -10805,9 +11024,15 @@ namespace engine
 						}
 					}
 
+					const engine::client::CombatHudState& hudState = m_combatHud.GetState();
+
+					// NB : les jauges PV/ressource du joueur sont rendues en bas-centre
+					// par le bloc « Validation v12 » plus bas (uiModel.playerStats) — ne
+					// PAS les redessiner ici depuis les bounds du presenter (bas-gauche),
+					// qui chevauchent le panneau de chat.
+
 					// --- Log combat HUD (bas-droite) : dernieres lignes formatees par
 					// le CombatHudPresenter (suffixes critique/rate inclus).
-					const engine::client::CombatHudState& hudState = m_combatHud.GetState();
 					if (!hudState.combatLogLines.empty())
 					{
 						constexpr size_t kHudLogMaxLines = 6u;
@@ -10891,24 +11116,90 @@ namespace engine
 					// --- Combat SP3 : barre d'action (touches 1-4, sorts du profil).
 					// Cooldowns affichés localement (cosmétique) ; le serveur revalide
 					// kit/cooldown/coût/cible/portée à chaque CastRequest.
-					const std::vector<engine::client::SpellDisplay>* actionKit =
-						uiModel.playerStats.profileId.empty()
-							? nullptr
-							: m_spellCatalog.FindKit(uiModel.playerStats.profileId);
-					if (actionKit != nullptr && !actionKit->empty())
+					// SP-C — kit effectif : compétences de classe connues (fallback kit profil).
+					// BuildEffectiveKit retourne un vecteur valide pour toute la durée du bloc.
+					auto BuildEffectiveKit = [&]() -> std::vector<engine::client::SpellDisplay>
+					{
+						const std::string& classId    = uiModel.classId;
+						const std::string& profileId  = uiModel.playerStats.profileId;
+						const std::vector<std::string>& knownIds = uiModel.knownSkillIds;
+						// Chemin compétences de classe : classId connu + skills connus + catalogue disponible.
+						if (!classId.empty() && !knownIds.empty())
+						{
+							const std::vector<engine::client::ClassSkillDisplay>* classSkills =
+								m_classSkillCatalog.GetClassSkills(classId);
+							if (classSkills != nullptr)
+							{
+								std::vector<engine::client::SpellDisplay> kit;
+								kit.reserve(knownIds.size());
+								for (const std::string& skillId : knownIds)
+								{
+									for (const engine::client::ClassSkillDisplay& cs : *classSkills)
+									{
+										if (cs.skillId == skillId)
+										{
+											kit.push_back(engine::client::ToSpellDisplay(cs, classId));
+											break;
+										}
+									}
+								}
+								if (!kit.empty())
+								{
+									return kit;
+								}
+							}
+						}
+						// Fallback : kit profil depuis le catalogue de sorts (comportement original).
+						if (!profileId.empty())
+						{
+							const std::vector<engine::client::SpellDisplay>* profileKit =
+								m_spellCatalog.FindKit(profileId);
+							if (profileKit != nullptr)
+							{
+								return *profileKit;
+							}
+						}
+						return {};
+					};
+					const std::vector<engine::client::SpellDisplay> effectiveKit = BuildEffectiveKit();
+					if (!effectiveKit.empty())
 					{
 						const float nowSec = EngineNowSec();
 						const float slotSize = 58.0f;
 						const float slotGap = 8.0f;
-						const size_t slotCount = std::min<size_t>(actionKit->size(), 4u);
+						// Grimoire — layout effectif des 10 slots (slot i → spellId).
+						const std::array<std::string, 10> resolvedLayout =
+							engine::client::ResolveActionBarLayout(uiModel.playerStats.actionBarLayout, effectiveKit);
+						const size_t slotCount = resolvedLayout.size(); // 10
 						const float barWidth = slotSize * static_cast<float>(slotCount)
 							+ slotGap * static_cast<float>(slotCount - 1);
 						const float barX = (dw - barWidth) * 0.5f;
 						const float barY = dh - slotSize - 16.0f;
 						for (size_t slotIndex = 0; slotIndex < slotCount; ++slotIndex)
 						{
-							const engine::client::SpellDisplay& spell = (*actionKit)[slotIndex];
+							const std::string& slotSpellId = resolvedLayout[slotIndex];
+							const engine::client::SpellDisplay* spellPtr =
+								slotSpellId.empty() ? nullptr : engine::client::FindSpellInKit(effectiveKit, slotSpellId);
 							const float sx0 = barX + static_cast<float>(slotIndex) * (slotSize + slotGap);
+							// Touche du slot (remappable) : défaut Digit1..Digit9 puis Digit0.
+							const engine::platform::Key slotKey = KeyFromName(
+								m_cfg.GetString("controls.keybind.action_slot_" + std::to_string(slotIndex + 1),
+									(slotIndex < 9) ? std::string(1, static_cast<char>('1' + slotIndex)) : std::string("0")),
+								(slotIndex < 9)
+									? static_cast<engine::platform::Key>('1' + static_cast<int>(slotIndex))
+									: engine::platform::Key::Digit0);
+							if (spellPtr == nullptr)
+							{
+								// Slot vide : case grisée + glyphe touche, pas d'action.
+								fg->AddRectFilled(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+									IM_COL32(14, 16, 22, 160), 6.0f);
+								fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+									IM_COL32(70, 70, 76, 160), 6.0f, 0, 2.0f);
+								const std::string emptyKeyLabel = KeyGlyph(slotKey);
+								fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f), IM_COL32(150, 140, 110, 200), emptyKeyLabel.c_str());
+								continue;
+							}
+							const engine::client::SpellDisplay& spell = *spellPtr;
 							// Coût payable + cooldown : visuel grisé si indisponible.
 							const uint32_t cost = spell.resourceCostPercent
 								* uiModel.playerStats.secondaryResourceMax / 100u;
@@ -10922,13 +11213,31 @@ namespace engine
 								IM_COL32(14, 16, 22, 215), 6.0f);
 							fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
 								ready ? IM_COL32(200, 180, 90, 220) : IM_COL32(90, 90, 96, 200), 6.0f, 0, 2.0f);
-							// Numéro de touche (haut-gauche) + nom du sort (bas, tronqué).
-							const std::string keyLabel = std::to_string(slotIndex + 1);
+							// SP-E — icône du sort en fond du slot (compétences de classe).
+							// Repli sur le nom texte si pas d'icône (kit profil, fichier absent).
+							bool slotHasIcon = false;
+							if (!spell.iconPath.empty())
+							{
+								const uint64_t slotTexId = m_skillIconCache.GetOrLoad(spell.iconPath);
+								if (slotTexId != 0)
+								{
+									const float pad = 3.0f;
+									fg->AddImage(static_cast<ImTextureID>(slotTexId),
+										ImVec2(sx0 + pad, barY + pad),
+										ImVec2(sx0 + slotSize - pad, barY + slotSize - pad));
+									slotHasIcon = true;
+								}
+							}
+							// Numéro de touche (haut-gauche) + nom du sort (bas, tronqué) si pas d'icône.
+							const std::string keyLabel = KeyGlyph(slotKey);
 							fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f), IM_COL32(255, 230, 150, 230), keyLabel.c_str());
-							std::string spellLabel = spell.name.substr(0, 9);
-							fg->AddText(ImVec2(sx0 + 4.0f, barY + slotSize - 18.0f),
-								ready ? IM_COL32(225, 225, 225, 255) : IM_COL32(140, 140, 140, 255),
-								spellLabel.c_str());
+							if (!slotHasIcon)
+							{
+								std::string spellLabel = spell.name.substr(0, 9);
+								fg->AddText(ImVec2(sx0 + 4.0f, barY + slotSize - 18.0f),
+									ready ? IM_COL32(225, 225, 225, 255) : IM_COL32(140, 140, 140, 255),
+									spellLabel.c_str());
+							}
 							// Voile + décompte pendant le cooldown affiché.
 							if (cooldownRemaining > 0.0f)
 							{
@@ -10945,9 +11254,8 @@ namespace engine
 								fg->AddText(ImVec2(sx0 + (slotSize - cdTs.x) * 0.5f, barY + (slotSize - cdTs.y) * 0.5f),
 									IM_COL32(255, 255, 255, 255), cooldownText);
 							}
-							// Touche 1-4 : envoi du CastRequest (Digit1..Digit4 = '1'..'4').
-							if (keysAllowed
-								&& m_input.WasPressed(static_cast<engine::platform::Key>('1' + static_cast<int>(slotIndex))))
+							// Touche remappable du slot : envoi du CastRequest.
+							if (keysAllowed && m_input.WasPressed(slotKey))
 							{
 								const bool targetOk = !spell.needsEnemyTarget
 									|| (uiModel.targetStats.hasTarget
@@ -11768,6 +12076,55 @@ namespace engine
 				m_skillBookImGui->SetEnabled(true);
 				m_skillBookImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_skillBookImGui->Render();
+			}
+			// Grimoire (Task 13) — Sync du presenter (profil + layout autoritaire)
+			// puis render conditionnel si le panneau est ouvert.
+			// SP-C — kit effectif : compétences de classe connues (fallback kit profil).
+			const engine::client::UIModel& grimoireModel = m_uiModelBinding.GetModel();
+			{
+				std::vector<engine::client::SpellDisplay> grimoireEffectiveKit;
+				const std::string& gClassId   = grimoireModel.classId;
+				const std::string& gProfileId = grimoireModel.playerStats.profileId;
+				const std::vector<std::string>& gKnownIds = grimoireModel.knownSkillIds;
+				if (!gClassId.empty() && !gKnownIds.empty())
+				{
+					const std::vector<engine::client::ClassSkillDisplay>* gClassSkills =
+						m_classSkillCatalog.GetClassSkills(gClassId);
+					if (gClassSkills != nullptr)
+					{
+						grimoireEffectiveKit.reserve(gKnownIds.size());
+						for (const std::string& skillId : gKnownIds)
+						{
+							for (const engine::client::ClassSkillDisplay& cs : *gClassSkills)
+							{
+								if (cs.skillId == skillId)
+								{
+									grimoireEffectiveKit.push_back(engine::client::ToSpellDisplay(cs, gClassId));
+									break;
+								}
+							}
+						}
+					}
+				}
+				m_grimoireUi.Sync(gProfileId, grimoireModel.playerStats.actionBarLayout, grimoireEffectiveKit);
+			}
+			if (m_grimoireVisible && m_grimoireImGui && m_grimoireUi.IsInitialized())
+			{
+				m_grimoireImGui->SetEnabled(true);
+				m_grimoireImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_grimoireImGui->Render();
+			}
+			// SP-D — Sync + render conditionnel de l'arbre de compétences par-classe.
+			// playerLevel absent de UIModel — on passe 60u (permissif, le serveur valide).
+			{
+				const engine::client::UIModel& treeModel = m_uiModelBinding.GetModel();
+				m_classSkillTreeUi.Sync(treeModel.classId, treeModel.knownSkillIds, 60u);
+				if (m_classSkillTreeVisible && m_classSkillTreeImGui && m_classSkillTreeUi.IsInitialized())
+				{
+					m_classSkillTreeImGui->SetEnabled(true);
+					m_classSkillTreeImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+					m_classSkillTreeImGui->Render();
+				}
 			}
 			// CMANGOS.21 (Phase 5.21 step 3+4) — Render du panneau Arena si
 			// visible. Le popup proposal s'affiche aussi quand pendingProposalId

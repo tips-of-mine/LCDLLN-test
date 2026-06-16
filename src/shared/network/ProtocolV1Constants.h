@@ -505,14 +505,14 @@ namespace engine::network
 	// Alliance/Horde, match start, score updates, match end). Master tient
 	// en memoire un BattleGroundQueue + matches actifs (V1).
 	//
-	// Architecture : 3 BG hardcodes au boot (Warsong Gulch, Arathi Basin,
-	// Alterac Valley). Le master tient en memoire la queue par account et
+	// Architecture : 3 BG hardcodes au boot (Gorge de Feyhin, Bassin des Ombres,
+	// Vallee Gelee). Le master tient en memoire la queue par account et
 	// les matches actifs. V1 simplifie : a la queue, master cree
 	// immediatement un match contre AI bot (faction opposee) et push la
 	// sequence Start -> Score(s) -> End. Pas besoin de Tick().
 	//
 	// V1 limitations :
-	//   - 3 BG hardcodes (Warsong/Arathi/Alterac). Vrais BG via M40+ futur.
+	//   - 3 BG hardcodes (Gorge de Feyhin/Bassin des Ombres/Vallee Gelee). Vrais BG via M40+ futur.
 	//   - Match vs AI bot fictif (V1) ; vrai matchmaking 2 factions a venir.
 	//   - Score evolution simulee instantanee (V1) ; vrai gameplay BG via shardd futur.
 	//   - Pas de SyncBg RPC entre master et shardd (master autoritaire V1).
@@ -542,8 +542,8 @@ namespace engine::network
 	// capturables par faction, score par zone, push capture progress + complete).
 	// Master tient en memoire un OutdoorPvPManager (V1 seed hardcode).
 	//
-	// Architecture : 2 zones contestees au boot (Hellfire Peninsula 3
-	// objectifs, Eastern Plaguelands 4 objectifs). Le master tient en
+	// Architecture : 2 zones contestees au boot (Peninsule Ardente 3
+	// objectifs, Terres Maudites de l'Est 4 objectifs). Le master tient en
 	// memoire les subscriptions par account et l'etat des objectifs.
 	// V1 simplifie : a chaque CaptureStartRequest, master simule la
 	// capture instantanee : push 4 progress (25/50/75/100) puis call
@@ -551,7 +551,7 @@ namespace engine::network
 	// puis push CaptureCompletedNotification.
 	//
 	// V1 limitations :
-	//   - 2 zones hardcodees (Hellfire, Eastern Plaguelands). Vraies
+	//   - 2 zones hardcodees (Peninsule Ardente, Terres Maudites de l'Est). Vraies
 	//     zones via M40+ futur.
 	//   - Capture simulee instantanement (V1) ; vrai gameplay capture
 	//     via shardd futur.
@@ -705,7 +705,7 @@ namespace engine::network
 	// au scan a chaque AuctionListRequest.
 	//
 	// Architecture : 8 auctions seedees au boot avec differents owners
-	// (Aragorn, Legolas, Gimli, Saruman) et expirations echelonnees
+	// (Garond, Mirelle, Tobrek, Sylvane) et expirations echelonnees
 	// (1h-48h), avec ou sans buyout. Le master tient en memoire un
 	// std::vector<InMemoryAuction> protege par mutex. V1 simplifie : pas
 	// de Tick periodique pour expirations -- le scan est fait a chaque

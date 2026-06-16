@@ -22,17 +22,17 @@ namespace engine::server
 
 		/// Table d'items V1 (10 entries hardcode). Adresses stables pour const char*.
 		const char* const kItemNames[kItemNameTableMax + 1u] = {
-			"Item #0",        // 0 (placeholder, jamais retourne pour 0)
-			"Iron Ore",       // 1
-			"Linen Cloth",    // 2
-			"Mageweave",      // 3
-			"Health Potion",  // 4
-			"Mana Potion",    // 5
-			"Mithril Bar",    // 6
-			"Thorium Ore",    // 7
-			"Black Lotus",    // 8
-			"Arcanite Bar",   // 9
-			"Soul Shard"      // 10
+			"Item #0",              // 0 (placeholder, jamais retourne pour 0)
+			"Minerai de fer",      // 1
+			"Toile de lin",        // 2
+			"Tissu mage",          // 3
+			"Potion de soin",      // 4
+			"Potion de mana",      // 5
+			"Lingot de mithril",   // 6
+			"Minerai de thorium",  // 7
+			"Lotus noir",          // 8
+			"Lingot d'arcanite",   // 9
+			"Eclat d'ame"          // 10
 		};
 
 		/// Format un fallback "Item #<id>" pour les ids hors table.
@@ -179,14 +179,14 @@ namespace engine::server
 		};
 
 		// 8 auctions seedees (mix items / owners / durations / buyouts).
-		add(1u,  20u, 500ull,    1000ull,   1ull,  "Aragorn"); // Iron Ore
-		add(2u,  50u, 300ull,    0ull,      6ull,  "Legolas"); // Linen Cloth, no buyout
-		add(3u,  10u, 1500ull,   3000ull,   12ull, "Gimli");   // Mageweave
-		add(4u,  5u,  250ull,    500ull,    24ull, "Aragorn"); // Health Potion
-		add(5u,  5u,  250ull,    0ull,      24ull, "Saruman"); // Mana Potion, no buyout
-		add(6u,  3u,  10000ull,  25000ull,  36ull, "Saruman"); // Mithril Bar
-		add(7u,  15u, 8000ull,   0ull,      48ull, "Gimli");   // Thorium Ore, no buyout
-		add(8u,  1u,  50000ull,  150000ull, 48ull, "Legolas"); // Black Lotus
+		add(1u,  20u, 500ull,    1000ull,   1ull,  "Garond");  // Minerai de fer
+		add(2u,  50u, 300ull,    0ull,      6ull,  "Mirelle"); // Toile de lin, no buyout
+		add(3u,  10u, 1500ull,   3000ull,   12ull, "Tobrek");  // Tissu mage
+		add(4u,  5u,  250ull,    500ull,    24ull, "Garond");  // Potion de soin
+		add(5u,  5u,  250ull,    0ull,      24ull, "Sylvane"); // Potion de mana, no buyout
+		add(6u,  3u,  10000ull,  25000ull,  36ull, "Sylvane"); // Lingot de mithril
+		add(7u,  15u, 8000ull,   0ull,      48ull, "Tobrek");  // Minerai de thorium, no buyout
+		add(8u,  1u,  50000ull,  150000ull, 48ull, "Mirelle"); // Lotus noir
 
 		m_seeded = true;
 		LOG_INFO(Net, "[AuctionHandler] V1 auctions seeded : 8 listings ({} -> {})",

@@ -393,6 +393,104 @@ namespace
 		std::puts("[OK] TestCastRequestRoundTrip");
 	}
 
+	void TestSetActionBarLayoutRoundTrip()
+	{
+		engine::server::SetActionBarLayoutMessage in{};
+		in.clientId = 42u;
+		in.slots[0] = "lanceur_trait_de_feu";
+		in.slots[1] = "lanceur_nova";
+		in.slots[9] = "lanceur_brulure";
+		// slots 2..8 restent vides ("")
+
+		const std::vector<std::byte> packet = engine::server::EncodeSetActionBarLayout(in);
+		assert(!packet.empty());
+
+		engine::server::SetActionBarLayoutMessage out{};
+		assert(engine::server::DecodeSetActionBarLayout(packet, out));
+		assert(out.clientId == 42u);
+		assert(out.slots[0] == "lanceur_trait_de_feu");
+		assert(out.slots[1] == "lanceur_nova");
+		assert(out.slots[2].empty());
+		assert(out.slots[9] == "lanceur_brulure");
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 2u);
+		assert(!engine::server::DecodeSetActionBarLayout(truncated, out));
+		std::puts("[OK] TestSetActionBarLayoutRoundTrip");
+	}
+
+	void TestActionBarLayoutUpdateRoundTrip()
+	{
+		engine::server::ActionBarLayoutUpdateMessage in{};
+		in.clientId = 7u;
+		in.slots[0] = "melee_frappe_brutale";
+		in.slots[3] = "melee_cri_de_guerre";
+
+		const std::vector<std::byte> packet = engine::server::EncodeActionBarLayoutUpdate(in);
+		assert(!packet.empty());
+
+		engine::server::ActionBarLayoutUpdateMessage out{};
+		assert(engine::server::DecodeActionBarLayoutUpdate(packet, out));
+		assert(out.clientId == 7u);
+		assert(out.slots[0] == "melee_frappe_brutale");
+		assert(out.slots[3] == "melee_cri_de_guerre");
+		assert(out.slots[1].empty());
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 2u);
+		assert(!engine::server::DecodeActionBarLayoutUpdate(truncated, out));
+		std::puts("[OK] TestActionBarLayoutUpdateRoundTrip");
+	}
+
+	void TestClassProgressionUpdateRoundTrip()
+	{
+		engine::server::ClassProgressionUpdateMessage in{};
+		in.clientId = 55u;
+		in.classId  = "guerrier";
+		in.knownSkillIds = { "frappe_puissante", "cri_de_guerre", "bouclier_de_fer" };
+
+		const std::vector<std::byte> packet = engine::server::EncodeClassProgressionUpdate(in);
+		assert(!packet.empty());
+
+		engine::server::ClassProgressionUpdateMessage out{};
+		assert(engine::server::DecodeClassProgressionUpdate(packet, out));
+		assert(out.clientId == 55u);
+		assert(out.classId == "guerrier");
+		assert(out.knownSkillIds.size() == 3u);
+		assert(out.knownSkillIds[0] == "frappe_puissante");
+		assert(out.knownSkillIds[1] == "cri_de_guerre");
+		assert(out.knownSkillIds[2] == "bouclier_de_fer");
+
+		// Paquet tronqué rejeté.
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 3u);
+		assert(!engine::server::DecodeClassProgressionUpdate(truncated, out));
+		std::puts("[OK] TestClassProgressionUpdateRoundTrip");
+	}
+
+	void TestChooseClassSkillRequestRoundTrip()
+	{
+		engine::server::ChooseClassSkillRequestMessage in{};
+		in.clientId = 12u;
+		in.level    = 5u;
+		in.skillId  = "frappe_puissante";
+
+		const std::vector<std::byte> packet = engine::server::EncodeChooseClassSkillRequest(in);
+		assert(!packet.empty());
+
+		engine::server::ChooseClassSkillRequestMessage out{};
+		assert(engine::server::DecodeChooseClassSkillRequest(packet, out));
+		assert(out.clientId == 12u);
+		assert(out.level    == 5u);
+		assert(out.skillId  == "frappe_puissante");
+
+		// Paquet tronqué rejeté.
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 2u);
+		assert(!engine::server::DecodeChooseClassSkillRequest(truncated, out));
+		std::puts("[OK] TestChooseClassSkillRequestRoundTrip");
+	}
+
 	void TestResourceUpdateRoundTrip()
 	{
 		engine::server::ResourceUpdateMessage in{};
@@ -589,6 +687,10 @@ int main()
 	TestAttackRequestRoundTrip();
 	TestRespawnRequestRoundTrip();
 	TestCastRequestRoundTrip();
+	TestSetActionBarLayoutRoundTrip();
+	TestActionBarLayoutUpdateRoundTrip();
+	TestClassProgressionUpdateRoundTrip();
+	TestChooseClassSkillRequestRoundTrip();
 	TestResourceUpdateRoundTrip();
 	TestCastBarUpdateRoundTrip();
 	TestAuraUpdateRoundTrip();

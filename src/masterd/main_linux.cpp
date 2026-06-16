@@ -718,7 +718,7 @@ int main(int argc, char** argv)
 
 	// CMANGOS.10 (Phase 5 step 3+4) — BattleGround wire server.
 	// Le master tient en memoire un store de queue + matches actifs
-	// (V1 : 3 BG hardcodes Warsong/Arathi/Alterac, queue par account,
+	// (V1 : 3 BG hardcodes Gorge de Feyhin/Bassin des Ombres/Vallee Gelee, queue par account,
 	// match V1 vs AI bot fictif a la queue). Les opcodes 130/132/134/139
 	// sont dispatches au handler ; les responses 131/133/135 et les push
 	// notifications 136 (MatchStart) / 137 (ScoreUpdate) / 138 (MatchEnd)
@@ -745,7 +745,7 @@ int main(int argc, char** argv)
 
 	// CMANGOS.36 (Phase 5.36 step 3+4) — OutdoorPvp wire server.
 	// Le master tient en memoire un OutdoorPvPManager seede au boot avec
-	// 2 zones contestees (Hellfire Peninsula 3 obj, Eastern Plaguelands
+	// 2 zones contestees (Peninsule Ardente 3 obj, Terres Maudites de l'Est
 	// 4 obj). Les opcodes 140/142/144/146 sont dispatches au handler ;
 	// les responses 141/143/145/147 et les push notifications 148
 	// (CaptureProgress) / 149 (CaptureCompleted) sont emises par le
@@ -853,7 +853,7 @@ int main(int argc, char** argv)
 
 	// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — AuctionHandler : list /
 	// post / bid / cancel + push AuctionExpired. V1 : 8 listings hardcodes
-	// au boot avec differents owners (Aragorn, Legolas, Gimli, Saruman) et
+	// au boot avec differents owners (Garond, Mirelle, Tobrek, Sylvane) et
 	// expirations echelonnees (1h-48h). Les opcodes 173/175/177/179 sont
 	// dispatches au handler ; les responses 174/176/178/180 et la push
 	// notification 181 (AuctionExpired) sont emises par le handler. V1

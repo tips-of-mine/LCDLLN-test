@@ -23,6 +23,7 @@
 #include "src/client/lfg/LfgUi.h"
 #include "src/client/cinematics/CinematicUi.h"
 #include "src/client/skills/SkillBookUi.h"
+#include "src/client/grimoire/GrimoireUi.h"
 #include "src/client/trade/TradeWindowUi.h"
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
@@ -33,6 +34,9 @@
 // Combat SP3 — barre d'action (kits de sorts) + BuffBar (auras répliquées).
 #include "src/client/combat/BuffBarPresenter.h"
 #include "src/client/gameplay/SpellKitCatalog.h"
+#include "src/client/gameplay/ClassSkillCatalog.h"
+#include "src/client/render/SkillIconCache.h"
+#include "src/client/skills/ClassSkillTreeUi.h"
 // Combat SP4 — FX visuels d'auras (halo aux pieds des entités).
 #include "src/client/combat/AuraFXSystem.h"
 // Réticule de ciblage au sol (cercles + cône de vision 120°, decal orienté).
@@ -130,6 +134,8 @@ namespace engine::render
 	class LfgImGuiRenderer;
 	class CinematicImGuiRenderer;
 	class SkillBookImGuiRenderer;
+	class GrimoireImGuiRenderer;
+	class ClassSkillTreeImGuiRenderer;
 	class ArenaImGuiRenderer;
 	class BattleGroundImGuiRenderer;
 	class OutdoorPvpImGuiRenderer;
@@ -614,6 +620,10 @@ namespace engine
 		/// Visible uniquement quand m_skillBookVisible (toggle via slash command
 		/// /skills ou touche B).
 		std::unique_ptr<engine::render::SkillBookImGuiRenderer> m_skillBookImGui;
+		/// Grimoire (Task 13) — Renderer ImGui du panneau Grimoire / Carnet de
+		/// techniques. Partage le contexte ImGui post-auth. Visible quand
+		/// m_grimoireVisible (toggle via touche V remappable ou /grimoire / /sorts).
+		std::unique_ptr<engine::render::GrimoireImGuiRenderer> m_grimoireImGui;
 		/// CMANGOS.21 (Phase 5.21 step 3+4) — Panneau "Arena" (post-auth, ImGui).
 		/// Partage le contexte ImGui avec les autres panneaux post-auth.
 		/// Visible uniquement quand m_arenaVisible (toggle via slash command
@@ -1208,6 +1218,25 @@ namespace engine
 		/// CMANGOS.39 (Phase 4.39 step 3+4) — Visibilite du panneau Skill Book
 		/// (toggle via slash command \c /skills ou touche B). Faux par defaut.
 		bool                                  m_skillBookVisible = false;
+		/// Grimoire (Task 13) — Presenter du panneau Grimoire / Carnet de techniques.
+		/// Reçoit le layout autoritaire via UIModel.actionBarLayout (kind 89 ACK).
+		/// Émet SetActionBarLayout via m_gameplayUdp.SendSetActionBarLayout (kind 88).
+		engine::client::GrimoireUiPresenter   m_grimoireUi;
+		/// Grimoire (Task 13) — Visibilite du panneau Grimoire (toggle touche V
+		/// remappable via controls.keybind.grimoire, ou /grimoire / /sorts). Faux par defaut.
+		bool                                  m_grimoireVisible = false;
+		/// SP-D — Presenter de l'arbre de compétences par-classe.
+		/// Lit ClassSkillCatalog + UIModel.classId/knownSkillIds ; émet SendChooseClassSkill.
+		engine::client::ClassSkillTreeUiPresenter m_classSkillTreeUi;
+		/// SP-D — Visibilité du panneau arbre de compétences (toggle touche Y remappable
+		/// via controls.keybind.skilltree, ou /arbre / /competences). Faux par défaut.
+		bool                                  m_classSkillTreeVisible = false;
+		/// SP-D — Renderer ImGui du panneau arbre de compétences.
+		/// Forward-déclaré dans Engine.h (ClassSkillTreeImGuiRenderer).
+		std::unique_ptr<engine::render::ClassSkillTreeImGuiRenderer> m_classSkillTreeImGui;
+		/// SP-E - Cache d'icones de competences (PNG -> texture ImGui), partage par
+		/// l'arbre, le Grimoire et la barre d'action. Init apres ImGui, Shutdown avant.
+		engine::client::SkillIconCache m_skillIconCache;
 		/// CMANGOS.21 (Phase 5.21 step 3+4) — Presenter de la fenetre Arena.
 		/// Recoit les responses opcodes 121/123/125/128 et les push notifications
 		/// 126/129 via le push handler du master ; fire-and-forget des requetes
@@ -1320,6 +1349,9 @@ namespace engine
 		/// Combat SP3 — binds : touches 1-4 = sorts du kit du profil (slots 1-4).
 		/// Catalogue d'affichage des sorts (même JSON que le serveur, tolérant).
 		engine::client::SpellKitCatalog m_spellCatalog{};
+		/// SP-D — Catalogue client des compétences par-classe (gameplay/class_skills/*.json).
+		/// Politique tolérante : absent/invalide = catalogue vide + LOG_WARN (non bloquant).
+		engine::client::ClassSkillCatalog m_classSkillCatalog{};
 		/// Combat SP3 — BuffBar (M31.2) : auras du joueur et de la cible.
 		engine::client::BuffBarPresenter m_buffBar{};
 		/// Combat SP4 — FX d'auras (couche données ; rendu = halo écran-espace

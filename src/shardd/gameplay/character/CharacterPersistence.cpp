@@ -163,6 +163,27 @@ namespace engine::server
 			}
 		}
 
+		// Grimoire — 10 slots de barre d'action (absent = "" = vide).
+		for (size_t slotIndex = 0; slotIndex < outState.actionBarLayout.size(); ++slotIndex)
+		{
+			outState.actionBarLayout[slotIndex] =
+				persisted.GetString("actionbar.slot." + std::to_string(slotIndex), "");
+		}
+
+	// SP-B — compétences par-classe déjà choisies.
+	outState.knownSkillIds.clear();
+	const uint32_t skillCount = static_cast<uint32_t>(persisted.GetInt("knownskill.count", 0));
+	constexpr uint32_t kMaxKnownSkills = 60;
+	const uint32_t maxSkills = std::min(skillCount, kMaxKnownSkills);
+	for (uint32_t si = 0; si < maxSkills; ++si)
+	{
+		const std::string skillId = persisted.GetString("knownskill." + std::to_string(si), "");
+		if (!skillId.empty())
+		{
+			outState.knownSkillIds.push_back(skillId);
+		}
+	}
+
 	outState.mailboxGold = static_cast<uint32_t>(persisted.GetInt("mailbox.gold", 0));
 	outState.mailboxItems.clear();
 	const uint32_t mailboxItemCount = static_cast<uint32_t>(persisted.GetInt("mailbox.item_count", 0));
@@ -259,6 +280,21 @@ namespace engine::server
 		{
 			output << "chat.ignore." << ignoreIndex << ".name=" << state.chatIgnoredDisplayNames[ignoreIndex] << "\n";
 		}
+
+		// Grimoire — 10 slots de barre d'action (clés fixes, "" = slot vide ;
+		// l'alignement positionnel est conservé, contrairement à chat.ignore).
+		for (size_t slotIndex = 0; slotIndex < state.actionBarLayout.size(); ++slotIndex)
+		{
+			output << "actionbar.slot." << slotIndex << "=" << state.actionBarLayout[slotIndex] << "\n";
+		}
+
+	// SP-B — compétences par-classe déjà choisies (un skill par tier/niveau débloqué).
+	const size_t skillsToSave = std::min<size_t>(state.knownSkillIds.size(), 60u);
+	output << "knownskill.count=" << skillsToSave << "\n";
+	for (size_t si = 0; si < skillsToSave; ++si)
+	{
+		output << "knownskill." << si << "=" << state.knownSkillIds[si] << "\n";
+	}
 
 	output << "mailbox.gold=" << state.mailboxGold << "\n";
 	const size_t mailboxToSave = std::min<size_t>(state.mailboxItems.size(), 64u);

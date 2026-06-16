@@ -306,6 +306,8 @@ add_library(engine_core
   src/client/lfg/LfgUi.cpp
   src/client/cinematics/CinematicUi.cpp
   src/client/skills/SkillBookUi.cpp
+  src/client/grimoire/GrimoireUi.cpp
+  src/client/skills/ClassSkillTreeUi.cpp
   src/client/social/PartyHud.cpp
   src/client/world/ZonePreloadHook.cpp
   src/shared/net/ChatSystem.cpp
@@ -612,6 +614,9 @@ add_library(engine_core
   src/client/render/LfgImGuiRenderer.cpp
   src/client/render/CinematicImGuiRenderer.cpp
   src/client/render/SkillBookImGuiRenderer.cpp
+  src/client/render/GrimoireImGuiRenderer.cpp
+  src/client/render/ClassSkillTreeImGuiRenderer.cpp
+  src/client/render/SkillIconCache.cpp
   src/client/render/EditorHubImGuiRenderer.cpp
   src/client/render/DecalSystem.cpp
   src/client/render/DecalPass.cpp
@@ -678,6 +683,10 @@ add_library(engine_core
   src/client/gameplay/SkillSystem.cpp
   # Combat SP3 — métadonnées d'affichage des kits de sorts (barre d'action).
   src/client/gameplay/SpellKitCatalog.cpp
+  # SP-A — catalogue client tolérant des compétences par-classe.
+  src/client/gameplay/ClassSkillCatalog.cpp
+  # Grimoire — résolveur de layout des 10 slots de barre d'action (fonction pure).
+  src/client/gameplay/ActionBarLayout.cpp
   src/client/gameplay/ClientPrediction.cpp
   src/client/gameplay/StatusEffect.cpp
   src/client/world/WorldModel.cpp

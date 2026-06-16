@@ -56,7 +56,7 @@ namespace engine::server::bg_db
 		/// auto-genere (AUTO_INCREMENT) -- distinct du matchId in-memory
 		/// passe en parametre.
 		///
-		/// \param bgType            type de BG (1=Warsong, 2=Arathi, 3=Alterac).
+		/// \param bgType            type de BG (1=Gorge de Feyhin, 2=Bassin des Ombres, 3=Vallee Gelee).
 		/// \param mapName           nom de la map (UTF-8, <= 64).
 		/// \param allianceScore     score final cote Alliance.
 		/// \param hordeScore        score final cote Horde.

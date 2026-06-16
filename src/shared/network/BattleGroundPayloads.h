@@ -37,7 +37,7 @@ namespace engine::network
 	{
 		Ok               = 0,
 		AlreadyQueued    = 1, ///< Le compte est deja inscrit dans une queue BG.
-		UnknownBg        = 2, ///< bgType inconnu (1=Warsong, 2=Arathi, 3=Alterac V1).
+		UnknownBg        = 2, ///< bgType inconnu (1=Gorge de Feyhin, 2=Bassin des Ombres, 3=Vallee Gelee V1).
 		InvalidFaction   = 3, ///< faction hors {0=Alliance, 1=Horde}.
 		NotInQueue       = 4, ///< Pas inscrit dans une queue BG (LeaveQueue).
 		Unauthorized     = 5, ///< Pas de session valide cote master.

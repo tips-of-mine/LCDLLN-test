@@ -17,14 +17,14 @@
 // error=Unauthorized (code 1) dans la reponse type-specific.
 //
 // Store in-memory V1 (mutex protege) :
-//   - Guild 1 "Les Gardiens" leader=Aragorn motd="Soyez courageux"
-//       members : Aragorn(0/GM, online), Legolas(1/Officer, online),
-//                 Gimli(5/Member, offline), Frodo(9/Initiate, offline)
-//       bank0 : Iron Ore x100, Linen Cloth x250, Mageweave x80,
-//               Health Potion x30, Mana Potion x20
-//   - Guild 2 "L'Ombre" leader=Saruman motd="Le pouvoir est tout"
-//       members : Saruman(0/GM, online), Wormtongue(5/Member, offline)
-//       bank0 : Black Cloth x50, Soul Shard x10
+//   - Guild 1 "Les Gardiens" leader=Garond motd="Soyez courageux"
+//       members : Garond(0/GM, online), Mirelle(1/Officer, online),
+//                 Tobrek(5/Member, offline), Pernel(9/Initiate, offline)
+//       bank0 : Minerai de fer x100, Toile de lin x250, Tissu mage x80,
+//               Potion de soin x30, Potion de mana x20
+//   - Guild 2 "L'Ombre" leader=Sylvane motd="Le pouvoir est tout"
+//       members : Sylvane(0/GM, online), Verlin(5/Member, offline)
+//       bank0 : Toile noire x50, Eclat d'ame x10
 //   - GuildPermissionMatrix : SetupWowDefaults(1) + SetupWowDefaults(2).
 //   - Rank names array : 10 ranks (0=Guild Master ... 9=Initiate).
 //

@@ -1,0 +1,6 @@
+# Git LFS — icônes de compétences par-classe (3780 PNG, ~238 Mo).
+# Scopé UNIQUEMENT à ce dossier pour ne pas migrer les autres PNG du repo
+# (textures, écrans auth…) qui restent versionnés normalement.
+# La CI build-windows fait le checkout avec lfs:true pour empaqueter les vrais
+# fichiers dans l'artefact client.
+game/data/icons/skills/**/*.png filter=lfs diff=lfs merge=lfs -text

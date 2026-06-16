@@ -30,6 +30,7 @@ namespace engine::platform
 		V = 'V',
 		G = 'G',
 		H = 'H',
+		I = 'I',
 		L = 'L',
 		R = 'R',
 		F = 'F',
@@ -64,8 +65,20 @@ namespace engine::platform
 		Down = 0x28,
 		PageUp = 0x21,
 		PageDown = 0x22,
-		// Win32 VK_* codes for function keys (used by hotkeys like fullscreen toggle).
-		F_11 = 0x7Au
+		// Win32 VK_* codes for function keys. F11 = bascule plein écran ; F1-F10 et
+		// F12 servent à ouvrir les panneaux in-game (remappables via controls.keybind.*).
+		F_1  = 0x70u,
+		F_2  = 0x71u,
+		F_3  = 0x72u,
+		F_4  = 0x73u,
+		F_5  = 0x74u,
+		F_6  = 0x75u,
+		F_7  = 0x76u,
+		F_8  = 0x77u,
+		F_9  = 0x78u,
+		F_10 = 0x79u,
+		F_11 = 0x7Au,
+		F_12 = 0x7Bu
 	};
 
 	/// Mouse buttons used by the editor/runtime input system.

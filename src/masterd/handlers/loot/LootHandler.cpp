@@ -20,11 +20,11 @@ namespace engine::server
 		/// Items hardcodes V1 (id 1..5). Adresses stables pour le wire.
 		struct ItemEntry { uint32_t id; const char* name; };
 		const ItemEntry kV1Items[] = {
-			{1u, "Iron Ore"},
-			{2u, "Linen Cloth"},
-			{3u, "Mageweave"},
-			{4u, "Health Potion"},
-			{5u, "Mana Potion"},
+			{1u, "Minerai de fer"},
+			{2u, "Toile de lin"},
+			{3u, "Tissu mage"},
+			{4u, "Potion de soin"},
+			{5u, "Potion de mana"},
 		};
 		constexpr size_t kV1ItemCount = sizeof(kV1Items) / sizeof(kV1Items[0]);
 	}

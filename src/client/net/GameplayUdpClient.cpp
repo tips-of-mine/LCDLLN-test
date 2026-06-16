@@ -318,6 +318,45 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendSetActionBarLayout(uint32_t clientId, const std::array<std::string, 10>& slots)
+	{
+		engine::server::SetActionBarLayoutMessage msg{};
+		msg.clientId = clientId;
+		msg.slots = slots;
+		const std::vector<std::byte> packet = engine::server::EncodeSetActionBarLayout(msg);
+		const bool ok = SendBytes(packet);
+		if (ok)
+		{
+			LOG_DEBUG(Net, "[GameplayUdpClient] SetActionBarLayout sent (client_id={})", clientId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] SetActionBarLayout FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
+	bool GameplayUdpClient::SendChooseClassSkill(uint32_t clientId, uint32_t level, std::string_view skillId)
+	{
+		engine::server::ChooseClassSkillRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.level = level;
+		msg.skillId = std::string(skillId);
+		const std::vector<std::byte> packet = engine::server::EncodeChooseClassSkillRequest(msg);
+		const bool ok = SendBytes(packet);
+		if (ok)
+		{
+			LOG_DEBUG(Net, "[GameplayUdpClient] ChooseClassSkill sent (client_id={}, level={}, skill={})",
+				clientId, level, msg.skillId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] ChooseClassSkill FAILED (client_id={}, level={}, skill={})",
+				clientId, level, msg.skillId);
+		}
+		return ok;
+	}
+
 	bool GameplayUdpClient::SendPartyAccept(uint32_t clientId)
 	{
 		engine::server::PartyAcceptMessage msg{};

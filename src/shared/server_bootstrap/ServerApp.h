@@ -17,6 +17,7 @@
 #include "src/shardd/gameplay/spawner/SpawnerRuntime.h"
 #include "src/shardd/gameplay/creature/CreatureArchetypeLibrary.h"
 #include "src/shardd/gameplay/spell/SpellKitLibrary.h"
+#include "src/shardd/gameplay/spell/ClassSkillLibrary.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/net/ChatSystem.h"
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
@@ -31,6 +32,7 @@
 #include "src/shardd/world/UdpTransport.h"
 #include "src/shardd/world/ZoneTransitions.h"
 
+#include <array>
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
@@ -217,6 +219,10 @@ namespace engine::server
 		uint32_t chatMutedUntilServerTick = 0;
 		/// M36.2: known crafting professions and skill levels.
 		std::vector<ProfessionEntry> professions;
+		/// Grimoire — 10 slots de barre d'action (slot i → spellId, "" = vide).
+		std::array<std::string, 10> actionBarLayout{};
+		/// SP-B — compétences par-classe déjà choisies (un skill par tier/niveau débloqué).
+		std::vector<std::string> knownSkillIds;
 	};
 
 	/// Minimal authoritative mob replicated through the same interest system as players.
@@ -606,6 +612,26 @@ namespace engine::server
 		/// immédiate, sinon cast armé (résolu/annulé par TickActiveCasts).
 		void HandleCastRequest(const Endpoint& endpoint, const CastRequestMessage& message);
 
+		/// Grimoire — réassignation des 10 slots de barre d'action (kind 88).
+		/// Valide chaque spellId contre le kit du profil + unicité ; applique et
+		/// renvoie un ActionBarLayoutUpdate autoritaire. En cas de rejet, renvoie
+		/// le layout inchangé (réconciliation silencieuse côté client).
+		void HandleSetActionBarLayout(const Endpoint& endpoint, const SetActionBarLayoutMessage& message);
+
+		/// Grimoire — pousse le layout courant du client (enter-world ou ACK).
+		/// \return false si l'envoi UDP a échoué.
+		bool SendActionBarLayout(const ConnectedClient& client);
+
+		/// SP-B — pousse l'état autoritaire de progression de classe (classId + skills connus)
+		/// au client (enter-world ou ACK après choix validé).
+		/// \return false si l'envoi UDP a échoué.
+		bool SendClassProgression(const ConnectedClient& client);
+
+		/// SP-B — traite un choix de compétence par-classe (kind 91 ChooseClassSkillRequest).
+		/// Valide le skill via ClassSkillLibrary, l'unicité par tier et le niveau requis.
+		/// En cas de rejet, renvoie l'état inchangé via SendClassProgression.
+		void HandleChooseClassSkill(const Endpoint& endpoint, const ChooseClassSkillRequestMessage& message);
+
 		/// Combat SP3 — avance les casts en cours (annulation mort/déplacement,
 		/// résolution à l'échéance). Appelée depuis Simulate.
 		void TickActiveCasts();
@@ -617,6 +643,18 @@ namespace engine::server
 		/// Combat SP3 — applique tous les effets d'un sort validé (débit ressource,
 		/// cooldown, dégâts/soins/auras/menace) et émet les messages associés.
 		void ResolveSpellCast(ConnectedClient& client, const SpellDef& spell, EntityId targetEntityId);
+
+		/// SP-C — résout un cast validé par compétence de classe (chemin additif, jamais
+		/// appelé si le fallback kit profil SP3 s'applique). Effets :
+		///   Damage/SingleEnemy → DirectDamage × powerValue via ResolveAttackRoll/ApplyPlayerDamageToMob.
+		///   Damage/AreaAroundSelf → même chose sur tous les mobs dans areaRadiusMeters.
+		///   Heal/SingleAlly → soin direct × powerValue × damagePerHit (chemin DirectHeal SP3).
+		///   Defense → aura DamageReductionPercent 8 s sur le casteur (percent clampé [5,50]).
+		/// Débite la ressource, arme le cooldown, émet SendResourceUpdate et les CombatEvents.
+		/// \param client         Casteur autoritaire (non mort, ressource vérifiée avant appel).
+		/// \param cs             Définition immuable du skill (ptr non nul garanti par l'appelant).
+		/// \param targetEntityId Entité résolue par HandleCastRequest (0 = AoE/soi).
+		void ResolveClassSkillCast(ConnectedClient& client, const ClassSkillDef& cs, EntityId targetEntityId);
 
 		/// Combat SP2/SP3 — applique des dégâts (déjà jetés/multipliés) d'un joueur
 		/// sur un mob : PV, événement dynamique, mort/loot/XP, CombatEvent broadcast.
@@ -1014,6 +1052,8 @@ namespace engine::server
 		CreatureArchetypeLibrary m_archetypeLibrary;
 		/// Combat SP3 — kits de sorts par profil (gameplay/spells/*.json), strict.
 		SpellKitLibrary m_spellKits;
+		/// SP-B — bibliothèque des compétences par-classe (gameplay/class_skills/*.json), stricte.
+		ClassSkillLibrary m_classSkills;
 		/// Combat SP2 — RNG des jets d'attaque (précision/critique), seedé au
 		/// constructeur. Main thread du tick monde uniquement (pas de verrou).
 		std::mt19937 m_combatRng;

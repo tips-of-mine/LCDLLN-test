@@ -615,6 +615,11 @@ namespace engine::client
 			return ApplyResourceUpdate(packet);
 		case engine::server::MessageKind::CastBarUpdate:
 			return ApplyCastBarUpdate(packet);
+		case engine::server::MessageKind::ActionBarLayoutUpdate:
+			return ApplyActionBarLayoutUpdate(packet);
+		// SP-B — progression par-classe (kind 90, shard → client).
+		case engine::server::MessageKind::ClassProgressionUpdate:
+			return ApplyClassProgressionUpdate(packet);
 		case engine::server::MessageKind::AuraUpdate:
 			return ApplyAuraUpdate(packet);
 		case engine::server::MessageKind::ThreatUpdate:
@@ -943,6 +948,37 @@ namespace engine::client
 			m_model.castBar = UICastBarState{};
 		}
 		NotifyObservers(UIModelChangeCombat);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyActionBarLayoutUpdate(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeActionBarLayoutUpdate(packet, m_actionBarLayoutMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] ActionBarLayoutUpdate FAILED: decode error");
+			return false;
+		}
+		m_model.playerStats.actionBarLayout = m_actionBarLayoutMessage.slots;
+		LOG_INFO(Net, "[UIModelBinding] ActionBarLayoutUpdate applied (client_id={})",
+			m_actionBarLayoutMessage.clientId);
+		NotifyObservers(UIModelChangeStats);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyClassProgressionUpdate(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeClassProgressionUpdate(packet, m_classProgressionMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] ClassProgressionUpdate FAILED: decode error");
+			return false;
+		}
+		m_model.classId = m_classProgressionMessage.classId;
+		m_model.knownSkillIds = m_classProgressionMessage.knownSkillIds;
+		LOG_INFO(Net, "[UIModelBinding] ClassProgressionUpdate applied (client_id={}, class='{}', known={})",
+			m_classProgressionMessage.clientId,
+			m_classProgressionMessage.classId,
+			m_classProgressionMessage.knownSkillIds.size());
+		NotifyObservers(UIModelChangeStats);
 		return true;
 	}
 
@@ -1505,12 +1541,13 @@ namespace engine::client
 		m_model.playerStats.secondaryResourceCurrent = m_playerStatsScratch.resource;
 
 		LOG_INFO(Net,
-			"[UIModelBinding] PlayerStats applied (client_id={}, max_health={}, resource={}, stamina={}, damage={})",
+			"[UIModelBinding] PlayerStats applied (client_id={}, max_health={}, resource={}, stamina={}, damage={}, profile='{}')",
 			m_playerStatsScratch.clientId,
 			m_playerStatsScratch.maxHealth,
 			m_playerStatsScratch.resource,
 			m_playerStatsScratch.stamina,
-			m_playerStatsScratch.damage);
+			m_playerStatsScratch.damage,
+			m_playerStatsScratch.profileId.empty() ? "<none>" : m_playerStatsScratch.profileId.c_str());
 
 		NotifyObservers(UIModelChangeStats);
 		return true;

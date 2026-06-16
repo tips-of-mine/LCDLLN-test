@@ -40,7 +40,7 @@ namespace engine::server::outdoorpvp
 		/// + scores actuels lors d'une ZoneListRequest. La structure exposee
 		/// reste const : aucune mutation ne doit passer par ce getter.
 		///
-		/// \param zid identifiant de la zone (1 = Hellfire, 2 = Eastern Plaguelands V1).
+		/// \param zid identifiant de la zone (1 = Peninsule Ardente, 2 = Terres Maudites de l'Est V1).
 		/// \return pointeur const sur la Zone, ou nullptr si \p zid inconnu.
 		const Zone* GetZone(ZoneId zid) const
 		{

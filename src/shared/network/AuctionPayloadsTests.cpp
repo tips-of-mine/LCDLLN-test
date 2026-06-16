@@ -72,11 +72,11 @@ static void TestListResponseSingle()
 	AuctionListingSummary s;
 	s.auctionId              = 7ull;
 	s.itemTemplateId         = 1u;
-	s.itemName               = "Iron Ore";
+	s.itemName               = "Minerai de fer";
 	s.count                  = 20u;
 	s.currentBidCopper       = 500ull;
 	s.buyoutCopper           = 1000ull;
-	s.ownerName              = "Aragorn";
+	s.ownerName              = "Garond";
 	s.secondsUntilExpiration = 3600ull;
 	auto buf = BuildAuctionListResponsePayload(0u, {s});
 	auto parsed = ParseAuctionListResponsePayload(buf.data(), buf.size());
@@ -85,11 +85,11 @@ static void TestListResponseSingle()
 	{
 		Assert(parsed->listings[0].auctionId == 7ull,           "List[0] auctionId");
 		Assert(parsed->listings[0].itemTemplateId == 1u,        "List[0] itemTemplateId");
-		Assert(parsed->listings[0].itemName == "Iron Ore",      "List[0] itemName");
+		Assert(parsed->listings[0].itemName == "Minerai de fer", "List[0] itemName");
 		Assert(parsed->listings[0].count == 20u,                "List[0] count");
 		Assert(parsed->listings[0].currentBidCopper == 500ull,  "List[0] currentBid");
 		Assert(parsed->listings[0].buyoutCopper == 1000ull,     "List[0] buyout");
-		Assert(parsed->listings[0].ownerName == "Aragorn",      "List[0] ownerName");
+		Assert(parsed->listings[0].ownerName == "Garond",       "List[0] ownerName");
 		Assert(parsed->listings[0].secondsUntilExpiration == 3600ull, "List[0] secondsUntil");
 	}
 	else
@@ -168,7 +168,7 @@ static void TestListResponsePacket()
 	AuctionListingSummary s;
 	s.auctionId = 42ull;
 	s.itemTemplateId = 5u;
-	s.itemName = "Mana Potion";
+	s.itemName = "Potion de mana";
 	s.count = 5u;
 	s.currentBidCopper = 250ull;
 	s.buyoutCopper = 500ull;
@@ -380,7 +380,7 @@ static void TestCancelResponsePacket()
 
 static void TestExpiredNotifWonRoundTrip()
 {
-	auto buf = BuildAuctionExpiredNotificationPayload(7ull, 1u, 1500ull, "Aragorn");
+	auto buf = BuildAuctionExpiredNotificationPayload(7ull, 1u, 1500ull, "Garond");
 	auto parsed = ParseAuctionExpiredNotificationPayload(buf.data(), buf.size());
 	Assert(parsed.has_value(), "ExpiredNotif won parses");
 	if (parsed)
@@ -388,7 +388,7 @@ static void TestExpiredNotifWonRoundTrip()
 		Assert(parsed->auctionId == 7ull, "ExpiredNotif auctionId");
 		Assert(parsed->won == 1u, "ExpiredNotif won=1");
 		Assert(parsed->finalBidCopper == 1500ull, "ExpiredNotif finalBid");
-		Assert(parsed->winnerName == "Aragorn", "ExpiredNotif winnerName");
+		Assert(parsed->winnerName == "Garond", "ExpiredNotif winnerName");
 	}
 }
 
@@ -413,7 +413,7 @@ static void TestExpiredNotifRejectsShort()
 
 static void TestExpiredNotifPacket()
 {
-	auto pkt = BuildAuctionExpiredNotificationPacket(123ull, 1u, 9999ull, "Saruman", 0xFADEull);
+	auto pkt = BuildAuctionExpiredNotificationPacket(123ull, 1u, 9999ull, "Sylvane", 0xFADEull);
 	Assert(!pkt.empty(), "ExpiredNotif packet built");
 	PacketView view;
 	Assert(PacketView::Parse(pkt.data(), pkt.size(), view) == PacketParseResult::Ok,
@@ -423,7 +423,7 @@ static void TestExpiredNotifPacket()
 	Assert(view.SessionId() == 0xFADEull, "ExpiredNotif SessionId preserved");
 	auto parsed = ParseAuctionExpiredNotificationPayload(view.Payload(), view.PayloadSize());
 	Assert(parsed.has_value() && parsed->auctionId == 123ull
-		&& parsed->winnerName == "Saruman",
+		&& parsed->winnerName == "Sylvane",
 		"ExpiredNotif payload decodes");
 }
 

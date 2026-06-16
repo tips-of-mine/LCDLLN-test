@@ -76,7 +76,7 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
-		if (ImGui::Begin("Loot Roll (L)##ln_loot_panel", nullptr, flags))
+		if (ImGui::Begin("Tirage de butin (F7)##ln_loot_panel", nullptr, flags))
 		{
 			// Erreur transitoire (rouge).
 			if (!state.lastErrorText.empty())
@@ -97,9 +97,9 @@ namespace engine::render
 
 			// Top : bouton Simulate (V1 debug).
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.95f, 0.85f, 0.45f, 1.f));
-			ImGui::TextUnformatted("DEBUG (V1) :");
+			ImGui::TextUnformatted("DEBOGAGE (V1) :");
 			ImGui::PopStyleColor();
-			if (ImGui::Button("Simulate Loot Roll", ImVec2(-FLT_MIN, 28.f)))
+			if (ImGui::Button("Simuler un tirage", ImVec2(-FLT_MIN, 28.f)))
 			{
 				m_presenter->SimulateRoll();
 			}
@@ -110,7 +110,7 @@ namespace engine::render
 			if (state.pendingRolls.empty())
 			{
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.7f, 0.7f, 1.f));
-				ImGui::TextWrapped("Aucune roll en attente.");
+				ImGui::TextWrapped("Aucun tirage en attente.");
 				ImGui::PopStyleColor();
 			}
 			else
@@ -135,7 +135,7 @@ namespace engine::render
 						if (p.expiresAtMs > now)
 							remainMs = p.expiresAtMs - now;
 						const uint64_t remainSec = remainMs / 1000ull;
-						ImGui::Text("Time left: %us", static_cast<unsigned>(remainSec));
+						ImGui::Text("Temps restant : %us", static_cast<unsigned>(remainSec));
 
 						// Boutons Need/Greed/Pass (grises si myChoice set).
 						const bool clicked = p.myChoice.has_value();
@@ -151,21 +151,21 @@ namespace engine::render
 							// Need (violet).
 							ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.45f, 0.20f, 0.55f, 1.f));
 							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.55f, 0.30f, 0.65f, 1.f));
-							if (ImGui::Button("Need", ImVec2(120.f, 26.f)))
+							if (ImGui::Button("Besoin", ImVec2(120.f, 26.f)))
 								m_presenter->Choose(p.rollId, 2u);
 							ImGui::PopStyleColor(2);
 							ImGui::SameLine();
 							// Greed (vert).
 							ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.20f, 0.55f, 0.20f, 1.f));
 							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.30f, 0.65f, 0.30f, 1.f));
-							if (ImGui::Button("Greed", ImVec2(120.f, 26.f)))
+							if (ImGui::Button("Cupidite", ImVec2(120.f, 26.f)))
 								m_presenter->Choose(p.rollId, 1u);
 							ImGui::PopStyleColor(2);
 							ImGui::SameLine();
 							// Pass (gris).
 							ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.40f, 0.40f, 0.45f, 1.f));
 							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.50f, 0.50f, 0.55f, 1.f));
-							if (ImGui::Button("Pass", ImVec2(120.f, 26.f)))
+							if (ImGui::Button("Passer", ImVec2(120.f, 26.f)))
 								m_presenter->Choose(p.rollId, 0u);
 							ImGui::PopStyleColor(2);
 						}

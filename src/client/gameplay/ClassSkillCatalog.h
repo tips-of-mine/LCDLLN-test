@@ -29,13 +29,18 @@ namespace engine::client
 		uint32_t cooldownMs = 0;
 		uint32_t resourceCostPercent = 0;
 		std::string description;
+		/// Nom de fichier d'icône (relatif à icons/skills/<classId>/), "" si aucun.
+		/// Le client construit le chemin complet et retombe sur le texte si absent.
+		std::string iconFile;
 	};
 
 	/// SP-C — convertit une compétence de classe en SpellDisplay pour alimenter
 	/// la barre d'action et le Grimoire. slot est mis à 1 (sera résolu par
 	/// ResolveActionBarLayout) ; needsEnemyTarget et targetsAlly sont déduits du
-	/// champ target.
-	SpellDisplay ToSpellDisplay(const ClassSkillDisplay& s);
+	/// champ target. \p classId sert à construire iconPath
+	/// ("icons/skills/<classId>/<iconFile>") ; iconPath reste "" si la compétence
+	/// n'a pas d'icône ou si classId est vide.
+	SpellDisplay ToSpellDisplay(const ClassSkillDisplay& s, std::string_view classId);
 
 	/// SP-A — catalogue client des compétences par-classe (mêmes fichiers
 	/// `gameplay/class_skills/*.json`). Politique TOLÉRANTE : fichier absent/invalide

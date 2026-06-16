@@ -16,7 +16,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Tempete de Mana : aneantit une large zone (degats reduits)."
+                       "description":  "Tempete de Mana : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv01_Tempete-de-Mana.png"
                    },
                    {
                        "id":  "archimage_def_t1",
@@ -32,7 +33,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Bouclier Superieur : manipule l'arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv01_Bouclier-Superieur.png"
                    },
                    {
                        "id":  "archimage_single_t1",
@@ -48,7 +50,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Rayon Annihilateur : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Rayon Annihilateur : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv01_Rayon-Annihilateur.png"
                    },
                    {
                        "id":  "archimage_aoe_t2",
@@ -64,7 +67,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Pluie de Flammes  Aiguise : aneantit une large zone (degats reduits)."
+                       "description":  "Pluie de Flammes  Aiguise : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv02_Pluie-de-Flammes-Aiguise.png"
                    },
                    {
                        "id":  "archimage_def_t2",
@@ -80,7 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Deviation  Aiguise : manipule l'arcane pour annuler les degats."
+                       "description":  "Deviation  Aiguise : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv02_Deviation-Aiguise.png"
                    },
                    {
                        "id":  "archimage_single_t2",
@@ -96,7 +101,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Lance Draconique  Aiguise : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Lance Draconique  Aiguise : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv02_Lance-Draconique-Aiguise.png"
                    },
                    {
                        "id":  "archimage_aoe_t3",
@@ -112,7 +118,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Vortex  Renforce : aneantit une large zone (degats reduits)."
+                       "description":  "Vortex  Renforce : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv03_Vortex-Renforce.png"
                    },
                    {
                        "id":  "archimage_def_t3",
@@ -128,7 +135,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Clignement Arcanique  Renforce : manipule l'arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Renforce : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv03_Clignement-Arcanique-Renforce.png"
                    },
                    {
                        "id":  "archimage_single_t3",
@@ -144,7 +152,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Trait du Neant  Renforce : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Trait du Neant  Renforce : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv03_Trait-du-Neant-Renforce.png"
                    },
                    {
                        "id":  "archimage_aoe_t4",
@@ -160,7 +169,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Nova Supreme  Affute : aneantit une large zone (degats reduits)."
+                       "description":  "Nova Supreme  Affute : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv04_Nova-Supreme-Affute.png"
                    },
                    {
                        "id":  "archimage_def_t4",
@@ -176,7 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Egide de Mana  Affute : manipule l'arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Affute : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv04_Egide-de-Mana-Affute.png"
                    },
                    {
                        "id":  "archimage_single_t4",
@@ -192,7 +203,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Foudre Supreme  Affute : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Foudre Supreme  Affute : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv04_Foudre-Supreme-Affute.png"
                    },
                    {
                        "id":  "archimage_aoe_t5",
@@ -208,7 +220,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Effondrement  Brutal : aneantit une large zone (degats reduits)."
+                       "description":  "Effondrement  Brutal : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv05_Effondrement-Brutal.png"
                    },
                    {
                        "id":  "archimage_def_t5",
@@ -224,7 +237,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Inversion de Sort  Brutal : manipule l'arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Brutal : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv05_Inversion-de-Sort-Brutal.png"
                    },
                    {
                        "id":  "archimage_single_t5",
@@ -240,7 +254,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Flamme Concentree  Brutal : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Flamme Concentree  Brutal : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv05_Flamme-Concentree-Brutal.png"
                    },
                    {
                        "id":  "archimage_aoe_t6",
@@ -256,7 +271,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Fin de Toute Chose  Vorace : aneantit une large zone (degats reduits)."
+                       "description":  "Fin de Toute Chose  Vorace : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv06_Fin-de-Toute-Chose-Vorace.png"
                    },
                    {
                        "id":  "archimage_def_t6",
@@ -272,7 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Forme Etheree  Vorace : manipule l'arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Vorace : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv06_Forme-Etheree-Vorace.png"
                    },
                    {
                        "id":  "archimage_single_t6",
@@ -288,7 +305,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Mot de Mort  Vorace : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Mot de Mort  Vorace : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv06_Mot-de-Mort-Vorace.png"
                    },
                    {
                        "id":  "archimage_aoe_t7",
@@ -304,7 +322,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Tempete de Mana  Implacable : aneantit une large zone (degats reduits)."
+                       "description":  "Tempete de Mana  Implacable : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv07_Tempete-de-Mana-Implacable.png"
                    },
                    {
                        "id":  "archimage_def_t7",
@@ -320,7 +339,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Bouclier Superieur  Implacable : manipule l'arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Implacable : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv07_Bouclier-Superieur-Implacable.png"
                    },
                    {
                        "id":  "archimage_single_t7",
@@ -336,7 +356,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Rayon Annihilateur  Implacable : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Rayon Annihilateur  Implacable : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv07_Rayon-Annihilateur-Implacable.png"
                    },
                    {
                        "id":  "archimage_aoe_t8",
@@ -352,7 +373,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Pluie de Flammes  Funeste : aneantit une large zone (degats reduits)."
+                       "description":  "Pluie de Flammes  Funeste : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv08_Pluie-de-Flammes-Funeste.png"
                    },
                    {
                        "id":  "archimage_def_t8",
@@ -368,7 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Deviation  Funeste : manipule l'arcane pour annuler les degats."
+                       "description":  "Deviation  Funeste : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv08_Deviation-Funeste.png"
                    },
                    {
                        "id":  "archimage_single_t8",
@@ -384,7 +407,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Lance Draconique  Funeste : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Lance Draconique  Funeste : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv08_Lance-Draconique-Funeste.png"
                    },
                    {
                        "id":  "archimage_aoe_t9",
@@ -400,7 +424,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Vortex  Cruel : aneantit une large zone (degats reduits)."
+                       "description":  "Vortex  Cruel : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv09_Vortex-Cruel.png"
                    },
                    {
                        "id":  "archimage_def_t9",
@@ -416,7 +441,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Clignement Arcanique  Cruel : manipule l'arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Cruel : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv09_Clignement-Arcanique-Cruel.png"
                    },
                    {
                        "id":  "archimage_single_t9",
@@ -432,7 +458,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Trait du Neant  Cruel : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Trait du Neant  Cruel : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv09_Trait-du-Neant-Cruel.png"
                    },
                    {
                        "id":  "archimage_aoe_t10",
@@ -448,7 +475,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Nova Supreme  Sanglant : aneantit une large zone (degats reduits)."
+                       "description":  "Nova Supreme  Sanglant : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv10_Nova-Supreme-Sanglant.png"
                    },
                    {
                        "id":  "archimage_def_t10",
@@ -464,7 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Egide de Mana  Sanglant : manipule l'arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Sanglant : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv10_Egide-de-Mana-Sanglant.png"
                    },
                    {
                        "id":  "archimage_single_t10",
@@ -480,7 +509,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Foudre Supreme  Sanglant : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Foudre Supreme  Sanglant : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv10_Foudre-Supreme-Sanglant.png"
                    },
                    {
                        "id":  "archimage_aoe_t11",
@@ -496,7 +526,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Effondrement  Devastateur : aneantit une large zone (degats reduits)."
+                       "description":  "Effondrement  Devastateur : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv11_Effondrement-Devastateur.png"
                    },
                    {
                        "id":  "archimage_def_t11",
@@ -512,7 +543,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Inversion de Sort  Devastateur : manipule l'arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Devastateur : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv11_Inversion-de-Sort-Devastateur.png"
                    },
                    {
                        "id":  "archimage_single_t11",
@@ -528,7 +560,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Flamme Concentree  Devastateur : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Flamme Concentree  Devastateur : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv11_Flamme-Concentree-Devastateur.png"
                    },
                    {
                        "id":  "archimage_aoe_t12",
@@ -544,7 +577,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Fin de Toute Chose  Foudroyant : aneantit une large zone (degats reduits)."
+                       "description":  "Fin de Toute Chose  Foudroyant : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv12_Fin-de-Toute-Chose-Foudroyant.png"
                    },
                    {
                        "id":  "archimage_def_t12",
@@ -560,7 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Forme Etheree  Foudroyant : manipule l'arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Foudroyant : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv12_Forme-Etheree-Foudroyant.png"
                    },
                    {
                        "id":  "archimage_single_t12",
@@ -576,7 +611,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Mot de Mort  Foudroyant : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Mot de Mort  Foudroyant : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv12_Mot-de-Mort-Foudroyant.png"
                    },
                    {
                        "id":  "archimage_aoe_t13",
@@ -592,7 +628,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Tempete de Mana  Mortel : aneantit une large zone (degats reduits)."
+                       "description":  "Tempete de Mana  Mortel : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv13_Tempete-de-Mana-Mortel.png"
                    },
                    {
                        "id":  "archimage_def_t13",
@@ -608,7 +645,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Bouclier Superieur  Mortel : manipule l'arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Mortel : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv13_Bouclier-Superieur-Mortel.png"
                    },
                    {
                        "id":  "archimage_single_t13",
@@ -624,7 +662,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Rayon Annihilateur  Mortel : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Rayon Annihilateur  Mortel : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv13_Rayon-Annihilateur-Mortel.png"
                    },
                    {
                        "id":  "archimage_aoe_t14",
@@ -640,7 +679,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Pluie de Flammes  Inexorable : aneantit une large zone (degats reduits)."
+                       "description":  "Pluie de Flammes  Inexorable : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv14_Pluie-de-Flammes-Inexorable.png"
                    },
                    {
                        "id":  "archimage_def_t14",
@@ -656,7 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Deviation  Inexorable : manipule l'arcane pour annuler les degats."
+                       "description":  "Deviation  Inexorable : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv14_Deviation-Inexorable.png"
                    },
                    {
                        "id":  "archimage_single_t14",
@@ -672,7 +713,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Lance Draconique  Inexorable : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Lance Draconique  Inexorable : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv14_Lance-Draconique-Inexorable.png"
                    },
                    {
                        "id":  "archimage_aoe_t15",
@@ -688,7 +730,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Vortex  Terrible : aneantit une large zone (degats reduits)."
+                       "description":  "Vortex  Terrible : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv15_Vortex-Terrible.png"
                    },
                    {
                        "id":  "archimage_def_t15",
@@ -704,7 +747,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Clignement Arcanique  Terrible : manipule l'arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Terrible : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv15_Clignement-Arcanique-Terrible.png"
                    },
                    {
                        "id":  "archimage_single_t15",
@@ -720,7 +764,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Trait du Neant  Terrible : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Trait du Neant  Terrible : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv15_Trait-du-Neant-Terrible.png"
                    },
                    {
                        "id":  "archimage_aoe_t16",
@@ -736,7 +781,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Nova Supreme  Souverain : aneantit une large zone (degats reduits)."
+                       "description":  "Nova Supreme  Souverain : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv16_Nova-Supreme-Souverain.png"
                    },
                    {
                        "id":  "archimage_def_t16",
@@ -752,7 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Egide de Mana  Souverain : manipule l'arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Souverain : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv16_Egide-de-Mana-Souverain.png"
                    },
                    {
                        "id":  "archimage_single_t16",
@@ -768,7 +815,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Foudre Supreme  Souverain : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Foudre Supreme  Souverain : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv16_Foudre-Supreme-Souverain.png"
                    },
                    {
                        "id":  "archimage_aoe_t17",
@@ -784,7 +832,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Effondrement  Legendaire : aneantit une large zone (degats reduits)."
+                       "description":  "Effondrement  Legendaire : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv17_Effondrement-Legendaire.png"
                    },
                    {
                        "id":  "archimage_def_t17",
@@ -800,7 +849,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Inversion de Sort  Legendaire : manipule l'arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Legendaire : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv17_Inversion-de-Sort-Legendaire.png"
                    },
                    {
                        "id":  "archimage_single_t17",
@@ -816,7 +866,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Flamme Concentree  Legendaire : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Flamme Concentree  Legendaire : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv17_Flamme-Concentree-Legendaire.png"
                    },
                    {
                        "id":  "archimage_aoe_t18",
@@ -832,7 +883,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Fin de Toute Chose  Cataclysmique : aneantit une large zone (degats reduits)."
+                       "description":  "Fin de Toute Chose  Cataclysmique : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv18_Fin-de-Toute-Chose-Cataclysmique.png"
                    },
                    {
                        "id":  "archimage_def_t18",
@@ -848,7 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Forme Etheree  Cataclysmique : manipule l'arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Cataclysmique : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv18_Forme-Etheree-Cataclysmique.png"
                    },
                    {
                        "id":  "archimage_single_t18",
@@ -864,7 +917,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Mot de Mort  Cataclysmique : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Mot de Mort  Cataclysmique : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv18_Mot-de-Mort-Cataclysmique.png"
                    },
                    {
                        "id":  "archimage_aoe_t19",
@@ -880,7 +934,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Tempete de Mana  Apocalyptique : aneantit une large zone (degats reduits)."
+                       "description":  "Tempete de Mana  Apocalyptique : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv19_Tempete-de-Mana-Apocalyptique.png"
                    },
                    {
                        "id":  "archimage_def_t19",
@@ -896,7 +951,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Bouclier Superieur  Apocalyptique : manipule l'arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Apocalyptique : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv19_Bouclier-Superieur-Apocalyptique.png"
                    },
                    {
                        "id":  "archimage_single_t19",
@@ -912,7 +968,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Rayon Annihilateur  Apocalyptique : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Rayon Annihilateur  Apocalyptique : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv19_Rayon-Annihilateur-Apocalyptique.png"
                    },
                    {
                        "id":  "archimage_aoe_t20",
@@ -928,7 +985,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Pluie de Flammes  Ultime : aneantit une large zone (degats reduits)."
+                       "description":  "Pluie de Flammes  Ultime : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv20_Pluie-de-Flammes-Ultime.png"
                    },
                    {
                        "id":  "archimage_def_t20",
@@ -944,7 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Deviation  Ultime : manipule l'arcane pour annuler les degats."
+                       "description":  "Deviation  Ultime : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv20_Deviation-Ultime.png"
                    },
                    {
                        "id":  "archimage_single_t20",
@@ -960,7 +1019,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Lance Draconique  Ultime : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Lance Draconique  Ultime : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv20_Lance-Draconique-Ultime.png"
                    },
                    {
                        "id":  "archimage_aoe_t21",
@@ -976,7 +1036,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Vortex  Maitrise 21 : aneantit une large zone (degats reduits)."
+                       "description":  "Vortex  Maitrise 21 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv21_Vortex-Maitrise-21.png"
                    },
                    {
                        "id":  "archimage_def_t21",
@@ -992,7 +1053,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Clignement Arcanique  Maitrise 21 : manipule l'arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 21 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv21_Clignement-Arcanique-Maitrise-21.png"
                    },
                    {
                        "id":  "archimage_single_t21",
@@ -1008,7 +1070,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Trait du Neant  Maitrise 21 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Trait du Neant  Maitrise 21 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv21_Trait-du-Neant-Maitrise-21.png"
                    },
                    {
                        "id":  "archimage_aoe_t22",
@@ -1024,7 +1087,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Nova Supreme  Maitrise 22 : aneantit une large zone (degats reduits)."
+                       "description":  "Nova Supreme  Maitrise 22 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv22_Nova-Supreme-Maitrise-22.png"
                    },
                    {
                        "id":  "archimage_def_t22",
@@ -1040,7 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Egide de Mana  Maitrise 22 : manipule l'arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 22 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv22_Egide-de-Mana-Maitrise-22.png"
                    },
                    {
                        "id":  "archimage_single_t22",
@@ -1056,7 +1121,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Foudre Supreme  Maitrise 22 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Foudre Supreme  Maitrise 22 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv22_Foudre-Supreme-Maitrise-22.png"
                    },
                    {
                        "id":  "archimage_aoe_t23",
@@ -1072,7 +1138,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Effondrement  Maitrise 23 : aneantit une large zone (degats reduits)."
+                       "description":  "Effondrement  Maitrise 23 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv23_Effondrement-Maitrise-23.png"
                    },
                    {
                        "id":  "archimage_def_t23",
@@ -1088,7 +1155,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Inversion de Sort  Maitrise 23 : manipule l'arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 23 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv23_Inversion-de-Sort-Maitrise-23.png"
                    },
                    {
                        "id":  "archimage_single_t23",
@@ -1104,7 +1172,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Flamme Concentree  Maitrise 23 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Flamme Concentree  Maitrise 23 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv23_Flamme-Concentree-Maitrise-23.png"
                    },
                    {
                        "id":  "archimage_aoe_t24",
@@ -1120,7 +1189,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Fin de Toute Chose  Maitrise 24 : aneantit une large zone (degats reduits)."
+                       "description":  "Fin de Toute Chose  Maitrise 24 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv24_Fin-de-Toute-Chose-Maitrise-24.png"
                    },
                    {
                        "id":  "archimage_def_t24",
@@ -1136,7 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Forme Etheree  Maitrise 24 : manipule l'arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 24 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv24_Forme-Etheree-Maitrise-24.png"
                    },
                    {
                        "id":  "archimage_single_t24",
@@ -1152,7 +1223,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Mot de Mort  Maitrise 24 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Mot de Mort  Maitrise 24 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv24_Mot-de-Mort-Maitrise-24.png"
                    },
                    {
                        "id":  "archimage_aoe_t25",
@@ -1168,7 +1240,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Tempete de Mana  Maitrise 25 : aneantit une large zone (degats reduits)."
+                       "description":  "Tempete de Mana  Maitrise 25 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv25_Tempete-de-Mana-Maitrise-25.png"
                    },
                    {
                        "id":  "archimage_def_t25",
@@ -1184,7 +1257,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Bouclier Superieur  Maitrise 25 : manipule l'arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Maitrise 25 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv25_Bouclier-Superieur-Maitrise-25.png"
                    },
                    {
                        "id":  "archimage_single_t25",
@@ -1200,7 +1274,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Rayon Annihilateur  Maitrise 25 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Rayon Annihilateur  Maitrise 25 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv25_Rayon-Annihilateur-Maitrise-25.png"
                    },
                    {
                        "id":  "archimage_aoe_t26",
@@ -1216,7 +1291,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Pluie de Flammes  Maitrise 26 : aneantit une large zone (degats reduits)."
+                       "description":  "Pluie de Flammes  Maitrise 26 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv26_Pluie-de-Flammes-Maitrise-26.png"
                    },
                    {
                        "id":  "archimage_def_t26",
@@ -1232,7 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Deviation  Maitrise 26 : manipule l'arcane pour annuler les degats."
+                       "description":  "Deviation  Maitrise 26 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv26_Deviation-Maitrise-26.png"
                    },
                    {
                        "id":  "archimage_single_t26",
@@ -1248,7 +1325,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Lance Draconique  Maitrise 26 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Lance Draconique  Maitrise 26 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv26_Lance-Draconique-Maitrise-26.png"
                    },
                    {
                        "id":  "archimage_aoe_t27",
@@ -1264,7 +1342,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Vortex  Maitrise 27 : aneantit une large zone (degats reduits)."
+                       "description":  "Vortex  Maitrise 27 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv27_Vortex-Maitrise-27.png"
                    },
                    {
                        "id":  "archimage_def_t27",
@@ -1280,7 +1359,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Clignement Arcanique  Maitrise 27 : manipule l'arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 27 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv27_Clignement-Arcanique-Maitrise-27.png"
                    },
                    {
                        "id":  "archimage_single_t27",
@@ -1296,7 +1376,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Trait du Neant  Maitrise 27 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Trait du Neant  Maitrise 27 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv27_Trait-du-Neant-Maitrise-27.png"
                    },
                    {
                        "id":  "archimage_aoe_t28",
@@ -1312,7 +1393,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Nova Supreme  Maitrise 28 : aneantit une large zone (degats reduits)."
+                       "description":  "Nova Supreme  Maitrise 28 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv28_Nova-Supreme-Maitrise-28.png"
                    },
                    {
                        "id":  "archimage_def_t28",
@@ -1328,7 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Egide de Mana  Maitrise 28 : manipule l'arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 28 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv28_Egide-de-Mana-Maitrise-28.png"
                    },
                    {
                        "id":  "archimage_single_t28",
@@ -1344,7 +1427,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Foudre Supreme  Maitrise 28 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Foudre Supreme  Maitrise 28 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv28_Foudre-Supreme-Maitrise-28.png"
                    },
                    {
                        "id":  "archimage_aoe_t29",
@@ -1360,7 +1444,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Effondrement  Maitrise 29 : aneantit une large zone (degats reduits)."
+                       "description":  "Effondrement  Maitrise 29 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv29_Effondrement-Maitrise-29.png"
                    },
                    {
                        "id":  "archimage_def_t29",
@@ -1376,7 +1461,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Inversion de Sort  Maitrise 29 : manipule l'arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 29 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv29_Inversion-de-Sort-Maitrise-29.png"
                    },
                    {
                        "id":  "archimage_single_t29",
@@ -1392,7 +1478,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Flamme Concentree  Maitrise 29 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Flamme Concentree  Maitrise 29 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv29_Flamme-Concentree-Maitrise-29.png"
                    },
                    {
                        "id":  "archimage_aoe_t30",
@@ -1408,7 +1495,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Fin de Toute Chose  Maitrise 30 : aneantit une large zone (degats reduits)."
+                       "description":  "Fin de Toute Chose  Maitrise 30 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv30_Fin-de-Toute-Chose-Maitrise-30.png"
                    },
                    {
                        "id":  "archimage_def_t30",
@@ -1424,7 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Forme Etheree  Maitrise 30 : manipule l'arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 30 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv30_Forme-Etheree-Maitrise-30.png"
                    },
                    {
                        "id":  "archimage_single_t30",
@@ -1440,7 +1529,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Mot de Mort  Maitrise 30 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Mot de Mort  Maitrise 30 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv30_Mot-de-Mort-Maitrise-30.png"
                    },
                    {
                        "id":  "archimage_aoe_t31",
@@ -1456,7 +1546,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Tempete de Mana  Maitrise 31 : aneantit une large zone (degats reduits)."
+                       "description":  "Tempete de Mana  Maitrise 31 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv31_Tempete-de-Mana-Maitrise-31.png"
                    },
                    {
                        "id":  "archimage_def_t31",
@@ -1472,7 +1563,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Bouclier Superieur  Maitrise 31 : manipule l'arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Maitrise 31 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv31_Bouclier-Superieur-Maitrise-31.png"
                    },
                    {
                        "id":  "archimage_single_t31",
@@ -1488,7 +1580,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Rayon Annihilateur  Maitrise 31 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Rayon Annihilateur  Maitrise 31 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv31_Rayon-Annihilateur-Maitrise-31.png"
                    },
                    {
                        "id":  "archimage_aoe_t32",
@@ -1504,7 +1597,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Pluie de Flammes  Maitrise 32 : aneantit une large zone (degats reduits)."
+                       "description":  "Pluie de Flammes  Maitrise 32 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv32_Pluie-de-Flammes-Maitrise-32.png"
                    },
                    {
                        "id":  "archimage_def_t32",
@@ -1520,7 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Deviation  Maitrise 32 : manipule l'arcane pour annuler les degats."
+                       "description":  "Deviation  Maitrise 32 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv32_Deviation-Maitrise-32.png"
                    },
                    {
                        "id":  "archimage_single_t32",
@@ -1536,7 +1631,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Lance Draconique  Maitrise 32 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Lance Draconique  Maitrise 32 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv32_Lance-Draconique-Maitrise-32.png"
                    },
                    {
                        "id":  "archimage_aoe_t33",
@@ -1552,7 +1648,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Vortex  Maitrise 33 : aneantit une large zone (degats reduits)."
+                       "description":  "Vortex  Maitrise 33 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv33_Vortex-Maitrise-33.png"
                    },
                    {
                        "id":  "archimage_def_t33",
@@ -1568,7 +1665,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Clignement Arcanique  Maitrise 33 : manipule l'arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 33 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv33_Clignement-Arcanique-Maitrise-33.png"
                    },
                    {
                        "id":  "archimage_single_t33",
@@ -1584,7 +1682,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Trait du Neant  Maitrise 33 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Trait du Neant  Maitrise 33 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv33_Trait-du-Neant-Maitrise-33.png"
                    },
                    {
                        "id":  "archimage_aoe_t34",
@@ -1600,7 +1699,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Nova Supreme  Maitrise 34 : aneantit une large zone (degats reduits)."
+                       "description":  "Nova Supreme  Maitrise 34 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv34_Nova-Supreme-Maitrise-34.png"
                    },
                    {
                        "id":  "archimage_def_t34",
@@ -1616,7 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Egide de Mana  Maitrise 34 : manipule l'arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 34 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv34_Egide-de-Mana-Maitrise-34.png"
                    },
                    {
                        "id":  "archimage_single_t34",
@@ -1632,7 +1733,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Foudre Supreme  Maitrise 34 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Foudre Supreme  Maitrise 34 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv34_Foudre-Supreme-Maitrise-34.png"
                    },
                    {
                        "id":  "archimage_aoe_t35",
@@ -1648,7 +1750,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Effondrement  Maitrise 35 : aneantit une large zone (degats reduits)."
+                       "description":  "Effondrement  Maitrise 35 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv35_Effondrement-Maitrise-35.png"
                    },
                    {
                        "id":  "archimage_def_t35",
@@ -1664,7 +1767,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Inversion de Sort  Maitrise 35 : manipule l'arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 35 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv35_Inversion-de-Sort-Maitrise-35.png"
                    },
                    {
                        "id":  "archimage_single_t35",
@@ -1680,7 +1784,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Flamme Concentree  Maitrise 35 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Flamme Concentree  Maitrise 35 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv35_Flamme-Concentree-Maitrise-35.png"
                    },
                    {
                        "id":  "archimage_aoe_t36",
@@ -1696,7 +1801,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Fin de Toute Chose  Maitrise 36 : aneantit une large zone (degats reduits)."
+                       "description":  "Fin de Toute Chose  Maitrise 36 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv36_Fin-de-Toute-Chose-Maitrise-36.png"
                    },
                    {
                        "id":  "archimage_def_t36",
@@ -1712,7 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Forme Etheree  Maitrise 36 : manipule l'arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 36 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv36_Forme-Etheree-Maitrise-36.png"
                    },
                    {
                        "id":  "archimage_single_t36",
@@ -1728,7 +1835,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Mot de Mort  Maitrise 36 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Mot de Mort  Maitrise 36 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv36_Mot-de-Mort-Maitrise-36.png"
                    },
                    {
                        "id":  "archimage_aoe_t37",
@@ -1744,7 +1852,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Tempete de Mana  Maitrise 37 : aneantit une large zone (degats reduits)."
+                       "description":  "Tempete de Mana  Maitrise 37 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv37_Tempete-de-Mana-Maitrise-37.png"
                    },
                    {
                        "id":  "archimage_def_t37",
@@ -1760,7 +1869,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Bouclier Superieur  Maitrise 37 : manipule l'arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Maitrise 37 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv37_Bouclier-Superieur-Maitrise-37.png"
                    },
                    {
                        "id":  "archimage_single_t37",
@@ -1776,7 +1886,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Rayon Annihilateur  Maitrise 37 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Rayon Annihilateur  Maitrise 37 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv37_Rayon-Annihilateur-Maitrise-37.png"
                    },
                    {
                        "id":  "archimage_aoe_t38",
@@ -1792,7 +1903,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Pluie de Flammes  Maitrise 38 : aneantit une large zone (degats reduits)."
+                       "description":  "Pluie de Flammes  Maitrise 38 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv38_Pluie-de-Flammes-Maitrise-38.png"
                    },
                    {
                        "id":  "archimage_def_t38",
@@ -1808,7 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Deviation  Maitrise 38 : manipule l'arcane pour annuler les degats."
+                       "description":  "Deviation  Maitrise 38 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv38_Deviation-Maitrise-38.png"
                    },
                    {
                        "id":  "archimage_single_t38",
@@ -1824,7 +1937,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Lance Draconique  Maitrise 38 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Lance Draconique  Maitrise 38 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv38_Lance-Draconique-Maitrise-38.png"
                    },
                    {
                        "id":  "archimage_aoe_t39",
@@ -1840,7 +1954,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Vortex  Maitrise 39 : aneantit une large zone (degats reduits)."
+                       "description":  "Vortex  Maitrise 39 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv39_Vortex-Maitrise-39.png"
                    },
                    {
                        "id":  "archimage_def_t39",
@@ -1856,7 +1971,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Clignement Arcanique  Maitrise 39 : manipule l'arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 39 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv39_Clignement-Arcanique-Maitrise-39.png"
                    },
                    {
                        "id":  "archimage_single_t39",
@@ -1872,7 +1988,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Trait du Neant  Maitrise 39 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Trait du Neant  Maitrise 39 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv39_Trait-du-Neant-Maitrise-39.png"
                    },
                    {
                        "id":  "archimage_aoe_t40",
@@ -1888,7 +2005,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Nova Supreme  Maitrise 40 : aneantit une large zone (degats reduits)."
+                       "description":  "Nova Supreme  Maitrise 40 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv40_Nova-Supreme-Maitrise-40.png"
                    },
                    {
                        "id":  "archimage_def_t40",
@@ -1904,7 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Egide de Mana  Maitrise 40 : manipule l'arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 40 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv40_Egide-de-Mana-Maitrise-40.png"
                    },
                    {
                        "id":  "archimage_single_t40",
@@ -1920,7 +2039,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Foudre Supreme  Maitrise 40 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Foudre Supreme  Maitrise 40 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv40_Foudre-Supreme-Maitrise-40.png"
                    },
                    {
                        "id":  "archimage_aoe_t41",
@@ -1936,7 +2056,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Effondrement  Maitrise 41 : aneantit une large zone (degats reduits)."
+                       "description":  "Effondrement  Maitrise 41 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv41_Effondrement-Maitrise-41.png"
                    },
                    {
                        "id":  "archimage_def_t41",
@@ -1952,7 +2073,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Inversion de Sort  Maitrise 41 : manipule l'arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 41 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv41_Inversion-de-Sort-Maitrise-41.png"
                    },
                    {
                        "id":  "archimage_single_t41",
@@ -1968,7 +2090,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Flamme Concentree  Maitrise 41 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Flamme Concentree  Maitrise 41 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv41_Flamme-Concentree-Maitrise-41.png"
                    },
                    {
                        "id":  "archimage_aoe_t42",
@@ -1984,7 +2107,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Fin de Toute Chose  Maitrise 42 : aneantit une large zone (degats reduits)."
+                       "description":  "Fin de Toute Chose  Maitrise 42 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv42_Fin-de-Toute-Chose-Maitrise-42.png"
                    },
                    {
                        "id":  "archimage_def_t42",
@@ -2000,7 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Forme Etheree  Maitrise 42 : manipule l'arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 42 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv42_Forme-Etheree-Maitrise-42.png"
                    },
                    {
                        "id":  "archimage_single_t42",
@@ -2016,7 +2141,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Mot de Mort  Maitrise 42 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Mot de Mort  Maitrise 42 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv42_Mot-de-Mort-Maitrise-42.png"
                    },
                    {
                        "id":  "archimage_aoe_t43",
@@ -2032,7 +2158,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Tempete de Mana  Maitrise 43 : aneantit une large zone (degats reduits)."
+                       "description":  "Tempete de Mana  Maitrise 43 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv43_Tempete-de-Mana-Maitrise-43.png"
                    },
                    {
                        "id":  "archimage_def_t43",
@@ -2048,7 +2175,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Bouclier Superieur  Maitrise 43 : manipule l'arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Maitrise 43 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv43_Bouclier-Superieur-Maitrise-43.png"
                    },
                    {
                        "id":  "archimage_single_t43",
@@ -2064,7 +2192,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Rayon Annihilateur  Maitrise 43 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Rayon Annihilateur  Maitrise 43 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv43_Rayon-Annihilateur-Maitrise-43.png"
                    },
                    {
                        "id":  "archimage_aoe_t44",
@@ -2080,7 +2209,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Pluie de Flammes  Maitrise 44 : aneantit une large zone (degats reduits)."
+                       "description":  "Pluie de Flammes  Maitrise 44 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv44_Pluie-de-Flammes-Maitrise-44.png"
                    },
                    {
                        "id":  "archimage_def_t44",
@@ -2096,7 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Deviation  Maitrise 44 : manipule l'arcane pour annuler les degats."
+                       "description":  "Deviation  Maitrise 44 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv44_Deviation-Maitrise-44.png"
                    },
                    {
                        "id":  "archimage_single_t44",
@@ -2112,7 +2243,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Lance Draconique  Maitrise 44 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Lance Draconique  Maitrise 44 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv44_Lance-Draconique-Maitrise-44.png"
                    },
                    {
                        "id":  "archimage_aoe_t45",
@@ -2128,7 +2260,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Vortex  Maitrise 45 : aneantit une large zone (degats reduits)."
+                       "description":  "Vortex  Maitrise 45 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv45_Vortex-Maitrise-45.png"
                    },
                    {
                        "id":  "archimage_def_t45",
@@ -2144,7 +2277,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Clignement Arcanique  Maitrise 45 : manipule l'arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 45 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv45_Clignement-Arcanique-Maitrise-45.png"
                    },
                    {
                        "id":  "archimage_single_t45",
@@ -2160,7 +2294,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Trait du Neant  Maitrise 45 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Trait du Neant  Maitrise 45 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv45_Trait-du-Neant-Maitrise-45.png"
                    },
                    {
                        "id":  "archimage_aoe_t46",
@@ -2176,7 +2311,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Nova Supreme  Maitrise 46 : aneantit une large zone (degats reduits)."
+                       "description":  "Nova Supreme  Maitrise 46 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv46_Nova-Supreme-Maitrise-46.png"
                    },
                    {
                        "id":  "archimage_def_t46",
@@ -2192,7 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Egide de Mana  Maitrise 46 : manipule l'arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 46 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv46_Egide-de-Mana-Maitrise-46.png"
                    },
                    {
                        "id":  "archimage_single_t46",
@@ -2208,7 +2345,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Foudre Supreme  Maitrise 46 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Foudre Supreme  Maitrise 46 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv46_Foudre-Supreme-Maitrise-46.png"
                    },
                    {
                        "id":  "archimage_aoe_t47",
@@ -2224,7 +2362,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Effondrement  Maitrise 47 : aneantit une large zone (degats reduits)."
+                       "description":  "Effondrement  Maitrise 47 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv47_Effondrement-Maitrise-47.png"
                    },
                    {
                        "id":  "archimage_def_t47",
@@ -2240,7 +2379,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Inversion de Sort  Maitrise 47 : manipule l'arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 47 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv47_Inversion-de-Sort-Maitrise-47.png"
                    },
                    {
                        "id":  "archimage_single_t47",
@@ -2256,7 +2396,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Flamme Concentree  Maitrise 47 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Flamme Concentree  Maitrise 47 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv47_Flamme-Concentree-Maitrise-47.png"
                    },
                    {
                        "id":  "archimage_aoe_t48",
@@ -2272,7 +2413,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Fin de Toute Chose  Maitrise 48 : aneantit une large zone (degats reduits)."
+                       "description":  "Fin de Toute Chose  Maitrise 48 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv48_Fin-de-Toute-Chose-Maitrise-48.png"
                    },
                    {
                        "id":  "archimage_def_t48",
@@ -2288,7 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Forme Etheree  Maitrise 48 : manipule l'arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 48 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv48_Forme-Etheree-Maitrise-48.png"
                    },
                    {
                        "id":  "archimage_single_t48",
@@ -2304,7 +2447,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Mot de Mort  Maitrise 48 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Mot de Mort  Maitrise 48 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv48_Mot-de-Mort-Maitrise-48.png"
                    },
                    {
                        "id":  "archimage_aoe_t49",
@@ -2320,7 +2464,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Tempete de Mana  Maitrise 49 : aneantit une large zone (degats reduits)."
+                       "description":  "Tempete de Mana  Maitrise 49 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv49_Tempete-de-Mana-Maitrise-49.png"
                    },
                    {
                        "id":  "archimage_def_t49",
@@ -2336,7 +2481,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Bouclier Superieur  Maitrise 49 : manipule l'arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Maitrise 49 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv49_Bouclier-Superieur-Maitrise-49.png"
                    },
                    {
                        "id":  "archimage_single_t49",
@@ -2352,7 +2498,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Rayon Annihilateur  Maitrise 49 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Rayon Annihilateur  Maitrise 49 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv49_Rayon-Annihilateur-Maitrise-49.png"
                    },
                    {
                        "id":  "archimage_aoe_t50",
@@ -2368,7 +2515,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Pluie de Flammes  Maitrise 50 : aneantit une large zone (degats reduits)."
+                       "description":  "Pluie de Flammes  Maitrise 50 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv50_Pluie-de-Flammes-Maitrise-50.png"
                    },
                    {
                        "id":  "archimage_def_t50",
@@ -2384,7 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Deviation  Maitrise 50 : manipule l'arcane pour annuler les degats."
+                       "description":  "Deviation  Maitrise 50 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv50_Deviation-Maitrise-50.png"
                    },
                    {
                        "id":  "archimage_single_t50",
@@ -2400,7 +2549,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Lance Draconique  Maitrise 50 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Lance Draconique  Maitrise 50 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv50_Lance-Draconique-Maitrise-50.png"
                    },
                    {
                        "id":  "archimage_aoe_t51",
@@ -2416,7 +2566,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Vortex  Maitrise 51 : aneantit une large zone (degats reduits)."
+                       "description":  "Vortex  Maitrise 51 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv51_Vortex-Maitrise-51.png"
                    },
                    {
                        "id":  "archimage_def_t51",
@@ -2432,7 +2583,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Clignement Arcanique  Maitrise 51 : manipule l'arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 51 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv51_Clignement-Arcanique-Maitrise-51.png"
                    },
                    {
                        "id":  "archimage_single_t51",
@@ -2448,7 +2600,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Trait du Neant  Maitrise 51 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Trait du Neant  Maitrise 51 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv51_Trait-du-Neant-Maitrise-51.png"
                    },
                    {
                        "id":  "archimage_aoe_t52",
@@ -2464,7 +2617,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Nova Supreme  Maitrise 52 : aneantit une large zone (degats reduits)."
+                       "description":  "Nova Supreme  Maitrise 52 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv52_Nova-Supreme-Maitrise-52.png"
                    },
                    {
                        "id":  "archimage_def_t52",
@@ -2480,7 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Egide de Mana  Maitrise 52 : manipule l'arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 52 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv52_Egide-de-Mana-Maitrise-52.png"
                    },
                    {
                        "id":  "archimage_single_t52",
@@ -2496,7 +2651,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Foudre Supreme  Maitrise 52 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Foudre Supreme  Maitrise 52 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv52_Foudre-Supreme-Maitrise-52.png"
                    },
                    {
                        "id":  "archimage_aoe_t53",
@@ -2512,7 +2668,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Effondrement  Maitrise 53 : aneantit une large zone (degats reduits)."
+                       "description":  "Effondrement  Maitrise 53 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv53_Effondrement-Maitrise-53.png"
                    },
                    {
                        "id":  "archimage_def_t53",
@@ -2528,7 +2685,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Inversion de Sort  Maitrise 53 : manipule l'arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 53 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv53_Inversion-de-Sort-Maitrise-53.png"
                    },
                    {
                        "id":  "archimage_single_t53",
@@ -2544,7 +2702,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Flamme Concentree  Maitrise 53 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Flamme Concentree  Maitrise 53 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv53_Flamme-Concentree-Maitrise-53.png"
                    },
                    {
                        "id":  "archimage_aoe_t54",
@@ -2560,7 +2719,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Fin de Toute Chose  Maitrise 54 : aneantit une large zone (degats reduits)."
+                       "description":  "Fin de Toute Chose  Maitrise 54 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv54_Fin-de-Toute-Chose-Maitrise-54.png"
                    },
                    {
                        "id":  "archimage_def_t54",
@@ -2576,7 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Forme Etheree  Maitrise 54 : manipule l'arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 54 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv54_Forme-Etheree-Maitrise-54.png"
                    },
                    {
                        "id":  "archimage_single_t54",
@@ -2592,7 +2753,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Mot de Mort  Maitrise 54 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Mot de Mort  Maitrise 54 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv54_Mot-de-Mort-Maitrise-54.png"
                    },
                    {
                        "id":  "archimage_aoe_t55",
@@ -2608,7 +2770,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Tempete de Mana  Maitrise 55 : aneantit une large zone (degats reduits)."
+                       "description":  "Tempete de Mana  Maitrise 55 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv55_Tempete-de-Mana-Maitrise-55.png"
                    },
                    {
                        "id":  "archimage_def_t55",
@@ -2624,7 +2787,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Bouclier Superieur  Maitrise 55 : manipule l'arcane pour annuler les degats."
+                       "description":  "Bouclier Superieur  Maitrise 55 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv55_Bouclier-Superieur-Maitrise-55.png"
                    },
                    {
                        "id":  "archimage_single_t55",
@@ -2640,7 +2804,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Rayon Annihilateur  Maitrise 55 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Rayon Annihilateur  Maitrise 55 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv55_Rayon-Annihilateur-Maitrise-55.png"
                    },
                    {
                        "id":  "archimage_aoe_t56",
@@ -2656,7 +2821,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Pluie de Flammes  Maitrise 56 : aneantit une large zone (degats reduits)."
+                       "description":  "Pluie de Flammes  Maitrise 56 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv56_Pluie-de-Flammes-Maitrise-56.png"
                    },
                    {
                        "id":  "archimage_def_t56",
@@ -2672,7 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Deviation  Maitrise 56 : manipule l'arcane pour annuler les degats."
+                       "description":  "Deviation  Maitrise 56 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv56_Deviation-Maitrise-56.png"
                    },
                    {
                        "id":  "archimage_single_t56",
@@ -2688,7 +2855,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Lance Draconique  Maitrise 56 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Lance Draconique  Maitrise 56 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv56_Lance-Draconique-Maitrise-56.png"
                    },
                    {
                        "id":  "archimage_aoe_t57",
@@ -2704,7 +2872,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Vortex  Maitrise 57 : aneantit une large zone (degats reduits)."
+                       "description":  "Vortex  Maitrise 57 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv57_Vortex-Maitrise-57.png"
                    },
                    {
                        "id":  "archimage_def_t57",
@@ -2720,7 +2889,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Clignement Arcanique  Maitrise 57 : manipule l'arcane pour annuler les degats."
+                       "description":  "Clignement Arcanique  Maitrise 57 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv57_Clignement-Arcanique-Maitrise-57.png"
                    },
                    {
                        "id":  "archimage_single_t57",
@@ -2736,7 +2906,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Trait du Neant  Maitrise 57 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Trait du Neant  Maitrise 57 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv57_Trait-du-Neant-Maitrise-57.png"
                    },
                    {
                        "id":  "archimage_aoe_t58",
@@ -2752,7 +2923,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Nova Supreme  Maitrise 58 : aneantit une large zone (degats reduits)."
+                       "description":  "Nova Supreme  Maitrise 58 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv58_Nova-Supreme-Maitrise-58.png"
                    },
                    {
                        "id":  "archimage_def_t58",
@@ -2768,7 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Egide de Mana  Maitrise 58 : manipule l'arcane pour annuler les degats."
+                       "description":  "Egide de Mana  Maitrise 58 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv58_Egide-de-Mana-Maitrise-58.png"
                    },
                    {
                        "id":  "archimage_single_t58",
@@ -2784,7 +2957,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Foudre Supreme  Maitrise 58 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Foudre Supreme  Maitrise 58 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv58_Foudre-Supreme-Maitrise-58.png"
                    },
                    {
                        "id":  "archimage_aoe_t59",
@@ -2800,7 +2974,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Effondrement  Maitrise 59 : aneantit une large zone (degats reduits)."
+                       "description":  "Effondrement  Maitrise 59 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv59_Effondrement-Maitrise-59.png"
                    },
                    {
                        "id":  "archimage_def_t59",
@@ -2816,7 +2991,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Inversion de Sort  Maitrise 59 : manipule l'arcane pour annuler les degats."
+                       "description":  "Inversion de Sort  Maitrise 59 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv59_Inversion-de-Sort-Maitrise-59.png"
                    },
                    {
                        "id":  "archimage_single_t59",
@@ -2832,7 +3008,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Flamme Concentree  Maitrise 59 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Flamme Concentree  Maitrise 59 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv59_Flamme-Concentree-Maitrise-59.png"
                    },
                    {
                        "id":  "archimage_aoe_t60",
@@ -2848,7 +3025,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Fin de Toute Chose  Maitrise 60 : aneantit une large zone (degats reduits)."
+                       "description":  "Fin de Toute Chose  Maitrise 60 : aneantit une large zone (degats reduits).",
+                       "iconFile":  "Archimage_Zone_Niv60_Fin-de-Toute-Chose-Maitrise-60.png"
                    },
                    {
                        "id":  "archimage_def_t60",
@@ -2864,7 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Forme Etheree  Maitrise 60 : manipule l'arcane pour annuler les degats."
+                       "description":  "Forme Etheree  Maitrise 60 : manipule l'arcane pour annuler les degats.",
+                       "iconFile":  "Archimage_Defense_Niv60_Forme-Etheree-Maitrise-60.png"
                    },
                    {
                        "id":  "archimage_single_t60",
@@ -2880,7 +3059,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Mot de Mort  Maitrise 60 : concentre une puissance arcanique devastatrice sur une cible."
+                       "description":  "Mot de Mort  Maitrise 60 : concentre une puissance arcanique devastatrice sur une cible.",
+                       "iconFile":  "Archimage_Unitaire_Niv60_Mot-de-Mort-Maitrise-60.png"
                    }
                ]
 }

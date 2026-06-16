@@ -412,7 +412,7 @@ namespace engine::client
 
 	} // namespace anonyme
 
-	SpellDisplay ToSpellDisplay(const ClassSkillDisplay& s)
+	SpellDisplay ToSpellDisplay(const ClassSkillDisplay& s, std::string_view classId)
 	{
 		SpellDisplay out{};
 		out.spellId              = s.skillId;
@@ -423,6 +423,11 @@ namespace engine::client
 		out.resourceCostPercent  = s.resourceCostPercent;
 		out.needsEnemyTarget     = (s.target == "SingleEnemy");
 		out.targetsAlly          = (s.target == "SingleAlly");
+		// Chemin d'icône relatif à paths.content, ou "" si pas d'icône / classId vide.
+		if (!s.iconFile.empty() && !classId.empty())
+		{
+			out.iconPath = "icons/skills/" + std::string(classId) + "/" + s.iconFile;
+		}
 		return out;
 	}
 
@@ -489,6 +494,9 @@ namespace engine::client
 			disp.effectKind = effV->stringValue;
 			disp.target = tgtV->stringValue;
 			disp.description = (descV != nullptr && descV->type == JsonType::String) ? descV->stringValue : "";
+			// iconFile : optionnel et tolérant (absent/non-string → "" → repli texte).
+			const JsonValue* iconV = FindObjectMember(entry, "iconFile");
+			disp.iconFile = (iconV != nullptr && iconV->type == JsonType::String) ? iconV->stringValue : "";
 
 			const JsonValue* tierV = FindObjectMember(entry, "tier");
 			const JsonValue* levelV = FindObjectMember(entry, "level");

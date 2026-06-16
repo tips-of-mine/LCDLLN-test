@@ -16,7 +16,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Tir Multiple : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Tir Multiple : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv01_Tir-Multiple.png"
                    },
                    {
                        "id":  "arbaletrier_def_t1",
@@ -32,7 +33,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Pavois : reduit les degats subis en position de tir."
+                       "description":  "Pavois : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv01_Pavois.png"
                    },
                    {
                        "id":  "arbaletrier_single_t1",
@@ -48,7 +50,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Tir Lourd : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Lourd : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv01_Tir-Lourd.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t2",
@@ -64,7 +67,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Carreaux en Eventail  Aiguise : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Carreaux en Eventail  Aiguise : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv02_Carreaux-en-Eventail-Aiguise.png"
                    },
                    {
                        "id":  "arbaletrier_def_t2",
@@ -80,7 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Recharge Abritee  Aiguise : reduit les degats subis en position de tir."
+                       "description":  "Recharge Abritee  Aiguise : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv02_Recharge-Abritee-Aiguise.png"
                    },
                    {
                        "id":  "arbaletrier_single_t2",
@@ -96,7 +101,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Carreau Percant  Aiguise : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau Percant  Aiguise : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv02_Carreau-Percant-Aiguise.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t3",
@@ -112,7 +118,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Volee Mecanique  Renforce : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Volee Mecanique  Renforce : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv03_Volee-Mecanique-Renforce.png"
                    },
                    {
                        "id":  "arbaletrier_def_t3",
@@ -128,7 +135,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Couvert  Renforce : reduit les degats subis en position de tir."
+                       "description":  "Couvert  Renforce : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv03_Couvert-Renforce.png"
                    },
                    {
                        "id":  "arbaletrier_single_t3",
@@ -144,7 +152,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Trait Perforant  Renforce : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Perforant  Renforce : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv03_Trait-Perforant-Renforce.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t4",
@@ -160,7 +169,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Salve Lourde  Affute : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Salve Lourde  Affute : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv04_Salve-Lourde-Affute.png"
                    },
                    {
                        "id":  "arbaletrier_def_t4",
@@ -176,7 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Garde au Pavois  Affute : reduit les degats subis en position de tir."
+                       "description":  "Garde au Pavois  Affute : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv04_Garde-au-Pavois-Affute.png"
                    },
                    {
                        "id":  "arbaletrier_single_t4",
@@ -192,7 +203,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Tir Transpercant  Affute : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Transpercant  Affute : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv04_Tir-Transpercant-Affute.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t5",
@@ -208,7 +220,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Barrage  Brutal : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Barrage  Brutal : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv05_Barrage-Brutal.png"
                    },
                    {
                        "id":  "arbaletrier_def_t5",
@@ -224,7 +237,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Position Fortifiee  Brutal : reduit les degats subis en position de tir."
+                       "description":  "Position Fortifiee  Brutal : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv05_Position-Fortifiee-Brutal.png"
                    },
                    {
                        "id":  "arbaletrier_single_t5",
@@ -240,7 +254,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Carreau d'Acier  Brutal : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau d'Acier  Brutal : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv05_Carreau-d-Acier-Brutal.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t6",
@@ -256,7 +271,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Pluie de Carreaux  Vorace : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Pluie de Carreaux  Vorace : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv06_Pluie-de-Carreaux-Vorace.png"
                    },
                    {
                        "id":  "arbaletrier_def_t6",
@@ -272,7 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Bastion de Tir  Vorace : reduit les degats subis en position de tir."
+                       "description":  "Bastion de Tir  Vorace : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv06_Bastion-de-Tir-Vorace.png"
                    },
                    {
                        "id":  "arbaletrier_single_t6",
@@ -288,7 +305,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Trait Executeur  Vorace : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Executeur  Vorace : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv06_Trait-Executeur-Vorace.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t7",
@@ -304,7 +322,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Tir Multiple  Implacable : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Tir Multiple  Implacable : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv07_Tir-Multiple-Implacable.png"
                    },
                    {
                        "id":  "arbaletrier_def_t7",
@@ -320,7 +339,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Pavois  Implacable : reduit les degats subis en position de tir."
+                       "description":  "Pavois  Implacable : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv07_Pavois-Implacable.png"
                    },
                    {
                        "id":  "arbaletrier_single_t7",
@@ -336,7 +356,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Tir Lourd  Implacable : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Lourd  Implacable : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv07_Tir-Lourd-Implacable.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t8",
@@ -352,7 +373,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Carreaux en Eventail  Funeste : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Carreaux en Eventail  Funeste : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv08_Carreaux-en-Eventail-Funeste.png"
                    },
                    {
                        "id":  "arbaletrier_def_t8",
@@ -368,7 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Recharge Abritee  Funeste : reduit les degats subis en position de tir."
+                       "description":  "Recharge Abritee  Funeste : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv08_Recharge-Abritee-Funeste.png"
                    },
                    {
                        "id":  "arbaletrier_single_t8",
@@ -384,7 +407,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Carreau Percant  Funeste : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau Percant  Funeste : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv08_Carreau-Percant-Funeste.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t9",
@@ -400,7 +424,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Volee Mecanique  Cruel : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Volee Mecanique  Cruel : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv09_Volee-Mecanique-Cruel.png"
                    },
                    {
                        "id":  "arbaletrier_def_t9",
@@ -416,7 +441,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Couvert  Cruel : reduit les degats subis en position de tir."
+                       "description":  "Couvert  Cruel : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv09_Couvert-Cruel.png"
                    },
                    {
                        "id":  "arbaletrier_single_t9",
@@ -432,7 +458,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Trait Perforant  Cruel : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Perforant  Cruel : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv09_Trait-Perforant-Cruel.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t10",
@@ -448,7 +475,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Salve Lourde  Sanglant : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Salve Lourde  Sanglant : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv10_Salve-Lourde-Sanglant.png"
                    },
                    {
                        "id":  "arbaletrier_def_t10",
@@ -464,7 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Garde au Pavois  Sanglant : reduit les degats subis en position de tir."
+                       "description":  "Garde au Pavois  Sanglant : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv10_Garde-au-Pavois-Sanglant.png"
                    },
                    {
                        "id":  "arbaletrier_single_t10",
@@ -480,7 +509,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Tir Transpercant  Sanglant : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Transpercant  Sanglant : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv10_Tir-Transpercant-Sanglant.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t11",
@@ -496,7 +526,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Barrage  Devastateur : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Barrage  Devastateur : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv11_Barrage-Devastateur.png"
                    },
                    {
                        "id":  "arbaletrier_def_t11",
@@ -512,7 +543,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Position Fortifiee  Devastateur : reduit les degats subis en position de tir."
+                       "description":  "Position Fortifiee  Devastateur : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv11_Position-Fortifiee-Devastateur.png"
                    },
                    {
                        "id":  "arbaletrier_single_t11",
@@ -528,7 +560,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Carreau d'Acier  Devastateur : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau d'Acier  Devastateur : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv11_Carreau-d-Acier-Devastateur.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t12",
@@ -544,7 +577,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Pluie de Carreaux  Foudroyant : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Pluie de Carreaux  Foudroyant : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv12_Pluie-de-Carreaux-Foudroyant.png"
                    },
                    {
                        "id":  "arbaletrier_def_t12",
@@ -560,7 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Bastion de Tir  Foudroyant : reduit les degats subis en position de tir."
+                       "description":  "Bastion de Tir  Foudroyant : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv12_Bastion-de-Tir-Foudroyant.png"
                    },
                    {
                        "id":  "arbaletrier_single_t12",
@@ -576,7 +611,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Trait Executeur  Foudroyant : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Executeur  Foudroyant : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv12_Trait-Executeur-Foudroyant.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t13",
@@ -592,7 +628,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Tir Multiple  Mortel : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Tir Multiple  Mortel : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv13_Tir-Multiple-Mortel.png"
                    },
                    {
                        "id":  "arbaletrier_def_t13",
@@ -608,7 +645,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Pavois  Mortel : reduit les degats subis en position de tir."
+                       "description":  "Pavois  Mortel : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv13_Pavois-Mortel.png"
                    },
                    {
                        "id":  "arbaletrier_single_t13",
@@ -624,7 +662,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Tir Lourd  Mortel : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Lourd  Mortel : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv13_Tir-Lourd-Mortel.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t14",
@@ -640,7 +679,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Carreaux en Eventail  Inexorable : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Carreaux en Eventail  Inexorable : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv14_Carreaux-en-Eventail-Inexorable.png"
                    },
                    {
                        "id":  "arbaletrier_def_t14",
@@ -656,7 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Recharge Abritee  Inexorable : reduit les degats subis en position de tir."
+                       "description":  "Recharge Abritee  Inexorable : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv14_Recharge-Abritee-Inexorable.png"
                    },
                    {
                        "id":  "arbaletrier_single_t14",
@@ -672,7 +713,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Carreau Percant  Inexorable : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau Percant  Inexorable : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv14_Carreau-Percant-Inexorable.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t15",
@@ -688,7 +730,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Volee Mecanique  Terrible : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Volee Mecanique  Terrible : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv15_Volee-Mecanique-Terrible.png"
                    },
                    {
                        "id":  "arbaletrier_def_t15",
@@ -704,7 +747,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Couvert  Terrible : reduit les degats subis en position de tir."
+                       "description":  "Couvert  Terrible : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv15_Couvert-Terrible.png"
                    },
                    {
                        "id":  "arbaletrier_single_t15",
@@ -720,7 +764,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Trait Perforant  Terrible : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Perforant  Terrible : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv15_Trait-Perforant-Terrible.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t16",
@@ -736,7 +781,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Salve Lourde  Souverain : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Salve Lourde  Souverain : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv16_Salve-Lourde-Souverain.png"
                    },
                    {
                        "id":  "arbaletrier_def_t16",
@@ -752,7 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Garde au Pavois  Souverain : reduit les degats subis en position de tir."
+                       "description":  "Garde au Pavois  Souverain : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv16_Garde-au-Pavois-Souverain.png"
                    },
                    {
                        "id":  "arbaletrier_single_t16",
@@ -768,7 +815,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Tir Transpercant  Souverain : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Transpercant  Souverain : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv16_Tir-Transpercant-Souverain.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t17",
@@ -784,7 +832,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Barrage  Legendaire : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Barrage  Legendaire : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv17_Barrage-Legendaire.png"
                    },
                    {
                        "id":  "arbaletrier_def_t17",
@@ -800,7 +849,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Position Fortifiee  Legendaire : reduit les degats subis en position de tir."
+                       "description":  "Position Fortifiee  Legendaire : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv17_Position-Fortifiee-Legendaire.png"
                    },
                    {
                        "id":  "arbaletrier_single_t17",
@@ -816,7 +866,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Carreau d'Acier  Legendaire : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau d'Acier  Legendaire : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv17_Carreau-d-Acier-Legendaire.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t18",
@@ -832,7 +883,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Pluie de Carreaux  Cataclysmique : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Pluie de Carreaux  Cataclysmique : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv18_Pluie-de-Carreaux-Cataclysmique.png"
                    },
                    {
                        "id":  "arbaletrier_def_t18",
@@ -848,7 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Bastion de Tir  Cataclysmique : reduit les degats subis en position de tir."
+                       "description":  "Bastion de Tir  Cataclysmique : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv18_Bastion-de-Tir-Cataclysmique.png"
                    },
                    {
                        "id":  "arbaletrier_single_t18",
@@ -864,7 +917,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Trait Executeur  Cataclysmique : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Executeur  Cataclysmique : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv18_Trait-Executeur-Cataclysmique.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t19",
@@ -880,7 +934,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Tir Multiple  Apocalyptique : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Tir Multiple  Apocalyptique : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv19_Tir-Multiple-Apocalyptique.png"
                    },
                    {
                        "id":  "arbaletrier_def_t19",
@@ -896,7 +951,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Pavois  Apocalyptique : reduit les degats subis en position de tir."
+                       "description":  "Pavois  Apocalyptique : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv19_Pavois-Apocalyptique.png"
                    },
                    {
                        "id":  "arbaletrier_single_t19",
@@ -912,7 +968,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Tir Lourd  Apocalyptique : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Lourd  Apocalyptique : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv19_Tir-Lourd-Apocalyptique.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t20",
@@ -928,7 +985,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Carreaux en Eventail  Ultime : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Carreaux en Eventail  Ultime : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv20_Carreaux-en-Eventail-Ultime.png"
                    },
                    {
                        "id":  "arbaletrier_def_t20",
@@ -944,7 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Recharge Abritee  Ultime : reduit les degats subis en position de tir."
+                       "description":  "Recharge Abritee  Ultime : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv20_Recharge-Abritee-Ultime.png"
                    },
                    {
                        "id":  "arbaletrier_single_t20",
@@ -960,7 +1019,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Carreau Percant  Ultime : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau Percant  Ultime : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv20_Carreau-Percant-Ultime.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t21",
@@ -976,7 +1036,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Volee Mecanique  Maitrise 21 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Volee Mecanique  Maitrise 21 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv21_Volee-Mecanique-Maitrise-21.png"
                    },
                    {
                        "id":  "arbaletrier_def_t21",
@@ -992,7 +1053,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Couvert  Maitrise 21 : reduit les degats subis en position de tir."
+                       "description":  "Couvert  Maitrise 21 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv21_Couvert-Maitrise-21.png"
                    },
                    {
                        "id":  "arbaletrier_single_t21",
@@ -1008,7 +1070,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Trait Perforant  Maitrise 21 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Perforant  Maitrise 21 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv21_Trait-Perforant-Maitrise-21.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t22",
@@ -1024,7 +1087,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Salve Lourde  Maitrise 22 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Salve Lourde  Maitrise 22 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv22_Salve-Lourde-Maitrise-22.png"
                    },
                    {
                        "id":  "arbaletrier_def_t22",
@@ -1040,7 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Garde au Pavois  Maitrise 22 : reduit les degats subis en position de tir."
+                       "description":  "Garde au Pavois  Maitrise 22 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv22_Garde-au-Pavois-Maitrise-22.png"
                    },
                    {
                        "id":  "arbaletrier_single_t22",
@@ -1056,7 +1121,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Tir Transpercant  Maitrise 22 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Transpercant  Maitrise 22 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv22_Tir-Transpercant-Maitrise-22.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t23",
@@ -1072,7 +1138,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Barrage  Maitrise 23 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Barrage  Maitrise 23 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv23_Barrage-Maitrise-23.png"
                    },
                    {
                        "id":  "arbaletrier_def_t23",
@@ -1088,7 +1155,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Position Fortifiee  Maitrise 23 : reduit les degats subis en position de tir."
+                       "description":  "Position Fortifiee  Maitrise 23 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv23_Position-Fortifiee-Maitrise-23.png"
                    },
                    {
                        "id":  "arbaletrier_single_t23",
@@ -1104,7 +1172,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Carreau d'Acier  Maitrise 23 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau d'Acier  Maitrise 23 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv23_Carreau-d-Acier-Maitrise-23.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t24",
@@ -1120,7 +1189,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Pluie de Carreaux  Maitrise 24 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Pluie de Carreaux  Maitrise 24 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv24_Pluie-de-Carreaux-Maitrise-24.png"
                    },
                    {
                        "id":  "arbaletrier_def_t24",
@@ -1136,7 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Bastion de Tir  Maitrise 24 : reduit les degats subis en position de tir."
+                       "description":  "Bastion de Tir  Maitrise 24 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv24_Bastion-de-Tir-Maitrise-24.png"
                    },
                    {
                        "id":  "arbaletrier_single_t24",
@@ -1152,7 +1223,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Trait Executeur  Maitrise 24 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Executeur  Maitrise 24 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv24_Trait-Executeur-Maitrise-24.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t25",
@@ -1168,7 +1240,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Tir Multiple  Maitrise 25 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Tir Multiple  Maitrise 25 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv25_Tir-Multiple-Maitrise-25.png"
                    },
                    {
                        "id":  "arbaletrier_def_t25",
@@ -1184,7 +1257,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Pavois  Maitrise 25 : reduit les degats subis en position de tir."
+                       "description":  "Pavois  Maitrise 25 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv25_Pavois-Maitrise-25.png"
                    },
                    {
                        "id":  "arbaletrier_single_t25",
@@ -1200,7 +1274,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Tir Lourd  Maitrise 25 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Lourd  Maitrise 25 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv25_Tir-Lourd-Maitrise-25.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t26",
@@ -1216,7 +1291,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Carreaux en Eventail  Maitrise 26 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Carreaux en Eventail  Maitrise 26 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv26_Carreaux-en-Eventail-Maitrise-26.png"
                    },
                    {
                        "id":  "arbaletrier_def_t26",
@@ -1232,7 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Recharge Abritee  Maitrise 26 : reduit les degats subis en position de tir."
+                       "description":  "Recharge Abritee  Maitrise 26 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv26_Recharge-Abritee-Maitrise-26.png"
                    },
                    {
                        "id":  "arbaletrier_single_t26",
@@ -1248,7 +1325,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Carreau Percant  Maitrise 26 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau Percant  Maitrise 26 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv26_Carreau-Percant-Maitrise-26.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t27",
@@ -1264,7 +1342,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Volee Mecanique  Maitrise 27 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Volee Mecanique  Maitrise 27 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv27_Volee-Mecanique-Maitrise-27.png"
                    },
                    {
                        "id":  "arbaletrier_def_t27",
@@ -1280,7 +1359,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Couvert  Maitrise 27 : reduit les degats subis en position de tir."
+                       "description":  "Couvert  Maitrise 27 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv27_Couvert-Maitrise-27.png"
                    },
                    {
                        "id":  "arbaletrier_single_t27",
@@ -1296,7 +1376,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Trait Perforant  Maitrise 27 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Perforant  Maitrise 27 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv27_Trait-Perforant-Maitrise-27.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t28",
@@ -1312,7 +1393,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Salve Lourde  Maitrise 28 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Salve Lourde  Maitrise 28 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv28_Salve-Lourde-Maitrise-28.png"
                    },
                    {
                        "id":  "arbaletrier_def_t28",
@@ -1328,7 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Garde au Pavois  Maitrise 28 : reduit les degats subis en position de tir."
+                       "description":  "Garde au Pavois  Maitrise 28 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv28_Garde-au-Pavois-Maitrise-28.png"
                    },
                    {
                        "id":  "arbaletrier_single_t28",
@@ -1344,7 +1427,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Tir Transpercant  Maitrise 28 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Transpercant  Maitrise 28 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv28_Tir-Transpercant-Maitrise-28.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t29",
@@ -1360,7 +1444,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Barrage  Maitrise 29 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Barrage  Maitrise 29 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv29_Barrage-Maitrise-29.png"
                    },
                    {
                        "id":  "arbaletrier_def_t29",
@@ -1376,7 +1461,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Position Fortifiee  Maitrise 29 : reduit les degats subis en position de tir."
+                       "description":  "Position Fortifiee  Maitrise 29 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv29_Position-Fortifiee-Maitrise-29.png"
                    },
                    {
                        "id":  "arbaletrier_single_t29",
@@ -1392,7 +1478,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Carreau d'Acier  Maitrise 29 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau d'Acier  Maitrise 29 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv29_Carreau-d-Acier-Maitrise-29.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t30",
@@ -1408,7 +1495,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Pluie de Carreaux  Maitrise 30 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Pluie de Carreaux  Maitrise 30 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv30_Pluie-de-Carreaux-Maitrise-30.png"
                    },
                    {
                        "id":  "arbaletrier_def_t30",
@@ -1424,7 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Bastion de Tir  Maitrise 30 : reduit les degats subis en position de tir."
+                       "description":  "Bastion de Tir  Maitrise 30 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv30_Bastion-de-Tir-Maitrise-30.png"
                    },
                    {
                        "id":  "arbaletrier_single_t30",
@@ -1440,7 +1529,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Trait Executeur  Maitrise 30 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Executeur  Maitrise 30 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv30_Trait-Executeur-Maitrise-30.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t31",
@@ -1456,7 +1546,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Tir Multiple  Maitrise 31 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Tir Multiple  Maitrise 31 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv31_Tir-Multiple-Maitrise-31.png"
                    },
                    {
                        "id":  "arbaletrier_def_t31",
@@ -1472,7 +1563,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Pavois  Maitrise 31 : reduit les degats subis en position de tir."
+                       "description":  "Pavois  Maitrise 31 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv31_Pavois-Maitrise-31.png"
                    },
                    {
                        "id":  "arbaletrier_single_t31",
@@ -1488,7 +1580,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Tir Lourd  Maitrise 31 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Lourd  Maitrise 31 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv31_Tir-Lourd-Maitrise-31.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t32",
@@ -1504,7 +1597,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Carreaux en Eventail  Maitrise 32 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Carreaux en Eventail  Maitrise 32 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv32_Carreaux-en-Eventail-Maitrise-32.png"
                    },
                    {
                        "id":  "arbaletrier_def_t32",
@@ -1520,7 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Recharge Abritee  Maitrise 32 : reduit les degats subis en position de tir."
+                       "description":  "Recharge Abritee  Maitrise 32 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv32_Recharge-Abritee-Maitrise-32.png"
                    },
                    {
                        "id":  "arbaletrier_single_t32",
@@ -1536,7 +1631,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Carreau Percant  Maitrise 32 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau Percant  Maitrise 32 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv32_Carreau-Percant-Maitrise-32.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t33",
@@ -1552,7 +1648,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Volee Mecanique  Maitrise 33 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Volee Mecanique  Maitrise 33 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv33_Volee-Mecanique-Maitrise-33.png"
                    },
                    {
                        "id":  "arbaletrier_def_t33",
@@ -1568,7 +1665,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Couvert  Maitrise 33 : reduit les degats subis en position de tir."
+                       "description":  "Couvert  Maitrise 33 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv33_Couvert-Maitrise-33.png"
                    },
                    {
                        "id":  "arbaletrier_single_t33",
@@ -1584,7 +1682,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Trait Perforant  Maitrise 33 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Perforant  Maitrise 33 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv33_Trait-Perforant-Maitrise-33.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t34",
@@ -1600,7 +1699,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Salve Lourde  Maitrise 34 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Salve Lourde  Maitrise 34 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv34_Salve-Lourde-Maitrise-34.png"
                    },
                    {
                        "id":  "arbaletrier_def_t34",
@@ -1616,7 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Garde au Pavois  Maitrise 34 : reduit les degats subis en position de tir."
+                       "description":  "Garde au Pavois  Maitrise 34 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv34_Garde-au-Pavois-Maitrise-34.png"
                    },
                    {
                        "id":  "arbaletrier_single_t34",
@@ -1632,7 +1733,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Tir Transpercant  Maitrise 34 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Transpercant  Maitrise 34 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv34_Tir-Transpercant-Maitrise-34.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t35",
@@ -1648,7 +1750,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Barrage  Maitrise 35 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Barrage  Maitrise 35 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv35_Barrage-Maitrise-35.png"
                    },
                    {
                        "id":  "arbaletrier_def_t35",
@@ -1664,7 +1767,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Position Fortifiee  Maitrise 35 : reduit les degats subis en position de tir."
+                       "description":  "Position Fortifiee  Maitrise 35 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv35_Position-Fortifiee-Maitrise-35.png"
                    },
                    {
                        "id":  "arbaletrier_single_t35",
@@ -1680,7 +1784,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Carreau d'Acier  Maitrise 35 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau d'Acier  Maitrise 35 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv35_Carreau-d-Acier-Maitrise-35.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t36",
@@ -1696,7 +1801,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Pluie de Carreaux  Maitrise 36 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Pluie de Carreaux  Maitrise 36 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv36_Pluie-de-Carreaux-Maitrise-36.png"
                    },
                    {
                        "id":  "arbaletrier_def_t36",
@@ -1712,7 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Bastion de Tir  Maitrise 36 : reduit les degats subis en position de tir."
+                       "description":  "Bastion de Tir  Maitrise 36 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv36_Bastion-de-Tir-Maitrise-36.png"
                    },
                    {
                        "id":  "arbaletrier_single_t36",
@@ -1728,7 +1835,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Trait Executeur  Maitrise 36 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Executeur  Maitrise 36 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv36_Trait-Executeur-Maitrise-36.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t37",
@@ -1744,7 +1852,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Tir Multiple  Maitrise 37 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Tir Multiple  Maitrise 37 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv37_Tir-Multiple-Maitrise-37.png"
                    },
                    {
                        "id":  "arbaletrier_def_t37",
@@ -1760,7 +1869,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Pavois  Maitrise 37 : reduit les degats subis en position de tir."
+                       "description":  "Pavois  Maitrise 37 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv37_Pavois-Maitrise-37.png"
                    },
                    {
                        "id":  "arbaletrier_single_t37",
@@ -1776,7 +1886,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Tir Lourd  Maitrise 37 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Lourd  Maitrise 37 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv37_Tir-Lourd-Maitrise-37.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t38",
@@ -1792,7 +1903,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Carreaux en Eventail  Maitrise 38 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Carreaux en Eventail  Maitrise 38 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv38_Carreaux-en-Eventail-Maitrise-38.png"
                    },
                    {
                        "id":  "arbaletrier_def_t38",
@@ -1808,7 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Recharge Abritee  Maitrise 38 : reduit les degats subis en position de tir."
+                       "description":  "Recharge Abritee  Maitrise 38 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv38_Recharge-Abritee-Maitrise-38.png"
                    },
                    {
                        "id":  "arbaletrier_single_t38",
@@ -1824,7 +1937,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Carreau Percant  Maitrise 38 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau Percant  Maitrise 38 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv38_Carreau-Percant-Maitrise-38.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t39",
@@ -1840,7 +1954,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Volee Mecanique  Maitrise 39 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Volee Mecanique  Maitrise 39 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv39_Volee-Mecanique-Maitrise-39.png"
                    },
                    {
                        "id":  "arbaletrier_def_t39",
@@ -1856,7 +1971,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Couvert  Maitrise 39 : reduit les degats subis en position de tir."
+                       "description":  "Couvert  Maitrise 39 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv39_Couvert-Maitrise-39.png"
                    },
                    {
                        "id":  "arbaletrier_single_t39",
@@ -1872,7 +1988,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Trait Perforant  Maitrise 39 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Perforant  Maitrise 39 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv39_Trait-Perforant-Maitrise-39.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t40",
@@ -1888,7 +2005,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Salve Lourde  Maitrise 40 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Salve Lourde  Maitrise 40 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv40_Salve-Lourde-Maitrise-40.png"
                    },
                    {
                        "id":  "arbaletrier_def_t40",
@@ -1904,7 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Garde au Pavois  Maitrise 40 : reduit les degats subis en position de tir."
+                       "description":  "Garde au Pavois  Maitrise 40 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv40_Garde-au-Pavois-Maitrise-40.png"
                    },
                    {
                        "id":  "arbaletrier_single_t40",
@@ -1920,7 +2039,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Tir Transpercant  Maitrise 40 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Transpercant  Maitrise 40 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv40_Tir-Transpercant-Maitrise-40.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t41",
@@ -1936,7 +2056,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Barrage  Maitrise 41 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Barrage  Maitrise 41 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv41_Barrage-Maitrise-41.png"
                    },
                    {
                        "id":  "arbaletrier_def_t41",
@@ -1952,7 +2073,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Position Fortifiee  Maitrise 41 : reduit les degats subis en position de tir."
+                       "description":  "Position Fortifiee  Maitrise 41 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv41_Position-Fortifiee-Maitrise-41.png"
                    },
                    {
                        "id":  "arbaletrier_single_t41",
@@ -1968,7 +2090,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Carreau d'Acier  Maitrise 41 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau d'Acier  Maitrise 41 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv41_Carreau-d-Acier-Maitrise-41.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t42",
@@ -1984,7 +2107,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Pluie de Carreaux  Maitrise 42 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Pluie de Carreaux  Maitrise 42 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv42_Pluie-de-Carreaux-Maitrise-42.png"
                    },
                    {
                        "id":  "arbaletrier_def_t42",
@@ -2000,7 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Bastion de Tir  Maitrise 42 : reduit les degats subis en position de tir."
+                       "description":  "Bastion de Tir  Maitrise 42 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv42_Bastion-de-Tir-Maitrise-42.png"
                    },
                    {
                        "id":  "arbaletrier_single_t42",
@@ -2016,7 +2141,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Trait Executeur  Maitrise 42 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Executeur  Maitrise 42 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv42_Trait-Executeur-Maitrise-42.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t43",
@@ -2032,7 +2158,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Tir Multiple  Maitrise 43 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Tir Multiple  Maitrise 43 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv43_Tir-Multiple-Maitrise-43.png"
                    },
                    {
                        "id":  "arbaletrier_def_t43",
@@ -2048,7 +2175,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Pavois  Maitrise 43 : reduit les degats subis en position de tir."
+                       "description":  "Pavois  Maitrise 43 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv43_Pavois-Maitrise-43.png"
                    },
                    {
                        "id":  "arbaletrier_single_t43",
@@ -2064,7 +2192,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Tir Lourd  Maitrise 43 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Lourd  Maitrise 43 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv43_Tir-Lourd-Maitrise-43.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t44",
@@ -2080,7 +2209,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Carreaux en Eventail  Maitrise 44 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Carreaux en Eventail  Maitrise 44 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv44_Carreaux-en-Eventail-Maitrise-44.png"
                    },
                    {
                        "id":  "arbaletrier_def_t44",
@@ -2096,7 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Recharge Abritee  Maitrise 44 : reduit les degats subis en position de tir."
+                       "description":  "Recharge Abritee  Maitrise 44 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv44_Recharge-Abritee-Maitrise-44.png"
                    },
                    {
                        "id":  "arbaletrier_single_t44",
@@ -2112,7 +2243,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Carreau Percant  Maitrise 44 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau Percant  Maitrise 44 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv44_Carreau-Percant-Maitrise-44.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t45",
@@ -2128,7 +2260,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Volee Mecanique  Maitrise 45 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Volee Mecanique  Maitrise 45 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv45_Volee-Mecanique-Maitrise-45.png"
                    },
                    {
                        "id":  "arbaletrier_def_t45",
@@ -2144,7 +2277,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Couvert  Maitrise 45 : reduit les degats subis en position de tir."
+                       "description":  "Couvert  Maitrise 45 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv45_Couvert-Maitrise-45.png"
                    },
                    {
                        "id":  "arbaletrier_single_t45",
@@ -2160,7 +2294,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Trait Perforant  Maitrise 45 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Perforant  Maitrise 45 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv45_Trait-Perforant-Maitrise-45.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t46",
@@ -2176,7 +2311,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Salve Lourde  Maitrise 46 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Salve Lourde  Maitrise 46 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv46_Salve-Lourde-Maitrise-46.png"
                    },
                    {
                        "id":  "arbaletrier_def_t46",
@@ -2192,7 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Garde au Pavois  Maitrise 46 : reduit les degats subis en position de tir."
+                       "description":  "Garde au Pavois  Maitrise 46 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv46_Garde-au-Pavois-Maitrise-46.png"
                    },
                    {
                        "id":  "arbaletrier_single_t46",
@@ -2208,7 +2345,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Tir Transpercant  Maitrise 46 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Transpercant  Maitrise 46 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv46_Tir-Transpercant-Maitrise-46.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t47",
@@ -2224,7 +2362,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Barrage  Maitrise 47 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Barrage  Maitrise 47 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv47_Barrage-Maitrise-47.png"
                    },
                    {
                        "id":  "arbaletrier_def_t47",
@@ -2240,7 +2379,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Position Fortifiee  Maitrise 47 : reduit les degats subis en position de tir."
+                       "description":  "Position Fortifiee  Maitrise 47 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv47_Position-Fortifiee-Maitrise-47.png"
                    },
                    {
                        "id":  "arbaletrier_single_t47",
@@ -2256,7 +2396,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Carreau d'Acier  Maitrise 47 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau d'Acier  Maitrise 47 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv47_Carreau-d-Acier-Maitrise-47.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t48",
@@ -2272,7 +2413,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Pluie de Carreaux  Maitrise 48 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Pluie de Carreaux  Maitrise 48 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv48_Pluie-de-Carreaux-Maitrise-48.png"
                    },
                    {
                        "id":  "arbaletrier_def_t48",
@@ -2288,7 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Bastion de Tir  Maitrise 48 : reduit les degats subis en position de tir."
+                       "description":  "Bastion de Tir  Maitrise 48 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv48_Bastion-de-Tir-Maitrise-48.png"
                    },
                    {
                        "id":  "arbaletrier_single_t48",
@@ -2304,7 +2447,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Trait Executeur  Maitrise 48 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Executeur  Maitrise 48 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv48_Trait-Executeur-Maitrise-48.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t49",
@@ -2320,7 +2464,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Tir Multiple  Maitrise 49 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Tir Multiple  Maitrise 49 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv49_Tir-Multiple-Maitrise-49.png"
                    },
                    {
                        "id":  "arbaletrier_def_t49",
@@ -2336,7 +2481,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Pavois  Maitrise 49 : reduit les degats subis en position de tir."
+                       "description":  "Pavois  Maitrise 49 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv49_Pavois-Maitrise-49.png"
                    },
                    {
                        "id":  "arbaletrier_single_t49",
@@ -2352,7 +2498,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Tir Lourd  Maitrise 49 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Lourd  Maitrise 49 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv49_Tir-Lourd-Maitrise-49.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t50",
@@ -2368,7 +2515,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Carreaux en Eventail  Maitrise 50 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Carreaux en Eventail  Maitrise 50 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv50_Carreaux-en-Eventail-Maitrise-50.png"
                    },
                    {
                        "id":  "arbaletrier_def_t50",
@@ -2384,7 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Recharge Abritee  Maitrise 50 : reduit les degats subis en position de tir."
+                       "description":  "Recharge Abritee  Maitrise 50 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv50_Recharge-Abritee-Maitrise-50.png"
                    },
                    {
                        "id":  "arbaletrier_single_t50",
@@ -2400,7 +2549,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Carreau Percant  Maitrise 50 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau Percant  Maitrise 50 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv50_Carreau-Percant-Maitrise-50.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t51",
@@ -2416,7 +2566,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Volee Mecanique  Maitrise 51 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Volee Mecanique  Maitrise 51 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv51_Volee-Mecanique-Maitrise-51.png"
                    },
                    {
                        "id":  "arbaletrier_def_t51",
@@ -2432,7 +2583,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Couvert  Maitrise 51 : reduit les degats subis en position de tir."
+                       "description":  "Couvert  Maitrise 51 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv51_Couvert-Maitrise-51.png"
                    },
                    {
                        "id":  "arbaletrier_single_t51",
@@ -2448,7 +2600,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Trait Perforant  Maitrise 51 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Perforant  Maitrise 51 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv51_Trait-Perforant-Maitrise-51.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t52",
@@ -2464,7 +2617,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Salve Lourde  Maitrise 52 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Salve Lourde  Maitrise 52 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv52_Salve-Lourde-Maitrise-52.png"
                    },
                    {
                        "id":  "arbaletrier_def_t52",
@@ -2480,7 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Garde au Pavois  Maitrise 52 : reduit les degats subis en position de tir."
+                       "description":  "Garde au Pavois  Maitrise 52 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv52_Garde-au-Pavois-Maitrise-52.png"
                    },
                    {
                        "id":  "arbaletrier_single_t52",
@@ -2496,7 +2651,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Tir Transpercant  Maitrise 52 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Transpercant  Maitrise 52 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv52_Tir-Transpercant-Maitrise-52.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t53",
@@ -2512,7 +2668,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Barrage  Maitrise 53 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Barrage  Maitrise 53 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv53_Barrage-Maitrise-53.png"
                    },
                    {
                        "id":  "arbaletrier_def_t53",
@@ -2528,7 +2685,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Position Fortifiee  Maitrise 53 : reduit les degats subis en position de tir."
+                       "description":  "Position Fortifiee  Maitrise 53 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv53_Position-Fortifiee-Maitrise-53.png"
                    },
                    {
                        "id":  "arbaletrier_single_t53",
@@ -2544,7 +2702,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Carreau d'Acier  Maitrise 53 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau d'Acier  Maitrise 53 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv53_Carreau-d-Acier-Maitrise-53.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t54",
@@ -2560,7 +2719,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Pluie de Carreaux  Maitrise 54 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Pluie de Carreaux  Maitrise 54 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv54_Pluie-de-Carreaux-Maitrise-54.png"
                    },
                    {
                        "id":  "arbaletrier_def_t54",
@@ -2576,7 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Bastion de Tir  Maitrise 54 : reduit les degats subis en position de tir."
+                       "description":  "Bastion de Tir  Maitrise 54 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv54_Bastion-de-Tir-Maitrise-54.png"
                    },
                    {
                        "id":  "arbaletrier_single_t54",
@@ -2592,7 +2753,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Trait Executeur  Maitrise 54 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Executeur  Maitrise 54 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv54_Trait-Executeur-Maitrise-54.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t55",
@@ -2608,7 +2770,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Tir Multiple  Maitrise 55 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Tir Multiple  Maitrise 55 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv55_Tir-Multiple-Maitrise-55.png"
                    },
                    {
                        "id":  "arbaletrier_def_t55",
@@ -2624,7 +2787,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Pavois  Maitrise 55 : reduit les degats subis en position de tir."
+                       "description":  "Pavois  Maitrise 55 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv55_Pavois-Maitrise-55.png"
                    },
                    {
                        "id":  "arbaletrier_single_t55",
@@ -2640,7 +2804,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Tir Lourd  Maitrise 55 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Lourd  Maitrise 55 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv55_Tir-Lourd-Maitrise-55.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t56",
@@ -2656,7 +2821,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Carreaux en Eventail  Maitrise 56 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Carreaux en Eventail  Maitrise 56 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv56_Carreaux-en-Eventail-Maitrise-56.png"
                    },
                    {
                        "id":  "arbaletrier_def_t56",
@@ -2672,7 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Recharge Abritee  Maitrise 56 : reduit les degats subis en position de tir."
+                       "description":  "Recharge Abritee  Maitrise 56 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv56_Recharge-Abritee-Maitrise-56.png"
                    },
                    {
                        "id":  "arbaletrier_single_t56",
@@ -2688,7 +2855,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Carreau Percant  Maitrise 56 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau Percant  Maitrise 56 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv56_Carreau-Percant-Maitrise-56.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t57",
@@ -2704,7 +2872,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Volee Mecanique  Maitrise 57 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Volee Mecanique  Maitrise 57 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv57_Volee-Mecanique-Maitrise-57.png"
                    },
                    {
                        "id":  "arbaletrier_def_t57",
@@ -2720,7 +2889,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Couvert  Maitrise 57 : reduit les degats subis en position de tir."
+                       "description":  "Couvert  Maitrise 57 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv57_Couvert-Maitrise-57.png"
                    },
                    {
                        "id":  "arbaletrier_single_t57",
@@ -2736,7 +2906,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Trait Perforant  Maitrise 57 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Perforant  Maitrise 57 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv57_Trait-Perforant-Maitrise-57.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t58",
@@ -2752,7 +2923,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Salve Lourde  Maitrise 58 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Salve Lourde  Maitrise 58 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv58_Salve-Lourde-Maitrise-58.png"
                    },
                    {
                        "id":  "arbaletrier_def_t58",
@@ -2768,7 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Garde au Pavois  Maitrise 58 : reduit les degats subis en position de tir."
+                       "description":  "Garde au Pavois  Maitrise 58 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv58_Garde-au-Pavois-Maitrise-58.png"
                    },
                    {
                        "id":  "arbaletrier_single_t58",
@@ -2784,7 +2957,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Tir Transpercant  Maitrise 58 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Tir Transpercant  Maitrise 58 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv58_Tir-Transpercant-Maitrise-58.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t59",
@@ -2800,7 +2974,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Barrage  Maitrise 59 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Barrage  Maitrise 59 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv59_Barrage-Maitrise-59.png"
                    },
                    {
                        "id":  "arbaletrier_def_t59",
@@ -2816,7 +2991,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Position Fortifiee  Maitrise 59 : reduit les degats subis en position de tir."
+                       "description":  "Position Fortifiee  Maitrise 59 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv59_Position-Fortifiee-Maitrise-59.png"
                    },
                    {
                        "id":  "arbaletrier_single_t59",
@@ -2832,7 +3008,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Carreau d'Acier  Maitrise 59 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Carreau d'Acier  Maitrise 59 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv59_Carreau-d-Acier-Maitrise-59.png"
                    },
                    {
                        "id":  "arbaletrier_aoe_t60",
@@ -2848,7 +3025,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Pluie de Carreaux  Maitrise 60 : envoie plusieurs carreaux sur un groupe (degats reduits)."
+                       "description":  "Pluie de Carreaux  Maitrise 60 : envoie plusieurs carreaux sur un groupe (degats reduits).",
+                       "iconFile":  "Arbaletrier_Zone_Niv60_Pluie-de-Carreaux-Maitrise-60.png"
                    },
                    {
                        "id":  "arbaletrier_def_t60",
@@ -2864,7 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Bastion de Tir  Maitrise 60 : reduit les degats subis en position de tir."
+                       "description":  "Bastion de Tir  Maitrise 60 : reduit les degats subis en position de tir.",
+                       "iconFile":  "Arbaletrier_Defense_Niv60_Bastion-de-Tir-Maitrise-60.png"
                    },
                    {
                        "id":  "arbaletrier_single_t60",
@@ -2880,7 +3059,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Trait Executeur  Maitrise 60 : tire un carreau lourd qui ignore une partie de l'armure."
+                       "description":  "Trait Executeur  Maitrise 60 : tire un carreau lourd qui ignore une partie de l'armure.",
+                       "iconFile":  "Arbaletrier_Unitaire_Niv60_Trait-Executeur-Maitrise-60.png"
                    }
                ]
 }

@@ -11067,7 +11067,7 @@ namespace engine
 									{
 										if (cs.skillId == skillId)
 										{
-											kit.push_back(engine::client::ToSpellDisplay(cs));
+											kit.push_back(engine::client::ToSpellDisplay(cs, classId));
 											break;
 										}
 									}
@@ -12010,7 +12010,7 @@ namespace engine
 							{
 								if (cs.skillId == skillId)
 								{
-									grimoireEffectiveKit.push_back(engine::client::ToSpellDisplay(cs));
+									grimoireEffectiveKit.push_back(engine::client::ToSpellDisplay(cs, gClassId));
 									break;
 								}
 							}

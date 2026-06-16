@@ -16,7 +16,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Secousse : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Secousse : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv01_Secousse.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t1",
@@ -32,7 +33,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Garde Inflexible : absorbe les degats pour soi et ses allies."
+                       "description":  "Garde Inflexible : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv01_Garde-Inflexible.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t1",
@@ -48,7 +50,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Coup de Garde : contre-attaque une cible unique."
+                       "description":  "Coup de Garde : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv01_Coup-de-Garde.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t2",
@@ -64,7 +67,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Cri du Gardien  Aiguise : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Cri du Gardien  Aiguise : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv02_Cri-du-Gardien-Aiguise.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t2",
@@ -80,7 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Mur d'Ecailles  Aiguise : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Aiguise : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv02_Mur-d-Ecailles-Aiguise.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t2",
@@ -96,7 +101,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Frappe du Gardien  Aiguise : contre-attaque une cible unique."
+                       "description":  "Frappe du Gardien  Aiguise : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv02_Frappe-du-Gardien-Aiguise.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t3",
@@ -112,7 +118,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Vague d'Ecailles  Renforce : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Renforce : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv03_Vague-d-Ecailles-Renforce.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t3",
@@ -128,7 +135,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Protection de Groupe  Renforce : absorbe les degats pour soi et ses allies."
+                       "description":  "Protection de Groupe  Renforce : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv03_Protection-de-Groupe-Renforce.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t3",
@@ -144,7 +152,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Choc d'Ecaille  Renforce : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Renforce : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv03_Choc-d-Ecaille-Renforce.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t4",
@@ -160,7 +169,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Repulsion  Affute : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Repulsion  Affute : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv04_Repulsion-Affute.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t4",
@@ -176,7 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Tendre la Garde  Affute : absorbe les degats pour soi et ses allies."
+                       "description":  "Tendre la Garde  Affute : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv04_Tendre-la-Garde-Affute.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t4",
@@ -192,7 +203,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Represailles  Affute : contre-attaque une cible unique."
+                       "description":  "Represailles  Affute : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv04_Represailles-Affute.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t5",
@@ -208,7 +220,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Seisme Mineur  Brutal : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Seisme Mineur  Brutal : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv05_Seisme-Mineur-Brutal.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t5",
@@ -224,7 +237,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Bouclier Vivant  Brutal : absorbe les degats pour soi et ses allies."
+                       "description":  "Bouclier Vivant  Brutal : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv05_Bouclier-Vivant-Brutal.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t5",
@@ -240,7 +254,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Brise-Assaut  Brutal : contre-attaque une cible unique."
+                       "description":  "Brise-Assaut  Brutal : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv05_Brise-Assaut-Brutal.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t6",
@@ -256,7 +271,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Deflagration Tellurique  Vorace : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Deflagration Tellurique  Vorace : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv06_Deflagration-Tellurique-Vorace.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t6",
@@ -272,7 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Forteresse  Vorace : absorbe les degats pour soi et ses allies."
+                       "description":  "Forteresse  Vorace : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv06_Forteresse-Vorace.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t6",
@@ -288,7 +305,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Sentence du Gardien  Vorace : contre-attaque une cible unique."
+                       "description":  "Sentence du Gardien  Vorace : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv06_Sentence-du-Gardien-Vorace.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t7",
@@ -304,7 +322,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Secousse  Implacable : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Secousse  Implacable : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv07_Secousse-Implacable.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t7",
@@ -320,7 +339,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Garde Inflexible  Implacable : absorbe les degats pour soi et ses allies."
+                       "description":  "Garde Inflexible  Implacable : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv07_Garde-Inflexible-Implacable.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t7",
@@ -336,7 +356,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Coup de Garde  Implacable : contre-attaque une cible unique."
+                       "description":  "Coup de Garde  Implacable : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv07_Coup-de-Garde-Implacable.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t8",
@@ -352,7 +373,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Cri du Gardien  Funeste : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Cri du Gardien  Funeste : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv08_Cri-du-Gardien-Funeste.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t8",
@@ -368,7 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Mur d'Ecailles  Funeste : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Funeste : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv08_Mur-d-Ecailles-Funeste.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t8",
@@ -384,7 +407,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Frappe du Gardien  Funeste : contre-attaque une cible unique."
+                       "description":  "Frappe du Gardien  Funeste : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv08_Frappe-du-Gardien-Funeste.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t9",
@@ -400,7 +424,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Vague d'Ecailles  Cruel : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Cruel : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv09_Vague-d-Ecailles-Cruel.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t9",
@@ -416,7 +441,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Protection de Groupe  Cruel : absorbe les degats pour soi et ses allies."
+                       "description":  "Protection de Groupe  Cruel : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv09_Protection-de-Groupe-Cruel.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t9",
@@ -432,7 +458,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Choc d'Ecaille  Cruel : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Cruel : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv09_Choc-d-Ecaille-Cruel.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t10",
@@ -448,7 +475,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Repulsion  Sanglant : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Repulsion  Sanglant : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv10_Repulsion-Sanglant.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t10",
@@ -464,7 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Tendre la Garde  Sanglant : absorbe les degats pour soi et ses allies."
+                       "description":  "Tendre la Garde  Sanglant : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv10_Tendre-la-Garde-Sanglant.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t10",
@@ -480,7 +509,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Represailles  Sanglant : contre-attaque une cible unique."
+                       "description":  "Represailles  Sanglant : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv10_Represailles-Sanglant.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t11",
@@ -496,7 +526,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Seisme Mineur  Devastateur : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Seisme Mineur  Devastateur : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv11_Seisme-Mineur-Devastateur.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t11",
@@ -512,7 +543,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Bouclier Vivant  Devastateur : absorbe les degats pour soi et ses allies."
+                       "description":  "Bouclier Vivant  Devastateur : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv11_Bouclier-Vivant-Devastateur.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t11",
@@ -528,7 +560,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Brise-Assaut  Devastateur : contre-attaque une cible unique."
+                       "description":  "Brise-Assaut  Devastateur : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv11_Brise-Assaut-Devastateur.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t12",
@@ -544,7 +577,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Deflagration Tellurique  Foudroyant : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Deflagration Tellurique  Foudroyant : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv12_Deflagration-Tellurique-Foudroyant.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t12",
@@ -560,7 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Forteresse  Foudroyant : absorbe les degats pour soi et ses allies."
+                       "description":  "Forteresse  Foudroyant : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv12_Forteresse-Foudroyant.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t12",
@@ -576,7 +611,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Sentence du Gardien  Foudroyant : contre-attaque une cible unique."
+                       "description":  "Sentence du Gardien  Foudroyant : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv12_Sentence-du-Gardien-Foudroyant.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t13",
@@ -592,7 +628,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Secousse  Mortel : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Secousse  Mortel : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv13_Secousse-Mortel.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t13",
@@ -608,7 +645,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Garde Inflexible  Mortel : absorbe les degats pour soi et ses allies."
+                       "description":  "Garde Inflexible  Mortel : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv13_Garde-Inflexible-Mortel.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t13",
@@ -624,7 +662,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Coup de Garde  Mortel : contre-attaque une cible unique."
+                       "description":  "Coup de Garde  Mortel : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv13_Coup-de-Garde-Mortel.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t14",
@@ -640,7 +679,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Cri du Gardien  Inexorable : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Cri du Gardien  Inexorable : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv14_Cri-du-Gardien-Inexorable.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t14",
@@ -656,7 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Mur d'Ecailles  Inexorable : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Inexorable : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv14_Mur-d-Ecailles-Inexorable.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t14",
@@ -672,7 +713,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Frappe du Gardien  Inexorable : contre-attaque une cible unique."
+                       "description":  "Frappe du Gardien  Inexorable : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv14_Frappe-du-Gardien-Inexorable.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t15",
@@ -688,7 +730,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Vague d'Ecailles  Terrible : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Terrible : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv15_Vague-d-Ecailles-Terrible.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t15",
@@ -704,7 +747,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Protection de Groupe  Terrible : absorbe les degats pour soi et ses allies."
+                       "description":  "Protection de Groupe  Terrible : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv15_Protection-de-Groupe-Terrible.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t15",
@@ -720,7 +764,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Choc d'Ecaille  Terrible : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Terrible : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv15_Choc-d-Ecaille-Terrible.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t16",
@@ -736,7 +781,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Repulsion  Souverain : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Repulsion  Souverain : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv16_Repulsion-Souverain.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t16",
@@ -752,7 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Tendre la Garde  Souverain : absorbe les degats pour soi et ses allies."
+                       "description":  "Tendre la Garde  Souverain : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv16_Tendre-la-Garde-Souverain.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t16",
@@ -768,7 +815,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Represailles  Souverain : contre-attaque une cible unique."
+                       "description":  "Represailles  Souverain : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv16_Represailles-Souverain.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t17",
@@ -784,7 +832,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Seisme Mineur  Legendaire : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Seisme Mineur  Legendaire : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv17_Seisme-Mineur-Legendaire.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t17",
@@ -800,7 +849,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Bouclier Vivant  Legendaire : absorbe les degats pour soi et ses allies."
+                       "description":  "Bouclier Vivant  Legendaire : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv17_Bouclier-Vivant-Legendaire.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t17",
@@ -816,7 +866,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Brise-Assaut  Legendaire : contre-attaque une cible unique."
+                       "description":  "Brise-Assaut  Legendaire : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv17_Brise-Assaut-Legendaire.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t18",
@@ -832,7 +883,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Deflagration Tellurique  Cataclysmique : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Deflagration Tellurique  Cataclysmique : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv18_Deflagration-Tellurique-Cataclysmique.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t18",
@@ -848,7 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Forteresse  Cataclysmique : absorbe les degats pour soi et ses allies."
+                       "description":  "Forteresse  Cataclysmique : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv18_Forteresse-Cataclysmique.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t18",
@@ -864,7 +917,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Sentence du Gardien  Cataclysmique : contre-attaque une cible unique."
+                       "description":  "Sentence du Gardien  Cataclysmique : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv18_Sentence-du-Gardien-Cataclysmique.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t19",
@@ -880,7 +934,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Secousse  Apocalyptique : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Secousse  Apocalyptique : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv19_Secousse-Apocalyptique.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t19",
@@ -896,7 +951,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Garde Inflexible  Apocalyptique : absorbe les degats pour soi et ses allies."
+                       "description":  "Garde Inflexible  Apocalyptique : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv19_Garde-Inflexible-Apocalyptique.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t19",
@@ -912,7 +968,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Coup de Garde  Apocalyptique : contre-attaque une cible unique."
+                       "description":  "Coup de Garde  Apocalyptique : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv19_Coup-de-Garde-Apocalyptique.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t20",
@@ -928,7 +985,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Cri du Gardien  Ultime : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Cri du Gardien  Ultime : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv20_Cri-du-Gardien-Ultime.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t20",
@@ -944,7 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Mur d'Ecailles  Ultime : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Ultime : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv20_Mur-d-Ecailles-Ultime.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t20",
@@ -960,7 +1019,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Frappe du Gardien  Ultime : contre-attaque une cible unique."
+                       "description":  "Frappe du Gardien  Ultime : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv20_Frappe-du-Gardien-Ultime.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t21",
@@ -976,7 +1036,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Vague d'Ecailles  Maitrise 21 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 21 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv21_Vague-d-Ecailles-Maitrise-21.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t21",
@@ -992,7 +1053,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Protection de Groupe  Maitrise 21 : absorbe les degats pour soi et ses allies."
+                       "description":  "Protection de Groupe  Maitrise 21 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv21_Protection-de-Groupe-Maitrise-21.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t21",
@@ -1008,7 +1070,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Choc d'Ecaille  Maitrise 21 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 21 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv21_Choc-d-Ecaille-Maitrise-21.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t22",
@@ -1024,7 +1087,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Repulsion  Maitrise 22 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Repulsion  Maitrise 22 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv22_Repulsion-Maitrise-22.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t22",
@@ -1040,7 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Tendre la Garde  Maitrise 22 : absorbe les degats pour soi et ses allies."
+                       "description":  "Tendre la Garde  Maitrise 22 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv22_Tendre-la-Garde-Maitrise-22.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t22",
@@ -1056,7 +1121,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Represailles  Maitrise 22 : contre-attaque une cible unique."
+                       "description":  "Represailles  Maitrise 22 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv22_Represailles-Maitrise-22.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t23",
@@ -1072,7 +1138,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Seisme Mineur  Maitrise 23 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Seisme Mineur  Maitrise 23 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv23_Seisme-Mineur-Maitrise-23.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t23",
@@ -1088,7 +1155,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Bouclier Vivant  Maitrise 23 : absorbe les degats pour soi et ses allies."
+                       "description":  "Bouclier Vivant  Maitrise 23 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv23_Bouclier-Vivant-Maitrise-23.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t23",
@@ -1104,7 +1172,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Brise-Assaut  Maitrise 23 : contre-attaque une cible unique."
+                       "description":  "Brise-Assaut  Maitrise 23 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv23_Brise-Assaut-Maitrise-23.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t24",
@@ -1120,7 +1189,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Deflagration Tellurique  Maitrise 24 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Deflagration Tellurique  Maitrise 24 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv24_Deflagration-Tellurique-Maitrise-24.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t24",
@@ -1136,7 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Forteresse  Maitrise 24 : absorbe les degats pour soi et ses allies."
+                       "description":  "Forteresse  Maitrise 24 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv24_Forteresse-Maitrise-24.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t24",
@@ -1152,7 +1223,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Sentence du Gardien  Maitrise 24 : contre-attaque une cible unique."
+                       "description":  "Sentence du Gardien  Maitrise 24 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv24_Sentence-du-Gardien-Maitrise-24.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t25",
@@ -1168,7 +1240,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Secousse  Maitrise 25 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Secousse  Maitrise 25 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv25_Secousse-Maitrise-25.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t25",
@@ -1184,7 +1257,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Garde Inflexible  Maitrise 25 : absorbe les degats pour soi et ses allies."
+                       "description":  "Garde Inflexible  Maitrise 25 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv25_Garde-Inflexible-Maitrise-25.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t25",
@@ -1200,7 +1274,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Coup de Garde  Maitrise 25 : contre-attaque une cible unique."
+                       "description":  "Coup de Garde  Maitrise 25 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv25_Coup-de-Garde-Maitrise-25.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t26",
@@ -1216,7 +1291,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Cri du Gardien  Maitrise 26 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Cri du Gardien  Maitrise 26 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv26_Cri-du-Gardien-Maitrise-26.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t26",
@@ -1232,7 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Mur d'Ecailles  Maitrise 26 : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Maitrise 26 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv26_Mur-d-Ecailles-Maitrise-26.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t26",
@@ -1248,7 +1325,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Frappe du Gardien  Maitrise 26 : contre-attaque une cible unique."
+                       "description":  "Frappe du Gardien  Maitrise 26 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv26_Frappe-du-Gardien-Maitrise-26.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t27",
@@ -1264,7 +1342,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Vague d'Ecailles  Maitrise 27 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 27 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv27_Vague-d-Ecailles-Maitrise-27.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t27",
@@ -1280,7 +1359,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Protection de Groupe  Maitrise 27 : absorbe les degats pour soi et ses allies."
+                       "description":  "Protection de Groupe  Maitrise 27 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv27_Protection-de-Groupe-Maitrise-27.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t27",
@@ -1296,7 +1376,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Choc d'Ecaille  Maitrise 27 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 27 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv27_Choc-d-Ecaille-Maitrise-27.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t28",
@@ -1312,7 +1393,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Repulsion  Maitrise 28 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Repulsion  Maitrise 28 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv28_Repulsion-Maitrise-28.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t28",
@@ -1328,7 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Tendre la Garde  Maitrise 28 : absorbe les degats pour soi et ses allies."
+                       "description":  "Tendre la Garde  Maitrise 28 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv28_Tendre-la-Garde-Maitrise-28.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t28",
@@ -1344,7 +1427,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Represailles  Maitrise 28 : contre-attaque une cible unique."
+                       "description":  "Represailles  Maitrise 28 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv28_Represailles-Maitrise-28.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t29",
@@ -1360,7 +1444,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Seisme Mineur  Maitrise 29 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Seisme Mineur  Maitrise 29 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv29_Seisme-Mineur-Maitrise-29.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t29",
@@ -1376,7 +1461,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Bouclier Vivant  Maitrise 29 : absorbe les degats pour soi et ses allies."
+                       "description":  "Bouclier Vivant  Maitrise 29 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv29_Bouclier-Vivant-Maitrise-29.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t29",
@@ -1392,7 +1478,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Brise-Assaut  Maitrise 29 : contre-attaque une cible unique."
+                       "description":  "Brise-Assaut  Maitrise 29 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv29_Brise-Assaut-Maitrise-29.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t30",
@@ -1408,7 +1495,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Deflagration Tellurique  Maitrise 30 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Deflagration Tellurique  Maitrise 30 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv30_Deflagration-Tellurique-Maitrise-30.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t30",
@@ -1424,7 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Forteresse  Maitrise 30 : absorbe les degats pour soi et ses allies."
+                       "description":  "Forteresse  Maitrise 30 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv30_Forteresse-Maitrise-30.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t30",
@@ -1440,7 +1529,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Sentence du Gardien  Maitrise 30 : contre-attaque une cible unique."
+                       "description":  "Sentence du Gardien  Maitrise 30 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv30_Sentence-du-Gardien-Maitrise-30.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t31",
@@ -1456,7 +1546,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Secousse  Maitrise 31 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Secousse  Maitrise 31 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv31_Secousse-Maitrise-31.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t31",
@@ -1472,7 +1563,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Garde Inflexible  Maitrise 31 : absorbe les degats pour soi et ses allies."
+                       "description":  "Garde Inflexible  Maitrise 31 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv31_Garde-Inflexible-Maitrise-31.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t31",
@@ -1488,7 +1580,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Coup de Garde  Maitrise 31 : contre-attaque une cible unique."
+                       "description":  "Coup de Garde  Maitrise 31 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv31_Coup-de-Garde-Maitrise-31.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t32",
@@ -1504,7 +1597,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Cri du Gardien  Maitrise 32 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Cri du Gardien  Maitrise 32 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv32_Cri-du-Gardien-Maitrise-32.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t32",
@@ -1520,7 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Mur d'Ecailles  Maitrise 32 : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Maitrise 32 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv32_Mur-d-Ecailles-Maitrise-32.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t32",
@@ -1536,7 +1631,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Frappe du Gardien  Maitrise 32 : contre-attaque une cible unique."
+                       "description":  "Frappe du Gardien  Maitrise 32 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv32_Frappe-du-Gardien-Maitrise-32.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t33",
@@ -1552,7 +1648,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Vague d'Ecailles  Maitrise 33 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 33 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv33_Vague-d-Ecailles-Maitrise-33.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t33",
@@ -1568,7 +1665,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Protection de Groupe  Maitrise 33 : absorbe les degats pour soi et ses allies."
+                       "description":  "Protection de Groupe  Maitrise 33 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv33_Protection-de-Groupe-Maitrise-33.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t33",
@@ -1584,7 +1682,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Choc d'Ecaille  Maitrise 33 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 33 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv33_Choc-d-Ecaille-Maitrise-33.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t34",
@@ -1600,7 +1699,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Repulsion  Maitrise 34 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Repulsion  Maitrise 34 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv34_Repulsion-Maitrise-34.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t34",
@@ -1616,7 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Tendre la Garde  Maitrise 34 : absorbe les degats pour soi et ses allies."
+                       "description":  "Tendre la Garde  Maitrise 34 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv34_Tendre-la-Garde-Maitrise-34.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t34",
@@ -1632,7 +1733,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Represailles  Maitrise 34 : contre-attaque une cible unique."
+                       "description":  "Represailles  Maitrise 34 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv34_Represailles-Maitrise-34.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t35",
@@ -1648,7 +1750,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Seisme Mineur  Maitrise 35 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Seisme Mineur  Maitrise 35 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv35_Seisme-Mineur-Maitrise-35.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t35",
@@ -1664,7 +1767,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Bouclier Vivant  Maitrise 35 : absorbe les degats pour soi et ses allies."
+                       "description":  "Bouclier Vivant  Maitrise 35 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv35_Bouclier-Vivant-Maitrise-35.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t35",
@@ -1680,7 +1784,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Brise-Assaut  Maitrise 35 : contre-attaque une cible unique."
+                       "description":  "Brise-Assaut  Maitrise 35 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv35_Brise-Assaut-Maitrise-35.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t36",
@@ -1696,7 +1801,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Deflagration Tellurique  Maitrise 36 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Deflagration Tellurique  Maitrise 36 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv36_Deflagration-Tellurique-Maitrise-36.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t36",
@@ -1712,7 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Forteresse  Maitrise 36 : absorbe les degats pour soi et ses allies."
+                       "description":  "Forteresse  Maitrise 36 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv36_Forteresse-Maitrise-36.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t36",
@@ -1728,7 +1835,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Sentence du Gardien  Maitrise 36 : contre-attaque une cible unique."
+                       "description":  "Sentence du Gardien  Maitrise 36 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv36_Sentence-du-Gardien-Maitrise-36.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t37",
@@ -1744,7 +1852,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Secousse  Maitrise 37 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Secousse  Maitrise 37 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv37_Secousse-Maitrise-37.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t37",
@@ -1760,7 +1869,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Garde Inflexible  Maitrise 37 : absorbe les degats pour soi et ses allies."
+                       "description":  "Garde Inflexible  Maitrise 37 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv37_Garde-Inflexible-Maitrise-37.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t37",
@@ -1776,7 +1886,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Coup de Garde  Maitrise 37 : contre-attaque une cible unique."
+                       "description":  "Coup de Garde  Maitrise 37 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv37_Coup-de-Garde-Maitrise-37.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t38",
@@ -1792,7 +1903,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Cri du Gardien  Maitrise 38 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Cri du Gardien  Maitrise 38 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv38_Cri-du-Gardien-Maitrise-38.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t38",
@@ -1808,7 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Mur d'Ecailles  Maitrise 38 : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Maitrise 38 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv38_Mur-d-Ecailles-Maitrise-38.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t38",
@@ -1824,7 +1937,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Frappe du Gardien  Maitrise 38 : contre-attaque une cible unique."
+                       "description":  "Frappe du Gardien  Maitrise 38 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv38_Frappe-du-Gardien-Maitrise-38.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t39",
@@ -1840,7 +1954,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Vague d'Ecailles  Maitrise 39 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 39 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv39_Vague-d-Ecailles-Maitrise-39.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t39",
@@ -1856,7 +1971,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Protection de Groupe  Maitrise 39 : absorbe les degats pour soi et ses allies."
+                       "description":  "Protection de Groupe  Maitrise 39 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv39_Protection-de-Groupe-Maitrise-39.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t39",
@@ -1872,7 +1988,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Choc d'Ecaille  Maitrise 39 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 39 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv39_Choc-d-Ecaille-Maitrise-39.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t40",
@@ -1888,7 +2005,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Repulsion  Maitrise 40 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Repulsion  Maitrise 40 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv40_Repulsion-Maitrise-40.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t40",
@@ -1904,7 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Tendre la Garde  Maitrise 40 : absorbe les degats pour soi et ses allies."
+                       "description":  "Tendre la Garde  Maitrise 40 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv40_Tendre-la-Garde-Maitrise-40.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t40",
@@ -1920,7 +2039,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Represailles  Maitrise 40 : contre-attaque une cible unique."
+                       "description":  "Represailles  Maitrise 40 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv40_Represailles-Maitrise-40.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t41",
@@ -1936,7 +2056,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Seisme Mineur  Maitrise 41 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Seisme Mineur  Maitrise 41 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv41_Seisme-Mineur-Maitrise-41.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t41",
@@ -1952,7 +2073,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Bouclier Vivant  Maitrise 41 : absorbe les degats pour soi et ses allies."
+                       "description":  "Bouclier Vivant  Maitrise 41 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv41_Bouclier-Vivant-Maitrise-41.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t41",
@@ -1968,7 +2090,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Brise-Assaut  Maitrise 41 : contre-attaque une cible unique."
+                       "description":  "Brise-Assaut  Maitrise 41 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv41_Brise-Assaut-Maitrise-41.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t42",
@@ -1984,7 +2107,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Deflagration Tellurique  Maitrise 42 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Deflagration Tellurique  Maitrise 42 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv42_Deflagration-Tellurique-Maitrise-42.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t42",
@@ -2000,7 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Forteresse  Maitrise 42 : absorbe les degats pour soi et ses allies."
+                       "description":  "Forteresse  Maitrise 42 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv42_Forteresse-Maitrise-42.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t42",
@@ -2016,7 +2141,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Sentence du Gardien  Maitrise 42 : contre-attaque une cible unique."
+                       "description":  "Sentence du Gardien  Maitrise 42 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv42_Sentence-du-Gardien-Maitrise-42.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t43",
@@ -2032,7 +2158,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Secousse  Maitrise 43 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Secousse  Maitrise 43 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv43_Secousse-Maitrise-43.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t43",
@@ -2048,7 +2175,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Garde Inflexible  Maitrise 43 : absorbe les degats pour soi et ses allies."
+                       "description":  "Garde Inflexible  Maitrise 43 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv43_Garde-Inflexible-Maitrise-43.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t43",
@@ -2064,7 +2192,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Coup de Garde  Maitrise 43 : contre-attaque une cible unique."
+                       "description":  "Coup de Garde  Maitrise 43 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv43_Coup-de-Garde-Maitrise-43.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t44",
@@ -2080,7 +2209,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Cri du Gardien  Maitrise 44 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Cri du Gardien  Maitrise 44 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv44_Cri-du-Gardien-Maitrise-44.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t44",
@@ -2096,7 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Mur d'Ecailles  Maitrise 44 : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Maitrise 44 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv44_Mur-d-Ecailles-Maitrise-44.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t44",
@@ -2112,7 +2243,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Frappe du Gardien  Maitrise 44 : contre-attaque une cible unique."
+                       "description":  "Frappe du Gardien  Maitrise 44 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv44_Frappe-du-Gardien-Maitrise-44.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t45",
@@ -2128,7 +2260,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Vague d'Ecailles  Maitrise 45 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 45 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv45_Vague-d-Ecailles-Maitrise-45.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t45",
@@ -2144,7 +2277,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Protection de Groupe  Maitrise 45 : absorbe les degats pour soi et ses allies."
+                       "description":  "Protection de Groupe  Maitrise 45 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv45_Protection-de-Groupe-Maitrise-45.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t45",
@@ -2160,7 +2294,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Choc d'Ecaille  Maitrise 45 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 45 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv45_Choc-d-Ecaille-Maitrise-45.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t46",
@@ -2176,7 +2311,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Repulsion  Maitrise 46 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Repulsion  Maitrise 46 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv46_Repulsion-Maitrise-46.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t46",
@@ -2192,7 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Tendre la Garde  Maitrise 46 : absorbe les degats pour soi et ses allies."
+                       "description":  "Tendre la Garde  Maitrise 46 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv46_Tendre-la-Garde-Maitrise-46.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t46",
@@ -2208,7 +2345,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Represailles  Maitrise 46 : contre-attaque une cible unique."
+                       "description":  "Represailles  Maitrise 46 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv46_Represailles-Maitrise-46.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t47",
@@ -2224,7 +2362,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Seisme Mineur  Maitrise 47 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Seisme Mineur  Maitrise 47 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv47_Seisme-Mineur-Maitrise-47.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t47",
@@ -2240,7 +2379,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Bouclier Vivant  Maitrise 47 : absorbe les degats pour soi et ses allies."
+                       "description":  "Bouclier Vivant  Maitrise 47 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv47_Bouclier-Vivant-Maitrise-47.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t47",
@@ -2256,7 +2396,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Brise-Assaut  Maitrise 47 : contre-attaque une cible unique."
+                       "description":  "Brise-Assaut  Maitrise 47 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv47_Brise-Assaut-Maitrise-47.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t48",
@@ -2272,7 +2413,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Deflagration Tellurique  Maitrise 48 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Deflagration Tellurique  Maitrise 48 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv48_Deflagration-Tellurique-Maitrise-48.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t48",
@@ -2288,7 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Forteresse  Maitrise 48 : absorbe les degats pour soi et ses allies."
+                       "description":  "Forteresse  Maitrise 48 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv48_Forteresse-Maitrise-48.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t48",
@@ -2304,7 +2447,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Sentence du Gardien  Maitrise 48 : contre-attaque une cible unique."
+                       "description":  "Sentence du Gardien  Maitrise 48 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv48_Sentence-du-Gardien-Maitrise-48.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t49",
@@ -2320,7 +2464,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Secousse  Maitrise 49 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Secousse  Maitrise 49 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv49_Secousse-Maitrise-49.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t49",
@@ -2336,7 +2481,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Garde Inflexible  Maitrise 49 : absorbe les degats pour soi et ses allies."
+                       "description":  "Garde Inflexible  Maitrise 49 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv49_Garde-Inflexible-Maitrise-49.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t49",
@@ -2352,7 +2498,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Coup de Garde  Maitrise 49 : contre-attaque une cible unique."
+                       "description":  "Coup de Garde  Maitrise 49 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv49_Coup-de-Garde-Maitrise-49.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t50",
@@ -2368,7 +2515,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Cri du Gardien  Maitrise 50 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Cri du Gardien  Maitrise 50 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv50_Cri-du-Gardien-Maitrise-50.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t50",
@@ -2384,7 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Mur d'Ecailles  Maitrise 50 : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Maitrise 50 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv50_Mur-d-Ecailles-Maitrise-50.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t50",
@@ -2400,7 +2549,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Frappe du Gardien  Maitrise 50 : contre-attaque une cible unique."
+                       "description":  "Frappe du Gardien  Maitrise 50 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv50_Frappe-du-Gardien-Maitrise-50.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t51",
@@ -2416,7 +2566,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Vague d'Ecailles  Maitrise 51 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 51 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv51_Vague-d-Ecailles-Maitrise-51.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t51",
@@ -2432,7 +2583,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Protection de Groupe  Maitrise 51 : absorbe les degats pour soi et ses allies."
+                       "description":  "Protection de Groupe  Maitrise 51 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv51_Protection-de-Groupe-Maitrise-51.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t51",
@@ -2448,7 +2600,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Choc d'Ecaille  Maitrise 51 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 51 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv51_Choc-d-Ecaille-Maitrise-51.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t52",
@@ -2464,7 +2617,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Repulsion  Maitrise 52 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Repulsion  Maitrise 52 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv52_Repulsion-Maitrise-52.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t52",
@@ -2480,7 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Tendre la Garde  Maitrise 52 : absorbe les degats pour soi et ses allies."
+                       "description":  "Tendre la Garde  Maitrise 52 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv52_Tendre-la-Garde-Maitrise-52.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t52",
@@ -2496,7 +2651,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Represailles  Maitrise 52 : contre-attaque une cible unique."
+                       "description":  "Represailles  Maitrise 52 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv52_Represailles-Maitrise-52.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t53",
@@ -2512,7 +2668,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Seisme Mineur  Maitrise 53 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Seisme Mineur  Maitrise 53 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv53_Seisme-Mineur-Maitrise-53.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t53",
@@ -2528,7 +2685,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Bouclier Vivant  Maitrise 53 : absorbe les degats pour soi et ses allies."
+                       "description":  "Bouclier Vivant  Maitrise 53 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv53_Bouclier-Vivant-Maitrise-53.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t53",
@@ -2544,7 +2702,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Brise-Assaut  Maitrise 53 : contre-attaque une cible unique."
+                       "description":  "Brise-Assaut  Maitrise 53 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv53_Brise-Assaut-Maitrise-53.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t54",
@@ -2560,7 +2719,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Deflagration Tellurique  Maitrise 54 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Deflagration Tellurique  Maitrise 54 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv54_Deflagration-Tellurique-Maitrise-54.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t54",
@@ -2576,7 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Forteresse  Maitrise 54 : absorbe les degats pour soi et ses allies."
+                       "description":  "Forteresse  Maitrise 54 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv54_Forteresse-Maitrise-54.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t54",
@@ -2592,7 +2753,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Sentence du Gardien  Maitrise 54 : contre-attaque une cible unique."
+                       "description":  "Sentence du Gardien  Maitrise 54 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv54_Sentence-du-Gardien-Maitrise-54.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t55",
@@ -2608,7 +2770,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Secousse  Maitrise 55 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Secousse  Maitrise 55 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv55_Secousse-Maitrise-55.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t55",
@@ -2624,7 +2787,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Garde Inflexible  Maitrise 55 : absorbe les degats pour soi et ses allies."
+                       "description":  "Garde Inflexible  Maitrise 55 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv55_Garde-Inflexible-Maitrise-55.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t55",
@@ -2640,7 +2804,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Coup de Garde  Maitrise 55 : contre-attaque une cible unique."
+                       "description":  "Coup de Garde  Maitrise 55 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv55_Coup-de-Garde-Maitrise-55.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t56",
@@ -2656,7 +2821,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Cri du Gardien  Maitrise 56 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Cri du Gardien  Maitrise 56 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv56_Cri-du-Gardien-Maitrise-56.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t56",
@@ -2672,7 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Mur d'Ecailles  Maitrise 56 : absorbe les degats pour soi et ses allies."
+                       "description":  "Mur d'Ecailles  Maitrise 56 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv56_Mur-d-Ecailles-Maitrise-56.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t56",
@@ -2688,7 +2855,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Frappe du Gardien  Maitrise 56 : contre-attaque une cible unique."
+                       "description":  "Frappe du Gardien  Maitrise 56 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv56_Frappe-du-Gardien-Maitrise-56.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t57",
@@ -2704,7 +2872,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Vague d'Ecailles  Maitrise 57 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Vague d'Ecailles  Maitrise 57 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv57_Vague-d-Ecailles-Maitrise-57.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t57",
@@ -2720,7 +2889,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Protection de Groupe  Maitrise 57 : absorbe les degats pour soi et ses allies."
+                       "description":  "Protection de Groupe  Maitrise 57 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv57_Protection-de-Groupe-Maitrise-57.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t57",
@@ -2736,7 +2906,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Choc d'Ecaille  Maitrise 57 : contre-attaque une cible unique."
+                       "description":  "Choc d'Ecaille  Maitrise 57 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv57_Choc-d-Ecaille-Maitrise-57.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t58",
@@ -2752,7 +2923,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Repulsion  Maitrise 58 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Repulsion  Maitrise 58 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv58_Repulsion-Maitrise-58.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t58",
@@ -2768,7 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Tendre la Garde  Maitrise 58 : absorbe les degats pour soi et ses allies."
+                       "description":  "Tendre la Garde  Maitrise 58 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv58_Tendre-la-Garde-Maitrise-58.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t58",
@@ -2784,7 +2957,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Represailles  Maitrise 58 : contre-attaque une cible unique."
+                       "description":  "Represailles  Maitrise 58 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv58_Represailles-Maitrise-58.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t59",
@@ -2800,7 +2974,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Seisme Mineur  Maitrise 59 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Seisme Mineur  Maitrise 59 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv59_Seisme-Mineur-Maitrise-59.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t59",
@@ -2816,7 +2991,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Bouclier Vivant  Maitrise 59 : absorbe les degats pour soi et ses allies."
+                       "description":  "Bouclier Vivant  Maitrise 59 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv59_Bouclier-Vivant-Maitrise-59.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t59",
@@ -2832,7 +3008,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Brise-Assaut  Maitrise 59 : contre-attaque une cible unique."
+                       "description":  "Brise-Assaut  Maitrise 59 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv59_Brise-Assaut-Maitrise-59.png"
                    },
                    {
                        "id":  "gardien_ecailles_aoe_t60",
@@ -2848,7 +3025,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Deflagration Tellurique  Maitrise 60 : repousse et blesse les ennemis alentour (degats reduits)."
+                       "description":  "Deflagration Tellurique  Maitrise 60 : repousse et blesse les ennemis alentour (degats reduits).",
+                       "iconFile":  "Gardien-d-ecailles_Zone_Niv60_Deflagration-Tellurique-Maitrise-60.png"
                    },
                    {
                        "id":  "gardien_ecailles_def_t60",
@@ -2864,7 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Forteresse  Maitrise 60 : absorbe les degats pour soi et ses allies."
+                       "description":  "Forteresse  Maitrise 60 : absorbe les degats pour soi et ses allies.",
+                       "iconFile":  "Gardien-d-ecailles_Defense_Niv60_Forteresse-Maitrise-60.png"
                    },
                    {
                        "id":  "gardien_ecailles_single_t60",
@@ -2880,7 +3059,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Sentence du Gardien  Maitrise 60 : contre-attaque une cible unique."
+                       "description":  "Sentence du Gardien  Maitrise 60 : contre-attaque une cible unique.",
+                       "iconFile":  "Gardien-d-ecailles_Unitaire_Niv60_Sentence-du-Gardien-Maitrise-60.png"
                    }
                ]
 }

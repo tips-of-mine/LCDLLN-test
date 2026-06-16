@@ -16,7 +16,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Nova de Givre : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Nova de Givre : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv01_Nova-de-Givre.png"
                    },
                    {
                        "id":  "mage_def_t1",
@@ -32,7 +33,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Bouclier de Mana : erige une barriere qui absorbe les degats."
+                       "description":  "Bouclier de Mana : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv01_Bouclier-de-Mana.png"
                    },
                    {
                        "id":  "mage_single_t1",
@@ -48,7 +50,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Eclair Magique : lance un projectile magique sur une cible unique."
+                       "description":  "Eclair Magique : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv01_Eclair-Magique.png"
                    },
                    {
                        "id":  "mage_aoe_t2",
@@ -64,7 +67,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Boule de Feu  Aiguise : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Boule de Feu  Aiguise : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv02_Boule-de-Feu-Aiguise.png"
                    },
                    {
                        "id":  "mage_def_t2",
@@ -80,7 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Armure de Glace  Aiguise : erige une barriere qui absorbe les degats."
+                       "description":  "Armure de Glace  Aiguise : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv02_Armure-de-Glace-Aiguise.png"
                    },
                    {
                        "id":  "mage_single_t2",
@@ -96,7 +101,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Dard Arcanique  Aiguise : lance un projectile magique sur une cible unique."
+                       "description":  "Dard Arcanique  Aiguise : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv02_Dard-Arcanique-Aiguise.png"
                    },
                    {
                        "id":  "mage_aoe_t3",
@@ -112,7 +118,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Tempete d'Eclairs  Renforce : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Renforce : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv03_Tempete-d-Eclairs-Renforce.png"
                    },
                    {
                        "id":  "mage_def_t3",
@@ -128,7 +135,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Teleportation Courte  Renforce : erige une barriere qui absorbe les degats."
+                       "description":  "Teleportation Courte  Renforce : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv03_Teleportation-Courte-Renforce.png"
                    },
                    {
                        "id":  "mage_single_t3",
@@ -144,7 +152,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Trait de Givre  Renforce : lance un projectile magique sur une cible unique."
+                       "description":  "Trait de Givre  Renforce : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv03_Trait-de-Givre-Renforce.png"
                    },
                    {
                        "id":  "mage_aoe_t4",
@@ -160,7 +169,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Pluie de Meteores  Affute : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Pluie de Meteores  Affute : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv04_Pluie-de-Meteores-Affute.png"
                    },
                    {
                        "id":  "mage_def_t4",
@@ -176,7 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Barriere Arcanique  Affute : erige une barriere qui absorbe les degats."
+                       "description":  "Barriere Arcanique  Affute : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv04_Barriere-Arcanique-Affute.png"
                    },
                    {
                        "id":  "mage_single_t4",
@@ -192,7 +203,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Foudre Ciblee  Affute : lance un projectile magique sur une cible unique."
+                       "description":  "Foudre Ciblee  Affute : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv04_Foudre-Ciblee-Affute.png"
                    },
                    {
                        "id":  "mage_aoe_t5",
@@ -208,7 +220,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Blizzard  Brutal : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Blizzard  Brutal : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv05_Blizzard-Brutal.png"
                    },
                    {
                        "id":  "mage_def_t5",
@@ -224,7 +237,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Reflet de Sort  Brutal : erige une barriere qui absorbe les degats."
+                       "description":  "Reflet de Sort  Brutal : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv05_Reflet-de-Sort-Brutal.png"
                    },
                    {
                        "id":  "mage_single_t5",
@@ -240,7 +254,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Lance de Feu  Brutal : lance un projectile magique sur une cible unique."
+                       "description":  "Lance de Feu  Brutal : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv05_Lance-de-Feu-Brutal.png"
                    },
                    {
                        "id":  "mage_aoe_t6",
@@ -256,7 +271,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Cataclysme Arcanique  Vorace : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Cataclysme Arcanique  Vorace : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv06_Cataclysme-Arcanique-Vorace.png"
                    },
                    {
                        "id":  "mage_def_t6",
@@ -272,7 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Sanctuaire Magique  Vorace : erige une barriere qui absorbe les degats."
+                       "description":  "Sanctuaire Magique  Vorace : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv06_Sanctuaire-Magique-Vorace.png"
                    },
                    {
                        "id":  "mage_single_t6",
@@ -288,7 +305,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Desintegration  Vorace : lance un projectile magique sur une cible unique."
+                       "description":  "Desintegration  Vorace : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv06_Desintegration-Vorace.png"
                    },
                    {
                        "id":  "mage_aoe_t7",
@@ -304,7 +322,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Nova de Givre  Implacable : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Nova de Givre  Implacable : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv07_Nova-de-Givre-Implacable.png"
                    },
                    {
                        "id":  "mage_def_t7",
@@ -320,7 +339,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Bouclier de Mana  Implacable : erige une barriere qui absorbe les degats."
+                       "description":  "Bouclier de Mana  Implacable : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv07_Bouclier-de-Mana-Implacable.png"
                    },
                    {
                        "id":  "mage_single_t7",
@@ -336,7 +356,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Eclair Magique  Implacable : lance un projectile magique sur une cible unique."
+                       "description":  "Eclair Magique  Implacable : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv07_Eclair-Magique-Implacable.png"
                    },
                    {
                        "id":  "mage_aoe_t8",
@@ -352,7 +373,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Boule de Feu  Funeste : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Boule de Feu  Funeste : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv08_Boule-de-Feu-Funeste.png"
                    },
                    {
                        "id":  "mage_def_t8",
@@ -368,7 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Armure de Glace  Funeste : erige une barriere qui absorbe les degats."
+                       "description":  "Armure de Glace  Funeste : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv08_Armure-de-Glace-Funeste.png"
                    },
                    {
                        "id":  "mage_single_t8",
@@ -384,7 +407,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Dard Arcanique  Funeste : lance un projectile magique sur une cible unique."
+                       "description":  "Dard Arcanique  Funeste : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv08_Dard-Arcanique-Funeste.png"
                    },
                    {
                        "id":  "mage_aoe_t9",
@@ -400,7 +424,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Tempete d'Eclairs  Cruel : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Cruel : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv09_Tempete-d-Eclairs-Cruel.png"
                    },
                    {
                        "id":  "mage_def_t9",
@@ -416,7 +441,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Teleportation Courte  Cruel : erige une barriere qui absorbe les degats."
+                       "description":  "Teleportation Courte  Cruel : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv09_Teleportation-Courte-Cruel.png"
                    },
                    {
                        "id":  "mage_single_t9",
@@ -432,7 +458,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Trait de Givre  Cruel : lance un projectile magique sur une cible unique."
+                       "description":  "Trait de Givre  Cruel : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv09_Trait-de-Givre-Cruel.png"
                    },
                    {
                        "id":  "mage_aoe_t10",
@@ -448,7 +475,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Pluie de Meteores  Sanglant : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Pluie de Meteores  Sanglant : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv10_Pluie-de-Meteores-Sanglant.png"
                    },
                    {
                        "id":  "mage_def_t10",
@@ -464,7 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Barriere Arcanique  Sanglant : erige une barriere qui absorbe les degats."
+                       "description":  "Barriere Arcanique  Sanglant : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv10_Barriere-Arcanique-Sanglant.png"
                    },
                    {
                        "id":  "mage_single_t10",
@@ -480,7 +509,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Foudre Ciblee  Sanglant : lance un projectile magique sur une cible unique."
+                       "description":  "Foudre Ciblee  Sanglant : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv10_Foudre-Ciblee-Sanglant.png"
                    },
                    {
                        "id":  "mage_aoe_t11",
@@ -496,7 +526,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Blizzard  Devastateur : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Blizzard  Devastateur : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv11_Blizzard-Devastateur.png"
                    },
                    {
                        "id":  "mage_def_t11",
@@ -512,7 +543,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Reflet de Sort  Devastateur : erige une barriere qui absorbe les degats."
+                       "description":  "Reflet de Sort  Devastateur : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv11_Reflet-de-Sort-Devastateur.png"
                    },
                    {
                        "id":  "mage_single_t11",
@@ -528,7 +560,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Lance de Feu  Devastateur : lance un projectile magique sur une cible unique."
+                       "description":  "Lance de Feu  Devastateur : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv11_Lance-de-Feu-Devastateur.png"
                    },
                    {
                        "id":  "mage_aoe_t12",
@@ -544,7 +577,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Cataclysme Arcanique  Foudroyant : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Cataclysme Arcanique  Foudroyant : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv12_Cataclysme-Arcanique-Foudroyant.png"
                    },
                    {
                        "id":  "mage_def_t12",
@@ -560,7 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Sanctuaire Magique  Foudroyant : erige une barriere qui absorbe les degats."
+                       "description":  "Sanctuaire Magique  Foudroyant : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv12_Sanctuaire-Magique-Foudroyant.png"
                    },
                    {
                        "id":  "mage_single_t12",
@@ -576,7 +611,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Desintegration  Foudroyant : lance un projectile magique sur une cible unique."
+                       "description":  "Desintegration  Foudroyant : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv12_Desintegration-Foudroyant.png"
                    },
                    {
                        "id":  "mage_aoe_t13",
@@ -592,7 +628,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Nova de Givre  Mortel : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Nova de Givre  Mortel : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv13_Nova-de-Givre-Mortel.png"
                    },
                    {
                        "id":  "mage_def_t13",
@@ -608,7 +645,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Bouclier de Mana  Mortel : erige une barriere qui absorbe les degats."
+                       "description":  "Bouclier de Mana  Mortel : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv13_Bouclier-de-Mana-Mortel.png"
                    },
                    {
                        "id":  "mage_single_t13",
@@ -624,7 +662,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Eclair Magique  Mortel : lance un projectile magique sur une cible unique."
+                       "description":  "Eclair Magique  Mortel : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv13_Eclair-Magique-Mortel.png"
                    },
                    {
                        "id":  "mage_aoe_t14",
@@ -640,7 +679,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Boule de Feu  Inexorable : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Boule de Feu  Inexorable : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv14_Boule-de-Feu-Inexorable.png"
                    },
                    {
                        "id":  "mage_def_t14",
@@ -656,7 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Armure de Glace  Inexorable : erige une barriere qui absorbe les degats."
+                       "description":  "Armure de Glace  Inexorable : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv14_Armure-de-Glace-Inexorable.png"
                    },
                    {
                        "id":  "mage_single_t14",
@@ -672,7 +713,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Dard Arcanique  Inexorable : lance un projectile magique sur une cible unique."
+                       "description":  "Dard Arcanique  Inexorable : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv14_Dard-Arcanique-Inexorable.png"
                    },
                    {
                        "id":  "mage_aoe_t15",
@@ -688,7 +730,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Tempete d'Eclairs  Terrible : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Terrible : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv15_Tempete-d-Eclairs-Terrible.png"
                    },
                    {
                        "id":  "mage_def_t15",
@@ -704,7 +747,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Teleportation Courte  Terrible : erige une barriere qui absorbe les degats."
+                       "description":  "Teleportation Courte  Terrible : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv15_Teleportation-Courte-Terrible.png"
                    },
                    {
                        "id":  "mage_single_t15",
@@ -720,7 +764,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Trait de Givre  Terrible : lance un projectile magique sur une cible unique."
+                       "description":  "Trait de Givre  Terrible : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv15_Trait-de-Givre-Terrible.png"
                    },
                    {
                        "id":  "mage_aoe_t16",
@@ -736,7 +781,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Pluie de Meteores  Souverain : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Pluie de Meteores  Souverain : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv16_Pluie-de-Meteores-Souverain.png"
                    },
                    {
                        "id":  "mage_def_t16",
@@ -752,7 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Barriere Arcanique  Souverain : erige une barriere qui absorbe les degats."
+                       "description":  "Barriere Arcanique  Souverain : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv16_Barriere-Arcanique-Souverain.png"
                    },
                    {
                        "id":  "mage_single_t16",
@@ -768,7 +815,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Foudre Ciblee  Souverain : lance un projectile magique sur une cible unique."
+                       "description":  "Foudre Ciblee  Souverain : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv16_Foudre-Ciblee-Souverain.png"
                    },
                    {
                        "id":  "mage_aoe_t17",
@@ -784,7 +832,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Blizzard  Legendaire : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Blizzard  Legendaire : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv17_Blizzard-Legendaire.png"
                    },
                    {
                        "id":  "mage_def_t17",
@@ -800,7 +849,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Reflet de Sort  Legendaire : erige une barriere qui absorbe les degats."
+                       "description":  "Reflet de Sort  Legendaire : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv17_Reflet-de-Sort-Legendaire.png"
                    },
                    {
                        "id":  "mage_single_t17",
@@ -816,7 +866,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Lance de Feu  Legendaire : lance un projectile magique sur une cible unique."
+                       "description":  "Lance de Feu  Legendaire : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv17_Lance-de-Feu-Legendaire.png"
                    },
                    {
                        "id":  "mage_aoe_t18",
@@ -832,7 +883,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Cataclysme Arcanique  Cataclysmique : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Cataclysme Arcanique  Cataclysmique : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv18_Cataclysme-Arcanique-Cataclysmique.png"
                    },
                    {
                        "id":  "mage_def_t18",
@@ -848,7 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Sanctuaire Magique  Cataclysmique : erige une barriere qui absorbe les degats."
+                       "description":  "Sanctuaire Magique  Cataclysmique : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv18_Sanctuaire-Magique-Cataclysmique.png"
                    },
                    {
                        "id":  "mage_single_t18",
@@ -864,7 +917,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Desintegration  Cataclysmique : lance un projectile magique sur une cible unique."
+                       "description":  "Desintegration  Cataclysmique : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv18_Desintegration-Cataclysmique.png"
                    },
                    {
                        "id":  "mage_aoe_t19",
@@ -880,7 +934,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Nova de Givre  Apocalyptique : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Nova de Givre  Apocalyptique : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv19_Nova-de-Givre-Apocalyptique.png"
                    },
                    {
                        "id":  "mage_def_t19",
@@ -896,7 +951,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Bouclier de Mana  Apocalyptique : erige une barriere qui absorbe les degats."
+                       "description":  "Bouclier de Mana  Apocalyptique : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv19_Bouclier-de-Mana-Apocalyptique.png"
                    },
                    {
                        "id":  "mage_single_t19",
@@ -912,7 +968,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Eclair Magique  Apocalyptique : lance un projectile magique sur une cible unique."
+                       "description":  "Eclair Magique  Apocalyptique : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv19_Eclair-Magique-Apocalyptique.png"
                    },
                    {
                        "id":  "mage_aoe_t20",
@@ -928,7 +985,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Boule de Feu  Ultime : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Boule de Feu  Ultime : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv20_Boule-de-Feu-Ultime.png"
                    },
                    {
                        "id":  "mage_def_t20",
@@ -944,7 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Armure de Glace  Ultime : erige une barriere qui absorbe les degats."
+                       "description":  "Armure de Glace  Ultime : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv20_Armure-de-Glace-Ultime.png"
                    },
                    {
                        "id":  "mage_single_t20",
@@ -960,7 +1019,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Dard Arcanique  Ultime : lance un projectile magique sur une cible unique."
+                       "description":  "Dard Arcanique  Ultime : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv20_Dard-Arcanique-Ultime.png"
                    },
                    {
                        "id":  "mage_aoe_t21",
@@ -976,7 +1036,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Tempete d'Eclairs  Maitrise 21 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 21 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv21_Tempete-d-Eclairs-Maitrise-21.png"
                    },
                    {
                        "id":  "mage_def_t21",
@@ -992,7 +1053,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Teleportation Courte  Maitrise 21 : erige une barriere qui absorbe les degats."
+                       "description":  "Teleportation Courte  Maitrise 21 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv21_Teleportation-Courte-Maitrise-21.png"
                    },
                    {
                        "id":  "mage_single_t21",
@@ -1008,7 +1070,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Trait de Givre  Maitrise 21 : lance un projectile magique sur une cible unique."
+                       "description":  "Trait de Givre  Maitrise 21 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv21_Trait-de-Givre-Maitrise-21.png"
                    },
                    {
                        "id":  "mage_aoe_t22",
@@ -1024,7 +1087,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Pluie de Meteores  Maitrise 22 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Pluie de Meteores  Maitrise 22 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv22_Pluie-de-Meteores-Maitrise-22.png"
                    },
                    {
                        "id":  "mage_def_t22",
@@ -1040,7 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Barriere Arcanique  Maitrise 22 : erige une barriere qui absorbe les degats."
+                       "description":  "Barriere Arcanique  Maitrise 22 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv22_Barriere-Arcanique-Maitrise-22.png"
                    },
                    {
                        "id":  "mage_single_t22",
@@ -1056,7 +1121,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Foudre Ciblee  Maitrise 22 : lance un projectile magique sur une cible unique."
+                       "description":  "Foudre Ciblee  Maitrise 22 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv22_Foudre-Ciblee-Maitrise-22.png"
                    },
                    {
                        "id":  "mage_aoe_t23",
@@ -1072,7 +1138,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Blizzard  Maitrise 23 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Blizzard  Maitrise 23 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv23_Blizzard-Maitrise-23.png"
                    },
                    {
                        "id":  "mage_def_t23",
@@ -1088,7 +1155,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Reflet de Sort  Maitrise 23 : erige une barriere qui absorbe les degats."
+                       "description":  "Reflet de Sort  Maitrise 23 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv23_Reflet-de-Sort-Maitrise-23.png"
                    },
                    {
                        "id":  "mage_single_t23",
@@ -1104,7 +1172,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Lance de Feu  Maitrise 23 : lance un projectile magique sur une cible unique."
+                       "description":  "Lance de Feu  Maitrise 23 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv23_Lance-de-Feu-Maitrise-23.png"
                    },
                    {
                        "id":  "mage_aoe_t24",
@@ -1120,7 +1189,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Cataclysme Arcanique  Maitrise 24 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Cataclysme Arcanique  Maitrise 24 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv24_Cataclysme-Arcanique-Maitrise-24.png"
                    },
                    {
                        "id":  "mage_def_t24",
@@ -1136,7 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Sanctuaire Magique  Maitrise 24 : erige une barriere qui absorbe les degats."
+                       "description":  "Sanctuaire Magique  Maitrise 24 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv24_Sanctuaire-Magique-Maitrise-24.png"
                    },
                    {
                        "id":  "mage_single_t24",
@@ -1152,7 +1223,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Desintegration  Maitrise 24 : lance un projectile magique sur une cible unique."
+                       "description":  "Desintegration  Maitrise 24 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv24_Desintegration-Maitrise-24.png"
                    },
                    {
                        "id":  "mage_aoe_t25",
@@ -1168,7 +1240,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Nova de Givre  Maitrise 25 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Nova de Givre  Maitrise 25 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv25_Nova-de-Givre-Maitrise-25.png"
                    },
                    {
                        "id":  "mage_def_t25",
@@ -1184,7 +1257,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Bouclier de Mana  Maitrise 25 : erige une barriere qui absorbe les degats."
+                       "description":  "Bouclier de Mana  Maitrise 25 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv25_Bouclier-de-Mana-Maitrise-25.png"
                    },
                    {
                        "id":  "mage_single_t25",
@@ -1200,7 +1274,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Eclair Magique  Maitrise 25 : lance un projectile magique sur une cible unique."
+                       "description":  "Eclair Magique  Maitrise 25 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv25_Eclair-Magique-Maitrise-25.png"
                    },
                    {
                        "id":  "mage_aoe_t26",
@@ -1216,7 +1291,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Boule de Feu  Maitrise 26 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Boule de Feu  Maitrise 26 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv26_Boule-de-Feu-Maitrise-26.png"
                    },
                    {
                        "id":  "mage_def_t26",
@@ -1232,7 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Armure de Glace  Maitrise 26 : erige une barriere qui absorbe les degats."
+                       "description":  "Armure de Glace  Maitrise 26 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv26_Armure-de-Glace-Maitrise-26.png"
                    },
                    {
                        "id":  "mage_single_t26",
@@ -1248,7 +1325,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Dard Arcanique  Maitrise 26 : lance un projectile magique sur une cible unique."
+                       "description":  "Dard Arcanique  Maitrise 26 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv26_Dard-Arcanique-Maitrise-26.png"
                    },
                    {
                        "id":  "mage_aoe_t27",
@@ -1264,7 +1342,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Tempete d'Eclairs  Maitrise 27 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 27 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv27_Tempete-d-Eclairs-Maitrise-27.png"
                    },
                    {
                        "id":  "mage_def_t27",
@@ -1280,7 +1359,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Teleportation Courte  Maitrise 27 : erige une barriere qui absorbe les degats."
+                       "description":  "Teleportation Courte  Maitrise 27 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv27_Teleportation-Courte-Maitrise-27.png"
                    },
                    {
                        "id":  "mage_single_t27",
@@ -1296,7 +1376,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Trait de Givre  Maitrise 27 : lance un projectile magique sur une cible unique."
+                       "description":  "Trait de Givre  Maitrise 27 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv27_Trait-de-Givre-Maitrise-27.png"
                    },
                    {
                        "id":  "mage_aoe_t28",
@@ -1312,7 +1393,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Pluie de Meteores  Maitrise 28 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Pluie de Meteores  Maitrise 28 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv28_Pluie-de-Meteores-Maitrise-28.png"
                    },
                    {
                        "id":  "mage_def_t28",
@@ -1328,7 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Barriere Arcanique  Maitrise 28 : erige une barriere qui absorbe les degats."
+                       "description":  "Barriere Arcanique  Maitrise 28 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv28_Barriere-Arcanique-Maitrise-28.png"
                    },
                    {
                        "id":  "mage_single_t28",
@@ -1344,7 +1427,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Foudre Ciblee  Maitrise 28 : lance un projectile magique sur une cible unique."
+                       "description":  "Foudre Ciblee  Maitrise 28 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv28_Foudre-Ciblee-Maitrise-28.png"
                    },
                    {
                        "id":  "mage_aoe_t29",
@@ -1360,7 +1444,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Blizzard  Maitrise 29 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Blizzard  Maitrise 29 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv29_Blizzard-Maitrise-29.png"
                    },
                    {
                        "id":  "mage_def_t29",
@@ -1376,7 +1461,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Reflet de Sort  Maitrise 29 : erige une barriere qui absorbe les degats."
+                       "description":  "Reflet de Sort  Maitrise 29 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv29_Reflet-de-Sort-Maitrise-29.png"
                    },
                    {
                        "id":  "mage_single_t29",
@@ -1392,7 +1478,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Lance de Feu  Maitrise 29 : lance un projectile magique sur une cible unique."
+                       "description":  "Lance de Feu  Maitrise 29 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv29_Lance-de-Feu-Maitrise-29.png"
                    },
                    {
                        "id":  "mage_aoe_t30",
@@ -1408,7 +1495,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Cataclysme Arcanique  Maitrise 30 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Cataclysme Arcanique  Maitrise 30 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv30_Cataclysme-Arcanique-Maitrise-30.png"
                    },
                    {
                        "id":  "mage_def_t30",
@@ -1424,7 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Sanctuaire Magique  Maitrise 30 : erige une barriere qui absorbe les degats."
+                       "description":  "Sanctuaire Magique  Maitrise 30 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv30_Sanctuaire-Magique-Maitrise-30.png"
                    },
                    {
                        "id":  "mage_single_t30",
@@ -1440,7 +1529,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Desintegration  Maitrise 30 : lance un projectile magique sur une cible unique."
+                       "description":  "Desintegration  Maitrise 30 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv30_Desintegration-Maitrise-30.png"
                    },
                    {
                        "id":  "mage_aoe_t31",
@@ -1456,7 +1546,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Nova de Givre  Maitrise 31 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Nova de Givre  Maitrise 31 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv31_Nova-de-Givre-Maitrise-31.png"
                    },
                    {
                        "id":  "mage_def_t31",
@@ -1472,7 +1563,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Bouclier de Mana  Maitrise 31 : erige une barriere qui absorbe les degats."
+                       "description":  "Bouclier de Mana  Maitrise 31 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv31_Bouclier-de-Mana-Maitrise-31.png"
                    },
                    {
                        "id":  "mage_single_t31",
@@ -1488,7 +1580,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Eclair Magique  Maitrise 31 : lance un projectile magique sur une cible unique."
+                       "description":  "Eclair Magique  Maitrise 31 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv31_Eclair-Magique-Maitrise-31.png"
                    },
                    {
                        "id":  "mage_aoe_t32",
@@ -1504,7 +1597,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Boule de Feu  Maitrise 32 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Boule de Feu  Maitrise 32 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv32_Boule-de-Feu-Maitrise-32.png"
                    },
                    {
                        "id":  "mage_def_t32",
@@ -1520,7 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Armure de Glace  Maitrise 32 : erige une barriere qui absorbe les degats."
+                       "description":  "Armure de Glace  Maitrise 32 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv32_Armure-de-Glace-Maitrise-32.png"
                    },
                    {
                        "id":  "mage_single_t32",
@@ -1536,7 +1631,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Dard Arcanique  Maitrise 32 : lance un projectile magique sur une cible unique."
+                       "description":  "Dard Arcanique  Maitrise 32 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv32_Dard-Arcanique-Maitrise-32.png"
                    },
                    {
                        "id":  "mage_aoe_t33",
@@ -1552,7 +1648,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Tempete d'Eclairs  Maitrise 33 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 33 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv33_Tempete-d-Eclairs-Maitrise-33.png"
                    },
                    {
                        "id":  "mage_def_t33",
@@ -1568,7 +1665,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Teleportation Courte  Maitrise 33 : erige une barriere qui absorbe les degats."
+                       "description":  "Teleportation Courte  Maitrise 33 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv33_Teleportation-Courte-Maitrise-33.png"
                    },
                    {
                        "id":  "mage_single_t33",
@@ -1584,7 +1682,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Trait de Givre  Maitrise 33 : lance un projectile magique sur une cible unique."
+                       "description":  "Trait de Givre  Maitrise 33 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv33_Trait-de-Givre-Maitrise-33.png"
                    },
                    {
                        "id":  "mage_aoe_t34",
@@ -1600,7 +1699,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Pluie de Meteores  Maitrise 34 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Pluie de Meteores  Maitrise 34 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv34_Pluie-de-Meteores-Maitrise-34.png"
                    },
                    {
                        "id":  "mage_def_t34",
@@ -1616,7 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Barriere Arcanique  Maitrise 34 : erige une barriere qui absorbe les degats."
+                       "description":  "Barriere Arcanique  Maitrise 34 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv34_Barriere-Arcanique-Maitrise-34.png"
                    },
                    {
                        "id":  "mage_single_t34",
@@ -1632,7 +1733,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Foudre Ciblee  Maitrise 34 : lance un projectile magique sur une cible unique."
+                       "description":  "Foudre Ciblee  Maitrise 34 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv34_Foudre-Ciblee-Maitrise-34.png"
                    },
                    {
                        "id":  "mage_aoe_t35",
@@ -1648,7 +1750,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Blizzard  Maitrise 35 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Blizzard  Maitrise 35 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv35_Blizzard-Maitrise-35.png"
                    },
                    {
                        "id":  "mage_def_t35",
@@ -1664,7 +1767,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Reflet de Sort  Maitrise 35 : erige une barriere qui absorbe les degats."
+                       "description":  "Reflet de Sort  Maitrise 35 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv35_Reflet-de-Sort-Maitrise-35.png"
                    },
                    {
                        "id":  "mage_single_t35",
@@ -1680,7 +1784,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Lance de Feu  Maitrise 35 : lance un projectile magique sur une cible unique."
+                       "description":  "Lance de Feu  Maitrise 35 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv35_Lance-de-Feu-Maitrise-35.png"
                    },
                    {
                        "id":  "mage_aoe_t36",
@@ -1696,7 +1801,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Cataclysme Arcanique  Maitrise 36 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Cataclysme Arcanique  Maitrise 36 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv36_Cataclysme-Arcanique-Maitrise-36.png"
                    },
                    {
                        "id":  "mage_def_t36",
@@ -1712,7 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Sanctuaire Magique  Maitrise 36 : erige une barriere qui absorbe les degats."
+                       "description":  "Sanctuaire Magique  Maitrise 36 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv36_Sanctuaire-Magique-Maitrise-36.png"
                    },
                    {
                        "id":  "mage_single_t36",
@@ -1728,7 +1835,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Desintegration  Maitrise 36 : lance un projectile magique sur une cible unique."
+                       "description":  "Desintegration  Maitrise 36 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv36_Desintegration-Maitrise-36.png"
                    },
                    {
                        "id":  "mage_aoe_t37",
@@ -1744,7 +1852,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Nova de Givre  Maitrise 37 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Nova de Givre  Maitrise 37 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv37_Nova-de-Givre-Maitrise-37.png"
                    },
                    {
                        "id":  "mage_def_t37",
@@ -1760,7 +1869,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Bouclier de Mana  Maitrise 37 : erige une barriere qui absorbe les degats."
+                       "description":  "Bouclier de Mana  Maitrise 37 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv37_Bouclier-de-Mana-Maitrise-37.png"
                    },
                    {
                        "id":  "mage_single_t37",
@@ -1776,7 +1886,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Eclair Magique  Maitrise 37 : lance un projectile magique sur une cible unique."
+                       "description":  "Eclair Magique  Maitrise 37 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv37_Eclair-Magique-Maitrise-37.png"
                    },
                    {
                        "id":  "mage_aoe_t38",
@@ -1792,7 +1903,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Boule de Feu  Maitrise 38 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Boule de Feu  Maitrise 38 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv38_Boule-de-Feu-Maitrise-38.png"
                    },
                    {
                        "id":  "mage_def_t38",
@@ -1808,7 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Armure de Glace  Maitrise 38 : erige une barriere qui absorbe les degats."
+                       "description":  "Armure de Glace  Maitrise 38 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv38_Armure-de-Glace-Maitrise-38.png"
                    },
                    {
                        "id":  "mage_single_t38",
@@ -1824,7 +1937,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Dard Arcanique  Maitrise 38 : lance un projectile magique sur une cible unique."
+                       "description":  "Dard Arcanique  Maitrise 38 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv38_Dard-Arcanique-Maitrise-38.png"
                    },
                    {
                        "id":  "mage_aoe_t39",
@@ -1840,7 +1954,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Tempete d'Eclairs  Maitrise 39 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 39 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv39_Tempete-d-Eclairs-Maitrise-39.png"
                    },
                    {
                        "id":  "mage_def_t39",
@@ -1856,7 +1971,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Teleportation Courte  Maitrise 39 : erige une barriere qui absorbe les degats."
+                       "description":  "Teleportation Courte  Maitrise 39 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv39_Teleportation-Courte-Maitrise-39.png"
                    },
                    {
                        "id":  "mage_single_t39",
@@ -1872,7 +1988,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Trait de Givre  Maitrise 39 : lance un projectile magique sur une cible unique."
+                       "description":  "Trait de Givre  Maitrise 39 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv39_Trait-de-Givre-Maitrise-39.png"
                    },
                    {
                        "id":  "mage_aoe_t40",
@@ -1888,7 +2005,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Pluie de Meteores  Maitrise 40 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Pluie de Meteores  Maitrise 40 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv40_Pluie-de-Meteores-Maitrise-40.png"
                    },
                    {
                        "id":  "mage_def_t40",
@@ -1904,7 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Barriere Arcanique  Maitrise 40 : erige une barriere qui absorbe les degats."
+                       "description":  "Barriere Arcanique  Maitrise 40 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv40_Barriere-Arcanique-Maitrise-40.png"
                    },
                    {
                        "id":  "mage_single_t40",
@@ -1920,7 +2039,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Foudre Ciblee  Maitrise 40 : lance un projectile magique sur une cible unique."
+                       "description":  "Foudre Ciblee  Maitrise 40 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv40_Foudre-Ciblee-Maitrise-40.png"
                    },
                    {
                        "id":  "mage_aoe_t41",
@@ -1936,7 +2056,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Blizzard  Maitrise 41 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Blizzard  Maitrise 41 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv41_Blizzard-Maitrise-41.png"
                    },
                    {
                        "id":  "mage_def_t41",
@@ -1952,7 +2073,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Reflet de Sort  Maitrise 41 : erige une barriere qui absorbe les degats."
+                       "description":  "Reflet de Sort  Maitrise 41 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv41_Reflet-de-Sort-Maitrise-41.png"
                    },
                    {
                        "id":  "mage_single_t41",
@@ -1968,7 +2090,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Lance de Feu  Maitrise 41 : lance un projectile magique sur une cible unique."
+                       "description":  "Lance de Feu  Maitrise 41 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv41_Lance-de-Feu-Maitrise-41.png"
                    },
                    {
                        "id":  "mage_aoe_t42",
@@ -1984,7 +2107,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Cataclysme Arcanique  Maitrise 42 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Cataclysme Arcanique  Maitrise 42 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv42_Cataclysme-Arcanique-Maitrise-42.png"
                    },
                    {
                        "id":  "mage_def_t42",
@@ -2000,7 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Sanctuaire Magique  Maitrise 42 : erige une barriere qui absorbe les degats."
+                       "description":  "Sanctuaire Magique  Maitrise 42 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv42_Sanctuaire-Magique-Maitrise-42.png"
                    },
                    {
                        "id":  "mage_single_t42",
@@ -2016,7 +2141,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Desintegration  Maitrise 42 : lance un projectile magique sur une cible unique."
+                       "description":  "Desintegration  Maitrise 42 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv42_Desintegration-Maitrise-42.png"
                    },
                    {
                        "id":  "mage_aoe_t43",
@@ -2032,7 +2158,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Nova de Givre  Maitrise 43 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Nova de Givre  Maitrise 43 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv43_Nova-de-Givre-Maitrise-43.png"
                    },
                    {
                        "id":  "mage_def_t43",
@@ -2048,7 +2175,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Bouclier de Mana  Maitrise 43 : erige une barriere qui absorbe les degats."
+                       "description":  "Bouclier de Mana  Maitrise 43 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv43_Bouclier-de-Mana-Maitrise-43.png"
                    },
                    {
                        "id":  "mage_single_t43",
@@ -2064,7 +2192,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Eclair Magique  Maitrise 43 : lance un projectile magique sur une cible unique."
+                       "description":  "Eclair Magique  Maitrise 43 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv43_Eclair-Magique-Maitrise-43.png"
                    },
                    {
                        "id":  "mage_aoe_t44",
@@ -2080,7 +2209,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Boule de Feu  Maitrise 44 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Boule de Feu  Maitrise 44 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv44_Boule-de-Feu-Maitrise-44.png"
                    },
                    {
                        "id":  "mage_def_t44",
@@ -2096,7 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Armure de Glace  Maitrise 44 : erige une barriere qui absorbe les degats."
+                       "description":  "Armure de Glace  Maitrise 44 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv44_Armure-de-Glace-Maitrise-44.png"
                    },
                    {
                        "id":  "mage_single_t44",
@@ -2112,7 +2243,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Dard Arcanique  Maitrise 44 : lance un projectile magique sur une cible unique."
+                       "description":  "Dard Arcanique  Maitrise 44 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv44_Dard-Arcanique-Maitrise-44.png"
                    },
                    {
                        "id":  "mage_aoe_t45",
@@ -2128,7 +2260,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Tempete d'Eclairs  Maitrise 45 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 45 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv45_Tempete-d-Eclairs-Maitrise-45.png"
                    },
                    {
                        "id":  "mage_def_t45",
@@ -2144,7 +2277,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Teleportation Courte  Maitrise 45 : erige une barriere qui absorbe les degats."
+                       "description":  "Teleportation Courte  Maitrise 45 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv45_Teleportation-Courte-Maitrise-45.png"
                    },
                    {
                        "id":  "mage_single_t45",
@@ -2160,7 +2294,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Trait de Givre  Maitrise 45 : lance un projectile magique sur une cible unique."
+                       "description":  "Trait de Givre  Maitrise 45 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv45_Trait-de-Givre-Maitrise-45.png"
                    },
                    {
                        "id":  "mage_aoe_t46",
@@ -2176,7 +2311,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Pluie de Meteores  Maitrise 46 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Pluie de Meteores  Maitrise 46 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv46_Pluie-de-Meteores-Maitrise-46.png"
                    },
                    {
                        "id":  "mage_def_t46",
@@ -2192,7 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Barriere Arcanique  Maitrise 46 : erige une barriere qui absorbe les degats."
+                       "description":  "Barriere Arcanique  Maitrise 46 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv46_Barriere-Arcanique-Maitrise-46.png"
                    },
                    {
                        "id":  "mage_single_t46",
@@ -2208,7 +2345,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Foudre Ciblee  Maitrise 46 : lance un projectile magique sur une cible unique."
+                       "description":  "Foudre Ciblee  Maitrise 46 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv46_Foudre-Ciblee-Maitrise-46.png"
                    },
                    {
                        "id":  "mage_aoe_t47",
@@ -2224,7 +2362,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Blizzard  Maitrise 47 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Blizzard  Maitrise 47 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv47_Blizzard-Maitrise-47.png"
                    },
                    {
                        "id":  "mage_def_t47",
@@ -2240,7 +2379,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Reflet de Sort  Maitrise 47 : erige une barriere qui absorbe les degats."
+                       "description":  "Reflet de Sort  Maitrise 47 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv47_Reflet-de-Sort-Maitrise-47.png"
                    },
                    {
                        "id":  "mage_single_t47",
@@ -2256,7 +2396,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Lance de Feu  Maitrise 47 : lance un projectile magique sur une cible unique."
+                       "description":  "Lance de Feu  Maitrise 47 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv47_Lance-de-Feu-Maitrise-47.png"
                    },
                    {
                        "id":  "mage_aoe_t48",
@@ -2272,7 +2413,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Cataclysme Arcanique  Maitrise 48 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Cataclysme Arcanique  Maitrise 48 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv48_Cataclysme-Arcanique-Maitrise-48.png"
                    },
                    {
                        "id":  "mage_def_t48",
@@ -2288,7 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Sanctuaire Magique  Maitrise 48 : erige une barriere qui absorbe les degats."
+                       "description":  "Sanctuaire Magique  Maitrise 48 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv48_Sanctuaire-Magique-Maitrise-48.png"
                    },
                    {
                        "id":  "mage_single_t48",
@@ -2304,7 +2447,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Desintegration  Maitrise 48 : lance un projectile magique sur une cible unique."
+                       "description":  "Desintegration  Maitrise 48 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv48_Desintegration-Maitrise-48.png"
                    },
                    {
                        "id":  "mage_aoe_t49",
@@ -2320,7 +2464,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Nova de Givre  Maitrise 49 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Nova de Givre  Maitrise 49 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv49_Nova-de-Givre-Maitrise-49.png"
                    },
                    {
                        "id":  "mage_def_t49",
@@ -2336,7 +2481,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Bouclier de Mana  Maitrise 49 : erige une barriere qui absorbe les degats."
+                       "description":  "Bouclier de Mana  Maitrise 49 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv49_Bouclier-de-Mana-Maitrise-49.png"
                    },
                    {
                        "id":  "mage_single_t49",
@@ -2352,7 +2498,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Eclair Magique  Maitrise 49 : lance un projectile magique sur une cible unique."
+                       "description":  "Eclair Magique  Maitrise 49 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv49_Eclair-Magique-Maitrise-49.png"
                    },
                    {
                        "id":  "mage_aoe_t50",
@@ -2368,7 +2515,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Boule de Feu  Maitrise 50 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Boule de Feu  Maitrise 50 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv50_Boule-de-Feu-Maitrise-50.png"
                    },
                    {
                        "id":  "mage_def_t50",
@@ -2384,7 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Armure de Glace  Maitrise 50 : erige une barriere qui absorbe les degats."
+                       "description":  "Armure de Glace  Maitrise 50 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv50_Armure-de-Glace-Maitrise-50.png"
                    },
                    {
                        "id":  "mage_single_t50",
@@ -2400,7 +2549,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Dard Arcanique  Maitrise 50 : lance un projectile magique sur une cible unique."
+                       "description":  "Dard Arcanique  Maitrise 50 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv50_Dard-Arcanique-Maitrise-50.png"
                    },
                    {
                        "id":  "mage_aoe_t51",
@@ -2416,7 +2566,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Tempete d'Eclairs  Maitrise 51 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 51 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv51_Tempete-d-Eclairs-Maitrise-51.png"
                    },
                    {
                        "id":  "mage_def_t51",
@@ -2432,7 +2583,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Teleportation Courte  Maitrise 51 : erige une barriere qui absorbe les degats."
+                       "description":  "Teleportation Courte  Maitrise 51 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv51_Teleportation-Courte-Maitrise-51.png"
                    },
                    {
                        "id":  "mage_single_t51",
@@ -2448,7 +2600,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Trait de Givre  Maitrise 51 : lance un projectile magique sur une cible unique."
+                       "description":  "Trait de Givre  Maitrise 51 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv51_Trait-de-Givre-Maitrise-51.png"
                    },
                    {
                        "id":  "mage_aoe_t52",
@@ -2464,7 +2617,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Pluie de Meteores  Maitrise 52 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Pluie de Meteores  Maitrise 52 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv52_Pluie-de-Meteores-Maitrise-52.png"
                    },
                    {
                        "id":  "mage_def_t52",
@@ -2480,7 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Barriere Arcanique  Maitrise 52 : erige une barriere qui absorbe les degats."
+                       "description":  "Barriere Arcanique  Maitrise 52 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv52_Barriere-Arcanique-Maitrise-52.png"
                    },
                    {
                        "id":  "mage_single_t52",
@@ -2496,7 +2651,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Foudre Ciblee  Maitrise 52 : lance un projectile magique sur une cible unique."
+                       "description":  "Foudre Ciblee  Maitrise 52 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv52_Foudre-Ciblee-Maitrise-52.png"
                    },
                    {
                        "id":  "mage_aoe_t53",
@@ -2512,7 +2668,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Blizzard  Maitrise 53 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Blizzard  Maitrise 53 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv53_Blizzard-Maitrise-53.png"
                    },
                    {
                        "id":  "mage_def_t53",
@@ -2528,7 +2685,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Reflet de Sort  Maitrise 53 : erige une barriere qui absorbe les degats."
+                       "description":  "Reflet de Sort  Maitrise 53 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv53_Reflet-de-Sort-Maitrise-53.png"
                    },
                    {
                        "id":  "mage_single_t53",
@@ -2544,7 +2702,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Lance de Feu  Maitrise 53 : lance un projectile magique sur une cible unique."
+                       "description":  "Lance de Feu  Maitrise 53 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv53_Lance-de-Feu-Maitrise-53.png"
                    },
                    {
                        "id":  "mage_aoe_t54",
@@ -2560,7 +2719,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Cataclysme Arcanique  Maitrise 54 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Cataclysme Arcanique  Maitrise 54 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv54_Cataclysme-Arcanique-Maitrise-54.png"
                    },
                    {
                        "id":  "mage_def_t54",
@@ -2576,7 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Sanctuaire Magique  Maitrise 54 : erige une barriere qui absorbe les degats."
+                       "description":  "Sanctuaire Magique  Maitrise 54 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv54_Sanctuaire-Magique-Maitrise-54.png"
                    },
                    {
                        "id":  "mage_single_t54",
@@ -2592,7 +2753,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Desintegration  Maitrise 54 : lance un projectile magique sur une cible unique."
+                       "description":  "Desintegration  Maitrise 54 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv54_Desintegration-Maitrise-54.png"
                    },
                    {
                        "id":  "mage_aoe_t55",
@@ -2608,7 +2770,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Nova de Givre  Maitrise 55 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Nova de Givre  Maitrise 55 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv55_Nova-de-Givre-Maitrise-55.png"
                    },
                    {
                        "id":  "mage_def_t55",
@@ -2624,7 +2787,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Bouclier de Mana  Maitrise 55 : erige une barriere qui absorbe les degats."
+                       "description":  "Bouclier de Mana  Maitrise 55 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv55_Bouclier-de-Mana-Maitrise-55.png"
                    },
                    {
                        "id":  "mage_single_t55",
@@ -2640,7 +2804,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Eclair Magique  Maitrise 55 : lance un projectile magique sur une cible unique."
+                       "description":  "Eclair Magique  Maitrise 55 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv55_Eclair-Magique-Maitrise-55.png"
                    },
                    {
                        "id":  "mage_aoe_t56",
@@ -2656,7 +2821,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Boule de Feu  Maitrise 56 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Boule de Feu  Maitrise 56 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv56_Boule-de-Feu-Maitrise-56.png"
                    },
                    {
                        "id":  "mage_def_t56",
@@ -2672,7 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Armure de Glace  Maitrise 56 : erige une barriere qui absorbe les degats."
+                       "description":  "Armure de Glace  Maitrise 56 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv56_Armure-de-Glace-Maitrise-56.png"
                    },
                    {
                        "id":  "mage_single_t56",
@@ -2688,7 +2855,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Dard Arcanique  Maitrise 56 : lance un projectile magique sur une cible unique."
+                       "description":  "Dard Arcanique  Maitrise 56 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv56_Dard-Arcanique-Maitrise-56.png"
                    },
                    {
                        "id":  "mage_aoe_t57",
@@ -2704,7 +2872,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Tempete d'Eclairs  Maitrise 57 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Tempete d'Eclairs  Maitrise 57 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv57_Tempete-d-Eclairs-Maitrise-57.png"
                    },
                    {
                        "id":  "mage_def_t57",
@@ -2720,7 +2889,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Teleportation Courte  Maitrise 57 : erige une barriere qui absorbe les degats."
+                       "description":  "Teleportation Courte  Maitrise 57 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv57_Teleportation-Courte-Maitrise-57.png"
                    },
                    {
                        "id":  "mage_single_t57",
@@ -2736,7 +2906,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Trait de Givre  Maitrise 57 : lance un projectile magique sur une cible unique."
+                       "description":  "Trait de Givre  Maitrise 57 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv57_Trait-de-Givre-Maitrise-57.png"
                    },
                    {
                        "id":  "mage_aoe_t58",
@@ -2752,7 +2923,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Pluie de Meteores  Maitrise 58 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Pluie de Meteores  Maitrise 58 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv58_Pluie-de-Meteores-Maitrise-58.png"
                    },
                    {
                        "id":  "mage_def_t58",
@@ -2768,7 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Barriere Arcanique  Maitrise 58 : erige une barriere qui absorbe les degats."
+                       "description":  "Barriere Arcanique  Maitrise 58 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv58_Barriere-Arcanique-Maitrise-58.png"
                    },
                    {
                        "id":  "mage_single_t58",
@@ -2784,7 +2957,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Foudre Ciblee  Maitrise 58 : lance un projectile magique sur une cible unique."
+                       "description":  "Foudre Ciblee  Maitrise 58 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv58_Foudre-Ciblee-Maitrise-58.png"
                    },
                    {
                        "id":  "mage_aoe_t59",
@@ -2800,7 +2974,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Blizzard  Maitrise 59 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Blizzard  Maitrise 59 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv59_Blizzard-Maitrise-59.png"
                    },
                    {
                        "id":  "mage_def_t59",
@@ -2816,7 +2991,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Reflet de Sort  Maitrise 59 : erige une barriere qui absorbe les degats."
+                       "description":  "Reflet de Sort  Maitrise 59 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv59_Reflet-de-Sort-Maitrise-59.png"
                    },
                    {
                        "id":  "mage_single_t59",
@@ -2832,7 +3008,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Lance de Feu  Maitrise 59 : lance un projectile magique sur une cible unique."
+                       "description":  "Lance de Feu  Maitrise 59 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv59_Lance-de-Feu-Maitrise-59.png"
                    },
                    {
                        "id":  "mage_aoe_t60",
@@ -2848,7 +3025,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Cataclysme Arcanique  Maitrise 60 : dechaine les elements sur une zone (degats reduits)."
+                       "description":  "Cataclysme Arcanique  Maitrise 60 : dechaine les elements sur une zone (degats reduits).",
+                       "iconFile":  "Mage_Zone_Niv60_Cataclysme-Arcanique-Maitrise-60.png"
                    },
                    {
                        "id":  "mage_def_t60",
@@ -2864,7 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Sanctuaire Magique  Maitrise 60 : erige une barriere qui absorbe les degats."
+                       "description":  "Sanctuaire Magique  Maitrise 60 : erige une barriere qui absorbe les degats.",
+                       "iconFile":  "Mage_Defense_Niv60_Sanctuaire-Magique-Maitrise-60.png"
                    },
                    {
                        "id":  "mage_single_t60",
@@ -2880,7 +3059,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Desintegration  Maitrise 60 : lance un projectile magique sur une cible unique."
+                       "description":  "Desintegration  Maitrise 60 : lance un projectile magique sur une cible unique.",
+                       "iconFile":  "Mage_Unitaire_Niv60_Desintegration-Maitrise-60.png"
                    }
                ]
 }

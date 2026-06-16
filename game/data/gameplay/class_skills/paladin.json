@@ -16,7 +16,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Terre Consacree : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Terre Consacree : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv01_Terre-Consacree.png"
                    },
                    {
                        "id":  "paladin_def_t1",
@@ -32,7 +33,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Bouclier Sacre : protege soi et le groupe d'une aura sacree."
+                       "description":  "Bouclier Sacre : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv01_Bouclier-Sacre.png"
                    },
                    {
                        "id":  "paladin_single_t1",
@@ -48,7 +50,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Frappe Sacree : frappe l'ennemi d'un coup beni."
+                       "description":  "Frappe Sacree : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv01_Frappe-Sacree.png"
                    },
                    {
                        "id":  "paladin_aoe_t2",
@@ -64,7 +67,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Vague Sacree  Aiguise : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Vague Sacree  Aiguise : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv02_Vague-Sacree-Aiguise.png"
                    },
                    {
                        "id":  "paladin_def_t2",
@@ -80,7 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Aura de Protection  Aiguise : protege soi et le groupe d'une aura sacree."
+                       "description":  "Aura de Protection  Aiguise : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv02_Aura-de-Protection-Aiguise.png"
                    },
                    {
                        "id":  "paladin_single_t2",
@@ -96,7 +101,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Marteau de Justice  Aiguise : frappe l'ennemi d'un coup beni."
+                       "description":  "Marteau de Justice  Aiguise : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv02_Marteau-de-Justice-Aiguise.png"
                    },
                    {
                        "id":  "paladin_aoe_t3",
@@ -112,7 +118,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Nova de Lumiere  Renforce : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Nova de Lumiere  Renforce : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv03_Nova-de-Lumiere-Renforce.png"
                    },
                    {
                        "id":  "paladin_def_t3",
@@ -128,7 +135,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Main de Garde  Renforce : protege soi et le groupe d'une aura sacree."
+                       "description":  "Main de Garde  Renforce : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv03_Main-de-Garde-Renforce.png"
                    },
                    {
                        "id":  "paladin_single_t3",
@@ -144,7 +152,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Estoc Beni  Renforce : frappe l'ennemi d'un coup beni."
+                       "description":  "Estoc Beni  Renforce : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv03_Estoc-Beni-Renforce.png"
                    },
                    {
                        "id":  "paladin_aoe_t4",
@@ -160,7 +169,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Champ Beni  Affute : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Champ Beni  Affute : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv04_Champ-Beni-Affute.png"
                    },
                    {
                        "id":  "paladin_def_t4",
@@ -176,7 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Serment Sacre  Affute : protege soi et le groupe d'une aura sacree."
+                       "description":  "Serment Sacre  Affute : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv04_Serment-Sacre-Affute.png"
                    },
                    {
                        "id":  "paladin_single_t4",
@@ -192,7 +203,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Chatiment  Affute : frappe l'ennemi d'un coup beni."
+                       "description":  "Chatiment  Affute : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv04_Chatiment-Affute.png"
                    },
                    {
                        "id":  "paladin_aoe_t5",
@@ -208,7 +220,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Croisade Sainte  Brutal : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Croisade Sainte  Brutal : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv05_Croisade-Sainte-Brutal.png"
                    },
                    {
                        "id":  "paladin_def_t5",
@@ -224,7 +237,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Sanctuaire  Brutal : protege soi et le groupe d'une aura sacree."
+                       "description":  "Sanctuaire  Brutal : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv05_Sanctuaire-Brutal.png"
                    },
                    {
                        "id":  "paladin_single_t5",
@@ -240,7 +254,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Croisade  Brutal : frappe l'ennemi d'un coup beni."
+                       "description":  "Croisade  Brutal : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv05_Croisade-Brutal.png"
                    },
                    {
                        "id":  "paladin_aoe_t6",
@@ -256,7 +271,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Jugement de Zone  Vorace : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Jugement de Zone  Vorace : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv06_Jugement-de-Zone-Vorace.png"
                    },
                    {
                        "id":  "paladin_def_t6",
@@ -272,7 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Imprenable  Vorace : protege soi et le groupe d'une aura sacree."
+                       "description":  "Imprenable  Vorace : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv06_Imprenable-Vorace.png"
                    },
                    {
                        "id":  "paladin_single_t6",
@@ -288,7 +305,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Verdict Divin  Vorace : frappe l'ennemi d'un coup beni."
+                       "description":  "Verdict Divin  Vorace : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv06_Verdict-Divin-Vorace.png"
                    },
                    {
                        "id":  "paladin_aoe_t7",
@@ -304,7 +322,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Terre Consacree  Implacable : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Terre Consacree  Implacable : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv07_Terre-Consacree-Implacable.png"
                    },
                    {
                        "id":  "paladin_def_t7",
@@ -320,7 +339,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Bouclier Sacre  Implacable : protege soi et le groupe d'une aura sacree."
+                       "description":  "Bouclier Sacre  Implacable : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv07_Bouclier-Sacre-Implacable.png"
                    },
                    {
                        "id":  "paladin_single_t7",
@@ -336,7 +356,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Frappe Sacree  Implacable : frappe l'ennemi d'un coup beni."
+                       "description":  "Frappe Sacree  Implacable : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv07_Frappe-Sacree-Implacable.png"
                    },
                    {
                        "id":  "paladin_aoe_t8",
@@ -352,7 +373,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Vague Sacree  Funeste : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Vague Sacree  Funeste : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv08_Vague-Sacree-Funeste.png"
                    },
                    {
                        "id":  "paladin_def_t8",
@@ -368,7 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Aura de Protection  Funeste : protege soi et le groupe d'une aura sacree."
+                       "description":  "Aura de Protection  Funeste : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv08_Aura-de-Protection-Funeste.png"
                    },
                    {
                        "id":  "paladin_single_t8",
@@ -384,7 +407,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Marteau de Justice  Funeste : frappe l'ennemi d'un coup beni."
+                       "description":  "Marteau de Justice  Funeste : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv08_Marteau-de-Justice-Funeste.png"
                    },
                    {
                        "id":  "paladin_aoe_t9",
@@ -400,7 +424,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Nova de Lumiere  Cruel : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Nova de Lumiere  Cruel : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv09_Nova-de-Lumiere-Cruel.png"
                    },
                    {
                        "id":  "paladin_def_t9",
@@ -416,7 +441,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Main de Garde  Cruel : protege soi et le groupe d'une aura sacree."
+                       "description":  "Main de Garde  Cruel : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv09_Main-de-Garde-Cruel.png"
                    },
                    {
                        "id":  "paladin_single_t9",
@@ -432,7 +458,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Estoc Beni  Cruel : frappe l'ennemi d'un coup beni."
+                       "description":  "Estoc Beni  Cruel : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv09_Estoc-Beni-Cruel.png"
                    },
                    {
                        "id":  "paladin_aoe_t10",
@@ -448,7 +475,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Champ Beni  Sanglant : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Champ Beni  Sanglant : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv10_Champ-Beni-Sanglant.png"
                    },
                    {
                        "id":  "paladin_def_t10",
@@ -464,7 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Serment Sacre  Sanglant : protege soi et le groupe d'une aura sacree."
+                       "description":  "Serment Sacre  Sanglant : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv10_Serment-Sacre-Sanglant.png"
                    },
                    {
                        "id":  "paladin_single_t10",
@@ -480,7 +509,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Chatiment  Sanglant : frappe l'ennemi d'un coup beni."
+                       "description":  "Chatiment  Sanglant : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv10_Chatiment-Sanglant.png"
                    },
                    {
                        "id":  "paladin_aoe_t11",
@@ -496,7 +526,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Croisade Sainte  Devastateur : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Croisade Sainte  Devastateur : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv11_Croisade-Sainte-Devastateur.png"
                    },
                    {
                        "id":  "paladin_def_t11",
@@ -512,7 +543,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Sanctuaire  Devastateur : protege soi et le groupe d'une aura sacree."
+                       "description":  "Sanctuaire  Devastateur : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv11_Sanctuaire-Devastateur.png"
                    },
                    {
                        "id":  "paladin_single_t11",
@@ -528,7 +560,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Croisade  Devastateur : frappe l'ennemi d'un coup beni."
+                       "description":  "Croisade  Devastateur : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv11_Croisade-Devastateur.png"
                    },
                    {
                        "id":  "paladin_aoe_t12",
@@ -544,7 +577,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Jugement de Zone  Foudroyant : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Jugement de Zone  Foudroyant : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv12_Jugement-de-Zone-Foudroyant.png"
                    },
                    {
                        "id":  "paladin_def_t12",
@@ -560,7 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Imprenable  Foudroyant : protege soi et le groupe d'une aura sacree."
+                       "description":  "Imprenable  Foudroyant : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv12_Imprenable-Foudroyant.png"
                    },
                    {
                        "id":  "paladin_single_t12",
@@ -576,7 +611,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Verdict Divin  Foudroyant : frappe l'ennemi d'un coup beni."
+                       "description":  "Verdict Divin  Foudroyant : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv12_Verdict-Divin-Foudroyant.png"
                    },
                    {
                        "id":  "paladin_aoe_t13",
@@ -592,7 +628,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Terre Consacree  Mortel : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Terre Consacree  Mortel : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv13_Terre-Consacree-Mortel.png"
                    },
                    {
                        "id":  "paladin_def_t13",
@@ -608,7 +645,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Bouclier Sacre  Mortel : protege soi et le groupe d'une aura sacree."
+                       "description":  "Bouclier Sacre  Mortel : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv13_Bouclier-Sacre-Mortel.png"
                    },
                    {
                        "id":  "paladin_single_t13",
@@ -624,7 +662,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Frappe Sacree  Mortel : frappe l'ennemi d'un coup beni."
+                       "description":  "Frappe Sacree  Mortel : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv13_Frappe-Sacree-Mortel.png"
                    },
                    {
                        "id":  "paladin_aoe_t14",
@@ -640,7 +679,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Vague Sacree  Inexorable : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Vague Sacree  Inexorable : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv14_Vague-Sacree-Inexorable.png"
                    },
                    {
                        "id":  "paladin_def_t14",
@@ -656,7 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Aura de Protection  Inexorable : protege soi et le groupe d'une aura sacree."
+                       "description":  "Aura de Protection  Inexorable : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv14_Aura-de-Protection-Inexorable.png"
                    },
                    {
                        "id":  "paladin_single_t14",
@@ -672,7 +713,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Marteau de Justice  Inexorable : frappe l'ennemi d'un coup beni."
+                       "description":  "Marteau de Justice  Inexorable : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv14_Marteau-de-Justice-Inexorable.png"
                    },
                    {
                        "id":  "paladin_aoe_t15",
@@ -688,7 +730,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Nova de Lumiere  Terrible : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Nova de Lumiere  Terrible : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv15_Nova-de-Lumiere-Terrible.png"
                    },
                    {
                        "id":  "paladin_def_t15",
@@ -704,7 +747,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Main de Garde  Terrible : protege soi et le groupe d'une aura sacree."
+                       "description":  "Main de Garde  Terrible : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv15_Main-de-Garde-Terrible.png"
                    },
                    {
                        "id":  "paladin_single_t15",
@@ -720,7 +764,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Estoc Beni  Terrible : frappe l'ennemi d'un coup beni."
+                       "description":  "Estoc Beni  Terrible : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv15_Estoc-Beni-Terrible.png"
                    },
                    {
                        "id":  "paladin_aoe_t16",
@@ -736,7 +781,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Champ Beni  Souverain : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Champ Beni  Souverain : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv16_Champ-Beni-Souverain.png"
                    },
                    {
                        "id":  "paladin_def_t16",
@@ -752,7 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Serment Sacre  Souverain : protege soi et le groupe d'une aura sacree."
+                       "description":  "Serment Sacre  Souverain : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv16_Serment-Sacre-Souverain.png"
                    },
                    {
                        "id":  "paladin_single_t16",
@@ -768,7 +815,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Chatiment  Souverain : frappe l'ennemi d'un coup beni."
+                       "description":  "Chatiment  Souverain : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv16_Chatiment-Souverain.png"
                    },
                    {
                        "id":  "paladin_aoe_t17",
@@ -784,7 +832,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Croisade Sainte  Legendaire : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Croisade Sainte  Legendaire : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv17_Croisade-Sainte-Legendaire.png"
                    },
                    {
                        "id":  "paladin_def_t17",
@@ -800,7 +849,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Sanctuaire  Legendaire : protege soi et le groupe d'une aura sacree."
+                       "description":  "Sanctuaire  Legendaire : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv17_Sanctuaire-Legendaire.png"
                    },
                    {
                        "id":  "paladin_single_t17",
@@ -816,7 +866,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Croisade  Legendaire : frappe l'ennemi d'un coup beni."
+                       "description":  "Croisade  Legendaire : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv17_Croisade-Legendaire.png"
                    },
                    {
                        "id":  "paladin_aoe_t18",
@@ -832,7 +883,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Jugement de Zone  Cataclysmique : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Jugement de Zone  Cataclysmique : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv18_Jugement-de-Zone-Cataclysmique.png"
                    },
                    {
                        "id":  "paladin_def_t18",
@@ -848,7 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Imprenable  Cataclysmique : protege soi et le groupe d'une aura sacree."
+                       "description":  "Imprenable  Cataclysmique : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv18_Imprenable-Cataclysmique.png"
                    },
                    {
                        "id":  "paladin_single_t18",
@@ -864,7 +917,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Verdict Divin  Cataclysmique : frappe l'ennemi d'un coup beni."
+                       "description":  "Verdict Divin  Cataclysmique : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv18_Verdict-Divin-Cataclysmique.png"
                    },
                    {
                        "id":  "paladin_aoe_t19",
@@ -880,7 +934,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Terre Consacree  Apocalyptique : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Terre Consacree  Apocalyptique : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv19_Terre-Consacree-Apocalyptique.png"
                    },
                    {
                        "id":  "paladin_def_t19",
@@ -896,7 +951,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Bouclier Sacre  Apocalyptique : protege soi et le groupe d'une aura sacree."
+                       "description":  "Bouclier Sacre  Apocalyptique : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv19_Bouclier-Sacre-Apocalyptique.png"
                    },
                    {
                        "id":  "paladin_single_t19",
@@ -912,7 +968,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Frappe Sacree  Apocalyptique : frappe l'ennemi d'un coup beni."
+                       "description":  "Frappe Sacree  Apocalyptique : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv19_Frappe-Sacree-Apocalyptique.png"
                    },
                    {
                        "id":  "paladin_aoe_t20",
@@ -928,7 +985,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Vague Sacree  Ultime : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Vague Sacree  Ultime : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv20_Vague-Sacree-Ultime.png"
                    },
                    {
                        "id":  "paladin_def_t20",
@@ -944,7 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Aura de Protection  Ultime : protege soi et le groupe d'une aura sacree."
+                       "description":  "Aura de Protection  Ultime : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv20_Aura-de-Protection-Ultime.png"
                    },
                    {
                        "id":  "paladin_single_t20",
@@ -960,7 +1019,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Marteau de Justice  Ultime : frappe l'ennemi d'un coup beni."
+                       "description":  "Marteau de Justice  Ultime : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv20_Marteau-de-Justice-Ultime.png"
                    },
                    {
                        "id":  "paladin_aoe_t21",
@@ -976,7 +1036,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Nova de Lumiere  Maitrise 21 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Nova de Lumiere  Maitrise 21 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv21_Nova-de-Lumiere-Maitrise-21.png"
                    },
                    {
                        "id":  "paladin_def_t21",
@@ -992,7 +1053,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Main de Garde  Maitrise 21 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Main de Garde  Maitrise 21 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv21_Main-de-Garde-Maitrise-21.png"
                    },
                    {
                        "id":  "paladin_single_t21",
@@ -1008,7 +1070,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Estoc Beni  Maitrise 21 : frappe l'ennemi d'un coup beni."
+                       "description":  "Estoc Beni  Maitrise 21 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv21_Estoc-Beni-Maitrise-21.png"
                    },
                    {
                        "id":  "paladin_aoe_t22",
@@ -1024,7 +1087,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Champ Beni  Maitrise 22 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Champ Beni  Maitrise 22 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv22_Champ-Beni-Maitrise-22.png"
                    },
                    {
                        "id":  "paladin_def_t22",
@@ -1040,7 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Serment Sacre  Maitrise 22 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Serment Sacre  Maitrise 22 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv22_Serment-Sacre-Maitrise-22.png"
                    },
                    {
                        "id":  "paladin_single_t22",
@@ -1056,7 +1121,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Chatiment  Maitrise 22 : frappe l'ennemi d'un coup beni."
+                       "description":  "Chatiment  Maitrise 22 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv22_Chatiment-Maitrise-22.png"
                    },
                    {
                        "id":  "paladin_aoe_t23",
@@ -1072,7 +1138,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Croisade Sainte  Maitrise 23 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Croisade Sainte  Maitrise 23 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv23_Croisade-Sainte-Maitrise-23.png"
                    },
                    {
                        "id":  "paladin_def_t23",
@@ -1088,7 +1155,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Sanctuaire  Maitrise 23 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Sanctuaire  Maitrise 23 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv23_Sanctuaire-Maitrise-23.png"
                    },
                    {
                        "id":  "paladin_single_t23",
@@ -1104,7 +1172,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Croisade  Maitrise 23 : frappe l'ennemi d'un coup beni."
+                       "description":  "Croisade  Maitrise 23 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv23_Croisade-Maitrise-23.png"
                    },
                    {
                        "id":  "paladin_aoe_t24",
@@ -1120,7 +1189,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Jugement de Zone  Maitrise 24 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Jugement de Zone  Maitrise 24 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv24_Jugement-de-Zone-Maitrise-24.png"
                    },
                    {
                        "id":  "paladin_def_t24",
@@ -1136,7 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Imprenable  Maitrise 24 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Imprenable  Maitrise 24 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv24_Imprenable-Maitrise-24.png"
                    },
                    {
                        "id":  "paladin_single_t24",
@@ -1152,7 +1223,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Verdict Divin  Maitrise 24 : frappe l'ennemi d'un coup beni."
+                       "description":  "Verdict Divin  Maitrise 24 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv24_Verdict-Divin-Maitrise-24.png"
                    },
                    {
                        "id":  "paladin_aoe_t25",
@@ -1168,7 +1240,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Terre Consacree  Maitrise 25 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Terre Consacree  Maitrise 25 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv25_Terre-Consacree-Maitrise-25.png"
                    },
                    {
                        "id":  "paladin_def_t25",
@@ -1184,7 +1257,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Bouclier Sacre  Maitrise 25 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Bouclier Sacre  Maitrise 25 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv25_Bouclier-Sacre-Maitrise-25.png"
                    },
                    {
                        "id":  "paladin_single_t25",
@@ -1200,7 +1274,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Frappe Sacree  Maitrise 25 : frappe l'ennemi d'un coup beni."
+                       "description":  "Frappe Sacree  Maitrise 25 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv25_Frappe-Sacree-Maitrise-25.png"
                    },
                    {
                        "id":  "paladin_aoe_t26",
@@ -1216,7 +1291,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Vague Sacree  Maitrise 26 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Vague Sacree  Maitrise 26 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv26_Vague-Sacree-Maitrise-26.png"
                    },
                    {
                        "id":  "paladin_def_t26",
@@ -1232,7 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Aura de Protection  Maitrise 26 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Aura de Protection  Maitrise 26 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv26_Aura-de-Protection-Maitrise-26.png"
                    },
                    {
                        "id":  "paladin_single_t26",
@@ -1248,7 +1325,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Marteau de Justice  Maitrise 26 : frappe l'ennemi d'un coup beni."
+                       "description":  "Marteau de Justice  Maitrise 26 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv26_Marteau-de-Justice-Maitrise-26.png"
                    },
                    {
                        "id":  "paladin_aoe_t27",
@@ -1264,7 +1342,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Nova de Lumiere  Maitrise 27 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Nova de Lumiere  Maitrise 27 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv27_Nova-de-Lumiere-Maitrise-27.png"
                    },
                    {
                        "id":  "paladin_def_t27",
@@ -1280,7 +1359,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Main de Garde  Maitrise 27 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Main de Garde  Maitrise 27 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv27_Main-de-Garde-Maitrise-27.png"
                    },
                    {
                        "id":  "paladin_single_t27",
@@ -1296,7 +1376,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Estoc Beni  Maitrise 27 : frappe l'ennemi d'un coup beni."
+                       "description":  "Estoc Beni  Maitrise 27 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv27_Estoc-Beni-Maitrise-27.png"
                    },
                    {
                        "id":  "paladin_aoe_t28",
@@ -1312,7 +1393,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Champ Beni  Maitrise 28 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Champ Beni  Maitrise 28 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv28_Champ-Beni-Maitrise-28.png"
                    },
                    {
                        "id":  "paladin_def_t28",
@@ -1328,7 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Serment Sacre  Maitrise 28 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Serment Sacre  Maitrise 28 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv28_Serment-Sacre-Maitrise-28.png"
                    },
                    {
                        "id":  "paladin_single_t28",
@@ -1344,7 +1427,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Chatiment  Maitrise 28 : frappe l'ennemi d'un coup beni."
+                       "description":  "Chatiment  Maitrise 28 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv28_Chatiment-Maitrise-28.png"
                    },
                    {
                        "id":  "paladin_aoe_t29",
@@ -1360,7 +1444,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Croisade Sainte  Maitrise 29 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Croisade Sainte  Maitrise 29 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv29_Croisade-Sainte-Maitrise-29.png"
                    },
                    {
                        "id":  "paladin_def_t29",
@@ -1376,7 +1461,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Sanctuaire  Maitrise 29 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Sanctuaire  Maitrise 29 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv29_Sanctuaire-Maitrise-29.png"
                    },
                    {
                        "id":  "paladin_single_t29",
@@ -1392,7 +1478,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Croisade  Maitrise 29 : frappe l'ennemi d'un coup beni."
+                       "description":  "Croisade  Maitrise 29 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv29_Croisade-Maitrise-29.png"
                    },
                    {
                        "id":  "paladin_aoe_t30",
@@ -1408,7 +1495,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Jugement de Zone  Maitrise 30 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Jugement de Zone  Maitrise 30 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv30_Jugement-de-Zone-Maitrise-30.png"
                    },
                    {
                        "id":  "paladin_def_t30",
@@ -1424,7 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Imprenable  Maitrise 30 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Imprenable  Maitrise 30 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv30_Imprenable-Maitrise-30.png"
                    },
                    {
                        "id":  "paladin_single_t30",
@@ -1440,7 +1529,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Verdict Divin  Maitrise 30 : frappe l'ennemi d'un coup beni."
+                       "description":  "Verdict Divin  Maitrise 30 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv30_Verdict-Divin-Maitrise-30.png"
                    },
                    {
                        "id":  "paladin_aoe_t31",
@@ -1456,7 +1546,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Terre Consacree  Maitrise 31 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Terre Consacree  Maitrise 31 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv31_Terre-Consacree-Maitrise-31.png"
                    },
                    {
                        "id":  "paladin_def_t31",
@@ -1472,7 +1563,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Bouclier Sacre  Maitrise 31 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Bouclier Sacre  Maitrise 31 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv31_Bouclier-Sacre-Maitrise-31.png"
                    },
                    {
                        "id":  "paladin_single_t31",
@@ -1488,7 +1580,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Frappe Sacree  Maitrise 31 : frappe l'ennemi d'un coup beni."
+                       "description":  "Frappe Sacree  Maitrise 31 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv31_Frappe-Sacree-Maitrise-31.png"
                    },
                    {
                        "id":  "paladin_aoe_t32",
@@ -1504,7 +1597,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Vague Sacree  Maitrise 32 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Vague Sacree  Maitrise 32 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv32_Vague-Sacree-Maitrise-32.png"
                    },
                    {
                        "id":  "paladin_def_t32",
@@ -1520,7 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Aura de Protection  Maitrise 32 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Aura de Protection  Maitrise 32 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv32_Aura-de-Protection-Maitrise-32.png"
                    },
                    {
                        "id":  "paladin_single_t32",
@@ -1536,7 +1631,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Marteau de Justice  Maitrise 32 : frappe l'ennemi d'un coup beni."
+                       "description":  "Marteau de Justice  Maitrise 32 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv32_Marteau-de-Justice-Maitrise-32.png"
                    },
                    {
                        "id":  "paladin_aoe_t33",
@@ -1552,7 +1648,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Nova de Lumiere  Maitrise 33 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Nova de Lumiere  Maitrise 33 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv33_Nova-de-Lumiere-Maitrise-33.png"
                    },
                    {
                        "id":  "paladin_def_t33",
@@ -1568,7 +1665,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Main de Garde  Maitrise 33 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Main de Garde  Maitrise 33 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv33_Main-de-Garde-Maitrise-33.png"
                    },
                    {
                        "id":  "paladin_single_t33",
@@ -1584,7 +1682,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Estoc Beni  Maitrise 33 : frappe l'ennemi d'un coup beni."
+                       "description":  "Estoc Beni  Maitrise 33 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv33_Estoc-Beni-Maitrise-33.png"
                    },
                    {
                        "id":  "paladin_aoe_t34",
@@ -1600,7 +1699,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Champ Beni  Maitrise 34 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Champ Beni  Maitrise 34 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv34_Champ-Beni-Maitrise-34.png"
                    },
                    {
                        "id":  "paladin_def_t34",
@@ -1616,7 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Serment Sacre  Maitrise 34 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Serment Sacre  Maitrise 34 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv34_Serment-Sacre-Maitrise-34.png"
                    },
                    {
                        "id":  "paladin_single_t34",
@@ -1632,7 +1733,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Chatiment  Maitrise 34 : frappe l'ennemi d'un coup beni."
+                       "description":  "Chatiment  Maitrise 34 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv34_Chatiment-Maitrise-34.png"
                    },
                    {
                        "id":  "paladin_aoe_t35",
@@ -1648,7 +1750,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Croisade Sainte  Maitrise 35 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Croisade Sainte  Maitrise 35 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv35_Croisade-Sainte-Maitrise-35.png"
                    },
                    {
                        "id":  "paladin_def_t35",
@@ -1664,7 +1767,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Sanctuaire  Maitrise 35 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Sanctuaire  Maitrise 35 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv35_Sanctuaire-Maitrise-35.png"
                    },
                    {
                        "id":  "paladin_single_t35",
@@ -1680,7 +1784,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Croisade  Maitrise 35 : frappe l'ennemi d'un coup beni."
+                       "description":  "Croisade  Maitrise 35 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv35_Croisade-Maitrise-35.png"
                    },
                    {
                        "id":  "paladin_aoe_t36",
@@ -1696,7 +1801,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Jugement de Zone  Maitrise 36 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Jugement de Zone  Maitrise 36 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv36_Jugement-de-Zone-Maitrise-36.png"
                    },
                    {
                        "id":  "paladin_def_t36",
@@ -1712,7 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Imprenable  Maitrise 36 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Imprenable  Maitrise 36 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv36_Imprenable-Maitrise-36.png"
                    },
                    {
                        "id":  "paladin_single_t36",
@@ -1728,7 +1835,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Verdict Divin  Maitrise 36 : frappe l'ennemi d'un coup beni."
+                       "description":  "Verdict Divin  Maitrise 36 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv36_Verdict-Divin-Maitrise-36.png"
                    },
                    {
                        "id":  "paladin_aoe_t37",
@@ -1744,7 +1852,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Terre Consacree  Maitrise 37 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Terre Consacree  Maitrise 37 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv37_Terre-Consacree-Maitrise-37.png"
                    },
                    {
                        "id":  "paladin_def_t37",
@@ -1760,7 +1869,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Bouclier Sacre  Maitrise 37 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Bouclier Sacre  Maitrise 37 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv37_Bouclier-Sacre-Maitrise-37.png"
                    },
                    {
                        "id":  "paladin_single_t37",
@@ -1776,7 +1886,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Frappe Sacree  Maitrise 37 : frappe l'ennemi d'un coup beni."
+                       "description":  "Frappe Sacree  Maitrise 37 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv37_Frappe-Sacree-Maitrise-37.png"
                    },
                    {
                        "id":  "paladin_aoe_t38",
@@ -1792,7 +1903,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Vague Sacree  Maitrise 38 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Vague Sacree  Maitrise 38 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv38_Vague-Sacree-Maitrise-38.png"
                    },
                    {
                        "id":  "paladin_def_t38",
@@ -1808,7 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Aura de Protection  Maitrise 38 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Aura de Protection  Maitrise 38 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv38_Aura-de-Protection-Maitrise-38.png"
                    },
                    {
                        "id":  "paladin_single_t38",
@@ -1824,7 +1937,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Marteau de Justice  Maitrise 38 : frappe l'ennemi d'un coup beni."
+                       "description":  "Marteau de Justice  Maitrise 38 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv38_Marteau-de-Justice-Maitrise-38.png"
                    },
                    {
                        "id":  "paladin_aoe_t39",
@@ -1840,7 +1954,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Nova de Lumiere  Maitrise 39 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Nova de Lumiere  Maitrise 39 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv39_Nova-de-Lumiere-Maitrise-39.png"
                    },
                    {
                        "id":  "paladin_def_t39",
@@ -1856,7 +1971,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Main de Garde  Maitrise 39 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Main de Garde  Maitrise 39 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv39_Main-de-Garde-Maitrise-39.png"
                    },
                    {
                        "id":  "paladin_single_t39",
@@ -1872,7 +1988,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Estoc Beni  Maitrise 39 : frappe l'ennemi d'un coup beni."
+                       "description":  "Estoc Beni  Maitrise 39 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv39_Estoc-Beni-Maitrise-39.png"
                    },
                    {
                        "id":  "paladin_aoe_t40",
@@ -1888,7 +2005,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Champ Beni  Maitrise 40 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Champ Beni  Maitrise 40 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv40_Champ-Beni-Maitrise-40.png"
                    },
                    {
                        "id":  "paladin_def_t40",
@@ -1904,7 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Serment Sacre  Maitrise 40 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Serment Sacre  Maitrise 40 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv40_Serment-Sacre-Maitrise-40.png"
                    },
                    {
                        "id":  "paladin_single_t40",
@@ -1920,7 +2039,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Chatiment  Maitrise 40 : frappe l'ennemi d'un coup beni."
+                       "description":  "Chatiment  Maitrise 40 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv40_Chatiment-Maitrise-40.png"
                    },
                    {
                        "id":  "paladin_aoe_t41",
@@ -1936,7 +2056,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Croisade Sainte  Maitrise 41 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Croisade Sainte  Maitrise 41 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv41_Croisade-Sainte-Maitrise-41.png"
                    },
                    {
                        "id":  "paladin_def_t41",
@@ -1952,7 +2073,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Sanctuaire  Maitrise 41 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Sanctuaire  Maitrise 41 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv41_Sanctuaire-Maitrise-41.png"
                    },
                    {
                        "id":  "paladin_single_t41",
@@ -1968,7 +2090,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Croisade  Maitrise 41 : frappe l'ennemi d'un coup beni."
+                       "description":  "Croisade  Maitrise 41 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv41_Croisade-Maitrise-41.png"
                    },
                    {
                        "id":  "paladin_aoe_t42",
@@ -1984,7 +2107,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Jugement de Zone  Maitrise 42 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Jugement de Zone  Maitrise 42 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv42_Jugement-de-Zone-Maitrise-42.png"
                    },
                    {
                        "id":  "paladin_def_t42",
@@ -2000,7 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Imprenable  Maitrise 42 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Imprenable  Maitrise 42 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv42_Imprenable-Maitrise-42.png"
                    },
                    {
                        "id":  "paladin_single_t42",
@@ -2016,7 +2141,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Verdict Divin  Maitrise 42 : frappe l'ennemi d'un coup beni."
+                       "description":  "Verdict Divin  Maitrise 42 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv42_Verdict-Divin-Maitrise-42.png"
                    },
                    {
                        "id":  "paladin_aoe_t43",
@@ -2032,7 +2158,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Terre Consacree  Maitrise 43 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Terre Consacree  Maitrise 43 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv43_Terre-Consacree-Maitrise-43.png"
                    },
                    {
                        "id":  "paladin_def_t43",
@@ -2048,7 +2175,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Bouclier Sacre  Maitrise 43 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Bouclier Sacre  Maitrise 43 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv43_Bouclier-Sacre-Maitrise-43.png"
                    },
                    {
                        "id":  "paladin_single_t43",
@@ -2064,7 +2192,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Frappe Sacree  Maitrise 43 : frappe l'ennemi d'un coup beni."
+                       "description":  "Frappe Sacree  Maitrise 43 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv43_Frappe-Sacree-Maitrise-43.png"
                    },
                    {
                        "id":  "paladin_aoe_t44",
@@ -2080,7 +2209,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Vague Sacree  Maitrise 44 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Vague Sacree  Maitrise 44 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv44_Vague-Sacree-Maitrise-44.png"
                    },
                    {
                        "id":  "paladin_def_t44",
@@ -2096,7 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Aura de Protection  Maitrise 44 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Aura de Protection  Maitrise 44 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv44_Aura-de-Protection-Maitrise-44.png"
                    },
                    {
                        "id":  "paladin_single_t44",
@@ -2112,7 +2243,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Marteau de Justice  Maitrise 44 : frappe l'ennemi d'un coup beni."
+                       "description":  "Marteau de Justice  Maitrise 44 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv44_Marteau-de-Justice-Maitrise-44.png"
                    },
                    {
                        "id":  "paladin_aoe_t45",
@@ -2128,7 +2260,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Nova de Lumiere  Maitrise 45 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Nova de Lumiere  Maitrise 45 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv45_Nova-de-Lumiere-Maitrise-45.png"
                    },
                    {
                        "id":  "paladin_def_t45",
@@ -2144,7 +2277,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Main de Garde  Maitrise 45 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Main de Garde  Maitrise 45 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv45_Main-de-Garde-Maitrise-45.png"
                    },
                    {
                        "id":  "paladin_single_t45",
@@ -2160,7 +2294,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Estoc Beni  Maitrise 45 : frappe l'ennemi d'un coup beni."
+                       "description":  "Estoc Beni  Maitrise 45 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv45_Estoc-Beni-Maitrise-45.png"
                    },
                    {
                        "id":  "paladin_aoe_t46",
@@ -2176,7 +2311,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Champ Beni  Maitrise 46 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Champ Beni  Maitrise 46 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv46_Champ-Beni-Maitrise-46.png"
                    },
                    {
                        "id":  "paladin_def_t46",
@@ -2192,7 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Serment Sacre  Maitrise 46 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Serment Sacre  Maitrise 46 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv46_Serment-Sacre-Maitrise-46.png"
                    },
                    {
                        "id":  "paladin_single_t46",
@@ -2208,7 +2345,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Chatiment  Maitrise 46 : frappe l'ennemi d'un coup beni."
+                       "description":  "Chatiment  Maitrise 46 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv46_Chatiment-Maitrise-46.png"
                    },
                    {
                        "id":  "paladin_aoe_t47",
@@ -2224,7 +2362,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Croisade Sainte  Maitrise 47 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Croisade Sainte  Maitrise 47 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv47_Croisade-Sainte-Maitrise-47.png"
                    },
                    {
                        "id":  "paladin_def_t47",
@@ -2240,7 +2379,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Sanctuaire  Maitrise 47 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Sanctuaire  Maitrise 47 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv47_Sanctuaire-Maitrise-47.png"
                    },
                    {
                        "id":  "paladin_single_t47",
@@ -2256,7 +2396,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Croisade  Maitrise 47 : frappe l'ennemi d'un coup beni."
+                       "description":  "Croisade  Maitrise 47 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv47_Croisade-Maitrise-47.png"
                    },
                    {
                        "id":  "paladin_aoe_t48",
@@ -2272,7 +2413,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Jugement de Zone  Maitrise 48 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Jugement de Zone  Maitrise 48 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv48_Jugement-de-Zone-Maitrise-48.png"
                    },
                    {
                        "id":  "paladin_def_t48",
@@ -2288,7 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Imprenable  Maitrise 48 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Imprenable  Maitrise 48 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv48_Imprenable-Maitrise-48.png"
                    },
                    {
                        "id":  "paladin_single_t48",
@@ -2304,7 +2447,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Verdict Divin  Maitrise 48 : frappe l'ennemi d'un coup beni."
+                       "description":  "Verdict Divin  Maitrise 48 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv48_Verdict-Divin-Maitrise-48.png"
                    },
                    {
                        "id":  "paladin_aoe_t49",
@@ -2320,7 +2464,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Terre Consacree  Maitrise 49 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Terre Consacree  Maitrise 49 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv49_Terre-Consacree-Maitrise-49.png"
                    },
                    {
                        "id":  "paladin_def_t49",
@@ -2336,7 +2481,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Bouclier Sacre  Maitrise 49 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Bouclier Sacre  Maitrise 49 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv49_Bouclier-Sacre-Maitrise-49.png"
                    },
                    {
                        "id":  "paladin_single_t49",
@@ -2352,7 +2498,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Frappe Sacree  Maitrise 49 : frappe l'ennemi d'un coup beni."
+                       "description":  "Frappe Sacree  Maitrise 49 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv49_Frappe-Sacree-Maitrise-49.png"
                    },
                    {
                        "id":  "paladin_aoe_t50",
@@ -2368,7 +2515,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Vague Sacree  Maitrise 50 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Vague Sacree  Maitrise 50 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv50_Vague-Sacree-Maitrise-50.png"
                    },
                    {
                        "id":  "paladin_def_t50",
@@ -2384,7 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Aura de Protection  Maitrise 50 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Aura de Protection  Maitrise 50 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv50_Aura-de-Protection-Maitrise-50.png"
                    },
                    {
                        "id":  "paladin_single_t50",
@@ -2400,7 +2549,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Marteau de Justice  Maitrise 50 : frappe l'ennemi d'un coup beni."
+                       "description":  "Marteau de Justice  Maitrise 50 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv50_Marteau-de-Justice-Maitrise-50.png"
                    },
                    {
                        "id":  "paladin_aoe_t51",
@@ -2416,7 +2566,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Nova de Lumiere  Maitrise 51 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Nova de Lumiere  Maitrise 51 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv51_Nova-de-Lumiere-Maitrise-51.png"
                    },
                    {
                        "id":  "paladin_def_t51",
@@ -2432,7 +2583,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Main de Garde  Maitrise 51 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Main de Garde  Maitrise 51 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv51_Main-de-Garde-Maitrise-51.png"
                    },
                    {
                        "id":  "paladin_single_t51",
@@ -2448,7 +2600,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Estoc Beni  Maitrise 51 : frappe l'ennemi d'un coup beni."
+                       "description":  "Estoc Beni  Maitrise 51 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv51_Estoc-Beni-Maitrise-51.png"
                    },
                    {
                        "id":  "paladin_aoe_t52",
@@ -2464,7 +2617,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Champ Beni  Maitrise 52 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Champ Beni  Maitrise 52 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv52_Champ-Beni-Maitrise-52.png"
                    },
                    {
                        "id":  "paladin_def_t52",
@@ -2480,7 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Serment Sacre  Maitrise 52 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Serment Sacre  Maitrise 52 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv52_Serment-Sacre-Maitrise-52.png"
                    },
                    {
                        "id":  "paladin_single_t52",
@@ -2496,7 +2651,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Chatiment  Maitrise 52 : frappe l'ennemi d'un coup beni."
+                       "description":  "Chatiment  Maitrise 52 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv52_Chatiment-Maitrise-52.png"
                    },
                    {
                        "id":  "paladin_aoe_t53",
@@ -2512,7 +2668,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Croisade Sainte  Maitrise 53 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Croisade Sainte  Maitrise 53 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv53_Croisade-Sainte-Maitrise-53.png"
                    },
                    {
                        "id":  "paladin_def_t53",
@@ -2528,7 +2685,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Sanctuaire  Maitrise 53 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Sanctuaire  Maitrise 53 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv53_Sanctuaire-Maitrise-53.png"
                    },
                    {
                        "id":  "paladin_single_t53",
@@ -2544,7 +2702,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Croisade  Maitrise 53 : frappe l'ennemi d'un coup beni."
+                       "description":  "Croisade  Maitrise 53 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv53_Croisade-Maitrise-53.png"
                    },
                    {
                        "id":  "paladin_aoe_t54",
@@ -2560,7 +2719,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Jugement de Zone  Maitrise 54 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Jugement de Zone  Maitrise 54 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv54_Jugement-de-Zone-Maitrise-54.png"
                    },
                    {
                        "id":  "paladin_def_t54",
@@ -2576,7 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Imprenable  Maitrise 54 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Imprenable  Maitrise 54 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv54_Imprenable-Maitrise-54.png"
                    },
                    {
                        "id":  "paladin_single_t54",
@@ -2592,7 +2753,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Verdict Divin  Maitrise 54 : frappe l'ennemi d'un coup beni."
+                       "description":  "Verdict Divin  Maitrise 54 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv54_Verdict-Divin-Maitrise-54.png"
                    },
                    {
                        "id":  "paladin_aoe_t55",
@@ -2608,7 +2770,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Terre Consacree  Maitrise 55 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Terre Consacree  Maitrise 55 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv55_Terre-Consacree-Maitrise-55.png"
                    },
                    {
                        "id":  "paladin_def_t55",
@@ -2624,7 +2787,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Bouclier Sacre  Maitrise 55 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Bouclier Sacre  Maitrise 55 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv55_Bouclier-Sacre-Maitrise-55.png"
                    },
                    {
                        "id":  "paladin_single_t55",
@@ -2640,7 +2804,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Frappe Sacree  Maitrise 55 : frappe l'ennemi d'un coup beni."
+                       "description":  "Frappe Sacree  Maitrise 55 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv55_Frappe-Sacree-Maitrise-55.png"
                    },
                    {
                        "id":  "paladin_aoe_t56",
@@ -2656,7 +2821,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Vague Sacree  Maitrise 56 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Vague Sacree  Maitrise 56 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv56_Vague-Sacree-Maitrise-56.png"
                    },
                    {
                        "id":  "paladin_def_t56",
@@ -2672,7 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Aura de Protection  Maitrise 56 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Aura de Protection  Maitrise 56 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv56_Aura-de-Protection-Maitrise-56.png"
                    },
                    {
                        "id":  "paladin_single_t56",
@@ -2688,7 +2855,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Marteau de Justice  Maitrise 56 : frappe l'ennemi d'un coup beni."
+                       "description":  "Marteau de Justice  Maitrise 56 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv56_Marteau-de-Justice-Maitrise-56.png"
                    },
                    {
                        "id":  "paladin_aoe_t57",
@@ -2704,7 +2872,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Nova de Lumiere  Maitrise 57 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Nova de Lumiere  Maitrise 57 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv57_Nova-de-Lumiere-Maitrise-57.png"
                    },
                    {
                        "id":  "paladin_def_t57",
@@ -2720,7 +2889,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Main de Garde  Maitrise 57 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Main de Garde  Maitrise 57 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv57_Main-de-Garde-Maitrise-57.png"
                    },
                    {
                        "id":  "paladin_single_t57",
@@ -2736,7 +2906,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Estoc Beni  Maitrise 57 : frappe l'ennemi d'un coup beni."
+                       "description":  "Estoc Beni  Maitrise 57 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv57_Estoc-Beni-Maitrise-57.png"
                    },
                    {
                        "id":  "paladin_aoe_t58",
@@ -2752,7 +2923,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Champ Beni  Maitrise 58 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Champ Beni  Maitrise 58 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv58_Champ-Beni-Maitrise-58.png"
                    },
                    {
                        "id":  "paladin_def_t58",
@@ -2768,7 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Serment Sacre  Maitrise 58 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Serment Sacre  Maitrise 58 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv58_Serment-Sacre-Maitrise-58.png"
                    },
                    {
                        "id":  "paladin_single_t58",
@@ -2784,7 +2957,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Chatiment  Maitrise 58 : frappe l'ennemi d'un coup beni."
+                       "description":  "Chatiment  Maitrise 58 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv58_Chatiment-Maitrise-58.png"
                    },
                    {
                        "id":  "paladin_aoe_t59",
@@ -2800,7 +2974,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Croisade Sainte  Maitrise 59 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Croisade Sainte  Maitrise 59 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv59_Croisade-Sainte-Maitrise-59.png"
                    },
                    {
                        "id":  "paladin_def_t59",
@@ -2816,7 +2991,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Sanctuaire  Maitrise 59 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Sanctuaire  Maitrise 59 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv59_Sanctuaire-Maitrise-59.png"
                    },
                    {
                        "id":  "paladin_single_t59",
@@ -2832,7 +3008,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Croisade  Maitrise 59 : frappe l'ennemi d'un coup beni."
+                       "description":  "Croisade  Maitrise 59 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv59_Croisade-Maitrise-59.png"
                    },
                    {
                        "id":  "paladin_aoe_t60",
@@ -2848,7 +3025,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Jugement de Zone  Maitrise 60 : consacre le sol et brule les impies (degats reduits)."
+                       "description":  "Jugement de Zone  Maitrise 60 : consacre le sol et brule les impies (degats reduits).",
+                       "iconFile":  "Paladin_Zone_Niv60_Jugement-de-Zone-Maitrise-60.png"
                    },
                    {
                        "id":  "paladin_def_t60",
@@ -2864,7 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Imprenable  Maitrise 60 : protege soi et le groupe d'une aura sacree."
+                       "description":  "Imprenable  Maitrise 60 : protege soi et le groupe d'une aura sacree.",
+                       "iconFile":  "Paladin_Defense_Niv60_Imprenable-Maitrise-60.png"
                    },
                    {
                        "id":  "paladin_single_t60",
@@ -2880,7 +3059,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Verdict Divin  Maitrise 60 : frappe l'ennemi d'un coup beni."
+                       "description":  "Verdict Divin  Maitrise 60 : frappe l'ennemi d'un coup beni.",
+                       "iconFile":  "Paladin_Unitaire_Niv60_Verdict-Divin-Maitrise-60.png"
                    }
                ]
 }

@@ -16,7 +16,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Tir en Cloche : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir en Cloche : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv01_Tir-en-Cloche.png"
                    },
                    {
                        "id":  "archer_bois_def_t1",
@@ -32,7 +33,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Pas Leger : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Pas Leger : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv01_Pas-Leger.png"
                    },
                    {
                        "id":  "archer_bois_single_t1",
@@ -48,7 +50,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Tir Vise : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir Vise : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv01_Tir-Vise.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t2",
@@ -64,7 +67,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Pluie de Fleches  Aiguise : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Pluie de Fleches  Aiguise : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv02_Pluie-de-Fleches-Aiguise.png"
                    },
                    {
                        "id":  "archer_bois_def_t2",
@@ -80,7 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Camouflage  Aiguise : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Camouflage  Aiguise : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv02_Camouflage-Aiguise.png"
                    },
                    {
                        "id":  "archer_bois_single_t2",
@@ -96,7 +101,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Fleche Percante  Aiguise : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Percante  Aiguise : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv02_Fleche-Percante-Aiguise.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t3",
@@ -112,7 +118,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Salve  Renforce : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Salve  Renforce : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv03_Salve-Renforce.png"
                    },
                    {
                        "id":  "archer_bois_def_t3",
@@ -128,7 +135,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Roulade  Renforce : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Roulade  Renforce : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv03_Roulade-Renforce.png"
                    },
                    {
                        "id":  "archer_bois_single_t3",
@@ -144,7 +152,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Tir en Plein Cur  Renforce : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir en Plein Cur  Renforce : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv03_Tir-en-Plein-Cur-Renforce.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t4",
@@ -160,7 +169,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Tir Eclate  Affute : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir Eclate  Affute : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv04_Tir-Eclate-Affute.png"
                    },
                    {
                        "id":  "archer_bois_def_t4",
@@ -176,7 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Recul Agile  Affute : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Recul Agile  Affute : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv04_Recul-Agile-Affute.png"
                    },
                    {
                        "id":  "archer_bois_single_t4",
@@ -192,7 +203,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Fleche Barbelee  Affute : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Barbelee  Affute : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv04_Fleche-Barbelee-Affute.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t5",
@@ -208,7 +220,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Deluge  Brutal : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Deluge  Brutal : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv05_Deluge-Brutal.png"
                    },
                    {
                        "id":  "archer_bois_def_t5",
@@ -224,7 +237,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Vision du Chasseur  Brutal : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Vision du Chasseur  Brutal : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv05_Vision-du-Chasseur-Brutal.png"
                    },
                    {
                        "id":  "archer_bois_single_t5",
@@ -240,7 +254,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Tir du Faucon  Brutal : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir du Faucon  Brutal : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv05_Tir-du-Faucon-Brutal.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t6",
@@ -256,7 +271,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Tempete de Traits  Vorace : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tempete de Traits  Vorace : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv06_Tempete-de-Traits-Vorace.png"
                    },
                    {
                        "id":  "archer_bois_def_t6",
@@ -272,7 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Insaisissable  Vorace : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Insaisissable  Vorace : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv06_Insaisissable-Vorace.png"
                    },
                    {
                        "id":  "archer_bois_single_t6",
@@ -288,7 +305,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Fleche Mortelle  Vorace : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Mortelle  Vorace : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv06_Fleche-Mortelle-Vorace.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t7",
@@ -304,7 +322,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Tir en Cloche  Implacable : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir en Cloche  Implacable : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv07_Tir-en-Cloche-Implacable.png"
                    },
                    {
                        "id":  "archer_bois_def_t7",
@@ -320,7 +339,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Pas Leger  Implacable : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Pas Leger  Implacable : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv07_Pas-Leger-Implacable.png"
                    },
                    {
                        "id":  "archer_bois_single_t7",
@@ -336,7 +356,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Tir Vise  Implacable : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir Vise  Implacable : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv07_Tir-Vise-Implacable.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t8",
@@ -352,7 +373,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Pluie de Fleches  Funeste : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Pluie de Fleches  Funeste : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv08_Pluie-de-Fleches-Funeste.png"
                    },
                    {
                        "id":  "archer_bois_def_t8",
@@ -368,7 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Camouflage  Funeste : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Camouflage  Funeste : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv08_Camouflage-Funeste.png"
                    },
                    {
                        "id":  "archer_bois_single_t8",
@@ -384,7 +407,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Fleche Percante  Funeste : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Percante  Funeste : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv08_Fleche-Percante-Funeste.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t9",
@@ -400,7 +424,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Salve  Cruel : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Salve  Cruel : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv09_Salve-Cruel.png"
                    },
                    {
                        "id":  "archer_bois_def_t9",
@@ -416,7 +441,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Roulade  Cruel : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Roulade  Cruel : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv09_Roulade-Cruel.png"
                    },
                    {
                        "id":  "archer_bois_single_t9",
@@ -432,7 +458,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Tir en Plein Cur  Cruel : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir en Plein Cur  Cruel : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv09_Tir-en-Plein-Cur-Cruel.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t10",
@@ -448,7 +475,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Tir Eclate  Sanglant : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir Eclate  Sanglant : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv10_Tir-Eclate-Sanglant.png"
                    },
                    {
                        "id":  "archer_bois_def_t10",
@@ -464,7 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Recul Agile  Sanglant : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Recul Agile  Sanglant : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv10_Recul-Agile-Sanglant.png"
                    },
                    {
                        "id":  "archer_bois_single_t10",
@@ -480,7 +509,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Fleche Barbelee  Sanglant : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Barbelee  Sanglant : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv10_Fleche-Barbelee-Sanglant.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t11",
@@ -496,7 +526,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Deluge  Devastateur : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Deluge  Devastateur : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv11_Deluge-Devastateur.png"
                    },
                    {
                        "id":  "archer_bois_def_t11",
@@ -512,7 +543,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Vision du Chasseur  Devastateur : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Vision du Chasseur  Devastateur : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv11_Vision-du-Chasseur-Devastateur.png"
                    },
                    {
                        "id":  "archer_bois_single_t11",
@@ -528,7 +560,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Tir du Faucon  Devastateur : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir du Faucon  Devastateur : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv11_Tir-du-Faucon-Devastateur.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t12",
@@ -544,7 +577,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Tempete de Traits  Foudroyant : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tempete de Traits  Foudroyant : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv12_Tempete-de-Traits-Foudroyant.png"
                    },
                    {
                        "id":  "archer_bois_def_t12",
@@ -560,7 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Insaisissable  Foudroyant : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Insaisissable  Foudroyant : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv12_Insaisissable-Foudroyant.png"
                    },
                    {
                        "id":  "archer_bois_single_t12",
@@ -576,7 +611,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Fleche Mortelle  Foudroyant : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Mortelle  Foudroyant : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv12_Fleche-Mortelle-Foudroyant.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t13",
@@ -592,7 +628,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Tir en Cloche  Mortel : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir en Cloche  Mortel : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv13_Tir-en-Cloche-Mortel.png"
                    },
                    {
                        "id":  "archer_bois_def_t13",
@@ -608,7 +645,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Pas Leger  Mortel : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Pas Leger  Mortel : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv13_Pas-Leger-Mortel.png"
                    },
                    {
                        "id":  "archer_bois_single_t13",
@@ -624,7 +662,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Tir Vise  Mortel : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir Vise  Mortel : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv13_Tir-Vise-Mortel.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t14",
@@ -640,7 +679,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Pluie de Fleches  Inexorable : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Pluie de Fleches  Inexorable : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv14_Pluie-de-Fleches-Inexorable.png"
                    },
                    {
                        "id":  "archer_bois_def_t14",
@@ -656,7 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Camouflage  Inexorable : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Camouflage  Inexorable : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv14_Camouflage-Inexorable.png"
                    },
                    {
                        "id":  "archer_bois_single_t14",
@@ -672,7 +713,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Fleche Percante  Inexorable : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Percante  Inexorable : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv14_Fleche-Percante-Inexorable.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t15",
@@ -688,7 +730,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Salve  Terrible : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Salve  Terrible : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv15_Salve-Terrible.png"
                    },
                    {
                        "id":  "archer_bois_def_t15",
@@ -704,7 +747,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Roulade  Terrible : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Roulade  Terrible : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv15_Roulade-Terrible.png"
                    },
                    {
                        "id":  "archer_bois_single_t15",
@@ -720,7 +764,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Tir en Plein Cur  Terrible : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir en Plein Cur  Terrible : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv15_Tir-en-Plein-Cur-Terrible.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t16",
@@ -736,7 +781,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Tir Eclate  Souverain : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir Eclate  Souverain : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv16_Tir-Eclate-Souverain.png"
                    },
                    {
                        "id":  "archer_bois_def_t16",
@@ -752,7 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Recul Agile  Souverain : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Recul Agile  Souverain : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv16_Recul-Agile-Souverain.png"
                    },
                    {
                        "id":  "archer_bois_single_t16",
@@ -768,7 +815,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Fleche Barbelee  Souverain : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Barbelee  Souverain : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv16_Fleche-Barbelee-Souverain.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t17",
@@ -784,7 +832,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Deluge  Legendaire : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Deluge  Legendaire : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv17_Deluge-Legendaire.png"
                    },
                    {
                        "id":  "archer_bois_def_t17",
@@ -800,7 +849,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Vision du Chasseur  Legendaire : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Vision du Chasseur  Legendaire : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv17_Vision-du-Chasseur-Legendaire.png"
                    },
                    {
                        "id":  "archer_bois_single_t17",
@@ -816,7 +866,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Tir du Faucon  Legendaire : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir du Faucon  Legendaire : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv17_Tir-du-Faucon-Legendaire.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t18",
@@ -832,7 +883,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Tempete de Traits  Cataclysmique : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tempete de Traits  Cataclysmique : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv18_Tempete-de-Traits-Cataclysmique.png"
                    },
                    {
                        "id":  "archer_bois_def_t18",
@@ -848,7 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Insaisissable  Cataclysmique : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Insaisissable  Cataclysmique : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv18_Insaisissable-Cataclysmique.png"
                    },
                    {
                        "id":  "archer_bois_single_t18",
@@ -864,7 +917,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Fleche Mortelle  Cataclysmique : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Mortelle  Cataclysmique : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv18_Fleche-Mortelle-Cataclysmique.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t19",
@@ -880,7 +934,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Tir en Cloche  Apocalyptique : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir en Cloche  Apocalyptique : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv19_Tir-en-Cloche-Apocalyptique.png"
                    },
                    {
                        "id":  "archer_bois_def_t19",
@@ -896,7 +951,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Pas Leger  Apocalyptique : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Pas Leger  Apocalyptique : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv19_Pas-Leger-Apocalyptique.png"
                    },
                    {
                        "id":  "archer_bois_single_t19",
@@ -912,7 +968,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Tir Vise  Apocalyptique : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir Vise  Apocalyptique : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv19_Tir-Vise-Apocalyptique.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t20",
@@ -928,7 +985,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Pluie de Fleches  Ultime : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Pluie de Fleches  Ultime : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv20_Pluie-de-Fleches-Ultime.png"
                    },
                    {
                        "id":  "archer_bois_def_t20",
@@ -944,7 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Camouflage  Ultime : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Camouflage  Ultime : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv20_Camouflage-Ultime.png"
                    },
                    {
                        "id":  "archer_bois_single_t20",
@@ -960,7 +1019,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Fleche Percante  Ultime : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Percante  Ultime : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv20_Fleche-Percante-Ultime.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t21",
@@ -976,7 +1036,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Salve  Maitrise 21 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Salve  Maitrise 21 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv21_Salve-Maitrise-21.png"
                    },
                    {
                        "id":  "archer_bois_def_t21",
@@ -992,7 +1053,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Roulade  Maitrise 21 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Roulade  Maitrise 21 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv21_Roulade-Maitrise-21.png"
                    },
                    {
                        "id":  "archer_bois_single_t21",
@@ -1008,7 +1070,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Tir en Plein Cur  Maitrise 21 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir en Plein Cur  Maitrise 21 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv21_Tir-en-Plein-Cur-Maitrise-21.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t22",
@@ -1024,7 +1087,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Tir Eclate  Maitrise 22 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir Eclate  Maitrise 22 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv22_Tir-Eclate-Maitrise-22.png"
                    },
                    {
                        "id":  "archer_bois_def_t22",
@@ -1040,7 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Recul Agile  Maitrise 22 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Recul Agile  Maitrise 22 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv22_Recul-Agile-Maitrise-22.png"
                    },
                    {
                        "id":  "archer_bois_single_t22",
@@ -1056,7 +1121,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Fleche Barbelee  Maitrise 22 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Barbelee  Maitrise 22 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv22_Fleche-Barbelee-Maitrise-22.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t23",
@@ -1072,7 +1138,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Deluge  Maitrise 23 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Deluge  Maitrise 23 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv23_Deluge-Maitrise-23.png"
                    },
                    {
                        "id":  "archer_bois_def_t23",
@@ -1088,7 +1155,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Vision du Chasseur  Maitrise 23 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Vision du Chasseur  Maitrise 23 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv23_Vision-du-Chasseur-Maitrise-23.png"
                    },
                    {
                        "id":  "archer_bois_single_t23",
@@ -1104,7 +1172,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Tir du Faucon  Maitrise 23 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir du Faucon  Maitrise 23 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv23_Tir-du-Faucon-Maitrise-23.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t24",
@@ -1120,7 +1189,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Tempete de Traits  Maitrise 24 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tempete de Traits  Maitrise 24 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv24_Tempete-de-Traits-Maitrise-24.png"
                    },
                    {
                        "id":  "archer_bois_def_t24",
@@ -1136,7 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Insaisissable  Maitrise 24 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Insaisissable  Maitrise 24 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv24_Insaisissable-Maitrise-24.png"
                    },
                    {
                        "id":  "archer_bois_single_t24",
@@ -1152,7 +1223,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Fleche Mortelle  Maitrise 24 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Mortelle  Maitrise 24 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv24_Fleche-Mortelle-Maitrise-24.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t25",
@@ -1168,7 +1240,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Tir en Cloche  Maitrise 25 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir en Cloche  Maitrise 25 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv25_Tir-en-Cloche-Maitrise-25.png"
                    },
                    {
                        "id":  "archer_bois_def_t25",
@@ -1184,7 +1257,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Pas Leger  Maitrise 25 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Pas Leger  Maitrise 25 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv25_Pas-Leger-Maitrise-25.png"
                    },
                    {
                        "id":  "archer_bois_single_t25",
@@ -1200,7 +1274,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Tir Vise  Maitrise 25 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir Vise  Maitrise 25 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv25_Tir-Vise-Maitrise-25.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t26",
@@ -1216,7 +1291,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Pluie de Fleches  Maitrise 26 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Pluie de Fleches  Maitrise 26 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv26_Pluie-de-Fleches-Maitrise-26.png"
                    },
                    {
                        "id":  "archer_bois_def_t26",
@@ -1232,7 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Camouflage  Maitrise 26 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Camouflage  Maitrise 26 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv26_Camouflage-Maitrise-26.png"
                    },
                    {
                        "id":  "archer_bois_single_t26",
@@ -1248,7 +1325,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Fleche Percante  Maitrise 26 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Percante  Maitrise 26 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv26_Fleche-Percante-Maitrise-26.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t27",
@@ -1264,7 +1342,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Salve  Maitrise 27 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Salve  Maitrise 27 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv27_Salve-Maitrise-27.png"
                    },
                    {
                        "id":  "archer_bois_def_t27",
@@ -1280,7 +1359,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Roulade  Maitrise 27 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Roulade  Maitrise 27 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv27_Roulade-Maitrise-27.png"
                    },
                    {
                        "id":  "archer_bois_single_t27",
@@ -1296,7 +1376,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Tir en Plein Cur  Maitrise 27 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir en Plein Cur  Maitrise 27 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv27_Tir-en-Plein-Cur-Maitrise-27.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t28",
@@ -1312,7 +1393,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Tir Eclate  Maitrise 28 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir Eclate  Maitrise 28 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv28_Tir-Eclate-Maitrise-28.png"
                    },
                    {
                        "id":  "archer_bois_def_t28",
@@ -1328,7 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Recul Agile  Maitrise 28 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Recul Agile  Maitrise 28 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv28_Recul-Agile-Maitrise-28.png"
                    },
                    {
                        "id":  "archer_bois_single_t28",
@@ -1344,7 +1427,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Fleche Barbelee  Maitrise 28 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Barbelee  Maitrise 28 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv28_Fleche-Barbelee-Maitrise-28.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t29",
@@ -1360,7 +1444,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Deluge  Maitrise 29 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Deluge  Maitrise 29 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv29_Deluge-Maitrise-29.png"
                    },
                    {
                        "id":  "archer_bois_def_t29",
@@ -1376,7 +1461,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Vision du Chasseur  Maitrise 29 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Vision du Chasseur  Maitrise 29 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv29_Vision-du-Chasseur-Maitrise-29.png"
                    },
                    {
                        "id":  "archer_bois_single_t29",
@@ -1392,7 +1478,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Tir du Faucon  Maitrise 29 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir du Faucon  Maitrise 29 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv29_Tir-du-Faucon-Maitrise-29.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t30",
@@ -1408,7 +1495,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Tempete de Traits  Maitrise 30 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tempete de Traits  Maitrise 30 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv30_Tempete-de-Traits-Maitrise-30.png"
                    },
                    {
                        "id":  "archer_bois_def_t30",
@@ -1424,7 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Insaisissable  Maitrise 30 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Insaisissable  Maitrise 30 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv30_Insaisissable-Maitrise-30.png"
                    },
                    {
                        "id":  "archer_bois_single_t30",
@@ -1440,7 +1529,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Fleche Mortelle  Maitrise 30 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Mortelle  Maitrise 30 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv30_Fleche-Mortelle-Maitrise-30.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t31",
@@ -1456,7 +1546,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Tir en Cloche  Maitrise 31 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir en Cloche  Maitrise 31 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv31_Tir-en-Cloche-Maitrise-31.png"
                    },
                    {
                        "id":  "archer_bois_def_t31",
@@ -1472,7 +1563,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Pas Leger  Maitrise 31 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Pas Leger  Maitrise 31 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv31_Pas-Leger-Maitrise-31.png"
                    },
                    {
                        "id":  "archer_bois_single_t31",
@@ -1488,7 +1580,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Tir Vise  Maitrise 31 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir Vise  Maitrise 31 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv31_Tir-Vise-Maitrise-31.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t32",
@@ -1504,7 +1597,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Pluie de Fleches  Maitrise 32 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Pluie de Fleches  Maitrise 32 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv32_Pluie-de-Fleches-Maitrise-32.png"
                    },
                    {
                        "id":  "archer_bois_def_t32",
@@ -1520,7 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Camouflage  Maitrise 32 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Camouflage  Maitrise 32 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv32_Camouflage-Maitrise-32.png"
                    },
                    {
                        "id":  "archer_bois_single_t32",
@@ -1536,7 +1631,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Fleche Percante  Maitrise 32 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Percante  Maitrise 32 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv32_Fleche-Percante-Maitrise-32.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t33",
@@ -1552,7 +1648,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Salve  Maitrise 33 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Salve  Maitrise 33 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv33_Salve-Maitrise-33.png"
                    },
                    {
                        "id":  "archer_bois_def_t33",
@@ -1568,7 +1665,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Roulade  Maitrise 33 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Roulade  Maitrise 33 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv33_Roulade-Maitrise-33.png"
                    },
                    {
                        "id":  "archer_bois_single_t33",
@@ -1584,7 +1682,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Tir en Plein Cur  Maitrise 33 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir en Plein Cur  Maitrise 33 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv33_Tir-en-Plein-Cur-Maitrise-33.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t34",
@@ -1600,7 +1699,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Tir Eclate  Maitrise 34 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir Eclate  Maitrise 34 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv34_Tir-Eclate-Maitrise-34.png"
                    },
                    {
                        "id":  "archer_bois_def_t34",
@@ -1616,7 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Recul Agile  Maitrise 34 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Recul Agile  Maitrise 34 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv34_Recul-Agile-Maitrise-34.png"
                    },
                    {
                        "id":  "archer_bois_single_t34",
@@ -1632,7 +1733,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Fleche Barbelee  Maitrise 34 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Barbelee  Maitrise 34 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv34_Fleche-Barbelee-Maitrise-34.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t35",
@@ -1648,7 +1750,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Deluge  Maitrise 35 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Deluge  Maitrise 35 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv35_Deluge-Maitrise-35.png"
                    },
                    {
                        "id":  "archer_bois_def_t35",
@@ -1664,7 +1767,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Vision du Chasseur  Maitrise 35 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Vision du Chasseur  Maitrise 35 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv35_Vision-du-Chasseur-Maitrise-35.png"
                    },
                    {
                        "id":  "archer_bois_single_t35",
@@ -1680,7 +1784,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Tir du Faucon  Maitrise 35 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir du Faucon  Maitrise 35 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv35_Tir-du-Faucon-Maitrise-35.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t36",
@@ -1696,7 +1801,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Tempete de Traits  Maitrise 36 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tempete de Traits  Maitrise 36 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv36_Tempete-de-Traits-Maitrise-36.png"
                    },
                    {
                        "id":  "archer_bois_def_t36",
@@ -1712,7 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Insaisissable  Maitrise 36 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Insaisissable  Maitrise 36 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv36_Insaisissable-Maitrise-36.png"
                    },
                    {
                        "id":  "archer_bois_single_t36",
@@ -1728,7 +1835,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Fleche Mortelle  Maitrise 36 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Mortelle  Maitrise 36 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv36_Fleche-Mortelle-Maitrise-36.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t37",
@@ -1744,7 +1852,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Tir en Cloche  Maitrise 37 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir en Cloche  Maitrise 37 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv37_Tir-en-Cloche-Maitrise-37.png"
                    },
                    {
                        "id":  "archer_bois_def_t37",
@@ -1760,7 +1869,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Pas Leger  Maitrise 37 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Pas Leger  Maitrise 37 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv37_Pas-Leger-Maitrise-37.png"
                    },
                    {
                        "id":  "archer_bois_single_t37",
@@ -1776,7 +1886,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Tir Vise  Maitrise 37 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir Vise  Maitrise 37 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv37_Tir-Vise-Maitrise-37.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t38",
@@ -1792,7 +1903,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Pluie de Fleches  Maitrise 38 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Pluie de Fleches  Maitrise 38 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv38_Pluie-de-Fleches-Maitrise-38.png"
                    },
                    {
                        "id":  "archer_bois_def_t38",
@@ -1808,7 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Camouflage  Maitrise 38 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Camouflage  Maitrise 38 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv38_Camouflage-Maitrise-38.png"
                    },
                    {
                        "id":  "archer_bois_single_t38",
@@ -1824,7 +1937,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Fleche Percante  Maitrise 38 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Percante  Maitrise 38 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv38_Fleche-Percante-Maitrise-38.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t39",
@@ -1840,7 +1954,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Salve  Maitrise 39 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Salve  Maitrise 39 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv39_Salve-Maitrise-39.png"
                    },
                    {
                        "id":  "archer_bois_def_t39",
@@ -1856,7 +1971,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Roulade  Maitrise 39 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Roulade  Maitrise 39 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv39_Roulade-Maitrise-39.png"
                    },
                    {
                        "id":  "archer_bois_single_t39",
@@ -1872,7 +1988,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Tir en Plein Cur  Maitrise 39 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir en Plein Cur  Maitrise 39 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv39_Tir-en-Plein-Cur-Maitrise-39.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t40",
@@ -1888,7 +2005,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Tir Eclate  Maitrise 40 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir Eclate  Maitrise 40 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv40_Tir-Eclate-Maitrise-40.png"
                    },
                    {
                        "id":  "archer_bois_def_t40",
@@ -1904,7 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Recul Agile  Maitrise 40 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Recul Agile  Maitrise 40 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv40_Recul-Agile-Maitrise-40.png"
                    },
                    {
                        "id":  "archer_bois_single_t40",
@@ -1920,7 +2039,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Fleche Barbelee  Maitrise 40 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Barbelee  Maitrise 40 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv40_Fleche-Barbelee-Maitrise-40.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t41",
@@ -1936,7 +2056,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Deluge  Maitrise 41 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Deluge  Maitrise 41 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv41_Deluge-Maitrise-41.png"
                    },
                    {
                        "id":  "archer_bois_def_t41",
@@ -1952,7 +2073,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Vision du Chasseur  Maitrise 41 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Vision du Chasseur  Maitrise 41 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv41_Vision-du-Chasseur-Maitrise-41.png"
                    },
                    {
                        "id":  "archer_bois_single_t41",
@@ -1968,7 +2090,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Tir du Faucon  Maitrise 41 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir du Faucon  Maitrise 41 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv41_Tir-du-Faucon-Maitrise-41.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t42",
@@ -1984,7 +2107,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Tempete de Traits  Maitrise 42 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tempete de Traits  Maitrise 42 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv42_Tempete-de-Traits-Maitrise-42.png"
                    },
                    {
                        "id":  "archer_bois_def_t42",
@@ -2000,7 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Insaisissable  Maitrise 42 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Insaisissable  Maitrise 42 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv42_Insaisissable-Maitrise-42.png"
                    },
                    {
                        "id":  "archer_bois_single_t42",
@@ -2016,7 +2141,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Fleche Mortelle  Maitrise 42 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Mortelle  Maitrise 42 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv42_Fleche-Mortelle-Maitrise-42.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t43",
@@ -2032,7 +2158,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Tir en Cloche  Maitrise 43 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir en Cloche  Maitrise 43 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv43_Tir-en-Cloche-Maitrise-43.png"
                    },
                    {
                        "id":  "archer_bois_def_t43",
@@ -2048,7 +2175,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Pas Leger  Maitrise 43 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Pas Leger  Maitrise 43 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv43_Pas-Leger-Maitrise-43.png"
                    },
                    {
                        "id":  "archer_bois_single_t43",
@@ -2064,7 +2192,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Tir Vise  Maitrise 43 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir Vise  Maitrise 43 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv43_Tir-Vise-Maitrise-43.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t44",
@@ -2080,7 +2209,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Pluie de Fleches  Maitrise 44 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Pluie de Fleches  Maitrise 44 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv44_Pluie-de-Fleches-Maitrise-44.png"
                    },
                    {
                        "id":  "archer_bois_def_t44",
@@ -2096,7 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Camouflage  Maitrise 44 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Camouflage  Maitrise 44 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv44_Camouflage-Maitrise-44.png"
                    },
                    {
                        "id":  "archer_bois_single_t44",
@@ -2112,7 +2243,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Fleche Percante  Maitrise 44 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Percante  Maitrise 44 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv44_Fleche-Percante-Maitrise-44.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t45",
@@ -2128,7 +2260,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Salve  Maitrise 45 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Salve  Maitrise 45 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv45_Salve-Maitrise-45.png"
                    },
                    {
                        "id":  "archer_bois_def_t45",
@@ -2144,7 +2277,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Roulade  Maitrise 45 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Roulade  Maitrise 45 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv45_Roulade-Maitrise-45.png"
                    },
                    {
                        "id":  "archer_bois_single_t45",
@@ -2160,7 +2294,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Tir en Plein Cur  Maitrise 45 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir en Plein Cur  Maitrise 45 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv45_Tir-en-Plein-Cur-Maitrise-45.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t46",
@@ -2176,7 +2311,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Tir Eclate  Maitrise 46 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir Eclate  Maitrise 46 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv46_Tir-Eclate-Maitrise-46.png"
                    },
                    {
                        "id":  "archer_bois_def_t46",
@@ -2192,7 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Recul Agile  Maitrise 46 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Recul Agile  Maitrise 46 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv46_Recul-Agile-Maitrise-46.png"
                    },
                    {
                        "id":  "archer_bois_single_t46",
@@ -2208,7 +2345,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Fleche Barbelee  Maitrise 46 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Barbelee  Maitrise 46 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv46_Fleche-Barbelee-Maitrise-46.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t47",
@@ -2224,7 +2362,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Deluge  Maitrise 47 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Deluge  Maitrise 47 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv47_Deluge-Maitrise-47.png"
                    },
                    {
                        "id":  "archer_bois_def_t47",
@@ -2240,7 +2379,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Vision du Chasseur  Maitrise 47 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Vision du Chasseur  Maitrise 47 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv47_Vision-du-Chasseur-Maitrise-47.png"
                    },
                    {
                        "id":  "archer_bois_single_t47",
@@ -2256,7 +2396,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Tir du Faucon  Maitrise 47 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir du Faucon  Maitrise 47 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv47_Tir-du-Faucon-Maitrise-47.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t48",
@@ -2272,7 +2413,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Tempete de Traits  Maitrise 48 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tempete de Traits  Maitrise 48 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv48_Tempete-de-Traits-Maitrise-48.png"
                    },
                    {
                        "id":  "archer_bois_def_t48",
@@ -2288,7 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Insaisissable  Maitrise 48 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Insaisissable  Maitrise 48 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv48_Insaisissable-Maitrise-48.png"
                    },
                    {
                        "id":  "archer_bois_single_t48",
@@ -2304,7 +2447,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Fleche Mortelle  Maitrise 48 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Mortelle  Maitrise 48 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv48_Fleche-Mortelle-Maitrise-48.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t49",
@@ -2320,7 +2464,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Tir en Cloche  Maitrise 49 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir en Cloche  Maitrise 49 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv49_Tir-en-Cloche-Maitrise-49.png"
                    },
                    {
                        "id":  "archer_bois_def_t49",
@@ -2336,7 +2481,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Pas Leger  Maitrise 49 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Pas Leger  Maitrise 49 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv49_Pas-Leger-Maitrise-49.png"
                    },
                    {
                        "id":  "archer_bois_single_t49",
@@ -2352,7 +2498,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Tir Vise  Maitrise 49 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir Vise  Maitrise 49 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv49_Tir-Vise-Maitrise-49.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t50",
@@ -2368,7 +2515,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Pluie de Fleches  Maitrise 50 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Pluie de Fleches  Maitrise 50 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv50_Pluie-de-Fleches-Maitrise-50.png"
                    },
                    {
                        "id":  "archer_bois_def_t50",
@@ -2384,7 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Camouflage  Maitrise 50 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Camouflage  Maitrise 50 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv50_Camouflage-Maitrise-50.png"
                    },
                    {
                        "id":  "archer_bois_single_t50",
@@ -2400,7 +2549,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Fleche Percante  Maitrise 50 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Percante  Maitrise 50 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv50_Fleche-Percante-Maitrise-50.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t51",
@@ -2416,7 +2566,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Salve  Maitrise 51 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Salve  Maitrise 51 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv51_Salve-Maitrise-51.png"
                    },
                    {
                        "id":  "archer_bois_def_t51",
@@ -2432,7 +2583,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Roulade  Maitrise 51 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Roulade  Maitrise 51 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv51_Roulade-Maitrise-51.png"
                    },
                    {
                        "id":  "archer_bois_single_t51",
@@ -2448,7 +2600,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Tir en Plein Cur  Maitrise 51 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir en Plein Cur  Maitrise 51 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv51_Tir-en-Plein-Cur-Maitrise-51.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t52",
@@ -2464,7 +2617,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Tir Eclate  Maitrise 52 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir Eclate  Maitrise 52 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv52_Tir-Eclate-Maitrise-52.png"
                    },
                    {
                        "id":  "archer_bois_def_t52",
@@ -2480,7 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Recul Agile  Maitrise 52 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Recul Agile  Maitrise 52 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv52_Recul-Agile-Maitrise-52.png"
                    },
                    {
                        "id":  "archer_bois_single_t52",
@@ -2496,7 +2651,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Fleche Barbelee  Maitrise 52 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Barbelee  Maitrise 52 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv52_Fleche-Barbelee-Maitrise-52.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t53",
@@ -2512,7 +2668,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Deluge  Maitrise 53 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Deluge  Maitrise 53 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv53_Deluge-Maitrise-53.png"
                    },
                    {
                        "id":  "archer_bois_def_t53",
@@ -2528,7 +2685,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Vision du Chasseur  Maitrise 53 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Vision du Chasseur  Maitrise 53 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv53_Vision-du-Chasseur-Maitrise-53.png"
                    },
                    {
                        "id":  "archer_bois_single_t53",
@@ -2544,7 +2702,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Tir du Faucon  Maitrise 53 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir du Faucon  Maitrise 53 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv53_Tir-du-Faucon-Maitrise-53.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t54",
@@ -2560,7 +2719,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Tempete de Traits  Maitrise 54 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tempete de Traits  Maitrise 54 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv54_Tempete-de-Traits-Maitrise-54.png"
                    },
                    {
                        "id":  "archer_bois_def_t54",
@@ -2576,7 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Insaisissable  Maitrise 54 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Insaisissable  Maitrise 54 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv54_Insaisissable-Maitrise-54.png"
                    },
                    {
                        "id":  "archer_bois_single_t54",
@@ -2592,7 +2753,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Fleche Mortelle  Maitrise 54 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Mortelle  Maitrise 54 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv54_Fleche-Mortelle-Maitrise-54.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t55",
@@ -2608,7 +2770,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Tir en Cloche  Maitrise 55 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir en Cloche  Maitrise 55 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv55_Tir-en-Cloche-Maitrise-55.png"
                    },
                    {
                        "id":  "archer_bois_def_t55",
@@ -2624,7 +2787,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Pas Leger  Maitrise 55 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Pas Leger  Maitrise 55 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv55_Pas-Leger-Maitrise-55.png"
                    },
                    {
                        "id":  "archer_bois_single_t55",
@@ -2640,7 +2804,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Tir Vise  Maitrise 55 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir Vise  Maitrise 55 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv55_Tir-Vise-Maitrise-55.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t56",
@@ -2656,7 +2821,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Pluie de Fleches  Maitrise 56 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Pluie de Fleches  Maitrise 56 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv56_Pluie-de-Fleches-Maitrise-56.png"
                    },
                    {
                        "id":  "archer_bois_def_t56",
@@ -2672,7 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Camouflage  Maitrise 56 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Camouflage  Maitrise 56 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv56_Camouflage-Maitrise-56.png"
                    },
                    {
                        "id":  "archer_bois_single_t56",
@@ -2688,7 +2855,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Fleche Percante  Maitrise 56 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Percante  Maitrise 56 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv56_Fleche-Percante-Maitrise-56.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t57",
@@ -2704,7 +2872,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Salve  Maitrise 57 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Salve  Maitrise 57 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv57_Salve-Maitrise-57.png"
                    },
                    {
                        "id":  "archer_bois_def_t57",
@@ -2720,7 +2889,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Roulade  Maitrise 57 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Roulade  Maitrise 57 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv57_Roulade-Maitrise-57.png"
                    },
                    {
                        "id":  "archer_bois_single_t57",
@@ -2736,7 +2906,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Tir en Plein Cur  Maitrise 57 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir en Plein Cur  Maitrise 57 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv57_Tir-en-Plein-Cur-Maitrise-57.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t58",
@@ -2752,7 +2923,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Tir Eclate  Maitrise 58 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tir Eclate  Maitrise 58 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv58_Tir-Eclate-Maitrise-58.png"
                    },
                    {
                        "id":  "archer_bois_def_t58",
@@ -2768,7 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Recul Agile  Maitrise 58 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Recul Agile  Maitrise 58 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv58_Recul-Agile-Maitrise-58.png"
                    },
                    {
                        "id":  "archer_bois_single_t58",
@@ -2784,7 +2957,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Fleche Barbelee  Maitrise 58 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Barbelee  Maitrise 58 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv58_Fleche-Barbelee-Maitrise-58.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t59",
@@ -2800,7 +2974,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Deluge  Maitrise 59 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Deluge  Maitrise 59 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv59_Deluge-Maitrise-59.png"
                    },
                    {
                        "id":  "archer_bois_def_t59",
@@ -2816,7 +2991,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Vision du Chasseur  Maitrise 59 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Vision du Chasseur  Maitrise 59 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv59_Vision-du-Chasseur-Maitrise-59.png"
                    },
                    {
                        "id":  "archer_bois_single_t59",
@@ -2832,7 +3008,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Tir du Faucon  Maitrise 59 : decoche une fleche precise sur une cible unique."
+                       "description":  "Tir du Faucon  Maitrise 59 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv59_Tir-du-Faucon-Maitrise-59.png"
                    },
                    {
                        "id":  "archer_bois_aoe_t60",
@@ -2848,7 +3025,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Tempete de Traits  Maitrise 60 : fait pleuvoir des fleches sur une zone (degats reduits)."
+                       "description":  "Tempete de Traits  Maitrise 60 : fait pleuvoir des fleches sur une zone (degats reduits).",
+                       "iconFile":  "Archer_Zone_Niv60_Tempete-de-Traits-Maitrise-60.png"
                    },
                    {
                        "id":  "archer_bois_def_t60",
@@ -2864,7 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Insaisissable  Maitrise 60 : ameliore esquive et mobilite pour garder ses distances."
+                       "description":  "Insaisissable  Maitrise 60 : ameliore esquive et mobilite pour garder ses distances.",
+                       "iconFile":  "Archer_Defense_Niv60_Insaisissable-Maitrise-60.png"
                    },
                    {
                        "id":  "archer_bois_single_t60",
@@ -2880,7 +3059,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Fleche Mortelle  Maitrise 60 : decoche une fleche precise sur une cible unique."
+                       "description":  "Fleche Mortelle  Maitrise 60 : decoche une fleche precise sur une cible unique.",
+                       "iconFile":  "Archer_Unitaire_Niv60_Fleche-Mortelle-Maitrise-60.png"
                    }
                ]
 }

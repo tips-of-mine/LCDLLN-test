@@ -16,7 +16,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Lames Tournoyantes : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Lames Tournoyantes : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv01_Lames-Tournoyantes.png"
                    },
                    {
                        "id":  "voleur_def_t1",
@@ -32,7 +33,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Pas de l'Ombre : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv01_Pas-de-l-Ombre.png"
                    },
                    {
                        "id":  "voleur_single_t1",
@@ -48,7 +50,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Coup Bas : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Bas : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv01_Coup-Bas.png"
                    },
                    {
                        "id":  "voleur_aoe_t2",
@@ -64,7 +67,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Nuage de Poudre  Aiguise : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Nuage de Poudre  Aiguise : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv02_Nuage-de-Poudre-Aiguise.png"
                    },
                    {
                        "id":  "voleur_def_t2",
@@ -80,7 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Voile de Fumee  Aiguise : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Aiguise : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv02_Voile-de-Fumee-Aiguise.png"
                    },
                    {
                        "id":  "voleur_single_t2",
@@ -96,7 +101,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Eventration  Aiguise : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Eventration  Aiguise : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv02_Eventration-Aiguise.png"
                    },
                    {
                        "id":  "voleur_aoe_t3",
@@ -112,7 +118,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Bombe Fumigene  Renforce : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Bombe Fumigene  Renforce : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv03_Bombe-Fumigene-Renforce.png"
                    },
                    {
                        "id":  "voleur_def_t3",
@@ -128,7 +135,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Reflexe Felin  Renforce : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Renforce : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv03_Reflexe-Felin-Renforce.png"
                    },
                    {
                        "id":  "voleur_single_t3",
@@ -144,7 +152,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Poignard Empoisonne  Renforce : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Poignard Empoisonne  Renforce : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv03_Poignard-Empoisonne-Renforce.png"
                    },
                    {
                        "id":  "voleur_aoe_t4",
@@ -160,7 +169,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Eclats Aceres  Affute : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Eclats Aceres  Affute : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv04_Eclats-Aceres-Affute.png"
                    },
                    {
                        "id":  "voleur_def_t4",
@@ -176,7 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Disparition  Affute : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Disparition  Affute : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv04_Disparition-Affute.png"
                    },
                    {
                        "id":  "voleur_single_t4",
@@ -192,7 +203,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Saignee  Affute : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Saignee  Affute : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv04_Saignee-Affute.png"
                    },
                    {
                        "id":  "voleur_aoe_t5",
@@ -208,7 +220,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Danse des Couteaux  Brutal : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Danse des Couteaux  Brutal : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv05_Danse-des-Couteaux-Brutal.png"
                    },
                    {
                        "id":  "voleur_def_t5",
@@ -224,7 +237,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Acrobatie  Brutal : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Brutal : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv05_Acrobatie-Brutal.png"
                    },
                    {
                        "id":  "voleur_single_t5",
@@ -240,7 +254,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Frappe Sournoise  Brutal : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Frappe Sournoise  Brutal : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv05_Frappe-Sournoise-Brutal.png"
                    },
                    {
                        "id":  "voleur_aoe_t6",
@@ -256,7 +271,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Embuscade  Vorace : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Embuscade  Vorace : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv06_Embuscade-Vorace.png"
                    },
                    {
                        "id":  "voleur_def_t6",
@@ -272,7 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Echappee  Vorace : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Echappee  Vorace : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv06_Echappee-Vorace.png"
                    },
                    {
                        "id":  "voleur_single_t6",
@@ -288,7 +305,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Coup Fatal  Vorace : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Fatal  Vorace : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv06_Coup-Fatal-Vorace.png"
                    },
                    {
                        "id":  "voleur_aoe_t7",
@@ -304,7 +322,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Lames Tournoyantes  Implacable : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Lames Tournoyantes  Implacable : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv07_Lames-Tournoyantes-Implacable.png"
                    },
                    {
                        "id":  "voleur_def_t7",
@@ -320,7 +339,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Pas de l'Ombre  Implacable : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Implacable : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv07_Pas-de-l-Ombre-Implacable.png"
                    },
                    {
                        "id":  "voleur_single_t7",
@@ -336,7 +356,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Coup Bas  Implacable : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Bas  Implacable : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv07_Coup-Bas-Implacable.png"
                    },
                    {
                        "id":  "voleur_aoe_t8",
@@ -352,7 +373,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Nuage de Poudre  Funeste : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Nuage de Poudre  Funeste : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv08_Nuage-de-Poudre-Funeste.png"
                    },
                    {
                        "id":  "voleur_def_t8",
@@ -368,7 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Voile de Fumee  Funeste : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Funeste : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv08_Voile-de-Fumee-Funeste.png"
                    },
                    {
                        "id":  "voleur_single_t8",
@@ -384,7 +407,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Eventration  Funeste : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Eventration  Funeste : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv08_Eventration-Funeste.png"
                    },
                    {
                        "id":  "voleur_aoe_t9",
@@ -400,7 +424,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Bombe Fumigene  Cruel : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Bombe Fumigene  Cruel : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv09_Bombe-Fumigene-Cruel.png"
                    },
                    {
                        "id":  "voleur_def_t9",
@@ -416,7 +441,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Reflexe Felin  Cruel : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Cruel : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv09_Reflexe-Felin-Cruel.png"
                    },
                    {
                        "id":  "voleur_single_t9",
@@ -432,7 +458,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Poignard Empoisonne  Cruel : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Poignard Empoisonne  Cruel : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv09_Poignard-Empoisonne-Cruel.png"
                    },
                    {
                        "id":  "voleur_aoe_t10",
@@ -448,7 +475,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Eclats Aceres  Sanglant : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Eclats Aceres  Sanglant : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv10_Eclats-Aceres-Sanglant.png"
                    },
                    {
                        "id":  "voleur_def_t10",
@@ -464,7 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Disparition  Sanglant : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Disparition  Sanglant : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv10_Disparition-Sanglant.png"
                    },
                    {
                        "id":  "voleur_single_t10",
@@ -480,7 +509,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Saignee  Sanglant : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Saignee  Sanglant : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv10_Saignee-Sanglant.png"
                    },
                    {
                        "id":  "voleur_aoe_t11",
@@ -496,7 +526,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Danse des Couteaux  Devastateur : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Danse des Couteaux  Devastateur : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv11_Danse-des-Couteaux-Devastateur.png"
                    },
                    {
                        "id":  "voleur_def_t11",
@@ -512,7 +543,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Acrobatie  Devastateur : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Devastateur : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv11_Acrobatie-Devastateur.png"
                    },
                    {
                        "id":  "voleur_single_t11",
@@ -528,7 +560,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Frappe Sournoise  Devastateur : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Frappe Sournoise  Devastateur : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv11_Frappe-Sournoise-Devastateur.png"
                    },
                    {
                        "id":  "voleur_aoe_t12",
@@ -544,7 +577,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Embuscade  Foudroyant : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Embuscade  Foudroyant : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv12_Embuscade-Foudroyant.png"
                    },
                    {
                        "id":  "voleur_def_t12",
@@ -560,7 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Echappee  Foudroyant : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Echappee  Foudroyant : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv12_Echappee-Foudroyant.png"
                    },
                    {
                        "id":  "voleur_single_t12",
@@ -576,7 +611,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Coup Fatal  Foudroyant : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Fatal  Foudroyant : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv12_Coup-Fatal-Foudroyant.png"
                    },
                    {
                        "id":  "voleur_aoe_t13",
@@ -592,7 +628,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Lames Tournoyantes  Mortel : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Lames Tournoyantes  Mortel : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv13_Lames-Tournoyantes-Mortel.png"
                    },
                    {
                        "id":  "voleur_def_t13",
@@ -608,7 +645,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Pas de l'Ombre  Mortel : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Mortel : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv13_Pas-de-l-Ombre-Mortel.png"
                    },
                    {
                        "id":  "voleur_single_t13",
@@ -624,7 +662,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Coup Bas  Mortel : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Bas  Mortel : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv13_Coup-Bas-Mortel.png"
                    },
                    {
                        "id":  "voleur_aoe_t14",
@@ -640,7 +679,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Nuage de Poudre  Inexorable : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Nuage de Poudre  Inexorable : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv14_Nuage-de-Poudre-Inexorable.png"
                    },
                    {
                        "id":  "voleur_def_t14",
@@ -656,7 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Voile de Fumee  Inexorable : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Inexorable : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv14_Voile-de-Fumee-Inexorable.png"
                    },
                    {
                        "id":  "voleur_single_t14",
@@ -672,7 +713,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Eventration  Inexorable : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Eventration  Inexorable : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv14_Eventration-Inexorable.png"
                    },
                    {
                        "id":  "voleur_aoe_t15",
@@ -688,7 +730,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Bombe Fumigene  Terrible : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Bombe Fumigene  Terrible : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv15_Bombe-Fumigene-Terrible.png"
                    },
                    {
                        "id":  "voleur_def_t15",
@@ -704,7 +747,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Reflexe Felin  Terrible : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Terrible : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv15_Reflexe-Felin-Terrible.png"
                    },
                    {
                        "id":  "voleur_single_t15",
@@ -720,7 +764,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Poignard Empoisonne  Terrible : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Poignard Empoisonne  Terrible : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv15_Poignard-Empoisonne-Terrible.png"
                    },
                    {
                        "id":  "voleur_aoe_t16",
@@ -736,7 +781,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Eclats Aceres  Souverain : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Eclats Aceres  Souverain : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv16_Eclats-Aceres-Souverain.png"
                    },
                    {
                        "id":  "voleur_def_t16",
@@ -752,7 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Disparition  Souverain : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Disparition  Souverain : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv16_Disparition-Souverain.png"
                    },
                    {
                        "id":  "voleur_single_t16",
@@ -768,7 +815,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Saignee  Souverain : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Saignee  Souverain : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv16_Saignee-Souverain.png"
                    },
                    {
                        "id":  "voleur_aoe_t17",
@@ -784,7 +832,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Danse des Couteaux  Legendaire : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Danse des Couteaux  Legendaire : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv17_Danse-des-Couteaux-Legendaire.png"
                    },
                    {
                        "id":  "voleur_def_t17",
@@ -800,7 +849,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Acrobatie  Legendaire : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Legendaire : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv17_Acrobatie-Legendaire.png"
                    },
                    {
                        "id":  "voleur_single_t17",
@@ -816,7 +866,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Frappe Sournoise  Legendaire : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Frappe Sournoise  Legendaire : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv17_Frappe-Sournoise-Legendaire.png"
                    },
                    {
                        "id":  "voleur_aoe_t18",
@@ -832,7 +883,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Embuscade  Cataclysmique : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Embuscade  Cataclysmique : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv18_Embuscade-Cataclysmique.png"
                    },
                    {
                        "id":  "voleur_def_t18",
@@ -848,7 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Echappee  Cataclysmique : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Echappee  Cataclysmique : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv18_Echappee-Cataclysmique.png"
                    },
                    {
                        "id":  "voleur_single_t18",
@@ -864,7 +917,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Coup Fatal  Cataclysmique : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Fatal  Cataclysmique : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv18_Coup-Fatal-Cataclysmique.png"
                    },
                    {
                        "id":  "voleur_aoe_t19",
@@ -880,7 +934,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Lames Tournoyantes  Apocalyptique : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Lames Tournoyantes  Apocalyptique : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv19_Lames-Tournoyantes-Apocalyptique.png"
                    },
                    {
                        "id":  "voleur_def_t19",
@@ -896,7 +951,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Pas de l'Ombre  Apocalyptique : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Apocalyptique : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv19_Pas-de-l-Ombre-Apocalyptique.png"
                    },
                    {
                        "id":  "voleur_single_t19",
@@ -912,7 +968,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Coup Bas  Apocalyptique : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Bas  Apocalyptique : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv19_Coup-Bas-Apocalyptique.png"
                    },
                    {
                        "id":  "voleur_aoe_t20",
@@ -928,7 +985,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Nuage de Poudre  Ultime : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Nuage de Poudre  Ultime : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv20_Nuage-de-Poudre-Ultime.png"
                    },
                    {
                        "id":  "voleur_def_t20",
@@ -944,7 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Voile de Fumee  Ultime : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Ultime : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv20_Voile-de-Fumee-Ultime.png"
                    },
                    {
                        "id":  "voleur_single_t20",
@@ -960,7 +1019,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Eventration  Ultime : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Eventration  Ultime : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv20_Eventration-Ultime.png"
                    },
                    {
                        "id":  "voleur_aoe_t21",
@@ -976,7 +1036,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Bombe Fumigene  Maitrise 21 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Bombe Fumigene  Maitrise 21 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv21_Bombe-Fumigene-Maitrise-21.png"
                    },
                    {
                        "id":  "voleur_def_t21",
@@ -992,7 +1053,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Reflexe Felin  Maitrise 21 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 21 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv21_Reflexe-Felin-Maitrise-21.png"
                    },
                    {
                        "id":  "voleur_single_t21",
@@ -1008,7 +1070,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Poignard Empoisonne  Maitrise 21 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Poignard Empoisonne  Maitrise 21 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv21_Poignard-Empoisonne-Maitrise-21.png"
                    },
                    {
                        "id":  "voleur_aoe_t22",
@@ -1024,7 +1087,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Eclats Aceres  Maitrise 22 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Eclats Aceres  Maitrise 22 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv22_Eclats-Aceres-Maitrise-22.png"
                    },
                    {
                        "id":  "voleur_def_t22",
@@ -1040,7 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Disparition  Maitrise 22 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 22 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv22_Disparition-Maitrise-22.png"
                    },
                    {
                        "id":  "voleur_single_t22",
@@ -1056,7 +1121,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Saignee  Maitrise 22 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Saignee  Maitrise 22 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv22_Saignee-Maitrise-22.png"
                    },
                    {
                        "id":  "voleur_aoe_t23",
@@ -1072,7 +1138,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Danse des Couteaux  Maitrise 23 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Danse des Couteaux  Maitrise 23 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv23_Danse-des-Couteaux-Maitrise-23.png"
                    },
                    {
                        "id":  "voleur_def_t23",
@@ -1088,7 +1155,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Acrobatie  Maitrise 23 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 23 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv23_Acrobatie-Maitrise-23.png"
                    },
                    {
                        "id":  "voleur_single_t23",
@@ -1104,7 +1172,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Frappe Sournoise  Maitrise 23 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Frappe Sournoise  Maitrise 23 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv23_Frappe-Sournoise-Maitrise-23.png"
                    },
                    {
                        "id":  "voleur_aoe_t24",
@@ -1120,7 +1189,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Embuscade  Maitrise 24 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Embuscade  Maitrise 24 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv24_Embuscade-Maitrise-24.png"
                    },
                    {
                        "id":  "voleur_def_t24",
@@ -1136,7 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Echappee  Maitrise 24 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 24 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv24_Echappee-Maitrise-24.png"
                    },
                    {
                        "id":  "voleur_single_t24",
@@ -1152,7 +1223,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Coup Fatal  Maitrise 24 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Fatal  Maitrise 24 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv24_Coup-Fatal-Maitrise-24.png"
                    },
                    {
                        "id":  "voleur_aoe_t25",
@@ -1168,7 +1240,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Lames Tournoyantes  Maitrise 25 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Lames Tournoyantes  Maitrise 25 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv25_Lames-Tournoyantes-Maitrise-25.png"
                    },
                    {
                        "id":  "voleur_def_t25",
@@ -1184,7 +1257,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Pas de l'Ombre  Maitrise 25 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Maitrise 25 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv25_Pas-de-l-Ombre-Maitrise-25.png"
                    },
                    {
                        "id":  "voleur_single_t25",
@@ -1200,7 +1274,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Coup Bas  Maitrise 25 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Bas  Maitrise 25 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv25_Coup-Bas-Maitrise-25.png"
                    },
                    {
                        "id":  "voleur_aoe_t26",
@@ -1216,7 +1291,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Nuage de Poudre  Maitrise 26 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Nuage de Poudre  Maitrise 26 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv26_Nuage-de-Poudre-Maitrise-26.png"
                    },
                    {
                        "id":  "voleur_def_t26",
@@ -1232,7 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Voile de Fumee  Maitrise 26 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Maitrise 26 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv26_Voile-de-Fumee-Maitrise-26.png"
                    },
                    {
                        "id":  "voleur_single_t26",
@@ -1248,7 +1325,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Eventration  Maitrise 26 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Eventration  Maitrise 26 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv26_Eventration-Maitrise-26.png"
                    },
                    {
                        "id":  "voleur_aoe_t27",
@@ -1264,7 +1342,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Bombe Fumigene  Maitrise 27 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Bombe Fumigene  Maitrise 27 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv27_Bombe-Fumigene-Maitrise-27.png"
                    },
                    {
                        "id":  "voleur_def_t27",
@@ -1280,7 +1359,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Reflexe Felin  Maitrise 27 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 27 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv27_Reflexe-Felin-Maitrise-27.png"
                    },
                    {
                        "id":  "voleur_single_t27",
@@ -1296,7 +1376,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Poignard Empoisonne  Maitrise 27 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Poignard Empoisonne  Maitrise 27 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv27_Poignard-Empoisonne-Maitrise-27.png"
                    },
                    {
                        "id":  "voleur_aoe_t28",
@@ -1312,7 +1393,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Eclats Aceres  Maitrise 28 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Eclats Aceres  Maitrise 28 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv28_Eclats-Aceres-Maitrise-28.png"
                    },
                    {
                        "id":  "voleur_def_t28",
@@ -1328,7 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Disparition  Maitrise 28 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 28 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv28_Disparition-Maitrise-28.png"
                    },
                    {
                        "id":  "voleur_single_t28",
@@ -1344,7 +1427,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Saignee  Maitrise 28 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Saignee  Maitrise 28 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv28_Saignee-Maitrise-28.png"
                    },
                    {
                        "id":  "voleur_aoe_t29",
@@ -1360,7 +1444,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Danse des Couteaux  Maitrise 29 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Danse des Couteaux  Maitrise 29 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv29_Danse-des-Couteaux-Maitrise-29.png"
                    },
                    {
                        "id":  "voleur_def_t29",
@@ -1376,7 +1461,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Acrobatie  Maitrise 29 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 29 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv29_Acrobatie-Maitrise-29.png"
                    },
                    {
                        "id":  "voleur_single_t29",
@@ -1392,7 +1478,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Frappe Sournoise  Maitrise 29 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Frappe Sournoise  Maitrise 29 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv29_Frappe-Sournoise-Maitrise-29.png"
                    },
                    {
                        "id":  "voleur_aoe_t30",
@@ -1408,7 +1495,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Embuscade  Maitrise 30 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Embuscade  Maitrise 30 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv30_Embuscade-Maitrise-30.png"
                    },
                    {
                        "id":  "voleur_def_t30",
@@ -1424,7 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Echappee  Maitrise 30 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 30 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv30_Echappee-Maitrise-30.png"
                    },
                    {
                        "id":  "voleur_single_t30",
@@ -1440,7 +1529,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Coup Fatal  Maitrise 30 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Fatal  Maitrise 30 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv30_Coup-Fatal-Maitrise-30.png"
                    },
                    {
                        "id":  "voleur_aoe_t31",
@@ -1456,7 +1546,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Lames Tournoyantes  Maitrise 31 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Lames Tournoyantes  Maitrise 31 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv31_Lames-Tournoyantes-Maitrise-31.png"
                    },
                    {
                        "id":  "voleur_def_t31",
@@ -1472,7 +1563,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Pas de l'Ombre  Maitrise 31 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Maitrise 31 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv31_Pas-de-l-Ombre-Maitrise-31.png"
                    },
                    {
                        "id":  "voleur_single_t31",
@@ -1488,7 +1580,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Coup Bas  Maitrise 31 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Bas  Maitrise 31 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv31_Coup-Bas-Maitrise-31.png"
                    },
                    {
                        "id":  "voleur_aoe_t32",
@@ -1504,7 +1597,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Nuage de Poudre  Maitrise 32 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Nuage de Poudre  Maitrise 32 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv32_Nuage-de-Poudre-Maitrise-32.png"
                    },
                    {
                        "id":  "voleur_def_t32",
@@ -1520,7 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Voile de Fumee  Maitrise 32 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Maitrise 32 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv32_Voile-de-Fumee-Maitrise-32.png"
                    },
                    {
                        "id":  "voleur_single_t32",
@@ -1536,7 +1631,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Eventration  Maitrise 32 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Eventration  Maitrise 32 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv32_Eventration-Maitrise-32.png"
                    },
                    {
                        "id":  "voleur_aoe_t33",
@@ -1552,7 +1648,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Bombe Fumigene  Maitrise 33 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Bombe Fumigene  Maitrise 33 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv33_Bombe-Fumigene-Maitrise-33.png"
                    },
                    {
                        "id":  "voleur_def_t33",
@@ -1568,7 +1665,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Reflexe Felin  Maitrise 33 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 33 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv33_Reflexe-Felin-Maitrise-33.png"
                    },
                    {
                        "id":  "voleur_single_t33",
@@ -1584,7 +1682,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Poignard Empoisonne  Maitrise 33 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Poignard Empoisonne  Maitrise 33 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv33_Poignard-Empoisonne-Maitrise-33.png"
                    },
                    {
                        "id":  "voleur_aoe_t34",
@@ -1600,7 +1699,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Eclats Aceres  Maitrise 34 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Eclats Aceres  Maitrise 34 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv34_Eclats-Aceres-Maitrise-34.png"
                    },
                    {
                        "id":  "voleur_def_t34",
@@ -1616,7 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Disparition  Maitrise 34 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 34 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv34_Disparition-Maitrise-34.png"
                    },
                    {
                        "id":  "voleur_single_t34",
@@ -1632,7 +1733,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Saignee  Maitrise 34 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Saignee  Maitrise 34 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv34_Saignee-Maitrise-34.png"
                    },
                    {
                        "id":  "voleur_aoe_t35",
@@ -1648,7 +1750,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Danse des Couteaux  Maitrise 35 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Danse des Couteaux  Maitrise 35 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv35_Danse-des-Couteaux-Maitrise-35.png"
                    },
                    {
                        "id":  "voleur_def_t35",
@@ -1664,7 +1767,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Acrobatie  Maitrise 35 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 35 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv35_Acrobatie-Maitrise-35.png"
                    },
                    {
                        "id":  "voleur_single_t35",
@@ -1680,7 +1784,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Frappe Sournoise  Maitrise 35 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Frappe Sournoise  Maitrise 35 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv35_Frappe-Sournoise-Maitrise-35.png"
                    },
                    {
                        "id":  "voleur_aoe_t36",
@@ -1696,7 +1801,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Embuscade  Maitrise 36 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Embuscade  Maitrise 36 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv36_Embuscade-Maitrise-36.png"
                    },
                    {
                        "id":  "voleur_def_t36",
@@ -1712,7 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Echappee  Maitrise 36 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 36 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv36_Echappee-Maitrise-36.png"
                    },
                    {
                        "id":  "voleur_single_t36",
@@ -1728,7 +1835,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Coup Fatal  Maitrise 36 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Fatal  Maitrise 36 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv36_Coup-Fatal-Maitrise-36.png"
                    },
                    {
                        "id":  "voleur_aoe_t37",
@@ -1744,7 +1852,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Lames Tournoyantes  Maitrise 37 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Lames Tournoyantes  Maitrise 37 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv37_Lames-Tournoyantes-Maitrise-37.png"
                    },
                    {
                        "id":  "voleur_def_t37",
@@ -1760,7 +1869,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Pas de l'Ombre  Maitrise 37 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Maitrise 37 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv37_Pas-de-l-Ombre-Maitrise-37.png"
                    },
                    {
                        "id":  "voleur_single_t37",
@@ -1776,7 +1886,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Coup Bas  Maitrise 37 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Bas  Maitrise 37 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv37_Coup-Bas-Maitrise-37.png"
                    },
                    {
                        "id":  "voleur_aoe_t38",
@@ -1792,7 +1903,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Nuage de Poudre  Maitrise 38 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Nuage de Poudre  Maitrise 38 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv38_Nuage-de-Poudre-Maitrise-38.png"
                    },
                    {
                        "id":  "voleur_def_t38",
@@ -1808,7 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Voile de Fumee  Maitrise 38 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Maitrise 38 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv38_Voile-de-Fumee-Maitrise-38.png"
                    },
                    {
                        "id":  "voleur_single_t38",
@@ -1824,7 +1937,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Eventration  Maitrise 38 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Eventration  Maitrise 38 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv38_Eventration-Maitrise-38.png"
                    },
                    {
                        "id":  "voleur_aoe_t39",
@@ -1840,7 +1954,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Bombe Fumigene  Maitrise 39 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Bombe Fumigene  Maitrise 39 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv39_Bombe-Fumigene-Maitrise-39.png"
                    },
                    {
                        "id":  "voleur_def_t39",
@@ -1856,7 +1971,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Reflexe Felin  Maitrise 39 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 39 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv39_Reflexe-Felin-Maitrise-39.png"
                    },
                    {
                        "id":  "voleur_single_t39",
@@ -1872,7 +1988,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Poignard Empoisonne  Maitrise 39 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Poignard Empoisonne  Maitrise 39 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv39_Poignard-Empoisonne-Maitrise-39.png"
                    },
                    {
                        "id":  "voleur_aoe_t40",
@@ -1888,7 +2005,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Eclats Aceres  Maitrise 40 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Eclats Aceres  Maitrise 40 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv40_Eclats-Aceres-Maitrise-40.png"
                    },
                    {
                        "id":  "voleur_def_t40",
@@ -1904,7 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Disparition  Maitrise 40 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 40 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv40_Disparition-Maitrise-40.png"
                    },
                    {
                        "id":  "voleur_single_t40",
@@ -1920,7 +2039,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Saignee  Maitrise 40 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Saignee  Maitrise 40 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv40_Saignee-Maitrise-40.png"
                    },
                    {
                        "id":  "voleur_aoe_t41",
@@ -1936,7 +2056,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Danse des Couteaux  Maitrise 41 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Danse des Couteaux  Maitrise 41 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv41_Danse-des-Couteaux-Maitrise-41.png"
                    },
                    {
                        "id":  "voleur_def_t41",
@@ -1952,7 +2073,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Acrobatie  Maitrise 41 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 41 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv41_Acrobatie-Maitrise-41.png"
                    },
                    {
                        "id":  "voleur_single_t41",
@@ -1968,7 +2090,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Frappe Sournoise  Maitrise 41 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Frappe Sournoise  Maitrise 41 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv41_Frappe-Sournoise-Maitrise-41.png"
                    },
                    {
                        "id":  "voleur_aoe_t42",
@@ -1984,7 +2107,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Embuscade  Maitrise 42 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Embuscade  Maitrise 42 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv42_Embuscade-Maitrise-42.png"
                    },
                    {
                        "id":  "voleur_def_t42",
@@ -2000,7 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Echappee  Maitrise 42 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 42 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv42_Echappee-Maitrise-42.png"
                    },
                    {
                        "id":  "voleur_single_t42",
@@ -2016,7 +2141,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Coup Fatal  Maitrise 42 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Fatal  Maitrise 42 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv42_Coup-Fatal-Maitrise-42.png"
                    },
                    {
                        "id":  "voleur_aoe_t43",
@@ -2032,7 +2158,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Lames Tournoyantes  Maitrise 43 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Lames Tournoyantes  Maitrise 43 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv43_Lames-Tournoyantes-Maitrise-43.png"
                    },
                    {
                        "id":  "voleur_def_t43",
@@ -2048,7 +2175,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Pas de l'Ombre  Maitrise 43 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Maitrise 43 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv43_Pas-de-l-Ombre-Maitrise-43.png"
                    },
                    {
                        "id":  "voleur_single_t43",
@@ -2064,7 +2192,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Coup Bas  Maitrise 43 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Bas  Maitrise 43 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv43_Coup-Bas-Maitrise-43.png"
                    },
                    {
                        "id":  "voleur_aoe_t44",
@@ -2080,7 +2209,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Nuage de Poudre  Maitrise 44 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Nuage de Poudre  Maitrise 44 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv44_Nuage-de-Poudre-Maitrise-44.png"
                    },
                    {
                        "id":  "voleur_def_t44",
@@ -2096,7 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Voile de Fumee  Maitrise 44 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Maitrise 44 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv44_Voile-de-Fumee-Maitrise-44.png"
                    },
                    {
                        "id":  "voleur_single_t44",
@@ -2112,7 +2243,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Eventration  Maitrise 44 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Eventration  Maitrise 44 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv44_Eventration-Maitrise-44.png"
                    },
                    {
                        "id":  "voleur_aoe_t45",
@@ -2128,7 +2260,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Bombe Fumigene  Maitrise 45 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Bombe Fumigene  Maitrise 45 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv45_Bombe-Fumigene-Maitrise-45.png"
                    },
                    {
                        "id":  "voleur_def_t45",
@@ -2144,7 +2277,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Reflexe Felin  Maitrise 45 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 45 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv45_Reflexe-Felin-Maitrise-45.png"
                    },
                    {
                        "id":  "voleur_single_t45",
@@ -2160,7 +2294,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Poignard Empoisonne  Maitrise 45 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Poignard Empoisonne  Maitrise 45 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv45_Poignard-Empoisonne-Maitrise-45.png"
                    },
                    {
                        "id":  "voleur_aoe_t46",
@@ -2176,7 +2311,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Eclats Aceres  Maitrise 46 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Eclats Aceres  Maitrise 46 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv46_Eclats-Aceres-Maitrise-46.png"
                    },
                    {
                        "id":  "voleur_def_t46",
@@ -2192,7 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Disparition  Maitrise 46 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 46 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv46_Disparition-Maitrise-46.png"
                    },
                    {
                        "id":  "voleur_single_t46",
@@ -2208,7 +2345,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Saignee  Maitrise 46 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Saignee  Maitrise 46 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv46_Saignee-Maitrise-46.png"
                    },
                    {
                        "id":  "voleur_aoe_t47",
@@ -2224,7 +2362,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Danse des Couteaux  Maitrise 47 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Danse des Couteaux  Maitrise 47 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv47_Danse-des-Couteaux-Maitrise-47.png"
                    },
                    {
                        "id":  "voleur_def_t47",
@@ -2240,7 +2379,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Acrobatie  Maitrise 47 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 47 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv47_Acrobatie-Maitrise-47.png"
                    },
                    {
                        "id":  "voleur_single_t47",
@@ -2256,7 +2396,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Frappe Sournoise  Maitrise 47 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Frappe Sournoise  Maitrise 47 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv47_Frappe-Sournoise-Maitrise-47.png"
                    },
                    {
                        "id":  "voleur_aoe_t48",
@@ -2272,7 +2413,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Embuscade  Maitrise 48 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Embuscade  Maitrise 48 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv48_Embuscade-Maitrise-48.png"
                    },
                    {
                        "id":  "voleur_def_t48",
@@ -2288,7 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Echappee  Maitrise 48 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 48 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv48_Echappee-Maitrise-48.png"
                    },
                    {
                        "id":  "voleur_single_t48",
@@ -2304,7 +2447,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Coup Fatal  Maitrise 48 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Fatal  Maitrise 48 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv48_Coup-Fatal-Maitrise-48.png"
                    },
                    {
                        "id":  "voleur_aoe_t49",
@@ -2320,7 +2464,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Lames Tournoyantes  Maitrise 49 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Lames Tournoyantes  Maitrise 49 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv49_Lames-Tournoyantes-Maitrise-49.png"
                    },
                    {
                        "id":  "voleur_def_t49",
@@ -2336,7 +2481,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Pas de l'Ombre  Maitrise 49 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Maitrise 49 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv49_Pas-de-l-Ombre-Maitrise-49.png"
                    },
                    {
                        "id":  "voleur_single_t49",
@@ -2352,7 +2498,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Coup Bas  Maitrise 49 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Bas  Maitrise 49 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv49_Coup-Bas-Maitrise-49.png"
                    },
                    {
                        "id":  "voleur_aoe_t50",
@@ -2368,7 +2515,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Nuage de Poudre  Maitrise 50 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Nuage de Poudre  Maitrise 50 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv50_Nuage-de-Poudre-Maitrise-50.png"
                    },
                    {
                        "id":  "voleur_def_t50",
@@ -2384,7 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Voile de Fumee  Maitrise 50 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Maitrise 50 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv50_Voile-de-Fumee-Maitrise-50.png"
                    },
                    {
                        "id":  "voleur_single_t50",
@@ -2400,7 +2549,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Eventration  Maitrise 50 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Eventration  Maitrise 50 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv50_Eventration-Maitrise-50.png"
                    },
                    {
                        "id":  "voleur_aoe_t51",
@@ -2416,7 +2566,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Bombe Fumigene  Maitrise 51 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Bombe Fumigene  Maitrise 51 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv51_Bombe-Fumigene-Maitrise-51.png"
                    },
                    {
                        "id":  "voleur_def_t51",
@@ -2432,7 +2583,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Reflexe Felin  Maitrise 51 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 51 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv51_Reflexe-Felin-Maitrise-51.png"
                    },
                    {
                        "id":  "voleur_single_t51",
@@ -2448,7 +2600,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Poignard Empoisonne  Maitrise 51 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Poignard Empoisonne  Maitrise 51 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv51_Poignard-Empoisonne-Maitrise-51.png"
                    },
                    {
                        "id":  "voleur_aoe_t52",
@@ -2464,7 +2617,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Eclats Aceres  Maitrise 52 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Eclats Aceres  Maitrise 52 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv52_Eclats-Aceres-Maitrise-52.png"
                    },
                    {
                        "id":  "voleur_def_t52",
@@ -2480,7 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Disparition  Maitrise 52 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 52 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv52_Disparition-Maitrise-52.png"
                    },
                    {
                        "id":  "voleur_single_t52",
@@ -2496,7 +2651,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Saignee  Maitrise 52 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Saignee  Maitrise 52 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv52_Saignee-Maitrise-52.png"
                    },
                    {
                        "id":  "voleur_aoe_t53",
@@ -2512,7 +2668,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Danse des Couteaux  Maitrise 53 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Danse des Couteaux  Maitrise 53 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv53_Danse-des-Couteaux-Maitrise-53.png"
                    },
                    {
                        "id":  "voleur_def_t53",
@@ -2528,7 +2685,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Acrobatie  Maitrise 53 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 53 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv53_Acrobatie-Maitrise-53.png"
                    },
                    {
                        "id":  "voleur_single_t53",
@@ -2544,7 +2702,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Frappe Sournoise  Maitrise 53 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Frappe Sournoise  Maitrise 53 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv53_Frappe-Sournoise-Maitrise-53.png"
                    },
                    {
                        "id":  "voleur_aoe_t54",
@@ -2560,7 +2719,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Embuscade  Maitrise 54 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Embuscade  Maitrise 54 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv54_Embuscade-Maitrise-54.png"
                    },
                    {
                        "id":  "voleur_def_t54",
@@ -2576,7 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Echappee  Maitrise 54 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 54 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv54_Echappee-Maitrise-54.png"
                    },
                    {
                        "id":  "voleur_single_t54",
@@ -2592,7 +2753,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Coup Fatal  Maitrise 54 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Fatal  Maitrise 54 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv54_Coup-Fatal-Maitrise-54.png"
                    },
                    {
                        "id":  "voleur_aoe_t55",
@@ -2608,7 +2770,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Lames Tournoyantes  Maitrise 55 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Lames Tournoyantes  Maitrise 55 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv55_Lames-Tournoyantes-Maitrise-55.png"
                    },
                    {
                        "id":  "voleur_def_t55",
@@ -2624,7 +2787,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Pas de l'Ombre  Maitrise 55 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Pas de l'Ombre  Maitrise 55 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv55_Pas-de-l-Ombre-Maitrise-55.png"
                    },
                    {
                        "id":  "voleur_single_t55",
@@ -2640,7 +2804,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Coup Bas  Maitrise 55 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Bas  Maitrise 55 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv55_Coup-Bas-Maitrise-55.png"
                    },
                    {
                        "id":  "voleur_aoe_t56",
@@ -2656,7 +2821,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Nuage de Poudre  Maitrise 56 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Nuage de Poudre  Maitrise 56 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv56_Nuage-de-Poudre-Maitrise-56.png"
                    },
                    {
                        "id":  "voleur_def_t56",
@@ -2672,7 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Voile de Fumee  Maitrise 56 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Voile de Fumee  Maitrise 56 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv56_Voile-de-Fumee-Maitrise-56.png"
                    },
                    {
                        "id":  "voleur_single_t56",
@@ -2688,7 +2855,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Eventration  Maitrise 56 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Eventration  Maitrise 56 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv56_Eventration-Maitrise-56.png"
                    },
                    {
                        "id":  "voleur_aoe_t57",
@@ -2704,7 +2872,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Bombe Fumigene  Maitrise 57 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Bombe Fumigene  Maitrise 57 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv57_Bombe-Fumigene-Maitrise-57.png"
                    },
                    {
                        "id":  "voleur_def_t57",
@@ -2720,7 +2889,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Reflexe Felin  Maitrise 57 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Reflexe Felin  Maitrise 57 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv57_Reflexe-Felin-Maitrise-57.png"
                    },
                    {
                        "id":  "voleur_single_t57",
@@ -2736,7 +2906,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Poignard Empoisonne  Maitrise 57 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Poignard Empoisonne  Maitrise 57 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv57_Poignard-Empoisonne-Maitrise-57.png"
                    },
                    {
                        "id":  "voleur_aoe_t58",
@@ -2752,7 +2923,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Eclats Aceres  Maitrise 58 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Eclats Aceres  Maitrise 58 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv58_Eclats-Aceres-Maitrise-58.png"
                    },
                    {
                        "id":  "voleur_def_t58",
@@ -2768,7 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Disparition  Maitrise 58 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Disparition  Maitrise 58 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv58_Disparition-Maitrise-58.png"
                    },
                    {
                        "id":  "voleur_single_t58",
@@ -2784,7 +2957,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Saignee  Maitrise 58 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Saignee  Maitrise 58 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv58_Saignee-Maitrise-58.png"
                    },
                    {
                        "id":  "voleur_aoe_t59",
@@ -2800,7 +2974,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Danse des Couteaux  Maitrise 59 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Danse des Couteaux  Maitrise 59 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv59_Danse-des-Couteaux-Maitrise-59.png"
                    },
                    {
                        "id":  "voleur_def_t59",
@@ -2816,7 +2991,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Acrobatie  Maitrise 59 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Acrobatie  Maitrise 59 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv59_Acrobatie-Maitrise-59.png"
                    },
                    {
                        "id":  "voleur_single_t59",
@@ -2832,7 +3008,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Frappe Sournoise  Maitrise 59 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Frappe Sournoise  Maitrise 59 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv59_Frappe-Sournoise-Maitrise-59.png"
                    },
                    {
                        "id":  "voleur_aoe_t60",
@@ -2848,7 +3025,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Embuscade  Maitrise 60 : touche plusieurs ennemis dans un cone (degats reduits)."
+                       "description":  "Embuscade  Maitrise 60 : touche plusieurs ennemis dans un cone (degats reduits).",
+                       "iconFile":  "Voleur_Zone_Niv60_Embuscade-Maitrise-60.png"
                    },
                    {
                        "id":  "voleur_def_t60",
@@ -2864,7 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Echappee  Maitrise 60 : augmente l'esquive et permet de rompre le combat."
+                       "description":  "Echappee  Maitrise 60 : augmente l'esquive et permet de rompre le combat.",
+                       "iconFile":  "Voleur_Defense_Niv60_Echappee-Maitrise-60.png"
                    },
                    {
                        "id":  "voleur_single_t60",
@@ -2880,7 +3059,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Coup Fatal  Maitrise 60 : poignarde une cible isolee avec un bonus si elle ne vous voit pas."
+                       "description":  "Coup Fatal  Maitrise 60 : poignarde une cible isolee avec un bonus si elle ne vous voit pas.",
+                       "iconFile":  "Voleur_Unitaire_Niv60_Coup-Fatal-Maitrise-60.png"
                    }
                ]
 }

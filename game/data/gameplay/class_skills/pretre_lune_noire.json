@@ -16,7 +16,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Voile de Tenebres : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Voile de Tenebres : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv01_Voile-de-Tenebres.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t1",
@@ -32,7 +33,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Benediction Noire : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Benediction Noire : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv01_Benediction-Noire.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t1",
@@ -48,7 +50,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Rayon Tenebreux : foudroie une cible d'energie tenebreuse."
+                       "description":  "Rayon Tenebreux : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv01_Rayon-Tenebreux.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t2",
@@ -64,7 +67,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Pluie Noire  Aiguise : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Pluie Noire  Aiguise : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv02_Pluie-Noire-Aiguise.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t2",
@@ -80,7 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Linceul d'Ombre  Aiguise : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Aiguise : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv02_Linceul-d-Ombre-Aiguise.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t2",
@@ -96,7 +101,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Anatheme  Aiguise : foudroie une cible d'energie tenebreuse."
+                       "description":  "Anatheme  Aiguise : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv02_Anatheme-Aiguise.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t3",
@@ -112,7 +118,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Cercle Maudit  Renforce : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Cercle Maudit  Renforce : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv03_Cercle-Maudit-Renforce.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t3",
@@ -128,7 +135,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Don de Tenebres  Renforce : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Don de Tenebres  Renforce : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv03_Don-de-Tenebres-Renforce.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t3",
@@ -144,7 +152,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Flamme Noire  Renforce : foudroie une cible d'energie tenebreuse."
+                       "description":  "Flamme Noire  Renforce : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv03_Flamme-Noire-Renforce.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t4",
@@ -160,7 +169,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Eclipse  Affute : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Eclipse  Affute : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv04_Eclipse-Affute.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t4",
@@ -176,7 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Garde Lunaire  Affute : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Garde Lunaire  Affute : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv04_Garde-Lunaire-Affute.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t4",
@@ -192,7 +203,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Verbe de Haine  Affute : foudroie une cible d'energie tenebreuse."
+                       "description":  "Verbe de Haine  Affute : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv04_Verbe-de-Haine-Affute.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t5",
@@ -208,7 +220,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Nuit Devorante  Brutal : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Nuit Devorante  Brutal : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv05_Nuit-Devorante-Brutal.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t5",
@@ -224,7 +237,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Pacte d'Ombre  Brutal : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Brutal : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv05_Pacte-d-Ombre-Brutal.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t5",
@@ -240,7 +254,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Damnation Lunaire  Brutal : foudroie une cible d'energie tenebreuse."
+                       "description":  "Damnation Lunaire  Brutal : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv05_Damnation-Lunaire-Brutal.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t6",
@@ -256,7 +271,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Fin de Lumiere  Vorace : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Fin de Lumiere  Vorace : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv06_Fin-de-Lumiere-Vorace.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t6",
@@ -272,7 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Immortalite Noire  Vorace : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Immortalite Noire  Vorace : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv06_Immortalite-Noire-Vorace.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t6",
@@ -288,7 +305,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Sentence des Tenebres  Vorace : foudroie une cible d'energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Vorace : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv06_Sentence-des-Tenebres-Vorace.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t7",
@@ -304,7 +322,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Voile de Tenebres  Implacable : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Voile de Tenebres  Implacable : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv07_Voile-de-Tenebres-Implacable.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t7",
@@ -320,7 +339,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Benediction Noire  Implacable : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Benediction Noire  Implacable : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv07_Benediction-Noire-Implacable.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t7",
@@ -336,7 +356,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Rayon Tenebreux  Implacable : foudroie une cible d'energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Implacable : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv07_Rayon-Tenebreux-Implacable.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t8",
@@ -352,7 +373,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Pluie Noire  Funeste : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Pluie Noire  Funeste : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv08_Pluie-Noire-Funeste.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t8",
@@ -368,7 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Linceul d'Ombre  Funeste : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Funeste : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv08_Linceul-d-Ombre-Funeste.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t8",
@@ -384,7 +407,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Anatheme  Funeste : foudroie une cible d'energie tenebreuse."
+                       "description":  "Anatheme  Funeste : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv08_Anatheme-Funeste.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t9",
@@ -400,7 +424,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Cercle Maudit  Cruel : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Cercle Maudit  Cruel : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv09_Cercle-Maudit-Cruel.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t9",
@@ -416,7 +441,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Don de Tenebres  Cruel : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Don de Tenebres  Cruel : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv09_Don-de-Tenebres-Cruel.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t9",
@@ -432,7 +458,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Flamme Noire  Cruel : foudroie une cible d'energie tenebreuse."
+                       "description":  "Flamme Noire  Cruel : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv09_Flamme-Noire-Cruel.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t10",
@@ -448,7 +475,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Eclipse  Sanglant : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Eclipse  Sanglant : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv10_Eclipse-Sanglant.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t10",
@@ -464,7 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Garde Lunaire  Sanglant : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Garde Lunaire  Sanglant : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv10_Garde-Lunaire-Sanglant.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t10",
@@ -480,7 +509,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Verbe de Haine  Sanglant : foudroie une cible d'energie tenebreuse."
+                       "description":  "Verbe de Haine  Sanglant : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv10_Verbe-de-Haine-Sanglant.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t11",
@@ -496,7 +526,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Nuit Devorante  Devastateur : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Nuit Devorante  Devastateur : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv11_Nuit-Devorante-Devastateur.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t11",
@@ -512,7 +543,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Pacte d'Ombre  Devastateur : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Devastateur : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv11_Pacte-d-Ombre-Devastateur.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t11",
@@ -528,7 +560,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Damnation Lunaire  Devastateur : foudroie une cible d'energie tenebreuse."
+                       "description":  "Damnation Lunaire  Devastateur : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv11_Damnation-Lunaire-Devastateur.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t12",
@@ -544,7 +577,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Fin de Lumiere  Foudroyant : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Fin de Lumiere  Foudroyant : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv12_Fin-de-Lumiere-Foudroyant.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t12",
@@ -560,7 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Immortalite Noire  Foudroyant : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Immortalite Noire  Foudroyant : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv12_Immortalite-Noire-Foudroyant.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t12",
@@ -576,7 +611,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Sentence des Tenebres  Foudroyant : foudroie une cible d'energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Foudroyant : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv12_Sentence-des-Tenebres-Foudroyant.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t13",
@@ -592,7 +628,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Voile de Tenebres  Mortel : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Voile de Tenebres  Mortel : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv13_Voile-de-Tenebres-Mortel.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t13",
@@ -608,7 +645,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Benediction Noire  Mortel : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Benediction Noire  Mortel : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv13_Benediction-Noire-Mortel.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t13",
@@ -624,7 +662,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Rayon Tenebreux  Mortel : foudroie une cible d'energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Mortel : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv13_Rayon-Tenebreux-Mortel.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t14",
@@ -640,7 +679,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Pluie Noire  Inexorable : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Pluie Noire  Inexorable : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv14_Pluie-Noire-Inexorable.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t14",
@@ -656,7 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Linceul d'Ombre  Inexorable : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Inexorable : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv14_Linceul-d-Ombre-Inexorable.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t14",
@@ -672,7 +713,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Anatheme  Inexorable : foudroie une cible d'energie tenebreuse."
+                       "description":  "Anatheme  Inexorable : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv14_Anatheme-Inexorable.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t15",
@@ -688,7 +730,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Cercle Maudit  Terrible : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Cercle Maudit  Terrible : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv15_Cercle-Maudit-Terrible.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t15",
@@ -704,7 +747,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Don de Tenebres  Terrible : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Don de Tenebres  Terrible : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv15_Don-de-Tenebres-Terrible.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t15",
@@ -720,7 +764,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Flamme Noire  Terrible : foudroie une cible d'energie tenebreuse."
+                       "description":  "Flamme Noire  Terrible : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv15_Flamme-Noire-Terrible.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t16",
@@ -736,7 +781,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Eclipse  Souverain : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Eclipse  Souverain : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv16_Eclipse-Souverain.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t16",
@@ -752,7 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Garde Lunaire  Souverain : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Garde Lunaire  Souverain : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv16_Garde-Lunaire-Souverain.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t16",
@@ -768,7 +815,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Verbe de Haine  Souverain : foudroie une cible d'energie tenebreuse."
+                       "description":  "Verbe de Haine  Souverain : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv16_Verbe-de-Haine-Souverain.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t17",
@@ -784,7 +832,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Nuit Devorante  Legendaire : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Nuit Devorante  Legendaire : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv17_Nuit-Devorante-Legendaire.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t17",
@@ -800,7 +849,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Pacte d'Ombre  Legendaire : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Legendaire : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv17_Pacte-d-Ombre-Legendaire.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t17",
@@ -816,7 +866,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Damnation Lunaire  Legendaire : foudroie une cible d'energie tenebreuse."
+                       "description":  "Damnation Lunaire  Legendaire : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv17_Damnation-Lunaire-Legendaire.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t18",
@@ -832,7 +883,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Fin de Lumiere  Cataclysmique : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Fin de Lumiere  Cataclysmique : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv18_Fin-de-Lumiere-Cataclysmique.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t18",
@@ -848,7 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Immortalite Noire  Cataclysmique : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Immortalite Noire  Cataclysmique : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv18_Immortalite-Noire-Cataclysmique.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t18",
@@ -864,7 +917,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Sentence des Tenebres  Cataclysmique : foudroie une cible d'energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Cataclysmique : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv18_Sentence-des-Tenebres-Cataclysmique.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t19",
@@ -880,7 +934,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Voile de Tenebres  Apocalyptique : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Voile de Tenebres  Apocalyptique : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv19_Voile-de-Tenebres-Apocalyptique.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t19",
@@ -896,7 +951,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Benediction Noire  Apocalyptique : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Benediction Noire  Apocalyptique : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv19_Benediction-Noire-Apocalyptique.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t19",
@@ -912,7 +968,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Rayon Tenebreux  Apocalyptique : foudroie une cible d'energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Apocalyptique : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv19_Rayon-Tenebreux-Apocalyptique.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t20",
@@ -928,7 +985,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Pluie Noire  Ultime : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Pluie Noire  Ultime : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv20_Pluie-Noire-Ultime.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t20",
@@ -944,7 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Linceul d'Ombre  Ultime : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Ultime : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv20_Linceul-d-Ombre-Ultime.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t20",
@@ -960,7 +1019,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Anatheme  Ultime : foudroie une cible d'energie tenebreuse."
+                       "description":  "Anatheme  Ultime : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv20_Anatheme-Ultime.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t21",
@@ -976,7 +1036,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Cercle Maudit  Maitrise 21 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Cercle Maudit  Maitrise 21 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv21_Cercle-Maudit-Maitrise-21.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t21",
@@ -992,7 +1053,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Don de Tenebres  Maitrise 21 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Don de Tenebres  Maitrise 21 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv21_Don-de-Tenebres-Maitrise-21.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t21",
@@ -1008,7 +1070,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Flamme Noire  Maitrise 21 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 21 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv21_Flamme-Noire-Maitrise-21.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t22",
@@ -1024,7 +1087,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Eclipse  Maitrise 22 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Eclipse  Maitrise 22 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv22_Eclipse-Maitrise-22.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t22",
@@ -1040,7 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Garde Lunaire  Maitrise 22 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Garde Lunaire  Maitrise 22 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv22_Garde-Lunaire-Maitrise-22.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t22",
@@ -1056,7 +1121,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Verbe de Haine  Maitrise 22 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 22 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv22_Verbe-de-Haine-Maitrise-22.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t23",
@@ -1072,7 +1138,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Nuit Devorante  Maitrise 23 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Nuit Devorante  Maitrise 23 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv23_Nuit-Devorante-Maitrise-23.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t23",
@@ -1088,7 +1155,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Pacte d'Ombre  Maitrise 23 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 23 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv23_Pacte-d-Ombre-Maitrise-23.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t23",
@@ -1104,7 +1172,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Damnation Lunaire  Maitrise 23 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 23 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv23_Damnation-Lunaire-Maitrise-23.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t24",
@@ -1120,7 +1189,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Fin de Lumiere  Maitrise 24 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Fin de Lumiere  Maitrise 24 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv24_Fin-de-Lumiere-Maitrise-24.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t24",
@@ -1136,7 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Immortalite Noire  Maitrise 24 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Immortalite Noire  Maitrise 24 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv24_Immortalite-Noire-Maitrise-24.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t24",
@@ -1152,7 +1223,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Sentence des Tenebres  Maitrise 24 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 24 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv24_Sentence-des-Tenebres-Maitrise-24.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t25",
@@ -1168,7 +1240,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Voile de Tenebres  Maitrise 25 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Voile de Tenebres  Maitrise 25 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv25_Voile-de-Tenebres-Maitrise-25.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t25",
@@ -1184,7 +1257,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Benediction Noire  Maitrise 25 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Benediction Noire  Maitrise 25 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv25_Benediction-Noire-Maitrise-25.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t25",
@@ -1200,7 +1274,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Rayon Tenebreux  Maitrise 25 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Maitrise 25 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv25_Rayon-Tenebreux-Maitrise-25.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t26",
@@ -1216,7 +1291,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Pluie Noire  Maitrise 26 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Pluie Noire  Maitrise 26 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv26_Pluie-Noire-Maitrise-26.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t26",
@@ -1232,7 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Linceul d'Ombre  Maitrise 26 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Maitrise 26 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv26_Linceul-d-Ombre-Maitrise-26.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t26",
@@ -1248,7 +1325,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Anatheme  Maitrise 26 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Anatheme  Maitrise 26 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv26_Anatheme-Maitrise-26.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t27",
@@ -1264,7 +1342,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Cercle Maudit  Maitrise 27 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Cercle Maudit  Maitrise 27 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv27_Cercle-Maudit-Maitrise-27.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t27",
@@ -1280,7 +1359,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Don de Tenebres  Maitrise 27 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Don de Tenebres  Maitrise 27 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv27_Don-de-Tenebres-Maitrise-27.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t27",
@@ -1296,7 +1376,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Flamme Noire  Maitrise 27 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 27 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv27_Flamme-Noire-Maitrise-27.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t28",
@@ -1312,7 +1393,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Eclipse  Maitrise 28 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Eclipse  Maitrise 28 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv28_Eclipse-Maitrise-28.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t28",
@@ -1328,7 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Garde Lunaire  Maitrise 28 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Garde Lunaire  Maitrise 28 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv28_Garde-Lunaire-Maitrise-28.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t28",
@@ -1344,7 +1427,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Verbe de Haine  Maitrise 28 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 28 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv28_Verbe-de-Haine-Maitrise-28.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t29",
@@ -1360,7 +1444,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Nuit Devorante  Maitrise 29 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Nuit Devorante  Maitrise 29 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv29_Nuit-Devorante-Maitrise-29.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t29",
@@ -1376,7 +1461,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Pacte d'Ombre  Maitrise 29 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 29 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv29_Pacte-d-Ombre-Maitrise-29.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t29",
@@ -1392,7 +1478,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Damnation Lunaire  Maitrise 29 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 29 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv29_Damnation-Lunaire-Maitrise-29.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t30",
@@ -1408,7 +1495,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Fin de Lumiere  Maitrise 30 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Fin de Lumiere  Maitrise 30 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv30_Fin-de-Lumiere-Maitrise-30.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t30",
@@ -1424,7 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Immortalite Noire  Maitrise 30 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Immortalite Noire  Maitrise 30 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv30_Immortalite-Noire-Maitrise-30.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t30",
@@ -1440,7 +1529,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Sentence des Tenebres  Maitrise 30 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 30 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv30_Sentence-des-Tenebres-Maitrise-30.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t31",
@@ -1456,7 +1546,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Voile de Tenebres  Maitrise 31 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Voile de Tenebres  Maitrise 31 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv31_Voile-de-Tenebres-Maitrise-31.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t31",
@@ -1472,7 +1563,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Benediction Noire  Maitrise 31 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Benediction Noire  Maitrise 31 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv31_Benediction-Noire-Maitrise-31.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t31",
@@ -1488,7 +1580,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Rayon Tenebreux  Maitrise 31 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Maitrise 31 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv31_Rayon-Tenebreux-Maitrise-31.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t32",
@@ -1504,7 +1597,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Pluie Noire  Maitrise 32 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Pluie Noire  Maitrise 32 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv32_Pluie-Noire-Maitrise-32.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t32",
@@ -1520,7 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Linceul d'Ombre  Maitrise 32 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Maitrise 32 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv32_Linceul-d-Ombre-Maitrise-32.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t32",
@@ -1536,7 +1631,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Anatheme  Maitrise 32 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Anatheme  Maitrise 32 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv32_Anatheme-Maitrise-32.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t33",
@@ -1552,7 +1648,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Cercle Maudit  Maitrise 33 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Cercle Maudit  Maitrise 33 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv33_Cercle-Maudit-Maitrise-33.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t33",
@@ -1568,7 +1665,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Don de Tenebres  Maitrise 33 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Don de Tenebres  Maitrise 33 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv33_Don-de-Tenebres-Maitrise-33.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t33",
@@ -1584,7 +1682,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Flamme Noire  Maitrise 33 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 33 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv33_Flamme-Noire-Maitrise-33.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t34",
@@ -1600,7 +1699,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Eclipse  Maitrise 34 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Eclipse  Maitrise 34 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv34_Eclipse-Maitrise-34.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t34",
@@ -1616,7 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Garde Lunaire  Maitrise 34 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Garde Lunaire  Maitrise 34 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv34_Garde-Lunaire-Maitrise-34.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t34",
@@ -1632,7 +1733,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Verbe de Haine  Maitrise 34 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 34 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv34_Verbe-de-Haine-Maitrise-34.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t35",
@@ -1648,7 +1750,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Nuit Devorante  Maitrise 35 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Nuit Devorante  Maitrise 35 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv35_Nuit-Devorante-Maitrise-35.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t35",
@@ -1664,7 +1767,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Pacte d'Ombre  Maitrise 35 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 35 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv35_Pacte-d-Ombre-Maitrise-35.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t35",
@@ -1680,7 +1784,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Damnation Lunaire  Maitrise 35 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 35 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv35_Damnation-Lunaire-Maitrise-35.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t36",
@@ -1696,7 +1801,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Fin de Lumiere  Maitrise 36 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Fin de Lumiere  Maitrise 36 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv36_Fin-de-Lumiere-Maitrise-36.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t36",
@@ -1712,7 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Immortalite Noire  Maitrise 36 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Immortalite Noire  Maitrise 36 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv36_Immortalite-Noire-Maitrise-36.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t36",
@@ -1728,7 +1835,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Sentence des Tenebres  Maitrise 36 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 36 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv36_Sentence-des-Tenebres-Maitrise-36.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t37",
@@ -1744,7 +1852,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Voile de Tenebres  Maitrise 37 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Voile de Tenebres  Maitrise 37 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv37_Voile-de-Tenebres-Maitrise-37.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t37",
@@ -1760,7 +1869,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Benediction Noire  Maitrise 37 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Benediction Noire  Maitrise 37 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv37_Benediction-Noire-Maitrise-37.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t37",
@@ -1776,7 +1886,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Rayon Tenebreux  Maitrise 37 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Maitrise 37 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv37_Rayon-Tenebreux-Maitrise-37.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t38",
@@ -1792,7 +1903,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Pluie Noire  Maitrise 38 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Pluie Noire  Maitrise 38 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv38_Pluie-Noire-Maitrise-38.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t38",
@@ -1808,7 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Linceul d'Ombre  Maitrise 38 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Maitrise 38 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv38_Linceul-d-Ombre-Maitrise-38.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t38",
@@ -1824,7 +1937,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Anatheme  Maitrise 38 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Anatheme  Maitrise 38 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv38_Anatheme-Maitrise-38.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t39",
@@ -1840,7 +1954,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Cercle Maudit  Maitrise 39 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Cercle Maudit  Maitrise 39 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv39_Cercle-Maudit-Maitrise-39.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t39",
@@ -1856,7 +1971,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Don de Tenebres  Maitrise 39 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Don de Tenebres  Maitrise 39 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv39_Don-de-Tenebres-Maitrise-39.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t39",
@@ -1872,7 +1988,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Flamme Noire  Maitrise 39 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 39 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv39_Flamme-Noire-Maitrise-39.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t40",
@@ -1888,7 +2005,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Eclipse  Maitrise 40 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Eclipse  Maitrise 40 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv40_Eclipse-Maitrise-40.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t40",
@@ -1904,7 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Garde Lunaire  Maitrise 40 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Garde Lunaire  Maitrise 40 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv40_Garde-Lunaire-Maitrise-40.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t40",
@@ -1920,7 +2039,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Verbe de Haine  Maitrise 40 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 40 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv40_Verbe-de-Haine-Maitrise-40.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t41",
@@ -1936,7 +2056,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Nuit Devorante  Maitrise 41 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Nuit Devorante  Maitrise 41 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv41_Nuit-Devorante-Maitrise-41.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t41",
@@ -1952,7 +2073,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Pacte d'Ombre  Maitrise 41 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 41 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv41_Pacte-d-Ombre-Maitrise-41.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t41",
@@ -1968,7 +2090,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Damnation Lunaire  Maitrise 41 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 41 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv41_Damnation-Lunaire-Maitrise-41.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t42",
@@ -1984,7 +2107,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Fin de Lumiere  Maitrise 42 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Fin de Lumiere  Maitrise 42 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv42_Fin-de-Lumiere-Maitrise-42.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t42",
@@ -2000,7 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Immortalite Noire  Maitrise 42 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Immortalite Noire  Maitrise 42 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv42_Immortalite-Noire-Maitrise-42.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t42",
@@ -2016,7 +2141,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Sentence des Tenebres  Maitrise 42 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 42 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv42_Sentence-des-Tenebres-Maitrise-42.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t43",
@@ -2032,7 +2158,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Voile de Tenebres  Maitrise 43 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Voile de Tenebres  Maitrise 43 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv43_Voile-de-Tenebres-Maitrise-43.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t43",
@@ -2048,7 +2175,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Benediction Noire  Maitrise 43 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Benediction Noire  Maitrise 43 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv43_Benediction-Noire-Maitrise-43.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t43",
@@ -2064,7 +2192,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Rayon Tenebreux  Maitrise 43 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Maitrise 43 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv43_Rayon-Tenebreux-Maitrise-43.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t44",
@@ -2080,7 +2209,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Pluie Noire  Maitrise 44 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Pluie Noire  Maitrise 44 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv44_Pluie-Noire-Maitrise-44.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t44",
@@ -2096,7 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Linceul d'Ombre  Maitrise 44 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Maitrise 44 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv44_Linceul-d-Ombre-Maitrise-44.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t44",
@@ -2112,7 +2243,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Anatheme  Maitrise 44 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Anatheme  Maitrise 44 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv44_Anatheme-Maitrise-44.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t45",
@@ -2128,7 +2260,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Cercle Maudit  Maitrise 45 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Cercle Maudit  Maitrise 45 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv45_Cercle-Maudit-Maitrise-45.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t45",
@@ -2144,7 +2277,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Don de Tenebres  Maitrise 45 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Don de Tenebres  Maitrise 45 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv45_Don-de-Tenebres-Maitrise-45.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t45",
@@ -2160,7 +2294,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Flamme Noire  Maitrise 45 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 45 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv45_Flamme-Noire-Maitrise-45.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t46",
@@ -2176,7 +2311,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Eclipse  Maitrise 46 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Eclipse  Maitrise 46 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv46_Eclipse-Maitrise-46.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t46",
@@ -2192,7 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Garde Lunaire  Maitrise 46 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Garde Lunaire  Maitrise 46 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv46_Garde-Lunaire-Maitrise-46.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t46",
@@ -2208,7 +2345,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Verbe de Haine  Maitrise 46 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 46 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv46_Verbe-de-Haine-Maitrise-46.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t47",
@@ -2224,7 +2362,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Nuit Devorante  Maitrise 47 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Nuit Devorante  Maitrise 47 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv47_Nuit-Devorante-Maitrise-47.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t47",
@@ -2240,7 +2379,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Pacte d'Ombre  Maitrise 47 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 47 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv47_Pacte-d-Ombre-Maitrise-47.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t47",
@@ -2256,7 +2396,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Damnation Lunaire  Maitrise 47 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 47 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv47_Damnation-Lunaire-Maitrise-47.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t48",
@@ -2272,7 +2413,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Fin de Lumiere  Maitrise 48 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Fin de Lumiere  Maitrise 48 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv48_Fin-de-Lumiere-Maitrise-48.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t48",
@@ -2288,7 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Immortalite Noire  Maitrise 48 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Immortalite Noire  Maitrise 48 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv48_Immortalite-Noire-Maitrise-48.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t48",
@@ -2304,7 +2447,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Sentence des Tenebres  Maitrise 48 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 48 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv48_Sentence-des-Tenebres-Maitrise-48.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t49",
@@ -2320,7 +2464,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Voile de Tenebres  Maitrise 49 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Voile de Tenebres  Maitrise 49 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv49_Voile-de-Tenebres-Maitrise-49.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t49",
@@ -2336,7 +2481,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Benediction Noire  Maitrise 49 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Benediction Noire  Maitrise 49 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv49_Benediction-Noire-Maitrise-49.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t49",
@@ -2352,7 +2498,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Rayon Tenebreux  Maitrise 49 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Maitrise 49 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv49_Rayon-Tenebreux-Maitrise-49.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t50",
@@ -2368,7 +2515,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Pluie Noire  Maitrise 50 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Pluie Noire  Maitrise 50 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv50_Pluie-Noire-Maitrise-50.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t50",
@@ -2384,7 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Linceul d'Ombre  Maitrise 50 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Maitrise 50 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv50_Linceul-d-Ombre-Maitrise-50.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t50",
@@ -2400,7 +2549,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Anatheme  Maitrise 50 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Anatheme  Maitrise 50 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv50_Anatheme-Maitrise-50.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t51",
@@ -2416,7 +2566,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Cercle Maudit  Maitrise 51 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Cercle Maudit  Maitrise 51 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv51_Cercle-Maudit-Maitrise-51.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t51",
@@ -2432,7 +2583,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Don de Tenebres  Maitrise 51 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Don de Tenebres  Maitrise 51 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv51_Don-de-Tenebres-Maitrise-51.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t51",
@@ -2448,7 +2600,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Flamme Noire  Maitrise 51 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 51 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv51_Flamme-Noire-Maitrise-51.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t52",
@@ -2464,7 +2617,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Eclipse  Maitrise 52 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Eclipse  Maitrise 52 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv52_Eclipse-Maitrise-52.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t52",
@@ -2480,7 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Garde Lunaire  Maitrise 52 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Garde Lunaire  Maitrise 52 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv52_Garde-Lunaire-Maitrise-52.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t52",
@@ -2496,7 +2651,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Verbe de Haine  Maitrise 52 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 52 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv52_Verbe-de-Haine-Maitrise-52.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t53",
@@ -2512,7 +2668,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Nuit Devorante  Maitrise 53 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Nuit Devorante  Maitrise 53 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv53_Nuit-Devorante-Maitrise-53.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t53",
@@ -2528,7 +2685,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Pacte d'Ombre  Maitrise 53 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 53 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv53_Pacte-d-Ombre-Maitrise-53.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t53",
@@ -2544,7 +2702,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Damnation Lunaire  Maitrise 53 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 53 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv53_Damnation-Lunaire-Maitrise-53.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t54",
@@ -2560,7 +2719,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Fin de Lumiere  Maitrise 54 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Fin de Lumiere  Maitrise 54 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv54_Fin-de-Lumiere-Maitrise-54.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t54",
@@ -2576,7 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Immortalite Noire  Maitrise 54 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Immortalite Noire  Maitrise 54 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv54_Immortalite-Noire-Maitrise-54.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t54",
@@ -2592,7 +2753,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Sentence des Tenebres  Maitrise 54 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 54 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv54_Sentence-des-Tenebres-Maitrise-54.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t55",
@@ -2608,7 +2770,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Voile de Tenebres  Maitrise 55 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Voile de Tenebres  Maitrise 55 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv55_Voile-de-Tenebres-Maitrise-55.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t55",
@@ -2624,7 +2787,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Benediction Noire  Maitrise 55 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Benediction Noire  Maitrise 55 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv55_Benediction-Noire-Maitrise-55.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t55",
@@ -2640,7 +2804,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Rayon Tenebreux  Maitrise 55 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Rayon Tenebreux  Maitrise 55 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv55_Rayon-Tenebreux-Maitrise-55.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t56",
@@ -2656,7 +2821,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Pluie Noire  Maitrise 56 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Pluie Noire  Maitrise 56 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv56_Pluie-Noire-Maitrise-56.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t56",
@@ -2672,7 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Linceul d'Ombre  Maitrise 56 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Linceul d'Ombre  Maitrise 56 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv56_Linceul-d-Ombre-Maitrise-56.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t56",
@@ -2688,7 +2855,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Anatheme  Maitrise 56 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Anatheme  Maitrise 56 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv56_Anatheme-Maitrise-56.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t57",
@@ -2704,7 +2872,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Cercle Maudit  Maitrise 57 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Cercle Maudit  Maitrise 57 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv57_Cercle-Maudit-Maitrise-57.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t57",
@@ -2720,7 +2889,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Don de Tenebres  Maitrise 57 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Don de Tenebres  Maitrise 57 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv57_Don-de-Tenebres-Maitrise-57.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t57",
@@ -2736,7 +2906,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Flamme Noire  Maitrise 57 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Flamme Noire  Maitrise 57 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv57_Flamme-Noire-Maitrise-57.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t58",
@@ -2752,7 +2923,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Eclipse  Maitrise 58 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Eclipse  Maitrise 58 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv58_Eclipse-Maitrise-58.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t58",
@@ -2768,7 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Garde Lunaire  Maitrise 58 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Garde Lunaire  Maitrise 58 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv58_Garde-Lunaire-Maitrise-58.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t58",
@@ -2784,7 +2957,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Verbe de Haine  Maitrise 58 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Verbe de Haine  Maitrise 58 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv58_Verbe-de-Haine-Maitrise-58.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t59",
@@ -2800,7 +2974,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Nuit Devorante  Maitrise 59 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Nuit Devorante  Maitrise 59 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv59_Nuit-Devorante-Maitrise-59.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t59",
@@ -2816,7 +2991,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Pacte d'Ombre  Maitrise 59 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Pacte d'Ombre  Maitrise 59 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv59_Pacte-d-Ombre-Maitrise-59.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t59",
@@ -2832,7 +3008,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Damnation Lunaire  Maitrise 59 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Damnation Lunaire  Maitrise 59 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv59_Damnation-Lunaire-Maitrise-59.png"
                    },
                    {
                        "id":  "pretre_lune_noire_aoe_t60",
@@ -2848,7 +3025,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Fin de Lumiere  Maitrise 60 : plonge une zone dans les tenebres (degats reduits)."
+                       "description":  "Fin de Lumiere  Maitrise 60 : plonge une zone dans les tenebres (degats reduits).",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Zone_Niv60_Fin-de-Lumiere-Maitrise-60.png"
                    },
                    {
                        "id":  "pretre_lune_noire_def_t60",
@@ -2864,7 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Immortalite Noire  Maitrise 60 : octroie une protection tenebreuse a soi et aux fideles."
+                       "description":  "Immortalite Noire  Maitrise 60 : octroie une protection tenebreuse a soi et aux fideles.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Defense_Niv60_Immortalite-Noire-Maitrise-60.png"
                    },
                    {
                        "id":  "pretre_lune_noire_single_t60",
@@ -2880,7 +3059,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Sentence des Tenebres  Maitrise 60 : foudroie une cible d'energie tenebreuse."
+                       "description":  "Sentence des Tenebres  Maitrise 60 : foudroie une cible d'energie tenebreuse.",
+                       "iconFile":  "Pretre-de-la-Lune-Noire_Unitaire_Niv60_Sentence-des-Tenebres-Maitrise-60.png"
                    }
                ]
 }

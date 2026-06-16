@@ -26,6 +26,10 @@ namespace engine::client
 		/// Groupes SP1 — true si le sort vise un allié (targetType SingleAlly) :
 		/// la barre d'action envoie alors l'allié sélectionné au cadre de groupe.
 		bool targetsAlly = false;
+		/// Chemin RELATIF (depuis paths.content) de l'icône, ou "" si aucune.
+		/// Rempli pour les compétences de classe ("icons/skills/<classId>/<fichier>") ;
+		/// vide pour les kits profil (pas d'icône). Repli texte si vide ou introuvable.
+		std::string iconPath;
 	};
 
 	/// Combat SP3 — catalogue client des kits de sorts (même

@@ -16,7 +16,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Hymne Noir : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Hymne Noir : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv01_Hymne-Noir.png"
                    },
                    {
                        "id":  "menthats_def_t1",
@@ -32,7 +33,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Garde Mentale : protege grace aux sceaux des Menthats."
+                       "description":  "Garde Mentale : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv01_Garde-Mentale.png"
                    },
                    {
                        "id":  "menthats_single_t1",
@@ -48,7 +50,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Mot de Douleur : brise l'esprit d'une cible unique."
+                       "description":  "Mot de Douleur : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv01_Mot-de-Douleur.png"
                    },
                    {
                        "id":  "menthats_aoe_t2",
@@ -64,7 +67,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Vague Psychique  Aiguise : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Vague Psychique  Aiguise : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv02_Vague-Psychique-Aiguise.png"
                    },
                    {
                        "id":  "menthats_def_t2",
@@ -80,7 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Sceau Frontal  Aiguise : protege grace aux sceaux des Menthats."
+                       "description":  "Sceau Frontal  Aiguise : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv02_Sceau-Frontal-Aiguise.png"
                    },
                    {
                        "id":  "menthats_single_t2",
@@ -96,7 +101,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Chatiment Mental  Aiguise : brise l'esprit d'une cible unique."
+                       "description":  "Chatiment Mental  Aiguise : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv02_Chatiment-Mental-Aiguise.png"
                    },
                    {
                        "id":  "menthats_aoe_t3",
@@ -112,7 +118,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Cercle d'Anatheme  Renforce : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cercle d'Anatheme  Renforce : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv03_Cercle-d-Anatheme-Renforce.png"
                    },
                    {
                        "id":  "menthats_def_t3",
@@ -128,7 +135,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Litanie de Protection  Renforce : protege grace aux sceaux des Menthats."
+                       "description":  "Litanie de Protection  Renforce : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv03_Litanie-de-Protection-Renforce.png"
                    },
                    {
                        "id":  "menthats_single_t3",
@@ -144,7 +152,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Fletrissure  Renforce : brise l'esprit d'une cible unique."
+                       "description":  "Fletrissure  Renforce : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv03_Fletrissure-Renforce.png"
                    },
                    {
                        "id":  "menthats_aoe_t4",
@@ -160,7 +169,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Cantique de Mort  Affute : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cantique de Mort  Affute : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv04_Cantique-de-Mort-Affute.png"
                    },
                    {
                        "id":  "menthats_def_t4",
@@ -176,7 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Egide de Haazheel  Affute : protege grace aux sceaux des Menthats."
+                       "description":  "Egide de Haazheel  Affute : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv04_Egide-de-Haazheel-Affute.png"
                    },
                    {
                        "id":  "menthats_single_t4",
@@ -192,7 +203,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Anatheme Supreme  Affute : brise l'esprit d'une cible unique."
+                       "description":  "Anatheme Supreme  Affute : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv04_Anatheme-Supreme-Affute.png"
                    },
                    {
                        "id":  "menthats_aoe_t5",
@@ -208,7 +220,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Chur de Ruine  Brutal : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Chur de Ruine  Brutal : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv05_Chur-de-Ruine-Brutal.png"
                    },
                    {
                        "id":  "menthats_def_t5",
@@ -224,7 +237,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Voile Inviolable  Brutal : protege grace aux sceaux des Menthats."
+                       "description":  "Voile Inviolable  Brutal : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv05_Voile-Inviolable-Brutal.png"
                    },
                    {
                        "id":  "menthats_single_t5",
@@ -240,7 +254,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Brisure d'Ame  Brutal : brise l'esprit d'une cible unique."
+                       "description":  "Brisure d'Ame  Brutal : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv05_Brisure-d-Ame-Brutal.png"
                    },
                    {
                        "id":  "menthats_aoe_t6",
@@ -256,7 +271,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Apocalypse Mentale  Vorace : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Apocalypse Mentale  Vorace : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv06_Apocalypse-Mentale-Vorace.png"
                    },
                    {
                        "id":  "menthats_def_t6",
@@ -272,7 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Sanctuaire Interdit  Vorace : protege grace aux sceaux des Menthats."
+                       "description":  "Sanctuaire Interdit  Vorace : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv06_Sanctuaire-Interdit-Vorace.png"
                    },
                    {
                        "id":  "menthats_single_t6",
@@ -288,7 +305,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Sentence Finale  Vorace : brise l'esprit d'une cible unique."
+                       "description":  "Sentence Finale  Vorace : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv06_Sentence-Finale-Vorace.png"
                    },
                    {
                        "id":  "menthats_aoe_t7",
@@ -304,7 +322,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Hymne Noir  Implacable : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Hymne Noir  Implacable : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv07_Hymne-Noir-Implacable.png"
                    },
                    {
                        "id":  "menthats_def_t7",
@@ -320,7 +339,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Garde Mentale  Implacable : protege grace aux sceaux des Menthats."
+                       "description":  "Garde Mentale  Implacable : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv07_Garde-Mentale-Implacable.png"
                    },
                    {
                        "id":  "menthats_single_t7",
@@ -336,7 +356,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Mot de Douleur  Implacable : brise l'esprit d'une cible unique."
+                       "description":  "Mot de Douleur  Implacable : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv07_Mot-de-Douleur-Implacable.png"
                    },
                    {
                        "id":  "menthats_aoe_t8",
@@ -352,7 +373,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Vague Psychique  Funeste : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Vague Psychique  Funeste : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv08_Vague-Psychique-Funeste.png"
                    },
                    {
                        "id":  "menthats_def_t8",
@@ -368,7 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Sceau Frontal  Funeste : protege grace aux sceaux des Menthats."
+                       "description":  "Sceau Frontal  Funeste : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv08_Sceau-Frontal-Funeste.png"
                    },
                    {
                        "id":  "menthats_single_t8",
@@ -384,7 +407,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Chatiment Mental  Funeste : brise l'esprit d'une cible unique."
+                       "description":  "Chatiment Mental  Funeste : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv08_Chatiment-Mental-Funeste.png"
                    },
                    {
                        "id":  "menthats_aoe_t9",
@@ -400,7 +424,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Cercle d'Anatheme  Cruel : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cercle d'Anatheme  Cruel : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv09_Cercle-d-Anatheme-Cruel.png"
                    },
                    {
                        "id":  "menthats_def_t9",
@@ -416,7 +441,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Litanie de Protection  Cruel : protege grace aux sceaux des Menthats."
+                       "description":  "Litanie de Protection  Cruel : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv09_Litanie-de-Protection-Cruel.png"
                    },
                    {
                        "id":  "menthats_single_t9",
@@ -432,7 +458,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Fletrissure  Cruel : brise l'esprit d'une cible unique."
+                       "description":  "Fletrissure  Cruel : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv09_Fletrissure-Cruel.png"
                    },
                    {
                        "id":  "menthats_aoe_t10",
@@ -448,7 +475,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Cantique de Mort  Sanglant : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cantique de Mort  Sanglant : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv10_Cantique-de-Mort-Sanglant.png"
                    },
                    {
                        "id":  "menthats_def_t10",
@@ -464,7 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Egide de Haazheel  Sanglant : protege grace aux sceaux des Menthats."
+                       "description":  "Egide de Haazheel  Sanglant : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv10_Egide-de-Haazheel-Sanglant.png"
                    },
                    {
                        "id":  "menthats_single_t10",
@@ -480,7 +509,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Anatheme Supreme  Sanglant : brise l'esprit d'une cible unique."
+                       "description":  "Anatheme Supreme  Sanglant : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv10_Anatheme-Supreme-Sanglant.png"
                    },
                    {
                        "id":  "menthats_aoe_t11",
@@ -496,7 +526,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Chur de Ruine  Devastateur : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Chur de Ruine  Devastateur : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv11_Chur-de-Ruine-Devastateur.png"
                    },
                    {
                        "id":  "menthats_def_t11",
@@ -512,7 +543,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Voile Inviolable  Devastateur : protege grace aux sceaux des Menthats."
+                       "description":  "Voile Inviolable  Devastateur : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv11_Voile-Inviolable-Devastateur.png"
                    },
                    {
                        "id":  "menthats_single_t11",
@@ -528,7 +560,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Brisure d'Ame  Devastateur : brise l'esprit d'une cible unique."
+                       "description":  "Brisure d'Ame  Devastateur : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv11_Brisure-d-Ame-Devastateur.png"
                    },
                    {
                        "id":  "menthats_aoe_t12",
@@ -544,7 +577,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Apocalypse Mentale  Foudroyant : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Apocalypse Mentale  Foudroyant : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv12_Apocalypse-Mentale-Foudroyant.png"
                    },
                    {
                        "id":  "menthats_def_t12",
@@ -560,7 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Sanctuaire Interdit  Foudroyant : protege grace aux sceaux des Menthats."
+                       "description":  "Sanctuaire Interdit  Foudroyant : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv12_Sanctuaire-Interdit-Foudroyant.png"
                    },
                    {
                        "id":  "menthats_single_t12",
@@ -576,7 +611,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Sentence Finale  Foudroyant : brise l'esprit d'une cible unique."
+                       "description":  "Sentence Finale  Foudroyant : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv12_Sentence-Finale-Foudroyant.png"
                    },
                    {
                        "id":  "menthats_aoe_t13",
@@ -592,7 +628,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Hymne Noir  Mortel : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Hymne Noir  Mortel : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv13_Hymne-Noir-Mortel.png"
                    },
                    {
                        "id":  "menthats_def_t13",
@@ -608,7 +645,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Garde Mentale  Mortel : protege grace aux sceaux des Menthats."
+                       "description":  "Garde Mentale  Mortel : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv13_Garde-Mentale-Mortel.png"
                    },
                    {
                        "id":  "menthats_single_t13",
@@ -624,7 +662,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Mot de Douleur  Mortel : brise l'esprit d'une cible unique."
+                       "description":  "Mot de Douleur  Mortel : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv13_Mot-de-Douleur-Mortel.png"
                    },
                    {
                        "id":  "menthats_aoe_t14",
@@ -640,7 +679,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Vague Psychique  Inexorable : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Vague Psychique  Inexorable : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv14_Vague-Psychique-Inexorable.png"
                    },
                    {
                        "id":  "menthats_def_t14",
@@ -656,7 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Sceau Frontal  Inexorable : protege grace aux sceaux des Menthats."
+                       "description":  "Sceau Frontal  Inexorable : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv14_Sceau-Frontal-Inexorable.png"
                    },
                    {
                        "id":  "menthats_single_t14",
@@ -672,7 +713,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Chatiment Mental  Inexorable : brise l'esprit d'une cible unique."
+                       "description":  "Chatiment Mental  Inexorable : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv14_Chatiment-Mental-Inexorable.png"
                    },
                    {
                        "id":  "menthats_aoe_t15",
@@ -688,7 +730,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Cercle d'Anatheme  Terrible : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cercle d'Anatheme  Terrible : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv15_Cercle-d-Anatheme-Terrible.png"
                    },
                    {
                        "id":  "menthats_def_t15",
@@ -704,7 +747,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Litanie de Protection  Terrible : protege grace aux sceaux des Menthats."
+                       "description":  "Litanie de Protection  Terrible : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv15_Litanie-de-Protection-Terrible.png"
                    },
                    {
                        "id":  "menthats_single_t15",
@@ -720,7 +764,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Fletrissure  Terrible : brise l'esprit d'une cible unique."
+                       "description":  "Fletrissure  Terrible : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv15_Fletrissure-Terrible.png"
                    },
                    {
                        "id":  "menthats_aoe_t16",
@@ -736,7 +781,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Cantique de Mort  Souverain : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cantique de Mort  Souverain : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv16_Cantique-de-Mort-Souverain.png"
                    },
                    {
                        "id":  "menthats_def_t16",
@@ -752,7 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Egide de Haazheel  Souverain : protege grace aux sceaux des Menthats."
+                       "description":  "Egide de Haazheel  Souverain : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv16_Egide-de-Haazheel-Souverain.png"
                    },
                    {
                        "id":  "menthats_single_t16",
@@ -768,7 +815,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Anatheme Supreme  Souverain : brise l'esprit d'une cible unique."
+                       "description":  "Anatheme Supreme  Souverain : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv16_Anatheme-Supreme-Souverain.png"
                    },
                    {
                        "id":  "menthats_aoe_t17",
@@ -784,7 +832,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Chur de Ruine  Legendaire : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Chur de Ruine  Legendaire : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv17_Chur-de-Ruine-Legendaire.png"
                    },
                    {
                        "id":  "menthats_def_t17",
@@ -800,7 +849,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Voile Inviolable  Legendaire : protege grace aux sceaux des Menthats."
+                       "description":  "Voile Inviolable  Legendaire : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv17_Voile-Inviolable-Legendaire.png"
                    },
                    {
                        "id":  "menthats_single_t17",
@@ -816,7 +866,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Brisure d'Ame  Legendaire : brise l'esprit d'une cible unique."
+                       "description":  "Brisure d'Ame  Legendaire : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv17_Brisure-d-Ame-Legendaire.png"
                    },
                    {
                        "id":  "menthats_aoe_t18",
@@ -832,7 +883,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Apocalypse Mentale  Cataclysmique : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Apocalypse Mentale  Cataclysmique : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv18_Apocalypse-Mentale-Cataclysmique.png"
                    },
                    {
                        "id":  "menthats_def_t18",
@@ -848,7 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Sanctuaire Interdit  Cataclysmique : protege grace aux sceaux des Menthats."
+                       "description":  "Sanctuaire Interdit  Cataclysmique : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv18_Sanctuaire-Interdit-Cataclysmique.png"
                    },
                    {
                        "id":  "menthats_single_t18",
@@ -864,7 +917,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Sentence Finale  Cataclysmique : brise l'esprit d'une cible unique."
+                       "description":  "Sentence Finale  Cataclysmique : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv18_Sentence-Finale-Cataclysmique.png"
                    },
                    {
                        "id":  "menthats_aoe_t19",
@@ -880,7 +934,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Hymne Noir  Apocalyptique : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Hymne Noir  Apocalyptique : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv19_Hymne-Noir-Apocalyptique.png"
                    },
                    {
                        "id":  "menthats_def_t19",
@@ -896,7 +951,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Garde Mentale  Apocalyptique : protege grace aux sceaux des Menthats."
+                       "description":  "Garde Mentale  Apocalyptique : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv19_Garde-Mentale-Apocalyptique.png"
                    },
                    {
                        "id":  "menthats_single_t19",
@@ -912,7 +968,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Mot de Douleur  Apocalyptique : brise l'esprit d'une cible unique."
+                       "description":  "Mot de Douleur  Apocalyptique : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv19_Mot-de-Douleur-Apocalyptique.png"
                    },
                    {
                        "id":  "menthats_aoe_t20",
@@ -928,7 +985,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Vague Psychique  Ultime : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Vague Psychique  Ultime : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv20_Vague-Psychique-Ultime.png"
                    },
                    {
                        "id":  "menthats_def_t20",
@@ -944,7 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Sceau Frontal  Ultime : protege grace aux sceaux des Menthats."
+                       "description":  "Sceau Frontal  Ultime : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv20_Sceau-Frontal-Ultime.png"
                    },
                    {
                        "id":  "menthats_single_t20",
@@ -960,7 +1019,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Chatiment Mental  Ultime : brise l'esprit d'une cible unique."
+                       "description":  "Chatiment Mental  Ultime : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv20_Chatiment-Mental-Ultime.png"
                    },
                    {
                        "id":  "menthats_aoe_t21",
@@ -976,7 +1036,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Cercle d'Anatheme  Maitrise 21 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cercle d'Anatheme  Maitrise 21 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv21_Cercle-d-Anatheme-Maitrise-21.png"
                    },
                    {
                        "id":  "menthats_def_t21",
@@ -992,7 +1053,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Litanie de Protection  Maitrise 21 : protege grace aux sceaux des Menthats."
+                       "description":  "Litanie de Protection  Maitrise 21 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv21_Litanie-de-Protection-Maitrise-21.png"
                    },
                    {
                        "id":  "menthats_single_t21",
@@ -1008,7 +1070,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Fletrissure  Maitrise 21 : brise l'esprit d'une cible unique."
+                       "description":  "Fletrissure  Maitrise 21 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv21_Fletrissure-Maitrise-21.png"
                    },
                    {
                        "id":  "menthats_aoe_t22",
@@ -1024,7 +1087,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Cantique de Mort  Maitrise 22 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cantique de Mort  Maitrise 22 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv22_Cantique-de-Mort-Maitrise-22.png"
                    },
                    {
                        "id":  "menthats_def_t22",
@@ -1040,7 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Egide de Haazheel  Maitrise 22 : protege grace aux sceaux des Menthats."
+                       "description":  "Egide de Haazheel  Maitrise 22 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv22_Egide-de-Haazheel-Maitrise-22.png"
                    },
                    {
                        "id":  "menthats_single_t22",
@@ -1056,7 +1121,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Anatheme Supreme  Maitrise 22 : brise l'esprit d'une cible unique."
+                       "description":  "Anatheme Supreme  Maitrise 22 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv22_Anatheme-Supreme-Maitrise-22.png"
                    },
                    {
                        "id":  "menthats_aoe_t23",
@@ -1072,7 +1138,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Chur de Ruine  Maitrise 23 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Chur de Ruine  Maitrise 23 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv23_Chur-de-Ruine-Maitrise-23.png"
                    },
                    {
                        "id":  "menthats_def_t23",
@@ -1088,7 +1155,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Voile Inviolable  Maitrise 23 : protege grace aux sceaux des Menthats."
+                       "description":  "Voile Inviolable  Maitrise 23 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv23_Voile-Inviolable-Maitrise-23.png"
                    },
                    {
                        "id":  "menthats_single_t23",
@@ -1104,7 +1172,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Brisure d'Ame  Maitrise 23 : brise l'esprit d'une cible unique."
+                       "description":  "Brisure d'Ame  Maitrise 23 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv23_Brisure-d-Ame-Maitrise-23.png"
                    },
                    {
                        "id":  "menthats_aoe_t24",
@@ -1120,7 +1189,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Apocalypse Mentale  Maitrise 24 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Apocalypse Mentale  Maitrise 24 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv24_Apocalypse-Mentale-Maitrise-24.png"
                    },
                    {
                        "id":  "menthats_def_t24",
@@ -1136,7 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Sanctuaire Interdit  Maitrise 24 : protege grace aux sceaux des Menthats."
+                       "description":  "Sanctuaire Interdit  Maitrise 24 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv24_Sanctuaire-Interdit-Maitrise-24.png"
                    },
                    {
                        "id":  "menthats_single_t24",
@@ -1152,7 +1223,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Sentence Finale  Maitrise 24 : brise l'esprit d'une cible unique."
+                       "description":  "Sentence Finale  Maitrise 24 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv24_Sentence-Finale-Maitrise-24.png"
                    },
                    {
                        "id":  "menthats_aoe_t25",
@@ -1168,7 +1240,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Hymne Noir  Maitrise 25 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Hymne Noir  Maitrise 25 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv25_Hymne-Noir-Maitrise-25.png"
                    },
                    {
                        "id":  "menthats_def_t25",
@@ -1184,7 +1257,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Garde Mentale  Maitrise 25 : protege grace aux sceaux des Menthats."
+                       "description":  "Garde Mentale  Maitrise 25 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv25_Garde-Mentale-Maitrise-25.png"
                    },
                    {
                        "id":  "menthats_single_t25",
@@ -1200,7 +1274,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Mot de Douleur  Maitrise 25 : brise l'esprit d'une cible unique."
+                       "description":  "Mot de Douleur  Maitrise 25 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv25_Mot-de-Douleur-Maitrise-25.png"
                    },
                    {
                        "id":  "menthats_aoe_t26",
@@ -1216,7 +1291,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Vague Psychique  Maitrise 26 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Vague Psychique  Maitrise 26 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv26_Vague-Psychique-Maitrise-26.png"
                    },
                    {
                        "id":  "menthats_def_t26",
@@ -1232,7 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Sceau Frontal  Maitrise 26 : protege grace aux sceaux des Menthats."
+                       "description":  "Sceau Frontal  Maitrise 26 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv26_Sceau-Frontal-Maitrise-26.png"
                    },
                    {
                        "id":  "menthats_single_t26",
@@ -1248,7 +1325,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Chatiment Mental  Maitrise 26 : brise l'esprit d'une cible unique."
+                       "description":  "Chatiment Mental  Maitrise 26 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv26_Chatiment-Mental-Maitrise-26.png"
                    },
                    {
                        "id":  "menthats_aoe_t27",
@@ -1264,7 +1342,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Cercle d'Anatheme  Maitrise 27 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cercle d'Anatheme  Maitrise 27 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv27_Cercle-d-Anatheme-Maitrise-27.png"
                    },
                    {
                        "id":  "menthats_def_t27",
@@ -1280,7 +1359,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Litanie de Protection  Maitrise 27 : protege grace aux sceaux des Menthats."
+                       "description":  "Litanie de Protection  Maitrise 27 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv27_Litanie-de-Protection-Maitrise-27.png"
                    },
                    {
                        "id":  "menthats_single_t27",
@@ -1296,7 +1376,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Fletrissure  Maitrise 27 : brise l'esprit d'une cible unique."
+                       "description":  "Fletrissure  Maitrise 27 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv27_Fletrissure-Maitrise-27.png"
                    },
                    {
                        "id":  "menthats_aoe_t28",
@@ -1312,7 +1393,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Cantique de Mort  Maitrise 28 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cantique de Mort  Maitrise 28 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv28_Cantique-de-Mort-Maitrise-28.png"
                    },
                    {
                        "id":  "menthats_def_t28",
@@ -1328,7 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Egide de Haazheel  Maitrise 28 : protege grace aux sceaux des Menthats."
+                       "description":  "Egide de Haazheel  Maitrise 28 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv28_Egide-de-Haazheel-Maitrise-28.png"
                    },
                    {
                        "id":  "menthats_single_t28",
@@ -1344,7 +1427,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Anatheme Supreme  Maitrise 28 : brise l'esprit d'une cible unique."
+                       "description":  "Anatheme Supreme  Maitrise 28 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv28_Anatheme-Supreme-Maitrise-28.png"
                    },
                    {
                        "id":  "menthats_aoe_t29",
@@ -1360,7 +1444,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Chur de Ruine  Maitrise 29 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Chur de Ruine  Maitrise 29 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv29_Chur-de-Ruine-Maitrise-29.png"
                    },
                    {
                        "id":  "menthats_def_t29",
@@ -1376,7 +1461,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Voile Inviolable  Maitrise 29 : protege grace aux sceaux des Menthats."
+                       "description":  "Voile Inviolable  Maitrise 29 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv29_Voile-Inviolable-Maitrise-29.png"
                    },
                    {
                        "id":  "menthats_single_t29",
@@ -1392,7 +1478,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Brisure d'Ame  Maitrise 29 : brise l'esprit d'une cible unique."
+                       "description":  "Brisure d'Ame  Maitrise 29 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv29_Brisure-d-Ame-Maitrise-29.png"
                    },
                    {
                        "id":  "menthats_aoe_t30",
@@ -1408,7 +1495,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Apocalypse Mentale  Maitrise 30 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Apocalypse Mentale  Maitrise 30 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv30_Apocalypse-Mentale-Maitrise-30.png"
                    },
                    {
                        "id":  "menthats_def_t30",
@@ -1424,7 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Sanctuaire Interdit  Maitrise 30 : protege grace aux sceaux des Menthats."
+                       "description":  "Sanctuaire Interdit  Maitrise 30 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv30_Sanctuaire-Interdit-Maitrise-30.png"
                    },
                    {
                        "id":  "menthats_single_t30",
@@ -1440,7 +1529,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Sentence Finale  Maitrise 30 : brise l'esprit d'une cible unique."
+                       "description":  "Sentence Finale  Maitrise 30 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv30_Sentence-Finale-Maitrise-30.png"
                    },
                    {
                        "id":  "menthats_aoe_t31",
@@ -1456,7 +1546,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Hymne Noir  Maitrise 31 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Hymne Noir  Maitrise 31 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv31_Hymne-Noir-Maitrise-31.png"
                    },
                    {
                        "id":  "menthats_def_t31",
@@ -1472,7 +1563,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Garde Mentale  Maitrise 31 : protege grace aux sceaux des Menthats."
+                       "description":  "Garde Mentale  Maitrise 31 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv31_Garde-Mentale-Maitrise-31.png"
                    },
                    {
                        "id":  "menthats_single_t31",
@@ -1488,7 +1580,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Mot de Douleur  Maitrise 31 : brise l'esprit d'une cible unique."
+                       "description":  "Mot de Douleur  Maitrise 31 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv31_Mot-de-Douleur-Maitrise-31.png"
                    },
                    {
                        "id":  "menthats_aoe_t32",
@@ -1504,7 +1597,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Vague Psychique  Maitrise 32 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Vague Psychique  Maitrise 32 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv32_Vague-Psychique-Maitrise-32.png"
                    },
                    {
                        "id":  "menthats_def_t32",
@@ -1520,7 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Sceau Frontal  Maitrise 32 : protege grace aux sceaux des Menthats."
+                       "description":  "Sceau Frontal  Maitrise 32 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv32_Sceau-Frontal-Maitrise-32.png"
                    },
                    {
                        "id":  "menthats_single_t32",
@@ -1536,7 +1631,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Chatiment Mental  Maitrise 32 : brise l'esprit d'une cible unique."
+                       "description":  "Chatiment Mental  Maitrise 32 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv32_Chatiment-Mental-Maitrise-32.png"
                    },
                    {
                        "id":  "menthats_aoe_t33",
@@ -1552,7 +1648,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Cercle d'Anatheme  Maitrise 33 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cercle d'Anatheme  Maitrise 33 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv33_Cercle-d-Anatheme-Maitrise-33.png"
                    },
                    {
                        "id":  "menthats_def_t33",
@@ -1568,7 +1665,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Litanie de Protection  Maitrise 33 : protege grace aux sceaux des Menthats."
+                       "description":  "Litanie de Protection  Maitrise 33 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv33_Litanie-de-Protection-Maitrise-33.png"
                    },
                    {
                        "id":  "menthats_single_t33",
@@ -1584,7 +1682,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Fletrissure  Maitrise 33 : brise l'esprit d'une cible unique."
+                       "description":  "Fletrissure  Maitrise 33 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv33_Fletrissure-Maitrise-33.png"
                    },
                    {
                        "id":  "menthats_aoe_t34",
@@ -1600,7 +1699,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Cantique de Mort  Maitrise 34 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cantique de Mort  Maitrise 34 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv34_Cantique-de-Mort-Maitrise-34.png"
                    },
                    {
                        "id":  "menthats_def_t34",
@@ -1616,7 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Egide de Haazheel  Maitrise 34 : protege grace aux sceaux des Menthats."
+                       "description":  "Egide de Haazheel  Maitrise 34 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv34_Egide-de-Haazheel-Maitrise-34.png"
                    },
                    {
                        "id":  "menthats_single_t34",
@@ -1632,7 +1733,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Anatheme Supreme  Maitrise 34 : brise l'esprit d'une cible unique."
+                       "description":  "Anatheme Supreme  Maitrise 34 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv34_Anatheme-Supreme-Maitrise-34.png"
                    },
                    {
                        "id":  "menthats_aoe_t35",
@@ -1648,7 +1750,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Chur de Ruine  Maitrise 35 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Chur de Ruine  Maitrise 35 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv35_Chur-de-Ruine-Maitrise-35.png"
                    },
                    {
                        "id":  "menthats_def_t35",
@@ -1664,7 +1767,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Voile Inviolable  Maitrise 35 : protege grace aux sceaux des Menthats."
+                       "description":  "Voile Inviolable  Maitrise 35 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv35_Voile-Inviolable-Maitrise-35.png"
                    },
                    {
                        "id":  "menthats_single_t35",
@@ -1680,7 +1784,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Brisure d'Ame  Maitrise 35 : brise l'esprit d'une cible unique."
+                       "description":  "Brisure d'Ame  Maitrise 35 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv35_Brisure-d-Ame-Maitrise-35.png"
                    },
                    {
                        "id":  "menthats_aoe_t36",
@@ -1696,7 +1801,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Apocalypse Mentale  Maitrise 36 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Apocalypse Mentale  Maitrise 36 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv36_Apocalypse-Mentale-Maitrise-36.png"
                    },
                    {
                        "id":  "menthats_def_t36",
@@ -1712,7 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Sanctuaire Interdit  Maitrise 36 : protege grace aux sceaux des Menthats."
+                       "description":  "Sanctuaire Interdit  Maitrise 36 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv36_Sanctuaire-Interdit-Maitrise-36.png"
                    },
                    {
                        "id":  "menthats_single_t36",
@@ -1728,7 +1835,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Sentence Finale  Maitrise 36 : brise l'esprit d'une cible unique."
+                       "description":  "Sentence Finale  Maitrise 36 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv36_Sentence-Finale-Maitrise-36.png"
                    },
                    {
                        "id":  "menthats_aoe_t37",
@@ -1744,7 +1852,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Hymne Noir  Maitrise 37 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Hymne Noir  Maitrise 37 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv37_Hymne-Noir-Maitrise-37.png"
                    },
                    {
                        "id":  "menthats_def_t37",
@@ -1760,7 +1869,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Garde Mentale  Maitrise 37 : protege grace aux sceaux des Menthats."
+                       "description":  "Garde Mentale  Maitrise 37 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv37_Garde-Mentale-Maitrise-37.png"
                    },
                    {
                        "id":  "menthats_single_t37",
@@ -1776,7 +1886,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Mot de Douleur  Maitrise 37 : brise l'esprit d'une cible unique."
+                       "description":  "Mot de Douleur  Maitrise 37 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv37_Mot-de-Douleur-Maitrise-37.png"
                    },
                    {
                        "id":  "menthats_aoe_t38",
@@ -1792,7 +1903,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Vague Psychique  Maitrise 38 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Vague Psychique  Maitrise 38 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv38_Vague-Psychique-Maitrise-38.png"
                    },
                    {
                        "id":  "menthats_def_t38",
@@ -1808,7 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Sceau Frontal  Maitrise 38 : protege grace aux sceaux des Menthats."
+                       "description":  "Sceau Frontal  Maitrise 38 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv38_Sceau-Frontal-Maitrise-38.png"
                    },
                    {
                        "id":  "menthats_single_t38",
@@ -1824,7 +1937,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Chatiment Mental  Maitrise 38 : brise l'esprit d'une cible unique."
+                       "description":  "Chatiment Mental  Maitrise 38 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv38_Chatiment-Mental-Maitrise-38.png"
                    },
                    {
                        "id":  "menthats_aoe_t39",
@@ -1840,7 +1954,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Cercle d'Anatheme  Maitrise 39 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cercle d'Anatheme  Maitrise 39 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv39_Cercle-d-Anatheme-Maitrise-39.png"
                    },
                    {
                        "id":  "menthats_def_t39",
@@ -1856,7 +1971,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Litanie de Protection  Maitrise 39 : protege grace aux sceaux des Menthats."
+                       "description":  "Litanie de Protection  Maitrise 39 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv39_Litanie-de-Protection-Maitrise-39.png"
                    },
                    {
                        "id":  "menthats_single_t39",
@@ -1872,7 +1988,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Fletrissure  Maitrise 39 : brise l'esprit d'une cible unique."
+                       "description":  "Fletrissure  Maitrise 39 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv39_Fletrissure-Maitrise-39.png"
                    },
                    {
                        "id":  "menthats_aoe_t40",
@@ -1888,7 +2005,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Cantique de Mort  Maitrise 40 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cantique de Mort  Maitrise 40 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv40_Cantique-de-Mort-Maitrise-40.png"
                    },
                    {
                        "id":  "menthats_def_t40",
@@ -1904,7 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Egide de Haazheel  Maitrise 40 : protege grace aux sceaux des Menthats."
+                       "description":  "Egide de Haazheel  Maitrise 40 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv40_Egide-de-Haazheel-Maitrise-40.png"
                    },
                    {
                        "id":  "menthats_single_t40",
@@ -1920,7 +2039,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Anatheme Supreme  Maitrise 40 : brise l'esprit d'une cible unique."
+                       "description":  "Anatheme Supreme  Maitrise 40 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv40_Anatheme-Supreme-Maitrise-40.png"
                    },
                    {
                        "id":  "menthats_aoe_t41",
@@ -1936,7 +2056,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Chur de Ruine  Maitrise 41 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Chur de Ruine  Maitrise 41 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv41_Chur-de-Ruine-Maitrise-41.png"
                    },
                    {
                        "id":  "menthats_def_t41",
@@ -1952,7 +2073,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Voile Inviolable  Maitrise 41 : protege grace aux sceaux des Menthats."
+                       "description":  "Voile Inviolable  Maitrise 41 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv41_Voile-Inviolable-Maitrise-41.png"
                    },
                    {
                        "id":  "menthats_single_t41",
@@ -1968,7 +2090,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Brisure d'Ame  Maitrise 41 : brise l'esprit d'une cible unique."
+                       "description":  "Brisure d'Ame  Maitrise 41 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv41_Brisure-d-Ame-Maitrise-41.png"
                    },
                    {
                        "id":  "menthats_aoe_t42",
@@ -1984,7 +2107,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Apocalypse Mentale  Maitrise 42 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Apocalypse Mentale  Maitrise 42 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv42_Apocalypse-Mentale-Maitrise-42.png"
                    },
                    {
                        "id":  "menthats_def_t42",
@@ -2000,7 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Sanctuaire Interdit  Maitrise 42 : protege grace aux sceaux des Menthats."
+                       "description":  "Sanctuaire Interdit  Maitrise 42 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv42_Sanctuaire-Interdit-Maitrise-42.png"
                    },
                    {
                        "id":  "menthats_single_t42",
@@ -2016,7 +2141,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Sentence Finale  Maitrise 42 : brise l'esprit d'une cible unique."
+                       "description":  "Sentence Finale  Maitrise 42 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv42_Sentence-Finale-Maitrise-42.png"
                    },
                    {
                        "id":  "menthats_aoe_t43",
@@ -2032,7 +2158,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Hymne Noir  Maitrise 43 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Hymne Noir  Maitrise 43 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv43_Hymne-Noir-Maitrise-43.png"
                    },
                    {
                        "id":  "menthats_def_t43",
@@ -2048,7 +2175,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Garde Mentale  Maitrise 43 : protege grace aux sceaux des Menthats."
+                       "description":  "Garde Mentale  Maitrise 43 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv43_Garde-Mentale-Maitrise-43.png"
                    },
                    {
                        "id":  "menthats_single_t43",
@@ -2064,7 +2192,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Mot de Douleur  Maitrise 43 : brise l'esprit d'une cible unique."
+                       "description":  "Mot de Douleur  Maitrise 43 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv43_Mot-de-Douleur-Maitrise-43.png"
                    },
                    {
                        "id":  "menthats_aoe_t44",
@@ -2080,7 +2209,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Vague Psychique  Maitrise 44 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Vague Psychique  Maitrise 44 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv44_Vague-Psychique-Maitrise-44.png"
                    },
                    {
                        "id":  "menthats_def_t44",
@@ -2096,7 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Sceau Frontal  Maitrise 44 : protege grace aux sceaux des Menthats."
+                       "description":  "Sceau Frontal  Maitrise 44 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv44_Sceau-Frontal-Maitrise-44.png"
                    },
                    {
                        "id":  "menthats_single_t44",
@@ -2112,7 +2243,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Chatiment Mental  Maitrise 44 : brise l'esprit d'une cible unique."
+                       "description":  "Chatiment Mental  Maitrise 44 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv44_Chatiment-Mental-Maitrise-44.png"
                    },
                    {
                        "id":  "menthats_aoe_t45",
@@ -2128,7 +2260,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Cercle d'Anatheme  Maitrise 45 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cercle d'Anatheme  Maitrise 45 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv45_Cercle-d-Anatheme-Maitrise-45.png"
                    },
                    {
                        "id":  "menthats_def_t45",
@@ -2144,7 +2277,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Litanie de Protection  Maitrise 45 : protege grace aux sceaux des Menthats."
+                       "description":  "Litanie de Protection  Maitrise 45 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv45_Litanie-de-Protection-Maitrise-45.png"
                    },
                    {
                        "id":  "menthats_single_t45",
@@ -2160,7 +2294,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Fletrissure  Maitrise 45 : brise l'esprit d'une cible unique."
+                       "description":  "Fletrissure  Maitrise 45 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv45_Fletrissure-Maitrise-45.png"
                    },
                    {
                        "id":  "menthats_aoe_t46",
@@ -2176,7 +2311,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Cantique de Mort  Maitrise 46 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cantique de Mort  Maitrise 46 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv46_Cantique-de-Mort-Maitrise-46.png"
                    },
                    {
                        "id":  "menthats_def_t46",
@@ -2192,7 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Egide de Haazheel  Maitrise 46 : protege grace aux sceaux des Menthats."
+                       "description":  "Egide de Haazheel  Maitrise 46 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv46_Egide-de-Haazheel-Maitrise-46.png"
                    },
                    {
                        "id":  "menthats_single_t46",
@@ -2208,7 +2345,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Anatheme Supreme  Maitrise 46 : brise l'esprit d'une cible unique."
+                       "description":  "Anatheme Supreme  Maitrise 46 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv46_Anatheme-Supreme-Maitrise-46.png"
                    },
                    {
                        "id":  "menthats_aoe_t47",
@@ -2224,7 +2362,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Chur de Ruine  Maitrise 47 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Chur de Ruine  Maitrise 47 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv47_Chur-de-Ruine-Maitrise-47.png"
                    },
                    {
                        "id":  "menthats_def_t47",
@@ -2240,7 +2379,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Voile Inviolable  Maitrise 47 : protege grace aux sceaux des Menthats."
+                       "description":  "Voile Inviolable  Maitrise 47 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv47_Voile-Inviolable-Maitrise-47.png"
                    },
                    {
                        "id":  "menthats_single_t47",
@@ -2256,7 +2396,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Brisure d'Ame  Maitrise 47 : brise l'esprit d'une cible unique."
+                       "description":  "Brisure d'Ame  Maitrise 47 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv47_Brisure-d-Ame-Maitrise-47.png"
                    },
                    {
                        "id":  "menthats_aoe_t48",
@@ -2272,7 +2413,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Apocalypse Mentale  Maitrise 48 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Apocalypse Mentale  Maitrise 48 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv48_Apocalypse-Mentale-Maitrise-48.png"
                    },
                    {
                        "id":  "menthats_def_t48",
@@ -2288,7 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Sanctuaire Interdit  Maitrise 48 : protege grace aux sceaux des Menthats."
+                       "description":  "Sanctuaire Interdit  Maitrise 48 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv48_Sanctuaire-Interdit-Maitrise-48.png"
                    },
                    {
                        "id":  "menthats_single_t48",
@@ -2304,7 +2447,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Sentence Finale  Maitrise 48 : brise l'esprit d'une cible unique."
+                       "description":  "Sentence Finale  Maitrise 48 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv48_Sentence-Finale-Maitrise-48.png"
                    },
                    {
                        "id":  "menthats_aoe_t49",
@@ -2320,7 +2464,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Hymne Noir  Maitrise 49 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Hymne Noir  Maitrise 49 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv49_Hymne-Noir-Maitrise-49.png"
                    },
                    {
                        "id":  "menthats_def_t49",
@@ -2336,7 +2481,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Garde Mentale  Maitrise 49 : protege grace aux sceaux des Menthats."
+                       "description":  "Garde Mentale  Maitrise 49 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv49_Garde-Mentale-Maitrise-49.png"
                    },
                    {
                        "id":  "menthats_single_t49",
@@ -2352,7 +2498,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Mot de Douleur  Maitrise 49 : brise l'esprit d'une cible unique."
+                       "description":  "Mot de Douleur  Maitrise 49 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv49_Mot-de-Douleur-Maitrise-49.png"
                    },
                    {
                        "id":  "menthats_aoe_t50",
@@ -2368,7 +2515,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Vague Psychique  Maitrise 50 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Vague Psychique  Maitrise 50 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv50_Vague-Psychique-Maitrise-50.png"
                    },
                    {
                        "id":  "menthats_def_t50",
@@ -2384,7 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Sceau Frontal  Maitrise 50 : protege grace aux sceaux des Menthats."
+                       "description":  "Sceau Frontal  Maitrise 50 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv50_Sceau-Frontal-Maitrise-50.png"
                    },
                    {
                        "id":  "menthats_single_t50",
@@ -2400,7 +2549,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Chatiment Mental  Maitrise 50 : brise l'esprit d'une cible unique."
+                       "description":  "Chatiment Mental  Maitrise 50 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv50_Chatiment-Mental-Maitrise-50.png"
                    },
                    {
                        "id":  "menthats_aoe_t51",
@@ -2416,7 +2566,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Cercle d'Anatheme  Maitrise 51 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cercle d'Anatheme  Maitrise 51 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv51_Cercle-d-Anatheme-Maitrise-51.png"
                    },
                    {
                        "id":  "menthats_def_t51",
@@ -2432,7 +2583,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Litanie de Protection  Maitrise 51 : protege grace aux sceaux des Menthats."
+                       "description":  "Litanie de Protection  Maitrise 51 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv51_Litanie-de-Protection-Maitrise-51.png"
                    },
                    {
                        "id":  "menthats_single_t51",
@@ -2448,7 +2600,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Fletrissure  Maitrise 51 : brise l'esprit d'une cible unique."
+                       "description":  "Fletrissure  Maitrise 51 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv51_Fletrissure-Maitrise-51.png"
                    },
                    {
                        "id":  "menthats_aoe_t52",
@@ -2464,7 +2617,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Cantique de Mort  Maitrise 52 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cantique de Mort  Maitrise 52 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv52_Cantique-de-Mort-Maitrise-52.png"
                    },
                    {
                        "id":  "menthats_def_t52",
@@ -2480,7 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Egide de Haazheel  Maitrise 52 : protege grace aux sceaux des Menthats."
+                       "description":  "Egide de Haazheel  Maitrise 52 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv52_Egide-de-Haazheel-Maitrise-52.png"
                    },
                    {
                        "id":  "menthats_single_t52",
@@ -2496,7 +2651,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Anatheme Supreme  Maitrise 52 : brise l'esprit d'une cible unique."
+                       "description":  "Anatheme Supreme  Maitrise 52 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv52_Anatheme-Supreme-Maitrise-52.png"
                    },
                    {
                        "id":  "menthats_aoe_t53",
@@ -2512,7 +2668,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Chur de Ruine  Maitrise 53 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Chur de Ruine  Maitrise 53 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv53_Chur-de-Ruine-Maitrise-53.png"
                    },
                    {
                        "id":  "menthats_def_t53",
@@ -2528,7 +2685,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Voile Inviolable  Maitrise 53 : protege grace aux sceaux des Menthats."
+                       "description":  "Voile Inviolable  Maitrise 53 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv53_Voile-Inviolable-Maitrise-53.png"
                    },
                    {
                        "id":  "menthats_single_t53",
@@ -2544,7 +2702,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Brisure d'Ame  Maitrise 53 : brise l'esprit d'une cible unique."
+                       "description":  "Brisure d'Ame  Maitrise 53 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv53_Brisure-d-Ame-Maitrise-53.png"
                    },
                    {
                        "id":  "menthats_aoe_t54",
@@ -2560,7 +2719,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Apocalypse Mentale  Maitrise 54 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Apocalypse Mentale  Maitrise 54 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv54_Apocalypse-Mentale-Maitrise-54.png"
                    },
                    {
                        "id":  "menthats_def_t54",
@@ -2576,7 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Sanctuaire Interdit  Maitrise 54 : protege grace aux sceaux des Menthats."
+                       "description":  "Sanctuaire Interdit  Maitrise 54 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv54_Sanctuaire-Interdit-Maitrise-54.png"
                    },
                    {
                        "id":  "menthats_single_t54",
@@ -2592,7 +2753,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Sentence Finale  Maitrise 54 : brise l'esprit d'une cible unique."
+                       "description":  "Sentence Finale  Maitrise 54 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv54_Sentence-Finale-Maitrise-54.png"
                    },
                    {
                        "id":  "menthats_aoe_t55",
@@ -2608,7 +2770,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Hymne Noir  Maitrise 55 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Hymne Noir  Maitrise 55 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv55_Hymne-Noir-Maitrise-55.png"
                    },
                    {
                        "id":  "menthats_def_t55",
@@ -2624,7 +2787,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Garde Mentale  Maitrise 55 : protege grace aux sceaux des Menthats."
+                       "description":  "Garde Mentale  Maitrise 55 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv55_Garde-Mentale-Maitrise-55.png"
                    },
                    {
                        "id":  "menthats_single_t55",
@@ -2640,7 +2804,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Mot de Douleur  Maitrise 55 : brise l'esprit d'une cible unique."
+                       "description":  "Mot de Douleur  Maitrise 55 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv55_Mot-de-Douleur-Maitrise-55.png"
                    },
                    {
                        "id":  "menthats_aoe_t56",
@@ -2656,7 +2821,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Vague Psychique  Maitrise 56 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Vague Psychique  Maitrise 56 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv56_Vague-Psychique-Maitrise-56.png"
                    },
                    {
                        "id":  "menthats_def_t56",
@@ -2672,7 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Sceau Frontal  Maitrise 56 : protege grace aux sceaux des Menthats."
+                       "description":  "Sceau Frontal  Maitrise 56 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv56_Sceau-Frontal-Maitrise-56.png"
                    },
                    {
                        "id":  "menthats_single_t56",
@@ -2688,7 +2855,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Chatiment Mental  Maitrise 56 : brise l'esprit d'une cible unique."
+                       "description":  "Chatiment Mental  Maitrise 56 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv56_Chatiment-Mental-Maitrise-56.png"
                    },
                    {
                        "id":  "menthats_aoe_t57",
@@ -2704,7 +2872,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Cercle d'Anatheme  Maitrise 57 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cercle d'Anatheme  Maitrise 57 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv57_Cercle-d-Anatheme-Maitrise-57.png"
                    },
                    {
                        "id":  "menthats_def_t57",
@@ -2720,7 +2889,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Litanie de Protection  Maitrise 57 : protege grace aux sceaux des Menthats."
+                       "description":  "Litanie de Protection  Maitrise 57 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv57_Litanie-de-Protection-Maitrise-57.png"
                    },
                    {
                        "id":  "menthats_single_t57",
@@ -2736,7 +2906,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Fletrissure  Maitrise 57 : brise l'esprit d'une cible unique."
+                       "description":  "Fletrissure  Maitrise 57 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv57_Fletrissure-Maitrise-57.png"
                    },
                    {
                        "id":  "menthats_aoe_t58",
@@ -2752,7 +2923,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Cantique de Mort  Maitrise 58 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Cantique de Mort  Maitrise 58 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv58_Cantique-de-Mort-Maitrise-58.png"
                    },
                    {
                        "id":  "menthats_def_t58",
@@ -2768,7 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Egide de Haazheel  Maitrise 58 : protege grace aux sceaux des Menthats."
+                       "description":  "Egide de Haazheel  Maitrise 58 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv58_Egide-de-Haazheel-Maitrise-58.png"
                    },
                    {
                        "id":  "menthats_single_t58",
@@ -2784,7 +2957,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Anatheme Supreme  Maitrise 58 : brise l'esprit d'une cible unique."
+                       "description":  "Anatheme Supreme  Maitrise 58 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv58_Anatheme-Supreme-Maitrise-58.png"
                    },
                    {
                        "id":  "menthats_aoe_t59",
@@ -2800,7 +2974,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Chur de Ruine  Maitrise 59 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Chur de Ruine  Maitrise 59 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv59_Chur-de-Ruine-Maitrise-59.png"
                    },
                    {
                        "id":  "menthats_def_t59",
@@ -2816,7 +2991,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Voile Inviolable  Maitrise 59 : protege grace aux sceaux des Menthats."
+                       "description":  "Voile Inviolable  Maitrise 59 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv59_Voile-Inviolable-Maitrise-59.png"
                    },
                    {
                        "id":  "menthats_single_t59",
@@ -2832,7 +3008,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Brisure d'Ame  Maitrise 59 : brise l'esprit d'une cible unique."
+                       "description":  "Brisure d'Ame  Maitrise 59 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv59_Brisure-d-Ame-Maitrise-59.png"
                    },
                    {
                        "id":  "menthats_aoe_t60",
@@ -2848,7 +3025,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Apocalypse Mentale  Maitrise 60 : psalmodie une litanie destructrice (degats reduits)."
+                       "description":  "Apocalypse Mentale  Maitrise 60 : psalmodie une litanie destructrice (degats reduits).",
+                       "iconFile":  "Menthats_Zone_Niv60_Apocalypse-Mentale-Maitrise-60.png"
                    },
                    {
                        "id":  "menthats_def_t60",
@@ -2864,7 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Sanctuaire Interdit  Maitrise 60 : protege grace aux sceaux des Menthats."
+                       "description":  "Sanctuaire Interdit  Maitrise 60 : protege grace aux sceaux des Menthats.",
+                       "iconFile":  "Menthats_Defense_Niv60_Sanctuaire-Interdit-Maitrise-60.png"
                    },
                    {
                        "id":  "menthats_single_t60",
@@ -2880,7 +3059,8 @@
                        "castTimeMs":  1500,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Sentence Finale  Maitrise 60 : brise l'esprit d'une cible unique."
+                       "description":  "Sentence Finale  Maitrise 60 : brise l'esprit d'une cible unique.",
+                       "iconFile":  "Menthats_Unitaire_Niv60_Sentence-Finale-Maitrise-60.png"
                    }
                ]
 }

@@ -16,7 +16,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Flamme du Jugement : brule les heretiques d'un feu purificateur."
+                       "description":  "Flamme du Jugement : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv01_Flamme-du-Jugement.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t1",
@@ -32,7 +33,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Foi de Fer : protege par une foi inflexible."
+                       "description":  "Foi de Fer : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv01_Foi-de-Fer.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t1",
@@ -48,7 +50,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Mains Ardentes : soigne un allie par la ferveur purificatrice."
+                       "description":  "Mains Ardentes : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv01_Mains-Ardentes.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t2",
@@ -64,7 +67,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Fer Rouge  Aiguise : brule les heretiques d'un feu purificateur."
+                       "description":  "Fer Rouge  Aiguise : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv02_Fer-Rouge-Aiguise.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t2",
@@ -80,7 +84,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Garde Zelee  Aiguise : protege par une foi inflexible."
+                       "description":  "Garde Zelee  Aiguise : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv02_Garde-Zelee-Aiguise.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t2",
@@ -96,7 +101,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Onction  Aiguise : soigne un allie par la ferveur purificatrice."
+                       "description":  "Onction  Aiguise : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv02_Onction-Aiguise.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t3",
@@ -112,7 +118,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  10,
-                       "description":  "Pyre  Renforce : brule les heretiques d'un feu purificateur."
+                       "description":  "Pyre  Renforce : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv03_Pyre-Renforce.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t3",
@@ -128,7 +135,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  8,
-                       "description":  "Aura de Ferveur  Renforce : protege par une foi inflexible."
+                       "description":  "Aura de Ferveur  Renforce : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv03_Aura-de-Ferveur-Renforce.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t3",
@@ -144,7 +152,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  6,
-                       "description":  "Cauterisation Sacree  Renforce : soigne un allie par la ferveur purificatrice."
+                       "description":  "Cauterisation Sacree  Renforce : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv03_Cauterisation-Sacree-Renforce.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t4",
@@ -160,7 +169,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Chatiment Ardent  Affute : brule les heretiques d'un feu purificateur."
+                       "description":  "Chatiment Ardent  Affute : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv04_Chatiment-Ardent-Affute.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t4",
@@ -176,7 +186,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Serment Inquisiteur  Affute : protege par une foi inflexible."
+                       "description":  "Serment Inquisiteur  Affute : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv04_Serment-Inquisiteur-Affute.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t4",
@@ -192,7 +203,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Ferveur de Vie  Affute : soigne un allie par la ferveur purificatrice."
+                       "description":  "Ferveur de Vie  Affute : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv04_Ferveur-de-Vie-Affute.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t5",
@@ -208,7 +220,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Auto-da-fe  Brutal : brule les heretiques d'un feu purificateur."
+                       "description":  "Auto-da-fe  Brutal : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv05_Auto-da-fe-Brutal.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t5",
@@ -224,7 +237,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Egide de Conviction  Brutal : protege par une foi inflexible."
+                       "description":  "Egide de Conviction  Brutal : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv05_Egide-de-Conviction-Brutal.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t5",
@@ -240,7 +254,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Redemption  Brutal : soigne un allie par la ferveur purificatrice."
+                       "description":  "Redemption  Brutal : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv05_Redemption-Brutal.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t6",
@@ -256,7 +271,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Purification Totale  Vorace : brule les heretiques d'un feu purificateur."
+                       "description":  "Purification Totale  Vorace : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv06_Purification-Totale-Vorace.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t6",
@@ -272,7 +288,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Volonte Indomptable  Vorace : protege par une foi inflexible."
+                       "description":  "Volonte Indomptable  Vorace : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv06_Volonte-Indomptable-Vorace.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t6",
@@ -288,7 +305,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Salut Supreme  Vorace : soigne un allie par la ferveur purificatrice."
+                       "description":  "Salut Supreme  Vorace : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv06_Salut-Supreme-Vorace.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t7",
@@ -304,7 +322,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  11,
-                       "description":  "Flamme du Jugement  Implacable : brule les heretiques d'un feu purificateur."
+                       "description":  "Flamme du Jugement  Implacable : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv07_Flamme-du-Jugement-Implacable.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t7",
@@ -320,7 +339,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  9,
-                       "description":  "Foi de Fer  Implacable : protege par une foi inflexible."
+                       "description":  "Foi de Fer  Implacable : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv07_Foi-de-Fer-Implacable.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t7",
@@ -336,7 +356,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  7,
-                       "description":  "Mains Ardentes  Implacable : soigne un allie par la ferveur purificatrice."
+                       "description":  "Mains Ardentes  Implacable : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv07_Mains-Ardentes-Implacable.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t8",
@@ -352,7 +373,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Fer Rouge  Funeste : brule les heretiques d'un feu purificateur."
+                       "description":  "Fer Rouge  Funeste : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv08_Fer-Rouge-Funeste.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t8",
@@ -368,7 +390,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Garde Zelee  Funeste : protege par une foi inflexible."
+                       "description":  "Garde Zelee  Funeste : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv08_Garde-Zelee-Funeste.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t8",
@@ -384,7 +407,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Onction  Funeste : soigne un allie par la ferveur purificatrice."
+                       "description":  "Onction  Funeste : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv08_Onction-Funeste.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t9",
@@ -400,7 +424,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Pyre  Cruel : brule les heretiques d'un feu purificateur."
+                       "description":  "Pyre  Cruel : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv09_Pyre-Cruel.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t9",
@@ -416,7 +441,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Aura de Ferveur  Cruel : protege par une foi inflexible."
+                       "description":  "Aura de Ferveur  Cruel : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv09_Aura-de-Ferveur-Cruel.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t9",
@@ -432,7 +458,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Cauterisation Sacree  Cruel : soigne un allie par la ferveur purificatrice."
+                       "description":  "Cauterisation Sacree  Cruel : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv09_Cauterisation-Sacree-Cruel.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t10",
@@ -448,7 +475,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Chatiment Ardent  Sanglant : brule les heretiques d'un feu purificateur."
+                       "description":  "Chatiment Ardent  Sanglant : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv10_Chatiment-Ardent-Sanglant.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t10",
@@ -464,7 +492,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Serment Inquisiteur  Sanglant : protege par une foi inflexible."
+                       "description":  "Serment Inquisiteur  Sanglant : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv10_Serment-Inquisiteur-Sanglant.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t10",
@@ -480,7 +509,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Ferveur de Vie  Sanglant : soigne un allie par la ferveur purificatrice."
+                       "description":  "Ferveur de Vie  Sanglant : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv10_Ferveur-de-Vie-Sanglant.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t11",
@@ -496,7 +526,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  12,
-                       "description":  "Auto-da-fe  Devastateur : brule les heretiques d'un feu purificateur."
+                       "description":  "Auto-da-fe  Devastateur : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv11_Auto-da-fe-Devastateur.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t11",
@@ -512,7 +543,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  10,
-                       "description":  "Egide de Conviction  Devastateur : protege par une foi inflexible."
+                       "description":  "Egide de Conviction  Devastateur : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv11_Egide-de-Conviction-Devastateur.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t11",
@@ -528,7 +560,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  8,
-                       "description":  "Redemption  Devastateur : soigne un allie par la ferveur purificatrice."
+                       "description":  "Redemption  Devastateur : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv11_Redemption-Devastateur.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t12",
@@ -544,7 +577,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Purification Totale  Foudroyant : brule les heretiques d'un feu purificateur."
+                       "description":  "Purification Totale  Foudroyant : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv12_Purification-Totale-Foudroyant.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t12",
@@ -560,7 +594,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Volonte Indomptable  Foudroyant : protege par une foi inflexible."
+                       "description":  "Volonte Indomptable  Foudroyant : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv12_Volonte-Indomptable-Foudroyant.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t12",
@@ -576,7 +611,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Salut Supreme  Foudroyant : soigne un allie par la ferveur purificatrice."
+                       "description":  "Salut Supreme  Foudroyant : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv12_Salut-Supreme-Foudroyant.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t13",
@@ -592,7 +628,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Flamme du Jugement  Mortel : brule les heretiques d'un feu purificateur."
+                       "description":  "Flamme du Jugement  Mortel : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv13_Flamme-du-Jugement-Mortel.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t13",
@@ -608,7 +645,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Foi de Fer  Mortel : protege par une foi inflexible."
+                       "description":  "Foi de Fer  Mortel : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv13_Foi-de-Fer-Mortel.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t13",
@@ -624,7 +662,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Mains Ardentes  Mortel : soigne un allie par la ferveur purificatrice."
+                       "description":  "Mains Ardentes  Mortel : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv13_Mains-Ardentes-Mortel.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t14",
@@ -640,7 +679,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Fer Rouge  Inexorable : brule les heretiques d'un feu purificateur."
+                       "description":  "Fer Rouge  Inexorable : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv14_Fer-Rouge-Inexorable.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t14",
@@ -656,7 +696,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Garde Zelee  Inexorable : protege par une foi inflexible."
+                       "description":  "Garde Zelee  Inexorable : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv14_Garde-Zelee-Inexorable.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t14",
@@ -672,7 +713,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Onction  Inexorable : soigne un allie par la ferveur purificatrice."
+                       "description":  "Onction  Inexorable : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv14_Onction-Inexorable.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t15",
@@ -688,7 +730,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  13,
-                       "description":  "Pyre  Terrible : brule les heretiques d'un feu purificateur."
+                       "description":  "Pyre  Terrible : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv15_Pyre-Terrible.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t15",
@@ -704,7 +747,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  11,
-                       "description":  "Aura de Ferveur  Terrible : protege par une foi inflexible."
+                       "description":  "Aura de Ferveur  Terrible : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv15_Aura-de-Ferveur-Terrible.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t15",
@@ -720,7 +764,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  9,
-                       "description":  "Cauterisation Sacree  Terrible : soigne un allie par la ferveur purificatrice."
+                       "description":  "Cauterisation Sacree  Terrible : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv15_Cauterisation-Sacree-Terrible.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t16",
@@ -736,7 +781,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Chatiment Ardent  Souverain : brule les heretiques d'un feu purificateur."
+                       "description":  "Chatiment Ardent  Souverain : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv16_Chatiment-Ardent-Souverain.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t16",
@@ -752,7 +798,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Serment Inquisiteur  Souverain : protege par une foi inflexible."
+                       "description":  "Serment Inquisiteur  Souverain : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv16_Serment-Inquisiteur-Souverain.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t16",
@@ -768,7 +815,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Ferveur de Vie  Souverain : soigne un allie par la ferveur purificatrice."
+                       "description":  "Ferveur de Vie  Souverain : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv16_Ferveur-de-Vie-Souverain.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t17",
@@ -784,7 +832,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Auto-da-fe  Legendaire : brule les heretiques d'un feu purificateur."
+                       "description":  "Auto-da-fe  Legendaire : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv17_Auto-da-fe-Legendaire.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t17",
@@ -800,7 +849,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Egide de Conviction  Legendaire : protege par une foi inflexible."
+                       "description":  "Egide de Conviction  Legendaire : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv17_Egide-de-Conviction-Legendaire.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t17",
@@ -816,7 +866,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Redemption  Legendaire : soigne un allie par la ferveur purificatrice."
+                       "description":  "Redemption  Legendaire : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv17_Redemption-Legendaire.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t18",
@@ -832,7 +883,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Purification Totale  Cataclysmique : brule les heretiques d'un feu purificateur."
+                       "description":  "Purification Totale  Cataclysmique : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv18_Purification-Totale-Cataclysmique.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t18",
@@ -848,7 +900,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Volonte Indomptable  Cataclysmique : protege par une foi inflexible."
+                       "description":  "Volonte Indomptable  Cataclysmique : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv18_Volonte-Indomptable-Cataclysmique.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t18",
@@ -864,7 +917,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Salut Supreme  Cataclysmique : soigne un allie par la ferveur purificatrice."
+                       "description":  "Salut Supreme  Cataclysmique : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv18_Salut-Supreme-Cataclysmique.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t19",
@@ -880,7 +934,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  14,
-                       "description":  "Flamme du Jugement  Apocalyptique : brule les heretiques d'un feu purificateur."
+                       "description":  "Flamme du Jugement  Apocalyptique : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv19_Flamme-du-Jugement-Apocalyptique.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t19",
@@ -896,7 +951,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  12,
-                       "description":  "Foi de Fer  Apocalyptique : protege par une foi inflexible."
+                       "description":  "Foi de Fer  Apocalyptique : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv19_Foi-de-Fer-Apocalyptique.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t19",
@@ -912,7 +968,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  10,
-                       "description":  "Mains Ardentes  Apocalyptique : soigne un allie par la ferveur purificatrice."
+                       "description":  "Mains Ardentes  Apocalyptique : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv19_Mains-Ardentes-Apocalyptique.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t20",
@@ -928,7 +985,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Fer Rouge  Ultime : brule les heretiques d'un feu purificateur."
+                       "description":  "Fer Rouge  Ultime : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv20_Fer-Rouge-Ultime.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t20",
@@ -944,7 +1002,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Garde Zelee  Ultime : protege par une foi inflexible."
+                       "description":  "Garde Zelee  Ultime : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv20_Garde-Zelee-Ultime.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t20",
@@ -960,7 +1019,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Onction  Ultime : soigne un allie par la ferveur purificatrice."
+                       "description":  "Onction  Ultime : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv20_Onction-Ultime.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t21",
@@ -976,7 +1036,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Pyre  Maitrise 21 : brule les heretiques d'un feu purificateur."
+                       "description":  "Pyre  Maitrise 21 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv21_Pyre-Maitrise-21.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t21",
@@ -992,7 +1053,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Aura de Ferveur  Maitrise 21 : protege par une foi inflexible."
+                       "description":  "Aura de Ferveur  Maitrise 21 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv21_Aura-de-Ferveur-Maitrise-21.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t21",
@@ -1008,7 +1070,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Cauterisation Sacree  Maitrise 21 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Cauterisation Sacree  Maitrise 21 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv21_Cauterisation-Sacree-Maitrise-21.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t22",
@@ -1024,7 +1087,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Chatiment Ardent  Maitrise 22 : brule les heretiques d'un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 22 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv22_Chatiment-Ardent-Maitrise-22.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t22",
@@ -1040,7 +1104,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Serment Inquisiteur  Maitrise 22 : protege par une foi inflexible."
+                       "description":  "Serment Inquisiteur  Maitrise 22 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv22_Serment-Inquisiteur-Maitrise-22.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t22",
@@ -1056,7 +1121,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Ferveur de Vie  Maitrise 22 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Ferveur de Vie  Maitrise 22 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv22_Ferveur-de-Vie-Maitrise-22.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t23",
@@ -1072,7 +1138,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Auto-da-fe  Maitrise 23 : brule les heretiques d'un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 23 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv23_Auto-da-fe-Maitrise-23.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t23",
@@ -1088,7 +1155,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Egide de Conviction  Maitrise 23 : protege par une foi inflexible."
+                       "description":  "Egide de Conviction  Maitrise 23 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv23_Egide-de-Conviction-Maitrise-23.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t23",
@@ -1104,7 +1172,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Redemption  Maitrise 23 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Redemption  Maitrise 23 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv23_Redemption-Maitrise-23.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t24",
@@ -1120,7 +1189,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  15,
-                       "description":  "Purification Totale  Maitrise 24 : brule les heretiques d'un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 24 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv24_Purification-Totale-Maitrise-24.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t24",
@@ -1136,7 +1206,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  13,
-                       "description":  "Volonte Indomptable  Maitrise 24 : protege par une foi inflexible."
+                       "description":  "Volonte Indomptable  Maitrise 24 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv24_Volonte-Indomptable-Maitrise-24.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t24",
@@ -1152,7 +1223,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  11,
-                       "description":  "Salut Supreme  Maitrise 24 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Salut Supreme  Maitrise 24 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv24_Salut-Supreme-Maitrise-24.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t25",
@@ -1168,7 +1240,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Flamme du Jugement  Maitrise 25 : brule les heretiques d'un feu purificateur."
+                       "description":  "Flamme du Jugement  Maitrise 25 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv25_Flamme-du-Jugement-Maitrise-25.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t25",
@@ -1184,7 +1257,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Foi de Fer  Maitrise 25 : protege par une foi inflexible."
+                       "description":  "Foi de Fer  Maitrise 25 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv25_Foi-de-Fer-Maitrise-25.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t25",
@@ -1200,7 +1274,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Mains Ardentes  Maitrise 25 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Mains Ardentes  Maitrise 25 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv25_Mains-Ardentes-Maitrise-25.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t26",
@@ -1216,7 +1291,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Fer Rouge  Maitrise 26 : brule les heretiques d'un feu purificateur."
+                       "description":  "Fer Rouge  Maitrise 26 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv26_Fer-Rouge-Maitrise-26.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t26",
@@ -1232,7 +1308,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Garde Zelee  Maitrise 26 : protege par une foi inflexible."
+                       "description":  "Garde Zelee  Maitrise 26 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv26_Garde-Zelee-Maitrise-26.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t26",
@@ -1248,7 +1325,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Onction  Maitrise 26 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Onction  Maitrise 26 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv26_Onction-Maitrise-26.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t27",
@@ -1264,7 +1342,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Pyre  Maitrise 27 : brule les heretiques d'un feu purificateur."
+                       "description":  "Pyre  Maitrise 27 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv27_Pyre-Maitrise-27.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t27",
@@ -1280,7 +1359,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Aura de Ferveur  Maitrise 27 : protege par une foi inflexible."
+                       "description":  "Aura de Ferveur  Maitrise 27 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv27_Aura-de-Ferveur-Maitrise-27.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t27",
@@ -1296,7 +1376,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Cauterisation Sacree  Maitrise 27 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Cauterisation Sacree  Maitrise 27 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv27_Cauterisation-Sacree-Maitrise-27.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t28",
@@ -1312,7 +1393,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  16,
-                       "description":  "Chatiment Ardent  Maitrise 28 : brule les heretiques d'un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 28 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv28_Chatiment-Ardent-Maitrise-28.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t28",
@@ -1328,7 +1410,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  14,
-                       "description":  "Serment Inquisiteur  Maitrise 28 : protege par une foi inflexible."
+                       "description":  "Serment Inquisiteur  Maitrise 28 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv28_Serment-Inquisiteur-Maitrise-28.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t28",
@@ -1344,7 +1427,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  12,
-                       "description":  "Ferveur de Vie  Maitrise 28 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Ferveur de Vie  Maitrise 28 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv28_Ferveur-de-Vie-Maitrise-28.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t29",
@@ -1360,7 +1444,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Auto-da-fe  Maitrise 29 : brule les heretiques d'un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 29 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv29_Auto-da-fe-Maitrise-29.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t29",
@@ -1376,7 +1461,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Egide de Conviction  Maitrise 29 : protege par une foi inflexible."
+                       "description":  "Egide de Conviction  Maitrise 29 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv29_Egide-de-Conviction-Maitrise-29.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t29",
@@ -1392,7 +1478,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Redemption  Maitrise 29 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Redemption  Maitrise 29 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv29_Redemption-Maitrise-29.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t30",
@@ -1408,7 +1495,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Purification Totale  Maitrise 30 : brule les heretiques d'un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 30 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv30_Purification-Totale-Maitrise-30.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t30",
@@ -1424,7 +1512,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Volonte Indomptable  Maitrise 30 : protege par une foi inflexible."
+                       "description":  "Volonte Indomptable  Maitrise 30 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv30_Volonte-Indomptable-Maitrise-30.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t30",
@@ -1440,7 +1529,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Salut Supreme  Maitrise 30 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Salut Supreme  Maitrise 30 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv30_Salut-Supreme-Maitrise-30.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t31",
@@ -1456,7 +1546,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Flamme du Jugement  Maitrise 31 : brule les heretiques d'un feu purificateur."
+                       "description":  "Flamme du Jugement  Maitrise 31 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv31_Flamme-du-Jugement-Maitrise-31.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t31",
@@ -1472,7 +1563,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Foi de Fer  Maitrise 31 : protege par une foi inflexible."
+                       "description":  "Foi de Fer  Maitrise 31 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv31_Foi-de-Fer-Maitrise-31.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t31",
@@ -1488,7 +1580,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Mains Ardentes  Maitrise 31 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Mains Ardentes  Maitrise 31 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv31_Mains-Ardentes-Maitrise-31.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t32",
@@ -1504,7 +1597,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  17,
-                       "description":  "Fer Rouge  Maitrise 32 : brule les heretiques d'un feu purificateur."
+                       "description":  "Fer Rouge  Maitrise 32 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv32_Fer-Rouge-Maitrise-32.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t32",
@@ -1520,7 +1614,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  15,
-                       "description":  "Garde Zelee  Maitrise 32 : protege par une foi inflexible."
+                       "description":  "Garde Zelee  Maitrise 32 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv32_Garde-Zelee-Maitrise-32.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t32",
@@ -1536,7 +1631,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  13,
-                       "description":  "Onction  Maitrise 32 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Onction  Maitrise 32 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv32_Onction-Maitrise-32.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t33",
@@ -1552,7 +1648,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Pyre  Maitrise 33 : brule les heretiques d'un feu purificateur."
+                       "description":  "Pyre  Maitrise 33 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv33_Pyre-Maitrise-33.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t33",
@@ -1568,7 +1665,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Aura de Ferveur  Maitrise 33 : protege par une foi inflexible."
+                       "description":  "Aura de Ferveur  Maitrise 33 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv33_Aura-de-Ferveur-Maitrise-33.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t33",
@@ -1584,7 +1682,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Cauterisation Sacree  Maitrise 33 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Cauterisation Sacree  Maitrise 33 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv33_Cauterisation-Sacree-Maitrise-33.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t34",
@@ -1600,7 +1699,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Chatiment Ardent  Maitrise 34 : brule les heretiques d'un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 34 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv34_Chatiment-Ardent-Maitrise-34.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t34",
@@ -1616,7 +1716,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Serment Inquisiteur  Maitrise 34 : protege par une foi inflexible."
+                       "description":  "Serment Inquisiteur  Maitrise 34 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv34_Serment-Inquisiteur-Maitrise-34.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t34",
@@ -1632,7 +1733,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Ferveur de Vie  Maitrise 34 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Ferveur de Vie  Maitrise 34 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv34_Ferveur-de-Vie-Maitrise-34.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t35",
@@ -1648,7 +1750,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Auto-da-fe  Maitrise 35 : brule les heretiques d'un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 35 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv35_Auto-da-fe-Maitrise-35.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t35",
@@ -1664,7 +1767,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Egide de Conviction  Maitrise 35 : protege par une foi inflexible."
+                       "description":  "Egide de Conviction  Maitrise 35 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv35_Egide-de-Conviction-Maitrise-35.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t35",
@@ -1680,7 +1784,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Redemption  Maitrise 35 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Redemption  Maitrise 35 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv35_Redemption-Maitrise-35.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t36",
@@ -1696,7 +1801,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  18,
-                       "description":  "Purification Totale  Maitrise 36 : brule les heretiques d'un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 36 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv36_Purification-Totale-Maitrise-36.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t36",
@@ -1712,7 +1818,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  16,
-                       "description":  "Volonte Indomptable  Maitrise 36 : protege par une foi inflexible."
+                       "description":  "Volonte Indomptable  Maitrise 36 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv36_Volonte-Indomptable-Maitrise-36.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t36",
@@ -1728,7 +1835,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  14,
-                       "description":  "Salut Supreme  Maitrise 36 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Salut Supreme  Maitrise 36 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv36_Salut-Supreme-Maitrise-36.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t37",
@@ -1744,7 +1852,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Flamme du Jugement  Maitrise 37 : brule les heretiques d'un feu purificateur."
+                       "description":  "Flamme du Jugement  Maitrise 37 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv37_Flamme-du-Jugement-Maitrise-37.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t37",
@@ -1760,7 +1869,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Foi de Fer  Maitrise 37 : protege par une foi inflexible."
+                       "description":  "Foi de Fer  Maitrise 37 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv37_Foi-de-Fer-Maitrise-37.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t37",
@@ -1776,7 +1886,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Mains Ardentes  Maitrise 37 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Mains Ardentes  Maitrise 37 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv37_Mains-Ardentes-Maitrise-37.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t38",
@@ -1792,7 +1903,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Fer Rouge  Maitrise 38 : brule les heretiques d'un feu purificateur."
+                       "description":  "Fer Rouge  Maitrise 38 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv38_Fer-Rouge-Maitrise-38.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t38",
@@ -1808,7 +1920,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Garde Zelee  Maitrise 38 : protege par une foi inflexible."
+                       "description":  "Garde Zelee  Maitrise 38 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv38_Garde-Zelee-Maitrise-38.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t38",
@@ -1824,7 +1937,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Onction  Maitrise 38 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Onction  Maitrise 38 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv38_Onction-Maitrise-38.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t39",
@@ -1840,7 +1954,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Pyre  Maitrise 39 : brule les heretiques d'un feu purificateur."
+                       "description":  "Pyre  Maitrise 39 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv39_Pyre-Maitrise-39.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t39",
@@ -1856,7 +1971,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Aura de Ferveur  Maitrise 39 : protege par une foi inflexible."
+                       "description":  "Aura de Ferveur  Maitrise 39 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv39_Aura-de-Ferveur-Maitrise-39.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t39",
@@ -1872,7 +1988,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Cauterisation Sacree  Maitrise 39 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Cauterisation Sacree  Maitrise 39 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv39_Cauterisation-Sacree-Maitrise-39.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t40",
@@ -1888,7 +2005,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Chatiment Ardent  Maitrise 40 : brule les heretiques d'un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 40 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv40_Chatiment-Ardent-Maitrise-40.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t40",
@@ -1904,7 +2022,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Serment Inquisiteur  Maitrise 40 : protege par une foi inflexible."
+                       "description":  "Serment Inquisiteur  Maitrise 40 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv40_Serment-Inquisiteur-Maitrise-40.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t40",
@@ -1920,7 +2039,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Ferveur de Vie  Maitrise 40 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Ferveur de Vie  Maitrise 40 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv40_Ferveur-de-Vie-Maitrise-40.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t41",
@@ -1936,7 +2056,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  19,
-                       "description":  "Auto-da-fe  Maitrise 41 : brule les heretiques d'un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 41 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv41_Auto-da-fe-Maitrise-41.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t41",
@@ -1952,7 +2073,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  17,
-                       "description":  "Egide de Conviction  Maitrise 41 : protege par une foi inflexible."
+                       "description":  "Egide de Conviction  Maitrise 41 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv41_Egide-de-Conviction-Maitrise-41.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t41",
@@ -1968,7 +2090,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  15,
-                       "description":  "Redemption  Maitrise 41 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Redemption  Maitrise 41 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv41_Redemption-Maitrise-41.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t42",
@@ -1984,7 +2107,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Purification Totale  Maitrise 42 : brule les heretiques d'un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 42 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv42_Purification-Totale-Maitrise-42.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t42",
@@ -2000,7 +2124,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Volonte Indomptable  Maitrise 42 : protege par une foi inflexible."
+                       "description":  "Volonte Indomptable  Maitrise 42 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv42_Volonte-Indomptable-Maitrise-42.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t42",
@@ -2016,7 +2141,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Salut Supreme  Maitrise 42 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Salut Supreme  Maitrise 42 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv42_Salut-Supreme-Maitrise-42.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t43",
@@ -2032,7 +2158,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Flamme du Jugement  Maitrise 43 : brule les heretiques d'un feu purificateur."
+                       "description":  "Flamme du Jugement  Maitrise 43 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv43_Flamme-du-Jugement-Maitrise-43.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t43",
@@ -2048,7 +2175,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Foi de Fer  Maitrise 43 : protege par une foi inflexible."
+                       "description":  "Foi de Fer  Maitrise 43 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv43_Foi-de-Fer-Maitrise-43.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t43",
@@ -2064,7 +2192,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Mains Ardentes  Maitrise 43 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Mains Ardentes  Maitrise 43 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv43_Mains-Ardentes-Maitrise-43.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t44",
@@ -2080,7 +2209,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Fer Rouge  Maitrise 44 : brule les heretiques d'un feu purificateur."
+                       "description":  "Fer Rouge  Maitrise 44 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv44_Fer-Rouge-Maitrise-44.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t44",
@@ -2096,7 +2226,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Garde Zelee  Maitrise 44 : protege par une foi inflexible."
+                       "description":  "Garde Zelee  Maitrise 44 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv44_Garde-Zelee-Maitrise-44.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t44",
@@ -2112,7 +2243,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Onction  Maitrise 44 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Onction  Maitrise 44 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv44_Onction-Maitrise-44.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t45",
@@ -2128,7 +2260,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  20,
-                       "description":  "Pyre  Maitrise 45 : brule les heretiques d'un feu purificateur."
+                       "description":  "Pyre  Maitrise 45 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv45_Pyre-Maitrise-45.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t45",
@@ -2144,7 +2277,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  18,
-                       "description":  "Aura de Ferveur  Maitrise 45 : protege par une foi inflexible."
+                       "description":  "Aura de Ferveur  Maitrise 45 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv45_Aura-de-Ferveur-Maitrise-45.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t45",
@@ -2160,7 +2294,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  16,
-                       "description":  "Cauterisation Sacree  Maitrise 45 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Cauterisation Sacree  Maitrise 45 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv45_Cauterisation-Sacree-Maitrise-45.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t46",
@@ -2176,7 +2311,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Chatiment Ardent  Maitrise 46 : brule les heretiques d'un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 46 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv46_Chatiment-Ardent-Maitrise-46.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t46",
@@ -2192,7 +2328,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Serment Inquisiteur  Maitrise 46 : protege par une foi inflexible."
+                       "description":  "Serment Inquisiteur  Maitrise 46 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv46_Serment-Inquisiteur-Maitrise-46.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t46",
@@ -2208,7 +2345,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Ferveur de Vie  Maitrise 46 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Ferveur de Vie  Maitrise 46 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv46_Ferveur-de-Vie-Maitrise-46.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t47",
@@ -2224,7 +2362,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Auto-da-fe  Maitrise 47 : brule les heretiques d'un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 47 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv47_Auto-da-fe-Maitrise-47.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t47",
@@ -2240,7 +2379,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Egide de Conviction  Maitrise 47 : protege par une foi inflexible."
+                       "description":  "Egide de Conviction  Maitrise 47 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv47_Egide-de-Conviction-Maitrise-47.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t47",
@@ -2256,7 +2396,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Redemption  Maitrise 47 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Redemption  Maitrise 47 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv47_Redemption-Maitrise-47.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t48",
@@ -2272,7 +2413,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Purification Totale  Maitrise 48 : brule les heretiques d'un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 48 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv48_Purification-Totale-Maitrise-48.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t48",
@@ -2288,7 +2430,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Volonte Indomptable  Maitrise 48 : protege par une foi inflexible."
+                       "description":  "Volonte Indomptable  Maitrise 48 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv48_Volonte-Indomptable-Maitrise-48.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t48",
@@ -2304,7 +2447,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Salut Supreme  Maitrise 48 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Salut Supreme  Maitrise 48 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv48_Salut-Supreme-Maitrise-48.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t49",
@@ -2320,7 +2464,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  21,
-                       "description":  "Flamme du Jugement  Maitrise 49 : brule les heretiques d'un feu purificateur."
+                       "description":  "Flamme du Jugement  Maitrise 49 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv49_Flamme-du-Jugement-Maitrise-49.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t49",
@@ -2336,7 +2481,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  19,
-                       "description":  "Foi de Fer  Maitrise 49 : protege par une foi inflexible."
+                       "description":  "Foi de Fer  Maitrise 49 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv49_Foi-de-Fer-Maitrise-49.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t49",
@@ -2352,7 +2498,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  17,
-                       "description":  "Mains Ardentes  Maitrise 49 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Mains Ardentes  Maitrise 49 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv49_Mains-Ardentes-Maitrise-49.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t50",
@@ -2368,7 +2515,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Fer Rouge  Maitrise 50 : brule les heretiques d'un feu purificateur."
+                       "description":  "Fer Rouge  Maitrise 50 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv50_Fer-Rouge-Maitrise-50.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t50",
@@ -2384,7 +2532,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Garde Zelee  Maitrise 50 : protege par une foi inflexible."
+                       "description":  "Garde Zelee  Maitrise 50 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv50_Garde-Zelee-Maitrise-50.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t50",
@@ -2400,7 +2549,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Onction  Maitrise 50 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Onction  Maitrise 50 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv50_Onction-Maitrise-50.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t51",
@@ -2416,7 +2566,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Pyre  Maitrise 51 : brule les heretiques d'un feu purificateur."
+                       "description":  "Pyre  Maitrise 51 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv51_Pyre-Maitrise-51.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t51",
@@ -2432,7 +2583,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Aura de Ferveur  Maitrise 51 : protege par une foi inflexible."
+                       "description":  "Aura de Ferveur  Maitrise 51 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv51_Aura-de-Ferveur-Maitrise-51.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t51",
@@ -2448,7 +2600,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Cauterisation Sacree  Maitrise 51 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Cauterisation Sacree  Maitrise 51 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv51_Cauterisation-Sacree-Maitrise-51.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t52",
@@ -2464,7 +2617,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Chatiment Ardent  Maitrise 52 : brule les heretiques d'un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 52 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv52_Chatiment-Ardent-Maitrise-52.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t52",
@@ -2480,7 +2634,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Serment Inquisiteur  Maitrise 52 : protege par une foi inflexible."
+                       "description":  "Serment Inquisiteur  Maitrise 52 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv52_Serment-Inquisiteur-Maitrise-52.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t52",
@@ -2496,7 +2651,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Ferveur de Vie  Maitrise 52 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Ferveur de Vie  Maitrise 52 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv52_Ferveur-de-Vie-Maitrise-52.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t53",
@@ -2512,7 +2668,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  22,
-                       "description":  "Auto-da-fe  Maitrise 53 : brule les heretiques d'un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 53 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv53_Auto-da-fe-Maitrise-53.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t53",
@@ -2528,7 +2685,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  20,
-                       "description":  "Egide de Conviction  Maitrise 53 : protege par une foi inflexible."
+                       "description":  "Egide de Conviction  Maitrise 53 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv53_Egide-de-Conviction-Maitrise-53.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t53",
@@ -2544,7 +2702,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  18,
-                       "description":  "Redemption  Maitrise 53 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Redemption  Maitrise 53 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv53_Redemption-Maitrise-53.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t54",
@@ -2560,7 +2719,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Purification Totale  Maitrise 54 : brule les heretiques d'un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 54 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv54_Purification-Totale-Maitrise-54.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t54",
@@ -2576,7 +2736,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Volonte Indomptable  Maitrise 54 : protege par une foi inflexible."
+                       "description":  "Volonte Indomptable  Maitrise 54 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv54_Volonte-Indomptable-Maitrise-54.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t54",
@@ -2592,7 +2753,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Salut Supreme  Maitrise 54 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Salut Supreme  Maitrise 54 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv54_Salut-Supreme-Maitrise-54.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t55",
@@ -2608,7 +2770,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Flamme du Jugement  Maitrise 55 : brule les heretiques d'un feu purificateur."
+                       "description":  "Flamme du Jugement  Maitrise 55 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv55_Flamme-du-Jugement-Maitrise-55.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t55",
@@ -2624,7 +2787,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Foi de Fer  Maitrise 55 : protege par une foi inflexible."
+                       "description":  "Foi de Fer  Maitrise 55 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv55_Foi-de-Fer-Maitrise-55.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t55",
@@ -2640,7 +2804,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Mains Ardentes  Maitrise 55 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Mains Ardentes  Maitrise 55 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv55_Mains-Ardentes-Maitrise-55.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t56",
@@ -2656,7 +2821,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Fer Rouge  Maitrise 56 : brule les heretiques d'un feu purificateur."
+                       "description":  "Fer Rouge  Maitrise 56 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv56_Fer-Rouge-Maitrise-56.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t56",
@@ -2672,7 +2838,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Garde Zelee  Maitrise 56 : protege par une foi inflexible."
+                       "description":  "Garde Zelee  Maitrise 56 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv56_Garde-Zelee-Maitrise-56.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t56",
@@ -2688,7 +2855,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Onction  Maitrise 56 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Onction  Maitrise 56 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv56_Onction-Maitrise-56.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t57",
@@ -2704,7 +2872,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  23,
-                       "description":  "Pyre  Maitrise 57 : brule les heretiques d'un feu purificateur."
+                       "description":  "Pyre  Maitrise 57 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv57_Pyre-Maitrise-57.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t57",
@@ -2720,7 +2889,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  21,
-                       "description":  "Aura de Ferveur  Maitrise 57 : protege par une foi inflexible."
+                       "description":  "Aura de Ferveur  Maitrise 57 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv57_Aura-de-Ferveur-Maitrise-57.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t57",
@@ -2736,7 +2906,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  19,
-                       "description":  "Cauterisation Sacree  Maitrise 57 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Cauterisation Sacree  Maitrise 57 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv57_Cauterisation-Sacree-Maitrise-57.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t58",
@@ -2752,7 +2923,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Chatiment Ardent  Maitrise 58 : brule les heretiques d'un feu purificateur."
+                       "description":  "Chatiment Ardent  Maitrise 58 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv58_Chatiment-Ardent-Maitrise-58.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t58",
@@ -2768,7 +2940,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Serment Inquisiteur  Maitrise 58 : protege par une foi inflexible."
+                       "description":  "Serment Inquisiteur  Maitrise 58 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv58_Serment-Inquisiteur-Maitrise-58.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t58",
@@ -2784,7 +2957,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Ferveur de Vie  Maitrise 58 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Ferveur de Vie  Maitrise 58 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv58_Ferveur-de-Vie-Maitrise-58.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t59",
@@ -2800,7 +2974,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Auto-da-fe  Maitrise 59 : brule les heretiques d'un feu purificateur."
+                       "description":  "Auto-da-fe  Maitrise 59 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv59_Auto-da-fe-Maitrise-59.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t59",
@@ -2816,7 +2991,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Egide de Conviction  Maitrise 59 : protege par une foi inflexible."
+                       "description":  "Egide de Conviction  Maitrise 59 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv59_Egide-de-Conviction-Maitrise-59.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t59",
@@ -2832,7 +3008,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Redemption  Maitrise 59 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Redemption  Maitrise 59 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv59_Redemption-Maitrise-59.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_aoe_t60",
@@ -2848,7 +3025,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  10000,
                        "resourceCostPercent":  24,
-                       "description":  "Purification Totale  Maitrise 60 : brule les heretiques d'un feu purificateur."
+                       "description":  "Purification Totale  Maitrise 60 : brule les heretiques d'un feu purificateur.",
+                       "iconFile":  "Inquisiteur_Zone_Niv60_Purification-Totale-Maitrise-60.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_def_t60",
@@ -2864,7 +3042,8 @@
                        "castTimeMs":  0,
                        "cooldownMs":  18000,
                        "resourceCostPercent":  22,
-                       "description":  "Volonte Indomptable  Maitrise 60 : protege par une foi inflexible."
+                       "description":  "Volonte Indomptable  Maitrise 60 : protege par une foi inflexible.",
+                       "iconFile":  "Inquisiteur_Defense_Niv60_Volonte-Indomptable-Maitrise-60.png"
                    },
                    {
                        "id":  "inquisiteur_hospitalier_single_t60",
@@ -2880,7 +3059,8 @@
                        "castTimeMs":  1000,
                        "cooldownMs":  3000,
                        "resourceCostPercent":  20,
-                       "description":  "Salut Supreme  Maitrise 60 : soigne un allie par la ferveur purificatrice."
+                       "description":  "Salut Supreme  Maitrise 60 : soigne un allie par la ferveur purificatrice.",
+                       "iconFile":  "Inquisiteur_Unitaire_Niv60_Salut-Supreme-Maitrise-60.png"
                    }
                ]
 }

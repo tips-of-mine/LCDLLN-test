@@ -39,9 +39,12 @@ $MAP = [ordered]@{
   "demoniste"=$id_Demoniste; "tourmenteur"="Tourmenteur";
   "sorcier_sang"=$id_SorcierSang; "gardien_ecailles"=$id_GardienEcailles; "brise_roc"="Brise-roc";
   "dragonnier"="Dragonnier"; "menthats"="menthats"; "pretre_lune_noire"="class_black_moon_priest";
-  "pretre_jugement"="Paladin"; "pretre_grace"=$id_Pretre; "inquisiteur_hospitalier"=$id_Inquisiteur;
+  "pretre_jugement"="class_priest_judgment"; "pretre_grace"="class_priest_grace"; "inquisiteur_hospitalier"=$id_Inquisiteur;
   "inquisiteur_chatieur"="Paladin"
 }
+# Note : depuis la reference _42_, les 2 types de pretre sont des arbres dedies
+# (class_priest_grace / class_priest_judgment) ; l'ancien fallback "Paladre"/"Pretre"
+# (_41_) est remplace. $id_Pretre n'est plus utilise pour le mapping.
 
 # Translittere accents -> ASCII (compat parseur maison + Windlass).
 function To-Ascii([string]$s) {
@@ -111,6 +114,10 @@ foreach ($classId in $MAP.Keys) {
       cooldownMs = [int]$cooldown
       resourceCostPercent = [int]$cost
       description = To-Ascii $sk.description
+      # Nom de fichier d'icone (relatif a icons/skills/<classId>/). Fourni tel quel
+      # par la reference (deja ASCII) ; le client construit le chemin complet et
+      # retombe sur le libelle texte si le fichier est absent. "" si non fourni.
+      iconFile = if ($sk.icon_filename) { [string]$sk.icon_filename } else { "" }
     })
   }
 

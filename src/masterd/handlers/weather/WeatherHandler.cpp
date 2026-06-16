@@ -47,7 +47,7 @@ namespace engine::server
 		// Init RNG depuis steady_clock (deterministic-ish per-boot, suffisant V1).
 		m_rng.seed(static_cast<std::mt19937::result_type>(NowMs()));
 
-		// Zone 1 : Stormwind Plains — climat tempere (Clear/Rain/Storm).
+		// Zone 1 : Plaines Venteuses — climat tempere (Clear/Rain/Storm).
 		{
 			ZoneWeatherProfile p;
 			p.zoneId           = kZoneStormwindPlains;
@@ -59,10 +59,10 @@ namespace engine::server
 			p.pSandstorm = 0.0f;
 			p.pFog       = 0.0f;
 			m_manager.RegisterZone(p);
-			m_zoneNames[kZoneStormwindPlains] = "Stormwind Plains";
+			m_zoneNames[kZoneStormwindPlains] = "Plaines Venteuses";
 		}
 
-		// Zone 2 : Frozen Tundra — climat polaire (Clear/Snow/Fog).
+		// Zone 2 : Toundra Gelee — climat polaire (Clear/Snow/Fog).
 		{
 			ZoneWeatherProfile p;
 			p.zoneId           = kZoneFrozenTundra;
@@ -74,10 +74,10 @@ namespace engine::server
 			p.pSandstorm = 0.0f;
 			p.pFog       = 0.1f;
 			m_manager.RegisterZone(p);
-			m_zoneNames[kZoneFrozenTundra] = "Frozen Tundra";
+			m_zoneNames[kZoneFrozenTundra] = "Toundra Gelee";
 		}
 
-		// Zone 3 : Tanaris Desert — climat aride (Clear/Sandstorm/Fog).
+		// Zone 3 : Desert Aride — climat aride (Clear/Sandstorm/Fog).
 		{
 			ZoneWeatherProfile p;
 			p.zoneId           = kZoneTanarisDesert;
@@ -89,14 +89,14 @@ namespace engine::server
 			p.pSandstorm = 0.4f;
 			p.pFog       = 0.1f;
 			m_manager.RegisterZone(p);
-			m_zoneNames[kZoneTanarisDesert] = "Tanaris Desert";
+			m_zoneNames[kZoneTanarisDesert] = "Desert Aride";
 		}
 
 		// Premier Tick pour donner des states initiales aux 3 zones.
 		m_manager.Tick(NowMs(), m_rng);
 
 		m_seeded = true;
-		LOG_INFO(Net, "[WeatherHandler] V1 zones seeded : Stormwind Plains, Frozen Tundra, Tanaris Desert");
+		LOG_INFO(Net, "[WeatherHandler] V1 zones seeded : Plaines Venteuses, Toundra Gelee, Desert Aride");
 	}
 
 	// -------------------------------------------------------------------------

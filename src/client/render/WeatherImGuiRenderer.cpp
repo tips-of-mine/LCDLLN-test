@@ -88,7 +88,7 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
-		if (ImGui::Begin("Weather##ln_weather_panel", nullptr, flags))
+		if (ImGui::Begin("Meteo##ln_weather_panel", nullptr, flags))
 		{
 			// Erreur transitoire (rouge).
 			if (!state.lastErrorText.empty())
@@ -154,7 +154,7 @@ namespace engine::render
 					}
 					else
 					{
-						if (ImGui::Button("Set Active##active", ImVec2(140.f, 24.f)))
+						if (ImGui::Button("Activer##active", ImVec2(140.f, 24.f)))
 							m_presenter->SetActiveZone(z.zoneId);
 					}
 

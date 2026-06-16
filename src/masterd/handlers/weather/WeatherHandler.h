@@ -23,9 +23,9 @@
 //
 // Store in-memory V1 :
 //   - 3 zones meteo seedees au boot :
-//       zoneId=1 "Stormwind Plains" pClear=0.6, pRain=0.3, pStorm=0.1
-//       zoneId=2 "Frozen Tundra"    pClear=0.4, pSnow=0.5, pFog=0.1
-//       zoneId=3 "Tanaris Desert"   pClear=0.5, pSandstorm=0.4, pFog=0.1
+//       zoneId=1 "Plaines Venteuses" pClear=0.6, pRain=0.3, pStorm=0.1
+//       zoneId=2 "Toundra Gelee"     pClear=0.4, pSnow=0.5, pFog=0.1
+//       zoneId=3 "Desert Aride"      pClear=0.5, pSandstorm=0.4, pFog=0.1
 //   - Subscriptions : map account_id -> set<zoneId>.
 //   - Reverse index : map zoneId -> set<account_id> (pour broadcast aux
 //     subscribers d'une zone).

@@ -340,6 +340,8 @@ add_library(engine_core
   # M100.17 — Easy Placement Tool (geometrie pure + outil ; format/commande header-only).
   src/world_editor/PlacementGeometry.cpp
   src/world_editor/PlacementTool.cpp
+  # Auberge editable (T1) — Catalogue d'assets (scan disque props).
+  src/world_editor/assets/AssetCatalog.cpp
   # M100.32 — Interactive Props (simulateur d'animation pur + panneau editeur ;
   # types/format/relais header-only ; payloads reseau partages).
   src/client/world/interactive/InteractiveSimulator.cpp
@@ -1026,6 +1028,11 @@ add_test(NAME export_zone_tests COMMAND export_zone_tests)
 add_executable(placement_tests src/world_editor/tests/PlacementTests.cpp)
 target_link_libraries(placement_tests PRIVATE engine_core)
 add_test(NAME placement_tests COMMAND placement_tests)
+
+# Auberge editable (T1) — Tests AssetCatalog (categorisation + scan disque).
+add_executable(asset_catalog_tests src/world_editor/assets/tests/AssetCatalogTests.cpp)
+target_link_libraries(asset_catalog_tests PRIVATE engine_core)
+add_test(NAME asset_catalog_tests COMMAND asset_catalog_tests)
 
 # M100.18 — Tests foliage (library JSON + Poisson-disk + regles + round-trip).
 add_executable(foliage_tests src/client/world/foliage/tests/FoliageTests.cpp)

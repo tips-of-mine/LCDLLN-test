@@ -874,6 +874,14 @@ namespace engine::editor
 				{
 					ImGui::SetTooltip("Export bloque : corrigez les erreurs de validation (panneau Validation).");
 				}
+				// Auberge T4 — Exporte l'auberge de demo (preset assemble) vers
+				// config.json > world.scenery + l'ancre respawn inn. Action portee
+				// par le shell (le menu Tools du shell est masque dans l'exe editeur).
+				if (ImGui::MenuItem("Exporter l'auberge (carte demo)", nullptr, false, m_shell != nullptr)
+					&& m_shell)
+				{
+					m_shell->ExportAubergeToConfig();
+				}
 				// Lot C vague 4 — Bouton de validation de zone dans le menu Fichier.
 				if (ImGui::MenuItem("Valider la zone", nullptr, false, m_shell != nullptr))
 				{

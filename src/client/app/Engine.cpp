@@ -9100,6 +9100,17 @@ namespace engine
 					&m_worldEditorShell->GetDungeonPortalDocument());
 				m_worldEditorShell->MutableSceneModel().Rebuild();
 
+				// Auberge T3 — foncteur de suppression d'instance de layout : le
+				// bouton Supprimer de l'Outliner route vers la session qui possede
+				// le WorldMapEditDocument (index = position au Rebuild de la frame).
+				m_worldEditorShell->SetLayoutInstanceRemover(
+					[this](uint32_t index)
+					{
+						if (m_worldEditorSession)
+							m_worldEditorSession->RemoveLayoutInstance(
+								static_cast<size_t>(index));
+					});
+
 				// Sous-projet 1, bloc D — foncteur d'écriture de transform consommé
 				// par l'Inspector (SetEntityTransformCommand). Écrit dans le
 				// document concret par EntityId.index (= position dans la liste

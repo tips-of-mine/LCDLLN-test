@@ -234,6 +234,19 @@ namespace engine::editor::world
 		/// Effet de bord : écriture disque + LOG_WARN par document en échec.
 		size_t SaveZoneDocuments(const engine::core::Config& cfg);
 
+		/// Auberge T4 — Exporte l'auberge de démo vers `config.json > world.scenery`
+		/// + l'ancre de respawn `inn` de `respawn_points.txt`. Charge le preset
+		/// `<contentRoot>/assets/structures/presets/auberge_demo.json`, l'aplatit
+		/// au pivot fixe (88,100) yaw 0, et splice les deux fichiers. ABANDONNE
+		/// sans rien écrire si le preset ne comporte pas exactement 13 éléments
+		/// (préserve la numérotation contiguë 310..322 de `world.scenery` —
+		/// `LoadScenery` exige des clés 0..count-1). Effet de bord : lecture +
+		/// écriture disque (config.json à la racine cwd, respawn dans le contenu) ;
+		/// logs EditorWorld. Doit être appelée en main thread. Publique : appelée
+		/// depuis le menu Fichier de `WorldEditorImGui` (le menu du shell est
+		/// masqué dans `lcdlln_world_editor.exe`).
+		void ExportAubergeToConfig();
+
 		/// Sous-projet 1 — Persiste sur disque les chunks terrain + splat dirty
 		/// (source de verite de la zone) sous `<paths.content>/chunks/`. Appelee
 		/// depuis Engine quand l'utilisateur sauvegarde la carte.
@@ -264,6 +277,20 @@ namespace engine::editor::world
 
 		/// Installe le foncteur d'écriture de transform (appelé par l'Engine).
 		void SetTransformWriter(TransformWriter w) { m_transformWriter = std::move(w); }
+
+		/// Auberge T3 — Type du foncteur de suppression d'une instance de layout
+		/// par index (position au Rebuild). L'Outliner reflète le document de
+		/// layout de la session Engine (WorldMapEditDocument), atteignable
+		/// seulement via ce foncteur que l'Engine installe (le shell n'a qu'un
+		/// pointeur const pour le binding du scene model).
+		using LayoutInstanceRemover = std::function<void(uint32_t)>;
+
+		/// Installe le foncteur de suppression d'instance de layout (appelé par
+		/// l'Engine, routé vers `WorldEditorSession::RemoveLayoutInstance`).
+		void SetLayoutInstanceRemover(LayoutInstanceRemover fn)
+		{
+			m_layoutInstanceRemover = std::move(fn);
+		}
 
 		/// M100.6 — Accès mutable à l'outil de sculpt. Le panneau Tool
 		/// Properties l'utilise pour lire/écrire les paramètres de brosse
@@ -394,17 +421,6 @@ namespace engine::editor::world
 		/// la visibilité de tous les panneaux à true.
 		void ResetLayoutToDefault();
 
-		/// Auberge T4 — Exporte l'auberge de démo vers `config.json > world.scenery`
-		/// + l'ancre de respawn `inn` de `respawn_points.txt`. Charge le preset
-		/// `<contentRoot>/assets/structures/presets/auberge_demo.json`, l'aplatit
-		/// au pivot fixe (88,100) yaw 0, et splice les deux fichiers. ABANDONNE
-		/// sans rien écrire si le preset ne comporte pas exactement 13 éléments
-		/// (préserve la numérotation contiguë 310..322 de `world.scenery` —
-		/// `LoadScenery` exige des clés 0..count-1). Effet de bord : lecture +
-		/// écriture disque (config.json à la racine cwd, respawn dans le contenu) ;
-		/// logs EditorWorld. Doit être appelée en main thread.
-		void ExportAubergeToConfig();
-
 		/// M100.4 — Helper privé : retourne le ScenePanel (index 0 dans
 		/// `m_panels`, ordre stable garanti par Init). Utilisé par
 		/// `HandleShortcut` pour brancher Numpad 1/3/7 → SetMode et par
@@ -418,6 +434,7 @@ namespace engine::editor::world
 		engine::editor::scene::EditorSelection  m_selection;  // sous-projet 1, bloc B
 		engine::editor::scene::EditorSceneModel m_sceneModel; // sous-projet 1, bloc B
 		TransformWriter m_transformWriter;                    // sous-projet 1, bloc D
+		LayoutInstanceRemover m_layoutInstanceRemover;        // Auberge T3 — suppression layout via session
 		TerrainSculptTool m_sculptTool;
 		TerrainStampTool m_stampTool;
 		SplatPaintTool m_splatPaintTool;

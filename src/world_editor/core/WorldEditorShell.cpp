@@ -328,27 +328,15 @@ namespace engine::editor::world
 				using K = engine::editor::scene::EntityKind;
 				if (id.kind == K::LayoutInstance)
 				{
-					// Résout l'instanceId depuis la position (index) dans le
-					// document de placement possédé par le shell — même convention
-					// d'indexation que `EditorSceneModel::Rebuild` (EntityId.index
-					// = position dans la liste source au moment du Rebuild). Pousse
-					// un DeleteCommand réversible (undo/redo).
-					//
-					// NOTE (concern câblage) : l'Outliner reflète actuellement le
-					// document de layout lié par l'Engine
-					// (`WorldEditorSession::Doc().layoutInstances`,
-					// type WorldMapEditLayoutInstance), distinct de ce
-					// `m_placementDoc` (props PropInstance). La suppression n'opère
-					// donc proprement que sur les props placés via `m_placementDoc`.
-					// L'unification des deux sources de layout relève d'un suivi.
-					const auto& props = m_placementDoc.All();
-					if (id.index < props.size())
-					{
-						const uint32_t instanceId = props[id.index].instanceId;
-						m_commandStack.Push(std::make_unique<DeleteCommand>(
-							m_placementDoc.Mutable(),
-							std::vector<uint32_t>{ instanceId }));
-					}
+					// L'Outliner reflète le document de layout de la session Engine
+					// (WorldMapEditDocument.layoutInstances), atteignable seulement
+					// via le foncteur installé par l'Engine — le shell n'a qu'un
+					// pointeur const pour le binding du scene model. Suppression
+					// directe par index (même convention que EditorSceneModel::
+					// Rebuild : EntityId.index = position au Rebuild de la frame).
+					// NB : non réversible à ce stade (pas de commande dédiée côté
+					// session) ; symétrique du chemin MeshInsert ci-dessous.
+					if (m_layoutInstanceRemover) m_layoutInstanceRemover(id.index);
 				}
 				else if (id.kind == K::MeshInsert)
 				{

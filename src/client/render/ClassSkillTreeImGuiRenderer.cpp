@@ -70,11 +70,16 @@ namespace engine::render
 				{
 					const std::string branchIconPath =
 						std::string("icons/skills/branches/") + branchId + ".png";
-					const uint64_t bTex = m_iconCache->GetOrLoad(branchIconPath);
+					float bw = 0.0f, bh = 0.0f;
+					const uint64_t bTex = m_iconCache->GetOrLoad(branchIconPath, &bw, &bh);
 					if (bTex != 0)
 					{
-						ImGui::Image(static_cast<ImTextureID>(bTex),
-							ImVec2(ImGui::GetContentRegionAvail().x, kHeaderH));
+						// Pleine largeur de colonne, hauteur PROPORTIONNELLE au ratio
+						// natif (evite l'etirement vertical). Repli sur kHeaderH si la
+						// taille native est inconnue.
+						const float drawW = ImGui::GetContentRegionAvail().x;
+						const float drawH = (bw > 0.0f) ? (drawW * bh / bw) : kHeaderH;
+						ImGui::Image(static_cast<ImTextureID>(bTex), ImVec2(drawW, drawH));
 						headerDrawn = true;
 					}
 				}

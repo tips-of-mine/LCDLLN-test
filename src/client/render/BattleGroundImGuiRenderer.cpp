@@ -23,8 +23,8 @@ namespace engine::render
 		{
 			switch (fac)
 			{
-			case 0: return "Alliance";
-			case 1: return "Horde";
+			case 0: return "Lumiere";
+			case 1: return "Lune Noire";
 			case 2: return "Egalite";
 			default: return "?";
 			}
@@ -74,7 +74,7 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
-		if (ImGui::Begin("BattleGround##ln_bg_panel", nullptr, flags))
+		if (ImGui::Begin("Champ de bataille (F9)##ln_bg_panel", nullptr, flags))
 		{
 			// Erreur transitoire (rouge).
 			if (!state.lastErrorText.empty())
@@ -149,12 +149,12 @@ namespace engine::render
 						m_presenter->RequestList();
 					if (state.listLoaded && state.battlegrounds.empty())
 					{
-						ImGui::TextWrapped("Aucun battleground disponible.");
+						ImGui::TextWrapped("Aucun champ de bataille disponible.");
 					}
 				}
 				else
 				{
-					ImGui::TextUnformatted("Battlegrounds :");
+					ImGui::TextUnformatted("Champs de bataille :");
 					ImGui::Separator();
 					const ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders
 						| ImGuiTableFlags_RowBg
@@ -162,7 +162,7 @@ namespace engine::render
 					if (ImGui::BeginTable("##ln_bg_list", 4, tableFlags, ImVec2(0.f, 280.f)))
 					{
 						ImGui::TableSetupColumn("Nom",       ImGuiTableColumnFlags_WidthStretch);
-						ImGui::TableSetupColumn("Map",       ImGuiTableColumnFlags_WidthFixed, 80.f);
+						ImGui::TableSetupColumn("Carte",     ImGuiTableColumnFlags_WidthFixed, 80.f);
 						ImGui::TableSetupColumn("Taille",    ImGuiTableColumnFlags_WidthFixed, 50.f);
 						ImGui::TableSetupColumn("Faction",   ImGuiTableColumnFlags_WidthFixed, 160.f);
 						ImGui::TableHeadersRow();
@@ -180,12 +180,12 @@ namespace engine::render
 							ImGui::TableSetColumnIndex(3);
 							ImGui::PushID(static_cast<int>(bg.bgType));
 							ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.20f, 0.40f, 0.70f, 1.f));
-							if (ImGui::Button("Alliance", ImVec2(70.f, 22.f)))
+							if (ImGui::Button("Lumiere", ImVec2(80.f, 22.f)))
 								m_presenter->Queue(bg.bgType, 0u);
 							ImGui::PopStyleColor();
 							ImGui::SameLine();
 							ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.70f, 0.20f, 0.20f, 1.f));
-							if (ImGui::Button("Horde", ImVec2(70.f, 22.f)))
+							if (ImGui::Button("Lune Noire", ImVec2(90.f, 22.f)))
 								m_presenter->Queue(bg.bgType, 1u);
 							ImGui::PopStyleColor();
 							ImGui::PopID();
@@ -228,7 +228,7 @@ namespace engine::render
 			| ImGuiWindowFlags_NoResize
 			| ImGuiWindowFlags_NoMove
 			| ImGuiWindowFlags_NoSavedSettings;
-		if (ImGui::Begin("Match BG en cours##ln_bg_active", nullptr, flags))
+		if (ImGui::Begin("Champ de bataille en cours##ln_bg_active", nullptr, flags))
 		{
 			char durBuf[16]{};
 			FormatMmSs(state.matchElapsedSec, durBuf, sizeof(durBuf));
@@ -243,13 +243,13 @@ namespace engine::render
 
 			// Scoreboard "Alliance X vs Horde Y" avec couleurs.
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.7f, 1.f, 1.f));
-			ImGui::Text("Alliance : %u (%u joueurs)",
+			ImGui::Text("Lumiere    : %u (%u joueurs)",
 				static_cast<unsigned>(state.allianceScore),
 				static_cast<unsigned>(state.activeAllianceCount));
 			ImGui::PopStyleColor();
 
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.4f, 0.4f, 1.f));
-			ImGui::Text("Horde    : %u (%u joueurs)",
+			ImGui::Text("Lune Noire : %u (%u joueurs)",
 				static_cast<unsigned>(state.hordeScore),
 				static_cast<unsigned>(state.activeHordeCount));
 			ImGui::PopStyleColor();

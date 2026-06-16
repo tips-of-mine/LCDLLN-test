@@ -88,7 +88,7 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
-		if (ImGui::Begin("Skill Book (B)##ln_skillbook_panel", nullptr, flags))
+		if (ImGui::Begin("Livre de competences (F2)##ln_skillbook_panel", nullptr, flags))
 		{
 			// Erreur transitoire (rouge) — non bloquante.
 			if (!state.lastErrorText.empty())
@@ -104,7 +104,7 @@ namespace engine::render
 				m_presenter->RequestList();
 			}
 			ImGui::SameLine();
-			ImGui::TextDisabled("(%zu skill%s)",
+			ImGui::TextDisabled("(%zu competence%s)",
 				state.skills.size(), state.skills.size() > 1 ? "s" : "");
 
 			ImGui::Separator();

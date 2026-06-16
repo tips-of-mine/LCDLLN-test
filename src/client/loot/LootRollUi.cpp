@@ -30,9 +30,9 @@ namespace engine::client
 	{
 		switch (choice)
 		{
-		case 0u: return "Pass";
-		case 1u: return "Greed";
-		case 2u: return "Need";
+		case 0u: return "Passer";
+		case 1u: return "Cupidite";
+		case 2u: return "Besoin";
 		default: return "?";
 		}
 	}

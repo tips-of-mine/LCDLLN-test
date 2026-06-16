@@ -66,7 +66,7 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
-		if (ImGui::Begin("Auction House (H)##ln_auction_panel", nullptr, flags))
+		if (ImGui::Begin("Hotel des ventes (F6)##ln_auction_panel", nullptr, flags))
 		{
 			// Erreur transitoire (rouge).
 			if (!state.lastErrorText.empty())
@@ -124,11 +124,11 @@ namespace engine::render
 						ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders
 						| ImGuiTableFlags_SizingStretchProp))
 					{
-						ImGui::TableSetupColumn("Item");
+						ImGui::TableSetupColumn("Objet");
 						ImGui::TableSetupColumn("Qte");
-						ImGui::TableSetupColumn("Owner");
-						ImGui::TableSetupColumn("Bid");
-						ImGui::TableSetupColumn("Buyout");
+						ImGui::TableSetupColumn("Vendeur");
+						ImGui::TableSetupColumn("Enchere");
+						ImGui::TableSetupColumn("Achat imm.");
 						ImGui::TableSetupColumn("Reste");
 						ImGui::TableSetupColumn("Action");
 						ImGui::TableHeadersRow();
@@ -180,7 +180,7 @@ namespace engine::render
 			// Bottom : formulaire Post.
 			ImGui::TextUnformatted("Poster une enchere :");
 			ImGui::SetNextItemWidth(120.f);
-			ImGui::InputInt("Item ID##post_item", &m_inputPostItem);
+			ImGui::InputInt("ID objet##post_item", &m_inputPostItem);
 			if (m_inputPostItem < 1) m_inputPostItem = 1;
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(80.f);
@@ -188,11 +188,11 @@ namespace engine::render
 			if (m_inputPostCount < 1) m_inputPostCount = 1;
 
 			ImGui::SetNextItemWidth(140.f);
-			ImGui::InputInt("Bid initial (copper)##post_startbid", &m_inputPostStartBid);
+			ImGui::InputInt("Enchere initiale (cuivre)##post_startbid", &m_inputPostStartBid);
 			if (m_inputPostStartBid < 1) m_inputPostStartBid = 1;
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(140.f);
-			ImGui::InputInt("Buyout (copper)##post_buyout", &m_inputPostBuyout);
+			ImGui::InputInt("Achat imm. (cuivre)##post_buyout", &m_inputPostBuyout);
 			if (m_inputPostBuyout < 0) m_inputPostBuyout = 0;
 
 			ImGui::TextUnformatted("Duree :");
@@ -333,14 +333,14 @@ namespace engine::render
 		if (state.lastExpirationWon)
 		{
 			const std::string finalAmt = engine::client::FormatCopper(state.lastExpirationFinalBid);
-			std::snprintf(buf, sizeof(buf), "Auction #%llu expiree -- vendue a %s pour %s",
+			std::snprintf(buf, sizeof(buf), "Enchere #%llu expiree -- vendue a %s pour %s",
 				static_cast<unsigned long long>(state.lastExpirationAuctionId),
 				state.lastExpirationWinnerName.empty() ? "?" : state.lastExpirationWinnerName.c_str(),
 				finalAmt.c_str());
 		}
 		else
 		{
-			std::snprintf(buf, sizeof(buf), "Auction #%llu expiree sans acheteur",
+			std::snprintf(buf, sizeof(buf), "Enchere #%llu expiree sans acheteur",
 				static_cast<unsigned long long>(state.lastExpirationAuctionId));
 		}
 		text = buf;

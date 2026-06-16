@@ -10401,8 +10401,18 @@ namespace engine
 				// foreground draw list ImGui, qu'ImGui composite TOUJOURS au-dessus des fenetres
 				// (dont le panneau du menu pause, qui est une simple fenetre). On suspend donc
 				// ces labels quand un menu modal est ouvert, sinon ils perforent le menu.
-				const bool modalMenuOpen = m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible;
-				if (!modalMenuOpen)
+				// Les plaques/labels monde (nameplates mobs, noms joueurs, butin) passent
+				// par le foreground draw list, donc AU-DESSUS des fenetres ImGui. On les
+				// masque des qu'un menu OU un panneau in-game est ouvert, sinon ils
+				// debordent par-dessus et rendent le panneau illisible (ex. le label
+				// « Sanglier des collines » au milieu de l'arbre de competences).
+				const bool worldOverlaysHidden = m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible
+					|| m_classSkillTreeVisible || m_grimoireVisible || m_skillBookVisible
+					|| m_auctionHouseVisible || m_arenaVisible || m_battleGroundVisible
+					|| m_outdoorPvpVisible || m_guildVisible || m_lootRollVisible
+					|| m_characterSheetVisible || m_craftingVisible || m_advancedCombatVisible
+					|| m_weatherVisible;
+				if (!worldOverlaysHidden)
 				for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
 				{
 					const InteractableEntity& e = m_interactables[ii];
@@ -10443,7 +10453,7 @@ namespace engine
 				// snapshot brut si l'etat lisse n'existe pas encore (graceful) ;
 				// le `+ 1.2` est calibre sur la hauteur d'avatar (`py - 0.9` = pieds,
 				// donc tete ~ `py + 0.9`, plaque au-dessus = `py + 1.2`).
-				if (!modalMenuOpen)
+				if (!worldOverlaysHidden)
 				{
 					const auto& remotes = m_uiModelBinding.GetModel().remoteEntities;
 					for (const engine::client::UIRemoteEntity& re : remotes)

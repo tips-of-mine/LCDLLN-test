@@ -28,6 +28,8 @@ namespace
 	{
 		REQUIRE(CategorizeAsset("Wall_Plaster_Straight.gltf") == AssetCategory::Wall);
 		REQUIRE(CategorizeAsset("Door_2_Round.gltf") == AssetCategory::Door);
+		REQUIRE(CategorizeAsset("DoorFrame_Flat_Brick.gltf") == AssetCategory::Door);
+		REQUIRE(CategorizeAsset("WindowShutters_Wide_Flat_Open.gltf") == AssetCategory::Window);
 		REQUIRE(CategorizeAsset("Roof_RoundTiles_6x8.gltf") == AssetCategory::Roof);
 		REQUIRE(CategorizeAsset("Table_Large.gltf") == AssetCategory::Furniture);
 		REQUIRE(CategorizeAsset("Barrel.gltf") == AssetCategory::Container);
@@ -56,7 +58,10 @@ namespace
 
 	void Test_Scan_MissingDir()
 	{
-		auto entries = ScanPropAssets("/nonexistent/dir/xyz", "meshes/props/");
+		namespace fs = std::filesystem;
+		const fs::path absent = fs::temp_directory_path() / "lcdlln_definitely_absent_xyz";
+		fs::remove_all(absent); // garantit l'absence
+		auto entries = ScanPropAssets(absent.string(), "meshes/props/");
 		REQUIRE(entries.empty());
 	}
 }

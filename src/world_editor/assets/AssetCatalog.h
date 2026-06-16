@@ -37,7 +37,7 @@ namespace engine::editor::world::assets
 	/// \return Chaîne statique (pas d'allocation), toujours valide.
 	const char* CategoryLabel(AssetCategory c);
 
-	/// Scanne récursivement \p absoluteDir à la recherche de fichiers .gltf,
+	/// Scanne (non récursif) \p absoluteDir à la recherche de fichiers .gltf,
 	/// construit un AssetEntry par fichier (catégorie + chemin relatif), puis
 	/// trie le résultat par (catégorie, nom) pour un affichage ordonné.
 	/// \param absoluteDir    Chemin absolu du répertoire à scanner (ex. "C:/data/meshes/props").

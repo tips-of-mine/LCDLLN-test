@@ -7,6 +7,7 @@
 #include "src/world_editor/PlacementDocument.h"
 #include "src/world_editor/structures/MoveGroupCommand.h"
 #include "src/world_editor/core/CommandStack.h"
+#include "src/world_editor/structures/SceneryExport.h"
 
 #include <cmath>
 #include <memory>
@@ -160,6 +161,63 @@ namespace
 		REQUIRE(doc.All().size() == 1);
 		REQUIRE(doc.All()[0].groupId == 0);
 	}
+
+	void Test_BuildSceneryEntries()
+	{
+		BuildingPreset p; p.id = "x";
+		BuildingPresetElement a; a.meshPath = "meshes/props/Floor_WoodDark.gltf";
+		a.offset = { 0, 0, 0 }; a.solid = false; a.collisionRadius = 0.0f;
+		BuildingPresetElement b; b.meshPath = "meshes/props/Wall_Plaster_Straight.gltf";
+		b.offset = { 2, 0, 0 }; b.yawDeg = 90.0f; b.solid = true; b.collisionRadius = 0.5f;
+		p.elements = { a, b };
+		auto entries = BuildSceneryEntries(p, 88.0f, 100.0f, 0.0f);
+		REQUIRE(entries.size() == 2);
+		if (entries.size() == 2)
+		{
+			REQUIRE(Near(entries[0].x, 88.0f) && Near(entries[0].z, 100.0f));
+			REQUIRE(entries[0].solid == false);
+			REQUIRE(Near(entries[1].x, 90.0f) && Near(entries[1].z, 100.0f));
+			REQUIRE(Near(entries[1].yawDeg, 90.0f) && entries[1].solid == true);
+		}
+	}
+
+	void Test_SpliceSceneryBlock()
+	{
+		const std::string cfg =
+			"  AVANT\n"
+			"  \"_comment_auberge\": \"x\",\n"
+			"  \"310\": { \"mesh\": \"vieux\" },\n"
+			"  \"_comment_auberge_end\": \"y\",\n"
+			"  APRES\n";
+		const std::string block =
+			"  \"_comment_auberge\": \"AUBERGE generee\",\n"
+			"  \"310\": { \"mesh\": \"neuf\" },\n";
+		std::string out, err;
+		REQUIRE(SpliceSceneryBlock(cfg, block, out, err));
+		REQUIRE(out.find("neuf") != std::string::npos);
+		REQUIRE(out.find("vieux") == std::string::npos);
+		REQUIRE(out.find("AVANT") != std::string::npos);
+		REQUIRE(out.find("APRES") != std::string::npos);
+		REQUIRE(out.find("_comment_auberge_end") != std::string::npos);
+
+		std::string out2, err2;
+		REQUIRE(!SpliceSceneryBlock("pas de sentinelle", block, out2, err2));
+	}
+
+	void Test_SpliceInnRespawn()
+	{
+		const std::string txt =
+			"# commentaire\n"
+			"0 graveyard 120.0 1.5 120.0\n"
+			"0 inn 88.0 1.5 100.0\n";
+		std::string out = SpliceInnRespawn(txt, 0, 90.0f, 105.0f);
+		REQUIRE(out.find("0 inn 90") != std::string::npos);
+		REQUIRE(out.find("0 inn 88.0") == std::string::npos);
+		REQUIRE(out.find("graveyard 120") != std::string::npos);
+		// Ajout si absent.
+		std::string out2 = SpliceInnRespawn("0 graveyard 1 1 1\n", 0, 5.0f, 6.0f);
+		REQUIRE(out2.find("0 inn 5") != std::string::npos);
+	}
 }
 
 int main()
@@ -169,6 +227,9 @@ int main()
 	Test_RotateYaw();
 	Test_Instantiate();
 	Test_Group_MoveAndRemove();
+	Test_BuildSceneryEntries();
+	Test_SpliceSceneryBlock();
+	Test_SpliceInnRespawn();
 	if (g_failed == 0) std::fprintf(stderr, "[OK] BuildingStructuresTests\n");
 	else std::fprintf(stderr, "[FAIL] BuildingStructuresTests: %d\n", g_failed);
 	return g_failed;

@@ -121,6 +121,10 @@ namespace engine::client
 			/// Teinte de peau (0 = claire, 1 = foncée), reçue via CHARACTER_LIST
 			/// (migration 0068). Consommée par Engine::EnterWorld -> SetAvatarSkinTone.
 			uint8_t skinColorIdx = 0;
+			/// Niveau du personnage (reçu via CHARACTER_LIST, affiché « niv. N » au
+			/// select). Consommé par Engine::EnterWorld pour l'arbre de compétences
+			/// (verrouillage des paliers + affichage), au lieu du 60 permissif.
+			uint32_t level = 1;
 		};
 
 		struct AudioSettingsCommand

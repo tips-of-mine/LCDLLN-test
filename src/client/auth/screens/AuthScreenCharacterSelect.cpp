@@ -94,6 +94,8 @@ namespace engine::client
 			m_pendingEnterWorld.gender        = chosen.gender;
 			// Teinte de peau (DB, migration 0068) via CHARACTER_LIST -> Engine.
 			m_pendingEnterWorld.skinColorIdx  = chosen.skin_color_idx;
+			// Niveau du perso (CHARACTER_LIST) -> Engine -> arbre de competences.
+			m_pendingEnterWorld.level         = chosen.level;
 		const bool nonZero = (chosen.spawn_x != 0.0f) || (chosen.spawn_y != 0.0f)
 			|| (chosen.spawn_z != 0.0f) || (chosen.spawn_yaw_deg != 0.0f)
 			|| (chosen.spawn_pitch_deg != 0.0f);

@@ -26,11 +26,9 @@ namespace engine::render
 		ImGui::SetNextWindowSize(ImVec2(panelW, panelH), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowBgAlpha(0.96f);
 
-		const std::string windowTitle = "Arbre de competences — "
-		    + (state.classId.empty() ? std::string("(aucune classe)") : state.classId)
-		    + "##ln_skilltree";
-
-		if (ImGui::Begin(windowTitle.c_str(), nullptr, ImGuiWindowFlags_NoCollapse))
+		// Titre sans la classe (elle est deja affichee dans la ligne « Classe : ... »
+		// ci-dessous -> evite le doublon). ##id stable pour ImGui.
+		if (ImGui::Begin("Arbre de competences##ln_skilltree", nullptr, ImGuiWindowFlags_NoCollapse))
 		{
 			ImGui::TextDisabled("Classe : %s   |   Niveau joueur : %u",
 			    state.classId.empty() ? "(inconnue)" : state.classId.c_str(),

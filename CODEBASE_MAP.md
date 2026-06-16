@@ -1031,6 +1031,42 @@ L'écran CharacterCreate expose désormais un combo des 6 races jouables.
 
 ---
 
+## 17bis. Auberge éditable — assemblage de structures (chantier 2026-06-16)
+
+Périmètre : éditeur monde + données + client (rendu via `world.scenery`). Aucun
+impact serveur tant que le couplage respawn DB (différé) n'est pas fait.
+
+Sous-systèmes (logique pure, liée `engine_core`, testée headless) :
+- `src/world_editor/assets/AssetCatalog.{h,cpp}` — scan disque `meshes/props/` +
+  catégorisation par préfixe de nom ; alimente `AssetBrowserPanel`. Tests :
+  `src/world_editor/assets/tests/AssetCatalogTests.cpp` (`asset_catalog_tests`).
+- `src/world_editor/structures/` — preset de bâtiment réutilisable :
+  - `BuildingPreset.h` (struct : éléments mesh + offsets relatifs + ancre spawn).
+  - `BuildingPresetIo.{h,cpp}` (parse/sérialise JSON, parseur maison).
+  - `BuildingInstantiate.{h,cpp}` (`InstantiatePreset` → `PropInstance[]`,
+    `SpawnAnchorWorld`, `RotateYaw`).
+  - `MoveGroupCommand.h` (déplacement réversible d'un groupe via `groupId`).
+  - `SceneryExport.{h,cpp}` (`BuildSceneryEntries`, `SerializeSceneryEntries`,
+    `SpliceSceneryBlock`, `SpliceInnRespawn` — export vers `config.json`
+    `world.scenery` + `respawn_points.txt`).
+  - Tests : `src/world_editor/structures/tests/BuildingStructuresTests.cpp`
+    (`building_structures_tests`).
+- `PropInstance` (`src/client/world/instances/PropInstances.h`) gagne `groupId` ;
+  `props.bin` passe en v2 (lecture v1 rétro-compatible).
+- Contenu : `game/data/assets/structures/presets/auberge_demo.json` (13 éléments
+  = plage `world.scenery` 310..322). Bloc auberge de `config.json` encadré par
+  les sentinelles `_comment_auberge` / `_comment_auberge_end` (régénérable).
+- Contrainte : `Engine::LoadScenery` exige des clés `world.scenery` contiguës
+  `0..count-1` ; l'export refuse un preset ≠ 13 éléments en v1 (sinon renumérotation
+  du bloc cimetière requise).
+
+Suivis connus (intégration éditeur, à finir + valider en éditeur/jeu) :
+- La suppression Outliner cible le `PlacementDocument` du shell, distinct du
+  `WorldMapEditDocument` de la session Engine qui alimente les lignes
+  « LayoutInstance » — unification à faire.
+- L'action « Exporter l'auberge » vit dans le menu Tools du shell, masqué dans
+  `lcdlln_world_editor.exe` (menu français `WorldEditorImGui`) — à surfacer.
+
 ## 17. Éditeur monde — création/chargement de carte (chantier 2026-05-04)
 
 Périmètre : `lcdlln_world_editor.exe` uniquement. Aucun impact client jeu /

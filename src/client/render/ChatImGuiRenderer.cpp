@@ -183,7 +183,7 @@ namespace engine::render
 				// Format epure demande : canal Say (defaut) -> pas de tag, separateur
 				// « - » : "HH:MM - sender: text". Autres canaux -> tag entre crochets
 				// (l'info canal reste, en plus de la couleur).
-				if (msg.channel == ChatChannel::Say)
+				if (msg.channel == engine::net::ChatChannel::Say)
 				{
 					ImGui::TextColored(color, "%s - %s: %s",
 						hhmm.c_str(), msg.sender.c_str(), msg.text.c_str());

@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-namespace engine::client { class ClassSkillTreeUiPresenter; }
+namespace engine::client { class ClassSkillTreeUiPresenter; class SkillIconCache; }
 
 namespace engine::render
 {
@@ -16,6 +16,10 @@ namespace engine::render
 
 		/// Enregistre le presenter dont l'état sera lu à chaque Render().
 		void SetPresenter(engine::client::ClassSkillTreeUiPresenter* presenter) { m_presenter = presenter; }
+
+		/// Enregistre le cache d'icônes (optionnel). Si non fourni ou icône absente,
+		/// le palier affiche le nom texte seul.
+		void SetIconCache(engine::client::SkillIconCache* cache) { m_iconCache = cache; }
 
 		/// Active ou désactive l'affichage de la fenêtre.
 		void SetEnabled(bool on) { m_enabled = on; }
@@ -34,6 +38,7 @@ namespace engine::render
 
 	private:
 		engine::client::ClassSkillTreeUiPresenter* m_presenter = nullptr;
+		engine::client::SkillIconCache* m_iconCache = nullptr;
 		bool     m_enabled   = false;
 		uint32_t m_viewportW = 0;
 		uint32_t m_viewportH = 0;

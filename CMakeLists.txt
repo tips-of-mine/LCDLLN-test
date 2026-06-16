@@ -616,6 +616,7 @@ add_library(engine_core
   src/client/render/SkillBookImGuiRenderer.cpp
   src/client/render/GrimoireImGuiRenderer.cpp
   src/client/render/ClassSkillTreeImGuiRenderer.cpp
+  src/client/render/SkillIconCache.cpp
   src/client/render/EditorHubImGuiRenderer.cpp
   src/client/render/DecalSystem.cpp
   src/client/render/DecalPass.cpp

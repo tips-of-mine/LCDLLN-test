@@ -1,5 +1,6 @@
 #include "src/client/render/ClassSkillTreeImGuiRenderer.h"
 #include "src/client/skills/ClassSkillTreeUi.h"
+#include "src/client/render/SkillIconCache.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -67,6 +68,20 @@ namespace engine::render
 					for (const engine::client::SkillTreeCell& cell : branch->tiers)
 					{
 						ImGui::PushID(cell.skill.skillId.c_str());
+
+						// Icône du palier (si disponible) à gauche du libellé. Repli
+						// silencieux sur le texte seul si pas de cache / pas d'icône.
+						if (m_iconCache != nullptr && !cell.skill.iconFile.empty() && !state.classId.empty())
+						{
+							const std::string iconPath =
+								"icons/skills/" + state.classId + "/" + cell.skill.iconFile;
+							const uint64_t texId = m_iconCache->GetOrLoad(iconPath);
+							if (texId != 0)
+							{
+								ImGui::Image(static_cast<ImTextureID>(texId), ImVec2(28.0f, 28.0f));
+								ImGui::SameLine();
+							}
+						}
 
 						// En-tête de palier : numéro de tier + nom du skill.
 						ImGui::Text("Tier %u — %s", cell.skill.tier, cell.skill.name.c_str());

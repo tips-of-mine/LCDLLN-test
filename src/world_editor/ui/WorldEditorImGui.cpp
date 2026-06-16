@@ -450,13 +450,18 @@ namespace engine::editor
 		}
 		const uint32_t imgCount = std::max(2u, swapchainImageCount);
 
+		// 1024 sets : la fonte ImGui + l'apercu de race + les icones de competences
+		// (arbre/Grimoire/barre via SkillIconCache) allouent chacun 1 descripteur.
+		// L'arbre peut afficher ~180 icones a la fois ; 64 (valeur initiale) etait
+		// trop juste. SkillIconCache plafonne a 900 (< 1024) pour rester sous cette
+		// borne. FREE_DESCRIPTOR_SET_BIT conserve pour RemoveTexture.
 		VkDescriptorPoolSize poolSizes[] = {
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 64 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024 },
 		};
 		VkDescriptorPoolCreateInfo poolInfo{};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-		poolInfo.maxSets = 64;
+		poolInfo.maxSets = 1024;
 		poolInfo.poolSizeCount = static_cast<uint32_t>(std::size(poolSizes));
 		poolInfo.pPoolSizes = poolSizes;
 		if (vkCreateDescriptorPool(deviceContext.GetDevice(), &poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)

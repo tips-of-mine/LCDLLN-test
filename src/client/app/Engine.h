@@ -35,6 +35,7 @@
 #include "src/client/combat/BuffBarPresenter.h"
 #include "src/client/gameplay/SpellKitCatalog.h"
 #include "src/client/gameplay/ClassSkillCatalog.h"
+#include "src/client/render/SkillIconCache.h"
 #include "src/client/skills/ClassSkillTreeUi.h"
 // Combat SP4 — FX visuels d'auras (halo aux pieds des entités).
 #include "src/client/combat/AuraFXSystem.h"
@@ -1233,6 +1234,9 @@ namespace engine
 		/// SP-D — Renderer ImGui du panneau arbre de compétences.
 		/// Forward-déclaré dans Engine.h (ClassSkillTreeImGuiRenderer).
 		std::unique_ptr<engine::render::ClassSkillTreeImGuiRenderer> m_classSkillTreeImGui;
+		/// SP-E - Cache d'icones de competences (PNG -> texture ImGui), partage par
+		/// l'arbre, le Grimoire et la barre d'action. Init apres ImGui, Shutdown avant.
+		engine::client::SkillIconCache m_skillIconCache;
 		/// CMANGOS.21 (Phase 5.21 step 3+4) — Presenter de la fenetre Arena.
 		/// Recoit les responses opcodes 121/123/125/128 et les push notifications
 		/// 126/129 via le push handler du master ; fire-and-forget des requetes

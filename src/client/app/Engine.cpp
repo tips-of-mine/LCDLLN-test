@@ -7479,6 +7479,9 @@ namespace engine
 			// -> access violation a la fermeture (SEH 0xC0000005). Idempotent :
 			// le 2e Shutdown plus bas est neutralise par la garde m_initialized.
 			if (m_worldEditorShell) m_worldEditorShell->Shutdown();
+			// SP-E — Libère les descripteurs d'icônes (ImGui_ImplVulkan_RemoveTexture)
+			// AVANT la destruction du backend ImGui Vulkan ci-dessous.
+			m_skillIconCache.Shutdown();
 			if (m_worldEditorImGui)
 			{
 				m_worldEditorImGui->DetachPlatformWindow(m_window);
@@ -8212,6 +8215,14 @@ namespace engine
 				// Visible quand m_classSkillTreeVisible (touche Y ou /arbre / /competences).
 				m_classSkillTreeImGui = std::make_unique<engine::render::ClassSkillTreeImGuiRenderer>();
 				m_classSkillTreeImGui->SetPresenter(&m_classSkillTreeUi);
+				// SP-E — Cache d'icônes de compétences (PNG icons/skills/<classId>/...).
+				// Init APRÈS ImGui_ImplVulkan_Init (assuré par m_worldEditorImGui->Init
+				// plus haut). Idempotent. Partagé avec le Grimoire / la barre d'action.
+				if (!m_skillIconCache.IsInitialized())
+				{
+					(void)m_skillIconCache.Init(m_vkDeviceContext.GetDevice(), &m_assetRegistry);
+				}
+				m_classSkillTreeImGui->SetIconCache(&m_skillIconCache);
 				// CMANGOS.21 (Phase 5.21 step 3+4) — Renderer ImGui du panneau
 				// Arena. Visible uniquement quand m_arenaVisible (toggle via
 				// /arena ou touche A). Le popup proposal s'affiche aussi quand
@@ -11142,13 +11153,31 @@ namespace engine
 								IM_COL32(14, 16, 22, 215), 6.0f);
 							fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
 								ready ? IM_COL32(200, 180, 90, 220) : IM_COL32(90, 90, 96, 200), 6.0f, 0, 2.0f);
-							// Numéro de touche (haut-gauche) + nom du sort (bas, tronqué).
+							// SP-E — icône du sort en fond du slot (compétences de classe).
+							// Repli sur le nom texte si pas d'icône (kit profil, fichier absent).
+							bool slotHasIcon = false;
+							if (!spell.iconPath.empty())
+							{
+								const uint64_t slotTexId = m_skillIconCache.GetOrLoad(spell.iconPath);
+								if (slotTexId != 0)
+								{
+									const float pad = 3.0f;
+									fg->AddImage(static_cast<ImTextureID>(slotTexId),
+										ImVec2(sx0 + pad, barY + pad),
+										ImVec2(sx0 + slotSize - pad, barY + slotSize - pad));
+									slotHasIcon = true;
+								}
+							}
+							// Numéro de touche (haut-gauche) + nom du sort (bas, tronqué) si pas d'icône.
 							const std::string keyLabel = KeyGlyph(slotKey);
 							fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f), IM_COL32(255, 230, 150, 230), keyLabel.c_str());
-							std::string spellLabel = spell.name.substr(0, 9);
-							fg->AddText(ImVec2(sx0 + 4.0f, barY + slotSize - 18.0f),
-								ready ? IM_COL32(225, 225, 225, 255) : IM_COL32(140, 140, 140, 255),
-								spellLabel.c_str());
+							if (!slotHasIcon)
+							{
+								std::string spellLabel = spell.name.substr(0, 9);
+								fg->AddText(ImVec2(sx0 + 4.0f, barY + slotSize - 18.0f),
+									ready ? IM_COL32(225, 225, 225, 255) : IM_COL32(140, 140, 140, 255),
+									spellLabel.c_str());
+							}
 							// Voile + décompte pendant le cooldown affiché.
 							if (cooldownRemaining > 0.0f)
 							{

@@ -13406,7 +13406,7 @@ namespace engine
 					scaleMat(pt.localScale);
 				const engine::math::Mat4 worldM = groupM * localM;
 				BuildPropFromMeshMatrix(pt.gltfRelativePath, worldM,
-					/*interactableIndex*/ -1, /*solid*/ true, /*collisionRadius*/ 0.0f);
+					/*interactableIndex*/ -1, pt.solid, pt.collisionRadius);
 				++partCount;
 			}
 		}

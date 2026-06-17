@@ -30,6 +30,8 @@ namespace engine::world::instances
 		engine::math::Vec3 localPosition{ 0.0f, 0.0f, 0.0f }; // offset local (m)
 		engine::math::Vec3 localEulerDeg{ 0.0f, 0.0f, 0.0f }; // rotation XYZ locale (degrés)
 		float              localScale = 1.0f;           // échelle uniforme locale
+		bool               solid = true;                // pose un cylindre de collision
+		float              collisionRadius = 0.0f;      // 0 => rayon auto (empreinte XZ)
 	};
 
 	/// Un bâtiment = grappe de pièces + transform de groupe. `guid` 0 = invalide.
@@ -106,6 +108,8 @@ namespace engine::world::instances
 				detail::PutVec3(b, pt.localPosition);
 				detail::PutVec3(b, pt.localEulerDeg);
 				detail::PutF32(b, pt.localScale);
+				b.push_back(pt.solid ? 1u : 0u); // flags : bit0 = solid
+				detail::PutF32(b, pt.collisionRadius);
 			}
 		}
 		return b;
@@ -150,6 +154,9 @@ namespace engine::world::instances
 				if (!detail::GetVec3(bytes, p, pt.localPosition))   { err = "buildings.bin: part pos tronquee"; return false; }
 				if (!detail::GetVec3(bytes, p, pt.localEulerDeg))   { err = "buildings.bin: part rot tronquee"; return false; }
 				if (!detail::GetF32(bytes, p, pt.localScale))       { err = "buildings.bin: part scale tronque"; return false; }
+				if (p + 1 > bytes.size())                           { err = "buildings.bin: part flags tronque"; return false; }
+				pt.solid = (bytes[p] & 0x01u) != 0u; ++p;
+				if (!detail::GetF32(bytes, p, pt.collisionRadius))  { err = "buildings.bin: part collision tronque"; return false; }
 				bd.parts.push_back(std::move(pt));
 			}
 			out.push_back(std::move(bd));

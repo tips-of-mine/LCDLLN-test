@@ -46,6 +46,8 @@ namespace
 			wall.localPosition = { -2.0f, 0.0f, 0.0f };
 			wall.localEulerDeg = { 0.0f, 90.0f, 0.0f };
 			wall.localScale = 1.0f;
+			wall.solid = true;
+			wall.collisionRadius = 1.5f;
 			b.parts.push_back(wall);
 		}
 		{
@@ -54,6 +56,7 @@ namespace
 			roof.localPosition = { 0.0f, 3.5f, 0.0f }; // empilé en hauteur
 			roof.localEulerDeg = { 0.0f, 0.0f, 0.0f };
 			roof.localScale = 1.25f;
+			roof.solid = false; // décoratif, pas de collision
 			b.parts.push_back(roof);
 		}
 		return b;
@@ -88,8 +91,11 @@ namespace
 		REQUIRE(dst[0].parts.size() == 2u);
 		REQUIRE(dst[0].parts[0].gltfRelativePath == "meshes/props/Wall_Plaster_Straight.gltf");
 		REQUIRE(dst[0].parts[0].localEulerDeg.y == 90.0f);
+		REQUIRE(dst[0].parts[0].solid == true);
+		REQUIRE(dst[0].parts[0].collisionRadius == 1.5f);
 		REQUIRE(dst[0].parts[1].localPosition.y == 3.5f);
 		REQUIRE(dst[0].parts[1].localScale == 1.25f);
+		REQUIRE(dst[0].parts[1].solid == false);
 
 		REQUIRE(dst[1].guid == 99u);
 		REQUIRE(dst[1].displayName == "Cabane vide");

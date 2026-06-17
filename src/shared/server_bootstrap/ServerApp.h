@@ -1086,6 +1086,8 @@ namespace engine::server
 			float positionMetersX = 0.0f;
 			float positionMetersY = 0.0f;
 			float positionMetersZ = 0.0f;
+			std::string ownerFactionId;       ///< Faction propriétaire du cimetière (vide/"-" = neutre partout). Ignoré pour les auberges.
+			float       neutralRadiusM = 0.0f; ///< Rayon (m) dans lequel le cimetière est neutre (toutes factions). Défaut = globals.graveyard_default_faction_neutral_radius_m.
 		};
 		std::vector<RespawnPointDefinition> m_respawnPoints;
 		std::vector<DynamicEventState> m_dynamicEvents;

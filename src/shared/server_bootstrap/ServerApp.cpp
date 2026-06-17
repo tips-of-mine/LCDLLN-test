@@ -20,6 +20,9 @@
 // Combat SP2 — résolveur d'attaque pur (précision / critique, RNG injecté).
 #include "src/shardd/gameplay/combat/AttackResolver.h"
 
+// Respawn faction-aware — règles d'éligibilité cimetière par zone (header-only, partagé).
+#include "src/shared/world/RespawnRules.h"
+
 // TA.4 — pont position : compilé uniquement pour la cible shard Linux (SHARD_POSITION_DB),
 // pas pour le build Windows (ServerApp.cpp est partagé). Macro dédié plutôt qu'ENGINE_HAS_MYSQL
 // pour ne PAS basculer les autres systèmes gameplay du shard en mode DB.
@@ -1926,7 +1929,15 @@ namespace engine::server
 	{
 		m_respawnPoints.clear();
 
-		const std::string relativePath = m_config.GetString("server.respawn_points_path", "respawn/respawn_points.txt");
+		// Respawn points de la zone active (game/data/zones/<zone>/respawn_points.txt) si
+		// world.active_zone est défini, sinon repli sur l'ancien chemin global (rétro-compat).
+		const std::string activeZone = m_config.GetString("world.active_zone", "");
+		const std::string relativePath = activeZone.empty()
+			? m_config.GetString("server.respawn_points_path", "respawn/respawn_points.txt")
+			: ("zones/" + activeZone + "/respawn_points.txt");
+		// Rayon neutre par défaut (surchargé par colonne par cimetière). Ex-clé globals.
+		const float defaultNeutralRadiusM = static_cast<float>(
+			m_config.GetDouble("globals.graveyard_default_faction_neutral_radius_m", 500.0));
 		const std::string pointsText = engine::platform::FileSystem::ReadAllTextContent(m_config, relativePath);
 		if (pointsText.empty())
 		{
@@ -1960,6 +1971,22 @@ namespace engine::server
 			{
 				LOG_WARN(Net, "[ServerApp] Respawn points: type '{}' inconnu ligne {} (attendu graveyard|inn)", typeToken, lineNumber);
 				continue;
+			}
+			// Colonnes optionnelles (cimetières) : faction propriétaire puis rayon neutre.
+			// Absentes → cimetière neutre (faction vide) avec le rayon par défaut.
+			point.neutralRadiusM = defaultNeutralRadiusM;
+			std::string factionToken;
+			if (lineStream >> factionToken)
+			{
+				if (factionToken != "-")
+				{
+					point.ownerFactionId = factionToken;
+				}
+				float radiusToken = 0.0f;
+				if (lineStream >> radiusToken)
+				{
+					point.neutralRadiusM = radiusToken;
+				}
 			}
 			m_respawnPoints.push_back(point);
 		}
@@ -3142,6 +3169,16 @@ namespace engine::server
 				const float dxr = point.positionMetersX - client->positionMetersX;
 				const float dzr = point.positionMetersZ - client->positionMetersZ;
 				const float distSqR = dxr * dxr + dzr * dzr;
+				// Cimetière : filtre faction (rayon neutre). Auberge : aucune restriction.
+				if (destination == kRespawnDestinationGraveyard)
+				{
+					const float dist = std::sqrt(distSqR);
+					if (!engine::world::IsGraveyardEligibleForRespawn(
+							dist, point.neutralRadiusM, point.ownerFactionId, client->factionId))
+					{
+						continue;
+					}
+				}
 				if (distSqR < bestDistSq)
 				{
 					bestDistSq = distSqR;

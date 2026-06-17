@@ -21,5 +21,10 @@
       "flood_max_messages": 5,
       "max_tracked_accounts": 4096
     }
+  },
+  "globals": {
+    "default_locale": 0,
+    "fallback_locale": 0,
+    "graveyard_default_faction_neutral_radius_m": 500.0
   }
 }

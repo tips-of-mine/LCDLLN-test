@@ -1,0 +1,12 @@
+# Points de réapparition de la zone Feyhin (validation v12, wire v13).
+# Format : zone_id type x y z [faction] [neutral_radius_m]
+#   - type ∈ {graveyard, inn}
+#   - faction (cimetières uniquement) : id de la faction propriétaire ; '-' ou absent = neutre partout.
+#   - neutral_radius_m : rayon (m) dans lequel le cimetière est NEUTRE (toutes factions) ;
+#     au-delà, il n'est éligible que pour les joueurs de sa faction. Absent = défaut serveur
+#     (globals.graveyard_default_faction_neutral_radius_m).
+# Le serveur choisit le cimetière ÉLIGIBLE (cf. rayon neutre de faction) le PLUS PROCHE du
+# lieu de mort ; s'il n'y en a aucun, repli sur l'auberge / le point d'entrée en monde.
+# Cimetière neutre ('-') par défaut : comportement identique à avant (tout le monde y respawn).
+0 graveyard 120.0 1.5 120.0 -
+0 inn 88.0 1.5 100.0

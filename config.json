@@ -252,11 +252,6 @@
             "auction_talk_target": "auction"
         }
     },
-    "globals": {
-        "default_locale": 0,
-        "fallback_locale": 0,
-        "graveyard_default_faction_neutral_radius_m": 500.0
-    },
     "game": {
         "worldclock": {
             "_comment": "CLIENT : intervalle de re-synchro de l'horloge serveur. epoch/timescale/lunar_period sont AUTORITE master (cf. config serveur). Les valeurs locales world.day_night.* ne servent que de fallback solo / serveur muet.",

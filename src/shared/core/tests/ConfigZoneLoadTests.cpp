@@ -65,6 +65,24 @@ namespace
 		REQUIRE(Config::LoadActiveZone(cfg, root.string()) == false);
 		std::error_code ec; std::filesystem::remove_all(root, ec);
 	}
+
+	// Garantie centrale : scenery.json optionnel — zone.json seul suffit à renvoyer true.
+	void Test_MissingSceneryStillReturnsTrue()
+	{
+		const auto root = TempRoot();
+		const auto zoneDir = root / "zones" / "feyhin";
+		std::filesystem::create_directories(zoneDir);
+		{
+			std::ofstream(zoneDir / "zone.json")
+				<< R"({ "world": { "default_spawn": { "x": 5.0 } } })";
+			// scenery.json délibérément absent
+		}
+		Config cfg;
+		cfg.SetValue("world.active_zone", Config::Value{ std::string("feyhin") });
+		REQUIRE(Config::LoadActiveZone(cfg, root.string()) == true);
+		REQUIRE(cfg.GetDouble("world.default_spawn.x", 0.0) == 5.0);
+		std::error_code ec; std::filesystem::remove_all(root, ec);
+	}
 }
 
 int main()
@@ -72,6 +90,7 @@ int main()
 	Test_LoadsZoneAndScenery();
 	Test_MissingZoneReturnsFalse();
 	Test_EmptyActiveZoneReturnsFalse();
+	Test_MissingSceneryStillReturnsTrue();
 	if (g_failed == 0) { std::printf("[PASS] ConfigZoneLoadTests\n"); return 0; }
 	std::printf("[FAIL] ConfigZoneLoadTests: %d failure(s)\n", g_failed);
 	return 1;

@@ -162,19 +162,19 @@ int main(int argc, char** argv)
 	LOG_DEBUG(Server, "[MAIN_SRV] avant config load");
 	engine::core::Config config = engine::core::Config::Load("config.json", argc, argv);
 
-	// Config serveur dédiée (db/accounts/chat) : jamais livrée au client. Montée en
-	// Docker sur master ET shard (un seul fichier source → plus de duplication du bloc db).
-	if (!engine::core::Config::LoadServerConfig(config, "config"))
-	{
-		LOG_WARN(Server, "[master] config/server.config.json absent : repli sur clés inline éventuelles");
-	}
-
 	g_net_stats = ParseNetStatsFlag(argc, argv);
 
 	// M45 — Construction centralisée des LogSettings (filtres bitmask, fichiers spécialisés
 	// GM/Char/DBError/Packet/Custom, couleurs console, seuil fichier distinct).
 	engine::core::LogSettings logSettings = engine::core::BuildLogSettingsFromConfig(config, "engine.log");
 	engine::core::Log::Init(logSettings);
+
+	// Config serveur dédiée (db/accounts/chat) : jamais livrée au client. Montée en
+	// Docker sur master ET shard (un seul fichier source → plus de duplication du bloc db).
+	if (!engine::core::Config::LoadServerConfig(config, "config"))
+	{
+		LOG_WARN(Server, "[master] config/server.config.json absent : repli sur clés inline éventuelles");
+	}
 
 	LOG_INFO(Net, "[ServerMain] Linux TCP server starting...");
 

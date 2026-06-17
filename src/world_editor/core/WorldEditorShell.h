@@ -2,6 +2,7 @@
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/buildings/BuildingDocument.h"
+#include "src/client/world/instances/BuildingTemplateLibrary.h"
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"
@@ -428,6 +429,7 @@ namespace engine::editor::world
 		volumes::dungeons::DungeonPortalDocument m_dungeonPortalDoc;  // M100.43
 		volumes::dungeons::DungeonPortalTool     m_dungeonPortalTool; // M100.43
 		buildings::BuildingDocument m_buildingDoc;                    // Auberge éditable
+		engine::world::instances::BuildingTemplateLibrary m_buildingLibrary; // bibliothèque de types
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

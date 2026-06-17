@@ -573,6 +573,7 @@ add_library(engine_core
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
+  src/world_editor/panels/BuildingEditorPanel.cpp
   src/world_editor/panels/OutlinerPanel.cpp
   src/world_editor/panels/ConsolePanel.cpp
   src/world_editor/panels/ToolPropertiesPanel.cpp

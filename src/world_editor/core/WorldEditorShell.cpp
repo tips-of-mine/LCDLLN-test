@@ -4,6 +4,7 @@
 #include "src/world_editor/panels/ScenePanel.h"
 #include "src/world_editor/panels/InspectorPanel.h"
 #include "src/world_editor/panels/AssetBrowserPanel.h"
+#include "src/world_editor/panels/BuildingEditorPanel.h"
 #include "src/world_editor/panels/OutlinerPanel.h"
 #include "src/world_editor/panels/ConsolePanel.h"
 #include "src/world_editor/panels/ToolPropertiesPanel.h"
@@ -86,7 +87,13 @@ namespace engine::editor::world
 		// foncteur d'écriture de transform (installé par l'Engine).
 		m_panels.emplace_back(std::make_unique<panels::InspectorPanel>(
 			&m_sceneModel, &m_selection, &m_commandStack, &m_transformWriter));
-		m_panels.emplace_back(std::make_unique<panels::AssetBrowserPanel>());
+		// Asset Browser : charge `meshes/props/catalog.json` ; sa sélection
+		// alimente le Building Editor. On garde un pointeur brut (la propriété
+		// reste à m_panels) pour l'injecter plus bas.
+		auto assetBrowser = std::make_unique<panels::AssetBrowserPanel>();
+		assetBrowser->SetContentRoot(cfg.GetString("paths.content", "game/data"));
+		panels::AssetBrowserPanel* assetBrowserPtr = assetBrowser.get();
+		m_panels.emplace_back(std::move(assetBrowser));
 		// Sous-projet 1, bloc C — Outliner réel : reçoit le modèle de scène + la
 		// sélection partagés (possédés par le Shell). L'Engine lie le modèle aux
 		// documents et le reconstruit chaque frame.
@@ -113,6 +120,17 @@ namespace engine::editor::world
 		// les indices fixes (Scene=0, ToolProperties=5). Caché par défaut,
 		// toggle via le menu View. Partage la pile undo/redo du shell.
 		m_panels.emplace_back(std::make_unique<RoutineGraphPanel>(&m_commandStack));
+		// Auberge éditable — Building Editor : compose des variantes (sauvées
+		// dans buildings/templates/<type>.json) et pose des références sur la
+		// carte (buildings.bin). AJOUTÉ EN FIN (n'affecte pas les indices fixes).
+		{
+			auto buildingEditor = std::make_unique<panels::BuildingEditorPanel>();
+			buildingEditor->SetAssetBrowser(assetBrowserPtr);
+			buildingEditor->SetLibrary(&m_buildingLibrary);
+			buildingEditor->SetDocument(&m_buildingDoc);
+			buildingEditor->SetContentRoot(cfg.GetString("paths.content", "game/data"));
+			m_panels.emplace_back(std::move(buildingEditor));
+		}
 
 #if defined(_WIN32)
 		std::error_code ec;
@@ -241,6 +259,15 @@ namespace engine::editor::world
 		{
 			LOG_WARN(EditorWorld, "[WorldEditorShell] Building LoadFromDisk failed: {}",
 				buildingErr);
+		}
+		// Bibliothèque des types de bâtiments (buildings/templates/*.json) :
+		// alimente le Building Editor (création de variantes) et la résolution.
+		std::string buildingLibErr;
+		if (!m_buildingLibrary.LoadFromContent(
+				cfg.GetString("paths.content", "game/data"), buildingLibErr)
+			&& !buildingLibErr.empty())
+		{
+			LOG_WARN(EditorWorld, "[WorldEditorShell] Building library: {}", buildingLibErr);
 		}
 
 		// M100.45 — Phase 12 « Accessibilité ». Charge les préférences

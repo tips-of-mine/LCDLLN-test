@@ -1,4 +1,5 @@
 {
+  "_comment": "PROD/DOCKER : config serveur partagée, montée :ro sur master ET shard (/app/config/server.config.json). Source unique du bloc db → plus de duplication entre master.config.json et shard.config.json. Les clés de tuning db (delay_thread_*, cache) prennent leurs valeurs par défaut ici (présentes côté dev dans config/server.config.json).",
   "db": {
     "host": "mysql",
     "port": 3306,

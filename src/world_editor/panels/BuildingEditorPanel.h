@@ -35,8 +35,23 @@ namespace engine::editor::world::panels
 		void SetDocument(engine::editor::world::buildings::BuildingDocument* d) { m_doc = d; }
 		void SetContentRoot(std::string root) { m_contentRoot = std::move(root); }
 
+		// --- Aperçu 3D live (consommé par Engine en mode éditeur) -----------
+		/// Pièces du brouillon en cours de composition (espace local).
+		const std::vector<engine::world::instances::BuildingPart>& DraftParts() const { return m_draftParts; }
+		/// Origine monde où prévisualiser le brouillon = position de pose courante.
+		float PreviewX() const { return m_placePos[0]; }
+		float PreviewZ() const { return m_placePos[1]; }
+		float PreviewYaw() const { return m_placeYaw; }
+		float PreviewScale() const { return m_placeScale; }
+		/// True une fois si l'aperçu doit être reconstruit (brouillon/doc changé,
+		/// ou bouton « Rafraîchir »). Remet le flag à false (edge-triggered).
+		bool ConsumePreviewDirty() { const bool d = m_previewDirty; m_previewDirty = false; return d; }
+		/// Force un rebuild de l'aperçu au prochain tick (ex: zone chargée).
+		void MarkPreviewDirty() { m_previewDirty = true; }
+
 	private:
 		bool m_visible = true;
+		bool m_previewDirty = true; // aperçu 3D à (re)construire
 
 		AssetBrowserPanel* m_assetBrowser = nullptr;
 		engine::world::instances::BuildingTemplateLibrary* m_library = nullptr;
@@ -57,8 +72,10 @@ namespace engine::editor::world::panels
 		bool  m_newSolid       = true;
 		float m_newCollision   = 0.0f;
 
-		// Paramètres de pose sur la carte (référence).
-		float m_placePos[2]    = { 88.0f, 100.0f }; // X, Z monde
+		// Paramètres de pose sur la carte (référence). Défaut (0,0) = origine,
+		// visible d'emblée dans la vue éditeur ; l'aperçu 3D du brouillon s'y
+		// affiche (déplaçable via ces champs + « Rafraichir l'apercu »).
+		float m_placePos[2]    = { 0.0f, 0.0f }; // X, Z monde
 		float m_placeYaw       = 0.0f;
 		float m_placeScale     = 1.0f;
 

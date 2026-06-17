@@ -3,6 +3,7 @@
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
 #include "src/client/world/instances/Buildings.h"
 #include "src/client/world/instances/BuildingTemplateLibrary.h"
+#include "src/world_editor/panels/BuildingEditorPanel.h"
 #include "src/shared/core/Log.h"
 #include "src/world_editor/ui/EditorMode.h"
 #include "src/world_editor/ui/WorldEditorImGui.h"
@@ -8350,6 +8351,10 @@ namespace engine
 				m_worldEditorShell->ResetForZoneChange(
 					engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
 				m_worldEditorShell->LoadZoneDocuments(m_cfg);
+				// Force la reconstruction de l'aperçu 3D des bâtiments de la
+				// nouvelle zone (placements chargés depuis buildings.bin).
+				if (auto* bp = m_worldEditorShell->GetBuildingEditorPanel())
+					bp->MarkPreviewDirty();
 			}
 			if (m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
 			{
@@ -9165,6 +9170,9 @@ namespace engine
 						}
 					});
 			}
+			// Aperçu 3D live des bâtiments (brouillon + placements) dans la vue
+			// éditeur. Reconstruit m_props seulement si l'aperçu est « sale ».
+			SyncEditorBuildingPreview();
 			m_worldEditorShell->RenderFrame();
 		}
 #endif
@@ -13430,6 +13438,69 @@ namespace engine
 		}
 		LOG_INFO(Render, "[Buildings] {} placement(s), {} resolu(s), {} piece(s) rendue(s)",
 			static_cast<int>(placements.size()), resolved, partCount);
+	}
+
+	void Engine::SyncEditorBuildingPreview()
+	{
+		if (!m_worldEditorShell || !m_pipeline) return;
+		engine::editor::world::panels::BuildingEditorPanel* panel =
+			m_worldEditorShell->GetBuildingEditorPanel();
+		if (!panel) return;
+		// Edge-triggered : ne reconstruit qu'après un changement (évite la
+		// création de ressources GPU à chaque frame).
+		if (!panel->ConsumePreviewDirty()) return;
+
+		// En mode éditeur, m_props ne sert QU'À cet aperçu : on le reconstruit.
+		m_props.clear();
+		m_worldCollider.ClearCylinders();
+
+		const engine::world::instances::BuildingTemplateLibrary& library =
+			m_worldEditorShell->GetBuildingLibrary();
+
+		constexpr float kDeg2Rad = 3.14159265f / 180.f;
+		auto scaleMat = [](float s) {
+			engine::math::Mat4 m = engine::math::Mat4::Identity();
+			m.m[0] = s; m.m[5] = s; m.m[10] = s; return m;
+		};
+		auto rotZ = [](float r) {
+			engine::math::Mat4 m = engine::math::Mat4::Identity();
+			const float c = std::cos(r), s = std::sin(r);
+			m.m[0] = c; m.m[1] = s; m.m[4] = -s; m.m[5] = c; return m;
+		};
+		auto emitParts = [&](const std::vector<engine::world::instances::BuildingPart>& parts,
+			float ox, float oz, float oyaw, float oscale)
+		{
+			const float groundY = m_terrainCollider.GroundHeightAt(ox, oz);
+			const engine::math::Mat4 groupM =
+				engine::math::Mat4::Translate(engine::math::Vec3{ ox, groundY, oz }) *
+				engine::math::Mat4::RotateY(oyaw * kDeg2Rad) * scaleMat(oscale);
+			for (const auto& pt : parts)
+			{
+				if (pt.gltfRelativePath.empty()) continue;
+				const engine::math::Mat4 localM =
+					engine::math::Mat4::Translate(pt.localPosition) *
+					engine::math::Mat4::RotateY(pt.localEulerDeg.y * kDeg2Rad) *
+					engine::math::Mat4::RotateX(pt.localEulerDeg.x * kDeg2Rad) *
+					rotZ(pt.localEulerDeg.z * kDeg2Rad) * scaleMat(pt.localScale);
+				BuildPropFromMeshMatrix(pt.gltfRelativePath, groupM * localM,
+					/*interactableIndex*/ -1, pt.solid, pt.collisionRadius);
+			}
+		};
+
+		// 1. Bâtiments déjà posés (placements résolus via la bibliothèque).
+		for (const auto& pl : m_worldEditorShell->GetBuildingDocument().All())
+		{
+			const engine::world::instances::BuildingVariant* v =
+				library.Resolve(pl.templateType, pl.variantId);
+			if (v) emitParts(v->parts, pl.worldPosition.x, pl.worldPosition.z,
+				pl.worldYawDeg, pl.worldScale);
+		}
+		// 2. Brouillon en cours, à la position de pose courante (aperçu live).
+		emitParts(panel->DraftParts(), panel->PreviewX(), panel->PreviewZ(),
+			panel->PreviewYaw(), panel->PreviewScale());
+
+		LOG_INFO(Render, "[Buildings][editeur] apercu reconstruit : {} prop(s)",
+			static_cast<int>(m_props.size()));
 	}
 
 	void Engine::BuildPropFromMeshMatrix(const std::string& meshPath,

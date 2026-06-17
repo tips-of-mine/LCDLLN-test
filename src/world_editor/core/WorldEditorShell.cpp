@@ -129,6 +129,7 @@ namespace engine::editor::world
 			buildingEditor->SetLibrary(&m_buildingLibrary);
 			buildingEditor->SetDocument(&m_buildingDoc);
 			buildingEditor->SetContentRoot(cfg.GetString("paths.content", "game/data"));
+			m_buildingEditorPtr = buildingEditor.get(); // pour l'aperçu 3D live (Engine)
 			m_panels.emplace_back(std::move(buildingEditor));
 		}
 

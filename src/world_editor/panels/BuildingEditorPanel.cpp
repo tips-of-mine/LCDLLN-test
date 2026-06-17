@@ -53,7 +53,10 @@ namespace engine::editor::world::panels
 				part.solid = m_newSolid;
 				part.collisionRadius = m_newCollision;
 				m_draftParts.push_back(part);
+				m_previewDirty = true;
 			}
+			ImGui::SameLine();
+			if (ImGui::Button("Rafraichir l'apercu")) m_previewDirty = true;
 
 			ImGui::Separator();
 			// --- Pièces de la variante en cours ----------------------------
@@ -72,9 +75,12 @@ namespace engine::editor::world::panels
 				ImGui::PopID();
 			}
 			if (removeIdx >= 0)
+			{
 				m_draftParts.erase(m_draftParts.begin() + removeIdx);
+				m_previewDirty = true;
+			}
 
-			if (ImGui::Button("Vider la variante")) m_draftParts.clear();
+			if (ImGui::Button("Vider la variante")) { m_draftParts.clear(); m_previewDirty = true; }
 
 			ImGui::Separator();
 			// --- Enregistrer la variante dans le fichier du type -----------
@@ -118,6 +124,7 @@ namespace engine::editor::world::panels
 					pl.worldYawDeg = m_placeYaw;
 					pl.worldScale = m_placeScale;
 					const uint64_t guid = m_doc->Add(pl);
+					m_previewDirty = true;
 					m_status = "Reference posee (guid " + std::to_string(guid) +
 						"). Pense a sauvegarder la zone.";
 				}

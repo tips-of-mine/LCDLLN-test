@@ -980,6 +980,17 @@ namespace engine
 		/// local pour empiler toit / étage). À appeler après LoadScenery.
 		void LoadBuildings();
 
+		/// Aperçu 3D live des bâtiments dans la vue de l'ÉDITEUR. Reconstruit
+		/// `m_props` (que l'éditeur n'utilise que pour cet aperçu) à partir des
+		/// placements du `BuildingDocument` (résolus via la bibliothèque) + du
+		/// brouillon en cours du `BuildingEditorPanel` (rendu à la position de
+		/// pose courante), via `BuildPropFromMeshMatrix`. No-op hors mode éditeur
+		/// ou si l'aperçu n'est pas marqué « sale » (edge-triggered : on ne
+		/// reconstruit qu'après un changement, pour éviter la création de
+		/// ressources GPU à chaque frame). À appeler dans la boucle éditeur,
+		/// avant le rendu des props.
+		void SyncEditorBuildingPreview();
+
 		/// Charge le coffre (Chest_Wood) en mesh SKINNE (squelette + clips Open/Close)
 		/// pour l'animer a l'interaction. A appeler au boot apres LoadInteractableProps.
 		void LoadAnimatedChest();

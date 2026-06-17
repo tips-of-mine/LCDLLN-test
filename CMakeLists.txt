@@ -1429,6 +1429,15 @@ if(MSVC)
 endif()
 add_test(NAME config_zone_load_tests COMMAND config_zone_load_tests)
 
+# PR3 — Tests CPU de la règle d'éligibilité des cimetières (rayon neutre de
+# faction). RespawnRules.h est header-only : aucun lien bibliothèque requis.
+add_executable(respawn_rules_tests src/shared/world/tests/RespawnRulesTests.cpp)
+target_include_directories(respawn_rules_tests PRIVATE ${CMAKE_SOURCE_DIR})
+if(MSVC)
+  target_compile_options(respawn_rules_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME respawn_rules_tests COMMAND respawn_rules_tests)
+
 # M100.1 — Tests unitaires CPU pour la coquille WorldEditorShell.
 # Vérifient le cycle Init/Shutdown, la persistance du layout .ini, le
 # dispatch des raccourcis F1..F12 et le flag dirty. Le test crée un

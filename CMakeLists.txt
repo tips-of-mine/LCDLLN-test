@@ -487,6 +487,10 @@ add_library(engine_core
   # CRUD calqué sur MeshInsertDocument. Cf.
   # docs/superpowers/specs/2026-06-17-auberge-building-editor-design.md.
   src/world_editor/buildings/BuildingDocument.cpp
+  # Auberge éditable — Catalogue d'assets de l'éditeur (parse
+  # meshes/props/catalog.json via le parseur Config). Alimente
+  # l'AssetBrowserPanel et le BuildingTool.
+  src/world_editor/assets/AssetCatalog.cpp
   # M100.44 — VMap Bridge & Phase 11 Validation (clôture Phase 11).
   # VMapBridge : export AABB proxy collision (LCVC v1) depuis les
   # documents de volumes. Phase11Validator : checks de cohérence
@@ -1732,6 +1736,15 @@ if(MSVC)
   target_compile_options(building_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME building_tests COMMAND building_tests)
+
+# Auberge éditable — Tests unitaires CPU pour AssetCatalog (parsing JSON,
+# FindById, ByCategory, Categories). Pure CPU, cross-platform (ctest Linux).
+add_executable(asset_catalog_tests src/world_editor/tests/AssetCatalogTests.cpp)
+target_link_libraries(asset_catalog_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(asset_catalog_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME asset_catalog_tests COMMAND asset_catalog_tests)
 
 # M100.41 — Tests unitaires CPU pour l'Overhang Cliff Tool (Phase 11).
 # OverhangCatalog JSON parsing, PlaceOverhangCommand Apply/Undo, gating

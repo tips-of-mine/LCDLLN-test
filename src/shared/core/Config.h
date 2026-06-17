@@ -44,6 +44,13 @@ namespace engine::core
 		/// Load config from a JSON/INI file (if present) and apply CLI overrides (`--key=value`).
 		static Config Load(std::string_view filePath, int argc, char** argv);
 
+		/// Charge la config SERVEUR dédiée (`<configDir>/server.config.json`) par-dessus
+		/// `cfg` (override des clés existantes : db/accounts/chat). Réservé aux binaires
+		/// serveur — jamais appelé côté client. Renvoie false si le fichier est absent
+		/// ou JSON invalide (le serveur garde alors ses defaults).
+		/// \param configDir répertoire contenant server.config.json (ex. "config").
+		static bool LoadServerConfig(Config& cfg, std::string_view configDir);
+
 		/// Set a default value (used if no file/override sets the key).
 		void SetDefault(std::string_view key, Value value);
 

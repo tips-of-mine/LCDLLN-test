@@ -518,6 +518,12 @@ namespace engine::core
 		return cfg;
 	}
 
+	bool Config::LoadServerConfig(Config& cfg, std::string_view configDir)
+	{
+		std::filesystem::path path = std::filesystem::path(std::string(configDir)) / "server.config.json";
+		return cfg.LoadFromFile(path.string());
+	}
+
 	void Config::SetDefault(std::string_view key, Value value)
 	{
 		const std::string owned = ToOwnedKey(key);

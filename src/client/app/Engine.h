@@ -967,6 +967,17 @@ namespace engine
 		/// comme un prop + cylindre de collision enregistré dans m_worldCollider. À appeler
 		/// au boot juste après LoadInteractableProps (qui réinitialise le collisionneur).
 		void LoadScenery();
+
+		/// Auberge éditable — Charge les bâtiments de la zone active depuis
+		/// `instances/zone_<id>/buildings.bin` (format LCBD v1). Pour chaque
+		/// pièce d'un Building, compose la matrice monde
+		/// `T(origine) · Ry(yaw groupe) · S(scale groupe) · T(local) · R(euler
+		/// local) · S(scale local)` et la rend via `BuildPropFromMeshMatrix`
+		/// (bake SANS ground-snap par pièce : l'origine du bâtiment est snappée
+		/// une seule fois, les pièces gardent leur Y local pour empiler toit /
+		/// étage). À appeler après LoadScenery. Main thread.
+		void LoadBuildings();
+
 		/// Charge le coffre (Chest_Wood) en mesh SKINNE (squelette + clips Open/Close)
 		/// pour l'animer a l'interaction. A appeler au boot apres LoadInteractableProps.
 		void LoadAnimatedChest();
@@ -980,6 +991,17 @@ namespace engine
 		/// collision. Voir l'implémentation pour le détail des paramètres.
 		void BuildPropFromMesh(const std::string& meshPath, float wx, float wz,
 			float yawDeg, float rotXDeg, float scale, int interactableIndex,
+			bool solid, float collisionRadius);
+
+		/// Variante de BuildPropFromMesh qui CUIT une matrice monde explicite
+		/// \p worldM dans les sommets, SANS ré-ancrage au sol (pas de lift
+		/// `groundY - minY`). Utilisée pour les pièces d'un Building, dont le Y
+		/// local est autoritaire (toit/étage empilés). Le cylindre de collision
+		/// (si \p solid) est posé sous l'empreinte XZ réelle des sommets bakés,
+		/// de leur minimum à leur maximum Y monde. Partage `m_trimMatCache`.
+		/// \param worldM matrice modèle monde complète (déjà composée).
+		void BuildPropFromMeshMatrix(const std::string& meshPath,
+			const engine::math::Mat4& worldM, int interactableIndex,
 			bool solid, float collisionRadius);
 
 		/// Dessine les props (m_props) dans la passe Geometry, après l'avatar : un

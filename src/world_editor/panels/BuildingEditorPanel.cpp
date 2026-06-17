@@ -86,12 +86,19 @@ namespace engine::editor::world::panels
 				m_assetBrowser ? m_assetBrowser->SelectedAsset() : nullptr;
 			ImGui::Text("Asset selectionne : %s",
 				sel ? sel->displayName.c_str() : "(aucun — choisir dans Asset Browser)");
-			ImGui::DragFloat3("Position locale (m)", m_newPos, 0.1f);
-			ImGui::DragFloat("Rotation Y (deg)", &m_newYaw, 0.5f);
-			ImGui::DragFloat("Echelle", &m_newScale, 0.01f, 0.01f, 100.0f);
-			ImGui::Checkbox("Solide (collision)", &m_newSolid);
+			ImGui::TextDisabled("La piece en cours s'affiche EN DIRECT dans la vue (avant d'ajouter).");
+			// Détecte tout changement pour rafraîchir l'aperçu live de la pièce.
+			bool pendingChanged = false;
+			pendingChanged |= ImGui::DragFloat3("Position locale (m)", m_newPos, 0.1f);
+			pendingChanged |= ImGui::DragFloat("Rotation Y (deg)", &m_newYaw, 0.5f);
+			pendingChanged |= ImGui::DragFloat("Echelle", &m_newScale, 0.01f, 0.01f, 100.0f);
+			pendingChanged |= ImGui::Checkbox("Solide (collision)", &m_newSolid);
 			ImGui::SameLine();
-			ImGui::DragFloat("Rayon (0=auto)", &m_newCollision, 0.05f, 0.0f, 50.0f);
+			pendingChanged |= ImGui::DragFloat("Rayon (0=auto)", &m_newCollision, 0.05f, 0.0f, 50.0f);
+			// Changement d'asset sélectionné dans l'Asset Browser → rafraîchir.
+			const std::string selId = sel ? sel->id : std::string();
+			if (selId != m_lastPreviewAssetId) { m_lastPreviewAssetId = selId; pendingChanged = true; }
+			if (pendingChanged) m_previewDirty = true;
 
 			if (ImGui::Button("Ajouter la piece") && sel)
 			{
@@ -188,5 +195,27 @@ namespace engine::editor::world::panels
 		}
 		ImGui::End();
 #endif
+	}
+
+	std::vector<engine::world::instances::BuildingPart>
+	BuildingEditorPanel::PartsForPreview() const
+	{
+		std::vector<engine::world::instances::BuildingPart> out = m_draftParts;
+		const assets::AssetCatalogEntry* sel =
+			m_assetBrowser ? m_assetBrowser->SelectedAsset() : nullptr;
+		if (sel)
+		{
+			// Pièce EN COURS de configuration (pas encore ajoutée) : affichée en
+			// dernier pour voir le résultat avant « Ajouter la piece ».
+			engine::world::instances::BuildingPart pending;
+			pending.gltfRelativePath = sel->gltfRelativePath;
+			pending.localPosition = { m_newPos[0], m_newPos[1], m_newPos[2] };
+			pending.localEulerDeg = { 0.0f, m_newYaw, 0.0f };
+			pending.localScale = m_newScale;
+			pending.solid = m_newSolid;
+			pending.collisionRadius = m_newCollision;
+			out.push_back(pending);
+		}
+		return out;
 	}
 }

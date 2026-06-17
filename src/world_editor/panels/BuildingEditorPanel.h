@@ -38,6 +38,10 @@ namespace engine::editor::world::panels
 		// --- Aperçu 3D live (consommé par Engine en mode éditeur) -----------
 		/// Pièces du brouillon en cours de composition (espace local).
 		const std::vector<engine::world::instances::BuildingPart>& DraftParts() const { return m_draftParts; }
+		/// Brouillon + pièce EN COURS de configuration (asset sélectionné +
+		/// Position locale / Rotation / Échelle courantes), pour voir en direct
+		/// la pièce avant de l'ajouter. La pièce en cours est la dernière.
+		std::vector<engine::world::instances::BuildingPart> PartsForPreview() const;
 		/// Origine monde où prévisualiser le brouillon = position de pose courante.
 		float PreviewX() const { return m_placePos[0]; }
 		float PreviewZ() const { return m_placePos[1]; }
@@ -52,6 +56,8 @@ namespace engine::editor::world::panels
 	private:
 		bool m_visible = true;
 		bool m_previewDirty = true; // aperçu 3D à (re)construire
+
+		std::string m_lastPreviewAssetId; // détecte un changement d'asset sélectionné
 
 		AssetBrowserPanel* m_assetBrowser = nullptr;
 		engine::world::instances::BuildingTemplateLibrary* m_library = nullptr;

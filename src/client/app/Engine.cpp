@@ -13516,14 +13516,17 @@ namespace engine
 				previewZ = cam.position.z + (-std::cos(cam.yaw)) * 20.0f;
 			}
 		}
-		// Les bâtiments DÉJÀ posés (dont l'auberge) sont déjà rendus par le boot
+		// Brouillon + pièce EN COURS de configuration (aperçu live). Les
+		// bâtiments DÉJÀ posés (dont l'auberge) sont déjà rendus par le boot
 		// (LoadBuildings) et conservés dans le « monde » baseline ci-dessus.
-		emitParts(panel->DraftParts(), previewX, previewZ,
+		const std::vector<engine::world::instances::BuildingPart> previewParts =
+			panel->PartsForPreview();
+		emitParts(previewParts, previewX, previewZ,
 			panel->PreviewYaw(), panel->PreviewScale());
 
-		LOG_INFO(Render, "[Buildings][editeur] apercu : monde={} + brouillon={} piece(s) @ ({:.1f},{:.1f}) -> total {}",
+		LOG_INFO(Render, "[Buildings][editeur] apercu : monde={} + brouillon/encours={} piece(s) @ ({:.1f},{:.1f}) -> total {}",
 			static_cast<int>(m_editorBaselinePropCount),
-			static_cast<int>(panel->DraftParts().size()),
+			static_cast<int>(previewParts.size()),
 			previewX, previewZ, static_cast<int>(m_props.size()));
 	}
 

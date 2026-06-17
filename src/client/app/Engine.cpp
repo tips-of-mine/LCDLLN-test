@@ -13490,16 +13490,41 @@ namespace engine
 			}
 		};
 
-		// Brouillon en cours, à la position de pose courante (aperçu live). Les
-		// bâtiments DÉJÀ posés (dont l'auberge) sont déjà rendus par le boot
+		// Brouillon en cours : on l'affiche au point que REGARDE la caméra de
+		// l'éditeur (projection du rayon de visée sur le sol), pour qu'il soit
+		// TOUJOURS visible — sinon, posé à une coord fixe, il tombe hors du
+		// rayon de culling des props (~80 m) dès que la caméra est ailleurs.
+		const engine::render::Camera& cam =
+			m_renderStates[m_renderReadIndex.load(std::memory_order_acquire)].camera;
+		float previewX = cam.position.x;
+		float previewZ = cam.position.z;
+		{
+			const float cp = std::cos(cam.pitch), sp = std::sin(cam.pitch);
+			const float fwdY = -sp; // forward.y (convention OrbitalCameraController)
+			const float gy0 = m_terrainCollider.GroundHeightAt(cam.position.x, cam.position.z);
+			if (fwdY < -1e-3f) // caméra regarde vers le bas : intersection avec le sol
+			{
+				float t = (gy0 - cam.position.y) / fwdY;
+				if (t < 0.0f) t = 0.0f;
+				if (t > 300.0f) t = 300.0f; // borne : évite un point trop lointain
+				previewX = cam.position.x + t * (-std::sin(cam.yaw) * cp);
+				previewZ = cam.position.z + t * (-std::cos(cam.yaw) * cp);
+			}
+			else // visée horizontale/vers le haut : 20 m devant, sur XZ
+			{
+				previewX = cam.position.x + (-std::sin(cam.yaw)) * 20.0f;
+				previewZ = cam.position.z + (-std::cos(cam.yaw)) * 20.0f;
+			}
+		}
+		// Les bâtiments DÉJÀ posés (dont l'auberge) sont déjà rendus par le boot
 		// (LoadBuildings) et conservés dans le « monde » baseline ci-dessus.
-		emitParts(panel->DraftParts(), panel->PreviewX(), panel->PreviewZ(),
+		emitParts(panel->DraftParts(), previewX, previewZ,
 			panel->PreviewYaw(), panel->PreviewScale());
 
-		LOG_INFO(Render, "[Buildings][editeur] apercu : monde={} + brouillon={} piece(s) -> total {}",
+		LOG_INFO(Render, "[Buildings][editeur] apercu : monde={} + brouillon={} piece(s) @ ({:.1f},{:.1f}) -> total {}",
 			static_cast<int>(m_editorBaselinePropCount),
 			static_cast<int>(panel->DraftParts().size()),
-			static_cast<int>(m_props.size()));
+			previewX, previewZ, static_cast<int>(m_props.size()));
 	}
 
 	void Engine::BuildPropFromMeshMatrix(const std::string& meshPath,

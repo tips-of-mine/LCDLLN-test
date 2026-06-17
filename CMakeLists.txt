@@ -1413,6 +1413,9 @@ add_test(NAME config_save_to_file_tests COMMAND config_save_to_file_tests)
 add_executable(config_server_load_tests src/shared/core/tests/ConfigServerLoadTests.cpp)
 target_include_directories(config_server_load_tests PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(config_server_load_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(config_server_load_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
 add_test(NAME config_server_load_tests COMMAND config_server_load_tests)
 
 # M100.1 — Tests unitaires CPU pour la coquille WorldEditorShell.

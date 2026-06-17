@@ -12,8 +12,12 @@
 namespace
 {
 	int g_failed = 0;
-	#define REQUIRE(cond) do { if (!(cond)) { \
-		std::fprintf(stderr, "[FAIL] %s:%d  %s\n", __FILE__, __LINE__, #cond); ++g_failed; } } while (0)
+	#define REQUIRE(cond) do { \
+		if (!(cond)) { \
+			std::fprintf(stderr, "[FAIL] %s:%d  %s\n", __FILE__, __LINE__, #cond); \
+			++g_failed; \
+		} \
+	} while (0)
 
 	using engine::core::Config;
 
@@ -50,12 +54,25 @@ namespace
 		REQUIRE(Config::LoadServerConfig(cfg, dir.string()) == false);
 		std::error_code ec; std::filesystem::remove_all(dir, ec);
 	}
+
+	void Test_InvalidJsonReturnsFalse()
+	{
+		const auto dir = TempDir();
+		{
+			std::ofstream out(dir / "server.config.json");
+			out << "{ invalide !!!";
+		}
+		Config cfg;
+		REQUIRE(Config::LoadServerConfig(cfg, dir.string()) == false);
+		std::error_code ec; std::filesystem::remove_all(dir, ec);
+	}
 }
 
 int main()
 {
 	Test_LoadsServerKeys();
 	Test_MissingFileReturnsFalse();
+	Test_InvalidJsonReturnsFalse();
 	if (g_failed == 0) { std::printf("[PASS] ConfigServerLoadTests\n"); return 0; }
 	std::printf("[FAIL] ConfigServerLoadTests: %d failure(s)\n", g_failed);
 	return 1;

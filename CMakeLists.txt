@@ -487,6 +487,10 @@ add_library(engine_core
   # CRUD calqué sur MeshInsertDocument. Cf.
   # docs/superpowers/specs/2026-06-17-auberge-building-editor-design.md.
   src/world_editor/buildings/BuildingDocument.cpp
+  # Auberge éditable — Bibliothèque de types de bâtiments (un fichier JSON par
+  # type dans buildings/templates/ ; variantes + pièces). Partagée client
+  # (résolution au rendu) et éditeur (création/sauvegarde de variantes).
+  src/client/world/instances/BuildingTemplateLibrary.cpp
   # Auberge éditable — Catalogue d'assets de l'éditeur (parse
   # meshes/props/catalog.json via le parseur Config). Alimente
   # l'AssetBrowserPanel et le BuildingTool.
@@ -1736,6 +1740,16 @@ if(MSVC)
   target_compile_options(building_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME building_tests COMMAND building_tests)
+
+# Auberge éditable — Tests unitaires CPU pour la bibliothèque de types
+# (BuildingTemplateLibrary) : parse JSON, Resolve, SaveVariant round-trip.
+# Pure CPU, cross-platform (ctest Linux).
+add_executable(building_template_tests src/world_editor/tests/BuildingTemplateLibraryTests.cpp)
+target_link_libraries(building_template_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(building_template_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME building_template_tests COMMAND building_template_tests)
 
 # Auberge éditable — Tests unitaires CPU pour AssetCatalog (parsing JSON,
 # FindById, ByCategory, Categories). Pure CPU, cross-platform (ctest Linux).

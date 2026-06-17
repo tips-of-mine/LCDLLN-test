@@ -46,7 +46,7 @@ namespace engine::editor::world
 	struct ZoneExportInputs
 	{
 		std::vector<engine::world::instances::PropInstance>            props;
-		std::vector<engine::world::instances::BuildingInstance>       buildings;
+		std::vector<engine::world::instances::BuildingPlacement>      buildings;
 		std::vector<engine::world::hazard::HazardVolume>              hazards;
 		std::vector<engine::world::interactive::InteractivePropInstance> interactives;
 		std::vector<engine::world::zones::GameplayZone>              zones;

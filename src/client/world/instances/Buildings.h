@@ -1,17 +1,14 @@
 #pragma once
 
-// Auberge éditable — entité « Building » : struct + sérialisation
-// `instances/zone_<id>/buildings.bin` (magic « LCBD » v1).
+// Placements de bâtiments dans une zone : RÉFÉRENCES légères vers la
+// bibliothèque de types (cf. BuildingTemplates.h). La carte ne stocke PAS les
+// pièces : seulement (type + variante + transform monde). Le jeu résout chaque
+// placement contre `BuildingTemplateLibrary` pour récupérer les meshes et
+// afficher. Modifier une variante dans la bibliothèque met à jour tous les
+// placements de ce type.
 //
-// Un Building est une grappe d'éléments existants (murs, toits, portes,
-// mobilier) regroupée en une entité logique avec un transform de groupe.
-// Chaque pièce (`BuildingPart`) porte son chemin glTF EN CLAIR (pas de hash
-// `assetId`) + un transform LOCAL relatif à l'origine du bâtiment. Le client
-// peut donc rendre directement, sans résoudre de hash.
-//
-// Sérialisation HEADER-ONLY (inline), comme `PropInstances.h` : partagée
-// engine_core (runtime/éditeur) sans dupliquer de symboles. Réutilise les
-// helpers `detail::Put*/Get*` de PropInstances.h.
+// Sérialisation HEADER-ONLY (inline) `instances/zone_<id>/buildings.bin`
+// (magic « LCBD » v1), sur le patron de PropInstances.h.
 
 #include <cstdint>
 #include <span>
@@ -23,26 +20,17 @@
 
 namespace engine::world::instances
 {
-	/// Une pièce d'un bâtiment, en espace LOCAL (relatif à l'origine du Building).
-	struct BuildingPart
+	/// Un bâtiment posé sur la carte = référence vers une variante de la
+	/// bibliothèque + transform de groupe. `guid` 0 = invalide.
+	struct BuildingPlacement
 	{
-		std::string        gltfRelativePath;            // ex: "meshes/props/Wall_Plaster_Straight.gltf"
-		engine::math::Vec3 localPosition{ 0.0f, 0.0f, 0.0f }; // offset local (m)
-		engine::math::Vec3 localEulerDeg{ 0.0f, 0.0f, 0.0f }; // rotation XYZ locale (degrés)
-		float              localScale = 1.0f;           // échelle uniforme locale
-		bool               solid = true;                // pose un cylindre de collision
-		float              collisionRadius = 0.0f;      // 0 => rayon auto (empreinte XZ)
-	};
-
-	/// Un bâtiment = grappe de pièces + transform de groupe. `guid` 0 = invalide.
-	struct BuildingInstance
-	{
-		uint64_t                  guid = 0u;
-		std::string               displayName;          // libre, pour l'Outliner ("Auberge")
-		engine::math::Vec3        worldPosition{ 0.0f, 0.0f, 0.0f }; // origine du groupe (m)
-		float                     worldYawDeg = 0.0f;   // yaw du groupe (degrés)
-		float                     worldScale  = 1.0f;   // échelle uniforme du groupe
-		std::vector<BuildingPart> parts;
+		uint64_t           guid = 0u;
+		std::string        templateType;  // ex: "tavern" (fichier buildings/templates/tavern.json)
+		std::string        variantId;     // ex: "auberge_terrasse"
+		std::string        displayName;   // libre, pour l'Outliner (défaut = variantId)
+		engine::math::Vec3 worldPosition{ 0.0f, 0.0f, 0.0f }; // origine du groupe (m)
+		float              worldYawDeg = 0.0f; // yaw du groupe (degrés)
+		float              worldScale  = 1.0f; // échelle uniforme du groupe
 	};
 
 	constexpr uint32_t kBuildingsMagic   = 0x4442434Cu; // "LCBD" little-endian
@@ -85,40 +73,31 @@ namespace engine::world::instances
 		}
 	}
 
-	/// Sérialise la liste de bâtiments au format `buildings.bin` (LCBD v1).
-	/// Header 16 octets : [magic(4)][version(4)][buildingCount(4)][reserved(4)].
-	inline std::vector<uint8_t> SaveBuildingsBin(const std::vector<BuildingInstance>& buildings)
+	/// Sérialise les placements au format `buildings.bin` (LCBD v1).
+	/// Header 16 octets : [magic(4)][version(4)][placementCount(4)][reserved(4)].
+	inline std::vector<uint8_t> SaveBuildingsBin(const std::vector<BuildingPlacement>& placements)
 	{
 		std::vector<uint8_t> b;
 		detail::PutU32(b, kBuildingsMagic);
 		detail::PutU32(b, kBuildingsVersion);
-		detail::PutU32(b, static_cast<uint32_t>(buildings.size()));
+		detail::PutU32(b, static_cast<uint32_t>(placements.size()));
 		detail::PutU32(b, 0u); // reserved
-		for (const BuildingInstance& bd : buildings)
+		for (const BuildingPlacement& pl : placements)
 		{
-			detail::PutU64(b, bd.guid);
-			detail::PutStr(b, bd.displayName);
-			detail::PutVec3(b, bd.worldPosition);
-			detail::PutF32(b, bd.worldYawDeg);
-			detail::PutF32(b, bd.worldScale);
-			detail::PutU32(b, static_cast<uint32_t>(bd.parts.size()));
-			for (const BuildingPart& pt : bd.parts)
-			{
-				detail::PutStr(b, pt.gltfRelativePath);
-				detail::PutVec3(b, pt.localPosition);
-				detail::PutVec3(b, pt.localEulerDeg);
-				detail::PutF32(b, pt.localScale);
-				b.push_back(pt.solid ? 1u : 0u); // flags : bit0 = solid
-				detail::PutF32(b, pt.collisionRadius);
-			}
+			detail::PutU64(b, pl.guid);
+			detail::PutStr(b, pl.templateType);
+			detail::PutStr(b, pl.variantId);
+			detail::PutStr(b, pl.displayName);
+			detail::PutVec3(b, pl.worldPosition);
+			detail::PutF32(b, pl.worldYawDeg);
+			detail::PutF32(b, pl.worldScale);
 		}
 		return b;
 	}
 
 	/// Désérialise un `buildings.bin`. Valide magic + version. Reset `out`.
-	/// Fichier vide (buildingCount = 0) : retourne true, liste vide.
 	inline bool LoadBuildingsBin(std::span<const uint8_t> bytes,
-		std::vector<BuildingInstance>& out, std::string& err)
+		std::vector<BuildingPlacement>& out, std::string& err)
 	{
 		out.clear();
 		size_t p = 0;
@@ -138,28 +117,15 @@ namespace engine::world::instances
 		out.reserve(count);
 		for (uint32_t i = 0; i < count; ++i)
 		{
-			BuildingInstance bd;
-			if (!detail::GetU64(bytes, p, bd.guid))         { err = "buildings.bin: guid tronque"; return false; }
-			if (!detail::GetStr(bytes, p, bd.displayName))  { err = "buildings.bin: nom tronque"; return false; }
-			if (!detail::GetVec3(bytes, p, bd.worldPosition)) { err = "buildings.bin: pos tronquee"; return false; }
-			if (!detail::GetF32(bytes, p, bd.worldYawDeg))  { err = "buildings.bin: yaw tronque"; return false; }
-			if (!detail::GetF32(bytes, p, bd.worldScale))   { err = "buildings.bin: scale tronque"; return false; }
-			uint32_t partCount = 0;
-			if (!detail::GetU32(bytes, p, partCount))       { err = "buildings.bin: partCount tronque"; return false; }
-			bd.parts.reserve(partCount);
-			for (uint32_t j = 0; j < partCount; ++j)
-			{
-				BuildingPart pt;
-				if (!detail::GetStr(bytes, p, pt.gltfRelativePath)) { err = "buildings.bin: part path tronque"; return false; }
-				if (!detail::GetVec3(bytes, p, pt.localPosition))   { err = "buildings.bin: part pos tronquee"; return false; }
-				if (!detail::GetVec3(bytes, p, pt.localEulerDeg))   { err = "buildings.bin: part rot tronquee"; return false; }
-				if (!detail::GetF32(bytes, p, pt.localScale))       { err = "buildings.bin: part scale tronque"; return false; }
-				if (p + 1 > bytes.size())                           { err = "buildings.bin: part flags tronque"; return false; }
-				pt.solid = (bytes[p] & 0x01u) != 0u; ++p;
-				if (!detail::GetF32(bytes, p, pt.collisionRadius))  { err = "buildings.bin: part collision tronque"; return false; }
-				bd.parts.push_back(std::move(pt));
-			}
-			out.push_back(std::move(bd));
+			BuildingPlacement pl;
+			if (!detail::GetU64(bytes, p, pl.guid))           { err = "buildings.bin: guid tronque"; return false; }
+			if (!detail::GetStr(bytes, p, pl.templateType))   { err = "buildings.bin: type tronque"; return false; }
+			if (!detail::GetStr(bytes, p, pl.variantId))      { err = "buildings.bin: variante tronquee"; return false; }
+			if (!detail::GetStr(bytes, p, pl.displayName))    { err = "buildings.bin: nom tronque"; return false; }
+			if (!detail::GetVec3(bytes, p, pl.worldPosition)) { err = "buildings.bin: pos tronquee"; return false; }
+			if (!detail::GetF32(bytes, p, pl.worldYawDeg))    { err = "buildings.bin: yaw tronque"; return false; }
+			if (!detail::GetF32(bytes, p, pl.worldScale))     { err = "buildings.bin: scale tronque"; return false; }
+			out.push_back(std::move(pl));
 		}
 		return true;
 	}

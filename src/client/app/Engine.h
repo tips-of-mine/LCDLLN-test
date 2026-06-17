@@ -968,14 +968,16 @@ namespace engine
 		/// au boot juste après LoadInteractableProps (qui réinitialise le collisionneur).
 		void LoadScenery();
 
-		/// Auberge éditable — Charge les bâtiments de la zone active depuis
-		/// `instances/zone_<id>/buildings.bin` (format LCBD v1). Pour chaque
-		/// pièce d'un Building, compose la matrice monde
-		/// `T(origine) · Ry(yaw groupe) · S(scale groupe) · T(local) · R(euler
-		/// local) · S(scale local)` et la rend via `BuildPropFromMeshMatrix`
-		/// (bake SANS ground-snap par pièce : l'origine du bâtiment est snappée
-		/// une seule fois, les pièces gardent leur Y local pour empiler toit /
-		/// étage). À appeler après LoadScenery. Main thread.
+		/// Auberge éditable — Charge les bâtiments de la zone active. La carte ne
+		/// stocke que des RÉFÉRENCES (`instances/zone_<id>/buildings.bin`,
+		/// BuildingPlacement : type + variante + transform) ; on résout chaque
+		/// référence contre la bibliothèque `buildings/templates/<type>.json`
+		/// (BuildingTemplateLibrary) pour obtenir les pièces. Pour chaque pièce,
+		/// compose la matrice monde `T(origine) · Ry(yaw) · S(scale) · T(local)
+		/// · R(euler local) · S(scale local)` et la rend via
+		/// `BuildPropFromMeshMatrix` (bake SANS ground-snap par pièce : l'origine
+		/// du bâtiment est snappée une seule fois, les pièces gardent leur Y
+		/// local pour empiler toit / étage). À appeler après LoadScenery.
 		void LoadBuildings();
 
 		/// Charge le coffre (Chest_Wood) en mesh SKINNE (squelette + clips Open/Close)

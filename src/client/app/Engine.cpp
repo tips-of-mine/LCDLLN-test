@@ -2,6 +2,7 @@
 
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
 #include "src/client/world/instances/Buildings.h"
+#include "src/client/world/instances/BuildingTemplateLibrary.h"
 #include "src/shared/core/Log.h"
 #include "src/world_editor/ui/EditorMode.h"
 #include "src/world_editor/ui/WorldEditorImGui.h"
@@ -13361,14 +13362,22 @@ namespace engine
 		std::vector<uint8_t> bytes(static_cast<size_t>(size));
 		f.read(reinterpret_cast<char*>(bytes.data()), size);
 
-		std::vector<engine::world::instances::BuildingInstance> buildings;
+		std::vector<engine::world::instances::BuildingPlacement> placements;
 		std::string err;
 		if (!engine::world::instances::LoadBuildingsBin(
-				std::span<const uint8_t>(bytes), buildings, err))
+				std::span<const uint8_t>(bytes), placements, err))
 		{
 			LOG_WARN(Render, "[Buildings] buildings.bin invalide : {}", err);
 			return;
 		}
+
+		// Bibliothèque des types de bâtiments : la carte ne stocke que des
+		// références (type + variante) ; on résout ici contre les fichiers
+		// `buildings/templates/<type>.json` pour obtenir les pièces.
+		engine::world::instances::BuildingTemplateLibrary library;
+		std::string libErr;
+		if (!library.LoadFromContent(contentRoot, libErr) && !libErr.empty())
+			LOG_WARN(Render, "[Buildings] bibliotheque partiellement chargee : {}", libErr);
 
 		constexpr float kDeg2Rad = 3.14159265f / 180.f;
 		// Helpers de composition (Math.h ne fournit ni Scale ni RotateZ).
@@ -13382,20 +13391,29 @@ namespace engine
 			m.m[0] = c; m.m[1] = s; m.m[4] = -s; m.m[5] = c; return m;
 		};
 
-		int partCount = 0;
-		for (const auto& b : buildings)
+		int partCount = 0, resolved = 0;
+		for (const auto& pl : placements)
 		{
+			const engine::world::instances::BuildingVariant* variant =
+				library.Resolve(pl.templateType, pl.variantId);
+			if (!variant)
+			{
+				LOG_WARN(Render, "[Buildings] reference non resolue: type='{}' variante='{}'",
+					pl.templateType, pl.variantId);
+				continue;
+			}
+			++resolved;
 			// L'origine du bâtiment est ancrée au sol UNE fois ; les pièces
 			// conservent ensuite leur Y local (toit/étage empilés).
 			const float groundY = m_terrainCollider.GroundHeightAt(
-				b.worldPosition.x, b.worldPosition.z);
+				pl.worldPosition.x, pl.worldPosition.z);
 			const engine::math::Mat4 groupM =
 				engine::math::Mat4::Translate(engine::math::Vec3{
-					b.worldPosition.x, groundY + b.worldPosition.y, b.worldPosition.z }) *
-				engine::math::Mat4::RotateY(b.worldYawDeg * kDeg2Rad) *
-				scaleMat(b.worldScale);
+					pl.worldPosition.x, groundY + pl.worldPosition.y, pl.worldPosition.z }) *
+				engine::math::Mat4::RotateY(pl.worldYawDeg * kDeg2Rad) *
+				scaleMat(pl.worldScale);
 
-			for (const auto& pt : b.parts)
+			for (const auto& pt : variant->parts)
 			{
 				if (pt.gltfRelativePath.empty()) continue;
 				const engine::math::Mat4 localM =
@@ -13410,8 +13428,8 @@ namespace engine
 				++partCount;
 			}
 		}
-		LOG_INFO(Render, "[Buildings] {} batiment(s), {} piece(s) rendue(s)",
-			static_cast<int>(buildings.size()), partCount);
+		LOG_INFO(Render, "[Buildings] {} placement(s), {} resolu(s), {} piece(s) rendue(s)",
+			static_cast<int>(placements.size()), resolved, partCount);
 	}
 
 	void Engine::BuildPropFromMeshMatrix(const std::string& meshPath,

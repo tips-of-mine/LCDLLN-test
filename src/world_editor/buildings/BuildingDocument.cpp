@@ -9,39 +9,39 @@
 
 namespace engine::editor::world::buildings
 {
-	uint64_t BuildingDocument::Add(BuildingInstance building)
+	uint64_t BuildingDocument::Add(BuildingPlacement placement)
 	{
-		if (building.guid == 0u)
+		if (placement.guid == 0u)
 		{
-			building.guid = NextGuid();
+			placement.guid = NextGuid();
 		}
 		else
 		{
-			m_nextGuid = std::max(m_nextGuid, building.guid);
+			m_nextGuid = std::max(m_nextGuid, placement.guid);
 		}
-		const uint64_t assigned = building.guid;
-		m_buildings.push_back(std::move(building));
+		const uint64_t assigned = placement.guid;
+		m_placements.push_back(std::move(placement));
 		m_dirty = true;
-		if (m_onAdded) m_onAdded(m_buildings.back());
+		if (m_onAdded) m_onAdded(m_placements.back());
 		return assigned;
 	}
 
 	bool BuildingDocument::Remove(uint64_t guid)
 	{
-		auto it = std::find_if(m_buildings.begin(), m_buildings.end(),
-			[guid](const BuildingInstance& b) { return b.guid == guid; });
-		if (it == m_buildings.end()) return false;
-		m_buildings.erase(it);
+		auto it = std::find_if(m_placements.begin(), m_placements.end(),
+			[guid](const BuildingPlacement& b) { return b.guid == guid; });
+		if (it == m_placements.end()) return false;
+		m_placements.erase(it);
 		m_dirty = true;
 		if (m_onRemoved) m_onRemoved(guid);
 		return true;
 	}
 
-	bool BuildingDocument::Update(uint64_t guid, const BuildingInstance& newData)
+	bool BuildingDocument::Update(uint64_t guid, const BuildingPlacement& newData)
 	{
-		auto it = std::find_if(m_buildings.begin(), m_buildings.end(),
-			[guid](const BuildingInstance& b) { return b.guid == guid; });
-		if (it == m_buildings.end()) return false;
+		auto it = std::find_if(m_placements.begin(), m_placements.end(),
+			[guid](const BuildingPlacement& b) { return b.guid == guid; });
+		if (it == m_placements.end()) return false;
 		*it = newData;
 		it->guid = guid; // préserve le guid quoi qu'il arrive
 		m_dirty = true;
@@ -49,18 +49,18 @@ namespace engine::editor::world::buildings
 		return true;
 	}
 
-	const BuildingDocument::BuildingInstance* BuildingDocument::GetByGuid(uint64_t guid) const
+	const BuildingDocument::BuildingPlacement* BuildingDocument::GetByGuid(uint64_t guid) const
 	{
-		auto it = std::find_if(m_buildings.begin(), m_buildings.end(),
-			[guid](const BuildingInstance& b) { return b.guid == guid; });
-		return (it == m_buildings.end()) ? nullptr : &*it;
+		auto it = std::find_if(m_placements.begin(), m_placements.end(),
+			[guid](const BuildingPlacement& b) { return b.guid == guid; });
+		return (it == m_placements.end()) ? nullptr : &*it;
 	}
 
-	BuildingDocument::BuildingInstance* BuildingDocument::MutableByGuid(uint64_t guid)
+	BuildingDocument::BuildingPlacement* BuildingDocument::MutableByGuid(uint64_t guid)
 	{
-		auto it = std::find_if(m_buildings.begin(), m_buildings.end(),
-			[guid](const BuildingInstance& b) { return b.guid == guid; });
-		if (it == m_buildings.end()) return nullptr;
+		auto it = std::find_if(m_placements.begin(), m_placements.end(),
+			[guid](const BuildingPlacement& b) { return b.guid == guid; });
+		if (it == m_placements.end()) return nullptr;
 		m_dirty = true;
 		return &*it;
 	}
@@ -79,7 +79,7 @@ namespace engine::editor::world::buildings
 		}
 
 		const std::vector<uint8_t> bytes =
-			engine::world::instances::SaveBuildingsBin(m_buildings);
+			engine::world::instances::SaveBuildingsBin(m_placements);
 
 		std::ofstream f(path, std::ios::binary | std::ios::trunc);
 		if (!f.good())
@@ -107,7 +107,7 @@ namespace engine::editor::world::buildings
 		std::ifstream f(path, std::ios::binary | std::ios::ate);
 		if (!f.good())
 		{
-			m_buildings.clear();
+			m_placements.clear();
 			m_nextGuid = 0u;
 			m_dirty = false;
 			return true;
@@ -115,7 +115,7 @@ namespace engine::editor::world::buildings
 		const std::streamsize size = f.tellg();
 		if (size <= 0)
 		{
-			m_buildings.clear();
+			m_placements.clear();
 			m_nextGuid = 0u;
 			m_dirty = false;
 			return true;
@@ -130,11 +130,11 @@ namespace engine::editor::world::buildings
 		}
 
 		if (!engine::world::instances::LoadBuildingsBin(
-				std::span<const uint8_t>(bytes), m_buildings, outError))
+				std::span<const uint8_t>(bytes), m_placements, outError))
 			return false;
 
 		uint64_t maxGuid = 0u;
-		for (const auto& b : m_buildings) maxGuid = std::max(maxGuid, b.guid);
+		for (const auto& b : m_placements) maxGuid = std::max(maxGuid, b.guid);
 		m_nextGuid = maxGuid;
 		m_dirty = false;
 		return true;

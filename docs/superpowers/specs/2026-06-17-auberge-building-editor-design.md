@@ -6,6 +6,20 @@
 d'éléments existants (murs, toits, portes, mobilier), le persister, le voir en jeu,
 puis remplacer l'auberge actuelle de la carte de démo (Feyhin).
 
+> **Révision 2026-06-17 (bibliothèque de types + références)** — Sur demande
+> utilisateur, le modèle évolue d'un Building « inline » vers une **bibliothèque
+> de TYPES** : un fichier JSON par type dans `game/data/buildings/templates/`
+> (`tavern.json`, `house.json`…), chacun contenant plusieurs **variantes**
+> (créations), chaque variante = une grappe de pièces. La carte ne stocke que des
+> **références** (`BuildingPlacement` : type + variante + transform monde) dans
+> `buildings.bin` ; le jeu résout chaque référence contre la bibliothèque
+> (`BuildingTemplateLibrary`) pour afficher. Modifier une variante met à jour tous
+> les bâtiments de ce type posés. Les sections §3-§5 ci-dessous décrivant le
+> modèle inline d'origine sont **supersédées** par ce modèle là où elles diffèrent
+> (struct `BuildingInstance` à pièces inline → `BuildingTemplate`/`BuildingVariant`
+> en bibliothèque + `BuildingPlacement` en carte). Le format `BuildingPart`, le
+> piège de rendu (ground-snap) et `BuildPropFromMeshMatrix` restent valables.
+
 ---
 
 ## 1. Contexte (audit du 2026-06-17)

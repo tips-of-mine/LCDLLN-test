@@ -51,6 +51,13 @@ namespace engine::core
 		/// \param configDir répertoire contenant server.config.json (ex. "config").
 		static bool LoadServerConfig(Config& cfg, std::string_view configDir);
 
+		/// Charge le contenu de la zone active par-dessus `cfg` : lit `world.active_zone`,
+		/// puis fusionne `<contentRoot>/zones/<zone>/zone.json` et `…/scenery.json` (préfixes
+		/// world.* conservés). Renvoie false si `world.active_zone` est vide ou si zone.json
+		/// est absent (le moteur garde alors ses defaults). scenery.json absent n'est pas fatal.
+		/// \param contentRoot racine du contenu (ex. valeur de `paths.content` = "game/data").
+		static bool LoadActiveZone(Config& cfg, std::string_view contentRoot);
+
 		/// Set a default value (used if no file/override sets the key).
 		void SetDefault(std::string_view key, Value value);
 

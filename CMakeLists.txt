@@ -1418,6 +1418,17 @@ if(MSVC)
 endif()
 add_test(NAME config_server_load_tests COMMAND config_server_load_tests)
 
+# PR2 — Tests CPU pour Config::LoadActiveZone (éclatement config.json).
+# Vérifie que LoadActiveZone lit world.active_zone et fusionne zone.json +
+# scenery.json ; renvoie false si zone absente ou active_zone vide. Pur CPU + E/S.
+add_executable(config_zone_load_tests src/shared/core/tests/ConfigZoneLoadTests.cpp)
+target_include_directories(config_zone_load_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(config_zone_load_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(config_zone_load_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME config_zone_load_tests COMMAND config_zone_load_tests)
+
 # M100.1 — Tests unitaires CPU pour la coquille WorldEditorShell.
 # Vérifient le cycle Init/Shutdown, la persistance du layout .ini, le
 # dispatch des raccourcis F1..F12 et le flag dirty. Le test crée un

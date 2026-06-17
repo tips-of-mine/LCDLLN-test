@@ -264,10 +264,22 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 | `CMakeLists.txt` | Config build racine (C++20, cibles, liens). |
 | `CMakePresets.json` | Presets : `vs2022-x64` (Windows), `linux-x64` (serveur). |
 | `vcpkg.json` | Dépendances vcpkg (Vulkan, ImGui, MySQL connector…). |
-| `src/shared/core/Config.h/.cpp` | Lecture du fichier de config JSON au runtime (`GetInt`, `GetString`…). |
-| `config.json` | Config runtime par défaut (logging, endpoints, timeouts). |
-| `deploy/docker/config/master.config.json` | Config serveur master en production. |
-| `deploy/docker/config/shard.config.json` | Config serveur shard en production. |
+| `src/shared/core/Config.h/.cpp` | Lecture du fichier de config JSON au runtime (`GetInt`, `GetString`…). Store **plat à clés pointées** (le JSON imbriqué est aplati : `world.scenery.0.x`). `Load()` fusionne plusieurs fichiers (override). Helpers : `LoadServerConfig()`, `LoadActiveZone()`. |
+| `config.json` | Config MOTEUR + CLIENT partagée (logging, render, audio, lod, gi, controls, editor, client, paths) **+ `world.lunar`** (temps global, lu aussi par le master) **+ `world.active_zone`** (zone active). Packagée côté client. **Ne contient plus** db/accounts/chat/globals ni le contenu de map. |
+| `config/server.config.json` | Config SERVEUR (db, accounts, chat, globals). Chargée **uniquement** par master/shard/bootstrap via `LoadServerConfig()` — jamais embarquée côté client. |
+| `deploy/docker/config/server.config.json` | Idem prod : montée `:ro` sur master **ET** shard (`/app/config/server.config.json`). Source unique du bloc `db` → plus de duplication master/shard. |
+| `deploy/docker/config/master.config.json` | Config serveur master en production (rôle/ports ; **plus** de bloc db). Montée comme `/app/config.json`. |
+| `deploy/docker/config/shard.config.json` | Config serveur shard (rôle/ports + `world.active_zone`). Montée comme `/app/config.json`. |
+| `game/data/zones/<zone>/zone.json` | Contenu + réglages de zone (interactables, test_water, default_spawn, fog, volfog, dof, impostor, day_night, weather…). Chargé par client+éditeur via `LoadActiveZone()`. Clés `world.*` conservées. |
+| `game/data/zones/<zone>/scenery.json` | Décor de la zone (`world.scenery`, 340+ instances). |
+| `game/data/zones/<zone>/respawn_points.txt` | Cimetières/auberges par-zone : `zone_id type x y z [faction] [neutral_radius_m]`. Lu par le shard (respawn faction-aware, cf. `RespawnRules.h`) et le client (marqueurs). |
+
+> **Éclatement de `config.json` par rôle (chantier 2026-06-17)** : le fourre-tout
+> d'origine a été séparé en 3 familles — config moteur/client (`config.json`), config
+> serveur (`config/server.config.json`, non livrée au client), et contenu de zone
+> (`game/data/zones/<zone>/`). Les **préfixes de clés `world.*` / `db.*` sont conservés**
+> → aucun call-site C++ n'a changé (seuls les fichiers et l'ordre de chargement). Voir
+> `docs/superpowers/specs/2026-06-17-split-config-json-design.md`.
 
 ---
 

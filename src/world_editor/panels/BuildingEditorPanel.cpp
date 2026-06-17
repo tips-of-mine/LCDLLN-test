@@ -90,7 +90,7 @@ namespace engine::editor::world::panels
 			// Détecte tout changement pour rafraîchir l'aperçu live de la pièce.
 			bool pendingChanged = false;
 			pendingChanged |= ImGui::DragFloat3("Position locale (m)", m_newPos, 0.1f);
-			pendingChanged |= ImGui::DragFloat("Rotation Y (deg)", &m_newYaw, 0.5f);
+			pendingChanged |= ImGui::DragFloat3("Rotation XYZ (deg)", m_newRot, 0.5f);
 			pendingChanged |= ImGui::DragFloat("Echelle", &m_newScale, 0.01f, 0.01f, 100.0f);
 			pendingChanged |= ImGui::Checkbox("Solide (collision)", &m_newSolid);
 			ImGui::SameLine();
@@ -105,28 +105,34 @@ namespace engine::editor::world::panels
 				engine::world::instances::BuildingPart part;
 				part.gltfRelativePath = sel->gltfRelativePath;
 				part.localPosition = { m_newPos[0], m_newPos[1], m_newPos[2] };
-				part.localEulerDeg = { 0.0f, m_newYaw, 0.0f };
+				part.localEulerDeg = { m_newRot[0], m_newRot[1], m_newRot[2] };
 				part.localScale = m_newScale;
 				part.solid = m_newSolid;
 				part.collisionRadius = m_newCollision;
 				m_draftParts.push_back(part);
+				m_selectedDraft = static_cast<int>(m_draftParts.size()) - 1; // sélectionne la nouvelle
 				m_previewDirty = true;
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Rafraichir l'apercu")) m_previewDirty = true;
 
 			ImGui::Separator();
-			// --- Pièces de la variante en cours ----------------------------
-			ImGui::Text("Pieces de la variante : %zu", m_draftParts.size());
+			// --- Pièces de la variante en cours (cliquer pour sélectionner) ---
+			ImGui::Text("Pieces de la variante : %zu (cliquer pour editer)", m_draftParts.size());
+			if (m_selectedDraft >= static_cast<int>(m_draftParts.size())) m_selectedDraft = -1;
 			int removeIdx = -1;
 			for (size_t i = 0; i < m_draftParts.size(); ++i)
 			{
 				const auto& pt = m_draftParts[i];
 				ImGui::PushID(static_cast<int>(i));
-				ImGui::BulletText("%s  (%.1f, %.1f, %.1f)  yaw %.0f  x%.2f%s",
+				char label[160];
+				std::snprintf(label, sizeof(label), "%s  (%.1f, %.1f, %.1f)  rot(%.0f,%.0f,%.0f)  x%.2f%s",
 					pt.gltfRelativePath.c_str(),
 					pt.localPosition.x, pt.localPosition.y, pt.localPosition.z,
-					pt.localEulerDeg.y, pt.localScale, pt.solid ? "" : "  [non solide]");
+					pt.localEulerDeg.x, pt.localEulerDeg.y, pt.localEulerDeg.z,
+					pt.localScale, pt.solid ? "" : "  [non solide]");
+				if (ImGui::Selectable(label, m_selectedDraft == static_cast<int>(i)))
+					m_selectedDraft = static_cast<int>(i);
 				ImGui::SameLine();
 				if (ImGui::SmallButton("X")) removeIdx = static_cast<int>(i);
 				ImGui::PopID();
@@ -134,10 +140,37 @@ namespace engine::editor::world::panels
 			if (removeIdx >= 0)
 			{
 				m_draftParts.erase(m_draftParts.begin() + removeIdx);
+				if (m_selectedDraft == removeIdx) m_selectedDraft = -1;
+				else if (m_selectedDraft > removeIdx) --m_selectedDraft;
 				m_previewDirty = true;
 			}
 
-			if (ImGui::Button("Vider la variante")) { m_draftParts.clear(); m_previewDirty = true; }
+			// --- Édition de la pièce sélectionnée (transform X/Y/Z) -----------
+			if (m_selectedDraft >= 0 && m_selectedDraft < static_cast<int>(m_draftParts.size()))
+			{
+				engine::world::instances::BuildingPart& pt = m_draftParts[m_selectedDraft];
+				ImGui::Separator();
+				ImGui::Text("Piece selectionnee #%d", m_selectedDraft);
+				float pos[3] = { pt.localPosition.x, pt.localPosition.y, pt.localPosition.z };
+				float rot[3] = { pt.localEulerDeg.x, pt.localEulerDeg.y, pt.localEulerDeg.z };
+				float sc = pt.localScale;
+				bool changed = false;
+				changed |= ImGui::DragFloat3("Position (m)##sel", pos, 0.1f);
+				changed |= ImGui::DragFloat3("Rotation XYZ (deg)##sel", rot, 0.5f);
+				changed |= ImGui::DragFloat("Echelle##sel", &sc, 0.01f, 0.01f, 100.0f);
+				changed |= ImGui::Checkbox("Solide##sel", &pt.solid);
+				if (changed)
+				{
+					pt.localPosition = { pos[0], pos[1], pos[2] };
+					pt.localEulerDeg = { rot[0], rot[1], rot[2] };
+					pt.localScale = sc;
+					m_previewDirty = true;
+				}
+				if (ImGui::Button("Deselectionner")) m_selectedDraft = -1;
+			}
+
+			if (ImGui::Button("Vider la variante"))
+			{ m_draftParts.clear(); m_selectedDraft = -1; m_previewDirty = true; }
 
 			ImGui::Separator();
 			// --- Enregistrer la variante dans le fichier du type -----------
@@ -210,7 +243,7 @@ namespace engine::editor::world::panels
 			engine::world::instances::BuildingPart pending;
 			pending.gltfRelativePath = sel->gltfRelativePath;
 			pending.localPosition = { m_newPos[0], m_newPos[1], m_newPos[2] };
-			pending.localEulerDeg = { 0.0f, m_newYaw, 0.0f };
+			pending.localEulerDeg = { m_newRot[0], m_newRot[1], m_newRot[2] };
 			pending.localScale = m_newScale;
 			pending.solid = m_newSolid;
 			pending.collisionRadius = m_newCollision;

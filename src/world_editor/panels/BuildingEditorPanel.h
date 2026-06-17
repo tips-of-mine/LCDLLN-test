@@ -66,14 +66,15 @@ namespace engine::editor::world::panels
 
 		// Variante en cours de composition.
 		std::vector<engine::world::instances::BuildingPart> m_draftParts;
+		int  m_selectedDraft = -1; // pièce sélectionnée dans le brouillon (-1 = aucune)
 		char m_typeBuf[64]      = "tavern";
 		char m_typeNameBuf[96]  = "Taverne / Auberge";
 		char m_variantBuf[64]   = "";
 		char m_variantNameBuf[96] = "";
 
-		// Paramètres de la pièce à ajouter (transform local).
+		// Paramètres de la pièce à ajouter (transform local). Rotation X/Y/Z (deg).
 		float m_newPos[3]      = { 0.0f, 0.0f, 0.0f };
-		float m_newYaw         = 0.0f;
+		float m_newRot[3]      = { 0.0f, 0.0f, 0.0f };
 		float m_newScale       = 1.0f;
 		bool  m_newSolid       = true;
 		float m_newCollision   = 0.0f;

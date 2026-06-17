@@ -1,0 +1,30 @@
+{
+  "_comment": "PROD/DOCKER : config serveur partagée, montée :ro sur master ET shard (/app/config/server.config.json). Source unique du bloc db → plus de duplication entre master.config.json et shard.config.json. Les clés de tuning db (delay_thread_*, cache) prennent leurs valeurs par défaut ici (présentes côté dev dans config/server.config.json).",
+  "db": {
+    "host": "mysql",
+    "port": 3306,
+    "database": "lcdlln_master",
+    "user": "lcdlln_user",
+    "password": "lcdlln_pass_dev"
+  },
+  "accounts": {
+    "default_new_account_role": "player",
+    "role_change_audit": true
+  },
+  "chat": {
+    "sanitizer": {
+      "max_message_bytes": 255,
+      "strip_zero_width": true
+    },
+    "gate": {
+      "flood_window_ms": 5000,
+      "flood_max_messages": 5,
+      "max_tracked_accounts": 4096
+    }
+  },
+  "globals": {
+    "default_locale": 0,
+    "fallback_locale": 0,
+    "graveyard_default_faction_neutral_radius_m": 500.0
+  }
+}

@@ -44,6 +44,20 @@ namespace engine::core
 		/// Load config from a JSON/INI file (if present) and apply CLI overrides (`--key=value`).
 		static Config Load(std::string_view filePath, int argc, char** argv);
 
+		/// Charge la config SERVEUR dédiée (`<configDir>/server.config.json`) par-dessus
+		/// `cfg` (override des clés existantes : db/accounts/chat). Réservé aux binaires
+		/// serveur — jamais appelé côté client. Renvoie false si le fichier est absent
+		/// ou JSON invalide (le serveur garde alors ses defaults).
+		/// \param configDir répertoire contenant server.config.json (ex. "config").
+		static bool LoadServerConfig(Config& cfg, std::string_view configDir);
+
+		/// Charge le contenu de la zone active par-dessus `cfg` : lit `world.active_zone`,
+		/// puis fusionne `<contentRoot>/zones/<zone>/zone.json` et `…/scenery.json` (préfixes
+		/// world.* conservés). Renvoie false si `world.active_zone` est vide ou si zone.json
+		/// est absent (le moteur garde alors ses defaults). scenery.json absent n'est pas fatal.
+		/// \param contentRoot racine du contenu (ex. valeur de `paths.content` = "game/data").
+		static bool LoadActiveZone(Config& cfg, std::string_view contentRoot);
+
 		/// Set a default value (used if no file/override sets the key).
 		void SetDefault(std::string_view key, Value value);
 

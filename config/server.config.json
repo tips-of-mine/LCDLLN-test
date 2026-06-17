@@ -1,0 +1,31 @@
+{
+    "db": {
+        "_comment": "DEV LOCAL : seules les clés de TUNING sont ici (delay thread, cache prepared statements). Les clés de CONNEXION (host/port/database/user/password) sont volontairement absentes en dev (serveur local sans MySQL, ou repli sur defaults). En prod, deploy/docker/config/server.config.json fournit ces clés de connexion, monté sur master+shard.",
+        "delay_thread_enabled": true,
+        "delay_thread_queue_size": 1024,
+        "prepared_statement_cache_size_per_conn": 64,
+        "sql_storage_log_load_durations": true
+    },
+    "accounts": {
+        "default_new_account_role": "player",
+        "role_change_audit": true
+    },
+    "chat": {
+        "_comment": "Phase 2 CMANGOS.01 — sanitizer + gate cote master. sanitizer.max_message_bytes : limite UTF-8 safe (cf. ChatSanitizer). gate.flood_window_ms / flood_max_messages : sliding window anti-flood par account. gate.max_tracked_accounts : cap soft de la table interne (0 = illimite). Toutes les cles sont relues au boot du master uniquement.",
+        "sanitizer": {
+            "max_message_bytes": 255,
+            "strip_zero_width": true
+        },
+        "gate": {
+            "flood_window_ms": 5000,
+            "flood_max_messages": 5,
+            "max_tracked_accounts": 4096
+        }
+    },
+    "globals": {
+        "_comment": "Config serveur globale (relocalisée depuis config.json racine). default_locale/fallback_locale : defaults de langue (lus côté serveur). graveyard_default_faction_neutral_radius_m : rayon neutre PAR DÉFAUT des cimetières (m), surchargeable par cimetière dans game/data/zones/<zone>/respawn_points.txt (colonne neutral_radius_m). Lu par le shard (ServerApp::InitRespawnPoints).",
+        "default_locale": 0,
+        "fallback_locale": 0,
+        "graveyard_default_faction_neutral_radius_m": 500.0
+    }
+}

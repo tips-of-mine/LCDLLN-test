@@ -518,6 +518,27 @@ namespace engine::core
 		return cfg;
 	}
 
+	bool Config::LoadServerConfig(Config& cfg, std::string_view configDir)
+	{
+		std::filesystem::path path = std::filesystem::path(std::string(configDir)) / "server.config.json";
+		return cfg.LoadFromFile(path.string());
+	}
+
+	bool Config::LoadActiveZone(Config& cfg, std::string_view contentRoot)
+	{
+		const std::string zone = cfg.GetString("world.active_zone", "");
+		if (zone.empty())
+		{
+			return false;
+		}
+		const std::filesystem::path zoneDir =
+			std::filesystem::path(std::string(contentRoot)) / "zones" / zone;
+		const bool zoneOk = cfg.LoadFromFile((zoneDir / "zone.json").string());
+		// scenery.json optionnel (peut être absent sur une zone vide) : on n'échoue pas dessus.
+		(void)cfg.LoadFromFile((zoneDir / "scenery.json").string());
+		return zoneOk;
+	}
+
 	void Config::SetDefault(std::string_view key, Value value)
 	{
 		const std::string owned = ToOwnedKey(key);

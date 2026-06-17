@@ -99,6 +99,7 @@ namespace
 int main(int argc, char** argv)
 {
 	engine::core::Config config = engine::core::Config::Load("config.json", argc, argv);
+
 	ApplyServerPortCli(argc, argv, config);
 
 	// Default log file for server includes "server" in the name (config key log.file, default lcdlln_server.log).
@@ -113,6 +114,13 @@ int main(int argc, char** argv)
 	logSettings.retention_days = static_cast<int>(config.GetInt("log.retention_days", 7));
 	logSettings.subsystemFiles = config.GetStringMapUnderPrefix("log.subsystem_files");
 	engine::core::Log::Init(logSettings);
+
+	// Config serveur dédiée (db/accounts/chat) : jamais livrée au client. Montée en
+	// Docker sur master ET shard (un seul fichier source → plus de duplication du bloc db).
+	if (!engine::core::Config::LoadServerConfig(config, "config"))
+	{
+		LOG_WARN(Net, "[shard] config/server.config.json absent : repli sur clés inline éventuelles");
+	}
 
 	const uint16_t port = static_cast<uint16_t>(config.GetInt("server.listen_port", 27015));
 	LOG_INFO(Net, "[Server] lcdlln_server starting — log file: {}, port: {} (UDP), console: {}",

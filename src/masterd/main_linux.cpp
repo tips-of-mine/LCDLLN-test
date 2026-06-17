@@ -169,6 +169,13 @@ int main(int argc, char** argv)
 	engine::core::LogSettings logSettings = engine::core::BuildLogSettingsFromConfig(config, "engine.log");
 	engine::core::Log::Init(logSettings);
 
+	// Config serveur dédiée (db/accounts/chat) : jamais livrée au client. Montée en
+	// Docker sur master ET shard (un seul fichier source → plus de duplication du bloc db).
+	if (!engine::core::Config::LoadServerConfig(config, "config"))
+	{
+		LOG_WARN(Server, "[master] config/server.config.json absent : repli sur clés inline éventuelles");
+	}
+
 	LOG_INFO(Net, "[ServerMain] Linux TCP server starting...");
 
 	if (!engine::server::MigrationRunnerRun(config))

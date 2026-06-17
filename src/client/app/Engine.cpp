@@ -1269,6 +1269,15 @@ namespace engine
 				m_cfg.GetString("log.level", "Info"));
 		}
 
+		// Contenu de la zone active (scenery, interactables, réglages de zone) : fusionné
+		// par-dessus config.json. Les clés gardent leur préfixe world.* → call-sites inchangés.
+		// Couvre aussi l'éditeur (même constructeur Engine via --world-editor).
+		if (!engine::core::Config::LoadActiveZone(m_cfg, m_cfg.GetString("paths.content", "game/data")))
+		{
+			LOG_WARN(Core, "[Engine] Zone active introuvable (world.active_zone='{}') : monde par defaut",
+				m_cfg.GetString("world.active_zone", ""));
+		}
+
 		// ------------------------------------------------------------------
 		// Config + subsystems
 		// ------------------------------------------------------------------
@@ -12817,11 +12826,17 @@ namespace engine
 	void Engine::LoadRespawnMarkers()
 	{
 		m_respawnMarkers.clear();
-		const std::string markersText = engine::platform::FileSystem::ReadAllTextContent(
-			m_cfg, m_cfg.GetString("server.respawn_points_path", "respawn/respawn_points.txt"));
+		// Marqueurs de la zone active (game/data/zones/<zone>/respawn_points.txt) si
+		// world.active_zone est défini, sinon repli sur l'ancien chemin global.
+		// Le parseur ci-dessous ignore les colonnes faction/rayon (réservées au shard).
+		const std::string activeZone = m_cfg.GetString("world.active_zone", "");
+		const std::string markersPath = activeZone.empty()
+			? m_cfg.GetString("server.respawn_points_path", "respawn/respawn_points.txt")
+			: ("zones/" + activeZone + "/respawn_points.txt");
+		const std::string markersText = engine::platform::FileSystem::ReadAllTextContent(m_cfg, markersPath);
 		if (markersText.empty())
 		{
-			LOG_WARN(Core, "[Engine] Marqueurs de réapparition absents (respawn/respawn_points.txt)");
+			LOG_WARN(Core, "[Engine] Marqueurs de réapparition absents ({})", markersPath);
 			return;
 		}
 		std::istringstream input(markersText);

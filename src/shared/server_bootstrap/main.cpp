@@ -103,6 +103,13 @@ int main(int argc, char** argv)
 		logSettings.console ? "on" : "off",
 		logSettings.filePath.empty() ? "<disabled>" : logSettings.filePath);
 
+	// Config serveur dédiée (db/accounts/chat) : jamais livrée au client. Montée en
+	// Docker sur master ET shard (un seul fichier source → plus de duplication du bloc db).
+	if (!engine::core::Config::LoadServerConfig(config, "config"))
+	{
+		LOG_WARN(Core, "[bootstrap] config/server.config.json absent : repli sur clés inline éventuelles");
+	}
+
 	engine::core::Config configForRegistry = config;
 	engine::server::ServerRegistry serverRegistry;
 	engine::server::ServerApp app(std::move(config));

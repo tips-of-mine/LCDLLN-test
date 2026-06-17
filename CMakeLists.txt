@@ -1407,6 +1407,37 @@ if(MSVC)
 endif()
 add_test(NAME config_save_to_file_tests COMMAND config_save_to_file_tests)
 
+# PR1 — Tests CPU pour Config::LoadServerConfig (éclatement config.json).
+# Vérifie la fusion des clés serveur (db/accounts/chat) et le renvoi false
+# si server.config.json est absent. Pur CPU + E/S, non gate WIN32.
+add_executable(config_server_load_tests src/shared/core/tests/ConfigServerLoadTests.cpp)
+target_include_directories(config_server_load_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(config_server_load_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(config_server_load_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME config_server_load_tests COMMAND config_server_load_tests)
+
+# PR2 — Tests CPU pour Config::LoadActiveZone (éclatement config.json).
+# Vérifie que LoadActiveZone lit world.active_zone et fusionne zone.json +
+# scenery.json ; renvoie false si zone absente ou active_zone vide. Pur CPU + E/S.
+add_executable(config_zone_load_tests src/shared/core/tests/ConfigZoneLoadTests.cpp)
+target_include_directories(config_zone_load_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(config_zone_load_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(config_zone_load_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME config_zone_load_tests COMMAND config_zone_load_tests)
+
+# PR3 — Tests CPU de la règle d'éligibilité des cimetières (rayon neutre de
+# faction). RespawnRules.h est header-only : aucun lien bibliothèque requis.
+add_executable(respawn_rules_tests src/shared/world/tests/RespawnRulesTests.cpp)
+target_include_directories(respawn_rules_tests PRIVATE ${CMAKE_SOURCE_DIR})
+if(MSVC)
+  target_compile_options(respawn_rules_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME respawn_rules_tests COMMAND respawn_rules_tests)
+
 # M100.1 — Tests unitaires CPU pour la coquille WorldEditorShell.
 # Vérifient le cycle Init/Shutdown, la persistance du layout .ini, le
 # dispatch des raccourcis F1..F12 et le flag dirty. Le test crée un

@@ -46,9 +46,17 @@ namespace
 int main(int argc, char** argv)
 {
 	engine::core::Config config = engine::core::Config::Load("config.json", argc, argv);
+
 	// M45 — Construction centralisée des LogSettings (filtres, fichiers spécialisés, couleurs).
 	engine::core::LogSettings logSettings = engine::core::BuildLogSettingsFromConfig(config, "shard.log");
 	engine::core::Log::Init(logSettings);
+
+	// Config serveur dédiée (db/accounts/chat) : jamais livrée au client. Montée en
+	// Docker sur master ET shard (un seul fichier source → plus de duplication du bloc db).
+	if (!engine::core::Config::LoadServerConfig(config, "config"))
+	{
+		LOG_WARN(Net, "[shard] config/server.config.json absent : repli sur clés inline éventuelles");
+	}
 
 	LOG_INFO(Net, "[ShardMain] Shard server starting...");
 

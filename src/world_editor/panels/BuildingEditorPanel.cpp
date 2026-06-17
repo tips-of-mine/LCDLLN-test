@@ -23,6 +23,7 @@ namespace engine::editor::world::panels
 				"Compose une variante de batiment a partir des assets de l'Asset "
 				"Browser, enregistre-la dans le fichier de son type, puis pose une "
 				"reference sur la carte.");
+			ImGui::Checkbox("Mode edition batiment (le clic ne sculpte PAS le terrain)", &m_editMode);
 			ImGui::Separator();
 
 			// --- Charger une variante existante (pour la modifier) ----------

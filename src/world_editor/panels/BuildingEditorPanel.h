@@ -43,6 +43,10 @@ namespace engine::editor::world::panels
 		/// la pièce avant de l'ajouter. La pièce en cours est la dernière.
 		std::vector<engine::world::instances::BuildingPart> PartsForPreview() const;
 
+		/// Mode « édition bâtiment » : si vrai, le clic gauche dans la vue ne
+		/// modifie PAS le terrain (réservé à la sélection/édition des pièces).
+		bool EditModeActive() const { return m_editMode; }
+
 		/// Index de la pièce sélectionnée dans le brouillon (-1 = aucune).
 		int SelectedDraft() const { return m_selectedDraft; }
 		/// Position LOCALE de la pièce « active » du gizmo : la pièce sélectionnée
@@ -63,6 +67,7 @@ namespace engine::editor::world::panels
 	private:
 		bool m_visible = true;
 		bool m_previewDirty = true; // aperçu 3D à (re)construire
+		bool m_editMode = false;    // clic vue = bâtiment (pas terrain)
 
 		std::string m_lastPreviewAssetId; // détecte un changement d'asset sélectionné
 

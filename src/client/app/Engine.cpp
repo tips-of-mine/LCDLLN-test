@@ -10189,12 +10189,23 @@ namespace engine
 			// legacy (garde `!modernEditActive` sur le bloc legacy plus bas). Sans
 			// outil moderne d'edition actif, le legacy reste le chemin par defaut.
 			// Ctrl+clic gauche reste reserve au picking B3 (donc exclu ici).
+			// Mode « édition bâtiment » : quand actif (case à cocher du Building
+			// Editor), le clic gauche dans la vue NE modifie PAS le terrain (ni
+			// outils modernes ni brush legacy) — il est réservé à la
+			// sélection/édition des pièces de bâtiment. Évite de sculpter le
+			// terrain par réflexe en voulant choisir une pièce.
+			const bool buildingEditMode =
+				(m_worldEditorShell && m_worldEditorShell->GetBuildingEditorPanel())
+					? m_worldEditorShell->GetBuildingEditorPanel()->EditModeActive()
+					: false;
+
 			bool modernEditActive = false;
 			if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
 			{
 				const engine::editor::world::ActiveTool tool = m_worldEditorShell->GetActiveTool();
 				const bool freeClick = !m_worldEditorImGui->WantsCaptureMouse()
-					&& !m_input.IsDown(engine::platform::Key::Control);
+					&& !m_input.IsDown(engine::platform::Key::Control)
+					&& !buildingEditMode;
 				if (tool == engine::editor::world::ActiveTool::TerrainSculpt)
 				{
 					modernEditActive = true;
@@ -10281,7 +10292,7 @@ namespace engine
 				}
 			}
 
-			if (!modernEditActive && m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
+			if (!modernEditActive && !buildingEditMode && m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
 			{
 				const bool cap = m_worldEditorImGui->WantsCaptureMouse();
 				engine::editor::WorldEditorSession& ws = *m_worldEditorSession;

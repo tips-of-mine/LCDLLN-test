@@ -481,6 +481,12 @@ add_library(engine_core
   src/world_editor/volumes/dungeons/DungeonPortalIo.cpp
   src/world_editor/volumes/dungeons/DungeonPortalTool.cpp
   src/world_editor/volumes/dungeons/PlaceDungeonPortalCommand.cpp
+  # Auberge éditable — entité « Building » : grappe d'éléments existants
+  # (murs/toits/portes/mobilier) regroupée en une entité logique éditable.
+  # Format buildings.bin (LCBD v1) header-only dans Buildings.h ; document
+  # CRUD calqué sur MeshInsertDocument. Cf.
+  # docs/superpowers/specs/2026-06-17-auberge-building-editor-design.md.
+  src/world_editor/buildings/BuildingDocument.cpp
   # M100.44 — VMap Bridge & Phase 11 Validation (clôture Phase 11).
   # VMapBridge : export AABB proxy collision (LCVC v1) depuis les
   # documents de volumes. Phase11Validator : checks de cohérence
@@ -1714,6 +1720,18 @@ if(WIN32)
   endif()
   add_test(NAME mesh_insert_tests COMMAND mesh_insert_tests)
 endif()
+
+# Auberge éditable — Tests unitaires CPU pour l'entité « Building » :
+# round-trip binaire LCBD v1 (avec pièces + Y empilé), BuildingDocument CRUD,
+# auto-guid, round-trip disque namespacé. Pure CPU (pas d'ImGui) : cible
+# cross-platform pour être RÉELLEMENT exécutée par le ctest Linux de la CI
+# (engine_core expose ${CMAKE_SOURCE_DIR} en include PUBLIC).
+add_executable(building_tests src/world_editor/tests/BuildingTests.cpp)
+target_link_libraries(building_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(building_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME building_tests COMMAND building_tests)
 
 # M100.41 — Tests unitaires CPU pour l'Overhang Cliff Tool (Phase 11).
 # OverhangCatalog JSON parsing, PlaceOverhangCommand Apply/Undo, gating

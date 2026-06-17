@@ -92,6 +92,7 @@ services:
       - "traefik.enable=false"
     volumes:
       - ./config/master.config.json:/app/config.json:ro
+      - ./config/server.config.json:/app/config/server.config.json:ro
       # SMTP : monté depuis config/smtp.local.json (fichier non versionné, créer sur le serveur).
       - ./config/smtp.local.json:/app/smtp.local.json:ro
       - ./game/data:/app/game/data:ro
@@ -133,6 +134,7 @@ services:
       - "${SHARD_UDP_PORT:-27015}:27015/udp"
     volumes:
       - ./config/shard.config.json:/app/config.json:ro
+      - ./config/server.config.json:/app/config/server.config.json:ro
       - ./game/data:/app/game/data:ro
       # TA.4 — autosave perso : CharacterPersistenceStore écrit
       # game/data/persistence/characters/character_<id>.ini à chaque autosave (30 s).

@@ -4,13 +4,6 @@
     "health": { "port": 3844, "bind": "0.0.0.0" },
     "listen_port": 27015
   },
-  "db": {
-    "host": "mysql",
-    "port": 3306,
-    "database": "lcdlln_master",
-    "user": "lcdlln_user",
-    "password": "lcdlln_pass_dev"
-  },
   "shard": {
     "id": 1,
     "ticket_hmac_secret": "dev_secret_change_in_production",

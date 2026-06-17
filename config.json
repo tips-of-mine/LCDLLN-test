@@ -668,32 +668,10 @@
             "auction_talk_target": "auction"
         }
     },
-    "db": {
-        "delay_thread_enabled": true,
-        "delay_thread_queue_size": 1024,
-        "prepared_statement_cache_size_per_conn": 64,
-        "sql_storage_log_load_durations": true
-    },
     "globals": {
         "default_locale": 0,
         "fallback_locale": 0,
         "graveyard_default_faction_neutral_radius_m": 500.0
-    },
-    "accounts": {
-        "default_new_account_role": "player",
-        "role_change_audit": true
-    },
-    "chat": {
-        "_comment": "Phase 2 CMANGOS.01 — sanitizer + gate cote master. sanitizer.max_message_bytes : limite UTF-8 safe (cf. ChatSanitizer). gate.flood_window_ms / flood_max_messages : sliding window anti-flood par account. gate.max_tracked_accounts : cap soft de la table interne (0 = illimite). Toutes les cles sont relues au boot du master uniquement.",
-        "sanitizer": {
-            "max_message_bytes": 255,
-            "strip_zero_width": true
-        },
-        "gate": {
-            "flood_window_ms": 5000,
-            "flood_max_messages": 5,
-            "max_tracked_accounts": 4096
-        }
     },
     "game": {
         "worldclock": {

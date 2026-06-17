@@ -1269,6 +1269,15 @@ namespace engine
 				m_cfg.GetString("log.level", "Info"));
 		}
 
+		// Contenu de la zone active (scenery, interactables, réglages de zone) : fusionné
+		// par-dessus config.json. Les clés gardent leur préfixe world.* → call-sites inchangés.
+		// Couvre aussi l'éditeur (même constructeur Engine via --world-editor).
+		if (!engine::core::Config::LoadActiveZone(m_cfg, m_cfg.GetString("paths.content", "game/data")))
+		{
+			LOG_WARN(Core, "[Engine] Zone active introuvable (world.active_zone='{}') : monde par defaut",
+				m_cfg.GetString("world.active_zone", ""));
+		}
+
 		// ------------------------------------------------------------------
 		// Config + subsystems
 		// ------------------------------------------------------------------

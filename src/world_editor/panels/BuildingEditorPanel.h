@@ -72,6 +72,10 @@ namespace engine::editor::world::panels
 		bool  m_newSolid       = true;
 		float m_newCollision   = 0.0f;
 
+		// Sélection « charger une variante existante » (combos type/variante).
+		std::string m_loadType;
+		std::string m_loadVariant;
+
 		// Paramètres de pose sur la carte (référence). Défaut (0,0) = origine,
 		// visible d'emblée dans la vue éditeur ; l'aperçu 3D du brouillon s'y
 		// affiche (déplaçable via ces champs + « Rafraichir l'apercu »).

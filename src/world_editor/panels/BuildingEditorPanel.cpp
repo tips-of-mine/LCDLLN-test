@@ -4,6 +4,7 @@
 #include "src/world_editor/buildings/BuildingDocument.h"
 #include "src/world_editor/panels/AssetBrowserPanel.h"
 
+#include <cstdio>
 #include <string>
 
 #if defined(_WIN32)
@@ -22,6 +23,55 @@ namespace engine::editor::world::panels
 				"Compose une variante de batiment a partir des assets de l'Asset "
 				"Browser, enregistre-la dans le fichier de son type, puis pose une "
 				"reference sur la carte.");
+			ImGui::Separator();
+
+			// --- Charger une variante existante (pour la modifier) ----------
+			ImGui::TextUnformatted("Charger une variante existante (ex: l'auberge) :");
+			if (m_library)
+			{
+				const auto& templates = m_library->Templates();
+				if (ImGui::BeginCombo("Type a charger",
+					m_loadType.empty() ? "(choisir)" : m_loadType.c_str()))
+				{
+					for (const auto& t : templates)
+						if (ImGui::Selectable(t.type.c_str(), m_loadType == t.type))
+						{ m_loadType = t.type; m_loadVariant.clear(); }
+					ImGui::EndCombo();
+				}
+				const engine::world::instances::BuildingTemplate* selT =
+					m_library->FindType(m_loadType);
+				if (selT)
+				{
+					if (ImGui::BeginCombo("Variante a charger",
+						m_loadVariant.empty() ? "(choisir)" : m_loadVariant.c_str()))
+					{
+						for (const auto& v : selT->variants)
+							if (ImGui::Selectable(v.id.c_str(), m_loadVariant == v.id))
+								m_loadVariant = v.id;
+						ImGui::EndCombo();
+					}
+					if (ImGui::Button("Charger dans l'editeur"))
+					{
+						const engine::world::instances::BuildingVariant* v =
+							selT->FindVariant(m_loadVariant);
+						if (v)
+						{
+							m_draftParts = v->parts;
+							std::snprintf(m_typeBuf, sizeof(m_typeBuf), "%s", selT->type.c_str());
+							std::snprintf(m_typeNameBuf, sizeof(m_typeNameBuf), "%s", selT->displayName.c_str());
+							std::snprintf(m_variantBuf, sizeof(m_variantBuf), "%s", v->id.c_str());
+							std::snprintf(m_variantNameBuf, sizeof(m_variantNameBuf), "%s", v->displayName.c_str());
+							m_previewDirty = true;
+							m_status = "Variante chargee : " + v->id + " (" +
+								std::to_string(v->parts.size()) + " pieces). Modifie puis Enregistre.";
+						}
+					}
+				}
+			}
+			else
+			{
+				ImGui::TextDisabled("(bibliotheque indisponible)");
+			}
 			ImGui::Separator();
 
 			// --- Type / variante -------------------------------------------

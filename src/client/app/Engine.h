@@ -915,6 +915,12 @@ namespace engine
 		/// effacer le décor/les bâtiments chargés au boot.
 		size_t m_editorBaselinePropCount = 0;
 
+		/// Gizmo éditeur — position monde de la pièce de bâtiment active (cible du
+		/// gizmo), calculée dans SyncEditorBuildingPreview. m_editorGizmoValid =
+		/// false si aucune pièce active.
+		engine::math::Vec3 m_editorGizmoPos{};
+		bool m_editorGizmoValid = false;
+
 		/// M45.5 — atlas d'impostors par chemin de mesh (clé = PropRenderable::meshPath).
 		/// Peuplé à la demande dans BuildPropFromMesh quand world.impostor.enabled :
 		/// pour chaque mesh de DÉCOR, tente de charger `<même nom>.mipo` à côté du
@@ -996,6 +1002,13 @@ namespace engine
 		/// ressources GPU à chaque frame). À appeler dans la boucle éditeur,
 		/// avant le rendu des props.
 		void SyncEditorBuildingPreview();
+
+		/// Dessine le gizmo de la pièce de bâtiment active en overlay ImGui :
+		/// axes de translation + anneaux de rotation, X=rouge / Y=vert / Z=bleu,
+		/// projetés monde→écran via la viewProj courante. Visuel seul (pas
+		/// d'interaction souris à cette étape). No-op hors éditeur ou si aucune
+		/// pièce active. À appeler pendant la frame ImGui de l'éditeur.
+		void DrawEditorBuildingGizmo();
 
 		/// Charge le coffre (Chest_Wood) en mesh SKINNE (squelette + clips Open/Close)
 		/// pour l'animer a l'interaction. A appeler au boot apres LoadInteractableProps.

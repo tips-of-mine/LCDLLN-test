@@ -230,6 +230,23 @@ namespace engine::editor::world::panels
 #endif
 	}
 
+	bool BuildingEditorPanel::ActivePartLocalPos(float out[3]) const
+	{
+		if (m_selectedDraft >= 0 && m_selectedDraft < static_cast<int>(m_draftParts.size()))
+		{
+			const auto& p = m_draftParts[m_selectedDraft].localPosition;
+			out[0] = p.x; out[1] = p.y; out[2] = p.z;
+			return true;
+		}
+		// Sinon, la pièce en cours de configuration (si un asset est sélectionné).
+		if (m_assetBrowser && m_assetBrowser->SelectedAsset())
+		{
+			out[0] = m_newPos[0]; out[1] = m_newPos[1]; out[2] = m_newPos[2];
+			return true;
+		}
+		return false;
+	}
+
 	std::vector<engine::world::instances::BuildingPart>
 	BuildingEditorPanel::PartsForPreview() const
 	{

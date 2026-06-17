@@ -9178,6 +9178,9 @@ namespace engine
 			// éditeur. Reconstruit m_props seulement si l'aperçu est « sale ».
 			SyncEditorBuildingPreview();
 			m_worldEditorShell->RenderFrame();
+			// Gizmo (axes/anneaux X=rouge/Y=vert/Z=bleu) sur la pièce active,
+			// en overlay sur la 3D (sous les panneaux). Visuel seul pour l'instant.
+			DrawEditorBuildingGizmo();
 		}
 #endif
 
@@ -13524,10 +13527,96 @@ namespace engine
 		emitParts(previewParts, previewX, previewZ,
 			panel->PreviewYaw(), panel->PreviewScale());
 
+		// Cible du gizmo : position monde de la pièce active (sélectionnée ou en
+		// cours), pour l'overlay DrawEditorBuildingGizmo.
+		float activeLocal[3];
+		if (panel->ActivePartLocalPos(activeLocal))
+		{
+			const float gY = m_terrainCollider.GroundHeightAt(previewX, previewZ);
+			const engine::math::Mat4 grpM =
+				engine::math::Mat4::Translate(engine::math::Vec3{ previewX, gY, previewZ }) *
+				engine::math::Mat4::RotateY(panel->PreviewYaw() * kDeg2Rad) *
+				scaleMat(panel->PreviewScale());
+			const float* M = grpM.m;
+			m_editorGizmoPos = engine::math::Vec3{
+				M[0]*activeLocal[0] + M[4]*activeLocal[1] + M[8]*activeLocal[2]  + M[12],
+				M[1]*activeLocal[0] + M[5]*activeLocal[1] + M[9]*activeLocal[2]  + M[13],
+				M[2]*activeLocal[0] + M[6]*activeLocal[1] + M[10]*activeLocal[2] + M[14] };
+			m_editorGizmoValid = true;
+		}
+		else
+		{
+			m_editorGizmoValid = false;
+		}
+
 		LOG_INFO(Render, "[Buildings][editeur] apercu : monde={} + brouillon/encours={} piece(s) @ ({:.1f},{:.1f}) -> total {}",
 			static_cast<int>(m_editorBaselinePropCount),
 			static_cast<int>(previewParts.size()),
 			previewX, previewZ, static_cast<int>(m_props.size()));
+	}
+
+	void Engine::DrawEditorBuildingGizmo()
+	{
+#if defined(_WIN32)
+		if (!m_editorEnabled || !m_editorGizmoValid) return;
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::math::Mat4& vp = m_renderStates[readIdx].viewProjMatrix;
+		const ImGuiIO& io = ImGui::GetIO();
+		const float W = io.DisplaySize.x, H = io.DisplaySize.y;
+		if (W <= 0.0f || H <= 0.0f) return;
+
+		// Projection monde -> écran (pixels) via la viewProj courante.
+		auto project = [&](const engine::math::Vec3& w, ImVec2& out) -> bool {
+			const float* M = vp.m; // column-major
+			const float cx = M[0]*w.x + M[4]*w.y + M[8]*w.z  + M[12];
+			const float cy = M[1]*w.x + M[5]*w.y + M[9]*w.z  + M[13];
+			const float cw = M[3]*w.x + M[7]*w.y + M[11]*w.z + M[15];
+			if (cw <= 1e-4f) return false; // derrière la caméra
+			out.x = (cx / cw * 0.5f + 0.5f) * W;
+			out.y = (cy / cw * 0.5f + 0.5f) * H;
+			return true;
+		};
+
+		ImVec2 so;
+		if (!project(m_editorGizmoPos, so)) return;
+
+		// Background draw list : par-dessus la 3D, sous les fenêtres ImGui.
+		ImDrawList* dl = ImGui::GetBackgroundDrawList();
+		const float axisLen = 2.0f; // mètres
+		const float ringR   = 1.5f;
+		const ImU32 colX = IM_COL32(235, 70, 70, 255);  // X rouge
+		const ImU32 colY = IM_COL32(70, 210, 70, 255);  // Y vert
+		const ImU32 colZ = IM_COL32(80, 130, 255, 255); // Z bleu
+		const engine::math::Vec3 dirs[3] = { {1,0,0}, {0,1,0}, {0,0,1} };
+		const engine::math::Vec3 perps[3] = { {0,1,0}, {0,0,1}, {1,0,0} };
+		const ImU32 cols[3] = { colX, colY, colZ };
+		const engine::math::Vec3 o = m_editorGizmoPos;
+
+		for (int a = 0; a < 3; ++a)
+		{
+			// Axe de translation (ligne + poignée).
+			ImVec2 se;
+			const engine::math::Vec3 tip{
+				o.x + dirs[a].x * axisLen, o.y + dirs[a].y * axisLen, o.z + dirs[a].z * axisLen };
+			if (project(tip, se))
+			{
+				dl->AddLine(so, se, cols[a], 3.0f);
+				dl->AddCircleFilled(se, 5.0f, cols[a]);
+			}
+			// Anneau de rotation (cercle écran approximatif, rayon = projection
+			// d'un point à ringR sur un axe perpendiculaire).
+			ImVec2 sp;
+			const engine::math::Vec3 ringPt{
+				o.x + perps[a].x * ringR, o.y + perps[a].y * ringR, o.z + perps[a].z * ringR };
+			if (project(ringPt, sp))
+			{
+				const float dx = sp.x - so.x, dy = sp.y - so.y;
+				const float rad = std::sqrt(dx*dx + dy*dy);
+				if (rad > 3.0f && rad < 4000.0f) dl->AddCircle(so, rad, cols[a], 48, 2.0f);
+			}
+		}
+		dl->AddCircleFilled(so, 4.0f, IM_COL32(255, 255, 255, 255)); // centre
+#endif
 	}
 
 	void Engine::BuildPropFromMeshMatrix(const std::string& meshPath,

@@ -42,6 +42,13 @@ namespace engine::editor::world::panels
 		/// Position locale / Rotation / Échelle courantes), pour voir en direct
 		/// la pièce avant de l'ajouter. La pièce en cours est la dernière.
 		std::vector<engine::world::instances::BuildingPart> PartsForPreview() const;
+
+		/// Index de la pièce sélectionnée dans le brouillon (-1 = aucune).
+		int SelectedDraft() const { return m_selectedDraft; }
+		/// Position LOCALE de la pièce « active » du gizmo : la pièce sélectionnée
+		/// si une l'est, sinon la pièce en cours de configuration (asset choisi).
+		/// Retourne false si aucune pièce active. \param out reçoit x,y,z.
+		bool ActivePartLocalPos(float out[3]) const;
 		/// Origine monde où prévisualiser le brouillon = position de pose courante.
 		float PreviewX() const { return m_placePos[0]; }
 		float PreviewZ() const { return m_placePos[1]; }

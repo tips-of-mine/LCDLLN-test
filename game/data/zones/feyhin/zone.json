@@ -1,0 +1,75 @@
+{
+    "world": {
+        "max_draw_distance_m": 0.0,
+        "_comment_props": "Rendu des props de decor (world.scenery). cull_distance_m : au-dela de ce rayon (m) autour de la camera, un prop de DECOR n'est plus dessine (les INTERACTIBLES coffre/villageois/caisses sont toujours dessines). Lu a chaque frame -> reglage a chaud (modifier config.json puis relancer suffit, AUCUNE recompilation). Reduire si la foret dense fait chuter le framerate ; augmenter pour plus de profondeur visuelle. <= 0 = desactive (tout est dessine). Repli 80 si la cle est absente.",
+        "props": {
+            "cull_distance_m": 80.0
+        },
+        "_comment_impostor": "M45.5 — Impostors vegetation (billboards octaedriques) au LOIN, a la place des meshes de decor, eclaires via le GBuffer deferred. DESACTIVE par defaut (enabled=false) : aucun changement de rendu tant que non active. Necessite des atlas .mipo (generes par tools/impostor_builder) places A COTE de chaque mesh (meme nom, extension .mipo). Le SEUIL de bascule mesh->impostor est desormais lod.distance_impostor_m (l'ancienne cle distance_m a ete retiree). fade_band_m : largeur (m) de la bande de fondu (cross-fade dither anti-popping) juste apres ce seuil : dans cette bande, le mesh ET l'impostor coexistent (l'impostor monte en dither 0->1). parallax_scale : echelle du decalage de parallax single-step (frag v2). Lu a chaque frame -> reglage a chaud.",
+        "impostor": {
+            "enabled": false,
+            "fade_band_m": 10.0,
+            "parallax_scale": 0.08
+        },
+        "_comment_fog": "M45.1 Perspective aerienne a distance. start_m : rayon CLAIR autour du joueur (aucun brouillard en deca) ; end_m : distance de fondu COMPLET vers la teinte atmospherique (garantit le masquage de la coupe de distance des props). density : extinction exponentielle (1/m), <= 0 desactive l'effet ; inscatter : force du halo chaud directionnel quand on regarde le soleil. start/end : desactive si end_m <= start_m. density/inscatter : override des valeurs per-zone (atmosphere.json : aerial.density / aerial.inscatter) ; retirer ces cles ici pour piloter par zone. Lu a chaque frame -> reglage a chaud.",
+        "fog": {
+            "start_m": 35.0,
+            "end_m": 85.0,
+            "density": 0.012,
+            "inscatter": 0.6
+        },
+        "_comment_volfog": "M45.2 Brouillard VOLUMIQUE + god rays (rayons crepusculaires). Distinct du brouillard de distance (world.fog ci-dessus) : ici une passe plein ecran ray-marche par pixel le long du rayon camera->pixel en echantillonnant la shadow map cascade 0 pour l'occlusion solaire (god rays). DESACTIVE par defaut (density = 0). density : densite du milieu (<= 0 desactive entierement la passe) ; anisotropy : g de Henyey-Greenstein [-1..1] (>0 = diffusion vers l'avant, halo concentre autour du soleil) ; inscatter : intensite globale de l'inscattering ; steps : nombre de pas de marche (cout GPU ~ lineaire) ; max_dist_m : distance max de marche (m) ; height_m : hauteur de reference du fog (m, plus dense en dessous) ; height_falloff : taux d'attenuation en hauteur. Lu a chaque frame -> reglage a chaud.",
+        "volfog": {
+            "density": 0.0,
+            "anisotropy": 0.6,
+            "inscatter": 1.0,
+            "steps": 32,
+            "max_dist_m": 120.0,
+            "height_m": 10.0,
+            "height_falloff": 0.1
+        },
+        "_comment_dof": "M45.3 Profondeur de champ / bokeh. Passe plein ecran sur l'image HDR APRES bloom et AVANT tonemap : reconstruit la distance monde par pixel (depth + invViewProj), calcule un Circle of Confusion depuis l'ecart au plan focal, et applique un flou en disque (16 samples) ponderé par le CoC (un sample ne bave que s'il est lui-meme flou). DESACTIVE par defaut (focus_range_m = 0 -> passthrough). focus_distance_m : distance du plan de nettete (m) ; focus_range_m : demi-largeur de la zone nette (m ; <= 0 desactive entierement la passe) ; max_blur_px : rayon de flou max (pixels) ; near_scale : echelle du flou pour l'avant-plan (devant le plan focal) ; far_scale : echelle du flou pour l'arriere-plan. Lu a chaque frame -> reglage a chaud.",
+        "dof": {
+            "focus_distance_m": 12.0,
+            "focus_range_m": 0.0,
+            "max_blur_px": 8.0,
+            "near_scale": 1.0,
+            "far_scale": 1.0
+        },
+        "_comment_interactables": "Interagir (touche E) : count = nombre de cibles ; chaque index i a x/z (metres monde), radius (portee m), npc (bool : PNJ vs objet), label, role (sous-titre cellule de dialogue), message (effet objet), mesh/scale/yaw_deg/rot_x_deg, dialogue (legacy, repli) et/ou dialogue_id (reference vers game/data/dialogues/<id>.json, prioritaire). Un PNJ avec dialogue_id ouvre la cellule de dialogue dediee (hors chat) ; portee resserree a 1.5 m (= seuil de rupture). Seuls les VRAIS interactibles ici (PNJ, coffre). Le DECOR (arbres, props non interactifs mais solides) est dans world.scenery. Le coffre et le villageois sont solides (collision) comme tout le decor.",
+        "interactables": {
+            "count": 7,
+            "_comment_0": "dialogue_id reference le fichier game/data/dialogues/villageois.json (contenu : repliques + choix). Prioritaire sur dialogue (legacy, conserve comme repli si le fichier manque).",
+            "0": {
+                "x": 4.0, "z": 0.0, "radius": 1.5, "npc": true,
+                "label": "Villageois", "role": "Habitant du village",
+                "message": "Villageois : Bonjour !",
+                "mesh": "models/characters/humains/Male_Ranger/Male_Ranger.glb", "scale": 95.0, "rot_x_deg": -90.0, "yaw_deg": 270.0,
+                "dialogue": { "count": 3, "0": "Bonjour, aventurier ! Bienvenue par ici.", "1": "Le bassin de test est a l'est, si tu veux nager.", "2": "Reviens me voir quand tu veux." },
+                "dialogue_id": "villageois"
+            },
+            "1": { "x": -4.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Coffre", "message": "Vous fouillez le coffre... vide pour l'instant.", "mesh": "meshes/props/Chest_Wood.gltf", "scale": 1.0, "yaw_deg": 0.0 },
+            "2": { "x": -9.0, "z": -4.0, "radius": 2.0, "npc": false, "label": "Caisse en bois", "message": "Caisse en bois (comparaison).", "mesh": "meshes/props/Crate_Wooden.gltf", "scale": 1.0, "yaw_deg": 0.0 },
+            "3": { "x": -9.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Caisse metal", "message": "Caisse en metal (comparaison).", "mesh": "meshes/props/Crate_Metal.gltf", "scale": 1.0, "yaw_deg": 0.0 },
+            "4": { "x": -9.0, "z": 4.0, "radius": 2.0, "npc": false, "label": "Cageot", "message": "Cageot de ferme vide (comparaison).", "mesh": "meshes/props/FarmCrate_Empty.gltf", "scale": 1.0, "yaw_deg": 0.0 },
+            "5": { "x": -13.0, "z": -2.0, "radius": 2.0, "npc": false, "label": "Cage", "message": "Petite cage (comparaison).", "mesh": "meshes/props/Cage_Small.gltf", "scale": 1.0, "yaw_deg": 0.0 },
+            "6": { "x": -13.0, "z": 2.0, "radius": 2.0, "npc": false, "label": "Tonneau", "message": "Tonneau (comparaison).", "mesh": "meshes/props/Barrel.gltf", "scale": 1.0, "yaw_deg": 0.0 }
+        },
+        "_comment_test_water": "Nage : bassin de TEST procedural. Le heightmap demo_plains a ete CREUSE en bol lisse centre sur (center_x,center_z) (fond a y=94, berge a y=100) ; l'eau est posee au niveau du sol creuse + depth_m. niveauY = GroundHeightAt(centre) + depth_m = 96 + 3 = 99 (1 m sous la berge). Le depth-test du water.frag clippe la nappe au rivage reel du bol (pas de bord carre, pas de recouvrement plein ecran). Centre eloigne du spawn/props (x=50) pour ne pas creuser sous le coffre/villageois (resolution heightmap ~16 m/sample). enabled=false pour retirer l'eau (le bol reste creuse dans le heightmap). Sera remplace par une vraie etendue d'eau via instances/water.bin.",
+        "test_water": {
+            "enabled": true,
+            "center_x": 55.0,
+            "center_z": 0.0,
+            "half_size_m": 40.0,
+            "depth_m": 2.0
+        },
+        "default_spawn": {
+            "_comment": "Position de la caméra (m) au moment du clic Jouer (Phase 3.5). Y > 0 = au-dessus du terrain. Sera surchargée par characters.spawn_x/y/z une fois la migration en place.",
+            "x": 0.0,
+            "y": 100.0,
+            "z": 0.0,
+            "yaw_deg": 0.0,
+            "pitch_deg": -10.0
+        }
+    }
+}

@@ -1,6 +1,7 @@
 #pragma once
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/CommandStack.h"
+#include "src/world_editor/buildings/BuildingDocument.h"
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"
@@ -367,6 +368,11 @@ namespace engine::editor::world
 		volumes::dungeons::DungeonPortalDocument&       MutableDungeonPortalDocument()       { return m_dungeonPortalDoc; }
 		const volumes::dungeons::DungeonPortalDocument& GetDungeonPortalDocument()     const { return m_dungeonPortalDoc; }
 
+		/// Auberge éditable — Accès au document des bâtiments (grappes d'éléments
+		/// regroupées). Persisté en `instances/zone_<id>/buildings.bin` (LCBD v1).
+		buildings::BuildingDocument&       MutableBuildingDocument()       { return m_buildingDoc; }
+		const buildings::BuildingDocument& GetBuildingDocument()     const { return m_buildingDoc; }
+
 		/// M100.43 — Accès mutable à l'outil Dungeon Portal.
 		volumes::dungeons::DungeonPortalTool&       MutableDungeonPortalTool()       { return m_dungeonPortalTool; }
 		const volumes::dungeons::DungeonPortalTool& GetDungeonPortalTool()     const { return m_dungeonPortalTool; }
@@ -421,6 +427,7 @@ namespace engine::editor::world
 		volumes::arches::ArchTool   m_archTool;               // M100.42
 		volumes::dungeons::DungeonPortalDocument m_dungeonPortalDoc;  // M100.43
 		volumes::dungeons::DungeonPortalTool     m_dungeonPortalTool; // M100.43
+		buildings::BuildingDocument m_buildingDoc;                    // Auberge éditable
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

@@ -234,6 +234,15 @@ namespace engine::editor::world
 		}
 		m_dungeonPortalTool.Init(m_commandStack, m_dungeonPortalDoc, cfg);
 
+		// Auberge éditable — Init du document des bâtiments (persiste dans
+		// `instances/zone_<id>/buildings.bin` LCBD v1). Charge l'existant si présent.
+		std::string buildingErr;
+		if (!m_buildingDoc.LoadFromDisk(cfg, buildingErr))
+		{
+			LOG_WARN(EditorWorld, "[WorldEditorShell] Building LoadFromDisk failed: {}",
+				buildingErr);
+		}
+
 		// M100.45 — Phase 12 « Accessibilité ». Charge les préférences
 		// utilisateur (`editor/user_prefs.json` — créé avec les défauts au
 		// premier lancement) + le catalogue de presets d'outils
@@ -769,6 +778,7 @@ namespace engine::editor::world
 		m_waterDoc.SetZoneId(zoneId);
 		m_meshInsertDoc.SetZoneId(zoneId);
 		m_dungeonPortalDoc.SetZoneId(zoneId);
+		m_buildingDoc.SetZoneId(zoneId);
 	}
 
 	void WorldEditorShell::ResetForZoneChange(const std::string& zoneId)
@@ -781,6 +791,7 @@ namespace engine::editor::world
 		// la heightmap de la nouvelle carte avec les hauteurs de l'ancienne).
 		zone_presets::ResetEditedZoneDocuments(
 			m_terrainDoc, m_waterDoc, m_meshInsertDoc, m_dungeonPortalDoc);
+		m_buildingDoc.Reset();
 		// Correctif 4 — namespace disque de la nouvelle carte.
 		PropagateZoneIdToDocuments(zoneId);
 		LOG_INFO(EditorWorld,
@@ -812,10 +823,16 @@ namespace engine::editor::world
 			LOG_WARN(EditorWorld,
 				"[WorldEditorShell] DungeonPortal LoadFromDisk failed: {}", err);
 		}
+		err.clear();
+		if (!m_buildingDoc.LoadFromDisk(cfg, err))
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Building LoadFromDisk failed: {}", err);
+		}
 		LOG_INFO(EditorWorld,
-			"[WorldEditorShell] Loaded zone documents: {} lake(s)/{} river(s), {} mesh insert(s), {} portal(s)",
+			"[WorldEditorShell] Loaded zone documents: {} lake(s)/{} river(s), {} mesh insert(s), {} portal(s), {} building(s)",
 			m_waterDoc.Get().lakes.size(), m_waterDoc.Get().rivers.size(),
-			m_meshInsertDoc.Size(), m_dungeonPortalDoc.Size());
+			m_meshInsertDoc.Size(), m_dungeonPortalDoc.Size(), m_buildingDoc.Size());
 	}
 
 	size_t WorldEditorShell::SaveZoneDocuments(const engine::core::Config& cfg)
@@ -842,8 +859,15 @@ namespace engine::editor::world
 			LOG_WARN(EditorWorld,
 				"[WorldEditorShell] DungeonPortal SaveToDisk failed: {}", err);
 		}
+		err.clear();
+		if (m_buildingDoc.SaveToDisk(cfg, err)) { ++written; }
+		else
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Building SaveToDisk failed: {}", err);
+		}
 		LOG_INFO(EditorWorld,
-			"[WorldEditorShell] Saved zone documents: {}/3 (eau, mesh inserts, portails)",
+			"[WorldEditorShell] Saved zone documents: {}/4 (eau, mesh inserts, portails, batiments)",
 			written);
 		return written;
 	}

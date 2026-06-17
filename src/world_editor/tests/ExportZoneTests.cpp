@@ -13,6 +13,7 @@
 
 #include "src/client/world/foliage/FoliageInstances.h"
 #include "src/client/world/hazard/HazardVolumes.h"
+#include "src/client/world/instances/Buildings.h"
 #include "src/client/world/instances/PropInstances.h"
 #include "src/client/world/interactive/InteractiveInstances.h"
 #include "src/client/world/spline/SplineInstances.h"
@@ -174,6 +175,23 @@ namespace
 		ZoneExportInputs in;
 		// Props.
 		in.props = { MakeProp(10, 1.5f), MakeProp(11, 2.5f) };
+		// Buildings (auberge éditable) : un bâtiment à 2 pièces (mur + toit empilé).
+		{
+			engine::world::instances::BuildingInstance bd;
+			bd.guid = 5u;
+			bd.displayName = "Auberge";
+			bd.worldPosition = { 88.0f, 0.0f, 100.0f };
+			bd.worldYawDeg = 30.0f;
+			engine::world::instances::BuildingPart wall;
+			wall.gltfRelativePath = "meshes/props/Wall_Plaster_Straight.gltf";
+			wall.localEulerDeg = { 0.0f, 90.0f, 0.0f };
+			bd.parts.push_back(wall);
+			engine::world::instances::BuildingPart roof;
+			roof.gltfRelativePath = "meshes/props/Roof_RoundTiles_4x4.gltf";
+			roof.localPosition = { 0.0f, 3.5f, 0.0f };
+			bd.parts.push_back(roof);
+			in.buildings = { bd };
+		}
 		// Hazards.
 		engine::world::hazard::HazardVolume hz;
 		hz.type = engine::world::hazard::HazardType::Tar;
@@ -230,6 +248,17 @@ namespace
 		REQUIRE(engine::world::instances::LoadPropsBin(ReadFile(inst / "props.bin"), props2, lerr));
 		REQUIRE(props2.size() == 2);
 		if (props2.size() == 2) { REQUIRE(props2[0].instanceId == 10); REQUIRE(Near(props2[1].position.x, 2.5f)); }
+
+		std::vector<engine::world::instances::BuildingInstance> bd2;
+		REQUIRE(engine::world::instances::LoadBuildingsBin(ReadFile(inst / "buildings.bin"), bd2, lerr));
+		REQUIRE(bd2.size() == 1);
+		if (bd2.size() == 1)
+		{
+			REQUIRE(bd2[0].guid == 5u);
+			REQUIRE(bd2[0].displayName == "Auberge");
+			REQUIRE(bd2[0].parts.size() == 2);
+			REQUIRE(Near(bd2[0].parts[1].localPosition.y, 3.5f));
+		}
 
 		std::vector<engine::world::hazard::HazardVolume> hz2;
 		REQUIRE(engine::world::hazard::LoadHazardsBin(ReadFile(inst / "hazards.bin"), hz2, lerr));

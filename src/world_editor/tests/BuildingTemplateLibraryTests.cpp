@@ -131,14 +131,16 @@ namespace
 		REQUIRE(reloaded2.LoadFromContent(tmp.string(), err));
 		const auto* t = reloaded2.FindType("house");
 		REQUIRE(t != nullptr);
-		REQUIRE(t->variants.size() == 2u);
+		if (t) REQUIRE(t->variants.size() == 2u);
 
 		// Remplacer une variante existante (même id) → toujours 2.
 		var.displayName = "Maison simple v2";
 		REQUIRE(lib.SaveVariant(tmp.string(), "house", "Maisons", var, err));
 		BuildingTemplateLibrary reloaded3;
 		REQUIRE(reloaded3.LoadFromContent(tmp.string(), err));
-		REQUIRE(reloaded3.FindType("house")->variants.size() == 2u);
+		const auto* t3 = reloaded3.FindType("house");
+		REQUIRE(t3 != nullptr);
+		if (t3) REQUIRE(t3->variants.size() == 2u);
 
 		fs::remove_all(tmp, ec);
 	}

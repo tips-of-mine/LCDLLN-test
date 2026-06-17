@@ -203,7 +203,10 @@ namespace engine::world::instances
 		os << "  \"type\": \"" << JsonEscape(tmpl.type) << "\",\n";
 		os << "  \"displayName\": \"" << JsonEscape(tmpl.displayName) << "\",\n";
 		os << "  \"variants\": {\n";
-		os << "    \"count\": " << tmpl.variants.size() << ",\n";
+		// Virgule après "count" SEULEMENT s'il y a des variantes (le parseur
+		// rejette les virgules traînantes).
+		os << "    \"count\": " << tmpl.variants.size()
+		   << (tmpl.variants.empty() ? "" : ",") << "\n";
 		for (size_t vi = 0; vi < tmpl.variants.size(); ++vi)
 		{
 			const BuildingVariant& var = tmpl.variants[vi];
@@ -211,7 +214,9 @@ namespace engine::world::instances
 			os << "      \"id\": \"" << JsonEscape(var.id) << "\",\n";
 			os << "      \"displayName\": \"" << JsonEscape(var.displayName) << "\",\n";
 			os << "      \"parts\": {\n";
-			os << "        \"count\": " << var.parts.size() << ",\n";
+			// Virgule conditionnelle (pas de virgule traînante si 0 pièce).
+			os << "        \"count\": " << var.parts.size()
+			   << (var.parts.empty() ? "" : ",") << "\n";
 			for (size_t pi = 0; pi < var.parts.size(); ++pi)
 			{
 				const BuildingPart& pt = var.parts[pi];

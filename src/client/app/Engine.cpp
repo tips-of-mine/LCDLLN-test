@@ -5329,6 +5329,10 @@ namespace engine
 											// Bâtiments éditables (auberge…) depuis instances/.../buildings.bin.
 											// Après LoadScenery (partage m_props + m_worldCollider).
 											LoadBuildings();
+											// Aperçu éditeur : mémorise le nombre de props « monde » (décor +
+											// bâtiments posés) pour que SyncEditorBuildingPreview n'efface QUE
+											// le brouillon par-dessus, sans toucher au monde chargé ici.
+											m_editorBaselinePropCount = m_props.size();
 
 											engine::gameplay::CharacterController::Config ccCfg{};
 											ccCfg.walkSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.walk_speed",      5.0));
@@ -13450,12 +13454,11 @@ namespace engine
 		// création de ressources GPU à chaque frame).
 		if (!panel->ConsumePreviewDirty()) return;
 
-		// En mode éditeur, m_props ne sert QU'À cet aperçu : on le reconstruit.
-		m_props.clear();
-		m_worldCollider.ClearCylinders();
-
-		const engine::world::instances::BuildingTemplateLibrary& library =
-			m_worldEditorShell->GetBuildingLibrary();
+		// On NE touche QU'AU brouillon : on retire les props d'aperçu ajoutés
+		// précédemment (tout ce qui dépasse le « monde » chargé au boot : décor
+		// + bâtiments posés), sans effacer ce monde.
+		if (m_props.size() > m_editorBaselinePropCount)
+			m_props.resize(m_editorBaselinePropCount);
 
 		constexpr float kDeg2Rad = 3.14159265f / 180.f;
 		auto scaleMat = [](float s) {
@@ -13487,19 +13490,15 @@ namespace engine
 			}
 		};
 
-		// 1. Bâtiments déjà posés (placements résolus via la bibliothèque).
-		for (const auto& pl : m_worldEditorShell->GetBuildingDocument().All())
-		{
-			const engine::world::instances::BuildingVariant* v =
-				library.Resolve(pl.templateType, pl.variantId);
-			if (v) emitParts(v->parts, pl.worldPosition.x, pl.worldPosition.z,
-				pl.worldYawDeg, pl.worldScale);
-		}
-		// 2. Brouillon en cours, à la position de pose courante (aperçu live).
+		// Brouillon en cours, à la position de pose courante (aperçu live). Les
+		// bâtiments DÉJÀ posés (dont l'auberge) sont déjà rendus par le boot
+		// (LoadBuildings) et conservés dans le « monde » baseline ci-dessus.
 		emitParts(panel->DraftParts(), panel->PreviewX(), panel->PreviewZ(),
 			panel->PreviewYaw(), panel->PreviewScale());
 
-		LOG_INFO(Render, "[Buildings][editeur] apercu reconstruit : {} prop(s)",
+		LOG_INFO(Render, "[Buildings][editeur] apercu : monde={} + brouillon={} piece(s) -> total {}",
+			static_cast<int>(m_editorBaselinePropCount),
+			static_cast<int>(panel->DraftParts().size()),
 			static_cast<int>(m_props.size()));
 	}
 

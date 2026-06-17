@@ -909,6 +909,12 @@ namespace engine
 		/// interactibles ayant un meshPath. Cf. LoadInteractableProps / RecordPropsGeometry.
 		std::vector<PropRenderable> m_props;
 
+		/// Aperçu éditeur — nombre de props « monde » (scenery + bâtiments posés)
+		/// présents dans m_props après le boot. SyncEditorBuildingPreview ne touche
+		/// QU'aux props de brouillon ajoutés au-delà de ce seuil, pour ne pas
+		/// effacer le décor/les bâtiments chargés au boot.
+		size_t m_editorBaselinePropCount = 0;
+
 		/// M45.5 — atlas d'impostors par chemin de mesh (clé = PropRenderable::meshPath).
 		/// Peuplé à la demande dans BuildPropFromMesh quand world.impostor.enabled :
 		/// pour chaque mesh de DÉCOR, tente de charger `<même nom>.mipo` à côté du

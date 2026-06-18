@@ -18,7 +18,7 @@ namespace engine::client
 		/// Langue associée au code pays (insensible à la casse). "en" par défaut si inconnu/vide.
 		std::string LanguageForCountry(std::string_view countryCode) const;
 
-		/// true si au moins une entrée a été chargée.
+		/// true si aucune entrée n'a été chargée (table vide).
 		bool Empty() const { return m_map.empty(); }
 
 	private:

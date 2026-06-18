@@ -1,6 +1,9 @@
 ﻿#include "src/client/app/Engine.h"
 
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
+#include "src/client/world/instances/Buildings.h"
+#include "src/client/world/instances/BuildingTemplateLibrary.h"
+#include "src/world_editor/panels/BuildingEditorPanel.h"
 #include "src/shared/core/Log.h"
 #include "src/world_editor/ui/EditorMode.h"
 #include "src/world_editor/ui/WorldEditorImGui.h"
@@ -87,6 +90,7 @@
 #include <limits>
 #include <list>
 #include <filesystem>
+#include <fstream>
 #include <optional>
 #include <span>
 #include <sstream>
@@ -5322,6 +5326,13 @@ namespace engine
 											// Décor solide (arbres, props nature) depuis world.scenery. Doit suivre
 											// LoadInteractableProps (qui réinitialise le collisionneur composite).
 											LoadScenery();
+											// Bâtiments éditables (auberge…) depuis instances/.../buildings.bin.
+											// Après LoadScenery (partage m_props + m_worldCollider).
+											LoadBuildings();
+											// Aperçu éditeur : mémorise le nombre de props « monde » (décor +
+											// bâtiments posés) pour que SyncEditorBuildingPreview n'efface QUE
+											// le brouillon par-dessus, sans toucher au monde chargé ici.
+											m_editorBaselinePropCount = m_props.size();
 
 											engine::gameplay::CharacterController::Config ccCfg{};
 											ccCfg.walkSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.walk_speed",      5.0));
@@ -7921,10 +7932,23 @@ namespace engine
 		{
 			const bool ctrl  = m_input.IsDown(engine::platform::Key::Control);
 			const bool shift = m_input.IsDown(engine::platform::Key::Shift);
+			// En « Mode édition bâtiment », Ctrl+Z/Ctrl+Y (et Ctrl+Shift+Z)
+			// pilotent l'undo/redo du BROUILLON de bâtiment plutôt que la pile
+			// undo globale (terrain/scène) — évite tout conflit : l'utilisateur
+			// active cette case quand il travaille la composition.
+			engine::editor::world::panels::BuildingEditorPanel* bp =
+				m_worldEditorShell->GetBuildingEditorPanel();
+			const bool buildMode = bp && bp->EditModeActive();
 			if (m_input.WasPressed(engine::platform::Key::Z))
-				m_worldEditorShell->HandleShortcut('Z', ctrl, shift);
+			{
+				if (ctrl && buildMode) { if (shift) bp->Redo(); else bp->Undo(); }
+				else m_worldEditorShell->HandleShortcut('Z', ctrl, shift);
+			}
 			if (m_input.WasPressed(engine::platform::Key::Y))
-				m_worldEditorShell->HandleShortcut('Y', ctrl, shift);
+			{
+				if (ctrl && buildMode) bp->Redo();
+				else m_worldEditorShell->HandleShortcut('Y', ctrl, shift);
+			}
 		}
 
 		m_shaderHotReload.Poll(m_cfg);
@@ -8329,6 +8353,15 @@ namespace engine
 				m_worldEditorShell->ResetForZoneChange(
 					engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
 				m_worldEditorShell->InitNewZoneTerrain(chunksPerAxis, flatHeightMeters);
+				// Nouvelle carte = la caméra est replacée sur la nouvelle zone :
+				// l'origine STABLE du brouillon (mémorisée pour le gizmo/picking)
+				// pointe encore sur l'ANCIENNE carte. On l'invalide pour que le
+				// brouillon (auberge en cours) se recentre sur la vue de la
+				// nouvelle carte au prochain rebuild — sinon il reste hors-champ
+				// et « ne se charge plus ». On force aussi le rebuild.
+				m_editorPreviewValid = false;
+				if (auto* bp = m_worldEditorShell->GetBuildingEditorPanel())
+					bp->MarkPreviewDirty();
 			}
 			// Lot B3 (correctifs 1+3) — Chargement d'une carte EXISTANTE :
 			// reinitialise les documents (les chunks de la carte precedente
@@ -8344,6 +8377,14 @@ namespace engine
 				m_worldEditorShell->ResetForZoneChange(
 					engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
 				m_worldEditorShell->LoadZoneDocuments(m_cfg);
+				// Force la reconstruction de l'aperçu 3D des bâtiments de la
+				// nouvelle zone (placements chargés depuis buildings.bin).
+				if (auto* bp = m_worldEditorShell->GetBuildingEditorPanel())
+					bp->MarkPreviewDirty();
+				// Changement de zone : l'origine STABLE du brouillon (mémorisée pour
+				// le picking) n'est plus pertinente — la prochaine apparition se
+				// recentre sur la caméra de la nouvelle carte.
+				m_editorPreviewValid = false;
 			}
 			if (m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
 			{
@@ -9159,7 +9200,13 @@ namespace engine
 						}
 					});
 			}
+			// Aperçu 3D live des bâtiments (brouillon + placements) dans la vue
+			// éditeur. Reconstruit m_props seulement si l'aperçu est « sale ».
+			SyncEditorBuildingPreview();
 			m_worldEditorShell->RenderFrame();
+			// Gizmo (axes/anneaux X=rouge/Y=vert/Z=bleu) sur la pièce active,
+			// en overlay sur la 3D (sous les panneaux). Visuel seul pour l'instant.
+			DrawEditorBuildingGizmo();
 		}
 #endif
 
@@ -10168,12 +10215,23 @@ namespace engine
 			// legacy (garde `!modernEditActive` sur le bloc legacy plus bas). Sans
 			// outil moderne d'edition actif, le legacy reste le chemin par defaut.
 			// Ctrl+clic gauche reste reserve au picking B3 (donc exclu ici).
+			// Mode « édition bâtiment » : quand actif (case à cocher du Building
+			// Editor), le clic gauche dans la vue NE modifie PAS le terrain (ni
+			// outils modernes ni brush legacy) — il est réservé à la
+			// sélection/édition des pièces de bâtiment. Évite de sculpter le
+			// terrain par réflexe en voulant choisir une pièce.
+			const bool buildingEditMode =
+				(m_worldEditorShell && m_worldEditorShell->GetBuildingEditorPanel())
+					? m_worldEditorShell->GetBuildingEditorPanel()->EditModeActive()
+					: false;
+
 			bool modernEditActive = false;
 			if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
 			{
 				const engine::editor::world::ActiveTool tool = m_worldEditorShell->GetActiveTool();
 				const bool freeClick = !m_worldEditorImGui->WantsCaptureMouse()
-					&& !m_input.IsDown(engine::platform::Key::Control);
+					&& !m_input.IsDown(engine::platform::Key::Control)
+					&& !buildingEditMode;
 				if (tool == engine::editor::world::ActiveTool::TerrainSculpt)
 				{
 					modernEditActive = true;
@@ -10231,6 +10289,57 @@ namespace engine
 				}
 			}
 
+			// Gizmo étape 3.2 — cliquer-glisser : en mode « édition bâtiment », on
+			// tente d'abord de saisir/glisser un handle du gizmo (axe = translation,
+			// anneau = rotation) sur la pièce sélectionnée. S'il capture la souris,
+			// on N'enchaîne PAS sur la sélection de pièce ci-dessous.
+			bool gizmoGrabbed = false;
+			if (buildingEditMode && !m_worldEditorImGui->WantsCaptureMouse()
+				&& !m_input.IsDown(engine::platform::Key::Control))
+			{
+				gizmoGrabbed = UpdateEditorBuildingGizmoDrag(m_input.MouseX(), m_input.MouseY());
+			}
+
+			// Gizmo étape 3.1 — picking de pièce de bâtiment : en mode « édition
+			// bâtiment », un clic gauche dans la vue (hors ImGui, sans Ctrl)
+			// sélectionne la pièce du brouillon dont la position monde (XZ) est la
+			// plus proche du point de sol cliqué. Réutilise la transform du groupe
+			// mémorisée au dernier rendu (m_editorPreview*), pour que le picking
+			// corresponde à ce qui est affiché. Remplace la saisie de valeurs « à
+			// l'aveugle » : on clique la pièce, le gizmo s'y replace.
+			if (!gizmoGrabbed && buildingEditMode && m_editorPreviewValid && terrainPick
+				&& m_worldEditorShell && m_worldEditorShell->GetBuildingEditorPanel()
+				&& !m_worldEditorImGui->WantsCaptureMouse()
+				&& !m_input.IsDown(engine::platform::Key::Control)
+				&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+			{
+				engine::editor::world::panels::BuildingEditorPanel* bpanel =
+					m_worldEditorShell->GetBuildingEditorPanel();
+				const auto& parts = bpanel->DraftParts();
+				constexpr float kDeg2Rad = 3.14159265f / 180.f;
+				const float c = std::cos(m_editorPreviewYaw * kDeg2Rad);
+				const float s = std::sin(m_editorPreviewYaw * kDeg2Rad);
+				int best = -1;
+				float bestDist2 = 36.0f; // (6 m)^2 : seuil de tolérance autour de la pièce
+				for (size_t i = 0; i < parts.size(); ++i)
+				{
+					const float sx = m_editorPreviewScale * parts[i].localPosition.x;
+					const float sz = m_editorPreviewScale * parts[i].localPosition.z;
+					const float wx = m_editorPreviewOriginX + (c * sx + s * sz);
+					const float wz = m_editorPreviewOriginZ + (-s * sx + c * sz);
+					const float dx = wx - pickX;
+					const float dz = wz - pickZ;
+					const float d2 = dx * dx + dz * dz;
+					if (d2 < bestDist2) { bestDist2 = d2; best = static_cast<int>(i); }
+				}
+				if (best >= 0)
+				{
+					bpanel->SetSelectedDraft(best);
+					LOG_INFO(EditorWorld, "[Buildings][editeur] piece selectionnee par clic: #{} (dist={:.1f} m)",
+						best, std::sqrt(bestDist2));
+				}
+			}
+
 			// Sous-projet 1, bloc B3 — picking d'entite : Ctrl+clic gauche dans la
 			// vue 3D (hors ImGui) selectionne l'entite dont la position (XZ) est la
 			// plus proche du point de sol cliqué (seuil ~3 m), via EditorSceneModel
@@ -10260,7 +10369,7 @@ namespace engine
 				}
 			}
 
-			if (!modernEditActive && m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
+			if (!modernEditActive && !buildingEditMode && m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
 			{
 				const bool cap = m_worldEditorImGui->WantsCaptureMouse();
 				engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
@@ -13316,6 +13425,794 @@ namespace engine
 				if (radius < 0.05f) radius = 0.5f;
 				m_worldCollider.AddCylinder(
 					engine::gameplay::PropCylinder{ wx, wz, radius, groundY, topY });
+			}
+			m_props.push_back(std::move(prop));
+		}
+	}
+
+	void Engine::LoadBuildings()
+	{
+		if (!m_pipeline) return;
+		namespace fs = std::filesystem;
+		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+		const std::string zoneId = m_cfg.GetString("world.active_zone", "");
+
+		// Résolution du chemin : namespacé par zone si présent, sinon legacy plat.
+		fs::path path;
+		if (!zoneId.empty())
+		{
+			const fs::path ns = fs::path(contentRoot) / "instances" /
+				("zone_" + zoneId) / "buildings.bin";
+			std::error_code ec;
+			path = fs::exists(ns, ec) ? ns
+				: fs::path(contentRoot) / "instances" / "buildings.bin";
+		}
+		else
+		{
+			path = fs::path(contentRoot) / "instances" / "buildings.bin";
+		}
+
+		std::ifstream f(path, std::ios::binary | std::ios::ate);
+		if (!f.good())
+		{
+			// Absence de fichier = cas normal (zone sans bâtiment) -> Debug.
+			LOG_DEBUG(Render, "[Buildings] aucun buildings.bin ('{}')", path.string());
+			return;
+		}
+		const std::streamsize size = f.tellg();
+		if (size <= 0) return;
+		f.seekg(0, std::ios::beg);
+		std::vector<uint8_t> bytes(static_cast<size_t>(size));
+		f.read(reinterpret_cast<char*>(bytes.data()), size);
+
+		std::vector<engine::world::instances::BuildingPlacement> placements;
+		std::string err;
+		if (!engine::world::instances::LoadBuildingsBin(
+				std::span<const uint8_t>(bytes), placements, err))
+		{
+			LOG_WARN(Render, "[Buildings] buildings.bin invalide : {}", err);
+			return;
+		}
+
+		// Bibliothèque des types de bâtiments : la carte ne stocke que des
+		// références (type + variante) ; on résout ici contre les fichiers
+		// `buildings/templates/<type>.json` pour obtenir les pièces.
+		engine::world::instances::BuildingTemplateLibrary library;
+		std::string libErr;
+		if (!library.LoadFromContent(contentRoot, libErr) && !libErr.empty())
+			LOG_WARN(Render, "[Buildings] bibliotheque partiellement chargee : {}", libErr);
+
+		constexpr float kDeg2Rad = 3.14159265f / 180.f;
+		// Helpers de composition (Math.h ne fournit ni Scale ni RotateZ).
+		auto scaleMat = [](float s) {
+			engine::math::Mat4 m = engine::math::Mat4::Identity();
+			m.m[0] = s; m.m[5] = s; m.m[10] = s; return m;
+		};
+		auto rotZ = [](float r) {
+			engine::math::Mat4 m = engine::math::Mat4::Identity();
+			const float c = std::cos(r), s = std::sin(r);
+			m.m[0] = c; m.m[1] = s; m.m[4] = -s; m.m[5] = c; return m;
+		};
+
+		int partCount = 0, resolved = 0;
+		for (const auto& pl : placements)
+		{
+			const engine::world::instances::BuildingVariant* variant =
+				library.Resolve(pl.templateType, pl.variantId);
+			if (!variant)
+			{
+				LOG_WARN(Render, "[Buildings] reference non resolue: type='{}' variante='{}'",
+					pl.templateType, pl.variantId);
+				continue;
+			}
+			++resolved;
+			// L'origine du bâtiment est ancrée au sol UNE fois ; les pièces
+			// conservent ensuite leur Y local (toit/étage empilés).
+			const float groundY = m_terrainCollider.GroundHeightAt(
+				pl.worldPosition.x, pl.worldPosition.z);
+			const engine::math::Mat4 groupM =
+				engine::math::Mat4::Translate(engine::math::Vec3{
+					pl.worldPosition.x, groundY + pl.worldPosition.y, pl.worldPosition.z }) *
+				engine::math::Mat4::RotateY(pl.worldYawDeg * kDeg2Rad) *
+				scaleMat(pl.worldScale);
+
+			for (const auto& pt : variant->parts)
+			{
+				if (pt.gltfRelativePath.empty()) continue;
+				const engine::math::Mat4 localM =
+					engine::math::Mat4::Translate(pt.localPosition) *
+					engine::math::Mat4::RotateY(pt.localEulerDeg.y * kDeg2Rad) *
+					engine::math::Mat4::RotateX(pt.localEulerDeg.x * kDeg2Rad) *
+					rotZ(pt.localEulerDeg.z * kDeg2Rad) *
+					scaleMat(pt.localScale);
+				const engine::math::Mat4 worldM = groupM * localM;
+				BuildPropFromMeshMatrix(pt.gltfRelativePath, worldM,
+					/*interactableIndex*/ -1, pt.solid, pt.collisionRadius);
+				++partCount;
+			}
+		}
+		LOG_INFO(Render, "[Buildings] {} placement(s), {} resolu(s), {} piece(s) rendue(s)",
+			static_cast<int>(placements.size()), resolved, partCount);
+	}
+
+	void Engine::SyncEditorBuildingPreview()
+	{
+		if (!m_worldEditorShell || !m_pipeline) return;
+		engine::editor::world::panels::BuildingEditorPanel* panel =
+			m_worldEditorShell->GetBuildingEditorPanel();
+		if (!panel) return;
+
+		// Demande de re-centrage (ex: « Charger dans l'éditeur ») : on invalide
+		// l'origine stable pour que la variante fraîchement chargée apparaisse
+		// devant la caméra, pas à l'ancienne position (hors-champ).
+		if (panel->ConsumeRecenterRequest())
+			m_editorPreviewValid = false;
+
+		// Edge-triggered : ne reconstruit qu'après un changement (évite la
+		// création de ressources GPU à chaque frame). Pendant un drag du gizmo,
+		// les mutations sont silencieuses (pas de dirty) ; le mesh n'est donc
+		// reconstruit qu'au relâchement (MarkPreviewDirty), pas à chaque frame —
+		// indispensable car BuildPropFromMeshMatrix ne libère pas les meshes GPU.
+		if (!panel->ConsumePreviewDirty()) return;
+
+		// On NE touche QU'AU brouillon : on retire les props d'aperçu ajoutés
+		// précédemment (tout ce qui dépasse le « monde » chargé au boot : décor
+		// + bâtiments posés), sans effacer ce monde.
+		if (m_props.size() > m_editorBaselinePropCount)
+			m_props.resize(m_editorBaselinePropCount);
+
+		constexpr float kDeg2Rad = 3.14159265f / 180.f;
+		auto scaleMat = [](float s) {
+			engine::math::Mat4 m = engine::math::Mat4::Identity();
+			m.m[0] = s; m.m[5] = s; m.m[10] = s; return m;
+		};
+		auto rotZ = [](float r) {
+			engine::math::Mat4 m = engine::math::Mat4::Identity();
+			const float c = std::cos(r), s = std::sin(r);
+			m.m[0] = c; m.m[1] = s; m.m[4] = -s; m.m[5] = c; return m;
+		};
+		auto emitParts = [&](const std::vector<engine::world::instances::BuildingPart>& parts,
+			float ox, float oz, float oyaw, float oscale)
+		{
+			const float groundY = m_terrainCollider.GroundHeightAt(ox, oz);
+			const engine::math::Mat4 groupM =
+				engine::math::Mat4::Translate(engine::math::Vec3{ ox, groundY, oz }) *
+				engine::math::Mat4::RotateY(oyaw * kDeg2Rad) * scaleMat(oscale);
+			for (const auto& pt : parts)
+			{
+				if (pt.gltfRelativePath.empty()) continue;
+				const engine::math::Mat4 localM =
+					engine::math::Mat4::Translate(pt.localPosition) *
+					engine::math::Mat4::RotateY(pt.localEulerDeg.y * kDeg2Rad) *
+					engine::math::Mat4::RotateX(pt.localEulerDeg.x * kDeg2Rad) *
+					rotZ(pt.localEulerDeg.z * kDeg2Rad) * scaleMat(pt.localScale);
+				BuildPropFromMeshMatrix(pt.gltfRelativePath, groupM * localM,
+					/*interactableIndex*/ -1, pt.solid, pt.collisionRadius);
+			}
+		};
+
+		// Origine du brouillon. PREMIÈRE apparition (m_editorPreviewValid==false,
+		// ex. première pièce ajoutée ou variante chargée) : on la place au point
+		// que REGARDE la caméra (projection du rayon de visée sur le sol) pour
+		// qu'elle soit visible — sinon, à une coord fixe, elle tombe hors du
+		// rayon de culling des props (~80 m). Une fois posée, l'origine reste
+		// STABLE entre les rebuilds (sélection/édition de pièce), pour que le
+		// bâtiment ne « téléporte » pas sous la caméra à chaque clic et que le
+		// gizmo/picking reste cohérent. (Vider la variante remet valid=false →
+		// re-centrage de la prochaine composition sur la vue.)
+		float previewX;
+		float previewZ;
+		if (m_editorPreviewValid)
+		{
+			previewX = m_editorPreviewOriginX;
+			previewZ = m_editorPreviewOriginZ;
+		}
+		else
+		{
+			const engine::render::Camera& cam =
+				m_renderStates[m_renderReadIndex.load(std::memory_order_acquire)].camera;
+			previewX = cam.position.x;
+			previewZ = cam.position.z;
+			const float cp = std::cos(cam.pitch), sp = std::sin(cam.pitch);
+			const float fwdY = -sp; // forward.y (convention OrbitalCameraController)
+			const float gy0 = m_terrainCollider.GroundHeightAt(cam.position.x, cam.position.z);
+			if (fwdY < -1e-3f) // caméra regarde vers le bas : intersection avec le sol
+			{
+				float t = (gy0 - cam.position.y) / fwdY;
+				if (t < 0.0f) t = 0.0f;
+				if (t > 30.0f) t = 30.0f; // borne ~30 m : assez près pour être visible (rasant pouvait donner ~280 m, hors-champ)
+				previewX = cam.position.x + t * (-std::sin(cam.yaw) * cp);
+				previewZ = cam.position.z + t * (-std::cos(cam.yaw) * cp);
+			}
+			else // visée horizontale/vers le haut : 20 m devant, sur XZ
+			{
+				previewX = cam.position.x + (-std::sin(cam.yaw)) * 30.0f;
+				previewZ = cam.position.z + (-std::cos(cam.yaw)) * 30.0f;
+			}
+		}
+		// Brouillon + pièce EN COURS de configuration (aperçu live). Les
+		// bâtiments DÉJÀ posés (dont l'auberge) sont déjà rendus par le boot
+		// (LoadBuildings) et conservés dans le « monde » baseline ci-dessus.
+		const std::vector<engine::world::instances::BuildingPart> previewParts =
+			panel->PartsForPreview();
+		emitParts(previewParts, previewX, previewZ,
+			panel->PreviewYaw(), panel->PreviewScale());
+
+		// Mémorise la transform du groupe pour le picking viewport (clic =
+		// sélection), afin que la position monde calculée pour chaque pièce
+		// corresponde exactement à ce qui vient d'être rendu.
+		m_editorPreviewOriginX = previewX;
+		m_editorPreviewOriginZ = previewZ;
+		m_editorPreviewYaw     = panel->PreviewYaw();
+		m_editorPreviewScale   = panel->PreviewScale();
+		m_editorPreviewValid   = !previewParts.empty();
+
+		// Cible du gizmo : position monde de la pièce active (sélectionnée ou en
+		// cours), pour l'overlay DrawEditorBuildingGizmo.
+		float activeLocal[3];
+		if (panel->ActivePartLocalPos(activeLocal))
+		{
+			const float gY = m_terrainCollider.GroundHeightAt(previewX, previewZ);
+			const engine::math::Mat4 grpM =
+				engine::math::Mat4::Translate(engine::math::Vec3{ previewX, gY, previewZ }) *
+				engine::math::Mat4::RotateY(panel->PreviewYaw() * kDeg2Rad) *
+				scaleMat(panel->PreviewScale());
+			const float* M = grpM.m;
+			m_editorGizmoPos = engine::math::Vec3{
+				M[0]*activeLocal[0] + M[4]*activeLocal[1] + M[8]*activeLocal[2]  + M[12],
+				M[1]*activeLocal[0] + M[5]*activeLocal[1] + M[9]*activeLocal[2]  + M[13],
+				M[2]*activeLocal[0] + M[6]*activeLocal[1] + M[10]*activeLocal[2] + M[14] };
+			m_editorGizmoValid = true;
+		}
+		else
+		{
+			m_editorGizmoValid = false;
+		}
+
+		LOG_INFO(Render, "[Buildings][editeur] apercu : monde={} + brouillon/encours={} piece(s) @ ({:.1f},{:.1f}) -> total {}",
+			static_cast<int>(m_editorBaselinePropCount),
+			static_cast<int>(previewParts.size()),
+			previewX, previewZ, static_cast<int>(m_props.size()));
+	}
+
+	void Engine::GizmoHandleSizes(float& axisLen, float& ringR) const
+	{
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::render::Camera& cam = m_renderStates[readIdx].camera;
+		const float dx = cam.position.x - m_editorGizmoPos.x;
+		const float dy = cam.position.y - m_editorGizmoPos.y;
+		const float dz = cam.position.z - m_editorGizmoPos.z;
+		const float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+		// ~constant à l'écran : longueur d'axe proportionnelle à la distance.
+		axisLen = std::clamp(dist * 0.09f, 0.5f, 10.0f);
+		ringR   = axisLen * 0.8f;
+	}
+
+	void Engine::DrawEditorBuildingGizmo()
+	{
+#if defined(_WIN32)
+		if (!m_editorEnabled || !m_editorGizmoValid) return;
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::math::Mat4& vp = m_renderStates[readIdx].viewProjMatrix;
+		const ImGuiIO& io = ImGui::GetIO();
+		const float W = io.DisplaySize.x, H = io.DisplaySize.y;
+		if (W <= 0.0f || H <= 0.0f) return;
+
+		// Projection monde -> écran (pixels) via la viewProj courante.
+		auto project = [&](const engine::math::Vec3& w, ImVec2& out) -> bool {
+			const float* M = vp.m; // column-major
+			const float cx = M[0]*w.x + M[4]*w.y + M[8]*w.z  + M[12];
+			const float cy = M[1]*w.x + M[5]*w.y + M[9]*w.z  + M[13];
+			const float cw = M[3]*w.x + M[7]*w.y + M[11]*w.z + M[15];
+			if (cw <= 1e-4f) return false; // derrière la caméra
+			out.x = (cx / cw * 0.5f + 0.5f) * W;
+			out.y = (cy / cw * 0.5f + 0.5f) * H;
+			return true;
+		};
+
+		ImVec2 so;
+		if (!project(m_editorGizmoPos, so)) return;
+
+		// Background draw list : par-dessus la 3D, sous les fenêtres ImGui.
+		ImDrawList* dl = ImGui::GetBackgroundDrawList();
+		float axisLen, ringR; GizmoHandleSizes(axisLen, ringR); // taille ~constante à l'écran
+		const ImU32 colX = IM_COL32(235, 70, 70, 255);  // X rouge
+		const ImU32 colY = IM_COL32(70, 210, 70, 255);  // Y vert
+		const ImU32 colZ = IM_COL32(80, 130, 255, 255); // Z bleu
+		const ImU32 hot  = IM_COL32(255, 240, 130, 255);// survol/actif : jaune vif
+		const engine::math::Vec3 dirs[3] = { {1,0,0}, {0,1,0}, {0,0,1} };
+		const engine::math::Vec3 perps[3] = { {0,1,0}, {0,0,1}, {1,0,0} };
+		const ImU32 cols[3] = { colX, colY, colZ };
+		const engine::math::Vec3 o = m_editorGizmoPos;
+
+		// Géométrie écran des handles (axes + anneaux).
+		ImVec2 se[3]; bool seOk[3]; float ringRad[3]; bool ringOk[3];
+		for (int a = 0; a < 3; ++a)
+		{
+			const engine::math::Vec3 tip{ o.x + dirs[a].x*axisLen, o.y + dirs[a].y*axisLen, o.z + dirs[a].z*axisLen };
+			seOk[a] = project(tip, se[a]);
+			ImVec2 sp;
+			const engine::math::Vec3 rp{ o.x + perps[a].x*ringR, o.y + perps[a].y*ringR, o.z + perps[a].z*ringR };
+			ringOk[a] = project(rp, sp);
+			ringRad[a] = ringOk[a] ? std::sqrt((sp.x-so.x)*(sp.x-so.x) + (sp.y-so.y)*(sp.y-so.y)) : 0.0f;
+		}
+
+		// Handle SURVOLÉ (ou actif pendant un drag) → mis en évidence. Même test
+		// que le picking, pour que ce qui s'allume soit ce qu'on saisira.
+		int hovAxis = -1, hovMode = 0;
+		{
+			const ImVec2 mp = io.MousePos;
+			auto distToSeg = [](const ImVec2& p, const ImVec2& a, const ImVec2& b) -> float {
+				const float vx=b.x-a.x, vy=b.y-a.y, wx=p.x-a.x, wy=p.y-a.y;
+				const float len2=vx*vx+vy*vy; float t=(len2>1e-6f)?(wx*vx+wy*vy)/len2:0.0f;
+				t=std::clamp(t,0.0f,1.0f); const float cx=a.x+t*vx, cy=a.y+t*vy;
+				return std::sqrt((p.x-cx)*(p.x-cx)+(p.y-cy)*(p.y-cy));
+			};
+			float best = 9.0f;
+			for (int a = 0; a < 3; ++a)
+			{
+				if (seOk[a]) { const float sl=std::sqrt((se[a].x-so.x)*(se[a].x-so.x)+(se[a].y-so.y)*(se[a].y-so.y));
+					if (sl>12.0f) { const float d=distToSeg(mp,so,se[a]); if (d<best){best=d;hovAxis=a;hovMode=0;} } }
+				if (ringOk[a] && ringRad[a]>12.0f) { const float dm=std::sqrt((mp.x-so.x)*(mp.x-so.x)+(mp.y-so.y)*(mp.y-so.y));
+					const float dr=std::abs(dm-ringRad[a]); if (dr<best){best=dr;hovAxis=a;hovMode=1;} }
+			}
+			if (m_gizmoDragAxis >= 0) { hovAxis = m_gizmoDragAxis; hovMode = m_gizmoDragMode; }
+		}
+
+		for (int a = 0; a < 3; ++a)
+		{
+			const bool axHot   = (hovAxis == a && hovMode == 0);
+			const bool ringHot = (hovAxis == a && hovMode == 1);
+			if (seOk[a])
+			{
+				dl->AddLine(so, se[a], axHot ? hot : cols[a], axHot ? 5.0f : 3.0f);
+				dl->AddCircleFilled(se[a], axHot ? 7.0f : 5.0f, axHot ? hot : cols[a]);
+			}
+			if (ringOk[a] && ringRad[a] > 3.0f && ringRad[a] < 4000.0f)
+				dl->AddCircle(so, ringRad[a], ringHot ? hot : cols[a], 48, ringHot ? 4.0f : 2.0f);
+		}
+		dl->AddCircleFilled(so, 4.0f, IM_COL32(255, 255, 255, 255)); // centre
+
+		// Lecteur de valeurs : affiche la transform locale de la pièce active à
+		// côté du gizmo (position + rotation), pour combler le « manque
+		// d'information sur la valeur » pendant le drag (les anneaux qui tournent
+		// ne montrent pas l'angle). L'axe en cours de manipulation est surligné.
+		if (engine::editor::world::panels::BuildingEditorPanel* bp =
+			m_worldEditorShell ? m_worldEditorShell->GetBuildingEditorPanel() : nullptr)
+		{
+			float pos[3], rot[3], sc = 1.0f;
+			if (bp->ActivePartTransform(pos, rot, sc))
+			{
+				const int dragAxis = m_gizmoDragAxis;          // -1 si pas de drag
+				const bool dragRot  = (m_gizmoDragMode == 1);
+				char l1[96], l2[96];
+				std::snprintf(l1, sizeof(l1), "Pos  X %.2f  Y %.2f  Z %.2f  (m)", pos[0], pos[1], pos[2]);
+				std::snprintf(l2, sizeof(l2), "Rot  X %.0f  Y %.0f  Z %.0f  (deg)", rot[0], rot[1], rot[2]);
+				const ImVec2 p1{ so.x + 14.0f, so.y + 10.0f };
+				const ImVec2 p2{ so.x + 14.0f, so.y + 26.0f };
+				// Fond semi-opaque pour lisibilité par-dessus la 3D.
+				dl->AddRectFilled(ImVec2(p1.x - 4.0f, p1.y - 2.0f), ImVec2(p1.x + 230.0f, p2.y + 16.0f),
+					IM_COL32(0, 0, 0, 150), 3.0f);
+				// Surligne la ligne active (jaune) selon le mode de drag.
+				const ImU32 hotTxt = IM_COL32(255, 230, 90, 255);
+				const ImU32 white = IM_COL32(235, 235, 235, 255);
+				dl->AddText(p1, (dragAxis >= 0 && !dragRot) ? hotTxt : white, l1);
+				dl->AddText(p2, (dragAxis >= 0 &&  dragRot) ? hotTxt : white, l2);
+			}
+		}
+#endif
+	}
+
+	bool Engine::UpdateEditorBuildingGizmoDrag(int mouseX, int mouseY)
+	{
+#if defined(_WIN32)
+		if (!m_editorEnabled || !m_editorGizmoValid) return false;
+		if (!m_worldEditorShell) return false;
+		engine::editor::world::panels::BuildingEditorPanel* panel =
+			m_worldEditorShell->GetBuildingEditorPanel();
+		// Le drag n'agit que sur une pièce SÉLECTIONNÉE du brouillon (la pièce en
+		// cours d'ajout reste pilotée par les champs du panneau).
+		if (!panel || panel->SelectedDraft() < 0) { m_gizmoDragAxis = -1; return false; }
+
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::math::Mat4& vp = m_renderStates[readIdx].viewProjMatrix;
+		const ImGuiIO& io = ImGui::GetIO();
+		const float W = io.DisplaySize.x, H = io.DisplaySize.y;
+		if (W <= 0.0f || H <= 0.0f) return false;
+
+		auto project = [&](const engine::math::Vec3& w, float& sx, float& sy) -> bool {
+			const float* M = vp.m;
+			const float cx = M[0]*w.x + M[4]*w.y + M[8]*w.z  + M[12];
+			const float cy = M[1]*w.x + M[5]*w.y + M[9]*w.z  + M[13];
+			const float cw = M[3]*w.x + M[7]*w.y + M[11]*w.z + M[15];
+			if (cw <= 1e-4f) return false;
+			sx = (cx / cw * 0.5f + 0.5f) * W;
+			sy = (cy / cw * 0.5f + 0.5f) * H;
+			return true;
+		};
+
+		float axisLen, ringR; GizmoHandleSizes(axisLen, ringR); // identique au dessin
+		const engine::math::Vec3 dirs[3] = { {1,0,0}, {0,1,0}, {0,0,1} };
+		const engine::math::Vec3 perps[3] = { {0,1,0}, {0,0,1}, {1,0,0} };
+		const engine::math::Vec3 o = m_editorGizmoPos;
+
+		float ox, oy;
+		if (!project(o, ox, oy)) { m_gizmoDragAxis = -1; return false; }
+
+		// Géométrie écran courante des handles (recalculée chaque frame).
+		float tipX[3], tipY[3]; bool tipOk[3];
+		float ringRad[3]; bool ringOk[3];
+		for (int a = 0; a < 3; ++a)
+		{
+			const engine::math::Vec3 tip{ o.x + dirs[a].x*axisLen, o.y + dirs[a].y*axisLen, o.z + dirs[a].z*axisLen };
+			tipOk[a] = project(tip, tipX[a], tipY[a]);
+			float spx, spy;
+			const engine::math::Vec3 rp{ o.x + perps[a].x*ringR, o.y + perps[a].y*ringR, o.z + perps[a].z*ringR };
+			ringOk[a] = project(rp, spx, spy);
+			ringRad[a] = ringOk[a] ? std::sqrt((spx-ox)*(spx-ox) + (spy-oy)*(spy-oy)) : 0.0f;
+		}
+
+		const float mx = static_cast<float>(mouseX), my = static_cast<float>(mouseY);
+
+		// Distance point → segment [a,b] en écran.
+		auto distToSeg = [](float px, float py, float ax, float ay, float bx, float by) -> float {
+			const float vx = bx-ax, vy = by-ay;
+			const float wx = px-ax, wy = py-ay;
+			const float len2 = vx*vx + vy*vy;
+			float t = (len2 > 1e-6f) ? (wx*vx + wy*vy) / len2 : 0.0f;
+			t = std::clamp(t, 0.0f, 1.0f);
+			const float cx = ax + t*vx, cy = ay + t*vy;
+			const float dx = px-cx, dy = py-cy;
+			return std::sqrt(dx*dx + dy*dy);
+		};
+
+		const bool pressed  = m_input.WasMousePressed(engine::platform::MouseButton::Left);
+		const bool downNow  = m_input.IsMouseDown(engine::platform::MouseButton::Left);
+		const bool released = m_input.WasMouseReleased(engine::platform::MouseButton::Left);
+
+		// --- Saisie d'un handle au clic -----------------------------------
+		if (m_gizmoDragAxis < 0 && pressed)
+		{
+			constexpr float kPick = 9.0f; // tolérance écran (pixels)
+			int bestAxis = -1, bestMode = 0;
+			float bestDist = kPick;
+			for (int a = 0; a < 3; ++a)
+			{
+				if (tipOk[a])
+				{
+					const float dseg = distToSeg(mx, my, ox, oy, tipX[a], tipY[a]);
+					// Évite de saisir un axe quasi vu de bout (segment trop court).
+					const float segLen = std::sqrt((tipX[a]-ox)*(tipX[a]-ox) + (tipY[a]-oy)*(tipY[a]-oy));
+					if (segLen > 12.0f && dseg < bestDist) { bestDist = dseg; bestAxis = a; bestMode = 0; }
+				}
+				if (ringOk[a] && ringRad[a] > 12.0f)
+				{
+					const float dmouse = std::sqrt((mx-ox)*(mx-ox) + (my-oy)*(my-oy));
+					const float dring = std::abs(dmouse - ringRad[a]);
+					if (dring < bestDist) { bestDist = dring; bestAxis = a; bestMode = 1; }
+				}
+			}
+			if (bestAxis >= 0)
+			{
+				// Un drag = une étape d'annulation : on capture l'état AVANT de
+				// commencer à déplacer/tourner (les mutations seront silencieuses).
+				panel->PushUndoSnapshot();
+				m_gizmoDragAxis = bestAxis;
+				m_gizmoDragMode = bestMode;
+				m_gizmoDragLastX = mx; m_gizmoDragLastY = my;
+				m_gizmoDragLastAngle = std::atan2(my - oy, mx - ox);
+				return true; // capture : pas de sélection de pièce sur ce clic
+			}
+		}
+
+		// --- Application pendant le drag -----------------------------------
+		if (m_gizmoDragAxis >= 0 && downNow)
+		{
+			const int a = m_gizmoDragAxis;
+			if (m_gizmoDragMode == 0) // translation
+			{
+				// Direction écran de l'axe + mètres-monde par pixel le long de
+				// l'axe (la poignée à axisLen mètres se projette à |tip-o|).
+				float axSx = tipX[a]-ox, axSy = tipY[a]-oy;
+				const float segLen = std::sqrt(axSx*axSx + axSy*axSy);
+				if (segLen > 1e-3f)
+				{
+					axSx /= segLen; axSy /= segLen;
+					const float worldPerPix = axisLen / segLen;
+					const float dScreen = (mx - m_gizmoDragLastX)*axSx + (my - m_gizmoDragLastY)*axSy;
+					const float d = dScreen * worldPerPix; // mètres monde le long de l'axe a
+					// Monde → local : inverse(RotateY(groupYaw)) / échelle groupe.
+					constexpr float kDeg2Rad = 3.14159265f / 180.f;
+					const float c = std::cos(m_editorPreviewYaw * kDeg2Rad);
+					const float s = std::sin(m_editorPreviewYaw * kDeg2Rad);
+					const float invScale = (m_editorPreviewScale > 1e-4f) ? 1.0f/m_editorPreviewScale : 1.0f;
+					float lx = 0, ly = 0, lz = 0;
+					if (a == 0)      { lx = c*d*invScale;  lz = s*d*invScale; }
+					else if (a == 1) { ly = d*invScale; }
+					else             { lx = -s*d*invScale; lz = c*d*invScale; }
+					// Silencieux : on ne reconstruit PAS le mesh à chaque frame (fuite
+					// GPU) ; le gizmo suit via la donnée, le mesh est rebâti au release.
+					panel->TranslateSelectedSilent(lx, ly, lz);
+				}
+			}
+			else // rotation
+			{
+				const float angNow = std::atan2(my - oy, mx - ox);
+				float dAng = angNow - m_gizmoDragLastAngle;
+				// Normalise dans [-pi, pi] (passage ±180°).
+				while (dAng >  3.14159265f) dAng -= 6.28318530f;
+				while (dAng < -3.14159265f) dAng += 6.28318530f;
+				m_gizmoDragLastAngle = angNow;
+				panel->AddRotationSelectedSilent(a, dAng * (180.0f / 3.14159265f));
+			}
+			m_gizmoDragLastX = mx; m_gizmoDragLastY = my;
+
+			// Rafraîchit le MESH périodiquement pendant le drag (~1 frame sur 6,
+			// soit ~10 Hz) pour un retour visuel : les données sont déjà à jour
+			// (mutateurs silencieux), on demande juste un rebuild ponctuel. Throttlé
+			// car BuildPropFromMeshMatrix ne libère pas les meshes GPU (un rebuild
+			// par frame saturerait). Le rebuild final a lieu au relâchement.
+			if (++m_gizmoDragRefreshTick >= 6)
+			{
+				m_gizmoDragRefreshTick = 0;
+				panel->MarkPreviewDirty();
+			}
+
+			// Recalcule la cible du gizmo CHAQUE frame depuis la pièce mise à jour,
+			// pour que les cercles suivent la souris en temps réel même si le mesh
+			// n'est reconstruit qu'à intervalles (throttle ci-dessus).
+			float local[3];
+			if (panel->ActivePartLocalPos(local))
+			{
+				constexpr float kDeg2Rad = 3.14159265f / 180.f;
+				const float gY = m_terrainCollider.GroundHeightAt(m_editorPreviewOriginX, m_editorPreviewOriginZ);
+				const float c = std::cos(m_editorPreviewYaw * kDeg2Rad);
+				const float s = std::sin(m_editorPreviewYaw * kDeg2Rad);
+				const float sx = m_editorPreviewScale * local[0];
+				const float sy = m_editorPreviewScale * local[1];
+				const float sz = m_editorPreviewScale * local[2];
+				m_editorGizmoPos = engine::math::Vec3{
+					m_editorPreviewOriginX + (c*sx + s*sz),
+					gY + sy,
+					m_editorPreviewOriginZ + (-s*sx + c*sz) };
+			}
+			return true;
+		}
+
+		// Fin du drag : reconstruire le mesh UNE fois à la position finale (les
+		// mutations pendant le drag étaient silencieuses pour éviter la fuite GPU).
+		if (released)
+		{
+			const bool wasDragging = (m_gizmoDragAxis >= 0);
+			m_gizmoDragAxis = -1;
+			if (wasDragging) { panel->MarkPreviewDirty(); return true; }
+		}
+		return m_gizmoDragAxis >= 0;
+#else
+		(void)mouseX; (void)mouseY; return false;
+#endif
+	}
+
+	engine::render::TextureHandle Engine::SolidColorTexture(uint8_t r, uint8_t g, uint8_t b)
+	{
+		const uint32_t key = (static_cast<uint32_t>(r) << 16) | (static_cast<uint32_t>(g) << 8) | b;
+		auto it = m_solidColorTextures.find(key);
+		if (it != m_solidColorTextures.end()) return it->second;
+		const uint8_t rgba[4] = { r, g, b, 255 };
+		engine::render::TextureHandle h =
+			m_assetRegistry.CreateTextureFromMemory(rgba, 1, 1, /*useSrgb*/ true);
+		m_solidColorTextures[key] = h;
+		return h;
+	}
+
+	void Engine::BuildPropFromMeshMatrix(const std::string& meshPath,
+		const engine::math::Mat4& worldM, int interactableIndex,
+		bool solid, float collisionRadius)
+	{
+		if (!m_pipeline) return;
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		if (!materialCache.IsValid()) return;
+		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+
+		const std::string full = contentRoot + "/" + meshPath;
+		auto cpu = engine::render::staticmesh::StaticMeshLoader::LoadCpuOnlyForTests(full);
+		if (!cpu || cpu->vertices.empty() || cpu->submeshes.empty())
+		{
+			LOG_WARN(Render, "[Buildings] mesh load FAIL '{}'", full);
+			return;
+		}
+		std::string meshDir;
+		{
+			const auto slash = meshPath.find_last_of('/');
+			if (slash != std::string::npos) meshDir = meshPath.substr(0, slash + 1);
+		}
+		std::unordered_map<std::string, std::vector<uint32_t>> idxByMat;
+		std::unordered_map<std::string, const engine::render::staticmesh::StaticSubMesh*> repByMat;
+		for (const auto& sub : cpu->submeshes)
+		{
+			std::vector<uint32_t>& v = idxByMat[sub.materialName];
+			v.insert(v.end(), cpu->indices.begin() + sub.firstIndex,
+			         cpu->indices.begin() + sub.firstIndex + sub.indexCount);
+			if (repByMat.find(sub.materialName) == repByMat.end()) repByMat[sub.materialName] = &sub;
+		}
+
+		PropRenderable prop;
+		// Cuisson de worldM dans les sommets (même contournement que BuildPropFromMesh :
+		// le buffer d'instance GPU partagé n'autorise pas de matrice par-prop), mais
+		// SANS le lift au sol : le Y de la matrice est autoritaire (pièce empilable).
+		float minY = 1e30f, maxY = -1e30f;
+		float minX = 1e30f, maxX = -1e30f, minZ = 1e30f, maxZ = -1e30f;
+		{
+			const float* M = worldM.m; // column-major : M[col*4+row]
+			for (auto& v : cpu->vertices)
+			{
+				const float px = v.pos[0], py = v.pos[1], pz = v.pos[2];
+				v.pos[0] = M[0]*px + M[4]*py + M[8]*pz  + M[12];
+				v.pos[1] = M[1]*px + M[5]*py + M[9]*pz  + M[13];
+				v.pos[2] = M[2]*px + M[6]*py + M[10]*pz + M[14];
+				if (v.pos[1] < minY) minY = v.pos[1];
+				if (v.pos[1] > maxY) maxY = v.pos[1];
+				if (v.pos[0] < minX) minX = v.pos[0];
+				if (v.pos[0] > maxX) maxX = v.pos[0];
+				if (v.pos[2] < minZ) minZ = v.pos[2];
+				if (v.pos[2] > maxZ) maxZ = v.pos[2];
+				const float nx = v.normal[0], ny = v.normal[1], nz = v.normal[2];
+				float rnx = M[0]*nx + M[4]*ny + M[8]*nz;
+				float rny = M[1]*nx + M[5]*ny + M[9]*nz;
+				float rnz = M[2]*nx + M[6]*ny + M[10]*nz;
+				const float nlen = std::sqrt(rnx*rnx + rny*rny + rnz*rnz);
+				if (nlen > 1e-6f) { rnx /= nlen; rny /= nlen; rnz /= nlen; }
+				v.normal[0] = rnx; v.normal[1] = rny; v.normal[2] = rnz;
+			}
+		}
+		prop.modelMatrix = engine::math::Mat4::Identity(); // sommets déjà en espace monde
+
+		// Centre XZ = milieu de l'empreinte des sommets bakés (pour collision + impostor).
+		const float cx = 0.5f * (minX + maxX);
+		const float cz = 0.5f * (minZ + maxZ);
+		float radiusAuto = 0.0f;
+		for (const auto& v : cpu->vertices)
+		{
+			const float ddx = v.pos[0] - cx, ddz = v.pos[2] - cz;
+			const float r = std::sqrt(ddx*ddx + ddz*ddz);
+			if (r > radiusAuto) radiusAuto = r;
+		}
+
+		prop.meshPath = meshPath;
+		{
+			const float halfHeight = 0.5f * (maxY - minY);
+			prop.impostorCenter = engine::math::Vec3{ cx, minY + halfHeight, cz };
+			prop.impostorRadius = std::max(radiusAuto, halfHeight);
+			if (prop.impostorRadius < 0.05f) prop.impostorRadius = 0.5f;
+		}
+
+		for (const auto& kv : idxByMat)
+		{
+			const std::string& matName = kv.first;
+			const std::vector<uint32_t>& idxs = kv.second;
+			if (idxs.empty()) continue;
+			engine::render::MeshHandle mh = m_assetRegistry.CreateMeshFromData(
+				cpu->vertices.data(), static_cast<uint32_t>(cpu->vertices.size()),
+				idxs.data(), static_cast<uint32_t>(idxs.size()));
+			if (!mh.IsValid()) continue;
+
+			uint32_t matIdx = materialCache.GetDefaultMaterialIndex();
+			uint32_t hlIdx  = matIdx;
+			auto cached = m_trimMatCache.find(matName);
+			if (cached != m_trimMatCache.end())
+			{
+				matIdx = cached->second.first;
+				hlIdx  = cached->second.second;
+			}
+			else
+			{
+				const engine::render::staticmesh::StaticSubMesh* rep = repByMat[matName];
+				if (rep && !rep->baseColorUri.empty())
+				{
+					const engine::render::TextureHandle bc =
+						m_assetRegistry.LoadTexture(meshDir + rep->baseColorUri, /*useSrgb*/ true);
+					if (bc.IsValid())
+					{
+						engine::render::Material mat{};
+						mat.baseColor = bc;
+						if (!rep->normalUri.empty())
+						{
+							const engine::render::TextureHandle n = m_assetRegistry.LoadTexture(meshDir + rep->normalUri, false);
+							if (n.IsValid()) mat.normal = n;
+						}
+						if (!rep->ormUri.empty())
+						{
+							const engine::render::TextureHandle o = m_assetRegistry.LoadTexture(meshDir + rep->ormUri, false);
+							if (o.IsValid()) mat.orm = o;
+						}
+						if (rep->alphaCutout)
+							mat.flags = engine::render::MaterialFlags::AlphaCutout;
+						matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+						mat.flags = static_cast<engine::render::MaterialFlags>(
+							static_cast<uint32_t>(mat.flags) | static_cast<uint32_t>(engine::render::MaterialFlags::Highlight));
+						hlIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+					}
+				}
+				else
+				{
+					// Pièces de structure (murs, sols, coins…) : le glTF du projet
+					// ne référence aucune texture, mais a GARDÉ le nom du matériau
+					// (MI_Plaster, MI_WoodTrim, MI_Brick…). On retrouve la texture du
+					// kit « Medieval Village » (copiée dans meshes/props/) par ce nom.
+					// Priorité au NOM DU MATÉRIAU (sinon un mur « Wall_Plaster_WoodGrid »
+					// donnerait du plâtre à sa partie bois) ; le chemin ne sert qu'à
+					// distinguer la brique générique (rouge / irrégulière).
+					auto matHas  = [&](const char* s) { return matName.find(s)  != std::string::npos; };
+					auto pathHas = [&](const char* s) { return meshPath.find(s) != std::string::npos; };
+					const char* baseTex = nullptr; const char* nrmTex = nullptr; const char* ormTex = nullptr;
+					if (matHas("Plaster"))            { baseTex = "T_Plaster_BaseColor.png";     nrmTex = "T_Plaster_Normal.png";     ormTex = "T_Plaster_ORM.png"; }
+					else if (matHas("Wood"))          { baseTex = "T_WoodTrim_BaseColor.png";    nrmTex = "T_WoodTrim_Normal.png";    ormTex = "T_WoodTrim_ORM.png"; }
+					else if (matHas("UnevenBrick"))   { baseTex = "T_UnevenBrick_BaseColor.png"; nrmTex = "T_UnevenBrick_Normal.png"; }
+					else if (matHas("RedBrick"))      { baseTex = "T_RedBrick_BaseColor.png";    nrmTex = "T_Brick_Normal.png"; }
+					else if (matHas("Rock"))          { baseTex = "T_RockTrim_BaseColor.png";    nrmTex = "T_RockTrim_Normal.png";    ormTex = "T_RockTrim_ORM.png"; }
+					else if (matHas("RoundTile"))     { baseTex = "T_RoundTiles_BaseColor.png";  nrmTex = "T_RoundTiles_Normal.png"; }
+					else if (matHas("Metal"))         { baseTex = "T_Trim_Metal_BaseColor.png";  nrmTex = "T_Trim_Metal_Normal.png";  ormTex = "T_Trim_Metal_ORM.png"; }
+					else if (matHas("Brick"))         {
+						// Matériau « MI_Brick » générique : on affine via le nom du mesh.
+						if      (pathHas("RedBrick"))    { baseTex = "T_RedBrick_BaseColor.png";    nrmTex = "T_Brick_Normal.png"; }
+						else if (pathHas("UnevenBrick")) { baseTex = "T_UnevenBrick_BaseColor.png"; nrmTex = "T_UnevenBrick_Normal.png"; }
+						else                             { baseTex = "T_Brick_BaseColor.png";       nrmTex = "T_Brick_Normal.png"; }
+					}
+					else if (pathHas("RoundTiles"))   { baseTex = "T_RoundTiles_BaseColor.png";  nrmTex = "T_RoundTiles_Normal.png"; }
+
+					engine::render::TextureHandle bc;
+					if (baseTex) bc = m_assetRegistry.LoadTexture(meshDir + baseTex, /*useSrgb*/ true);
+					if (bc.IsValid())
+					{
+						engine::render::Material mat{};
+						mat.baseColor = bc;
+						if (nrmTex) { const auto n = m_assetRegistry.LoadTexture(meshDir + nrmTex, false); if (n.IsValid()) mat.normal = n; }
+						if (ormTex) { const auto o = m_assetRegistry.LoadTexture(meshDir + ormTex, false); if (o.IsValid()) mat.orm = o; }
+						matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+						hlIdx = matIdx;
+					}
+					else
+					{
+						// Repli (matériau non mappé OU texture absente) : couleur plate
+						// plutôt que blanc. Et on LOGGE le matériau pour pouvoir le
+						// mapper précisément ensuite (diagnostic des pièces blanches).
+						uint8_t cr = 200, cg = 195, cb = 185;
+						if (matHas("Plaster"))                         { cr = 232; cg = 224; cb = 203; }
+						else if (matHas("RedBrick") || pathHas("RedBrick")) { cr = 165; cg =  86; cb =  72; }
+						else if (matHas("Brick") || pathHas("Brick"))  { cr = 170; cg = 120; cb =  96; }
+						else if (pathHas("WoodDark"))                  { cr = 102; cg =  72; cb =  48; }
+						else if (pathHas("WoodLight"))                 { cr = 170; cg = 130; cb =  88; }
+						else if (matHas("Wood"))                       { cr = 140; cg = 100; cb =  62; }
+						else if (matHas("Metal"))                      { cr = 120; cg = 122; cb = 128; }
+						else if (matHas("Glass") || matHas("Window"))  { cr = 205; cg = 222; cb = 232; } // verre pâle
+						engine::render::Material mat{};
+						mat.baseColor = SolidColorTexture(cr, cg, cb);
+						matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+						hlIdx = matIdx;
+						LOG_WARN(Render, "[Buildings] materiau sans texture '{}' (mesh '{}', baseTex tente='{}') -> couleur plate ({},{},{})",
+							matName, meshPath, baseTex ? baseTex : "(aucun)", cr, cg, cb);
+					}
+				}
+				m_trimMatCache[matName] = { matIdx, hlIdx };
+			}
+
+			PropPart part;
+			part.mesh = mh;
+			part.materialIndex = matIdx;
+			part.highlightMaterialIndex = hlIdx;
+			prop.parts.push_back(part);
+		}
+
+		prop.interactableIndex = interactableIndex;
+		prop.worldPos = engine::math::Vec3{ cx, minY, cz };
+		if (!prop.parts.empty())
+		{
+			if (solid)
+			{
+				float radius = collisionRadius > 0.0f ? collisionRadius : radiusAuto;
+				if (radius < 0.05f) radius = 0.5f;
+				m_worldCollider.AddCylinder(
+					engine::gameplay::PropCylinder{ cx, cz, radius, minY, maxY });
 			}
 			m_props.push_back(std::move(prop));
 		}

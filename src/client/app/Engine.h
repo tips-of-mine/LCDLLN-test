@@ -909,6 +909,29 @@ namespace engine
 		/// interactibles ayant un meshPath. Cf. LoadInteractableProps / RecordPropsGeometry.
 		std::vector<PropRenderable> m_props;
 
+		/// Aperçu éditeur — nombre de props « monde » (scenery + bâtiments posés)
+		/// présents dans m_props après le boot. SyncEditorBuildingPreview ne touche
+		/// QU'aux props de brouillon ajoutés au-delà de ce seuil, pour ne pas
+		/// effacer le décor/les bâtiments chargés au boot.
+		size_t m_editorBaselinePropCount = 0;
+
+		/// Gizmo éditeur — position monde de la pièce de bâtiment active (cible du
+		/// gizmo), calculée dans SyncEditorBuildingPreview. m_editorGizmoValid =
+		/// false si aucune pièce active.
+		engine::math::Vec3 m_editorGizmoPos{};
+		bool m_editorGizmoValid = false;
+
+		/// Aperçu éditeur — origine MONDE (XZ), yaw et échelle du groupe avec
+		/// lesquels le brouillon de bâtiment a été rendu au dernier rebuild de
+		/// SyncEditorBuildingPreview. Mémorisé pour que le picking viewport
+		/// (clic = sélection de la pièce la plus proche) calcule la position
+		/// monde de chaque pièce avec la MÊME transform que celle affichée.
+		float m_editorPreviewOriginX = 0.0f;
+		float m_editorPreviewOriginZ = 0.0f;
+		float m_editorPreviewYaw     = 0.0f;
+		float m_editorPreviewScale   = 1.0f;
+		bool  m_editorPreviewValid   = false;
+
 		/// M45.5 — atlas d'impostors par chemin de mesh (clé = PropRenderable::meshPath).
 		/// Peuplé à la demande dans BuildPropFromMesh quand world.impostor.enabled :
 		/// pour chaque mesh de DÉCOR, tente de charger `<même nom>.mipo` à côté du
@@ -953,6 +976,14 @@ namespace engine
 		/// début de LoadInteractableProps.
 		std::unordered_map<std::string, std::pair<uint32_t, uint32_t>> m_trimMatCache;
 
+		/// Cache de textures 1×1 de couleur plate (clé = RGB packé 0xRRGGBB), pour
+		/// colorer les pièces de bâtiment dont le glTF ne fournit aucune texture
+		/// (murs/sols : matériaux MI_Plaster/MI_WoodTrim sans image → blanc sinon).
+		std::unordered_map<uint32_t, engine::render::TextureHandle> m_solidColorTextures;
+		/// Retourne (en la créant/mettant en cache) une texture 1×1 sRGB de la
+		/// couleur donnée, à utiliser comme baseColor d'un matériau plat.
+		engine::render::TextureHandle SolidColorTexture(uint8_t r, uint8_t g, uint8_t b);
+
 		/// Collisionneur composite (terrain + cylindres des props/décor/PNJ). Construit au
 		/// boot par LoadInteractableProps + LoadScenery, consommé par CharacterController.
 		engine::gameplay::CompositeWorldCollider m_worldCollider;
@@ -967,6 +998,64 @@ namespace engine
 		/// comme un prop + cylindre de collision enregistré dans m_worldCollider. À appeler
 		/// au boot juste après LoadInteractableProps (qui réinitialise le collisionneur).
 		void LoadScenery();
+
+		/// Auberge éditable — Charge les bâtiments de la zone active. La carte ne
+		/// stocke que des RÉFÉRENCES (`instances/zone_<id>/buildings.bin`,
+		/// BuildingPlacement : type + variante + transform) ; on résout chaque
+		/// référence contre la bibliothèque `buildings/templates/<type>.json`
+		/// (BuildingTemplateLibrary) pour obtenir les pièces. Pour chaque pièce,
+		/// compose la matrice monde `T(origine) · Ry(yaw) · S(scale) · T(local)
+		/// · R(euler local) · S(scale local)` et la rend via
+		/// `BuildPropFromMeshMatrix` (bake SANS ground-snap par pièce : l'origine
+		/// du bâtiment est snappée une seule fois, les pièces gardent leur Y
+		/// local pour empiler toit / étage). À appeler après LoadScenery.
+		void LoadBuildings();
+
+		/// Aperçu 3D live des bâtiments dans la vue de l'ÉDITEUR. Reconstruit
+		/// `m_props` (que l'éditeur n'utilise que pour cet aperçu) à partir des
+		/// placements du `BuildingDocument` (résolus via la bibliothèque) + du
+		/// brouillon en cours du `BuildingEditorPanel` (rendu à la position de
+		/// pose courante), via `BuildPropFromMeshMatrix`. No-op hors mode éditeur
+		/// ou si l'aperçu n'est pas marqué « sale » (edge-triggered : on ne
+		/// reconstruit qu'après un changement, pour éviter la création de
+		/// ressources GPU à chaque frame). À appeler dans la boucle éditeur,
+		/// avant le rendu des props.
+		void SyncEditorBuildingPreview();
+
+		/// Dessine le gizmo de la pièce de bâtiment active en overlay ImGui :
+		/// axes de translation + anneaux de rotation, X=rouge / Y=vert / Z=bleu,
+		/// projetés monde→écran via la viewProj courante. No-op hors éditeur ou si
+		/// aucune pièce active. À appeler pendant la frame ImGui de l'éditeur.
+		void DrawEditorBuildingGizmo();
+
+		/// Gère le cliquer-glisser sur le gizmo (étape 3.2) : saisit un axe de
+		/// translation (ligne) ou un anneau de rotation au clic, puis applique le
+		/// déplacement/rotation à la pièce SÉLECTIONNÉE du brouillon pendant le
+		/// drag. Conversion écran→monde→local cohérente avec la transform du
+		/// groupe mémorisée (m_editorPreview*). \param mouseX,mouseY position
+		/// souris (pixels fenêtre). \return true si un handle du gizmo capture la
+		/// souris cette frame (le clic ne doit alors PAS sélectionner une pièce).
+		/// No-op (false) hors mode édition bâtiment, sans pièce sélectionnée, ou
+		/// si le gizmo n'est pas valide. À appeler dans l'input viewport éditeur.
+		bool UpdateEditorBuildingGizmoDrag(int mouseX, int mouseY);
+
+		/// Taille MONDE des handles du gizmo (longueur d'axe + rayon d'anneau),
+		/// proportionnelle à la distance caméra→gizmo pour une taille ~CONSTANTE à
+		/// l'écran (sinon minuscule de loin / énorme de près). Doit être identique
+		/// dans le dessin et le picking, d'où ce helper partagé. \param axisLen,ringR out.
+		void GizmoHandleSizes(float& axisLen, float& ringR) const;
+
+		// Gizmo drag — état du glissement en cours (axe saisi, mode, suivi souris).
+		int   m_gizmoDragAxis = -1;       ///< axe saisi 0=X/1=Y/2=Z ; -1 = aucun
+		int   m_gizmoDragMode = 0;        ///< 0 = translation, 1 = rotation
+		float m_gizmoDragLastX = 0.0f;    ///< dernière position souris X (pixels)
+		float m_gizmoDragLastY = 0.0f;    ///< dernière position souris Y (pixels)
+		float m_gizmoDragLastAngle = 0.0f;///< dernier angle souris/centre (rad, mode rotation)
+		float m_gizmoDragAxisSx = 0.0f;   ///< direction écran de l'axe (unité) X
+		float m_gizmoDragAxisSy = 0.0f;   ///< direction écran de l'axe (unité) Y
+		float m_gizmoDragWorldPerPix = 0.0f; ///< mètres monde par pixel le long de l'axe (translation)
+		int   m_gizmoDragRefreshTick = 0;    ///< compteur de frames pour rafraîchir le mesh pendant le drag (throttle)
+
 		/// Charge le coffre (Chest_Wood) en mesh SKINNE (squelette + clips Open/Close)
 		/// pour l'animer a l'interaction. A appeler au boot apres LoadInteractableProps.
 		void LoadAnimatedChest();
@@ -980,6 +1069,17 @@ namespace engine
 		/// collision. Voir l'implémentation pour le détail des paramètres.
 		void BuildPropFromMesh(const std::string& meshPath, float wx, float wz,
 			float yawDeg, float rotXDeg, float scale, int interactableIndex,
+			bool solid, float collisionRadius);
+
+		/// Variante de BuildPropFromMesh qui CUIT une matrice monde explicite
+		/// \p worldM dans les sommets, SANS ré-ancrage au sol (pas de lift
+		/// `groundY - minY`). Utilisée pour les pièces d'un Building, dont le Y
+		/// local est autoritaire (toit/étage empilés). Le cylindre de collision
+		/// (si \p solid) est posé sous l'empreinte XZ réelle des sommets bakés,
+		/// de leur minimum à leur maximum Y monde. Partage `m_trimMatCache`.
+		/// \param worldM matrice modèle monde complète (déjà composée).
+		void BuildPropFromMeshMatrix(const std::string& meshPath,
+			const engine::math::Mat4& worldM, int interactableIndex,
 			bool solid, float collisionRadius);
 
 		/// Dessine les props (m_props) dans la passe Geometry, après l'avatar : un

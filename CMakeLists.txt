@@ -481,6 +481,20 @@ add_library(engine_core
   src/world_editor/volumes/dungeons/DungeonPortalIo.cpp
   src/world_editor/volumes/dungeons/DungeonPortalTool.cpp
   src/world_editor/volumes/dungeons/PlaceDungeonPortalCommand.cpp
+  # Auberge éditable — entité « Building » : grappe d'éléments existants
+  # (murs/toits/portes/mobilier) regroupée en une entité logique éditable.
+  # Format buildings.bin (LCBD v1) header-only dans Buildings.h ; document
+  # CRUD calqué sur MeshInsertDocument. Cf.
+  # docs/superpowers/specs/2026-06-17-auberge-building-editor-design.md.
+  src/world_editor/buildings/BuildingDocument.cpp
+  # Auberge éditable — Bibliothèque de types de bâtiments (un fichier JSON par
+  # type dans buildings/templates/ ; variantes + pièces). Partagée client
+  # (résolution au rendu) et éditeur (création/sauvegarde de variantes).
+  src/client/world/instances/BuildingTemplateLibrary.cpp
+  # Auberge éditable — Catalogue d'assets de l'éditeur (parse
+  # meshes/props/catalog.json via le parseur Config). Alimente
+  # l'AssetBrowserPanel et le BuildingTool.
+  src/world_editor/assets/AssetCatalog.cpp
   # M100.44 — VMap Bridge & Phase 11 Validation (clôture Phase 11).
   # VMapBridge : export AABB proxy collision (LCVC v1) depuis les
   # documents de volumes. Phase11Validator : checks de cohérence
@@ -559,6 +573,7 @@ add_library(engine_core
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
+  src/world_editor/panels/BuildingEditorPanel.cpp
   src/world_editor/panels/OutlinerPanel.cpp
   src/world_editor/panels/ConsolePanel.cpp
   src/world_editor/panels/ToolPropertiesPanel.cpp
@@ -1714,6 +1729,37 @@ if(WIN32)
   endif()
   add_test(NAME mesh_insert_tests COMMAND mesh_insert_tests)
 endif()
+
+# Auberge éditable — Tests unitaires CPU pour l'entité « Building » :
+# round-trip binaire LCBD v1 (avec pièces + Y empilé), BuildingDocument CRUD,
+# auto-guid, round-trip disque namespacé. Pure CPU (pas d'ImGui) : cible
+# cross-platform pour être RÉELLEMENT exécutée par le ctest Linux de la CI
+# (engine_core expose ${CMAKE_SOURCE_DIR} en include PUBLIC).
+add_executable(building_tests src/world_editor/tests/BuildingTests.cpp)
+target_link_libraries(building_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(building_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME building_tests COMMAND building_tests)
+
+# Auberge éditable — Tests unitaires CPU pour la bibliothèque de types
+# (BuildingTemplateLibrary) : parse JSON, Resolve, SaveVariant round-trip.
+# Pure CPU, cross-platform (ctest Linux).
+add_executable(building_template_tests src/world_editor/tests/BuildingTemplateLibraryTests.cpp)
+target_link_libraries(building_template_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(building_template_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME building_template_tests COMMAND building_template_tests)
+
+# Auberge éditable — Tests unitaires CPU pour AssetCatalog (parsing JSON,
+# FindById, ByCategory, Categories). Pure CPU, cross-platform (ctest Linux).
+add_executable(asset_catalog_tests src/world_editor/tests/AssetCatalogTests.cpp)
+target_link_libraries(asset_catalog_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(asset_catalog_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME asset_catalog_tests COMMAND asset_catalog_tests)
 
 # M100.41 — Tests unitaires CPU pour l'Overhang Cliff Tool (Phase 11).
 # OverhangCatalog JSON parsing, PlaceOverhangCommand Apply/Undo, gating

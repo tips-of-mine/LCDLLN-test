@@ -13,6 +13,7 @@
 
 #include "src/client/world/foliage/FoliageInstances.h"
 #include "src/client/world/hazard/HazardVolumes.h"
+#include "src/client/world/instances/Buildings.h"
 #include "src/client/world/instances/PropInstances.h"
 #include "src/client/world/interactive/InteractiveInstances.h"
 #include "src/client/world/spline/SplineInstances.h"
@@ -174,6 +175,18 @@ namespace
 		ZoneExportInputs in;
 		// Props.
 		in.props = { MakeProp(10, 1.5f), MakeProp(11, 2.5f) };
+		// Buildings (auberge éditable) : la carte stocke une RÉFÉRENCE (type +
+		// variante + transform), pas les pièces.
+		{
+			engine::world::instances::BuildingPlacement pl;
+			pl.guid = 5u;
+			pl.templateType = "tavern";
+			pl.variantId = "auberge_terrasse";
+			pl.displayName = "Auberge";
+			pl.worldPosition = { 88.0f, 0.0f, 100.0f };
+			pl.worldYawDeg = 30.0f;
+			in.buildings = { pl };
+		}
 		// Hazards.
 		engine::world::hazard::HazardVolume hz;
 		hz.type = engine::world::hazard::HazardType::Tar;
@@ -230,6 +243,18 @@ namespace
 		REQUIRE(engine::world::instances::LoadPropsBin(ReadFile(inst / "props.bin"), props2, lerr));
 		REQUIRE(props2.size() == 2);
 		if (props2.size() == 2) { REQUIRE(props2[0].instanceId == 10); REQUIRE(Near(props2[1].position.x, 2.5f)); }
+
+		std::vector<engine::world::instances::BuildingPlacement> bd2;
+		REQUIRE(engine::world::instances::LoadBuildingsBin(ReadFile(inst / "buildings.bin"), bd2, lerr));
+		REQUIRE(bd2.size() == 1);
+		if (bd2.size() == 1)
+		{
+			REQUIRE(bd2[0].guid == 5u);
+			REQUIRE(bd2[0].templateType == "tavern");
+			REQUIRE(bd2[0].variantId == "auberge_terrasse");
+			REQUIRE(bd2[0].displayName == "Auberge");
+			REQUIRE(Near(bd2[0].worldYawDeg, 30.0f));
+		}
 
 		std::vector<engine::world::hazard::HazardVolume> hz2;
 		REQUIRE(engine::world::hazard::LoadHazardsBin(ReadFile(inst / "hazards.bin"), hz2, lerr));

@@ -22,6 +22,7 @@
 
 #include "src/client/world/foliage/FoliageInstances.h"
 #include "src/client/world/hazard/HazardVolumes.h"
+#include "src/client/world/instances/Buildings.h"
 #include "src/client/world/instances/PropInstances.h"
 #include "src/client/world/interactive/InteractiveInstances.h"
 #include "src/client/world/spline/SplineInstances.h"
@@ -45,6 +46,7 @@ namespace engine::editor::world
 	struct ZoneExportInputs
 	{
 		std::vector<engine::world::instances::PropInstance>            props;
+		std::vector<engine::world::instances::BuildingPlacement>      buildings;
 		std::vector<engine::world::hazard::HazardVolume>              hazards;
 		std::vector<engine::world::interactive::InteractivePropInstance> interactives;
 		std::vector<engine::world::zones::GameplayZone>              zones;
@@ -54,7 +56,7 @@ namespace engine::editor::world
 	};
 
 	/// Écrit l'arborescence complète sous `outputDir` :
-	///   <outputDir>/instances/{props,hazards,interactives,zones,splines,wind_zones}.bin
+	///   <outputDir>/instances/{props,buildings,hazards,interactives,zones,splines,wind_zones}.bin
 	///   <outputDir>/chunks/chunk_<x>_<z>/{foliage,shade}.bin
 	/// Crée les dossiers au besoin. Retourne false + `outError` rempli au premier
     /// échec d'écriture.

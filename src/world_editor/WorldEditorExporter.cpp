@@ -47,6 +47,8 @@ namespace engine::editor::world
 		// fichier avec count=0 est valide et explicite l'absence de données).
 		if (!WriteFile(inst / "props.bin",
 			engine::world::instances::SavePropsBin(inputs.props), outError)) return false;
+		if (!WriteFile(inst / "buildings.bin",
+			engine::world::instances::SaveBuildingsBin(inputs.buildings), outError)) return false;
 		if (!WriteFile(inst / "hazards.bin",
 			engine::world::hazard::SaveHazardsBin(inputs.hazards), outError)) return false;
 		if (!WriteFile(inst / "interactives.bin",

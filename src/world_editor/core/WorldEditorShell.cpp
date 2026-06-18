@@ -4,6 +4,7 @@
 #include "src/world_editor/panels/ScenePanel.h"
 #include "src/world_editor/panels/InspectorPanel.h"
 #include "src/world_editor/panels/AssetBrowserPanel.h"
+#include "src/world_editor/panels/BuildingEditorPanel.h"
 #include "src/world_editor/panels/OutlinerPanel.h"
 #include "src/world_editor/panels/ConsolePanel.h"
 #include "src/world_editor/panels/ToolPropertiesPanel.h"
@@ -86,7 +87,13 @@ namespace engine::editor::world
 		// foncteur d'écriture de transform (installé par l'Engine).
 		m_panels.emplace_back(std::make_unique<panels::InspectorPanel>(
 			&m_sceneModel, &m_selection, &m_commandStack, &m_transformWriter));
-		m_panels.emplace_back(std::make_unique<panels::AssetBrowserPanel>());
+		// Asset Browser : charge `meshes/props/catalog.json` ; sa sélection
+		// alimente le Building Editor. On garde un pointeur brut (la propriété
+		// reste à m_panels) pour l'injecter plus bas.
+		auto assetBrowser = std::make_unique<panels::AssetBrowserPanel>();
+		assetBrowser->SetContentRoot(cfg.GetString("paths.content", "game/data"));
+		panels::AssetBrowserPanel* assetBrowserPtr = assetBrowser.get();
+		m_panels.emplace_back(std::move(assetBrowser));
 		// Sous-projet 1, bloc C — Outliner réel : reçoit le modèle de scène + la
 		// sélection partagés (possédés par le Shell). L'Engine lie le modèle aux
 		// documents et le reconstruit chaque frame.
@@ -113,6 +120,18 @@ namespace engine::editor::world
 		// les indices fixes (Scene=0, ToolProperties=5). Caché par défaut,
 		// toggle via le menu View. Partage la pile undo/redo du shell.
 		m_panels.emplace_back(std::make_unique<RoutineGraphPanel>(&m_commandStack));
+		// Auberge éditable — Building Editor : compose des variantes (sauvées
+		// dans buildings/templates/<type>.json) et pose des références sur la
+		// carte (buildings.bin). AJOUTÉ EN FIN (n'affecte pas les indices fixes).
+		{
+			auto buildingEditor = std::make_unique<panels::BuildingEditorPanel>();
+			buildingEditor->SetAssetBrowser(assetBrowserPtr);
+			buildingEditor->SetLibrary(&m_buildingLibrary);
+			buildingEditor->SetDocument(&m_buildingDoc);
+			buildingEditor->SetContentRoot(cfg.GetString("paths.content", "game/data"));
+			m_buildingEditorPtr = buildingEditor.get(); // pour l'aperçu 3D live (Engine)
+			m_panels.emplace_back(std::move(buildingEditor));
+		}
 
 #if defined(_WIN32)
 		std::error_code ec;
@@ -233,6 +252,24 @@ namespace engine::editor::world
 				dungeonErr);
 		}
 		m_dungeonPortalTool.Init(m_commandStack, m_dungeonPortalDoc, cfg);
+
+		// Auberge éditable — Init du document des bâtiments (persiste dans
+		// `instances/zone_<id>/buildings.bin` LCBD v1). Charge l'existant si présent.
+		std::string buildingErr;
+		if (!m_buildingDoc.LoadFromDisk(cfg, buildingErr))
+		{
+			LOG_WARN(EditorWorld, "[WorldEditorShell] Building LoadFromDisk failed: {}",
+				buildingErr);
+		}
+		// Bibliothèque des types de bâtiments (buildings/templates/*.json) :
+		// alimente le Building Editor (création de variantes) et la résolution.
+		std::string buildingLibErr;
+		if (!m_buildingLibrary.LoadFromContent(
+				cfg.GetString("paths.content", "game/data"), buildingLibErr)
+			&& !buildingLibErr.empty())
+		{
+			LOG_WARN(EditorWorld, "[WorldEditorShell] Building library: {}", buildingLibErr);
+		}
 
 		// M100.45 — Phase 12 « Accessibilité ». Charge les préférences
 		// utilisateur (`editor/user_prefs.json` — créé avec les défauts au
@@ -769,6 +806,7 @@ namespace engine::editor::world
 		m_waterDoc.SetZoneId(zoneId);
 		m_meshInsertDoc.SetZoneId(zoneId);
 		m_dungeonPortalDoc.SetZoneId(zoneId);
+		m_buildingDoc.SetZoneId(zoneId);
 	}
 
 	void WorldEditorShell::ResetForZoneChange(const std::string& zoneId)
@@ -781,6 +819,7 @@ namespace engine::editor::world
 		// la heightmap de la nouvelle carte avec les hauteurs de l'ancienne).
 		zone_presets::ResetEditedZoneDocuments(
 			m_terrainDoc, m_waterDoc, m_meshInsertDoc, m_dungeonPortalDoc);
+		m_buildingDoc.Reset();
 		// Correctif 4 — namespace disque de la nouvelle carte.
 		PropagateZoneIdToDocuments(zoneId);
 		LOG_INFO(EditorWorld,
@@ -812,10 +851,16 @@ namespace engine::editor::world
 			LOG_WARN(EditorWorld,
 				"[WorldEditorShell] DungeonPortal LoadFromDisk failed: {}", err);
 		}
+		err.clear();
+		if (!m_buildingDoc.LoadFromDisk(cfg, err))
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Building LoadFromDisk failed: {}", err);
+		}
 		LOG_INFO(EditorWorld,
-			"[WorldEditorShell] Loaded zone documents: {} lake(s)/{} river(s), {} mesh insert(s), {} portal(s)",
+			"[WorldEditorShell] Loaded zone documents: {} lake(s)/{} river(s), {} mesh insert(s), {} portal(s), {} building(s)",
 			m_waterDoc.Get().lakes.size(), m_waterDoc.Get().rivers.size(),
-			m_meshInsertDoc.Size(), m_dungeonPortalDoc.Size());
+			m_meshInsertDoc.Size(), m_dungeonPortalDoc.Size(), m_buildingDoc.Size());
 	}
 
 	size_t WorldEditorShell::SaveZoneDocuments(const engine::core::Config& cfg)
@@ -842,8 +887,15 @@ namespace engine::editor::world
 			LOG_WARN(EditorWorld,
 				"[WorldEditorShell] DungeonPortal SaveToDisk failed: {}", err);
 		}
+		err.clear();
+		if (m_buildingDoc.SaveToDisk(cfg, err)) { ++written; }
+		else
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Building SaveToDisk failed: {}", err);
+		}
 		LOG_INFO(EditorWorld,
-			"[WorldEditorShell] Saved zone documents: {}/3 (eau, mesh inserts, portails)",
+			"[WorldEditorShell] Saved zone documents: {}/4 (eau, mesh inserts, portails, batiments)",
 			written);
 		return written;
 	}

@@ -1,0 +1,182 @@
+#pragma once
+
+#include "src/world_editor/core/IPanel.h"
+#include "src/client/world/instances/BuildingTemplates.h"
+
+#include <string>
+#include <vector>
+
+namespace engine::world::instances { class BuildingTemplateLibrary; }
+namespace engine::editor::world::buildings { class BuildingDocument; }
+
+namespace engine::editor::world::panels
+{
+	class AssetBrowserPanel;
+
+	/// Panneau d'édition de bâtiments : compose une VARIANTE (grappe de pièces)
+	/// à partir des assets sélectionnés dans l'Asset Browser, l'enregistre dans
+	/// le fichier de son TYPE (`buildings/templates/<type>.json` via
+	/// `BuildingTemplateLibrary::SaveVariant` — « à chaque création ça se
+	/// sauvegarde dans le fichier du type »), puis pose une RÉFÉRENCE sur la
+	/// carte (`BuildingDocument`, écrit dans `buildings.bin`). Workflow par
+	/// formulaire (pas de raycast viewport dans ce MVP).
+	///
+	/// Dépendances injectées (non possédées) via les setters, à l'init du shell.
+	class BuildingEditorPanel final : public IPanel
+	{
+	public:
+		const char* GetName() const override { return "Building Editor"; }
+		void Render() override;
+		bool IsVisible() const override { return m_visible; }
+		void SetVisible(bool visible) override { m_visible = visible; }
+
+		void SetAssetBrowser(AssetBrowserPanel* b) { m_assetBrowser = b; }
+		void SetLibrary(engine::world::instances::BuildingTemplateLibrary* l) { m_library = l; }
+		void SetDocument(engine::editor::world::buildings::BuildingDocument* d) { m_doc = d; }
+		void SetContentRoot(std::string root) { m_contentRoot = std::move(root); }
+
+		// --- Aperçu 3D live (consommé par Engine en mode éditeur) -----------
+		/// Pièces du brouillon en cours de composition (espace local).
+		const std::vector<engine::world::instances::BuildingPart>& DraftParts() const { return m_draftParts; }
+		/// Brouillon + pièce EN COURS de configuration (asset sélectionné +
+		/// Position locale / Rotation / Échelle courantes), pour voir en direct
+		/// la pièce avant de l'ajouter. La pièce en cours est la dernière.
+		std::vector<engine::world::instances::BuildingPart> PartsForPreview() const;
+
+		/// Mode « édition bâtiment » : si vrai, le clic gauche dans la vue ne
+		/// modifie PAS le terrain (réservé à la sélection/édition des pièces).
+		bool EditModeActive() const { return m_editMode; }
+
+		/// Index de la pièce sélectionnée dans le brouillon (-1 = aucune).
+		int SelectedDraft() const { return m_selectedDraft; }
+		/// Sélectionne une pièce du brouillon par index (picking viewport). Borne
+		/// l'index (hors plage => désélection) et marque l'aperçu « dirty » pour
+		/// que le gizmo se replace. \param idx index dans DraftParts (-1 = aucune).
+		void SetSelectedDraft(int idx)
+		{
+			const int n = static_cast<int>(m_draftParts.size());
+			const int clamped = (idx >= 0 && idx < n) ? idx : -1;
+			if (clamped != m_selectedDraft) { m_selectedDraft = clamped; m_previewDirty = true; }
+		}
+		/// Applique un delta de translation en espace LOCAL à la pièce sélectionnée
+		/// (cliquer-glisser d'un axe du gizmo). Sans effet si aucune pièce
+		/// sélectionnée. Marque l'aperçu « dirty ». \param dx,dy,dz mètres locaux.
+		void TranslateSelected(float dx, float dy, float dz)
+		{
+			if (m_selectedDraft < 0 || m_selectedDraft >= static_cast<int>(m_draftParts.size())) return;
+			auto& p = m_draftParts[m_selectedDraft].localPosition;
+			p.x += dx; p.y += dy; p.z += dz;
+			m_previewDirty = true;
+		}
+		/// Ajoute un delta de rotation (degrés) autour de l'axe local indiqué à la
+		/// pièce sélectionnée (cliquer-glisser d'un anneau du gizmo). Sans effet si
+		/// aucune pièce sélectionnée. \param axis 0=X, 1=Y, 2=Z. \param deltaDeg degrés.
+		void AddRotationSelected(int axis, float deltaDeg)
+		{
+			if (m_selectedDraft < 0 || m_selectedDraft >= static_cast<int>(m_draftParts.size())) return;
+			auto& e = m_draftParts[m_selectedDraft].localEulerDeg;
+			if (axis == 0) e.x += deltaDeg; else if (axis == 1) e.y += deltaDeg; else if (axis == 2) e.z += deltaDeg;
+			m_previewDirty = true;
+		}
+		/// Variantes « silencieuses » pour le drag CONTINU du gizmo : mettent à
+		/// jour les données de la pièce (donc le gizmo, qui lit ActivePartLocalPos,
+		/// suit en direct) SANS marquer l'aperçu dirty. Évite de reconstruire les
+		/// meshes GPU à chaque frame (BuildPropFromMeshMatrix ne libère pas → fuite
+		/// rapide). Le mesh est reconstruit une seule fois au relâchement, via
+		/// MarkPreviewDirty appelé par l'appelant. Sans effet si aucune sélection.
+		void TranslateSelectedSilent(float dx, float dy, float dz)
+		{
+			if (m_selectedDraft < 0 || m_selectedDraft >= static_cast<int>(m_draftParts.size())) return;
+			auto& p = m_draftParts[m_selectedDraft].localPosition;
+			p.x += dx; p.y += dy; p.z += dz;
+		}
+		void AddRotationSelectedSilent(int axis, float deltaDeg)
+		{
+			if (m_selectedDraft < 0 || m_selectedDraft >= static_cast<int>(m_draftParts.size())) return;
+			auto& e = m_draftParts[m_selectedDraft].localEulerDeg;
+			if (axis == 0) e.x += deltaDeg; else if (axis == 1) e.y += deltaDeg; else if (axis == 2) e.z += deltaDeg;
+		}
+		/// Position LOCALE de la pièce « active » du gizmo : la pièce sélectionnée
+		/// si une l'est, sinon la pièce en cours de configuration (asset choisi).
+		/// Retourne false si aucune pièce active. \param out reçoit x,y,z.
+		bool ActivePartLocalPos(float out[3]) const;
+		/// Transform LOCAL complète de la pièce « active » (sélectionnée sinon en
+		/// cours) : position (m), rotation Euler X/Y/Z (deg), échelle. Sert au
+		/// lecteur de valeurs affiché sur le gizmo pendant le drag. \param pos,rot
+		/// reçoivent x,y,z ; \param scale l'échelle. \return false si aucune pièce.
+		bool ActivePartTransform(float pos[3], float rot[3], float& scale) const;
+		/// Origine monde où prévisualiser le brouillon = position de pose courante.
+		float PreviewX() const { return m_placePos[0]; }
+		float PreviewZ() const { return m_placePos[1]; }
+		float PreviewYaw() const { return m_placeYaw; }
+		float PreviewScale() const { return m_placeScale; }
+		/// True une fois si l'aperçu doit être reconstruit (brouillon/doc changé,
+		/// ou bouton « Rafraîchir »). Remet le flag à false (edge-triggered).
+		bool ConsumePreviewDirty() { const bool d = m_previewDirty; m_previewDirty = false; return d; }
+		/// Force un rebuild de l'aperçu au prochain tick (ex: zone chargée).
+		void MarkPreviewDirty() { m_previewDirty = true; }
+		/// Capture l'état courant du brouillon sur la pile d'annulation (à appeler
+		/// AVANT une mutation : ajout, suppression, déplacement gizmo, édition…).
+		/// Vide la pile de rétablissement. Borné à kMaxUndo entrées. Utilisé aussi
+		/// par l'Engine au début d'un drag du gizmo (un drag = une annulation).
+		void PushUndoSnapshot();
+		/// Annule / rétablit la dernière mutation du brouillon. Sans effet si la
+		/// pile correspondante est vide. Désélectionne et marque l'aperçu dirty.
+		void Undo();
+		void Redo();
+		bool CanUndo() const { return !m_undoStack.empty(); }
+		bool CanRedo() const { return !m_redoStack.empty(); }
+
+		/// True une fois si le brouillon doit être RE-CENTRÉ sur la vue caméra
+		/// (ex: après « Charger dans l'éditeur » — on veut voir la variante
+		/// fraîchement chargée devant soi, pas à l'ancienne origine). L'Engine
+		/// consomme ce flag et invalide son origine stable. Edge-triggered.
+		bool ConsumeRecenterRequest() { const bool r = m_recenterRequest; m_recenterRequest = false; return r; }
+
+	private:
+		bool m_visible = true;
+		bool m_previewDirty = true; // aperçu 3D à (re)construire
+		bool m_recenterRequest = false; // recentrer le brouillon sur la vue (Engine consomme)
+		bool m_editMode = false;    // clic vue = bâtiment (pas terrain)
+
+		std::string m_lastPreviewAssetId; // détecte un changement d'asset sélectionné
+
+		AssetBrowserPanel* m_assetBrowser = nullptr;
+		engine::world::instances::BuildingTemplateLibrary* m_library = nullptr;
+		engine::editor::world::buildings::BuildingDocument* m_doc = nullptr;
+		std::string m_contentRoot = "game/data";
+
+		// Variante en cours de composition.
+		std::vector<engine::world::instances::BuildingPart> m_draftParts;
+		int  m_selectedDraft = -1; // pièce sélectionnée dans le brouillon (-1 = aucune)
+
+		// Historique annuler/rétablir du brouillon (snapshots du vecteur de pièces).
+		std::vector<std::vector<engine::world::instances::BuildingPart>> m_undoStack;
+		std::vector<std::vector<engine::world::instances::BuildingPart>> m_redoStack;
+		static constexpr size_t kMaxUndo = 50;
+		char m_typeBuf[64]      = "tavern";
+		char m_typeNameBuf[96]  = "Taverne / Auberge";
+		char m_variantBuf[64]   = "";
+		char m_variantNameBuf[96] = "";
+
+		// Paramètres de la pièce à ajouter (transform local). Rotation X/Y/Z (deg).
+		float m_newPos[3]      = { 0.0f, 0.0f, 0.0f };
+		float m_newRot[3]      = { 0.0f, 0.0f, 0.0f };
+		float m_newScale       = 1.0f;
+		bool  m_newSolid       = true;
+		float m_newCollision   = 0.0f;
+
+		// Sélection « charger une variante existante » (combos type/variante).
+		std::string m_loadType;
+		std::string m_loadVariant;
+
+		// Paramètres de pose sur la carte (référence). Défaut (0,0) = origine,
+		// visible d'emblée dans la vue éditeur ; l'aperçu 3D du brouillon s'y
+		// affiche (déplaçable via ces champs + « Rafraichir l'apercu »).
+		float m_placePos[2]    = { 0.0f, 0.0f }; // X, Z monde
+		float m_placeYaw       = 0.0f;
+		float m_placeScale     = 1.0f;
+
+		std::string m_status; // dernier message (succès/erreur), affiché en bas
+	};
+}

@@ -976,6 +976,14 @@ namespace engine
 		/// début de LoadInteractableProps.
 		std::unordered_map<std::string, std::pair<uint32_t, uint32_t>> m_trimMatCache;
 
+		/// Cache de textures 1×1 de couleur plate (clé = RGB packé 0xRRGGBB), pour
+		/// colorer les pièces de bâtiment dont le glTF ne fournit aucune texture
+		/// (murs/sols : matériaux MI_Plaster/MI_WoodTrim sans image → blanc sinon).
+		std::unordered_map<uint32_t, engine::render::TextureHandle> m_solidColorTextures;
+		/// Retourne (en la créant/mettant en cache) une texture 1×1 sRGB de la
+		/// couleur donnée, à utiliser comme baseColor d'un matériau plat.
+		engine::render::TextureHandle SolidColorTexture(uint8_t r, uint8_t g, uint8_t b);
+
 		/// Collisionneur composite (terrain + cylindres des props/décor/PNJ). Construit au
 		/// boot par LoadInteractableProps + LoadScenery, consommé par CharacterController.
 		engine::gameplay::CompositeWorldCollider m_worldCollider;

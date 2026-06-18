@@ -13944,6 +13944,18 @@ namespace engine
 #endif
 	}
 
+	engine::render::TextureHandle Engine::SolidColorTexture(uint8_t r, uint8_t g, uint8_t b)
+	{
+		const uint32_t key = (static_cast<uint32_t>(r) << 16) | (static_cast<uint32_t>(g) << 8) | b;
+		auto it = m_solidColorTextures.find(key);
+		if (it != m_solidColorTextures.end()) return it->second;
+		const uint8_t rgba[4] = { r, g, b, 255 };
+		engine::render::TextureHandle h =
+			m_assetRegistry.CreateTextureFromMemory(rgba, 1, 1, /*useSrgb*/ true);
+		m_solidColorTextures[key] = h;
+		return h;
+	}
+
 	void Engine::BuildPropFromMeshMatrix(const std::string& meshPath,
 		const engine::math::Mat4& worldM, int interactableIndex,
 		bool solid, float collisionRadius)
@@ -14074,10 +14086,26 @@ namespace engine
 				}
 				else
 				{
+					// Pas de texture dans le glTF (pièces de structure : murs,
+					// sols, coins… matériaux MI_Plaster / MI_WoodTrim sans image
+					// ni baseColorFactor → rendraient BLANC). On leur attribue une
+					// couleur plate cohérente (1×1 texel) choisie d'après le nom du
+					// matériau/mesh, pour un rendu propre à défaut des textures
+					// d'origine (absentes du projet).
+					uint8_t cr = 200, cg = 195, cb = 185; // défaut : gris chaud clair
+					const std::string key = matName + "|" + meshPath;
+					auto has = [&](const char* s) { return key.find(s) != std::string::npos; };
+					if (has("Plaster"))          { cr = 232; cg = 224; cb = 203; } // plâtre crème
+					else if (has("RedBrick"))    { cr = 165; cg =  86; cb =  72; } // brique rouge
+					else if (has("Brick"))       { cr = 170; cg = 120; cb =  96; } // brique/terre
+					else if (has("WoodDark"))    { cr = 102; cg =  72; cb =  48; } // bois foncé
+					else if (has("WoodLight"))   { cr = 170; cg = 130; cb =  88; } // bois clair
+					else if (has("Wood"))        { cr = 140; cg = 100; cb =  62; } // bois (WoodTrim)
+					else if (has("Metal"))       { cr = 120; cg = 122; cb = 128; } // métal
 					engine::render::Material mat{};
-					mat.flags = engine::render::MaterialFlags::VertexColorAlbedo;
+					mat.baseColor = SolidColorTexture(cr, cg, cb);
 					matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
-					hlIdx = matIdx;
+					hlIdx = matIdx; // pièces de bâtiment non interactives : pas de variante highlight
 				}
 				m_trimMatCache[matName] = { matIdx, hlIdx };
 			}

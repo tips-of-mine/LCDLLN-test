@@ -68,15 +68,29 @@ int main()
 		check(!h, "sans_cylindre: pas de hit");
 	}
 
-	// 4bis) RÉGRESSION (téléport en hauteur) : un sweep VERTICAL traversant le
-	// cylindre par son axe (ex. sonde de récupération anti-encastrement qui sonde
-	// depuis 50 m au-dessus) NE DOIT PAS générer de hit. Sinon le CharacterController
-	// téléporte le perso au sommet de la sonde.
+	// 4bis) MARCHABLE — un sweep DESCENDANT au-dessus de l'empreinte du cylindre se
+	// POSE sur le sommet (topY=3) avec une normale verticale. C'est le comportement
+	// voulu (« avancer sur les meshes comme sur le sol ») qui remplace l'ancien
+	// "anti-teleport" : le perso se tient désormais sur le dessus des props.
 	{
 		CompositeWorldCollider c(&terrain); c.AddCylinder(cyl);
 		IWorldCollider::SweepHit hit;
 		bool h = c.SweepCapsule(cap, Vec3{ 5, 20, 0 }, Vec3{ 5, 1, 0 }, hit);
-		check(!h && !hit.hit, "sweep vertical dans cylindre: pas de hit (anti-teleport)");
+		check(h && hit.hit, "dessus: se pose sur le sommet (hit)");
+		check(hit.normal.y > 0.99f, "dessus: normale verticale (marchable)");
+		// Repos attendu : bas de la capsule sur topY=3 -> centre = 3 + halfH(0.9) + r(0.3) = 4.2.
+		const float restY = 20.0f + hit.fraction * (1.0f - 20.0f);
+		check(std::fabs(restY - 4.2f) < 0.05f, "dessus: repos a topY + demi-capsule");
+	}
+
+	// 4quater) Une fois POSÉ sur le dessus (pieds au niveau topY=3, centre y=4.2),
+	// le déplacement horizontal n'est PLUS bloqué par le flanc (sinon le perso
+	// resterait coincé en haut du mesh).
+	{
+		CompositeWorldCollider c(&terrain); c.AddCylinder(cyl);
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 4.2f, 0 }, Vec3{ 10, 4.2f, 0 }, hit);
+		check(!h, "sur le dessus: avance librement (pas de blocage de flanc)");
 	}
 
 	// 4ter) Déjà en chevauchement, mouvement s'ÉLOIGNANT de l'axe : pas de hit

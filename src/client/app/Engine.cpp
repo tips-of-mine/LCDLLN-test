@@ -14086,26 +14086,57 @@ namespace engine
 				}
 				else
 				{
-					// Pas de texture dans le glTF (pièces de structure : murs,
-					// sols, coins… matériaux MI_Plaster / MI_WoodTrim sans image
-					// ni baseColorFactor → rendraient BLANC). On leur attribue une
-					// couleur plate cohérente (1×1 texel) choisie d'après le nom du
-					// matériau/mesh, pour un rendu propre à défaut des textures
-					// d'origine (absentes du projet).
-					uint8_t cr = 200, cg = 195, cb = 185; // défaut : gris chaud clair
-					const std::string key = matName + "|" + meshPath;
-					auto has = [&](const char* s) { return key.find(s) != std::string::npos; };
-					if (has("Plaster"))          { cr = 232; cg = 224; cb = 203; } // plâtre crème
-					else if (has("RedBrick"))    { cr = 165; cg =  86; cb =  72; } // brique rouge
-					else if (has("Brick"))       { cr = 170; cg = 120; cb =  96; } // brique/terre
-					else if (has("WoodDark"))    { cr = 102; cg =  72; cb =  48; } // bois foncé
-					else if (has("WoodLight"))   { cr = 170; cg = 130; cb =  88; } // bois clair
-					else if (has("Wood"))        { cr = 140; cg = 100; cb =  62; } // bois (WoodTrim)
-					else if (has("Metal"))       { cr = 120; cg = 122; cb = 128; } // métal
-					engine::render::Material mat{};
-					mat.baseColor = SolidColorTexture(cr, cg, cb);
-					matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
-					hlIdx = matIdx; // pièces de bâtiment non interactives : pas de variante highlight
+					// Pièces de structure (murs, sols, coins…) : le glTF du projet
+					// ne référence aucune texture, mais a GARDÉ le nom du matériau
+					// (MI_Plaster, MI_WoodTrim, MI_Brick…). On retrouve la texture du
+					// kit « Medieval Village » (copiée dans meshes/props/) par ce nom.
+					// Priorité au NOM DU MATÉRIAU (sinon un mur « Wall_Plaster_WoodGrid »
+					// donnerait du plâtre à sa partie bois) ; le chemin ne sert qu'à
+					// distinguer la brique générique (rouge / irrégulière).
+					auto matHas  = [&](const char* s) { return matName.find(s)  != std::string::npos; };
+					auto pathHas = [&](const char* s) { return meshPath.find(s) != std::string::npos; };
+					const char* baseTex = nullptr; const char* nrmTex = nullptr; const char* ormTex = nullptr;
+					if (matHas("Plaster"))            { baseTex = "T_Plaster_BaseColor.png";     nrmTex = "T_Plaster_Normal.png";     ormTex = "T_Plaster_ORM.png"; }
+					else if (matHas("Wood"))          { baseTex = "T_WoodTrim_BaseColor.png";    nrmTex = "T_WoodTrim_Normal.png";    ormTex = "T_WoodTrim_ORM.png"; }
+					else if (matHas("UnevenBrick"))   { baseTex = "T_UnevenBrick_BaseColor.png"; nrmTex = "T_UnevenBrick_Normal.png"; }
+					else if (matHas("RedBrick"))      { baseTex = "T_RedBrick_BaseColor.png";    nrmTex = "T_Brick_Normal.png"; }
+					else if (matHas("Rock"))          { baseTex = "T_RockTrim_BaseColor.png";    nrmTex = "T_RockTrim_Normal.png";    ormTex = "T_RockTrim_ORM.png"; }
+					else if (matHas("RoundTile"))     { baseTex = "T_RoundTiles_BaseColor.png";  nrmTex = "T_RoundTiles_Normal.png"; }
+					else if (matHas("Brick"))         {
+						// Matériau « MI_Brick » générique : on affine via le nom du mesh.
+						if      (pathHas("RedBrick"))    { baseTex = "T_RedBrick_BaseColor.png";    nrmTex = "T_Brick_Normal.png"; }
+						else if (pathHas("UnevenBrick")) { baseTex = "T_UnevenBrick_BaseColor.png"; nrmTex = "T_UnevenBrick_Normal.png"; }
+						else                             { baseTex = "T_Brick_BaseColor.png";       nrmTex = "T_Brick_Normal.png"; }
+					}
+					else if (pathHas("RoundTiles"))   { baseTex = "T_RoundTiles_BaseColor.png";  nrmTex = "T_RoundTiles_Normal.png"; }
+
+					engine::render::TextureHandle bc;
+					if (baseTex) bc = m_assetRegistry.LoadTexture(meshDir + baseTex, /*useSrgb*/ true);
+					if (bc.IsValid())
+					{
+						engine::render::Material mat{};
+						mat.baseColor = bc;
+						if (nrmTex) { const auto n = m_assetRegistry.LoadTexture(meshDir + nrmTex, false); if (n.IsValid()) mat.normal = n; }
+						if (ormTex) { const auto o = m_assetRegistry.LoadTexture(meshDir + ormTex, false); if (o.IsValid()) mat.orm = o; }
+						matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+						hlIdx = matIdx;
+					}
+					else
+					{
+						// Repli (matériau non couvert) : couleur plate plutôt que blanc.
+						uint8_t cr = 200, cg = 195, cb = 185;
+						if (matHas("Plaster"))                         { cr = 232; cg = 224; cb = 203; }
+						else if (matHas("RedBrick") || pathHas("RedBrick")) { cr = 165; cg =  86; cb =  72; }
+						else if (matHas("Brick") || pathHas("Brick"))  { cr = 170; cg = 120; cb =  96; }
+						else if (pathHas("WoodDark"))                  { cr = 102; cg =  72; cb =  48; }
+						else if (pathHas("WoodLight"))                 { cr = 170; cg = 130; cb =  88; }
+						else if (matHas("Wood"))                       { cr = 140; cg = 100; cb =  62; }
+						else if (matHas("Metal"))                      { cr = 120; cg = 122; cb = 128; }
+						engine::render::Material mat{};
+						mat.baseColor = SolidColorTexture(cr, cg, cb);
+						matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
+						hlIdx = matIdx;
+					}
 				}
 				m_trimMatCache[matName] = { matIdx, hlIdx };
 			}

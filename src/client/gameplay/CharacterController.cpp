@@ -417,20 +417,25 @@ namespace engine::gameplay
 		(void)input;
 		(void)dt;
 
-		// Attempt:
-		// 1) Move up by maxStep and sweep horizontally.
-		// 2) If horizontal is clear, sweep downward by maxStep to find landing.
+		// Attempt (« meshes marchables quelle que soit la hauteur ») :
+		// 1) Monter de `maxClimb` (≫ maxStep) et balayer horizontalement.
+		// 2) Si l'horizontal est libre, balayer vers le bas de `maxClimb` pour trouver
+		//    le point de pose sur le dessus de l'obstacle.
+		// On utilise `maxClimb` (et non `maxStep`) afin de pouvoir monter sur le dessus
+		// d'un prop/mesh de hauteur quelconque (dans la limite `maxClimb`) en butant
+		// dedans, au lieu de seulement lisser les marches <= 0,3 m.
+		const float climb = (m_cfg.maxClimb > m_cfg.maxStep) ? m_cfg.maxClimb : m_cfg.maxStep;
 		const engine::math::Vec3 up(0.0f, 1.0f, 0.0f);
-		const engine::math::Vec3 upStart = startPos + up * m_cfg.maxStep;
+		const engine::math::Vec3 upStart = startPos + up * climb;
 		const engine::math::Vec3 upEnd = upStart + horizontalDisp;
 
 		IWorldCollider::SweepHit hit{};
 		if (world.SweepCapsule(m_capsule, upStart, upEnd, hit) && hit.hit && hit.fraction < 1.0f)
 			return false;
 
-		// Now sweep down to land.
+		// Now sweep down to land (jusqu'à `climb` plus bas).
 		const engine::math::Vec3 downStart = upEnd;
-		const engine::math::Vec3 downEnd = downStart + up * (-m_cfg.maxStep);
+		const engine::math::Vec3 downEnd = downStart + up * (-climb);
 		IWorldCollider::SweepHit downHit{};
 		if (!world.SweepCapsule(m_capsule, downStart, downEnd, downHit) || !downHit.hit)
 		{

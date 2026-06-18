@@ -14102,6 +14102,7 @@ namespace engine
 					else if (matHas("RedBrick"))      { baseTex = "T_RedBrick_BaseColor.png";    nrmTex = "T_Brick_Normal.png"; }
 					else if (matHas("Rock"))          { baseTex = "T_RockTrim_BaseColor.png";    nrmTex = "T_RockTrim_Normal.png";    ormTex = "T_RockTrim_ORM.png"; }
 					else if (matHas("RoundTile"))     { baseTex = "T_RoundTiles_BaseColor.png";  nrmTex = "T_RoundTiles_Normal.png"; }
+					else if (matHas("Metal"))         { baseTex = "T_Trim_Metal_BaseColor.png";  nrmTex = "T_Trim_Metal_Normal.png";  ormTex = "T_Trim_Metal_ORM.png"; }
 					else if (matHas("Brick"))         {
 						// Matériau « MI_Brick » générique : on affine via le nom du mesh.
 						if      (pathHas("RedBrick"))    { baseTex = "T_RedBrick_BaseColor.png";    nrmTex = "T_Brick_Normal.png"; }
@@ -14123,7 +14124,9 @@ namespace engine
 					}
 					else
 					{
-						// Repli (matériau non couvert) : couleur plate plutôt que blanc.
+						// Repli (matériau non mappé OU texture absente) : couleur plate
+						// plutôt que blanc. Et on LOGGE le matériau pour pouvoir le
+						// mapper précisément ensuite (diagnostic des pièces blanches).
 						uint8_t cr = 200, cg = 195, cb = 185;
 						if (matHas("Plaster"))                         { cr = 232; cg = 224; cb = 203; }
 						else if (matHas("RedBrick") || pathHas("RedBrick")) { cr = 165; cg =  86; cb =  72; }
@@ -14132,10 +14135,13 @@ namespace engine
 						else if (pathHas("WoodLight"))                 { cr = 170; cg = 130; cb =  88; }
 						else if (matHas("Wood"))                       { cr = 140; cg = 100; cb =  62; }
 						else if (matHas("Metal"))                      { cr = 120; cg = 122; cb = 128; }
+						else if (matHas("Glass") || matHas("Window"))  { cr = 205; cg = 222; cb = 232; } // verre pâle
 						engine::render::Material mat{};
 						mat.baseColor = SolidColorTexture(cr, cg, cb);
 						matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
 						hlIdx = matIdx;
+						LOG_WARN(Render, "[Buildings] materiau sans texture '{}' (mesh '{}', baseTex tente='{}') -> couleur plate ({},{},{})",
+							matName, meshPath, baseTex ? baseTex : "(aucun)", cr, cg, cb);
 					}
 				}
 				m_trimMatCache[matName] = { matIdx, hlIdx };

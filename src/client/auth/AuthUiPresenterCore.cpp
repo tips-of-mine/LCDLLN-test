@@ -24,6 +24,9 @@
 
 #include "src/client/render/AuthUiRenderer.h"
 
+#include "src/client/localization/CountryLanguageMap.h"
+#include "src/client/localization/IpApiGeoProvider.h"
+
 #include "src/shared/core/Log.h"
 #include "src/shared/network/NetClient.h"
 #include "src/shared/platform/FileSystem.h"
@@ -41,6 +44,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <memory>
 #include <mutex>
 #include <string_view>
 #include <thread>
@@ -1269,6 +1273,26 @@ namespace engine::client
 			auto it = std::find(locales.begin(), locales.end(), m_selectedLocale);
 			m_languageSelectionIndex = it != locales.end() ? static_cast<uint32_t>(std::distance(locales.begin(), it)) : 0u;
 			SetPhase(Phase::LanguageSelectionFirstRun);
+#if defined(_WIN32)
+			// Charge la table pays->langue et démarre la suggestion (système + géoloc IP).
+			engine::client::CountryLanguageMap countryMap;
+			const std::string mapJson = engine::platform::FileSystem::ReadAllText(
+				engine::platform::FileSystem::ResolveContentPath(cfg, "localization/country_language.json"));
+			if (!mapJson.empty())
+				countryMap.LoadFromJson(mapJson);
+			m_languageSuggestion.BeginDetection(
+				m_selectedLocale,
+				m_localization.GetAvailableLocales(),
+				std::move(countryMap),
+				std::make_unique<engine::client::IpApiGeoProvider>());
+			m_firstRunLocales = m_languageSuggestion.GetSuggestedLocales();
+			// Recale l'index de sélection sur la liste filtrée (système en tête).
+			{
+				auto it = std::find(m_firstRunLocales.begin(), m_firstRunLocales.end(), m_selectedLocale);
+				m_languageSelectionIndex = (it != m_firstRunLocales.end())
+					? static_cast<uint32_t>(std::distance(m_firstRunLocales.begin(), it)) : 0u;
+			}
+#endif
 			LOG_INFO(Core, "[AuthUiPresenter] First run locale selection required (detected={})", m_selectedLocale);
 		}
 		else
@@ -3438,7 +3462,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						}
 						else if (m_phase == Phase::LanguageSelectionFirstRun)
 						{
-							const auto& locales = m_localization.GetAvailableLocales();
+							const auto& locales = FirstRunLocales();
 							if (m_hoveredBodyLineIndex == 1 && !locales.empty())
 							{
 								m_languageSelectionIndex = (m_languageSelectionIndex + 1u) % static_cast<uint32_t>(locales.size());
@@ -3699,7 +3723,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 								if (contains(mx, my, lay.languageCardX[ci], lay.languageCardY[ci], lay.languageCardW[ci], lay.languageCardH[ci]))
 								{
 									actionHit = true;
-									const auto& localesPick = m_localization.GetAvailableLocales();
+									const auto& localesPick = FirstRunLocales();
 									if (!localesPick.empty() && static_cast<size_t>(ci) < model.languageFirstRunCards.size())
 									{
 										const std::string& tagPick = model.languageFirstRunCards[static_cast<size_t>(ci)].localeTag;

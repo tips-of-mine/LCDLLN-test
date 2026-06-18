@@ -1,6 +1,7 @@
 #pragma once
 
 #include "src/client/localization/LocalizationService.h"
+#include "src/client/localization/LanguageSuggestionService.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/network/CharacterPayloads.h"
 #include "src/shared/network/NetClient.h"
@@ -856,6 +857,9 @@ namespace engine::client
 		void BuildModel_Options(RenderModel& model) const;
 		/// AUTH-UI.7 — \c Phase::LanguageSelectionFirstRun (premier lancement).
 		void BuildModel_LanguageSelect(RenderModel& model) const;
+		/// Locales à afficher au 1er lancement. Si la liste suggérée est vide
+		/// (cas dégénéré), retombe sur les locales disponibles complètes.
+		const std::vector<std::string>& FirstRunLocales() const;
 		void Update_LanguageSelect(engine::platform::Input& input, const engine::core::Config& cfg, engine::platform::Window& window,
 			bool usingNativeAuth, bool authUiImguiMode);
 		/// AUTH-UI.8 — \c Phase::ShardPick (liste classique + navigation clavier ImGui).
@@ -1090,6 +1094,10 @@ namespace engine::client
 		uint32_t m_preferredServerIndexPending = 2u;
 		GameSettingsCommand m_pendingGameSettings{};
 		LocalizationService m_localization;
+		LanguageSuggestionService m_languageSuggestion;
+		// Liste des locales affichées au 1er lancement (union filtrée système+IP+en).
+		// Source unique pour TOUS les sites de l'écran LanguageSelectionFirstRun.
+		std::vector<std::string> m_firstRunLocales;
 
 		std::vector<uint8_t> m_argonSalt{};
 		uint32_t m_viewportW = 0;

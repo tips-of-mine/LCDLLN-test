@@ -45,8 +45,11 @@ namespace engine::client
 	std::string IpApiGeoProvider::FetchCountryCode()
 	{
 		std::string result;
+		// DEFAULT_PROXY (et non AUTOMATIC_PROXY/WPAD) : aligné sur l'usage WinHTTP
+		// existant du client (AuthUiPresenterCore) et plus robuste pour un appel
+		// best-effort court — WPAD peut ajouter de la latence ou échouer sans wpad.
 		HINTERNET session = WinHttpOpen(L"LCDLLN-GeoIP/1.0",
-			WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+			WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 		if (!session)
 		{
 			LOG_WARN(Core, "[IpApiGeoProvider] WinHttpOpen échoué -> géoloc ignorée");

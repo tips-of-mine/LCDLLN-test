@@ -10267,6 +10267,17 @@ namespace engine
 				}
 			}
 
+			// Gizmo étape 3.2 — cliquer-glisser : en mode « édition bâtiment », on
+			// tente d'abord de saisir/glisser un handle du gizmo (axe = translation,
+			// anneau = rotation) sur la pièce sélectionnée. S'il capture la souris,
+			// on N'enchaîne PAS sur la sélection de pièce ci-dessous.
+			bool gizmoGrabbed = false;
+			if (buildingEditMode && !m_worldEditorImGui->WantsCaptureMouse()
+				&& !m_input.IsDown(engine::platform::Key::Control))
+			{
+				gizmoGrabbed = UpdateEditorBuildingGizmoDrag(m_input.MouseX(), m_input.MouseY());
+			}
+
 			// Gizmo étape 3.1 — picking de pièce de bâtiment : en mode « édition
 			// bâtiment », un clic gauche dans la vue (hors ImGui, sans Ctrl)
 			// sélectionne la pièce du brouillon dont la position monde (XZ) est la
@@ -10274,7 +10285,7 @@ namespace engine
 			// mémorisée au dernier rendu (m_editorPreview*), pour que le picking
 			// corresponde à ce qui est affiché. Remplace la saisie de valeurs « à
 			// l'aveugle » : on clique la pièce, le gizmo s'y replace.
-			if (buildingEditMode && m_editorPreviewValid && terrainPick
+			if (!gizmoGrabbed && buildingEditMode && m_editorPreviewValid && terrainPick
 				&& m_worldEditorShell && m_worldEditorShell->GetBuildingEditorPanel()
 				&& !m_worldEditorImGui->WantsCaptureMouse()
 				&& !m_input.IsDown(engine::platform::Key::Control)
@@ -13693,6 +13704,154 @@ namespace engine
 			}
 		}
 		dl->AddCircleFilled(so, 4.0f, IM_COL32(255, 255, 255, 255)); // centre
+#endif
+	}
+
+	bool Engine::UpdateEditorBuildingGizmoDrag(int mouseX, int mouseY)
+	{
+#if defined(_WIN32)
+		if (!m_editorEnabled || !m_editorGizmoValid) return false;
+		if (!m_worldEditorShell) return false;
+		engine::editor::world::panels::BuildingEditorPanel* panel =
+			m_worldEditorShell->GetBuildingEditorPanel();
+		// Le drag n'agit que sur une pièce SÉLECTIONNÉE du brouillon (la pièce en
+		// cours d'ajout reste pilotée par les champs du panneau).
+		if (!panel || panel->SelectedDraft() < 0) { m_gizmoDragAxis = -1; return false; }
+
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::math::Mat4& vp = m_renderStates[readIdx].viewProjMatrix;
+		const ImGuiIO& io = ImGui::GetIO();
+		const float W = io.DisplaySize.x, H = io.DisplaySize.y;
+		if (W <= 0.0f || H <= 0.0f) return false;
+
+		auto project = [&](const engine::math::Vec3& w, float& sx, float& sy) -> bool {
+			const float* M = vp.m;
+			const float cx = M[0]*w.x + M[4]*w.y + M[8]*w.z  + M[12];
+			const float cy = M[1]*w.x + M[5]*w.y + M[9]*w.z  + M[13];
+			const float cw = M[3]*w.x + M[7]*w.y + M[11]*w.z + M[15];
+			if (cw <= 1e-4f) return false;
+			sx = (cx / cw * 0.5f + 0.5f) * W;
+			sy = (cy / cw * 0.5f + 0.5f) * H;
+			return true;
+		};
+
+		const float axisLen = 2.0f, ringR = 1.5f;
+		const engine::math::Vec3 dirs[3] = { {1,0,0}, {0,1,0}, {0,0,1} };
+		const engine::math::Vec3 perps[3] = { {0,1,0}, {0,0,1}, {1,0,0} };
+		const engine::math::Vec3 o = m_editorGizmoPos;
+
+		float ox, oy;
+		if (!project(o, ox, oy)) { m_gizmoDragAxis = -1; return false; }
+
+		// Géométrie écran courante des handles (recalculée chaque frame).
+		float tipX[3], tipY[3]; bool tipOk[3];
+		float ringRad[3]; bool ringOk[3];
+		for (int a = 0; a < 3; ++a)
+		{
+			const engine::math::Vec3 tip{ o.x + dirs[a].x*axisLen, o.y + dirs[a].y*axisLen, o.z + dirs[a].z*axisLen };
+			tipOk[a] = project(tip, tipX[a], tipY[a]);
+			float spx, spy;
+			const engine::math::Vec3 rp{ o.x + perps[a].x*ringR, o.y + perps[a].y*ringR, o.z + perps[a].z*ringR };
+			ringOk[a] = project(rp, spx, spy);
+			ringRad[a] = ringOk[a] ? std::sqrt((spx-ox)*(spx-ox) + (spy-oy)*(spy-oy)) : 0.0f;
+		}
+
+		const float mx = static_cast<float>(mouseX), my = static_cast<float>(mouseY);
+
+		// Distance point → segment [a,b] en écran.
+		auto distToSeg = [](float px, float py, float ax, float ay, float bx, float by) -> float {
+			const float vx = bx-ax, vy = by-ay;
+			const float wx = px-ax, wy = py-ay;
+			const float len2 = vx*vx + vy*vy;
+			float t = (len2 > 1e-6f) ? (wx*vx + wy*vy) / len2 : 0.0f;
+			t = std::clamp(t, 0.0f, 1.0f);
+			const float cx = ax + t*vx, cy = ay + t*vy;
+			const float dx = px-cx, dy = py-cy;
+			return std::sqrt(dx*dx + dy*dy);
+		};
+
+		const bool pressed  = m_input.WasMousePressed(engine::platform::MouseButton::Left);
+		const bool downNow  = m_input.IsMouseDown(engine::platform::MouseButton::Left);
+		const bool released = m_input.WasMouseReleased(engine::platform::MouseButton::Left);
+
+		// --- Saisie d'un handle au clic -----------------------------------
+		if (m_gizmoDragAxis < 0 && pressed)
+		{
+			constexpr float kPick = 9.0f; // tolérance écran (pixels)
+			int bestAxis = -1, bestMode = 0;
+			float bestDist = kPick;
+			for (int a = 0; a < 3; ++a)
+			{
+				if (tipOk[a])
+				{
+					const float dseg = distToSeg(mx, my, ox, oy, tipX[a], tipY[a]);
+					// Évite de saisir un axe quasi vu de bout (segment trop court).
+					const float segLen = std::sqrt((tipX[a]-ox)*(tipX[a]-ox) + (tipY[a]-oy)*(tipY[a]-oy));
+					if (segLen > 12.0f && dseg < bestDist) { bestDist = dseg; bestAxis = a; bestMode = 0; }
+				}
+				if (ringOk[a] && ringRad[a] > 12.0f)
+				{
+					const float dmouse = std::sqrt((mx-ox)*(mx-ox) + (my-oy)*(my-oy));
+					const float dring = std::abs(dmouse - ringRad[a]);
+					if (dring < bestDist) { bestDist = dring; bestAxis = a; bestMode = 1; }
+				}
+			}
+			if (bestAxis >= 0)
+			{
+				m_gizmoDragAxis = bestAxis;
+				m_gizmoDragMode = bestMode;
+				m_gizmoDragLastX = mx; m_gizmoDragLastY = my;
+				m_gizmoDragLastAngle = std::atan2(my - oy, mx - ox);
+				return true; // capture : pas de sélection de pièce sur ce clic
+			}
+		}
+
+		// --- Application pendant le drag -----------------------------------
+		if (m_gizmoDragAxis >= 0 && downNow)
+		{
+			const int a = m_gizmoDragAxis;
+			if (m_gizmoDragMode == 0) // translation
+			{
+				// Direction écran de l'axe + mètres-monde par pixel le long de
+				// l'axe (la poignée à axisLen mètres se projette à |tip-o|).
+				float axSx = tipX[a]-ox, axSy = tipY[a]-oy;
+				const float segLen = std::sqrt(axSx*axSx + axSy*axSy);
+				if (segLen > 1e-3f)
+				{
+					axSx /= segLen; axSy /= segLen;
+					const float worldPerPix = axisLen / segLen;
+					const float dScreen = (mx - m_gizmoDragLastX)*axSx + (my - m_gizmoDragLastY)*axSy;
+					const float d = dScreen * worldPerPix; // mètres monde le long de l'axe a
+					// Monde → local : inverse(RotateY(groupYaw)) / échelle groupe.
+					constexpr float kDeg2Rad = 3.14159265f / 180.f;
+					const float c = std::cos(m_editorPreviewYaw * kDeg2Rad);
+					const float s = std::sin(m_editorPreviewYaw * kDeg2Rad);
+					const float invScale = (m_editorPreviewScale > 1e-4f) ? 1.0f/m_editorPreviewScale : 1.0f;
+					float lx = 0, ly = 0, lz = 0;
+					if (a == 0)      { lx = c*d*invScale;  lz = s*d*invScale; }
+					else if (a == 1) { ly = d*invScale; }
+					else             { lx = -s*d*invScale; lz = c*d*invScale; }
+					panel->TranslateSelected(lx, ly, lz);
+				}
+			}
+			else // rotation
+			{
+				const float angNow = std::atan2(my - oy, mx - ox);
+				float dAng = angNow - m_gizmoDragLastAngle;
+				// Normalise dans [-pi, pi] (passage ±180°).
+				while (dAng >  3.14159265f) dAng -= 6.28318530f;
+				while (dAng < -3.14159265f) dAng += 6.28318530f;
+				m_gizmoDragLastAngle = angNow;
+				panel->AddRotationSelected(a, dAng * (180.0f / 3.14159265f));
+			}
+			m_gizmoDragLastX = mx; m_gizmoDragLastY = my;
+			return true;
+		}
+
+		if (released) m_gizmoDragAxis = -1;
+		return m_gizmoDragAxis >= 0;
+#else
+		(void)mouseX; (void)mouseY; return false;
 #endif
 	}
 

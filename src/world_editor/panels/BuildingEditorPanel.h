@@ -58,6 +58,26 @@ namespace engine::editor::world::panels
 			const int clamped = (idx >= 0 && idx < n) ? idx : -1;
 			if (clamped != m_selectedDraft) { m_selectedDraft = clamped; m_previewDirty = true; }
 		}
+		/// Applique un delta de translation en espace LOCAL à la pièce sélectionnée
+		/// (cliquer-glisser d'un axe du gizmo). Sans effet si aucune pièce
+		/// sélectionnée. Marque l'aperçu « dirty ». \param dx,dy,dz mètres locaux.
+		void TranslateSelected(float dx, float dy, float dz)
+		{
+			if (m_selectedDraft < 0 || m_selectedDraft >= static_cast<int>(m_draftParts.size())) return;
+			auto& p = m_draftParts[m_selectedDraft].localPosition;
+			p.x += dx; p.y += dy; p.z += dz;
+			m_previewDirty = true;
+		}
+		/// Ajoute un delta de rotation (degrés) autour de l'axe local indiqué à la
+		/// pièce sélectionnée (cliquer-glisser d'un anneau du gizmo). Sans effet si
+		/// aucune pièce sélectionnée. \param axis 0=X, 1=Y, 2=Z. \param deltaDeg degrés.
+		void AddRotationSelected(int axis, float deltaDeg)
+		{
+			if (m_selectedDraft < 0 || m_selectedDraft >= static_cast<int>(m_draftParts.size())) return;
+			auto& e = m_draftParts[m_selectedDraft].localEulerDeg;
+			if (axis == 0) e.x += deltaDeg; else if (axis == 1) e.y += deltaDeg; else if (axis == 2) e.z += deltaDeg;
+			m_previewDirty = true;
+		}
 		/// Position LOCALE de la pièce « active » du gizmo : la pièce sélectionnée
 		/// si une l'est, sinon la pièce en cours de configuration (asset choisi).
 		/// Retourne false si aucune pièce active. \param out reçoit x,y,z.

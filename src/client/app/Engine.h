@@ -1016,10 +1016,30 @@ namespace engine
 
 		/// Dessine le gizmo de la pièce de bâtiment active en overlay ImGui :
 		/// axes de translation + anneaux de rotation, X=rouge / Y=vert / Z=bleu,
-		/// projetés monde→écran via la viewProj courante. Visuel seul (pas
-		/// d'interaction souris à cette étape). No-op hors éditeur ou si aucune
-		/// pièce active. À appeler pendant la frame ImGui de l'éditeur.
+		/// projetés monde→écran via la viewProj courante. No-op hors éditeur ou si
+		/// aucune pièce active. À appeler pendant la frame ImGui de l'éditeur.
 		void DrawEditorBuildingGizmo();
+
+		/// Gère le cliquer-glisser sur le gizmo (étape 3.2) : saisit un axe de
+		/// translation (ligne) ou un anneau de rotation au clic, puis applique le
+		/// déplacement/rotation à la pièce SÉLECTIONNÉE du brouillon pendant le
+		/// drag. Conversion écran→monde→local cohérente avec la transform du
+		/// groupe mémorisée (m_editorPreview*). \param mouseX,mouseY position
+		/// souris (pixels fenêtre). \return true si un handle du gizmo capture la
+		/// souris cette frame (le clic ne doit alors PAS sélectionner une pièce).
+		/// No-op (false) hors mode édition bâtiment, sans pièce sélectionnée, ou
+		/// si le gizmo n'est pas valide. À appeler dans l'input viewport éditeur.
+		bool UpdateEditorBuildingGizmoDrag(int mouseX, int mouseY);
+
+		// Gizmo drag — état du glissement en cours (axe saisi, mode, suivi souris).
+		int   m_gizmoDragAxis = -1;       ///< axe saisi 0=X/1=Y/2=Z ; -1 = aucun
+		int   m_gizmoDragMode = 0;        ///< 0 = translation, 1 = rotation
+		float m_gizmoDragLastX = 0.0f;    ///< dernière position souris X (pixels)
+		float m_gizmoDragLastY = 0.0f;    ///< dernière position souris Y (pixels)
+		float m_gizmoDragLastAngle = 0.0f;///< dernier angle souris/centre (rad, mode rotation)
+		float m_gizmoDragAxisSx = 0.0f;   ///< direction écran de l'axe (unité) X
+		float m_gizmoDragAxisSy = 0.0f;   ///< direction écran de l'axe (unité) Y
+		float m_gizmoDragWorldPerPix = 0.0f; ///< mètres monde par pixel le long de l'axe (translation)
 
 		/// Charge le coffre (Chest_Wood) en mesh SKINNE (squelette + clips Open/Close)
 		/// pour l'animer a l'interaction. A appeler au boot apres LoadInteractableProps.

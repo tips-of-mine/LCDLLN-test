@@ -7932,10 +7932,23 @@ namespace engine
 		{
 			const bool ctrl  = m_input.IsDown(engine::platform::Key::Control);
 			const bool shift = m_input.IsDown(engine::platform::Key::Shift);
+			// En « Mode édition bâtiment », Ctrl+Z/Ctrl+Y (et Ctrl+Shift+Z)
+			// pilotent l'undo/redo du BROUILLON de bâtiment plutôt que la pile
+			// undo globale (terrain/scène) — évite tout conflit : l'utilisateur
+			// active cette case quand il travaille la composition.
+			engine::editor::world::panels::BuildingEditorPanel* bp =
+				m_worldEditorShell->GetBuildingEditorPanel();
+			const bool buildMode = bp && bp->EditModeActive();
 			if (m_input.WasPressed(engine::platform::Key::Z))
-				m_worldEditorShell->HandleShortcut('Z', ctrl, shift);
+			{
+				if (ctrl && buildMode) { if (shift) bp->Redo(); else bp->Undo(); }
+				else m_worldEditorShell->HandleShortcut('Z', ctrl, shift);
+			}
 			if (m_input.WasPressed(engine::platform::Key::Y))
-				m_worldEditorShell->HandleShortcut('Y', ctrl, shift);
+			{
+				if (ctrl && buildMode) bp->Redo();
+				else m_worldEditorShell->HandleShortcut('Y', ctrl, shift);
+			}
 		}
 
 		m_shaderHotReload.Poll(m_cfg);

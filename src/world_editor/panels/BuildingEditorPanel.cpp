@@ -127,8 +127,12 @@ namespace engine::editor::world::panels
 				std::snprintf(ub, sizeof(ub), "Annuler (%zu)", m_undoStack.size());
 				std::snprintf(rb, sizeof(rb), "Retablir (%zu)", m_redoStack.size());
 				if (ImGui::Button(ub)) Undo();
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("Annuler la derniere action sur le brouillon\nRaccourci : Ctrl+Z (en Mode edition batiment)");
 				ImGui::SameLine();
 				if (ImGui::Button(rb)) Redo();
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("Retablir\nRaccourci : Ctrl+Y ou Ctrl+Shift+Z (en Mode edition batiment)");
 			}
 
 			ImGui::Separator();

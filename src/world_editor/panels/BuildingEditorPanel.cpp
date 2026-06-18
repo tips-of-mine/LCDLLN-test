@@ -62,7 +62,9 @@ namespace engine::editor::world::panels
 							std::snprintf(m_typeNameBuf, sizeof(m_typeNameBuf), "%s", selT->displayName.c_str());
 							std::snprintf(m_variantBuf, sizeof(m_variantBuf), "%s", v->id.c_str());
 							std::snprintf(m_variantNameBuf, sizeof(m_variantNameBuf), "%s", v->displayName.c_str());
+							m_selectedDraft = -1;
 							m_previewDirty = true;
+							m_recenterRequest = true; // afficher la variante devant la caméra
 							m_status = "Variante chargee : " + v->id + " (" +
 								std::to_string(v->parts.size()) + " pieces). Modifie puis Enregistre.";
 						}

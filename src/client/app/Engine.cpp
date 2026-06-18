@@ -8340,6 +8340,15 @@ namespace engine
 				m_worldEditorShell->ResetForZoneChange(
 					engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
 				m_worldEditorShell->InitNewZoneTerrain(chunksPerAxis, flatHeightMeters);
+				// Nouvelle carte = la caméra est replacée sur la nouvelle zone :
+				// l'origine STABLE du brouillon (mémorisée pour le gizmo/picking)
+				// pointe encore sur l'ANCIENNE carte. On l'invalide pour que le
+				// brouillon (auberge en cours) se recentre sur la vue de la
+				// nouvelle carte au prochain rebuild — sinon il reste hors-champ
+				// et « ne se charge plus ». On force aussi le rebuild.
+				m_editorPreviewValid = false;
+				if (auto* bp = m_worldEditorShell->GetBuildingEditorPanel())
+					bp->MarkPreviewDirty();
 			}
 			// Lot B3 (correctifs 1+3) — Chargement d'une carte EXISTANTE :
 			// reinitialise les documents (les chunks de la carte precedente
@@ -13520,6 +13529,12 @@ namespace engine
 			m_worldEditorShell->GetBuildingEditorPanel();
 		if (!panel) return;
 
+		// Demande de re-centrage (ex: « Charger dans l'éditeur ») : on invalide
+		// l'origine stable pour que la variante fraîchement chargée apparaisse
+		// devant la caméra, pas à l'ancienne position (hors-champ).
+		if (panel->ConsumeRecenterRequest())
+			m_editorPreviewValid = false;
+
 		// Edge-triggered : ne reconstruit qu'après un changement (évite la
 		// création de ressources GPU à chaque frame). Pendant un drag du gizmo,
 		// les mutations sont silencieuses (pas de dirty) ; le mesh n'est donc
@@ -13592,14 +13607,14 @@ namespace engine
 			{
 				float t = (gy0 - cam.position.y) / fwdY;
 				if (t < 0.0f) t = 0.0f;
-				if (t > 300.0f) t = 300.0f; // borne : évite un point trop lointain
+				if (t > 30.0f) t = 30.0f; // borne ~30 m : assez près pour être visible (rasant pouvait donner ~280 m, hors-champ)
 				previewX = cam.position.x + t * (-std::sin(cam.yaw) * cp);
 				previewZ = cam.position.z + t * (-std::cos(cam.yaw) * cp);
 			}
 			else // visée horizontale/vers le haut : 20 m devant, sur XZ
 			{
-				previewX = cam.position.x + (-std::sin(cam.yaw)) * 20.0f;
-				previewZ = cam.position.z + (-std::cos(cam.yaw)) * 20.0f;
+				previewX = cam.position.x + (-std::sin(cam.yaw)) * 30.0f;
+				previewZ = cam.position.z + (-std::cos(cam.yaw)) * 30.0f;
 			}
 		}
 		// Brouillon + pièce EN COURS de configuration (aperçu live). Les

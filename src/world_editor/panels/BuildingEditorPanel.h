@@ -110,10 +110,16 @@ namespace engine::editor::world::panels
 		bool ConsumePreviewDirty() { const bool d = m_previewDirty; m_previewDirty = false; return d; }
 		/// Force un rebuild de l'aperçu au prochain tick (ex: zone chargée).
 		void MarkPreviewDirty() { m_previewDirty = true; }
+		/// True une fois si le brouillon doit être RE-CENTRÉ sur la vue caméra
+		/// (ex: après « Charger dans l'éditeur » — on veut voir la variante
+		/// fraîchement chargée devant soi, pas à l'ancienne origine). L'Engine
+		/// consomme ce flag et invalide son origine stable. Edge-triggered.
+		bool ConsumeRecenterRequest() { const bool r = m_recenterRequest; m_recenterRequest = false; return r; }
 
 	private:
 		bool m_visible = true;
 		bool m_previewDirty = true; // aperçu 3D à (re)construire
+		bool m_recenterRequest = false; // recentrer le brouillon sur la vue (Engine consomme)
 		bool m_editMode = false;    // clic vue = bâtiment (pas terrain)
 
 		std::string m_lastPreviewAssetId; // détecte un changement d'asset sélectionné

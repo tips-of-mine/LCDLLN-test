@@ -255,6 +255,26 @@ namespace engine::editor::world::panels
 		return false;
 	}
 
+	bool BuildingEditorPanel::ActivePartTransform(float pos[3], float rot[3], float& scale) const
+	{
+		if (m_selectedDraft >= 0 && m_selectedDraft < static_cast<int>(m_draftParts.size()))
+		{
+			const auto& p = m_draftParts[m_selectedDraft];
+			pos[0] = p.localPosition.x; pos[1] = p.localPosition.y; pos[2] = p.localPosition.z;
+			rot[0] = p.localEulerDeg.x; rot[1] = p.localEulerDeg.y; rot[2] = p.localEulerDeg.z;
+			scale = p.localScale;
+			return true;
+		}
+		if (m_assetBrowser && m_assetBrowser->SelectedAsset())
+		{
+			pos[0] = m_newPos[0]; pos[1] = m_newPos[1]; pos[2] = m_newPos[2];
+			rot[0] = m_newRot[0]; rot[1] = m_newRot[1]; rot[2] = m_newRot[2];
+			scale = m_newScale;
+			return true;
+		}
+		return false;
+	}
+
 	std::vector<engine::world::instances::BuildingPart>
 	BuildingEditorPanel::PartsForPreview() const
 	{

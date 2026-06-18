@@ -13723,6 +13723,34 @@ namespace engine
 			}
 		}
 		dl->AddCircleFilled(so, 4.0f, IM_COL32(255, 255, 255, 255)); // centre
+
+		// Lecteur de valeurs : affiche la transform locale de la pièce active à
+		// côté du gizmo (position + rotation), pour combler le « manque
+		// d'information sur la valeur » pendant le drag (les anneaux qui tournent
+		// ne montrent pas l'angle). L'axe en cours de manipulation est surligné.
+		if (engine::editor::world::panels::BuildingEditorPanel* bp =
+			m_worldEditorShell ? m_worldEditorShell->GetBuildingEditorPanel() : nullptr)
+		{
+			float pos[3], rot[3], sc = 1.0f;
+			if (bp->ActivePartTransform(pos, rot, sc))
+			{
+				const int dragAxis = m_gizmoDragAxis;          // -1 si pas de drag
+				const bool dragRot  = (m_gizmoDragMode == 1);
+				char l1[96], l2[96];
+				std::snprintf(l1, sizeof(l1), "Pos  X %.2f  Y %.2f  Z %.2f  (m)", pos[0], pos[1], pos[2]);
+				std::snprintf(l2, sizeof(l2), "Rot  X %.0f  Y %.0f  Z %.0f  (deg)", rot[0], rot[1], rot[2]);
+				const ImVec2 p1{ so.x + 14.0f, so.y + 10.0f };
+				const ImVec2 p2{ so.x + 14.0f, so.y + 26.0f };
+				// Fond semi-opaque pour lisibilité par-dessus la 3D.
+				dl->AddRectFilled(ImVec2(p1.x - 4.0f, p1.y - 2.0f), ImVec2(p1.x + 230.0f, p2.y + 16.0f),
+					IM_COL32(0, 0, 0, 150), 3.0f);
+				// Surligne la ligne active (jaune) selon le mode de drag.
+				const ImU32 hot = IM_COL32(255, 230, 90, 255);
+				const ImU32 white = IM_COL32(235, 235, 235, 255);
+				dl->AddText(p1, (dragAxis >= 0 && !dragRot) ? hot : white, l1);
+				dl->AddText(p2, (dragAxis >= 0 &&  dragRot) ? hot : white, l2);
+			}
+		}
 #endif
 	}
 
@@ -13866,6 +13894,17 @@ namespace engine
 				panel->AddRotationSelectedSilent(a, dAng * (180.0f / 3.14159265f));
 			}
 			m_gizmoDragLastX = mx; m_gizmoDragLastY = my;
+
+			// Rafraîchit le MESH périodiquement pendant le drag (~1 frame sur 6,
+			// soit ~10 Hz) pour un retour visuel : les données sont déjà à jour
+			// (mutateurs silencieux), on demande juste un rebuild ponctuel. Throttlé
+			// car BuildPropFromMeshMatrix ne libère pas les meshes GPU (un rebuild
+			// par frame saturerait). Le rebuild final a lieu au relâchement.
+			if (++m_gizmoDragRefreshTick >= 6)
+			{
+				m_gizmoDragRefreshTick = 0;
+				panel->MarkPreviewDirty();
+			}
 
 			// Recalcule la cible du gizmo CHAQUE frame depuis la pièce mise à jour,
 			// pour que les cercles suivent la souris en temps réel même si le mesh

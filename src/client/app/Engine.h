@@ -1040,6 +1040,7 @@ namespace engine
 		float m_gizmoDragAxisSx = 0.0f;   ///< direction écran de l'axe (unité) X
 		float m_gizmoDragAxisSy = 0.0f;   ///< direction écran de l'axe (unité) Y
 		float m_gizmoDragWorldPerPix = 0.0f; ///< mètres monde par pixel le long de l'axe (translation)
+		int   m_gizmoDragRefreshTick = 0;    ///< compteur de frames pour rafraîchir le mesh pendant le drag (throttle)
 
 		/// Charge le coffre (Chest_Wood) en mesh SKINNE (squelette + clips Open/Close)
 		/// pour l'animer a l'interaction. A appeler au boot apres LoadInteractableProps.

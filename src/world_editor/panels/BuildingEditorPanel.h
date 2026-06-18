@@ -100,6 +100,11 @@ namespace engine::editor::world::panels
 		/// si une l'est, sinon la pièce en cours de configuration (asset choisi).
 		/// Retourne false si aucune pièce active. \param out reçoit x,y,z.
 		bool ActivePartLocalPos(float out[3]) const;
+		/// Transform LOCAL complète de la pièce « active » (sélectionnée sinon en
+		/// cours) : position (m), rotation Euler X/Y/Z (deg), échelle. Sert au
+		/// lecteur de valeurs affiché sur le gizmo pendant le drag. \param pos,rot
+		/// reçoivent x,y,z ; \param scale l'échelle. \return false si aucune pièce.
+		bool ActivePartTransform(float pos[3], float rot[3], float& scale) const;
 		/// Origine monde où prévisualiser le brouillon = position de pose courante.
 		float PreviewX() const { return m_placePos[0]; }
 		float PreviewZ() const { return m_placePos[1]; }

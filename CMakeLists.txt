@@ -1367,6 +1367,14 @@ if(MSVC)
 endif()
 add_test(NAME language_suggestion_service_tests COMMAND language_suggestion_service_tests)
 
+# Langue 1er lancement — parité des clés entre catalogues de traduction
+add_executable(catalog_parity_tests src/client/localization/CatalogParityTests.cpp)
+target_link_libraries(catalog_parity_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(catalog_parity_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME catalog_parity_tests COMMAND catalog_parity_tests ${CMAKE_SOURCE_DIR}/game/data)
+
 # Tests unitaires CPU pour TexturePreviewCache (ResampleRgba8Box, GenerateProceduralAlbedoLayer).
 # Pas de dependance Vulkan : tournables en CI sans GPU.
 add_executable(texture_preview_cache_tests src/world_editor/tests/TexturePreviewCacheTests.cpp)

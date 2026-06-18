@@ -115,6 +115,18 @@ namespace engine::editor::world::panels
 		bool ConsumePreviewDirty() { const bool d = m_previewDirty; m_previewDirty = false; return d; }
 		/// Force un rebuild de l'aperçu au prochain tick (ex: zone chargée).
 		void MarkPreviewDirty() { m_previewDirty = true; }
+		/// Capture l'état courant du brouillon sur la pile d'annulation (à appeler
+		/// AVANT une mutation : ajout, suppression, déplacement gizmo, édition…).
+		/// Vide la pile de rétablissement. Borné à kMaxUndo entrées. Utilisé aussi
+		/// par l'Engine au début d'un drag du gizmo (un drag = une annulation).
+		void PushUndoSnapshot();
+		/// Annule / rétablit la dernière mutation du brouillon. Sans effet si la
+		/// pile correspondante est vide. Désélectionne et marque l'aperçu dirty.
+		void Undo();
+		void Redo();
+		bool CanUndo() const { return !m_undoStack.empty(); }
+		bool CanRedo() const { return !m_redoStack.empty(); }
+
 		/// True une fois si le brouillon doit être RE-CENTRÉ sur la vue caméra
 		/// (ex: après « Charger dans l'éditeur » — on veut voir la variante
 		/// fraîchement chargée devant soi, pas à l'ancienne origine). L'Engine
@@ -137,6 +149,11 @@ namespace engine::editor::world::panels
 		// Variante en cours de composition.
 		std::vector<engine::world::instances::BuildingPart> m_draftParts;
 		int  m_selectedDraft = -1; // pièce sélectionnée dans le brouillon (-1 = aucune)
+
+		// Historique annuler/rétablir du brouillon (snapshots du vecteur de pièces).
+		std::vector<std::vector<engine::world::instances::BuildingPart>> m_undoStack;
+		std::vector<std::vector<engine::world::instances::BuildingPart>> m_redoStack;
+		static constexpr size_t kMaxUndo = 50;
 		char m_typeBuf[64]      = "tavern";
 		char m_typeNameBuf[96]  = "Taverne / Auberge";
 		char m_variantBuf[64]   = "";

@@ -57,6 +57,7 @@ namespace engine::editor::world::panels
 							selT->FindVariant(m_loadVariant);
 						if (v)
 						{
+							PushUndoSnapshot(); // pouvoir annuler le remplacement du brouillon
 							m_draftParts = v->parts;
 							std::snprintf(m_typeBuf, sizeof(m_typeBuf), "%s", selT->type.c_str());
 							std::snprintf(m_typeNameBuf, sizeof(m_typeNameBuf), "%s", selT->displayName.c_str());
@@ -105,6 +106,7 @@ namespace engine::editor::world::panels
 
 			if (ImGui::Button("Ajouter la piece") && sel)
 			{
+				PushUndoSnapshot();
 				engine::world::instances::BuildingPart part;
 				part.gltfRelativePath = sel->gltfRelativePath;
 				part.localPosition = { m_newPos[0], m_newPos[1], m_newPos[2] };
@@ -118,6 +120,16 @@ namespace engine::editor::world::panels
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Rafraichir l'apercu")) m_previewDirty = true;
+
+			// --- Annuler / Rétablir (historique du brouillon) -----------------
+			{
+				char ub[32], rb[32];
+				std::snprintf(ub, sizeof(ub), "Annuler (%zu)", m_undoStack.size());
+				std::snprintf(rb, sizeof(rb), "Retablir (%zu)", m_redoStack.size());
+				if (ImGui::Button(ub)) Undo();
+				ImGui::SameLine();
+				if (ImGui::Button(rb)) Redo();
+			}
 
 			ImGui::Separator();
 			// --- Pièces de la variante en cours (cliquer pour sélectionner) ---
@@ -150,6 +162,7 @@ namespace engine::editor::world::panels
 			}
 			if (removeIdx >= 0)
 			{
+				PushUndoSnapshot();
 				m_draftParts.erase(m_draftParts.begin() + removeIdx);
 				if (m_selectedDraft == removeIdx) m_selectedDraft = -1;
 				else if (m_selectedDraft > removeIdx) --m_selectedDraft;
@@ -166,22 +179,29 @@ namespace engine::editor::world::panels
 				float rot[3] = { pt.localEulerDeg.x, pt.localEulerDeg.y, pt.localEulerDeg.z };
 				float sc = pt.localScale;
 				bool changed = false;
-				changed |= ImGui::DragFloat3("Position (m)##sel", pos, 0.1f);
-				changed |= ImGui::DragFloat3("Rotation XYZ (deg)##sel", rot, 0.5f);
-				changed |= ImGui::DragFloat("Echelle##sel", &sc, 0.01f, 0.01f, 100.0f);
-				changed |= ImGui::Checkbox("Solide##sel", &pt.solid);
+				bool activated = false;
+				changed |= ImGui::DragFloat3("Position (m)##sel", pos, 0.1f); activated |= ImGui::IsItemActivated();
+				changed |= ImGui::DragFloat3("Rotation XYZ (deg)##sel", rot, 0.5f); activated |= ImGui::IsItemActivated();
+				changed |= ImGui::DragFloat("Echelle##sel", &sc, 0.01f, 0.01f, 100.0f); activated |= ImGui::IsItemActivated();
+				bool solidLocal = pt.solid; // copie locale : pt.solid appliqué APRÈS le snapshot
+				bool solidToggled = ImGui::Checkbox("Solide##sel", &solidLocal);
+				changed |= solidToggled;
+				// Un snapshot par geste d'édition, AVANT d'écrire dans la pièce :
+				// au DÉBUT d'un drag de champ (IsItemActivated) ou au toggle Solide.
+				if (activated || solidToggled) PushUndoSnapshot();
 				if (changed)
 				{
 					pt.localPosition = { pos[0], pos[1], pos[2] };
 					pt.localEulerDeg = { rot[0], rot[1], rot[2] };
 					pt.localScale = sc;
+					pt.solid = solidLocal;
 					m_previewDirty = true;
 				}
 				if (ImGui::Button("Deselectionner")) { m_selectedDraft = -1; m_previewDirty = true; }
 			}
 
-			if (ImGui::Button("Vider la variante"))
-			{ m_draftParts.clear(); m_selectedDraft = -1; m_previewDirty = true; }
+			if (ImGui::Button("Vider la variante") && !m_draftParts.empty())
+			{ PushUndoSnapshot(); m_draftParts.clear(); m_selectedDraft = -1; m_previewDirty = true; }
 
 			ImGui::Separator();
 			// --- Enregistrer la variante dans le fichier du type -----------
@@ -256,6 +276,33 @@ namespace engine::editor::world::panels
 			return true;
 		}
 		return false;
+	}
+
+	void BuildingEditorPanel::PushUndoSnapshot()
+	{
+		m_undoStack.push_back(m_draftParts);
+		if (m_undoStack.size() > kMaxUndo) m_undoStack.erase(m_undoStack.begin());
+		m_redoStack.clear();
+	}
+
+	void BuildingEditorPanel::Undo()
+	{
+		if (m_undoStack.empty()) return;
+		m_redoStack.push_back(m_draftParts);
+		m_draftParts = m_undoStack.back();
+		m_undoStack.pop_back();
+		m_selectedDraft = -1;
+		m_previewDirty = true;
+	}
+
+	void BuildingEditorPanel::Redo()
+	{
+		if (m_redoStack.empty()) return;
+		m_undoStack.push_back(m_draftParts);
+		m_draftParts = m_redoStack.back();
+		m_redoStack.pop_back();
+		m_selectedDraft = -1;
+		m_previewDirty = true;
 	}
 
 	bool BuildingEditorPanel::ActivePartTransform(float pos[3], float rot[3], float& scale) const

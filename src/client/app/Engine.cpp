@@ -13845,6 +13845,9 @@ namespace engine
 			}
 			if (bestAxis >= 0)
 			{
+				// Un drag = une étape d'annulation : on capture l'état AVANT de
+				// commencer à déplacer/tourner (les mutations seront silencieuses).
+				panel->PushUndoSnapshot();
 				m_gizmoDragAxis = bestAxis;
 				m_gizmoDragMode = bestMode;
 				m_gizmoDragLastX = mx; m_gizmoDragLastY = my;

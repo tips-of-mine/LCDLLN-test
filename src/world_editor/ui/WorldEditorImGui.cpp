@@ -1,5 +1,7 @@
 #include "src/world_editor/ui/WorldEditorImGui.h"
 
+#include <cstring>  // std::strcmp — filtrage du panneau « Scene » dans le menu View
+
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
 #include "src/world_editor/ui/TextureLibraryPanel.h"
@@ -963,6 +965,9 @@ namespace engine::editor
 					for (auto& panel : m_shell->MutablePanels())
 					{
 						if (!panel) continue;
+						// Fenêtre « Scene » retirée (doublon de la vue 3D principale,
+						// cf. ScenePanel::Render) : plus de toggle dans ce menu.
+						if (std::strcmp(panel->GetName(), "Scene") == 0) continue;
 						bool visible = panel->IsVisible();
 						if (ImGui::MenuItem(panel->GetName(), nullptr, &visible))
 						{

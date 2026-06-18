@@ -17,6 +17,8 @@
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
 
+#include <cstring>  // std::strcmp — filtrage du panneau « Scene » dans le menu View
+
 #include "src/world_editor/modes/EditorModeRegistry.h"
 #include "src/world_editor/prefs/UserPrefsStore.h"
 #include "src/world_editor/presets/ToolPresetRegistry.h"
@@ -494,6 +496,11 @@ namespace engine::editor::world
 			for (auto& panel : m_panels)
 			{
 				if (!panel) continue;
+				// La fenêtre « Scene » a été retirée (doublon de la vue 3D
+				// principale, cf. ScenePanel::Render) : on ne propose plus son
+				// toggle dans le menu View. Le panneau reste m_panels[0] (indices
+				// figés), mais n'a plus de fenêtre à afficher/masquer.
+				if (std::strcmp(panel->GetName(), "Scene") == 0) continue;
 				bool visible = panel->IsVisible();
 				if (ImGui::MenuItem(panel->GetName(), nullptr, &visible))
 				{

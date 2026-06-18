@@ -248,6 +248,7 @@ add_library(engine_core
   src/client/combat/CombatHud.cpp
   src/client/localization/LocalizationService.cpp
   src/client/localization/CountryLanguageMap.cpp
+  src/client/localization/LanguageSuggestionService.cpp
   src/client/auth/AuthUiPresenterCore.cpp
   src/client/auth/AuthUiPresenterSettings.cpp
   src/client/auth/AuthUiPresenterNative.cpp
@@ -1356,6 +1357,14 @@ if(MSVC)
   target_compile_options(country_language_map_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME country_language_map_tests COMMAND country_language_map_tests)
+
+# Langue 1er lancement — logique d'union suggérée
+add_executable(language_suggestion_service_tests src/client/localization/LanguageSuggestionServiceTests.cpp)
+target_link_libraries(language_suggestion_service_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(language_suggestion_service_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME language_suggestion_service_tests COMMAND language_suggestion_service_tests)
 
 # Tests unitaires CPU pour TexturePreviewCache (ResampleRgba8Box, GenerateProceduralAlbedoLayer).
 # Pas de dependance Vulkan : tournables en CI sans GPU.

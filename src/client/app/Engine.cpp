@@ -13519,6 +13519,25 @@ namespace engine
 		engine::editor::world::panels::BuildingEditorPanel* panel =
 			m_worldEditorShell->GetBuildingEditorPanel();
 		if (!panel) return;
+
+		// Throttle pendant un drag du gizmo : BuildPropFromMeshMatrix recrée des
+		// meshes GPU sans cache ni libération (cf. CreateMeshFromData). À 60 fps
+		// un drag déclencherait ~24 créations/frame. On coalesce donc à ~1 frame
+		// sur 8 tant qu'un axe est saisi, SANS consommer le flag « dirty » (il
+		// reste vrai → rebuild à la prochaine frame autorisée). Le gizmo, lui,
+		// suit la souris chaque frame (m_editorGizmoPos mis à jour dans
+		// UpdateEditorBuildingGizmoDrag). Au relâchement, l'axe redevient -1 et la
+		// position finale est reconstruite normalement.
+		if (m_gizmoDragAxis >= 0)
+		{
+			if (++m_editorPreviewFrameSkip < 8) return; // garde le flag dirty
+			m_editorPreviewFrameSkip = 0;
+		}
+		else
+		{
+			m_editorPreviewFrameSkip = 0;
+		}
+
 		// Edge-triggered : ne reconstruit qu'après un changement (évite la
 		// création de ressources GPU à chaque frame).
 		if (!panel->ConsumePreviewDirty()) return;
@@ -13845,6 +13864,25 @@ namespace engine
 				panel->AddRotationSelected(a, dAng * (180.0f / 3.14159265f));
 			}
 			m_gizmoDragLastX = mx; m_gizmoDragLastY = my;
+
+			// Recalcule la cible du gizmo CHAQUE frame depuis la pièce mise à jour,
+			// pour que les cercles suivent la souris en temps réel même si le mesh
+			// n'est reconstruit qu'à intervalles (throttle ci-dessus).
+			float local[3];
+			if (panel->ActivePartLocalPos(local))
+			{
+				constexpr float kDeg2Rad = 3.14159265f / 180.f;
+				const float gY = m_terrainCollider.GroundHeightAt(m_editorPreviewOriginX, m_editorPreviewOriginZ);
+				const float c = std::cos(m_editorPreviewYaw * kDeg2Rad);
+				const float s = std::sin(m_editorPreviewYaw * kDeg2Rad);
+				const float sx = m_editorPreviewScale * local[0];
+				const float sy = m_editorPreviewScale * local[1];
+				const float sz = m_editorPreviewScale * local[2];
+				m_editorGizmoPos = engine::math::Vec3{
+					m_editorPreviewOriginX + (c*sx + s*sz),
+					gY + sy,
+					m_editorPreviewOriginZ + (-s*sx + c*sz) };
+			}
 			return true;
 		}
 

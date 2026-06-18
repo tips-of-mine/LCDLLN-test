@@ -133,7 +133,12 @@ namespace engine::editor::world::panels
 					pt.localEulerDeg.x, pt.localEulerDeg.y, pt.localEulerDeg.z,
 					pt.localScale, pt.solid ? "" : "  [non solide]");
 				if (ImGui::Selectable(label, m_selectedDraft == static_cast<int>(i)))
+				{
+					// Changer la pièce active doit rebâtir l'aperçu pour que le
+					// gizmo (cercles X/Y/Z) se replace sur la pièce sélectionnée.
+					if (m_selectedDraft != static_cast<int>(i)) m_previewDirty = true;
 					m_selectedDraft = static_cast<int>(i);
+				}
 				ImGui::SameLine();
 				if (ImGui::SmallButton("X")) removeIdx = static_cast<int>(i);
 				ImGui::PopID();
@@ -167,7 +172,7 @@ namespace engine::editor::world::panels
 					pt.localScale = sc;
 					m_previewDirty = true;
 				}
-				if (ImGui::Button("Deselectionner")) m_selectedDraft = -1;
+				if (ImGui::Button("Deselectionner")) { m_selectedDraft = -1; m_previewDirty = true; }
 			}
 
 			if (ImGui::Button("Vider la variante"))

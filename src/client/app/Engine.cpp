@@ -13520,26 +13520,11 @@ namespace engine
 			m_worldEditorShell->GetBuildingEditorPanel();
 		if (!panel) return;
 
-		// Throttle pendant un drag du gizmo : BuildPropFromMeshMatrix recrée des
-		// meshes GPU sans cache ni libération (cf. CreateMeshFromData). À 60 fps
-		// un drag déclencherait ~24 créations/frame. On coalesce donc à ~1 frame
-		// sur 8 tant qu'un axe est saisi, SANS consommer le flag « dirty » (il
-		// reste vrai → rebuild à la prochaine frame autorisée). Le gizmo, lui,
-		// suit la souris chaque frame (m_editorGizmoPos mis à jour dans
-		// UpdateEditorBuildingGizmoDrag). Au relâchement, l'axe redevient -1 et la
-		// position finale est reconstruite normalement.
-		if (m_gizmoDragAxis >= 0)
-		{
-			if (++m_editorPreviewFrameSkip < 8) return; // garde le flag dirty
-			m_editorPreviewFrameSkip = 0;
-		}
-		else
-		{
-			m_editorPreviewFrameSkip = 0;
-		}
-
 		// Edge-triggered : ne reconstruit qu'après un changement (évite la
-		// création de ressources GPU à chaque frame).
+		// création de ressources GPU à chaque frame). Pendant un drag du gizmo,
+		// les mutations sont silencieuses (pas de dirty) ; le mesh n'est donc
+		// reconstruit qu'au relâchement (MarkPreviewDirty), pas à chaque frame —
+		// indispensable car BuildPropFromMeshMatrix ne libère pas les meshes GPU.
 		if (!panel->ConsumePreviewDirty()) return;
 
 		// On NE touche QU'AU brouillon : on retire les props d'aperçu ajoutés
@@ -13850,7 +13835,9 @@ namespace engine
 					if (a == 0)      { lx = c*d*invScale;  lz = s*d*invScale; }
 					else if (a == 1) { ly = d*invScale; }
 					else             { lx = -s*d*invScale; lz = c*d*invScale; }
-					panel->TranslateSelected(lx, ly, lz);
+					// Silencieux : on ne reconstruit PAS le mesh à chaque frame (fuite
+					// GPU) ; le gizmo suit via la donnée, le mesh est rebâti au release.
+					panel->TranslateSelectedSilent(lx, ly, lz);
 				}
 			}
 			else // rotation
@@ -13861,7 +13848,7 @@ namespace engine
 				while (dAng >  3.14159265f) dAng -= 6.28318530f;
 				while (dAng < -3.14159265f) dAng += 6.28318530f;
 				m_gizmoDragLastAngle = angNow;
-				panel->AddRotationSelected(a, dAng * (180.0f / 3.14159265f));
+				panel->AddRotationSelectedSilent(a, dAng * (180.0f / 3.14159265f));
 			}
 			m_gizmoDragLastX = mx; m_gizmoDragLastY = my;
 
@@ -13886,7 +13873,14 @@ namespace engine
 			return true;
 		}
 
-		if (released) m_gizmoDragAxis = -1;
+		// Fin du drag : reconstruire le mesh UNE fois à la position finale (les
+		// mutations pendant le drag étaient silencieuses pour éviter la fuite GPU).
+		if (released)
+		{
+			const bool wasDragging = (m_gizmoDragAxis >= 0);
+			m_gizmoDragAxis = -1;
+			if (wasDragging) { panel->MarkPreviewDirty(); return true; }
+		}
 		return m_gizmoDragAxis >= 0;
 #else
 		(void)mouseX; (void)mouseY; return false;

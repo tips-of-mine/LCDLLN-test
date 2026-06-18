@@ -932,13 +932,6 @@ namespace engine
 		float m_editorPreviewScale   = 1.0f;
 		bool  m_editorPreviewValid   = false;
 
-		/// Throttle du rebuild de l'aperçu pendant un drag du gizmo. BuildProp-
-		/// FromMeshMatrix recrée les meshes GPU sans cache ni libération ; on
-		/// limite donc les reconstructions à ~1 frame sur 8 tant qu'un axe est
-		/// saisi (le gizmo, lui, suit la souris à chaque frame). Compteur de
-		/// frames sautées depuis le dernier rebuild.
-		int m_editorPreviewFrameSkip = 0;
-
 		/// M45.5 — atlas d'impostors par chemin de mesh (clé = PropRenderable::meshPath).
 		/// Peuplé à la demande dans BuildPropFromMesh quand world.impostor.enabled :
 		/// pour chaque mesh de DÉCOR, tente de charger `<même nom>.mipo` à côté du

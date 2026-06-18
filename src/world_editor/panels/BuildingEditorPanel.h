@@ -78,6 +78,24 @@ namespace engine::editor::world::panels
 			if (axis == 0) e.x += deltaDeg; else if (axis == 1) e.y += deltaDeg; else if (axis == 2) e.z += deltaDeg;
 			m_previewDirty = true;
 		}
+		/// Variantes « silencieuses » pour le drag CONTINU du gizmo : mettent à
+		/// jour les données de la pièce (donc le gizmo, qui lit ActivePartLocalPos,
+		/// suit en direct) SANS marquer l'aperçu dirty. Évite de reconstruire les
+		/// meshes GPU à chaque frame (BuildPropFromMeshMatrix ne libère pas → fuite
+		/// rapide). Le mesh est reconstruit une seule fois au relâchement, via
+		/// MarkPreviewDirty appelé par l'appelant. Sans effet si aucune sélection.
+		void TranslateSelectedSilent(float dx, float dy, float dz)
+		{
+			if (m_selectedDraft < 0 || m_selectedDraft >= static_cast<int>(m_draftParts.size())) return;
+			auto& p = m_draftParts[m_selectedDraft].localPosition;
+			p.x += dx; p.y += dy; p.z += dz;
+		}
+		void AddRotationSelectedSilent(int axis, float deltaDeg)
+		{
+			if (m_selectedDraft < 0 || m_selectedDraft >= static_cast<int>(m_draftParts.size())) return;
+			auto& e = m_draftParts[m_selectedDraft].localEulerDeg;
+			if (axis == 0) e.x += deltaDeg; else if (axis == 1) e.y += deltaDeg; else if (axis == 2) e.z += deltaDeg;
+		}
 		/// Position LOCALE de la pièce « active » du gizmo : la pièce sélectionnée
 		/// si une l'est, sinon la pièce en cours de configuration (asset choisi).
 		/// Retourne false si aucune pièce active. \param out reçoit x,y,z.

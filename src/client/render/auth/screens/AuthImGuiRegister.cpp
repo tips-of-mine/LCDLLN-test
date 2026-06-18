@@ -371,6 +371,30 @@ namespace engine::render
 			}
 		}
 
+		// Touche Entree (clavier principal ou pave numerique) : declenche le meme chemin que
+		// le bouton « Creer le compte ». Pattern identique a RenderLoginScreen (l.162) et
+		// RenderVerifyEmailScreen. Avant ce correctif, l'ecran Register n'avait AUCUN handler
+		// Entree (le renderer n'en posait pas, Update_Register sort tot en mode ImGui, et le
+		// dispatch clavier global exclut le mode ImGui) : la touche « Valider » annoncee dans
+		// le pied de page restait donc sans effet. dayStr/monStr/yrStr et les buffers m_reg*
+		// sont encore en portee ici (declares plus haut dans la fonction).
+		if (m_authPresenter != nullptr && m_authCfg != nullptr
+			&& (ImGui::IsKeyPressed(ImGuiKey_Enter, false) || ImGui::IsKeyPressed(ImGuiKey_KeypadEnter, false)))
+		{
+			engine::client::AuthUiPresenter::RegisterImGuiSubmit form{};
+			form.login = m_regId;
+			form.email = m_regEmail;
+			form.password = m_regPw;
+			form.passwordConfirm = m_regPw2;
+			form.firstName = m_regFirstName;
+			form.lastName = m_regLastName;
+			form.birthDay = dayStr.c_str();
+			form.birthMonth = monStr.c_str();
+			form.birthYear = yrStr.c_str();
+			form.countryIso2 = m_regCountry;
+			m_authPresenter->ImGuiSubmitRegister(*m_authCfg, form);
+		}
+
 		DrawSeparator();
 		DrawRegisterFooterChips(rm);
 		EndPanel();

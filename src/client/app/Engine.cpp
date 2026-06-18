@@ -8359,6 +8359,10 @@ namespace engine
 				// nouvelle zone (placements chargés depuis buildings.bin).
 				if (auto* bp = m_worldEditorShell->GetBuildingEditorPanel())
 					bp->MarkPreviewDirty();
+				// Changement de zone : l'origine STABLE du brouillon (mémorisée pour
+				// le picking) n'est plus pertinente — la prochaine apparition se
+				// recentre sur la caméra de la nouvelle carte.
+				m_editorPreviewValid = false;
 			}
 			if (m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
 			{
@@ -10260,6 +10264,46 @@ namespace engine
 					{
 						m_worldEditorShell->MutableValleyChainTool().AddVertex(pickX, pickZ);
 					}
+				}
+			}
+
+			// Gizmo étape 3.1 — picking de pièce de bâtiment : en mode « édition
+			// bâtiment », un clic gauche dans la vue (hors ImGui, sans Ctrl)
+			// sélectionne la pièce du brouillon dont la position monde (XZ) est la
+			// plus proche du point de sol cliqué. Réutilise la transform du groupe
+			// mémorisée au dernier rendu (m_editorPreview*), pour que le picking
+			// corresponde à ce qui est affiché. Remplace la saisie de valeurs « à
+			// l'aveugle » : on clique la pièce, le gizmo s'y replace.
+			if (buildingEditMode && m_editorPreviewValid && terrainPick
+				&& m_worldEditorShell && m_worldEditorShell->GetBuildingEditorPanel()
+				&& !m_worldEditorImGui->WantsCaptureMouse()
+				&& !m_input.IsDown(engine::platform::Key::Control)
+				&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+			{
+				engine::editor::world::panels::BuildingEditorPanel* bpanel =
+					m_worldEditorShell->GetBuildingEditorPanel();
+				const auto& parts = bpanel->DraftParts();
+				constexpr float kDeg2Rad = 3.14159265f / 180.f;
+				const float c = std::cos(m_editorPreviewYaw * kDeg2Rad);
+				const float s = std::sin(m_editorPreviewYaw * kDeg2Rad);
+				int best = -1;
+				float bestDist2 = 36.0f; // (6 m)^2 : seuil de tolérance autour de la pièce
+				for (size_t i = 0; i < parts.size(); ++i)
+				{
+					const float sx = m_editorPreviewScale * parts[i].localPosition.x;
+					const float sz = m_editorPreviewScale * parts[i].localPosition.z;
+					const float wx = m_editorPreviewOriginX + (c * sx + s * sz);
+					const float wz = m_editorPreviewOriginZ + (-s * sx + c * sz);
+					const float dx = wx - pickX;
+					const float dz = wz - pickZ;
+					const float d2 = dx * dx + dz * dz;
+					if (d2 < bestDist2) { bestDist2 = d2; best = static_cast<int>(i); }
+				}
+				if (best >= 0)
+				{
+					bpanel->SetSelectedDraft(best);
+					LOG_INFO(EditorWorld, "[Buildings][editeur] piece selectionnee par clic: #{} (dist={:.1f} m)",
+						best, std::sqrt(bestDist2));
 				}
 			}
 
@@ -13504,15 +13548,28 @@ namespace engine
 			}
 		};
 
-		// Brouillon en cours : on l'affiche au point que REGARDE la caméra de
-		// l'éditeur (projection du rayon de visée sur le sol), pour qu'il soit
-		// TOUJOURS visible — sinon, posé à une coord fixe, il tombe hors du
-		// rayon de culling des props (~80 m) dès que la caméra est ailleurs.
-		const engine::render::Camera& cam =
-			m_renderStates[m_renderReadIndex.load(std::memory_order_acquire)].camera;
-		float previewX = cam.position.x;
-		float previewZ = cam.position.z;
+		// Origine du brouillon. PREMIÈRE apparition (m_editorPreviewValid==false,
+		// ex. première pièce ajoutée ou variante chargée) : on la place au point
+		// que REGARDE la caméra (projection du rayon de visée sur le sol) pour
+		// qu'elle soit visible — sinon, à une coord fixe, elle tombe hors du
+		// rayon de culling des props (~80 m). Une fois posée, l'origine reste
+		// STABLE entre les rebuilds (sélection/édition de pièce), pour que le
+		// bâtiment ne « téléporte » pas sous la caméra à chaque clic et que le
+		// gizmo/picking reste cohérent. (Vider la variante remet valid=false →
+		// re-centrage de la prochaine composition sur la vue.)
+		float previewX;
+		float previewZ;
+		if (m_editorPreviewValid)
 		{
+			previewX = m_editorPreviewOriginX;
+			previewZ = m_editorPreviewOriginZ;
+		}
+		else
+		{
+			const engine::render::Camera& cam =
+				m_renderStates[m_renderReadIndex.load(std::memory_order_acquire)].camera;
+			previewX = cam.position.x;
+			previewZ = cam.position.z;
 			const float cp = std::cos(cam.pitch), sp = std::sin(cam.pitch);
 			const float fwdY = -sp; // forward.y (convention OrbitalCameraController)
 			const float gy0 = m_terrainCollider.GroundHeightAt(cam.position.x, cam.position.z);
@@ -13537,6 +13594,15 @@ namespace engine
 			panel->PartsForPreview();
 		emitParts(previewParts, previewX, previewZ,
 			panel->PreviewYaw(), panel->PreviewScale());
+
+		// Mémorise la transform du groupe pour le picking viewport (clic =
+		// sélection), afin que la position monde calculée pour chaque pièce
+		// corresponde exactement à ce qui vient d'être rendu.
+		m_editorPreviewOriginX = previewX;
+		m_editorPreviewOriginZ = previewZ;
+		m_editorPreviewYaw     = panel->PreviewYaw();
+		m_editorPreviewScale   = panel->PreviewScale();
+		m_editorPreviewValid   = !previewParts.empty();
 
 		// Cible du gizmo : position monde de la pièce active (sélectionnée ou en
 		// cours), pour l'overlay DrawEditorBuildingGizmo.

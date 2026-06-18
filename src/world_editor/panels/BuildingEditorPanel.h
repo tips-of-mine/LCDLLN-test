@@ -49,6 +49,15 @@ namespace engine::editor::world::panels
 
 		/// Index de la pièce sélectionnée dans le brouillon (-1 = aucune).
 		int SelectedDraft() const { return m_selectedDraft; }
+		/// Sélectionne une pièce du brouillon par index (picking viewport). Borne
+		/// l'index (hors plage => désélection) et marque l'aperçu « dirty » pour
+		/// que le gizmo se replace. \param idx index dans DraftParts (-1 = aucune).
+		void SetSelectedDraft(int idx)
+		{
+			const int n = static_cast<int>(m_draftParts.size());
+			const int clamped = (idx >= 0 && idx < n) ? idx : -1;
+			if (clamped != m_selectedDraft) { m_selectedDraft = clamped; m_previewDirty = true; }
+		}
 		/// Position LOCALE de la pièce « active » du gizmo : la pièce sélectionnée
 		/// si une l'est, sinon la pièce en cours de configuration (asset choisi).
 		/// Retourne false si aucune pièce active. \param out reçoit x,y,z.

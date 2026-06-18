@@ -921,6 +921,17 @@ namespace engine
 		engine::math::Vec3 m_editorGizmoPos{};
 		bool m_editorGizmoValid = false;
 
+		/// Aperçu éditeur — origine MONDE (XZ), yaw et échelle du groupe avec
+		/// lesquels le brouillon de bâtiment a été rendu au dernier rebuild de
+		/// SyncEditorBuildingPreview. Mémorisé pour que le picking viewport
+		/// (clic = sélection de la pièce la plus proche) calcule la position
+		/// monde de chaque pièce avec la MÊME transform que celle affichée.
+		float m_editorPreviewOriginX = 0.0f;
+		float m_editorPreviewOriginZ = 0.0f;
+		float m_editorPreviewYaw     = 0.0f;
+		float m_editorPreviewScale   = 1.0f;
+		bool  m_editorPreviewValid   = false;
+
 		/// M45.5 — atlas d'impostors par chemin de mesh (clé = PropRenderable::meshPath).
 		/// Peuplé à la demande dans BuildPropFromMesh quand world.impostor.enabled :
 		/// pour chaque mesh de DÉCOR, tente de charger `<même nom>.mipo` à côté du

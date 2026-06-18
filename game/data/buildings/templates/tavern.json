@@ -7,7 +7,7 @@
       "id": "auberge_terrasse",
       "displayName": "Auberge - terrasse de Feyhin",
       "parts": {
-        "count": 13,
+        "count": 19,
         "0": { "mesh": "meshes/props/Stall_Cart_Empty.gltf", "x": 0, "y": 0, "z": 0, "rx": 0, "ry": 180, "rz": 0, "scale": 1, "solid": true, "collision_radius": 1 },
         "1": { "mesh": "meshes/props/Table_Large.gltf", "x": 2.5, "y": 0, "z": 0.6, "rx": 0, "ry": 0, "rz": 0, "scale": 1, "solid": true, "collision_radius": 0.9 },
         "2": { "mesh": "meshes/props/Stool.gltf", "x": 1.6, "y": 0, "z": 0.6, "rx": 0, "ry": 0, "rz": 0, "scale": 1, "solid": false, "collision_radius": 0 },
@@ -20,7 +20,13 @@
         "9": { "mesh": "meshes/props/Barrel_Apples.gltf", "x": -1.7, "y": 0, "z": 0, "rx": 0, "ry": 0, "rz": 0, "scale": 1, "solid": true, "collision_radius": 0.4 },
         "10": { "mesh": "meshes/props/Banner_1.gltf", "x": 0, "y": 0, "z": -2.2, "rx": 0, "ry": 0, "rz": 0, "scale": 1, "solid": false, "collision_radius": 0 },
         "11": { "mesh": "meshes/props/Torch_Metal.gltf", "x": -1.8, "y": 0, "z": -1.6, "rx": 0, "ry": 0, "rz": 0, "scale": 1, "solid": false, "collision_radius": 0 },
-        "12": { "mesh": "meshes/props/Torch_Metal.gltf", "x": 2.4, "y": 0, "z": 2.2, "rx": 0, "ry": 0, "rz": 0, "scale": 1, "solid": false, "collision_radius": 0 }
+        "12": { "mesh": "meshes/props/Torch_Metal.gltf", "x": 2.4, "y": 0, "z": 2.2, "rx": 0, "ry": 0, "rz": 0, "scale": 1, "solid": false, "collision_radius": 0 },
+        "13": { "mesh": "meshes/props/Floor_Brick.gltf", "x": 6.13802, "y": 0, "z": 0, "rx": 0, "ry": 0, "rz": 0, "scale": 1, "solid": true, "collision_radius": 0 },
+        "14": { "mesh": "meshes/props/Floor_RedBrick.gltf", "x": 8.10656, "y": 0, "z": 0, "rx": 0, "ry": 0, "rz": 0, "scale": 1, "solid": true, "collision_radius": 0 },
+        "15": { "mesh": "meshes/props/Floor_UnevenBrick.gltf", "x": 10.1024, "y": 0, "z": 0, "rx": 0, "ry": 0, "rz": 0, "scale": 1, "solid": true, "collision_radius": 0 },
+        "16": { "mesh": "meshes/props/Floor_WoodDark.gltf", "x": 12.0983, "y": 0.0472876, "z": 0, "rx": 0, "ry": 0, "rz": 0, "scale": 1, "solid": true, "collision_radius": 0 },
+        "17": { "mesh": "meshes/props/Wall_Plaster_Straight_Base.gltf", "x": 12.0707, "y": 0.0599906, "z": -1.1862, "rx": 0, "ry": 180.124, "rz": 0, "scale": 1, "solid": true, "collision_radius": 0 },
+        "18": { "mesh": "meshes/props/Wall_Plaster_Straight_Base.gltf", "x": 6.19657, "y": 0, "z": 0, "rx": 0, "ry": 0, "rz": 180, "scale": 1, "solid": true, "collision_radius": 0 }
       }
     }
   }

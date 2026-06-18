@@ -1039,6 +1039,12 @@ namespace engine
 		/// si le gizmo n'est pas valide. À appeler dans l'input viewport éditeur.
 		bool UpdateEditorBuildingGizmoDrag(int mouseX, int mouseY);
 
+		/// Taille MONDE des handles du gizmo (longueur d'axe + rayon d'anneau),
+		/// proportionnelle à la distance caméra→gizmo pour une taille ~CONSTANTE à
+		/// l'écran (sinon minuscule de loin / énorme de près). Doit être identique
+		/// dans le dessin et le picking, d'où ce helper partagé. \param axisLen,ringR out.
+		void GizmoHandleSizes(float& axisLen, float& ringR) const;
+
 		// Gizmo drag — état du glissement en cours (axe saisi, mode, suivi souris).
 		int   m_gizmoDragAxis = -1;       ///< axe saisi 0=X/1=Y/2=Z ; -1 = aucun
 		int   m_gizmoDragMode = 0;        ///< 0 = translation, 1 = rotation

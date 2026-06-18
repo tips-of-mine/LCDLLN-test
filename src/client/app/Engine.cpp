@@ -13662,6 +13662,19 @@ namespace engine
 			previewX, previewZ, static_cast<int>(m_props.size()));
 	}
 
+	void Engine::GizmoHandleSizes(float& axisLen, float& ringR) const
+	{
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::render::Camera& cam = m_renderStates[readIdx].camera;
+		const float dx = cam.position.x - m_editorGizmoPos.x;
+		const float dy = cam.position.y - m_editorGizmoPos.y;
+		const float dz = cam.position.z - m_editorGizmoPos.z;
+		const float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+		// ~constant à l'écran : longueur d'axe proportionnelle à la distance.
+		axisLen = std::clamp(dist * 0.09f, 0.5f, 10.0f);
+		ringR   = axisLen * 0.8f;
+	}
+
 	void Engine::DrawEditorBuildingGizmo()
 	{
 #if defined(_WIN32)
@@ -13689,38 +13702,61 @@ namespace engine
 
 		// Background draw list : par-dessus la 3D, sous les fenêtres ImGui.
 		ImDrawList* dl = ImGui::GetBackgroundDrawList();
-		const float axisLen = 2.0f; // mètres
-		const float ringR   = 1.5f;
+		float axisLen, ringR; GizmoHandleSizes(axisLen, ringR); // taille ~constante à l'écran
 		const ImU32 colX = IM_COL32(235, 70, 70, 255);  // X rouge
 		const ImU32 colY = IM_COL32(70, 210, 70, 255);  // Y vert
 		const ImU32 colZ = IM_COL32(80, 130, 255, 255); // Z bleu
+		const ImU32 hot  = IM_COL32(255, 240, 130, 255);// survol/actif : jaune vif
 		const engine::math::Vec3 dirs[3] = { {1,0,0}, {0,1,0}, {0,0,1} };
 		const engine::math::Vec3 perps[3] = { {0,1,0}, {0,0,1}, {1,0,0} };
 		const ImU32 cols[3] = { colX, colY, colZ };
 		const engine::math::Vec3 o = m_editorGizmoPos;
 
+		// Géométrie écran des handles (axes + anneaux).
+		ImVec2 se[3]; bool seOk[3]; float ringRad[3]; bool ringOk[3];
 		for (int a = 0; a < 3; ++a)
 		{
-			// Axe de translation (ligne + poignée).
-			ImVec2 se;
-			const engine::math::Vec3 tip{
-				o.x + dirs[a].x * axisLen, o.y + dirs[a].y * axisLen, o.z + dirs[a].z * axisLen };
-			if (project(tip, se))
-			{
-				dl->AddLine(so, se, cols[a], 3.0f);
-				dl->AddCircleFilled(se, 5.0f, cols[a]);
-			}
-			// Anneau de rotation (cercle écran approximatif, rayon = projection
-			// d'un point à ringR sur un axe perpendiculaire).
+			const engine::math::Vec3 tip{ o.x + dirs[a].x*axisLen, o.y + dirs[a].y*axisLen, o.z + dirs[a].z*axisLen };
+			seOk[a] = project(tip, se[a]);
 			ImVec2 sp;
-			const engine::math::Vec3 ringPt{
-				o.x + perps[a].x * ringR, o.y + perps[a].y * ringR, o.z + perps[a].z * ringR };
-			if (project(ringPt, sp))
+			const engine::math::Vec3 rp{ o.x + perps[a].x*ringR, o.y + perps[a].y*ringR, o.z + perps[a].z*ringR };
+			ringOk[a] = project(rp, sp);
+			ringRad[a] = ringOk[a] ? std::sqrt((sp.x-so.x)*(sp.x-so.x) + (sp.y-so.y)*(sp.y-so.y)) : 0.0f;
+		}
+
+		// Handle SURVOLÉ (ou actif pendant un drag) → mis en évidence. Même test
+		// que le picking, pour que ce qui s'allume soit ce qu'on saisira.
+		int hovAxis = -1, hovMode = 0;
+		{
+			const ImVec2 mp = io.MousePos;
+			auto distToSeg = [](const ImVec2& p, const ImVec2& a, const ImVec2& b) -> float {
+				const float vx=b.x-a.x, vy=b.y-a.y, wx=p.x-a.x, wy=p.y-a.y;
+				const float len2=vx*vx+vy*vy; float t=(len2>1e-6f)?(wx*vx+wy*vy)/len2:0.0f;
+				t=std::clamp(t,0.0f,1.0f); const float cx=a.x+t*vx, cy=a.y+t*vy;
+				return std::sqrt((p.x-cx)*(p.x-cx)+(p.y-cy)*(p.y-cy));
+			};
+			float best = 9.0f;
+			for (int a = 0; a < 3; ++a)
 			{
-				const float dx = sp.x - so.x, dy = sp.y - so.y;
-				const float rad = std::sqrt(dx*dx + dy*dy);
-				if (rad > 3.0f && rad < 4000.0f) dl->AddCircle(so, rad, cols[a], 48, 2.0f);
+				if (seOk[a]) { const float sl=std::sqrt((se[a].x-so.x)*(se[a].x-so.x)+(se[a].y-so.y)*(se[a].y-so.y));
+					if (sl>12.0f) { const float d=distToSeg(mp,so,se[a]); if (d<best){best=d;hovAxis=a;hovMode=0;} } }
+				if (ringOk[a] && ringRad[a]>12.0f) { const float dm=std::sqrt((mp.x-so.x)*(mp.x-so.x)+(mp.y-so.y)*(mp.y-so.y));
+					const float dr=std::abs(dm-ringRad[a]); if (dr<best){best=dr;hovAxis=a;hovMode=1;} }
 			}
+			if (m_gizmoDragAxis >= 0) { hovAxis = m_gizmoDragAxis; hovMode = m_gizmoDragMode; }
+		}
+
+		for (int a = 0; a < 3; ++a)
+		{
+			const bool axHot   = (hovAxis == a && hovMode == 0);
+			const bool ringHot = (hovAxis == a && hovMode == 1);
+			if (seOk[a])
+			{
+				dl->AddLine(so, se[a], axHot ? hot : cols[a], axHot ? 5.0f : 3.0f);
+				dl->AddCircleFilled(se[a], axHot ? 7.0f : 5.0f, axHot ? hot : cols[a]);
+			}
+			if (ringOk[a] && ringRad[a] > 3.0f && ringRad[a] < 4000.0f)
+				dl->AddCircle(so, ringRad[a], ringHot ? hot : cols[a], 48, ringHot ? 4.0f : 2.0f);
 		}
 		dl->AddCircleFilled(so, 4.0f, IM_COL32(255, 255, 255, 255)); // centre
 
@@ -13745,10 +13781,10 @@ namespace engine
 				dl->AddRectFilled(ImVec2(p1.x - 4.0f, p1.y - 2.0f), ImVec2(p1.x + 230.0f, p2.y + 16.0f),
 					IM_COL32(0, 0, 0, 150), 3.0f);
 				// Surligne la ligne active (jaune) selon le mode de drag.
-				const ImU32 hot = IM_COL32(255, 230, 90, 255);
+				const ImU32 hotTxt = IM_COL32(255, 230, 90, 255);
 				const ImU32 white = IM_COL32(235, 235, 235, 255);
-				dl->AddText(p1, (dragAxis >= 0 && !dragRot) ? hot : white, l1);
-				dl->AddText(p2, (dragAxis >= 0 &&  dragRot) ? hot : white, l2);
+				dl->AddText(p1, (dragAxis >= 0 && !dragRot) ? hotTxt : white, l1);
+				dl->AddText(p2, (dragAxis >= 0 &&  dragRot) ? hotTxt : white, l2);
 			}
 		}
 #endif
@@ -13782,7 +13818,7 @@ namespace engine
 			return true;
 		};
 
-		const float axisLen = 2.0f, ringR = 1.5f;
+		float axisLen, ringR; GizmoHandleSizes(axisLen, ringR); // identique au dessin
 		const engine::math::Vec3 dirs[3] = { {1,0,0}, {0,1,0}, {0,0,1} };
 		const engine::math::Vec3 perps[3] = { {0,1,0}, {0,0,1}, {1,0,0} };
 		const engine::math::Vec3 o = m_editorGizmoPos;

@@ -12,6 +12,7 @@
 
 namespace engine::client
 {
+#if defined(_WIN32)
 	namespace
 	{
 		/// Extrait la valeur de "countryCode" d'un corps JSON ip-api, sans parseur
@@ -41,7 +42,6 @@ namespace engine::client
 		}
 	}
 
-#if defined(_WIN32)
 	std::string IpApiGeoProvider::FetchCountryCode()
 	{
 		std::string result;

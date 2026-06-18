@@ -249,6 +249,7 @@ add_library(engine_core
   src/client/localization/LocalizationService.cpp
   src/client/localization/CountryLanguageMap.cpp
   src/client/localization/LanguageSuggestionService.cpp
+  src/client/localization/IpApiGeoProvider.cpp
   src/client/auth/AuthUiPresenterCore.cpp
   src/client/auth/AuthUiPresenterSettings.cpp
   src/client/auth/AuthUiPresenterNative.cpp
@@ -802,7 +803,7 @@ if(WIN32)
   target_link_libraries(engine_core PRIVATE imgui_lcdlln)
 endif()
 if(WIN32)
-  target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL shell32)
+  target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL shell32 winhttp)
 elseif(UNIX)
   target_link_libraries(engine_core PRIVATE pthread OpenSSL::SSL)
   if(NOT APPLE)

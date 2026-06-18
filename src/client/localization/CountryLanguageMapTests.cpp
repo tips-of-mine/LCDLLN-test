@@ -43,6 +43,14 @@ namespace
 		Assert(map.LoadFromJson(kTestJson), "load flat json");
 		Assert(map.LanguageForCountry("fr") == "fr", "lowercase fr -> fr");
 	}
+
+	void TestMalformedJsonReturnsFalse()
+	{
+		engine::client::CountryLanguageMap map;
+		Assert(!map.LoadFromJson(""), "chaîne vide -> false");
+		Assert(!map.LoadFromJson("not json"), "JSON invalide -> false");
+		Assert(map.Empty(), "table vide après parse invalide");
+	}
 }
 
 int main()
@@ -50,6 +58,7 @@ int main()
 	TestMappingKnownCountries();
 	TestUnknownCountryDefaultsToEnglish();
 	TestCaseInsensitiveCountryCode();
+	TestMalformedJsonReturnsFalse();
 	if (s_failCount != 0)
 		return 1;
 	std::cout << "CountryLanguageMap tests: all passed." << std::endl;

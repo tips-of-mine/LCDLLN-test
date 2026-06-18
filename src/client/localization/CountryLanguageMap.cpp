@@ -62,16 +62,16 @@ namespace engine::client
 					ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
 				out[key] = value;
 				skipWs();
-				if (pos < text.size() && text[pos] == ',')
+				if (pos >= text.size())
+					return false;                 // ni ',' ni '}' avant la fin
+				if (text[pos] == ',')
 				{
 					++pos;
-					continue;
+					continue;                     // la tête de boucle gère la clé suivante ou '}'
 				}
-				skipWs();
-				if (pos < text.size() && text[pos] == '}')
+				if (text[pos] == '}')
 					return true;
-				if (pos >= text.size())
-					return false;
+				return false;                     // séparateur inattendu
 			}
 		}
 	}

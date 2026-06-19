@@ -1268,22 +1268,16 @@ namespace engine::client
 		}
 		if (requestedLocale.empty())
 		{
-			// 1er lancement (aucune locale persistée) : on APPLIQUE directement la langue
-			// détectée du système et on l'écrit dans user_settings.json, puis le flux part
-			// vers l'écran de login (comme une locale déjà retenue). L'écran illustré de
-			// sélection (Phase::LanguageSelectionFirstRun) est volontairement court-circuité :
-			// son rendu ImGui provoquait une faute GPU « device lost » au 1er lancement
-			// (impossible à localiser sans RenderDoc) ; créer user_settings.json suffit à
-			// l'éviter — ce que l'on fait ici automatiquement. La langue reste modifiable
-			// dans les Options (écran fonctionnel). La géoloc IP n'enrichit plus la sélection
-			// (elle servait cet écran) ; la langue système reste le signal principal de #1.
+			// DIAGNOSTIC (temporaire, branche diag uniquement) : on REACTIVE l'ecran de
+			// selection illustre (court-circuite par #915) afin de pouvoir reproduire et
+			// isoler sa faute GPU "device lost". Le vrai contournement reste sur main.
 			m_selectedLocale = m_localization.GetCurrentLocale();
-			if (PatchPersistedLocaleKey(m_selectedLocale))
-			{
-				m_persistedLocale = m_selectedLocale;
-				m_hasPersistedLocale = true;
-			}
-			LOG_INFO(Core, "[AuthUiPresenter] 1er lancement : langue détectée '{}' appliquée + persistée (écran de sélection court-circuité)", m_selectedLocale);
+			m_firstRunLocales = m_localization.GetAvailableLocales();
+			auto it = std::find(m_firstRunLocales.begin(), m_firstRunLocales.end(), m_selectedLocale);
+			m_languageSelectionIndex = it != m_firstRunLocales.end()
+				? static_cast<uint32_t>(std::distance(m_firstRunLocales.begin(), it)) : 0u;
+			SetPhase(Phase::LanguageSelectionFirstRun);
+			LOG_INFO(Core, "[AuthUiPresenter] DIAG : ecran de langue REACTIVE (detected={})", m_selectedLocale);
 		}
 		else
 		{

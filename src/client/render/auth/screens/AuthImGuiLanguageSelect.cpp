@@ -60,6 +60,9 @@ namespace engine::render
 	int AuthImGuiRenderer::DrawLanguageFirstRunCards(const RenderModel& rm, int selected)
 	{
 		int clicked = -1;
+		// DIAGNOSTIC (temporaire) : isoler l'element fautif du crash 1er-lancement via config.json.
+		const bool dbgFlags = (m_authCfg == nullptr) || m_authCfg->GetBool("debug.lang.flags", true);
+		const bool dbgCardText = (m_authCfg == nullptr) || m_authCfg->GetBool("debug.lang.cardtext", true);
 		const size_t n = rm.languageFirstRunCards.empty() ? 2u : rm.languageFirstRunCards.size();
 		const float gap = 16.f; ///< Espacement horizontal entre les cartes.
 		// Cartes plus compactes : largeur fixe maxi pour ne pas s'etaler ; centrage horizontal gere ci-dessous.
@@ -127,7 +130,7 @@ namespace engine::render
 			const float flagPadL = 14.f;
 			const float fx = rmin.x + flagPadL;
 			const float fy = rmin.y + (cardSize.y - flagH) * 0.5f;
-			DrawCardFlag(dl, fx, fy, flagW, flagH, locTag);
+			if (dbgFlags) { DrawCardFlag(dl, fx, fy, flagW, flagH, locTag); }
 
 			ImFont* font = ImGui::GetFont();
 			const float nameSize = font->FontSize * 1.05f;
@@ -135,11 +138,13 @@ namespace engine::render
 			const float textBlockH = nameSize + 4.f + nativeSz;
 			const float textX = fx + flagW + 12.f;
 			const float textY = rmin.y + (cardSize.y - textBlockH) * 0.5f;
-			const ImVec2 namePos(textX, textY);
-			dl->AddText(font, nameSize, namePos, U32(LnTheme::kText), nameCaps.data(), nameCaps.data() + static_cast<int>(nameCaps.size()));
-
-			const ImVec2 natPos(textX, textY + nameSize + 4.f);
-			dl->AddText(font, nativeSz, natPos, U32(LnTheme::kMuted), nativeLn.data(), nativeLn.data() + static_cast<int>(nativeLn.size()));
+			if (dbgCardText)
+			{
+				const ImVec2 namePos(textX, textY);
+				dl->AddText(font, nameSize, namePos, U32(LnTheme::kText), nameCaps.data(), nameCaps.data() + static_cast<int>(nameCaps.size()));
+				const ImVec2 natPos(textX, textY + nameSize + 4.f);
+				dl->AddText(font, nativeSz, natPos, U32(LnTheme::kMuted), nativeLn.data(), nativeLn.data() + static_cast<int>(nativeLn.size()));
+			}
 		}
 		return clicked;
 	}
@@ -165,8 +170,15 @@ namespace engine::render
 		// Panneau compact : hauteur calee sur titre + sous-titre + cartes (96px) + bouton + footer + paddings.
 		// On passe titleZoneW (et non vpW) en 2e arg : le panel se centre desormais dans la stage
 		// (BeginChild ##ln_lang_stage), meme logique que l'ecran Login.
-		const float panelFixedH = 340.f;
-		if (!BeginPanel(720.f, titleZoneW, vpH, panelTitle, welcome, ver, true, true, panelFixedH))
+		float panelFixedH = 340.f;
+		bool subtitleAccent = true;
+		// DIAGNOSTIC (temporaire) : court-circuiter par config.json pour isoler le crash 1er-lancement.
+		if (m_authCfg != nullptr)
+		{
+			subtitleAccent = m_authCfg->GetBool("debug.lang.accent", true);
+			if (!m_authCfg->GetBool("debug.lang.fixedheight", true)) { panelFixedH = 0.f; }
+		}
+		if (!BeginPanel(720.f, titleZoneW, vpH, panelTitle, welcome, ver, true, subtitleAccent, panelFixedH))
 		{
 			EndPanel();
 			ImGui::EndChild();
@@ -189,7 +201,9 @@ namespace engine::render
 		}
 		ImGui::Spacing();
 
-		const int clicked = DrawLanguageFirstRunCards(rm, m_selectedLang);
+		const int clicked = (m_authCfg == nullptr || m_authCfg->GetBool("debug.lang.cards", true))
+			? DrawLanguageFirstRunCards(rm, m_selectedLang)
+			: -1;
 		if (clicked >= 0)
 		{
 			m_selectedLang = clicked;
@@ -247,7 +261,10 @@ namespace engine::render
 		EndPanel();
 		ImGui::EndChild();
 
-		DrawAuthTweaksPanel(vpW, vpH);
+		if (m_authCfg == nullptr || m_authCfg->GetBool("debug.lang.tweaks", true))
+		{
+			DrawAuthTweaksPanel(vpW, vpH);
+		}
 	}
 } // namespace engine::render
 

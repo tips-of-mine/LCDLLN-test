@@ -213,6 +213,14 @@ namespace engine::client
 			/// Indicateur de disponibilité username (champ login uniquement).
 			/// Reflète UsernameCheckState : 0=Idle, 1=Pending, 2=Available, 3=Taken.
 			int32_t usernameCheckState = 0;
+			/// Indicateur de format e-mail (champ e-mail uniquement) :
+			/// 0 = neutre (vide), 1 = format valide, -1 = format invalide.
+			int32_t emailFormatState = 0;
+			/// Règles de mot de passe live (champ mot de passe uniquement) :
+			/// -1 = non évalué (vide), 0 = règle non respectée, 1 = règle respectée.
+			int32_t pwdRuleLength = -1;
+			int32_t pwdRuleLetter = -1;
+			int32_t pwdRuleDigit  = -1;
 		};
 
 		/// Bouton d’action : le fond est dessiné sans texte (AuthUiRenderer) ; le libellé vient des clés i18n,

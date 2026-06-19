@@ -24,6 +24,7 @@
 #include <vector>
 
 #if defined(_WIN32)
+#	include "src/shared/account/AccountValidation.h"
 #	include "src/shared/auth/Argon2Hash.h"
 #	include "src/shared/network/AuthRegisterPayloads.h"
 #	include "src/shared/network/ErrorPacket.h"
@@ -267,6 +268,10 @@ namespace
 		addGridField(Tr("auth.label.first_name"), m_firstName, m_activeField == 4, false, false, Tr("auth.tooltip.first_name"), 1, 1);
 		addGridField(Tr("common.email"), m_email, m_activeField == 3, false, false, Tr("auth.tooltip.email"), 0, 3, 0,
 			Tr("auth.placeholder.register_email"));
+		model.fields.back().emailFormatState = m_email.empty()
+			? 0
+			: (engine::server::ValidateEmail(engine::server::NormaliseEmail(m_email))
+				== engine::network::NetErrorCode::OK ? 1 : -1);
 		addGridField(Tr("auth.label.birth_day"), BirthCycleDisplayForRegister(m_birthDay, 1, 1, 31), m_activeField == 6, false, true,
 			Tr("auth.tooltip.birth_day"), 0, 1);
 		addGridField(Tr("auth.label.birth_month"), monthDisplay(m_birthMonth), m_activeField == 7, false, true, Tr("auth.tooltip.birth_month"),
@@ -275,6 +280,23 @@ namespace
 			false, true, Tr("auth.tooltip.birth_year"), 2, 1);
 		addGridField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true, false, Tr("auth.tooltip.password"), 0, 3, 0,
 			Tr("auth.placeholder.register_password"));
+		{
+			RenderField& pwField = model.fields.back();
+			if (m_password.empty())
+			{
+				pwField.pwdRuleLength = -1;
+				pwField.pwdRuleLetter = -1;
+				pwField.pwdRuleDigit  = -1;
+			}
+			else
+			{
+				const engine::server::PasswordRuleStatus rules =
+					engine::server::EvaluatePasswordRules(m_password);
+				pwField.pwdRuleLength = rules.lengthOk ? 1 : 0;
+				pwField.pwdRuleLetter = rules.hasLetter ? 1 : 0;
+				pwField.pwdRuleDigit  = rules.hasDigit ? 1 : 0;
+			}
+		}
 		addGridField(Tr("auth.label.password_confirm"), maskedConfirm(), m_activeField == 2, true, false, Tr("auth.tooltip.password_confirm"),
 			0, 3, pwdMatch ? 1 : (pwdMismatch ? -1 : 0), Tr("auth.placeholder.register_password_confirm"));
 

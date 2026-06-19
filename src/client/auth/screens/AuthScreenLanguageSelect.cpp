@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -195,14 +196,28 @@ namespace engine::client
 		{
 			return;
 		}
-		// Démarrage différé de la géoloc : à la 1re frame de l'écran de langue, donc
-		// APRÈS l'init Vulkan du boot. Lancer ce thread réseau WinHTTP pendant Init()
-		// le faisait courir en parallèle du chargement des DLL du driver Vulkan
-		// (vkCreateInstance) → crash au lancement (client ET éditeur). Idempotent via
-		// m_firstRunGeoStarted ; charge la table pays->langue puis lance le worker.
-		if (!m_firstRunGeoStarted)
+		// Démarrage DIFFÉRÉ de la géoloc (thread WinHTTP vers ip-api.com).
+		// Lancée pendant Init() (#909) elle crashait vkCreateInstance ; lancée à la 1re
+		// frame de l'écran (#915) elle crashait QUAND MÊME le GPU : l'init réseau WinHTTP
+		// concurrente des toutes premières frames du pilote déclenche une faute « device
+		// lost » (diagnostic confirmé par bisection : écran de langue OK dès que la géoloc
+		// est coupée). Parade : on attend que le pipeline de rendu soit CHAUD (quelques
+		// secondes ; StatusProbe terminé, swapchain cyclée) avant de lancer le worker.
+		// Délai réglable sans recompiler via client.first_run.geoip_delay_ms (défaut 2500).
+		// Best-effort : si l'utilisateur valide sa langue avant l'arrivée géo, aucun impact
+		// (la liste {système, en} est déjà juste ; la langue IP n'aurait fait que l'enrichir).
+		if (!m_firstRunGeoClockSet)
+		{
+			m_firstRunGeoClock = std::chrono::steady_clock::now();
+			m_firstRunGeoClockSet = true;
+		}
+		const long long geoElapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now() - m_firstRunGeoClock).count();
+		const long long geoDelayMs = static_cast<long long>(cfg.GetInt("client.first_run.geoip_delay_ms", 2500));
+		if (!m_firstRunGeoStarted && geoElapsedMs >= geoDelayMs)
 		{
 			m_firstRunGeoStarted = true;
+			LOG_INFO(Core, "[AuthUiPresenter] géoloc 1er lancement démarrée (après {} ms de chauffe pipeline)", geoElapsedMs);
 			engine::client::CountryLanguageMap countryMap;
 			const std::string mapJson = engine::platform::FileSystem::ReadAllText(
 				engine::platform::FileSystem::ResolveContentPath(cfg, "localization/country_language.json"));

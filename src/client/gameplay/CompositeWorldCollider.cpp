@@ -48,6 +48,10 @@ namespace engine::gameplay
 
 		for (const auto& c : m_cylinders)
 		{
+			// Porte (mesh « door ») : passage franchissable → le cylindre n'oppose
+			// AUCUNE collision (ni capuchon ni flanc), le perso traverse l'embrasure.
+			if (c.passable) continue;
+
 			// --- 2a) Capuchon supérieur : surface marchable au sommet du prop ---
 			// Quand le bas de la capsule descend à travers `topY` au-dessus de
 			// l'empreinte XZ du cylindre, on arrête la descente sur le sommet et on
@@ -69,6 +73,7 @@ namespace engine::gameplay
 							best.hit = true;
 							best.fraction = tc;
 							best.normal = engine::math::Vec3{ 0.0f, 1.0f, 0.0f };
+							best.stair = c.stair;
 						}
 					}
 				}
@@ -117,6 +122,7 @@ namespace engine::gameplay
 			{
 				best.hit = true;
 				best.fraction = tHit;
+				best.stair = c.stair;
 				// Normale horizontale : de l'axe du cylindre vers la capsule au contact.
 				const float px = sx + tHit * dx - c.cx;
 				const float pz = sz + tHit * dz - c.cz;

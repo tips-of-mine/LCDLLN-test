@@ -3154,8 +3154,10 @@ namespace engine::server
 			return;
 		}
 
-		// Wire v13 — point de réapparition du type demandé (cimetière/auberge)
-		// LE PLUS PROCHE du lieu de mort ; repli : point d'entrée en monde.
+		// Wire v13 — point de réapparition du type demandé. CIMETIÈRE : défaut DÉTERMINISTE
+		// de la zone (1er éligible par faction), INDÉPENDANT de la position de mort
+		// (anti-triche, cf. bloc ci-dessous). AUBERGE : le plus proche du lieu de mort.
+		// Repli (aucun point trouvé) : point d'entrée en monde.
 		float respawnX = client->spawnPositionMetersX;
 		float respawnY = client->spawnPositionMetersY;
 		float respawnZ = client->spawnPositionMetersZ;

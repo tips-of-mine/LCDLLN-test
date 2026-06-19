@@ -937,6 +937,12 @@ elseif(UNIX)
   lcdlln_add_simple_test(composite_world_collider_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CompositeWorldColliderTests.cpp)
 
+  # Lot 5 (anti-vol step-up) : un mur (prop normal) n'est PAS escaladable
+  # (step-up plafonne a maxStep) alors qu'un escalier (PropCylinder::stair) reste
+  # gravissable (step-up jusqu'a maxClimb). Integre controller + collider a 60 Hz.
+  lcdlln_add_simple_test(character_controller_stepup_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CharacterControllerStepUpTests.cpp)
+
   # Sous-projet C MVP : RaceDefinition.meshPath parsing.
   # Verifie que les 3 races MVP (humains, nains, orcs) exposent un meshPath
   # non vide depuis races.json, et que les races hors-MVP exposent une

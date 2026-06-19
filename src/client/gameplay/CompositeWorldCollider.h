@@ -16,6 +16,13 @@ namespace engine::gameplay
 		float radius = 0.5f; ///< rayon (mètres)
 		float baseY = 0.0f;  ///< Y monde du bas du cylindre
 		float topY = 2.0f;   ///< Y monde du haut du cylindre
+		/// Porte (mesh « door ») : passage franchissable. Le cylindre n'oppose
+		/// AUCUNE collision (ni flanc ni capuchon) → le perso traverse l'embrasure.
+		bool passable = false;
+		/// Escalier (mesh « escalier ») : surface gravissable. Le flanc ne bloque
+		/// pas ; on autorise la montée/descente sur son dessus quelle que soit la
+		/// hauteur (le perso s'y pose et la gravit), contrairement à un mur vertical.
+		bool stair = false;
 	};
 
 	/// Collisionneur composite : combine un IWorldCollider de terrain (sol + eau) et

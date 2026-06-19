@@ -13423,8 +13423,19 @@ namespace engine
 			{
 				float radius = collisionRadius > 0.0f ? collisionRadius : radiusAuto;
 				if (radius < 0.05f) radius = 0.5f;
-				m_worldCollider.AddCylinder(
-					engine::gameplay::PropCylinder{ wx, wz, radius, groundY, topY });
+				// Porte/escalier reconnus par le nom du mesh (insensible à la casse) :
+				// « door » → passage franchissable (aucune collision) ; « escalier »
+				// (ou « stair ») → surface gravissable. Le décor normal reste un mur plein.
+				std::string meshLower = meshPath;
+				for (char& ch : meshLower)
+				{
+					if (ch >= 'A' && ch <= 'Z') ch = static_cast<char>(ch - 'A' + 'a');
+				}
+				engine::gameplay::PropCylinder cyl{ wx, wz, radius, groundY, topY };
+				cyl.passable = meshLower.find("door") != std::string::npos;
+				cyl.stair = (meshLower.find("escalier") != std::string::npos)
+					|| (meshLower.find("stair") != std::string::npos);
+				m_worldCollider.AddCylinder(cyl);
 			}
 			m_props.push_back(std::move(prop));
 		}
@@ -14211,8 +14222,19 @@ namespace engine
 			{
 				float radius = collisionRadius > 0.0f ? collisionRadius : radiusAuto;
 				if (radius < 0.05f) radius = 0.5f;
-				m_worldCollider.AddCylinder(
-					engine::gameplay::PropCylinder{ cx, cz, radius, minY, maxY });
+				// Pièces de bâtiment : une « door » devient un passage franchissable,
+				// un « escalier » une surface gravissable (cf. PropCylinder). Détection
+				// par le nom du mesh, insensible à la casse. Les murs restent pleins.
+				std::string meshLower = meshPath;
+				for (char& ch : meshLower)
+				{
+					if (ch >= 'A' && ch <= 'Z') ch = static_cast<char>(ch - 'A' + 'a');
+				}
+				engine::gameplay::PropCylinder cyl{ cx, cz, radius, minY, maxY };
+				cyl.passable = meshLower.find("door") != std::string::npos;
+				cyl.stair = (meshLower.find("escalier") != std::string::npos)
+					|| (meshLower.find("stair") != std::string::npos);
+				m_worldCollider.AddCylinder(cyl);
 			}
 			m_props.push_back(std::move(prop));
 		}

@@ -32,6 +32,10 @@ namespace engine::gameplay
 			bool hit = false;
 			float fraction = 1.0f;     ///< 0..1 where 1 means "no hit"
 			engine::math::Vec3 normal{ 0.0f, 1.0f, 0.0f }; ///< world-space collision normal
+			/// L'obstacle touché est un escalier (mesh « escalier ») : le contrôleur
+			/// autorise alors la montée à grande hauteur (step-up jusqu'à maxClimb),
+			/// contrairement à un mur normal plafonné à maxStep. Cf. PropCylinder::stair.
+			bool stair = false;
 		};
 
 		virtual ~IWorldCollider() = default;
@@ -168,11 +172,16 @@ namespace engine::gameplay
 			return normal.y >= maxSlopeCos;
 		}
 
+		/// \param obstacleIsStair  L'obstacle buté est un escalier (SweepHit::stair) :
+		///        autorise alors un step-up jusqu'à `maxClimb` (montée d'escalier).
+		///        Sinon (mur, bâtiment, prop normal) le step-up est plafonné à
+		///        `maxStep` pour ne PAS grimper les parois verticales (anti-« vol »).
 		bool TryStepUp(const MoveInput& input, float dt, float timeRemaining,
 			const IWorldCollider& world,
 			const engine::math::Vec3& startPos,
 			const engine::math::Vec3& horizontalDisp,
 			const engine::math::Vec3& currentVel,
+			bool obstacleIsStair,
 			engine::math::Vec3& outPos,
 			engine::math::Vec3& outVel,
 			bool& outGrounded);

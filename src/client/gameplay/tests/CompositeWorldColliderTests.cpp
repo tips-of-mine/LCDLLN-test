@@ -103,6 +103,44 @@ int main()
 		check(!h, "chevauchement + eloignement: pas de hit (peut ressortir)");
 	}
 
+	// 6) PORTE (passable) — le cylindre n'oppose AUCUNE collision : un sweep qui
+	//    le traverserait normalement (cf. test 1) passe librement (on franchit
+	//    l'embrasure). Idem en descente : pas de capuchon.
+	{
+		PropCylinder door = cyl; door.passable = true;
+		CompositeWorldCollider c(&terrain); c.AddCylinder(door);
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, hit);
+		check(!h && !hit.hit, "porte: passable -> aucune collision (franchissable)");
+		IWorldCollider::SweepHit hitDown;
+		bool hd = c.SweepCapsule(cap, Vec3{ 5, 20, 0 }, Vec3{ 5, 1, 0 }, hitDown);
+		check(!hd, "porte: passable -> pas de capuchon non plus");
+	}
+
+	// 7) ESCALIER (stair) — collisionne toujours (flanc + capuchon), MAIS le hit est
+	//    marqué stair=true afin que le contrôleur autorise un step-up jusqu'à maxClimb
+	//    (montée d'escalier), au lieu du plafond maxStep réservé aux murs.
+	{
+		PropCylinder st = cyl; st.stair = true;
+		CompositeWorldCollider c(&terrain); c.AddCylinder(st);
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, hit);
+		check(h && hit.hit, "escalier: flanc bloque (hit attendu)");
+		check(hit.stair, "escalier: hit marque stair=true (flanc)");
+		IWorldCollider::SweepHit hitTop;
+		c.SweepCapsule(cap, Vec3{ 5, 20, 0 }, Vec3{ 5, 1, 0 }, hitTop);
+		check(hitTop.stair, "escalier: hit marque stair=true (capuchon)");
+	}
+
+	// 8) Prop normal (mur/bâtiment) — hit.stair reste false : le contrôleur ne
+	//    déclenchera PAS la montée haute (anti-« vol » le long des parois).
+	{
+		CompositeWorldCollider c(&terrain); c.AddCylinder(cyl);
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, hit);
+		check(h && !hit.stair, "mur normal: hit.stair=false");
+	}
+
 	// 5) QueryWater délégué au terrain.
 	{
 		CompositeWorldCollider c(&terrain);

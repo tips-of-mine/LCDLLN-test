@@ -332,7 +332,7 @@ namespace engine::gameplay
 					engine::math::Vec3 steppedVel;
 					bool steppedGrounded = false;
 					if (TryStepUp(input, dt, timeRemaining, world, pos, Vec3XZ(vel) * (dt * timeRemaining), vel,
-						steppedPos, steppedVel, steppedGrounded))
+						hit.stair, steppedPos, steppedVel, steppedGrounded))
 					{
 						pos = steppedPos;
 						vel = steppedVel;
@@ -410,6 +410,7 @@ namespace engine::gameplay
 		const engine::math::Vec3& startPos,
 		const engine::math::Vec3& horizontalDisp,
 		const engine::math::Vec3& currentVel,
+		bool obstacleIsStair,
 		engine::math::Vec3& outPos,
 		engine::math::Vec3& outVel,
 		bool& outGrounded)
@@ -417,14 +418,18 @@ namespace engine::gameplay
 		(void)input;
 		(void)dt;
 
-		// Attempt (« meshes marchables quelle que soit la hauteur ») :
-		// 1) Monter de `maxClimb` (≫ maxStep) et balayer horizontalement.
-		// 2) Si l'horizontal est libre, balayer vers le bas de `maxClimb` pour trouver
-		//    le point de pose sur le dessus de l'obstacle.
-		// On utilise `maxClimb` (et non `maxStep`) afin de pouvoir monter sur le dessus
-		// d'un prop/mesh de hauteur quelconque (dans la limite `maxClimb`) en butant
-		// dedans, au lieu de seulement lisser les marches <= 0,3 m.
-		const float climb = (m_cfg.maxClimb > m_cfg.maxStep) ? m_cfg.maxClimb : m_cfg.maxStep;
+		// Hauteur de step-up autorisée :
+		// - ESCALIER (mesh « escalier », obstacleIsStair) : on monte jusqu'à `maxClimb`
+		//   (≫ maxStep) pour se poser sur le dessus de la marche/volée.
+		// - SINON (mur, bâtiment, prop normal, micro-marche de terrain) : plafonné à
+		//   `maxStep` (~0,3 m) = simple lissage. On NE grimpe PAS les parois verticales
+		//   (sinon le perso « vole » en se collant à un mur — bug observé sur l'auberge).
+		// Auparavant `maxClimb` s'appliquait à TOUT obstacle (rendait tout mesh
+		// escaladable quelle que soit sa hauteur) → c'était la cause du vol le long
+		// des murs. On réserve désormais la grande montée aux escaliers taggés.
+		const float climb = obstacleIsStair
+			? ((m_cfg.maxClimb > m_cfg.maxStep) ? m_cfg.maxClimb : m_cfg.maxStep)
+			: m_cfg.maxStep;
 		const engine::math::Vec3 up(0.0f, 1.0f, 0.0f);
 		const engine::math::Vec3 upStart = startPos + up * climb;
 		const engine::math::Vec3 upEnd = upStart + horizontalDisp;

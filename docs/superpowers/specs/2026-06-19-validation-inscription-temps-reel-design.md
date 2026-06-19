@@ -1,33 +1,41 @@
-# Spec — Validation temps réel de l'inscription (comblement des manques)
+# Spec — Validation temps réel de l'inscription (rendu ImGui des retours + socle partagé)
 
 **Date :** 2026-06-19
 **Sous-système :** #2 du lot 2026-06-18 (validation inscription)
-**Statut :** Design validé (approche A), en attente de plan d'implémentation
+**Statut :** Design validé (approche A + périmètre corrigé), en attente de plan d'implémentation
 **Déploiement :** ✅ client uniquement (comportement) — **pas** de redéploiement serveur
 
 ---
 
-## 1. Contexte : l'essentiel existe déjà
+## 1. Contexte : la logique existe, le RENDU ImGui est absent
 
-L'écran d'inscription (`Phase::Register`) possède **déjà** une validation temps réel
-partielle (ne pas reconstruire — cf. `feedback_dedup_before_delivery`) :
+L'écran d'inscription (`Phase::Register`) a une logique de validation partielle dans le
+**modèle / réseau**, mais le **renderer ImGui actif n'affiche AUCUN retour** (même pattern
+que #4/#6 : feature présente côté modèle, rendu ImGui manquant). Constat vérifié :
 
-| Contrôle | État | Où |
-|----------|------|----|
-| **(a) Identifiant déjà pris** | ✅ **fait** | Opcodes 35/36, handler master (`AccountStore::ExistsLogin`), debounce 800 ms + n° de séquence anti-réponse-obsolète ; indicateur `RenderField::usernameCheckState` (0 Idle / 1 Pending / 2 Available / 3 Taken) — [AuthScreenRegister.cpp:256](../../../src/client/auth/screens/AuthScreenRegister.cpp), :602-662 |
-| **(c) Double saisie identique** | ✅ **fait** | `RenderField::passwordMatchState` (0 neutre / 1 match / -1 mismatch), `canSubmit` via `strcmp` — [AuthScreenRegister.cpp:279](../../../src/client/auth/screens/AuthScreenRegister.cpp) |
-| **(b) Mot de passe** | ⚠️ **incohérent** | Le renderer calcule un mètre de force client — [AuthImGuiRegister.cpp:238-274](../../../src/client/render/auth/screens/AuthImGuiRegister.cpp) |
-| **(d) E-mail bien formé** | ❌ **manquant** (temps réel) | Validé seulement au submit côté serveur (`ValidateEmail`) |
+| Contrôle | Logique modèle/réseau | Rendu ImGui (écran réel) |
+|----------|------------------------|--------------------------|
+| **(a) Identifiant déjà pris** | ✅ Opcodes 35/36, handler master (`AccountStore::ExistsLogin`), debounce 800 ms + n° de séquence ; `RenderField::usernameCheckState` (0/1/2/3) peuplé — [AuthScreenRegister.cpp:256](../../../src/client/auth/screens/AuthScreenRegister.cpp), :602-662 | ❌ **non affiché** (lu seulement par le renderer natif `AuthUiRendererCore.cpp:828`, pas par ImGui) |
+| **(c) Double saisie identique** | ✅ `RenderField::passwordMatchState` (0/1/-1) peuplé — [AuthScreenRegister.cpp:279](../../../src/client/auth/screens/AuthScreenRegister.cpp) | ❌ **non affiché** en ImGui |
+| **(b) Mot de passe** | ⚠️ `strength` calculé dans le renderer mais **jamais affiché** (sert seulement à `canSubmit`, [AuthImGuiRegister.cpp:299](../../../src/client/render/auth/screens/AuthImGuiRegister.cpp)) ; critères **divergents** du serveur | ❌ **non affiché** |
+| **(d) E-mail bien formé** | ❌ aucun état (validé seulement au submit serveur via `ValidateEmail`) | ❌ **non affiché** |
 
-### Les deux vrais manques
+`DrawAuthGoldField` ([AuthImGuiRenderer.cpp:697](../../../src/client/render/AuthImGuiRenderer.cpp)) — le champ ImGui — ne dessine
+**que** le label + `InputText`, **aucun** indicateur d'état.
 
-1. **(d) E-mail** : aucun indicateur de format **en temps réel** côté client (le champ
-   e-mail est ajouté avec un état neutre, [AuthScreenRegister.cpp:268](../../../src/client/auth/screens/AuthScreenRegister.cpp)).
-2. **(b) Incohérence mot de passe** : le mètre de force **client** récompense
-   « ≥8 + **majuscule** + chiffre + **symbole** », alors que la **politique serveur**
-   `ValidatePassword` exige « ≥8 + **1 chiffre** + **1 lettre** » (≤256). Le client peut
-   donc afficher « faible » pour un mot de passe **accepté** par le serveur (et inversement)
-   → retour trompeur.
+### Le vrai périmètre
+
+**Faire afficher par le renderer ImGui les 4 retours temps réel**, en réutilisant ce qui
+existe déjà dans le modèle et en s'appuyant sur des validateurs **partagés** :
+1. **(a) identifiant** : lire `field.usernameCheckState` (déjà peuplé) → pastille verte/rouge/grise ;
+2. **(b) mot de passe** : checklist `≥8 · une lettre · un chiffre` (**politique serveur**, via validateurs partagés) — remplace le `strength` divergent inutilisé ;
+3. **(c) correspondance** : lire `field.passwordMatchState` (déjà peuplé) → ✓/✗ ;
+4. **(d) e-mail** : nouvel `field.emailFormatState` → ✓/✗.
+
+**Incohérence (b) à corriger** : le `strength` client récompense « ≥8 + **majuscule** + chiffre
++ **symbole** » alors que la politique serveur `ValidatePassword` exige « ≥8 + **1 chiffre** +
+**1 lettre** » (≤256) → un mot de passe accepté par le serveur peut paraître « faible ». On
+aligne en partageant les règles.
 
 ---
 
@@ -52,12 +60,17 @@ Approches écartées :
 ### 3.1 Validateurs partagés (déplacement + extension)
 
 **`src/masterd/account/AccountValidation.{h,cpp}` → `src/shared/account/AccountValidation.{h,cpp}`**
-- Espace de noms : `engine::server` → **`engine::account`**.
-- Mettre à jour les call-sites serveur (`AuthRegisterHandler`, `PasswordResetHandler`,
-  `AdminCommandHandler`, `MysqlAccountStore`, `InMemoryAccountStore` — qualifier
-  `engine::account::`).
-- CMake : ajouter le `.cpp` à **`engine_core`** (client) **et** à la liste **`server_app`**
-  (cf. `reference_server_app_sources` — un .cpp partagé doit être dans les deux).
+- **Namespace conservé `engine::server`** (choix de robustesse) : on déplace seulement le
+  fichier vers `src/shared/`, sans renommer le namespace — ainsi **aucun call-site serveur
+  n'a à changer sa qualification** (les appels `engine::server::…` et non qualifiés restent
+  valides). Seul le **chemin d'include** change (`src/masterd/account/…` →
+  `src/shared/account/…`) dans les 6 fichiers qui l'incluent. L'objectif (source unique
+  client+serveur) est atteint ; un éventuel renommage `engine::account` est un nettoyage
+  ultérieur facultatif.
+- CMake : déplacer les 3 références `src/masterd/account/AccountValidation.cpp` →
+  `src/shared/account/AccountValidation.cpp` dans `src/CMakeLists.txt` (lignes 148/323/1022),
+  **et** ajouter le `.cpp` à **`engine_core`** (client, `CMakeLists.txt` racine) — un .cpp
+  partagé doit être dans les listes serveur **et** client (cf. `reference_server_app_sources`).
 - **Extension** (pour la checklist live des règles MdP) :
   ```cpp
   /// Détail des règles de mot de passe (politique v1), pour un retour UI règle par règle.
@@ -98,13 +111,26 @@ int32_t pwdRuleDigit  = -1;
 - **Mot de passe** : `const auto r = EvaluatePasswordRules(m_password);` →
   remplir `pwdRuleLength/Letter/Digit` (`-1` si `m_password` vide, sinon `0/1`).
 
-### 3.4 Renderer (`AuthImGuiRegister.cpp`)
+### 3.4 Rendu ImGui (cœur du correctif — aujourd'hui ABSENT)
 
-- **E-mail** : afficher l'indicateur de format (réutiliser le motif barre/pastille colorée
-  de `usernameCheckState` : vert = valide, rouge = invalide, rien si neutre).
-- **Mot de passe** : **remplacer** le mètre de force divergent (l.238-274) par une
-  **checklist live** alignée serveur : `[✓/✗] ≥ 8 caractères · [✓/✗] une lettre · [✓/✗] un chiffre`,
-  lue depuis `pwdRuleLength/Letter/Digit`.
+**3.4.a — `DrawAuthGoldField` ([AuthImGuiRenderer.cpp:697](../../../src/client/render/AuthImGuiRenderer.cpp))** : après
+l'`InputText`, dessiner une **barre/pastille d'état** sous le champ quand l'un des états du
+`spec` est non-neutre, en miroir du schéma de couleurs du renderer natif
+([AuthUiRendererCore.cpp:819-837](../../../src/client/render/auth/AuthUiRendererCore.cpp)) :
+- `spec.usernameCheckState` : 1 Pending → gris, 2 Available → vert, 3 Taken → rouge (champ identifiant) ;
+- `spec.passwordMatchState` : 1 → vert, -1 → rouge (champ confirmation) ;
+- `spec.emailFormatState` : 1 → vert, -1 → rouge (champ e-mail).
+Un seul de ces états est non-nul par champ → une barre `ImGui::GetWindowDrawList()->AddRectFilled`
+de 2 px en bas de la cellule (couleurs ASCII-safe, pas de glyphe spécial requis). C'est ce qui
+rend **(a)**, **(c)** et **(d)** enfin **visibles** en jeu.
+
+**3.4.b — `AuthImGuiRegister.cpp`** : **supprimer** le bloc `strength` divergent et inutilisé
+(l.238-274) ; à la place, sous le champ mot de passe, afficher la **checklist live** alignée
+serveur lue depuis `rm.fields[<pw>].pwdRuleLength/Letter/Digit` :
+`[v/x] Au moins 8 caracteres   [v/x] Une lettre   [v/x] Un chiffre`
+(préfixe ASCII `[v]`/`[x]` + couleur verte/rouge ; rien si `-1`/non évalué). `canSubmit`
+s'appuie désormais sur `ValidatePassword`/`pwdRule*` (mêmes règles que le serveur) au lieu
+de `strength >= 3`.
 
 ### 3.5 i18n (ASCII-only — contrainte atlas police, cf. `reference_imgui_font_atlas`)
 
@@ -150,7 +176,8 @@ Nouvelles clés (en+fr, puis miroir es/de/it/pl/pt avec la parité garantie par
 
 ## 7. Hors périmètre
 
-- (a) identifiant déjà pris et (c) double-saisie : **inchangés** (déjà fonctionnels).
+- La **logique modèle/réseau** de (a) identifiant et (c) double-saisie : **inchangée**
+  (déjà correcte) — on ne touche qu'au **rendu ImGui** (3.4.a) pour les rendre visibles.
 - Refonte visuelle globale des 4 contrôles (écartée — on comble, on n'embellit pas tout).
 - Changement de la **politique** de mot de passe/e-mail (on s'aligne sur la politique
   serveur existante, on ne la durcit pas).

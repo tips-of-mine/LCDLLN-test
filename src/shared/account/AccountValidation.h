@@ -10,6 +10,8 @@
 
 #include <cstddef>
 #include <optional>
+#include <string>       // std::string (retour de NormaliseEmail) — requis sur MSVC où
+                        // <string_view> ne tire pas <string> transitivement (build Windows).
 #include <string_view>
 
 namespace engine::server

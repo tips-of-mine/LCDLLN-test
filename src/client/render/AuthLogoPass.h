@@ -52,11 +52,23 @@ namespace engine::render
 			float sinA;
 		};
 
+		// Anneau de descriptor sets : Record() peut être appelé PLUSIEURS fois dans la
+		// même frame (logo + icônes info + drapeaux FR/EN de l'écran de langue), et
+		// chaque appel réécrit + lie + dessine. Avec un set UNIQUE, le 2e appel
+		// réécrivait (vkUpdateDescriptorSets) le set encore référencé par le draw
+		// précédent du même command buffer → usage Vulkan invalide → faute GPU sans
+		// erreur CPU (crash déterministe sur l'écran de langue, jamais sur Login qui
+		// ne dessine qu'un logo). On prend un set neuf à chaque Record via un curseur
+		// circulaire. kDescriptorRingSize doit couvrir (draws/frame) × (frames in
+		// flight) ; ~6 × 2 ici, 16 laisse une marge confortable.
+		static constexpr uint32_t kDescriptorRingSize = 16u;
+
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_pipeline = VK_NULL_HANDLE;
 		VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
-		VkDescriptorSet m_descriptorSet = VK_NULL_HANDLE;
+		VkDescriptorSet m_descriptorSets[kDescriptorRingSize] = {};
+		uint32_t m_descriptorCursor = 0u;
 		VkSampler m_sampler = VK_NULL_HANDLE;
 	};
 }

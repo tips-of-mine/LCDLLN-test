@@ -1268,32 +1268,22 @@ namespace engine::client
 		}
 		if (requestedLocale.empty())
 		{
+			// 1er lancement (aucune locale persistée) : on APPLIQUE directement la langue
+			// détectée du système et on l'écrit dans user_settings.json, puis le flux part
+			// vers l'écran de login (comme une locale déjà retenue). L'écran illustré de
+			// sélection (Phase::LanguageSelectionFirstRun) est volontairement court-circuité :
+			// son rendu ImGui provoquait une faute GPU « device lost » au 1er lancement
+			// (impossible à localiser sans RenderDoc) ; créer user_settings.json suffit à
+			// l'éviter — ce que l'on fait ici automatiquement. La langue reste modifiable
+			// dans les Options (écran fonctionnel). La géoloc IP n'enrichit plus la sélection
+			// (elle servait cet écran) ; la langue système reste le signal principal de #1.
 			m_selectedLocale = m_localization.GetCurrentLocale();
-			const auto& locales = m_localization.GetAvailableLocales();
-			auto it = std::find(locales.begin(), locales.end(), m_selectedLocale);
-			m_languageSelectionIndex = it != locales.end() ? static_cast<uint32_t>(std::distance(locales.begin(), it)) : 0u;
-			SetPhase(Phase::LanguageSelectionFirstRun);
-#if defined(_WIN32)
-			// Charge la table pays->langue et démarre la suggestion (système + géoloc IP).
-			engine::client::CountryLanguageMap countryMap;
-			const std::string mapJson = engine::platform::FileSystem::ReadAllText(
-				engine::platform::FileSystem::ResolveContentPath(cfg, "localization/country_language.json"));
-			if (!mapJson.empty())
-				countryMap.LoadFromJson(mapJson);
-			m_languageSuggestion.BeginDetection(
-				m_selectedLocale,
-				m_localization.GetAvailableLocales(),
-				std::move(countryMap),
-				std::make_unique<engine::client::IpApiGeoProvider>());
-			m_firstRunLocales = m_languageSuggestion.GetSuggestedLocales();
-			// Recale l'index de sélection sur la liste filtrée (système en tête).
+			if (PatchPersistedLocaleKey(m_selectedLocale))
 			{
-				auto it = std::find(m_firstRunLocales.begin(), m_firstRunLocales.end(), m_selectedLocale);
-				m_languageSelectionIndex = (it != m_firstRunLocales.end())
-					? static_cast<uint32_t>(std::distance(m_firstRunLocales.begin(), it)) : 0u;
+				m_persistedLocale = m_selectedLocale;
+				m_hasPersistedLocale = true;
 			}
-#endif
-			LOG_INFO(Core, "[AuthUiPresenter] First run locale selection required (detected={})", m_selectedLocale);
+			LOG_INFO(Core, "[AuthUiPresenter] 1er lancement : langue détectée '{}' appliquée + persistée (écran de sélection court-circuité)", m_selectedLocale);
 		}
 		else
 		{

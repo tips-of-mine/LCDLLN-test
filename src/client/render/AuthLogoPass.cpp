@@ -58,10 +58,10 @@ namespace engine::render
 
 		VkDescriptorPoolSize poolSize{};
 		poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		poolSize.descriptorCount = 1;
+		poolSize.descriptorCount = kDescriptorRingSize;
 		VkDescriptorPoolCreateInfo poolInfo{};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.maxSets = 1;
+		poolInfo.maxSets = kDescriptorRingSize;
 		poolInfo.poolSizeCount = 1;
 		poolInfo.pPoolSizes = &poolSize;
 		if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
@@ -70,16 +70,23 @@ namespace engine::render
 			return false;
 		}
 
+		// Tous les sets de l'anneau partagent le même layout.
+		VkDescriptorSetLayout ringLayouts[kDescriptorRingSize];
+		for (uint32_t i = 0; i < kDescriptorRingSize; ++i)
+		{
+			ringLayouts[i] = m_descriptorSetLayout;
+		}
 		VkDescriptorSetAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		allocInfo.descriptorPool = m_descriptorPool;
-		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &m_descriptorSetLayout;
-		if (vkAllocateDescriptorSets(device, &allocInfo, &m_descriptorSet) != VK_SUCCESS)
+		allocInfo.descriptorSetCount = kDescriptorRingSize;
+		allocInfo.pSetLayouts = ringLayouts;
+		if (vkAllocateDescriptorSets(device, &allocInfo, m_descriptorSets) != VK_SUCCESS)
 		{
 			Destroy(device);
 			return false;
 		}
+		m_descriptorCursor = 0u;
 
 		VkSamplerCreateInfo samp{};
 		samp.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -235,9 +242,14 @@ namespace engine::render
 		imgInfo.imageView = logoView;
 		imgInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
+		// Prend un set neuf dans l'anneau pour CE draw : on ne réécrit jamais un set
+		// encore référencé par un draw précédent (de cette frame ou de la frame en vol).
+		VkDescriptorSet descriptorSet = m_descriptorSets[m_descriptorCursor];
+		m_descriptorCursor = (m_descriptorCursor + 1u) % kDescriptorRingSize;
+
 		VkWriteDescriptorSet write{};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		write.dstSet = m_descriptorSet;
+		write.dstSet = descriptorSet;
 		write.dstBinding = 0;
 		write.descriptorCount = 1;
 		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -277,7 +289,7 @@ namespace engine::render
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
 		LogoPushConstants push{};
 		push.viewportSize[0] = static_cast<float>(extent.width);
@@ -318,10 +330,15 @@ namespace engine::render
 		}
 		if (m_descriptorPool != VK_NULL_HANDLE)
 		{
+			// Détruire le pool libère tous les sets de l'anneau.
 			vkDestroyDescriptorPool(device, m_descriptorPool, nullptr);
 			m_descriptorPool = VK_NULL_HANDLE;
 		}
-		m_descriptorSet = VK_NULL_HANDLE;
+		for (uint32_t i = 0; i < kDescriptorRingSize; ++i)
+		{
+			m_descriptorSets[i] = VK_NULL_HANDLE;
+		}
+		m_descriptorCursor = 0u;
 		if (m_descriptorSetLayout != VK_NULL_HANDLE)
 		{
 			vkDestroyDescriptorSetLayout(device, m_descriptorSetLayout, nullptr);

@@ -1268,28 +1268,22 @@ namespace engine::client
 		}
 		if (requestedLocale.empty())
 		{
+			// 1er lancement (aucune locale persistée) : on APPLIQUE directement la langue
+			// détectée du système et on l'écrit dans user_settings.json, puis le flux part
+			// vers l'écran de login (comme une locale déjà retenue). L'écran illustré de
+			// sélection (Phase::LanguageSelectionFirstRun) est volontairement court-circuité :
+			// son rendu ImGui provoquait une faute GPU « device lost » au 1er lancement
+			// (impossible à localiser sans RenderDoc) ; créer user_settings.json suffit à
+			// l'éviter — ce que l'on fait ici automatiquement. La langue reste modifiable
+			// dans les Options (écran fonctionnel). La géoloc IP n'enrichit plus la sélection
+			// (elle servait cet écran) ; la langue système reste le signal principal de #1.
 			m_selectedLocale = m_localization.GetCurrentLocale();
-			const auto& locales = m_localization.GetAvailableLocales();
-			auto it = std::find(locales.begin(), locales.end(), m_selectedLocale);
-			m_languageSelectionIndex = it != locales.end() ? static_cast<uint32_t>(std::distance(locales.begin(), it)) : 0u;
-			SetPhase(Phase::LanguageSelectionFirstRun);
-#if defined(_WIN32)
-			// Liste immédiate {système, en} SANS géoloc. Le thread géoloc (réseau WinHTTP)
-			// n'est volontairement PAS lancé ici : le démarrer pendant Init() (boot) le
-			// faisait tourner en parallèle de l'init Vulkan — vkCreateInstance charge les
-			// DLL du driver ICD — ce qui crashait le client ET l'éditeur au lancement.
-			// Il est désormais lancé à la 1re frame de l'écran de langue
-			// (Update_LanguageSelect), donc après l'init moteur (même patron que StatusProbe).
-			m_firstRunLocales = engine::client::ComputeSuggestedLocales(
-				m_selectedLocale, /*ipLocale*/ "", m_localization.GetAvailableLocales());
-			// Recale l'index de sélection sur la liste filtrée (système en tête).
+			if (PatchPersistedLocaleKey(m_selectedLocale))
 			{
-				auto it = std::find(m_firstRunLocales.begin(), m_firstRunLocales.end(), m_selectedLocale);
-				m_languageSelectionIndex = (it != m_firstRunLocales.end())
-					? static_cast<uint32_t>(std::distance(m_firstRunLocales.begin(), it)) : 0u;
+				m_persistedLocale = m_selectedLocale;
+				m_hasPersistedLocale = true;
 			}
-#endif
-			LOG_INFO(Core, "[AuthUiPresenter] First run locale selection required (detected={})", m_selectedLocale);
+			LOG_INFO(Core, "[AuthUiPresenter] 1er lancement : langue détectée '{}' appliquée + persistée (écran de sélection court-circuité)", m_selectedLocale);
 		}
 		else
 		{

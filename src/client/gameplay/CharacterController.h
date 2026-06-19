@@ -88,7 +88,13 @@ namespace engine::gameplay
 			float gravity = -20.0f; ///< m/s^2
 
 			float maxSlopeDeg = 45.0f; ///< walkable slope
-			float maxStep = 0.3f;      ///< m
+			float maxStep = 0.3f;      ///< m — lissage des petites marches/terrain
+			/// Hauteur max de montée sur un obstacle « solide marchable » (prop/mesh)
+			/// lors d'un step-up. Réglé généreux pour rendre les meshes marchables
+			/// QUELLE QUE SOIT leur hauteur (demande de design) : en butant un prop on
+			/// monte sur son dessus jusqu'à `maxClimb`. Au-delà, le prop reste un mur.
+			/// Tunable : augmenter pour grimper des structures plus hautes.
+			float maxClimb = 3.0f;     ///< m
 
 			// Saut realiste : apex = jumpSpeed^2 / (2*|gravity|). Avec gravity=-20,
 			// jumpSpeed=4.9 -> ~0.60 m (env. 1/3 de la taille 1.8 m, saut humain pose).

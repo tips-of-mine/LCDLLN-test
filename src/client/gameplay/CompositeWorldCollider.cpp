@@ -32,32 +32,65 @@ namespace engine::gameplay
 				best = th;
 		}
 
-		// 2) Cylindres : test 2D cercle (capsule en XZ) contre cercle (cylindre), borné
-		//    en Y. On résout le plus petit t in [0,1] où la distance horizontale entre
-		//    le centre de la capsule et l'axe du cylindre vaut (rCapsule + rCylindre).
+		// 2) Cylindres de props. Chaque prop est désormais SOLIDE et MARCHABLE :
+		//    - capuchon supérieur (2a) : le personnage se pose SUR le mesh (sol,
+		//      plateforme…) comme sur le terrain, au lieu de flotter / d'être bloqué ;
+		//    - flanc (2b) : barrière horizontale (murs, troncs) tant qu'on est À CÔTÉ.
 		const float halfH = capsule.height * 0.5f;
 		const float sx = startCenter.x, sz = startCenter.z;
 		const float dx = endCenter.x - sx, dz = endCenter.z - sz;
 
+		// Tolérance verticale pour considérer la capsule « posée sur le dessus » d'un
+		// prop : tant que ses pieds sont à moins de kStandSkin sous le sommet, on ne
+		// bloque plus latéralement (sinon, une fois debout sur le mesh, le test de
+		// flanc l'empêcherait d'avancer = perso coincé en haut).
+		constexpr float kStandSkin = 0.05f;
+
 		for (const auto& c : m_cylinders)
 		{
+			// --- 2a) Capuchon supérieur : surface marchable au sommet du prop ---
+			// Quand le bas de la capsule descend à travers `topY` au-dessus de
+			// l'empreinte XZ du cylindre, on arrête la descente sur le sommet et on
+			// renvoie une normale verticale (→ IsWalkable côté CharacterController, le
+			// perso se pose dessus). C'est ce qui rend les meshes « marchables ».
+			{
+				const float bottomStart = startCenter.y - halfH - capsule.radius;
+				const float bottomEnd   = endCenter.y   - halfH - capsule.radius;
+				const float denom = bottomStart - bottomEnd;   // > 0 si la capsule descend
+				if (denom > 1e-6f)
+				{
+					const float tc = (bottomStart - c.topY) / denom;  // bas de capsule == topY
+					if (tc >= 0.0f && tc <= 1.0f && tc < best.fraction)
+					{
+						const float px = sx + tc * dx - c.cx;
+						const float pz = sz + tc * dz - c.cz;
+						if (px * px + pz * pz <= c.radius * c.radius)  // au-dessus du disque
+						{
+							best.hit = true;
+							best.fraction = tc;
+							best.normal = engine::math::Vec3{ 0.0f, 1.0f, 0.0f };
+						}
+					}
+				}
+			}
+
+			// --- 2b) Flanc : barrière horizontale (test 2D cercle vs cercle borné en Y) ---
 			const float R = capsule.radius + c.radius;
 
-			// Recouvrement vertical (au point d'arrivée, conservateur) : si la capsule
-			// passe entièrement au-dessus ou en dessous du cylindre, pas de collision.
+			// Recouvrement vertical : pas de blocage latéral si la capsule passe
+			// entièrement sous la base, OU si ses pieds sont au niveau / au-dessus du
+			// sommet (= posée DESSUS — géré par le capuchon ci-dessus, pas à côté).
 			const float capLo = endCenter.y - halfH - capsule.radius;
 			const float capHi = endCenter.y + halfH + capsule.radius;
-			if (capHi < c.baseY || capLo > c.topY) continue;
+			if (capHi < c.baseY || capLo > c.topY - kStandSkin) continue;
 
 			const float fx = sx - c.cx, fz = sz - c.cz;
 			const float a = dx * dx + dz * dz;            // mouvement horizontal au carré
 			const float cc = fx * fx + fz * fz - R * R;   // < 0 => déjà en chevauchement XZ
 
-			// IMPORTANT : la collision contre un prop ne concerne QUE le déplacement
-			// HORIZONTAL entrant dans le cylindre. On ne bloque JAMAIS un sweep vertical
-			// (gravité, sonde de sol, récupération anti-encastrement du CharacterController
-			// qui sonde depuis 50 m au-dessus). Sinon ces sweeps verticaux heurtent le
-			// cylindre et la récupération téléporte le perso au sommet de la sonde.
+			// Le flanc ne concerne QUE le déplacement HORIZONTAL entrant dans le
+			// cylindre ; un sweep purement vertical (descente) est traité par le
+			// capuchon 2a, pas ici.
 			float tHit = -1.0f;
 			if (a >= 1e-8f)
 			{

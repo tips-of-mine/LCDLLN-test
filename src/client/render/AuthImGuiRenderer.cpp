@@ -758,6 +758,29 @@ namespace engine::render
 
 		ImGui::PopStyleVar(3);
 		ImGui::PopStyleColor(4);
+
+		// Barre d'état 2 px sous la cellule (retour validation temps réel). Un seul des
+		// trois états est non-neutre selon le champ : identifiant (usernameCheckState),
+		// confirmation (passwordMatchState), e-mail (emailFormatState). Couleurs alignées
+		// sur le renderer natif AuthUiRendererCore. ASCII-safe (pas de glyphe).
+		{
+			float br = 0.f, bg = 0.f, bb = 0.f;
+			bool drawBar = false;
+			if (spec.usernameCheckState == 1) { br = 0.55f; bg = 0.55f; bb = 0.55f; drawBar = true; } // Pending gris
+			else if (spec.usernameCheckState == 2) { br = 0.13f; bg = 0.80f; bb = 0.27f; drawBar = true; } // Available vert
+			else if (spec.usernameCheckState == 3) { br = 0.80f; bg = 0.13f; bb = 0.13f; drawBar = true; } // Taken rouge
+			else if (spec.passwordMatchState == 1 || spec.emailFormatState == 1) { br = 0.13f; bg = 0.80f; bb = 0.27f; drawBar = true; }
+			else if (spec.passwordMatchState == -1 || spec.emailFormatState == -1) { br = 0.80f; bg = 0.13f; bb = 0.13f; drawBar = true; }
+			if (drawBar)
+			{
+				const ImVec2 mn = ImGui::GetItemRectMin();   // dernière InputText
+				const ImVec2 mx = ImGui::GetItemRectMax();
+				ImDrawList* dl = ImGui::GetWindowDrawList();
+				dl->AddRectFilled(ImVec2(mn.x, mx.y - 2.f), ImVec2(mx.x, mx.y),
+					ImGui::ColorConvertFloat4ToU32(ImVec4(br, bg, bb, 1.f)));
+			}
+		}
+
 		ImGui::Spacing();
 	}
 

@@ -10,6 +10,8 @@
 
 #include <cstddef>
 #include <optional>
+#include <string>       // std::string (retour de NormaliseEmail) — requis sur MSVC où
+                        // <string_view> ne tire pas <string> transitivement (build Windows).
 #include <string_view>
 
 namespace engine::server
@@ -59,6 +61,19 @@ namespace engine::server
 	/// @param normalisedLogin Login après NormaliseLoginView().
 	/// @return NetErrorCode::OK si valide, INVALID_LOGIN si longueur hors bornes ou caractère interdit.
 	engine::network::NetErrorCode ValidateLogin(std::string_view normalisedLogin);
+
+	/// Détail règle-par-règle de la politique de mot de passe v1, pour un retour UI live
+	/// (checklist). Chaque booléen est évalué indépendamment (sans court-circuit).
+	struct PasswordRuleStatus
+	{
+		bool lengthOk = false;  ///< longueur dans [kAccountPasswordMinLength, kAccountPasswordMaxLength]
+		bool hasLetter = false; ///< au moins une lettre ASCII a-z / A-Z
+		bool hasDigit = false;  ///< au moins un chiffre 0-9
+	};
+
+	/// Évalue chaque règle de mot de passe séparément (pour affichage live).
+	/// ValidatePassword() == OK si et seulement si les trois booléens sont vrais.
+	PasswordRuleStatus EvaluatePasswordRules(std::string_view password);
 
 	/// Valide la politique de complexité du mot de passe en clair (politique v1).
 	/// Exigences : longueur entre kAccountPasswordMinLength (8) et kAccountPasswordMaxLength (256),

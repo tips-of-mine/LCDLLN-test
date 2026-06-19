@@ -247,6 +247,7 @@ add_library(engine_core
   src/client/audio/MaMenuMusic.cpp
   src/client/combat/CombatHud.cpp
   src/client/localization/LocalizationService.cpp
+  src/shared/account/AccountValidation.cpp
   src/client/localization/CountryLanguageMap.cpp
   src/client/localization/LanguageSuggestionService.cpp
   src/client/localization/IpApiGeoProvider.cpp
@@ -1350,6 +1351,14 @@ if(MSVC)
   target_compile_options(localization_service_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME localization_service_tests COMMAND localization_service_tests)
+
+# Validateurs de compte partagés (login/email/password) — Plan #2
+add_executable(account_validation_tests src/shared/account/AccountValidationTests.cpp)
+target_link_libraries(account_validation_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(account_validation_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME account_validation_tests COMMAND account_validation_tests)
 
 # Langue 1er lancement — table pays->langue
 add_executable(country_language_map_tests src/client/localization/CountryLanguageMapTests.cpp)

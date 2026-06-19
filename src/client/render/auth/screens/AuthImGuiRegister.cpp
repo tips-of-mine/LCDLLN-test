@@ -4,7 +4,6 @@
 #include "src/client/render/LnTheme.h"
 
 #include <algorithm>
-#include <cctype>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -235,43 +234,24 @@ namespace engine::render
 			DrawField(tr("auth.label.country", "Country").c_str(), m_regCountry, static_cast<int>(sizeof(m_regCountry)));
 		}
 
-		int strength = 0;
-		const size_t pwLen = std::strlen(m_regPw);
-		if (pwLen >= 8)
-		{
-			++strength;
-		}
-		bool hasUpper = false;
-		bool hasDigit = false;
-		bool hasSym = false;
-		for (size_t i = 0; i < pwLen; ++i)
-		{
-			const unsigned char c = static_cast<unsigned char>(m_regPw[i]);
-			if (c >= 'A' && c <= 'Z')
-			{
-				hasUpper = true;
-			}
-			if (c >= '0' && c <= '9')
-			{
-				hasDigit = true;
-			}
-			if (!std::isalnum(static_cast<unsigned char>(c)))
-			{
-				hasSym = true;
-			}
-		}
-		if (hasUpper)
-		{
-			++strength;
-		}
-		if (hasDigit)
-		{
-			++strength;
-		}
-		if (hasSym)
-		{
-			++strength;
-		}
+		// Checklist mot de passe LIVE, alignée sur la politique serveur (ValidatePassword) :
+		// >= 8 caractères, au moins une lettre, au moins un chiffre. États lus depuis le
+		// modèle (rm.fields[8].pwdRule*), peuplés par BuildModel_Register via les valideurs
+		// PARTAGÉS — donc strictement cohérents avec l'acceptation serveur.
+		const engine::client::AuthUiPresenter::RenderField& pwSpec = rm.fields[8];
+		auto drawRule = [this, &tr](int32_t state, const char* key, const char* fallback) {
+			if (state < 0) return;                       // non évalué (champ vide)
+			const bool ok = (state == 1);
+			ImGui::PushStyleColor(ImGuiCol_Text, ok ? IV(LnTheme::kAccent) : IV(LnTheme::kErrorCol));
+			ImGui::Text("%s %s", ok ? "[v]" : "[x]", tr(key, fallback).c_str());
+			ImGui::PopStyleColor();
+		};
+		drawRule(pwSpec.pwdRuleLength, "auth.register.pwd_rule_length", "Au moins 8 caracteres");
+		drawRule(pwSpec.pwdRuleLetter, "auth.register.pwd_rule_letter", "Au moins une lettre");
+		drawRule(pwSpec.pwdRuleDigit,  "auth.register.pwd_rule_digit",  "Au moins un chiffre");
+		ImGui::Spacing();
+		const bool pwdRulesOk = (pwSpec.pwdRuleLength == 1)
+			&& (pwSpec.pwdRuleLetter == 1) && (pwSpec.pwdRuleDigit == 1);
 
 		std::string dayStr = "01";
 		std::string monStr = "01";
@@ -296,7 +276,7 @@ namespace engine::render
 
 		const bool fieldsOk = std::strlen(m_regId) > 0 && std::strlen(m_regEmail) > 0 && std::strlen(m_regFirstName) > 0
 			&& std::strlen(m_regLastName) > 0 && std::strlen(m_regCountry) >= 2u;
-		const bool canSubmit = fieldsOk && (strength >= 3) && (std::strlen(m_regPw) > 0) && (std::strcmp(m_regPw, m_regPw2) == 0);
+		const bool canSubmit = fieldsOk && pwdRulesOk && (std::strcmp(m_regPw, m_regPw2) == 0);
 
 		const engine::client::AuthUiPresenter::RenderAction* actSubmit = nullptr;
 		const engine::client::AuthUiPresenter::RenderAction* actBack = nullptr;

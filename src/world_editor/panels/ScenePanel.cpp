@@ -6,78 +6,31 @@
 
 namespace engine::editor::world::panels
 {
-	/// Convertit un `EditorCameraMode` en libellé court affiché dans le HUD
-	/// du panneau Scene. Ne dépend pas d'ImGui ; reste utilisable hors WIN32.
-	static const char* CameraModeLabel(engine::editor::world::EditorCameraMode mode)
-	{
-		switch (mode)
-		{
-			case engine::editor::world::EditorCameraMode::FPS:          return "FPS";
-			case engine::editor::world::EditorCameraMode::Orbital:      return "Orbital";
-			case engine::editor::world::EditorCameraMode::TopDownOrtho: return "TopDown";
-		}
-		return "?";
-	}
-
-	/// Affiche la barre de mode caméra, le HUD focus puis le placeholder
-	/// viewport. M100.4 : ajoute trois RadioButton qui reflètent le mode
-	/// courant et permettent le toggle souris (équivalent Numpad 1/3/7).
-	/// Capture la taille courante de la zone client pour que le rendu
-	/// offscreen (M100.34) puisse y attacher son image.
+	/// Rôle : panneau Scene du Shell éditeur. Historiquement (M100.34) il créait
+	/// une fenêtre flottante « Scene » affichant, via une render target offscreen,
+	/// la vue 3D du monde en édition.
+	///
+	/// Retrait de la fenêtre (demande utilisateur) : ce dock flottant n'était
+	/// qu'un DOUBLON de la vue 3D principale plein écran (rendu moteur direct).
+	/// `Render()` ne crée donc plus AUCUNE fenêtre ImGui — le panneau « Scene »
+	/// n'apparaît plus à l'écran ni dans le menu View (cf. WorldEditorShell et
+	/// WorldEditorImGui qui le filtrent par nom).
+	///
+	/// L'objet est néanmoins CONSERVÉ comme `m_panels[0]` du Shell pour préserver,
+	/// sans refonte risquée : l'ordre d'index figé des panneaux (Inspector=1,
+	/// AssetBrowser=2, …), les casts `WorldEditorShell::GetScenePanel()` (raccourcis
+	/// caméra Numpad 1/3/7) et le branchement Engine de `EditorViewportRenderTarget`.
+	/// La caméra (`m_camera`) et la taille de viewport restent donc accessibles.
+	///
+	/// Effet de bord : aucun (ne crée plus de window, ne touche plus l'atlas ImGui).
+	/// Doit être appelée en main thread depuis `WorldEditorShell::RenderFrame`, comme
+	/// les autres panneaux. Pour réactiver le viewport in-dock, restaurer le bloc
+	/// `ImGui::Begin("Scene") … ImGui::End()` d'origine (cf. historique git).
 	void ScenePanel::Render()
 	{
-#if defined(_WIN32)
-		if (!m_visible) return;
-		if (ImGui::Begin("Scene", &m_visible))
-		{
-			// Barre de mode caméra (cf. spec M100.4 §"Spécification fonctionnelle"
-			// ligne 36 : "Bouton dans la barre du panneau Scene : [FPS] [Orbital] [Top]").
-			const auto mode = m_camera.GetMode();
-			if (ImGui::RadioButton("FPS", mode == engine::editor::world::EditorCameraMode::FPS))
-				m_camera.SetMode(engine::editor::world::EditorCameraMode::FPS);
-			ImGui::SameLine();
-			if (ImGui::RadioButton("Orbital", mode == engine::editor::world::EditorCameraMode::Orbital))
-				m_camera.SetMode(engine::editor::world::EditorCameraMode::Orbital);
-			ImGui::SameLine();
-			if (ImGui::RadioButton("Top", mode == engine::editor::world::EditorCameraMode::TopDownOrtho))
-				m_camera.SetMode(engine::editor::world::EditorCameraMode::TopDownOrtho);
-
-			// HUD coin haut-gauche (cf. spec M100.4 §"Indicateur HUD" ligne 38).
-			const auto fp = m_camera.GetFocusPoint();
-			ImGui::TextDisabled("Mode: %s | Focus: (%.1f, %.1f, %.1f)",
-				CameraModeLabel(m_camera.GetMode()), fp.x, fp.y, fp.z);
-
-			// Met à jour la taille du viewport — consommée par M100.4 (caméra,
-			// pour le calcul d'aspect dans BuildCamera) et M100.34 (rendu).
-			const ImVec2 avail = ImGui::GetContentRegionAvail();
-			m_viewportWidth = static_cast<int>(avail.x);
-			m_viewportHeight = static_cast<int>(avail.y);
-
-			// M100.34 incrément 1 — affiche l'image offscreen via ImGui::Image
-			// si l'`EditorViewportRenderTarget` du Engine a fourni un texture ID.
-			// La target est initialement vide (noire) ; la PR 2 branchera la
-			// copie depuis SceneColor_LDR pour montrer le rendu réel.
-			if (m_editorViewportTexId != 0u && m_viewportWidth > 0 && m_viewportHeight > 0)
-			{
-				// `ImTextureID` est défini comme `ImU64` (numérique) dans cette
-				// version d'ImGui — `static_cast` direct, pas `reinterpret_cast`
-				// (le cast pointeur échoue sous MSVC C2440). Le `uint64_t`
-				// stocké côté `EditorViewportRenderTarget` est le
-				// `VkDescriptorSet` retourné par `ImGui_ImplVulkan_AddTexture`,
-				// déjà tronqué/casté en uint64.
-				ImGui::Image(static_cast<ImTextureID>(m_editorViewportTexId),
-					avail);
-			}
-			else
-			{
-				ImGui::TextDisabled("Scene viewport — placeholder M100.1.");
-				ImGui::TextWrapped(
-					"La vue 3D principale du monde en édition apparaîtra ici "
-					"à partir de M100.34 (integration rendu offscreen).");
-				ImGui::Text("Viewport courant : %d x %d px", m_viewportWidth, m_viewportHeight);
-			}
-		}
-		ImGui::End();
-#endif
+		// Volontairement vide : plus de fenêtre « Scene » (doublon de la vue
+		// principale). `m_camera`, `m_viewportWidth/Height` et `m_editorViewportTexId`
+		// restent valides pour les consommateurs externes (Engine, raccourcis), mais
+		// ne sont plus rafraîchis ici puisque le dock n'existe plus.
 	}
 }

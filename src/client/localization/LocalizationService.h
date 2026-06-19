@@ -40,10 +40,13 @@ namespace engine::client
 		/// Normalize OS/user locale names to short lowercase catalog tags.
 		static std::string NormalizeLocaleTag(std::string_view localeTag);
 
-	private:
 		using Catalog = std::unordered_map<std::string, std::string>;
 
+		/// Parse un catalogue JSON plat {"clé":"valeur",...}. Exposé pour les tests
+		/// de parité de clés entre catalogues.
 		static bool ParseFlatJsonCatalog(std::string_view text, Catalog& outCatalog);
+
+	private:
 		static std::string ApplyParams(std::string text, const Params& params);
 
 		bool LoadCatalog(std::string_view localeTag, Catalog& outCatalog) const;

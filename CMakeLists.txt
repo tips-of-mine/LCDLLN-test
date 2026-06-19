@@ -247,6 +247,9 @@ add_library(engine_core
   src/client/audio/MaMenuMusic.cpp
   src/client/combat/CombatHud.cpp
   src/client/localization/LocalizationService.cpp
+  src/client/localization/CountryLanguageMap.cpp
+  src/client/localization/LanguageSuggestionService.cpp
+  src/client/localization/IpApiGeoProvider.cpp
   src/client/auth/AuthUiPresenterCore.cpp
   src/client/auth/AuthUiPresenterSettings.cpp
   src/client/auth/AuthUiPresenterNative.cpp
@@ -800,7 +803,7 @@ if(WIN32)
   target_link_libraries(engine_core PRIVATE imgui_lcdlln)
 endif()
 if(WIN32)
-  target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL shell32)
+  target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL shell32 winhttp)
 elseif(UNIX)
   target_link_libraries(engine_core PRIVATE pthread OpenSSL::SSL)
   if(NOT APPLE)
@@ -1347,6 +1350,30 @@ if(MSVC)
   target_compile_options(localization_service_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME localization_service_tests COMMAND localization_service_tests)
+
+# Langue 1er lancement — table pays->langue
+add_executable(country_language_map_tests src/client/localization/CountryLanguageMapTests.cpp)
+target_link_libraries(country_language_map_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(country_language_map_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME country_language_map_tests COMMAND country_language_map_tests)
+
+# Langue 1er lancement — logique d'union suggérée
+add_executable(language_suggestion_service_tests src/client/localization/LanguageSuggestionServiceTests.cpp)
+target_link_libraries(language_suggestion_service_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(language_suggestion_service_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME language_suggestion_service_tests COMMAND language_suggestion_service_tests)
+
+# Langue 1er lancement — parité des clés entre catalogues de traduction
+add_executable(catalog_parity_tests src/client/localization/CatalogParityTests.cpp)
+target_link_libraries(catalog_parity_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(catalog_parity_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME catalog_parity_tests COMMAND catalog_parity_tests ${CMAKE_SOURCE_DIR}/game/data)
 
 # Tests unitaires CPU pour TexturePreviewCache (ResampleRgba8Box, GenerateProceduralAlbedoLayer).
 # Pas de dependance Vulkan : tournables en CI sans GPU.

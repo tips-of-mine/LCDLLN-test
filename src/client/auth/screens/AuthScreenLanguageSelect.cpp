@@ -3,7 +3,10 @@
 // Couche modèle : BuildModel_LanguageSelect peuple les cartes langue, ApplyLocaleSelection persiste le choix.
 #include "src/client/auth/AuthUi.h"
 
+#include "src/client/localization/CountryLanguageMap.h"
+#include "src/client/localization/IpApiGeoProvider.h"
 #include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 #include "src/shared/platform/Input.h"
 #include "src/shared/platform/Window.h"
 
@@ -36,10 +39,21 @@ namespace engine::client
 		}
 	} // namespace
 
+	/// Locales affichées au 1er lancement : liste filtrée (système + géo-IP + en).
+	/// Filet de sécurité : si la suggestion est vide, retombe sur la liste complète.
+	const std::vector<std::string>& AuthUiPresenter::FirstRunLocales() const
+	{
+		if (!m_firstRunLocales.empty())
+			return m_firstRunLocales;
+		return m_localization.GetAvailableLocales();   // filet de sécurité
+	}
+
 	/// Applique la locale sélectionnée : charge les traductions, persiste dans user_settings.json si premier lancement, passe à Login.
 	void AuthUiPresenter::ApplyLocaleSelection(bool firstRun)
 	{
-		const auto& locales = m_localization.GetAvailableLocales();
+		// Au 1er lancement, l'index pointe dans la liste filtrée (cartes affichées) ;
+		// dans l'écran d'options c'est la liste complète. Choisir la bonne source.
+		const auto& locales = firstRun ? FirstRunLocales() : m_localization.GetAvailableLocales();
 		if (locales.empty())
 		{
 			LOG_WARN(Core, "[AuthUiPresenter] ApplyLocaleSelection ignored: no available locales");
@@ -92,7 +106,7 @@ namespace engine::client
 		{
 			return;
 		}
-		const auto& locales = m_localization.GetAvailableLocales();
+		const auto& locales = FirstRunLocales();
 		if (locales.empty())
 		{
 			return;
@@ -116,7 +130,7 @@ namespace engine::client
 		{
 			return;
 		}
-		const auto& locales = m_localization.GetAvailableLocales();
+		const auto& locales = FirstRunLocales();
 		if (locales.empty() || cardIndex >= locales.size())
 		{
 			return;
@@ -130,7 +144,7 @@ namespace engine::client
 	{
 		model.languageFirstRunLayout = true;
 		model.sectionTitle = Tr("language.first_run.panel_title");
-		const auto& localesFr = m_localization.GetAvailableLocales();
+		const auto& localesFr = FirstRunLocales();
 		if (!localesFr.empty() && m_languageSelectionIndex < localesFr.size())
 		{
 			const std::string& selTag = localesFr[m_languageSelectionIndex];
@@ -180,7 +194,20 @@ namespace engine::client
 		{
 			return;
 		}
-		const auto& locales = m_localization.GetAvailableLocales();
+		// Intègre la langue déduite de l'IP dès qu'elle arrive (non bloquant).
+		if (m_languageSuggestion.PollGeoUpdate())
+		{
+			const std::string previouslySelected = m_selectedLocale;
+			m_firstRunLocales = m_languageSuggestion.GetSuggestedLocales();
+			// Conserve la sélection courante si elle existe encore, sinon index 0.
+			auto it = std::find(m_firstRunLocales.begin(), m_firstRunLocales.end(), previouslySelected);
+			m_languageSelectionIndex = (it != m_firstRunLocales.end())
+				? static_cast<uint32_t>(std::distance(m_firstRunLocales.begin(), it)) : 0u;
+			if (!m_firstRunLocales.empty())
+				m_selectedLocale = m_firstRunLocales[m_languageSelectionIndex];
+			LOG_INFO(Core, "[AuthUiPresenter] Liste langues 1er lancement mise à jour ({} entrées)", m_firstRunLocales.size());
+		}
+		const auto& locales = FirstRunLocales();
 		if (locales.empty())
 		{
 			return;
@@ -206,6 +233,11 @@ namespace engine::client
 
 // Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
+
+	const std::vector<std::string>& AuthUiPresenter::FirstRunLocales() const
+	{
+		return m_localization.GetAvailableLocales();
+	}
 
 	void AuthUiPresenter::ImGuiApplyFirstRunLanguageContinue(const engine::core::Config&, std::string_view) {}
 

@@ -200,7 +200,12 @@ namespace engine::client
 		// le faisait courir en parallèle du chargement des DLL du driver Vulkan
 		// (vkCreateInstance) → crash au lancement (client ET éditeur). Idempotent via
 		// m_firstRunGeoStarted ; charge la table pays->langue puis lance le worker.
-		if (!m_firstRunGeoStarted)
+		// DIAG (debug.lang.geoloc) : permet de COUPER le thread géoloc WinHTTP afin
+		// d'isoler s'il est la cause de la faute GPU "device lost" du 1er lancement
+		// (le rendu ImGui de l'écran ayant été disculpé par les autres toggles).
+		// debug.lang.geoloc=false => aucun thread géoloc, la liste reste {système, en}.
+		const bool dbgGeoloc = cfg.GetBool("debug.lang.geoloc", true);
+		if (!m_firstRunGeoStarted && dbgGeoloc)
 		{
 			m_firstRunGeoStarted = true;
 			engine::client::CountryLanguageMap countryMap;

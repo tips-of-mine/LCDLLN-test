@@ -1274,18 +1274,14 @@ namespace engine::client
 			m_languageSelectionIndex = it != locales.end() ? static_cast<uint32_t>(std::distance(locales.begin(), it)) : 0u;
 			SetPhase(Phase::LanguageSelectionFirstRun);
 #if defined(_WIN32)
-			// Charge la table pays->langue et démarre la suggestion (système + géoloc IP).
-			engine::client::CountryLanguageMap countryMap;
-			const std::string mapJson = engine::platform::FileSystem::ReadAllText(
-				engine::platform::FileSystem::ResolveContentPath(cfg, "localization/country_language.json"));
-			if (!mapJson.empty())
-				countryMap.LoadFromJson(mapJson);
-			m_languageSuggestion.BeginDetection(
-				m_selectedLocale,
-				m_localization.GetAvailableLocales(),
-				std::move(countryMap),
-				std::make_unique<engine::client::IpApiGeoProvider>());
-			m_firstRunLocales = m_languageSuggestion.GetSuggestedLocales();
+			// Liste immédiate {système, en} SANS géoloc. Le thread géoloc (réseau WinHTTP)
+			// n'est volontairement PAS lancé ici : le démarrer pendant Init() (boot) le
+			// faisait tourner en parallèle de l'init Vulkan — vkCreateInstance charge les
+			// DLL du driver ICD — ce qui crashait le client ET l'éditeur au lancement.
+			// Il est désormais lancé à la 1re frame de l'écran de langue
+			// (Update_LanguageSelect), donc après l'init moteur (même patron que StatusProbe).
+			m_firstRunLocales = engine::client::ComputeSuggestedLocales(
+				m_selectedLocale, /*ipLocale*/ "", m_localization.GetAvailableLocales());
 			// Recale l'index de sélection sur la liste filtrée (système en tête).
 			{
 				auto it = std::find(m_firstRunLocales.begin(), m_firstRunLocales.end(), m_selectedLocale);

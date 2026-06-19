@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -193,6 +194,25 @@ namespace engine::client
 		if (usingNativeAuth || m_phase != Phase::LanguageSelectionFirstRun)
 		{
 			return;
+		}
+		// Démarrage différé de la géoloc : à la 1re frame de l'écran de langue, donc
+		// APRÈS l'init Vulkan du boot. Lancer ce thread réseau WinHTTP pendant Init()
+		// le faisait courir en parallèle du chargement des DLL du driver Vulkan
+		// (vkCreateInstance) → crash au lancement (client ET éditeur). Idempotent via
+		// m_firstRunGeoStarted ; charge la table pays->langue puis lance le worker.
+		if (!m_firstRunGeoStarted)
+		{
+			m_firstRunGeoStarted = true;
+			engine::client::CountryLanguageMap countryMap;
+			const std::string mapJson = engine::platform::FileSystem::ReadAllText(
+				engine::platform::FileSystem::ResolveContentPath(cfg, "localization/country_language.json"));
+			if (!mapJson.empty())
+				countryMap.LoadFromJson(mapJson);
+			m_languageSuggestion.BeginDetection(
+				m_selectedLocale,
+				m_localization.GetAvailableLocales(),
+				std::move(countryMap),
+				std::make_unique<engine::client::IpApiGeoProvider>());
 		}
 		// Intègre la langue déduite de l'IP dès qu'elle arrive (non bloquant).
 		if (m_languageSuggestion.PollGeoUpdate())

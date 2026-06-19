@@ -9,7 +9,7 @@
 /// est écrit.
 
 #include "src/masterd/account/MysqlAccountStore.h"
-#include "src/masterd/account/AccountValidation.h"
+#include "src/shared/account/AccountValidation.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
 #include "src/shared/db/SqlPreparedStatement.h"

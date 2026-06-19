@@ -7,7 +7,7 @@
 #include "src/masterd/email/SmtpMailer.h"
 #include "src/shared/security/RateLimitAndBan.h"
 #include "src/shared/security/SecurityAuditLog.h"
-#include "src/masterd/account/AccountValidation.h"
+#include "src/shared/account/AccountValidation.h"
 #include "src/masterd/email/LocalizedEmail.h"
 #include "src/shared/auth/Argon2Hash.h"
 #include "src/shared/network/AuthRegisterPayloads.h"

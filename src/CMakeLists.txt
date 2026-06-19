@@ -145,7 +145,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildTabard.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildBank.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountValidation.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/account/AccountValidation.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/InMemoryAccountStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/MysqlAccountStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountRole.cpp
@@ -320,7 +320,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountRoleService.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountRole.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/InMemoryAccountStore.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountValidation.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/account/AccountValidation.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
   )
   target_include_directories(account_role_service_tests PRIVATE ${CMAKE_SOURCE_DIR})
@@ -1019,7 +1019,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountRoleService.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountRole.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/InMemoryAccountStore.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountValidation.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/account/AccountValidation.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
   )
   target_include_directories(chat_command_router_tests PRIVATE ${CMAKE_SOURCE_DIR})

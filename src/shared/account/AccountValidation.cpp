@@ -1,4 +1,4 @@
-#include "src/masterd/account/AccountValidation.h"
+#include "src/shared/account/AccountValidation.h"
 
 #include <algorithm>
 #include <cctype>
@@ -63,20 +63,25 @@ namespace engine::server
 		return engine::network::NetErrorCode::OK;
 	}
 
-	engine::network::NetErrorCode ValidatePassword(std::string_view password)
+	PasswordRuleStatus EvaluatePasswordRules(std::string_view password)
 	{
-		if (password.size() < kAccountPasswordMinLength || password.size() > kAccountPasswordMaxLength)
-			return engine::network::NetErrorCode::WEAK_PASSWORD;
-		bool hasDigit = false;
-		bool hasLetter = false;
+		PasswordRuleStatus s;
+		s.lengthOk = (password.size() >= kAccountPasswordMinLength
+			&& password.size() <= kAccountPasswordMaxLength);
 		for (unsigned char c : password)
 		{
 			if (std::isdigit(c))
-				hasDigit = true;
-			if (std::isalpha(static_cast<unsigned char>(c)))
-				hasLetter = true;
+				s.hasDigit = true;
+			if (std::isalpha(c))
+				s.hasLetter = true;
 		}
-		if (!hasDigit || !hasLetter)
+		return s;
+	}
+
+	engine::network::NetErrorCode ValidatePassword(std::string_view password)
+	{
+		const PasswordRuleStatus s = EvaluatePasswordRules(password);
+		if (!s.lengthOk || !s.hasDigit || !s.hasLetter)
 			return engine::network::NetErrorCode::WEAK_PASSWORD;
 		return engine::network::NetErrorCode::OK;
 	}

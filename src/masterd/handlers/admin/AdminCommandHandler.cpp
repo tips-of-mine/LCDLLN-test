@@ -8,7 +8,7 @@
 #include "src/masterd/account/AccountRole.h"
 #include "src/masterd/account/AccountRoleService.h"
 #include "src/masterd/account/AccountStore.h"
-#include "src/masterd/account/AccountValidation.h"
+#include "src/shared/account/AccountValidation.h"
 #include "src/masterd/admin/SlashCommandRegistry.h"
 #include "src/masterd/gmtickets/GmTicketSystem.h"
 #include "src/masterd/handlers/worldclock/WorldClockHandler.h"

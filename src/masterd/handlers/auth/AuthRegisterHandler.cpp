@@ -5,7 +5,7 @@
 #include "src/shared/security/RateLimitAndBan.h"
 #include "src/shared/security/SecurityAuditLog.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
-#include "src/masterd/account/AccountValidation.h"
+#include "src/shared/account/AccountValidation.h"
 #include "src/masterd/handlers/password/PasswordResetStore.h"
 #include "src/masterd/email/SmtpMailer.h"
 #include "src/shared/security/CaptchaVerifier.h"    // M33.3

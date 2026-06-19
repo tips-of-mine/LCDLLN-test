@@ -1268,22 +1268,29 @@ namespace engine::client
 		}
 		if (requestedLocale.empty())
 		{
-			// 1er lancement (aucune locale persistée) : on APPLIQUE directement la langue
-			// détectée du système et on l'écrit dans user_settings.json, puis le flux part
-			// vers l'écran de login (comme une locale déjà retenue). L'écran illustré de
-			// sélection (Phase::LanguageSelectionFirstRun) est volontairement court-circuité :
-			// son rendu ImGui provoquait une faute GPU « device lost » au 1er lancement
-			// (impossible à localiser sans RenderDoc) ; créer user_settings.json suffit à
-			// l'éviter — ce que l'on fait ici automatiquement. La langue reste modifiable
-			// dans les Options (écran fonctionnel). La géoloc IP n'enrichit plus la sélection
-			// (elle servait cet écran) ; la langue système reste le signal principal de #1.
+			// 1er lancement (aucune locale persistée) : on affiche l'écran illustré de
+			// sélection de langue (Phase::LanguageSelectionFirstRun) avec la liste filtrée
+			// {système, en} calculée IMMÉDIATEMENT par ComputeSuggestedLocales (fonction
+			// PURE, aucun réseau). La langue déduite de l'IP enrichira la liste plus tard,
+			// via PollGeoUpdate, quand la géoloc aura répondu.
+			//
+			// IMPORTANT — anti « device lost » : la géoloc (thread WinHTTP vers ip-api.com)
+			// n'est PLUS démarrée ici. Lancée pendant le boot (#909) elle crashait
+			// vkCreateInstance ; déplacée à la 1re frame de l'écran (#915) elle crashait
+			// quand même le GPU (init réseau concurrente des toutes premières frames du
+			// pilote → faute « device lost », diagnostic confirmé par bisection). Elle est
+			// désormais démarrée DE MANIÈRE DIFFÉRÉE dans Update_LanguageSelect, après
+			// chauffe du pipeline de rendu (cf. AuthScreenLanguageSelect.cpp). Le bypass
+			// #915 (qui sautait cet écran) est donc retiré : l'écran refait ses propositions.
 			m_selectedLocale = m_localization.GetCurrentLocale();
-			if (PatchPersistedLocaleKey(m_selectedLocale))
-			{
-				m_persistedLocale = m_selectedLocale;
-				m_hasPersistedLocale = true;
-			}
-			LOG_INFO(Core, "[AuthUiPresenter] 1er lancement : langue détectée '{}' appliquée + persistée (écran de sélection court-circuité)", m_selectedLocale);
+			m_firstRunLocales = engine::client::ComputeSuggestedLocales(
+				m_selectedLocale, /*ipLocale (encore inconnue)*/ "", m_localization.GetAvailableLocales());
+			auto it = std::find(m_firstRunLocales.begin(), m_firstRunLocales.end(), m_selectedLocale);
+			m_languageSelectionIndex = (it != m_firstRunLocales.end())
+				? static_cast<uint32_t>(std::distance(m_firstRunLocales.begin(), it)) : 0u;
+			SetPhase(Phase::LanguageSelectionFirstRun);
+			LOG_INFO(Core, "[AuthUiPresenter] 1er lancement : écran de langue (detected={}, {} proposition(s) immédiate(s) ; géoloc différée hors premières frames)",
+				m_selectedLocale, m_firstRunLocales.size());
 		}
 		else
 		{

@@ -1098,10 +1098,16 @@ namespace engine::client
 		// Liste des locales affichées au 1er lancement (union filtrée système+IP+en).
 		// Source unique pour TOUS les sites de l'écran LanguageSelectionFirstRun.
 		std::vector<std::string> m_firstRunLocales;
-		// Garde-fou de démarrage différé de la géoloc : passe à true à la 1re frame de
-		// l'écran de langue (Update_LanguageSelect), où le thread WinHTTP est lancé —
-		// jamais pendant Init()/boot (conflit avec l'init Vulkan = crash au lancement).
+		// Garde-fou de démarrage différé de la géoloc : passe à true une fois le thread
+		// WinHTTP lancé (Update_LanguageSelect), APRÈS chauffe du pipeline de rendu —
+		// jamais pendant Init()/boot ni sur les toutes premières frames (init réseau
+		// concurrente du pilote GPU = faute « device lost »).
 		bool m_firstRunGeoStarted = false;
+		// Horloge de chauffe : instant d'entrée sur l'écran de langue. La géoloc n'est
+		// lancée qu'après client.first_run.geoip_delay_ms (défaut 2500) écoulées, le temps
+		// que le GPU/swapchain/StatusProbe se stabilisent.
+		std::chrono::steady_clock::time_point m_firstRunGeoClock{};
+		bool m_firstRunGeoClockSet = false;
 
 		std::vector<uint8_t> m_argonSalt{};
 		uint32_t m_viewportW = 0;

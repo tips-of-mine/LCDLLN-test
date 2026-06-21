@@ -446,8 +446,11 @@ comportement inchangé.)
 
 - [ ] **Step 3 : `GeometryPass.h` — ajouter `float fade` à `Record`**
 
-Dans la signature de `Record` (lignes 46-53), ajouter un paramètre `float fade = 1.0f`
-juste après `uint32_t materialIndex = 0,` :
+Dans la signature de `Record` (lignes 46-53), ajouter `float fade = 1.0f` en **DERNIER
+paramètre** (après `bool loadExistingGbuffer`). ⚠️ Ne PAS l'insérer avant
+`loadExistingGbuffer` : un appelant existant ([Engine.cpp:5488](src/client/app/Engine.cpp))
+passe un `bool` (`terrainBeforeGeometry`) en dernier argument positionnel ; le mettre en
+dernier avec un défaut `1.0f` laisse tous les appels actuels inchangés.
 
 ```cpp
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,
@@ -457,16 +460,16 @@ juste après `uint32_t materialIndex = 0,` :
 		            VkDescriptorSet materialDescriptorSet = VK_NULL_HANDLE,
 		            const float* instanceMatrix = nullptr,
 		            uint32_t materialIndex = 0,
-		            float fade = 1.0f,
-		            bool loadExistingGbuffer = false);
+		            bool loadExistingGbuffer = false,
+		            float fade = 1.0f);
 ```
 
 - [ ] **Step 4 : `GeometryPass.cpp` — propager `fade` dans `Record`**
 
 Mettre à jour la **définition** de `Record` pour accepter le même paramètre
-`float fade = 1.0f` (même position, juste avant `bool loadExistingGbuffer`), puis dans
-le corps de `Record` (au site push-constant ~ligne 669) ajouter après
-`pushConstants.materialIndex = materialIndex;` :
+`float fade = 1.0f` **en dernier** (après `bool loadExistingGbuffer`, identique à la
+déclaration), puis dans le corps de `Record` (au site push-constant ~ligne 669) ajouter
+après `pushConstants.materialIndex = materialIndex;` :
 
 ```cpp
 		pushConstants.fade = fade;
@@ -644,15 +647,15 @@ Dans `RecordPropsGeometry`, rendre l'index de prop disponible et passer le fondu
 				/* ... params inchangés jusqu'à materialIndex ... */
 				prop.modelMatrix.m,
 				highlight ? part.highlightMaterialIndex : part.materialIndex,
-				fade,          // <-- nouveau : fondu d'occlusion de ce prop
-				true);         // loadExistingGbuffer
+				true,          // loadExistingGbuffer (inchangé)
+				fade);         // <-- nouveau : fondu d'occlusion de ce prop (DERNIER param)
 		}
 	}
 ```
 
 > Conserver tel quel le reste du corps de la boucle (sélection LOD/impostor, etc.).
 > Seuls changent : l'itération indexée, le calcul `fade`, et l'argument `fade` ajouté à
-> `geom.Record` (juste avant le `true` final `loadExistingGbuffer`). L'index `propIndex`
+> `geom.Record` **en dernier** (après `true` = `loadExistingGbuffer`). L'index `propIndex`
 > est exactement l'`id` utilisé en Step 4 → correspondance garantie.
 
 - [ ] **Step 6 : Vérifier (CI) — build client OK**

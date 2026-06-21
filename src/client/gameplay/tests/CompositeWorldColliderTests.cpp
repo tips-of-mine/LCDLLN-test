@@ -160,6 +160,69 @@ int main()
 		check(std::fabs(side.normal.y) < 1e-3f, "mur: normale de flanc horizontale");
 	}
 
+	// === PropBox : boîte orientée (mur de bâtiment) ===
+	// Boîte centrée en (5,0), demi-dim (1.0 en X, 0.1 en Z) -> mur fin orienté
+	// selon les axes monde, de Y=0 à Y=3.
+	auto makeWall = []() {
+		PropBox b;
+		b.cx = 5.0f; b.cz = 0.0f; b.halfX = 1.0f; b.halfZ = 0.1f;
+		b.axisX = Vec3{ 1, 0, 0 }; b.axisZ = Vec3{ 0, 0, 1 };
+		b.loY = 0.0f; b.hiY = 3.0f; b.wall = true;
+		return b;
+	};
+
+	// B1) Capsule traversant la FACE large du mur (le long de +X, à z=0) : bloquée,
+	//     normale horizontale (selon -X, face d'approche).
+	{
+		CompositeWorldCollider c(&terrain); c.AddBox(makeWall());
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, hit);
+		check(h && hit.hit, "box: face -> hit");
+		check(std::fabs(hit.normal.y) < 1e-3f, "box: normale horizontale");
+		// Contact attendu : x = 5 - halfX(1.0) - r(0.3) = 3.7 -> fraction ~0.37.
+		check(hit.fraction > 0.30f && hit.fraction < 0.45f, "box: fraction plausible");
+	}
+
+	// B2) Capsule passant à CÔTÉ du mur fin (à z=2, au-delà de halfZ+r=0.4) : pas de hit.
+	{
+		CompositeWorldCollider c(&terrain); c.AddBox(makeWall());
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 1, 2 }, Vec3{ 10, 1, 2 }, hit);
+		check(!h, "box: a cote (hors epaisseur) -> pas de hit");
+	}
+
+	// B3) Capsule AU-DESSUS (Y=10, hors [loY,hiY]) : pas de hit.
+	{
+		CompositeWorldCollider c(&terrain); c.AddBox(makeWall());
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 10, 0 }, Vec3{ 10, 10, 0 }, hit);
+		check(!h, "box: au-dessus -> pas de hit");
+	}
+
+	// B4) Boîte passable : aucune collision.
+	{
+		PropBox p = makeWall(); p.passable = true;
+		CompositeWorldCollider c(&terrain); c.AddBox(p);
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, hit);
+		check(!h, "box passable: aucune collision");
+	}
+
+	// B5) Boîte tournée de 90° (axisX <-> axisZ) : un mur fin orienté selon Z.
+	//     halfX=1.0 le long de axisX=(0,0,1), halfZ=0.1 le long de axisZ=(1,0,0).
+	//     Donc fin en X (epaisseur 0.1), large en Z. Une capsule le long de +X
+	//     à z=0 traverse la fine épaisseur -> hit.
+	{
+		PropBox b = makeWall();
+		b.axisX = Vec3{ 0, 0, 1 }; b.axisZ = Vec3{ 1, 0, 0 };
+		CompositeWorldCollider c(&terrain); c.AddBox(b);
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, hit);
+		check(h && hit.hit, "box tournee: traverse l'epaisseur -> hit");
+		// Epaisseur le long de X = halfZ(0.1)+r(0.3)=0.4 -> contact x~4.6 -> frac~0.46.
+		check(hit.fraction > 0.40f && hit.fraction < 0.52f, "box tournee: fraction plausible");
+	}
+
 	// 5) QueryWater délégué au terrain.
 	{
 		CompositeWorldCollider c(&terrain);

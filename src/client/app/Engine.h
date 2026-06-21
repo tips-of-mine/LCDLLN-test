@@ -107,6 +107,7 @@
 #include "src/client/gameplay/CharacterController.h"
 #include "src/client/gameplay/TerrainCollider.h"
 #include "src/client/gameplay/CompositeWorldCollider.h"
+#include "src/client/world/BuildingCollisionCatalog.h"
 #if defined(_WIN32)
 #include "src/client/render/terrain/TerrainEditingTools.h"
 #include "src/world_editor/ui/TexturePreviewCache.h"
@@ -987,6 +988,12 @@ namespace engine
 		/// Collisionneur composite (terrain + cylindres des props/décor/PNJ). Construit au
 		/// boot par LoadInteractableProps + LoadScenery, consommé par CharacterController.
 		engine::gameplay::CompositeWorldCollider m_worldCollider;
+
+		/// Catalogue de collision des pièces de bâtiment (boîtes fines orientées +
+		/// portes franchissables), chargé au boot dans LoadBuildings depuis
+		/// <content>/collision/building_pieces.json. Consulté par
+		/// BuildPropFromMeshMatrix ; un mesh absent retombe sur le cylindre par défaut.
+		engine::world::BuildingCollisionCatalog m_buildingCollisionCatalog;
 
 		/// Charge les meshes glTF statiques des interactibles (groupés par matériau,
 		/// matériaux trim chargés dans le cache bindless) et peuple m_props. (Re)construit

@@ -14234,6 +14234,11 @@ namespace engine
 				cyl.passable = meshLower.find("door") != std::string::npos;
 				cyl.stair = (meshLower.find("escalier") != std::string::npos)
 					|| (meshLower.find("stair") != std::string::npos);
+				// Pièce de bâtiment = MUR (barrière latérale pure, pas de dessus
+				// marchable), SAUF un escalier qui doit garder son dessus pour être
+				// gravi. Évite le « vol » : la sonde anti-encastrement ne peut plus
+				// remonter le perso au sommet du gros cylindre englobant de la pièce.
+				cyl.wall = !cyl.stair;
 				m_worldCollider.AddCylinder(cyl);
 			}
 			m_props.push_back(std::move(prop));

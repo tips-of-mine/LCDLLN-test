@@ -141,6 +141,25 @@ int main()
 		check(h && !hit.stair, "mur normal: hit.stair=false");
 	}
 
+	// 9) MUR de bâtiment (wall) — PAS de dessus marchable : un sweep DESCENDANT
+	//    au-dessus de l'empreinte ne s'accroche PAS au sommet (contrairement au
+	//    prop normal, cf. test 4bis). C'est ce qui tue le « vol » : la sonde
+	//    anti-encastrement du contrôleur ne peut plus remonter le perso au sommet
+	//    du mur. Le flanc, lui, bloque toujours horizontalement.
+	{
+		PropCylinder wall = cyl; wall.wall = true;
+		CompositeWorldCollider c(&terrain); c.AddCylinder(wall);
+		// Descente au-dessus du disque : AUCUN capuchon (le prop normal, lui, posait).
+		IWorldCollider::SweepHit down;
+		bool hd = c.SweepCapsule(cap, Vec3{ 5, 20, 0 }, Vec3{ 5, 1, 0 }, down);
+		check(!hd, "mur: pas de dessus marchable (sweep descendant ne s'accroche pas)");
+		// Flanc toujours bloquant : entrée horizontale arrêtée, normale horizontale.
+		IWorldCollider::SweepHit side;
+		bool hs = c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, side);
+		check(hs && side.hit, "mur: flanc bloque toujours (hit)");
+		check(std::fabs(side.normal.y) < 1e-3f, "mur: normale de flanc horizontale");
+	}
+
 	// 5) QueryWater délégué au terrain.
 	{
 		CompositeWorldCollider c(&terrain);

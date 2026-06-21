@@ -119,11 +119,51 @@ namespace
 		// ...et n'a PAS été hissé le long de la paroi (anti-vol) : pieds au sol.
 		REQUIRE(feetY < 0.5f);
 	}
+
+	// Garde du fix « vol contre le mur de bâtiment » : un perso DANS l'empreinte
+	// d'un gros cylindre de mur (wall=true, comme l'auberge) ne doit PAS être
+	// remonté à son sommet par la sonde anti-encastrement du contrôleur. Sans le
+	// flag wall (capuchon marchable), la sonde — qui balaie du haut vers le bas —
+	// accrochait le sommet (topY) et collait le perso à la hauteur du mur.
+	void Test_BuildingWall_NoFloatSnap()
+	{
+		CharacterController::Config cfg{};
+		cfg.gravity = -20.0f;
+		cfg.capsule.height = 1.8f;
+		cfg.capsule.radius = 0.3f;
+		cfg.enableFlying = false;
+		cfg.maxStep = 0.3f;
+		cfg.maxClimb = 3.0f;
+		cfg.maxSlopeDeg = 45.0f;
+
+		CharacterController cc(cfg);
+		const float halfH = cfg.capsule.height * 0.5f;
+		cc.Init(Vec3(0.0f, halfH, 0.0f)); // pieds à y=0, DANS l'empreinte du mur
+
+		FlatFloor floor(0.0f);
+		CompositeWorldCollider world(&floor);
+		// Gros cylindre de mur de 3 m, rayon 3 m (englobant grossier d'une pièce
+		// de bâtiment), centré sur le perso. wall=true => pas de dessus marchable.
+		PropCylinder wall{ 0.0f, 0.0f, 3.0f, 0.0f, 3.0f };
+		wall.wall = true;
+		world.AddCylinder(wall);
+
+		const float dt = 1.0f / 60.0f;
+		MoveInput idle{};
+		for (int i = 0; i < 30; ++i)
+			cc.Update(dt, idle, world);
+
+		const float feetY = cc.GetPosition().y - halfH;
+		std::fprintf(stderr, "[INFO] mur batiment: feetY=%.3f (attendu ~0, PAS remonte a topY=3)\n", feetY);
+		// Reste au sol : la sonde ne l'a pas collé au sommet du mur (sinon feetY ~3).
+		REQUIRE(feetY < 0.5f);
+	}
 }
 
 int main()
 {
 	Test_Wall_NotClimbed_ButReached();
+	Test_BuildingWall_NoFloatSnap();
 	if (g_failed == 0) std::fprintf(stderr, "CharacterControllerStepUpTests: OK\n");
 	return g_failed;
 }

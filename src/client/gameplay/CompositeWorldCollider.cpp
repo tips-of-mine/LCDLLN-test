@@ -57,6 +57,13 @@ namespace engine::gameplay
 			// l'empreinte XZ du cylindre, on arrête la descente sur le sommet et on
 			// renvoie une normale verticale (→ IsWalkable côté CharacterController, le
 			// perso se pose dessus). C'est ce qui rend les meshes « marchables ».
+			//
+			// EXCEPTION mur (c.wall) : pas de dessus marchable. Un mur de bâtiment est
+			// un gros cylindre englobant ; son capuchon faisait accrocher la sonde
+			// anti-encastrement du contrôleur (balayage du haut vers le bas) et
+			// remontait le perso au sommet du mur = « vol contre le mur ». On saute
+			// donc 2a pour les murs : ils ne font que bloquer latéralement (2b).
+			if (!c.wall)
 			{
 				const float bottomStart = startCenter.y - halfH - capsule.radius;
 				const float bottomEnd   = endCenter.y   - halfH - capsule.radius;

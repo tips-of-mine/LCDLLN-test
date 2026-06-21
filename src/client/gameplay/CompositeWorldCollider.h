@@ -23,6 +23,15 @@ namespace engine::gameplay
 		/// pas ; on autorise la montée/descente sur son dessus quelle que soit la
 		/// hauteur (le perso s'y pose et la gravit), contrairement à un mur vertical.
 		bool stair = false;
+		/// Pièce de bâtiment (mur, paroi) : BARRIÈRE LATÉRALE PURE, SANS dessus
+		/// marchable. Les bâtiments (#908) sont approximés par un gros cylindre
+		/// englobant PAR pièce ; rendre leur dessus marchable faisait remonter le
+		/// perso au SOMMET du mur (la sonde anti-encastrement du contrôleur balaie
+		/// depuis le haut et accrochait ce capuchon) = bug « vol contre le mur ».
+		/// wall=true désactive le capuchon (2a) : le mur ne fait plus que bloquer
+		/// horizontalement. (Les props de décor — arbres, coffres — restent
+		/// marchables sur le dessus, eux.)
+		bool wall = false;
 	};
 
 	/// Collisionneur composite : combine un IWorldCollider de terrain (sol + eau) et

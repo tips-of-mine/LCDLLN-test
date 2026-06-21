@@ -21,7 +21,7 @@ namespace engine::render
 			float prevViewProj[16]{};
 			float viewProj[16]{};
 			uint32_t materialIndex = 0;
-			uint32_t padding0 = 0;
+			float    fade = 1.0f;   // 1.0 = opaque (anti-occlusion caméra)
 			uint32_t padding1 = 0;
 			uint32_t padding2 = 0;
 		};
@@ -593,7 +593,8 @@ namespace engine::render
 	    VkDescriptorSet materialDescriptorSet,
 	    const float* instanceMatrix,
 	    uint32_t materialIndex,
-	    bool loadExistingGbuffer)
+	    bool loadExistingGbuffer,
+	    float fade)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
 			return;
@@ -672,6 +673,7 @@ namespace engine::render
 		if (viewProjMat4)
 			std::memcpy(pushConstants.viewProj, viewProjMat4, sizeof(pushConstants.viewProj));
 		pushConstants.materialIndex = materialIndex;
+		pushConstants.fade = fade;
 		vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
 			kPushConstantSize, &pushConstants);
 

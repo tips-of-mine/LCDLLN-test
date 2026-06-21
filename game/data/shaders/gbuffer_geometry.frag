@@ -34,7 +34,7 @@ layout(push_constant) uniform PushConstants {
     mat4 prevViewProj;
     mat4 viewProj;
     uint materialIndex;
-    uint _pad0;
+    float fade;     // 1.0 = opaque (anti-occlusion caméra)
     uint _pad1;
     uint _pad2;
 } pc;
@@ -46,6 +46,18 @@ layout(location = 3) out vec4 outVelocity; // GBufferVelocity (M07.3, .rg = curr
 
 void main()
 {
+    // Anti-occlusion caméra : transparence tramée (screen-door). fade=1 -> rien.
+    if (pc.fade < 0.999) {
+        const float bayer[16] = float[16](
+            0.0/16.0,  8.0/16.0,  2.0/16.0, 10.0/16.0,
+           12.0/16.0,  4.0/16.0, 14.0/16.0,  6.0/16.0,
+            3.0/16.0, 11.0/16.0,  1.0/16.0,  9.0/16.0,
+           15.0/16.0,  7.0/16.0, 13.0/16.0,  5.0/16.0);
+        ivec2 p = ivec2(gl_FragCoord.xy) & 3;
+        if (pc.fade < bayer[p.y * 4 + p.x])
+            discard;
+    }
+
     MaterialGpuData mat = uMaterialBuffer.materials[pc.materialIndex];
     vec2 tiledUv = vUv * mat.tiling;
 

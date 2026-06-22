@@ -3154,38 +3154,61 @@ namespace engine::server
 			return;
 		}
 
-		// Wire v13 — point de réapparition du type demandé (cimetière/auberge)
-		// LE PLUS PROCHE du lieu de mort ; repli : point d'entrée en monde.
+		// Wire v13 — point de réapparition du type demandé. CIMETIÈRE : défaut DÉTERMINISTE
+		// de la zone (1er éligible par faction), INDÉPENDANT de la position de mort
+		// (anti-triche, cf. bloc ci-dessous). AUBERGE : le plus proche du lieu de mort.
+		// Repli (aucun point trouvé) : point d'entrée en monde.
 		float respawnX = client->spawnPositionMetersX;
 		float respawnY = client->spawnPositionMetersY;
 		float respawnZ = client->spawnPositionMetersZ;
 		{
-			float bestDistSq = std::numeric_limits<float>::max();
 			bool found = false;
-			for (const RespawnPointDefinition& point : m_respawnPoints)
+			if (destination == kRespawnDestinationGraveyard)
 			{
-				if (point.zoneId != client->zoneId || point.destinationType != destination)
-					continue;
-				const float dxr = point.positionMetersX - client->positionMetersX;
-				const float dzr = point.positionMetersZ - client->positionMetersZ;
-				const float distSqR = dxr * dxr + dzr * dzr;
-				// Cimetière : filtre faction (rayon neutre). Auberge : aucune restriction.
-				if (destination == kRespawnDestinationGraveyard)
+				// Cimetière PAR DÉFAUT de la zone : le PREMIER cimetière éligible par
+				// propriété (neutre ou même faction), INDÉPENDANT de la position de mort.
+				// La position (client->positionMeters) est client-autoritaire donc
+				// spoofable : on ne l'utilise plus pour choisir le cimetière (anti-triche).
+				for (const RespawnPointDefinition& point : m_respawnPoints)
 				{
-					const float dist = std::sqrt(distSqR);
-					if (!engine::world::IsGraveyardEligibleForRespawn(
-							dist, point.neutralRadiusM, point.ownerFactionId, client->factionId))
+					if (point.zoneId != client->zoneId
+						|| point.destinationType != kRespawnDestinationGraveyard)
 					{
 						continue;
 					}
-				}
-				if (distSqR < bestDistSq)
-				{
-					bestDistSq = distSqR;
+					if (!engine::world::IsGraveyardEligibleAsZoneDefault(
+							point.ownerFactionId, client->factionId))
+					{
+						continue;
+					}
 					respawnX = point.positionMetersX;
 					respawnY = point.positionMetersY;
 					respawnZ = point.positionMetersZ;
 					found = true;
+					break; // 1er éligible (ordre de fichier) = défaut déterministe de la zone
+				}
+			}
+			else
+			{
+				// Auberge (inn) : comportement INCHANGÉ — le plus proche du lieu de mort.
+				float bestDistSq = std::numeric_limits<float>::max();
+				for (const RespawnPointDefinition& point : m_respawnPoints)
+				{
+					if (point.zoneId != client->zoneId || point.destinationType != destination)
+					{
+						continue;
+					}
+					const float dxr = point.positionMetersX - client->positionMetersX;
+					const float dzr = point.positionMetersZ - client->positionMetersZ;
+					const float distSqR = dxr * dxr + dzr * dzr;
+					if (distSqR < bestDistSq)
+					{
+						bestDistSq = distSqR;
+						respawnX = point.positionMetersX;
+						respawnY = point.positionMetersY;
+						respawnZ = point.positionMetersZ;
+						found = true;
+					}
 				}
 			}
 			if (!found)

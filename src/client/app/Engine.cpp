@@ -1216,6 +1216,18 @@ namespace engine
 	// The definitions JSON path defaults to "lights/dynamic_lights.json" relative to
 	// paths.content, overridable via "world.dynamic_lights_path" in config.json.
 	m_dynamicLights.Init(m_cfg);
+
+	// Anti-occlusion caméra — fondu tramé des props occultant la vue caméra→joueur.
+	// Réglable sans recompiler via les clés client.camera.occlusion_fade.* du config.
+	{
+		engine::render::CameraOcclusionFade::Config occCfg{};
+		occCfg.fadeMin             = static_cast<float>(m_cfg.GetDouble("client.camera.occlusion_fade.fade_min", 0.15));
+		occCfg.radiusMargin        = static_cast<float>(m_cfg.GetDouble("client.camera.occlusion_fade.radius_margin", 0.5));
+		occCfg.fadeInPerSec        = static_cast<float>(m_cfg.GetDouble("client.camera.occlusion_fade.fade_in_per_sec", 6.0));
+		occCfg.fadeOutPerSec       = static_cast<float>(m_cfg.GetDouble("client.camera.occlusion_fade.fade_out_per_sec", 8.0));
+		occCfg.playerProtectRadius = static_cast<float>(m_cfg.GetDouble("client.camera.occlusion_fade.player_protect_radius", 0.6));
+		m_cameraOcclusionFade.Init(occCfg);
+	}
 }
 
 	Engine::Engine(int argc, char** argv)
@@ -9893,6 +9905,36 @@ namespace engine
 
 				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
 				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, rmbLook, out.camera);
+
+				// --- Clamp anti-sous-sol : la caméra ne descend pas sous le terrain. ---
+				const bool occEnabled = m_cfg.GetBool("client.camera.occlusion_fade.enabled", true);
+				const float clampMargin = static_cast<float>(
+					m_cfg.GetDouble("client.camera.terrain_clamp_margin", 0.5));
+				const float groundY = m_terrain.SampleHeightAtWorldXZ(
+					out.camera.position.x, out.camera.position.z);
+				const float minCamY = groundY + clampMargin;
+				if (out.camera.position.y < minCamY)
+					out.camera.position.y = minCamY;
+
+				// --- Fondu d'occlusion : collecte des occulteurs (props + bâtiments). ---
+				// L'index `i` ci-dessous est l'identifiant d'occulteur ; il DOIT
+				// correspondre à l'index utilisé pour FadeFor dans RecordPropsGeometry
+				// (même conteneur m_props, même ordre dans la même frame).
+				if (occEnabled)
+				{
+					std::vector<engine::render::OccluderSphere> occluders;
+					occluders.reserve(m_props.size());
+					for (std::size_t i = 0; i < m_props.size(); ++i)
+					{
+						const auto& prop = m_props[i];
+						if (prop.occluderRadius <= 0.0f) continue;
+						occluders.push_back({ static_cast<std::uint32_t>(i),
+							prop.occluderCenter, prop.occluderRadius });
+					}
+					const engine::math::Vec3 focus = m_orbitalCameraController.GetTargetPosition();
+					m_cameraOcclusionFade.Update(out.camera.position, focus,
+						occluders, static_cast<float>(dt));
+				}
 			}
 
 			// Chat update : uniquement post-EnterWorld. Le rendu pre-game est desactive
@@ -13301,6 +13343,9 @@ namespace engine
 		{
 			const float* M = bakeM.m;  // column-major : M[col*4+row]
 			float minY = 1e30f, maxY = -1e30f;
+			// AABB monde complète (anti-occlusion caméra) — XZ figés ici (le lift
+			// ne décale que Y, appliqué plus bas aux bornes minY/maxY).
+			float bbMinX = 1e30f, bbMaxX = -1e30f, bbMinZ = 1e30f, bbMaxZ = -1e30f;
 			for (auto& v : cpu->vertices)
 			{
 				const float px = v.pos[0], py = v.pos[1], pz = v.pos[2];
@@ -13309,6 +13354,10 @@ namespace engine
 				v.pos[2] = M[2]*px + M[6]*py + M[10]*pz + M[14];
 				if (v.pos[1] < minY) minY = v.pos[1];
 				if (v.pos[1] > maxY) maxY = v.pos[1];
+				if (v.pos[0] < bbMinX) bbMinX = v.pos[0];
+				if (v.pos[0] > bbMaxX) bbMaxX = v.pos[0];
+				if (v.pos[2] < bbMinZ) bbMinZ = v.pos[2];
+				if (v.pos[2] > bbMaxZ) bbMaxZ = v.pos[2];
 				const float nx = v.normal[0], ny = v.normal[1], nz = v.normal[2];
 				float rnx = M[0]*nx + M[4]*ny + M[8]*nz;
 				float rny = M[1]*nx + M[5]*ny + M[9]*nz;
@@ -13325,6 +13374,18 @@ namespace engine
 				for (auto& v : cpu->vertices)
 					v.pos[1] += lift;
 			topY = maxY + lift;
+			// Anti-occlusion caméra — sphère englobante monde (AABB des sommets
+			// bakés, Y décalé du lift). Sert d'occulteur dans CameraOcclusionFade.
+			{
+				const float wMinY = minY + lift, wMaxY = maxY + lift;
+				prop.occluderCenter = engine::math::Vec3{
+					0.5f * (bbMinX + bbMaxX), 0.5f * (wMinY + wMaxY),
+					0.5f * (bbMinZ + bbMaxZ) };
+				const engine::math::Vec3 ext{
+					bbMaxX - bbMinX, wMaxY - wMinY, bbMaxZ - bbMinZ };
+				prop.occluderRadius =
+					0.5f * std::sqrt(ext.x * ext.x + ext.y * ext.y + ext.z * ext.z);
+			}
 			// Empreinte XZ auto (rayon max des sommets autour de l'axe (wx,wz)).
 			for (const auto& v : cpu->vertices)
 			{
@@ -14109,6 +14170,17 @@ namespace engine
 			if (prop.impostorRadius < 0.05f) prop.impostorRadius = 0.5f;
 		}
 
+		// Anti-occlusion caméra — sphère englobante monde (AABB des sommets bakés,
+		// déjà en espace monde car modelMatrix = identité). Sert d'occulteur dans
+		// CameraOcclusionFade. Si l'empreinte est dégénérée, le rayon reste positif.
+		{
+			prop.occluderCenter = engine::math::Vec3{
+				0.5f * (minX + maxX), 0.5f * (minY + maxY), 0.5f * (minZ + maxZ) };
+			const engine::math::Vec3 ext{ maxX - minX, maxY - minY, maxZ - minZ };
+			prop.occluderRadius =
+				0.5f * std::sqrt(ext.x * ext.x + ext.y * ext.y + ext.z * ext.z);
+		}
+
 		for (const auto& kv : idxByMat)
 		{
 			const std::string& matName = kv.first;
@@ -14375,8 +14447,12 @@ namespace engine
 		std::unordered_map<std::string, std::vector<engine::render::ImpostorInstance>> impostorBatches;
 
 		int drawn = 0, culled = 0, impostored = 0;
-		for (const auto& prop : m_props)
+		// Boucle indexée : propIndex sert de clé FadeFor (anti-occlusion caméra). Cet
+		// index DOIT correspondre à l'id d'occulteur poussé dans la boucle Update
+		// (même conteneur m_props, même ordre → même frame).
+		for (std::size_t propIndex = 0; propIndex < m_props.size(); ++propIndex)
 		{
+			const auto& prop = m_props[propIndex];
 			const float dxp = prop.worldPos.x - camPos.x;
 			const float dzp = prop.worldPos.z - camPos.z;
 			const float dist2 = dxp * dxp + dzp * dzp;
@@ -14431,6 +14507,9 @@ namespace engine
 			// dessine ses parties avec la variante de materiau Highlight (teinte).
 			const bool highlight =
 				(prop.interactableIndex >= 0 && prop.interactableIndex == m_interactableInRange);
+			// Fondu d'occlusion de ce prop (1.0 = opaque si non occulteur / inconnu).
+			const float occFade =
+				m_cameraOcclusionFade.FadeFor(static_cast<std::uint32_t>(propIndex));
 			for (const auto& part : prop.parts)
 			{
 				engine::render::MeshAsset* mesh = part.mesh.Get();
@@ -14443,7 +14522,8 @@ namespace engine
 					materialCache.GetDescriptorSet(),
 					prop.modelMatrix.m,
 					highlight ? part.highlightMaterialIndex : part.materialIndex,
-					true);
+					true,
+					occFade);
 			}
 		}
 

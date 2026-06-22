@@ -634,14 +634,15 @@ void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
         float prevViewProj[16];
         float viewProj[16];
         uint32_t materialIndex;
-        uint32_t pad0;
+        float    fade;      // toujours 1.0 : l'avatar n'est jamais fondu
         uint32_t pad1;
         uint32_t pad2;
     } pc;
     static_assert(sizeof(PushConstants) == 144, "PushConstants must match shader layout");
     std::memcpy(pc.prevViewProj, prevViewProj, sizeof(float) * 16);
     std::memcpy(pc.viewProj, viewProj, sizeof(float) * 16);
-    pc.pad0 = pc.pad1 = pc.pad2 = 0;
+    pc.fade = 1.0f;
+    pc.pad1 = pc.pad2 = 0;
 
     // 7. Bind des vertex buffers : per-vertex @ binding 0 (mesh), per-instance
     //    @ binding 1 (matrice modèle). Cf. layout vertex input dans Init.

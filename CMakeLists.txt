@@ -661,6 +661,7 @@ add_library(engine_core
   src/client/render/PsoKey.cpp
   src/client/render/PipelineCache.cpp
   src/client/render/GeometryPass.cpp
+  src/client/render/CameraOcclusionFade.cpp
   src/client/render/TerrainChunkPipeline.cpp
   src/client/render/terrain_chunk/ChunkRuntime.cpp
   src/client/render/terrain_chunk/DescriptorSetPool.cpp

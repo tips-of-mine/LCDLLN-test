@@ -937,6 +937,13 @@ elseif(UNIX)
   lcdlln_add_simple_test(composite_world_collider_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CompositeWorldColliderTests.cpp)
 
+  # Anti-occlusion caméra : module math pur CameraOcclusionFade (fondu tramé
+  # par occulteur + lissage temporel + purge). 9 cas : cœur, derrière joueur,
+  # derrière caméra, latéral, transition, garde joueur, lissage, purge, id inconnu.
+  lcdlln_add_simple_test(camera_occlusion_fade_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/tests/CameraOcclusionFadeTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/render/CameraOcclusionFade.cpp)
+
   # Lot 5 (anti-vol step-up) : un mur (prop normal) n'est PAS escaladable
   # (step-up plafonne a maxStep) alors qu'un escalier (PropCylinder::stair) reste
   # gravissable (step-up jusqu'a maxClimb). Integre controller + collider a 60 Hz.

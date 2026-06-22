@@ -52,6 +52,7 @@
 #include "src/shared/platform/Input.h"
 #include "src/shared/platform/Window.h"
 #include "src/client/render/AssetRegistry.h"
+#include "src/client/render/CameraOcclusionFade.h"
 #include "src/client/render/ImpostorAsset.h"
 #include "src/client/render/DecalSystem.h"
 #include "src/client/render/FrameGraph.h"
@@ -904,6 +905,11 @@ namespace engine
 			engine::math::Vec3 impostorCenter{ 0.0f, 0.0f, 0.0f };
 			/// M45.5 — rayon (m) de la sphère englobante (demi-taille du billboard).
 			float impostorRadius = 0.0f;
+			/// Anti-occlusion caméra — centre monde de la sphère englobante (AABB des
+			/// sommets cuits). Utilisé par CameraOcclusionFade pour le fondu.
+			engine::math::Vec3 occluderCenter{ 0.0f, 0.0f, 0.0f };
+			/// Anti-occlusion caméra — rayon monde de la sphère ; 0 = non occulteur.
+			float occluderRadius = 0.0f;
 		};
 		/// Props statiques rendus (chantier B), construits au boot depuis les
 		/// interactibles ayant un meshPath. Cf. LoadInteractableProps / RecordPropsGeometry.
@@ -1535,6 +1541,9 @@ namespace engine
 		/// Controleur camera 3eme personne post-EnterWorld (vue orbitale arriere).
 		/// Utilise UNIQUEMENT in-game (post-auth, pas en mode --editor / --world-editor).
 		engine::render::OrbitalCameraController m_orbitalCameraController;
+		/// Anti-occlusion caméra — calcule par frame le fondu tramé des props
+		/// occultant la vue caméra→joueur. Math pure, alimenté dans la boucle Update.
+		engine::render::CameraOcclusionFade m_cameraOcclusionFade;
 		engine::world::World m_world;
 		engine::world::StreamingScheduler m_streamingScheduler;
 		engine::world::StreamCache m_streamCache;

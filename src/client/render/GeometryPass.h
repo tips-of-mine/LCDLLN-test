@@ -50,7 +50,8 @@ namespace engine::render
 		            VkDescriptorSet materialDescriptorSet = VK_NULL_HANDLE,
 		            const float* instanceMatrix = nullptr,
 		            uint32_t materialIndex = 0,
-		            bool loadExistingGbuffer = false);
+		            bool loadExistingGbuffer = false,
+		            float fade = 1.0f);
 
 		/// M09.3: Records instanced draws for batches (mesh+material key). instanceBuffer holds mat4s at each batch's instanceBufferOffset.
 		void RecordInstanced(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,

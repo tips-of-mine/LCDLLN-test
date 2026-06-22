@@ -34,6 +34,24 @@ namespace engine::gameplay
 		bool wall = false;
 	};
 
+	/// Boîte de collision orientée pour une pièce de bâtiment (mur, jambage, linteau).
+	/// Empreinte = rectangle dans le plan XZ orienté par (axisX, axisZ) unitaires
+	/// monde, demi-dimensions (halfX, halfZ) ; bornée en Y par [loY, hiY]. Le sweep
+	/// capsule fait un test rectangle-orienté-vs-cercle(rayon capsule) dans XZ +
+	/// recouvrement vertical, calqué sur PropCylinder. Pas de dessus marchable
+	/// (wall=true) : une boîte de mur ne fait que bloquer latéralement (cf. #919).
+	struct PropBox
+	{
+		float cx = 0.0f, cz = 0.0f;          ///< centre XZ monde (m)
+		float halfX = 0.5f, halfZ = 0.1f;    ///< demi-dimensions du rectangle (m), > 0
+		engine::math::Vec3 axisX{ 1, 0, 0 }; ///< axe « largeur » monde (unitaire, XZ)
+		engine::math::Vec3 axisZ{ 0, 0, 1 }; ///< axe « épaisseur » monde (unitaire, XZ)
+		float loY = 0.0f, hiY = 2.0f;        ///< bornes Y monde [bas, haut]
+		bool passable = false; ///< aucune collision (battant de porte)
+		bool stair = false;    ///< gravissable (cf. CharacterController)
+		bool wall = true;      ///< barrière latérale pure, pas de dessus marchable
+	};
+
 	/// Collisionneur composite : combine un IWorldCollider de terrain (sol + eau) et
 	/// une liste de cylindres de props. SweepCapsule retourne le hit le plus proche
 	/// (plus petite fraction) entre le terrain et les cylindres. QueryWater est délégué
@@ -49,6 +67,9 @@ namespace engine::gameplay
 		void ClearCylinders() { m_cylinders.clear(); }
 		void AddCylinder(const PropCylinder& c) { m_cylinders.push_back(c); }
 		std::size_t CylinderCount() const { return m_cylinders.size(); }
+		void AddBox(const PropBox& b) { m_boxes.push_back(b); }
+		void ClearBoxes() { m_boxes.clear(); }
+		std::size_t BoxCount() const { return m_boxes.size(); }
 
 		bool SweepCapsule(const Capsule& capsule,
 			const engine::math::Vec3& startCenter,
@@ -60,5 +81,6 @@ namespace engine::gameplay
 	private:
 		const IWorldCollider* m_terrain = nullptr;
 		std::vector<PropCylinder> m_cylinders;
+		std::vector<PropBox> m_boxes;
 	};
 }

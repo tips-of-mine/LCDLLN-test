@@ -710,6 +710,7 @@ add_library(engine_core
   src/client/gameplay/ClientPrediction.cpp
   src/client/gameplay/StatusEffect.cpp
   src/client/world/WorldModel.cpp
+  src/client/world/BuildingCollisionCatalog.cpp
   src/client/world/OutputVersion.cpp
   src/client/world/ProbeData.cpp
   # Combat SP1 — apparences d'archétypes de créatures (rendu des mobs).

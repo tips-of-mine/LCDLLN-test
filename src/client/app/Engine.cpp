@@ -13507,6 +13507,18 @@ namespace engine
 		if (!m_pipeline) return;
 		namespace fs = std::filesystem;
 		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+
+		// Catalogue de collision des pièces (boîtes fines + portes passables).
+		// Absent -> catalogue vide -> fallback cylindre (rétro-compatible).
+		{
+			const std::string catPath = contentRoot + "/collision/building_pieces.json";
+			const std::string catJson = engine::platform::FileSystem::ReadAllText(catPath);
+			if (!catJson.empty() && m_buildingCollisionCatalog.LoadFromJson(catJson))
+				LOG_INFO(Render, "[Buildings] catalogue collision chargé ('{}')", catPath);
+			else
+				LOG_DEBUG(Render, "[Buildings] pas de catalogue collision ('{}') -> fallback cylindre", catPath);
+		}
+
 		const std::string zoneId = m_cfg.GetString("world.active_zone", "");
 
 		// Résolution du chemin : namespacé par zone si présent, sinon legacy plat.
@@ -14302,16 +14314,60 @@ namespace engine
 				{
 					if (ch >= 'A' && ch <= 'Z') ch = static_cast<char>(ch - 'A' + 'a');
 				}
-				engine::gameplay::PropCylinder cyl{ cx, cz, radius, minY, maxY };
-				cyl.passable = meshLower.find("door") != std::string::npos;
-				cyl.stair = (meshLower.find("escalier") != std::string::npos)
+				// Basename du mesh (sans dossier ni extension) pour le catalogue.
+				std::string meshBase = meshPath;
+				{
+					const auto sl = meshBase.find_last_of("/\\");
+					if (sl != std::string::npos) meshBase = meshBase.substr(sl + 1);
+					const auto dot = meshBase.find_last_of('.');
+					if (dot != std::string::npos) meshBase = meshBase.substr(0, dot);
+				}
+
+				const auto* piece = m_buildingCollisionCatalog.Lookup(meshBase);
+				const bool isStair = (meshLower.find("escalier") != std::string::npos)
 					|| (meshLower.find("stair") != std::string::npos);
-				// Pièce de bâtiment = MUR (barrière latérale pure, pas de dessus
-				// marchable), SAUF un escalier qui doit garder son dessus pour être
-				// gravi. Évite le « vol » : la sonde anti-encastrement ne peut plus
-				// remonter le perso au sommet du gros cylindre englobant de la pièce.
-				cyl.wall = !cyl.stair;
-				m_worldCollider.AddCylinder(cyl);
+				if (piece == nullptr)
+				{
+					// Fallback : comportement actuel (cylindre englobant), rétro-compatible.
+					// Pièce de bâtiment = MUR (barrière latérale pure, pas de dessus
+					// marchable), SAUF un escalier qui doit garder son dessus pour être
+					// gravi. Évite le « vol » : la sonde anti-encastrement ne peut plus
+					// remonter le perso au sommet du gros cylindre englobant de la pièce.
+					engine::gameplay::PropCylinder cyl{ cx, cz, radius, minY, maxY };
+					cyl.passable = meshLower.find("door") != std::string::npos;
+					cyl.stair = isStair;
+					cyl.wall = !cyl.stair;
+					m_worldCollider.AddCylinder(cyl);
+				}
+				else if (!piece->passable)
+				{
+					// Boîtes du catalogue : transformer chaque boîte LOCALE par la
+					// matrice monde de la pièce (worldM, column-major M[col*4+row]).
+					// Colonnes 3x3 = axes + échelle.
+					const float* M = worldM.m;
+					const engine::math::Vec3 colX{ M[0], M[1], M[2] };
+					const engine::math::Vec3 colY{ M[4], M[5], M[6] };
+					const engine::math::Vec3 colZ{ M[8], M[9], M[10] };
+					const float sX = std::sqrt(colX.x*colX.x + colX.y*colX.y + colX.z*colX.z);
+					const float sY = std::sqrt(colY.x*colY.x + colY.y*colY.y + colY.z*colY.z);
+					const float sZ = std::sqrt(colZ.x*colZ.x + colZ.y*colZ.y + colZ.z*colZ.z);
+					for (const auto& lb : piece->boxes)
+					{
+						// Centre local -> monde.
+						const float wx = M[0]*lb.cx + M[4]*lb.cy + M[8]*lb.cz  + M[12];
+						const float wy = M[1]*lb.cx + M[5]*lb.cy + M[9]*lb.cz  + M[13];
+						const float wz = M[2]*lb.cx + M[6]*lb.cy + M[10]*lb.cz + M[14];
+						engine::gameplay::PropBox box;
+						box.cx = wx; box.cz = wz;
+						box.halfX = lb.hx * sX; box.halfZ = lb.hz * sZ;
+						box.axisX = (sX > 1e-6f) ? engine::math::Vec3{ colX.x/sX, 0.0f, colX.z/sX } : engine::math::Vec3{ 1, 0, 0 };
+						box.axisZ = (sZ > 1e-6f) ? engine::math::Vec3{ colZ.x/sZ, 0.0f, colZ.z/sZ } : engine::math::Vec3{ 0, 0, 1 };
+						box.loY = wy - lb.hy * sY; box.hiY = wy + lb.hy * sY;
+						box.stair = isStair; box.wall = !isStair;
+						m_worldCollider.AddBox(box);
+					}
+				}
+				// piece->passable : on n'ajoute rien (battant franchissable).
 			}
 			m_props.push_back(std::move(prop));
 		}

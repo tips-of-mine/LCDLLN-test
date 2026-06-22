@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "_comment": "Catalogue de collision des pieces de batiment (boites orientees fines). Cle = basename mesh en minuscules. Valeurs = espace LOCAL du mesh (centre cx/cy/cz, demi-dim hx/hy/hz, metres), transformees par la matrice monde de la piece. Bounds mesurees depuis les accessors POSITION des .gltf (game/data/meshes/props). Murs = enveloppe X[-1,1] Y[0,3.12] Z[-0.31,0.09]. Portes (battants Door_*) = passable. Les SOLS (Floor_*) ne sont PAS catalogues ici : ils exigent une boite a dessus marchable (chantier de suivi).",
+
+  "pieces": {
+    "door_1_flat":  { "passable": true },
+    "door_1_round": { "passable": true },
+    "door_2_flat":  { "passable": true },
+    "door_2_round": { "passable": true },
+    "door_4_flat":  { "passable": true },
+    "door_4_round": { "passable": true },
+    "door_8_flat":  { "passable": true },
+    "door_8_round": { "passable": true },
+
+    "doorframe_flat_brick":     { "passable": true },
+    "doorframe_flat_wooddark":  { "passable": true },
+    "doorframe_round_brick":    { "passable": true },
+    "doorframe_round_wooddark": { "passable": true },
+
+    "wall_plaster_woodgrid": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_plaster_straight": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_plaster_straight_base": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_plaster_straight_l": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_plaster_straight_r": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_plaster_window_wide_flat": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_plaster_window_wide_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_plaster_window_thin_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_arch": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_unevenbrick_straight": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_unevenbrick_window_wide_flat": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_unevenbrick_window_wide_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_unevenbrick_window_thin_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+
+    "corner_exterior_wood": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.5, "cz": 0.0, "hx": 0.11, "hy": 1.5, "hz": 0.12 }
+    },
+
+    "wall_plaster_door_flat": {
+      "box_count": 3,
+      "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
+    },
+    "wall_plaster_door_round": {
+      "box_count": 3,
+      "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
+    },
+    "wall_plaster_door_roundinset": {
+      "box_count": 3,
+      "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
+    },
+    "wall_unevenbrick_door_flat": {
+      "box_count": 3,
+      "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
+    },
+    "wall_unevenbrick_door_round": {
+      "box_count": 3,
+      "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
+    }
+  }
+}

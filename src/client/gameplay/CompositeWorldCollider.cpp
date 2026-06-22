@@ -139,6 +139,67 @@ namespace engine::gameplay
 			}
 		}
 
+		// 3) Boîtes orientées de props (murs/jambages/linteaux de bâtiment).
+		//    Même découpage que les cylindres : recouvrement Y + empreinte XZ, mais
+		//    l'empreinte est un rectangle orienté au lieu d'un disque.
+		for (const auto& b : m_boxes)
+		{
+			if (b.passable) continue;
+
+			// Recouvrement vertical (identique aux cylindres).
+			const float capLo = endCenter.y - halfH - capsule.radius;
+			const float capHi = endCenter.y + halfH + capsule.radius;
+			if (capHi < b.loY || capLo > b.hiY - kStandSkin) continue;
+
+			// Projection du départ et du déplacement XZ dans le repère du rectangle.
+			const float r = capsule.radius;
+			const float rx = sx - b.cx, rz = sz - b.cz;
+			const float u0 = rx * b.axisX.x + rz * b.axisX.z; // le long de axisX
+			const float v0 = rx * b.axisZ.x + rz * b.axisZ.z; // le long de axisZ
+			const float du = dx * b.axisX.x + dz * b.axisX.z;
+			const float dv = dx * b.axisZ.x + dz * b.axisZ.z;
+
+			// AABB 2D élargi du rayon capsule (Minkowski cercle-vs-rectangle).
+			const float ex = b.halfX + r;
+			const float ez = b.halfZ + r;
+
+			// Slab test 2D (ray (u0,v0)+t(du,dv) vs [-ex,ex]x[-ez,ez]).
+			float tEnter = 0.0f, tExit = 1.0f;
+			int enterAxis = -1;     // 0 = axe u (axisX), 1 = axe v (axisZ)
+			float enterSign = 0.0f; // signe de la face d'entrée
+			bool separated = false;
+
+			// Lambda slab sur un axe : met à jour tEnter/tExit/enterAxis.
+			auto slab = [&](float p, float d, float e, int axis) {
+				if (std::fabs(d) < 1e-8f) { if (p < -e || p > e) separated = true; return; }
+				float t1 = (-e - p) / d, t2 = (e - p) / d;
+				float sgn = -1.0f; // face -e si d>0 (on entre par -e)
+				if (t1 > t2) { const float tmp = t1; t1 = t2; t2 = tmp; sgn = 1.0f; }
+				if (t1 > tEnter) { tEnter = t1; enterAxis = axis; enterSign = sgn; }
+				if (t2 < tExit) tExit = t2;
+			};
+			slab(u0, du, ex, 0);
+			slab(v0, dv, ez, 1);
+
+			if (separated || tEnter > tExit || tEnter > 1.0f) continue;
+			float tHit = tEnter < 0.0f ? 0.0f : tEnter; // déjà à l'intérieur -> bloque à 0
+			if (tHit >= best.fraction) continue;
+
+			best.hit = true;
+			best.fraction = tHit;
+			best.stair = b.stair;
+			// Normale = face d'entrée, exprimée en monde (axe XZ correspondant).
+			engine::math::Vec3 n{ 1, 0, 0 };
+			if (enterAxis == 0) n = engine::math::Vec3{ enterSign * b.axisX.x, 0.0f, enterSign * b.axisX.z };
+			else if (enterAxis == 1) n = engine::math::Vec3{ enterSign * b.axisZ.x, 0.0f, enterSign * b.axisZ.z };
+			else { // déjà à l'intérieur (tEnter<=0) : normale = sortie la plus proche en u.
+				n = engine::math::Vec3{ (u0 >= 0.0f ? b.axisX.x : -b.axisX.x), 0.0f, (u0 >= 0.0f ? b.axisX.z : -b.axisX.z) };
+			}
+			const float nlen = std::sqrt(n.x * n.x + n.z * n.z);
+			best.normal = nlen > 1e-6f ? engine::math::Vec3{ n.x / nlen, 0.0f, n.z / nlen }
+			                           : engine::math::Vec3{ 1.0f, 0.0f, 0.0f };
+		}
+
 		outHit = best;
 		return best.hit;
 	}

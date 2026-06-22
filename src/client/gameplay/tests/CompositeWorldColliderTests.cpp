@@ -160,6 +160,99 @@ int main()
 		check(std::fabs(side.normal.y) < 1e-3f, "mur: normale de flanc horizontale");
 	}
 
+	// === PropBox : boîte orientée (mur de bâtiment) ===
+	// Boîte centrée en (5,0), demi-dim (1.0 en X, 0.1 en Z) -> mur fin orienté
+	// selon les axes monde, de Y=0 à Y=3.
+	auto makeWall = []() {
+		PropBox b;
+		b.cx = 5.0f; b.cz = 0.0f; b.halfX = 1.0f; b.halfZ = 0.1f;
+		b.axisX = Vec3{ 1, 0, 0 }; b.axisZ = Vec3{ 0, 0, 1 };
+		b.loY = 0.0f; b.hiY = 3.0f; b.wall = true;
+		return b;
+	};
+
+	// B1) Capsule traversant la FACE large du mur (le long de +X, à z=0) : bloquée,
+	//     normale horizontale (selon -X, face d'approche).
+	{
+		CompositeWorldCollider c(&terrain); c.AddBox(makeWall());
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, hit);
+		check(h && hit.hit, "box: face -> hit");
+		check(std::fabs(hit.normal.y) < 1e-3f, "box: normale horizontale");
+		// Contact attendu : x = 5 - halfX(1.0) - r(0.3) = 3.7 -> fraction ~0.37.
+		check(hit.fraction > 0.30f && hit.fraction < 0.45f, "box: fraction plausible");
+	}
+
+	// B2) Capsule passant à CÔTÉ du mur fin (à z=2, au-delà de halfZ+r=0.4) : pas de hit.
+	{
+		CompositeWorldCollider c(&terrain); c.AddBox(makeWall());
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 1, 2 }, Vec3{ 10, 1, 2 }, hit);
+		check(!h, "box: a cote (hors epaisseur) -> pas de hit");
+	}
+
+	// B3) Capsule AU-DESSUS (Y=10, hors [loY,hiY]) : pas de hit.
+	{
+		CompositeWorldCollider c(&terrain); c.AddBox(makeWall());
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 10, 0 }, Vec3{ 10, 10, 0 }, hit);
+		check(!h, "box: au-dessus -> pas de hit");
+	}
+
+	// B4) Boîte passable : aucune collision.
+	{
+		PropBox p = makeWall(); p.passable = true;
+		CompositeWorldCollider c(&terrain); c.AddBox(p);
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, hit);
+		check(!h, "box passable: aucune collision");
+	}
+
+	// B5) Boîte tournée de 90° (axisX <-> axisZ) : un mur fin orienté selon Z.
+	//     halfX=1.0 le long de axisX=(0,0,1), halfZ=0.1 le long de axisZ=(1,0,0).
+	//     Donc fin en X (epaisseur 0.1), large en Z. Une capsule le long de +X
+	//     à z=0 traverse la fine épaisseur -> hit.
+	{
+		PropBox b = makeWall();
+		b.axisX = Vec3{ 0, 0, 1 }; b.axisZ = Vec3{ 1, 0, 0 };
+		CompositeWorldCollider c(&terrain); c.AddBox(b);
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, hit);
+		check(h && hit.hit, "box tournee: traverse l'epaisseur -> hit");
+		// Epaisseur le long de X = halfZ(0.1)+r(0.3)=0.4 -> contact x~4.6 -> frac~0.46.
+		check(hit.fraction > 0.40f && hit.fraction < 0.52f, "box tournee: fraction plausible");
+	}
+
+	// B6) MUR À PORTE — 3 boîtes (jambage gauche, jambage droit, linteau) laissant
+	//     une embrasure centrale libre. Le mur est à x=5, orienté face selon X.
+	//     Jambages : largeur (en Z) 0.4 chacun, à z=±0.75 ; épaisseur (en X) 0.2.
+	//     Linteau : au-dessus de la porte (loY=2.3), couvre toute la largeur en Z.
+	//     L'embrasure = bande z ∈ [-0.35, 0.35], y < 2.3. La capsule (h=1.8, r=0.3)
+	//     a un sommet effectif à y=2.2 (centre 1 + halfH 0.9 + rayon 0.3) : elle passe
+	//     donc SOUS le linteau à 2.3 (porte assez haute), mais bute les jambages.
+	{
+		auto jamb = [](float zc) {
+			PropBox b; b.cx = 5.0f; b.cz = zc; b.halfX = 0.1f; b.halfZ = 0.2f;
+			b.axisX = Vec3{ 1,0,0 }; b.axisZ = Vec3{ 0,0,1 }; b.loY = 0.0f; b.hiY = 3.0f;
+			return b;
+		};
+		PropBox lintel; lintel.cx = 5.0f; lintel.cz = 0.0f; lintel.halfX = 0.1f; lintel.halfZ = 1.0f;
+		lintel.axisX = Vec3{ 1,0,0 }; lintel.axisZ = Vec3{ 0,0,1 }; lintel.loY = 2.3f; lintel.hiY = 3.0f;
+
+		CompositeWorldCollider c(&terrain);
+		c.AddBox(jamb(-0.75f)); c.AddBox(jamb(0.75f)); c.AddBox(lintel);
+
+		// Traverser l'EMBRASURE (z=0, hauteur perso ~1.8 < linteau 2.1) : pas de hit.
+		IWorldCollider::SweepHit through;
+		bool ht = c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, through);
+		check(!ht, "porte: on traverse l'embrasure (pas de hit)");
+
+		// Viser un JAMBAGE (z=0.75) : bloqué.
+		IWorldCollider::SweepHit onJamb;
+		bool hj = c.SweepCapsule(cap, Vec3{ 0, 1, 0.75f }, Vec3{ 10, 1, 0.75f }, onJamb);
+		check(hj && onJamb.hit, "porte: on bute un jambage (hit)");
+	}
+
 	// 5) QueryWater délégué au terrain.
 	{
 		CompositeWorldCollider c(&terrain);

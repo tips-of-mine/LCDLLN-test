@@ -937,6 +937,12 @@ elseif(UNIX)
   lcdlln_add_simple_test(composite_world_collider_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CompositeWorldColliderTests.cpp)
 
+  # Catalogue de collision des bâtiments : parse JSON (via Config), passable,
+  # multi-boîtes, mesh absent -> nullptr, JSON invalide -> echec.
+  lcdlln_add_simple_test(building_collision_catalog_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/BuildingCollisionCatalog.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/world/tests/BuildingCollisionCatalogTests.cpp)
+
   # Anti-occlusion caméra : module math pur CameraOcclusionFade (fondu tramé
   # par occulteur + lissage temporel + purge). 9 cas : cœur, derrière joueur,
   # derrière caméra, latéral, transition, garde joueur, lissage, purge, id inconnu.

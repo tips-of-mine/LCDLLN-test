@@ -186,3 +186,17 @@
 - **Points « lire le voisin »** (assumés, non inventés) : patron `ChatImGuiRenderer` pour le renderer ; comment Engine dérive le `npcTargetId` d'un interactable (Talk) ; où `SetQuestActionCallback` est/doit être posé ; `WorldToScreenPx` + le masque de culling de l'overlay.
 - **Cohérence types** : `questId`=`std::string` ; `role` uint8 (0=giver,1=turnIn) cohérent entre `QuestGiverTable`, `UIModel.giverList` et le wire SP1.
 - **Testabilité** : logique (catalogue, table, réception) en TDD ; UI (renderer, marqueur) en intégration validée compilation + jeu (SP5).
+
+---
+
+## Task 4b : `npcTargetId` des interactables + Talk à l'ouverture du dialogue (fondation)
+
+**Motif (revue T4)** : `OpenDialogue` ouvre le dialogue PNJ **sans Talk**, donc `giverList.npcTargetId` est vide/périmé → l'accept/turn-in par dialogue cible le mauvais PNJ (serveur rejette). `InteractableEntity` n'a pas d'id réseau. Fondation aussi requise par le **marqueur (Task 6)**.
+
+**Files:** Modify `src/client/app/Engine.{h,cpp}`, `config.json` (+ contenu). **Intégration — pas de test unitaire** (validée compil CI + jeu).
+
+- [ ] **Step 1** — `InteractableEntity` (`Engine.h:854`) gagne `std::string npcTargetId;`. Chargé depuis `world.interactables.<i>.npc_target_id` (`Engine.cpp:5279-5300`), fallback vide.
+- [ ] **Step 2** — À `OpenDialogue` (`Engine.cpp:~9882`), si `entity.npcTargetId` non vide et le réseau gameplay est prêt : `m_gameplayUdp.SendTalkRequest(m_gameplayUdp.ServerClientId(), entity.npcTargetId)` (fire l'event Talk + déclenche `QuestGiverList` pour CE PNJ) et stocker `m_currentDialogueNpcTargetId = entity.npcTargetId`.
+- [ ] **Step 3** — La lambda `SetQuestActionCallback` (Task 4, `Engine.cpp:~8790`) utilise **`m_currentDialogueNpcTargetId`** (au lieu de `giverList.npcTargetId`) comme cible d'accept/turn-in. Réinitialiser à la fermeture du dialogue.
+- [ ] **Step 4** — Contenu : ajouter `npc_target_id` (ex. `"npc:elder_marn"`) au(x) interactable(s) PNJ dans `config.json`, cohérent avec `quest_givers.json`/`quest_definitions.json`.
+- [ ] **Step 5 : Vérif compil CI** ; **Commit** — `feat(quests-client): npcTargetId interactables + Talk à l'ouverture du dialogue`.

@@ -15,12 +15,13 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		ImVec4 IV(const LnTheme::Rgba& c) { return ImVec4(c.r, c.g, c.b, c.a); }
+		using LnTheme::ToImVec4;
 
 		/// Convertit ARGB8888 (cf. \ref engine::net::ChannelColorArgb) en ImVec4.
 		/// ImGui n'a pas d'overload qui prend un ARGB direct ; on décompose via masques.
@@ -78,8 +79,8 @@ namespace engine::render
 		// Background opaque (alpha=0.95) au lieu de 0.78 pour bien le voir sur fonds clairs et sombres.
 		ImGui::SetNextWindowBgAlpha(0.95f);
 
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.95f)));
-		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ToImVec4(LnTheme::PanelBg(0.95f)));
+		ImGui::PushStyleColor(ImGuiCol_Border,   ToImVec4(LnTheme::kBorder));
 
 		// inWorldShard ignore : le chat n'est rendu que post-EnterWorld (gating cote
 		// Engine.cpp), donc inWorldShard est toujours true ici en pratique. On garde
@@ -120,8 +121,8 @@ namespace engine::render
 				: (sizeof(kChannelsPostAuth) / sizeof(kChannelsPostAuth[0]));
 			const uint16_t mask = m_chat->ChannelFilterMask();
 			ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.f, 0.f, 0.f, 0.f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.20f)));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive,  IV(LnTheme::AccentDim(0.35f)));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.20f)));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ToImVec4(LnTheme::AccentDim(0.35f)));
 			for (size_t k = 0; k < kVisibleChannelsCount; ++k)
 			{
 				const uint8_t i = kVisibleChannels[k];
@@ -129,7 +130,7 @@ namespace engine::render
 				const bool visible = (mask & (1u << i)) != 0u;
 				const ImVec4 color = visible
 					? ArgbToIm(engine::net::ChannelColorArgb(static_cast<engine::net::ChatChannel>(i)))
-					: IV(LnTheme::kMuted);
+					: ToImVec4(LnTheme::kMuted);
 				ImGui::PushStyleColor(ImGuiCol_Text, color);
 				char buttonId[32];
 				// Pas de crochets [ ] autour du tag : Windlass.ttf n'a pas ces glyphes et
@@ -233,9 +234,9 @@ namespace engine::render
 					ImGui::SetKeyboardFocusHere();
 				}
 
-				ImGui::PushStyleColor(ImGuiCol_Text,    IV(LnTheme::kAccent));
-				ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
-				ImGui::PushStyleColor(ImGuiCol_Border,  IV(LnTheme::kBorder));
+				ImGui::PushStyleColor(ImGuiCol_Text,    ToImVec4(LnTheme::kAccent));
+				ImGui::PushStyleColor(ImGuiCol_FrameBg, ToImVec4(LnTheme::kSurface));
+				ImGui::PushStyleColor(ImGuiCol_Border,  ToImVec4(LnTheme::kBorder));
 				ImGui::Text("> ");
 				ImGui::SameLine(0.f, 4.f);
 				ImGui::SetNextItemWidth(-FLT_MIN); // remplit la ligne restante
@@ -256,7 +257,7 @@ namespace engine::render
 			}
 			else
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::TextUnformatted("/ pour tchatter  -  1..0 filtres canal");
 				ImGui::PopStyleColor();
 			}

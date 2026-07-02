@@ -5,12 +5,13 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		ImVec4 IV(const LnTheme::Rgba& c) { return ImVec4(c.r, c.g, c.b, c.a); }
+		using LnTheme::ToImVec4;
 	}
 
 	void EditorHubImGuiRenderer::Render(float viewportW, float viewportH)
@@ -25,8 +26,8 @@ namespace engine::render
 		ImGui::SetNextWindowPos(ImVec2(margin, margin));
 		ImGui::SetNextWindowBgAlpha(0.78f);
 
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.78f)));
-		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ToImVec4(LnTheme::PanelBg(0.78f)));
+		ImGui::PushStyleColor(ImGuiCol_Border,   ToImVec4(LnTheme::kBorder));
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration
 			| ImGuiWindowFlags_NoMove
@@ -38,7 +39,7 @@ namespace engine::render
 		if (ImGui::Begin("##ln_editor_hub", nullptr, flags))
 		{
 			// Header LCDLLN Editor + indicator dirty.
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 			if (m_editor->IsDirty())
 				ImGui::TextUnformatted("[LCDLLN Editor] *dirty*");
 			else
@@ -52,13 +53,13 @@ namespace engine::render
 			const std::string& title = m_editor->GetHubTitle();
 			if (!title.empty())
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 				ImGui::TextWrapped("%s", title.c_str());
 				ImGui::PopStyleColor();
 			}
 			else
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::TextUnformatted("(en attente du premier RefreshShell...)");
 				ImGui::PopStyleColor();
 			}

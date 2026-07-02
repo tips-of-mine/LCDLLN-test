@@ -23,16 +23,13 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		/// Convertit une couleur LnTheme::Rgba en ImVec4 pour les appels de style ImGui.
-		ImVec4 IV(const LnTheme::Rgba& c)
-		{
-			return ImVec4(c.r, c.g, c.b, c.a);
-		}
+		using LnTheme::ToImVec4;
 	} // namespace
 
 	/// Affiche l'ecran de creation de personnage en 2 colonnes : apercu 3D a
@@ -102,7 +99,7 @@ namespace engine::render
 
 			// ---------------- Colonne gauche : apercu visuel ----------------
 			ImGui::TableSetColumnIndex(0);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 			ImGui::TextUnformatted("APERCU");
 			ImGui::PopStyleColor();
 			if (m_racePreview && m_racePreview->IsValid())
@@ -127,7 +124,7 @@ namespace engine::render
 			DrawField(nameLabel.c_str(), m_charName, static_cast<int>(sizeof(m_charName)));
 			for (const auto& line : rm.bodyLines)
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::TextWrapped("%s", line.text.c_str());
 				ImGui::PopStyleColor();
 			}
@@ -148,7 +145,7 @@ namespace engine::render
 			{
 				// ---- Combo FACTION (seulement les factions selectionnables) ----
 				ImGui::Spacing();
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 				ImGui::TextUnformatted("FACTION");
 				ImGui::PopStyleColor();
 
@@ -186,7 +183,7 @@ namespace engine::render
 				// Affiche la race deduite en lecture seule (pas de combo race).
 				if (hasRaces && m_charRaceIdx >= 0 && m_charRaceIdx < static_cast<int>(races->size()))
 				{
-					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+					ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 					ImGui::Text("Race : %s", (*races)[m_charRaceIdx].displayName.c_str());
 					ImGui::PopStyleColor();
 				}
@@ -195,7 +192,7 @@ namespace engine::render
 				const std::vector<engine::client::FactionClass>* facClasses =
 					ccPresenter->GetFactionClasses(realFactionIdx);
 				ImGui::Spacing();
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 				ImGui::TextUnformatted("CLASSE");
 				ImGui::PopStyleColor();
 				if (facClasses && !facClasses->empty())
@@ -240,7 +237,7 @@ namespace engine::render
 				if (!facDesc.empty() || !clsDesc.empty())
 				{
 					ImGui::Spacing();
-					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+					ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 					if (!facDesc.empty())
 						ImGui::TextWrapped("%s", facDesc.c_str());
 					if (!facDesc.empty() && !clsDesc.empty())
@@ -254,7 +251,7 @@ namespace engine::render
 			{
 				// Repli : ancien combo RACE pur (aucune faction chargee).
 				ImGui::Spacing();
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 				ImGui::TextUnformatted("RACE");
 				ImGui::PopStyleColor();
 				std::vector<const char*> labels;
@@ -268,7 +265,7 @@ namespace engine::render
 			else
 			{
 				ImGui::Spacing();
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 				ImGui::TextUnformatted("RACE");
 				ImGui::PopStyleColor();
 				ImGui::TextDisabled("(liste des races indisponible)");
@@ -279,7 +276,7 @@ namespace engine::render
 			// Genre : 0 = Masculin (male), 1 = Feminin (female). Deux RadioButtons cote
 			// a cote. La bascule met a jour l'apercu 3D (mesh genre) plus bas.
 			ImGui::Spacing();
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 			ImGui::TextUnformatted("GENRE");
 			ImGui::PopStyleColor();
 			ImGui::RadioButton("Masculin", &m_charGender, 0);
@@ -289,7 +286,7 @@ namespace engine::render
 			// Teinte de peau : 0 = Claire, 1 = Foncée. Visible sur les parties de
 			// peau exposées (mains avec le Ranger ; corps entier avec un futur mesh).
 			ImGui::Spacing();
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 			ImGui::TextUnformatted("TEINTE DE PEAU");
 			ImGui::PopStyleColor();
 			ImGui::RadioButton("Claire", &m_charSkinTone, 0);
@@ -327,7 +324,7 @@ namespace engine::render
 					}
 
 					ImGui::Spacing();
-					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+					ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 					ImGui::TextUnformatted("APPARENCE PHYSIQUE");
 					ImGui::PopStyleColor();
 

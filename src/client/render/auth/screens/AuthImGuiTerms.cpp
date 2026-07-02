@@ -9,16 +9,13 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		/// Convertit une couleur LnTheme::Rgba en ImVec4 pour les appels de style ImGui.
-		ImVec4 IV(const LnTheme::Rgba& c)
-		{
-			return ImVec4(c.r, c.g, c.b, c.a);
-		}
+		using LnTheme::ToImVec4;
 	} // namespace
 
 	/// Affiche l'ecran des CGU : metadonnees en en-tete, texte integral defilant, case a cocher d'acquittement, et boutons Refuser / Accepter.
@@ -56,7 +53,7 @@ namespace engine::render
 				{
 					continue;
 				}
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::TextWrapped("%s", line.text.c_str());
 				ImGui::PopStyleColor();
 			}
@@ -70,7 +67,7 @@ namespace engine::render
 		if (m_authPresenter != nullptr)
 		{
 			const std::string& full = m_authPresenter->TermsFullTextForImGui();
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 			ImGui::TextUnformatted(full.c_str());
 			ImGui::PopStyleColor();
 			const float scrollY = ImGui::GetScrollY();

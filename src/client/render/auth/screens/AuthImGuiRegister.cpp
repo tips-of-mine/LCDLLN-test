@@ -10,16 +10,13 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		/// Convertit une couleur theme en ImVec4 pour ImGui::PushStyleColor.
-		ImVec4 IV(const LnTheme::Rgba& c)
-		{
-			return ImVec4(c.r, c.g, c.b, c.a);
-		}
+		using LnTheme::ToImVec4;
 	}
 
 	/// Affiche le formulaire d'inscription : identifiant, e-mail, mots de passe, date de naissance, pays, nom/prenom, et boutons Retour/Creer.
@@ -77,7 +74,7 @@ namespace engine::render
 			DrawAuthGoldField(rm.fields[4], m_regEmail, static_cast<int>(sizeof(m_regEmail)), false);
 			if (!rm.authRegisterEmailHint.empty())
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.82f);
 				ImGui::TextWrapped("%s", rm.authRegisterEmailHint.c_str());
 				ImGui::SetWindowFontScale(1.f);
@@ -132,7 +129,7 @@ namespace engine::render
 			const std::string& dayLab = rm.dropdowns[0].label.empty() ? std::string("JOUR") : rm.dropdowns[0].label;
 			const std::string& monLab = rm.dropdowns[1].label.empty() ? std::string("MOIS") : rm.dropdowns[1].label;
 			const std::string& yrLab = rm.dropdowns[2].label.empty() ? std::string("ANNEE") : rm.dropdowns[2].label;
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 			ImGui::TextUnformatted(dayLab.c_str());
 			ImGui::SameLine();
 			ImGui::SetCursorPosX(ddStartX + ddW + ddGap);
@@ -141,8 +138,8 @@ namespace engine::render
 			ImGui::SetCursorPosX(ddStartX + (ddW + ddGap) * 2.f);
 			ImGui::TextUnformatted(yrLab.c_str());
 			ImGui::PopStyleColor();
-			ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, ToImVec4(LnTheme::kSurface));
+			ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 			ImGui::SetNextItemWidth(ddW);
 			if (!dayPtrs.empty())
@@ -174,7 +171,7 @@ namespace engine::render
 						ch = static_cast<char>(ch - 'a' + 'A');
 					}
 				}
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 				ImGui::TextUnformatted(lab.c_str());
 				ImGui::PopStyleColor();
 				if (!rm.authRegisterCountryPick.empty())
@@ -182,8 +179,8 @@ namespace engine::render
 					m_regCountryComboIdx =
 						std::clamp(m_regCountryComboIdx, 0, static_cast<int>(rm.authRegisterCountryPick.size()) - 1);
 					const std::string& preview = rm.authRegisterCountryPick[static_cast<size_t>(m_regCountryComboIdx)].second;
-					ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
-					ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+					ImGui::PushStyleColor(ImGuiCol_FrameBg, ToImVec4(LnTheme::kSurface));
+					ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 					ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 					if (ImGui::BeginCombo("##reg_country", preview.c_str()))
 					{
@@ -242,7 +239,7 @@ namespace engine::render
 		auto drawRule = [this, &tr](int32_t state, const char* key, const char* fallback) {
 			if (state < 0) return;                       // non évalué (champ vide)
 			const bool ok = (state == 1);
-			ImGui::PushStyleColor(ImGuiCol_Text, ok ? IV(LnTheme::kAccent) : IV(LnTheme::kErrorCol));
+			ImGui::PushStyleColor(ImGuiCol_Text, ok ? ToImVec4(LnTheme::kAccent) : ToImVec4(LnTheme::kErrorCol));
 			ImGui::Text("%s %s", ok ? "[v]" : "[x]", tr(key, fallback).c_str());
 			ImGui::PopStyleColor();
 		};
@@ -300,7 +297,7 @@ namespace engine::render
 			if (!rm.authRegisterShowErrorsLabel.empty() && !canSubmit)
 			{
 				ImGui::SameLine(0.f, 18.f);
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				if (ImGui::SmallButton(rm.authRegisterShowErrorsLabel.c_str()) && m_authPresenter != nullptr && m_authCfg != nullptr)
 				{
 					m_authPresenter->ImGuiRegisterPreviewValidationErrors(*m_authCfg);

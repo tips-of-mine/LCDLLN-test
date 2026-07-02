@@ -11,12 +11,13 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		ImVec4 IV(const LnTheme::Rgba& c) { return ImVec4(c.r, c.g, c.b, c.a); }
+		using LnTheme::ToImVec4;
 
 		/// Transforme une cle de ressource snake_case en libelle affichable :
 		/// chaque '_' devient une espace, la premiere lettre passe en majuscule,
@@ -68,8 +69,8 @@ namespace engine::render
 		ImGui::SetNextWindowSize(ImVec2(panelW, panelH), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowBgAlpha(0.95f);
 
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.95f)));
-		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ToImVec4(LnTheme::PanelBg(0.95f)));
+		ImGui::PushStyleColor(ImGuiCol_Border,   ToImVec4(LnTheme::kBorder));
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
 		if (ImGui::Begin("Personnage##ln_character_sheet", nullptr, flags))

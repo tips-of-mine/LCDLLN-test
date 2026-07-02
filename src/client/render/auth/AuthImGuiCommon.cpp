@@ -12,16 +12,13 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		/// Convertit une couleur thème en ImVec4 pour ImGui.
-		ImVec4 IV(const LnTheme::Rgba& c)
-		{
-			return ImVec4(c.r, c.g, c.b, c.a);
-		}
+		using LnTheme::ToImVec4;
 	}
 
 	/// Dessine une bannière colorée avec un titre accentué et un message de corps enroulé.
@@ -51,7 +48,7 @@ namespace engine::render
 		ImGui::PopStyleColor();
 		if (!message.empty())
 		{
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 			ImGui::TextWrapped("%.*s", static_cast<int>(message.size()), message.data());
 			ImGui::PopStyleColor();
 		}
@@ -84,20 +81,20 @@ namespace engine::render
 		const ImU32 fillOff = IM_COL32(40, 48, 62, 255);
 		const ImU32 fillOn = IM_COL32(72, 90, 48, 255);
 		dl->AddRectFilled(a, b, on ? fillOn : fillOff, trackH * 0.5f);
-		dl->AddRect(a, b, ImGui::ColorConvertFloat4ToU32(IV(LnTheme::kBorder)), trackH * 0.5f, 0, 1.f);
+		dl->AddRect(a, b, ImGui::ColorConvertFloat4ToU32(ToImVec4(LnTheme::kBorder)), trackH * 0.5f, 0, 1.f);
 		const float thumbR = (trackH - pad * 2.f) * 0.5f;
 		const float cx = on ? (b.x - pad - thumbR) : (a.x + pad + thumbR);
 		const float cy = (a.y + b.y) * 0.5f;
-		dl->AddCircleFilled(ImVec2(cx, cy), thumbR, ImGui::ColorConvertFloat4ToU32(IV(LnTheme::kAccent)));
+		dl->AddCircleFilled(ImVec2(cx, cy), thumbR, ImGui::ColorConvertFloat4ToU32(ToImVec4(LnTheme::kAccent)));
 
 		ImGui::SameLine(0.f, 12.f);
 		ImGui::BeginGroup();
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 		ImGui::TextUnformatted(label.data(), label.data() + static_cast<int>(label.size()));
 		ImGui::PopStyleColor();
 		if (!hint.empty())
 		{
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 			ImGui::SetWindowFontScale(0.82f);
 			ImGui::TextWrapped("%.*s", static_cast<int>(hint.size()), hint.data());
 			ImGui::SetWindowFontScale(1.f);
@@ -119,9 +116,9 @@ namespace engine::render
 		id.append(label.data(), label.size());
 		id.append(idSuffix.data(), idSuffix.size());
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.10f)));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.10f)));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.18f)));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.f, 8.f));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
 		const bool pressed = ImGui::Button(id.c_str());
@@ -137,10 +134,10 @@ namespace engine::render
 		{
 			ImGui::BeginDisabled();
 		}
-		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kPrimary));
+		ImGui::PushStyleColor(ImGuiCol_Button, ToImVec4(LnTheme::kPrimary));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.39f, 0.58f, 0.82f, 1.f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.19f, 0.38f, 0.62f, 1.f));
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		std::string id;
 		id.append(label.data(), label.size());
@@ -158,11 +155,11 @@ namespace engine::render
 	/// Dessine un bouton fantôme (fond surface, bordure texte) occupant toute la largeur disponible.
 	bool DrawAuthButtonGhost(std::string_view label, std::string_view idSuffix)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.1f)));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.16f)));
-		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kText));
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_Button, ToImVec4(LnTheme::kSurface));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.1f)));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.16f)));
+		ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		std::string id;
@@ -178,7 +175,7 @@ namespace engine::render
 	void DrawAuthKeycapRow(std::string_view leftKey, std::string_view leftDesc, std::string_view midKey, std::string_view midDesc,
 		std::string_view rightKey, std::string_view rightDesc)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 		ImGui::Text("[%.*s] %.*s", static_cast<int>(leftKey.size()), leftKey.data(), static_cast<int>(leftDesc.size()), leftDesc.data());
 		ImGui::SameLine(0.f, 14.f);
 		ImGui::Text("[%.*s] %.*s", static_cast<int>(midKey.size()), midKey.data(), static_cast<int>(midDesc.size()), midDesc.data());
@@ -194,15 +191,15 @@ namespace engine::render
 		const float avail = ImGui::GetContentRegionAvail().x;
 		ImGui::Columns(2, "##auth_keybind", false);
 		ImGui::SetColumnWidth(0, (std::max)(120.f, avail * 0.55f));
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 		ImGui::TextUnformatted(actionName.data(), actionName.data() + static_cast<int>(actionName.size()));
 		ImGui::PopStyleColor();
 		ImGui::NextColumn();
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 		ImGui::TextUnformatted(keyLabel.data(), keyLabel.data() + static_cast<int>(keyLabel.size()));
 		ImGui::PopStyleColor();
 		ImGui::Columns(1);
-		ImGui::PushStyleColor(ImGuiCol_Separator, IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_Separator, ToImVec4(LnTheme::kBorder));
 		ImGui::Separator();
 		ImGui::PopStyleColor();
 		ImGui::PopID();
@@ -211,10 +208,10 @@ namespace engine::render
 	/// Dessine un bouton d'action destructrice (fond rouge erreur) pleine largeur.
 	bool DrawAuthButtonDanger(std::string_view label, std::string_view idSuffix)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kErrorCol));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.18f)));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::kErrorCol));
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_Button, ToImVec4(LnTheme::kErrorCol));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.18f)));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::kErrorCol));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		std::string id;
 		id.append(label.data(), label.size());

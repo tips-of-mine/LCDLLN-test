@@ -41,6 +41,7 @@
 #include "src/client/dialogue/DialogueConfigLoader.h"
 #include "src/client/render/DialogueImGuiRenderer.h"
 #include "src/client/render/ChatImGuiRenderer.h"
+#include "src/client/render/QuestImGuiRenderer.h"
 #include "src/client/render/MailImGuiRenderer.h"
 #include "src/client/render/GmTicketImGuiRenderer.h"
 #include "src/client/render/ReputationImGuiRenderer.h"

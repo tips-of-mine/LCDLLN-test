@@ -14,12 +14,13 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		ImVec4 IV(const LnTheme::Rgba& c) { return ImVec4(c.r, c.g, c.b, c.a); }
+		using LnTheme::ToImVec4;
 
 		/// Rend une chaine "il y a X minutes/heures/jours" a partir d'un timestamp UTC ms.
 		/// Pour V1 on reste simple : pas d'i18n, hardcode FR. Si timestamp vide ou futur,
@@ -86,8 +87,8 @@ namespace engine::render
 		ImGui::SetNextWindowSize(ImVec2(panelW, panelH), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowBgAlpha(0.95f);
 
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.95f)));
-		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ToImVec4(LnTheme::PanelBg(0.95f)));
+		ImGui::PushStyleColor(ImGuiCol_Border,   ToImVec4(LnTheme::kBorder));
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
 		if (ImGui::Begin("Boite mail##ln_mail_panel", nullptr, flags))
@@ -208,7 +209,7 @@ namespace engine::render
 					ImGui::Spacing();
 					if (it->bodyLoaded)
 					{
-						ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kSurface));
+						ImGui::PushStyleColor(ImGuiCol_ChildBg, ToImVec4(LnTheme::kSurface));
 						ImGui::BeginChild("##ln_mail_body", ImVec2(0.f, 100.f), true,
 							ImGuiWindowFlags_HorizontalScrollbar);
 						ImGui::TextWrapped("%s", it->body.c_str());

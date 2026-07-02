@@ -11,16 +11,13 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		/// Convertit une couleur theme en ImVec4 pour ImGui.
-		ImVec4 IV(const LnTheme::Rgba& c)
-		{
-			return ImVec4(c.r, c.g, c.b, c.a);
-		}
+		using LnTheme::ToImVec4;
 
 		/// Concatene dans l'ordre les chiffres valides des 6 cases de saisie.
 		std::string PackVerifySlotsInOrder(const char slots[7])
@@ -91,7 +88,7 @@ namespace engine::render
 
 		const std::string& digitLab =
 			rm.authVerifyDigitLabel.empty() ? std::string("CODE DE VERIFICATION") : rm.authVerifyDigitLabel;
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 		ImGui::SetWindowFontScale(0.78f);
 		ImGui::TextUnformatted(digitLab.c_str());
 		ImGui::SetWindowFontScale(1.f);
@@ -123,10 +120,10 @@ namespace engine::render
 				one[0] = m_verifyCode[i];
 			}
 			ImGui::SetNextItemWidth(boxW);
-			ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_FrameBgActive, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_Border, borderActive ? IV(LnTheme::kPrimary) : IV(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, ToImVec4(LnTheme::kSurface));
+			ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ToImVec4(LnTheme::kSurface));
+			ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ToImVec4(LnTheme::kSurface));
+			ImGui::PushStyleColor(ImGuiCol_Border, borderActive ? ToImVec4(LnTheme::kPrimary) : ToImVec4(LnTheme::kBorder));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 			ImGui::SetWindowFontScale((std::min)(1.28f, (std::max)(1.f, vpW * 0.0022f)));
@@ -169,10 +166,10 @@ namespace engine::render
 			const std::string& chmail = rm.authVerifyChangeEmailLabel;
 			const float lw = ImGui::CalcTextSize(resend.c_str()).x + 20.f + ImGui::CalcTextSize(chmail.c_str()).x;
 			ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - lw) * 0.5f + ImGui::GetCursorPosX());
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.06f)));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.10f)));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.06f)));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.10f)));
 			if (ImGui::SmallButton((resend + "##resend").c_str()) && m_authPresenter != nullptr)
 			{
 				std::memset(m_verifyCode, 0, sizeof(m_verifyCode));
@@ -201,10 +198,10 @@ namespace engine::render
 			const float colW = ImGui::GetContentRegionAvail().x;
 			const float backBtnW = (std::max)(80.f, colW - capW - 10.f);
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.08f)));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.15f)));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.08f)));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.15f)));
+			ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 			if (ImGui::Button(backLbl.c_str(), ImVec2(backBtnW, 36.f)) && m_authPresenter != nullptr)
@@ -214,14 +211,14 @@ namespace engine::render
 			ImGui::PopStyleVar(2);
 			ImGui::PopStyleColor(5);
 			ImGui::SameLine(0.f, 8.f);
-			ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_ChildBg, ToImVec4(LnTheme::kSurface));
+			ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 			ImGui::BeginChild("##verify_keycap", ImVec2(capW, 36.f), true, ImGuiWindowFlags_NoScrollbar);
 			ImGui::PopStyleVar(2);
 			ImGui::PopStyleColor(2);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 			const float tcx = (capW - ImGui::CalcTextSize(kcap.c_str()).x) * 0.5f;
 			ImGui::SetCursorPosX(tcx);
 			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 6.f);
@@ -238,7 +235,7 @@ namespace engine::render
 			}
 			if (!rm.authVerifySubmitKeycap.empty())
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.82f);
 				const float sk = ImGui::CalcTextSize(rm.authVerifySubmitKeycap.c_str()).x;
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (ImGui::GetContentRegionAvail().x - sk) * 0.5f);
@@ -254,7 +251,7 @@ namespace engine::render
 
 		if (!rm.authVerifyDevHint.empty())
 		{
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 			ImGui::SetWindowFontScale(0.88f);
 			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.92f);
 			const float hintW = (std::min)(560.f, vpW * 0.92f);
@@ -316,7 +313,7 @@ namespace engine::render
 
 		const std::string& digitLab =
 			rm.authVerifyDigitLabel.empty() ? std::string("CODE DE VERIFICATION") : rm.authVerifyDigitLabel;
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 		ImGui::SetWindowFontScale(0.78f);
 		ImGui::TextUnformatted(digitLab.c_str());
 		ImGui::SetWindowFontScale(1.f);
@@ -348,10 +345,10 @@ namespace engine::render
 				one[0] = m_verifyCode[i];
 			}
 			ImGui::SetNextItemWidth(boxW);
-			ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_FrameBgActive, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_Border, borderActive ? IV(LnTheme::kPrimary) : IV(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, ToImVec4(LnTheme::kSurface));
+			ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ToImVec4(LnTheme::kSurface));
+			ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ToImVec4(LnTheme::kSurface));
+			ImGui::PushStyleColor(ImGuiCol_Border, borderActive ? ToImVec4(LnTheme::kPrimary) : ToImVec4(LnTheme::kBorder));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 			ImGui::SetWindowFontScale((std::min)(1.28f, (std::max)(1.f, vpW * 0.0022f)));
@@ -393,7 +390,7 @@ namespace engine::render
 		{
 			if (!rm.authVerifyCodeExpiredMessage.empty())
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kErrorCol));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kErrorCol));
 				ImGui::SetWindowFontScale(0.88f);
 				const float msgW = ImGui::CalcTextSize(rm.authVerifyCodeExpiredMessage.c_str()).x;
 				ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - msgW) * 0.5f + ImGui::GetCursorPosX());
@@ -403,10 +400,10 @@ namespace engine::render
 				ImGui::Spacing();
 			}
 			const std::string resendLbl = rm.authVerifyResendLabel.empty() ? std::string("Renvoyer le code") : rm.authVerifyResendLabel;
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.06f)));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.10f)));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.06f)));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.10f)));
 			const float resendW = ImGui::CalcTextSize(resendLbl.c_str()).x + 16.f;
 			ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - resendW) * 0.5f + ImGui::GetCursorPosX());
 			if (ImGui::SmallButton((resendLbl + "##resend_conf").c_str()) && m_authPresenter != nullptr && m_authCfg != nullptr)
@@ -433,10 +430,10 @@ namespace engine::render
 			const float colW = ImGui::GetContentRegionAvail().x;
 			const float backBtnW = (std::max)(80.f, colW - capW - 10.f);
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.08f)));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.15f)));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.08f)));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.15f)));
+			ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 			if (ImGui::Button(backLbl.c_str(), ImVec2(backBtnW, 36.f)) && m_authPresenter != nullptr)
@@ -446,14 +443,14 @@ namespace engine::render
 			ImGui::PopStyleVar(2);
 			ImGui::PopStyleColor(5);
 			ImGui::SameLine(0.f, 8.f);
-			ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_ChildBg, ToImVec4(LnTheme::kSurface));
+			ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 			ImGui::BeginChild("##emailconf_keycap", ImVec2(capW, 36.f), true, ImGuiWindowFlags_NoScrollbar);
 			ImGui::PopStyleVar(2);
 			ImGui::PopStyleColor(2);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 			const float tcx = (capW - ImGui::CalcTextSize(kcap.c_str()).x) * 0.5f;
 			ImGui::SetCursorPosX(tcx);
 			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 6.f);
@@ -470,7 +467,7 @@ namespace engine::render
 			}
 			if (!rm.authVerifySubmitKeycap.empty())
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.82f);
 				const float sk = ImGui::CalcTextSize(rm.authVerifySubmitKeycap.c_str()).x;
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (ImGui::GetContentRegionAvail().x - sk) * 0.5f);
@@ -486,7 +483,7 @@ namespace engine::render
 
 		if (!rm.authVerifyDevHint.empty())
 		{
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 			ImGui::SetWindowFontScale(0.88f);
 			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.92f);
 			const float hintW = (std::min)(560.f, vpW * 0.92f);

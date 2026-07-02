@@ -16,15 +16,13 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		ImVec4 IV(const LnTheme::Rgba& c)
-		{
-			return ImVec4(c.r, c.g, c.b, c.a);
-		}
+		using LnTheme::ToImVec4;
 	}
 
 	void AuthImGuiRenderer::RenderCharacterSelectScreen(const RenderModel& rm, float vpW, float vpH)
@@ -60,7 +58,7 @@ namespace engine::render
 		const std::string hintStr = tr("auth.character_select.hint");
 		if (!hintStr.empty())
 		{
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 			ImGui::SetWindowFontScale(0.85f);
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 620.f);
 			ImGui::TextWrapped("%s", hintStr.c_str());
@@ -75,7 +73,7 @@ namespace engine::render
 
 		if (entries.empty())
 		{
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 			ImGui::TextWrapped("%s", tr("auth.character_select.empty").c_str());
 			ImGui::PopStyleColor();
 		}
@@ -88,9 +86,9 @@ namespace engine::render
 				const bool isSelected = (static_cast<int>(i) == selected);
 
 				ImGui::PushStyleColor(ImGuiCol_ChildBg,
-					isSelected ? IV(LnTheme::AccentDim(0.1f)) : IV(LnTheme::kSurface));
+					isSelected ? ToImVec4(LnTheme::AccentDim(0.1f)) : ToImVec4(LnTheme::kSurface));
 				ImGui::PushStyleColor(ImGuiCol_Border,
-					isSelected ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
+					isSelected ? ToImVec4(LnTheme::kAccent) : ToImVec4(LnTheme::kBorder));
 				ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 6.f);
 				ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, isSelected ? 2.f : 1.f);
 				char rowId[40];
@@ -101,7 +99,7 @@ namespace engine::render
 
 				const std::string nameUpper = c.name.empty() ? std::string("?") : c.name;
 				ImGui::PushStyleColor(ImGuiCol_Text,
-					isSelected ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
+					isSelected ? ToImVec4(LnTheme::kAccent) : ToImVec4(LnTheme::kText));
 				ImGui::SetWindowFontScale(1.05f);
 				ImGui::TextUnformatted(nameUpper.c_str());
 				ImGui::SetWindowFontScale(1.f);
@@ -162,7 +160,7 @@ namespace engine::render
 				// Symbole race (lettre) en accent juste avant la subline si dispo.
 				if (raceSym != '\0')
 				{
-					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+					ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 					ImGui::SetWindowFontScale(0.95f);
 					char symBuf[2] = { raceSym, '\0' };
 					ImGui::TextUnformatted(symBuf);
@@ -170,7 +168,7 @@ namespace engine::render
 					ImGui::PopStyleColor();
 					ImGui::SameLine(0.f, 8.f);
 				}
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.82f);
 				ImGui::TextUnformatted(sub.c_str());
 				ImGui::SetWindowFontScale(1.f);
@@ -187,10 +185,10 @@ namespace engine::render
 				ImGui::SetCursorPos(ImVec2(btnX, (kRowH - 28.f) * 0.5f));
 				if (isConfirming)
 				{
-					ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kErrorCol));
-					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::kErrorCol));
-					ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::kErrorCol));
-					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+					ImGui::PushStyleColor(ImGuiCol_Button, ToImVec4(LnTheme::kErrorCol));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::kErrorCol));
+					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::kErrorCol));
+					ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 					char btnId[48];
 					std::snprintf(btnId, sizeof(btnId), "%s##chardel_confirm%zu",
 						tr("auth.character_select.delete_confirm").c_str(), i);
@@ -204,9 +202,9 @@ namespace engine::render
 				else
 				{
 					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.08f)));
-					ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kErrorCol));
-					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kErrorCol));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.08f)));
+					ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kErrorCol));
+					ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kErrorCol));
 					ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 					ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 					char btnId[48];
@@ -255,10 +253,10 @@ namespace engine::render
 			if (disabled)
 				ImGui::BeginDisabled();
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.08f)));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.15f)));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.08f)));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.15f)));
+			ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 			const bool clicked = ImGui::Button(label, ImVec2(w, 32.f));
@@ -287,10 +285,10 @@ namespace engine::render
 		ImGui::SameLine(0.f, 0.f);
 		if (!canPlay)
 			ImGui::BeginDisabled();
-		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kPrimary));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.25f)));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.35f)));
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_Button, ToImVec4(LnTheme::kPrimary));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.25f)));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.35f)));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		const bool playClick = ImGui::Button(playStr.c_str(), ImVec2(playW, 32.f));
 		ImGui::PopStyleVar(1);

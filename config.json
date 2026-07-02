@@ -241,6 +241,10 @@
             "enabled": true,
             "timeout_ms": 5000
         },
+        "quest": {
+            "_comment_giver_marker": "SP2 Task 6 - distance max (metres) au-dela de laquelle le marqueur world-space (rune) au-dessus d'un PNJ donneur/receveur de quete n'est plus dessine. Culling independant du rayon d'interaction (touche E, ~2.5 m) qui reste local a l'entite.",
+            "giver_marker_distance_m": 35.0
+        },
         "gameplay_udp": {
             "enabled": false,
             "host": "127.0.0.1",

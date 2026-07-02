@@ -10686,6 +10686,83 @@ namespace engine
 						fg->AddRect(ImVec2(bx, by), ImVec2(bx + bw, by + bh), IM_COL32(255, 220, 80, 255), 4.0f, 0, 2.0f);
 						fg->AddText(ImVec2(bx + pad, by + pad), IM_COL32(255, 220, 80, 255), "E");
 					}
+					// SP2 Task 6 — Marqueur world-space donneur de quête : rune procédurale
+					// (losange + anneau) au-dessus des PNJ liés à une quête en cours de
+					// proposition ou de rendu. Source des liens PNJ<->quête : table
+					// data-driven chargée au boot (cf. Init, m_questGiverTable.Load).
+					// Statuts UIModel.quests miroir de engine::client::QuestStatus (wire
+					// uint8) — dupliqués en constantes locales comme QuestImGuiRenderer.cpp
+					// pour ne pas tirer de dépendance supplémentaire ici.
+					if (!e.npcTargetId.empty())
+					{
+						constexpr uint8_t kQuestStatusOffered = 1;
+						constexpr uint8_t kQuestStatusReadyToTurnIn = 3;
+						const std::vector<engine::client::QuestGiverLink>* links = m_questGiverTable.ForNpc(e.npcTargetId);
+						if (links != nullptr && !links->empty())
+						{
+							// Culling distance : seulement si le PNJ est à portée « visible »
+							// configurée (defaut 35 m), indépendamment du rayon d'interaction
+							// (e.radius, ~2.5 m) qui régit le badge "E".
+							const engine::math::Vec3 markerPlayerPos = m_characterController.GetPosition();
+							const float mdx = e.position.x - markerPlayerPos.x;
+							const float mdy = e.position.y - markerPlayerPos.y;
+							const float mdz = e.position.z - markerPlayerPos.z;
+							const float markerDist = std::sqrt(mdx * mdx + mdy * mdy + mdz * mdz);
+							const float markerMaxDist = static_cast<float>(
+								m_cfg.GetDouble("client.quest.giver_marker_distance_m", 35.0));
+							if (markerDist <= markerMaxDist)
+							{
+								// Priorité d'affichage si plusieurs liens : rendre > proposer
+								// (un PNJ à la fois donneur ET receveur pour des quêtes
+								// différentes doit d'abord signaler ce qu'il attend du joueur).
+								bool hasOffer = false;
+								bool hasTurnIn = false;
+								const auto& questsModel = m_uiModelBinding.GetModel().quests;
+								for (const engine::client::QuestGiverLink& link : *links)
+								{
+									for (const engine::client::UIQuestEntry& q : questsModel)
+									{
+										if (q.questId != link.questId)
+											continue;
+										if (link.role == 0 && q.status == kQuestStatusOffered)
+											hasOffer = true;
+										else if (link.role == 1 && q.status == kQuestStatusReadyToTurnIn)
+											hasTurnIn = true;
+									}
+								}
+								if (hasOffer || hasTurnIn)
+								{
+									// Ancrage : ~2.2 m au-dessus de la tête (my = sol + 1.9, tête
+									// approx au-dessus -> on projette depuis le sol + 2.2 direct
+									// pour rester simple et stable si le mesh du PNJ varie).
+									const float runeWorldY = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 2.2f;
+									float rsx = 0.0f, rsy = 0.0f;
+									if (WorldToScreenPx(out.viewProjMatrix.m, e.position.x, runeWorldY, e.position.z, ivw, ivh, rsx, rsy))
+									{
+										// Rendre prioritaire sur proposer si les deux sont vrais.
+										const bool turnInVariant = hasTurnIn;
+										const ImU32 runeFill = turnInVariant
+											? IM_COL32(120, 200, 255, 235)   // rendre : teinte bleu-glacé
+											: IM_COL32(255, 205, 60, 235);   // proposer : doré plein
+										const ImU32 runeRing = turnInVariant
+											? IM_COL32(230, 245, 255, 255)
+											: IM_COL32(255, 240, 190, 255);
+										const float runeR = 11.0f;
+										// Losange (4 sommets) rempli.
+										const ImVec2 diamond[4] = {
+											ImVec2(rsx, rsy - runeR),
+											ImVec2(rsx + runeR * 0.62f, rsy),
+											ImVec2(rsx, rsy + runeR),
+											ImVec2(rsx - runeR * 0.62f, rsy),
+										};
+										fg->AddConvexPolyFilled(diamond, 4, runeFill);
+										// Anneau autour du losange pour la lisibilité + signature "rune".
+										fg->AddCircle(ImVec2(rsx, rsy), runeR + 3.0f, runeRing, 16, 2.0f);
+									}
+								}
+							}
+						}
+					}
 				}
 				// TD.4 — Plaques de nom au-dessus des avatars joueurs distants.
 				// Source : `m_uiModelBinding.GetModel().remoteEntities` (peuple par

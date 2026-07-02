@@ -144,21 +144,17 @@ Marqueur donneur (world-space) : interactables + UIModel.giverList/quests + tabl
 
 ---
 
-## 4. Décisions à confirmer (relecture)
+## 4. Décisions (verrouillées)
 
-1. **Rendu de la rune** : l'overview a retenu « asset dédié ». La police Windlass étant
-   ASCII-only (atlas), deux options : **(a)** petite **texture rune** (PNG) chargée +
-   dessinée en billboard/`ImGui::Image` foreground — fidèle à « asset dédié » ; **(b)**
-   **rune procédurale** dessinée à l'`ImDrawList` (polygones/anneaux, 2 teintes) — zéro
-   asset, plus simple, atlas-safe. **Ma reco V1 : (b) procédurale** (rapide, cohérente
-   avec l'overlay existant), asset texture en polish ultérieur. À trancher.
-2. **`questKey`** : ajout d'un champ string aux choix de dialogue (plutôt qu'une table de
-   mapping int→string). OK ?
-3. **Périmètre** : minimap **POI** reste en **SP3** (SP2 = journal + tracker + dialogue +
-   panneau donneur + marqueur). La minimap n'est pas rendue par SP2. OK ?
-4. **Contenu table donneurs** : fichier client dédié `quest_givers.json` vs champs
-   `giver`/`turnIn` recopiés dans `quest_texts.<lang>.json`. Reco : **fichier dédié
-   `quest_givers.json`** (non localisé, une seule source). OK ?
+1. **Rendu de la rune** : ✅ **procédurale** — dessinée à l'`ImDrawList` (polygones/anneaux,
+   2 teintes : doré plein `Offered` / variante `ReadyToTurnIn`) dans l'overlay foreground
+   existant. Zéro asset, atlas-safe. Une texture dédiée reste un polish ultérieur possible.
+2. **`questKey`** : ✅ champ `string` optionnel ajouté aux choix de dialogue (pas de table
+   de mapping int→string parallèle).
+3. **Périmètre** : ✅ minimap **POI** en **SP3**. SP2 = journal + tracker + dialogue +
+   panneau donneur + marqueur ; SP2 ne rend pas la minimap.
+4. **Table donneurs** : ✅ fichier client dédié **`game/data/quests/quest_givers.json`**
+   (non localisé, source unique du mapping `npcTargetId → {questId, role}`).
 
 ---
 

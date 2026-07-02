@@ -14,22 +14,14 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		/// Convertit une couleur LnTheme::Rgba en ImVec4 pour les appels de style ImGui.
-		ImVec4 IV(const LnTheme::Rgba& c)
-		{
-			return ImVec4(c.r, c.g, c.b, c.a);
-		}
-
-		/// Convertit une couleur LnTheme::Rgba en ImU32 pour les appels de draw list ImGui.
-		ImU32 U32(const LnTheme::Rgba& c)
-		{
-			return ImGui::ColorConvertFloat4ToU32(IV(c));
-		}
+		using LnTheme::ToImVec4;
+		using LnTheme::ToU32;
 
 		/// Retourne vrai si le tag de locale correspond a une variante anglaise (en, en-GB, en_US...).
 		bool IsEnglishLocaleTag(std::string_view tag)
@@ -50,8 +42,8 @@ namespace engine::render
 			}
 			else
 			{
-				dl->AddRectFilled(ImVec2(x, y), ImVec2(x + fw, y + fh), U32(LnTheme::kSurface));
-				dl->AddRect(ImVec2(x, y), ImVec2(x + fw, y + fh), U32(LnTheme::kBorder), 2.f, 0, 1.f);
+				dl->AddRectFilled(ImVec2(x, y), ImVec2(x + fw, y + fh), ToU32(LnTheme::kSurface));
+				dl->AddRect(ImVec2(x, y), ImVec2(x + fw, y + fh), ToU32(LnTheme::kBorder), 2.f, 0, 1.f);
 			}
 		}
 	} // namespace
@@ -117,7 +109,7 @@ namespace engine::render
 			}
 
 			const ImU32 borderCol =
-				isSelected ? U32(LnTheme::kAccent) : (itemHovered ? U32(LnTheme::kPrimary) : U32(LnTheme::kBorder));
+				isSelected ? ToU32(LnTheme::kAccent) : (itemHovered ? ToU32(LnTheme::kPrimary) : ToU32(LnTheme::kBorder));
 			const float borderThick = isSelected ? 2.f : 1.f;
 			dl->AddRect(rmin, rmax, borderCol, 8.f, 0, borderThick);
 
@@ -136,10 +128,10 @@ namespace engine::render
 			const float textX = fx + flagW + 12.f;
 			const float textY = rmin.y + (cardSize.y - textBlockH) * 0.5f;
 			const ImVec2 namePos(textX, textY);
-			dl->AddText(font, nameSize, namePos, U32(LnTheme::kText), nameCaps.data(), nameCaps.data() + static_cast<int>(nameCaps.size()));
+			dl->AddText(font, nameSize, namePos, ToU32(LnTheme::kText), nameCaps.data(), nameCaps.data() + static_cast<int>(nameCaps.size()));
 
 			const ImVec2 natPos(textX, textY + nameSize + 4.f);
-			dl->AddText(font, nativeSz, natPos, U32(LnTheme::kMuted), nativeLn.data(), nativeLn.data() + static_cast<int>(nativeLn.size()));
+			dl->AddText(font, nativeSz, natPos, ToU32(LnTheme::kMuted), nativeLn.data(), nativeLn.data() + static_cast<int>(nativeLn.size()));
 		}
 		return clicked;
 	}
@@ -178,7 +170,7 @@ namespace engine::render
 			const std::string info = m_authPresenter->UiTranslate("language.first_run.info_popup");
 			if (!info.empty())
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.82f);
 				ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 680.f);
 				ImGui::TextWrapped("%s", info.c_str());
@@ -219,10 +211,10 @@ namespace engine::render
 
 		const float btnW = 200.f;
 		ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - btnW + ImGui::GetCursorPosX());
-		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kPrimary));
+		ImGui::PushStyleColor(ImGuiCol_Button, ToImVec4(LnTheme::kPrimary));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.39f, 0.58f, 0.82f, 1.f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.19f, 0.38f, 0.62f, 1.f));
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		char contId[256];
 		std::snprintf(contId, sizeof(contId), "%s##lang_continue", contLabel.c_str());

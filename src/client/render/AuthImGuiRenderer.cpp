@@ -18,20 +18,14 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		ImVec4 IV(const LnTheme::Rgba& c)
-		{
-			return ImVec4(c.r, c.g, c.b, c.a);
-		}
-
-		ImU32 U32(const LnTheme::Rgba& c)
-		{
-			return ImGui::ColorConvertFloat4ToU32(IV(c));
-		}
+		using LnTheme::ToImVec4;
+		using LnTheme::ToU32;
 
 		void StrCopyTrunc(char* dst, size_t dstSz, const std::string& s)
 		{
@@ -486,7 +480,7 @@ namespace engine::render
 		{
 			if (BeginPanel(420.f, viewportW, viewportH, rm.sectionTitle.c_str(), "", ""))
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::TextWrapped("%s", rm.infoBanner.c_str());
 				ImGui::PopStyleColor();
 				EndPanel();
@@ -504,7 +498,7 @@ namespace engine::render
 		// Fond plein écran FIGÉ sur le thème par défaut (or_royal), invariant au
 		// thème actif : changer de thème de race ne doit recolorer que les
 		// panneaux, pas le fond (demande utilisateur). Cf. LnTheme::AuthBackdrop.
-		ImVec4 bg = IV(LnTheme::AuthBackdrop());
+		ImVec4 bg = ToImVec4(LnTheme::AuthBackdrop());
 		bg.w = windowBgAlpha;
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, bg);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
@@ -534,7 +528,7 @@ namespace engine::render
 		const float topMargin = (std::max)(24.f, vpH * 0.05f);
 		ImGui::SetCursorPosY(topMargin);
 		ImGui::SetWindowFontScale(5.0f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
 		ImGui::SetCursorPosX((std::max)(0.f, (titleZoneW - w1) * 0.5f));
 		ImGui::TextUnformatted(h1.c_str());
@@ -545,7 +539,7 @@ namespace engine::render
 		{
 			ImGui::Dummy(ImVec2(0.f, 28.f));
 			ImGui::SetWindowFontScale(2.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
 			ImGui::SetCursorPosX((std::max)(0.f, (titleZoneW - w2) * 0.5f));
 			ImGui::TextUnformatted(rm.titleLine2.c_str());
@@ -568,8 +562,8 @@ namespace engine::render
 			: (vpH * 0.28f);
 		ImGui::SetCursorPos(ImVec2(panelX, panelY));
 
-		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::PanelBg()));
-		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_ChildBg, ToImVec4(LnTheme::PanelBg()));
+		ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.f, 18.f));
@@ -601,7 +595,7 @@ namespace engine::render
 		}
 		if (!title.empty())
 		{
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 			ImGui::SetWindowFontScale(1.15f);
 			ImGui::TextUnformatted(title.data(), title.data() + static_cast<int>(title.size()));
 			ImGui::SetWindowFontScale(1.f);
@@ -621,12 +615,12 @@ namespace engine::render
 				const float r = side * 0.42f;
 				const ImVec2 center(ip.x + side * 0.5f, ip.y + side * 0.5f);
 				ImDrawList* dl = ImGui::GetWindowDrawList();
-				dl->AddCircle(center, r, U32(LnTheme::kMuted), 0, 1.25f);
-				dl->AddText(ImVec2(center.x - ImGui::CalcTextSize("i").x * 0.5f, ip.y + 1.f), U32(LnTheme::kMuted), "i");
+				dl->AddCircle(center, r, ToU32(LnTheme::kMuted), 0, 1.25f);
+				dl->AddText(ImVec2(center.x - ImGui::CalcTextSize("i").x * 0.5f, ip.y + 1.f), ToU32(LnTheme::kMuted), "i");
 				ImGui::Dummy(ImVec2(side, side));
 				ImGui::SameLine(0.f, gap);
 			}
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 			ImGui::TextUnformatted(versionLabel.data(), versionLabel.data() + static_cast<int>(versionLabel.size()));
 			ImGui::PopStyleColor();
 		}
@@ -637,7 +631,7 @@ namespace engine::render
 			ImGui::Dummy(ImVec2(0.f, 6.f));
 			if (subtitleWelcomeAccent)
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.92f);
 				ImGui::SetWindowFontScale(0.95f);
 				ImGui::TextWrapped("%.*s", static_cast<int>(subtitle.size()), subtitle.data());
@@ -647,12 +641,12 @@ namespace engine::render
 			}
 			else
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::TextWrapped("%.*s", static_cast<int>(subtitle.size()), subtitle.data());
 				ImGui::PopStyleColor();
 			}
 		}
-		ImGui::PushStyleColor(ImGuiCol_Separator, IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_Separator, ToImVec4(LnTheme::kBorder));
 		ImGui::Separator();
 		ImGui::PopStyleColor();
 		// Anciennement : ImGui::Spacing() (= Dummy(0, 8)) apres le Separator. Total
@@ -673,7 +667,7 @@ namespace engine::render
 
 	void AuthImGuiRenderer::DrawLangFooterHints(std::string_view left, std::string_view right)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 		ImGui::SetWindowFontScale(0.88f);
 		if (!left.empty() && !right.empty())
 		{
@@ -705,7 +699,7 @@ namespace engine::render
 				ch = static_cast<char>(ch - 'a' + 'A');
 			}
 		}
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 		ImGui::TextUnformatted(lab.c_str());
 		ImGui::PopStyleColor();
 
@@ -716,10 +710,10 @@ namespace engine::render
 			ImGui::Dummy(ImVec2(0.f, extraSpacingPx));
 		}
 
-		ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
-		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, IV(LnTheme::kSurface));
-		ImGui::PushStyleColor(ImGuiCol_FrameBgActive, IV(LnTheme::kSurface));
-		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_FrameBg, ToImVec4(LnTheme::kSurface));
+		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ToImVec4(LnTheme::kSurface));
+		ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ToImVec4(LnTheme::kSurface));
+		ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 		// FramePadding.y bumpe de 3 (defaut ImGui) a 8 px > InputText  13 + 16 = 29 px
@@ -817,17 +811,17 @@ namespace engine::render
 		const ImU32 fillOff = IM_COL32(40, 48, 62, 255);
 		const ImU32 fillOn = IM_COL32(72, 90, 48, 255);
 		dl->AddRectFilled(a, b, on ? fillOn : fillOff, trackH * 0.5f);
-		dl->AddRect(a, b, U32(LnTheme::kBorder), trackH * 0.5f, 0, 1.f);
+		dl->AddRect(a, b, ToU32(LnTheme::kBorder), trackH * 0.5f, 0, 1.f);
 		const float thumbR = (trackH - pad * 2.f) * 0.5f;
 		const float cx = on ? (b.x - pad - thumbR) : (a.x + pad + thumbR);
 		const float cy = (a.y + b.y) * 0.5f;
-		dl->AddCircleFilled(ImVec2(cx, cy), thumbR, U32(LnTheme::kAccent));
+		dl->AddCircleFilled(ImVec2(cx, cy), thumbR, ToU32(LnTheme::kAccent));
 		// Libelle dessine via la draw list par-dessus la zone invisible (pas de SameLine + Text qui
 		// deplacerait le curseur d'une ligne et casserait le hit-test ci-dessus).
 		const float labelX = b.x + 12.f;
 		const ImVec2 ts = ImGui::CalcTextSize(rememberTitle.c_str());
 		const float labelY = (a.y + b.y) * 0.5f - ts.y * 0.5f;
-		dl->AddText(ImVec2(labelX, labelY), U32(LnTheme::kText), rememberTitle.c_str());
+		dl->AddText(ImVec2(labelX, labelY), ToU32(LnTheme::kText), rememberTitle.c_str());
 	}
 
 	void AuthImGuiRenderer::DrawLoginFooterChips(const RenderModel& rm)
@@ -852,8 +846,8 @@ namespace engine::render
 			const float keyW = ImGui::CalcTextSize(chip.first.c_str()).x + 16.f;
 			const float descW = ImGui::CalcTextSize(chip.second.c_str()).x + 12.f;
 			const float chipW = keyW + descW + 8.f;
-			ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_ChildBg, ToImVec4(LnTheme::kSurface));
+			ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 			char cid[48];
@@ -861,12 +855,12 @@ namespace engine::render
 			ImGui::BeginChild(cid, ImVec2(chipW, 40.f), true, ImGuiWindowFlags_NoScrollbar);
 			ImGui::PopStyleVar(2);
 			ImGui::PopStyleColor(2);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 			ImGui::SetWindowFontScale(0.92f);
 			ImGui::TextUnformatted(chip.first.c_str());
 			ImGui::PopStyleColor();
 			ImGui::SameLine(0.f, 6.f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 			ImGui::SetWindowFontScale(0.78f);
 			ImGui::TextUnformatted(chip.second.c_str());
 			ImGui::SetWindowFontScale(1.f);
@@ -902,14 +896,14 @@ namespace engine::render
 			if (i > 0u)
 			{
 				ImGui::SameLine(0.f, 0.f);
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::TextUnformatted(" \xE2\x80\x94 ");
 				ImGui::PopStyleColor();
 				ImGui::SameLine(0.f, 0.f);
 			}
 			const bool done = static_cast<int>(i) < cur;
 			const bool active = static_cast<int>(i) == cur;
-			const ImVec4 col = done ? IV(LnTheme::kSuccess) : (active ? IV(LnTheme::kAccent) : IV(LnTheme::kMuted));
+			const ImVec4 col = done ? ToImVec4(LnTheme::kSuccess) : (active ? ToImVec4(LnTheme::kAccent) : ToImVec4(LnTheme::kMuted));
 			ImGui::PushStyleColor(ImGuiCol_Text, col);
 			if (active)
 			{
@@ -975,14 +969,14 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(badgePadX, badgePadY));
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.92f)));
-		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kAccent));
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ToImVec4(LnTheme::PanelBg(0.92f)));
+		ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kAccent));
 		ImGui::Begin("##ln_login_lang_badge",
 			nullptr,
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
 				| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoInputs
 				| ImGuiWindowFlags_NoScrollbar);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 		ImGui::TextUnformatted(m_loginLangBadgeText.c_str());
 		ImGui::PopStyleColor();
 		ImGui::End();
@@ -1013,8 +1007,8 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.f, 12.f));
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.78f)));
-		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ToImVec4(LnTheme::PanelBg(0.78f)));
+		ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 		ImGui::Begin("##ln_auth_tweaks",
 			nullptr,
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
@@ -1024,7 +1018,7 @@ namespace engine::render
 		// 0.85x compense le titre login agrandi, en gardant les boutons cliquables.
 		ImGui::SetWindowFontScale(0.85f);
 
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 		ImGui::TextUnformatted("THEME DE RACE");
 		ImGui::PopStyleColor();
 		ImGui::Spacing();
@@ -1042,10 +1036,10 @@ namespace engine::render
 				if (cur == order[i]) { m_langTweakRace = i; break; }
 		}
 
-		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.12f)));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
-		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_Button, ToImVec4(LnTheme::kSurface));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.12f)));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.18f)));
+		ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 		// Grille 3x2 (6 races). Etat selectionne : on reprend le style VALIDE du menu Pause
@@ -1061,7 +1055,7 @@ namespace engine::render
 				}
 				const int idx = r * 3 + c;
 				const bool sel = (m_langTweakRace == idx);
-				ImGui::PushStyleColor(ImGuiCol_Text, sel ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
+				ImGui::PushStyleColor(ImGuiCol_Text, sel ? ToImVec4(LnTheme::kAccent) : ToImVec4(LnTheme::kText));
 				char id[40];
 				std::snprintf(id, sizeof(id), "%s##race_%d", kRaceLabels[idx], idx);
 				if (ImGui::Button(id, ImVec2(btnW, 0.f)))
@@ -1080,7 +1074,7 @@ namespace engine::render
 				if (sel)
 				{
 					ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
-						ImGui::ColorConvertFloat4ToU32(IV(LnTheme::kAccent)), 4.f, 0, 1.5f);
+						ImGui::ColorConvertFloat4ToU32(ToImVec4(LnTheme::kAccent)), 4.f, 0, 1.5f);
 				}
 				ImGui::PopStyleColor(1);
 			}
@@ -1089,14 +1083,14 @@ namespace engine::render
 		ImGui::PopStyleColor(4);
 
 		ImGui::Spacing();
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 		ImGui::TextUnformatted("FOND ANIME");
 		ImGui::PopStyleColor();
 		ImGui::Spacing();
-		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.12f)));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
-		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_Button, ToImVec4(LnTheme::kSurface));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.12f)));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.18f)));
+		ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 		{
@@ -1106,12 +1100,12 @@ namespace engine::render
 			// Meme style selectionne que la grille de races : contour dore AddRect + texte accent.
 			const float half = (ImGui::GetContentRegionAvail().x - 6.f) * 0.5f;
 			const auto drawToggle = [&](const char* label, bool active) -> bool {
-				ImGui::PushStyleColor(ImGuiCol_Text, active ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
+				ImGui::PushStyleColor(ImGuiCol_Text, active ? ToImVec4(LnTheme::kAccent) : ToImVec4(LnTheme::kText));
 				const bool clicked = ImGui::Button(label, ImVec2(half, 0.f));
 				if (active)
 				{
 					ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
-						ImGui::ColorConvertFloat4ToU32(IV(LnTheme::kAccent)), 4.f, 0, 1.5f);
+						ImGui::ColorConvertFloat4ToU32(ToImVec4(LnTheme::kAccent)), 4.f, 0, 1.5f);
 				}
 				ImGui::PopStyleColor(1);
 				return clicked;
@@ -1137,14 +1131,14 @@ namespace engine::render
 
 	void AuthImGuiRenderer::DrawField(std::string_view label, char* buf, int bufSz, bool password)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 		ImGui::TextUnformatted(label.data(), label.data() + static_cast<int>(label.size()));
 		ImGui::PopStyleColor();
 
-		ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
-		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, IV(LnTheme::kSurface));
-		ImGui::PushStyleColor(ImGuiCol_FrameBgActive, IV(LnTheme::kSurface));
-		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_FrameBg, ToImVec4(LnTheme::kSurface));
+		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ToImVec4(LnTheme::kSurface));
+		ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ToImVec4(LnTheme::kSurface));
+		ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 
@@ -1188,7 +1182,7 @@ namespace engine::render
 		ImGui::PopStyleColor();
 		if (!msg.empty())
 		{
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 			ImGui::TextWrapped("%.*s", static_cast<int>(msg.size()), msg.data());
 			ImGui::PopStyleColor();
 		}
@@ -1198,7 +1192,7 @@ namespace engine::render
 
 	void AuthImGuiRenderer::DrawKeycapHints(std::initializer_list<std::pair<const char*, const char*>> hints)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 		bool first = true;
 		for (const auto& kv : hints)
 		{
@@ -1218,10 +1212,10 @@ namespace engine::render
 		{
 			ImGui::BeginDisabled();
 		}
-		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kPrimary));
+		ImGui::PushStyleColor(ImGuiCol_Button, ToImVec4(LnTheme::kPrimary));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.39f, 0.58f, 0.82f, 1.f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.19f, 0.38f, 0.62f, 1.f));
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		char id[160];
 		std::snprintf(id, sizeof(id), "%.*s##primary", static_cast<int>(label.size()), label.data());
@@ -1242,10 +1236,10 @@ namespace engine::render
 			ImGui::BeginDisabled();
 		}
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.08f)));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.15f)));
-		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.08f)));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.15f)));
+		ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 		char id[160];
@@ -1262,7 +1256,7 @@ namespace engine::render
 
 	void AuthImGuiRenderer::DrawSeparator()
 	{
-		ImGui::PushStyleColor(ImGuiCol_Separator, IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_Separator, ToImVec4(LnTheme::kBorder));
 		ImGui::Separator();
 		ImGui::PopStyleColor();
 		ImGui::Spacing();
@@ -1275,7 +1269,7 @@ namespace engine::render
 		{
 			const bool done = i < current;
 			const bool active = i == current;
-			const ImVec4 col = done ? IV(LnTheme::kSuccess) : (active ? IV(LnTheme::kAccent) : IV(LnTheme::kMuted));
+			const ImVec4 col = done ? ToImVec4(LnTheme::kSuccess) : (active ? ToImVec4(LnTheme::kAccent) : ToImVec4(LnTheme::kMuted));
 			ImGui::PushStyleColor(ImGuiCol_Text, col);
 			ImGui::Text("%02d %s", i + 1, s);
 			ImGui::PopStyleColor();
@@ -1298,7 +1292,7 @@ namespace engine::render
 		{
 			const bool done = i < current;
 			const bool active = i == current;
-			const ImVec4 col = done ? IV(LnTheme::kSuccess) : (active ? IV(LnTheme::kAccent) : IV(LnTheme::kMuted));
+			const ImVec4 col = done ? ToImVec4(LnTheme::kSuccess) : (active ? ToImVec4(LnTheme::kAccent) : ToImVec4(LnTheme::kMuted));
 			ImGui::PushStyleColor(ImGuiCol_Text, col);
 			ImGui::Text("%02d %s", i + 1, steps[static_cast<size_t>(i)].c_str());
 			ImGui::PopStyleColor();

@@ -14,22 +14,14 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		/// Convertit une couleur LnTheme::Rgba en ImVec4 pour les appels de style ImGui.
-		ImVec4 IV(const LnTheme::Rgba& c)
-		{
-			return ImVec4(c.r, c.g, c.b, c.a);
-		}
-
-		/// Convertit une couleur LnTheme::Rgba en ImU32 pour les appels de draw list ImGui.
-		ImU32 U32(const LnTheme::Rgba& c)
-		{
-			return ImGui::ColorConvertFloat4ToU32(IV(c));
-		}
+		using LnTheme::ToImVec4;
+		using LnTheme::ToU32;
 
 		constexpr int kOptionsRes[][2] = {{1280, 720}, {1600, 900}, {1920, 1080}, {2560, 1440}, {3840, 2160}}; ///< Table des resolutions video proposees dans le combo graphique.
 		constexpr int kOptionsResCount = sizeof(kOptionsRes) / sizeof(kOptionsRes[0]); ///< Nombre d'entrees dans kOptionsRes, calcule statiquement.
@@ -194,15 +186,15 @@ namespace engine::render
 		const float bottomMargin = 60.f;
 		const float panelH = (std::max)(560.f, vpH - topMargin - bottomMargin);
 		ImGui::SetCursorPos(ImVec2(0.f, topMargin));
-		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kPanel));
-		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_ChildBg, ToImVec4(LnTheme::kPanel));
+		ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 		ImGui::BeginChild("##opts_sidebar", ImVec2(sideW, panelH),
 			ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(2);
 
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 		ImGui::SetWindowFontScale(1.08f);
 		{
 			const std::string sideTitle = tr("options.imgui.sidebar_title");
@@ -216,10 +208,10 @@ namespace engine::render
 		{
 			const bool active = (m_optionsTab == i);
 			const std::string tabLabel = tr(kTabKeys[i]);
-			ImGui::PushStyleColor(ImGuiCol_Button, active ? IV(LnTheme::AccentDim(0.12f)) : ImVec4(0.f, 0.f, 0.f, 0.f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.08f)));
-			ImGui::PushStyleColor(ImGuiCol_Text, active ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
-			ImGui::PushStyleColor(ImGuiCol_Border, active ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_Button, active ? ToImVec4(LnTheme::AccentDim(0.12f)) : ImVec4(0.f, 0.f, 0.f, 0.f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.08f)));
+			ImGui::PushStyleColor(ImGuiCol_Text, active ? ToImVec4(LnTheme::kAccent) : ToImVec4(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_Border, active ? ToImVec4(LnTheme::kAccent) : ToImVec4(LnTheme::kBorder));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, active ? 1.5f : 0.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
 			char btnLine[192];
@@ -233,7 +225,7 @@ namespace engine::render
 				ImDrawList* dl = ImGui::GetWindowDrawList();
 				const ImVec2 rmin = ImGui::GetItemRectMin();
 				const ImVec2 rmax = ImGui::GetItemRectMax();
-				dl->AddRectFilled(ImVec2(rmin.x, rmin.y), ImVec2(rmin.x + 3.f, rmax.y), U32(LnTheme::kAccent));
+				dl->AddRectFilled(ImVec2(rmin.x, rmin.y), ImVec2(rmin.x + 3.f, rmax.y), ToU32(LnTheme::kAccent));
 			}
 			ImGui::PopStyleVar(2);
 			ImGui::PopStyleColor(4);
@@ -248,7 +240,7 @@ namespace engine::render
 		{
 			ImGui::Dummy(ImVec2(1.f, sidebarSpacerH));
 		}
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 		ImGui::SetWindowFontScale(0.82f);
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.92f);
 		ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + sideW - 24.f);
@@ -263,8 +255,8 @@ namespace engine::render
 		// panelH. Le contenu commence dans le coin haut-gauche du child et le
 		// scroll interne (##opts_body) prend le relais si trop d'options.
 		ImGui::SetCursorPos(ImVec2(mainOriginX, topMargin));
-		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kBackground));
-		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+		ImGui::PushStyleColor(ImGuiCol_ChildBg, ToImVec4(LnTheme::kBackground));
+		ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 		ImGui::BeginChild("##opts_main", ImVec2(mainW, panelH),
 			ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
@@ -274,12 +266,12 @@ namespace engine::render
 		// Header inline : pas de BeginChild wrapper qui consommait trop de hauteur
 		// (ImGui::BeginChild avec hauteur 0 sans flag AutoResizeY peut prendre 100%
 		// de la zone disponible -> body invisible, retour utilisateur 'cadre vide').
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 		ImGui::SetWindowFontScale(0.78f);
 		ImGui::TextUnformatted(tr("options.imgui.category_label").c_str());
 		ImGui::SetWindowFontScale(1.f);
 		ImGui::PopStyleColor();
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 		ImGui::SetWindowFontScale(1.12f);
 		{
 			const std::string mainTabTitle = tr(kTabKeys[m_optionsTab]);
@@ -290,7 +282,7 @@ namespace engine::render
 		if (m_optDirty)
 		{
 			ImGui::SameLine(0.f, 18.f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kWarning));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kWarning));
 			ImGui::TextUnformatted(tr("options.imgui.dirty_banner_title").c_str());
 			ImGui::PopStyleColor();
 		}
@@ -318,7 +310,7 @@ namespace engine::render
 		const auto sectionTitle = [&](const char* key) {
 			ImGui::Spacing();
 			const std::string t = tr(key);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 			ImGui::SetWindowFontScale(0.82f);
 			ImGui::TextUnformatted(t.c_str());
 			ImGui::SetWindowFontScale(1.f);
@@ -332,7 +324,7 @@ namespace engine::render
 			{
 				return;
 			}
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 			ImGui::SetWindowFontScale(0.78f);
 			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.9f);
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x);
@@ -346,11 +338,11 @@ namespace engine::render
 		const auto toggleRow = [&](const char* labelKey, bool* v, const char* hintKey) {
 			const float fullW = ImGui::GetContentRegionAvail().x;
 			const std::string lbl = tr(labelKey);
-			ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, IV(LnTheme::AccentDim(0.12f)));
-			ImGui::PushStyleColor(ImGuiCol_CheckMark, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, ToImVec4(LnTheme::kSurface));
+			ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ToImVec4(LnTheme::AccentDim(0.12f)));
+			ImGui::PushStyleColor(ImGuiCol_CheckMark, ToImVec4(LnTheme::kAccent));
 			ImGui::BeginGroup();
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 			ImGui::AlignTextToFramePadding();
 			ImGui::TextUnformatted(lbl.c_str());
 			ImGui::PopStyleColor();
@@ -402,10 +394,10 @@ namespace engine::render
 			m_optDirty = false;
 		};
 
-		ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
-		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, IV(LnTheme::AccentDim(0.12f)));
-		ImGui::PushStyleColor(ImGuiCol_SliderGrab, IV(LnTheme::kAccent));
-		ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, IV(LnTheme::kAccent));
+		ImGui::PushStyleColor(ImGuiCol_FrameBg, ToImVec4(LnTheme::kSurface));
+		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ToImVec4(LnTheme::AccentDim(0.12f)));
+		ImGui::PushStyleColor(ImGuiCol_SliderGrab, ToImVec4(LnTheme::kAccent));
+		ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ToImVec4(LnTheme::kAccent));
 
 		if (m_optionsTab == 0)
 		{
@@ -523,7 +515,7 @@ namespace engine::render
 			const auto rebindRow = [&](int actionIdx) {
 				const RebindAction& act = kRebindActions[actionIdx];
 				const std::string label = tr(act.labelKey, act.labelFallback);
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 				ImGui::AlignTextToFramePadding();
 				ImGui::Text("%s : %s", label.c_str(), m_rebindKeys[actionIdx].c_str());
 				ImGui::PopStyleColor();
@@ -531,7 +523,7 @@ namespace engine::render
 				ImGui::PushID(actionIdx);
 				if (m_rebindActionIdx == actionIdx)
 				{
-					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+					ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 					ImGui::TextUnformatted(tr("options.keybind.press_key", "appuyez sur une touche (Echap = annuler)").c_str());
 					ImGui::PopStyleColor();
 				}
@@ -539,11 +531,11 @@ namespace engine::render
 				{
 					// Bouton compact (largeur fixe) : DrawAuthButtonGhost s'étire sur
 					// toute la largeur restante (width -FLT_MIN), inadapté après SameLine.
-					ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
-					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.12f)));
-					ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
-					ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
-					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+					ImGui::PushStyleColor(ImGuiCol_Button, ToImVec4(LnTheme::kSurface));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.12f)));
+					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.18f)));
+					ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
+					ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 					ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 					ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
 					if (ImGui::Button(tr("options.keybind.rebind", "Modifier").c_str(), ImVec2(110.f, 28.f)))
@@ -562,7 +554,7 @@ namespace engine::render
 			}
 			if (!m_rebindWarning.empty())
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kWarning));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kWarning));
 				ImGui::TextWrapped("%s", m_rebindWarning.c_str());
 				ImGui::PopStyleColor();
 			}
@@ -664,13 +656,13 @@ namespace engine::render
 				}
 			}
 			ImGui::Spacing();
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 			ImGui::TextUnformatted(tr("options.imgui.latency_label").c_str());
 			ImGui::SameLine(0.f, 12.f);
 			if (m_authPresenter != nullptr)
 			{
 				const auto& sc = m_authPresenter->GetStatusCache();
-				ImGui::PushStyleColor(ImGuiCol_Text, sc.authOk ? IV(LnTheme::kSuccess) : IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, sc.authOk ? ToImVec4(LnTheme::kSuccess) : ToImVec4(LnTheme::kMuted));
 				const std::string lat = sc.authOk ? tr("options.imgui.latency_ok") : std::string("--");
 				ImGui::TextUnformatted(lat.c_str());
 				ImGui::PopStyleColor();
@@ -693,18 +685,18 @@ namespace engine::render
 		else if (m_optionsTab == 6)
 		{
 			sectionTitle("options.imgui.account.section");
-			ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::AccentDim(0.08f)));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_ChildBg, ToImVec4(LnTheme::AccentDim(0.08f)));
+			ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 			ImGui::BeginChild("##acct_card", ImVec2(-FLT_MIN, 92.f), true, ImGuiWindowFlags_None);
 			ImGui::PopStyleVar(2);
 			ImGui::PopStyleColor(2);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 			const std::string& loginDisp = rm.authOptionsAccountLogin.empty() ? tr("options.imgui.account_anon") : rm.authOptionsAccountLogin;
 			ImGui::TextUnformatted(loginDisp.c_str());
 			ImGui::PopStyleColor();
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 			const std::string& tagDisp = rm.authOptionsAccountTagId.empty() ? std::string("-") : rm.authOptionsAccountTagId;
 			ImGui::TextUnformatted(tagDisp.c_str());
 			ImGui::PopStyleColor();
@@ -750,10 +742,10 @@ namespace engine::render
 				ImGui::BeginDisabled();
 			}
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.08f)));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.15f)));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.08f)));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.15f)));
+			ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 			const bool c = ImGui::Button(label, ImVec2(w, 32.f));
@@ -785,13 +777,13 @@ namespace engine::render
 		}
 		else
 		{
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kAccent));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 2.f);
 		}
-		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kPrimary));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.25f)));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.35f)));
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::PushStyleColor(ImGuiCol_Button, ToImVec4(LnTheme::kPrimary));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ToImVec4(LnTheme::AccentDim(0.25f)));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ToImVec4(LnTheme::AccentDim(0.35f)));
+		ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		const bool applyClick = ImGui::Button(applyStr.c_str(), ImVec2(btnW, 32.f));
 		ImGui::PopStyleVar(1);

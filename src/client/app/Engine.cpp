@@ -8818,20 +8818,22 @@ namespace engine
 				m_currentCharacterId = enterCmd.characterId;
 				// Cellule de dialogue PNJ : journal local de conversation de quête pour ce
 				// personnage + branchement du presenter (sink de journalisation + callback
-				// d'action quête). AcceptQuest/CompleteQuest réutilisent les opcodes quête
-				// existants (m_questUi expose AcceptQuest(uint32_t)/CompleteQuest(uint32_t)).
+				// d'action quête). Accept/turn-in partent au shard (SP2 Task 7, voir
+				// callback ci-dessous) ; System A (m_questUi.AcceptQuest/CompleteQuest)
+				// n'est plus sollicité depuis ce call-site.
 				m_dialogueJournal = std::make_unique<engine::client::QuestConversationJournal>(m_cfg, m_currentCharacterId);
 				m_dialogue.SetJournalSink(m_dialogueJournal.get());
 				m_dialogue.SetQuestActionCallback(
 					[this](engine::client::DialogueAction action, int questId, const std::string& questKey)
 					{
-						if (questId >= 0)
-						{
-							if (action == engine::client::DialogueAction::AcceptQuest)
-								m_questUi.AcceptQuest(static_cast<uint32_t>(questId));
-							else if (action == engine::client::DialogueAction::CompleteQuest)
-								m_questUi.CompleteQuest(static_cast<uint32_t>(questId));
-						}
+						// SP2 Task 7 — accept/turn-in passent désormais EXCLUSIVEMENT par le
+						// shard (opcodes 93/94 ci-dessous, Tasks 4/5). L'ancien double-envoi
+						// système A maître (m_questUi.AcceptQuest/CompleteQuest, opcodes
+						// 59/61/63) est retiré ici pour ne plus émettre ces opcodes redondants.
+						// Les méthodes System A restent définies dans QuestUiPresenter (cache
+						// m_questStates dormant) ; leur retrait complet est le sous-projet
+						// Cleanup séparé, pas SP2.
+						(void)questId;
 						// SP2 — wire quêtes UDP (shard) : le choix de dialogue porte la clé
 						// texte de quête ; on envoie QuestAccept/TurnInRequest au shard avec
 						// le PNJ dont le dialogue est actuellement ouvert (Task 4b —

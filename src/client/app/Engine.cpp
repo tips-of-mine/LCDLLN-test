@@ -1502,6 +1502,31 @@ namespace engine
 			LOG_WARN(Core, "[Boot] AuthUiPresenter viewport FAILED — using fallback layout");
 		}
 
+		// SP2 Task 5 — Init du presenter Quete (jamais appele jusqu'ici : la
+		// SetSendCallback ci-dessous supposait a tort un Init deja fait plus
+		// haut dans le boot). Charge aussi les textes de quete (titre/
+		// description/etapes, resolus par locale) et la table PNJ->quetes,
+		// tous deux consommes par le journal/panneau donneur (QuestImGuiRenderer).
+		if (!m_questUi.Init(m_cfg))
+		{
+			LOG_WARN(Core, "[Boot] QuestUiPresenter init FAILED — journal/tracker de quete desactives");
+		}
+		else if (!m_questUi.SetViewportSize(static_cast<uint32_t>(std::max(1, m_width)), static_cast<uint32_t>(std::max(1, m_height))))
+		{
+			LOG_WARN(Core, "[Boot] QuestUiPresenter viewport FAILED — using fallback layout");
+		}
+		{
+			const std::string questLocale = m_cfg.GetString("client.locale", "fr");
+			if (!m_questTextCatalog.Load(m_cfg, questLocale))
+			{
+				LOG_WARN(Core, "[Boot] QuestTextCatalog load FAILED (locale={}) — titres/descriptions retombent sur les ids", questLocale);
+			}
+			if (!m_questGiverTable.Load(m_cfg))
+			{
+				LOG_WARN(Core, "[Boot] QuestGiverTable load FAILED — table PNJ->quetes vide");
+			}
+		}
+
 		// CMANGOS.18 (Phase 3.18 step 4) — Init du presenter Mail. Doit etre
 		// fait avant l'installation du push handler ci-dessous (qui dispatche
 		// les opcodes Mail vers ce presenter).
@@ -8216,6 +8241,12 @@ namespace engine
 				// Partage le contexte ImGui avec auth/chat ; rendu Windows uniquement
 				// (le .cpp est gardé par #if _WIN32). Constructeur par défaut.
 				m_dialogueImGui = std::make_unique<engine::render::DialogueImGuiRenderer>();
+				// SP2 Task 5 — Renderer ImGui journal/tracker/panneau donneur.
+				// Partage le contexte ImGui avec auth/chat/dialogue. Le callback
+				// d'action panneau donneur est cable plus bas (apres m_gameplayUdp
+				// disponible), dans le meme bloc que le wiring GameplayNet.
+				m_questImGui = std::make_unique<engine::render::QuestImGuiRenderer>();
+				m_questImGui->BindQuestUi(&m_questUi, &m_questTextCatalog, &m_uiModelBinding, &m_cfg);
 				// CMANGOS.18 (Phase 3.18 step 4) — Renderer ImGui de la boite mail.
 				// Partage le contexte ImGui avec auth/chat. Visible uniquement quand
 				// m_mailVisible (toggle via /mail). La taille viewport est mise a
@@ -10596,6 +10627,11 @@ namespace engine
 			// Partage la frame ImGui en cours (NewFrame déjà appelé plus haut).
 			if (m_dialogueImGui && m_dialogue.IsActive())
 				m_dialogueImGui->Render(m_dialogue, dw, dh);
+			// SP2 Task 5 — Journal + tracker + panneau donneur. No-op si non bindé
+			// (BindQuestUi est appelé au boot, cf. plus haut) ou si giverList/
+			// journalEntries sont vides (rien à afficher).
+			if (m_questImGui)
+				m_questImGui->Render(dw, dh, m_authUi.IsInWorldShard());
 			// Marqueurs ImGui des interactibles : label flottant projete (visibilite v1
 			// sans mesh). Surligne + " [E]" si a portee. Cf. m_interactables (#39/#40).
 			{
@@ -14837,6 +14873,10 @@ namespace engine
 		{
 			(void)m_authUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
 		}
+		// SP2 Task 5 — Relayout journal/tracker (QuestUiPresenter). SetViewportSize
+		// est un no-op silencieux (log + false) si le presenter n'est pas initialise
+		// (echec Init au boot), donc pas besoin d'un garde IsInitialized ici.
+		(void)m_questUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
 		if (m_gameplayNetInitialized)
 		{
 			(void)m_shopUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
@@ -15023,6 +15063,11 @@ namespace engine
 				// Métiers SP1 — récolte (UIModelChangeHarvest) + artisanat (Crafting).
 				(void)m_harvestBar.ApplyModel(model, changeMask);
 				(void)m_craftingUi.ApplyModel(model, changeMask);
+				// SP2 Task 5 — journal + tracker (QuestUiPresenter reconstruit sa vue
+				// depuis model.quests a chaque changement). Le panneau donneur, lui,
+				// lit directement model.giverList depuis QuestImGuiRenderer (pas besoin
+				// de passer par le presenter).
+				(void)m_questUi.ApplyModel(model, changeMask);
 			});
 		if (m_uiObserverHandle == 0u)
 		{
@@ -15074,6 +15119,27 @@ namespace engine
 			port,
 			m_gameplayVendorTalkTarget,
 			m_gameplayAuctionTalkTarget);
+
+		// SP2 Task 5 — Panneau donneur (QuestImGuiRenderer) : boutons Accepter/
+		// Terminer. Contrairement au callback d'action du dialogue (qui cible
+		// m_currentDialogueNpcTargetId), le panneau donneur cible
+		// giverList.npcTargetId : il n'apparaît qu'après une réponse
+		// QuestGiverList (donc npcTargetId est forcément à jour dans ce contexte).
+		if (m_questImGui)
+		{
+			m_questImGui->SetGiverActionCallback(
+				[this](const std::string& questId, uint8_t role)
+				{
+					if (!m_gameplayNetInitialized)
+						return;
+					const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
+					const std::string& npcTargetId = m_uiModelBinding.GetModel().giverList.npcTargetId;
+					if (role == 0)
+						(void)m_gameplayUdp.SendQuestAcceptRequest(gameplayClientId, questId, npcTargetId);
+					else
+						(void)m_gameplayUdp.SendQuestTurnInRequest(gameplayClientId, questId, npcTargetId);
+				});
+		}
 	}
 
 	void Engine::ShutdownGameplayNet()

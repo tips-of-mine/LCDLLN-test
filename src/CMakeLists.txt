@@ -596,6 +596,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(quest_giver_table_tests
     ${CMAKE_SOURCE_DIR}/src/client/quest/QuestGiverTableTests.cpp
     ${CMAKE_SOURCE_DIR}/src/client/quest/QuestGiverTable.cpp)
+  # SP2 (client) : réception QuestGiverList (opcode 92) -> UIModel.giverList.
+  # UIModel.cpp et ServerProtocol.cpp sont déjà dans engine_core (CMakeLists
+  # racine) -> ne pas les re-lister ici (double définition de symboles).
+  lcdlln_add_simple_test(ui_model_quest_giver_tests
+    ${CMAKE_SOURCE_DIR}/src/client/ui_common/UIModelQuestGiverTests.cpp)
   # SP1 : compat des statuts de quête persistés (ancien enum 0/1/2 -> nouveau).
   lcdlln_add_simple_test(character_persistence_quest_compat_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistenceQuestCompatTests.cpp

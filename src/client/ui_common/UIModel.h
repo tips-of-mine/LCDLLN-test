@@ -340,6 +340,22 @@ namespace engine::client
 		std::vector<engine::server::ItemStack> rewardItems;
 	};
 
+	/// SP2 — une entrée de la liste de quêtes d'un PNJ (offer ou turn-in), miroir de
+	/// \ref engine::server::QuestGiverEntry.
+	struct UIQuestGiverEntry
+	{
+		std::string questId;
+		uint8_t role = 0;   ///< 0 = offer (Offered), 1 = turnin (ReadyToTurnIn)
+	};
+
+	/// SP2 — liste de quêtes proposées/rendables par le PNJ actuellement ciblé, miroir de
+	/// \ref engine::server::QuestGiverListMessage. Consommée par l'écran de dialogue PNJ.
+	struct UIQuestGiverList
+	{
+		std::string npcTargetId;
+		std::vector<UIQuestGiverEntry> entries;
+	};
+
 	/// One chat line mirrored from \ref engine::server::ChatRelayMessage (M29.1).
 	struct UIChatLineEntry
 	{
@@ -420,6 +436,8 @@ namespace engine::client
 		UITargetStats targetStats{};
 		std::vector<engine::server::ItemStack> inventory;
 		std::vector<UIQuestEntry> quests;
+		/// SP2 — liste de quêtes offer/turn-in du PNJ ciblé (Talk), voir \ref UIQuestGiverList.
+		UIQuestGiverList giverList;
 		std::vector<UIEventEntry> events;
 		std::vector<UICombatLogEntry> combatLog;
 		std::vector<UIChatLineEntry> chatLines;
@@ -618,6 +636,9 @@ namespace engine::client
 		/// Apply one decoded quest delta to the quest section of the UI model.
 		bool ApplyQuestDelta(std::span<const std::byte> packet);
 
+		/// SP2 — applique la liste de quêtes offer/turn-in d'un PNJ (Talk) au modèle UI.
+		bool ApplyQuestGiverList(std::span<const std::byte> packet);
+
 		/// Apply one decoded dynamic event state message to the event section of the UI model.
 		bool ApplyEventState(std::span<const std::byte> packet);
 
@@ -714,6 +735,8 @@ namespace engine::client
 		engine::server::ZoneChangeMessage m_zoneChangeMessage{};
 		engine::server::InventoryDeltaMessage m_inventoryMessage{};
 		engine::server::QuestDeltaMessage m_questMessage{};
+		/// SP2 — scratch du message QuestGiverList (réutilisé par paquet).
+		engine::server::QuestGiverListMessage m_questGiverListMessage{};
 		engine::server::EventStateMessage m_eventMessage{};
 		engine::server::ChatRelayMessage m_chatRelayScratch{};
 		engine::server::EmoteRelayMessage m_emoteRelayScratch{};

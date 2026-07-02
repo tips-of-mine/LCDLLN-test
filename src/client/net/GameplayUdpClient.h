@@ -51,6 +51,14 @@ namespace engine::client
 		/// Send TalkRequest (e.g. `vendor:1` to open shop).
 		bool SendTalkRequest(uint32_t clientId, std::string_view targetId);
 
+		/// SP2 — le joueur accepte une quête proposée par le PNJ \p giverTargetId
+		/// (le serveur revalide l'éligibilité/le catalogue avant journalisation).
+		bool SendQuestAcceptRequest(uint32_t clientId, const std::string& questId, const std::string& giverTargetId);
+
+		/// SP2 — le joueur rend une quête au PNJ \p npcTargetId (le serveur
+		/// revalide l'état « prête à rendre » avant de créditer les récompenses).
+		bool SendQuestTurnInRequest(uint32_t clientId, const std::string& questId, const std::string& npcTargetId);
+
 		/// Combat SP2 — demande d'attaque sur une entité ciblée. Le serveur
 		/// revalide tout (portée, cooldown, cible vivante) ; le client peut
 		/// throttler mais n'a pas d'autorité.

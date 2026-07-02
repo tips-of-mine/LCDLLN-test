@@ -8788,13 +8788,28 @@ namespace engine
 				m_dialogueJournal = std::make_unique<engine::client::QuestConversationJournal>(m_cfg, m_currentCharacterId);
 				m_dialogue.SetJournalSink(m_dialogueJournal.get());
 				m_dialogue.SetQuestActionCallback(
-					[this](engine::client::DialogueAction action, int questId)
+					[this](engine::client::DialogueAction action, int questId, const std::string& questKey)
 					{
-						if (questId < 0) return;
-						if (action == engine::client::DialogueAction::AcceptQuest)
-							m_questUi.AcceptQuest(static_cast<uint32_t>(questId));
-						else if (action == engine::client::DialogueAction::CompleteQuest)
-							m_questUi.CompleteQuest(static_cast<uint32_t>(questId));
+						if (questId >= 0)
+						{
+							if (action == engine::client::DialogueAction::AcceptQuest)
+								m_questUi.AcceptQuest(static_cast<uint32_t>(questId));
+							else if (action == engine::client::DialogueAction::CompleteQuest)
+								m_questUi.CompleteQuest(static_cast<uint32_t>(questId));
+						}
+						// SP2 — wire quêtes UDP (shard) : le choix de dialogue porte la clé
+						// texte de quête ; on envoie QuestAccept/TurnInRequest au shard avec
+						// le PNJ actuellement ciblé (npcTargetId reçu du dernier QuestGiverList).
+						// Ignoré si questKey vide (dialogue non relié au catalogue quêtes SP1/SP2).
+						if (!questKey.empty() && m_gameplayNetInitialized)
+						{
+							const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
+							const std::string& npcTargetId = m_uiModelBinding.GetModel().giverList.npcTargetId;
+							if (action == engine::client::DialogueAction::AcceptQuest)
+								(void)m_gameplayUdp.SendQuestAcceptRequest(gameplayClientId, questKey, npcTargetId);
+							else if (action == engine::client::DialogueAction::CompleteQuest)
+								(void)m_gameplayUdp.SendQuestTurnInRequest(gameplayClientId, questKey, npcTargetId);
+						}
 					});
 				const int64_t intervalCfg = m_cfg.GetInt("client.save_position.interval_sec", 30);
 				m_savePositionIntervalSec = std::chrono::seconds(std::max<int64_t>(5, intervalCfg));

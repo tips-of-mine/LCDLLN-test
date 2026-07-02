@@ -171,7 +171,7 @@ namespace
 
 		DialoguePresenter p;
 		p.SetJournalSink(&sink);
-		p.SetQuestActionCallback([&](DialogueAction a, int q) { firedAction = a; firedQuest = q; });
+		p.SetQuestActionCallback([&](DialogueAction a, int q, const std::string& /*questKey*/) { firedAction = a; firedQuest = q; });
 		p.OpenDialogue(MakeQuestTree(), DialogueNpcRef{"Aldric", "Garde", 0});
 
 		p.SelectChoice(0); // accept quest 1012
@@ -289,6 +289,22 @@ namespace
 		// Le 2e choix du nœud d'intro accepte une quête (questId illustratif >= 0).
 		REQUIRE(t.FindNode("intro")->choices[1].action == DialogueAction::AcceptQuest);
 		REQUIRE(t.FindNode("intro")->choices[1].questId >= 0);
+		// SP2 : le choix accept_quest porte aussi la clé texte de quête (wire QuestAcceptRequest).
+		REQUIRE(t.FindNode("intro")->choices[1].questKey == "kill_10_boars");
+	}
+
+	// SP2 — un choix sans "questKey" dans la config retombe sur une chaîne vide
+	// (pas de clé wire disponible : Engine ne doit pas envoyer un QuestAcceptRequest bidon).
+	void Test_QuestKeyDefaultsToEmptyWhenAbsent()
+	{
+		engine::core::Config world;
+		world.SetDefault("paths.content", std::string("game/data"));
+		world.SetDefault("npc.dialogue_id", std::string("villageois"));
+
+		const DialogueTree t = engine::client::LoadDialogueTree(world, "npc.", {});
+		// Le choix "Au revoir" du nœud intro (index 2) n'est pas lié à une quête.
+		REQUIRE(t.FindNode("intro")->choices[2].action == DialogueAction::End);
+		REQUIRE(t.FindNode("intro")->choices[2].questKey.empty());
 	}
 
 	// Si dialogue_id est absent, on retombe sur l'arbre legacy (un nœud + « Au revoir »).
@@ -334,6 +350,9 @@ int main()
 	// Task 8 (relocalisation : fichiers de dialogue dédiés)
 	Test_LoadDialogueFromDedicatedFile();
 	Test_NoDialogueIdFallsBackToLegacy();
+
+	// SP2 — Task 4 : parsing du champ questKey
+	Test_QuestKeyDefaultsToEmptyWhenAbsent();
 
 	if (g_failed == 0)
 		std::printf("[OK] DialoguePresenterTests: all assertions passed\n");

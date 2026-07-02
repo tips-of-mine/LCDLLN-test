@@ -16,6 +16,7 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnWidgets.h"
 #	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
@@ -48,9 +49,9 @@ namespace engine::render
 			? m_authPresenter->CharacterListEntries() : kEmpty;
 		const int selected = m_authPresenter ? m_authPresenter->CharacterSelectIndex() : -1;
 
-		if (!BeginPanel(680.f, titleZoneW, vpH, std::string_view(titleStr), std::string_view(subStr), std::string_view(""), true, false))
+		if (!LnWidgets::BeginPanel(680.f, titleZoneW, vpH, std::string_view(titleStr), std::string_view(subStr), std::string_view(""), true, false))
 		{
-			EndPanel();
+			LnWidgets::EndPanel();
 			ImGui::EndChild();
 			return;
 		}
@@ -300,7 +301,7 @@ namespace engine::render
 			m_authPresenter->ImGuiActivateSelectedCharacter();
 		}
 
-		EndPanel();
+		LnWidgets::EndPanel();
 		ImGui::EndChild();
 	}
 } // namespace engine::render

@@ -23,6 +23,7 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnWidgets.h"
 #	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
@@ -48,9 +49,9 @@ namespace engine::render
 
 		const std::string panelTitle =
 			rm.sectionTitle.empty() ? std::string("Creation de personnage") : rm.sectionTitle;
-		if (!BeginPanel(panelW, titleZoneW, vpH, panelTitle.c_str(), "", ""))
+		if (!LnWidgets::BeginPanel(panelW, titleZoneW, vpH, panelTitle.c_str(), "", ""))
 		{
-			EndPanel();
+			LnWidgets::EndPanel();
 			ImGui::EndChild();
 			return;
 		}
@@ -121,7 +122,7 @@ namespace engine::render
 
 			const std::string& nameLabel =
 				rm.fields.empty() ? std::string("Nom du personnage") : rm.fields[0].label;
-			DrawField(nameLabel.c_str(), m_charName, static_cast<int>(sizeof(m_charName)));
+			LnWidgets::Field(nameLabel.c_str(), m_charName, static_cast<int>(sizeof(m_charName)));
 			for (const auto& line : rm.bodyLines)
 			{
 				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
@@ -399,7 +400,7 @@ namespace engine::render
 		ImGui::Spacing();
 		const float ccGap  = 8.f;
 		const float ccBtnW = (ImGui::GetContentRegionAvail().x - ccGap) * 0.5f;
-		if (DrawGhostButton("Annuler", false, ccBtnW) && m_authPresenter != nullptr)
+		if (LnWidgets::GhostButton("Annuler", false, ccBtnW) && m_authPresenter != nullptr)
 		{
 			m_authPresenter->ImGuiCancelCharacterCreateReturnToLogin();
 		}
@@ -413,7 +414,7 @@ namespace engine::render
 				break;
 			}
 		}
-		if (DrawPrimaryButton(submitLabel.c_str(), false, ccBtnW) && m_authPresenter != nullptr &&
+		if (LnWidgets::PrimaryButton(submitLabel.c_str(), false, ccBtnW) && m_authPresenter != nullptr &&
 		    m_authCfg != nullptr)
 		{
 			// Resout le raceId depuis le presenter (fallback "humains").
@@ -458,7 +459,7 @@ namespace engine::render
 			const uint8_t skinTone = static_cast<uint8_t>((m_charSkinTone == 1) ? 1 : 0);
 				m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName, raceId.c_str(), genderId, skinTone, factionId.c_str(), classId.c_str());
 		}
-		EndPanel();
+		LnWidgets::EndPanel();
 		ImGui::EndChild();
 	}
 } // namespace engine::render

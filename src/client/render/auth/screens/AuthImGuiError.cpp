@@ -10,6 +10,7 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnWidgets.h"
 #	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
@@ -53,9 +54,9 @@ namespace engine::render
 			const std::string_view sub = rm.authErrorPanelSubtitle;
 			const std::string& ver =
 				rm.authErrorVersionBadge.empty() ? std::string("Erreur") : rm.authErrorVersionBadge;
-			if (!BeginPanel(640.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
+			if (!LnWidgets::BeginPanel(640.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
 			{
-				EndPanel();
+				LnWidgets::EndPanel();
 				ImGui::EndChild();
 				DrawAuthTweaksPanel(vpW, vpH);
 				return;
@@ -192,13 +193,13 @@ namespace engine::render
 				ImGui::Spacing();
 				const std::string& retry =
 					rm.authErrorRetryButtonLabel.empty() ? std::string("Retry") : rm.authErrorRetryButtonLabel;
-				if (DrawPrimaryButton(retry) && m_authPresenter != nullptr && m_authCfg != nullptr)
+				if (LnWidgets::PrimaryButton(retry) && m_authPresenter != nullptr && m_authCfg != nullptr)
 				{
 					m_authPresenter->ImGuiAcknowledgeErrorScreen(*m_authCfg);
 				}
 			}
 
-			EndPanel();
+			LnWidgets::EndPanel();
 			ImGui::EndChild();
 			DrawAuthTweaksPanel(vpW, vpH);
 
@@ -218,9 +219,9 @@ namespace engine::render
 			}
 		}
 		const std::string& ver = rm.authErrorVersionBadge.empty() ? std::string("Erreur") : rm.authErrorVersionBadge;
-		if (!BeginPanel(560.f, titleZoneW, vpH, panelTitle, "", ver, true, false))
+		if (!LnWidgets::BeginPanel(560.f, titleZoneW, vpH, panelTitle, "", ver, true, false))
 		{
-			EndPanel();
+			LnWidgets::EndPanel();
 			ImGui::EndChild();
 			DrawAuthTweaksPanel(vpW, vpH);
 			return;
@@ -231,11 +232,11 @@ namespace engine::render
 
 		const std::string& backLbl2 =
 			rm.authErrorBackButtonLabel.empty() ? std::string("RETOUR AU FORMULAIRE") : rm.authErrorBackButtonLabel;
-		if (DrawGhostButton(backLbl2.c_str()) && m_authPresenter != nullptr && m_authCfg != nullptr)
+		if (LnWidgets::GhostButton(backLbl2.c_str()) && m_authPresenter != nullptr && m_authCfg != nullptr)
 		{
 			m_authPresenter->ImGuiAcknowledgeErrorScreen(*m_authCfg);
 		}
-		EndPanel();
+		LnWidgets::EndPanel();
 		ImGui::EndChild();
 		DrawAuthTweaksPanel(vpW, vpH);
 

@@ -9,6 +9,7 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnWidgets.h"
 #	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
@@ -39,9 +40,9 @@ namespace engine::render
 		const std::string title = rm.sectionTitle.empty() ? tr("auth.panel.terms", "Terms of use") : rm.sectionTitle;
 		const float termsW = (std::min)(960.f, vpW * 0.92f);
 		const float termsPanelH = (std::min)(820.f, vpH * 0.78f);
-		if (!BeginPanel(termsW, vpW, vpH, title.c_str(), "", "", false, false, termsPanelH))
+		if (!LnWidgets::BeginPanel(termsW, vpW, vpH, title.c_str(), "", "", false, false, termsPanelH))
 		{
-			EndPanel();
+			LnWidgets::EndPanel();
 			return;
 		}
 		{
@@ -96,7 +97,7 @@ namespace engine::render
 				m_authPresenter->ImGuiSetTermsAcknowledgeChecked(termsAckChecked);
 			}
 		}
-		DrawSeparator();
+		LnWidgets::Separator();
 		// Largeurs finies : avant, DrawGhostButton et DrawPrimaryButton utilisaient -FLT_MIN
 		// (pleine largeur), donc Refuser couvrait toute la ligne et son rectangle de hit-test
 		// englobait celui d'Accepter. ImGui choisit le premier item dessine en cas de chevauchement
@@ -104,16 +105,16 @@ namespace engine::render
 		// fermeture immediate du jeu (" le jeu plante ").
 		const float btnGap = 14.f;
 		const float btnW = (ImGui::GetContentRegionAvail().x - btnGap) * 0.5f;
-		if (DrawGhostButton("Refuser", false, btnW) && m_authPresenter != nullptr && m_authWindow != nullptr)
+		if (LnWidgets::GhostButton("Refuser", false, btnW) && m_authPresenter != nullptr && m_authWindow != nullptr)
 		{
 			m_authPresenter->ImGuiTermsDecline(*m_authWindow);
 		}
 		ImGui::SameLine(0.f, btnGap);
-		if (DrawPrimaryButton("Accepter / continuer", false, btnW) && m_authPresenter != nullptr && m_authCfg != nullptr)
+		if (LnWidgets::PrimaryButton("Accepter / continuer", false, btnW) && m_authPresenter != nullptr && m_authCfg != nullptr)
 		{
 			m_authPresenter->ImGuiTermsPrimaryClick(*m_authCfg);
 		}
-		EndPanel();
+		LnWidgets::EndPanel();
 	}
 } // namespace engine::render
 

@@ -6,6 +6,7 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnWidgets.h"
 
 namespace engine::render
 {
@@ -26,13 +27,13 @@ namespace engine::render
 		};
 
 		const std::string title = rm.sectionTitle.empty() ? tr("auth.section.forgot_password", "Password recovery") : rm.sectionTitle;
-		if (!BeginPanel(460.f, vpW, vpH, title.c_str(), "", ""))
+		if (!LnWidgets::BeginPanel(460.f, vpW, vpH, title.c_str(), "", ""))
 		{
-			EndPanel();
+			LnWidgets::EndPanel();
 			return;
 		}
 		const std::string emailLabel = rm.fields.empty() ? tr("common.email", "Email") : rm.fields[0].label;
-		DrawField(emailLabel.c_str(), m_forgotEmail, static_cast<int>(sizeof(m_forgotEmail)));
+		LnWidgets::Field(emailLabel.c_str(), m_forgotEmail, static_cast<int>(sizeof(m_forgotEmail)));
 
 		std::string submitLabel = tr("common.submit", "Submit");
 		std::string backLabel = tr("common.back", "Back");
@@ -48,16 +49,16 @@ namespace engine::render
 			}
 		}
 
-		if (DrawPrimaryButton(submitLabel.c_str()) && m_authPresenter != nullptr && m_authCfg != nullptr)
+		if (LnWidgets::PrimaryButton(submitLabel.c_str()) && m_authPresenter != nullptr && m_authCfg != nullptr)
 		{
 			m_authPresenter->ImGuiSubmitForgotPassword(*m_authCfg, m_forgotEmail);
 		}
 		ImGui::SameLine(0.f, 8.f);
-		if (DrawGhostButton(backLabel.c_str()) && m_authPresenter != nullptr)
+		if (LnWidgets::GhostButton(backLabel.c_str()) && m_authPresenter != nullptr)
 		{
 			m_authPresenter->ImGuiBackFromForgotToLogin();
 		}
-		EndPanel();
+		LnWidgets::EndPanel();
 	}
 } // namespace engine::render
 

@@ -14,6 +14,7 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnWidgets.h"
 #	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
@@ -158,9 +159,9 @@ namespace engine::render
 		// On passe titleZoneW (et non vpW) en 2e arg : le panel se centre desormais dans la stage
 		// (BeginChild ##ln_lang_stage), meme logique que l'ecran Login.
 		const float panelFixedH = 340.f;
-		if (!BeginPanel(720.f, titleZoneW, vpH, panelTitle, welcome, ver, true, true, panelFixedH))
+		if (!LnWidgets::BeginPanel(720.f, titleZoneW, vpH, panelTitle, welcome, ver, true, true, panelFixedH))
 		{
-			EndPanel();
+			LnWidgets::EndPanel();
 			ImGui::EndChild();
 			return;
 		}
@@ -230,13 +231,13 @@ namespace engine::render
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(4);
 
-		DrawSeparator();
+		LnWidgets::Separator();
 		const std::string& footL =
 			rm.languageFooterLeft.empty() ? std::string("Fleches : naviguer") : rm.languageFooterLeft;
 		const std::string& footR = rm.languageFooterRight.empty() ? std::string("Entree : valider") : rm.languageFooterRight;
-		DrawLangFooterHints(footL, footR);
+		LnWidgets::FooterHints(footL, footR);
 
-		EndPanel();
+		LnWidgets::EndPanel();
 		ImGui::EndChild();
 
 		DrawAuthTweaksPanel(vpW, vpH);

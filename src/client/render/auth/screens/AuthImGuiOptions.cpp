@@ -14,6 +14,7 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnWidgets.h"
 #	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
@@ -202,7 +203,7 @@ namespace engine::render
 		}
 		ImGui::SetWindowFontScale(1.f);
 		ImGui::PopStyleColor();
-		DrawSeparator();
+		LnWidgets::Separator();
 
 		for (int i : visibleTabs)
 		{
@@ -286,7 +287,7 @@ namespace engine::render
 			ImGui::TextUnformatted(tr("options.imgui.dirty_banner_title").c_str());
 			ImGui::PopStyleColor();
 		}
-		DrawSeparator();
+		LnWidgets::Separator();
 
 		// Body : hauteur 0 = remplit l'espace restant du panel main (ImGui calcule
 		// auto en retranchant la taille deja consommee par header + separator).
@@ -730,7 +731,7 @@ namespace engine::render
 
 		ImGui::EndChild();
 
-		DrawSeparator();
+		LnWidgets::Separator();
 		const float btnW = 128.f;
 		const std::string backStr = tr("options.imgui.button.back");
 		const std::string cancelStr = tr("common.cancel");
@@ -828,7 +829,7 @@ namespace engine::render
 	/// frame ImGui ouverte, valeur de retour). Detail d'implementation :
 	///  - 1ere frame d'ouverture (m_optionsOverlayWasOpen passe false->true) : on tire les
 	///    mirrors d'edition (m_opt*) depuis les *Pending prepares par OpenLanguageOptionsInGame.
-	///  - overlay opaque via BeginFullscreenOverlay(.., 1.0f), puis RenderOptionsScreen(inGame=true),
+	///  - overlay opaque via LnWidgets::BeginFullscreenOverlay(.., 1.0f), puis RenderOptionsScreen(inGame=true),
 	///    puis ImGui::End() — paire Begin/End equilibree.
 	///  - fermeture detectee via le presenter : RenderOptionsScreen appelle
 	///    ImGuiCloseLanguageOptionsWithoutApply() (Retour/Echap) qui, en in-game, pose
@@ -855,7 +856,7 @@ namespace engine::render
 		// RenderModel minimal : champs par defaut. authOptionsAccountLogin /
 		// authOptionsAccountTagId restent vides — l'onglet Account sera masque en jeu (ST6).
 		RenderModel rmMinimal{};
-		BeginFullscreenOverlay(vpW, vpH, 1.0f);
+		LnWidgets::BeginFullscreenOverlay(vpW, vpH, 1.0f);
 		RenderOptionsScreen(rmMinimal, vpW, vpH, /*inGame=*/true);
 		ImGui::End();
 

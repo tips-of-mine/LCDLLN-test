@@ -11,6 +11,7 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnWidgets.h"
 #	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
@@ -73,9 +74,9 @@ namespace engine::render
 			rm.authVerifyPanelSubtitle.empty() ? std::string("NOUS AVONS ENVOYE UN CODE A 6 CHIFFRES.") : rm.authVerifyPanelSubtitle;
 		const std::string& ver =
 			rm.authVerifyPanelBadge.empty() ? std::string("3 / 4") : rm.authVerifyPanelBadge;
-		if (!BeginPanel(560.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
+		if (!LnWidgets::BeginPanel(560.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
 		{
-			EndPanel();
+			LnWidgets::EndPanel();
 			ImGui::EndChild();
 			DrawAuthTweaksPanel(vpW, vpH);
 			return;
@@ -228,7 +229,7 @@ namespace engine::render
 		}
 		ImGui::NextColumn();
 		{
-			if (DrawPrimaryButton(submitLbl, !codeComplete) && m_authPresenter != nullptr && m_authCfg != nullptr)
+			if (LnWidgets::PrimaryButton(submitLbl, !codeComplete) && m_authPresenter != nullptr && m_authCfg != nullptr)
 			{
 				const std::string p = PackVerifySlotsInOrder(m_verifyCode);
 				m_authPresenter->ImGuiSubmitVerifyEmailCode(*m_authCfg, p.c_str());
@@ -246,7 +247,7 @@ namespace engine::render
 		}
 		ImGui::Columns(1);
 
-		EndPanel();
+		LnWidgets::EndPanel();
 		ImGui::EndChild();
 
 		if (!rm.authVerifyDevHint.empty())
@@ -297,9 +298,9 @@ namespace engine::render
 		const std::string& sub = rm.authVerifyPanelSubtitle;
 		const std::string& ver =
 			rm.authVerifyPanelBadge.empty() ? std::string("3 / 4") : rm.authVerifyPanelBadge;
-		if (!BeginPanel(560.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
+		if (!LnWidgets::BeginPanel(560.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
 		{
-			EndPanel();
+			LnWidgets::EndPanel();
 			ImGui::EndChild();
 			DrawAuthTweaksPanel(vpW, vpH);
 			return;
@@ -460,7 +461,7 @@ namespace engine::render
 		}
 		ImGui::NextColumn();
 		{
-			if (DrawPrimaryButton(submitLbl, !codeComplete) && m_authPresenter != nullptr && m_authCfg != nullptr)
+			if (LnWidgets::PrimaryButton(submitLbl, !codeComplete) && m_authPresenter != nullptr && m_authCfg != nullptr)
 			{
 				const std::string p = PackVerifySlotsInOrder(m_verifyCode);
 				m_authPresenter->ImGuiSubmitVerifyEmailCode(*m_authCfg, p.c_str());
@@ -478,7 +479,7 @@ namespace engine::render
 		}
 		ImGui::Columns(1);
 
-		EndPanel();
+		LnWidgets::EndPanel();
 		ImGui::EndChild();
 
 		if (!rm.authVerifyDevHint.empty())

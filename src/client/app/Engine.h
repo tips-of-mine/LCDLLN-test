@@ -680,6 +680,12 @@ namespace engine
 		std::unique_ptr<engine::render::DialogueImGuiRenderer> m_dialogueImGui;              ///< Rendu (Windows).
 		std::unique_ptr<engine::client::QuestConversationJournal> m_dialogueJournal;         ///< Journal local (créé au login).
 		bool m_dialogueActive = false;                                                       ///< Vrai pendant un dialogue (verrouille le déplacement).
+		/// SP2 — id réseau (npcTargetId) du PNJ dont le dialogue est actuellement
+		/// ouvert (copié depuis InteractableEntity::npcTargetId à l'ouverture via
+		/// OpenDialogue). Cible réelle des QuestAccept/TurnInRequest (Task 4/4b) au
+		/// lieu de UIModel.giverList.npcTargetId (périmé/vide si le dialogue est
+		/// ouvert sans Talk préalable). Vidé à la fermeture du dialogue.
+		std::string m_currentDialogueNpcTargetId;
 
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
 		std::unique_ptr<engine::editor::WorldEditorSession> m_worldEditorSession;
@@ -859,6 +865,11 @@ namespace engine
 			std::string label;
 			std::string role; ///< Sous-titre affiché dans la cellule de dialogue (ex. "Garde du pont").
 			std::string message;
+			/// SP2 — id réseau du PNJ (ex. "npc:elder_marn"), cohérent avec
+			/// quest_givers.json/quest_definitions.json côté shard. Chargé depuis
+			/// `world.interactables.<i>.npc_target_id` (vide si non-PNJ ou non déclaré :
+			/// aucun Talk n'est alors envoyé à l'ouverture du dialogue).
+			std::string npcTargetId;
 			/// Dialogue PNJ multi-lignes (format legacy, optionnel). Conservé comme
 			/// source de repli : converti en \ref dialogueTree au chargement
 			/// (\see DialogueConfigLoader). Pour les objets non-PNJ, on affiche `message`.

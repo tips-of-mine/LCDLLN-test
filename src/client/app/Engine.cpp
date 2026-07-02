@@ -5297,6 +5297,10 @@ namespace engine
 												// (fallback legacy depuis e.dialogue si pas de dialogue_tree).
 												e.role = m_cfg.GetString(base + "role", "");
 												e.dialogueTree = engine::client::LoadDialogueTree(m_cfg, base, e.dialogue);
+												// SP2 — id réseau du PNJ (ex. "npc:elder_marn"), utilisé pour envoyer un
+												// Talk à l'ouverture du dialogue (\see OpenDialogue) puis comme cible
+												// des QuestAccept/TurnInRequest. Vide = pas de PNJ quête (aucun Talk envoyé).
+												e.npcTargetId = m_cfg.GetString(base + "npc_target_id", "");
 												m_interactables.push_back(e);
 											}
 											if (m_interactables.empty())
@@ -8799,12 +8803,16 @@ namespace engine
 						}
 						// SP2 — wire quêtes UDP (shard) : le choix de dialogue porte la clé
 						// texte de quête ; on envoie QuestAccept/TurnInRequest au shard avec
-						// le PNJ actuellement ciblé (npcTargetId reçu du dernier QuestGiverList).
+						// le PNJ dont le dialogue est actuellement ouvert (Task 4b —
+						// m_currentDialogueNpcTargetId, mémorisé par OpenDialogue depuis
+						// InteractableEntity::npcTargetId ; PAS UIModel.giverList.npcTargetId,
+						// qui n'est mis à jour que par une réponse QuestGiverList et resterait
+						// vide/périmé car OpenDialogue est purement local hors Talk explicite).
 						// Ignoré si questKey vide (dialogue non relié au catalogue quêtes SP1/SP2).
 						if (!questKey.empty() && m_gameplayNetInitialized)
 						{
 							const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
-							const std::string& npcTargetId = m_uiModelBinding.GetModel().giverList.npcTargetId;
+							const std::string& npcTargetId = m_currentDialogueNpcTargetId;
 							if (action == engine::client::DialogueAction::AcceptQuest)
 								(void)m_gameplayUdp.SendQuestAcceptRequest(gameplayClientId, questKey, npcTargetId);
 							else if (action == engine::client::DialogueAction::CompleteQuest)
@@ -9881,6 +9889,19 @@ namespace engine
 									npc.entityIndex = nearestI; // index de l'interactable courant
 									m_dialogue.OpenDialogue(e.dialogueTree, npc);
 									m_dialogueActive = true;
+									// SP2 (Task 4b) — mémorise le PNJ courant pour l'accept/turn-in
+									// (Task 4) ET envoie un Talk au shard : OpenDialogue est purement
+									// local (pas de round-trip serveur), donc sans ce Talk,
+									// UIModel.giverList.npcTargetId reste vide/périmé (dernier PNJ
+									// parlé, pas forcément celui-ci) et le shard rejetterait l'accept/
+									// turn-in. Ignoré si le PNJ n'a pas d'id réseau ou si le réseau
+									// gameplay n'est pas encore prêt (dialogue reste utilisable en
+									// mode solo/hors-ligne, juste sans wire quête).
+									m_currentDialogueNpcTargetId = e.npcTargetId;
+									if (!e.npcTargetId.empty() && m_gameplayNetInitialized)
+									{
+										(void)m_gameplayUdp.SendTalkRequest(m_gameplayUdp.ServerClientId(), e.npcTargetId);
+									}
 								}
 							}
 							else
@@ -9913,7 +9934,13 @@ namespace engine
 							// Synchronise le flag : toute fermeture (distance, Échap, choix End)
 							// libère le déplacement.
 							if (!m_dialogue.IsActive())
+							{
 								m_dialogueActive = false;
+								// SP2 (Task 4b) — le PNJ mémorisé n'est plus valide une fois le
+								// dialogue fermé (évite qu'un futur accept/turn-in hors dialogue
+								// réutilise par erreur la dernière cible).
+								m_currentDialogueNpcTargetId.clear();
+							}
 						}
 					}
 				}

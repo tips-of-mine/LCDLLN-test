@@ -588,6 +588,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(quest_runtime_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntimeTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntime.cpp)
+  # SP2 (client) : QuestTextCatalog — titres/descriptions/étapes lisibles par locale.
+  lcdlln_add_simple_test(quest_text_catalog_tests
+    ${CMAKE_SOURCE_DIR}/src/client/quest/QuestTextCatalogTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/quest/QuestTextCatalog.cpp)
   # SP1 : compat des statuts de quête persistés (ancien enum 0/1/2 -> nouveau).
   lcdlln_add_simple_test(character_persistence_quest_compat_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistenceQuestCompatTests.cpp

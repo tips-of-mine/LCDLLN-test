@@ -1,0 +1,25 @@
+{
+  "kill_10_boars": {
+    "title": "Sangliers en surnombre",
+    "description": "Les sangliers ravagent les champs autour du village. Réduisez leur nombre pour protéger les récoltes.",
+    "steps": [
+      "Sangliers tués : {current}/{required}"
+    ]
+  },
+  "hunt_collect_enter": {
+    "title": "Sur les traces de l'ancien",
+    "description": "L'ancien Marn a besoin d'aide : traquer une bête, récupérer un objet perdu et explorer une zone voisine.",
+    "steps": [
+      "Bête traquée : {current}/{required}",
+      "Objet récupéré : {current}/{required}",
+      "Zone explorée : {current}/{required}"
+    ]
+  },
+  "report_to_guard": {
+    "title": "Rapport au capitaine",
+    "description": "Faites votre rapport au capitaine de la garde.",
+    "steps": [
+      "Rapport donné : {current}/{required}"
+    ]
+  }
+}

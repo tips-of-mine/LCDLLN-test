@@ -10,22 +10,14 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
 {
 	namespace
 	{
-		/// Convertit une couleur theme en ImVec4 pour ImGui::PushStyleColor.
-		ImVec4 IV(const LnTheme::Rgba& c)
-		{
-			return ImVec4(c.r, c.g, c.b, c.a);
-		}
-
-		/// Convertit une couleur theme en ImU32 pour les primitives du DrawList (AddRectFilled, etc.).
-		ImU32 U32(const LnTheme::Rgba& c)
-		{
-			return ImGui::ColorConvertFloat4ToU32(IV(c));
-		}
+		using LnTheme::ToImVec4;
+		using LnTheme::ToU32;
 
 		/// Pastilles de variante d'erreur : desactive en production (maquette AUTH-UI.4).
 		constexpr bool kAuthErrorVariantPillsDemo = false;
@@ -85,8 +77,8 @@ namespace engine::render
 					}
 					const bool sel = i == shown;
 					const auto& pv = rm.authRegisterErrorVariants[static_cast<size_t>(i)];
-					ImGui::PushStyleColor(ImGuiCol_Text, sel ? IV(LnTheme::kAccent) : IV(LnTheme::kMuted));
-					ImGui::PushStyleColor(ImGuiCol_Border, sel ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
+					ImGui::PushStyleColor(ImGuiCol_Text, sel ? ToImVec4(LnTheme::kAccent) : ToImVec4(LnTheme::kMuted));
+					ImGui::PushStyleColor(ImGuiCol_Border, sel ? ToImVec4(LnTheme::kAccent) : ToImVec4(LnTheme::kBorder));
 					ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, sel ? 1.5f : 1.f);
 					ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
 					char pid[96]{};
@@ -116,38 +108,38 @@ namespace engine::render
 			if (!v.fieldLabel.empty() && !rm.authErrorHideFieldBox)
 			{
 				ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(10.f / 255.f, 13.f / 255.f, 18.f / 255.f, 0.5f));
-				ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+				ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 				ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 6.f);
 				ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 				ImGui::BeginChild("##err_field", ImVec2(-FLT_MIN, 0.f), true, ImGuiWindowFlags_NoScrollbar);
 				ImGui::PopStyleVar(2);
 				ImGui::PopStyleColor(2);
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.78f);
 				const std::string& flab =
 					rm.authErrorFieldSectionLabel.empty() ? std::string("CHAMP A CORRIGER") : rm.authErrorFieldSectionLabel;
 				ImGui::TextUnformatted(flab.c_str());
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 				ImGui::TextUnformatted(v.fieldLabel.c_str());
 				ImGui::PopStyleColor();
 				ImGui::EndChild();
 				ImGui::Spacing();
 			}
 
-			ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::AccentDim(0.04f)));
+			ImGui::PushStyleColor(ImGuiCol_ChildBg, ToImVec4(LnTheme::AccentDim(0.04f)));
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.f);
 			ImGui::BeginChild("##err_fix", ImVec2(-FLT_MIN, 0.f), false, ImGuiWindowFlags_NoScrollbar);
 			const ImVec2 child0 = ImGui::GetWindowPos();
 			const ImVec2 pad = ImGui::GetStyle().WindowPadding;
 			const float fixH = ImGui::GetFontSize() * 4.f + 24.f;
 			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(child0.x + pad.x, child0.y + pad.y),
-				ImVec2(child0.x + pad.x + 3.f, child0.y + pad.y + fixH), U32(LnTheme::kAccent));
+				ImVec2(child0.x + pad.x + 3.f, child0.y + pad.y + fixH), ToU32(LnTheme::kAccent));
 			ImGui::PopStyleVar(1);
 			ImGui::PopStyleColor(1);
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 8.f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kAccent));
 			ImGui::SetWindowFontScale(0.78f);
 			const std::string& hfix =
 				rm.authErrorFixSectionLabel.empty() ? std::string("COMMENT CORRIGER") : rm.authErrorFixSectionLabel;
@@ -155,7 +147,7 @@ namespace engine::render
 			ImGui::SetWindowFontScale(1.f);
 			ImGui::PopStyleColor();
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 8.f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kText));
 			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.95f);
 			ImGui::SetWindowFontScale(0.92f);
 			ImGui::TextWrapped("%s", v.fixHint.c_str());
@@ -179,14 +171,14 @@ namespace engine::render
 			if (btnW >= 120.f)
 			{
 				ImGui::SameLine(0.f, 10.f);
-				ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kSurface));
-				ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+				ImGui::PushStyleColor(ImGuiCol_ChildBg, ToImVec4(LnTheme::kSurface));
+				ImGui::PushStyleColor(ImGuiCol_Border, ToImVec4(LnTheme::kBorder));
 				ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.f);
 				ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 				ImGui::BeginChild("##err_keycap", ImVec2(capW, 36.f), true, ImGuiWindowFlags_NoScrollbar);
 				ImGui::PopStyleVar(2);
 				ImGui::PopStyleColor(2);
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				const float tx = (capW - ImGui::CalcTextSize(kcap.c_str()).x) * 0.5f;
 				ImGui::SetCursorPosX(tx);
 				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 6.f);

@@ -615,6 +615,7 @@ add_library(engine_core
   src/client/render/auth/screens/AuthImGuiCharacterCreate.cpp
   src/client/render/auth/screens/AuthImGuiCharacterSelect.cpp
   src/client/render/LnTheme.h
+  src/client/render/LnThemeImGui.h
   src/client/render/AuthImGuiRenderer.cpp
   src/client/render/ChatImGuiRenderer.cpp
   src/client/render/DialogueImGuiRenderer.cpp

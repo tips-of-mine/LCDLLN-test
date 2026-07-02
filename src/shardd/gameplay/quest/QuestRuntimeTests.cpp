@@ -123,6 +123,56 @@ int main()
 		Check(!badRuntime.Init(), "Init rejette une quête sans turnIn");
 	}
 
+	// Transitions pilotées par le joueur : Offered → Active (accept) →
+	// ReadyToTurnIn (dernière étape complétée, sans récompense auto) → turn-in.
+	{
+		const std::string json = R"JSON({
+      "quests": [
+        { "id": "q1", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [], "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 2 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } }
+      ]
+    })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(json);
+		Check(runtime.Init(), "Init charge q1 pour le test de transitions");
+
+		std::vector<QuestState> states;
+		std::vector<QuestProgressDelta> deltas;
+		Check(runtime.SyncQuestStates(states, deltas), "sync OK");
+		// q1 sans prérequis → Offered (PAS Active).
+		Check(states.size() == 1 && states[0].status == QuestStatus::Offered,
+		      "prérequis remplis → Offered");
+
+		const auto* def = runtime.FindQuestDefinition("q1");
+		Check(def != nullptr, "def q1");
+		Check(runtime.CanAccept(states[0], *def, "npc:marn"), "accept au bon giver");
+		Check(!runtime.CanAccept(states[0], *def, "npc:autre"), "refus mauvais giver");
+
+		// Simuler l'accept : Offered → Active.
+		states[0].status = QuestStatus::Active;
+
+		// Progresser : 1 kill (pas assez) reste Active.
+		deltas.clear();
+		runtime.ApplyEvent(states, QuestStepType::Kill, "mob:1", 1, deltas);
+		Check(states[0].status == QuestStatus::Active, "1/2 kill → reste Active");
+
+		// 2e kill → ReadyToTurnIn, SANS reward dans le delta.
+		deltas.clear();
+		runtime.ApplyEvent(states, QuestStepType::Kill, "mob:1", 1, deltas);
+		Check(states[0].status == QuestStatus::ReadyToTurnIn, "2/2 kill → ReadyToTurnIn");
+		bool anyReward = false;
+		for (const auto& d : deltas)
+			if (d.rewardExperience != 0 || d.rewardGold != 0 || !d.rewardItems.empty()) anyReward = true;
+		Check(!anyReward, "aucune récompense au passage ReadyToTurnIn");
+
+		Check(runtime.CanTurnIn(states[0], *def, "npc:marn"), "turn-in au bon PNJ");
+		Check(!runtime.CanTurnIn(states[0], *def, "npc:autre"), "refus turn-in mauvais PNJ");
+
+		const auto* reward = runtime.TakeRewardOnTurnIn(*def);
+		Check(reward != nullptr && reward->experience == 10, "reward exposé au turn-in");
+	}
+
 	if (g_failures != 0)
 	{
 		std::cerr << g_failures << " assertion(s) échouée(s)\n";

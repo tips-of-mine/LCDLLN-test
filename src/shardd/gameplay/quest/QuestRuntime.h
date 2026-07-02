@@ -112,6 +112,17 @@ namespace engine::server
 		/// Find one quest definition by id, or return `nullptr` when it is absent.
 		const QuestDefinition* FindQuestDefinition(std::string_view questId) const;
 
+		/// Vrai si \p state peut être accepté au PNJ \p giverTargetId : quête Offered
+		/// et \p giverTargetId == def.giverId. Pur, sans effet de bord.
+		bool CanAccept(const QuestState& state, const QuestDefinition& def, std::string_view giverTargetId) const;
+
+		/// Vrai si \p state peut être rendu au PNJ \p npcTargetId : quête ReadyToTurnIn
+		/// et \p npcTargetId == def.turnInId. Pur, sans effet de bord.
+		bool CanTurnIn(const QuestState& state, const QuestDefinition& def, std::string_view npcTargetId) const;
+
+		/// Retourne le bundle de récompense à verser au turn-in (jamais nul).
+		const QuestReward* TakeRewardOnTurnIn(const QuestDefinition& def) const;
+
 	private:
 		/// Load every quest definition from the configured JSON content file.
 		bool LoadDefinitions();

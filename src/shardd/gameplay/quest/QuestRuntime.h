@@ -19,12 +19,15 @@ namespace engine::server
 		Enter = 4
 	};
 
-	/// Runtime status stored for one quest on one player.
+	/// Runtime status stored for one quest on one player. L'ordre est
+	/// significatif (persisté et transmis wire) : ne pas réordonner sans migration.
 	enum class QuestStatus : uint8_t
 	{
-		Locked = 0,
-		Active = 1,
-		Completed = 2
+		Locked        = 0,   ///< pré-requis non remplis (interne, non affiché)
+		Offered       = 1,   ///< proposée au PNJ giver, pas encore acceptée
+		Active        = 2,   ///< acceptée, en cours
+		ReadyToTurnIn = 3,   ///< étapes remplies, à rendre (pas encore récompensée)
+		Completed     = 4,   ///< rendue + récompensée (terminal)
 	};
 
 	/// One typed step loaded from the quest definitions JSON.
@@ -47,6 +50,8 @@ namespace engine::server
 	struct QuestDefinition
 	{
 		std::string questId;
+		std::string giverId;    ///< PNJ qui propose la quête (même espace que targetId du Talk)
+		std::string turnInId;   ///< PNJ où rendre la quête (souvent = giverId)
 		std::vector<std::string> prerequisiteQuestIds;
 		std::vector<QuestStepDefinition> steps;
 		QuestReward rewards;

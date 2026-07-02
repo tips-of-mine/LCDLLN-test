@@ -487,15 +487,13 @@ namespace engine::server
 	{
 		switch (status)
 		{
-		case QuestStatus::Locked:
-			return "locked";
-		case QuestStatus::Active:
-			return "active";
-		case QuestStatus::Completed:
-			return "completed";
-		default:
-			return "locked";
+		case QuestStatus::Locked:        return "locked";
+		case QuestStatus::Offered:       return "offered";
+		case QuestStatus::Active:        return "active";
+		case QuestStatus::ReadyToTurnIn: return "ready_to_turn_in";
+		case QuestStatus::Completed:     return "completed";
 		}
+		return "unknown";
 	}
 
 	QuestRuntime::QuestRuntime(const engine::core::Config& config)
@@ -844,6 +842,23 @@ namespace engine::server
 
 			QuestDefinition definition{};
 			definition.questId = idValue->stringValue;
+
+			const JsonValue* giverValue  = FindObjectMember(questValue, "giver");
+			const JsonValue* turnInValue = FindObjectMember(questValue, "turnIn");
+			if (giverValue == nullptr || giverValue->type != JsonType::String || giverValue->stringValue.empty())
+			{
+				LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.giver must be a non-empty string", definition.questId);
+				m_definitions.clear();
+				return false;
+			}
+			if (turnInValue == nullptr || turnInValue->type != JsonType::String || turnInValue->stringValue.empty())
+			{
+				LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.turnIn must be a non-empty string", definition.questId);
+				m_definitions.clear();
+				return false;
+			}
+			definition.giverId  = giverValue->stringValue;
+			definition.turnInId = turnInValue->stringValue;
 
 			if (const JsonValue* prereqsValue = FindObjectMember(questValue, "prereqs");
 				prereqsValue != nullptr)

@@ -59,7 +59,7 @@ namespace engine::server
 	/// 4 → 5). Les kinds ForcePosition (86) et LootNotify (87) ajoutés pendant
 	/// la fenêtre v12 restaient rétro-additifs ; ce changement-ci modifie un
 	/// payload existant → wire-breaking : lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 13;
+	inline constexpr uint16_t kProtocolVersion = 14;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -278,7 +278,16 @@ namespace engine::server
 		/// poussé à l'enter-world et après chaque choix. Rétro-additif.
 		ClassProgressionUpdate = 90,
 		/// SP-B — client → shard : le joueur choisit 1 skill (parmi 3) à un niveau donné.
-		ChooseClassSkillRequest = 91
+		ChooseClassSkillRequest = 91,
+
+		// SP1 quêtes — cycle de vie complet (giver-list, accept, turn-in) — bump v13->v14.
+
+		/// SP1 quêtes — liste des quêtes offertes/rendables d'un PNJ (serveur→client).
+		QuestGiverList = 92,
+		/// SP1 quêtes — le joueur accepte une quête au PNJ giver (client→serveur).
+		QuestAcceptRequest = 93,
+		/// SP1 quêtes — le joueur rend une quête au PNJ turn-in (client→serveur).
+		QuestTurnInRequest = 94
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -577,6 +586,38 @@ namespace engine::server
 		std::vector<ItemStack> rewardItems;
 	};
 
+	/// Une entrée de la liste de quêtes d'un PNJ (offer ou turn-in).
+	struct QuestGiverEntry
+	{
+		std::string questId;
+		uint8_t role = 0;   ///< 0 = offer (Offered), 1 = turnin (ReadyToTurnIn)
+	};
+
+	/// SP1 quêtes — réponse au Talk : quêtes qu'un PNJ propose / que le joueur peut y rendre
+	/// (serveur→client).
+	struct QuestGiverListMessage
+	{
+		uint32_t clientId = 0;
+		std::string npcTargetId;
+		std::vector<QuestGiverEntry> entries;
+	};
+
+	/// SP1 quêtes — le joueur accepte une quête au PNJ giver (client→serveur).
+	struct QuestAcceptRequestMessage
+	{
+		uint32_t clientId = 0;
+		std::string questId;
+		std::string giverTargetId;
+	};
+
+	/// SP1 quêtes — le joueur rend une quête au PNJ turn-in (client→serveur).
+	struct QuestTurnInRequestMessage
+	{
+		uint32_t clientId = 0;
+		std::string questId;
+		std::string npcTargetId;
+	};
+
 	/// Client chat send request (parsed prefixes applied client-side; server validates + routes).
 	struct ChatSendRequestMessage
 	{
@@ -755,6 +796,18 @@ namespace engine::server
 
 	/// Decode a quest delta packet and validate the protocol header.
 	bool DecodeQuestDelta(std::span<const std::byte> packet, QuestDeltaMessage& outMessage);
+
+	/// SP1 quêtes — encode/decode de la liste des quêtes offertes/rendables d'un PNJ (serveur→client).
+	std::vector<std::byte> EncodeQuestGiverList(const QuestGiverListMessage& message);
+	bool DecodeQuestGiverList(std::span<const std::byte> packet, QuestGiverListMessage& outMessage);
+
+	/// SP1 quêtes — encode/decode de l'acceptation d'une quête (client→serveur).
+	std::vector<std::byte> EncodeQuestAcceptRequest(const QuestAcceptRequestMessage& message);
+	bool DecodeQuestAcceptRequest(std::span<const std::byte> packet, QuestAcceptRequestMessage& outMessage);
+
+	/// SP1 quêtes — encode/decode du rendu d'une quête (client→serveur).
+	std::vector<std::byte> EncodeQuestTurnInRequest(const QuestTurnInRequestMessage& message);
+	bool DecodeQuestTurnInRequest(std::span<const std::byte> packet, QuestTurnInRequestMessage& outMessage);
 
 	/// Encode a dynamic event state packet with the protocol header.
 	std::vector<std::byte> EncodeEventState(const EventStateMessage& message);

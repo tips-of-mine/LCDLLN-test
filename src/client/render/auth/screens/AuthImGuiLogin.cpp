@@ -8,6 +8,7 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnWidgets.h"
 
 namespace engine::render
 {
@@ -52,9 +53,9 @@ namespace engine::render
 		// sommes desormais dans un BeginChild de largeur titleZoneW ( vpW), il faut passer
 		// titleZoneW - sinon le calcul `(stageW - stageW) / 2 = 0` poussait le panneau contre
 		// le bord gauche de la stage (bug observe en revue UX).
-		if (!BeginPanel(stageW, titleZoneW, vpH, panelTitle, "", ver, true, false))
+		if (!LnWidgets::BeginPanel(stageW, titleZoneW, vpH, panelTitle, "", ver, true, false))
 		{
-			EndPanel();
+			LnWidgets::EndPanel();
 			ImGui::EndChild();
 			return;
 		}
@@ -94,8 +95,8 @@ namespace engine::render
 		}
 		else
 		{
-			DrawField(tr("auth.label.login", "Login").c_str(), m_loginId, static_cast<int>(sizeof(m_loginId)), false);
-			DrawField(tr("auth.label.password", "Password").c_str(), m_loginPw, static_cast<int>(sizeof(m_loginPw)), true);
+			LnWidgets::Field(tr("auth.label.login", "Login").c_str(), m_loginId, static_cast<int>(sizeof(m_loginId)), false);
+			LnWidgets::Field(tr("auth.label.password", "Password").c_str(), m_loginPw, static_cast<int>(sizeof(m_loginPw)), true);
 		}
 
 		DrawLoginRememberRow(rm);
@@ -169,7 +170,7 @@ namespace engine::render
 			m_authPresenter->ImGuiSubmitLogin(*m_authCfg, m_loginId, m_loginPw, m_rememberMe);
 		}
 
-		// Anciennement : DrawSeparator() + DrawLoginFooterChips(rm) qui affichaient les chips
+		// Anciennement : LnWidgets::Separator() + DrawLoginFooterChips(rm) qui affichaient les chips
 		// [Tab] champ suivant | [Entree] se connecter | [Echap] quitter. L'utilisateur veut ces
 		// rappels masques (les touches restent actives via ImGui InputText nav et le handler
 		// d'entree du presenter), mais la zone visuelle disparait pour epurer le panneau.
@@ -179,7 +180,7 @@ namespace engine::render
 		// (suite au retour utilisateur : " il faudrait l'agrandir en hauteur ").
 		ImGui::Dummy(ImVec2(0.f, 30.f));
 
-		EndPanel();
+		LnWidgets::EndPanel();
 
 		ImGui::EndChild();
 

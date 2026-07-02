@@ -227,42 +227,23 @@ namespace engine::render
 		void RenderCharCreateScreen(const RenderModel& rm, float vpW, float vpH);
 		void RenderCharacterSelectScreen(const RenderModel& rm, float vpW, float vpH);
 
-		void BeginFullscreenOverlay(float vpW, float vpH, float windowBgAlpha = 1.f);
 		/// Helper unifié pour le rendu du grand titre « LES CHRONIQUES » + sous-titre
 		/// « DE LA LUNE NOIRE » sur tous les écrans auth — pattern de référence calé
 		/// sur l'écran Login (h1 scale 5.0x, Dummy 28 px pour passer sous la jambe du R,
 		/// h2 scale 2.5x). Ouvre un BeginChild "##ln_<screenId>_stage" 96 % vpW que le
 		/// caller doit refermer via ImGui::EndChild() après EndPanel.
 		void DrawAuthBigTitle(const RenderModel& rm, float vpW, float vpH, const char* screenId);
-		bool BeginPanel(float width, float vpW, float vpH, std::string_view title, std::string_view subtitle,
-			std::string_view versionLabel = {}, bool versionLeadingInfoGlyph = false, bool subtitleWelcomeAccent = false,
-			float fixedHeight = 0.f);
-		void EndPanel();
 		int DrawLanguageFirstRunCards(const RenderModel& rm, int selected);
 		void DrawAuthTweaksPanel(float vpW, float vpH);
 		/// Affiche au-dessus du cadre login le badge « Langue : … » capturé lors de la transition
 		/// depuis l'écran de sélection de langue. Disparaît automatiquement après quelques secondes.
 		void DrawLoginLanguageBadge(float vpW, float vpH);
-		void DrawLangFooterHints(std::string_view left, std::string_view right);
 		void DrawAuthGoldField(const engine::client::AuthUiPresenter::RenderField& spec, char* buf, int bufSz, bool password,
 			float extraSpacingPx = 0.f);
 		void DrawLoginRememberRow(const RenderModel& rm);
 		void DrawLoginFooterChips(const RenderModel& rm);
-		void DrawFooterChipRow(const std::vector<std::pair<std::string, std::string>>& chips);
 		void DrawRegisterFlowHeader(const RenderModel& rm, float vpW);
 		void DrawRegisterFooterChips(const RenderModel& rm);
-		void DrawField(std::string_view label, char* buf, int bufSz, bool password = false);
-		void DrawBanner(std::string_view title, std::string_view msg, float r, float g, float b);
-		void DrawKeycapHints(std::initializer_list<std::pair<const char*, const char*>> hints);
-		// width = -FLT_MIN (défaut) = pleine largeur. Quand on place plusieurs de ces boutons sur
-		// la même ligne avec SameLine, il faut donner une largeur finie à chacun pour éviter que
-		// leur rectangle de hit-test ne se chevauche (cas vu dans Terms : Refuser couvrait toute
-		// la largeur, donc cliquer sur Accepter déclenchait Refuser → fermeture de l'app).
-		bool DrawPrimaryButton(std::string_view label, bool disabled = false, float width = -FLT_MIN);
-		bool DrawGhostButton(std::string_view label, bool disabled = false, float width = -FLT_MIN);
-		void DrawSeparator();
-		void DrawBreadcrumb(std::initializer_list<const char*> steps, int current);
-		void DrawBreadcrumb(const std::vector<std::string>& steps, int current);
 
 		void SyncTransientFromModel(const VisualState& vs, const RenderModel& rm);
 		void PullLanguageOptionsFromPresenter();

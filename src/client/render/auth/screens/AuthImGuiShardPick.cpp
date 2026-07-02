@@ -18,6 +18,7 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnWidgets.h"
 #	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
@@ -87,9 +88,9 @@ namespace engine::render
 		const std::string verStr = tr("auth.shard_pick.version_online",
 			P{{"online", std::to_string(onlineCount)}, {"total", std::to_string(entries.size())}});
 
-		if (!BeginPanel(820.f, titleZoneW, vpH, std::string_view(titleStr), std::string_view(subStr), std::string_view(verStr), true, false))
+		if (!LnWidgets::BeginPanel(820.f, titleZoneW, vpH, std::string_view(titleStr), std::string_view(subStr), std::string_view(verStr), true, false))
 		{
-			EndPanel();
+			LnWidgets::EndPanel();
 			ImGui::EndChild();
 			return;
 		}
@@ -425,7 +426,7 @@ namespace engine::render
 			m_authPresenter->ImGuiSubmitShardPick(*m_authCfg);
 		}
 
-		EndPanel();
+		LnWidgets::EndPanel();
 		ImGui::EndChild();
 
 		DrawAuthTweaksPanel(vpW, vpH);

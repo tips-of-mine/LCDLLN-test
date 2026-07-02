@@ -424,7 +424,7 @@ namespace engine::render
 									   || vs.shardPick)
 			? 0.22f
 			: 1.f;
-		BeginFullscreenOverlay(viewportW, viewportH, overlayAlpha);
+		LnWidgets::BeginFullscreenOverlay(viewportW, viewportH, overlayAlpha);
 
 		if (vs.languageSelection)
 		{
@@ -479,21 +479,16 @@ namespace engine::render
 		}
 		else if (vs.submitting)
 		{
-			if (BeginPanel(420.f, viewportW, viewportH, rm.sectionTitle.c_str(), "", ""))
+			if (LnWidgets::BeginPanel(420.f, viewportW, viewportH, rm.sectionTitle.c_str(), "", ""))
 			{
 				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 				ImGui::TextWrapped("%s", rm.infoBanner.c_str());
 				ImGui::PopStyleColor();
-				EndPanel();
+				LnWidgets::EndPanel();
 			}
 		}
 
 		ImGui::End();
-	}
-
-	void AuthImGuiRenderer::BeginFullscreenOverlay(float vpW, float vpH, float windowBgAlpha)
-	{
-		LnWidgets::BeginFullscreenOverlay(vpW, vpH, windowBgAlpha);
 	}
 
 	void AuthImGuiRenderer::DrawAuthBigTitle(const RenderModel& rm, float vpW, float vpH, const char* screenId)
@@ -502,24 +497,6 @@ namespace engine::render
 		// ne connaît pas le RenderModel et reçoit les lignes déjà résolues.
 		const std::string h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 		LnWidgets::BigTitle(h1, rm.titleLine2, vpW, vpH, screenId);
-	}
-
-	bool AuthImGuiRenderer::BeginPanel(float width, float vpW, float vpH, std::string_view title,
-		std::string_view subtitle, std::string_view versionLabel, bool versionLeadingInfoGlyph, bool subtitleWelcomeAccent,
-		float fixedHeight)
-	{
-		return LnWidgets::BeginPanel(width, vpW, vpH, title, subtitle, versionLabel, versionLeadingInfoGlyph,
-			subtitleWelcomeAccent, fixedHeight);
-	}
-
-	void AuthImGuiRenderer::EndPanel()
-	{
-		LnWidgets::EndPanel();
-	}
-
-	void AuthImGuiRenderer::DrawLangFooterHints(std::string_view left, std::string_view right)
-	{
-		LnWidgets::FooterHints(left, right);
 	}
 
 	void AuthImGuiRenderer::DrawAuthGoldField(const engine::client::AuthUiPresenter::RenderField& spec, char* buf, int bufSz,
@@ -662,15 +639,10 @@ namespace engine::render
 	{
 		if (rm.authLoginFooterChips.empty())
 		{
-			DrawKeycapHints({{"Tab", "champ suivant"}, {"Entree", "se connecter"}, {"Echap", "quitter"}});
+			LnWidgets::KeycapHints({{"Tab", "champ suivant"}, {"Entree", "se connecter"}, {"Echap", "quitter"}});
 			return;
 		}
-		DrawFooterChipRow(rm.authLoginFooterChips);
-	}
-
-	void AuthImGuiRenderer::DrawFooterChipRow(const std::vector<std::pair<std::string, std::string>>& chips)
-	{
-		LnWidgets::FooterChipRow(chips);
+		LnWidgets::FooterChipRow(rm.authLoginFooterChips);
 	}
 
 	void AuthImGuiRenderer::DrawRegisterFlowHeader(const RenderModel& rm, float vpW)
@@ -727,10 +699,10 @@ namespace engine::render
 	{
 		if (rm.authRegisterFooterChips.empty())
 		{
-			DrawKeycapHints({{"Entree", "valider"}, {"Echap", "retour"}});
+			LnWidgets::KeycapHints({{"Entree", "valider"}, {"Echap", "retour"}});
 			return;
 		}
-		DrawFooterChipRow(rm.authRegisterFooterChips);
+		LnWidgets::FooterChipRow(rm.authRegisterFooterChips);
 	}
 
 	void AuthImGuiRenderer::DrawLoginLanguageBadge(float vpW, float vpH)
@@ -933,46 +905,6 @@ namespace engine::render
 		ImGui::PopStyleVar(3);
 	}
 
-	void AuthImGuiRenderer::DrawField(std::string_view label, char* buf, int bufSz, bool password)
-	{
-		LnWidgets::Field(label, buf, bufSz, password);
-	}
-
-	void AuthImGuiRenderer::DrawBanner(std::string_view title, std::string_view msg, float r, float g, float b)
-	{
-		LnWidgets::Banner(title, msg, r, g, b);
-	}
-
-	void AuthImGuiRenderer::DrawKeycapHints(std::initializer_list<std::pair<const char*, const char*>> hints)
-	{
-		LnWidgets::KeycapHints(hints);
-	}
-
-	bool AuthImGuiRenderer::DrawPrimaryButton(std::string_view label, bool disabled, float width)
-	{
-		return LnWidgets::PrimaryButton(label, disabled, width);
-	}
-
-	bool AuthImGuiRenderer::DrawGhostButton(std::string_view label, bool disabled, float width)
-	{
-		return LnWidgets::GhostButton(label, disabled, width);
-	}
-
-	void AuthImGuiRenderer::DrawSeparator()
-	{
-		LnWidgets::Separator();
-	}
-
-	void AuthImGuiRenderer::DrawBreadcrumb(std::initializer_list<const char*> steps, int current)
-	{
-		LnWidgets::Breadcrumb(steps, current);
-	}
-
-	void AuthImGuiRenderer::DrawBreadcrumb(const std::vector<std::string>& steps, int current)
-	{
-		LnWidgets::Breadcrumb(steps, current);
-	}
-
 } // namespace engine::render
 
 #else
@@ -997,7 +929,6 @@ namespace engine::render
 
 	void AuthImGuiRenderer::SyncTransientFromModel(const VisualState&, const RenderModel&) {}
 
-	void AuthImGuiRenderer::DrawBreadcrumb(const std::vector<std::string>&, int) {}
 } // namespace engine::render
 
 #endif

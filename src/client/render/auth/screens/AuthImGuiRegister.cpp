@@ -10,6 +10,7 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include "src/client/render/LnWidgets.h"
 #	include "src/client/render/LnThemeImGui.h"
 
 namespace engine::render
@@ -55,16 +56,16 @@ namespace engine::render
 			rm.authRegisterPanelBadge.empty() ? std::string("2 / 4") : rm.authRegisterPanelBadge;
 		// Panel elargi 760 > 880 px : avec 760, le bouton " CREER LE COMPTE " a droite etait
 		// coupe en bord de cadre. Cf retour utilisateur sur la maquette.
-		if (!BeginPanel(880.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
+		if (!LnWidgets::BeginPanel(880.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
 		{
-			EndPanel();
+			LnWidgets::EndPanel();
 			ImGui::EndChild();
 			return;
 		}
 
 		if (!rm.errorText.empty())
 		{
-			DrawBanner("Echec", rm.errorText, LnTheme::kErrorCol.r, LnTheme::kErrorCol.g, LnTheme::kErrorCol.b);
+			LnWidgets::Banner("Echec", rm.errorText, LnTheme::kErrorCol.r, LnTheme::kErrorCol.g, LnTheme::kErrorCol.b);
 		}
 
 		const bool haveModel = (rm.fields.size() >= 10u && rm.dropdowns.size() >= 3u);
@@ -208,7 +209,7 @@ namespace engine::render
 				}
 				else
 				{
-					DrawField(tr("auth.label.country", "Country").c_str(), m_regCountry, static_cast<int>(sizeof(m_regCountry)), false);
+					LnWidgets::Field(tr("auth.label.country", "Country").c_str(), m_regCountry, static_cast<int>(sizeof(m_regCountry)), false);
 				}
 				ImGui::Spacing();
 			}
@@ -224,11 +225,11 @@ namespace engine::render
 		}
 		else
 		{
-			DrawField(tr("auth.label.login", "Login").c_str(), m_regId, static_cast<int>(sizeof(m_regId)));
-			DrawField(tr("common.email", "Email").c_str(), m_regEmail, static_cast<int>(sizeof(m_regEmail)));
-			DrawField(tr("auth.label.first_name", "First name").c_str(), m_regFirstName, static_cast<int>(sizeof(m_regFirstName)));
-			DrawField(tr("auth.label.last_name", "Last name").c_str(), m_regLastName, static_cast<int>(sizeof(m_regLastName)));
-			DrawField(tr("auth.label.country", "Country").c_str(), m_regCountry, static_cast<int>(sizeof(m_regCountry)));
+			LnWidgets::Field(tr("auth.label.login", "Login").c_str(), m_regId, static_cast<int>(sizeof(m_regId)));
+			LnWidgets::Field(tr("common.email", "Email").c_str(), m_regEmail, static_cast<int>(sizeof(m_regEmail)));
+			LnWidgets::Field(tr("auth.label.first_name", "First name").c_str(), m_regFirstName, static_cast<int>(sizeof(m_regFirstName)));
+			LnWidgets::Field(tr("auth.label.last_name", "Last name").c_str(), m_regLastName, static_cast<int>(sizeof(m_regLastName)));
+			LnWidgets::Field(tr("auth.label.country", "Country").c_str(), m_regCountry, static_cast<int>(sizeof(m_regCountry)));
 		}
 
 		// Checklist mot de passe LIVE, alignée sur la politique serveur (ValidatePassword) :
@@ -326,12 +327,12 @@ namespace engine::render
 		}
 		else
 		{
-			if (DrawGhostButton(tr("auth.register.footer.back", "Back").c_str()) && m_authPresenter != nullptr)
+			if (LnWidgets::GhostButton(tr("auth.register.footer.back", "Back").c_str()) && m_authPresenter != nullptr)
 			{
 				m_authPresenter->ImGuiBackFromRegisterToLogin();
 			}
 			ImGui::SameLine(ImGui::GetContentRegionAvail().x * 0.55f);
-			if (DrawPrimaryButton(tr("auth.register.submit_create", "CREATE ACCOUNT").c_str(), !canSubmit) && m_authPresenter != nullptr && m_authCfg != nullptr)
+			if (LnWidgets::PrimaryButton(tr("auth.register.submit_create", "CREATE ACCOUNT").c_str(), !canSubmit) && m_authPresenter != nullptr && m_authCfg != nullptr)
 			{
 				engine::client::AuthUiPresenter::RegisterImGuiSubmit form{};
 				form.login = m_regId;
@@ -372,9 +373,9 @@ namespace engine::render
 			m_authPresenter->ImGuiSubmitRegister(*m_authCfg, form);
 		}
 
-		DrawSeparator();
+		LnWidgets::Separator();
 		DrawRegisterFooterChips(rm);
-		EndPanel();
+		LnWidgets::EndPanel();
 		ImGui::EndChild();
 
 		DrawAuthTweaksPanel(vpW, vpH);

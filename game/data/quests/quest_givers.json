@@ -1,0 +1,12 @@
+{
+  "npc:elder_marn": [
+    { "questId": "kill_10_boars", "role": 0 },
+    { "questId": "kill_10_boars", "role": 1 },
+    { "questId": "hunt_collect_enter", "role": 0 },
+    { "questId": "hunt_collect_enter", "role": 1 }
+  ],
+  "npc:guard_captain": [
+    { "questId": "report_to_guard", "role": 0 },
+    { "questId": "report_to_guard", "role": 1 }
+  ]
+}

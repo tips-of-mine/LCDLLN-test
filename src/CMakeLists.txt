@@ -592,6 +592,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(quest_text_catalog_tests
     ${CMAKE_SOURCE_DIR}/src/client/quest/QuestTextCatalogTests.cpp
     ${CMAKE_SOURCE_DIR}/src/client/quest/QuestTextCatalog.cpp)
+  # SP2 (client) : QuestGiverTable — association PNJ -> quêtes (donneur/receveur).
+  lcdlln_add_simple_test(quest_giver_table_tests
+    ${CMAKE_SOURCE_DIR}/src/client/quest/QuestGiverTableTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/quest/QuestGiverTable.cpp)
   # SP1 : compat des statuts de quête persistés (ancien enum 0/1/2 -> nouveau).
   lcdlln_add_simple_test(character_persistence_quest_compat_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistenceQuestCompatTests.cpp

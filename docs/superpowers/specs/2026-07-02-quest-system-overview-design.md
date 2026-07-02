@@ -70,6 +70,24 @@ client. **La « sauvegarde du suivi » que l'on croyait manquante existe déjà.
 | 6 | Texte de quête | Fichier compagnon localisé `quest_texts.<lang>.json` (client-side), **pas** transporté par le wire. |
 | 7 | Interaction PNJ donneur | **Les deux** : dialogue existant (`accept_quest`/`complete_quest` → Accept/TurnIn de SP1) **et** panneau donneur dynamique piloté par `QuestGiverList`. |
 | 8 | Tranche verticale jouable | Un **PNJ dans la carte actuelle** donne une quête « tuer 10 sangliers » (archétype existant `mob:100`), validée puis rendue au PNJ pour la récompense. Capstone d'acceptation. |
+| 9 | Marqueur au-dessus des PNJ donneurs | **Rune/glyphe du jeu** (asset dédié, **≠ « ! »**), **deux variantes** : `Offered` = doré plein (venir chercher) / `ReadyToTurnIn` = variante distincte (venir rendre). **Culling par distance** (config) pour ne pas polluer le HUD. Feature **SP2**. |
+
+### Marqueur PNJ donneur (SP2) — détail
+
+- **Rendu** : petit **billboard texturé world-space** ancré au-dessus du PNJ (pas un
+  glyphe de police — la police Windlass est ASCII-only, cf. atlas). Réutiliser le
+  précédent des marqueurs de réapparition (overlays ImGui foreground world-space,
+  `Engine.cpp`). Deux teintes/variantes selon l'état (doré plein `Offered` /
+  variante `ReadyToTurnIn`).
+- **Visibilité** : n'apparaît que si le joueur est à **≤ distance seuil** du PNJ
+  (clé config `client.quest.giver_marker_distance_m`, défaut à fixer en SP2) ET si
+  ce PNJ a, **pour ce joueur**, une quête `Offered` (role offer) ou `ReadyToTurnIn`
+  (role turnin).
+- **Donnée nécessaire côté client** : la table `npcTargetId → quêtes (giver/turnIn)`.
+  Elle vient d'un **fichier de contenu client** (le compagnon `quest_texts` ou une
+  petite table `quest_givers`), **sans nouveau wire** — le client croise cette table
+  avec les états de quête déjà reçus (`UIModel.quests`) pour décider quel marqueur
+  afficher. À figer au design SP2.
 
 ### Note d'impédance : `questId` numérique (dialogue) ↔ `string` (système B)
 

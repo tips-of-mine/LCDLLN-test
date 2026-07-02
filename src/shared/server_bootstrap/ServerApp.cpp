@@ -864,6 +864,22 @@ namespace engine::server
 			return;
 		}
 
+		// SP1 quêtes — accepter une quête proposée par un PNJ giver.
+		QuestAcceptRequestMessage questAccept{};
+		if (DecodeQuestAcceptRequest(packetBytes, questAccept))
+		{
+			HandleAcceptQuest(datagram.endpoint, questAccept);
+			return;
+		}
+
+		// SP1 quêtes — rendre une quête (récompense versée ici).
+		QuestTurnInRequestMessage questTurnIn{};
+		if (DecodeQuestTurnInRequest(packetBytes, questTurnIn))
+		{
+			HandleTurnInQuest(datagram.endpoint, questTurnIn);
+			return;
+		}
+
 		ShopBuyRequestMessage shopBuy{};
 		if (DecodeShopBuyRequest(packetBytes, shopBuy))
 		{
@@ -3419,6 +3435,7 @@ namespace engine::server
 		}
 
 		LOG_INFO(Net, "[ServerApp] TalkRequest accepted (client_id={}, target={})", client->clientId, targetId);
+		SendQuestGiverList(*client, targetId);
 		ApplyQuestEvent(*client, QuestStepType::Talk, targetId, 1, "talk");
 	}
 
@@ -5218,47 +5235,14 @@ namespace engine::server
 			return;
 		}
 
-		std::vector<ItemStack> rewardedItems;
+		// SP1 quêtes — les récompenses ne sont plus versées ici : elles le sont
+		// désormais au turn-in explicite (HandleTurnInQuest). Ce chemin ne fait
+		// que propager les deltas de progression au client.
 		for (const QuestProgressDelta& delta : deltas)
 		{
-			if (delta.rewardExperience != 0 || delta.rewardGold != 0 || !delta.rewardItems.empty())
-			{
-				ApplyLevelUpsAfterXp(client, delta.rewardExperience);
-				if (delta.rewardGold != 0u)
-				{
-					std::string walletErr;
-					if (!m_playerWallet.AddCurrency(client, kCurrencyGold, delta.rewardGold, walletErr))
-					{
-						LOG_WARN(Net,
-							"[ServerApp] Quest gold grant blocked (client_id={}, err={})",
-							client.clientId,
-							walletErr);
-					}
-				}
-				for (const ItemStack& rewardItem : delta.rewardItems)
-				{
-					AddItemToInventory(client, rewardItem);
-					rewardedItems.push_back(rewardItem);
-				}
-
-				LOG_INFO(Net,
-					"[ServerApp] Quest rewards granted (client_id={}, quest_id={}, xp={}, gold={}, items={})",
-					client.clientId,
-					delta.questId,
-					delta.rewardExperience,
-					delta.rewardGold,
-					delta.rewardItems.size());
-			}
-
 			(void)SendQuestDelta(client, delta);
 		}
 
-		if (!rewardedItems.empty())
-		{
-			(void)SendInventoryDelta(client, rewardedItems);
-		}
-
-		(void)SendWalletUpdate(client);
 		SaveConnectedClient(client, reason);
 		LOG_INFO(Net,
 			"[ServerApp] Quest event applied (client_id={}, type={}, target={}, deltas={}, reason={})",
@@ -5267,6 +5251,221 @@ namespace engine::server
 			targetId,
 			deltas.size(),
 			reason);
+	}
+
+	size_t ServerApp::FindClientQuestStateIndex(const ConnectedClient& client, std::string_view questId)
+	{
+		for (size_t i = 0; i < client.questStates.size(); ++i)
+		{
+			if (client.questStates[i].questId == questId)
+			{
+				return i;
+			}
+		}
+		return kInvalidQuestIndex;
+	}
+
+	bool ServerApp::IsClientNearNpc(const ConnectedClient& client, std::string_view npcTargetId) const
+	{
+		// V1 : aucune vérification de distance serveur. Le Talk (HandleTalkRequest)
+		// route aujourd'hui uniquement par targetId, sans contrôle de portée côté
+		// serveur ; la proximité est garantie côté client (le Talk n'est émis que
+		// lorsque le joueur est à portée du PNJ). TODO SP-ultérieur : durcir avec
+		// une vraie distance joueur/PNJ une fois les positions PNJ exposées ici.
+		(void)client;
+		(void)npcTargetId;
+		return true;
+	}
+
+	void ServerApp::SendQuestGiverList(const ConnectedClient& receiver, std::string_view npcTargetId)
+	{
+		QuestGiverListMessage msg{};
+		msg.clientId = receiver.clientId;
+		msg.npcTargetId = std::string(npcTargetId);
+		for (const QuestState& state : receiver.questStates)
+		{
+			const QuestDefinition* def = m_questRuntime.FindQuestDefinition(state.questId);
+			if (def == nullptr)
+			{
+				continue;
+			}
+			if (state.status == QuestStatus::Offered && def->giverId == npcTargetId)
+			{
+				msg.entries.push_back(QuestGiverEntry{ state.questId, 0u });
+			}
+			else if (state.status == QuestStatus::ReadyToTurnIn && def->turnInId == npcTargetId)
+			{
+				msg.entries.push_back(QuestGiverEntry{ state.questId, 1u });
+			}
+		}
+
+		if (msg.entries.empty())
+		{
+			return;
+		}
+
+		const std::vector<std::byte> packet = EncodeQuestGiverList(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] QuestGiverList send failed (client_id={}, npc={})",
+				receiver.clientId,
+				npcTargetId);
+			return;
+		}
+
+		LOG_INFO(Net, "[ServerApp] QuestGiverList sent (client_id={}, npc={}, entries={})",
+			receiver.clientId,
+			npcTargetId,
+			msg.entries.size());
+	}
+
+	void ServerApp::HandleAcceptQuest(const Endpoint& endpoint, const QuestAcceptRequestMessage& msg)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AcceptQuest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != msg.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] AcceptQuest ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				client->clientId,
+				msg.clientId,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		const QuestDefinition* def = m_questRuntime.FindQuestDefinition(msg.questId);
+		if (def == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AcceptQuest: quête inconnue (client_id={}, quest_id={})", client->clientId, msg.questId);
+			return;
+		}
+
+		const size_t idx = FindClientQuestStateIndex(*client, msg.questId);
+		if (idx == kInvalidQuestIndex)
+		{
+			LOG_WARN(Net, "[ServerApp] AcceptQuest: état de quête absent (client_id={}, quest_id={})", client->clientId, msg.questId);
+			return;
+		}
+		QuestState& state = client->questStates[idx];
+
+		if (!m_questRuntime.CanAccept(state, *def, msg.giverTargetId))
+		{
+			LOG_WARN(Net, "[ServerApp] AcceptQuest refusé (client_id={}, quest_id={}, giver={})",
+				client->clientId, msg.questId, msg.giverTargetId);
+			return;
+		}
+
+		if (!IsClientNearNpc(*client, msg.giverTargetId))
+		{
+			return;
+		}
+
+		state.status = QuestStatus::Active;
+		state.stepProgressCounts.assign(def->steps.size(), 0u);
+
+		QuestProgressDelta delta{};
+		delta.questId = state.questId;
+		delta.status = state.status;
+		delta.stepProgressCounts = state.stepProgressCounts;
+		(void)SendQuestDelta(*client, delta);
+		SaveConnectedClient(*client, "quest_accept");
+		LOG_INFO(Net, "[ServerApp] Quest accepted (client_id={}, quest_id={})", client->clientId, msg.questId);
+	}
+
+	void ServerApp::HandleTurnInQuest(const Endpoint& endpoint, const QuestTurnInRequestMessage& msg)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] TurnInQuest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != msg.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] TurnInQuest ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				client->clientId,
+				msg.clientId,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		const QuestDefinition* def = m_questRuntime.FindQuestDefinition(msg.questId);
+		if (def == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] TurnInQuest: quête inconnue (client_id={}, quest_id={})", client->clientId, msg.questId);
+			return;
+		}
+
+		const size_t idx = FindClientQuestStateIndex(*client, msg.questId);
+		if (idx == kInvalidQuestIndex)
+		{
+			LOG_WARN(Net, "[ServerApp] TurnInQuest: état de quête absent (client_id={}, quest_id={})", client->clientId, msg.questId);
+			return;
+		}
+		QuestState& state = client->questStates[idx];
+
+		if (!m_questRuntime.CanTurnIn(state, *def, msg.npcTargetId))
+		{
+			LOG_WARN(Net, "[ServerApp] TurnInQuest refusé (client_id={}, quest_id={}, npc={})",
+				client->clientId, msg.questId, msg.npcTargetId);
+			return;
+		}
+
+		if (!IsClientNearNpc(*client, msg.npcTargetId))
+		{
+			return;
+		}
+
+		// Verser les récompenses (bloc déplacé depuis l'ancien ApplyQuestEvent —
+		// désormais le turn-in explicite est le seul chemin de versement).
+		const QuestReward* reward = m_questRuntime.TakeRewardOnTurnIn(*def);
+		std::vector<ItemStack> rewardedItems;
+		if (reward != nullptr)
+		{
+			ApplyLevelUpsAfterXp(*client, reward->experience);
+			if (reward->gold != 0u)
+			{
+				std::string walletErr;
+				if (!m_playerWallet.AddCurrency(*client, kCurrencyGold, reward->gold, walletErr))
+				{
+					LOG_WARN(Net, "[ServerApp] Quest gold grant blocked (client_id={}, err={})", client->clientId, walletErr);
+				}
+			}
+			for (const ItemStack& item : reward->items)
+			{
+				AddItemToInventory(*client, item);
+				rewardedItems.push_back(item);
+			}
+		}
+
+		state.status = QuestStatus::Completed;
+
+		QuestProgressDelta delta{};
+		delta.questId = state.questId;
+		delta.status = state.status;
+		delta.stepProgressCounts = state.stepProgressCounts;
+		if (reward != nullptr)
+		{
+			delta.rewardExperience = reward->experience;
+			delta.rewardGold = reward->gold;
+			delta.rewardItems = reward->items;
+		}
+		(void)SendQuestDelta(*client, delta);
+		if (!rewardedItems.empty())
+		{
+			(void)SendInventoryDelta(*client, rewardedItems);
+		}
+		(void)SendWalletUpdate(*client);
+		SaveConnectedClient(*client, "quest_turnin");
+		LOG_INFO(Net, "[ServerApp] Quest turned in (client_id={}, quest_id={}, xp={}, gold={})",
+			client->clientId, msg.questId, reward ? reward->experience : 0u, reward ? reward->gold : 0u);
 	}
 
 	void ServerApp::SendQuestStateBootstrap(const ConnectedClient& receiver)

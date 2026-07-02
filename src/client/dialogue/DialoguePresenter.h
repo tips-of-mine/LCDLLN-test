@@ -85,7 +85,9 @@ namespace engine::client
 
 		// --- Callbacks ---
 		/// Appelé quand un choix porte AcceptQuest/CompleteQuest (déclenche le système quête).
-		void SetQuestActionCallback(std::function<void(DialogueAction, int /*questId*/)> cb)
+		/// SP2 : \p questKey (id texte) accompagne désormais \p questId (index legacy) pour
+		/// permettre l'envoi QuestAccept/TurnInRequest (wire, clé texte) au shard.
+		void SetQuestActionCallback(std::function<void(DialogueAction, int /*questId*/, const std::string& /*questKey*/)> cb)
 		{
 			m_questActionCb = std::move(cb);
 		}
@@ -107,7 +109,7 @@ namespace engine::client
 		float m_viewHeight    = 0.0f;
 		bool  m_autoScroll    = true;
 
-		std::function<void(DialogueAction, int)> m_questActionCb;
+		std::function<void(DialogueAction, int, const std::string&)> m_questActionCb;
 		IQuestConversationSink*                  m_journalSink = nullptr;
 	};
 

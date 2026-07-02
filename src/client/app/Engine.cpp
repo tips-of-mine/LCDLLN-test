@@ -41,6 +41,7 @@
 #include "src/client/dialogue/DialogueConfigLoader.h"
 #include "src/client/render/DialogueImGuiRenderer.h"
 #include "src/client/render/ChatImGuiRenderer.h"
+#include "src/client/render/QuestImGuiRenderer.h"
 #include "src/client/render/MailImGuiRenderer.h"
 #include "src/client/render/GmTicketImGuiRenderer.h"
 #include "src/client/render/ReputationImGuiRenderer.h"
@@ -1500,6 +1501,31 @@ namespace engine
 		else if (!m_authUi.SetViewportSize(static_cast<uint32_t>(std::max(1, m_width)), static_cast<uint32_t>(std::max(1, m_height))))
 		{
 			LOG_WARN(Core, "[Boot] AuthUiPresenter viewport FAILED — using fallback layout");
+		}
+
+		// SP2 Task 5 — Init du presenter Quete (jamais appele jusqu'ici : la
+		// SetSendCallback ci-dessous supposait a tort un Init deja fait plus
+		// haut dans le boot). Charge aussi les textes de quete (titre/
+		// description/etapes, resolus par locale) et la table PNJ->quetes,
+		// tous deux consommes par le journal/panneau donneur (QuestImGuiRenderer).
+		if (!m_questUi.Init(m_cfg))
+		{
+			LOG_WARN(Core, "[Boot] QuestUiPresenter init FAILED — journal/tracker de quete desactives");
+		}
+		else if (!m_questUi.SetViewportSize(static_cast<uint32_t>(std::max(1, m_width)), static_cast<uint32_t>(std::max(1, m_height))))
+		{
+			LOG_WARN(Core, "[Boot] QuestUiPresenter viewport FAILED — using fallback layout");
+		}
+		{
+			const std::string questLocale = m_cfg.GetString("client.locale", "fr");
+			if (!m_questTextCatalog.Load(m_cfg, questLocale))
+			{
+				LOG_WARN(Core, "[Boot] QuestTextCatalog load FAILED (locale={}) — titres/descriptions retombent sur les ids", questLocale);
+			}
+			if (!m_questGiverTable.Load(m_cfg))
+			{
+				LOG_WARN(Core, "[Boot] QuestGiverTable load FAILED — table PNJ->quetes vide");
+			}
 		}
 
 		// CMANGOS.18 (Phase 3.18 step 4) — Init du presenter Mail. Doit etre
@@ -5297,6 +5323,10 @@ namespace engine
 												// (fallback legacy depuis e.dialogue si pas de dialogue_tree).
 												e.role = m_cfg.GetString(base + "role", "");
 												e.dialogueTree = engine::client::LoadDialogueTree(m_cfg, base, e.dialogue);
+												// SP2 — id réseau du PNJ (ex. "npc:elder_marn"), utilisé pour envoyer un
+												// Talk à l'ouverture du dialogue (\see OpenDialogue) puis comme cible
+												// des QuestAccept/TurnInRequest. Vide = pas de PNJ quête (aucun Talk envoyé).
+												e.npcTargetId = m_cfg.GetString(base + "npc_target_id", "");
 												m_interactables.push_back(e);
 											}
 											if (m_interactables.empty())
@@ -8212,6 +8242,12 @@ namespace engine
 				// Partage le contexte ImGui avec auth/chat ; rendu Windows uniquement
 				// (le .cpp est gardé par #if _WIN32). Constructeur par défaut.
 				m_dialogueImGui = std::make_unique<engine::render::DialogueImGuiRenderer>();
+				// SP2 Task 5 — Renderer ImGui journal/tracker/panneau donneur.
+				// Partage le contexte ImGui avec auth/chat/dialogue. Le callback
+				// d'action panneau donneur est cable plus bas (apres m_gameplayUdp
+				// disponible), dans le meme bloc que le wiring GameplayNet.
+				m_questImGui = std::make_unique<engine::render::QuestImGuiRenderer>();
+				m_questImGui->BindQuestUi(&m_questUi, &m_questTextCatalog, &m_uiModelBinding, &m_cfg);
 				// CMANGOS.18 (Phase 3.18 step 4) — Renderer ImGui de la boite mail.
 				// Partage le contexte ImGui avec auth/chat. Visible uniquement quand
 				// m_mailVisible (toggle via /mail). La taille viewport est mise a
@@ -8783,18 +8819,39 @@ namespace engine
 				m_currentCharacterId = enterCmd.characterId;
 				// Cellule de dialogue PNJ : journal local de conversation de quête pour ce
 				// personnage + branchement du presenter (sink de journalisation + callback
-				// d'action quête). AcceptQuest/CompleteQuest réutilisent les opcodes quête
-				// existants (m_questUi expose AcceptQuest(uint32_t)/CompleteQuest(uint32_t)).
+				// d'action quête). Accept/turn-in partent au shard (SP2 Task 7, voir
+				// callback ci-dessous) ; System A (m_questUi.AcceptQuest/CompleteQuest)
+				// n'est plus sollicité depuis ce call-site.
 				m_dialogueJournal = std::make_unique<engine::client::QuestConversationJournal>(m_cfg, m_currentCharacterId);
 				m_dialogue.SetJournalSink(m_dialogueJournal.get());
 				m_dialogue.SetQuestActionCallback(
-					[this](engine::client::DialogueAction action, int questId)
+					[this](engine::client::DialogueAction action, int questId, const std::string& questKey)
 					{
-						if (questId < 0) return;
-						if (action == engine::client::DialogueAction::AcceptQuest)
-							m_questUi.AcceptQuest(static_cast<uint32_t>(questId));
-						else if (action == engine::client::DialogueAction::CompleteQuest)
-							m_questUi.CompleteQuest(static_cast<uint32_t>(questId));
+						// SP2 Task 7 — accept/turn-in passent désormais EXCLUSIVEMENT par le
+						// shard (opcodes 93/94 ci-dessous, Tasks 4/5). L'ancien double-envoi
+						// système A maître (m_questUi.AcceptQuest/CompleteQuest, opcodes
+						// 59/61/63) est retiré ici pour ne plus émettre ces opcodes redondants.
+						// Les méthodes System A restent définies dans QuestUiPresenter (cache
+						// m_questStates dormant) ; leur retrait complet est le sous-projet
+						// Cleanup séparé, pas SP2.
+						(void)questId;
+						// SP2 — wire quêtes UDP (shard) : le choix de dialogue porte la clé
+						// texte de quête ; on envoie QuestAccept/TurnInRequest au shard avec
+						// le PNJ dont le dialogue est actuellement ouvert (Task 4b —
+						// m_currentDialogueNpcTargetId, mémorisé par OpenDialogue depuis
+						// InteractableEntity::npcTargetId ; PAS UIModel.giverList.npcTargetId,
+						// qui n'est mis à jour que par une réponse QuestGiverList et resterait
+						// vide/périmé car OpenDialogue est purement local hors Talk explicite).
+						// Ignoré si questKey vide (dialogue non relié au catalogue quêtes SP1/SP2).
+						if (!questKey.empty() && m_gameplayNetInitialized)
+						{
+							const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
+							const std::string& npcTargetId = m_currentDialogueNpcTargetId;
+							if (action == engine::client::DialogueAction::AcceptQuest)
+								(void)m_gameplayUdp.SendQuestAcceptRequest(gameplayClientId, questKey, npcTargetId);
+							else if (action == engine::client::DialogueAction::CompleteQuest)
+								(void)m_gameplayUdp.SendQuestTurnInRequest(gameplayClientId, questKey, npcTargetId);
+						}
 					});
 				const int64_t intervalCfg = m_cfg.GetInt("client.save_position.interval_sec", 30);
 				m_savePositionIntervalSec = std::chrono::seconds(std::max<int64_t>(5, intervalCfg));
@@ -9866,6 +9923,19 @@ namespace engine
 									npc.entityIndex = nearestI; // index de l'interactable courant
 									m_dialogue.OpenDialogue(e.dialogueTree, npc);
 									m_dialogueActive = true;
+									// SP2 (Task 4b) — mémorise le PNJ courant pour l'accept/turn-in
+									// (Task 4) ET envoie un Talk au shard : OpenDialogue est purement
+									// local (pas de round-trip serveur), donc sans ce Talk,
+									// UIModel.giverList.npcTargetId reste vide/périmé (dernier PNJ
+									// parlé, pas forcément celui-ci) et le shard rejetterait l'accept/
+									// turn-in. Ignoré si le PNJ n'a pas d'id réseau ou si le réseau
+									// gameplay n'est pas encore prêt (dialogue reste utilisable en
+									// mode solo/hors-ligne, juste sans wire quête).
+									m_currentDialogueNpcTargetId = e.npcTargetId;
+									if (!e.npcTargetId.empty() && m_gameplayNetInitialized)
+									{
+										(void)m_gameplayUdp.SendTalkRequest(m_gameplayUdp.ServerClientId(), e.npcTargetId);
+									}
 								}
 							}
 							else
@@ -9898,7 +9968,13 @@ namespace engine
 							// Synchronise le flag : toute fermeture (distance, Échap, choix End)
 							// libère le déplacement.
 							if (!m_dialogue.IsActive())
+							{
 								m_dialogueActive = false;
+								// SP2 (Task 4b) — le PNJ mémorisé n'est plus valide une fois le
+								// dialogue fermé (évite qu'un futur accept/turn-in hors dialogue
+								// réutilise par erreur la dernière cible).
+								m_currentDialogueNpcTargetId.clear();
+							}
 						}
 					}
 				}
@@ -10554,6 +10630,11 @@ namespace engine
 			// Partage la frame ImGui en cours (NewFrame déjà appelé plus haut).
 			if (m_dialogueImGui && m_dialogue.IsActive())
 				m_dialogueImGui->Render(m_dialogue, dw, dh);
+			// SP2 Task 5 — Journal + tracker + panneau donneur. No-op si non bindé
+			// (BindQuestUi est appelé au boot, cf. plus haut) ou si giverList/
+			// journalEntries sont vides (rien à afficher).
+			if (m_questImGui)
+				m_questImGui->Render(dw, dh, m_authUi.IsInWorldShard());
 			// Marqueurs ImGui des interactibles : label flottant projete (visibilite v1
 			// sans mesh). Surligne + " [E]" si a portee. Cf. m_interactables (#39/#40).
 			{
@@ -10607,6 +10688,83 @@ namespace engine
 						fg->AddRectFilled(ImVec2(bx, by), ImVec2(bx + bw, by + bh), IM_COL32(20, 20, 24, 220), 4.0f);
 						fg->AddRect(ImVec2(bx, by), ImVec2(bx + bw, by + bh), IM_COL32(255, 220, 80, 255), 4.0f, 0, 2.0f);
 						fg->AddText(ImVec2(bx + pad, by + pad), IM_COL32(255, 220, 80, 255), "E");
+					}
+					// SP2 Task 6 — Marqueur world-space donneur de quête : rune procédurale
+					// (losange + anneau) au-dessus des PNJ liés à une quête en cours de
+					// proposition ou de rendu. Source des liens PNJ<->quête : table
+					// data-driven chargée au boot (cf. Init, m_questGiverTable.Load).
+					// Statuts UIModel.quests miroir de engine::client::QuestStatus (wire
+					// uint8) — dupliqués en constantes locales comme QuestImGuiRenderer.cpp
+					// pour ne pas tirer de dépendance supplémentaire ici.
+					if (!e.npcTargetId.empty())
+					{
+						constexpr uint8_t kQuestStatusOffered = 1;
+						constexpr uint8_t kQuestStatusReadyToTurnIn = 3;
+						const std::vector<engine::client::QuestGiverLink>* links = m_questGiverTable.ForNpc(e.npcTargetId);
+						if (links != nullptr && !links->empty())
+						{
+							// Culling distance : seulement si le PNJ est à portée « visible »
+							// configurée (defaut 35 m), indépendamment du rayon d'interaction
+							// (e.radius, ~2.5 m) qui régit le badge "E".
+							const engine::math::Vec3 markerPlayerPos = m_characterController.GetPosition();
+							const float mdx = e.position.x - markerPlayerPos.x;
+							const float mdy = e.position.y - markerPlayerPos.y;
+							const float mdz = e.position.z - markerPlayerPos.z;
+							const float markerDist = std::sqrt(mdx * mdx + mdy * mdy + mdz * mdz);
+							const float markerMaxDist = static_cast<float>(
+								m_cfg.GetDouble("client.quest.giver_marker_distance_m", 35.0));
+							if (markerDist <= markerMaxDist)
+							{
+								// Priorité d'affichage si plusieurs liens : rendre > proposer
+								// (un PNJ à la fois donneur ET receveur pour des quêtes
+								// différentes doit d'abord signaler ce qu'il attend du joueur).
+								bool hasOffer = false;
+								bool hasTurnIn = false;
+								const auto& questsModel = m_uiModelBinding.GetModel().quests;
+								for (const engine::client::QuestGiverLink& link : *links)
+								{
+									for (const engine::client::UIQuestEntry& q : questsModel)
+									{
+										if (q.questId != link.questId)
+											continue;
+										if (link.role == 0 && q.status == kQuestStatusOffered)
+											hasOffer = true;
+										else if (link.role == 1 && q.status == kQuestStatusReadyToTurnIn)
+											hasTurnIn = true;
+									}
+								}
+								if (hasOffer || hasTurnIn)
+								{
+									// Ancrage : ~2.2 m au-dessus de la tête (my = sol + 1.9, tête
+									// approx au-dessus -> on projette depuis le sol + 2.2 direct
+									// pour rester simple et stable si le mesh du PNJ varie).
+									const float runeWorldY = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 2.2f;
+									float rsx = 0.0f, rsy = 0.0f;
+									if (WorldToScreenPx(out.viewProjMatrix.m, e.position.x, runeWorldY, e.position.z, ivw, ivh, rsx, rsy))
+									{
+										// Rendre prioritaire sur proposer si les deux sont vrais.
+										const bool turnInVariant = hasTurnIn;
+										const ImU32 runeFill = turnInVariant
+											? IM_COL32(120, 200, 255, 235)   // rendre : teinte bleu-glacé
+											: IM_COL32(255, 205, 60, 235);   // proposer : doré plein
+										const ImU32 runeRing = turnInVariant
+											? IM_COL32(230, 245, 255, 255)
+											: IM_COL32(255, 240, 190, 255);
+										const float runeR = 11.0f;
+										// Losange (4 sommets) rempli.
+										const ImVec2 diamond[4] = {
+											ImVec2(rsx, rsy - runeR),
+											ImVec2(rsx + runeR * 0.62f, rsy),
+											ImVec2(rsx, rsy + runeR),
+											ImVec2(rsx - runeR * 0.62f, rsy),
+										};
+										fg->AddConvexPolyFilled(diamond, 4, runeFill);
+										// Anneau autour du losange pour la lisibilité + signature "rune".
+										fg->AddCircle(ImVec2(rsx, rsy), runeR + 3.0f, runeRing, 16, 2.0f);
+									}
+								}
+							}
+						}
 					}
 				}
 				// TD.4 — Plaques de nom au-dessus des avatars joueurs distants.
@@ -14795,6 +14953,10 @@ namespace engine
 		{
 			(void)m_authUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
 		}
+		// SP2 Task 5 — Relayout journal/tracker (QuestUiPresenter). SetViewportSize
+		// est un no-op silencieux (log + false) si le presenter n'est pas initialise
+		// (echec Init au boot), donc pas besoin d'un garde IsInitialized ici.
+		(void)m_questUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
 		if (m_gameplayNetInitialized)
 		{
 			(void)m_shopUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
@@ -14981,6 +15143,11 @@ namespace engine
 				// Métiers SP1 — récolte (UIModelChangeHarvest) + artisanat (Crafting).
 				(void)m_harvestBar.ApplyModel(model, changeMask);
 				(void)m_craftingUi.ApplyModel(model, changeMask);
+				// SP2 Task 5 — journal + tracker (QuestUiPresenter reconstruit sa vue
+				// depuis model.quests a chaque changement). Le panneau donneur, lui,
+				// lit directement model.giverList depuis QuestImGuiRenderer (pas besoin
+				// de passer par le presenter).
+				(void)m_questUi.ApplyModel(model, changeMask);
 			});
 		if (m_uiObserverHandle == 0u)
 		{
@@ -15032,6 +15199,27 @@ namespace engine
 			port,
 			m_gameplayVendorTalkTarget,
 			m_gameplayAuctionTalkTarget);
+
+		// SP2 Task 5 — Panneau donneur (QuestImGuiRenderer) : boutons Accepter/
+		// Terminer. Contrairement au callback d'action du dialogue (qui cible
+		// m_currentDialogueNpcTargetId), le panneau donneur cible
+		// giverList.npcTargetId : il n'apparaît qu'après une réponse
+		// QuestGiverList (donc npcTargetId est forcément à jour dans ce contexte).
+		if (m_questImGui)
+		{
+			m_questImGui->SetGiverActionCallback(
+				[this](const std::string& questId, uint8_t role)
+				{
+					if (!m_gameplayNetInitialized)
+						return;
+					const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
+					const std::string& npcTargetId = m_uiModelBinding.GetModel().giverList.npcTargetId;
+					if (role == 0)
+						(void)m_gameplayUdp.SendQuestAcceptRequest(gameplayClientId, questId, npcTargetId);
+					else
+						(void)m_gameplayUdp.SendQuestTurnInRequest(gameplayClientId, questId, npcTargetId);
+				});
+		}
 	}
 
 	void Engine::ShutdownGameplayNet()

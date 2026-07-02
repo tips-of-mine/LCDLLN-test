@@ -50,6 +50,7 @@ namespace engine::client
 					choice.nextNodeId = cfg.GetString(cb + "next", "");
 					choice.action     = ParseDialogueAction(cfg.GetString(cb + "action", "continue"));
 					choice.questId    = static_cast<int>(cfg.GetInt(cb + "questId", -1));
+					choice.questKey   = cfg.GetString(cb + "questKey", ""); // SP2 : id texte pour QuestAccept/TurnInRequest.
 					choice.icon       = cfg.GetString(cb + "icon", "");
 					node.choices.push_back(std::move(choice));
 				}

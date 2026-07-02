@@ -54,7 +54,7 @@ namespace engine::client
 		     || choice.action == DialogueAction::CompleteQuest)
 		    && m_questActionCb)
 		{
-			m_questActionCb(choice.action, choice.questId);
+			m_questActionCb(choice.action, choice.questId, choice.questKey);
 		}
 
 		// Navigation / fermeture.

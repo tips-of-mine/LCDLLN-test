@@ -261,6 +261,46 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendQuestAcceptRequest(uint32_t clientId, const std::string& questId, const std::string& giverTargetId)
+	{
+		engine::server::QuestAcceptRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.questId = questId;
+		msg.giverTargetId = giverTargetId;
+		const std::vector<std::byte> packet = engine::server::EncodeQuestAcceptRequest(msg);
+		const bool ok = SendBytes(packet);
+		if (ok)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] QuestAcceptRequest sent (client_id={}, quest={}, giver={})",
+				clientId, msg.questId, msg.giverTargetId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] QuestAcceptRequest FAILED (client_id={}, quest={})", clientId, msg.questId);
+		}
+		return ok;
+	}
+
+	bool GameplayUdpClient::SendQuestTurnInRequest(uint32_t clientId, const std::string& questId, const std::string& npcTargetId)
+	{
+		engine::server::QuestTurnInRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.questId = questId;
+		msg.npcTargetId = npcTargetId;
+		const std::vector<std::byte> packet = engine::server::EncodeQuestTurnInRequest(msg);
+		const bool ok = SendBytes(packet);
+		if (ok)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] QuestTurnInRequest sent (client_id={}, quest={}, npc={})",
+				clientId, msg.questId, msg.npcTargetId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] QuestTurnInRequest FAILED (client_id={}, quest={})", clientId, msg.questId);
+		}
+		return ok;
+	}
+
 	bool GameplayUdpClient::SendAttackRequest(uint32_t clientId, uint64_t targetEntityId)
 	{
 		engine::server::AttackRequestMessage msg{};

@@ -39,14 +39,15 @@
         "_comment_interactables": "Interagir (touche E) : count = nombre de cibles ; chaque index i a x/z (metres monde), radius (portee m), npc (bool : PNJ vs objet), label, role (sous-titre cellule de dialogue), message (effet objet), mesh/scale/yaw_deg/rot_x_deg, dialogue (legacy, repli) et/ou dialogue_id (reference vers game/data/dialogues/<id>.json, prioritaire). Un PNJ avec dialogue_id ouvre la cellule de dialogue dediee (hors chat) ; portee resserree a 1.5 m (= seuil de rupture). Seuls les VRAIS interactibles ici (PNJ, coffre). Le DECOR (arbres, props non interactifs mais solides) est dans world.scenery. Le coffre et le villageois sont solides (collision) comme tout le decor.",
         "interactables": {
             "count": 7,
-            "_comment_0": "dialogue_id reference le fichier game/data/dialogues/villageois.json (contenu : repliques + choix). Prioritaire sur dialogue (legacy, conserve comme repli si le fichier manque).",
+            "_comment_0": "dialogue_id reference le fichier game/data/dialogues/villageois.json (contenu : repliques + choix). Prioritaire sur dialogue (legacy, conserve comme repli si le fichier manque). npc_target_id (SP2, Task 4b) : id reseau du PNJ envoye au shard (Talk a l'ouverture du dialogue + cible reelle des QuestAccept/TurnInRequest) ; doit correspondre a une cle de game/data/quests/quest_givers.json (ici npc:elder_marn, giver+turnIn de kill_10_boars, cf. quest_definitions.json / questKey du dialogue villageois.json).",
             "0": {
                 "x": 4.0, "z": 0.0, "radius": 1.5, "npc": true,
                 "label": "Villageois", "role": "Habitant du village",
                 "message": "Villageois : Bonjour !",
                 "mesh": "models/characters/humains/Male_Ranger/Male_Ranger.glb", "scale": 95.0, "rot_x_deg": -90.0, "yaw_deg": 270.0,
                 "dialogue": { "count": 3, "0": "Bonjour, aventurier ! Bienvenue par ici.", "1": "Le bassin de test est a l'est, si tu veux nager.", "2": "Reviens me voir quand tu veux." },
-                "dialogue_id": "villageois"
+                "dialogue_id": "villageois",
+                "npc_target_id": "npc:elder_marn"
             },
             "1": { "x": -4.0, "z": 0.0, "radius": 2.0, "npc": false, "label": "Coffre", "message": "Vous fouillez le coffre... vide pour l'instant.", "mesh": "meshes/props/Chest_Wood.gltf", "scale": 1.0, "yaw_deg": 0.0 },
             "2": { "x": -9.0, "z": -4.0, "radius": 2.0, "npc": false, "label": "Caisse en bois", "message": "Caisse en bois (comparaison).", "mesh": "meshes/props/Crate_Wooden.gltf", "scale": 1.0, "yaw_deg": 0.0 },

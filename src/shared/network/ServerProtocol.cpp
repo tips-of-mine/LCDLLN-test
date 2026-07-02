@@ -1261,6 +1261,140 @@ namespace engine::server
 		return true;
 	}
 
+	// SP1 quêtes — cycle de vie complet (giver-list, accept, turn-in). Wire v13->v14.
+
+	std::vector<std::byte> EncodeQuestAcceptRequest(const QuestAcceptRequestMessage& message)
+	{
+		const size_t payloadSize = 4u + 2u + message.questId.size() + 2u + message.giverTargetId.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::QuestAcceptRequest, payloadSize);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.questId);
+		WriteSizedString(packet, message.giverTargetId);
+		return packet;
+	}
+
+	bool DecodeQuestAcceptRequest(std::span<const std::byte> packet, QuestAcceptRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::QuestAcceptRequest, payload) || payload.size() < 8)
+		{
+			return false;
+		}
+
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset);
+		offset += 4;
+		if (!ReadSizedString(payload, offset, outMessage.questId))
+		{
+			return false;
+		}
+		if (!ReadSizedString(payload, offset, outMessage.giverTargetId) || offset != payload.size())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	std::vector<std::byte> EncodeQuestTurnInRequest(const QuestTurnInRequestMessage& message)
+	{
+		const size_t payloadSize = 4u + 2u + message.questId.size() + 2u + message.npcTargetId.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::QuestTurnInRequest, payloadSize);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.questId);
+		WriteSizedString(packet, message.npcTargetId);
+		return packet;
+	}
+
+	bool DecodeQuestTurnInRequest(std::span<const std::byte> packet, QuestTurnInRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::QuestTurnInRequest, payload) || payload.size() < 8)
+		{
+			return false;
+		}
+
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset);
+		offset += 4;
+		if (!ReadSizedString(payload, offset, outMessage.questId))
+		{
+			return false;
+		}
+		if (!ReadSizedString(payload, offset, outMessage.npcTargetId) || offset != payload.size())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	std::vector<std::byte> EncodeQuestGiverList(const QuestGiverListMessage& message)
+	{
+		size_t payloadSize = 4u + 2u + message.npcTargetId.size() + 2u;
+		for (const QuestGiverEntry& entry : message.entries)
+		{
+			payloadSize += 2u + entry.questId.size() + 1u;
+		}
+
+		std::vector<std::byte> packet = BeginPacket(MessageKind::QuestGiverList, payloadSize);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.npcTargetId);
+		WriteU16(packet, static_cast<uint16_t>(message.entries.size()));
+		for (const QuestGiverEntry& entry : message.entries)
+		{
+			WriteSizedString(packet, entry.questId);
+			packet.push_back(static_cast<std::byte>(entry.role));
+		}
+		return packet;
+	}
+
+	bool DecodeQuestGiverList(std::span<const std::byte> packet, QuestGiverListMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::QuestGiverList, payload) || payload.size() < 8)
+		{
+			return false;
+		}
+
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset);
+		offset += 4;
+		if (!ReadSizedString(payload, offset, outMessage.npcTargetId))
+		{
+			return false;
+		}
+
+		if ((offset + 2) > payload.size())
+		{
+			return false;
+		}
+		const uint16_t count = ReadU16(payload, offset);
+		offset += 2;
+
+		outMessage.entries.clear();
+		outMessage.entries.reserve(count);
+		for (uint16_t index = 0; index < count; ++index)
+		{
+			QuestGiverEntry entry{};
+			if (!ReadSizedString(payload, offset, entry.questId))
+			{
+				outMessage.entries.clear();
+				return false;
+			}
+			if (offset >= payload.size())
+			{
+				outMessage.entries.clear();
+				return false;
+			}
+			entry.role = static_cast<uint8_t>(payload[offset]);
+			offset += 1;
+			outMessage.entries.push_back(std::move(entry));
+		}
+
+		return offset == payload.size();
+	}
+
 	std::vector<std::byte> EncodeEventState(const EventStateMessage& message)
 	{
 		size_t payloadSize = 4 + 1 + 2 + 2 + 4 + 4 + 2 + message.eventId.size() + 2 + message.notificationText.size() + 4 + 4 + 2;

@@ -685,6 +685,29 @@ namespace engine::server
 		/// Send the current quest journal state after the client handshake succeeds.
 		void SendQuestStateBootstrap(const ConnectedClient& receiver);
 
+		/// SP1 quêtes — le joueur accepte une quête au PNJ giver (Offered -> Active).
+		void HandleAcceptQuest(const Endpoint& endpoint, const QuestAcceptRequestMessage& msg);
+
+		/// SP1 quêtes — le joueur rend une quête (ReadyToTurnIn -> Completed) : récompenses versées ici.
+		void HandleTurnInQuest(const Endpoint& endpoint, const QuestTurnInRequestMessage& msg);
+
+		/// SP1 quêtes — envoie la liste des quêtes offertes/rendables d'un PNJ au client.
+		void SendQuestGiverList(const ConnectedClient& receiver, std::string_view npcTargetId);
+
+		/// SP1 quêtes — sentinelle « non trouvé » pour FindClientQuestStateIndex.
+		static constexpr size_t kInvalidQuestIndex = static_cast<size_t>(-1);
+
+		/// SP1 quêtes — retrouve l'index de l'état de quête \p questId dans
+		/// \p client.questStates. Renvoie kInvalidQuestIndex si absent.
+		static size_t FindClientQuestStateIndex(const ConnectedClient& client, std::string_view questId);
+
+		/// SP1 quêtes — contrôle de portée joueur/PNJ pour accept/turn-in.
+		/// V1 : renvoie toujours true — la portée est aujourd'hui garantie côté
+		/// client (le Talk n'est émis qu'à proximité du PNJ) ; le Talk serveur
+		/// actuel route uniquement par targetId, sans vérifier de distance.
+		/// TODO SP-ultérieur : durcir côté serveur (distance réelle joueur/PNJ).
+		bool IsClientNearNpc(const ConnectedClient& client, std::string_view npcTargetId) const;
+
 		/// Send the current event state snapshot for the receiver's zone.
 		void SendDynamicEventBootstrap(const ConnectedClient& receiver);
 

@@ -19,12 +19,15 @@ namespace engine::server
 		Enter = 4
 	};
 
-	/// Runtime status stored for one quest on one player.
+	/// Runtime status stored for one quest on one player. L'ordre est
+	/// significatif (persisté et transmis wire) : ne pas réordonner sans migration.
 	enum class QuestStatus : uint8_t
 	{
-		Locked = 0,
-		Active = 1,
-		Completed = 2
+		Locked        = 0,   ///< pré-requis non remplis (interne, non affiché)
+		Offered       = 1,   ///< proposée au PNJ giver, pas encore acceptée
+		Active        = 2,   ///< acceptée, en cours
+		ReadyToTurnIn = 3,   ///< étapes remplies, à rendre (pas encore récompensée)
+		Completed     = 4,   ///< rendue + récompensée (terminal)
 	};
 
 	/// One typed step loaded from the quest definitions JSON.
@@ -47,6 +50,8 @@ namespace engine::server
 	struct QuestDefinition
 	{
 		std::string questId;
+		std::string giverId;    ///< PNJ qui propose la quête (même espace que targetId du Talk)
+		std::string turnInId;   ///< PNJ où rendre la quête (souvent = giverId)
 		std::vector<std::string> prerequisiteQuestIds;
 		std::vector<QuestStepDefinition> steps;
 		QuestReward rewards;
@@ -106,6 +111,17 @@ namespace engine::server
 
 		/// Find one quest definition by id, or return `nullptr` when it is absent.
 		const QuestDefinition* FindQuestDefinition(std::string_view questId) const;
+
+		/// Vrai si \p state peut être accepté au PNJ \p giverTargetId : quête Offered
+		/// et \p giverTargetId == def.giverId. Pur, sans effet de bord.
+		bool CanAccept(const QuestState& state, const QuestDefinition& def, std::string_view giverTargetId) const;
+
+		/// Vrai si \p state peut être rendu au PNJ \p npcTargetId : quête ReadyToTurnIn
+		/// et \p npcTargetId == def.turnInId. Pur, sans effet de bord.
+		bool CanTurnIn(const QuestState& state, const QuestDefinition& def, std::string_view npcTargetId) const;
+
+		/// Retourne le bundle de récompense à verser au turn-in (jamais nul).
+		const QuestReward* TakeRewardOnTurnIn(const QuestDefinition& def) const;
 
 	private:
 		/// Load every quest definition from the configured JSON content file.

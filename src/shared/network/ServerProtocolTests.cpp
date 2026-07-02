@@ -673,6 +673,86 @@ namespace
 		std::puts("[OK] TestLootNotifyRoundTrip");
 	}
 
+	/// SP1 quêtes — round-trip QuestAcceptRequest (client→serveur) + rejet tronqué.
+	void TestQuestAcceptRequestRoundTrip()
+	{
+		engine::server::QuestAcceptRequestMessage in{};
+		in.clientId = 7u;
+		in.questId = "q1";
+		in.giverTargetId = "npc:marn";
+
+		const std::vector<std::byte> packet = engine::server::EncodeQuestAcceptRequest(in);
+		assert(!packet.empty());
+
+		engine::server::QuestAcceptRequestMessage out{};
+		assert(engine::server::DecodeQuestAcceptRequest(packet, out));
+		assert(out.clientId == 7u);
+		assert(out.questId == "q1");
+		assert(out.giverTargetId == "npc:marn");
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 1u);
+		assert(!engine::server::DecodeQuestAcceptRequest(truncated, out));
+		std::puts("[OK] TestQuestAcceptRequestRoundTrip");
+	}
+
+	/// SP1 quêtes — round-trip QuestTurnInRequest (client→serveur) + rejet tronqué.
+	void TestQuestTurnInRequestRoundTrip()
+	{
+		engine::server::QuestTurnInRequestMessage in{};
+		in.clientId = 9u;
+		in.questId = "q2";
+		in.npcTargetId = "npc:guard";
+
+		const std::vector<std::byte> packet = engine::server::EncodeQuestTurnInRequest(in);
+		assert(!packet.empty());
+
+		engine::server::QuestTurnInRequestMessage out{};
+		assert(engine::server::DecodeQuestTurnInRequest(packet, out));
+		assert(out.clientId == 9u);
+		assert(out.questId == "q2");
+		assert(out.npcTargetId == "npc:guard");
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 1u);
+		assert(!engine::server::DecodeQuestTurnInRequest(truncated, out));
+		std::puts("[OK] TestQuestTurnInRequestRoundTrip");
+	}
+
+	/// SP1 quêtes — round-trip QuestGiverList (serveur→client) : 2 entrées (offer + turnin),
+	/// liste vide valide, et rejet d'un paquet tronqué.
+	void TestQuestGiverListRoundTrip()
+	{
+		engine::server::QuestGiverListMessage in{};
+		in.clientId = 3u;
+		in.npcTargetId = "npc:marn";
+		in.entries.push_back(engine::server::QuestGiverEntry{ "q1", 0u });
+		in.entries.push_back(engine::server::QuestGiverEntry{ "q2", 1u });
+
+		const std::vector<std::byte> packet = engine::server::EncodeQuestGiverList(in);
+		assert(!packet.empty());
+
+		engine::server::QuestGiverListMessage out{};
+		assert(engine::server::DecodeQuestGiverList(packet, out));
+		assert(out.clientId == 3u);
+		assert(out.npcTargetId == "npc:marn");
+		assert(out.entries.size() == 2u);
+		assert(out.entries[0].questId == "q1" && out.entries[0].role == 0u);
+		assert(out.entries[1].questId == "q2" && out.entries[1].role == 1u);
+
+		// Liste vide : valide (PNJ sans quête à offrir/rendre pour ce joueur).
+		engine::server::QuestGiverListMessage empty{};
+		empty.clientId = 3u;
+		empty.npcTargetId = "npc:marn";
+		assert(engine::server::DecodeQuestGiverList(engine::server::EncodeQuestGiverList(empty), out));
+		assert(out.entries.empty());
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 1u);
+		assert(!engine::server::DecodeQuestGiverList(truncated, out));
+		std::puts("[OK] TestQuestGiverListRoundTrip");
+	}
+
 int main()
 {
 	TestInputRoundTrip();
@@ -698,6 +778,9 @@ int main()
 	TestPlayerStatsRoundTripWithProfile();
 	TestForcePositionRoundTrip();
 	TestLootNotifyRoundTrip();
+	TestQuestAcceptRequestRoundTrip();
+	TestQuestTurnInRequestRoundTrip();
+	TestQuestGiverListRoundTrip();
 	std::puts("All ServerProtocol tests passed");
 	return 0;
 }

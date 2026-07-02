@@ -487,15 +487,13 @@ namespace engine::server
 	{
 		switch (status)
 		{
-		case QuestStatus::Locked:
-			return "locked";
-		case QuestStatus::Active:
-			return "active";
-		case QuestStatus::Completed:
-			return "completed";
-		default:
-			return "locked";
+		case QuestStatus::Locked:        return "locked";
+		case QuestStatus::Offered:       return "offered";
+		case QuestStatus::Active:        return "active";
+		case QuestStatus::ReadyToTurnIn: return "ready_to_turn_in";
+		case QuestStatus::Completed:     return "completed";
 		}
+		return "unknown";
 	}
 
 	QuestRuntime::QuestRuntime(const engine::core::Config& config)
@@ -590,7 +588,11 @@ namespace engine::server
 			}
 
 			QuestState& state = states[stateIndex];
-			if (state.status == QuestStatus::Completed)
+			// Une quête déjà acceptée (Active) ou prête à rendre (ReadyToTurnIn) ne doit
+			// jamais être rétrogradée par la sync de prérequis ; Completed est terminal.
+			if (state.status == QuestStatus::Completed
+				|| state.status == QuestStatus::Active
+				|| state.status == QuestStatus::ReadyToTurnIn)
 			{
 				continue;
 			}
@@ -609,7 +611,9 @@ namespace engine::server
 
 			if (prerequisitesComplete)
 			{
-				desiredStatus = QuestStatus::Active;
+				// La quête est proposée au joueur (Offered) ; l'acceptation explicite
+				// au PNJ giver (CanAccept) la fait ensuite passer à Active.
+				desiredStatus = QuestStatus::Offered;
 			}
 
 			if (state.status != desiredStatus)
@@ -732,17 +736,14 @@ namespace engine::server
 			delta.stepProgressCounts = state.stepProgressCounts;
 			if (AreAllStepsComplete(definition, state))
 			{
-				state.status = QuestStatus::Completed;
-				delta.status = QuestStatus::Completed;
-				delta.rewardExperience = definition.rewards.experience;
-				delta.rewardGold = definition.rewards.gold;
-				delta.rewardItems = definition.rewards.items;
+				// La récompense n'est PAS versée ici : elle est différée au turn-in
+				// explicite au PNJ (TakeRewardOnTurnIn), pour éviter un octroi silencieux
+				// dès la dernière étape complétée.
+				state.status = QuestStatus::ReadyToTurnIn;
+				delta.status = QuestStatus::ReadyToTurnIn;
 				LOG_INFO(Net,
-					"[QuestRuntime] Quest completed (quest_id={}, reward_xp={}, reward_gold={}, reward_items={})",
-					definition.questId,
-					delta.rewardExperience,
-					delta.rewardGold,
-					delta.rewardItems.size());
+					"[QuestRuntime] Quest ready to turn in (quest_id={})",
+					definition.questId);
 			}
 
 			UpsertDelta(outDeltas, std::move(delta));
@@ -781,6 +782,25 @@ namespace engine::server
 		}
 
 		return nullptr;
+	}
+
+	bool QuestRuntime::CanAccept(const QuestState& state, const QuestDefinition& def, std::string_view giverTargetId) const
+	{
+		return state.questId == def.questId
+			&& state.status == QuestStatus::Offered
+			&& giverTargetId == def.giverId;
+	}
+
+	bool QuestRuntime::CanTurnIn(const QuestState& state, const QuestDefinition& def, std::string_view npcTargetId) const
+	{
+		return state.questId == def.questId
+			&& state.status == QuestStatus::ReadyToTurnIn
+			&& npcTargetId == def.turnInId;
+	}
+
+	const QuestReward* QuestRuntime::TakeRewardOnTurnIn(const QuestDefinition& def) const
+	{
+		return &def.rewards;
 	}
 
 	bool QuestRuntime::LoadDefinitions()
@@ -844,6 +864,23 @@ namespace engine::server
 
 			QuestDefinition definition{};
 			definition.questId = idValue->stringValue;
+
+			const JsonValue* giverValue  = FindObjectMember(questValue, "giver");
+			const JsonValue* turnInValue = FindObjectMember(questValue, "turnIn");
+			if (giverValue == nullptr || giverValue->type != JsonType::String || giverValue->stringValue.empty())
+			{
+				LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.giver must be a non-empty string", definition.questId);
+				m_definitions.clear();
+				return false;
+			}
+			if (turnInValue == nullptr || turnInValue->type != JsonType::String || turnInValue->stringValue.empty())
+			{
+				LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.turnIn must be a non-empty string", definition.questId);
+				m_definitions.clear();
+				return false;
+			}
+			definition.giverId  = giverValue->stringValue;
+			definition.turnInId = turnInValue->stringValue;
 
 			if (const JsonValue* prereqsValue = FindObjectMember(questValue, "prereqs");
 				prereqsValue != nullptr)

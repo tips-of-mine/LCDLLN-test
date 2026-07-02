@@ -1,5 +1,6 @@
 #include "src/shardd/gameplay/character/CharacterPersistence.h"
 
+#include "src/shardd/gameplay/character/CharacterPersistenceQuestCompat.h"
 #include "src/shared/network/ServerProtocol.h"
 
 #include "src/shared/core/Log.h"
@@ -10,6 +11,29 @@
 
 namespace engine::server
 {
+	/// SP1 — Convertit une valeur de statut de quête persistée en QuestStatus.
+	/// L'ancien format (formatVersion 0) sérialisait 0=Locked/1=Active/2=Completed ;
+	/// le nouveau (formatVersion >= 1) sérialise directement l'enum QuestStatus (0..4).
+	/// \param persistedValue valeur brute lue du fichier de personnage.
+	/// \param formatVersion 0 = ancien schéma (0/1/2), >=1 = enum direct.
+	/// \return QuestStatus mappé ; Locked pour toute valeur hors plage.
+	QuestStatus MapPersistedQuestStatus(int64_t persistedValue, uint32_t formatVersion)
+	{
+		if (formatVersion == 0u)
+		{
+			switch (persistedValue)
+			{
+			case 0: return QuestStatus::Locked;
+			case 1: return QuestStatus::Active;
+			case 2: return QuestStatus::Completed;
+			default: return QuestStatus::Locked;
+			}
+		}
+		if (persistedValue >= 0 && persistedValue <= 4)
+			return static_cast<QuestStatus>(static_cast<uint8_t>(persistedValue));
+		return QuestStatus::Locked;
+	}
+
 	CharacterPersistenceStore::CharacterPersistenceStore(const engine::core::Config& config)
 		: m_config(config)
 		, m_schemaRelativePath(m_config.GetString(
@@ -123,19 +147,11 @@ namespace engine::server
 				continue;
 			}
 
+			// SP1 — quests.format_version absent = personnages existants (schéma legacy).
+			const uint32_t questFormatVersion =
+				static_cast<uint32_t>(persisted.GetInt("quests.format_version", 0));
 			const int64_t persistedStatus = persisted.GetInt("quests." + std::to_string(questIndex) + ".status", 0);
-			if (persistedStatus <= 0)
-			{
-				questState.status = QuestStatus::Locked;
-			}
-			else if (persistedStatus == 1)
-			{
-				questState.status = QuestStatus::Active;
-			}
-			else
-			{
-				questState.status = QuestStatus::Completed;
-			}
+			questState.status = MapPersistedQuestStatus(persistedStatus, questFormatVersion);
 
 			const uint32_t stepCount = static_cast<uint32_t>(persisted.GetInt("quests." + std::to_string(questIndex) + ".step_count", 0));
 			questState.stepProgressCounts.reserve(stepCount);
@@ -261,6 +277,8 @@ namespace engine::server
 			output << "inventory." << index << ".item_id=" << state.inventory[index].itemId << "\n";
 			output << "inventory." << index << ".quantity=" << state.inventory[index].quantity << "\n";
 		}
+		// SP1 — format_version=1 : quests.*.status écrit désormais l'enum QuestStatus direct (0..4).
+		output << "quests.format_version=1\n";
 		output << "quests.count=" << state.questStates.size() << "\n";
 		for (size_t questIndex = 0; questIndex < state.questStates.size(); ++questIndex)
 		{

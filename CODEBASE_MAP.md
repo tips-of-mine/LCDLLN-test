@@ -2431,3 +2431,14 @@ cast ; le combat reste sur les kits profil jusqu'à SP-C).
   (cf. spec §6).
 - **Déploiement** : ⚠️ redéploiement **shardd** (nouveau `ClassSkillLibrary` au
   boot) mais **inerte** → pas de lock-step.
+
+## Quêtes — cycle de vie piloté par le joueur (SP1)
+
+Le système de quêtes du shard (`src/shardd/gameplay/quest/QuestRuntime`) suit une machine d'états par personnage : `Locked → Offered → Active → ReadyToTurnIn → Completed`.
+
+- **Offered** : pré-requis remplis ; la quête est proposée par son PNJ `giver` (visible via la giver-list au Talk, pas dans le journal).
+- **Active** : le joueur a accepté (message `QuestAcceptRequest`, opcode 93) ; la progression avance via les events gameplay (`Kill/Collect/Talk/Enter`).
+- **ReadyToTurnIn** : toutes les étapes remplies ; **aucune récompense encore**.
+- **Completed** : le joueur a rendu la quête à son PNJ `turnIn` (message `QuestTurnInRequest`, opcode 94) → **récompenses versées à ce moment** (XP/or/items).
+
+Au `Talk` sur un PNJ, le shard renvoie `QuestGiverList` (opcode 92) listant ses quêtes proposées/rendables pour ce joueur, en plus de l'event d'étape `Talk`. Le contenu est data-driven (`game/data/quests/quest_definitions.json`, champs `giver`/`turnIn`). Wire : `kProtocolVersion` 14. Persistance : `CharacterPersistence` sérialise statut + `stepProgressCounts` + `quests.format_version` par personnage. Détails : `docs/superpowers/specs/2026-07-02-quest-*`.

@@ -2,6 +2,8 @@
   "quests": [
     {
       "id": "hunt_collect_enter",
+      "giver": "npc:elder_marn",
+      "turnIn": "npc:elder_marn",
       "prereqs": [],
       "steps": [
         { "type": "kill", "target": "mob:100", "requiredCount": 1 },
@@ -18,6 +20,8 @@
     },
     {
       "id": "report_to_guard",
+      "giver": "npc:guard_captain",
+      "turnIn": "npc:guard_captain",
       "prereqs": ["hunt_collect_enter"],
       "steps": [
         { "type": "talk", "target": "npc:guard_captain", "requiredCount": 1 }

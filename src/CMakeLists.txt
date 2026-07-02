@@ -588,6 +588,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(quest_runtime_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntimeTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntime.cpp)
+  # SP1 : compat des statuts de quête persistés (ancien enum 0/1/2 -> nouveau).
+  lcdlln_add_simple_test(character_persistence_quest_compat_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistenceQuestCompatTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp)
   # CMANGOS.33 (Phase 5.33a) : LfgQueue header-only.
   lcdlln_add_simple_test(lfg_queue_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/lfg/LfgQueueTests.cpp)

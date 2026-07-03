@@ -691,6 +691,13 @@ namespace engine::server
 		/// SP1 quêtes — le joueur rend une quête (ReadyToTurnIn -> Completed) : récompenses versées ici.
 		void HandleTurnInQuest(const Endpoint& endpoint, const QuestTurnInRequestMessage& msg);
 
+		/// EXT-2 quêtes — verse la récompense d'une quête terminée à \p client :
+		/// XP (avec montées de niveau), or (wallet) et objets (inventaire), puis
+		/// réplique les deltas inventaire/wallet. Partagé par le turn-in explicite
+		/// (HandleTurnInQuest) et l'auto-complétion (ApplyQuestEvent). Ne modifie
+		/// pas le statut de quête ni n'envoie de QuestDelta (à la charge du caller).
+		void GrantQuestReward(ConnectedClient& client, const QuestDefinition& def);
+
 		/// SP1 quêtes — envoie la liste des quêtes offertes/rendables d'un PNJ au client.
 		void SendQuestGiverList(const ConnectedClient& receiver, std::string_view npcTargetId);
 

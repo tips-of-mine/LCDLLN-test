@@ -46,6 +46,18 @@ namespace engine::server
 		std::vector<ItemStack> items;
 	};
 
+	/// EXT-2 — Mode de répétition d'une quête (par quête, choisi dans le JSON).
+	/// L'ordre est significatif (mappé depuis le JSON, potentiellement persisté
+	/// dans l'éditeur) : ne pas réordonner sans migration.
+	enum class QuestRepeatMode : uint8_t
+	{
+		None       = 0,   ///< quête one-shot classique (défaut, rétro-compatible)
+		Repeatable = 1,   ///< re-réalisable immédiatement, sans délai
+		Daily      = 2,   ///< re-réalisable au changement de jour UTC
+		Weekly     = 3,   ///< re-réalisable au changement de semaine UTC (lundi 00:00)
+		Cooldown   = 4,   ///< re-réalisable après `cooldownHours` heures écoulées
+	};
+
 	/// One quest definition loaded from the data-driven JSON file.
 	struct QuestDefinition
 	{
@@ -59,6 +71,15 @@ namespace engine::server
 		std::vector<std::string> excludedQuestIds;
 		std::vector<QuestStepDefinition> steps;
 		QuestReward rewards;
+		/// EXT-2 — mode de répétition (défaut None = one-shot, rétro-compatible).
+		QuestRepeatMode repeatMode = QuestRepeatMode::None;
+		/// EXT-2 — délai de réactivation en heures ; pertinent uniquement si
+		/// repeatMode == Cooldown (doit alors être > 0 ; ignoré sinon).
+		uint32_t cooldownHours = 0;
+		/// EXT-2 — si vrai, la quête se termine (Completed) automatiquement dès la
+		/// dernière étape complétée, sans retour au PNJ (récompense versée par le
+		/// caller ServerApp, pas par QuestRuntime).
+		bool autoComplete = false;
 	};
 
 	/// Per-player stored quest state required by the server runtime.

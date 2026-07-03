@@ -417,6 +417,40 @@ namespace engine::server
 			return false;
 		}
 
+		/// EXT-2 — Convertit un jeton JSON en QuestRepeatMode. Retourne false si le
+		/// texte n'appartient pas à l'ensemble {none, repeatable, daily, weekly,
+		/// cooldown} (le caller émet alors une erreur de chargement).
+		bool ParseRepeatMode(std::string_view text, QuestRepeatMode& outMode)
+		{
+			if (text == "none")
+			{
+				outMode = QuestRepeatMode::None;
+				return true;
+			}
+			if (text == "repeatable")
+			{
+				outMode = QuestRepeatMode::Repeatable;
+				return true;
+			}
+			if (text == "daily")
+			{
+				outMode = QuestRepeatMode::Daily;
+				return true;
+			}
+			if (text == "weekly")
+			{
+				outMode = QuestRepeatMode::Weekly;
+				return true;
+			}
+			if (text == "cooldown")
+			{
+				outMode = QuestRepeatMode::Cooldown;
+				return true;
+			}
+
+			return false;
+		}
+
 		/// Return true when every step on the quest reached its required count.
 		bool AreAllStepsComplete(const QuestDefinition& definition, const QuestState& state)
 		{
@@ -739,14 +773,29 @@ namespace engine::server
 			delta.stepProgressCounts = state.stepProgressCounts;
 			if (AreAllStepsComplete(definition, state))
 			{
-				// La récompense n'est PAS versée ici : elle est différée au turn-in
-				// explicite au PNJ (TakeRewardOnTurnIn), pour éviter un octroi silencieux
-				// dès la dernière étape complétée.
-				state.status = QuestStatus::ReadyToTurnIn;
-				delta.status = QuestStatus::ReadyToTurnIn;
-				LOG_INFO(Net,
-					"[QuestRuntime] Quest ready to turn in (quest_id={})",
-					definition.questId);
+				if (definition.autoComplete)
+				{
+					// EXT-2 — quête auto-complétée : elle passe directement Completed,
+					// sans retour au PNJ. La récompense n'est PAS versée ici
+					// (QuestRuntime n'a pas d'accès inventaire) : le caller ServerApp
+					// détecte le delta Completed et appelle GrantQuestReward.
+					state.status = QuestStatus::Completed;
+					delta.status = QuestStatus::Completed;
+					LOG_INFO(Net,
+						"[QuestRuntime] Quest auto-completed (quest_id={})",
+						definition.questId);
+				}
+				else
+				{
+					// La récompense n'est PAS versée ici : elle est différée au turn-in
+					// explicite au PNJ (TakeRewardOnTurnIn), pour éviter un octroi silencieux
+					// dès la dernière étape complétée.
+					state.status = QuestStatus::ReadyToTurnIn;
+					delta.status = QuestStatus::ReadyToTurnIn;
+					LOG_INFO(Net,
+						"[QuestRuntime] Quest ready to turn in (quest_id={})",
+						definition.questId);
+				}
 			}
 
 			UpsertDelta(outDeltas, std::move(delta));
@@ -1120,6 +1169,57 @@ namespace engine::server
 						definition.rewards.items.push_back(item);
 					}
 				}
+			}
+
+			// EXT-2 — champs optionnels "repeat"/"cooldownHours"/"autoComplete"
+			// (rétro-compatibles : absents → None/0/false, comme les définitions
+			// existantes de quest_definitions.json).
+			if (const JsonValue* repeatValue = FindObjectMember(questValue, "repeat");
+				repeatValue != nullptr)
+			{
+				if (repeatValue->type != JsonType::String
+					|| !ParseRepeatMode(repeatValue->stringValue, definition.repeatMode))
+				{
+					LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.repeat must be one of none/repeatable/daily/weekly/cooldown",
+						definition.questId);
+					m_definitions.clear();
+					return false;
+				}
+			}
+
+			if (const JsonValue* cooldownValue = FindObjectMember(questValue, "cooldownHours");
+				cooldownValue != nullptr)
+			{
+				if (!TryGetUint(*cooldownValue, definition.cooldownHours))
+				{
+					LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.cooldownHours must be a non-negative integer",
+						definition.questId);
+					m_definitions.clear();
+					return false;
+				}
+			}
+
+			// En mode Cooldown, cooldownHours doit être strictement positif (sinon la
+			// quête serait immédiatement re-réalisable, ce qui contredit l'intention).
+			if (definition.repeatMode == QuestRepeatMode::Cooldown && definition.cooldownHours == 0)
+			{
+				LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.cooldownHours must be > 0 when repeat is 'cooldown'",
+					definition.questId);
+				m_definitions.clear();
+				return false;
+			}
+
+			if (const JsonValue* autoCompleteValue = FindObjectMember(questValue, "autoComplete");
+				autoCompleteValue != nullptr)
+			{
+				if (autoCompleteValue->type != JsonType::Bool)
+				{
+					LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.autoComplete must be a boolean",
+						definition.questId);
+					m_definitions.clear();
+					return false;
+				}
+				definition.autoComplete = autoCompleteValue->boolValue;
 			}
 
 			LOG_INFO(Net, "[QuestRuntime] Loaded quest definition (quest_id={}, prereqs={}, steps={}, reward_items={})",

@@ -21,6 +21,7 @@ using engine::server::QuestStatus;
 using engine::server::QuestState;
 using engine::server::QuestStepType;
 using engine::server::QuestProgressDelta;
+using engine::server::QuestRepeatMode;
 
 namespace
 {
@@ -282,6 +283,155 @@ int main()
 				Check(!runtime.IsBlockedByExclusion(states, *defY),
 				      "(e) qY jamais bloquée sans excludes");
 			}
+		}
+	}
+
+	// EXT-2 — parse repeat/cooldownHours/autoComplete.
+	{
+		const std::string json = R"JSON({
+      "quests": [
+        { "id": "daily1", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [], "repeat": "daily", "autoComplete": true,
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } }
+      ]
+    })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(json);
+		Check(runtime.Init(), "EXT-2 Init charge daily1 (repeat=daily, autoComplete)");
+		const auto* def = runtime.FindQuestDefinition("daily1");
+		Check(def != nullptr, "EXT-2 daily1 trouvée");
+		if (def != nullptr)
+		{
+			Check(def->repeatMode == QuestRepeatMode::Daily, "EXT-2 repeat=daily → Daily");
+			Check(def->autoComplete, "EXT-2 autoComplete=true parsé");
+		}
+	}
+
+	// EXT-2 — rétro-compat : sans champs repeat/autoComplete → None/false.
+	{
+		const std::string json = R"JSON({
+      "quests": [
+        { "id": "legacy1", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [], "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } }
+      ]
+    })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(json);
+		Check(runtime.Init(), "EXT-2 Init charge legacy1 (aucun champ EXT-2)");
+		const auto* def = runtime.FindQuestDefinition("legacy1");
+		Check(def != nullptr, "EXT-2 legacy1 trouvée");
+		if (def != nullptr)
+		{
+			Check(def->repeatMode == QuestRepeatMode::None, "EXT-2 repeat absent → None (rétro-compat)");
+			Check(!def->autoComplete, "EXT-2 autoComplete absent → false (rétro-compat)");
+			Check(def->cooldownHours == 0, "EXT-2 cooldownHours absent → 0");
+		}
+	}
+
+	// EXT-2 — cooldown valide (cooldownHours > 0).
+	{
+		const std::string json = R"JSON({
+      "quests": [
+        { "id": "cd1", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [], "repeat": "cooldown", "cooldownHours": 6,
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } }
+      ]
+    })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(json);
+		Check(runtime.Init(), "EXT-2 Init charge cd1 (cooldown 6h)");
+		const auto* def = runtime.FindQuestDefinition("cd1");
+		Check(def != nullptr, "EXT-2 cd1 trouvée");
+		if (def != nullptr)
+		{
+			Check(def->repeatMode == QuestRepeatMode::Cooldown, "EXT-2 repeat=cooldown → Cooldown");
+			Check(def->cooldownHours == 6, "EXT-2 cooldownHours=6 parsé");
+		}
+	}
+
+	// EXT-2 — rejet : cooldown sans cooldownHours (défaut 0).
+	{
+		const std::string bad = R"JSON({ "quests": [
+          { "id": "cdbad", "giver": "npc:marn", "turnIn": "npc:marn",
+            "prereqs": [], "repeat": "cooldown",
+            "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ],
+            "rewards": { "xp": 1, "gold": 0, "items": [] } } ] })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(bad);
+		Check(!runtime.Init(), "EXT-2 Init rejette cooldown sans cooldownHours");
+	}
+
+	// EXT-2 — rejet : cooldown avec cooldownHours == 0.
+	{
+		const std::string bad = R"JSON({ "quests": [
+          { "id": "cdzero", "giver": "npc:marn", "turnIn": "npc:marn",
+            "prereqs": [], "repeat": "cooldown", "cooldownHours": 0,
+            "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ],
+            "rewards": { "xp": 1, "gold": 0, "items": [] } } ] })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(bad);
+		Check(!runtime.Init(), "EXT-2 Init rejette cooldown avec cooldownHours 0");
+	}
+
+	// EXT-2 — rejet : mode repeat invalide.
+	{
+		const std::string bad = R"JSON({ "quests": [
+          { "id": "bogus", "giver": "npc:marn", "turnIn": "npc:marn",
+            "prereqs": [], "repeat": "bogus",
+            "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ],
+            "rewards": { "xp": 1, "gold": 0, "items": [] } } ] })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(bad);
+		Check(!runtime.Init(), "EXT-2 Init rejette repeat invalide");
+	}
+
+	// EXT-2 — autoComplete : la dernière étape complétée passe Completed
+	// (pas ReadyToTurnIn). Un jumeau autoComplete=false reste ReadyToTurnIn.
+	{
+		const std::string json = R"JSON({
+      "quests": [
+        { "id": "qauto", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [], "autoComplete": true,
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } },
+        { "id": "qmanual", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [], "autoComplete": false,
+          "steps": [ { "type": "kill", "target": "mob:2", "requiredCount": 1 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } }
+      ]
+    })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(json);
+		Check(runtime.Init(), "EXT-2 Init charge qauto/qmanual");
+
+		std::vector<QuestState> states;
+		std::vector<QuestProgressDelta> deltas;
+		Check(runtime.SyncQuestStates(states, deltas), "EXT-2 sync OK");
+		Check(states.size() == 2, "EXT-2 deux états créés");
+		if (states.size() == 2)
+		{
+			// Accepter les deux (Offered → Active).
+			states[0].status = QuestStatus::Active;
+			states[1].status = QuestStatus::Active;
+
+			// Compléter l'étape de qauto → Completed (auto).
+			deltas.clear();
+			runtime.ApplyEvent(states, QuestStepType::Kill, "mob:1", 1, deltas);
+			Check(states[0].status == QuestStatus::Completed,
+			      "EXT-2 autoComplete → Completed (pas ReadyToTurnIn)");
+			bool sawAutoCompletedDelta = false;
+			for (const auto& d : deltas)
+				if (d.questId == "qauto" && d.status == QuestStatus::Completed) sawAutoCompletedDelta = true;
+			Check(sawAutoCompletedDelta, "EXT-2 delta qauto porte le statut Completed");
+
+			// Compléter l'étape de qmanual → ReadyToTurnIn (inchangé).
+			deltas.clear();
+			runtime.ApplyEvent(states, QuestStepType::Kill, "mob:2", 1, deltas);
+			Check(states[1].status == QuestStatus::ReadyToTurnIn,
+			      "EXT-2 autoComplete=false → ReadyToTurnIn (inchangé)");
 		}
 	}
 

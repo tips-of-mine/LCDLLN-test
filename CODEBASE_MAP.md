@@ -1242,7 +1242,6 @@ Chaque domaine persistant expose une **interface abstraite** + **implémentation
 | Loot | `src/masterd/loot/LootStore.h` | `MysqlLootStore` | Wave 5 phase 2 #574 |
 | Mail | `src/masterd/mail/MailStore.h` | `MysqlMailStore` + `IsAvailable` helper | Wave 10 #579 |
 | Cinematic | `src/masterd/cinematics/CinematicStore.h` | `MysqlCinematicStore` | Wave 11 #580 |
-| Quests | `src/masterd/quests/QuestStateStore.h` | `MysqlQuestStateStore` | - |
 | Reputation | `src/masterd/reputation/ReputationStore.h` | `MysqlReputationStore` | - |
 
 ### Fallback InMemory
@@ -2307,7 +2306,7 @@ Correctifs du constat majeur de l''audit 2026-06-10 : le NetServer dispatche les
 handlers sur un pool de workers (défaut 4) mais plusieurs systèmes à état RAM
 n''avaient AUCUN verrou. Ajout d''un `std::mutex` (méthodes publiques verrouillées,
 helpers privés « Unlocked » quand une publique en appelait une autre) sur :
-`LfgQueue`, `GmTicketSystem`, `QuestStateTracker`, `MailManager` (sérialise les
+`LfgQueue`, `GmTicketSystem`, `MailManager` (sérialise les
 séquences Find→Update du store), `RateLimitAndBan`, `PasswordResetStore`.
 Et purge opportuniste de l''anti-rejeu `ShardTicketValidator::m_used_ticket_ids`
 (set → map ticket_id→expires_at ; l''ancien set grossissait sans fin).
@@ -2433,6 +2432,13 @@ cast ; le combat reste sur les kits profil jusqu'à SP-C).
   boot) mais **inerte** → pas de lock-step.
 
 ## Quêtes — cycle de vie piloté par le joueur (SP1)
+
+> **Source unique = système B (shard).** L'ancien « système A » côté master
+> (status-machine `QuestStateTracker`/`MysqlQuestStateStore`/`QuestHandler`,
+> opcodes 59-67, migration `0048_quest_state.sql`) a été **entièrement retiré**
+> (Cleanup 2026-07-02, spec `docs/superpowers/specs/2026-07-02-quest-cleanup-systeme-a-design.md`).
+> Il était 100 % mort (aucun appel gameplay). Ne pas réintroduire d'état de quête
+> côté master : tout passe par le `QuestRuntime` du shard décrit ci-dessous.
 
 Le système de quêtes du shard (`src/shardd/gameplay/quest/QuestRuntime`) suit une machine d'états par personnage : `Locked → Offered → Active → ReadyToTurnIn → Completed`.
 

@@ -8,7 +8,7 @@
 // l'opcode 95 (REPUTATION_LIST_REQUEST).
 //
 // Le handler expose aussi une API publique ApplyReputationDelta() qu'un autre
-// handler (QuestHandler, futurs LootHandler / KillHandler / etc.) peut
+// handler (futurs LootHandler / KillHandler / etc.) peut
 // appeler pour declencher un changement de reputation cote serveur. Le
 // changement est applique au manager (avec spillover), persiste en DB, et
 // pousse au client via REPUTATION_UPDATE_NOTIFICATION (opcode 97) si le

@@ -16,7 +16,6 @@
 #include "src/shared/network/ChatPayloads.h"
 #include "src/shared/network/IgnoreListPayloads.h"
 #include "src/shared/network/MailPayloads.h"
-#include "src/shared/network/QuestPayloads.h"
 #include "src/shared/network/GmTicketPayloads.h"
 #include "src/shared/network/ReputationPayloads.h"
 #include "src/shared/network/ArenaPayloads.h"
@@ -1503,11 +1502,10 @@ namespace engine
 			LOG_WARN(Core, "[Boot] AuthUiPresenter viewport FAILED — using fallback layout");
 		}
 
-		// SP2 Task 5 — Init du presenter Quete (jamais appele jusqu'ici : la
-		// SetSendCallback ci-dessous supposait a tort un Init deja fait plus
-		// haut dans le boot). Charge aussi les textes de quete (titre/
-		// description/etapes, resolus par locale) et la table PNJ->quetes,
-		// tous deux consommes par le journal/panneau donneur (QuestImGuiRenderer).
+		// SP2 Task 5 — Init du presenter Quete (systeme B, shard). Charge aussi
+		// les textes de quete (titre/description/etapes, resolus par locale) et
+		// la table PNJ->quetes, tous deux consommes par le journal/panneau
+		// donneur (QuestImGuiRenderer).
 		if (!m_questUi.Init(m_cfg))
 		{
 			LOG_WARN(Core, "[Boot] QuestUiPresenter init FAILED — journal/tracker de quete desactives");
@@ -1554,15 +1552,6 @@ namespace engine
 				return m_authUi.SendGenericRequestAsync(opcode, payload);
 			});
 		}
-
-		// CMANGOS.23 (Phase 5.23 step 3+4) — Cable le QuestUi presenter au
-		// master via le helper generique d'AuthUi. Le presenter etait deja
-		// init via Init(m_cfg) plus haut dans le boot ; ici on ne fait que
-		// brancher le canal d'envoi reseau. La reception est dispatchee dans
-		// le SetMasterPushHandler ci-dessous (opcodes 60/62/64/66/67).
-		m_questUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-			return m_authUi.SendGenericRequestAsync(opcode, payload);
-		});
 
 		// CMANGOS.25 (Phase 3.25 step 3+4) — Init du presenter IgnoreList +
 		// cable du send callback. La reception est dispatchee dans le
@@ -1901,23 +1890,6 @@ namespace engine
 						}
 					}
 				}
-			}
-			// CMANGOS.23 (Phase 5.23 step 3+4) — Slash command /quest et /quests
-			// pour ouvrir/fermer le panneau quete et synchroniser la liste depuis
-			// le master au moment de l'ouverture.
-			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
-				&& (text == "/quest" || text == "/quests"
-				    || text.starts_with("/quest ") || text.starts_with("/quest\t")
-				    || text.starts_with("/quests ") || text.starts_with("/quests\t")))
-			{
-				m_questVisible = !m_questVisible;
-				if (m_questVisible)
-				{
-					m_questUi.RequestQuestList();
-				}
-				LOG_INFO(Core, "[Engine] /quest toggle (visible={})", m_questVisible);
-				sendAdminAudit("/quest");
-				return true;
 			}
 			// CMANGOS.27 (Phase 4.27 step 3+4) — Slash command /trade <accountId>
 			// pour initier un echange avec le joueur cible. V1 : resolution par
@@ -2693,63 +2665,6 @@ namespace engine
 					return;
 				}
 				m_mailUi.OnDeleteResponse(*parsed);
-				return;
-			}
-			// CMANGOS.23 (Phase 5.23 step 3+4) — Dispatch des reponses Quest
-			// (60/62/64/66) + push QuestStateUpdate (67).
-			case kOpcodeQuestAcceptResponse:
-			{
-				auto parsed = ParseQuestAcceptResponsePayload(payload, payloadSize);
-				if (!parsed)
-				{
-					LOG_WARN(Net, "[Engine] QUEST_ACCEPT_RESPONSE parse failed (size={})", payloadSize);
-					return;
-				}
-				m_questUi.OnQuestAcceptResponse(*parsed);
-				return;
-			}
-			case kOpcodeQuestCompleteResponse:
-			{
-				auto parsed = ParseQuestCompleteResponsePayload(payload, payloadSize);
-				if (!parsed)
-				{
-					LOG_WARN(Net, "[Engine] QUEST_COMPLETE_RESPONSE parse failed (size={})", payloadSize);
-					return;
-				}
-				m_questUi.OnQuestCompleteResponse(*parsed);
-				return;
-			}
-			case kOpcodeQuestRewardResponse:
-			{
-				auto parsed = ParseQuestRewardResponsePayload(payload, payloadSize);
-				if (!parsed)
-				{
-					LOG_WARN(Net, "[Engine] QUEST_REWARD_RESPONSE parse failed (size={})", payloadSize);
-					return;
-				}
-				m_questUi.OnQuestRewardResponse(*parsed);
-				return;
-			}
-			case kOpcodeQuestListResponse:
-			{
-				auto parsed = ParseQuestListResponsePayload(payload, payloadSize);
-				if (!parsed)
-				{
-					LOG_WARN(Net, "[Engine] QUEST_LIST_RESPONSE parse failed (size={})", payloadSize);
-					return;
-				}
-				m_questUi.OnQuestListResponse(*parsed);
-				return;
-			}
-			case kOpcodeQuestStateUpdate:
-			{
-				auto parsed = ParseQuestStateUpdatePayload(payload, payloadSize);
-				if (!parsed)
-				{
-					LOG_WARN(Net, "[Engine] QUEST_STATE_UPDATE parse failed (size={})", payloadSize);
-					return;
-				}
-				m_questUi.OnQuestStateUpdate(*parsed);
 				return;
 			}
 			// CMANGOS.25 (Phase 3.25 step 3+4) — Dispatch des reponses IgnoreList
@@ -8833,20 +8748,15 @@ namespace engine
 				// Cellule de dialogue PNJ : journal local de conversation de quête pour ce
 				// personnage + branchement du presenter (sink de journalisation + callback
 				// d'action quête). Accept/turn-in partent au shard (SP2 Task 7, voir
-				// callback ci-dessous) ; System A (m_questUi.AcceptQuest/CompleteQuest)
-				// n'est plus sollicité depuis ce call-site.
+				// callback ci-dessous).
 				m_dialogueJournal = std::make_unique<engine::client::QuestConversationJournal>(m_cfg, m_currentCharacterId);
 				m_dialogue.SetJournalSink(m_dialogueJournal.get());
 				m_dialogue.SetQuestActionCallback(
 					[this](engine::client::DialogueAction action, int questId, const std::string& questKey)
 					{
-						// SP2 Task 7 — accept/turn-in passent désormais EXCLUSIVEMENT par le
-						// shard (opcodes 93/94 ci-dessous, Tasks 4/5). L'ancien double-envoi
-						// système A maître (m_questUi.AcceptQuest/CompleteQuest, opcodes
-						// 59/61/63) est retiré ici pour ne plus émettre ces opcodes redondants.
-						// Les méthodes System A restent définies dans QuestUiPresenter (cache
-						// m_questStates dormant) ; leur retrait complet est le sous-projet
-						// Cleanup séparé, pas SP2.
+						// SP2 Task 7 — accept/turn-in passent EXCLUSIVEMENT par le shard
+						// (opcodes 93/94 ci-dessous, Tasks 4/5). Le système A maître (retiré,
+						// Cleanup 2026-07-02) n'existe plus.
 						(void)questId;
 						// SP2 — wire quêtes UDP (shard) : le choix de dialogue porte la clé
 						// texte de quête ; on envoie QuestAccept/TurnInRequest au shard avec

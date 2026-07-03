@@ -4,7 +4,7 @@
  *
  * Returns 0 on success, 1 on first failure.
  *
- * Test policy : symétrique aux MailPayloadsTests.cpp / QuestPayloadsTests.cpp.
+ * Test policy : symétrique aux autres *PayloadsTests.cpp (ex: MailPayloadsTests.cpp).
  */
 
 #include "src/shared/network/IgnoreListPayloads.h"

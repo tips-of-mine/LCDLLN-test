@@ -79,8 +79,8 @@ namespace engine::server
 
 		/// API publique : pousse une push SkillUpgradeNotification (opcode 119)
 		/// au client identifie par \p connId. Utilise par les autres handlers
-		/// (CraftingSystem futur, QuestHandler reward, etc.) pour signaler un
-		/// gain de skill ou un changement de cap.
+		/// (CraftingSystem futur, etc.) pour signaler un gain de skill ou un
+		/// changement de cap.
 		///
 		/// \param connId    identifiant de connexion TCP cible (0 = no-op).
 		/// \param skillId   skill modifie.

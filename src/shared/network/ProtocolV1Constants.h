@@ -214,23 +214,11 @@ namespace engine::network
 	constexpr uint16_t kOpcodeMailDeleteResponse          = 58u; ///< Master→Client : ACK ou erreur (NOT_FOUND, NOT_OWNER).
 
 	// -------------------------------------------------------------------------
-	// Opcodes Quest (valeurs 59–67)
-	// Référence : Phase 5 CMANGOS.23 step 3+4. Wire client→master pour la
-	// machine d'état Quest (None → Available → Accepted → Completed → Rewarded).
-	// Le step 1 (QuestStateTracker header-only) et le step 2 (MysqlQuestStateStore
-	// + migration 0048) sont déjà mergés. Cette série expose les opérations
-	// au client via 4 paires request/response + 1 push (state update).
+	// Opcodes 59-67 (Quest, système A master) retirés — Cleanup 2026-07-02.
+	// Remplacés par le système B (shard) : ServerProtocol QuestDelta(13)/
+	// QuestGiverList(92)/QuestAccept(93)/QuestTurnIn(94), kProtocolVersion 14.
+	// Voir docs/superpowers/specs/2026-07-02-quest-cleanup-systeme-a-design.md
 	// -------------------------------------------------------------------------
-
-	constexpr uint16_t kOpcodeQuestAcceptRequest    = 59u; ///< Client→Master : accepte une quête (questId).
-	constexpr uint16_t kOpcodeQuestAcceptResponse   = 60u; ///< Master→Client : OK + nouveau status, ou WrongStatus / Unauthorized.
-	constexpr uint16_t kOpcodeQuestCompleteRequest  = 61u; ///< Client→Master : marque une quête Completed.
-	constexpr uint16_t kOpcodeQuestCompleteResponse = 62u; ///< Master→Client : OK + nouveau status, ou WrongStatus.
-	constexpr uint16_t kOpcodeQuestRewardRequest    = 63u; ///< Client→Master : récupère la récompense (Completed → Rewarded).
-	constexpr uint16_t kOpcodeQuestRewardResponse   = 64u; ///< Master→Client : OK + nouveau status, ou NotImplementedYet (V1).
-	constexpr uint16_t kOpcodeQuestListRequest      = 65u; ///< Client→Master : liste les quêtes connues du compte (vide, account dérivé de la session).
-	constexpr uint16_t kOpcodeQuestListResponse     = 66u; ///< Master→Client : tableau {questId, status} ou Unauthorized.
-	constexpr uint16_t kOpcodeQuestStateUpdate      = 67u; ///< Master→Client (push, request_id=0) : le serveur a changé l'état d'une quête (admin reset, etc.).
 
 	// -------------------------------------------------------------------------
 	// Opcodes IgnoreList (valeurs 68–73)

@@ -5,7 +5,7 @@
  *
  * Returns 0 on success, 1 on first failure.
  *
- * Test policy : symetrique aux QuestPayloadsTests.cpp — pas de framework de
+ * Test policy : symetrique aux autres *PayloadsTests.cpp — pas de framework de
  * test externe, juste un Assert local + main() qui appelle chaque suite.
  */
 

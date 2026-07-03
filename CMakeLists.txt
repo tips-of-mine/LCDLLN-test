@@ -778,7 +778,6 @@ add_library(engine_core
   src/shared/network/DungeonPayloads.cpp   # M100.43 — opcodes 197/198, réservés (handler M100.44)
   src/shared/network/IgnoreListPayloads.cpp
   src/shared/network/MailPayloads.cpp
-  src/shared/network/QuestPayloads.cpp
   src/shared/network/GmTicketPayloads.cpp
   src/shared/network/ReputationPayloads.cpp
   src/shared/network/ArenaPayloads.cpp
@@ -1201,11 +1200,6 @@ add_test(NAME chat_payloads_tests COMMAND chat_payloads_tests)
 add_executable(mail_payloads_tests src/shared/network/MailPayloadsTests.cpp)
 target_link_libraries(mail_payloads_tests PRIVATE engine_core)
 add_test(NAME mail_payloads_tests COMMAND mail_payloads_tests)
-
-# CMANGOS.23 (Phase 5.23 step 3+4): QUEST_*_REQUEST/RESPONSE payload round-trip tests
-add_executable(quest_payloads_tests src/shared/network/QuestPayloadsTests.cpp)
-target_link_libraries(quest_payloads_tests PRIVATE engine_core)
-add_test(NAME quest_payloads_tests COMMAND quest_payloads_tests)
 
 # CMANGOS.25 (Phase 3.25 step 3+4): IGNORE_*_REQUEST/RESPONSE payload round-trip tests
 add_executable(ignore_list_payloads_tests src/shared/network/IgnoreListPayloadsTests.cpp)

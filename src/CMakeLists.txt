@@ -165,7 +165,6 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/session/SessionCharacterMap.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/chat/ChatRelayHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/mail/MailHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/quest/QuestHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/social/IgnoreListHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/gmtickets/GmTicketHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/trade/TradeHandler.cpp
@@ -190,7 +189,6 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/IgnoreListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/DungeonPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/MailPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/QuestPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/GmTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/TradePayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ReputationPayloads.cpp
@@ -217,7 +215,6 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/mail/MysqlMailStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/gmtickets/MysqlGmTicketStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/reputation/MysqlReputationStore.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/quests/MysqlQuestStateStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/social/MysqlIgnoreStore.cpp
     # Wave 5 Persistence phase 1 : Auction / Arena / GameEvents / Skills / OutdoorPvp.
     ${CMAKE_SOURCE_DIR}/src/masterd/auction/MysqlAuctionStore.cpp
@@ -581,9 +578,6 @@ elseif(UNIX)
   lcdlln_add_simple_test(gm_ticket_system_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/gmtickets/GmTicketSystemTests.cpp)
 
-  # CMANGOS.23 (Phase 3.23a) : QuestStateTracker (header-only state machine).
-  lcdlln_add_simple_test(quest_state_tests
-    ${CMAKE_SOURCE_DIR}/src/masterd/quests/QuestStateTests.cpp)
   # SP1 : QuestRuntime — cycle de vie piloté par le joueur (parse giver/turnIn, transitions).
   lcdlln_add_simple_test(quest_runtime_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntimeTests.cpp

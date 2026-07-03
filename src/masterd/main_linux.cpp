@@ -42,7 +42,6 @@
 #include "src/masterd/mail/InMemoryMailStore.h"
 #include "src/masterd/mail/MailManager.h"
 #include "src/masterd/mail/MysqlMailStore.h"
-#include "src/masterd/handlers/quest/QuestHandler.h"
 #include "src/masterd/handlers/reputation/ReputationHandler.h"
 #include "src/masterd/handlers/arena/ArenaHandler.h"
 #include "src/masterd/handlers/battleground/BattleGroundHandler.h"
@@ -64,10 +63,8 @@
 #include "src/masterd/cinematics/InMemoryCinematicStore.h"
 #include "src/masterd/cinematics/MysqlCinematicStore.h"
 #include "src/masterd/handlers/skills/SkillHandler.h"
-#include "src/masterd/quests/MysqlQuestStateStore.h"
 #include "src/masterd/reputation/MysqlReputationStore.h"
 #include "src/masterd/reputation/ReputationManager.h"
-#include "src/masterd/quests/QuestState.h"
 #include "src/masterd/handlers/social/IgnoreListHandler.h"
 #include "src/masterd/social/IgnoreList.h"
 #include "src/masterd/social/MysqlIgnoreStore.h"
@@ -520,27 +517,9 @@ int main(int argc, char** argv)
 	mailHandler.SetConnectionSessionMap(&connSessionMap);
 	LOG_INFO(Net, "[ServerMain] MailHandler configured (CMANGOS.18 step 3)");
 
-	// CMANGOS.23 (Phase 5.23 step 3+4) — Quest wire server.
-	// Le tracker in-memory est l'autorite runtime des etats Quest. Le store
-	// MySQL sert de persistance audit (et future reload au login). En mode
-	// no-DB on garde le tracker mais on saute le store : la perte au reboot
-	// est acceptable pour cette MVP (le client redemandera la liste).
-	engine::server::quests::QuestStateTracker questTracker;
-	engine::server::quests::MysqlQuestStateStore questStore(&dbPool);
-	engine::server::QuestHandler questHandler;
-	questHandler.SetTracker(&questTracker);
-	questHandler.SetServer(&server);
-	questHandler.SetSessionManager(&sessionManager);
-	questHandler.SetConnectionSessionMap(&connSessionMap);
-	if (dbPool.IsInitialized())
-	{
-		questHandler.SetStore(&questStore);
-		LOG_INFO(Net, "[ServerMain] QuestHandler configured with DB store (CMANGOS.23 step 3+4)");
-	}
-	else
-	{
-		LOG_WARN(Net, "[ServerMain] QuestHandler running in no-DB mode (no persistence)");
-	}
+	// Système A (master status-machine Quest, opcodes 59-67) retiré — Cleanup
+	// 2026-07-02. Remplacé par le système B (shard, data-driven). Voir
+	// docs/superpowers/specs/2026-07-02-quest-cleanup-systeme-a-design.md
 
 	// CMANGOS.25 (Phase 3.25 step 3+4) — IgnoreList wire server.
 	// Le store DB est instancie seulement si dbPool est dispo (sinon mode no-DB :
@@ -1106,7 +1085,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &interactiveHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &worldClockHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &interactiveHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &worldClockHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -1141,11 +1120,6 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeMailTakeAttachmentsRequest
 		      || opcode == kOpcodeMailDeleteRequest)
 			mailHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpcodeQuestAcceptRequest
-		      || opcode == kOpcodeQuestCompleteRequest
-		      || opcode == kOpcodeQuestRewardRequest
-		      || opcode == kOpcodeQuestListRequest)
-			questHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeIgnoreAddRequest
 		      || opcode == kOpcodeIgnoreRemoveRequest
 		      || opcode == kOpcodeIgnoreListRequest)

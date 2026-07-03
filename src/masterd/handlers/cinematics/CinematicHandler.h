@@ -74,9 +74,8 @@ namespace engine::server
 		                  uint64_t sessionIdHeader,
 		                  const uint8_t* payload, size_t payloadSize);
 
-		/// API publique pour qu'un autre handler (ex: QuestHandler quand reward
-		/// cutscene, LootHandler, GMCommand, etc.) push une cinematic au client
-		/// d'un account donne.
+		/// API publique pour qu'un autre handler (ex: LootHandler, GMCommand,
+		/// etc.) push une cinematic au client d'un account donne.
 		///
 		/// \param accountId  account cible (le client en ligne sur le master).
 		/// \param sequenceId id de la sequence a jouer (mappe vers seq<id>.json

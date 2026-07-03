@@ -598,6 +598,12 @@ elseif(UNIX)
   # QuestGiverTable.cpp est desormais dans engine_core (meme raison que ci-dessus).
   lcdlln_add_simple_test(quest_giver_table_tests
     ${CMAKE_SOURCE_DIR}/src/client/quest/QuestGiverTableTests.cpp)
+  # SP3 (client) : QuestPoiTable — positions minimap par cible de quête (targetId).
+  # QuestPoiTable.cpp est desormais dans engine_core (meme raison que ci-dessus,
+  # requis par le futur QuestUiPresenter) -> ne pas le re-lister ici (double
+  # définition de symboles au link).
+  lcdlln_add_simple_test(quest_poi_table_tests
+    ${CMAKE_SOURCE_DIR}/src/client/quest/QuestPoiTableTests.cpp)
   # SP2 (client) : réception QuestGiverList (opcode 92) -> UIModel.giverList.
   # UIModel.cpp et ServerProtocol.cpp sont déjà dans engine_core (CMakeLists
   # racine) -> ne pas les re-lister ici (double définition de symboles).

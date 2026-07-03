@@ -500,6 +500,15 @@ namespace engine::editor::world::quests
 				}
 			}
 
+			if (const JsonValue* partySharedValue = FindObjectMember(questValue, "partyShared"); partySharedValue != nullptr)
+			{
+				if (!TryGetBool(*partySharedValue, quest.partyShared))
+				{
+					outError = "quest '" + quest.id + "': partyShared must be a boolean";
+					return false;
+				}
+			}
+
 			// Contrainte inter-champs : le mode cooldown exige un délai strictement
 			// positif (0 heure n'aurait pas de sens et casserait le reset shard).
 			if (quest.repeatMode == QuestRepeatMode::Cooldown && quest.cooldownHours == 0)
@@ -965,9 +974,11 @@ namespace engine::editor::world::quests
 
 			// EXT-2 : re-réalisation. `repeat` en chaîne minuscule (vocabulaire
 			// shard), `cooldownHours` en entier, `autoComplete` en bool JSON.
+			// EXT-3 : `partyShared` en bool JSON (dernier champ, sans virgule).
 			os << fieldPad << "\"repeat\": \"" << RepeatModeToString(quest.repeatMode) << "\",\n";
 			os << fieldPad << "\"cooldownHours\": " << Num(quest.cooldownHours) << ",\n";
-			os << fieldPad << "\"autoComplete\": " << (quest.autoComplete ? "true" : "false") << "\n";
+			os << fieldPad << "\"autoComplete\": " << (quest.autoComplete ? "true" : "false") << ",\n";
+			os << fieldPad << "\"partyShared\": " << (quest.partyShared ? "true" : "false") << "\n";
 			os << pad << "}";
 			return os.str();
 		}

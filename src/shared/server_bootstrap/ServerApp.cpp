@@ -5252,11 +5252,78 @@ namespace engine::server
 		std::string_view reason)
 	{
 		std::vector<QuestProgressDelta> deltas;
-		if (!m_questRuntime.ApplyEvent(client.questStates, eventType, targetId, amount, deltas))
+		if (m_questRuntime.ApplyEvent(client.questStates, eventType, targetId, amount, deltas))
 		{
-			return;
+			// L'acteur crédite TOUTES ses quêtes matchantes (onlyPartyShared=false),
+			// puis on verse récompenses + envoie deltas + persiste via le helper.
+			const size_t actorDeltas = deltas.size();
+			FinalizeQuestDeltas(client, deltas, reason);
+			LOG_INFO(Net,
+				"[ServerApp] Quest event applied (client_id={}, type={}, target={}, deltas={}, reason={})",
+				client.clientId,
+				GetQuestStepTypeName(eventType),
+				targetId,
+				actorDeltas,
+				reason);
 		}
 
+		// EXT-3 — fan-out groupe : propager le crédit aux coéquipiers à portée,
+		// mais UNIQUEMENT pour les quêtes partyShared (filtre onlyPartyShared=true).
+		// L'acteur a déjà été crédité (toutes quêtes) ci-dessus ; on l'exclut ici
+		// pour éviter tout double-crédit.
+		Party* party = m_partySystem.FindPartyByMember(client.clientId);
+		if (party != nullptr)
+		{
+			const double radiusM = m_config.GetDouble("server.quest.party_share_radius_m", 30.0);
+			const float radiusSq = static_cast<float>(radiusM * radiusM);
+			for (const PartyMember& member : party->members)
+			{
+				if (member.clientId == client.clientId)
+				{
+					continue; // pas l'acteur (déjà crédité)
+				}
+				// FindConnectedClient résout un clientId via m_clientIndexByClientId.
+				ConnectedClient* mate = FindConnectedClient(member.clientId);
+				if (mate == nullptr)
+				{
+					continue; // coéquipier hors-ligne / non connecté
+				}
+				// Garde zone AVANT rayon : les positions sont en coordonnées par-zone,
+				// exiger la même zone évite un faux positif de distance inter-zones.
+				if (mate->zoneId != client.zoneId)
+				{
+					continue;
+				}
+				if (DistanceSquaredXZ(client.positionMetersX, client.positionMetersZ,
+					mate->positionMetersX, mate->positionMetersZ) > radiusSq)
+				{
+					continue; // hors de portée de partage
+				}
+
+				std::vector<QuestProgressDelta> mateDeltas;
+				if (m_questRuntime.ApplyEvent(mate->questStates, eventType, targetId, amount,
+					mateDeltas, /*onlyPartyShared=*/true))
+				{
+					// Chaque coéquipier a sa propre instance de quête : récompense,
+					// envoi et persistance lui sont propres (pas de partage de butin).
+					FinalizeQuestDeltas(*mate, mateDeltas, reason);
+					LOG_INFO(Net,
+						"[ServerApp] Quest event shared to party mate (actor_id={}, mate_id={}, type={}, target={}, deltas={})",
+						client.clientId,
+						mate->clientId,
+						GetQuestStepTypeName(eventType),
+						targetId,
+						mateDeltas.size());
+				}
+			}
+		}
+	}
+
+	void ServerApp::FinalizeQuestDeltas(
+		ConnectedClient& client,
+		std::vector<QuestProgressDelta>& deltas,
+		std::string_view reason)
+	{
 		// EXT-2 — auto-complétion : ApplyEvent n'émet un delta Completed QUE pour
 		// une quête `autoComplete` (le seul chemin de QuestRuntime vers Completed ;
 		// SyncQuestStates ne produit que Locked/Offered, et une quête non-auto passe
@@ -5293,13 +5360,6 @@ namespace engine::server
 		}
 
 		SaveConnectedClient(client, reason);
-		LOG_INFO(Net,
-			"[ServerApp] Quest event applied (client_id={}, type={}, target={}, deltas={}, reason={})",
-			client.clientId,
-			GetQuestStepTypeName(eventType),
-			targetId,
-			deltas.size(),
-			reason);
 	}
 
 	size_t ServerApp::FindClientQuestStateIndex(const ConnectedClient& client, std::string_view questId)

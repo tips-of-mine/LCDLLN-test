@@ -19,6 +19,9 @@
 // autoComplete) : round-trip cooldown, défaut None/0/false sans champ, rejet
 // d'un mode inconnu, rejet du mode cooldown avec cooldownHours=0 (parse ET
 // Validate).
+//
+// EXT-3 : cas (s)-(t) couvrent le partage groupe (partyShared) : round-trip
+// partyShared=true, et défaut false quand le champ est absent (rétro-compat).
 
 #include "src/world_editor/quests/QuestEditIo.h"
 
@@ -538,6 +541,59 @@ int main()
 		const bool ok = io.Validate(quests, errors);
 		Check(!ok, "EXT-2: Validate cooldown + cooldownHours=0 -> false");
 		Check(!errors.empty(), "EXT-2: Validate cooldown + cooldownHours=0 -> au moins 1 erreur");
+	}
+
+	// --- EXT-3 : partage groupe (partyShared) --------------------------------
+
+	// (s) round-trip Save -> Load d'une quête partagée : partyShared=true doit
+	// survivre parse -> serialize -> parse à l'identique.
+	{
+		const std::filesystem::path sharedRoot = MakeTempContentDir();
+
+		EditedQuest shared = MakeValidQuest("shared_quest");
+		shared.partyShared = true;
+
+		std::string saveError;
+		const bool saved = io.Save(sharedRoot.string(), { shared }, saveError);
+		Check(saved, "EXT-3: Save d'une quête partyShared réussit");
+
+		std::vector<EditedQuest> reloaded;
+		std::string reloadError;
+		const bool reloadedOk = io.Load(sharedRoot.string(), reloaded, reloadError);
+		Check(reloadedOk, "EXT-3: Load après Save (partyShared) réussit");
+		Check(reloaded.size() == 1, "EXT-3: 1 quête rechargée");
+		if (reloaded.size() == 1)
+		{
+			Check(reloaded[0].partyShared == true, "EXT-3: partyShared == true après round-trip");
+		}
+
+		std::error_code sharedCleanupError;
+		std::filesystem::remove_all(sharedRoot, sharedCleanupError);
+	}
+
+	// (t) une quête SANS champ partyShared se recharge en false (rétro-compat).
+	{
+		const std::filesystem::path plainRoot = MakeTempContentDir();
+		const std::string plainJson = R"JSON({
+      "quests": [
+        { "id": "plain_shared", "giver": "npc:g", "turnIn": "npc:g",
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ] }
+      ]
+    })JSON";
+		WriteQuestsFile(plainRoot, "quest_definitions.json", plainJson);
+
+		std::vector<EditedQuest> plainOut;
+		std::string plainError;
+		const bool plainOk = io.Load(plainRoot.string(), plainOut, plainError);
+		Check(plainOk, "EXT-3: Load d'une quête sans champ partyShared réussit");
+		Check(plainOut.size() == 1, "EXT-3: 1 quête sans partyShared chargée");
+		if (plainOut.size() == 1)
+		{
+			Check(plainOut[0].partyShared == false, "EXT-3: défaut partyShared == false");
+		}
+
+		std::error_code plainCleanupError;
+		std::filesystem::remove_all(plainRoot, plainCleanupError);
 	}
 
 	if (g_failures != 0)

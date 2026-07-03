@@ -682,6 +682,13 @@ namespace engine::server
 		/// Apply one authoritative quest event and emit any resulting deltas.
 		void ApplyQuestEvent(ConnectedClient& client, QuestStepType eventType, std::string_view targetId, uint32_t amount, std::string_view reason);
 
+		/// EXT-3 — post-traitement des deltas de quête d'un client après ApplyEvent :
+		/// verse la récompense des quêtes auto-complétées (stamp completedAtEpochMs +
+		/// GrantQuestReward), envoie chaque QuestDelta au client, puis persiste l'état.
+		/// Partagé par l'acteur et les coéquipiers crédités (fan-out partyShared),
+		/// pour éviter toute divergence de traitement entre les deux chemins.
+		void FinalizeQuestDeltas(ConnectedClient& client, std::vector<QuestProgressDelta>& deltas, std::string_view reason);
+
 		/// Send the current quest journal state after the client handshake succeeds.
 		void SendQuestStateBootstrap(const ConnectedClient& receiver);
 

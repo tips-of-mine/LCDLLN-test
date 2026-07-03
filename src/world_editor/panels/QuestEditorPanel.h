@@ -100,8 +100,9 @@ namespace engine::editor::world::panels
 		/// Rend la section EXT-2 « re-réalisation » : un `Combo` de mode
 		/// (Aucun/Répétable/Quotidienne/Hebdo/Cooldown → `m_repeatModeBuffer`),
 		/// un `DragInt` « Cooldown (h) » affiché UNIQUEMENT en mode Cooldown
-		/// (→ `m_cooldownHoursBuffer`) et un `Checkbox` « Auto-complete »
-		/// (→ `m_autoCompleteBuffer`). Effet de bord : état ImGui + ces 3
+		/// (→ `m_cooldownHoursBuffer`), un `Checkbox` « Auto-complete »
+		/// (→ `m_autoCompleteBuffer`) et (EXT-3) un `Checkbox` « Partage en groupe »
+		/// (→ `m_partySharedBuffer`). Effet de bord : état ImGui + ces 4
 		/// buffers membres. Thread : main thread (phase ImGui).
 		void RenderRepeatSection();
 
@@ -148,6 +149,9 @@ namespace engine::editor::world::panels
 			engine::editor::world::quests::QuestRepeatMode::None;
 		uint32_t m_cooldownHoursBuffer = 0;
 		bool m_autoCompleteBuffer = false;
+		// EXT-3 : partage groupe. Si vrai, le crédit d'étape est propagé aux
+		// coéquipiers à portée (fan-out shard) ; sérialisé en `"partyShared"`.
+		bool m_partySharedBuffer = false;
 
 		char m_titleBuf[128] = "";
 		char m_descriptionBuf[512] = "";

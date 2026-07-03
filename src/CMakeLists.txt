@@ -604,6 +604,11 @@ elseif(UNIX)
   # définition de symboles au link).
   lcdlln_add_simple_test(quest_poi_table_tests
     ${CMAKE_SOURCE_DIR}/src/client/quest/QuestPoiTableTests.cpp)
+  # SP3 (client) : WorldToRadarUv — projection monde -> UV radar minimap
+  # centré joueur (RebuildMinimap). Helper pur exposé dans QuestUi.h/.cpp
+  # (déjà dans engine_core) -> le test ne relie que son propre .cpp.
+  lcdlln_add_simple_test(quest_ui_radar_tests
+    ${CMAKE_SOURCE_DIR}/src/client/quest/QuestUiRadarTests.cpp)
   # SP2 (client) : réception QuestGiverList (opcode 92) -> UIModel.giverList.
   # UIModel.cpp et ServerProtocol.cpp sont déjà dans engine_core (CMakeLists
   # racine) -> ne pas les re-lister ici (double définition de symboles).

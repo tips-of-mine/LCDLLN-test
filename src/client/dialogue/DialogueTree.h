@@ -29,6 +29,11 @@ namespace engine::client
 		DialogueAction action  = DialogueAction::Continue;
 		int            questId = -1;                      ///< >=0 => lié à une quête (journalisé).
 		std::string    icon;                              ///< Optionnel (ex. "⚔️").
+		// SP2 : placé APRÈS `icon` (et non juste après `questId`) à dessein — de nombreux
+		// sites construisent DialogueChoice par init agrégat positionnel à 5 arguments
+		// (text, nextNodeId, action, questId, icon) ; insérer un champ avant `icon` aurait
+		// silencieusement décalé la valeur "icon" fournie dans ce nouveau champ.
+		std::string    questKey;                          ///< SP2 : id texte de la quête (wire QuestAccept/TurnInRequest) ; vide si non lié.
 	};
 
 	/// Un nœud de dialogue : lignes du PNJ + 1..5 choix.

@@ -9,6 +9,8 @@
 #include "src/client/chat/ChatUi.h"
 #include "src/client/mail/MailUi.h"
 #include "src/client/quest/QuestUi.h"
+#include "src/client/quest/QuestTextCatalog.h"
+#include "src/client/quest/QuestGiverTable.h"
 #include "src/client/social/IgnoreListUi.h"
 #include "src/client/gmtickets/GmTicketUi.h"
 #include "src/client/reputation/ReputationUi.h"
@@ -129,6 +131,7 @@ namespace engine::render
 	class AuthImGuiRenderer;
 	class ChatImGuiRenderer;
 	class DialogueImGuiRenderer;
+	class QuestImGuiRenderer;
 	class MailImGuiRenderer;
 	class GmTicketImGuiRenderer;
 	class ReputationImGuiRenderer;
@@ -680,6 +683,12 @@ namespace engine
 		std::unique_ptr<engine::render::DialogueImGuiRenderer> m_dialogueImGui;              ///< Rendu (Windows).
 		std::unique_ptr<engine::client::QuestConversationJournal> m_dialogueJournal;         ///< Journal local (créé au login).
 		bool m_dialogueActive = false;                                                       ///< Vrai pendant un dialogue (verrouille le déplacement).
+		/// SP2 — id réseau (npcTargetId) du PNJ dont le dialogue est actuellement
+		/// ouvert (copié depuis InteractableEntity::npcTargetId à l'ouverture via
+		/// OpenDialogue). Cible réelle des QuestAccept/TurnInRequest (Task 4/4b) au
+		/// lieu de UIModel.giverList.npcTargetId (périmé/vide si le dialogue est
+		/// ouvert sans Talk préalable). Vidé à la fermeture du dialogue.
+		std::string m_currentDialogueNpcTargetId;
 
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
 		std::unique_ptr<engine::editor::WorldEditorSession> m_worldEditorSession;
@@ -859,6 +868,11 @@ namespace engine
 			std::string label;
 			std::string role; ///< Sous-titre affiché dans la cellule de dialogue (ex. "Garde du pont").
 			std::string message;
+			/// SP2 — id réseau du PNJ (ex. "npc:elder_marn"), cohérent avec
+			/// quest_givers.json/quest_definitions.json côté shard. Chargé depuis
+			/// `world.interactables.<i>.npc_target_id` (vide si non-PNJ ou non déclaré :
+			/// aucun Talk n'est alors envoyé à l'ouverture du dialogue).
+			std::string npcTargetId;
 			/// Dialogue PNJ multi-lignes (format legacy, optionnel). Conservé comme
 			/// source de repli : converti en \ref dialogueTree au chargement
 			/// (\see DialogueConfigLoader). Pour les objets non-PNJ, on affiche `message`.
@@ -1276,6 +1290,18 @@ namespace engine
 		/// CMANGOS.23 (Phase 5.23 step 3+4) — Visibilite du panneau quete
 		/// (toggle via slash command \c /quest ou \c /quests). Faux par defaut.
 		bool                             m_questVisible = false;
+		/// SP2 Task 5 — Rendu ImGui journal + tracker + panneau donneur.
+		/// Partage le contexte ImGui avec m_authImGui / m_chatImGui / m_dialogueImGui.
+		std::unique_ptr<engine::render::QuestImGuiRenderer> m_questImGui;
+		/// SP2 Task 5 — Textes de quete (titre/description/etapes) resolus par
+		/// locale, charges une fois au boot (\c client.locale, repli \c fr).
+		engine::client::QuestTextCatalog m_questTextCatalog;
+		/// SP2 (Task 3, table jamais chargee jusqu'ici) — Table PNJ -> quetes
+		/// offer/turnin, chargee une fois au boot depuis quests/quest_givers.json.
+		/// Non consommee directement par QuestImGuiRenderer (le panneau donneur
+		/// lit UIModel.giverList, deja resolu cote reseau) ; conservee ici pour
+		/// un futur usage (marqueurs monde Task 6, resolution locale hors-ligne).
+		engine::client::QuestGiverTable m_questGiverTable;
 		/// CMANGOS.25 (Phase 3.25 step 3+4) — Presenter liste d'ignore. Recoit
 		/// les reponses opcodes 69/71/73 via le push handler du master ;
 		/// fire-and-forget des requetes 68/70/72 via

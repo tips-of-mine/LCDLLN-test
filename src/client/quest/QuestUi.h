@@ -122,6 +122,14 @@ namespace engine::client
 		/// La reponse est consommee via \ref OnQuestListResponse.
 		void RequestQuestList();
 
+		// TODO Cleanup (sous-projet séparé, hors SP2 Task 7) : AcceptQuest/
+		// CompleteQuest/RewardQuest (système A, opcodes master 59/61/63) ne
+		// sont plus appelées par aucun call-site actif depuis SP2 Task 7 —
+		// accept/turn-in passent désormais par le shard (opcodes 93/94, voir
+		// Engine.cpp SetQuestActionCallback). Conservées ici uniquement pour
+		// ne pas casser la compilation ; le retrait complet (méthodes +
+		// cache m_questStates dormant) est repoussé au sous-projet Cleanup.
+
 		/// Envoie un QuestAcceptRequest pour la quete \p questId.
 		void AcceptQuest(uint32_t questId);
 

@@ -569,6 +569,8 @@ namespace engine::client
 			return ApplyInventoryDelta(packet);
 		case engine::server::MessageKind::QuestDelta:
 			return ApplyQuestDelta(packet);
+		case engine::server::MessageKind::QuestGiverList:
+			return ApplyQuestGiverList(packet);
 		case engine::server::MessageKind::EventState:
 			return ApplyEventState(packet);
 		case engine::server::MessageKind::ChatRelay:
@@ -1299,6 +1301,31 @@ namespace engine::client
 			quest->questId,
 			quest->status,
 			quest->steps.size());
+		return true;
+	}
+
+	bool UIModelBinding::ApplyQuestGiverList(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeQuestGiverList(packet, m_questGiverListMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] QuestGiverList FAILED: decode error");
+			return false;
+		}
+
+		m_model.giverList.npcTargetId = m_questGiverListMessage.npcTargetId;
+		m_model.giverList.entries.resize(m_questGiverListMessage.entries.size());
+		for (size_t index = 0; index < m_questGiverListMessage.entries.size(); ++index)
+		{
+			const engine::server::QuestGiverEntry& source = m_questGiverListMessage.entries[index];
+			UIQuestGiverEntry& target = m_model.giverList.entries[index];
+			target.questId = source.questId;
+			target.role = source.role;
+		}
+
+		NotifyObservers(UIModelChangeQuests);
+		LOG_INFO(Net, "[UIModelBinding] QuestGiverList applied (npc_target_id={}, entries={})",
+			m_model.giverList.npcTargetId,
+			m_model.giverList.entries.size());
 		return true;
 	}
 

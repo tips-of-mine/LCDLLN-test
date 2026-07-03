@@ -588,6 +588,21 @@ elseif(UNIX)
   lcdlln_add_simple_test(quest_runtime_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntimeTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntime.cpp)
+  # SP2 (client) : QuestTextCatalog — titres/descriptions/étapes lisibles par locale.
+  # QuestTextCatalog.cpp est desormais dans engine_core (CMakeLists racine, requis
+  # par QuestImGuiRenderer/Engine.cpp) -> ne pas le re-lister ici (double définition
+  # de symboles), meme pattern que ui_model_quest_giver_tests ci-dessous.
+  lcdlln_add_simple_test(quest_text_catalog_tests
+    ${CMAKE_SOURCE_DIR}/src/client/quest/QuestTextCatalogTests.cpp)
+  # SP2 (client) : QuestGiverTable — association PNJ -> quêtes (donneur/receveur).
+  # QuestGiverTable.cpp est desormais dans engine_core (meme raison que ci-dessus).
+  lcdlln_add_simple_test(quest_giver_table_tests
+    ${CMAKE_SOURCE_DIR}/src/client/quest/QuestGiverTableTests.cpp)
+  # SP2 (client) : réception QuestGiverList (opcode 92) -> UIModel.giverList.
+  # UIModel.cpp et ServerProtocol.cpp sont déjà dans engine_core (CMakeLists
+  # racine) -> ne pas les re-lister ici (double définition de symboles).
+  lcdlln_add_simple_test(ui_model_quest_giver_tests
+    ${CMAKE_SOURCE_DIR}/src/client/ui_common/UIModelQuestGiverTests.cpp)
   # SP1 : compat des statuts de quête persistés (ancien enum 0/1/2 -> nouveau).
   lcdlln_add_simple_test(character_persistence_quest_compat_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistenceQuestCompatTests.cpp

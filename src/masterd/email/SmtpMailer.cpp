@@ -264,6 +264,17 @@ namespace engine::server
 			return false;
 		}
 
+		// Sécurité (audit F9) : refuser CR/LF dans les champs injectés dans les commandes/headers SMTP.
+		// Défense en profondeur : ValidateEmail() rejette déjà les octets de contrôle dans l'adresse
+		// en amont (AccountValidation.cpp), mais subject/to peuvent transiter par d'autres chemins
+		// (ex. notifications internes) — on ne fait pas confiance à l'appelant.
+		auto hasCrlf = [](std::string_view s) { return s.find('\r') != std::string_view::npos || s.find('\n') != std::string_view::npos; };
+		if (hasCrlf(to) || hasCrlf(subject) || hasCrlf(cfg.from_address))
+		{
+			LOG_WARN(Smtp, "[SmtpMailer] Send refusé : CR/LF détecté dans to/subject/from");
+			return false;
+		}
+
 		LOG_WARN(Smtp,
 			"[SMTP] session démarrée → {} host={}:{} starttls={} auth={} (détail niveau Info, sous-système Smtp)",
 			RedactEmailForLog(to),

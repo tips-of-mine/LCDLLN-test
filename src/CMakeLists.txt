@@ -1155,6 +1155,16 @@ elseif(UNIX)
   target_compile_options(server_list_policy_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME server_list_policy_tests COMMAND server_list_policy_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # Sécurité (audit F9) : AccountValidation — normalisation/validation e-mail, login, mot de passe.
+  # Pure (pas de réseau, pas de DB) : dépend uniquement de NetErrorCode.h (header-only).
+  add_executable(account_validation_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/account/AccountValidationTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/account/AccountValidation.cpp
+  )
+  target_include_directories(account_validation_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_compile_options(account_validation_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME account_validation_tests COMMAND account_validation_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # Wave 12: PacketLog ring buffer (debug RX/TX trace, opt-in) — pure unit tests.
   # Aucun lien sur engine_core ni OpenSSL : PacketLog est autonome (std + threads).
   # Module dans engine::server::netdebug (src/shared/network/PacketLog).

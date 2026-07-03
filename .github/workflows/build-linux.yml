@@ -14,6 +14,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Vérifier la parité des migrations Docker (audit F1)
+        run: |
+          set -e
+          miss=0
+          for f in sql/migrations/*.sql; do
+            b=$(basename "$f")
+            if ! diff -q "$f" "deploy/docker/sql/migrations/$b" >/dev/null 2>&1; then
+              echo "::error::Migration désynchronisée: $b (lancez scripts/sync-db-to-docker-deploy.sh)"
+              miss=1
+            fi
+          done
+          exit $miss
+
       - name: Install system dependencies
         run: |
           sudo apt-get update

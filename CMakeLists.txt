@@ -581,6 +581,14 @@ add_library(engine_core
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
   src/world_editor/panels/BuildingEditorPanel.cpp
+  # SP4 (authoring quêtes) : QuestEditIo.cpp + QuestEditorPanel.cpp doivent être
+  # dans engine_core (pas seulement world_editor_app) car WorldEditorShell.cpp
+  # (ci-dessus) instancie QuestEditorPanel et est lui-même compilé dans
+  # engine_core, lié par engine_app (flag runtime --editor-world) : sans ça,
+  # engine_app ne résout pas le vtable/Render() au link. Même pattern que
+  # QuestTextCatalog.cpp / QuestGiverTable.cpp plus haut.
+  src/world_editor/quests/QuestEditIo.cpp
+  src/world_editor/panels/QuestEditorPanel.cpp
   src/world_editor/panels/OutlinerPanel.cpp
   src/world_editor/panels/ConsolePanel.cpp
   src/world_editor/panels/ToolPropertiesPanel.cpp
@@ -864,6 +872,10 @@ if(WIN32)
 endif()
 
 # World Editor : exécutable séparé, même cœur Vulkan que le jeu (flag interne --world-editor).
+# SP4 (authoring quêtes) — QuestEditIo.cpp + QuestEditorPanel.cpp sont désormais
+# dans engine_core (CMakeLists racine, requis par WorldEditorShell::Init lié
+# aussi dans engine_app) -> ne pas les re-lister ici, world_editor_app les
+# obtient via engine_core.
 add_executable(world_editor_app
   src/world_editor/main.cpp
 )

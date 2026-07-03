@@ -1106,6 +1106,27 @@ elseif(UNIX)
   target_compile_options(shard_ticket_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME shard_ticket_tests COMMAND shard_ticket_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # Audit F8 : verrou anti-brute-force sur PasswordResetHandler::HandleVerifyEmail
+  # (code de vérification e-mail à 6 chiffres). Passe par HandlePacket() (point
+  # d'entrée public) avec un NetServer jamais Init() — Send() y est un no-op sûr.
+  add_executable(password_reset_handler_tests
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/password/PasswordResetHandlerTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/password/PasswordResetHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/password/PasswordResetStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/account/InMemoryAccountStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/email/SmtpMailer.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/email/LocalizedEmail.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/security/RateLimitAndBan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/NetServer.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/PacketLog.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/AuthRegisterPayloads.cpp
+  )
+  target_include_directories(password_reset_handler_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(password_reset_handler_tests PRIVATE engine_core engine_auth OpenSSL::SSL pthread)
+  target_compile_options(password_reset_handler_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME password_reset_handler_tests COMMAND password_reset_handler_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # Présence enrichie (v9) : round-trip du payload SHARD_HEARTBEAT avec tableau joueurs.
   add_executable(shard_payloads_tests
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardPayloadsTests.cpp

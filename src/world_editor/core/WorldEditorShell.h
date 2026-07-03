@@ -3,6 +3,7 @@
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/buildings/BuildingDocument.h"
 #include "src/client/world/instances/BuildingTemplateLibrary.h"
+#include "src/world_editor/quests/QuestEditIo.h"
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"
@@ -36,6 +37,7 @@ namespace engine::editor::world
 {
 	namespace panels { class ScenePanel; }
 	namespace panels { class BuildingEditorPanel; }
+	namespace panels { class QuestEditorPanel; }
 
 	/// Identifiant de l'outil actif dans le shell éditeur monde (M100.6+).
 	/// `None` est l'état initial après `Init`. `TerrainSculpt` est activé
@@ -382,6 +384,12 @@ namespace engine::editor::world
 		/// nullptr tant qu'Init n'a pas été appelé.
 		panels::BuildingEditorPanel* GetBuildingEditorPanel() { return m_buildingEditorPtr; }
 
+		/// SP4 — Panneau Quest Editor (authoring des quêtes). nullptr tant
+		/// qu'Init n'a pas été appelé. Exposé pour d'éventuels tests/outils
+		/// externes ; le rendu normal passe par la boucle `m_panels` de
+		/// `RenderFrame`.
+		panels::QuestEditorPanel* GetQuestEditorPanel() { return m_questEditorPtr; }
+
 		/// M100.43 — Accès mutable à l'outil Dungeon Portal.
 		volumes::dungeons::DungeonPortalTool&       MutableDungeonPortalTool()       { return m_dungeonPortalTool; }
 		const volumes::dungeons::DungeonPortalTool& GetDungeonPortalTool()     const { return m_dungeonPortalTool; }
@@ -439,6 +447,8 @@ namespace engine::editor::world
 		buildings::BuildingDocument m_buildingDoc;                    // Auberge éditable
 		panels::BuildingEditorPanel* m_buildingEditorPtr = nullptr;  // non possédé (dans m_panels)
 		engine::world::instances::BuildingTemplateLibrary m_buildingLibrary; // bibliothèque de types
+		engine::editor::world::quests::QuestEditIo m_questEditIo;    // SP4 — E/S authoring quêtes
+		panels::QuestEditorPanel* m_questEditorPtr = nullptr;        // non possédé (dans m_panels)
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

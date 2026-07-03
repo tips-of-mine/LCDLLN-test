@@ -2448,3 +2448,13 @@ Au `Talk` sur un PNJ, le shard renvoie `QuestGiverList` (opcode 92) listant ses 
 Côté client, le système de quêtes (shard, SP1) est affiché par `QuestImGuiRenderer` (`src/client/render/`) branché dans la boucle ImGui in-game : **journal** (quêtes Active/ReadyToTurnIn, textes via `QuestTextCatalog`), **tracker HUD**, et **panneau donneur** (boutons Accepter/Terminer). Les textes lisibles viennent de `game/data/quests/quest_texts.<lang>.json` (`QuestTextCatalog`) ; le mapping PNJ→quêtes de `game/data/quests/quest_givers.json` (`QuestGiverTable`).
 
 Interaction : les choix de dialogue portent un `questKey` (string) qui déclenche `GameplayUdpClient::SendQuestAcceptRequest`/`SendQuestTurnInRequest` (opcodes 93/94) vers le shard, ciblant le PNJ courant (`m_currentDialogueNpcTargetId`, posé à l'ouverture du dialogue — qui envoie aussi un Talk pour recevoir la giver-list). La réception de `QuestGiverList` (opcode 92) alimente `UIModel.giverList`. Un **marqueur world-space** (rune procédurale, 2 variantes : doré = proposer, bleu = rendre ; culling par `client.quest.giver_marker_distance_m`) signale les PNJ ayant une quête `Offered` (donneur) ou `ReadyToTurnIn` (receveur) pour ce joueur. Les envois système A (master, opcodes 59/61/63) ne sont plus émis (retrait complet = sous-projet Cleanup). Détails : `docs/superpowers/specs/2026-07-02-quest-sp2-client-ui-design.md`.
+
+## Quêtes — authoring éditeur (SP4)
+
+Dans l'éditeur monde (`lcdlln_world_editor.exe`), le **`QuestEditorPanel`** (`src/world_editor/panels/`, `IPanel`) permet de créer/éditer des quêtes par formulaire (id, giver, turnIn, pré-requis, étapes typées kill/collect/talk/enter, récompenses, textes titre/description/libellés). La logique I/O + validation est isolée dans **`QuestEditIo`** (`src/world_editor/quests/`, pur, testable) :
+
+- **Load** : parse `quest_definitions.json` (pur JSON) + fusionne `quest_texts.fr.json`.
+- **Validate** : id unique, giver/turnIn obligatoires, étapes bien formées, pré-requis existants, **détection de cycle** (DFS), items valides.
+- **Save** : écrit les **3 fichiers** — `quest_definitions.json` (pur JSON, format inchangé relisible par le shard), `quest_texts.fr.json`, et **régénère `quest_givers.json`** depuis les giver/turnIn (cohérence garantie).
+
+Greffé dans `WorldEditorShell::Init` (après `BuildingEditorPanel`) ; rendu automatique via la boucle des panneaux. ⚠️ Toute quête créée/éditée = contenu → **restart shard** pour la charger. Détails : `docs/superpowers/specs/2026-07-02-quest-sp4-editor-authoring-design.md`.

@@ -200,6 +200,13 @@ dans le `config.json` livré (ligne 222). Le ticket source M19.6 exigeait pourta
 `BuildUserSettingsJson` + `config.json`) ; n'activer le mode insecure que via une
 macro de build de développement, pas une clé de config modifiable par l'utilisateur.
 
+> **Statut (2026-07-03)** : DIFFÉRÉ. Passer `allow_insecure_dev` à `false` sans
+> `client.server_fingerprint` renseigné bloquerait tous les clients
+> (`TlsVerifyFingerprint` refuse la connexion sur mismatch). Fermeture : fournir
+> le SHA-256 du certificat du master de production dans `client.server_fingerprint`,
+> puis passer `allow_insecure_dev` à `false` (tous les call sites +
+> `BuildUserSettingsJson` + `config.json`).
+
 ### F8 · Code de vérification e-mail brute-forçable (pré-auth, sans throttle) — sécurité
 
 [PasswordResetHandler.cpp:230](src/masterd/handlers/password/PasswordResetHandler.cpp:230) · catégorie **sécurité**

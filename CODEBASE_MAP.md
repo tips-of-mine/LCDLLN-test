@@ -2458,3 +2458,7 @@ Dans l'éditeur monde (`lcdlln_world_editor.exe`), le **`QuestEditorPanel`** (`s
 - **Save** : écrit les **3 fichiers** — `quest_definitions.json` (pur JSON, format inchangé relisible par le shard), `quest_texts.fr.json`, et **régénère `quest_givers.json`** depuis les giver/turnIn (cohérence garantie).
 
 Greffé dans `WorldEditorShell::Init` (après `BuildingEditorPanel`) ; rendu automatique via la boucle des panneaux. ⚠️ Toute quête créée/éditée = contenu → **restart shard** pour la charger. Détails : `docs/superpowers/specs/2026-07-02-quest-sp4-editor-authoring-design.md`.
+
+## Quêtes — POI minimap (SP3)
+
+Une **minimap radar** schématique (sans texture, dessinée à l'`ImDrawList`) affiche les **POI des objectifs de quête actifs**. `QuestUiPresenter::RebuildMinimap` résout, pour chaque étape non terminée d'une quête `Active` (status wire système B = 2), les positions de sa cible via **`QuestPoiTable`** (`game/data/quests/quest_poi.json` : `targetId → positions monde`), projetées en coordonnées **radar centrées joueur** par la fonction pure `WorldToRadarUv` (rayon `client.quest.minimap.radius_m`, défaut 60 m ; POI hors-rayon clampé au bord du cadre). `QuestImGuiRenderer::RenderMinimap` (appelé après le tracker, gardé `#if defined(_WIN32)`) dessine le cadre + les POI teintés par type (kill=rouge, talk=jaune, enter=bleu) + le marqueur joueur au centre. Config `client.quest.minimap.{enabled, size_px, radius_m}`. 100 % client, aucun wire. Détails : `docs/superpowers/specs/2026-07-02-quest-sp3-minimap-poi-design.md`.

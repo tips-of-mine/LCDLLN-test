@@ -11,6 +11,7 @@
 #include "src/client/quest/QuestUi.h"
 #include "src/client/quest/QuestTextCatalog.h"
 #include "src/client/quest/QuestGiverTable.h"
+#include "src/client/quest/QuestPoiTable.h"
 #include "src/client/social/IgnoreListUi.h"
 #include "src/client/gmtickets/GmTicketUi.h"
 #include "src/client/reputation/ReputationUi.h"
@@ -1302,6 +1303,12 @@ namespace engine
 		/// lit UIModel.giverList, deja resolu cote reseau) ; conservee ici pour
 		/// un futur usage (marqueurs monde Task 6, resolution locale hors-ligne).
 		engine::client::QuestGiverTable m_questGiverTable;
+		/// SP3 Task 3 — Table des positions minimap (targetId -> [x,z]),
+		/// chargee une fois au boot depuis quests/quest_poi.json et injectee
+		/// dans le presenter via \c QuestUiPresenter::SetPoiTable. Consommee
+		/// par \c QuestUiPresenter::RebuildMinimap pour poser les marqueurs
+		/// de POI de quete sur le radar (QuestImGuiRenderer::RenderMinimap).
+		engine::client::QuestPoiTable m_questPoiTable;
 		/// CMANGOS.25 (Phase 3.25 step 3+4) — Presenter liste d'ignore. Recoit
 		/// les reponses opcodes 69/71/73 via le push handler du master ;
 		/// fire-and-forget des requetes 68/70/72 via

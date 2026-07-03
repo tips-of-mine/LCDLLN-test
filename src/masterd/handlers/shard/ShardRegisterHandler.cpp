@@ -124,7 +124,7 @@ namespace engine::server
 		}
 	}
 
-	void ShardRegisterHandler::HandleHeartbeat(uint32_t /*connId*/, const uint8_t* payload, size_t payloadSize)
+	void ShardRegisterHandler::HandleHeartbeat(uint32_t connId, const uint8_t* payload, size_t payloadSize)
 	{
 		using namespace engine::network;
 
@@ -136,6 +136,18 @@ namespace engine::server
 		if (!parsed)
 		{
 			LOG_WARN(Server, "[SREG] HandleHeartbeat: parse failed");
+			return;
+		}
+		// Sécurité (audit F2) : le shard_id du heartbeat doit correspondre à la connId qui a
+		// réalisé le REGISTER (mémorisée par SetShardConnection). Sans cette vérification,
+		// n'importe quel pair connecté au Master peut forger un heartbeat pour un shard_id
+		// qu'il ne possède pas. GetShardConnection renvoie std::optional<uint32_t> (nullopt
+		// si le shard_id est inconnu du registre).
+		const auto registered = m_registry->GetShardConnection(parsed->shard_id);
+		if (!registered || *registered != connId)
+		{
+			LOG_WARN(Server, "[SREG] HandleHeartbeat rejeté : connId={} ne correspond pas au shard_id={} (attendu connId={})",
+				connId, parsed->shard_id, registered ? *registered : 0u);
 			return;
 		}
 		m_registry->UpdateHeartbeat(parsed->shard_id, parsed->current_load);

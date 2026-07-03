@@ -77,10 +77,13 @@ namespace engine::server
 
 		/// Traite l'opcode SHARD_HEARTBEAT.
 		///
-		/// Parse le payload (shard_id, charge actuelle) et délègue à
+		/// Parse le payload (shard_id, charge actuelle), vérifie (audit F2) que \p connId
+		/// correspond bien à la connexion enregistrée pour ce shard_id via
+		/// ShardRegistry::GetShardConnection (rejette sinon, LOG_WARN), puis délègue à
 		/// ShardRegistry::UpdateHeartbeat pour maintenir l'état Online du shard.
 		/// Aucune réponse n'est envoyée (fire-and-forget).
-		/// @param connId       Identifiant de connexion (utilisé pour le logging uniquement).
+		/// @param connId       Identifiant de connexion réseau de l'appelant ; doit correspondre
+		///                     à la connId mémorisée lors du REGISTER pour ce shard_id.
 		/// @param payload      Corps du paquet SHARD_HEARTBEAT.
 		/// @param payloadSize  Taille en octets de \p payload.
 		void HandleHeartbeat(uint32_t connId, const uint8_t* payload, size_t payloadSize);

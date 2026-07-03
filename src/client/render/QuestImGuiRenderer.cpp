@@ -231,7 +231,8 @@ namespace engine::render
 	{
 		// Config : desactivable (client.quest.minimap.enabled, defaut true) et
 		// taille pixels du cadre carre (client.quest.minimap.size_px, defaut 200).
-		// m_cfg est garanti non-null ici (verifie par l'appelant Render()).
+		// m_cfg est non-null : invariant maintenu par l'unique appelant BindQuestUi
+		// (les 4 pointeurs sont liés ensemble ; Render() vérifie les 3 autres).
 		const bool enabled = m_cfg->GetBool("client.quest.minimap.enabled", true);
 		if (!enabled)
 			return;
@@ -251,8 +252,12 @@ namespace engine::render
 		// re-toucher RebuildLayout ici (hors perimetre Task 3).
 		const ImGuiIO& io = ImGui::GetIO();
 		const float margin = 16.0f;
+		// SP3 — la minimap s'ancre en haut-droite, mais le HUD météo
+		// (WeatherImGuiRenderer : boîte ~240x70 à y=margin) occupe déjà ce coin.
+		// On empile donc la minimap SOUS ce bandeau pour éviter le chevauchement.
+		const float weatherHudHeightPx = 70.0f;
 		const float x0 = io.DisplaySize.x - sizePx - margin;
-		const float y0 = margin;
+		const float y0 = margin + weatherHudHeightPx + 8.0f;
 		const float x1 = x0 + sizePx;
 		const float y1 = y0 + sizePx;
 		const ImVec2 center((x0 + x1) * 0.5f, (y0 + y1) * 0.5f);

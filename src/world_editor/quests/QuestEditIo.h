@@ -74,5 +74,22 @@ namespace engine::editor::world::quests
 		/// depuis n'importe quel thread tant que `contentRoot` n'est pas modifié
 		/// concurremment sur disque.
 		bool Load(const std::string& contentRoot, std::vector<EditedQuest>& out, std::string& outError) const;
+
+		/// Valide l'ensemble de quêtes éditées : unicité des `id`, non-vacuité
+		/// de `giver`/`turnIn`, formes des étapes (`type` connu, `target` non
+		/// vide, `requiredCount` ≥ 1), existence des `prereqs` référencés dans
+		/// l'ensemble, absence de cycle dans le graphe `prereqs`, et formes des
+		/// items de récompense (`itemId` > 0, `quantity` ≥ 1).
+		///
+		/// Pure : aucune E/S, aucun état modifié (ni sur `this`, ni global) ;
+		/// utilisable depuis n'importe quel thread sur une copie de \p quests.
+		///
+		/// \param quests ensemble de quêtes à valider (tel que produit par `Load`
+		///        ou construit par l'UI d'édition).
+		/// \param outErrors rempli avec un message d'erreur lisible (français)
+		///        par violation détectée ; vidé en début d'appel. Peut contenir
+		///        plusieurs messages pour une même quête. Vide si tout est valide.
+		/// \return `outErrors.empty()` — true si aucune violation n'a été trouvée.
+		bool Validate(const std::vector<EditedQuest>& quests, std::vector<std::string>& outErrors) const;
 	};
 }

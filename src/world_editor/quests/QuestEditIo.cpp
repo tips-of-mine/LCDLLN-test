@@ -10,6 +10,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 namespace engine::editor::world::quests
@@ -664,6 +665,58 @@ namespace engine::editor::world::quests
 				}
 			}
 		}
+
+		/// Couleur d'un sommet du graphe `prereqs` pendant la détection de cycle
+		/// par DFS (coloriage blanc/gris/noir classique).
+		enum class VisitColor
+		{
+			White, ///< pas encore visité.
+			Grey,  ///< en cours de visite (sur la pile d'appel courante).
+			Black  ///< visite terminée, aucun cycle trouvé sous ce sommet.
+		};
+
+		/// Visite en profondeur le sommet `questId` dans le graphe `prereqs`
+		/// (index construit dans `Validate`) pour détecter un cycle.
+		/// \param questId id de quête à visiter (doit exister dans \p byId).
+		/// \param byId index `id -> EditedQuest*` de l'ensemble complet.
+		/// \param colors coloriage courant de chaque sommet visité (modifié en place).
+		/// \return true si un cycle est atteignable depuis `questId` (un sommet
+		///         gris est réatteint pendant la descente).
+		///
+		/// Effet de bord : met à jour \p colors (Grey à l'entrée, Black à la
+		/// sortie normale). Les prereqs inconnus (dangling, déjà signalés par
+		/// ailleurs) sont ignorés ici pour ne pas fausser la détection de cycle.
+		bool HasCycle(const std::string& questId, const std::unordered_map<std::string, const EditedQuest*>& byId,
+			std::unordered_map<std::string, VisitColor>& colors)
+		{
+			colors[questId] = VisitColor::Grey;
+
+			const auto it = byId.find(questId);
+			if (it != byId.end())
+			{
+				for (const std::string& prereqId : it->second->prereqs)
+				{
+					const auto colorIt = colors.find(prereqId);
+					const VisitColor prereqColor = (colorIt != colors.end()) ? colorIt->second : VisitColor::White;
+
+					if (prereqColor == VisitColor::Grey)
+					{
+						return true;
+					}
+
+					if (prereqColor == VisitColor::White && byId.find(prereqId) != byId.end())
+					{
+						if (HasCycle(prereqId, byId, colors))
+						{
+							return true;
+						}
+					}
+				}
+			}
+
+			colors[questId] = VisitColor::Black;
+			return false;
+		}
 	}
 
 	bool QuestEditIo::Load(const std::string& contentRoot, std::vector<EditedQuest>& out, std::string& outError) const
@@ -710,5 +763,101 @@ namespace engine::editor::world::quests
 
 		out = std::move(parsedQuests);
 		return true;
+	}
+
+	bool QuestEditIo::Validate(const std::vector<EditedQuest>& quests, std::vector<std::string>& outErrors) const
+	{
+		outErrors.clear();
+
+		// Index id -> quête, et détection des doublons d'id au passage.
+		std::unordered_map<std::string, const EditedQuest*> byId;
+		byId.reserve(quests.size());
+		for (const EditedQuest& quest : quests)
+		{
+			if (quest.id.empty())
+			{
+				outErrors.push_back("quête sans id (id vide)");
+				continue;
+			}
+
+			if (byId.find(quest.id) != byId.end())
+			{
+				outErrors.push_back("id de quête dupliqué : '" + quest.id + "'");
+				continue;
+			}
+
+			byId.emplace(quest.id, &quest);
+		}
+
+		static const std::unordered_set<std::string> kValidStepTypes = { "kill", "collect", "talk", "enter" };
+
+		for (const EditedQuest& quest : quests)
+		{
+			const std::string label = quest.id.empty() ? std::string("<sans id>") : quest.id;
+
+			if (quest.giver.empty())
+			{
+				outErrors.push_back("quête '" + label + "': giver ne doit pas être vide");
+			}
+			if (quest.turnIn.empty())
+			{
+				outErrors.push_back("quête '" + label + "': turnIn ne doit pas être vide");
+			}
+
+			if (quest.steps.empty())
+			{
+				outErrors.push_back("quête '" + label + "': doit avoir au moins une étape");
+			}
+			for (size_t stepIndex = 0; stepIndex < quest.steps.size(); ++stepIndex)
+			{
+				const EditedStep& step = quest.steps[stepIndex];
+				if (kValidStepTypes.find(step.type) == kValidStepTypes.end())
+				{
+					outErrors.push_back("quête '" + label + "': étape " + std::to_string(stepIndex)
+						+ ": type '" + step.type + "' invalide (attendu kill/collect/talk/enter)");
+				}
+				if (step.target.empty())
+				{
+					outErrors.push_back("quête '" + label + "': étape " + std::to_string(stepIndex) + ": target ne doit pas être vide");
+				}
+				if (step.requiredCount < 1)
+				{
+					outErrors.push_back("quête '" + label + "': étape " + std::to_string(stepIndex) + ": requiredCount doit être ≥ 1");
+				}
+			}
+
+			for (const std::string& prereqId : quest.prereqs)
+			{
+				if (byId.find(prereqId) == byId.end())
+				{
+					outErrors.push_back("quête '" + label + "': prereq '" + prereqId + "' introuvable dans l'ensemble");
+				}
+			}
+
+			for (size_t itemIndex = 0; itemIndex < quest.rewardItems.size(); ++itemIndex)
+			{
+				const EditedRewardItem& item = quest.rewardItems[itemIndex];
+				if (item.itemId == 0 || item.quantity < 1)
+				{
+					outErrors.push_back("quête '" + label + "': reward item " + std::to_string(itemIndex)
+						+ ": itemId doit être > 0 et quantity ≥ 1");
+				}
+			}
+		}
+
+		// Détection de cycle sur le graphe prereqs, uniquement entre id connus
+		// (les dangling prereqs sont déjà signalés ci-dessus et ignorés ici).
+		std::unordered_map<std::string, VisitColor> colors;
+		colors.reserve(byId.size());
+		for (const auto& idAndQuest : byId)
+		{
+			const std::string& questId = idAndQuest.first;
+			if (colors.find(questId) == colors.end() && HasCycle(questId, byId, colors))
+			{
+				outErrors.push_back("cycle détecté dans le graphe prereqs impliquant la quête '" + questId + "'");
+			}
+		}
+
+		return outErrors.empty();
 	}
 }

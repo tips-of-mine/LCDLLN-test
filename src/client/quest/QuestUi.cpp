@@ -359,8 +359,11 @@ namespace engine::client
 		m_state.trackerSteps.clear();
 		for (const UIQuestEntry& quest : model.quests)
 		{
-			if (quest.status != 1)
+			if (quest.status != 2)
 			{
+				// 2 == QuestStatus::Active (status wire système B copié par
+				// ApplyQuestDelta : Offered=1, Active=2, cf. QuestRuntime.h).
+				// Correctif SP3 : l'ancien `!= 1` ne gardait que les Offered.
 				continue;
 			}
 
@@ -424,10 +427,13 @@ namespace engine::client
 		// et non terminée. Remplace l'ancien placeholder `zone:` central.
 		for (const UIQuestEntry& quest : model.quests)
 		{
-			if (quest.status != 1)
+			if (quest.status != 2)
 			{
-				// 1 == QuestStatus::Active (cf. RebuildTracker) : seules les
-				// quêtes actives affichent des marqueurs de POI.
+				// 2 == QuestStatus::Active. UIQuestEntry.status est le status
+				// wire système B copié par UIModelBinding::ApplyQuestDelta
+				// (Locked=0, Offered=1, Active=2, ReadyToTurnIn=3, Completed=4 ;
+				// cf. QuestRuntime.h). Seules les quêtes ACCEPTÉES et EN COURS
+				// affichent des marqueurs de POI (pas Offered/Locked/Completed).
 				continue;
 			}
 

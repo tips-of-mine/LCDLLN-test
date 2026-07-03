@@ -68,6 +68,13 @@ namespace engine::render
 		/// \c UIModel.giverList contient des entrées.
 		void RenderGiverPanel();
 
+		/// SP3 Task 3 — Dessine le radar minimap schématique (fond + croix
+		/// centrale + marqueurs POI teintés par \c MinimapPoiView::stepType +
+		/// marqueur joueur), via \c ImGui::GetForegroundDrawList(). Overlay
+		/// non interactif. No-op si \c client.quest.minimap.enabled=false
+		/// (config) ou si \c QuestUiState.layoutValid est faux.
+		void RenderMinimap();
+
 		engine::client::QuestUiPresenter*        m_presenter = nullptr;
 		const engine::client::QuestTextCatalog*  m_textCatalog = nullptr;
 		const engine::client::UIModelBinding*    m_uiModelBinding = nullptr;

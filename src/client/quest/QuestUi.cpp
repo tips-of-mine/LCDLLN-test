@@ -5,9 +5,36 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 
 namespace engine::client
 {
+	void WorldToRadarUv(float px, float pz, float playerX, float playerZ, float radiusM,
+		float& outU, float& outV, bool& outOffRadar)
+	{
+		if (radiusM <= 0.0f)
+		{
+			outU = 0.5f;
+			outV = 0.5f;
+			outOffRadar = true;
+			return;
+		}
+
+		const float dx = px - playerX;
+		const float dz = pz - playerZ;
+		outU = 0.5f + dx / (2.0f * radiusM);
+		outV = 0.5f + dz / (2.0f * radiusM);
+
+		const float dist = std::sqrt(dx * dx + dz * dz);
+		outOffRadar = dist > radiusM;
+
+		if (outOffRadar)
+		{
+			outU = std::clamp(outU, 0.0f, 1.0f);
+			outV = std::clamp(outV, 0.0f, 1.0f);
+		}
+	}
+
 	namespace
 	{
 		/// Trim spaces and tabs from both ends of one text view.
@@ -331,8 +358,11 @@ namespace engine::client
 		m_state.trackerSteps.clear();
 		for (const UIQuestEntry& quest : model.quests)
 		{
-			if (quest.status != 1)
+			if (quest.status != 2)
 			{
+				// 2 == QuestStatus::Active (status wire système B copié par
+				// ApplyQuestDelta : Offered=1, Active=2, cf. QuestRuntime.h).
+				// Correctif SP3 : l'ancien `!= 1` ne gardait que les Offered.
 				continue;
 			}
 
@@ -361,49 +391,84 @@ namespace engine::client
 		m_state.targetMarker = {};
 
 		const MinimapZoneMetadata* zoneMetadata = FindZoneMetadata(model.playerStats.zoneId);
+		m_state.minimapTexturePath = zoneMetadata ? zoneMetadata->texturePath : std::string();
 		if (!zoneMetadata)
 		{
-			m_state.minimapTexturePath.clear();
 			LOG_WARN(Core, "[QuestUiPresenter] Minimap zone missing metadata (zone_id={})", model.playerStats.zoneId);
-			return;
+			// Pas de texture de fond connue, mais le radar SP3 est centré sur
+			// le joueur (indépendant de la texture de zone) : on continue.
 		}
 
-		m_state.minimapTexturePath = zoneMetadata->texturePath;
+		const float playerX = model.playerStats.positionX;
+		const float playerZ = model.playerStats.positionZ;
 
-		float u = 0.0f;
-		float v = 0.0f;
-		if (TryConvertWorldToUv(model.playerStats.zoneId, model.playerStats.positionX, model.playerStats.positionZ, u, v))
-		{
-			m_state.playerMarker.u = u;
-			m_state.playerMarker.v = v;
-			m_state.playerMarker.label = "Player";
-			m_state.playerMarker.visible = true;
-		}
+		// SP3 — radar centré joueur : le joueur est toujours au centre exact.
+		m_state.playerMarker.u = 0.5f;
+		m_state.playerMarker.v = 0.5f;
+		m_state.playerMarker.label = "Player";
+		m_state.playerMarker.visible = true;
 
-		if (model.targetStats.hasTarget && model.targetStats.hasPosition
-			&& TryConvertWorldToUv(model.playerStats.zoneId, model.targetStats.positionX, model.targetStats.positionZ, u, v))
+		if (model.targetStats.hasTarget && model.targetStats.hasPosition)
 		{
+			float u = 0.0f;
+			float v = 0.0f;
+			bool offRadar = false;
+			WorldToRadarUv(model.targetStats.positionX, model.targetStats.positionZ, playerX, playerZ,
+				m_minimapRadiusM, u, v, offRadar);
 			m_state.targetMarker.u = u;
 			m_state.targetMarker.v = v;
 			m_state.targetMarker.label = "Target";
 			m_state.targetMarker.visible = true;
 		}
 
+		// SP3 — marqueurs de POI de quête : positions résolues via la table
+		// de POI injectée (\ref m_poiTable), une par targetId d'étape active
+		// et non terminée. Remplace l'ancien placeholder `zone:` central.
 		for (const UIQuestEntry& quest : model.quests)
 		{
+			if (quest.status != 2)
+			{
+				// 2 == QuestStatus::Active. UIQuestEntry.status est le status
+				// wire système B copié par UIModelBinding::ApplyQuestDelta
+				// (Locked=0, Offered=1, Active=2, ReadyToTurnIn=3, Completed=4 ;
+				// cf. QuestRuntime.h). Seules les quêtes ACCEPTÉES et EN COURS
+				// affichent des marqueurs de POI (pas Offered/Locked/Completed).
+				continue;
+			}
+
 			for (const UIQuestStep& step : quest.steps)
 			{
-				if (!step.targetId.starts_with("zone:"))
+				if (step.currentCount >= step.requiredCount)
+				{
+					// Étape déjà terminée : rien à pointer sur le radar.
+					continue;
+				}
+
+				const std::vector<QuestPoiPosition>* positions =
+					m_poiTable ? m_poiTable->Positions(step.targetId) : nullptr;
+				if (!positions)
 				{
 					continue;
 				}
 
-				MinimapPoiView poi{};
-				poi.u = 0.5f;
-				poi.v = 0.5f;
-				poi.label = quest.questId + ": " + step.targetId;
-				poi.visible = true;
-				m_state.questPois.push_back(std::move(poi));
+				const std::string label = BuildQuestStepLabel(step);
+				for (const QuestPoiPosition& pos : *positions)
+				{
+					float u = 0.0f;
+					float v = 0.0f;
+					bool offRadar = false;
+					WorldToRadarUv(pos.x, pos.z, playerX, playerZ, m_minimapRadiusM, u, v, offRadar);
+
+					MinimapPoiView poi{};
+					poi.u = u;
+					poi.v = v;
+					poi.label = label;
+					poi.visible = true;
+					// SP3 Task 3 — miroir de QuestStepType, consomme par
+					// QuestImGuiRenderer::RenderMinimap pour teinter le marqueur.
+					poi.stepType = step.stepType;
+					m_state.questPois.push_back(std::move(poi));
+				}
 			}
 		}
 	}
@@ -419,20 +484,6 @@ namespace engine::client
 		}
 
 		return nullptr;
-	}
-
-	bool QuestUiPresenter::TryConvertWorldToUv(uint32_t zoneId, float positionX, float positionZ, float& outU, float& outV) const
-	{
-		const MinimapZoneMetadata* metadata = FindZoneMetadata(zoneId);
-		if (!metadata || metadata->zoneSizeMeters <= 0.0f)
-		{
-			return false;
-		}
-
-		const float invSize = 1.0f / metadata->zoneSizeMeters;
-		outU = std::clamp(positionX * invSize, 0.0f, 1.0f);
-		outV = std::clamp(positionZ * invSize, 0.0f, 1.0f);
-		return true;
 	}
 
 	std::string QuestUiPresenter::BuildQuestStepLabel(const UIQuestStep& step) const

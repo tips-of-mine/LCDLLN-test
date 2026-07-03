@@ -1,5 +1,6 @@
 #pragma once
 
+#include "src/client/quest/QuestPoiTable.h"
 #include "src/client/ui_common/UIModel.h"
 #include "src/shared/core/Config.h"
 
@@ -10,6 +11,18 @@
 
 namespace engine::client
 {
+	/// Convertit une position monde (plan XZ) en coordonnées UV normalisées du
+	/// radar minimap, centré sur le joueur (SP3). `outU`/`outV` = 0.5 au centre
+	/// (position du joueur), croissant vers +x/+z, échelle `radiusM` mètres du
+	/// centre au bord du radar. `outOffRadar` = vrai si le POI est hors du
+	/// disque de rayon `radiusM` (auquel cas `outU`/`outV` sont clampés dans
+	/// [0,1], donc ramenés sur le bord du cadre carré). Garde `radiusM <= 0` :
+	/// pas de division par zéro, sort au centre avec `outOffRadar=true`.
+	/// Fonction pure (aucun état, aucune dépendance ImGui) — exposée en dehors
+	/// de tout namespace anonyme pour être testable directement.
+	void WorldToRadarUv(float px, float pz, float playerX, float playerZ, float radiusM,
+		float& outU, float& outV, bool& outOffRadar);
+
 	/// Pixel-space rectangle used by the quest UI presenter layout.
 	struct QuestUiRect
 	{
@@ -45,6 +58,11 @@ namespace engine::client
 		float v = 0.0f;
 		std::string label;
 		bool visible = false;
+		/// SP3 Task 3 — miroir de `engine::server::QuestStepType` (Kill=1,
+		/// Collect=2, Talk=3, Enter=4). Sert uniquement a teinter le marqueur
+		/// cote renderer (QuestImGuiRenderer::RenderMinimap) ; 0 = inconnu/non
+		/// renseigne (couleur de repli grise).
+		uint8_t stepType = 0;
 	};
 
 	/// Zone metadata loaded from content for minimap rendering.
@@ -103,6 +121,17 @@ namespace engine::client
 		/// Return the immutable resolved quest UI state.
 		const QuestUiState& GetState() const { return m_state; }
 
+		/// SP3 — Injecte la table de POI minimap (positions par targetId de
+		/// quête). Référence non possédée : \p table doit survivre au
+		/// presenter (typiquement un singleton chargé au boot). `nullptr`
+		/// desactive les marqueurs de POI de quête sur la minimap.
+		void SetPoiTable(const QuestPoiTable* table) { m_poiTable = table; }
+
+		/// SP3 Task 3 — Redéfinit le rayon du radar minimap (mètres, centre
+		/// joueur -> bord). Câblé depuis `client.quest.minimap.radius_m` au
+		/// boot (Engine). Ignoré si \p radiusM <= 0 (garde de \ref WorldToRadarUv).
+		void SetMinimapRadius(float radiusM) { m_minimapRadiusM = radiusM; }
+
 	private:
 		/// Load minimap zone metadata from the configured content-relative file.
 		bool LoadZoneMetadata(const engine::core::Config& config);
@@ -119,14 +148,14 @@ namespace engine::client
 		/// Rebuild the tracker HUD from active quests.
 		void RebuildTracker(const UIModel& model);
 
-		/// Rebuild minimap markers from player, target and tracked quest data.
+		/// SP3 — Reconstruit le radar minimap centré sur le joueur (0.5,0.5).
+		/// Pour chaque étape de quête `Active` non terminée, résout ses
+		/// positions via \ref m_poiTable (targetId) et les projette en UV
+		/// radar avec \ref WorldToRadarUv (rayon \ref m_minimapRadiusM).
 		void RebuildMinimap(const UIModel& model);
 
 		/// Return metadata for one zone id, or null when missing.
 		const MinimapZoneMetadata* FindZoneMetadata(uint32_t zoneId) const;
-
-		/// Convert one zone-local xz position to normalized minimap UV coordinates.
-		bool TryConvertWorldToUv(uint32_t zoneId, float positionX, float positionZ, float& outU, float& outV) const;
 
 		/// Build a human-readable label for one quest step.
 		std::string BuildQuestStepLabel(const UIQuestStep& step) const;
@@ -142,5 +171,13 @@ namespace engine::client
 		uint32_t m_viewportHeight = 0;
 		std::string m_relativeZoneMetadataPath;
 		bool m_initialized = false;
+
+		/// SP3 — table de POI minimap (positions par targetId), injectée via
+		/// \ref SetPoiTable. Non possédée ; `nullptr` = pas de marqueurs de POI.
+		const QuestPoiTable* m_poiTable = nullptr;
+		/// SP3 — rayon du radar minimap en mètres (centre joueur -> bord du
+		/// cadre). Valeur par défaut ; le câblage config (client.minimap.*)
+		/// est repoussé à la Task 3 du plan SP3.
+		float m_minimapRadiusM = 60.0f;
 	};
 }

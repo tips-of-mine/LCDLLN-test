@@ -243,7 +243,13 @@
         },
         "quest": {
             "_comment_giver_marker": "SP2 Task 6 - distance max (metres) au-dela de laquelle le marqueur world-space (rune) au-dessus d'un PNJ donneur/receveur de quete n'est plus dessine. Culling independant du rayon d'interaction (touche E, ~2.5 m) qui reste local a l'entite.",
-            "giver_marker_distance_m": 35.0
+            "giver_marker_distance_m": 35.0,
+            "minimap": {
+                "_comment": "SP3 Task 3 - radar minimap schematique (QuestImGuiRenderer::RenderMinimap), overlay non interactif ancre en haut a droite. enabled=false desactive tout l'overlay. size_px = cote du cadre carre en pixels ecran. radius_m = rayon du radar en metres (centre joueur -> bord du cadre), cable sur QuestUiPresenter::SetMinimapRadius au boot.",
+                "enabled": true,
+                "size_px": 200,
+                "radius_m": 60.0
+            }
         },
         "gameplay_udp": {
             "enabled": false,

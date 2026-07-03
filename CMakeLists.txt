@@ -288,6 +288,7 @@ add_library(engine_core
   src/client/quest/QuestUi.cpp
   src/client/quest/QuestTextCatalog.cpp
   src/client/quest/QuestGiverTable.cpp
+  src/client/quest/QuestPoiTable.cpp
   src/client/dialogue/DialogueTree.cpp
   src/client/dialogue/DialoguePresenter.cpp
   src/client/dialogue/DialogueConfigLoader.cpp

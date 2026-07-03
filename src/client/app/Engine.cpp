@@ -1524,6 +1524,19 @@ namespace engine
 			{
 				LOG_WARN(Core, "[Boot] QuestGiverTable load FAILED — table PNJ->quetes vide");
 			}
+			// SP3 Task 3 — Table des positions minimap (targetId -> [x,z]),
+			// injectee dans le presenter pour que RebuildMinimap puisse resoudre
+			// les marqueurs de POI des etapes de quete actives.
+			if (!m_questPoiTable.Load(m_cfg))
+			{
+				LOG_WARN(Core, "[Boot] QuestPoiTable load FAILED — pas de marqueurs de POI sur la minimap");
+			}
+			m_questUi.SetPoiTable(&m_questPoiTable);
+			const float minimapRadiusM = static_cast<float>(m_cfg.GetDouble("client.quest.minimap.radius_m", 60.0));
+			if (minimapRadiusM > 0.0f)
+			{
+				m_questUi.SetMinimapRadius(minimapRadiusM);
+			}
 		}
 
 		// CMANGOS.18 (Phase 3.18 step 4) — Init du presenter Mail. Doit etre

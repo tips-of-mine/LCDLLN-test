@@ -5,6 +5,7 @@
 #include "src/world_editor/panels/InspectorPanel.h"
 #include "src/world_editor/panels/AssetBrowserPanel.h"
 #include "src/world_editor/panels/BuildingEditorPanel.h"
+#include "src/world_editor/panels/QuestEditorPanel.h"
 #include "src/world_editor/panels/OutlinerPanel.h"
 #include "src/world_editor/panels/ConsolePanel.h"
 #include "src/world_editor/panels/ToolPropertiesPanel.h"
@@ -133,6 +134,16 @@ namespace engine::editor::world
 			buildingEditor->SetContentRoot(cfg.GetString("paths.content", "game/data"));
 			m_buildingEditorPtr = buildingEditor.get(); // pour l'aperçu 3D live (Engine)
 			m_panels.emplace_back(std::move(buildingEditor));
+		}
+		// SP4 — Quest Editor : authoring des quêtes (charger/éditer/valider/
+		// enregistrer via QuestEditIo). AJOUTÉ EN FIN (n'affecte pas les
+		// indices fixes). Pas d'aperçu 3D (donnée pure).
+		{
+			auto questEditor = std::make_unique<panels::QuestEditorPanel>();
+			questEditor->SetContentRoot(cfg.GetString("paths.content", "game/data"));
+			questEditor->SetIo(&m_questEditIo);
+			m_questEditorPtr = questEditor.get();
+			m_panels.emplace_back(std::move(questEditor));
 		}
 
 #if defined(_WIN32)

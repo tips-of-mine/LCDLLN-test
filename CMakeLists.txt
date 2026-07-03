@@ -863,8 +863,15 @@ if(WIN32)
 endif()
 
 # World Editor : exécutable séparé, même cœur Vulkan que le jeu (flag interne --world-editor).
+# SP4 (authoring quêtes) — QuestEditorPanel.cpp + QuestEditIo.cpp sont compilés
+# UNIQUEMENT ici (pas dans engine_core) : QuestEditIo.cpp est déjà compilé
+# directement dans l'exécutable de test `quest_edit_io_tests` (qui lie aussi
+# engine_core) — l'ajouter à engine_core créerait un symbole dupliqué au link
+# de ce test.
 add_executable(world_editor_app
   src/world_editor/main.cpp
+  src/world_editor/quests/QuestEditIo.cpp
+  src/world_editor/panels/QuestEditorPanel.cpp
 )
 if(WIN32)
   target_sources(world_editor_app PRIVATE "${CMAKE_SOURCE_DIR}/game/data/icons/lcdlln_world_editor.rc")

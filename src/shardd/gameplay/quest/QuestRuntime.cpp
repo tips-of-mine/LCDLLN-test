@@ -609,7 +609,10 @@ namespace engine::server
 				}
 			}
 
-			if (prerequisitesComplete)
+			// EXT-1 — une quête bloquée par exclusion mutuelle ne doit jamais être
+			// proposée : elle reste Locked, donc absente du journal et de la
+			// giver-list (dérivée des quêtes Offered).
+			if (prerequisitesComplete && !IsBlockedByExclusion(states, definition))
 			{
 				// La quête est proposée au joueur (Offered) ; l'acceptation explicite
 				// au PNJ giver (CanAccept) la fait ensuite passer à Active.
@@ -803,6 +806,54 @@ namespace engine::server
 		return &def.rewards;
 	}
 
+	bool QuestRuntime::IsQuestEngaged(const std::vector<QuestState>& states, const std::string& questId) const
+	{
+		const size_t stateIndex = FindQuestStateIndex(states, questId);
+		if (stateIndex == std::string::npos)
+		{
+			return false;
+		}
+
+		const QuestStatus status = states[stateIndex].status;
+		// « Engagée » = le joueur a accepté la quête (ou l'a déjà terminée).
+		// Offered et Locked ne comptent pas : voir une quête proposée ne l'engage pas.
+		return status == QuestStatus::Active
+			|| status == QuestStatus::ReadyToTurnIn
+			|| status == QuestStatus::Completed;
+	}
+
+	bool QuestRuntime::IsBlockedByExclusion(const std::vector<QuestState>& states, const QuestDefinition& def) const
+	{
+		// (a) Sens direct : une quête que `def` exclut explicitement est engagée.
+		for (const std::string& excludedQuestId : def.excludedQuestIds)
+		{
+			if (IsQuestEngaged(states, excludedQuestId))
+			{
+				return true;
+			}
+		}
+
+		// (b) Sens symétrique : une AUTRE définition qui exclut `def` est engagée.
+		// L'exclusion déclarée d'un seul côté bloque bien les deux quêtes.
+		for (const QuestDefinition& other : m_definitions)
+		{
+			if (other.questId == def.questId)
+			{
+				continue;
+			}
+
+			for (const std::string& otherExcludedQuestId : other.excludedQuestIds)
+			{
+				if (otherExcludedQuestId == def.questId && IsQuestEngaged(states, other.questId))
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	bool QuestRuntime::LoadDefinitions()
 	{
 		m_definitions.clear();
@@ -905,6 +956,34 @@ namespace engine::server
 					}
 
 					definition.prerequisiteQuestIds.push_back(prereqValue.stringValue);
+				}
+			}
+
+			// EXT-1 — champ optionnel "excludes" (miroir exact de "prereqs").
+			// Absent = OK (rétro-compatible : aucune exclusion déclarée).
+			if (const JsonValue* excludesValue = FindObjectMember(questValue, "excludes");
+				excludesValue != nullptr)
+			{
+				if (excludesValue->type != JsonType::Array)
+				{
+					LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.excludes must be an array", definition.questId);
+					m_definitions.clear();
+					return false;
+				}
+
+				for (size_t excludeIndex = 0; excludeIndex < excludesValue->arrayValue.size(); ++excludeIndex)
+				{
+					const JsonValue& excludeValue = excludesValue->arrayValue[excludeIndex];
+					if (excludeValue.type != JsonType::String || excludeValue.stringValue.empty())
+					{
+						LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.excludes[{}] must be a non-empty string",
+							definition.questId,
+							excludeIndex);
+						m_definitions.clear();
+						return false;
+					}
+
+					definition.excludedQuestIds.push_back(excludeValue.stringValue);
 				}
 			}
 

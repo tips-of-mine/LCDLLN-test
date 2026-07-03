@@ -53,6 +53,10 @@ namespace engine::server
 		std::string giverId;    ///< PNJ qui propose la quête (même espace que targetId du Talk)
 		std::string turnInId;   ///< PNJ où rendre la quête (souvent = giverId)
 		std::vector<std::string> prerequisiteQuestIds;
+		/// EXT-1 : quêtes mutuellement exclusives. S'engager dans cette quête
+		/// (Active/ReadyToTurnIn/Completed) verrouille chacune de ces quêtes, et
+		/// réciproquement (exclusion symétrique évaluée au runtime).
+		std::vector<std::string> excludedQuestIds;
 		std::vector<QuestStepDefinition> steps;
 		QuestReward rewards;
 	};
@@ -123,9 +127,21 @@ namespace engine::server
 		/// Retourne le bundle de récompense à verser au turn-in (jamais nul).
 		const QuestReward* TakeRewardOnTurnIn(const QuestDefinition& def) const;
 
+		/// EXT-1 — Vrai si \p def est actuellement bloquée par exclusion mutuelle
+		/// pour ce joueur : soit (a) une quête listée dans `def.excludedQuestIds`
+		/// est engagée, soit (b) une autre définition dont `excludedQuestIds`
+		/// contient `def.questId` est engagée (symétrie : l'exclusion déclarée d'un
+		/// seul côté bloque les deux). Pur, sans effet de bord.
+		bool IsBlockedByExclusion(const std::vector<QuestState>& states, const QuestDefinition& def) const;
+
 	private:
 		/// Load every quest definition from the configured JSON content file.
 		bool LoadDefinitions();
+
+		/// EXT-1 — Vrai si le joueur a un état pour \p questId dont le statut est
+		/// « engagé » (∈ {Active, ReadyToTurnIn, Completed}). Offered et Locked ne
+		/// comptent pas : voir une quête proposée n'engage pas encore.
+		bool IsQuestEngaged(const std::vector<QuestState>& states, const std::string& questId) const;
 
 		engine::core::Config m_config;
 		std::string m_questDefinitionsRelativePath;

@@ -5360,6 +5360,17 @@ namespace engine::server
 			return;
 		}
 
+		// EXT-1 — re-vérification atomique de l'exclusion mutuelle : ferme la
+		// fenêtre de course où deux quêtes exclusives sont Offered simultanément et
+		// où le client accepterait la seconde avant que la sync n'ait rétrogradé
+		// l'une des deux à Locked.
+		if (m_questRuntime.IsBlockedByExclusion(client->questStates, *def))
+		{
+			LOG_WARN(Net, "[ServerApp] AcceptQuest refusé (exclusion) (client_id={}, quest_id={})",
+				client->clientId, msg.questId);
+			return;
+		}
+
 		if (!IsClientNearNpc(*client, msg.giverTargetId))
 		{
 			return;

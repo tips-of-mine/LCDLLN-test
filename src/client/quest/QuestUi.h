@@ -61,6 +61,11 @@ namespace engine::client
 		float v = 0.0f;
 		std::string label;
 		bool visible = false;
+		/// SP3 Task 3 — miroir de `engine::server::QuestStepType` (Kill=1,
+		/// Collect=2, Talk=3, Enter=4). Sert uniquement a teinter le marqueur
+		/// cote renderer (QuestImGuiRenderer::RenderMinimap) ; 0 = inconnu/non
+		/// renseigne (couleur de repli grise).
+		uint8_t stepType = 0;
 	};
 
 	/// Zone metadata loaded from content for minimap rendering.
@@ -124,6 +129,11 @@ namespace engine::client
 		/// presenter (typiquement un singleton chargé au boot). `nullptr`
 		/// desactive les marqueurs de POI de quête sur la minimap.
 		void SetPoiTable(const QuestPoiTable* table) { m_poiTable = table; }
+
+		/// SP3 Task 3 — Redéfinit le rayon du radar minimap (mètres, centre
+		/// joueur -> bord). Câblé depuis `client.quest.minimap.radius_m` au
+		/// boot (Engine). Ignoré si \p radiusM <= 0 (garde de \ref WorldToRadarUv).
+		void SetMinimapRadius(float radiusM) { m_minimapRadiusM = radiusM; }
 
 		// ---------------------------------------------------------------------
 		// CMANGOS.23 (Phase 5.23 step 3+4) — Network wiring

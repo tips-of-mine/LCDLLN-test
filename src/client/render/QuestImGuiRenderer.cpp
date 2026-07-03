@@ -25,6 +25,14 @@ namespace engine::render
 		constexpr uint8_t kQuestStatusOffered = 1;
 		constexpr uint8_t kQuestStatusActive = 2;
 		constexpr uint8_t kQuestStatusReadyToTurnIn = 3;
+
+		/// SP3 Task 3 — miroir de `engine::server::QuestStepType` (QuestRuntime.h),
+		/// duplique ici pour la meme raison que les constantes de statut
+		/// ci-dessus (pas de dependance shardd depuis un renderer client).
+		constexpr uint8_t kQuestStepTypeKill = 1;
+		constexpr uint8_t kQuestStepTypeCollect = 2;
+		constexpr uint8_t kQuestStepTypeTalk = 3;
+		constexpr uint8_t kQuestStepTypeEnter = 4;
 	}
 
 	void QuestImGuiRenderer::BindQuestUi(engine::client::QuestUiPresenter* presenter,
@@ -52,6 +60,7 @@ namespace engine::render
 
 		RenderJournal();
 		RenderTracker();
+		RenderMinimap();
 		RenderGiverPanel();
 	}
 
@@ -216,6 +225,87 @@ namespace engine::render
 		ImGui::End();
 
 		ImGui::PopStyleColor(2);
+	}
+
+	void QuestImGuiRenderer::RenderMinimap()
+	{
+		// Config : desactivable (client.quest.minimap.enabled, defaut true) et
+		// taille pixels du cadre carre (client.quest.minimap.size_px, defaut 200).
+		// m_cfg est garanti non-null ici (verifie par l'appelant Render()).
+		const bool enabled = m_cfg->GetBool("client.quest.minimap.enabled", true);
+		if (!enabled)
+			return;
+
+		const engine::client::QuestUiState& state = m_presenter->GetState();
+		if (!state.layoutValid)
+			return;
+
+		const float sizePx = static_cast<float>(m_cfg->GetInt("client.quest.minimap.size_px", 200));
+		if (sizePx <= 0.0f)
+			return;
+
+		// Ancrage : coin haut-droit de l'ecran, marge fixe. Le presenter expose
+		// bien `minimapBounds` (layout), mais celui-ci est dimensionne pour
+		// l'ancien rendu texture de zone (SP1/SP2) — le radar schematique SP3
+		// utilise son propre cadre carre pilote par la config, pour eviter de
+		// re-toucher RebuildLayout ici (hors perimetre Task 3).
+		const ImGuiIO& io = ImGui::GetIO();
+		const float margin = 16.0f;
+		const float x0 = io.DisplaySize.x - sizePx - margin;
+		const float y0 = margin;
+		const float x1 = x0 + sizePx;
+		const float y1 = y0 + sizePx;
+		const ImVec2 center((x0 + x1) * 0.5f, (y0 + y1) * 0.5f);
+
+		ImDrawList* dl = ImGui::GetForegroundDrawList();
+
+		// Fond + bordure + croix centrale (repere joueur).
+		dl->AddRectFilled(ImVec2(x0, y0), ImVec2(x1, y1), IM_COL32(10, 12, 16, 170), 6.0f);
+		dl->AddRect(ImVec2(x0, y0), ImVec2(x1, y1), LnTheme::ToU32(LnTheme::kBorder), 6.0f, 0, 2.0f);
+		dl->AddLine(ImVec2(center.x - 6.0f, center.y), ImVec2(center.x + 6.0f, center.y), LnTheme::ToU32(LnTheme::kMuted), 1.0f);
+		dl->AddLine(ImVec2(center.x, center.y - 6.0f), ImVec2(center.x, center.y + 6.0f), LnTheme::ToU32(LnTheme::kMuted), 1.0f);
+
+		// Marqueurs de POI de quete, teintes par type d'etape.
+		for (const engine::client::MinimapPoiView& poi : state.questPois)
+		{
+			if (!poi.visible)
+				continue;
+
+			ImU32 color = IM_COL32(180, 180, 180, 255); // repli : collect/inconnu = gris
+			switch (poi.stepType)
+			{
+			case kQuestStepTypeKill:
+				color = IM_COL32(220, 60, 60, 255); // rouge
+				break;
+			case kQuestStepTypeTalk:
+				color = IM_COL32(230, 200, 60, 255); // jaune
+				break;
+			case kQuestStepTypeEnter:
+				color = IM_COL32(70, 140, 230, 255); // bleu
+				break;
+			case kQuestStepTypeCollect:
+			default:
+				break; // gris (repli ci-dessus)
+			}
+
+			const ImVec2 p(x0 + poi.u * sizePx, y0 + poi.v * sizePx);
+			dl->AddCircleFilled(p, 4.5f, color);
+			if (!poi.label.empty())
+				dl->AddText(ImVec2(p.x + 6.0f, p.y - 6.0f), color, poi.label.c_str());
+		}
+
+		// Marqueur joueur : petit triangle plein au centre du radar (toujours
+		// (0.5, 0.5), cf. QuestUiPresenter::RebuildMinimap).
+		if (state.playerMarker.visible)
+		{
+			const ImVec2 p(x0 + state.playerMarker.u * sizePx, y0 + state.playerMarker.v * sizePx);
+			const ImU32 playerColor = LnTheme::ToU32(LnTheme::kAccent);
+			dl->AddTriangleFilled(
+				ImVec2(p.x, p.y - 6.0f),
+				ImVec2(p.x - 5.0f, p.y + 5.0f),
+				ImVec2(p.x + 5.0f, p.y + 5.0f),
+				playerColor);
+		}
 	}
 
 	void QuestImGuiRenderer::RenderGiverPanel()

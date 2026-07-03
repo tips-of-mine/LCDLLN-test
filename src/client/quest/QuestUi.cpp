@@ -465,6 +465,9 @@ namespace engine::client
 					poi.v = v;
 					poi.label = label;
 					poi.visible = true;
+					// SP3 Task 3 — miroir de QuestStepType, consomme par
+					// QuestImGuiRenderer::RenderMinimap pour teinter le marqueur.
+					poi.stepType = step.stepType;
 					m_state.questPois.push_back(std::move(poi));
 				}
 			}

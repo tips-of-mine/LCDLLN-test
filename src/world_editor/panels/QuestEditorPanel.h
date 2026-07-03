@@ -75,6 +75,16 @@ namespace engine::editor::world::panels
 		/// état ImGui + `m_prereqBuffer`.
 		void RenderPrereqSection();
 
+		/// Rend la multi-sélection des quêtes mutuellement exclusives (EXT-1,
+		/// `m_excludesBuffer`) : une case à cocher par id de quête connu, HORS
+		/// la quête en cours d'édition (`q.id != m_idBuf`) pour interdire
+		/// l'auto-exclusion côté UI (règle miroir de `RenderPrereqSection`, mais
+		/// sans cycle-check : l'exclusion mutuelle est permise). Cocher/décocher
+		/// ajoute/retire l'id dans `m_excludesBuffer`.
+		/// Effet de bord : état ImGui + `m_excludesBuffer` (modifié en place).
+		/// Thread : main thread (ImGui).
+		void RenderExcludesSection();
+
 		/// Rend la liste éditable des étapes (`m_stepsBuffer`) : combo type
 		/// (kill/collect/talk/enter), champ target, champ requiredCount,
 		/// boutons Suppr par ligne + bouton « Ajouter une étape » en fin de
@@ -116,6 +126,7 @@ namespace engine::editor::world::panels
 		char m_giverBuf[64] = "";
 		char m_turnInBuf[64] = "";
 		std::vector<std::string> m_prereqBuffer;
+		std::vector<std::string> m_excludesBuffer; // EXT-1 : quêtes mutuellement exclusives
 
 		std::vector<engine::editor::world::quests::EditedStep> m_stepsBuffer;
 		uint32_t m_rewardXpBuffer = 0;

@@ -32,6 +32,12 @@ namespace engine::editor::world::quests
 		std::string giver;
 		std::string turnIn;
 		std::vector<std::string> prereqs;
+		/// Quêtes mutuellement exclusives (EXT-1) : s'engager dans cette quête
+		/// rend indisponibles celles listées ici (et réciproquement, l'exclusion
+		/// étant symétrique au runtime shard). Champ optionnel — absent = aucune
+		/// exclusion. N'introduit AUCUNE contrainte d'acyclicité (contrairement à
+		/// `prereqs`) : deux quêtes peuvent s'exclure mutuellement.
+		std::vector<std::string> excludes;
 		std::vector<EditedStep> steps;
 		uint32_t rewardXp = 0;
 		uint32_t rewardGold = 0;
@@ -78,7 +84,9 @@ namespace engine::editor::world::quests
 		/// Valide l'ensemble de quêtes éditées : unicité des `id`, non-vacuité
 		/// de `giver`/`turnIn`, formes des étapes (`type` connu, `target` non
 		/// vide, `requiredCount` ≥ 1), existence des `prereqs` référencés dans
-		/// l'ensemble, absence de cycle dans le graphe `prereqs`, et formes des
+		/// l'ensemble, absence de cycle dans le graphe `prereqs`, existence des
+		/// `excludes` référencés + interdiction de l'auto-exclusion (`id` dans
+		/// son propre `excludes`) SANS contrainte d'acyclicité, et formes des
 		/// items de récompense (`itemId` > 0, `quantity` ≥ 1).
 		///
 		/// Pure : aucune E/S, aucun état modifié (ni sur `this`, ni global) ;

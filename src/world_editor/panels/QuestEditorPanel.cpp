@@ -43,6 +43,7 @@ namespace engine::editor::world::panels
 		std::snprintf(m_giverBuf, sizeof(m_giverBuf), "%s", q.giver.c_str());
 		std::snprintf(m_turnInBuf, sizeof(m_turnInBuf), "%s", q.turnIn.c_str());
 		m_prereqBuffer = q.prereqs;
+		m_excludesBuffer = q.excludes;
 		m_stepsBuffer = q.steps;
 		m_rewardXpBuffer = q.rewardXp;
 		m_rewardGoldBuffer = q.rewardGold;
@@ -60,6 +61,7 @@ namespace engine::editor::world::panels
 		q.giver = m_giverBuf;
 		q.turnIn = m_turnInBuf;
 		q.prereqs = m_prereqBuffer;
+		q.excludes = m_excludesBuffer;
 		q.steps = m_stepsBuffer;
 		q.rewardXp = m_rewardXpBuffer;
 		q.rewardGold = m_rewardGoldBuffer;
@@ -78,6 +80,7 @@ namespace engine::editor::world::panels
 		m_giverBuf[0] = '\0';
 		m_turnInBuf[0] = '\0';
 		m_prereqBuffer.clear();
+		m_excludesBuffer.clear();
 		m_stepsBuffer.clear();
 		m_rewardXpBuffer = 0;
 		m_rewardGoldBuffer = 0;
@@ -148,6 +151,49 @@ namespace engine::editor::world::panels
 				}
 			}
 		}
+	}
+
+	/// Rend la multi-sélection des quêtes mutuellement exclusives (EXT-1) : une
+	/// case à cocher par id de quête connu, HORS la quête en cours d'édition
+	/// (`q.id == m_idBuf` sauté) pour interdire l'auto-exclusion côté UI.
+	/// Cocher ajoute l'id à `m_excludesBuffer`, décocher l'en retire. Miroir de
+	/// `RenderPrereqSection` mais sans cycle-check (l'exclusion mutuelle A<->B
+	/// est autorisée). Effet de bord : état ImGui + `m_excludesBuffer` (modifié
+	/// en place). Thread : main thread (phase ImGui, appelée depuis Render).
+	void QuestEditorPanel::RenderExcludesSection()
+	{
+		ImGui::TextUnformatted("Quetes mutuellement exclusives :");
+		if (m_quests.empty())
+		{
+			ImGui::TextDisabled("(aucune autre quete chargee)");
+			return;
+		}
+		// Namespace ImGui de la section : les cases d'exclusion partagent leur
+		// label (`q.id`) avec celles des prérequis ; sans ce PushID de section,
+		// les deux ensembles de cases entreraient en collision d'id ImGui.
+		ImGui::PushID("excludes_section");
+		for (const auto& q : m_quests)
+		{
+			// Une quête ne peut pas s'exclure elle-même (auto-exclusion interdite,
+			// rejetée aussi par QuestEditIo::Validate).
+			if (q.id == m_idBuf) continue;
+			bool checked = false;
+			for (const auto& e : m_excludesBuffer) if (e == q.id) { checked = true; break; }
+			if (ImGui::Checkbox(q.id.c_str(), &checked))
+			{
+				if (checked)
+				{
+					m_excludesBuffer.push_back(q.id);
+				}
+				else
+				{
+					m_excludesBuffer.erase(
+						std::remove(m_excludesBuffer.begin(), m_excludesBuffer.end(), q.id),
+						m_excludesBuffer.end());
+				}
+			}
+		}
+		ImGui::PopID();
 	}
 
 	void QuestEditorPanel::RenderStepsSection()
@@ -305,6 +351,8 @@ namespace engine::editor::world::panels
 			RenderIdentityFields();
 			ImGui::Separator();
 			RenderPrereqSection();
+			ImGui::Separator();
+			RenderExcludesSection();
 			ImGui::Separator();
 			RenderStepsSection();
 			ImGui::Separator();

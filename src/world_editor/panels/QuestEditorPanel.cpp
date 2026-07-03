@@ -35,6 +35,10 @@ namespace engine::editor::world::panels
 		}
 	}
 
+	/// Copie la quête sélectionnée (`m_selected`) dans les buffers d'édition du
+	/// formulaire (id, giver, turnIn, prérequis, **exclusions**, étapes,
+	/// récompenses, textes). No-op si aucune sélection valide.
+	/// Effet de bord : écrase tous les `m_*Buffer` du panneau. Main thread (ImGui).
 	void QuestEditorPanel::LoadBuffersFromSelected()
 	{
 		if (m_selected < 0 || m_selected >= static_cast<int>(m_quests.size())) return;
@@ -54,6 +58,9 @@ namespace engine::editor::world::panels
 		m_stepLabelsBuffer.resize(m_stepsBuffer.size());
 	}
 
+	/// Construit un `EditedQuest` à partir des buffers d'édition courants
+	/// (opération inverse de \ref LoadBuffersFromSelected), incluant les
+	/// **exclusions** (`m_excludesBuffer`). Pur (ne modifie aucun état du panneau).
 	EditedQuest QuestEditorPanel::BuildQuestFromBuffers() const
 	{
 		EditedQuest q;
@@ -73,6 +80,9 @@ namespace engine::editor::world::panels
 		return q;
 	}
 
+	/// Réinitialise tous les buffers d'édition pour saisir une nouvelle quête
+	/// (dé-sélectionne, vide id/giver/turnIn/prérequis/**exclusions**/étapes/
+	/// récompenses). Effet de bord : écrase tous les `m_*Buffer`. Main thread (ImGui).
 	void QuestEditorPanel::ResetBuffersToNew()
 	{
 		m_selected = -1;

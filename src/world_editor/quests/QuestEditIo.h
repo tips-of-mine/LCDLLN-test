@@ -91,5 +91,36 @@ namespace engine::editor::world::quests
 		///        plusieurs messages pour une même quête. Vide si tout est valide.
 		/// \return `outErrors.empty()` — true si aucune violation n'a été trouvée.
 		bool Validate(const std::vector<EditedQuest>& quests, std::vector<std::string>& outErrors) const;
+
+		/// Écrit l'ensemble \p quests sous `<contentRoot>/quests/` en 3 fichiers
+		/// JSON purs (sérialisation manuelle, sans passer par `Config`) :
+		/// - `quest_definitions.json` : données mécaniques (id/giver/turnIn/
+		///   prereqs/steps/rewards), format tableaux (`{ "quests": [...] }`),
+		///   compatible avec `QuestEditIo::Load` et avec le parseur JSON pur du
+		///   shard (PAS le format `count`-indexé de `Config`, qui casserait
+		///   `QuestRuntime`).
+		/// - `quest_texts.fr.json` : textes lisibles (`{ "<id>": {title,
+		///   description, steps:[...]} }`), appariés par `id`.
+		/// - `quest_givers.json` : RÉGÉNÉRÉ intégralement à partir de `giver`/
+		///   `turnIn` de chaque quête (ne lit pas l'éventuel fichier existant) ;
+		///   groupé par PNJ cible, chaque entrée `{questId, role}` avec
+		///   `role=0` pour un donneur (`giver`) et `role=1` pour un rendu
+		///   (`turnIn`). Un même PNJ peut apparaître comme donneur ET receveur
+		///   (pour la même quête ou des quêtes différentes) : toutes les
+		///   entrées sont conservées.
+		///
+		/// \param contentRoot dossier de contenu (filesystem) sous lequel écrire
+		///        `quests/` (créé si absent).
+		/// \param quests ensemble de quêtes à écrire, tel quel (aucune validation
+		///        implicite : appeler `Validate` avant `Save` si nécessaire).
+		/// \param outError message d'erreur lisible en cas d'échec d'écriture
+		///        (dossier non créable, fichier non ouvrable). Vide en cas de
+		///        succès.
+		/// \return false si l'un des 3 fichiers n'a pas pu être écrit ; true sinon.
+		///
+		/// Effet de bord : écriture disque (3 fichiers sous `<contentRoot>/quests/`,
+		/// écrasés s'ils existent déjà). À appeler depuis le thread principal de
+		/// l'éditeur (pas de synchronisation interne, comme `Load`/`Validate`).
+		bool Save(const std::string& contentRoot, const std::vector<EditedQuest>& quests, std::string& outError) const;
 	};
 }

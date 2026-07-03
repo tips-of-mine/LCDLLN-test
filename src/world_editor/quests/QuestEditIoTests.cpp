@@ -1,5 +1,5 @@
-// Tests de QuestEditIo::Load et QuestEditIo::Validate — chargement et
-// validation authoring des quêtes (SP4, Tâches 1 et 2).
+// Tests de QuestEditIo::Load, QuestEditIo::Validate et QuestEditIo::Save —
+// chargement, validation et écriture authoring des quêtes (SP4, Tâches 1, 2, 3).
 //
 // Écrit une fixture (quest_definitions.json + quest_texts.fr.json) dans un
 // répertoire temporaire unique (isolé du vrai contenu du dépôt), à l'instar
@@ -9,6 +9,11 @@
 //
 // QuestEditIo::Validate est pure (pas d'I/O) : les cas ci-dessous construisent
 // des std::vector<EditedQuest> directement en mémoire, sans fixture disque.
+//
+// QuestEditIo::Save écrit sur disque (3 fichiers) : les cas ci-dessous
+// vérifient le round-trip Save -> Load (égalité structurelle) et le contenu
+// brut des fichiers écrits (quest_givers.json régénéré, quest_definitions.json
+// en JSON pur tableaux et non au format `count`-indexé de Config).
 
 #include "src/world_editor/quests/QuestEditIo.h"
 
@@ -16,9 +21,11 @@
 #include <fstream>
 #include <iostream>
 #include <random>
+#include <sstream>
 #include <string>
 
 using engine::editor::world::quests::EditedQuest;
+using engine::editor::world::quests::EditedRewardItem;
 using engine::editor::world::quests::EditedStep;
 using engine::editor::world::quests::QuestEditIo;
 
@@ -84,6 +91,63 @@ namespace
 			std::abort();
 		}
 		file << text;
+	}
+
+	/// Relit intégralement `<contentRoot>/quests/<fileName>` en mémoire (pour
+	/// inspection brute du contenu écrit par `QuestEditIo::Save` dans les tests).
+	/// Abort si le fichier n'a pas pu être ouvert (fixture/écriture invalide sinon).
+	std::string ReadQuestsFile(const std::filesystem::path& contentRoot, const std::string& fileName)
+	{
+		const std::filesystem::path filePath = contentRoot / "quests" / fileName;
+		std::ifstream file(filePath, std::ios::binary);
+		if (!file)
+		{
+			std::cerr << "[FATAL] cannot read written file " << filePath.string() << "\n";
+			std::abort();
+		}
+		std::ostringstream ss;
+		ss << file.rdbuf();
+		return ss.str();
+	}
+
+	/// Construit l'ensemble de quêtes en mémoire utilisé par le test round-trip
+	/// Save -> Load : `kill_10_boars` avec `giver` == `turnIn` == "npc:elder_marn"
+	/// (pour exercer la régénération quest_givers.json avec les 2 rôles sur le
+	/// même PNJ), plus une seconde quête avec prereq et textes complets.
+	std::vector<EditedQuest> MakeRoundTripQuests()
+	{
+		EditedQuest boars;
+		boars.id = "kill_10_boars";
+		boars.giver = "npc:elder_marn";
+		boars.turnIn = "npc:elder_marn";
+		EditedStep boarStep;
+		boarStep.type = "kill";
+		boarStep.target = "mob:100";
+		boarStep.requiredCount = 10;
+		boars.steps.push_back(boarStep);
+		boars.rewardXp = 50;
+		boars.rewardGold = 20;
+		boars.rewardItems.push_back(EditedRewardItem{ 7, 2 });
+		boars.title = "Chasse aux sangliers";
+		boars.description = "Tuez 10 sangliers pour l'aîné Marn.";
+		boars.stepLabels.push_back("Sangliers tués : {current}/{required}");
+
+		EditedQuest scout;
+		scout.id = "talk_to_scout";
+		scout.giver = "npc:scout";
+		scout.turnIn = "npc:scout";
+		scout.prereqs.push_back("kill_10_boars");
+		EditedStep talkStep;
+		talkStep.type = "talk";
+		talkStep.target = "npc:scout";
+		talkStep.requiredCount = 1;
+		scout.steps.push_back(talkStep);
+		scout.rewardXp = 5;
+		scout.title = "Éclaireur";
+		scout.description = "Parlez à l'éclaireur.";
+		scout.stepLabels.push_back("Parlé à l'éclaireur");
+
+		return { boars, scout };
 	}
 }
 
@@ -230,6 +294,86 @@ int main()
 		const bool ok = io.Validate(quests, errors);
 		Check(!ok, "Validate: étape target vide -> false");
 		Check(!errors.empty(), "Validate: étape target vide -> au moins 1 erreur");
+	}
+
+	// --- QuestEditIo::Save ---------------------------------------------------
+
+	// (h) round-trip Save -> Load : égalité structurelle id/giver/turnIn/steps/
+	// rewards/title/stepLabels.
+	{
+		const std::filesystem::path saveRoot = MakeTempContentDir();
+		const std::vector<EditedQuest> original = MakeRoundTripQuests();
+
+		std::string saveError;
+		const bool saved = io.Save(saveRoot.string(), original, saveError);
+		Check(saved, "Save réussit sur un ensemble valide");
+		Check(saveError.empty(), "Save ne renseigne pas outError en cas de succès");
+
+		std::vector<EditedQuest> reloaded;
+		std::string loadError;
+		const bool reloadedOk = io.Load(saveRoot.string(), reloaded, loadError);
+		Check(reloadedOk, "Load réussit après Save (round-trip)");
+		Check(reloaded.size() == original.size(), "round-trip: même nombre de quêtes");
+
+		for (const EditedQuest& orig : original)
+		{
+			const EditedQuest* found = nullptr;
+			for (const EditedQuest& candidate : reloaded)
+			{
+				if (candidate.id == orig.id)
+				{
+					found = &candidate;
+				}
+			}
+
+			const std::string label = "round-trip '" + orig.id + "'";
+			Check(found != nullptr, (label + ": retrouvée après reload").c_str());
+			if (found == nullptr)
+			{
+				continue;
+			}
+
+			Check(found->giver == orig.giver, (label + ": giver identique").c_str());
+			Check(found->turnIn == orig.turnIn, (label + ": turnIn identique").c_str());
+			Check(found->prereqs == orig.prereqs, (label + ": prereqs identiques").c_str());
+			Check(found->steps.size() == orig.steps.size(), (label + ": nombre d'étapes identique").c_str());
+			for (size_t i = 0; i < orig.steps.size() && i < found->steps.size(); ++i)
+			{
+				Check(found->steps[i].type == orig.steps[i].type, (label + ": step.type identique").c_str());
+				Check(found->steps[i].target == orig.steps[i].target, (label + ": step.target identique").c_str());
+				Check(found->steps[i].requiredCount == orig.steps[i].requiredCount, (label + ": step.requiredCount identique").c_str());
+			}
+			Check(found->rewardXp == orig.rewardXp, (label + ": rewardXp identique").c_str());
+			Check(found->rewardGold == orig.rewardGold, (label + ": rewardGold identique").c_str());
+			Check(found->rewardItems.size() == orig.rewardItems.size(), (label + ": nombre d'items de récompense identique").c_str());
+			for (size_t i = 0; i < orig.rewardItems.size() && i < found->rewardItems.size(); ++i)
+			{
+				Check(found->rewardItems[i].itemId == orig.rewardItems[i].itemId, (label + ": rewardItem.itemId identique").c_str());
+				Check(found->rewardItems[i].quantity == orig.rewardItems[i].quantity, (label + ": rewardItem.quantity identique").c_str());
+			}
+			Check(found->title == orig.title, (label + ": title identique").c_str());
+			Check(found->stepLabels == orig.stepLabels, (label + ": stepLabels identiques").c_str());
+		}
+
+		// (i) quest_givers.json régénéré : npc:elder_marn doit avoir à la fois
+		// {kill_10_boars, role 0} (giver) et {kill_10_boars, role 1} (turnIn),
+		// puisque giver == turnIn == "npc:elder_marn" pour cette quête.
+		const std::string giversJson = ReadQuestsFile(saveRoot, "quest_givers.json");
+		Check(giversJson.find("\"npc:elder_marn\"") != std::string::npos, "quest_givers.json: clé npc:elder_marn présente");
+		Check(giversJson.find("\"questId\": \"kill_10_boars\", \"role\": 0") != std::string::npos,
+			"quest_givers.json: entrée role 0 (giver) pour kill_10_boars");
+		Check(giversJson.find("\"questId\": \"kill_10_boars\", \"role\": 1") != std::string::npos,
+			"quest_givers.json: entrée role 1 (turnIn) pour kill_10_boars");
+
+		// (j) quest_definitions.json écrit est du JSON pur (tableaux), pas le
+		// format `count`-indexé de Config.
+		const std::string definitionsJsonWritten = ReadQuestsFile(saveRoot, "quest_definitions.json");
+		Check(definitionsJsonWritten.find("\"quests\"") != std::string::npos, "quest_definitions.json: clé 'quests' présente");
+		Check(definitionsJsonWritten.find('[') != std::string::npos, "quest_definitions.json: contient un tableau JSON '['");
+		Check(definitionsJsonWritten.find("\"count\"") == std::string::npos, "quest_definitions.json: PAS de format count-indexé");
+
+		std::error_code saveCleanupError;
+		std::filesystem::remove_all(saveRoot, saveCleanupError);
 	}
 
 	if (g_failures != 0)

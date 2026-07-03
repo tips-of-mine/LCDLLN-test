@@ -6,7 +6,10 @@
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <limits>
+#include <map>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -717,6 +720,247 @@ namespace engine::editor::world::quests
 			colors[questId] = VisitColor::Black;
 			return false;
 		}
+
+		/// Échappe une chaîne pour insertion dans un littéral JSON (guillemets +
+		/// antislash + retour à la ligne). Patron dupliqué volontairement depuis
+		/// `BuildingTemplateLibrary.cpp` (pas de lib JSON partagée côté éditeur).
+		std::string JsonEscape(const std::string& s)
+		{
+			std::string out;
+			out.reserve(s.size() + 8);
+			for (char c : s)
+			{
+				if (c == '"' || c == '\\')
+				{
+					out.push_back('\\');
+					out.push_back(c);
+				}
+				else if (c == '\n')
+				{
+					out += "\\n";
+				}
+				else
+				{
+					out.push_back(c);
+				}
+			}
+			return out;
+		}
+
+		/// Formate un entier non signé pour un littéral JSON (pas de zéros
+		/// parasites, pas de séparateur de milliers).
+		std::string Num(uint32_t v)
+		{
+			return std::to_string(v);
+		}
+
+		/// Sérialise une étape éditable (`{type, target, requiredCount}`) en JSON
+		/// pur, indentée à \p indent espaces, sans retour à la ligne final.
+		std::string SerializeStep(const EditedStep& step, int indent)
+		{
+			const std::string pad(static_cast<size_t>(indent), ' ');
+			std::ostringstream os;
+			os << pad << "{ \"type\": \"" << JsonEscape(step.type) << "\", \"target\": \"" << JsonEscape(step.target)
+			   << "\", \"requiredCount\": " << Num(step.requiredCount) << " }";
+			return os.str();
+		}
+
+		/// Sérialise le bloc `rewards` (`{xp, gold, items:[{itemId,quantity}]}`)
+		/// d'une quête éditée en JSON pur, indentée à \p indent espaces.
+		std::string SerializeRewards(const EditedQuest& quest, int indent)
+		{
+			const std::string pad(static_cast<size_t>(indent), ' ');
+			const std::string itemPad(static_cast<size_t>(indent) + 2, ' ');
+			std::ostringstream os;
+			os << pad << "{\n";
+			os << itemPad << "\"xp\": " << Num(quest.rewardXp) << ",\n";
+			os << itemPad << "\"gold\": " << Num(quest.rewardGold) << ",\n";
+			os << itemPad << "\"items\": [";
+			for (size_t i = 0; i < quest.rewardItems.size(); ++i)
+			{
+				const EditedRewardItem& item = quest.rewardItems[i];
+				os << (i == 0 ? "\n" : ",\n") << itemPad << "  { \"itemId\": " << Num(item.itemId)
+				   << ", \"quantity\": " << Num(item.quantity) << " }";
+			}
+			if (!quest.rewardItems.empty())
+			{
+				os << "\n" << itemPad;
+			}
+			os << "]\n";
+			os << pad << "}";
+			return os.str();
+		}
+
+		/// Sérialise une quête éditée complète (`{id, giver, turnIn, prereqs,
+		/// steps, rewards}`) en JSON pur, tableau, indentée à \p indent espaces
+		/// (élément de `quests[]` dans `quest_definitions.json`).
+		std::string SerializeQuestDefinition(const EditedQuest& quest, int indent)
+		{
+			const std::string pad(static_cast<size_t>(indent), ' ');
+			const std::string fieldPad(static_cast<size_t>(indent) + 2, ' ');
+			std::ostringstream os;
+			os << pad << "{\n";
+			os << fieldPad << "\"id\": \"" << JsonEscape(quest.id) << "\",\n";
+			os << fieldPad << "\"giver\": \"" << JsonEscape(quest.giver) << "\",\n";
+			os << fieldPad << "\"turnIn\": \"" << JsonEscape(quest.turnIn) << "\",\n";
+
+			os << fieldPad << "\"prereqs\": [";
+			for (size_t i = 0; i < quest.prereqs.size(); ++i)
+			{
+				os << (i == 0 ? "" : ", ") << "\"" << JsonEscape(quest.prereqs[i]) << "\"";
+			}
+			os << "],\n";
+
+			os << fieldPad << "\"steps\": [";
+			for (size_t i = 0; i < quest.steps.size(); ++i)
+			{
+				os << (i == 0 ? "\n" : ",\n") << SerializeStep(quest.steps[i], indent + 4);
+			}
+			if (!quest.steps.empty())
+			{
+				os << "\n" << fieldPad;
+			}
+			os << "],\n";
+
+			os << fieldPad << "\"rewards\": " << SerializeRewards(quest, indent + 2) << "\n";
+			os << pad << "}";
+			return os.str();
+		}
+
+		/// Sérialise `quest_definitions.json` en entier (`{ "quests": [...] }`,
+		/// JSON pur, tableaux — PAS le format `count`-indexé de `Config`).
+		std::string SerializeQuestDefinitions(const std::vector<EditedQuest>& quests)
+		{
+			std::ostringstream os;
+			os << "{\n  \"quests\": [";
+			for (size_t i = 0; i < quests.size(); ++i)
+			{
+				os << (i == 0 ? "\n" : ",\n") << SerializeQuestDefinition(quests[i], 4);
+			}
+			if (!quests.empty())
+			{
+				os << "\n  ";
+			}
+			os << "]\n}\n";
+			return os.str();
+		}
+
+		/// Sérialise `quest_texts.fr.json` (`{ "<id>": {title, description,
+		/// steps:[...]} }`) à partir des textes portés par chaque `EditedQuest`.
+		/// N'écrit une entrée que pour les quêtes ayant au moins un champ texte
+		/// non vide (title/description/stepLabels), pour ne pas polluer le
+		/// fichier de traductions avec des entrées entièrement vides.
+		std::string SerializeQuestTexts(const std::vector<EditedQuest>& quests)
+		{
+			std::ostringstream os;
+			os << "{";
+			bool first = true;
+			for (const EditedQuest& quest : quests)
+			{
+				if (quest.title.empty() && quest.description.empty() && quest.stepLabels.empty())
+				{
+					continue;
+				}
+
+				os << (first ? "\n" : ",\n") << "  \"" << JsonEscape(quest.id) << "\": {\n";
+				os << "    \"title\": \"" << JsonEscape(quest.title) << "\",\n";
+				os << "    \"description\": \"" << JsonEscape(quest.description) << "\",\n";
+				os << "    \"steps\": [";
+				for (size_t i = 0; i < quest.stepLabels.size(); ++i)
+				{
+					os << (i == 0 ? "\n" : ",\n") << "      \"" << JsonEscape(quest.stepLabels[i]) << "\"";
+				}
+				if (!quest.stepLabels.empty())
+				{
+					os << "\n    ";
+				}
+				os << "]\n  }";
+				first = false;
+			}
+			if (!first)
+			{
+				os << "\n";
+			}
+			os << "}\n";
+			return os.str();
+		}
+
+		/// Une entrée de `quest_givers.json` régénérée : quête + rôle du PNJ
+		/// pour cette quête (0 = donneur `giver`, 1 = receveur `turnIn`).
+		struct GiverEntry
+		{
+			std::string questId;
+			int role = 0;
+		};
+
+		/// Sérialise `quest_givers.json` régénéré à partir de `giver`/`turnIn`
+		/// de chaque quête de \p quests : pour chaque quête, ajoute `{questId,
+		/// role:0}` sous la clé PNJ `giver`, et `{questId, role:1}` sous la clé
+		/// PNJ `turnIn`, puis groupe par PNJ (`std::map` pour un ordre de clés
+		/// stable et déterministe entre deux appels, utile pour les diffs git).
+		/// Un même PNJ peut recevoir plusieurs entrées (plusieurs quêtes, ou
+		/// donneur+receveur d'une même quête) : toutes conservées, dans l'ordre
+		/// de parcours de \p quests.
+		std::string SerializeQuestGivers(const std::vector<EditedQuest>& quests)
+		{
+			std::map<std::string, std::vector<GiverEntry>> byNpc;
+			for (const EditedQuest& quest : quests)
+			{
+				if (!quest.giver.empty())
+				{
+					byNpc[quest.giver].push_back(GiverEntry{ quest.id, 0 });
+				}
+				if (!quest.turnIn.empty())
+				{
+					byNpc[quest.turnIn].push_back(GiverEntry{ quest.id, 1 });
+				}
+			}
+
+			std::ostringstream os;
+			os << "{";
+			bool first = true;
+			for (const auto& npcAndEntries : byNpc)
+			{
+				os << (first ? "\n" : ",\n") << "  \"" << JsonEscape(npcAndEntries.first) << "\": [";
+				const std::vector<GiverEntry>& entries = npcAndEntries.second;
+				for (size_t i = 0; i < entries.size(); ++i)
+				{
+					os << (i == 0 ? "\n" : ",\n") << "    { \"questId\": \"" << JsonEscape(entries[i].questId)
+					   << "\", \"role\": " << entries[i].role << " }";
+				}
+				os << "\n  ]";
+				first = false;
+			}
+			if (!first)
+			{
+				os << "\n";
+			}
+			os << "}\n";
+			return os.str();
+		}
+
+		/// Écrit \p content dans \p path (binaire, tronque un fichier existant).
+		/// \return false et remplit \p outError si le fichier n'a pas pu être ouvert en écriture.
+		///
+		/// Effet de bord : écriture disque (création/écrasement de \p path).
+		bool WriteTextFile(const std::filesystem::path& path, const std::string& content, std::string& outError)
+		{
+			std::ofstream file(path, std::ios::binary | std::ios::trunc);
+			if (!file)
+			{
+				outError = "cannot write file (path=" + path.string() + ")";
+				return false;
+			}
+
+			file << content;
+			if (!file)
+			{
+				outError = "write failed (path=" + path.string() + ")";
+				return false;
+			}
+
+			return true;
+		}
 	}
 
 	bool QuestEditIo::Load(const std::string& contentRoot, std::vector<EditedQuest>& out, std::string& outError) const
@@ -859,5 +1103,36 @@ namespace engine::editor::world::quests
 		}
 
 		return outErrors.empty();
+	}
+
+	bool QuestEditIo::Save(const std::string& contentRoot, const std::vector<EditedQuest>& quests, std::string& outError) const
+	{
+		outError.clear();
+
+		const std::filesystem::path questsDir = std::filesystem::path(contentRoot) / "quests";
+		std::error_code ec;
+		std::filesystem::create_directories(questsDir, ec);
+		if (ec)
+		{
+			outError = "cannot create directory (path=" + questsDir.string() + "): " + ec.message();
+			return false;
+		}
+
+		if (!WriteTextFile(questsDir / "quest_definitions.json", SerializeQuestDefinitions(quests), outError))
+		{
+			return false;
+		}
+
+		if (!WriteTextFile(questsDir / "quest_texts.fr.json", SerializeQuestTexts(quests), outError))
+		{
+			return false;
+		}
+
+		if (!WriteTextFile(questsDir / "quest_givers.json", SerializeQuestGivers(quests), outError))
+		{
+			return false;
+		}
+
+		return true;
 	}
 }

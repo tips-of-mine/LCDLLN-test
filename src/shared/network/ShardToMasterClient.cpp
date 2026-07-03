@@ -3,6 +3,7 @@
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/PacketView.h"
 #include "src/shared/network/ShardPayloads.h"
+#include "src/shared/network/ShardWireAuth.h"
 #include "src/shared/core/Log.h"
 
 #include <chrono>
@@ -40,6 +41,11 @@ namespace engine::network
 	void ShardToMasterClient::SetAllowInsecureDev(bool allow)
 	{
 		m_allow_insecure = allow;
+	}
+
+	void ShardToMasterClient::SetSharedSecret(std::string secret)
+	{
+		m_shared_secret = std::move(secret);
 	}
 
 	void ShardToMasterClient::SetShardIdentity(std::string name, std::string endpoint, std::string udp_endpoint, uint32_t max_capacity, std::string build_version,
@@ -125,6 +131,13 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 			LOG_ERROR(Core, "[ShardToMasterClient] BuildShardRegisterPayload failed");
 			return;
 		}
+		// Sécurité (audit F3) : authentifier le REGISTER par tag HMAC préfixe.
+		payload = WrapShardAuth(m_shared_secret, payload);
+		if (payload.empty())
+		{
+			LOG_ERROR(Core, "[ShardToMasterClient] WrapShardAuth register échoué (secret vide ?)");
+			return;
+		}
 		PacketBuilder builder;
 		auto w = builder.PayloadWriter();
 		if (!w.WriteBytes(payload.data(), payload.size()))
@@ -153,6 +166,9 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 		if (m_presence_provider)
 			players = m_presence_provider();
 		auto payload = BuildShardHeartbeatPayload(m_shard_id, m_current_load, timestamp, players);
+		if (payload.empty())
+			return;
+		payload = WrapShardAuth(m_shared_secret, payload); // audit F3
 		if (payload.empty())
 			return;
 		PacketBuilder builder;

@@ -798,6 +798,8 @@ add_library(engine_core
   src/shared/network/TradePayloads.cpp
   src/shared/network/ShardPayloads.cpp
   src/shared/network/TermsPayloads.cpp
+  # Audit F3 : tag HMAC-SHA256 préfixe authentifiant SHARD_REGISTER/HEARTBEAT.
+  src/shared/network/ShardWireAuth.cpp
 )
 # Shared gameplay wire codec (Encode*/Decode*); linked into client — must not be server-only.
 target_sources(engine_core PRIVATE src/shared/network/ServerProtocol.cpp)

@@ -139,6 +139,9 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/TermsPayloads.cpp
+    # Audit F3 : tag HMAC-SHA256 préfixe authentifiant SHARD_REGISTER/HEARTBEAT
+    # (utilisé par ShardRegisterHandler, compilé dans ce binaire master).
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ShardWireAuth.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp
@@ -1140,6 +1143,16 @@ elseif(UNIX)
   target_link_libraries(shard_payloads_tests PRIVATE engine_core)
   target_compile_options(shard_payloads_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME shard_payloads_tests COMMAND shard_payloads_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # Audit F3 : tag HMAC-SHA256 préfixe authentifiant SHARD_REGISTER/HEARTBEAT.
+  add_executable(shard_wire_auth_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ShardWireAuthTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ShardWireAuth.cpp
+  )
+  target_include_directories(shard_wire_auth_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(shard_wire_auth_tests PRIVATE OpenSSL::SSL)
+  target_compile_options(shard_wire_auth_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME shard_wire_auth_tests COMMAND shard_wire_auth_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # Présence unifiée (Niveau 1) : ShardPresenceService — présence shard-locale.
   add_executable(shard_presence_service_tests

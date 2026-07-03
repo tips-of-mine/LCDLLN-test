@@ -186,6 +186,9 @@ int main(int argc, char** argv)
 	toMaster.SetAllowInsecureDev(masterInsecure);
 	toMaster.SetShardIdentity(regName, regEndpoint, regUdpEndpoint, regCap, buildVer, regDisplayName, regGameMode, regRuleset, regRegion);
 	toMaster.SetHeartbeatIntervalSec(static_cast<int>(config.GetInt("shard.heartbeat_interval_sec", 10)));
+	// Sécurité (audit F3) : authentifie SHARD_REGISTER/SHARD_HEARTBEAT par tag HMAC préfixe
+	// (même secret que le master, config `shard.ticket_hmac_secret`).
+	toMaster.SetSharedSecret(config.GetString("shard.ticket_hmac_secret", ""));
 	// TA.3 — admet (account_id, character_id) dans le registre dès que le master pousse
 	// kOpcodeMasterToShardAdmitCharacter (suite à un EnterWorld réussi côté master). Sans
 	// ce câblage, le Hello UDP du client (clientNonce=character_id) serait rejeté car le

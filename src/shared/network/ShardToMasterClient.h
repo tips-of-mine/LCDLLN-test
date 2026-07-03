@@ -54,6 +54,12 @@ namespace engine::network
 		/// Heartbeat interval in seconds. Default 10. Call before Start() to take effect.
 		void SetHeartbeatIntervalSec(int sec) { m_heartbeat_interval_sec = (sec > 0) ? sec : 10; }
 
+		/// Sécurité (audit F3) : secret partagé HMAC-SHA256 authentifiant les payloads
+		/// SHARD_REGISTER/SHARD_HEARTBEAT envoyés au master (config `shard.ticket_hmac_secret`).
+		/// Doit être appelé avant Start() ; si vide, l'émission échoue silencieusement
+		/// (WrapShardAuth renvoie {} et le paquet n'est pas envoyé).
+		void SetSharedSecret(std::string secret);
+
 		/// Présence enrichie (v9) : fournisseur optionnel appelé à chaque heartbeat pour
 		/// joindre la liste des joueurs en jeu `{accountId, characterId, level, zoneId}`.
 		/// Doit renvoyer un snapshot cohérent (typiquement construit sur le thread monde).
@@ -106,6 +112,8 @@ namespace engine::network
 		ShardRuleset m_ruleset = ShardRuleset::Cooperative;
 		std::string m_region;
 		uint32_t m_current_load = 0;
+		/// Sécurité (audit F3) : secret HMAC partagé avec le master. Voir SetSharedSecret.
+		std::string m_shared_secret;
 
 		State m_state = State::Disconnected;
 		uint32_t m_shard_id = 0;

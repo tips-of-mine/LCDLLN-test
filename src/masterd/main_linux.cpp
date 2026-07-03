@@ -1049,6 +1049,9 @@ int main(int argc, char** argv)
 	passwordResetHandler.SetSecurityAuditLog(&auditLog);
 	LOG_INFO(Auth, "[ServerMain] PasswordResetHandler configured (M33.2)");
 	shardRegisterHandler.SetServer(&server);
+	// Sécurité (audit F3) : authentifie SHARD_REGISTER/SHARD_HEARTBEAT par tag HMAC préfixe
+	// (même secret que ShardTicketHandler ci-dessous, config `shard.ticket_hmac_secret`).
+	shardRegisterHandler.SetSecret(config.GetString("shard.ticket_hmac_secret", ""));
 	engine::server::ShardTicketHandler shardTicketHandler;
 	shardTicketHandler.SetServer(&server);
 	shardTicketHandler.SetShardRegistry(&shardRegistry);

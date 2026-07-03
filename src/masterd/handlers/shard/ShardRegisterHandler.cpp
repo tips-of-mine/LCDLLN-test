@@ -14,16 +14,19 @@
 #include "src/masterd/shards/ShardRegistry.h"
 #include "src/masterd/shards/ShardPlayerPresenceCache.h"
 #include "src/shared/network/ShardPayloads.h"
+#include "src/shared/network/ShardWireAuth.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/core/Log.h"
 
 #include <cstdio>
+#include <utility>
 
 namespace engine::server
 {
 	void ShardRegisterHandler::SetServer(NetServer* server) { m_server = server; }
 	void ShardRegisterHandler::SetShardRegistry(ShardRegistry* registry) { m_registry = registry; }
 	void ShardRegisterHandler::SetPlayerPresenceCache(ShardPlayerPresenceCache* cache) { m_presenceCache = cache; }
+	void ShardRegisterHandler::SetSecret(std::string secret) { m_secret = std::move(secret); }
 
 	void ShardRegisterHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t /*sessionIdHeader*/,
 		const uint8_t* payload, size_t payloadSize)
@@ -34,15 +37,19 @@ namespace engine::server
 			LOG_WARN(Core, "[ShardRegisterHandler] HandlePacket: server or registry not set");
 			return;
 		}
-		if (opcode == kOpcodeShardRegister)
+		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
 		{
-			HandleRegister(connId, requestId, payload, payloadSize);
-			return;
-		}
-		if (opcode == kOpcodeShardHeartbeat)
-		{
-			HandleHeartbeat(connId, payload, payloadSize);
-			return;
+			// Sécurité (audit F3) : le canal shard↔master est authentifié par un tag HMAC préfixe.
+			auto body = UnwrapShardAuth(m_secret, payload, payloadSize);
+			if (!body)
+			{
+				LOG_WARN(Server, "[SREG] paquet shard rejeté : authentification HMAC invalide (opcode={}, connId={})", opcode, connId);
+				return;
+			}
+			if (opcode == kOpcodeShardRegister)
+				HandleRegister(connId, requestId, body->first, body->second);
+			else
+				HandleHeartbeat(connId, body->first, body->second);
 		}
 	}
 

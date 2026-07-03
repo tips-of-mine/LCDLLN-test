@@ -47,7 +47,7 @@ namespace engine::network
 		uint8_t expected[kShardAuthTagSize];
 		if (!ComputeTag(secret, body, bodySize, expected))
 			return std::nullopt;
-		// Comparaison à temps constant (corrige aussi F27 pour ce chemin).
+		// Comparaison à temps constant (CRYPTO_memcmp) pour la vérification du tag HMAC.
 		if (CRYPTO_memcmp(expected, payload, kShardAuthTagSize) != 0)
 			return std::nullopt;
 		return std::make_pair(body, bodySize);

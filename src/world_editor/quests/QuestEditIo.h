@@ -74,6 +74,10 @@ namespace engine::editor::world::quests
 		/// `Completed`) dès que toutes ses étapes sont finies, sans retour PNJ.
 		/// Défaut false. Sérialisé via la clé JSON `"autoComplete"` (bool).
 		bool autoComplete = false;
+		/// EXT-3 : si vrai, la quête est partagée en groupe — le crédit d'étape
+		/// déclenché par un membre est propagé aux coéquipiers à portée (fan-out
+		/// shard). Défaut false. Sérialisé via la clé JSON `"partyShared"` (bool).
+		bool partyShared = false;
 
 		// Textes lisibles, fusionnés depuis quest_texts.<lang>.json. Vides si la
 		// quête n'a pas (encore) d'entrée de texte pour la langue chargée.

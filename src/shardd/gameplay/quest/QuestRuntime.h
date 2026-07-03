@@ -80,6 +80,10 @@ namespace engine::server
 		/// dernière étape complétée, sans retour au PNJ (récompense versée par le
 		/// caller ServerApp, pas par QuestRuntime).
 		bool autoComplete = false;
+		/// EXT-3 — si vrai, le crédit d'étape est propagé aux membres du groupe de
+		/// l'acteur à portée (fan-out réalisé côté ServerApp). Défaut false =
+		/// quête solo, rétro-compatible.
+		bool partyShared = false;
 	};
 
 	/// Per-player stored quest state required by the server runtime.
@@ -150,12 +154,17 @@ namespace engine::server
 		bool SyncQuestStates(std::vector<QuestState>& states, std::vector<QuestProgressDelta>& outDeltas) const;
 
 		/// Apply one authoritative quest event and emit deltas for every changed quest.
+		/// EXT-3 — \p onlyPartyShared : si true, ignore toute définition dont
+		/// `!partyShared` (crédit réservé aux quêtes partagées en groupe, pour le
+		/// fan-out aux coéquipiers). Défaut false = comportement historique
+		/// (toutes les quêtes Active matchantes avancent).
 		bool ApplyEvent(
 			std::vector<QuestState>& states,
 			QuestStepType eventType,
 			std::string_view targetId,
 			uint32_t amount,
-			std::vector<QuestProgressDelta>& outDeltas) const;
+			std::vector<QuestProgressDelta>& outDeltas,
+			bool onlyPartyShared = false) const;
 
 		/// Find one quest definition by id, or return `nullptr` when it is absent.
 		const QuestDefinition* FindQuestDefinition(std::string_view questId) const;

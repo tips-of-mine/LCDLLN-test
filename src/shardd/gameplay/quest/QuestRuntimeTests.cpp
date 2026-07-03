@@ -553,6 +553,99 @@ int main()
 		}
 	}
 
+	// EXT-3 — parse du flag partyShared (défaut false + true lu).
+	{
+		const std::string json = R"JSON({
+      "quests": [
+        { "id": "shared1", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [], "partyShared": true,
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } },
+        { "id": "solo1", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [],
+          "steps": [ { "type": "kill", "target": "mob:2", "requiredCount": 1 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } }
+      ]
+    })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(json);
+		Check(runtime.Init(), "EXT-3 Init charge shared1 (partyShared) + solo1");
+		const auto* shared = runtime.FindQuestDefinition("shared1");
+		const auto* solo = runtime.FindQuestDefinition("solo1");
+		Check(shared != nullptr && solo != nullptr, "EXT-3 shared1/solo1 trouvées");
+		if (shared != nullptr && solo != nullptr)
+		{
+			Check(shared->partyShared, "EXT-3 partyShared=true parsé");
+			Check(!solo->partyShared, "EXT-3 partyShared absent → false (rétro-compat)");
+		}
+	}
+
+	// EXT-3 — filtre ApplyEvent(onlyPartyShared) : deux quêtes Active avec une
+	// étape kill matchante, une partyShared:true une :false. onlyPartyShared=true
+	// n'avance QUE la partagée ; le défaut (false) avance les deux (non-régression).
+	{
+		const std::string json = R"JSON({
+      "quests": [
+        { "id": "qshared", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [], "partyShared": true,
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 3 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } },
+        { "id": "qsolo", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [], "partyShared": false,
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 3 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } }
+      ]
+    })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(json);
+		Check(runtime.Init(), "EXT-3 Init charge qshared/qsolo pour le filtre");
+
+		// Cas A : onlyPartyShared=true → seule qshared avance.
+		{
+			std::vector<QuestState> states;
+			std::vector<QuestProgressDelta> deltas;
+			Check(runtime.SyncQuestStates(states, deltas), "EXT-3 sync (filtre) OK");
+			Check(states.size() == 2, "EXT-3 deux états créés (filtre)");
+			if (states.size() == 2)
+			{
+				states[0].status = QuestStatus::Active; // qshared
+				states[1].status = QuestStatus::Active; // qsolo
+
+				deltas.clear();
+				const bool advanced = runtime.ApplyEvent(
+					states, QuestStepType::Kill, "mob:1", 1, deltas, /*onlyPartyShared=*/true);
+				Check(advanced, "EXT-3 onlyPartyShared=true progresse au moins une quête");
+				Check(states[0].stepProgressCounts[0] == 1u,
+				      "EXT-3 onlyPartyShared=true avance qshared (partagée)");
+				Check(states[1].stepProgressCounts[0] == 0u,
+				      "EXT-3 onlyPartyShared=true n'avance PAS qsolo (non partagée)");
+				bool sawSoloDelta = false;
+				for (const auto& d : deltas)
+					if (d.questId == "qsolo") sawSoloDelta = true;
+				Check(!sawSoloDelta, "EXT-3 aucun delta pour qsolo sous onlyPartyShared=true");
+			}
+		}
+
+		// Cas B (non-régression) : défaut (onlyPartyShared=false) → les deux avancent.
+		{
+			std::vector<QuestState> states;
+			std::vector<QuestProgressDelta> deltas;
+			Check(runtime.SyncQuestStates(states, deltas), "EXT-3 sync (défaut) OK");
+			if (states.size() == 2)
+			{
+				states[0].status = QuestStatus::Active;
+				states[1].status = QuestStatus::Active;
+
+				deltas.clear();
+				runtime.ApplyEvent(states, QuestStepType::Kill, "mob:1", 1, deltas);
+				Check(states[0].stepProgressCounts[0] == 1u,
+				      "EXT-3 défaut avance qshared");
+				Check(states[1].stepProgressCounts[0] == 1u,
+				      "EXT-3 défaut avance aussi qsolo (non-régression)");
+			}
+		}
+	}
+
 	if (g_failures != 0)
 	{
 		std::cerr << g_failures << " assertion(s) échouée(s)\n";

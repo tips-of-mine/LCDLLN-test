@@ -732,7 +732,8 @@ namespace engine::server
 		QuestStepType eventType,
 		std::string_view targetId,
 		uint32_t amount,
-		std::vector<QuestProgressDelta>& outDeltas) const
+		std::vector<QuestProgressDelta>& outDeltas,
+		bool onlyPartyShared) const
 	{
 		outDeltas.clear();
 		if (!m_initialized)
@@ -759,6 +760,15 @@ namespace engine::server
 
 		for (const QuestDefinition& definition : m_definitions)
 		{
+			// EXT-3 — en mode fan-out groupe, ne créditer que les quêtes partagées.
+			// On saute AVANT toute mutation d'état pour que les coéquipiers ne
+			// progressent que sur les quêtes partyShared. Défaut (onlyPartyShared
+			// == false) : aucune quête ignorée = comportement historique.
+			if (onlyPartyShared && !definition.partyShared)
+			{
+				continue;
+			}
+
 			const size_t stateIndex = FindQuestStateIndex(states, definition.questId);
 			if (stateIndex == std::string::npos)
 			{
@@ -1300,6 +1310,20 @@ namespace engine::server
 					return false;
 				}
 				definition.autoComplete = autoCompleteValue->boolValue;
+			}
+
+			// EXT-3 — flag optionnel partyShared (défaut false, absent = rétro-compat).
+			if (const JsonValue* partySharedValue = FindObjectMember(questValue, "partyShared");
+				partySharedValue != nullptr)
+			{
+				if (partySharedValue->type != JsonType::Bool)
+				{
+					LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.partyShared must be a boolean",
+						definition.questId);
+					m_definitions.clear();
+					return false;
+				}
+				definition.partyShared = partySharedValue->boolValue;
 			}
 
 			LOG_INFO(Net, "[QuestRuntime] Loaded quest definition (quest_id={}, prereqs={}, steps={}, reward_items={})",

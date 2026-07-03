@@ -2443,6 +2443,8 @@ Le système de quêtes du shard (`src/shardd/gameplay/quest/QuestRuntime`) suit 
 
 Au `Talk` sur un PNJ, le shard renvoie `QuestGiverList` (opcode 92) listant ses quêtes proposées/rendables pour ce joueur, en plus de l'event d'étape `Talk`. Le contenu est data-driven (`game/data/quests/quest_definitions.json`, champs `giver`/`turnIn`). Wire : `kProtocolVersion` 14. Persistance : `CharacterPersistence` sérialise statut + `stepProgressCounts` + `quests.format_version` par personnage. Détails : `docs/superpowers/specs/2026-07-02-quest-*`.
 
+**Exclusion mutuelle / contre-quêtes (EXT-1)** : une définition peut porter un champ **optionnel** `excludes: [questId,…]` (`QuestDefinition::excludedQuestIds`). S'**engager** dans une quête (statut ∈ {Active, ReadyToTurnIn, Completed}) rend indisponibles les quêtes qu'elle exclut — et **réciproquement** : l'exclusion est **symétrique au runtime** (`QuestRuntime::IsBlockedByExclusion`, déclarée d'un seul côté). Deux gates : l'offer-sync (`SyncQuestStates`) garde la quête exclue `Locked` (elle n'apparaît donc ni au journal ni dans la giver-list), et l'accept (`ServerApp::HandleAcceptQuest`) re-vérifie atomiquement (ferme la course où deux quêtes exclusives sont `Offered` simultanément). **100 % serveur** : le client ne voit que le statut résultant via `QuestDelta`, **aucun changement de wire**. Champ optionnel → rétro-compatible. Détails : `docs/superpowers/specs/2026-07-03-quest-ext1-exclusion-design.md`.
+
 ## Quêtes — rendu & interaction client (SP2)
 
 Côté client, le système de quêtes (shard, SP1) est affiché par `QuestImGuiRenderer` (`src/client/render/`) branché dans la boucle ImGui in-game : **journal** (quêtes Active/ReadyToTurnIn, textes via `QuestTextCatalog`), **tracker HUD**, et **panneau donneur** (boutons Accepter/Terminer). Les textes lisibles viennent de `game/data/quests/quest_texts.<lang>.json` (`QuestTextCatalog`) ; le mapping PNJ→quêtes de `game/data/quests/quest_givers.json` (`QuestGiverTable`).
@@ -2454,7 +2456,7 @@ Interaction : les choix de dialogue portent un `questKey` (string) qui déclench
 Dans l'éditeur monde (`lcdlln_world_editor.exe`), le **`QuestEditorPanel`** (`src/world_editor/panels/`, `IPanel`) permet de créer/éditer des quêtes par formulaire (id, giver, turnIn, pré-requis, étapes typées kill/collect/talk/enter, récompenses, textes titre/description/libellés). La logique I/O + validation est isolée dans **`QuestEditIo`** (`src/world_editor/quests/`, pur, testable) :
 
 - **Load** : parse `quest_definitions.json` (pur JSON) + fusionne `quest_texts.fr.json`.
-- **Validate** : id unique, giver/turnIn obligatoires, étapes bien formées, pré-requis existants, **détection de cycle** (DFS), items valides.
+- **Validate** : id unique, giver/turnIn obligatoires, étapes bien formées, pré-requis existants, **détection de cycle** (DFS), items valides, **exclusions** (`excludes`, EXT-1) existantes et sans auto-exclusion (pas de cycle-check : l'exclusion mutuelle A↔B est licite).
 - **Save** : écrit les **3 fichiers** — `quest_definitions.json` (pur JSON, format inchangé relisible par le shard), `quest_texts.fr.json`, et **régénère `quest_givers.json`** depuis les giver/turnIn (cohérence garantie).
 
 Greffé dans `WorldEditorShell::Init` (après `BuildingEditorPanel`) ; rendu automatique via la boucle des panneaux. ⚠️ Toute quête créée/éditée = contenu → **restart shard** pour la charger. Détails : `docs/superpowers/specs/2026-07-02-quest-sp4-editor-authoring-design.md`.

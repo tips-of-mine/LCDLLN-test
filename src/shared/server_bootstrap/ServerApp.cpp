@@ -1522,6 +1522,12 @@ namespace engine::server
 		}
 
 		std::vector<QuestProgressDelta> questSyncDeltas;
+		// EXT-2 — rejoue les resets temporels (répétables/quotidiennes/cooldown)
+		// AVANT la sync : une quête reset repasse Locked, que SyncQuestStates
+		// repromeut à Offered dans la même passe. L'état final est transmis au
+		// client par SendQuestStateBootstrap (plus bas), pas par ces deltas.
+		(void)m_questRuntime.ApplyRepeatResets(
+			acceptedClient.questStates, NowUnixEpochMsUtc(), questSyncDeltas);
 		if (m_questRuntime.SyncQuestStates(acceptedClient.questStates, questSyncDeltas))
 		{
 			if (!questSyncDeltas.empty())
@@ -3435,6 +3441,22 @@ namespace engine::server
 		}
 
 		LOG_INFO(Net, "[ServerApp] TalkRequest accepted (client_id={}, target={})", client->clientId, targetId);
+		// EXT-2 — rejoue les resets temporels AVANT de construire la giver-list :
+		// une quête répétable/quotidienne dont la borne est franchie redevient
+		// Offered (re-proposée par le PNJ) sans relog. On resync juste après (le
+		// Locked issu du reset est repromu Offered) et on propage les deltas au
+		// client pour rafraîchir son journal.
+		{
+			std::vector<QuestProgressDelta> talkResetDeltas;
+			(void)m_questRuntime.ApplyRepeatResets(client->questStates, NowUnixEpochMsUtc(), talkResetDeltas);
+			if (m_questRuntime.SyncQuestStates(client->questStates, talkResetDeltas))
+			{
+				for (const QuestProgressDelta& delta : talkResetDeltas)
+				{
+					(void)SendQuestDelta(*client, delta);
+				}
+			}
+		}
 		SendQuestGiverList(*client, targetId);
 		ApplyQuestEvent(*client, QuestStepType::Talk, targetId, 1, "talk");
 	}
@@ -5252,6 +5274,13 @@ namespace engine::server
 			{
 				continue;
 			}
+			// EXT-2 — horodate la complétion auto sur l'état persisté (borne du
+			// reset répétable/quotidien/cooldown) AVANT de verser la récompense.
+			const size_t stateIdx = FindClientQuestStateIndex(client, delta.questId);
+			if (stateIdx != kInvalidQuestIndex)
+			{
+				client.questStates[stateIdx].completedAtEpochMs = NowUnixEpochMsUtc();
+			}
 			GrantQuestReward(client, *def);
 		}
 
@@ -5462,6 +5491,8 @@ namespace engine::server
 		GrantQuestReward(*client, *def);
 
 		state.status = QuestStatus::Completed;
+		// EXT-2 — horodate la complétion (borne du reset répétable/quotidien/cooldown).
+		state.completedAtEpochMs = NowUnixEpochMsUtc();
 
 		QuestProgressDelta delta{};
 		delta.questId = state.questId;

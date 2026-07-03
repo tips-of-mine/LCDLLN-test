@@ -153,6 +153,12 @@ namespace engine::server
 			const int64_t persistedStatus = persisted.GetInt("quests." + std::to_string(questIndex) + ".status", 0);
 			questState.status = MapPersistedQuestStatus(persistedStatus, questFormatVersion);
 
+			// EXT-2 — ms UTC de la dernière complétion. Absent des saves v1 (format_version < 2)
+			// → défaut 0 : une quotidienne déjà complétée redeviendra disponible au 1er login
+			// post-migration (comportement voulu, inoffensif).
+			questState.completedAtEpochMs = static_cast<uint64_t>(
+				persisted.GetInt("quests." + std::to_string(questIndex) + ".completed_at", 0));
+
 			const uint32_t stepCount = static_cast<uint32_t>(persisted.GetInt("quests." + std::to_string(questIndex) + ".step_count", 0));
 			questState.stepProgressCounts.reserve(stepCount);
 			for (uint32_t stepIndex = 0; stepIndex < stepCount; ++stepIndex)
@@ -277,13 +283,16 @@ namespace engine::server
 			output << "inventory." << index << ".item_id=" << state.inventory[index].itemId << "\n";
 			output << "inventory." << index << ".quantity=" << state.inventory[index].quantity << "\n";
 		}
-		// SP1 — format_version=1 : quests.*.status écrit désormais l'enum QuestStatus direct (0..4).
-		output << "quests.format_version=1\n";
+		// SP1 — format_version=1 : quests.*.status écrit l'enum QuestStatus direct (0..4).
+		// EXT-2 — format_version=2 : ajoute quests.<i>.completed_at (ms UTC de la dernière
+		// complétion) ; bump additif, les saves v1 (sans la clé) chargent completed_at=0.
+		output << "quests.format_version=2\n";
 		output << "quests.count=" << state.questStates.size() << "\n";
 		for (size_t questIndex = 0; questIndex < state.questStates.size(); ++questIndex)
 		{
 			output << "quests." << questIndex << ".id=" << state.questStates[questIndex].questId << "\n";
 			output << "quests." << questIndex << ".status=" << static_cast<uint32_t>(state.questStates[questIndex].status) << "\n";
+			output << "quests." << questIndex << ".completed_at=" << state.questStates[questIndex].completedAtEpochMs << "\n";
 			output << "quests." << questIndex << ".step_count=" << state.questStates[questIndex].stepProgressCounts.size() << "\n";
 			for (size_t stepIndex = 0; stepIndex < state.questStates[questIndex].stepProgressCounts.size(); ++stepIndex)
 			{

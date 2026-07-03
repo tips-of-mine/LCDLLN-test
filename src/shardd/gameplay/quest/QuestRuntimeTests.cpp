@@ -435,6 +435,124 @@ int main()
 		}
 	}
 
+	// EXT-2 — ShouldRepeatReset : helpers purs (now/completedAt fixes, pas d'horloge).
+	{
+		using engine::server::ShouldRepeatReset;
+		using engine::server::UtcDayIndex;
+		using engine::server::UtcWeekIndex;
+
+		constexpr uint64_t kDayMs  = 86400000ULL;
+		constexpr uint64_t kHourMs = 3600000ULL;
+
+		// None → jamais de reset.
+		Check(!ShouldRepeatReset(QuestRepeatMode::None, 0, 1000, 999999999ULL),
+		      "EXT-2 ShouldRepeatReset None → false");
+
+		// Repeatable → toujours vrai (même completedAt==now).
+		Check(ShouldRepeatReset(QuestRepeatMode::Repeatable, 0, 42, 42),
+		      "EXT-2 ShouldRepeatReset Repeatable → true");
+
+		// Daily : même jour → false, jour suivant → true. On place completedAt juste
+		// avant une borne minuit UTC (fin du jour N) et now juste après (début N+1).
+		const uint64_t dayBoundary = 20000ULL * kDayMs; // minuit UTC du jour 20000
+		Check(UtcDayIndex(dayBoundary - 1) == 19999ULL, "EXT-2 UtcDayIndex avant borne = 19999");
+		Check(UtcDayIndex(dayBoundary) == 20000ULL, "EXT-2 UtcDayIndex à la borne = 20000");
+		Check(!ShouldRepeatReset(QuestRepeatMode::Daily, 0, dayBoundary + 10, dayBoundary + 20),
+		      "EXT-2 Daily même jour → false");
+		Check(ShouldRepeatReset(QuestRepeatMode::Daily, 0, dayBoundary - 10, dayBoundary + 10),
+		      "EXT-2 Daily jour suivant → true");
+
+		// Weekly : borne lundi. UtcWeekIndex = (day + 3) / 7. Un jour d tel que
+		// (d+3)%7==0 est un lundi : d=4 → (4+3)/7=1. Le jour 4 = lundi 1970-01-05
+		// (l'epoch 0 est un jeudi). completedAt le dimanche (jour 3), now le lundi
+		// (jour 4) : la borne de semaine est franchie.
+		Check(UtcWeekIndex(3ULL * kDayMs) != UtcWeekIndex(4ULL * kDayMs),
+		      "EXT-2 UtcWeekIndex change entre dimanche(j3) et lundi(j4)");
+		Check(UtcWeekIndex(4ULL * kDayMs) == UtcWeekIndex(10ULL * kDayMs),
+		      "EXT-2 UtcWeekIndex identique lundi(j4)..dimanche(j10)");
+		Check(ShouldRepeatReset(QuestRepeatMode::Weekly, 0, 3ULL * kDayMs, 4ULL * kDayMs),
+		      "EXT-2 Weekly passe la borne lundi → true");
+		Check(!ShouldRepeatReset(QuestRepeatMode::Weekly, 0, 4ULL * kDayMs, 5ULL * kDayMs),
+		      "EXT-2 Weekly même semaine → false");
+
+		// Cooldown : écoulé >= heures → true, sinon false, completedAt==0 → false.
+		const uint64_t base = 1000ULL * kDayMs;
+		Check(ShouldRepeatReset(QuestRepeatMode::Cooldown, 6, base, base + 6 * kHourMs),
+		      "EXT-2 Cooldown exactement 6h écoulées → true");
+		Check(ShouldRepeatReset(QuestRepeatMode::Cooldown, 6, base, base + 7 * kHourMs),
+		      "EXT-2 Cooldown 7h écoulées → true");
+		Check(!ShouldRepeatReset(QuestRepeatMode::Cooldown, 6, base, base + 5 * kHourMs),
+		      "EXT-2 Cooldown 5h < 6h → false");
+		Check(!ShouldRepeatReset(QuestRepeatMode::Cooldown, 6, 0, base + 100 * kHourMs),
+		      "EXT-2 Cooldown completedAt==0 → false (jamais complétée)");
+	}
+
+	// EXT-2 — ApplyRepeatResets : Completed daily ancien → Locked + delta + steps zéro ;
+	// Completed None → inchangé ; Completed daily aujourd'hui → inchangé.
+	{
+		const std::string json = R"JSON({
+      "quests": [
+        { "id": "qdaily", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [], "repeat": "daily",
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 3 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } },
+        { "id": "qonce", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [],
+          "steps": [ { "type": "kill", "target": "mob:2", "requiredCount": 2 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } }
+      ]
+    })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(json);
+		Check(runtime.Init(), "EXT-2 Init charge qdaily/qonce pour ApplyRepeatResets");
+
+		constexpr uint64_t kDayMs = 86400000ULL;
+		const uint64_t nowMs = 30000ULL * kDayMs + 12 * 3600000ULL; // milieu du jour 30000
+
+		// Cas 1 : qdaily Completed complétée hier → doit reset.
+		{
+			std::vector<QuestState> states;
+			QuestState d{}; d.questId = "qdaily"; d.status = QuestStatus::Completed;
+			d.stepProgressCounts = { 3u }; d.completedAtEpochMs = 29999ULL * kDayMs + 100; // jour 29999
+			states.push_back(d);
+			QuestState o{}; o.questId = "qonce"; o.status = QuestStatus::Completed;
+			o.stepProgressCounts = { 2u }; o.completedAtEpochMs = 29999ULL * kDayMs + 100;
+			states.push_back(o);
+
+			std::vector<QuestProgressDelta> deltas;
+			const bool changed = runtime.ApplyRepeatResets(states, nowMs, deltas);
+			Check(changed, "EXT-2 ApplyRepeatResets signale un changement");
+			Check(states[0].status == QuestStatus::Locked, "EXT-2 qdaily repasse Locked");
+			Check(states[0].stepProgressCounts.size() == 1 && states[0].stepProgressCounts[0] == 0u,
+			      "EXT-2 qdaily steps remis à zéro");
+			// qonce (mode None) reste Completed.
+			Check(states[1].status == QuestStatus::Completed, "EXT-2 qonce (None) reste Completed");
+			Check(states[1].stepProgressCounts[0] == 2u, "EXT-2 qonce steps inchangés");
+			bool sawDailyDelta = false, sawOnceDelta = false;
+			for (const auto& dl : deltas)
+			{
+				if (dl.questId == "qdaily" && dl.status == QuestStatus::Locked) sawDailyDelta = true;
+				if (dl.questId == "qonce") sawOnceDelta = true;
+			}
+			Check(sawDailyDelta, "EXT-2 delta Locked émis pour qdaily");
+			Check(!sawOnceDelta, "EXT-2 aucun delta pour qonce (inchangée)");
+		}
+
+		// Cas 2 : qdaily complétée aujourd'hui → pas de reset.
+		{
+			std::vector<QuestState> states;
+			QuestState d{}; d.questId = "qdaily"; d.status = QuestStatus::Completed;
+			d.stepProgressCounts = { 3u }; d.completedAtEpochMs = 30000ULL * kDayMs + 1000; // même jour que now
+			states.push_back(d);
+
+			std::vector<QuestProgressDelta> deltas;
+			const bool changed = runtime.ApplyRepeatResets(states, nowMs, deltas);
+			Check(!changed, "EXT-2 ApplyRepeatResets : rien à reset le même jour");
+			Check(states[0].status == QuestStatus::Completed, "EXT-2 qdaily complétée aujourd'hui reste Completed");
+			Check(deltas.empty(), "EXT-2 aucun delta quand rien ne change");
+		}
+	}
+
 	if (g_failures != 0)
 	{
 		std::cerr << g_failures << " assertion(s) échouée(s)\n";

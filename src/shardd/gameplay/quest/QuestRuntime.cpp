@@ -530,6 +530,43 @@ namespace engine::server
 		return "unknown";
 	}
 
+	uint64_t UtcDayIndex(uint64_t ms)
+	{
+		// Minuit UTC comme borne : 86 400 000 ms par jour.
+		return ms / 86400000ULL;
+	}
+
+	uint64_t UtcWeekIndex(uint64_t ms)
+	{
+		// Le jour epoch 0 (1970-01-01) est un jeudi ; `+3` décale l'origine pour
+		// aligner le début de semaine sur le lundi 00:00 UTC.
+		return (ms / 86400000ULL + 3ULL) / 7ULL;
+	}
+
+	bool ShouldRepeatReset(QuestRepeatMode mode, uint32_t cooldownHours,
+		uint64_t completedAtMs, uint64_t nowMs)
+	{
+		switch (mode)
+		{
+		case QuestRepeatMode::None:
+			return false;
+		case QuestRepeatMode::Repeatable:
+			// Re-réalisable immédiatement, sans délai.
+			return true;
+		case QuestRepeatMode::Daily:
+			return UtcDayIndex(nowMs) != UtcDayIndex(completedAtMs);
+		case QuestRepeatMode::Weekly:
+			return UtcWeekIndex(nowMs) != UtcWeekIndex(completedAtMs);
+		case QuestRepeatMode::Cooldown:
+			// Jamais complétée (0) → pas de reset. On garde nowMs >= completedAtMs
+			// pour éviter un sous-débordement uint64 si l'horloge recule.
+			return completedAtMs != 0ULL
+				&& nowMs >= completedAtMs
+				&& (nowMs - completedAtMs) >= static_cast<uint64_t>(cooldownHours) * 3600000ULL;
+		}
+		return false;
+	}
+
 	QuestRuntime::QuestRuntime(const engine::core::Config& config)
 		: m_config(config)
 		, m_questDefinitionsRelativePath(m_config.GetString("server.quest_definitions_path", "quests/quest_definitions.json"))
@@ -834,6 +871,49 @@ namespace engine::server
 		}
 
 		return nullptr;
+	}
+
+	bool QuestRuntime::ApplyRepeatResets(std::vector<QuestState>& states, uint64_t nowMs,
+		std::vector<QuestProgressDelta>& outDeltas) const
+	{
+		bool anyChanged = false;
+		for (QuestState& state : states)
+		{
+			// Seules les quêtes terminées (Completed) sont candidates au reset.
+			if (state.status != QuestStatus::Completed)
+			{
+				continue;
+			}
+
+			const QuestDefinition* def = FindQuestDefinition(state.questId);
+			if (def == nullptr || def->repeatMode == QuestRepeatMode::None)
+			{
+				// Quête one-shot (ou définition disparue) : reste Completed.
+				continue;
+			}
+
+			if (!ShouldRepeatReset(def->repeatMode, def->cooldownHours, state.completedAtEpochMs, nowMs))
+			{
+				continue;
+			}
+
+			// Reset : Completed → Locked, compteurs d'étapes remis à zéro. La passe
+			// SyncQuestStates suivante repromeut le Locked à Offered (prérequis OK).
+			state.status = QuestStatus::Locked;
+			state.stepProgressCounts.assign(def->steps.size(), 0u);
+
+			QuestProgressDelta delta{};
+			delta.questId = state.questId;
+			delta.status = state.status;
+			delta.stepProgressCounts = state.stepProgressCounts;
+			outDeltas.push_back(std::move(delta));
+			anyChanged = true;
+
+			LOG_INFO(Net, "[QuestRuntime] Quête répétable réinitialisée (quest_id={}, mode={})",
+				state.questId,
+				static_cast<uint32_t>(def->repeatMode));
+		}
+		return anyChanged;
 	}
 
 	bool QuestRuntime::CanAccept(const QuestState& state, const QuestDefinition& def, std::string_view giverTargetId) const

@@ -1096,7 +1096,8 @@ int main(int argc, char** argv)
 			serverListHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeForgotPasswordRequest
 		      || opcode == kOpcodeResetPasswordRequest
-		      || opcode == kOpcodeVerifyEmailRequest)
+		      || opcode == kOpcodeVerifyEmailRequest
+		      || opcode == kOpcodeResendVerificationRequest)
 			passwordResetHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeTermsStatusRequest || opcode == kOpcodeTermsContentRequest || opcode == kOpcodeTermsAcceptRequest)
 			termsHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);

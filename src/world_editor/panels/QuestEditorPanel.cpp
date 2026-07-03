@@ -37,7 +37,8 @@ namespace engine::editor::world::panels
 
 	/// Copie la quête sélectionnée (`m_selected`) dans les buffers d'édition du
 	/// formulaire (id, giver, turnIn, prérequis, **exclusions**, étapes,
-	/// récompenses, textes). No-op si aucune sélection valide.
+	/// récompenses, **re-réalisation EXT-2 : mode/cooldown/autoComplete**,
+	/// textes). No-op si aucune sélection valide.
 	/// Effet de bord : écrase tous les `m_*Buffer` du panneau. Main thread (ImGui).
 	void QuestEditorPanel::LoadBuffersFromSelected()
 	{
@@ -52,6 +53,9 @@ namespace engine::editor::world::panels
 		m_rewardXpBuffer = q.rewardXp;
 		m_rewardGoldBuffer = q.rewardGold;
 		m_rewardItemsBuffer = q.rewardItems;
+		m_repeatModeBuffer = q.repeatMode;
+		m_cooldownHoursBuffer = q.cooldownHours;
+		m_autoCompleteBuffer = q.autoComplete;
 		std::snprintf(m_titleBuf, sizeof(m_titleBuf), "%s", q.title.c_str());
 		std::snprintf(m_descriptionBuf, sizeof(m_descriptionBuf), "%s", q.description.c_str());
 		m_stepLabelsBuffer = q.stepLabels;
@@ -60,7 +64,9 @@ namespace engine::editor::world::panels
 
 	/// Construit un `EditedQuest` à partir des buffers d'édition courants
 	/// (opération inverse de \ref LoadBuffersFromSelected), incluant les
-	/// **exclusions** (`m_excludesBuffer`). Pur (ne modifie aucun état du panneau).
+	/// **exclusions** (`m_excludesBuffer`) et la **re-réalisation EXT-2**
+	/// (`m_repeatModeBuffer`/`m_cooldownHoursBuffer`/`m_autoCompleteBuffer`).
+	/// Pur (ne modifie aucun état du panneau).
 	EditedQuest QuestEditorPanel::BuildQuestFromBuffers() const
 	{
 		EditedQuest q;
@@ -73,6 +79,9 @@ namespace engine::editor::world::panels
 		q.rewardXp = m_rewardXpBuffer;
 		q.rewardGold = m_rewardGoldBuffer;
 		q.rewardItems = m_rewardItemsBuffer;
+		q.repeatMode = m_repeatModeBuffer;
+		q.cooldownHours = m_cooldownHoursBuffer;
+		q.autoComplete = m_autoCompleteBuffer;
 		q.title = m_titleBuf;
 		q.description = m_descriptionBuf;
 		q.stepLabels = m_stepLabelsBuffer;
@@ -82,7 +91,8 @@ namespace engine::editor::world::panels
 
 	/// Réinitialise tous les buffers d'édition pour saisir une nouvelle quête
 	/// (dé-sélectionne, vide id/giver/turnIn/prérequis/**exclusions**/étapes/
-	/// récompenses). Effet de bord : écrase tous les `m_*Buffer`. Main thread (ImGui).
+	/// récompenses ; **re-réalisation EXT-2 remise à None/0/false**).
+	/// Effet de bord : écrase tous les `m_*Buffer`. Main thread (ImGui).
 	void QuestEditorPanel::ResetBuffersToNew()
 	{
 		m_selected = -1;
@@ -95,6 +105,9 @@ namespace engine::editor::world::panels
 		m_rewardXpBuffer = 0;
 		m_rewardGoldBuffer = 0;
 		m_rewardItemsBuffer.clear();
+		m_repeatModeBuffer = engine::editor::world::quests::QuestRepeatMode::None;
+		m_cooldownHoursBuffer = 0;
+		m_autoCompleteBuffer = false;
 		m_titleBuf[0] = '\0';
 		m_descriptionBuf[0] = '\0';
 		m_stepLabelsBuffer.clear();
@@ -275,6 +288,36 @@ namespace engine::editor::world::panels
 		if (ImGui::Button("Ajouter un item")) m_rewardItemsBuffer.push_back(EditedRewardItem{});
 	}
 
+	/// Rend la section EXT-2 « re-réalisation » du formulaire : `Combo` de mode
+	/// (5 entrées, indexées dans l'ordre de `QuestRepeatMode`), `DragInt`
+	/// « Cooldown (h) » affiché SEULEMENT en mode Cooldown, `Checkbox`
+	/// « Auto-complete ». Effet de bord : état ImGui + `m_repeatModeBuffer` /
+	/// `m_cooldownHoursBuffer` / `m_autoCompleteBuffer` (modifiés en place).
+	/// Thread : main thread (phase ImGui, appelée depuis Render).
+	void QuestEditorPanel::RenderRepeatSection()
+	{
+		using engine::editor::world::quests::QuestRepeatMode;
+		ImGui::TextUnformatted("Re-realisation :");
+		// Ordre EXACT de QuestRepeatMode (None=0..Cooldown=4) : l'index du combo
+		// est directement convertible en enum.
+		static const char* kRepeatModes[] = { "Aucun", "Repetable", "Quotidienne", "Hebdo", "Cooldown" };
+		int modeIdx = static_cast<int>(m_repeatModeBuffer);
+		if (modeIdx < 0 || modeIdx > 4) modeIdx = 0;
+		if (ImGui::Combo("Mode", &modeIdx, kRepeatModes, 5))
+			m_repeatModeBuffer = static_cast<QuestRepeatMode>(modeIdx);
+
+		// Cooldown (h) : pertinent uniquement en mode Cooldown ; on n'affiche le
+		// champ que dans ce cas pour ne pas suggérer qu'il s'applique aux autres.
+		if (m_repeatModeBuffer == QuestRepeatMode::Cooldown)
+		{
+			int hours = static_cast<int>(m_cooldownHoursBuffer);
+			if (ImGui::DragInt("Cooldown (h)", &hours, 1.0f, 1, 100000))
+				m_cooldownHoursBuffer = static_cast<uint32_t>(hours < 1 ? 1 : hours);
+		}
+
+		ImGui::Checkbox("Auto-complete (fin sans retour PNJ)", &m_autoCompleteBuffer);
+	}
+
 	void QuestEditorPanel::RenderTextsSection()
 	{
 		ImGui::TextUnformatted("Textes (fr) :");
@@ -367,6 +410,8 @@ namespace engine::editor::world::panels
 			RenderStepsSection();
 			ImGui::Separator();
 			RenderRewardsSection();
+			ImGui::Separator();
+			RenderRepeatSection();
 			ImGui::Separator();
 			RenderTextsSection();
 			ImGui::Separator();

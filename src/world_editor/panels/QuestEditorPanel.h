@@ -97,6 +97,14 @@ namespace engine::editor::world::panels
 		/// `m_rewardXpBuffer`/`m_rewardGoldBuffer`/`m_rewardItemsBuffer`.
 		void RenderRewardsSection();
 
+		/// Rend la section EXT-2 « re-réalisation » : un `Combo` de mode
+		/// (Aucun/Répétable/Quotidienne/Hebdo/Cooldown → `m_repeatModeBuffer`),
+		/// un `DragInt` « Cooldown (h) » affiché UNIQUEMENT en mode Cooldown
+		/// (→ `m_cooldownHoursBuffer`) et un `Checkbox` « Auto-complete »
+		/// (→ `m_autoCompleteBuffer`). Effet de bord : état ImGui + ces 3
+		/// buffers membres. Thread : main thread (phase ImGui).
+		void RenderRepeatSection();
+
 		/// Rend les champs de texte lisible (titre/description/libellés
 		/// d'étape, un par étape de `m_stepsBuffer`, taille synchronisée par
 		/// `RenderStepsSection`). Effet de bord : état ImGui uniquement.
@@ -132,6 +140,14 @@ namespace engine::editor::world::panels
 		uint32_t m_rewardXpBuffer = 0;
 		uint32_t m_rewardGoldBuffer = 0;
 		std::vector<engine::editor::world::quests::EditedRewardItem> m_rewardItemsBuffer;
+
+		// EXT-2 : re-réalisation. `m_repeatModeBuffer` indexe le combo (0=None..4=Cooldown,
+		// même ordre que QuestRepeatMode) ; `m_cooldownHoursBuffer` pertinent si
+		// mode==Cooldown ; `m_autoCompleteBuffer` = fin automatique sans retour PNJ.
+		engine::editor::world::quests::QuestRepeatMode m_repeatModeBuffer =
+			engine::editor::world::quests::QuestRepeatMode::None;
+		uint32_t m_cooldownHoursBuffer = 0;
+		bool m_autoCompleteBuffer = false;
 
 		char m_titleBuf[128] = "";
 		char m_descriptionBuf[512] = "";

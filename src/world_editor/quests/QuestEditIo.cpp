@@ -417,6 +417,100 @@ namespace engine::editor::world::quests
 			return true;
 		}
 
+		/// Lit une valeur JSON booléenne. \return false si \p value n'est pas de
+		/// type `Bool` (l'éditeur n'ayant pas d'autre accesseur bool, on lit
+		/// directement le type de la `JsonValue`).
+		bool TryGetBool(const JsonValue& value, bool& outValue)
+		{
+			if (value.type != JsonType::Bool)
+			{
+				return false;
+			}
+
+			outValue = value.boolValue;
+			return true;
+		}
+
+		/// Convertit la chaîne JSON `"repeat"` en `QuestRepeatMode` (EXT-2).
+		/// Les 5 tokens acceptés (minuscules) sont ceux attendus par le parseur
+		/// shard : none/repeatable/daily/weekly/cooldown.
+		/// \return false si \p token n'est aucun des 5 modes valides (mode rejeté).
+		bool ParseRepeatMode(const std::string& token, QuestRepeatMode& outMode)
+		{
+			if (token == "none") { outMode = QuestRepeatMode::None; return true; }
+			if (token == "repeatable") { outMode = QuestRepeatMode::Repeatable; return true; }
+			if (token == "daily") { outMode = QuestRepeatMode::Daily; return true; }
+			if (token == "weekly") { outMode = QuestRepeatMode::Weekly; return true; }
+			if (token == "cooldown") { outMode = QuestRepeatMode::Cooldown; return true; }
+			return false;
+		}
+
+		/// Convertit un `QuestRepeatMode` en son token JSON minuscule (EXT-2),
+		/// exactement dans le vocabulaire attendu par le shard. `None` mappe sur
+		/// `"none"` (émis explicitement à la sérialisation pour un JSON complet).
+		const char* RepeatModeToString(QuestRepeatMode mode)
+		{
+			switch (mode)
+			{
+			case QuestRepeatMode::Repeatable: return "repeatable";
+			case QuestRepeatMode::Daily: return "daily";
+			case QuestRepeatMode::Weekly: return "weekly";
+			case QuestRepeatMode::Cooldown: return "cooldown";
+			case QuestRepeatMode::None:
+			default: return "none";
+			}
+		}
+
+		/// Analyse les champs EXT-2 optionnels de re-réalisation d'une quête
+		/// (`"repeat"`, `"cooldownHours"`, `"autoComplete"`) depuis \p questValue
+		/// (niveau quête, PAS sous `rewards`) et remplit les champs correspondants
+		/// de \p quest. Tous optionnels (défaut None/0/false → rétro-compat).
+		/// \return false si `"repeat"` n'est pas une chaîne d'un des 5 modes, si
+		///         `"cooldownHours"` n'est pas un entier, si `"autoComplete"`
+		///         n'est pas un booléen, ou si le mode `cooldown` est demandé sans
+		///         `cooldownHours > 0` (échec bloquant pour la quête).
+		bool ParseEditedRepeat(const JsonValue& questValue, EditedQuest& quest, std::string& outError)
+		{
+			if (const JsonValue* repeatValue = FindObjectMember(questValue, "repeat"); repeatValue != nullptr)
+			{
+				if (repeatValue->type != JsonType::String
+					|| !ParseRepeatMode(repeatValue->stringValue, quest.repeatMode))
+				{
+					outError = "quest '" + quest.id
+						+ "': repeat must be one of none/repeatable/daily/weekly/cooldown";
+					return false;
+				}
+			}
+
+			if (const JsonValue* cooldownValue = FindObjectMember(questValue, "cooldownHours"); cooldownValue != nullptr)
+			{
+				if (!TryGetUint(*cooldownValue, quest.cooldownHours))
+				{
+					outError = "quest '" + quest.id + "': cooldownHours must be a non-negative integer";
+					return false;
+				}
+			}
+
+			if (const JsonValue* autoValue = FindObjectMember(questValue, "autoComplete"); autoValue != nullptr)
+			{
+				if (!TryGetBool(*autoValue, quest.autoComplete))
+				{
+					outError = "quest '" + quest.id + "': autoComplete must be a boolean";
+					return false;
+				}
+			}
+
+			// Contrainte inter-champs : le mode cooldown exige un délai strictement
+			// positif (0 heure n'aurait pas de sens et casserait le reset shard).
+			if (quest.repeatMode == QuestRepeatMode::Cooldown && quest.cooldownHours == 0)
+			{
+				outError = "quest '" + quest.id + "': cooldownHours must be > 0 when repeat is 'cooldown'";
+				return false;
+			}
+
+			return true;
+		}
+
 		/// Analyse une étape éditable (`{type, target, requiredCount}`) depuis
 		/// \p stepValue et la pousse dans `quest.steps`.
 		/// \return false si `type`/`target` sont absents ou de mauvais type
@@ -535,11 +629,13 @@ namespace engine::editor::world::quests
 			return true;
 		}
 
-		/// Analyse une quête complète (`{id, giver, turnIn, prereqs, steps, rewards}`)
+		/// Analyse une quête complète (`{id, giver, turnIn, prereqs, excludes,
+		/// steps, rewards}` + champs EXT-2 `repeat`/`cooldownHours`/`autoComplete`)
 		/// depuis \p questValue et la pousse dans \p out si valide.
 		/// \return false si un champ requis (`id`/`giver`/`turnIn`/`steps` non
-		///         vide) est absent ou invalide (échec bloquant pour tout le
-		///         chargement, cf. `QuestEditIo::Load`).
+		///         vide) est absent ou invalide, ou si un champ EXT-2 est mal
+		///         formé (échec bloquant pour tout le chargement, cf.
+		///         `QuestEditIo::Load`).
 		bool ParseEditedQuest(const JsonValue& questValue, std::vector<EditedQuest>& out, std::string& outError)
 		{
 			if (questValue.type != JsonType::Object)
@@ -634,6 +730,13 @@ namespace engine::editor::world::quests
 			}
 
 			if (!ParseEditedRewards(questValue, quest, outError))
+			{
+				return false;
+			}
+
+			// EXT-2 : champs de re-réalisation optionnels (repeat/cooldownHours/
+			// autoComplete), au niveau quête (PAS sous rewards).
+			if (!ParseEditedRepeat(questValue, quest, outError))
 			{
 				return false;
 			}
@@ -816,8 +919,11 @@ namespace engine::editor::world::quests
 		}
 
 		/// Sérialise une quête éditée complète (`{id, giver, turnIn, prereqs,
-		/// excludes, steps, rewards}`) en JSON pur, tableau, indentée à \p indent espaces
-		/// (élément de `quests[]` dans `quest_definitions.json`).
+		/// excludes, steps, rewards}` + champs EXT-2 `repeat`/`cooldownHours`/
+		/// `autoComplete`) en JSON pur, tableau, indentée à \p indent espaces
+		/// (élément de `quests[]` dans `quest_definitions.json`). Les 3 champs
+		/// EXT-2 sont TOUJOURS émis (défaut `"none"`/`0`/`false`) : JSON pur
+		/// relisible par le shard.
 		std::string SerializeQuestDefinition(const EditedQuest& quest, int indent)
 		{
 			const std::string pad(static_cast<size_t>(indent), ' ');
@@ -855,7 +961,13 @@ namespace engine::editor::world::quests
 			}
 			os << "],\n";
 
-			os << fieldPad << "\"rewards\": " << SerializeRewards(quest, indent + 2) << "\n";
+			os << fieldPad << "\"rewards\": " << SerializeRewards(quest, indent + 2) << ",\n";
+
+			// EXT-2 : re-réalisation. `repeat` en chaîne minuscule (vocabulaire
+			// shard), `cooldownHours` en entier, `autoComplete` en bool JSON.
+			os << fieldPad << "\"repeat\": \"" << RepeatModeToString(quest.repeatMode) << "\",\n";
+			os << fieldPad << "\"cooldownHours\": " << Num(quest.cooldownHours) << ",\n";
+			os << fieldPad << "\"autoComplete\": " << (quest.autoComplete ? "true" : "false") << "\n";
 			os << pad << "}";
 			return os.str();
 		}
@@ -1135,6 +1247,13 @@ namespace engine::editor::world::quests
 					outErrors.push_back("quête '" + label + "': reward item " + std::to_string(itemIndex)
 						+ ": itemId doit être > 0 et quantity ≥ 1");
 				}
+			}
+
+			// EXT-2 : le mode cooldown exige un délai strictement positif (règle
+			// inter-champs, miroir de la validation au parse).
+			if (quest.repeatMode == QuestRepeatMode::Cooldown && quest.cooldownHours == 0)
+			{
+				outErrors.push_back("quête '" + label + "': cooldownHours doit être > 0 en mode 'cooldown'");
 			}
 		}
 

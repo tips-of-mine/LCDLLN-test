@@ -14,6 +14,11 @@
 // vérifient le round-trip Save -> Load (égalité structurelle) et le contenu
 // brut des fichiers écrits (quest_givers.json régénéré, quest_definitions.json
 // en JSON pur tableaux et non au format `count`-indexé de Config).
+//
+// EXT-2 : cas (n)-(r) couvrent la re-réalisation (repeat/cooldownHours/
+// autoComplete) : round-trip cooldown, défaut None/0/false sans champ, rejet
+// d'un mode inconnu, rejet du mode cooldown avec cooldownHours=0 (parse ET
+// Validate).
 
 #include "src/world_editor/quests/QuestEditIo.h"
 
@@ -28,6 +33,7 @@ using engine::editor::world::quests::EditedQuest;
 using engine::editor::world::quests::EditedRewardItem;
 using engine::editor::world::quests::EditedStep;
 using engine::editor::world::quests::QuestEditIo;
+using engine::editor::world::quests::QuestRepeatMode;
 
 namespace
 {
@@ -415,6 +421,123 @@ int main()
 
 		std::error_code saveCleanupError;
 		std::filesystem::remove_all(saveRoot, saveCleanupError);
+	}
+
+	// --- EXT-2 : re-réalisation (repeat/cooldownHours/autoComplete) ----------
+
+	// (n) round-trip Save -> Load d'une quête cooldown : repeat=cooldown,
+	// cooldownHours=12, autoComplete=true doivent survivre parse -> serialize ->
+	// parse à l'identique.
+	{
+		const std::filesystem::path repeatRoot = MakeTempContentDir();
+
+		EditedQuest daily = MakeValidQuest("cooldown_quest");
+		daily.repeatMode = QuestRepeatMode::Cooldown;
+		daily.cooldownHours = 12;
+		daily.autoComplete = true;
+
+		std::string saveError;
+		const bool saved = io.Save(repeatRoot.string(), { daily }, saveError);
+		Check(saved, "EXT-2: Save d'une quête cooldown réussit");
+
+		std::vector<EditedQuest> reloaded;
+		std::string loadError;
+		const bool reloadedOk = io.Load(repeatRoot.string(), reloaded, loadError);
+		Check(reloadedOk, "EXT-2: Load après Save (cooldown) réussit");
+		Check(reloaded.size() == 1, "EXT-2: 1 quête rechargée");
+		if (reloaded.size() == 1)
+		{
+			Check(reloaded[0].repeatMode == QuestRepeatMode::Cooldown, "EXT-2: repeatMode == Cooldown après round-trip");
+			Check(reloaded[0].cooldownHours == 12, "EXT-2: cooldownHours == 12 après round-trip");
+			Check(reloaded[0].autoComplete == true, "EXT-2: autoComplete == true après round-trip");
+		}
+
+		std::error_code repeatCleanupError;
+		std::filesystem::remove_all(repeatRoot, repeatCleanupError);
+	}
+
+	// (o) une quête SANS champ EXT-2 se recharge en None/0/false (rétro-compat :
+	// la fixture principale plus haut n'a pas de champ repeat).
+	{
+		const std::filesystem::path plainRoot = MakeTempContentDir();
+		const std::string plainJson = R"JSON({
+      "quests": [
+        { "id": "plain", "giver": "npc:g", "turnIn": "npc:g",
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ] }
+      ]
+    })JSON";
+		WriteQuestsFile(plainRoot, "quest_definitions.json", plainJson);
+
+		std::vector<EditedQuest> plainOut;
+		std::string plainError;
+		const bool plainOk = io.Load(plainRoot.string(), plainOut, plainError);
+		Check(plainOk, "EXT-2: Load d'une quête sans champ repeat réussit");
+		Check(plainOut.size() == 1, "EXT-2: 1 quête sans repeat chargée");
+		if (plainOut.size() == 1)
+		{
+			Check(plainOut[0].repeatMode == QuestRepeatMode::None, "EXT-2: défaut repeatMode == None");
+			Check(plainOut[0].cooldownHours == 0, "EXT-2: défaut cooldownHours == 0");
+			Check(plainOut[0].autoComplete == false, "EXT-2: défaut autoComplete == false");
+		}
+
+		std::error_code plainCleanupError;
+		std::filesystem::remove_all(plainRoot, plainCleanupError);
+	}
+
+	// (p) `repeat` inconnu -> Load rejette (parse bloquant).
+	{
+		const std::filesystem::path badRoot = MakeTempContentDir();
+		const std::string badJson = R"JSON({
+      "quests": [
+        { "id": "bad_repeat", "giver": "npc:g", "turnIn": "npc:g", "repeat": "monthly",
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ] }
+      ]
+    })JSON";
+		WriteQuestsFile(badRoot, "quest_definitions.json", badJson);
+
+		std::vector<EditedQuest> badOut;
+		std::string badError;
+		const bool badOk = io.Load(badRoot.string(), badOut, badError);
+		Check(!badOk, "EXT-2: repeat inconnu -> Load échoue");
+		Check(!badError.empty(), "EXT-2: repeat inconnu -> outError renseigné");
+
+		std::error_code badCleanupError;
+		std::filesystem::remove_all(badRoot, badCleanupError);
+	}
+
+	// (q) mode cooldown avec cooldownHours=0 -> Load rejette (règle inter-champs).
+	{
+		const std::filesystem::path zeroRoot = MakeTempContentDir();
+		const std::string zeroJson = R"JSON({
+      "quests": [
+        { "id": "cooldown_zero", "giver": "npc:g", "turnIn": "npc:g",
+          "repeat": "cooldown", "cooldownHours": 0,
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ] }
+      ]
+    })JSON";
+		WriteQuestsFile(zeroRoot, "quest_definitions.json", zeroJson);
+
+		std::vector<EditedQuest> zeroOut;
+		std::string zeroError;
+		const bool zeroOk = io.Load(zeroRoot.string(), zeroOut, zeroError);
+		Check(!zeroOk, "EXT-2: cooldown + cooldownHours=0 -> Load échoue");
+		Check(!zeroError.empty(), "EXT-2: cooldown + cooldownHours=0 -> outError renseigné");
+
+		std::error_code zeroCleanupError;
+		std::filesystem::remove_all(zeroRoot, zeroCleanupError);
+	}
+
+	// (r) Validate rejette aussi le mode cooldown avec cooldownHours=0 (règle
+	// inter-champs, en mémoire, sans passer par le disque).
+	{
+		std::vector<EditedQuest> quests = { MakeValidQuest("cooldown_validate") };
+		quests[0].repeatMode = QuestRepeatMode::Cooldown;
+		quests[0].cooldownHours = 0;
+
+		std::vector<std::string> errors;
+		const bool ok = io.Validate(quests, errors);
+		Check(!ok, "EXT-2: Validate cooldown + cooldownHours=0 -> false");
+		Check(!errors.empty(), "EXT-2: Validate cooldown + cooldownHours=0 -> au moins 1 erreur");
 	}
 
 	if (g_failures != 0)

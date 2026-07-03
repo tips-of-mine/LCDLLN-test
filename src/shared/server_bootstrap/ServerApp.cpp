@@ -1522,6 +1522,12 @@ namespace engine::server
 		}
 
 		std::vector<QuestProgressDelta> questSyncDeltas;
+		// EXT-2 — rejoue les resets temporels (répétables/quotidiennes/cooldown)
+		// AVANT la sync : une quête reset repasse Locked, que SyncQuestStates
+		// repromeut à Offered dans la même passe. L'état final est transmis au
+		// client par SendQuestStateBootstrap (plus bas), pas par ces deltas.
+		(void)m_questRuntime.ApplyRepeatResets(
+			acceptedClient.questStates, NowUnixEpochMsUtc(), questSyncDeltas);
 		if (m_questRuntime.SyncQuestStates(acceptedClient.questStates, questSyncDeltas))
 		{
 			if (!questSyncDeltas.empty())
@@ -3435,6 +3441,22 @@ namespace engine::server
 		}
 
 		LOG_INFO(Net, "[ServerApp] TalkRequest accepted (client_id={}, target={})", client->clientId, targetId);
+		// EXT-2 — rejoue les resets temporels AVANT de construire la giver-list :
+		// une quête répétable/quotidienne dont la borne est franchie redevient
+		// Offered (re-proposée par le PNJ) sans relog. On resync juste après (le
+		// Locked issu du reset est repromu Offered) et on propage les deltas au
+		// client pour rafraîchir son journal.
+		{
+			std::vector<QuestProgressDelta> talkResetDeltas;
+			(void)m_questRuntime.ApplyRepeatResets(client->questStates, NowUnixEpochMsUtc(), talkResetDeltas);
+			if (m_questRuntime.SyncQuestStates(client->questStates, talkResetDeltas))
+			{
+				for (const QuestProgressDelta& delta : talkResetDeltas)
+				{
+					(void)SendQuestDelta(*client, delta);
+				}
+			}
+		}
 		SendQuestGiverList(*client, targetId);
 		ApplyQuestEvent(*client, QuestStepType::Talk, targetId, 1, "talk");
 	}
@@ -5235,9 +5257,36 @@ namespace engine::server
 			return;
 		}
 
-		// SP1 quêtes — les récompenses ne sont plus versées ici : elles le sont
-		// désormais au turn-in explicite (HandleTurnInQuest). Ce chemin ne fait
-		// que propager les deltas de progression au client.
+		// EXT-2 — auto-complétion : ApplyEvent n'émet un delta Completed QUE pour
+		// une quête `autoComplete` (le seul chemin de QuestRuntime vers Completed ;
+		// SyncQuestStates ne produit que Locked/Offered, et une quête non-auto passe
+		// par ReadyToTurnIn puis Completed via HandleTurnInQuest, hors de ce chemin).
+		// On verse donc la récompense ici pour ces deltas — sans risque de double
+		// versement avec le turn-in explicite.
+		for (const QuestProgressDelta& delta : deltas)
+		{
+			if (delta.status != QuestStatus::Completed)
+			{
+				continue;
+			}
+			const QuestDefinition* def = m_questRuntime.FindQuestDefinition(delta.questId);
+			if (def == nullptr)
+			{
+				continue;
+			}
+			// EXT-2 — horodate la complétion auto sur l'état persisté (borne du
+			// reset répétable/quotidien/cooldown) AVANT de verser la récompense.
+			const size_t stateIdx = FindClientQuestStateIndex(client, delta.questId);
+			if (stateIdx != kInvalidQuestIndex)
+			{
+				client.questStates[stateIdx].completedAtEpochMs = NowUnixEpochMsUtc();
+			}
+			GrantQuestReward(client, *def);
+		}
+
+		// SP1 quêtes — les récompenses de turn-in explicite sont versées dans
+		// HandleTurnInQuest ; ce chemin propage les deltas de progression et verse
+		// la récompense des seules quêtes auto-complétées (ci-dessus).
 		for (const QuestProgressDelta& delta : deltas)
 		{
 			(void)SendQuestDelta(client, delta);
@@ -5434,29 +5483,16 @@ namespace engine::server
 			return;
 		}
 
-		// Verser les récompenses (bloc déplacé depuis l'ancien ApplyQuestEvent —
-		// désormais le turn-in explicite est le seul chemin de versement).
+		// Verser les récompenses (bloc factorisé dans GrantQuestReward — partagé
+		// avec l'auto-complétion). GrantQuestReward réplique déjà les deltas
+		// inventaire/wallet ; ne reste ici que la transition de statut + le
+		// QuestDelta (qui porte le résumé de récompense au client).
 		const QuestReward* reward = m_questRuntime.TakeRewardOnTurnIn(*def);
-		std::vector<ItemStack> rewardedItems;
-		if (reward != nullptr)
-		{
-			ApplyLevelUpsAfterXp(*client, reward->experience);
-			if (reward->gold != 0u)
-			{
-				std::string walletErr;
-				if (!m_playerWallet.AddCurrency(*client, kCurrencyGold, reward->gold, walletErr))
-				{
-					LOG_WARN(Net, "[ServerApp] Quest gold grant blocked (client_id={}, err={})", client->clientId, walletErr);
-				}
-			}
-			for (const ItemStack& item : reward->items)
-			{
-				AddItemToInventory(*client, item);
-				rewardedItems.push_back(item);
-			}
-		}
+		GrantQuestReward(*client, *def);
 
 		state.status = QuestStatus::Completed;
+		// EXT-2 — horodate la complétion (borne du reset répétable/quotidien/cooldown).
+		state.completedAtEpochMs = NowUnixEpochMsUtc();
 
 		QuestProgressDelta delta{};
 		delta.questId = state.questId;
@@ -5469,14 +5505,41 @@ namespace engine::server
 			delta.rewardItems = reward->items;
 		}
 		(void)SendQuestDelta(*client, delta);
-		if (!rewardedItems.empty())
-		{
-			(void)SendInventoryDelta(*client, rewardedItems);
-		}
-		(void)SendWalletUpdate(*client);
 		SaveConnectedClient(*client, "quest_turnin");
 		LOG_INFO(Net, "[ServerApp] Quest turned in (client_id={}, quest_id={}, xp={}, gold={})",
 			client->clientId, msg.questId, reward ? reward->experience : 0u, reward ? reward->gold : 0u);
+	}
+
+	void ServerApp::GrantQuestReward(ConnectedClient& client, const QuestDefinition& def)
+	{
+		// Bloc de versement déplacé verbatim depuis HandleTurnInQuest : XP (avec
+		// montées de niveau), or (wallet) et objets (inventaire), puis réplication
+		// des deltas inventaire/wallet vers le client.
+		const QuestReward* reward = m_questRuntime.TakeRewardOnTurnIn(def);
+		std::vector<ItemStack> rewardedItems;
+		if (reward != nullptr)
+		{
+			ApplyLevelUpsAfterXp(client, reward->experience);
+			if (reward->gold != 0u)
+			{
+				std::string walletErr;
+				if (!m_playerWallet.AddCurrency(client, kCurrencyGold, reward->gold, walletErr))
+				{
+					LOG_WARN(Net, "[ServerApp] Quest gold grant blocked (client_id={}, err={})", client.clientId, walletErr);
+				}
+			}
+			for (const ItemStack& item : reward->items)
+			{
+				AddItemToInventory(client, item);
+				rewardedItems.push_back(item);
+			}
+		}
+
+		if (!rewardedItems.empty())
+		{
+			(void)SendInventoryDelta(client, rewardedItems);
+		}
+		(void)SendWalletUpdate(client);
 	}
 
 	void ServerApp::SendQuestStateBootstrap(const ConnectedClient& receiver)

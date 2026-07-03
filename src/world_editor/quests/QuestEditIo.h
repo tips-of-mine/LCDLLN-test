@@ -23,6 +23,25 @@ namespace engine::editor::world::quests
 		uint32_t quantity = 1;
 	};
 
+	/// Mode de re-réalisation d'une quête (EXT-2), miroir éditeur-local de
+	/// `QuestRepeatMode` côté shard (`QuestRuntime.h`). Volontairement dupliqué
+	/// ici pour éviter un couplage cross-module éditeur→shard : les valeurs
+	/// entières DOIVENT rester alignées sur le shard (sérialisation JSON par
+	/// chaîne, pas par entier — voir `RepeatModeToString`/`ParseRepeatMode`).
+	/// - None : quête à réaliser une seule fois (comportement historique).
+	/// - Repeatable : re-disponible immédiatement après complétion.
+	/// - Daily : re-disponible au passage d'un jour UTC.
+	/// - Weekly : re-disponible au passage d'une semaine UTC (borne lundi).
+	/// - Cooldown : re-disponible après `cooldownHours` heures écoulées.
+	enum class QuestRepeatMode : uint8_t
+	{
+		None = 0,
+		Repeatable = 1,
+		Daily = 2,
+		Weekly = 3,
+		Cooldown = 4
+	};
+
 	/// Une quête telle qu'éditée dans l'outil d'authoring : fusion des données
 	/// mécaniques (`quest_definitions.json`) et des textes lisibles
 	/// (`quest_texts.<lang>.json`), pour affichage/édition unifiés dans l'éditeur.
@@ -42,6 +61,19 @@ namespace engine::editor::world::quests
 		uint32_t rewardXp = 0;
 		uint32_t rewardGold = 0;
 		std::vector<EditedRewardItem> rewardItems;
+
+		/// EXT-2 : mode de re-réalisation de la quête. Défaut `None` (absent du
+		/// JSON = quête à réaliser une seule fois, rétro-compatible). Sérialisé
+		/// via la clé JSON `"repeat"` (chaîne minuscule).
+		QuestRepeatMode repeatMode = QuestRepeatMode::None;
+		/// EXT-2 : durée du cooldown en heures, pertinente UNIQUEMENT si
+		/// `repeatMode == Cooldown` (doit alors être > 0). Ignorée sinon.
+		/// Sérialisée via la clé JSON `"cooldownHours"` (entier).
+		uint32_t cooldownHours = 0;
+		/// EXT-2 : si vrai, la quête se termine automatiquement (statut
+		/// `Completed`) dès que toutes ses étapes sont finies, sans retour PNJ.
+		/// Défaut false. Sérialisé via la clé JSON `"autoComplete"` (bool).
+		bool autoComplete = false;
 
 		// Textes lisibles, fusionnés depuis quest_texts.<lang>.json. Vides si la
 		// quête n'a pas (encore) d'entrée de texte pour la langue chargée.
@@ -86,8 +118,10 @@ namespace engine::editor::world::quests
 		/// vide, `requiredCount` ≥ 1), existence des `prereqs` référencés dans
 		/// l'ensemble, absence de cycle dans le graphe `prereqs`, existence des
 		/// `excludes` référencés + interdiction de l'auto-exclusion (`id` dans
-		/// son propre `excludes`) SANS contrainte d'acyclicité, et formes des
-		/// items de récompense (`itemId` > 0, `quantity` ≥ 1).
+		/// son propre `excludes`) SANS contrainte d'acyclicité, formes des
+		/// items de récompense (`itemId` > 0, `quantity` ≥ 1) et, pour EXT-2,
+		/// cohérence du mode de re-réalisation (`cooldownHours` > 0 requis quand
+		/// `repeatMode == Cooldown`).
 		///
 		/// Pure : aucune E/S, aucun état modifié (ni sur `this`, ni global) ;
 		/// utilisable depuis n'importe quel thread sur une copie de \p quests.

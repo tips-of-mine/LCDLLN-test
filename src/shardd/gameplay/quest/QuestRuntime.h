@@ -46,6 +46,18 @@ namespace engine::server
 		std::vector<ItemStack> items;
 	};
 
+	/// EXT-2 — Mode de répétition d'une quête (par quête, choisi dans le JSON).
+	/// L'ordre est significatif (mappé depuis le JSON, potentiellement persisté
+	/// dans l'éditeur) : ne pas réordonner sans migration.
+	enum class QuestRepeatMode : uint8_t
+	{
+		None       = 0,   ///< quête one-shot classique (défaut, rétro-compatible)
+		Repeatable = 1,   ///< re-réalisable immédiatement, sans délai
+		Daily      = 2,   ///< re-réalisable au changement de jour UTC
+		Weekly     = 3,   ///< re-réalisable au changement de semaine UTC (lundi 00:00)
+		Cooldown   = 4,   ///< re-réalisable après `cooldownHours` heures écoulées
+	};
+
 	/// One quest definition loaded from the data-driven JSON file.
 	struct QuestDefinition
 	{
@@ -59,6 +71,15 @@ namespace engine::server
 		std::vector<std::string> excludedQuestIds;
 		std::vector<QuestStepDefinition> steps;
 		QuestReward rewards;
+		/// EXT-2 — mode de répétition (défaut None = one-shot, rétro-compatible).
+		QuestRepeatMode repeatMode = QuestRepeatMode::None;
+		/// EXT-2 — délai de réactivation en heures ; pertinent uniquement si
+		/// repeatMode == Cooldown (doit alors être > 0 ; ignoré sinon).
+		uint32_t cooldownHours = 0;
+		/// EXT-2 — si vrai, la quête se termine (Completed) automatiquement dès la
+		/// dernière étape complétée, sans retour au PNJ (récompense versée par le
+		/// caller ServerApp, pas par QuestRuntime).
+		bool autoComplete = false;
 	};
 
 	/// Per-player stored quest state required by the server runtime.
@@ -67,6 +88,9 @@ namespace engine::server
 		std::string questId;
 		QuestStatus status = QuestStatus::Locked;
 		std::vector<uint32_t> stepProgressCounts;
+		/// EXT-2 — ms UTC de la dernière complétion (0 = jamais complétée).
+		/// Sert de borne au reset des quêtes répétables/quotidiennes/cooldown.
+		uint64_t completedAtEpochMs = 0;
 	};
 
 	/// One quest state change emitted after sync or progress evaluation.
@@ -79,6 +103,26 @@ namespace engine::server
 		uint32_t rewardGold = 0;
 		std::vector<ItemStack> rewardItems;
 	};
+
+	/// EXT-2 — Index du jour UTC (minuit UTC comme borne). Pur/testable.
+	/// \param ms horodatage en ms depuis l'epoch Unix (UTC).
+	uint64_t UtcDayIndex(uint64_t ms);
+
+	/// EXT-2 — Index de la semaine UTC alignée sur lundi 00:00 UTC. Pur/testable.
+	/// Le jour epoch 0 (1970-01-01) est un jeudi ; `+3` décale l'origine pour que
+	/// chaque semaine démarre le lundi.
+	/// \param ms horodatage en ms depuis l'epoch Unix (UTC).
+	uint64_t UtcWeekIndex(uint64_t ms);
+
+	/// EXT-2 — Vrai si une quête `Completed` doit redevenir disponible selon son
+	/// mode de répétition. Fonction pure (aucune horloge interne : `nowMs` injecté),
+	/// donc testable unitairement.
+	/// \param mode mode de répétition de la définition.
+	/// \param cooldownHours délai en heures (pertinent uniquement en mode Cooldown).
+	/// \param completedAtMs ms UTC de la dernière complétion (0 = jamais).
+	/// \param nowMs ms UTC courantes (injectées par le caller).
+	bool ShouldRepeatReset(QuestRepeatMode mode, uint32_t cooldownHours,
+		uint64_t completedAtMs, uint64_t nowMs);
 
 	/// Return a readable name for one quest step type.
 	const char* GetQuestStepTypeName(QuestStepType type);
@@ -126,6 +170,17 @@ namespace engine::server
 
 		/// Retourne le bundle de récompense à verser au turn-in (jamais nul).
 		const QuestReward* TakeRewardOnTurnIn(const QuestDefinition& def) const;
+
+		/// EXT-2 — Rejoue les resets temporels des quêtes répétables/quotidiennes/
+		/// cooldown. Pour chaque \p state `Completed` dont la définition a
+		/// `repeatMode != None` et `ShouldRepeatReset(...) == true` : statut remis à
+		/// `Locked`, `stepProgressCounts` remis à zéro (taille = def.steps.size()),
+		/// un `QuestProgressDelta` (Locked + compteurs zéro) ajouté à \p outDeltas.
+		/// À appeler AVANT `SyncQuestStates` (qui repromeut alors le Locked à
+		/// Offered dans la même passe). \param nowMs ms UTC courantes (injectées).
+		/// \return true si au moins un état a changé.
+		bool ApplyRepeatResets(std::vector<QuestState>& states, uint64_t nowMs,
+			std::vector<QuestProgressDelta>& outDeltas) const;
 
 		/// EXT-1 — Vrai si \p def est actuellement bloquée par exclusion mutuelle
 		/// pour ce joueur : soit (a) une quête listée dans `def.excludedQuestIds`

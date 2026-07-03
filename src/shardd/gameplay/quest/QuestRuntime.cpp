@@ -417,6 +417,40 @@ namespace engine::server
 			return false;
 		}
 
+		/// EXT-2 — Convertit un jeton JSON en QuestRepeatMode. Retourne false si le
+		/// texte n'appartient pas à l'ensemble {none, repeatable, daily, weekly,
+		/// cooldown} (le caller émet alors une erreur de chargement).
+		bool ParseRepeatMode(std::string_view text, QuestRepeatMode& outMode)
+		{
+			if (text == "none")
+			{
+				outMode = QuestRepeatMode::None;
+				return true;
+			}
+			if (text == "repeatable")
+			{
+				outMode = QuestRepeatMode::Repeatable;
+				return true;
+			}
+			if (text == "daily")
+			{
+				outMode = QuestRepeatMode::Daily;
+				return true;
+			}
+			if (text == "weekly")
+			{
+				outMode = QuestRepeatMode::Weekly;
+				return true;
+			}
+			if (text == "cooldown")
+			{
+				outMode = QuestRepeatMode::Cooldown;
+				return true;
+			}
+
+			return false;
+		}
+
 		/// Return true when every step on the quest reached its required count.
 		bool AreAllStepsComplete(const QuestDefinition& definition, const QuestState& state)
 		{
@@ -494,6 +528,43 @@ namespace engine::server
 		case QuestStatus::Completed:     return "completed";
 		}
 		return "unknown";
+	}
+
+	uint64_t UtcDayIndex(uint64_t ms)
+	{
+		// Minuit UTC comme borne : 86 400 000 ms par jour.
+		return ms / 86400000ULL;
+	}
+
+	uint64_t UtcWeekIndex(uint64_t ms)
+	{
+		// Le jour epoch 0 (1970-01-01) est un jeudi ; `+3` décale l'origine pour
+		// aligner le début de semaine sur le lundi 00:00 UTC.
+		return (ms / 86400000ULL + 3ULL) / 7ULL;
+	}
+
+	bool ShouldRepeatReset(QuestRepeatMode mode, uint32_t cooldownHours,
+		uint64_t completedAtMs, uint64_t nowMs)
+	{
+		switch (mode)
+		{
+		case QuestRepeatMode::None:
+			return false;
+		case QuestRepeatMode::Repeatable:
+			// Re-réalisable immédiatement, sans délai.
+			return true;
+		case QuestRepeatMode::Daily:
+			return UtcDayIndex(nowMs) != UtcDayIndex(completedAtMs);
+		case QuestRepeatMode::Weekly:
+			return UtcWeekIndex(nowMs) != UtcWeekIndex(completedAtMs);
+		case QuestRepeatMode::Cooldown:
+			// Jamais complétée (0) → pas de reset. On garde nowMs >= completedAtMs
+			// pour éviter un sous-débordement uint64 si l'horloge recule.
+			return completedAtMs != 0ULL
+				&& nowMs >= completedAtMs
+				&& (nowMs - completedAtMs) >= static_cast<uint64_t>(cooldownHours) * 3600000ULL;
+		}
+		return false;
 	}
 
 	QuestRuntime::QuestRuntime(const engine::core::Config& config)
@@ -739,14 +810,29 @@ namespace engine::server
 			delta.stepProgressCounts = state.stepProgressCounts;
 			if (AreAllStepsComplete(definition, state))
 			{
-				// La récompense n'est PAS versée ici : elle est différée au turn-in
-				// explicite au PNJ (TakeRewardOnTurnIn), pour éviter un octroi silencieux
-				// dès la dernière étape complétée.
-				state.status = QuestStatus::ReadyToTurnIn;
-				delta.status = QuestStatus::ReadyToTurnIn;
-				LOG_INFO(Net,
-					"[QuestRuntime] Quest ready to turn in (quest_id={})",
-					definition.questId);
+				if (definition.autoComplete)
+				{
+					// EXT-2 — quête auto-complétée : elle passe directement Completed,
+					// sans retour au PNJ. La récompense n'est PAS versée ici
+					// (QuestRuntime n'a pas d'accès inventaire) : le caller ServerApp
+					// détecte le delta Completed et appelle GrantQuestReward.
+					state.status = QuestStatus::Completed;
+					delta.status = QuestStatus::Completed;
+					LOG_INFO(Net,
+						"[QuestRuntime] Quest auto-completed (quest_id={})",
+						definition.questId);
+				}
+				else
+				{
+					// La récompense n'est PAS versée ici : elle est différée au turn-in
+					// explicite au PNJ (TakeRewardOnTurnIn), pour éviter un octroi silencieux
+					// dès la dernière étape complétée.
+					state.status = QuestStatus::ReadyToTurnIn;
+					delta.status = QuestStatus::ReadyToTurnIn;
+					LOG_INFO(Net,
+						"[QuestRuntime] Quest ready to turn in (quest_id={})",
+						definition.questId);
+				}
 			}
 
 			UpsertDelta(outDeltas, std::move(delta));
@@ -785,6 +871,49 @@ namespace engine::server
 		}
 
 		return nullptr;
+	}
+
+	bool QuestRuntime::ApplyRepeatResets(std::vector<QuestState>& states, uint64_t nowMs,
+		std::vector<QuestProgressDelta>& outDeltas) const
+	{
+		bool anyChanged = false;
+		for (QuestState& state : states)
+		{
+			// Seules les quêtes terminées (Completed) sont candidates au reset.
+			if (state.status != QuestStatus::Completed)
+			{
+				continue;
+			}
+
+			const QuestDefinition* def = FindQuestDefinition(state.questId);
+			if (def == nullptr || def->repeatMode == QuestRepeatMode::None)
+			{
+				// Quête one-shot (ou définition disparue) : reste Completed.
+				continue;
+			}
+
+			if (!ShouldRepeatReset(def->repeatMode, def->cooldownHours, state.completedAtEpochMs, nowMs))
+			{
+				continue;
+			}
+
+			// Reset : Completed → Locked, compteurs d'étapes remis à zéro. La passe
+			// SyncQuestStates suivante repromeut le Locked à Offered (prérequis OK).
+			state.status = QuestStatus::Locked;
+			state.stepProgressCounts.assign(def->steps.size(), 0u);
+
+			QuestProgressDelta delta{};
+			delta.questId = state.questId;
+			delta.status = state.status;
+			delta.stepProgressCounts = state.stepProgressCounts;
+			outDeltas.push_back(std::move(delta));
+			anyChanged = true;
+
+			LOG_INFO(Net, "[QuestRuntime] Quête répétable réinitialisée (quest_id={}, mode={})",
+				state.questId,
+				static_cast<uint32_t>(def->repeatMode));
+		}
+		return anyChanged;
 	}
 
 	bool QuestRuntime::CanAccept(const QuestState& state, const QuestDefinition& def, std::string_view giverTargetId) const
@@ -1120,6 +1249,57 @@ namespace engine::server
 						definition.rewards.items.push_back(item);
 					}
 				}
+			}
+
+			// EXT-2 — champs optionnels "repeat"/"cooldownHours"/"autoComplete"
+			// (rétro-compatibles : absents → None/0/false, comme les définitions
+			// existantes de quest_definitions.json).
+			if (const JsonValue* repeatValue = FindObjectMember(questValue, "repeat");
+				repeatValue != nullptr)
+			{
+				if (repeatValue->type != JsonType::String
+					|| !ParseRepeatMode(repeatValue->stringValue, definition.repeatMode))
+				{
+					LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.repeat must be one of none/repeatable/daily/weekly/cooldown",
+						definition.questId);
+					m_definitions.clear();
+					return false;
+				}
+			}
+
+			if (const JsonValue* cooldownValue = FindObjectMember(questValue, "cooldownHours");
+				cooldownValue != nullptr)
+			{
+				if (!TryGetUint(*cooldownValue, definition.cooldownHours))
+				{
+					LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.cooldownHours must be a non-negative integer",
+						definition.questId);
+					m_definitions.clear();
+					return false;
+				}
+			}
+
+			// En mode Cooldown, cooldownHours doit être strictement positif (sinon la
+			// quête serait immédiatement re-réalisable, ce qui contredit l'intention).
+			if (definition.repeatMode == QuestRepeatMode::Cooldown && definition.cooldownHours == 0)
+			{
+				LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.cooldownHours must be > 0 when repeat is 'cooldown'",
+					definition.questId);
+				m_definitions.clear();
+				return false;
+			}
+
+			if (const JsonValue* autoCompleteValue = FindObjectMember(questValue, "autoComplete");
+				autoCompleteValue != nullptr)
+			{
+				if (autoCompleteValue->type != JsonType::Bool)
+				{
+					LOG_ERROR(Net, "[QuestRuntime] Definition load FAILED: quest '{}'.autoComplete must be a boolean",
+						definition.questId);
+					m_definitions.clear();
+					return false;
+				}
+				definition.autoComplete = autoCompleteValue->boolValue;
 			}
 
 			LOG_INFO(Net, "[QuestRuntime] Loaded quest definition (quest_id={}, prereqs={}, steps={}, reward_items={})",

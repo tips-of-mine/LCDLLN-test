@@ -24,6 +24,7 @@
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/security/RateLimitAndBan.h"
 #include "src/shared/security/SecurityAuditLog.h"
+#include "src/shared/security/SharedSecretPolicy.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/handlers/password/PasswordResetStore.h"
 #include "src/masterd/handlers/password/PasswordResetHandler.h"
@@ -171,6 +172,20 @@ int main(int argc, char** argv)
 	if (!engine::core::Config::LoadServerConfig(config, "config"))
 	{
 		LOG_WARN(Server, "[master] config/server.config.json absent : repli sur clés inline éventuelles");
+	}
+
+	// Audit F6 : refus au boot si le secret HMAC partagé (utilisé pour signer les
+	// tickets shard) est vide ou une valeur de dev connue committée dans le repo.
+	// Placé tôt, avant toute ouverture de port réseau (server.Init plus bas).
+	{
+		const std::string shardSecret = config.GetString("shard.ticket_hmac_secret", "");
+		if (engine::security::IsWeakSharedSecret(shardSecret) && !engine::security::DevSecretOverrideEnabled())
+		{
+			LOG_ERROR(Core, "[Boot] shard.ticket_hmac_secret vide ou par défaut : refus de démarrer. "
+				"Définir un vrai secret, ou poser LCDLLN_ALLOW_DEV_SECRET=1 en développement.");
+			engine::core::Log::Shutdown();
+			return 1;
+		}
 	}
 
 	LOG_INFO(Net, "[ServerMain] Linux TCP server starting...");

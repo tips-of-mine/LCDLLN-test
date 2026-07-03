@@ -142,6 +142,8 @@ elseif(UNIX)
     # Audit F3 : tag HMAC-SHA256 préfixe authentifiant SHARD_REGISTER/HEARTBEAT
     # (utilisé par ShardRegisterHandler, compilé dans ce binaire master).
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardWireAuth.cpp
+    # Audit F6 : refus au boot d'un secret HMAC partagé faible/par défaut.
+    ${CMAKE_SOURCE_DIR}/src/shared/security/SharedSecretPolicy.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp
@@ -1153,6 +1155,15 @@ elseif(UNIX)
   target_link_libraries(shard_wire_auth_tests PRIVATE OpenSSL::SSL)
   target_compile_options(shard_wire_auth_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME shard_wire_auth_tests COMMAND shard_wire_auth_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # Audit F6 : refus au boot d'un secret HMAC partagé faible/par défaut (masterd + shardd).
+  add_executable(shared_secret_policy_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/security/SharedSecretPolicyTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/security/SharedSecretPolicy.cpp
+  )
+  target_include_directories(shared_secret_policy_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_compile_options(shared_secret_policy_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME shared_secret_policy_tests COMMAND shared_secret_policy_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # Présence unifiée (Niveau 1) : ShardPresenceService — présence shard-locale.
   add_executable(shard_presence_service_tests

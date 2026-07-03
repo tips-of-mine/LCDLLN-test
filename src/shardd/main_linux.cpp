@@ -11,6 +11,7 @@
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/network/ShardToMasterClient.h"
+#include "src/shared/security/SharedSecretPolicy.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/core/LogConfig.h"
@@ -56,6 +57,21 @@ int main(int argc, char** argv)
 	if (!engine::core::Config::LoadServerConfig(config, "config"))
 	{
 		LOG_WARN(Net, "[shard] config/server.config.json absent : repli sur clés inline éventuelles");
+	}
+
+	// Audit F6 : refus au boot si le secret HMAC partagé (utilisé pour signer les
+	// tickets et authentifier SHARD_REGISTER/HEARTBEAT vers le master) est vide ou
+	// une valeur de dev connue committée dans le repo. Placé tôt, avant l'ouverture
+	// du port réseau (server.Init plus bas) et avant le ShardToMasterClient.
+	{
+		const std::string shardSecret = config.GetString("shard.ticket_hmac_secret", "");
+		if (engine::security::IsWeakSharedSecret(shardSecret) && !engine::security::DevSecretOverrideEnabled())
+		{
+			LOG_ERROR(Net, "[Boot] shard.ticket_hmac_secret vide ou par défaut : refus de démarrer. "
+				"Définir un vrai secret, ou poser LCDLLN_ALLOW_DEV_SECRET=1 en développement.");
+			engine::core::Log::Shutdown();
+			return 1;
+		}
 	}
 
 	LOG_INFO(Net, "[ShardMain] Shard server starting...");

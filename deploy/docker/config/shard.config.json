@@ -6,7 +6,7 @@
   },
   "shard": {
     "id": 1,
-    "ticket_hmac_secret": "dev_secret_change_in_production",
+    "ticket_hmac_secret": "",
     "heartbeat_interval_sec": 10,
     "master": {
       "host": "master",

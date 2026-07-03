@@ -173,6 +173,118 @@ int main()
 		Check(reward != nullptr && reward->experience == 10, "reward exposé au turn-in");
 	}
 
+	// EXT-1 — Exclusion mutuelle : A exclut B. Fixture partagée pour les cas
+	// (a)..(d). A et B sont sans prérequis (donc naturellement Offered), A
+	// déclarant "excludes": ["qB"] ; B ne déclare rien (test de symétrie).
+	{
+		const std::string json = R"JSON({
+      "quests": [
+        { "id": "qA", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [], "excludes": [ "qB" ],
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } },
+        { "id": "qB", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [],
+          "steps": [ { "type": "kill", "target": "mob:2", "requiredCount": 1 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } }
+      ]
+    })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(json);
+		Check(runtime.Init(), "Init charge qA (excludes qB) + qB");
+
+		const auto* defA = runtime.FindQuestDefinition("qA");
+		const auto* defB = runtime.FindQuestDefinition("qB");
+		Check(defA != nullptr && defB != nullptr, "qA et qB trouvées");
+		if (defA != nullptr && defB != nullptr)
+		{
+			Check(defA->excludedQuestIds.size() == 1 && defA->excludedQuestIds[0] == "qB",
+			      "excludes parsé sur qA");
+			Check(defB->excludedQuestIds.empty(), "qB sans excludes (rétro-compat champ absent)");
+
+			std::vector<QuestState> states;
+			std::vector<QuestProgressDelta> deltas;
+			Check(runtime.SyncQuestStates(states, deltas), "sync initiale OK");
+			// (d) Aucune quête engagée → les deux sont seulement Offered → aucun blocage.
+			const size_t iA = 0, iB = 1; // ordre = ordre des définitions
+			Check(states.size() == 2, "deux états créés");
+			bool bothOffered = states.size() == 2
+				&& states[iA].status == QuestStatus::Offered
+				&& states[iB].status == QuestStatus::Offered;
+			Check(bothOffered, "(d) A et B Offered quand rien n'est engagé");
+			Check(!runtime.IsBlockedByExclusion(states, *defB),
+			      "(d) B non bloquée quand A seulement Offered");
+			Check(!runtime.IsBlockedByExclusion(states, *defA),
+			      "(d) A non bloquée quand B seulement Offered");
+
+			// Engager A (Offered → Active), comme le ferait un accept.
+			states[iA].status = QuestStatus::Active;
+
+			// (b) IsBlockedByExclusion(B) vrai quand A engagée (Active).
+			Check(runtime.IsBlockedByExclusion(states, *defB),
+			      "(b) B bloquée quand A Active (sens direct : A exclut B)");
+			// (c) Symétrie : B ne déclare pas A, mais reste bloquée.
+			Check(runtime.IsBlockedByExclusion(states, *defB),
+			      "(c) symétrie : B bloquée même sans déclarer A");
+			// A n'est pas bloquée par elle-même.
+			Check(!runtime.IsBlockedByExclusion(states, *defA),
+			      "A non bloquée par sa propre exclusion");
+
+			// (a) offer-sync : re-sync ne doit PAS repasser B à Offered (reste Locked).
+			deltas.clear();
+			Check(runtime.SyncQuestStates(states, deltas), "re-sync avec A engagée OK");
+			Check(states[iB].status == QuestStatus::Locked,
+			      "(a) offer-sync garde B Locked quand A engagée");
+
+			// (b) idem quand A est Completed (statut terminal, toujours « engagée »).
+			states[iA].status = QuestStatus::Completed;
+			Check(runtime.IsBlockedByExclusion(states, *defB),
+			      "(b) B bloquée quand A Completed");
+		}
+	}
+
+	// EXT-1 (e) — Rétro-compat : une quête sans "excludes" se comporte à
+	// l'identique (Offered malgré une autre quête engagée).
+	{
+		const std::string json = R"JSON({
+      "quests": [
+        { "id": "qX", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [],
+          "steps": [ { "type": "kill", "target": "mob:1", "requiredCount": 1 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } },
+        { "id": "qY", "giver": "npc:marn", "turnIn": "npc:marn",
+          "prereqs": [],
+          "steps": [ { "type": "kill", "target": "mob:2", "requiredCount": 1 } ],
+          "rewards": { "xp": 10, "gold": 5, "items": [] } }
+      ]
+    })JSON";
+
+		QuestRuntime runtime = MakeRuntimeWithFixture(json);
+		Check(runtime.Init(), "(e) Init charge qX/qY sans excludes");
+
+		const auto* defY = runtime.FindQuestDefinition("qY");
+		Check(defY != nullptr, "(e) qY trouvée");
+
+		std::vector<QuestState> states;
+		std::vector<QuestProgressDelta> deltas;
+		Check(runtime.SyncQuestStates(states, deltas), "(e) sync OK");
+		Check(states.size() == 2, "(e) deux états créés");
+		if (states.size() == 2)
+		{
+			states[0].status = QuestStatus::Active; // qX engagée
+			deltas.clear();
+			Check(runtime.SyncQuestStates(states, deltas), "(e) re-sync OK");
+			// Sans excludes, qY reste proposée malgré qX engagée.
+			Check(states[1].status == QuestStatus::Offered,
+			      "(e) qY reste Offered (aucun excludes déclaré)");
+			if (defY != nullptr)
+			{
+				Check(!runtime.IsBlockedByExclusion(states, *defY),
+				      "(e) qY jamais bloquée sans excludes");
+			}
+		}
+	}
+
 	if (g_failures != 0)
 	{
 		std::cerr << g_failures << " assertion(s) échouée(s)\n";

@@ -594,6 +594,30 @@ namespace engine::editor::world::quests
 				}
 			}
 
+			// EXT-1 : champ `excludes` OPTIONNEL (quêtes mutuellement exclusives),
+			// miroir exact du bloc `prereqs` ci-dessus. Absent = OK (rétro-compat) ;
+			// la validation d'existence / anti-auto-exclusion est faite dans Validate.
+			if (const JsonValue* excludesValue = FindObjectMember(questValue, "excludes");
+				excludesValue != nullptr)
+			{
+				if (excludesValue->type != JsonType::Array)
+				{
+					outError = "quest '" + quest.id + "': excludes must be an array";
+					return false;
+				}
+
+				for (const JsonValue& excludeValue : excludesValue->arrayValue)
+				{
+					if (excludeValue.type != JsonType::String || excludeValue.stringValue.empty())
+					{
+						outError = "quest '" + quest.id + "': excludes entry must be a non-empty string";
+						return false;
+					}
+
+					quest.excludes.push_back(excludeValue.stringValue);
+				}
+			}
+
 			const JsonValue* stepsValue = FindObjectMember(questValue, "steps");
 			if (stepsValue == nullptr || stepsValue->type != JsonType::Array || stepsValue->arrayValue.empty())
 			{
@@ -792,7 +816,7 @@ namespace engine::editor::world::quests
 		}
 
 		/// Sérialise une quête éditée complète (`{id, giver, turnIn, prereqs,
-		/// steps, rewards}`) en JSON pur, tableau, indentée à \p indent espaces
+		/// excludes, steps, rewards}`) en JSON pur, tableau, indentée à \p indent espaces
 		/// (élément de `quests[]` dans `quest_definitions.json`).
 		std::string SerializeQuestDefinition(const EditedQuest& quest, int indent)
 		{
@@ -808,6 +832,15 @@ namespace engine::editor::world::quests
 			for (size_t i = 0; i < quest.prereqs.size(); ++i)
 			{
 				os << (i == 0 ? "" : ", ") << "\"" << JsonEscape(quest.prereqs[i]) << "\"";
+			}
+			os << "],\n";
+
+			// EXT-1 : `excludes` sérialisé à l'identique de `prereqs` — tableau
+			// TOUJOURS émis (vide -> `[]`), JSON pur relisible par le shard.
+			os << fieldPad << "\"excludes\": [";
+			for (size_t i = 0; i < quest.excludes.size(); ++i)
+			{
+				os << (i == 0 ? "" : ", ") << "\"" << JsonEscape(quest.excludes[i]) << "\"";
 			}
 			os << "],\n";
 
@@ -1075,6 +1108,22 @@ namespace engine::editor::world::quests
 				if (byId.find(prereqId) == byId.end())
 				{
 					outErrors.push_back("quête '" + label + "': prereq '" + prereqId + "' introuvable dans l'ensemble");
+				}
+			}
+
+			// EXT-1 : chaque `exclude` doit exister dans l'ensemble (dangling ->
+			// erreur, même politique que les prereqs) et ne peut pas viser la
+			// quête elle-même (auto-exclusion interdite). PAS de détection de
+			// cycle : l'exclusion mutuelle A<->B est autorisée.
+			for (const std::string& excludeId : quest.excludes)
+			{
+				if (excludeId == quest.id)
+				{
+					outErrors.push_back("quête '" + label + "': ne peut pas s'exclure elle-même ('" + excludeId + "')");
+				}
+				else if (byId.find(excludeId) == byId.end())
+				{
+					outErrors.push_back("quête '" + label + "': exclude '" + excludeId + "' introuvable dans l'ensemble");
 				}
 			}
 

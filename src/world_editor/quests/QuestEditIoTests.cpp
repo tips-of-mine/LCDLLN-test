@@ -137,6 +137,9 @@ namespace
 		scout.giver = "npc:scout";
 		scout.turnIn = "npc:scout";
 		scout.prereqs.push_back("kill_10_boars");
+		// Exclusion mutuelle (structurelle) exercee par le round-trip : scout
+		// exclut boars (id existant, != scout) -> parse -> serialize -> parse.
+		scout.excludes.push_back("kill_10_boars");
 		EditedStep talkStep;
 		talkStep.type = "talk";
 		talkStep.target = "npc:scout";
@@ -296,6 +299,43 @@ int main()
 		Check(!errors.empty(), "Validate: étape target vide -> au moins 1 erreur");
 	}
 
+	// (k) excludes vers un id existant -> valide (pas de contrainte d'acyclicite :
+	// une exclusion mutuelle declaree dans les deux sens reste valide).
+	{
+		EditedQuest questA = MakeValidQuest("quest_excl_a");
+		EditedQuest questB = MakeValidQuest("quest_excl_b");
+		questA.excludes.push_back("quest_excl_b");
+		questB.excludes.push_back("quest_excl_a");
+		std::vector<EditedQuest> quests = { questA, questB };
+
+		std::vector<std::string> errors;
+		const bool ok = io.Validate(quests, errors);
+		Check(ok, "Validate: excludes mutuel (A<->B) -> true (pas de cycle-check)");
+		Check(errors.empty(), "Validate: excludes mutuel -> 0 erreur");
+	}
+
+	// (l) auto-exclusion (id dans son propre excludes) -> false.
+	{
+		std::vector<EditedQuest> quests = { MakeValidQuest("quest_self_excl") };
+		quests[0].excludes.push_back("quest_self_excl");
+
+		std::vector<std::string> errors;
+		const bool ok = io.Validate(quests, errors);
+		Check(!ok, "Validate: auto-exclusion -> false");
+		Check(!errors.empty(), "Validate: auto-exclusion -> au moins 1 erreur");
+	}
+
+	// (m) excludes vers un id inexistant (dangling) -> false.
+	{
+		std::vector<EditedQuest> quests = { MakeValidQuest("quest_m") };
+		quests[0].excludes.push_back("inconnu");
+
+		std::vector<std::string> errors;
+		const bool ok = io.Validate(quests, errors);
+		Check(!ok, "Validate: exclude dangling -> false");
+		Check(!errors.empty(), "Validate: exclude dangling -> au moins 1 erreur");
+	}
+
 	// --- QuestEditIo::Save ---------------------------------------------------
 
 	// (h) round-trip Save -> Load : égalité structurelle id/giver/turnIn/steps/
@@ -336,6 +376,7 @@ int main()
 			Check(found->giver == orig.giver, (label + ": giver identique").c_str());
 			Check(found->turnIn == orig.turnIn, (label + ": turnIn identique").c_str());
 			Check(found->prereqs == orig.prereqs, (label + ": prereqs identiques").c_str());
+			Check(found->excludes == orig.excludes, (label + ": excludes identiques").c_str());
 			Check(found->steps.size() == orig.steps.size(), (label + ": nombre d'étapes identique").c_str());
 			for (size_t i = 0; i < orig.steps.size() && i < found->steps.size(); ++i)
 			{

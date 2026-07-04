@@ -168,7 +168,17 @@ public:
     /// une marge confortable avant qu'un slot soit réutilisé par-dessus une
     /// écriture encore en flight côté GPU. Coût : 32 × (~16 KB bone SSBO + 64 B
     /// model) ≈ 512 KB host-visible GPU. Acceptable pour un client.
-    static constexpr uint32_t kFrameSlots = 32u;
+    ///
+    /// 2026-07-04 — bump 32 → 64. Les zones peuplées (ex. cluster de 16 sangliers
+    /// SP5 rendus comme avatars skinnés) dépassaient 16 draws skinnés/frame :
+    /// 1 local + 16 distants = 17 > 32/FIF(2) = 16 → l'anneau se réécrivait par-
+    /// dessus les os de l'avatar LOCAL (slot le plus ancien) encore lu par le GPU
+    /// → l'avatar local clignotait/disparaissait. 64 slots couvrent 32 draws/frame
+    /// à FIF=2 (marge sur les 17 actuels). Coût ≈ 1 MB host-visible. LIMITE : reste
+    /// un plafond fixe (au-delà de 32 draps/frame le bug réapparaît) — le fix
+    /// durable = allocation partitionnée par index de frame (ou cap de draws
+    /// skinnés/frame), à faire séparément.
+    static constexpr uint32_t kFrameSlots = 64u;
 
 private:
     VkDevice m_device = VK_NULL_HANDLE;

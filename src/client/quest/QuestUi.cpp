@@ -35,6 +35,13 @@ namespace engine::client
 		}
 	}
 
+	bool ShouldShowQuestInJournal(uint8_t status)
+	{
+		// Journal = uniquement les quêtes acceptées et en cours : Active (2) et
+		// ReadyToTurnIn (3). Offered (1)/Locked (0)/Completed (4) exclus (cf. doc h).
+		return status == 2u || status == 3u;
+	}
+
 	namespace
 	{
 		/// Trim spaces and tabs from both ends of one text view.
@@ -306,14 +313,40 @@ namespace engine::client
 		m_state.selectedQuestId.clear();
 		m_state.selectedQuestStatus = 0;
 
-		if (m_selectedQuestId.empty() && !model.quests.empty())
+		// Si la sélection courante n'est plus une quête acceptée (rendue, abandonnée,
+		// ou jamais acceptée), on la réassigne à la première quête acceptée dispo.
+		bool selectionStillShown = false;
+		for (const UIQuestEntry& quest : model.quests)
 		{
-			m_selectedQuestId = model.quests.front().questId;
+			if (ShouldShowQuestInJournal(quest.status) && quest.questId == m_selectedQuestId)
+			{
+				selectionStillShown = true;
+				break;
+			}
+		}
+		if (!selectionStillShown)
+		{
+			m_selectedQuestId.clear();
+			for (const UIQuestEntry& quest : model.quests)
+			{
+				if (ShouldShowQuestInJournal(quest.status))
+				{
+					m_selectedQuestId = quest.questId;
+					break;
+				}
+			}
 		}
 
 		bool selectedQuestFound = false;
 		for (const UIQuestEntry& quest : model.quests)
 		{
+			// Le journal ne liste QUE les quêtes acceptées (Active/ReadyToTurnIn) ;
+			// les quêtes seulement proposées par un PNJ (Offered) ou verrouillées
+			// n'y apparaissent pas — elles ne sont visibles que chez le PNJ.
+			if (!ShouldShowQuestInJournal(quest.status))
+			{
+				continue;
+			}
 			QuestJournalEntryView entry{};
 			entry.questId = quest.questId;
 			entry.status = quest.status;

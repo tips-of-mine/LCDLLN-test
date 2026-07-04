@@ -23,6 +23,16 @@ namespace engine::client
 	void WorldToRadarUv(float px, float pz, float playerX, float playerZ, float radiusM,
 		float& outU, float& outV, bool& outOffRadar);
 
+	/// Vrai si une quête de statut \p status doit apparaître dans le JOURNAL du
+	/// joueur : uniquement les quêtes acceptées et en cours — `Active` (2) et
+	/// `ReadyToTurnIn` (3). Les quêtes seulement proposées par un PNJ (`Offered` = 1)
+	/// ou verrouillées (`Locked` = 0), et les quêtes déjà rendues (`Completed` = 4),
+	/// n'y figurent PAS : le joueur doit d'abord accepter la quête chez le PNJ (le
+	/// journal reflète ce qu'on a accepté, pas ce qui est simplement disponible).
+	/// \p status = statut wire système B copié par `UIModelBinding::ApplyQuestDelta`
+	/// (cf. `QuestStatus` dans `QuestRuntime.h`). Fonction pure, testable directement.
+	bool ShouldShowQuestInJournal(uint8_t status);
+
 	/// Pixel-space rectangle used by the quest UI presenter layout.
 	struct QuestUiRect
 	{

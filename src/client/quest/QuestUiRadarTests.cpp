@@ -8,6 +8,7 @@
 #include <cmath>
 #include <iostream>
 
+using engine::client::ShouldShowQuestInJournal;
 using engine::client::WorldToRadarUv;
 
 namespace
@@ -84,6 +85,18 @@ int main()
 		Check(NearlyEqual(u, 0.5f), "radiusM<=0 -> u==0.5 (garde)");
 		Check(NearlyEqual(v, 0.5f), "radiusM<=0 -> v==0.5 (garde)");
 		Check(offRadar, "radiusM<=0 -> off-radar force a true");
+	}
+
+	// Filtre du journal : seules les quêtes ACCEPTÉES (Active=2, ReadyToTurnIn=3)
+	// y apparaissent. Une quête juste proposée (Offered=1) ou verrouillée (Locked=0)
+	// n'y figure PAS — le joueur doit l'accepter chez le PNJ d'abord. Completed (4)
+	// (rendue) en sort aussi.
+	{
+		Check(!ShouldShowQuestInJournal(0u), "Locked(0) -> pas dans le journal");
+		Check(!ShouldShowQuestInJournal(1u), "Offered(1) -> pas dans le journal (dispo PNJ seulement)");
+		Check(ShouldShowQuestInJournal(2u), "Active(2) -> dans le journal");
+		Check(ShouldShowQuestInJournal(3u), "ReadyToTurnIn(3) -> dans le journal");
+		Check(!ShouldShowQuestInJournal(4u), "Completed(4) -> pas dans le journal (rendue)");
 	}
 
 	if (g_failures != 0)

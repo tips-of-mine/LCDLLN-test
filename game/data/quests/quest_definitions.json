@@ -5,8 +5,6 @@
       "giver": "npc:elder_marn",
       "turnIn": "npc:elder_marn",
       "prereqs": [],
-      "repeat": "daily",
-      "autoComplete": false,
       "steps": [
         { "type": "kill", "target": "mob:100", "requiredCount": 10 }
       ],

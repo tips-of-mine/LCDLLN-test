@@ -58,6 +58,15 @@ namespace engine::server
 		inline constexpr uint32_t kDefaultMobDamage = 6;
 		inline constexpr uint32_t kDefaultLootBagArchetypeId = 200;
 		inline constexpr float kDefaultAttackRangeMeters = 4.0f;
+		/// Accuracy de repli pour les profils de mêlée. Le moteur de stats
+		/// (`CharacterStatsEngine`) met délibérément `accuracy = 0` pour les classes
+		/// de mêlée (range 0) — dans SON domaine, 0 signifie « accuracy non
+		/// applicable à la mêlée ». Mais `ResolveAttackRoll` interprète `accuracy = 0`
+		/// comme 0 % de chance de toucher → 100 % de ratés. On substitue donc une
+		/// accuracy pleine (100 = touche toujours, la mêlée ne fait pas de jet de
+		/// précision) au moment de peupler le composant combat. Cf.
+		/// `ApplyDerivedCombatStats` (miroir du fallback de portée juste au-dessus).
+		inline constexpr float kDefaultMeleeAccuracy = 100.0f;
 		inline constexpr float kDefaultMobLeashDistanceMeters = 24.0f;
 		inline constexpr float kDefaultMobMoveSpeedMetersPerSecond = 3.0f;
 		inline constexpr float kDefaultMobPatrolDistanceMeters = 6.0f;
@@ -271,7 +280,10 @@ namespace engine::server
 		{
 			client.combat.damagePerHit = derived.damage;
 			client.combat.attackRangeMeters = (derived.range > 0.0f) ? derived.range : kDefaultAttackRangeMeters;
-			client.combat.accuracy = derived.accuracy;
+			// Mêlée : le moteur de stats donne accuracy 0 (« non applicable »), que
+			// ResolveAttackRoll lit comme 0 % de touche → 100 % de ratés. Fallback à
+			// une accuracy pleine (la mêlée touche toujours). Cf. kDefaultMeleeAccuracy.
+			client.combat.accuracy = (derived.accuracy > 0.0f) ? derived.accuracy : kDefaultMeleeAccuracy;
 			client.combat.critRate = derived.critRate;
 			client.combat.critMult = derived.critMult;
 		}

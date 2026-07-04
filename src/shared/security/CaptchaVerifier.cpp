@@ -17,6 +17,7 @@
 #  include <unistd.h>
 #  include <openssl/ssl.h>
 #  include <openssl/err.h>
+#  include <openssl/x509.h>
 #  include <cstring>
 #  include <sstream>
 #else
@@ -219,15 +220,35 @@ namespace engine::server
 			LOG_ERROR(Net, "[CaptchaVerifier] VerifyHttp: SSL_CTX_new failed");
 			return false;
 		}
+		// Sécurité (audit F4) : vérifier le certificat serveur (défaut OpenSSL = SSL_VERIFY_NONE).
+		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+		if (SSL_CTX_set_default_verify_paths(ctx) != 1)
+		{
+			LOG_WARN(Net, "[CaptchaVerifier] trust store système indisponible");
+			// poursuivre : SSL_get_verify_result rejettera si le cert n'est pas validable.
+		}
 		SSL* ssl = SSL_new(ctx);
 		SSL_set_fd(ssl, fd);
 		SSL_set_tlsext_host_name(ssl, host.c_str());
+		// Sécurité (audit F4) : épingler le hostname attendu pour la validation du certificat.
+		SSL_set1_host(ssl, host.c_str());
 		if (SSL_connect(ssl) != 1)
 		{
 			SSL_free(ssl);
 			SSL_CTX_free(ctx);
 			::close(fd);
 			LOG_ERROR(Net, "[CaptchaVerifier] VerifyHttp: TLS handshake failed to host={}", host);
+			return false;
+		}
+
+		// Sécurité (audit F4) : refuser si la chaîne/hostname n'est pas validée.
+		const long verifyResult = SSL_get_verify_result(ssl);
+		if (verifyResult != X509_V_OK)
+		{
+			SSL_free(ssl);
+			SSL_CTX_free(ctx);
+			::close(fd);
+			LOG_WARN(Net, "[CaptchaVerifier] validation certificat échouée (code={}, host={})", verifyResult, host);
 			return false;
 		}
 

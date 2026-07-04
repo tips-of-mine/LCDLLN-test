@@ -14,16 +14,19 @@
 #include "src/masterd/shards/ShardRegistry.h"
 #include "src/masterd/shards/ShardPlayerPresenceCache.h"
 #include "src/shared/network/ShardPayloads.h"
+#include "src/shared/network/ShardWireAuth.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/core/Log.h"
 
 #include <cstdio>
+#include <utility>
 
 namespace engine::server
 {
 	void ShardRegisterHandler::SetServer(NetServer* server) { m_server = server; }
 	void ShardRegisterHandler::SetShardRegistry(ShardRegistry* registry) { m_registry = registry; }
 	void ShardRegisterHandler::SetPlayerPresenceCache(ShardPlayerPresenceCache* cache) { m_presenceCache = cache; }
+	void ShardRegisterHandler::SetSecret(std::string secret) { m_secret = std::move(secret); }
 
 	void ShardRegisterHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t /*sessionIdHeader*/,
 		const uint8_t* payload, size_t payloadSize)
@@ -34,15 +37,19 @@ namespace engine::server
 			LOG_WARN(Core, "[ShardRegisterHandler] HandlePacket: server or registry not set");
 			return;
 		}
-		if (opcode == kOpcodeShardRegister)
+		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
 		{
-			HandleRegister(connId, requestId, payload, payloadSize);
-			return;
-		}
-		if (opcode == kOpcodeShardHeartbeat)
-		{
-			HandleHeartbeat(connId, payload, payloadSize);
-			return;
+			// Sécurité (audit F3) : le canal shard↔master est authentifié par un tag HMAC préfixe.
+			auto body = UnwrapShardAuth(m_secret, payload, payloadSize);
+			if (!body)
+			{
+				LOG_WARN(Server, "[SREG] paquet shard rejeté : authentification HMAC invalide (opcode={}, connId={})", opcode, connId);
+				return;
+			}
+			if (opcode == kOpcodeShardRegister)
+				HandleRegister(connId, requestId, body->first, body->second);
+			else
+				HandleHeartbeat(connId, body->first, body->second);
 		}
 	}
 
@@ -124,7 +131,7 @@ namespace engine::server
 		}
 	}
 
-	void ShardRegisterHandler::HandleHeartbeat(uint32_t /*connId*/, const uint8_t* payload, size_t payloadSize)
+	void ShardRegisterHandler::HandleHeartbeat(uint32_t connId, const uint8_t* payload, size_t payloadSize)
 	{
 		using namespace engine::network;
 
@@ -136,6 +143,18 @@ namespace engine::server
 		if (!parsed)
 		{
 			LOG_WARN(Server, "[SREG] HandleHeartbeat: parse failed");
+			return;
+		}
+		// Sécurité (audit F2) : le shard_id du heartbeat doit correspondre à la connId qui a
+		// réalisé le REGISTER (mémorisée par SetShardConnection). Sans cette vérification,
+		// n'importe quel pair connecté au Master peut forger un heartbeat pour un shard_id
+		// qu'il ne possède pas. GetShardConnection renvoie std::optional<uint32_t> (nullopt
+		// si le shard_id est inconnu du registre).
+		const auto registered = m_registry->GetShardConnection(parsed->shard_id);
+		if (!registered || *registered != connId)
+		{
+			LOG_WARN(Server, "[SREG] HandleHeartbeat rejeté : connId={} ne correspond pas au shard_id={} (attendu connId={})",
+				connId, parsed->shard_id, registered ? *registered : 0u);
 			return;
 		}
 		m_registry->UpdateHeartbeat(parsed->shard_id, parsed->current_load);

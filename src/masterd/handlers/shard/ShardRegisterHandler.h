@@ -10,6 +10,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 namespace engine::server
 {
@@ -48,16 +49,25 @@ namespace engine::server
 		/// @param cache  Instance ShardPlayerPresenceCache. Non possédé. Peut être nul.
 		void SetPlayerPresenceCache(ShardPlayerPresenceCache* cache);
 
-		/// Point d'entrée principal : dispatche vers HandleRegister ou HandleHeartbeat.
+		/// Sécurité (audit F3) : secret partagé HMAC-SHA256 utilisé pour vérifier le tag
+		/// d'authentification préfixé aux payloads SHARD_REGISTER/SHARD_HEARTBEAT (config
+		/// `shard.ticket_hmac_secret`, identique au secret câblé côté shard). Si vide,
+		/// UnwrapShardAuth rejette systématiquement (aucun shard ne peut s'enregistrer).
+		void SetSecret(std::string secret);
+
+		/// Point d'entrée principal : vérifie le tag HMAC préfixe (audit F3) puis dispatche
+		/// vers HandleRegister ou HandleHeartbeat.
 		///
 		/// Ignore silencieusement tout opcode autre que SHARD_REGISTER et SHARD_HEARTBEAT.
 		/// Si m_server ou m_registry est nul, émet un LOG_WARN et retourne immédiatement.
+		/// Si le tag d'authentification est absent ou invalide, émet un LOG_WARN et
+		/// rejette le paquet sans dispatcher (aucune réponse envoyée).
 		/// @param connId          Identifiant de connexion réseau de l'appelant (shard).
 		/// @param opcode          Code d'opération du paquet reçu.
 		/// @param requestId       Identifiant de requête à reporter dans la réponse.
 		/// @param sessionIdHeader Champ session de l'en-tête (ignoré pour ces opcodes).
-		/// @param payload         Données brutes du corps du paquet.
-		/// @param payloadSize     Taille en octets de \p payload.
+		/// @param payload         Données brutes du corps du paquet, tag HMAC(32) inclus en tête.
+		/// @param payloadSize     Taille en octets de \p payload (tag inclus).
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
 
@@ -77,10 +87,13 @@ namespace engine::server
 
 		/// Traite l'opcode SHARD_HEARTBEAT.
 		///
-		/// Parse le payload (shard_id, charge actuelle) et délègue à
+		/// Parse le payload (shard_id, charge actuelle), vérifie (audit F2) que \p connId
+		/// correspond bien à la connexion enregistrée pour ce shard_id via
+		/// ShardRegistry::GetShardConnection (rejette sinon, LOG_WARN), puis délègue à
 		/// ShardRegistry::UpdateHeartbeat pour maintenir l'état Online du shard.
 		/// Aucune réponse n'est envoyée (fire-and-forget).
-		/// @param connId       Identifiant de connexion (utilisé pour le logging uniquement).
+		/// @param connId       Identifiant de connexion réseau de l'appelant ; doit correspondre
+		///                     à la connId mémorisée lors du REGISTER pour ce shard_id.
 		/// @param payload      Corps du paquet SHARD_HEARTBEAT.
 		/// @param payloadSize  Taille en octets de \p payload.
 		void HandleHeartbeat(uint32_t connId, const uint8_t* payload, size_t payloadSize);
@@ -91,5 +104,7 @@ namespace engine::server
 		ShardRegistry* m_registry = nullptr;
 		/// Cache de présence enrichie (optionnel, non possédé). Nul = présence enrichie désactivée.
 		ShardPlayerPresenceCache* m_presenceCache = nullptr;
+		/// Secret HMAC partagé avec les shards (audit F3). Voir SetSecret.
+		std::string m_secret;
 	};
 }

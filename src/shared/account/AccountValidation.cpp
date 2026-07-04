@@ -37,6 +37,13 @@ namespace engine::server
 	{
 		if (normalisedEmail.empty())
 			return engine::network::NetErrorCode::INVALID_EMAIL;
+		// Sécurité (audit F9) : aucun caractère de contrôle (0x00-0x1F, 0x7F) où que ce soit —
+		// empêche l'injection SMTP (CR/LF vers RCPT TO/headers) via l'adresse enregistrée.
+		for (unsigned char c : normalisedEmail)
+		{
+			if (c < 0x20u || c == 0x7Fu)
+				return engine::network::NetErrorCode::INVALID_EMAIL;
+		}
 		if (normalisedEmail.size() > kAccountEmailMaxLength)
 			return engine::network::NetErrorCode::INVALID_EMAIL;
 		std::size_t at = normalisedEmail.find('@');

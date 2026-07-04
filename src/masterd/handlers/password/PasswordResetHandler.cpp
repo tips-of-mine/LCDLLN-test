@@ -251,6 +251,16 @@ namespace engine::server
 
 		const uint64_t account_id = parsed->account_id;
 
+		// Sécurité (audit F8) : verrou anti-brute-force sur le code à 6 chiffres, clé par compte.
+		const std::string rlKey = "vemail:" + std::to_string(account_id);
+		if (m_rateLimit && m_rateLimit->IsBanned(rlKey))
+		{
+			LOG_WARN(Auth, "[PasswordResetHandler] VerifyEmail: verrouillé (trop d'échecs) account_id={}", account_id);
+			auto pkt = BuildVerifyEmailResponseErrorPacket(NetErrorCode::VERIFICATION_CODE_INVALID, requestId, sessionIdHeader);
+			if (!pkt.empty()) m_server->Send(connId, pkt);
+			return;
+		}
+
 		// Lookup account to confirm it exists.
 		auto optAccount = m_accountStore->FindByAccountId(account_id);
 		if (!optAccount)
@@ -273,6 +283,7 @@ namespace engine::server
 		// Validate code.
 		if (!m_resetStore->ValidateVerificationCode(account_id, parsed->code))
 		{
+			if (m_rateLimit) m_rateLimit->RecordAuthFailure(rlKey); // audit F8 : bannit après N échecs
 			LOG_WARN(Auth, "[PasswordResetHandler] VerifyEmail: invalid or expired code (account_id={})", account_id);
 			auto pkt = BuildVerifyEmailResponseErrorPacket(NetErrorCode::VERIFICATION_CODE_INVALID, requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);

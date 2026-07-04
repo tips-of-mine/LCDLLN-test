@@ -44,6 +44,22 @@ namespace
 		Assert(ValidateEmail(NormaliseEmail("a@bcom")) == NetErrorCode::INVALID_EMAIL, "domaine sans .");
 		Assert(ValidateEmail(NormaliseEmail("")) == NetErrorCode::INVALID_EMAIL, "vide");
 	}
+
+	// Sécurité (audit F9) : rejet des octets de contrôle dans l'e-mail (anti-injection SMTP).
+	void TestValidateEmailControlCharsRejected()
+	{
+		using engine::server::ValidateEmail;
+		Assert(ValidateEmail("a@b.com") == NetErrorCode::OK, "email valide accepté");
+		Assert(ValidateEmail(std::string("a@b.com\r\nRCPT TO:<x@evil>")) == NetErrorCode::INVALID_EMAIL,
+			"CRLF au milieu rejeté");
+		Assert(ValidateEmail(std::string("a\tb@c.com")) == NetErrorCode::INVALID_EMAIL, "TAB rejeté");
+		{
+			std::string withNul = "a@b.com";
+			withNul.push_back('\0');
+			withNul += "x";
+			Assert(ValidateEmail(withNul) == NetErrorCode::INVALID_EMAIL, "NUL rejeté");
+		}
+	}
 }
 
 int main()
@@ -51,6 +67,7 @@ int main()
 	TestPasswordRules();
 	TestValidatePasswordEquivalence();
 	TestValidateEmail();
+	TestValidateEmailControlCharsRejected();
 	if (s_fail != 0) return 1;
 	std::cout << "AccountValidation tests: all passed." << std::endl;
 	return 0;

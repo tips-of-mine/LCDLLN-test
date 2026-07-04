@@ -25,3 +25,21 @@
 ## Application dans une transaction
 
 Chaque migration doit être exécutée dans une transaction si le moteur le permet (MySQL : `START TRANSACTION;` … `COMMIT;`). En cas d’erreur : `ROLLBACK;`.
+
+## Cas particulier : doublon historique 0023 (NE PAS SUPPRIMER)
+
+Deux fichiers portent le numéro **0023** (`0023_accounts_profile.sql` et
+`0023_accounts_profile_fields.sql`). C’est un doublon **historique** : selon la base,
+**l’un OU l’autre** a été appliqué (et son checksum est en `schema_version`).
+
+- **Ne supprimez NI l’un NI l’autre.** Le `MigrationRunner` accepte qu’un numéro ait
+  plusieurs fichiers et valide le checksum en base s’il correspond à **n’importe lequel**
+  d’eux ; supprimer le fichier réellement appliqué provoquerait un *checksum mismatch*
+  → **arrêt du master au démarrage**.
+- À l’application (base fraîche), un **seul** script par numéro est exécuté (anti
+  double-`INSERT` sur la PK `version`).
+- Les colonnes du fichier 0023 **non** appliqué sont comblées de façon **idempotente**
+  par `0066_accounts_profile_complete.sql` (union de toutes les colonnes des deux 0023).
+
+**Convention pour l’avenir : un numéro = un fichier.** Ce doublon est une exception gérée,
+pas un modèle à suivre.

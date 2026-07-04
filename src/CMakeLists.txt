@@ -139,6 +139,11 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/TermsPayloads.cpp
+    # Audit F3 : tag HMAC-SHA256 préfixe authentifiant SHARD_REGISTER/HEARTBEAT
+    # (utilisé par ShardRegisterHandler, compilé dans ce binaire master).
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ShardWireAuth.cpp
+    # Audit F6 : refus au boot d'un secret HMAC partagé faible/par défaut.
+    ${CMAKE_SOURCE_DIR}/src/shared/security/SharedSecretPolicy.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp
@@ -1106,6 +1111,27 @@ elseif(UNIX)
   target_compile_options(shard_ticket_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME shard_ticket_tests COMMAND shard_ticket_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # Audit F8 : verrou anti-brute-force sur PasswordResetHandler::HandleVerifyEmail
+  # (code de vérification e-mail à 6 chiffres). Passe par HandlePacket() (point
+  # d'entrée public) avec un NetServer jamais Init() — Send() y est un no-op sûr.
+  add_executable(password_reset_handler_tests
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/password/PasswordResetHandlerTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/password/PasswordResetHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/password/PasswordResetStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/account/InMemoryAccountStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/email/SmtpMailer.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/email/LocalizedEmail.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/security/RateLimitAndBan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/NetServer.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/PacketLog.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/AuthRegisterPayloads.cpp
+  )
+  target_include_directories(password_reset_handler_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(password_reset_handler_tests PRIVATE engine_core engine_auth OpenSSL::SSL pthread)
+  target_compile_options(password_reset_handler_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME password_reset_handler_tests COMMAND password_reset_handler_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # Présence enrichie (v9) : round-trip du payload SHARD_HEARTBEAT avec tableau joueurs.
   add_executable(shard_payloads_tests
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardPayloadsTests.cpp
@@ -1119,6 +1145,25 @@ elseif(UNIX)
   target_link_libraries(shard_payloads_tests PRIVATE engine_core)
   target_compile_options(shard_payloads_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME shard_payloads_tests COMMAND shard_payloads_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # Audit F3 : tag HMAC-SHA256 préfixe authentifiant SHARD_REGISTER/HEARTBEAT.
+  add_executable(shard_wire_auth_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ShardWireAuthTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ShardWireAuth.cpp
+  )
+  target_include_directories(shard_wire_auth_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(shard_wire_auth_tests PRIVATE OpenSSL::SSL)
+  target_compile_options(shard_wire_auth_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME shard_wire_auth_tests COMMAND shard_wire_auth_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # Audit F6 : refus au boot d'un secret HMAC partagé faible/par défaut (masterd + shardd).
+  add_executable(shared_secret_policy_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/security/SharedSecretPolicyTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/security/SharedSecretPolicy.cpp
+  )
+  target_include_directories(shared_secret_policy_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_compile_options(shared_secret_policy_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME shared_secret_policy_tests COMMAND shared_secret_policy_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # Présence unifiée (Niveau 1) : ShardPresenceService — présence shard-locale.
   add_executable(shard_presence_service_tests
@@ -1154,6 +1199,9 @@ elseif(UNIX)
   target_link_libraries(server_list_policy_tests PRIVATE engine_core)
   target_compile_options(server_list_policy_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME server_list_policy_tests COMMAND server_list_policy_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # Sécurité (audit F9) : la cible account_validation_tests est déjà déclarée dans le
+  # CMakeLists.txt racine (liée à engine_core) — ne pas la redéclarer ici (CMP0002 : doublon).
 
   # Wave 12: PacketLog ring buffer (debug RX/TX trace, opt-in) — pure unit tests.
   # Aucun lien sur engine_core ni OpenSSL : PacketLog est autonome (std + threads).

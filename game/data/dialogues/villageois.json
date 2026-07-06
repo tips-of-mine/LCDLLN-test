@@ -1,8 +1,8 @@
 {
-    "_comment": "Dialogue PNJ. Un fichier par PNJ/zone sous game/data/dialogues/. Reference depuis config.json via world.interactables.<i>.dialogue_id = \"villageois\". Format : start (id du noeud initial) + nodes (count + index). Chaque noeud : id, lines (count+index : text, cue optionnel), choices (1..5 : text, next OU action end/accept_quest/complete_quest, questId optionnel, questKey optionnel (SP2, id texte wire QuestAccept/TurnInRequest), icon optionnel). questId illustratif (a mapper vers un vrai quest numerique cote serveur). Textes sans accents (convention du projet).",
+    "_comment": "Dialogue PNJ. Un fichier par PNJ/zone sous game/data/dialogues/. Reference depuis config.json via world.interactables.<i>.dialogue_id = \"villageois\". Format : start (id du noeud initial) + nodes (count + index). Chaque noeud : id, lines (count+index : text, cue optionnel), choices (1..5 : text, next OU action end/accept_quest/complete_quest, questId optionnel, questKey optionnel (SP2, id texte wire QuestAccept/TurnInRequest), icon optionnel). questId illustratif (a mapper vers un vrai quest numerique cote serveur). Textes sans accents (convention du projet). NB (2026-07-04) : l'acceptation de quete ne se fait plus via une action 'accept_quest' dans le dialogue (retour joueur : trop implicite) ; le choix 'As-tu une tache ?' renvoie vers un noeud d'info, et l'acceptation explicite se fait via le bouton 'Accepter' du panneau 'Quetes du PNJ' (giver-list, ouvert au Talk).",
     "start": "intro",
     "nodes": {
-        "count": 2,
+        "count": 3,
         "0": {
             "id": "intro",
             "lines": {
@@ -13,7 +13,7 @@
             "choices": {
                 "count": 3,
                 "0": { "text": "Parle-moi du coin.", "next": "infos" },
-                "1": { "text": "As-tu une tache pour moi ?", "action": "accept_quest", "questId": 1, "questKey": "kill_10_boars" },
+                "1": { "text": "As-tu une tache pour moi ?", "next": "tache" },
                 "2": { "text": "Au revoir.", "action": "end" }
             }
         },
@@ -25,8 +25,21 @@
             },
             "choices": {
                 "count": 2,
-                "0": { "text": "Finalement, j'accepte ta tache.", "action": "accept_quest", "questId": 1 },
+                "0": { "text": "As-tu une tache pour moi ?", "next": "tache" },
                 "1": { "text": "Merci, a bientot.", "action": "end" }
+            }
+        },
+        "2": {
+            "id": "tache",
+            "lines": {
+                "count": 2,
+                "0": { "text": "Oui : les sangliers du nord ravagent nos champs. Reduis leur nombre pour proteger les recoltes." },
+                "1": { "text": "(Pour t'en charger, ouvre le panneau 'Quetes du PNJ' et choisis 'Accepter'.)", "cue": true }
+            },
+            "choices": {
+                "count": 2,
+                "0": { "text": "Revenir.", "next": "intro" },
+                "1": { "text": "Au revoir.", "action": "end" }
             }
         }
     }

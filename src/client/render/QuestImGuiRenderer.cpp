@@ -137,11 +137,14 @@ namespace engine::render
 				for (size_t i = 0; i < state.selectedQuestSteps.size(); ++i)
 				{
 					const engine::client::QuestStepView& step = state.selectedQuestSteps[i];
+					// StepLabel inclut DÉJÀ le compteur (template quest_texts.fr.json
+					// « … {current}/{required} », ou fallback « current/required »).
+					// Ne pas ré-ajouter « (x/y) » ici sinon double affichage « 9/10 (9/10) ».
 					const std::string stepLabel = m_textCatalog->StepLabel(
 						state.selectedQuestId, i, step.currentCount, step.requiredCount);
 					if (step.completed)
 						ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kSuccess));
-					ImGui::BulletText("%s (%u/%u)", stepLabel.c_str(), step.currentCount, step.requiredCount);
+					ImGui::BulletText("%s", stepLabel.c_str());
 					if (step.completed)
 						ImGui::PopStyleColor();
 				}

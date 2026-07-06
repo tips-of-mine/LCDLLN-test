@@ -10630,10 +10630,14 @@ namespace engine
 							// configurée (defaut 35 m), indépendamment du rayon d'interaction
 							// (e.radius, ~2.5 m) qui régit le badge "E".
 							const engine::math::Vec3 markerPlayerPos = m_characterController.GetPosition();
+							// Distance XZ uniquement (comme le rayon d'interaction / badge "E",
+							// cf. calcul dx²+dz² du "[E]") : la position des interactables est
+							// chargée avec y=0 (jamais collée au sol) alors que le joueur est
+							// ~100 m plus haut (plateau terrain). Inclure le Y ferait toujours
+							// dépasser markerMaxDist → le rune ne s'afficherait jamais.
 							const float mdx = e.position.x - markerPlayerPos.x;
-							const float mdy = e.position.y - markerPlayerPos.y;
 							const float mdz = e.position.z - markerPlayerPos.z;
-							const float markerDist = std::sqrt(mdx * mdx + mdy * mdy + mdz * mdz);
+							const float markerDist = std::sqrt(mdx * mdx + mdz * mdz);
 							const float markerMaxDist = static_cast<float>(
 								m_cfg.GetDouble("client.quest.giver_marker_distance_m", 35.0));
 							if (markerDist <= markerMaxDist)
@@ -11195,7 +11199,11 @@ namespace engine
 
 					// --- Cadre cible (haut-centre) : nom + barre de PV. Les PV de la
 					// cible suivent les snapshots (cf. UIModelBinding::ApplySnapshot).
-					if (uiModel.targetStats.hasTarget)
+					// On masque le cadre dès que la cible est morte (bit 1 de stateFlags) :
+					// inutile de laisser traîner « (MORT) » tant qu'aucune autre cible n'est
+					// sélectionnée — ça encombrait le HUD (retour joueur 2026-07-04).
+					if (uiModel.targetStats.hasTarget
+						&& (uiModel.targetStats.stateFlags & 1u) == 0u)
 					{
 						const float frameW = 260.0f;
 						const float frameH = 54.0f;

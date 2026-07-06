@@ -134,29 +134,61 @@ namespace engine::render
 			const size_t choiceCount = node.choices.size();
 			for (size_t i = 0; i < choiceCount; ++i)
 			{
-				// Libellé : numéro + icône optionnelle + texte du choix.
+				const DialogueChoice& choice = node.choices[i];
+				// SP2 — distinction visuelle des choix liés à une QUÊTE : couleur de
+				// bouton dédiée (doré = accepter, vert = rendre) + tag texte, pour les
+				// séparer nettement des réponses de bavardage ordinaires.
+				const bool isAcceptChoice = (choice.action == DialogueAction::AcceptQuest);
+				const bool isTurnInChoice = (choice.action == DialogueAction::CompleteQuest);
+				const bool isQuestChoice  = isAcceptChoice || isTurnInChoice || choice.questId >= 0;
+				const char* questTag = isAcceptChoice ? "  [Nouvelle quête]"
+				                     : isTurnInChoice ? "  [Rendre la quête]"
+				                     : isQuestChoice  ? "  [Quête]" : "";
+
+				// Libellé : numéro + icône optionnelle + texte du choix + tag quête.
 				// Le suffix ##choice<i> garantit l'unicité de l'ID ImGui.
 				char label[512];
-				if (!node.choices[i].icon.empty())
+				if (!choice.icon.empty())
 				{
-					std::snprintf(label, sizeof(label), "%zu. %s %s##choice%zu",
+					std::snprintf(label, sizeof(label), "%zu. %s %s%s##choice%zu",
 					              i + 1u,
-					              node.choices[i].icon.c_str(),
-					              node.choices[i].text.c_str(),
+					              choice.icon.c_str(),
+					              choice.text.c_str(),
+					              questTag,
 					              i);
 				}
 				else
 				{
-					std::snprintf(label, sizeof(label), "%zu. %s##choice%zu",
+					std::snprintf(label, sizeof(label), "%zu. %s%s##choice%zu",
 					              i + 1u,
-					              node.choices[i].text.c_str(),
+					              choice.text.c_str(),
+					              questTag,
 					              i);
+				}
+
+				// Surbrillance dédiée aux choix de quête (avant le bouton).
+				int questColorsPushed = 0;
+				if (isAcceptChoice)
+				{
+					ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.46f, 0.35f, 0.11f, 0.92f));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.64f, 0.49f, 0.17f, 1.0f));
+					questColorsPushed = 2;
+				}
+				else if (isTurnInChoice)
+				{
+					ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.16f, 0.36f, 0.18f, 0.92f));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.24f, 0.52f, 0.26f, 1.0f));
+					questColorsPushed = 2;
 				}
 
 				// Bouton pleine largeur avec word-wrap (PushTextWrapPos avant le bouton).
 				ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + wrapW);
 				const bool clicked = ImGui::Button(label, ImVec2(wrapW, 0.0f));
 				ImGui::PopTextWrapPos();
+
+				// Toujours dépiler les couleurs de quête avant tout break de boucle.
+				if (questColorsPushed > 0)
+					ImGui::PopStyleColor(questColorsPushed);
 
 				// Raccourcis clavier 1..5 (API ImGui moderne : ImGuiKey_1 + offset).
 				// Limité à i < 5 pour ne pas dépasser ImGuiKey_5.

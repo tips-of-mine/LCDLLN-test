@@ -282,15 +282,19 @@ namespace
 
 		const DialogueTree t = engine::client::LoadDialogueTree(world, "npc.", {});
 		REQUIRE(t.startNodeId == "intro");
-		REQUIRE(t.nodes.size() == 2);
+		REQUIRE(t.nodes.size() == 3);
 		REQUIRE(t.FindNode("intro") != nullptr);
 		REQUIRE(t.FindNode("infos") != nullptr);
+		REQUIRE(t.FindNode("tache") != nullptr);
 		REQUIRE(t.FindNode("intro")->choices.size() == 3);
-		// Le 2e choix du nœud d'intro accepte une quête (questId illustratif >= 0).
-		REQUIRE(t.FindNode("intro")->choices[1].action == DialogueAction::AcceptQuest);
-		REQUIRE(t.FindNode("intro")->choices[1].questId >= 0);
-		// SP2 : le choix accept_quest porte aussi la clé texte de quête (wire QuestAcceptRequest).
-		REQUIRE(t.FindNode("intro")->choices[1].questKey == "kill_10_boars");
+		// 2026-07-04 : le 2e choix du nœud d'intro « As-tu une tache ? » ne fait plus
+		// d'accept_quest direct (retour joueur : acceptation trop implicite). Il navigue
+		// vers le nœud d'info « tache » ; l'acceptation explicite passe par le bouton
+		// « Accepter » du panneau donneur. (La couverture du parsing/callback accept_quest
+		// reste assurée par les tests synthétiques ci-dessus.)
+		REQUIRE(t.FindNode("intro")->choices[1].action == DialogueAction::Continue);
+		REQUIRE(t.FindNode("intro")->choices[1].nextNodeId == "tache");
+		REQUIRE(t.FindNode("intro")->choices[1].questKey.empty());
 	}
 
 	// SP2 — un choix sans "questKey" dans la config retombe sur une chaîne vide

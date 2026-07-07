@@ -2,6 +2,7 @@
   "kill_10_boars": {
     "title": "Sangliers en surnombre",
     "description": "Les sangliers ravagent les champs autour du village. Réduisez leur nombre pour protéger les récoltes.",
+    "completion": "Merci, aventurier ! Grâce à toi, nos champs seront plus sûrs cette saison. Voici ta récompense.",
     "steps": [
       "Sangliers tués : {current}/{required}"
     ]
@@ -9,6 +10,7 @@
   "hunt_collect_enter": {
     "title": "Sur les traces de l'ancien",
     "description": "L'ancien Marn a besoin d'aide : traquer une bête, récupérer un objet perdu et explorer une zone voisine.",
+    "completion": "Tu as accompli tout ce que je t'avais demandé. L'ancien Marn t'en est reconnaissant — prends ceci.",
     "steps": [
       "Bête traquée : {current}/{required}",
       "Objet récupéré : {current}/{required}",
@@ -18,6 +20,7 @@
   "report_to_guard": {
     "title": "Rapport au capitaine",
     "description": "Faites votre rapport au capitaine de la garde.",
+    "completion": "Bien reçu. Le capitaine te remercie pour ce rapport.",
     "steps": [
       "Rapport donné : {current}/{required}"
     ]

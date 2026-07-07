@@ -17,6 +17,7 @@ namespace engine::client
 	{
 		std::string title;
 		std::string description;
+		std::string completion; ///< texte de clôture affiché au turn-in (optionnel)
 		std::vector<std::string> stepTemplates; ///< un template par étape, peut contenir {current}/{required}
 	};
 
@@ -42,6 +43,10 @@ namespace engine::client
 
 		/// Description lisible de la quête \p questId. Fallback : chaîne vide.
 		std::string Description(std::string_view questId) const;
+
+		/// Texte de clôture (turn-in) de la quête \p questId — affiché dans le
+		/// panneau donneur quand la quête est prête à rendre. Fallback : chaîne vide.
+		std::string Completion(std::string_view questId) const;
 
 		/// Libellé lisible de l'étape \p stepIndex de la quête \p questId, avec
 		/// substitution de `{current}`/`{required}` dans le template d'étape.

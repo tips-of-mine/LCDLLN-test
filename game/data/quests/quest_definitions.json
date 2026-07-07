@@ -21,8 +21,7 @@
       "prereqs": [],
       "steps": [
         { "type": "kill", "target": "mob:100", "requiredCount": 1 },
-        { "type": "collect", "target": "item:2001", "requiredCount": 1 },
-        { "type": "enter", "target": "zone:2", "requiredCount": 1 }
+        { "type": "collect", "target": "item:2001", "requiredCount": 1 }
       ],
       "rewards": {
         "xp": 100,

@@ -7770,6 +7770,27 @@ namespace engine
 			}
 		}
 
+		// Bascule HUD carte — Touche U remappable post-auth masque/affiche le
+		// « cluster carte » : boussole + radar minimap + tracker de quêtes (retour
+		// joueur : « pouvoir boucher la boussole, le radar et le suivi de quête »).
+		// Le journal et le panneau donneur ne sont PAS concernés (interactifs).
+		// Mêmes guards que les autres toggles (chat focus + pause + editor + auth).
+		{
+			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
+			const bool inGameNoMenu = !m_inGamePauseMenuVisible
+				&& !m_inGameOptionsPanelVisible
+				&& !m_editorEnabled
+				&& m_authUi.IsInitialized()
+				&& m_authUi.IsFlowComplete();
+			const engine::platform::Key hudKey =
+				KeyFromName(m_cfg.GetString("controls.keybind.hud_toggle", "U"), engine::platform::Key::U);
+			if (inGameNoMenu && !chatBlocks && m_input.WasPressed(hudKey))
+			{
+				m_hudMapClusterHidden = !m_hudMapClusterHidden;
+				LOG_INFO(Core, "[Engine] HUD map cluster toggle (hidden={})", m_hudMapClusterHidden);
+			}
+		}
+
 		// CMANGOS.21 (Phase 5.21 step 3+4) — Touche A post-auth toggle le
 		// panneau Arena (equivalent a la slash command /arena). Memes guards
 		// que la touche B (chat focus + pause + editor + auth flow).
@@ -10542,7 +10563,9 @@ namespace engine
 #if defined(_WIN32)
 			// Boussole HUD : visible en jeu. Forward caméra = row 2 du view matrix.
 			// L'aiguille rouge pointe le Nord et tourne quand le joueur pivote.
-			if (m_authUi.IsInWorldShard())
+			// Masquée avec le radar/tracker par la bascule HUD (m_hudMapClusterHidden,
+			// touche controls.keybind.hud_toggle).
+			if (m_authUi.IsInWorldShard() && !m_hudMapClusterHidden)
 			{
 				const uint32_t rIdxHud = m_renderReadIndex.load(std::memory_order_acquire);
 				const engine::RenderState& rsHud = m_renderStates[rIdxHud];
@@ -10561,7 +10584,7 @@ namespace engine
 			// (BindQuestUi est appelé au boot, cf. plus haut) ou si giverList/
 			// journalEntries sont vides (rien à afficher).
 			if (m_questImGui)
-				m_questImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+				m_questImGui->Render(dw, dh, m_authUi.IsInWorldShard(), !m_hudMapClusterHidden);
 			// Marqueurs ImGui des interactibles : label flottant projete (visibilite v1
 			// sans mesh). Surligne + " [E]" si a portee. Cf. m_interactables (#39/#40).
 			{
@@ -12160,6 +12183,34 @@ namespace engine
 									ImVec2(gaugeX + gaugeW * resFrac, resY + 8.0f), IM_COL32(70, 130, 220, 235), 3.0f);
 							}
 						}
+					}
+
+					// --- Bourse : pièces d'or du joueur, coin bas-droit. Alimentée par
+					// WalletUpdate (UIModel.wallet.gold), rafraîchie à chaque récompense de
+					// quête ou vente (le serveur pousse SendWalletUpdate). Retour joueur :
+					// « il reçoit de l'or mais aucune bourse pour le suivre ». Non concernée
+					// par la bascule HUD carte (garde la bourse visible en permanence).
+					{
+						const std::string goldText = "Or : " + std::to_string(uiModel.wallet.gold);
+						const ImVec2 goldTs = ImGui::CalcTextSize(goldText.c_str());
+						const float padX = 10.0f;
+						const float padY = 6.0f;
+						const float coinR = 5.0f;
+						const float gap = 7.0f;
+						const float pillW = padX * 2.0f + coinR * 2.0f + gap + goldTs.x;
+						const float pillH = padY * 2.0f + std::max(goldTs.y, coinR * 2.0f);
+						const float bourseMargin = 16.0f;
+						const float px1 = dw - bourseMargin;
+						const float py1 = dh - bourseMargin;
+						const float px0 = px1 - pillW;
+						const float py0 = py1 - pillH;
+						fg->AddRectFilled(ImVec2(px0, py0), ImVec2(px1, py1), IM_COL32(18, 20, 26, 210), 6.0f);
+						fg->AddRect(ImVec2(px0, py0), ImVec2(px1, py1), IM_COL32(120, 100, 40, 220), 6.0f, 0, 1.5f);
+						const ImVec2 coinC(px0 + padX + coinR, (py0 + py1) * 0.5f);
+						fg->AddCircleFilled(coinC, coinR, IM_COL32(240, 200, 70, 255));
+						fg->AddCircle(coinC, coinR, IM_COL32(180, 140, 30, 255), 12, 1.0f);
+						fg->AddText(ImVec2(coinC.x + coinR + gap, (py0 + py1) * 0.5f - goldTs.y * 0.5f),
+							IM_COL32(245, 230, 190, 255), goldText.c_str());
 					}
 
 					// --- Ecran de mort : overlay sombre + bouton Reapparaitre →

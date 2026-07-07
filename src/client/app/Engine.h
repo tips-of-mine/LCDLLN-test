@@ -1372,6 +1372,11 @@ namespace engine
 		/// SP-D — Visibilité du panneau arbre de compétences (toggle touche Y remappable
 		/// via controls.keybind.skilltree, ou /arbre / /competences). Faux par défaut.
 		bool                                  m_classSkillTreeVisible = false;
+		/// Bascule HUD carte : quand vrai, boussole + radar minimap + tracker de
+		/// quêtes sont masqués (touche controls.keybind.hud_toggle, défaut U).
+		/// Retour joueur : pouvoir « boucher » ces overlays. Journal + panneau
+		/// donneur non concernés (interactifs). Faux par défaut (HUD visible).
+		bool                                  m_hudMapClusterHidden = false;
 		/// SP-D — Renderer ImGui du panneau arbre de compétences.
 		/// Forward-déclaré dans Engine.h (ClassSkillTreeImGuiRenderer).
 		std::unique_ptr<engine::render::ClassSkillTreeImGuiRenderer> m_classSkillTreeImGui;

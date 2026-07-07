@@ -842,6 +842,9 @@ namespace engine::server
 		/// Retourne false si tables absentes, char legacy (faction/classe vides) ou
 		/// calcul/envoi échoué — non fatal pour le handshake (log seulement).
 		bool SendPlayerStats(const ConnectedClient& client);
+		/// PR-C — pousse la progression de niveau (niveau + XP courante + XP pour le
+		/// niveau suivant) au client local pour la barre d'XP. Enter-world + gain d'XP.
+		bool SendPlayerXpUpdate(const ConnectedClient& client);
 
 		/// Send one empty snapshot packet to the given connected client.
 		bool SendSnapshot(const ConnectedClient& client);

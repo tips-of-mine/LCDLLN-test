@@ -228,6 +228,13 @@ namespace engine::client
 		/// Grimoire — layout autoritaire des 10 slots (slot i → spellId, "" = vide),
 		/// reçu via ActionBarLayoutUpdate (enter-world / ACK serveur).
 		std::array<std::string, 10> actionBarLayout{};
+		/// PR-C — progression de niveau (barre d'XP), reçue via PlayerXpUpdate
+		/// (enter-world + chaque gain d'XP). \c xpForNextLevel = 0 signale le cap
+		/// de niveau. \c hasXp reste faux tant qu'aucun PlayerXpUpdate n'est reçu.
+		bool     hasXp = false;
+		uint32_t level = 0;
+		uint32_t xpIntoLevel = 0;
+		uint32_t xpForNextLevel = 0;
 	};
 
 	/// Combat SP3 — état de la barre de cast du joueur local (CastBarUpdate).
@@ -707,6 +714,9 @@ namespace engine::client
 		/// Applique un message PlayerStats (feuille de perso dérivée) à la section stats (R1-B).
 		bool ApplyPlayerStats(std::span<const std::byte> packet);
 
+		/// PR-C — applique un message PlayerXpUpdate (niveau + XP) à la section stats.
+		bool ApplyPlayerXpUpdate(std::span<const std::byte> packet);
+
 		/// Advance world presenter ages (wall clock clamped).
 		void PumpWorldPresenterAge();
 
@@ -766,6 +776,7 @@ namespace engine::client
 		engine::server::CraftCompleteMessage       m_craftCompleteScratch{};
 		engine::server::CraftCancelledMessage      m_craftCancelledScratch{};
 		engine::server::PlayerStatsMessage         m_playerStatsScratch{};
+		engine::server::PlayerXpUpdateMessage      m_playerXpScratch{};
 		ChatWorldVisualPresenter m_chatWorld{};
 		size_t m_nextObserverHandle = 1;
 		bool m_initialized = false;

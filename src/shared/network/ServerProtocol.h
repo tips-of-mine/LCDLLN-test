@@ -287,7 +287,13 @@ namespace engine::server
 		/// SP1 quêtes — le joueur accepte une quête au PNJ giver (client→serveur).
 		QuestAcceptRequest = 93,
 		/// SP1 quêtes — le joueur rend une quête au PNJ turn-in (client→serveur).
-		QuestTurnInRequest = 94
+		QuestTurnInRequest = 94,
+
+		/// PR-C — progression de niveau du joueur local (serveur→client) : niveau,
+		/// XP dans le niveau courant, XP requise pour le suivant. Poussé à l'enter-world
+		/// ET à chaque gain d'XP (level-up ou non). Rétro-additif (vieux clients
+		/// l'ignorent) : PAS de bump de kProtocolVersion.
+		PlayerXpUpdate = 95
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -1179,6 +1185,26 @@ namespace engine::server
 
 	/// Decode a wallet update packet.
 	bool DecodeWalletUpdate(std::span<const std::byte> packet, WalletUpdateMessage& outMessage);
+
+	// -------------------------------------------------------------------------
+	// PR-C — Réplication de la progression de niveau (barre d'XP)
+	// -------------------------------------------------------------------------
+
+	/// Server → client : progression de niveau du joueur local.
+	/// \c xpForNextLevel = 0 signale le cap de niveau (barre pleine, pas de suivant).
+	struct PlayerXpUpdateMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t level = 0;
+		uint32_t xpIntoLevel = 0;    ///< XP accumulée DANS le niveau courant.
+		uint32_t xpForNextLevel = 0; ///< XP requise pour passer au niveau suivant (0 = cap).
+	};
+
+	/// Encode a player XP update packet (server authoritative).
+	std::vector<std::byte> EncodePlayerXpUpdate(const PlayerXpUpdateMessage& message);
+
+	/// Decode a player XP update packet.
+	bool DecodePlayerXpUpdate(std::span<const std::byte> packet, PlayerXpUpdateMessage& outMessage);
 
 	// -------------------------------------------------------------------------
 	// M35.2 — Vendor shop

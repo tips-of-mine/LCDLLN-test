@@ -46,7 +46,7 @@ namespace engine::render
 		m_cfg = cfg;
 	}
 
-	void QuestImGuiRenderer::Render(float viewportW, float viewportH, bool inWorldShard)
+	void QuestImGuiRenderer::Render(float viewportW, float viewportH, bool inWorldShard, bool showMapCluster)
 	{
 		(void)viewportW;
 		(void)viewportH;
@@ -59,8 +59,14 @@ namespace engine::render
 			return;
 
 		RenderJournal();
-		RenderTracker();
-		RenderMinimap();
+		// Le tracker et le radar forment le « cluster carte » masquable par le
+		// joueur (avec la boussole, gérée côté Engine). Le journal et le panneau
+		// donneur restent toujours visibles (interactifs).
+		if (showMapCluster)
+		{
+			RenderTracker();
+			RenderMinimap();
+		}
 		RenderGiverPanel();
 	}
 
@@ -194,9 +200,27 @@ namespace engine::render
 		if (!state.layoutValid || state.trackerSteps.empty())
 			return;
 
-		const engine::client::QuestUiRect& bounds = state.trackerBounds;
-		ImGui::SetNextWindowPos(ImVec2(bounds.x, bounds.y), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(bounds.width, bounds.height), ImGuiCond_FirstUseEver);
+		// Position : empilé SOUS le radar minimap, coin haut-droit, aligné à droite.
+		// Corrige le chevauchement historique (tracker et radar étaient tous deux
+		// ancrés en haut-droit à y≈marge). On reprend l'ancrage exact de
+		// RenderMinimap (marge 16 + bandeau météo ~78 px + taille radar config)
+		// pour empiler proprement la colonne météo -> radar -> tracker. Si le radar
+		// est désactivé, le tracker remonte juste sous le bandeau météo.
+		// Cond_Always : le HUD doit suivre résolution/config sans se figer sur une
+		// position imgui.ini périmée (fenêtre NoMove + NoSavedSettings de toute façon).
+		const ImGuiIO& io = ImGui::GetIO();
+		const float trackerMargin = 16.0f;
+		const float weatherHudHeightPx = 70.0f;
+		const bool minimapEnabled = m_cfg->GetBool("client.quest.minimap.enabled", true);
+		const float radarSizePx = static_cast<float>(m_cfg->GetInt("client.quest.minimap.size_px", 200));
+		const float radarBottom = (minimapEnabled && radarSizePx > 0.0f)
+			? (trackerMargin + weatherHudHeightPx + 8.0f + radarSizePx)
+			: (trackerMargin + weatherHudHeightPx);
+		const float trackerW = state.trackerBounds.width;
+		const float trackerH = state.trackerBounds.height;
+		ImGui::SetNextWindowPos(
+			ImVec2(io.DisplaySize.x - trackerMargin - trackerW, radarBottom + 12.0f), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(trackerW, trackerH), ImGuiCond_Always);
 		ImGui::SetNextWindowBgAlpha(0.78f);
 
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, ToImVec4(LnTheme::PanelBg(0.78f)));
@@ -204,6 +228,7 @@ namespace engine::render
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration
 			| ImGuiWindowFlags_NoMove
+			| ImGuiWindowFlags_NoSavedSettings
 			| ImGuiWindowFlags_NoFocusOnAppearing
 			| ImGuiWindowFlags_NoBringToFrontOnFocus
 			| ImGuiWindowFlags_NoNav
@@ -422,7 +447,7 @@ namespace engine::render
 		const engine::client::QuestTextCatalog*,
 		const engine::client::UIModelBinding*,
 		const engine::core::Config*) {}
-	void QuestImGuiRenderer::Render(float, float, bool) {}
+	void QuestImGuiRenderer::Render(float, float, bool, bool) {}
 }
 
 #endif

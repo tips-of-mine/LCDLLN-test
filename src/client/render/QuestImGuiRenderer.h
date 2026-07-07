@@ -55,7 +55,11 @@ namespace engine::render
 		///
 		/// \p inWorldShard : si false (post-auth mais pas encore in-world), les
 		/// panneaux ne sont pas dessinés (pas de quêtes hors monde).
-		void Render(float viewportW, float viewportH, bool inWorldShard = true);
+		/// \p showMapCluster : si false, le tracker HUD et le radar minimap sont
+		/// masqués (bascule joueur « boussole/radar/suivi », cf. Engine touche
+		/// controls.keybind.hud_toggle). Le journal et le panneau donneur restent
+		/// toujours affichés (interactifs, pas concernés par la bascule HUD).
+		void Render(float viewportW, float viewportH, bool inWorldShard = true, bool showMapCluster = true);
 
 	private:
 		/// Dessine le panneau journal (liste Active/ReadyToTurnIn + détail).

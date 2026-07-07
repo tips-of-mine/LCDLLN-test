@@ -8191,6 +8191,11 @@ namespace engine
 				// Partage le contexte ImGui avec auth/chat ; rendu Windows uniquement
 				// (le .cpp est gardé par #if _WIN32). Constructeur par défaut.
 				m_dialogueImGui = std::make_unique<engine::render::DialogueImGuiRenderer>();
+				// PR-B — Acceptation/rendu de quête DANS la conversation : le renderer
+				// de dialogue injecte les boutons Accepter/Rendre depuis UIModel.giverList
+				// (titres via le catalogue). Le callback d'action est câblé plus bas
+				// (même bloc GameplayNet que le panneau donneur, m_gameplayUdp requis).
+				m_dialogueImGui->BindQuestGiver(&m_uiModelBinding, &m_questTextCatalog);
 				// SP2 Task 5 — Renderer ImGui journal/tracker/panneau donneur.
 				// Partage le contexte ImGui avec auth/chat/dialogue. Le callback
 				// d'action panneau donneur est cable plus bas (apres m_gameplayUdp
@@ -10583,8 +10588,14 @@ namespace engine
 			// SP2 Task 5 — Journal + tracker + panneau donneur. No-op si non bindé
 			// (BindQuestUi est appelé au boot, cf. plus haut) ou si giverList/
 			// journalEntries sont vides (rien à afficher).
+			// PR-B — quand un dialogue PNJ est actif, on supprime le panneau donneur
+			// séparé : l'acceptation/rendu se fait DANS la conversation (boutons injectés
+			// par DialogueImGuiRenderer). Le panneau reste le fallback hors dialogue.
 			if (m_questImGui)
+			{
+				m_questImGui->SetGiverPanelSuppressed(m_dialogue.IsActive());
 				m_questImGui->Render(dw, dh, m_authUi.IsInWorldShard(), !m_hudMapClusterHidden);
+			}
 			// Marqueurs ImGui des interactibles : label flottant projete (visibilite v1
 			// sans mesh). Surligne + " [E]" si a portee. Cf. m_interactables (#39/#40).
 			{
@@ -15193,18 +15204,25 @@ namespace engine
 		// QuestGiverList (donc npcTargetId est forcément à jour dans ce contexte).
 		if (m_questImGui)
 		{
-			m_questImGui->SetGiverActionCallback(
-				[this](const std::string& questId, uint8_t role)
-				{
-					if (!m_gameplayNetInitialized)
-						return;
-					const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
-					const std::string& npcTargetId = m_uiModelBinding.GetModel().giverList.npcTargetId;
-					if (role == 0)
-						(void)m_gameplayUdp.SendQuestAcceptRequest(gameplayClientId, questId, npcTargetId);
-					else
-						(void)m_gameplayUdp.SendQuestTurnInRequest(gameplayClientId, questId, npcTargetId);
-				});
+			// Callback partagé Accepter/Rendre (panneau donneur ET boutons injectés
+			// dans le dialogue, PR-B) : même logique, npcTargetId = celui du dernier
+			// QuestGiverList (à jour dans ce contexte).
+			auto giverActionCb = [this](const std::string& questId, uint8_t role)
+			{
+				if (!m_gameplayNetInitialized)
+					return;
+				const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
+				const std::string& npcTargetId = m_uiModelBinding.GetModel().giverList.npcTargetId;
+				if (role == 0)
+					(void)m_gameplayUdp.SendQuestAcceptRequest(gameplayClientId, questId, npcTargetId);
+				else
+					(void)m_gameplayUdp.SendQuestTurnInRequest(gameplayClientId, questId, npcTargetId);
+			};
+			m_questImGui->SetGiverActionCallback(giverActionCb);
+			// PR-B — même callback pour les boutons Accepter/Rendre injectés dans la
+			// fenêtre de dialogue (acceptation « dans la conversation »).
+			if (m_dialogueImGui)
+				m_dialogueImGui->SetGiverActionCallback(giverActionCb);
 		}
 	}
 

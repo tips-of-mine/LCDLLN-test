@@ -49,6 +49,12 @@ namespace engine::render
 		/// Câble le callback d'action du panneau donneur (Accepter/Terminer).
 		void SetGiverActionCallback(GiverActionCallback callback) { m_giverAction = std::move(callback); }
 
+		/// PR-B — Supprime le panneau donneur séparé quand un dialogue PNJ est actif :
+		/// dans ce cas l'acceptation/rendu se fait DANS la conversation
+		/// (DialogueImGuiRenderer injecte les boutons). Le panneau reste le fallback
+		/// pour un donneur sans arbre de dialogue. Positionné par Engine chaque frame.
+		void SetGiverPanelSuppressed(bool suppressed) { m_giverPanelSuppressed = suppressed; }
+
 		/// Émet les commandes ImGui pour la frame courante. Suppose que
 		/// \c m_worldEditorImGui->NewFrame a déjà été appelé.
 		/// No-op si le presenter n'est pas bindé.
@@ -84,5 +90,6 @@ namespace engine::render
 		const engine::client::UIModelBinding*    m_uiModelBinding = nullptr;
 		const engine::core::Config*              m_cfg = nullptr;
 		GiverActionCallback m_giverAction;
+		bool m_giverPanelSuppressed = false;
 	};
 }

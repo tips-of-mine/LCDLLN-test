@@ -445,6 +445,12 @@ namespace engine::client
 				entry.description = descriptionValue->stringValue;
 			}
 
+			if (const JsonValue* completionValue = FindObjectMember(questValue, "completion");
+				completionValue != nullptr && completionValue->type == JsonType::String)
+			{
+				entry.completion = completionValue->stringValue;
+			}
+
 			if (const JsonValue* stepsValue = FindObjectMember(questValue, "steps");
 				stepsValue != nullptr && stepsValue->type == JsonType::Array)
 			{
@@ -481,6 +487,17 @@ namespace engine::client
 		}
 
 		return it->second.description;
+	}
+
+	std::string QuestTextCatalog::Completion(std::string_view questId) const
+	{
+		const auto it = m_entries.find(std::string(questId));
+		if (it == m_entries.end())
+		{
+			return {};
+		}
+
+		return it->second.completion;
 	}
 
 	std::string QuestTextCatalog::StepLabel(std::string_view questId, size_t stepIndex, uint32_t current, uint32_t required) const

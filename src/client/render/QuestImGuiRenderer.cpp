@@ -331,9 +331,45 @@ namespace engine::render
 		{
 			for (const engine::client::UIQuestGiverEntry& entry : giverList.entries)
 			{
+				const bool turnIn = (entry.role == 1);
 				const std::string title = m_textCatalog->Title(entry.questId);
+
+				// Titre coloré : doré = à proposer, vert = à rendre.
+				ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(turnIn ? LnTheme::kSuccess : LnTheme::kAccent));
 				ImGui::TextUnformatted(title.c_str());
-				ImGui::SameLine();
+				ImGui::PopStyleColor();
+
+				// Texte spécifique : description à l'offre, texte de clôture au turn-in.
+				const std::string body = turnIn
+					? m_textCatalog->Completion(entry.questId)
+					: m_textCatalog->Description(entry.questId);
+				if (!body.empty())
+				{
+					ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
+					ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + 320.0f);
+					ImGui::TextUnformatted(body.c_str());
+					ImGui::PopTextWrapPos();
+					ImGui::PopStyleColor();
+				}
+
+				// Récompense (surtout parlante au turn-in) : lue sur le modèle.
+				for (const engine::client::UIQuestEntry& q : model.quests)
+				{
+					if (q.questId != entry.questId)
+						continue;
+					if (q.rewardExperience > 0 || q.rewardGold > 0)
+					{
+						std::string reward = "Recompense :";
+						if (q.rewardExperience > 0)
+							reward += "  " + std::to_string(q.rewardExperience) + " XP";
+						if (q.rewardGold > 0)
+							reward += "  " + std::to_string(q.rewardGold) + " or";
+						ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
+						ImGui::TextUnformatted(reward.c_str());
+						ImGui::PopStyleColor();
+					}
+					break;
+				}
 
 				// role 0 = offer (pas encore acceptée) -> bouton Accepter.
 				// role 1 = turnin (étapes remplies, à rendre) -> bouton Terminer.

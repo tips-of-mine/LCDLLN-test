@@ -16,6 +16,7 @@
 
 // Level-up runtime — courbe XP -> niveau (séparée de la boucle réseau, pure et testable).
 #include "src/shardd/gameplay/character/LevelProgression.h"
+#include "src/shared/formulas/Formulas.h"
 
 // Combat SP2 — résolveur d'attaque pur (précision / critique, RNG injecté).
 #include "src/shardd/gameplay/combat/AttackResolver.h"
@@ -1572,6 +1573,7 @@ namespace engine::server
 			m_clients.size());
 		(void)SendWelcome(acceptedClient);
 		(void)SendPlayerStats(acceptedClient);
+		(void)SendPlayerXpUpdate(acceptedClient); // PR-C — sync initial barre d'XP
 		(void)SendActionBarLayout(acceptedClient); // Grimoire — layout persisté (ou vide)
 		(void)SendClassProgression(acceptedClient); // SP-B — progression par-classe persistée (ou vide)
 		SendDynamicEventBootstrap(acceptedClient);
@@ -6391,6 +6393,32 @@ namespace engine::server
 		return true;
 	}
 
+	// PR-C — pousse la progression de niveau (barre d'XP client). xpForNextLevel
+	// via la MÊME courbe que ApplyXpGain (formulas::XpToNextLevel) pour cohérence :
+	// 0 signale le cap de niveau. Appelé à l'enter-world et à chaque gain d'XP.
+	bool ServerApp::SendPlayerXpUpdate(const ConnectedClient& client)
+	{
+		if (!m_statsTables) return false;
+		PlayerXpUpdateMessage msg{};
+		msg.clientId    = client.clientId;
+		msg.level       = client.level;
+		msg.xpIntoLevel = client.experiencePoints;
+		const uint8_t levelU8 = static_cast<uint8_t>(std::min<uint32_t>(client.level, 255u));
+		const uint8_t levelMaxU8 = static_cast<uint8_t>(std::min<uint32_t>(m_statsTables->levelMax, 255u));
+		msg.xpForNextLevel = engine::server::formulas::XpToNextLevel(
+			levelU8, m_statsTables->xpBase, m_statsTables->xpFactor, levelMaxU8);
+
+		const std::vector<std::byte> packet = EncodePlayerXpUpdate(msg);
+		if (!m_transport.Send(client.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] SendPlayerXpUpdate failed (client_id={})", client.clientId);
+			return false;
+		}
+		LOG_INFO(Net, "[ServerApp] PlayerXpUpdate sent (client_id={}, level={}, xp={}/{})",
+			client.clientId, msg.level, msg.xpIntoLevel, msg.xpForNextLevel);
+		return true;
+	}
+
 	bool ServerApp::SendSnapshot(const ConnectedClient& client)
 	{
 		m_snapshotEntitiesScratch.clear();
@@ -7641,6 +7669,9 @@ namespace engine::server
 			m_statsTables->xpBase, m_statsTables->xpFactor, m_statsTables->levelMax);
 		client.level = r.newLevel;
 		client.experiencePoints = r.newXpIntoLevel;
+		// PR-C — pousse la barre d'XP à CHAQUE gain (même sans level-up : sinon la
+		// progression intra-niveau n'atteindrait jamais le client).
+		(void)SendPlayerXpUpdate(client);
 		if (r.levelsGained == 0u)
 			return;
 		// Recalcul des stats au nouveau niveau + soin complet.

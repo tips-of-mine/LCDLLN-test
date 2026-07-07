@@ -612,6 +612,8 @@ namespace engine::client
 		// R1-B — feuille de personnage (stats dérivées poussées à l'enter-world)
 		case engine::server::MessageKind::PlayerStats:
 			return ApplyPlayerStats(packet);
+		case engine::server::MessageKind::PlayerXpUpdate:
+			return ApplyPlayerXpUpdate(packet);
 		// Combat SP3 — sorts et auras (wire v11)
 		case engine::server::MessageKind::ResourceUpdate:
 			return ApplyResourceUpdate(packet);
@@ -1598,6 +1600,30 @@ namespace engine::client
 			m_playerStatsScratch.stamina,
 			m_playerStatsScratch.damage,
 			m_playerStatsScratch.profileId.empty() ? "<none>" : m_playerStatsScratch.profileId.c_str());
+
+		NotifyObservers(UIModelChangeStats);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyPlayerXpUpdate(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodePlayerXpUpdate(packet, m_playerXpScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] PlayerXpUpdate FAILED: decode error");
+			return false;
+		}
+
+		m_model.playerStats.hasXp = true;
+		m_model.playerStats.level = m_playerXpScratch.level;
+		m_model.playerStats.xpIntoLevel = m_playerXpScratch.xpIntoLevel;
+		m_model.playerStats.xpForNextLevel = m_playerXpScratch.xpForNextLevel;
+
+		LOG_INFO(Net,
+			"[UIModelBinding] PlayerXpUpdate applied (client_id={}, level={}, xp={}/{})",
+			m_playerXpScratch.clientId,
+			m_playerXpScratch.level,
+			m_playerXpScratch.xpIntoLevel,
+			m_playerXpScratch.xpForNextLevel);
 
 		NotifyObservers(UIModelChangeStats);
 		return true;

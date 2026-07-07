@@ -2064,6 +2064,30 @@ namespace engine::server
 		return true;
 	}
 
+	std::vector<std::byte> EncodePlayerXpUpdate(const PlayerXpUpdateMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::PlayerXpUpdate, 16);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.level);
+		WriteU32(packet, message.xpIntoLevel);
+		WriteU32(packet, message.xpForNextLevel);
+		return packet;
+	}
+
+	bool DecodePlayerXpUpdate(std::span<const std::byte> packet, PlayerXpUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::PlayerXpUpdate, payload) || payload.size() != 16)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.level = ReadU32(payload, 4);
+		outMessage.xpIntoLevel = ReadU32(payload, 8);
+		outMessage.xpForNextLevel = ReadU32(payload, 12);
+		return true;
+	}
+
 	std::vector<std::byte> EncodeShopOpen(const ShopOpenMessage& message)
 	{
 		const uint16_t offerCount = static_cast<uint16_t>(

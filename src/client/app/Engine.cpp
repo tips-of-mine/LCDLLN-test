@@ -12193,6 +12193,40 @@ namespace engine
 								fg->AddRectFilled(ImVec2(gaugeX, resY),
 									ImVec2(gaugeX + gaugeW * resFrac, resY + 8.0f), IM_COL32(70, 130, 220, 235), 3.0f);
 							}
+							// --- Barre d'XP (PR-C) : fine barre dorée sous la vie/ressource,
+							// alimentée par PlayerXpUpdate (serveur, enter-world + chaque gain).
+							// Niveau à gauche, progression xp/prochain niveau centrée dessous.
+							// hasXp faux tant qu'aucun PlayerXpUpdate reçu -> pas de barre.
+							if (uiModel.playerStats.hasXp)
+							{
+								const bool atCap = (uiModel.playerStats.xpForNextLevel == 0u);
+								const float xpFrac = atCap ? 1.0f : std::clamp(
+									static_cast<float>(uiModel.playerStats.xpIntoLevel)
+										/ static_cast<float>(uiModel.playerStats.xpForNextLevel),
+									0.0f, 1.0f);
+								const float xpY = gaugeY + gaugeH + 16.0f;
+								const float xpH = 6.0f;
+								fg->AddRectFilled(ImVec2(gaugeX, xpY),
+									ImVec2(gaugeX + gaugeW, xpY + xpH), IM_COL32(30, 26, 12, 230), 2.0f);
+								fg->AddRectFilled(ImVec2(gaugeX, xpY),
+									ImVec2(gaugeX + gaugeW * xpFrac, xpY + xpH), IM_COL32(220, 180, 60, 235), 2.0f);
+								// Niveau, à gauche de la barre.
+								char lvlBuf[32];
+								std::snprintf(lvlBuf, sizeof(lvlBuf), "Nv. %u", uiModel.playerStats.level);
+								const ImVec2 lvlTs = ImGui::CalcTextSize(lvlBuf);
+								fg->AddText(ImVec2(gaugeX - lvlTs.x - 8.0f, xpY - 4.0f),
+									IM_COL32(230, 210, 150, 255), lvlBuf);
+								// Progression xp/prochain niveau (ou « Niveau max ») centrée dessous.
+								char xpBuf[48];
+								if (atCap)
+									std::snprintf(xpBuf, sizeof(xpBuf), "Niveau max");
+								else
+									std::snprintf(xpBuf, sizeof(xpBuf), "%u / %u XP",
+										uiModel.playerStats.xpIntoLevel, uiModel.playerStats.xpForNextLevel);
+								const ImVec2 xpTs = ImGui::CalcTextSize(xpBuf);
+								fg->AddText(ImVec2(gaugeX + (gaugeW - xpTs.x) * 0.5f, xpY + xpH + 1.0f),
+									IM_COL32(200, 190, 160, 220), xpBuf);
+							}
 						}
 					}
 

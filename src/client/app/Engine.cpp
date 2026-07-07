@@ -10588,6 +10588,17 @@ namespace engine
 			// SP2 Task 5 — Journal + tracker + panneau donneur. No-op si non bindé
 			// (BindQuestUi est appelé au boot, cf. plus haut) ou si giverList/
 			// journalEntries sont vides (rien à afficher).
+			// Radar : alimente le presenter avec la position CLIENT-AUTORITAIRE du
+			// joueur AVANT le rendu. Le serveur exclut le joueur local de son propre
+			// snapshot (AoI self-skip) -> UIModel.playerStats.position reste figée au
+			// spawn et le radar ne suivait jamais le joueur (retour joueur 2026-07-07).
+			// In-world uniquement (contrôleur valide). UpdatePlayerWorldPosition ne
+			// reconstruit le radar que si le déplacement dépasse ~5 cm.
+			if (m_authUi.IsInWorldShard())
+			{
+				const engine::math::Vec3 radarPlayerPos = m_characterController.GetPosition();
+				m_questUi.UpdatePlayerWorldPosition(radarPlayerPos.x, radarPlayerPos.z);
+			}
 			// PR-B — quand un dialogue PNJ est actif, on supprime le panneau donneur
 			// séparé : l'acceptation/rendu se fait DANS la conversation (boutons injectés
 			// par DialogueImGuiRenderer). Le panneau reste le fallback hors dialogue.

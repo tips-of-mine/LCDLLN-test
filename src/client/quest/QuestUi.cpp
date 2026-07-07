@@ -175,6 +175,34 @@ namespace engine::client
 		return true;
 	}
 
+	void QuestUiPresenter::UpdatePlayerWorldPosition(float worldX, float worldZ)
+	{
+		if (!m_initialized)
+		{
+			return;
+		}
+		// Seuil anti-rebuild (~5 cm) : joueur immobile -> pas de reconstruction du
+		// radar chaque frame. Les POI de mobs restent par ailleurs rafraîchis par
+		// ApplyModel (snapshots réseau), donc rien n'est figé à l'arrêt.
+		constexpr float kMinDeltaM = 0.05f;
+		if (m_hasLivePlayerPos)
+		{
+			const float dx = worldX - m_livePlayerX;
+			const float dz = worldZ - m_livePlayerZ;
+			if ((dx * dx + dz * dz) < (kMinDeltaM * kMinDeltaM))
+			{
+				return;
+			}
+		}
+		m_livePlayerX = worldX;
+		m_livePlayerZ = worldZ;
+		m_hasLivePlayerPos = true;
+		// Seul le radar dépend de la position ; le journal et le tracker n'en
+		// dépendent pas. On reconstruit donc uniquement la minimap depuis le
+		// dernier modèle réseau connu (mobs/quêtes courants).
+		RebuildMinimap(m_lastModel);
+	}
+
 	bool QuestUiPresenter::SelectQuest(std::string_view questId)
 	{
 		if (!m_initialized)
@@ -432,8 +460,12 @@ namespace engine::client
 			// le joueur (indépendant de la texture de zone) : on continue.
 		}
 
-		const float playerX = model.playerStats.positionX;
-		const float playerZ = model.playerStats.positionZ;
+		// Centre du radar = position CLIENT-AUTORITAIRE du joueur si disponible
+		// (poussée par Engine via UpdatePlayerWorldPosition). Le serveur exclut le
+		// joueur local de son propre snapshot (AoI self-skip) -> playerStats.position
+		// resterait figée au spawn et le radar ne suivrait jamais le joueur.
+		const float playerX = m_hasLivePlayerPos ? m_livePlayerX : model.playerStats.positionX;
+		const float playerZ = m_hasLivePlayerPos ? m_livePlayerZ : model.playerStats.positionZ;
 
 		// SP3 — radar centré joueur : le joueur est toujours au centre exact.
 		m_state.playerMarker.u = 0.5f;

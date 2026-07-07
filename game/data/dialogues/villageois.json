@@ -1,5 +1,5 @@
 {
-    "_comment": "Dialogue PNJ. Un fichier par PNJ/zone sous game/data/dialogues/. Reference depuis config.json via world.interactables.<i>.dialogue_id = \"villageois\". Format : start (id du noeud initial) + nodes (count + index). Chaque noeud : id, lines (count+index : text, cue optionnel), choices (1..5 : text, next OU action end/accept_quest/complete_quest, questId optionnel, questKey optionnel (SP2, id texte wire QuestAccept/TurnInRequest), icon optionnel). questId illustratif (a mapper vers un vrai quest numerique cote serveur). Textes sans accents (convention du projet). NB (2026-07-04) : l'acceptation de quete ne se fait plus via une action 'accept_quest' dans le dialogue (retour joueur : trop implicite) ; le choix 'As-tu une tache ?' renvoie vers un noeud d'info, et l'acceptation explicite se fait via le bouton 'Accepter' du panneau 'Quetes du PNJ' (giver-list, ouvert au Talk).",
+    "_comment": "Dialogue PNJ. Un fichier par PNJ/zone sous game/data/dialogues/. Reference depuis config.json via world.interactables.<i>.dialogue_id = \"villageois\". Format : start (id du noeud initial) + nodes (count + index). Chaque noeud : id, lines (count+index : text, cue optionnel), choices (1..5 : text, next OU action end/accept_quest/complete_quest, questId optionnel, questKey optionnel (SP2, id texte wire QuestAccept/TurnInRequest), icon optionnel). questId illustratif (a mapper vers un vrai quest numerique cote serveur). Textes sans accents (convention du projet). NB (2026-07-07, PR-B) : l'acceptation de quete se fait DANS la conversation via un bouton 'Accepter'/'Rendre' injecte au bas de la fenetre de dialogue par DialogueImGuiRenderer, pilote par UIModel.giverList (status-aware, cote serveur). Ces boutons ne sont PAS dans ce JSON (injectes a l'execution) ; le choix 'As-tu une tache ?' renvoie toujours vers un noeud d'info. L'ancien panneau 'Quetes du PNJ' separe ne sert plus que de fallback hors dialogue.",
     "start": "intro",
     "nodes": {
         "count": 3,
@@ -34,7 +34,7 @@
             "lines": {
                 "count": 2,
                 "0": { "text": "Oui : les sangliers du nord ravagent nos champs. Reduis leur nombre pour proteger les recoltes." },
-                "1": { "text": "(Pour t'en charger, ouvre le panneau 'Quetes du PNJ' et choisis 'Accepter'.)", "cue": true }
+                "1": { "text": "(Pour t'en charger, choisis 'Accepter' ci-dessous, sans quitter la conversation.)", "cue": true }
             },
             "choices": {
                 "count": 2,

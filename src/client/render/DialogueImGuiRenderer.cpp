@@ -1,8 +1,11 @@
 #include "src/client/render/DialogueImGuiRenderer.h"
 
 #include "src/client/dialogue/DialoguePresenter.h"
+#include "src/client/quest/QuestTextCatalog.h"
+#include "src/client/ui_common/UIModel.h"
 
 #include <cstdio>
+#include <string>
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -205,6 +208,61 @@ namespace engine::render
 					// On sort de la boucle immédiatement : l'état du node a changé.
 					presenter.SelectChoice(i);
 					break;
+				}
+			}
+
+			// PR-B — Acceptation/rendu de quête DANS la conversation. On injecte
+			// sous les réponses scriptées un bouton par entrée du panneau donneur
+			// (UIModel.giverList, instantané status-aware du dernier Talk : le serveur
+			// n'y met role 0 « Accepter » que si la quête est proposée, role 1
+			// « Rendre » que si les étapes sont remplies). Remplace l'ancien panneau
+			// donneur séparé (QuestImGuiRenderer, désormais masqué tant qu'un dialogue
+			// est actif). Le clic déclenche le callback quête d'Engine
+			// (SendQuestAccept/TurnInRequest) ; l'entrée disparaît au frame suivant
+			// (ApplyQuestDelta purge le giverList au changement de statut). No-op si
+			// non bindé (BindQuestGiver) ou si le giverList est vide.
+			if (m_uiModelBinding != nullptr && m_textCatalog != nullptr && m_giverAction)
+			{
+				const engine::client::UIQuestGiverList& giverList =
+					m_uiModelBinding->GetModel().giverList;
+				if (!giverList.entries.empty())
+				{
+					ImGui::Spacing();
+					ImGui::Separator();
+					for (const engine::client::UIQuestGiverEntry& entry : giverList.entries)
+					{
+						const bool isTurnIn = (entry.role == 1u);
+						const std::string title = m_textCatalog->Title(entry.questId);
+						char qlabel[512];
+						std::snprintf(qlabel, sizeof(qlabel), "%s : %s##giver_%s_%u",
+						              isTurnIn ? "Rendre" : "Accepter",
+						              title.c_str(),
+						              entry.questId.c_str(),
+						              static_cast<unsigned>(entry.role));
+
+						// Même code couleur que les choix scriptés de quête : doré =
+						// accepter, vert = rendre.
+						if (isTurnIn)
+						{
+							ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.16f, 0.36f, 0.18f, 0.92f));
+							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.24f, 0.52f, 0.26f, 1.0f));
+						}
+						else
+						{
+							ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.46f, 0.35f, 0.11f, 0.92f));
+							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.64f, 0.49f, 0.17f, 1.0f));
+						}
+						ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + wrapW);
+						const bool qClicked = ImGui::Button(qlabel, ImVec2(wrapW, 0.0f));
+						ImGui::PopTextWrapPos();
+						ImGui::PopStyleColor(2);
+
+						if (qClicked)
+						{
+							m_giverAction(entry.questId, entry.role);
+							break; // le giverList peut être purgé ce frame -> on sort.
+						}
+					}
 				}
 			}
 

@@ -355,6 +355,12 @@ namespace engine::render
 
 	void QuestImGuiRenderer::RenderGiverPanel()
 	{
+		// PR-B — Masqué tant qu'un dialogue PNJ est actif : dans ce cas
+		// l'acceptation/rendu se fait DANS la conversation (DialogueImGuiRenderer).
+		// Ce panneau ne subsiste que comme fallback (donneur sans arbre de dialogue).
+		if (m_giverPanelSuppressed)
+			return;
+
 		const engine::client::UIModel& model = m_uiModelBinding->GetModel();
 		const engine::client::UIQuestGiverList& giverList = model.giverList;
 		if (giverList.entries.empty())

@@ -539,6 +539,17 @@ namespace engine::client
 		/// Return the current immutable UI model snapshot.
 		const UIModel& GetModel() const { return m_model; }
 
+		/// SP2 — vide la liste de quêtes du PNJ (giver-list). À appeler à la
+		/// fermeture du dialogue : sans ça, `giverList` (rempli au Talk, opcode 92)
+		/// n'est jamais effacé et le panneau « Quêtes du PNJ » resterait affiché en
+		/// permanence après avoir parlé une fois. Le vider ici lie le panneau à la
+		/// conversation en cours (il n'apparaît que pendant qu'on parle au PNJ).
+		void ClearGiverList()
+		{
+			m_model.giverList.entries.clear();
+			m_model.giverList.npcTargetId.clear();
+		}
+
 		/// Combat SP2 — sélection LOCALE de cible (clic / Tab). Cherche l'entité
 		/// dans les remoteEntities du dernier snapshot, remplit targetStats
 		/// (PV/flags/position) et notifie UIModelChangeCombat. Retourne false si

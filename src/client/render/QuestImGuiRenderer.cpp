@@ -252,21 +252,26 @@ namespace engine::render
 		// re-toucher RebuildLayout ici (hors perimetre Task 3).
 		const ImGuiIO& io = ImGui::GetIO();
 		const float margin = 16.0f;
-		// SP3 — la minimap s'ancre en haut-droite, mais le HUD météo
-		// (WeatherImGuiRenderer : boîte ~240x70 à y=margin) occupe déjà ce coin.
-		// On empile donc la minimap SOUS ce bandeau pour éviter le chevauchement.
-		const float weatherHudHeightPx = 70.0f;
+		// SP3 — la minimap s'ancre en haut-droite, MAIS ce coin est déjà occupé par
+		// le HUD météo (WeatherImGuiRenderer, ~240x70 à y=margin) ET la boussole
+		// (CompassHud, disque + arc jusqu'à ~y122). On empile donc la minimap SOUS
+		// ces deux éléments pour éviter le chevauchement de pixels (retour joueur
+		// 2026-07-04 : le radar chevauchait la boussole).
+		const float topHudClearancePx = 116.0f;
 		const float x0 = io.DisplaySize.x - sizePx - margin;
-		const float y0 = margin + weatherHudHeightPx + 8.0f;
+		const float y0 = margin + topHudClearancePx + 8.0f;
 		const float x1 = x0 + sizePx;
 		const float y1 = y0 + sizePx;
 		const ImVec2 center((x0 + x1) * 0.5f, (y0 + y1) * 0.5f);
 
 		ImDrawList* dl = ImGui::GetForegroundDrawList();
 
-		// Fond + bordure + croix centrale (repere joueur).
-		dl->AddRectFilled(ImVec2(x0, y0), ImVec2(x1, y1), IM_COL32(10, 12, 16, 170), 6.0f);
-		dl->AddRect(ImVec2(x0, y0), ImVec2(x1, y1), LnTheme::ToU32(LnTheme::kBorder), 6.0f, 0, 2.0f);
+		// Fond + bordure CIRCULAIRE + croix centrale (repere joueur). Les données
+		// sont déjà radiales (WorldToRadarUv teste dist > rayon) : seul le dessin
+		// devient circulaire (retour joueur 2026-07-04 : radar carré -> rond).
+		const float radiusPx = sizePx * 0.5f;
+		dl->AddCircleFilled(center, radiusPx, IM_COL32(10, 12, 16, 170), 48);
+		dl->AddCircle(center, radiusPx, LnTheme::ToU32(LnTheme::kBorder), 48, 2.0f);
 		dl->AddLine(ImVec2(center.x - 6.0f, center.y), ImVec2(center.x + 6.0f, center.y), LnTheme::ToU32(LnTheme::kMuted), 1.0f);
 		dl->AddLine(ImVec2(center.x, center.y - 6.0f), ImVec2(center.x, center.y + 6.0f), LnTheme::ToU32(LnTheme::kMuted), 1.0f);
 
@@ -274,6 +279,13 @@ namespace engine::render
 		for (const engine::client::MinimapPoiView& poi : state.questPois)
 		{
 			if (!poi.visible)
+				continue;
+
+			// Clip circulaire : un POI hors du disque (u,v clampés au coin carré par
+			// WorldToRadarUv quand off-radar) ne doit pas s'afficher dans les coins.
+			const float pdu = poi.u - 0.5f;
+			const float pdv = poi.v - 0.5f;
+			if (pdu * pdu + pdv * pdv > 0.25f)
 				continue;
 
 			ImU32 color = IM_COL32(180, 180, 180, 255); // repli : collect/inconnu = gris

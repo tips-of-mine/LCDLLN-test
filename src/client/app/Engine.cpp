@@ -9897,6 +9897,10 @@ namespace engine
 								// dialogue fermé (évite qu'un futur accept/turn-in hors dialogue
 								// réutilise par erreur la dernière cible).
 								m_currentDialogueNpcTargetId.clear();
+								// Le panneau « Quêtes du PNJ » (giver-list, rempli au Talk) ne doit
+								// vivre que le temps de la conversation : on le vide à la fermeture,
+								// sinon il resterait affiché en permanence après avoir parlé une fois.
+								m_uiModelBinding.ClearGiverList();
 							}
 						}
 					}
@@ -10673,7 +10677,7 @@ namespace engine
 										const ImU32 runeRing = turnInVariant
 											? IM_COL32(230, 245, 255, 255)
 											: IM_COL32(255, 240, 190, 255);
-										const float runeR = 11.0f;
+										const float runeR = 18.0f; // agrandie (retour joueur : trop petite a 11)
 										// Losange (4 sommets) rempli.
 										const ImVec2 diamond[4] = {
 											ImVec2(rsx, rsy - runeR),
@@ -10683,7 +10687,7 @@ namespace engine
 										};
 										fg->AddConvexPolyFilled(diamond, 4, runeFill);
 										// Anneau autour du losange pour la lisibilité + signature "rune".
-										fg->AddCircle(ImVec2(rsx, rsy), runeR + 3.0f, runeRing, 16, 2.0f);
+										fg->AddCircle(ImVec2(rsx, rsy), runeR + 4.0f, runeRing, 24, 2.5f);
 									}
 								}
 							}

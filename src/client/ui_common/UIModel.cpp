@@ -1296,6 +1296,29 @@ namespace engine::client
 		}
 		quest->rewardItems = m_questMessage.rewardItems;
 
+		// Resynchronise le panneau donneur (giverList = instantané du dernier Talk)
+		// avec le nouveau statut : une entrée « Accepter » (role 0) n'est valide que
+		// si la quête est Offered, une entrée « Terminer » (role 1) que si elle est
+		// ReadyToTurnIn. Sans ça, après un accept/turn-in réussi, le bouton restait
+		// affiché et un 2e clic était rejeté par le serveur -> illusion d'un bouton
+		// « qui ne marche pas » (retour joueur 2026-07-04 : Terminer inopérant).
+		{
+			constexpr uint8_t kStatusOffered = 1;        // QuestStatus::Offered
+			constexpr uint8_t kStatusReadyToTurnIn = 3;  // QuestStatus::ReadyToTurnIn
+			std::vector<UIQuestGiverEntry>& entries = m_model.giverList.entries;
+			for (size_t i = 0; i < entries.size();)
+			{
+				const UIQuestGiverEntry& e = entries[i];
+				const bool stale = (e.questId == quest->questId)
+					&& ((e.role == 0 && quest->status != kStatusOffered)
+						|| (e.role == 1 && quest->status != kStatusReadyToTurnIn));
+				if (stale)
+					entries.erase(entries.begin() + static_cast<std::ptrdiff_t>(i));
+				else
+					++i;
+			}
+		}
+
 		NotifyObservers(UIModelChangeQuests);
 		LOG_INFO(Net, "[UIModelBinding] QuestDelta applied (quest_id={}, status={}, steps={})",
 			quest->questId,

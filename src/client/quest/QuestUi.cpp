@@ -477,6 +477,42 @@ namespace engine::client
 					continue;
 				}
 
+				// Etape « tuer mob:X » : pointer les mobs VIVANTS correspondants (bien plus
+				// utile que des points de spawn statiques -- retour joueur 2026-07-04 :
+				// « pas d'info radar pendant la quete »). Les mobs bougent/meurent, on lit
+				// donc les entites repliquees en direct (model.remoteEntities).
+				if (step.stepType == 1 /*Kill*/ && step.targetId.rfind("mob:", 0) == 0)
+				{
+					uint32_t archetypeId = 0;
+					bool parsed = step.targetId.size() > 4;
+					for (size_t ci = 4; ci < step.targetId.size(); ++ci)
+					{
+						const char c = step.targetId[ci];
+						if (c < '0' || c > '9') { parsed = false; break; }
+						archetypeId = archetypeId * 10u + static_cast<uint32_t>(c - '0');
+					}
+					if (parsed)
+					{
+						const std::string mobLabel = BuildQuestStepLabel(step);
+						for (const UIRemoteEntity& re : model.remoteEntities)
+						{
+							if (re.archetypeId != archetypeId) continue; // mauvaise creature
+							if (re.playerClientId != 0u) continue;        // pas un joueur
+							if ((re.stateFlags & 1u) != 0u) continue;     // pas un mob mort
+							float mu = 0.0f, mv = 0.0f; bool moff = false;
+							WorldToRadarUv(re.positionX, re.positionZ, playerX, playerZ, m_minimapRadiusM, mu, mv, moff);
+							MinimapPoiView mpoi{};
+							mpoi.u = mu;
+							mpoi.v = mv;
+							mpoi.label = mobLabel;
+							mpoi.visible = true;
+							mpoi.stepType = step.stepType;
+							m_state.questPois.push_back(std::move(mpoi));
+						}
+						continue; // etape traitee par les mobs vivants (pas de POI statique)
+					}
+				}
+
 				const std::vector<QuestPoiPosition>* positions =
 					m_poiTable ? m_poiTable->Positions(step.targetId) : nullptr;
 				if (!positions)

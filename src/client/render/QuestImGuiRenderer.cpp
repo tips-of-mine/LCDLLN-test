@@ -202,20 +202,22 @@ namespace engine::render
 			return;
 
 		// Position : empilé SOUS le radar minimap, coin haut-droit, aligné à droite.
-		// Corrige le chevauchement historique (tracker et radar étaient tous deux
-		// ancrés en haut-droit à y≈marge). On reprend l'ancrage exact de
-		// RenderMinimap (marge 16 + bandeau météo ~78 px + taille radar config)
-		// pour empiler proprement la colonne météo -> radar -> tracker. Si le radar
-		// est désactivé, le tracker remonte juste sous le bandeau météo.
+		// Corrige le chevauchement (retour joueur 2026-07-08 : « collision entre le
+		// suivi de quêtes et le mini radar »). CAUSE : l'ancien calcul recomposait à
+		// la main le bas du radar (16 + 70 + 8 + 200 = 294) alors que le radar réel
+		// descend jusqu'à y0(140) + taille(200) = 340 → le tracker montait ~34 px
+		// trop haut. FIX : on lit le VRAI rectangle du radar via ComputeRadarScreenRect
+		// (même source que RenderMinimap et le hit-test de zoom) → zéro dérive. Si le
+		// radar est désactivé, on retombe sous le dégagement HUD haut (marge + météo).
 		// Cond_Always : le HUD doit suivre résolution/config sans se figer sur une
 		// position imgui.ini périmée (fenêtre NoMove + NoSavedSettings de toute façon).
 		const ImGuiIO& io = ImGui::GetIO();
 		const float trackerMargin = 16.0f;
 		const float weatherHudHeightPx = 70.0f;
-		const bool minimapEnabled = m_cfg->GetBool("client.quest.minimap.enabled", true);
-		const float radarSizePx = static_cast<float>(m_cfg->GetInt("client.quest.minimap.size_px", 200));
-		const float radarBottom = (minimapEnabled && radarSizePx > 0.0f)
-			? (trackerMargin + weatherHudHeightPx + 8.0f + radarSizePx)
+		const engine::client::RadarScreenRect radarRect =
+			engine::client::ComputeRadarScreenRect(*m_cfg, io.DisplaySize.x, io.DisplaySize.y);
+		const float radarBottom = radarRect.enabled
+			? (radarRect.y0 + radarRect.size)
 			: (trackerMargin + weatherHudHeightPx);
 		const float trackerW = state.trackerBounds.width;
 		const float trackerH = state.trackerBounds.height;
@@ -324,10 +326,11 @@ namespace engine::render
 				break; // gris (repli ci-dessus)
 			}
 
+			// Retour joueur 2026-07-08 : « je ne veux que des points colorés dans le
+			// radar, pas de texte ». On ne dessine QUE la pastille teintée par type
+			// d'étape ; le libellé reste disponible dans le tracker/journal.
 			const ImVec2 p(x0 + poi.u * sizePx, y0 + poi.v * sizePx);
 			dl->AddCircleFilled(p, 4.5f, color);
-			if (!poi.label.empty())
-				dl->AddText(ImVec2(p.x + 6.0f, p.y - 6.0f), color, poi.label.c_str());
 		}
 
 		// Marqueur joueur : petit triangle plein au centre du radar (toujours

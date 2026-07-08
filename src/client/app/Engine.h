@@ -1568,6 +1568,11 @@ namespace engine
 		std::unordered_map<std::string, float> m_spellCooldownUiUntilSec;
 		/// Combat SP2 — visibilité du panneau combat avancé (touche J).
 		bool m_advancedCombatVisible = false;
+		/// Inventaire — visibilité de la fenêtre d'inventaire (touche I). Retour
+		/// joueur 2026-07-08 : « je gagne un objet mais je ne peux pas afficher
+		/// l'inventaire ». La grille était calculée (InventoryUiPresenter) mais
+		/// jamais dessinée ni ouvrable.
+		bool m_inventoryVisible = false;
 		/// Combat SP2 — throttle local d'envoi d'AttackRequest (le serveur reste
 		/// l'autorité du cooldown réel ; ceci évite juste le spam réseau).
 		float m_attackSendCooldownSec = 0.0f;

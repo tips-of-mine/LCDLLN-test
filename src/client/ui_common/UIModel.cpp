@@ -637,6 +637,27 @@ namespace engine::client
 		// Validation v12 — butin auto-crédité à la mort d'un mob.
 		case engine::server::MessageKind::LootNotify:
 			return ApplyLootNotify(packet);
+		// Spawn (5) / Despawn (6) : le client reconstruit l'ENSEMBLE des entités de
+		// l'AoI depuis chaque Snapshot complet (cf. ApplySnapshot) ; ces messages
+		// incrémentaux de cycle de vie sont donc redondants ici. No-op silencieux
+		// (au lieu du faux « unsupported message kind » qui polluait le log —
+		// retour joueur 2026-07-08). Une entité tuée/sortie de l'AoI disparaît
+		// naturellement au snapshot suivant.
+		case engine::server::MessageKind::Spawn:
+		case engine::server::MessageKind::Despawn:
+			return true;
+		// Amis (FriendListSync=23, FriendStatusUpdate=24) : le presenter FriendsUi
+		// existe (ApplyFriendList / ApplyStatusUpdate) mais n'est PAS encore monté
+		// dans Engine — la liste d'amis n'a donc aucun consommateur côté client. On
+		// accepte le message sans le traiter (au lieu du faux « unsupported ») et on
+		// le signale comme FONCTIONNALITÉ DIFFÉRÉE.
+		// TODO(friends) : monter FriendsUi (instancier + décoder FriendListSync/
+		// FriendStatusUpdate + ApplyFriendList/ApplyStatusUpdate + rendu + touche).
+		case engine::server::MessageKind::FriendListSync:
+		case engine::server::MessageKind::FriendStatusUpdate:
+			LOG_INFO(Net, "[UIModelBinding] Message amis kind {} recu — panneau FriendsUi non monte (differe)",
+				static_cast<uint16_t>(kind));
+			return true;
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;

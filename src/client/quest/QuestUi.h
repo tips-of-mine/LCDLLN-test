@@ -142,6 +142,16 @@ namespace engine::client
 		/// boot (Engine). Ignoré si \p radiusM <= 0 (garde de \ref WorldToRadarUv).
 		void SetMinimapRadius(float radiusM) { m_minimapRadiusM = radiusM; }
 
+		/// Renseigne la position monde CLIENT-AUTORITAIRE du joueur local (mètres,
+		/// XZ) et rafraîchit le radar. Le joueur local est client-autoritaire : le
+		/// serveur ne le renvoie PAS dans son propre snapshot (AoI exclut self, cf.
+		/// ServerApp::BuildRelevantEntityIds) donc \c UIModel.playerStats.position
+		/// reste figée au spawn -> le radar ne suivait jamais le joueur. Engine
+		/// appelle ceci chaque frame in-world avec \c CharacterController::GetPosition.
+		/// Ne reconstruit le radar que si le déplacement dépasse un petit seuil
+		/// (évite un rebuild par frame à l'arrêt). No-op si non initialisé.
+		void UpdatePlayerWorldPosition(float worldX, float worldZ);
+
 	private:
 		/// Load minimap zone metadata from the configured content-relative file.
 		bool LoadZoneMetadata(const engine::core::Config& config);
@@ -189,5 +199,13 @@ namespace engine::client
 		/// cadre). Valeur par défaut ; le câblage config (client.minimap.*)
 		/// est repoussé à la Task 3 du plan SP3.
 		float m_minimapRadiusM = 60.0f;
+
+		/// Position monde client-autoritaire du joueur (XZ, mètres), poussée par
+		/// \ref UpdatePlayerWorldPosition. Utilisée comme centre du radar à la place
+		/// de \c UIModel.playerStats.position (figée au spawn pour le joueur local).
+		/// \c m_hasLivePlayerPos faux tant qu'aucune position n'a été poussée.
+		float m_livePlayerX = 0.0f;
+		float m_livePlayerZ = 0.0f;
+		bool  m_hasLivePlayerPos = false;
 	};
 }

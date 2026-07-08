@@ -150,27 +150,37 @@ namespace engine::client
 				LOG_INFO(Core, "[ChatUiPresenter] Chat focus ON (toggle=Slash/Enter)");
 			}
 
-			for (uint32_t ch = 0; ch < 10; ++ch)
+			// Bascule des filtres de canaux par CTRL + chiffre (1..0). Le modificateur
+			// Ctrl est OBLIGATOIRE : sans lui, les touches 1..0 nues sont réservées à la
+			// BARRE D'ACTION (lancement des sorts, Engine slotKey Digit1..Digit0). Sans ce
+			// garde, presser 1-5 pour lancer un pouvoir basculait aussi les filtres de
+			// canaux (chat non focus) — retour joueur 2026-07-08. Les filtres restent aussi
+			// commutables au clic dans l'UI du chat (ToggleChannelFilter).
+			if (input.IsDown(engine::platform::Key::Control))
 			{
-				const engine::platform::Key digitKeys[10] = {
-					engine::platform::Key::Digit1,
-					engine::platform::Key::Digit2,
-					engine::platform::Key::Digit3,
-					engine::platform::Key::Digit4,
-					engine::platform::Key::Digit5,
-					engine::platform::Key::Digit6,
-					engine::platform::Key::Digit7,
-					engine::platform::Key::Digit8,
-					engine::platform::Key::Digit9,
-					engine::platform::Key::Digit0
-				};
-				if (input.WasPressed(digitKeys[ch]))
+				for (uint32_t ch = 0; ch < 10; ++ch)
 				{
-					const uint32_t bit = 1u << ch;
-					m_channelFilterMask ^= static_cast<uint16_t>(bit);
-					LOG_INFO(Core, "[ChatUiPresenter] Channel filter toggled (channel_index={}, mask=0x{:04X})",
-						ch,
-						m_channelFilterMask);
+					const engine::platform::Key digitKeys[10] = {
+						engine::platform::Key::Digit1,
+						engine::platform::Key::Digit2,
+						engine::platform::Key::Digit3,
+						engine::platform::Key::Digit4,
+						engine::platform::Key::Digit5,
+						engine::platform::Key::Digit6,
+						engine::platform::Key::Digit7,
+						engine::platform::Key::Digit8,
+						engine::platform::Key::Digit9,
+						engine::platform::Key::Digit0
+					};
+					if (input.WasPressed(digitKeys[ch]))
+					{
+						const uint32_t bit = 1u << ch;
+						m_channelFilterMask ^= static_cast<uint16_t>(bit);
+						LOG_INFO(Core, "[ChatUiPresenter] Channel filter toggled (Ctrl+{}, channel_index={}, mask=0x{:04X})",
+							ch + 1u,
+							ch,
+							m_channelFilterMask);
+					}
 				}
 			}
 		}

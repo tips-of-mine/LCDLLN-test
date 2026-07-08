@@ -1377,6 +1377,12 @@ namespace engine
 		/// Retour joueur : pouvoir « boucher » ces overlays. Journal + panneau
 		/// donneur non concernés (interactifs). Faux par défaut (HUD visible).
 		bool                                  m_hudMapClusterHidden = false;
+		/// Cran de zoom du radar minimap (0..4 -> 200/400/600/800/1000 m, cf.
+		/// engine::client::kMinimapZoomLevelsM). Chargé de client.quest.minimap.zoom_level
+		/// au boot (défaut 600 m), modifié par la molette/clic sur le radar, persisté
+		/// dans minimap_settings.json. Le rayon effectif est poussé au presenter via
+		/// SetMinimapRadius.
+		int                                   m_minimapZoomIndex = 2;
 		/// SP-D — Renderer ImGui du panneau arbre de compétences.
 		/// Forward-déclaré dans Engine.h (ClassSkillTreeImGuiRenderer).
 		std::unique_ptr<engine::render::ClassSkillTreeImGuiRenderer> m_classSkillTreeImGui;

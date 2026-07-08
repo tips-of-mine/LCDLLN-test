@@ -42,6 +42,67 @@ namespace engine::client
 		return status == 2u || status == 3u;
 	}
 
+	int ClampZoomIndex(int index)
+	{
+		if (index < 0)
+			return 0;
+		if (index >= kMinimapZoomLevelCount)
+			return kMinimapZoomLevelCount - 1;
+		return index;
+	}
+
+	int StepZoomIndex(int index, int wheelDelta)
+	{
+		// Molette vers le haut (wheelDelta > 0) = zoom IN = rayon plus petit =
+		// index décroît (même convention que le zoom caméra).
+		return ClampZoomIndex(index - wheelDelta);
+	}
+
+	float RadiusForZoomIndex(int index)
+	{
+		return kMinimapZoomLevelsM[ClampZoomIndex(index)];
+	}
+
+	RadarScreenRect ComputeRadarScreenRect(const engine::core::Config& cfg,
+		float displayW, float displayH)
+	{
+		(void)displayH;
+		RadarScreenRect rect{};
+		rect.enabled = cfg.GetBool("client.quest.minimap.enabled", true);
+		const float sizePx = static_cast<float>(cfg.GetInt("client.quest.minimap.size_px", 200));
+		if (!rect.enabled || sizePx <= 0.0f)
+		{
+			rect.enabled = false;
+			return rect;
+		}
+		// Ancrage IDENTIQUE à QuestImGuiRenderer::RenderMinimap : coin haut-droit,
+		// sous le HUD météo + la boussole (marge 16 + dégagement haut 116 + 8 px).
+		// Ces constantes DOIVENT rester synchronisées avec RenderMinimap (qui utilise
+		// désormais ce même helper) sous peine de dérive géométrie rendu/hit-test.
+		constexpr float kMargin = 16.0f;
+		constexpr float kTopHudClearancePx = 116.0f;
+		rect.size = sizePx;
+		rect.x0 = displayW - sizePx - kMargin;
+		rect.y0 = kMargin + kTopHudClearancePx + 8.0f;
+		return rect;
+	}
+
+	ScreenPoint RadarZoomTickPos(const RadarScreenRect& rect, int tickIndex)
+	{
+		const int k = ClampZoomIndex(tickIndex);
+		const float cx = rect.x0 + rect.size * 0.5f;
+		const float cy = rect.y0 + rect.size * 0.5f;
+		const float rArc = rect.size * 0.5f + 6.0f; // juste à l'extérieur de la bordure
+		constexpr float kDegToRad = 3.14159265f / 180.0f;
+		// 150° (haut-gauche) -> 30° (haut-droite), 30° entre chaque repère. Repère
+		// écran : y vers le bas, donc +sin(theta) monte (d'où le -sin sur y).
+		const float theta = (150.0f - 30.0f * static_cast<float>(k)) * kDegToRad;
+		ScreenPoint p;
+		p.x = cx + rArc * std::cos(theta);
+		p.y = cy - rArc * std::sin(theta);
+		return p;
+	}
+
 	namespace
 	{
 		/// Trim spaces and tabs from both ends of one text view.

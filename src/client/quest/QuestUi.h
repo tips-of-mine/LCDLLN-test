@@ -33,6 +33,61 @@ namespace engine::client
 	/// (cf. `QuestStatus` dans `QuestRuntime.h`). Fonction pure, testable directement.
 	bool ShouldShowQuestInJournal(uint8_t status);
 
+	// --- Contrôle de zoom du radar minimap (cf. spec 2026-07-08) ---
+
+	/// Nombre de crans de zoom du radar.
+	inline constexpr int kMinimapZoomLevelCount = 5;
+	/// Rayons affichés par cran (mètres, centre joueur -> bord). Index 0 = le plus
+	/// zoomé (200 m), index 4 = le plus large (1000 m).
+	inline constexpr float kMinimapZoomLevelsM[kMinimapZoomLevelCount] =
+		{ 200.0f, 400.0f, 600.0f, 800.0f, 1000.0f };
+	/// Cran par défaut (600 m).
+	inline constexpr int kMinimapZoomDefaultIndex = 2;
+
+	/// Borne un index de cran dans [0, kMinimapZoomLevelCount-1]. Pure/testable.
+	int ClampZoomIndex(int index);
+
+	/// Applique une rotation de molette à un index de cran. \p wheelDelta > 0
+	/// (molette vers le haut) = zoom IN (rayon plus petit, index décroît), comme
+	/// le zoom caméra. Retourne l'index borné. Pure/testable.
+	int StepZoomIndex(int index, int wheelDelta);
+
+	/// Rayon affiché (mètres) pour un index de cran (borné). Pure/testable.
+	float RadiusForZoomIndex(int index);
+
+	/// Géométrie écran du radar minimap (coin haut-gauche + taille du cadre carré,
+	/// pixels). \c enabled reflète `client.quest.minimap.enabled`. Partagée entre
+	/// le rendu (arc/repères/POI) et le hit-test souris (Engine) pour éviter toute
+	/// dérive de géométrie.
+	struct RadarScreenRect
+	{
+		bool  enabled = false;
+		float x0 = 0.0f;
+		float y0 = 0.0f;
+		float size = 0.0f;
+	};
+
+	/// Calcule la géométrie écran du radar depuis la config et le viewport.
+	/// Ancrage : coin haut-droit, sous le bandeau météo (cf. RenderMinimap). Pure
+	/// (aucune dépendance ImGui), testable. \c enabled = false (et size = 0) si le
+	/// radar est désactivé ou `size_px <= 0`.
+	RadarScreenRect ComputeRadarScreenRect(const engine::core::Config& cfg,
+		float displayW, float displayH);
+
+	/// Point écran (pixels).
+	struct ScreenPoint
+	{
+		float x = 0.0f;
+		float y = 0.0f;
+	};
+
+	/// Position écran du repère de zoom d'index \p tickIndex (0..4) sur l'arc de la
+	/// moitié haute du radar. Les 5 repères s'étalent de 150° (haut-gauche, index 0
+	/// = 200 m) à 30° (haut-droite, index 4 = 1000 m), juste à l'extérieur de la
+	/// bordure du radar. Partagée entre le rendu (dessin des repères) et le hit-test
+	/// du clic (Engine). Pure/testable. \p rect doit être `enabled`.
+	ScreenPoint RadarZoomTickPos(const RadarScreenRect& rect, int tickIndex);
+
 	/// Pixel-space rectangle used by the quest UI presenter layout.
 	struct QuestUiRect
 	{

@@ -136,8 +136,10 @@ namespace engine::render
 		///
 		/// \p applyMouseLook : false coupe yaw/pitch (ex. quand le clic droit
 		/// est requis et absent, ou qu'ImGui capte la souris).
+		/// \p applyZoom : false coupe le zoom molette (ex. quand le curseur survole
+		/// le radar minimap, qui capte alors la molette pour son propre zoom).
 		void Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel,
-		            bool invertY, bool applyMouseLook, Camera& camera);
+		            bool invertY, bool applyMouseLook, bool applyZoom, Camera& camera);
 
 	private:
 		engine::math::Vec3 m_target{ 0.0f, 0.0f, 0.0f };

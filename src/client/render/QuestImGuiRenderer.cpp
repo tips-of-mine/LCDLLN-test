@@ -261,33 +261,23 @@ namespace engine::render
 		// taille pixels du cadre carre (client.quest.minimap.size_px, defaut 200).
 		// m_cfg est non-null : invariant maintenu par l'unique appelant BindQuestUi
 		// (les 4 pointeurs sont liés ensemble ; Render() vérifie les 3 autres).
-		const bool enabled = m_cfg->GetBool("client.quest.minimap.enabled", true);
-		if (!enabled)
-			return;
-
 		const engine::client::QuestUiState& state = m_presenter->GetState();
 		if (!state.layoutValid)
 			return;
 
-		const float sizePx = static_cast<float>(m_cfg->GetInt("client.quest.minimap.size_px", 200));
-		if (sizePx <= 0.0f)
+		// Géométrie du radar partagée avec le hit-test Engine (molette/clic de zoom)
+		// via ComputeRadarScreenRect -> zéro dérive rendu/interaction. `enabled` et
+		// `size_px` (config) sont résolus dans le helper. Ancrage : coin haut-droit,
+		// sous le HUD météo + la boussole (cf. helper).
+		const ImGuiIO& io = ImGui::GetIO();
+		const engine::client::RadarScreenRect rect =
+			engine::client::ComputeRadarScreenRect(*m_cfg, io.DisplaySize.x, io.DisplaySize.y);
+		if (!rect.enabled)
 			return;
 
-		// Ancrage : coin haut-droit de l'ecran, marge fixe. Le presenter expose
-		// bien `minimapBounds` (layout), mais celui-ci est dimensionne pour
-		// l'ancien rendu texture de zone (SP1/SP2) — le radar schematique SP3
-		// utilise son propre cadre carre pilote par la config, pour eviter de
-		// re-toucher RebuildLayout ici (hors perimetre Task 3).
-		const ImGuiIO& io = ImGui::GetIO();
-		const float margin = 16.0f;
-		// SP3 — la minimap s'ancre en haut-droite, MAIS ce coin est déjà occupé par
-		// le HUD météo (WeatherImGuiRenderer, ~240x70 à y=margin) ET la boussole
-		// (CompassHud, disque + arc jusqu'à ~y122). On empile donc la minimap SOUS
-		// ces deux éléments pour éviter le chevauchement de pixels (retour joueur
-		// 2026-07-04 : le radar chevauchait la boussole).
-		const float topHudClearancePx = 116.0f;
-		const float x0 = io.DisplaySize.x - sizePx - margin;
-		const float y0 = margin + topHudClearancePx + 8.0f;
+		const float sizePx = rect.size;
+		const float x0 = rect.x0;
+		const float y0 = rect.y0;
 		const float x1 = x0 + sizePx;
 		const float y1 = y0 + sizePx;
 		const ImVec2 center((x0 + x1) * 0.5f, (y0 + y1) * 0.5f);
@@ -350,6 +340,47 @@ namespace engine::render
 				ImVec2(p.x - 5.0f, p.y + 5.0f),
 				ImVec2(p.x + 5.0f, p.y + 5.0f),
 				playerColor);
+		}
+
+		// --- Contrôle de zoom : arc sur la moitié haute du radar, 5 repères (gauche
+		// = 200 m … droite = 1000 m), cran courant surligné, valeur numérique en haut.
+		// Piloté par Engine (molette + clic, cf. SetMinimapZoomIndex) ; ici on dessine
+		// seulement. Géométrie via RadarZoomTickPos (partagée avec le hit-test Engine).
+		{
+			const int zoomIdx = engine::client::ClampZoomIndex(m_minimapZoomIndex);
+			const ImU32 arcCol = IM_COL32(120, 130, 150, 180);
+			const ImU32 tickCol = IM_COL32(150, 160, 180, 220);
+			const ImU32 activeCol = LnTheme::ToU32(LnTheme::kAccent);
+			// Arc reliant les repères (polyligne), tracé d'abord.
+			ImVec2 prevTick{};
+			for (int t = 0; t < engine::client::kMinimapZoomLevelCount; ++t)
+			{
+				const engine::client::ScreenPoint sp = engine::client::RadarZoomTickPos(rect, t);
+				const ImVec2 cur(sp.x, sp.y);
+				if (t > 0)
+					dl->AddLine(prevTick, cur, arcCol, 2.0f);
+				prevTick = cur;
+			}
+			// Repères par-dessus l'arc ; cran courant plus gros + teinte accent.
+			for (int t = 0; t < engine::client::kMinimapZoomLevelCount; ++t)
+			{
+				const engine::client::ScreenPoint sp = engine::client::RadarZoomTickPos(rect, t);
+				const ImVec2 cur(sp.x, sp.y);
+				if (t == zoomIdx)
+				{
+					dl->AddCircleFilled(cur, 5.5f, activeCol);
+					dl->AddCircle(cur, 5.5f, IM_COL32(255, 255, 255, 230), 12, 1.5f);
+				}
+				else
+				{
+					dl->AddCircleFilled(cur, 3.0f, tickCol);
+				}
+			}
+			// Valeur numérique du cran courant (« 600 m »), centrée en haut du radar.
+			const std::string zoomText =
+				std::to_string(static_cast<int>(engine::client::RadiusForZoomIndex(zoomIdx))) + " m";
+			const ImVec2 zts = ImGui::CalcTextSize(zoomText.c_str());
+			dl->AddText(ImVec2(center.x - zts.x * 0.5f, y0 + 3.0f), tickCol, zoomText.c_str());
 		}
 	}
 

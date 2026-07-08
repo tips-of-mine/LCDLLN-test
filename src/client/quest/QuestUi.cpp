@@ -478,6 +478,10 @@ namespace engine::client
 	void QuestUiPresenter::RebuildTracker(const UIModel& model)
 	{
 		m_state.trackerSteps.clear();
+		// Retour joueur 2026-07-08 : « je ne peux pas choisir ce qu'affiche le suivi ».
+		// Le tracker (comme le radar) ne montre plus QUE la quête SÉLECTIONNÉE dans le
+		// Journal (m_selectedQuestId, tenu à jour par RebuildJournal/SelectQuest). Cela
+		// donne au joueur un contrôle direct : cliquer une autre quête re-cible le suivi.
 		for (const UIQuestEntry& quest : model.quests)
 		{
 			if (quest.status != 2)
@@ -487,21 +491,23 @@ namespace engine::client
 				// Correctif SP3 : l'ancien `!= 1` ne gardait que les Offered.
 				continue;
 			}
+			if (quest.questId != m_selectedQuestId)
+			{
+				// Seule la quête suivie alimente le tracker (choix du joueur).
+				continue;
+			}
 
 			for (const UIQuestStep& step : quest.steps)
 			{
 				QuestStepView view{};
-				view.label = quest.questId + ": " + BuildQuestStepLabel(step);
+				// Une seule quête suivie : plus besoin du préfixe « questId: » (redondant).
+				view.label = BuildQuestStepLabel(step);
 				view.currentCount = step.currentCount;
 				view.requiredCount = step.requiredCount;
 				view.completed = (step.requiredCount > 0 && step.currentCount >= step.requiredCount);
 				m_state.trackerSteps.push_back(std::move(view));
 			}
-
-			if (m_state.trackerSteps.size() >= 4)
-			{
-				break;
-			}
+			break; // quête suivie trouvée et traitée.
 		}
 	}
 
@@ -559,6 +565,12 @@ namespace engine::client
 				// (Locked=0, Offered=1, Active=2, ReadyToTurnIn=3, Completed=4 ;
 				// cf. QuestRuntime.h). Seules les quêtes ACCEPTÉES et EN COURS
 				// affichent des marqueurs de POI (pas Offered/Locked/Completed).
+				continue;
+			}
+			if (quest.questId != m_selectedQuestId)
+			{
+				// Radar aligné sur le tracker : seuls les POI de la quête SUIVIE
+				// (sélectionnée dans le Journal) apparaissent. Choix du joueur.
 				continue;
 			}
 

@@ -12483,6 +12483,16 @@ namespace engine
 			// les paliers > niveau et affiche le bon « Niveau joueur ». Le serveur revalide.
 			{
 				const engine::client::UIModel& treeModel = m_uiModelBinding.GetModel();
+				// Le level-up EN JEU doit débloquer les paliers de l'arbre. Le niveau
+				// live vient de PlayerXpUpdate (barre d'XP, playerStats.level), qui suit
+				// les montées de niveau ; m_activeCharacterLevel n'était capturé qu'à
+				// l'EnterWorld et jamais remis à jour -> l'arbre restait bloqué au niveau
+				// d'entrée (retour joueur 2026-07-07 : perso niv. 5 mais arbre « Niveau
+				// joueur : 1 », compétences verrouillées). On synchronise donc le niveau
+				// actif sur le niveau serveur (monotone ; fallback = EnterWorld si aucun
+				// PlayerXpUpdate reçu, ex. serveur ancien).
+				if (treeModel.playerStats.hasXp && treeModel.playerStats.level > m_activeCharacterLevel)
+					m_activeCharacterLevel = treeModel.playerStats.level;
 				m_classSkillTreeUi.Sync(treeModel.classId, treeModel.knownSkillIds, m_activeCharacterLevel);
 				if (m_classSkillTreeVisible && m_classSkillTreeImGui && m_classSkillTreeUi.IsInitialized())
 				{

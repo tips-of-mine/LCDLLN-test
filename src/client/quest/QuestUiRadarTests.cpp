@@ -10,6 +10,13 @@
 
 using engine::client::ShouldShowQuestInJournal;
 using engine::client::WorldToRadarUv;
+using engine::client::ClampZoomIndex;
+using engine::client::StepZoomIndex;
+using engine::client::RadiusForZoomIndex;
+using engine::client::ComputeRadarScreenRect;
+using engine::client::RadarZoomTickPos;
+using engine::client::RadarScreenRect;
+using engine::client::ScreenPoint;
 
 namespace
 {
@@ -97,6 +104,64 @@ int main()
 		Check(ShouldShowQuestInJournal(2u), "Active(2) -> dans le journal");
 		Check(ShouldShowQuestInJournal(3u), "ReadyToTurnIn(3) -> dans le journal");
 		Check(!ShouldShowQuestInJournal(4u), "Completed(4) -> pas dans le journal (rendue)");
+	}
+
+	// --- Contrôle de zoom du radar (helpers purs) ---
+	// ClampZoomIndex borne [0, 4].
+	Check(ClampZoomIndex(-3) == 0, "ClampZoomIndex(-3)==0");
+	Check(ClampZoomIndex(0) == 0, "ClampZoomIndex(0)==0");
+	Check(ClampZoomIndex(4) == 4, "ClampZoomIndex(4)==4");
+	Check(ClampZoomIndex(9) == 4, "ClampZoomIndex(9)==4 (clamp haut)");
+
+	// RadiusForZoomIndex : 0->200 … 4->1000 (clamp hors borne).
+	Check(NearlyEqual(RadiusForZoomIndex(0), 200.0f), "zoom 0 -> 200 m");
+	Check(NearlyEqual(RadiusForZoomIndex(2), 600.0f), "zoom 2 -> 600 m (defaut)");
+	Check(NearlyEqual(RadiusForZoomIndex(4), 1000.0f), "zoom 4 -> 1000 m");
+	Check(NearlyEqual(RadiusForZoomIndex(99), 1000.0f), "zoom hors borne -> 1000 m (clamp)");
+
+	// StepZoomIndex : molette haut (>0) = zoom IN = index decroit ; clamp.
+	Check(StepZoomIndex(2, 1) == 1, "step +1 depuis 2 -> 1 (zoom in)");
+	Check(StepZoomIndex(2, -1) == 3, "step -1 depuis 2 -> 3 (zoom out)");
+	Check(StepZoomIndex(0, 1) == 0, "step +1 depuis 0 -> 0 (clamp min)");
+	Check(StepZoomIndex(4, -1) == 4, "step -1 depuis 4 -> 4 (clamp max)");
+	Check(StepZoomIndex(4, 2) == 2, "step +2 depuis 4 -> 2 (multi-cran)");
+
+	// ComputeRadarScreenRect : coin haut-droit, sous le degagement HUD.
+	{
+		engine::core::Config cfg;
+		cfg.SetDefault("client.quest.minimap.enabled", true);
+		cfg.SetDefault("client.quest.minimap.size_px", static_cast<int64_t>(200));
+		const RadarScreenRect r = ComputeRadarScreenRect(cfg, 1280.0f, 720.0f);
+		Check(r.enabled, "radar rect enabled");
+		Check(NearlyEqual(r.size, 200.0f), "radar size == size_px");
+		Check(NearlyEqual(r.x0, 1280.0f - 200.0f - 16.0f), "radar x0 = W - size - marge");
+		Check(NearlyEqual(r.y0, 16.0f + 116.0f + 8.0f), "radar y0 = marge + degagement + 8");
+	}
+	{
+		engine::core::Config cfg;
+		cfg.SetDefault("client.quest.minimap.enabled", false);
+		cfg.SetDefault("client.quest.minimap.size_px", static_cast<int64_t>(200));
+		const RadarScreenRect r = ComputeRadarScreenRect(cfg, 1280.0f, 720.0f);
+		Check(!r.enabled, "radar desactive -> rect non enabled");
+	}
+
+	// RadarZoomTickPos : repères sur la moitié haute, symétriques, au-dessus du centre.
+	{
+		RadarScreenRect r;
+		r.enabled = true;
+		r.x0 = 100.0f;
+		r.y0 = 100.0f;
+		r.size = 200.0f;
+		const float cx = r.x0 + r.size * 0.5f; // 200
+		const float cy = r.y0 + r.size * 0.5f; // 200
+		const ScreenPoint t0 = RadarZoomTickPos(r, 0); // gauche
+		const ScreenPoint t2 = RadarZoomTickPos(r, 2); // haut-centre
+		const ScreenPoint t4 = RadarZoomTickPos(r, 4); // droite
+		Check(t0.x < cx, "repere 0 a gauche du centre");
+		Check(t4.x > cx, "repere 4 a droite du centre");
+		Check(NearlyEqual(t2.x, cx, 0.01f), "repere 2 centre en x (haut)");
+		Check(t0.y < cy && t2.y < cy && t4.y < cy, "tous les reperes au-dessus du centre");
+		Check(NearlyEqual(t0.x - cx, -(t4.x - cx), 0.01f), "reperes 0 et 4 symetriques en x");
 	}
 
 	if (g_failures != 0)

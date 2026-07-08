@@ -55,6 +55,11 @@ namespace engine::render
 		/// pour un donneur sans arbre de dialogue. Positionné par Engine chaque frame.
 		void SetGiverPanelSuppressed(bool suppressed) { m_giverPanelSuppressed = suppressed; }
 
+		/// Renseigne le cran de zoom courant du radar (0..4). Engine le possède
+		/// (molette/clic + persistance) ; le renderer ne fait que dessiner l'arc et
+		/// le repère surligné. Borné par \ref engine::client::ClampZoomIndex au rendu.
+		void SetMinimapZoomIndex(int index) { m_minimapZoomIndex = index; }
+
 		/// Émet les commandes ImGui pour la frame courante. Suppose que
 		/// \c m_worldEditorImGui->NewFrame a déjà été appelé.
 		/// No-op si le presenter n'est pas bindé.
@@ -91,5 +96,6 @@ namespace engine::render
 		const engine::core::Config*              m_cfg = nullptr;
 		GiverActionCallback m_giverAction;
 		bool m_giverPanelSuppressed = false;
+		int m_minimapZoomIndex = 2; ///< Cran de zoom radar (défaut 600 m), poussé par Engine.
 	};
 }

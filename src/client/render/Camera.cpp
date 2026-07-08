@@ -179,7 +179,7 @@ namespace engine::render
 	}
 
 	void OrbitalCameraController::Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel,
-		bool invertY, bool applyMouseLook, Camera& camera)
+		bool invertY, bool applyMouseLook, bool applyZoom, Camera& camera)
 	{
 		(void)dt; // Plus de logique d'integration temporelle ici (mouvement delegue a CharacterController).
 
@@ -202,8 +202,9 @@ namespace engine::render
 			if (camera.pitch > kPitchMax) camera.pitch = kPitchMax;
 		}
 
-		// Molette -> zoom in/out (modifie distance camera-cible).
-		const int scroll = input.MouseScrollDelta();
+		// Molette -> zoom in/out (modifie distance camera-cible). Coupe si applyZoom
+		// est faux (ex. curseur sur le radar minimap, qui capte la molette).
+		const int scroll = applyZoom ? input.MouseScrollDelta() : 0;
 		if (scroll != 0)
 		{
 			m_distance -= static_cast<float>(scroll) * kZoomStep;

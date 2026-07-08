@@ -859,6 +859,13 @@ namespace engine
 			if (cfg.LoadFromFile("character_appearance.json"))
 				LOG_INFO(Core, "[Boot] character_appearance.json applique (genre avatar persistant)");
 
+			// Zoom radar minimap (client.quest.minimap.zoom_level) : fichier dedie
+			// minimap_settings.json, ecrit au changement de zoom (molette/clic sur le
+			// radar). Meme logique que keybinds.json (un echec ne corrompt jamais
+			// user_settings.json).
+			if (cfg.LoadFromFile("minimap_settings.json"))
+				LOG_INFO(Core, "[Boot] minimap_settings.json applique (zoom radar persistant)");
+
 			engine::core::Config persisted;
 			if (!persisted.LoadFromFile("user_settings.json"))
 			{
@@ -1532,11 +1539,12 @@ namespace engine
 				LOG_WARN(Core, "[Boot] QuestPoiTable load FAILED — pas de marqueurs de POI sur la minimap");
 			}
 			m_questUi.SetPoiTable(&m_questPoiTable);
-			const float minimapRadiusM = static_cast<float>(m_cfg.GetDouble("client.quest.minimap.radius_m", 60.0));
-			if (minimapRadiusM > 0.0f)
-			{
-				m_questUi.SetMinimapRadius(minimapRadiusM);
-			}
+			// Zoom radar : cran persistant (0..4 -> 200..1000 m) ; défaut 600 m.
+			// Remplace l'ancien rayon fixe client.quest.minimap.radius_m.
+			m_minimapZoomIndex = engine::client::ClampZoomIndex(
+				static_cast<int>(m_cfg.GetInt("client.quest.minimap.zoom_level",
+					engine::client::kMinimapZoomDefaultIndex)));
+			m_questUi.SetMinimapRadius(engine::client::RadiusForZoomIndex(m_minimapZoomIndex));
 		}
 
 		// CMANGOS.18 (Phase 3.18 step 4) — Init du presenter Mail. Doit etre
@@ -9932,8 +9940,68 @@ namespace engine
 					}
 				}
 
+				// --- Zoom radar minimap (molette + clic sur l'arc). Si le curseur
+				// survole le radar (disque + anneau des repères), la molette pilote le
+				// zoom du radar (5 crans 200..1000 m) au lieu du zoom caméra, et le clic
+				// sur un repère saute à ce cran. Géométrie via ComputeRadarScreenRect
+				// (m_width/m_height = taille framebuffer = io.DisplaySize du radar, donc
+				// même géométrie qu'au rendu). Cran persisté dans minimap_settings.json.
+				bool mouseOverRadar = false;
+				{
+					const engine::client::RadarScreenRect radarRect =
+						engine::client::ComputeRadarScreenRect(m_cfg,
+							static_cast<float>(m_width), static_cast<float>(m_height));
+					if (radarRect.enabled)
+					{
+						const float rcx = radarRect.x0 + radarRect.size * 0.5f;
+						const float rcy = radarRect.y0 + radarRect.size * 0.5f;
+						// Zone d'interaction = disque + marge couvrant l'anneau des repères
+						// (tracés à R+6). Sans cette marge, un clic sur un repère (hors du
+						// disque) ne serait jamais détecté.
+						const float interactR = radarRect.size * 0.5f + 16.0f;
+						const float mdx = static_cast<float>(m_input.MouseX()) - rcx;
+						const float mdy = static_cast<float>(m_input.MouseY()) - rcy;
+						mouseOverRadar = (mdx * mdx + mdy * mdy) <= (interactR * interactR);
+						if (mouseOverRadar)
+						{
+							int newZoom = m_minimapZoomIndex;
+							const int wheel = m_input.MouseScrollDelta();
+							if (wheel != 0)
+								newZoom = engine::client::StepZoomIndex(newZoom, wheel);
+							if (m_input.WasMousePressed(engine::platform::MouseButton::Left))
+							{
+								constexpr float kTickHitRadiusPx = 12.0f;
+								for (int t = 0; t < engine::client::kMinimapZoomLevelCount; ++t)
+								{
+									const engine::client::ScreenPoint tp =
+										engine::client::RadarZoomTickPos(radarRect, t);
+									const float tdx = static_cast<float>(m_input.MouseX()) - tp.x;
+									const float tdy = static_cast<float>(m_input.MouseY()) - tp.y;
+									if ((tdx * tdx + tdy * tdy) <= (kTickHitRadiusPx * kTickHitRadiusPx))
+									{
+										newZoom = t;
+										break;
+									}
+								}
+							}
+							if (newZoom != m_minimapZoomIndex)
+							{
+								m_minimapZoomIndex = newZoom;
+								m_questUi.SetMinimapRadius(engine::client::RadiusForZoomIndex(newZoom));
+								engine::core::Config zoomCfg;
+								zoomCfg.SetValue("client.quest.minimap.zoom_level", static_cast<int64_t>(newZoom));
+								if (!zoomCfg.SaveToFile("minimap_settings.json"))
+									LOG_WARN(Core, "[Minimap] echec persistance zoom (minimap_settings.json)");
+								else
+									LOG_INFO(Core, "[Minimap] zoom radar -> cran {} ({} m)",
+										newZoom, engine::client::RadiusForZoomIndex(newZoom));
+							}
+						}
+					}
+				}
+
 				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
-				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, rmbLook, out.camera);
+				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, rmbLook, !mouseOverRadar, out.camera);
 
 				// --- Clamp anti-sous-sol : la caméra ne descend pas sous le terrain. ---
 				const bool occEnabled = m_cfg.GetBool("client.camera.occlusion_fade.enabled", true);
@@ -10594,6 +10662,7 @@ namespace engine
 			if (m_questImGui)
 			{
 				m_questImGui->SetGiverPanelSuppressed(m_dialogue.IsActive());
+				m_questImGui->SetMinimapZoomIndex(m_minimapZoomIndex);
 				m_questImGui->Render(dw, dh, m_authUi.IsInWorldShard(), !m_hudMapClusterHidden);
 			}
 			// Marqueurs ImGui des interactibles : label flottant projete (visibilite v1

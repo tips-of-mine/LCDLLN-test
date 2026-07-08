@@ -7,6 +7,7 @@
 #include "src/client/render/LnTheme.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 
 #if defined(_WIN32)
@@ -342,45 +343,71 @@ namespace engine::render
 				playerColor);
 		}
 
-		// --- Contrôle de zoom : arc sur la moitié haute du radar, 5 repères (gauche
-		// = 200 m … droite = 1000 m), cran courant surligné, valeur numérique en haut.
-		// Piloté par Engine (molette + clic, cf. SetMinimapZoomIndex) ; ici on dessine
-		// seulement. Géométrie via RadarZoomTickPos (partagée avec le hit-test Engine).
+		// --- Contrôle de zoom : glissière en arc sur la moitié haute du radar.
+		// Rail lisse + portion remplie jusqu'au cran courant + 5 encoches de détente
+		// + poignée (au lieu des points « constellation » précédents). Piloté par Engine
+		// (molette + clic, cf. SetMinimapZoomIndex) ; ici on ne fait que dessiner.
+		// Géométrie (centre, rayon d'arc, angles) IDENTIQUE à
+		// engine::client::RadarZoomTickPos pour que poignée/encoches coïncident avec le
+		// hit-test du clic côté Engine.
 		{
 			const int zoomIdx = engine::client::ClampZoomIndex(m_minimapZoomIndex);
-			const ImU32 arcCol = IM_COL32(120, 130, 150, 180);
-			const ImU32 tickCol = IM_COL32(150, 160, 180, 220);
-			const ImU32 activeCol = LnTheme::ToU32(LnTheme::kAccent);
-			// Arc reliant les repères (polyligne), tracé d'abord.
-			ImVec2 prevTick{};
+			const float cx = center.x;
+			const float cy = center.y;
+			const float rArc = sizePx * 0.5f + 6.0f; // == RadarZoomTickPos
+			constexpr float kDegToRad = 3.14159265f / 180.0f;
+			constexpr float aStartDeg = 150.0f; // cran 0 (200 m), haut-gauche
+			constexpr float aEndDeg = 30.0f;    // cran 4 (1000 m), haut-droite
+			const float aCurDeg = aStartDeg - 30.0f * static_cast<float>(zoomIdx);
+			// Repère écran (y vers le bas) : point = (cx + r cos θ, cy - r sin θ).
+			auto arcPt = [&](float deg, float radius) -> ImVec2 {
+				const float t = deg * kDegToRad;
+				return ImVec2(cx + radius * std::cos(t), cy - radius * std::sin(t));
+			};
+
+			const ImU32 trackCol = IM_COL32(64, 72, 86, 205);
+			const ImU32 fillCol = LnTheme::ToU32(LnTheme::kAccent);
+			const ImU32 tickCol = IM_COL32(150, 160, 180, 170);
+			const ImU32 knobRing = IM_COL32(255, 255, 255, 235);
+			constexpr int kSeg = 40;
+
+			// 1) Rail de fond (arc lisse, segments AddLine).
+			ImVec2 prev = arcPt(aStartDeg, rArc);
+			for (int i = 1; i <= kSeg; ++i)
+			{
+				const float a = aStartDeg + (aEndDeg - aStartDeg) * (static_cast<float>(i) / static_cast<float>(kSeg));
+				const ImVec2 cur = arcPt(a, rArc);
+				dl->AddLine(prev, cur, trackCol, 4.0f);
+				prev = cur;
+			}
+			// 2) Portion remplie (de aStart jusqu'au cran courant), teinte accent.
+			if (zoomIdx > 0)
+			{
+				ImVec2 fprev = arcPt(aStartDeg, rArc);
+				for (int i = 1; i <= kSeg; ++i)
+				{
+					const float a = aStartDeg + (aCurDeg - aStartDeg) * (static_cast<float>(i) / static_cast<float>(kSeg));
+					const ImVec2 cur = arcPt(a, rArc);
+					dl->AddLine(fprev, cur, fillCol, 4.0f);
+					fprev = cur;
+				}
+			}
+			// 3) Encoches de détente (petits traits radiaux aux 5 crans).
 			for (int t = 0; t < engine::client::kMinimapZoomLevelCount; ++t)
 			{
-				const engine::client::ScreenPoint sp = engine::client::RadarZoomTickPos(rect, t);
-				const ImVec2 cur(sp.x, sp.y);
-				if (t > 0)
-					dl->AddLine(prevTick, cur, arcCol, 2.0f);
-				prevTick = cur;
+				const float a = aStartDeg - 30.0f * static_cast<float>(t);
+				dl->AddLine(arcPt(a, rArc - 3.5f), arcPt(a, rArc + 3.5f), tickCol, 1.5f);
 			}
-			// Repères par-dessus l'arc ; cran courant plus gros + teinte accent.
-			for (int t = 0; t < engine::client::kMinimapZoomLevelCount; ++t)
-			{
-				const engine::client::ScreenPoint sp = engine::client::RadarZoomTickPos(rect, t);
-				const ImVec2 cur(sp.x, sp.y);
-				if (t == zoomIdx)
-				{
-					dl->AddCircleFilled(cur, 5.5f, activeCol);
-					dl->AddCircle(cur, 5.5f, IM_COL32(255, 255, 255, 230), 12, 1.5f);
-				}
-				else
-				{
-					dl->AddCircleFilled(cur, 3.0f, tickCol);
-				}
-			}
-			// Valeur numérique du cran courant (« 600 m »), centrée en haut du radar.
+			// 4) Poignée (knob) au cran courant.
+			const ImVec2 knob = arcPt(aCurDeg, rArc);
+			dl->AddCircleFilled(knob, 5.5f, fillCol);
+			dl->AddCircle(knob, 5.5f, knobRing, 20, 1.5f);
+
+			// 5) Valeur numérique du cran courant (« 600 m »), centrée en haut du radar.
 			const std::string zoomText =
 				std::to_string(static_cast<int>(engine::client::RadiusForZoomIndex(zoomIdx))) + " m";
 			const ImVec2 zts = ImGui::CalcTextSize(zoomText.c_str());
-			dl->AddText(ImVec2(center.x - zts.x * 0.5f, y0 + 3.0f), tickCol, zoomText.c_str());
+			dl->AddText(ImVec2(cx - zts.x * 0.5f, y0 + 3.0f), IM_COL32(220, 225, 235, 235), zoomText.c_str());
 		}
 	}
 

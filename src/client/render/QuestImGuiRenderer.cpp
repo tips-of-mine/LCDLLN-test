@@ -3,6 +3,7 @@
 #include "src/client/quest/QuestUi.h"
 #include "src/client/quest/QuestTextCatalog.h"
 #include "src/client/ui_common/UIModel.h"
+#include "src/client/ui_common/CurrencyFormat.h"
 #include "src/shared/core/Config.h"
 #include "src/client/render/LnTheme.h"
 
@@ -173,7 +174,7 @@ namespace engine::render
 						if (quest.rewardExperience > 0)
 							ImGui::BulletText("%u XP", quest.rewardExperience);
 						if (quest.rewardGold > 0)
-							ImGui::BulletText("%u or", quest.rewardGold);
+							ImGui::BulletText("%s", engine::client::FormatCoinsText(quest.rewardGold).c_str());
 						for (const auto& item : quest.rewardItems)
 						{
 							ImGui::BulletText("Objet #%u x%u", item.itemId, item.quantity);
@@ -470,7 +471,7 @@ namespace engine::render
 						if (q.rewardExperience > 0)
 							reward += "  " + std::to_string(q.rewardExperience) + " XP";
 						if (q.rewardGold > 0)
-							reward += "  " + std::to_string(q.rewardGold) + " or";
+							reward += "  " + engine::client::FormatCoinsText(q.rewardGold);
 						ImGui::PushStyleColor(ImGuiCol_Text, ToImVec4(LnTheme::kMuted));
 						ImGui::TextUnformatted(reward.c_str());
 						ImGui::PopStyleColor();

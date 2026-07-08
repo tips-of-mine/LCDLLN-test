@@ -11315,6 +11315,13 @@ namespace engine
 						m_advancedCombatVisible = !m_advancedCombatVisible;
 					}
 
+					// --- I : fenetre d'inventaire (grille objets). Retour joueur
+					// 2026-07-08 : l'inventaire etait calcule mais jamais affichable.
+					if (keysAllowed && m_input.WasPressed(engine::platform::Key::I))
+					{
+						m_inventoryVisible = !m_inventoryVisible;
+					}
+
 					// --- Cadre cible (haut-centre) : nom + barre de PV. Les PV de la
 					// cible suivent les snapshots (cf. UIModelBinding::ApplySnapshot).
 					// On masque le cadre dès que la cible est morte (bit 1 de stateFlags) :
@@ -12336,6 +12343,97 @@ namespace engine
 						fg->AddCircle(coinC, coinR, IM_COL32(180, 140, 30, 255), 12, 1.0f);
 						fg->AddText(ImVec2(coinC.x + coinR + gap, (py0 + py1) * 0.5f - goldTs.y * 0.5f),
 							IM_COL32(245, 230, 190, 255), goldText.c_str());
+					}
+
+					// --- Fenetre d'inventaire (bascule touche I). La grille 4x4 est
+					// deja calculee par InventoryUiPresenter (slots, icones, quantites)
+					// mais n'etait jamais dessinee ni ouvrable. On la rend ici en fenetre
+					// ImGui deplacable + fermable. Retour joueur 2026-07-08.
+					if (m_inventoryVisible)
+					{
+						const engine::client::InventoryPanelState& inv = m_invUi.GetState();
+						const int invCols = (inv.columns > 0u) ? static_cast<int>(inv.columns) : 4;
+						const int invSlotCount = static_cast<int>(inv.slots.size());
+						const int invRows = (invSlotCount + invCols - 1) / invCols;
+						const float invCell = 54.0f;
+						const float invGap = 6.0f;
+						const float invPad = 12.0f;
+						const float invGridW = static_cast<float>(invCols) * invCell
+							+ static_cast<float>(invCols - 1) * invGap;
+						const float invGridH = static_cast<float>(invRows) * invCell
+							+ static_cast<float>(std::max(0, invRows - 1)) * invGap;
+						const float invWinW = invGridW + invPad * 2.0f;
+						ImGui::SetNextWindowPos(ImVec2((dw - invWinW) * 0.5f, dh * 0.26f), ImGuiCond_Appearing);
+						ImGui::SetNextWindowBgAlpha(0.95f);
+						ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.06f, 0.07f, 0.10f, 0.95f));
+						ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.47f, 0.39f, 0.16f, 0.86f));
+						const ImGuiWindowFlags invFlags = ImGuiWindowFlags_NoSavedSettings
+							| ImGuiWindowFlags_NoResize
+							| ImGuiWindowFlags_AlwaysAutoResize;
+						if (ImGui::Begin("Inventaire##ln_inventory", &m_inventoryVisible, invFlags))
+						{
+							ImDrawList* wdl = ImGui::GetWindowDrawList();
+							const ImVec2 invOrigin = ImGui::GetCursorScreenPos();
+							int invOccupied = 0;
+							for (int i = 0; i < invSlotCount; ++i)
+							{
+								const engine::client::InventorySlotState& slot =
+									inv.slots[static_cast<size_t>(i)];
+								const int r = i / invCols;
+								const int c = i % invCols;
+								const float cx0 = invOrigin.x + static_cast<float>(c) * (invCell + invGap);
+								const float cy0 = invOrigin.y + static_cast<float>(r) * (invCell + invGap);
+								const ImVec2 mn(cx0, cy0);
+								const ImVec2 mx(cx0 + invCell, cy0 + invCell);
+								const bool occupied = slot.occupied && slot.itemId != 0u;
+								wdl->AddRectFilled(mn, mx,
+									occupied ? IM_COL32(26, 30, 40, 235) : IM_COL32(16, 18, 24, 200), 5.0f);
+								wdl->AddRect(mn, mx,
+									occupied ? IM_COL32(150, 130, 60, 220) : IM_COL32(64, 66, 74, 180),
+									5.0f, 0, 1.5f);
+								if (!occupied)
+									continue;
+								++invOccupied;
+								bool hasIcon = false;
+								if (!slot.iconPath.empty())
+								{
+									const uint64_t texId = m_skillIconCache.GetOrLoad(slot.iconPath);
+									if (texId != 0)
+									{
+										const float ip = 3.0f;
+										wdl->AddImage(static_cast<ImTextureID>(texId),
+											ImVec2(cx0 + ip, cy0 + ip), ImVec2(mx.x - ip, mx.y - ip));
+										hasIcon = true;
+									}
+								}
+								if (!hasIcon && !slot.label.empty())
+								{
+									const std::string lbl = slot.label.substr(0, 8);
+									wdl->AddText(ImVec2(cx0 + 4.0f, cy0 + 6.0f),
+										IM_COL32(220, 220, 225, 255), lbl.c_str());
+								}
+								if (slot.quantity > 1u)
+								{
+									char qty[12];
+									std::snprintf(qty, sizeof(qty), "%u", slot.quantity);
+									const ImVec2 qs = ImGui::CalcTextSize(qty);
+									wdl->AddText(ImVec2(mx.x - qs.x - 4.0f, mx.y - qs.y - 3.0f),
+										IM_COL32(255, 240, 190, 255), qty);
+								}
+								if (ImGui::IsMouseHoveringRect(mn, mx) && !slot.label.empty())
+								{
+									ImGui::BeginTooltip();
+									ImGui::TextUnformatted(slot.label.c_str());
+									ImGui::EndTooltip();
+								}
+							}
+							// Reserve l'espace de la grille (dessinee au draw list manuel).
+							ImGui::Dummy(ImVec2(invGridW, invGridH));
+							if (invOccupied == 0)
+								ImGui::TextDisabled("Inventaire vide");
+						}
+						ImGui::End();
+						ImGui::PopStyleColor(2);
 					}
 
 					// --- Ecran de mort : overlay sombre + bouton Reapparaitre →

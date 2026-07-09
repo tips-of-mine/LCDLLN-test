@@ -2025,7 +2025,7 @@ namespace engine
 					if (headBone < 0) headBone = skel.FindBoneIndex("head");
 					if (headBone < 0) headBone = skel.FindBoneIndex("Head");
 					if (headBone < 0) headBone = static_cast<int>(skel.bones.size()) - 1;
-					const float sizes[2] = { 0.12f, 0.18f };
+					const float sizes[2] = { 0.16f, 0.24f };
 					for (int i = 0; i < 2; ++i)
 					{
 						engine::render::skinned::SkinnedMeshCpuData cpu =

@@ -8,6 +8,57 @@
 #include <string>
 #include <vector>
 
+namespace
+{
+	/// Inverse générale d'une matrice 4x4 col-major (méthode des cofacteurs 2x2).
+	/// \param m  matrice d'entrée (16 floats, col-major : élément (r,c) = m[c*4+r]).
+	/// \param out matrice inverse en sortie (16 floats). Non écrite si singulière.
+	/// \return false si la matrice est singulière (det ~ 0), true sinon.
+	bool InvertMat4(const float* m, float* out)
+	{
+		const float a00 = m[0], a10 = m[1], a20 = m[2], a30 = m[3];
+		const float a01 = m[4], a11 = m[5], a21 = m[6], a31 = m[7];
+		const float a02 = m[8], a12 = m[9], a22 = m[10], a32 = m[11];
+		const float a03 = m[12], a13 = m[13], a23 = m[14], a33 = m[15];
+
+		const float b00 = a00 * a11 - a10 * a01;
+		const float b01 = a00 * a21 - a20 * a01;
+		const float b02 = a00 * a31 - a30 * a01;
+		const float b03 = a10 * a21 - a20 * a11;
+		const float b04 = a10 * a31 - a30 * a11;
+		const float b05 = a20 * a31 - a30 * a21;
+		const float b06 = a02 * a13 - a12 * a03;
+		const float b07 = a02 * a23 - a22 * a03;
+		const float b08 = a02 * a33 - a32 * a03;
+		const float b09 = a12 * a23 - a22 * a13;
+		const float b10 = a12 * a33 - a32 * a13;
+		const float b11 = a22 * a33 - a32 * a23;
+
+		const float det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+		if (det > -1e-7f && det < 1e-7f)
+			return false; // singulière
+
+		const float inv = 1.0f / det;
+		out[0]  = ( a11 * b11 - a21 * b10 + a31 * b09) * inv;
+		out[1]  = (-a10 * b11 + a20 * b10 - a30 * b09) * inv;
+		out[2]  = ( a13 * b05 - a23 * b04 + a33 * b03) * inv;
+		out[3]  = (-a12 * b05 + a22 * b04 - a32 * b03) * inv;
+		out[4]  = (-a01 * b11 + a21 * b08 - a31 * b07) * inv;
+		out[5]  = ( a00 * b11 - a20 * b08 + a30 * b07) * inv;
+		out[6]  = (-a03 * b05 + a23 * b02 - a33 * b01) * inv;
+		out[7]  = ( a02 * b05 - a22 * b02 + a32 * b01) * inv;
+		out[8]  = ( a01 * b10 - a11 * b08 + a31 * b06) * inv;
+		out[9]  = (-a00 * b10 + a10 * b08 - a30 * b06) * inv;
+		out[10] = ( a03 * b04 - a13 * b02 + a33 * b00) * inv;
+		out[11] = (-a02 * b04 + a12 * b02 - a32 * b00) * inv;
+		out[12] = (-a01 * b09 + a11 * b07 - a21 * b06) * inv;
+		out[13] = ( a00 * b09 - a10 * b07 + a20 * b06) * inv;
+		out[14] = (-a03 * b03 + a13 * b01 - a23 * b00) * inv;
+		out[15] = ( a02 * b03 - a12 * b01 + a22 * b00) * inv;
+		return true;
+	}
+}
+
 namespace engine::render::skinned
 {
 	SkinnedMeshCpuData MakePlaceholderBoxPart(const Skeleton& skel, int boneIndex, float halfExtentM)
@@ -15,27 +66,36 @@ namespace engine::render::skinned
 		SkinnedMeshCpuData cpu;
 		cpu.skeleton = skel; // squelette partagé (copie) — la pose vient du corps au rendu.
 
-		// Position bind-globale de l'os cible. Même convention que
-		// AnimationSampler::ComputeGlobalMatrices : global = parent * bindLocal
-		// (bones topo-ordonnés parent-avant-enfant). Translation = colonne 3.
+		// Position bind-globale (espace modèle) de l'os cible = inverse de son
+		// inverseBindGlobal (IBM). On DOIT passer par l'inverse de l'IBM plutôt
+		// que de composer les bindLocal : le skinning applique
+		// finals[i] = globals[i] * inverseBindGlobal[i] ; placer un point à
+		// inverse(IBM) garantit que inverseBindGlobal * point = origine de l'os,
+		// donc la boîte suit exactement l'os animé. Sur un rig UE5/Mixamo, un
+		// nœud « armature » (scale cm→m) au-dessus de la racine est baké dans
+		// l'IBM mais ABSENT de la chaîne bindLocal — une boîte placée via
+		// bindLocal atterrirait ~100× hors champ (bug : boîte invisible).
 		float cx = 0.0f, cy = 0.0f, cz = 0.0f;
 		const bool boneOk = (boneIndex >= 0)
 			&& (static_cast<std::size_t>(boneIndex) < skel.bones.size());
 		if (boneOk)
 		{
-			std::vector<engine::math::Mat4> globals(skel.bones.size());
-			for (std::size_t i = 0; i < skel.bones.size(); ++i)
+			float bindGlobal[16];
+			if (InvertMat4(skel.bones[static_cast<std::size_t>(boneIndex)].inverseBindGlobal.m,
+				bindGlobal))
 			{
-				const int parent = skel.bones[i].parentIndex;
-				globals[i] = (parent < 0)
-					? skel.bones[i].bindLocal
-					: globals[static_cast<std::size_t>(parent)] * skel.bones[i].bindLocal;
+				cx = bindGlobal[12];
+				cy = bindGlobal[13];
+				cz = bindGlobal[14];
 			}
-			const engine::math::Mat4& g = globals[static_cast<std::size_t>(boneIndex)];
-			cx = g.m[12];
-			cy = g.m[13];
-			cz = g.m[14];
 		}
+
+		// Fait FLOTTER la boîte juste au-dessus de la tête (repère de dev bien
+		// visible, non noyé dans le maillage du crâne/capuche). Décalage en +Y
+		// espace modèle — la tête est droite en bind pose, donc +Y = « au-dessus » ;
+		// après skinning la boîte suit l'os tête. Rend la preuve visuelle du
+		// pipeline modulaire impossible à manquer avant les vrais assets.
+		cy += halfExtentM + 0.20f;
 
 		const std::uint16_t bone = static_cast<std::uint16_t>(boneOk ? boneIndex : 0);
 		const float h = halfExtentM;
@@ -53,7 +113,7 @@ namespace engine::render::skinned
 		const float uvs[4][2] = {{0.f,0.f},{1.f,0.f},{1.f,1.f},{0.f,1.f}};
 
 		cpu.vertices.reserve(24);
-		cpu.indices.reserve(36);
+		cpu.indices.reserve(72); // double face (recto + verso) : 6 faces x 2 tris x 2 sens x 3.
 		for (int f = 0; f < 6; ++f)
 		{
 			const std::uint32_t base = static_cast<std::uint32_t>(cpu.vertices.size());
@@ -78,12 +138,22 @@ namespace engine::render::skinned
 				sv.weights[3] = 0.0f;
 				cpu.vertices.push_back(sv);
 			}
+			// Recto (CCW, normale sortante).
 			cpu.indices.push_back(base + 0u);
 			cpu.indices.push_back(base + 1u);
 			cpu.indices.push_back(base + 2u);
 			cpu.indices.push_back(base + 0u);
 			cpu.indices.push_back(base + 2u);
 			cpu.indices.push_back(base + 3u);
+			// Verso (winding inversé) : boîte DOUBLE-FACE. Assurance anti-culling —
+			// le repère de dev reste visible quelle que soit la convention réelle
+			// de face (cf. historique winding CLAUDE.md). Coût négligeable.
+			cpu.indices.push_back(base + 0u);
+			cpu.indices.push_back(base + 2u);
+			cpu.indices.push_back(base + 1u);
+			cpu.indices.push_back(base + 0u);
+			cpu.indices.push_back(base + 3u);
+			cpu.indices.push_back(base + 2u);
 		}
 
 		cpu.submeshes.push_back(

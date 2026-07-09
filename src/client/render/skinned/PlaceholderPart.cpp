@@ -15,22 +15,21 @@ namespace engine::render::skinned
 		SkinnedMeshCpuData cpu;
 		cpu.skeleton = skel; // squelette partagé (copie) — la pose vient du corps au rendu.
 
-		// IMPORTANT — pourquoi on N'utilise PAS la bind-globale de l'os pour placer
-		// la boîte : sur le rig UE5 de l'avatar, les os ont TOUS leur bind-globale à
-		// l'ORIGINE (diagnostic : os tête bind-global ≈ (0,0,0), Y=0 au lieu de ~1.6 m).
-		// La pose debout est portée par les SOMMETS du maillage, pas par les matrices
-		// d'os. S'ancrer sur la bind-globale de l'os posait donc la boîte AUX PIEDS,
-		// détachée du personnage.
+		// IMPORTANT — placement de la boîte sur ce rig UE5.
+		// Deux constats issus du diagnostic en jeu :
+		//  1) TOUS les os ont leur bind-globale à l'ORIGINE (os tête ≈ (0,0,0),
+		//     Y=0 au lieu de ~1.6 m). La pose debout est portée par les SOMMETS du
+		//     maillage, pas par les matrices d'os.
+		//  2) La matrice finals[os_tête] appliquée au rendu DÉPLACE un point posé à
+		//     hauteur tête loin dans le décor (l'os tête est inexploitable ici).
 		//
-		// Solution : placer la boîte à la position MODÈLE approximative de la tête
-		// (~1.6 m au-dessus des pieds, là où se trouve réellement la géométrie de la
-		// tête) et la peser à l'os tête. Elle se co-localise ainsi avec les sommets
-		// de la tête du corps et hérite EXACTEMENT de leur transformation (position +
-		// rotation animée). Les vrais assets modulaires, authored au bon endroit,
-		// marcheront de la même façon.
-		const bool boneOk = (boneIndex >= 0)
-			&& (static_cast<std::size_t>(boneIndex) < skel.bones.size());
-		const std::uint16_t bone = static_cast<std::uint16_t>(boneOk ? boneIndex : 0);
+		// Solution robuste : peser la boîte à l'os RACINE (index 0), dont la matrice
+		// finals ≈ identité, et la placer à la hauteur tête MODÈLE (~1.6 m). La boîte
+		// suit alors la matrice modèle de l'avatar (position + orientation du corps)
+		// et se pose sur la tête, indépendamment de l'os tête cassé. Le suivi fin par
+		// os (casque qui tourne avec la tête) reviendra avec un rig correct + vrais
+		// assets modulaires. `boneIndex` n'est plus qu'informatif (log).
+		const std::uint16_t bone = 0; // os racine : rid la matrice modèle avatar.
 
 		// Hauteur tête (espace modèle) : l'avatar fait ~1.8 m, la tête est vers 1.6 m.
 		constexpr float kHeadHeightM = 1.60f;
@@ -38,7 +37,8 @@ namespace engine::render::skinned
 		const float h = halfExtentM;
 
 		LOG_INFO(Render,
-			"[ModularDiag] boite tete : bone={} centre=({:.2f},{:.2f},{:.2f}) demiTaille={:.2f} m",
+			"[ModularDiag] boite tete : boneDemande={} pesee_sur_os=0 (racine) "
+			"centre=({:.2f},{:.2f},{:.2f}) demiTaille={:.2f} m",
 			boneIndex, cx, cy, cz, h);
 
 		// 6 faces (normale sortante) ; 4 sommets CCW vus de l'extérieur.

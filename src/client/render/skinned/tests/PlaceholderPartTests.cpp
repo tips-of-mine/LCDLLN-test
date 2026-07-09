@@ -47,12 +47,14 @@ namespace
 		REQUIRE(part.skeleton.bones.size() == 2); // squelette copié
 	}
 
-	void Test_AllVertsWeightedToTargetBone()
+	void Test_AllVertsWeightedToRootBone()
 	{
+		// Le placeholder est pesé à l'os RACINE (0) quel que soit boneIndex demandé
+		// (l'os cible du rig UE5 est inexploitable, cf. PlaceholderPart.cpp).
 		SkinnedMeshCpuData part = MakePlaceholderBoxPart(MakeSkel(), 1, 0.1f);
 		for (const auto& v : part.vertices)
 		{
-			REQUIRE(v.boneIndices[0] == 1);
+			REQUIRE(v.boneIndices[0] == 0);
 			REQUIRE(Approx(v.weights[0], 1.0f));
 			REQUIRE(Approx(v.weights[1], 0.0f));
 			REQUIRE(Approx(v.weights[2], 0.0f));
@@ -88,7 +90,7 @@ namespace
 int main()
 {
 	Test_BoxCounts();
-	Test_AllVertsWeightedToTargetBone();
+	Test_AllVertsWeightedToRootBone();
 	Test_BoxCenteredAtHeadHeight();
 	Test_OutOfRangeBone_FallsBackToBoneZero();
 	return g_failed == 0 ? 0 : 1;

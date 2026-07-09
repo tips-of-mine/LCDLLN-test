@@ -66,6 +66,7 @@
 #include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/gameplay/ActionBarLayout.h"
 #include "src/client/ui_common/CurrencyFormat.h"
+#include "src/client/render/skinned/PlaceholderPart.h"
 #include "src/client/render/LnTheme.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/client/render/DeferredPipeline.h"
@@ -2002,6 +2003,62 @@ namespace engine
 				if (m_characterWindowImGui)
 					m_characterWindowImGui->OpenAtTab(engine::render::CharacterWindowImGuiRenderer::Tab::Arbre);
 				LOG_INFO(Core, "[Engine] /arbre -> fenetre Personnage (onglet Arbre)");
+				return true;
+			}
+			// Chantier 2 SP1 — commande DEBUG /modular <a|b|off> : pose/echange/retire
+			// une PARTIE placeholder (boite) sur la TETE de l'avatar. Preuve visuelle
+			// du pipeline modulaire (avant les vrais assets). Gate derriere
+			// client.debug.modular_test (defaut false) : outil de dev, pas une feature.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/modular" || text.starts_with("/modular ")))
+			{
+				if (!m_cfg.GetBool("client.debug.modular_test", false))
+				{
+					LOG_INFO(Core, "[Engine] /modular ignore (client.debug.modular_test=false)");
+					return true;
+				}
+				// Genere 2 variantes placeholder a la 1re utilisation (mesh + device valides).
+				if (m_placeholderParts.empty() && m_currentSkinnedMesh != nullptr)
+				{
+					const engine::render::skinned::Skeleton& skel = m_currentSkinnedMesh->skeleton;
+					int headBone = skel.FindBoneIndex("mixamorig:Head");
+					if (headBone < 0) headBone = skel.FindBoneIndex("head");
+					if (headBone < 0) headBone = skel.FindBoneIndex("Head");
+					if (headBone < 0) headBone = static_cast<int>(skel.bones.size()) - 1;
+					const float sizes[2] = { 0.12f, 0.18f };
+					for (int i = 0; i < 2; ++i)
+					{
+						engine::render::skinned::SkinnedMeshCpuData cpu =
+							engine::render::skinned::MakePlaceholderBoxPart(skel, headBone, sizes[i]);
+						auto mesh = std::make_unique<engine::render::skinned::SkinnedMesh>();
+						if (mesh->Upload(m_vkDeviceContext.GetDevice(),
+							m_vkDeviceContext.GetPhysicalDevice(), cpu))
+						{
+							m_placeholderParts.push_back(std::move(mesh));
+						}
+					}
+					LOG_INFO(Render, "[Modular] {} partie(s) placeholder generee(s) (os tete={})",
+						m_placeholderParts.size(), headBone);
+				}
+				const std::string arg = (text.size() > 9) ? text.substr(9) : std::string();
+				if (arg.find("off") != std::string::npos)
+				{
+					m_modularAvatar.ClearPart(engine::render::skinned::EquipVisualSlot::Head);
+					LOG_INFO(Render, "[Modular] tete retiree");
+				}
+				else if ((arg.find('b') != std::string::npos || arg.find('B') != std::string::npos)
+					&& m_placeholderParts.size() >= 2)
+				{
+					(void)m_modularAvatar.SetPart(
+						engine::render::skinned::EquipVisualSlot::Head, m_placeholderParts[1].get());
+					LOG_INFO(Render, "[Modular] tete = variante B");
+				}
+				else if (!m_placeholderParts.empty())
+				{
+					(void)m_modularAvatar.SetPart(
+						engine::render::skinned::EquipVisualSlot::Head, m_placeholderParts[0].get());
+					LOG_INFO(Render, "[Modular] tete = variante A");
+				}
 				return true;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Slash command /lfg pour
@@ -5508,6 +5565,11 @@ namespace engine
 													auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
 														m_currentSkinnedMesh->skeleton, globals);
 
+													// Chantier 2 SP1 — le corps de base de l'avatar modulaire = le mesh
+													// courant (idempotent chaque frame ; suit un éventuel changement de
+													// race). Les parties équipées (placeholder) persistent via /modular.
+													m_modularAvatar.SetBody(m_currentSkinnedMesh);
+
 													// --- B.1 / Task 9 : model matrix depuis CharacterController + m_avatarYaw ---
 													// On lit la position monde directement depuis le CC (deja appele
 													// dans Update *avant* OrbitalCameraController, cf. ligne ~6580),
@@ -5597,21 +5659,30 @@ namespace engine
 														m_fgGBufferVelocityId, m_fgDepthId,
 														[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat, bodyMaterialId,
 														 submeshMaterialIndices = std::move(submeshMaterialIndices)](VkCommandBuffer innerCmd) {
-															m_skinnedRenderer.Record(
-																m_vkDeviceContext.GetDevice(), innerCmd,
-																m_vkSwapchain.GetExtent(),
-																m_pipeline->GetGeometryPass().GetRenderPassLoad(),
-																VK_NULL_HANDLE,
-																rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
-																*m_currentSkinnedMesh,
-																finals,
-																materialCache.GetDescriptorSet(),
-																finalModelMat.m,
-																skinnedMaterialIndex,
-																submeshMaterialIndices,
-																bodyMaterialId,
-																m_avatarSkinDepthBiasConstant,
-																m_avatarSkinDepthBiasSlope);
+															// Chantier 2 SP1 — avatar modulaire : dessine chaque partie active
+															// avec les MÊMES matrices d'os (squelette partagé). Le Body garde son
+															// routage matériau (habit/peau) ; les parties placeholder utilisent le
+															// chemin mono-draw (materialIndex 0). ActiveParts() = Body seul tant
+															// qu'aucune partie n'est équipée -> rendu identique à avant.
+															for (const engine::render::skinned::SkinnedMesh* part : m_modularAvatar.ActiveParts())
+															{
+																const bool isBody = (part == m_currentSkinnedMesh);
+																m_skinnedRenderer.Record(
+																	m_vkDeviceContext.GetDevice(), innerCmd,
+																	m_vkSwapchain.GetExtent(),
+																	m_pipeline->GetGeometryPass().GetRenderPassLoad(),
+																	VK_NULL_HANDLE,
+																	rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+																	*part,
+																	finals,
+																	materialCache.GetDescriptorSet(),
+																	finalModelMat.m,
+																	isBody ? skinnedMaterialIndex : 0u,
+																	isBody ? submeshMaterialIndices : std::vector<uint32_t>{},
+																	isBody ? bodyMaterialId : 0u,
+																	m_avatarSkinDepthBiasConstant,
+																	m_avatarSkinDepthBiasSlope);
+															}
 														});
 												}
 

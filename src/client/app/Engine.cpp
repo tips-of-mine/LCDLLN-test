@@ -62,6 +62,7 @@
 #include "src/client/render/SkillBookImGuiRenderer.h"
 #include "src/client/render/GrimoireImGuiRenderer.h"
 #include "src/client/render/ClassSkillTreeImGuiRenderer.h"
+#include "src/client/render/CharacterWindowImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/gameplay/ActionBarLayout.h"
 #include "src/client/ui_common/CurrencyFormat.h"
@@ -1972,12 +1973,11 @@ namespace engine
 				    || text.starts_with("/skills ") || text.starts_with("/skills\t")
 				    || text.starts_with("/skill ") || text.starts_with("/skill\t")))
 			{
-				m_skillBookVisible = !m_skillBookVisible;
-				if (m_skillBookVisible)
-				{
-					m_skillBookUi.RequestList();
-				}
-				LOG_INFO(Core, "[Engine] /skills toggle (visible={})", m_skillBookVisible);
+				// Chantier 1 — route vers la fenêtre Personnage unifiée (onglet Compétences).
+				if (m_characterWindowImGui)
+					m_characterWindowImGui->OpenAtTab(engine::render::CharacterWindowImGuiRenderer::Tab::Competences);
+				m_skillBookUi.RequestList();
+				LOG_INFO(Core, "[Engine] /skills -> fenetre Personnage (onglet Competences)");
 				sendAdminAudit("/skills");
 				return true;
 			}
@@ -1988,8 +1988,9 @@ namespace engine
 				    || text.starts_with("/grimoire ") || text.starts_with("/grimoire\t")
 				    || text.starts_with("/sorts ") || text.starts_with("/sorts\t")))
 			{
-				m_grimoireVisible = !m_grimoireVisible;
-				LOG_INFO(Core, "[Engine] /grimoire toggle (visible={})", m_grimoireVisible);
+				if (m_characterWindowImGui)
+					m_characterWindowImGui->OpenAtTab(engine::render::CharacterWindowImGuiRenderer::Tab::Techniques);
+				LOG_INFO(Core, "[Engine] /grimoire -> fenetre Personnage (onglet Techniques)");
 				return true;
 			}
 			// SP-D — Slash commands /arbre et /competences pour l'arbre de compétences.
@@ -1998,8 +1999,9 @@ namespace engine
 				    || text.starts_with("/arbre ") || text.starts_with("/arbre	")
 				    || text.starts_with("/competences ") || text.starts_with("/competences	")))
 			{
-				m_classSkillTreeVisible = !m_classSkillTreeVisible;
-				LOG_INFO(Core, "[Engine] /arbre toggle (visible={})", m_classSkillTreeVisible);
+				if (m_characterWindowImGui)
+					m_characterWindowImGui->OpenAtTab(engine::render::CharacterWindowImGuiRenderer::Tab::Arbre);
+				LOG_INFO(Core, "[Engine] /arbre -> fenetre Personnage (onglet Arbre)");
 				return true;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Slash command /lfg pour
@@ -7714,70 +7716,14 @@ namespace engine
 		if (m_input.WasPressed(engine::platform::Key::F_11))
     		m_window.ToggleFullscreen();
 
-		// CMANGOS.39 (Phase 4.39 step 3+4) — Touche B post-auth toggle le
-		// panneau Skill Book (equivalent a la slash command /skills). Bloquee
-		// si le chat a le focus (l'utilisateur tape) ou si le menu pause /
-		// editor est ouvert pour eviter les toggles accidentels.
-		{
-			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
-			const bool inGameNoMenu = !m_inGamePauseMenuVisible
-				&& !m_inGameOptionsPanelVisible
-				&& !m_editorEnabled
-				&& m_authUi.IsInitialized()
-				&& m_authUi.IsFlowComplete();
-			if (inGameNoMenu && !chatBlocks
-				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.skillbook", "F2"), engine::platform::Key::F_2)))
-			{
-				m_skillBookVisible = !m_skillBookVisible;
-				if (m_skillBookVisible)
-				{
-					m_skillBookUi.RequestList();
-				}
-				LOG_INFO(Core, "[Engine] F2 toggle skillbook (visible={})", m_skillBookVisible);
-			}
-		}
+		// Chantier 1 — touche F2 (Skill Book) LIBÉRÉE : le livre de compétences est
+		// désormais l'onglet Compétences de la fenêtre Personnage unifiée (F1). Le
+		// RequestList() est déclenché à l'ouverture de la fenêtre côté conteneur au
+		// besoin ; l'ancien toggle F2 autonome est retiré.
 
-		// Grimoire (Task 13) — Touche I remappable post-auth toggle le panneau
-		// Grimoire / Carnet de techniques. Même guards que B (chat + pause + editor).
-		// Defaut = I : V etait en collision avec le talk marchand (SendTalkRequest,
-		// meme touche), ce qui ouvrait le Grimoire ET la boutique simultanement.
-		{
-			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
-			const bool inGameNoMenu = !m_inGamePauseMenuVisible
-				&& !m_inGameOptionsPanelVisible
-				&& !m_editorEnabled
-				&& m_authUi.IsInitialized()
-				&& m_authUi.IsFlowComplete();
-			const engine::platform::Key grimoireKey =
-				KeyFromName(m_cfg.GetString("controls.keybind.grimoire", "F3"), engine::platform::Key::F_3);
-			if (inGameNoMenu && !chatBlocks && m_input.WasPressed(grimoireKey))
-			{
-				m_grimoireVisible = !m_grimoireVisible;
-				LOG_INFO(Core, "[Engine] Grimoire toggle (visible={})", m_grimoireVisible);
-			}
-		}
-
-		// SP-D — Touche W remappable post-auth toggle l'arbre de compétences par-classe.
-		// Même guards que Grimoire (chat + pause + editor). Defaut = W : Y etait en
-		// collision avec le panneau Meteo (meme touche Y), ce qui ouvrait l'arbre ET
-		// la meteo simultanement. W est libre en disposition ZQSD (deplacement = Z/Q/S/D)
-		// comme en AZERTY ; remappable via controls.keybind.skilltree pour les claviers
-		// QWERTY ou W sert au deplacement avant.
-		{
-			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
-			const bool inGameNoMenu = !m_inGamePauseMenuVisible
-				&& !m_inGameOptionsPanelVisible
-				&& !m_editorEnabled
-				&& m_authUi.IsInitialized()
-				&& m_authUi.IsFlowComplete();
-			const engine::platform::Key treeKey =
-				KeyFromName(m_cfg.GetString("controls.keybind.skilltree", "F4"), engine::platform::Key::F_4);
-			if (inGameNoMenu && !chatBlocks && m_input.WasPressed(treeKey))
-			{
-				m_classSkillTreeVisible = !m_classSkillTreeVisible;
-				LOG_INFO(Core, "[Engine] ClassSkillTree toggle (visible={})", m_classSkillTreeVisible);
-			}
-		}
+		// Chantier 1 — touches F3 (Grimoire) et F4 (arbre) LIBÉRÉES : ces panneaux
+		// sont désormais des onglets de la fenêtre Personnage unifiée ouverte par F1
+		// (cf. bloc F1 plus bas). Leurs anciens toggles autonomes sont retirés.
 
 		// Bascule HUD carte — Touche U remappable post-auth masque/affiche le
 		// « cluster carte » : boussole + radar minimap + tracker de quêtes (retour
@@ -7911,16 +7857,37 @@ namespace engine
 				m_lootRollVisible = !m_lootRollVisible;
 				LOG_INFO(Core, "[Engine] F7 toggle loot roll (visible={})", m_lootRollVisible);
 			}
-			// R1-B (Task 4) — Touche C (mnemonique naturel « Character ») : toggle la
-			// feuille de personnage (stats derivees). Pas de fetch a l'ouverture :
-			// playerStats est deja peuple dans le modele UI a l'enter-world. L'action
-			// "punch" (controls.keybind.punch) a ete deplacee sur X pour liberer C.
-			// Memes guards que les autres toggles (chat focus, pause, editor, auth flow).
+			// Chantier 1 — Touche F1 : ouvre/ferme la fenêtre Personnage unifiée à
+			// onglets (perso 3D + inventaire + caractéristiques + argent, plus les
+			// onglets Compétences/Techniques/Arbre). Remplace l'ancien toggle de la
+			// fiche autonome ; F2/F3/F4/I sont désormais libres. Clé de config
+			// conservée (controls.keybind.charactersheet, défaut F1). Mêmes guards.
 			if (inGameNoMenu && !chatBlocks
 				&& m_input.WasPressed(KeyFromName(m_cfg.GetString("controls.keybind.charactersheet", "F1"), engine::platform::Key::F_1)))
 			{
-				m_characterSheetVisible = !m_characterSheetVisible;
-				LOG_INFO(Core, "[Engine] F1 toggle character sheet (visible={})", m_characterSheetVisible);
+				if (m_characterWindowImGui)
+				{
+					m_characterWindowImGui->ToggleVisible();
+					if (m_characterWindowImGui->IsVisible())
+					{
+						// Peupler l'onglet Compétences (l'ancien toggle F2 le faisait ;
+						// le Skill Book se remplit via RequestList côté serveur).
+						m_skillBookUi.RequestList();
+						// Task 4 — pose l'avatar du joueur dans le viewport 3D À
+						// L'OUVERTURE seulement : SetMesh réinitialise l'animation, il ne
+						// doit PAS être rappelé chaque frame (sinon l'anim reste figée à
+						// t=0). Le Tick/RenderOffscreen se font ensuite tant que ouvert.
+						m_racePreviewViewport.SetGender(m_avatarGender);
+						m_racePreviewViewport.SetSkinTone(m_avatarSkinTone);
+						m_racePreviewViewport.SetMesh(m_currentSkinnedMesh);
+						// Vue de face + rotation manuelle (pas d'auto-orbit) : retour
+						// joueur 2026-07-09. Le drag dans la fenêtre pilote ensuite l'angle.
+						m_racePreviewViewport.SetAutoOrbit(false);
+						m_racePreviewViewport.SetOrbitYaw(0.0f);
+						m_characterWindowImGui->ResetPreviewOrientation();
+					}
+				}
+				LOG_INFO(Core, "[Engine] F1 toggle fenetre Personnage");
 			}
 		}
 
@@ -8269,6 +8236,16 @@ namespace engine
 				}
 				m_classSkillTreeImGui->SetIconCache(&m_skillIconCache);
 				if (m_grimoireImGui) { m_grimoireImGui->SetIconCache(&m_skillIconCache); }
+				// Chantier 1 — fenêtre Personnage unifiée à onglets (F1). Regroupe les 3
+				// panneaux (pilotés en mode embarqué) + inventaire + argent + perso 3D
+				// (viewport branché en Task 4). Bind après création des sous-renderers et
+				// init du cache d'icônes.
+				m_characterWindowImGui = std::make_unique<engine::render::CharacterWindowImGuiRenderer>();
+				m_characterWindowImGui->Bind(&m_cfg, &m_uiModelBinding, &m_invUi, &m_skillIconCache,
+					m_skillBookImGui.get(), m_grimoireImGui.get(), m_classSkillTreeImGui.get());
+				// Task 4 — aperçu 3D : le conteneur affiche la texture offscreen du
+				// viewport perso (alimenté quand la fenêtre est ouverte, cf. Update).
+				m_characterWindowImGui->SetRaceViewport(&m_racePreviewViewport);
 				// CMANGOS.21 (Phase 5.21 step 3+4) — Renderer ImGui du panneau
 				// Arena. Visible uniquement quand m_arenaVisible (toggle via
 				// /arena ou touche A). Le popup proposal s'affiche aussi quand
@@ -10002,7 +9979,17 @@ namespace engine
 				}
 
 				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
-				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, rmbLook, !mouseOverRadar, out.camera);
+				// applyZoom coupé aussi quand ImGui capte la souris : sinon la molette
+				// utilisée pour défiler dans une fenêtre (ex. onglet Arbre de la fenêtre
+				// Personnage) zoomait AUSSI la caméra du jeu (retour joueur 2026-07-09).
+				// Cette section n'est PAS sous #if defined(_WIN32) et ImGui n'est inclus
+				// que sur Windows -> on garde la lecture WantCaptureMouse.
+				bool imguiWantsMouse = false;
+#if defined(_WIN32)
+				imguiWantsMouse = ImGui::GetIO().WantCaptureMouse;
+#endif
+				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, rmbLook,
+					!mouseOverRadar && !imguiWantsMouse, out.camera);
 
 				// --- Clamp anti-sous-sol : la caméra ne descend pas sous le terrain. ---
 				const bool occEnabled = m_cfg.GetBool("client.camera.occlusion_fade.enabled", true);
@@ -10600,6 +10587,9 @@ namespace engine
 				m_racePreviewLastNowSec = previewNowSec;
 				if (previewDt < 0.0f)  previewDt = 0.0f;
 				if (previewDt > 0.1f)  previewDt = 0.1f; // clamp gros hitch
+				// L'écran de création garde la rotation auto (la fenêtre Personnage la
+				// coupe ; on la réactive ici au cas où elle a servi avant).
+				m_racePreviewViewport.SetAutoOrbit(true);
 				m_racePreviewViewport.Tick(previewDt);
 				m_racePreviewViewport.RenderOffscreen();
 			}
@@ -10694,10 +10684,10 @@ namespace engine
 				// debordent par-dessus et rendent le panneau illisible (ex. le label
 				// « Sanglier des collines » au milieu de l'arbre de competences).
 				const bool worldOverlaysHidden = m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible
-					|| m_classSkillTreeVisible || m_grimoireVisible || m_skillBookVisible
+					|| (m_characterWindowImGui && m_characterWindowImGui->IsVisible())
 					|| m_auctionHouseVisible || m_arenaVisible || m_battleGroundVisible
 					|| m_outdoorPvpVisible || m_guildVisible || m_lootRollVisible
-					|| m_characterSheetVisible || m_craftingVisible || m_advancedCombatVisible
+					|| m_craftingVisible || m_advancedCombatVisible
 					|| m_weatherVisible;
 				if (!worldOverlaysHidden)
 				for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
@@ -10828,6 +10818,22 @@ namespace engine
 						// (x,y,z,w = gauche,haut,droite,bas). Une nouvelle plaque qui en
 						// recouvre une est remontee d'une hauteur de plaque (empilement).
 						std::vector<ImVec4> placedLabelRects;
+					// Le Journal de quêtes (coin haut-gauche, toujours visible) est une
+					// fenêtre ImGui ; les plaques de mob passent par le foreground draw
+					// list, donc AU-DESSUS. On récupère son rectangle pour sauter toute
+					// plaque qui retomberait dessus (retour joueur 2026-07-09 : « Sanglier
+					// des collines » s'affichait par-dessus le journal).
+					ImVec4 journalRect(0.0f, 0.0f, 0.0f, 0.0f);
+					bool hasJournalRect = false;
+					{
+						const engine::client::QuestUiState& qs = m_questUi.GetState();
+						if (qs.layoutValid)
+						{
+							const engine::client::QuestUiRect& jb = qs.journalPanelBounds;
+							journalRect = ImVec4(jb.x, jb.y, jb.x + jb.width, jb.y + jb.height);
+							hasJournalRect = true;
+						}
+					}
 					for (const engine::client::UIRemoteEntity& re : remotes)
 					{
 						// Combat SP1 : les mobs (archetypeId != 0) ont leur plaque.
@@ -10950,6 +10956,16 @@ namespace engine
 							}
 							if (!overlap) break;
 							syp -= (plateH + 3.0f);
+						}
+						// Ne pas dessiner la plaque si elle retombe sur le Journal de quêtes
+						// (elle serait masquée par la fenêtre de toute façon, mais le
+						// foreground la peindrait par-dessus -> illisible).
+						if (hasJournalRect
+							&& (sxp - plateHalfW) < journalRect.z && (sxp + plateHalfW) > journalRect.x
+							&& (syp - ts.y - 2.0f) < journalRect.w
+							&& (syp + (drawMobHealthBar ? 24.0f : 4.0f)) > journalRect.y)
+						{
+							continue;
 						}
 						placedLabelRects.emplace_back(sxp - plateHalfW, syp - ts.y - 2.0f,
 							sxp + plateHalfW, syp + (drawMobHealthBar ? 24.0f : 4.0f));
@@ -11316,12 +11332,8 @@ namespace engine
 						m_advancedCombatVisible = !m_advancedCombatVisible;
 					}
 
-					// --- I : fenetre d'inventaire (grille objets). Retour joueur
-					// 2026-07-08 : l'inventaire etait calcule mais jamais affichable.
-					if (keysAllowed && m_input.WasPressed(engine::platform::Key::I))
-					{
-						m_inventoryVisible = !m_inventoryVisible;
-					}
+					// Chantier 1 — la touche I est LIBÉRÉE : l'inventaire est désormais
+					// l'onglet Personnage de la fenêtre unifiée (ouverte par F1).
 
 					// --- Cadre cible (haut-centre) : nom + barre de PV. Les PV de la
 					// cible suivent les snapshots (cf. UIModelBinding::ApplySnapshot).
@@ -12376,187 +12388,6 @@ namespace engine
 						}
 					}
 
-					// --- Fenetre d'inventaire (bascule touche I). La grille 4x4 est
-					// deja calculee par InventoryUiPresenter (slots, icones, quantites)
-					// mais n'etait jamais dessinee ni ouvrable. On la rend ici en fenetre
-					// ImGui deplacable + fermable. Retour joueur 2026-07-08.
-					if (m_inventoryVisible)
-					{
-						const engine::client::InventoryPanelState& inv = m_invUi.GetState();
-						const int invCols = (inv.columns > 0u) ? static_cast<int>(inv.columns) : 4;
-						const int invSlotCount = static_cast<int>(inv.slots.size());
-						const int invRows = (invSlotCount + invCols - 1) / invCols;
-						const float invCell = 54.0f;
-						const float invGap = 6.0f;
-						const float invPad = 12.0f;
-						const float invGridW = static_cast<float>(invCols) * invCell
-							+ static_cast<float>(invCols - 1) * invGap;
-						const float invGridH = static_cast<float>(invRows) * invCell
-							+ static_cast<float>(std::max(0, invRows - 1)) * invGap;
-						const float invWinW = invGridW + invPad * 2.0f;
-						ImGui::SetNextWindowPos(ImVec2((dw - invWinW) * 0.5f, dh * 0.26f), ImGuiCond_Appearing);
-						ImGui::SetNextWindowBgAlpha(0.95f);
-						ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.06f, 0.07f, 0.10f, 0.95f));
-						ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.47f, 0.39f, 0.16f, 0.86f));
-						const ImGuiWindowFlags invFlags = ImGuiWindowFlags_NoSavedSettings
-							| ImGuiWindowFlags_NoResize
-							| ImGuiWindowFlags_AlwaysAutoResize;
-						if (ImGui::Begin("Inventaire##ln_inventory", &m_inventoryVisible, invFlags))
-						{
-							ImDrawList* wdl = ImGui::GetWindowDrawList();
-							const ImVec2 invOrigin = ImGui::GetCursorScreenPos();
-							int invOccupied = 0;
-							for (int i = 0; i < invSlotCount; ++i)
-							{
-								const engine::client::InventorySlotState& slot =
-									inv.slots[static_cast<size_t>(i)];
-								const int r = i / invCols;
-								const int c = i % invCols;
-								const float cx0 = invOrigin.x + static_cast<float>(c) * (invCell + invGap);
-								const float cy0 = invOrigin.y + static_cast<float>(r) * (invCell + invGap);
-								const ImVec2 mn(cx0, cy0);
-								const ImVec2 mx(cx0 + invCell, cy0 + invCell);
-								const bool occupied = slot.occupied && slot.itemId != 0u;
-								wdl->AddRectFilled(mn, mx,
-									occupied ? IM_COL32(26, 30, 40, 235) : IM_COL32(16, 18, 24, 200), 5.0f);
-								wdl->AddRect(mn, mx,
-									occupied ? IM_COL32(150, 130, 60, 220) : IM_COL32(64, 66, 74, 180),
-									5.0f, 0, 1.5f);
-								if (!occupied)
-									continue;
-								++invOccupied;
-								bool hasIcon = false;
-								if (!slot.iconPath.empty())
-								{
-									const uint64_t texId = m_skillIconCache.GetOrLoad(slot.iconPath);
-									if (texId != 0)
-									{
-										const float ip = 3.0f;
-										wdl->AddImage(static_cast<ImTextureID>(texId),
-											ImVec2(cx0 + ip, cy0 + ip), ImVec2(mx.x - ip, mx.y - ip));
-										hasIcon = true;
-									}
-								}
-								if (!hasIcon && !slot.label.empty())
-								{
-									const std::string lbl = slot.label.substr(0, 8);
-									wdl->AddText(ImVec2(cx0 + 4.0f, cy0 + 6.0f),
-										IM_COL32(220, 220, 225, 255), lbl.c_str());
-								}
-								if (slot.quantity > 1u)
-								{
-									char qty[12];
-									std::snprintf(qty, sizeof(qty), "%u", slot.quantity);
-									const ImVec2 qs = ImGui::CalcTextSize(qty);
-									wdl->AddText(ImVec2(mx.x - qs.x - 4.0f, mx.y - qs.y - 3.0f),
-										IM_COL32(255, 240, 190, 255), qty);
-								}
-								if (ImGui::IsMouseHoveringRect(mn, mx) && !slot.label.empty())
-								{
-									ImGui::BeginTooltip();
-									ImGui::TextUnformatted(slot.label.c_str());
-									ImGui::EndTooltip();
-								}
-							}
-							// Reserve l'espace de la grille (dessinee au draw list manuel).
-							ImGui::Dummy(ImVec2(invGridW, invGridH));
-							if (invOccupied == 0)
-								ImGui::TextDisabled("Inventaire vide");
-						}
-						ImGui::End();
-						ImGui::PopStyleColor(2);
-					}
-
-					// --- Fenetre d'inventaire (bascule touche I). La grille 4x4 est
-					// deja calculee par InventoryUiPresenter (slots, icones, quantites)
-					// mais n'etait jamais dessinee ni ouvrable. On la rend ici en fenetre
-					// ImGui deplacable + fermable. Retour joueur 2026-07-08.
-					if (m_inventoryVisible)
-					{
-						const engine::client::InventoryPanelState& inv = m_invUi.GetState();
-						const int invCols = (inv.columns > 0u) ? static_cast<int>(inv.columns) : 4;
-						const int invSlotCount = static_cast<int>(inv.slots.size());
-						const int invRows = (invSlotCount + invCols - 1) / invCols;
-						const float invCell = 54.0f;
-						const float invGap = 6.0f;
-						const float invPad = 12.0f;
-						const float invGridW = static_cast<float>(invCols) * invCell
-							+ static_cast<float>(invCols - 1) * invGap;
-						const float invGridH = static_cast<float>(invRows) * invCell
-							+ static_cast<float>(std::max(0, invRows - 1)) * invGap;
-						const float invWinW = invGridW + invPad * 2.0f;
-						ImGui::SetNextWindowPos(ImVec2((dw - invWinW) * 0.5f, dh * 0.26f), ImGuiCond_Appearing);
-						ImGui::SetNextWindowBgAlpha(0.95f);
-						ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.06f, 0.07f, 0.10f, 0.95f));
-						ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.47f, 0.39f, 0.16f, 0.86f));
-						const ImGuiWindowFlags invFlags = ImGuiWindowFlags_NoSavedSettings
-							| ImGuiWindowFlags_NoResize
-							| ImGuiWindowFlags_AlwaysAutoResize;
-						if (ImGui::Begin("Inventaire##ln_inventory", &m_inventoryVisible, invFlags))
-						{
-							ImDrawList* wdl = ImGui::GetWindowDrawList();
-							const ImVec2 invOrigin = ImGui::GetCursorScreenPos();
-							int invOccupied = 0;
-							for (int i = 0; i < invSlotCount; ++i)
-							{
-								const engine::client::InventorySlotState& slot =
-									inv.slots[static_cast<size_t>(i)];
-								const int r = i / invCols;
-								const int c = i % invCols;
-								const float cx0 = invOrigin.x + static_cast<float>(c) * (invCell + invGap);
-								const float cy0 = invOrigin.y + static_cast<float>(r) * (invCell + invGap);
-								const ImVec2 mn(cx0, cy0);
-								const ImVec2 mx(cx0 + invCell, cy0 + invCell);
-								const bool occupied = slot.occupied && slot.itemId != 0u;
-								wdl->AddRectFilled(mn, mx,
-									occupied ? IM_COL32(26, 30, 40, 235) : IM_COL32(16, 18, 24, 200), 5.0f);
-								wdl->AddRect(mn, mx,
-									occupied ? IM_COL32(150, 130, 60, 220) : IM_COL32(64, 66, 74, 180),
-									5.0f, 0, 1.5f);
-								if (!occupied)
-									continue;
-								++invOccupied;
-								bool hasIcon = false;
-								if (!slot.iconPath.empty())
-								{
-									const uint64_t texId = m_skillIconCache.GetOrLoad(slot.iconPath);
-									if (texId != 0)
-									{
-										const float ip = 3.0f;
-										wdl->AddImage(static_cast<ImTextureID>(texId),
-											ImVec2(cx0 + ip, cy0 + ip), ImVec2(mx.x - ip, mx.y - ip));
-										hasIcon = true;
-									}
-								}
-								if (!hasIcon && !slot.label.empty())
-								{
-									const std::string lbl = slot.label.substr(0, 8);
-									wdl->AddText(ImVec2(cx0 + 4.0f, cy0 + 6.0f),
-										IM_COL32(220, 220, 225, 255), lbl.c_str());
-								}
-								if (slot.quantity > 1u)
-								{
-									char qty[12];
-									std::snprintf(qty, sizeof(qty), "%u", slot.quantity);
-									const ImVec2 qs = ImGui::CalcTextSize(qty);
-									wdl->AddText(ImVec2(mx.x - qs.x - 4.0f, mx.y - qs.y - 3.0f),
-										IM_COL32(255, 240, 190, 255), qty);
-								}
-								if (ImGui::IsMouseHoveringRect(mn, mx) && !slot.label.empty())
-								{
-									ImGui::BeginTooltip();
-									ImGui::TextUnformatted(slot.label.c_str());
-									ImGui::EndTooltip();
-								}
-							}
-							// Reserve l'espace de la grille (dessinee au draw list manuel).
-							ImGui::Dummy(ImVec2(invGridW, invGridH));
-							if (invOccupied == 0)
-								ImGui::TextDisabled("Inventaire vide");
-						}
-						ImGui::End();
-						ImGui::PopStyleColor(2);
-					}
 
 					// --- Ecran de mort : overlay sombre + bouton Reapparaitre →
 					// RespawnRequest (le serveur ne l'honore que si le flag dead est pose ;
@@ -12615,10 +12446,13 @@ namespace engine
 			{
 				if (ImGui::BeginMenu("Panneaux"))
 				{
-					if (ImGui::MenuItem("Carnet de sorts", nullptr, m_skillBookVisible))
+					if (ImGui::MenuItem("Personnage (F1)", nullptr,
+						m_characterWindowImGui && m_characterWindowImGui->IsVisible()))
 					{
-						m_skillBookVisible = !m_skillBookVisible;
-						if (m_skillBookVisible) m_skillBookUi.RequestList();
+						// Ouvre la fenêtre Personnage unifiée (onglet Compétences).
+						if (m_characterWindowImGui)
+							m_characterWindowImGui->OpenAtTab(engine::render::CharacterWindowImGuiRenderer::Tab::Competences);
+						m_skillBookUi.RequestList();
 					}
 					if (ImGui::MenuItem("Arenes", nullptr, m_arenaVisible))
 					{
@@ -12691,15 +12525,9 @@ namespace engine
 				m_reputationImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_reputationImGui->Render();
 			}
-			// R1-B (Task 4) — Render de la feuille de personnage si visible. Lit
-			// directement le modele UI (playerStats) ; le renderer gere lui-meme
-			// le cas hasSheet == false (affiche "Statistiques indisponibles").
-			if (m_characterSheetVisible && m_characterSheetImGui)
-			{
-				m_characterSheetImGui->SetEnabled(true);
-				m_characterSheetImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
-				m_characterSheetImGui->Render(m_uiModelBinding.GetModel());
-			}
+			// Chantier 1 — les caractéristiques (ex-fiche F1) sont désormais dans
+			// l'onglet Personnage de la fenêtre unifiée (rendu plus bas). Ancien
+			// panneau F1 autonome retiré.
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Render du panneau LFG si visible.
 			// Le modal proposal s'affiche aussi quand hasProposal == true (meme si
 			// le panneau principal est masque), pour que le joueur ne rate pas
@@ -12724,12 +12552,8 @@ namespace engine
 			// render le panneau Skill Book si visible. L'indicateur Use est rendu
 			// en plus de la liste si actif (overlay non bloquant).
 			m_skillBookUi.TickIndicator(static_cast<float>(m_time.DeltaSeconds()));
-			if (m_skillBookVisible && m_skillBookImGui && m_skillBookUi.IsInitialized())
-			{
-				m_skillBookImGui->SetEnabled(true);
-				m_skillBookImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
-				m_skillBookImGui->Render();
-			}
+			// Chantier 1 — le Skill Book est désormais l'onglet Compétences de la
+			// fenêtre unifiée (rendu embarqué plus bas). Panneau autonome retiré.
 			// Grimoire (Task 13) — Sync du presenter (profil + layout autoritaire)
 			// puis render conditionnel si le panneau est ouvert.
 			// SP-C — kit effectif : compétences de classe connues (fallback kit profil).
@@ -12761,12 +12585,8 @@ namespace engine
 				}
 				m_grimoireUi.Sync(gProfileId, grimoireModel.playerStats.actionBarLayout, grimoireEffectiveKit);
 			}
-			if (m_grimoireVisible && m_grimoireImGui && m_grimoireUi.IsInitialized())
-			{
-				m_grimoireImGui->SetEnabled(true);
-				m_grimoireImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
-				m_grimoireImGui->Render();
-			}
+			// Chantier 1 — le Grimoire est désormais l'onglet Techniques de la fenêtre
+			// unifiée (rendu embarqué plus bas). Le Sync ci-dessus reste nécessaire.
 			// SP-D — Sync + render conditionnel de l'arbre de compétences par-classe.
 			// Niveau réel du perso (capturé à EnterWorld depuis CHARACTER_LIST) : verrouille
 			// les paliers > niveau et affiche le bon « Niveau joueur ». Le serveur revalide.
@@ -12783,12 +12603,33 @@ namespace engine
 				if (treeModel.playerStats.hasXp && treeModel.playerStats.level > m_activeCharacterLevel)
 					m_activeCharacterLevel = treeModel.playerStats.level;
 				m_classSkillTreeUi.Sync(treeModel.classId, treeModel.knownSkillIds, m_activeCharacterLevel);
-				if (m_classSkillTreeVisible && m_classSkillTreeImGui && m_classSkillTreeUi.IsInitialized())
-				{
-					m_classSkillTreeImGui->SetEnabled(true);
-					m_classSkillTreeImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
-					m_classSkillTreeImGui->Render();
-				}
+				// Chantier 1 — l'arbre est désormais l'onglet Arbre de la fenêtre unifiée
+				// (rendu embarqué juste après). Le Sync ci-dessus reste nécessaire.
+			}
+			// Task 4 — aperçu 3D : fait tourner + rend l'avatar du joueur dans l'image
+			// offscreen tant que la fenêtre Personnage est ouverte, AVANT que la draw
+			// list ImGui n'échantillonne la texture. RenderOffscreen est autonome
+			// (submit + wait idle) : coûteux (stall GPU) -> uniquement fenêtre ouverte.
+			// Le mesh/genre/teinte sont posés à l'ouverture (toggle F1) ; ici on ne fait
+			// qu'avancer l'anim/orbit et rendre.
+			if (m_characterWindowImGui && m_characterWindowImGui->IsVisible())
+			{
+				const float pNow = EngineNowSec();
+				float pDt = (m_racePreviewLastNowSec > 0.0f) ? (pNow - m_racePreviewLastNowSec) : 0.0f;
+				m_racePreviewLastNowSec = pNow;
+				if (pDt < 0.0f) pDt = 0.0f;
+				if (pDt > 0.1f) pDt = 0.1f; // clamp gros hitch
+				m_racePreviewViewport.Tick(pDt);
+				m_racePreviewViewport.RenderOffscreen();
+			}
+			// Chantier 1 — fenêtre Personnage unifiée à onglets (F1). Rendue APRÈS les
+			// Sync du Grimoire et de l'arbre (leurs presenters embarqués lisent l'état à
+			// jour). Point single-pass (même bloc que les autres panneaux) -> pas de
+			// doublon d'inventaire.
+			if (m_characterWindowImGui)
+			{
+				m_characterWindowImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_characterWindowImGui->Render(m_uiModelBinding.GetModel());
 			}
 			// CMANGOS.21 (Phase 5.21 step 3+4) — Render du panneau Arena si
 			// visible. Le popup proposal s'affiche aussi quand pendingProposalId

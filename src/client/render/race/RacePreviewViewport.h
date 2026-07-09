@@ -114,6 +114,15 @@ namespace engine::render::race
 		/// teinte claire si le matériau foncé n'existe pas (id 0).
 		void SetSkinTone(int tone);
 
+		/// Active/désactive la rotation orbit automatique (défaut true). Off => la
+		/// caméra reste à l'angle courant (piloté par SetOrbitYaw, ex. drag souris
+		/// dans la fenêtre Personnage). L'animation continue indépendamment.
+		void SetAutoOrbit(bool a) { m_autoOrbit = a; }
+
+		/// Fixe l'angle orbit (radians). 0 = vue de face (caméra en +Z regardant le
+		/// perso). Utilisé quand l'auto-orbit est off (rotation manuelle).
+		void SetOrbitYaw(float rad) { m_orbitYawRad = rad; }
+
 		/// Matériaux de l'avatar (set bindless + ids + noms peau + depth bias),
 		/// fournis par Engine après création des matériaux au boot. À appeler une
 		/// fois avant le 1er RenderOffscreen (re-appelable sans risque).
@@ -237,6 +246,10 @@ namespace engine::render::race
 		/// Angle de rotation orbit accumule depuis Init, en radians.
 		/// Wrap mod 2pi dans Tick pour eviter l'accumulation flottante.
 		float          m_orbitYawRad    = 0.0f;
+
+		/// Rotation automatique de l'orbit dans Tick (défaut true, ex. écran de
+		/// création). La fenêtre Personnage la coupe pour une rotation manuelle.
+		bool           m_autoOrbit      = true;
 
 		/// Anim sampling state mis a jour par Tick, consomme par Render.
 		/// m_localBoneMatrices : matrices TRS locales echantillonnees du clip Idle.

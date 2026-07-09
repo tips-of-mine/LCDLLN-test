@@ -593,7 +593,10 @@ namespace engine::render::race
 		// Accumule l'angle orbit, puis wrap mod 2pi pour eviter
 		// l'accumulation flottante sur de longues sessions.
 		constexpr float kDegToRad = 3.14159265358979323846f / 180.0f;
-		m_orbitYawRad += kOrbitDegPerSec * dt * kDegToRad;
+		// Rotation orbit automatique seulement si activée (écran de création). La
+		// fenêtre Personnage la coupe et pilote l'angle via SetOrbitYaw (drag).
+		if (m_autoOrbit)
+			m_orbitYawRad += kOrbitDegPerSec * dt * kDegToRad;
 		while (m_orbitYawRad >= k2Pi) m_orbitYawRad -= k2Pi;
 		while (m_orbitYawRad <  0.0f) m_orbitYawRad += k2Pi;
 

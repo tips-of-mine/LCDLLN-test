@@ -12,8 +12,10 @@ namespace engine::client
 {
 	namespace
 	{
-		inline constexpr uint32_t kInventoryColumns = 4;
-		inline constexpr uint32_t kInventoryRows = 4;
+		// Capacité augmentée (retours joueur 2026-07-09). 8x8 = 64 emplacements
+		// affichés (la grille de la fenêtre Personnage lit ces valeurs).
+		inline constexpr uint32_t kInventoryColumns = 8;
+		inline constexpr uint32_t kInventoryRows = 8;
 		inline constexpr size_t kPickupFeedbackMaxEntries = 3;
 		inline constexpr float kPickupFeedbackDurationSeconds = 2.0f;
 

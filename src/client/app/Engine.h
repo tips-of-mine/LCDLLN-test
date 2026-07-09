@@ -142,6 +142,7 @@ namespace engine::render
 	class SkillBookImGuiRenderer;
 	class GrimoireImGuiRenderer;
 	class ClassSkillTreeImGuiRenderer;
+	class CharacterWindowImGuiRenderer;
 	class ArenaImGuiRenderer;
 	class BattleGroundImGuiRenderer;
 	class OutdoorPvpImGuiRenderer;
@@ -1386,6 +1387,10 @@ namespace engine
 		/// SP-D — Renderer ImGui du panneau arbre de compétences.
 		/// Forward-déclaré dans Engine.h (ClassSkillTreeImGuiRenderer).
 		std::unique_ptr<engine::render::ClassSkillTreeImGuiRenderer> m_classSkillTreeImGui;
+		/// Chantier 1 — fenêtre Personnage unifiée à onglets (touche F1). Regroupe
+		/// perso 3D + inventaire + caractéristiques + argent (onglet défaut) et
+		/// délègue aux renderers Compétences/Techniques/Arbre en mode embarqué.
+		std::unique_ptr<engine::render::CharacterWindowImGuiRenderer> m_characterWindowImGui;
 		/// SP-E - Cache d'icones de competences (PNG -> texture ImGui), partage par
 		/// l'arbre, le Grimoire et la barre d'action. Init apres ImGui, Shutdown avant.
 		engine::client::SkillIconCache m_skillIconCache;
@@ -1568,11 +1573,6 @@ namespace engine
 		std::unordered_map<std::string, float> m_spellCooldownUiUntilSec;
 		/// Combat SP2 — visibilité du panneau combat avancé (touche J).
 		bool m_advancedCombatVisible = false;
-		/// Inventaire — visibilité de la fenêtre d'inventaire (touche I). Retour
-		/// joueur 2026-07-08 : « je gagne un objet mais je ne peux pas afficher
-		/// l'inventaire ». La grille était calculée (InventoryUiPresenter) mais
-		/// jamais dessinée ni ouvrable.
-		bool m_inventoryVisible = false;
 		/// Combat SP2 — throttle local d'envoi d'AttackRequest (le serveur reste
 		/// l'autorité du cooldown réel ; ceci évite juste le spam réseau).
 		float m_attackSendCooldownSec = 0.0f;

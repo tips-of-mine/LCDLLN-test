@@ -20,22 +20,28 @@ namespace engine::render
 
 	void GrimoireImGuiRenderer::Render()
 	{
-		if (m_presenter == nullptr || !m_enabled || !m_presenter->IsInitialized())
+		if (m_presenter == nullptr || (!m_embedded && !m_enabled) || !m_presenter->IsInitialized())
 		{
 			return;
 		}
 		const auto& state = m_presenter->GetState();
 
-		const float panelW = 720.f;
-		const float panelH = 540.f;
-		const float vpW = (m_viewportW > 0) ? static_cast<float>(m_viewportW) : 1280.f;
-		const float vpH = (m_viewportH > 0) ? static_cast<float>(m_viewportH) : 720.f;
-		ImGui::SetNextWindowPos(ImVec2((vpW - panelW) * 0.5f, (vpH - panelH) * 0.5f), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(panelW, panelH), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowBgAlpha(0.96f);
-
-		const char* title = state.isCaster ? "Grimoire##ln_grimoire" : "Carnet de techniques##ln_grimoire";
-		if (ImGui::Begin(title, nullptr, ImGuiWindowFlags_NoCollapse))
+		// Mode embarqué (conteneur CharacterWindow) : pas de fenêtre propre, on
+		// dessine directement dans l'onglet courant. Mode autonome : fenêtre centrée.
+		bool open = true;
+		if (!m_embedded)
+		{
+			const float panelW = 720.f;
+			const float panelH = 540.f;
+			const float vpW = (m_viewportW > 0) ? static_cast<float>(m_viewportW) : 1280.f;
+			const float vpH = (m_viewportH > 0) ? static_cast<float>(m_viewportH) : 720.f;
+			ImGui::SetNextWindowPos(ImVec2((vpW - panelW) * 0.5f, (vpH - panelH) * 0.5f), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSize(ImVec2(panelW, panelH), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowBgAlpha(0.96f);
+			const char* title = state.isCaster ? "Grimoire##ln_grimoire" : "Carnet de techniques##ln_grimoire";
+			open = ImGui::Begin(title, nullptr, ImGuiWindowFlags_NoCollapse);
+		}
+		if (open)
 		{
 			// --- Recherche
 			static char searchBuf[64] = {0};
@@ -120,7 +126,8 @@ namespace engine::render
 
 			ImGui::Columns(1);
 		}
-		ImGui::End();
+		if (!m_embedded)
+			ImGui::End();
 	}
 }
 

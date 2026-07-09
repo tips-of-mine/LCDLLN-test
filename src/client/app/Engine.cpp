@@ -1973,12 +1973,11 @@ namespace engine
 				    || text.starts_with("/skills ") || text.starts_with("/skills\t")
 				    || text.starts_with("/skill ") || text.starts_with("/skill\t")))
 			{
-				m_skillBookVisible = !m_skillBookVisible;
-				if (m_skillBookVisible)
-				{
-					m_skillBookUi.RequestList();
-				}
-				LOG_INFO(Core, "[Engine] /skills toggle (visible={})", m_skillBookVisible);
+				// Chantier 1 — route vers la fenêtre Personnage unifiée (onglet Compétences).
+				if (m_characterWindowImGui)
+					m_characterWindowImGui->OpenAtTab(engine::render::CharacterWindowImGuiRenderer::Tab::Competences);
+				m_skillBookUi.RequestList();
+				LOG_INFO(Core, "[Engine] /skills -> fenetre Personnage (onglet Competences)");
 				sendAdminAudit("/skills");
 				return true;
 			}
@@ -1989,8 +1988,9 @@ namespace engine
 				    || text.starts_with("/grimoire ") || text.starts_with("/grimoire\t")
 				    || text.starts_with("/sorts ") || text.starts_with("/sorts\t")))
 			{
-				m_grimoireVisible = !m_grimoireVisible;
-				LOG_INFO(Core, "[Engine] /grimoire toggle (visible={})", m_grimoireVisible);
+				if (m_characterWindowImGui)
+					m_characterWindowImGui->OpenAtTab(engine::render::CharacterWindowImGuiRenderer::Tab::Techniques);
+				LOG_INFO(Core, "[Engine] /grimoire -> fenetre Personnage (onglet Techniques)");
 				return true;
 			}
 			// SP-D — Slash commands /arbre et /competences pour l'arbre de compétences.
@@ -1999,8 +1999,9 @@ namespace engine
 				    || text.starts_with("/arbre ") || text.starts_with("/arbre	")
 				    || text.starts_with("/competences ") || text.starts_with("/competences	")))
 			{
-				m_classSkillTreeVisible = !m_classSkillTreeVisible;
-				LOG_INFO(Core, "[Engine] /arbre toggle (visible={})", m_classSkillTreeVisible);
+				if (m_characterWindowImGui)
+					m_characterWindowImGui->OpenAtTab(engine::render::CharacterWindowImGuiRenderer::Tab::Arbre);
+				LOG_INFO(Core, "[Engine] /arbre -> fenetre Personnage (onglet Arbre)");
 				return true;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Slash command /lfg pour
@@ -7879,6 +7880,11 @@ namespace engine
 						m_racePreviewViewport.SetGender(m_avatarGender);
 						m_racePreviewViewport.SetSkinTone(m_avatarSkinTone);
 						m_racePreviewViewport.SetMesh(m_currentSkinnedMesh);
+						// Vue de face + rotation manuelle (pas d'auto-orbit) : retour
+						// joueur 2026-07-09. Le drag dans la fenêtre pilote ensuite l'angle.
+						m_racePreviewViewport.SetAutoOrbit(false);
+						m_racePreviewViewport.SetOrbitYaw(0.0f);
+						m_characterWindowImGui->ResetPreviewOrientation();
 					}
 				}
 				LOG_INFO(Core, "[Engine] F1 toggle fenetre Personnage");
@@ -10581,6 +10587,9 @@ namespace engine
 				m_racePreviewLastNowSec = previewNowSec;
 				if (previewDt < 0.0f)  previewDt = 0.0f;
 				if (previewDt > 0.1f)  previewDt = 0.1f; // clamp gros hitch
+				// L'écran de création garde la rotation auto (la fenêtre Personnage la
+				// coupe ; on la réactive ici au cas où elle a servi avant).
+				m_racePreviewViewport.SetAutoOrbit(true);
 				m_racePreviewViewport.Tick(previewDt);
 				m_racePreviewViewport.RenderOffscreen();
 			}
@@ -12437,10 +12446,13 @@ namespace engine
 			{
 				if (ImGui::BeginMenu("Panneaux"))
 				{
-					if (ImGui::MenuItem("Carnet de sorts", nullptr, m_skillBookVisible))
+					if (ImGui::MenuItem("Personnage (F1)", nullptr,
+						m_characterWindowImGui && m_characterWindowImGui->IsVisible()))
 					{
-						m_skillBookVisible = !m_skillBookVisible;
-						if (m_skillBookVisible) m_skillBookUi.RequestList();
+						// Ouvre la fenêtre Personnage unifiée (onglet Compétences).
+						if (m_characterWindowImGui)
+							m_characterWindowImGui->OpenAtTab(engine::render::CharacterWindowImGuiRenderer::Tab::Competences);
+						m_skillBookUi.RequestList();
 					}
 					if (ImGui::MenuItem("Arenes", nullptr, m_arenaVisible))
 					{

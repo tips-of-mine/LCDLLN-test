@@ -36,6 +36,12 @@ namespace engine::render
 		bool IsVisible() const { return m_visible; }
 		void SetActiveTab(Tab t) { m_activeTab = t; }
 		Tab ActiveTab() const { return m_activeTab; }
+		/// Ouvre la fenêtre ET force l'onglet demandé (sélection programmatique au
+		/// prochain rendu). Utilisé par les slash commands /skills //grimoire //arbre
+		/// et l'item de menu pause pour router vers la fenêtre unifiée.
+		void OpenAtTab(Tab t) { m_visible = true; m_pendingTab = t; m_hasPendingTab = true; }
+		/// Remet l'aperçu 3D face à la caméra (appelé à l'ouverture F1).
+		void ResetPreviewOrientation() { m_previewYaw = 0.0f; }
 
 		/// À appeler entre ImGui::NewFrame() et ImGui::Render(), dans le bloc des
 		/// panneaux (single-pass). No-op si non visible.
@@ -56,5 +62,8 @@ namespace engine::render
 		uint32_t m_viewportH = 0;
 		bool m_visible = false;
 		Tab m_activeTab = Tab::Personnage;
+		Tab m_pendingTab = Tab::Personnage;   ///< Onglet à forcer (OpenAtTab).
+		bool m_hasPendingTab = false;         ///< Vrai tant que la sélection forcée n'est pas consommée.
+		float m_previewYaw = 0.0f;            ///< Angle orbit du perso 3D (drag souris).
 	};
 }

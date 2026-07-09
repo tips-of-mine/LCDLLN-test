@@ -43,24 +43,29 @@ namespace engine::render
 
 		const float vpW = (m_viewportW > 0) ? static_cast<float>(m_viewportW) : 1280.0f;
 		const float vpH = (m_viewportH > 0) ? static_cast<float>(m_viewportH) : 720.0f;
-		// Fenêtre agrandie (retour joueur 2026-07-09 : « trop petite, textes compacts »).
-		const float winW = 940.0f;
-		const float winH = 640.0f;
+		// Fenêtre agrandie (retours joueur 2026-07-09) : plus haute pour l'aperçu 3D
+		// et plus large pour un inventaire 6x5.
+		const float winW = 980.0f;
+		const float winH = 720.0f;
 		ImGui::SetNextWindowPos(ImVec2((vpW - winW) * 0.5f, (vpH - winH) * 0.5f), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(winW, winH), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowBgAlpha(0.96f);
 
 		if (ImGui::Begin("Personnage##ln_character_window", &m_visible, ImGuiWindowFlags_NoCollapse))
 		{
+			// Sélection d'onglet programmatique (OpenAtTab via slash commands / menu).
+			auto tabFlag = [&](Tab t) -> ImGuiTabItemFlags {
+				return (m_hasPendingTab && m_pendingTab == t) ? ImGuiTabItemFlags_SetSelected : 0;
+			};
 			if (ImGui::BeginTabBar("##ln_character_tabs"))
 			{
-				if (ImGui::BeginTabItem("Personnage"))
+				if (ImGui::BeginTabItem("Personnage", nullptr, tabFlag(Tab::Personnage)))
 				{
 					m_activeTab = Tab::Personnage;
 					RenderPersonnageTab(model);
 					ImGui::EndTabItem();
 				}
-				if (ImGui::BeginTabItem("Competences"))
+				if (ImGui::BeginTabItem("Competences", nullptr, tabFlag(Tab::Competences)))
 				{
 					m_activeTab = Tab::Competences;
 					if (m_skillBook)
@@ -71,7 +76,7 @@ namespace engine::render
 					}
 					ImGui::EndTabItem();
 				}
-				if (ImGui::BeginTabItem("Techniques"))
+				if (ImGui::BeginTabItem("Techniques", nullptr, tabFlag(Tab::Techniques)))
 				{
 					m_activeTab = Tab::Techniques;
 					if (m_grimoire)
@@ -82,7 +87,7 @@ namespace engine::render
 					}
 					ImGui::EndTabItem();
 				}
-				if (ImGui::BeginTabItem("Arbre"))
+				if (ImGui::BeginTabItem("Arbre", nullptr, tabFlag(Tab::Arbre)))
 				{
 					m_activeTab = Tab::Arbre;
 					if (m_classTree)
@@ -95,6 +100,7 @@ namespace engine::render
 				}
 				ImGui::EndTabBar();
 			}
+			m_hasPendingTab = false; // sélection consommée pour cette frame.
 		}
 		ImGui::End();
 	}
@@ -103,21 +109,26 @@ namespace engine::render
 	{
 		// Deux colonnes : gauche (3D + slots équipement inactifs + caractéristiques),
 		// droite (inventaire + argent).
-		const float leftW = ImGui::GetContentRegionAvail().x * 0.44f;
+		const float leftW = ImGui::GetContentRegionAvail().x * 0.42f;
 
 		ImGui::BeginChild("##ln_char_left", ImVec2(leftW, 0.0f), false);
 		{
 			const ImVec2 avail = ImGui::GetContentRegionAvail();
-			// Aperçu CARRÉ (la texture du viewport est 512x512) : dessiner en largeur
-			// pleine l'écrasait verticalement (retour joueur 2026-07-09). On centre un
-			// carré de côté = min(largeur dispo, 320).
-			const float side = std::min(avail.x, 320.0f);
+			// Aperçu CARRÉ (texture 512x512) agrandi ; rotation MANUELLE au drag et vue
+			// de face par défaut (retour joueur 2026-07-09 : pas de rotation auto).
+			const float side = std::min(avail.x, 400.0f);
 			const float offX = (avail.x - side) * 0.5f;
 			if (m_raceViewport != nullptr && m_raceViewport->GetImguiTextureId() != 0u)
 			{
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offX);
 				ImGui::Image(static_cast<ImTextureID>(m_raceViewport->GetImguiTextureId()),
 					ImVec2(side, side));
+				// Rotation manuelle : glisser (bouton gauche) sur l'aperçu tourne le
+				// perso ; au repos il reste immobile, face caméra. Auto-orbit coupée.
+				m_raceViewport->SetAutoOrbit(false);
+				if (ImGui::IsItemHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+					m_previewYaw += ImGui::GetIO().MouseDelta.x * 0.012f;
+				m_raceViewport->SetOrbitYaw(m_previewYaw);
 			}
 			else
 			{

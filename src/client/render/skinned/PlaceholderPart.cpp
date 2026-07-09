@@ -1,6 +1,7 @@
 #include "src/client/render/skinned/PlaceholderPart.h"
 
 #include "src/client/render/skinned/Skeleton.h"
+#include "src/shared/core/Log.h"
 #include "src/shared/math/Math.h"
 
 #include <cmath>
@@ -84,12 +85,44 @@ namespace engine::render::skinned
 		if (boneOk)
 			(void)InvertMat4(skel.bones[static_cast<std::size_t>(boneIndex)].inverseBindGlobal.m, bg);
 
-		// Échelle du rig (longueur de la colonne X de bg) : on divise la
-		// demi-taille désirée par cette échelle pour obtenir une taille MONDE
-		// fixe quel que soit l'échelle du squelette (mètres vs cm→m Mixamo).
-		float rigScale = std::sqrt(bg[0] * bg[0] + bg[1] * bg[1] + bg[2] * bg[2]);
+		// Échelle du rig pour la taille MONDE : elle DOIT venir de la bind-globale
+		// COMPOSÉE (chaîne bindLocal) et NON de inverse(IBM). En effet, au rendu la
+		// boîte est positionnée par le tableau `globals` (= composition des bindLocal,
+		// cf. AnimationSampler::ComputeGlobalMatrices), pas par inverse(IBM). Sur un
+		// rig où l'IBM porte une échelle différente (nœud armature), utiliser
+		// scale(inverse IBM) donnait un localH démesuré → boîte géante hors champ.
+		// Taille monde = scale(globals) * localH ; on veut halfExtentM, donc
+		// localH = halfExtentM / scale(globals).
+		float gcol0[3] = {1.0f, 0.0f, 0.0f};
+		float gtrans[3] = {0.0f, 0.0f, 0.0f};
+		if (boneOk)
+		{
+			std::vector<engine::math::Mat4> globals(skel.bones.size());
+			for (std::size_t i = 0; i < skel.bones.size(); ++i)
+			{
+				const int parent = skel.bones[i].parentIndex;
+				globals[i] = (parent < 0)
+					? skel.bones[i].bindLocal
+					: globals[static_cast<std::size_t>(parent)] * skel.bones[i].bindLocal;
+			}
+			const engine::math::Mat4& g = globals[static_cast<std::size_t>(boneIndex)];
+			gcol0[0] = g.m[0]; gcol0[1] = g.m[1]; gcol0[2] = g.m[2];
+			gtrans[0] = g.m[12]; gtrans[1] = g.m[13]; gtrans[2] = g.m[14];
+		}
+		float rigScale = std::sqrt(gcol0[0] * gcol0[0] + gcol0[1] * gcol0[1] + gcol0[2] * gcol0[2]);
 		if (rigScale < 1e-6f)
 			rigScale = 1.0f;
+
+		// Diagnostic (une ligne par variante) : où atterrit la boîte et à quelle
+		// échelle. bgTrans = centre via inverse(IBM) ; gTrans = tête via bindLocal
+		// composé (= position réelle au rendu). S'ils divergent, le rig est
+		// incohérent. invIbmScale vs rigScale explique une éventuelle taille folle.
+		const float invIbmScale = std::sqrt(bg[0] * bg[0] + bg[1] * bg[1] + bg[2] * bg[2]);
+		LOG_INFO(Render,
+			"[ModularDiag] bone={} bgTrans=({:.3f},{:.3f},{:.3f}) gTrans=({:.3f},{:.3f},{:.3f}) "
+			"invIbmScale={:.4f} rigScale(bindLocal)={:.4f} halfExtentM={:.3f} localH={:.4f}",
+			boneIndex, bg[12], bg[13], bg[14], gtrans[0], gtrans[1], gtrans[2],
+			invIbmScale, rigScale, halfExtentM, halfExtentM / rigScale);
 
 		const std::uint16_t bone = static_cast<std::uint16_t>(boneOk ? boneIndex : 0);
 		const float h = halfExtentM / rigScale; // demi-extension en espace OS-LOCAL.

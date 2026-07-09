@@ -108,16 +108,29 @@ namespace engine::render
 	void CharacterWindowImGuiRenderer::RenderPersonnageTab(const engine::client::UIModel& model)
 	{
 		// Deux colonnes : gauche (3D + slots équipement inactifs + caractéristiques),
-		// droite (inventaire + argent).
+		// droite (inventaire + argent). Tout est dimensionné DYNAMIQUEMENT à partir de
+		// l'espace disponible pour ne laisser aucun vide (retour joueur 2026-07-09 :
+		// grille/aperçu qui ne remplissaient pas la fenêtre).
 		const float leftW = ImGui::GetContentRegionAvail().x * 0.38f;
 
 		ImGui::BeginChild("##ln_char_left", ImVec2(leftW, 0.0f), false);
 		{
 			const ImVec2 avail = ImGui::GetContentRegionAvail();
-			// Aperçu CARRÉ (texture 512x512) agrandi ; rotation MANUELLE au drag et vue
-			// de face par défaut (retour joueur 2026-07-09 : pas de rotation auto).
-			const float side = std::min(avail.x, 400.0f);
+			// Hauteur réservée au bloc caractéristiques (titre + séparateur + 4 lignes).
+			const float lineH = ImGui::GetTextLineHeightWithSpacing();
+			const float statsH = lineH * 6.0f + 16.0f;
+			// Aperçu CARRÉ (texture 512x512) agrandi pour remplir la colonne : borné par
+			// la largeur ET par la hauteur restante une fois les stats retirées.
+			float side = std::min(avail.x, avail.y - statsH);
+			side = std::max(side, 140.0f);
 			const float offX = (avail.x - side) * 0.5f;
+			// Centrage vertical du bloc (aperçu + stats) : répartit l'espace résiduel
+			// en haut/bas au lieu de le laisser béant sous les stats.
+			const float blockH = side + statsH;
+			const float padTop = std::max(0.0f, (avail.y - blockH) * 0.5f);
+			if (padTop > 0.0f)
+				ImGui::Dummy(ImVec2(1.0f, padTop));
+
 			if (m_raceViewport != nullptr && m_raceViewport->GetImguiTextureId() != 0u)
 			{
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offX);
@@ -172,11 +185,29 @@ namespace engine::render
 				const engine::client::InventoryPanelState& gi = m_inv->GetState();
 				const int cols = (gi.columns > 0u) ? static_cast<int>(gi.columns) : 4;
 				const int count = static_cast<int>(gi.slots.size());
-				// Cellules dimensionnées pour loger 8 colonnes dans la fenêtre élargie.
-				const float cell = 58.0f;
+				const int rows = (count + cols - 1) / cols;
 				const float gap = 7.0f;
+				// Espace restant sous le titre, en réservant une ligne pour la bourse.
+				const ImVec2 region = ImGui::GetContentRegionAvail();
+				const float moneyH = ImGui::GetFrameHeightWithSpacing()
+					+ ImGui::GetTextLineHeightWithSpacing();
+				const float gridAvailW = region.x;
+				const float gridAvailH = std::max(0.0f, region.y - moneyH);
+				// Cellule CARRÉE dimensionnée pour remplir au mieux la zone (largeur OU
+				// hauteur, le plus contraignant) → les cases grossissent, plus de vide.
+				const float cellW = (cols > 0) ? (gridAvailW - static_cast<float>(cols - 1) * gap)
+					/ static_cast<float>(cols) : 0.0f;
+				const float cellH = (rows > 0) ? (gridAvailH - static_cast<float>(rows - 1) * gap)
+					/ static_cast<float>(rows) : 0.0f;
+				float cell = std::max(24.0f, std::min(cellW, cellH));
+				const float gridW = static_cast<float>(cols) * cell + static_cast<float>(cols - 1) * gap;
+				const float gridH = static_cast<float>(rows) * cell + static_cast<float>(rows - 1) * gap;
+				// Centrage de la grille dans la zone disponible (marges équilibrées).
+				const float offX = std::max(0.0f, (gridAvailW - gridW) * 0.5f);
+				const float offY = std::max(0.0f, (gridAvailH - gridH) * 0.5f);
 				ImDrawList* wdl = ImGui::GetWindowDrawList();
-				const ImVec2 origin = ImGui::GetCursorScreenPos();
+				const ImVec2 cur = ImGui::GetCursorScreenPos();
+				const ImVec2 origin(cur.x + offX, cur.y + offY);
 				for (int i = 0; i < count; ++i)
 				{
 					const engine::client::InventorySlotState& s = gi.slots[static_cast<size_t>(i)];
@@ -217,11 +248,11 @@ namespace engine::render
 						ImGui::EndTooltip();
 					}
 				}
-				const int rows = (count + cols - 1) / cols;
-				ImGui::Dummy(ImVec2(0.0f, static_cast<float>(rows) * (cell + gap)));
+				// Réserve toute la zone grille pour pousser la bourse en bas.
+				ImGui::Dummy(ImVec2(gridAvailW, gridAvailH));
 			}
 
-			// Bourse or/argent/bronze (base = bronze, cf. CurrencyFormat.h).
+			// Bourse or/argent/bronze (base = bronze, cf. CurrencyFormat.h), épinglée en bas.
 			const engine::client::CoinBreakdown coins = engine::client::SplitCoins(model.wallet.gold);
 			ImGui::Separator();
 			ImGui::Text("Or %u   Arg %u   Br %u", coins.gold, coins.silver, coins.bronze);

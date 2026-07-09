@@ -19,6 +19,10 @@ namespace engine::render
 		void SetIconCache(engine::client::SkillIconCache* cache) { m_iconCache = cache; }
 		void SetEnabled(bool on) { m_enabled = on; }
 		bool IsEnabled() const { return m_enabled; }
+		/// Mode embarqué : Render() dessine son contenu dans la fenêtre/onglet
+		/// courant sans ouvrir sa propre fenêtre ImGui (piloté par le conteneur
+		/// CharacterWindowImGuiRenderer). Défaut false = fenêtre autonome.
+		void SetEmbedded(bool e) { m_embedded = e; }
 		void SetViewportSize(uint32_t w, uint32_t h) { m_viewportW = w; m_viewportH = h; }
 
 		/// À appeler entre ImGui::NewFrame() et ImGui::Render() si presenter valide.
@@ -28,6 +32,7 @@ namespace engine::render
 		engine::client::GrimoireUiPresenter* m_presenter = nullptr;
 		engine::client::SkillIconCache* m_iconCache = nullptr;
 		bool m_enabled = false;
+		bool m_embedded = false;
 		uint32_t m_viewportW = 0;
 		uint32_t m_viewportH = 0;
 	};

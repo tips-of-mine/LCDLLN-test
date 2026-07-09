@@ -11,24 +11,30 @@ namespace engine::render
 {
 	void ClassSkillTreeImGuiRenderer::Render()
 	{
-		if (m_presenter == nullptr || !m_enabled || !m_presenter->IsInitialized())
+		if (m_presenter == nullptr || (!m_embedded && !m_enabled) || !m_presenter->IsInitialized())
 		{
 			return;
 		}
 		const auto& state = m_presenter->GetState();
 
-		const float panelW = 860.f;
-		const float panelH = 620.f;
-		const float vpW = (m_viewportW > 0) ? static_cast<float>(m_viewportW) : 1280.f;
-		const float vpH = (m_viewportH > 0) ? static_cast<float>(m_viewportH) : 720.f;
-		ImGui::SetNextWindowPos(ImVec2((vpW - panelW) * 0.5f, (vpH - panelH) * 0.5f),
-		                        ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(panelW, panelH), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowBgAlpha(0.96f);
+		// Mode embarqué : dessine dans l'onglet courant sans fenêtre propre.
+		bool open = true;
+		if (!m_embedded)
+		{
+			const float panelW = 860.f;
+			const float panelH = 620.f;
+			const float vpW = (m_viewportW > 0) ? static_cast<float>(m_viewportW) : 1280.f;
+			const float vpH = (m_viewportH > 0) ? static_cast<float>(m_viewportH) : 720.f;
+			ImGui::SetNextWindowPos(ImVec2((vpW - panelW) * 0.5f, (vpH - panelH) * 0.5f),
+			                        ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSize(ImVec2(panelW, panelH), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowBgAlpha(0.96f);
 
-		// Titre sans la classe (elle est deja affichee dans la ligne « Classe : ... »
-		// ci-dessous -> evite le doublon). ##id stable pour ImGui.
-		if (ImGui::Begin("Arbre de competences##ln_skilltree", nullptr, ImGuiWindowFlags_NoCollapse))
+			// Titre sans la classe (elle est deja affichee dans la ligne « Classe : ... »
+			// ci-dessous -> evite le doublon). ##id stable pour ImGui.
+			open = ImGui::Begin("Arbre de competences##ln_skilltree", nullptr, ImGuiWindowFlags_NoCollapse);
+		}
+		if (open)
 		{
 			ImGui::TextDisabled("Classe : %s   |   Niveau joueur : %u",
 			    state.classId.empty() ? "(inconnue)" : state.classId.c_str(),
@@ -158,7 +164,8 @@ namespace engine::render
 				ImGui::EndChild(); // wrapper de colonne (alignement)
 			}
 		}
-		ImGui::End();
+		if (!m_embedded)
+			ImGui::End();
 	}
 }
 

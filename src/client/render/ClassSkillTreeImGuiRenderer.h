@@ -27,6 +27,10 @@ namespace engine::render
 		/// \return true si la fenêtre est actuellement active.
 		bool IsEnabled() const { return m_enabled; }
 
+		/// Mode embarqué : dessine dans l'onglet courant sans fenêtre propre
+		/// (conteneur CharacterWindowImGuiRenderer). Défaut false = fenêtre autonome.
+		void SetEmbedded(bool e) { m_embedded = e; }
+
 		/// Met à jour la taille du viewport pour centrer la fenêtre.
 		/// \param w Largeur du viewport en pixels.
 		/// \param h Hauteur du viewport en pixels.
@@ -40,6 +44,7 @@ namespace engine::render
 		engine::client::ClassSkillTreeUiPresenter* m_presenter = nullptr;
 		engine::client::SkillIconCache* m_iconCache = nullptr;
 		bool     m_enabled   = false;
+		bool     m_embedded  = false;
 		uint32_t m_viewportW = 0;
 		uint32_t m_viewportH = 0;
 	};

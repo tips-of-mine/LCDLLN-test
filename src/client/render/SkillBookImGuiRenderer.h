@@ -23,6 +23,10 @@ namespace engine::render
 
 		void SetEnabled(bool on) { m_enabled = on; }
 		bool IsEnabled() const   { return m_enabled; }
+		/// Mode embarqué : dessine la liste dans l'onglet courant sans fenêtre
+		/// propre (conteneur CharacterWindowImGuiRenderer). L'indicateur Use
+		/// transitoire est omis en embarqué. Défaut false = fenêtre autonome.
+		void SetEmbedded(bool e) { m_embedded = e; }
 
 		/// Met a jour la viewport pour le placement du panneau.
 		void SetViewportSize(uint32_t w, uint32_t h) { m_viewportW = w; m_viewportH = h; }
@@ -38,6 +42,7 @@ namespace engine::render
 
 		engine::client::SkillBookUiPresenter* m_presenter = nullptr;
 		bool                                  m_enabled   = false;
+		bool                                  m_embedded  = false;
 		uint32_t                              m_viewportW = 0;
 		uint32_t                              m_viewportH = 0;
 	};

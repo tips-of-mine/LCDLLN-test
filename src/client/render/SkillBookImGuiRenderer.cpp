@@ -58,38 +58,45 @@ namespace engine::render
 
 	void SkillBookImGuiRenderer::Render()
 	{
-		if (m_presenter == nullptr || !m_enabled)
+		if (m_presenter == nullptr || (!m_embedded && !m_enabled))
 			return;
 		if (!m_presenter->IsInitialized())
 			return;
 		RenderListPanel();
-		RenderUseIndicator();
+		// L'indicateur Use est un toast plein écran : on l'omet en mode embarqué
+		// (il ne doit pas s'ouvrir comme fenêtre imbriquée dans l'onglet).
+		if (!m_embedded)
+			RenderUseIndicator();
 	}
 
 	void SkillBookImGuiRenderer::RenderListPanel()
 	{
 		const auto& state = m_presenter->GetState();
 
-		// Geometrie : panneau ancre droite, 380x520. Decale legerement vs
-		// reputation pour eviter le chevauchement direct si les deux sont
-		// ouverts en meme temps.
-		const float panelW = 380.f;
-		const float panelH = 520.f;
-		const float margin = 24.f;
-		const float vpW = (m_viewportW > 0) ? static_cast<float>(m_viewportW) : 1280.f;
-		const float vpH = (m_viewportH > 0) ? static_cast<float>(m_viewportH) : 720.f;
-		const float posX = std::max(0.f, vpW - panelW - margin);
-		const float posY = std::max(0.f, (vpH - panelH) * 0.5f);
+		// Mode embarqué : dessine directement dans l'onglet courant (pas de fenêtre
+		// propre). Mode autonome : panneau ancré droite, 380x520.
+		bool open = true;
+		if (!m_embedded)
+		{
+			const float panelW = 380.f;
+			const float panelH = 520.f;
+			const float margin = 24.f;
+			const float vpW = (m_viewportW > 0) ? static_cast<float>(m_viewportW) : 1280.f;
+			const float vpH = (m_viewportH > 0) ? static_cast<float>(m_viewportH) : 720.f;
+			const float posX = std::max(0.f, vpW - panelW - margin);
+			const float posY = std::max(0.f, (vpH - panelH) * 0.5f);
 
-		ImGui::SetNextWindowPos(ImVec2(posX, posY), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(panelW, panelH), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowBgAlpha(0.95f);
+			ImGui::SetNextWindowPos(ImVec2(posX, posY), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSize(ImVec2(panelW, panelH), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowBgAlpha(0.95f);
 
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, ToImVec4(LnTheme::PanelBg(0.95f)));
-		ImGui::PushStyleColor(ImGuiCol_Border,   ToImVec4(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, ToImVec4(LnTheme::PanelBg(0.95f)));
+			ImGui::PushStyleColor(ImGuiCol_Border,   ToImVec4(LnTheme::kBorder));
 
-		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
-		if (ImGui::Begin("Livre de competences (F2)##ln_skillbook_panel", nullptr, flags))
+			const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
+			open = ImGui::Begin("Livre de competences (F2)##ln_skillbook_panel", nullptr, flags);
+		}
+		if (open)
 		{
 			// Erreur transitoire (rouge) — non bloquante.
 			if (!state.lastErrorText.empty())
@@ -183,8 +190,11 @@ namespace engine::render
 				}
 			}
 		}
-		ImGui::End();
-		ImGui::PopStyleColor(2);
+		if (!m_embedded)
+		{
+			ImGui::End();
+			ImGui::PopStyleColor(2);
+		}
 	}
 
 	void SkillBookImGuiRenderer::RenderUseIndicator()

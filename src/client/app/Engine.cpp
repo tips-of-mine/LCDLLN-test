@@ -2040,8 +2040,10 @@ namespace engine
 					LOG_INFO(Render, "[Modular] {} partie(s) placeholder generee(s) (os tete={})",
 						m_placeholderParts.size(), headBone);
 				}
-				const std::string arg = (text.size() > 9) ? text.substr(9) : std::string();
-				if (arg.find("off") != std::string::npos)
+				// `text` est un std::string_view -> substr renvoie un string_view (pas de
+				// conversion implicite vers std::string). find() marche sur string_view.
+				const std::string_view arg = (text.size() > 9u) ? text.substr(9) : std::string_view{};
+				if (arg.find("off") != std::string_view::npos)
 				{
 					m_modularAvatar.ClearPart(engine::render::skinned::EquipVisualSlot::Head);
 					LOG_INFO(Render, "[Modular] tete retiree");

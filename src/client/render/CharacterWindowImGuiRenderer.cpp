@@ -42,8 +42,9 @@ namespace engine::render
 
 		const float vpW = (m_viewportW > 0) ? static_cast<float>(m_viewportW) : 1280.0f;
 		const float vpH = (m_viewportH > 0) ? static_cast<float>(m_viewportH) : 720.0f;
-		const float winW = 660.0f;
-		const float winH = 460.0f;
+		// Fenêtre agrandie (retour joueur 2026-07-09 : « trop petite, textes compacts »).
+		const float winW = 940.0f;
+		const float winH = 640.0f;
 		ImGui::SetNextWindowPos(ImVec2((vpW - winW) * 0.5f, (vpH - winH) * 0.5f), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(winW, winH), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowBgAlpha(0.96f);
@@ -130,8 +131,11 @@ namespace engine::render
 
 			// Caractéristiques compactes (ex-fiche F1).
 			const engine::client::UIPlayerStats& ps = model.playerStats;
+			ImGui::Spacing();
 			ImGui::Text("Niveau %u", ps.level);
-			ImGui::Text("Points de vie : %u", ps.maxHealth);
+			// PV : sheetMaxHealth (peuplé par PlayerStats, comme l'ancienne fiche F1) ;
+			// maxHealth est piloté par le snapshot et peut rester 0 hors combat.
+			ImGui::Text("Points de vie : %u", ps.sheetMaxHealth);
 			ImGui::Text("Ressource : %u", ps.secondaryResourceMax);
 			ImGui::Text("Degats : %u", ps.damage);
 		}

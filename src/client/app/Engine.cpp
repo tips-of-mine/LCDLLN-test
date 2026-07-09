@@ -9976,7 +9976,12 @@ namespace engine
 				// applyZoom coupé aussi quand ImGui capte la souris : sinon la molette
 				// utilisée pour défiler dans une fenêtre (ex. onglet Arbre de la fenêtre
 				// Personnage) zoomait AUSSI la caméra du jeu (retour joueur 2026-07-09).
-				const bool imguiWantsMouse = ImGui::GetIO().WantCaptureMouse;
+				// Cette section n'est PAS sous #if defined(_WIN32) et ImGui n'est inclus
+				// que sur Windows -> on garde la lecture WantCaptureMouse.
+				bool imguiWantsMouse = false;
+#if defined(_WIN32)
+				imguiWantsMouse = ImGui::GetIO().WantCaptureMouse;
+#endif
 				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, rmbLook,
 					!mouseOverRadar && !imguiWantsMouse, out.camera);
 

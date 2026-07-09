@@ -3,6 +3,7 @@
 #include "src/client/render/skinned/Skeleton.h"
 #include "src/shared/math/Math.h"
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -66,39 +67,39 @@ namespace engine::render::skinned
 		SkinnedMeshCpuData cpu;
 		cpu.skeleton = skel; // squelette partagé (copie) — la pose vient du corps au rendu.
 
-		// Position bind-globale (espace modèle) de l'os cible = inverse de son
-		// inverseBindGlobal (IBM). On DOIT passer par l'inverse de l'IBM plutôt
-		// que de composer les bindLocal : le skinning applique
-		// finals[i] = globals[i] * inverseBindGlobal[i] ; placer un point à
-		// inverse(IBM) garantit que inverseBindGlobal * point = origine de l'os,
-		// donc la boîte suit exactement l'os animé. Sur un rig UE5/Mixamo, un
-		// nœud « armature » (scale cm→m) au-dessus de la racine est baké dans
-		// l'IBM mais ABSENT de la chaîne bindLocal — une boîte placée via
-		// bindLocal atterrirait ~100× hors champ (bug : boîte invisible).
-		float cx = 0.0f, cy = 0.0f, cz = 0.0f;
+		// Attache RIGIDE de la boîte à l'os cible. Le skinning applique
+		// finals[i] = globals[i] * inverseBindGlobal[i] (IBM). Pour qu'un sommet
+		// suive l'os SANS distorsion, on l'exprime en espace OS-LOCAL puis on le
+		// ramène en espace modèle bind par bg = inverse(IBM) :
+		//     pos_modele = bg * pos_osLocal
+		//   → world = globals * IBM * bg * pos_osLocal = globals * pos_osLocal
+		// (rigide). Bug précédent : on ajoutait l'offset des coins en espace
+		// modèle brut (sans bg) → boîte géante et décalée derrière le perso, car
+		// l'offset traversait globals*IBM ≠ identité.
+		//
+		// bg = inverse(IBM) ; si l'os est hors bornes → identité (repli).
+		float bg[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
 		const bool boneOk = (boneIndex >= 0)
 			&& (static_cast<std::size_t>(boneIndex) < skel.bones.size());
 		if (boneOk)
-		{
-			float bindGlobal[16];
-			if (InvertMat4(skel.bones[static_cast<std::size_t>(boneIndex)].inverseBindGlobal.m,
-				bindGlobal))
-			{
-				cx = bindGlobal[12];
-				cy = bindGlobal[13];
-				cz = bindGlobal[14];
-			}
-		}
+			(void)InvertMat4(skel.bones[static_cast<std::size_t>(boneIndex)].inverseBindGlobal.m, bg);
 
-		// Fait FLOTTER la boîte juste au-dessus de la tête (repère de dev bien
-		// visible, non noyé dans le maillage du crâne/capuche). Décalage en +Y
-		// espace modèle — la tête est droite en bind pose, donc +Y = « au-dessus » ;
-		// après skinning la boîte suit l'os tête. Rend la preuve visuelle du
-		// pipeline modulaire impossible à manquer avant les vrais assets.
-		cy += halfExtentM + 0.20f;
+		// Échelle du rig (longueur de la colonne X de bg) : on divise la
+		// demi-taille désirée par cette échelle pour obtenir une taille MONDE
+		// fixe quel que soit l'échelle du squelette (mètres vs cm→m Mixamo).
+		float rigScale = std::sqrt(bg[0] * bg[0] + bg[1] * bg[1] + bg[2] * bg[2]);
+		if (rigScale < 1e-6f)
+			rigScale = 1.0f;
 
 		const std::uint16_t bone = static_cast<std::uint16_t>(boneOk ? boneIndex : 0);
-		const float h = halfExtentM;
+		const float h = halfExtentM / rigScale; // demi-extension en espace OS-LOCAL.
+
+		// Transforme un point/vecteur os-local -> modèle bind via bg (col-major).
+		auto xformPoint = [&](float x, float y, float z, float w, float out[3]) {
+			out[0] = bg[0] * x + bg[4] * y + bg[8]  * z + bg[12] * w;
+			out[1] = bg[1] * x + bg[5] * y + bg[9]  * z + bg[13] * w;
+			out[2] = bg[2] * x + bg[6] * y + bg[10] * z + bg[14] * w;
+		};
 
 		// 6 faces (normale sortante) ; 4 sommets CCW vus de l'extérieur.
 		struct Face { float n[3]; float c[4][3]; };
@@ -120,12 +121,20 @@ namespace engine::render::skinned
 			for (int v = 0; v < 4; ++v)
 			{
 				SkinnedVertex sv{};
-				sv.pos[0] = cx + faces[f].c[v][0];
-				sv.pos[1] = cy + faces[f].c[v][1];
-				sv.pos[2] = cz + faces[f].c[v][2];
-				sv.normal[0] = faces[f].n[0];
-				sv.normal[1] = faces[f].n[1];
-				sv.normal[2] = faces[f].n[2];
+				// Coin os-local -> espace modèle bind (point : w=1).
+				float p[3];
+				xformPoint(faces[f].c[v][0], faces[f].c[v][1], faces[f].c[v][2], 1.0f, p);
+				sv.pos[0] = p[0];
+				sv.pos[1] = p[1];
+				sv.pos[2] = p[2];
+				// Normale os-local -> modèle (vecteur : w=0), renormalisée.
+				float n[3];
+				xformPoint(faces[f].n[0], faces[f].n[1], faces[f].n[2], 0.0f, n);
+				const float nl = std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+				const float inv = (nl > 1e-6f) ? (1.0f / nl) : 1.0f;
+				sv.normal[0] = n[0] * inv;
+				sv.normal[1] = n[1] * inv;
+				sv.normal[2] = n[2] * inv;
 				sv.uv[0] = uvs[v][0];
 				sv.uv[1] = uvs[v][1];
 				sv.boneIndices[0] = bone;

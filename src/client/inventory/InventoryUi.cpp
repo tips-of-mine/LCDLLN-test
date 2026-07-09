@@ -12,10 +12,10 @@ namespace engine::client
 {
 	namespace
 	{
-		// Capacité augmentée (retour joueur 2026-07-09 : « plus d'objets »). 6x5 = 30
-		// emplacements affichés (la grille de la fenêtre Personnage lit ces valeurs).
-		inline constexpr uint32_t kInventoryColumns = 6;
-		inline constexpr uint32_t kInventoryRows = 5;
+		// Capacité augmentée (retours joueur 2026-07-09). 8x8 = 64 emplacements
+		// affichés (la grille de la fenêtre Personnage lit ces valeurs).
+		inline constexpr uint32_t kInventoryColumns = 8;
+		inline constexpr uint32_t kInventoryRows = 8;
 		inline constexpr size_t kPickupFeedbackMaxEntries = 3;
 		inline constexpr float kPickupFeedbackDurationSeconds = 2.0f;
 

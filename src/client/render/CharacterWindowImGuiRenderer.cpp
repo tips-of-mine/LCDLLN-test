@@ -44,9 +44,9 @@ namespace engine::render
 		const float vpW = (m_viewportW > 0) ? static_cast<float>(m_viewportW) : 1280.0f;
 		const float vpH = (m_viewportH > 0) ? static_cast<float>(m_viewportH) : 720.0f;
 		// Fenêtre agrandie (retours joueur 2026-07-09) : plus haute pour l'aperçu 3D
-		// et plus large pour un inventaire 6x5.
-		const float winW = 980.0f;
-		const float winH = 720.0f;
+		// et assez large pour un inventaire 8x8.
+		const float winW = 1120.0f;
+		const float winH = 740.0f;
 		ImGui::SetNextWindowPos(ImVec2((vpW - winW) * 0.5f, (vpH - winH) * 0.5f), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(winW, winH), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowBgAlpha(0.96f);
@@ -109,7 +109,7 @@ namespace engine::render
 	{
 		// Deux colonnes : gauche (3D + slots équipement inactifs + caractéristiques),
 		// droite (inventaire + argent).
-		const float leftW = ImGui::GetContentRegionAvail().x * 0.42f;
+		const float leftW = ImGui::GetContentRegionAvail().x * 0.38f;
 
 		ImGui::BeginChild("##ln_char_left", ImVec2(leftW, 0.0f), false);
 		{
@@ -172,9 +172,9 @@ namespace engine::render
 				const engine::client::InventoryPanelState& gi = m_inv->GetState();
 				const int cols = (gi.columns > 0u) ? static_cast<int>(gi.columns) : 4;
 				const int count = static_cast<int>(gi.slots.size());
-				// Cellules plus grandes (retour joueur 2026-07-09 : inventaire trop petit).
-				const float cell = 66.0f;
-				const float gap = 8.0f;
+				// Cellules dimensionnées pour loger 8 colonnes dans la fenêtre élargie.
+				const float cell = 58.0f;
+				const float gap = 7.0f;
 				ImDrawList* wdl = ImGui::GetWindowDrawList();
 				const ImVec2 origin = ImGui::GetCursorScreenPos();
 				for (int i = 0; i < count; ++i)

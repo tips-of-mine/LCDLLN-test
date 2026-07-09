@@ -8,7 +8,8 @@
 
 namespace engine::core { class Config; }
 namespace engine::client { class UIModelBinding; class InventoryUiPresenter; class SkillIconCache; struct UIModel; }
-namespace engine::render { class SkillBookImGuiRenderer; class GrimoireImGuiRenderer; class ClassSkillTreeImGuiRenderer; class RacePreviewViewport; }
+namespace engine::render { class SkillBookImGuiRenderer; class GrimoireImGuiRenderer; class ClassSkillTreeImGuiRenderer; }
+namespace engine::render::race { class RacePreviewViewport; }
 
 namespace engine::render
 {
@@ -28,7 +29,7 @@ namespace engine::render
 			engine::render::ClassSkillTreeImGuiRenderer* classTree);
 
 		/// Viewport 3D du perso (optionnel ; Task 4). Nul -> placeholder dessiné.
-		void SetRaceViewport(engine::render::RacePreviewViewport* vp) { m_raceViewport = vp; }
+		void SetRaceViewport(engine::render::race::RacePreviewViewport* vp) { m_raceViewport = vp; }
 		void SetViewportSize(uint32_t w, uint32_t h) { m_viewportW = w; m_viewportH = h; }
 		void SetVisible(bool v) { m_visible = v; }
 		void ToggleVisible() { m_visible = !m_visible; }
@@ -50,7 +51,7 @@ namespace engine::render
 		engine::render::SkillBookImGuiRenderer* m_skillBook = nullptr;
 		engine::render::GrimoireImGuiRenderer* m_grimoire = nullptr;
 		engine::render::ClassSkillTreeImGuiRenderer* m_classTree = nullptr;
-		engine::render::RacePreviewViewport* m_raceViewport = nullptr;
+		engine::render::race::RacePreviewViewport* m_raceViewport = nullptr;
 		uint32_t m_viewportW = 0;
 		uint32_t m_viewportH = 0;
 		bool m_visible = false;

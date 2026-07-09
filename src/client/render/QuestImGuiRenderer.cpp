@@ -407,11 +407,15 @@ namespace engine::render
 			dl->AddCircleFilled(knob, 5.5f, fillCol);
 			dl->AddCircle(knob, 5.5f, knobRing, 20, 1.5f);
 
-			// 5) Valeur numérique du cran courant (« 600 m »), centrée en haut du radar.
+			// 5) Valeur numérique du cran courant (« 600 m »), centrée AU-DESSUS de la
+			// glissière en arc (retour joueur 2026-07-09 : le texte était sous l'arc,
+			// dans le disque du radar). L'arc culmine à cy - rArc (90°) ; on place le
+			// texte juste au-dessus.
 			const std::string zoomText =
 				std::to_string(static_cast<int>(engine::client::RadiusForZoomIndex(zoomIdx))) + " m";
 			const ImVec2 zts = ImGui::CalcTextSize(zoomText.c_str());
-			dl->AddText(ImVec2(cx - zts.x * 0.5f, y0 + 3.0f), IM_COL32(220, 225, 235, 235), zoomText.c_str());
+			dl->AddText(ImVec2(cx - zts.x * 0.5f, cy - rArc - zts.y - 4.0f),
+				IM_COL32(220, 225, 235, 235), zoomText.c_str());
 		}
 	}
 

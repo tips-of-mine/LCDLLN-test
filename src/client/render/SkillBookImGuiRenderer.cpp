@@ -134,9 +134,9 @@ namespace engine::render
 				if (ImGui::BeginTable("##ln_skillbook_list", 4, tableFlags, ImVec2(0.f, 0.f)))
 				{
 					ImGui::TableSetupColumn("Competence", ImGuiTableColumnFlags_WidthStretch);
-					ImGui::TableSetupColumn("Valeur",     ImGuiTableColumnFlags_WidthFixed,  90.f);
-					ImGui::TableSetupColumn("Progres",    ImGuiTableColumnFlags_WidthFixed,  90.f);
-					ImGui::TableSetupColumn("",           ImGuiTableColumnFlags_WidthFixed,  60.f);
+					ImGui::TableSetupColumn("Valeur",     ImGuiTableColumnFlags_WidthFixed,  80.f);
+					ImGui::TableSetupColumn("Progres",    ImGuiTableColumnFlags_WidthFixed,  110.f);
+					ImGui::TableSetupColumn("Action",     ImGuiTableColumnFlags_WidthFixed,  92.f);
 					ImGui::TableHeadersRow();
 
 					for (const auto& e : state.skills)

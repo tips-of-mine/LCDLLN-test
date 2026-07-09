@@ -13,6 +13,7 @@
 #if defined(_WIN32)
 #	include "imgui.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <string>
 
@@ -102,30 +103,37 @@ namespace engine::render
 	{
 		// Deux colonnes : gauche (3D + slots équipement inactifs + caractéristiques),
 		// droite (inventaire + argent).
-		const float leftW = ImGui::GetContentRegionAvail().x * 0.46f;
+		const float leftW = ImGui::GetContentRegionAvail().x * 0.44f;
 
 		ImGui::BeginChild("##ln_char_left", ImVec2(leftW, 0.0f), false);
 		{
 			const ImVec2 avail = ImGui::GetContentRegionAvail();
-			const float previewH = 190.0f;
+			// Aperçu CARRÉ (la texture du viewport est 512x512) : dessiner en largeur
+			// pleine l'écrasait verticalement (retour joueur 2026-07-09). On centre un
+			// carré de côté = min(largeur dispo, 320).
+			const float side = std::min(avail.x, 320.0f);
+			const float offX = (avail.x - side) * 0.5f;
 			if (m_raceViewport != nullptr && m_raceViewport->GetImguiTextureId() != 0u)
 			{
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offX);
 				ImGui::Image(static_cast<ImTextureID>(m_raceViewport->GetImguiTextureId()),
-					ImVec2(avail.x, previewH));
+					ImVec2(side, side));
 			}
 			else
 			{
-				// Placeholder tant que le viewport 3D n'est pas branché (Task 4).
+				// Placeholder tant que le viewport 3D n'est pas branché.
 				ImDrawList* dl = ImGui::GetWindowDrawList();
-				const ImVec2 p0 = ImGui::GetCursorScreenPos();
-				dl->AddRectFilled(p0, ImVec2(p0.x + avail.x, p0.y + previewH), IM_COL32(14, 16, 22, 255), 6.0f);
+				const ImVec2 p0raw = ImGui::GetCursorScreenPos();
+				const ImVec2 p0(p0raw.x + offX, p0raw.y);
+				dl->AddRectFilled(p0, ImVec2(p0.x + side, p0.y + side), IM_COL32(14, 16, 22, 255), 6.0f);
 				const char* lbl = "Apercu 3D";
 				const ImVec2 ts = ImGui::CalcTextSize(lbl);
-				dl->AddText(ImVec2(p0.x + (avail.x - ts.x) * 0.5f, p0.y + previewH * 0.5f - ts.y * 0.5f),
+				dl->AddText(ImVec2(p0.x + (side - ts.x) * 0.5f, p0.y + side * 0.5f - ts.y * 0.5f),
 					IM_COL32(120, 130, 160, 255), lbl);
-				ImGui::Dummy(ImVec2(avail.x, previewH));
+				ImGui::Dummy(ImVec2(avail.x, side));
 			}
 
+			ImGui::Spacing();
 			ImGui::TextDisabled("Equipement — Chantier 2");
 			ImGui::Separator();
 
@@ -146,14 +154,16 @@ namespace engine::render
 		ImGui::BeginChild("##ln_char_right", ImVec2(0.0f, 0.0f), false);
 		{
 			ImGui::TextUnformatted("Inventaire");
+			ImGui::Spacing();
 
 			if (m_inv != nullptr)
 			{
 				const engine::client::InventoryPanelState& gi = m_inv->GetState();
 				const int cols = (gi.columns > 0u) ? static_cast<int>(gi.columns) : 4;
 				const int count = static_cast<int>(gi.slots.size());
-				const float cell = 48.0f;
-				const float gap = 6.0f;
+				// Cellules plus grandes (retour joueur 2026-07-09 : inventaire trop petit).
+				const float cell = 66.0f;
+				const float gap = 8.0f;
 				ImDrawList* wdl = ImGui::GetWindowDrawList();
 				const ImVec2 origin = ImGui::GetCursorScreenPos();
 				for (int i = 0; i < count; ++i)

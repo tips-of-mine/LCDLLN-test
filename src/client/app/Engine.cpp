@@ -9973,7 +9973,12 @@ namespace engine
 				}
 
 				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
-				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, rmbLook, !mouseOverRadar, out.camera);
+				// applyZoom coupé aussi quand ImGui capte la souris : sinon la molette
+				// utilisée pour défiler dans une fenêtre (ex. onglet Arbre de la fenêtre
+				// Personnage) zoomait AUSSI la caméra du jeu (retour joueur 2026-07-09).
+				const bool imguiWantsMouse = ImGui::GetIO().WantCaptureMouse;
+				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, rmbLook,
+					!mouseOverRadar && !imguiWantsMouse, out.camera);
 
 				// --- Clamp anti-sous-sol : la caméra ne descend pas sous le terrain. ---
 				const bool occEnabled = m_cfg.GetBool("client.camera.occlusion_fade.enabled", true);
@@ -10799,6 +10804,22 @@ namespace engine
 						// (x,y,z,w = gauche,haut,droite,bas). Une nouvelle plaque qui en
 						// recouvre une est remontee d'une hauteur de plaque (empilement).
 						std::vector<ImVec4> placedLabelRects;
+					// Le Journal de quêtes (coin haut-gauche, toujours visible) est une
+					// fenêtre ImGui ; les plaques de mob passent par le foreground draw
+					// list, donc AU-DESSUS. On récupère son rectangle pour sauter toute
+					// plaque qui retomberait dessus (retour joueur 2026-07-09 : « Sanglier
+					// des collines » s'affichait par-dessus le journal).
+					ImVec4 journalRect(0.0f, 0.0f, 0.0f, 0.0f);
+					bool hasJournalRect = false;
+					{
+						const engine::client::QuestUiState& qs = m_questUi.GetState();
+						if (qs.layoutValid)
+						{
+							const engine::client::QuestUiRect& jb = qs.journalPanelBounds;
+							journalRect = ImVec4(jb.x, jb.y, jb.x + jb.width, jb.y + jb.height);
+							hasJournalRect = true;
+						}
+					}
 					for (const engine::client::UIRemoteEntity& re : remotes)
 					{
 						// Combat SP1 : les mobs (archetypeId != 0) ont leur plaque.
@@ -10921,6 +10942,16 @@ namespace engine
 							}
 							if (!overlap) break;
 							syp -= (plateH + 3.0f);
+						}
+						// Ne pas dessiner la plaque si elle retombe sur le Journal de quêtes
+						// (elle serait masquée par la fenêtre de toute façon, mais le
+						// foreground la peindrait par-dessus -> illisible).
+						if (hasJournalRect
+							&& (sxp - plateHalfW) < journalRect.z && (sxp + plateHalfW) > journalRect.x
+							&& (syp - ts.y - 2.0f) < journalRect.w
+							&& (syp + (drawMobHealthBar ? 24.0f : 4.0f)) > journalRect.y)
+						{
+							continue;
 						}
 						placedLabelRects.emplace_back(sxp - plateHalfW, syp - ts.y - 2.0f,
 							sxp + plateHalfW, syp + (drawMobHealthBar ? 24.0f : 4.0f));

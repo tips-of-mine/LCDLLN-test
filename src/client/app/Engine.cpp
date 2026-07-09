@@ -7867,10 +7867,19 @@ namespace engine
 				if (m_characterWindowImGui)
 				{
 					m_characterWindowImGui->ToggleVisible();
-					// Peupler l'onglet Compétences à l'ouverture (l'ancien toggle F2 le
-					// faisait ; le Skill Book se remplit via RequestList côté serveur).
 					if (m_characterWindowImGui->IsVisible())
+					{
+						// Peupler l'onglet Compétences (l'ancien toggle F2 le faisait ;
+						// le Skill Book se remplit via RequestList côté serveur).
 						m_skillBookUi.RequestList();
+						// Task 4 — pose l'avatar du joueur dans le viewport 3D À
+						// L'OUVERTURE seulement : SetMesh réinitialise l'animation, il ne
+						// doit PAS être rappelé chaque frame (sinon l'anim reste figée à
+						// t=0). Le Tick/RenderOffscreen se font ensuite tant que ouvert.
+						m_racePreviewViewport.SetGender(m_avatarGender);
+						m_racePreviewViewport.SetSkinTone(m_avatarSkinTone);
+						m_racePreviewViewport.SetMesh(m_currentSkinnedMesh);
+					}
 				}
 				LOG_INFO(Core, "[Engine] F1 toggle fenetre Personnage");
 			}
@@ -8228,6 +8237,9 @@ namespace engine
 				m_characterWindowImGui = std::make_unique<engine::render::CharacterWindowImGuiRenderer>();
 				m_characterWindowImGui->Bind(&m_cfg, &m_uiModelBinding, &m_invUi, &m_skillIconCache,
 					m_skillBookImGui.get(), m_grimoireImGui.get(), m_classSkillTreeImGui.get());
+				// Task 4 — aperçu 3D : le conteneur affiche la texture offscreen du
+				// viewport perso (alimenté quand la fenêtre est ouverte, cf. Update).
+				m_characterWindowImGui->SetRaceViewport(&m_racePreviewViewport);
 				// CMANGOS.21 (Phase 5.21 step 3+4) — Renderer ImGui du panneau
 				// Arena. Visible uniquement quand m_arenaVisible (toggle via
 				// /arena ou touche A). Le popup proposal s'affiche aussi quand
@@ -12546,11 +12558,26 @@ namespace engine
 				// Chantier 1 — l'arbre est désormais l'onglet Arbre de la fenêtre unifiée
 				// (rendu embarqué juste après). Le Sync ci-dessus reste nécessaire.
 			}
+			// Task 4 — aperçu 3D : fait tourner + rend l'avatar du joueur dans l'image
+			// offscreen tant que la fenêtre Personnage est ouverte, AVANT que la draw
+			// list ImGui n'échantillonne la texture. RenderOffscreen est autonome
+			// (submit + wait idle) : coûteux (stall GPU) -> uniquement fenêtre ouverte.
+			// Le mesh/genre/teinte sont posés à l'ouverture (toggle F1) ; ici on ne fait
+			// qu'avancer l'anim/orbit et rendre.
+			if (m_characterWindowImGui && m_characterWindowImGui->IsVisible())
+			{
+				const float pNow = EngineNowSec();
+				float pDt = (m_racePreviewLastNowSec > 0.0f) ? (pNow - m_racePreviewLastNowSec) : 0.0f;
+				m_racePreviewLastNowSec = pNow;
+				if (pDt < 0.0f) pDt = 0.0f;
+				if (pDt > 0.1f) pDt = 0.1f; // clamp gros hitch
+				m_racePreviewViewport.Tick(pDt);
+				m_racePreviewViewport.RenderOffscreen();
+			}
 			// Chantier 1 — fenêtre Personnage unifiée à onglets (F1). Rendue APRÈS les
 			// Sync du Grimoire et de l'arbre (leurs presenters embarqués lisent l'état à
 			// jour). Point single-pass (même bloc que les autres panneaux) -> pas de
-			// doublon d'inventaire (le bug de #958 venait d'un rendu dans la région HUD
-			// avant-plan, finalisée par deux ImGui::Render()).
+			// doublon d'inventaire.
 			if (m_characterWindowImGui)
 			{
 				m_characterWindowImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));

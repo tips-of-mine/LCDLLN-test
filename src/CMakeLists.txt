@@ -940,6 +940,16 @@ elseif(UNIX)
   lcdlln_add_simple_test(avatar_material_routing_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AvatarMaterialRoutingTests.cpp)
 
+  # Chantier 2 SP1 : ModularAvatar (composition de parties partageant un squelette,
+  # logique pure). ModularAvatar.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(modular_avatar_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/ModularAvatarTests.cpp)
+
+  # Chantier 2 SP1 : PlaceholderPart (boite skinnee a un os, donnees CPU).
+  # PlaceholderPart.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(placeholder_part_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/PlaceholderPartTests.cpp)
+
   # Chargeur de mesh glTF statique (props, chantier B). StaticMeshLoader.cpp est
   # compile dans engine_core ; cgltf y est resolu via SkinnedMeshLoader.cpp (CGLTF_IMPLEMENTATION).
   lcdlln_add_simple_test(static_mesh_loader_tests

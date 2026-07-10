@@ -1,7 +1,7 @@
 #include "src/client/render/skinned/PlaceholderPart.h"
 
 #include "src/client/render/skinned/Skeleton.h"
-#include "src/shared/math/Math.h"
+#include "src/shared/core/Log.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -15,30 +15,31 @@ namespace engine::render::skinned
 		SkinnedMeshCpuData cpu;
 		cpu.skeleton = skel; // squelette partagé (copie) — la pose vient du corps au rendu.
 
-		// Position bind-globale de l'os cible. Même convention que
-		// AnimationSampler::ComputeGlobalMatrices : global = parent * bindLocal
-		// (bones topo-ordonnés parent-avant-enfant). Translation = colonne 3.
-		float cx = 0.0f, cy = 0.0f, cz = 0.0f;
-		const bool boneOk = (boneIndex >= 0)
-			&& (static_cast<std::size_t>(boneIndex) < skel.bones.size());
-		if (boneOk)
-		{
-			std::vector<engine::math::Mat4> globals(skel.bones.size());
-			for (std::size_t i = 0; i < skel.bones.size(); ++i)
-			{
-				const int parent = skel.bones[i].parentIndex;
-				globals[i] = (parent < 0)
-					? skel.bones[i].bindLocal
-					: globals[static_cast<std::size_t>(parent)] * skel.bones[i].bindLocal;
-			}
-			const engine::math::Mat4& g = globals[static_cast<std::size_t>(boneIndex)];
-			cx = g.m[12];
-			cy = g.m[13];
-			cz = g.m[14];
-		}
+		// IMPORTANT — placement de la boîte sur ce rig UE5.
+		// Deux constats issus du diagnostic en jeu :
+		//  1) TOUS les os ont leur bind-globale à l'ORIGINE (os tête ≈ (0,0,0),
+		//     Y=0 au lieu de ~1.6 m). La pose debout est portée par les SOMMETS du
+		//     maillage, pas par les matrices d'os.
+		//  2) La matrice finals[os_tête] appliquée au rendu DÉPLACE un point posé à
+		//     hauteur tête loin dans le décor (l'os tête est inexploitable ici).
+		//
+		// Solution robuste : peser la boîte à l'os RACINE (index 0), dont la matrice
+		// finals ≈ identité, et la placer à la hauteur tête MODÈLE (~1.6 m). La boîte
+		// suit alors la matrice modèle de l'avatar (position + orientation du corps)
+		// et se pose sur la tête, indépendamment de l'os tête cassé. Le suivi fin par
+		// os (casque qui tourne avec la tête) reviendra avec un rig correct + vrais
+		// assets modulaires. `boneIndex` n'est plus qu'informatif (log).
+		const std::uint16_t bone = 0; // os racine : rid la matrice modèle avatar.
 
-		const std::uint16_t bone = static_cast<std::uint16_t>(boneOk ? boneIndex : 0);
+		// Hauteur tête (espace modèle) : l'avatar fait ~1.8 m, la tête est vers 1.6 m.
+		constexpr float kHeadHeightM = 1.60f;
+		const float cx = 0.0f, cy = kHeadHeightM, cz = 0.0f;
 		const float h = halfExtentM;
+
+		LOG_INFO(Render,
+			"[ModularDiag] boite tete : boneDemande={} pesee_sur_os=0 (racine) "
+			"centre=({:.2f},{:.2f},{:.2f}) demiTaille={:.2f} m",
+			boneIndex, cx, cy, cz, h);
 
 		// 6 faces (normale sortante) ; 4 sommets CCW vus de l'extérieur.
 		struct Face { float n[3]; float c[4][3]; };
@@ -53,7 +54,7 @@ namespace engine::render::skinned
 		const float uvs[4][2] = {{0.f,0.f},{1.f,0.f},{1.f,1.f},{0.f,1.f}};
 
 		cpu.vertices.reserve(24);
-		cpu.indices.reserve(36);
+		cpu.indices.reserve(72); // double face (recto + verso) : 6 faces x 2 tris x 2 sens x 3.
 		for (int f = 0; f < 6; ++f)
 		{
 			const std::uint32_t base = static_cast<std::uint32_t>(cpu.vertices.size());
@@ -78,12 +79,21 @@ namespace engine::render::skinned
 				sv.weights[3] = 0.0f;
 				cpu.vertices.push_back(sv);
 			}
+			// Recto (CCW, normale sortante).
 			cpu.indices.push_back(base + 0u);
 			cpu.indices.push_back(base + 1u);
 			cpu.indices.push_back(base + 2u);
 			cpu.indices.push_back(base + 0u);
 			cpu.indices.push_back(base + 2u);
 			cpu.indices.push_back(base + 3u);
+			// Verso (winding inversé) : boîte DOUBLE-FACE. Assurance anti-culling —
+			// le repère de dev reste visible quelle que soit la convention de face.
+			cpu.indices.push_back(base + 0u);
+			cpu.indices.push_back(base + 2u);
+			cpu.indices.push_back(base + 1u);
+			cpu.indices.push_back(base + 0u);
+			cpu.indices.push_back(base + 3u);
+			cpu.indices.push_back(base + 2u);
 		}
 
 		cpu.submeshes.push_back(

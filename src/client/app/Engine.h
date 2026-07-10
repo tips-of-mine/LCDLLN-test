@@ -102,6 +102,7 @@
 // Sous-projet A (Task 15) : skinned humanoid avatar runtime.
 #include "src/client/render/skinned/SkinnedRenderer.h"
 #include "src/client/render/skinned/SkinnedMesh.h"
+#include "src/client/render/skinned/ModularAvatar.h"
 #include "src/client/render/skinned/SkinnedMeshLoader.h"
 #include "src/client/render/skinned/AvatarMaterialRouting.h"
 #include "src/client/render/skinned/AnimationSampler.h"
@@ -754,6 +755,13 @@ namespace engine
 		/// du payload — cf. Engine::GetRaceMesh (Task 7) qui resout race_str
 		/// -> SkinnedMesh* via m_raceMeshes avec fallback humains.
 		engine::render::skinned::SkinnedMesh*                     m_currentSkinnedMesh = nullptr;
+		/// Chantier 2 SP1 — avatar modulaire de l'avatar local : Body = mesh courant
+		/// + parties équipées (placeholder pour l'instant, cf. /modular). Le rendu
+		/// dessine chaque partie active avec les mêmes matrices d'os.
+		engine::render::skinned::ModularAvatar                   m_modularAvatar;
+		/// Parties placeholder possédées (uploadées GPU) pour la commande /modular
+		/// (Task 4). Générées depuis le squelette du corps.
+		std::vector<std::unique_ptr<engine::render::skinned::SkinnedMesh>> m_placeholderParts;
 		/// Sous-projet C MVP — Map race_str -> mesh skinned + clips charges
 		/// au boot. Remplit a partir d'un CharacterCreationPresenter local
 		/// (instancie dans le bloc skinned-pipeline d'Engine::Init, Init()

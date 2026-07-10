@@ -3,6 +3,8 @@
 Date : 2026-07-09
 Statut : direction validée par l'utilisateur (modulaire + groundwork-first + placeholders + commande admin de test).
 
+> **Suite (2026-07-10)** — SP-A « catalogue d'objets + équipement » **livré** (PRs #965 serveur / #966 client) : 10 slots gameplay, équiper/déséquiper, bonus de stats dérivées serveur-autoritaire, persistance. Spec dédiée : `docs/superpowers/specs/2026-07-10-ch2-spA-item-catalog-equipment-design.md`. Le **rendu visuel** des objets équipés sur l'avatar (attache de mesh) reste à faire (SP-D) : bloqué par la limite du rig UE5 (os à l'origine) documentée ici et par les assets modulaires.
+
 ## Contexte
 
 Chantier 2 = système d'équipement complet. Décision d'apparence : **personnage

@@ -3,6 +3,8 @@
 Genere automatiquement apres analyse de code approfondie (reorganisation tickets/), avec une passe de correction des faux-negatifs lies a l'ancien chemin engine/ (code reel sous src/).
 Convention : **DONE** = implemente, cloture par une Issue dans `tickets/issues/` (le .md du ticket a ete retire du dossier milestone). **PARTIAL** = partiellement implemente, ticket conserve avec encart d'etat. **TODO** = a faire, ticket conserve.
 
+> **Note (2026-07-10)** — Ce tableau couvre les milestones tickets (Mxx) figes au 2026-06-03. Depuis, le developpement se poursuit hors systeme de tickets sous forme de **Chantiers** : systeme de personnages, combat, sorts/competences, quetes (+ suivi HUD/XP), metiers (recolte/artisanat), economie (marchands/monnaie/commerce/encheres), social (courrier/guildes/groupes/amis), fenetre Personnage unifiee (F1), meteo/nuages, et **equipement d'objets (Chantier 2 SP-A)**. L'etat user-facing de ces chantiers est reflete sur la **roadmap publique** (`sql/migrations/0026|0034|0037|0039|0073_roadmap_items*.sql` → table `roadmap_items` → portail web).
+
 ## Synthese
 
 | Statut | Nombre |

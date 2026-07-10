@@ -87,6 +87,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Clock.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
+    # Chantier 2 SP-A — catalogue d'objets (server_app WIN32 ne linke pas engine_core).
+    ${CMAKE_SOURCE_DIR}/src/shared/items/ItemCatalog.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/ServerEndpoints.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Log.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/LogConfig.cpp
@@ -697,6 +699,11 @@ elseif(UNIX)
   # Character system PR1 — Config::LoadFromString : parsing JSON en mémoire (anti-triche).
   lcdlln_add_simple_test(config_loadfromstring_tests
     ${CMAKE_SOURCE_DIR}/src/shared/core/ConfigLoadFromStringTests.cpp)
+
+  # Chantier 2 SP-A — ItemCatalog : parsing items.json (type/slot/bonus) + Find.
+  # ItemCatalog.cpp est compilé dans engine_core (lié par le helper).
+  lcdlln_add_simple_test(item_catalog_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/items/ItemCatalogTests.cpp)
 
   # Character system PR1 — CharacterStatsEngine : 11 stats déterministes depuis
   # les tables JSON embarquées. Bloc explicite (pas lcdlln_add_simple_test) :

@@ -59,7 +59,11 @@ namespace engine::server
 	/// 4 → 5). Les kinds ForcePosition (86) et LootNotify (87) ajoutés pendant
 	/// la fenêtre v12 restaient rétro-additifs ; ce changement-ci modifie un
 	/// payload existant → wire-breaking : lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 14;
+	/// Chantier 2 SP-A — bump 14 → 15 : opcodes équipement EquipRequest (96),
+	/// UnequipRequest (97), EquipmentUpdate (98). Nouveaux opcodes client→serveur
+	/// (equip/unequip) : un vieux serveur les ignorerait → bump pour rejeter les
+	/// paires client/serveur incompatibles. Lock-step master + shardd + client.
+	inline constexpr uint16_t kProtocolVersion = 15;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -293,7 +297,18 @@ namespace engine::server
 		/// XP dans le niveau courant, XP requise pour le suivant. Poussé à l'enter-world
 		/// ET à chaque gain d'XP (level-up ou non). Rétro-additif (vieux clients
 		/// l'ignorent) : PAS de bump de kProtocolVersion.
-		PlayerXpUpdate = 95
+		PlayerXpUpdate = 95,
+
+		/// Chantier 2 SP-A — équipement d'objets. Wire-breaking (bump 14→15).
+		/// EquipRequest (client→serveur) : équiper l'objet `itemId` depuis le sac ;
+		/// le SERVEUR détermine le slot depuis SON catalogue (anti-triche).
+		EquipRequest = 96,
+		/// UnequipRequest (client→serveur) : retirer l'objet du slot `slot` (renvoyé
+		/// au sac).
+		UnequipRequest = 97,
+		/// EquipmentUpdate (serveur→client) : snapshot complet de l'équipement porté
+		/// (liste des slots occupés → itemId). Idempotent, comme InventoryDelta.
+		EquipmentUpdate = 98
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -564,6 +579,38 @@ namespace engine::server
 		uint32_t clientId = 0;
 	};
 
+	/// Chantier 2 SP-A — requête d'équipement (client→serveur). Le client demande
+	/// à équiper `itemId` (présent dans son sac). Le slot est déterminé par le
+	/// serveur depuis SON catalogue (jamais fourni par le client).
+	struct EquipRequestMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t itemId = 0;
+	};
+
+	/// Chantier 2 SP-A — requête de retrait d'équipement (client→serveur).
+	/// `slot` = valeur de engine::items::EquipmentSlot (1..10).
+	struct UnequipRequestMessage
+	{
+		uint32_t clientId = 0;
+		uint8_t slot = 0;
+	};
+
+	/// Une entrée d'équipement portée : slot occupé → itemId. Slot = valeur de
+	/// engine::items::EquipmentSlot (1..10).
+	struct EquipmentEntry
+	{
+		uint8_t slot = 0;
+		uint32_t itemId = 0;
+	};
+
+	/// Chantier 2 SP-A — snapshot d'équipement (serveur→client). Contient les
+	/// slots occupés uniquement ; le client vide puis applique (idempotent).
+	struct EquipmentUpdateMessage
+	{
+		uint32_t clientId = 0;
+	};
+
 	/// Client request asking the authoritative server to validate one quest talk target.
 	struct TalkRequestMessage
 	{
@@ -790,6 +837,19 @@ namespace engine::server
 
 	/// Decode an inventory delta packet and reuse the provided item buffer for the payload items.
 	bool DecodeInventoryDelta(std::span<const std::byte> packet, InventoryDeltaMessage& outMessage, std::vector<ItemStack>& outItems);
+
+	/// Chantier 2 SP-A — encode/décode d'une requête d'équipement (payload fixe 8 o).
+	std::vector<std::byte> EncodeEquipRequest(const EquipRequestMessage& message);
+	bool DecodeEquipRequest(std::span<const std::byte> packet, EquipRequestMessage& outMessage);
+
+	/// Chantier 2 SP-A — encode/décode d'une requête de retrait (payload fixe 5 o).
+	std::vector<std::byte> EncodeUnequipRequest(const UnequipRequestMessage& message);
+	bool DecodeUnequipRequest(std::span<const std::byte> packet, UnequipRequestMessage& outMessage);
+
+	/// Chantier 2 SP-A — encode/décode d'un snapshot d'équipement.
+	/// Payload : clientId (4) + count (2) + count × [slot (1) + itemId (4)].
+	std::vector<std::byte> EncodeEquipmentUpdate(const EquipmentUpdateMessage& message, std::span<const EquipmentEntry> entries);
+	bool DecodeEquipmentUpdate(std::span<const std::byte> packet, EquipmentUpdateMessage& outMessage, std::vector<EquipmentEntry>& outEntries);
 
 	/// Decode a talk request packet and validate the protocol header.
 	bool DecodeTalkRequest(std::span<const std::byte> packet, TalkRequestMessage& outMessage);

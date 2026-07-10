@@ -137,6 +137,15 @@ namespace engine::server
 			outState.inventory.push_back(item);
 		}
 
+		// Chantier 2 SP-A — équipement porté : clé plate equipment.<slot>.item_id.
+		// Slots absents => 0 (rien d'équipé). Robuste aux fichiers legacy (pré-SP-A).
+		outState.equipment.fill(0u);
+		for (std::size_t slot = 1; slot < outState.equipment.size(); ++slot)
+		{
+			outState.equipment[slot] = static_cast<uint32_t>(
+				persisted.GetInt("equipment." + std::to_string(slot) + ".item_id", 0));
+		}
+
 		const uint32_t questCount = static_cast<uint32_t>(persisted.GetInt("quests.count", 0));
 		for (uint32_t questIndex = 0; questIndex < questCount; ++questIndex)
 		{
@@ -282,6 +291,14 @@ namespace engine::server
 		{
 			output << "inventory." << index << ".item_id=" << state.inventory[index].itemId << "\n";
 			output << "inventory." << index << ".quantity=" << state.inventory[index].quantity << "\n";
+		}
+		// Chantier 2 SP-A — équipement porté (n'écrit que les slots occupés).
+		for (std::size_t slot = 1; slot < state.equipment.size(); ++slot)
+		{
+			if (state.equipment[slot] != 0u)
+			{
+				output << "equipment." << slot << ".item_id=" << state.equipment[slot] << "\n";
+			}
 		}
 		// SP1 — format_version=1 : quests.*.status écrit l'enum QuestStatus direct (0..4).
 		// EXT-2 — format_version=2 : ajoute quests.<i>.completed_at (ms UTC de la dernière

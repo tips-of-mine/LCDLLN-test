@@ -1146,6 +1146,91 @@ namespace engine::server
 		return true;
 	}
 
+	// ---- Chantier 2 SP-A : équipement ----
+
+	std::vector<std::byte> EncodeEquipRequest(const EquipRequestMessage& message)
+	{
+		// Payload fixe : clientId (4) + itemId (4) = 8 octets (miroir du décodeur).
+		std::vector<std::byte> packet = BeginPacket(MessageKind::EquipRequest, 8);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.itemId);
+		return packet;
+	}
+
+	bool DecodeEquipRequest(std::span<const std::byte> packet, EquipRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::EquipRequest, payload) || payload.size() != 8)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.itemId = ReadU32(payload, 4);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeUnequipRequest(const UnequipRequestMessage& message)
+	{
+		// Payload fixe : clientId (4) + slot (1) = 5 octets.
+		std::vector<std::byte> packet = BeginPacket(MessageKind::UnequipRequest, 5);
+		WriteU32(packet, message.clientId);
+		WriteU8(packet, message.slot);
+		return packet;
+	}
+
+	bool DecodeUnequipRequest(std::span<const std::byte> packet, UnequipRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::UnequipRequest, payload) || payload.size() != 5)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.slot = ReadU8(payload, 4);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeEquipmentUpdate(const EquipmentUpdateMessage& message, std::span<const EquipmentEntry> entries)
+	{
+		// Payload : clientId (4) + count (2) + count × [slot (1) + itemId (4)].
+		std::vector<std::byte> packet = BeginPacket(MessageKind::EquipmentUpdate, 6 + (entries.size() * 5));
+		WriteU32(packet, message.clientId);
+		WriteU16(packet, static_cast<uint16_t>(entries.size()));
+		for (const EquipmentEntry& entry : entries)
+		{
+			WriteU8(packet, entry.slot);
+			WriteU32(packet, entry.itemId);
+		}
+		return packet;
+	}
+
+	bool DecodeEquipmentUpdate(std::span<const std::byte> packet, EquipmentUpdateMessage& outMessage, std::vector<EquipmentEntry>& outEntries)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::EquipmentUpdate, payload) || payload.size() < 6)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		const size_t count = static_cast<size_t>(ReadU16(payload, 4));
+		const size_t expectedPayloadSize = 6 + (count * 5);
+		if (payload.size() != expectedPayloadSize)
+		{
+			return false;
+		}
+		outEntries.clear();
+		outEntries.resize(count);
+		size_t offset = 6;
+		for (size_t index = 0; index < count; ++index)
+		{
+			EquipmentEntry& entry = outEntries[index];
+			entry.slot = ReadU8(payload, offset + 0);
+			entry.itemId = ReadU32(payload, offset + 1);
+			offset += 5;
+		}
+		return true;
+	}
+
 	std::vector<std::byte> EncodeQuestDelta(const QuestDeltaMessage& message)
 	{
 		size_t payloadSize = 4 + 1 + 2 + message.questId.size() + 4 + 4 + 1 + 2;

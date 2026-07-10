@@ -44,7 +44,9 @@ namespace engine::client
 		/// M36.1 — harvest cast bar progress (start, fill, cancel/complete).
 		UIModelChangeHarvest   = 1u << 14,
 		/// M36.2 — crafting panel state (professions, recipe list, cast bar).
-		UIModelChangeCrafting  = 1u << 15
+		UIModelChangeCrafting  = 1u << 15,
+		/// Chantier 2 SP-A — équipement porté (snapshot EquipmentUpdate).
+		UIModelChangeEquipment = 1u << 16
 	};
 
 	/// M35.2 — one vendor offer row mirrored from \ref engine::server::ShopOfferWire.
@@ -442,6 +444,10 @@ namespace engine::client
 		UIPlayerStats playerStats{};
 		UITargetStats targetStats{};
 		std::vector<engine::server::ItemStack> inventory;
+		/// Chantier 2 SP-A — équipement porté (slots occupés uniquement, miroir du
+		/// wire EquipmentUpdate). slot = valeur d'EquipmentSlot (1..10), itemId résolu
+		/// via le catalogue client pour l'affichage.
+		std::vector<engine::server::EquipmentEntry> equipment;
 		std::vector<UIQuestEntry> quests;
 		/// SP2 — liste de quêtes offer/turn-in du PNJ ciblé (Talk), voir \ref UIQuestGiverList.
 		UIQuestGiverList giverList;
@@ -651,6 +657,10 @@ namespace engine::client
 		/// Apply one decoded inventory delta to the inventory section of the UI model.
 		bool ApplyInventoryDelta(std::span<const std::byte> packet);
 
+		/// Chantier 2 SP-A — applique un snapshot d'équipement (EquipmentUpdate) à la
+		/// section équipement du modèle (remplacement complet, idempotent).
+		bool ApplyEquipmentUpdate(std::span<const std::byte> packet);
+
 		/// Apply one decoded quest delta to the quest section of the UI model.
 		bool ApplyQuestDelta(std::span<const std::byte> packet);
 
@@ -755,6 +765,9 @@ namespace engine::client
 		engine::server::LootNotifyMessage m_lootNotifyMessage{};
 		engine::server::ZoneChangeMessage m_zoneChangeMessage{};
 		engine::server::InventoryDeltaMessage m_inventoryMessage{};
+		/// Chantier 2 SP-A — scratch du snapshot d'équipement (réutilisé par paquet).
+		engine::server::EquipmentUpdateMessage m_equipmentMessage{};
+		std::vector<engine::server::EquipmentEntry> m_equipmentScratch;
 		engine::server::QuestDeltaMessage m_questMessage{};
 		/// SP2 — scratch du message QuestGiverList (réutilisé par paquet).
 		engine::server::QuestGiverListMessage m_questGiverListMessage{};

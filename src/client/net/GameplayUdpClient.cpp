@@ -449,6 +449,44 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendEquipRequest(uint32_t clientId, uint32_t itemId)
+	{
+		engine::server::EquipRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.itemId = itemId;
+		const bool ok = SendBytes(engine::server::EncodeEquipRequest(msg));
+		if (ok)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] EquipRequest sent (client_id={}, item_id={})",
+				clientId, itemId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] EquipRequest FAILED (client_id={}, item_id={})",
+				clientId, itemId);
+		}
+		return ok;
+	}
+
+	bool GameplayUdpClient::SendUnequipRequest(uint32_t clientId, uint8_t slot)
+	{
+		engine::server::UnequipRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.slot = slot;
+		const bool ok = SendBytes(engine::server::EncodeUnequipRequest(msg));
+		if (ok)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] UnequipRequest sent (client_id={}, slot={})",
+				clientId, slot);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] UnequipRequest FAILED (client_id={}, slot={})",
+				clientId, slot);
+		}
+		return ok;
+	}
+
 	bool GameplayUdpClient::SendHarvestRequest(uint32_t clientId, uint64_t nodeEntityId)
 	{
 		engine::server::HarvestRequestMessage msg{};

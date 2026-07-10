@@ -753,6 +753,76 @@ namespace
 		std::puts("[OK] TestQuestGiverListRoundTrip");
 	}
 
+	// Chantier 2 SP-A — équipement.
+	void TestEquipRequestRoundTrip()
+	{
+		engine::server::EquipRequestMessage msg{};
+		msg.clientId = 7u;
+		msg.itemId = 2004u;
+		std::vector<std::byte> packet = engine::server::EncodeEquipRequest(msg);
+
+		engine::server::EquipRequestMessage out{};
+		assert(engine::server::DecodeEquipRequest(packet, out));
+		assert(out.clientId == 7u);
+		assert(out.itemId == 2004u);
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 1u);
+		assert(!engine::server::DecodeEquipRequest(truncated, out));
+		std::puts("[OK] TestEquipRequestRoundTrip");
+	}
+
+	void TestUnequipRequestRoundTrip()
+	{
+		engine::server::UnequipRequestMessage msg{};
+		msg.clientId = 12u;
+		msg.slot = 6u; // MainHand
+		std::vector<std::byte> packet = engine::server::EncodeUnequipRequest(msg);
+
+		engine::server::UnequipRequestMessage out{};
+		assert(engine::server::DecodeUnequipRequest(packet, out));
+		assert(out.clientId == 12u);
+		assert(out.slot == 6u);
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 1u);
+		assert(!engine::server::DecodeUnequipRequest(truncated, out));
+		std::puts("[OK] TestUnequipRequestRoundTrip");
+	}
+
+	void TestEquipmentUpdateRoundTrip()
+	{
+		engine::server::EquipmentUpdateMessage msg{};
+		msg.clientId = 42u;
+		std::vector<engine::server::EquipmentEntry> entries = {
+			{1u, 2001u}, // Head
+			{2u, 2002u}, // Chest
+			{6u, 2004u}, // MainHand
+		};
+		std::vector<std::byte> packet = engine::server::EncodeEquipmentUpdate(msg, entries);
+
+		engine::server::EquipmentUpdateMessage out{};
+		std::vector<engine::server::EquipmentEntry> outEntries;
+		assert(engine::server::DecodeEquipmentUpdate(packet, out, outEntries));
+		assert(out.clientId == 42u);
+		assert(outEntries.size() == 3u);
+		assert(outEntries[0].slot == 1u && outEntries[0].itemId == 2001u);
+		assert(outEntries[1].slot == 2u && outEntries[1].itemId == 2002u);
+		assert(outEntries[2].slot == 6u && outEntries[2].itemId == 2004u);
+
+		// Snapshot vide (tout déséquipé) : valide, 0 entrée.
+		engine::server::EquipmentUpdateMessage empty{};
+		empty.clientId = 5u;
+		assert(engine::server::DecodeEquipmentUpdate(
+			engine::server::EncodeEquipmentUpdate(empty, {}), out, outEntries));
+		assert(outEntries.empty());
+
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 1u);
+		assert(!engine::server::DecodeEquipmentUpdate(truncated, out, outEntries));
+		std::puts("[OK] TestEquipmentUpdateRoundTrip");
+	}
+
 int main()
 {
 	TestInputRoundTrip();
@@ -781,6 +851,9 @@ int main()
 	TestQuestAcceptRequestRoundTrip();
 	TestQuestTurnInRequestRoundTrip();
 	TestQuestGiverListRoundTrip();
+	TestEquipRequestRoundTrip();
+	TestUnequipRequestRoundTrip();
+	TestEquipmentUpdateRoundTrip();
 	std::puts("All ServerProtocol tests passed");
 	return 0;
 }

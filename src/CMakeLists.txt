@@ -698,6 +698,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(config_loadfromstring_tests
     ${CMAKE_SOURCE_DIR}/src/shared/core/ConfigLoadFromStringTests.cpp)
 
+  # Chantier 2 SP-A — ItemCatalog : parsing items.json (type/slot/bonus) + Find.
+  # ItemCatalog.cpp est compilé dans engine_core (lié par le helper).
+  lcdlln_add_simple_test(item_catalog_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/items/ItemCatalogTests.cpp)
+
   # Character system PR1 — CharacterStatsEngine : 11 stats déterministes depuis
   # les tables JSON embarquées. Bloc explicite (pas lcdlln_add_simple_test) :
   # le test a besoin du dossier des headers générés (${LCDLLN_GEN_DIR}) et de

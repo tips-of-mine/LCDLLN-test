@@ -237,6 +237,7 @@ add_library(engine_core
   src/client/render/vk/VkUtils.cpp
   src/shared/core/Clock.cpp
   src/shared/core/Config.cpp
+  src/shared/items/ItemCatalog.cpp
   src/shared/core/ServerEndpoints.cpp
   src/shared/core/Profiler.cpp
   src/shared/core/jobs/JobSystem.cpp

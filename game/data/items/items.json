@@ -1,0 +1,59 @@
+{
+  "_comment": "Catalogue d'objets — Chantier 2 SP-A. Le serveur (shardd) est autoritaire : slot et bonus proviennent TOUJOURS de ce fichier, jamais du client. Ids >= 2000 pour l'equipement de depart (ne pas collisionner avec les objets de quete existants). L'ordre des slots est fige (cf. ItemDefinition.h).",
+  "items": [
+    {
+      "id": 2001,
+      "name": "Heaume de fer",
+      "description": "Un casque de fer simple mais solide.",
+      "icon": "items/heaume_fer.png",
+      "type": "armor",
+      "slot": "head",
+      "bonus": { "hp": 15, "perception": 2 }
+    },
+    {
+      "id": 2002,
+      "name": "Plastron de cuir",
+      "description": "Un plastron de cuir bouilli, leger et souple.",
+      "icon": "items/plastron_cuir.png",
+      "type": "armor",
+      "slot": "chest",
+      "bonus": { "hp": 30, "stamina": 5 }
+    },
+    {
+      "id": 2003,
+      "name": "Bottes de marche",
+      "description": "De bonnes bottes pour arpenter les chemins.",
+      "icon": "items/bottes_marche.png",
+      "type": "armor",
+      "slot": "feet",
+      "bonus": { "hp": 8, "speedWalk": 0.2, "speedRun": 0.3 }
+    },
+    {
+      "id": 2004,
+      "name": "Epee courte",
+      "description": "Une lame courte, fiable au corps a corps.",
+      "icon": "items/epee_courte.png",
+      "type": "weapon",
+      "slot": "mainhand",
+      "bonus": { "damage": 12, "accuracy": 3, "critRate": 0.02 }
+    },
+    {
+      "id": 2005,
+      "name": "Bouclier rond",
+      "description": "Un bouclier de bois cercle de fer.",
+      "icon": "items/bouclier_rond.png",
+      "type": "armor",
+      "slot": "offhand",
+      "bonus": { "hp": 20 }
+    },
+    {
+      "id": 2006,
+      "name": "Anneau de vigueur",
+      "description": "Un anneau grave de runes revigorantes.",
+      "icon": "items/anneau_vigueur.png",
+      "type": "accessory",
+      "slot": "ring1",
+      "bonus": { "hp": 10, "resource": 10, "stamina": 3 }
+    }
+  ]
+}

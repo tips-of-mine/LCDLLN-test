@@ -5666,6 +5666,15 @@ namespace engine
 															// routage matériau (habit/peau) ; les parties placeholder utilisent le
 															// chemin mono-draw (materialIndex 0). ActiveParts() = Body seul tant
 															// qu'aucune partie n'est équipée -> rendu identique à avant.
+															// Matrices d'os IDENTITÉ pour les parties placeholder : le rig UE5
+															// a des os inexploitables (bind-globales à l'origine) -> peser une
+															// boîte a un os la projette n'importe ou. Avec une pose identité, la
+															// partie n'est plus deformee par le squelette : posee en espace
+															// MODELE (~1.6 m = tete) puis placee par finalModelMat (la meme
+															// matrice qui positionne tout l'avatar), elle se pose sur la tete et
+															// suit position + orientation du perso. Suivi fin par os -> rig propre.
+															std::vector<engine::math::Mat4> identityFinals(
+																finals.size(), engine::math::Mat4::Identity());
 															for (const engine::render::skinned::SkinnedMesh* part : m_modularAvatar.ActiveParts())
 															{
 																const bool isBody = (part == m_currentSkinnedMesh);
@@ -5676,7 +5685,7 @@ namespace engine
 																	VK_NULL_HANDLE,
 																	rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
 																	*part,
-																	finals,
+																	isBody ? finals : identityFinals,
 																	materialCache.GetDescriptorSet(),
 																	finalModelMat.m,
 																	isBody ? skinnedMaterialIndex : 0u,

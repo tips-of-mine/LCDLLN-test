@@ -9,6 +9,7 @@
 #include "src/client/ui_common/CurrencyFormat.h"
 #include "src/client/inventory/InventoryUi.h"
 #include "src/shared/core/Config.h"
+#include "src/shared/items/ItemCatalog.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -19,6 +20,29 @@
 
 namespace engine::render
 {
+	namespace
+	{
+		// Chantier 2 SP-A — libellé français d'un slot d'équipement (l'enum ToString
+		// renvoie des tokens anglais réservés au wire/JSON).
+		const char* SlotLabelFr(engine::items::EquipmentSlot slot)
+		{
+			switch (slot)
+			{
+			case engine::items::EquipmentSlot::Head:     return "Tete";
+			case engine::items::EquipmentSlot::Chest:    return "Torse";
+			case engine::items::EquipmentSlot::Legs:     return "Jambes";
+			case engine::items::EquipmentSlot::Feet:     return "Pieds";
+			case engine::items::EquipmentSlot::Hands:    return "Mains";
+			case engine::items::EquipmentSlot::MainHand: return "Main droite";
+			case engine::items::EquipmentSlot::OffHand:  return "Main gauche";
+			case engine::items::EquipmentSlot::Amulet:   return "Amulette";
+			case engine::items::EquipmentSlot::Ring1:    return "Anneau 1";
+			case engine::items::EquipmentSlot::Ring2:    return "Anneau 2";
+			default:                                     return "?";
+			}
+		}
+	}
+
 	void CharacterWindowImGuiRenderer::Bind(const engine::core::Config* cfg,
 		const engine::client::UIModelBinding* uiBinding,
 		const engine::client::InventoryUiPresenter* inv,
@@ -119,14 +143,17 @@ namespace engine::render
 			// Hauteur réservée au bloc caractéristiques (titre + séparateur + 4 lignes).
 			const float lineH = ImGui::GetTextLineHeightWithSpacing();
 			const float statsH = lineH * 6.0f + 16.0f;
+			// Chantier 2 SP-A — hauteur réservée au panneau équipement (titre + séparateur
+			// + 5 rangées de 2 slots).
+			const float equipH = lineH * 7.0f + 8.0f;
 			// Aperçu CARRÉ (texture 512x512) agrandi pour remplir la colonne : borné par
-			// la largeur ET par la hauteur restante une fois les stats retirées.
-			float side = std::min(avail.x, avail.y - statsH);
+			// la largeur ET par la hauteur restante une fois équipement + stats retirés.
+			float side = std::min(avail.x, avail.y - statsH - equipH);
 			side = std::max(side, 140.0f);
 			const float offX = (avail.x - side) * 0.5f;
 			// Centrage vertical du bloc (aperçu + stats) : répartit l'espace résiduel
 			// en haut/bas au lieu de le laisser béant sous les stats.
-			const float blockH = side + statsH;
+			const float blockH = side + equipH + statsH;
 			const float padTop = std::max(0.0f, (avail.y - blockH) * 0.5f);
 			if (padTop > 0.0f)
 				ImGui::Dummy(ImVec2(1.0f, padTop));
@@ -158,8 +185,61 @@ namespace engine::render
 			}
 
 			ImGui::Spacing();
-			ImGui::TextDisabled("Equipement — Chantier 2");
+			ImGui::TextDisabled("Equipement");
 			ImGui::Separator();
+
+			// Chantier 2 SP-A — grille des 10 slots (2 colonnes × 5 rangées). Slot occupé
+			// => nom de l'objet porté + clic pour déséquiper (renvoi au sac). Le serveur
+			// est autoritaire : le clic n'émet qu'une intention, drainée par Engine.
+			{
+				// Table slot(1..10) -> itemId porté, depuis le snapshot EquipmentUpdate.
+				uint32_t worn[engine::items::kEquipSlotCount + 1] = {};
+				for (const engine::server::EquipmentEntry& e : model.equipment)
+				{
+					if (e.slot >= 1u && e.slot <= engine::items::kEquipSlotCount)
+						worn[e.slot] = e.itemId;
+				}
+				const float colW = ImGui::GetContentRegionAvail().x * 0.5f - 2.0f;
+				for (std::size_t slot = 1; slot <= engine::items::kEquipSlotCount; ++slot)
+				{
+					const engine::items::EquipmentSlot es = static_cast<engine::items::EquipmentSlot>(slot);
+					const uint32_t itemId = worn[slot];
+					std::string itemName;
+					bool occupied = false;
+					if (itemId != 0u)
+					{
+						occupied = true;
+						if (m_itemCatalog != nullptr)
+						{
+							if (const engine::items::ItemDefinition* def = m_itemCatalog->Find(itemId))
+								itemName = def->name;
+						}
+						if (itemName.empty())
+							itemName = "#" + std::to_string(itemId);
+					}
+					char label[96];
+					std::snprintf(label, sizeof(label), "%s: %s##eqslot%zu",
+						SlotLabelFr(es), occupied ? itemName.c_str() : "-", slot);
+					ImGui::Selectable(label, false, 0, ImVec2(colW, 0.0f));
+					if (occupied && ImGui::IsItemHovered())
+					{
+						ImGui::BeginTooltip();
+						ImGui::TextUnformatted(itemName.c_str());
+						ImGui::TextDisabled("Emplacement : %s", SlotLabelFr(es));
+						ImGui::Separator();
+						ImGui::TextDisabled("Clic : déséquiper");
+						ImGui::EndTooltip();
+					}
+					if (occupied && ImGui::IsItemClicked(ImGuiMouseButton_Left))
+					{
+						m_pendingEquip = PendingEquipAction{
+							PendingEquipAction::Kind::Unequip, 0u, static_cast<uint8_t>(slot)};
+					}
+					// 2 colonnes : slot impair à gauche, pair sur la même ligne à droite.
+					if ((slot % 2u) == 1u && slot != engine::items::kEquipSlotCount)
+						ImGui::SameLine(0.0f, 4.0f);
+				}
+			}
 
 			// Caractéristiques compactes (ex-fiche F1).
 			const engine::client::UIPlayerStats& ps = model.playerStats;
@@ -241,11 +321,47 @@ namespace engine::render
 						const ImVec2 qs = ImGui::CalcTextSize(q);
 						wdl->AddText(ImVec2(mx.x - qs.x - 3, mx.y - qs.y - 2), IM_COL32(255, 240, 190, 255), q);
 					}
+					// Chantier 2 SP-A — objet équipable ? (catalogue client, source d'affichage).
+					const engine::items::ItemDefinition* def =
+						(m_itemCatalog != nullptr) ? m_itemCatalog->Find(s.itemId) : nullptr;
+					const bool equippable = (def != nullptr) && def->IsEquippable();
 					if (ImGui::IsMouseHoveringRect(mn, mx) && !s.label.empty())
 					{
 						ImGui::BeginTooltip();
 						ImGui::TextUnformatted(s.label.c_str());
+						if (def != nullptr)
+						{
+							if (equippable)
+								ImGui::TextDisabled("Emplacement : %s", SlotLabelFr(def->slot));
+							const engine::items::StatBonus& b = def->bonus;
+							if (b.hp)          ImGui::Text("PV +%d", b.hp);
+							if (b.resource)    ImGui::Text("Ressource +%d", b.resource);
+							if (b.damage)      ImGui::Text("Degats +%d", b.damage);
+							if (b.accuracy)    ImGui::Text("Precision +%d", b.accuracy);
+							if (b.range != 0.0f)       ImGui::Text("Portee +%.1f m", b.range);
+							if (b.critRate != 0.0f)    ImGui::Text("Crit +%.1f%%", b.critRate);
+							if (b.critMult != 0.0f)    ImGui::Text("Mult. crit +%.2f", b.critMult);
+							if (b.speedWalk != 0.0f)   ImGui::Text("Vitesse marche +%.2f", b.speedWalk);
+							if (b.speedRun != 0.0f)    ImGui::Text("Vitesse course +%.2f", b.speedRun);
+							if (b.speedSprint != 0.0f) ImGui::Text("Vitesse sprint +%.2f", b.speedSprint);
+							if (b.stamina)     ImGui::Text("Endurance +%d", b.stamina);
+							if (b.perception)  ImGui::Text("Perception +%d", b.perception);
+							if (b.stealth)     ImGui::Text("Discretion +%d", b.stealth);
+							if (equippable)
+							{
+								ImGui::Separator();
+								ImGui::TextDisabled("Clic : equiper");
+							}
+						}
 						ImGui::EndTooltip();
+					}
+					// Clic gauche sur un objet équipable => intention d'équipement (drainée
+					// par Engine). Le serveur revalide (possession + slot).
+					if (equippable && ImGui::IsMouseHoveringRect(mn, mx)
+						&& ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					{
+						m_pendingEquip = PendingEquipAction{
+							PendingEquipAction::Kind::Equip, s.itemId, 0u};
 					}
 				}
 				// Réserve toute la zone grille pour pousser la bourse en bas.

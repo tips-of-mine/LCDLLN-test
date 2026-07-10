@@ -10,6 +10,7 @@ namespace engine::core { class Config; }
 namespace engine::client { class UIModelBinding; class InventoryUiPresenter; class SkillIconCache; struct UIModel; }
 namespace engine::render { class SkillBookImGuiRenderer; class GrimoireImGuiRenderer; class ClassSkillTreeImGuiRenderer; }
 namespace engine::render::race { class RacePreviewViewport; }
+namespace engine::items { class ItemCatalog; }
 
 namespace engine::render
 {
@@ -27,6 +28,28 @@ namespace engine::render
 			engine::render::SkillBookImGuiRenderer* skillBook,
 			engine::render::GrimoireImGuiRenderer* grimoire,
 			engine::render::ClassSkillTreeImGuiRenderer* classTree);
+
+		/// Chantier 2 SP-A — catalogue d'objets client (résolution itemId → nom/slot/
+		/// bonus pour le panneau équipement et les tooltips enrichis). Nul -> noms bruts.
+		void SetItemCatalog(const engine::items::ItemCatalog* catalog) { m_itemCatalog = catalog; }
+
+		/// Chantier 2 SP-A — action d'équipement demandée par l'utilisateur au clic,
+		/// drainée par Engine après Render() pour l'envoyer au serveur (le renderer
+		/// n'a pas accès au socket).
+		struct PendingEquipAction
+		{
+			enum class Kind { None, Equip, Unequip } kind = Kind::None;
+			uint32_t itemId = 0; ///< pour Equip (objet du sac cliqué)
+			uint8_t slot = 0;    ///< pour Unequip (slot cliqué, 1..10)
+		};
+		/// Récupère et efface l'action en attente. Retourne false si aucune.
+		bool ConsumeEquipAction(PendingEquipAction& out)
+		{
+			if (m_pendingEquip.kind == PendingEquipAction::Kind::None) return false;
+			out = m_pendingEquip;
+			m_pendingEquip = PendingEquipAction{};
+			return true;
+		}
 
 		/// Viewport 3D du perso (optionnel ; Task 4). Nul -> placeholder dessiné.
 		void SetRaceViewport(engine::render::race::RacePreviewViewport* vp) { m_raceViewport = vp; }
@@ -53,6 +76,8 @@ namespace engine::render
 		const engine::core::Config* m_cfg = nullptr;
 		const engine::client::UIModelBinding* m_uiBinding = nullptr;
 		const engine::client::InventoryUiPresenter* m_inv = nullptr;
+		const engine::items::ItemCatalog* m_itemCatalog = nullptr; ///< Chantier 2 SP-A
+		PendingEquipAction m_pendingEquip{};                       ///< Chantier 2 SP-A
 		engine::client::SkillIconCache* m_icons = nullptr;
 		engine::render::SkillBookImGuiRenderer* m_skillBook = nullptr;
 		engine::render::GrimoireImGuiRenderer* m_grimoire = nullptr;

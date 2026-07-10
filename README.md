@@ -2,9 +2,18 @@
 
 ## Documentation
 
+- Carte du code (architecture, réseau, serveur, DB) : [CODEBASE_MAP.md](CODEBASE_MAP.md)
 - Terrain décalé et World Editor : [docs/terrain_et_world_editor.md](docs/terrain_et_world_editor.md)
 - Pipeline zones, export WE, `zone_builder` : [docs/world_editor_zone_pipeline.md](docs/world_editor_zone_pipeline.md)
 - Checklist zone démo **`demo_plains`** : [docs/world_zone_demo_checklist.md](docs/world_zone_demo_checklist.md)
+
+## Roadmap publique
+
+L'état des grands systèmes de jeu (personnages, combat, quêtes, métiers, économie,
+social, fenêtre Personnage, météo, **équipement d'objets**…) est publié sur la
+roadmap du portail web, alimentée par la table `roadmap_items`
+(migrations `sql/migrations/00NN_roadmap_items*.sql`, dernière en date
+`0073_roadmap_items_v5.sql`).
 
 ## World / zones
 

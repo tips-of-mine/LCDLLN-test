@@ -46,8 +46,14 @@
 
 ## D. Systèmes plus gros (code, à cadrer)
 
-- **Système d'équipement** : slots, attache d'un mesh d'arme à un os (main) du squelette,
-  équiper/déséquiper. Dépend des meshes d'armes (section C).
+- **Système d'équipement** — *SP-A livré (2026-07-10, PRs #965/#966)* : 10 slots gameplay
+  (tête, torse, jambes, pieds, mains, arme, bouclier, amulette, 2 anneaux), équiper/déséquiper
+  (clic dans la fenêtre Personnage), **bonus de stats dérivées** serveur-autoritaire (slot+bonus
+  lus depuis le catalogue serveur `game/data/items/items.json`, jamais du client), persistance
+  par personnage. Module partagé `src/shared/items/` + opcodes 96/97/98 (protocole 15).
+  **Reste (SP-D)** : attache visuelle d'un mesh d'objet à un os/point d'ancrage de l'avatar
+  (`visualMesh` du catalogue, encore vide) — bloqué par les meshes d'armes (section C) ET par
+  la limite du rig UE5 (os à l'origine, pas de vraie hiérarchie de pose), cf. Chantier 2 SP1.
 - **Système d'interaction complet** : raycast visée (au lieu de proximité simple),
   prompt UI dédié, loot, déclencheurs d'objets typés, dialogue PNJ branché.
 - **Rendu de props / meshes statiques** : passe de rendu pour afficher des objets non-skinnés

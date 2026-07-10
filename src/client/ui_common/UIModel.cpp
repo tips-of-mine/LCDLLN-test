@@ -567,6 +567,8 @@ namespace engine::client
 			return ApplyZoneChange(packet);
 		case engine::server::MessageKind::InventoryDelta:
 			return ApplyInventoryDelta(packet);
+		case engine::server::MessageKind::EquipmentUpdate:
+			return ApplyEquipmentUpdate(packet);
 		case engine::server::MessageKind::QuestDelta:
 			return ApplyQuestDelta(packet);
 		case engine::server::MessageKind::QuestGiverList:
@@ -1285,6 +1287,22 @@ namespace engine::client
 		LOG_INFO(Net, "[UIModelBinding] InventoryDelta applied (client_id={}, items={})",
 			m_inventoryMessage.clientId,
 			m_model.inventory.size());
+		return true;
+	}
+
+	bool UIModelBinding::ApplyEquipmentUpdate(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeEquipmentUpdate(packet, m_equipmentMessage, m_equipmentScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] EquipmentUpdate FAILED: decode error");
+			return false;
+		}
+
+		m_model.equipment = m_equipmentScratch;
+		NotifyObservers(UIModelChangeEquipment);
+		LOG_INFO(Net, "[UIModelBinding] EquipmentUpdate applied (client_id={}, worn={})",
+			m_equipmentMessage.clientId,
+			m_model.equipment.size());
 		return true;
 	}
 

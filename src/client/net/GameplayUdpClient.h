@@ -93,6 +93,14 @@ namespace engine::client
 		/// proximité et propriété, puis pousse l'InventoryDelta).
 		bool SendPickupRequest(uint32_t clientId, uint64_t lootBagEntityId);
 
+		/// Chantier 2 SP-A — demande d'équipement d'un objet du sac (le serveur
+		/// détermine le slot depuis son catalogue, puis pousse EquipmentUpdate +
+		/// InventoryDelta + PlayerStats).
+		bool SendEquipRequest(uint32_t clientId, uint32_t itemId);
+
+		/// Chantier 2 SP-A — demande de retrait de l'objet d'un slot (1..10).
+		bool SendUnequipRequest(uint32_t clientId, uint8_t slot);
+
 		/// Métiers SP1 — démarre une récolte sur un node répliqué (M36.1, le
 		/// serveur valide disponibilité/portée/session unique).
 		bool SendHarvestRequest(uint32_t clientId, uint64_t nodeEntityId);

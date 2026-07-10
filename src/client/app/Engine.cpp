@@ -8325,6 +8325,18 @@ namespace engine
 				m_characterWindowImGui = std::make_unique<engine::render::CharacterWindowImGuiRenderer>();
 				m_characterWindowImGui->Bind(&m_cfg, &m_uiModelBinding, &m_invUi, &m_skillIconCache,
 					m_skillBookImGui.get(), m_grimoireImGui.get(), m_classSkillTreeImGui.get());
+				// Chantier 2 SP-A — catalogue d'objets client (noms/slots/bonus pour le
+				// panneau équipement + tooltips). Source d'affichage ; le serveur reste
+				// autoritaire. Non fatal : catalogue absent -> noms bruts (#itemId).
+				{
+					const std::string itemsText =
+						engine::platform::FileSystem::ReadAllTextContent(m_cfg, "items/items.json");
+					if (itemsText.empty() || !m_itemCatalog.LoadFromJson(itemsText))
+						LOG_WARN(Net, "[Engine] catalogue d'objets client indisponible (items/items.json)");
+					else
+						LOG_INFO(Net, "[Engine] catalogue d'objets client charge : {} objet(s)", m_itemCatalog.Count());
+					m_characterWindowImGui->SetItemCatalog(&m_itemCatalog);
+				}
 				// Task 4 — aperçu 3D : le conteneur affiche la texture offscreen du
 				// viewport perso (alimenté quand la fenêtre est ouverte, cf. Update).
 				m_characterWindowImGui->SetRaceViewport(&m_racePreviewViewport);
@@ -12712,6 +12724,20 @@ namespace engine
 			{
 				m_characterWindowImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_characterWindowImGui->Render(m_uiModelBinding.GetModel());
+				// Chantier 2 SP-A — draine l'intention equip/unequip signalée au clic et
+				// l'envoie au serveur (le renderer n'a pas accès au socket). Le serveur
+				// revalide possession + slot.
+				engine::render::CharacterWindowImGuiRenderer::PendingEquipAction equipAction;
+				if (m_characterWindowImGui->ConsumeEquipAction(equipAction))
+				{
+					const uint32_t equipClientId = m_gameplayUdp.ServerClientId();
+					if (equipAction.kind ==
+						engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::Equip)
+						(void)m_gameplayUdp.SendEquipRequest(equipClientId, equipAction.itemId);
+					else if (equipAction.kind ==
+						engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::Unequip)
+						(void)m_gameplayUdp.SendUnequipRequest(equipClientId, equipAction.slot);
+				}
 			}
 			// CMANGOS.21 (Phase 5.21 step 3+4) — Render du panneau Arena si
 			// visible. Le popup proposal s'affiche aussi quand pendingProposalId

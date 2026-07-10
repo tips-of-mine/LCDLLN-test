@@ -31,6 +31,7 @@
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
 #include "src/client/inventory/InventoryUi.h"
+#include "src/shared/items/ItemCatalog.h"
 // Combat SP2 — présentateurs combat câblés (HUD cible/log + panneau avancé).
 #include "src/client/combat/CombatHud.h"
 #include "src/client/combat/AdvancedCombatUi.h"
@@ -1505,6 +1506,11 @@ namespace engine
 		engine::client::ShopUiPresenter m_shopUi{};
 		engine::client::AuctionUiPresenter m_auctionUi{};
 		engine::client::InventoryUiPresenter m_invUi{};
+		/// Chantier 2 SP-A — catalogue d'objets client (noms/slots/bonus pour la
+		/// fenêtre Personnage : panneau équipement + tooltips). Chargé au boot depuis
+		/// game/data/items/items.json ; source d'AFFICHAGE seulement (le serveur reste
+		/// autoritaire sur slot/bonus).
+		engine::items::ItemCatalog m_itemCatalog{};
 		// ---------------------------------------------------------------------
 		// Combat SP2 — binds combat (embryon du registre central, Lot E) :
 		//   clic gauche = sélection de cible (pick écran-espace sur les mobs)

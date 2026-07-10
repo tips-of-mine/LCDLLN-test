@@ -4,6 +4,7 @@
 #include "src/shardd/gameplay/crafting/CraftingSystem.h"
 #include "src/shardd/gameplay/quest/QuestRuntime.h"
 #include "src/shared/network/ReplicationTypes.h"
+#include "src/shared/items/ItemDefinition.h"
 
 #include <array>
 #include <cstdint>
@@ -32,6 +33,9 @@ namespace engine::server
 		uint32_t premiumCurrency = 0;
 		StatsComponent stats{};
 		std::vector<ItemStack> inventory;
+		/// Chantier 2 SP-A — équipement porté (indexé par la valeur de
+		/// engine::items::EquipmentSlot, 1..kEquipSlotCount ; index 0 inutilisé).
+		std::array<uint32_t, engine::items::kEquipSlotCount + 1> equipment{};
 		std::vector<QuestState> questStates;
 		/// M29.2: persisted `/ignore` targets (display names, e.g. P12).
 		std::vector<std::string> chatIgnoredDisplayNames;

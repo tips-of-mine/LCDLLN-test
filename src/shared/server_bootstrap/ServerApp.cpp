@@ -471,6 +471,25 @@ namespace engine::server
 		}
 		m_vendorStock.ResetFromCatalog(m_vendorCatalog.GetVendors());
 
+		// Chantier 2 SP-A — catalogue d'objets (autoritaire pour slot/bonus). Non
+		// fatal : un catalogue absent désactive simplement l'équipement (pas de
+		// régression sur le reste du gameplay), à l'image de m_statsTables.
+		{
+			const std::string itemsPath = m_config.GetString("server.items_catalog_path", "items/items.json");
+			const std::string itemsText = engine::platform::FileSystem::ReadAllTextContent(m_config, itemsPath);
+			if (itemsText.empty() || !m_itemCatalog.LoadFromJson(itemsText))
+			{
+				LOG_WARN(Core,
+					"[ServerApp] catalogue d'objets absent/illisible (path={}) — équipement désactivé",
+					itemsPath);
+			}
+			else
+			{
+				m_itemCatalogLoaded = true;
+				LOG_INFO(Core, "[ServerApp] catalogue d'objets chargé : {} objet(s)", m_itemCatalog.Count());
+			}
+		}
+
 		m_characterAutosaveIntervalTicks = ResolveCharacterAutosaveIntervalTicks();
 		m_nextCharacterAutosaveTick = m_characterAutosaveIntervalTicks;
 
@@ -867,6 +886,21 @@ namespace engine::server
 		if (DecodePickupRequest(packetBytes, pickupRequest))
 		{
 			HandlePickupRequest(datagram.endpoint, pickupRequest.clientId, pickupRequest.lootBagEntityId);
+			return;
+		}
+
+		// Chantier 2 SP-A — équiper / déséquiper un objet.
+		EquipRequestMessage equipRequest{};
+		if (DecodeEquipRequest(packetBytes, equipRequest))
+		{
+			HandleEquipRequest(datagram.endpoint, equipRequest.clientId, equipRequest.itemId);
+			return;
+		}
+
+		UnequipRequestMessage unequipRequest{};
+		if (DecodeUnequipRequest(packetBytes, unequipRequest))
+		{
+			HandleUnequipRequest(datagram.endpoint, unequipRequest.clientId, unequipRequest.slot);
 			return;
 		}
 
@@ -1360,6 +1394,7 @@ namespace engine::server
 			acceptedClient.premiumCurrency = persistedState.premiumCurrency;
 			acceptedClient.stats = persistedState.stats;
 			acceptedClient.inventory = persistedState.inventory;
+			acceptedClient.equipment = persistedState.equipment; // Chantier 2 SP-A
 			acceptedClient.questStates = persistedState.questStates;
 		acceptedClient.chatIgnoredDisplayNames = std::move(persistedState.chatIgnoredDisplayNames);
 		acceptedClient.chatModeratorRole = persistedState.chatModeratorRole;
@@ -1490,6 +1525,18 @@ namespace engine::server
 			{
 				acceptedClient.stats.maxHealth = sh.maxHealth;
 				acceptedClient.stats.currentHealth = sh.currentHealth;
+				// Chantier 2 SP-A — le bonus PV d'équipement élargit le pool de PV max
+				// (les PV courants persistés restent clampés dessous).
+				const int32_t hpBonus = SumEquipmentBonus(acceptedClient).hp;
+				if (hpBonus != 0)
+				{
+					const int64_t widened = static_cast<int64_t>(acceptedClient.stats.maxHealth) + hpBonus;
+					acceptedClient.stats.maxHealth = widened < 0 ? 0u : static_cast<uint32_t>(widened);
+					if (acceptedClient.stats.currentHealth > acceptedClient.stats.maxHealth)
+					{
+						acceptedClient.stats.currentHealth = acceptedClient.stats.maxHealth;
+					}
+				}
 				LOG_INFO(Net,
 					"[ServerApp] R1-A enter-world stats (client_id={}, faction={}, class={}, level={}) -> maxHealth={}, currentHealth={}",
 					acceptedClient.clientId,
@@ -1503,11 +1550,13 @@ namespace engine::server
 			// portée, précision, critique) dans le composant combat, à la place
 			// des constantes MVP. Faction/classe vides → ComputeStats nullopt →
 			// le composant MVP est conservé (pas de régression mode no-DB).
-			const auto derived = engine::server::gameplay::ComputeStats(
+			auto derived = engine::server::gameplay::ComputeStats(
 				*m_statsTables, acceptedClient.factionId, acceptedClient.classId,
 				sex, acceptedClient.level);
 			if (derived)
 			{
+				// Chantier 2 SP-A — bonus d'equipement dans le combat/ressource au spawn.
+				ApplyEquipmentBonus(acceptedClient, *derived);
 				ApplyDerivedCombatStats(acceptedClient, *derived);
 				// Combat SP3 — profil de classe (kit de sorts) + ressource runtime.
 				const auto factionIt = m_statsTables->factions.find(acceptedClient.factionId);
@@ -2110,6 +2159,7 @@ namespace engine::server
 		state.premiumCurrency = client.premiumCurrency;
 		state.stats = client.stats;
 		state.inventory = client.inventory;
+		state.equipment = client.equipment; // Chantier 2 SP-A
 		state.questStates = client.questStates;
 		state.chatIgnoredDisplayNames = client.chatIgnoredDisplayNames;
 		state.chatModeratorRole = client.chatModeratorRole;
@@ -3398,6 +3448,229 @@ namespace engine::server
 		}
 		SaveConnectedClient(*client, "pickup");
 		(void)SendInventoryDelta(*client, pickedItems);
+	}
+
+	// ------------------------------------------------------------------------
+	// Chantier 2 SP-A — équipement d'objets (serveur autoritaire)
+	// ------------------------------------------------------------------------
+
+	engine::items::StatBonus ServerApp::SumEquipmentBonus(const ConnectedClient& client) const
+	{
+		engine::items::StatBonus total{};
+		if (!m_itemCatalogLoaded)
+		{
+			return total;
+		}
+		for (std::size_t slot = 1; slot < client.equipment.size(); ++slot)
+		{
+			const uint32_t itemId = client.equipment[slot];
+			if (itemId == 0u)
+			{
+				continue;
+			}
+			if (const engine::items::ItemDefinition* def = m_itemCatalog.Find(itemId))
+			{
+				total += def->bonus;
+			}
+		}
+		return total;
+	}
+
+	void ServerApp::ApplyEquipmentBonus(const ConnectedClient& client, engine::server::gameplay::DerivedStats& d) const
+	{
+		const engine::items::StatBonus b = SumEquipmentBonus(client);
+		// Champs uint32 : additionne en int64 puis clamp ≥ 0 (bonus négatif possible).
+		const auto addU = [](uint32_t base, int32_t delta) -> uint32_t {
+			const int64_t v = static_cast<int64_t>(base) + static_cast<int64_t>(delta);
+			return v < 0 ? 0u : static_cast<uint32_t>(v);
+		};
+		d.hp          = addU(d.hp, b.hp);
+		d.resource    = addU(d.resource, b.resource);
+		d.damage      = addU(d.damage, b.damage);
+		d.stamina     = addU(d.stamina, b.stamina);
+		d.accuracy    = std::max(0.0f, d.accuracy + static_cast<float>(b.accuracy));
+		d.range       = std::max(0.0f, d.range + b.range);
+		d.critRate    = std::max(0.0f, d.critRate + b.critRate);
+		d.critMult    = std::max(0.0f, d.critMult + b.critMult);
+		d.speedWalk   = std::max(0.0f, d.speedWalk + b.speedWalk);
+		d.speedRun    = std::max(0.0f, d.speedRun + b.speedRun);
+		d.speedSprint = std::max(0.0f, d.speedSprint + b.speedSprint);
+		d.perception  = std::max(0.0f, d.perception + static_cast<float>(b.perception));
+		d.stealth     = std::max(0.0f, d.stealth + static_cast<float>(b.stealth));
+	}
+
+	void ServerApp::RefreshLiveDerivedStats(ConnectedClient& client)
+	{
+		if (!m_statsTables) return;
+		if (client.factionId.empty() || client.classId.empty()) return;
+		const engine::server::gameplay::Sex sex =
+			(client.gender == "female") ? engine::server::gameplay::Sex::Female
+			                            : engine::server::gameplay::Sex::Male;
+		auto d = engine::server::gameplay::ComputeStats(
+			*m_statsTables, client.factionId, client.classId, sex, client.level);
+		if (!d) return;
+		ApplyEquipmentBonus(client, *d);
+
+		ApplyDerivedCombatStats(client, *d);
+		client.maxResource = d->resource;
+		if (client.currentResource > client.maxResource)
+		{
+			client.currentResource = client.maxResource;
+		}
+		// PV max = hp dérivé (bonus inclus) ; on préserve les PV courants (pas de
+		// soin en équipant), seulement clampés sur le nouveau max.
+		client.stats.maxHealth = d->hp;
+		if (client.stats.currentHealth > client.stats.maxHealth)
+		{
+			client.stats.currentHealth = client.stats.maxHealth;
+		}
+	}
+
+	bool ServerApp::SendEquipmentUpdate(const ConnectedClient& receiver)
+	{
+		EquipmentUpdateMessage message{};
+		message.clientId = receiver.clientId;
+		std::vector<EquipmentEntry> entries;
+		for (std::size_t slot = 1; slot < receiver.equipment.size(); ++slot)
+		{
+			if (receiver.equipment[slot] != 0u)
+			{
+				entries.push_back(EquipmentEntry{static_cast<uint8_t>(slot), receiver.equipment[slot]});
+			}
+		}
+		const std::vector<std::byte> packet = EncodeEquipmentUpdate(message, entries);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] EquipmentUpdate send failed (client_id={})", receiver.clientId);
+			return false;
+		}
+		LOG_INFO(Net, "[ServerApp] EquipmentUpdate sent (client_id={}, worn={})",
+			receiver.clientId, entries.size());
+		return true;
+	}
+
+	void ServerApp::HandleEquipRequest(const Endpoint& endpoint, uint32_t clientId, uint32_t itemId)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] EquipRequest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] EquipRequest ignored: client_id mismatch (expected={}, got={})",
+				client->clientId, clientId);
+			return;
+		}
+		if (!m_itemCatalogLoaded)
+		{
+			LOG_WARN(Net, "[ServerApp] EquipRequest rejeté: catalogue d'objets non chargé (client_id={})", clientId);
+			return;
+		}
+
+		// Slot ET bonus proviennent du catalogue serveur (jamais du client) : anti-triche.
+		const engine::items::ItemDefinition* def = m_itemCatalog.Find(itemId);
+		if (def == nullptr || !def->IsEquippable())
+		{
+			LOG_WARN(Net, "[ServerApp] EquipRequest rejeté: objet inconnu/non équipable (client_id={}, item_id={})",
+				clientId, itemId);
+			return;
+		}
+		const std::size_t slot = static_cast<std::size_t>(def->slot);
+		if (slot == 0u || slot >= client->equipment.size())
+		{
+			LOG_WARN(Net, "[ServerApp] EquipRequest rejeté: slot hors borne (client_id={}, item_id={}, slot={})",
+				clientId, itemId, slot);
+			return;
+		}
+
+		// L'objet doit être présent dans le sac (anti-triche : on ne peut équiper
+		// que ce qu'on possède).
+		bool owned = false;
+		for (const ItemStack& stack : client->inventory)
+		{
+			if (stack.itemId == itemId && stack.quantity >= 1u)
+			{
+				owned = true;
+				break;
+			}
+		}
+		if (!owned)
+		{
+			LOG_WARN(Net, "[ServerApp] EquipRequest rejeté: objet absent du sac (client_id={}, item_id={})",
+				clientId, itemId);
+			return;
+		}
+
+		std::string error;
+		if (!RemoveStackFromInventory(*client, itemId, 1u, error))
+		{
+			LOG_WARN(Net, "[ServerApp] EquipRequest échec retrait sac (client_id={}, item_id={}, err={})",
+				clientId, itemId, error);
+			return;
+		}
+
+		// Renvoie au sac l'objet déjà porté sur ce slot (échange).
+		const uint32_t previous = client->equipment[slot];
+		if (previous != 0u)
+		{
+			AddItemToInventory(*client, ItemStack{previous, 1u});
+		}
+		client->equipment[slot] = itemId;
+
+		LOG_INFO(Net, "[ServerApp] Équipement (client_id={}, item_id={}, slot={}, remplacé={})",
+			clientId, itemId, slot, previous);
+
+		SaveConnectedClient(*client, "equip");
+		RefreshLiveDerivedStats(*client); // combat/PV/ressource refletent le nouvel equipement
+		(void)SendInventoryDelta(*client, client->inventory); // snapshot complet
+		(void)SendEquipmentUpdate(*client);
+		(void)SendPlayerStats(*client);
+	}
+
+	void ServerApp::HandleUnequipRequest(const Endpoint& endpoint, uint32_t clientId, uint8_t slot)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] UnequipRequest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] UnequipRequest ignored: client_id mismatch (expected={}, got={})",
+				client->clientId, clientId);
+			return;
+		}
+		const std::size_t slotIndex = static_cast<std::size_t>(slot);
+		if (slotIndex == 0u || slotIndex >= client->equipment.size())
+		{
+			LOG_WARN(Net, "[ServerApp] UnequipRequest rejeté: slot hors borne (client_id={}, slot={})",
+				clientId, slotIndex);
+			return;
+		}
+		const uint32_t itemId = client->equipment[slotIndex];
+		if (itemId == 0u)
+		{
+			LOG_WARN(Net, "[ServerApp] UnequipRequest ignoré: slot déjà vide (client_id={}, slot={})",
+				clientId, slotIndex);
+			return;
+		}
+
+		AddItemToInventory(*client, ItemStack{itemId, 1u});
+		client->equipment[slotIndex] = 0u;
+
+		LOG_INFO(Net, "[ServerApp] Déséquipement (client_id={}, item_id={}, slot={})",
+			clientId, itemId, slotIndex);
+
+		SaveConnectedClient(*client, "unequip");
+		RefreshLiveDerivedStats(*client); // combat/PV/ressource refletent le nouvel equipement
+		(void)SendInventoryDelta(*client, client->inventory); // snapshot complet
+		(void)SendEquipmentUpdate(*client);
+		(void)SendPlayerStats(*client);
 	}
 
 	void ServerApp::HandleTalkRequest(const Endpoint& endpoint, uint32_t clientId, std::string_view targetId)
@@ -6359,9 +6632,11 @@ namespace engine::server
 		const engine::server::gameplay::Sex sex =
 			(client.gender == "female") ? engine::server::gameplay::Sex::Female
 			                            : engine::server::gameplay::Sex::Male;
-		const auto d = engine::server::gameplay::ComputeStats(
+		auto d = engine::server::gameplay::ComputeStats(
 			*m_statsTables, client.factionId, client.classId, sex, client.level);
 		if (!d) return false;
+		// Chantier 2 SP-A — bonus d'équipement (source autoritaire : catalogue serveur).
+		ApplyEquipmentBonus(client, *d);
 
 		PlayerStatsMessage msg{};
 		msg.clientId    = client.clientId;

@@ -174,6 +174,57 @@ int main()
               "EXT-2 format_version=2 écrit");
     }
 
+    // Chantier 2 SP-A — round-trip de l'équipement porté : les slots occupés
+    // survivent à Save/Load ; les slots vides restent à 0.
+    {
+        engine::core::Config config = MakeConfigWithSchema();
+        CharacterPersistenceStore store(config);
+        Check(store.Init(), "SP-A store Init OK (équipement)");
+
+        PersistedCharacterState saved{};
+        saved.characterKey = 555ULL;
+        saved.equipment[1] = 2001u; // Head
+        saved.equipment[2] = 2002u; // Chest
+        saved.equipment[6] = 2004u; // MainHand
+        Check(store.SaveCharacter(saved), "SP-A SaveCharacter (équipement) OK");
+
+        PersistedCharacterState loaded{};
+        Check(store.LoadCharacter(saved.characterKey, loaded), "SP-A LoadCharacter (équipement) OK");
+        Check(loaded.equipment[1] == 2001u, "SP-A slot Head round-trip");
+        Check(loaded.equipment[2] == 2002u, "SP-A slot Chest round-trip");
+        Check(loaded.equipment[6] == 2004u, "SP-A slot MainHand round-trip");
+        Check(loaded.equipment[3] == 0u, "SP-A slot vide reste 0");
+        Check(loaded.equipment[0] == 0u, "SP-A slot 0 (None) inutilisé");
+    }
+
+    // Chantier 2 SP-A — compat legacy : un fichier sans clés equipment.* charge
+    // avec tous les slots à 0 (pas de régression pour les persos pré-SP-A).
+    {
+        engine::core::Config config = MakeConfigWithSchema();
+        CharacterPersistenceStore store(config);
+        Check(store.Init(), "SP-A store Init OK (legacy sans équipement)");
+
+        const uint64_t key = 556ULL;
+        const std::string rel =
+            "persistence/characters/character_" + std::to_string(key) + ".ini";
+        const std::string legacyBlob =
+            "character.zone_id=1\n"
+            "inventory.count=0\n"
+            "quests.format_version=2\n"
+            "quests.count=0\n";
+        Check(engine::platform::FileSystem::WriteAllTextContent(config, rel, legacyBlob),
+              "SP-A écriture blob legacy");
+
+        PersistedCharacterState loaded{};
+        Check(store.LoadCharacter(key, loaded), "SP-A LoadCharacter legacy OK");
+        bool allZero = true;
+        for (std::size_t s = 0; s < loaded.equipment.size(); ++s)
+        {
+            if (loaded.equipment[s] != 0u) { allZero = false; break; }
+        }
+        Check(allZero, "SP-A legacy → équipement tout à 0");
+    }
+
     if (g_failures) { std::cerr << g_failures << " échec(s)\n"; return 1; }
     std::cout << "OK\n";
     return 0;

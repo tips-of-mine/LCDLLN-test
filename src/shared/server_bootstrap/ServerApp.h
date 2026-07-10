@@ -18,6 +18,7 @@
 #include "src/shardd/gameplay/creature/CreatureArchetypeLibrary.h"
 #include "src/shardd/gameplay/spell/SpellKitLibrary.h"
 #include "src/shardd/gameplay/spell/ClassSkillLibrary.h"
+#include "src/shared/items/ItemCatalog.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/net/ChatSystem.h"
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
@@ -210,6 +211,10 @@ namespace engine::server
 		std::vector<EntityId> interestEntityIds;
 		std::vector<EntityId> replicatedEntityIds;
 		std::vector<ItemStack> inventory;
+		/// Chantier 2 SP-A — équipement porté. Indexé par la valeur de
+		/// engine::items::EquipmentSlot (1..kEquipSlotCount) ; index 0 (None) inutilisé.
+		/// 0 = slot vide, sinon itemId. Persisté + poussé au client via EquipmentUpdate.
+		std::array<uint32_t, engine::items::kEquipSlotCount + 1> equipment{};
 		std::vector<QuestState> questStates;
 		/// M29.2: ignored chat senders (display names, persisted).
 		std::vector<std::string> chatIgnoredDisplayNames;
@@ -559,6 +564,34 @@ namespace engine::server
 
 		/// Validate one pickup request, update the inventory and despawn the bag.
 		void HandlePickupRequest(const Endpoint& endpoint, uint32_t clientId, EntityId lootBagEntityId);
+
+		/// Chantier 2 SP-A — équipe l'objet `itemId` (présent au sac) du client. Le
+		/// slot et le bonus sont résolus depuis m_itemCatalog (autoritaire). Retire un
+		/// exemplaire du sac, replace l'éventuel objet déjà porté dans le sac, met à
+		/// jour equipment[slot], persiste, puis pousse EquipmentUpdate + PlayerStats.
+		void HandleEquipRequest(const Endpoint& endpoint, uint32_t clientId, uint32_t itemId);
+
+		/// Chantier 2 SP-A — retire l'objet du slot `slot` (1..kEquipSlotCount) et le
+		/// renvoie au sac. Persiste puis pousse EquipmentUpdate + PlayerStats.
+		void HandleUnequipRequest(const Endpoint& endpoint, uint32_t clientId, uint8_t slot);
+
+		/// Chantier 2 SP-A — pousse au client le snapshot complet de son équipement porté.
+		bool SendEquipmentUpdate(const ConnectedClient& receiver);
+
+		/// Chantier 2 SP-A — somme des StatBonus de tout l'équipement porté (résolus
+		/// via m_itemCatalog). Additionnée aux DerivedStats avant émission (anti-triche).
+		engine::items::StatBonus SumEquipmentBonus(const ConnectedClient& client) const;
+
+		/// Chantier 2 SP-A — additionne le bonus d'équipement du client aux stats
+		/// dérivées `d` (clamp ≥ 0 ; les champs uint32 passent par int64 pour éviter
+		/// tout underflow avec un bonus négatif). Ne lit jamais de valeur client.
+		void ApplyEquipmentBonus(const ConnectedClient& client, engine::server::gameplay::DerivedStats& d) const;
+
+		/// Chantier 2 SP-A — recalcule les stats runtime vivantes (combat, ressource
+		/// max, PV max) d'un client déjà en monde en tenant compte de l'équipement,
+		/// puis clamp les valeurs courantes sur les nouveaux max. Appelée après un
+		/// equip/unequip. Sans effet si les tables de stats ou l'identité RPG manquent.
+		void RefreshLiveDerivedStats(ConnectedClient& client);
 
 		/// Validate one talk request and forward it to the quest runtime.
 		void HandleTalkRequest(const Endpoint& endpoint, uint32_t clientId, std::string_view targetId);
@@ -1084,6 +1117,11 @@ namespace engine::server
 		/// M35.2 — vendor definitions (`config/vendors.json`) + finite stock book.
 		VendorCatalog m_vendorCatalog{};
 		VendorStockBook m_vendorStock{};
+		/// Chantier 2 SP-A — catalogue d'objets (game/data/items/items.json).
+		/// SOURCE AUTORITAIRE : slot + bonus d'un objet équipé sont lus ici, jamais
+		/// fournis par le client. Chargé une fois à l'Init (m_itemCatalogLoaded).
+		engine::items::ItemCatalog m_itemCatalog{};
+		bool m_itemCatalogLoaded = false;
 		EventRuntime m_eventRuntime;
 		QuestRuntime m_questRuntime;
 		SpawnerRuntime m_spawnerRuntime;

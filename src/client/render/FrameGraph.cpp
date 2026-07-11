@@ -3,7 +3,13 @@
 #include "src/shared/core/Profiler.h"
 
 #include <vulkan/vulkan.h>
+#if defined(_MSC_VER)
+#pragma warning(push, 0) // en-tete tiers : silence les warnings
+#endif
 #include <vk_mem_alloc.h>
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 #include <algorithm>
 #include <cstdio>
@@ -758,7 +764,7 @@ namespace engine::render
 		}
 	}
 
-	void FrameGraph::ensureBufferResources(VkDevice device, void* vmaAllocator,
+	void FrameGraph::ensureBufferResources([[maybe_unused]] VkDevice device, void* vmaAllocator,
 		uint32_t frameIndex, uint32_t framesInFlight)
 	{
 		if (vmaAllocator == nullptr) return;

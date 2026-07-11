@@ -10139,7 +10139,7 @@ namespace engine
 		{
 			// Ne pas lier souris et clavier : un InputText actif mettait WantCaptureKeyboard à true et bloquait
 			// aussi la souris (orientation), ce qui figeait la caméra dans l’éditeur.
-			const bool capMouse = m_worldEditorImGui->WantsCaptureMouse();
+			[[maybe_unused]] const bool capMouse = m_worldEditorImGui->WantsCaptureMouse();
 			const bool capKb = m_worldEditorImGui->WantsCaptureKeyboard();
 			// Convention UX standard (Unity/Unreal/Blender) : la rotation de la
 			// caméra free-fly de l'éditeur n'est active QUE pendant que le clic

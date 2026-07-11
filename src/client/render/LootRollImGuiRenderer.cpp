@@ -64,7 +64,7 @@ namespace engine::render
 		const float panelW = 460.f;
 		const float panelH = 520.f;
 		const float margin = 24.f;
-		const float vpW = (m_viewportW > 0) ? static_cast<float>(m_viewportW) : 1280.f;
+		[[maybe_unused]] const float vpW = (m_viewportW > 0) ? static_cast<float>(m_viewportW) : 1280.f;
 		const float vpH = (m_viewportH > 0) ? static_cast<float>(m_viewportH) : 720.f;
 		const float posX = std::max(0.f, margin);
 		const float posY = std::max(0.f, (vpH - panelH) * 0.5f);

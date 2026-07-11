@@ -349,7 +349,7 @@ namespace engine::render
 		return desiredExtent.width != m_extent.width || desiredExtent.height != m_extent.height;
 	}
 
-	bool VkSwapchain::HasDegenerateSurfaceExtent(uint32_t requestedWidth, uint32_t requestedHeight) const
+	bool VkSwapchain::HasDegenerateSurfaceExtent([[maybe_unused]] uint32_t requestedWidth, uint32_t requestedHeight) const
 	{
 		if (m_physicalDevice == VK_NULL_HANDLE || m_surface == VK_NULL_HANDLE || m_swapchain == VK_NULL_HANDLE)
 		{

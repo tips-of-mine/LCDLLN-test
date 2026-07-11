@@ -461,7 +461,7 @@ namespace engine::render
 		const int32_t contentX = layout.contentX;
 		const int32_t contentW = layout.contentW;
 		const int32_t artW = layout.artW;
-		const bool largeContent = layout.largeContent;
+		[[maybe_unused]] const bool largeContent = layout.largeContent;
 
 		auto addRect = [&layers](int32_t x, int32_t y, int32_t rw, int32_t rh, float r, float g, float b, float a)
 		{
@@ -952,7 +952,7 @@ namespace engine::render
 			for (int32_t row = 0; row < 2; ++row)
 			{
 				const int32_t rowY = (row == 0) ? loginTwoRow.secondaryRowY : loginTwoRow.primaryRowY;
-				int32_t colX = contentX;
+				[[maybe_unused]] int32_t colX = contentX;
 				for (int32_t col = 0; col < 2; ++col)
 				{
 					const int32_t i = row * 2 + col;

@@ -6,7 +6,13 @@
 #include <cstring>
 
 #define MINIAUDIO_IMPLEMENTATION
+#if defined(_MSC_VER)
+#pragma warning(push, 0) // en-tete tiers : silence les warnings
+#endif
 #include "miniaudio.h"
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 namespace engine::audio
 {

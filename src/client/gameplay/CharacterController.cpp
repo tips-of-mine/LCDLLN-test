@@ -405,7 +405,7 @@ namespace engine::gameplay
 		return true;
 	}
 
-	bool CharacterController::TryStepUp(const MoveInput& input, float dt, float timeRemaining,
+	bool CharacterController::TryStepUp(const MoveInput& input, float dt, [[maybe_unused]] float timeRemaining,
 		const IWorldCollider& world,
 		const engine::math::Vec3& startPos,
 		const engine::math::Vec3& horizontalDisp,

@@ -334,7 +334,7 @@ namespace engine::server
 			outError = "not in a trade";
 			return TradeOpResult::NotInTrade;
 		}
-		RemoveSession(idx, "cancel");
+		RemoveSession(static_cast<uint32_t>(idx), "cancel");
 		return TradeOpResult::Ok;
 	}
 

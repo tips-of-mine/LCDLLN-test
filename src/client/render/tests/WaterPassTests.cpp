@@ -3,6 +3,9 @@
 
 #include <cstddef>
 #include <cstdio>
+#if defined(_MSC_VER)
+#pragma warning(disable : 4127) // REQUIRE() sur expressions constantes (sizeof/offsetof) dans les tests
+#endif
 
 namespace
 {

@@ -83,7 +83,7 @@ namespace engine::render
 			std::array<VkDescriptorSetLayoutBinding, 2> bindings{};
 			for (size_t i = 0; i < bindings.size(); ++i)
 			{
-				bindings[i].binding = i;
+				bindings[i].binding = static_cast<uint32_t>(i);
 				bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				bindings[i].descriptorCount = 1;
 				bindings[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -385,7 +385,7 @@ namespace engine::render
 			{
 				writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				writes[i].dstSet = ds;
-				writes[i].dstBinding = i;
+				writes[i].dstBinding = static_cast<uint32_t>(i);
 				writes[i].descriptorCount = 1;
 				writes[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				writes[i].pImageInfo = &imageInfos[i];

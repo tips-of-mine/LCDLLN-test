@@ -60,7 +60,7 @@ namespace engine::render
 		m_cfg = cfg;
 	}
 
-	void ChatImGuiRenderer::Render(float viewportW, float viewportH, bool inWorldShard)
+	void ChatImGuiRenderer::Render([[maybe_unused]] float viewportW, float viewportH, bool inWorldShard)
 	{
 		if (m_chat == nullptr || !m_chat->IsInitialized())
 			return;
@@ -240,9 +240,9 @@ namespace engine::render
 				ImGui::Text("> ");
 				ImGui::SameLine(0.f, 4.f);
 				ImGui::SetNextItemWidth(-FLT_MIN); // remplit la ligne restante
-				const ImGuiInputTextFlags flags = ImGuiInputTextFlags_EnterReturnsTrue
+				const ImGuiInputTextFlags inputFlags = ImGuiInputTextFlags_EnterReturnsTrue
 					| ImGuiInputTextFlags_AutoSelectAll;
-				if (ImGui::InputText("##ln_chat_input", m_inputBuf, sizeof(m_inputBuf), flags))
+				if (ImGui::InputText("##ln_chat_input", m_inputBuf, sizeof(m_inputBuf), inputFlags))
 				{
 					m_chat->SetInputLine(m_inputBuf);
 					m_chat->SubmitFromUi();

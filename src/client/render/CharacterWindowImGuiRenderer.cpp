@@ -41,6 +41,26 @@ namespace engine::render
 			default:                                     return "?";
 			}
 		}
+
+		// Chantier 2 SP-A — lignes de bonus d'un objet dans une infobulle (n'affiche
+		// que les champs non nuls). Réutilisé par les cellules d'équipement et
+		// l'inventaire. À appeler entre BeginTooltip/EndTooltip.
+		void AppendBonusTooltipLines(const engine::items::StatBonus& b)
+		{
+			if (b.hp)                  ImGui::Text("PV +%d", b.hp);
+			if (b.resource)            ImGui::Text("Ressource +%d", b.resource);
+			if (b.damage)              ImGui::Text("Degats +%d", b.damage);
+			if (b.accuracy)            ImGui::Text("Precision +%d", b.accuracy);
+			if (b.range != 0.0f)       ImGui::Text("Portee +%.1f m", b.range);
+			if (b.critRate != 0.0f)    ImGui::Text("Crit +%.1f%%", b.critRate);
+			if (b.critMult != 0.0f)    ImGui::Text("Mult. crit +%.2f", b.critMult);
+			if (b.speedWalk != 0.0f)   ImGui::Text("Vitesse marche +%.2f", b.speedWalk);
+			if (b.speedRun != 0.0f)    ImGui::Text("Vitesse course +%.2f", b.speedRun);
+			if (b.speedSprint != 0.0f) ImGui::Text("Vitesse sprint +%.2f", b.speedSprint);
+			if (b.stamina)             ImGui::Text("Endurance +%d", b.stamina);
+			if (b.perception)          ImGui::Text("Perception +%d", b.perception);
+			if (b.stealth)             ImGui::Text("Discretion +%d", b.stealth);
+		}
 	}
 
 	void CharacterWindowImGuiRenderer::Bind(const engine::core::Config* cfg,
@@ -83,7 +103,9 @@ namespace engine::render
 			};
 			if (ImGui::BeginTabBar("##ln_character_tabs"))
 			{
-				if (ImGui::BeginTabItem("Personnage", nullptr, tabFlag(Tab::Personnage)))
+				// Onglet renommé « Equipement » pour ne pas dupliquer le titre de la
+				// fenêtre (« Personnage »), source de confusion (retour joueur 2026-07-11).
+				if (ImGui::BeginTabItem("Equipement", nullptr, tabFlag(Tab::Personnage)))
 				{
 					m_activeTab = Tab::Personnage;
 					RenderPersonnageTab(model);
@@ -143,28 +165,136 @@ namespace engine::render
 			// Hauteur réservée au bloc caractéristiques (titre + séparateur + 4 lignes).
 			const float lineH = ImGui::GetTextLineHeightWithSpacing();
 			const float statsH = lineH * 6.0f + 16.0f;
-			// Chantier 2 SP-A — hauteur réservée au panneau équipement (titre + séparateur
-			// + 5 rangées de 2 slots).
-			const float equipH = lineH * 7.0f + 8.0f;
-			// Aperçu CARRÉ (texture 512x512) agrandi pour remplir la colonne : borné par
-			// la largeur ET par la hauteur restante une fois équipement + stats retirés.
-			float side = std::min(avail.x, avail.y - statsH - equipH);
-			side = std::max(side, 140.0f);
-			const float offX = (avail.x - side) * 0.5f;
-			// Centrage vertical du bloc (aperçu + stats) : répartit l'espace résiduel
-			// en haut/bas au lieu de le laisser béant sous les stats.
-			const float blockH = side + equipH + statsH;
+			const float gap = 6.0f;
+
+			// Chantier 2 SP-A — « paperdoll » : deux colonnes de 5 cellules d'équipement
+			// encadrent l'aperçu 3D (5 à gauche, 5 à droite). L'aperçu est RÉDUIT en
+			// largeur (reste carré, non déformé) pour dégager la place des cellules
+			// (retour joueur 2026-07-11). Bande = cell + gap + S + gap + cell ; les
+			// cellules s'alignent sur la hauteur S : cell = (S-4·gap)/5, d'où pour une
+			// largeur de bande W : S = (5·W - 2·gap)/7.
+			uint32_t worn[engine::items::kEquipSlotCount + 1] = {};
+			for (const engine::server::EquipmentEntry& e : model.equipment)
+			{
+				if (e.slot >= 1u && e.slot <= engine::items::kEquipSlotCount)
+					worn[e.slot] = e.itemId;
+			}
+			float side = (5.0f * avail.x - 2.0f * gap) / 7.0f;
+			side = std::min(side, avail.y - statsH);   // borné par la hauteur disponible
+			side = std::max(side, 150.0f);
+			const float cell = std::max(30.0f, (side - 4.0f * gap) / 5.0f);
+			const float bandW = 2.0f * cell + 2.0f * gap + side;
+			const float offX = std::max(0.0f, (avail.x - bandW) * 0.5f);
+			// Centrage vertical du bloc (bande paperdoll + stats).
+			const float blockH = side + statsH;
 			const float padTop = std::max(0.0f, (avail.y - blockH) * 0.5f);
 			if (padTop > 0.0f)
 				ImGui::Dummy(ImVec2(1.0f, padTop));
 
+			// Repères écran de la bande (dessin manuel via draw list).
+			const ImVec2 bandOrigin = ImGui::GetCursorScreenPos();
+			const float bandX = bandOrigin.x + offX;
+			const float bandY = bandOrigin.y;
+			const float previewX = bandX + cell + gap;
+			const float rightX = previewX + side + gap;
+			ImDrawList* wdl = ImGui::GetWindowDrawList();
+
+			// Rendu d'une cellule d'équipement (dessin manuel, comme l'inventaire).
+			// Slot vide => libellé grisé du slot (repère « ce qui va là ») ; occupé =>
+			// icône de l'objet (ou libellé). Survol = infobulle ; clic = déséquiper.
+			auto drawEquipCell = [&](std::size_t slot, float x0, float y0)
+			{
+				const engine::items::EquipmentSlot es = static_cast<engine::items::EquipmentSlot>(slot);
+				const uint32_t itemId = worn[slot];
+				const bool occ = itemId != 0u;
+				const ImVec2 mn(x0, y0);
+				const ImVec2 mx(x0 + cell, y0 + cell);
+				wdl->AddRectFilled(mn, mx, occ ? IM_COL32(26, 30, 40, 235) : IM_COL32(16, 18, 24, 200), 5.0f);
+				wdl->AddRect(mn, mx, occ ? IM_COL32(150, 130, 60, 220) : IM_COL32(64, 66, 74, 180), 5.0f, 0, 1.5f);
+				const engine::items::ItemDefinition* def =
+					(occ && m_itemCatalog != nullptr) ? m_itemCatalog->Find(itemId) : nullptr;
+				bool hasIcon = false;
+				if (def != nullptr && m_icons != nullptr && !def->iconPath.empty())
+				{
+					const uint64_t tex = m_icons->GetOrLoad(def->iconPath);
+					if (tex != 0)
+					{
+						wdl->AddImage(static_cast<ImTextureID>(tex), ImVec2(x0 + 3, y0 + 3), ImVec2(mx.x - 3, mx.y - 3));
+						hasIcon = true;
+					}
+				}
+				if (!hasIcon)
+				{
+					const std::string txt = std::string(SlotLabelFr(es)).substr(0, 6);
+					const ImU32 col = occ ? IM_COL32(220, 220, 225, 255) : IM_COL32(120, 124, 134, 255);
+					wdl->AddText(ImVec2(x0 + 4, y0 + cell * 0.5f - 7.0f), col, txt.c_str());
+				}
+				// Item ImGui superposé (les visuels sont déjà dessinés via wdl) : porte
+				// le survol, le clic-déséquiper ET la cible de glisser-déposer.
+				ImGui::SetCursorScreenPos(mn);
+				char cellId[24];
+				std::snprintf(cellId, sizeof(cellId), "##eqcell%zu", slot);
+				ImGui::InvisibleButton(cellId, ImVec2(cell, cell));
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::TextDisabled("%s", SlotLabelFr(es));
+					if (occ)
+					{
+						const std::string itemName = (def != nullptr && !def->name.empty())
+							? def->name : ("#" + std::to_string(itemId));
+						ImGui::TextUnformatted(itemName.c_str());
+						if (def != nullptr)
+							AppendBonusTooltipLines(def->bonus);
+						ImGui::Separator();
+						ImGui::TextDisabled("Clic / relâcher ici : déséquiper / équiper");
+					}
+					else
+					{
+						ImGui::TextDisabled("(vide) — glissez un objet ici");
+					}
+					ImGui::EndTooltip();
+				}
+				// Clic simple (relâché sur la cellule, hors glisser) => déséquiper.
+				if (occ && ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
+					&& ImGui::GetDragDropPayload() == nullptr)
+				{
+					m_pendingEquip = PendingEquipAction{
+						PendingEquipAction::Kind::Unequip, 0u, static_cast<uint8_t>(slot)};
+				}
+				// Glisser-déposer : accepte un objet équipable lâché depuis l'inventaire.
+				// Le serveur reste autoritaire (choisit le slot réel + valide la possession),
+				// on émet donc simplement l'intention d'équipement de l'itemId lâché.
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* pl = ImGui::AcceptDragDropPayload("LN_EQUIP_ITEM"))
+					{
+						if (pl->DataSize == static_cast<int>(sizeof(uint32_t)))
+						{
+							const uint32_t dropped = *static_cast<const uint32_t*>(pl->Data);
+							m_pendingEquip = PendingEquipAction{
+								PendingEquipAction::Kind::Equip, dropped, 0u};
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+			};
+
+			// Colonne gauche (slots 1..5 : tête, torse, jambes, pieds, mains).
+			for (std::size_t i = 0; i < 5; ++i)
+				drawEquipCell(1 + i, bandX, bandY + static_cast<float>(i) * (cell + gap));
+			// Colonne droite (slots 6..10 : arme, bouclier, amulette, 2 anneaux).
+			for (std::size_t i = 0; i < 5; ++i)
+				drawEquipCell(6 + i, rightX, bandY + static_cast<float>(i) * (cell + gap));
+
+			// Aperçu 3D au centre (carré, non déformé), réduit en largeur pour laisser
+			// la place aux deux colonnes de cellules.
 			if (m_raceViewport != nullptr && m_raceViewport->GetImguiTextureId() != 0u)
 			{
-				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offX);
+				ImGui::SetCursorScreenPos(ImVec2(previewX, bandY));
 				ImGui::Image(static_cast<ImTextureID>(m_raceViewport->GetImguiTextureId()),
 					ImVec2(side, side));
-				// Rotation manuelle : glisser (bouton gauche) sur l'aperçu tourne le
-				// perso ; au repos il reste immobile, face caméra. Auto-orbit coupée.
+				// Rotation manuelle : glisser (bouton gauche) sur l'aperçu tourne le perso.
 				m_raceViewport->SetAutoOrbit(false);
 				if (ImGui::IsItemHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 					m_previewYaw += ImGui::GetIO().MouseDelta.x * 0.012f;
@@ -173,73 +303,16 @@ namespace engine::render
 			else
 			{
 				// Placeholder tant que le viewport 3D n'est pas branché.
-				ImDrawList* dl = ImGui::GetWindowDrawList();
-				const ImVec2 p0raw = ImGui::GetCursorScreenPos();
-				const ImVec2 p0(p0raw.x + offX, p0raw.y);
-				dl->AddRectFilled(p0, ImVec2(p0.x + side, p0.y + side), IM_COL32(14, 16, 22, 255), 6.0f);
+				wdl->AddRectFilled(ImVec2(previewX, bandY), ImVec2(previewX + side, bandY + side),
+					IM_COL32(14, 16, 22, 255), 6.0f);
 				const char* lbl = "Apercu 3D";
 				const ImVec2 ts = ImGui::CalcTextSize(lbl);
-				dl->AddText(ImVec2(p0.x + (side - ts.x) * 0.5f, p0.y + side * 0.5f - ts.y * 0.5f),
+				wdl->AddText(ImVec2(previewX + (side - ts.x) * 0.5f, bandY + side * 0.5f - ts.y * 0.5f),
 					IM_COL32(120, 130, 160, 255), lbl);
-				ImGui::Dummy(ImVec2(avail.x, side));
 			}
 
-			ImGui::Spacing();
-			ImGui::TextDisabled("Equipement");
-			ImGui::Separator();
-
-			// Chantier 2 SP-A — grille des 10 slots (2 colonnes × 5 rangées). Slot occupé
-			// => nom de l'objet porté + clic pour déséquiper (renvoi au sac). Le serveur
-			// est autoritaire : le clic n'émet qu'une intention, drainée par Engine.
-			{
-				// Table slot(1..10) -> itemId porté, depuis le snapshot EquipmentUpdate.
-				uint32_t worn[engine::items::kEquipSlotCount + 1] = {};
-				for (const engine::server::EquipmentEntry& e : model.equipment)
-				{
-					if (e.slot >= 1u && e.slot <= engine::items::kEquipSlotCount)
-						worn[e.slot] = e.itemId;
-				}
-				const float colW = ImGui::GetContentRegionAvail().x * 0.5f - 2.0f;
-				for (std::size_t slot = 1; slot <= engine::items::kEquipSlotCount; ++slot)
-				{
-					const engine::items::EquipmentSlot es = static_cast<engine::items::EquipmentSlot>(slot);
-					const uint32_t itemId = worn[slot];
-					std::string itemName;
-					bool occupied = false;
-					if (itemId != 0u)
-					{
-						occupied = true;
-						if (m_itemCatalog != nullptr)
-						{
-							if (const engine::items::ItemDefinition* def = m_itemCatalog->Find(itemId))
-								itemName = def->name;
-						}
-						if (itemName.empty())
-							itemName = "#" + std::to_string(itemId);
-					}
-					char label[96];
-					std::snprintf(label, sizeof(label), "%s: %s##eqslot%zu",
-						SlotLabelFr(es), occupied ? itemName.c_str() : "-", slot);
-					ImGui::Selectable(label, false, 0, ImVec2(colW, 0.0f));
-					if (occupied && ImGui::IsItemHovered())
-					{
-						ImGui::BeginTooltip();
-						ImGui::TextUnformatted(itemName.c_str());
-						ImGui::TextDisabled("Emplacement : %s", SlotLabelFr(es));
-						ImGui::Separator();
-						ImGui::TextDisabled("Clic : déséquiper");
-						ImGui::EndTooltip();
-					}
-					if (occupied && ImGui::IsItemClicked(ImGuiMouseButton_Left))
-					{
-						m_pendingEquip = PendingEquipAction{
-							PendingEquipAction::Kind::Unequip, 0u, static_cast<uint8_t>(slot)};
-					}
-					// 2 colonnes : slot impair à gauche, pair sur la même ligne à droite.
-					if ((slot % 2u) == 1u && slot != engine::items::kEquipSlotCount)
-						ImGui::SameLine(0.0f, 4.0f);
-				}
-			}
+			// Curseur repositionné sous la bande paperdoll pour la suite (stats).
+			ImGui::SetCursorScreenPos(ImVec2(bandOrigin.x, bandY + side + 6.0f));
 
 			// Caractéristiques compactes (ex-fiche F1).
 			const engine::client::UIPlayerStats& ps = model.playerStats;
@@ -325,7 +398,20 @@ namespace engine::render
 					const engine::items::ItemDefinition* def =
 						(m_itemCatalog != nullptr) ? m_itemCatalog->Find(s.itemId) : nullptr;
 					const bool equippable = (def != nullptr) && def->IsEquippable();
-					if (ImGui::IsMouseHoveringRect(mn, mx) && !s.label.empty())
+
+					// Item ImGui superposé (visuels déjà dessinés via wdl) : survol, clic
+					// et SOURCE de glisser-déposer vers les cellules d'équipement.
+					ImGui::SetCursorScreenPos(mn);
+					char invId[24];
+					std::snprintf(invId, sizeof(invId), "##invcell%d", i);
+					ImGui::InvisibleButton(invId, ImVec2(cell, cell));
+					if (equippable && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+					{
+						ImGui::SetDragDropPayload("LN_EQUIP_ITEM", &s.itemId, sizeof(uint32_t));
+						ImGui::TextUnformatted(s.label.empty() ? "Objet" : s.label.c_str());
+						ImGui::EndDragDropSource();
+					}
+					if (ImGui::IsItemHovered() && !s.label.empty())
 					{
 						ImGui::BeginTooltip();
 						ImGui::TextUnformatted(s.label.c_str());
@@ -333,45 +419,56 @@ namespace engine::render
 						{
 							if (equippable)
 								ImGui::TextDisabled("Emplacement : %s", SlotLabelFr(def->slot));
-							const engine::items::StatBonus& b = def->bonus;
-							if (b.hp)          ImGui::Text("PV +%d", b.hp);
-							if (b.resource)    ImGui::Text("Ressource +%d", b.resource);
-							if (b.damage)      ImGui::Text("Degats +%d", b.damage);
-							if (b.accuracy)    ImGui::Text("Precision +%d", b.accuracy);
-							if (b.range != 0.0f)       ImGui::Text("Portee +%.1f m", b.range);
-							if (b.critRate != 0.0f)    ImGui::Text("Crit +%.1f%%", b.critRate);
-							if (b.critMult != 0.0f)    ImGui::Text("Mult. crit +%.2f", b.critMult);
-							if (b.speedWalk != 0.0f)   ImGui::Text("Vitesse marche +%.2f", b.speedWalk);
-							if (b.speedRun != 0.0f)    ImGui::Text("Vitesse course +%.2f", b.speedRun);
-							if (b.speedSprint != 0.0f) ImGui::Text("Vitesse sprint +%.2f", b.speedSprint);
-							if (b.stamina)     ImGui::Text("Endurance +%d", b.stamina);
-							if (b.perception)  ImGui::Text("Perception +%d", b.perception);
-							if (b.stealth)     ImGui::Text("Discretion +%d", b.stealth);
+							AppendBonusTooltipLines(def->bonus);
 							if (equippable)
 							{
 								ImGui::Separator();
-								ImGui::TextDisabled("Clic : equiper");
+								ImGui::TextDisabled("Clic ou glisser vers un slot : équiper");
 							}
 						}
 						ImGui::EndTooltip();
 					}
-					// Clic gauche sur un objet équipable => intention d'équipement (drainée
-					// par Engine). Le serveur revalide (possession + slot).
-					if (equippable && ImGui::IsMouseHoveringRect(mn, mx)
-						&& ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					// Clic simple (relâché sur l'objet, hors glisser) => équiper. Le serveur
+					// choisit le slot réel + valide la possession.
+					if (equippable && ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
+						&& ImGui::GetDragDropPayload() == nullptr)
 					{
 						m_pendingEquip = PendingEquipAction{
 							PendingEquipAction::Kind::Equip, s.itemId, 0u};
 					}
 				}
-				// Réserve toute la zone grille pour pousser la bourse en bas.
+				// Réserve toute la zone grille pour pousser la bourse en bas (curseur
+				// remis en haut de grille : les InvisibleButton l'ont déplacé).
+				ImGui::SetCursorScreenPos(cur);
 				ImGui::Dummy(ImVec2(gridAvailW, gridAvailH));
 			}
 
 			// Bourse or/argent/bronze (base = bronze, cf. CurrencyFormat.h), épinglée en bas.
+			// Chaque montant est précédé d'une pastille « pièce » colorée (or / argent /
+			// bronze) — retour joueur 2026-07-11. Dessin manuel (aucun asset requis).
 			const engine::client::CoinBreakdown coins = engine::client::SplitCoins(model.wallet.gold);
 			ImGui::Separator();
-			ImGui::Text("Or %u   Arg %u   Br %u", coins.gold, coins.silver, coins.bronze);
+			{
+				ImDrawList* cdl = ImGui::GetWindowDrawList();
+				const float coinR = ImGui::GetTextLineHeight() * 0.42f;
+				// Dessine une pastille pièce + le montant, puis avance le curseur.
+				auto drawCoin = [&](ImU32 fill, ImU32 rim, uint32_t amount)
+				{
+					const ImVec2 p = ImGui::GetCursorScreenPos();
+					const float cx = p.x + coinR;
+					const float cy = p.y + ImGui::GetTextLineHeight() * 0.5f;
+					cdl->AddCircleFilled(ImVec2(cx, cy), coinR, fill);
+					cdl->AddCircle(ImVec2(cx, cy), coinR, rim, 0, 1.5f);
+					ImGui::Dummy(ImVec2(coinR * 2.0f, ImGui::GetTextLineHeight()));
+					ImGui::SameLine(0.0f, 5.0f);
+					ImGui::Text("%u", amount);
+				};
+				drawCoin(IM_COL32(255, 215, 0, 255),  IM_COL32(170, 130, 0, 255),  coins.gold);   // or
+				ImGui::SameLine(0.0f, 16.0f);
+				drawCoin(IM_COL32(205, 208, 214, 255), IM_COL32(140, 143, 150, 255), coins.silver); // argent
+				ImGui::SameLine(0.0f, 16.0f);
+				drawCoin(IM_COL32(205, 127, 50, 255),  IM_COL32(140, 85, 30, 255),  coins.bronze); // bronze
+			}
 		}
 		ImGui::EndChild();
 	}

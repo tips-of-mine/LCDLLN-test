@@ -2,7 +2,13 @@
 
 // cgltf est défini (CGLTF_IMPLEMENTATION) une seule fois dans le projet, dans
 // SkinnedMeshLoader.cpp. Ici on n'inclut que les déclarations.
+#if defined(_MSC_VER)
+#pragma warning(push, 0) // en-tete tiers : silence les warnings
+#endif
 #include "cgltf.h"
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 #include "src/shared/core/Log.h"
 

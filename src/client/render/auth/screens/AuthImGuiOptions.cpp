@@ -403,7 +403,10 @@ namespace engine::render
 		if (m_optionsTab == 0)
 		{
 			sectionTitle("options.imgui.section.display");
-			const char* resItems = "1280x720\01600x900\01920x1080\02560x1440\03840x2160\0\0";
+			// Liste ImGui séparée par des NUL. Chaque item est un littéral distinct :
+			// sinon "\0" suivi d'un chiffre est lu comme échappement OCTAL (ex. "\016")
+			// et corrompt les séparateurs (bug C4125). La juxtaposition force un vrai NUL.
+			const char* resItems = "1280x720\0" "1600x900\0" "1920x1080\0" "2560x1440\0" "3840x2160\0";
 			const std::string resLab = tr("options.imgui.resolution");
 			if (ImGui::Combo(resLab.c_str(), &m_optResIdx, resItems))
 			{

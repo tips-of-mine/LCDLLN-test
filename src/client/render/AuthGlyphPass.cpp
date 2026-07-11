@@ -493,7 +493,7 @@ namespace engine::render
 		}
 	}
 
-	bool AuthGlyphPass::CreateFontPipeline(VkDevice device, VkPhysicalDevice physicalDevice, VkFormat colorFormat,
+	bool AuthGlyphPass::CreateFontPipeline(VkDevice device, [[maybe_unused]] VkPhysicalDevice physicalDevice, VkFormat colorFormat,
 		const uint32_t* vertSpirv, size_t vertWordCount,
 		const uint32_t* fragTtfSpirv, size_t fragTtfWordCount,
 		VkPipelineCache pipelineCache)
@@ -1432,7 +1432,7 @@ namespace engine::render
 		return TextPixelWidth(text, scale);
 	}
 
-	void AuthGlyphPass::Record(VkDevice device, VkCommandBuffer cmd, VkExtent2D extent,
+	void AuthGlyphPass::Record([[maybe_unused]] VkDevice device, VkCommandBuffer cmd, VkExtent2D extent,
 		std::string_view text,
 		int32_t originX, int32_t originY,
 		int32_t maxWidthPx)
@@ -1490,7 +1490,7 @@ namespace engine::render
 		vkCmdDraw(cmd, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 	}
 
-	void AuthGlyphPass::RecordModel(VkDevice device, VkCommandBuffer cmd, VkExtent2D extent,
+	void AuthGlyphPass::RecordModel([[maybe_unused]] VkDevice device, VkCommandBuffer cmd, VkExtent2D extent,
 		const engine::client::AuthUiPresenter::VisualState& state,
 		const engine::client::AuthUiPresenter::RenderModel& model,
 		const AuthUiTheme& theme)
@@ -1614,7 +1614,7 @@ namespace engine::render
 				}
 				const auto& card = model.languageFirstRunCards[static_cast<size_t>(ci)];
 				const int32_t cax = layout.languageCardX[ci];
-				const int32_t cay = layout.languageCardY[ci];
+				[[maybe_unused]] const int32_t cay = layout.languageCardY[ci];
 				const int32_t caw = layout.languageCardW[ci];
 				const int32_t nameY = layout.languageFlagCenterY[ci] + layout.languageFlagHalfExtentPx[ci] + 8;
 				appendCenteredText(card.nameAllCaps, cax, nameY, caw, smallScale,
@@ -1671,7 +1671,7 @@ namespace engine::render
 		if (!state.submitting && !model.errorText.empty())
 		{
 			const int32_t boxTop = panelY + layout.authErrorBoxTopFromPanelTopPx;
-			const int32_t boxH = std::max(48, layout.authErrorBoxHeightPx);
+			[[maybe_unused]] const int32_t boxH = std::max(48, layout.authErrorBoxHeightPx);
 			const int32_t msgY = boxTop + 18;
 			AppendText(vertices, model.errorText, contentX + 18, msgY, contentW - 36, bodyScale, titleColor);
 			const int32_t footerTop = panelY + layout.authErrorFooterTopFromPanelTopPx;
@@ -2005,7 +2005,7 @@ namespace engine::render
 				for (int32_t row = 0; row < 2; ++row)
 				{
 					const int32_t rowY = (row == 0) ? loginTwoRow.secondaryRowY : loginTwoRow.primaryRowY;
-					int32_t colX = contentX;
+					[[maybe_unused]] int32_t colX = contentX;
 					for (int32_t col = 0; col < 2; ++col)
 					{
 						const int32_t i = row * 2 + col;

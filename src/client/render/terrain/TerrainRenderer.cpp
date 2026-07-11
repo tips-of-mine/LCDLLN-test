@@ -1755,8 +1755,8 @@ namespace engine::render::terrain
                 if (cliff.vertexBuffer == VK_NULL_HANDLE || cliff.indexBuffer == VK_NULL_HANDLE)
                     continue;
 
-                VkDeviceSize vbOffset = 0;
-                vkCmdBindVertexBuffers(cmd, 0, 1, &cliff.vertexBuffer, &vbOffset);
+                VkDeviceSize cliffVbOffset = 0;
+                vkCmdBindVertexBuffers(cmd, 0, 1, &cliff.vertexBuffer, &cliffVbOffset);
                 vkCmdBindIndexBuffer(cmd, cliff.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
                 vkCmdDrawIndexed(cmd, cliff.indexCount, 1, 0, 0, 0);
             }

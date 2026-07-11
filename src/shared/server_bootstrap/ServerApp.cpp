@@ -8880,7 +8880,7 @@ namespace engine::server
 		return true;
 	}
 
-	void ServerApp::HandleTradeAccept(const Endpoint& endpoint, const TradeAcceptMessage& message)
+	void ServerApp::HandleTradeAccept(const Endpoint& endpoint, [[maybe_unused]] const TradeAcceptMessage& message)
 	{
 		ConnectedClient* acceptor = FindClient(endpoint);
 		if (acceptor == nullptr)
@@ -8905,7 +8905,7 @@ namespace engine::server
 		         acceptor->clientId, partnerClientId);
 	}
 
-	void ServerApp::HandleTradeDecline(const Endpoint& endpoint, const TradeDeclineMessage& message)
+	void ServerApp::HandleTradeDecline(const Endpoint& endpoint, [[maybe_unused]] const TradeDeclineMessage& message)
 	{
 		ConnectedClient* decliner = FindClient(endpoint);
 		if (decliner == nullptr)
@@ -8980,7 +8980,7 @@ namespace engine::server
 		BroadcastTradeWindowUpdate(caller->clientId, partnerClientId);
 	}
 
-	void ServerApp::HandleTradeLock(const Endpoint& endpoint, const TradeLockMessage& message)
+	void ServerApp::HandleTradeLock(const Endpoint& endpoint, [[maybe_unused]] const TradeLockMessage& message)
 	{
 		ConnectedClient* caller = FindClient(endpoint);
 		if (caller == nullptr)
@@ -9003,7 +9003,7 @@ namespace engine::server
 		BroadcastTradeWindowUpdate(caller->clientId, partnerClientId);
 	}
 
-	void ServerApp::HandleTradeConfirm(const Endpoint& endpoint, const TradeConfirmMessage& message)
+	void ServerApp::HandleTradeConfirm(const Endpoint& endpoint, [[maybe_unused]] const TradeConfirmMessage& message)
 	{
 		ConnectedClient* caller = FindClient(endpoint);
 		if (caller == nullptr)
@@ -9069,7 +9069,7 @@ namespace engine::server
 		}
 	}
 
-	void ServerApp::HandleTradeCancelPacket(const Endpoint& endpoint, const TradeCancelMessage& message)
+	void ServerApp::HandleTradeCancelPacket(const Endpoint& endpoint, [[maybe_unused]] const TradeCancelMessage& message)
 	{
 		ConnectedClient* caller = FindClient(endpoint);
 		if (caller == nullptr)
@@ -9248,7 +9248,7 @@ namespace engine::server
 		}
 	}
 
-	void ServerApp::HandleHarvestCancelRequest(const Endpoint& endpoint, const HarvestCancelRequestMessage& message)
+	void ServerApp::HandleHarvestCancelRequest(const Endpoint& endpoint, [[maybe_unused]] const HarvestCancelRequestMessage& message)
 	{
 		ConnectedClient* client = FindClient(endpoint);
 		if (client == nullptr)
@@ -9498,7 +9498,7 @@ namespace engine::server
 		}
 	}
 
-	void ServerApp::HandleCraftCancelRequest(const Endpoint& endpoint, const CraftCancelRequestMessage& message)
+	void ServerApp::HandleCraftCancelRequest(const Endpoint& endpoint, [[maybe_unused]] const CraftCancelRequestMessage& message)
 	{
 		ConnectedClient* client = FindClient(endpoint);
 		if (client == nullptr)

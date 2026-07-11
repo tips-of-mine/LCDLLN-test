@@ -9,7 +9,13 @@
 // être défini que dans UN seul .cpp du projet ; aucune autre TU n'inclut
 // cgltf actuellement (vérifié à la création de Task 10).
 #define CGLTF_IMPLEMENTATION
+#if defined(_MSC_VER)
+#pragma warning(push, 0) // en-tete tiers : silence les warnings
+#endif
 #include "cgltf.h"
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 #include "src/shared/math/Quat.h"
 

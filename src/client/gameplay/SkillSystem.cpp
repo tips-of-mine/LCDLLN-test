@@ -1871,7 +1871,7 @@ namespace engine::gameplay
 		const uint64_t castTicks = SecondsToTicks(def->castTimeSeconds);
 		if (castTicks == 0)
 		{
-			const float gcdSeconds = static_cast<float>(m_config.GetDouble("skills.gcd_seconds", 1.5));
+			[[maybe_unused]] const float gcdSeconds = static_cast<float>(m_config.GetDouble("skills.gcd_seconds", 1.5));
 			m_gcdEndTicks[playerId] = nowTicks + ResolveGcdTicks();
 
 			LOG_INFO(Gameplay, "[SkillSystem] Cast triggered instant (player_id={}, skill={}, target_id={}, gcd_s={:.2f})",

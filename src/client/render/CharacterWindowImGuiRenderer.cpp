@@ -229,7 +229,13 @@ namespace engine::render
 					const ImU32 col = occ ? IM_COL32(220, 220, 225, 255) : IM_COL32(120, 124, 134, 255);
 					wdl->AddText(ImVec2(x0 + 4, y0 + cell * 0.5f - 7.0f), col, txt.c_str());
 				}
-				if (ImGui::IsMouseHoveringRect(mn, mx))
+				// Item ImGui superposé (les visuels sont déjà dessinés via wdl) : porte
+				// le survol, le clic-déséquiper ET la cible de glisser-déposer.
+				ImGui::SetCursorScreenPos(mn);
+				char cellId[24];
+				std::snprintf(cellId, sizeof(cellId), "##eqcell%zu", slot);
+				ImGui::InvisibleButton(cellId, ImVec2(cell, cell));
+				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
 					ImGui::TextDisabled("%s", SlotLabelFr(es));
@@ -241,18 +247,36 @@ namespace engine::render
 						if (def != nullptr)
 							AppendBonusTooltipLines(def->bonus);
 						ImGui::Separator();
-						ImGui::TextDisabled("Clic : déséquiper");
+						ImGui::TextDisabled("Clic / relâcher ici : déséquiper / équiper");
 					}
 					else
 					{
-						ImGui::TextDisabled("(vide)");
+						ImGui::TextDisabled("(vide) — glissez un objet ici");
 					}
 					ImGui::EndTooltip();
 				}
-				if (occ && ImGui::IsMouseHoveringRect(mn, mx) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				// Clic simple (relâché sur la cellule, hors glisser) => déséquiper.
+				if (occ && ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
+					&& ImGui::GetDragDropPayload() == nullptr)
 				{
 					m_pendingEquip = PendingEquipAction{
 						PendingEquipAction::Kind::Unequip, 0u, static_cast<uint8_t>(slot)};
+				}
+				// Glisser-déposer : accepte un objet équipable lâché depuis l'inventaire.
+				// Le serveur reste autoritaire (choisit le slot réel + valide la possession),
+				// on émet donc simplement l'intention d'équipement de l'itemId lâché.
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* pl = ImGui::AcceptDragDropPayload("LN_EQUIP_ITEM"))
+					{
+						if (pl->DataSize == static_cast<int>(sizeof(uint32_t)))
+						{
+							const uint32_t dropped = *static_cast<const uint32_t*>(pl->Data);
+							m_pendingEquip = PendingEquipAction{
+								PendingEquipAction::Kind::Equip, dropped, 0u};
+						}
+					}
+					ImGui::EndDragDropTarget();
 				}
 			};
 
@@ -374,7 +398,20 @@ namespace engine::render
 					const engine::items::ItemDefinition* def =
 						(m_itemCatalog != nullptr) ? m_itemCatalog->Find(s.itemId) : nullptr;
 					const bool equippable = (def != nullptr) && def->IsEquippable();
-					if (ImGui::IsMouseHoveringRect(mn, mx) && !s.label.empty())
+
+					// Item ImGui superposé (visuels déjà dessinés via wdl) : survol, clic
+					// et SOURCE de glisser-déposer vers les cellules d'équipement.
+					ImGui::SetCursorScreenPos(mn);
+					char invId[24];
+					std::snprintf(invId, sizeof(invId), "##invcell%d", i);
+					ImGui::InvisibleButton(invId, ImVec2(cell, cell));
+					if (equippable && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+					{
+						ImGui::SetDragDropPayload("LN_EQUIP_ITEM", &s.itemId, sizeof(uint32_t));
+						ImGui::TextUnformatted(s.label.empty() ? "Objet" : s.label.c_str());
+						ImGui::EndDragDropSource();
+					}
+					if (ImGui::IsItemHovered() && !s.label.empty())
 					{
 						ImGui::BeginTooltip();
 						ImGui::TextUnformatted(s.label.c_str());
@@ -386,21 +423,23 @@ namespace engine::render
 							if (equippable)
 							{
 								ImGui::Separator();
-								ImGui::TextDisabled("Clic : equiper");
+								ImGui::TextDisabled("Clic ou glisser vers un slot : équiper");
 							}
 						}
 						ImGui::EndTooltip();
 					}
-					// Clic gauche sur un objet équipable => intention d'équipement (drainée
-					// par Engine). Le serveur revalide (possession + slot).
-					if (equippable && ImGui::IsMouseHoveringRect(mn, mx)
-						&& ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					// Clic simple (relâché sur l'objet, hors glisser) => équiper. Le serveur
+					// choisit le slot réel + valide la possession.
+					if (equippable && ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
+						&& ImGui::GetDragDropPayload() == nullptr)
 					{
 						m_pendingEquip = PendingEquipAction{
 							PendingEquipAction::Kind::Equip, s.itemId, 0u};
 					}
 				}
-				// Réserve toute la zone grille pour pousser la bourse en bas.
+				// Réserve toute la zone grille pour pousser la bourse en bas (curseur
+				// remis en haut de grille : les InvisibleButton l'ont déplacé).
+				ImGui::SetCursorScreenPos(cur);
 				ImGui::Dummy(ImVec2(gridAvailW, gridAvailH));
 			}
 

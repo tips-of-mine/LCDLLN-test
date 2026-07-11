@@ -5925,22 +5925,32 @@ namespace engine::server
 			eventCount);
 	}
 
-	bool ServerApp::SendInventoryDelta(const ConnectedClient& receiver, std::span<const ItemStack> items)
+	bool ServerApp::SendInventoryDelta(const ConnectedClient& receiver, std::span<const ItemStack> changedItems)
 	{
+		// IMPORTANT — le client applique InventoryDelta comme un SNAPSHOT COMPLET
+		// (UIModelBinding::ApplyInventoryDelta fait `m_model.inventory = delta`, un
+		// remplacement total). On envoie donc TOUJOURS l'inventaire complet du joueur,
+		// jamais la seule liste des objets qui viennent de changer : sinon l'affichage
+		// est écrasé par le dernier delta partiel. Symptôme (bug corrigé ici) : le butin
+		// auto-loot de N sangliers n'affichait que le dernier kill (1 épée + 3 potions)
+		// au lieu du cumul (ex. 12 + 36), alors que l'inventaire serveur était correct.
+		// `changedItems` ne sert plus qu'au log (nombre d'objets modifiés).
 		InventoryDeltaMessage message{};
 		message.clientId = receiver.clientId;
-		const std::vector<std::byte> packet = EncodeInventoryDelta(message, items);
+		const std::vector<std::byte> packet = EncodeInventoryDelta(message, receiver.inventory);
 		if (!m_transport.Send(receiver.endpoint, packet))
 		{
-			LOG_WARN(Net, "[ServerApp] InventoryDelta send failed (client_id={}, item_count={})",
+			LOG_WARN(Net, "[ServerApp] InventoryDelta send failed (client_id={}, changed={}, total={})",
 				receiver.clientId,
-				items.size());
+				changedItems.size(),
+				receiver.inventory.size());
 			return false;
 		}
 
-		LOG_INFO(Net, "[ServerApp] InventoryDelta sent (client_id={}, item_count={})",
+		LOG_INFO(Net, "[ServerApp] InventoryDelta sent (client_id={}, changed={}, total={})",
 			receiver.clientId,
-			items.size());
+			changedItems.size(),
+			receiver.inventory.size());
 		return true;
 	}
 

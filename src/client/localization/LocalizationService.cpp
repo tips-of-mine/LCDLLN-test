@@ -7,6 +7,9 @@
 #include <cctype>
 #include <cstdlib>
 #include <filesystem>
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996) // getenv (lecture var env, sur) ; deprecation CRT MSVC
+#endif
 
 #if defined(_WIN32)
 #	define WIN32_LEAN_AND_MEAN

@@ -5,6 +5,9 @@
 #include <openssl/sha.h>
 #include <cstring>
 #include <string>
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996) // OpenSSL SHA256_* (deprecation OpenSSL 3.0, API retenue deliberement ; migration EVP = chantier separe)
+#endif
 
 namespace engine::auth
 {

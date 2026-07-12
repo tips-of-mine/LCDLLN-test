@@ -13,6 +13,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996) // OpenSSL SHA256_* (deprecation OpenSSL 3.0 ; outil de checksum de migration)
+#endif
 
 namespace fs = std::filesystem;
 

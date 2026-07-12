@@ -88,7 +88,7 @@ namespace
 		};
 		// Triangle (0,0)-(10,0)-(0,10) : contient id 1, pas 2 (au-dessus de
 		// l'hypoténuse x+z<=10 ? 2+8=10 → sur la limite, exclu), pas 3.
-		std::vector<std::pair<float, float>> poly = { {0,0}, {10,0}, {0,10} };
+		std::vector<std::pair<float, float>> poly = { {0.f,0.f}, {10.f,0.f}, {0.f,10.f} };
 		auto sel = SelectInLasso(pts, poly);
 		bool has1 = false, has3 = false;
 		for (uint32_t id : sel) { if (id == 1) has1 = true; if (id == 3) has3 = true; }
@@ -96,7 +96,7 @@ namespace
 		REQUIRE(!has3);
 
 		// Polygone dégénéré (< 3 sommets) → rien.
-		std::vector<std::pair<float, float>> deg = { {0,0}, {1,1} };
+		std::vector<std::pair<float, float>> deg = { {0.f,0.f}, {1.f,1.f} };
 		REQUIRE(SelectInLasso(pts, deg).empty());
 	}
 

@@ -21,7 +21,15 @@ namespace engine::server
 		auto now = std::chrono::system_clock::now();
 		auto t = std::chrono::system_clock::to_time_t(now);
 		char buf[32];
-		std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", std::gmtime(&t));
+		// gmtime_s/gmtime_r : variante THREAD-SAFE (std::gmtime renvoie un buffer
+		// statique partagé — course de données ; d'où le C4996 sous MSVC).
+		std::tm tmUtc{};
+#if defined(_WIN32)
+		gmtime_s(&tmUtc, &t);
+#else
+		gmtime_r(&t, &tmUtc);
+#endif
+		std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &tmUtc);
 		return std::string(buf);
 	}
 

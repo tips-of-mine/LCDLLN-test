@@ -3,6 +3,9 @@
 #include <array>
 #include <cstdlib>
 #include <string_view>
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996) // getenv (lecture var env, sur) ; deprecation CRT MSVC
+#endif
 
 namespace engine::security
 {

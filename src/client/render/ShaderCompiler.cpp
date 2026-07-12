@@ -5,6 +5,9 @@
 #include <cstdlib>
 #include <fstream>
 #include <filesystem>
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996) // getenv (lecture var env, sur) ; deprecation CRT MSVC
+#endif
 
 namespace engine::render
 {

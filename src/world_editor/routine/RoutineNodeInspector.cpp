@@ -6,6 +6,9 @@
 #include "src/world_editor/routine/RoutineGraphCommands.h"
 #include "src/world_editor/routine/RoutineGraphDocument.h"
 #include "src/shared/routine/RoutineNodeSchema.h"
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996) // strncpy borne + termine manuellement (usage correct) ; deprecation CRT MSVC
+#endif
 
 #if defined(_WIN32)
 #	include "imgui.h"

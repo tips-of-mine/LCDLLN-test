@@ -7095,7 +7095,7 @@ namespace engine
 																break;
 															}
 															LOG_INFO(Render,
-																"[CopyPresent] auth fond: blit {}x{} → {}x{} fit={} (log unique; blit chaque frame)",
+																"[CopyPresent] auth fond: blit {}x{} -> {}x{} fit={} (log unique; blit chaque frame)",
 																bgTex->width,
 																bgTex->height,
 																ext.width,

@@ -3,10 +3,22 @@
 /// .cpp (unique TU pour chaque bibliothèque header-only).
 
 #define CGLTF_IMPLEMENTATION
+#if defined(_MSC_VER)
+#pragma warning(push, 0) // en-tete tiers : silence les warnings
+#endif
 #include "cgltf.h"
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 #define STB_IMAGE_IMPLEMENTATION
+#if defined(_MSC_VER)
+#pragma warning(push, 0) // en-tete tiers : silence les warnings
+#endif
 #include "stb_image.h"
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 #include "GltfMeshLoader.h"
 

@@ -844,7 +844,14 @@ namespace engine::client
 		std::string_view CountryCodeAt(int idx)
 		{
 			const int n = static_cast<int>(kCountryCodes.size());
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4127) // n derive d une table de taille compile-time (garde defensive)
+#endif
 			if (n == 0) return "FR";
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 			return kCountryCodes[static_cast<size_t>(((idx % n) + n) % n)];
 		}
 

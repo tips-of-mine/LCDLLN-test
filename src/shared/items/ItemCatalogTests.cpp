@@ -98,6 +98,32 @@ namespace
 		REQUIRE(!cat.LoadFromJson("{ ceci n'est pas du json"));
 		REQUIRE(cat.Count() == 0);
 	}
+
+	// Garde anti-régression sur le VRAI catalogue (game/data/items/items.json).
+	// CTest exécute depuis la racine du repo (WORKING_DIRECTORY=CMAKE_SOURCE_DIR),
+	// donc le chemin relatif résout. Vérifie qu'aucune collision d'id ne rend un
+	// objet de BUTIN équipable par erreur (bug 2026-07-13 : Minor Potion id 2002
+	// héritait d'une armure torse à cause d'une collision d'id).
+	void Test_RealCatalog_LootNotEquippable()
+	{
+		ItemCatalog cat;
+		REQUIRE(cat.LoadFromFile("game/data/items/items.json"));
+		REQUIRE(cat.Count() > 0);
+
+		// Minor Potion (2002) = consommable de butin : JAMAIS équipable.
+		const ItemDefinition* potion = cat.Find(2002);
+		REQUIRE(potion != nullptr);
+		if (potion)
+		{
+			REQUIRE(potion->type == ItemType::Consumable);
+			REQUIRE(!potion->IsEquippable());
+		}
+		// Rusty Sword (2001) = arme (main droite).
+		if (const ItemDefinition* sword = cat.Find(2001))
+		{
+			REQUIRE(sword->slot == EquipmentSlot::MainHand);
+		}
+	}
 }
 
 int main()
@@ -107,5 +133,6 @@ int main()
 	Test_MissingIdReturnsNull();
 	Test_BonusAccumulation();
 	Test_InvalidJson();
+	Test_RealCatalog_LootNotEquippable();
 	return g_failed == 0 ? 0 : 1;
 }

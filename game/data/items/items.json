@@ -1,8 +1,25 @@
 {
-  "_comment": "Catalogue d'objets — Chantier 2 SP-A. Le serveur (shardd) est autoritaire : slot et bonus proviennent TOUJOURS de ce fichier, jamais du client. Ids >= 2000 pour l'equipement de depart (ne pas collisionner avec les objets de quete existants). L'ordre des slots est fige (cf. ItemDefinition.h).",
+  "_comment": "Catalogue d'objets — Chantier 2 SP-A. Le serveur (shardd) est autoritaire : slot et bonus proviennent TOUJOURS de ce fichier, jamais du client. ATTENTION AUX COLLISIONS D'ID : 2001 (Rusty Sword) et 2002 (Minor Potion) sont des objets de BUTIN existants (loot_tables.txt, inventory_items.txt) ; on les definit ici avec leur VRAIE identite. Les ids 2010/2011/2020/2021/2030/3001-3010/4001-4003/9001 sont deja utilises ailleurs (vendeurs/quetes/events). L'equipement AJOUTE utilise la plage LIBRE 5000+.",
   "items": [
     {
       "id": 2001,
+      "name": "Rusty Sword",
+      "description": "Une lame de fer rouillee, lachee par les ennemis du debut.",
+      "icon": "ui/icons/item_2001.png",
+      "type": "weapon",
+      "slot": "mainhand",
+      "bonus": { "damage": 8, "accuracy": 2 }
+    },
+    {
+      "id": 2002,
+      "name": "Minor Potion",
+      "description": "Une potion mineure. Consommable — ne s'equipe pas.",
+      "icon": "ui/icons/item_2002.png",
+      "type": "consumable",
+      "slot": "none"
+    },
+    {
+      "id": 5001,
       "name": "Heaume de fer",
       "description": "Un casque de fer simple mais solide.",
       "icon": "items/heaume_fer.png",
@@ -11,7 +28,7 @@
       "bonus": { "hp": 15, "perception": 2 }
     },
     {
-      "id": 2002,
+      "id": 5002,
       "name": "Plastron de cuir",
       "description": "Un plastron de cuir bouilli, leger et souple.",
       "icon": "items/plastron_cuir.png",
@@ -20,7 +37,16 @@
       "bonus": { "hp": 30, "stamina": 5 }
     },
     {
-      "id": 2003,
+      "id": 5003,
+      "name": "Jambieres de cuir",
+      "description": "Des jambieres de cuir renforce.",
+      "icon": "items/jambieres_cuir.png",
+      "type": "armor",
+      "slot": "legs",
+      "bonus": { "hp": 20, "stamina": 3 }
+    },
+    {
+      "id": 5004,
       "name": "Bottes de marche",
       "description": "De bonnes bottes pour arpenter les chemins.",
       "icon": "items/bottes_marche.png",
@@ -29,16 +55,16 @@
       "bonus": { "hp": 8, "speedWalk": 0.2, "speedRun": 0.3 }
     },
     {
-      "id": 2004,
-      "name": "Epee courte",
-      "description": "Une lame courte, fiable au corps a corps.",
-      "icon": "items/epee_courte.png",
-      "type": "weapon",
-      "slot": "mainhand",
-      "bonus": { "damage": 12, "accuracy": 3, "critRate": 0.02 }
+      "id": 5005,
+      "name": "Gants de cuir",
+      "description": "Des gants de cuir souple pour une bonne prise.",
+      "icon": "items/gants_cuir.png",
+      "type": "armor",
+      "slot": "hands",
+      "bonus": { "hp": 8, "accuracy": 2 }
     },
     {
-      "id": 2005,
+      "id": 5006,
       "name": "Bouclier rond",
       "description": "Un bouclier de bois cercle de fer.",
       "icon": "items/bouclier_rond.png",
@@ -47,13 +73,22 @@
       "bonus": { "hp": 20 }
     },
     {
-      "id": 2006,
-      "name": "Anneau de vigueur",
-      "description": "Un anneau grave de runes revigorantes.",
-      "icon": "items/anneau_vigueur.png",
+      "id": 5007,
+      "name": "Amulette de vigueur",
+      "description": "Une amulette gravee de runes revigorantes.",
+      "icon": "items/amulette_vigueur.png",
+      "type": "accessory",
+      "slot": "amulet",
+      "bonus": { "hp": 10, "resource": 10 }
+    },
+    {
+      "id": 5008,
+      "name": "Anneau de force",
+      "description": "Un anneau qui raffermit la poigne du porteur.",
+      "icon": "items/anneau_force.png",
       "type": "accessory",
       "slot": "ring1",
-      "bonus": { "hp": 10, "resource": 10, "stamina": 3 }
+      "bonus": { "damage": 4 }
     }
   ]
 }

@@ -1,0 +1,78 @@
+# Analyse de sécurité Trivy (Aqua Security).
+#
+# Scanne le dépôt (mode filesystem) pour :
+#   - vuln     : vulnérabilités connues des dépendances (npm du portail web ;
+#                le C++/vcpkg n'est pas couvert par Trivy).
+#   - secret   : identifiants / clés en dur.
+#   - misconfig: mauvaises configurations (Dockerfiles deploy/docker + web-portal,
+#                docker-compose) — le plus gros intérêt ici.
+#
+# Politique (choix utilisateur 2026-07-13) :
+#   - Rapport COMPLET (toutes sévérités) poussé en SARIF vers l'onglet Security
+#     (GitHub code scanning) — findings suivis et « dismissables ».
+#   - BARRIÈRE bloquante : la CI échoue sur les findings CRITICAL et HIGH
+#     (vulnérabilités corrigibles uniquement — ignore-unfixed).
+#
+# Indépendant du build (build-windows/build-linux) : tourne sur Linux, ~1-2 min.
+name: Trivy Security Scan
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Lundi 06:00 UTC — re-scan hebdomadaire contre les CVE nouvellement publiées
+    # (une dépendance saine aujourd'hui peut devenir vulnérable demain).
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+  security-events: write # requis pour l'upload SARIF vers code scanning
+
+jobs:
+  trivy:
+    name: Trivy (analyse de sécurité fs)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # 1) Rapport COMPLET (toutes sévérités) -> SARIF. Ne fait JAMAIS échouer
+      #    (exit-code 0) : c'est du reporting vers l'onglet Security.
+      - name: Trivy — rapport SARIF (toutes sévérités)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          format: sarif
+          output: trivy-results.sarif
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          # legacy/ = archive utilisateur (ne pas scanner) ; .claude/ = worktrees
+          # internes ; vcpkg/build/node_modules = généré/vendored (absent d'un
+          # checkout frais mais sans risque de l'exclure).
+          skip-dirs: legacy,.claude,vcpkg,build,web-portal/node_modules
+          exit-code: '0'
+
+      - name: Upload SARIF -> GitHub code scanning
+        if: always()
+        continue-on-error: true # n'échoue pas si le code scanning n'est pas activé sur le repo
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy
+
+      # 2) BARRIÈRE bloquante : échec sur CRITICAL + HIGH corrigibles.
+      #    La base de vulnérabilités est déjà téléchargée par l'étape 1 (cache
+      #    disque du runner), donc ce 2e passage est rapide.
+      - name: Trivy — barrière (CRITICAL + HIGH bloquant)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          format: table
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true # ne bloque pas sur une vuln sans correctif disponible
+          skip-dirs: legacy,.claude,vcpkg,build,web-portal/node_modules
+          exit-code: '1'

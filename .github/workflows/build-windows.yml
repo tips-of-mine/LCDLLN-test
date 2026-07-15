@@ -1,79 +1,83 @@
-# Build engine (Windows, CMake + vcpkg + Ninja)
+# Build engine (Windows, CMake + vcpkg + MSBuild)
+#
+# Découpé en JOBS PARALLÈLES par composant (retour utilisateur 2026-07-11) :
+#   - client        : le jeu (engine_app -> lcdlln.exe)
+#   - editor        : l'éditeur de monde + le constructeur de carte
+#                     (world_editor_app -> lcdlln_world_editor.exe, zone_builder)
+#   - server-tools  : le serveur + les outils (server_app + migration/hlod/…)
+#
+# Pourquoi c'est plus rapide que l'ancien job unique : chaque job ne compile
+# QUE sa cible (pas les ~100 exécutables de test, qui sont validés par ctest
+# dans build-linux). Les jobs tournent en parallèle -> temps « au mur » réduit.
+#
+# Cache : on persiste le dépôt d'ARCHIVES BINAIRES de vcpkg
+# (%LOCALAPPDATA%\vcpkg\archives). C'est le cache natif de vcpkg, clé par ABI :
+# OpenSSL/Vulkan/glfw ne sont recompilés qu'au 1er run (~8 min), puis restaurés
+# (~1 min) pour tous les jobs et tous les runs suivants. Le SDK Vulkan
+# (glslangValidator) est aussi caché.
+#
+# Contrepartie assumée : `engine_core` (bibliothèque partagée) est reconstruit
+# dans chaque job -> plus de minutes facturées, mais chaque job reste plus court
+# que l'ancien build monolithique.
 name: Build Windows
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+
+env:
+  VCPKG_DEFAULT_TRIPLET: x64-windows-release
+
 jobs:
-  build-windows:
-    # Epingle sur windows-2022 (= Visual Studio 2022 / v17). L'image `windows-latest`
-    # a derive vers Visual Studio 18, que le generateur CMake "Visual Studio 17 2022"
-    # (CMakePresets.json, preset vs2022-x64) ne trouve pas -> echec a la configuration.
+  # ---------------------------------------------------------------------------
+  # CLIENT (jeu)
+  # ---------------------------------------------------------------------------
+  client:
+    name: Client (jeu)
     runs-on: windows-2022
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          # Récupère les fichiers Git LFS (icônes de compétences
-          # game/data/icons/skills/**/*.png) pour qu'ils soient empaquetés dans
-          # l'artefact client. Sans ça, seuls les pointeurs LFS seraient copiés et
-          # le rendu retomberait sur le texte.
+          # LFS : icônes de compétences (game/data/icons/skills/**/*.png)
+          # empaquetées dans l'artefact ; sinon seuls les pointeurs LFS seraient copiés.
           lfs: true
 
-      - name: Clone vcpkg
-        shell: pwsh
-        run: git clone https://github.com/Microsoft/vcpkg.git "$env:GITHUB_WORKSPACE\vcpkg"
+      # Cache natif de vcpkg (archives binaires ABI-keyed). Partagé entre jobs/runs.
+      - name: Cache vcpkg binary archives
+        uses: actions/cache@v5
+        with:
+          path: ~\AppData\Local\vcpkg\archives
+          key: vcpkg-archives-windows-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-archives-windows-
 
-      - name: Bootstrap vcpkg
+      - name: Clone + bootstrap vcpkg
         shell: pwsh
         run: |
+          git clone https://github.com/Microsoft/vcpkg.git "$env:GITHUB_WORKSPACE\vcpkg"
           & "$env:GITHUB_WORKSPACE\vcpkg\bootstrap-vcpkg.bat" -disableMetrics
 
       - name: Configure
         shell: pwsh
         env:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
-          VCPKG_DEFAULT_TRIPLET: x64-windows-release
-        run: |
-          cmake --preset vs2022-x64
+        run: cmake --preset vs2022-x64
 
-      - name: Build (Release)
+      - name: Build (client uniquement — engine_app)
         shell: pwsh
         env:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
-        run: |
-          cmake --build --preset vs2022-x64-release
+        run: cmake --build --preset vs2022-x64-release --target engine_app
 
-      # Lot H : garde explicite que le World Editor compile au même titre que le jeu.
-      # Si une régression casse uniquement la cible world_editor_app, ce step échoue alors que
-      # le step précédent (qui construit toutes les cibles) pourrait masquer le diagnostic.
-      - name: Build explicite — cible world_editor_app
-        shell: pwsh
-        env:
-          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
-        run: |
-          cmake --build --preset vs2022-x64-release --target world_editor_app
-
-      - name: Vérifie présence des deux exécutables (jeu + éditeur)
+      - name: Vérifie présence de l'exécutable jeu
         shell: pwsh
         run: |
-          $errors = @()
-          $engineExe = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\build" -Filter "lcdlln*.exe" `
-            -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "lcdlln_world_editor.exe" } | Select-Object -First 1
-          $editorExe = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\build" -Filter "lcdlln_world_editor.exe" `
-            -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $engineExe) { $errors += "Game executable (lcdlln*.exe non-editor) introuvable" }
-          if (-not $editorExe) { $errors += "Editor executable (lcdlln_world_editor.exe) introuvable" }
-          if ($errors.Count -gt 0) {
-            Write-Host "[FAIL] Build verification failed:"
-            $errors | ForEach-Object { Write-Host "  - $_" }
-            exit 1
-          }
-          Write-Host "[OK] Game exe   : $($engineExe.FullName)"
-          Write-Host "[OK] Editor exe : $($editorExe.FullName)"
+          $exe = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\build" -Filter "lcdlln.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { Write-Host "[FAIL] lcdlln.exe introuvable"; exit 1 }
+          Write-Host "[OK] Game exe : $($exe.FullName)"
 
-      # Les .spv ne sont pas versionnés (sources GLSL seulement) ; le moteur charge uniquement le SPIR-V depuis game/data/shaders/.
       - name: Cache Vulkan SDK (glslangValidator)
         id: vk-sdk-cache
         uses: actions/cache@v5
@@ -91,13 +95,11 @@ jobs:
           New-Item -ItemType Directory -Force -Path "C:\VulkanSDK" | Out-Null
           $url = "https://sdk.lunarg.com/sdk/download/$sdkVer/windows/VulkanSDK-$sdkVer-Installer.exe"
           $inst = Join-Path $env:TEMP "VulkanSDK-$sdkVer-Installer.exe"
-          Write-Host "Downloading $url"
           Invoke-WebRequest -Uri $url -OutFile $inst -UseBasicParsing
-          Write-Host "Installing Vulkan SDK to $root ..."
           $p = Start-Process -FilePath $inst -ArgumentList @("--root", $root, "--accept-licenses", "--default-answer", "--confirm-command", "install") -Wait -PassThru -NoNewWindow
           if ($p.ExitCode -ne 0) { throw "Vulkan SDK installer exit code $($p.ExitCode)" }
 
-      - name: Compile GLSL to SPIR-V (game/data/shaders)
+      - name: Compile GLSL to SPIR-V
         shell: pwsh
         env:
           VULKAN_SDK: C:\VulkanSDK\1.3.296.0
@@ -107,128 +109,216 @@ jobs:
           if (-not (Test-Path -LiteralPath $glsl)) { throw "Missing $glsl" }
           & "${{ github.workspace }}\tools\compile_game_shaders.ps1" -ShaderDir "${{ github.workspace }}\game\data\shaders"
 
-      - name: Collect artifacts
+      - name: Package (jeu)
         shell: pwsh
         env:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
-          VCPKG_DEFAULT_TRIPLET: x64-windows-release
         run: |
-          New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\artifacts"
+          . "${{ github.workspace }}\.github\scripts\package-windows.ps1"
+          Copy-ArtifactExes -Names @("lcdlln.exe")
+          Copy-RuntimeDlls -IncludeGraphics
+          Copy-GameData
+          Copy-ClientConfig
 
-          # Copie les binaires produits (hors vcpkg et hors debug) "*.exe" "*.dll" "*.pdb" 
-          # Filtres successifs :
-          #  - vcpkg, debug : sources externes ou builds debug, pas du release
-          #  - *_tests.exe : test executables (tournent en ctest, pas a shipper)
-          #  - CompilerId*.exe : fichiers cmake pour detection compilo
-          #  - VmaSample* : sample du Vulkan Memory Allocator (dependance externe)
-          #  - client_flow_app.exe : test d'integration headless, pas outil utilisateur
-          # Ce qui reste : lcdlln.exe, lcdlln_world_editor.exe, lcdlln_server.exe,
-          # zone_builder.exe, hlod_builder.exe, migration_checksum.exe,
-          # gen_terrain_placeholders.exe, load_tester.exe + DLLs.
-          Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE" `
-            -Include "*.exe","*.dll" |
-            Where-Object {
-              $_.FullName -notlike "*\vcpkg\*" -and
-              $_.FullName -notlike "*\debug\*" -and
-              $_.FullName -notlike "*\Debug\*" -and
-              $_.Name -notlike "*_tests.exe" -and
-              $_.Name -notlike "CompilerId*.exe" -and
-              $_.Name -notlike "VmaSample*" -and
-              $_.Name -ne "client_flow_app.exe"
-            } |
-            Copy-Item -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-
-          # NB : ex-step "assets/" supprime suite a la migration des 2 JSONs
-          # (surface_table, layer_palette) vers game/data/. Le top-level
-          # assets/ n'existe plus. game/data/ est copie plus bas et inclut
-          # desormais ces fichiers.
-
-          # Copie les DLLs MSVC Release depuis VS Redist
-          $vcRedistBase = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC"
-          $dlls = @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll", "LIBCRYPTO-3-X64.dll", "LIBSSL-3-X64.dll")
-          foreach ($dll in $dlls) {
-            $found = Get-ChildItem -Recurse -Path $vcRedistBase -Filter $dll `
-              -ErrorAction SilentlyContinue |
-              Where-Object {
-                $_.FullName -like "*x64*" -and
-                $_.FullName -notlike "*debug_nonredist*" -and
-                $_.FullName -notlike "*onecore*"
-              } |
-              Select-Object -First 1
-            if ($found) {
-              Copy-Item $found.FullName -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-            }
-          }
-
-          # Copie ucrtbase.dll depuis System32
-          $ucrt = "C:\Windows\System32\ucrtbase.dll"
-          if (Test-Path $ucrt) {
-            Copy-Item $ucrt -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-          }
-
-          # OpenSSL (vcpkg, lien dynamique) — même principe que les redist MSVC
-          $osslDlls = @("libssl-3-x64.dll", "libcrypto-3-x64.dll")
-          # vcpkg peut placer les binaires soit sous $VCPKG_ROOT/installed, soit sous le dossier vcpkg intégré au build.
-          $osslBinCandidates = @(
-            (Join-Path $env:VCPKG_ROOT "installed\$env:VCPKG_DEFAULT_TRIPLET\bin"),
-            (Join-Path $env:GITHUB_WORKSPACE "build\vs2022-x64\vcpkg_installed\$env:VCPKG_DEFAULT_TRIPLET\bin"),
-            (Join-Path $env:GITHUB_WORKSPACE "build\vs2022-x64\vcpkg_installed\x64-windows\bin")
-          )
-
-          $copiedAny = $false
-          foreach ($osslBin in $osslBinCandidates) {
-            if (-not (Test-Path $osslBin)) { continue }
-            foreach ($dll in $osslDlls) {
-              $src = Join-Path $osslBin $dll
-              if (Test-Path $src) {
-                Copy-Item $src -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-                $copiedAny = $true
-              }
-            }
-          }
-
-          foreach ($dll in $osslDlls) {
-            $dst = Join-Path $env:GITHUB_WORKSPACE\artifacts $dll
-            if (Test-Path $dst) {
-              Write-Host "[OpenSSL] Copied $dll to artifacts/"
-            } else {
-              Write-Host "[OpenSSL] MISSING $dll in artifacts/"
-            }
-          }
-
-          # game/data
-          $gameDataSource = "$env:GITHUB_WORKSPACE\game\data"
-          if (Test-Path $gameDataSource) {
-            Copy-Item -Recurse -Path $gameDataSource `
-              -Destination "$env:GITHUB_WORKSPACE\artifacts\game\data" -Force
-          }
-          
-          # config.json à la racine (si présent)
-          $config = "$env:GITHUB_WORKSPACE\config.json"
-          if (Test-Path $config) {
-            Copy-Item $config -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-          }
-
-          # config/server.ini : source runtime des endpoints master (host TCP/HTTPS,
-          # origine HTTP embarquee, sonde /status, portail). Charge a cote de l'exe par
-          # Config.cpp ; auto-recree avec les defauts s'il est absent (ServerEndpoints).
-          # En le packageant ici, l'environnement se change en editant ce seul fichier.
-          $serverIni = "$env:GITHUB_WORKSPACE\config\server.ini"
-          if (Test-Path $serverIni) {
-            New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\artifacts\config" | Out-Null
-            Copy-Item $serverIni -Destination "$env:GITHUB_WORKSPACE\artifacts\config" -Force
-          }
-
-          # build_hlod.bat à la racine du package de livraison (si présent)
-          $buildHlod = "$env:GITHUB_WORKSPACE\build_hlod.bat"
-          if (Test-Path $buildHlod) {
-            Copy-Item $buildHlod -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-          }
-
-      - name: Upload artifacts
+      - name: Upload artifact (jeu)
         uses: actions/upload-artifact@v6
         with:
-          name: windows-release-${{ github.sha }}
+          name: windows-client-${{ github.sha }}
           path: artifacts/
           if-no-files-found: error
           retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # ÉDITEUR DE MONDE + CONSTRUCTEUR DE CARTE
+  # ---------------------------------------------------------------------------
+  editor:
+    name: Editeur + carte
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          lfs: true
+
+      - name: Cache vcpkg binary archives
+        uses: actions/cache@v5
+        with:
+          path: ~\AppData\Local\vcpkg\archives
+          key: vcpkg-archives-windows-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-archives-windows-
+
+      - name: Clone + bootstrap vcpkg
+        shell: pwsh
+        run: |
+          git clone https://github.com/Microsoft/vcpkg.git "$env:GITHUB_WORKSPACE\vcpkg"
+          & "$env:GITHUB_WORKSPACE\vcpkg\bootstrap-vcpkg.bat" -disableMetrics
+
+      - name: Configure
+        shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: cmake --preset vs2022-x64
+
+      - name: Build (éditeur + carte — world_editor_app, zone_builder)
+        shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: |
+          cmake --build --preset vs2022-x64-release --target world_editor_app
+          cmake --build --preset vs2022-x64-release --target zone_builder
+
+      - name: Vérifie présence des exécutables (éditeur + carte)
+        shell: pwsh
+        run: |
+          $ed = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\build" -Filter "lcdlln_world_editor.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $zb = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\build" -Filter "zone_builder.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $ed) { Write-Host "[FAIL] lcdlln_world_editor.exe introuvable"; exit 1 }
+          if (-not $zb) { Write-Host "[FAIL] zone_builder.exe introuvable"; exit 1 }
+          Write-Host "[OK] Editor : $($ed.FullName)"
+          Write-Host "[OK] Carte  : $($zb.FullName)"
+
+      - name: Cache Vulkan SDK (glslangValidator)
+        id: vk-sdk-cache
+        uses: actions/cache@v5
+        with:
+          path: C:\VulkanSDK\1.3.296.0
+          key: lunarg-vulkan-sdk-1.3.296.0-windows-x64-glslang
+
+      - name: Install Vulkan SDK (prebuilt, silent)
+        if: steps.vk-sdk-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sdkVer = "1.3.296.0"
+          $root = "C:\VulkanSDK\$sdkVer"
+          New-Item -ItemType Directory -Force -Path "C:\VulkanSDK" | Out-Null
+          $url = "https://sdk.lunarg.com/sdk/download/$sdkVer/windows/VulkanSDK-$sdkVer-Installer.exe"
+          $inst = Join-Path $env:TEMP "VulkanSDK-$sdkVer-Installer.exe"
+          Invoke-WebRequest -Uri $url -OutFile $inst -UseBasicParsing
+          $p = Start-Process -FilePath $inst -ArgumentList @("--root", $root, "--accept-licenses", "--default-answer", "--confirm-command", "install") -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "Vulkan SDK installer exit code $($p.ExitCode)" }
+
+      - name: Compile GLSL to SPIR-V
+        shell: pwsh
+        env:
+          VULKAN_SDK: C:\VulkanSDK\1.3.296.0
+        run: |
+          $ErrorActionPreference = "Stop"
+          $glsl = Join-Path $env:VULKAN_SDK "Bin\glslangValidator.exe"
+          if (-not (Test-Path -LiteralPath $glsl)) { throw "Missing $glsl" }
+          & "${{ github.workspace }}\tools\compile_game_shaders.ps1" -ShaderDir "${{ github.workspace }}\game\data\shaders"
+
+      - name: Package (éditeur + carte)
+        shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: |
+          . "${{ github.workspace }}\.github\scripts\package-windows.ps1"
+          Copy-ArtifactExes -Names @("lcdlln_world_editor.exe", "zone_builder.exe")
+          Copy-RuntimeDlls -IncludeGraphics
+          Copy-GameData
+          Copy-ClientConfig
+
+      - name: Upload artifact (éditeur + carte)
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows-editor-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # SERVEUR + OUTILS
+  # ---------------------------------------------------------------------------
+  server-tools:
+    name: Serveur + outils
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          lfs: false # le serveur/outils n'ont pas besoin des assets LFS
+
+      - name: Cache vcpkg binary archives
+        uses: actions/cache@v5
+        with:
+          path: ~\AppData\Local\vcpkg\archives
+          key: vcpkg-archives-windows-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-archives-windows-
+
+      - name: Clone + bootstrap vcpkg
+        shell: pwsh
+        run: |
+          git clone https://github.com/Microsoft/vcpkg.git "$env:GITHUB_WORKSPACE\vcpkg"
+          & "$env:GITHUB_WORKSPACE\vcpkg\bootstrap-vcpkg.bat" -disableMetrics
+
+      - name: Configure
+        shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: cmake --preset vs2022-x64
+
+      - name: Build (serveur + outils)
+        shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: |
+          cmake --build --preset vs2022-x64-release --target server_app
+          cmake --build --preset vs2022-x64-release --target migration_checksum
+          cmake --build --preset vs2022-x64-release --target hlod_builder
+          cmake --build --preset vs2022-x64-release --target gen_terrain_placeholders
+          cmake --build --preset vs2022-x64-release --target load_tester
+
+      - name: Vérifie présence de l'exécutable serveur
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\build" -Filter "lcdlln_server.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { Write-Host "[FAIL] lcdlln_server.exe introuvable"; exit 1 }
+          Write-Host "[OK] Server : $($exe.FullName)"
+
+      - name: Package (serveur + outils)
+        shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: |
+          . "${{ github.workspace }}\.github\scripts\package-windows.ps1"
+          Copy-ArtifactExes -Names @("lcdlln_server.exe", "migration_checksum.exe", "hlod_builder.exe", "gen_terrain_placeholders.exe", "load_tester.exe")
+          Copy-RuntimeDlls
+          Copy-ServerConfig
+
+      - name: Upload artifact (serveur + outils)
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows-server-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # Agrégateur — reproduit le check REQUIS « build-windows ».
+  # L'ancien job unique portait ce nom et la protection de branche `main`
+  # l'exige toujours ; le découpage en 3 jobs l'avait supprimé (merge bloqué :
+  # « Waiting for status to be reported »). Ce job réémet le contexte
+  # `build-windows`, vert UNIQUEMENT si les 3 jobs de build réussissent.
+  # (Alternative : retirer `build-windows` des required checks dans les
+  #  réglages de protection de branche et exiger les 3 nouveaux à la place.)
+  # ---------------------------------------------------------------------------
+  build-windows:
+    name: build-windows
+    needs: [client, editor, server-tools]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Statut agrégé des 3 builds Windows
+        shell: bash
+        run: |
+          echo "client=${{ needs.client.result }} editor=${{ needs.editor.result }} server-tools=${{ needs.server-tools.result }}"
+          if [ "${{ needs.client.result }}" != "success" ] \
+             || [ "${{ needs.editor.result }}" != "success" ] \
+             || [ "${{ needs.server-tools.result }}" != "success" ]; then
+            echo "::error::Au moins un job de build Windows a échoué."
+            exit 1
+          fi
+          echo "Tous les jobs de build Windows ont réussi."

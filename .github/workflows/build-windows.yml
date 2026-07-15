@@ -295,3 +295,30 @@ jobs:
           path: artifacts/
           if-no-files-found: error
           retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # Agrégateur — reproduit le check REQUIS « build-windows ».
+  # L'ancien job unique portait ce nom et la protection de branche `main`
+  # l'exige toujours ; le découpage en 3 jobs l'avait supprimé (merge bloqué :
+  # « Waiting for status to be reported »). Ce job réémet le contexte
+  # `build-windows`, vert UNIQUEMENT si les 3 jobs de build réussissent.
+  # (Alternative : retirer `build-windows` des required checks dans les
+  #  réglages de protection de branche et exiger les 3 nouveaux à la place.)
+  # ---------------------------------------------------------------------------
+  build-windows:
+    name: build-windows
+    needs: [client, editor, server-tools]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Statut agrégé des 3 builds Windows
+        shell: bash
+        run: |
+          echo "client=${{ needs.client.result }} editor=${{ needs.editor.result }} server-tools=${{ needs.server-tools.result }}"
+          if [ "${{ needs.client.result }}" != "success" ] \
+             || [ "${{ needs.editor.result }}" != "success" ] \
+             || [ "${{ needs.server-tools.result }}" != "success" ]; then
+            echo "::error::Au moins un job de build Windows a échoué."
+            exit 1
+          fi
+          echo "Tous les jobs de build Windows ont réussi."

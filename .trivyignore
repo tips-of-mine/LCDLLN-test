@@ -1,0 +1,17 @@
+# Findings Trivy acceptés (avec justification). Un ID par ligne.
+# La barrière CI reste stricte (CRITICAL+HIGH bloquant) pour tout le reste.
+
+# AVD-DS-0002 (HIGH) — « Specify at least 1 USER … non-root » sur les images
+# serveur deploy/docker/Dockerfile.{master,server,shard}.
+#
+# Accepté pour l'instant. Raison : ces conteneurs écrivent les LOGS et la
+# PERSISTANCE DES PERSONNAGES dans des bind-mounts hôte en lecture-écriture
+# (docker-compose.yml : ./data/logs/*, ./data/persistence/characters), créés
+# par Docker donc possédés par root. Passer les conteneurs en utilisateur
+# non-root casserait ces écritures (permission denied) tant que la propriété
+# des dossiers hôte n'est pas alignée sur l'uid du conteneur.
+#
+# Durcissement propre = PR Docker dédiée (USER non-root + uid fixe + chown des
+# dossiers hôte / mapping uid), à VALIDER sur un vrai déploiement conteneur.
+# Le portail web (web-portal/Dockerfile) fait déjà `USER nextjs` (0 finding).
+AVD-DS-0002

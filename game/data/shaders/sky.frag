@@ -19,7 +19,8 @@
 //   moonIntensity    (  4 bytes, float) — 0..1, fade jour/nuit
 //   moonPhase        (  4 bytes, float) — 0..15
 //   moonIllumination (  4 bytes, float) — 0..1
-//   _pad3            (  8 bytes)
+//   skyModel         (  4 bytes, float) — 0=dégradé legacy, 1=analytique (2026-07-17)
+//   _pad3            (  4 bytes)
 
 layout(location = 0) in  vec2 vUV;
 layout(location = 0) out vec4 outColor;
@@ -37,9 +38,106 @@ layout(push_constant) uniform SkyPC
     float moonIntensity;     // 0..1, fade jour/nuit
     float moonPhase;         // 0..15
     float moonIllumination;  // 0..1
-    vec2  _pad3;
+    float skyModel;          // 0 = dégradé legacy ; 1 = diffusion analytique (2026-07-17)
+    float _pad3;
     vec4  cameraPos;         // xyz = position monde caméra (reconstruction viewDir)
 } pc;
+
+// -------------------------------------------------------------------------
+// Ciel analytique (chantier ciel 2026-07-17) — diffusion simple Rayleigh +
+// Mie : ray-march léger (8 échantillons vue × 4 vers le soleil) dans une
+// atmosphère exponentielle. Constantes physiques standard (Terre). Donne un
+// zénith bleu profond, un horizon blanchi, des levers/couchers orangés et
+// une nuit qui tombe naturellement — là où le dégradé 2 couleurs restait
+// plat. Sélectionné par pc.skyModel (config client.sky.analytic).
+// -------------------------------------------------------------------------
+const float kPi       = 3.14159265358979;
+const float kPlanetR  = 6360.0e3;               // rayon planète (m)
+const float kAtmoR    = 6420.0e3;               // sommet de l'atmosphère (m)
+const vec3  kBetaR    = vec3(5.8e-6, 13.5e-6, 33.1e-6); // diffusion Rayleigh
+const float kBetaM    = 21.0e-6;                // diffusion Mie
+const float kHR       = 8000.0;                 // hauteur d'échelle Rayleigh (m)
+const float kHM       = 1200.0;                 // hauteur d'échelle Mie (m)
+
+// Distance de o (relatif au centre planète) à la sphère de rayon r le long
+// de d ; négatif si pas d'intersection avant.
+float RaySphereFar(vec3 o, vec3 d, float r)
+{
+    float b = dot(o, d);
+    float c = dot(o, o) - r * r;
+    float disc = b * b - c;
+    if (disc < 0.0) return -1.0;
+    return -b + sqrt(disc);
+}
+
+vec3 AnalyticSky(vec3 viewDir, vec3 sunDir)
+{
+    // Caméra posée près du sol : l'altitude jeu (dizaines de mètres) est
+    // négligeable devant les hauteurs d'échelle — on fige +200 m.
+    vec3 o = vec3(0.0, kPlanetR + 200.0, 0.0);
+    // Sous l'horizon on borne le rayon vers le haut : le sol du jeu couvre
+    // ces pixels (le ciel n'y est visible qu'en bordure de monde).
+    vec3 d = normalize(vec3(viewDir.x, max(viewDir.y, -0.03), viewDir.z));
+    float tMax = RaySphereFar(o, d, kAtmoR);
+    if (tMax <= 0.0) return vec3(0.0);
+
+    float mu = dot(d, sunDir);
+    float phaseR = 3.0 / (16.0 * kPi) * (1.0 + mu * mu);
+    const float g = 0.76; // anisotropie Mie (halo autour du soleil)
+    float phaseM = 3.0 / (8.0 * kPi) * ((1.0 - g * g) * (1.0 + mu * mu))
+        / ((2.0 + g * g) * pow(1.0 + g * g - 2.0 * g * mu, 1.5));
+
+    const int kSteps      = 8;
+    const int kLightSteps = 4;
+    float dt = tMax / float(kSteps);
+    float t  = 0.5 * dt;
+    vec3  sumR = vec3(0.0);
+    vec3  sumM = vec3(0.0);
+    float odR = 0.0; // épaisseur optique cumulée le long de la vue
+    float odM = 0.0;
+    for (int i = 0; i < kSteps; ++i)
+    {
+        vec3 p = o + d * t;
+        float h = max(length(p) - kPlanetR, 0.0);
+        float dR = exp(-h / kHR) * dt;
+        float dM = exp(-h / kHM) * dt;
+        odR += dR;
+        odM += dM;
+
+        // Épaisseur optique vers le soleil (4 échantillons) ; si le rayon
+        // soleil traverse le sol, l'échantillon est dans l'ombre de la
+        // planète (crépuscule) et ne contribue pas.
+        float tSun = RaySphereFar(p, sunDir, kAtmoR);
+        float sdt = tSun / float(kLightSteps);
+        float st = 0.5 * sdt;
+        float sOdR = 0.0;
+        float sOdM = 0.0;
+        bool inShadow = (tSun <= 0.0);
+        for (int j = 0; j < kLightSteps && !inShadow; ++j)
+        {
+            vec3 sp = p + sunDir * st;
+            float sh = length(sp) - kPlanetR;
+            if (sh < 0.0) { inShadow = true; break; }
+            sOdR += exp(-sh / kHR) * sdt;
+            sOdM += exp(-sh / kHM) * sdt;
+            st += sdt;
+        }
+        if (!inShadow)
+        {
+            vec3 tau = kBetaR * (odR + sOdR) + vec3(kBetaM * 1.1) * (odM + sOdM);
+            vec3 att = exp(-tau);
+            sumR += att * dR;
+            sumM += att * dM;
+        }
+        t += dt;
+    }
+
+    const float kSunIntensity = 20.0;
+    vec3 col = kSunIntensity * (sumR * kBetaR * phaseR + sumM * vec3(kBetaM) * phaseM);
+    // Plancher nocturne : jamais le noir absolu (la lune et le halo restent
+    // composés par-dessus, cf. RenderMoonDisk).
+    return max(col, vec3(0.0015, 0.002, 0.0045));
+}
 
 // -------------------------------------------------------------------------
 // RenderMoonDisk : composite procedurale d'un disque lunaire avec ombre
@@ -133,15 +231,23 @@ void main()
     vec3 worldFar  = worldPos4.xyz / worldPos4.w;
     vec3 viewDir   = normalize(worldFar - pc.cameraPos.xyz);
 
-    // ---- Sky gradient via view-zenith angle ---------------------------------
-    // viewDir.y is the sine of the elevation angle.
-    // Map [0..1] for above-horizon to [1..0] for below horizon (clamp at horizon).
-    float t = clamp(viewDir.y, 0.0, 1.0);
-
-    // Rayleigh approximation: non-linear blend (slightly exponential).
-    // pow(t, 0.6) weights the gradient toward the horizon for a wider blue band.
-    float blendFactor = pow(t, 0.6);
-    vec3 skyColor = mix(pc.horizonColor, pc.zenithColor, blendFactor);
+    // ---- Fond de ciel : analytique OU dégradé legacy ------------------------
+    // Chantier ciel 2026-07-17 : pc.skyModel sélectionne la diffusion
+    // Rayleigh+Mie (défaut) ou l'ancien dégradé 2 couleurs (repli via
+    // config client.sky.analytic=false, zéro rebuild).
+    vec3 skyColor;
+    if (pc.skyModel > 0.5)
+    {
+        skyColor = AnalyticSky(viewDir, normalize(pc.lightDir));
+    }
+    else
+    {
+        // Dégradé legacy via l'angle vue-zénith. viewDir.y = sinus de
+        // l'élévation ; pow(t, 0.6) élargit la bande d'horizon.
+        float t = clamp(viewDir.y, 0.0, 1.0);
+        float blendFactor = pow(t, 0.6);
+        skyColor = mix(pc.horizonColor, pc.zenithColor, blendFactor);
+    }
 
     // ---- Disque solaire NET + couronne + halo atmosphérique -----------------
     // Disque circulaire à bord net (au lieu d'un blob mou), couleur chaude qui

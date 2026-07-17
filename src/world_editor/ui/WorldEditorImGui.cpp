@@ -11,6 +11,7 @@
 #include "src/world_editor/modes/EditorModeRegistry.h"
 #include "src/world_editor/prefs/UserPrefsStore.h"
 #include "src/world_editor/actions/EditorActionRegistry.h"
+#include "src/world_editor/ui/ToolbarIconAtlas.h" // libellé FR de l'outil actif (barre de statut)
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/WorldEditorShell.h"
@@ -1698,8 +1699,50 @@ namespace engine::editor
 			}
 			ImGui::End();
 
+			// Réorganisation UI 2026-07-17 — barre de statut enrichie
+			// (convention UE) : message de session | carte courante | outil
+			// actif, et à droite l'indicateur « Tout enregistré / Non
+			// sauvegardé » (même source dirty que la modale Quitter :
+			// WorldEditorShell::IsDirtySinceSave). Remplace l'affichage du
+			// statut dans la barre de menu (supprimé par la réorganisation).
 			ImGui::Begin("Statut", nullptr, ImGuiWindowFlags_NoMouseInputs);
-			ImGui::TextWrapped("%s", m_session->Status().c_str());
+			{
+				ImGui::TextUnformatted(m_session->Status().c_str());
+				ImGui::SameLine();
+				ImGui::TextDisabled("|  Carte : %s", m_session->Doc().zoneId.c_str());
+				if (m_shell != nullptr)
+				{
+					ImGui::SameLine();
+					const engine::editor::world::ToolIconStyle toolStyle =
+						engine::editor::world::ToolbarIconAtlas::Get(m_shell->GetActiveTool());
+					ImGui::TextDisabled("|  Outil : %s",
+						(m_shell->GetActiveTool() == engine::editor::world::ActiveTool::None)
+							? "aucun" : toolStyle.tooltipFr);
+
+					// Indicateur de sauvegarde aligné à droite.
+					const bool dirty = m_shell->IsDirtySinceSave();
+					const char* saveText =
+						dirty ? "\xE2\x97\x8F Non sauvegardé" : "Tout enregistré";
+					const float textW = ImGui::CalcTextSize(saveText).x;
+					const float avail = ImGui::GetContentRegionAvail().x;
+					if (avail > textW + 16.0f)
+					{
+						ImGui::SameLine(0.0f, avail - textW - 8.0f);
+					}
+					else
+					{
+						ImGui::SameLine();
+					}
+					if (dirty)
+					{
+						ImGui::TextColored(ImVec4(1.0f, 0.77f, 0.25f, 1.0f), "%s", saveText);
+					}
+					else
+					{
+						ImGui::TextDisabled("%s", saveText);
+					}
+				}
+			}
 			ImGui::End();
 		}
 		else

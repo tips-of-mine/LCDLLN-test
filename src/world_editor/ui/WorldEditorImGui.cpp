@@ -13,6 +13,7 @@
 #include "src/world_editor/actions/EditorActionRegistry.h"
 #include "src/world_editor/ui/ToolbarIconAtlas.h" // libellé FR de l'outil actif (barre de statut)
 #include "src/world_editor/ui/CommandPaletteModel.h" // filtrage pur de la palette Ctrl+P (PR 3)
+#include "src/world_editor/ui/EditorTheme.h" // thème sombre éditeur (polish 2026-07-17)
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/WorldEditorShell.h"
@@ -491,6 +492,13 @@ namespace engine::editor
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		// Pas de NavEnableKeyboard : sinon io.WantCaptureKeyboard reste souvent vrai et bloque WASD (camera FPS).
 		ImGui::StyleColorsDark();
+		// Polish UI 2026-07-17 — thème sombre dédié à l'éditeur monde
+		// (anthracite + accent doré, arrondis, paddings). Uniquement pour le
+		// binaire éditeur : le client de jeu garde ses styles d'UI propres.
+		if (isWorldEditorExe)
+		{
+			engine::editor::world::ApplyWorldEditorTheme();
+		}
 
 		// Polices auth (Windlass / Morpheus) chargees dans l'atlas ImGui AVANT ImGui_ImplVulkan_Init -
 		// celui-ci construit la texture des fonts une seule fois a partir de l'atlas. Sans ce chargement,

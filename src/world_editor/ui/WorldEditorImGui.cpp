@@ -12,6 +12,7 @@
 #include "src/world_editor/prefs/UserPrefsStore.h"
 #include "src/world_editor/actions/EditorActionRegistry.h"
 #include "src/world_editor/ui/ToolbarIconAtlas.h" // libellé FR de l'outil actif (barre de statut)
+#include "src/world_editor/ui/CommandPaletteModel.h" // filtrage pur de la palette Ctrl+P (PR 3)
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/WorldEditorShell.h"
@@ -855,10 +856,18 @@ namespace engine::editor
 		// rendues depuis ce registre (spec docs/superpowers/specs/
 		// 2026-07-17-editor-menus-toolbar-reorg-design.md).
 		RegisterEditorActions();
+		// PR 3 — Ctrl+P ouvre la palette de commandes (détection ImGui
+		// directe : pas de plumbing Engine nécessaire).
+		if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_P))
+		{
+			OpenCommandPalette();
+		}
 		RenderMenuBarFr();
 		RenderQuitConfirmModal();
 		RenderPreferencesWindow();
 		RenderAboutWindow();
+		RenderCommandPalette();
+		RenderShortcutsWindow();
 
 		// M100.46 incrément 3 — dessine la popup modale Zone Presets
 		// (no-op si non ouverte ou Shell non branché). m_cfg passé pour
@@ -2769,6 +2778,16 @@ namespace engine::editor
 			weact::ActionCategory::Edition, nullptr, nullptr,
 			nullptr, nullptr,
 			[this] { m_showPreferencesWindow = true; });
+		// PR 3 — palette de commandes + fenêtre récapitulative des raccourcis.
+		add("app.command-palette", "Palette de commandes...",
+			weact::ActionCategory::Edition, nullptr, "Ctrl+P",
+			nullptr, nullptr,
+			[this] { OpenCommandPalette(); });
+		add("help.shortcuts", "Raccourcis clavier...",
+			weact::ActionCategory::Aide, nullptr, nullptr,
+			nullptr,
+			[this] { return m_showShortcutsWindow; },
+			[this] { m_showShortcutsWindow = !m_showShortcutsWindow; });
 
 		// ---- Vue (options du viewport uniquement) ---------------------------
 		add("view.grid", "Grille (afficher/masquer)",
@@ -2990,7 +3009,9 @@ namespace engine::editor
 			MenuItemForAction("edit.redo");
 			MenuItemForAction("edit.history");
 			ImGui::Separator();
+			MenuItemForAction("app.command-palette");
 			MenuItemForAction("edit.preferences");
+			MenuItemForAction("help.shortcuts");
 			ImGui::EndMenu();
 		}
 
@@ -3057,6 +3078,7 @@ namespace engine::editor
 		if (ImGui::BeginMenu("Aide"))
 		{
 			MenuItemForAction("help.diagnostic");
+			MenuItemForAction("help.shortcuts");
 			ImGui::Separator();
 			MenuItemForAction("help.about");
 			ImGui::EndMenu();
@@ -3217,6 +3239,206 @@ namespace engine::editor
 			ImGui::TextDisabled("Spec UI : docs/superpowers/specs/");
 			ImGui::TextDisabled("2026-07-17-editor-menus-toolbar-reorg-design.md");
 		}
+		ImGui::End();
+	}
+	void WorldEditorImGui::RenderCommandPalette()
+	{
+		if (!m_showCommandPalette) return;
+		namespace weact = engine::editor::world::actions;
+		namespace wpal  = engine::editor::world::palette;
+
+		// Fenêtre centrée horizontalement, ancrée vers le haut (style UE /
+		// VS Code). Taille figée : la liste défile dans un child.
+		const ImGuiViewport* vp = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(
+			ImVec2(vp->WorkPos.x + vp->WorkSize.x * 0.5f, vp->WorkPos.y + 72.0f),
+			ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+		ImGui::SetNextWindowSize(ImVec2(560.0f, 380.0f), ImGuiCond_Always);
+		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse
+			| ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking
+			| ImGuiWindowFlags_NoSavedSettings;
+		if (!ImGui::Begin("Palette de commandes", &m_showCommandPalette, flags))
+		{
+			ImGui::End();
+			return;
+		}
+
+		// Champ de recherche avec focus automatique à l'ouverture.
+		if (m_paletteFocusQuery)
+		{
+			ImGui::SetKeyboardFocusHere();
+			m_paletteFocusQuery = false;
+		}
+		ImGui::SetNextItemWidth(-1.0f);
+		const bool enterPressed = ImGui::InputTextWithHint("##palette_query",
+			"Commencez à taper pour rechercher une action...",
+			m_paletteQuery, sizeof(m_paletteQuery),
+			ImGuiInputTextFlags_EnterReturnsTrue);
+
+		// Snapshot des actions du registre → entrées texte de la palette.
+		std::vector<wpal::PaletteEntry> entries;
+		if (m_shell != nullptr)
+		{
+			static constexpr const char* kCategoryFr[] =
+				{ "Fichier", "Édition", "Vue", "Fenêtre", "Outils", "Aide" };
+			const auto& actionsVec = m_shell->GetActionRegistry().Actions();
+			entries.reserve(actionsVec.size());
+			for (const weact::EditorAction& a : actionsVec)
+			{
+				wpal::PaletteEntry e;
+				e.id = a.id;
+				e.label = a.label;
+				const size_t catIdx = static_cast<size_t>(a.category);
+				e.categoryFr = (catIdx < 6u) ? kCategoryFr[catIdx] : "";
+				e.shortcutText = a.shortcutText;
+				e.enabled = weact::EditorActionRegistry::IsEnabled(a);
+				entries.push_back(std::move(e));
+			}
+		}
+		const std::vector<size_t> order =
+			wpal::FilterPaletteEntries(m_paletteQuery, entries);
+
+		// Navigation clavier ↑/↓ dans la liste filtrée.
+		if (ImGui::IsKeyPressed(ImGuiKey_DownArrow)) { ++m_paletteSelected; }
+		if (ImGui::IsKeyPressed(ImGuiKey_UpArrow))   { --m_paletteSelected; }
+		if (order.empty())
+		{
+			m_paletteSelected = 0;
+		}
+		else
+		{
+			m_paletteSelected = std::clamp(m_paletteSelected, 0,
+				static_cast<int>(order.size()) - 1);
+		}
+
+		// Liste filtrée : libellé à gauche, catégorie + raccourci grisés à
+		// droite. Les actions désactivées sont affichées grisées et ne sont
+		// pas exécutables.
+		const weact::EditorAction* toExecute = nullptr;
+		ImGui::BeginChild("##palette_list", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None);
+		for (size_t rank = 0; rank < order.size(); ++rank)
+		{
+			const wpal::PaletteEntry& e = entries[order[rank]];
+			const bool selected = (static_cast<int>(rank) == m_paletteSelected);
+
+			ImGui::PushID(static_cast<int>(rank));
+			if (!e.enabled) { ImGui::BeginDisabled(); }
+			if (ImGui::Selectable(e.label.c_str(), selected))
+			{
+				m_paletteSelected = static_cast<int>(rank);
+				if (e.enabled && m_shell != nullptr)
+				{
+					toExecute = m_shell->GetActionRegistry().Find(e.id);
+				}
+			}
+			if (!e.enabled) { ImGui::EndDisabled(); }
+
+			// Colonne droite : catégorie + raccourci.
+			std::string right = e.categoryFr;
+			if (!e.shortcutText.empty())
+			{
+				right += "  ";
+				right += e.shortcutText;
+			}
+			if (!right.empty())
+			{
+				ImGui::SameLine();
+				const float w = ImGui::CalcTextSize(right.c_str()).x;
+				const float avail = ImGui::GetContentRegionAvail().x;
+				if (avail > w + 8.0f)
+				{
+					ImGui::SameLine(0.0f, avail - w - 4.0f);
+				}
+				ImGui::TextDisabled("%s", right.c_str());
+			}
+			if (selected && (ImGui::IsKeyPressed(ImGuiKey_DownArrow)
+				|| ImGui::IsKeyPressed(ImGuiKey_UpArrow)))
+			{
+				ImGui::SetScrollHereY();
+			}
+			ImGui::PopID();
+		}
+		ImGui::EndChild();
+
+		// Entrée = exécute la sélection courante de la liste filtrée.
+		if (enterPressed && !order.empty() && m_shell != nullptr)
+		{
+			const wpal::PaletteEntry& e =
+				entries[order[static_cast<size_t>(m_paletteSelected)]];
+			if (e.enabled)
+			{
+				toExecute = m_shell->GetActionRegistry().Find(e.id);
+			}
+		}
+		if (toExecute != nullptr)
+		{
+			m_showCommandPalette = false;
+			if (toExecute->execute) { toExecute->execute(); }
+		}
+		if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+		{
+			m_showCommandPalette = false;
+		}
+		ImGui::End();
+	}
+
+	void WorldEditorImGui::RenderShortcutsWindow()
+	{
+		if (!m_showShortcutsWindow) return;
+		namespace weact = engine::editor::world::actions;
+
+		ImGui::SetNextWindowSize(ImVec2(520.0f, 460.0f), ImGuiCond_FirstUseEver);
+		if (!ImGui::Begin("Raccourcis clavier", &m_showShortcutsWindow))
+		{
+			ImGui::End();
+			return;
+		}
+
+		// Section 1 — raccourcis d'actions, générés depuis le registre :
+		// ajouter une action avec `shortcutText` la fait apparaître ici sans
+		// maintenance manuelle.
+		if (m_shell != nullptr)
+		{
+			static constexpr const char* kCategoryFr[] =
+				{ "Fichier", "Édition", "Vue", "Fenêtre", "Outils", "Aide" };
+			for (size_t cat = 0; cat < 6u; ++cat)
+			{
+				bool headerShown = false;
+				for (const weact::EditorAction& a : m_shell->GetActionRegistry().Actions())
+				{
+					if (static_cast<size_t>(a.category) != cat) continue;
+					if (a.shortcutText.empty()) continue;
+					if (!headerShown)
+					{
+						ImGui::SeparatorText(kCategoryFr[cat]);
+						headerShown = true;
+					}
+					ImGui::TextUnformatted(a.label.c_str());
+					ImGui::SameLine(320.0f);
+					ImGui::TextDisabled("%s", a.shortcutText.c_str());
+				}
+			}
+		}
+
+		// Section 2 — raccourcis hors registre (dispatchés par Engine /
+		// WorldEditorShell::HandleShortcut) : documentés statiquement ici.
+		struct StaticShortcut { const char* label; const char* keys; };
+		static constexpr StaticShortcut kStaticShortcuts[] = {
+			{ "Déplacement caméra",              "WASD / ZQSD (cf. Préférences)" },
+			{ "Course (caméra plus rapide)",     "Shift" },
+			{ "Mode caméra FPS / Orbital / Top", "Pavé num. 1 / 3 / 7" },
+			{ "Panneaux du shell",               "F1..F12" },
+			{ "Annuler / Rétablir",              "Ctrl+Z / Ctrl+Y" },
+			{ "Palette de commandes",            "Ctrl+P" },
+		};
+		ImGui::SeparatorText("Caméra & navigation");
+		for (const StaticShortcut& s : kStaticShortcuts)
+		{
+			ImGui::TextUnformatted(s.label);
+			ImGui::SameLine(320.0f);
+			ImGui::TextDisabled("%s", s.keys);
+		}
+
 		ImGui::End();
 	}
 #endif // _WIN32

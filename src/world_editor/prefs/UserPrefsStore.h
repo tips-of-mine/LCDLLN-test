@@ -57,6 +57,11 @@ namespace engine::editor::world::prefs
 		/// Cartes récentes, plus récente en tête.
 		const std::vector<std::string>& GetRecentMaps() const { return m_prefs.recentMapIds; }
 
+		/// Polish UI 2026-07-17 — version de disposition vue par l'utilisateur
+		/// (cf. `UserPrefs::editorLayoutVersion`). Persistance immédiate au Set.
+		int  GetLayoutVersion() const { return m_prefs.editorLayoutVersion; }
+		void SetLayoutVersion(int version);
+
 		bool IsInitialized() const { return m_initialized; }
 
 		/// Réinitialise l'état (défauts, non initialisé). Réservé aux tests.

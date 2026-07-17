@@ -363,6 +363,27 @@ namespace
 		store.ResetForTesting();
 	}
 
+	/// Polish UI 2026-07-17 — round-trip disque de la version de disposition
+	/// (défaut 0 pour les anciens profils, persistance immédiate au Set).
+	void Test_UserPrefs_LayoutVersion_RoundTrip()
+	{
+		const auto root = MakeTempContentRoot("prefs_layoutver");
+		auto& store = prefs::UserPrefsStore::Instance();
+		store.ResetForTesting();
+		store.Init(root.string());
+		REQUIRE(store.GetLayoutVersion() == 0); // défaut ancien profil
+
+		store.SetLayoutVersion(2);
+		store.ResetForTesting();
+		const bool existed = store.Init(root.string());
+		REQUIRE(existed);
+		REQUIRE(store.GetLayoutVersion() == 2);
+
+		std::error_code ec;
+		std::filesystem::remove_all(root, ec);
+		store.ResetForTesting();
+	}
+
 	void Test_UserPrefs_TolerantToMalformedFile()
 	{
 		const auto root = MakeTempContentRoot("prefs_bad");
@@ -398,6 +419,7 @@ int main()
 	Test_UserPrefs_AtomicSaveLeavesNoTmp();
 	Test_UserPrefs_RecentMaps_DedupAndCap();
 	Test_UserPrefs_RecentMaps_RoundTripPersist();
+	Test_UserPrefs_LayoutVersion_RoundTrip();
 	Test_UserPrefs_TolerantToMalformedFile();
 
 	if (g_failed > 0)

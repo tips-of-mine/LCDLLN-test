@@ -84,6 +84,14 @@ namespace engine::editor
 #if defined(_WIN32)
 	namespace
 	{
+		/// Polish UI 2026-07-17 — version de la disposition de fenêtres par
+		/// défaut. À BUMPER à chaque évolution de la disposition (ajout de
+		/// panneau docké, réorganisation des nodes…) : les profils dont
+		/// `user_prefs.json` porte une version différente voient leur
+		/// disposition reconstruite automatiquement au boot (les .ini
+		/// périmés éparpillaient les nouvelles fenêtres en flottant).
+		constexpr int kEditorLayoutVersion = 2;
+
 		void TryPersistMovementLayoutToUserSettings(std::string_view layout)
 		{
 			const char* path = "user_settings.json";
@@ -856,6 +864,26 @@ namespace engine::editor
 		// rendues depuis ce registre (spec docs/superpowers/specs/
 		// 2026-07-17-editor-menus-toolbar-reorg-design.md).
 		RegisterEditorActions();
+		// Polish UI 2026-07-17 — disposition versionnée : si le profil
+		// utilisateur vient d'une version de disposition antérieure (ou n'en
+		// a jamais vue), on reconstruit automatiquement la disposition par
+		// défaut au lieu de laisser l'ancien .ini éparpiller les nouvelles
+		// fenêtres en flottant (bug constaté au premier build mergé).
+		if (!m_layoutVersionChecked)
+		{
+			m_layoutVersionChecked = true;
+			auto& prefsStore = engine::editor::world::prefs::UserPrefsStore::Instance();
+			const int seenVersion = prefsStore.IsInitialized()
+				? prefsStore.GetLayoutVersion() : kEditorLayoutVersion;
+			if (seenVersion != kEditorLayoutVersion)
+			{
+				ResetDockLayout();
+				prefsStore.SetLayoutVersion(kEditorLayoutVersion);
+				LOG_INFO(EditorWorld,
+					"[WorldEditorImGui] Disposition reconstruite (version {} -> {})",
+					seenVersion, kEditorLayoutVersion);
+			}
+		}
 		// PR 3 — Ctrl+P ouvre la palette de commandes (détection ImGui
 		// directe : pas de plumbing Engine nécessaire).
 		if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_P))
@@ -952,14 +980,20 @@ namespace engine::editor
 					ImGuiID idBottom = 0;
 					ImGui::DockBuilderSplitNode(idCenter, ImGuiDir_Down, 0.18f, &idBottom, &idCenter);
 
-					// Palette outils : a gauche, c'est la zone d'action principale.
-					ImGui::DockBuilderDockWindow("Outils", idLeft);
-					// Réorganisation UI 2026-07-17 (PR 2) — la palette
-					// d'outils du shell rejoint le node gauche (onglet à
-					// côté de « Outils »).
-					ImGui::DockBuilderDockWindow("Palette d'outils", idLeft);
+					// Polish UI 2026-07-17 — disposition UNIFIÉE : les panneaux
+					// du SHELL (M100.x) sont dockés ici aussi, par nom de
+					// fenêtre, dans les mêmes nodes que les fenêtres session
+					// (M43.x). Fini les deux systèmes de disposition
+					// superposés qui laissaient flotter la moitié des
+					// fenêtres (capture utilisateur du build #976-979).
 
-					// Inspecteur : panneaux carte / affichage / import / objets / scene sont des onglets a droite.
+					// Gauche : la palette d'outils d'abord (onglet actif au
+					// premier lancement), la fenêtre « Outils » (infos) derrière.
+					ImGui::DockBuilderDockWindow("Palette d'outils", idLeft);
+					ImGui::DockBuilderDockWindow("Outils", idLeft);
+
+					// Droite : onglets carte / affichage / atmosphère /
+					// import / objets + panneaux scène du shell.
 					// Scene rejoint cette pile : la docker dans le node central annulait le passthrough et
 					// bloquait l'interaction 3D (regression P1). En tant qu'onglet a droite, son contenu
 					// (diagnostic camera) reste accessible et le node central reste vide -> 3D visible
@@ -969,13 +1003,26 @@ namespace engine::editor
 					ImGui::DockBuilderDockWindow("Atmosphere", idRight);
 					ImGui::DockBuilderDockWindow("Import assets", idRight);
 					ImGui::DockBuilderDockWindow("Objets sur la carte", idRight);
+					ImGui::DockBuilderDockWindow("Outliner", idRight);
+					ImGui::DockBuilderDockWindow("Inspector", idRight);
+					ImGui::DockBuilderDockWindow("Tool Properties", idRight);
+					// Panneaux avancés masqués par défaut : pré-dockés pour
+					// apparaître au bon endroit quand le menu Fenêtre les ouvre.
+					ImGui::DockBuilderDockWindow("Quest Editor", idRight);
+					ImGui::DockBuilderDockWindow("Building Editor", idRight);
+					ImGui::DockBuilderDockWindow("Surface Table", idRight);
+					ImGui::DockBuilderDockWindow("Collision Editor", idRight);
+					ImGui::DockBuilderDockWindow("History", idRight);
+					ImGui::DockBuilderDockWindow("Asset Browser", idBottom);
+					ImGui::DockBuilderDockWindow("Console", idBottom);
+					ImGui::DockBuilderDockWindow("Routines", idBottom);
 					// La fenêtre « Camera (aide) » n'est PAS dockée — ses flags
 					// `NoMouseInputs` polluent le tab bar du node quand elle
 					// est dans le même groupe que d'autres tabs (cause des
 					// onglets non cliquables, bug confirmé utilisateur).
 					// Elle est opt-in via `Vue > Aide camera` et flotte.
 
-					// Statut en bas, plein largeur.
+					// Statut en bas, plein largeur (onglet actif du node bas).
 					ImGui::DockBuilderDockWindow("Statut", idBottom);
 
 					ImGui::DockBuilderFinish(dockId);
@@ -3114,6 +3161,19 @@ namespace engine::editor
 		// au prochain run).
 		std::error_code ec;
 		std::filesystem::remove("world_editor_imgui.ini", ec);
+		// Polish UI 2026-07-17 — la disposition est désormais UNIFIÉE : les
+		// panneaux du shell sont dockés par la même disposition par défaut.
+		// L'ancien layout du shell (`editor_world_layout.ini`) ne doit donc
+		// ni être rechargé (lecture différée annulée) ni survivre sur disque
+		// (il réappliquerait des positions périmées par-dessus).
+		if (m_shell != nullptr)
+		{
+			m_shell->DiscardPendingLayoutLoad();
+			if (!m_shell->LayoutPath().empty())
+			{
+				std::filesystem::remove(m_shell->LayoutPath(), ec);
+			}
+		}
 		if (m_session)
 		{
 			m_session->SetStatus("Disposition réinitialisée.");

@@ -326,6 +326,42 @@ namespace engine::editor
 		/// branché → « Quitter » grisé.
 		std::function<void()> m_onQuitRequested;
 
+		// ── Réorganisation UI 2026-07-17 (PR 3) : palette Ctrl+P + raccourcis ──
+		/// Visibilité de la palette de commandes (Ctrl+P ou menu Édition).
+		bool m_showCommandPalette = false;
+		/// Buffer de la requête de recherche de la palette (ImGui::InputText).
+		char m_paletteQuery[128] = {};
+		/// Index sélectionné dans la liste FILTRÉE de la palette (↑/↓/Entrée).
+		int m_paletteSelected = 0;
+		/// Posé à l'ouverture : donne le focus clavier au champ de recherche
+		/// à la frame suivante, puis consommé.
+		bool m_paletteFocusQuery = false;
+		/// Visibilité de la fenêtre « Raccourcis clavier » (lecture seule).
+		bool m_showShortcutsWindow = false;
+
+		/// Ouvre la palette de commandes : réinitialise requête + sélection
+		/// et arme le focus clavier sur le champ de recherche.
+		void OpenCommandPalette()
+		{
+			m_showCommandPalette = true;
+			m_paletteFocusQuery = true;
+			m_paletteSelected = 0;
+			m_paletteQuery[0] = '\0';
+		}
+
+		/// Rend la palette de commandes si visible : champ de recherche
+		/// (filtrage incrémental via `FilterPaletteEntries` sur le registre
+		/// d'actions), navigation ↑/↓, `Entrée` exécute l'action sélectionnée
+		/// (si son prédicat `enabled` est vrai), `Échap` ferme.
+		/// Effet de bord : ImGui state + exécution d'action.
+		void RenderCommandPalette();
+
+		/// Rend la fenêtre « Raccourcis clavier » si visible : tableau généré
+		/// depuis le registre (actions à raccourci non vide, groupées par
+		/// catégorie) + table statique des raccourcis hors registre (caméra
+		/// WASD/ZQSD, Numpad, F1..F12, Ctrl+P). Lecture seule.
+		void RenderShortcutsWindow();
+
 		/// Réorganisation UI 2026-07-17 — Enregistre dans le registre du shell
 		/// toutes les actions qui dépendent de la session/config/UI ImGui
 		/// (fichier, import/export, vue, fenêtre, outils, aide). Idempotent

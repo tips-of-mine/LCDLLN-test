@@ -1,6 +1,7 @@
 #pragma once
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/CommandStack.h"
+#include "src/world_editor/actions/EditorActionRegistry.h"
 #include "src/world_editor/buildings/BuildingDocument.h"
 #include "src/client/world/instances/BuildingTemplateLibrary.h"
 #include "src/world_editor/quests/QuestEditIo.h"
@@ -124,6 +125,27 @@ namespace engine::editor::world
 		/// (le mécanisme de save sera ajouté dans un ticket ultérieur).
 		bool IsDirty() const { return m_dirty; }
 
+		/// Réorganisation UI 2026-07-17 — À appeler après un save réussi
+		/// (`WorldEditorSession::ActionSaveCurrentMap` + persistance chunks) :
+		/// mémorise le sériel courant du `CommandStack` et remet `m_dirty` à
+		/// false. `IsDirtySinceSave` compare ensuite à ce point de référence.
+		/// Effet de bord : écrit `m_savedSerial` et `m_dirty`.
+		void NoteSaved()
+		{
+			m_savedSerial = m_commandStack.Serial();
+			m_dirty = false;
+		}
+
+		/// Réorganisation UI 2026-07-17 — true si l'état édité a changé depuis
+		/// le dernier `NoteSaved` : soit via la pile de commandes (sériel
+		/// différent), soit via un `MarkDirty` explicite. Consommé par
+		/// l'indicateur « Non sauvegardé » de la barre de statut et par la
+		/// modale de confirmation de « Quitter ».
+		bool IsDirtySinceSave() const
+		{
+			return m_dirty || m_commandStack.Serial() != m_savedSerial;
+		}
+
 		/// Retourne true si Init() a été appelé avec succès et que Shutdown()
 		/// n'a pas encore été appelé.
 		bool IsInitialized() const { return m_initialized; }
@@ -150,6 +172,16 @@ namespace engine::editor::world
 		/// tests et les UIs en lecture (HistoryPanel passe par un pointeur
 		/// non-const car il appelle Clear/RewindTo).
 		const CommandStack& GetCommandStack() const { return m_commandStack; }
+
+		/// Réorganisation UI 2026-07-17 — Registre central des actions de
+		/// l'éditeur. Le shell y enregistre à `Init` ses actions autonomes
+		/// (undo/redo, historique, toggles de panneaux, reset layout) ;
+		/// `WorldEditorImGui::RegisterEditorActions` y ajoute les actions qui
+		/// dépendent de la session (save/load/export/import/quit/outils…).
+		/// Consommé par la barre de menu française, la barre d'actions, la
+		/// palette de commandes Ctrl+P et la fenêtre « Raccourcis clavier ».
+		actions::EditorActionRegistry&       MutableActionRegistry()       { return m_actions; }
+		const actions::EditorActionRegistry& GetActionRegistry()     const { return m_actions; }
 
 		/// M100.6 — Retourne l'outil actuellement actif (None par défaut).
 		ActiveTool GetActiveTool() const { return m_activeTool; }
@@ -450,6 +482,9 @@ namespace engine::editor::world
 		engine::editor::world::quests::QuestEditIo m_questEditIo;    // SP4 — E/S authoring quêtes
 		panels::QuestEditorPanel* m_questEditorPtr = nullptr;        // non possédé (dans m_panels)
 		ActiveTool m_activeTool = ActiveTool::None;
+		actions::EditorActionRegistry m_actions; // réorganisation UI 2026-07-17
+		/// Sériel du CommandStack au dernier `NoteSaved` (dirty-tracking).
+		uint64_t m_savedSerial = 0;
 		std::string m_layoutPath;
 		bool m_dirty = false;
 		bool m_initialized = false;

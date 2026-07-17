@@ -36,6 +36,10 @@ namespace engine::editor::world
 	{
 		if (!cmd) return;
 
+		// Toute commande accédant à Push (coalescée ou non) est une mutation
+		// du document : on incrémente le sériel de dirty-tracking avant même
+		// le coalescing (un brushstroke fusionné modifie bien le terrain).
+		++m_serial;
 		cmd->Execute();
 		m_redo.clear();
 		m_redoTimestamps.clear();
@@ -79,6 +83,7 @@ namespace engine::editor::world
 	void CommandStack::Undo()
 	{
 		if (m_undo.empty()) return;
+		++m_serial; // mutation du document (dirty-tracking, cf. Serial()).
 		auto cmd = std::move(m_undo.back());
 		m_undo.pop_back();
 		const uint64_t ts = m_undoTimestamps.back();
@@ -95,6 +100,7 @@ namespace engine::editor::world
 	void CommandStack::Redo()
 	{
 		if (m_redo.empty()) return;
+		++m_serial; // mutation du document (dirty-tracking, cf. Serial()).
 		auto cmd = std::move(m_redo.back());
 		m_redo.pop_back();
 		const uint64_t ts = m_redoTimestamps.back();
@@ -119,6 +125,9 @@ namespace engine::editor::world
 	/// destructeurs des commandes sont appelés par les `clear()`.
 	void CommandStack::Clear()
 	{
+		// Contrat simple : Clear incrémente toujours le sériel (même sur pile
+		// déjà vide) — aucun consommateur ne dépend du cas « clear no-op ».
+		++m_serial;
 		m_undo.clear();
 		m_redo.clear();
 		m_undoTimestamps.clear();

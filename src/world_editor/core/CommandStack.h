@@ -149,6 +149,16 @@ namespace engine::editor::world
 		/// History pour rendre la liste sans exposer les pointeurs internes.
 		std::vector<HistoryEntry> SnapshotHistory() const;
 
+		/// Numéro de série monotone des mutations de la pile (réorganisation
+		/// UI 2026-07-17). Incrémenté par `Push` (y compris coalescé), `Undo`,
+		/// `Redo` et `Clear` ; inchangé par les no-op (Undo/Redo sur pile
+		/// vide). Sert au dirty-tracking « non sauvegardé » de l'éditeur :
+		/// `WorldEditorShell::NoteSaved` mémorise la valeur au moment du save,
+		/// `IsDirtySinceSave` compare. Contrairement à `UndoSize()`, la valeur
+		/// ne « revient » jamais en arrière (un Undo suivi d'un Redo produit
+		/// deux mutations, pas un retour à l'état sériel initial).
+		uint64_t Serial() const { return m_serial; }
+
 	private:
 		/// Évince la commande la plus ancienne (front) si la pile n'est pas
 		/// vide. Met à jour `m_totalBytes`. Appelé en boucle par `Push`.
@@ -160,5 +170,7 @@ namespace engine::editor::world
 		std::vector<uint64_t> m_redoTimestamps;
 		size_t m_totalBytes = 0;
 		CommandStackConfig m_cfg;
+		/// Compteur de mutations pour le dirty-tracking (cf. `Serial()`).
+		uint64_t m_serial = 0;
 	};
 }

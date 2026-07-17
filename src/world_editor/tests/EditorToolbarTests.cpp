@@ -179,6 +179,29 @@ namespace
 		REQUIRE(std::strcmp(deselect.letter, "X") == 0);
 	}
 
+	/// Test (réorganisation UI 2026-07-17) : NoteSaved/IsDirtySinceSave — le
+	/// dirty-tracking consommé par la barre de statut et la modale Quitter.
+	/// Un shell neuf n'est pas dirty ; MarkDirty le rend dirty ; NoteSaved le
+	/// blanchit ; une mutation de la pile de commandes le re-salit.
+	void Test_Shell_DirtySinceSave_Tracking()
+	{
+		WorldEditorShell shell;
+		REQUIRE(!shell.IsDirtySinceSave());
+
+		shell.MarkDirty("test");
+		REQUIRE(shell.IsDirtySinceSave());
+
+		shell.NoteSaved();
+		REQUIRE(!shell.IsDirtySinceSave());
+
+		// Mutation de la pile (Clear incrémente le sériel) → dirty à nouveau.
+		shell.MutableCommandStack().Clear();
+		REQUIRE(shell.IsDirtySinceSave());
+
+		shell.NoteSaved();
+		REQUIRE(!shell.IsDirtySinceSave());
+	}
+
 	/// Test : activation d'un nouvel outil ne déclenche AUCUN side effect
 	/// sur l'état dirty / panels / initialized du shell. C'est un proxy
 	/// observable pour l'invariant de visibilité du terrain : si
@@ -213,6 +236,7 @@ int main()
 	Test_Toolbar_ClickRoutesToSetActiveTool();
 	Test_Toolbar_HitTestOutsideAllButtons_ReturnsFalse();
 	Test_Toolbar_MissingIcon_FallsBackToPlaceholder();
+	Test_Shell_DirtySinceSave_Tracking();
 	Test_NewToolActivation_DoesNotResetCameraOrFrustumCullState();
 
 	if (g_failed > 0)

@@ -32,6 +32,7 @@ namespace
 	using engine::editor::world::ActiveTool;
 	using engine::editor::world::GetToolPaletteGroups;
 	using engine::editor::world::kActiveToolCount;
+	using engine::editor::world::ToolActionId;
 	using engine::editor::world::ToolLabelFr;
 	using engine::editor::world::ToolPaletteGroup;
 
@@ -84,6 +85,23 @@ namespace
 		const char* bogus = ToolLabelFr(static_cast<ActiveTool>(99));
 		REQUIRE(bogus != nullptr && std::strlen(bogus) > 0);
 	}
+
+	/// Test : ToolActionId — id kebab-case "tool." unique par outil ; None
+	/// et hors-enum retournent une chaîne vide (jamais nullptr).
+	void Test_ToolActionId_DefinedAndUnique()
+	{
+		std::set<std::string> ids;
+		for (int v = 1; v <= kActiveToolCount; ++v)
+		{
+			const char* id = ToolActionId(static_cast<ActiveTool>(v));
+			REQUIRE(id != nullptr && std::strlen(id) > 0);
+			REQUIRE(std::strncmp(id, "tool.", 5) == 0);
+			REQUIRE(ids.insert(id).second);
+		}
+		REQUIRE(ToolActionId(ActiveTool::None) != nullptr);
+		REQUIRE(std::strlen(ToolActionId(ActiveTool::None)) == 0);
+		REQUIRE(ToolActionId(static_cast<ActiveTool>(99)) != nullptr);
+	}
 }
 
 int main()
@@ -91,6 +109,7 @@ int main()
 	Test_Groups_CoverAllToolsExactlyOnce();
 	Test_Groups_TitlesAndNonEmpty();
 	Test_ToolLabelFr_DefinedAndUnique();
+	Test_ToolActionId_DefinedAndUnique();
 
 	if (g_failed > 0)
 	{

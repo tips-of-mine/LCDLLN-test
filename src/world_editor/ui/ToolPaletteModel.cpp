@@ -61,4 +61,28 @@ namespace engine::editor::world
 		}
 		return "?";
 	}
+
+	const char* ToolActionId(ActiveTool tool)
+	{
+		switch (tool)
+		{
+			case ActiveTool::None:               return "";
+			case ActiveTool::TerrainSculpt:      return "tool.terrain-sculpt";
+			case ActiveTool::TerrainStamp:       return "tool.terrain-stamp";
+			case ActiveTool::SplatPaint:         return "tool.splat-paint";
+			case ActiveTool::Lake:               return "tool.lake";
+			case ActiveTool::River:              return "tool.river";
+			case ActiveTool::MountainRange:      return "tool.mountain-range";
+			case ActiveTool::ValleyChain:        return "tool.valley-chain";
+			case ActiveTool::RiverNetwork:       return "tool.river-network";
+			case ActiveTool::Coastline:          return "tool.coastline";
+			case ActiveTool::HydraulicErosion:   return "tool.hydraulic-erosion";
+			case ActiveTool::ThermalWindErosion: return "tool.thermal-wind-erosion";
+			case ActiveTool::Cave:               return "tool.cave";
+			case ActiveTool::Overhang:           return "tool.overhang";
+			case ActiveTool::Arch:               return "tool.arch";
+			case ActiveTool::DungeonPortal:      return "tool.dungeon-portal";
+		}
+		return "";
+	}
 }

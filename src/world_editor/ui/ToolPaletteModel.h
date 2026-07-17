@@ -31,4 +31,11 @@ namespace engine::editor::world
 	/// `None` retourne "Aucun outil" ; une valeur hors enum retourne "?".
 	/// Sans effet de bord ; chaînes statiques (durée de vie programme).
 	const char* ToolLabelFr(ActiveTool tool);
+
+	/// Id d'action du registre correspondant à un outil (ex. "tool.lake") —
+	/// mêmes ids que ceux enregistrés par
+	/// `WorldEditorImGui::RegisterEditorActions`. Sert aux surfaces (palette,
+	/// tooltips) pour retrouver raccourci/prédicats au registre. `None` et
+	/// les valeurs hors enum retournent une chaîne vide (pas d'action).
+	const char* ToolActionId(ActiveTool tool);
 }

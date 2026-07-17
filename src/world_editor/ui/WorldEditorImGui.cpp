@@ -945,6 +945,10 @@ namespace engine::editor
 
 					// Palette outils : a gauche, c'est la zone d'action principale.
 					ImGui::DockBuilderDockWindow("Outils", idLeft);
+					// Réorganisation UI 2026-07-17 (PR 2) — la palette
+					// d'outils du shell rejoint le node gauche (onglet à
+					// côté de « Outils »).
+					ImGui::DockBuilderDockWindow("Palette d'outils", idLeft);
 
 					// Inspecteur : panneaux carte / affichage / import / objets / scene sont des onglets a droite.
 					// Scene rejoint cette pile : la docker dans le node central annulait le passthrough et
@@ -1263,7 +1267,8 @@ namespace engine::editor
 			// sliders/options de l'outil actif (Sculpt, Stamp, Splat, Lake,
 			// River, Mountain Range, Valley Chain) y sont rendus
 			// contextuellement.
-			ImGui::TextDisabled("Sélection d'outil : barre d'icônes en haut du viewport.");
+			ImGui::TextDisabled("Sélection d'outil : panneau « Palette d'outils » (à gauche),");
+			ImGui::TextDisabled("menu « Outils », ou raccourcis (Ctrl+Shift+...).");
 			ImGui::TextDisabled("Paramètres : panneau « Tool Properties ».");
 			ImGui::Separator();
 			ImGui::TextWrapped(

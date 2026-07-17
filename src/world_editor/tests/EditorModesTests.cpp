@@ -304,6 +304,65 @@ namespace
 		store.ResetForTesting();
 	}
 
+	/// Réorganisation UI 2026-07-17 — cartes récentes : dédoublonnage (la
+	/// carte remonte en tête), plafond kMaxRecentMaps, zoneId vide ignoré.
+	void Test_UserPrefs_RecentMaps_DedupAndCap()
+	{
+		auto& store = prefs::UserPrefsStore::Instance();
+		store.ResetForTesting();
+
+		store.PushRecentMap("zone_a");
+		store.PushRecentMap("zone_b");
+		store.PushRecentMap("zone_c");
+		REQUIRE(store.GetRecentMaps().size() == 3u);
+		REQUIRE(store.GetRecentMaps()[0] == "zone_c");
+		REQUIRE(store.GetRecentMaps()[2] == "zone_a");
+
+		// Re-push d'une carte existante : elle remonte en tête, pas de doublon.
+		store.PushRecentMap("zone_a");
+		REQUIRE(store.GetRecentMaps().size() == 3u);
+		REQUIRE(store.GetRecentMaps()[0] == "zone_a");
+		REQUIRE(store.GetRecentMaps()[1] == "zone_c");
+
+		// zoneId vide : no-op.
+		store.PushRecentMap("");
+		REQUIRE(store.GetRecentMaps().size() == 3u);
+
+		// Plafond : pousser 10 zones distinctes -> seules les 8 dernières restent.
+		for (int i = 0; i < 10; ++i)
+		{
+			store.PushRecentMap("zone_flood_" + std::to_string(i));
+		}
+		REQUIRE(store.GetRecentMaps().size() == prefs::UserPrefsStore::kMaxRecentMaps);
+		REQUIRE(store.GetRecentMaps()[0] == "zone_flood_9");
+
+		store.ResetForTesting();
+	}
+
+	/// Réorganisation UI 2026-07-17 — round-trip disque des cartes récentes
+	/// (sérialisation JSON symétrique, ordre préservé).
+	void Test_UserPrefs_RecentMaps_RoundTripPersist()
+	{
+		const auto root = MakeTempContentRoot("prefs_recent");
+		auto& store = prefs::UserPrefsStore::Instance();
+		store.ResetForTesting();
+		store.Init(root.string());
+
+		store.PushRecentMap("vallee_de_la_planche");
+		store.PushRecentMap("zone_1");
+
+		store.ResetForTesting();
+		const bool existed = store.Init(root.string());
+		REQUIRE(existed);
+		REQUIRE(store.GetRecentMaps().size() == 2u);
+		REQUIRE(store.GetRecentMaps()[0] == "zone_1");
+		REQUIRE(store.GetRecentMaps()[1] == "vallee_de_la_planche");
+
+		std::error_code ec;
+		std::filesystem::remove_all(root, ec);
+		store.ResetForTesting();
+	}
+
 	void Test_UserPrefs_TolerantToMalformedFile()
 	{
 		const auto root = MakeTempContentRoot("prefs_bad");
@@ -337,6 +396,8 @@ int main()
 	Test_UserPrefs_FirstLaunchCreatesDefaults();
 	Test_UserPrefs_RoundTripPersist();
 	Test_UserPrefs_AtomicSaveLeavesNoTmp();
+	Test_UserPrefs_RecentMaps_DedupAndCap();
+	Test_UserPrefs_RecentMaps_RoundTripPersist();
 	Test_UserPrefs_TolerantToMalformedFile();
 
 	if (g_failed > 0)

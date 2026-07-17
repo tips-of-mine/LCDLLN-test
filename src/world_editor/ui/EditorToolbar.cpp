@@ -139,7 +139,7 @@ namespace engine::editor::world
 					ImVec2(mx(a.x + w * 0.34f), tipY - h * 0.30f),
 					ImVec2(mx(a.x + w * 0.34f), tipY + h * 0.30f), col);
 				dl->PathLineTo(ImVec2(mx(a.x + w * 0.30f), tipY));
-				dl->PathBezierCubicTo(
+				dl->PathBezierCubicCurveTo(
 					ImVec2(mx(b.x), tipY),
 					ImVec2(mx(b.x), b.y),
 					ImVec2(mx(a.x + w * 0.30f), b.y));

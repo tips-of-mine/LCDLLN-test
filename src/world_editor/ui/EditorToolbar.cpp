@@ -101,6 +101,84 @@ namespace engine::editor::world
 	}
 
 #if defined(_WIN32)
+	namespace
+	{
+		/// Polish UI 2026-07-17 — Dessine le glyphe vectoriel d'une action de
+		/// la barre (disquette, flèches undo/redo, coche, export) directement
+		/// via ImDrawList : pas d'assets PNG à pipeliner, rendu net à toute
+		/// échelle. \return false si l'id n'a pas de glyphe mappé — l'appelant
+		/// retombe alors sur la lettre placeholder de l'atlas.
+		bool DrawActionGlyph(ImDrawList* dl, const std::string& actionId,
+			const ImVec2& btnMin, const ImVec2& btnMax, ImU32 col)
+		{
+			const float inset = 11.0f;
+			const ImVec2 a{ btnMin.x + inset, btnMin.y + inset };
+			const ImVec2 b{ btnMax.x - inset, btnMax.y - inset };
+			const float w = b.x - a.x;
+			const float h = b.y - a.y;
+			const float th = 2.0f;
+
+			if (actionId == "file.save")
+			{
+				// Disquette : contour arrondi + volet haut + étiquette basse.
+				dl->AddRect(a, b, col, 2.0f, 0, th);
+				dl->AddRectFilled(ImVec2(a.x + w * 0.30f, a.y + th),
+					ImVec2(a.x + w * 0.70f, a.y + h * 0.35f), col);
+				dl->AddRectFilled(ImVec2(a.x + w * 0.22f, a.y + h * 0.58f),
+					ImVec2(a.x + w * 0.78f, b.y - th), col);
+				return true;
+			}
+			if (actionId == "edit.undo" || actionId == "edit.redo")
+			{
+				// Flèche à queue courbée ; redo = miroir horizontal de undo.
+				const bool mirror = (actionId == "edit.redo");
+				auto mx = [&](float x) { return mirror ? (a.x + b.x - x) : x; };
+				const float tipY = a.y + h * 0.32f;
+				const ImVec2 tip{ mx(a.x), tipY };
+				dl->AddTriangleFilled(tip,
+					ImVec2(mx(a.x + w * 0.34f), tipY - h * 0.30f),
+					ImVec2(mx(a.x + w * 0.34f), tipY + h * 0.30f), col);
+				dl->PathLineTo(ImVec2(mx(a.x + w * 0.30f), tipY));
+				dl->PathBezierCubicTo(
+					ImVec2(mx(b.x), tipY),
+					ImVec2(mx(b.x), b.y),
+					ImVec2(mx(a.x + w * 0.30f), b.y));
+				dl->PathStroke(col, 0, th);
+				return true;
+			}
+			if (actionId == "zone.validate")
+			{
+				// Coche.
+				const ImVec2 pts[3] = {
+					ImVec2(a.x, a.y + h * 0.55f),
+					ImVec2(a.x + w * 0.38f, b.y),
+					ImVec2(b.x, a.y + h * 0.08f),
+				};
+				dl->AddPolyline(pts, 3, col, 0, 2.5f);
+				return true;
+			}
+			if (actionId == "zone.export")
+			{
+				// Plateau ouvert + flèche montante (export vers le runtime).
+				const ImVec2 tray[4] = {
+					ImVec2(a.x, a.y + h * 0.55f),
+					ImVec2(a.x, b.y),
+					ImVec2(b.x, b.y),
+					ImVec2(b.x, a.y + h * 0.55f),
+				};
+				dl->AddPolyline(tray, 4, col, 0, th);
+				const float cx = (a.x + b.x) * 0.5f;
+				dl->AddLine(ImVec2(cx, a.y + h * 0.18f), ImVec2(cx, a.y + h * 0.72f), col, th);
+				dl->AddTriangleFilled(
+					ImVec2(cx, a.y - 1.0f),
+					ImVec2(cx - w * 0.24f, a.y + h * 0.30f),
+					ImVec2(cx + w * 0.24f, a.y + h * 0.30f), col);
+				return true;
+			}
+			return false;
+		}
+	}
+
 	void EditorToolbar::Render()
 	{
 		// Construction de la fenêtre : ancrée sous le menu bar, largeur =
@@ -170,15 +248,18 @@ namespace engine::editor::world
 			}
 			dl->AddRectFilled(buttonScreenMin, buttonScreenMax, baseColor, 4.0f);
 
-			// Lettre centrale (placeholder — un futur ticket d'art remplacera
-			// par de vraies icônes PNG, cf. ToolbarIconAtlas).
-			const ImVec2 textSize = ImGui::CalcTextSize(style.letter);
-			const ImVec2 textPos{
-				buttonScreenMin.x + (kButtonSizePx - textSize.x) * 0.5f,
-				buttonScreenMin.y + (kButtonSizePx - textSize.y) * 0.5f };
-			dl->AddText(textPos,
-				enabled ? IM_COL32_WHITE : IM_COL32(160, 160, 160, 200),
-				style.letter);
+			// Glyphe vectoriel (polish 2026-07-17) ; lettre placeholder de
+			// l'atlas en repli si l'id n'est pas mappé.
+			const ImU32 glyphCol = enabled
+				? IM_COL32_WHITE : IM_COL32(160, 160, 160, 200);
+			if (!DrawActionGlyph(dl, a->id, buttonScreenMin, buttonScreenMax, glyphCol))
+			{
+				const ImVec2 textSize = ImGui::CalcTextSize(style.letter);
+				const ImVec2 textPos{
+					buttonScreenMin.x + (kButtonSizePx - textSize.x) * 0.5f,
+					buttonScreenMin.y + (kButtonSizePx - textSize.y) * 0.5f };
+				dl->AddText(textPos, glyphCol, style.letter);
+			}
 
 			dl->AddRect(buttonScreenMin, buttonScreenMax,
 				IM_COL32(40, 40, 40, 200), 4.0f, 0, 1.5f);

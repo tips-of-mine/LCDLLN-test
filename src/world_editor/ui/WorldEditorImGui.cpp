@@ -904,6 +904,7 @@ namespace engine::editor
 		RenderAboutWindow();
 		RenderCommandPalette();
 		RenderShortcutsWindow();
+		RenderWelcomeOverlay();
 
 		// M100.46 incrément 3 — dessine la popup modale Zone Presets
 		// (no-op si non ouverte ou Shell non branché). m_cfg passé pour
@@ -3505,6 +3506,89 @@ namespace engine::editor
 			ImGui::TextUnformatted(s.label);
 			ImGui::SameLine(320.0f);
 			ImGui::TextDisabled("%s", s.keys);
+		}
+
+		ImGui::End();
+	}
+
+	void WorldEditorImGui::RenderWelcomeOverlay()
+	{
+		if (m_welcomeDismissed) return;
+		if (m_session == nullptr || m_cfg == nullptr) return;
+		// Une carte est « chargée » dès que le document référence une
+		// heightmap (même critère que l'état Terrain du panneau Outils).
+		if (!m_session->Doc().heightmapContentRelativePath.empty()) return;
+
+		namespace weact = engine::editor::world::actions;
+		namespace prefs = engine::editor::world::prefs;
+
+		const ImGuiViewport* vp = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(
+			ImVec2(vp->WorkPos.x + vp->WorkSize.x * 0.5f,
+			       vp->WorkPos.y + vp->WorkSize.y * 0.42f),
+			ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		ImGui::SetNextWindowSize(ImVec2(440.0f, 0.0f), ImGuiCond_Always);
+		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDocking
+			| ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize
+			| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize;
+		if (!ImGui::Begin("Bienvenue", nullptr, flags))
+		{
+			ImGui::End();
+			return;
+		}
+
+		ImGui::TextUnformatted("LCDLLN World Editor");
+		ImGui::TextDisabled("Aucune carte n'est chargée pour l'instant.");
+		ImGui::Spacing();
+
+		// Action principale : l'assistant guidé de création de zone.
+		if (ImGui::Button("Nouvelle zone (assistant)...", ImVec2(-1.0f, 0.0f)))
+		{
+			if (m_shell != nullptr)
+			{
+				const weact::EditorAction* a =
+					m_shell->GetActionRegistry().Find("file.new-zone-wizard");
+				if (a != nullptr && a->execute) { a->execute(); }
+			}
+		}
+
+		ImGui::SeparatorText("Cartes récentes");
+		{
+			if (!m_session->AvailableMapsScanned())
+			{
+				m_session->RefreshAvailableMaps(*m_cfg);
+			}
+			const std::vector<std::string>& recents =
+				prefs::UserPrefsStore::Instance().GetRecentMaps();
+			const std::vector<std::string>& mapIds = m_session->AvailableMapIds();
+			size_t shown = 0;
+			for (const std::string& zoneId : recents)
+			{
+				if (shown >= 5u) break;
+				const bool available =
+					std::find(mapIds.begin(), mapIds.end(), zoneId) != mapIds.end();
+				if (ImGui::Selectable(zoneId.c_str(), false,
+					available ? ImGuiSelectableFlags_None : ImGuiSelectableFlags_Disabled)
+					&& available
+					&& m_session->ActionLoadMapByZoneId(*m_cfg, zoneId))
+				{
+					prefs::UserPrefsStore::Instance().PushRecentMap(zoneId);
+				}
+				++shown;
+			}
+			if (shown == 0u)
+			{
+				ImGui::TextDisabled("Aucune carte récente.");
+			}
+		}
+
+		ImGui::Spacing();
+		ImGui::TextDisabled("Créer une carte vide : panneau « Carte » (à droite),");
+		ImGui::TextDisabled("section « Nouvelle carte ». Toutes les actions : Ctrl+P.");
+		ImGui::Spacing();
+		if (ImGui::Button("Fermer"))
+		{
+			m_welcomeDismissed = true;
 		}
 
 		ImGui::End();

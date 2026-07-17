@@ -344,6 +344,7 @@ add_library(engine_core
   src/world_editor/ui/ToolPaletteModel.cpp
   src/world_editor/panels/ToolPalettePanel.cpp
   src/world_editor/ui/CommandPaletteModel.cpp
+  src/world_editor/ui/EditorTheme.cpp
   # M101.4 / M101.5 — editeur de routines nodal (panel + commandes + palette/inspecteur).
   src/world_editor/routine/RoutineGraphCommands.cpp
   src/world_editor/routine/RoutineGraphPanel.cpp

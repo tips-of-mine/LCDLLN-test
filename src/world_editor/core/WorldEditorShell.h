@@ -134,6 +134,18 @@ namespace engine::editor::world
 		const std::vector<std::unique_ptr<IPanel>>& Panels() const { return m_panels; }
 		std::vector<std::unique_ptr<IPanel>>&       MutablePanels()     { return m_panels; }
 
+		/// Polish UI 2026-07-17 — Annule la lecture différée du layout dock du
+		/// shell (`editor_world_layout.ini`, chargée normalement au 1er
+		/// RenderFrame). Appelée par `WorldEditorImGui::ResetDockLayout` lors
+		/// d'une reconstruction de disposition (bump de version) : l'ancien
+		/// ini ne doit pas réappliquer les positions périmées par-dessus la
+		/// disposition unifiée fraîchement posée.
+		void DiscardPendingLayoutLoad() { m_pendingLayoutLoad = false; }
+
+		/// Chemin du fichier de layout dock du shell (lecture seule) — permet
+		/// à la reconstruction de disposition de supprimer aussi ce fichier.
+		const std::string& LayoutPath() const { return m_layoutPath; }
+
 		/// Quand l'éditeur monde tourne dans le binaire `lcdlln_world_editor.exe`,
 		/// la barre de menu M43.x (`WorldEditorImGui::BuildUi`) prend la main
 		/// avec un menu français complet (incluant Zone Presets M100.46).

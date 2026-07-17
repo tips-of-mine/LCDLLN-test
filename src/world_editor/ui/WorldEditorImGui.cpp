@@ -13,6 +13,7 @@
 #include "src/world_editor/actions/EditorActionRegistry.h"
 #include "src/world_editor/ui/ToolbarIconAtlas.h" // libellé FR de l'outil actif (barre de statut)
 #include "src/world_editor/ui/CommandPaletteModel.h" // filtrage pur de la palette Ctrl+P (PR 3)
+#include "src/world_editor/ui/EditorTheme.h" // thème sombre éditeur (polish 2026-07-17)
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/WorldEditorShell.h"
@@ -84,6 +85,14 @@ namespace engine::editor
 #if defined(_WIN32)
 	namespace
 	{
+		/// Polish UI 2026-07-17 — version de la disposition de fenêtres par
+		/// défaut. À BUMPER à chaque évolution de la disposition (ajout de
+		/// panneau docké, réorganisation des nodes…) : les profils dont
+		/// `user_prefs.json` porte une version différente voient leur
+		/// disposition reconstruite automatiquement au boot (les .ini
+		/// périmés éparpillaient les nouvelles fenêtres en flottant).
+		constexpr int kEditorLayoutVersion = 2;
+
 		void TryPersistMovementLayoutToUserSettings(std::string_view layout)
 		{
 			const char* path = "user_settings.json";
@@ -483,6 +492,13 @@ namespace engine::editor
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		// Pas de NavEnableKeyboard : sinon io.WantCaptureKeyboard reste souvent vrai et bloque WASD (camera FPS).
 		ImGui::StyleColorsDark();
+		// Polish UI 2026-07-17 — thème sombre dédié à l'éditeur monde
+		// (anthracite + accent doré, arrondis, paddings). Uniquement pour le
+		// binaire éditeur : le client de jeu garde ses styles d'UI propres.
+		if (isWorldEditorExe)
+		{
+			engine::editor::world::ApplyWorldEditorTheme();
+		}
 
 		// Polices auth (Windlass / Morpheus) chargees dans l'atlas ImGui AVANT ImGui_ImplVulkan_Init -
 		// celui-ci construit la texture des fonts une seule fois a partir de l'atlas. Sans ce chargement,
@@ -856,6 +872,26 @@ namespace engine::editor
 		// rendues depuis ce registre (spec docs/superpowers/specs/
 		// 2026-07-17-editor-menus-toolbar-reorg-design.md).
 		RegisterEditorActions();
+		// Polish UI 2026-07-17 — disposition versionnée : si le profil
+		// utilisateur vient d'une version de disposition antérieure (ou n'en
+		// a jamais vue), on reconstruit automatiquement la disposition par
+		// défaut au lieu de laisser l'ancien .ini éparpiller les nouvelles
+		// fenêtres en flottant (bug constaté au premier build mergé).
+		if (!m_layoutVersionChecked)
+		{
+			m_layoutVersionChecked = true;
+			auto& prefsStore = engine::editor::world::prefs::UserPrefsStore::Instance();
+			const int seenVersion = prefsStore.IsInitialized()
+				? prefsStore.GetLayoutVersion() : kEditorLayoutVersion;
+			if (seenVersion != kEditorLayoutVersion)
+			{
+				ResetDockLayout();
+				prefsStore.SetLayoutVersion(kEditorLayoutVersion);
+				LOG_INFO(EditorWorld,
+					"[WorldEditorImGui] Disposition reconstruite (version {} -> {})",
+					seenVersion, kEditorLayoutVersion);
+			}
+		}
 		// PR 3 — Ctrl+P ouvre la palette de commandes (détection ImGui
 		// directe : pas de plumbing Engine nécessaire).
 		if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_P))
@@ -868,6 +904,7 @@ namespace engine::editor
 		RenderAboutWindow();
 		RenderCommandPalette();
 		RenderShortcutsWindow();
+		RenderWelcomeOverlay();
 
 		// M100.46 incrément 3 — dessine la popup modale Zone Presets
 		// (no-op si non ouverte ou Shell non branché). m_cfg passé pour
@@ -952,14 +989,20 @@ namespace engine::editor
 					ImGuiID idBottom = 0;
 					ImGui::DockBuilderSplitNode(idCenter, ImGuiDir_Down, 0.18f, &idBottom, &idCenter);
 
-					// Palette outils : a gauche, c'est la zone d'action principale.
-					ImGui::DockBuilderDockWindow("Outils", idLeft);
-					// Réorganisation UI 2026-07-17 (PR 2) — la palette
-					// d'outils du shell rejoint le node gauche (onglet à
-					// côté de « Outils »).
-					ImGui::DockBuilderDockWindow("Palette d'outils", idLeft);
+					// Polish UI 2026-07-17 — disposition UNIFIÉE : les panneaux
+					// du SHELL (M100.x) sont dockés ici aussi, par nom de
+					// fenêtre, dans les mêmes nodes que les fenêtres session
+					// (M43.x). Fini les deux systèmes de disposition
+					// superposés qui laissaient flotter la moitié des
+					// fenêtres (capture utilisateur du build #976-979).
 
-					// Inspecteur : panneaux carte / affichage / import / objets / scene sont des onglets a droite.
+					// Gauche : la palette d'outils d'abord (onglet actif au
+					// premier lancement), la fenêtre « Outils » (infos) derrière.
+					ImGui::DockBuilderDockWindow("Palette d'outils", idLeft);
+					ImGui::DockBuilderDockWindow("Outils", idLeft);
+
+					// Droite : onglets carte / affichage / atmosphère /
+					// import / objets + panneaux scène du shell.
 					// Scene rejoint cette pile : la docker dans le node central annulait le passthrough et
 					// bloquait l'interaction 3D (regression P1). En tant qu'onglet a droite, son contenu
 					// (diagnostic camera) reste accessible et le node central reste vide -> 3D visible
@@ -969,13 +1012,26 @@ namespace engine::editor
 					ImGui::DockBuilderDockWindow("Atmosphere", idRight);
 					ImGui::DockBuilderDockWindow("Import assets", idRight);
 					ImGui::DockBuilderDockWindow("Objets sur la carte", idRight);
+					ImGui::DockBuilderDockWindow("Outliner", idRight);
+					ImGui::DockBuilderDockWindow("Inspector", idRight);
+					ImGui::DockBuilderDockWindow("Tool Properties", idRight);
+					// Panneaux avancés masqués par défaut : pré-dockés pour
+					// apparaître au bon endroit quand le menu Fenêtre les ouvre.
+					ImGui::DockBuilderDockWindow("Quest Editor", idRight);
+					ImGui::DockBuilderDockWindow("Building Editor", idRight);
+					ImGui::DockBuilderDockWindow("Surface Table", idRight);
+					ImGui::DockBuilderDockWindow("Collision Editor", idRight);
+					ImGui::DockBuilderDockWindow("History", idRight);
+					ImGui::DockBuilderDockWindow("Asset Browser", idBottom);
+					ImGui::DockBuilderDockWindow("Console", idBottom);
+					ImGui::DockBuilderDockWindow("Routines", idBottom);
 					// La fenêtre « Camera (aide) » n'est PAS dockée — ses flags
 					// `NoMouseInputs` polluent le tab bar du node quand elle
 					// est dans le même groupe que d'autres tabs (cause des
 					// onglets non cliquables, bug confirmé utilisateur).
 					// Elle est opt-in via `Vue > Aide camera` et flotte.
 
-					// Statut en bas, plein largeur.
+					// Statut en bas, plein largeur (onglet actif du node bas).
 					ImGui::DockBuilderDockWindow("Statut", idBottom);
 
 					ImGui::DockBuilderFinish(dockId);
@@ -3114,6 +3170,19 @@ namespace engine::editor
 		// au prochain run).
 		std::error_code ec;
 		std::filesystem::remove("world_editor_imgui.ini", ec);
+		// Polish UI 2026-07-17 — la disposition est désormais UNIFIÉE : les
+		// panneaux du shell sont dockés par la même disposition par défaut.
+		// L'ancien layout du shell (`editor_world_layout.ini`) ne doit donc
+		// ni être rechargé (lecture différée annulée) ni survivre sur disque
+		// (il réappliquerait des positions périmées par-dessus).
+		if (m_shell != nullptr)
+		{
+			m_shell->DiscardPendingLayoutLoad();
+			if (!m_shell->LayoutPath().empty())
+			{
+				std::filesystem::remove(m_shell->LayoutPath(), ec);
+			}
+		}
 		if (m_session)
 		{
 			m_session->SetStatus("Disposition réinitialisée.");
@@ -3437,6 +3506,89 @@ namespace engine::editor
 			ImGui::TextUnformatted(s.label);
 			ImGui::SameLine(320.0f);
 			ImGui::TextDisabled("%s", s.keys);
+		}
+
+		ImGui::End();
+	}
+
+	void WorldEditorImGui::RenderWelcomeOverlay()
+	{
+		if (m_welcomeDismissed) return;
+		if (m_session == nullptr || m_cfg == nullptr) return;
+		// Une carte est « chargée » dès que le document référence une
+		// heightmap (même critère que l'état Terrain du panneau Outils).
+		if (!m_session->Doc().heightmapContentRelativePath.empty()) return;
+
+		namespace weact = engine::editor::world::actions;
+		namespace prefs = engine::editor::world::prefs;
+
+		const ImGuiViewport* vp = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(
+			ImVec2(vp->WorkPos.x + vp->WorkSize.x * 0.5f,
+			       vp->WorkPos.y + vp->WorkSize.y * 0.42f),
+			ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		ImGui::SetNextWindowSize(ImVec2(440.0f, 0.0f), ImGuiCond_Always);
+		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDocking
+			| ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize
+			| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize;
+		if (!ImGui::Begin("Bienvenue", nullptr, flags))
+		{
+			ImGui::End();
+			return;
+		}
+
+		ImGui::TextUnformatted("LCDLLN World Editor");
+		ImGui::TextDisabled("Aucune carte n'est chargée pour l'instant.");
+		ImGui::Spacing();
+
+		// Action principale : l'assistant guidé de création de zone.
+		if (ImGui::Button("Nouvelle zone (assistant)...", ImVec2(-1.0f, 0.0f)))
+		{
+			if (m_shell != nullptr)
+			{
+				const weact::EditorAction* a =
+					m_shell->GetActionRegistry().Find("file.new-zone-wizard");
+				if (a != nullptr && a->execute) { a->execute(); }
+			}
+		}
+
+		ImGui::SeparatorText("Cartes récentes");
+		{
+			if (!m_session->AvailableMapsScanned())
+			{
+				m_session->RefreshAvailableMaps(*m_cfg);
+			}
+			const std::vector<std::string>& recents =
+				prefs::UserPrefsStore::Instance().GetRecentMaps();
+			const std::vector<std::string>& mapIds = m_session->AvailableMapIds();
+			size_t shown = 0;
+			for (const std::string& zoneId : recents)
+			{
+				if (shown >= 5u) break;
+				const bool available =
+					std::find(mapIds.begin(), mapIds.end(), zoneId) != mapIds.end();
+				if (ImGui::Selectable(zoneId.c_str(), false,
+					available ? ImGuiSelectableFlags_None : ImGuiSelectableFlags_Disabled)
+					&& available
+					&& m_session->ActionLoadMapByZoneId(*m_cfg, zoneId))
+				{
+					prefs::UserPrefsStore::Instance().PushRecentMap(zoneId);
+				}
+				++shown;
+			}
+			if (shown == 0u)
+			{
+				ImGui::TextDisabled("Aucune carte récente.");
+			}
+		}
+
+		ImGui::Spacing();
+		ImGui::TextDisabled("Créer une carte vide : panneau « Carte » (à droite),");
+		ImGui::TextDisabled("section « Nouvelle carte ». Toutes les actions : Ctrl+P.");
+		ImGui::Spacing();
+		if (ImGui::Button("Fermer"))
+		{
+			m_welcomeDismissed = true;
 		}
 
 		ImGui::End();

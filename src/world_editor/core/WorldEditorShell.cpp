@@ -341,6 +341,32 @@ namespace engine::editor::world
 			static_cast<panels::ToolPropertiesPanel*>(m_panels[5].get())->SetShell(this);
 		}
 
+		// Polish UI 2026-07-17 — visibilité par défaut « simple au premier
+		// regard » : seuls les panneaux du flux principal (Palette d'outils,
+		// Outliner, Inspector, Tool Properties) démarrent visibles. Les
+		// panneaux avancés restent accessibles via le menu Fenêtre (toggles
+		// du registre d'actions) et sont pré-dockés par la disposition par
+		// défaut pour apparaître au bon endroit à l'ouverture.
+		{
+			static constexpr const char* kHiddenByDefault[] = {
+				"Asset Browser", "Console", "History", "Surface Table",
+				"Collision Editor", "Building Editor", "Quest Editor",
+				"Routines",
+			};
+			for (auto& panel : m_panels)
+			{
+				if (!panel) continue;
+				for (const char* hidden : kHiddenByDefault)
+				{
+					if (std::strcmp(panel->GetName(), hidden) == 0)
+					{
+						panel->SetVisible(false);
+						break;
+					}
+				}
+			}
+		}
+
 		// Réorganisation UI 2026-07-17 — actions autonomes du shell (undo/
 		// redo, historique, toggles panneaux). Les actions dépendant de la
 		// session (save/load/export…) sont ajoutées par

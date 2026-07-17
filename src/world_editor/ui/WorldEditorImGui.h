@@ -338,6 +338,21 @@ namespace engine::editor
 		bool m_paletteFocusQuery = false;
 		/// Visibilité de la fenêtre « Raccourcis clavier » (lecture seule).
 		bool m_showShortcutsWindow = false;
+		/// Polish UI 2026-07-17 — true après la vérification (une fois par
+		/// session) de `UserPrefs::editorLayoutVersion` contre la constante
+		/// code : une version différente déclenche la reconstruction
+		/// automatique de la disposition (cf. BuildUi / ResetDockLayout).
+		bool m_layoutVersionChecked = false;
+		/// Polish UI 2026-07-17 — true quand l'utilisateur a fermé l'écran
+		/// d'accueil « aucune carte » pour la session courante (non persisté).
+		bool m_welcomeDismissed = false;
+
+		/// Polish UI 2026-07-17 — Rend l'écran d'accueil centré tant
+		/// qu'aucune carte n'est chargée (heightmap du document vide) :
+		/// bouton « Nouvelle zone (assistant)… », cartes récentes cliquables,
+		/// renvoi vers le panneau Carte. Fermable (`m_welcomeDismissed`),
+		/// disparaît automatiquement dès qu'une carte est chargée.
+		void RenderWelcomeOverlay();
 
 		/// Ouvre la palette de commandes : réinitialise requête + sélection
 		/// et arme le focus clavier sur le champ de recherche.

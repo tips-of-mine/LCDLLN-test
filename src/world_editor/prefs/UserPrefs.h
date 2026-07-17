@@ -29,6 +29,13 @@ namespace engine::editor::world::prefs
 		/// `UserPrefsStore::kMaxRecentMaps`. Alimente le sous-menu
 		/// « Fichier > Cartes récentes ».
 		std::vector<std::string>                     recentMapIds;
+		/// Polish UI 2026-07-17 — version de la disposition de fenêtres que
+		/// cet utilisateur a déjà vue. Si différente de la constante
+		/// `kEditorLayoutVersion` du code (bumpée à chaque évolution de la
+		/// disposition par défaut), l'éditeur reconstruit automatiquement la
+		/// disposition (suppression des .ini + re-pose) au boot. 0 = jamais
+		/// posée (anciens profils).
+		int                                          editorLayoutVersion = 0;
 	};
 
 	/// Version de schéma courante écrite dans le champ `version`.

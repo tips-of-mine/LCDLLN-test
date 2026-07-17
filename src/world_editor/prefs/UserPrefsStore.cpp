@@ -234,6 +234,11 @@ namespace engine::editor::world::prefs
 				parsed.recentMapIds.resize(kMaxRecentMaps);
 			}
 		}
+		if (SeekKey(json, "editorLayoutVersion", pos))
+		{
+			try { parsed.editorLayoutVersion = std::stoi(json.substr(pos, 16)); }
+			catch (...) { parsed.editorLayoutVersion = 0; }
+		}
 
 		m_prefs = std::move(parsed);
 	}
@@ -287,8 +292,9 @@ namespace engine::editor::world::prefs
 				out << "    \"" << EscapeJson(id) << "\"";
 				first = false;
 			}
-			out << (first ? "]" : "\n  ]") << "\n";
+			out << (first ? "]" : "\n  ]") << ",\n";
 		}
+		out << "  \"editorLayoutVersion\": " << m_prefs.editorLayoutVersion << "\n";
 		out << "}\n";
 
 		// Sauvegarde atomique : .tmp puis rename.
@@ -372,6 +378,13 @@ namespace engine::editor::world::prefs
 		{
 			recents.resize(kMaxRecentMaps);
 		}
+		(void)SaveToDisk();
+	}
+
+	void UserPrefsStore::SetLayoutVersion(int version)
+	{
+		if (m_prefs.editorLayoutVersion == version) return;
+		m_prefs.editorLayoutVersion = version;
 		(void)SaveToDisk();
 	}
 

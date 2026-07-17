@@ -11,6 +11,7 @@
 #include "src/world_editor/panels/ToolPropertiesPanel.h"
 #include "src/world_editor/panels/HistoryPanel.h"
 #include "src/world_editor/panels/SurfaceTablePanel.h"
+#include "src/world_editor/panels/ToolPalettePanel.h"
 #include "src/world_editor/panels/CollisionEditorPanel.h"
 #include "src/world_editor/routine/RoutineGraphPanel.h"
 #include "src/world_editor/ui/EditorToolbar.h"
@@ -148,6 +149,13 @@ namespace engine::editor::world
 			m_questEditorPtr = questEditor.get();
 			m_panels.emplace_back(std::move(questEditor));
 		}
+
+		// Réorganisation UI 2026-07-17 (PR 2) — palette d'outils latérale
+		// (remplace la rangée d'outils M100.35 de l'EditorToolbar, devenue
+		// barre d'actions). Ajoutée en FIN de liste : les raccourcis F1..F12
+		// et plusieurs branchements mappent des INDICES FIXES dans m_panels
+		// (Scene=0 … ToolProperties=5) — ne jamais insérer avant.
+		m_panels.emplace_back(std::make_unique<panels::ToolPalettePanel>(this));
 
 #if defined(_WIN32)
 		std::error_code ec;

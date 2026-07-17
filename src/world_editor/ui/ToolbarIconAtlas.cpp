@@ -48,4 +48,17 @@ namespace engine::editor::world
 	{
 		return { 0xFFB04040u, "X", "Désélectionner l'outil", true };
 	}
+
+	ToolIconStyle ToolbarIconAtlas::GetForAction(std::string_view actionId)
+	{
+		// Palette distincte de celle des outils : verts/bleus « action »
+		// plutôt que les bruns « terrain ». Lettres = initiale du verbe FR.
+		if (actionId == "file.save")     return { 0xFF2F7D4Fu, "S", "Sauvegarder la carte courante", true };
+		if (actionId == "edit.undo")     return { 0xFF4A6FA5u, "Z", "Annuler",   true };
+		if (actionId == "edit.redo")     return { 0xFF4A8FA5u, "Y", "Rétablir",  true };
+		if (actionId == "zone.validate") return { 0xFF8A7A2Du, "V", "Valider la zone", true };
+		if (actionId == "zone.export")   return { 0xFF7A4A8Au, "E", "Exporter en runtime", true };
+		// Fallback : même convention que les outils non mappés.
+		return { 0xFF606060u, "?", "Bientôt disponible", false };
+	}
 }

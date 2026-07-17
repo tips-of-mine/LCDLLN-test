@@ -1,6 +1,13 @@
+// EditorToolbar — barre d'actions (réorganisation UI 2026-07-17).
+// Remplace la rangée d'outils M100.35 : les outils vivent désormais dans la
+// palette latérale (ToolPalettePanel) ; la barre du haut ne porte plus que
+// les actions générales du registre (save / undo / redo / validate / export).
+
 #include "src/world_editor/ui/EditorToolbar.h"
 
 #include "src/world_editor/ui/ToolbarIconAtlas.h"
+
+#include <algorithm>
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -11,23 +18,22 @@ namespace engine::editor::world
 	EditorToolbar::EditorToolbar(WorldEditorShell& shell)
 		: m_shell(shell)
 	{
-		m_orderedTools = {
-			ActiveTool::TerrainSculpt,
-			ActiveTool::TerrainStamp,
-			ActiveTool::SplatPaint,
-			ActiveTool::Lake,
-			ActiveTool::River,
-			ActiveTool::MountainRange,
-			ActiveTool::ValleyChain,
-			ActiveTool::RiverNetwork,     // M100.36
-			ActiveTool::Coastline,        // M100.37
-			ActiveTool::HydraulicErosion,   // M100.38
-			ActiveTool::ThermalWindErosion, // M100.39 (clôt Phase 2.5)
-			ActiveTool::Cave,               // M100.40 (démarre Phase 11)
-			ActiveTool::Overhang,           // M100.41
-			ActiveTool::Arch,               // M100.42
-			ActiveTool::DungeonPortal,      // M100.43
+		// Ordre d'affichage. Groupes visuels : Sauvegarder | Annuler/Rétablir
+		// | Valider/Exporter (indices 1 et 3 démarrent un nouveau groupe).
+		m_orderedActionIds = {
+			"file.save",
+			"edit.undo",
+			"edit.redo",
+			"zone.validate",
+			"zone.export",
 		};
+		m_groupStartIndices = { 1u, 3u };
+	}
+
+	bool EditorToolbar::IsGroupStart(size_t idx) const
+	{
+		return std::find(m_groupStartIndices.begin(), m_groupStartIndices.end(), idx)
+			!= m_groupStartIndices.end();
 	}
 
 	ToolbarLayout EditorToolbar::BuildLayout(float viewportWidthPx,
@@ -37,35 +43,32 @@ namespace engine::editor::world
 		layout.toolbarY      = menuBarHeightPx;
 		layout.toolbarHeight = kToolbarHeightPx;
 		layout.toolbarWidth  = viewportWidthPx;
+		layout.buttons.reserve(m_orderedActionIds.size());
 
-		// Le bouton X de désélection est ajouté en queue : (N outils) + 1.
-		const size_t totalButtons = m_orderedTools.size() + 1u;
-		layout.buttons.reserve(totalButtons);
+		const actions::EditorActionRegistry& reg = m_shell.GetActionRegistry();
 
 		float cursorX = kToolbarPaddingPx;
 		const float cursorY = layout.toolbarY + kToolbarPaddingPx;
-		for (ActiveTool tool : m_orderedTools)
+		for (size_t i = 0; i < m_orderedActionIds.size(); ++i)
 		{
+			// Un id absent du registre (ex. actions session non enregistrées
+			// en mode shell in-game) ne produit pas de bouton.
+			if (reg.Find(m_orderedActionIds[i]) == nullptr) continue;
+
+			if (IsGroupStart(i) && !layout.buttons.empty())
+			{
+				cursorX += kGroupSpacingPx;
+			}
+
 			ToolbarButtonRect r;
 			r.x = cursorX;
 			r.y = cursorY;
 			r.width = kButtonSizePx;
 			r.height = kButtonSizePx;
-			r.tool = tool;
-			layout.buttons.push_back(r);
+			r.actionId = m_orderedActionIds[i];
+			layout.buttons.push_back(std::move(r));
 			cursorX += kButtonSizePx + kButtonSpacingPx;
 		}
-
-		// Bouton de désélection (X) — un petit espace supplémentaire avant
-		// pour le séparer visuellement des autres outils.
-		cursorX += kButtonSpacingPx;
-		ToolbarButtonRect deselect;
-		deselect.x = cursorX;
-		deselect.y = cursorY;
-		deselect.width = kButtonSizePx;
-		deselect.height = kButtonSizePx;
-		deselect.tool = ActiveTool::None;
-		layout.buttons.push_back(deselect);
 
 		return layout;
 	}
@@ -90,18 +93,20 @@ namespace engine::editor::world
 		size_t buttonIndex)
 	{
 		if (buttonIndex >= layout.buttons.size()) return;
-		m_shell.SetActiveTool(layout.buttons[buttonIndex].tool);
+		const actions::EditorAction* a =
+			m_shell.GetActionRegistry().Find(layout.buttons[buttonIndex].actionId);
+		if (a == nullptr) return;
+		if (!actions::EditorActionRegistry::IsEnabled(*a)) return;
+		if (a->execute) { a->execute(); }
 	}
 
 #if defined(_WIN32)
 	void EditorToolbar::Render()
 	{
-		// Construction de la fenêtre toolbar : ancrée sous le menu bar,
-		// largeur = viewport principal, hauteur fixe. Le menu bar ImGui
-		// occupe `ImGui::GetFrameHeight()` pixels en haut du viewport
-		// principal.
+		// Construction de la fenêtre : ancrée sous le menu bar, largeur =
+		// viewport principal, hauteur fixe (mêmes flags que la toolbar
+		// M100.35 — la barre ne couvre jamais la zone 3D).
 		const ImGuiViewport* vp = ImGui::GetMainViewport();
-		const float menuBarH = ImGui::GetFrameHeight();
 		const ImVec2 toolbarPos{ vp->WorkPos.x, vp->WorkPos.y };
 		const ImVec2 toolbarSize{ vp->WorkSize.x, kToolbarHeightPx };
 
@@ -126,17 +131,25 @@ namespace engine::editor::world
 			return;
 		}
 
-		const ActiveTool current = m_shell.GetActiveTool();
-		const ImU32 activeBg = IM_COL32(255, 196, 64, 96);
-
+		const actions::EditorActionRegistry& reg = m_shell.GetActionRegistry();
 		ImDrawList* dl = ImGui::GetWindowDrawList();
 		const ImVec2 windowOrigin = ImGui::GetCursorScreenPos();
 
 		float cursorX = 0.0f;
-		for (size_t i = 0; i < m_orderedTools.size(); ++i)
+		bool anyDrawn = false;
+		for (size_t i = 0; i < m_orderedActionIds.size(); ++i)
 		{
-			const ActiveTool tool = m_orderedTools[i];
-			const ToolIconStyle style = ToolbarIconAtlas::Get(tool);
+			const actions::EditorAction* a = reg.Find(m_orderedActionIds[i]);
+			if (a == nullptr) continue;
+
+			if (IsGroupStart(i) && anyDrawn)
+			{
+				cursorX += kGroupSpacingPx;
+			}
+			anyDrawn = true;
+
+			const bool enabled = actions::EditorActionRegistry::IsEnabled(*a);
+			const ToolIconStyle style = ToolbarIconAtlas::GetForAction(a->id);
 
 			ImGui::PushID(static_cast<int>(i));
 			ImGui::SetCursorPosX(cursorX);
@@ -149,93 +162,56 @@ namespace engine::editor::world
 				buttonScreenMin.x + kButtonSizePx,
 				buttonScreenMin.y + kButtonSizePx };
 
-			// Background du bouton : ambre si actif, sinon couleur de
-			// l'icône (placeholder). Le rect est dessiné avant
-			// l'InvisibleButton pour qu'ImGui ne mange pas le rect.
-			const bool isActive = (current == tool);
-			const ImU32 baseColor = isActive
-				? activeBg
-				: static_cast<ImU32>(style.bgColorArgb);
+			// Fond : couleur de l'icône, assombrie si l'action est grisée.
+			ImU32 baseColor = static_cast<ImU32>(style.bgColorArgb);
+			if (!enabled)
+			{
+				baseColor = IM_COL32(70, 70, 70, 160);
+			}
 			dl->AddRectFilled(buttonScreenMin, buttonScreenMax, baseColor, 4.0f);
 
-			// Lettre centrale (placeholder).
+			// Lettre centrale (placeholder — un futur ticket d'art remplacera
+			// par de vraies icônes PNG, cf. ToolbarIconAtlas).
 			const ImVec2 textSize = ImGui::CalcTextSize(style.letter);
 			const ImVec2 textPos{
 				buttonScreenMin.x + (kButtonSizePx - textSize.x) * 0.5f,
 				buttonScreenMin.y + (kButtonSizePx - textSize.y) * 0.5f };
-			dl->AddText(textPos, IM_COL32_WHITE, style.letter);
+			dl->AddText(textPos,
+				enabled ? IM_COL32_WHITE : IM_COL32(160, 160, 160, 200),
+				style.letter);
 
-			// Bordure (active = jaune, sinon gris foncé).
-			const ImU32 border = isActive
-				? IM_COL32(255, 196, 64, 220)
-				: IM_COL32(40, 40, 40, 200);
-			dl->AddRect(buttonScreenMin, buttonScreenMax, border, 4.0f, 0, 1.5f);
+			dl->AddRect(buttonScreenMin, buttonScreenMax,
+				IM_COL32(40, 40, 40, 200), 4.0f, 0, 1.5f);
 
 			// InvisibleButton occupe exactement le rect du bouton.
-			ImGui::InvisibleButton("##btn",
-				ImVec2(kButtonSizePx, kButtonSizePx));
-			const bool clicked = ImGui::IsItemActivated() ||
-				(ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left));
-			if (clicked && style.enabled)
+			ImGui::InvisibleButton("##btn", ImVec2(kButtonSizePx, kButtonSizePx));
+			const bool clicked = ImGui::IsItemHovered()
+				&& ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+			if (clicked && enabled && a->execute)
 			{
-				m_shell.SetActiveTool(tool);
+				a->execute();
 			}
-			if (ImGui::IsItemHovered())
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
 			{
-				ImGui::SetTooltip("%s", style.tooltipFr);
+				// Tooltip « libellé (raccourci) » depuis le registre — source
+				// unique avec les menus.
+				if (a->shortcutText.empty())
+				{
+					ImGui::SetTooltip("%s", a->label.c_str());
+				}
+				else
+				{
+					ImGui::SetTooltip("%s (%s)", a->label.c_str(), a->shortcutText.c_str());
+				}
 			}
 
 			ImGui::PopID();
 			cursorX += kButtonSizePx + kButtonSpacingPx;
-			ImGui::SameLine(); // s'aligne pour InvisibleButton suivant
-		}
-
-		// Bouton X de désélection. Petit espace avant.
-		cursorX += kButtonSpacingPx;
-		{
-			const ToolIconStyle style = ToolbarIconAtlas::GetDeselect();
-			ImGui::PushID("deselect");
-
-			const ImVec2 buttonScreenMin{
-				windowOrigin.x + cursorX,
-				windowOrigin.y };
-			const ImVec2 buttonScreenMax{
-				buttonScreenMin.x + kButtonSizePx,
-				buttonScreenMin.y + kButtonSizePx };
-
-			const bool isActive = (current == ActiveTool::None);
-			const ImU32 baseColor = isActive
-				? activeBg
-				: static_cast<ImU32>(style.bgColorArgb);
-			dl->AddRectFilled(buttonScreenMin, buttonScreenMax, baseColor, 4.0f);
-			const ImVec2 textSize = ImGui::CalcTextSize(style.letter);
-			const ImVec2 textPos{
-				buttonScreenMin.x + (kButtonSizePx - textSize.x) * 0.5f,
-				buttonScreenMin.y + (kButtonSizePx - textSize.y) * 0.5f };
-			dl->AddText(textPos, IM_COL32_WHITE, style.letter);
-			dl->AddRect(buttonScreenMin, buttonScreenMax,
-				IM_COL32(80, 0, 0, 220), 4.0f, 0, 1.5f);
-
-			ImGui::SetCursorPosX(cursorX);
-			ImGui::SetCursorPosY(0.0f);
-			ImGui::InvisibleButton("##xbtn",
-				ImVec2(kButtonSizePx, kButtonSizePx));
-			if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-			{
-				m_shell.SetActiveTool(ActiveTool::None);
-			}
-			if (ImGui::IsItemHovered())
-			{
-				ImGui::SetTooltip("%s", style.tooltipFr);
-			}
-
-			ImGui::PopID();
+			ImGui::SameLine(); // s'aligne pour l'InvisibleButton suivant
 		}
 
 		ImGui::End();
 		ImGui::PopStyleVar(3);
-
-		(void)menuBarH; // toolbarPos est calculé via vp->WorkPos qui inclut le menu bar
 	}
 #endif
 }

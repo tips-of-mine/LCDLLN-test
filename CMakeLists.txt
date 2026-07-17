@@ -338,8 +338,11 @@ add_library(engine_core
   src/world_editor/core/WorldEditorShell.cpp
   src/world_editor/core/CommandStack.cpp
   # Réorganisation UI 2026-07-17 — registre central des actions (menus,
-  # barre d'actions, palette de commandes, fenêtre raccourcis).
+  # barre d'actions, palette de commandes, fenêtre raccourcis) + modèle pur
+  # de la palette d'outils (familles + libellés FR).
   src/world_editor/actions/EditorActionRegistry.cpp
+  src/world_editor/ui/ToolPaletteModel.cpp
+  src/world_editor/panels/ToolPalettePanel.cpp
   # M101.4 / M101.5 — editeur de routines nodal (panel + commandes + palette/inspecteur).
   src/world_editor/routine/RoutineGraphCommands.cpp
   src/world_editor/routine/RoutineGraphPanel.cpp
@@ -1738,6 +1741,19 @@ else()
   target_compile_options(editor_action_registry_tests PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 add_test(NAME editor_action_registry_tests COMMAND editor_action_registry_tests)
+
+# Réorganisation UI 2026-07-17 (PR 2) — Tests unitaires CPU du modèle pur de
+# la palette d'outils : couverture exacte des 15 outils par les 4 familles,
+# unicité des titres et libellés FR. NON gaté WIN32 (ctest Linux).
+add_executable(tool_palette_model_tests src/world_editor/tests/ToolPaletteModelTests.cpp)
+target_include_directories(tool_palette_model_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(tool_palette_model_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(tool_palette_model_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+else()
+  target_compile_options(tool_palette_model_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME tool_palette_model_tests COMMAND tool_palette_model_tests)
 
 # M100.36 — Tests unitaires CPU pour le watershed D8 + flow accumulation +
 # Douglas-Peucker + OceanSettings + RiverNetworkCommand + water.bin v1/v2

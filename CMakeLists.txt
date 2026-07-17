@@ -337,6 +337,9 @@ add_library(engine_core
   # editor.world.enabled. Pas référencé par engine/server/.
   src/world_editor/core/WorldEditorShell.cpp
   src/world_editor/core/CommandStack.cpp
+  # Réorganisation UI 2026-07-17 — registre central des actions (menus,
+  # barre d'actions, palette de commandes, fenêtre raccourcis).
+  src/world_editor/actions/EditorActionRegistry.cpp
   # M101.4 / M101.5 — editeur de routines nodal (panel + commandes + palette/inspecteur).
   src/world_editor/routine/RoutineGraphCommands.cpp
   src/world_editor/routine/RoutineGraphPanel.cpp
@@ -1720,6 +1723,21 @@ if(WIN32)
   endif()
   add_test(NAME editor_toolbar_tests COMMAND editor_toolbar_tests)
 endif()
+
+# Réorganisation UI 2026-07-17 — Tests unitaires CPU du registre d'actions
+# de l'éditeur monde (unicité des ids, prédicats enabled/checked, ordre
+# d'insertion) + sériel de mutations du CommandStack (dirty-tracking « non
+# sauvegardé »). Aucune dépendance ImGui/GPU : NON gaté WIN32 pour que
+# build-linux (le seul workflow à lancer ctest) l'exécute réellement.
+add_executable(editor_action_registry_tests src/world_editor/tests/EditorActionRegistryTests.cpp)
+target_include_directories(editor_action_registry_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(editor_action_registry_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(editor_action_registry_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+else()
+  target_compile_options(editor_action_registry_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME editor_action_registry_tests COMMAND editor_action_registry_tests)
 
 # M100.36 — Tests unitaires CPU pour le watershed D8 + flow accumulation +
 # Douglas-Peucker + OceanSettings + RiverNetworkCommand + water.bin v1/v2

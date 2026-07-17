@@ -44,6 +44,19 @@ namespace engine::editor::world::prefs
 		bool GetTutorialFlag(const std::string& flagId) const;
 		void SetTutorialFlag(const std::string& flagId, bool value);
 
+		/// Réorganisation UI 2026-07-17 — Plafond du nombre de cartes
+		/// récentes mémorisées (sous-menu « Fichier > Cartes récentes »).
+		static constexpr size_t kMaxRecentMaps = 8;
+
+		/// Enregistre \p zoneId comme carte la plus récente : dédoublonne
+		/// (une occurrence existante remonte en tête), insère en tête,
+		/// tronque à `kMaxRecentMaps`, persiste immédiatement. Un zoneId
+		/// vide est ignoré (no-op). Effet de bord : écriture disque.
+		void PushRecentMap(const std::string& zoneId);
+
+		/// Cartes récentes, plus récente en tête.
+		const std::vector<std::string>& GetRecentMaps() const { return m_prefs.recentMapIds; }
+
 		bool IsInitialized() const { return m_initialized; }
 
 		/// Réinitialise l'état (défauts, non initialisé). Réservé aux tests.

@@ -4,6 +4,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace engine::editor::world::prefs
 {
@@ -23,6 +24,11 @@ namespace engine::editor::world::prefs
 		std::unordered_map<std::string, std::string> lastPresetByTool;
 		bool                                         showAdvancedTooltips = false;
 		std::unordered_map<std::string, bool>        tutorialCompletionFlags;
+		/// Réorganisation UI 2026-07-17 — zoneIds des cartes récemment
+		/// chargées/sauvegardées, plus récente en tête, plafonné à
+		/// `UserPrefsStore::kMaxRecentMaps`. Alimente le sous-menu
+		/// « Fichier > Cartes récentes ».
+		std::vector<std::string>                     recentMapIds;
 	};
 
 	/// Version de schéma courante écrite dans le champ `version`.

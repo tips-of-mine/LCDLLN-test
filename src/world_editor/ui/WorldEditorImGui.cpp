@@ -9,6 +9,9 @@
 #include "src/world_editor/ui/TreeSpeciesCatalog.h"
 #include "src/world_editor/ui/WorldEditorSession.h"
 #include "src/world_editor/modes/EditorModeRegistry.h"
+#include "src/world_editor/prefs/UserPrefsStore.h"
+#include "src/world_editor/actions/EditorActionRegistry.h"
+#include "src/world_editor/ui/ToolbarIconAtlas.h" // libellé FR de l'outil actif (barre de statut)
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/WorldEditorShell.h"
@@ -846,279 +849,16 @@ namespace engine::editor
 		// rectangle après son rendu, plus bas dans cette frame.
 		m_widgetTargets.Clear();
 
-		if (ImGui::BeginMainMenuBar())
-		{
-			if (ImGui::BeginMenu("Fichier"))
-			{
-				if (ImGui::MenuItem("Sauvegarder la carte courante", "Ctrl+S", false, m_session != nullptr && m_cfg != nullptr)
-					&& m_session && m_cfg)
-				{
-					(void)m_session->ActionSaveCurrentMap(*m_cfg);
-				}
-				// Lot C vague 4 — Export runtime BLOQUÉ si la dernière validation a
-				// remonté des erreurs. Le bouton est désactivé tant que
-				// `m_lastValidationReport.HasBlockingErrors()` ; il reste actif si
-				// aucune validation n'a encore tourné (l'utilisateur reste libre,
-				// mais le panneau Validation l'invite à valider avant export).
-				const bool exportBlocked = m_validationHasRun && m_lastValidationReport.HasBlockingErrors();
-				const bool exportEnabled = m_session != nullptr && m_cfg != nullptr && !exportBlocked;
-				if (ImGui::MenuItem("Exporter en runtime", nullptr, false, exportEnabled)
-					&& m_session && m_cfg && !exportBlocked)
-				{
-					(void)m_session->ActionExportRuntime(*m_cfg);
-				}
-				// Enregistre le rectangle de cette entrée menu pour le guidance
-				// overlay (id stable conforme à la convention <panel>.<sous>.<id>).
-				m_widgetTargets.Register("menubar.file.export_runtime",
-					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
-					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
-				if (exportBlocked && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-				{
-					ImGui::SetTooltip("Export bloque : corrigez les erreurs de validation (panneau Validation).");
-				}
-				// Lot C vague 4 — Bouton de validation de zone dans le menu Fichier.
-				if (ImGui::MenuItem("Valider la zone", nullptr, false, m_shell != nullptr))
-				{
-					RunZoneValidation();
-				}
-				m_widgetTargets.Register("toolbar.button.validate",
-					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
-					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
-				ImGui::Separator();
-				// Lot C vague 4 — assistant « Nouvelle zone » (QuickStartWizard).
-				// Désactivé si le Shell n'est pas branché (la génération a besoin
-				// des 4 documents + catalogs + CommandStack, comme le dialog preset).
-				if (ImGui::MenuItem("Nouvelle zone (assistant)...", nullptr, false,
-					m_shell != nullptr)
-					&& m_shell)
-				{
-					// Transition fermé→ouvert : on réinitialise l'assistant pour
-					// qu'il reparte de l'étape 1 (Climat), sans état résiduel d'une
-					// session précédente (choix, seed, bandeau de résumé).
-					if (!m_showWizard)
-					{
-						ResetWizardState();
-					}
-					m_showWizard = true;
-				}
-				m_widgetTargets.Register("menubar.file.new_zone_wizard",
-					{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
-					  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
-				// M100.46 incrément 3 — entrée menu pour appliquer un Zone
-				// Preset. Désactivée si le Shell n'est pas branché (le
-				// dialog a besoin des 4 documents + catalogs).
-				if (ImGui::MenuItem("Appliquer un preset de zone...", nullptr, false,
-					m_shell != nullptr && m_zonePresetDialog != nullptr)
-					&& m_shell && m_zonePresetDialog)
-				{
-					m_zonePresetDialog->Open();
-				}
-				ImGui::Separator();
-				if (ImGui::MenuItem("Importer une texture (PNG/JPG/TGA/BMP)...", nullptr, false, m_session != nullptr && m_cfg != nullptr)
-					&& m_session && m_cfg)
-				{
-					(void)m_session->ActionImportTexture(*m_cfg);
-				}
-				if (ImGui::MenuItem("Importer un son (WAV/OGG)...", nullptr, false, m_session != nullptr && m_cfg != nullptr)
-					&& m_session && m_cfg)
-				{
-					(void)m_session->ActionImportAudio(*m_cfg);
-				}
-				ImGui::Separator();
-				ImGui::MenuItem("Quitter", nullptr, false, false);
-				ImGui::EndMenu();
-			}
-			// Menu Édition — migré depuis WorldEditorShell::RenderMenuBar
-			// quand sa barre est supprimée (m_worldEditorExe). Undo/Redo
-			// forwardés au CommandStack du Shell.
-			if (m_shell && ImGui::BeginMenu("Edition"))
-			{
-				auto& stack = m_shell->MutableCommandStack();
-				if (ImGui::MenuItem("Annuler", "Ctrl+Z", false, stack.CanUndo()))
-				{
-					stack.Undo();
-				}
-				if (ImGui::MenuItem("Rétablir", "Ctrl+Y", false, stack.CanRedo()))
-				{
-					stack.Redo();
-				}
-				ImGui::EndMenu();
-			}
-			if (ImGui::BeginMenu("Vue"))
-			{
-				// Toggle grille — placé en tête du menu Vue pour être trouvable
-				// immédiatement sans ré-ouvrir le panneau "Affichage & grille"
-				// (qui peut être fermé par l'utilisateur sans moyen évident
-				// de le rouvrir). Le checkmark reflète l'état courant de
-				// `WorldEditorSession::ShowGrid()`. Pas de raccourci clavier
-				// par choix utilisateur.
-				if (m_session)
-				{
-					ImGui::MenuItem("Grille (afficher/masquer)", nullptr,
-						&m_session->ShowGrid());
-				}
-				ImGui::Separator();
-				// Panel toggles — migrés depuis WorldEditorShell::RenderMenuBar.
-				// Chaque panneau du Shell se rend dockable individuellement.
-				if (m_shell)
-				{
-					for (auto& panel : m_shell->MutablePanels())
-					{
-						if (!panel) continue;
-						// Fenêtre « Scene » retirée (doublon de la vue 3D principale,
-						// cf. ScenePanel::Render) : plus de toggle dans ce menu.
-						if (std::strcmp(panel->GetName(), "Scene") == 0) continue;
-						bool visible = panel->IsVisible();
-						if (ImGui::MenuItem(panel->GetName(), nullptr, &visible))
-						{
-							panel->SetVisible(visible);
-						}
-					}
-					ImGui::Separator();
-				}
-				if (ImGui::MenuItem("Reinitialiser la disposition des fenetres"))
-				{
-					// Reinitialisation in-process : on retire le node DockBuilder courant et on
-					// repasse m_defaultLayoutAttempted a false. La frame suivante reconstruit la
-					// disposition par defaut via le bloc DockBuilder en haut de BuildUi().
-					const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpaceV2");
-					ImGui::DockBuilderRemoveNode(dockId);
-					m_defaultLayoutAttempted = false;
-					// Supprime aussi le fichier .ini pour que la reinitialisation persiste apres
-					// le redemarrage (sinon ImGui rechargerait l'ancienne disposition au prochain run).
-					std::error_code ec;
-					std::filesystem::remove("world_editor_imgui.ini", ec);
-					if (m_session)
-					{
-						m_session->SetStatus("Disposition reinitialisee.");
-					}
-				}
-				ImGui::MenuItem("Bibliotheque de textures", nullptr, &m_showTextureLibrary);
-				// Panneau « Atmosphere » (cycle jour/nuit). Le panneau est
-				// dessine inline par `BuildUi` (pas un Shell panel), donc
-				// pas liste dans la boucle Panels() ci-dessus. Toggle direct
-				// via ce flag — corrige la regression apres #622 (suppression
-				// barre M100.1 qui exposait tous les panels).
-				ImGui::MenuItem("Atmosphere (jour/nuit)", nullptr, &m_showAtmospherePanel);
-				// Aide caméra : overlay texte avec instructions WASD,
-				// position monde, etc. Cachée par défaut pour ne pas
-				// polluer le dock (cf. #629).
-				ImGui::MenuItem("Aide camera (instructions WASD)", nullptr, &m_showCameraHelp);
-				// Lot C vague 4 — toggle du panneau Validation (ouvert aussi
-				// automatiquement à chaque « Valider la zone »).
-				ImGui::MenuItem("Validation de zone", nullptr, &m_showValidationPanel);
-				ImGui::Separator();
-				if (m_cfg)
-				{
-					float mult = static_cast<float>(m_cfg->GetDouble("controls.editor_camera_speed_multiplier", 1.0));
-					ImGui::TextDisabled("Vitesse de deplacement (Shift = course) :");
-					if (ImGui::SliderFloat("Vitesse camera (x)", &mult, 0.25f, 5.0f, "%.2f"))
-					{
-						mult = std::clamp(mult, 0.25f, 5.0f);
-						m_cfg->SetValue("controls.editor_camera_speed_multiplier", static_cast<double>(mult));
-					}
-					ImGui::TextDisabled("Astuce : montez ce curseur pour traverser plus vite les");
-					ImGui::TextDisabled("grandes cartes pendant la creation.");
-					ImGui::Separator();
-				}
-				ImGui::TextDisabled("Astuce : faites glisser une fenetre par sa barre de titre");
-				ImGui::TextDisabled("pour la docker a gauche, a droite ou en bas.");
-				ImGui::EndMenu();
-			}
-			if (m_cfg && ImGui::BeginMenu("Options"))
-			{
-				const std::string cur = m_cfg->GetString("controls.movement_layout", "wasd");
-				const bool zqsdActive = (cur == "zqsd");
-				if (ImGui::MenuItem("Deplacement : QWERTY (WASD)", nullptr, !zqsdActive))
-				{
-					m_cfg->SetValue("controls.movement_layout", std::string("wasd"));
-					TryPersistMovementLayoutToUserSettings("wasd");
-				}
-				if (ImGui::MenuItem("Deplacement : AZERTY (ZQSD)", nullptr, zqsdActive))
-				{
-					m_cfg->SetValue("controls.movement_layout", std::string("zqsd"));
-					TryPersistMovementLayoutToUserSettings("zqsd");
-				}
-
-				// M100.45 (A.5) — toggle Mode éditeur Simple/Avancé. Le
-				// EditorModeRegistry persiste le choix dans user_prefs.json
-				// et notifie les ToolPropertiesPanel pour re-render immédiat.
-				ImGui::Separator();
-				if (ImGui::BeginMenu("Mode editeur"))
-				{
-					namespace modes = engine::editor::world::modes;
-					auto& reg = modes::EditorModeRegistry::Instance();
-					const modes::EditorMode current = reg.GetCurrentMode();
-					if (ImGui::MenuItem("Simple", "recommande pour demarrer",
-						current == modes::EditorMode::Simple))
-					{
-						reg.SetCurrentMode(modes::EditorMode::Simple);
-					}
-					if (ImGui::MenuItem("Avance", "acces complet aux parametres",
-						current == modes::EditorMode::Advanced))
-					{
-						reg.SetCurrentMode(modes::EditorMode::Advanced);
-					}
-					ImGui::EndMenu();
-				}
-				ImGui::EndMenu();
-			}
-			// Lot C vague 4 — Menu « Aide » : ouvre le panneau Diagnostic
-			// (« Pourquoi ca ne marche pas ? »). Distinct du menu Vue (reserve
-			// aux toggles de panneaux/disposition) car le diagnostic releve de
-			// l'assistance contextuelle (jumeau du futur tutoriel/guidance).
-			if (ImGui::BeginMenu("Aide"))
-			{
-				ImGui::MenuItem("Diagnostic (pourquoi ca ne marche pas ?)", nullptr,
-					&m_showDiagnosticPanel);
-				ImGui::EndMenu();
-			}
-			// Barre d'outils rapide a droite du menu : sauvegarde 1-clic + chargement carte.
-			if (m_session != nullptr && m_cfg != nullptr)
-			{
-				ImGui::Separator();
-				if (ImGui::MenuItem("Sauvegarder"))
-				{
-					(void)m_session->ActionSaveCurrentMap(*m_cfg);
-				}
-				if (!m_session->AvailableMapsScanned())
-				{
-					m_session->RefreshAvailableMaps(*m_cfg);
-				}
-				if (ImGui::BeginMenu("Charger une carte"))
-				{
-					const std::vector<std::string>& mapIds = m_session->AvailableMapIds();
-					if (mapIds.empty())
-					{
-						ImGui::TextDisabled("Aucune carte. Creez-en une via le panneau 'Carte'.");
-					}
-					else
-					{
-						for (size_t i = 0; i < mapIds.size(); ++i)
-						{
-							if (ImGui::MenuItem(mapIds[i].c_str()))
-							{
-								(void)m_session->ActionLoadMapByZoneId(*m_cfg, mapIds[i]);
-								m_session->SelectedAvailableMapIndex() = static_cast<int>(i);
-							}
-						}
-					}
-					ImGui::Separator();
-					if (ImGui::MenuItem("Rafraichir la liste"))
-					{
-						m_session->RefreshAvailableMaps(*m_cfg);
-					}
-					ImGui::EndMenu();
-				}
-				// Statut court a droite
-				if (!m_session->Status().empty())
-				{
-					ImGui::Separator();
-					ImGui::TextUnformatted(m_session->Status().c_str());
-				}
-			}
-			ImGui::EndMainMenuBar();
-		}
+		// Réorganisation UI 2026-07-17 — les actions sont enregistrées une
+		// fois dans le registre du shell, puis la barre de menu française,
+		// la modale Quitter et les fenêtres Préférences / À propos sont
+		// rendues depuis ce registre (spec docs/superpowers/specs/
+		// 2026-07-17-editor-menus-toolbar-reorg-design.md).
+		RegisterEditorActions();
+		RenderMenuBarFr();
+		RenderQuitConfirmModal();
+		RenderPreferencesWindow();
+		RenderAboutWindow();
 
 		// M100.46 incrément 3 — dessine la popup modale Zone Presets
 		// (no-op si non ouverte ou Shell non branché). m_cfg passé pour
@@ -1959,8 +1699,50 @@ namespace engine::editor
 			}
 			ImGui::End();
 
+			// Réorganisation UI 2026-07-17 — barre de statut enrichie
+			// (convention UE) : message de session | carte courante | outil
+			// actif, et à droite l'indicateur « Tout enregistré / Non
+			// sauvegardé » (même source dirty que la modale Quitter :
+			// WorldEditorShell::IsDirtySinceSave). Remplace l'affichage du
+			// statut dans la barre de menu (supprimé par la réorganisation).
 			ImGui::Begin("Statut", nullptr, ImGuiWindowFlags_NoMouseInputs);
-			ImGui::TextWrapped("%s", m_session->Status().c_str());
+			{
+				ImGui::TextUnformatted(m_session->Status().c_str());
+				ImGui::SameLine();
+				ImGui::TextDisabled("|  Carte : %s", m_session->Doc().zoneId.c_str());
+				if (m_shell != nullptr)
+				{
+					ImGui::SameLine();
+					const engine::editor::world::ToolIconStyle toolStyle =
+						engine::editor::world::ToolbarIconAtlas::Get(m_shell->GetActiveTool());
+					ImGui::TextDisabled("|  Outil : %s",
+						(m_shell->GetActiveTool() == engine::editor::world::ActiveTool::None)
+							? "aucun" : toolStyle.tooltipFr);
+
+					// Indicateur de sauvegarde aligné à droite.
+					const bool dirty = m_shell->IsDirtySinceSave();
+					const char* saveText =
+						dirty ? "\xE2\x97\x8F Non sauvegardé" : "Tout enregistré";
+					const float textW = ImGui::CalcTextSize(saveText).x;
+					const float avail = ImGui::GetContentRegionAvail().x;
+					if (avail > textW + 16.0f)
+					{
+						ImGui::SameLine(0.0f, avail - textW - 8.0f);
+					}
+					else
+					{
+						ImGui::SameLine();
+					}
+					if (dirty)
+					{
+						ImGui::TextColored(ImVec4(1.0f, 0.77f, 0.25f, 1.0f), "%s", saveText);
+					}
+					else
+					{
+						ImGui::TextDisabled("%s", saveText);
+					}
+				}
+			}
 			ImGui::End();
 		}
 		else
@@ -2883,6 +2665,556 @@ namespace engine::editor
 		(void)window;
 #endif
 	}
+
+#if defined(_WIN32)
+	// ── Réorganisation UI 2026-07-17 : registre d'actions + menus français ──
+	// (spec docs/superpowers/specs/2026-07-17-editor-menus-toolbar-reorg-design.md)
+
+	void WorldEditorImGui::RegisterEditorActions()
+	{
+		if (m_actionsRegistered || m_shell == nullptr) return;
+		m_actionsRegistered = true;
+
+		namespace weact = engine::editor::world::actions;
+		using engine::editor::world::ActiveTool;
+		weact::EditorActionRegistry& reg = m_shell->MutableActionRegistry();
+
+		// Helper local : construit + enregistre une action en une expression.
+		auto add = [&reg](const char* id, const char* label,
+			weact::ActionCategory cat, const char* section, const char* shortcut,
+			std::function<bool()> enabled, std::function<bool()> checked,
+			std::function<void()> execute)
+		{
+			weact::EditorAction a;
+			a.id = id;
+			a.label = label;
+			a.category = cat;
+			a.section = (section != nullptr) ? section : "";
+			a.shortcutText = (shortcut != nullptr) ? shortcut : "";
+			a.enabled = std::move(enabled);
+			a.checked = std::move(checked);
+			a.execute = std::move(execute);
+			(void)reg.Register(std::move(a));
+		};
+
+		// ---- Fichier --------------------------------------------------------
+		add("file.new-zone-wizard", "Nouvelle zone (assistant)...",
+			weact::ActionCategory::Fichier, "Nouveau", nullptr,
+			[this] { return m_shell != nullptr; }, nullptr,
+			[this]
+			{
+				// Transition fermé→ouvert : repartir de l'étape 1 sans état
+				// résiduel d'une session précédente (choix, seed, résumé).
+				if (!m_showWizard) { ResetWizardState(); }
+				m_showWizard = true;
+			});
+		add("file.zone-preset", "Appliquer un preset de zone...",
+			weact::ActionCategory::Fichier, "Nouveau", nullptr,
+			[this] { return m_shell != nullptr && m_zonePresetDialog != nullptr; }, nullptr,
+			[this] { if (m_zonePresetDialog) { m_zonePresetDialog->Open(); } });
+		add("file.save", "Sauvegarder la carte courante",
+			weact::ActionCategory::Fichier, "Enregistrer", "Ctrl+S",
+			[this] { return m_session != nullptr && m_cfg != nullptr; }, nullptr,
+			[this] { (void)SaveCurrentMapAndNote(); });
+		add("file.import.texture", "Importer une texture (PNG/JPG/TGA/BMP)...",
+			weact::ActionCategory::Fichier, "Import", nullptr,
+			[this] { return m_session != nullptr && m_cfg != nullptr; }, nullptr,
+			[this] { if (m_session && m_cfg) { (void)m_session->ActionImportTexture(*m_cfg); } });
+		add("file.import.audio", "Importer un son (WAV/OGG)...",
+			weact::ActionCategory::Fichier, "Import", nullptr,
+			[this] { return m_session != nullptr && m_cfg != nullptr; }, nullptr,
+			[this] { if (m_session && m_cfg) { (void)m_session->ActionImportAudio(*m_cfg); } });
+		add("zone.validate", "Valider la zone",
+			weact::ActionCategory::Fichier, "Export", nullptr,
+			[this] { return m_shell != nullptr; }, nullptr,
+			[this] { RunZoneValidation(); });
+		// Export runtime BLOQUÉ si la dernière validation a remonté des
+		// erreurs (comportement Lot C vague 4 conservé). Reste actif si
+		// aucune validation n'a encore tourné.
+		add("zone.export", "Exporter en runtime",
+			weact::ActionCategory::Fichier, "Export", nullptr,
+			[this]
+			{
+				const bool blocked = m_validationHasRun
+					&& m_lastValidationReport.HasBlockingErrors();
+				return m_session != nullptr && m_cfg != nullptr && !blocked;
+			},
+			nullptr,
+			[this] { if (m_session && m_cfg) { (void)m_session->ActionExportRuntime(*m_cfg); } });
+		add("file.quit", "Quitter",
+			weact::ActionCategory::Fichier, nullptr, nullptr,
+			[this] { return static_cast<bool>(m_onQuitRequested); }, nullptr,
+			[this]
+			{
+				// Modifications non sauvegardées → confirmation ; sinon
+				// fermeture directe via le callback Engine::OnQuit.
+				if (m_shell != nullptr && m_shell->IsDirtySinceSave())
+				{
+					m_quitConfirmRequested = true;
+				}
+				else if (m_onQuitRequested)
+				{
+					m_onQuitRequested();
+				}
+			});
+
+		// ---- Édition (les actions undo/redo/historique sont enregistrées
+		// par le shell lui-même, cf. WorldEditorShell::RegisterShellActions) --
+		add("edit.preferences", "Préférences...",
+			weact::ActionCategory::Edition, nullptr, nullptr,
+			nullptr, nullptr,
+			[this] { m_showPreferencesWindow = true; });
+
+		// ---- Vue (options du viewport uniquement) ---------------------------
+		add("view.grid", "Grille (afficher/masquer)",
+			weact::ActionCategory::Vue, nullptr, nullptr,
+			[this] { return m_session != nullptr; },
+			[this] { return m_session != nullptr && m_session->ShowGrid(); },
+			[this] { if (m_session) { m_session->ShowGrid() = !m_session->ShowGrid(); } });
+		add("view.camera-help", "Aide caméra (instructions WASD)",
+			weact::ActionCategory::Vue, nullptr, nullptr,
+			nullptr,
+			[this] { return m_showCameraHelp; },
+			[this] { m_showCameraHelp = !m_showCameraHelp; });
+		add("view.atmosphere", "Atmosphère (jour/nuit)",
+			weact::ActionCategory::Vue, nullptr, nullptr,
+			nullptr,
+			[this] { return m_showAtmospherePanel; },
+			[this] { m_showAtmospherePanel = !m_showAtmospherePanel; });
+
+		// ---- Fenêtre (toggles hors panneaux du shell) -----------------------
+		add("window.texture-library", "Bibliothèque de textures",
+			weact::ActionCategory::Fenetre, nullptr, nullptr,
+			nullptr,
+			[this] { return m_showTextureLibrary; },
+			[this] { m_showTextureLibrary = !m_showTextureLibrary; });
+		add("window.validation-panel", "Validation de zone",
+			weact::ActionCategory::Fenetre, nullptr, nullptr,
+			nullptr,
+			[this] { return m_showValidationPanel; },
+			[this] { m_showValidationPanel = !m_showValidationPanel; });
+		add("window.layout.reset", "Réinitialiser la disposition des fenêtres",
+			weact::ActionCategory::Fenetre, "Disposition", nullptr,
+			nullptr, nullptr,
+			[this] { ResetDockLayout(); });
+
+		// ---- Outils (les 15 outils du shell, groupés par famille) ----------
+		// Un clic sur l'outil déjà actif le désélectionne (retour à None) —
+		// même convention que le bouton X de la barre d'icônes.
+		struct ToolActionSpec
+		{
+			const char* id;
+			const char* label;
+			const char* section;
+			const char* shortcut;
+			ActiveTool  tool;
+		};
+		static constexpr ToolActionSpec kToolActions[] = {
+			{ "tool.terrain-sculpt", "Sculpture du terrain", "Terrain", "B", ActiveTool::TerrainSculpt },
+			{ "tool.terrain-stamp", "Tampon de terrain", "Terrain", "N", ActiveTool::TerrainStamp },
+			{ "tool.splat-paint", "Peinture de texture (sol)", "Terrain", "P", ActiveTool::SplatPaint },
+			{ "tool.lake", "Lac", "Eau", "L", ActiveTool::Lake },
+			{ "tool.river", "Rivière", "Eau", "R", ActiveTool::River },
+			{ "tool.river-network", "Réseau fluvial", "Eau", "Ctrl+Shift+N", ActiveTool::RiverNetwork },
+			{ "tool.coastline", "Littoral", "Eau", "Ctrl+Shift+C", ActiveTool::Coastline },
+			{ "tool.mountain-range", "Chaîne de montagnes", "Macro", "Ctrl+Shift+M", ActiveTool::MountainRange },
+			{ "tool.valley-chain", "Chaîne de vallées", "Macro", "Ctrl+Shift+V", ActiveTool::ValleyChain },
+			{ "tool.hydraulic-erosion", "Érosion hydraulique", "Macro", "Ctrl+Shift+H", ActiveTool::HydraulicErosion },
+			{ "tool.thermal-wind-erosion", "Érosion thermique/vent", "Macro", "Ctrl+Shift+T", ActiveTool::ThermalWindErosion },
+			{ "tool.cave", "Grotte", "Structures", "Ctrl+Shift+G", ActiveTool::Cave },
+			{ "tool.overhang", "Surplomb", "Structures", "Ctrl+Shift+O", ActiveTool::Overhang },
+			{ "tool.arch", "Arche", "Structures", "Ctrl+Shift+A", ActiveTool::Arch },
+			{ "tool.dungeon-portal", "Portail de donjon", "Structures", "Ctrl+Shift+D", ActiveTool::DungeonPortal },
+		};
+		for (const ToolActionSpec& spec : kToolActions)
+		{
+			const ActiveTool tool = spec.tool;
+			add(spec.id, spec.label, weact::ActionCategory::Outils,
+				spec.section, spec.shortcut,
+				[this] { return m_shell != nullptr; },
+				[this, tool] { return m_shell != nullptr && m_shell->GetActiveTool() == tool; },
+				[this, tool]
+				{
+					if (m_shell == nullptr) return;
+					m_shell->SetActiveTool(
+						m_shell->GetActiveTool() == tool ? ActiveTool::None : tool);
+				});
+		}
+
+		// ---- Aide -----------------------------------------------------------
+		add("help.diagnostic", "Diagnostic (pourquoi ça ne marche pas ?)",
+			weact::ActionCategory::Aide, nullptr, nullptr,
+			nullptr,
+			[this] { return m_showDiagnosticPanel; },
+			[this] { m_showDiagnosticPanel = !m_showDiagnosticPanel; });
+		add("help.about", "À propos...",
+			weact::ActionCategory::Aide, nullptr, nullptr,
+			nullptr, nullptr,
+			[this] { m_showAboutWindow = true; });
+	}
+
+	bool WorldEditorImGui::MenuItemForAction(const char* id)
+	{
+		namespace weact = engine::editor::world::actions;
+		const weact::EditorAction* a =
+			(m_shell != nullptr) ? m_shell->GetActionRegistry().Find(id) : nullptr;
+		if (a == nullptr) return false;
+		const bool enabled  = weact::EditorActionRegistry::IsEnabled(*a);
+		const bool checked  = a->checked ? a->checked() : false;
+		const char* shortcut = a->shortcutText.empty() ? nullptr : a->shortcutText.c_str();
+		if (ImGui::MenuItem(a->label.c_str(), shortcut, checked, enabled))
+		{
+			if (a->execute) { a->execute(); }
+			return true;
+		}
+		return false;
+	}
+
+	void WorldEditorImGui::RenderMenuBarFr()
+	{
+		namespace weact = engine::editor::world::actions;
+		namespace prefs = engine::editor::world::prefs;
+		if (!ImGui::BeginMainMenuBar()) return;
+
+		const bool sessionReady = (m_session != nullptr && m_cfg != nullptr);
+
+		if (ImGui::BeginMenu("Fichier"))
+		{
+			ImGui::SeparatorText("Nouveau");
+			MenuItemForAction("file.new-zone-wizard");
+			// Rectangle-cible du guidance overlay (id stable, convention
+			// <panel>.<sous>.<id> — Lot C vague 4).
+			m_widgetTargets.Register("menubar.file.new_zone_wizard",
+				{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
+				  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
+			MenuItemForAction("file.zone-preset");
+
+			ImGui::SeparatorText("Ouvrir");
+			if (sessionReady && !m_session->AvailableMapsScanned())
+			{
+				m_session->RefreshAvailableMaps(*m_cfg);
+			}
+			ImGui::BeginDisabled(!sessionReady);
+			if (ImGui::BeginMenu("Charger une carte"))
+			{
+				const std::vector<std::string>& mapIds = m_session->AvailableMapIds();
+				if (mapIds.empty())
+				{
+					ImGui::TextDisabled("Aucune carte. Créez-en une via le panneau 'Carte'.");
+				}
+				else
+				{
+					for (size_t i = 0; i < mapIds.size(); ++i)
+					{
+						if (ImGui::MenuItem(mapIds[i].c_str())
+							&& m_session->ActionLoadMapByZoneId(*m_cfg, mapIds[i]))
+						{
+							m_session->SelectedAvailableMapIndex() = static_cast<int>(i);
+							prefs::UserPrefsStore::Instance().PushRecentMap(mapIds[i]);
+						}
+					}
+				}
+				ImGui::Separator();
+				if (ImGui::MenuItem("Rafraîchir la liste"))
+				{
+					m_session->RefreshAvailableMaps(*m_cfg);
+				}
+				ImGui::EndMenu();
+			}
+			// Cartes récentes (user_prefs.json) : entrée grisée si la carte
+			// n'existe plus dans world_editor/maps/ (supprimée hors éditeur).
+			if (ImGui::BeginMenu("Cartes récentes"))
+			{
+				const std::vector<std::string>& recents =
+					prefs::UserPrefsStore::Instance().GetRecentMaps();
+				if (recents.empty())
+				{
+					ImGui::TextDisabled("Aucune carte récente.");
+				}
+				else
+				{
+					const std::vector<std::string>& mapIds = m_session->AvailableMapIds();
+					for (const std::string& zoneId : recents)
+					{
+						const bool available =
+							std::find(mapIds.begin(), mapIds.end(), zoneId) != mapIds.end();
+						if (ImGui::MenuItem(zoneId.c_str(), nullptr, false, available)
+							&& m_session->ActionLoadMapByZoneId(*m_cfg, zoneId))
+						{
+							prefs::UserPrefsStore::Instance().PushRecentMap(zoneId);
+						}
+					}
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndDisabled();
+
+			ImGui::SeparatorText("Enregistrer");
+			MenuItemForAction("file.save");
+
+			ImGui::SeparatorText("Import");
+			MenuItemForAction("file.import.texture");
+			MenuItemForAction("file.import.audio");
+
+			ImGui::SeparatorText("Export");
+			MenuItemForAction("zone.validate");
+			m_widgetTargets.Register("toolbar.button.validate",
+				{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
+				  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
+			MenuItemForAction("zone.export");
+			m_widgetTargets.Register("menubar.file.export_runtime",
+				{ ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y,
+				  ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y });
+			{
+				const bool exportBlocked = m_validationHasRun
+					&& m_lastValidationReport.HasBlockingErrors();
+				if (exportBlocked && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+				{
+					ImGui::SetTooltip("Export bloqué : corrigez les erreurs de validation (panneau Validation).");
+				}
+			}
+
+			ImGui::Separator();
+			MenuItemForAction("file.quit");
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Édition"))
+		{
+			MenuItemForAction("edit.undo");
+			MenuItemForAction("edit.redo");
+			MenuItemForAction("edit.history");
+			ImGui::Separator();
+			MenuItemForAction("edit.preferences");
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Vue"))
+		{
+			MenuItemForAction("view.grid");
+			MenuItemForAction("view.camera-help");
+			MenuItemForAction("view.atmosphere");
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Fenêtre"))
+		{
+			ImGui::SeparatorText("Panneaux");
+			if (m_shell != nullptr)
+			{
+				// Toggles de panneaux enregistrés par le shell (ordre stable).
+				for (const weact::EditorAction& a : m_shell->GetActionRegistry().Actions())
+				{
+					if (a.id.rfind("window.panel.", 0) == 0)
+					{
+						MenuItemForAction(a.id.c_str());
+					}
+				}
+			}
+			MenuItemForAction("window.texture-library");
+			MenuItemForAction("window.validation-panel");
+			ImGui::SeparatorText("Disposition");
+			MenuItemForAction("window.layout.reset");
+			ImGui::TextDisabled("Astuce : faites glisser une fenêtre par sa barre de titre");
+			ImGui::TextDisabled("pour la docker à gauche, à droite ou en bas.");
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Outils"))
+		{
+			if (m_shell == nullptr)
+			{
+				ImGui::TextDisabled("Shell éditeur non branché.");
+			}
+			else
+			{
+				// Sous-menus par famille — même source (registre, section)
+				// que la future palette d'outils et la palette Ctrl+P.
+				static constexpr const char* kFamilies[] =
+					{ "Terrain", "Eau", "Macro", "Structures" };
+				for (const char* family : kFamilies)
+				{
+					if (!ImGui::BeginMenu(family)) continue;
+					for (const weact::EditorAction& a : m_shell->GetActionRegistry().Actions())
+					{
+						if (a.category == weact::ActionCategory::Outils
+							&& a.section == family)
+						{
+							MenuItemForAction(a.id.c_str());
+						}
+					}
+					ImGui::EndMenu();
+				}
+			}
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Aide"))
+		{
+			MenuItemForAction("help.diagnostic");
+			ImGui::Separator();
+			MenuItemForAction("help.about");
+			ImGui::EndMenu();
+		}
+
+		ImGui::EndMainMenuBar();
+	}
+
+	bool WorldEditorImGui::SaveCurrentMapAndNote()
+	{
+		if (m_session == nullptr || m_cfg == nullptr) return false;
+		if (!m_session->ActionSaveCurrentMap(*m_cfg)) return false;
+		if (m_shell != nullptr)
+		{
+			m_shell->NoteSaved();
+		}
+		engine::editor::world::prefs::UserPrefsStore::Instance()
+			.PushRecentMap(m_session->Doc().zoneId);
+		return true;
+	}
+
+	void WorldEditorImGui::ResetDockLayout()
+	{
+		// Réinitialisation in-process : on retire le node DockBuilder courant
+		// et on repasse m_defaultLayoutAttempted à false. La frame suivante
+		// reconstruit la disposition par défaut via le bloc DockBuilder en
+		// haut de BuildUi().
+		const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpaceV2");
+		ImGui::DockBuilderRemoveNode(dockId);
+		m_defaultLayoutAttempted = false;
+		// Supprime aussi le fichier .ini pour que la réinitialisation persiste
+		// après le redémarrage (sinon ImGui rechargerait l'ancienne disposition
+		// au prochain run).
+		std::error_code ec;
+		std::filesystem::remove("world_editor_imgui.ini", ec);
+		if (m_session)
+		{
+			m_session->SetStatus("Disposition réinitialisée.");
+		}
+	}
+
+	void WorldEditorImGui::RenderQuitConfirmModal()
+	{
+		if (m_quitConfirmRequested)
+		{
+			ImGui::OpenPopup("Quitter l'éditeur ?");
+			m_quitConfirmRequested = false;
+		}
+		// Centre la modale sur le viewport (confort ; pas d'état persisté).
+		const ImGuiViewport* vp = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(
+			ImVec2(vp->WorkPos.x + vp->WorkSize.x * 0.5f,
+			       vp->WorkPos.y + vp->WorkSize.y * 0.5f),
+			ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+		if (ImGui::BeginPopupModal("Quitter l'éditeur ?", nullptr,
+			ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::TextUnformatted("Des modifications non sauvegardées existent.");
+			ImGui::TextDisabled("Carte : %s",
+				(m_session != nullptr) ? m_session->Doc().zoneId.c_str() : "(inconnue)");
+			ImGui::Separator();
+			if (ImGui::Button("Sauvegarder et quitter"))
+			{
+				if (SaveCurrentMapAndNote() && m_onQuitRequested)
+				{
+					m_onQuitRequested();
+				}
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Quitter sans sauvegarder"))
+			{
+				if (m_onQuitRequested) { m_onQuitRequested(); }
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Annuler"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+	}
+
+	void WorldEditorImGui::RenderPreferencesWindow()
+	{
+		if (!m_showPreferencesWindow) return;
+		ImGui::SetNextWindowSize(ImVec2(480.0f, 0.0f), ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("Préférences", &m_showPreferencesWindow,
+			ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			// -- Clavier (migré de l'ancien menu Options) ---------------------
+			ImGui::SeparatorText("Clavier");
+			if (m_cfg != nullptr)
+			{
+				const std::string cur = m_cfg->GetString("controls.movement_layout", "wasd");
+				const bool zqsdActive = (cur == "zqsd");
+				if (ImGui::RadioButton("QWERTY (WASD)", !zqsdActive) && zqsdActive)
+				{
+					m_cfg->SetValue("controls.movement_layout", std::string("wasd"));
+					TryPersistMovementLayoutToUserSettings("wasd");
+				}
+				ImGui::SameLine();
+				if (ImGui::RadioButton("AZERTY (ZQSD)", zqsdActive) && !zqsdActive)
+				{
+					m_cfg->SetValue("controls.movement_layout", std::string("zqsd"));
+					TryPersistMovementLayoutToUserSettings("zqsd");
+				}
+			}
+
+			// -- Caméra (migré de l'ancien menu Vue) --------------------------
+			ImGui::SeparatorText("Caméra");
+			if (m_cfg != nullptr)
+			{
+				float mult = static_cast<float>(
+					m_cfg->GetDouble("controls.editor_camera_speed_multiplier", 1.0));
+				ImGui::TextDisabled("Vitesse de déplacement (Shift = course) :");
+				if (ImGui::SliderFloat("Vitesse caméra (x)", &mult, 0.25f, 5.0f, "%.2f"))
+				{
+					mult = std::clamp(mult, 0.25f, 5.0f);
+					m_cfg->SetValue("controls.editor_camera_speed_multiplier",
+						static_cast<double>(mult));
+				}
+				ImGui::TextDisabled("Astuce : montez ce curseur pour traverser plus vite les");
+				ImGui::TextDisabled("grandes cartes pendant la création.");
+			}
+
+			// -- Mode éditeur (migré de l'ancien menu Options, M100.45) -------
+			ImGui::SeparatorText("Mode éditeur");
+			{
+				namespace modes = engine::editor::world::modes;
+				auto& reg = modes::EditorModeRegistry::Instance();
+				const modes::EditorMode current = reg.GetCurrentMode();
+				if (ImGui::RadioButton("Simple (recommandé pour démarrer)",
+					current == modes::EditorMode::Simple))
+				{
+					reg.SetCurrentMode(modes::EditorMode::Simple);
+				}
+				if (ImGui::RadioButton("Avancé (accès complet aux paramètres)",
+					current == modes::EditorMode::Advanced))
+				{
+					reg.SetCurrentMode(modes::EditorMode::Advanced);
+				}
+			}
+		}
+		ImGui::End();
+	}
+
+	void WorldEditorImGui::RenderAboutWindow()
+	{
+		if (!m_showAboutWindow) return;
+		if (ImGui::Begin("À propos", &m_showAboutWindow,
+			ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::TextUnformatted("LCDLLN World Editor");
+			ImGui::TextDisabled("Éditeur de cartes interne — binaire lcdlln_world_editor.exe");
+			ImGui::Separator();
+			ImGui::TextDisabled("Spec UI : docs/superpowers/specs/");
+			ImGui::TextDisabled("2026-07-17-editor-menus-toolbar-reorg-design.md");
+		}
+		ImGui::End();
+	}
+#endif // _WIN32
 
 	void WorldEditorImGui::DetachPlatformWindow(engine::platform::Window& window)
 	{

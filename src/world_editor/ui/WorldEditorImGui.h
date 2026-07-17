@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 
 #include <vector>
@@ -118,6 +119,14 @@ namespace engine::editor
 		{
 			m_shell = shell;
 		}
+
+		/// Réorganisation UI 2026-07-17 — Branche le callback de demande de
+		/// fermeture de l'application (côté Engine : `Engine::OnQuit`).
+		/// Consommé par l'action « Fichier > Quitter » : appel direct si
+		/// aucun changement non sauvegardé, sinon après confirmation via la
+		/// modale (cf. `RenderQuitConfirmModal`). Si non branché, l'entrée
+		/// « Quitter » est grisée.
+		void SetQuitCallback(std::function<void()> cb) { m_onQuitRequested = std::move(cb); }
 
 		/// \param hwndNative \c HWND sous Windows, sinon ignoré.
 		/// \param cfg utilisé pour charger les polices TTF de l'UI auth (Windlass / Morpheus) dans
@@ -298,6 +307,75 @@ namespace engine::editor
 		bool m_wizardHasGenerated = false;
 		/// Id du preset effectivement résolu+exécuté (affiché dans le résumé).
 		std::string m_wizardLastPresetId;
+
+		// ── Réorganisation UI 2026-07-17 : menus + registre d'actions ─────────
+		/// True après le premier `RegisterEditorActions` (le registre du shell
+		/// prend les actions une seule fois par session).
+		bool m_actionsRegistered = false;
+		/// Visibilité de la fenêtre « Préférences » (Édition > Préférences…) :
+		/// regroupe layout clavier QWERTY/AZERTY, vitesse caméra et mode
+		/// éditeur Simple/Avancé (l'ancien menu Options est supprimé).
+		bool m_showPreferencesWindow = false;
+		/// Visibilité de la fenêtre « À propos » (Aide > À propos).
+		bool m_showAboutWindow = false;
+		/// Posé par l'action `file.quit` quand des changements non sauvegardés
+		/// existent ; consommé une seule fois par `RenderQuitConfirmModal` qui
+		/// pousse l'`ImGui::OpenPopup` correspondant.
+		bool m_quitConfirmRequested = false;
+		/// Callback de fermeture d'application (Engine::OnQuit). Nul si non
+		/// branché → « Quitter » grisé.
+		std::function<void()> m_onQuitRequested;
+
+		/// Réorganisation UI 2026-07-17 — Enregistre dans le registre du shell
+		/// toutes les actions qui dépendent de la session/config/UI ImGui
+		/// (fichier, import/export, vue, fenêtre, outils, aide). Idempotent
+		/// via `m_actionsRegistered`. No-op si `m_shell` est nul (le registre
+		/// vit dans le shell). Doit être appelée en début de `BuildUi`, main
+		/// thread. Effet de bord : remplit `m_shell->MutableActionRegistry()`.
+		void RegisterEditorActions();
+
+		/// Rend un item de menu depuis une action du registre (label,
+		/// raccourci, coche, grisage) et l'exécute au clic.
+		/// \param id id d'action (ex. "file.save") ; item absent si inconnu.
+		/// \return true si l'item vient d'être cliqué (et exécuté).
+		/// Effet de bord : ImGui state + exécution de l'action au clic.
+		bool MenuItemForAction(const char* id);
+
+		/// Rend la barre de menu française réorganisée (Fichier / Édition /
+		/// Vue / Fenêtre / Outils / Aide) depuis le registre d'actions.
+		/// Remplace l'ancien bloc inline de `BuildUi` (menus Fichier/Edition/
+		/// Vue/Options/Aide + items top-level Sauvegarder/Charger).
+		/// Effet de bord : ImGui state, exécution d'actions au clic,
+		/// enregistrement des rectangles guidance (`m_widgetTargets`).
+		void RenderMenuBarFr();
+
+		/// Rend la fenêtre « Préférences » si `m_showPreferencesWindow`.
+		/// Effet de bord : écrit `controls.movement_layout` et
+		/// `controls.editor_camera_speed_multiplier` dans `m_cfg`, persiste le
+		/// layout clavier dans user_settings.json, change le mode éditeur via
+		/// `EditorModeRegistry` (persisté dans user_prefs.json).
+		void RenderPreferencesWindow();
+
+		/// Rend la fenêtre « À propos » si `m_showAboutWindow`.
+		void RenderAboutWindow();
+
+		/// Rend la modale de confirmation de fermeture (3 choix : sauvegarder
+		/// et quitter / quitter sans sauvegarder / annuler). Ouverte quand
+		/// `m_quitConfirmRequested` a été posé par l'action `file.quit`.
+		/// Effet de bord : peut appeler `m_onQuitRequested` et sauvegarder.
+		void RenderQuitConfirmModal();
+
+		/// Sauvegarde la carte courante et, en cas de succès, blanchit le
+		/// dirty-tracking (`WorldEditorShell::NoteSaved`) et pousse le zoneId
+		/// dans les cartes récentes (user_prefs.json).
+		/// \return true si `ActionSaveCurrentMap` a réussi.
+		bool SaveCurrentMapAndNote();
+
+		/// Réinitialise la disposition des fenêtres dockées (retire le node
+		/// DockBuilder `WorldEditorDockSpaceV2`, supprime world_editor_imgui.ini,
+		/// re-arme la pose de la disposition par défaut à la frame suivante).
+		/// Extrait de l'ancien item de menu « Réinitialiser la disposition ».
+		void ResetDockLayout();
 
 		/// Lot C vague 4 — Construit un `ValidationContext` (vues lecture seule)
 		/// depuis les documents du shell branché puis exécute `m_zoneValidator`,

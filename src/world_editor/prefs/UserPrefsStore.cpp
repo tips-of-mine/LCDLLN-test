@@ -120,6 +120,28 @@ namespace engine::editor::world::prefs
 			}
 		}
 
+		/// Lit un tableau `[ "a", "b", ... ]` de strings. Curseur sur le `[`.
+		/// Tolérant : s'arrête au `]` ou à la première anomalie (le contenu
+		/// déjà lu est conservé).
+		void ReadStringArray(const std::string& s, size_t p,
+			std::vector<std::string>& out)
+		{
+			SkipWs(s, p);
+			if (p >= s.size() || s[p] != '[') return;
+			++p;
+			while (p < s.size())
+			{
+				SkipWs(s, p);
+				if (p < s.size() && s[p] == ']') return;
+				std::string val;
+				if (!ReadString(s, p, val)) return;
+				out.push_back(std::move(val));
+				SkipWs(s, p);
+				if (p < s.size() && s[p] == ',') { ++p; continue; }
+				if (p < s.size() && s[p] == ']') return;
+			}
+		}
+
 		std::string EscapeJson(const std::string& in)
 		{
 			std::string out;
@@ -204,6 +226,14 @@ namespace engine::editor::world::prefs
 		{
 			ReadBoolMap(json, pos, parsed.tutorialCompletionFlags);
 		}
+		if (SeekKey(json, "recentMapIds", pos))
+		{
+			ReadStringArray(json, pos, parsed.recentMapIds);
+			if (parsed.recentMapIds.size() > kMaxRecentMaps)
+			{
+				parsed.recentMapIds.resize(kMaxRecentMaps);
+			}
+		}
 
 		m_prefs = std::move(parsed);
 	}
@@ -245,7 +275,19 @@ namespace engine::editor::world::prefs
 				    << (kv.second ? "true" : "false");
 				first = false;
 			}
-			out << (first ? "}" : "\n  }") << "\n";
+			out << (first ? "}" : "\n  }") << ",\n";
+		}
+
+		out << "  \"recentMapIds\": [";
+		{
+			bool first = true;
+			for (const std::string& id : m_prefs.recentMapIds)
+			{
+				out << (first ? "\n" : ",\n");
+				out << "    \"" << EscapeJson(id) << "\"";
+				first = false;
+			}
+			out << (first ? "]" : "\n  ]") << "\n";
 		}
 		out << "}\n";
 
@@ -311,6 +353,25 @@ namespace engine::editor::world::prefs
 		auto it = m_prefs.tutorialCompletionFlags.find(flagId);
 		if (it != m_prefs.tutorialCompletionFlags.end() && it->second == value) return;
 		m_prefs.tutorialCompletionFlags[flagId] = value;
+		(void)SaveToDisk();
+	}
+
+	void UserPrefsStore::PushRecentMap(const std::string& zoneId)
+	{
+		if (zoneId.empty()) return;
+		std::vector<std::string>& recents = m_prefs.recentMapIds;
+		// Dédoublonnage : une occurrence existante est retirée avant la
+		// réinsertion en tête (la carte « remonte »).
+		for (auto it = recents.begin(); it != recents.end(); )
+		{
+			if (*it == zoneId) it = recents.erase(it);
+			else ++it;
+		}
+		recents.insert(recents.begin(), zoneId);
+		if (recents.size() > kMaxRecentMaps)
+		{
+			recents.resize(kMaxRecentMaps);
+		}
 		(void)SaveToDisk();
 	}
 

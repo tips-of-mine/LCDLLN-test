@@ -8119,6 +8119,10 @@ namespace engine
 					// dialog Zone Presets puisse résoudre documents et
 					// catalogs au moment de l'exécution.
 					m_worldEditorImGui->SetWorldEditorShell(m_worldEditorShell.get());
+					// Réorganisation UI 2026-07-17 — « Fichier > Quitter » :
+					// demande de fermeture par le même chemin que la croix
+					// fenêtre (sortie propre de la boucle principale).
+					m_worldEditorImGui->SetQuitCallback([this] { OnQuit(); });
 
 					// Cache de vignettes pour les textures de splatting.
 					m_texturePreviewCache = std::make_unique<engine::editor::TexturePreviewCache>();
@@ -8435,6 +8439,12 @@ namespace engine
 				m_worldEditorShell->ResetForZoneChange(
 					engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
 				m_worldEditorShell->InitNewZoneTerrain(chunksPerAxis, flatHeightMeters);
+				// Réorganisation UI 2026-07-17 — une zone fraîchement créée
+				// (fichiers déjà écrits par ActionNewMap) repart d'un état
+				// « tout enregistré » : sans ce NoteSaved, le Clear de la
+				// pile undo (ResetForZoneChange) marquerait la carte neuve
+				// « non sauvegardée » dans la barre de statut.
+				m_worldEditorShell->NoteSaved();
 				// Nouvelle carte = la caméra est replacée sur la nouvelle zone :
 				// l'origine STABLE du brouillon (mémorisée pour le gizmo/picking)
 				// pointe encore sur l'ANCIENNE carte. On l'invalide pour que le
@@ -8459,6 +8469,11 @@ namespace engine
 				m_worldEditorShell->ResetForZoneChange(
 					engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
 				m_worldEditorShell->LoadZoneDocuments(m_cfg);
+				// Réorganisation UI 2026-07-17 — une carte fraîchement
+				// chargée repart d'un état « tout enregistré » (cf. barre de
+				// statut / modale Quitter) : le Clear de la pile undo fait
+				// par ResetForZoneChange incrémente le sériel du CommandStack.
+				m_worldEditorShell->NoteSaved();
 				// Force la reconstruction de l'aperçu 3D des bâtiments de la
 				// nouvelle zone (placements chargés depuis buildings.bin).
 				if (auto* bp = m_worldEditorShell->GetBuildingEditorPanel())

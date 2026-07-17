@@ -519,13 +519,15 @@ namespace engine::editor::world
 #endif
 	}
 
-	/// Rend la barre de menu File/Edit/View/Tools/Window/Help. M100.1 : la
-	/// plupart des items sont des stubs no-op qui loguent leur déclenchement.
-	/// File/New/Open/Save sont stubs jusqu'aux tickets save/load. Edit/Undo
-	/// /Redo grisés (activés en M100.2). View propose le toggle de chaque
-	/// panneau et Reset Layout. Tools vide. Window expose 4 layouts pré-
-	/// définis (3 identiques au Default en M100.1). Help/About : version
-	/// figée pour l'instant.
+	/// Rend la barre de menu de repli Edit/View/Help. Réorganisation UI
+	/// 2026-07-17 : la barre M100.1 historique (File/Edit/View/Tools/Window/
+	/// Help) est dégraissée de ses stubs no-op (File New/Open/Save/Exit),
+	/// de son menu Tools vide et de ses 4 layouts Window aliasés sur
+	/// Default. Ne restent que les menus fonctionnels : Edit (undo/redo),
+	/// View (toggles panneaux + reset layout), Help (version). Cette barre
+	/// ne sert que le mode shell « couche au-dessus » in-game : dans le
+	/// binaire éditeur monde, elle est supprimée (SetMenuBarSuppressed) au
+	/// profit du menu français complet de WorldEditorImGui.
 	void WorldEditorShell::RenderMenuBar()
 	{
 #if defined(_WIN32)
@@ -538,28 +540,6 @@ namespace engine::editor::world
 		// par WorldEditorImGui.
 		if (m_menuBarSuppressed) return;
 		if (!ImGui::BeginMainMenuBar()) return;
-
-		if (ImGui::BeginMenu("File"))
-		{
-			if (ImGui::MenuItem("New", nullptr, false, true))
-			{
-				LOG_INFO(EditorWorld, "Menu File/New (no-op M100.1, save/load à venir)");
-			}
-			if (ImGui::MenuItem("Open", nullptr, false, true))
-			{
-				LOG_INFO(EditorWorld, "Menu File/Open (no-op M100.1, save/load à venir)");
-			}
-			if (ImGui::MenuItem("Save", "Ctrl+S", false, true))
-			{
-				MarkDirty("File/Save no-op M100.1");
-			}
-			ImGui::Separator();
-			if (ImGui::MenuItem("Exit", "Ctrl+Q", false, true))
-			{
-				LOG_INFO(EditorWorld, "Menu File/Exit (no-op M100.1, dialog à venir)");
-			}
-			ImGui::EndMenu();
-		}
 
 		if (ImGui::BeginMenu("Edit"))
 		{
@@ -597,38 +577,6 @@ namespace engine::editor::world
 			{
 				ResetLayoutToDefault();
 				LOG_INFO(EditorWorld, "Menu View/Reset Layout");
-			}
-			ImGui::EndMenu();
-		}
-
-		if (ImGui::BeginMenu("Tools"))
-		{
-			ImGui::TextDisabled("(à remplir par les tickets outils)");
-			ImGui::EndMenu();
-		}
-
-		if (ImGui::BeginMenu("Window"))
-		{
-			// Les 3 derniers layouts sont identiques au Default en M100.1.
-			if (ImGui::MenuItem("Default Layout"))
-			{
-				ResetLayoutToDefault();
-				LOG_INFO(EditorWorld, "Menu Window/Default Layout");
-			}
-			if (ImGui::MenuItem("Sculpting Layout"))
-			{
-				ResetLayoutToDefault();
-				LOG_INFO(EditorWorld, "Menu Window/Sculpting Layout (alias Default M100.1)");
-			}
-			if (ImGui::MenuItem("Painting Layout"))
-			{
-				ResetLayoutToDefault();
-				LOG_INFO(EditorWorld, "Menu Window/Painting Layout (alias Default M100.1)");
-			}
-			if (ImGui::MenuItem("Placement Layout"))
-			{
-				ResetLayoutToDefault();
-				LOG_INFO(EditorWorld, "Menu Window/Placement Layout (alias Default M100.1)");
 			}
 			ImGui::EndMenu();
 		}

@@ -96,34 +96,22 @@ namespace
 		REQUIRE(upper[0] == 4u);
 	}
 
-	/// Test : préfixe de mot classé AVANT sous-chaîne. « re » préfixe
-	/// « Rétablir » et « runtime » (mot de « Exporter en runtime ») mais
-	/// n'est que sous-chaîne de « Sauvegarder ».
+	/// Test : préfixe de mot classé AVANT sous-chaîne, requête "r" :
+	///   - préfixes de mot : « Rétablir » (2), « runtime » dans « Exporter
+	///     en runtime » (3), « Rivière » (4) — ordre d'origine préservé ;
+	///   - sous-chaînes seulement : « Sauvegarder… » (0), « Annuler » (1),
+	///     « Érosion hydraulique » (5) — après les préfixes, ordre préservé.
 	void Test_Filter_WordPrefixRanksBeforeSubstring()
 	{
 		const auto entries = MakeEntries();
-		const std::vector<size_t> res = FilterPaletteEntries("re", entries);
-		// Préfixes de mot : "Rétablir" (2) et "runtime" dans (3) — ordre
-		// d'origine préservé entre eux. Sous-chaînes ensuite : "Sauvegarder"
-		// (0, "...der la ca..." ne contient pas "re" ? si : "Sauvegarder"
-		// contient "r e" ? — vérifions plutôt par appartenance et rangs.
-		REQUIRE(!res.empty());
-		// (2) et (3) doivent être présents et AVANT (0) s'il matche.
-		size_t rank2 = res.size(), rank3 = res.size(), rank0 = res.size();
-		for (size_t i = 0; i < res.size(); ++i)
-		{
-			if (res[i] == 2u) rank2 = i;
-			if (res[i] == 3u) rank3 = i;
-			if (res[i] == 0u) rank0 = i;
-		}
-		REQUIRE(rank2 < res.size());
-		REQUIRE(rank3 < res.size());
-		REQUIRE(rank2 < rank3); // ordre d'origine entre égaux
-		if (rank0 < res.size())
-		{
-			REQUIRE(rank2 < rank0);
-			REQUIRE(rank3 < rank0);
-		}
+		const std::vector<size_t> res = FilterPaletteEntries("r", entries);
+		REQUIRE(res.size() == 6u);
+		REQUIRE(res[0] == 2u);
+		REQUIRE(res[1] == 3u);
+		REQUIRE(res[2] == 4u);
+		REQUIRE(res[3] == 0u);
+		REQUIRE(res[4] == 1u);
+		REQUIRE(res[5] == 5u);
 	}
 
 	/// Test : match sur la catégorie (taper « outils » liste les outils).

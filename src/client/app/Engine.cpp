@@ -5821,6 +5821,12 @@ namespace engine
 													skyPc.moonIntensity    = dn.isDaytime ? 0.0f : 1.0f;
 													skyPc.moonPhase        = static_cast<float>(dn.moonPhase);
 													skyPc.moonIllumination = dn.moonIllumination;
+													// Chantier ciel 2026-07-17 — modèle de ciel :
+													// analytique (Rayleigh+Mie) par défaut ; la clé
+													// client.sky.analytic=false rebascule sur le
+													// dégradé legacy sans rebuild (filet visuel).
+													skyPc.skyModel =
+														m_cfg.GetBool("client.sky.analytic", true) ? 1.0f : 0.0f;
 													// Position caméra : sert au sky.frag à reconstruire un vrai
 													// rayon de vue (sinon ciel uniforme, soleil/lune invisibles).
 													skyPc.cameraPos[0]     = rs.camera.position.x;

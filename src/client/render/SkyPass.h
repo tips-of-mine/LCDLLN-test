@@ -48,7 +48,13 @@ namespace engine::render
 			float moonIntensity;
 			float moonPhase;
 			float moonIllumination;
-			float _pad3[2];
+			/// Chantier ciel 2026-07-17 — sélecteur de modèle de ciel :
+			/// 0 = dégradé legacy zénith/horizon, 1 = diffusion analytique
+			/// Rayleigh+Mie (sky.frag). Réutilise un float de padding : la
+			/// taille (160 o) et le layout restent inchangés. Piloté par la
+			/// clé de config `client.sky.analytic` (défaut true) côté Engine.
+			float skyModel;
+			float _pad3;
 			/// xyz = position monde de la caméra ; w inutilisé. Indispensable pour
 			/// reconstruire un vrai rayon de vue (viewDir) dans sky.frag quand la
 			/// caméra n'est pas à l'origine — sinon le ciel dégénère vers une

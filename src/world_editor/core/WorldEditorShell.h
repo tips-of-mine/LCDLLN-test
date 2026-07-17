@@ -445,6 +445,16 @@ namespace engine::editor::world
 		/// la visibilité de tous les panneaux à true.
 		void ResetLayoutToDefault();
 
+		/// Réorganisation UI 2026-07-17 — Enregistre dans `m_actions` les
+		/// actions autonomes du shell (ne dépendant ni de la session ni de la
+		/// config) : Annuler/Rétablir (pile de commandes), Historique des
+		/// annulations, et un toggle de visibilité par panneau (sauf
+		/// « Scene », doublon de la vue 3D). Appelée en fin d'`Init`, après
+		/// la création des panneaux (les callbacks capturent des `IPanel*`
+		/// non possédés, valides jusqu'à `Shutdown`).
+		/// Effet de bord : remplit `m_actions`.
+		void RegisterShellActions();
+
 		/// M100.4 — Helper privé : retourne le ScenePanel (index 0 dans
 		/// `m_panels`, ordre stable garanti par Init). Utilisé par
 		/// `HandleShortcut` pour brancher Numpad 1/3/7 → SetMode et par

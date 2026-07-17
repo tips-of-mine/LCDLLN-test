@@ -18,7 +18,10 @@
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
 
+#include <cctype>   // std::tolower — ids kebab-case des toggles de panneaux
 #include <cstring>  // std::strcmp — filtrage du panneau « Scene » dans le menu View
+#include <functional>
+#include <utility>
 
 #include "src/world_editor/modes/EditorModeRegistry.h"
 #include "src/world_editor/prefs/UserPrefsStore.h"
@@ -330,10 +333,81 @@ namespace engine::editor::world
 			static_cast<panels::ToolPropertiesPanel*>(m_panels[5].get())->SetShell(this);
 		}
 
+		// Réorganisation UI 2026-07-17 — actions autonomes du shell (undo/
+		// redo, historique, toggles panneaux). Les actions dépendant de la
+		// session (save/load/export…) sont ajoutées par
+		// `WorldEditorImGui::RegisterEditorActions`.
+		RegisterShellActions();
+
 		m_initialized = true;
 		LOG_INFO(EditorWorld, "WorldEditorShell init OK, {} panels, layout='{}', cameraMode='{}'",
 			m_panels.size(), m_layoutPath, lastMode);
 		return true;
+	}
+
+	void WorldEditorShell::RegisterShellActions()
+	{
+		using actions::ActionCategory;
+		using actions::EditorAction;
+
+		// Helper local : construit + enregistre une action en une expression.
+		auto add = [this](const char* id, const char* label, ActionCategory cat,
+			const char* shortcut,
+			std::function<bool()> enabled, std::function<bool()> checked,
+			std::function<void()> execute)
+		{
+			EditorAction a;
+			a.id = id;
+			a.label = label;
+			a.category = cat;
+			a.shortcutText = (shortcut != nullptr) ? shortcut : "";
+			a.enabled = std::move(enabled);
+			a.checked = std::move(checked);
+			a.execute = std::move(execute);
+			(void)m_actions.Register(std::move(a));
+		};
+
+		add("edit.undo", "Annuler", ActionCategory::Edition, "Ctrl+Z",
+			[this] { return m_commandStack.CanUndo(); }, nullptr,
+			[this] { m_commandStack.Undo(); });
+		add("edit.redo", "Rétablir", ActionCategory::Edition, "Ctrl+Y",
+			[this] { return m_commandStack.CanRedo(); }, nullptr,
+			[this] { m_commandStack.Redo(); });
+
+		// Toggle de visibilité par panneau (menu « Fenêtre »). Le panneau
+		// « Scene » est exclu (doublon de la vue 3D principale, cf. menu Vue
+		// historique). Id kebab-case dérivé du nom : "Asset Browser" →
+		// "window.panel.asset-browser". Les IPanel* capturés sont possédés
+		// par `m_panels` et restent valides jusqu'à `Shutdown`.
+		for (auto& panel : m_panels)
+		{
+			if (!panel) continue;
+			const char* name = panel->GetName();
+			if (std::strcmp(name, "Scene") == 0) continue;
+			std::string id = "window.panel.";
+			for (const char* c = name; *c != '\0'; ++c)
+			{
+				id.push_back(*c == ' ' ? '-'
+					: static_cast<char>(std::tolower(static_cast<unsigned char>(*c))));
+			}
+			IPanel* p = panel.get();
+			add(id.c_str(), name, ActionCategory::Fenetre, nullptr,
+				nullptr,
+				[p] { return p->IsVisible(); },
+				[p] { p->SetVisible(!p->IsVisible()); });
+
+			// « Historique des annulations » : alias d'ouverture du panneau
+			// History dans le menu Édition (convention UE : l'historique
+			// d'annulation se trouve sous Edit).
+			if (std::strcmp(name, "History") == 0)
+			{
+				add("edit.history", "Historique des annulations",
+					ActionCategory::Edition, nullptr,
+					nullptr,
+					[p] { return p->IsVisible(); },
+					[p] { p->SetVisible(!p->IsVisible()); });
+			}
+		}
 	}
 
 	/// M100.6 — Active un outil et logge la transition. Garde l'API simple :

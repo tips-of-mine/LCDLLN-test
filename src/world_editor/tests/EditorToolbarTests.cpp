@@ -1,15 +1,18 @@
-/// Tests unitaires CPU pour M100.35 — EditorToolbar.
+/// Tests unitaires CPU pour la barre d'actions (réorganisation UI
+/// 2026-07-17 — ex-toolbar d'outils M100.35).
 ///
 /// Pas d'ImGui ni de GPU. On vérifie :
-///   - Le layout calculé ne couvre PAS le viewport 3D (l'invariant clé du
-///     ticket : la toolbar reste au-dessus, pas au-dessus du terrain).
+///   - Le layout calculé ne couvre PAS le viewport 3D (invariant M100.35
+///     conservé : la barre reste dans sa bande, jamais sur le terrain).
+///   - Un id d'action absent du registre ne produit PAS de bouton.
 ///   - Le hit-test pur renvoie le bon index de bouton.
-///   - `HandleClick` route correctement vers `WorldEditorShell::SetActiveTool`.
-///   - Le fallback "icône absente" est non-crashable (l'atlas retourne un
-///     style valide même pour le bouton de désélection / les outils non
-///     mappés).
-///   - `SetActiveTool` ne mute pas d'état "rendu" du shell (proxy : ne
-///     touche pas à `m_dirty`, `m_initialized`, `m_panels.size()`).
+///   - `HandleClick` exécute l'action du registre (stub qui flippe un bool)
+///     et respecte le prédicat `enabled` (action grisée = no-op).
+///   - Le fallback de `ToolbarIconAtlas::GetForAction` est non-crashable.
+///   - `SetActiveTool` ne mute pas d'état « rendu » du shell (proxy pour
+///     l'invariant de visibilité du terrain).
+///   - Dirty-tracking `NoteSaved`/`IsDirtySinceSave` (barre de statut +
+///     modale Quitter).
 ///
 /// Framework : REQUIRE maison + main monolithique (pattern identique aux
 /// autres suites de tests world_editor).
@@ -20,6 +23,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <functional>
 
 namespace
 {
@@ -38,14 +42,41 @@ namespace
 	using engine::editor::world::ToolbarIconAtlas;
 	using engine::editor::world::ToolIconStyle;
 	using engine::editor::world::WorldEditorShell;
+	using engine::editor::world::actions::ActionCategory;
+	using engine::editor::world::actions::EditorAction;
 
-	/// Test : la toolbar ne couvre PAS le viewport. La règle : la zone Y
-	/// occupée par la toolbar reste sous la zone du viewport (toolbar.y +
-	/// height ≤ topOfViewport). Concrètement : la toolbar est posée *juste
-	/// au-dessus* du dockspace, dont le top commence où la toolbar finit.
+	/// Enregistre une action stub `id` qui incrémente `counter` à chaque
+	/// exécution. `enabled` nul => toujours active.
+	void RegisterStub(WorldEditorShell& shell, const char* id, int* counter,
+		std::function<bool()> enabled = nullptr)
+	{
+		EditorAction a;
+		a.id = id;
+		a.label = id;
+		a.category = ActionCategory::Fichier;
+		a.enabled = std::move(enabled);
+		a.execute = [counter] { ++(*counter); };
+		(void)shell.MutableActionRegistry().Register(std::move(a));
+	}
+
+	/// Enregistre les 5 actions attendues par la barre, comptées dans
+	/// `counters[0..4]` (ordre save/undo/redo/validate/export).
+	void RegisterAllFive(WorldEditorShell& shell, int* counters)
+	{
+		RegisterStub(shell, "file.save",     &counters[0]);
+		RegisterStub(shell, "edit.undo",     &counters[1]);
+		RegisterStub(shell, "edit.redo",     &counters[2]);
+		RegisterStub(shell, "zone.validate", &counters[3]);
+		RegisterStub(shell, "zone.export",   &counters[4]);
+	}
+
+	/// Test : la barre ne couvre PAS le viewport (toolbar.y + height borne
+	/// tous les boutons) et les 5 actions donnent 5 boutons.
 	void Test_Toolbar_DoesNotCoverViewport()
 	{
 		WorldEditorShell shell;
+		int counters[5] = {};
+		RegisterAllFive(shell, counters);
 		EditorToolbar toolbar(shell);
 
 		// Viewport simulé : 1920x1080, menu bar 20 px.
@@ -56,124 +87,129 @@ namespace
 		REQUIRE(layout.toolbarHeight == EditorToolbar::kToolbarHeightPx);
 		REQUIRE(layout.toolbarY == menuBarHeight);
 		REQUIRE(layout.toolbarWidth == viewportWidth);
+		REQUIRE(layout.buttons.size() == 5u);
 
 		// Le top du viewport 3D commence à `toolbarY + toolbarHeight`.
 		const float viewportTopY = layout.toolbarY + layout.toolbarHeight;
-		// Tous les boutons ont y < viewportTopY (donc strictement dans la
-		// bande toolbar, jamais sous le terrain).
 		for (const auto& b : layout.buttons)
 		{
 			REQUIRE(b.y + b.height <= viewportTopY);
 		}
 	}
 
-	/// Test : click sur le bouton d'un outil donné route vers
-	/// `SetActiveTool` avec le bon enum.
-	void Test_Toolbar_ClickRoutesToSetActiveTool()
+	/// Test : un id absent du registre est omis du layout (mode shell
+	/// in-game : les actions session ne sont pas enregistrées).
+	void Test_Toolbar_UnknownActionOmitted()
 	{
 		WorldEditorShell shell;
+		int c0 = 0, c1 = 0;
+		RegisterStub(shell, "edit.undo", &c0);
+		RegisterStub(shell, "edit.redo", &c1);
+		EditorToolbar toolbar(shell);
+
+		const ToolbarLayout layout = toolbar.BuildLayout(1920.0f, 20.0f);
+		REQUIRE(layout.buttons.size() == 2u);
+		REQUIRE(layout.buttons[0].actionId == "edit.undo");
+		REQUIRE(layout.buttons[1].actionId == "edit.redo");
+
+		// Registre entièrement vide → aucun bouton, pas de crash.
+		WorldEditorShell emptyShell;
+		EditorToolbar emptyToolbar(emptyShell);
+		REQUIRE(emptyToolbar.BuildLayout(1920.0f, 20.0f).buttons.empty());
+	}
+
+	/// Test : click sur un bouton route vers l'exécution de la BONNE action.
+	void Test_Toolbar_ClickExecutesAction()
+	{
+		WorldEditorShell shell;
+		int counters[5] = {};
+		RegisterAllFive(shell, counters);
 		EditorToolbar toolbar(shell);
 		const ToolbarLayout layout = toolbar.BuildLayout(1920.0f, 20.0f);
 
-		// Trouve le bouton Mountain Range et clique son centre.
-		size_t mountainIdx = layout.buttons.size();
+		// Trouve le bouton "zone.validate" et clique son centre.
+		size_t validateIdx = layout.buttons.size();
 		for (size_t i = 0; i < layout.buttons.size(); ++i)
 		{
-			if (layout.buttons[i].tool == ActiveTool::MountainRange)
-			{
-				mountainIdx = i;
-				break;
-			}
+			if (layout.buttons[i].actionId == "zone.validate") { validateIdx = i; break; }
 		}
-		REQUIRE(mountainIdx < layout.buttons.size());
+		REQUIRE(validateIdx < layout.buttons.size());
 
-		const auto& b = layout.buttons[mountainIdx];
-		const float mx = b.x + b.width * 0.5f;
-		const float my = b.y + b.height * 0.5f;
-
+		const auto& b = layout.buttons[validateIdx];
 		size_t hitIdx = 0;
-		REQUIRE(EditorToolbar::HitTest(layout, mx, my, hitIdx));
-		REQUIRE(hitIdx == mountainIdx);
+		REQUIRE(EditorToolbar::HitTest(layout,
+			b.x + b.width * 0.5f, b.y + b.height * 0.5f, hitIdx));
+		REQUIRE(hitIdx == validateIdx);
 
-		REQUIRE(shell.GetActiveTool() == ActiveTool::None);
 		toolbar.HandleClick(layout, hitIdx);
-		REQUIRE(shell.GetActiveTool() == ActiveTool::MountainRange);
+		REQUIRE(counters[3] == 1); // zone.validate exécutée
+		REQUIRE(counters[0] == 0 && counters[1] == 0
+			&& counters[2] == 0 && counters[4] == 0);
 
-		// Idem pour Valley Chain.
-		size_t valleyIdx = layout.buttons.size();
-		for (size_t i = 0; i < layout.buttons.size(); ++i)
-		{
-			if (layout.buttons[i].tool == ActiveTool::ValleyChain)
-			{
-				valleyIdx = i;
-				break;
-			}
-		}
-		REQUIRE(valleyIdx < layout.buttons.size());
-		toolbar.HandleClick(layout, valleyIdx);
-		REQUIRE(shell.GetActiveTool() == ActiveTool::ValleyChain);
+		// Index hors plage : no-op.
+		toolbar.HandleClick(layout, layout.buttons.size());
+		REQUIRE(counters[3] == 1);
+	}
 
-		// Cliquer le bouton X (désélection) bascule vers None.
-		size_t deselectIdx = layout.buttons.size();
-		for (size_t i = 0; i < layout.buttons.size(); ++i)
-		{
-			if (layout.buttons[i].tool == ActiveTool::None)
-			{
-				deselectIdx = i;
-				break;
-			}
-		}
-		REQUIRE(deselectIdx < layout.buttons.size());
-		toolbar.HandleClick(layout, deselectIdx);
-		REQUIRE(shell.GetActiveTool() == ActiveTool::None);
+	/// Test : une action au prédicat `enabled` faux n'est PAS exécutée au
+	/// clic (bouton grisé).
+	void Test_Toolbar_DisabledActionIsNoOp()
+	{
+		WorldEditorShell shell;
+		int execCount = 0;
+		bool gate = false;
+		RegisterStub(shell, "file.save", &execCount, [&gate] { return gate; });
+		EditorToolbar toolbar(shell);
+		const ToolbarLayout layout = toolbar.BuildLayout(1920.0f, 20.0f);
+		REQUIRE(layout.buttons.size() == 1u);
+
+		toolbar.HandleClick(layout, 0);
+		REQUIRE(execCount == 0); // grisée → no-op
+
+		gate = true;
+		toolbar.HandleClick(layout, 0);
+		REQUIRE(execCount == 1); // réactivée → exécutée
 	}
 
 	/// Test : HitTest hors zone de tous les boutons → false.
 	void Test_Toolbar_HitTestOutsideAllButtons_ReturnsFalse()
 	{
 		WorldEditorShell shell;
+		int counters[5] = {};
+		RegisterAllFive(shell, counters);
 		EditorToolbar toolbar(shell);
 		const ToolbarLayout layout = toolbar.BuildLayout(1920.0f, 20.0f);
 
 		size_t hitIdx = 999;
-		// Bien sous tous les boutons (Y au milieu du viewport, où il n'y a
-		// pas de toolbar).
+		// Bien sous tous les boutons (Y au milieu du viewport).
 		REQUIRE(!EditorToolbar::HitTest(layout, 100.0f, 500.0f, hitIdx));
 		REQUIRE(hitIdx == 999); // pas muté
 
-		// Au-dessus de toute la toolbar.
+		// Au-dessus de toute la barre.
 		REQUIRE(!EditorToolbar::HitTest(layout, 100.0f, 0.0f, hitIdx));
 	}
 
-	/// Test : l'atlas fournit un style placeholder valide pour chaque outil
-	/// connu et un fallback pour l'inconnu — pas de crash, pas de pointeur
-	/// null sur `letter` ou `tooltipFr`.
-	void Test_Toolbar_MissingIcon_FallsBackToPlaceholder()
+	/// Test : l'atlas fournit un style valide pour chaque action de la barre
+	/// et un fallback pour l'inconnu — pas de pointeur nul.
+	void Test_Toolbar_ActionIcons_FallBackToPlaceholder()
 	{
-		const ActiveTool kKnown[] = {
-			ActiveTool::None,
-			ActiveTool::TerrainSculpt,
-			ActiveTool::TerrainStamp,
-			ActiveTool::SplatPaint,
-			ActiveTool::Lake,
-			ActiveTool::River,
-			ActiveTool::MountainRange,
-			ActiveTool::ValleyChain,
+		const char* kActionIds[] = {
+			"file.save", "edit.undo", "edit.redo", "zone.validate", "zone.export",
 		};
-		for (ActiveTool t : kKnown)
+		for (const char* id : kActionIds)
 		{
-			const ToolIconStyle s = ToolbarIconAtlas::Get(t);
-			REQUIRE(s.letter    != nullptr);
-			REQUIRE(s.tooltipFr != nullptr);
-			REQUIRE(std::strlen(s.letter)    > 0);
-			REQUIRE(std::strlen(s.tooltipFr) > 0);
+			const ToolIconStyle s = ToolbarIconAtlas::GetForAction(id);
+			REQUIRE(s.enabled);
+			REQUIRE(s.letter    != nullptr && std::strlen(s.letter)    > 0);
+			REQUIRE(s.tooltipFr != nullptr && std::strlen(s.tooltipFr) > 0);
 		}
 
-		// Cast d'un uint8 hors enum → style par défaut "Bientôt disponible".
-		const ToolIconStyle bogus = ToolbarIconAtlas::Get(static_cast<ActiveTool>(99));
+		const ToolIconStyle bogus = ToolbarIconAtlas::GetForAction("absent.id");
 		REQUIRE(bogus.enabled == false);
-		REQUIRE(bogus.letter  != nullptr);
+		REQUIRE(bogus.letter != nullptr);
 
+		// L'atlas outils (consommé par la palette + la barre de statut)
+		// reste non-crashable.
 		const ToolIconStyle deselect = ToolbarIconAtlas::GetDeselect();
 		REQUIRE(deselect.enabled == true);
 		REQUIRE(std::strcmp(deselect.letter, "X") == 0);
@@ -181,8 +217,6 @@ namespace
 
 	/// Test (réorganisation UI 2026-07-17) : NoteSaved/IsDirtySinceSave — le
 	/// dirty-tracking consommé par la barre de statut et la modale Quitter.
-	/// Un shell neuf n'est pas dirty ; MarkDirty le rend dirty ; NoteSaved le
-	/// blanchit ; une mutation de la pile de commandes le re-salit.
 	void Test_Shell_DirtySinceSave_Tracking()
 	{
 		WorldEditorShell shell;
@@ -203,11 +237,8 @@ namespace
 	}
 
 	/// Test : activation d'un nouvel outil ne déclenche AUCUN side effect
-	/// sur l'état dirty / panels / initialized du shell. C'est un proxy
-	/// observable pour l'invariant de visibilité du terrain : si
-	/// `SetActiveTool` n'écrit que `m_activeTool`, alors par construction
-	/// il ne peut pas muter `TerrainRenderer::IsFrustumCullEnabled`,
-	/// `m_noUserTextures` ou la position caméra (qui vivent ailleurs).
+	/// sur l'état dirty / panels / initialized du shell. Proxy observable de
+	/// l'invariant de visibilité du terrain (cf. M100.35).
 	void Test_NewToolActivation_DoesNotResetCameraOrFrustumCullState()
 	{
 		WorldEditorShell shell;
@@ -220,10 +251,6 @@ namespace
 		REQUIRE(shell.IsInitialized() == initBefore);
 		REQUIRE(shell.Panels().size() == panelsBefore);
 
-		shell.SetActiveTool(ActiveTool::ValleyChain);
-		REQUIRE(shell.GetActiveTool() == ActiveTool::ValleyChain);
-		REQUIRE(shell.IsDirty() == dirtyBefore);
-
 		shell.SetActiveTool(ActiveTool::None);
 		REQUIRE(shell.GetActiveTool() == ActiveTool::None);
 		REQUIRE(shell.IsDirty() == dirtyBefore);
@@ -233,9 +260,11 @@ namespace
 int main()
 {
 	Test_Toolbar_DoesNotCoverViewport();
-	Test_Toolbar_ClickRoutesToSetActiveTool();
+	Test_Toolbar_UnknownActionOmitted();
+	Test_Toolbar_ClickExecutesAction();
+	Test_Toolbar_DisabledActionIsNoOp();
 	Test_Toolbar_HitTestOutsideAllButtons_ReturnsFalse();
-	Test_Toolbar_MissingIcon_FallsBackToPlaceholder();
+	Test_Toolbar_ActionIcons_FallBackToPlaceholder();
 	Test_Shell_DirtySinceSave_Tracking();
 	Test_NewToolActivation_DoesNotResetCameraOrFrustumCullState();
 

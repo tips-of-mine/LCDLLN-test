@@ -1,8 +1,9 @@
 #pragma once
 
-#include "src/world_editor/core/WorldEditorShell.h"
+#include "src/world_editor/core/ActiveTool.h"
 
 #include <cstdint>
+#include <string_view>
 
 namespace engine::editor::world
 {
@@ -43,5 +44,13 @@ namespace engine::editor::world
 		/// Style explicite du bouton de désélection (icône X), retourné en
 		/// fin de toolbar quel que soit l'outil actif.
 		static ToolIconStyle GetDeselect();
+
+		/// Réorganisation UI 2026-07-17 — Style placeholder pour un bouton de
+		/// la barre d'ACTIONS (save/undo/redo/validate/export), identifié par
+		/// l'id d'action du registre (ex. "file.save"). Un id non mappé
+		/// retourne le fallback neutre désactivé « Bientôt disponible ».
+		/// Le tooltip affiché par la barre vient du registre (libellé +
+		/// raccourci) ; le champ `tooltipFr` du style n'est qu'un secours.
+		static ToolIconStyle GetForAction(std::string_view actionId);
 	};
 }

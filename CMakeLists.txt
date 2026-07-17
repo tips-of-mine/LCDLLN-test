@@ -343,6 +343,7 @@ add_library(engine_core
   src/world_editor/actions/EditorActionRegistry.cpp
   src/world_editor/ui/ToolPaletteModel.cpp
   src/world_editor/panels/ToolPalettePanel.cpp
+  src/world_editor/ui/CommandPaletteModel.cpp
   # M101.4 / M101.5 — editeur de routines nodal (panel + commandes + palette/inspecteur).
   src/world_editor/routine/RoutineGraphCommands.cpp
   src/world_editor/routine/RoutineGraphPanel.cpp
@@ -1754,6 +1755,19 @@ else()
   target_compile_options(tool_palette_model_tests PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 add_test(NAME tool_palette_model_tests COMMAND tool_palette_model_tests)
+
+# Réorganisation UI 2026-07-17 (PR 3) — Tests unitaires CPU du filtrage pur
+# de la palette de commandes Ctrl+P : normalisation accents/casse, préfixe
+# de mot > sous-chaîne, match catégorie, stabilité. NON gaté WIN32.
+add_executable(command_palette_model_tests src/world_editor/tests/CommandPaletteModelTests.cpp)
+target_include_directories(command_palette_model_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(command_palette_model_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(command_palette_model_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+else()
+  target_compile_options(command_palette_model_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME command_palette_model_tests COMMAND command_palette_model_tests)
 
 # M100.36 — Tests unitaires CPU pour le watershed D8 + flow accumulation +
 # Douglas-Peucker + OceanSettings + RiverNetworkCommand + water.bin v1/v2

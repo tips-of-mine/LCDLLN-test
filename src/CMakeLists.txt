@@ -1081,6 +1081,10 @@ elseif(UNIX)
   # CPU ; CloudWeatherMapper.cpp est fourni par engine_core (lie par le helper).
   lcdlln_add_simple_test(cloud_params_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/clouds/CloudParamsTests.cpp)
+  # Chantier ciel 2026-07-17 — générateur de bruit Perlin-Worley des nuages :
+  # déterminisme, périodicité (tuilage sampler REPEAT), distribution.
+  lcdlln_add_simple_test(cloud_noise_generator_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/clouds/CloudNoiseGeneratorTests.cpp)
   lcdlln_add_simple_test(cloud_weather_mapper_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/clouds/CloudWeatherMapperTests.cpp)
   # WeatherKindMap : conversion WeatherKind serveur (wire 156) -> WeatherState client.

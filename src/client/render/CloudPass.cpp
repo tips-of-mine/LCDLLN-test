@@ -1,8 +1,10 @@
 #include "src/client/render/CloudPass.h"
 #include "src/client/render/PipelineCache.h"
+#include "src/client/render/clouds/CloudNoiseGenerator.h"
 #include "src/shared/core/Log.h"
 
 #include <array>
+#include <chrono>
 #include <cstring>
 
 namespace engine::render
@@ -19,16 +21,36 @@ namespace engine::render
 			vkCreateShaderModule(device, &info, nullptr, &mod);
 			return mod;
 		}
+
+		/// Trouve un type mémoire compatible (pattern standard Vulkan).
+		/// \return l'index du type, ou UINT32_MAX si aucun ne convient.
+		uint32_t FindMemoryType(VkPhysicalDevice physicalDevice,
+			uint32_t typeBits, VkMemoryPropertyFlags props)
+		{
+			VkPhysicalDeviceMemoryProperties memProps{};
+			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+			for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+			{
+				if ((typeBits & (1u << i))
+					&& (memProps.memoryTypes[i].propertyFlags & props) == props)
+				{
+					return i;
+				}
+			}
+			return UINT32_MAX;
+		}
 	}
 
-	bool CloudPass::Init(VkDevice device, VkPhysicalDevice /*physicalDevice*/,
+	bool CloudPass::Init(VkDevice device, VkPhysicalDevice physicalDevice,
 		VkFormat sceneColorHDRFormat,
 		const uint32_t* vertSpirv, size_t vertWordCount,
 		const uint32_t* fragSpirv, size_t fragWordCount,
+		VkQueue uploadQueue, uint32_t uploadQueueFamilyIndex,
 		uint32_t maxFrames, VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv
-			|| vertWordCount == 0 || fragWordCount == 0)
+			|| vertWordCount == 0 || fragWordCount == 0
+			|| uploadQueue == VK_NULL_HANDLE)
 		{
 			LOG_ERROR(Render, "CloudPass::Init: invalid arguments");
 			return false;
@@ -81,9 +103,10 @@ namespace engine::render
 			}
 		}
 
-		// 2. Descriptor set layout : 2 combined image samplers (scene color, depth).
+		// 2. Descriptor set layout : 4 combined image samplers (scene color,
+		// depth, bruit base 3D, bruit détail 3D — chantier ciel 2026-07-17).
 		{
-			std::array<VkDescriptorSetLayoutBinding, 2> bindings{};
+			std::array<VkDescriptorSetLayoutBinding, 4> bindings{};
 			for (size_t i = 0; i < bindings.size(); ++i)
 			{
 				bindings[i].binding         = static_cast<uint32_t>(i);
@@ -106,7 +129,7 @@ namespace engine::render
 		{
 			VkDescriptorPoolSize poolSize{};
 			poolSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSize.descriptorCount = 2 * m_maxFrames;
+			poolSize.descriptorCount = 4 * m_maxFrames;
 			VkDescriptorPoolCreateInfo poolInfo{};
 			poolInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 			poolInfo.poolSizeCount = 1;
@@ -158,6 +181,57 @@ namespace engine::render
 				LOG_ERROR(Render, "CloudPass: vkCreateSampler (nearest) failed");
 				Destroy(device); return false;
 			}
+			// Sampler des textures de bruit : linéaire + REPEAT (les bruits
+			// sont périodiques, le tuilage doit être sans couture).
+			si.magFilter    = VK_FILTER_LINEAR;
+			si.minFilter    = VK_FILTER_LINEAR;
+			si.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			si.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			si.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			if (vkCreateSampler(device, &si, nullptr, &m_noiseSampler) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkCreateSampler (noise repeat) failed");
+				Destroy(device); return false;
+			}
+		}
+
+		// 5b. Chantier ciel 2026-07-17 — génération CPU + upload des textures
+		// 3D de bruit Perlin-Worley (base 64³ + détail 32³). One-shot au boot
+		// via un command pool transitoire (vkQueueWaitIdle interne).
+		{
+			const auto t0 = std::chrono::steady_clock::now();
+			const clouds::CloudNoiseData noise = clouds::GenerateCloudNoise(1337u);
+
+			VkCommandPool uploadPool = VK_NULL_HANDLE;
+			VkCommandPoolCreateInfo poolInfo{};
+			poolInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+			poolInfo.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+			poolInfo.queueFamilyIndex = uploadQueueFamilyIndex;
+			if (vkCreateCommandPool(device, &poolInfo, nullptr, &uploadPool) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkCreateCommandPool (noise upload) failed");
+				Destroy(device); return false;
+			}
+
+			const bool okBase = CreateNoiseTexture3D(device, physicalDevice,
+				uploadPool, uploadQueue, clouds::kBaseNoiseSize,
+				noise.baseRgba.data(),
+				m_noiseBaseImage, m_noiseBaseMemory, m_noiseBaseView);
+			const bool okDetail = okBase && CreateNoiseTexture3D(device, physicalDevice,
+				uploadPool, uploadQueue, clouds::kDetailNoiseSize,
+				noise.detailRgba.data(),
+				m_noiseDetailImage, m_noiseDetailMemory, m_noiseDetailView);
+			vkDestroyCommandPool(device, uploadPool, nullptr);
+			if (!okBase || !okDetail)
+			{
+				LOG_ERROR(Render, "CloudPass: creation des textures de bruit 3D echouee");
+				Destroy(device); return false;
+			}
+			const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now() - t0).count();
+			LOG_INFO(Render, "CloudPass: bruit Perlin-Worley genere+uploade en {} ms "
+				"(base {}^3, detail {}^3)", static_cast<long long>(ms),
+				clouds::kBaseNoiseSize, clouds::kDetailNoiseSize);
 		}
 
 		// 6. Pipeline layout : set 0 + push constants (176 o, fragment).
@@ -281,10 +355,12 @@ namespace engine::render
 		const uint32_t setIdx = frameIndex % m_maxFrames;
 		VkDescriptorSet ds = m_descriptorSets[setIdx];
 
-		std::array<VkDescriptorImageInfo, 2> imageInfos{};
-		imageInfos[0] = { m_linearSampler,  viewSceneIn, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-		imageInfos[1] = { m_nearestSampler, viewDepth,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-		std::array<VkWriteDescriptorSet, 2> writes{};
+		std::array<VkDescriptorImageInfo, 4> imageInfos{};
+		imageInfos[0] = { m_linearSampler,  viewSceneIn,       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[1] = { m_nearestSampler, viewDepth,         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[2] = { m_noiseSampler,   m_noiseBaseView,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[3] = { m_noiseSampler,   m_noiseDetailView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		std::array<VkWriteDescriptorSet, 4> writes{};
 		for (size_t i = 0; i < writes.size(); ++i)
 		{
 			writes[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -351,6 +427,181 @@ namespace engine::render
 		vkCmdEndRenderPass(cmd);
 	}
 
+	bool CloudPass::CreateNoiseTexture3D(VkDevice device, VkPhysicalDevice physicalDevice,
+		VkCommandPool cmdPool, VkQueue queue,
+		int size, const uint8_t* rgba,
+		VkImage& outImage, VkDeviceMemory& outMemory, VkImageView& outView)
+	{
+		const VkDeviceSize byteSize =
+			static_cast<VkDeviceSize>(size) * size * size * 4u;
+
+		// 1. Image 3D device-local.
+		{
+			VkImageCreateInfo ii{};
+			ii.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			ii.imageType     = VK_IMAGE_TYPE_3D;
+			ii.format        = VK_FORMAT_R8G8B8A8_UNORM;
+			ii.extent        = { static_cast<uint32_t>(size),
+			                     static_cast<uint32_t>(size),
+			                     static_cast<uint32_t>(size) };
+			ii.mipLevels     = 1;
+			ii.arrayLayers   = 1;
+			ii.samples       = VK_SAMPLE_COUNT_1_BIT;
+			ii.tiling        = VK_IMAGE_TILING_OPTIMAL;
+			ii.usage         = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+			ii.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			if (vkCreateImage(device, &ii, nullptr, &outImage) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkCreateImage (bruit 3D {}^3) failed", size);
+				return false;
+			}
+			VkMemoryRequirements req{};
+			vkGetImageMemoryRequirements(device, outImage, &req);
+			VkMemoryAllocateInfo ai{};
+			ai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			ai.allocationSize  = req.size;
+			ai.memoryTypeIndex = FindMemoryType(physicalDevice, req.memoryTypeBits,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+			if (ai.memoryTypeIndex == UINT32_MAX
+				|| vkAllocateMemory(device, &ai, nullptr, &outMemory) != VK_SUCCESS
+				|| vkBindImageMemory(device, outImage, outMemory, 0) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: allocation memoire image bruit 3D failed");
+				return false;
+			}
+		}
+
+		// 2. Staging host-visible + copie CPU.
+		VkBuffer stagingBuf = VK_NULL_HANDLE;
+		VkDeviceMemory stagingMem = VK_NULL_HANDLE;
+		{
+			VkBufferCreateInfo bi{};
+			bi.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bi.size        = byteSize;
+			bi.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			bi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			if (vkCreateBuffer(device, &bi, nullptr, &stagingBuf) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkCreateBuffer (staging bruit) failed");
+				return false;
+			}
+			VkMemoryRequirements req{};
+			vkGetBufferMemoryRequirements(device, stagingBuf, &req);
+			VkMemoryAllocateInfo ai{};
+			ai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			ai.allocationSize  = req.size;
+			ai.memoryTypeIndex = FindMemoryType(physicalDevice, req.memoryTypeBits,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			if (ai.memoryTypeIndex == UINT32_MAX
+				|| vkAllocateMemory(device, &ai, nullptr, &stagingMem) != VK_SUCCESS
+				|| vkBindBufferMemory(device, stagingBuf, stagingMem, 0) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: allocation staging bruit failed");
+				if (stagingBuf) vkDestroyBuffer(device, stagingBuf, nullptr);
+				if (stagingMem) vkFreeMemory(device, stagingMem, nullptr);
+				return false;
+			}
+			void* mapped = nullptr;
+			if (vkMapMemory(device, stagingMem, 0, byteSize, 0, &mapped) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkMapMemory (staging bruit) failed");
+				vkDestroyBuffer(device, stagingBuf, nullptr);
+				vkFreeMemory(device, stagingMem, nullptr);
+				return false;
+			}
+			std::memcpy(mapped, rgba, static_cast<size_t>(byteSize));
+			vkUnmapMemory(device, stagingMem);
+		}
+
+		// 3. Command buffer one-shot : UNDEFINED → TRANSFER_DST, copie,
+		// → SHADER_READ_ONLY (fragment). Submit + wait (boot uniquement).
+		bool ok = false;
+		{
+			VkCommandBufferAllocateInfo cbai{};
+			cbai.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			cbai.commandPool        = cmdPool;
+			cbai.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			cbai.commandBufferCount = 1;
+			VkCommandBuffer cmd = VK_NULL_HANDLE;
+			if (vkAllocateCommandBuffers(device, &cbai, &cmd) == VK_SUCCESS)
+			{
+				VkCommandBufferBeginInfo bi{};
+				bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+				bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+				vkBeginCommandBuffer(cmd, &bi);
+
+				VkImageSubresourceRange range{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+				VkImageMemoryBarrier toDst{};
+				toDst.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				toDst.srcAccessMask       = 0;
+				toDst.dstAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+				toDst.oldLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
+				toDst.newLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				toDst.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				toDst.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				toDst.image               = outImage;
+				toDst.subresourceRange    = range;
+				vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+					VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toDst);
+
+				VkBufferImageCopy copy{};
+				copy.imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+				copy.imageExtent      = { static_cast<uint32_t>(size),
+				                          static_cast<uint32_t>(size),
+				                          static_cast<uint32_t>(size) };
+				vkCmdCopyBufferToImage(cmd, stagingBuf, outImage,
+					VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+
+				VkImageMemoryBarrier toRead = toDst;
+				toRead.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				toRead.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				toRead.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				toRead.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
+					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toRead);
+
+				vkEndCommandBuffer(cmd);
+				VkSubmitInfo si{};
+				si.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+				si.commandBufferCount = 1;
+				si.pCommandBuffers    = &cmd;
+				if (vkQueueSubmit(queue, 1, &si, VK_NULL_HANDLE) == VK_SUCCESS)
+				{
+					vkQueueWaitIdle(queue);
+					ok = true;
+				}
+				else
+				{
+					LOG_ERROR(Render, "CloudPass: vkQueueSubmit (upload bruit) failed");
+				}
+				vkFreeCommandBuffers(device, cmdPool, 1, &cmd);
+			}
+			else
+			{
+				LOG_ERROR(Render, "CloudPass: vkAllocateCommandBuffers (upload bruit) failed");
+			}
+		}
+		vkDestroyBuffer(device, stagingBuf, nullptr);
+		vkFreeMemory(device, stagingMem, nullptr);
+		if (!ok) return false;
+
+		// 4. Vue 3D.
+		{
+			VkImageViewCreateInfo vi{};
+			vi.sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			vi.image            = outImage;
+			vi.viewType         = VK_IMAGE_VIEW_TYPE_3D;
+			vi.format           = VK_FORMAT_R8G8B8A8_UNORM;
+			vi.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+			if (vkCreateImageView(device, &vi, nullptr, &outView) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkCreateImageView (bruit 3D) failed");
+				return false;
+			}
+		}
+		return true;
+	}
+
 	// Audit 2026-06-10 (Lot B2) — détruit les framebuffers cachés (pattern WaterPass).
 	void CloudPass::InvalidateFramebufferCache(VkDevice device)
 	{
@@ -373,6 +624,14 @@ namespace engine::render
 		if (m_pipelineLayout)      { vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr); m_pipelineLayout = VK_NULL_HANDLE; }
 		if (m_nearestSampler)      { vkDestroySampler(device, m_nearestSampler, nullptr); m_nearestSampler = VK_NULL_HANDLE; }
 		if (m_linearSampler)       { vkDestroySampler(device, m_linearSampler, nullptr); m_linearSampler = VK_NULL_HANDLE; }
+		// Chantier ciel 2026-07-17 — textures 3D de bruit + sampler REPEAT.
+		if (m_noiseSampler)        { vkDestroySampler(device, m_noiseSampler, nullptr); m_noiseSampler = VK_NULL_HANDLE; }
+		if (m_noiseBaseView)       { vkDestroyImageView(device, m_noiseBaseView, nullptr); m_noiseBaseView = VK_NULL_HANDLE; }
+		if (m_noiseBaseImage)      { vkDestroyImage(device, m_noiseBaseImage, nullptr); m_noiseBaseImage = VK_NULL_HANDLE; }
+		if (m_noiseBaseMemory)     { vkFreeMemory(device, m_noiseBaseMemory, nullptr); m_noiseBaseMemory = VK_NULL_HANDLE; }
+		if (m_noiseDetailView)     { vkDestroyImageView(device, m_noiseDetailView, nullptr); m_noiseDetailView = VK_NULL_HANDLE; }
+		if (m_noiseDetailImage)    { vkDestroyImage(device, m_noiseDetailImage, nullptr); m_noiseDetailImage = VK_NULL_HANDLE; }
+		if (m_noiseDetailMemory)   { vkFreeMemory(device, m_noiseDetailMemory, nullptr); m_noiseDetailMemory = VK_NULL_HANDLE; }
 		m_descriptorSets.clear();
 		if (m_descriptorPool)      { vkDestroyDescriptorPool(device, m_descriptorPool, nullptr); m_descriptorPool = VK_NULL_HANDLE; }
 		if (m_descriptorSetLayout) { vkDestroyDescriptorSetLayout(device, m_descriptorSetLayout, nullptr); m_descriptorSetLayout = VK_NULL_HANDLE; }

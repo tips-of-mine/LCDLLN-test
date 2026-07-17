@@ -3,7 +3,8 @@
 // Nuages volumétriques ray-marchés (client). Passe GRAPHIQUE plein écran
 // (fullscreen triangle partagé avec volumetric_fog.frag via lighting.vert).
 // Pour chaque pixel : reconstruit le rayon caméra->pixel, ray-marche une dalle
-// horizontale [baseAlt, topAlt], accumule densité (bruit FBM in-shader) et
+// horizontale [baseAlt, topAlt], accumule densité (textures 3D Perlin-Worley
+// pré-cuites, chantier ciel 2026-07-17 — ex-bruit FBM in-shader) et
 // éclairage (Beer + Powder + phase Henyey-Greenstein vers le soleil), puis
 // composite par-dessus la scène déjà brouillardée. Le depth scène borne la
 // marche (un relief proche occulte les nuages).
@@ -11,6 +12,9 @@
 // Entrées (descriptor set 0) :
 //   binding 0 = scene color HDR post-fog (sampler linéaire clamp)
 //   binding 1 = depth scene (D32_SFLOAT, sampler nearest clamp, lu en .r)
+//   binding 2 = bruit 3D base 64³ (R=Perlin fBm, G/B/A=Worley 8/16/32,
+//               sampler linéaire REPEAT) — chantier ciel 2026-07-17
+//   binding 3 = bruit 3D détail 32³ (R/G/B=Worley 4/8/16, REPEAT)
 //
 // Sortie :
 //   outColor (location 0) — scene + nuages composités.
@@ -22,6 +26,8 @@ layout(location = 0) out vec4 outColor;
 
 layout(set = 0, binding = 0) uniform sampler2D uSceneColor; // HDR post-fog
 layout(set = 0, binding = 1) uniform sampler2D uSceneDepth; // depth, .r = [0,1]
+layout(set = 0, binding = 2) uniform sampler3D uNoiseBase;   // Perlin-Worley base
+layout(set = 0, binding = 3) uniform sampler3D uNoiseDetail; // Worley détail
 
 layout(push_constant) uniform CloudPC
 {
@@ -38,50 +44,16 @@ layout(push_constant) uniform CloudPC
 
 const float PI = 3.14159265358979;
 
-// ---- Bruit value-noise 3D + FBM (hash, sans texture) ----
-float hash13(vec3 p)
+// Remap borné [0,1] — dilatation de Schneider (Horizon Zero Dawn) et
+// érosion de détail (chantier ciel 2026-07-17).
+float remap01(float v, float lo, float hi)
 {
-	p = fract(p * 0.1031);
-	p += dot(p, p.yzx + 33.33);
-	return fract((p.x + p.y) * p.z);
+	return clamp((v - lo) / max(hi - lo, 1e-5), 0.0, 1.0);
 }
 
-float valueNoise(vec3 p)
-{
-	vec3 i = floor(p);
-	vec3 f = fract(p);
-	f = f * f * (3.0 - 2.0 * f);
-	float n000 = hash13(i + vec3(0,0,0));
-	float n100 = hash13(i + vec3(1,0,0));
-	float n010 = hash13(i + vec3(0,1,0));
-	float n110 = hash13(i + vec3(1,1,0));
-	float n001 = hash13(i + vec3(0,0,1));
-	float n101 = hash13(i + vec3(1,0,1));
-	float n011 = hash13(i + vec3(0,1,1));
-	float n111 = hash13(i + vec3(1,1,1));
-	float nx00 = mix(n000, n100, f.x);
-	float nx10 = mix(n010, n110, f.x);
-	float nx01 = mix(n001, n101, f.x);
-	float nx11 = mix(n011, n111, f.x);
-	float nxy0 = mix(nx00, nx10, f.y);
-	float nxy1 = mix(nx01, nx11, f.y);
-	return mix(nxy0, nxy1, f.z);
-}
-
-float fbm(vec3 p)
-{
-	float a = 0.5;
-	float sum = 0.0;
-	for (int i = 0; i < 5; ++i)
-	{
-		sum += a * valueNoise(p);
-		p *= 2.02;
-		a *= 0.5;
-	}
-	return sum;
-}
-
-// Densité de nuage en un point monde p.
+// Densité de nuage en un point monde p (chantier ciel 2026-07-17 : les
+// textures 3D Perlin-Worley pré-cuites remplacent le value-noise FBM
+// in-shader — cf. CloudNoiseGenerator.cpp).
 float cloudDensity(vec3 p)
 {
 	float baseAlt = pc.zenithColor.w;
@@ -94,23 +66,31 @@ float cloudDensity(vec3 p)
 
 	// Animation par le vent.
 	vec3 wind = vec3(pc.windParams.x, 0.0, pc.windParams.y) * pc.windParams.z * pc.cameraPos.w;
-	vec3 sp = (p + wind) * 0.0006;
 
+	// Forme de base : texture 64³ tuilée sur ~5,2 km. R = Perlin fBm,
+	// dilaté par le fBm de Worley (G/B/A) — la « dilatation Schneider »
+	// donne des cumulus à bords nets là où le value-noise donnait des blobs.
+	vec3 sp = (p + wind) / 5200.0;
+	vec4 nb = texture(uNoiseBase, sp);
+	float worleyFbm = nb.g * 0.625 + nb.b * 0.25 + nb.a * 0.125;
+	float baseShape = remap01(nb.r, worleyFbm - 1.0, 1.0);
+
+	// Seuil de couverture : coverage 0 -> ciel quasi vide, 1 -> couvert.
+	// Plage choisie pour la distribution du baseShape remappé (moyenne ~0.5).
 	float coverage = pc.sunDir.w;
-	float base = fbm(sp);
-	// Seuil placé dans la plage RÉELLE du FBM (moyenne ~0.48, max ~0.97) : un seuil
-	// (1-coverage) brut donnait 0.75 à Clear -> densité nulle partout (nuages
-	// invisibles). On remappe : coverage 0 -> seuil 0.55 (ciel quasi vide),
-	// coverage 1 -> seuil 0.10 (couvert). smoothstep pour des bords doux + opacité visible.
-	// Plage relevée (0.68..0.25) : à Clear (coverage~0.25) le seuil ~0.57 reste
-	// au-dessus de la moyenne du FBM (~0.48) -> nuages ÉPARS avec du ciel entre eux
-	// (et non un plafond couvrant). Storm (coverage~0.97) -> seuil ~0.26 -> couvert.
-	float threshold = mix(0.68, 0.25, coverage);
-	float d = smoothstep(threshold, threshold + 0.18, base);
+	float threshold = mix(0.72, 0.28, coverage);
+	float d = smoothstep(threshold, threshold + 0.14, baseShape);
 
-	// Érosion de détail haute fréquence sur les bords.
-	float detail = fbm(sp * 4.0 + wind * 0.01);
-	d = max(d - detail * 0.2 * (1.0 - coverage), 0.0);
+	// Érosion de détail : texture 32³ tuilée sur ~800 m. Bords effilochés
+	// (wispy) vers la base du nuage, cotonneux (billowy) vers le sommet.
+	if (d > 0.001)
+	{
+		vec3 dp = (p + wind * 1.4) / 800.0;
+		vec3 nd = texture(uNoiseDetail, dp).rgb;
+		float detailFbm = nd.r * 0.625 + nd.g * 0.25 + nd.b * 0.125;
+		float erode = mix(detailFbm, 1.0 - detailFbm, clamp(h * 4.0, 0.0, 1.0));
+		d = remap01(d, erode * 0.4, 1.0);
+	}
 
 	return d * heightGrad * pc.sunColor.w * 1.5; // * density, gain d'opacité
 }

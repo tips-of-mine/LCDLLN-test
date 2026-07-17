@@ -673,6 +673,9 @@ add_library(engine_core
   src/client/render/SkyPass.cpp
   src/client/render/WeatherSystem.cpp
   src/client/render/clouds/CloudWeatherMapper.cpp
+  # Chantier ciel 2026-07-17 — générateur CPU des textures 3D Perlin-Worley
+  # (consommé par CloudPass::Init au boot, testé par cloud_noise_generator_tests).
+  src/client/render/clouds/CloudNoiseGenerator.cpp
   src/client/render/DynamicLightSystem.cpp
   src/client/render/CascadedShadowMaps.cpp
   src/client/render/BrdfLutPass.cpp

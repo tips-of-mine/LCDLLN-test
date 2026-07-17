@@ -43,15 +43,22 @@ namespace engine::render
 		CloudPass(const CloudPass&) = delete;
 		CloudPass& operator=(const CloudPass&) = delete;
 
-		/// Crée render pass, descriptor set layout/pool, samplers, pipeline plein écran.
+		/// Crée render pass, descriptor set layout/pool, samplers, pipeline plein écran
+		/// ET les deux textures 3D de bruit Perlin-Worley (chantier ciel 2026-07-17) :
+		/// génération CPU (CloudNoiseGenerator, ~centaines de ms, une fois au boot)
+		/// puis upload via staging + command pool transitoire sur \p uploadQueue.
 		/// \param sceneColorHDRFormat doit être VK_FORMAT_R16G16B16A16_SFLOAT.
 		/// \param vertSpirv/vertWordCount  SPIR-V du fullscreen triangle (lighting.vert.spv).
 		/// \param fragSpirv/fragWordCount  SPIR-V de clouds.frag.spv.
+		/// \param uploadQueue        Queue graphics pour l'upload one-shot des textures
+		///        de bruit (vkQueueWaitIdle interne — boot uniquement, jamais en frame).
+		/// \param uploadQueueFamilyIndex Famille de \p uploadQueue (command pool).
 		/// \param maxFrames frames en vol (un descriptor set par frame).
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
 			VkFormat sceneColorHDRFormat,
 			const uint32_t* vertSpirv, size_t vertWordCount,
 			const uint32_t* fragSpirv, size_t fragWordCount,
+			VkQueue uploadQueue, uint32_t uploadQueueFamilyIndex,
 			uint32_t maxFrames = 2,
 			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
@@ -93,6 +100,16 @@ namespace engine::render
 		};
 		std::unordered_map<FramebufferKey, VkFramebuffer, FramebufferKeyHash> m_framebufferCache;
 
+		/// Chantier ciel 2026-07-17 — Crée une image 3D R8G8B8A8_UNORM de côté
+		/// \p size, y uploade \p rgba (size³×4 octets) via staging + command
+		/// buffer one-shot (submit + wait sur \p queue), et crée la vue 3D.
+		/// \return false (et log) au premier échec Vulkan ; les handles déjà
+		/// créés sont libérés par Destroy.
+		bool CreateNoiseTexture3D(VkDevice device, VkPhysicalDevice physicalDevice,
+			VkCommandPool cmdPool, VkQueue queue,
+			int size, const uint8_t* rgba,
+			VkImage& outImage, VkDeviceMemory& outMemory, VkImageView& outView);
+
 		VkRenderPass          m_renderPass          = VK_NULL_HANDLE;
 		VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool      m_descriptorPool      = VK_NULL_HANDLE;
@@ -100,6 +117,15 @@ namespace engine::render
 		VkPipeline            m_pipeline            = VK_NULL_HANDLE;
 		VkSampler             m_linearSampler       = VK_NULL_HANDLE;
 		VkSampler             m_nearestSampler      = VK_NULL_HANDLE;
+		// Chantier ciel 2026-07-17 — textures 3D de bruit Perlin-Worley
+		// (base 64³ + détail 32³) et leur sampler linéaire REPEAT (tuilage).
+		VkImage        m_noiseBaseImage    = VK_NULL_HANDLE;
+		VkDeviceMemory m_noiseBaseMemory   = VK_NULL_HANDLE;
+		VkImageView    m_noiseBaseView     = VK_NULL_HANDLE;
+		VkImage        m_noiseDetailImage  = VK_NULL_HANDLE;
+		VkDeviceMemory m_noiseDetailMemory = VK_NULL_HANDLE;
+		VkImageView    m_noiseDetailView   = VK_NULL_HANDLE;
+		VkSampler      m_noiseSampler      = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSet> m_descriptorSets;
 		uint32_t m_maxFrames = 2;
 	};

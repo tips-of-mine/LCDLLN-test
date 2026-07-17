@@ -342,8 +342,11 @@ namespace engine::render
 			std::vector<uint32_t> cloudFrag = loadSpirv("shaders/clouds.frag.spv");
 			if (!cloudVert.empty() && !cloudFrag.empty())
 			{
+				// Chantier ciel 2026-07-17 — la queue graphics sert à l'upload
+				// one-shot des textures 3D de bruit Perlin-Worley au boot.
 				if (m_cloudPass.Init(device, physicalDevice, VK_FORMAT_R16G16B16A16_SFLOAT,
 						cloudVert.data(), cloudVert.size(), cloudFrag.data(), cloudFrag.size(),
+						graphicsQueue, graphicsQueueFamilyIndex,
 						2u, pipelineCacheHandle))
 					LOG_INFO(Render, "[Boot] DeferredPipeline CloudPass OK");
 				else

@@ -3,6 +3,7 @@
 #include "src/world_editor/panels/ToolPalettePanel.h"
 
 #include "src/world_editor/core/WorldEditorShell.h"
+#include "src/world_editor/ui/ToolGlyphs.h"
 #include "src/world_editor/ui/ToolPaletteModel.h"
 #include "src/world_editor/ui/ToolbarIconAtlas.h"
 
@@ -50,17 +51,20 @@ namespace engine::editor::world::panels
 			const ImVec2 pos = ImGui::GetCursorScreenPos();
 			const float sq = ImGui::GetTextLineHeight();
 
-			// Le Selectable réserve la place de la pastille par des espaces
-			// de tête ; la pastille est dessinée par-dessus juste après.
+			// Le Selectable réserve la place de l'icône par des espaces de
+			// tête ; l'icône (fond couleur atlas + glyphe vectoriel blanc,
+			// lot follow-up 2026-07-18) est dessinée par-dessus juste après.
 			const std::string label = std::string("     ") + ToolLabelFr(tool);
 			if (ImGui::Selectable(label.c_str(), active))
 			{
 				shell.SetActiveTool(active ? ActiveTool::None : tool);
 			}
-			dl->AddRectFilled(
-				ImVec2(pos.x + 2.0f, pos.y + 1.0f),
-				ImVec2(pos.x + 2.0f + sq, pos.y + 1.0f + sq),
+			const ImVec2 icoMin(pos.x + 2.0f, pos.y + 1.0f);
+			const ImVec2 icoMax(icoMin.x + sq, icoMin.y + sq);
+			dl->AddRectFilled(icoMin, icoMax,
 				static_cast<ImU32>(style.bgColorArgb), 3.0f);
+			DrawToolGlyph(dl, tool, icoMin.x, icoMin.y, icoMax.x, icoMax.y,
+				IM_COL32(255, 255, 255, 235));
 
 			if (ImGui::IsItemHovered())
 			{

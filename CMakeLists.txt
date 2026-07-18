@@ -342,6 +342,7 @@ add_library(engine_core
   # de la palette d'outils (familles + libellés FR).
   src/world_editor/actions/EditorActionRegistry.cpp
   src/world_editor/ui/ToolPaletteModel.cpp
+  src/world_editor/ui/ToolGlyphs.cpp
   src/world_editor/panels/ToolPalettePanel.cpp
   src/world_editor/ui/CommandPaletteModel.cpp
   src/world_editor/ui/EditorTheme.cpp

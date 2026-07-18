@@ -225,6 +225,7 @@ elseif(UNIX)
     # Anniversaires (spec 2026-07-18) : exploits fidelite/naissance + courrier cadeau.
     ${CMAKE_SOURCE_DIR}/src/masterd/exploits/MysqlExploitStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/anniversary/AnniversaryService.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/anniversary/BirthdayEmailJob.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/anniversary/AnniversaryMath.cpp
     # SP2 anniversaires : liste de mes exploits (opcodes 206/207).
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/exploits/ExploitHandler.cpp

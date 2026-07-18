@@ -308,4 +308,112 @@ namespace
 			break;
 		}
 	}
+
+	void BuildBirthdayEmail(AccountEmailLocale loc, const std::string& firstName,
+	                        std::string& outSubject, std::string& outBody, bool& outIsHtml)
+	{
+		outIsHtml = false;
+		const std::string locTag = LocaleToTag(loc);
+		// Nom affiché : prénom du compte, ou formule générique par langue.
+		std::string name = firstName;
+		if (name.empty())
+		{
+			switch (loc)
+			{
+			case AccountEmailLocale::French:     name = "aventurier"; break;
+			case AccountEmailLocale::Spanish:    name = "aventurero"; break;
+			case AccountEmailLocale::German:     name = "Abenteurer"; break;
+			case AccountEmailLocale::Portuguese: name = "aventureiro"; break;
+			case AccountEmailLocale::Italian:    name = "avventuriero"; break;
+			case AccountEmailLocale::English: default: name = "adventurer"; break;
+			}
+		}
+		std::string html = LoadHtmlTemplate("birthday", locTag);
+		if (!html.empty())
+		{
+			ReplaceAllInPlace(html, "{{name}}", name);
+			switch (loc)
+			{
+			case AccountEmailLocale::French:
+				outSubject = "Joyeux anniversaire " + name + " ! — Les Chroniques de la Lune Noire";
+				break;
+			case AccountEmailLocale::Spanish:
+				outSubject = "¡Feliz cumpleaños " + name + "! — Les Chroniques de la Lune Noire";
+				break;
+			case AccountEmailLocale::German:
+				outSubject = "Alles Gute zum Geburtstag, " + name + "! — Les Chroniques de la Lune Noire";
+				break;
+			case AccountEmailLocale::Portuguese:
+				outSubject = "Feliz aniversário, " + name + "! — Les Chroniques de la Lune Noire";
+				break;
+			case AccountEmailLocale::Italian:
+				outSubject = "Buon compleanno " + name + "! — Les Chroniques de la Lune Noire";
+				break;
+			case AccountEmailLocale::English:
+			default:
+				outSubject = "Happy birthday " + name + "! — Les Chroniques de la Lune Noire";
+				break;
+			}
+			outBody = std::move(html);
+			outIsHtml = true;
+			return;
+		}
+		// Fallback plain text — mentionne le cadeau qui attend EN JEU le jour J.
+		switch (loc)
+		{
+		case AccountEmailLocale::French:
+			outSubject = "Joyeux anniversaire " + name + " ! 🎂";
+			outBody    = "Bonjour " + name + ",\r\n\r\n"
+			             "Toute l'équipe des Chroniques de la Lune Noire vous souhaite un très joyeux anniversaire !\r\n\r\n"
+			             "Un cadeau vous attend en jeu AUJOURD'HUI seulement : connectez-vous et entrez en monde "
+			             "pour recevoir votre courrier d'anniversaire (or, gâteau à partager avec votre groupe, "
+			             "et un souvenir de fidélité).\r\n\r\n"
+			             "Bonne fête et à très vite en jeu !\r\n";
+			break;
+		case AccountEmailLocale::Spanish:
+			outSubject = "¡Feliz cumpleaños " + name + "! 🎂";
+			outBody    = "Hola " + name + ",\r\n\r\n"
+			             "¡Todo el equipo de Les Chroniques de la Lune Noire te desea un feliz cumpleaños!\r\n\r\n"
+			             "Un regalo te espera en el juego SOLO HOY: conéctate y entra al mundo para recibir tu "
+			             "correo de cumpleaños (oro, un pastel para compartir con tu grupo y un recuerdo de fidelidad).\r\n\r\n"
+			             "¡Feliz día y hasta pronto!\r\n";
+			break;
+		case AccountEmailLocale::German:
+			outSubject = "Alles Gute zum Geburtstag, " + name + "! 🎂";
+			outBody    = "Hallo " + name + ",\r\n\r\n"
+			             "Das gesamte Team von Les Chroniques de la Lune Noire wünscht dir alles Gute zum Geburtstag!\r\n\r\n"
+			             "NUR HEUTE wartet ein Geschenk im Spiel auf dich: Melde dich an und betrete die Welt, um "
+			             "deine Geburtstagspost zu erhalten (Gold, ein Kuchen zum Teilen mit deiner Gruppe und ein "
+			             "Treueandenken).\r\n\r\n"
+			             "Feier schön und bis bald im Spiel!\r\n";
+			break;
+		case AccountEmailLocale::Portuguese:
+			outSubject = "Feliz aniversário, " + name + "! 🎂";
+			outBody    = "Olá " + name + ",\r\n\r\n"
+			             "Toda a equipa de Les Chroniques de la Lune Noire deseja-lhe um feliz aniversário!\r\n\r\n"
+			             "Um presente espera por si no jogo APENAS HOJE: ligue-se e entre no mundo para receber o "
+			             "seu correio de aniversário (ouro, um bolo para partilhar com o seu grupo e uma lembrança "
+			             "de fidelidade).\r\n\r\n"
+			             "Boa festa e até já!\r\n";
+			break;
+		case AccountEmailLocale::Italian:
+			outSubject = "Buon compleanno " + name + "! 🎂";
+			outBody    = "Ciao " + name + ",\r\n\r\n"
+			             "Tutto il team di Les Chroniques de la Lune Noire ti augura un buon compleanno!\r\n\r\n"
+			             "Un regalo ti aspetta nel gioco SOLO OGGI: collegati ed entra nel mondo per ricevere la "
+			             "tua posta di compleanno (oro, una torta da condividere con il tuo gruppo e un ricordo "
+			             "di fedeltà).\r\n\r\n"
+			             "Buona festa e a presto!\r\n";
+			break;
+		case AccountEmailLocale::English:
+		default:
+			outSubject = "Happy birthday " + name + "! 🎂";
+			outBody    = "Hello " + name + ",\r\n\r\n"
+			             "The whole Les Chroniques de la Lune Noire team wishes you a very happy birthday!\r\n\r\n"
+			             "A gift is waiting for you in game TODAY only: log in and enter the world to receive "
+			             "your birthday mail (gold, a cake to share with your party, and a loyalty keepsake).\r\n\r\n"
+			             "Have a great day and see you in game!\r\n";
+			break;
+		}
+	}
 }

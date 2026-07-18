@@ -38,4 +38,12 @@ namespace engine::server
 	/// \param outIsHtml Set to true if the body is HTML (loaded from template), false for plain text fallback.
 	void BuildTermsAcceptanceEmail(AccountEmailLocale loc, const std::string& versionLabel,
 	                               std::string& outSubject, std::string& outBody, bool& outIsHtml);
+
+	/// Anniversaires (spec 2026-07-18, extension e-mail) — vœux personnalisés
+	/// envoyés le jour J de naissance par le BirthdayEmailJob du master.
+	/// Template HTML optionnel "birthday" (placeholder {{name}}) ; repli texte.
+	/// \param firstName prénom du compte ("" → formule générique par langue).
+	/// \param outIsHtml true si le corps vient du template HTML.
+	void BuildBirthdayEmail(AccountEmailLocale loc, const std::string& firstName,
+	                        std::string& outSubject, std::string& outBody, bool& outIsHtml);
 }

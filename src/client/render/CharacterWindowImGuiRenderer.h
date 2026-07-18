@@ -38,8 +38,10 @@ namespace engine::render
 		/// n'a pas accès au socket).
 		struct PendingEquipAction
 		{
-			enum class Kind { None, Equip, Unequip } kind = Kind::None;
-			uint32_t itemId = 0; ///< pour Equip (objet du sac cliqué)
+			/// SlotCake (SP3 anniversaires 2026-07-18) : placer le gâteau
+			/// cliqué dans la barre d'action (Engine → GrimoireUi::AssignSlot).
+			enum class Kind { None, Equip, Unequip, SlotCake } kind = Kind::None;
+			uint32_t itemId = 0; ///< pour Equip/SlotCake (objet du sac cliqué)
 			uint8_t slot = 0;    ///< pour Unequip (slot cliqué, 1..10)
 		};
 		/// Récupère et efface l'action en attente. Retourne false si aucune.

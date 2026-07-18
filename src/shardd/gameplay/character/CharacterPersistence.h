@@ -8,6 +8,7 @@
 
 #include <array>
 #include <cstdint>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -51,6 +52,10 @@ namespace engine::server
 		std::array<std::string, 10> actionBarLayout{};
 		/// SP-B — compétences par-classe déjà choisies (un skill par tier/niveau débloqué).
 		std::vector<std::string> knownSkillIds;
+		/// Anniversaires SP3 (2026-07-18) — expirations UTC (epoch ms) des
+		/// gâteaux d'anniversaire possédés (clé = itemId 5101..5110). Posées à
+		/// l'entrée en inventaire, consommées par la purge de minuit du shard.
+		std::map<uint32_t, uint64_t> cakeExpiresAtMsUtcByItemId;
 	};
 
 	/// Minimal file-backed character persistence store used by the server runtime.

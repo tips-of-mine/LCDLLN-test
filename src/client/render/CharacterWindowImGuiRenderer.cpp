@@ -4,6 +4,7 @@
 #include "src/client/render/GrimoireImGuiRenderer.h"
 #include "src/client/render/ClassSkillTreeImGuiRenderer.h"
 #include "src/client/render/ExploitsImGuiRenderer.h" // SP2 anniversaires (2026-07-18)
+#include "src/shared/anniversary/CakeItemToken.h"    // SP3 anniversaires (2026-07-18)
 #include "src/client/render/race/RacePreviewViewport.h"
 #include "src/client/render/SkillIconCache.h"
 #include "src/client/ui_common/UIModel.h"
@@ -422,6 +423,9 @@ namespace engine::render
 						ImGui::TextUnformatted(s.label.empty() ? "Objet" : s.label.c_str());
 						ImGui::EndDragDropSource();
 					}
+					// SP3 anniversaires (2026-07-18) — le gâteau se place dans la
+					// barre d'action d'un clic (geste volontaire du joueur).
+					const bool isCake = engine::anniversary::IsCakeItemId(s.itemId);
 					if (ImGui::IsItemHovered() && !s.label.empty())
 					{
 						ImGui::BeginTooltip();
@@ -436,6 +440,11 @@ namespace engine::render
 								ImGui::Separator();
 								ImGui::TextDisabled("Clic ou glisser vers un slot : équiper");
 							}
+							if (isCake)
+							{
+								ImGui::Separator();
+								ImGui::TextDisabled("Clic : placer dans la barre d'action (slot 10)");
+							}
 						}
 						ImGui::EndTooltip();
 					}
@@ -446,6 +455,13 @@ namespace engine::render
 					{
 						m_pendingEquip = PendingEquipAction{
 							PendingEquipAction::Kind::Equip, s.itemId, 0u};
+					}
+					// SP3 — clic sur un gâteau : demande de placement en barre.
+					if (isCake && ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
+						&& ImGui::GetDragDropPayload() == nullptr)
+					{
+						m_pendingEquip = PendingEquipAction{
+							PendingEquipAction::Kind::SlotCake, s.itemId, 0u};
 					}
 				}
 				// Réserve toute la zone grille pour pousser la bourse en bas (curseur

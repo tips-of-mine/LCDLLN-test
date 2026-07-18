@@ -94,7 +94,7 @@
       "_comment": "Anniversaires (spec 2026-07-18) — 10 gateaux (5101-5110, un buff distinct chacun, active en SP3 : partage groupe/guilde en rayon, valable le jour J seulement) + 10 souvenirs millesimes (5121-5130, An 1..10, slots tournants, bonus reels modestes). Plage 5101-5130 RESERVEE anniversaires.",
       "id": 5101,
       "name": "Gateau des braves",
-      "description": "Un gateau d'anniversaire a partager : +force pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "description": "Un gateau d'anniversaire a partager : +6% degats infliges pour le groupe proche. Ne se conserve pas au-dela du jour J.",
       "icon": "items/gateau_braves.png",
       "type": "consumable",
       "slot": "none"
@@ -102,7 +102,7 @@
     {
       "id": 5102,
       "name": "Gateau du colosse",
-      "description": "Un gateau d'anniversaire a partager : +endurance pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "description": "Un gateau d'anniversaire a partager : -8% degats subis pour le groupe proche. Ne se conserve pas au-dela du jour J.",
       "icon": "items/gateau_colosse.png",
       "type": "consumable",
       "slot": "none"
@@ -110,7 +110,7 @@
     {
       "id": 5103,
       "name": "Gateau du zephyr",
-      "description": "Un gateau d'anniversaire a partager : +vitesse pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "description": "Un gateau d'anniversaire a partager : -15% menace generee pour le groupe proche. Ne se conserve pas au-dela du jour J.",
       "icon": "items/gateau_zephyr.png",
       "type": "consumable",
       "slot": "none"
@@ -118,7 +118,7 @@
     {
       "id": 5104,
       "name": "Gateau du sage",
-      "description": "Un gateau d'anniversaire a partager : +esprit pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "description": "Un gateau d'anniversaire a partager : -20% menace generee pour le groupe proche. Ne se conserve pas au-dela du jour J.",
       "icon": "items/gateau_sage.png",
       "type": "consumable",
       "slot": "none"
@@ -126,7 +126,7 @@
     {
       "id": 5105,
       "name": "Gateau du guetteur",
-      "description": "Un gateau d'anniversaire a partager : +perception pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "description": "Un gateau d'anniversaire a partager : +4% degats infliges pour le groupe proche. Ne se conserve pas au-dela du jour J.",
       "icon": "items/gateau_guetteur.png",
       "type": "consumable",
       "slot": "none"
@@ -134,7 +134,7 @@
     {
       "id": 5106,
       "name": "Gateau du duelliste",
-      "description": "Un gateau d'anniversaire a partager : +precision pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "description": "Un gateau d'anniversaire a partager : +8% degats infliges pour le groupe proche. Ne se conserve pas au-dela du jour J.",
       "icon": "items/gateau_duelliste.png",
       "type": "consumable",
       "slot": "none"
@@ -142,7 +142,7 @@
     {
       "id": 5107,
       "name": "Gateau du gardien",
-      "description": "Un gateau d'anniversaire a partager : +points de vie pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "description": "Un gateau d'anniversaire a partager : -10% degats subis pour le groupe proche. Ne se conserve pas au-dela du jour J.",
       "icon": "items/gateau_gardien.png",
       "type": "consumable",
       "slot": "none"
@@ -150,7 +150,7 @@
     {
       "id": 5108,
       "name": "Gateau de l'erudit",
-      "description": "Un gateau d'anniversaire a partager : +ressource pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "description": "Un gateau d'anniversaire a partager : -6% degats subis pour le groupe proche. Ne se conserve pas au-dela du jour J.",
       "icon": "items/gateau_erudit.png",
       "type": "consumable",
       "slot": "none"
@@ -158,7 +158,7 @@
     {
       "id": 5109,
       "name": "Gateau du chasseur",
-      "description": "Un gateau d'anniversaire a partager : +degats pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "description": "Un gateau d'anniversaire a partager : +7% degats infliges pour le groupe proche. Ne se conserve pas au-dela du jour J.",
       "icon": "items/gateau_chasseur.png",
       "type": "consumable",
       "slot": "none"
@@ -166,7 +166,7 @@
     {
       "id": 5110,
       "name": "Gateau du vagabond",
-      "description": "Un gateau d'anniversaire a partager : +recuperation pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "description": "Un gateau d'anniversaire a partager : +5% degats infliges pour le groupe proche. Ne se conserve pas au-dela du jour J.",
       "icon": "items/gateau_vagabond.png",
       "type": "consumable",
       "slot": "none"

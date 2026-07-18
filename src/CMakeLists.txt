@@ -41,6 +41,8 @@ if(WIN32)
   add_executable(server_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_win.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
+    # SP3 anniversaires (2026-07-18) : buffs de gateau (utilise par ServerApp).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/anniversary/CakeBuffLibrary.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
@@ -1292,6 +1294,8 @@ elseif(UNIX)
     # (membre m_moderationAuditLog) → on l'ajoute ici.
     ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
+    # SP3 anniversaires (2026-07-18) : buffs de gateau (utilise par ServerApp).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/anniversary/CakeBuffLibrary.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp

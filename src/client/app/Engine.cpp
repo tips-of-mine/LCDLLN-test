@@ -19,6 +19,7 @@
 #include "src/shared/network/GmTicketPayloads.h"
 #include "src/shared/network/ReputationPayloads.h"
 #include "src/shared/network/ExploitPayloads.h" // SP2 anniversaires (2026-07-18)
+#include "src/shared/anniversary/CakeItemToken.h" // SP3 anniversaires (2026-07-18)
 #include "src/shared/network/ArenaPayloads.h"
 #include "src/shared/network/BattleGroundPayloads.h"
 #include "src/shared/network/OutdoorPvpPayloads.h"
@@ -11935,6 +11936,33 @@ namespace engine
 								(slotIndex < 9)
 									? static_cast<engine::platform::Key>('1' + static_cast<int>(slotIndex))
 									: engine::platform::Key::Digit0);
+							// SP3 anniversaires (2026-07-18) — slot occupé par un
+							// GÂTEAU (jeton "item:<id>") : case dédiée, la touche
+							// envoie un CastRequest avec le jeton (activation
+							// serveur : buff groupe/guilde tant que slotté).
+							uint32_t cakeItemId = 0u;
+							if (engine::anniversary::ParseCakeToken(slotSpellId, cakeItemId))
+							{
+								fg->AddRectFilled(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+									IM_COL32(58, 34, 52, 220), 6.0f);
+								fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+									IM_COL32(220, 150, 190, 200), 6.0f, 0, 2.0f);
+								const engine::items::ItemDefinition* cakeDef = m_itemCatalog.Find(cakeItemId);
+								const char* cakeLabel = (cakeDef != nullptr && !cakeDef->name.empty())
+									? cakeDef->name.c_str() : "Gateau";
+								fg->AddText(ImVec2(sx0 + 4.0f, barY + slotSize * 0.5f - 8.0f),
+									IM_COL32(255, 230, 245, 255), cakeLabel);
+								const std::string cakeKeyLabel = KeyGlyph(slotKey);
+								fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f),
+									IM_COL32(255, 220, 240, 220), cakeKeyLabel.c_str());
+								if (keysAllowed && m_input.WasPressed(slotKey))
+								{
+									const uint32_t cakeClientId = m_gameplayUdp.ServerClientId();
+									if (cakeClientId != 0u)
+										(void)m_gameplayUdp.SendCastRequest(cakeClientId, 0ull, slotSpellId);
+								}
+								continue;
+							}
 							if (spellPtr == nullptr)
 							{
 								// Slot vide : case grisée + glyphe touche, pas d'action.
@@ -12999,6 +13027,12 @@ namespace engine
 					else if (equipAction.kind ==
 						engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::Unequip)
 						(void)m_gameplayUdp.SendUnequipRequest(equipClientId, equipAction.slot);
+				// SP3 anniversaires (2026-07-18) — gâteau cliqué dans le sac :
+				// placé au slot 10 de la barre (jeton "item:<id>", envoi kind 88
+				// via le presenter Grimoire ; validation serveur : objet possédé).
+				else if (equipAction.kind ==
+					engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::SlotCake)
+					m_grimoireUi.AssignSlot(9u, engine::anniversary::MakeCakeToken(equipAction.itemId));
 				}
 			}
 			// CMANGOS.21 (Phase 5.21 step 3+4) — Render du panneau Arena si

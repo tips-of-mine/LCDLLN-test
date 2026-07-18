@@ -1,5 +1,6 @@
 #include "src/shared/server_bootstrap/ServerApp.h"
 
+#include "src/shared/anniversary/CakeItemToken.h" // SP3 anniversaires (2026-07-18)
 #include "src/shared/core/Log.h"
 #include "src/shared/net/ChatEmotes.h"
 #include "src/shared/net/ChatSystem.h"
@@ -1402,6 +1403,9 @@ namespace engine::server
 		acceptedClient.professions = std::move(persistedState.professions);
 		/// Grimoire — restore action bar layout (10 slots).
 		acceptedClient.actionBarLayout = std::move(persistedState.actionBarLayout);
+		// Anniversaires SP3 (2026-07-18) — expirations des gâteaux possédés
+		// (la purge de minuit tourne dans TickCakeBuffs).
+		acceptedClient.cakeExpiresAtMsUtcByItemId = std::move(persistedState.cakeExpiresAtMsUtcByItemId);
 		/// SP-B — restore known class skills.
 		acceptedClient.knownSkillIds = std::move(persistedState.knownSkillIds);
 		acceptedClient.hasReplicatedState = true;
@@ -1878,6 +1882,9 @@ namespace engine::server
 		RegenerateResources();
 		TickActiveCasts();
 		TickAuras();
+		// Anniversaires SP3 (2026-07-18) — buffs de gâteau (entretien 1 Hz) +
+		// purge de minuit UTC des gâteaux expirés.
+		TickCakeBuffs(NowMonotonicMs());
 		// Combat SP4 — réplication des tables de menace modifiées (≤ 1/s par mob).
 		PushThreatUpdates();
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
@@ -2169,6 +2176,8 @@ namespace engine::server
 		state.professions = client.professions;
 		/// Grimoire — persist action bar layout.
 		state.actionBarLayout = client.actionBarLayout;
+		/// Anniversaires SP3 — persist les expirations des gâteaux possédés.
+		state.cakeExpiresAtMsUtcByItemId = client.cakeExpiresAtMsUtcByItemId;
 		/// SP-B — persist known class skills.
 		state.knownSkillIds = client.knownSkillIds;
 		if (!m_characterPersistence.SaveCharacter(state))
@@ -4430,6 +4439,18 @@ namespace engine::server
 			return;
 		}
 
+		// ── Anniversaires SP3 (2026-07-18) : activation d'un gâteau slotté ──
+		// AVANT les chemins de sorts : le jeton "item:<id>" n'est pas un
+		// spellId et ne requiert aucun profil de classe.
+		{
+			uint32_t cakeItemId = 0u;
+			if (engine::anniversary::ParseCakeToken(message.spellId, cakeItemId))
+			{
+				HandleCakeActivation(*client, cakeItemId);
+				return;
+			}
+		}
+
 		if (client->profileId.empty())
 		{
 			LOG_WARN(Net, "[ServerApp] CastRequest ignored: no class profile (client_id={})", client->clientId);
@@ -4681,6 +4702,38 @@ namespace engine::server
 			if (spellId.empty())
 			{
 				continue; // slot vide autorisé
+			}
+			// Anniversaires SP3 (2026-07-18) — jeton "item:<id>" : un gâteau
+			// possédé peut être slotté (unicité vérifiée comme les sorts).
+			{
+				uint32_t cakeItemId = 0u;
+				if (engine::anniversary::ParseCakeToken(spellId, cakeItemId))
+				{
+					bool owned = false;
+					for (const ItemStack& s : client->inventory)
+					{
+						if (s.itemId == cakeItemId && s.quantity > 0u) { owned = true; break; }
+					}
+					if (!owned)
+					{
+						LOG_WARN(Net, "[ServerApp] SetActionBarLayout reject: gateau {} non possede (client_id={})",
+							cakeItemId, client->clientId);
+						(void)SendActionBarLayout(*client);
+						return;
+					}
+					bool duplicateToken = false;
+					for (size_t prior = 0; prior < slotIndex; ++prior)
+					{
+						if (validated[prior] == spellId) { duplicateToken = true; break; }
+					}
+					if (duplicateToken)
+					{
+						(void)SendActionBarLayout(*client);
+						return;
+					}
+					validated[slotIndex] = spellId;
+					continue;
+				}
 			}
 			if (client->profileId.empty()
 				|| m_spellKits.FindSpell(client->profileId, spellId) == nullptr)
@@ -5509,8 +5562,180 @@ namespace engine::server
 		return true;
 	}
 
+	void ServerApp::HandleCakeActivation(ConnectedClient& client, uint32_t cakeItemId)
+	{
+		const CakeBuffDef* def = FindCakeBuff(cakeItemId);
+		if (def == nullptr) return;
+		const std::string token = engine::anniversary::MakeCakeToken(cakeItemId);
+		bool slotted = false;
+		for (const std::string& slot : client.actionBarLayout)
+			if (slot == token) { slotted = true; break; }
+		if (!slotted)
+		{
+			SendChatSystemNotice(client, "Placez d'abord le gâteau dans votre barre d'action.");
+			return;
+		}
+		bool owned = false;
+		for (const ItemStack& s : client.inventory)
+			if (s.itemId == cakeItemId && s.quantity > 0u) { owned = true; break; }
+		if (!owned)
+		{
+			SendChatSystemNotice(client, "Vous ne possédez plus ce gâteau.");
+			return;
+		}
+		const auto expiryIt = client.cakeExpiresAtMsUtcByItemId.find(cakeItemId);
+		if (expiryIt != client.cakeExpiresAtMsUtcByItemId.end()
+			&& NowUnixEpochMsUtc() >= expiryIt->second)
+		{
+			SendChatSystemNotice(client, "Ce gâteau n'est plus frais — la fête est finie.");
+			return;
+		}
+		client.activeCakeItemId = cakeItemId;
+		SendChatSystemNotice(client, std::string("Le gâteau est servi ! ") + def->noticeFr
+			+ " pour votre groupe à proximité, tant qu'il reste dans la barre d'action.");
+		LOG_INFO(Net, "[ServerApp] Gateau active (client_id={}, item_id={})", client.clientId, cakeItemId);
+	}
+
+	void ServerApp::TickCakeBuffs(uint64_t nowMonotonicMs)
+	{
+		// 1 Hz : suffisant (TTL d'aura 3,5 s re-rafraîchi) et évite le spam
+		// AuraUpdate (kind 84). m_tickHz garanti > 0 par l'init du scheduler.
+		if (m_tickHz != 0u && (m_currentTick % m_tickHz) != 0u)
+			return;
+
+		/// Rayon de partage du buff (m) — « rayon raisonnable » du spec.
+		constexpr float kCakeBuffRadiusMeters = 30.0f;
+		/// TTL de l'aura : > période d'entretien (1 s) pour rester continue,
+		/// assez court pour tomber vite quand le gâteau quitte la barre.
+		constexpr uint64_t kCakeAuraTtlMs = 3500ull;
+		const uint64_t nowUtc = NowUnixEpochMsUtc();
+
+		for (ConnectedClient& client : m_clients)
+		{
+			// ── Purge de minuit UTC : le gâteau est « mangé ». ──
+			bool inventoryChanged = false;
+			for (auto it = client.cakeExpiresAtMsUtcByItemId.begin();
+				it != client.cakeExpiresAtMsUtcByItemId.end();)
+			{
+				const uint32_t cakeItemId = it->first;
+				if (nowUtc < it->second) { ++it; continue; }
+				for (size_t i = 0; i < client.inventory.size(); ++i)
+				{
+					if (client.inventory[i].itemId == cakeItemId)
+					{
+						client.inventory.erase(client.inventory.begin() + static_cast<ptrdiff_t>(i));
+						inventoryChanged = true;
+						break;
+					}
+				}
+				const std::string token = engine::anniversary::MakeCakeToken(cakeItemId);
+				bool layoutChanged = false;
+				for (std::string& slot : client.actionBarLayout)
+				{
+					if (slot == token) { slot.clear(); layoutChanged = true; }
+				}
+				if (client.activeCakeItemId == cakeItemId)
+					client.activeCakeItemId = 0u;
+				if (layoutChanged)
+					(void)SendActionBarLayout(client);
+				SendChatSystemNotice(client,
+					"Le gâteau d'anniversaire a été mangé — la fête est finie pour cette année !");
+				it = client.cakeExpiresAtMsUtcByItemId.erase(it);
+			}
+			if (inventoryChanged)
+			{
+				(void)SendInventoryDelta(client,
+					std::span<const ItemStack>(client.inventory.data(), client.inventory.size()));
+				SaveConnectedClient(client, "cake_expired");
+			}
+
+			// ── Entretien du buff : actif + slotté + possédé, sinon extinction. ──
+			if (client.activeCakeItemId == 0u)
+				continue;
+			const CakeBuffDef* def = FindCakeBuff(client.activeCakeItemId);
+			const std::string activeToken = engine::anniversary::MakeCakeToken(client.activeCakeItemId);
+			bool slotted = false;
+			for (const std::string& slot : client.actionBarLayout)
+				if (slot == activeToken) { slotted = true; break; }
+			bool owned = false;
+			for (const ItemStack& s : client.inventory)
+				if (s.itemId == client.activeCakeItemId && s.quantity > 0u) { owned = true; break; }
+			if (def == nullptr || !slotted || !owned)
+			{
+				// Plus de rafraîchissement : l'aura TTL court expire d'elle-même
+				// en ≤ 3,5 s via TickAuras (« retiré du slot → le buff s'arrête »).
+				client.activeCakeItemId = 0u;
+				continue;
+			}
+
+			// Destinataires : le porteur + membres du groupe à portée.
+			std::vector<ConnectedClient*> recipients;
+			recipients.push_back(&client);
+			if (m_partySystem.IsInitialized())
+			{
+				if (const Party* party = m_partySystem.FindPartyByMember(client.clientId))
+				{
+					const std::vector<uint32_t> inRange = m_partySystem.GetMembersInRange(
+						party->partyId, client.clientId,
+						client.positionMetersX, client.positionMetersZ,
+						kCakeBuffRadiusMeters,
+						[this](uint32_t memberClientId, float& outX, float& outZ) -> bool
+						{
+							for (const ConnectedClient& c : m_clients)
+							{
+								if (c.clientId == memberClientId)
+								{
+									outX = c.positionMetersX;
+									outZ = c.positionMetersZ;
+									return true;
+								}
+							}
+							return false;
+						});
+					for (uint32_t memberId : inRange)
+					{
+						if (memberId == client.clientId) continue;
+						for (ConnectedClient& other : m_clients)
+						{
+							if (other.clientId == memberId) { recipients.push_back(&other); break; }
+						}
+					}
+				}
+			}
+			// DETTE (documentée PR #991) — partage « guilde » : le shard ne
+			// connaît PAS l'appartenance de guilde (aucun GuildSystem câblé
+			// dans ServerApp ; les guildes vivent côté master/DB). V1 = groupe
+			// à portée uniquement ; étendre à la guilde exigera une synchro
+			// d'appartenance master→shard (chantier séparé).
+
+			for (ConnectedClient* target : recipients)
+			{
+				ActiveAura aura;
+				aura.spellId = def->buffSpellId;
+				aura.type = def->type;
+				aura.percent = def->percent;
+				aura.expiresAtMs = nowMonotonicMs + kCakeAuraTtlMs;
+				aura.casterEntityId = client.entityId;
+				UpsertAura(target->auras, std::move(aura));
+				BroadcastAuraUpdate(target->entityId, target->auras);
+			}
+		}
+	}
+
 	void ServerApp::AddItemToInventory(ConnectedClient& client, const ItemStack& item)
 	{
+		// Anniversaires SP3 (2026-07-18) — un gâteau qui ENTRE en inventaire
+		// reçoit son expiration : fin du jour UTC courant (« mangé » à minuit,
+		// cf. TickCakeBuffs). Posée une seule fois (pas re-décalée si le même
+		// gâteau re-transite, ex. rollback de vente).
+		if (engine::anniversary::IsCakeItemId(item.itemId)
+			&& client.cakeExpiresAtMsUtcByItemId.find(item.itemId) == client.cakeExpiresAtMsUtcByItemId.end())
+		{
+			constexpr uint64_t kDayMs = 86400000ull;
+			const uint64_t nowUtc = NowUnixEpochMsUtc();
+			client.cakeExpiresAtMsUtcByItemId[item.itemId] = ((nowUtc / kDayMs) + 1ull) * kDayMs;
+		}
+
 		for (ItemStack& inventoryItem : client.inventory)
 		{
 			if (inventoryItem.itemId == item.itemId)

@@ -140,6 +140,45 @@ vec3 AnalyticSky(vec3 viewDir, vec3 sunDir)
 }
 
 // -------------------------------------------------------------------------
+// Étoiles nocturnes procédurales (chantier ciel 2026-07-18, lot 3).
+// Champ d'étoiles par cellules 3D sur la direction de vue : chaque cellule
+// tire (hash) une étoile potentielle (~3 % des cellules), avec position,
+// magnitude et teinte propres. Fondu piloté par l'élévation du soleil ;
+// la lune est composée PAR-DESSUS (RenderMoonDisk appelé après).
+// -------------------------------------------------------------------------
+float StarHash13(vec3 p)
+{
+    p = fract(p * 0.1031);
+    p += dot(p, p.yzx + 33.33);
+    return fract((p.x + p.y) * p.z);
+}
+
+vec3 Stars(vec3 viewDir, float nightFactor)
+{
+    if (nightFactor <= 0.001 || viewDir.y < -0.05) return vec3(0.0);
+    // Échelle angulaire : ~220 cellules par unité de direction (étoiles
+    // ponctuelles d'environ un quart de degré).
+    vec3 sp = viewDir * 220.0;
+    vec3 cell = floor(sp);
+    float h = StarHash13(cell);
+    if (h < 0.97) return vec3(0.0); // ~3 % des cellules sont étoilées
+
+    // Position de l'étoile dans sa cellule (décalage stable par hash).
+    vec3 starPos = cell + 0.5 + 0.6 * (vec3(
+        StarHash13(cell + 1.7),
+        StarHash13(cell + 4.2),
+        StarHash13(cell + 9.1)) - 0.5);
+    float d = length(sp - starPos);
+    float star = smoothstep(0.7, 0.0, d);
+
+    // Magnitude et teinte variables (blanc bleuté -> blanc chaud).
+    float mag  = 0.35 + 0.65 * StarHash13(cell + 2.3);
+    float tint = StarHash13(cell + 5.5);
+    vec3 col = mix(vec3(0.75, 0.85, 1.0), vec3(1.0, 0.92, 0.80), tint);
+    return col * star * mag * 0.6 * nightFactor;
+}
+
+// -------------------------------------------------------------------------
 // RenderMoonDisk : composite procedurale d'un disque lunaire avec ombre
 // dependant de la phase. Renvoie la couleur ciel modifiee (mix entre baseSky
 // et la surface lunaire ponderee par halo + intensity).
@@ -280,6 +319,10 @@ void main()
         float belowT  = clamp(-viewDir.y / 0.1, 0.0, 1.0);
         skyColor = mix(skyColor, pc.horizonColor * 0.3, belowT);
     }
+
+    // ---- Étoiles nocturnes (lot 3) — sous la lune, fondu au crépuscule ------
+    float nightFactor = smoothstep(0.0, -0.12, pc.lightDir.y);
+    skyColor += Stars(viewDir, nightFactor);
 
     // ---- Phase 5 Lunar — disque lunaire procedural ---------------------------
     // Compose le disque lunaire (avec ombre dependant de la phase) sur la

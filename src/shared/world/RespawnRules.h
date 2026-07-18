@@ -43,4 +43,24 @@ namespace engine::world
 		// Au-delà : réservé aux joueurs de la faction propriétaire du cimetière.
 		return graveyardFaction == playerFaction;
 	}
+
+	/// Éligibilité d'un cimetière comme DÉFAUT de zone, INDÉPENDANTE de la position
+	/// (anti-triche : la position de mort est client-autoritaire, donc non fiable).
+	///   - cimetière neutre (`graveyardFaction` vide ou "-") → éligible pour tous ;
+	///   - sinon, éligible UNIQUEMENT pour sa faction propriétaire.
+	/// Aucune notion de distance / rayon neutre (à la différence de
+	/// IsGraveyardEligibleForRespawn, conservée pour l'ancien modèle « plus proche »).
+	///
+	/// \param graveyardFaction id de la faction propriétaire (vide/"-" = neutre).
+	/// \param playerFaction    id de la faction du joueur (peut être vide).
+	/// \return true si ce cimetière peut être le défaut de respawn du joueur.
+	inline bool IsGraveyardEligibleAsZoneDefault(std::string_view graveyardFaction,
+	                                             std::string_view playerFaction)
+	{
+		if (graveyardFaction.empty() || graveyardFaction == "-")
+		{
+			return true;
+		}
+		return graveyardFaction == playerFaction;
+	}
 }

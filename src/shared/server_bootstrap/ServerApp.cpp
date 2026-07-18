@@ -5592,7 +5592,7 @@ namespace engine::server
 		}
 		client.activeCakeItemId = cakeItemId;
 		SendChatSystemNotice(client, std::string("Le gâteau est servi ! ") + def->noticeFr
-			+ " pour votre groupe et votre guilde à proximité, tant qu'il reste dans la barre d'action.");
+			+ " pour votre groupe à proximité, tant qu'il reste dans la barre d'action.");
 		LOG_INFO(Net, "[ServerApp] Gateau active (client_id={}, item_id={})", client.clientId, cakeItemId);
 	}
 
@@ -5668,8 +5668,7 @@ namespace engine::server
 				continue;
 			}
 
-			// Destinataires : le porteur + membres du groupe à portée + membres
-			// de la guilde connectés à portée (déduplication par pointeur).
+			// Destinataires : le porteur + membres du groupe à portée.
 			std::vector<ConnectedClient*> recipients;
 			recipients.push_back(&client);
 			if (m_partySystem.IsInitialized())
@@ -5703,26 +5702,11 @@ namespace engine::server
 					}
 				}
 			}
-			if (m_guildSystem.IsInitialized() && client.persistenceCharacterKey != 0u)
-			{
-				const uint64_t guildId = m_guildSystem.GetGuildIdForPlayer(client.persistenceCharacterKey);
-				if (guildId != 0u)
-				{
-					const float radiusSq = kCakeBuffRadiusMeters * kCakeBuffRadiusMeters;
-					for (ConnectedClient& other : m_clients)
-					{
-						if (&other == &client || other.persistenceCharacterKey == 0u) continue;
-						if (m_guildSystem.GetGuildIdForPlayer(other.persistenceCharacterKey) != guildId) continue;
-						const float dx = other.positionMetersX - client.positionMetersX;
-						const float dz = other.positionMetersZ - client.positionMetersZ;
-						if (dx * dx + dz * dz > radiusSq) continue;
-						bool already = false;
-						for (ConnectedClient* r : recipients)
-							if (r == &other) { already = true; break; }
-						if (!already) recipients.push_back(&other);
-					}
-				}
-			}
+			// DETTE (documentée PR #991) — partage « guilde » : le shard ne
+			// connaît PAS l'appartenance de guilde (aucun GuildSystem câblé
+			// dans ServerApp ; les guildes vivent côté master/DB). V1 = groupe
+			// à portée uniquement ; étendre à la guilde exigera une synchro
+			// d'appartenance master→shard (chantier séparé).
 
 			for (ConnectedClient* target : recipients)
 			{

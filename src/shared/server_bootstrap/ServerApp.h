@@ -691,8 +691,9 @@ namespace engine::server
 		void HandleCakeActivation(ConnectedClient& client, uint32_t cakeItemId);
 
 		/// Anniversaires SP3 — entretien (1 Hz) des buffs de gâteau : aura à
-		/// TTL court re-rafraîchie sur le porteur + membres du groupe/guilde à
-		/// portée tant que le gâteau est slotté et possédé ; ET purge de
+		/// TTL court re-rafraîchie sur le porteur + membres du GROUPE à
+		/// portée tant que le gâteau est slotté et possédé (guilde = dette,
+		/// le shard n'a pas l'appartenance de guilde) ; ET purge de
 		/// minuit UTC (gâteau « mangé » : retiré de l'inventaire et des slots,
 		/// notice + resync inventaire/barre). \param nowMonotonicMs horloge
 		/// monotone des auras (l'expiration jour J utilise l'horloge UTC).

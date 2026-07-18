@@ -401,6 +401,9 @@ add_library(engine_core
   src/world_editor/scene/EditorSceneModel.cpp
   # Sous-projet 1, bloc D — commande undoable d'edition de transform.
   src/world_editor/inspector/SetEntityTransformCommand.cpp
+  # Lot 5 (2026-07-18) — dupliquer/supprimer la selection (undoables).
+  src/world_editor/scene/DeleteEntityCommand.cpp
+  src/world_editor/scene/DuplicateEntityCommand.cpp
   src/world_editor/terrain/TerrainDocument.cpp
   src/world_editor/terrain/TerrainBrush.cpp
   src/world_editor/terrain/TerrainRaycast.cpp
@@ -1481,6 +1484,17 @@ if(MSVC)
   target_compile_options(set_entity_transform_command_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME set_entity_transform_command_tests COMMAND set_entity_transform_command_tests)
+
+# Lot 5 (2026-07-18) — Tests CPU pour DeleteEntityCommand / DuplicateEntityCommand
+# (Execute/Undo/Redo via foncteurs factices, integration CommandStack). Pur CPU,
+# non gate WIN32 (execute aussi par le ctest de build-linux).
+add_executable(entity_edit_commands_tests src/world_editor/tests/EntityEditCommandsTests.cpp)
+target_include_directories(entity_edit_commands_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(entity_edit_commands_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(entity_edit_commands_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME entity_edit_commands_tests COMMAND entity_edit_commands_tests)
 
 # Sous-projet 1, bloc H — Tests CPU pour Config::SaveToFile (round-trip JSON
 # plat des 4 types scalaires + echappement). Pur CPU + E/S, non gate WIN32.

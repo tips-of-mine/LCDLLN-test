@@ -8004,6 +8004,25 @@ namespace engine
 				if (ctrl && buildMode) bp->Redo();
 				else m_worldEditorShell->HandleShortcut('Y', ctrl, shift);
 			}
+			// Lot 5 (2026-07-18) — Ctrl+D (dupliquer la sélection) et Suppr
+			// (supprimer la sélection). Ignorés quand ImGui édite du texte
+			// (champ de saisie actif) : Suppr/Ctrl+D y ont leur sens d'édition
+			// de texte et ne doivent pas toucher la scène.
+			const bool imguiTextInput =
+				(ImGui::GetCurrentContext() != nullptr) && ImGui::GetIO().WantTextInput;
+			if (!imguiTextInput)
+			{
+				if (ctrl && m_input.WasPressed(engine::platform::Key::D))
+				{
+					// shift transmis tel quel : Ctrl+Shift+D reste l'outil
+					// Dungeon Portal (géré par le shell).
+					m_worldEditorShell->HandleShortcut('D', true, shift);
+				}
+				if (!ctrl && !shift && m_input.WasPressed(engine::platform::Key::Delete))
+				{
+					m_worldEditorShell->HandleShortcut(0x2E, false, false);
+				}
+			}
 		}
 
 		m_shaderHotReload.Poll(m_cfg);
@@ -9318,6 +9337,144 @@ namespace engine
 							}
 						}
 					});
+
+				// Lot 5 (2026-07-18) — Foncteurs d'édition STRUCTURELLE des
+				// entités (Dupliquer/Supprimer undoables). Même pattern que le
+				// TransformWriter ci-dessus : l'Engine capture [this] pour
+				// atteindre le doc layout (session) que le shell ne possède
+				// pas. Réinstallés chaque frame (comme le writer) — les
+				// commandes gardent leur PROPRE copie des foncteurs au Push.
+				{
+					using engine::editor::scene::EntityId;
+					using engine::editor::scene::EntityKind;
+					using engine::editor::scene::EntitySnapshot;
+					engine::editor::scene::EntityEditOps ops;
+
+					// Copie l'entité (kind+index scène) en snapshot à guid
+					// stable, sans la retirer. false si index hors bornes ou
+					// kind non éditable.
+					ops.capture = [this](EntityId id, EntitySnapshot& out) -> bool
+					{
+						if (id.kind == EntityKind::LayoutInstance && m_worldEditorSession)
+						{
+							const auto& insts = m_worldEditorSession->Doc().layoutInstances;
+							if (id.index >= insts.size()) return false;
+							out.kind = id.kind;
+							out.layout = insts[id.index];
+							out.layoutIndex = id.index;
+							return true;
+						}
+						if (id.kind == EntityKind::MeshInsert && m_worldEditorShell)
+						{
+							const auto& all = m_worldEditorShell->GetMeshInsertDocument().All();
+							if (id.index >= all.size()) return false;
+							out.kind = id.kind;
+							out.meshInsert = all[id.index];
+							return true;
+						}
+						if (id.kind == EntityKind::DungeonPortal && m_worldEditorShell)
+						{
+							const auto& all = m_worldEditorShell->GetDungeonPortalDocument().All();
+							if (id.index >= all.size()) return false;
+							out.kind = id.kind;
+							out.portal = all[id.index];
+							return true;
+						}
+						return false;
+					};
+
+					// Retire l'entité du snapshot — par guid (stable), jamais
+					// par index (instable après édition structurelle).
+					ops.remove = [this](const EntitySnapshot& s) -> bool
+					{
+						if (s.kind == EntityKind::LayoutInstance && m_worldEditorSession)
+						{
+							auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+							for (size_t i = 0; i < insts.size(); ++i)
+							{
+								if (insts[i].guid == s.layout.guid)
+								{
+									insts.erase(insts.begin() + static_cast<ptrdiff_t>(i));
+									return true;
+								}
+							}
+							return false;
+						}
+						if (s.kind == EntityKind::MeshInsert && m_worldEditorShell)
+							return m_worldEditorShell->MutableMeshInsertDocument().Remove(s.meshInsert.guid);
+						if (s.kind == EntityKind::DungeonPortal && m_worldEditorShell)
+							return m_worldEditorShell->MutableDungeonPortalDocument().Remove(s.portal.guid);
+						return false;
+					};
+
+					// Réinsère le snapshot : au rang d'origine (borné) pour le
+					// layout, par Add (guid conservé, compteur resynchronisé)
+					// pour les volumes.
+					ops.restore = [this](const EntitySnapshot& s) -> bool
+					{
+						if (s.kind == EntityKind::LayoutInstance && m_worldEditorSession)
+						{
+							auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+							const size_t at = std::min<size_t>(s.layoutIndex, insts.size());
+							insts.insert(insts.begin() + static_cast<ptrdiff_t>(at), s.layout);
+							return true;
+						}
+						if (s.kind == EntityKind::MeshInsert && m_worldEditorShell)
+						{
+							(void)m_worldEditorShell->MutableMeshInsertDocument().Add(s.meshInsert);
+							return true;
+						}
+						if (s.kind == EntityKind::DungeonPortal && m_worldEditorShell)
+						{
+							(void)m_worldEditorShell->MutableDungeonPortalDocument().Add(s.portal);
+							return true;
+						}
+						return false;
+					};
+
+					// Ajoute une COPIE de src (nouveau guid + décalage +1,5 m
+					// en X pour que la copie soit visible à côté de
+					// l'original) et renvoie son snapshot dans outCopy.
+					ops.duplicate = [this](const EntitySnapshot& src, EntitySnapshot& outCopy) -> bool
+					{
+						constexpr double kDupOffsetM = 1.5;
+						outCopy = src;
+						if (src.kind == EntityKind::LayoutInstance && m_worldEditorSession)
+						{
+							auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+							// Préfixe "we_dup_" distinct du "we_inst_" de la
+							// session : aucun risque de collision de guid.
+							static uint64_t s_dupSeq = 1u;
+							char buf[48];
+							std::snprintf(buf, sizeof(buf), "we_dup_%llu",
+								static_cast<unsigned long long>(s_dupSeq++));
+							outCopy.layout.guid = buf;
+							outCopy.layout.worldX += kDupOffsetM;
+							outCopy.layoutIndex = static_cast<uint32_t>(insts.size());
+							insts.push_back(outCopy.layout);
+							return true;
+						}
+						if (src.kind == EntityKind::MeshInsert && m_worldEditorShell)
+						{
+							auto& doc = m_worldEditorShell->MutableMeshInsertDocument();
+							outCopy.meshInsert.guid = 0u; // Add() assigne un nouveau guid
+							outCopy.meshInsert.worldPosition.x += static_cast<float>(kDupOffsetM);
+							outCopy.meshInsert.guid = doc.Add(outCopy.meshInsert);
+							return true;
+						}
+						if (src.kind == EntityKind::DungeonPortal && m_worldEditorShell)
+						{
+							auto& doc = m_worldEditorShell->MutableDungeonPortalDocument();
+							outCopy.portal.guid = 0u; // Add() assigne un nouveau guid
+							outCopy.portal.worldPosition.x += static_cast<float>(kDupOffsetM);
+							outCopy.portal.guid = doc.Add(outCopy.portal);
+							return true;
+						}
+						return false;
+					};
+
+					m_worldEditorShell->SetEntityEditOps(std::move(ops));
+				}
 			}
 			// Aperçu 3D live des bâtiments (brouillon + placements) dans la vue
 			// éditeur. Reconstruit m_props seulement si l'aperçu est « sale ».

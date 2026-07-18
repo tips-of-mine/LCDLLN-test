@@ -53,20 +53,34 @@ namespace engine::render
 		/// \param uploadQueue        Queue graphics pour l'upload one-shot des textures
 		///        de bruit (vkQueueWaitIdle interne — boot uniquement, jamais en frame).
 		/// \param uploadQueueFamilyIndex Famille de \p uploadQueue (command pool).
+		/// \param compositeFragSpirv/compositeFragWordCount SPIR-V de
+		///        clouds_composite.frag (lot 1 : upsample + composition pleine
+		///        résolution des nuages marchés en cible réduite).
 		/// \param maxFrames frames en vol (un descriptor set par frame).
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
 			VkFormat sceneColorHDRFormat,
 			const uint32_t* vertSpirv, size_t vertWordCount,
 			const uint32_t* fragSpirv, size_t fragWordCount,
+			const uint32_t* compositeFragSpirv, size_t compositeFragWordCount,
 			VkQueue uploadQueue, uint32_t uploadQueueFamilyIndex,
 			uint32_t maxFrames = 2,
 			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
-		/// Enregistre la passe. Lit scene color (idSceneColorIn) + depth (idDepth),
-		/// composite les nuages, écrit dans idSceneColorOut.
-		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,
-			ResourceId idSceneColorIn, ResourceId idDepth,
-			ResourceId idSceneColorOut, const CloudPushConstants& params, uint32_t frameIndex);
+		/// Lot 1 (2026-07-18) — Enregistre la MARCHE des nuages dans la cible
+		/// réduite \p idCloudsOut (RGBA16F, extent \p scaledExtent = swapchain
+		/// divisée par render.clouds.resolution_divider). Lit uniquement le
+		/// depth (pleine résolution, échantillonné) ; sortie pré-multipliée
+		/// (rgb) + visibilité scène (a), cf. clouds.frag.
+		void RecordMarch(VkDevice device, VkCommandBuffer cmd, Registry& registry,
+			VkExtent2D scaledExtent, ResourceId idDepth,
+			ResourceId idCloudsOut, const CloudPushConstants& params, uint32_t frameIndex);
+
+		/// Lot 1 (2026-07-18) — Compose (pleine résolution) la cible nuages
+		/// réduite \p idCloudsIn sur la scène \p idSceneColorIn et écrit
+		/// \p idSceneColorOut : final = scene * clouds.a + clouds.rgb.
+		void RecordComposite(VkDevice device, VkCommandBuffer cmd, Registry& registry,
+			VkExtent2D extent, ResourceId idSceneColorIn, ResourceId idCloudsIn,
+			ResourceId idSceneColorOut, uint32_t frameIndex);
 
 		void Destroy(VkDevice device);
 
@@ -115,6 +129,13 @@ namespace engine::render
 		VkDescriptorPool      m_descriptorPool      = VK_NULL_HANDLE;
 		VkPipelineLayout      m_pipelineLayout      = VK_NULL_HANDLE;
 		VkPipeline            m_pipeline            = VK_NULL_HANDLE;
+		// Lot 1 (2026-07-18) — pipeline de composition pleine résolution
+		// (clouds_composite.frag : scene * clouds.a + clouds.rgb). Réutilise
+		// m_renderPass (même format RGBA16F que la cible réduite).
+		VkDescriptorSetLayout m_compositeSetLayout      = VK_NULL_HANDLE;
+		VkPipelineLayout      m_compositePipelineLayout = VK_NULL_HANDLE;
+		VkPipeline            m_compositePipeline       = VK_NULL_HANDLE;
+		std::vector<VkDescriptorSet> m_compositeSets;
 		VkSampler             m_linearSampler       = VK_NULL_HANDLE;
 		VkSampler             m_nearestSampler      = VK_NULL_HANDLE;
 		// Chantier ciel 2026-07-17 — textures 3D de bruit Perlin-Worley

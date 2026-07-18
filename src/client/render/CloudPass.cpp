@@ -45,11 +45,13 @@ namespace engine::render
 		VkFormat sceneColorHDRFormat,
 		const uint32_t* vertSpirv, size_t vertWordCount,
 		const uint32_t* fragSpirv, size_t fragWordCount,
+		const uint32_t* compositeFragSpirv, size_t compositeFragWordCount,
 		VkQueue uploadQueue, uint32_t uploadQueueFamilyIndex,
 		uint32_t maxFrames, VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv
 			|| vertWordCount == 0 || fragWordCount == 0
+			|| !compositeFragSpirv || compositeFragWordCount == 0
 			|| uploadQueue == VK_NULL_HANDLE)
 		{
 			LOG_ERROR(Render, "CloudPass::Init: invalid arguments");
@@ -125,16 +127,39 @@ namespace engine::render
 			}
 		}
 
-		// 3. Descriptor pool.
+		// 2b. Lot 1 (2026-07-18) — layout du set de composition : 2 samplers
+		// (scene pleine résolution + nuages basse résolution).
+		{
+			std::array<VkDescriptorSetLayoutBinding, 2> bindings{};
+			for (size_t i = 0; i < bindings.size(); ++i)
+			{
+				bindings[i].binding         = static_cast<uint32_t>(i);
+				bindings[i].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				bindings[i].descriptorCount = 1;
+				bindings[i].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
+			}
+			VkDescriptorSetLayoutCreateInfo layoutInfo{};
+			layoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+			layoutInfo.pBindings    = bindings.data();
+			if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &m_compositeSetLayout) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkCreateDescriptorSetLayout (composite) failed");
+				Destroy(device); return false;
+			}
+		}
+
+		// 3. Descriptor pool (marche : 4 bindings + composite : 2 bindings,
+		// un set de chaque par frame).
 		{
 			VkDescriptorPoolSize poolSize{};
 			poolSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSize.descriptorCount = 4 * m_maxFrames;
+			poolSize.descriptorCount = 6 * m_maxFrames;
 			VkDescriptorPoolCreateInfo poolInfo{};
 			poolInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 			poolInfo.poolSizeCount = 1;
 			poolInfo.pPoolSizes    = &poolSize;
-			poolInfo.maxSets       = m_maxFrames;
+			poolInfo.maxSets       = 2 * m_maxFrames;
 			if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "CloudPass: vkCreateDescriptorPool failed");
@@ -142,7 +167,7 @@ namespace engine::render
 			}
 		}
 
-		// 4. Alloue un descriptor set par frame.
+		// 4. Alloue les descriptor sets (marche + composite) par frame.
 		{
 			std::vector<VkDescriptorSetLayout> layouts(m_maxFrames, m_descriptorSetLayout);
 			VkDescriptorSetAllocateInfo allocInfo{};
@@ -154,6 +179,14 @@ namespace engine::render
 			if (vkAllocateDescriptorSets(device, &allocInfo, m_descriptorSets.data()) != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "CloudPass: vkAllocateDescriptorSets failed");
+				Destroy(device); return false;
+			}
+			std::vector<VkDescriptorSetLayout> compLayouts(m_maxFrames, m_compositeSetLayout);
+			allocInfo.pSetLayouts = compLayouts.data();
+			m_compositeSets.resize(m_maxFrames, VK_NULL_HANDLE);
+			if (vkAllocateDescriptorSets(device, &allocInfo, m_compositeSets.data()) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkAllocateDescriptorSets (composite) failed");
 				Destroy(device); return false;
 			}
 		}
@@ -251,6 +284,18 @@ namespace engine::render
 				LOG_ERROR(Render, "CloudPass: vkCreatePipelineLayout failed");
 				Destroy(device); return false;
 			}
+
+			// Lot 1 — layout du pipeline de composition (set composite, pas
+			// de push constants).
+			VkPipelineLayoutCreateInfo compLayoutInfo{};
+			compLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			compLayoutInfo.setLayoutCount = 1;
+			compLayoutInfo.pSetLayouts    = &m_compositeSetLayout;
+			if (vkCreatePipelineLayout(device, &compLayoutInfo, nullptr, &m_compositePipelineLayout) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkCreatePipelineLayout (composite) failed");
+				Destroy(device); return false;
+			}
 		}
 
 		// 7. Pipeline graphique fullscreen triangle (pas de vertex input, pas de depth test).
@@ -324,11 +369,39 @@ namespace engine::render
 			AssertPipelineCreationAllowed();
 			PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, sceneColorHDRFormat, VK_FORMAT_UNDEFINED));
 			VkResult res = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline);
-			vkDestroyShaderModule(device, vertMod, nullptr);
-			vkDestroyShaderModule(device, fragMod, nullptr);
 			if (res != VK_SUCCESS)
 			{
+				vkDestroyShaderModule(device, vertMod, nullptr);
+				vkDestroyShaderModule(device, fragMod, nullptr);
 				LOG_ERROR(Render, "CloudPass: vkCreateGraphicsPipelines failed: {}", static_cast<int>(res));
+				Destroy(device); return false;
+			}
+
+			// Lot 1 (2026-07-18) — pipeline de composition : mêmes états
+			// (fullscreen triangle, pas de depth, pas de blend — l'équation
+			// de composition est dans le shader), fragment
+			// clouds_composite.frag, layout composite. Même render pass
+			// (format RGBA16F identique pour la cible réduite et la scène).
+			VkShaderModule compFragMod = CreateShaderModule(device,
+				compositeFragSpirv, compositeFragWordCount);
+			if (compFragMod == VK_NULL_HANDLE)
+			{
+				vkDestroyShaderModule(device, vertMod, nullptr);
+				vkDestroyShaderModule(device, fragMod, nullptr);
+				LOG_ERROR(Render, "CloudPass: composite shader module creation failed");
+				Destroy(device); return false;
+			}
+			stages[1].module = compFragMod;
+			gpInfo.layout    = m_compositePipelineLayout;
+			AssertPipelineCreationAllowed();
+			PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_compositePipelineLayout, sceneColorHDRFormat, VK_FORMAT_UNDEFINED));
+			res = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_compositePipeline);
+			vkDestroyShaderModule(device, vertMod, nullptr);
+			vkDestroyShaderModule(device, fragMod, nullptr);
+			vkDestroyShaderModule(device, compFragMod, nullptr);
+			if (res != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkCreateGraphicsPipelines (composite) failed: {}", static_cast<int>(res));
 				Destroy(device); return false;
 			}
 		}
@@ -337,26 +410,29 @@ namespace engine::render
 		return true;
 	}
 
-	void CloudPass::Record(VkDevice device, VkCommandBuffer cmd, Registry& registry,
-		VkExtent2D extent, ResourceId idSceneColorIn, ResourceId idDepth,
-		ResourceId idSceneColorOut, const CloudPushConstants& params, uint32_t frameIndex)
+	void CloudPass::RecordMarch(VkDevice device, VkCommandBuffer cmd, Registry& registry,
+		VkExtent2D scaledExtent, ResourceId idDepth,
+		ResourceId idCloudsOut, const CloudPushConstants& params, uint32_t frameIndex)
 	{
+		const VkExtent2D extent = scaledExtent;
 		if (!IsValid() || extent.width == 0 || extent.height == 0) return;
 
-		VkImageView viewSceneIn = registry.getImageView(idSceneColorIn);
-		VkImageView viewDepth   = registry.getImageView(idDepth);
-		VkImageView viewOut     = registry.getImageView(idSceneColorOut);
-		if (viewSceneIn == VK_NULL_HANDLE || viewDepth == VK_NULL_HANDLE || viewOut == VK_NULL_HANDLE)
+		VkImageView viewDepth = registry.getImageView(idDepth);
+		VkImageView viewOut   = registry.getImageView(idCloudsOut);
+		if (viewDepth == VK_NULL_HANDLE || viewOut == VK_NULL_HANDLE)
 		{
-			LOG_WARN(Render, "CloudPass::Record: missing image views, skipping");
+			LOG_WARN(Render, "CloudPass::RecordMarch: missing image views, skipping");
 			return;
 		}
 
 		const uint32_t setIdx = frameIndex % m_maxFrames;
 		VkDescriptorSet ds = m_descriptorSets[setIdx];
 
+		// Binding 0 (ex-scene color) : plus échantillonné par clouds.frag
+		// (lot 1) mais toujours présent au layout — on y lie le depth en
+		// « bouche-trou » déclaré au FrameGraph (layout SHADER_READ_ONLY).
 		std::array<VkDescriptorImageInfo, 4> imageInfos{};
-		imageInfos[0] = { m_linearSampler,  viewSceneIn,       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[0] = { m_nearestSampler, viewDepth,         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[1] = { m_nearestSampler, viewDepth,         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[2] = { m_noiseSampler,   m_noiseBaseView,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[3] = { m_noiseSampler,   m_noiseDetailView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
@@ -423,6 +499,98 @@ namespace engine::render
 
 		vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT,
 			0, static_cast<uint32_t>(sizeof(CloudPushConstants)), &params);
+		vkCmdDraw(cmd, 3, 1, 0, 0);
+		vkCmdEndRenderPass(cmd);
+	}
+
+	void CloudPass::RecordComposite(VkDevice device, VkCommandBuffer cmd, Registry& registry,
+		VkExtent2D extent, ResourceId idSceneColorIn, ResourceId idCloudsIn,
+		ResourceId idSceneColorOut, uint32_t frameIndex)
+	{
+		if (!IsValid() || m_compositePipeline == VK_NULL_HANDLE
+			|| extent.width == 0 || extent.height == 0)
+		{
+			return;
+		}
+
+		VkImageView viewSceneIn = registry.getImageView(idSceneColorIn);
+		VkImageView viewClouds  = registry.getImageView(idCloudsIn);
+		VkImageView viewOut     = registry.getImageView(idSceneColorOut);
+		if (viewSceneIn == VK_NULL_HANDLE || viewClouds == VK_NULL_HANDLE
+			|| viewOut == VK_NULL_HANDLE)
+		{
+			LOG_WARN(Render, "CloudPass::RecordComposite: missing image views, skipping");
+			return;
+		}
+
+		const uint32_t setIdx = frameIndex % m_maxFrames;
+		VkDescriptorSet ds = m_compositeSets[setIdx];
+
+		std::array<VkDescriptorImageInfo, 2> imageInfos{};
+		imageInfos[0] = { m_linearSampler, viewSceneIn, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[1] = { m_linearSampler, viewClouds,  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		std::array<VkWriteDescriptorSet, 2> writes{};
+		for (size_t i = 0; i < writes.size(); ++i)
+		{
+			writes[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writes[i].dstSet          = ds;
+			writes[i].dstBinding      = static_cast<uint32_t>(i);
+			writes[i].descriptorCount = 1;
+			writes[i].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writes[i].pImageInfo      = &imageInfos[i];
+		}
+		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
+
+		// Framebuffer mis en cache (même pattern que la marche : la clé
+		// inclut la vue de sortie et la taille).
+		FramebufferKey fbKey{ viewOut, extent.width, extent.height };
+		VkFramebuffer fb = VK_NULL_HANDLE;
+		auto fbIt = m_framebufferCache.find(fbKey);
+		if (fbIt != m_framebufferCache.end())
+		{
+			fb = fbIt->second;
+		}
+		else
+		{
+			VkFramebufferCreateInfo fbInfo{};
+			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass      = m_renderPass;
+			fbInfo.attachmentCount = 1;
+			fbInfo.pAttachments    = &viewOut;
+			fbInfo.width           = extent.width;
+			fbInfo.height          = extent.height;
+			fbInfo.layers          = 1;
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass::RecordComposite: vkCreateFramebuffer failed");
+				return;
+			}
+			m_framebufferCache[fbKey] = fb;
+		}
+
+		VkClearValue clearVal{};
+		clearVal.color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		VkRenderPassBeginInfo rpBegin{};
+		rpBegin.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		rpBegin.renderPass      = m_renderPass;
+		rpBegin.framebuffer     = fb;
+		rpBegin.renderArea      = { { 0, 0 }, extent };
+		rpBegin.clearValueCount = 1;
+		rpBegin.pClearValues    = &clearVal;
+		vkCmdBeginRenderPass(cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
+
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_compositePipeline);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+			m_compositePipelineLayout, 0, 1, &ds, 0, nullptr);
+
+		VkViewport viewport{};
+		viewport.width = static_cast<float>(extent.width);
+		viewport.height = static_cast<float>(extent.height);
+		viewport.minDepth = 0.0f; viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+		VkRect2D scissor = { { 0, 0 }, extent };
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
 		vkCmdDraw(cmd, 3, 1, 0, 0);
 		vkCmdEndRenderPass(cmd);
 	}
@@ -622,6 +790,11 @@ namespace engine::render
 		InvalidateFramebufferCache(device);
 		if (m_pipeline)            { vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
 		if (m_pipelineLayout)      { vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr); m_pipelineLayout = VK_NULL_HANDLE; }
+		// Lot 1 — pipeline de composition.
+		if (m_compositePipeline)       { vkDestroyPipeline(device, m_compositePipeline, nullptr); m_compositePipeline = VK_NULL_HANDLE; }
+		if (m_compositePipelineLayout) { vkDestroyPipelineLayout(device, m_compositePipelineLayout, nullptr); m_compositePipelineLayout = VK_NULL_HANDLE; }
+		m_compositeSets.clear();
+		if (m_compositeSetLayout)      { vkDestroyDescriptorSetLayout(device, m_compositeSetLayout, nullptr); m_compositeSetLayout = VK_NULL_HANDLE; }
 		if (m_nearestSampler)      { vkDestroySampler(device, m_nearestSampler, nullptr); m_nearestSampler = VK_NULL_HANDLE; }
 		if (m_linearSampler)       { vkDestroySampler(device, m_linearSampler, nullptr); m_linearSampler = VK_NULL_HANDLE; }
 		// Chantier ciel 2026-07-17 — textures 3D de bruit + sampler REPEAT.

@@ -89,6 +89,177 @@
       "type": "accessory",
       "slot": "ring1",
       "bonus": { "damage": 4 }
+    },
+    {
+      "_comment": "Anniversaires (spec 2026-07-18) — 10 gateaux (5101-5110, un buff distinct chacun, active en SP3 : partage groupe/guilde en rayon, valable le jour J seulement) + 10 souvenirs millesimes (5121-5130, An 1..10, slots tournants, bonus reels modestes). Plage 5101-5130 RESERVEE anniversaires.",
+      "id": 5101,
+      "name": "Gateau des braves",
+      "description": "Un gateau d'anniversaire a partager : +force pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "icon": "items/gateau_braves.png",
+      "type": "consumable",
+      "slot": "none"
+    },
+    {
+      "id": 5102,
+      "name": "Gateau du colosse",
+      "description": "Un gateau d'anniversaire a partager : +endurance pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "icon": "items/gateau_colosse.png",
+      "type": "consumable",
+      "slot": "none"
+    },
+    {
+      "id": 5103,
+      "name": "Gateau du zephyr",
+      "description": "Un gateau d'anniversaire a partager : +vitesse pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "icon": "items/gateau_zephyr.png",
+      "type": "consumable",
+      "slot": "none"
+    },
+    {
+      "id": 5104,
+      "name": "Gateau du sage",
+      "description": "Un gateau d'anniversaire a partager : +esprit pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "icon": "items/gateau_sage.png",
+      "type": "consumable",
+      "slot": "none"
+    },
+    {
+      "id": 5105,
+      "name": "Gateau du guetteur",
+      "description": "Un gateau d'anniversaire a partager : +perception pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "icon": "items/gateau_guetteur.png",
+      "type": "consumable",
+      "slot": "none"
+    },
+    {
+      "id": 5106,
+      "name": "Gateau du duelliste",
+      "description": "Un gateau d'anniversaire a partager : +precision pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "icon": "items/gateau_duelliste.png",
+      "type": "consumable",
+      "slot": "none"
+    },
+    {
+      "id": 5107,
+      "name": "Gateau du gardien",
+      "description": "Un gateau d'anniversaire a partager : +points de vie pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "icon": "items/gateau_gardien.png",
+      "type": "consumable",
+      "slot": "none"
+    },
+    {
+      "id": 5108,
+      "name": "Gateau de l'erudit",
+      "description": "Un gateau d'anniversaire a partager : +ressource pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "icon": "items/gateau_erudit.png",
+      "type": "consumable",
+      "slot": "none"
+    },
+    {
+      "id": 5109,
+      "name": "Gateau du chasseur",
+      "description": "Un gateau d'anniversaire a partager : +degats pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "icon": "items/gateau_chasseur.png",
+      "type": "consumable",
+      "slot": "none"
+    },
+    {
+      "id": 5110,
+      "name": "Gateau du vagabond",
+      "description": "Un gateau d'anniversaire a partager : +recuperation pour le groupe. Ne se conserve pas au-dela du jour J.",
+      "icon": "items/gateau_vagabond.png",
+      "type": "consumable",
+      "slot": "none"
+    },
+    {
+      "id": 5121,
+      "name": "Amulette des fideles - An 1",
+      "description": "Souvenir du premier anniversaire fete en jeu. Une vraie recompense, pas un gadget.",
+      "icon": "items/souvenir_an1.png",
+      "type": "accessory",
+      "slot": "amulet",
+      "bonus": { "hp": 20, "resource": 15 }
+    },
+    {
+      "id": 5122,
+      "name": "Anneau des fideles - An 2",
+      "description": "Souvenir du deuxieme anniversaire fete en jeu.",
+      "icon": "items/souvenir_an2.png",
+      "type": "accessory",
+      "slot": "ring1",
+      "bonus": { "damage": 5, "accuracy": 3 }
+    },
+    {
+      "id": 5123,
+      "name": "Couronne des fideles - An 3",
+      "description": "Souvenir du troisieme anniversaire fete en jeu.",
+      "icon": "items/souvenir_an3.png",
+      "type": "armor",
+      "slot": "head",
+      "bonus": { "hp": 25, "perception": 4 }
+    },
+    {
+      "id": 5124,
+      "name": "Gantelets des fideles - An 4",
+      "description": "Souvenir du quatrieme anniversaire fete en jeu.",
+      "icon": "items/souvenir_an4.png",
+      "type": "armor",
+      "slot": "hands",
+      "bonus": { "hp": 15, "accuracy": 4, "damage": 3 }
+    },
+    {
+      "id": 5125,
+      "name": "Bottes des fideles - An 5",
+      "description": "Souvenir du cinquieme anniversaire fete en jeu.",
+      "icon": "items/souvenir_an5.png",
+      "type": "armor",
+      "slot": "feet",
+      "bonus": { "hp": 15, "speedWalk": 0.3, "speedRun": 0.4 }
+    },
+    {
+      "id": 5126,
+      "name": "Plastron des fideles - An 6",
+      "description": "Souvenir du sixieme anniversaire fete en jeu.",
+      "icon": "items/souvenir_an6.png",
+      "type": "armor",
+      "slot": "chest",
+      "bonus": { "hp": 40, "stamina": 6 }
+    },
+    {
+      "id": 5127,
+      "name": "Jambieres des fideles - An 7",
+      "description": "Souvenir du septieme anniversaire fete en jeu.",
+      "icon": "items/souvenir_an7.png",
+      "type": "armor",
+      "slot": "legs",
+      "bonus": { "hp": 30, "stamina": 5 }
+    },
+    {
+      "id": 5128,
+      "name": "Egide des fideles - An 8",
+      "description": "Souvenir du huitieme anniversaire fete en jeu.",
+      "icon": "items/souvenir_an8.png",
+      "type": "armor",
+      "slot": "offhand",
+      "bonus": { "hp": 30, "stamina": 4 }
+    },
+    {
+      "id": 5129,
+      "name": "Sceau des fideles - An 9",
+      "description": "Souvenir du neuvieme anniversaire fete en jeu.",
+      "icon": "items/souvenir_an9.png",
+      "type": "accessory",
+      "slot": "ring2",
+      "bonus": { "damage": 6, "hp": 15 }
+    },
+    {
+      "id": 5130,
+      "name": "Lame des fideles - An 10",
+      "description": "Souvenir du dixieme anniversaire fete en jeu. Dix ans, deja.",
+      "icon": "items/souvenir_an10.png",
+      "type": "weapon",
+      "slot": "mainhand",
+      "bonus": { "damage": 12, "accuracy": 4 }
     }
   ]
 }

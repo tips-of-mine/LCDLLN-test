@@ -37,6 +37,8 @@
 #include "src/masterd/handlers/character/CharacterDeleteHandler.h"
 #include "src/masterd/handlers/character/CharacterSavePositionHandler.h"
 #include "src/masterd/handlers/character/CharacterEnterWorldHandler.h"
+#include "src/masterd/anniversary/AnniversaryService.h"
+#include "src/masterd/exploits/MysqlExploitStore.h"
 #include "src/masterd/handlers/dungeon/EnterDungeonHandler.h"
 #include "src/masterd/handlers/chat/ChatRelayHandler.h"
 #include "src/masterd/handlers/mail/MailHandler.h"
@@ -528,6 +530,17 @@ int main(int argc, char** argv)
 	engine::server::MailHandler mailHandler;
 	mailHandler.SetMailManager(&mailManager);
 	mailHandler.SetServer(&server);
+
+	// Anniversaires (spec 2026-07-18) — exploits fidélité/naissance + courrier
+	// cadeau le jour J. Branché sur l'EnterWorld (déclaré plus haut) une fois
+	// le store mail résolu (MySQL ou in-memory). En mode no-DB, le store
+	// d'exploits est indisponible et le service devient un no-op silencieux.
+	engine::server::MysqlExploitStore exploitStore(&dbPool);
+	engine::server::AnniversaryService anniversaryService;
+	anniversaryService.SetDependencies(&dbPool, &exploitStore, mailStoreActive);
+	characterEnterWorldHandler.SetAnniversaryService(&anniversaryService);
+	LOG_INFO(Net, "[ServerMain] AnniversaryService branché (exploits DB {})",
+		exploitStore.IsAvailable() ? "OK" : "INDISPONIBLE — no-op");
 	mailHandler.SetSessionManager(&sessionManager);
 	mailHandler.SetConnectionSessionMap(&connSessionMap);
 	LOG_INFO(Net, "[ServerMain] MailHandler configured (CMANGOS.18 step 3)");

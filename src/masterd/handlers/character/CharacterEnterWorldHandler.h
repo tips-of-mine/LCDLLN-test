@@ -15,6 +15,7 @@ namespace engine::server
 	class ConnectionSessionMap;
 	class SessionCharacterMap;
 	class ShardRegistry;
+	class AnniversaryService;
 
 	/// Phase 4 chat — Master-side handler for kOpcodeCharacterEnterWorldRequest.
 	///
@@ -44,6 +45,12 @@ namespace engine::server
 		/// au premier EnterWorld). Permet de tourner sans cette fonctionnalité (tests / dev).
 		void SetShardRegistry(ShardRegistry* registry);
 
+		/// Anniversaires (spec 2026-07-18) — facultatif. Si configuré, chaque
+		/// EnterWorld validé passe par AnniversaryService::OnEnterWorld
+		/// (exploits fidélité/naissance + courrier cadeau le jour J) et les
+		/// déblocages sont notifiés au client par un ChatRelay « système ».
+		void SetAnniversaryService(AnniversaryService* service);
+
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
 
@@ -54,5 +61,6 @@ namespace engine::server
 		SessionCharacterMap*                m_charMap  = nullptr;
 		engine::server::db::ConnectionPool* m_pool     = nullptr;
 		ShardRegistry*                      m_shardRegistry = nullptr; ///< TA.3 — lookup connId pour push d'admission.
+		AnniversaryService*                 m_anniversary = nullptr;   ///< Anniversaires — facultatif (nullptr = off).
 	};
 }

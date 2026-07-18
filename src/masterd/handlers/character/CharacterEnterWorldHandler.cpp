@@ -11,12 +11,16 @@
 #include "src/masterd/session/SessionManager.h"
 #include "src/masterd/shards/ShardRegistry.h"
 #include "src/masterd/account/AccountRole.h"
+#include "src/masterd/anniversary/AnniversaryService.h"
+#include "src/shared/network/ChatPayloads.h"
+#include "src/shared/net/ChatSystem.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
 #include "src/shared/db/SqlPreparedStatement.h"
 
 #include <mysql.h>
 
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -29,6 +33,7 @@ namespace engine::server
 	void CharacterEnterWorldHandler::SetSessionCharacterMap(SessionCharacterMap* charMap) { m_charMap = charMap; }
 	void CharacterEnterWorldHandler::SetConnectionPool(engine::server::db::ConnectionPool* pool) { m_pool = pool; }
 	void CharacterEnterWorldHandler::SetShardRegistry(ShardRegistry* registry) { m_shardRegistry = registry; }
+	void CharacterEnterWorldHandler::SetAnniversaryService(AnniversaryService* service) { m_anniversary = service; }
 
 	void CharacterEnterWorldHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize)
@@ -199,5 +204,37 @@ namespace engine::server
 		auto pkt = BuildCharacterEnterWorldResponsePacket(1u, requestId, sessionIdHeader);
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
+
+		// Anniversaires (spec 2026-07-18) — après l'admission validée :
+		// paliers fidélité (rattrapage) + jour J de naissance (exploit +
+		// courrier cadeau). Les déblocages sont annoncés au client entrant
+		// par un ChatRelay « système » (même pattern que les notices du
+		// ChatRelayHandler). Le service est idempotent : un re-EnterWorld
+		// (changement de perso) ne double aucun octroi.
+		if (m_anniversary != nullptr)
+		{
+			const auto anniv = m_anniversary->OnEnterWorld(*accountId, engine::anniversary::TodayUtc());
+			const uint64_t nowMs = static_cast<uint64_t>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::system_clock::now().time_since_epoch()).count());
+			for (const std::string& title : anniv.unlockedTitles)
+			{
+				auto notice = BuildChatRelayPacket(nowMs,
+					static_cast<uint8_t>(engine::net::ChatChannel::Server),
+					"system", "Exploit débloqué : " + title, sessionIdHeader);
+				if (!notice.empty())
+					m_server->Send(connId, notice);
+			}
+			if (anniv.birthdayGiftMailed)
+			{
+				auto notice = BuildChatRelayPacket(nowMs,
+					static_cast<uint8_t>(engine::net::ChatChannel::Server),
+					"system",
+					"Joyeux anniversaire ! Un cadeau vous attend dans votre courrier.",
+					sessionIdHeader);
+				if (!notice.empty())
+					m_server->Send(connId, notice);
+			}
+		}
 	}
 }

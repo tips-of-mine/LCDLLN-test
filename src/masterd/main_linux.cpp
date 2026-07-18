@@ -39,6 +39,7 @@
 #include "src/masterd/handlers/character/CharacterEnterWorldHandler.h"
 #include "src/masterd/anniversary/AnniversaryService.h"
 #include "src/masterd/exploits/MysqlExploitStore.h"
+#include "src/masterd/handlers/exploits/ExploitHandler.h"
 #include "src/masterd/handlers/dungeon/EnterDungeonHandler.h"
 #include "src/masterd/handlers/chat/ChatRelayHandler.h"
 #include "src/masterd/handlers/mail/MailHandler.h"
@@ -539,6 +540,14 @@ int main(int argc, char** argv)
 	engine::server::AnniversaryService anniversaryService;
 	anniversaryService.SetDependencies(&dbPool, &exploitStore, mailStoreActive);
 	characterEnterWorldHandler.SetAnniversaryService(&anniversaryService);
+
+	// SP2 — handler de lecture « liste de mes exploits » (opcode 206) pour
+	// l'onglet Exploits de la fenêtre F1 (et tout futur écran d'exploits).
+	engine::server::ExploitHandler exploitHandler;
+	exploitHandler.SetServer(&server);
+	exploitHandler.SetSessionManager(&sessionManager);
+	exploitHandler.SetConnectionSessionMap(&connSessionMap);
+	exploitHandler.SetStore(&exploitStore);
 	LOG_INFO(Net, "[ServerMain] AnniversaryService branché (exploits DB {})",
 		exploitStore.IsAvailable() ? "OK" : "INDISPONIBLE — no-op");
 	mailHandler.SetSessionManager(&sessionManager);
@@ -1116,7 +1125,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &interactiveHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &worldClockHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &exploitHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &interactiveHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &worldClockHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -1168,6 +1177,9 @@ int main(int argc, char** argv)
 			tradeHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeReputationListRequest)
 			reputationHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		// Exploits (spec 2026-07-18, SP2) — liste « mes exploits » (206).
+		else if (opcode == kOpcodeExploitListRequest)
+			exploitHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeLfgQueueRequest
 		      || opcode == kOpcodeLfgLeaveRequest
 		      || opcode == kOpcodeLfgStatusRequest

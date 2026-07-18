@@ -305,6 +305,8 @@ add_library(engine_core
   src/client/social/IgnoreListUi.cpp
   src/client/gmtickets/GmTicketUi.cpp
   src/client/reputation/ReputationUi.cpp
+  # SP2 anniversaires (2026-07-18) : presenter liste de mes exploits (206/207).
+  src/client/exploits/ExploitsUi.cpp
   src/client/arena/ArenaUi.cpp
   src/client/battleground/BattleGroundUi.cpp
   src/client/outdoorpvp/OutdoorPvpUi.cpp
@@ -651,6 +653,7 @@ add_library(engine_core
   src/client/render/MailImGuiRenderer.cpp
   src/client/render/GmTicketImGuiRenderer.cpp
   src/client/render/ReputationImGuiRenderer.cpp
+  src/client/render/ExploitsImGuiRenderer.cpp
   src/client/render/CharacterSheetImGuiRenderer.cpp
   src/client/render/ArenaImGuiRenderer.cpp
   src/client/render/BattleGroundImGuiRenderer.cpp
@@ -801,6 +804,7 @@ add_library(engine_core
   src/shared/network/MailPayloads.cpp
   src/shared/network/GmTicketPayloads.cpp
   src/shared/network/ReputationPayloads.cpp
+  src/shared/network/ExploitPayloads.cpp
   src/shared/network/ArenaPayloads.cpp
   src/shared/network/BattleGroundPayloads.cpp
   src/shared/network/OutdoorPvpPayloads.cpp
@@ -1240,6 +1244,11 @@ add_test(NAME gm_ticket_payloads_tests COMMAND gm_ticket_payloads_tests)
 add_executable(reputation_payloads_tests src/shared/network/ReputationPayloadsTests.cpp)
 target_link_libraries(reputation_payloads_tests PRIVATE engine_core)
 add_test(NAME reputation_payloads_tests COMMAND reputation_payloads_tests)
+
+# SP2 anniversaires (2026-07-18) — round-trip payloads Exploits (206/207).
+add_executable(exploit_payloads_tests src/shared/network/ExploitPayloadsTests.cpp)
+target_link_libraries(exploit_payloads_tests PRIVATE engine_core)
+add_test(NAME exploit_payloads_tests COMMAND exploit_payloads_tests)
 
 # CMANGOS.33 (Phase 5.33 step 3+4) — Lfg payloads round-trip tests (no DB / no network).
 add_executable(lfg_payloads_tests src/shared/network/LfgPayloadsTests.cpp)

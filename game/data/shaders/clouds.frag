@@ -77,8 +77,14 @@ float cloudDensity(vec3 p)
 
 	// Seuil de couverture : coverage 0 -> ciel quasi vide, 1 -> couvert.
 	// Plage choisie pour la distribution du baseShape remappé (moyenne ~0.5).
+	// Fix crépuscule 2026-07-18 — variation basse fréquence anti-répétition :
+	// vu de loin (rayons rasants), le motif 5,2 km se répétait visiblement
+	// (retour utilisateur, capture crépuscule). On module le seuil par un
+	// échantillon très basse fréquence (~tuile 40 km, décalé) : les paquets
+	// de nuages varient d'une tuile à l'autre, la répétition disparaît.
 	float coverage = pc.sunDir.w;
-	float threshold = mix(0.72, 0.28, coverage);
+	float covVar = texture(uNoiseBase, sp * 0.13 + vec3(0.17, 0.0, 0.31)).g;
+	float threshold = mix(0.72, 0.28, coverage) + (covVar - 0.5) * 0.16;
 	float d = smoothstep(threshold, threshold + 0.14, baseShape);
 
 	// Érosion de détail : texture 32³ tuilée sur ~800 m. Bords effilochés
@@ -200,9 +206,21 @@ void main()
 	float transmittance = 1.0;
 	vec3  scattered     = vec3(0.0);
 
-	vec3 sunCol = pc.sunColor.rgb;
-	// Ambiant : moyenne des teintes ciel (déjà colorées par l'apparence météo).
+	// Fix crépuscule 2026-07-18 — facteur jour continu (1 = soleil haut,
+	// 0 = nuit, transition douce autour de l'horizon). Le DayNightCycle
+	// bascule sunColor vers ~0.02 dès le coucher alors que le ciel
+	// analytique reste lumineux (crépuscule) : les nuages devenaient des
+	// silhouettes NOIRES sur fond mauve (retour utilisateur, capture).
+	float dayFactor = smoothstep(-0.08, 0.12, sun.y);
+	// Couleur « soleil » effective : soleil le jour, clair de lune bleuté
+	// la nuit (les nuages nocturnes restent lisibles, jamais noirs).
+	vec3 sunCol = pc.sunColor.rgb * dayFactor
+		+ vec3(0.10, 0.12, 0.18) * (1.0 - dayFactor);
+	// Ambiant : moyenne des teintes ciel (déjà colorées par l'apparence météo)
+	// + plancher crépuscule/nuit pour rester cohérent avec le fond analytique
+	// encore lumineux après le coucher.
 	vec3 skyAmb = mix(pc.horizonColor.rgb, pc.zenithColor.rgb, 0.5) * pc.stepParams.w;
+	skyAmb = max(skyAmb, vec3(0.045, 0.05, 0.07) * (1.0 - dayFactor));
 
 	for (int i = 0; i < steps; ++i)
 	{
@@ -210,15 +228,19 @@ void main()
 		float dens = cloudDensity(p);
 		if (dens > 0.001)
 		{
-			// Transmittance vers le soleil (marche courte).
+			// Transmittance vers le soleil (marche courte). Perf 2026-07-18 :
+			// sautée la nuit (le soleil sous l'horizon n'éclaire plus la
+			// dalle — la marche coûtait ~lightSteps échantillons par point
+			// pour rien) et coupée dès que l'auto-ombrage sature (< 0.05).
 			float lt = 0.0;
 			float lightTrans = 1.0;
 			float ldt = (topAlt - baseAlt) / float(max(lightSteps, 1));
-			for (int j = 0; j < lightSteps; ++j)
+			for (int j = 0; j < lightSteps && dayFactor > 0.02; ++j)
 			{
 				lt += ldt;
 				float ld = cloudDensity(p + sun * lt);
 				lightTrans *= exp(-ld * ldt * 0.02);
+				if (lightTrans < 0.05) break;
 			}
 			// Powder (auto-ombrage des bords).
 			float powder = 1.0 - exp(-dens * 2.0);

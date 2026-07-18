@@ -26,6 +26,7 @@
 #include "src/world_editor/terrain/ValleyChainTool.h"
 #include "src/world_editor/water/WaterDocument.h"
 #include "src/world_editor/scene/EditorSceneModel.h" // sous-projet 1, bloc B (selection + scene)
+#include "src/world_editor/scene/EntityEditOps.h"    // lot 5 (2026-07-18) : dupliquer/supprimer
 
 #include <functional>
 #include <memory>
@@ -290,6 +291,36 @@ namespace engine::editor::world
 		/// Installe le foncteur d'écriture de transform (appelé par l'Engine).
 		void SetTransformWriter(TransformWriter w) { m_transformWriter = std::move(w); }
 
+		/// Lot 5 (2026-07-18) — Installe les foncteurs d'édition structurelle
+		/// (capture / remove / restore / duplicate) des entités de scène.
+		/// Appelé par l'Engine (qui capture les documents mutables) au même
+		/// point que `SetTransformWriter`. Consommé par les actions
+		/// `edit.duplicate` / `edit.delete` et les raccourcis Ctrl+D / Suppr.
+		void SetEntityEditOps(engine::editor::scene::EntityEditOps ops)
+		{
+			m_entityEditOps = std::move(ops);
+		}
+
+		/// Lot 5 — true si la sélection courante est duplicable/supprimable :
+		/// foncteurs installés ET kind ∈ {LayoutInstance, MeshInsert,
+		/// DungeonPortal} (Terrain/Water/None exclus). Pilote `enabled` des
+		/// actions `edit.duplicate` / `edit.delete`.
+		bool CanEditSelectedEntity() const;
+
+		/// Lot 5 — Duplique l'entité sélectionnée via une
+		/// `DuplicateEntityCommand` poussée sur la pile undo (nouveau guid +
+		/// léger décalage de position ; la sélection reste sur l'original,
+		/// dont l'index n'est pas invalidé par un ajout en fin de liste).
+		/// No-op (log) si `CanEditSelectedEntity()` est false.
+		void DuplicateSelectedEntity();
+
+		/// Lot 5 — Supprime l'entité sélectionnée via une
+		/// `DeleteEntityCommand` poussée sur la pile undo, puis VIDE la
+		/// sélection (les index d'entités suivant la supprimée glissent d'un
+		/// rang — garder la sélection pointerait une autre entité).
+		/// No-op (log) si `CanEditSelectedEntity()` est false.
+		void DeleteSelectedEntity();
+
 		/// M100.6 — Accès mutable à l'outil de sculpt. Le panneau Tool
 		/// Properties l'utilise pour lire/écrire les paramètres de brosse
 		/// quand `m_activeTool == TerrainSculpt`.
@@ -460,6 +491,7 @@ namespace engine::editor::world
 		engine::editor::scene::EditorSelection  m_selection;  // sous-projet 1, bloc B
 		engine::editor::scene::EditorSceneModel m_sceneModel; // sous-projet 1, bloc B
 		TransformWriter m_transformWriter;                    // sous-projet 1, bloc D
+		engine::editor::scene::EntityEditOps m_entityEditOps; // lot 5 : dupliquer/supprimer
 		TerrainSculptTool m_sculptTool;
 		TerrainStampTool m_stampTool;
 		SplatPaintTool m_splatPaintTool;

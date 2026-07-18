@@ -25,6 +25,8 @@
 #include <utility>
 
 #include "src/world_editor/modes/EditorModeRegistry.h"
+#include "src/world_editor/scene/DeleteEntityCommand.h"    // lot 5
+#include "src/world_editor/scene/DuplicateEntityCommand.h" // lot 5
 #include "src/world_editor/prefs/UserPrefsStore.h"
 #include "src/world_editor/presets/ToolPresetRegistry.h"
 #include "src/world_editor/help/HelpContentStore.h"
@@ -408,6 +410,18 @@ namespace engine::editor::world
 			[this] { return m_commandStack.CanRedo(); }, nullptr,
 			[this] { m_commandStack.Redo(); });
 
+		// Lot 5 (2026-07-18) — Dupliquer / Supprimer l'entité sélectionnée
+		// (Outliner ou Ctrl+clic viewport). Undoables via la pile de commandes ;
+		// grisées tant qu'aucune entité duplicable/supprimable n'est
+		// sélectionnée (Terrain/Water exclus) ou que l'Engine n'a pas installé
+		// les foncteurs d'édition (SetEntityEditOps).
+		add("edit.duplicate", "Dupliquer la sélection", ActionCategory::Edition, "Ctrl+D",
+			[this] { return CanEditSelectedEntity(); }, nullptr,
+			[this] { DuplicateSelectedEntity(); });
+		add("edit.delete", "Supprimer la sélection", ActionCategory::Edition, "Suppr",
+			[this] { return CanEditSelectedEntity(); }, nullptr,
+			[this] { DeleteSelectedEntity(); });
+
 		// Toggle de visibilité par panneau (menu « Fenêtre »). Le panneau
 		// « Scene » est exclu (doublon de la vue 3D principale, cf. menu Vue
 		// historique). Id kebab-case dérivé du nom : "Asset Browser" →
@@ -442,6 +456,53 @@ namespace engine::editor::world
 					[p] { p->SetVisible(!p->IsVisible()); });
 			}
 		}
+	}
+
+	/// Lot 5 (2026-07-18) — true si la sélection courante est duplicable/
+	/// supprimable : foncteurs Engine installés ET kind ∈ {LayoutInstance,
+	/// MeshInsert, DungeonPortal}. Terrain (entité implicite unique), Water
+	/// (pas de transform simple) et None sont exclus.
+	bool WorldEditorShell::CanEditSelectedEntity() const
+	{
+		if (!m_entityEditOps.IsInstalled()) return false;
+		const engine::editor::scene::EntityKind kind = m_selection.Current().kind;
+		using K = engine::editor::scene::EntityKind;
+		return kind == K::LayoutInstance || kind == K::MeshInsert || kind == K::DungeonPortal;
+	}
+
+	/// Lot 5 — Pousse une DuplicateEntityCommand sur la pile undo (Execute
+	/// immédiat : la copie apparaît, décalée, avec un nouveau guid). La
+	/// sélection reste sur l'original : la copie est ajoutée en FIN de liste,
+	/// aucun index existant n'est invalidé.
+	void WorldEditorShell::DuplicateSelectedEntity()
+	{
+		if (!CanEditSelectedEntity())
+		{
+			LOG_INFO(EditorWorld, "Dupliquer : aucune entité duplicable sélectionnée");
+			return;
+		}
+		m_commandStack.Push(std::make_unique<DuplicateEntityCommand>(
+			m_selection.Current(), m_entityEditOps));
+		LOG_INFO(EditorWorld, "Dupliquer la sélection (kind={}, index={})",
+			static_cast<int>(m_selection.Current().kind), m_selection.Current().index);
+	}
+
+	/// Lot 5 — Pousse une DeleteEntityCommand sur la pile undo (Execute
+	/// immédiat : l'entité disparaît) puis VIDE la sélection — après un
+	/// erase, les index des entités suivantes glissent d'un rang et la
+	/// sélection courante pointerait une autre entité.
+	void WorldEditorShell::DeleteSelectedEntity()
+	{
+		if (!CanEditSelectedEntity())
+		{
+			LOG_INFO(EditorWorld, "Supprimer : aucune entité supprimable sélectionnée");
+			return;
+		}
+		const engine::editor::scene::EntityId id = m_selection.Current();
+		m_commandStack.Push(std::make_unique<DeleteEntityCommand>(id, m_entityEditOps));
+		m_selection.Clear();
+		LOG_INFO(EditorWorld, "Supprimer la sélection (kind={}, index={})",
+			static_cast<int>(id.kind), id.index);
 	}
 
 	/// M100.6 — Active un outil et logge la transition. Garde l'API simple :
@@ -740,6 +801,19 @@ namespace engine::editor::world
 			m_commandStack.Redo();
 			LOG_INFO(EditorWorld, "Shortcut Ctrl+Y -> Redo (undoSize={}, redoSize={})",
 				m_commandStack.UndoSize(), m_commandStack.RedoSize());
+			return true;
+		}
+		// Lot 5 (2026-07-18) — Ctrl+D (sans Shift) : dupliquer la sélection.
+		// Ctrl+Shift+D reste l'activation de l'outil Dungeon Portal (plus bas).
+		if (ctrl && !shift && virtualKey == 'D')
+		{
+			DuplicateSelectedEntity();
+			return true;
+		}
+		// Lot 5 — Suppr (VK_DELETE, sans modifiers) : supprimer la sélection.
+		if (!ctrl && !shift && virtualKey == 0x2E)
+		{
+			DeleteSelectedEntity();
 			return true;
 		}
 		// M100.6 — Raccourci 'B' (sans modifiers) active la sculpture terrain.

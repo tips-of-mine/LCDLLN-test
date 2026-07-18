@@ -3065,6 +3065,11 @@ namespace engine::editor
 			MenuItemForAction("edit.redo");
 			MenuItemForAction("edit.history");
 			ImGui::Separator();
+			// Lot 5 (2026-07-18) — édition structurelle de la sélection
+			// (Outliner / Ctrl+clic viewport). Grisées sans sélection éditable.
+			MenuItemForAction("edit.duplicate");
+			MenuItemForAction("edit.delete");
+			ImGui::Separator();
 			MenuItemForAction("app.command-palette");
 			MenuItemForAction("edit.preferences");
 			MenuItemForAction("help.shortcuts");
@@ -3499,6 +3504,9 @@ namespace engine::editor
 			{ "Panneaux du shell",               "F1..F12" },
 			{ "Annuler / Rétablir",              "Ctrl+Z / Ctrl+Y" },
 			{ "Palette de commandes",            "Ctrl+P" },
+			// Lot 5 (2026-07-18) — la sélection d'entité alimente
+			// Dupliquer (Ctrl+D) / Supprimer (Suppr), listés en Édition.
+			{ "Sélectionner une entité (viewport)", "Ctrl+clic gauche" },
 		};
 		ImGui::SeparatorText("Caméra & navigation");
 		for (const StaticShortcut& s : kStaticShortcuts)

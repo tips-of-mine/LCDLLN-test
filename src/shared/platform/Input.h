@@ -56,6 +56,8 @@ namespace engine::platform
 		Space = 0x20,
 		Enter = 0x0D,
 		Backspace = 0x08,
+		/// VK_DELETE — éditeur monde lot 5 (2026-07-18) : supprimer la sélection.
+		Delete = 0x2E,
 		/// US keyboard OEM_2 ('/'); used as chat focus toggle (M29.1).
 		Slash = 0xBF,
 		Shift = 0x10,

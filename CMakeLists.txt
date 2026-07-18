@@ -1250,6 +1250,14 @@ add_executable(exploit_payloads_tests src/shared/network/ExploitPayloadsTests.cp
 target_link_libraries(exploit_payloads_tests PRIVATE engine_core)
 add_test(NAME exploit_payloads_tests COMMAND exploit_payloads_tests)
 
+# SP3 anniversaires (2026-07-18) — jeton de gateau "item:<id>" (header-only).
+add_executable(cake_item_token_tests src/shared/anniversary/tests/CakeItemTokenTests.cpp)
+target_include_directories(cake_item_token_tests PRIVATE ${CMAKE_SOURCE_DIR})
+if(MSVC)
+  target_compile_options(cake_item_token_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME cake_item_token_tests COMMAND cake_item_token_tests)
+
 # CMANGOS.33 (Phase 5.33 step 3+4) — Lfg payloads round-trip tests (no DB / no network).
 add_executable(lfg_payloads_tests src/shared/network/LfgPayloadsTests.cpp)
 target_link_libraries(lfg_payloads_tests PRIVATE engine_core)

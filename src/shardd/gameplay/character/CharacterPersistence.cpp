@@ -1,6 +1,7 @@
 #include "src/shardd/gameplay/character/CharacterPersistence.h"
 
 #include "src/shardd/gameplay/character/CharacterPersistenceQuestCompat.h"
+#include "src/shared/anniversary/CakeItemToken.h" // SP3 anniversaires (2026-07-18)
 #include "src/shared/network/ServerProtocol.h"
 
 #include "src/shared/core/Log.h"
@@ -201,6 +202,23 @@ namespace engine::server
 				persisted.GetString("actionbar.slot." + std::to_string(slotIndex), "");
 		}
 
+		// Anniversaires SP3 (2026-07-18) — expirations des gâteaux (clés
+		// bornées : 10 ids possibles, cf. CakeItemToken). Absent/0 = pas
+		// d'expiration enregistrée. Rétro-compatible : vieux fichiers sans
+		// ces clés = map vide ; vieux lecteurs ignorent les clés inconnues.
+		outState.cakeExpiresAtMsUtcByItemId.clear();
+		for (uint32_t cakeId = engine::anniversary::kFirstCakeItemId;
+			cakeId < engine::anniversary::kFirstCakeItemId + engine::anniversary::kCakeVariantCount;
+			++cakeId)
+		{
+			const int64_t expiry = persisted.GetInt(
+				"cake_expiry." + std::to_string(cakeId), 0);
+			if (expiry > 0)
+			{
+				outState.cakeExpiresAtMsUtcByItemId[cakeId] = static_cast<uint64_t>(expiry);
+			}
+		}
+
 	// SP-B — compétences par-classe déjà choisies.
 	outState.knownSkillIds.clear();
 	const uint32_t skillCount = static_cast<uint32_t>(persisted.GetInt("knownskill.count", 0));
@@ -330,6 +348,13 @@ namespace engine::server
 		for (size_t slotIndex = 0; slotIndex < state.actionBarLayout.size(); ++slotIndex)
 		{
 			output << "actionbar.slot." << slotIndex << "=" << state.actionBarLayout[slotIndex] << "\n";
+		}
+
+		// Anniversaires SP3 (2026-07-18) — expirations UTC (epoch ms) des
+		// gâteaux possédés (clés par itemId, cf. CakeItemToken).
+		for (const auto& [cakeItemId, expiresAtMs] : state.cakeExpiresAtMsUtcByItemId)
+		{
+			output << "cake_expiry." << cakeItemId << "=" << expiresAtMs << "\n";
 		}
 
 	// SP-B — compétences par-classe déjà choisies (un skill par tier/niveau débloqué).

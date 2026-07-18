@@ -17,6 +17,7 @@
 #include "src/shardd/gameplay/spawner/SpawnerRuntime.h"
 #include "src/shardd/gameplay/creature/CreatureArchetypeLibrary.h"
 #include "src/shardd/gameplay/spell/SpellKitLibrary.h"
+#include "src/shardd/gameplay/anniversary/CakeBuffLibrary.h" // SP3 anniversaires (2026-07-18)
 #include "src/shardd/gameplay/spell/ClassSkillLibrary.h"
 #include "src/shared/items/ItemCatalog.h"
 #include "src/shared/core/Config.h"
@@ -37,6 +38,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
+#include <map>
 #include <cstddef>
 #include <mutex>
 #include <optional>
@@ -152,6 +154,16 @@ namespace engine::server
 		uint64_t lastForcePositionSentMs = 0;
 		/// Combat SP3 — auras actives (buffs, HoT, debuffs subis).
 		std::vector<ActiveAura> auras;
+		/// Anniversaires SP3 (2026-07-18) — gâteau ACTIF (0 = aucun). Posé par
+		/// un CastRequest "item:<id>" ; le buff est entretenu par TickCakeBuffs
+		/// tant que le gâteau reste slotté ET possédé ; NON persisté (à
+		/// réactiver après reconnexion — geste volontaire du joueur).
+		uint32_t activeCakeItemId = 0;
+		/// Anniversaires SP3 — expiration UTC (epoch ms) par gâteau possédé :
+		/// posée à l'entrée en inventaire (fin du jour UTC courant), consommée
+		/// par la purge de minuit de TickCakeBuffs. Persistée
+		/// (clés cake_expiry.<itemId> du fichier personnage).
+		std::map<uint32_t, uint64_t> cakeExpiresAtMsUtcByItemId;
 		/// Combat SP3 — cast en cours (vide = aucun). Annulé si le joueur meurt ou
 		/// se déplace de plus de 0,5 m pendant l'incantation.
 		std::string activeCastSpellId;
@@ -672,6 +684,19 @@ namespace engine::server
 		/// Combat SP3 — tick des auras (DoT/HoT dus, expirations) des joueurs et
 		/// des mobs + broadcast AuraUpdate sur changement. Appelée depuis Simulate.
 		void TickAuras();
+
+		/// Anniversaires SP3 (2026-07-18) — activation du gâteau \p cakeItemId
+		/// (reçue en CastRequest "item:<id>") : vérifie slotté + possédé + non
+		/// expiré, pose activeCakeItemId et notifie le joueur (chat système).
+		void HandleCakeActivation(ConnectedClient& client, uint32_t cakeItemId);
+
+		/// Anniversaires SP3 — entretien (1 Hz) des buffs de gâteau : aura à
+		/// TTL court re-rafraîchie sur le porteur + membres du groupe/guilde à
+		/// portée tant que le gâteau est slotté et possédé ; ET purge de
+		/// minuit UTC (gâteau « mangé » : retiré de l'inventaire et des slots,
+		/// notice + resync inventaire/barre). \param nowMonotonicMs horloge
+		/// monotone des auras (l'expiration jour J utilise l'horloge UTC).
+		void TickCakeBuffs(uint64_t nowMonotonicMs);
 
 		/// Combat SP3 — applique tous les effets d'un sort validé (débit ressource,
 		/// cooldown, dégâts/soins/auras/menace) et émet les messages associés.

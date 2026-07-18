@@ -1,5 +1,7 @@
 #include "src/client/gameplay/ActionBarLayout.h"
 
+#include "src/shared/anniversary/CakeItemToken.h" // SP3 anniversaires (2026-07-18)
+
 namespace engine::client
 {
 	const SpellDisplay* FindSpellInKit(const std::vector<SpellDisplay>& kit, const std::string& spellId)
@@ -42,11 +44,16 @@ namespace engine::client
 			return resolved;
 		}
 
-		// Layout custom : filtre les spellId hors-kit + doublons.
+		// Layout custom : filtre les spellId hors-kit + doublons. Les jetons
+		// de gâteau "item:<id>" (SP3 anniversaires) passent tels quels : ils
+		// ne sont pas des sorts du kit mais le serveur les a validés (objet
+		// possédé) — la barre les rend comme des objets utilisables.
 		for (size_t i = 0; i < layout.size(); ++i)
 		{
 			const std::string& spellId = layout[i];
-			if (spellId.empty() || FindSpellInKit(kit, spellId) == nullptr)
+			uint32_t cakeItemId = 0u;
+			const bool isCake = engine::anniversary::ParseCakeToken(spellId, cakeItemId);
+			if (spellId.empty() || (!isCake && FindSpellInKit(kit, spellId) == nullptr))
 			{
 				continue;
 			}

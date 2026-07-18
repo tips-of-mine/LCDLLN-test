@@ -8007,9 +8007,15 @@ namespace engine
 			// Lot 5 (2026-07-18) — Ctrl+D (dupliquer la sélection) et Suppr
 			// (supprimer la sélection). Ignorés quand ImGui édite du texte
 			// (champ de saisie actif) : Suppr/Ctrl+D y ont leur sens d'édition
-			// de texte et ne doivent pas toucher la scène.
+			// de texte et ne doivent pas toucher la scène. ImGui n'existe que
+			// côté Windows (comme partout dans Engine.cpp) — sur les autres
+			// plateformes l'éditeur n'a pas d'UI, pas de saisie à protéger.
+#if defined(_WIN32)
 			const bool imguiTextInput =
 				(ImGui::GetCurrentContext() != nullptr) && ImGui::GetIO().WantTextInput;
+#else
+			const bool imguiTextInput = false;
+#endif
 			if (!imguiTextInput)
 			{
 				if (ctrl && m_input.WasPressed(engine::platform::Key::D))

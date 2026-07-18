@@ -51,4 +51,14 @@ namespace engine::anniversary
 	/// Date civile UTC du jour, depuis l'horloge système. Séparée pour que
 	/// les tests injectent leurs propres dates sans toucher à l'horloge.
 	YmdDate TodayUtc();
+
+	/// Décale \p date de \p days jours civils (positif ou négatif),
+	/// calendrier grégorien (algorithme days-from-civil de Hinnant). Pur.
+	YmdDate AddDays(const YmdDate& date, int days);
+
+	/// Convertit l'instant UTC \p utcEpochSeconds décalé de \p offsetMinutes
+	/// en date civile LOCALE + heure locale (0..23). Pur (aucune horloge) —
+	/// sert à l'envoi « à 7 h du matin chez le joueur » (BirthdayEmailJob).
+	void LocalCivilFromUtc(int64_t utcEpochSeconds, int offsetMinutes,
+		YmdDate& outDate, int& outHour);
 }

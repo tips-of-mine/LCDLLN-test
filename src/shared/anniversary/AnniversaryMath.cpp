@@ -99,6 +99,57 @@ namespace engine::anniversary
 		return today.month == celMonth && today.day == celDay;
 	}
 
+	namespace
+	{
+		/// Jours écoulés depuis l'époque civile 1970-01-01 (Hinnant,
+		/// « days_from_civil » — valide sur tout le calendrier grégorien).
+		int64_t DaysFromCivil(int y, int m, int d)
+		{
+			y -= m <= 2 ? 1 : 0;
+			const int64_t era = (y >= 0 ? y : y - 399) / 400;
+			const int yoe = static_cast<int>(y - era * 400);
+			const int doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1;
+			const int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+			return era * 146097 + doe - 719468;
+		}
+
+		/// Inverse de DaysFromCivil (« civil_from_days » de Hinnant).
+		YmdDate CivilFromDays(int64_t z)
+		{
+			z += 719468;
+			const int64_t era = (z >= 0 ? z : z - 146096) / 146097;
+			const int doe = static_cast<int>(z - era * 146097);
+			const int yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+			const int y = static_cast<int>(yoe + era * 400);
+			const int doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+			const int mp = (5 * doy + 2) / 153;
+			const int d = doy - (153 * mp + 2) / 5 + 1;
+			const int m = mp + (mp < 10 ? 3 : -9);
+			YmdDate out;
+			out.year = y + (m <= 2 ? 1 : 0);
+			out.month = m;
+			out.day = d;
+			return out;
+		}
+	}
+
+	YmdDate AddDays(const YmdDate& date, int days)
+	{
+		return CivilFromDays(DaysFromCivil(date.year, date.month, date.day) + days);
+	}
+
+	void LocalCivilFromUtc(int64_t utcEpochSeconds, int offsetMinutes,
+		YmdDate& outDate, int& outHour)
+	{
+		const int64_t localSeconds = utcEpochSeconds + static_cast<int64_t>(offsetMinutes) * 60ll;
+		// floor-division (les instants pré-1970 restent corrects).
+		int64_t days = localSeconds / 86400ll;
+		int64_t rem = localSeconds - days * 86400ll;
+		if (rem < 0) { rem += 86400ll; --days; }
+		outDate = CivilFromDays(days);
+		outHour = static_cast<int>(rem / 3600ll);
+	}
+
 	YmdDate TodayUtc()
 	{
 		std::time_t now = std::time(nullptr);

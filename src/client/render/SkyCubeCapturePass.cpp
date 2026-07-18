@@ -343,7 +343,10 @@ namespace engine::render
 		// Construit le push-constant miroir std430 depuis les paramètres ciel.
 		SkyCapturePushConstants pc{};
 		pc.faceSize = m_faceSize;
-		pc.pad0 = 0.0f;
+		// Lot 2 (2026-07-18) — pad0 transporte le sélecteur de modèle de
+		// ciel (0 = dégradé legacy, 1 = analytique) : taille/layout du push
+		// constant inchangés (96 o), miroir du champ `skyModel` du .comp.
+		pc.pad0 = params.skyModel;
 		pc.pad1 = 0.0f;
 		pc.lightDir[0] = params.lightDir[0];
 		pc.lightDir[1] = params.lightDir[1];

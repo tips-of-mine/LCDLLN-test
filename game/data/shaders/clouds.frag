@@ -6,25 +6,28 @@
 // horizontale [baseAlt, topAlt], accumule densité (textures 3D Perlin-Worley
 // pré-cuites, chantier ciel 2026-07-17 — ex-bruit FBM in-shader) et
 // éclairage (Beer + Powder + phase Henyey-Greenstein vers le soleil), puis
-// composite par-dessus la scène déjà brouillardée. Le depth scène borne la
-// marche (un relief proche occulte les nuages).
+// écrit le résultat PRÉ-MULTIPLIÉ dans une cible RÉDUITE (lot 1,
+// 2026-07-18) que clouds_composite.frag upsample et compose sur la scène.
+// Le depth scène borne la marche (un relief proche occulte les nuages).
 //
 // Entrées (descriptor set 0) :
-//   binding 0 = scene color HDR post-fog (sampler linéaire clamp)
+//   binding 0 = réservé (l'ex-scene color ; plus échantillonné depuis le
+//               passage en cible réduite — la composition est faite par
+//               clouds_composite.frag en pleine résolution)
 //   binding 1 = depth scene (D32_SFLOAT, sampler nearest clamp, lu en .r)
 //   binding 2 = bruit 3D base 64³ (R=Perlin fBm, G/B/A=Worley 8/16/32,
 //               sampler linéaire REPEAT) — chantier ciel 2026-07-17
 //   binding 3 = bruit 3D détail 32³ (R/G/B=Worley 4/8/16, REPEAT)
 //
-// Sortie :
-//   outColor (location 0) — scene + nuages composités.
+// Sortie (cible réduite RGBA16F) :
+//   rgb = couleur nuages pré-multipliée (scattered * fade)
+//   a   = visibilité scène = (1 - opacité nuages) * ombre de nuages au sol
 //
 // Push constants (192 octets, fragment) — cf. CloudPushConstants (CloudPass.h).
 
 layout(location = 0) in  vec2 inUV;
 layout(location = 0) out vec4 outColor;
 
-layout(set = 0, binding = 0) uniform sampler2D uSceneColor; // HDR post-fog
 layout(set = 0, binding = 1) uniform sampler2D uSceneDepth; // depth, .r = [0,1]
 layout(set = 0, binding = 2) uniform sampler3D uNoiseBase;   // Perlin-Worley base
 layout(set = 0, binding = 3) uniform sampler3D uNoiseDetail; // Worley détail
@@ -97,9 +100,7 @@ float cloudDensity(vec3 p)
 
 void main()
 {
-	// Couleur de scène existante (déjà brouillardée par la passe fog amont).
-	vec3 sceneCol = texture(uSceneColor, inUV).rgb;
-	float depth   = texture(uSceneDepth, inUV).r;
+	float depth = texture(uSceneDepth, inUV).r;
 
 	// Reconstruit le rayon monde de la caméra vers ce pixel (NDC xy [-1,1]).
 	vec2 ndc = inUV * 2.0 - 1.0;
@@ -109,9 +110,11 @@ void main()
 	vec3 rd = normalize(farWorld - ro);
 
 	// --- Ombres de nuages au sol (Phase 2) ---
-	// Pour les pixels de géométrie (depth < 1), marche le rayon SOLEIL à travers
-	// la dalle de nuages depuis la position monde du sol et assombrit la scène.
-	// Réutilise cloudDensity() (même champ de densité que la dalle vue).
+	// Pour les pixels de géométrie (depth < 1), marche le rayon SOLEIL à
+	// travers la dalle depuis la position monde du sol. Le facteur d'ombre
+	// est REPORTÉ dans l'alpha de sortie (visibilité scène) et appliqué par
+	// clouds_composite.frag — la scène n'est plus lue ici (cible réduite).
+	float shadowVis = 1.0;
 	float shadowStrength = pc.shadowParams.x;
 	if (depth < 1.0 && shadowStrength > 0.001)
 	{
@@ -134,7 +137,7 @@ void main()
 				float st  = te;
 				for (int i = 0; i < ss; ++i) { sum += cloudDensity(P + sunS * st) * sdt; st += sdt; }
 				float shadowTrans = exp(-sum * 0.04);
-				sceneCol *= mix(1.0, shadowTrans, shadowStrength);
+				shadowVis = mix(1.0, shadowTrans, shadowStrength);
 			}
 		}
 	}
@@ -145,7 +148,7 @@ void main()
 	if (abs(rd.y) < 1e-4)
 	{
 		// Rayon quasi-horizontal : pas d'intersection nette de la dalle.
-		outColor = vec4(sceneCol, 1.0);
+		outColor = vec4(0.0, 0.0, 0.0, shadowVis);
 		return;
 	}
 	float tBase = (baseAlt - ro.y) / rd.y;
@@ -157,7 +160,7 @@ void main()
 	// Pas de dalle visible (rayon regarde le sol / dalle derrière la caméra).
 	if (tExit <= tEnter)
 	{
-		outColor = vec4(sceneCol, 1.0);
+		outColor = vec4(0.0, 0.0, 0.0, shadowVis);
 		return;
 	}
 
@@ -171,7 +174,7 @@ void main()
 		tExit = min(tExit, gDist);
 		if (tExit <= tEnter)
 		{
-			outColor = vec4(sceneCol, 1.0);
+			outColor = vec4(0.0, 0.0, 0.0, shadowVis);
 			return;
 		}
 	}
@@ -179,7 +182,7 @@ void main()
 	tExit = min(tExit, pc.stepParams.z); // distMax
 	if (tExit <= tEnter)
 	{
-		outColor = vec4(sceneCol, 1.0);
+		outColor = vec4(0.0, 0.0, 0.0, shadowVis);
 		return;
 	}
 
@@ -250,6 +253,7 @@ void main()
 	float fadeStart = pc.shadowParams.z;
 	float fade = (fadeStart > 0.0) ? (1.0 - smoothstep(fadeStart, fadeStart * 3.0, tEnter)) : 1.0;
 	float opacity = (1.0 - transmittance) * fade;
-	vec3 finalCol = sceneCol * (1.0 - opacity) + scattered * fade;
-	outColor = vec4(finalCol, 1.0);
+	// Sortie pré-multipliée (lot 1) : la composition sur la scène est faite
+	// par clouds_composite.frag en pleine résolution.
+	outColor = vec4(scattered * fade, (1.0 - opacity) * shadowVis);
 }

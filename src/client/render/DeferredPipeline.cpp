@@ -340,12 +340,16 @@ namespace engine::render
 		{
 			std::vector<uint32_t> cloudVert = loadSpirv("shaders/lighting.vert.spv");
 			std::vector<uint32_t> cloudFrag = loadSpirv("shaders/clouds.frag.spv");
-			if (!cloudVert.empty() && !cloudFrag.empty())
+			// Lot 1 (2026-07-18) — shader de composition pleine résolution
+			// (upsample de la cible nuages réduite sur la scène).
+			std::vector<uint32_t> cloudCompFrag = loadSpirv("shaders/clouds_composite.frag.spv");
+			if (!cloudVert.empty() && !cloudFrag.empty() && !cloudCompFrag.empty())
 			{
 				// Chantier ciel 2026-07-17 — la queue graphics sert à l'upload
 				// one-shot des textures 3D de bruit Perlin-Worley au boot.
 				if (m_cloudPass.Init(device, physicalDevice, VK_FORMAT_R16G16B16A16_SFLOAT,
 						cloudVert.data(), cloudVert.size(), cloudFrag.data(), cloudFrag.size(),
+						cloudCompFrag.data(), cloudCompFrag.size(),
 						graphicsQueue, graphicsQueueFamilyIndex,
 						2u, pipelineCacheHandle))
 					LOG_INFO(Render, "[Boot] DeferredPipeline CloudPass OK");
@@ -354,7 +358,7 @@ namespace engine::render
 			}
 			else
 			{
-				LOG_WARN(Render, "clouds: SPIR-V manquant (lighting.vert.spv / clouds.frag.spv)");
+				LOG_WARN(Render, "clouds: SPIR-V manquant (lighting.vert.spv / clouds.frag.spv / clouds_composite.frag.spv)");
 			}
 		}
 

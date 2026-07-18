@@ -4152,6 +4152,24 @@ namespace engine
 										// Fogged (R16G16B16A16_SFLOAT, extent swapchain). Lu en aval par Bloom
 										// (Prefilter / Combine) quand la passe nuages est active.
 										m_fgCloudsId = m_frameGraph.createImage("SceneColor_HDR_Clouds", sceneColorHDRDesc);
+											// Lot 1 (2026-07-18) — Clouds_Half : cible RÉDUITE de la marche des
+											// nuages (raymarch coûteux → 1/2 ou 1/4 de la swapchain, cf.
+											// render.clouds.resolution_divider). rgb = couleur pré-multipliée,
+											// a = visibilité scène ; upsamplée par Clouds_Composite.
+											{
+												int cloudDivider = m_cfg.GetInt("render.clouds.resolution_divider", 2);
+												if (cloudDivider != 1 && cloudDivider != 2 && cloudDivider != 4)
+												{
+													LOG_WARN(Render, "render.clouds.resolution_divider={} invalide (1/2/4), repli sur 2", cloudDivider);
+													cloudDivider = 2;
+												}
+												m_cloudsExtentPower = (cloudDivider == 4) ? 2u : (cloudDivider == 2 ? 1u : 0u);
+												engine::render::ImageDesc cloudsHalfDesc{};
+												cloudsHalfDesc.format           = VK_FORMAT_R16G16B16A16_SFLOAT;
+												cloudsHalfDesc.usage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+												cloudsHalfDesc.extentScalePower = m_cloudsExtentPower;
+												m_fgCloudsHalfId = m_frameGraph.createImage("Clouds_Half", cloudsHalfDesc);
+											}
 										// M45.3 — SceneColor_HDR_Dof : cible de la passe DepthOfField (bokeh),
 										// ou copie passthrough si la passe DoF est invalide. Meme desc que
 										// WithBloom/Fogged (qui inclut deja TRANSFER_DST pour le passthrough
@@ -6583,11 +6601,14 @@ namespace engine
 										}
 										if (cloudsEnabled && m_pipeline && m_pipeline->IsCloudPassReady())
 										{
-											m_frameGraph.addPass("Clouds",
+											// Lot 1 (2026-07-18) — la marche des nuages (raymarch coûteux) tourne
+											// en RÉSOLUTION RÉDUITE (Clouds_Half) et ne lit plus la scène : le
+											// shader écrit couleur pré-multipliée (rgb) + visibilité (a). La
+											// composition pleine résolution est une 2e passe (Clouds_Composite).
+											m_frameGraph.addPass("Clouds_March",
 												[this](engine::render::PassBuilder& b) {
-													b.read(m_fgSceneColorFoggedId, engine::render::ImageUsage::SampledRead);
-													b.read(m_fgDepthId,            engine::render::ImageUsage::SampledRead);
-													b.write(m_fgCloudsId,          engine::render::ImageUsage::ColorWrite);
+													b.read(m_fgDepthId,       engine::render::ImageUsage::SampledRead);
+													b.write(m_fgCloudsHalfId, engine::render::ImageUsage::ColorWrite);
 												},
 												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 													if (!m_pipeline->GetCloudPass().IsValid()) return;
@@ -6686,9 +6707,33 @@ namespace engine
 													pc.shadowParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.fade_distance_m", 2500.0));
 													pc.shadowParams[3] = 0.0f;
 
-													m_pipeline->GetCloudPass().Record(
+													// Extent réduit — même calcul que FrameGraph pour Clouds_Half
+													// (shift + clamp à 1) afin que viewport == framebuffer.
+													const VkExtent2D fullExt = m_vkSwapchain.GetExtent();
+													VkExtent2D scaledExt{
+														fullExt.width  >> m_cloudsExtentPower,
+														fullExt.height >> m_cloudsExtentPower };
+													if (scaledExt.width  < 1u) scaledExt.width  = 1u;
+													if (scaledExt.height < 1u) scaledExt.height = 1u;
+													m_pipeline->GetCloudPass().RecordMarch(
+														m_vkDeviceContext.GetDevice(), cmd, reg, scaledExt,
+														m_fgDepthId, m_fgCloudsHalfId, pc, m_currentFrame % 2);
+												});
+
+											// Composition pleine résolution : upsample bilinéaire de Clouds_Half
+											// sur la scène brouillardée → SceneColor_HDR_Clouds (consommée par
+											// Bloom via sceneAfterClouds, inchangé).
+											m_frameGraph.addPass("Clouds_Composite",
+												[this](engine::render::PassBuilder& b) {
+													b.read(m_fgSceneColorFoggedId, engine::render::ImageUsage::SampledRead);
+													b.read(m_fgCloudsHalfId,       engine::render::ImageUsage::SampledRead);
+													b.write(m_fgCloudsId,          engine::render::ImageUsage::ColorWrite);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													if (!m_pipeline->GetCloudPass().IsValid()) return;
+													m_pipeline->GetCloudPass().RecordComposite(
 														m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
-														m_fgSceneColorFoggedId, m_fgDepthId, m_fgCloudsId, pc, m_currentFrame % 2);
+														m_fgSceneColorFoggedId, m_fgCloudsHalfId, m_fgCloudsId, m_currentFrame % 2);
 												});
 										}
 

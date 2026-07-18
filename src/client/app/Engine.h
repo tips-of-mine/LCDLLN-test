@@ -432,6 +432,13 @@ namespace engine
 		/// (Prefilter + Combine) lorsque la passe nuages est active. Même desc que
 		/// Fogged (R16G16B16A16_SFLOAT, extent swapchain).
 		engine::render::ResourceId m_fgCloudsId = engine::render::kInvalidResourceId;
+		/// Lot 1 (2026-07-18) — Clouds_Half : cible RÉDUITE de la marche des nuages
+		/// (RGBA16F, extent swapchain >> m_cloudsExtentPower). rgb = couleur
+		/// pré-multipliée, a = visibilité scène. Lue par Clouds_Composite.
+		engine::render::ResourceId m_fgCloudsHalfId = engine::render::kInvalidResourceId;
+		/// Puissance de réduction de la cible nuages (extentScalePower FrameGraph) :
+		/// render.clouds.resolution_divider 1/2/4 → 0/1/2. Défaut 1 (demi-résolution).
+		uint32_t m_cloudsExtentPower = 1;
 
 		/// Temps réel cumulé (secondes) pour l'advection des nuages par le vent
 		/// (push-constant CloudPass). Avancé chaque frame par le dt d'Update.

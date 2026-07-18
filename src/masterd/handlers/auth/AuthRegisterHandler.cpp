@@ -15,6 +15,7 @@
 #include "src/shared/network/NetErrorCode.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/auth/Argon2Hash.h"
+#include "src/shared/anniversary/AnniversaryMath.h" // validation birth_date (spec 2026-07-18)
 #include "src/shared/core/Log.h"
 
 #include <chrono>
@@ -171,6 +172,21 @@ namespace engine::server
 			LOG_WARN(Auth, "[AUTH] HandleRegister result={}", "FAIL");
 			if (m_auditLog) m_auditLog->LogRegisterFail(ipKey, "email_taken");
 			auto pkt = BuildRegisterResponseErrorPacket(NetErrorCode::INVALID_EMAIL, requestId, sessionIdHeader);
+			if (!pkt.empty()) m_server->Send(connId, pkt);
+			return;
+		}
+		// Anniversaires (spec 2026-07-18) — birth_date devient une donnée de
+		// GAMEPLAY immuable (récompenses du jour J) : validation STRICTE côté
+		// serveur à l'inscription (seul moment où elle peut être écrite).
+		// Format yyyy-mm-dd, date calendaire réelle, >= 1900, pas dans le
+		// futur. Le client valide déjà le format ; un payload forgé est
+		// rejeté ici.
+		if (!parsed->birth_date.empty()
+			&& !engine::anniversary::IsValidBirthDate(parsed->birth_date, engine::anniversary::TodayUtc()))
+		{
+			LOG_WARN(Auth, "[AUTH] HandleRegister result={}", "FAIL");
+			if (m_auditLog) m_auditLog->LogRegisterFail(ipKey, "invalid_birth_date");
+			auto pkt = BuildRegisterResponseErrorPacket(NetErrorCode::REGISTRATION_INVALID, requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}

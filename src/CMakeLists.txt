@@ -220,6 +220,10 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatChannelRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/mail/MailManager.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/mail/MysqlMailStore.cpp
+    # Anniversaires (spec 2026-07-18) : exploits fidelite/naissance + courrier cadeau.
+    ${CMAKE_SOURCE_DIR}/src/masterd/exploits/MysqlExploitStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/anniversary/AnniversaryService.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/anniversary/AnniversaryMath.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/gmtickets/MysqlGmTicketStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/reputation/MysqlReputationStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/social/MysqlIgnoreStore.cpp

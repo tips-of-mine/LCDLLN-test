@@ -12,6 +12,10 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json() as Record<string, string>
+    // GARDE anti-triche (spec 2026-07-18, récompenses d'anniversaire) :
+    // birth_date et created_at sont IMMUABLES — ils conditionnent des
+    // récompenses annuelles côté serveur. Ne JAMAIS les ajouter à ce
+    // fieldMap ni créer un autre chemin d'édition.
     const fieldMap: Record<string, string> = {
       firstName: 'first_name',
       lastName: 'last_name',

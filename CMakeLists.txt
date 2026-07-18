@@ -238,6 +238,8 @@ add_library(engine_core
   src/shared/core/Clock.cpp
   src/shared/core/Config.cpp
   src/shared/items/ItemCatalog.cpp
+  # Anniversaires (spec 2026-07-18) — logique calendaire pure (tests + master).
+  src/shared/anniversary/AnniversaryMath.cpp
   src/shared/core/ServerEndpoints.cpp
   src/shared/core/Profiler.cpp
   src/shared/core/jobs/JobSystem.cpp
@@ -1506,6 +1508,17 @@ if(MSVC)
   target_compile_options(config_save_to_file_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME config_save_to_file_tests COMMAND config_save_to_file_tests)
+
+# Anniversaires (spec 2026-07-18) — Tests CPU pour AnniversaryMath (parse
+# strict yyyy-mm-dd, années révolues, 29/02→28/02, jour J, validation
+# naissance). Pur CPU, non gate WIN32 (ctest build-linux).
+add_executable(anniversary_math_tests src/shared/anniversary/tests/AnniversaryMathTests.cpp)
+target_include_directories(anniversary_math_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(anniversary_math_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(anniversary_math_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME anniversary_math_tests COMMAND anniversary_math_tests)
 
 # PR1 — Tests CPU pour Config::LoadServerConfig (éclatement config.json).
 # Vérifie la fusion des clés serveur (db/accounts/chat) et le renvoi false

@@ -4279,6 +4279,10 @@ namespace engine
 											iblSky.moonIntensity    = dnIbl.isDaytime ? 0.0f : 1.0f;
 											iblSky.moonPhase        = static_cast<float>(dnIbl.moonPhase);
 											iblSky.moonIllumination = dnIbl.moonIllumination;
+											// Lot 2 (2026-07-18) — la capture IBL suit le même
+											// modèle de ciel que sky.frag (client.sky.analytic).
+											iblSky.skyModel =
+												m_cfg.GetBool("client.sky.analytic", true) ? 1.0f : 0.0f;
 										}
 
 										bool pipelineOk = m_pipeline->Init(
@@ -8608,6 +8612,8 @@ namespace engine
 			iblSky.moonIntensity    = dn.isDaytime ? 0.0f : 1.0f;
 			iblSky.moonPhase        = static_cast<float>(dn.moonPhase);
 			iblSky.moonIllumination = dn.moonIllumination;
+			// Lot 2 (2026-07-18) — même modèle de ciel que sky.frag.
+			iblSky.skyModel = m_cfg.GetBool("client.sky.analytic", true) ? 1.0f : 0.0f;
 			m_pipeline->RegenerateIbl(m_vkDeviceContext.GetDevice(),
 			                          m_vkDeviceContext.GetGraphicsQueue(), iblSky);
 			m_iblRegenTimer = 0.0f;

@@ -22,6 +22,12 @@ namespace engine::render
 		float moonIntensity   = 0.0f;
 		float moonPhase       = 0.0f;
 		float moonIllumination = 0.0f;
+		/// Chantier ciel 2026-07-18 (lot 2) — sélecteur de modèle de ciel
+		/// pour la capture IBL : 0 = dégradé legacy, 1 = diffusion
+		/// analytique Rayleigh+Mie (même modèle que sky.frag). Rempli par
+		/// l'Engine depuis `client.sky.analytic` : l'ambiance IBL reste
+		/// alignée sur le ciel réellement affiché.
+		float skyModel        = 0.0f;
 	};
 
 	/// SkyCubeCapturePass (IBL) : capture le ciel procédural dans une cubemap

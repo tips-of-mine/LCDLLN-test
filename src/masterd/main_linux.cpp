@@ -1682,7 +1682,8 @@ int main(int argc, char** argv)
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 		auto now = std::chrono::steady_clock::now();
-		// Anniversaires (extension e-mail) — tick 10 min (no-op intra-jour).
+		// Anniversaires (extension e-mail) — tick 10 min : réévalue l'heure
+		// LOCALE de chaque compte fêté (envoi dès 7 h chez le joueur).
 		if (now - lastBirthdayEmailTick >= kBirthdayEmailTickInterval)
 		{
 			lastBirthdayEmailTick = now;

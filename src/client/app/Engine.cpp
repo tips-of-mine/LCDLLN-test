@@ -18,6 +18,7 @@
 #include "src/shared/network/MailPayloads.h"
 #include "src/shared/network/GmTicketPayloads.h"
 #include "src/shared/network/ReputationPayloads.h"
+#include "src/shared/network/ExploitPayloads.h" // SP2 anniversaires (2026-07-18)
 #include "src/shared/network/ArenaPayloads.h"
 #include "src/shared/network/BattleGroundPayloads.h"
 #include "src/shared/network/OutdoorPvpPayloads.h"
@@ -1609,6 +1610,12 @@ namespace engine
 			});
 		}
 
+		// SP2 anniversaires (2026-07-18) — send callback du presenter Exploits
+		// (requête 206 fire-and-forget ; réponse 207 dispatchée plus bas).
+		m_exploitsUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+			return m_authUi.SendGenericRequestAsync(opcode, payload);
+		});
+
 		// CMANGOS.33 (Phase 5.33 step 3+4) — Init du presenter LFG + cable du
 		// send callback pour les requetes 100/102/104/107. Reception dispatchee
 		// dans le push handler ci-dessous (responses 101/103/105 + push 106).
@@ -2840,6 +2847,18 @@ namespace engine
 					return;
 				}
 				m_reputationUi.OnUpdateNotification(*parsed);
+				return;
+			}
+			// SP2 anniversaires (2026-07-18) — Dispatch de la réponse Exploits (207).
+			case kOpcodeExploitListResponse:
+			{
+				auto parsed = ParseExploitListResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] EXPLOIT_LIST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_exploitsUi.OnListResponse(*parsed);
 				return;
 			}
 			// CMANGOS.39 (Phase 4.39 step 3+4) — Dispatch des reponses Skills
@@ -8010,6 +8029,9 @@ namespace engine
 						// Peupler l'onglet Compétences (l'ancien toggle F2 le faisait ;
 						// le Skill Book se remplit via RequestList côté serveur).
 						m_skillBookUi.RequestList();
+						// SP2 anniversaires (2026-07-18) — peupler l'onglet Exploits
+						// (opcode 206 fire-and-forget, réponse 207 au push handler).
+						m_exploitsUi.RequestExploitList();
 						// Task 4 — pose l'avatar du joueur dans le viewport 3D À
 						// L'OUVERTURE seulement : SetMesh réinitialise l'animation, il ne
 						// doit PAS être rappelé chaque frame (sinon l'anim reste figée à
@@ -8409,6 +8431,11 @@ namespace engine
 				m_characterWindowImGui = std::make_unique<engine::render::CharacterWindowImGuiRenderer>();
 				m_characterWindowImGui->Bind(&m_cfg, &m_uiModelBinding, &m_invUi, &m_skillIconCache,
 					m_skillBookImGui.get(), m_grimoireImGui.get(), m_classSkillTreeImGui.get());
+				// SP2 anniversaires (2026-07-18) — onglet Exploits (renderer lié
+				// au presenter m_exploitsUi ; la requête part au toggle F1).
+				m_exploitsImGui = std::make_unique<engine::render::ExploitsImGuiRenderer>();
+				m_exploitsImGui->Bind(&m_exploitsUi);
+				m_characterWindowImGui->SetExploitsRenderer(m_exploitsImGui.get());
 				// Chantier 2 SP-A — catalogue d'objets client (noms/slots/bonus pour le
 				// panneau équipement + tooltips). Source d'affichage ; le serveur reste
 				// autoritaire. Non fatal : catalogue absent -> noms bruts (#itemId).

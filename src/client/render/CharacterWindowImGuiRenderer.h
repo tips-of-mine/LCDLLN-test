@@ -8,7 +8,7 @@
 
 namespace engine::core { class Config; }
 namespace engine::client { class UIModelBinding; class InventoryUiPresenter; class SkillIconCache; struct UIModel; }
-namespace engine::render { class SkillBookImGuiRenderer; class GrimoireImGuiRenderer; class ClassSkillTreeImGuiRenderer; }
+namespace engine::render { class SkillBookImGuiRenderer; class GrimoireImGuiRenderer; class ClassSkillTreeImGuiRenderer; class ExploitsImGuiRenderer; }
 namespace engine::render::race { class RacePreviewViewport; }
 namespace engine::items { class ItemCatalog; }
 
@@ -17,7 +17,7 @@ namespace engine::render
 	class CharacterWindowImGuiRenderer
 	{
 	public:
-		enum class Tab { Personnage = 0, Competences, Techniques, Arbre };
+		enum class Tab { Personnage = 0, Competences, Techniques, Arbre, Exploits };
 
 		/// Câble les dépendances (pointeurs non possédés). Les 3 renderers de
 		/// panneaux sont pilotés en mode embarqué par cette fenêtre.
@@ -51,6 +51,10 @@ namespace engine::render
 			return true;
 		}
 
+		/// SP2 anniversaires (2026-07-18) — renderer de l'onglet Exploits
+		/// (non possédé). Nul -> onglet absent (rétro-compatible).
+		void SetExploitsRenderer(engine::render::ExploitsImGuiRenderer* r) { m_exploits = r; }
+
 		/// Viewport 3D du perso (optionnel ; Task 4). Nul -> placeholder dessiné.
 		void SetRaceViewport(engine::render::race::RacePreviewViewport* vp) { m_raceViewport = vp; }
 		void SetViewportSize(uint32_t w, uint32_t h) { m_viewportW = w; m_viewportH = h; }
@@ -82,6 +86,7 @@ namespace engine::render
 		engine::render::SkillBookImGuiRenderer* m_skillBook = nullptr;
 		engine::render::GrimoireImGuiRenderer* m_grimoire = nullptr;
 		engine::render::ClassSkillTreeImGuiRenderer* m_classTree = nullptr;
+		engine::render::ExploitsImGuiRenderer* m_exploits = nullptr; ///< SP2 anniversaires
 		engine::render::race::RacePreviewViewport* m_raceViewport = nullptr;
 		uint32_t m_viewportW = 0;
 		uint32_t m_viewportH = 0;

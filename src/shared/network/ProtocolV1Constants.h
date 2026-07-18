@@ -836,4 +836,12 @@ namespace engine::network
 	constexpr uint16_t kOpcodeWorldClockStateRequest        = 203u; ///< Client to Master : etat horloge (vide).
 	constexpr uint16_t kOpcodeWorldClockStateResponse       = 204u; ///< Master to Client : epoch, timeScale, offset, paused, lunarPeriod + serverTimeUnixMs.
 	constexpr uint16_t kOpcodeWorldClockChangeNotification  = 205u; ///< Master to Client (push, request_id=0) : changement admin.
+
+	// =====================================================================
+	// Exploits (spec 2026-07-18 recompenses anniversaire, SP2) — lecture seule
+	// cote client : le master seul debloque (MysqlExploitStore). Rétro-additif
+	// (pas de version ProtocolV1) ; deploiement lock-step master + client.
+	// =====================================================================
+	constexpr uint16_t kOpcodeExploitListRequest  = 206u; ///< Client to Master : liste de mes exploits (payload vide, account via session).
+	constexpr uint16_t kOpcodeExploitListResponse = 207u; ///< Master to Client : catalogue actif + statut debloque/verrouille (secrets non debloques omis).
 }

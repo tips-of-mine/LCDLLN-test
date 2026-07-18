@@ -15,6 +15,8 @@
 #include "src/client/social/IgnoreListUi.h"
 #include "src/client/gmtickets/GmTicketUi.h"
 #include "src/client/reputation/ReputationUi.h"
+#include "src/client/exploits/ExploitsUi.h" // SP2 anniversaires (2026-07-18)
+#include "src/client/render/ExploitsImGuiRenderer.h"
 #include "src/client/arena/ArenaUi.h"
 #include "src/client/battleground/BattleGroundUi.h"
 #include "src/client/outdoorpvp/OutdoorPvpUi.h"
@@ -1338,6 +1340,10 @@ namespace engine
 		/// Recoit la reponse opcode 96 et le push 97 via le push handler du master ;
 		/// fire-and-forget de la requete 95 via \c m_authUi.SendGenericRequestAsync.
 		engine::client::ReputationUiPresenter m_reputationUi;
+		/// SP2 anniversaires (2026-07-18) — Presenter de la liste « mes
+		/// exploits » (opcodes 206/207). Requête au premier affichage de la
+		/// fenêtre Personnage (F1) ; réponse via le push handler du master.
+		engine::client::ExploitsUiPresenter   m_exploitsUi;
 		/// CMANGOS.24 (Phase 3.24 step 3+4) — Visibilite du panneau Reputation
 		/// (toggle via slash command \c /rep ou \c /reputation). Faux par defaut.
 		bool                                  m_reputationVisible = false;
@@ -1407,6 +1413,9 @@ namespace engine
 		/// perso 3D + inventaire + caractéristiques + argent (onglet défaut) et
 		/// délègue aux renderers Compétences/Techniques/Arbre en mode embarqué.
 		std::unique_ptr<engine::render::CharacterWindowImGuiRenderer> m_characterWindowImGui;
+		/// SP2 anniversaires (2026-07-18) — renderer de l'onglet Exploits de la
+		/// fenêtre Personnage (lit m_exploitsUi ; pas de fenêtre autonome).
+		std::unique_ptr<engine::render::ExploitsImGuiRenderer> m_exploitsImGui;
 		/// SP-E - Cache d'icones de competences (PNG -> texture ImGui), partage par
 		/// l'arbre, le Grimoire et la barre d'action. Init apres ImGui, Shutdown avant.
 		engine::client::SkillIconCache m_skillIconCache;

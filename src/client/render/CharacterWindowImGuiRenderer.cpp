@@ -3,6 +3,7 @@
 #include "src/client/render/SkillBookImGuiRenderer.h"
 #include "src/client/render/GrimoireImGuiRenderer.h"
 #include "src/client/render/ClassSkillTreeImGuiRenderer.h"
+#include "src/client/render/ExploitsImGuiRenderer.h" // SP2 anniversaires (2026-07-18)
 #include "src/client/render/race/RacePreviewViewport.h"
 #include "src/client/render/SkillIconCache.h"
 #include "src/client/ui_common/UIModel.h"
@@ -142,6 +143,16 @@ namespace engine::render
 						m_classTree->SetEnabled(true);
 						m_classTree->Render();
 					}
+					ImGui::EndTabItem();
+				}
+				// SP2 anniversaires (2026-07-18) — onglet absent si le renderer
+				// n'est pas câblé (rétro-compatible).
+				if (m_exploits != nullptr
+					&& ImGui::BeginTabItem("Exploits", nullptr, tabFlag(Tab::Exploits)))
+				{
+					m_activeTab = Tab::Exploits;
+					m_exploits->SetEmbedded(true);
+					m_exploits->Render();
 					ImGui::EndTabItem();
 				}
 				ImGui::EndTabBar();

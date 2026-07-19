@@ -39,6 +39,7 @@
 #include "src/masterd/handlers/character/CharacterEnterWorldHandler.h"
 #include "src/masterd/anniversary/AnniversaryService.h"
 #include "src/masterd/anniversary/BirthdayEmailJob.h"
+#include "src/masterd/jobs/MasterJobScheduler.h" // Roadmap-4 (2026-07-19)
 #include "src/masterd/exploits/MysqlExploitStore.h"
 #include "src/masterd/handlers/exploits/ExploitHandler.h"
 #include "src/masterd/handlers/dungeon/EnterDungeonHandler.h"
@@ -560,6 +561,26 @@ int main(int argc, char** argv)
 	// boucle principale ; garde annuelle kind='birthday_email' (0074).
 	engine::server::BirthdayEmailJob birthdayEmailJob;
 	birthdayEmailJob.SetDependencies(&dbPool, &exploitStore, &smtpConfig);
+
+	// Roadmap-4 (2026-07-19) — registre des jobs périodiques du master.
+	// Chaque futur job (relances, résumés…) s'enregistre ici au lieu
+	// d'ajouter un bloc « if (now - last >= interval) » à la boucle.
+	engine::server::MasterJobScheduler jobScheduler;
+	// E-mail d'anniversaire : réévalue l'heure LOCALE des comptes fêtés
+	// (envoi dès 7 h chez le joueur) ; interne 1x/jour par compte (garde).
+	jobScheduler.Register("birthday_email", std::chrono::minutes(10),
+		[&birthdayEmailJob] { birthdayEmailJob.Tick(); });
+	// Purge des courriers expirés et supprimés (pièces jointes comprises —
+	// l'expiration vaut disparition). No-op propre en mode no-DB.
+	jobScheduler.Register("mail_purge", std::chrono::hours(1),
+		[&mailStoreDb]
+		{
+			const uint64_t nowMs = static_cast<uint64_t>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::system_clock::now().time_since_epoch()).count());
+			(void)mailStoreDb.PurgeExpired(nowMs);
+		});
+	jobScheduler.LogRegistered();
 	mailHandler.SetSessionManager(&sessionManager);
 	mailHandler.SetConnectionSessionMap(&connSessionMap);
 	LOG_INFO(Net, "[ServerMain] MailHandler configured (CMANGOS.18 step 3)");
@@ -1814,23 +1835,17 @@ int main(int argc, char** argv)
 	auto lastLunarTickTime = std::chrono::steady_clock::now();
 	constexpr auto kLunarTickInterval = std::chrono::seconds(300);
 
-	// Anniversaires (extension e-mail) — vérification périodique du jour UTC :
-	// le job ne travaille réellement qu'une fois par jour (boot + rollover).
-	auto lastBirthdayEmailTick = std::chrono::steady_clock::time_point{};
-	constexpr auto kBirthdayEmailTickInterval = std::chrono::minutes(10);
+	// Roadmap-4 (2026-07-19) — les jobs périodiques (e-mail d'anniversaire,
+	// purge des courriers…) sont désormais cadencés par jobScheduler.Tick()
+	// dans la boucle ci-dessous.
 
 	while (server.IsRunning() && g_quit == 0)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 		auto now = std::chrono::steady_clock::now();
-		// Anniversaires (extension e-mail) — tick 10 min : réévalue l'heure
-		// LOCALE de chaque compte fêté (envoi dès 7 h chez le joueur).
-		if (now - lastBirthdayEmailTick >= kBirthdayEmailTickInterval)
-		{
-			lastBirthdayEmailTick = now;
-			birthdayEmailJob.Tick();
-		}
+		// Roadmap-4 (2026-07-19) — jobs périodiques (intervalles internes).
+		jobScheduler.Tick();
 		if (now - lastSummaryLog >= kSummaryInterval)
 		{
 			lastSummaryLog = now;

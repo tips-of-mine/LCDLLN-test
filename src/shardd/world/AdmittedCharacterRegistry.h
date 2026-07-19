@@ -36,19 +36,30 @@ namespace engine::server
 		/// \param gender TD.6 — genre du personnage ("male"/"female", cf. migration 0067) ;
 		///        peut être vide si master legacy. Propagé au client via SnapshotEntity pour
 		///        sélectionner le mesh skinné des avatars distants.
+		/// \param guildId Roadmap-7 — guilde du compte (guild_members_v2 côté master) ;
+		///        0 = sans guilde ou master antérieur à l'extension. Consommé par
+		///        `ServerApp::HandleHello` pour remplir `ConnectedClient.guildId`
+		///        (partage du buff gâteau à la guilde, dette #991).
 		void Admit(uint64_t characterId, uint64_t accountId, std::string_view characterName,
-			std::string_view gender, uint64_t nowMs);
+			std::string_view gender, uint64_t guildId, uint64_t nowMs);
 
-		/// Surcharge legacy (sans nom ni genre) — équivalente à Admit(..., "", "", nowMs).
-		void Admit(uint64_t characterId, uint64_t accountId, uint64_t nowMs)
+		/// Surcharge legacy (sans guilde) — équivalente à Admit(..., gender, 0, nowMs).
+		void Admit(uint64_t characterId, uint64_t accountId, std::string_view characterName,
+			std::string_view gender, uint64_t nowMs)
 		{
-			Admit(characterId, accountId, std::string_view{}, std::string_view{}, nowMs);
+			Admit(characterId, accountId, characterName, gender, 0u, nowMs);
 		}
 
-		/// Surcharge legacy (sans genre) — équivalente à Admit(..., name, "", nowMs).
+		/// Surcharge legacy (sans nom ni genre) — équivalente à Admit(..., "", "", 0, nowMs).
+		void Admit(uint64_t characterId, uint64_t accountId, uint64_t nowMs)
+		{
+			Admit(characterId, accountId, std::string_view{}, std::string_view{}, 0u, nowMs);
+		}
+
+		/// Surcharge legacy (sans genre) — équivalente à Admit(..., name, "", 0, nowMs).
 		void Admit(uint64_t characterId, uint64_t accountId, std::string_view characterName, uint64_t nowMs)
 		{
-			Admit(characterId, accountId, characterName, std::string_view{}, nowMs);
+			Admit(characterId, accountId, characterName, std::string_view{}, 0u, nowMs);
 		}
 
 		/// Retire un personnage (ex. déconnexion). No-op si absent.
@@ -71,6 +82,11 @@ namespace engine::server
 		/// locale n'est pas configurée (et propagé au client via SnapshotEntity).
 		std::string AdmittedGender(uint64_t characterId, uint64_t nowMs) const;
 
+		/// Roadmap-7 — guilde du personnage admis et non expiré, 0 sinon (ou si le
+		/// master n'avait pas fourni de guilde). Utilisé par `ServerApp::HandleHello`
+		/// pour remplir `ConnectedClient.guildId`.
+		uint64_t AdmittedGuildId(uint64_t characterId, uint64_t nowMs) const;
+
 		/// Nombre d'entrées (admises ou non, sans purge). Utile aux tests / diagnostics.
 		size_t Count() const;
 
@@ -85,6 +101,7 @@ namespace engine::server
 			uint64_t admittedAtMs = 0;
 			std::string characterName; ///< TD.5 — peut être vide (admission sans nom).
 			std::string gender;        ///< TD.6 — peut être vide (admission sans genre).
+			uint64_t guildId = 0;      ///< Roadmap-7 — 0 = sans guilde / master legacy.
 		};
 
 		mutable std::mutex m_mutex;

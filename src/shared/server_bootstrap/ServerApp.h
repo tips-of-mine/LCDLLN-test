@@ -207,6 +207,12 @@ namespace engine::server
 		/// Compte propriétaire (résolu au Hello via AdmittedCharacterRegistry). Clé de la
 		/// présence unifiée (ShardPresenceService) ; 0 si non résolu (registre absent).
 		uint64_t accountId = 0;
+		/// Roadmap-7 — guilde du compte (snapshot à l'enter-world, poussé par le master
+		/// dans kOpcodeMasterToShardAdmitCharacter et résolu au Hello via
+		/// AdmittedCharacterRegistry::AdmittedGuildId). 0 = sans guilde / master legacy.
+		/// Consommé par TickCakeBuffs pour partager le buff gâteau aux co-membres de
+		/// guilde connectés à portée (dette #991).
+		uint64_t guildId = 0;
 		/// Niveau du personnage (table characters.level, chargé au Hello via LoadSpawnFromDb).
 		/// Reporté au master dans le heartbeat enrichi (présence web-portal).
 		uint32_t level = 1;

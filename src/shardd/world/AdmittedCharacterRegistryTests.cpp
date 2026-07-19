@@ -132,6 +132,35 @@ namespace
 		assert(reg.AdmittedGender(40u, 1000u) == "female");
 		std::puts("[OK] TestReAdmitWithoutGenderPreservesGender");
 	}
+
+	/// Roadmap-7 — Admit avec guilde retourne ce guildId ; surcharges legacy
+	/// (sans guilde) retournent 0 ; TTL et character_id inconnu → 0.
+	void TestAdmitWithGuild()
+	{
+		AdmittedCharacterRegistry reg;
+		reg.SetTtlMs(1000u);
+		reg.Admit(50u, 1u, std::string_view{"homme"}, std::string_view{"male"}, 7u, 100u);
+		assert(reg.AdmittedGuildId(50u, 100u) == 7u);
+		// Surcharge legacy (nom+genre sans guilde) => 0.
+		reg.Admit(51u, 1u, std::string_view{"anon"}, std::string_view{"male"}, 100u);
+		assert(reg.AdmittedGuildId(51u, 100u) == 0u);
+		// character_id inconnu ou expiré => 0.
+		assert(reg.AdmittedGuildId(999u, 100u) == 0u);
+		assert(reg.AdmittedGuildId(50u, 100u + 5000u) == 0u); // TTL dépassé
+		std::puts("[OK] TestAdmitWithGuild");
+	}
+
+	/// Roadmap-7 — un re-Admit sans guilde (ticket TCP, master legacy) après un
+	/// Admit avec guilde PRÉSERVE la guilde (même règle que nom/genre).
+	void TestReAdmitWithoutGuildPreservesGuild()
+	{
+		AdmittedCharacterRegistry reg;
+		reg.Admit(60u, 7u, std::string_view{"femme"}, std::string_view{"female"}, 3u, 0u);
+		assert(reg.AdmittedGuildId(60u, 0u) == 3u);
+		reg.Admit(60u, 7u, std::string_view{"femme"}, std::string_view{"female"}, 1000u); // sans guilde
+		assert(reg.AdmittedGuildId(60u, 1000u) == 3u);
+		std::puts("[OK] TestReAdmitWithoutGuildPreservesGuild");
+	}
 }
 
 int main()
@@ -145,6 +174,8 @@ int main()
 	TestReAdmitWithoutNamePreservesName();
 	TestAdmitWithGender();
 	TestReAdmitWithoutGenderPreservesGender();
+	TestAdmitWithGuild();
+	TestReAdmitWithoutGuildPreservesGuild();
 	std::puts("All AdmittedCharacterRegistry tests passed");
 	return 0;
 }

@@ -38,6 +38,13 @@ namespace engine::editor::world
 				return { 0xFF5A4A36u, "A", "Placer une arche naturelle (Phase 11)", true };
 			case ActiveTool::DungeonPortal:
 				return { 0xFF6A2E5Au, "D", "Placer un portail de donjon (Phase 11)", true };
+			// Roadmap-8 (audit 2026-06-05, 1.1) — outils M100.16/28/29 câblés.
+			case ActiveTool::Spline:
+				return { 0xFF9A8A5Au, "S", "Tracer une spline (route/chemin)",      true };
+			case ActiveTool::GameplayZone:
+				return { 0xFF3A7A5Au, "Z", "Tracer une zone de gameplay",           true };
+			case ActiveTool::Hazard:
+				return { 0xFFB05A2Au, "!", "Poser un danger (piège)",               true };
 		}
 		// Fallback générique pour outils futurs non encore mappés : carré
 		// neutre, désactivé, tooltip standard "Bientôt disponible".

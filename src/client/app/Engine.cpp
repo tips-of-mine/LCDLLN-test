@@ -11,6 +11,7 @@
 #include "src/world_editor/ui/WorldMapIo.h" // lot B3 : SanitizeZoneId (namespacing zone)
 #include "src/world_editor/core/WorldEditorShell.h"
 #include "src/world_editor/core/CompositeCommand.h"            // Roadmap-6 : undo groupé du gizmo
+#include "src/world_editor/HazardCommand.h"                    // Roadmap-8 : pose de danger undoable
 #include "src/world_editor/inspector/SetEntityTransformCommand.h" // Roadmap-6 : undo du drag de gizmo
 #include "src/world_editor/scene/LayoutPlacementCommands.h"    // Roadmap-6 : placement undoable
 #include "src/world_editor/panels/ScenePanel.h"
@@ -10795,6 +10796,54 @@ namespace engine
 						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
 					{
 						m_worldEditorShell->MutableValleyChainTool().AddVertex(pickX, pickZ);
+					}
+				}
+				else if (tool == engine::editor::world::ActiveTool::Spline)
+				{
+					modernEditActive = true;
+					// Roadmap-8 — spline (routes/chemins) : chaque clic ajoute un
+					// noeud au trace en cours (largeur = defaut du panneau) ; le
+					// bouton « Ajouter la spline » du ToolPropertiesPanel pousse
+					// l'AddSplineCommand undoable.
+					if (freeClick && terrainPick
+						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						engine::editor::world::SplineTool& spline =
+							m_worldEditorShell->MutableSplineTool();
+						const float wy = m_terrainCollider.GroundHeightAt(pickX, pickZ);
+						spline.AddNode(engine::math::Vec3{ pickX, wy, pickZ },
+							spline.DefaultWidthMeters());
+					}
+				}
+				else if (tool == engine::editor::world::ActiveTool::GameplayZone)
+				{
+					modernEditActive = true;
+					// Roadmap-8 — zone de gameplay : chaque clic ajoute un sommet
+					// au polygone en cours ; « Ajouter la zone » (panneau) pousse
+					// l'AddGameplayZoneCommand undoable.
+					if (freeClick && terrainPick
+						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						const float wy = m_terrainCollider.GroundHeightAt(pickX, pickZ);
+						m_worldEditorShell->MutableZoneTool().AddPoint(
+							engine::math::Vec3{ pickX, wy, pickZ });
+					}
+				}
+				else if (tool == engine::editor::world::ActiveTool::Hazard)
+				{
+					modernEditActive = true;
+					// Roadmap-8 — danger : pose one-shot au point clique, undoable
+					// immediatement (AddHazardCommand aux parametres courants du
+					// panneau — type, forme, profondeur...).
+					if (freeClick && terrainPick
+						&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+					{
+						const float wy = m_terrainCollider.GroundHeightAt(pickX, pickZ);
+						m_worldEditorShell->MutableCommandStack().Push(
+							std::make_unique<engine::editor::world::AddHazardCommand>(
+								m_worldEditorShell->MutableHazardDocument(),
+								m_worldEditorShell->GetHazardTool().CreateAt(
+									engine::math::Vec3{ pickX, wy, pickZ })));
 					}
 				}
 			}

@@ -19,9 +19,16 @@ namespace engine::editor::world
 			m_current.nodes.push_back(n);
 		}
 		void Clear() { m_current.nodes.clear(); }
+
+		/// Roadmap-8 — largeur (mètres) appliquée aux prochains nœuds posés au
+		/// clic viewport ; éditée par le ToolPropertiesPanel.
+		float& DefaultWidthMeters() { return m_defaultWidthMeters; }
+		float DefaultWidthMeters() const { return m_defaultWidthMeters; }
+
 		void Render();
 
 	private:
 		engine::world::spline::Spline m_current;
+		float m_defaultWidthMeters = 6.0f; ///< Roadmap-8 — largeur des nœuds posés au clic.
 	};
 }

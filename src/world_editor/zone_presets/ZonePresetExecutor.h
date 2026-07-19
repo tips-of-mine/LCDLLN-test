@@ -49,14 +49,19 @@ namespace engine::editor::world::zone_presets
 	///      d. arrêt si `progressCallback` retourne false OU si
 	///         `RequestCancel()` a été appelé entretemps.
 	///
-	/// Types câblés (incréments 2b + 2c + 2d) : `place_cave`, `place_overhang`,
-	/// `place_arch`, `place_dungeon`, `mountain_macro`, `valley_macro`,
-	/// `lake_polygon`, `river_manual` (8 sur 14). Les 4 restants
-	/// (`coastline`, `river_network`, `hydraulic_erosion`,
-	/// `thermal_wind_erosion`) sont ignorés silencieusement avec un log info
-	/// (besoin d'extraire la simulation des Tools UI — itération 2e+). Le
-	/// compteur `unsupportedSkipped` du résumé permet à l'UI d'informer
-	/// l'utilisateur.
+	/// Types câblés (P1 audit 2026-06-05, 6.3 — doc corrigée) : 12 sur 14 —
+	/// `place_cave`, `place_overhang`, `place_arch`, `place_dungeon`,
+	/// `mountain_macro`, `valley_macro`, `lake_polygon`, `river_manual`,
+	/// ET (incrément 2e livré) `coastline`, `river_network`,
+	/// `hydraulic_erosion`, `thermal_wind_erosion`. Les 2 seuls restants
+	/// (`sculpt_brush`, `splat_paint`) renvoient `Unsupported` (leur logique
+	/// vit encore dans les Tools UI). Le compteur `unsupportedSkipped` du
+	/// résumé permet à l'UI d'informer l'utilisateur.
+	///
+	/// P0 (audit 6.1) : le reset initial est destructif MAIS le point d'appel
+	/// (`ZonePresetDialog::RunSelectedPreset`) écrit un filet de sécurité
+	/// disque avant `Execute` et RESTAURE la carte si `failed > 0` ou
+	/// `wasCancelled` — voir la transaction côté dialog.
 	class ZonePresetExecutor
 	{
 	public:

@@ -284,7 +284,10 @@ namespace
 	bool NearEq(double a, double b) { return std::fabs(a - b) < 1e-6; }
 
 	/// Parse scalaires (nombre, bool, string) + saute les clés
-	/// structurelles type/preset/affectedBy.
+	/// structurelles type/affectedBy. P1 (audit 2026-06-05, 6.4) : "preset"
+	/// N'est PLUS filtrée — `MaybeApplyToolPreset` (OperationDispatcher) la
+	/// lit via `GetString("preset")` ; la filtrer rendait l'overlay de
+	/// tool-preset silencieusement inopérant.
 	void Test_OpParams_ParsesScalars()
 	{
 		const std::string raw = R"({
@@ -294,9 +297,11 @@ namespace
 			"carvingEnabled": true, "windEnabled": false
 		})";
 		const auto p = zp::OperationParams::Parse(raw);
-		// type/preset/affectedBy ne sont PAS dans les params.
+		// type/affectedBy ne sont PAS dans les params ; "preset" y est (6.4).
 		REQUIRE(!p.Has("type"));
-		REQUIRE(!p.Has("preset"));
+		std::string presetId;
+		REQUIRE(p.GetString("preset", presetId));
+		REQUIRE(presetId == "realistic");
 		REQUIRE(!p.Has("affectedBy"));
 		double n = 0.0;
 		REQUIRE(p.GetNumber("numDroplets", n));

@@ -262,7 +262,11 @@ namespace engine::editor::world::volumes::bridge
 			outError = "VMapBridge: unsupported version";
 			return false;
 		}
-		outProxies.reserve(count);
+		// P0 (audit 2026-06-05, 3.1) — borne le reserve par la taille restante
+		// du fichier : un proxy sérialisé fait EXACTEMENT 33 octets (u64 guid +
+		// 6 f32 AABB + u8 kind). Un count corrompu (0xFFFFFFFF) provoquait un
+		// std::bad_alloc non catché avant toute lecture.
+		outProxies.reserve(std::min<size_t>(count, (bytes.size() - cursor) / 33u));
 		for (uint32_t i = 0; i < count; ++i)
 		{
 			VolumeAabbProxy p;

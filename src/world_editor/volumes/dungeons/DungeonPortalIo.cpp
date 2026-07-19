@@ -1,5 +1,6 @@
 #include "src/world_editor/volumes/dungeons/DungeonPortalIo.h"
 
+#include <algorithm> // std::min — plafond du reserve (P0 audit 3.1)
 #include <cstring>
 
 namespace engine::editor::world::volumes::dungeons
@@ -144,7 +145,13 @@ namespace engine::editor::world::volumes::dungeons
 			return false;
 		}
 
-		outInstances.reserve(instanceCount);
+		// P0 (audit 2026-06-05, 3.1) — borne le reserve par la taille restante
+		// du fichier (une instance sérialisée ≥ ~41 octets, borne prudente 32) :
+		// un count corrompu (0xFFFFFFFF) provoquait un std::bad_alloc non
+		// catché avant toute lecture. La boucle échoue proprement si le count
+		// reste mensonger (« truncated »).
+		outInstances.reserve(std::min<size_t>(instanceCount,
+			(bytes.size() - cursor) / 32u));
 		for (uint32_t i = 0; i < instanceCount; ++i)
 		{
 			DungeonPortalInstance inst;

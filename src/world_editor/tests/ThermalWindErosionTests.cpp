@@ -240,6 +240,60 @@ namespace
 		REQUIRE(r.totalTransferredMeters < 1e-3f);
 		(void)originalHeights;
 	}
+
+	/// P0 (audit 2026-06-05, 4.1) : terrain sous le plancher (hauteurs
+	/// négatives) → AUCUN transfert inversé. Avant le fix, le facteur
+	/// anti-runaway `h / excès` devenait NÉGATIF pour h < 0 : les deltas
+	/// s'inversaient (masse remontant la pente, amplitudes non bornées) et
+	/// les altitudes divergeaient. Après le fix, les cellules sans hauteur
+	/// disponible au-dessus du plancher n'émettent tout simplement pas.
+	void Test_Thermal_NegativeHeights_NoInvertedRunaway()
+	{
+		// Falaise raide dont TOUT le relief est sous 0 m (plancher hors sea).
+		ConsolidatedHeightGrid g;
+		g.width = 10; g.height = 10;
+		g.cellSizeMeters = 1.0f;
+		g.heights.resize(100);
+		for (int z = 0; z < 10; ++z)
+			for (int x = 0; x < 10; ++x)
+				g.heights[static_cast<size_t>(z) * 10 + x] =
+					-5.0f - static_cast<float>(x) * 20.0f; // pente raide, h < 0
+		ThermalSimulationParams params;
+		params.talusAngleDeg = 35.0f;
+		params.forcePerPass  = 0.5f;
+		params.numPasses     = 20;
+		params.stopUnderSeaLevel = false; // plancher = 0 m
+		const auto r = RunThermalSimulation(g, 0.0f, params);
+		REQUIRE(r.totalTransferredMeters == 0.0f); // rien de disponible au-dessus de 0
+		for (const float h : g.heights)
+		{
+			REQUIRE(std::isfinite(h));
+			REQUIRE(h >= -200.0f && h <= 10.0f); // aucune divergence
+		}
+	}
+
+	/// P0 (4.1) : une cellule juste au-dessus du plancher ne descend jamais
+	/// SOUS le plancher, quelle que soit la pente demandée.
+	void Test_Thermal_NeverBelowFloor()
+	{
+		ConsolidatedHeightGrid g;
+		g.width = 8; g.height = 8;
+		g.cellSizeMeters = 1.0f;
+		g.heights.resize(64, 0.0f);
+		// Un pic isolé de 3 m au centre : il doit relaxer mais jamais < 0.
+		g.heights[static_cast<size_t>(4) * 8 + 4] = 3.0f;
+		ThermalSimulationParams params;
+		params.talusAngleDeg = 35.0f;
+		params.forcePerPass  = 1.0f;
+		params.numPasses     = 40;
+		params.stopUnderSeaLevel = false; // plancher = 0 m
+		const auto r = RunThermalSimulation(g, 0.0f, params);
+		(void)r;
+		for (const float h : g.heights)
+		{
+			REQUIRE(h >= -1e-4f); // jamais sous le plancher (tolérance float)
+		}
+	}
 }
 
 int main()
@@ -253,6 +307,8 @@ int main()
 	Test_Wind_ZeroParticles_EmptyResult();
 	Test_Command_Apply_Undo_RestoresExact();
 	Test_Thermal_PreserveSteepSlopes();
+	Test_Thermal_NegativeHeights_NoInvertedRunaway();
+	Test_Thermal_NeverBelowFloor();
 
 	if (g_failed > 0)
 	{

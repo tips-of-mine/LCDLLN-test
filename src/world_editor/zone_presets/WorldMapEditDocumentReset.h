@@ -24,9 +24,10 @@ namespace engine::editor::world::zone_presets
 	///
 	/// Note MVP : ce helper ne pousse PAS de `ResetZoneCommand` sur le
 	/// CommandStack (spec §D.3 le prévoit pour Ctrl+Z après preset).
-	/// L'annulation est laissée à un follow-up : pour cet incrément, le
-	/// reset est destructif (irréversible). L'utilisateur en est prévenu
-	/// par le dialog de confirmation côté UI (incrément 3).
+	/// Le reset reste destructif en RAM, MAIS depuis le P0 audit 6.1 le
+	/// point d'appel (`ZonePresetDialog::RunSelectedPreset`) écrit un filet
+	/// de sécurité disque AVANT `Execute` et restaure la carte si le preset
+	/// échoue ou est annulé — plus de perte irréversible.
 	void ResetEditedZoneDocuments(
 		engine::editor::world::TerrainDocument& terrain,
 		engine::editor::world::WaterDocument& water,

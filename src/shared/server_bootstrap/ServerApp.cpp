@@ -260,19 +260,48 @@ namespace engine::server
 			return static_cast<uint32_t>(std::llround(modified));
 		}
 
+		/// Roadmap-2 (2026-07-19) — applique les modificateurs de STATS des
+		/// auras au DerivedStats : +% PV max et +% vitesses. Les effets de
+		/// dégâts restent gérés à la résolution (ApplyAuraDamageModifiers).
+		/// Les multiplicateurs sont plafonnés vers le bas (jamais < 10 % de la
+		/// base) pour qu'un débuff extrême ne fige/tue pas le personnage.
+		void ApplyAuraStatModifiers(const std::vector<ActiveAura>& auras,
+			engine::server::gameplay::DerivedStats& d)
+		{
+			const float hpPct = SumAuraPercent(auras, SpellEffectType::MaxHealthPercent);
+			if (hpPct != 0.0f)
+			{
+				const float mult = std::max(0.1f, 1.0f + hpPct / 100.0f);
+				d.hp = std::max<uint32_t>(1u, static_cast<uint32_t>(
+					std::llround(static_cast<double>(d.hp) * mult)));
+			}
+			const float spdPct = SumAuraPercent(auras, SpellEffectType::MoveSpeedPercent);
+			if (spdPct != 0.0f)
+			{
+				const float mult = std::max(0.1f, 1.0f + spdPct / 100.0f);
+				d.speedWalk   *= mult;
+				d.speedRun    *= mult;
+				d.speedSprint *= mult;
+			}
+		}
+
 		/// Combat SP3 — insère ou rafraîchit une aura (même spellId + même casteur
 		/// = refresh de la durée, pas d'empilement en V1).
-		void UpsertAura(std::vector<ActiveAura>& auras, ActiveAura&& aura)
+		/// \return true si l'aura vient d'être AJOUTÉE (nouvelle), false si
+		/// c'était un simple refresh — les appelants ne déclenchent le recalcul
+		/// de stats (Roadmap-2) que sur un vrai ajout.
+		bool UpsertAura(std::vector<ActiveAura>& auras, ActiveAura&& aura)
 		{
 			for (ActiveAura& existing : auras)
 			{
 				if (existing.spellId == aura.spellId && existing.casterEntityId == aura.casterEntityId)
 				{
 					existing = std::move(aura);
-					return;
+					return false;
 				}
 			}
 			auras.push_back(std::move(aura));
+			return true;
 		}
 
 		/// Combat SP2 — copie les stats dérivées du moteur de personnages dans le
@@ -3557,6 +3586,9 @@ namespace engine::server
 			*m_statsTables, client.factionId, client.classId, sex, client.level);
 		if (!d) return;
 		ApplyEquipmentBonus(client, *d);
+		// Roadmap-2 (2026-07-19) — les auras de stats (%PV max, %vitesse)
+		// s'appliquent APRÈS l'équipement (mêmes règles que SendPlayerStats).
+		ApplyAuraStatModifiers(client.auras, *d);
 
 		ApplyDerivedCombatStats(client, *d);
 		client.maxResource = d->resource;
@@ -3570,6 +3602,14 @@ namespace engine::server
 		if (client.stats.currentHealth > client.stats.maxHealth)
 		{
 			client.stats.currentHealth = client.stats.maxHealth;
+		}
+		// Roadmap-2 (2026-07-19) — déclare à l'anti-cheat le multiplicateur de
+		// vitesse LÉGITIME (buffs %MoveSpeed) pour éviter les faux SpeedHack.
+		if (client.persistenceCharacterKey != 0u)
+		{
+			const float spdPct = SumAuraPercent(client.auras, SpellEffectType::MoveSpeedPercent);
+			m_antiCheat.SetPlayerSpeedMultiplier(client.persistenceCharacterKey,
+				std::max(0.1f, 1.0f + spdPct / 100.0f));
 		}
 	}
 
@@ -5183,7 +5223,13 @@ namespace engine::server
 							: static_cast<uint32_t>(std::llround(
 								static_cast<double>(effect.mult) * static_cast<double>(client.combat.damagePerHit)));
 					}
-					UpsertAura(ally->auras, std::move(aura));
+					// Roadmap-2 (2026-07-19) — une NOUVELLE aura peut modifier
+					// les stats réelles (%PV max, %vitesse) : recalcul + push 79.
+					if (UpsertAura(ally->auras, std::move(aura)))
+					{
+						RefreshLiveDerivedStats(*ally);
+						(void)SendPlayerStats(*ally);
+					}
 					if (ally == &client)
 					{
 						casterAurasChanged = true;
@@ -5344,7 +5390,12 @@ namespace engine::server
 			defAura.expiresAtMs     = nowMs + 8000u;
 			defAura.nextTickAtMs    = 0u;
 			defAura.casterEntityId  = client.entityId;
-			UpsertAura(client.auras, std::move(defAura));
+			if (UpsertAura(client.auras, std::move(defAura)))
+			{
+				// Roadmap-2 — recalcul des stats réelles à l'ajout d'aura.
+				RefreshLiveDerivedStats(client);
+				(void)SendPlayerStats(client);
+			}
 			BroadcastAuraUpdate(client.entityId, client.auras);
 			LOG_INFO(Net,
 				"[ServerApp] SP-C Defense aura applied (client_id={}, skill={}, percent={:.1f}, duration_ms=8000)",
@@ -5393,6 +5444,11 @@ namespace engine::server
 			if (client.auras.size() != beforeCount)
 			{
 				BroadcastAuraUpdate(client.entityId, client.auras);
+				// Roadmap-2 (2026-07-19) — l'expiration d'une aura peut rendre
+				// des stats réelles (%PV max, %vitesse) : recalcul + push 79.
+				// Les PV courants sont re-clampés sous le nouveau max.
+				RefreshLiveDerivedStats(client);
+				(void)SendPlayerStats(client);
 			}
 		}
 
@@ -5795,7 +5851,14 @@ namespace engine::server
 				aura.percent = def->percent;
 				aura.expiresAtMs = nowMonotonicMs + kCakeAuraTtlMs;
 				aura.casterEntityId = client.entityId;
-				UpsertAura(target->auras, std::move(aura));
+				const bool newlyAdded = UpsertAura(target->auras, std::move(aura));
+				// Roadmap-2 — recalcul UNIQUEMENT au vrai ajout (l'entretien
+				// 1 Hz ne fait que rafraîchir la durée : pas de spam 79).
+				if (newlyAdded)
+				{
+					RefreshLiveDerivedStats(*target);
+					(void)SendPlayerStats(*target);
+				}
 				BroadcastAuraUpdate(target->entityId, target->auras);
 			}
 		}
@@ -6951,6 +7014,8 @@ namespace engine::server
 		if (!d) return false;
 		// Chantier 2 SP-A — bonus d'équipement (source autoritaire : catalogue serveur).
 		ApplyEquipmentBonus(client, *d);
+		// Roadmap-2 (2026-07-19) — reflète aussi les auras de stats sur le wire.
+		ApplyAuraStatModifiers(client.auras, *d);
 
 		PlayerStatsMessage msg{};
 		msg.clientId    = client.clientId;

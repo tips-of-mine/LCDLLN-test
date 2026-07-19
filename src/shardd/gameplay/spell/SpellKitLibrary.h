@@ -28,6 +28,14 @@ namespace engine::server
 		/// (appliquée dans ApplyAuraDamageModifiers côté cible). Analogue à
 		/// DebuffDamageTakenPercent mais en signe inverse (réduction, pas amplification).
 		DamageReductionPercent = 9,
+		/// Roadmap-2 (2026-07-19) — modificateurs de VRAIES stats, agrégés par
+		/// ApplyAuraStatModifiers (ServerApp) et poussés au client par
+		/// PlayerStats (kind 79) à l'application/retrait de l'aura :
+		/// +% PV max (les PV courants sont clampés, jamais soignés gratis).
+		MaxHealthPercent = 10,
+		/// +% vitesses de déplacement (walk/run/sprint) — répercuté aussi sur
+		/// la tolérance anti-cheat par joueur.
+		MoveSpeedPercent = 11,
 	};
 
 	/// Combat SP3 — type de cible d'un sort.

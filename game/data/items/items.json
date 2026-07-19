@@ -110,7 +110,7 @@
     {
       "id": 5103,
       "name": "Gateau du zephyr",
-      "description": "Un gateau d'anniversaire a partager : -15% menace generee pour le groupe proche. Ne se conserve pas au-dela du jour J.",
+      "description": "Un gateau d'anniversaire a partager : +8% vitesse de deplacement pour le groupe proche. Ne se conserve pas au-dela du jour J.",
       "icon": "items/gateau_zephyr.png",
       "type": "consumable",
       "slot": "none"
@@ -118,7 +118,7 @@
     {
       "id": 5104,
       "name": "Gateau du sage",
-      "description": "Un gateau d'anniversaire a partager : -20% menace generee pour le groupe proche. Ne se conserve pas au-dela du jour J.",
+      "description": "Un gateau d'anniversaire a partager : +8% PV maximum pour le groupe proche. Ne se conserve pas au-dela du jour J.",
       "icon": "items/gateau_sage.png",
       "type": "consumable",
       "slot": "none"

@@ -9619,6 +9619,14 @@ namespace engine
 					&& (m_uiModelBinding.GetModel().playerStats.stateFlags & 1u) != 0u;
 				if (m_dialogueActive || moveLocked || localPlayerDead)
 					moveInput = engine::gameplay::MoveInput{};
+				// Roadmap-2 (2026-07-19) — vitesses AUTORITAIRES du serveur
+				// (PlayerStats kind 79 : classe + équipement + buffs d'auras).
+				// 0 = pas encore reçu → la config locale reste en vigueur.
+				{
+					const auto& ps79 = m_uiModelBinding.GetModel().playerStats;
+					if (ps79.speedRun > 0.1f)
+						m_characterController.SetMoveSpeeds(ps79.speedWalk, ps79.speedRun, ps79.speedSprint);
+				}
 				// Collisionneur composite : terrain (sol + eau) + cylindres des props/décor.
 				m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
 				const engine::math::Vec3 ccPos = m_characterController.GetPosition();

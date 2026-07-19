@@ -85,6 +85,9 @@ namespace engine::gameplay
 			float walkSpeed = 5.0f;  ///< range: 4-6 m/s
 			float runSpeed = 9.0f;   ///< range: 8-10 m/s
 			float sprintSpeed = 13.0f; ///< range: 12-14 m/s (Alt maintenu)
+			// (Roadmap-2 2026-07-19 : ces trois vitesses peuvent être écrasées
+			// à chaud par SetMoveSpeeds — valeurs autoritaires du serveur,
+			// équipement + buffs d'auras inclus, cf. PlayerStats kind 79.)
 			float crouchSpeed = 2.5f;  ///< range: 2-3 m/s (Ctrl maintenu)
 			float acceleration = 25.0f; ///< m/s^2
 			float friction = 20.0f;     ///< m/s^2 (horizontal decel when no input)
@@ -147,6 +150,18 @@ namespace engine::gameplay
 		engine::math::Vec3 GetPosition() const { return m_positionCenter; }
 		engine::math::Vec3 GetVelocity() const { return m_velocity; }
 		IWorldCollider::Capsule GetCapsule() const { return m_capsule; }
+
+		/// Roadmap-2 (2026-07-19) — écrase les vitesses de déplacement par les
+		/// valeurs AUTORITAIRES du serveur (PlayerStats kind 79 : base classe
+		/// + équipement + buffs d'auras). Appelée chaque frame par l'Engine
+		/// (idempotente, valeurs ignorées si <= 0). Les autres paramètres
+		/// (gravité, saut, esquive…) restent ceux de la config locale.
+		void SetMoveSpeeds(float walk, float run, float sprint)
+		{
+			if (walk > 0.0f)   m_cfg.walkSpeed = walk;
+			if (run > 0.0f)    m_cfg.runSpeed = run;
+			if (sprint > 0.0f) m_cfg.sprintSpeed = sprint;
+		}
 
 		/// Declenche une impulsion d'esquive (roulade) dans la direction XZ donnee.
 		/// Pendant `dodgeDurationSec`, la vitesse horizontale est forcee a

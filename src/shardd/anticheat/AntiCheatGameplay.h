@@ -65,16 +65,47 @@ namespace engine::server::anticheat
 
 			const uint64_t dtMs = (nowMs > last.tsMs) ? (nowMs - last.tsMs) : 1;
 			const float speedMps = dist / (static_cast<float>(dtMs) / 1000.0f);
-			const float maxAllowed = m_cfg.maxSpeedMps * m_cfg.speedTolerance;
+			// Roadmap-2 (2026-07-19) — le plafond intègre le multiplicateur de
+			// vitesse LÉGITIME du joueur (buffs %MoveSpeed, cf.
+			// SetPlayerSpeedMultiplier) ; 1.0 si aucun buff.
+			const float maxAllowed = m_cfg.maxSpeedMps * m_cfg.speedTolerance
+				* PlayerSpeedMultiplier(player);
 
 			last = {x, y, z, nowMs, true};
 			return (speedMps > maxAllowed) ? CheatVerdict::SpeedHack : CheatVerdict::OK;
 		}
 
-		void Reset(PlayerId player) { m_state.erase(player); }
+		void Reset(PlayerId player)
+		{
+			m_state.erase(player);
+			m_speedMultiplier.erase(player);
+		}
+
+		/// Roadmap-2 (2026-07-19) — déclare le multiplicateur de vitesse
+		/// LÉGITIME du joueur (1.0 = aucun buff). Posé par le shard à chaque
+		/// recalcul de stats (RefreshLiveDerivedStats) pour que les buffs
+		/// %MoveSpeed ne déclenchent pas de faux SpeedHack. Valeur bornée
+		/// [0.1, 10] par sûreté.
+		void SetPlayerSpeedMultiplier(PlayerId player, float multiplier)
+		{
+			const float clamped = multiplier < 0.1f ? 0.1f : (multiplier > 10.0f ? 10.0f : multiplier);
+			if (clamped == 1.0f)
+				m_speedMultiplier.erase(player);
+			else
+				m_speedMultiplier[player] = clamped;
+		}
 
 	private:
+		/// Multiplicateur courant du joueur (1.0 si non déclaré).
+		float PlayerSpeedMultiplier(PlayerId player) const
+		{
+			const auto it = m_speedMultiplier.find(player);
+			return it != m_speedMultiplier.end() ? it->second : 1.0f;
+		}
+
 		AntiCheatConfig m_cfg;
 		std::unordered_map<PlayerId, LastReportedPos> m_state;
+		/// Roadmap-2 — multiplicateurs de vitesse légitimes par joueur.
+		std::unordered_map<PlayerId, float> m_speedMultiplier;
 	};
 }

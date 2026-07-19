@@ -22,7 +22,9 @@ namespace engine::world
 		struct LocalBox { float cx, cy, cz, hx, hy, hz; };
 
 		/// Résultat de Lookup pour une pièce présente au catalogue.
-		struct Piece { bool passable = false; std::vector<LocalBox> boxes; };
+		/// Roadmap-5 (2026-07-19) — walkable=true : le DESSUS des boîtes est
+		/// marchable (sols d'étage, plateformes ; clé JSON "walkable").
+		struct Piece { bool passable = false; bool walkable = false; std::vector<LocalBox> boxes; };
 
 		/// Charge le catalogue depuis le texte JSON. \return false si parse invalide.
 		bool LoadFromJson(const std::string& jsonText);

@@ -253,6 +253,58 @@ int main()
 		check(hj && onJamb.hit, "porte: on bute un jambage (hit)");
 	}
 
+	// === Roadmap-5 (2026-07-19) : dessus MARCHABLE des boîtes (capuchon 3a) ===
+	// Dalle de sol 2x2 m à y ∈ [1.0, 1.05], centrée (5,0).
+	auto makeFloor = []() {
+		PropBox b;
+		b.cx = 5.0f; b.cz = 0.0f; b.halfX = 1.0f; b.halfZ = 1.0f;
+		b.axisX = Vec3{ 1, 0, 0 }; b.axisZ = Vec3{ 0, 0, 1 };
+		b.loY = 1.0f; b.hiY = 1.05f;
+		b.wall = false; b.walkableTop = true;
+		return b;
+	};
+
+	// B7) Descente au-dessus de la dalle : le bas de capsule (centre - 1.2)
+	//     traverse hiY=1.05 -> pose (normale verticale). Départ centre y=3
+	//     (bas 1.8), arrivée y=1.5 (bas 0.3) : tc = (1.8-1.05)/1.5 = 0.5.
+	{
+		CompositeWorldCollider c(&terrain); c.AddBox(makeFloor());
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 5, 3, 0 }, Vec3{ 5, 1.5f, 0 }, hit);
+		check(h && hit.hit, "sol: descente -> pose sur le dessus");
+		check(hit.normal.y > 0.9f, "sol: normale verticale (walkable)");
+		check(hit.fraction > 0.45f && hit.fraction < 0.55f, "sol: fraction plausible");
+	}
+
+	// B8) Même descente sur une boîte MUR (walkableTop=false) : PAS de pose
+	//     (les murs restent des barrières latérales pures — anti « vol »).
+	{
+		PropBox wallBox = makeFloor();
+		wallBox.wall = true; wallBox.walkableTop = false;
+		CompositeWorldCollider c(&terrain); c.AddBox(wallBox);
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 5, 3, 0 }, Vec3{ 5, 1.5f, 0 }, hit);
+		check(!h, "mur: pas de capuchon superieur (pas de pose)");
+	}
+
+	// B9) Descente HORS de l'empreinte (x=8, au-delà de halfX+r) : pas de pose.
+	{
+		CompositeWorldCollider c(&terrain); c.AddBox(makeFloor());
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 8, 3, 0 }, Vec3{ 8, 1.5f, 0 }, hit);
+		check(!h, "sol: hors empreinte -> pas de pose");
+	}
+
+	// B10) Marche d'escalier (stair=true) : le flag stair se propage au hit
+	//      du capuchon (TryStepUp montera via maxClimb).
+	{
+		PropBox step = makeFloor(); step.stair = true;
+		CompositeWorldCollider c(&terrain); c.AddBox(step);
+		IWorldCollider::SweepHit hit;
+		bool h = c.SweepCapsule(cap, Vec3{ 5, 3, 0 }, Vec3{ 5, 1.5f, 0 }, hit);
+		check(h && hit.stair, "marche: flag stair propage par le capuchon");
+	}
+
 	// 5) QueryWater délégué au terrain.
 	{
 		CompositeWorldCollider c(&terrain);

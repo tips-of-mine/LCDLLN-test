@@ -47,6 +47,8 @@ namespace engine::world
 
 		Piece p;
 		p.passable = passable;
+		// Roadmap-5 (2026-07-19) — dessus marchable (sols, plateformes).
+		p.walkable = m_cfg.GetBool(base + "walkable", false);
 		for (int i = 0; i < count; ++i)
 		{
 			const std::string b = base + "box_" + std::to_string(i) + ".";

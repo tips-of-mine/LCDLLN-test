@@ -50,6 +50,11 @@ namespace engine::gameplay
 		bool passable = false; ///< aucune collision (battant de porte)
 		bool stair = false;    ///< gravissable (cf. CharacterController)
 		bool wall = true;      ///< barrière latérale pure, pas de dessus marchable
+		/// Roadmap-5 (2026-07-19) — dessus MARCHABLE (capuchon supérieur,
+		/// cf. bloc 3a du sweep) : sols d'étage et marches d'escalier. Ne
+		/// JAMAIS l'activer sur un mur (wall) — la sonde anti-encastrement
+		/// accrocherait son sommet (bug « vol contre le mur », #919/#920).
+		bool walkableTop = false;
 	};
 
 	/// Collisionneur composite : combine un IWorldCollider de terrain (sol + eau) et

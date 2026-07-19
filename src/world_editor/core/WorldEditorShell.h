@@ -291,6 +291,28 @@ namespace engine::editor::world
 		/// Installe le foncteur d'écriture de transform (appelé par l'Engine).
 		void SetTransformWriter(TransformWriter w) { m_transformWriter = std::move(w); }
 
+		/// Roadmap-6 (2026-07-19) — Accès lecture au foncteur d'écriture de
+		/// transform. Consommé par le gizmo viewport (Engine) pour construire
+		/// des `SetEntityTransformCommand` au relâchement d'un drag. Peut être
+		/// vide si l'Engine ne l'a pas encore installé (tester avant usage).
+		const TransformWriter& GetTransformWriter() const { return m_transformWriter; }
+
+		/// Roadmap-6 — Mode du gizmo de transformation du viewport (entités de
+		/// scène sélectionnées). Piloté par les raccourcis E / T / C et par les
+		/// actions `tool.gizmo-*` ; lu par l'Engine pour dessiner et manipuler.
+		enum class SceneGizmoMode : uint8_t
+		{
+			Translate = 0, ///< E — déplacer le long des axes monde X/Y/Z.
+			Rotate    = 1, ///< T — tourner autour de l'axe vertical (yaw).
+			Scale     = 2, ///< C — échelle uniforme.
+		};
+
+		/// Roadmap-6 — Mode courant du gizmo viewport (Translate par défaut).
+		SceneGizmoMode GetSceneGizmoMode() const { return m_sceneGizmoMode; }
+
+		/// Roadmap-6 — Change le mode du gizmo viewport. Effet de bord : log.
+		void SetSceneGizmoMode(SceneGizmoMode mode);
+
 		/// Lot 5 (2026-07-18) — Installe les foncteurs d'édition structurelle
 		/// (capture / remove / restore / duplicate) des entités de scène.
 		/// Appelé par l'Engine (qui capture les documents mutables) au même
@@ -301,23 +323,27 @@ namespace engine::editor::world
 			m_entityEditOps = std::move(ops);
 		}
 
-		/// Lot 5 — true si la sélection courante est duplicable/supprimable :
-		/// foncteurs installés ET kind ∈ {LayoutInstance, MeshInsert,
-		/// DungeonPortal} (Terrain/Water/None exclus). Pilote `enabled` des
-		/// actions `edit.duplicate` / `edit.delete`.
+		/// Lot 5 (multi Roadmap-6) — true si AU MOINS une entité de la sélection
+		/// est duplicable/supprimable : foncteurs installés ET kind ∈
+		/// {LayoutInstance, MeshInsert, DungeonPortal} (Terrain/Water/None
+		/// exclus). Pilote `enabled` des actions `edit.duplicate`/`edit.delete`.
 		bool CanEditSelectedEntity() const;
 
-		/// Lot 5 — Duplique l'entité sélectionnée via une
-		/// `DuplicateEntityCommand` poussée sur la pile undo (nouveau guid +
-		/// léger décalage de position ; la sélection reste sur l'original,
-		/// dont l'index n'est pas invalidé par un ajout en fin de liste).
+		/// Lot 5 (multi Roadmap-6) — Duplique la sélection : une
+		/// `DuplicateEntityCommand` par entité éditable (nouveau guid + léger
+		/// décalage de position), regroupées en `CompositeCommand` si la
+		/// sélection en contient plusieurs (UNE étape d'annulation par geste).
+		/// La sélection reste sur les originaux (copies ajoutées en fin de
+		/// liste, aucun index invalidé).
 		/// No-op (log) si `CanEditSelectedEntity()` est false.
 		void DuplicateSelectedEntity();
 
-		/// Lot 5 — Supprime l'entité sélectionnée via une
-		/// `DeleteEntityCommand` poussée sur la pile undo, puis VIDE la
-		/// sélection (les index d'entités suivant la supprimée glissent d'un
-		/// rang — garder la sélection pointerait une autre entité).
+		/// Lot 5 (multi Roadmap-6) — Supprime la sélection : une
+		/// `DeleteEntityCommand` par entité éditable, ordonnées par index
+		/// DÉCROISSANT par kind (la capture du 1er Execute travaille par index
+		/// de scène — retirer d'abord les index hauts préserve les bas),
+		/// regroupées en `CompositeCommand` si plusieurs. VIDE ensuite la
+		/// sélection (les index des entités restantes ont glissé).
 		/// No-op (log) si `CanEditSelectedEntity()` est false.
 		void DeleteSelectedEntity();
 
@@ -516,6 +542,7 @@ namespace engine::editor::world
 		engine::editor::world::quests::QuestEditIo m_questEditIo;    // SP4 — E/S authoring quêtes
 		panels::QuestEditorPanel* m_questEditorPtr = nullptr;        // non possédé (dans m_panels)
 		ActiveTool m_activeTool = ActiveTool::None;
+		SceneGizmoMode m_sceneGizmoMode = SceneGizmoMode::Translate; // Roadmap-6
 		actions::EditorActionRegistry m_actions; // réorganisation UI 2026-07-17
 		/// Sériel du CommandStack au dernier `NoteSaved` (dirty-tracking).
 		uint64_t m_savedSerial = 0;

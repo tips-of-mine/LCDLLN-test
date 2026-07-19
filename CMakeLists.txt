@@ -1516,6 +1516,28 @@ if(MSVC)
 endif()
 add_test(NAME entity_edit_commands_tests COMMAND entity_edit_commands_tests)
 
+# Roadmap-6 (2026-07-19) — Tests CPU pour CompositeCommand (undo groupe des
+# gestes multi-selection : ordre Execute/Undo, integration CommandStack).
+# Pur CPU, non gate WIN32 (execute aussi par le ctest de build-linux).
+add_executable(composite_command_tests src/world_editor/tests/CompositeCommandTests.cpp)
+target_include_directories(composite_command_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(composite_command_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(composite_command_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME composite_command_tests COMMAND composite_command_tests)
+
+# Roadmap-6 (2026-07-19) — Tests CPU pour PlaceLayoutInstanceCommand /
+# MoveLayoutInstanceCommand (placement undoable, foncteurs mock par guid).
+# Pur CPU, non gate WIN32.
+add_executable(layout_placement_commands_tests src/world_editor/tests/LayoutPlacementCommandsTests.cpp)
+target_include_directories(layout_placement_commands_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(layout_placement_commands_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(layout_placement_commands_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME layout_placement_commands_tests COMMAND layout_placement_commands_tests)
+
 # Sous-projet 1, bloc H — Tests CPU pour Config::SaveToFile (round-trip JSON
 # plat des 4 types scalaires + echappement). Pur CPU + E/S, non gate WIN32.
 add_executable(config_save_to_file_tests src/world_editor/tests/ConfigSaveToFileTests.cpp)

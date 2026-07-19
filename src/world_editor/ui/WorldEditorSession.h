@@ -88,8 +88,36 @@ namespace engine::editor
 		[[nodiscard]] bool ConsumeRouteApplyDraftRequest();
 
 		/// Place une nouvelle instance ou deplace celle selectionnee (coords monde, Y au sol).
+		/// Chemin DIRECT (non-undoable), conservé pour compat/tests — le clic
+		/// viewport passe désormais par les commandes Roadmap-6 ci-dessous.
 		void PlaceOrMoveLayoutInstanceAtTerrainHit(const engine::core::Config& cfg, double worldX, double worldY, double worldZ);
 		void RemoveLayoutInstance(size_t index);
+
+		/// Roadmap-6 (2026-07-19) — Construit (SANS l'ajouter au document)
+		/// l'instance qui serait posée au point de sol donné, selon le mode de
+		/// placement courant (rocher / arbre + espèce + échelle aléatoire).
+		/// Le guid est généré ici (stable, conservé par le Redo de la commande).
+		/// \param worldX,worldY,worldZ coordonnées monde (mètres, Y au sol).
+		/// \return false si aucune espèce d'arbre valide (statut renseigné).
+		/// Effet de bord : charge le catalogue d'arbres au 1er appel + SetStatus.
+		bool BuildLayoutInstanceForPlacement(const engine::core::Config& cfg,
+			double worldX, double worldY, double worldZ,
+			WorldMapEditLayoutInstance& out);
+
+		/// Roadmap-6 — Ajoute une instance déjà construite en fin de document
+		/// (guid conservé). Consommé par `PlaceLayoutInstanceCommand::Execute`.
+		/// Effet de bord : SetStatus (« Rocher place. » / « Arbre place. »).
+		bool AddLayoutInstance(const WorldMapEditLayoutInstance& inst);
+
+		/// Roadmap-6 — Retire l'instance de guid donné (recalage de la
+		/// sélection liste comme `RemoveLayoutInstance`). \return false si
+		/// le guid est introuvable. Consommé par les Undo/Redo des commandes.
+		bool RemoveLayoutInstanceByGuid(const std::string& guid);
+
+		/// Roadmap-6 — Écrit la position monde (mètres) de l'instance de guid
+		/// donné. \return false si le guid est introuvable. Consommé par
+		/// `MoveLayoutInstanceCommand` (Execute ET Undo).
+		bool SetLayoutInstancePositionByGuid(const std::string& guid, double worldX, double worldY, double worldZ);
 
 		/// Appele avant l'ecriture du JSON d'edition pour persister heightmap / splat sur disque (Vulkan).
 		void SetTerrainSaveHook(std::function<bool(const engine::core::Config&, const WorldMapEditDocument&)> hook);

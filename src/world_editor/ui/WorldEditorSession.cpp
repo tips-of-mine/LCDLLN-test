@@ -199,6 +199,21 @@ namespace engine::editor
 			SetStatus("Instance deplacee.");
 			return;
 		}
+		// Roadmap-6 : la construction est factorisée (réutilisée par le chemin
+		// undoable côté Engine) ; ce chemin direct reste pour compat/tests.
+		WorldMapEditLayoutInstance inst{};
+		if (!BuildLayoutInstanceForPlacement(cfg, worldX, worldY, worldZ, inst))
+		{
+			return;
+		}
+		(void)AddLayoutInstance(inst);
+	}
+
+	bool WorldEditorSession::BuildLayoutInstanceForPlacement(const engine::core::Config& cfg,
+		double worldX, double worldY, double worldZ,
+		WorldMapEditLayoutInstance& out)
+	{
+		EnsureTreeCatalogLoaded(cfg);
 		const int kind = std::clamp(m_instancePlacementKind, 0, 1);
 		WorldMapEditLayoutInstance inst{};
 		inst.guid = NewLayoutInstanceGuid();
@@ -214,7 +229,7 @@ namespace engine::editor
 			if (m_treeCatalog.Species().empty())
 			{
 				SetStatus("Aucune espece d'arbre valide (catalogue absent ou sans 2+ glTF par espece). Utilisez 'Rocher' ou corrigez le JSON.");
-				return;
+				return false;
 			}
 			const int si = std::clamp(m_treeSpeciesUiIndex, 0, static_cast<int>(m_treeCatalog.Species().size()) - 1);
 			const TreeSpeciesSpec& sp = m_treeCatalog.Species()[static_cast<size_t>(si)];
@@ -239,8 +254,43 @@ namespace engine::editor
 		inst.worldX = worldX;
 		inst.worldY = worldY;
 		inst.worldZ = worldZ;
-		m_doc.layoutInstances.push_back(std::move(inst));
-		SetStatus(kind == 1 ? "Rocher place." : "Arbre place.");
+		out = std::move(inst);
+		return true;
+	}
+
+	bool WorldEditorSession::AddLayoutInstance(const WorldMapEditLayoutInstance& inst)
+	{
+		m_doc.layoutInstances.push_back(inst);
+		SetStatus(inst.speciesId.empty() ? "Rocher place." : "Arbre place.");
+		return true;
+	}
+
+	bool WorldEditorSession::RemoveLayoutInstanceByGuid(const std::string& guid)
+	{
+		for (size_t i = 0; i < m_doc.layoutInstances.size(); ++i)
+		{
+			if (m_doc.layoutInstances[i].guid == guid)
+			{
+				RemoveLayoutInstance(i); // recale aussi m_selectedLayoutInstance
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool WorldEditorSession::SetLayoutInstancePositionByGuid(const std::string& guid, double worldX, double worldY, double worldZ)
+	{
+		for (WorldMapEditLayoutInstance& inst : m_doc.layoutInstances)
+		{
+			if (inst.guid == guid)
+			{
+				inst.worldX = worldX;
+				inst.worldY = worldY;
+				inst.worldZ = worldZ;
+				return true;
+			}
+		}
+		return false;
 	}
 
 	void WorldEditorSession::RemoveLayoutInstance(size_t index)

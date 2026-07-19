@@ -8,6 +8,38 @@
       "count": 2,
       "respawnSec": 8,
       "leashDistanceMeters": 24.0
+    },
+    {
+      "id": "zone_1_spawn_02_loups",
+      "archetypeId": 101,
+      "position": [96.0, 0.0, 140.0],
+      "count": 3,
+      "respawnSec": 10,
+      "leashDistanceMeters": 28.0
+    },
+    {
+      "id": "zone_1_spawn_03_lapins",
+      "archetypeId": 102,
+      "position": [110.0, 0.0, 105.0],
+      "count": 4,
+      "respawnSec": 6,
+      "leashDistanceMeters": 18.0
+    },
+    {
+      "id": "zone_1_spawn_04_bandits",
+      "archetypeId": 103,
+      "position": [160.0, 0.0, 150.0],
+      "count": 2,
+      "respawnSec": 15,
+      "leashDistanceMeters": 30.0
+    },
+    {
+      "id": "zone_1_spawn_05_alpha",
+      "archetypeId": 104,
+      "position": [150.0, 0.0, 96.0],
+      "count": 1,
+      "respawnSec": 45,
+      "leashDistanceMeters": 32.0
     }
   ]
 }

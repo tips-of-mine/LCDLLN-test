@@ -260,6 +260,39 @@
       "type": "weapon",
       "slot": "mainhand",
       "bonus": { "damage": 12, "accuracy": 4 }
+    },
+    {
+      "_comment": "Loot reel (2026-07-19) — materiaux de butin (plage 6001+). Ne s'equipent pas ; vendables aux marchands / futurs ingredients d'artisanat.",
+      "id": 6001,
+      "name": "Peau de loup",
+      "description": "Une peau epaisse et grise. Les tanneurs en font bon usage.",
+      "icon": "items/peau_loup.png",
+      "type": "misc",
+      "slot": "none"
+    },
+    {
+      "id": 6002,
+      "name": "Patte de lapin",
+      "description": "Un porte-bonheur classique. Moins chanceux pour le lapin.",
+      "icon": "items/patte_lapin.png",
+      "type": "misc",
+      "slot": "none"
+    },
+    {
+      "id": 6003,
+      "name": "Defense de sanglier",
+      "description": "Une defense robuste, prisee des artisans.",
+      "icon": "items/defense_sanglier.png",
+      "type": "misc",
+      "slot": "none"
+    },
+    {
+      "id": 6004,
+      "name": "Bourse volee",
+      "description": "Une bourse derobee par un bandit. Son proprietaire ne la reclamera plus.",
+      "icon": "items/bourse_volee.png",
+      "type": "misc",
+      "slot": "none"
     }
   ]
 }

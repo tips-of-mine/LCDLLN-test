@@ -1632,6 +1632,14 @@ namespace engine::server
 		SendDynamicEventBootstrap(acceptedClient);
 		SendQuestStateBootstrap(acceptedClient);
 		(void)SendWalletUpdate(acceptedClient);
+		// Loot réel (2026-07-19) — resynchronise l'inventaire ET l'équipement
+		// PERSISTÉS à l'entrée en monde. Avant ce fix, le serveur rechargeait
+		// bien les deux depuis le fichier personnage mais n'en envoyait rien :
+		// au relog, le sac paraissait vide jusqu'au premier delta (loot,
+		// achat, équipement…).
+		(void)SendInventoryDelta(acceptedClient,
+			std::span<const ItemStack>(acceptedClient.inventory.data(), acceptedClient.inventory.size()));
+		(void)SendEquipmentUpdate(acceptedClient);
 		OnClientLogin(acceptedClient);
 	}
 
@@ -2002,6 +2010,36 @@ namespace engine::server
 				LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: zero value at line {}", lineNumber);
 				m_lootTableEntries.clear();
 				return false;
+			}
+
+			// Loot réel (2026-07-19) — colonnes OPTIONNELLES rétro-compatibles :
+			//   [drop_chance_pct]           1..100 (absent = 100, toujours)
+			//   [min_count max_count]       quantité uniforme (absent = fixe)
+			uint32_t chance = 0;
+			if (lineStream >> chance)
+			{
+				if (chance == 0 || chance > 100)
+				{
+					LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: drop_chance {} hors [1..100] ligne {}",
+						chance, lineNumber);
+					m_lootTableEntries.clear();
+					return false;
+				}
+				entry.dropChancePct = static_cast<uint8_t>(chance);
+				uint32_t minCount = 0;
+				uint32_t maxCount = 0;
+				if (lineStream >> minCount >> maxCount)
+				{
+					if (minCount == 0 || maxCount < minCount)
+					{
+						LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: min/max ({}/{}) invalides ligne {}",
+							minCount, maxCount, lineNumber);
+						m_lootTableEntries.clear();
+						return false;
+					}
+					entry.minCount = minCount;
+					entry.maxCount = maxCount;
+				}
 			}
 
 			m_lootTableEntries.push_back(entry);
@@ -3973,22 +4011,50 @@ namespace engine::server
 			sentOk);
 	}
 
+	/// Loot réel (2026-07-19) — Tire le drop effectif d'une entrée : proba
+	/// dropChancePct (m_combatRng), puis quantité uniforme [minCount,
+	/// maxCount] si bornée, sinon quantité fixe item.quantity.
+	/// \return true si l'entrée droppe (outItem rempli), false si le tirage
+	/// échoue. Effet de bord : consomme m_combatRng.
+	bool ServerApp::RollLootEntry(const LootTableEntry& entry, ItemStack& outItem)
+	{
+		if (entry.dropChancePct < 100u)
+		{
+			std::uniform_int_distribution<uint32_t> chanceDist(1u, 100u);
+			if (chanceDist(m_combatRng) > entry.dropChancePct)
+			{
+				return false;
+			}
+		}
+		outItem = entry.item;
+		if (entry.maxCount > 0u)
+		{
+			std::uniform_int_distribution<uint32_t> countDist(entry.minCount, entry.maxCount);
+			outItem.quantity = countDist(m_combatRng);
+		}
+		return true;
+	}
+
 	void ServerApp::AutoLootMobToKiller(const MobEntity& mob, EntityId looterEntityId)
 	{
 		// Même collecte que SpawnLootBagForMob : toutes les entrées de la table
 		// pour cet archétype (la visibilité owner/public ne concerne que les
 		// sacs ; en crédit direct le looter du groupe a déjà été résolu).
+		// Loot réel (2026-07-19) : chaque entrée passe par RollLootEntry
+		// (proba de drop + quantité aléatoire).
 		std::vector<ItemStack> droppedItems;
 		for (const LootTableEntry& entry : m_lootTableEntries)
 		{
-			if (entry.sourceArchetypeId == mob.archetypeId)
+			ItemStack rolled{};
+			if (entry.sourceArchetypeId == mob.archetypeId && RollLootEntry(entry, rolled))
 			{
-				droppedItems.push_back(entry.item);
+				droppedItems.push_back(rolled);
 			}
 		}
 		if (droppedItems.empty())
 		{
-			// Pas de loot pour cet archétype : pas de fenêtre côté client.
+			// Pas de loot pour cet archétype (ou tirages malchanceux) : pas de
+			// fenêtre côté client.
 			LOG_DEBUG(Net, "[ServerApp] Auto-loot skipped: no loot table entry (mob_entity_id={}, archetype_id={})",
 				mob.entityId, mob.archetypeId);
 			return;
@@ -4050,7 +4116,13 @@ namespace engine::server
 				return;
 			}
 
-			droppedItems.push_back(entry.item);
+			// Loot réel (2026-07-19) — tirage proba + quantité (la visibilité
+			// est validée sur TOUTES les entrées de l'archétype, tirées ou non).
+			ItemStack rolled{};
+			if (RollLootEntry(entry, rolled))
+			{
+				droppedItems.push_back(rolled);
+			}
 		}
 
 		if (!foundLoot)
@@ -4058,6 +4130,13 @@ namespace engine::server
 			LOG_WARN(Net, "[ServerApp] Loot bag spawn skipped: no loot table entry (mob_entity_id={}, archetype_id={})",
 				mob.entityId,
 				mob.archetypeId);
+			return;
+		}
+		if (droppedItems.empty())
+		{
+			// Tirages malchanceux : rien à mettre dans le sac, pas de spawn.
+			LOG_DEBUG(Net, "[ServerApp] Loot bag spawn skipped: rolls empty (mob_entity_id={}, archetype_id={})",
+				mob.entityId, mob.archetypeId);
 			return;
 		}
 

@@ -1,5 +1,6 @@
 #include "src/world_editor/volumes/MeshInsertIo.h"
 
+#include <algorithm> // std::min — plafond du reserve (P0 audit 3.1)
 #include <cstring>
 
 namespace engine::editor::world::volumes
@@ -146,7 +147,15 @@ namespace engine::editor::world::volumes
 			return false;
 		}
 
-		outInstances.reserve(instanceCount);
+		// P0 (audit 2026-06-05, 3.1) — borne le reserve par ce que le fichier
+		// peut PHYSIQUEMENT contenir : une instance sérialisée fait au moins
+		// ~49 octets (guid + 3 chaînes + 2 vec3 + 2 f32 + flags) ; on prend 32
+		// en borne prudente. Sans ce plafond, un .bin corrompu annonçant
+		// count=0xFFFFFFFF provoquait un std::bad_alloc non catché (crash au
+		// chargement) AVANT toute vérification des octets. La boucle ci-dessous
+		// échoue proprement (« truncated ») si le count reste mensonger.
+		outInstances.reserve(std::min<size_t>(instanceCount,
+			(bytes.size() - cursor) / 32u));
 		for (uint32_t i = 0; i < instanceCount; ++i)
 		{
 			MeshInsertInstance inst;

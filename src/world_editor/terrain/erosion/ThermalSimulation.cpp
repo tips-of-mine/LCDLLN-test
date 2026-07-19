@@ -120,11 +120,20 @@ namespace engine::editor::world::erosion
 					}
 
 					if (excessTotal <= 0.0f) continue;
-					// Anti-runaway : on ne peut pas relâcher plus que la
-					// hauteur disponible au-dessus du sea level (ou 0 par
-					// défaut). Borne soft : `min(1, h / excessTotal)` pour
-					// préserver la masse.
-					const float factor = std::min(1.0f, h / std::max(excessTotal, 1e-6f));
+					// Anti-runaway (P0 audit 2026-06-05, 4.1) : on ne relâche
+					// jamais plus que la hauteur DISPONIBLE au-dessus du
+					// plancher (sea level si stopUnderSeaLevel, 0 m sinon —
+					// c'était l'intention documentée, mais le code bornait sur
+					// `h` brut : facteur NÉGATIF pour h < 0 → transferts
+					// inversés non bornés (dérive de masse, altitudes qui
+					// divergent). Le clamp [0,1] garantit qu'une cellule ne
+					// descend jamais sous le plancher et que le facteur reste
+					// une fraction de l'excès calculé.
+					const float floorMeters = params.stopUnderSeaLevel ? seaLevelMeters : 0.0f;
+					const float available = h - floorMeters;
+					if (available <= 0.0f) continue;
+					const float factor = std::clamp(
+						available / std::max(excessTotal, 1e-6f), 0.0f, 1.0f);
 					for (int n = 0; n < 8; ++n)
 					{
 						const float e = perNeighborExcess[n];

@@ -131,8 +131,13 @@ namespace engine::editor::world::zone_presets
 			const char c = s[p];
 			// Clés structurelles déjà parsées côté ZonePresetOperation :
 			// on les saute (mais on consomme quand même leur valeur).
+			// P1 (audit 2026-06-05, 6.4) : "preset" N'EST PLUS filtrée — c'est
+			// `MaybeApplyToolPreset` (OperationDispatcher) qui la lit via
+			// `GetString("preset")` ; la filtrer ici rendait l'overlay de
+			// tool-preset silencieusement inopérant (les sims tournaient
+			// toujours avec les defaults + overrides scalaires seulement).
 			const bool structural =
-				(key == "type" || key == "preset" || key == "affectedBy");
+				(key == "type" || key == "affectedBy");
 
 			if (c == '"')
 			{

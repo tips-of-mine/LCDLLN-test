@@ -16,6 +16,9 @@
 
 #include <chrono>
 #include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace engine::editor::world::zone_presets
 {
@@ -64,6 +67,31 @@ namespace engine::editor::world::zone_presets
 			preset.id, custom.reliefMultiplier, custom.waterDensityMultiplier,
 			custom.drynessMultiplier, custom.seed);
 
+		// P0 (audit 2026-06-05, 6.1) — TRANSACTION : l'exécution d'un preset
+		// commence par un reset DESTRUCTIF de la zone ; si une op échoue ou si
+		// l'utilisateur annule, la carte serait laissée dans un état partiel
+		// IRRÉVERSIBLE (le reset n'est pas une commande, pas de Ctrl+Z).
+		// Filet de sécurité : on persiste l'état courant sur DISQUE avant, et
+		// on RESTAURE depuis ce filet si l'exécution ne va pas au bout.
+		std::vector<engine::world::GlobalChunkCoord> preCoords;
+		if (cfg != nullptr)
+		{
+			shell.MutableTerrainDocument().ForEachLoadedChunk(
+				[&preCoords](engine::world::GlobalChunkCoord c,
+					const std::shared_ptr<engine::world::terrain::TerrainChunk>&)
+				{ preCoords.push_back(c); });
+			const size_t chunksSaved = shell.SaveTerrainChunks(*cfg);
+			const size_t docsSaved   = shell.SaveZoneDocuments(*cfg);
+			LOG_INFO(EditorWorld,
+				"[ZonePresetDialog] Filet de sécurité écrit avant preset ({} chunk(s), {} document(s))",
+				chunksSaved, docsSaved);
+		}
+		else
+		{
+			LOG_WARN(EditorWorld,
+				"[ZonePresetDialog] Config absente : preset exécuté SANS filet de sécurité (rollback impossible)");
+		}
+
 		using clock = std::chrono::steady_clock;
 		const auto t0 = clock::now();
 
@@ -79,6 +107,37 @@ namespace engine::editor::world::zone_presets
 		m_lastDurationMs  = std::chrono::duration<double, std::milli>(t1 - t0).count();
 		m_lastPresetId    = preset.id;
 		m_screen          = Screen::Result;
+
+		// P0 (6.1) — rollback : échec d'au moins une op OU annulation → la
+		// carte est restaurée depuis le filet disque. L'historique undo est
+		// vidé (les commandes du preset référencent l'état abandonné).
+		if (cfg != nullptr && (m_lastSummary.failed > 0u || m_lastSummary.wasCancelled))
+		{
+			engine::editor::world::TerrainDocument& terrain = shell.MutableTerrainDocument();
+			// Empreinte GPU à resynchroniser : union des chunks d'AVANT et de
+			// ceux créés par le preset (encore chargés à cet instant).
+			std::vector<engine::world::GlobalChunkCoord> touched = preCoords;
+			terrain.ForEachLoadedChunk(
+				[&touched](engine::world::GlobalChunkCoord c,
+					const std::shared_ptr<engine::world::terrain::TerrainChunk>&)
+				{
+					for (const engine::world::GlobalChunkCoord& k : touched)
+						if (k == c) return;
+					touched.push_back(c);
+				});
+			const std::string zoneId = terrain.GetZoneId();
+			shell.ResetForZoneChange(zoneId); // purge RAM + historique undo périmé
+			shell.LoadZoneDocuments(*cfg);    // eau / mesh inserts / portails depuis le filet
+			for (const engine::world::GlobalChunkCoord& c : touched)
+			{
+				(void)terrain.EnsureLoaded(*cfg, c.x, c.z); // relit le filet (ou plat 0 m)
+				terrain.OnCommit(c);                        // resync GPU + LODs du chunk
+			}
+			LOG_WARN(EditorWorld,
+				"[ZonePresetDialog] '{}' {} — carte RESTAURÉE depuis le filet disque ({} chunk(s) resynchronisés)",
+				preset.id, m_lastSummary.wasCancelled ? "annulé" : "en échec partiel",
+				touched.size());
+		}
 
 		LOG_INFO(EditorWorld,
 			"[ZonePresetDialog] '{}' terminé en {:.0f} ms (pushed={}, skipped={}, failed={})",
@@ -220,15 +279,19 @@ namespace engine::editor::world::zone_presets
 		ImGui::Separator();
 		if (m_lastSummary.unsupportedSkipped > 0u)
 		{
-			ImGui::TextWrapped("Note : certaines opérations (érosions, river_network, "
-				"coastline) n'ont pas encore de chemin d'exécution sans UI et sont "
-				"ignorées (M100.46 incrément 2e à venir).");
+			// P1 (audit 2026-06-05, 6.3) — texte corrigé : les érosions,
+			// river_network et coastline SONT câblées (12/14) ; les deux
+			// seules opérations non câblées sont sculpt_brush et splat_paint.
+			ImGui::TextWrapped("Note : les opérations sculpt_brush et splat_paint "
+				"n'ont pas encore de chemin d'exécution hors UI et sont ignorées "
+				"(les 12 autres types, érosions et rivières comprises, sont câblés).");
 			ImGui::Separator();
 		}
 		if (m_lastSummary.failed > 0u)
 		{
 			ImGui::TextWrapped("Certaines opérations ont échoué (catalogId introuvable, "
-				"paramètres invalides...). Voir les logs EditorWorld pour le détail.");
+				"paramètres invalides...). La carte a été RESTAURÉE depuis le filet "
+				"de sécurité écrit avant le preset. Voir les logs EditorWorld.");
 			ImGui::Separator();
 		}
 		if (ImGui::Button("Retour à la sélection", ImVec2(180.0f, 0.0f)))

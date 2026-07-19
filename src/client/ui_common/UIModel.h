@@ -230,6 +230,9 @@ namespace engine::client
 		/// Grimoire — layout autoritaire des 10 slots (slot i → spellId, "" = vide),
 		/// reçu via ActionBarLayoutUpdate (enter-world / ACK serveur).
 		std::array<std::string, 10> actionBarLayout{};
+		/// Roadmap-3 (2026-07-19) — ceinture : 4 slots d'objets actifs
+		/// (jetons "item:<id>"), reçue via BeltLayoutUpdate (kind 100).
+		std::array<std::string, 4> beltLayout{};
 		/// PR-C — progression de niveau (barre d'XP), reçue via PlayerXpUpdate
 		/// (enter-world + chaque gain d'XP). \c xpForNextLevel = 0 signale le cap
 		/// de niveau. \c hasXp reste faux tant qu'aucun PlayerXpUpdate n'est reçu.

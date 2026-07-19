@@ -24,16 +24,25 @@ namespace engine::anniversary
 		return itemId >= kFirstCakeItemId && itemId < kFirstCakeItemId + kCakeVariantCount;
 	}
 
-	/// Jeton de slot pour \p itemId : "item:<itemId>".
-	inline std::string MakeCakeToken(uint32_t itemId)
+	/// Roadmap-3 (2026-07-19) — jeton de slot GÉNÉRIQUE pour tout objet :
+	/// "item:<itemId>" (ceinture : gâteaux, potions, nourriture…).
+	inline std::string MakeItemToken(uint32_t itemId)
 	{
 		return "item:" + std::to_string(itemId);
 	}
 
-	/// Parse un jeton de slot. \return true si \p token est "item:<id>" avec
-	/// <id> = gâteau valide (écrit dans \p outItemId). Tout autre contenu
-	/// (spellId, vide, id hors plage) retourne false.
-	inline bool ParseCakeToken(std::string_view token, uint32_t& outItemId)
+	/// Jeton de slot pour \p itemId : "item:<itemId>" (alias historique
+	/// gâteau — même format que MakeItemToken).
+	inline std::string MakeCakeToken(uint32_t itemId)
+	{
+		return MakeItemToken(itemId);
+	}
+
+	/// Roadmap-3 (2026-07-19) — Parse GÉNÉRIQUE d'un jeton "item:<id>" (tout
+	/// id d'objet > 0 : gâteaux, potions, nourriture…). \return true si le
+	/// format est strict (préfixe + chiffres) — l'appelant valide ensuite
+	/// l'existence/l'activabilité de l'objet (catalogue, possession).
+	inline bool ParseItemToken(std::string_view token, uint32_t& outItemId)
 	{
 		constexpr std::string_view kPrefix = "item:";
 		if (token.size() <= kPrefix.size() || token.compare(0, kPrefix.size(), kPrefix) != 0)
@@ -46,7 +55,17 @@ namespace engine::anniversary
 			value = value * 10u + static_cast<uint32_t>(c - '0');
 			if (value > 1000000u) return false; // garde anti-overflow
 		}
-		if (!IsCakeItemId(value)) return false;
+		if (value == 0u) return false;
+		outItemId = value;
+		return true;
+	}
+
+	/// Parse un jeton de slot GÂTEAU. \return true si \p token est
+	/// "item:<id>" avec <id> = gâteau valide (5101..5110).
+	inline bool ParseCakeToken(std::string_view token, uint32_t& outItemId)
+	{
+		uint32_t value = 0;
+		if (!ParseItemToken(token, value) || !IsCakeItemId(value)) return false;
 		outItemId = value;
 		return true;
 	}

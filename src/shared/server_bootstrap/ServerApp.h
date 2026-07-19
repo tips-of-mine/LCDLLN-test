@@ -161,6 +161,11 @@ namespace engine::server
 		uint64_t lastForcePositionSentMs = 0;
 		/// Combat SP3 — auras actives (buffs, HoT, debuffs subis).
 		std::vector<ActiveAura> auras;
+		/// Roadmap-3 (2026-07-19) — Ceinture : 4 slots d'objets ACTIFS
+		/// (jetons "item:<id>" : gâteaux, potions, nourriture ; "" = vide).
+		/// Autoritaire (validée par HandleSetBeltLayout : objet possédé et
+		/// activable) et persistée (belt.slot.N).
+		std::array<std::string, 4> beltLayout{};
 		/// Anniversaires SP3 (2026-07-18) — gâteau ACTIF (0 = aucun). Posé par
 		/// un CastRequest "item:<id>" ; le buff est entretenu par TickCakeBuffs
 		/// tant que le gâteau reste slotté ET possédé ; NON persisté (à
@@ -601,6 +606,21 @@ namespace engine::server
 		/// (proba dropChancePct + quantité uniforme [minCount,maxCount]).
 		/// \return true si l'entrée droppe (\p outItem rempli).
 		bool RollLootEntry(const LootTableEntry& entry, ItemStack& outItem);
+
+		/// Roadmap-3 (2026-07-19) — Ceinture : validation autoritaire du
+		/// layout (kind 99) — chaque jeton "item:<id>" doit référencer un
+		/// objet POSSÉDÉ et ACTIVABLE (consommable du catalogue ou gâteau),
+		/// unicité par slot ; rejet = renvoi de l'état inchangé (kind 100).
+		void HandleSetBeltLayout(const Endpoint& endpoint, const SetBeltLayoutMessage& message);
+
+		/// Roadmap-3 — pousse le layout ceinture autoritaire (kind 100).
+		bool SendBeltLayout(const ConnectedClient& client);
+
+		/// Roadmap-3 — consomme un objet activable NON-gâteau de la ceinture
+		/// (ex. potion 2002) : vérifie slotté + possédé, applique l'effet
+		/// (ConsumableEffectLibrary), décrémente la pile (slot vidé si
+		/// épuisée), resynchronise inventaire + ceinture + notice.
+		void HandleConsumableUse(ConnectedClient& client, uint32_t itemId);
 
 		/// Chantier 2 SP-A — somme des StatBonus de tout l'équipement porté (résolus
 		/// via m_itemCatalog). Additionnée aux DerivedStats avant émission (anti-triche).

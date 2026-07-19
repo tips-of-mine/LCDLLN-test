@@ -1,6 +1,7 @@
 #include "src/shared/server_bootstrap/ServerApp.h"
 
 #include "src/shared/anniversary/CakeItemToken.h" // SP3 anniversaires (2026-07-18)
+#include "src/shardd/gameplay/items/ConsumableEffectLibrary.h" // Roadmap-3 (2026-07-19)
 #include "src/shared/core/Log.h"
 #include "src/shared/net/ChatEmotes.h"
 #include "src/shared/net/ChatSystem.h"
@@ -904,6 +905,14 @@ namespace engine::server
 			return;
 		}
 
+		// Roadmap-3 (2026-07-19) — Ceinture : réassignation des slots (kind 99).
+		SetBeltLayoutMessage setBelt{};
+		if (DecodeSetBeltLayout(packetBytes, setBelt))
+		{
+			HandleSetBeltLayout(datagram.endpoint, setBelt);
+			return;
+		}
+
 		// SP-B — choix d'une compétence par-classe (kind 91).
 		ChooseClassSkillRequestMessage chooseSkill{};
 		if (DecodeChooseClassSkillRequest(packetBytes, chooseSkill))
@@ -1432,6 +1441,8 @@ namespace engine::server
 		acceptedClient.professions = std::move(persistedState.professions);
 		/// Grimoire — restore action bar layout (10 slots).
 		acceptedClient.actionBarLayout = std::move(persistedState.actionBarLayout);
+		// Roadmap-3 (2026-07-19) — ceinture persistée.
+		acceptedClient.beltLayout = std::move(persistedState.beltLayout);
 		// Anniversaires SP3 (2026-07-18) — expirations des gâteaux possédés
 		// (la purge de minuit tourne dans TickCakeBuffs).
 		acceptedClient.cakeExpiresAtMsUtcByItemId = std::move(persistedState.cakeExpiresAtMsUtcByItemId);
@@ -1657,6 +1668,7 @@ namespace engine::server
 		(void)SendPlayerStats(acceptedClient);
 		(void)SendPlayerXpUpdate(acceptedClient); // PR-C — sync initial barre d'XP
 		(void)SendActionBarLayout(acceptedClient); // Grimoire — layout persisté (ou vide)
+		(void)SendBeltLayout(acceptedClient); // Roadmap-3 — ceinture persistée (ou vide)
 		(void)SendClassProgression(acceptedClient); // SP-B — progression par-classe persistée (ou vide)
 		SendDynamicEventBootstrap(acceptedClient);
 		SendQuestStateBootstrap(acceptedClient);
@@ -2243,6 +2255,8 @@ namespace engine::server
 		state.professions = client.professions;
 		/// Grimoire — persist action bar layout.
 		state.actionBarLayout = client.actionBarLayout;
+		/// Roadmap-3 — persist la ceinture (4 slots d'objets actifs).
+		state.beltLayout = client.beltLayout;
 		/// Anniversaires SP3 — persist les expirations des gâteaux possédés.
 		state.cakeExpiresAtMsUtcByItemId = client.cakeExpiresAtMsUtcByItemId;
 		/// SP-B — persist known class skills.
@@ -4558,14 +4572,17 @@ namespace engine::server
 			return;
 		}
 
-		// ── Anniversaires SP3 (2026-07-18) : activation d'un gâteau slotté ──
-		// AVANT les chemins de sorts : le jeton "item:<id>" n'est pas un
-		// spellId et ne requiert aucun profil de classe.
+		// ── Activation d'un OBJET (jeton "item:<id>") — AVANT les chemins de
+		// sorts (pas un spellId, aucun profil de classe requis). Gâteaux
+		// (anniversaires SP3) et consommables de ceinture (Roadmap-3).
 		{
-			uint32_t cakeItemId = 0u;
-			if (engine::anniversary::ParseCakeToken(message.spellId, cakeItemId))
+			uint32_t tokenItemId = 0u;
+			if (engine::anniversary::ParseItemToken(message.spellId, tokenItemId))
 			{
-				HandleCakeActivation(*client, cakeItemId);
+				if (engine::anniversary::IsCakeItemId(tokenItemId))
+					HandleCakeActivation(*client, tokenItemId);
+				else
+					HandleConsumableUse(*client, tokenItemId);
 				return;
 			}
 		}
@@ -4880,6 +4897,149 @@ namespace engine::server
 		SaveConnectedClient(*client, "actionbar_change");
 		(void)SendActionBarLayout(*client); // ACK autoritaire (layout validé)
 		LOG_INFO(Net, "[ServerApp] SetActionBarLayout applied (client_id={})", client->clientId);
+	}
+
+	void ServerApp::HandleSetBeltLayout(const Endpoint& endpoint, const SetBeltLayoutMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] SetBeltLayout ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] SetBeltLayout ignored: client_id mismatch (expected={}, got={})",
+				client->clientId, message.clientId);
+			return;
+		}
+
+		// Validation autoritaire : chaque slot non vide = jeton "item:<id>"
+		// d'un objet POSSÉDÉ et ACTIVABLE (gâteau ou consommable connu),
+		// unicité par slot. Rejet = renvoi de l'état inchangé (kind 100).
+		std::array<std::string, 4> validated{};
+		for (size_t slotIndex = 0; slotIndex < message.slots.size(); ++slotIndex)
+		{
+			const std::string& token = message.slots[slotIndex];
+			if (token.empty())
+			{
+				continue;
+			}
+			uint32_t itemId = 0u;
+			if (!engine::anniversary::ParseItemToken(token, itemId)
+				|| (!engine::anniversary::IsCakeItemId(itemId)
+					&& FindConsumableEffect(itemId) == nullptr))
+			{
+				LOG_WARN(Net, "[ServerApp] SetBeltLayout reject: jeton '{}' non activable (client_id={})",
+					token, client->clientId);
+				(void)SendBeltLayout(*client);
+				return;
+			}
+			bool owned = false;
+			for (const ItemStack& s : client->inventory)
+			{
+				if (s.itemId == itemId && s.quantity > 0u) { owned = true; break; }
+			}
+			if (!owned)
+			{
+				LOG_WARN(Net, "[ServerApp] SetBeltLayout reject: objet {} non possede (client_id={})",
+					itemId, client->clientId);
+				(void)SendBeltLayout(*client);
+				return;
+			}
+			for (size_t prior = 0; prior < slotIndex; ++prior)
+			{
+				if (validated[prior] == token)
+				{
+					(void)SendBeltLayout(*client);
+					return;
+				}
+			}
+			validated[slotIndex] = token;
+		}
+
+		client->beltLayout = validated;
+		SaveConnectedClient(*client, "belt_change");
+		(void)SendBeltLayout(*client); // ACK autoritaire
+		LOG_INFO(Net, "[ServerApp] SetBeltLayout applied (client_id={})", client->clientId);
+	}
+
+	bool ServerApp::SendBeltLayout(const ConnectedClient& client)
+	{
+		BeltLayoutUpdateMessage msg{};
+		msg.clientId = client.clientId;
+		msg.slots = client.beltLayout;
+		return m_transport.Send(client.endpoint, EncodeBeltLayoutUpdate(msg));
+	}
+
+	void ServerApp::HandleConsumableUse(ConnectedClient& client, uint32_t itemId)
+	{
+		const ConsumableEffectDef* def = FindConsumableEffect(itemId);
+		if (def == nullptr) return;
+		// Slotté en ceinture (les consommables ne s'activent QUE depuis la
+		// ceinture — geste volontaire, cf. règle gâteau).
+		const std::string token = engine::anniversary::MakeItemToken(itemId);
+		bool slotted = false;
+		for (const std::string& slot : client.beltLayout)
+			if (slot == token) { slotted = true; break; }
+		if (!slotted)
+		{
+			SendChatSystemNotice(client, "Placez d'abord cet objet dans votre ceinture.");
+			return;
+		}
+		std::string invErr;
+		if (!RemoveStackFromInventory(client, itemId, 1u, invErr))
+		{
+			SendChatSystemNotice(client, "Vous ne possédez plus cet objet.");
+			return;
+		}
+
+		// Effet : soin instantané (% PV max) et/ou aura de buff.
+		if (def->healPercentMaxHp > 0.0f)
+		{
+			const uint32_t healAmount = static_cast<uint32_t>(std::llround(
+				static_cast<double>(client.stats.maxHealth)
+				* static_cast<double>(def->healPercentMaxHp) / 100.0));
+			client.stats.currentHealth = std::min(
+				client.stats.maxHealth, client.stats.currentHealth + healAmount);
+		}
+		if (def->auraDurationMs > 0u)
+		{
+			ActiveAura aura;
+			aura.spellId = def->auraSpellId;
+			aura.type = def->auraType;
+			aura.percent = def->auraPercent;
+			aura.expiresAtMs = NowMonotonicMs() + def->auraDurationMs;
+			aura.casterEntityId = client.entityId;
+			if (UpsertAura(client.auras, std::move(aura)))
+			{
+				RefreshLiveDerivedStats(client);
+				(void)SendPlayerStats(client);
+			}
+			BroadcastAuraUpdate(client.entityId, client.auras);
+		}
+
+		// Pile épuisée : vider les slots de ceinture portant ce jeton.
+		bool stillOwned = false;
+		for (const ItemStack& s : client.inventory)
+			if (s.itemId == itemId && s.quantity > 0u) { stillOwned = true; break; }
+		bool beltChanged = false;
+		if (!stillOwned)
+		{
+			for (std::string& slot : client.beltLayout)
+				if (slot == token) { slot.clear(); beltChanged = true; }
+		}
+
+		SaveConnectedClient(client, "consumable_use");
+		(void)SendInventoryDelta(client,
+			std::span<const ItemStack>(client.inventory.data(), client.inventory.size()));
+		if (beltChanged)
+			(void)SendBeltLayout(client);
+		if (def->noticeFr[0] != '\0')
+			SendChatSystemNotice(client, def->noticeFr);
+		LOG_INFO(Net, "[ServerApp] Consommable utilise (client_id={}, item_id={})",
+			client.clientId, itemId);
 	}
 
 	bool ServerApp::SendClassProgression(const ConnectedClient& client)
@@ -5702,12 +5862,16 @@ namespace engine::server
 		const CakeBuffDef* def = FindCakeBuff(cakeItemId);
 		if (def == nullptr) return;
 		const std::string token = engine::anniversary::MakeCakeToken(cakeItemId);
+		// Roadmap-3 (2026-07-19) — le gâteau s'active depuis la barre d'action
+		// OU la ceinture (nouvelle barre d'objets actifs).
 		bool slotted = false;
 		for (const std::string& slot : client.actionBarLayout)
 			if (slot == token) { slotted = true; break; }
+		for (const std::string& slot : client.beltLayout)
+			if (slot == token) { slotted = true; break; }
 		if (!slotted)
 		{
-			SendChatSystemNotice(client, "Placez d'abord le gâteau dans votre barre d'action.");
+			SendChatSystemNotice(client, "Placez d'abord le gâteau dans votre ceinture (ou barre d'action).");
 			return;
 		}
 		bool owned = false;
@@ -5769,10 +5933,18 @@ namespace engine::server
 				{
 					if (slot == token) { slot.clear(); layoutChanged = true; }
 				}
+				// Roadmap-3 — vide aussi les slots de ceinture du gâteau mangé.
+				bool beltChanged = false;
+				for (std::string& slot : client.beltLayout)
+				{
+					if (slot == token) { slot.clear(); beltChanged = true; }
+				}
 				if (client.activeCakeItemId == cakeItemId)
 					client.activeCakeItemId = 0u;
 				if (layoutChanged)
 					(void)SendActionBarLayout(client);
+				if (beltChanged)
+					(void)SendBeltLayout(client);
 				SendChatSystemNotice(client,
 					"Le gâteau d'anniversaire a été mangé — la fête est finie pour cette année !");
 				it = client.cakeExpiresAtMsUtcByItemId.erase(it);
@@ -5789,8 +5961,11 @@ namespace engine::server
 				continue;
 			const CakeBuffDef* def = FindCakeBuff(client.activeCakeItemId);
 			const std::string activeToken = engine::anniversary::MakeCakeToken(client.activeCakeItemId);
+			// Roadmap-3 — slotté = barre d'action OU ceinture.
 			bool slotted = false;
 			for (const std::string& slot : client.actionBarLayout)
+				if (slot == activeToken) { slotted = true; break; }
+			for (const std::string& slot : client.beltLayout)
 				if (slot == activeToken) { slotted = true; break; }
 			bool owned = false;
 			for (const ItemStack& s : client.inventory)

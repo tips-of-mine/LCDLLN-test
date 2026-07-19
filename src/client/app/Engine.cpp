@@ -12067,6 +12067,56 @@ namespace engine
 							}
 						}
 
+						// Roadmap-3 (2026-07-19) — CEINTURE : 4 slots d'objets
+						// ACTIFS à droite de la barre d'action (jetons
+						// "item:<id>" : gâteaux, potions…). Activation par
+						// Maj+1..4 ou clic sur la case ; le serveur applique
+						// l'effet (CastRequest avec le jeton).
+						{
+							const float beltSlot = 44.0f;
+							const float beltGap = 6.0f;
+							const float beltX = barX + barWidth + 24.0f;
+							const float beltY = dh - beltSlot - 16.0f;
+							const auto& beltLayout = uiModel.playerStats.beltLayout;
+							const bool shiftHeld = m_input.IsDown(engine::platform::Key::Shift);
+							for (size_t bi = 0; bi < beltLayout.size(); ++bi)
+							{
+								const float bx0 = beltX + static_cast<float>(bi) * (beltSlot + beltGap);
+								const std::string& beltTok = beltLayout[bi];
+								uint32_t beltItemId = 0u;
+								const bool occupied = engine::anniversary::ParseItemToken(beltTok, beltItemId);
+								fg->AddRectFilled(ImVec2(bx0, beltY), ImVec2(bx0 + beltSlot, beltY + beltSlot),
+									occupied ? IM_COL32(30, 44, 34, 220) : IM_COL32(14, 16, 22, 160), 6.0f);
+								fg->AddRect(ImVec2(bx0, beltY), ImVec2(bx0 + beltSlot, beltY + beltSlot),
+									IM_COL32(120, 170, 130, occupied ? 220 : 120), 6.0f, 0, 2.0f);
+								char beltKeyLabel[8];
+								std::snprintf(beltKeyLabel, sizeof(beltKeyLabel), "M%d", static_cast<int>(bi) + 1);
+								fg->AddText(ImVec2(bx0 + 3.0f, beltY + 2.0f),
+									IM_COL32(200, 230, 205, 200), beltKeyLabel);
+								if (!occupied)
+									continue;
+								const engine::items::ItemDefinition* bdef = m_itemCatalog.Find(beltItemId);
+								const char* blabel = (bdef != nullptr && !bdef->name.empty())
+									? bdef->name.c_str() : "Objet";
+								fg->AddText(ImVec2(bx0 + 3.0f, beltY + beltSlot * 0.5f - 6.0f),
+									IM_COL32(235, 245, 235, 255), blabel);
+								const bool beltKeyPressed = keysAllowed && shiftHeld
+									&& m_input.WasPressed(static_cast<engine::platform::Key>('1' + static_cast<int>(bi)));
+								const bool beltClicked =
+									m_input.WasMousePressed(engine::platform::MouseButton::Left)
+									&& m_input.MouseX() >= static_cast<int>(bx0)
+									&& m_input.MouseX() <= static_cast<int>(bx0 + beltSlot)
+									&& m_input.MouseY() >= static_cast<int>(beltY)
+									&& m_input.MouseY() <= static_cast<int>(beltY + beltSlot);
+								if (beltKeyPressed || beltClicked)
+								{
+									const uint32_t beltClientId = m_gameplayUdp.ServerClientId();
+									if (beltClientId != 0u)
+										(void)m_gameplayUdp.SendCastRequest(beltClientId, 0ull, beltTok);
+								}
+							}
+						}
+
 						// --- Barre de cast (au-dessus de la barre d'action) pilotée
 						// par CastBarUpdate ; progression calculée localement.
 						if (uiModel.castBar.active && uiModel.castBar.durationMs > 0u)
@@ -13035,12 +13085,27 @@ namespace engine
 					else if (equipAction.kind ==
 						engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::Unequip)
 						(void)m_gameplayUdp.SendUnequipRequest(equipClientId, equipAction.slot);
-				// SP3 anniversaires (2026-07-18) — gâteau cliqué dans le sac :
-				// placé au slot 10 de la barre (jeton "item:<id>", envoi kind 88
-				// via le presenter Grimoire ; validation serveur : objet possédé).
+				// Roadmap-3 (2026-07-19) — consommable cliqué dans le sac :
+				// placé au 1er slot LIBRE de la CEINTURE (slot 1 remplacé si
+				// pleine). Envoi kind 99 ; le serveur valide la possession et
+				// renvoie le layout autoritaire (kind 100).
 				else if (equipAction.kind ==
 					engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::SlotCake)
-					m_grimoireUi.AssignSlot(9u, engine::anniversary::MakeCakeToken(equipAction.itemId));
+				{
+					std::array<std::string, 4> belt = m_uiModelBinding.GetModel().playerStats.beltLayout;
+					const std::string beltToken = engine::anniversary::MakeItemToken(equipAction.itemId);
+					bool alreadySlotted = false;
+					for (const std::string& s : belt)
+						if (s == beltToken) { alreadySlotted = true; break; }
+					if (!alreadySlotted)
+					{
+						size_t target = 0;
+						for (size_t i = 0; i < belt.size(); ++i)
+							if (belt[i].empty()) { target = i; break; }
+						belt[target] = beltToken;
+						(void)m_gameplayUdp.SendSetBeltLayout(equipClientId, belt);
+					}
+				}
 				}
 			}
 			// CMANGOS.21 (Phase 5.21 step 3+4) — Render du panneau Arena si

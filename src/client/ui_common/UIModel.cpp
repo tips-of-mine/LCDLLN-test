@@ -623,6 +623,19 @@ namespace engine::client
 			return ApplyCastBarUpdate(packet);
 		case engine::server::MessageKind::ActionBarLayoutUpdate:
 			return ApplyActionBarLayoutUpdate(packet);
+		// Roadmap-3 (2026-07-19) — ceinture (kind 100).
+		case engine::server::MessageKind::BeltLayoutUpdate:
+		{
+			engine::server::BeltLayoutUpdateMessage beltMsg{};
+			if (!engine::server::DecodeBeltLayoutUpdate(packet, beltMsg))
+			{
+				LOG_WARN(Net, "[UIModelBinding] BeltLayoutUpdate FAILED: decode error");
+				return false;
+			}
+			m_model.playerStats.beltLayout = beltMsg.slots;
+			LOG_INFO(Net, "[UIModelBinding] BeltLayoutUpdate applied (client_id={})", beltMsg.clientId);
+			return true;
+		}
 		// SP-B — progression par-classe (kind 90, shard → client).
 		case engine::server::MessageKind::ClassProgressionUpdate:
 			return ApplyClassProgressionUpdate(packet);

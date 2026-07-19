@@ -376,6 +376,24 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendSetBeltLayout(uint32_t clientId, const std::array<std::string, 4>& slots)
+	{
+		engine::server::SetBeltLayoutMessage msg{};
+		msg.clientId = clientId;
+		msg.slots = slots;
+		const std::vector<std::byte> packet = engine::server::EncodeSetBeltLayout(msg);
+		const bool ok = SendBytes(packet);
+		if (ok)
+		{
+			LOG_DEBUG(Net, "[GameplayUdpClient] SetBeltLayout sent (client_id={})", clientId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] SetBeltLayout FAILED (client_id={})", clientId);
+		}
+		return ok;
+	}
+
 	bool GameplayUdpClient::SendChooseClassSkill(uint32_t clientId, uint32_t level, std::string_view skillId)
 	{
 		engine::server::ChooseClassSkillRequestMessage msg{};

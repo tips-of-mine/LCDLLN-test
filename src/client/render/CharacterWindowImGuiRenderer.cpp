@@ -423,9 +423,11 @@ namespace engine::render
 						ImGui::TextUnformatted(s.label.empty() ? "Objet" : s.label.c_str());
 						ImGui::EndDragDropSource();
 					}
-					// SP3 anniversaires (2026-07-18) — le gâteau se place dans la
-					// barre d'action d'un clic (geste volontaire du joueur).
-					const bool isCake = engine::anniversary::IsCakeItemId(s.itemId);
+					// Roadmap-3 (2026-07-19) — tout CONSOMMABLE (gâteau, potion,
+					// nourriture) se place dans la CEINTURE d'un clic (geste
+					// volontaire du joueur ; le serveur valide la possession).
+					const bool isCake = (def != nullptr)
+						&& def->type == engine::items::ItemType::Consumable;
 					if (ImGui::IsItemHovered() && !s.label.empty())
 					{
 						ImGui::BeginTooltip();
@@ -443,7 +445,7 @@ namespace engine::render
 							if (isCake)
 							{
 								ImGui::Separator();
-								ImGui::TextDisabled("Clic : placer dans la barre d'action (slot 10)");
+								ImGui::TextDisabled("Clic : placer dans la ceinture");
 							}
 						}
 						ImGui::EndTooltip();

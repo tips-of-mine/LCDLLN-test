@@ -78,6 +78,11 @@ namespace engine::client
 		/// Le serveur valide (kit/unicité) et renvoie un ActionBarLayoutUpdate autoritaire.
 		bool SendSetActionBarLayout(uint32_t clientId, const std::array<std::string, 10>& slots);
 
+		/// Roadmap-3 (2026-07-19) — Ceinture : pose le layout des 4 slots
+		/// d'objets actifs (jetons "item:<id>", kind 99). ACK autoritaire
+		/// par BeltLayoutUpdate (kind 100).
+		bool SendSetBeltLayout(uint32_t clientId, const std::array<std::string, 4>& slots);
+
 		/// SP-B — envoie un choix de skill de classe (ChooseClassSkillRequest, kind 91).
 		/// Le shard valide (niveau, unicité, appartenance au kit) et renvoie un
 		/// ClassProgressionUpdate autoritaire si le choix est accepté.

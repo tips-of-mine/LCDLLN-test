@@ -202,6 +202,13 @@ namespace engine::server
 				persisted.GetString("actionbar.slot." + std::to_string(slotIndex), "");
 		}
 
+		// Roadmap-3 (2026-07-19) — ceinture (absent = "" = vide, rétro-compat).
+		for (size_t slotIndex = 0; slotIndex < outState.beltLayout.size(); ++slotIndex)
+		{
+			outState.beltLayout[slotIndex] =
+				persisted.GetString("belt.slot." + std::to_string(slotIndex), "");
+		}
+
 		// Anniversaires SP3 (2026-07-18) — expirations des gâteaux (clés
 		// bornées : 10 ids possibles, cf. CakeItemToken). Absent/0 = pas
 		// d'expiration enregistrée. Rétro-compatible : vieux fichiers sans
@@ -348,6 +355,12 @@ namespace engine::server
 		for (size_t slotIndex = 0; slotIndex < state.actionBarLayout.size(); ++slotIndex)
 		{
 			output << "actionbar.slot." << slotIndex << "=" << state.actionBarLayout[slotIndex] << "\n";
+		}
+
+		// Roadmap-3 (2026-07-19) — ceinture (4 slots, clés fixes).
+		for (size_t slotIndex = 0; slotIndex < state.beltLayout.size(); ++slotIndex)
+		{
+			output << "belt.slot." << slotIndex << "=" << state.beltLayout[slotIndex] << "\n";
 		}
 
 		// Anniversaires SP3 (2026-07-18) — expirations UTC (epoch ms) des

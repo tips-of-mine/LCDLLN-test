@@ -308,7 +308,12 @@ namespace engine::server
 		UnequipRequest = 97,
 		/// EquipmentUpdate (serveur→client) : snapshot complet de l'équipement porté
 		/// (liste des slots occupés → itemId). Idempotent, comme InventoryDelta.
-		EquipmentUpdate = 98
+		EquipmentUpdate = 98,
+		// Roadmap-3 (2026-07-19) — Ceinture : barre d'objets ACTIFS (4 slots,
+		// jetons "item:<id>" : gâteaux, potions, nourriture). Kinds ADDITIFS
+		// (pas de bump kProtocolVersion) sur le modèle 88/89.
+		SetBeltLayout = 99,     ///< Client → Shard : pose le layout ceinture.
+		BeltLayoutUpdate = 100  ///< Shard → Client : layout autoritaire (enter-world / ACK).
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -474,6 +479,23 @@ namespace engine::server
 	{
 		uint32_t clientId = 0;
 		std::array<std::string, 10> slots{};
+	};
+
+	/// Roadmap-3 (2026-07-19) — Ceinture : 4 slots d'objets actifs (slot i →
+	/// jeton "item:<id>", "" = vide). Validée côté shard : objet POSSÉDÉ et
+	/// activable (consommable ou gâteau).
+	struct SetBeltLayoutMessage
+	{
+		uint32_t clientId = 0;
+		std::array<std::string, 4> slots{};
+	};
+
+	/// Roadmap-3 — layout ceinture autoritaire poussé par le shard
+	/// (enter-world / ACK de SetBeltLayout, même réconciliation que 89).
+	struct BeltLayoutUpdateMessage
+	{
+		uint32_t clientId = 0;
+		std::array<std::string, 4> slots{};
 	};
 
 	/// SP-B — shard → client : état autoritaire de progression de classe (classId + skills connus).
@@ -811,6 +833,11 @@ namespace engine::server
 	bool DecodeSetActionBarLayout(std::span<const std::byte> packet, SetActionBarLayoutMessage& outMessage);
 	std::vector<std::byte> EncodeActionBarLayoutUpdate(const ActionBarLayoutUpdateMessage& message);
 	bool DecodeActionBarLayoutUpdate(std::span<const std::byte> packet, ActionBarLayoutUpdateMessage& outMessage);
+	// Roadmap-3 (2026-07-19) — Ceinture (kinds 99/100, modèle 88/89).
+	std::vector<std::byte> EncodeSetBeltLayout(const SetBeltLayoutMessage& message);
+	bool DecodeSetBeltLayout(std::span<const std::byte> packet, SetBeltLayoutMessage& outMessage);
+	std::vector<std::byte> EncodeBeltLayoutUpdate(const BeltLayoutUpdateMessage& message);
+	bool DecodeBeltLayoutUpdate(std::span<const std::byte> packet, BeltLayoutUpdateMessage& outMessage);
 
 	/// SP-B — encode/decode de la progression de classe (shard→client, rétro-additif).
 	std::vector<std::byte> EncodeClassProgressionUpdate(const ClassProgressionUpdateMessage& message);

@@ -43,6 +43,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
     # SP3 anniversaires (2026-07-18) : buffs de gateau (utilise par ServerApp).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/anniversary/CakeBuffLibrary.cpp
+    # Roadmap-3 (2026-07-19) : effets des consommables de ceinture.
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/items/ConsumableEffectLibrary.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
@@ -1298,6 +1300,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
     # SP3 anniversaires (2026-07-18) : buffs de gateau (utilise par ServerApp).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/anniversary/CakeBuffLibrary.cpp
+    # Roadmap-3 (2026-07-19) : effets des consommables de ceinture.
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/items/ConsumableEffectLibrary.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp

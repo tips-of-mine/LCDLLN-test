@@ -50,6 +50,9 @@ namespace engine::server
 		std::vector<ProfessionEntry> professions;
 		/// Grimoire — 10 slots de barre d'action (slot i → spellId, "" = vide).
 		std::array<std::string, 10> actionBarLayout{};
+		/// Roadmap-3 (2026-07-19) — ceinture : 4 slots d'objets actifs
+		/// (jetons "item:<id>", "" = vide). Clés belt.slot.N.
+		std::array<std::string, 4> beltLayout{};
 		/// SP-B — compétences par-classe déjà choisies (un skill par tier/niveau débloqué).
 		std::vector<std::string> knownSkillIds;
 		/// Anniversaires SP3 (2026-07-18) — expirations UTC (epoch ms) des

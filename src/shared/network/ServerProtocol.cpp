@@ -818,6 +818,79 @@ namespace engine::server
 		return true;
 	}
 
+	// Roadmap-3 (2026-07-19) — Ceinture (kinds 99/100, miroir exact 88/89 :
+	// clientId u32 + 4 chaînes préfixées u16, jetons "item:<id>" bornés 64 o).
+
+	std::vector<std::byte> EncodeSetBeltLayout(const SetBeltLayoutMessage& message)
+	{
+		size_t hint = 4;
+		for (const std::string& slot : message.slots)
+		{
+			hint += 2 + slot.size();
+		}
+		std::vector<std::byte> packet = BeginPacket(MessageKind::SetBeltLayout, hint);
+		WriteU32(packet, message.clientId);
+		for (const std::string& slot : message.slots)
+		{
+			WriteSizedString(packet, slot);
+		}
+		return packet;
+	}
+
+	bool DecodeSetBeltLayout(std::span<const std::byte> packet, SetBeltLayoutMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::SetBeltLayout, payload) || payload.size() < 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		for (std::string& slot : outMessage.slots)
+		{
+			if (!ReadSizedString(payload, offset, slot) || slot.size() > 64u)
+			{
+				return false;
+			}
+		}
+		return offset == payload.size();
+	}
+
+	std::vector<std::byte> EncodeBeltLayoutUpdate(const BeltLayoutUpdateMessage& message)
+	{
+		size_t hint = 4;
+		for (const std::string& slot : message.slots)
+		{
+			hint += 2 + slot.size();
+		}
+		std::vector<std::byte> packet = BeginPacket(MessageKind::BeltLayoutUpdate, hint);
+		WriteU32(packet, message.clientId);
+		for (const std::string& slot : message.slots)
+		{
+			WriteSizedString(packet, slot);
+		}
+		return packet;
+	}
+
+	bool DecodeBeltLayoutUpdate(std::span<const std::byte> packet, BeltLayoutUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::BeltLayoutUpdate, payload) || payload.size() < 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		for (std::string& slot : outMessage.slots)
+		{
+			if (!ReadSizedString(payload, offset, slot) || slot.size() > 64u)
+			{
+				return false;
+			}
+		}
+		return offset == payload.size();
+	}
+
 	std::vector<std::byte> EncodeClassProgressionUpdate(const ClassProgressionUpdateMessage& message)
 	{
 		// SP-B — payload : clientId (4) + classId (u16+str) + count (u16) + N skillIds (u16+str).

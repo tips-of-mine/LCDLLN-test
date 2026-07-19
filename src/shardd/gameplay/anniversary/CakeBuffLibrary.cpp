@@ -11,8 +11,10 @@ namespace engine::server
 		constexpr CakeBuffDef kCakeBuffs[] = {
 			{ 5101u, "gateau_braves",    "+6 % de dégâts infligés",   SpellEffectType::BuffDamagePercent,      6.0f },
 			{ 5102u, "gateau_colosse",   "-8 % de dégâts subis",      SpellEffectType::DamageReductionPercent, 8.0f },
-			{ 5103u, "gateau_zephyr",    "-15 % de menace générée",   SpellEffectType::ThreatReducePercent,   15.0f },
-			{ 5104u, "gateau_sage",      "-20 % de menace générée",   SpellEffectType::ThreatReducePercent,   20.0f },
+			// Roadmap-2 (2026-07-19) — les effets de VRAIES stats existent
+			// désormais : le zéphyr retrouve sa vitesse, le sage donne des PV.
+			{ 5103u, "gateau_zephyr",    "+8 % de vitesse de déplacement", SpellEffectType::MoveSpeedPercent,  8.0f },
+			{ 5104u, "gateau_sage",      "+8 % de PV maximum",             SpellEffectType::MaxHealthPercent,  8.0f },
 			{ 5105u, "gateau_guetteur",  "+4 % de dégâts infligés",   SpellEffectType::BuffDamagePercent,      4.0f },
 			{ 5106u, "gateau_duelliste", "+8 % de dégâts infligés",   SpellEffectType::BuffDamagePercent,      8.0f },
 			{ 5107u, "gateau_gardien",   "-10 % de dégâts subis",     SpellEffectType::DamageReductionPercent, 10.0f },

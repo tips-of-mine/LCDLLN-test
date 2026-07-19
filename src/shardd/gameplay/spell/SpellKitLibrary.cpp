@@ -425,6 +425,8 @@ namespace engine::server
 			if (text == "TauntThreatMult") { outType = SpellEffectType::TauntThreatMult; return true; }
 			if (text == "SlowMobPercent") { outType = SpellEffectType::SlowMobPercent; return true; }
 			if (text == "ThreatReducePercent") { outType = SpellEffectType::ThreatReducePercent; return true; }
+			if (text == "MaxHealthPercent") { outType = SpellEffectType::MaxHealthPercent; return true; }
+			if (text == "MoveSpeedPercent") { outType = SpellEffectType::MoveSpeedPercent; return true; }
 			return false;
 		}
 

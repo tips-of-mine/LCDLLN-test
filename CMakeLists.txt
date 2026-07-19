@@ -1516,6 +1516,17 @@ if(MSVC)
 endif()
 add_test(NAME entity_edit_commands_tests COMMAND entity_edit_commands_tests)
 
+# Roadmap-8 (2026-07-19) — Tests CPU du round-trip Save/Load des documents
+# splines/zones/hazards (dette audit 7.2 comblee au cablage des outils).
+# Pur CPU + E/S temporaires, non gate WIN32.
+add_executable(gameplay_docs_round_trip_tests src/world_editor/tests/GameplayDocsRoundTripTests.cpp)
+target_include_directories(gameplay_docs_round_trip_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(gameplay_docs_round_trip_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(gameplay_docs_round_trip_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME gameplay_docs_round_trip_tests COMMAND gameplay_docs_round_trip_tests)
+
 # Roadmap-6 (2026-07-19) — Tests CPU pour CompositeCommand (undo groupe des
 # gestes multi-selection : ordre Execute/Undo, integration CommandStack).
 # Pur CPU, non gate WIN32 (execute aussi par le ctest de build-linux).

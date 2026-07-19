@@ -180,6 +180,40 @@ namespace engine::editor::world
 			c.dl->AddCircleFilled(c.P(0.60f, 0.58f), c.w * 0.05f, IM_COL32(35, 37, 42, 255));
 			c.dl->AddLine(c.P(0.22f, 0.88f), c.P(0.78f, 0.88f), c.col, c.th);
 		}
+
+		// ---- Gameplay (Roadmap-8) -------------------------------------------
+
+		/// Spline : courbe en S + nœuds ronds (route à points de contrôle).
+		void GlyphSpline(const GlyphCtx& c)
+		{
+			c.dl->PathLineTo(c.P(0.15f, 0.85f));
+			c.dl->PathBezierCubicCurveTo(c.P(0.55f, 0.75f), c.P(0.35f, 0.25f), c.P(0.85f, 0.15f));
+			c.dl->PathStroke(c.col, 0, c.th * 1.3f);
+			c.dl->AddCircleFilled(c.P(0.15f, 0.85f), c.w * 0.07f, c.col);
+			c.dl->AddCircleFilled(c.P(0.50f, 0.50f), c.w * 0.07f, c.col);
+			c.dl->AddCircleFilled(c.P(0.85f, 0.15f), c.w * 0.07f, c.col);
+		}
+
+		/// Zone de gameplay : pentagone ouvert (polygone tracé) + drapeau.
+		void GlyphGameplayZone(const GlyphCtx& c)
+		{
+			c.dl->PathLineTo(c.P(0.20f, 0.80f));
+			c.dl->PathLineTo(c.P(0.15f, 0.40f));
+			c.dl->PathLineTo(c.P(0.50f, 0.18f));
+			c.dl->PathLineTo(c.P(0.85f, 0.42f));
+			c.dl->PathLineTo(c.P(0.75f, 0.80f));
+			c.dl->PathStroke(c.col, ImDrawFlags_Closed, c.th);
+			c.dl->AddLine(c.P(0.50f, 0.62f), c.P(0.50f, 0.36f), c.col, c.th);
+			c.dl->AddTriangleFilled(c.P(0.50f, 0.36f), c.P(0.66f, 0.42f), c.P(0.50f, 0.48f), c.col);
+		}
+
+		/// Danger : triangle d'avertissement + point d'exclamation.
+		void GlyphHazard(const GlyphCtx& c)
+		{
+			c.dl->AddTriangle(c.P(0.50f, 0.12f), c.P(0.10f, 0.85f), c.P(0.90f, 0.85f), c.col, c.th);
+			c.dl->AddLine(c.P(0.50f, 0.36f), c.P(0.50f, 0.62f), c.col, c.th * 1.2f);
+			c.dl->AddCircleFilled(c.P(0.50f, 0.74f), c.w * 0.05f, c.col);
+		}
 	}
 
 	void DrawToolGlyph(ImDrawList* drawList, ActiveTool tool,
@@ -217,6 +251,10 @@ namespace engine::editor::world
 			case ActiveTool::Overhang:           GlyphOverhang(c); break;
 			case ActiveTool::Arch:               GlyphArch(c); break;
 			case ActiveTool::DungeonPortal:      GlyphDungeonPortal(c); break;
+			// Roadmap-8 (audit 2026-06-05, 1.1) — outils M100.16/28/29 câblés.
+			case ActiveTool::Spline:             GlyphSpline(c); break;
+			case ActiveTool::GameplayZone:       GlyphGameplayZone(c); break;
+			case ActiveTool::Hazard:             GlyphHazard(c); break;
 			case ActiveTool::None:               break; // pas de glyphe
 		}
 	}

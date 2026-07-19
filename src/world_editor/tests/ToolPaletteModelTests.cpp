@@ -2,8 +2,9 @@
 /// (réorganisation UI 2026-07-17, PR 2).
 ///
 /// Pas d'ImGui ni de shell — la suite tourne sous ctest Linux. On vérifie :
-///   - Les 4 familles couvrent exactement les 15 outils de l'enum (chaque
-///     valeur 1..15 apparaît UNE fois, aucune n'est oubliée ni dupliquée).
+///   - Les familles couvrent exactement les kActiveToolCount outils de
+///     l'enum (chaque valeur apparaît UNE fois, aucune oubliée ni dupliquée).
+///     Roadmap-8 : 5 familles depuis l'ajout de « Gameplay » (zones, dangers).
 ///   - Aucun groupe vide, titres non vides et uniques.
 ///   - `ToolLabelFr` : libellé non vide et unique pour chaque outil, cas
 ///     `None` et valeur hors enum définis (pas de nullptr).
@@ -56,11 +57,12 @@ namespace
 		REQUIRE(total == static_cast<size_t>(kActiveToolCount));
 	}
 
-	/// Test : structure des groupes — 4 familles, non vides, titres uniques.
+	/// Test : structure des groupes — 5 familles (Roadmap-8 : + « Gameplay »),
+	/// non vides, titres uniques.
 	void Test_Groups_TitlesAndNonEmpty()
 	{
 		const std::vector<ToolPaletteGroup>& groups = GetToolPaletteGroups();
-		REQUIRE(groups.size() == 4u);
+		REQUIRE(groups.size() == 5u);
 		std::set<std::string> titles;
 		for (const ToolPaletteGroup& g : groups)
 		{

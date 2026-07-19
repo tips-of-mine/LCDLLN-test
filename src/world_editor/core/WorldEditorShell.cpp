@@ -631,6 +631,9 @@ namespace engine::editor::world
 			case ActiveTool::Overhang:            name = "Overhang"; break;
 			case ActiveTool::Arch:                name = "Arch"; break;
 			case ActiveTool::DungeonPortal:       name = "DungeonPortal"; break;
+			case ActiveTool::Spline:              name = "Spline"; break;        // Roadmap-8
+			case ActiveTool::GameplayZone:        name = "GameplayZone"; break;  // Roadmap-8
+			case ActiveTool::Hazard:              name = "Hazard"; break;        // Roadmap-8
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -1085,6 +1088,11 @@ namespace engine::editor::world
 		zone_presets::ResetEditedZoneDocuments(
 			m_terrainDoc, m_waterDoc, m_meshInsertDoc, m_dungeonPortalDoc);
 		m_buildingDoc.Reset();
+		// Roadmap-8 — les 3 documents des outils câblés suivent le même cycle
+		// de vie que les autres : vidés à chaque changement de carte.
+		m_splineDoc.Clear();
+		m_zoneDoc.Clear();
+		m_hazardDoc.Clear();
 		// Correctif 4 — namespace disque de la nouvelle carte.
 		PropagateZoneIdToDocuments(zoneId);
 		LOG_INFO(EditorWorld,
@@ -1122,10 +1130,44 @@ namespace engine::editor::world
 			LOG_WARN(EditorWorld,
 				"[WorldEditorShell] Building LoadFromDisk failed: {}", err);
 		}
+		// Roadmap-8 (dette audit 7.2) — les documents splines/zones/hazards
+		// sont enfin RELUS (avant : écriture morte, contenu perdu au reload).
+		err.clear();
+		if (!m_splineDoc.LoadFromDisk(ZoneInstancesPath(cfg, "splines.bin"), err))
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Spline LoadFromDisk failed: {}", err);
+		}
+		err.clear();
+		if (!m_zoneDoc.LoadFromDisk(ZoneInstancesPath(cfg, "zones.bin"), err))
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Zone LoadFromDisk failed: {}", err);
+		}
+		err.clear();
+		if (!m_hazardDoc.LoadFromDisk(ZoneInstancesPath(cfg, "hazards.bin"), err))
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Hazard LoadFromDisk failed: {}", err);
+		}
 		LOG_INFO(EditorWorld,
-			"[WorldEditorShell] Loaded zone documents: {} lake(s)/{} river(s), {} mesh insert(s), {} portal(s), {} building(s)",
+			"[WorldEditorShell] Loaded zone documents: {} lake(s)/{} river(s), {} mesh insert(s), {} portal(s), {} building(s), {} spline(s), {} zone(s), {} hazard(s)",
 			m_waterDoc.Get().lakes.size(), m_waterDoc.Get().rivers.size(),
-			m_meshInsertDoc.Size(), m_dungeonPortalDoc.Size(), m_buildingDoc.Size());
+			m_meshInsertDoc.Size(), m_dungeonPortalDoc.Size(), m_buildingDoc.Size(),
+			m_splineDoc.All().size(), m_zoneDoc.All().size(), m_hazardDoc.All().size());
+	}
+
+	/// Roadmap-8 — Chemin d'un fichier d'instances de la zone courante.
+	/// Effet de bord : crée le dossier parent au besoin (écriture disque).
+	std::string WorldEditorShell::ZoneInstancesPath(const engine::core::Config& cfg, const char* file) const
+	{
+		const std::string contentRoot = cfg.GetString("paths.content", "game/data");
+		const std::string& zoneId = m_terrainDoc.GetZoneId();
+		std::string dir = contentRoot + "/instances";
+		if (!zoneId.empty()) dir += "/zone_" + zoneId;
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		return dir + "/" + file;
 	}
 
 	size_t WorldEditorShell::SaveZoneDocuments(const engine::core::Config& cfg)
@@ -1159,8 +1201,30 @@ namespace engine::editor::world
 			LOG_WARN(EditorWorld,
 				"[WorldEditorShell] Building SaveToDisk failed: {}", err);
 		}
+		// Roadmap-8 — persistance des 3 documents des outils câblés.
+		err.clear();
+		if (m_splineDoc.SaveToDisk(ZoneInstancesPath(cfg, "splines.bin"), err)) { ++written; }
+		else
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Spline SaveToDisk failed: {}", err);
+		}
+		err.clear();
+		if (m_zoneDoc.SaveToDisk(ZoneInstancesPath(cfg, "zones.bin"), err)) { ++written; }
+		else
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Zone SaveToDisk failed: {}", err);
+		}
+		err.clear();
+		if (m_hazardDoc.SaveToDisk(ZoneInstancesPath(cfg, "hazards.bin"), err)) { ++written; }
+		else
+		{
+			LOG_WARN(EditorWorld,
+				"[WorldEditorShell] Hazard SaveToDisk failed: {}", err);
+		}
 		LOG_INFO(EditorWorld,
-			"[WorldEditorShell] Saved zone documents: {}/4 (eau, mesh inserts, portails, batiments)",
+			"[WorldEditorShell] Saved zone documents: {}/7 (eau, mesh inserts, portails, batiments, splines, zones, hazards)",
 			written);
 		return written;
 	}

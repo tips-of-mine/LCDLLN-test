@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -34,6 +35,24 @@ namespace engine::editor::world
 			if (!out.good()) { err = "SplineDocument::SaveToDisk: write failed: " + path; return false; }
 			return true;
 		}
+
+		/// Roadmap-8 (dette audit 7.2) — Relit `splines.bin` et REMPLACE le
+		/// contenu courant. Fichier absent = succès avec liste vide.
+		/// \return false si le fichier existe mais est corrompu.
+		bool LoadFromDisk(const std::string& path, std::string& err)
+		{
+			m_splines.clear();
+			std::error_code ec;
+			if (!std::filesystem::exists(path, ec)) return true; // pas de splines : OK
+			std::ifstream in(path, std::ios::binary);
+			if (!in.good()) { err = "SplineDocument::LoadFromDisk: open failed: " + path; return false; }
+			std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)),
+				std::istreambuf_iterator<char>());
+			return engine::world::spline::LoadSplinesBin(bytes, m_splines, err);
+		}
+
+		/// Roadmap-8 — Vide toutes les splines (changement de carte).
+		void Clear() { m_splines.clear(); }
 
 	private:
 		std::vector<engine::world::spline::Spline> m_splines;

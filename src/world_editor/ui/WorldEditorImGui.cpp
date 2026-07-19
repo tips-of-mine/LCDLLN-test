@@ -2905,6 +2905,10 @@ namespace engine::editor
 			{ "tool.overhang", "Surplomb", "Structures", "Ctrl+Shift+O", ActiveTool::Overhang },
 			{ "tool.arch", "Arche", "Structures", "Ctrl+Shift+A", ActiveTool::Arch },
 			{ "tool.dungeon-portal", "Portail de donjon", "Structures", "Ctrl+Shift+D", ActiveTool::DungeonPortal },
+			// Roadmap-8 (audit 2026-06-05, 1.1) — outils M100.16/28/29 câblés.
+			{ "tool.spline", "Spline (route/chemin)", "Structures", nullptr, ActiveTool::Spline },
+			{ "tool.gameplay-zone", "Zone de gameplay", "Gameplay", nullptr, ActiveTool::GameplayZone },
+			{ "tool.hazard", "Danger (piège)", "Gameplay", nullptr, ActiveTool::Hazard },
 		};
 		for (const ToolActionSpec& spec : kToolActions)
 		{
@@ -3117,8 +3121,9 @@ namespace engine::editor
 			{
 				// Sous-menus par famille — même source (registre, section)
 				// que la future palette d'outils et la palette Ctrl+P.
+				// Roadmap-8 : famille « Gameplay » (zones + dangers).
 				static constexpr const char* kFamilies[] =
-					{ "Terrain", "Eau", "Macro", "Structures" };
+					{ "Terrain", "Eau", "Macro", "Structures", "Gameplay" };
 				for (const char* family : kFamilies)
 				{
 					if (!ImGui::BeginMenu(family)) continue;

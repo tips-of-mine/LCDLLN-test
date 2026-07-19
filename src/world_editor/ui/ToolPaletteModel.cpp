@@ -33,6 +33,13 @@ namespace engine::editor::world
 				ActiveTool::Overhang,
 				ActiveTool::Arch,
 				ActiveTool::DungeonPortal,
+				ActiveTool::Spline, // Roadmap-8 — routes/chemins
+			} },
+			// Roadmap-8 (audit 2026-06-05, thème 1.1) — famille Gameplay :
+			// outils M100.16/M100.28 enfin câblés (zones typées + dangers).
+			{ "Gameplay", {
+				ActiveTool::GameplayZone,
+				ActiveTool::Hazard,
 			} },
 		};
 		return kGroups;
@@ -58,6 +65,9 @@ namespace engine::editor::world
 			case ActiveTool::Overhang:           return "Surplomb";
 			case ActiveTool::Arch:               return "Arche";
 			case ActiveTool::DungeonPortal:      return "Portail de donjon";
+			case ActiveTool::Spline:             return "Spline (route/chemin)";
+			case ActiveTool::GameplayZone:       return "Zone de gameplay";
+			case ActiveTool::Hazard:             return "Danger (piège)";
 		}
 		return "?";
 	}
@@ -82,6 +92,9 @@ namespace engine::editor::world
 			case ActiveTool::Overhang:           return "tool.overhang";
 			case ActiveTool::Arch:               return "tool.arch";
 			case ActiveTool::DungeonPortal:      return "tool.dungeon-portal";
+			case ActiveTool::Spline:             return "tool.spline";
+			case ActiveTool::GameplayZone:       return "tool.gameplay-zone";
+			case ActiveTool::Hazard:             return "tool.hazard";
 		}
 		return "";
 	}

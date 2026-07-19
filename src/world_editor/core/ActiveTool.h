@@ -31,9 +31,12 @@ namespace engine::editor::world
 		Overhang            = 13,  // M100.41 — raccourci Ctrl+Shift+O (Overhang)
 		Arch                = 14,  // M100.42 — raccourci Ctrl+Shift+A (Arche)
 		DungeonPortal       = 15,  // M100.43 — raccourci Ctrl+Shift+D (Donjon)
+		Spline              = 16,  // Roadmap-8 — routes/chemins (M100.29 câblé, sans raccourci)
+		GameplayZone        = 17,  // Roadmap-8 — zones de gameplay (M100.28 câblé, sans raccourci)
+		Hazard              = 18,  // Roadmap-8 — dangers/pièges (M100.16 câblé, sans raccourci)
 	};
 
 	/// Nombre d'outils « réels » (hors None). Sert aux tests d'exhaustivité
 	/// (palette d'outils : chaque outil apparaît exactement une fois).
-	inline constexpr int kActiveToolCount = 15;
+	inline constexpr int kActiveToolCount = 18;
 }

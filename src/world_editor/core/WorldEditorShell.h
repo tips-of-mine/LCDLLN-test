@@ -27,6 +27,12 @@
 #include "src/world_editor/water/WaterDocument.h"
 #include "src/world_editor/scene/EditorSceneModel.h" // sous-projet 1, bloc B (selection + scene)
 #include "src/world_editor/scene/EntityEditOps.h"    // lot 5 (2026-07-18) : dupliquer/supprimer
+#include "src/world_editor/SplineTool.h"     // Roadmap-8 : outils M100.16/28/29 câblés
+#include "src/world_editor/SplineDocument.h"
+#include "src/world_editor/ZoneTool.h"
+#include "src/world_editor/ZoneDocument.h"
+#include "src/world_editor/HazardTool.h"
+#include "src/world_editor/HazardDocument.h"
 
 #include <functional>
 #include <memory>
@@ -475,7 +481,31 @@ namespace engine::editor::world
 		volumes::dungeons::DungeonPortalTool&       MutableDungeonPortalTool()       { return m_dungeonPortalTool; }
 		const volumes::dungeons::DungeonPortalTool& GetDungeonPortalTool()     const { return m_dungeonPortalTool; }
 
+		/// Roadmap-8 (audit 2026-06-05, 1.1) — Outils M100.29 (spline), M100.28
+		/// (zones de gameplay) et M100.16 (dangers) enfin câblés : accès pour le
+		/// ToolPropertiesPanel (paramètres) et l'Engine (clics viewport).
+		SplineTool&       MutableSplineTool()       { return m_splineTool; }
+		const SplineTool& GetSplineTool()     const { return m_splineTool; }
+		ZoneTool&         MutableZoneTool()         { return m_zoneTool; }
+		const ZoneTool&   GetZoneTool()       const { return m_zoneTool; }
+		HazardTool&       MutableHazardTool()       { return m_hazardTool; }
+		const HazardTool& GetHazardTool()     const { return m_hazardTool; }
+
+		/// Roadmap-8 — Documents persistés des 3 outils câblés (sérialisés dans
+		/// `instances/zone_<id>/{splines,zones,hazards}.bin` par
+		/// `SaveZoneDocuments`, relus par `LoadZoneDocuments` — dette 7.2 comblée).
+		SplineDocument&       MutableSplineDocument()       { return m_splineDoc; }
+		const SplineDocument& GetSplineDocument()     const { return m_splineDoc; }
+		ZoneDocument&         MutableZoneDocument()         { return m_zoneDoc; }
+		const ZoneDocument&   GetZoneDocument()       const { return m_zoneDoc; }
+		HazardDocument&       MutableHazardDocument()       { return m_hazardDoc; }
+		const HazardDocument& GetHazardDocument()     const { return m_hazardDoc; }
+
 	private:
+		/// Roadmap-8 — Chemin du fichier d'instances `file` de la zone courante
+		/// (`<paths.content>/instances/zone_<id>/<file>`, chemin plat legacy si
+		/// aucune zone). Effet de bord : crée le dossier parent au besoin.
+		std::string ZoneInstancesPath(const engine::core::Config& cfg, const char* file) const;
 		/// Rend la barre de menu File/Edit/View/Tools/Window/Help (M100.1
 		/// stubs pour la plupart des items). Effet de bord : ImGui state.
 		void RenderMenuBar();
@@ -536,6 +566,12 @@ namespace engine::editor::world
 		volumes::arches::ArchTool   m_archTool;               // M100.42
 		volumes::dungeons::DungeonPortalDocument m_dungeonPortalDoc;  // M100.43
 		volumes::dungeons::DungeonPortalTool     m_dungeonPortalTool; // M100.43
+		SplineTool     m_splineTool;  // Roadmap-8 (M100.29 câblé)
+		SplineDocument m_splineDoc;   // Roadmap-8
+		ZoneTool       m_zoneTool;    // Roadmap-8 (M100.28 câblé)
+		ZoneDocument   m_zoneDoc;     // Roadmap-8
+		HazardTool     m_hazardTool;  // Roadmap-8 (M100.16 câblé)
+		HazardDocument m_hazardDoc;   // Roadmap-8
 		buildings::BuildingDocument m_buildingDoc;                    // Auberge éditable
 		panels::BuildingEditorPanel* m_buildingEditorPtr = nullptr;  // non possédé (dans m_panels)
 		engine::world::instances::BuildingTemplateLibrary m_buildingLibrary; // bibliothèque de types

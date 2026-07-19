@@ -29,6 +29,8 @@
 #include "src/world_editor/terrain/ValleyChainTool.h"
 #include "src/world_editor/water/WaterDocument.h"
 #include "src/world_editor/core/WorldEditorShell.h"
+#include "src/world_editor/SplineCommand.h"       // Roadmap-8 : bouton « Ajouter la spline »
+#include "src/world_editor/GameplayZoneCommand.h" // Roadmap-8 : bouton « Ajouter la zone »
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -36,7 +38,9 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstdio>   // std::snprintf — buffer du champ Nom (Roadmap-8)
 #include <filesystem>
+#include <memory>
 
 namespace engine::editor::world::panels
 {
@@ -2170,6 +2174,106 @@ namespace engine::editor::world::panels
 				ImGui::TextUnformatted("Dungeon Portal (Phase 11)");
 				ImGui::Separator();
 				RenderDungeonPortalParams(*m_shell, m_shell->MutableDungeonPortalTool());
+			}
+			// Roadmap-8 (audit 2026-06-05, 1.1) — blocs de propriétés des outils
+			// M100.29 (spline), M100.28 (zones) et M100.16 (dangers) câblés.
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::Spline)
+			{
+				ImGui::TextUnformatted("Spline (route/chemin)");
+				ImGui::Separator();
+				engine::editor::world::SplineTool& tool = m_shell->MutableSplineTool();
+				ImGui::TextWrapped("Clic gauche dans la vue : ajoute un noeud au trace.");
+				ImGui::DragFloat("Largeur (m)", &tool.DefaultWidthMeters(), 0.25f, 0.5f, 60.0f, "%.2f");
+				ImGui::Text("Noeuds du trace : %d", static_cast<int>(tool.Current().nodes.size()));
+				ImGui::Text("Splines de la carte : %d", static_cast<int>(m_shell->GetSplineDocument().All().size()));
+				const bool canAddSpline = tool.Current().nodes.size() >= 2u;
+				if (!canAddSpline) ImGui::BeginDisabled();
+				if (ImGui::Button("Ajouter la spline"))
+				{
+					m_shell->MutableCommandStack().Push(
+						std::make_unique<engine::editor::world::AddSplineCommand>(
+							m_shell->MutableSplineDocument(), tool.Current()));
+					tool.Clear();
+				}
+				if (!canAddSpline) ImGui::EndDisabled();
+				ImGui::SameLine();
+				if (ImGui::Button("Effacer le trace")) tool.Clear();
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::GameplayZone)
+			{
+				ImGui::TextUnformatted("Zone de gameplay");
+				ImGui::Separator();
+				engine::editor::world::ZoneTool& tool = m_shell->MutableZoneTool();
+				engine::world::zones::GameplayZone& z = tool.Current();
+				ImGui::TextWrapped("Clic gauche dans la vue : ajoute un sommet au polygone.");
+				static const char* kZoneTypes[] = {
+					"Zone sure", "Zone JcJ", "Zone de raid", "Construction interdite",
+					"Declencheur de quete", "Meteo forcee" };
+				int typeIdx = static_cast<int>(z.type);
+				if (ImGui::Combo("Type", &typeIdx, kZoneTypes, 6))
+					z.type = static_cast<engine::world::zones::ZoneType>(typeIdx);
+				char nameBuf[64];
+				std::snprintf(nameBuf, sizeof(nameBuf), "%s", z.name.c_str());
+				if (ImGui::InputText("Nom", nameBuf, sizeof(nameBuf))) z.name = nameBuf;
+				if (z.type == engine::world::zones::ZoneType::QuestTrigger)
+				{
+					int questId = static_cast<int>(z.questId);
+					if (ImGui::DragInt("Quete (id)", &questId, 1, 0, 1000000))
+						z.questId = static_cast<uint32_t>(std::max(0, questId));
+				}
+				if (z.type == engine::world::zones::ZoneType::WeatherOverride)
+				{
+					int weather = static_cast<int>(z.weatherType);
+					if (ImGui::DragInt("Meteo (type)", &weather, 1, 0, 32))
+						z.weatherType = static_cast<uint32_t>(std::max(0, weather));
+					ImGui::DragFloat("Marge de transition (m)", &z.transitionMarginMeters, 0.5f, 0.0f, 100.0f);
+				}
+				ImGui::Text("Sommets du polygone : %d", static_cast<int>(z.polygon.size()));
+				ImGui::Text("Zones de la carte : %d", static_cast<int>(m_shell->GetZoneDocument().All().size()));
+				const bool canAddZone = z.polygon.size() >= 3u;
+				if (!canAddZone) ImGui::BeginDisabled();
+				if (ImGui::Button("Ajouter la zone"))
+				{
+					m_shell->MutableCommandStack().Push(
+						std::make_unique<engine::editor::world::AddGameplayZoneCommand>(
+							m_shell->MutableZoneDocument(), z));
+					tool.Clear();
+				}
+				if (!canAddZone) ImGui::EndDisabled();
+				ImGui::SameLine();
+				if (ImGui::Button("Effacer le polygone")) tool.Clear();
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::Hazard)
+			{
+				ImGui::TextUnformatted("Danger (piege)");
+				ImGui::Separator();
+				engine::editor::world::HazardTool& tool = m_shell->MutableHazardTool();
+				engine::world::hazard::HazardVolume& p = tool.Params();
+				ImGui::TextWrapped("Clic gauche dans la vue : pose un danger aux parametres courants (undoable).");
+				static const char* kHazardTypes[] = { "Sables mouvants", "Marecage", "Goudron", "Lave" };
+				int typeIdx = static_cast<int>(p.type);
+				if (ImGui::Combo("Type", &typeIdx, kHazardTypes, 4))
+					tool.SetType(static_cast<engine::world::hazard::HazardType>(typeIdx));
+				static const char* kShapes[] = { "Boite", "Cylindre" };
+				int shapeIdx = static_cast<int>(p.shape);
+				if (ImGui::Combo("Forme", &shapeIdx, kShapes, 2))
+					p.shape = static_cast<engine::world::hazard::HazardShape>(shapeIdx);
+				if (p.shape == engine::world::hazard::HazardShape::Cylinder)
+				{
+					ImGui::DragFloat("Rayon (m)", &p.cylRadius, 0.25f, 0.5f, 50.0f);
+					ImGui::DragFloat("Hauteur (m)", &p.cylHeight, 0.25f, 0.5f, 20.0f);
+				}
+				else
+				{
+					ImGui::DragFloat3("Demi-etendues (m)", &p.boxHalfExtents.x, 0.25f, 0.25f, 50.0f);
+				}
+				ImGui::DragFloat("Vitesse d'enfoncement (m/s)", &p.sinkRateMps, 0.01f, 0.0f, 2.0f);
+				ImGui::DragFloat("Profondeur max (m)", &p.maxDepthMeters, 0.05f, 0.0f, 5.0f);
+				ImGui::DragFloat("Multiplicateur de vitesse", &p.slowdownMul, 0.01f, 0.0f, 1.0f);
+				ImGui::Text("Dangers de la carte : %d", static_cast<int>(m_shell->GetHazardDocument().All().size()));
 			}
 			else
 			{

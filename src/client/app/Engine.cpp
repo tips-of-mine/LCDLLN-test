@@ -10,6 +10,9 @@
 #include "src/world_editor/ui/WorldEditorSession.h"
 #include "src/world_editor/ui/WorldMapIo.h" // lot B3 : SanitizeZoneId (namespacing zone)
 #include "src/world_editor/core/WorldEditorShell.h"
+#include "src/world_editor/core/CompositeCommand.h"            // Roadmap-6 : undo groupé du gizmo
+#include "src/world_editor/inspector/SetEntityTransformCommand.h" // Roadmap-6 : undo du drag de gizmo
+#include "src/world_editor/scene/LayoutPlacementCommands.h"    // Roadmap-6 : placement undoable
 #include "src/world_editor/panels/ScenePanel.h"
 #include "src/shared/core/memory/Memory.h"
 #include "src/shared/platform/FileSystem.h"
@@ -8100,6 +8103,18 @@ namespace engine
 				{
 					m_worldEditorShell->HandleShortcut(0x2E, false, false);
 				}
+				// Roadmap-6 (2026-07-19) — E / T / C : mode du gizmo de scène
+				// (dÉplacer / Tourner / éChelle). Sans modifiers, hors saisie
+				// de texte (garde imguiTextInput ci-dessus).
+				if (!ctrl && !shift)
+				{
+					if (m_input.WasPressed(engine::platform::Key::E))
+						m_worldEditorShell->HandleShortcut('E', false, false);
+					if (m_input.WasPressed(engine::platform::Key::T))
+						m_worldEditorShell->HandleShortcut('T', false, false);
+					if (m_input.WasPressed(engine::platform::Key::C))
+						m_worldEditorShell->HandleShortcut('C', false, false);
+				}
 			}
 		}
 
@@ -9568,6 +9583,9 @@ namespace engine
 			// Gizmo (axes/anneaux X=rouge/Y=vert/Z=bleu) sur la pièce active,
 			// en overlay sur la 3D (sous les panneaux). Visuel seul pour l'instant.
 			DrawEditorBuildingGizmo();
+			// Roadmap-6 — gizmo des entités de scène sélectionnées (E/T/C) +
+			// marqueurs de multi-sélection. No-op en mode édition bâtiment.
+			DrawEditorSceneGizmo();
 		}
 #endif
 
@@ -10832,11 +10850,26 @@ namespace engine
 				}
 			}
 
+			// Roadmap-6 (2026-07-19) — gizmo de scène : cliquer-glisser sur les
+			// handles (axes / anneau yaw / poignée d'échelle) de la sélection.
+			// Hors mode bâtiment (le gizmo bâtiment garde la main) et sans Ctrl
+			// (Ctrl = picking d'entité ci-dessous). S'il capture la souris, le
+			// clic ne doit alimenter NI le picking NI les outils terrain.
+			bool sceneGizmoGrabbed = false;
+			if (!buildingEditMode && m_worldEditorShell && m_worldEditorShell->IsInitialized()
+				&& !m_worldEditorImGui->WantsCaptureMouse()
+				&& !m_input.IsDown(engine::platform::Key::Control))
+			{
+				sceneGizmoGrabbed = UpdateEditorSceneGizmoDrag(m_input.MouseX(), m_input.MouseY());
+			}
+
 			// Sous-projet 1, bloc B3 — picking d'entite : Ctrl+clic gauche dans la
 			// vue 3D (hors ImGui) selectionne l'entite dont la position (XZ) est la
 			// plus proche du point de sol cliqué (seuil ~3 m), via EditorSceneModel
 			// + EditorSelection. Geste Ctrl+clic distinct du clic d'edition
 			// (sculpt/placement) pour ne pas interferer avec les deux systemes.
+			// Roadmap-6 : Ctrl+Maj+clic BASCULE l'entité dans la multi-sélection ;
+			// Ctrl+clic dans le vide vide la sélection.
 			if (terrainPick && m_worldEditorShell && m_worldEditorShell->IsInitialized()
 				&& !m_worldEditorImGui->WantsCaptureMouse()
 				&& m_input.IsDown(engine::platform::Key::Control)
@@ -10854,14 +10887,24 @@ namespace engine
 					const float d2 = dx * dx + dz * dz;
 					if (d2 < bestDist2) { bestDist2 = d2; best = &e; }
 				}
+				const bool shiftHeld = m_input.IsDown(engine::platform::Key::Shift);
 				if (best != nullptr)
 				{
-					m_worldEditorShell->MutableSelection().Select(best->id);
-					LOG_INFO(EditorWorld, "[WorldEditor] Entite selectionnee (Ctrl+clic): {}", best->label);
+					if (shiftHeld)
+						m_worldEditorShell->MutableSelection().Toggle(best->id);
+					else
+						m_worldEditorShell->MutableSelection().Select(best->id);
+					LOG_INFO(EditorWorld, "[WorldEditor] Entite selectionnee (Ctrl+clic{}): {} ({} au total)",
+						shiftHeld ? "+Maj" : "", best->label,
+						m_worldEditorShell->GetSelection().Count());
+				}
+				else if (!shiftHeld)
+				{
+					m_worldEditorShell->MutableSelection().Clear();
 				}
 			}
 
-			if (!modernEditActive && !buildingEditMode && m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
+			if (!modernEditActive && !buildingEditMode && !sceneGizmoGrabbed && m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
 			{
 				const bool cap = m_worldEditorImGui->WantsCaptureMouse();
 				engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
@@ -10882,8 +10925,57 @@ namespace engine
 					if (TryTerrainWorldY(hm, overlay.terrainOriginX, overlay.terrainOriginZ, overlay.terrainWorldSize, overlay.heightScale,
 							pickX, pickZ, wy))
 					{
-						ws.PlaceOrMoveLayoutInstanceAtTerrainHit(m_cfg, static_cast<double>(pickX), static_cast<double>(wy),
-							static_cast<double>(pickZ));
+						// Roadmap-6 (2026-07-19) — placement/déplacement UNDOABLE :
+						// le clic passe par des commandes sur la pile du shell
+						// (adressage par guid stable). Fallback direct historique
+						// si le shell n'est pas initialisé (pas de pile undo).
+						if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
+						{
+							// Foncteurs capturant [this] : l'Engine survit aux
+							// commandes dans la pile undo (même pattern Lot 5).
+							engine::editor::scene::LayoutPlacementOps ops;
+							ops.add = [this](const engine::editor::WorldMapEditLayoutInstance& inst) -> bool
+							{
+								return m_worldEditorSession ? m_worldEditorSession->AddLayoutInstance(inst) : false;
+							};
+							ops.removeByGuid = [this](const std::string& guid) -> bool
+							{
+								return m_worldEditorSession ? m_worldEditorSession->RemoveLayoutInstanceByGuid(guid) : false;
+							};
+							ops.setPositionByGuid = [this](const std::string& guid, double x, double y, double z) -> bool
+							{
+								return m_worldEditorSession
+									? m_worldEditorSession->SetLayoutInstancePositionByGuid(guid, x, y, z) : false;
+							};
+							const int selIdx = ws.SelectedLayoutInstanceIndex();
+							if (selIdx >= 0 && selIdx < static_cast<int>(ws.Doc().layoutInstances.size()))
+							{
+								const engine::editor::WorldMapEditLayoutInstance& inst =
+									ws.Doc().layoutInstances[static_cast<size_t>(selIdx)];
+								m_worldEditorShell->MutableCommandStack().Push(
+									std::make_unique<engine::editor::scene::MoveLayoutInstanceCommand>(
+										inst.guid, inst.worldX, inst.worldY, inst.worldZ,
+										static_cast<double>(pickX), static_cast<double>(wy), static_cast<double>(pickZ),
+										ops));
+								ws.Status() = "Instance deplacee.";
+							}
+							else
+							{
+								engine::editor::WorldMapEditLayoutInstance inst{};
+								if (ws.BuildLayoutInstanceForPlacement(m_cfg, static_cast<double>(pickX),
+										static_cast<double>(wy), static_cast<double>(pickZ), inst))
+								{
+									m_worldEditorShell->MutableCommandStack().Push(
+										std::make_unique<engine::editor::scene::PlaceLayoutInstanceCommand>(
+											std::move(inst), ops));
+								}
+							}
+						}
+						else
+						{
+							ws.PlaceOrMoveLayoutInstanceAtTerrainHit(m_cfg, static_cast<double>(pickX), static_cast<double>(wy),
+								static_cast<double>(pickZ));
+						}
 					}
 				}
 				else if (m_worldEditorTerrainTools.IsValid() && !cap && m_input.IsMouseDown(engine::platform::MouseButton::Left)
@@ -14889,6 +14981,378 @@ namespace engine
 			if (wasDragging) { panel->MarkPreviewDirty(); return true; }
 		}
 		return m_gizmoDragAxis >= 0;
+#else
+		(void)mouseX; (void)mouseY; return false;
+#endif
+	}
+
+	void Engine::SceneGizmoHandleSizes(const engine::math::Vec3& pos, float& axisLen, float& ringR) const
+	{
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::render::Camera& cam = m_renderStates[readIdx].camera;
+		const float dx = cam.position.x - pos.x;
+		const float dy = cam.position.y - pos.y;
+		const float dz = cam.position.z - pos.z;
+		const float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+		// ~constant à l'écran : longueur d'axe proportionnelle à la distance
+		// (mêmes coefficients que le gizmo bâtiment, cf. GizmoHandleSizes).
+		axisLen = std::clamp(dist * 0.09f, 0.5f, 10.0f);
+		ringR   = axisLen * 0.8f;
+	}
+
+	void Engine::DrawEditorSceneGizmo()
+	{
+#if defined(_WIN32)
+		if (!m_editorEnabled || !m_worldEditorShell || !m_worldEditorShell->IsInitialized()) return;
+		// Le gizmo bâtiment garde la main en mode édition bâtiment (deux gizmos
+		// superposés seraient illisibles et se disputeraient les clics).
+		if (engine::editor::world::panels::BuildingEditorPanel* bp =
+			m_worldEditorShell->GetBuildingEditorPanel(); bp && bp->EditModeActive()) return;
+		const engine::editor::scene::EditorSelection& sel = m_worldEditorShell->GetSelection();
+		if (!sel.HasSelection()) return;
+		const engine::editor::scene::EditorSceneModel& model = m_worldEditorShell->GetSceneModel();
+		const engine::editor::scene::SceneEntity* primary = model.Find(sel.Current());
+		if (primary == nullptr || !primary->hasTransform) return;
+
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::math::Mat4& vp = m_renderStates[readIdx].viewProjMatrix;
+		const ImGuiIO& io = ImGui::GetIO();
+		const float W = io.DisplaySize.x, H = io.DisplaySize.y;
+		if (W <= 0.0f || H <= 0.0f) return;
+
+		// Projection monde -> écran (pixels) via la viewProj courante (même
+		// convention que le gizmo bâtiment : viewProj col-major, pas de Y-flip).
+		auto project = [&](const engine::math::Vec3& w, ImVec2& out) -> bool {
+			const float* M = vp.m;
+			const float cx = M[0]*w.x + M[4]*w.y + M[8]*w.z  + M[12];
+			const float cy = M[1]*w.x + M[5]*w.y + M[9]*w.z  + M[13];
+			const float cw = M[3]*w.x + M[7]*w.y + M[11]*w.z + M[15];
+			if (cw <= 1e-4f) return false; // derrière la caméra
+			out.x = (cx / cw * 0.5f + 0.5f) * W;
+			out.y = (cy / cw * 0.5f + 0.5f) * H;
+			return true;
+		};
+
+		ImDrawList* dl = ImGui::GetBackgroundDrawList();
+
+		// Marqueurs de multi-sélection : un anneau magenta par entité (double
+		// épaisseur sur la primaire) pour VOIR ce qui sera affecté par le geste.
+		const ImU32 colSel = IM_COL32(230, 80, 230, 220);
+		for (const engine::editor::scene::EntityId& id : sel.Items())
+		{
+			const engine::editor::scene::SceneEntity* e = model.Find(id);
+			if (e == nullptr || !e->hasTransform) continue;
+			ImVec2 p;
+			if (project(e->transform.position, p))
+				dl->AddCircle(p, (id == sel.Current()) ? 11.0f : 7.0f, colSel, 24,
+					(id == sel.Current()) ? 3.0f : 1.5f);
+		}
+
+		const engine::math::Vec3 o = primary->transform.position;
+		ImVec2 so;
+		if (!project(o, so)) return;
+
+		float axisLen, ringR; SceneGizmoHandleSizes(o, axisLen, ringR);
+		const ImU32 colX = IM_COL32(235, 70, 70, 255);  // X rouge
+		const ImU32 colY = IM_COL32(70, 210, 70, 255);  // Y vert
+		const ImU32 colZ = IM_COL32(80, 130, 255, 255); // Z bleu
+		const ImU32 hot  = IM_COL32(255, 240, 130, 255);// survol/actif : jaune vif
+		const ImU32 cols[3] = { colX, colY, colZ };
+		const engine::math::Vec3 dirs[3] = { {1,0,0}, {0,1,0}, {0,0,1} };
+		const int mode = static_cast<int>(m_worldEditorShell->GetSceneGizmoMode());
+		const bool dragging = (m_sceneGizmoDragAxis >= 0);
+
+		if (mode == 0) // Translation : 3 axes monde
+		{
+			auto distToSeg = [](const ImVec2& p, const ImVec2& a, const ImVec2& b) -> float {
+				const float vx=b.x-a.x, vy=b.y-a.y, wx=p.x-a.x, wy=p.y-a.y;
+				const float len2=vx*vx+vy*vy; float t=(len2>1e-6f)?(wx*vx+wy*vy)/len2:0.0f;
+				t=std::clamp(t,0.0f,1.0f); const float cx=a.x+t*vx, cy=a.y+t*vy;
+				return std::sqrt((p.x-cx)*(p.x-cx)+(p.y-cy)*(p.y-cy));
+			};
+			int hovAxis = dragging ? m_sceneGizmoDragAxis : -1;
+			for (int a = 0; a < 3; ++a)
+			{
+				const engine::math::Vec3 tip{ o.x + dirs[a].x*axisLen, o.y + dirs[a].y*axisLen, o.z + dirs[a].z*axisLen };
+				ImVec2 se;
+				if (!project(tip, se)) continue;
+				if (!dragging)
+				{
+					const float sl = std::sqrt((se.x-so.x)*(se.x-so.x) + (se.y-so.y)*(se.y-so.y));
+					if (sl > 12.0f && distToSeg(io.MousePos, so, se) < 9.0f) hovAxis = a;
+				}
+				const bool axHot = (hovAxis == a);
+				dl->AddLine(so, se, axHot ? hot : cols[a], axHot ? 5.0f : 3.0f);
+				dl->AddCircleFilled(se, axHot ? 7.0f : 5.0f, axHot ? hot : cols[a]);
+			}
+		}
+		else if (mode == 1) // Rotation yaw : un anneau autour de Y
+		{
+			ImVec2 rp;
+			const engine::math::Vec3 rw{ o.x + ringR, o.y, o.z };
+			if (project(rw, rp))
+			{
+				const float rad = std::sqrt((rp.x-so.x)*(rp.x-so.x) + (rp.y-so.y)*(rp.y-so.y));
+				if (rad > 3.0f && rad < 4000.0f)
+				{
+					bool ringHot = dragging;
+					if (!dragging)
+					{
+						const float dm = std::sqrt((io.MousePos.x-so.x)*(io.MousePos.x-so.x)
+							+ (io.MousePos.y-so.y)*(io.MousePos.y-so.y));
+						ringHot = std::abs(dm - rad) < 9.0f;
+					}
+					dl->AddCircle(so, rad, ringHot ? hot : colY, 48, ringHot ? 4.0f : 2.5f);
+				}
+			}
+		}
+		else // Échelle uniforme : poignée carrée au centre (drag vertical)
+		{
+			bool sqHot = dragging;
+			if (!dragging)
+			{
+				sqHot = std::abs(io.MousePos.x - so.x) < 14.0f && std::abs(io.MousePos.y - so.y) < 14.0f;
+			}
+			dl->AddRectFilled(ImVec2(so.x - 9.0f, so.y - 9.0f), ImVec2(so.x + 9.0f, so.y + 9.0f),
+				sqHot ? hot : IM_COL32(210, 210, 210, 255), 2.0f);
+		}
+		dl->AddCircleFilled(so, 4.0f, IM_COL32(255, 255, 255, 255)); // centre
+
+		// Lecteur de valeurs : transform de l'entité primaire + taille de la
+		// sélection (le drag n'affiche pas ses valeurs autrement).
+		{
+			char l1[112], l2[112];
+			std::snprintf(l1, sizeof(l1), "Pos  X %.2f  Y %.2f  Z %.2f  (m)",
+				primary->transform.position.x, primary->transform.position.y, primary->transform.position.z);
+			std::snprintf(l2, sizeof(l2), "Yaw  %.0f deg   Echelle  %.2f   (%d selectionnee(s))",
+				primary->transform.eulerDeg.y, primary->transform.uniformScale,
+				static_cast<int>(sel.Count()));
+			const ImVec2 p1{ so.x + 14.0f, so.y + 10.0f };
+			const ImVec2 p2{ so.x + 14.0f, so.y + 26.0f };
+			dl->AddRectFilled(ImVec2(p1.x - 4.0f, p1.y - 2.0f), ImVec2(p1.x + 290.0f, p2.y + 16.0f),
+				IM_COL32(0, 0, 0, 150), 3.0f);
+			const ImU32 white = IM_COL32(235, 235, 235, 255);
+			const ImU32 hotTxt = IM_COL32(255, 230, 90, 255);
+			dl->AddText(p1, (dragging && m_sceneGizmoDragMode == 0) ? hotTxt : white, l1);
+			dl->AddText(p2, (dragging && m_sceneGizmoDragMode != 0) ? hotTxt : white, l2);
+		}
+#endif
+	}
+
+	bool Engine::UpdateEditorSceneGizmoDrag(int mouseX, int mouseY)
+	{
+#if defined(_WIN32)
+		if (!m_editorEnabled || !m_worldEditorShell || !m_worldEditorShell->IsInitialized()) return false;
+		if (engine::editor::world::panels::BuildingEditorPanel* bp =
+			m_worldEditorShell->GetBuildingEditorPanel(); bp && bp->EditModeActive())
+		{
+			m_sceneGizmoDragAxis = -1;
+			return false;
+		}
+		const engine::editor::scene::EditorSelection& sel = m_worldEditorShell->GetSelection();
+		const engine::editor::scene::EditorSceneModel& model = m_worldEditorShell->GetSceneModel();
+		const engine::editor::scene::SceneEntity* primary =
+			sel.HasSelection() ? model.Find(sel.Current()) : nullptr;
+		if (primary == nullptr || !primary->hasTransform)
+		{
+			m_sceneGizmoDragAxis = -1;
+			return false;
+		}
+		const engine::editor::world::WorldEditorShell::TransformWriter& writer =
+			m_worldEditorShell->GetTransformWriter();
+		if (!writer) return false;
+
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::math::Mat4& vp = m_renderStates[readIdx].viewProjMatrix;
+		const ImGuiIO& io = ImGui::GetIO();
+		const float W = io.DisplaySize.x, H = io.DisplaySize.y;
+		if (W <= 0.0f || H <= 0.0f) return false;
+
+		auto project = [&](const engine::math::Vec3& w, float& sx, float& sy) -> bool {
+			const float* M = vp.m;
+			const float cx = M[0]*w.x + M[4]*w.y + M[8]*w.z  + M[12];
+			const float cy = M[1]*w.x + M[5]*w.y + M[9]*w.z  + M[13];
+			const float cw = M[3]*w.x + M[7]*w.y + M[11]*w.z + M[15];
+			if (cw <= 1e-4f) return false;
+			sx = (cx / cw * 0.5f + 0.5f) * W;
+			sy = (cy / cw * 0.5f + 0.5f) * H;
+			return true;
+		};
+
+		const engine::math::Vec3 o = primary->transform.position;
+		float ox, oy;
+		if (!project(o, ox, oy)) { m_sceneGizmoDragAxis = -1; return false; }
+		float axisLen, ringR; SceneGizmoHandleSizes(o, axisLen, ringR);
+		const engine::math::Vec3 dirs[3] = { {1,0,0}, {0,1,0}, {0,0,1} };
+		const int mode = static_cast<int>(m_worldEditorShell->GetSceneGizmoMode());
+		const float mx = static_cast<float>(mouseX), my = static_cast<float>(mouseY);
+
+		const bool pressed  = m_input.WasMousePressed(engine::platform::MouseButton::Left);
+		const bool downNow  = m_input.IsMouseDown(engine::platform::MouseButton::Left);
+		const bool released = m_input.WasMouseReleased(engine::platform::MouseButton::Left);
+
+		// --- Saisie d'un handle au clic (selon le mode courant) --------------
+		if (m_sceneGizmoDragAxis < 0 && pressed)
+		{
+			int grabbedAxis = -1;
+			if (mode == 0) // translation : un des 3 axes
+			{
+				auto distToSeg = [](float px, float py, float ax, float ay, float bx, float by) -> float {
+					const float vx = bx-ax, vy = by-ay, wx = px-ax, wy = py-ay;
+					const float len2 = vx*vx + vy*vy;
+					float t = (len2 > 1e-6f) ? (wx*vx + wy*vy) / len2 : 0.0f;
+					t = std::clamp(t, 0.0f, 1.0f);
+					const float cx = ax + t*vx, cy = ay + t*vy;
+					return std::sqrt((px-cx)*(px-cx) + (py-cy)*(py-cy));
+				};
+				float bestDist = 9.0f; // tolérance écran (pixels)
+				for (int a = 0; a < 3; ++a)
+				{
+					const engine::math::Vec3 tip{ o.x + dirs[a].x*axisLen, o.y + dirs[a].y*axisLen, o.z + dirs[a].z*axisLen };
+					float tx, ty;
+					if (!project(tip, tx, ty)) continue;
+					const float segLen = std::sqrt((tx-ox)*(tx-ox) + (ty-oy)*(ty-oy));
+					if (segLen <= 12.0f) continue; // axe quasi vu de bout
+					const float d = distToSeg(mx, my, ox, oy, tx, ty);
+					if (d < bestDist) { bestDist = d; grabbedAxis = a; }
+				}
+			}
+			else if (mode == 1) // rotation yaw : l'anneau
+			{
+				float rx, ry;
+				const engine::math::Vec3 rw{ o.x + ringR, o.y, o.z };
+				if (project(rw, rx, ry))
+				{
+					const float rad = std::sqrt((rx-ox)*(rx-ox) + (ry-oy)*(ry-oy));
+					const float dm = std::sqrt((mx-ox)*(mx-ox) + (my-oy)*(my-oy));
+					if (rad > 12.0f && std::abs(dm - rad) < 9.0f) grabbedAxis = 0;
+				}
+			}
+			else // échelle : la poignée centrale
+			{
+				if (std::abs(mx - ox) < 14.0f && std::abs(my - oy) < 14.0f) grabbedAxis = 0;
+			}
+
+			if (grabbedAxis >= 0)
+			{
+				// Capture des transforms de départ de TOUTES les entités
+				// éditables de la sélection (ancien état des commandes d'undo).
+				m_sceneGizmoDragStart.clear();
+				for (const engine::editor::scene::EntityId& id : sel.Items())
+				{
+					const engine::editor::scene::SceneEntity* e = model.Find(id);
+					if (e != nullptr && e->hasTransform)
+						m_sceneGizmoDragStart.emplace_back(id, e->transform);
+				}
+				if (m_sceneGizmoDragStart.empty()) return false;
+				m_sceneGizmoDragAxis = grabbedAxis;
+				m_sceneGizmoDragMode = mode;
+				m_sceneGizmoDragLastX = mx;
+				m_sceneGizmoDragLastY = my;
+				m_sceneGizmoDragLastAngle = std::atan2(my - oy, mx - ox);
+				return true; // capture : pas de picking/outil sur ce clic
+			}
+		}
+
+		// --- Application pendant le drag (écriture directe, undo au release) --
+		if (m_sceneGizmoDragAxis >= 0 && downNow)
+		{
+			if (m_sceneGizmoDragMode == 0) // translation le long de l'axe monde
+			{
+				const int a = m_sceneGizmoDragAxis;
+				const engine::math::Vec3 tip{ o.x + dirs[a].x*axisLen, o.y + dirs[a].y*axisLen, o.z + dirs[a].z*axisLen };
+				float tx, ty;
+				if (project(tip, tx, ty))
+				{
+					float axSx = tx - ox, axSy = ty - oy;
+					const float segLen = std::sqrt(axSx*axSx + axSy*axSy);
+					if (segLen > 1e-3f)
+					{
+						axSx /= segLen; axSy /= segLen;
+						const float worldPerPix = axisLen / segLen;
+						const float dScreen = (mx - m_sceneGizmoDragLastX)*axSx + (my - m_sceneGizmoDragLastY)*axSy;
+						const float d = dScreen * worldPerPix; // mètres monde le long de l'axe a
+						for (const auto& [id, startT] : m_sceneGizmoDragStart)
+						{
+							const engine::editor::scene::SceneEntity* e = model.Find(id);
+							if (e == nullptr) continue;
+							engine::editor::scene::EntityTransform t = e->transform;
+							t.position.x += dirs[a].x * d;
+							t.position.y += dirs[a].y * d;
+							t.position.z += dirs[a].z * d;
+							writer(id, t);
+						}
+					}
+				}
+			}
+			else if (m_sceneGizmoDragMode == 1) // rotation yaw autour du pivot de chaque entité
+			{
+				const float angNow = std::atan2(my - oy, mx - ox);
+				float dAng = angNow - m_sceneGizmoDragLastAngle;
+				while (dAng >  3.14159265f) dAng -= 6.28318530f;
+				while (dAng < -3.14159265f) dAng += 6.28318530f;
+				m_sceneGizmoDragLastAngle = angNow;
+				const float dDeg = dAng * (180.0f / 3.14159265f);
+				for (const auto& [id, startT] : m_sceneGizmoDragStart)
+				{
+					const engine::editor::scene::SceneEntity* e = model.Find(id);
+					if (e == nullptr) continue;
+					engine::editor::scene::EntityTransform t = e->transform;
+					t.eulerDeg.y += dDeg;
+					writer(id, t);
+				}
+			}
+			else // échelle uniforme (drag vertical : haut = agrandir)
+			{
+				const float factor = 1.0f + (m_sceneGizmoDragLastY - my) * 0.01f;
+				for (const auto& [id, startT] : m_sceneGizmoDragStart)
+				{
+					const engine::editor::scene::SceneEntity* e = model.Find(id);
+					if (e == nullptr) continue;
+					engine::editor::scene::EntityTransform t = e->transform;
+					t.uniformScale = std::clamp(t.uniformScale * factor, 0.01f, 1000.0f);
+					writer(id, t);
+				}
+			}
+			m_sceneGizmoDragLastX = mx;
+			m_sceneGizmoDragLastY = my;
+			return true;
+		}
+
+		// --- Fin du drag : pousser UNE étape d'annulation pour tout le geste --
+		if (released && m_sceneGizmoDragAxis >= 0)
+		{
+			auto sameTransform = [](const engine::editor::scene::EntityTransform& a,
+				const engine::editor::scene::EntityTransform& b) -> bool
+			{
+				return a.position.x == b.position.x && a.position.y == b.position.y
+					&& a.position.z == b.position.z
+					&& a.eulerDeg.x == b.eulerDeg.x && a.eulerDeg.y == b.eulerDeg.y
+					&& a.eulerDeg.z == b.eulerDeg.z
+					&& a.uniformScale == b.uniformScale;
+			};
+			const char* label = (m_sceneGizmoDragMode == 0) ? "Gizmo : déplacer"
+				: (m_sceneGizmoDragMode == 1) ? "Gizmo : tourner" : "Gizmo : échelle";
+			// Toujours envelopper dans une CompositeCommand (mergeKey 0) : deux
+			// drags successifs de la même entité ne doivent PAS fusionner en une
+			// seule étape d'annulation (contrairement au slider de l'Inspector).
+			auto composite = std::make_unique<engine::editor::world::CompositeCommand>(label);
+			for (const auto& [id, startT] : m_sceneGizmoDragStart)
+			{
+				const engine::editor::scene::SceneEntity* e = model.Find(id);
+				if (e == nullptr || sameTransform(startT, e->transform)) continue;
+				composite->AddChild(std::make_unique<engine::editor::world::SetEntityTransformCommand>(
+					id, startT, e->transform, writer));
+			}
+			if (!composite->Empty())
+			{
+				m_worldEditorShell->MutableCommandStack().Push(std::move(composite));
+			}
+			m_sceneGizmoDragAxis = -1;
+			m_sceneGizmoDragStart.clear();
+			return true;
+		}
+		return m_sceneGizmoDragAxis >= 0;
 #else
 		(void)mouseX; (void)mouseY; return false;
 #endif

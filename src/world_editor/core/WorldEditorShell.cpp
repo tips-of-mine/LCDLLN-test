@@ -19,11 +19,14 @@
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
 
+#include <algorithm> // std::sort — suppression multi par index décroissant (Roadmap-6)
 #include <cctype>   // std::tolower — ids kebab-case des toggles de panneaux
 #include <cstring>  // std::strcmp — filtrage du panneau « Scene » dans le menu View
 #include <functional>
 #include <utility>
+#include <vector>
 
+#include "src/world_editor/core/CompositeCommand.h"        // Roadmap-6 : gestes multi-sélection
 #include "src/world_editor/modes/EditorModeRegistry.h"
 #include "src/world_editor/scene/DeleteEntityCommand.h"    // lot 5
 #include "src/world_editor/scene/DuplicateEntityCommand.h" // lot 5
@@ -422,6 +425,21 @@ namespace engine::editor::world
 			[this] { return CanEditSelectedEntity(); }, nullptr,
 			[this] { DeleteSelectedEntity(); });
 
+		// Roadmap-6 (2026-07-19) — Modes du gizmo de transformation viewport
+		// (toggles exclusifs, cf. raccourcis E/T/C dans HandleShortcut).
+		add("tool.gizmo-translate", "Gizmo : déplacer", ActionCategory::Outils, "E",
+			nullptr,
+			[this] { return m_sceneGizmoMode == SceneGizmoMode::Translate; },
+			[this] { SetSceneGizmoMode(SceneGizmoMode::Translate); });
+		add("tool.gizmo-rotate", "Gizmo : tourner", ActionCategory::Outils, "T",
+			nullptr,
+			[this] { return m_sceneGizmoMode == SceneGizmoMode::Rotate; },
+			[this] { SetSceneGizmoMode(SceneGizmoMode::Rotate); });
+		add("tool.gizmo-scale", "Gizmo : échelle", ActionCategory::Outils, "C",
+			nullptr,
+			[this] { return m_sceneGizmoMode == SceneGizmoMode::Scale; },
+			[this] { SetSceneGizmoMode(SceneGizmoMode::Scale); });
+
 		// Toggle de visibilité par panneau (menu « Fenêtre »). Le panneau
 		// « Scene » est exclu (doublon de la vue 3D principale, cf. menu Vue
 		// historique). Id kebab-case dérivé du nom : "Asset Browser" →
@@ -458,51 +476,132 @@ namespace engine::editor::world
 		}
 	}
 
-	/// Lot 5 (2026-07-18) — true si la sélection courante est duplicable/
-	/// supprimable : foncteurs Engine installés ET kind ∈ {LayoutInstance,
-	/// MeshInsert, DungeonPortal}. Terrain (entité implicite unique), Water
-	/// (pas de transform simple) et None sont exclus.
+	namespace
+	{
+		/// Lot 5 / Roadmap-6 — true si le kind est éditable structurellement
+		/// (duplicable/supprimable) : Terrain (entité implicite unique), Water
+		/// (pas de transform simple) et None sont exclus.
+		bool IsStructurallyEditableKind(engine::editor::scene::EntityKind kind)
+		{
+			using K = engine::editor::scene::EntityKind;
+			return kind == K::LayoutInstance || kind == K::MeshInsert || kind == K::DungeonPortal;
+		}
+
+		/// Roadmap-6 — Extrait de la sélection la liste des entités éditables,
+		/// dans l'ordre de sélection (sans doublon, garanti par EditorSelection).
+		std::vector<engine::editor::scene::EntityId> EditableSelection(
+			const engine::editor::scene::EditorSelection& sel)
+		{
+			std::vector<engine::editor::scene::EntityId> out;
+			for (const engine::editor::scene::EntityId& id : sel.Items())
+			{
+				if (IsStructurallyEditableKind(id.kind)) out.push_back(id);
+			}
+			return out;
+		}
+	}
+
+	/// Lot 5 (2026-07-18, multi Roadmap-6) — true si AU MOINS une entité de la
+	/// sélection est duplicable/supprimable (foncteurs Engine installés).
 	bool WorldEditorShell::CanEditSelectedEntity() const
 	{
 		if (!m_entityEditOps.IsInstalled()) return false;
-		const engine::editor::scene::EntityKind kind = m_selection.Current().kind;
-		using K = engine::editor::scene::EntityKind;
-		return kind == K::LayoutInstance || kind == K::MeshInsert || kind == K::DungeonPortal;
+		for (const engine::editor::scene::EntityId& id : m_selection.Items())
+		{
+			if (IsStructurallyEditableKind(id.kind)) return true;
+		}
+		return false;
 	}
 
-	/// Lot 5 — Pousse une DuplicateEntityCommand sur la pile undo (Execute
-	/// immédiat : la copie apparaît, décalée, avec un nouveau guid). La
-	/// sélection reste sur l'original : la copie est ajoutée en FIN de liste,
-	/// aucun index existant n'est invalidé.
+	/// Lot 5 (multi Roadmap-6) — Duplique toutes les entités éditables de la
+	/// sélection. Une commande par entité, regroupées en CompositeCommand si
+	/// plusieurs (une seule étape d'annulation). Les copies s'ajoutent en FIN
+	/// de liste : aucun index existant n'est invalidé, la sélection reste sur
+	/// les originaux.
 	void WorldEditorShell::DuplicateSelectedEntity()
 	{
-		if (!CanEditSelectedEntity())
+		const std::vector<engine::editor::scene::EntityId> ids =
+			m_entityEditOps.IsInstalled()
+				? EditableSelection(m_selection)
+				: std::vector<engine::editor::scene::EntityId>{};
+		if (ids.empty())
 		{
 			LOG_INFO(EditorWorld, "Dupliquer : aucune entité duplicable sélectionnée");
 			return;
 		}
-		m_commandStack.Push(std::make_unique<DuplicateEntityCommand>(
-			m_selection.Current(), m_entityEditOps));
-		LOG_INFO(EditorWorld, "Dupliquer la sélection (kind={}, index={})",
-			static_cast<int>(m_selection.Current().kind), m_selection.Current().index);
+		if (ids.size() == 1u)
+		{
+			m_commandStack.Push(std::make_unique<DuplicateEntityCommand>(ids.front(), m_entityEditOps));
+		}
+		else
+		{
+			auto composite = std::make_unique<CompositeCommand>(
+				"Dupliquer " + std::to_string(ids.size()) + " entités");
+			for (const engine::editor::scene::EntityId& id : ids)
+			{
+				composite->AddChild(std::make_unique<DuplicateEntityCommand>(id, m_entityEditOps));
+			}
+			m_commandStack.Push(std::move(composite));
+		}
+		LOG_INFO(EditorWorld, "Dupliquer la sélection ({} entité(s))", ids.size());
 	}
 
-	/// Lot 5 — Pousse une DeleteEntityCommand sur la pile undo (Execute
-	/// immédiat : l'entité disparaît) puis VIDE la sélection — après un
-	/// erase, les index des entités suivantes glissent d'un rang et la
-	/// sélection courante pointerait une autre entité.
+	/// Lot 5 (multi Roadmap-6) — Supprime toutes les entités éditables de la
+	/// sélection, par index DÉCROISSANT au sein de chaque kind : la capture du
+	/// 1er Execute d'une DeleteEntityCommand se fait par index de scène, et
+	/// retirer d'abord les index hauts garantit que les index bas restent
+	/// valides pour les commandes suivantes du composite. VIDE ensuite la
+	/// sélection (les index des entités restantes ont glissé).
 	void WorldEditorShell::DeleteSelectedEntity()
 	{
-		if (!CanEditSelectedEntity())
+		std::vector<engine::editor::scene::EntityId> ids =
+			m_entityEditOps.IsInstalled()
+				? EditableSelection(m_selection)
+				: std::vector<engine::editor::scene::EntityId>{};
+		if (ids.empty())
 		{
 			LOG_INFO(EditorWorld, "Supprimer : aucune entité supprimable sélectionnée");
 			return;
 		}
-		const engine::editor::scene::EntityId id = m_selection.Current();
-		m_commandStack.Push(std::make_unique<DeleteEntityCommand>(id, m_entityEditOps));
+		std::sort(ids.begin(), ids.end(),
+			[](const engine::editor::scene::EntityId& a, const engine::editor::scene::EntityId& b)
+			{
+				if (a.kind != b.kind) return static_cast<int>(a.kind) < static_cast<int>(b.kind);
+				return a.index > b.index; // index décroissant au sein du kind
+			});
+		if (ids.size() == 1u)
+		{
+			m_commandStack.Push(std::make_unique<DeleteEntityCommand>(ids.front(), m_entityEditOps));
+		}
+		else
+		{
+			auto composite = std::make_unique<CompositeCommand>(
+				"Supprimer " + std::to_string(ids.size()) + " entités");
+			for (const engine::editor::scene::EntityId& id : ids)
+			{
+				composite->AddChild(std::make_unique<DeleteEntityCommand>(id, m_entityEditOps));
+			}
+			m_commandStack.Push(std::move(composite));
+		}
+		const size_t n = ids.size();
 		m_selection.Clear();
-		LOG_INFO(EditorWorld, "Supprimer la sélection (kind={}, index={})",
-			static_cast<int>(id.kind), id.index);
+		LOG_INFO(EditorWorld, "Supprimer la sélection ({} entité(s))", n);
+	}
+
+	/// Roadmap-6 — Change le mode du gizmo viewport (E/T/C, actions
+	/// `tool.gizmo-*`). Idempotent, logge la transition.
+	void WorldEditorShell::SetSceneGizmoMode(SceneGizmoMode mode)
+	{
+		if (m_sceneGizmoMode == mode) return;
+		m_sceneGizmoMode = mode;
+		const char* name = "Translate";
+		switch (mode)
+		{
+			case SceneGizmoMode::Translate: name = "Translate"; break;
+			case SceneGizmoMode::Rotate:    name = "Rotate"; break;
+			case SceneGizmoMode::Scale:     name = "Scale"; break;
+		}
+		LOG_INFO(EditorWorld, "Gizmo viewport -> {}", name);
 	}
 
 	/// M100.6 — Active un outil et logge la transition. Garde l'API simple :
@@ -814,6 +913,24 @@ namespace engine::editor::world
 		if (!ctrl && !shift && virtualKey == 0x2E)
 		{
 			DeleteSelectedEntity();
+			return true;
+		}
+		// Roadmap-6 (2026-07-19) — E / T / C (sans modifiers) : mode du gizmo
+		// viewport (dÉplacer / Tourner / éChelle). W est réservé à la caméra
+		// (WASD/ZQSD) et R à l'outil rivière (M100.13), d'où ce trio.
+		if (!ctrl && !shift && virtualKey == 'E')
+		{
+			SetSceneGizmoMode(SceneGizmoMode::Translate);
+			return true;
+		}
+		if (!ctrl && !shift && virtualKey == 'T')
+		{
+			SetSceneGizmoMode(SceneGizmoMode::Rotate);
+			return true;
+		}
+		if (!ctrl && !shift && virtualKey == 'C')
+		{
+			SetSceneGizmoMode(SceneGizmoMode::Scale);
 			return true;
 		}
 		// M100.6 — Raccourci 'B' (sans modifiers) active la sculpture terrain.

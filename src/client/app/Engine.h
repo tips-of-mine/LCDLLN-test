@@ -119,6 +119,7 @@
 #if defined(_WIN32)
 #include "src/client/render/terrain/TerrainEditingTools.h"
 #include "src/world_editor/ui/TexturePreviewCache.h"
+#include "src/world_editor/scene/EditorSceneModel.h" // Roadmap-6 : gizmo scène (EntityId/EntityTransform)
 #endif
 #include "src/world_editor/render/EditorViewportRenderTarget.h"
 // Sous-projet C MVP (Task 12) — viewport offscreen pour l'apercu race
@@ -1102,6 +1103,41 @@ namespace engine
 		float m_gizmoDragAxisSy = 0.0f;   ///< direction écran de l'axe (unité) Y
 		float m_gizmoDragWorldPerPix = 0.0f; ///< mètres monde par pixel le long de l'axe (translation)
 		int   m_gizmoDragRefreshTick = 0;    ///< compteur de frames pour rafraîchir le mesh pendant le drag (throttle)
+
+		/// Roadmap-6 (2026-07-19) — Dessine le gizmo de transformation des
+		/// ENTITÉS DE SCÈNE sélectionnées (EditorSelection du shell) en overlay
+		/// ImGui : selon le mode du shell (E/T/C), axes de translation X/Y/Z,
+		/// anneau de rotation yaw, ou poignée d'échelle uniforme — sur l'entité
+		/// PRIMAIRE, plus un marqueur sur chaque entité de la multi-sélection.
+		/// No-op hors éditeur, sans sélection à transform, ou en mode édition
+		/// bâtiment (le gizmo bâtiment garde la main). Main thread, frame ImGui.
+		void DrawEditorSceneGizmo();
+
+		/// Roadmap-6 — Gère le cliquer-glisser du gizmo de scène : saisit un
+		/// handle au clic (axe / anneau yaw / poignée d'échelle selon le mode),
+		/// applique la transformation à TOUTES les entités éditables de la
+		/// sélection pendant le drag (écriture directe via TransformWriter),
+		/// puis pousse au relâchement UNE étape d'annulation
+		/// (SetEntityTransformCommand par entité, CompositeCommand si
+		/// plusieurs). \param mouseX,mouseY position souris (pixels fenêtre).
+		/// \return true si le gizmo capture la souris cette frame (le clic ne
+		/// doit alors PAS être interprété par le picking/outils terrain).
+		bool UpdateEditorSceneGizmoDrag(int mouseX, int mouseY);
+
+		/// Roadmap-6 — Taille MONDE des handles du gizmo de scène (même règle
+		/// « ~constante à l'écran » que GizmoHandleSizes, mais centrée sur une
+		/// position arbitraire). \param pos centre monde du gizmo (mètres).
+		void SceneGizmoHandleSizes(const engine::math::Vec3& pos, float& axisLen, float& ringR) const;
+
+		// Gizmo de scène — état du glissement en cours (Roadmap-6).
+		int   m_sceneGizmoDragAxis = -1;    ///< translation : axe saisi 0=X/1=Y/2=Z ; rotation/échelle : 0 ; -1 = aucun
+		int   m_sceneGizmoDragMode = 0;     ///< mode au moment de la saisie : 0=translation, 1=rotation yaw, 2=échelle
+		float m_sceneGizmoDragLastX = 0.0f; ///< dernière position souris X (pixels)
+		float m_sceneGizmoDragLastY = 0.0f; ///< dernière position souris Y (pixels)
+		float m_sceneGizmoDragLastAngle = 0.0f; ///< dernier angle souris/centre (rad, mode rotation)
+		/// Transforms des entités éditables de la sélection AU DÉBUT du drag
+		/// (ancien état des SetEntityTransformCommand poussées au relâchement).
+		std::vector<std::pair<engine::editor::scene::EntityId, engine::editor::scene::EntityTransform>> m_sceneGizmoDragStart;
 
 		/// Charge le coffre (Chest_Wood) en mesh SKINNE (squelette + clips Open/Close)
 		/// pour l'animer a l'interaction. A appeler au boot apres LoadInteractableProps.

@@ -20,6 +20,13 @@ namespace engine::server::mail
 		/// avec ce store ou avec un InMemoryMailStore (mode no-DB / tests).
 		bool IsAvailable() const noexcept;
 
+		/// Roadmap-4 (2026-07-19) — purge les courriers EXPIRÉS
+		/// (expires_ts_ms > 0 et < \p nowMs — l'expiration vaut disparition,
+		/// pièces jointes comprises) et les courriers SUPPRIMÉS par leur
+		/// destinataire (state=Deleted). mail_items d'abord (pas de FK
+		/// cascade), puis mail. \return nombre de courriers supprimés.
+		size_t PurgeExpired(uint64_t nowMs);
+
 		uint64_t Insert(Mail& out) override;
 		std::optional<Mail> Find(uint64_t mailId) const override;
 		std::vector<Mail> ListInbox(uint64_t receiverAccountId) const override;

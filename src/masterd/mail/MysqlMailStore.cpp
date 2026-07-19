@@ -64,6 +64,44 @@ namespace engine::server::mail
 		return m_pool && m_pool->IsInitialized();
 	}
 
+	size_t MysqlMailStore::PurgeExpired(uint64_t nowMs)
+	{
+		if (!IsAvailable()) return 0;
+		auto guard = m_pool->Acquire();
+		MYSQL* mysql = guard.get();
+		auto* cache = guard.cache();
+		if (!mysql || !cache) return 0;
+
+		engine::server::db::ScopedTransaction tx(mysql);
+
+		// 1. Pièces jointes des courriers à purger (pas de FK ON DELETE
+		// CASCADE sur mail_items — migration 0045).
+		auto* itemsStmt = cache->Acquire(mysql,
+			"DELETE mi FROM mail_items mi JOIN mail m ON m.mail_id = mi.mail_id "
+			"WHERE (m.expires_ts_ms > 0 AND m.expires_ts_ms < ?) OR m.state = 3");
+		if (!itemsStmt || !itemsStmt->Bind(0, nowMs) || !itemsStmt->Execute())
+		{
+			LOG_WARN(Net, "[MysqlMailStore] PurgeExpired: delete mail_items failed");
+			return 0;
+		}
+
+		// 2. Les courriers eux-mêmes.
+		auto* mailStmt = cache->Acquire(mysql,
+			"DELETE FROM mail WHERE (expires_ts_ms > 0 AND expires_ts_ms < ?) OR state = 3");
+		if (!mailStmt || !mailStmt->Bind(0, nowMs) || !mailStmt->Execute())
+		{
+			LOG_WARN(Net, "[MysqlMailStore] PurgeExpired: delete mail failed");
+			return 0;
+		}
+		const size_t purged = static_cast<size_t>(mailStmt->AffectedRows());
+		tx.Commit();
+		if (purged > 0)
+		{
+			LOG_INFO(Net, "[MysqlMailStore] PurgeExpired: {} courrier(s) purgé(s)", purged);
+		}
+		return purged;
+	}
+
 	uint64_t MysqlMailStore::Insert(Mail& out)
 	{
 		if (!IsAvailable()) return 0;

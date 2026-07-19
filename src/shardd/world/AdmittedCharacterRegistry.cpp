@@ -3,7 +3,7 @@
 namespace engine::server
 {
 	void AdmittedCharacterRegistry::Admit(uint64_t characterId, uint64_t accountId,
-		std::string_view characterName, std::string_view gender, uint64_t nowMs)
+		std::string_view characterName, std::string_view gender, uint64_t guildId, uint64_t nowMs)
 	{
 		if (characterId == 0u)
 		{
@@ -22,6 +22,13 @@ namespace engine::server
 		if (!gender.empty())
 		{
 			entry.gender.assign(gender);
+		}
+		// Roadmap-7 — même règle de préservation : une admission sans guilde
+		// (ticket TCP, master legacy) ne doit pas écraser la guilde poussée par
+		// un EnterWorld antérieur.
+		if (guildId != 0u)
+		{
+			entry.guildId = guildId;
 		}
 	}
 
@@ -89,6 +96,21 @@ namespace engine::server
 			return {};
 		}
 		return it->second.gender;
+	}
+
+	uint64_t AdmittedCharacterRegistry::AdmittedGuildId(uint64_t characterId, uint64_t nowMs) const
+	{
+		if (characterId == 0u)
+		{
+			return 0u;
+		}
+		std::lock_guard<std::mutex> lock(m_mutex);
+		const auto it = m_admitted.find(characterId);
+		if (it == m_admitted.end() || (nowMs - it->second.admittedAtMs) > m_ttlMs)
+		{
+			return 0u;
+		}
+		return it->second.guildId;
 	}
 
 	size_t AdmittedCharacterRegistry::Count() const

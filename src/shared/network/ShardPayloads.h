@@ -100,6 +100,12 @@ namespace engine::network
 		uint64_t character_id = 0;
 		std::string character_name;
 		std::string gender;
+		/// Roadmap-7 (2026-07-19) — guilde du compte (table guild_members_v2 côté
+		/// master, un compte = au plus une guilde). 0 = sans guilde OU master
+		/// antérieur à cette extension (champ optionnel en queue, cf. Parse).
+		/// Permet au shard (y compris no-DB) de connaître l'appartenance de
+		/// guilde des joueurs connectés (ex. partage du buff gâteau, dette #991).
+		uint64_t guild_id = 0;
 	};
 
 	/// Parses MASTER_TO_SHARD_ADMIT_CHARACTER payload. Returns nullopt if truncated.
@@ -109,6 +115,8 @@ namespace engine::network
 	/// \param character_name nom du personnage (table SQL characters.name) ; sera tronqué
 	///        à 32 caractères côté master avant l'appel (cohérent avec la contrainte SQL).
 	/// \param gender genre du personnage ("male"/"female", cf. migration 0067).
+	/// \param guild_id Roadmap-7 — guilde du compte (0 = sans guilde). Champ ADDITIF en
+	///        queue de payload : un shard ancien l'ignore, un master ancien ne l'émet pas.
 	std::vector<uint8_t> BuildAdmitCharacterPacket(uint64_t account_id, uint64_t character_id,
-		std::string_view character_name, std::string_view gender);
+		std::string_view character_name, std::string_view gender, uint64_t guild_id = 0);
 }

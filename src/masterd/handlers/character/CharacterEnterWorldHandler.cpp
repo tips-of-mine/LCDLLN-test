@@ -155,6 +155,26 @@ namespace engine::server
 			}
 		}
 
+		// Roadmap-7 (2026-07-19) — guilde du compte pour le push d'admission au
+		// shard (partage du buff gâteau à la guilde, dette #991). SELECT direct
+		// sur guild_members_v2 (un compte = au plus une guilde, clé composite) :
+		// évite de coupler ce handler au GuildHandler (construit APRÈS lui dans
+		// main_linux.cpp — piège d'ordre de déclaration). Tolérant : guilde
+		// indéterminée → 0 (sans guilde), le shard n'étend pas le partage.
+		uint64_t guildId = 0;
+		if (stmtCache)
+		{
+			auto* guildStmt = stmtCache->Acquire(mysql,
+				"SELECT guild_id FROM guild_members_v2 WHERE account_id = ? LIMIT 1");
+			if (guildStmt
+				&& guildStmt->Bind(0, *accountId)
+				&& guildStmt->Execute()
+				&& guildStmt->FetchRow())
+			{
+				guildId = guildStmt->GetUInt64(0);
+			}
+		}
+
 		// Tout est validé : on enregistre le mapping pour le chat.
 		const std::string normalized = SessionCharacterMap::Normalize(parsed->characterName);
 		m_charMap->Set(connId, *accountId, parsed->characterId, parsed->characterName, normalized, accountRole);
@@ -176,12 +196,15 @@ namespace engine::server
 				// TD.6 — on embarque aussi le genre (cf. migration 0067) pour permettre au
 				// client de sélectionner le bon mesh skinné (Male_Ranger vs Female_Ranger)
 				// pour les avatars distants.
+				// Roadmap-7 — on embarque aussi la guilde du compte (guild_members_v2,
+				// 0 = sans guilde) pour que le shard connaisse l'appartenance des
+				// joueurs connectés (partage du buff gâteau à la guilde).
 				auto admitPkt = engine::network::BuildAdmitCharacterPacket(*accountId, parsed->characterId,
-					parsed->characterName, dbGender);
+					parsed->characterName, dbGender, guildId);
 				if (!admitPkt.empty() && m_server->Send(*shardConnId, admitPkt))
 				{
-					LOG_INFO(Net, "[CharacterEnterWorldHandler] admit push sent (shard_id={}, shardConnId={}, account_id={}, character_id={})",
-						dbServerId, *shardConnId, *accountId, parsed->characterId);
+					LOG_INFO(Net, "[CharacterEnterWorldHandler] admit push sent (shard_id={}, shardConnId={}, account_id={}, character_id={}, guild_id={})",
+						dbServerId, *shardConnId, *accountId, parsed->characterId, guildId);
 				}
 				else
 				{

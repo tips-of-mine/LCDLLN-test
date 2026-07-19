@@ -160,11 +160,19 @@ namespace engine::network
 			if (!r.ReadString(out.gender))
 				return std::nullopt;
 		}
+		// Roadmap-7 — guild_id optionnel EN QUEUE (après gender, ne jamais insérer
+		// avant les champs optionnels existants) : un master ancien ne l'émet pas
+		// → 0 (sans guilde), repli propre côté shard (pas de partage guilde).
+		if (r.Remaining() > 0u)
+		{
+			if (!r.ReadU64(out.guild_id))
+				return std::nullopt;
+		}
 		return out;
 	}
 
 	std::vector<uint8_t> BuildAdmitCharacterPacket(uint64_t account_id, uint64_t character_id,
-		std::string_view character_name, std::string_view gender)
+		std::string_view character_name, std::string_view gender, uint64_t guild_id)
 	{
 		PacketBuilder builder;
 		ByteWriter w = builder.PayloadWriter();
@@ -173,6 +181,9 @@ namespace engine::network
 		if (!w.WriteString(character_name))
 			return {};
 		if (!w.WriteString(gender))
+			return {};
+		// Roadmap-7 — guilde du compte, champ additif en queue (cf. Parse).
+		if (!w.WriteU64(guild_id))
 			return {};
 		const size_t payloadBytes = w.Offset();
 		// Push master→shard, pas de request_id ni session.

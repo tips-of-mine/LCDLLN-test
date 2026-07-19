@@ -1516,6 +1516,10 @@ namespace engine::server
 				// Présence unifiée : résout le compte propriétaire (clé de ShardPresenceService).
 				acceptedClient.accountId = m_admittedRegistry->AdmittedAccountId(
 					acceptedClient.persistenceCharacterKey, nowMs);
+				// Roadmap-7 — guilde du compte (poussée par le master dans le push
+				// d'admission ; 0 = sans guilde). Sert au partage du buff gâteau.
+				acceptedClient.guildId = m_admittedRegistry->AdmittedGuildId(
+					acceptedClient.persistenceCharacterKey, nowMs);
 				if (acceptedClient.characterName.empty())
 				{
 					std::string admittedName = m_admittedRegistry->AdmittedCharacterName(
@@ -6012,11 +6016,27 @@ namespace engine::server
 					}
 				}
 			}
-			// DETTE (documentée PR #991) — partage « guilde » : le shard ne
-			// connaît PAS l'appartenance de guilde (aucun GuildSystem câblé
-			// dans ServerApp ; les guildes vivent côté master/DB). V1 = groupe
-			// à portée uniquement ; étendre à la guilde exigera une synchro
-			// d'appartenance master→shard (chantier séparé).
+			// Roadmap-7 (2026-07-19) — partage « guilde » (solde la DETTE #991) :
+			// la guilde du compte est désormais synchronisée master→shard via le
+			// push d'admission (ConnectedClient.guildId, snapshot enter-world).
+			// Mêmes règles que le groupe : co-membres CONNECTÉS et À PORTÉE
+			// (kCakeBuffRadiusMeters), sans doublon avec les membres de groupe
+			// déjà retenus. guildId == 0 (sans guilde / master legacy) → no-op.
+			if (client.guildId != 0u)
+			{
+				for (ConnectedClient& other : m_clients)
+				{
+					if (other.clientId == client.clientId) continue;
+					if (other.guildId != client.guildId) continue;
+					const float dx = other.positionMetersX - client.positionMetersX;
+					const float dz = other.positionMetersZ - client.positionMetersZ;
+					if (dx * dx + dz * dz > kCakeBuffRadiusMeters * kCakeBuffRadiusMeters) continue;
+					bool already = false;
+					for (const ConnectedClient* r : recipients)
+						if (r->clientId == other.clientId) { already = true; break; }
+					if (!already) recipients.push_back(&other);
+				}
+			}
 
 			for (ConnectedClient* target : recipients)
 			{

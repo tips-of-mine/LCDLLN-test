@@ -119,8 +119,10 @@
 #if defined(_WIN32)
 #include "src/client/render/terrain/TerrainEditingTools.h"
 #include "src/world_editor/ui/TexturePreviewCache.h"
-#include "src/world_editor/scene/EditorSceneModel.h" // Roadmap-6 : gizmo scène (EntityId/EntityTransform)
 #endif
+// Roadmap-6 : gizmo scène (EntityId/EntityTransform). Pur CPU, HORS du bloc
+// _WIN32 — Engine.h est aussi compilé sous Linux (via engine_core).
+#include "src/world_editor/scene/EditorSceneModel.h"
 #include "src/world_editor/render/EditorViewportRenderTarget.h"
 // Sous-projet C MVP (Task 12) — viewport offscreen pour l'apercu race
 // dans l'ecran ImGui de creation de personnage.

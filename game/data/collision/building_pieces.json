@@ -104,6 +104,50 @@
       "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
       "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
       "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
+    },
+
+    "_comment_walkable": "Roadmap-5 (2026-07-19) — SOLS et ESCALIERS a dessus MARCHABLE (walkable=true -> PropBox.walkableTop, capuchon superieur du sweep). Bounds MESUREES dans les .gltf (accessor POSITION min/max). Dalles de sol : 2x2 m, epaisseur 2 cm. Escalier interieur : rampe approximee en 8 boites-marches pleines (montee 3,93 m sur 4,56 m — marches ~0.49 m, gravies via stair/maxClimb).",
+    "floor_brick": {
+      "walkable": true,
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 0.0, "cz": 0.0, "hx": 1.0, "hy": 0.01, "hz": 1.0 }
+    },
+    "floor_redbrick": {
+      "walkable": true,
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 0.0, "cz": 0.0, "hx": 1.0, "hy": 0.01, "hz": 1.0 }
+    },
+    "floor_unevenbrick": {
+      "walkable": true,
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 0.0, "cz": 0.0, "hx": 1.0, "hy": 0.01, "hz": 1.0 }
+    },
+    "floor_wooddark": {
+      "walkable": true,
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 0.0, "cz": 0.0, "hx": 1.0, "hy": 0.01, "hz": 1.0 }
+    },
+    "floor_woodlight": {
+      "walkable": true,
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 0.0, "cz": 0.0, "hx": 1.0, "hy": 0.01, "hz": 1.0 }
+    },
+    "stair_interior_rails": {
+      "walkable": true,
+      "box_count": 8,
+      "box_0": { "cx": 0.0, "cy": 0.257, "cz": -0.041, "hx": 0.858, "hy": 0.257, "hz": 0.285 },
+      "box_1": { "cx": 0.0, "cy": 0.503, "cz": -0.611, "hx": 0.858, "hy": 0.503, "hz": 0.285 },
+      "box_2": { "cx": 0.0, "cy": 0.748, "cz": -1.182, "hx": 0.858, "hy": 0.748, "hz": 0.285 },
+      "box_3": { "cx": 0.0, "cy": 0.994, "cz": -1.752, "hx": 0.858, "hy": 0.994, "hz": 0.285 },
+      "box_4": { "cx": 0.0, "cy": 1.240, "cz": -2.322, "hx": 0.858, "hy": 1.240, "hz": 0.285 },
+      "box_5": { "cx": 0.0, "cy": 1.485, "cz": -2.893, "hx": 0.858, "hy": 1.485, "hz": 0.285 },
+      "box_6": { "cx": 0.0, "cy": 1.731, "cz": -3.463, "hx": 0.858, "hy": 1.731, "hz": 0.285 },
+      "box_7": { "cx": 0.0, "cy": 1.977, "cz": -4.034, "hx": 0.858, "hy": 1.977, "hz": 0.285 }
+    },
+    "stairs_exterior_platform": {
+      "walkable": true,
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 0.885, "cz": 0.0, "hx": 0.813, "hy": 0.103, "hz": 1.0 }
     }
   }
 }

@@ -146,6 +146,41 @@ namespace engine::gameplay
 		{
 			if (b.passable) continue;
 
+			// --- 3a) Capuchon supérieur (Roadmap-5, 2026-07-19) : dessus
+			// MARCHABLE (sols d'étage, marches d'escalier). Même mécanique que
+			// le capuchon cylindre 2a : quand le bas de la capsule descend à
+			// travers hiY au-dessus de l'empreinte du rectangle, on pose le
+			// perso (normale verticale → IsWalkable). JAMAIS actif sur les
+			// murs (walkableTop=false) — la sonde anti-encastrement du
+			// contrôleur accrocherait leur sommet (« vol contre le mur »).
+			if (b.walkableTop)
+			{
+				const float bottomStart = startCenter.y - halfH - capsule.radius;
+				const float bottomEnd   = endCenter.y   - halfH - capsule.radius;
+				const float denom = bottomStart - bottomEnd; // > 0 si la capsule descend
+				if (denom > 1e-6f)
+				{
+					const float tc = (bottomStart - b.hiY) / denom; // bas de capsule == hiY
+					if (tc >= 0.0f && tc <= 1.0f && tc < best.fraction)
+					{
+						// Point d'impact XZ projeté dans le repère du rectangle
+						// (empreinte élargie du rayon de capsule, comme le flanc).
+						const float pxw = sx + tc * dx - b.cx;
+						const float pzw = sz + tc * dz - b.cz;
+						const float pu = pxw * b.axisX.x + pzw * b.axisX.z;
+						const float pv = pxw * b.axisZ.x + pzw * b.axisZ.z;
+						if (std::fabs(pu) <= b.halfX + capsule.radius
+							&& std::fabs(pv) <= b.halfZ + capsule.radius)
+						{
+							best.hit = true;
+							best.fraction = tc;
+							best.normal = engine::math::Vec3{ 0.0f, 1.0f, 0.0f };
+							best.stair = b.stair;
+						}
+					}
+				}
+			}
+
 			// Recouvrement vertical (identique aux cylindres).
 			const float capLo = endCenter.y - halfH - capsule.radius;
 			const float capHi = endCenter.y + halfH + capsule.radius;

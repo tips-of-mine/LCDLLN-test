@@ -15180,7 +15180,12 @@ namespace engine
 						box.axisX = (sX > 1e-6f) ? engine::math::Vec3{ colX.x/sX, 0.0f, colX.z/sX } : engine::math::Vec3{ 1, 0, 0 };
 						box.axisZ = (sZ > 1e-6f) ? engine::math::Vec3{ colZ.x/sZ, 0.0f, colZ.z/sZ } : engine::math::Vec3{ 0, 0, 1 };
 						box.loY = wy - lb.hy * sY; box.hiY = wy + lb.hy * sY;
-						box.stair = isStair; box.wall = !isStair;
+						box.stair = isStair;
+						// Roadmap-5 (2026-07-19) — dessus marchable pour les
+						// sols (tag JSON "walkable") et les marches d'escalier ;
+						// les murs restent des barrières latérales pures.
+						box.walkableTop = piece->walkable || isStair;
+						box.wall = !box.walkableTop;
 						m_worldCollider.AddBox(box);
 					}
 				}

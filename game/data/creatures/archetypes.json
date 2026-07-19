@@ -15,6 +15,70 @@
       },
       "xpReward": 10,
       "model": { "mesh": "orcs", "scale": 0.9 }
+    },
+    {
+      "id": 101,
+      "name": "Loup gris",
+      "level": 1,
+      "stats": {
+        "hp": 40,
+        "damage": 4,
+        "accuracy": 85.0,
+        "rangeMeters": 2.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 1600
+      },
+      "xpReward": 7,
+      "model": { "mesh": "orcs", "scale": 0.7 }
+    },
+    {
+      "id": 102,
+      "name": "Lapin des pres",
+      "level": 1,
+      "stats": {
+        "hp": 12,
+        "damage": 1,
+        "accuracy": 60.0,
+        "rangeMeters": 1.5,
+        "critRate": 0.5,
+        "critMult": 1.2,
+        "attackPeriodMs": 2500
+      },
+      "xpReward": 2,
+      "model": { "mesh": "orcs", "scale": 0.4 }
+    },
+    {
+      "id": 103,
+      "name": "Bandit de grand chemin",
+      "level": 4,
+      "stats": {
+        "hp": 90,
+        "damage": 8,
+        "accuracy": 82.0,
+        "rangeMeters": 2.5,
+        "critRate": 5.0,
+        "critMult": 1.6,
+        "attackPeriodMs": 1800
+      },
+      "xpReward": 18,
+      "model": { "mesh": "orcs", "scale": 1.0 }
+    },
+    {
+      "id": 104,
+      "name": "Sanglier alpha",
+      "level": 5,
+      "stats": {
+        "hp": 140,
+        "damage": 11,
+        "accuracy": 84.0,
+        "rangeMeters": 2.8,
+        "critRate": 4.0,
+        "critMult": 1.7,
+        "attackPeriodMs": 2100
+      },
+      "xpReward": 30,
+      "model": { "mesh": "orcs", "scale": 1.2 }
     }
   ]
 }

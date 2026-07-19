@@ -108,6 +108,13 @@ namespace engine::server
 		uint32_t sourceArchetypeId = 0;
 		ItemStack item{};
 		LootVisibility visibility = LootVisibility::Owner;
+		/// Loot réel (2026-07-19) — probabilité de drop en % (1..100 ;
+		/// colonne optionnelle du fichier texte, défaut 100 = toujours).
+		uint8_t dropChancePct = 100;
+		/// Quantité aléatoire uniforme [minCount, maxCount] quand
+		/// maxCount > 0 ; sinon quantité FIXE = item.quantity (rétro-compat).
+		uint32_t minCount = 0;
+		uint32_t maxCount = 0;
 	};
 
 	/// One connected client tracked by endpoint and assigned server id.
@@ -589,6 +596,11 @@ namespace engine::server
 
 		/// Chantier 2 SP-A — pousse au client le snapshot complet de son équipement porté.
 		bool SendEquipmentUpdate(const ConnectedClient& receiver);
+
+		/// Loot réel (2026-07-19) — tirage d'une entrée de table de loot
+		/// (proba dropChancePct + quantité uniforme [minCount,maxCount]).
+		/// \return true si l'entrée droppe (\p outItem rempli).
+		bool RollLootEntry(const LootTableEntry& entry, ItemStack& outItem);
 
 		/// Chantier 2 SP-A — somme des StatBonus de tout l'équipement porté (résolus
 		/// via m_itemCatalog). Additionnée aux DerivedStats avant émission (anti-triche).

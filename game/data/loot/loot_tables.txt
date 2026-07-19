@@ -1,3 +1,28 @@
-# source_archetype_id item_id quantity visibility
-100 2001 1 owner
-100 2002 3 owner
+# Tables de loot du shard — Loot reel 2026-07-19.
+# Format : source_archetype_id item_id quantity visibility [drop_chance_pct] [min_count max_count]
+#   - drop_chance_pct optionnel (1..100 ; absent = 100, drop garanti)
+#   - min_count/max_count optionnels (quantite uniforme ; absents = quantity fixe)
+# Les item_id referencent game/data/items/items.json (2001/2002 = butin
+# historique, 5001+ = equipement, 6001+ = materiaux de butin).
+
+# 100 — Sanglier des collines
+100 6003 1 owner 80 1 2
+100 2002 1 owner 45 1 2
+100 2001 1 owner 20
+
+# 101 — Loup gris
+101 6001 1 owner 85 1 2
+101 2002 1 owner 15
+
+# 102 — Lapin des pres
+102 6002 1 owner 95
+
+# 103 — Bandit de grand chemin
+103 6004 1 owner 70 1 3
+103 2001 1 owner 35
+103 5008 1 owner 5
+
+# 104 — Sanglier alpha (mini-boss)
+104 6003 1 owner 100 2 4
+104 5001 1 owner 12
+104 2002 1 owner 60 2 3

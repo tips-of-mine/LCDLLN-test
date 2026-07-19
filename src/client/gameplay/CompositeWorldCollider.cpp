@@ -181,6 +181,20 @@ namespace engine::gameplay
 				}
 			}
 
+			// Le flanc ne concerne QUE le déplacement HORIZONTAL (même garde
+			// que le flanc des cylindres, bloc 2) : un sweep purement vertical
+			// (chute/pose) est l'affaire du capuchon 3a — sans cette garde, le
+			// slab-test ci-dessous rend tEnter=0 dès que le départ est dans
+			// l'empreinte XZ et écrase la pose avec une normale horizontale.
+			if (dx * dx + dz * dz < 1e-8f) continue;
+
+			// Dessus marchable : une capsule qui DÉMARRE au-dessus du dessus
+			// (à la peau près) ne peut pas heurter le flanc — sinon on serait
+			// bloqué latéralement en marchant sur la dalle ou en atterrissant
+			// dessus avec un déplacement diagonal.
+			if (b.walkableTop && startCenter.y - halfH - capsule.radius >= b.hiY - kStandSkin)
+				continue;
+
 			// Recouvrement vertical (identique aux cylindres).
 			const float capLo = endCenter.y - halfH - capsule.radius;
 			const float capHi = endCenter.y + halfH + capsule.radius;

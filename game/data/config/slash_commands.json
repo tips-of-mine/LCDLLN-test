@@ -467,6 +467,42 @@
       "status": "implemented",
       "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
       "notes": "Commande admin horloge monde : le master appelle WorldClockHandler::SetTimeScale qui borne [1,1440] et broadcast 205. Hors bornes ou argument non numerique -> InvalidArgs."
+    },
+    {
+      "command": "/help [commande]",
+      "aliases": ["/commands", "/aide"],
+      "description": "Liste les commandes accessibles a VOTRE role (groupees par categorie) ; /help /commande donne le detail (description, role minimum, alias).",
+      "category": "ui_panel",
+      "minRole": "player",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "server_routed",
+      "implementation_file": "src/masterd/main_linux.cpp",
+      "notes": "Console 2026-07-18 : dispatch via ChatCommandRouter (master), liste construite depuis CE fichier (SlashCommandRegistry::Entries) filtree par le role de l'appelant ; les entrees status=planned sont omises. Reponses en notices system."
+    },
+    {
+      "command": "/time",
+      "aliases": [],
+      "description": "Affiche la date et l'heure du serveur (UTC).",
+      "category": "ui_panel",
+      "minRole": "player",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "server_routed",
+      "implementation_file": "src/masterd/main_linux.cpp",
+      "notes": "Console 2026-07-18 : dispatch via ChatCommandRouter (master)."
+    },
+    {
+      "command": "/uptime",
+      "aliases": [],
+      "description": "Temps de fonctionnement du serveur master (jours/heures/minutes/secondes).",
+      "category": "moderation",
+      "minRole": "moderator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "server_routed",
+      "implementation_file": "src/masterd/main_linux.cpp",
+      "notes": "Console 2026-07-18 : info d'exploitation, reservee moderateur et plus (ajustable ici — le router relit ce fichier au boot via SlashCommandRegistry ? NON : le minRole effectif du router est fixe en code a Moderator ; garder les deux alignes)."
     }
   ]
 }

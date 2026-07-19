@@ -61,6 +61,8 @@
 #include "src/masterd/handlers/worldclock/WorldClockHandler.h"
 #include "src/masterd/handlers/admin/AdminCommandHandler.h"
 #include "src/masterd/admin/SlashCommandRegistry.h"
+#include "src/shared/network/ChatPayloads.h" // Console /help /time /uptime (2026-07-18)
+#include "src/shared/net/ChatSystem.h"
 #include "src/masterd/account/AccountRoleService.h"
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
@@ -98,6 +100,7 @@
 
 #include <csignal>
 #include <chrono>
+#include <ctime> // Console /time (2026-07-18)
 #include <cstdio>
 #include <cstring>
 #include <memory>
@@ -1052,6 +1055,145 @@ int main(int argc, char** argv)
 	// GetRole/RequireMinRole. Utilise par AdminCommandHandler pour la
 	// verification du minRole. Lecture seule cote AdminCommand.
 	engine::server::AccountRoleService accountRoleService(*accountStore, &auditLog);
+
+	// ── Console 2026-07-18 : /help (+ /commands /aide), /time, /uptime ──
+	// Enregistrées sur le ChatCommandRouter du relay (dispatch serveur, RBAC
+	// vérifié par le router, réponses en notices « system »). /help liste les
+	// commandes VISIBLES PAR LE RÔLE de l'appelant depuis le registre
+	// slash_commands.json (source unique) ; /help <cmd> donne le détail.
+	{
+		const auto masterStartTime = std::chrono::steady_clock::now();
+
+		// Répond à l'appelant (accountId → session → connId) par une notice
+		// « system » sur le canal Server. No-op si le compte n'a plus de
+		// connexion (déconnexion entre l'envoi et le dispatch).
+		auto replyToAccount = [&server, &connSessionMap, &sessionManager](
+			uint64_t accountId, const std::string& text)
+		{
+			for (const auto& [connId, sessionId] : connSessionMap.Snapshot())
+			{
+				const auto acc = sessionManager.GetAccountId(sessionId);
+				if (!acc || *acc != accountId) continue;
+				const uint64_t nowMs = static_cast<uint64_t>(
+					std::chrono::duration_cast<std::chrono::milliseconds>(
+						std::chrono::system_clock::now().time_since_epoch()).count());
+				auto notice = engine::network::BuildChatRelayPacket(nowMs,
+					static_cast<uint8_t>(engine::net::ChatChannel::Server),
+					"system", text, sessionId);
+				if (!notice.empty())
+					server.Send(connId, notice);
+				return;
+			}
+		};
+
+		// Libellé FR d'un rôle (affichage /help).
+		auto roleLabelFr = [](engine::server::AccountRole r) -> const char*
+		{
+			switch (r)
+			{
+				case engine::server::AccountRole::Moderator:     return "modérateur";
+				case engine::server::AccountRole::GameMaster:    return "maître de jeu";
+				case engine::server::AccountRole::Administrator: return "administrateur";
+				default:                                          return "joueur";
+			}
+		};
+
+		// /help [commande] — liste par catégorie des commandes accessibles au
+		// rôle de l'appelant, ou détail d'une commande précise.
+		auto helpHandler = [&slashCommandRegistry, &accountStore, replyToAccount, roleLabelFr](
+			uint64_t accountId, std::string_view args)
+		{
+			const engine::server::AccountRole role = accountStore->GetRole(accountId);
+			if (!args.empty())
+			{
+				// Détail d'une commande : accepte "/kick" ou "kick".
+				std::string wanted(args);
+				if (wanted.front() != '/') wanted.insert(wanted.begin(), '/');
+				const engine::server::SlashCommandEntry* e = slashCommandRegistry.Lookup(wanted);
+				if (e == nullptr)
+				{
+					replyToAccount(accountId, "Commande inconnue : " + wanted);
+					return;
+				}
+				if (!engine::server::AccountRoleService::RequireMinRole(role, e->minRole))
+				{
+					replyToAccount(accountId, wanted + " est réservée au rôle "
+						+ std::string(roleLabelFr(e->minRole)) + " (ou supérieur).");
+					return;
+				}
+				std::string detail = e->command;
+				if (!e->description.empty()) detail += " — " + e->description;
+				detail += " [rôle min : " + std::string(roleLabelFr(e->minRole)) + "]";
+				if (!e->aliases.empty())
+				{
+					detail += " [alias :";
+					for (const std::string& a : e->aliases) detail += " " + a;
+					detail += "]";
+				}
+				replyToAccount(accountId, detail);
+				return;
+			}
+
+			// Liste groupée par catégorie, filtrée par le rôle de l'appelant.
+			// Les commandes "planned" (pas encore implémentées) sont omises.
+			replyToAccount(accountId, std::string("Commandes disponibles pour votre rôle (")
+				+ roleLabelFr(role) + ") — « /help /commande » pour le détail :");
+			std::vector<std::string> categories;
+			for (const auto& e : slashCommandRegistry.Entries())
+			{
+				if (e.status == "planned") continue;
+				if (!engine::server::AccountRoleService::RequireMinRole(role, e.minRole)) continue;
+				bool seen = false;
+				for (const std::string& c : categories)
+					if (c == e.category) { seen = true; break; }
+				if (!seen) categories.push_back(e.category);
+			}
+			for (const std::string& cat : categories)
+			{
+				std::string line = (cat.empty() ? std::string("autres") : cat) + " :";
+				for (const auto& e : slashCommandRegistry.Entries())
+				{
+					if (e.category != cat || e.status == "planned") continue;
+					if (!engine::server::AccountRoleService::RequireMinRole(role, e.minRole)) continue;
+					line += " " + e.command;
+				}
+				replyToAccount(accountId, line);
+			}
+		};
+		chatRelayHandler.CommandRouter().Register("/help", engine::server::AccountRole::Player, helpHandler);
+		chatRelayHandler.CommandRouter().Register("/commands", engine::server::AccountRole::Player, helpHandler);
+		chatRelayHandler.CommandRouter().Register("/aide", engine::server::AccountRole::Player, helpHandler);
+
+		// /time — date et heure serveur (UTC).
+		chatRelayHandler.CommandRouter().Register("/time", engine::server::AccountRole::Player,
+			[replyToAccount](uint64_t accountId, std::string_view)
+			{
+				const std::time_t now = std::time(nullptr);
+				std::tm tmv{};
+				gmtime_r(&now, &tmv);
+				char buf[64];
+				std::snprintf(buf, sizeof(buf),
+					"Heure serveur : %04d-%02d-%02d %02d:%02d:%02d UTC",
+					tmv.tm_year + 1900, tmv.tm_mon + 1, tmv.tm_mday,
+					tmv.tm_hour, tmv.tm_min, tmv.tm_sec);
+				replyToAccount(accountId, buf);
+			});
+
+		// /uptime — temps de fonctionnement du master (modérateur et plus).
+		chatRelayHandler.CommandRouter().Register("/uptime", engine::server::AccountRole::Moderator,
+			[replyToAccount, masterStartTime](uint64_t accountId, std::string_view)
+			{
+				const auto up = std::chrono::duration_cast<std::chrono::seconds>(
+					std::chrono::steady_clock::now() - masterStartTime).count();
+				const long long d = up / 86400ll, h = (up / 3600ll) % 24ll,
+					m = (up / 60ll) % 60ll, s = up % 60ll;
+				char buf[96];
+				std::snprintf(buf, sizeof(buf),
+					"Uptime master : %lldj %lldh %lldmin %llds", d, h, m, s);
+				replyToAccount(accountId, buf);
+			});
+		LOG_INFO(Net, "[ServerMain] Console : /help /commands /aide /time /uptime enregistrées");
+	}
 
 	engine::server::AdminCommandHandler adminCommandHandler;
 	adminCommandHandler.SetServer(&server);

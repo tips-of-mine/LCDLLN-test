@@ -120,3 +120,22 @@ Les UI panels peuvent éventuellement utiliser un opcode léger
 `AdminCommandLog` qui ne fait que tracer sans bloquer (status toujours
 OK pour `minRole=player`), pour éviter la latence d'un round-trip
 serveur sur des commandes UI fréquentes.
+
+## Console : /help, /time, /uptime (2026-07-18)
+
+Trois commandes « server_routed » dispatchées par le `ChatCommandRouter`
+du master (réponses en notices `system`) :
+
+- **`/help [commande]`** (alias `/commands`, `/aide`, minRole `player`) :
+  liste les commandes **accessibles au rôle de l'appelant**, groupées par
+  catégorie, construite depuis `slash_commands.json`
+  (`SlashCommandRegistry::Entries`) — les entrées `status=planned` sont
+  omises. `/help /commande` donne le détail : description, rôle minimum,
+  alias. C'est la réponse au besoin « on ne connaît pas toutes les
+  commandes » : chacun voit exactement ce que son rôle permet.
+- **`/time`** (minRole `player`) : date et heure du serveur (UTC).
+- **`/uptime`** (minRole `moderator`) : temps de fonctionnement du master.
+
+Rappel : le `minRole` effectif de ces trois commandes est fixé **en code**
+à l'enregistrement sur le router (`src/masterd/main_linux.cpp`) ; le JSON
+doit rester aligné (source documentaire pour `/help`).

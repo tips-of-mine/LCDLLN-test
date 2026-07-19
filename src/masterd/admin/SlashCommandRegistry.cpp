@@ -311,6 +311,11 @@ namespace engine::server
 
 			if (const JsonNode* statusNode = FindString(item.o, "status"))
 				entry.status = statusNode->s;
+			// Console /help (2026-07-18) — champs affichables optionnels.
+			if (const JsonNode* descNode = FindString(item.o, "description"))
+				entry.description = descNode->s;
+			if (const JsonNode* catNode = FindString(item.o, "category"))
+				entry.category = catNode->s;
 
 			const size_t idx = m_entries.size();
 			m_entries.push_back(std::move(entry));

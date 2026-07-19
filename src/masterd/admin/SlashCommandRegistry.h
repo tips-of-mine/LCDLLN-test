@@ -33,6 +33,10 @@ namespace engine::server
 		std::vector<std::string>   aliases;   ///< Aliases ex: ["/sky"] pour "/sky info".
 		engine::server::AccountRole minRole = engine::server::AccountRole::Player;
 		std::string                status;    ///< "implemented" / "client_only_legacy" / etc. (info).
+		/// Console /help (2026-07-18) — description et catégorie affichables
+		/// (reprises du JSON ; vides si absentes).
+		std::string                description;
+		std::string                category;
 	};
 
 	/// Registre des slash commands lu au boot. Read-only apres LoadFromFile.
@@ -69,6 +73,11 @@ namespace engine::server
 
 		/// Nombre d'entrees uniques chargees (pas le total des cles indexees).
 		size_t Size() const { return m_entries.size(); }
+
+		/// Console /help (2026-07-18) — liste complete des entrees (ordre du
+		/// fichier). Lecture seule ; sert a construire la liste des commandes
+		/// visibles par un role donne.
+		const std::vector<SlashCommandEntry>& Entries() const { return m_entries; }
 
 	private:
 		/// Stockage canonique par valeur (une entree par commande).

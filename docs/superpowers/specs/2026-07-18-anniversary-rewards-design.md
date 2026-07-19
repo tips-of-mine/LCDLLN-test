@@ -54,15 +54,18 @@ Récompenser la fidélité des joueurs à partir de deux dates **immuables** :
 
 Nouveau `AnniversaryService` côté master, sans scheduler :
 
-- **À l'AUTH** : années révolues depuis `created_at` → débloque tous les
-  `signup_anniv_*` manquants. Si jour UTC == jour/mois de `birth_date` →
-  débloque `birthday_N` avec N = (nombre de paliers `birthday_*` déjà
-  débloqués dans `account_exploit_unlocks`) + 1 ; l'idempotence intra-jour
-  est assurée par la garde `(account_id, year, 'birthday_exploit')`.
-- **Au premier EnterWorld du jour J de naissance** : dépose le courrier
-  cadeau au personnage entrant (il faut un destinataire personnage). Garde
-  `(account_id, year, 'birthday_gift')`. Pas d'EnterWorld le jour J = pas de
-  cadeaux.
+- **Point d'accroche unique : EnterWorld** (décision d'implémentation — le
+  compte, le personnage destinataire ET la connexion pour la notification
+  chat y sont tous disponibles ; les règles utilisateur restent respectées :
+  « à la connexion suivante » = au prochain EnterWorld, jamais perdu ; jour J
+  strict pour la naissance) :
+  - années révolues depuis `created_at` → débloque tous les
+    `signup_anniv_*` manquants ;
+  - si jour UTC == jour/mois de `birth_date` → débloque `birthday_N` avec
+    N = (paliers `birthday_*` déjà débloqués) + 1, garde
+    `(account_id, year, 'birthday_exploit')` ; puis dépose le **courrier
+    cadeau** au personnage entrant, garde `(account_id, year,
+    'birthday_gift')`. Pas d'EnterWorld le jour J = pas de cadeaux.
 - La logique de dates vit dans un module pur (`AnniversaryMath`) avec horloge
   injectée (testable).
 

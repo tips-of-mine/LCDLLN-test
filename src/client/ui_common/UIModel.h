@@ -234,7 +234,11 @@ namespace engine::client
 		/// d'objets actifs (jetons "item:<id>"), taille = capacité ACTIVE
 		/// autoritaire (4 par défaut, 12 max — ceinture équipée en Waist),
 		/// reçue via BeltLayoutUpdate (kind 100, count-prefixed).
-		std::vector<std::string> beltLayout{};
+		/// DÉFAUT : 4 cases vides (= kBeltSlotsDefault, « ceinture de base »
+		/// du joueur) — la barre est visible dès l'entrée en monde, AVANT le
+		/// 1er update autoritaire (retour de test 2026-07-20 : barre invisible
+		/// tant que le kind 100 n'était pas reçu/décodé).
+		std::vector<std::string> beltLayout = std::vector<std::string>(4);
 		/// PR-C — progression de niveau (barre d'XP), reçue via PlayerXpUpdate
 		/// (enter-world + chaque gain d'XP). \c xpForNextLevel = 0 signale le cap
 		/// de niveau. \c hasXp reste faux tant qu'aucun PlayerXpUpdate n'est reçu.

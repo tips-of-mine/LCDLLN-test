@@ -79,6 +79,57 @@
       },
       "xpReward": 30,
       "model": { "mesh": "orcs", "scale": 1.2 }
+    },
+    {
+      "_comment": "Contenu Feyhin lot 1 (2026-07-20) — 105-107. Rapide et fragile : l'araignee mord vite mais tombe vite.",
+      "id": 105,
+      "name": "Araignee des sous-bois",
+      "level": 3,
+      "stats": {
+        "hp": 70,
+        "damage": 6,
+        "accuracy": 86.0,
+        "rangeMeters": 2.0,
+        "critRate": 6.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 1400
+      },
+      "xpReward": 14,
+      "model": { "mesh": "orcs", "scale": 0.6 }
+    },
+    {
+      "_comment": "Mini-boss du camp de bandits (quete bandit_leader). Frappe fort, lent.",
+      "id": 106,
+      "name": "Varek, chef bandit",
+      "level": 6,
+      "stats": {
+        "hp": 200,
+        "damage": 14,
+        "accuracy": 85.0,
+        "rangeMeters": 2.8,
+        "critRate": 8.0,
+        "critMult": 1.8,
+        "attackPeriodMs": 2200
+      },
+      "xpReward": 45,
+      "model": { "mesh": "orcs", "scale": 1.15 }
+    },
+    {
+      "_comment": "Gibier paisible de l'est (quete stag_offering) : ne fait presque pas mal, s'enfuit peu (leash court au spawner).",
+      "id": 107,
+      "name": "Cerf des clairieres",
+      "level": 2,
+      "stats": {
+        "hp": 50,
+        "damage": 2,
+        "accuracy": 70.0,
+        "rangeMeters": 1.8,
+        "critRate": 1.0,
+        "critMult": 1.3,
+        "attackPeriodMs": 2400
+      },
+      "xpReward": 8,
+      "model": { "mesh": "orcs", "scale": 0.85 }
     }
   ]
 }

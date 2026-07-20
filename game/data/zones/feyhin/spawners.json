@@ -33,6 +33,95 @@
       "count": 3,
       "respawnSec": 90,
       "leashDistanceMeters": 24.0
+    },
+    {
+      "_comment": "Contenu Feyhin lot 1 (2026-07-20) — la vallee s'anime : loups a l'OUEST, araignees dans les sous-bois SUD-OUEST, camp de bandits au SUD (avec Varek, mini-boss respawn long), cerfs a l'EST pres du bassin, lapins d'ambiance pres du village, et ENFIN un spawner pour le Sanglier alpha (sa table de loot 104 existait sans aucun spawner). y=0 : ground-snap serveur comme les sangliers.",
+      "id": "feyhin_wolves_west_01",
+      "archetypeId": 101,
+      "position": [-45.0, 0.0, -12.0],
+      "count": 3,
+      "respawnSec": 100,
+      "leashDistanceMeters": 24.0
+    },
+    {
+      "id": "feyhin_wolves_west_02",
+      "archetypeId": 101,
+      "position": [-52.0, 0.0, -20.0],
+      "count": 3,
+      "respawnSec": 100,
+      "leashDistanceMeters": 24.0
+    },
+    {
+      "id": "feyhin_rabbits_village_01",
+      "archetypeId": 102,
+      "position": [18.0, 0.0, 8.0],
+      "count": 4,
+      "respawnSec": 60,
+      "leashDistanceMeters": 16.0
+    },
+    {
+      "id": "feyhin_spiders_southwest_01",
+      "archetypeId": 105,
+      "position": [-38.0, 0.0, 26.0],
+      "count": 3,
+      "respawnSec": 110,
+      "leashDistanceMeters": 22.0
+    },
+    {
+      "id": "feyhin_spiders_southwest_02",
+      "archetypeId": 105,
+      "position": [-30.0, 0.0, 34.0],
+      "count": 3,
+      "respawnSec": 110,
+      "leashDistanceMeters": 22.0
+    },
+    {
+      "id": "feyhin_bandits_south_01",
+      "archetypeId": 103,
+      "position": [6.0, 0.0, 44.0],
+      "count": 3,
+      "respawnSec": 120,
+      "leashDistanceMeters": 26.0
+    },
+    {
+      "id": "feyhin_bandits_south_02",
+      "archetypeId": 103,
+      "position": [-4.0, 0.0, 50.0],
+      "count": 3,
+      "respawnSec": 120,
+      "leashDistanceMeters": 26.0
+    },
+    {
+      "id": "feyhin_varek_camp_south",
+      "archetypeId": 106,
+      "position": [2.0, 0.0, 56.0],
+      "count": 1,
+      "respawnSec": 300,
+      "leashDistanceMeters": 30.0
+    },
+    {
+      "id": "feyhin_boar_alpha_north",
+      "archetypeId": 104,
+      "position": [4.0, 0.0, -55.0],
+      "count": 1,
+      "respawnSec": 240,
+      "leashDistanceMeters": 30.0
+    },
+    {
+      "id": "feyhin_stags_east_01",
+      "archetypeId": 107,
+      "position": [34.0, 0.0, -6.0],
+      "count": 3,
+      "respawnSec": 90,
+      "leashDistanceMeters": 18.0
+    },
+    {
+      "id": "feyhin_stags_east_02",
+      "archetypeId": 107,
+      "position": [40.0, 0.0, 4.0],
+      "count": 2,
+      "respawnSec": 90,
+      "leashDistanceMeters": 18.0
     }
   ]
 }

@@ -44,6 +44,97 @@
         "gold": 5,
         "items": []
       }
+    },
+    {
+      "_comment": "Contenu Feyhin lot 1 (2026-07-20) — 6 nouvelles quetes : deux chaines (Marn : soie -> alpha ; Rendal : loups puis bandits -> Varek) + une collecte libre (cerfs).",
+      "id": "wolf_cull",
+      "giver": "npc:guard_captain",
+      "turnIn": "npc:guard_captain",
+      "prereqs": [],
+      "steps": [
+        { "type": "kill", "target": "mob:101", "requiredCount": 6 }
+      ],
+      "rewards": {
+        "xp": 150,
+        "gold": 40,
+        "items": []
+      }
+    },
+    {
+      "id": "spider_silk",
+      "giver": "npc:elder_marn",
+      "turnIn": "npc:elder_marn",
+      "prereqs": ["kill_10_boars"],
+      "steps": [
+        { "type": "collect", "target": "item:6005", "requiredCount": 5 }
+      ],
+      "rewards": {
+        "xp": 250,
+        "gold": 60,
+        "items": [
+          { "itemId": 2003, "quantity": 2 }
+        ]
+      }
+    },
+    {
+      "id": "alpha_trophy",
+      "giver": "npc:elder_marn",
+      "turnIn": "npc:elder_marn",
+      "prereqs": ["spider_silk"],
+      "steps": [
+        { "type": "kill", "target": "mob:104", "requiredCount": 1 }
+      ],
+      "rewards": {
+        "xp": 400,
+        "gold": 120,
+        "items": [
+          { "itemId": 2003, "quantity": 3 }
+        ]
+      }
+    },
+    {
+      "id": "bandit_menace",
+      "giver": "npc:guard_captain",
+      "turnIn": "npc:guard_captain",
+      "prereqs": ["report_to_guard"],
+      "steps": [
+        { "type": "kill", "target": "mob:103", "requiredCount": 5 }
+      ],
+      "rewards": {
+        "xp": 300,
+        "gold": 80,
+        "items": []
+      }
+    },
+    {
+      "id": "bandit_leader",
+      "giver": "npc:guard_captain",
+      "turnIn": "npc:guard_captain",
+      "prereqs": ["bandit_menace"],
+      "steps": [
+        { "type": "kill", "target": "mob:106", "requiredCount": 1 }
+      ],
+      "rewards": {
+        "xp": 500,
+        "gold": 200,
+        "items": [
+          { "itemId": 2003, "quantity": 3 }
+        ]
+      }
+    },
+    {
+      "id": "stag_offering",
+      "giver": "npc:elder_marn",
+      "turnIn": "npc:elder_marn",
+      "prereqs": [],
+      "steps": [
+        { "type": "collect", "target": "item:6006", "requiredCount": 3 }
+      ],
+      "rewards": {
+        "xp": 180,
+        "gold": 50,
+        "items": []
+      }
     }
   ]
 }

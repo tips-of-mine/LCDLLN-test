@@ -1,0 +1,47 @@
+{
+    "_comment": "Contenu Feyhin lot 1 (2026-07-20) — dialogue du Capitaine Rendal (npc:guard_captain, interactable 7 de zones/feyhin/zone.json). Meme format que villageois.json : start + nodes ; les boutons Accepter/Rendre sont injectes a l'execution par DialogueImGuiRenderer (UIModel.giverList), PAS dans ce JSON. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": { "text": "Halte. Ah, un aventurier — tant mieux, on manque de bras par ici." },
+                "1": { "text": "(Elle garde une main sur le pommeau de son epee, l'oeil tourne vers le sud.)", "cue": true }
+            },
+            "choices": {
+                "count": 3,
+                "0": { "text": "Que se passe-t-il au sud ?", "next": "menace" },
+                "1": { "text": "As-tu une mission pour moi ?", "next": "mission" },
+                "2": { "text": "Au revoir.", "action": "end" }
+            }
+        },
+        "1": {
+            "id": "menace",
+            "lines": {
+                "count": 2,
+                "0": { "text": "Des bandits ont monte un camp au sud du village. Leur chef, un certain Varek, n'est pas un tendre." },
+                "1": { "text": "Tant qu'ils rodent, les marchands ne passent plus. Et sans marchands, pas de sel, pas d'outils, pas de nouvelles." }
+            },
+            "choices": {
+                "count": 2,
+                "0": { "text": "As-tu une mission pour moi ?", "next": "mission" },
+                "1": { "text": "Bon courage, capitaine.", "action": "end" }
+            }
+        },
+        "2": {
+            "id": "mission",
+            "lines": {
+                "count": 2,
+                "0": { "text": "Les loups de l'ouest s'enhardissent, et le camp du sud grossit chaque semaine. Choisis ton front." },
+                "1": { "text": "(Pour t'engager, choisis 'Accepter' ci-dessous, sans quitter la conversation.)", "cue": true }
+            },
+            "choices": {
+                "count": 2,
+                "0": { "text": "Revenir.", "next": "intro" },
+                "1": { "text": "Au revoir.", "action": "end" }
+            }
+        }
+    }
+}

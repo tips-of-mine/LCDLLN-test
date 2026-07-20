@@ -169,13 +169,17 @@ vec3 Stars(vec3 viewDir, float nightFactor)
         StarHash13(cell + 4.2),
         StarHash13(cell + 9.1)) - 0.5);
     float d = length(sp - starPos);
-    float star = smoothstep(0.7, 0.0, d);
+    // Retour de test 2026-07-20 : rayon resserré 0.7 -> 0.35 (les étoiles
+    // occupaient presque toute leur cellule et paraissaient trop grosses).
+    // Intensité légèrement remontée (0.6 -> 0.7) pour compenser la surface
+    // réduite et garder des points bien visibles.
+    float star = smoothstep(0.35, 0.0, d);
 
     // Magnitude et teinte variables (blanc bleuté -> blanc chaud).
     float mag  = 0.35 + 0.65 * StarHash13(cell + 2.3);
     float tint = StarHash13(cell + 5.5);
     vec3 col = mix(vec3(0.75, 0.85, 1.0), vec3(1.0, 0.92, 0.80), tint);
-    return col * star * mag * 0.6 * nightFactor;
+    return col * star * mag * 0.7 * nightFactor;
 }
 
 // -------------------------------------------------------------------------

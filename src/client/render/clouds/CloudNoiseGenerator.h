@@ -23,6 +23,10 @@ namespace engine::render::clouds
 	inline constexpr int kBaseNoiseSize = 64;
 	/// Côté (texels par axe) de la texture 3D d'érosion de détail.
 	inline constexpr int kDetailNoiseSize = 32;
+	/// Côté (texels par axe) de la weather map 2D de couverture (chantier
+	/// weather map 2026-07-20). La texture tuile sur plusieurs dizaines de km
+	/// (échelle en mètres portée par le push constant, cf. clouds.frag).
+	inline constexpr int kWeatherMapSize = 256;
 
 	/// Textures générées, prêtes à uploader en R8G8B8A8_UNORM.
 	struct CloudNoiseData
@@ -50,4 +54,13 @@ namespace engine::render::clouds
 	/// octets sur toutes plateformes). Coût : quelques centaines de ms
 	/// (appelée une fois au boot par CloudPass::Init, hors boucle frame).
 	CloudNoiseData GenerateCloudNoise(uint32_t seed);
+
+	/// Weather map 2D de couverture nuageuse (chantier weather map 2026-07-20) :
+	/// fBm de Perlin 2D périodique (tuile sans couture, sampler REPEAT),
+	/// kWeatherMapSize² octets R8. Valeur haute = zone couverte, basse =
+	/// trouée ; clouds.frag y module le seuil de couverture par position monde
+	/// (fronts nuageux, ciel non uniforme). Déterministe pour un seed donné.
+	/// Distincte du CloudWeatherMapper (état météo -> params GLOBAUX) : ici
+	/// c'est la variation SPATIALE autour de la consigne globale.
+	std::vector<uint8_t> GenerateWeatherCoverageMap(uint32_t seed);
 }

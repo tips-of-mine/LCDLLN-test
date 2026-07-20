@@ -97,7 +97,7 @@ layout(push_constant) uniform PC
     // --- M45.7 — DDGI dynamique (ADDITIF). useDdgi=0 (défaut) => aucun changement.
     // useIBL+useDdgi+pad0+pad1 = 16 o pour aligner les vec4 DDGI sur 16 (std140). ---
     float useDdgi;      // 1.0 = ajoute l'irradiance DDGI dynamique, 0.0 = inchangé
-    float pad0;         // padding (alignement vec4)
+    float aerialSkyModel; // 1.0 = teinte aerial = ciel ANALYTIQUE évalué par rayon (chantier 2026-07-20) ; 0.0 = skyColor legacy (ex-pad0)
     float pad1;         // padding (alignement vec4)
     vec4  ddgiOrigin;   // xyz = origine monde grille (mètres) ; w inutilisé
     vec4  ddgiSpacing;  // xyz = espacement par axe (mètres) ; w inutilisé
@@ -208,6 +208,97 @@ vec3 ddgiSampleTrilinear(vec3 P, vec3 N)
 // soleil. Plus élevé = halo plus concentré autour du disque solaire. Constante
 // (pas de slot push-constant libre) ; ajuster ici si besoin de réglage visuel.
 const float kAerialSunExponent = 8.0;
+
+// Chantier perspective aérienne 2026-07-20 — mini-évaluation du ciel
+// ANALYTIQUE (mêmes constantes physiques que sky.frag, marche réduite
+// 4 échantillons vue × 2 vers le soleil au lieu de 8×4) pour la TEINTE de la
+// perspective aérienne : le terrain lointain converge vers la couleur du ciel
+// analytique dans SA direction (chaud côté soleil au couchant, froid à
+// l'opposé, bleuté le jour) au lieu de la couleur d'horizon legacy uniforme —
+// qui jurait avec le fond analytique à l'horizon. Coût : uniquement les
+// pixels de géométrie dont le facteur de brume est significatif.
+const float kAerialPi      = 3.14159265358979;       // PI global déclaré plus bas
+const float kAerialPlanetR = 6360.0e3;               // rayon planète (m)
+const float kAerialAtmoR   = 6420.0e3;               // sommet de l'atmosphère (m)
+const vec3  kAerialBetaR   = vec3(5.8e-6, 13.5e-6, 33.1e-6); // diffusion Rayleigh
+const float kAerialBetaM   = 21.0e-6;                // diffusion Mie
+const float kAerialHR      = 8000.0;                 // hauteur d'échelle Rayleigh (m)
+const float kAerialHM      = 1200.0;                 // hauteur d'échelle Mie (m)
+
+// Distance de o (relatif au centre planète) à la sphère de rayon r le long
+// de d ; négatif si pas d'intersection avant (copie de sky.frag).
+float AerialRaySphereFar(vec3 o, vec3 d, float r)
+{
+    float b = dot(o, d);
+    float c = dot(o, o) - r * r;
+    float disc = b * b - c;
+    if (disc < 0.0) return -1.0;
+    return -b + sqrt(disc);
+}
+
+// Couleur du ciel analytique juste au-dessus de l'horizon dans la direction
+// azimutale de \p viewDir (composante Y clampée vers l'horizon : regarder le
+// sol n'a pas de sens atmosphérique — la teinte de convergence du terrain
+// lointain est celle du ciel derrière lui). Sortie en radiance HDR, même
+// échelle que le ciel écrit par SkyPass (kSunIntensity identique).
+vec3 AerialAnalyticHorizon(vec3 viewDir, vec3 sunDir)
+{
+    vec3 o = vec3(0.0, kAerialPlanetR + 200.0, 0.0);
+    vec3 d = normalize(vec3(viewDir.x, clamp(viewDir.y, 0.015, 0.25), viewDir.z));
+    float tMax = AerialRaySphereFar(o, d, kAerialAtmoR);
+    if (tMax <= 0.0) return vec3(0.0015, 0.002, 0.0045);
+
+    float mu = dot(d, sunDir);
+    float phaseR = 3.0 / (16.0 * kAerialPi) * (1.0 + mu * mu);
+    const float g = 0.76; // anisotropie Mie (halo autour du soleil)
+    float phaseM = 3.0 / (8.0 * kAerialPi) * ((1.0 - g * g) * (1.0 + mu * mu))
+        / ((2.0 + g * g) * pow(1.0 + g * g - 2.0 * g * mu, 1.5));
+
+    const int kSteps      = 4;
+    const int kLightSteps = 2;
+    float dt = tMax / float(kSteps);
+    float t  = 0.5 * dt;
+    vec3  sumR = vec3(0.0);
+    vec3  sumM = vec3(0.0);
+    float odR = 0.0;
+    float odM = 0.0;
+    for (int i = 0; i < kSteps; ++i)
+    {
+        vec3 p = o + d * t;
+        float h = max(length(p) - kAerialPlanetR, 0.0);
+        float dR = exp(-h / kAerialHR) * dt;
+        float dM = exp(-h / kAerialHM) * dt;
+        odR += dR;
+        odM += dM;
+        float tSun = AerialRaySphereFar(p, sunDir, kAerialAtmoR);
+        float sdt = tSun / float(kLightSteps);
+        float st = 0.5 * sdt;
+        float sOdR = 0.0;
+        float sOdM = 0.0;
+        bool inShadow = (tSun <= 0.0);
+        for (int j = 0; j < kLightSteps && !inShadow; ++j)
+        {
+            vec3 sp = p + sunDir * st;
+            float sh = length(sp) - kAerialPlanetR;
+            if (sh < 0.0) { inShadow = true; break; }
+            sOdR += exp(-sh / kAerialHR) * sdt;
+            sOdM += exp(-sh / kAerialHM) * sdt;
+            st += sdt;
+        }
+        if (!inShadow)
+        {
+            vec3 tau = kAerialBetaR * (odR + sOdR) + vec3(kAerialBetaM * 1.1) * (odM + sOdM);
+            vec3 att = exp(-tau);
+            sumR += att * dR;
+            sumM += att * dM;
+        }
+        t += dt;
+    }
+    const float kSunIntensity = 20.0;
+    vec3 col = kSunIntensity * (sumR * kAerialBetaR * phaseR + sumM * vec3(kAerialBetaM) * phaseM);
+    // Plancher nocturne aligné sur sky.frag (jamais le noir absolu).
+    return max(col, vec3(0.0015, 0.002, 0.0045));
+}
 
 // ---- Constants --------------------------------------------------------------
 const float PI       = 3.14159265358979323846;
@@ -479,11 +570,28 @@ void main()
         // reste ~0 pres de fogStart pour laisser l'exponentielle s'exprimer.
         fog = max(fog, smoothstep(fogStart, fogEnd, dist));
         // Inscattering directionnel : halo chaud vers le soleil (couleur du
-        // soleil = lightColor.rgb), base = couleur d'horizon (skyColor.rgb,
-        // pilotee jour/nuit). rayDir = direction camera->pixel.
+        // soleil = lightColor.rgb). rayDir = direction camera->pixel.
+        // Base de teinte (chantier perspective aérienne 2026-07-20) :
+        //  - mode analytique (aerialSkyModel=1, config client.sky.analytic) :
+        //    ciel analytique évalué DANS LA DIRECTION DU RAYON — le terrain
+        //    lointain se fond dans le vrai fond de ciel (couchant orangé côté
+        //    soleil, bleu froid à l'opposé). Le halo Mie étant déjà dans la
+        //    base, le renfort directionnel legacy est réduit (x0.3) pour ne
+        //    pas doubler le halo.
+        //  - mode legacy : couleur d'horizon uniforme skyColor.rgb (inchangé).
         vec3  rayDir = normalize(P - pc.cameraPos.xyz);
         float sunAmt = pow(max(dot(rayDir, normalize(pc.lightDir.xyz)), 0.0), kAerialSunExponent) * inscatter;
-        vec3  tint   = mix(pc.skyColor.rgb, pc.lightColor.rgb, clamp(sunAmt, 0.0, 1.0));
+        vec3  tintBase;
+        if (pc.aerialSkyModel >= 0.5)
+        {
+            tintBase = AerialAnalyticHorizon(rayDir, normalize(pc.lightDir.xyz));
+            sunAmt *= 0.3;
+        }
+        else
+        {
+            tintBase = pc.skyColor.rgb;
+        }
+        vec3  tint   = mix(tintBase, pc.lightColor.rgb, clamp(sunAmt, 0.0, 1.0));
         color = mix(color, tint, fog);
     }
 

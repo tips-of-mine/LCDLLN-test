@@ -31,8 +31,10 @@ namespace
 
 	using engine::render::clouds::CloudNoiseData;
 	using engine::render::clouds::GenerateCloudNoise;
+	using engine::render::clouds::GenerateWeatherCoverageMap;
 	using engine::render::clouds::kBaseNoiseSize;
 	using engine::render::clouds::kDetailNoiseSize;
+	using engine::render::clouds::kWeatherMapSize;
 	using engine::render::clouds::TileablePerlinFbm;
 	using engine::render::clouds::TileableWorley;
 
@@ -108,6 +110,32 @@ namespace
 		REQUIRE(mx - mn > 60);           // vraie dynamique
 		REQUIRE(mean > 40.0 && mean < 215.0); // ni noir ni blanc uniforme
 	}
+	/// Test : weather map 2D (chantier weather map 2026-07-20) — taille R8,
+	/// déterminisme par seed, distribution non dégénérée (vraies trouées ET
+	/// vrais paquets : le contraste accentué doit atteindre les deux bornes).
+	void Test_WeatherCoverageMap()
+	{
+		const std::vector<uint8_t> a = GenerateWeatherCoverageMap(42u);
+		REQUIRE(a.size() == static_cast<size_t>(kWeatherMapSize) * kWeatherMapSize);
+
+		const std::vector<uint8_t> b = GenerateWeatherCoverageMap(42u);
+		REQUIRE(a == b);
+		const std::vector<uint8_t> c = GenerateWeatherCoverageMap(9999u);
+		REQUIRE(a != c);
+
+		uint8_t mn = 255u, mx = 0u;
+		uint64_t sum = 0u;
+		for (const uint8_t v : a)
+		{
+			mn = (v < mn) ? v : mn;
+			mx = (v > mx) ? v : mx;
+			sum += v;
+		}
+		const double mean = static_cast<double>(sum) / static_cast<double>(a.size());
+		REQUIRE(mn < 30u);                     // vraies trouées (ciel dégagé local)
+		REQUIRE(mx > 225u);                    // vrais paquets (couvert local)
+		REQUIRE(mean > 40.0 && mean < 215.0);  // ni vide ni saturée
+	}
 }
 
 int main()
@@ -116,6 +144,7 @@ int main()
 	Test_Generate_Deterministic();
 	Test_Noises_AreTileable();
 	Test_Generate_NonDegenerateDistribution();
+	Test_WeatherCoverageMap();
 
 	if (g_failed > 0)
 	{

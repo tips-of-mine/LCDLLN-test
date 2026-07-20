@@ -18,6 +18,8 @@
 //   binding 2 = bruit 3D base 64³ (R=Perlin fBm, G/B/A=Worley 8/16/32,
 //               sampler linéaire REPEAT) — chantier ciel 2026-07-17
 //   binding 3 = bruit 3D détail 32³ (R/G/B=Worley 4/8/16, REPEAT)
+//   binding 4 = weather map 2D 256² R8 (couverture par position monde XZ,
+//               REPEAT) — chantier weather map 2026-07-20
 //
 // Sortie (cible réduite RGBA16F) :
 //   rgb = couleur nuages pré-multipliée (scattered * fade)
@@ -31,6 +33,7 @@ layout(location = 0) out vec4 outColor;
 layout(set = 0, binding = 1) uniform sampler2D uSceneDepth; // depth, .r = [0,1]
 layout(set = 0, binding = 2) uniform sampler3D uNoiseBase;   // Perlin-Worley base
 layout(set = 0, binding = 3) uniform sampler3D uNoiseDetail; // Worley détail
+layout(set = 0, binding = 4) uniform sampler2D uWeatherMap;  // couverture 2D (weather map)
 
 layout(push_constant) uniform CloudPC
 {
@@ -42,7 +45,7 @@ layout(push_constant) uniform CloudPC
 	vec4  horizonColor;  // xyz = teinte horizon ciel ; w = topAltMeters
 	vec4  windParams;    // x = ventX ; y = ventZ ; z = vitesse ; w = anisotropie HG g
 	vec4  stepParams;    // x = nbStepsVue ; y = nbStepsLumière ; z = distMax (m) ; w = forceAmbiante
-	vec4  shadowParams;  // x = force des ombres de nuages au sol [0..1] ; yzw réservés
+	vec4  shadowParams;  // x = force ombres sol [0..1] ; y = luminance max ; z = distance d'estompage (m) ; w = tuile weather map (m, <=1 désactive)
 } pc;
 
 const float PI = 3.14159265358979;
@@ -80,14 +83,22 @@ float cloudDensity(vec3 p)
 
 	// Seuil de couverture : coverage 0 -> ciel quasi vide, 1 -> couvert.
 	// Plage choisie pour la distribution du baseShape remappé (moyenne ~0.5).
-	// Fix crépuscule 2026-07-18 — variation basse fréquence anti-répétition :
-	// vu de loin (rayons rasants), le motif 5,2 km se répétait visiblement
-	// (retour utilisateur, capture crépuscule). On module le seuil par un
-	// échantillon très basse fréquence (~tuile 40 km, décalé) : les paquets
-	// de nuages varient d'une tuile à l'autre, la répétition disparaît.
+	// Chantier weather map 2026-07-20 — la variation basse fréquence vient
+	// désormais d'une VRAIE weather map 2D (256² R8, tuile shadowParams.w
+	// mètres, fBm Perlin périodique, cf. GenerateWeatherCoverageMap) : des
+	// fronts nuageux et des trouées par position monde, qui défilent avec le
+	// vent (facteur 0.3 : les fronts bougent plus lentement que les volutes).
+	// Remplace l'échantillon 3D détourné du fix crépuscule 2026-07-18 (même
+	// rôle anti-répétition, amplitude renforcée 0.16 -> 0.30 pour des paquets
+	// francs). shadowParams.w <= 1 : carte neutre (bascule de secours).
 	float coverage = pc.sunDir.w;
-	float covVar = texture(uNoiseBase, sp * 0.13 + vec3(0.17, 0.0, 0.31)).g;
-	float threshold = mix(0.72, 0.28, coverage) + (covVar - 0.5) * 0.16;
+	float covVar = 0.5;
+	if (pc.shadowParams.w > 1.0)
+	{
+		vec2 wuv = (p.xz + wind.xz * 0.3) / pc.shadowParams.w;
+		covVar = texture(uWeatherMap, wuv).r;
+	}
+	float threshold = mix(0.72, 0.28, coverage) + (0.5 - covVar) * 0.30;
 	float d = smoothstep(threshold, threshold + 0.14, baseShape);
 
 	// Érosion de détail : texture 32³ tuilée sur ~800 m. Bords effilochés

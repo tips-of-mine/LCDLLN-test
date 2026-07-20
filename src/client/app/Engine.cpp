@@ -12222,21 +12222,27 @@ namespace engine
 							{
 								const float beltSlotSz = 48.0f;
 								const float beltGap = 6.0f;
-								// 2 rangées à partir de 7 cases (une grande
-								// ceinture ne doit pas traverser l'écran).
-								const size_t perRow = (beltCount <= 6u) ? beltCount : ((beltCount + 1u) / 2u);
-								const size_t rowCount = (beltCount + perRow - 1u) / perRow;
+								// Retour de test 2026-07-20 — disposition : la
+								// rangée BASSE porte les slots 1..6 ; les slots
+								// 7..12 s'empilent sur une 2e rangée AU-DESSUS,
+								// alignés colonne par colonne (7 au-dessus du 1,
+								// 8 au-dessus du 2, etc.).
+								const size_t perRow = std::min<size_t>(beltCount, 6u);
+								const size_t rowCount = (beltCount + 5u) / 6u;
 								const float beltW = static_cast<float>(perRow) * beltSlotSz
 									+ static_cast<float>(perRow - 1u) * beltGap;
 								const float beltH = static_cast<float>(rowCount) * beltSlotSz
 									+ static_cast<float>(rowCount - 1u) * beltGap;
-								const float beltX = barX + barWidth + 24.0f;
-								const float beltY = dh - beltH - 16.0f;
+								// Retour de test 2026-07-20 — séparation nette
+								// avec les icônes de pouvoir : écart élargi +
+								// trait séparateur vertical (dessiné plus bas).
+								const float beltX = barX + barWidth + 56.0f;
+								const float beltY = dh - beltH - 16.0f; // bord HAUT du bloc
 								const bool shiftHeld = m_input.IsDown(engine::platform::Key::Shift);
 								const uint32_t beltClientId = m_gameplayUdp.ServerClientId();
 
-								ImGui::SetNextWindowPos(ImVec2(beltX - 6.0f, beltY - 20.0f));
-								ImGui::SetNextWindowSize(ImVec2(beltW + 12.0f, beltH + 26.0f));
+								ImGui::SetNextWindowPos(ImVec2(beltX - 34.0f, beltY - 20.0f));
+								ImGui::SetNextWindowSize(ImVec2(beltW + 40.0f, beltH + 26.0f));
 								ImGui::Begin("##belt_bar", nullptr,
 									ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground
 									| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar
@@ -12249,6 +12255,11 @@ namespace engine
 									static_cast<int>(engine::items::kBeltSlotsMax));
 								bdl->AddText(ImVec2(beltX, beltY - 18.0f),
 									IM_COL32(190, 215, 195, 200), beltTitle);
+								// Trait séparateur vertical entre la barre
+								// d'action (icônes de pouvoir) et la ceinture.
+								bdl->AddLine(ImVec2(beltX - 26.0f, dh - beltSlotSz - 20.0f),
+									ImVec2(beltX - 26.0f, dh - 12.0f),
+									IM_COL32(150, 170, 155, 120), 2.0f);
 
 								// Copie de travail : mutée par drop/échange/vidage,
 								// envoyée en une fois si changement.
@@ -12257,10 +12268,13 @@ namespace engine
 
 								for (size_t bi = 0; bi < beltCount; ++bi)
 								{
-									const size_t row = bi / perRow;
-									const size_t colIdx = bi % perRow;
+									// row 0 = rangée BASSE (slots 1..6) ; les rangées
+									// suivantes montent AU-DESSUS, mêmes colonnes.
+									const size_t row = bi / 6u;
+									const size_t colIdx = bi % 6u;
 									const float bx0 = beltX + static_cast<float>(colIdx) * (beltSlotSz + beltGap);
-									const float by0 = beltY + static_cast<float>(row) * (beltSlotSz + beltGap);
+									const float by0 = beltY
+										+ static_cast<float>(rowCount - 1u - row) * (beltSlotSz + beltGap);
 									const std::string& beltTok = beltLayout[bi];
 									uint32_t beltItemId = 0u;
 									const bool occupied = engine::anniversary::ParseItemToken(beltTok, beltItemId);

@@ -9704,6 +9704,13 @@ namespace engine
 				{
 					const bool grounded = m_characterController.IsGrounded();
 					const bool moving = (moveInput.moveDirXZ.x != 0.0f || moveInput.moveDirXZ.z != 0.0f);
+					// Anti-flottement (retour de test 2026-07-20) : au ras d'un
+					// bord de collision, IsGrounded oscille frame à frame et la
+					// SM battait Land->Fall->Land en boucle (spam de log + pop
+					// d'animation). On mémorise DEPUIS QUAND le sol est perdu ;
+					// la transition vers Fall attend une tolérance « coyote ».
+					if (grounded)
+						m_avatarUngroundedSinceSec = -1.0f;
 
 					const auto now = std::chrono::steady_clock::now();
 					// nowSec via EngineNowSec : meme reference de temps que les sites de
@@ -10034,13 +10041,19 @@ namespace engine
 					else
 					{
 						// Not grounded : Jump (takeoff phase) -> Fall after takeoff duration ;
-						// sinon (Walk/Run/Land/Idle qui perdent le sol) -> Fall direct.
+						// sinon (Walk/Run/Land/Idle qui perdent le sol) -> Fall APRÈS
+						// une tolérance « coyote » de 150 ms (anti-flottement : les
+						// micro-pertes de sol d'une frame au bord d'un obstacle ne
+						// déclenchent plus la boucle Land->Fall->Land).
+						if (m_avatarUngroundedSinceSec < 0.0f)
+							m_avatarUngroundedSinceSec = nowSec;
 						if (m_avatarLocoState == AvatarLocomotionState::Jump)
 						{
 							if (jumpClip && stateElapsed >= jumpClip->duration * 0.4f)
 								newState = AvatarLocomotionState::Fall;
 						}
-						else if (m_avatarLocoState != AvatarLocomotionState::Fall)
+						else if (m_avatarLocoState != AvatarLocomotionState::Fall
+							&& nowSec - m_avatarUngroundedSinceSec >= 0.15f)
 						{
 							newState = AvatarLocomotionState::Fall;
 						}
@@ -12222,21 +12235,27 @@ namespace engine
 							{
 								const float beltSlotSz = 48.0f;
 								const float beltGap = 6.0f;
-								// 2 rangées à partir de 7 cases (une grande
-								// ceinture ne doit pas traverser l'écran).
-								const size_t perRow = (beltCount <= 6u) ? beltCount : ((beltCount + 1u) / 2u);
-								const size_t rowCount = (beltCount + perRow - 1u) / perRow;
+								// Retour de test 2026-07-20 — disposition : la
+								// rangée BASSE porte les slots 1..6 ; les slots
+								// 7..12 s'empilent sur une 2e rangée AU-DESSUS,
+								// alignés colonne par colonne (7 au-dessus du 1,
+								// 8 au-dessus du 2, etc.).
+								const size_t perRow = std::min<size_t>(beltCount, 6u);
+								const size_t rowCount = (beltCount + 5u) / 6u;
 								const float beltW = static_cast<float>(perRow) * beltSlotSz
 									+ static_cast<float>(perRow - 1u) * beltGap;
 								const float beltH = static_cast<float>(rowCount) * beltSlotSz
 									+ static_cast<float>(rowCount - 1u) * beltGap;
-								const float beltX = barX + barWidth + 24.0f;
-								const float beltY = dh - beltH - 16.0f;
+								// Retour de test 2026-07-20 — séparation nette
+								// avec les icônes de pouvoir : écart élargi +
+								// trait séparateur vertical (dessiné plus bas).
+								const float beltX = barX + barWidth + 56.0f;
+								const float beltY = dh - beltH - 16.0f; // bord HAUT du bloc
 								const bool shiftHeld = m_input.IsDown(engine::platform::Key::Shift);
 								const uint32_t beltClientId = m_gameplayUdp.ServerClientId();
 
-								ImGui::SetNextWindowPos(ImVec2(beltX - 6.0f, beltY - 20.0f));
-								ImGui::SetNextWindowSize(ImVec2(beltW + 12.0f, beltH + 26.0f));
+								ImGui::SetNextWindowPos(ImVec2(beltX - 34.0f, beltY - 20.0f));
+								ImGui::SetNextWindowSize(ImVec2(beltW + 40.0f, beltH + 26.0f));
 								ImGui::Begin("##belt_bar", nullptr,
 									ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground
 									| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar
@@ -12249,6 +12268,11 @@ namespace engine
 									static_cast<int>(engine::items::kBeltSlotsMax));
 								bdl->AddText(ImVec2(beltX, beltY - 18.0f),
 									IM_COL32(190, 215, 195, 200), beltTitle);
+								// Trait séparateur vertical entre la barre
+								// d'action (icônes de pouvoir) et la ceinture.
+								bdl->AddLine(ImVec2(beltX - 26.0f, dh - beltSlotSz - 20.0f),
+									ImVec2(beltX - 26.0f, dh - 12.0f),
+									IM_COL32(150, 170, 155, 120), 2.0f);
 
 								// Copie de travail : mutée par drop/échange/vidage,
 								// envoyée en une fois si changement.
@@ -12257,10 +12281,13 @@ namespace engine
 
 								for (size_t bi = 0; bi < beltCount; ++bi)
 								{
-									const size_t row = bi / perRow;
-									const size_t colIdx = bi % perRow;
+									// row 0 = rangée BASSE (slots 1..6) ; les rangées
+									// suivantes montent AU-DESSUS, mêmes colonnes.
+									const size_t row = bi / 6u;
+									const size_t colIdx = bi % 6u;
 									const float bx0 = beltX + static_cast<float>(colIdx) * (beltSlotSz + beltGap);
-									const float by0 = beltY + static_cast<float>(row) * (beltSlotSz + beltGap);
+									const float by0 = beltY
+										+ static_cast<float>(rowCount - 1u - row) * (beltSlotSz + beltGap);
 									const std::string& beltTok = beltLayout[bi];
 									uint32_t beltItemId = 0u;
 									const bool occupied = engine::anniversary::ParseItemToken(beltTok, beltItemId);
@@ -16103,8 +16130,60 @@ namespace engine
 		// boucle. Pas encore de distinction Walk/Run/Sprint côté wire — TD.7 V1 suffit.
 		constexpr float kIdleSpeedThresholdMps = 0.1f;
 		static bool diagLoggedSuccess = false;
-		for (const engine::client::UIRemoteEntity& re : remotes)
+		// Anomalie perf (retour de test 2026-07-20) : ~26 avatars skinnés (65 os
+		// chacun) échantillonnés + dessinés CHAQUE frame faisaient chuter 60→12 fps,
+		// et dépassaient la limite sûre du ring SSBO (~16 draws skinnés/frame, cf.
+		// SkinnedRenderer.h — au-delà le ring se réécrit pendant une frame en vol).
+		// Triple garde-fou, distances configurables :
+		//   1) cull : au-delà de render_distance_m, pas de mesh (labels flottants et
+		//      points radar suivent leur propre chemin et restent visibles) ;
+		//   2) budget : au plus max_skinned_draws avatars dessinés par frame, les
+		//      PLUS PROCHES d'abord (tri par distance caméra croissante) ;
+		//   3) LOD d'animation : au-delà de anim_lod_distance_m, la pose n'est
+		//      ré-échantillonnée qu'à ~10 Hz (pose cachée entre deux, cf. boucle).
+		const float remoteRenderDist = static_cast<float>(
+			m_cfg.GetDouble("client.remote_avatars.render_distance_m", 60.0));
+		const float animLodDist = static_cast<float>(
+			m_cfg.GetDouble("client.remote_avatars.anim_lod_distance_m", 25.0));
+		const size_t maxSkinnedDraws = static_cast<size_t>(
+			m_cfg.GetDouble("client.remote_avatars.max_skinned_draws", 16.0));
+		const float remoteRenderDist2 = remoteRenderDist * remoteRenderDist;
+		// Passe 1 — candidats triés par distance. Les entités sans mesh (nodes de
+		// récolte, mobs morts, loot bags) sont écartées ICI pour ne pas consommer
+		// de slot du budget de draws.
+		struct RemoteDrawCandidate { size_t index; float dist2; };
+		std::vector<RemoteDrawCandidate> candidates;
+		candidates.reserve(remotes.size());
+		for (size_t ri = 0; ri < remotes.size(); ++ri)
 		{
+			const engine::client::UIRemoteEntity& rc = remotes[ri];
+			if (rc.playerClientId == 0u)
+			{
+				if (rc.archetypeId == 0u) continue;                                          // loot bag : pipeline dédié
+				if (rc.archetypeId >= engine::server::kGatheringNodeArchetypeBase) continue; // node de récolte : label seul
+				if ((rc.stateFlags & 1u) != 0u) continue;                                    // mob mort en attente de despawn
+			}
+			float cx = rc.positionX, cy = rc.positionY, cz = rc.positionZ;
+			const auto csit = m_remoteSmoothed.find(rc.entityId);
+			if (csit != m_remoteSmoothed.end() && csit->second.valid)
+			{
+				cx = csit->second.x; cy = csit->second.y; cz = csit->second.z;
+			}
+			const float ddx = cx - rs.camera.position.x;
+			const float ddy = cy - rs.camera.position.y;
+			const float ddz = cz - rs.camera.position.z;
+			const float dist2 = ddx * ddx + ddy * ddy + ddz * ddz;
+			if (dist2 > remoteRenderDist2)
+				continue;
+			candidates.push_back(RemoteDrawCandidate{ ri, dist2 });
+		}
+		std::sort(candidates.begin(), candidates.end(),
+			[](const RemoteDrawCandidate& a, const RemoteDrawCandidate& b) { return a.dist2 < b.dist2; });
+		if (candidates.size() > maxSkinnedDraws)
+			candidates.resize(maxSkinnedDraws);
+		for (const RemoteDrawCandidate& cand : candidates)
+		{
+			const engine::client::UIRemoteEntity& re = remotes[cand.index];
 			// remoteEntities contient TOUTES les entités distantes (joueurs + mobs + lootbags).
 			// Combat SP1 : les mobs (archetypeId != 0) réutilisent un mesh de race
 			// existant déclaré par le catalogue (cf. CreatureCatalog) ; seuls les loot
@@ -16208,11 +16287,25 @@ namespace engine
 				// précédente (graceful) — pas de switch, pas de crash.
 			}
 			// Sample → globals → finals : même chaîne que l'avatar local (cf. ligne ~4723).
-			auto locals  = anim.crossfade.Sample(remoteMesh->skeleton, nowSec);
-			auto globals = engine::render::skinned::AnimationSampler::ComputeGlobalMatrices(
-				remoteMesh->skeleton, locals);
-			auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
-				remoteMesh->skeleton, globals);
+			// LOD d'animation : au-delà de animLodDist, la pose n'est ré-échantillonnée
+			// qu'à ~10 Hz — entre deux échantillons on redessine la pose cachée
+			// (imperceptible à distance, divise le coût CPU par ~6 à 60 fps). En deçà,
+			// plein débit comme avant. Un changement de clip repasse par le cache au
+			// prochain échantillon (≤ 100 ms), le crossfade lisse la transition.
+			const bool animFullRate = cand.dist2 <= animLodDist * animLodDist;
+			const bool animCacheUsable = !anim.cachedFinals.empty()
+				&& anim.lastSampleSec >= 0.0f
+				&& (nowSec - anim.lastSampleSec) < 0.1f;
+			if (animFullRate || !animCacheUsable)
+			{
+				auto locals  = anim.crossfade.Sample(remoteMesh->skeleton, nowSec);
+				auto globals = engine::render::skinned::AnimationSampler::ComputeGlobalMatrices(
+					remoteMesh->skeleton, locals);
+				anim.cachedFinals = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
+					remoteMesh->skeleton, globals);
+				anim.lastSampleSec = nowSec;
+			}
+			const std::vector<engine::math::Mat4>& finals = anim.cachedFinals;
 			// Pieds au sol : le serveur réplique la position « centre capsule » comme pour
 			// l'avatar local (feetPos = ccPos.y - 0.9). Même offset ici pour la cohérence.
 			// Combat SP1 : échelle uniforme d'archétype (1.0 pour les joueurs) appliquée

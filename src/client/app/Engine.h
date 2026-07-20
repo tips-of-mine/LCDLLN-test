@@ -875,6 +875,12 @@ namespace engine
 		/// geste verrouillant (ouverture de coffre). Toujours tester via
 		/// `EngineNowSec() < m_avatarMoveLockUntilSec` (jamais `!= 0`). 0 = aucun verrou.
 		float                                                    m_avatarMoveLockUntilSec = 0.0f;
+		/// Anti-flottement (retour de test 2026-07-20) — instant (EngineNowSec)
+		/// où l'avatar a PERDU le sol ; -1 tant qu'il est au sol. La SM ne passe
+		/// en Fall qu'après 150 ms sans sol (tolérance « coyote » : les micro
+		/// oscillations d'IsGrounded au bord d'un obstacle ne déclenchent plus
+		/// la boucle Land->Fall->Land).
+		float                                                    m_avatarUngroundedSinceSec = -1.0f;
 		/// Sequence de sort : phase (0=Enter,1=Shoot,2=Exit) + clip a rejouer en
 		/// cours d'etat (vide=aucun ; consomme 1 fois par la SM, rejoue un one-shot
 		/// sans changer d'etat). Garde-fou 3s dans le case Cast => jamais bloque.
@@ -1275,6 +1281,13 @@ namespace engine
 		{
 			engine::render::skinned::AnimationCrossfade crossfade;
 			std::string lastClipName;
+			/// LOD d'animation (retour de test 2026-07-20 : chute 60→12 fps avec ~26
+			/// avatars skinnés 65 os échantillonnés chaque frame). Pose finale mise en
+			/// cache par RecordRemoteAvatars ; au-delà de la distance de LOD elle n'est
+			/// ré-échantillonnée qu'à ~10 Hz, entre deux on redessine cette pose.
+			std::vector<engine::math::Mat4> cachedFinals;
+			/// Horodatage (EngineNowSec) du dernier Sample réel ; < 0 = jamais échantillonné.
+			float lastSampleSec = -1.0f;
 		};
 		std::unordered_map<engine::server::EntityId, RemoteAvatarAnim> m_remoteAnims;
 		engine::gameplay::MoveInput                               m_lastMoveInput{};

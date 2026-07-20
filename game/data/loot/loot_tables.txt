@@ -26,3 +26,6 @@
 104 6003 1 owner 100 2 4
 104 5001 1 owner 12
 104 2002 1 owner 60 2 3
+# Ceinture v2 (2026-07-20) — la Grande ceinture du colporteur (12 slots)
+# ne s'achete pas : drop rare du mini-boss.
+104 5133 1 owner 8

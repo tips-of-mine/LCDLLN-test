@@ -202,11 +202,19 @@ namespace engine::server
 				persisted.GetString("actionbar.slot." + std::to_string(slotIndex), "");
 		}
 
-		// Roadmap-3 (2026-07-19) — ceinture (absent = "" = vide, rétro-compat).
-		for (size_t slotIndex = 0; slotIndex < outState.beltLayout.size(); ++slotIndex)
+		// Roadmap-3 (2026-07-19) / Ceinture v2 (2026-07-20) — ceinture à
+		// taille dynamique : belt.count (borné 12) puis belt.slot.N.
+		// Rétro-compat : les fichiers antérieurs n'ont pas belt.count → on
+		// lit les 4 clés historiques (absent = "" = vide).
 		{
-			outState.beltLayout[slotIndex] =
-				persisted.GetString("belt.slot." + std::to_string(slotIndex), "");
+			const int64_t beltCount = std::clamp<int64_t>(
+				persisted.GetInt("belt.count", 4), 0, 12);
+			outState.beltLayout.assign(static_cast<size_t>(beltCount), std::string{});
+			for (size_t slotIndex = 0; slotIndex < outState.beltLayout.size(); ++slotIndex)
+			{
+				outState.beltLayout[slotIndex] =
+					persisted.GetString("belt.slot." + std::to_string(slotIndex), "");
+			}
 		}
 
 		// Anniversaires SP3 (2026-07-18) — expirations des gâteaux (clés
@@ -357,7 +365,10 @@ namespace engine::server
 			output << "actionbar.slot." << slotIndex << "=" << state.actionBarLayout[slotIndex] << "\n";
 		}
 
-		// Roadmap-3 (2026-07-19) — ceinture (4 slots, clés fixes).
+		// Roadmap-3 (2026-07-19) / Ceinture v2 — ceinture à taille dynamique :
+		// belt.count puis belt.slot.N (les vieux lecteurs ignorent belt.count
+		// et relisent les 4 premières clés — dégradation propre).
+		output << "belt.count=" << state.beltLayout.size() << "\n";
 		for (size_t slotIndex = 0; slotIndex < state.beltLayout.size(); ++slotIndex)
 		{
 			output << "belt.slot." << slotIndex << "=" << state.beltLayout[slotIndex] << "\n";

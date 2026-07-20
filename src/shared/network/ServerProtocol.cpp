@@ -818,77 +818,90 @@ namespace engine::server
 		return true;
 	}
 
-	// Roadmap-3 (2026-07-19) — Ceinture (kinds 99/100, miroir exact 88/89 :
-	// clientId u32 + 4 chaînes préfixées u16, jetons "item:<id>" bornés 64 o).
+	// Roadmap-3 (2026-07-19) / Ceinture v2 (2026-07-20) — kinds 99/100 :
+	// clientId u32 + count u16 (≤ 12) + count chaînes préfixées u16 (jetons
+	// "item:<id>" bornés 64 o). Modèle count-prefixed d'EquipmentUpdate ;
+	// count autoritaire = capacité active (ceinture équipée, défaut 4).
+
+	namespace
+	{
+		/// Ceinture v2 — encode le payload commun des kinds 99/100 (clientId +
+		/// count + slots). \param kind SetBeltLayout ou BeltLayoutUpdate.
+		std::vector<std::byte> EncodeBeltSlots(MessageKind kind, uint32_t clientId,
+			const std::vector<std::string>& slots)
+		{
+			size_t hint = 4 + 2;
+			for (const std::string& slot : slots)
+			{
+				hint += 2 + slot.size();
+			}
+			std::vector<std::byte> packet = BeginPacket(kind, hint);
+			WriteU32(packet, clientId);
+			WriteU16(packet, static_cast<uint16_t>(slots.size()));
+			for (const std::string& slot : slots)
+			{
+				WriteSizedString(packet, slot);
+			}
+			return packet;
+		}
+
+		/// Ceinture v2 — décode le payload commun des kinds 99/100. Rejette
+		/// count > 12 (borne dure du design) et toute chaîne > 64 octets.
+		bool DecodeBeltSlots(std::span<const std::byte> payload, uint32_t& outClientId,
+			std::vector<std::string>& outSlots)
+		{
+			if (payload.size() < 6)
+			{
+				return false;
+			}
+			outClientId = ReadU32(payload, 0);
+			const uint16_t count = ReadU16(payload, 4);
+			if (count > 12u)
+			{
+				return false;
+			}
+			outSlots.clear();
+			outSlots.resize(count);
+			size_t offset = 6;
+			for (std::string& slot : outSlots)
+			{
+				if (!ReadSizedString(payload, offset, slot) || slot.size() > 64u)
+				{
+					return false;
+				}
+			}
+			return offset == payload.size();
+		}
+	}
 
 	std::vector<std::byte> EncodeSetBeltLayout(const SetBeltLayoutMessage& message)
 	{
-		size_t hint = 4;
-		for (const std::string& slot : message.slots)
-		{
-			hint += 2 + slot.size();
-		}
-		std::vector<std::byte> packet = BeginPacket(MessageKind::SetBeltLayout, hint);
-		WriteU32(packet, message.clientId);
-		for (const std::string& slot : message.slots)
-		{
-			WriteSizedString(packet, slot);
-		}
-		return packet;
+		return EncodeBeltSlots(MessageKind::SetBeltLayout, message.clientId, message.slots);
 	}
 
 	bool DecodeSetBeltLayout(std::span<const std::byte> packet, SetBeltLayoutMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
-		if (!DecodeHeader(packet, MessageKind::SetBeltLayout, payload) || payload.size() < 4)
+		if (!DecodeHeader(packet, MessageKind::SetBeltLayout, payload))
 		{
 			return false;
 		}
-		outMessage.clientId = ReadU32(payload, 0);
-		size_t offset = 4;
-		for (std::string& slot : outMessage.slots)
-		{
-			if (!ReadSizedString(payload, offset, slot) || slot.size() > 64u)
-			{
-				return false;
-			}
-		}
-		return offset == payload.size();
+		return DecodeBeltSlots(payload, outMessage.clientId, outMessage.slots);
 	}
 
 	std::vector<std::byte> EncodeBeltLayoutUpdate(const BeltLayoutUpdateMessage& message)
 	{
-		size_t hint = 4;
-		for (const std::string& slot : message.slots)
-		{
-			hint += 2 + slot.size();
-		}
-		std::vector<std::byte> packet = BeginPacket(MessageKind::BeltLayoutUpdate, hint);
-		WriteU32(packet, message.clientId);
-		for (const std::string& slot : message.slots)
-		{
-			WriteSizedString(packet, slot);
-		}
-		return packet;
+		return EncodeBeltSlots(MessageKind::BeltLayoutUpdate, message.clientId, message.slots);
 	}
 
 	bool DecodeBeltLayoutUpdate(std::span<const std::byte> packet, BeltLayoutUpdateMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
-		if (!DecodeHeader(packet, MessageKind::BeltLayoutUpdate, payload) || payload.size() < 4)
+		if (!DecodeHeader(packet, MessageKind::BeltLayoutUpdate, payload))
 		{
 			return false;
 		}
-		outMessage.clientId = ReadU32(payload, 0);
-		size_t offset = 4;
-		for (std::string& slot : outMessage.slots)
-		{
-			if (!ReadSizedString(payload, offset, slot) || slot.size() > 64u)
-			{
-				return false;
-			}
-		}
-		return offset == payload.size();
+		return DecodeBeltSlots(payload, outMessage.clientId, outMessage.slots);
 	}
 
 	std::vector<std::byte> EncodeClassProgressionUpdate(const ClassProgressionUpdateMessage& message)

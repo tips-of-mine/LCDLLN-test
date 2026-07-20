@@ -3733,6 +3733,10 @@ namespace engine::server
 		(void)SendInventoryDelta(*client, client->inventory); // snapshot complet
 		(void)SendEquipmentUpdate(*client);
 		(void)SendPlayerStats(*client);
+		// Ceinture v2 — équiper une ceinture (slot Waist) change la capacité
+		// active : repousser le layout (le client redimensionne sa barre).
+		if (slot == static_cast<uint8_t>(engine::items::EquipmentSlot::Waist))
+			(void)SendBeltLayout(*client);
 	}
 
 	void ServerApp::HandleUnequipRequest(const Endpoint& endpoint, uint32_t clientId, uint8_t slot)
@@ -3776,6 +3780,10 @@ namespace engine::server
 		(void)SendInventoryDelta(*client, client->inventory); // snapshot complet
 		(void)SendEquipmentUpdate(*client);
 		(void)SendPlayerStats(*client);
+		// Ceinture v2 — déséquiper la ceinture ramène la capacité à 4 : le
+		// contenu au-delà reste stocké (inactif) et revient si on rééquipe.
+		if (slotIndex == static_cast<size_t>(engine::items::EquipmentSlot::Waist))
+			(void)SendBeltLayout(*client);
 	}
 
 	void ServerApp::HandleTalkRequest(const Endpoint& endpoint, uint32_t clientId, std::string_view targetId)
@@ -4919,10 +4927,21 @@ namespace engine::server
 			return;
 		}
 
+		// Ceinture v2 — le count client ne peut pas dépasser la capacité
+		// ACTIVE (ceinture équipée en Waist, autoritaire côté serveur).
+		const size_t capacity = BeltCapacity(*client);
+		if (message.slots.size() > capacity)
+		{
+			LOG_WARN(Net, "[ServerApp] SetBeltLayout reject: count {} > capacite {} (client_id={})",
+				message.slots.size(), capacity, client->clientId);
+			(void)SendBeltLayout(*client);
+			return;
+		}
+
 		// Validation autoritaire : chaque slot non vide = jeton "item:<id>"
 		// d'un objet POSSÉDÉ et ACTIVABLE (gâteau ou consommable connu),
 		// unicité par slot. Rejet = renvoi de l'état inchangé (kind 100).
-		std::array<std::string, 4> validated{};
+		std::vector<std::string> validated(message.slots.size());
 		for (size_t slotIndex = 0; slotIndex < message.slots.size(); ++slotIndex)
 		{
 			const std::string& token = message.slots[slotIndex];
@@ -4973,8 +4992,29 @@ namespace engine::server
 	{
 		BeltLayoutUpdateMessage msg{};
 		msg.clientId = client.clientId;
+		// Ceinture v2 — exactement la capacité ACTIVE : les slots au-delà
+		// (contenu d'une grande ceinture déséquipée) restent stockés côté
+		// serveur mais ne sont ni envoyés ni activables.
 		msg.slots = client.beltLayout;
+		msg.slots.resize(BeltCapacity(client));
 		return m_transport.Send(client.endpoint, EncodeBeltLayoutUpdate(msg));
+	}
+
+	uint8_t ServerApp::BeltCapacity(const ConnectedClient& client) const
+	{
+		using engine::items::EquipmentSlot;
+		const uint32_t waistItemId =
+			client.equipment[static_cast<size_t>(EquipmentSlot::Waist)];
+		if (waistItemId != 0u && m_itemCatalogLoaded)
+		{
+			const engine::items::ItemDefinition* def = m_itemCatalog.Find(waistItemId);
+			if (def != nullptr && def->beltSlots > 0u)
+			{
+				return std::clamp<uint8_t>(def->beltSlots,
+					engine::items::kBeltSlotsDefault, engine::items::kBeltSlotsMax);
+			}
+		}
+		return engine::items::kBeltSlotsDefault;
 	}
 
 	void ServerApp::HandleConsumableUse(ConnectedClient& client, uint32_t itemId)
@@ -4982,11 +5022,14 @@ namespace engine::server
 		const ConsumableEffectDef* def = FindConsumableEffect(itemId);
 		if (def == nullptr) return;
 		// Slotté en ceinture (les consommables ne s'activent QUE depuis la
-		// ceinture — geste volontaire, cf. règle gâteau).
+		// ceinture — geste volontaire, cf. règle gâteau). Ceinture v2 : seuls
+		// les slots ACTIFS (index < capacité) comptent.
 		const std::string token = engine::anniversary::MakeItemToken(itemId);
+		const size_t activeSlots =
+			std::min<size_t>(client.beltLayout.size(), BeltCapacity(client));
 		bool slotted = false;
-		for (const std::string& slot : client.beltLayout)
-			if (slot == token) { slotted = true; break; }
+		for (size_t i = 0; i < activeSlots; ++i)
+			if (client.beltLayout[i] == token) { slotted = true; break; }
 		if (!slotted)
 		{
 			SendChatSystemNotice(client, "Placez d'abord cet objet dans votre ceinture.");
@@ -5871,8 +5914,11 @@ namespace engine::server
 		bool slotted = false;
 		for (const std::string& slot : client.actionBarLayout)
 			if (slot == token) { slotted = true; break; }
-		for (const std::string& slot : client.beltLayout)
-			if (slot == token) { slotted = true; break; }
+		// Ceinture v2 — seuls les slots ACTIFS (index < capacité) comptent.
+		const size_t activeBeltSlots =
+			std::min<size_t>(client.beltLayout.size(), BeltCapacity(client));
+		for (size_t i = 0; i < activeBeltSlots; ++i)
+			if (client.beltLayout[i] == token) { slotted = true; break; }
 		if (!slotted)
 		{
 			SendChatSystemNotice(client, "Placez d'abord le gâteau dans votre ceinture (ou barre d'action).");
@@ -5965,12 +6011,15 @@ namespace engine::server
 				continue;
 			const CakeBuffDef* def = FindCakeBuff(client.activeCakeItemId);
 			const std::string activeToken = engine::anniversary::MakeCakeToken(client.activeCakeItemId);
-			// Roadmap-3 — slotté = barre d'action OU ceinture.
+			// Roadmap-3 — slotté = barre d'action OU ceinture (Ceinture v2 :
+			// seuls les slots ACTIFS, index < capacité, comptent).
 			bool slotted = false;
 			for (const std::string& slot : client.actionBarLayout)
 				if (slot == activeToken) { slotted = true; break; }
-			for (const std::string& slot : client.beltLayout)
-				if (slot == activeToken) { slotted = true; break; }
+			const size_t activeBeltSlots =
+				std::min<size_t>(client.beltLayout.size(), BeltCapacity(client));
+			for (size_t i = 0; i < activeBeltSlots; ++i)
+				if (client.beltLayout[i] == activeToken) { slotted = true; break; }
 			bool owned = false;
 			for (const ItemStack& s : client.inventory)
 				if (s.itemId == client.activeCakeItemId && s.quantity > 0u) { owned = true; break; }

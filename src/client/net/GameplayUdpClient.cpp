@@ -376,7 +376,7 @@ namespace engine::client
 		return ok;
 	}
 
-	bool GameplayUdpClient::SendSetBeltLayout(uint32_t clientId, const std::array<std::string, 4>& slots)
+	bool GameplayUdpClient::SendSetBeltLayout(uint32_t clientId, const std::vector<std::string>& slots)
 	{
 		engine::server::SetBeltLayoutMessage msg{};
 		msg.clientId = clientId;

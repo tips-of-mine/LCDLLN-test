@@ -481,21 +481,28 @@ namespace engine::server
 		std::array<std::string, 10> slots{};
 	};
 
-	/// Roadmap-3 (2026-07-19) — Ceinture : 4 slots d'objets actifs (slot i →
+	/// Roadmap-3 (2026-07-19) — Ceinture : slots d'objets actifs (slot i →
 	/// jeton "item:<id>", "" = vide). Validée côté shard : objet POSSÉDÉ et
 	/// activable (consommable ou gâteau).
+	/// Ceinture v2 (2026-07-20) — taille VARIABLE : count u16 + count chaînes
+	/// (modèle EquipmentUpdate). La capacité est AUTORITAIRE côté shard
+	/// (ceinture équipée en slot Waist : 4 par défaut, 12 max) ; un count
+	/// client > capacité est rejeté. Client et shard basculent ensemble
+	/// (lock-step, décodeur strict) — pas de bump kProtocolVersion (framing
+	/// inchangé, kinds 99/100 conservés).
 	struct SetBeltLayoutMessage
 	{
 		uint32_t clientId = 0;
-		std::array<std::string, 4> slots{};
+		std::vector<std::string> slots;
 	};
 
 	/// Roadmap-3 — layout ceinture autoritaire poussé par le shard
 	/// (enter-world / ACK de SetBeltLayout, même réconciliation que 89).
+	/// Ceinture v2 : le nombre de slots envoyés = capacité ACTIVE du joueur.
 	struct BeltLayoutUpdateMessage
 	{
 		uint32_t clientId = 0;
-		std::array<std::string, 4> slots{};
+		std::vector<std::string> slots;
 	};
 
 	/// SP-B — shard → client : état autoritaire de progression de classe (classId + skills connus).

@@ -29,7 +29,9 @@ namespace engine::items
 		Amulet,    // 8  (non visuel)
 		Ring1,     // 9  (non visuel)
 		Ring2,     // 10 (non visuel)
-		Count      // 11 borne
+		Waist,     // 11 (non visuel) — Ceinture v2 (2026-07-20) : porte la
+		           //     capacité de la barre ceinture via beltSlots (4..12)
+		Count      // 12 borne
 	};
 
 	// Nombre de slots réellement équipables (hors None). Utile pour dimensionner
@@ -79,6 +81,12 @@ namespace engine::items
 		}
 	};
 
+	// Ceinture v2 (2026-07-20) — bornes de la barre ceinture (objets actifs).
+	// Le joueur démarre à 4 slots (sans ceinture équipée) ; une ceinture
+	// équipée (slot Waist) porte sa capacité via `beltSlots`, plafonnée à 12.
+	inline constexpr std::uint8_t kBeltSlotsDefault = 4;
+	inline constexpr std::uint8_t kBeltSlotsMax     = 12;
+
 	// Définition complète d'un objet du catalogue.
 	struct ItemDefinition
 	{
@@ -90,6 +98,9 @@ namespace engine::items
 		EquipmentSlot slot = EquipmentSlot::None; // None => non équipable
 		StatBonus     bonus;                      // additif quand équipé
 		std::string   visualMesh;                 // apparence modulaire (SP-D) ; vide en SP-A
+		// Ceinture v2 — capacité de barre ceinture apportée quand l'objet est
+		// équipé en slot Waist (0 = pas une ceinture ; clampée 4..12 côté serveur).
+		std::uint8_t  beltSlots = 0;
 
 		bool IsEquippable() const { return slot != EquipmentSlot::None; }
 	};

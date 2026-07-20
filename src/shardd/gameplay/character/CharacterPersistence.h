@@ -52,7 +52,9 @@ namespace engine::server
 		std::array<std::string, 10> actionBarLayout{};
 		/// Roadmap-3 (2026-07-19) — ceinture : 4 slots d'objets actifs
 		/// (jetons "item:<id>", "" = vide). Clés belt.slot.N.
-		std::array<std::string, 4> beltLayout{};
+		/// Ceinture v2 (2026-07-20) — slots dynamiques (persistés belt.count +
+		/// belt.slot.N ; rétro-compat : fichiers sans belt.count = 4 slots).
+		std::vector<std::string> beltLayout{};
 		/// SP-B — compétences par-classe déjà choisies (un skill par tier/niveau débloqué).
 		std::vector<std::string> knownSkillIds;
 		/// Anniversaires SP3 (2026-07-18) — expirations UTC (epoch ms) des

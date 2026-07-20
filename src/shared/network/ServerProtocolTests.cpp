@@ -442,6 +442,50 @@ namespace
 		std::puts("[OK] TestActionBarLayoutUpdateRoundTrip");
 	}
 
+	/// Ceinture v2 (2026-07-20) — kinds 99/100 count-prefixed : round-trip à
+	/// taille variable (4 et 12 slots), rejet count > 12, rejet tronqué.
+	void TestBeltLayoutRoundTripVariableSize()
+	{
+		// 4 slots (défaut sans ceinture équipée).
+		engine::server::SetBeltLayoutMessage in{};
+		in.clientId = 42u;
+		in.slots = { "item:6002", "", "item:5101", "" };
+		const std::vector<std::byte> packet = engine::server::EncodeSetBeltLayout(in);
+		assert(!packet.empty());
+		engine::server::SetBeltLayoutMessage out{};
+		assert(engine::server::DecodeSetBeltLayout(packet, out));
+		assert(out.clientId == 42u);
+		assert(out.slots.size() == 4u);
+		assert(out.slots[0] == "item:6002");
+		assert(out.slots[1].empty());
+		assert(out.slots[2] == "item:5101");
+
+		// 12 slots (grande ceinture équipée) — kind 100.
+		engine::server::BeltLayoutUpdateMessage big{};
+		big.clientId = 7u;
+		big.slots.assign(12u, std::string{});
+		big.slots[11] = "item:6003";
+		const std::vector<std::byte> bigPacket = engine::server::EncodeBeltLayoutUpdate(big);
+		engine::server::BeltLayoutUpdateMessage bigOut{};
+		assert(engine::server::DecodeBeltLayoutUpdate(bigPacket, bigOut));
+		assert(bigOut.slots.size() == 12u);
+		assert(bigOut.slots[11] == "item:6003");
+
+		// count > 12 : encodé volontairement à 13 → rejeté au décodage.
+		engine::server::SetBeltLayoutMessage tooBig{};
+		tooBig.clientId = 1u;
+		tooBig.slots.assign(13u, std::string{});
+		const std::vector<std::byte> tooBigPacket = engine::server::EncodeSetBeltLayout(tooBig);
+		engine::server::SetBeltLayoutMessage rejected{};
+		assert(!engine::server::DecodeSetBeltLayout(tooBigPacket, rejected));
+
+		// Tronqué : rejeté proprement.
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 2u);
+		assert(!engine::server::DecodeSetBeltLayout(truncated, out));
+		std::puts("[OK] TestBeltLayoutRoundTripVariableSize");
+	}
+
 	void TestClassProgressionUpdateRoundTrip()
 	{
 		engine::server::ClassProgressionUpdateMessage in{};
@@ -838,6 +882,7 @@ int main()
 	TestRespawnRequestRoundTrip();
 	TestCastRequestRoundTrip();
 	TestSetActionBarLayoutRoundTrip();
+	TestBeltLayoutRoundTripVariableSize();
 	TestActionBarLayoutUpdateRoundTrip();
 	TestClassProgressionUpdateRoundTrip();
 	TestChooseClassSkillRequestRoundTrip();

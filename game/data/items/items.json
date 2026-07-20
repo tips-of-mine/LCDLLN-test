@@ -293,6 +293,36 @@
       "icon": "items/bourse_volee.png",
       "type": "misc",
       "slot": "none"
+    },
+    {
+      "id": 5131,
+      "name": "Ceinture de cuir robuste",
+      "description": "Une ceinture de cuir epais a 6 poches. De quoi garder ses potions a portee de main.",
+      "icon": "items/ceinture_cuir.png",
+      "type": "armor",
+      "slot": "waist",
+      "belt_slots": 6,
+      "bonus": { "hp": 3 }
+    },
+    {
+      "id": 5132,
+      "name": "Ceinture de campagne",
+      "description": "Huit poches renforcees, cousues pour les longues expeditions.",
+      "icon": "items/ceinture_campagne.png",
+      "type": "armor",
+      "slot": "waist",
+      "belt_slots": 8,
+      "bonus": { "hp": 5, "stamina": 2 }
+    },
+    {
+      "id": 5133,
+      "name": "Grande ceinture du colporteur",
+      "description": "Douze poches, des boucles partout : le colporteur qui la portait ne manquait jamais de rien.",
+      "icon": "items/ceinture_colporteur.png",
+      "type": "armor",
+      "slot": "waist",
+      "belt_slots": 12,
+      "bonus": { "hp": 8, "stamina": 4 }
     }
   ]
 }

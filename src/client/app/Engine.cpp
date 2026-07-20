@@ -12208,52 +12208,206 @@ namespace engine
 							}
 						}
 
-						// Roadmap-3 (2026-07-19) — CEINTURE : 4 slots d'objets
-						// ACTIFS à droite de la barre d'action (jetons
-						// "item:<id>" : gâteaux, potions…). Activation par
-						// Maj+1..4 ou clic sur la case ; le serveur applique
-						// l'effet (CastRequest avec le jeton).
+						// Ceinture v2 (2026-07-20) — barre d'objets ACTIFS à taille
+						// DYNAMIQUE (4 par défaut, 12 max — capacité autoritaire
+						// = ceinture équipée en slot Waist, reçue via kind 100).
+						// Fenêtre ImGui invisible : chaque case est un vrai
+						// widget → drag & drop natif (sac → case, case → case),
+						// tooltips, clic droit pour vider. Activation : Maj+1..9
+						// ou clic complet (relâché sans drag) sur la case.
 						{
-							const float beltSlot = 44.0f;
-							const float beltGap = 6.0f;
-							const float beltX = barX + barWidth + 24.0f;
-							const float beltY = dh - beltSlot - 16.0f;
-							const auto& beltLayout = uiModel.playerStats.beltLayout;
-							const bool shiftHeld = m_input.IsDown(engine::platform::Key::Shift);
-							for (size_t bi = 0; bi < beltLayout.size(); ++bi)
+							const std::vector<std::string>& beltLayout = uiModel.playerStats.beltLayout;
+							const size_t beltCount = beltLayout.size();
+							if (beltCount > 0u)
 							{
-								const float bx0 = beltX + static_cast<float>(bi) * (beltSlot + beltGap);
-								const std::string& beltTok = beltLayout[bi];
-								uint32_t beltItemId = 0u;
-								const bool occupied = engine::anniversary::ParseItemToken(beltTok, beltItemId);
-								fg->AddRectFilled(ImVec2(bx0, beltY), ImVec2(bx0 + beltSlot, beltY + beltSlot),
-									occupied ? IM_COL32(30, 44, 34, 220) : IM_COL32(14, 16, 22, 160), 6.0f);
-								fg->AddRect(ImVec2(bx0, beltY), ImVec2(bx0 + beltSlot, beltY + beltSlot),
-									IM_COL32(120, 170, 130, occupied ? 220 : 120), 6.0f, 0, 2.0f);
-								char beltKeyLabel[8];
-								std::snprintf(beltKeyLabel, sizeof(beltKeyLabel), "M%d", static_cast<int>(bi) + 1);
-								fg->AddText(ImVec2(bx0 + 3.0f, beltY + 2.0f),
-									IM_COL32(200, 230, 205, 200), beltKeyLabel);
-								if (!occupied)
-									continue;
-								const engine::items::ItemDefinition* bdef = m_itemCatalog.Find(beltItemId);
-								const char* blabel = (bdef != nullptr && !bdef->name.empty())
-									? bdef->name.c_str() : "Objet";
-								fg->AddText(ImVec2(bx0 + 3.0f, beltY + beltSlot * 0.5f - 6.0f),
-									IM_COL32(235, 245, 235, 255), blabel);
-								const bool beltKeyPressed = keysAllowed && shiftHeld
-									&& m_input.WasPressed(static_cast<engine::platform::Key>('1' + static_cast<int>(bi)));
-								const bool beltClicked =
-									m_input.WasMousePressed(engine::platform::MouseButton::Left)
-									&& m_input.MouseX() >= static_cast<int>(bx0)
-									&& m_input.MouseX() <= static_cast<int>(bx0 + beltSlot)
-									&& m_input.MouseY() >= static_cast<int>(beltY)
-									&& m_input.MouseY() <= static_cast<int>(beltY + beltSlot);
-								if (beltKeyPressed || beltClicked)
+								const float beltSlotSz = 48.0f;
+								const float beltGap = 6.0f;
+								// 2 rangées à partir de 7 cases (une grande
+								// ceinture ne doit pas traverser l'écran).
+								const size_t perRow = (beltCount <= 6u) ? beltCount : ((beltCount + 1u) / 2u);
+								const size_t rowCount = (beltCount + perRow - 1u) / perRow;
+								const float beltW = static_cast<float>(perRow) * beltSlotSz
+									+ static_cast<float>(perRow - 1u) * beltGap;
+								const float beltH = static_cast<float>(rowCount) * beltSlotSz
+									+ static_cast<float>(rowCount - 1u) * beltGap;
+								const float beltX = barX + barWidth + 24.0f;
+								const float beltY = dh - beltH - 16.0f;
+								const bool shiftHeld = m_input.IsDown(engine::platform::Key::Shift);
+								const uint32_t beltClientId = m_gameplayUdp.ServerClientId();
+
+								ImGui::SetNextWindowPos(ImVec2(beltX - 6.0f, beltY - 20.0f));
+								ImGui::SetNextWindowSize(ImVec2(beltW + 12.0f, beltH + 26.0f));
+								ImGui::Begin("##belt_bar", nullptr,
+									ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground
+									| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar
+									| ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoFocusOnAppearing
+									| ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoSavedSettings);
+								ImDrawList* bdl = ImGui::GetWindowDrawList();
+								char beltTitle[32];
+								std::snprintf(beltTitle, sizeof(beltTitle), "Ceinture  %d/%d",
+									static_cast<int>(beltCount),
+									static_cast<int>(engine::items::kBeltSlotsMax));
+								bdl->AddText(ImVec2(beltX, beltY - 18.0f),
+									IM_COL32(190, 215, 195, 200), beltTitle);
+
+								// Copie de travail : mutée par drop/échange/vidage,
+								// envoyée en une fois si changement.
+								std::vector<std::string> newBelt(beltLayout.begin(), beltLayout.end());
+								bool beltChanged = false;
+
+								for (size_t bi = 0; bi < beltCount; ++bi)
 								{
-									const uint32_t beltClientId = m_gameplayUdp.ServerClientId();
-									if (beltClientId != 0u)
+									const size_t row = bi / perRow;
+									const size_t colIdx = bi % perRow;
+									const float bx0 = beltX + static_cast<float>(colIdx) * (beltSlotSz + beltGap);
+									const float by0 = beltY + static_cast<float>(row) * (beltSlotSz + beltGap);
+									const std::string& beltTok = beltLayout[bi];
+									uint32_t beltItemId = 0u;
+									const bool occupied = engine::anniversary::ParseItemToken(beltTok, beltItemId);
+									const engine::items::ItemDefinition* bdef =
+										occupied ? m_itemCatalog.Find(beltItemId) : nullptr;
+
+									ImGui::SetCursorScreenPos(ImVec2(bx0, by0));
+									char beltBtnId[16];
+									std::snprintf(beltBtnId, sizeof(beltBtnId), "##belt%d", static_cast<int>(bi));
+									ImGui::InvisibleButton(beltBtnId, ImVec2(beltSlotSz, beltSlotSz));
+									const bool hovered = ImGui::IsItemHovered();
+
+									// Quantité restante en sac (somme des piles).
+									uint32_t beltQty = 0u;
+									if (occupied)
+									{
+										for (const engine::client::InventorySlotState& is : m_invUi.GetState().slots)
+											if (is.occupied && is.itemId == beltItemId)
+												beltQty += is.quantity;
+									}
+
+									// Visuel : fond, bordure (survol = doré), raccourci,
+									// initiale de l'objet en grand + quantité en bas-droite.
+									const ImU32 fillCol = occupied
+										? IM_COL32(32, 46, 36, 235) : IM_COL32(14, 16, 22, 170);
+									const ImU32 borderCol = hovered
+										? IM_COL32(235, 205, 120, 255)
+										: IM_COL32(120, 170, 130, occupied ? 220 : 110);
+									bdl->AddRectFilled(ImVec2(bx0, by0),
+										ImVec2(bx0 + beltSlotSz, by0 + beltSlotSz), fillCol, 6.0f);
+									bdl->AddRect(ImVec2(bx0, by0),
+										ImVec2(bx0 + beltSlotSz, by0 + beltSlotSz), borderCol, 6.0f, 0,
+										hovered ? 2.5f : 2.0f);
+									if (bi < 9u)
+									{
+										char beltKeyLabel[12];
+										std::snprintf(beltKeyLabel, sizeof(beltKeyLabel), "M+%d",
+											static_cast<int>(bi) + 1);
+										bdl->AddText(ImVec2(bx0 + 3.0f, by0 + 2.0f),
+											IM_COL32(200, 230, 205, 190), beltKeyLabel);
+									}
+									if (occupied)
+									{
+										// Initiale (2 lettres) au centre — lisible sans atlas d'icônes.
+										const char* bname = (bdef != nullptr && !bdef->name.empty())
+											? bdef->name.c_str() : "?";
+										char initials[3] = { bname[0], bname[1] != '\0' ? bname[1] : ' ', '\0' };
+										const ImVec2 initSz = ImGui::CalcTextSize(initials);
+										bdl->AddText(ImVec2(bx0 + (beltSlotSz - initSz.x) * 0.5f,
+											by0 + (beltSlotSz - initSz.y) * 0.5f),
+											IM_COL32(240, 250, 240, 255), initials);
+										char beltQtyTxt[12];
+										std::snprintf(beltQtyTxt, sizeof(beltQtyTxt), "%u", beltQty);
+										const ImVec2 qtySz = ImGui::CalcTextSize(beltQtyTxt);
+										bdl->AddText(ImVec2(bx0 + beltSlotSz - qtySz.x - 3.0f,
+											by0 + beltSlotSz - qtySz.y - 2.0f),
+											beltQty > 0u ? IM_COL32(255, 240, 190, 255)
+											             : IM_COL32(255, 120, 110, 255),
+											beltQtyTxt);
+									}
+
+									// Source de drag (réorganisation case → case).
+									if (occupied && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+									{
+										int fromIndex = static_cast<int>(bi);
+										ImGui::SetDragDropPayload("LN_BELT_MOVE", &fromIndex, sizeof(int));
+										ImGui::TextUnformatted((bdef != nullptr && !bdef->name.empty())
+											? bdef->name.c_str() : "Objet");
+										ImGui::EndDragDropSource();
+									}
+									// Cible de drop : échange interne OU objet du sac.
+									if (ImGui::BeginDragDropTarget())
+									{
+										if (const ImGuiPayload* mv = ImGui::AcceptDragDropPayload("LN_BELT_MOVE"))
+										{
+											if (mv->DataSize == static_cast<int>(sizeof(int)))
+											{
+												const int from = *static_cast<const int*>(mv->Data);
+												if (from >= 0 && from < static_cast<int>(newBelt.size())
+													&& from != static_cast<int>(bi))
+												{
+													std::swap(newBelt[static_cast<size_t>(from)], newBelt[bi]);
+													beltChanged = true;
+												}
+											}
+										}
+										if (const ImGuiPayload* it = ImGui::AcceptDragDropPayload("LN_EQUIP_ITEM"))
+										{
+											if (it->DataSize == static_cast<int>(sizeof(uint32_t)))
+											{
+												const uint32_t droppedId = *static_cast<const uint32_t*>(it->Data);
+												const std::string droppedTok =
+													engine::anniversary::MakeItemToken(droppedId);
+												bool already = false;
+												for (const std::string& s : newBelt)
+													if (s == droppedTok) { already = true; break; }
+												if (!already)
+												{
+													newBelt[bi] = droppedTok;
+													beltChanged = true;
+												}
+											}
+										}
+										ImGui::EndDragDropTarget();
+									}
+									// Clic droit : vider la case.
+									if (occupied && hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+									{
+										newBelt[bi].clear();
+										beltChanged = true;
+									}
+									// Tooltip riche.
+									if (hovered && occupied)
+									{
+										ImGui::BeginTooltip();
+										ImGui::TextUnformatted((bdef != nullptr && !bdef->name.empty())
+											? bdef->name.c_str() : "Objet");
+										if (bdef != nullptr && !bdef->description.empty())
+											ImGui::TextDisabled("%s", bdef->description.c_str());
+										ImGui::Separator();
+										if (bi < 9u)
+											ImGui::TextDisabled("Maj+%d ou clic : utiliser", static_cast<int>(bi) + 1);
+										else
+											ImGui::TextDisabled("Clic : utiliser");
+										ImGui::TextDisabled("Clic droit : retirer  |  Glisser : deplacer");
+										ImGui::TextDisabled("En sac : %u", beltQty);
+										ImGui::EndTooltip();
+									}
+
+									// Activation : Maj+1..9, ou clic COMPLET (press +
+									// release dans la case, sans drag en cours — permet
+									// de glisser sans consommer l'objet).
+									const bool beltKeyPressed = keysAllowed && shiftHeld && bi < 9u
+										&& m_input.WasPressed(static_cast<engine::platform::Key>('1' + static_cast<int>(bi)));
+									const bool beltClickCompleted = ImGui::IsItemDeactivated()
+										&& hovered && ImGui::GetDragDropPayload() == nullptr;
+									if (occupied && (beltKeyPressed || beltClickCompleted)
+										&& beltClientId != 0u)
+									{
 										(void)m_gameplayUdp.SendCastRequest(beltClientId, 0ull, beltTok);
+									}
+								}
+								ImGui::End();
+
+								if (beltChanged && beltClientId != 0u)
+								{
+									(void)m_gameplayUdp.SendSetBeltLayout(beltClientId, newBelt);
 								}
 							}
 						}
@@ -13233,12 +13387,13 @@ namespace engine
 				else if (equipAction.kind ==
 					engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::SlotCake)
 				{
-					std::array<std::string, 4> belt = m_uiModelBinding.GetModel().playerStats.beltLayout;
+					// Ceinture v2 — layout à taille dynamique (vector).
+					std::vector<std::string> belt = m_uiModelBinding.GetModel().playerStats.beltLayout;
 					const std::string beltToken = engine::anniversary::MakeItemToken(equipAction.itemId);
 					bool alreadySlotted = false;
 					for (const std::string& s : belt)
 						if (s == beltToken) { alreadySlotted = true; break; }
-					if (!alreadySlotted)
+					if (!alreadySlotted && !belt.empty())
 					{
 						size_t target = 0;
 						for (size_t i = 0; i < belt.size(); ++i)

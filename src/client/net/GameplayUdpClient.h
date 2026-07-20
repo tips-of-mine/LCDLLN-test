@@ -81,7 +81,9 @@ namespace engine::client
 		/// Roadmap-3 (2026-07-19) — Ceinture : pose le layout des 4 slots
 		/// d'objets actifs (jetons "item:<id>", kind 99). ACK autoritaire
 		/// par BeltLayoutUpdate (kind 100).
-		bool SendSetBeltLayout(uint32_t clientId, const std::array<std::string, 4>& slots);
+		/// Ceinture v2 (2026-07-20) — envoie le layout complet (taille = capacité
+		/// active affichée ; le shard rejette un count > capacité autoritaire).
+		bool SendSetBeltLayout(uint32_t clientId, const std::vector<std::string>& slots);
 
 		/// SP-B — envoie un choix de skill de classe (ChooseClassSkillRequest, kind 91).
 		/// Le shard valide (niveau, unicité, appartenance au kit) et renvoie un

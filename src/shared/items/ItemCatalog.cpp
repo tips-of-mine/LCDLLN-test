@@ -66,6 +66,10 @@ namespace engine::items
 			def.type        = ItemTypeFromString(ToLowerAscii(cfg.GetString(p + ".type", "misc")));
 			def.slot        = EquipmentSlotFromString(ToLowerAscii(cfg.GetString(p + ".slot", "none")));
 			def.visualMesh  = cfg.GetString(p + ".visualMesh", "");
+			// Ceinture v2 (2026-07-20) — capacité de barre ceinture (0 = pas
+			// une ceinture ; clamp final 4..12 fait côté serveur à l'usage).
+			def.beltSlots   = static_cast<std::uint8_t>(
+				std::clamp<std::int64_t>(cfg.GetInt(p + ".belt_slots", 0), 0, 255));
 			if (cfg.Has(p + ".bonus.hp") || cfg.Has(p + ".bonus.damage") ||
 				cfg.Has(p + ".bonus.resource") || cfg.Has(p + ".bonus.accuracy") ||
 				cfg.Has(p + ".bonus.range") || cfg.Has(p + ".bonus.critRate") ||
@@ -112,6 +116,7 @@ namespace engine::items
 		if (s == "amulet")   return EquipmentSlot::Amulet;
 		if (s == "ring1")    return EquipmentSlot::Ring1;
 		if (s == "ring2")    return EquipmentSlot::Ring2;
+		if (s == "waist")    return EquipmentSlot::Waist; // Ceinture v2
 		return EquipmentSlot::None;
 	}
 
@@ -139,6 +144,7 @@ namespace engine::items
 		case EquipmentSlot::Amulet:   return "amulet";
 		case EquipmentSlot::Ring1:    return "ring1";
 		case EquipmentSlot::Ring2:    return "ring2";
+		case EquipmentSlot::Waist:    return "waist"; // Ceinture v2
 		default:                      return "none";
 		}
 	}

@@ -165,7 +165,12 @@ namespace engine::server
 		/// (jetons "item:<id>" : gâteaux, potions, nourriture ; "" = vide).
 		/// Autoritaire (validée par HandleSetBeltLayout : objet possédé et
 		/// activable) et persistée (belt.slot.N).
-		std::array<std::string, 4> beltLayout{};
+		/// Ceinture v2 (2026-07-20) — slots d'objets actifs, taille VARIABLE.
+		/// La capacité ACTIVE = BeltCapacity() (ceinture équipée en Waist,
+		/// défaut 4, max 12). Le vecteur peut être plus long que la capacité
+		/// (grande ceinture déséquipée : contenu conservé mais INACTIF) ;
+		/// seuls les index < capacité sont activables/envoyés au client.
+		std::vector<std::string> beltLayout{};
 		/// Anniversaires SP3 (2026-07-18) — gâteau ACTIF (0 = aucun). Posé par
 		/// un CastRequest "item:<id>" ; le buff est entretenu par TickCakeBuffs
 		/// tant que le gâteau reste slotté ET possédé ; NON persisté (à
@@ -620,7 +625,14 @@ namespace engine::server
 		void HandleSetBeltLayout(const Endpoint& endpoint, const SetBeltLayoutMessage& message);
 
 		/// Roadmap-3 — pousse le layout ceinture autoritaire (kind 100).
+		/// Ceinture v2 : envoie exactement BeltCapacity(client) slots.
 		bool SendBeltLayout(const ConnectedClient& client);
+
+		/// Ceinture v2 (2026-07-20) — capacité ACTIVE de la ceinture du joueur :
+		/// beltSlots de la ceinture équipée en slot Waist (résolue via
+		/// m_itemCatalog, autoritaire), clampée [4..12] ; 4 par défaut sans
+		/// ceinture équipée (kBeltSlotsDefault).
+		uint8_t BeltCapacity(const ConnectedClient& client) const;
 
 		/// Roadmap-3 — consomme un objet activable NON-gâteau de la ceinture
 		/// (ex. potion 2002) : vérifie slotté + possédé, applique l'effet

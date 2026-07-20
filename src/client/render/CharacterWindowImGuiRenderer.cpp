@@ -298,6 +298,11 @@ namespace engine::render
 			// Colonne droite (slots 6..10 : arme, bouclier, amulette, 2 anneaux).
 			for (std::size_t i = 0; i < 5; ++i)
 				drawEquipCell(6 + i, rightX, bandY + static_cast<float>(i) * (cell + gap));
+			// Ceinture v2 (2026-07-20) — 11e cellule (slot Waist) en bas de la
+			// colonne gauche : la ceinture équipée porte la capacité de la
+			// barre d'objets actifs (4 par défaut, 12 max).
+			drawEquipCell(static_cast<std::size_t>(engine::items::EquipmentSlot::Waist),
+				bandX, bandY + 5.0f * (cell + gap));
 
 			// Aperçu 3D au centre (carré, non déformé), réduit en largeur pour laisser
 			// la place aux deux colonnes de cellules.
@@ -411,23 +416,27 @@ namespace engine::render
 						(m_itemCatalog != nullptr) ? m_itemCatalog->Find(s.itemId) : nullptr;
 					const bool equippable = (def != nullptr) && def->IsEquippable();
 
-					// Item ImGui superposé (visuels déjà dessinés via wdl) : survol, clic
-					// et SOURCE de glisser-déposer vers les cellules d'équipement.
-					ImGui::SetCursorScreenPos(mn);
-					char invId[24];
-					std::snprintf(invId, sizeof(invId), "##invcell%d", i);
-					ImGui::InvisibleButton(invId, ImVec2(cell, cell));
-					if (equippable && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
-					{
-						ImGui::SetDragDropPayload("LN_EQUIP_ITEM", &s.itemId, sizeof(uint32_t));
-						ImGui::TextUnformatted(s.label.empty() ? "Objet" : s.label.c_str());
-						ImGui::EndDragDropSource();
-					}
 					// Roadmap-3 (2026-07-19) — tout CONSOMMABLE (gâteau, potion,
 					// nourriture) se place dans la CEINTURE d'un clic (geste
 					// volontaire du joueur ; le serveur valide la possession).
 					const bool isCake = (def != nullptr)
 						&& def->type == engine::items::ItemType::Consumable;
+
+					// Item ImGui superposé (visuels déjà dessinés via wdl) : survol, clic
+					// et SOURCE de glisser-déposer vers les cellules d'équipement.
+					// Ceinture v2 (2026-07-20) — les consommables sont AUSSI
+					// draggables (cible : cases de la barre ceinture, payload
+					// commun LN_EQUIP_ITEM = itemId u32).
+					ImGui::SetCursorScreenPos(mn);
+					char invId[24];
+					std::snprintf(invId, sizeof(invId), "##invcell%d", i);
+					ImGui::InvisibleButton(invId, ImVec2(cell, cell));
+					if ((equippable || isCake) && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+					{
+						ImGui::SetDragDropPayload("LN_EQUIP_ITEM", &s.itemId, sizeof(uint32_t));
+						ImGui::TextUnformatted(s.label.empty() ? "Objet" : s.label.c_str());
+						ImGui::EndDragDropSource();
+					}
 					if (ImGui::IsItemHovered() && !s.label.empty())
 					{
 						ImGui::BeginTooltip();
@@ -445,7 +454,7 @@ namespace engine::render
 							if (isCake)
 							{
 								ImGui::Separator();
-								ImGui::TextDisabled("Clic : placer dans la ceinture");
+								ImGui::TextDisabled("Clic ou glisser : placer dans la ceinture");
 							}
 						}
 						ImGui::EndTooltip();

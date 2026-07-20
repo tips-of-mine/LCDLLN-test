@@ -29,3 +29,20 @@
 # Ceinture v2 (2026-07-20) — la Grande ceinture du colporteur (12 slots)
 # ne s'achete pas : drop rare du mini-boss.
 104 5133 1 owner 8
+
+# Contenu Feyhin lot 1 (2026-07-20) — nouvelles creatures 105-107.
+
+# 105 — Araignee des sous-bois (soie = cible de la quete spider_silk)
+105 6005 1 owner 85 1 2
+105 2002 1 owner 10
+
+# 106 — Varek, chef bandit (mini-boss du camp sud)
+106 6004 1 owner 100 2 4
+106 2001 1 owner 50
+106 2003 1 owner 40 1 2
+# La Lame de Varek ne s'achete pas : drop du boss uniquement.
+106 5134 1 owner 15
+
+# 107 — Cerf des clairieres (bois = cible de la quete stag_offering)
+107 6006 1 owner 90
+107 6002 1 owner 20

@@ -23,5 +23,53 @@
     "steps": [
       "Rapport donné : {current}/{required}"
     ]
+  },
+  "wolf_cull": {
+    "title": "Les loups de l'ouest",
+    "description": "Les loups gris s'enhardissent du côté ouest de la vallée et rôdent trop près des fermes. Le capitaine Rendal veut réduire la meute.",
+    "completion": "Six de moins. Les bergers dormiront mieux cette nuit — et moi aussi. Tiens, c'est mérité.",
+    "steps": [
+      "Loups gris abattus : {current}/{required}"
+    ]
+  },
+  "spider_silk": {
+    "title": "Soie des sous-bois",
+    "description": "Les tisserands du village manquent de fil solide. Les araignées des sous-bois, au sud-ouest, en portent d'excellente qualité... sur elles.",
+    "completion": "Quelle finesse ! Ce fil vaut de l'or pour nos tisserands. Prends ceci pour la peine — et pour les morsures.",
+    "steps": [
+      "Soies d'araignée récoltées : {current}/{required}"
+    ]
+  },
+  "alpha_trophy": {
+    "title": "Le trophée de l'alpha",
+    "description": "Un sanglier colossal mène la harde du nord profond. Tant qu'il vit, les sangliers reviendront. L'ancien Marn veut sa tête.",
+    "completion": "Par tous les anciens... tu l'as vraiment terrassé. La vallée respire. Ce trophée ornera la place du village.",
+    "steps": [
+      "Sanglier alpha terrassé : {current}/{required}"
+    ]
+  },
+  "bandit_menace": {
+    "title": "Le camp du sud",
+    "description": "Des bandits ont monté un camp au sud du village et rançonnent les marchands. Le capitaine Rendal veut éclaircir leurs rangs.",
+    "completion": "Cinq brigands de moins sur les routes. Il ne reste plus que leur chef... mais chaque chose en son temps.",
+    "steps": [
+      "Bandits éliminés : {current}/{required}"
+    ]
+  },
+  "bandit_leader": {
+    "title": "Varek doit tomber",
+    "description": "Le chef bandit Varek tient encore son camp. Tant qu'il respire, d'autres coupe-jarrets viendront grossir ses rangs. Finissez-en.",
+    "completion": "Varek est tombé ?! Les routes sont libres. Le village te doit une fière chandelle — et moi, cette bourse.",
+    "steps": [
+      "Varek vaincu : {current}/{required}"
+    ]
+  },
+  "stag_offering": {
+    "title": "Bois de cerf",
+    "description": "L'ancien Marn taille des manches d'outils dans le bois de cerf. Les clairières de l'est, près du bassin, abritent un petit troupeau.",
+    "completion": "De belles ramures, bien denses. Mes outils dureront des années. Merci, aventurier.",
+    "steps": [
+      "Bois de cerf rapportés : {current}/{required}"
+    ]
   }
 }

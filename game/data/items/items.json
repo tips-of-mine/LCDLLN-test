@@ -323,6 +323,40 @@
       "slot": "waist",
       "belt_slots": 12,
       "bonus": { "hp": 8, "stamina": 4 }
+    },
+    {
+      "_comment": "Contenu Feyhin lot 1 (2026-07-20) — 2003 consommable, 5134 arme (drop Varek), 6005/6006 materiaux de butin (cibles des quetes collect spider_silk / stag_offering).",
+      "id": 2003,
+      "name": "Potion de soin moyenne",
+      "description": "Un flacon ambre au gout d'herbes des sous-bois. Consommable — ne s'equipe pas.",
+      "icon": "ui/icons/item_2002.png",
+      "type": "consumable",
+      "slot": "none"
+    },
+    {
+      "id": 5134,
+      "name": "Lame de Varek",
+      "description": "La lame courbe du chef bandit. Bien equilibree, et un peu mal acquise.",
+      "icon": "items/lame_varek.png",
+      "type": "weapon",
+      "slot": "mainhand",
+      "bonus": { "damage": 14, "accuracy": 3 }
+    },
+    {
+      "id": 6005,
+      "name": "Soie d'araignee",
+      "description": "Un echeveau de fil solide et leger. Les tisserands du village en raffolent.",
+      "icon": "items/soie_araignee.png",
+      "type": "misc",
+      "slot": "none"
+    },
+    {
+      "id": 6006,
+      "name": "Bois de cerf",
+      "description": "Une ramure elegante, tombee ou prise. L'ancien Marn en fait des manches d'outils.",
+      "icon": "items/bois_cerf.png",
+      "type": "misc",
+      "slot": "none"
     }
   ]
 }

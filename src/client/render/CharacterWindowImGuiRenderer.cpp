@@ -192,16 +192,18 @@ namespace engine::render
 					worn[e.slot] = e.itemId;
 			}
 			float side = (5.0f * avail.x - 2.0f * gap) / 7.0f;
-			side = std::min(side, avail.y - statsH);   // borné par la hauteur disponible
+			// Borné par la hauteur disponible : bande (side) + rangée ceinture
+			// (cell + gap, cf. cellule Waist dessinée sous la colonne gauche) +
+			// stats. Avec cell = (side - 4·gap)/5, la contrainte
+			// side + gap + cell + statsH ≤ avail.y se résout en :
+			side = std::min(side, (5.0f * (avail.y - statsH - gap) + 4.0f * gap) / 6.0f);
 			side = std::max(side, 150.0f);
 			const float cell = std::max(30.0f, (side - 4.0f * gap) / 5.0f);
 			const float bandW = 2.0f * cell + 2.0f * gap + side;
 			const float offX = std::max(0.0f, (avail.x - bandW) * 0.5f);
-			// Centrage vertical du bloc (bande paperdoll + stats).
-			const float blockH = side + statsH;
-			const float padTop = std::max(0.0f, (avail.y - blockH) * 0.5f);
-			if (padTop > 0.0f)
-				ImGui::Dummy(ImVec2(1.0f, padTop));
+			// Retour joueur 2026-07-20 — bloc ANCRÉ EN HAUT (plus de centrage
+			// vertical) : le centrage laissait un grand vide au-dessus du
+			// paperdoll, impression que l'aperçu du personnage était descendu.
 
 			// Repères écran de la bande (dessin manuel via draw list).
 			const ImVec2 bandOrigin = ImGui::GetCursorScreenPos();
@@ -328,8 +330,11 @@ namespace engine::render
 					IM_COL32(120, 130, 160, 255), lbl);
 			}
 
-			// Curseur repositionné sous la bande paperdoll pour la suite (stats).
-			ImGui::SetCursorScreenPos(ImVec2(bandOrigin.x, bandY + side + 6.0f));
+			// Curseur repositionné pour la suite (stats) SOUS la rangée ceinture
+			// (cellule Waist à bandY + 5·(cell+gap), haute de cell) — avant, les
+			// stats s'écrivaient par-dessus la cellule Ceinture (retour 2026-07-20).
+			ImGui::SetCursorScreenPos(ImVec2(bandOrigin.x,
+				bandY + 5.0f * (cell + gap) + cell + 6.0f));
 
 			// Caractéristiques compactes (ex-fiche F1).
 			const engine::client::UIPlayerStats& ps = model.playerStats;

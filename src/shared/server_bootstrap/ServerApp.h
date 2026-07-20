@@ -452,6 +452,23 @@ namespace engine::server
 		std::string& outName, std::string& outGender, uint32_t& outLevel,
 		std::string& outFactionId, std::string& outClassId);
 
+		/// Roadmap-10 (2026-07-20) — écrit wallet (player_wallet, migration 0012) +
+		/// inventaire (character_inventory) + équipement (character_equipment,
+		/// migration 0075) en DB, dans UNE transaction (remplacement intégral des
+		/// lignes du personnage). Write-through : appelée par SaveConnectedClient en
+		/// PLUS du fichier .ini (le fichier reste le filet de secours). No-op
+		/// silencieux si le pool DB est absent (dev sans MySQL / Windows).
+		/// Corps réel sous SHARD_POSITION_DB (même garde que LoadSpawnFromDb).
+		void SaveCharacterToDb(const PersistedCharacterState& state);
+
+		/// Roadmap-10 — recharge wallet + inventaire + équipement depuis la DB dans
+		/// \p state (les autres champs ne sont pas touchés). Sentinelle d'existence :
+		/// player_wallet (les 4 devises sont écrites à CHAQUE save DB) — un personnage
+		/// sans ligne wallet n'a jamais été sauvé en DB (état .ini conservé).
+		/// \return true si le personnage est présent en DB et \p state mis à jour —
+		/// la DB fait alors foi sur ces trois domaines (survit à la perte du .ini).
+		bool LoadCharacterFromDb(uint64_t characterKey, PersistedCharacterState& state);
+
 		/// Accept a new client or refresh an existing handshake.
 		/// Phase 3.7.5 — \p helloNonce élargi à uint64 (character_id complet).
 		void HandleHello(const Endpoint& endpoint, uint64_t helloNonce);

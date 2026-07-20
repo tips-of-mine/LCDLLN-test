@@ -1301,6 +1301,192 @@ namespace engine::server
 #endif
 	}
 
+	void ServerApp::SaveCharacterToDb(const PersistedCharacterState& state)
+	{
+#if defined(SHARD_POSITION_DB)
+		if (m_characterDbPool == nullptr || state.characterKey == 0u)
+		{
+			return;
+		}
+		auto guard = m_characterDbPool->Acquire();
+		MYSQL* mysql = guard.get();
+		auto* cache = guard.cache();
+		if (mysql == nullptr || cache == nullptr)
+		{
+			return;
+		}
+		// Transaction : wallet + inventaire + équipement partent ENSEMBLE — un
+		// lecteur concurrent (autre shard, outil web) ne voit jamais un état mixte,
+		// et un échec au milieu laisse la DB sur le save précédent (le .ini, écrit
+		// par SaveConnectedClient juste avant, reste le filet de secours).
+		if (mysql_query(mysql, "START TRANSACTION") != 0)
+		{
+			LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: START TRANSACTION failed (character_key={})",
+				state.characterKey);
+			return;
+		}
+		bool ok = true;
+		// 1. Wallet : upsert des 4 devises (ids alignés sur PlayerWalletService :
+		// 1=gold, 2=honor, 3=badges, 4=premium). Les 4 lignes sont TOUJOURS écrites
+		// (même à 0) : elles servent de sentinelle d'existence à LoadCharacterFromDb.
+		// Le stmt est ré-Acquire à chaque itération : le cache fait Reset() au hit
+		// (état libmysql propre pour la ré-exécution).
+		const std::pair<uint32_t, uint32_t> currencies[] = {
+			{ 1u, state.gold }, { 2u, state.honor },
+			{ 3u, state.badges }, { 4u, state.premiumCurrency } };
+		for (const auto& currency : currencies)
+		{
+			auto* stmt = cache->Acquire(mysql,
+				"INSERT INTO player_wallet (player_id, currency_id, amount) VALUES (?, ?, ?) "
+				"ON DUPLICATE KEY UPDATE amount = VALUES(amount)");
+			if (stmt == nullptr || !stmt->Bind(0, state.characterKey)
+				|| !stmt->Bind(1, currency.first)
+				|| !stmt->Bind(2, static_cast<uint64_t>(currency.second))
+				|| !stmt->Execute())
+			{
+				ok = false;
+				break;
+			}
+		}
+		// 2. Inventaire : remplacement intégral (DELETE + INSERT par pile). Les sacs
+		// sont petits (dizaines de piles) — le coût reste marginal par save.
+		if (ok)
+		{
+			auto* del = cache->Acquire(mysql,
+				"DELETE FROM character_inventory WHERE character_id = ?");
+			ok = del != nullptr && del->Bind(0, state.characterKey) && del->Execute();
+			for (size_t i = 0; ok && i < state.inventory.size(); ++i)
+			{
+				auto* ins = cache->Acquire(mysql,
+					"INSERT INTO character_inventory (character_id, slot_index, item_id, quantity) "
+					"VALUES (?, ?, ?, ?)");
+				ok = ins != nullptr && ins->Bind(0, state.characterKey)
+					&& ins->Bind(1, static_cast<uint32_t>(i))
+					&& ins->Bind(2, state.inventory[i].itemId)
+					&& ins->Bind(3, state.inventory[i].quantity)
+					&& ins->Execute();
+			}
+		}
+		// 3. Équipement porté : remplacement intégral, une ligne par slot occupé
+		// (slot_id = valeur EquipmentSlot 1..kEquipSlotCount).
+		if (ok)
+		{
+			auto* del = cache->Acquire(mysql,
+				"DELETE FROM character_equipment WHERE character_id = ?");
+			ok = del != nullptr && del->Bind(0, state.characterKey) && del->Execute();
+			for (size_t slot = 1; ok && slot < state.equipment.size(); ++slot)
+			{
+				if (state.equipment[slot] == 0u)
+				{
+					continue;
+				}
+				auto* ins = cache->Acquire(mysql,
+					"INSERT INTO character_equipment (character_id, slot_id, item_id) "
+					"VALUES (?, ?, ?)");
+				ok = ins != nullptr && ins->Bind(0, state.characterKey)
+					&& ins->Bind(1, static_cast<uint32_t>(slot))
+					&& ins->Bind(2, state.equipment[slot])
+					&& ins->Execute();
+			}
+		}
+		if (ok)
+		{
+			if (mysql_query(mysql, "COMMIT") != 0)
+			{
+				LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: COMMIT failed (character_key={})",
+					state.characterKey);
+			}
+		}
+		else
+		{
+			mysql_query(mysql, "ROLLBACK");
+			LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: rollback (character_key={})",
+				state.characterKey);
+		}
+#else
+		(void)state;
+#endif
+	}
+
+	bool ServerApp::LoadCharacterFromDb(uint64_t characterKey, PersistedCharacterState& state)
+	{
+#if defined(SHARD_POSITION_DB)
+		if (m_characterDbPool == nullptr || characterKey == 0u)
+		{
+			return false;
+		}
+		auto guard = m_characterDbPool->Acquire();
+		MYSQL* mysql = guard.get();
+		auto* cache = guard.cache();
+		if (mysql == nullptr || cache == nullptr)
+		{
+			return false;
+		}
+		// Sentinelle : le wallet est écrit à CHAQUE save DB (4 lignes, même à 0) —
+		// aucune ligne wallet = personnage jamais sauvé en DB (premier passage
+		// depuis un .ini legacy) → on garde l'état fichier tel quel.
+		auto* wallet = cache->Acquire(mysql,
+			"SELECT currency_id, amount FROM player_wallet WHERE player_id = ?");
+		if (wallet == nullptr || !wallet->Bind(0, characterKey) || !wallet->Execute())
+		{
+			return false;
+		}
+		bool found = false;
+		while (wallet->FetchRow())
+		{
+			found = true;
+			const uint32_t currencyId = static_cast<uint32_t>(wallet->GetUInt64(0));
+			const uint32_t amount = static_cast<uint32_t>(wallet->GetUInt64(1));
+			switch (currencyId)
+			{
+				case 1u: state.gold = amount; break;
+				case 2u: state.honor = amount; break;
+				case 3u: state.badges = amount; break;
+				case 4u: state.premiumCurrency = amount; break;
+				default: break; // devise inconnue (future) : ignorée.
+			}
+		}
+		if (!found)
+		{
+			return false;
+		}
+		// Inventaire (ordre stable par slot_index — reconstruit le vector du sac).
+		auto* inv = cache->Acquire(mysql,
+			"SELECT item_id, quantity FROM character_inventory WHERE character_id = ? "
+			"ORDER BY slot_index");
+		if (inv != nullptr && inv->Bind(0, characterKey) && inv->Execute())
+		{
+			state.inventory.clear();
+			while (inv->FetchRow())
+			{
+				ItemStack stack{};
+				stack.itemId = static_cast<uint32_t>(inv->GetUInt64(0));
+				stack.quantity = static_cast<uint32_t>(inv->GetUInt64(1));
+				state.inventory.push_back(stack);
+			}
+		}
+		// Équipement porté (slots hors bornes ignorés — schéma futur plus large).
+		auto* equip = cache->Acquire(mysql,
+			"SELECT slot_id, item_id FROM character_equipment WHERE character_id = ?");
+		if (equip != nullptr && equip->Bind(0, characterKey) && equip->Execute())
+		{
+			state.equipment.fill(0u);
+			while (equip->FetchRow())
+			{
+				const size_t slot = static_cast<size_t>(equip->GetUInt64(0));
+				if (slot >= 1u && slot < state.equipment.size())
+				{
+					state.equipment[slot] = static_cast<uint32_t>(equip->GetUInt64(1));
+				}
+			}
+		}
+		return true;
+#else
+		(void)characterKey; (void)state;
+		return false;
+#endif
+	}
+
 	void ServerApp::HandleHello(const Endpoint& endpoint, uint64_t helloNonce)
 	{
 		// R1-A — charge les tables de stats une seule fois (lazy). FromEmbedded renvoie
@@ -1417,7 +1603,25 @@ namespace engine::server
 		m_clientIndexByClientId[acceptedClient.clientId] = acceptedIndex;
 		m_clientIndexByEntityId[acceptedClient.entityId] = acceptedIndex;
 		PersistedCharacterState persistedState{};
-		if (m_characterPersistence.LoadCharacter(acceptedClient.persistenceCharacterKey, persistedState))
+		const bool fileLoaded =
+			m_characterPersistence.LoadCharacter(acceptedClient.persistenceCharacterKey, persistedState);
+		// Roadmap-10 (2026-07-20) — la DB (si peuplée pour ce personnage) fait foi
+		// sur wallet + inventaire + équipement : écrite à chaque save, elle survit
+		// à la perte du répertoire persistence/ du shard (le .ini reste le filet
+		// pour tout le reste : quêtes, ceinture, métiers, grimoire...). Appelée
+		// AVANT le merge mailbox pour que le courrier s'ajoute PAR-DESSUS l'état DB.
+		const bool dbLoaded =
+			LoadCharacterFromDb(acceptedClient.persistenceCharacterKey, persistedState);
+		if (dbLoaded)
+		{
+			LOG_INFO(Net,
+				"[ServerApp] Character DB state applied (character_key={}, gold={}, inventory_items={}, file_present={})",
+				acceptedClient.persistenceCharacterKey,
+				persistedState.gold,
+				persistedState.inventory.size(),
+				fileLoaded ? "true" : "false");
+		}
+		if (fileLoaded || dbLoaded)
 		{
 			const bool hadMailbox =
 				persistedState.mailboxGold != 0u || !persistedState.mailboxItems.empty();
@@ -2265,6 +2469,11 @@ namespace engine::server
 		state.cakeExpiresAtMsUtcByItemId = client.cakeExpiresAtMsUtcByItemId;
 		/// SP-B — persist known class skills.
 		state.knownSkillIds = client.knownSkillIds;
+		// Roadmap-10 (2026-07-20) — write-through MySQL : wallet + inventaire +
+		// équipement partent aussi en DB (player_wallet / character_inventory /
+		// character_equipment), AVANT le fichier pour que la DB soit à jour même
+		// si l'écriture disque échoue. No-op si pas de pool DB (dev sans MySQL).
+		SaveCharacterToDb(state);
 		if (!m_characterPersistence.SaveCharacter(state))
 		{
 			LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",

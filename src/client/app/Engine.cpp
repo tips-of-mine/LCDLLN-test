@@ -12272,12 +12272,8 @@ namespace engine
 									| ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoFocusOnAppearing
 									| ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoSavedSettings);
 								ImDrawList* bdl = ImGui::GetWindowDrawList();
-								char beltTitle[32];
-								std::snprintf(beltTitle, sizeof(beltTitle), "Ceinture  %d/%d",
-									static_cast<int>(beltCount),
-									static_cast<int>(engine::items::kBeltSlotsMax));
-								bdl->AddText(ImVec2(beltX, beltY - 18.0f),
-									IM_COL32(190, 215, 195, 200), beltTitle);
+								// Retour de test 2026-07-20 — pas de libellé « Ceinture x/y »
+								// au-dessus de la barre : les cases se suffisent.
 								// Trait séparateur vertical entre la barre
 								// d'action (icônes de pouvoir) et la ceinture.
 								bdl->AddLine(ImVec2(beltX - 26.0f, dh - beltSlotSz - 20.0f),

@@ -248,4 +248,30 @@ namespace engine::render::clouds
 
 		return out;
 	}
+
+	std::vector<uint8_t> GenerateWeatherCoverageMap(uint32_t seed)
+	{
+		// fBm 2D périodique via le Perlin 3D à tranche z FIGÉE : la coupe d'un
+		// bruit périodique en x/y reste périodique en x/y (seule la périodicité
+		// z est perdue, sans objet pour une texture 2D). Période de base 4
+		// (grosses masses ~ quart de tuile), 4 octaves pour du relief de front.
+		std::vector<uint8_t> out(static_cast<size_t>(kWeatherMapSize) * kWeatherMapSize);
+		constexpr float kSliceZ = 0.37f;
+		size_t idx = 0;
+		for (int y = 0; y < kWeatherMapSize; ++y)
+		{
+			const float fy = (static_cast<float>(y) + 0.5f) / static_cast<float>(kWeatherMapSize);
+			for (int x = 0; x < kWeatherMapSize; ++x)
+			{
+				const float fx = (static_cast<float>(x) + 0.5f) / static_cast<float>(kWeatherMapSize);
+				const float n = TileablePerlinFbm(fx, fy, kSliceZ, 4, 4,
+					seed ^ 0x5bd1e995u);
+				// Accentue le contraste autour de la moyenne (~0.5) : creuse de
+				// vraies trouées et de vrais paquets au lieu d'une brume uniforme.
+				const float c = std::clamp((n - 0.30f) / 0.40f, 0.0f, 1.0f);
+				out[idx++] = ToByte(c);
+			}
+		}
+		return out;
+	}
 }

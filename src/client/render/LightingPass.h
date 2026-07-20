@@ -37,14 +37,14 @@ namespace engine::render
 			float lightDir[4];    ///< Normalized direction *toward* the light xyz ; w = M45.1 aerial fogEnd (m).
 			float lightColor[4];   ///< RGB radiance (color * intensity) ; w = M45.1 aerialDensity (1/m, <=0 désactive).
 			float ambientColor[4]; ///< Constant ambient RGB (fallback when IBL absent) ; w = M45.1 aerialInscatter.
-			float skyColor[4];     ///< RGB couleur du ciel (skyHorizon DayNightCycle) pour les pixels sans géométrie. w unused.
+			float skyColor[4];     ///< RGB couleur du ciel (skyHorizon DayNightCycle) pour les pixels sans géométrie. w = 1.0 si SkyPass a déjà écrit le ciel dans GBufferA (cf. lighting.frag).
 			float useIBL;          ///< 1.0 = use IBL (irradiance + prefilter + BRDF LUT), 0.0 = fallback.
 			// --- M45.7 — DDGI dynamique (ADDITIF). useDdgi=0 (défaut) => chemin
 			// strictement inchangé (binding 9 lié à un fallback valide mais jamais lu).
 			// useIBL + useDdgi + pad0 + pad1 = 16 octets pour que les vec4 DDGI
 			// suivants soient alignés sur 16 (règle std140 des push_constant GLSL).
 			float useDdgi;         ///< 1.0 = échantillonne l'irradiance DDGI dynamique, 0.0 = aucun changement.
-			float pad0;            ///< Padding (alignement vec4 std140).
+			float aerialSkyModel = 0.0f; ///< Chantier perspective aérienne 2026-07-20 : 1.0 = la teinte aerial est le ciel ANALYTIQUE évalué par rayon (cohérent avec sky.frag) ; 0.0 = skyColor legacy (ex-pad0, layout inchangé).
 			float pad1;            ///< Padding (alignement vec4 std140).
 			float ddgiOrigin[4];   ///< xyz = origine monde de la grille DDGI (mètres) ; w inutilisé.
 			float ddgiSpacing[4];  ///< xyz = espacement par axe (mètres) ; w inutilisé.

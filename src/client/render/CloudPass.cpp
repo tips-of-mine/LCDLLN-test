@@ -105,10 +105,11 @@ namespace engine::render
 			}
 		}
 
-		// 2. Descriptor set layout : 4 combined image samplers (scene color,
-		// depth, bruit base 3D, bruit détail 3D — chantier ciel 2026-07-17).
+		// 2. Descriptor set layout : 5 combined image samplers (scene color,
+		// depth, bruit base 3D, bruit détail 3D — chantier ciel 2026-07-17 —,
+		// weather map 2D — chantier weather map 2026-07-20).
 		{
-			std::array<VkDescriptorSetLayoutBinding, 4> bindings{};
+			std::array<VkDescriptorSetLayoutBinding, 5> bindings{};
 			for (size_t i = 0; i < bindings.size(); ++i)
 			{
 				bindings[i].binding         = static_cast<uint32_t>(i);
@@ -149,12 +150,12 @@ namespace engine::render
 			}
 		}
 
-		// 3. Descriptor pool (marche : 4 bindings + composite : 2 bindings,
+		// 3. Descriptor pool (marche : 5 bindings + composite : 2 bindings,
 		// un set de chaque par frame).
 		{
 			VkDescriptorPoolSize poolSize{};
 			poolSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSize.descriptorCount = 6 * m_maxFrames;
+			poolSize.descriptorCount = 7 * m_maxFrames;
 			VkDescriptorPoolCreateInfo poolInfo{};
 			poolInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 			poolInfo.poolSizeCount = 1;
@@ -254,17 +255,24 @@ namespace engine::render
 				uploadPool, uploadQueue, clouds::kDetailNoiseSize,
 				noise.detailRgba.data(),
 				m_noiseDetailImage, m_noiseDetailMemory, m_noiseDetailView);
+			// Chantier weather map 2026-07-20 — carte 2D de couverture (fronts
+			// nuageux par position monde), même vie que les bruits 3D.
+			const std::vector<uint8_t> weather =
+				clouds::GenerateWeatherCoverageMap(1337u);
+			const bool okWeather = okDetail && CreateWeatherTexture2D(device,
+				physicalDevice, uploadPool, uploadQueue,
+				clouds::kWeatherMapSize, weather.data());
 			vkDestroyCommandPool(device, uploadPool, nullptr);
-			if (!okBase || !okDetail)
+			if (!okBase || !okDetail || !okWeather)
 			{
-				LOG_ERROR(Render, "CloudPass: creation des textures de bruit 3D echouee");
+				LOG_ERROR(Render, "CloudPass: creation des textures de bruit echouee");
 				Destroy(device); return false;
 			}
 			const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
 				std::chrono::steady_clock::now() - t0).count();
 			LOG_INFO(Render, "CloudPass: bruit Perlin-Worley genere+uploade en {} ms "
-				"(base {}^3, detail {}^3)", static_cast<long long>(ms),
-				clouds::kBaseNoiseSize, clouds::kDetailNoiseSize);
+				"(base {}^3, detail {}^3, weather map {}^2)", static_cast<long long>(ms),
+				clouds::kBaseNoiseSize, clouds::kDetailNoiseSize, clouds::kWeatherMapSize);
 		}
 
 		// 6. Pipeline layout : set 0 + push constants (176 o, fragment).
@@ -431,12 +439,13 @@ namespace engine::render
 		// Binding 0 (ex-scene color) : plus échantillonné par clouds.frag
 		// (lot 1) mais toujours présent au layout — on y lie le depth en
 		// « bouche-trou » déclaré au FrameGraph (layout SHADER_READ_ONLY).
-		std::array<VkDescriptorImageInfo, 4> imageInfos{};
+		std::array<VkDescriptorImageInfo, 5> imageInfos{};
 		imageInfos[0] = { m_nearestSampler, viewDepth,         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[1] = { m_nearestSampler, viewDepth,         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[2] = { m_noiseSampler,   m_noiseBaseView,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[3] = { m_noiseSampler,   m_noiseDetailView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-		std::array<VkWriteDescriptorSet, 4> writes{};
+		imageInfos[4] = { m_noiseSampler,   m_weatherView,     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		std::array<VkWriteDescriptorSet, 5> writes{};
 		for (size_t i = 0; i < writes.size(); ++i)
 		{
 			writes[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -770,6 +779,179 @@ namespace engine::render
 		return true;
 	}
 
+	bool CloudPass::CreateWeatherTexture2D(VkDevice device, VkPhysicalDevice physicalDevice,
+		VkCommandPool cmdPool, VkQueue queue,
+		int size, const uint8_t* r8)
+	{
+		// Même séquence que CreateNoiseTexture3D (image device-local, staging,
+		// barrières UNDEFINED→TRANSFER_DST→SHADER_READ_ONLY, submit + wait au
+		// boot) mais en 2D R8_UNORM — 1 octet par texel.
+		const VkDeviceSize byteSize = static_cast<VkDeviceSize>(size) * size;
+
+		// 1. Image 2D device-local.
+		{
+			VkImageCreateInfo ii{};
+			ii.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			ii.imageType     = VK_IMAGE_TYPE_2D;
+			ii.format        = VK_FORMAT_R8_UNORM;
+			ii.extent        = { static_cast<uint32_t>(size),
+			                     static_cast<uint32_t>(size), 1u };
+			ii.mipLevels     = 1;
+			ii.arrayLayers   = 1;
+			ii.samples       = VK_SAMPLE_COUNT_1_BIT;
+			ii.tiling        = VK_IMAGE_TILING_OPTIMAL;
+			ii.usage         = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+			ii.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			if (vkCreateImage(device, &ii, nullptr, &m_weatherImage) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkCreateImage (weather map {}^2) failed", size);
+				return false;
+			}
+			VkMemoryRequirements req{};
+			vkGetImageMemoryRequirements(device, m_weatherImage, &req);
+			VkMemoryAllocateInfo ai{};
+			ai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			ai.allocationSize  = req.size;
+			ai.memoryTypeIndex = FindMemoryType(physicalDevice, req.memoryTypeBits,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+			if (ai.memoryTypeIndex == UINT32_MAX
+				|| vkAllocateMemory(device, &ai, nullptr, &m_weatherMemory) != VK_SUCCESS
+				|| vkBindImageMemory(device, m_weatherImage, m_weatherMemory, 0) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: allocation memoire weather map failed");
+				return false;
+			}
+		}
+
+		// 2. Staging host-visible + copie CPU.
+		VkBuffer stagingBuf = VK_NULL_HANDLE;
+		VkDeviceMemory stagingMem = VK_NULL_HANDLE;
+		{
+			VkBufferCreateInfo bi{};
+			bi.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bi.size        = byteSize;
+			bi.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			bi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			if (vkCreateBuffer(device, &bi, nullptr, &stagingBuf) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkCreateBuffer (staging weather) failed");
+				return false;
+			}
+			VkMemoryRequirements req{};
+			vkGetBufferMemoryRequirements(device, stagingBuf, &req);
+			VkMemoryAllocateInfo ai{};
+			ai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			ai.allocationSize  = req.size;
+			ai.memoryTypeIndex = FindMemoryType(physicalDevice, req.memoryTypeBits,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			if (ai.memoryTypeIndex == UINT32_MAX
+				|| vkAllocateMemory(device, &ai, nullptr, &stagingMem) != VK_SUCCESS
+				|| vkBindBufferMemory(device, stagingBuf, stagingMem, 0) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: allocation staging weather failed");
+				if (stagingBuf) vkDestroyBuffer(device, stagingBuf, nullptr);
+				if (stagingMem) vkFreeMemory(device, stagingMem, nullptr);
+				return false;
+			}
+			void* mapped = nullptr;
+			if (vkMapMemory(device, stagingMem, 0, byteSize, 0, &mapped) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkMapMemory (staging weather) failed");
+				vkDestroyBuffer(device, stagingBuf, nullptr);
+				vkFreeMemory(device, stagingMem, nullptr);
+				return false;
+			}
+			std::memcpy(mapped, r8, static_cast<size_t>(byteSize));
+			vkUnmapMemory(device, stagingMem);
+		}
+
+		// 3. Command buffer one-shot : transitions + copie + submit/wait.
+		bool ok = false;
+		{
+			VkCommandBufferAllocateInfo cbai{};
+			cbai.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			cbai.commandPool        = cmdPool;
+			cbai.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			cbai.commandBufferCount = 1;
+			VkCommandBuffer cmd = VK_NULL_HANDLE;
+			if (vkAllocateCommandBuffers(device, &cbai, &cmd) == VK_SUCCESS)
+			{
+				VkCommandBufferBeginInfo bi{};
+				bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+				bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+				vkBeginCommandBuffer(cmd, &bi);
+
+				VkImageSubresourceRange range{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+				VkImageMemoryBarrier toDst{};
+				toDst.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				toDst.srcAccessMask       = 0;
+				toDst.dstAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+				toDst.oldLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
+				toDst.newLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				toDst.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				toDst.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				toDst.image               = m_weatherImage;
+				toDst.subresourceRange    = range;
+				vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+					VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toDst);
+
+				VkBufferImageCopy copy{};
+				copy.imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+				copy.imageExtent      = { static_cast<uint32_t>(size),
+				                          static_cast<uint32_t>(size), 1u };
+				vkCmdCopyBufferToImage(cmd, stagingBuf, m_weatherImage,
+					VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+
+				VkImageMemoryBarrier toRead = toDst;
+				toRead.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				toRead.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				toRead.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				toRead.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
+					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toRead);
+
+				vkEndCommandBuffer(cmd);
+				VkSubmitInfo si{};
+				si.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+				si.commandBufferCount = 1;
+				si.pCommandBuffers    = &cmd;
+				if (vkQueueSubmit(queue, 1, &si, VK_NULL_HANDLE) == VK_SUCCESS)
+				{
+					vkQueueWaitIdle(queue);
+					ok = true;
+				}
+				else
+				{
+					LOG_ERROR(Render, "CloudPass: vkQueueSubmit (upload weather) failed");
+				}
+				vkFreeCommandBuffers(device, cmdPool, 1, &cmd);
+			}
+			else
+			{
+				LOG_ERROR(Render, "CloudPass: vkAllocateCommandBuffers (upload weather) failed");
+			}
+		}
+		vkDestroyBuffer(device, stagingBuf, nullptr);
+		vkFreeMemory(device, stagingMem, nullptr);
+		if (!ok) return false;
+
+		// 4. Vue 2D.
+		{
+			VkImageViewCreateInfo vi{};
+			vi.sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			vi.image            = m_weatherImage;
+			vi.viewType         = VK_IMAGE_VIEW_TYPE_2D;
+			vi.format           = VK_FORMAT_R8_UNORM;
+			vi.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+			if (vkCreateImageView(device, &vi, nullptr, &m_weatherView) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "CloudPass: vkCreateImageView (weather map) failed");
+				return false;
+			}
+		}
+		return true;
+	}
+
 	// Audit 2026-06-10 (Lot B2) — détruit les framebuffers cachés (pattern WaterPass).
 	void CloudPass::InvalidateFramebufferCache(VkDevice device)
 	{
@@ -805,6 +987,9 @@ namespace engine::render
 		if (m_noiseDetailView)     { vkDestroyImageView(device, m_noiseDetailView, nullptr); m_noiseDetailView = VK_NULL_HANDLE; }
 		if (m_noiseDetailImage)    { vkDestroyImage(device, m_noiseDetailImage, nullptr); m_noiseDetailImage = VK_NULL_HANDLE; }
 		if (m_noiseDetailMemory)   { vkFreeMemory(device, m_noiseDetailMemory, nullptr); m_noiseDetailMemory = VK_NULL_HANDLE; }
+		if (m_weatherView)         { vkDestroyImageView(device, m_weatherView, nullptr); m_weatherView = VK_NULL_HANDLE; }
+		if (m_weatherImage)        { vkDestroyImage(device, m_weatherImage, nullptr); m_weatherImage = VK_NULL_HANDLE; }
+		if (m_weatherMemory)       { vkFreeMemory(device, m_weatherMemory, nullptr); m_weatherMemory = VK_NULL_HANDLE; }
 		m_descriptorSets.clear();
 		if (m_descriptorPool)      { vkDestroyDescriptorPool(device, m_descriptorPool, nullptr); m_descriptorPool = VK_NULL_HANDLE; }
 		if (m_descriptorSetLayout) { vkDestroyDescriptorSetLayout(device, m_descriptorSetLayout, nullptr); m_descriptorSetLayout = VK_NULL_HANDLE; }

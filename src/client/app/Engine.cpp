@@ -6263,6 +6263,13 @@ namespace engine
 													lp.skyColor[1] = dnLight.skyHorizon[1];
 													lp.skyColor[2] = dnLight.skyHorizon[2];
 													lp.skyColor[3] = m_skyPassReady ? 1.0f : 0.0f;
+													// Chantier perspective aérienne 2026-07-20 — quand le ciel
+													// analytique est actif (même clé que sky.frag), la teinte de
+													// la perspective aérienne est évaluée par lighting.frag DANS
+													// la direction du rayon (fond de ciel analytique) au lieu de
+													// la couleur d'horizon legacy uniforme ci-dessus.
+													lp.aerialSkyModel =
+														m_cfg.GetBool("client.sky.analytic", true) ? 1.0f : 0.0f;
 												}
 												VkImageView irrView       = m_pipeline->GetIrradiancePass().IsValid() ? m_pipeline->GetIrradiancePass().GetImageView() : VK_NULL_HANDLE;
 												VkSampler   irrSamp       = m_pipeline->GetIrradiancePass().IsValid() ? m_pipeline->GetIrradiancePass().GetSampler()   : VK_NULL_HANDLE;
@@ -6733,7 +6740,10 @@ namespace engine
 													// z = distance (m) de début d'estompage des nuages lointains (perspective
 													// aérienne) ; évite le mur blanc à l'horizon. 0 = désactivé.
 													pc.shadowParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.fade_distance_m", 2500.0));
-													pc.shadowParams[3] = 0.0f;
+													// w = tuile (m) de la weather map 2D de couverture (chantier
+													// weather map 2026-07-20) : fronts nuageux par position monde.
+													// <= 1 = carte neutre (bascule de secours sans rebuild).
+													pc.shadowParams[3] = static_cast<float>(m_cfg.GetDouble("render.clouds.weather_tile_m", 40000.0));
 
 													// Extent réduit — même calcul que FrameGraph pour Clouds_Half
 													// (shift + clamp à 1) afin que viewport == framebuffer.

@@ -66,7 +66,9 @@
             "_comment_maxlum": "max_luminance : plafond de luminosité des nuages. Empêche le flamboiement en gros blobs blancs quand on regarde vers le soleil. Baisser (1.0, 0.8) si encore trop éclatant ; 0 = pas de plafond.",
             "max_luminance": 1.3,
             "_comment_resdiv": "resolution_divider : la marche des nuages tourne en résolution réduite (1 = pleine, 2 = demi, 4 = quart) puis est upsamplée bilinéairement. 2 = ~x4 moins de fragments marchés, quasi sans perte visuelle (nuages = basses fréquences). Lu au boot (rebuild du frame graph requis).",
-            "resolution_divider": 2
+            "resolution_divider": 2,
+            "_comment_weather": "weather_tile_m : côté (m) de la tuile de la weather map 2D de couverture (fronts nuageux et trouées par position monde, défilent avec le vent). Baisser (20000) = fronts plus resserrés ; monter (80000) = masses plus larges. <= 1 = carte neutre (couverture uniforme, comportement d'avant).",
+            "weather_tile_m": 40000.0
         },
         "auth_ui": {
             "background_path": "ui/login/background.png",

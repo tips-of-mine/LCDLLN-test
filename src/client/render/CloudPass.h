@@ -35,7 +35,7 @@ namespace engine::render
 			float horizonColor[4];  ///< xyz horizon ; w = topAltMeters.      16 o.
 			float windParams[4];    ///< x ventX ; y ventZ ; z vitesse ; w = HG g. 16 o.
 			float stepParams[4];    ///< x stepsVue ; y stepsLum ; z distMax ; w = ambiant. 16 o.
-			float shadowParams[4];  ///< x = force ombres sol [0..1] ; z = distance d'estompage (m) ; y,w réservés. 16 o.
+			float shadowParams[4];  ///< x = force ombres sol [0..1] ; y = luminance max ; z = distance d'estompage (m) ; w = tuile weather map (m, <=1 désactive — chantier weather map 2026-07-20). 16 o.
 		};
 		static_assert(sizeof(CloudPushConstants) == 192, "CloudPushConstants doit faire 192 octets");
 
@@ -124,6 +124,15 @@ namespace engine::render
 			int size, const uint8_t* rgba,
 			VkImage& outImage, VkDeviceMemory& outMemory, VkImageView& outView);
 
+		/// Chantier weather map 2026-07-20 — Crée une image 2D R8_UNORM de côté
+		/// \p size, y uploade \p r8 (size²×1 octet) via staging + command buffer
+		/// one-shot (submit + wait sur \p queue — boot uniquement), et crée la
+		/// vue 2D. Stocke le résultat dans m_weatherImage/Memory/View.
+		/// \return false (et log) au premier échec Vulkan.
+		bool CreateWeatherTexture2D(VkDevice device, VkPhysicalDevice physicalDevice,
+			VkCommandPool cmdPool, VkQueue queue,
+			int size, const uint8_t* r8);
+
 		VkRenderPass          m_renderPass          = VK_NULL_HANDLE;
 		VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool      m_descriptorPool      = VK_NULL_HANDLE;
@@ -146,6 +155,11 @@ namespace engine::render
 		VkImage        m_noiseDetailImage  = VK_NULL_HANDLE;
 		VkDeviceMemory m_noiseDetailMemory = VK_NULL_HANDLE;
 		VkImageView    m_noiseDetailView   = VK_NULL_HANDLE;
+		// Chantier weather map 2026-07-20 — weather map 2D R8 de couverture
+		// (variation spatiale des nuages, binding 4, sampler REPEAT partagé).
+		VkImage        m_weatherImage      = VK_NULL_HANDLE;
+		VkDeviceMemory m_weatherMemory     = VK_NULL_HANDLE;
+		VkImageView    m_weatherView       = VK_NULL_HANDLE;
 		VkSampler      m_noiseSampler      = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSet> m_descriptorSets;
 		uint32_t m_maxFrames = 2;

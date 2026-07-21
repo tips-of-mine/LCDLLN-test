@@ -40,6 +40,9 @@ namespace engine::render
 			case engine::items::EquipmentSlot::Amulet:   return "Amulette";
 			case engine::items::EquipmentSlot::Ring1:    return "Anneau 1";
 			case engine::items::EquipmentSlot::Ring2:    return "Anneau 2";
+			// Retour joueur 2026-07-21 — la cellule Waist affichait « ? »
+			// (libellé manquant). « Taille » = nom vestimentaire du slot.
+			case engine::items::EquipmentSlot::Waist:    return "Taille";
 			default:                                     return "?";
 			}
 		}
@@ -224,8 +227,19 @@ namespace engine::render
 				const bool occ = itemId != 0u;
 				const ImVec2 mn(x0, y0);
 				const ImVec2 mx(x0 + cell, y0 + cell);
-				wdl->AddRectFilled(mn, mx, occ ? IM_COL32(26, 30, 40, 235) : IM_COL32(16, 18, 24, 200), 5.0f);
-				wdl->AddRect(mn, mx, occ ? IM_COL32(150, 130, 60, 220) : IM_COL32(64, 66, 74, 180), 5.0f, 0, 1.5f);
+				// Retour joueur 2026-07-21 — la cellule CEINTURE (Waist) se
+				// distingue nettement des autres : mêmes teintes vertes que la
+				// rangée « Ceinture » et la barre HUD (fond vert sombre, bordure
+				// verte épaisse), pour matérialiser le lien slot → cases.
+				const bool isWaist = es == engine::items::EquipmentSlot::Waist;
+				const ImU32 cellFill = isWaist
+					? (occ ? IM_COL32(32, 46, 36, 235) : IM_COL32(18, 26, 20, 210))
+					: (occ ? IM_COL32(26, 30, 40, 235) : IM_COL32(16, 18, 24, 200));
+				const ImU32 cellBorder = isWaist
+					? IM_COL32(120, 170, 130, occ ? 255 : 170)
+					: (occ ? IM_COL32(150, 130, 60, 220) : IM_COL32(64, 66, 74, 180));
+				wdl->AddRectFilled(mn, mx, cellFill, 5.0f);
+				wdl->AddRect(mn, mx, cellBorder, 5.0f, 0, isWaist ? 2.5f : 1.5f);
 				const engine::items::ItemDefinition* def =
 					(occ && m_itemCatalog != nullptr) ? m_itemCatalog->Find(itemId) : nullptr;
 				bool hasIcon = false;
@@ -254,6 +268,8 @@ namespace engine::render
 				{
 					ImGui::BeginTooltip();
 					ImGui::TextDisabled("%s", SlotLabelFr(es));
+					if (isWaist)
+						ImGui::TextDisabled("Emplacement ceinture — donne ses cases a la barre d'objets");
 					if (occ)
 					{
 						const std::string itemName = (def != nullptr && !def->name.empty())
@@ -263,6 +279,8 @@ namespace engine::render
 							AppendBonusTooltipLines(def->bonus);
 						ImGui::Separator();
 						ImGui::TextDisabled("Clic / relâcher ici : déséquiper / équiper");
+						if (isWaist)
+							ImGui::TextDisabled("Retirer la ceinture vide ses cases (objets deja en sac)");
 					}
 					else
 					{
@@ -274,8 +292,34 @@ namespace engine::render
 				if (occ && ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
 					&& ImGui::GetDragDropPayload() == nullptr)
 				{
-					m_pendingEquip = PendingEquipAction{
-						PendingEquipAction::Kind::Unequip, 0u, static_cast<uint8_t>(slot)};
+					// Retour joueur 2026-07-21 — pré-vérification « sac plein » :
+					// le déséquipement ajoute l'objet au sac ; s'il n'existe ni
+					// pile du même objet ni case libre, on n'envoie RIEN et on
+					// affiche le motif à l'écran (le serveur a la même garde).
+					bool bagHasRoom = m_inv == nullptr; // sans état de sac : laisser le serveur trancher.
+					if (m_inv != nullptr)
+					{
+						for (const engine::client::InventorySlotState& is : m_inv->GetState().slots)
+						{
+							if (!is.occupied || is.itemId == itemId)
+							{
+								bagHasRoom = true;
+								break;
+							}
+						}
+					}
+					if (bagHasRoom)
+					{
+						m_pendingEquip = PendingEquipAction{
+							PendingEquipAction::Kind::Unequip, 0u, static_cast<uint8_t>(slot)};
+					}
+					else
+					{
+						m_noticeText = isWaist
+							? "Sac plein : impossible de retirer la ceinture."
+							: "Sac plein : impossible de deposer l'objet desequipe.";
+						m_noticeUntil = ImGui::GetTime() + 4.0;
+					}
 				}
 				// Glisser-déposer : accepte un objet équipable lâché depuis l'inventaire.
 				// Le serveur reste autoritaire (choisit le slot réel + valide la possession),
@@ -344,7 +388,17 @@ namespace engine::render
 			const std::vector<std::string>& belt = model.playerStats.beltLayout;
 			const float beltRowY = bandY + 5.0f * (cell + gap) + cell + 8.0f;
 			float statsY = beltRowY;
-			if (!belt.empty())
+			if (belt.empty())
+			{
+				// Retour joueur 2026-07-21 — sans ceinture équipée (capacité 0,
+				// le joueur l'a retirée), la rangée dit POURQUOI il n'y a plus
+				// de cases au lieu de disparaître sans explication.
+				wdl->AddText(ImVec2(bandX, beltRowY), IM_COL32(150, 180, 155, 230), "Ceinture");
+				wdl->AddText(ImVec2(bandX + 76.0f, beltRowY), IM_COL32(140, 130, 120, 210),
+					"(aucune ceinture equipee — equipez-en une au slot Taille)");
+				statsY = beltRowY + 22.0f;
+			}
+			else
 			{
 				const size_t beltN = belt.size();
 				// Cases dimensionnées pour tenir toute la bande (12 max), sans
@@ -501,6 +555,16 @@ namespace engine::render
 					m_beltLayoutDirty = true;
 				}
 				statsY = beltY0 + beltCell + 8.0f;
+			}
+
+			// Retour joueur 2026-07-21 — message d'information temporaire (motif
+			// d'un refus, ex. sac plein au retrait de la ceinture), affiché en
+			// rouge sous la rangée Ceinture pendant quelques secondes.
+			if (!m_noticeText.empty() && ImGui::GetTime() < m_noticeUntil)
+			{
+				wdl->AddText(ImVec2(bandX, statsY), IM_COL32(255, 120, 110, 255),
+					m_noticeText.c_str());
+				statsY += 20.0f;
 			}
 
 			// Curseur repositionné pour la suite (stats) SOUS la rangée

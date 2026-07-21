@@ -357,6 +357,17 @@
       "icon": "items/bois_cerf.png",
       "type": "misc",
       "slot": "none"
+    },
+    {
+      "_comment": "Retour joueur 2026-07-21 — ceinture de DEPART (kStarterBeltItemId, cf. ItemDefinition.h) : equipee d'office a l'enter-world si le personnage n'a ni ceinture equipee ni ceinture en sac (ServerApp::EnsureStarterBelt). Retirable ; sans ceinture equipee la barre d'objets n'a plus aucune case.",
+      "id": 5135,
+      "name": "Ceinture usee",
+      "description": "Quatre poches racornies par les ans. Tout aventurier commence avec elle a la taille.",
+      "icon": "items/ceinture_usee.png",
+      "type": "armor",
+      "slot": "waist",
+      "belt_slots": 4,
+      "bonus": { "hp": 2 }
     }
   ]
 }

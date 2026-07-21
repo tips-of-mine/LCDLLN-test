@@ -102,6 +102,10 @@ namespace engine::render
 		PendingEquipAction m_pendingEquip{};                       ///< Chantier 2 SP-A
 		std::vector<std::string> m_pendingBeltLayout;              ///< Rangée Ceinture (2026-07-21)
 		bool m_beltLayoutDirty = false;                            ///< Vrai si layout modifié ce frame
+		/// Retour joueur 2026-07-21 — message d'information temporaire affiché
+		/// dans la fiche (ex. « Sac plein : impossible de retirer la ceinture »).
+		std::string m_noticeText;
+		double m_noticeUntil = 0.0; ///< Fin d'affichage (ImGui::GetTime()).
 		engine::client::SkillIconCache* m_icons = nullptr;
 		engine::render::SkillBookImGuiRenderer* m_skillBook = nullptr;
 		engine::render::GrimoireImGuiRenderer* m_grimoire = nullptr;

@@ -82,10 +82,14 @@ namespace engine::items
 	};
 
 	// Ceinture v2 (2026-07-20) — bornes de la barre ceinture (objets actifs).
-	// Le joueur démarre à 4 slots (sans ceinture équipée) ; une ceinture
-	// équipée (slot Waist) porte sa capacité via `beltSlots`, plafonnée à 12.
+	// Retour joueur 2026-07-21 : la capacité vient EXCLUSIVEMENT de la ceinture
+	// équipée (slot Waist) — 0 slot sans ceinture. Le joueur démarre garanti
+	// avec la « Ceinture usée » (kStarterBeltItemId, 4 slots) équipée d'office
+	// à l'enter-world (cf. ServerApp::EnsureStarterBelt) ; il peut la retirer.
 	inline constexpr std::uint8_t kBeltSlotsDefault = 4;
 	inline constexpr std::uint8_t kBeltSlotsMax     = 12;
+	/// Item de la ceinture de départ (items.json : « Ceinture usée », 4 slots).
+	inline constexpr std::uint32_t kStarterBeltItemId = 5135;
 
 	// Définition complète d'un objet du catalogue.
 	struct ItemDefinition

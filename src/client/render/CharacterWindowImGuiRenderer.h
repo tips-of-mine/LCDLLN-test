@@ -5,6 +5,8 @@
 // de frame que les panneaux existants (bloc single-pass) -> pas de doublon.
 
 #include <cstdint>
+#include <string>
+#include <vector>
 
 namespace engine::core { class Config; }
 namespace engine::client { class UIModelBinding; class InventoryUiPresenter; class SkillIconCache; struct UIModel; }
@@ -53,6 +55,20 @@ namespace engine::render
 			return true;
 		}
 
+		/// Emplacement ceinture dans la fiche (retour joueur 2026-07-21) — nouveau
+		/// layout complet demandé par drag & drop / clic droit dans la rangée
+		/// « Ceinture » de l'onglet Personnage, drainé par Engine après Render()
+		/// (envoi kind 99 SetBeltLayout ; le serveur revalide et renvoie le
+		/// layout autoritaire kind 100). Retourne false si aucun changement.
+		bool ConsumeBeltLayout(std::vector<std::string>& out)
+		{
+			if (!m_beltLayoutDirty) return false;
+			out = std::move(m_pendingBeltLayout);
+			m_pendingBeltLayout.clear();
+			m_beltLayoutDirty = false;
+			return true;
+		}
+
 		/// SP2 anniversaires (2026-07-18) — renderer de l'onglet Exploits
 		/// (non possédé). Nul -> onglet absent (rétro-compatible).
 		void SetExploitsRenderer(engine::render::ExploitsImGuiRenderer* r) { m_exploits = r; }
@@ -84,6 +100,8 @@ namespace engine::render
 		const engine::client::InventoryUiPresenter* m_inv = nullptr;
 		const engine::items::ItemCatalog* m_itemCatalog = nullptr; ///< Chantier 2 SP-A
 		PendingEquipAction m_pendingEquip{};                       ///< Chantier 2 SP-A
+		std::vector<std::string> m_pendingBeltLayout;              ///< Rangée Ceinture (2026-07-21)
+		bool m_beltLayoutDirty = false;                            ///< Vrai si layout modifié ce frame
 		engine::client::SkillIconCache* m_icons = nullptr;
 		engine::render::SkillBookImGuiRenderer* m_skillBook = nullptr;
 		engine::render::GrimoireImGuiRenderer* m_grimoire = nullptr;

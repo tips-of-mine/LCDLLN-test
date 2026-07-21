@@ -192,11 +192,12 @@ namespace engine::render
 					worn[e.slot] = e.itemId;
 			}
 			float side = (5.0f * avail.x - 2.0f * gap) / 7.0f;
-			// Borné par la hauteur disponible : bande (side) + rangée ceinture
+			// Borné par la hauteur disponible : bande (side) + rangée Waist
 			// (cell + gap, cf. cellule Waist dessinée sous la colonne gauche) +
-			// stats. Avec cell = (side - 4·gap)/5, la contrainte
-			// side + gap + cell + statsH ≤ avail.y se résout en :
-			side = std::min(side, (5.0f * (avail.y - statsH - gap) + 4.0f * gap) / 6.0f);
+			// rangée « Ceinture » (contenu, ~58 px libellé compris — retour
+			// joueur 2026-07-21) + stats. Avec cell = (side - 4·gap)/5, la
+			// contrainte side + gap + cell + 58 + statsH ≤ avail.y se résout en :
+			side = std::min(side, (5.0f * (avail.y - statsH - 58.0f - gap) + 4.0f * gap) / 6.0f);
 			side = std::max(side, 150.0f);
 			const float cell = std::max(30.0f, (side - 4.0f * gap) / 5.0f);
 			const float bandW = 2.0f * cell + 2.0f * gap + side;
@@ -330,11 +331,182 @@ namespace engine::render
 					IM_COL32(120, 130, 160, 255), lbl);
 			}
 
-			// Curseur repositionné pour la suite (stats) SOUS la rangée ceinture
-			// (cellule Waist à bandY + 5·(cell+gap), haute de cell) — avant, les
-			// stats s'écrivaient par-dessus la cellule Ceinture (retour 2026-07-20).
-			ImGui::SetCursorScreenPos(ImVec2(bandOrigin.x,
-				bandY + 5.0f * (cell + gap) + cell + 6.0f));
+			// Retour joueur 2026-07-21 — la ceinture a son EMPLACEMENT DÉDIÉ dans
+			// la fiche du personnage (références WoW / Diablo IV / Dune : le
+			// contenu de la ceinture visible dans la fenêtre, pas seulement sur
+			// le HUD). Rangée « Ceinture » sous le paperdoll : les N cases du
+			// contenu (icône ou initiales, quantité restante en sac, tooltips),
+			// CIBLES de glisser-déposer depuis le sac (payload LN_EQUIP_ITEM) et
+			// réorganisables entre elles (LN_BELT_MOVE — payload PARTAGÉ avec la
+			// barre HUD : on peut aussi glisser de la fenêtre vers le HUD et
+			// inversement). Clic droit = retirer. L'ACTIVATION reste sur la
+			// barre HUD (Maj+1..9 / clic) : ici on organise, on ne consomme pas.
+			const std::vector<std::string>& belt = model.playerStats.beltLayout;
+			const float beltRowY = bandY + 5.0f * (cell + gap) + cell + 8.0f;
+			float statsY = beltRowY;
+			if (!belt.empty())
+			{
+				const size_t beltN = belt.size();
+				// Cases dimensionnées pour tenir toute la bande (12 max), sans
+				// dépasser la taille des cellules d'équipement.
+				const float beltCell = std::min(cell,
+					(bandW - static_cast<float>(beltN - 1) * gap) / static_cast<float>(beltN));
+				wdl->AddText(ImVec2(bandX, beltRowY), IM_COL32(150, 180, 155, 230), "Ceinture");
+				char capTxt[24];
+				std::snprintf(capTxt, sizeof(capTxt), "%d emplacement(s)", static_cast<int>(beltN));
+				const ImVec2 capSz = ImGui::CalcTextSize(capTxt);
+				wdl->AddText(ImVec2(bandX + bandW - capSz.x, beltRowY),
+					IM_COL32(120, 130, 140, 200), capTxt);
+				const float beltY0 = beltRowY + 18.0f;
+				std::vector<std::string> newBelt(belt.begin(), belt.end());
+				bool beltEdited = false;
+				for (size_t bi = 0; bi < beltN; ++bi)
+				{
+					const float bx0 = bandX + static_cast<float>(bi) * (beltCell + gap);
+					uint32_t beltItemId = 0u;
+					const bool bOcc = engine::anniversary::ParseItemToken(belt[bi], beltItemId);
+					const engine::items::ItemDefinition* bdef =
+						(bOcc && m_itemCatalog != nullptr) ? m_itemCatalog->Find(beltItemId) : nullptr;
+					ImGui::SetCursorScreenPos(ImVec2(bx0, beltY0));
+					char beltId[24];
+					std::snprintf(beltId, sizeof(beltId), "##fbelt%zu", bi);
+					ImGui::InvisibleButton(beltId, ImVec2(beltCell, beltCell));
+					const bool bHov = ImGui::IsItemHovered();
+					// Quantité restante en sac (somme des piles) — même jauge que le HUD.
+					uint32_t bQty = 0u;
+					if (bOcc && m_inv != nullptr)
+					{
+						for (const engine::client::InventorySlotState& is : m_inv->GetState().slots)
+							if (is.occupied && is.itemId == beltItemId)
+								bQty += is.quantity;
+					}
+					// Visuel : mêmes codes que la barre HUD (fond vert sombre,
+					// bordure dorée au survol) pour que le lien saute aux yeux.
+					wdl->AddRectFilled(ImVec2(bx0, beltY0),
+						ImVec2(bx0 + beltCell, beltY0 + beltCell),
+						bOcc ? IM_COL32(32, 46, 36, 235) : IM_COL32(14, 16, 22, 170), 6.0f);
+					wdl->AddRect(ImVec2(bx0, beltY0),
+						ImVec2(bx0 + beltCell, beltY0 + beltCell),
+						bHov ? IM_COL32(235, 205, 120, 255)
+						     : IM_COL32(120, 170, 130, bOcc ? 220 : 110),
+						6.0f, 0, bHov ? 2.5f : 2.0f);
+					if (bOcc)
+					{
+						bool bIcon = false;
+						if (bdef != nullptr && m_icons != nullptr && !bdef->iconPath.empty())
+						{
+							const uint64_t tex = m_icons->GetOrLoad(bdef->iconPath);
+							if (tex != 0)
+							{
+								wdl->AddImage(static_cast<ImTextureID>(tex),
+									ImVec2(bx0 + 3.0f, beltY0 + 3.0f),
+									ImVec2(bx0 + beltCell - 3.0f, beltY0 + beltCell - 3.0f));
+								bIcon = true;
+							}
+						}
+						if (!bIcon)
+						{
+							const char* bname = (bdef != nullptr && !bdef->name.empty())
+								? bdef->name.c_str() : "?";
+							char initials[3] = { bname[0], bname[1] != '\0' ? bname[1] : ' ', '\0' };
+							const ImVec2 initSz = ImGui::CalcTextSize(initials);
+							wdl->AddText(ImVec2(bx0 + (beltCell - initSz.x) * 0.5f,
+								beltY0 + (beltCell - initSz.y) * 0.5f),
+								IM_COL32(240, 250, 240, 255), initials);
+						}
+						char bQtyTxt[12];
+						std::snprintf(bQtyTxt, sizeof(bQtyTxt), "%u", bQty);
+						const ImVec2 qtySz = ImGui::CalcTextSize(bQtyTxt);
+						wdl->AddText(ImVec2(bx0 + beltCell - qtySz.x - 3.0f,
+							beltY0 + beltCell - qtySz.y - 2.0f),
+							bQty > 0u ? IM_COL32(255, 240, 190, 255)
+							          : IM_COL32(255, 120, 110, 255),
+							bQtyTxt);
+					}
+					// Source de drag (réorganisation — payload partagé avec le HUD).
+					if (bOcc && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+					{
+						int fromIndex = static_cast<int>(bi);
+						ImGui::SetDragDropPayload("LN_BELT_MOVE", &fromIndex, sizeof(int));
+						ImGui::TextUnformatted((bdef != nullptr && !bdef->name.empty())
+							? bdef->name.c_str() : "Objet");
+						ImGui::EndDragDropSource();
+					}
+					// Cible de drop : échange interne OU consommable lâché du sac.
+					if (ImGui::BeginDragDropTarget())
+					{
+						if (const ImGuiPayload* mv = ImGui::AcceptDragDropPayload("LN_BELT_MOVE"))
+						{
+							if (mv->DataSize == static_cast<int>(sizeof(int)))
+							{
+								const int from = *static_cast<const int*>(mv->Data);
+								if (from >= 0 && from < static_cast<int>(newBelt.size())
+									&& from != static_cast<int>(bi))
+								{
+									std::swap(newBelt[static_cast<size_t>(from)], newBelt[bi]);
+									beltEdited = true;
+								}
+							}
+						}
+						if (const ImGuiPayload* it = ImGui::AcceptDragDropPayload("LN_EQUIP_ITEM"))
+						{
+							if (it->DataSize == static_cast<int>(sizeof(uint32_t)))
+							{
+								const uint32_t droppedId = *static_cast<const uint32_t*>(it->Data);
+								const std::string droppedTok = engine::anniversary::MakeItemToken(droppedId);
+								bool already = false;
+								for (const std::string& s : newBelt)
+									if (s == droppedTok) { already = true; break; }
+								if (!already)
+								{
+									newBelt[bi] = droppedTok;
+									beltEdited = true;
+								}
+							}
+						}
+						ImGui::EndDragDropTarget();
+					}
+					// Clic droit : vider la case.
+					if (bOcc && bHov && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+					{
+						newBelt[bi].clear();
+						beltEdited = true;
+					}
+					// Tooltip.
+					if (bHov)
+					{
+						ImGui::BeginTooltip();
+						if (bOcc)
+						{
+							ImGui::TextUnformatted((bdef != nullptr && !bdef->name.empty())
+								? bdef->name.c_str() : "Objet");
+							if (bdef != nullptr && !bdef->description.empty())
+								ImGui::TextDisabled("%s", bdef->description.c_str());
+							ImGui::Separator();
+							ImGui::TextDisabled("Clic droit : retirer  |  Glisser : deplacer");
+							ImGui::TextDisabled("En sac : %u", bQty);
+							ImGui::TextDisabled("Utilisation : barre ceinture (Maj+1..9)");
+						}
+						else
+						{
+							ImGui::TextDisabled("Case de ceinture (vide)");
+							ImGui::TextDisabled("Glissez un consommable du sac ici");
+						}
+						ImGui::EndTooltip();
+					}
+				}
+				if (beltEdited)
+				{
+					m_pendingBeltLayout = std::move(newBelt);
+					m_beltLayoutDirty = true;
+				}
+				statsY = beltY0 + beltCell + 8.0f;
+			}
+
+			// Curseur repositionné pour la suite (stats) SOUS la rangée
+			// « Ceinture » — avant, les stats s'écrivaient juste sous la cellule
+			// Waist (retours 2026-07-20 puis 2026-07-21).
+			ImGui::SetCursorScreenPos(ImVec2(bandOrigin.x, statsY));
 
 			// Caractéristiques compactes (ex-fiche F1).
 			const engine::client::UIPlayerStats& ps = model.playerStats;

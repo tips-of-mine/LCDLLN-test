@@ -11,6 +11,11 @@ type AccountRow = RowDataPacket & {
   login: string;
   email: string;
   password_hash: string;
+  /// Retour joueur 2026-07-21 — date de naissance saisie à l'INSCRIPTION
+  /// (accounts.birth_date, VARCHAR "yyyy-mm-dd", migration 0023). Sert de
+  /// pré-remplissage au profil de récupération tant que celui-ci n'a pas
+  /// la sienne.
+  birth_date: string | null;
 };
 
 type RecoveryProfileRow = RowDataPacket & {
@@ -161,18 +166,49 @@ export async function ensurePasswordRecoveryTables(): Promise<void> {
   `);
 }
 
+// Retour joueur 2026-07-21 — normalise une date DB en "yyyy-mm-dd" pour
+// <input type="date"> : accepte l'objet Date renvoyé par mysql2 pour les
+// colonnes DATE (composantes LOCALES — mysql2 crée les Date à minuit local,
+// toISOString reculerait d'un jour en fuseau UTC+) comme la chaîne VARCHAR
+// déjà au bon format (accounts.birth_date). null/invalide → chaîne vide.
+function toIsoDateString(value: unknown): string {
+  if (value == null) return "";
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return "";
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, "0");
+    const d = String(value.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  const text = String(value).trim();
+  return text.length >= 10 ? text.slice(0, 10) : text;
+}
+
 export async function getRecoveryProfile(accountId: number): Promise<RecoveryProfileData | null> {
   await ensurePasswordRecoveryTables();
   const accounts = await query<AccountRow[]>(
-    "SELECT id, login, email, password_hash FROM accounts WHERE id = ? LIMIT 1",
+    "SELECT id, login, email, password_hash, birth_date FROM accounts WHERE id = ? LIMIT 1",
     [accountId],
   );
   if (accounts.length === 0) return null;
 
   const bundle = await loadRecoveryProfileBundle(accountId);
+  // Retour joueur 2026-07-21 — le champ « Date de naissance » du formulaire
+  // s'affichait VIDE, pour deux raisons cumulées :
+  //  1. le profil de récupération (account_recovery_profiles) n'existe
+  //     qu'après le premier enregistrement, alors que la date a déjà été
+  //     saisie à l'inscription (accounts.birth_date) → pré-remplissage
+  //     depuis le compte quand le profil n'a pas la sienne ;
+  //  2. la colonne DATE du profil arrive de mysql2 comme OBJET Date JS
+  //     (pool sans dateStrings), sérialisé « ...T00:00:00.000Z » que
+  //     <input type="date"> rejette → normalisation en "yyyy-mm-dd"
+  //     (composantes LOCALES : toISOString ferait reculer d'un jour en
+  //     fuseau UTC+, mysql2 créant les Date à minuit local).
+  const accountBirthDate = toIsoDateString(accounts[0].birth_date);
+  const profileBirthDate = toIsoDateString(bundle.profile?.birth_date);
   return {
     accountId,
-    birthDate: bundle.profile?.birth_date ?? "",
+    birthDate: profileBirthDate !== "" ? profileBirthDate : accountBirthDate,
     address: bundle.profile?.street_address ?? "",
     city: bundle.profile?.city ?? "",
     postalCode: bundle.profile?.postal_code ?? "",

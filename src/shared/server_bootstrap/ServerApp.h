@@ -167,9 +167,9 @@ namespace engine::server
 		/// activable) et persistée (belt.slot.N).
 		/// Ceinture v2 (2026-07-20) — slots d'objets actifs, taille VARIABLE.
 		/// La capacité ACTIVE = BeltCapacity() (ceinture équipée en Waist,
-		/// défaut 4, max 12). Le vecteur peut être plus long que la capacité
-		/// (grande ceinture déséquipée : contenu conservé mais INACTIF) ;
-		/// seuls les index < capacité sont activables/envoyés au client.
+		/// max 12 ; 0 SANS ceinture — retour joueur 2026-07-21). Retirer la
+		/// ceinture VIDE ce vecteur (les cases ne sont que des références vers
+		/// le sac) ; seuls les index < capacité sont activables/envoyés.
 		std::vector<std::string> beltLayout{};
 		/// Anniversaires SP3 (2026-07-18) — gâteau ACTIF (0 = aucun). Posé par
 		/// un CastRequest "item:<id>" ; le buff est entretenu par TickCakeBuffs
@@ -642,13 +642,21 @@ namespace engine::server
 		void HandleSetBeltLayout(const Endpoint& endpoint, const SetBeltLayoutMessage& message);
 
 		/// Roadmap-3 — pousse le layout ceinture autoritaire (kind 100).
+		/// Retour joueur 2026-07-21 — garantit la ceinture de départ : si le
+		/// personnage n'a AUCUNE ceinture (ni portée en Waist, ni en sac),
+		/// équipe d'office la « Ceinture usée » (kStarterBeltItemId, 4 slots).
+		/// Appelée à l'enter-world AVANT les envois d'état initiaux. Le joueur
+		/// reste libre de la retirer ensuite (capacité 0 sans ceinture).
+		void EnsureStarterBelt(ConnectedClient& client);
+
 		/// Ceinture v2 : envoie exactement BeltCapacity(client) slots.
 		bool SendBeltLayout(const ConnectedClient& client);
 
 		/// Ceinture v2 (2026-07-20) — capacité ACTIVE de la ceinture du joueur :
 		/// beltSlots de la ceinture équipée en slot Waist (résolue via
-		/// m_itemCatalog, autoritaire), clampée [4..12] ; 4 par défaut sans
-		/// ceinture équipée (kBeltSlotsDefault).
+		/// m_itemCatalog, autoritaire), clampée [4..12] ; 0 sans ceinture
+		/// équipée (retour joueur 2026-07-21 — la ceinture de départ est
+		/// garantie par EnsureStarterBelt, mais reste retirable).
 		uint8_t BeltCapacity(const ConnectedClient& client) const;
 
 		/// Roadmap-3 — consomme un objet activable NON-gâteau de la ceinture

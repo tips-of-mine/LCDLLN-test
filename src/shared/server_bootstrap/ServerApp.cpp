@@ -1677,6 +1677,13 @@ namespace engine::server
 				acceptedClient.persistenceCharacterKey);
 		}
 
+		// Retour joueur 2026-07-21 — tout personnage COMMENCE avec une ceinture :
+		// si aucune ceinture n'est portée NI possédée en sac (perso neuf, ou
+		// ceinture perdue/vendue), la « Ceinture usée » (4 slots) est équipée
+		// d'office. Avant les envois d'état initiaux (équipement/ceinture),
+		// qui reflètent donc l'état corrigé.
+		EnsureStarterBelt(acceptedClient);
+
 		// TA.4 — pont position : la table `characters` (écrite par le master via
 		// CharacterSavePositionHandler) fait foi pour le spawn. On surcharge la position
 		// issue du fichier/défauts par spawn_x/y/z de la DB. Sans pool (build Windows ou
@@ -3978,8 +3985,31 @@ namespace engine::server
 			return;
 		}
 
+		// Retour joueur 2026-07-21 — refus si le sac est PLEIN et que l'objet
+		// retiré exigerait une nouvelle pile (la grille client est bornée à
+		// 8×8 = 64 piles, cf. kInventoryStacksMax : la 65e serait invisible).
+		// Le client fait la même pré-vérification et affiche le motif à
+		// l'écran ; cette garde serveur est la défense d'autorité.
+		bool hasExistingStack = false;
+		for (const ItemStack& stack : client->inventory)
+			if (stack.itemId == itemId) { hasExistingStack = true; break; }
+		if (!hasExistingStack && client->inventory.size() >= kInventoryStacksMax)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] UnequipRequest rejeté: sac plein (client_id={}, item_id={}, piles={})",
+				clientId, itemId, client->inventory.size());
+			return;
+		}
+
 		AddItemToInventory(*client, ItemStack{itemId, 1u});
 		client->equipment[slotIndex] = 0u;
+		// Retour joueur 2026-07-21 — retirer la CEINTURE vide sa barre : les
+		// cases ne sont que des RÉFÉRENCES vers les consommables du sac (les
+		// objets y sont donc déjà — « ils retournent à l'inventaire » sans
+		// mouvement physique). Plus de contenu « inactif conservé » : rééquiper
+		// une ceinture donne des cases vides à réorganiser.
+		if (slotIndex == static_cast<size_t>(engine::items::EquipmentSlot::Waist))
+			client->beltLayout.clear();
 
 		LOG_INFO(Net, "[ServerApp] Déséquipement (client_id={}, item_id={}, slot={})",
 			clientId, itemId, slotIndex);
@@ -3989,8 +4019,8 @@ namespace engine::server
 		(void)SendInventoryDelta(*client, client->inventory); // snapshot complet
 		(void)SendEquipmentUpdate(*client);
 		(void)SendPlayerStats(*client);
-		// Ceinture v2 — déséquiper la ceinture ramène la capacité à 4 : le
-		// contenu au-delà reste stocké (inactif) et revient si on rééquipe.
+		// Ceinture — le retrait vide la barre (capacité 0 sans ceinture) :
+		// pousser le layout autoritaire (kind 100, count 0).
 		if (slotIndex == static_cast<size_t>(engine::items::EquipmentSlot::Waist))
 			(void)SendBeltLayout(*client);
 	}
@@ -5223,7 +5253,34 @@ namespace engine::server
 					engine::items::kBeltSlotsDefault, engine::items::kBeltSlotsMax);
 			}
 		}
-		return engine::items::kBeltSlotsDefault;
+		// Retour joueur 2026-07-21 — la capacité vient EXCLUSIVEMENT de la
+		// ceinture équipée : sans ceinture, AUCUNE case (avant : 4 par défaut).
+		// La « ceinture de base 4 slots » du démarrage est désormais un VRAI
+		// objet équipé d'office (EnsureStarterBelt), que le joueur peut retirer.
+		return 0u;
+	}
+
+	void ServerApp::EnsureStarterBelt(ConnectedClient& client)
+	{
+		using engine::items::EquipmentSlot;
+		const size_t waistIdx = static_cast<size_t>(EquipmentSlot::Waist);
+		if (client.equipment[waistIdx] != 0u)
+			return; // une ceinture est déjà portée.
+		// Le joueur possède-t-il une ceinture dans le sac (retirée volontairement,
+		// ou trouvée sans l'équiper) ? Dans ce cas on respecte son choix.
+		if (m_itemCatalogLoaded)
+		{
+			for (const ItemStack& stack : client.inventory)
+			{
+				const engine::items::ItemDefinition* def = m_itemCatalog.Find(stack.itemId);
+				if (def != nullptr && def->beltSlots > 0u)
+					return;
+			}
+		}
+		client.equipment[waistIdx] = engine::items::kStarterBeltItemId;
+		LOG_INFO(Net,
+			"[ServerApp] Ceinture de depart equipee d'office (client_id={}, item_id={})",
+			client.clientId, engine::items::kStarterBeltItemId);
 	}
 
 	void ServerApp::HandleConsumableUse(ConnectedClient& client, uint32_t itemId)

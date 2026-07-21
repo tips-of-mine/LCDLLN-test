@@ -49,6 +49,13 @@ namespace engine::server
 		uint32_t quantity = 0;
 	};
 
+	/// Retour joueur 2026-07-21 — nombre maximal de PILES du sac. Miroir de la
+	/// grille d'inventaire client (8×8, cf. kInventoryColumns/kInventoryRows
+	/// dans src/client/inventory/InventoryUi.cpp) : au-delà, une pile serait
+	/// invisible à l'écran. Le serveur s'en sert pour refuser un déséquipement
+	/// quand le sac est plein (cf. HandleUnequipRequest).
+	inline constexpr size_t kInventoryStacksMax = 64;
+
 	/// Minimal replicated entity state shared by spawn and snapshot messages.
 	struct EntityState
 	{

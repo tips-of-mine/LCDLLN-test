@@ -339,12 +339,24 @@ namespace engine::render
 				}
 			};
 
-			// Colonne gauche (slots 1..5 : tête, torse, jambes, pieds, mains).
+			// Retour de test 2026-07-21 — la MAIN GAUCHE (OffHand : bouclier /
+			// 2ᵈᵉ main) vit dans la colonne GAUCHE et la MAIN DROITE (MainHand :
+			// arme) dans la colonne DROITE (avant : les deux mains empilées à
+			// droite, « Main gauche » à droite de l'écran). Les gants (Hands)
+			// prennent la place libérée en colonne droite.
+			using engine::items::EquipmentSlot;
+			const EquipmentSlot leftColumn[5] = {
+				EquipmentSlot::Head, EquipmentSlot::Chest, EquipmentSlot::Legs,
+				EquipmentSlot::Feet, EquipmentSlot::OffHand };
+			const EquipmentSlot rightColumn[5] = {
+				EquipmentSlot::MainHand, EquipmentSlot::Hands, EquipmentSlot::Amulet,
+				EquipmentSlot::Ring1, EquipmentSlot::Ring2 };
 			for (std::size_t i = 0; i < 5; ++i)
-				drawEquipCell(1 + i, bandX, bandY + static_cast<float>(i) * (cell + gap));
-			// Colonne droite (slots 6..10 : arme, bouclier, amulette, 2 anneaux).
+				drawEquipCell(static_cast<std::size_t>(leftColumn[i]),
+					bandX, bandY + static_cast<float>(i) * (cell + gap));
 			for (std::size_t i = 0; i < 5; ++i)
-				drawEquipCell(6 + i, rightX, bandY + static_cast<float>(i) * (cell + gap));
+				drawEquipCell(static_cast<std::size_t>(rightColumn[i]),
+					rightX, bandY + static_cast<float>(i) * (cell + gap));
 			// Ceinture v2 (2026-07-20) — 11e cellule (slot Waist) en bas de la
 			// colonne gauche : la ceinture équipée porte la capacité de la
 			// barre d'objets actifs (4 par défaut, 12 max).

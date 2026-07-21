@@ -232,13 +232,14 @@ namespace engine::client
 		std::array<std::string, 10> actionBarLayout{};
 		/// Roadmap-3 (2026-07-19) / Ceinture v2 (2026-07-20) — ceinture : slots
 		/// d'objets actifs (jetons "item:<id>"), taille = capacité ACTIVE
-		/// autoritaire (4 par défaut, 12 max — ceinture équipée en Waist),
-		/// reçue via BeltLayoutUpdate (kind 100, count-prefixed).
-		/// DÉFAUT : 4 cases vides (= kBeltSlotsDefault, « ceinture de base »
-		/// du joueur) — la barre est visible dès l'entrée en monde, AVANT le
-		/// 1er update autoritaire (retour de test 2026-07-20 : barre invisible
-		/// tant que le kind 100 n'était pas reçu/décodé).
-		std::vector<std::string> beltLayout = std::vector<std::string>(4);
+		/// autoritaire (max 12), reçue via BeltLayoutUpdate (kind 100).
+		/// Retour de test 2026-07-21 — DÉFAUT : VIDE. La capacité vient
+		/// EXCLUSIVEMENT de la ceinture équipée (0 case sans ceinture) et le
+		/// serveur garantit la « Ceinture usée » de départ (EnsureStarterBelt)
+		/// + pousse le kind 100 à l'enter-world : l'ancien défaut local de
+		/// 4 cases (fix #1005, d'avant cette règle) affichait des cases
+		/// fantômes alors que le slot Taille était vide.
+		std::vector<std::string> beltLayout{};
 		/// PR-C — progression de niveau (barre d'XP), reçue via PlayerXpUpdate
 		/// (enter-world + chaque gain d'XP). \c xpForNextLevel = 0 signale le cap
 		/// de niveau. \c hasXp reste faux tant qu'aucun PlayerXpUpdate n'est reçu.

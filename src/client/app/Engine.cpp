@@ -13436,6 +13436,18 @@ namespace engine
 					}
 				}
 				}
+				// Retour joueur 2026-07-21 — rangée « Ceinture » de la fenêtre
+				// Personnage : nouveau layout demandé (drop depuis le sac,
+				// réorganisation, retrait au clic droit), envoyé kind 99 ; le
+				// serveur revalide la possession et renvoie le layout
+				// autoritaire (kind 100), qui rafraîchit fenêtre ET barre HUD.
+				std::vector<std::string> windowBeltLayout;
+				if (m_characterWindowImGui->ConsumeBeltLayout(windowBeltLayout))
+				{
+					const uint32_t beltWinClientId = m_gameplayUdp.ServerClientId();
+					if (beltWinClientId != 0u)
+						(void)m_gameplayUdp.SendSetBeltLayout(beltWinClientId, windowBeltLayout);
+				}
 			}
 			// CMANGOS.21 (Phase 5.21 step 3+4) — Render du panneau Arena si
 			// visible. Le popup proposal s'affiche aussi quand pendingProposalId

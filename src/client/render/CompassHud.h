@@ -2,8 +2,10 @@
 // Petite boussole HUD (ImGui) pour le client de jeu + arc temporel.
 //
 // Rôle :
-//  - Boussole : le HAUT = direction regardée par la caméra ; une AIGUILLE rouge
-//    indique toujours le NORD et tourne quand le joueur pivote. Lettres N/E/S/O.
+//  - Boussole : CADRAN FIXE (retour de test 2026-07-21) — N toujours en haut,
+//    E à droite, S en bas, O à gauche ; c'est l'AIGUILLE rouge qui tourne et
+//    indique la direction regardée par la caméra. (Avant : cadran tournant,
+//    haut = cap — inversé sur retour utilisateur.)
 //  - Arc temporel (demi-cercle au-dessus) : dégradé nuit↔jour avec un marqueur
 //    (soleil le jour / lune la nuit) qui balaie l'arc selon l'heure du monde
 //    (minuit à gauche → midi en haut → minuit à droite). Permet au joueur de
@@ -102,11 +104,11 @@ namespace engine::render
 		dl->AddCircleFilled(center, radiusPx + 4.0f, IM_COL32(10, 12, 18, 160), 48);
 		dl->AddCircle(center, radiusPx, IM_COL32(220, 225, 235, 220), 48, 2.0f);
 
-		// place : le HAUT = cap caméra. phi = bearing - heading ; up = -Y.
+		// Retour de test 2026-07-21 — CADRAN FIXE : les lettres sont placées à
+		// leur azimut absolu (N en haut, E à droite...), sans soustraire le cap.
 		auto place = [&](float bearing, float r) -> ImVec2
 		{
-			const float phi = bearing - heading;
-			return ImVec2(center.x + r * std::sin(phi), center.y - r * std::cos(phi));
+			return ImVec2(center.x + r * std::sin(bearing), center.y - r * std::cos(bearing));
 		};
 
 		struct Card { float bearing; const char* label; };
@@ -121,16 +123,17 @@ namespace engine::render
 			            IM_COL32(235, 238, 245, 235), c.label);
 		}
 
-		// Aiguille : pointe rouge vers le Nord (tourne avec le cap), queue grise.
-		const ImVec2 north = place(0.0f, radiusPx - 6.0f);
-		const ImVec2 south = place(kPi, radiusPx - 6.0f);
-		// Base PERPENDICULAIRE à l'axe N-S de l'aiguille (axe = (-sin h, -cos h) ;
-		// perpendiculaire = (cos h, -sin h)). Sinon l'épaisseur apparente de
+		// Aiguille : c'est ELLE qui tourne — la pointe rouge indique la
+		// direction REGARDÉE (le cap) sur le cadran fixe ; queue grise opposée.
+		const ImVec2 tip  = place(heading, radiusPx - 6.0f);
+		const ImVec2 tail = place(heading + kPi, radiusPx - 6.0f);
+		// Base PERPENDICULAIRE à l'axe de l'aiguille (axe écran = (sin h, -cos h) ;
+		// perpendiculaire = (cos h, sin h)). Sinon l'épaisseur apparente de
 		// l'aiguille varie avec l'orientation de la caméra.
-		const ImVec2 sideA(center.x + 5.0f * std::cos(heading), center.y - 5.0f * std::sin(heading));
-		const ImVec2 sideB(center.x - 5.0f * std::cos(heading), center.y + 5.0f * std::sin(heading));
-		dl->AddTriangleFilled(sideA, sideB, south, IM_COL32(150, 155, 165, 235));
-		dl->AddTriangleFilled(sideA, sideB, north, IM_COL32(230, 60, 60, 255));
+		const ImVec2 sideA(center.x + 5.0f * std::cos(heading), center.y + 5.0f * std::sin(heading));
+		const ImVec2 sideB(center.x - 5.0f * std::cos(heading), center.y - 5.0f * std::sin(heading));
+		dl->AddTriangleFilled(sideA, sideB, tail, IM_COL32(150, 155, 165, 235));
+		dl->AddTriangleFilled(sideA, sideB, tip, IM_COL32(230, 60, 60, 255));
 		dl->AddCircleFilled(center, 3.0f, IM_COL32(245, 248, 252, 255), 12);
 	}
 }

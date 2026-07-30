@@ -1181,6 +1181,10 @@
         <span class="nav-icon">🌳</span> Compétences
         <span class="count-badge" id="cnt-skill_trees">0</span>
       </div>
+      <div class="sidebar-item" onclick="showSection('artisanat')" id="nav-artisanat">
+        <span class="nav-icon">⚒️</span> Artisanat
+        <span class="count-badge" id="cnt-artisanat">0</span>
+      </div>
       <div class="sidebar-item" onclick="showSection('companions')" id="nav-companions">
         <span class="nav-icon">🔮</span> Compagnons
         <span class="count-badge" id="cnt-companions">0</span>
@@ -1365,7 +1369,7 @@ var db = {
   meta: { source: "Les Chroniques de la Lune Noire (MMORPG)", version: "0.1.0", notes: [] },
   factions: [], classes: [], races: [], companions: [],
   persons: [], zones: [], lore: null,
-  competences: [], regles_transverses: [],
+  competences: [], regles_transverses: [], artisanat: [],
   tomes_config: [
     {id:"t00",label:"Tome 00",color:"#508cd2"},
     {id:"t01",label:"Tome 01",color:"#598dc4"},
@@ -1809,6 +1813,7 @@ function buildExportSchema() {
     quest_categories: db.quest_categories||[],
     tomes_config: (db.tomes_config||[]).map(function(t){return{id:t.id||'',label:t.label||''};}),
     competences: (db.competences||[]).map(function(c){return{id:c.id||'',name:c.name||'',school:c.school||'',usable_by:c.usable_by||[],prerequisite:c.prerequisite||'',description:c.description||'',progression:c.progression||[],effects:c.effects||[],incantation:c.incantation||c.incantation_known||'',training_steps:c.training_steps||c.learning_steps||[],source:c.source||'',notes:c.notes||[]};}),
+    artisanat: (db.artisanat||[]).map(function(a){return{id:a.id||'',name:a.name||'',type:a.type||'',icon:a.icon||'',min_level:(a.min_level!=null?a.min_level:20),description:a.description||'',products:(a.products||[]).map(function(p){return{name:p.name||'',level:(p.level!=null?p.level:20),value:(p.value!=null?p.value:null),usage:p.usage||'',description:p.description||''};}),notes:a.notes||[]};}),
     regles_transverses: (db.regles_transverses||[]).map(function(r){return{id:r.id||'',name:r.name||'',category:r.category||'',description:r.description||'',applies_to:r.applies_to||[],mechanique_jeu:r.mechanique_jeu||'',apparition_window:r.apparition_window||'',incantations_connues:r.incantations_connues||[],training_minimum:r.training_minimum||'',source:r.source||'',notes:r.notes||[]};}),
     weapons: (db.weapons||[]).map(function(w){return{id:w.id||'',name:w.name||'',type:w.type||'',hands:w.hands||'one',dual_wield:!!w.dual_wield,eligible_races:w.eligible_races||[],eligible_factions:w.eligible_factions||[],eligible_classes:w.eligible_classes||[],notes:w.notes||[]};}),
     server_commands: (db.server_commands||[]).map(function(c){return{id:c.id||'',name:c.name||'',rbac_level:c.rbac_level||'player',description:c.description||'',notes:c.notes||[]};})
@@ -1880,6 +1885,7 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
       if (!db.zones)            db.zones            = [];
       if (!db.lore)             db.lore             = null;
       if (!db.competences)      db.competences      = [];
+      if (!db.artisanat)        db.artisanat        = [];
       if (!db.regles_transverses) db.regles_transverses = [];
       if (!db.weapons)          db.weapons          = [];
       if (!db.server_commands)  db.server_commands  = [];
@@ -1978,6 +1984,7 @@ function showSection(section) {
     zones: renderZones,
     lore: renderLore,
     competences: renderCompetences,
+    artisanat: renderArtisanat,
     regles_transverses: renderReglesTransverses,
     carte: renderCarte,
     weapons: renderWeapons,
@@ -1987,7 +1994,7 @@ function showSection(section) {
 }
 
 function updateCounts() {
-  ['factions','classes','races','companions','villes','exploits','quests','mounts','raids','regions','loots','dialogues','creatures','timeline','persons','zones','skill_trees','competences','regles_transverses','weapons','server_commands'].forEach(function(k) {
+  ['factions','classes','races','companions','villes','exploits','quests','mounts','raids','regions','loots','dialogues','creatures','timeline','persons','zones','skill_trees','artisanat','competences','regles_transverses','weapons','server_commands'].forEach(function(k) {
     var el = document.getElementById('cnt-' + k);
     if (el) el.textContent = (db[k]||[]).length;
   });
@@ -2018,7 +2025,8 @@ function renderDashboard(el) {
     {key:'quests',icon:'📜',label:'Quêtes'},         {key:'mounts',icon:'🐴',label:'Montures'},
     {key:'raids',icon:'🗡️',label:'Raids'},          {key:'regions',icon:'🗺️',label:'Régions'},
     {key:'loots',icon:'💎',label:'Loots'},           {key:'creatures',icon:'🐉',label:'Créatures'},
-    {key:'skill_trees',icon:'🌳',label:'Arbres'},    {key:'timeline',icon:'📅',label:'Événements'},
+    {key:'skill_trees',icon:'🌳',label:'Arbres'},    {key:'artisanat',icon:'⚒️',label:'Artisanat'},
+    {key:'timeline',icon:'📅',label:'Événements'},
     {key:'persons',icon:'👤',label:'PNJ'},
     {key:'zones',icon:'📍',label:'Zones'},
     {key:'competences',icon:'✨',label:'Compétences'},
@@ -5537,6 +5545,7 @@ var SECTION_META = {
   dialogues: {icon:'💬',  label:'Dialogues',  section:'dialogues'},
   creatures: {icon:'🐉',  label:'Créatures',  section:'creatures'},
   skill_trees:{icon:'🌳', label:'Compétences',section:'skill_trees'},
+  artisanat: {icon:'⚒️',  label:'Artisanat',  section:'artisanat'},
   timeline:  {icon:'📅',  label:'Timeline',   section:'timeline'},
   persons:   {icon:'👤',  label:'PNJ',        section:'persons'},
   zones:     {icon:'📍',  label:'Zones',      section:'zones'},
@@ -6046,12 +6055,26 @@ function skillEffectsStr(skill){
   return e == null ? '' : String(e);
 }
 
+/// Libellés de portée d'une compétence, prêts à afficher (chaînes simples) :
+/// distance maximale d'utilisation (range_m), rayon d'effet de zone (radius_m,
+/// uniquement pour une cible 'zone' et si > 0) et libellé libre (range_label).
+/// \return tableau de chaînes, éventuellement vide.
+function skillRangeParts(skill){
+  if(!skill) return [];
+  var parts=[];
+  if(skill.range_m!=null && skill.range_m!=='') parts.push('📏 '+skill.range_m+' m');
+  if(skill.target_type==='zone' && skill.radius_m!=null && skill.radius_m!=='' && Number(skill.radius_m)>0) parts.push('⭕ '+skill.radius_m+' m');
+  if(skill.range_label) parts.push(String(skill.range_label));
+  return parts;
+}
+
 /// Ligne compacte (cible + dégâts/soin) affichée sous un nœud de l'arbre.
 /// \return HTML prêt à concaténer, ou '' si la compétence n'a ni cible ni puissance.
 function skillNodePowerLine(skill){
   var parts=[];
   var tl=skillTargetLabel(skill.target_type); if(tl) parts.push(tl);
   var pl=skillPowerLabel(skill); if(pl) parts.push(pl);
+  skillRangeParts(skill).forEach(function(p){ parts.push(p); });
   if(!parts.length) return '';
   return '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.2rem;display:flex;gap:0.45rem;flex-wrap:wrap">'+parts.map(esc).join(' ')+'</div>';
 }
@@ -6229,6 +6252,9 @@ function openSkillDetail(treeIdx, skillIdx) {
     (skill.cost?badge(skill.cost+' point'+(skill.cost>1?'s':''),  '#c9a84c'):'')+
     (skill.target_type?badge(skillTargetLabel(skill.target_type), skill.target_type==='zone'?'#c08a3a':'#6fa36f'):'')+
     (skillPowerLabel(skill)?badge(skillPowerLabel(skill), skill.power_kind==='heal'?'#5fae6a':'#c0563a'):'')+
+    (skill.range_m!=null&&skill.range_m!==''?badge('📏 Portée '+skill.range_m+' m', '#8a8f98'):'')+
+    (skill.target_type==='zone'&&skill.radius_m!=null&&skill.radius_m!==''&&Number(skill.radius_m)>0?badge('⭕ Rayon '+skill.radius_m+' m', '#8a8f98'):'')+
+    (skill.range_label?badge(skill.range_label, '#8a8f98'):'')+
     '</div>'+
     (skill.description?'<div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6">'+esc(skill.description)+'</div>':'')+
     (skillEffectsStr(skill)?'<div style="background:var(--bg-deep);border:1px solid '+bColor+'44;border-radius:3px;padding:0.6rem 0.75rem"><div style="font-size:0.6rem;font-family:Cinzel,serif;text-transform:uppercase;letter-spacing:0.12em;color:'+bColor+';margin-bottom:0.25rem">Effets</div><div style="font-size:0.82rem;color:var(--text-primary)">'+esc(skillEffectsStr(skill))+'</div></div>':'')+
@@ -6300,7 +6326,7 @@ function renderSkillEditorBody() {
       h += '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.35rem 0.6rem;border-bottom:1px solid var(--border)">';
       h += '<span style="color:'+bc+';font-size:0.8rem;width:1.2rem">'+esc(s.icon||'✦')+'</span>';
       h += '<span style="flex:2;font-size:0.8rem">'+esc(s.name)+'</span>';
-      h += '<span style="font-size:0.7rem;color:var(--text-dim)">T'+s.tier+(s.level?' · Niv.'+s.level:'')+(b?' · '+b.name:'')+'</span>';
+      h += '<span style="font-size:0.7rem;color:var(--text-dim)">T'+s.tier+(s.level?' · Niv.'+s.level:'')+(s.range_m!=null&&s.range_m!==''?' · '+s.range_m+'m':'')+(b?' · '+b.name:'')+'</span>';
       h += '<button class="btn btn-ghost btn-sm" style="padding:0.1rem 0.4rem" onclick="editSkillInline('+si+')">✎</button>';
       h += '<button class="note-del-btn" onclick="window._editTree.skills.splice('+si+',1);renderSkillEditorBody()">✕</button>';
       h += '</div>';
@@ -6320,6 +6346,11 @@ function renderSkillEditorBody() {
   h += '<input class="form-input" id="sk_level" type="number" min="1" placeholder="Niveau d\'obtention" style="padding:0.2rem 0.4rem" title="Niveau du personnage requis pour obtenir cette étape">';
   h += '<select class="form-select" id="sk_target" style="padding:0.2rem 0.4rem" title="Portée de la compétence"><option value="">— Cible —</option><option value="unitaire">🎯 Unitaire</option><option value="zone">🌐 Zone</option></select>';
   h += '<div style="display:flex;gap:0.3rem"><select class="form-select" id="sk_power_kind" style="flex:1;padding:0.2rem 0.4rem" title="Type d\'effet chiffré"><option value="none">— Aucun —</option><option value="damage">⚔️ Dégâts</option><option value="heal">💚 Soin</option></select><input class="form-input" id="sk_power_value" type="number" min="0" placeholder="Valeur" style="width:70px;padding:0.2rem 0.4rem" title="Dégâts infligés ou PV rendus"></div>';
+  h += '</div>';
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:0.4rem;margin-bottom:0.4rem">';
+  h += '<input class="form-input" id="sk_range_m" type="number" min="0" step="0.5" placeholder="Distance max (m)" style="padding:0.2rem 0.4rem" title="Distance maximale à laquelle la compétence peut être utilisée (mètres)">';
+  h += '<input class="form-input" id="sk_radius_m" type="number" min="0" step="0.5" placeholder="Rayon zone (m)" style="padding:0.2rem 0.4rem" title="Rayon d\'effet pour une compétence de zone (mètres)">';
+  h += '<input class="form-input" id="sk_range_label" placeholder="Libellé portée (ex: corps-à-corps)" style="padding:0.2rem 0.4rem" title="Libellé libre de portée">';
   h += '</div>';
   h += '<input class="form-input" id="sk_desc" placeholder="Description…" style="margin-bottom:0.3rem;padding:0.2rem 0.4rem">';
   h += '<input class="form-input" id="sk_effects" placeholder="Effets en jeu…" style="margin-bottom:0.4rem;padding:0.2rem 0.4rem">';
@@ -6344,6 +6375,9 @@ function addSkillToTree() {
     target_type: document.getElementById('sk_target').value || '',
     power_kind: document.getElementById('sk_power_kind').value || 'none',
     power_value: parseInt(document.getElementById('sk_power_value').value,10) || null,
+    range_m: (isNaN(parseFloat(document.getElementById('sk_range_m').value)) ? null : parseFloat(document.getElementById('sk_range_m').value)),
+    radius_m: (isNaN(parseFloat(document.getElementById('sk_radius_m').value)) ? null : parseFloat(document.getElementById('sk_radius_m').value)),
+    range_label: (document.getElementById('sk_range_label').value||'').trim(),
     description: (document.getElementById('sk_desc').value||'').trim(),
     effects: (document.getElementById('sk_effects').value||'').trim(),
     prerequisites: []
@@ -6379,6 +6413,10 @@ function editSkillInline(si) {
       '<option value="damage"'+(skill.power_kind==='damage'?' selected':'')+'>⚔️ Dégâts</option>'+
       '<option value="heal"'+(skill.power_kind==='heal'?' selected':'')+'>💚 Soin</option></select>'+
       '<input class="form-input" id="eskill_power_value" type="number" min="0" value="'+(skill.power_value||'')+'" placeholder="Valeur" style="width:70px" title="Dégâts infligés ou PV rendus"></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:0.5rem;margin-bottom:0.5rem">'+
+    '<input class="form-input" id="eskill_range_m" type="number" min="0" step="0.5" value="'+(skill.range_m!=null&&skill.range_m!==''?skill.range_m:'')+'" placeholder="Distance max (m)" title="Distance maximale d\'utilisation (mètres)">'+
+    '<input class="form-input" id="eskill_radius_m" type="number" min="0" step="0.5" value="'+(skill.radius_m!=null&&skill.radius_m!==''?skill.radius_m:'')+'" placeholder="Rayon zone (m)" title="Rayon d\'effet de zone (mètres)">'+
+    '<input class="form-input" id="eskill_range_label" value="'+esc(skill.range_label||'')+'" placeholder="Libellé portée (ex: corps-à-corps)" title="Libellé libre de portée"></div>'+
     '<textarea class="form-textarea" id="eskill_desc" style="height:55px" placeholder="Description">'+esc(skill.description||'')+'</textarea>'+
     '<textarea class="form-textarea" id="eskill_fx" style="height:55px;margin-top:0.4rem" placeholder="Effets en jeu">'+esc(skillEffectsStr(skill))+'</textarea>';
   document.getElementById('modalFooter').innerHTML =
@@ -6393,6 +6431,9 @@ function editSkillInline(si) {
     'window._editTree.skills['+si+'].target_type=document.getElementById(\'eskill_target\').value||\'\';'+
     'window._editTree.skills['+si+'].power_kind=document.getElementById(\'eskill_power_kind\').value||\'none\';'+
     'window._editTree.skills['+si+'].power_value=parseInt(document.getElementById(\'eskill_power_value\').value,10)||null;'+
+    'window._editTree.skills['+si+'].range_m=(isNaN(parseFloat(document.getElementById(\'eskill_range_m\').value))?null:parseFloat(document.getElementById(\'eskill_range_m\').value));'+
+    'window._editTree.skills['+si+'].radius_m=(isNaN(parseFloat(document.getElementById(\'eskill_radius_m\').value))?null:parseFloat(document.getElementById(\'eskill_radius_m\').value));'+
+    'window._editTree.skills['+si+'].range_label=(document.getElementById(\'eskill_range_label\').value||\'\').trim();'+
     'window._editTree.skills['+si+'].description=document.getElementById(\'eskill_desc\').value;'+
     'window._editTree.skills['+si+'].effects=document.getElementById(\'eskill_fx\').value;'+
     'openSkillTreeEditor(window._editTree.class_id);})()">💾 OK</button>';
@@ -8375,6 +8416,215 @@ function saveCompetence(idx) {
 function deleteCompetence(idx) {
   confirmDelete('Supprimer «&nbsp;'+db.competences[idx].name+'&nbsp;» ?', function(){
     db.competences.splice(idx,1); showSection('competences'); toast('Compétence supprimée');
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// ARTISANAT — métiers de production ouverts à tous les joueurs
+// (un seul métier choisissable par joueur à partir du niveau 20)
+// ═══════════════════════════════════════════════════════════
+
+// Catalogue des types de métiers d'artisanat (clé → libellé, couleur, icône).
+var ARTISANAT_TYPES = {
+  forgeron:   {label:'Forgeron',   color:'#b5651d', icon:'⚒️'},
+  medecin:    {label:'Médecin',    color:'#c05c5c', icon:'⚕️'},
+  herboriste: {label:'Herboriste', color:'#5a9e5a', icon:'🌿'},
+  alchimiste: {label:'Alchimiste', color:'#9b59b6', icon:'⚗️'},
+  cuisinier:  {label:'Cuisinier',  color:'#e0a030', icon:'🍳'},
+  tailleur:   {label:'Tailleur',   color:'#4a90c0', icon:'🧵'},
+  bijoutier:  {label:'Bijoutier',  color:'#d4af37', icon:'💎'},
+  enchanteur: {label:'Enchanteur', color:'#7b68ee', icon:'✨'},
+  mineur:     {label:'Mineur',     color:'#808080', icon:'⛏️'},
+  other:      {label:'Autre',      color:'#708090', icon:'🛠️'}
+};
+
+/// Retourne la définition d'un type de métier, avec un repli neutre si le type
+/// n'est pas connu du catalogue.
+function getArtisanatType(k){ return ARTISANAT_TYPES[k] || {label:k||'—', color:'#708090', icon:'🛠️'}; }
+
+/// Affiche la rubrique Artisanat : barre de recherche + filtre par type,
+/// bandeau d'explication (métier unique choisissable au niveau 20) et grille
+/// de cartes des métiers définis.
+function renderArtisanat(el){
+  var h = '<div class="panel-header"><div class="panel-title">⚒️ Artisanat</div>';
+  h += '<div style="display:flex;gap:0.6rem;align-items:center">';
+  h += '<div class="search-bar"><input type="text" placeholder="Rechercher..." id="searchArti" oninput="renderArtisanat(document.getElementById(\'sectionContent\'))"></div>';
+  h += '<select class="form-select" id="filterArtiType" style="width:170px;padding:0.35rem 0.5rem;font-size:0.75rem" onchange="renderArtisanat(document.getElementById(\'sectionContent\'))">';
+  h += '<option value="">Tous les types</option>';
+  Object.keys(ARTISANAT_TYPES).forEach(function(k){ var t=ARTISANAT_TYPES[k]; h+='<option value="'+k+'">'+t.icon+' '+t.label+'</option>'; });
+  h += '</select>';
+  h += '<button class="btn btn-gold btn-sm" onclick="openArtisanatForm()">+ Ajouter</button></div></div>';
+  h += '<div style="background:var(--bg-deep);border:1px solid var(--border);border-left:3px solid #a06040;border-radius:3px;padding:0.6rem 0.8rem;margin-bottom:1rem;font-size:0.8rem;color:var(--text-secondary)">⚒️ Métiers d\'artisanat ouverts à <strong>tous les joueurs</strong>. Chaque joueur en choisit <strong>un seul</strong> dans la liste à partir du <strong>niveau&nbsp;20</strong>, pour produire des objets à utiliser, vendre ou offrir à d\'autres joueurs.</div>';
+  h += '<div class="cards-grid" id="artiGrid"></div>';
+  var q  = document.getElementById('searchArti')   ? document.getElementById('searchArti').value.toLowerCase() : '';
+  var tf = document.getElementById('filterArtiType') ? document.getElementById('filterArtiType').value : '';
+  el.innerHTML = h;
+  var _sf=document.getElementById('searchArti'); if(_sf&&q){_sf.value=q;_sf.focus();_sf.setSelectionRange(q.length,q.length);}
+  var _ff=document.getElementById('filterArtiType'); if(_ff&&tf) _ff.value=tf;
+  var list = (db.artisanat||[]).filter(function(a){
+    if(tf && a.type!==tf) return false;
+    return !q || (a.name&&a.name.toLowerCase().includes(q)) ||
+           (a.description&&a.description.toLowerCase().includes(q)) ||
+           (a.type&&a.type.toLowerCase().includes(q));
+  });
+  var grid = el.querySelector('#artiGrid');
+  if(!list.length){ grid.innerHTML='<div class="empty-state">Aucun métier d\'artisanat. Cliquez « + Ajouter » pour en créer un (forgeron, médecin, herboriste…).</div>'; return; }
+  grid.innerHTML = list.map(function(a){
+    var gi = db.artisanat.indexOf(a);
+    var t = getArtisanatType(a.type);
+    var icon = a.icon || t.icon;
+    var card = '<div class="card" style="--card-accent:'+t.color+'">';
+    card += '<div class="card-header"><div>';
+    card += '<div class="card-title">'+esc(icon)+' '+esc(a.name)+'</div>';
+    card += '<div class="card-id">'+esc(a.id)+'</div></div>';
+    card += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.2rem">';
+    card += badge(t.label, t.color);
+    card += badge('Niv. '+(a.min_level!=null?a.min_level:20)+'+', '#7a9ec2');
+    card += '</div></div>';
+    if(a.description) card += '<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:0.3rem;line-height:1.5">'+esc(a.description.substring(0,120))+(a.description.length>120?'…':'')+'</div>';
+    var nP=(a.products||[]).length;
+    if(nP){
+      card += cardRow('Production', badge('📦 '+nP+' objet'+(nP>1?'s':''), t.color), false);
+      var preview=(a.products||[]).slice(0,3).map(function(p){return '<div style="font-size:0.72rem;color:var(--text-secondary)">• '+esc(p.name)+(p.value!=null?' <span style="color:var(--accent-gold)">('+p.value+' 🪙)</span>':'')+'</div>';}).join('');
+      card += '<div style="margin-top:0.25rem">'+preview+(nP>3?'<div style="font-size:0.7rem;color:var(--text-dim)">+'+(nP-3)+' autre'+(nP-3>1?'s':'')+'…</div>':'')+'</div>';
+    }
+    card += '<div class="card-actions">';
+    card += '<button class="btn btn-ghost btn-sm" onclick="openArtisanatDetail('+gi+')" title="Détail & Objets">👁️</button>';
+    card += '<button class="btn btn-ghost btn-sm" onclick="openArtisanatForm('+gi+')">✎</button>';
+    card += '<button class="btn btn-danger" onclick="deleteArtisanat('+gi+')">✕</button>';
+    card += '</div></div>';
+    return card;
+  }).join('');
+}
+
+/// Fiche détail (lecture seule) d'un métier : type, niveau requis, description,
+/// liste des objets produits (niveau / valeur / usage) et notes.
+function openArtisanatDetail(idx){
+  var a = db.artisanat[idx]; if(!a) return;
+  var t = getArtisanatType(a.type);
+  var icon = a.icon || t.icon;
+  var h = '<div style="display:flex;flex-direction:column;gap:0.9rem;max-height:70vh;overflow-y:auto;padding:0.25rem 0">';
+  h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)">';
+  h += badge(t.icon+' '+t.label, t.color);
+  h += badge('Choisissable au Niv. '+(a.min_level!=null?a.min_level:20), '#7a9ec2');
+  h += '</div>';
+  if(a.description) h += renderDetailBlock('📖 Description', a.description, t.color);
+  if((a.products||[]).length){
+    h += '<div><div style="font-family:Cinzel,serif;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--accent-gold);margin-bottom:0.5rem">📦 Objets produits</div>';
+    a.products.forEach(function(p){
+      h += '<div style="display:flex;gap:0.75rem;padding:0.5rem 0.65rem;margin-bottom:0.3rem;background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;border-left:3px solid '+t.color+'">';
+      h += '<div style="flex:1"><div style="font-size:0.84rem;font-weight:600;color:var(--text-primary);margin-bottom:0.15rem">'+esc(p.name)+'</div>';
+      if(p.description) h += '<div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.5">'+esc(p.description)+'</div>';
+      var meta=[];
+      if(p.level!=null) meta.push('Niv. '+p.level);
+      if(p.value!=null) meta.push(p.value+' 🪙');
+      if(p.usage) meta.push(p.usage==='utiliser'?'🛡️ Utiliser':p.usage==='vendre'?'💰 Vendre':'🔁 Utiliser / Vendre');
+      if(meta.length) h += '<div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.2rem">'+esc(meta.join(' · '))+'</div>';
+      h += '</div></div>';
+    });
+    h += '</div>';
+  }
+  if((a.notes||[]).length){
+    h += '<div><div style="font-family:Cinzel,serif;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:0.35rem">📝 Notes</div>';
+    h += '<ul style="margin:0;padding-left:1.2rem">'+a.notes.map(function(n){return '<li style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.25rem">'+esc(n)+'</li>';}).join('')+'</ul></div>';
+  }
+  h += '</div>';
+  document.getElementById('modalTitle').textContent = icon+' '+a.name;
+  document.getElementById('modalBody').innerHTML = h;
+  document.getElementById('modalFooter').innerHTML =
+    '<button class="btn btn-ghost" onclick="closeModal()">Fermer</button>'+
+    '<button class="btn btn-gold" onclick="closeModal();openArtisanatForm('+idx+')">✎ Modifier</button>';
+  openModal();
+}
+
+/// Formulaire de création / édition d'un métier d'artisanat.
+/// \param idx index dans db.artisanat si édition, undefined si création.
+/// Effet de bord : initialise window._currentNotes et window._artisanatProducts.
+function openArtisanatForm(idx){
+  var isEdit = idx!==undefined;
+  var a = isEdit ? JSON.parse(JSON.stringify(db.artisanat[idx])) :
+    {id:'',name:'',type:'',icon:'',min_level:20,description:'',products:[],notes:[]};
+  window._currentNotes = toArr(a.notes).slice();
+  window._artisanatProducts = (a.products||[]).map(function(p){return {name:p.name||'',level:(p.level!=null?p.level:20),value:(p.value!=null?p.value:null),usage:p.usage||'',description:p.description||''};});
+
+  var typeOpts = '<option value="">— Type de métier —</option>';
+  Object.keys(ARTISANAT_TYPES).forEach(function(k){ var t=ARTISANAT_TYPES[k]; typeOpts+='<option value="'+k+'"'+(a.type===k?' selected':'')+' style="color:'+t.color+'">'+t.icon+' '+t.label+'</option>'; });
+
+  document.getElementById('modalTitle').textContent = isEdit ? 'Modifier le Métier' : 'Nouveau Métier d\'Artisanat';
+  document.getElementById('modalBody').innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
+    '<div class="form-group"><label class="form-label">ID*</label><input class="form-input" id="arti_id" value="'+esc(a.id)+'" placeholder="metier_forgeron" oninput="lockIdField(\'arti_id\')"></div>'+
+    '<div class="form-group"><label class="form-label">Nom*</label><input class="form-input" id="arti_name" value="'+esc(a.name)+'" placeholder="Forgeron" oninput="autoGenId(this,\'arti_id\')"></div></div>'+
+    '<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:0.75rem">'+
+    '<div class="form-group"><label class="form-label">Type de métier</label><select class="form-select" id="arti_type">'+typeOpts+'</select></div>'+
+    '<div class="form-group"><label class="form-label">Icône</label><input class="form-input" id="arti_icon" value="'+esc(a.icon||'')+'" placeholder="⚒️"></div>'+
+    '<div class="form-group"><label class="form-label">Niveau requis</label><input class="form-input" id="arti_minlevel" type="number" min="1" value="'+(a.min_level!=null?a.min_level:20)+'" title="Niveau à partir duquel un joueur peut choisir ce métier"></div></div>'+
+    '<div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" style="height:70px" id="arti_desc" placeholder="Rôle du métier, ce qu\'il permet de produire…">'+esc(a.description||'')+'</textarea></div>'+
+    '<div class="form-group"><label class="form-label">Objets produits <span style="font-size:0.68rem;color:var(--text-dim)">(à utiliser ou vendre)</span></label>'+
+    '<div id="artisanat_products_list"></div>'+
+    '<button class="btn btn-primary btn-sm" style="margin-top:0.3rem" onclick="addArtisanatProduct()">+ Ajouter un objet</button></div>'+
+    '<div class="form-group"><label class="form-label">Notes</label>'+
+    '<div class="notes-editor"><div class="note-input-row"><input type="text" id="noteInput" placeholder="Ajouter une note…">'+
+    '<button class="btn btn-primary btn-sm" onclick="addCurrentNote()">+ Ajouter</button></div>'+
+    '<div class="notes-list-edit" id="notesList"></div></div></div>';
+  renderNotesList(); renderArtisanatProductsList();
+  document.getElementById('modalFooter').innerHTML =
+    '<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>'+
+    '<button class="btn btn-gold" onclick="saveArtisanat('+(isEdit?idx:'undefined')+')">💾 Enregistrer</button>';
+  document.getElementById('noteInput').addEventListener('keydown',function(e){if(e.key==='Enter'){addCurrentNote();e.preventDefault();}});
+  openModal();
+}
+
+/// Ajoute un objet vierge (niveau 20 par défaut) à la liste en cours d'édition.
+function addArtisanatProduct(){
+  if(!window._artisanatProducts) window._artisanatProducts=[];
+  window._artisanatProducts.push({name:'',level:20,value:null,usage:'',description:''});
+  renderArtisanatProductsList();
+}
+
+/// (Ré)affiche l'éditeur de la liste des objets produits. Chaque champ met à
+/// jour window._artisanatProducts en place via onchange (pas de relecture DOM
+/// nécessaire à l'enregistrement).
+function renderArtisanatProductsList(){
+  var el=document.getElementById('artisanat_products_list'); if(!el)return;
+  var arr=window._artisanatProducts||[];
+  if(!arr.length){ el.innerHTML='<div style="padding:0.4rem;font-size:0.78rem;color:var(--text-dim)">Aucun objet produit pour l\'instant.</div>'; return; }
+  el.innerHTML=arr.map(function(p,i){
+    return '<div style="display:grid;grid-template-columns:2fr 0.7fr 0.9fr 1.1fr auto;gap:0.3rem;align-items:center;margin-bottom:0.3rem;background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;padding:0.35rem 0.45rem">'+
+      '<input class="form-input" style="padding:0.2rem 0.4rem" value="'+esc(p.name||'')+'" placeholder="Nom de l\'objet" onchange="window._artisanatProducts['+i+'].name=this.value">'+
+      '<input class="form-input" type="number" min="1" style="padding:0.2rem 0.4rem" value="'+(p.level!=null?p.level:'')+'" placeholder="Niv" title="Niveau requis pour produire l\'objet" onchange="window._artisanatProducts['+i+'].level=parseInt(this.value,10)||null">'+
+      '<input class="form-input" type="number" min="0" style="padding:0.2rem 0.4rem" value="'+(p.value!=null?p.value:'')+'" placeholder="Valeur 🪙" title="Valeur / prix de vente en pièces" onchange="window._artisanatProducts['+i+'].value=(isNaN(parseInt(this.value,10))?null:parseInt(this.value,10))">'+
+      '<select class="form-select" style="padding:0.2rem 0.4rem" onchange="window._artisanatProducts['+i+'].usage=this.value"><option value="">— Usage —</option>'+
+        [['utiliser','🛡️ Utiliser'],['vendre','💰 Vendre'],['les deux','🔁 Les deux']].map(function(u){return '<option value="'+u[0]+'"'+(p.usage===u[0]?' selected':'')+'>'+u[1]+'</option>';}).join('')+
+      '</select>'+
+      '<button class="note-del-btn" onclick="window._artisanatProducts.splice('+i+',1);renderArtisanatProductsList()">✕</button>'+
+      '<input class="form-input" style="grid-column:1/-1;padding:0.2rem 0.4rem;margin-top:0.2rem" value="'+esc(p.description||'')+'" placeholder="Description / effet de l\'objet" onchange="window._artisanatProducts['+i+'].description=this.value">'+
+    '</div>';
+  }).join('');
+}
+
+/// Enregistre le métier (création ou remplacement) dans db.artisanat puis
+/// réaffiche la rubrique. Les objets sans nom sont ignorés.
+function saveArtisanat(idx){
+  var obj = {
+    id:          document.getElementById('arti_id').value.trim(),
+    name:        document.getElementById('arti_name').value.trim(),
+    type:        document.getElementById('arti_type').value,
+    icon:        document.getElementById('arti_icon').value.trim(),
+    min_level:   parseInt(document.getElementById('arti_minlevel').value,10)||20,
+    description: document.getElementById('arti_desc').value.trim(),
+    products:    (window._artisanatProducts||[]).filter(function(p){return (p.name||'').trim();}).map(function(p){return {name:(p.name||'').trim(),level:(p.level!=null?p.level:20),value:(p.value!=null?p.value:null),usage:p.usage||'',description:(p.description||'').trim()};}),
+    notes:       window._currentNotes.slice()
+  };
+  if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
+  if(!db.artisanat) db.artisanat=[];
+  if(idx!==undefined) db.artisanat[idx]=obj; else db.artisanat.push(obj);
+  closeModal(); showSection('artisanat'); toast(idx!==undefined?'Métier modifié':'Métier ajouté');
+}
+
+function deleteArtisanat(idx){
+  confirmDelete('Supprimer «&nbsp;'+db.artisanat[idx].name+'&nbsp;» ?', function(){
+    db.artisanat.splice(idx,1); showSection('artisanat'); toast('Métier supprimé');
   });
 }
 

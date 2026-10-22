@@ -91,4 +91,40 @@ namespace engine::world::cells
 	/// Distance (m) du point global (x, z) au bord le plus proche de SA cellule
 	/// (0 sur la frontière, 5000 au centre). Sert au préchargement des voisines.
 	double DistanceToCellBorder(double x, double z);
+
+	/// Distance (m) du point global (x, z) au rectangle de la cellule \p c
+	/// (0 si le point est dedans). Sert à l'activation des régions voisines.
+	double DistanceToCell(CellCoord c, double x, double z);
+
+	// ------------------------------------------------------------------
+	// Monde « une seule carte » : les cellules sont des RÉGIONS d'une même
+	// carte. Deux entités de cellules différentes se voient, se combattent et
+	// se parlent comme si elles étaient dans la même zone ; seule l'activation
+	// (simulation, spawners) est découpée par cellule.
+	// ------------------------------------------------------------------
+
+	/// Nom de `world.active_zone` qui active le monde en cellules.
+	inline constexpr std::string_view kCellWorldName = "royaumes";
+
+	/// Identifiant de CARTE commun à toutes les cellules (grille d'intérêt,
+	/// comparaisons « même carte »). Hors de la plage des identifiants de
+	/// cellule et des zones historiques.
+	inline constexpr uint32_t kCellWorldMapId = 999999u;
+
+	/// Vrai si \p activeZone (valeur de `world.active_zone`) désigne le monde en cellules.
+	bool IsCellWorld(std::string_view activeZone);
+
+	/// Carte d'une zone : kCellWorldMapId pour une cellule, la zone elle-même sinon
+	/// (zones historiques feyhin / zone_0 / zone_1 / zone_2).
+	uint32_t MapIdOfZone(uint32_t zoneId);
+
+	/// Vrai si les deux zones appartiennent à la même carte (deux cellules
+	/// quelconques, ou deux zones historiques identiques).
+	bool SameMap(uint32_t zoneA, uint32_t zoneB);
+
+	/// Vrai si le dossier `zones/<dirName>` appartient au monde \p activeZone :
+	/// monde en cellules → uniquement les dossiers `cell_*` ; sinon → tous les
+	/// dossiers SAUF `cell_*` (les cellules générées ne polluent pas les zones
+	/// historiques). Utilisé par les chargeurs serveur (spawners, événements, récolte).
+	bool ZoneDirBelongsToWorld(std::string_view dirName, std::string_view activeZone);
 }

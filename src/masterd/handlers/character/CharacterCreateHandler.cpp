@@ -30,11 +30,20 @@ namespace engine::server
 		// Monde jouable — points de départ par race chargés ICI, au câblage du
 		// handler (avant tout trafic) : Handle() tourne sur les workers TCP du
 		// master, la table est ensuite en lecture seule (pas de verrou requis).
+		// Monde « Royaumes » : seulement si `world.active_zone` désigne le monde en
+		// cellules (positions GLOBALES). Une zone historique (feyhin) garde son
+		// repère local et le repli character_creation.default_spawn.*.
 		if (m_config != nullptr)
 		{
+			const std::string activeZone = m_config->GetString("world.active_zone", "");
+			if (!engine::world::cells::IsCellWorld(activeZone))
+			{
+				LOG_INFO(Net, "[CharacterCreateHandler] Monde historique (active_zone='{}') : depart default_spawn", activeZone);
+				return;
+			}
 			std::string startErr;
-			if (m_startLocations.LoadFromContent(*m_config, startErr))
-				LOG_INFO(Net, "[CharacterCreateHandler] Points de depart charges ({} race(s))", m_startLocations.Count());
+			if (m_startLocations.LoadForWorld(*m_config, activeZone, startErr))
+				LOG_INFO(Net, "[CharacterCreateHandler] Points de depart charges ({} race(s), monde '{}')", m_startLocations.Count(), activeZone);
 			else
 				LOG_WARN(Net, "[CharacterCreateHandler] Points de depart indisponibles ({}) — repli default_spawn", startErr);
 		}
@@ -253,7 +262,7 @@ namespace engine::server
 		double spawnYaw   = m_config ? m_config->GetDouble("character_creation.default_spawn.yaw_deg", 0.0) : 0.0;
 		const double spawnPitch = m_config ? m_config->GetDouble("character_creation.default_spawn.pitch_deg", -10.0) : -10.0;
 		// Monde jouable (chantier « Royaumes ») — un nouveau personnage apparaît
-		// dans la ville de départ de SA race (world/start_locations.json, généré
+		// dans la ville de départ de SA race (world/<monde>/start_locations.json, généré
 		// par tools/world_gen). Repli : clés character_creation.default_spawn.*.
 		if (const engine::world::StartLocation* start = m_startLocations.Resolve(parsed->raceId))
 		{

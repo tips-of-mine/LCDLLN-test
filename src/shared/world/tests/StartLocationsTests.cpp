@@ -32,6 +32,19 @@ int main()
 	Check(!t.LoadFromText(R"({ "schema_version": 2, "races": {} })", err), "schema_version inconnu rejete");
 	Check(t.Resolve("humains") == nullptr, "table videe apres echec");
 	Check(!t.LoadFromText("{ pas du json", err), "JSON invalide rejete");
+
+	// Cellules générées (monde en cellules) : liste optionnelle, validée.
+	Check(t.LoadFromText(json, err) && t.GeneratedCells().empty() && t.IsGeneratedCell({ 0, 0 }),
+		"sans liste : aucune restriction");
+	const char* withCells = R"({ "schema_version": 1, "generated_cells": "N003_W009, S009_E011",
+	  "races": { "humains": { "x": -90000, "y": 60, "z": -30000 } } })";
+	Check(t.LoadFromText(withCells, err) && t.GeneratedCells().size() == 2, "deux cellules generees");
+	Check(t.IsGeneratedCell({ 3, -9 }) && t.IsGeneratedCell({ -9, 11 }) && !t.IsGeneratedCell({ 0, 0 }),
+		"appartenance aux cellules generees");
+	Check(!t.IsGeneratedCell({ 600, 0 }), "hors carte du lore : jamais generee");
+	Check(t.All().size() == 1 && t.All()[0].race == "humains", "liste des departs");
+	Check(!t.LoadFromText(R"({ "schema_version": 1, "generated_cells": "N003_X009",
+	  "races": { "humains": { "x": 0, "z": 0 } } })", err) && t.Count() == 0, "cellule invalide rejetee");
 	if (g_fail == 0) std::printf("StartLocationsTests: OK\n");
 	return g_fail == 0 ? 0 : 1;
 }

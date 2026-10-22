@@ -530,6 +530,14 @@ namespace engine::server
 			Shutdown();
 			return false;
 		}
+		// Monde « Royaumes » — monde en cellules : départs par race, cellules générées.
+		if (!InitCellWorld())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: cell world data missing (world.active_zone=royaumes)");
+			Shutdown();
+			return false;
+		}
+
 		// Validation v12 (wire v13) — points de réapparition (non bloquant).
 		InitRespawnPoints();
 
@@ -703,7 +711,7 @@ namespace engine::server
 			SaveConnectedClient(client, "shutdown");
 			if (client.hasCell)
 			{
-				const auto zoneIt = m_zoneGrids.find(client.zoneId);
+				const auto zoneIt = m_zoneGrids.find(engine::world::cells::MapIdOfZone(client.zoneId));
 				if (zoneIt != m_zoneGrids.end())
 				{
 					(void)zoneIt->second.RemoveEntity(client.entityId);
@@ -717,7 +725,7 @@ namespace engine::server
 		m_clientIndexByEntityId.clear();
 		for (const MobEntity& mob : m_mobs)
 		{
-			const auto zoneIt = m_zoneGrids.find(mob.zoneId);
+			const auto zoneIt = m_zoneGrids.find(engine::world::cells::MapIdOfZone(mob.zoneId));
 			if (zoneIt != m_zoneGrids.end())
 			{
 				(void)zoneIt->second.RemoveEntity(mob.entityId);
@@ -726,7 +734,7 @@ namespace engine::server
 		m_mobs.clear();
 		for (const LootBagEntity& lootBag : m_lootBags)
 		{
-			const auto zoneIt = m_zoneGrids.find(lootBag.zoneId);
+			const auto zoneIt = m_zoneGrids.find(engine::world::cells::MapIdOfZone(lootBag.zoneId));
 			if (zoneIt != m_zoneGrids.end())
 			{
 				(void)zoneIt->second.RemoveEntity(lootBag.entityId);
@@ -1254,7 +1262,7 @@ namespace engine::server
 
 	bool ServerApp::LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg,
 		std::string& outName, std::string& outGender, uint32_t& outLevel,
-		std::string& outFactionId, std::string& outClassId)
+		std::string& outFactionId, std::string& outClassId, std::string& outRaceId)
 	{
 #if defined(SHARD_POSITION_DB)
 		if (m_characterDbPool == nullptr || characterId == 0u)
@@ -1275,8 +1283,10 @@ namespace engine::server
 		// R1-A — `faction_str`/`class_str` (cf. migrations 0040/0033) ajoutés EN FIN de SELECT
 		// (indices 7/8) pour ne pas décaler les indices des colonnes existantes (0..6).
 		// Alimentent le moteur de stats (PV à l'enter-world).
+		// Monde « Royaumes » — `race_str` (migration 0033) ajouté EN FIN (indice 9) :
+		// ville de départ quand la position sauvegardée est hors du monde généré.
 		auto* stmt = cache->Acquire(mysql,
-			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender, level, faction_str, class_str FROM characters "
+			"SELECT spawn_x, spawn_y, spawn_z, spawn_yaw_deg, name, gender, level, faction_str, class_str, race_str FROM characters "
 			"WHERE id = ? AND deleted_at IS NULL");
 		if (!stmt || !stmt->Bind(0, characterId) || !stmt->Execute() || !stmt->FetchRow())
 		{
@@ -1293,10 +1303,11 @@ namespace engine::server
 			outLevel = 1u; // garde-fou : niveau minimal 1.
 		outFactionId = stmt->GetString(7);
 		outClassId = stmt->GetString(8);
+		outRaceId = stmt->GetString(9);
 		return true;
 #else
 		(void)characterId; (void)x; (void)y; (void)z; (void)yawDeg; (void)outName; (void)outGender; (void)outLevel;
-		(void)outFactionId; (void)outClassId;
+		(void)outFactionId; (void)outClassId; (void)outRaceId;
 		return false;
 #endif
 	}
@@ -1696,7 +1707,8 @@ namespace engine::server
 			uint32_t dbLevel = 1u;
 			std::string dbFactionId;
 			std::string dbClassId;
-			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg, dbName, dbGender, dbLevel, dbFactionId, dbClassId))
+			std::string dbRaceId;
+			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg, dbName, dbGender, dbLevel, dbFactionId, dbClassId, dbRaceId))
 			{
 				acceptedClient.positionMetersX = dbX;
 				acceptedClient.positionMetersY = dbY;
@@ -1711,6 +1723,7 @@ namespace engine::server
 				// R1-A — faction/classe pour le moteur de stats (PV à l'enter-world).
 				acceptedClient.factionId = std::move(dbFactionId);
 				acceptedClient.classId = std::move(dbClassId);
+				acceptedClient.raceId = std::move(dbRaceId);
 				LOG_INFO(Net,
 					"[ServerApp] Spawn position chargee depuis la DB (character_key={}, name=\"{}\", gender=\"{}\", pos=({:.2f}, {:.2f}, {:.2f}))",
 					acceptedClient.persistenceCharacterKey, acceptedClient.characterName, acceptedClient.gender, dbX, dbY, dbZ);
@@ -1864,6 +1877,12 @@ namespace engine::server
 				acceptedClient.clientId);
 		}
 
+		// Monde « Royaumes » — position hors des cellules générées (ou héritée du
+		// repère local de feyhin) : replacée au point de départ de la race. Le
+		// client en est informé par un ForcePosition juste après le Welcome.
+		const bool relocatedAtLogin = NormalizeCellWorldLoginPosition(acceptedClient,
+			fileLoaded ? std::optional<uint32_t>(persistedState.zoneId) : std::nullopt);
+
 		// Combat SP2 — mémorise la position d'entrée en monde comme point de
 		// réapparition (la position finale est résolue à ce stade : persistance
 		// fichier, pont DB et défauts ont tous été appliqués).
@@ -1880,6 +1899,16 @@ namespace engine::server
 			UdpTransport::EndpointToString(endpoint),
 			m_clients.size());
 		(void)SendWelcome(acceptedClient);
+		if (relocatedAtLogin)
+		{
+			// Mouvement client-autoritaire : sans ce message, le client garderait sa
+			// position (hors monde) et l'imposerait au premier Input.
+			m_antiCheat.Reset(acceptedClient.persistenceCharacterKey);
+			SendForcePosition(acceptedClient, kForcePositionReasonTeleport);
+			// Sauvegarde immédiate : le fichier personnage porte désormais la zone de la
+			// cellule (plus de relocalisation au prochain login, même après un crash).
+			SaveConnectedClient(acceptedClient, "world_relocation");
+		}
 		(void)SendPlayerStats(acceptedClient);
 		(void)SendPlayerXpUpdate(acceptedClient); // PR-C — sync initial barre d'XP
 		(void)SendActionBarLayout(acceptedClient); // Grimoire — layout persisté (ou vide)
@@ -1915,6 +1944,24 @@ namespace engine::server
 				client->clientId,
 				clientId,
 				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		// Monde « Royaumes » — mur invisible côté serveur : une position dans une cellule
+		// non générée (ou NaN) est refusée AVANT l'anti-triche (dont la trace reste sur la
+		// dernière position valide) ; le client est recalé (ForcePosition, ≤ 1 / 500 ms).
+		if (!IsInsideGeneratedWorld(positionMetersX, positionMetersZ))
+		{
+			LOG_DEBUG(Net, "[ServerApp] Input rejete : hors du monde genere (client_id={}, pos=({:.1f},{:.1f}))",
+				client->clientId, positionMetersX, positionMetersZ);
+			const uint64_t forceNowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now().time_since_epoch()).count());
+			// Le client est vivant (il pousse contre le mur) : pas d'éviction pour inactivité.
+			client->lastUdpActivityAtMs = forceNowMs;
+			if ((forceNowMs - client->lastForcePositionSentMs) >= 500u)
+			{
+				SendForcePosition(*client, kForcePositionReasonTeleport);
+			}
 			return;
 		}
 
@@ -2132,6 +2179,9 @@ namespace engine::server
 
 	void ServerApp::Simulate()
 	{
+		// Monde « Royaumes » — régions actives (1 Hz) : les spawners d'une cellule sans
+		// joueur proche ne sont pas évalués (leurs mobs restants sont retirés hors combat).
+		RefreshRegionActivity();
 		UpdateMobAi();
 		UpdateSpawners();
 		UpdateDynamicEvents();
@@ -2205,6 +2255,14 @@ namespace engine::server
 			SpawnerRuntimeState runtimeState{};
 			runtimeState.definition = definition;
 			runtimeState.slots.resize(definition.count);
+			// Monde « Royaumes » — région du spawner = cellule de SA position (le zoneId
+			// du fichier est celui de la cellule qui l'a généré : ils coïncident).
+			runtimeState.inCellWorld = engine::world::cells::IsCellZoneId(definition.zoneId);
+			if (runtimeState.inCellWorld)
+			{
+				runtimeState.regionCell = engine::world::cells::CellFromPosition(
+					definition.positionMetersX, definition.positionMetersZ);
+			}
 			if (!zoneGrid->TryWorldToCellCoord(definition.positionMetersX, definition.positionMetersZ, runtimeState.centerCell))
 			{
 				LOG_ERROR(Net, "[ServerApp] Spawner init FAILED: invalid spawn position (spawner_id={}, zone_id={})",
@@ -2324,66 +2382,80 @@ namespace engine::server
 		// Respawn points de la zone active (game/data/zones/<zone>/respawn_points.txt) si
 		// world.active_zone est défini, sinon repli sur l'ancien chemin global (rétro-compat).
 		const std::string activeZone = m_config.GetString("world.active_zone", "");
-		const std::string relativePath = activeZone.empty()
-			? m_config.GetString("server.respawn_points_path", "respawn/respawn_points.txt")
-			: ("zones/" + activeZone + "/respawn_points.txt");
+		// Monde « Royaumes » : les points de chaque cellule générée sont concaténés
+		// (positions globales, zoneId = cellule) — le plus proche gagne au respawn.
+		std::vector<std::string> relativePaths;
+		if (m_cellWorld)
+		{
+			for (const engine::world::cells::CellCoord& cell : m_worldStarts.GeneratedCells())
+				relativePaths.push_back("zones/" + engine::world::cells::CellDirName(cell) + "/respawn_points.txt");
+		}
+		else
+		{
+			relativePaths.push_back(activeZone.empty()
+				? m_config.GetString("server.respawn_points_path", "respawn/respawn_points.txt")
+				: ("zones/" + activeZone + "/respawn_points.txt"));
+		}
 		// Rayon neutre par défaut (surchargé par colonne par cimetière). Ex-clé globals.
 		const float defaultNeutralRadiusM = static_cast<float>(
 			m_config.GetDouble("globals.graveyard_default_faction_neutral_radius_m", 500.0));
-		const std::string pointsText = engine::platform::FileSystem::ReadAllTextContent(m_config, relativePath);
-		if (pointsText.empty())
+		for (const std::string& relativePath : relativePaths)
 		{
-			LOG_WARN(Net, "[ServerApp] Respawn points absent ({}): repli sur le point d'entrée en monde", relativePath);
-			return;
+			const std::string pointsText = engine::platform::FileSystem::ReadAllTextContent(m_config, relativePath);
+			if (pointsText.empty())
+			{
+				LOG_WARN(Net, "[ServerApp] Respawn points absent ({}): repli sur le point d'entrée en monde", relativePath);
+				continue;
+			}
+
+			std::istringstream input(pointsText);
+			std::string line;
+			uint32_t lineNumber = 0;
+			while (std::getline(input, line))
+			{
+				++lineNumber;
+				if (line.empty() || line[0] == '#')
+					continue;
+
+				std::istringstream lineStream(line);
+				RespawnPointDefinition point{};
+				std::string typeToken;
+				if (!(lineStream >> point.zoneId >> typeToken
+					>> point.positionMetersX >> point.positionMetersY >> point.positionMetersZ))
+				{
+					LOG_WARN(Net, "[ServerApp] Respawn points: ligne {} invalide ignorée ({})", lineNumber, relativePath);
+					continue;
+				}
+				if (typeToken == "graveyard")
+					point.destinationType = kRespawnDestinationGraveyard;
+				else if (typeToken == "inn")
+					point.destinationType = kRespawnDestinationInn;
+				else
+				{
+					LOG_WARN(Net, "[ServerApp] Respawn points: type '{}' inconnu ligne {} (attendu graveyard|inn)", typeToken, lineNumber);
+					continue;
+				}
+				// Colonnes optionnelles (cimetières) : faction propriétaire puis rayon neutre.
+				// Absentes → cimetière neutre (faction vide) avec le rayon par défaut.
+				point.neutralRadiusM = defaultNeutralRadiusM;
+				std::string factionToken;
+				if (lineStream >> factionToken)
+				{
+					if (factionToken != "-")
+					{
+						point.ownerFactionId = factionToken;
+					}
+					float radiusToken = 0.0f;
+					if (lineStream >> radiusToken)
+					{
+						point.neutralRadiusM = radiusToken;
+					}
+				}
+				m_respawnPoints.push_back(point);
+			}
 		}
 
-		std::istringstream input(pointsText);
-		std::string line;
-		uint32_t lineNumber = 0;
-		while (std::getline(input, line))
-		{
-			++lineNumber;
-			if (line.empty() || line[0] == '#')
-				continue;
-
-			std::istringstream lineStream(line);
-			RespawnPointDefinition point{};
-			std::string typeToken;
-			if (!(lineStream >> point.zoneId >> typeToken
-				>> point.positionMetersX >> point.positionMetersY >> point.positionMetersZ))
-			{
-				LOG_WARN(Net, "[ServerApp] Respawn points: ligne {} invalide ignorée ({})", lineNumber, relativePath);
-				continue;
-			}
-			if (typeToken == "graveyard")
-				point.destinationType = kRespawnDestinationGraveyard;
-			else if (typeToken == "inn")
-				point.destinationType = kRespawnDestinationInn;
-			else
-			{
-				LOG_WARN(Net, "[ServerApp] Respawn points: type '{}' inconnu ligne {} (attendu graveyard|inn)", typeToken, lineNumber);
-				continue;
-			}
-			// Colonnes optionnelles (cimetières) : faction propriétaire puis rayon neutre.
-			// Absentes → cimetière neutre (faction vide) avec le rayon par défaut.
-			point.neutralRadiusM = defaultNeutralRadiusM;
-			std::string factionToken;
-			if (lineStream >> factionToken)
-			{
-				if (factionToken != "-")
-				{
-					point.ownerFactionId = factionToken;
-				}
-				float radiusToken = 0.0f;
-				if (lineStream >> radiusToken)
-				{
-					point.neutralRadiusM = radiusToken;
-				}
-			}
-			m_respawnPoints.push_back(point);
-		}
-
-		LOG_INFO(Net, "[ServerApp] Respawn points init OK (points={})", m_respawnPoints.size());
+		LOG_INFO(Net, "[ServerApp] Respawn points init OK (points={}, files={})", m_respawnPoints.size(), relativePaths.size());
 	}
 
 	bool ServerApp::InitQuests()
@@ -2587,7 +2659,7 @@ namespace engine::server
 			ConnectedClient* target = FindClientByEntityId(mob.aggroTargetEntityId);
 			if (target == nullptr
 				|| !target->hasReplicatedState
-				|| target->zoneId != mob.zoneId
+				|| !engine::world::cells::SameMap(target->zoneId, mob.zoneId)
 				|| target->stats.currentHealth == 0
 				|| (target->stateFlags & kEntityStateDead) != 0u)
 			{
@@ -2677,7 +2749,7 @@ namespace engine::server
 		float nearestD2 = kTalkPauseRadiusMeters * kTalkPauseRadiusMeters;
 		for (const ConnectedClient& client : m_clients)
 		{
-			if (!client.hasReplicatedState || client.zoneId != mob.zoneId) continue;
+			if (!client.hasReplicatedState || !engine::world::cells::SameMap(client.zoneId, mob.zoneId)) continue;
 			const float d2 = DistanceSquaredXZ(client.positionMetersX, client.positionMetersZ, mob.positionMetersX, mob.positionMetersZ);
 			if (d2 < nearestD2) { nearestD2 = d2; nearest = &client; }
 		}
@@ -2747,7 +2819,8 @@ namespace engine::server
 	{
 		for (const ConnectedClient& client : m_clients)
 		{
-			if (!client.hasReplicatedState || !client.hasCell || client.zoneId != spawner.definition.zoneId)
+			if (!client.hasReplicatedState || !client.hasCell
+				|| !engine::world::cells::SameMap(client.zoneId, spawner.definition.zoneId))
 			{
 				continue;
 			}
@@ -2768,7 +2841,7 @@ namespace engine::server
 					const MobEntity* mob = FindMobByEntityId(slot.mobEntityId);
 					if (mob == nullptr) continue;
 					const CellGrid* grid = nullptr;
-					if (auto it = m_zoneGrids.find(mob->zoneId); it != m_zoneGrids.end()) grid = &it->second;
+					if (auto it = m_zoneGrids.find(engine::world::cells::MapIdOfZone(mob->zoneId)); it != m_zoneGrids.end()) grid = &it->second;
 					CellCoord mc{};
 					if (grid != nullptr && grid->TryWorldToCellCoord(mob->positionMetersX, mob->positionMetersZ, mc)
 						&& std::abs(static_cast<int>(client.currentCell.x) - static_cast<int>(mc.x)) <= kBaseInterestRadiusCells
@@ -2953,6 +3026,18 @@ namespace engine::server
 		const float worldHour = CurrentWorldHour();
 		for (SpawnerRuntimeState& spawner : m_spawners)
 		{
+			// Monde « Royaumes » — région inactive (aucun joueur dans la cellule ni à moins
+			// de la marge de son bord) et aucun mob vivant : coût nul, on passe.
+			if (spawner.inCellWorld && !m_regionActivity.IsActive(spawner.regionCell))
+			{
+				const bool hasLiveMob = std::any_of(spawner.slots.begin(), spawner.slots.end(),
+					[](const SpawnerSlotState& slot) { return slot.mobEntityId != 0; });
+				if (!hasLiveMob)
+				{
+					spawner.isActive = false;
+					continue;
+				}
+			}
 			const bool shouldBeActive = IsSpawnerActivatedByPlayers(spawner);
 			if (spawner.isActive != shouldBeActive)
 			{
@@ -3401,6 +3486,8 @@ namespace engine::server
 
 	void ServerApp::UpdateClientInterest(ConnectedClient& client)
 	{
+		// Monde « Royaumes » — la région (cellule) suit la position, sans changer de grille.
+		UpdateClientRegion(client);
 		CellGrid* zoneGrid = GetOrCreateZoneGrid(client.zoneId);
 		if (zoneGrid == nullptr)
 		{
@@ -3531,7 +3618,7 @@ namespace engine::server
 			return;
 		}
 
-		if (target->zoneId != client->zoneId)
+		if (!engine::world::cells::SameMap(target->zoneId, client->zoneId))
 		{
 			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: cross-zone target (client_id={}, attacker_zone={}, target_zone={})",
 				client->clientId,
@@ -3738,7 +3825,7 @@ namespace engine::server
 			bool found = false;
 			for (const RespawnPointDefinition& point : m_respawnPoints)
 			{
-				if (point.zoneId != client->zoneId || point.destinationType != destination)
+				if (!engine::world::cells::SameMap(point.zoneId, client->zoneId) || point.destinationType != destination)
 					continue;
 				const float dxr = point.positionMetersX - client->positionMetersX;
 				const float dzr = point.positionMetersZ - client->positionMetersZ;
@@ -3863,7 +3950,7 @@ namespace engine::server
 			return;
 		}
 
-		if (lootBag->zoneId != client->zoneId)
+		if (!engine::world::cells::SameMap(lootBag->zoneId, client->zoneId))
 		{
 			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: cross-zone bag (client_id={}, client_zone={}, bag_zone={})",
 				client->clientId,
@@ -4371,6 +4458,17 @@ namespace engine::server
 				}
 			}
 		};
+		// Monde « Royaumes » : toute la carte (toutes les régions de 10 km).
+		const auto addAllOnMap = [this, &addUnique](uint32_t zoneId)
+		{
+			for (ConnectedClient& peer : m_clients)
+			{
+				if (engine::world::cells::SameMap(peer.zoneId, zoneId))
+				{
+					addUnique(&peer);
+				}
+			}
+		};
 
 		switch (logicalChannel)
 		{
@@ -4380,7 +4478,8 @@ namespace engine::server
 			const float radiusSq = radius * radius;
 			for (ConnectedClient& peer : m_clients)
 			{
-				if (peer.zoneId != sender->zoneId)
+				// Monde « Royaumes » : la portée (dire/crier) traverse les frontières de région.
+				if (!engine::world::cells::SameMap(peer.zoneId, sender->zoneId))
 				{
 					continue;
 				}
@@ -4403,7 +4502,8 @@ namespace engine::server
 			const float radiusSq = radius * radius;
 			for (ConnectedClient& peer : m_clients)
 			{
-				if (peer.zoneId != sender->zoneId)
+				// Monde « Royaumes » : la portée (dire/crier) traverse les frontières de région.
+				if (!engine::world::cells::SameMap(peer.zoneId, sender->zoneId))
 				{
 					continue;
 				}
@@ -4439,10 +4539,11 @@ namespace engine::server
 		case engine::net::ChatChannel::Party:
 		case engine::net::ChatChannel::Guild:
 			LOG_INFO(Net,
-				"[ServerApp] ChatSend party/guild routing stub -> zone broadcast (client_id={}, channel_wire={})",
+				"[ServerApp] ChatSend party/guild routing stub -> map broadcast (client_id={}, channel_wire={})",
 				sender->clientId,
 				request.channel);
-			addAllInZone(sender->zoneId);
+			// Une région de 10 km ne doit pas couper un groupe : diffusion à la carte.
+			addAllOnMap(sender->zoneId);
 			break;
 		case engine::net::ChatChannel::Zone:
 			addAllInZone(sender->zoneId);
@@ -4717,7 +4818,7 @@ namespace engine::server
 					const ConnectedClient* target = FindClientByEntityId(entry.entityId);
 					return target == nullptr
 						|| !target->hasReplicatedState
-						|| target->zoneId != mob.zoneId
+						|| !engine::world::cells::SameMap(target->zoneId, mob.zoneId)
 						|| target->stats.currentHealth == 0
 						|| (target->stateFlags & kEntityStateDead) != 0u
 						|| entry.threat == 0;
@@ -4800,7 +4901,7 @@ namespace engine::server
 		constexpr float kMobSeparationMeters = 1.2f;
 		for (const MobEntity& other : m_mobs)
 		{
-			if (other.entityId == mob.entityId || other.zoneId != mob.zoneId)
+			if (other.entityId == mob.entityId || !engine::world::cells::SameMap(other.zoneId, mob.zoneId))
 				continue;
 			if ((other.stateFlags & kEntityStateDead) != 0u)
 				continue;
@@ -5071,7 +5172,7 @@ namespace engine::server
 				if (cs->target == ClassSkillTarget::SingleEnemy)
 				{
 					MobEntity* target = FindMobByEntityId(message.targetEntityId);
-					if (target == nullptr || target->zoneId != client->zoneId
+					if (target == nullptr || !engine::world::cells::SameMap(target->zoneId, client->zoneId)
 						|| (target->stateFlags & kEntityStateDead) != 0u || target->stats.currentHealth == 0)
 					{
 						LOG_WARN(Net,
@@ -5164,7 +5265,7 @@ namespace engine::server
 		if (spell->targetType == SpellTargetKind::SingleEnemy)
 		{
 			MobEntity* target = FindMobByEntityId(message.targetEntityId);
-			if (target == nullptr || target->zoneId != client->zoneId
+			if (target == nullptr || !engine::world::cells::SameMap(target->zoneId, client->zoneId)
 				|| (target->stateFlags & kEntityStateDead) != 0u || target->stats.currentHealth == 0)
 			{
 				LOG_WARN(Net, "[ServerApp] CastRequest ignored: invalid enemy target (client_id={}, target_entity_id={})",
@@ -5694,7 +5795,7 @@ namespace engine::server
 					const float radiusSquared = spell.areaRadiusMeters * spell.areaRadiusMeters;
 					for (MobEntity& mob : m_mobs)
 					{
-						if (mob.zoneId != client.zoneId || mob.pendingDespawn
+						if (!engine::world::cells::SameMap(mob.zoneId, client.zoneId) || mob.pendingDespawn
 							|| (mob.stateFlags & kEntityStateDead) != 0u || mob.stats.currentHealth == 0)
 						{
 							continue;
@@ -5938,7 +6039,7 @@ namespace engine::server
 				const float radiusSquared = cs.areaRadiusMeters * cs.areaRadiusMeters;
 				for (MobEntity& mob : m_mobs)
 				{
-					if (mob.zoneId != client.zoneId || mob.pendingDespawn
+					if (!engine::world::cells::SameMap(mob.zoneId, client.zoneId) || mob.pendingDespawn
 						|| (mob.stateFlags & kEntityStateDead) != 0u || mob.stats.currentHealth == 0)
 					{
 						continue;
@@ -6632,7 +6733,7 @@ namespace engine::server
 				}
 				// Garde zone AVANT rayon : les positions sont en coordonnées par-zone,
 				// exiger la même zone évite un faux positif de distance inter-zones.
-				if (mate->zoneId != client.zoneId)
+				if (!engine::world::cells::SameMap(mate->zoneId, client.zoneId))
 				{
 					continue;
 				}
@@ -7928,20 +8029,203 @@ namespace engine::server
 
 	CellGrid* ServerApp::GetOrCreateZoneGrid(uint32_t zoneId)
 	{
-		auto [it, inserted] = m_zoneGrids.try_emplace(zoneId);
+		// Monde « Royaumes » : une grille par CARTE — toutes les cellules de 10 km
+		// partagent la grille du continent (visibilité continue aux frontières).
+		const uint32_t mapId = engine::world::cells::MapIdOfZone(zoneId);
+		auto [it, inserted] = m_zoneGrids.try_emplace(mapId);
 		if (inserted)
 		{
-			if (!it->second.Init())
+			const bool cellWorldMap = mapId == engine::world::cells::kCellWorldMapId;
+			const bool ok = cellWorldMap ? it->second.Init(kCellWorldHalfExtentMeters) : it->second.Init();
+			if (!ok)
 			{
-				LOG_ERROR(Net, "[ServerApp] Zone grid init FAILED (zone_id={})", zoneId);
+				LOG_ERROR(Net, "[ServerApp] Zone grid init FAILED (zone_id={}, map_id={})", zoneId, mapId);
 				m_zoneGrids.erase(it);
 				return nullptr;
 			}
 
-			LOG_INFO(Net, "[ServerApp] Zone grid ready (zone_id={})", zoneId);
+			LOG_INFO(Net, "[ServerApp] Zone grid ready (zone_id={}, map_id={}, extent_m={:.0f})",
+				zoneId, mapId, it->second.HalfExtentMeters() * 2.0f);
 		}
 
 		return &it->second;
+	}
+
+	bool ServerApp::InitCellWorld()
+	{
+		namespace cells = engine::world::cells;
+		const std::string activeZone = m_config.GetString("world.active_zone", "");
+		m_cellWorld = cells::IsCellWorld(activeZone);
+		m_regionActivity.Begin();
+		m_regionActivity.SetMarginMeters(m_config.GetDouble("world.region_activation_margin_m",
+			RegionActivity::kDefaultMarginMeters));
+		if (!m_cellWorld)
+		{
+			LOG_INFO(Net, "[ServerApp] Monde historique (active_zone='{}') : regions de 10 km inactives", activeZone);
+			return true;
+		}
+
+		std::string error;
+		if (!m_worldStarts.LoadForWorld(m_config, activeZone, error))
+		{
+			LOG_ERROR(Net, "[ServerApp] Monde en cellules : {} (lancer tools/world_gen avant le deploiement)", error);
+			return false;
+		}
+		if (m_worldStarts.GeneratedCells().empty())
+		{
+			LOG_ERROR(Net, "[ServerApp] Monde en cellules : start_locations.json sans generated_cells (generateur trop ancien)");
+			return false;
+		}
+		// Le départ par défaut (race inconnue, mode no-DB) doit exister et être jouable :
+		// c'est le filet de NormalizeCellWorldLoginPosition.
+		const engine::world::StartLocation* fallbackStart = m_worldStarts.Resolve("");
+		if (fallbackStart == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] Monde en cellules : depart par defaut (default_race) absent");
+			return false;
+		}
+		// Chaque départ doit être jouable : sinon la relocalisation placerait le joueur
+		// derrière le mur invisible (boucle de ForcePosition).
+		for (const engine::world::StartLocation& start : m_worldStarts.All())
+		{
+			if (!m_worldStarts.IsGeneratedCell(cells::CellFromPosition(start.x, start.z)))
+			{
+				LOG_ERROR(Net, "[ServerApp] Monde en cellules : depart '{}' ({}) hors des cellules generees",
+					start.race, start.cityName);
+				return false;
+			}
+		}
+		std::string cellList;
+		for (const cells::CellCoord& cell : m_worldStarts.GeneratedCells())
+			cellList += (cellList.empty() ? "" : ",") + cells::LoreCellId(cell);
+		LOG_INFO(Net, "[ServerApp] Monde en cellules '{}' : {} cellule(s) generee(s) [{}], {} depart(s), marge d'activation {:.0f} m",
+			activeZone, m_worldStarts.GeneratedCells().size(), cellList, m_worldStarts.Count(),
+			m_regionActivity.MarginMeters());
+		return true;
+	}
+
+	void ServerApp::RefreshRegionActivity()
+	{
+		if (!m_cellWorld || m_currentTick < m_nextRegionRefreshTick)
+		{
+			return;
+		}
+		m_nextRegionRefreshTick = m_currentTick + std::max<uint32_t>(1u, m_tickHz);
+		const size_t previousActive = m_regionActivity.ActiveCount();
+		m_regionActivity.Begin();
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (client.hasReplicatedState && engine::world::cells::IsCellZoneId(client.zoneId))
+			{
+				m_regionActivity.AddPlayer(client.positionMetersX, client.positionMetersZ);
+			}
+		}
+		if (m_regionActivity.ActiveCount() != previousActive)
+		{
+			LOG_INFO(Net, "[ServerApp] Regions actives : {} (occupees={}, joueurs={})",
+				m_regionActivity.ActiveCount(), m_regionActivity.OccupiedCount(), m_clients.size());
+		}
+	}
+
+	void ServerApp::UpdateClientRegion(ConnectedClient& client)
+	{
+		namespace cells = engine::world::cells;
+		if (!m_cellWorld || !cells::IsCellZoneId(client.zoneId))
+		{
+			return;
+		}
+		const uint32_t regionZoneId = cells::CellZoneId(
+			cells::CellFromPosition(client.positionMetersX, client.positionMetersZ));
+		if (regionZoneId == client.zoneId)
+		{
+			return;
+		}
+		const uint32_t previousZoneId = client.zoneId;
+		client.zoneId = regionZoneId;
+		// Même carte, même grille : pas de retrait de la grille ni de ZoneChange (le
+		// client streame les cellules d'après sa position). Seuls la présence, les
+		// quêtes « zone:<id> » et le bootstrap d'événements suivent la région.
+		m_shardPresence.UpdateZone(client.accountId != 0 ? client.accountId
+			: static_cast<uint64_t>(client.persistenceCharacterKey), client.zoneId);
+		LOG_INFO(Net, "[ServerApp] Region changee (client_id={}, {} -> {}, pos=({:.1f}, {:.1f}))",
+			client.clientId,
+			cells::CellFromZoneId(previousZoneId) ? cells::LoreCellId(*cells::CellFromZoneId(previousZoneId)) : std::string("?"),
+			cells::LoreCellId(*cells::CellFromZoneId(client.zoneId)),
+			client.positionMetersX,
+			client.positionMetersZ);
+		SendDynamicEventBootstrap(client);
+		ApplyQuestEvent(client, QuestStepType::Enter, std::string("zone:") + std::to_string(client.zoneId), 1, "zone_enter");
+	}
+
+	bool ServerApp::IsInsideGeneratedWorld(float positionX, float positionZ) const
+	{
+		if (!m_cellWorld)
+		{
+			return true;
+		}
+		// Position fournie par le client : bornée AVANT la conversion en indice de
+		// cellule (un float énorme rendrait le cast entier indéfini).
+		constexpr float kMaxAbsCoordinateMeters = 1.0e7f;
+		if (!std::isfinite(positionX) || !std::isfinite(positionZ)
+			|| std::fabs(positionX) > kMaxAbsCoordinateMeters || std::fabs(positionZ) > kMaxAbsCoordinateMeters)
+		{
+			return false;
+		}
+		return m_worldStarts.IsGeneratedCell(engine::world::cells::CellFromPosition(positionX, positionZ));
+	}
+
+	bool ServerApp::NormalizeCellWorldLoginPosition(ConnectedClient& client, std::optional<uint32_t> persistedZoneFromFile)
+	{
+		namespace cells = engine::world::cells;
+		if (!m_cellWorld)
+		{
+			if (cells::IsCellZoneId(client.zoneId))
+			{
+				// Retour arrière (monde en cellules → zone historique) : la position est
+				// globale, hors de la grille ±5000 m de la zone. On revient au point
+				// d'apparition historique (mêmes clés et défauts que le master).
+				LOG_WARN(Net, "[ServerApp] Personnage sauvegarde dans le monde en cellules, monde historique actif : zone 1, spawn par defaut (client_id={})",
+					client.clientId);
+				client.zoneId = 1;
+				client.positionMetersX = static_cast<float>(m_config.GetDouble("character_creation.default_spawn.x", 0.0));
+				client.positionMetersY = static_cast<float>(m_config.GetDouble("character_creation.default_spawn.y", 100.0));
+				client.positionMetersZ = static_cast<float>(m_config.GetDouble("character_creation.default_spawn.z", 0.0));
+				client.velocityMetersPerSecondX = 0.0f;
+				client.velocityMetersPerSecondY = 0.0f;
+				client.velocityMetersPerSecondZ = 0.0f;
+				return true;
+			}
+			return false;
+		}
+
+		// Ancien repère : le fichier personnage porte une zone historique (feyhin = 1…),
+		// la position est LOCALE à cette zone et n'a aucun sens dans le repère global.
+		const bool legacyFrame = persistedZoneFromFile.has_value() && !cells::IsCellZoneId(*persistedZoneFromFile);
+		const bool inside = IsInsideGeneratedWorld(client.positionMetersX, client.positionMetersZ)
+			&& std::isfinite(client.positionMetersY);
+		bool relocated = false;
+		if (legacyFrame || !inside)
+		{
+			const engine::world::StartLocation* start = m_worldStarts.Resolve(client.raceId);
+			if (start != nullptr)
+			{
+				LOG_INFO(Net,
+					"[ServerApp] Position replacee au depart '{}' (client_id={}, race='{}', raison={}, ancienne=({:.1f}, {:.1f}, {:.1f}))",
+					start->cityName, client.clientId, client.raceId, legacyFrame ? "repere_historique" : "hors_monde_genere",
+					client.positionMetersX, client.positionMetersY, client.positionMetersZ);
+				client.positionMetersX = static_cast<float>(start->x);
+				client.positionMetersY = static_cast<float>(start->y);
+				client.positionMetersZ = static_cast<float>(start->z);
+				client.yawRadians = static_cast<float>(start->yawDeg) * 0.01745329252f;
+				client.velocityMetersPerSecondX = 0.0f;
+				client.velocityMetersPerSecondY = 0.0f;
+				client.velocityMetersPerSecondZ = 0.0f;
+				relocated = true;
+			}
+		}
+		// La région se déduit TOUJOURS de la position (le fichier et la DB peuvent diverger).
+		client.zoneId = cells::CellZoneId(cells::CellFromPosition(client.positionMetersX, client.positionMetersZ));
+		return relocated;
 	}
 
 	namespace
@@ -8173,7 +8457,7 @@ namespace engine::server
 		SaveConnectedClient(*clientIt, persistenceReason);
 		if (clientIt->hasCell)
 		{
-			const auto zoneIt = m_zoneGrids.find(clientIt->zoneId);
+			const auto zoneIt = m_zoneGrids.find(engine::world::cells::MapIdOfZone(clientIt->zoneId));
 			if (zoneIt != m_zoneGrids.end())
 			{
 				(void)zoneIt->second.RemoveEntity(clientIt->entityId);

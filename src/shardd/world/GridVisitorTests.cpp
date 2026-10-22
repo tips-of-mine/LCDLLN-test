@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
+#include <cstdlib>
 #include <vector>
 
 using namespace engine::server;
@@ -177,6 +178,41 @@ namespace
 		assert(count == 9);
 		std::puts("[OK] TestGridVisitStress1000Entities");
 	}
+
+	/// Échec explicite (indépendant de NDEBUG, contrairement à assert).
+	void Require(bool ok, const char* what)
+	{
+		if (!ok)
+		{
+			std::printf("FAIL: %s\n", what);
+			std::exit(1);
+		}
+	}
+
+	/// Monde « Royaumes » : une seule grille creuse pour toute la carte (±210 km),
+	/// visibilité continue à travers la frontière de deux cellules de 10 km.
+	void TestCellWorldGridAcrossCellBorder()
+	{
+		CellGrid grid;
+		Require(grid.Init(kCellWorldHalfExtentMeters), "init grille monde");
+		Require(grid.AxisCount() == 4200, "4200 cases par axe");
+		CellCoord cell{};
+		// Hameau de Marn (N003_W009, centre (-90000, -30000)) : frontière ouest de la
+		// cellule en x = -95000. Un joueur à l'est de la frontière, un mob à l'ouest.
+		Require(grid.UpsertEntity(1, -94950.0f, -30000.0f, cell), "joueur dans N003_W009");
+		Require(grid.UpsertEntity(2, -95150.0f, -30000.0f, cell), "mob dans N003_W010");
+		Require(grid.UpsertEntity(3, 204999.0f, -184999.0f, cell), "coin de la carte");
+		Require(!grid.UpsertEntity(4, 210000.0f, 0.0f, cell), "hors carte rejete");
+		Require(grid.OccupiedCellCount() == 3, "stockage creux : 3 cases");
+
+		std::vector<EntityId> visited;
+		GridVisit(grid, -94950.0f, -30000.0f, [&visited](EntityId id) { visited.push_back(id); });
+		Require(visited.size() == 2, "le joueur voit le mob de l'autre cellule");
+
+		Require(grid.RemoveEntity(2) && grid.OccupiedCellCount() == 2, "case videe liberee");
+		Require(grid.UpsertEntity(1, 0.0f, 0.0f, cell) && grid.OccupiedCellCount() == 2, "deplacement : ancienne case liberee");
+		std::puts("[OK] TestCellWorldGridAcrossCellBorder");
+	}
 }
 
 int main()
@@ -189,6 +225,7 @@ int main()
 	TestGridVisitUninitialized();
 	TestGridVisitWithVisitor();
 	TestGridVisitStress1000Entities();
+	TestCellWorldGridAcrossCellBorder();
 	std::puts("All GridVisitor tests passed");
 	return 0;
 }

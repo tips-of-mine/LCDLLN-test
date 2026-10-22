@@ -19,6 +19,8 @@ namespace engine::world
 	{
 		m_byRace.clear();
 		m_defaultRace.clear();
+		m_generatedCells.clear();
+		m_generatedCellIds.clear();
 		engine::core::Config c;
 		if (!c.LoadFromString(json)) { outError = "start_locations: JSON invalide"; return false; }
 		if (c.GetInt("schema_version", 0) != 1) { outError = "start_locations: schema_version 1 attendu"; return false; }
@@ -39,19 +41,68 @@ namespace engine::world
 		}
 		m_defaultRace = c.GetString("default_race", "humains");
 		if (m_byRace.empty()) { outError = "start_locations: aucune race"; return false; }
+		// Cellules générées : liste « N003_W009,N011_E008 » (identifiants du lore).
+		const std::string cellsText = c.GetString("generated_cells", "");
+		size_t begin = 0;
+		while (begin < cellsText.size())
+		{
+			size_t end = cellsText.find(',', begin);
+			if (end == std::string::npos) end = cellsText.size();
+			std::string_view token(cellsText.data() + begin, end - begin);
+			while (!token.empty() && token.front() == ' ') token.remove_prefix(1);
+			while (!token.empty() && token.back() == ' ') token.remove_suffix(1);
+			if (!token.empty())
+			{
+				const std::optional<cells::CellCoord> cell = cells::ParseLoreCellId(token);
+				if (!cell || !cells::IsInLoreGrid(*cell))
+				{
+					m_byRace.clear();
+					m_generatedCells.clear();
+					m_generatedCellIds.clear();
+					outError = "start_locations: cellule invalide dans generated_cells '" + std::string(token) + "'";
+					return false;
+				}
+				if (m_generatedCellIds.insert(cells::CellZoneId(*cell)).second)
+					m_generatedCells.push_back(*cell);
+			}
+			begin = end + 1;
+		}
 		return true;
 	}
 
-	bool StartLocationTable::LoadFromContent(const engine::core::Config& config, std::string& outError)
+	bool StartLocationTable::LoadForWorld(const engine::core::Config& config, std::string_view world, std::string& outError)
 	{
-		const std::string text = engine::platform::FileSystem::ReadAllTextContent(config, "world/start_locations.json");
+		const std::string relativePath = "world/" + std::string(world) + "/start_locations.json";
+		const std::string text = engine::platform::FileSystem::ReadAllTextContent(config, relativePath);
 		if (text.empty())
 		{
 			m_byRace.clear();
-			outError = "start_locations: fichier absent (world/start_locations.json)";
+			m_generatedCells.clear();
+			m_generatedCellIds.clear();
+			outError = "start_locations: fichier absent (" + relativePath + ")";
 			return false;
 		}
 		return LoadFromText(text, outError);
+	}
+
+	bool StartLocationTable::IsGeneratedCell(cells::CellCoord c) const
+	{
+		if (m_generatedCellIds.empty()) return true;
+		// Hors carte du lore : jamais générée (et CellZoneId exige |n|,|e| < 500).
+		if (!cells::IsInLoreGrid(c)) return false;
+		return m_generatedCellIds.count(cells::CellZoneId(c)) != 0;
+	}
+
+	std::vector<StartLocation> StartLocationTable::All() const
+	{
+		std::vector<StartLocation> out;
+		out.reserve(m_byRace.size());
+		for (const auto& [race, start] : m_byRace)
+		{
+			(void)race;
+			out.push_back(start);
+		}
+		return out;
 	}
 
 	const StartLocation* StartLocationTable::Resolve(std::string_view race) const

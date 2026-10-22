@@ -53,7 +53,8 @@ namespace engine::server
 		ConnectionSessionMap* m_connMap = nullptr;
 		engine::server::db::ConnectionPool* m_pool = nullptr;
 		const engine::core::Config* m_config = nullptr;
-		/// Monde jouable — points de départ par race (world/start_locations.json),
+		/// Monde jouable — points de départ par race (world/<monde>/start_locations.json,
+		/// seulement en monde en cellules : world.active_zone = "royaumes"),
 		/// chargés une fois dans SetConfig (avant le trafic) puis lus en lecture
 		/// seule par les workers TCP (thread-safe).
 		engine::world::StartLocationTable m_startLocations;

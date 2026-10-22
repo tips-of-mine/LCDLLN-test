@@ -9,14 +9,6 @@ namespace engine::server
 {
 	namespace
 	{
-		/// Return true when the cell coordinate is inside the fixed kCellGridAxisCount × kCellGridAxisCount grid.
-		bool IsValidCell(const CellCoord& cell)
-		{
-			return cell.x >= 0 && cell.z >= 0
-				&& cell.x < kCellGridAxisCount
-				&& cell.z < kCellGridAxisCount;
-		}
-
 		/// Return true when the given interest set already contains the cell.
 		bool ContainsCell(const std::vector<CellCoord>& cells, const CellCoord& target)
 		{
@@ -49,7 +41,7 @@ namespace engine::server
 		Shutdown();
 	}
 
-	bool CellGrid::Init()
+	bool CellGrid::Init(float halfExtentMeters)
 	{
 		if (m_initialized)
 		{
@@ -57,15 +49,38 @@ namespace engine::server
 			return true;
 		}
 
+		// Étendue : multiple de la case, au moins une case, au plus int16 cases par axe.
+		// Bornes vérifiées AVANT la conversion entière (NaN / valeur énorme → cast indéfini).
+		constexpr float kMaxHalfExtentMeters = 16000.0f * static_cast<float>(kCellSizeMeters);
+		if (!(halfExtentMeters > 0.0f) || halfExtentMeters > kMaxHalfExtentMeters)
+		{
+			LOG_ERROR(Net, "[CellGrid] Init FAILED: invalid half extent {:.1f} m", halfExtentMeters);
+			return false;
+		}
+		const int halfCells = static_cast<int>(std::ceil(halfExtentMeters / static_cast<float>(kCellSizeMeters)));
+		m_halfExtentMeters = static_cast<float>(halfCells * kCellSizeMeters);
+		m_axisCount = halfCells * 2;
 		m_cells.clear();
-		m_cells.resize(static_cast<size_t>(kCellGridAxisCount * kCellGridAxisCount));
 		m_entityCells.clear();
 		m_initialized = true;
-		LOG_INFO(Net, "[CellGrid] Init OK (zone_m={}, cell_m={}, axis_count={})",
-			kZoneSizeMeters,
+		LOG_INFO(Net, "[CellGrid] Init OK (extent_m={:.0f}, cell_m={}, axis_count={}, storage=sparse)",
+			m_halfExtentMeters * 2.0f,
 			kCellSizeMeters,
-			kCellGridAxisCount);
+			m_axisCount);
 		return true;
+	}
+
+	bool CellGrid::IsValidCell(const CellCoord& cell) const
+	{
+		return cell.x >= 0 && cell.z >= 0
+			&& cell.x < m_axisCount
+			&& cell.z < m_axisCount;
+	}
+
+	uint32_t CellGrid::CellKey(const CellCoord& cell) const
+	{
+		return static_cast<uint32_t>(cell.z) * static_cast<uint32_t>(m_axisCount)
+			+ static_cast<uint32_t>(cell.x);
 	}
 
 	void CellGrid::Shutdown()
@@ -90,22 +105,26 @@ namespace engine::server
 			return false;
 		}
 
-		// Convention : le client centre le monde à (0,0) (cf. Engine.cpp B.1 spawn).
-		// La grille stocke des cellules indexées [0, kCellGridAxisCount). On translate
-		// donc les coords monde par +halfZone pour les mapper sur l'espace cellule.
-		// Plage monde acceptée : [-halfZone, +halfZone). Au-delà : hors-zone (rejet).
-		constexpr float halfZoneMeters = static_cast<float>(kZoneSizeMeters) * 0.5f;
+		// Convention : la carte est centrée sur (0,0) (zone historique : cf. Engine.cpp
+		// B.1 spawn ; monde « Royaumes » : centre de l'Oracle). La grille indexe ses
+		// cases dans [0, m_axisCount) : on translate donc les coords par +demi-étendue.
+		// Plage acceptée : [-demi-étendue, +demi-étendue). Au-delà : hors carte (rejet).
+		const float halfZoneMeters = m_halfExtentMeters;
+		const float extentMeters = m_halfExtentMeters * 2.0f;
 		const float gridX = posX + halfZoneMeters;
 		const float gridZ = posZ + halfZoneMeters;
-		if (gridX < 0.0f || gridZ < 0.0f || gridX >= static_cast<float>(kZoneSizeMeters) || gridZ >= static_cast<float>(kZoneSizeMeters))
+		if (!(gridX >= 0.0f) || !(gridZ >= 0.0f) || gridX >= extentMeters || gridZ >= extentMeters)
 		{
 			LOG_WARN(Net, "[CellGrid] TryWorldToCellCoord FAILED: out of zone position ({:.2f}, {:.2f}) (plage acceptee [-{:.0f}, +{:.0f}))",
 				posX, posZ, halfZoneMeters, halfZoneMeters);
 			return false;
 		}
 
-		outCell.x = static_cast<int16_t>(std::floor(gridX / static_cast<float>(kCellSizeMeters)));
-		outCell.z = static_cast<int16_t>(std::floor(gridZ / static_cast<float>(kCellSizeMeters)));
+		// Bornage défensif : l'arrondi flottant près du bord ne doit pas produire m_axisCount.
+		outCell.x = static_cast<int16_t>(std::min(m_axisCount - 1,
+			static_cast<int>(std::floor(gridX / static_cast<float>(kCellSizeMeters)))));
+		outCell.z = static_cast<int16_t>(std::min(m_axisCount - 1,
+			static_cast<int>(std::floor(gridZ / static_cast<float>(kCellSizeMeters)))));
 		return true;
 	}
 
@@ -125,14 +144,22 @@ namespace engine::server
 				return true;
 			}
 
-			std::vector<EntityId>& previousCellEntities = m_cells[CellIndex(existingIt->second)];
-			previousCellEntities.erase(
-				std::remove(previousCellEntities.begin(), previousCellEntities.end(), entityId),
-				previousCellEntities.end());
+			const auto previousIt = m_cells.find(CellKey(existingIt->second));
+			if (previousIt != m_cells.end())
+			{
+				std::vector<EntityId>& previousCellEntities = previousIt->second;
+				previousCellEntities.erase(
+					std::remove(previousCellEntities.begin(), previousCellEntities.end(), entityId),
+					previousCellEntities.end());
+				if (previousCellEntities.empty())
+				{
+					m_cells.erase(previousIt); // stockage creux : case vide libérée
+				}
+			}
 		}
 
 		m_entityCells[entityId] = outCell;
-		std::vector<EntityId>& targetCellEntities = m_cells[CellIndex(outCell)];
+		std::vector<EntityId>& targetCellEntities = m_cells[CellKey(outCell)];
 		if (!ContainsEntityId(targetCellEntities, entityId))
 		{
 			targetCellEntities.push_back(entityId);
@@ -157,10 +184,18 @@ namespace engine::server
 			return false;
 		}
 
-		std::vector<EntityId>& cellEntities = m_cells[CellIndex(it->second)];
-		cellEntities.erase(
-			std::remove(cellEntities.begin(), cellEntities.end(), entityId),
-			cellEntities.end());
+		const auto cellIt = m_cells.find(CellKey(it->second));
+		if (cellIt != m_cells.end())
+		{
+			std::vector<EntityId>& cellEntities = cellIt->second;
+			cellEntities.erase(
+				std::remove(cellEntities.begin(), cellEntities.end(), entityId),
+				cellEntities.end());
+			if (cellEntities.empty())
+			{
+				m_cells.erase(cellIt); // stockage creux : case vide libérée
+			}
+		}
 		m_entityCells.erase(it);
 		LOG_INFO(Net, "[CellGrid] Entity removed (entity_id={})", entityId);
 		return true;
@@ -212,8 +247,12 @@ namespace engine::server
 				continue;
 			}
 
-			const std::vector<EntityId>& cellEntities = m_cells[CellIndex(cell)];
-			for (EntityId entityId : cellEntities)
+			const auto cellIt = m_cells.find(CellKey(cell));
+			if (cellIt == m_cells.end())
+			{
+				continue; // case vide (stockage creux)
+			}
+			for (EntityId entityId : cellIt->second)
 			{
 				if (!ContainsEntityId(outEntityIds, entityId))
 				{
@@ -221,12 +260,6 @@ namespace engine::server
 				}
 			}
 		}
-	}
-
-	size_t CellGrid::CellIndex(const CellCoord& cell) const
-	{
-		return static_cast<size_t>(cell.z) * static_cast<size_t>(kCellGridAxisCount)
-			+ static_cast<size_t>(cell.x);
 	}
 
 	void ComputeInterestDiff(

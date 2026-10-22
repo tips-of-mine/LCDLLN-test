@@ -69,6 +69,20 @@ int main()
 
 	Check(Near(DistanceToCellBorder(0.0, 0.0), 5000.0), "distance au bord : centre");
 	Check(Near(DistanceToCellBorder(4900.0, 100.0), 100.0), "distance au bord : pres de l'est");
+	Check(Near(DistanceToCell({ 0, 0 }, 100.0, -200.0), 0.0), "distance a la cellule : dedans");
+	Check(Near(DistanceToCell({ 0, 1 }, 4000.0, 0.0), 1000.0), "distance a la cellule est");
+	Check(Near(DistanceToCell({ 1, 1 }, 4000.0, -4000.0), std::sqrt(2.0) * 1000.0), "distance a la cellule diagonale");
+
+	// Une seule carte : toutes les cellules partagent la même carte.
+	Check(IsCellWorld("royaumes") && !IsCellWorld("feyhin") && !IsCellWorld(""), "monde en cellules");
+	Check(MapIdOfZone(CellZoneId({ 3, -9 })) == kCellWorldMapId, "carte d'une cellule");
+	Check(!IsCellZoneId(kCellWorldMapId) && kCellWorldMapId > 2u, "id de carte hors plage");
+	Check(MapIdOfZone(1u) == 1u, "carte d'une zone historique");
+	Check(SameMap(CellZoneId({ 3, -9 }), CellZoneId({ -9, 11 })), "deux cellules = meme carte");
+	Check(!SameMap(CellZoneId({ 3, -9 }), 1u) && !SameMap(1u, 2u) && SameMap(2u, 2u), "zones historiques distinctes");
+	Check(ZoneDirBelongsToWorld("cell_n003_w009", "royaumes") && !ZoneDirBelongsToWorld("feyhin", "royaumes"), "dossiers du monde en cellules");
+	Check(ZoneDirBelongsToWorld("feyhin", "feyhin") && ZoneDirBelongsToWorld("zone_1", "")
+		&& !ZoneDirBelongsToWorld("cell_n003_w009", "feyhin"), "dossiers des zones historiques");
 
 	if (g_fail == 0) std::printf("world_cells_tests: OK\n");
 	return g_fail == 0 ? 0 : 1;

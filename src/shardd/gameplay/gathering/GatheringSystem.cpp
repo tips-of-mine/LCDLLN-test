@@ -3,6 +3,7 @@
 #include "src/shared/server_bootstrap/ServerApp.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/platform/FileSystem.h"
+#include "src/shared/world/WorldCells.h"
 
 #include <algorithm>
 #include <cctype>
@@ -570,6 +571,13 @@ namespace engine::server
 		for (const std::filesystem::path& entry : entries)
 		{
 			if (!std::filesystem::is_directory(entry))
+			{
+				continue;
+			}
+			// Monde « Royaumes » : seuls les dossiers du monde actif sont chargés
+			// (cellules cell_* en monde en cellules, zones historiques sinon).
+			if (!engine::world::cells::ZoneDirBelongsToWorld(entry.filename().string(),
+				config.GetString("world.active_zone", "")))
 			{
 				continue;
 			}

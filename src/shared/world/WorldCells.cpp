@@ -124,4 +124,33 @@ namespace engine::world::cells
 		const CellPoint l = ToLocal(CellFromPosition(x, z), x, z);
 		return std::min(kCellHalfMeters - std::fabs(l.x), kCellHalfMeters - std::fabs(l.z));
 	}
+
+	double DistanceToCell(CellCoord c, double x, double z)
+	{
+		const CellPoint l = ToLocal(c, x, z);
+		const double dx = std::max(0.0, std::fabs(l.x) - kCellHalfMeters);
+		const double dz = std::max(0.0, std::fabs(l.z) - kCellHalfMeters);
+		return std::sqrt(dx * dx + dz * dz);
+	}
+
+	bool IsCellWorld(std::string_view activeZone)
+	{
+		return activeZone == kCellWorldName;
+	}
+
+	uint32_t MapIdOfZone(uint32_t zoneId)
+	{
+		return IsCellZoneId(zoneId) ? kCellWorldMapId : zoneId;
+	}
+
+	bool SameMap(uint32_t zoneA, uint32_t zoneB)
+	{
+		return MapIdOfZone(zoneA) == MapIdOfZone(zoneB);
+	}
+
+	bool ZoneDirBelongsToWorld(std::string_view dirName, std::string_view activeZone)
+	{
+		const bool isCellDir = ParseCellDirName(dirName).has_value();
+		return IsCellWorld(activeZone) ? isCellDir : !isCellDir;
+	}
 }

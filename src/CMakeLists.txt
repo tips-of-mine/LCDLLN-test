@@ -90,6 +90,10 @@ if(WIN32)
     # GridVisitor.h est header-only template, pas de .cpp.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/GridNotifier.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ZoneTransitions.cpp
+    # Monde « Royaumes » — cellules de 10 km, régions actives, points de départ.
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Clock.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
@@ -172,6 +176,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterCreateHandler.cpp
     # Monde jouable — points de départ par race (lus à la création de personnage).
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterListHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterDeleteHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterSavePositionHandler.cpp
@@ -556,11 +561,18 @@ elseif(UNIX)
   # Monde jouable (chantier « Royaumes ») : points de départ par race (master).
   lcdlln_add_simple_test(start_locations_tests
     ${CMAKE_SOURCE_DIR}/src/shared/world/tests/StartLocationsTests.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp)
+    ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
   # Monde « Royaumes » : découpage en cellules de 10 km (module pur partagé).
   lcdlln_add_simple_test(world_cells_tests
     ${CMAKE_SOURCE_DIR}/src/shared/world/tests/WorldCellsTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
+
+  # Monde « Royaumes » : activation des régions (cellules) par la présence des joueurs.
+  lcdlln_add_simple_test(region_activity_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/RegionActivityTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
   # Monde jouable (chantier « Royaumes ») : lieux du monde (carte M, bannière).
@@ -1333,6 +1345,10 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/GridState.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/GridNotifier.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ZoneTransitions.cpp
+    # Monde « Royaumes » — cellules de 10 km, régions actives, points de départ.
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp

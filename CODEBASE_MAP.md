@@ -1166,7 +1166,7 @@ Le shard est le binaire qui exécute le **gameplay temps réel** (combat, mouvem
 | `src/shardd/spell/` | `SpellFamilyMask` + Runtime (Wave 9 #577). **Manque** : SpellMgr/Spell/Aura/ProcMgr (Wave 23 roadmap). |
 | `src/shardd/trade/` | Trade FSM 2-phase commit. |
 | `src/shardd/weather/` | Weather Markov chain runtime. |
-| `src/shardd/world/` | `SpatialPartition`, `GridState`, `LunarCalendar`, `LagCompensation`, `TickScheduler`, `UdpTransport`, `ZoneTransitions`. **Manque** : GridVisitor + GridNotifier (Wave 18 roadmap). |
+| `src/shardd/world/` | `SpatialPartition`, `GridState`, `LunarCalendar`, `LagCompensation`, `RegionActivity`, `TickScheduler`, `UdpTransport`, `ZoneTransitions`. **Manque** : GridVisitor + GridNotifier (Wave 18 roadmap). |
 
 ### Point d'entrée shard
 
@@ -2497,4 +2497,7 @@ Monde continu en **cellules de 10 km** (1 case du lore = 1 cellule) généré pa
 | `src/client/gameplay/CompositeWorldCollider.{h,cpp}` | Index spatial 16 m des collisions (bâtiments, décor). |
 | `src/shardd/gameplay/ambient/AmbientRoutine.{h,cpp}` | Routines des PNJ d'ambiance : tour / patrol / post / wander, horaires jour/nuit (pur, `ambient_routine_tests`). |
 | `src/shared/server_bootstrap/ServerApp.cpp` (`UpdateAmbientMob`) | Application serveur des routines (non attaquables, arrêt près d'un joueur, retour à la maison hors horaire). |
-| `src/shared/world/StartLocations.{h,cpp}` | Points de départ par race (`world/start_locations.json`), lus par `CharacterCreateHandler` (master). |
+| `src/shared/world/StartLocations.{h,cpp}` | Points de départ par race + cellules générées (`world/<monde>/start_locations.json`), lus par `CharacterCreateHandler` (master) et le shard (pur, `start_locations_tests`). |
+| `src/shardd/world/RegionActivity.{h,cpp}` | **Régions actives** : une cellule n'est simulée que si un joueur s'y trouve ou à moins de `world.region_activation_margin_m` de son bord (pur, `region_activity_tests`). |
+| `src/shardd/world/SpatialPartition.{h,cpp}` (`CellGrid`) | Grille d'intérêt 100 m **creuse** ; une seule grille pour tout le continent (`kCellWorldHalfExtentMeters`), une par zone historique. |
+| `src/shared/server_bootstrap/ServerApp.cpp` (`InitCellWorld`, `RefreshRegionActivity`, `UpdateClientRegion`, `NormalizeCellWorldLoginPosition`) | Monde en cellules côté shard : une carte, régions = cellules, mur invisible serveur, relocalisation au départ de la race. |

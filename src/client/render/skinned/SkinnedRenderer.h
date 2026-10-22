@@ -178,7 +178,12 @@ public:
     /// un plafond fixe (au-delà de 32 draps/frame le bug réapparaît) — le fix
     /// durable = allocation partitionnée par index de frame (ou cap de draws
     /// skinnés/frame), à faire séparément.
-    static constexpr uint32_t kFrameSlots = 64u;
+    ///
+    /// 2026-10-22 — bump 64 → 128 (monde « Royaumes ») : les villes comptent
+    /// jusqu'à ~28 PNJ d'ambiance à portée ; le budget client passe à 32 avatars
+    /// distants + 1 local (+ aperçu) = 34 draws/frame > 32. 128 slots couvrent
+    /// 64 draws/frame à FIF=2. Coût ≈ 2 MB host-visible.
+    static constexpr uint32_t kFrameSlots = 128u;
 
 private:
     VkDevice m_device = VK_NULL_HANDLE;

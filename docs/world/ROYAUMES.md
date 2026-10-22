@@ -182,6 +182,8 @@ indexé sur grille uniforme 16 m.
 | `world.props.cull_distance_m` | 140 | props historiques (scenery.json) |
 | `world.fog.start_m` / `end_m` | 60 / 185 | brouillard masquant la coupe de distance |
 | `game.worldclock.timescale_real_min_per_day` | 60 | durée d'une journée de jeu (min réelles) |
+| `client.remote_avatars.max_skinned_draws` | 32 | avatars animés dessinés par frame (plafond 48) |
+| `client.remote_avatars.render_distance_m` | 60 | distance d'affichage des personnages |
 
 Revenir à l'ancienne zone de test : `world.active_zone = "feyhin"` (client et
 `deploy/docker/config/shard.config.json`).
@@ -190,6 +192,15 @@ Revenir à l'ancienne zone de test : `world.active_zone = "feyhin"` (client et
 
 - Le serveur n'a ni heightfield ni navmesh : les PNJ suivent les graphes de
   rues générés ; le client recale Y visuellement sur le terrain.
+- **Horloge et commandes admin** : le shard calcule l'heure des routines depuis
+  `game.worldclock.*` (mêmes valeurs que le master). Les commandes runtime
+  `/settime`, `/pausetime`, `/settimescale` ne modifient que le master : les PNJ
+  d'ambiance gardent alors l'horaire « config » jusqu'au redémarrage du shard
+  (propagation master → shard non implémentée : demanderait un nouveau message).
+- **Avatars animés** : au plus `client.remote_avatars.max_skinned_draws` (32,
+  plafond 48) personnages distants dessinés par frame — uniquement ceux dans le
+  champ de la caméra et à moins de `render_distance_m` (60 m), les plus proches
+  d'abord ; les autres gardent leur plaque de nom.
 - Elfes et démons empruntent la silhouette humaine (pas de mesh dédié).
 - L'île d'Hishtarland n'est pas reliée par route (avertissement attendu du
   générateur) — liaison maritime à concevoir.

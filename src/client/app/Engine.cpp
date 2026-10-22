@@ -16286,8 +16286,14 @@ namespace engine
 			m_cfg.GetDouble("client.remote_avatars.render_distance_m", 60.0));
 		const float animLodDist = static_cast<float>(
 			m_cfg.GetDouble("client.remote_avatars.anim_lod_distance_m", 25.0));
-		const size_t maxSkinnedDraws = static_cast<size_t>(
-			m_cfg.GetDouble("client.remote_avatars.max_skinned_draws", 16.0));
+		// 32 (monde « Royaumes », villes denses) : borné par SkinnedRenderer::kFrameSlots
+		// (128 slots = 64 draws/frame à FIF=2, marge pour l'avatar local et l'aperçu).
+		const size_t maxSkinnedDraws = std::min<size_t>(48u, static_cast<size_t>(
+			m_cfg.GetDouble("client.remote_avatars.max_skinned_draws", 32.0)));
+		// Seuls les avatars DANS le champ de la caméra consomment le budget : un PNJ
+		// dans le dos du joueur n'est ni animé ni dessiné (sa plaque suit son chemin).
+		const engine::world::scatter::Frustum avatarFrustum =
+			engine::world::scatter::Frustum::FromViewProj(rs.viewProjMatrix.m);
 		const float remoteRenderDist2 = remoteRenderDist * remoteRenderDist;
 		// Passe 1 — candidats triés par distance. Les entités sans mesh (nodes de
 		// récolte, mobs morts, loot bags) sont écartées ICI pour ne pas consommer
@@ -16316,6 +16322,9 @@ namespace engine
 			const float dist2 = ddx * ddx + ddy * ddy + ddz * ddz;
 			if (dist2 > remoteRenderDist2)
 				continue;
+			// Sphère englobante d'un humanoïde (centre ~1 m au-dessus des pieds, rayon 1,6 m).
+			if (!avatarFrustum.SphereVisible(engine::math::Vec3{ cx, cy + 1.0f, cz }, 1.6f))
+				continue;
 			candidates.push_back(RemoteDrawCandidate{ ri, dist2 });
 		}
 		std::sort(candidates.begin(), candidates.end(),
@@ -16330,9 +16339,8 @@ namespace engine
 			// existant déclaré par le catalogue (cf. CreatureCatalog) ; seuls les loot
 			// bags (les deux ids à 0) gardent leur pipeline dédié (pas de mesh humanoïde).
 			// Attention budget : chaque mob = 1 draw skinné dans le ring SSBO partagé
-			// (kFrameSlots=32, cf. SkinnedRenderer.h) — au-delà de ~16 draws skinnés
-			// par frame le ring se réécrit pendant une frame en vol (limite connue,
-			// audit 2026-06-10) ; zone actuelle = 1 mob, marge OK.
+			// (kFrameSlots=128, cf. SkinnedRenderer.h, soit 64 draws/frame à FIF=2) ;
+			// maxSkinnedDraws est plafonné à 48 pour garder la marge.
 			std::string meshRace;
 			std::string gender;
 			float meshScale = 1.0f;

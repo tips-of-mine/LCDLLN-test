@@ -9,7 +9,10 @@ on:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest
+    # Épinglé : ubuntu-latest bascule vers Ubuntu 26 depuis le 19/10/2026. Les
+    # images Docker (Dockerfile.master/shard) sont en ubuntu:24.04 : des binaires
+    # compilés sur une glibc plus récente n'y tourneraient pas.
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v5

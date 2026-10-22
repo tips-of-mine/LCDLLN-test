@@ -114,10 +114,6 @@ namespace engine::render::terrain
             return false;
         }
 
-        // vertStepWorld = world units per local vertex step at LOD 0
-        // For a 1025-pixel heightmap, there are 1024 inter-pixel gaps = kPatchQuads * patchCount gaps.
-        m_vertStepWorld = m_terrainWorldSize / static_cast<float>(1024u); // 1024 = 64×16
-
         // ── Load heightmap from file ──────────────────────────────────────────────
         {
             const std::string contentPath = config.GetString("paths.content", "game/data");
@@ -134,6 +130,19 @@ namespace engine::render::terrain
                 m_heightmapData.heights.assign(1025u * 1025u, 0u);
             }
         }
+
+        // vertStepWorld = mètres monde entre deux échantillons de la heightmap (LOD 0) :
+        // la heightmap de N échantillons couvre world_size avec N-1 intervalles
+        // (1025 → 1024, 2049 → 2048 pour les cellules de 10 km). Historiquement
+        // figé à world_size / 1024, ce qui étirait toute autre résolution.
+        if (m_heightmapData.width < 2u || m_heightmapData.height < 2u)
+        {
+            LOG_ERROR(Render, "[TerrainRenderer] Heightmap trop petite ({}x{})",
+                      m_heightmapData.width, m_heightmapData.height);
+            Destroy(device);
+            return false;
+        }
+        m_vertStepWorld = m_terrainWorldSize / static_cast<float>(m_heightmapData.width - 1u);
 
         // ── Upload heightmap to GPU ───────────────────────────────────────────────
         if (!HeightmapLoader::UploadHeightmap(device, physDev, m_heightmapData,
@@ -263,6 +272,8 @@ namespace engine::render::terrain
                 p.originZ = m_terrainOriginZ + static_cast<float>(pz) * patchWorldSize;
                 p.centerX = p.originX + patchWorldSize * 0.5f;
                 p.centerZ = p.originZ + patchWorldSize * 0.5f;
+                p.indexX  = px;
+                p.indexZ  = pz;
 
                 // Compute Y bounds by sampling the 4 patch corners
                 const uint32_t hx0 = px * kPatchQuads;
@@ -354,6 +365,40 @@ namespace engine::render::terrain
                 m_renderPass == VK_NULL_HANDLE)
             {
                 LOG_ERROR(Render, "[TerrainRenderer] vkCreateRenderPass failed");
+                Destroy(device);
+                return false;
+            }
+
+            // Variante LOAD (monde en cellules) : plusieurs terrains enchaînés dans la
+            // même frame — seul le premier efface le GBuffer, les suivants conservent
+            // le contenu (attachements déjà en layout attachement). Compatible avec
+            // m_renderPass (mêmes formats / échantillons) : même pipeline.
+            for (int i = 0; i < 4; ++i)
+            {
+                attachments[i].loadOp        = VK_ATTACHMENT_LOAD_OP_LOAD;
+                attachments[i].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            }
+            attachments[4].loadOp        = VK_ATTACHMENT_LOAD_OP_LOAD;
+            attachments[4].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            // Le terrain précédent a ÉCRIT couleur + profondeur : dépendance mémoire
+            // écriture → lecture/écriture (LOAD lit les attachements, test de profondeur).
+            // Les dépendances n'entrent pas dans la compatibilité des render passes.
+            dep.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                                VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+                                VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+            dep.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                                VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+                                VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+            dep.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            if (vkCreateRenderPass(device, &rpCI, nullptr, &m_renderPassLoad) != VK_SUCCESS ||
+                m_renderPassLoad == VK_NULL_HANDLE)
+            {
+                LOG_ERROR(Render, "[TerrainRenderer] vkCreateRenderPass (LOAD) failed");
                 Destroy(device);
                 return false;
             }
@@ -1361,6 +1406,7 @@ namespace engine::render::terrain
         if (m_descPool       != VK_NULL_HANDLE) { vkDestroyDescriptorPool(device, m_descPool, nullptr);       m_descPool       = VK_NULL_HANDLE; m_descSet = VK_NULL_HANDLE; }
         if (m_descSetLayout  != VK_NULL_HANDLE) { vkDestroyDescriptorSetLayout(device, m_descSetLayout, nullptr); m_descSetLayout = VK_NULL_HANDLE; }
         if (m_renderPass     != VK_NULL_HANDLE) { vkDestroyRenderPass(device, m_renderPass, nullptr);         m_renderPass     = VK_NULL_HANDLE; }
+        if (m_renderPassLoad != VK_NULL_HANDLE) { vkDestroyRenderPass(device, m_renderPassLoad, nullptr);     m_renderPassLoad = VK_NULL_HANDLE; }
 
         if (m_uboBuffer != VK_NULL_HANDLE) { vkDestroyBuffer(device, m_uboBuffer, nullptr); m_uboBuffer = VK_NULL_HANDLE; }
         if (m_uboMemory != VK_NULL_HANDLE) { vkFreeMemory(device, m_uboMemory, nullptr);    m_uboMemory = VK_NULL_HANDLE; }
@@ -1390,11 +1436,24 @@ namespace engine::render::terrain
     // ─────────────────────────────────────────────────────────────────────────────
     // TerrainRenderer::GetActualRenderedExtentX/Z
     // ─────────────────────────────────────────────────────────────────────────────
-    // m_vertStepWorld = m_terrainWorldSize / 1024 (cf. Init), donc
+    // m_vertStepWorld = m_terrainWorldSize / (largeur - 1) (cf. Init), donc
     // l'etendue reellement maillee = m_patchCountX * kPatchQuads * m_vertStepWorld.
-    // Pour une heightmap 256x256 avec world_size=10000, ca donne 15*16*9.77 = 2344 m
-    // au lieu de 10000 m -> le centre des patches n'est PAS le centre de
-    // GetTerrainWorldSize().
+    // Egale a world_size quand (largeur - 1) est multiple de kPatchQuads (1025,
+    // 2049) ; un peu moins sinon (256x256 : 15*16 = 240 intervalles sur 255).
+
+    void TerrainRenderer::SetTerrainOrigin(float originX, float originZ)
+    {
+        m_terrainOriginX = originX;
+        m_terrainOriginZ = originZ;
+        const float patchWorldSize = static_cast<float>(kPatchQuads) * m_vertStepWorld;
+        for (TerrainPatchInfo& p : m_patches)
+        {
+            p.originX = m_terrainOriginX + static_cast<float>(p.indexX) * patchWorldSize;
+            p.originZ = m_terrainOriginZ + static_cast<float>(p.indexZ) * patchWorldSize;
+            p.centerX = p.originX + patchWorldSize * 0.5f;
+            p.centerZ = p.originZ + patchWorldSize * 0.5f;
+        }
+    }
 
     float TerrainRenderer::GetActualRenderedExtentX() const
     {
@@ -1476,6 +1535,9 @@ namespace engine::render::terrain
         std::vector<DrawEntry> drawLists[kTerrainLodCount];
 
         const float patchWorldSize = static_cast<float>(kPatchQuads) * m_vertStepWorld;
+        // Seuils de LOD définis pour un pas de 1 m (zone historique 1025² sur 1 km) :
+        // mis à l'échelle du pas réel pour garder la densité de sommets à l'écran.
+        const float lodScale = std::max(1.0f, m_vertStepWorld);
 
         // Diagnostic one-shot : trace patches retenus / rejetes au premier appel
         // Record apres un Init. Utile pour comprendre pourquoi le terrain ne
@@ -1492,26 +1554,29 @@ namespace engine::render::terrain
             const engine::math::Vec3 bMin{ p.originX,                  p.minY, p.originZ };
             const engine::math::Vec3 bMax{ p.originX + patchWorldSize,  p.maxY, p.originZ + patchWorldSize };
 
-            if (m_frustumCullEnabled && !frustum.TestAABB(bMin, bMax)) { ++diagCulled; continue; }
-            ++diagKept;
-
             // Distance from camera to patch centre (XZ only)
             const float dx   = p.centerX - cameraPos.x;
             const float dz   = p.centerZ - cameraPos.z;
             const float dist = std::sqrt(dx * dx + dz * dz);
+            // Monde en cellules : au-delà de la distance d'affichage (brouillard), le
+            // patch n'est pas dessiné (0 = illimité, comportement historique).
+            if (m_maxDrawDistance > 0.0f && dist - patchWorldSize > m_maxDrawDistance) { ++diagCulled; continue; }
 
-            // Select LOD
+            if (m_frustumCullEnabled && !frustum.TestAABB(bMin, bMax)) { ++diagCulled; continue; }
+            ++diagKept;
+
+            // Select LOD (seuils proportionnels au pas de la heightmap, cf. kLodDistances)
             uint32_t lod = 0;
             for (; lod < kTerrainLodCount - 1u; ++lod)
-                if (dist < kLodDistances[lod]) break;
+                if (dist < kLodDistances[lod] * lodScale) break;
 
             // Morph factor: blend towards next (coarser) LOD in the transition zone.
             // Transition zone = last 20% of the current LOD range.
             float morphFactor = 0.0f;
             if (lod < kTerrainLodCount - 1u)
             {
-                const float rangeLow  = (lod > 0) ? kLodDistances[lod - 1] : 0.0f;
-                const float rangeHigh = kLodDistances[lod];
+                const float rangeLow  = (lod > 0) ? kLodDistances[lod - 1] * lodScale : 0.0f;
+                const float rangeHigh = kLodDistances[lod] * lodScale;
                 const float morphStart = rangeLow + (rangeHigh - rangeLow) * 0.8f;
                 const float morphRange = rangeHigh - morphStart;
                 if (morphRange > 0.0f)
@@ -1623,8 +1688,11 @@ namespace engine::render::terrain
             registry.getImageView(idDepth)
         };
 
+        // Premier terrain de la frame : efface le GBuffer ; suivants : LOAD.
+        const VkRenderPass activeRenderPass = m_clearAttachments ? m_renderPass : m_renderPassLoad;
+
         FramebufferKey fbKey{};
-        fbKey.renderPass = m_renderPass;
+        fbKey.renderPass = activeRenderPass;
         for (int i = 0; i < 5; ++i) fbKey.views[i] = views[i];
         fbKey.width  = extent.width;
         fbKey.height = extent.height;
@@ -1639,7 +1707,7 @@ namespace engine::render::terrain
         {
             VkFramebufferCreateInfo fbCI{};
             fbCI.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            fbCI.renderPass      = m_renderPass;
+            fbCI.renderPass      = activeRenderPass;
             fbCI.attachmentCount = 5;
             fbCI.pAttachments    = views;
             fbCI.width           = extent.width;
@@ -1665,7 +1733,7 @@ namespace engine::render::terrain
 
         VkRenderPassBeginInfo rpBI{};
         rpBI.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        rpBI.renderPass        = m_renderPass;
+        rpBI.renderPass        = activeRenderPass;
         rpBI.framebuffer       = framebuffer;
         rpBI.renderArea.offset = { 0, 0 };
         rpBI.renderArea.extent = extent;

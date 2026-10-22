@@ -1307,7 +1307,16 @@ namespace engine
 		// Contenu de la zone active (scenery, interactables, réglages de zone) : fusionné
 		// par-dessus config.json. Les clés gardent leur préfixe world.* → call-sites inchangés.
 		// Couvre aussi l'éditeur (même constructeur Engine via --world-editor).
-		if (!engine::core::Config::LoadActiveZone(m_cfg, m_cfg.GetString("paths.content", "game/data")))
+		// Monde « Royaumes » en cellules : pas de zone.json unique — liste des cellules
+		// générées + réglages client d'une cellule (cf. LoadCellWorldSettings).
+		// Les éditeurs (--world-editor, --editor) éditent UN terrain (m_terrain) :
+		// jamais en mode cellules.
+		const bool anyEditor = HasCliFlag(argc, argv, "--world-editor") || HasCliFlag(argc, argv, "--editor")
+			|| m_cfg.GetBool("editor.enabled", false);
+		if (anyEditor && engine::world::cells::IsCellWorld(m_cfg.GetString("world.active_zone", "")))
+			LOG_WARN(Core, "[Cells] Editeur : le monde en cellules n'est pas editable ici (zone historique attendue)");
+		if (!(!anyEditor && LoadCellWorldSettings())
+			&& !engine::core::Config::LoadActiveZone(m_cfg, m_cfg.GetString("paths.content", "game/data")))
 		{
 			LOG_WARN(Core, "[Engine] Zone active introuvable (world.active_zone='{}') : monde par defaut",
 				m_cfg.GetString("world.active_zone", ""));
@@ -1546,7 +1555,12 @@ namespace engine
 			// SP3 Task 3 — Table des positions minimap (targetId -> [x,z]),
 			// injectee dans le presenter pour que RebuildMinimap puisse resoudre
 			// les marqueurs de POI des etapes de quete actives.
-			if (!m_questPoiTable.Load(m_cfg))
+			// Monde « Royaumes » : POI GLOBAUX générés (world/<monde>/quest_poi.json),
+			// ramenés dans le repère de rendu par RebaseRenderOrigin (SetOrigin).
+			const bool poiLoaded = m_cellWorld
+				? m_questPoiTable.LoadFrom(m_cfg, "world/" + m_cfg.GetString("world.active_zone", "") + "/quest_poi.json")
+				: m_questPoiTable.Load(m_cfg);
+			if (!poiLoaded)
 			{
 				LOG_WARN(Core, "[Boot] QuestPoiTable load FAILED — pas de marqueurs de POI sur la minimap");
 			}
@@ -3851,9 +3865,16 @@ namespace engine
 #if defined(_WIN32)
 			surfaceReady = true;
 #else
-			glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+			// Build Linux = fumée (fenêtre cachée 1×1). Variable d'environnement
+			// LCDLLN_LINUX_VISIBLE_WINDOW=1 : vraie fenêtre 1280×720 (tests de rendu
+			// sous Xvfb + lavapipe, captures d'écran en CI ou en local).
+			const char* visibleWindowEnv = std::getenv("LCDLLN_LINUX_VISIBLE_WINDOW");
+			const bool visibleWindow = visibleWindowEnv != nullptr && visibleWindowEnv[0] == '1';
+			glfwWindowHint(GLFW_VISIBLE, visibleWindow ? GLFW_TRUE : GLFW_FALSE);
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-			m_glfwWindowForVk = glfwCreateWindow(1, 1, "VkSurface", nullptr, nullptr);
+			m_glfwWindowForVk = visibleWindow
+				? glfwCreateWindow(1280, 720, "LCDLLN", nullptr, nullptr)
+				: glfwCreateWindow(1, 1, "VkSurface", nullptr, nullptr);
 			if (!m_glfwWindowForVk)
 			{
 				LOG_WARN(Platform, "[Boot] glfwCreateWindow returned null");
@@ -4022,7 +4043,7 @@ namespace engine
 										{
 											auto sampleGround = [this](float worldX, float worldZ) -> float
 											{
-												return m_terrain.SampleHeightAtWorldXZ(worldX, worldZ);
+												return SampleGroundHeight(worldX, worldZ);
 											};
 											auto resolveSmoothed = [this](engine::server::EntityId entityId,
 												float& outX, float& outZ, float& outYaw) -> bool
@@ -4625,7 +4646,9 @@ namespace engine
 
 									// Client jeu : le terrain est toujours tenté (pas de drapeau « enabled ») ;
 										// chemin par défaut conventionnel si la clé est absente ou vide.
-										if (pipelineOk && !m_worldEditorExe)
+										// Monde « Royaumes » en cellules : pas de terrain unique, les terrains
+										// des cellules sont chargés par le streaming (EngineCells.cpp).
+										if (pipelineOk && !m_worldEditorExe && !m_cellWorld)
 										{
 											static constexpr const char* kDefaultHeightmapRel = "terrain/heightmap.r16h";
 											std::string hmGame = m_cfg.GetString("render.terrain.heightmap", kDefaultHeightmapRel);
@@ -5290,6 +5313,10 @@ namespace engine
 											m_heightmapField = std::make_unique<engine::world::terrain::HeightmapHeightField>(&m_terrain);
 											m_chunkField     = std::make_unique<engine::world::terrain::ChunkHeightField>(&m_streamCache, &m_cfg);
 											m_terrainCollider.BindHeightFields(m_chunkField.get(), m_heightmapField.get());
+											// Monde « Royaumes » en cellules : hauteurs des cellules (CPU) et eau
+											// de toutes les cellules générées, en coordonnées de rendu.
+											if (m_cellWorld)
+												InitCellWorldBoot();
 
 											// Nage (v1) : eau-test procedurale. La zone demo est plate et sans
 											// eau ; on pose un BASSIN DE TEST au-dessus du sol pour valider la
@@ -5297,7 +5324,11 @@ namespace engine
 											// pipeline water.bin / level-design). Desactivable : world.test_water.enabled=false.
 											// Nage : tenter d'abord une VRAIE eau (instances/water.bin via StreamCache) ;
 											// repli sur l'eau-test procedurale si absente (zone demo plate, sans water.bin).
-											if (auto realWater = m_streamCache.LoadWater(m_cfg, ""))
+											if (m_cellWorld)
+											{
+												// Eau déjà posée par InitCellWorldBoot (cellules générées).
+											}
+											else if (auto realWater = m_streamCache.LoadWater(m_cfg, ""))
 											{
 												m_clientWaterScene = realWater;
 												m_waterClientSceneDirty = true;
@@ -5348,35 +5379,15 @@ namespace engine
 											}
 											// Interaction : interactibles declares en config (world.interactables.N.*).
 											// Repli sur 2 cibles de TEST pres du spawn si aucun n'est declare.
-											m_interactables.clear();
-											const int icount = static_cast<int>(m_cfg.GetInt("world.interactables.count", 0));
-											for (int ii = 0; ii < icount; ++ii)
+											// Monde en cellules : les interactibles viennent des cellules
+											// (EnsureCellHeights), chargées plus bas.
+											if (!m_cellWorld)
 											{
-												const std::string base = "world.interactables." + std::to_string(ii) + ".";
-												InteractableEntity e;
-												e.position = engine::math::Vec3{ static_cast<float>(m_cfg.GetDouble(base + "x", 0.0)), 0.0f, static_cast<float>(m_cfg.GetDouble(base + "z", 0.0)) };
-												e.radius = static_cast<float>(m_cfg.GetDouble(base + "radius", 2.5));
-												e.isNpc = m_cfg.GetBool(base + "npc", false);
-												e.label = m_cfg.GetString(base + "label", "?");
-												e.message = m_cfg.GetString(base + "message", "");
-												e.meshPath = m_cfg.GetString(base + "mesh", "");
-												e.meshScale = static_cast<float>(m_cfg.GetDouble(base + "scale", 1.0));
-												e.meshYawDeg = static_cast<float>(m_cfg.GetDouble(base + "yaw_deg", 0.0));
-												e.meshRotXDeg = static_cast<float>(m_cfg.GetDouble(base + "rot_x_deg", 0.0));
-												const int dcount = static_cast<int>(m_cfg.GetInt(base + "dialogue.count", 0));
-												for (int dj = 0; dj < dcount; ++dj)
-													e.dialogue.push_back(m_cfg.GetString(base + "dialogue." + std::to_string(dj), ""));
-												// Cellule de dialogue PNJ : sous-titre (role) + arbre moderne
-												// (fallback legacy depuis e.dialogue si pas de dialogue_tree).
-												e.role = m_cfg.GetString(base + "role", "");
-												e.dialogueTree = engine::client::LoadDialogueTree(m_cfg, base, e.dialogue);
-												// SP2 — id réseau du PNJ (ex. "npc:elder_marn"), utilisé pour envoyer un
-												// Talk à l'ouverture du dialogue (\see OpenDialogue) puis comme cible
-												// des QuestAccept/TurnInRequest. Vide = pas de PNJ quête (aucun Talk envoyé).
-												e.npcTargetId = m_cfg.GetString(base + "npc_target_id", "");
-												m_interactables.push_back(e);
+												m_interactables.clear();
+												AppendInteractables(m_cfg, 0.0, 0.0);
 											}
-											if (m_interactables.empty())
+											// Pas de cibles de test à l'origine dans le monde en cellules.
+											if (m_interactables.empty() && !m_cellWorld)
 											{
 												InteractableEntity npc;
 												npc.position = engine::math::Vec3{ 4.0f, 0.0f, 0.0f };
@@ -5420,10 +5431,20 @@ namespace engine
 											// Le catalogue de collision des pièces doit précéder le décor
 											// instancié : ses murs/arches enregistrent leurs boîtes au chargement.
 											LoadBuildingCollisionCatalog();
-											LoadScatterWorld();
-											// Bâtiments éditables (auberge…) depuis instances/.../buildings.bin,
-											// rendus eux aussi en instancié (pièces partagées entre bâtiments).
-											LoadBuildings();
+											if (m_cellWorld)
+											{
+												// Monde en cellules : première cellule générée chargée
+												// synchronement (monde visible avant l'EnterWorld) ; le
+												// streaming prend ensuite le relais autour du joueur.
+												EnterCellWorldAt(m_cellBootGlobalX, m_cellBootGlobalZ);
+											}
+											else
+											{
+												LoadScatterWorld();
+												// Bâtiments éditables (auberge…) depuis instances/.../buildings.bin,
+												// rendus eux aussi en instancié (pièces partagées entre bâtiments).
+												LoadBuildings();
+											}
 											// Aperçu éditeur : mémorise le nombre de props « monde » (décor +
 											// bâtiments posés) pour que SyncEditorBuildingPreview n'efface QUE
 											// le brouillon par-dessus, sans toucher au monde chargé ici.
@@ -5442,8 +5463,9 @@ namespace engine
 
 											// Spawn au centre map (XZ = 0,0), pose au-dessus du sol echantillonne
 											// + halfHeight de capsule pour que le bas de la capsule effleure le sol.
-											const float spawnX = 0.0f;
-											const float spawnZ = 0.0f;
+											// Monde en cellules : point d'arrivée du boot (repère de rendu).
+											const float spawnX = m_cellWorld ? m_renderFrame.ToRenderX(m_cellBootGlobalX) : 0.0f;
+											const float spawnZ = m_cellWorld ? m_renderFrame.ToRenderZ(m_cellBootGlobalZ) : 0.0f;
 											const float spawnY = m_terrainCollider.GroundHeightAt(spawnX, spawnZ) + 0.9f;
 											m_characterController.Init(engine::math::Vec3{ spawnX, spawnY, spawnZ });
 											LOG_INFO(Render,
@@ -5527,11 +5549,17 @@ namespace engine
 												// Phase 0 (chantier C) : rendu exclusif. On ne dessine le terrain
 												// heightmap legacy que si les chunks n'ont pas couvert la scène à la
 												// frame précédente -> supprime le z-fighting du double terrain.
+												// Monde « Royaumes » : terrains des cellules résidentes (le
+												// premier efface le GBuffer) à la place du terrain unique.
 												const bool terrainBeforeGeometry = engine::render::ShouldDrawLegacyTerrain(
-													m_terrain.IsValid(),
+													m_cellWorld ? HasCellTerrainToDraw() : m_terrain.IsValid(),
 													m_pipeline->GetGeometryPass().HasLoadPass(),
 													m_lastFrameChunkDrawCount);
-												if (terrainBeforeGeometry)
+												if (terrainBeforeGeometry && m_cellWorld)
+												{
+													(void)RecordCellTerrains(cmd, reg, rs);
+												}
+												else if (terrainBeforeGeometry)
 												{
 													m_terrain.Record(
 														m_vkDeviceContext.GetDevice(), cmd, reg,
@@ -7680,6 +7708,8 @@ namespace engine
 #endif
 		if (m_terrain.IsValid())
 			m_terrain.Destroy(m_vkDeviceContext.GetDevice());
+		// Monde « Royaumes » : terrains des cellules (device encore valide ici).
+		ShutdownCellWorld();
 		// M100 — Task 12 : shutdown terrain chunk runtime AVANT le DeferredPipeline
 		// (le renderer dépend du renderPass `m_pipeline->GetGeometryPass`).
 		if (m_terrainChunkRenderer)
@@ -7807,8 +7837,10 @@ namespace engine
 			const float pitchDeg = shutdownCam.pitch * kRad2Deg;
 			// Vue 3eme personne : on persiste la position cible (joueur), pas la camera.
 			const engine::math::Vec3& playerPos = m_orbitalCameraController.GetTargetPosition();
+			// Monde « Royaumes » : le master stocke des positions GLOBALES.
 			const bool sent = m_authUi.SavePositionAsync(m_currentCharacterId,
-				playerPos.x, playerPos.y, playerPos.z,
+				m_cellWorld ? static_cast<float>(m_renderFrame.ToGlobalX(playerPos.x)) : playerPos.x, playerPos.y,
+				m_cellWorld ? static_cast<float>(m_renderFrame.ToGlobalZ(playerPos.z)) : playerPos.z,
 				yawDeg, pitchDeg);
 			LOG_INFO(Core, "[SavePosition] shutdown save (character_id={}, pos=({:.1f},{:.1f},{:.1f}), sent={})",
 				m_currentCharacterId, playerPos.x, playerPos.y, playerPos.z, sent);
@@ -8156,6 +8188,7 @@ namespace engine
 					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
 				if (m_terrain.IsValid())
 					m_terrain.InvalidateFramebufferCache(m_vkDeviceContext.GetDevice());
+				InvalidateCellTerrainFramebuffers();
 				// M100.14 — Le cache framebuffer de la passe water est indexé par
 				// VkImageView source : un resize détruit toutes les vues FG → cache
 				// stale. Invalidation au même endroit que terrain/pipeline.
@@ -8810,7 +8843,14 @@ namespace engine
 			}
 		}
 
+#if !defined(_WIN32)
+		// Build Linux (fumée) : LCDLLN_DEBUG_AUTOWALK lève l'écran d'authentification
+		// (absent sous Linux) pour que le déplacement de test s'exécute.
+		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete()
+			&& std::getenv("LCDLLN_DEBUG_AUTOWALK") == nullptr;
+#else
 		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
+#endif
 		if (authGateActive)
 		{
 			LOG_DEBUG(Render, "[DIAG] authUi.Update begin frame={}", m_currentFrame);
@@ -8905,6 +8945,20 @@ namespace engine
 						yawDeg   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.yaw_deg", 0.0));
 						pitchDeg = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.pitch_deg", -10.0));
 						LOG_INFO(Core, "[EnterWorld] using config default spawn (no per-character data)");
+						// Monde « Royaumes » : (0, 0) n'est pas une cellule générée — repli sur
+						// le point d'arrivée du boot (le serveur corrige ensuite par ForcePosition).
+						if (m_cellWorld && !m_cfg.Has("client.world.default_spawn.x"))
+						{
+							spawnX = static_cast<float>(m_cellBootGlobalX);
+							spawnZ = static_cast<float>(m_cellBootGlobalZ);
+						}
+					}
+					// Monde « Royaumes » : spawn GLOBAL (DB) → cellule chargée + repère de rendu.
+					if (m_cellWorld)
+					{
+						EnterCellWorldAt(spawnX, spawnZ);
+						spawnX = m_renderFrame.ToRenderX(spawnX);
+						spawnZ = m_renderFrame.ToRenderZ(spawnZ);
 					}
 					constexpr float kDeg2Rad = 3.14159265f / 180.f;
 					out.camera.position.x = spawnX;
@@ -9221,8 +9275,10 @@ namespace engine
 					constexpr float kRad2Deg = 180.f / 3.14159265f;
 					const float yawDeg   = out.camera.yaw   * kRad2Deg;
 					const float pitchDeg = out.camera.pitch * kRad2Deg;
+					// Monde « Royaumes » : le master stocke des positions GLOBALES.
 					if (m_authUi.SavePositionAsync(m_currentCharacterId,
-						playerPos.x, playerPos.y, playerPos.z,
+						m_cellWorld ? static_cast<float>(m_renderFrame.ToGlobalX(playerPos.x)) : playerPos.x, playerPos.y,
+						m_cellWorld ? static_cast<float>(m_renderFrame.ToGlobalZ(playerPos.z)) : playerPos.z,
 						yawDeg, pitchDeg))
 					{
 						LOG_DEBUG(Core, "[SavePosition] sync sent (character_id={}, pos=({:.1f},{:.1f},{:.1f}), reason={})",
@@ -9673,8 +9729,43 @@ namespace engine
 					if (ps79.speedRun > 0.1f)
 						m_characterController.SetMoveSpeeds(ps79.speedWalk, ps79.speedRun, ps79.speedSprint);
 				}
+#if !defined(_WIN32)
+				// Build Linux (fumée, sans clavier) : LCDLLN_DEBUG_AUTOWALK="dx,dz" fait
+				// marcher le personnage dans cette direction (tests de rendu / streaming
+				// sous Xvfb). Sans effet si la variable est absente.
+				if (const char* autowalk = std::getenv("LCDLLN_DEBUG_AUTOWALK"))
+				{
+					float awx = 0.0f, awz = 0.0f;
+					if (std::sscanf(autowalk, "%f,%f", &awx, &awz) == 2)
+					{
+						const float len = std::sqrt(awx * awx + awz * awz);
+						if (len > 1e-3f)
+						{
+							moveInput.moveDirXZ = engine::math::Vec3{ awx / len, 0.0f, awz / len };
+							moveInput.sprint = true;
+						}
+					}
+				}
+#endif
 				// Collisionneur composite : terrain (sol + eau) + cylindres des props/décor.
-				m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
+				// Monde « Royaumes » : + collisionneurs des cellules résidentes (décalés).
+				const engine::math::Vec3 ccPrevPos = m_characterController.GetPosition();
+				if (m_cellWorld)
+					m_characterController.Update(static_cast<float>(dt), moveInput, m_cellCollider);
+				else
+					m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
+				if (m_cellWorld)
+				{
+					// Mur invisible : on ne sort pas des cellules générées (le shard
+					// refuse aussi la position et recale le client).
+					const engine::math::Vec3 moved = m_characterController.GetPosition();
+					if (!engine::world::cells::IsMoveAllowed(m_generatedCells,
+							m_renderFrame.ToGlobalX(ccPrevPos.x), m_renderFrame.ToGlobalZ(ccPrevPos.z),
+							m_renderFrame.ToGlobalX(moved.x), m_renderFrame.ToGlobalZ(moved.z)))
+						m_characterController.BlockHorizontalAt(ccPrevPos.x, ccPrevPos.z);
+					// Streaming des cellules autour du joueur (rebase éventuel inclus).
+					UpdateCellStreaming(/*synchronous*/ false);
+				}
 				const engine::math::Vec3 ccPos = m_characterController.GetPosition();
 				m_orbitalCameraController.SetTargetPosition(ccPos);
 
@@ -10489,7 +10580,7 @@ namespace engine
 				const bool occEnabled = m_cfg.GetBool("client.camera.occlusion_fade.enabled", true);
 				const float clampMargin = static_cast<float>(
 					m_cfg.GetDouble("client.camera.terrain_clamp_margin", 0.5));
-				const float groundY = m_terrain.SampleHeightAtWorldXZ(
+				const float groundY = SampleGroundHeight(
 					out.camera.position.x, out.camera.position.z);
 				const float minCamY = groundY + clampMargin;
 				if (out.camera.position.y < minCamY)
@@ -14252,6 +14343,9 @@ namespace engine
 	void Engine::LoadRespawnMarkers()
 	{
 		m_respawnMarkers.clear();
+		// Monde en cellules : marqueurs chargés avec chaque cellule (EnsureCellHeights).
+		if (m_cellWorld)
+			return;
 		// Marqueurs de la zone active (game/data/zones/<zone>/respawn_points.txt) si
 		// world.active_zone est défini, sinon repli sur l'ancien chemin global.
 		// Le parseur ci-dessous ignore les colonnes faction/rayon (réservées au shard).
@@ -14298,7 +14392,7 @@ namespace engine
 		// Mob / node / loot bag : Y de spawn brut (souvent 0) → snap visuel au sol
 		// client. SampleHeightAtWorldXZ retombe sur 0 si la heightmap n'est pas
 		// chargée — comportement identique à l'ancien rendu dans ce cas.
-		return m_terrain.SampleHeightAtWorldXZ(worldX, worldZ) + 0.9f;
+		return SampleGroundHeight(worldX, worldZ) + 0.9f;
 	}
 
 	void Engine::SetAvatarGender(const std::string& gender)
@@ -14814,16 +14908,23 @@ namespace engine
 		{
 			path = fs::path(contentRoot) / "instances" / "buildings.bin";
 		}
+		(void)LoadBuildingsInto(path.string(), LegacyInstanceTarget());
+	}
 
+	int Engine::LoadBuildingsInto(const std::string& fullPath, const InstanceTarget& target)
+	{
+		if (!m_pipeline || target.field == nullptr || target.collider == nullptr || !target.ground) return 0;
+		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+		const std::string& path = fullPath;
 		std::ifstream f(path, std::ios::binary | std::ios::ate);
 		if (!f.good())
 		{
 			// Absence de fichier = cas normal (zone sans bâtiment) -> Debug.
-			LOG_DEBUG(Render, "[Buildings] aucun buildings.bin ('{}')", path.string());
-			return;
+			LOG_DEBUG(Render, "[Buildings] aucun buildings.bin ('{}')", path);
+			return 0;
 		}
 		const std::streamsize size = f.tellg();
-		if (size <= 0) return;
+		if (size <= 0) return 0;
 		f.seekg(0, std::ios::beg);
 		std::vector<uint8_t> bytes(static_cast<size_t>(size));
 		f.read(reinterpret_cast<char*>(bytes.data()), size);
@@ -14834,7 +14935,7 @@ namespace engine
 				std::span<const uint8_t>(bytes), placements, err))
 		{
 			LOG_WARN(Render, "[Buildings] buildings.bin invalide : {}", err);
-			return;
+			return 0;
 		}
 
 		// Bibliothèque des types de bâtiments : la carte ne stocke que des
@@ -14870,12 +14971,14 @@ namespace engine
 			}
 			++resolved;
 			// L'origine du bâtiment est ancrée au sol UNE fois ; les pièces
-			// conservent ensuite leur Y local (toit/étage empilés).
-			const float groundY = m_terrainCollider.GroundHeightAt(
-				pl.worldPosition.x, pl.worldPosition.z);
+			// conservent ensuite leur Y local (toit/étage empilés). Position dans le
+			// repère de la cible (globale − origine : cellule du monde « Royaumes »).
+			const float bx = static_cast<float>(static_cast<double>(pl.worldPosition.x) - target.originX);
+			const float bz = static_cast<float>(static_cast<double>(pl.worldPosition.z) - target.originZ);
+			const float groundY = target.ground(bx, bz);
 			const engine::math::Mat4 groupM =
 				engine::math::Mat4::Translate(engine::math::Vec3{
-					pl.worldPosition.x, groundY + pl.worldPosition.y, pl.worldPosition.z }) *
+					bx, groundY + pl.worldPosition.y, bz }) *
 				engine::math::Mat4::RotateY(pl.worldYawDeg * kDeg2Rad) *
 				scaleMat(pl.worldScale);
 
@@ -14897,12 +15000,13 @@ namespace engine
 				AddScatterInstance(meshId, worldM, /*cullClass*/ 0u,
 					static_cast<uint8_t>(engine::world::instances::kScatterFlagBuildingPiece
 						| engine::world::instances::kScatterFlagOccluder),
-					pt.solid, /*buildingPiece*/ true, pt.collisionRadius);
+					pt.solid, /*buildingPiece*/ true, pt.collisionRadius, target);
 				++partCount;
 			}
 		}
-		LOG_INFO(Render, "[Buildings] {} placement(s), {} resolu(s), {} piece(s) rendue(s)",
-			static_cast<int>(placements.size()), resolved, partCount);
+		LOG_INFO(Render, "[Buildings] '{}' : {} placement(s), {} resolu(s), {} piece(s) rendue(s)",
+			path, static_cast<int>(placements.size()), resolved, partCount);
+		return partCount;
 	}
 
 	void Engine::SyncEditorBuildingPreview()
@@ -15943,7 +16047,7 @@ namespace engine
 		if (!prop.parts.empty())
 		{
 			if (solid)
-				RegisterBuildingPieceCollision(meshPath, worldM, cx, cz, radiusAuto, minY, maxY, collisionRadius);
+				RegisterBuildingPieceCollision(meshPath, worldM, cx, cz, radiusAuto, minY, maxY, collisionRadius, m_worldCollider);
 			m_props.push_back(std::move(prop));
 		}
 	}
@@ -15956,9 +16060,12 @@ namespace engine
 	// \param cx,cz,radiusAuto  Empreinte XZ (centre + rayon auto) du mesh posé (m).
 	// \param minY,maxY         Bornes verticales monde du mesh posé (m).
 	// \param collisionRadius   Rayon imposé (m) ; 0 = radiusAuto.
-	// Effet de bord : ajoute des primitives dans m_worldCollider (index spatial invalidé).
+	// \param target          Collisionneur qui reçoit les primitives (m_worldCollider, ou
+	//                         celui d'une cellule du monde « Royaumes », en coordonnées locales).
+	// Effet de bord : ajoute des primitives dans \p target (index spatial invalidé).
 	void Engine::RegisterBuildingPieceCollision(const std::string& meshPath, const engine::math::Mat4& worldM,
-		float cx, float cz, float radiusAuto, float minY, float maxY, float collisionRadius)
+		float cx, float cz, float radiusAuto, float minY, float maxY, float collisionRadius,
+		engine::gameplay::CompositeWorldCollider& target)
 	{
 		float radius = collisionRadius > 0.0f ? collisionRadius : radiusAuto;
 		if (radius < 0.05f) radius = 0.5f;
@@ -15993,7 +16100,7 @@ namespace engine
 			cyl.passable = meshLower.find("door") != std::string::npos;
 			cyl.stair = isStair;
 			cyl.wall = !cyl.stair;
-			m_worldCollider.AddCylinder(cyl);
+			target.AddCylinder(cyl);
 		}
 		else if (!piece->passable)
 		{
@@ -16025,7 +16132,7 @@ namespace engine
 				// les murs restent des barrières latérales pures.
 				box.walkableTop = piece->walkable || isStair;
 				box.wall = !box.walkableTop;
-				m_worldCollider.AddBox(box);
+				target.AddBox(box);
 			}
 		}
 		// piece->passable : on n'ajoute rien (battant franchissable).
@@ -17001,10 +17108,19 @@ namespace engine
 				// local → le joueur réapparaissait sous la carte. On garantit au
 				// minimum sol + 0.9 (centre capsule) ; un Y data plus haut (tour,
 				// étage) reste respecté.
-				const float forcedGroundY =
-					m_terrain.SampleHeightAtWorldXZ(forced.x, forced.z) + 0.9f;
+				// Monde « Royaumes » : position GLOBALE → cellule chargée (rebase si
+				// téléportation lointaine) puis repère de rendu.
+				float forcedX = forced.x;
+				float forcedZ = forced.z;
+				if (m_cellWorld)
+				{
+					EnterCellWorldAt(forced.x, forced.z);
+					forcedX = m_renderFrame.ToRenderX(forced.x);
+					forcedZ = m_renderFrame.ToRenderZ(forced.z);
+				}
+				const float forcedGroundY = SampleGroundHeight(forcedX, forcedZ) + 0.9f;
 				const engine::math::Vec3 forcedPos{
-					forced.x, std::max(forced.y, forcedGroundY), forced.z };
+					forcedX, std::max(forced.y, forcedGroundY), forcedZ };
 				(void)m_characterController.Init(forcedPos);
 				m_orbitalCameraController.SetTargetPosition(forcedPos);
 				m_avatarYaw = forced.yawRadians;
@@ -17043,10 +17159,13 @@ namespace engine
 			{
 				m_gameplayInputAccumSec = 0.0f;
 				const engine::math::Vec3 avatarPos = m_characterController.GetPosition();
+				// Monde « Royaumes » : le shard attend des positions GLOBALES.
+				const float wireX = m_cellWorld ? static_cast<float>(m_renderFrame.ToGlobalX(avatarPos.x)) : avatarPos.x;
+				const float wireZ = m_cellWorld ? static_cast<float>(m_renderFrame.ToGlobalZ(avatarPos.z)) : avatarPos.z;
 				// TD.8 — propage l'état d'animation local pour que les autres joueurs voient
 				// emotes/roulades/run/sprint/etc. (pas seulement Idle/Walk dérivé de la vélocité).
 				(void)m_gameplayUdp.SendInput(clientId, ++m_gameplayInputSeq,
-					avatarPos.x, avatarPos.y, avatarPos.z, m_avatarYaw,
+					wireX, avatarPos.y, wireZ, m_avatarYaw,
 					ToWireAnimState(m_avatarLocoState));
 			}
 		}

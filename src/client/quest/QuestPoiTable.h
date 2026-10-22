@@ -33,11 +33,25 @@ namespace engine::client
 		/// numériques `[x, z]`.
 		bool Load(const engine::core::Config& cfg);
 
+		/// Comme Load, depuis \p relativeContentPath (monde « Royaumes » :
+		/// `world/royaumes/quest_poi.json`, positions GLOBALES).
+		bool LoadFrom(const engine::core::Config& cfg, const std::string& relativeContentPath);
+
+		/// Monde en cellules : origine du repère de rendu (m globaux). Les positions
+		/// exposées par Positions() deviennent (globale − origine), comme celles du
+		/// joueur et des entités. (0, 0) = positions du fichier telles quelles.
+		void SetOrigin(double originX, double originZ);
+
 		/// Liste des positions POI associées à \p targetId, ou `nullptr` si
 		/// cette cible n'a aucune position connue.
 		const std::vector<QuestPoiPosition>* Positions(std::string_view targetId) const;
 
 	private:
+		/// Positions exposées (repère de rendu courant).
 		std::unordered_map<std::string, std::vector<QuestPoiPosition>> m_positionsByTarget;
+		/// Positions du fichier (repère du fichier : global pour « Royaumes »).
+		std::unordered_map<std::string, std::vector<QuestPoiPosition>> m_filePositions;
+		double m_originX = 0.0;
+		double m_originZ = 0.0;
 	};
 }

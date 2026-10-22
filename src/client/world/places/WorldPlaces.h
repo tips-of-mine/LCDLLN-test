@@ -75,6 +75,9 @@ namespace engine::client
 		const std::vector<PlaceCity>& Cities() const { return m_cities; }
 		const std::vector<PlacePoi>& Pois() const { return m_pois; }
 		const std::vector<PlaceRegion>& Regions() const { return m_regions; }
+		/// Cellules générées (jouables) du monde « Royaumes » : identifiants du lore
+		/// (« N003_W009 »), dans l'ordre du fichier. Vide pour un monde historique.
+		const std::vector<std::string>& GeneratedCells() const { return m_generatedCells; }
 
 		/// Convertit une position monde (m) en coordonnées normalisées de la
 		/// carte : u ∈ [0,1] vers l'est (+X), v ∈ [0,1] vers le sud (+Z).
@@ -100,6 +103,7 @@ namespace engine::client
 		std::vector<PlaceCity> m_cities;
 		std::vector<PlacePoi> m_pois;
 		std::vector<PlaceRegion> m_regions;
+		std::vector<std::string> m_generatedCells;
 	};
 
 	/// Bannière « Vous entrez à … » : suit le lieu courant du joueur et arme un

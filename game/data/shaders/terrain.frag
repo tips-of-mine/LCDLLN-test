@@ -98,7 +98,9 @@ void main()
         discard;
 
     // ── Decode terrain macro normal ───────────────────────────────────────────
-    vec3 macroN = normalize(texture(uNormalMap, vUV).rgb * 2.0 - 1.0);
+    // Normal map générée aux SOMMETS de la heightmap : centre de texel (cf. terrain.vert).
+    vec2 nmSize = vec2(textureSize(uNormalMap, 0));
+    vec3 macroN = normalize(texture(uNormalMap, (vUV * (nmSize - 1.0) + 0.5) / nmSize).rgb * 2.0 - 1.0);
 
     // ── Read splat weights and normalise (Σ = 1) ─────────────────────────────
     vec4 splat     = texture(uSplatMap, vUV);

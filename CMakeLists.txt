@@ -614,8 +614,13 @@ add_library(engine_core
   src/world_editor/panels/CollisionEditorPanel.cpp
   src/client/app/Engine.cpp
   src/client/app/EngineWorld.cpp
+  src/client/app/EngineCells.cpp
   src/client/world/scatter/ScatterField.cpp
   src/client/world/places/WorldPlaces.cpp
+  # Monde « Royaumes » (client) : convention des cellules + repère de rendu.
+  src/shared/world/WorldCells.cpp
+  src/client/world/cells/CellWorldFrame.cpp
+  src/client/world/cells/CellHeightFields.cpp
   src/client/render/WorldMapImGuiRenderer.cpp
   src/shared/platform/FileSystem.cpp
   src/shared/platform/FileWatcher.cpp
@@ -742,6 +747,7 @@ add_library(engine_core
   src/client/gameplay/CharacterController.cpp
   src/client/gameplay/TerrainCollider.cpp
   src/client/gameplay/CompositeWorldCollider.cpp
+  src/client/gameplay/CellWorldCollider.cpp
   src/client/gameplay/ThirdPersonCamera.cpp
   src/client/gameplay/SkillSystem.cpp
   # Combat SP3 — métadonnées d'affichage des kits de sorts (barre d'action).

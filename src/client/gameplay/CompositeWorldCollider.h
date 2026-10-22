@@ -78,6 +78,10 @@ namespace engine::gameplay
 		void ClearBoxes() { m_boxes.clear(); m_indexDirty = true; }
 		std::size_t BoxCount() const { return m_boxes.size(); }
 
+		/// Monde en cellules (origine de rendu flottante) : translate toutes les
+		/// primitives de (dx, dz) mètres. Effet de bord : index spatial invalidé.
+		void Translate(float dx, float dz);
+
 		bool SweepCapsule(const Capsule& capsule,
 			const engine::math::Vec3& startCenter,
 			const engine::math::Vec3& endCenter,

@@ -11,12 +11,12 @@
 | Étape | Contenu | État |
 |---|---|---|
 | 1 | Convention commune (`WorldCells`), générateur à l'échelle 10 km (2049², couche macro + cellules, lieux procéduraux), binaires générés par la CI | fait (PR #1017) |
-| 2 | Serveur : une carte / une grille, régions actives par cellule, zones `cell_*` chargées, mur invisible serveur, départs par race (master + shard), anciens personnages feyhin replacés | **cette étape** — dormante tant que `active_zone` = `feyhin` |
-| 3 | Client : streaming des cellules voisines (terrain 2049², décor par chunks, bâtiments, eau), origine flottante, carte M du continent, mur invisible | à faire |
+| 2 | Serveur : une carte / une grille, régions actives par cellule, zones `cell_*` chargées, mur invisible serveur, départs par race (master + shard), anciens personnages feyhin replacés | fait (PR #1018) |
+| 3 | Client : streaming des cellules (terrain 2049², décor, bâtiments, collisions), repère de rendu centré sur la cellule du joueur, eau, PNJ, carte M et POI en global, mur invisible | **cette étape** — dormante tant que `active_zone` = `feyhin` |
 | 4 | Bascule : `world.active_zone` → monde « royaumes », CI qui génère avant l'empaquetage | à faire |
 
-Tant que l'étape 3 (client) n'est pas livrée, **ne pas basculer**
-`world.active_zone` sur `royaumes`. Les sorties du générateur peuvent en
+Tant que l'étape 4 (bascule + génération en CI) n'est pas faite, **ne pas
+basculer** `world.active_zone` sur `royaumes`. Les sorties du générateur peuvent en
 revanche être déployées sans risque : en zone historique, le shard ignore
 les dossiers `zones/cell_*` (et inversement).
 
@@ -50,11 +50,40 @@ Activé par `world.active_zone = "royaumes"` sur **le shard ET le master**
 | Mur invisible | Un Input dans une cellule non générée est refusé et le client recalé (`ForcePosition`, raison « téléport », ≤ 1 / 500 ms). |
 | Entrée en monde | Position hors cellule générée, ou fichier personnage d'une zone historique (repère local feyhin) → point de départ de la race (`characters.race_str`, sinon race par défaut) + `ForcePosition`. |
 | Création (master) | Ville de départ de la race lue dans `world/royaumes/start_locations.json` ; en zone historique, repli `character_creation.default_spawn.*`. |
+| Éditeurs | `--world-editor` / `--editor` ignorent le mode cellules (ils éditent un terrain unique). |
 | Boot | Monde en cellules sans `world/royaumes/start_locations.json` (avec `generated_cells`) = **refus de démarrer** : lancer le générateur avant. |
 
 Le canal « groupe / guilde » (encore un relais provisoire) diffuse à toute la carte.
 
-## 3. Générer le monde
+## 3. Client : streaming et repère de rendu
+
+Activé par le même `world.active_zone = "royaumes"` (client, shard, master).
+
+| Point | Règle |
+|---|---|
+| Repère de rendu | Le moteur travaille en coordonnées de RENDU : origine = centre de la cellule du joueur (`RenderFrame`, double). Positions toujours à moins de ~15 km de (0,0) → précision du float conservée. |
+| Rebase | Quand le joueur est entré de ≥ 50 m dans une autre cellule générée, l'origine saute au centre de la nouvelle (multiple exact de 10 km) : joueur, caméra, entités distantes, PNJ et leurs props (matrice décalée), marqueurs, eau, POI de quêtes décalés ; terrains et décor des cellules suivent par leur décalage (rien à recharger) ; historique TAA invalidé. |
+| Réseau | Le shard et le master restent en GLOBAL. Conversion aux frontières : snapshots (`UIModelBinding::SetWorldOrigin`), Input, sauvegarde de position, EnterWorld, ForcePosition (qui recharge la zone d'arrivée si besoin). |
+| Hauteurs CPU | Heightmap 2049² de chaque cellule à moins de `world.cells.height_radius_m` (6 km) : collision, pose au sol des PNJ / entités / décor (`CellHeightFields`). |
+| Tuiles de rendu | À moins de `world.cells.render_radius_m` (2,5 km) du bord : terrain GPU (un `TerrainRenderer` par cellule, le premier efface le GBuffer), décor instancié et bâtiments en coordonnées LOCALES à la cellule, collisions de la cellule (`CellWorldCollider`). Déchargées au-delà de `world.cells.unload_radius_m` (3,5 km), destruction GPU différée (attente du GPU). Une cellule dont le zone.json, la heightmap ou le terrain manque n'est plus retentée de la session. Patchs de terrain dessinés jusqu'à `world.cells.terrain_draw_distance_m` (2,5 km). |
+| Contenu léger | PNJ / coffres (`world.interactables` du zone.json) et marqueurs de respawn chargés une fois par cellule ; eau (`water.bin`) de toutes les cellules générées dès le boot (la passe d'eau est choisie au premier FrameGraph). |
+| Mur invisible | Le personnage ne peut pas entrer dans une cellule non générée (le shard refuse aussi). |
+| Carte M, bannière | `world/royaumes/places.json` (global) ; la position du joueur est convertie. Cellules générées : liste `cells` de places.json. |
+| POI de quêtes | `world/royaumes/quest_poi.json` (global), ramenés au repère de rendu. |
+| Boot | Avant l'EnterWorld, la cellule de `world.cells.boot_x` / `boot_z` (défaut : centre de la première cellule générée) est chargée — fond de l'écran de connexion. |
+
+Corrections du terrain faites à cette étape (profitent aussi aux zones historiques) :
+pas de la heightmap = taille / (N − 1) (au lieu de / 1024), patchs de LOD ≥ 1 qui
+étaient étirés 2^N fois (relief faux et décor « enterré » à quelques dizaines de
+mètres), lecture de la heightmap et de sa normal map au centre des texels, seuils
+de LOD proportionnels au pas de la heightmap.
+
+**Test sans serveur (Linux, Xvfb + lavapipe)** : `LCDLLN_LINUX_VISIBLE_WINDOW=1`
+ouvre une vraie fenêtre ; `LCDLLN_DEBUG_AUTOWALK="dx,dz"` fait marcher le
+personnage (et lève l'écran de connexion absent sous Linux) — utile pour vérifier
+le streaming et le rebase par captures d'écran.
+
+## 4. Générer le monde
 
 La CI compile `lcdlln_world_gen` (paquet Windows « éditeur + carte » compris)
 et exécute `world_gen_tests`. En local (Windows) :
@@ -97,7 +126,7 @@ rivières, routes, cellules générées encadrées), `start_locations.json`
 (départs par race + `generated_cells`, lus par le master et le shard),
 `quest_poi.json`.
 
-## 4. Pipeline du générateur (`tools/world_gen/lib`)
+## 5. Pipeline du générateur (`tools/world_gen/lib`)
 
 **Couche macro** (une fois, tout le continent) — garantit des cellules
 voisines raccord au mètre près :
@@ -130,7 +159,7 @@ voisines raccord au mètre près :
 10. `Population.cpp` : PNJ d'ambiance, voyageurs/patrouilles sur les routes,
     faune par biome et distance aux villes de départ, quêtes d'accueil.
 
-## 5. Points de départ par race
+## 6. Points de départ par race
 
 | Race | Ville | Cellule |
 |---|---|---|
@@ -143,28 +172,29 @@ voisines raccord au mètre près :
 Chaîne d'accueil (elfes / orcs / nains / démons) : `<race>_accueil` →
 `<race>_chasse` → `<race>_epreuve` (`quests/quest_definitions.json`).
 
-## 6. Contenu historique (ex-zone feyhin)
+## 7. Contenu historique (ex-zone feyhin)
 
 Le hameau de Marn reprend l'ancienne zone de test : `imports` du master
 (zone.json, scenery, buildings, respawns, **spawners**, **POI de quêtes**
 `quests/quest_poi_feyhin.json`) en coordonnées **locales**, translatées sur
 le centre du hameau dans sa cellule. `quests/quest_poi.json` (racine) reste
-celui de feyhin tant que le client n'est pas passé aux cellules.
+celui de feyhin (zone historique) ; dans le monde en cellules, le client lit
+`world/royaumes/quest_poi.json` (global).
 
-## 7. Monde vivant — PNJ d'ambiance
+## 8. Monde vivant — PNJ d'ambiance
 
 Routines `tour` / `patrol` / `post` / `wander`, horaires `day` / `night` /
 `always` (retour à la maison hors horaire), arrêt près d'un joueur, non
 attaquables. Module pur : `src/shardd/gameplay/ambient/AmbientRoutine`.
 Côté client : plaque « Nom - Rôle », E pour parler / commercer, jamais ciblé au Tab.
 
-## 8. Format `scatter.bin` LCSC v2
+## 9. Format `scatter.bin` LCSC v2
 
 v1 + table de chunks en fin de fichier : `originX f32, originZ f32,
 chunkSizeM f32, cols u16, rows u16`, puis `cols × rows × (first u32, count u32)`.
 Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-compatible).
 
-## 9. Limites connues / suite
+## 10. Limites connues / suite
 
 - Horloge : `/settime`, `/pausetime`, `/settimescale` ne sont pas propagées
   au shard (les PNJ gardent l'horaire « config »).
@@ -172,8 +202,18 @@ Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-c
   plafond 48) personnages distants dessinés, dans le champ de la caméra.
 - Elfes et démons empruntent la silhouette humaine.
 - L'île d'Hishtarland n'a pas de route (avertissement attendu).
-- Les cellules non générées sont bordées d'un mur invisible : côté serveur
-  (étape 2), côté client à l'étape 3.
+- Les cellules non générées sont bordées d'un mur invisible (serveur et client).
+- Chargement d'une tuile de rendu SYNCHRONE (une par frame, avec attente du GPU
+  avant la création des matériaux) : saccade quand une nouvelle cellule entre dans
+  le rayon de 2,5 km ; chaque tuile a son pipeline terrain. Chargement en tâche de
+  fond et pipeline partagé à faire.
+- Pas de mer : la section océan de `water.bin` est ignorée (comme en zone historique).
+- Joints de cellules : relief raccord, mais l'éclairage (normal map par cellule)
+  et le mélange des sols peuvent marquer légèrement la frontière.
+- Le pavage des textures du sol se décale au rebase (couche « neige », tuile de
+  12 m qui ne divise pas 10 km).
+- `scatter.bin` v2 (chunks de 500 m) : la table de chunks n'est pas encore
+  exploitée, le client charge la cellule entière (viendra avec l'asynchrone).
 - Deux cellules générées ne sont pas encore voisines : le changement de région
   en marchant ne se produit donc pas encore en jeu (testé côté logique).
 - Les anciens personnages de feyhin reprennent au hameau de Marn (leur position

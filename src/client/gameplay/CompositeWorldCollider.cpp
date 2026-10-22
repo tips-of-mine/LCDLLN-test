@@ -8,6 +8,13 @@ namespace engine::gameplay
 	CompositeWorldCollider::CompositeWorldCollider(const IWorldCollider* terrain)
 		: m_terrain(terrain) {}
 
+	void CompositeWorldCollider::Translate(float dx, float dz)
+	{
+		for (PropCylinder& c : m_cylinders) { c.cx += dx; c.cz += dz; }
+		for (PropBox& b : m_boxes) { b.cx += dx; b.cz += dz; }
+		m_indexDirty = true;
+	}
+
 	bool CompositeWorldCollider::QueryWater(const engine::math::Vec3& worldCenter,
 	                                        WaterQuery& out) const
 	{

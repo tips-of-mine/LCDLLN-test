@@ -5417,6 +5417,9 @@ namespace engine
 											LoadScenery();
 											// Monde ouvert (chantier « Royaumes ») : décor instancié de la zone
 											// (scatter.bin). Après le terrain (ancrage au sol) et le collisionneur.
+											// Le catalogue de collision des pièces doit précéder le décor
+											// instancié : ses murs/arches enregistrent leurs boîtes au chargement.
+											LoadBuildingCollisionCatalog();
 											LoadScatterWorld();
 											// Bâtiments éditables (auberge…) depuis instances/.../buildings.bin,
 											// rendus eux aussi en instancié (pièces partagées entre bâtiments).
@@ -14774,22 +14777,26 @@ namespace engine
 		}
 	}
 
+	void Engine::LoadBuildingCollisionCatalog()
+	{
+		// Absent -> catalogue vide -> fallback cylindre (rétro-compatible).
+		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+		const std::string catPath = contentRoot + "/collision/building_pieces.json";
+		const std::string catJson = engine::platform::FileSystem::ReadAllText(catPath);
+		if (!catJson.empty() && m_buildingCollisionCatalog.LoadFromJson(catJson))
+			LOG_INFO(Render, "[Buildings] catalogue collision chargé ('{}')", catPath);
+		else
+			LOG_DEBUG(Render, "[Buildings] pas de catalogue collision ('{}') -> fallback cylindre", catPath);
+	}
+
 	void Engine::LoadBuildings()
 	{
 		if (!m_pipeline) return;
 		namespace fs = std::filesystem;
 		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
 
-		// Catalogue de collision des pièces (boîtes fines + portes passables).
-		// Absent -> catalogue vide -> fallback cylindre (rétro-compatible).
-		{
-			const std::string catPath = contentRoot + "/collision/building_pieces.json";
-			const std::string catJson = engine::platform::FileSystem::ReadAllText(catPath);
-			if (!catJson.empty() && m_buildingCollisionCatalog.LoadFromJson(catJson))
-				LOG_INFO(Render, "[Buildings] catalogue collision chargé ('{}')", catPath);
-			else
-				LOG_DEBUG(Render, "[Buildings] pas de catalogue collision ('{}') -> fallback cylindre", catPath);
-		}
+		// Catalogue de collision des pièces : chargé au boot AVANT le décor instancié
+		// (LoadBuildingCollisionCatalog), partagé avec les bâtiments ci-dessous.
 
 		const std::string zoneId = m_cfg.GetString("world.active_zone", "");
 

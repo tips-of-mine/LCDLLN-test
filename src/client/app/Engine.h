@@ -1240,6 +1240,10 @@ namespace engine
 		bool EnsureScatterInstanceBuffer(uint32_t slot, uint32_t capacity);
 		/// Libère l'anneau de buffers d'instances (après vkDeviceWaitIdle).
 		void DestroyScatterResources();
+		/// Charge collision/building_pieces.json dans m_buildingCollisionCatalog
+		/// (boîtes fines des pièces de bâtiment). Idempotent (recharge). Doit
+		/// précéder LoadScatterWorld et LoadBuildings. Effet de bord : lecture disque.
+		void LoadBuildingCollisionCatalog();
 		/// Monde jouable — lieux du monde (places.json), chargés paresseusement au
 		/// premier HUD en jeu (\ref EnsureWorldPlaces).
 		engine::client::WorldPlaces m_worldPlaces;

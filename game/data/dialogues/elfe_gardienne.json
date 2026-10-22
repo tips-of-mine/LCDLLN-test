@@ -1,0 +1,79 @@
+{
+    "_comment": "Monde Royaumes — PNJ de quete d'une ville de depart (world_master.json interactables). Les boutons Accepter/Rendre sont injectes a l'execution (UIModel.giverList), pas dans ce JSON.",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Bienvenue, enfant de la colline. Les arbres murmurent ton nom."
+                },
+                "1": {
+                    "text": "(Iaelith pose une main sur l'ecorce du grand arbre.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Qu'arrive-t-il a la foret ?",
+                    "next": "about"
+                },
+                "1": {
+                    "text": "Comment aider ?",
+                    "next": "task"
+                },
+                "2": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "about",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Une corruption ronge les bois. Les loups ont change, et une dryade s'est detournee de nous."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Comment aider ?",
+                    "next": "task"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "task",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Va d'abord trouver Sylvanor, notre eclaireur. Ensuite, quand tu seras pret, purifie ce qui a ete perdu."
+                },
+                "1": {
+                    "text": "(Pour t'engager ou rendre une tache, choisis 'Accepter' / 'Rendre' ci-dessous.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Revenir.",
+                    "next": "intro"
+                },
+                "1": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

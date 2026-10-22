@@ -14,7 +14,7 @@
         "attackPeriodMs": 2000
       },
       "xpReward": 10,
-      "model": { "mesh": "orcs", "scale": 0.9 }
+      "model": {"mesh": "orcs", "scale": 0.9}
     },
     {
       "id": 101,
@@ -30,7 +30,7 @@
         "attackPeriodMs": 1600
       },
       "xpReward": 7,
-      "model": { "mesh": "orcs", "scale": 0.7 }
+      "model": {"mesh": "orcs", "scale": 0.7}
     },
     {
       "id": 102,
@@ -46,7 +46,7 @@
         "attackPeriodMs": 2500
       },
       "xpReward": 2,
-      "model": { "mesh": "orcs", "scale": 0.4 }
+      "model": {"mesh": "orcs", "scale": 0.4}
     },
     {
       "id": 103,
@@ -62,7 +62,7 @@
         "attackPeriodMs": 1800
       },
       "xpReward": 18,
-      "model": { "mesh": "orcs", "scale": 1.0 }
+      "model": {"mesh": "orcs", "scale": 1.0}
     },
     {
       "id": 104,
@@ -78,7 +78,7 @@
         "attackPeriodMs": 2100
       },
       "xpReward": 30,
-      "model": { "mesh": "orcs", "scale": 1.2 }
+      "model": {"mesh": "orcs", "scale": 1.2}
     },
     {
       "_comment": "Contenu Feyhin lot 1 (2026-07-20) — 105-107. Rapide et fragile : l'araignee mord vite mais tombe vite.",
@@ -95,7 +95,7 @@
         "attackPeriodMs": 1400
       },
       "xpReward": 14,
-      "model": { "mesh": "orcs", "scale": 0.6 }
+      "model": {"mesh": "orcs", "scale": 0.6}
     },
     {
       "_comment": "Mini-boss du camp de bandits (quete bandit_leader). Frappe fort, lent.",
@@ -112,7 +112,7 @@
         "attackPeriodMs": 2200
       },
       "xpReward": 45,
-      "model": { "mesh": "orcs", "scale": 1.15 }
+      "model": {"mesh": "orcs", "scale": 1.15}
     },
     {
       "_comment": "Gibier paisible de l'est (quete stag_offering) : ne fait presque pas mal, s'enfuit peu (leash court au spawner).",
@@ -129,7 +129,707 @@
         "attackPeriodMs": 2400
       },
       "xpReward": 8,
-      "model": { "mesh": "orcs", "scale": 0.85 }
+      "model": {"mesh": "orcs", "scale": 0.85}
+    },
+    {
+      "id": 120,
+      "name": "Loup corrompu",
+      "level": 2,
+      "stats": {
+        "hp": 55,
+        "damage": 5,
+        "accuracy": 82.0,
+        "rangeMeters": 2.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 1700
+      },
+      "xpReward": 12,
+      "model": {"mesh": "orcs", "scale": 0.72}
+    },
+    {
+      "id": 121,
+      "name": "Dryade dechue",
+      "level": 3,
+      "stats": {
+        "hp": 95,
+        "damage": 7,
+        "accuracy": 82.0,
+        "rangeMeters": 6.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 2200
+      },
+      "xpReward": 22,
+      "model": {"mesh": "humains", "scale": 0.95}
+    },
+    {
+      "id": 130,
+      "name": "Raptor de la jungle",
+      "level": 2,
+      "stats": {
+        "hp": 60,
+        "damage": 6,
+        "accuracy": 82.0,
+        "rangeMeters": 2.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 1500
+      },
+      "xpReward": 12,
+      "model": {"mesh": "orcs", "scale": 0.7}
+    },
+    {
+      "id": 131,
+      "name": "Pillard du clan rival",
+      "level": 3,
+      "stats": {
+        "hp": 110,
+        "damage": 8,
+        "accuracy": 82.0,
+        "rangeMeters": 2.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 2100
+      },
+      "xpReward": 24,
+      "model": {"mesh": "orcs", "scale": 1.0}
+    },
+    {
+      "id": 140,
+      "name": "Rat des galeries",
+      "level": 2,
+      "stats": {
+        "hp": 45,
+        "damage": 5,
+        "accuracy": 82.0,
+        "rangeMeters": 2.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 1500
+      },
+      "xpReward": 11,
+      "model": {"mesh": "nains", "scale": 0.55}
+    },
+    {
+      "id": 141,
+      "name": "Golem de pierre fele",
+      "level": 3,
+      "stats": {
+        "hp": 140,
+        "damage": 9,
+        "accuracy": 82.0,
+        "rangeMeters": 2.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 2600
+      },
+      "xpReward": 26,
+      "model": {"mesh": "nains", "scale": 1.25}
+    },
+    {
+      "id": 150,
+      "name": "Diablotin errant",
+      "level": 2,
+      "stats": {
+        "hp": 50,
+        "damage": 6,
+        "accuracy": 82.0,
+        "rangeMeters": 2.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 1600
+      },
+      "xpReward": 12,
+      "model": {"mesh": "orcs", "scale": 0.6}
+    },
+    {
+      "id": 151,
+      "name": "Chien des Cendres",
+      "level": 3,
+      "stats": {
+        "hp": 105,
+        "damage": 8,
+        "accuracy": 82.0,
+        "rangeMeters": 2.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 1800
+      },
+      "xpReward": 24,
+      "model": {"mesh": "orcs", "scale": 0.8}
+    },
+    {
+      "id": 160,
+      "name": "Ours brun",
+      "level": 6,
+      "stats": {
+        "hp": 260,
+        "damage": 16,
+        "accuracy": 82.0,
+        "rangeMeters": 2.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 2400
+      },
+      "xpReward": 55,
+      "model": {"mesh": "orcs", "scale": 1.2}
+    },
+    {
+      "id": 161,
+      "name": "Ogre des collines",
+      "level": 10,
+      "stats": {
+        "hp": 520,
+        "damage": 28,
+        "accuracy": 82.0,
+        "rangeMeters": 3.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 120,
+      "model": {"mesh": "orcs", "scale": 1.6}
+    },
+    {
+      "id": 162,
+      "name": "Gobelin pillard",
+      "level": 6,
+      "stats": {
+        "hp": 180,
+        "damage": 13,
+        "accuracy": 82.0,
+        "rangeMeters": 2.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 1700
+      },
+      "xpReward": 50,
+      "model": {"mesh": "orcs", "scale": 0.65}
+    },
+    {
+      "id": 163,
+      "name": "Spectre du marais",
+      "level": 9,
+      "stats": {
+        "hp": 300,
+        "damage": 22,
+        "accuracy": 82.0,
+        "rangeMeters": 5.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 2200
+      },
+      "xpReward": 95,
+      "model": {"mesh": "humains", "scale": 1.05}
+    },
+    {
+      "id": 164,
+      "name": "Elementaire de braise",
+      "level": 12,
+      "stats": {
+        "hp": 560,
+        "damage": 32,
+        "accuracy": 82.0,
+        "rangeMeters": 4.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 2600
+      },
+      "xpReward": 150,
+      "model": {"mesh": "orcs", "scale": 1.3}
+    },
+    {
+      "id": 165,
+      "name": "Scorpion geant",
+      "level": 8,
+      "stats": {
+        "hp": 340,
+        "damage": 20,
+        "accuracy": 82.0,
+        "rangeMeters": 2.0,
+        "critRate": 3.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 2000
+      },
+      "xpReward": 80,
+      "model": {"mesh": "orcs", "scale": 0.9}
+    },
+    {
+      "id": 200,
+      "name": "Villageois",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.0, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.35,
+        "role": "Habitant",
+        "dialogueId": "amb_villageois_humains"
+      }
+    },
+    {
+      "id": 201,
+      "name": "Villageoise",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 0.96, "gender": "female"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.3,
+        "role": "Habitante",
+        "dialogueId": "amb_villageois_humains"
+      }
+    },
+    {
+      "id": 202,
+      "name": "Garde du guet",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.04, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.7,
+        "role": "Garde",
+        "dialogueId": "amb_garde_humains"
+      }
+    },
+    {
+      "id": 203,
+      "name": "Marchand",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.0, "gender": "male"},
+      "behavior": {"kind": "ambient", "attackable": false, "moveSpeed": 1.2, "role": "Marchand", "talkTarget": "vendor:1"}
+    },
+    {
+      "id": 204,
+      "name": "Aubergiste",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 0.98, "gender": "female"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.2,
+        "role": "Aubergiste",
+        "dialogueId": "amb_aubergiste"
+      }
+    },
+    {
+      "id": 205,
+      "name": "Voyageur",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.0, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.6,
+        "role": "Voyageur",
+        "dialogueId": "amb_voyageur"
+      }
+    },
+    {
+      "id": 206,
+      "name": "Patrouille imperiale",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.05, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.8,
+        "role": "Patrouille",
+        "dialogueId": "amb_patrouille"
+      }
+    },
+    {
+      "id": 210,
+      "name": "Sylvain",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.03, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.4,
+        "role": "Habitant de la colline",
+        "dialogueId": "amb_villageois_elfes"
+      }
+    },
+    {
+      "id": 211,
+      "name": "Sylvaine",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.0, "gender": "female"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.4,
+        "role": "Habitante de la colline",
+        "dialogueId": "amb_villageois_elfes"
+      }
+    },
+    {
+      "id": 212,
+      "name": "Sentinelle sylvaine",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.04, "gender": "female"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.8,
+        "role": "Sentinelle",
+        "dialogueId": "amb_garde_elfes"
+      }
+    },
+    {
+      "id": 213,
+      "name": "Marchand sylvain",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.02, "gender": "male"},
+      "behavior": {"kind": "ambient", "attackable": false, "moveSpeed": 1.2, "role": "Marchand", "talkTarget": "vendor:1"}
+    },
+    {
+      "id": 220,
+      "name": "Orc du kraal",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "orcs", "scale": 1.0, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.4,
+        "role": "Guerrier du clan",
+        "dialogueId": "amb_villageois_orcs"
+      }
+    },
+    {
+      "id": 221,
+      "name": "Garde du kraal",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "orcs", "scale": 1.08, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.7,
+        "role": "Garde",
+        "dialogueId": "amb_garde_orcs"
+      }
+    },
+    {
+      "id": 222,
+      "name": "Troqueur orc",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "orcs", "scale": 1.0, "gender": "male"},
+      "behavior": {"kind": "ambient", "attackable": false, "moveSpeed": 1.2, "role": "Marchand", "talkTarget": "vendor:1"}
+    },
+    {
+      "id": 230,
+      "name": "Nain de la cite",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "nains", "scale": 1.0, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.2,
+        "role": "Mineur",
+        "dialogueId": "amb_villageois_nains"
+      }
+    },
+    {
+      "id": 231,
+      "name": "Garde des portes",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "nains", "scale": 1.04, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.5,
+        "role": "Garde",
+        "dialogueId": "amb_garde_nains"
+      }
+    },
+    {
+      "id": 232,
+      "name": "Negociant nain",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "nains", "scale": 1.0, "gender": "male"},
+      "behavior": {"kind": "ambient", "attackable": false, "moveSpeed": 1.1, "role": "Marchand", "talkTarget": "vendor:1"}
+    },
+    {
+      "id": 240,
+      "name": "Citoyen de Tsaroth",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.06, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.4,
+        "role": "Citoyen",
+        "dialogueId": "amb_villageois_demons"
+      }
+    },
+    {
+      "id": 241,
+      "name": "Legionnaire",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.1, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.7,
+        "role": "Garde",
+        "dialogueId": "amb_garde_demons"
+      }
+    },
+    {
+      "id": 242,
+      "name": "Marchand de la Faille",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.02, "gender": "female"},
+      "behavior": {"kind": "ambient", "attackable": false, "moveSpeed": 1.2, "role": "Marchand", "talkTarget": "vendor:1"}
+    },
+    {
+      "id": 250,
+      "name": "Colon",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.0, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.35,
+        "role": "Habitant",
+        "dialogueId": "amb_villageois_neutre"
+      }
+    },
+    {
+      "id": 251,
+      "name": "Milicien",
+      "level": 1,
+      "stats": {
+        "hp": 500,
+        "damage": 1,
+        "accuracy": 80.0,
+        "rangeMeters": 2.0,
+        "critRate": 2.0,
+        "critMult": 1.5,
+        "attackPeriodMs": 3000
+      },
+      "xpReward": 0,
+      "model": {"mesh": "humains", "scale": 1.03, "gender": "male"},
+      "behavior": {
+        "kind": "ambient",
+        "attackable": false,
+        "moveSpeed": 1.6,
+        "role": "Garde",
+        "dialogueId": "amb_garde_neutre"
+      }
     }
   ]
 }

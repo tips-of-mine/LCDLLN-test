@@ -1,0 +1,16 @@
+{
+  "lcdlln_runtime_manifest_version": 3,
+  "zone_id": "royaumes",
+  "zone_numeric_id": 1,
+  "display_name": "Les Royaumes de la Lune Noire",
+  "terrain_heightmap": "zones/royaumes/terrain_height.r16h",
+  "terrain_splatmap": "zones/royaumes/terrain_splat.slap",
+  "terrain_grass_mask": "zones/royaumes/terrain_grass.grms",
+  "source_edit_format_version": 1,
+  "terrain_world_size_m": 5632,
+  "texture_assets": [],
+  "exported_textures": [],
+  "texture_assets_source_missing": [],
+  "object_prefab_ids": [],
+  "note": "GENERE par tools/world_gen depuis world/royaumes/world_master.json."
+}

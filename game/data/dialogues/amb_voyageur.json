@@ -1,0 +1,78 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Salut a toi. La route est longue, hein ?"
+                },
+                "1": {
+                    "text": "(Il reajuste un sac de voyage couvert de poussiere.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "D'ou viens-tu ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "Un conseil ?",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "De loin. J'ai vu les collines des elfes, le kraal des orcs et les portes d'acier des nains."
+                },
+                "1": {
+                    "text": "Chaque peuple a ses routes ; elles finissent toutes par se croiser."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Un conseil ?",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Regarde ta carte (touche M). Les villes y sont marquees, et les routes aussi."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "D'ou viens-tu ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

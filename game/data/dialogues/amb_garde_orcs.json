@@ -1,0 +1,75 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Toi passer. Toi pas faire d'histoires."
+                },
+                "1": {
+                    "text": "(Le garde frappe le sol du manche de sa hache.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Des ennemis ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "Ou est le chef ?",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Clan rival a l'est. Pillards. Shazka dit que les esprits veulent leur sang."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Ou est le chef ?",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Grokhaar ? Au milieu du kraal. Il crie fort, tu trouveras."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Des ennemis ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

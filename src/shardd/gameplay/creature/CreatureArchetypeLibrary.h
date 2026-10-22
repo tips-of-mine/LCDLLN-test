@@ -33,6 +33,14 @@ namespace engine::server
 		/// pour le rendu du mob en attendant des assets créatures dédiés.
 		std::string meshKey;
 		float scale = 1.0f;
+		/// Monde vivant — comportement (`behavior` du JSON, optionnel).
+		/// ambient = PNJ d'ambiance (villageois, garde, marchand…) : jamais
+		/// d'aggro ; attaquable par défaut NON. creature = IA historique.
+		bool ambient = false;
+		/// Les joueurs peuvent-ils lui infliger des dégâts ? (défaut : !ambient)
+		bool attackable = true;
+		/// Vitesse de marche propre (m/s) ; 0 = server.mob_move_speed_meters_per_second.
+		float moveSpeedMetersPerSecond = 0.0f;
 	};
 
 	/// Combat SP1 — catalogue serveur des archétypes de créatures, résolu depuis

@@ -1,0 +1,75 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Patrouille imperiale. Rien a signaler ?"
+                },
+                "1": {
+                    "text": "(Le soldat scrute l'horizon par-dessus ton epaule.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Que surveillez-vous ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "Ou allez-vous ?",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Les grandes routes. Brigands, betes et deserteurs n'y ont pas leur place."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Ou allez-vous ?",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "D'une ville a l'autre, aller et retour, de l'aube au crepuscule."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Que surveillez-vous ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,79 @@
+{
+    "_comment": "Monde Royaumes — PNJ de quete d'une ville de depart (world_master.json interactables). Les boutons Accepter/Rendre sont injectes a l'execution (UIModel.giverList), pas dans ce JSON.",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Les esprits de la jungle ont faim, petit."
+                },
+                "1": {
+                    "text": "(Shazka jette une poignee d'os qui roulent a tes pieds.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Que disent les os ?",
+                    "next": "about"
+                },
+                "1": {
+                    "text": "Que dois-je faire ?",
+                    "next": "task"
+                },
+                "2": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "about",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Ils disent : raptors trop nombreux, proie trop rare. Le kraal aura faim cet hiver."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Que dois-je faire ?",
+                    "next": "task"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "task",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Chasse six raptors autour du kraal. Leur viande nourrira le clan."
+                },
+                "1": {
+                    "text": "(Pour t'engager ou rendre une tache, choisis 'Accepter' / 'Rendre' ci-dessous.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Revenir.",
+                    "next": "intro"
+                },
+                "1": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

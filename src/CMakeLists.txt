@@ -73,6 +73,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/auction/AuctionHouse.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
+    # Monde vivant (chantier « Royaumes ») — routines des PNJ d'ambiance (pur).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/AmbientRoutine.cpp
     # Combat SP1 — catalogue d'archétypes de créatures (stats data-driven).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibrary.cpp
     # Combat SP3 — kits de sorts par profil (data-driven).
@@ -168,6 +170,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/terms/TermsRepository.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/terms/TermsHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterCreateHandler.cpp
+    # Monde jouable — points de départ par race (lus à la création de personnage).
+    ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterListHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterDeleteHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterSavePositionHandler.cpp
@@ -548,6 +552,20 @@ elseif(UNIX)
   # + Hello. ServerProtocol.cpp est fourni par engine_core (lié par le helper).
   lcdlln_add_simple_test(server_protocol_tests
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerProtocolTests.cpp)
+
+  # Monde jouable (chantier « Royaumes ») : points de départ par race (master).
+  lcdlln_add_simple_test(start_locations_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/world/tests/StartLocationsTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp)
+
+  # Monde jouable (chantier « Royaumes ») : lieux du monde (carte M, bannière).
+  lcdlln_add_simple_test(world_places_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/places/tests/WorldPlacesTests.cpp)
+
+  # Monde vivant (chantier « Royaumes ») : routines des PNJ d'ambiance (pur).
+  lcdlln_add_simple_test(ambient_routine_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/tests/AmbientRoutineTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/AmbientRoutine.cpp)
 
   # Combat SP1 : catalogue d'archétypes de créatures (parse + validation JSON).
   lcdlln_add_simple_test(creature_archetype_library_tests
@@ -1333,6 +1351,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/auction/AuctionHouse.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
+    # Monde vivant (chantier « Royaumes ») — routines des PNJ d'ambiance (pur).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/AmbientRoutine.cpp
     # Combat SP1 — catalogue d'archétypes de créatures (stats data-driven).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibrary.cpp
     # Combat SP3 — kits de sorts par profil (data-driven).

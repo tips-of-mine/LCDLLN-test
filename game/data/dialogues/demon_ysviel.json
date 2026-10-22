@@ -1,0 +1,79 @@
+{
+    "_comment": "Monde Royaumes — PNJ de quete d'une ville de depart (world_master.json interactables). Les boutons Accepter/Rendre sont injectes a l'execution (UIModel.giverList), pas dans ce JSON.",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Approche. Laisse-moi lire les braises."
+                },
+                "1": {
+                    "text": "(Ysviel souffle sur un brasero ; les flammes se tordent en silhouettes.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Que vois-tu ?",
+                    "next": "about"
+                },
+                "1": {
+                    "text": "Que dois-je faire ?",
+                    "next": "task"
+                },
+                "2": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "about",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Des diablotins, echappes de la Faille, qui rongent les murs de la cite."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Que dois-je faire ?",
+                    "next": "task"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "task",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Detruis six diablotins errants autour de Tsaroth avant qu'ils ne se multiplient."
+                },
+                "1": {
+                    "text": "(Pour t'engager ou rendre une tache, choisis 'Accepter' / 'Rendre' ci-dessous.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Revenir.",
+                    "next": "intro"
+                },
+                "1": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

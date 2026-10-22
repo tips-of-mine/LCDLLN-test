@@ -1,0 +1,75 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "La Faille t'a crache ici aussi, on dirait."
+                },
+                "1": {
+                    "text": "(Ses yeux brillent d'une lueur de braise.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Qu'est-ce que Tsaroth ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "Qui commande ?",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Une cite batie au bord du gouffre. On y vit vite, on y meurt jeune, et on revient parfois."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Qui commande ?",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "La Legion. Maltheus, son heraut, recrute ceux qui ont du cran."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Qu'est-ce que Tsaroth ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

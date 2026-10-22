@@ -1,0 +1,846 @@
+{
+  "_comment": "SOURCE DE VERITE du monde jouable 'royaumes' (editable a la main). Extrait une fois du lore legacy/world-builder-html/lune-noire-data-v19.json (meta 1.0.15) le 2026-10-22, puis complete : les villes sans cellule dans le lore sont marquees [INFÉRÉ]. Tout le contenu de zones/royaumes/, instances/zone_royaumes/ et world/royaumes/ est DERIVE de ce fichier par tools/world_gen (lcdlln_world_gen) : ne jamais editer ces sorties a la main. Voir docs/world/ROYAUMES.md.",
+  "schema_version": 1,
+  "world_id": "royaumes",
+  "display_name": "Les Royaumes de la Lune Noire",
+  "seed": 20261022,
+  "scale": {
+    "_comment": "1 cellule du lore = cell_size_m metres. origin_cell = cellule centree sur (0,0) monde (hameau de depart humain). Le terrain (heightmap 1025x1025) couvre grid_cols x grid_cols cellules ; les rangees manquantes (pad_north_rows au nord, le reste au sud) sont de la mer, et un liseré de mer est force sur le pourtour.",
+    "cell_size_m": 128,
+    "grid_cols": 44,
+    "west_e": -21,
+    "north_n": 18,
+    "pad_north_rows": 5,
+    "origin_cell": "N003_W009",
+    "height_scale_m": 400.0,
+    "sea_level_m": 40.0
+  },
+  "grid": {
+    "_comment": "Une ligne par rangee de N018 (haut) a S014 (bas), 44 caracteres de W021 a E022 (2 colonnes de mer ajoutees de chaque cote du lore W019..E020). Legende dans 'legend'.",
+    "legend": {
+      " ": "deep_sea",
+      "-": "shallow_sea",
+      ",": "coast",
+      "_": "beach",
+      ".": "plain",
+      "r": "plain_with_river",
+      "T": "forest",
+      "t": "forest_edge",
+      "R": "forest_with_river",
+      "L": "forest_with_lake",
+      "~": "desert",
+      ":": "arid_land",
+      "l": "arid_land_with_lake",
+      "^": "mountain",
+      "M": "mountain_range",
+      "*": "snow_mountain",
+      "V": "volcanic_area",
+      "o": "island",
+      "%": "swamp",
+      "&": "swamp_with_river"
+    },
+    "rows": [
+      "                            -,............  ",
+      "                            -,............  ",
+      "                           --,MMMMM.......  ",
+      "                           -,.tTTTTM......  ",
+      "                           -,tTTTTTtM.....  ",
+      "     --------------       -,tTTTTTTTtM....  ",
+      "   ---,,,,,,,,--,,-   -----,tTTTTTTTTtM...  ",
+      "   -,,.r......,R%%-----oo-,,tTTTTTTTTt.M..  ",
+      "   -,.rr.....TRR%&%,,,,___rtTTTTTTTTt.....  ",
+      "   -,.r......TTTTRRR.....tRTTTTTTTTt......  ",
+      "   -,,,,.....TTTTRTRT...tTTRTTTTTtt.......  ",
+      "   -----..r.TTTTTRTTTT.tTTLLLLTTt.........  ",
+      "       -,...TTTTRTTTT...tTTTRTTt..........  ",
+      "       -,....TTTRTT......tTTTLTt..........  ",
+      "       -__....TTR~~~......tttttt..........  ",
+      "       --_......M:l:......~~~~~t..........  ",
+      "        -_.....M~:::....~~~~~~~...........  ",
+      "        --,...M~~~..~~~.~~~~~~~...........  ",
+      "         -,..M..~~..~~~.tttttt......~~~~~.  ",
+      "        -_......^^^.~~~.tTTTTTt....~~~~~~.  ",
+      "       --_.....^**^^....tTTTTTTt.~~~~~~~~.  ",
+      "     --__.....^^***^^^^..tTTTTTt.~~~~~~~~.  ",
+      "    -,__......^*^^^^^^^^^.tttttt.~~~~~^^^.  ",
+      "    -,........^^^.^^^^^^^^.......~~~^^^^^^  ",
+      "    -,........,___,^^^^^^^........VV^^^^^^  ",
+      "     -,......,-----^^^^..........VVVV^^^^^  ",
+      "      -,....,,-   -_^^^.......MMMVVVV^^^^^  ",
+      "       -,,,,-,--  -_^^^.....MM~~~~VV^^^^^.  ",
+      "        ---- -oo- -_.......M~~~~~~~^^^^^..  ",
+      "             -ooo-,........M~~~~~~~^^^^...  ",
+      "             -----,........M~~~~~~~^^^^^..  ",
+      "                 -,.........M~~~~~..^^^^^.  ",
+      "                 -,.........M~~~~~...^^^^^  "
+    ]
+  },
+  "regions": [
+    {
+      "id": "terres_de_lempereur",
+      "name": "Terres de l'Empereur",
+      "e_min": -12,
+      "e_max": -6,
+      "n_min": 0,
+      "n_max": 8
+    },
+    {
+      "id": "via_magna",
+      "name": "Via Magna",
+      "e_min": -5,
+      "e_max": 6,
+      "n_min": 0,
+      "n_max": 8
+    },
+    {
+      "id": "foret_elfique",
+      "name": "Foret elfique",
+      "e_min": 3,
+      "e_max": 12,
+      "n_min": 5,
+      "n_max": 16
+    },
+    {
+      "id": "territoires_orcques",
+      "name": "Territoires orcques",
+      "e_min": 9,
+      "e_max": 15,
+      "n_min": 6,
+      "n_max": 13
+    },
+    {
+      "id": "marches_du_nord",
+      "name": "Marches du Nord",
+      "e_min": 13,
+      "e_max": 20,
+      "n_min": 9,
+      "n_max": 18
+    },
+    {
+      "id": "foret_occidentale",
+      "name": "Foret occidentale",
+      "e_min": -12,
+      "e_max": -3,
+      "n_min": 5,
+      "n_max": 11
+    },
+    {
+      "id": "baronnie_de_moorks",
+      "name": "Baronnie de Moork",
+      "e_min": 11,
+      "e_max": 20,
+      "n_min": -3,
+      "n_max": 3
+    },
+    {
+      "id": "royaume_des_nains_de_lest",
+      "name": "Royaume des nains de l'Est",
+      "e_min": 15,
+      "e_max": 20,
+      "n_min": -10,
+      "n_max": -4
+    },
+    {
+      "id": "royaumes_des_nains_du_sud",
+      "name": "Montagnes du Sud",
+      "e_min": -8,
+      "e_max": -1,
+      "n_min": -8,
+      "n_max": -1
+    },
+    {
+      "id": "terres_desolees",
+      "name": "Terres desolees de Tsaroth",
+      "e_min": 8,
+      "e_max": 15,
+      "n_min": -11,
+      "n_max": -6
+    },
+    {
+      "id": "hishtarland",
+      "name": "Royaume d'Hishtarland",
+      "e_min": -12,
+      "e_max": -2,
+      "n_min": -14,
+      "n_max": -8
+    },
+    {
+      "id": "desert_central",
+      "name": "Desert de l'Oracle",
+      "e_min": -6,
+      "e_max": 4,
+      "n_min": -2,
+      "n_max": 3
+    }
+  ],
+  "cities": [
+    {
+      "id": "hameau_marn",
+      "name": "Hameau de Marn",
+      "cell": "N003_W009",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [
+        "humains"
+      ],
+      "source": "[INFÉRÉ] INFERE",
+      "description": "Hameau agricole aux portes de L'hynn ; l'ancien Marn et le capitaine Rendal y accueillent les nouveaux venus."
+    },
+    {
+      "id": "ville_lhynn",
+      "name": "L'hynn",
+      "cell": "N001_W010",
+      "kind": "capitale",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[BD] BD-T3",
+      "description": "Haazheel Thorn s'y rend pour prêter hommage à l'Empereur."
+    },
+    {
+      "id": "ville_altenberg",
+      "name": "Altenberg",
+      "cell": "N005_W012",
+      "kind": "grande_ville",
+      "race": "humains",
+      "state": "intact",
+      "faction": "lumiere",
+      "start_for": [],
+      "source": "[BD] BD-T4",
+      "description": "Pages 23-24 — siège officiel : 'Le siège de l'Ordre des Chevaliers de la Lumière'."
+    },
+    {
+      "id": "ville_sysigie",
+      "name": "Sysigie",
+      "cell": "N009_W011",
+      "kind": "grande_ville",
+      "race": "humains",
+      "state": "intact",
+      "faction": "justice",
+      "start_for": [],
+      "source": "[BD] BD-T4",
+      "description": "Pages 38-39 — Parsifal arrive à Sysigie au lever du jour."
+    },
+    {
+      "id": "dys",
+      "name": "Dys",
+      "cell": "N005_W009",
+      "kind": "grande_ville",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[BD] BD-T4",
+      "description": "La ville est aussi orthographiée 'Dis' dans le texte du tome 4 (dialogue page 17)."
+    },
+    {
+      "id": "ville_northind",
+      "name": "Northind",
+      "cell": "N007_W005",
+      "kind": "grande_ville",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[BD] BD-T8",
+      "description": "'Voilà, Fratus, tout est fini, nous sommes prêts à les recevoir.' — lieutenant à Fratus."
+    },
+    {
+      "id": "sauken_glude_of_magistrya",
+      "name": "Sauken Glude",
+      "cell": "N003_W003",
+      "kind": "grande_ville",
+      "race": "humains",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[BD] BD-T2",
+      "description": "Immense ville-tour construite autour d'un pic rocheux, s'enroulant comme 'un serpent de pierre'. Les plus belles demeures sont vers les hauteurs."
+    },
+    {
+      "id": "kendrhir_vale",
+      "name": "Kendrhir Vale",
+      "cell": "N007_E001",
+      "kind": "ville",
+      "race": "humains",
+      "state": "ruine",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[BD] BD-T1",
+      "description": "Cité des Grands Mages — rasée par la horde de Ghorghor Bey."
+    },
+    {
+      "id": "horker",
+      "name": "Horker",
+      "cell": "N004_E009",
+      "kind": "ville",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[BD] BD-T6",
+      "description": "Comté dirigé par George d'Horkher, situé près de Moork (carte visible page 37 : Horkher au nord, Moork au sud, route directe)."
+    },
+    {
+      "id": "ville_moork",
+      "name": "Moork",
+      "cell": "S002_E015",
+      "kind": "grande_ville",
+      "race": "humains",
+      "state": "intact",
+      "faction": "lune_noire",
+      "start_for": [],
+      "source": "[BD] BD-T5",
+      "description": "Siège de Haazheel Thorn — grande ville fortifiée avec hautes murailles de bois/pierre."
+    },
+    {
+      "id": "ville_feyhin_lokcthat",
+      "name": "Feyhin Lokcthat",
+      "cell": "N008_E007",
+      "kind": "grande_ville",
+      "race": "humains",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[BD] BD-T2",
+      "description": "Première cité visitée par Wismerhill et ses compagnons dans le Tome 2."
+    },
+    {
+      "id": "hishtarland",
+      "name": "Hishtarland",
+      "cell": "S011_W006",
+      "kind": "ville",
+      "race": "humains",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[BD] HS",
+      "description": "Royaume du sud. Puissance indépendante suffisamment importante pour envoyer des espionnes dans l'Empire."
+    },
+    {
+      "id": "ville_der_hem_shelsem",
+      "name": "Der hem Shelsem",
+      "cell": "S009_E010",
+      "kind": "ville",
+      "race": "humains",
+      "state": "ruine",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[BD] HS",
+      "description": "Lieu où le Palais Roulant fut aperçu lors de la grande bataille (illustration BD couleur)."
+    },
+    {
+      "id": "ville_oracle_camp",
+      "name": "Camp de l'Oracle",
+      "cell": "N000_E000",
+      "kind": "camp",
+      "race": "neutre",
+      "state": "camp",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[BD] BD-T3",
+      "description": "'La nuit répandait ses ténèbres sur l'océan de tentes qui venait se briser au pied de l'Oracle.'"
+    },
+    {
+      "id": "ville_whispers_hill",
+      "name": "Whispers Hill",
+      "cell": "N011_E008",
+      "kind": "village",
+      "race": "elfes",
+      "state": "intact",
+      "faction": "elfe",
+      "start_for": [
+        "elfes"
+      ],
+      "source": "[INFÉRÉ] BD-T1",
+      "description": "La Colline aux Murmures, relevee de ses cendres par les elfes sylvains : point de depart des enfants de la foret."
+    },
+    {
+      "id": "leviathan_jungle",
+      "name": "Leviathan",
+      "cell": "N009_E011",
+      "kind": "ville",
+      "race": "orcs",
+      "state": "intact",
+      "faction": "dzorak",
+      "start_for": [
+        "orcs"
+      ],
+      "source": "[INFÉRÉ] INFERE",
+      "description": "Kraal fortifie au coeur des Territoires orcques, ou les clans de Dzorak forgent leurs jeunes guerriers."
+    },
+    {
+      "id": "ville_orkh",
+      "name": "Village Orkh",
+      "cell": "N008_W006",
+      "kind": "village",
+      "race": "orcs",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T5",
+      "description": "Village d'Orkhs (petits humanoïdes au museau porcin) — paisible, hommes partis à la guerre."
+    },
+    {
+      "id": "ville_ghrunke_dash",
+      "name": "Ghrunke Dash",
+      "cell": "S007_E016",
+      "kind": "grande_ville",
+      "race": "nains",
+      "state": "intact",
+      "faction": "naine",
+      "start_for": [
+        "nains"
+      ],
+      "source": "[INFÉRÉ] BD-T3",
+      "description": "'Les portes de la ville étaient d'acier et semblaient imprenables.'"
+    },
+    {
+      "id": "ville_forteresse_naine_heureux_t11",
+      "name": "Forteresse d'Heureux",
+      "cell": "S004_W004",
+      "kind": "forteresse",
+      "race": "nains",
+      "state": "intact",
+      "faction": "naine",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T11",
+      "description": "Ancienne forteresse naine reconvertie en refuge pour les concubines de Wismerhill."
+    },
+    {
+      "id": "ville_tsaroth",
+      "name": "Faille de Tsaroth",
+      "cell": "S009_E011",
+      "kind": "camp",
+      "race": "demons",
+      "state": "camp",
+      "faction": "legion",
+      "start_for": [
+        "demons"
+      ],
+      "source": "[INFÉRÉ] BD-T5",
+      "description": "Campement de la Legion au bord de la Faille de Tsaroth, la crevasse qui plonge jusqu'aux enfers."
+    },
+    {
+      "id": "ville_hoengardt_t11",
+      "name": "Hoengardt",
+      "cell": "N014_E016",
+      "kind": "ville",
+      "race": "orcs",
+      "state": "intact",
+      "faction": "dzorak",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T11",
+      "description": "Wismerhill ordonne à Goristroy de faire remonter les troupes vers Hoengardt."
+    },
+    {
+      "id": "ville_tbarak",
+      "name": "Tbarak",
+      "cell": "N006_E002",
+      "kind": "village",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T1",
+      "description": "Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey."
+    },
+    {
+      "id": "ville_klindor",
+      "name": "Klindor",
+      "cell": "N004_E004",
+      "kind": "forteresse",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T1",
+      "description": "Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey."
+    },
+    {
+      "id": "ville_hazol",
+      "name": "Hazol",
+      "cell": "N001_E003",
+      "kind": "village",
+      "race": "humains",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T1",
+      "description": "Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey."
+    },
+    {
+      "id": "ville_chateau_ruine_t00",
+      "name": "Chateau en ruine",
+      "cell": "N016_E015",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "ruine",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T00",
+      "description": "Chateau en ruine"
+    },
+    {
+      "id": "ville_garundel_fief",
+      "name": "Fief de Garundel",
+      "cell": "S001_E004",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T3",
+      "description": "Wismerhill y passe l'automne. La succube l'enchante chaque soir."
+    },
+    {
+      "id": "ville_village_fantome",
+      "name": "Village fantome",
+      "cell": "N010_W004",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "ruine",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T3",
+      "description": "'Qu'une semaine, tous les cent ans, attirant à chaque fois un groupe d'aventuriers.'"
+    },
+    {
+      "id": "crossroads",
+      "name": "Crossroads",
+      "cell": "S013_E020",
+      "kind": "village",
+      "race": "humains",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[BD] DATA",
+      "description": "Crossroads"
+    },
+    {
+      "id": "millway",
+      "name": "Millway",
+      "cell": "N013_E020",
+      "kind": "village",
+      "race": "humains",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[BD] DATA",
+      "description": "Millway"
+    },
+    {
+      "id": "highfall",
+      "name": "Highfall",
+      "cell": "N018_E020",
+      "kind": "village",
+      "race": "humains",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[BD] DATA",
+      "description": "Highfall"
+    },
+    {
+      "id": "stonemark",
+      "name": "Stonemark",
+      "cell": "N015_E020",
+      "kind": "village",
+      "race": "nains",
+      "state": "intact",
+      "faction": "naine",
+      "start_for": [],
+      "source": "[BD] DATA",
+      "description": "Stonemark"
+    },
+    {
+      "id": "farwatch",
+      "name": "Farwatch",
+      "cell": "N011_E020",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[BD] DATA",
+      "description": "Farwatch"
+    },
+    {
+      "id": "shadowfen",
+      "name": "Shadowfen",
+      "cell": "S011_E018",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[BD] DATA",
+      "description": "Shadowfen"
+    },
+    {
+      "id": "ridgeholt",
+      "name": "Ridgeholt",
+      "cell": "N012_E018",
+      "kind": "village",
+      "race": "nains",
+      "state": "intact",
+      "faction": "naine",
+      "start_for": [],
+      "source": "[BD] DATA",
+      "description": "Ridgeholt"
+    },
+    {
+      "id": "clearwater",
+      "name": "Clearwater",
+      "cell": "S014_E015",
+      "kind": "village",
+      "race": "humains",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[BD] DATA",
+      "description": "Clearwater"
+    }
+  ],
+  "pois": [
+    {
+      "id": "poi_oracle",
+      "name": "L'Oracle",
+      "cell": "N000_E000",
+      "kind": "monolithe",
+      "description": "Structure cristalline colossale ; nul ne combat a l'ombre de l'Oracle."
+    },
+    {
+      "id": "poi_faille_kashogs",
+      "name": "Faille de Kashogs",
+      "cell": "N016_E012",
+      "kind": "faille",
+      "description": "Canyon battu par des vents violents, seul passage vers la 1re province."
+    },
+    {
+      "id": "poi_palais_passe",
+      "name": "Palais abandonne de la Passe",
+      "cell": "S003_W004",
+      "kind": "ruine",
+      "description": "Palais oublie au coeur de la Passe des Dragons."
+    },
+    {
+      "id": "poi_deathtrap",
+      "name": "Deathtrap Canyon",
+      "cell": "S008_E010",
+      "kind": "faille",
+      "description": "Canyon maudit hante par les morts."
+    },
+    {
+      "id": "poi_arche",
+      "name": "Grande Arche",
+      "cell": "S004_E020",
+      "kind": "monolithe",
+      "description": "Portail entre la Lune et la Terre."
+    },
+    {
+      "id": "poi_porte_1",
+      "name": "Porte des enfers I",
+      "cell": "S013_E000",
+      "kind": "portail",
+      "description": "Un cercle de pierres noires qui suinte la chaleur."
+    },
+    {
+      "id": "poi_porte_2",
+      "name": "Porte des enfers II",
+      "cell": "N008_E007",
+      "kind": "portail",
+      "description": "Un cercle de pierres noires qui suinte la chaleur."
+    },
+    {
+      "id": "poi_porte_3",
+      "name": "Porte des enfers III",
+      "cell": "S005_W011",
+      "kind": "portail",
+      "description": "Un cercle de pierres noires qui suinte la chaleur."
+    },
+    {
+      "id": "poi_porte_4",
+      "name": "Porte des enfers IV",
+      "cell": "S005_E011",
+      "kind": "portail",
+      "description": "Un cercle de pierres noires qui suinte la chaleur."
+    },
+    {
+      "id": "poi_porte_5",
+      "name": "Porte des enfers V",
+      "cell": "N008_W007",
+      "kind": "portail",
+      "description": "Un cercle de pierres noires qui suinte la chaleur."
+    }
+  ],
+  "gameplay_zone_id": 1,
+  "zone_numeric_id": 1,
+  "imports": {
+    "_comment": "Contenu historique du hameau de depart humain (ex-zone de test 'feyhin') repris tel quel, ancre a l'origine (0,0) de la ville anchor_city. Les spawners de zones/feyhin/spawners.json restent charges par le shard (SpawnerRuntime lit toutes les zones).",
+    "zone_config": "zones/feyhin/zone.json",
+    "scenery": "zones/feyhin/scenery.json",
+    "buildings": "instances/zone_feyhin/buildings.bin",
+    "respawn_points": "zones/feyhin/respawn_points.txt",
+    "anchor_city": "hameau_marn"
+  },
+  "extra_lakes": [
+    {
+      "id": "etang_de_marn",
+      "x": 55,
+      "z": 0,
+      "radius_m": 26
+    }
+  ],
+  "zone_overrides": {
+    "_comment": "Fusionne PAR-DESSUS les reglages importes (zone_config). Distances adaptees a un monde ouvert de 5 km.",
+    "world": {
+      "fog": {
+        "start_m": 60.0,
+        "end_m": 185.0
+      },
+      "props": {
+        "cull_distance_m": 140.0
+      },
+      "scatter": {
+        "_comment": "Distances de culling du decor instancie (scatter.bin) par classe : large = arbres/bati, medium = buissons/rochers/mobilier, small = fleurs/herbes. Reglage a chaud (relu chaque frame).",
+        "cull_large_m": 150.0,
+        "cull_medium_m": 80.0,
+        "cull_small_m": 42.0
+      }
+    }
+  },
+  "interactables": [
+    {
+      "city": "ville_whispers_hill",
+      "x": 4,
+      "z": -2,
+      "radius": 1.5,
+      "npc": true,
+      "label": "Iaelith",
+      "role": "Gardienne de la Colline",
+      "message": "Iaelith : Les arbres murmurent ton nom.",
+      "mesh": "models/characters/humains/Female_Ranger/Female_Ranger.glb",
+      "scale": 95.0,
+      "rot_x_deg": -90.0,
+      "yaw_deg": 270,
+      "dialogue_id": "elfe_gardienne",
+      "npc_target_id": "npc:elfe_iaelith"
+    },
+    {
+      "city": "ville_whispers_hill",
+      "x": -5,
+      "z": 3,
+      "radius": 1.5,
+      "npc": true,
+      "label": "Sylvanor",
+      "role": "Eclaireur sylvain",
+      "message": "Sylvanor : Reste sous le couvert des arbres.",
+      "mesh": "models/characters/humains/Male_Ranger/Male_Ranger.glb",
+      "scale": 95.0,
+      "rot_x_deg": -90.0,
+      "yaw_deg": 90,
+      "dialogue_id": "elfe_eclaireur",
+      "npc_target_id": "npc:elfe_sylvanor"
+    },
+    {
+      "city": "leviathan_jungle",
+      "x": 4,
+      "z": -2,
+      "radius": 1.5,
+      "npc": true,
+      "label": "Grokhaar",
+      "role": "Chef de guerre du kraal",
+      "message": "Grokhaar : Montre-moi ce que valent tes poings !",
+      "mesh": "models/characters/humains/Male_Ranger/Male_Ranger.glb",
+      "scale": 95.0,
+      "rot_x_deg": -90.0,
+      "yaw_deg": 270,
+      "dialogue_id": "orc_chef",
+      "npc_target_id": "npc:orc_grokhaar"
+    },
+    {
+      "city": "leviathan_jungle",
+      "x": -5,
+      "z": 3,
+      "radius": 1.5,
+      "npc": true,
+      "label": "Shazka",
+      "role": "Chamane du clan",
+      "message": "Shazka : Les esprits de la jungle ont faim.",
+      "mesh": "models/characters/humains/Female_Ranger/Female_Ranger.glb",
+      "scale": 95.0,
+      "rot_x_deg": -90.0,
+      "yaw_deg": 90,
+      "dialogue_id": "orc_chamane",
+      "npc_target_id": "npc:orc_shazka"
+    },
+    {
+      "city": "ville_ghrunke_dash",
+      "x": 4,
+      "z": -2,
+      "radius": 1.5,
+      "npc": true,
+      "label": "Thrain Barbe-de-Fer",
+      "role": "Maitre de forge",
+      "message": "Thrain : L'acier ne ment jamais, gamin.",
+      "mesh": "models/characters/humains/Male_Ranger/Male_Ranger.glb",
+      "scale": 95.0,
+      "rot_x_deg": -90.0,
+      "yaw_deg": 270,
+      "dialogue_id": "nain_forgeron",
+      "npc_target_id": "npc:nain_thrain"
+    },
+    {
+      "city": "ville_ghrunke_dash",
+      "x": -5,
+      "z": 3,
+      "radius": 1.5,
+      "npc": true,
+      "label": "Brunhild",
+      "role": "Capitaine des portes",
+      "message": "Brunhild : Les portes d'acier ne s'ouvrent qu'aux braves.",
+      "mesh": "models/characters/humains/Female_Ranger/Female_Ranger.glb",
+      "scale": 95.0,
+      "rot_x_deg": -90.0,
+      "yaw_deg": 90,
+      "dialogue_id": "nain_capitaine",
+      "npc_target_id": "npc:nain_brunhild"
+    },
+    {
+      "city": "ville_tsaroth",
+      "x": 4,
+      "z": -2,
+      "radius": 1.5,
+      "npc": true,
+      "label": "Maltheus",
+      "role": "Heraut de la Legion",
+      "message": "Maltheus : La Faille t'a vu naitre. Sers-la.",
+      "mesh": "models/characters/humains/Male_Ranger/Male_Ranger.glb",
+      "scale": 95.0,
+      "rot_x_deg": -90.0,
+      "yaw_deg": 270,
+      "dialogue_id": "demon_heraut",
+      "npc_target_id": "npc:demon_maltheus"
+    },
+    {
+      "city": "ville_tsaroth",
+      "x": -5,
+      "z": 3,
+      "radius": 1.5,
+      "npc": true,
+      "label": "Ysviel",
+      "role": "Succube de la garde",
+      "message": "Ysviel : Ta haine me nourrit... continue.",
+      "mesh": "models/characters/humains/Female_Ranger/Female_Ranger.glb",
+      "scale": 95.0,
+      "rot_x_deg": -90.0,
+      "yaw_deg": 90,
+      "dialogue_id": "demon_ysviel",
+      "npc_target_id": "npc:demon_ysviel"
+    }
+  ]
+}

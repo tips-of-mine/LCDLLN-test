@@ -1,24 +1,64 @@
 {
   "npc:elder_marn": [
-    { "questId": "kill_10_boars", "role": 0 },
-    { "questId": "kill_10_boars", "role": 1 },
-    { "questId": "hunt_collect_enter", "role": 0 },
-    { "questId": "hunt_collect_enter", "role": 1 },
-    { "questId": "spider_silk", "role": 0 },
-    { "questId": "spider_silk", "role": 1 },
-    { "questId": "alpha_trophy", "role": 0 },
-    { "questId": "alpha_trophy", "role": 1 },
-    { "questId": "stag_offering", "role": 0 },
-    { "questId": "stag_offering", "role": 1 }
+    {"questId": "kill_10_boars", "role": 0},
+    {"questId": "kill_10_boars", "role": 1},
+    {"questId": "hunt_collect_enter", "role": 0},
+    {"questId": "hunt_collect_enter", "role": 1},
+    {"questId": "spider_silk", "role": 0},
+    {"questId": "spider_silk", "role": 1},
+    {"questId": "alpha_trophy", "role": 0},
+    {"questId": "alpha_trophy", "role": 1},
+    {"questId": "stag_offering", "role": 0},
+    {"questId": "stag_offering", "role": 1}
   ],
   "npc:guard_captain": [
-    { "questId": "report_to_guard", "role": 0 },
-    { "questId": "report_to_guard", "role": 1 },
-    { "questId": "wolf_cull", "role": 0 },
-    { "questId": "wolf_cull", "role": 1 },
-    { "questId": "bandit_menace", "role": 0 },
-    { "questId": "bandit_menace", "role": 1 },
-    { "questId": "bandit_leader", "role": 0 },
-    { "questId": "bandit_leader", "role": 1 }
+    {"questId": "report_to_guard", "role": 0},
+    {"questId": "report_to_guard", "role": 1},
+    {"questId": "wolf_cull", "role": 0},
+    {"questId": "wolf_cull", "role": 1},
+    {"questId": "bandit_menace", "role": 0},
+    {"questId": "bandit_menace", "role": 1},
+    {"questId": "bandit_leader", "role": 0},
+    {"questId": "bandit_leader", "role": 1}
+  ],
+  "npc:elfe_iaelith": [
+    {"questId": "elfes_accueil", "role": 0},
+    {"questId": "elfes_epreuve", "role": 0},
+    {"questId": "elfes_epreuve", "role": 1}
+  ],
+  "npc:elfe_sylvanor": [
+    {"questId": "elfes_accueil", "role": 1},
+    {"questId": "elfes_chasse", "role": 0},
+    {"questId": "elfes_chasse", "role": 1}
+  ],
+  "npc:orc_grokhaar": [
+    {"questId": "orcs_accueil", "role": 0},
+    {"questId": "orcs_epreuve", "role": 0},
+    {"questId": "orcs_epreuve", "role": 1}
+  ],
+  "npc:orc_shazka": [
+    {"questId": "orcs_accueil", "role": 1},
+    {"questId": "orcs_chasse", "role": 0},
+    {"questId": "orcs_chasse", "role": 1}
+  ],
+  "npc:nain_thrain": [
+    {"questId": "nains_accueil", "role": 0},
+    {"questId": "nains_epreuve", "role": 0},
+    {"questId": "nains_epreuve", "role": 1}
+  ],
+  "npc:nain_brunhild": [
+    {"questId": "nains_accueil", "role": 1},
+    {"questId": "nains_chasse", "role": 0},
+    {"questId": "nains_chasse", "role": 1}
+  ],
+  "npc:demon_maltheus": [
+    {"questId": "demons_accueil", "role": 0},
+    {"questId": "demons_epreuve", "role": 0},
+    {"questId": "demons_epreuve", "role": 1}
+  ],
+  "npc:demon_ysviel": [
+    {"questId": "demons_accueil", "role": 1},
+    {"questId": "demons_chasse", "role": 0},
+    {"questId": "demons_chasse", "role": 1}
   ]
 }

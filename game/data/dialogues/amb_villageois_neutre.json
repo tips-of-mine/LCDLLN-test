@@ -1,0 +1,75 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Bonjour l'ami. Tu es de passage ?"
+                },
+                "1": {
+                    "text": "(Le colon pose un fagot de bois sur son epaule.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Comment va la vie ici ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "Les environs ?",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Rude, mais libre. Pas de roi, pas de clan, juste le travail."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Les environs ?",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Mefie-toi des ruines. Des bandits y ont pris leurs quartiers."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Comment va la vie ici ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

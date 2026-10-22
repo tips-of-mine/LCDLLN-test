@@ -1,0 +1,75 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Milice de la ville. On ne cherche pas d'ennuis."
+                },
+                "1": {
+                    "text": "(Il serre une lance un peu trop grande pour lui.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Des dangers ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "Merci du conseil.",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Les betes sauvages, surtout passe la riviere. Plus on s'eloigne, plus elles sont grosses."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Merci du conseil.",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Va en paix."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Des dangers ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

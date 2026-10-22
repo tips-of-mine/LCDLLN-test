@@ -3,6 +3,9 @@
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
 #include "src/client/world/instances/Buildings.h"
 #include "src/client/world/instances/BuildingTemplateLibrary.h"
+#include "src/client/world/instances/ScatterInstances.h"
+#include "src/client/world/scatter/PropMaterialRules.h"
+#include "src/client/world/scatter/ScatterField.h"
 #include "src/world_editor/panels/BuildingEditorPanel.h"
 #include "src/shared/core/Log.h"
 #include "src/world_editor/ui/EditorMode.h"
@@ -5412,8 +5415,11 @@ namespace engine
 											// Décor solide (arbres, props nature) depuis world.scenery. Doit suivre
 											// LoadInteractableProps (qui réinitialise le collisionneur composite).
 											LoadScenery();
-											// Bâtiments éditables (auberge…) depuis instances/.../buildings.bin.
-											// Après LoadScenery (partage m_props + m_worldCollider).
+											// Monde ouvert (chantier « Royaumes ») : décor instancié de la zone
+											// (scatter.bin). Après le terrain (ancrage au sol) et le collisionneur.
+											LoadScatterWorld();
+											// Bâtiments éditables (auberge…) depuis instances/.../buildings.bin,
+											// rendus eux aussi en instancié (pièces partagées entre bâtiments).
 											LoadBuildings();
 											// Aperçu éditeur : mémorise le nombre de props « monde » (décor +
 											// bâtiments posés) pour que SyncEditorBuildingPreview n'efface QUE
@@ -5745,6 +5751,8 @@ namespace engine
 
 												// Chantier B : dessine les props statiques (coffre, etc.) par-dessus le GBuffer.
 												RecordPropsGeometry(cmd, reg, rs);
+												// Monde ouvert : décor + bâtiments instanciés (une passe, lots par mesh).
+												RecordScatterGeometry(cmd, reg, rs);
 
 												// TD.2 : dessine les avatars des joueurs distants (réplication AoI).
 												RecordRemoteAvatars(cmd, reg, rs);
@@ -7712,6 +7720,8 @@ namespace engine
 				m_skyPassReady = false;
 			}
 			m_waterMeshGpu.Destroy();
+			// Monde ouvert : anneau de buffers d'instances du décor (meshes = AssetRegistry).
+			DestroyScatterResources();
 			if (m_waterTransferPool != VK_NULL_HANDLE)
 			{
 				vkDestroyCommandPool(m_vkDeviceContext.GetDevice(), m_waterTransferPool, nullptr);
@@ -8962,6 +8972,10 @@ namespace engine
 					// Fallback humains si la race n'est pas chargee dans m_raceMeshes.
 					{
 						const std::string& raceId = enterCmd.raceId;
+						// Monde jouable : race mémorisée pour la carte (ville de départ en
+						// évidence) ; la bannière se réarme (accueil dans la ville d'arrivée).
+						m_localRaceId = raceId;
+						m_placeBanner = engine::client::PlaceBannerTracker{};
 						engine::render::skinned::SkinnedMesh* mesh = GetRaceMesh(raceId);
 						if (mesh) {
 							m_currentSkinnedMesh = mesh;
@@ -10236,6 +10250,61 @@ namespace engine
 								m_chestCrossfade.Play(*clip, /*loops*/ false, EngineNowSec());
 							pushInteractChat("[Objet]", "Le coffre se referme.");
 						}
+						// Monde vivant — PNJ d'ambiance parlants (villageois, gardes, marchands) :
+						// à défaut d'interactible statique à portée, le plus proche dans
+						// kAmbientTalkRadiusM répond à E (dialogue et/ou Talk serveur).
+						const engine::client::UIRemoteEntity* ambientNpc = nullptr;
+						const engine::client::CreatureAppearance* ambientApp = nullptr;
+						if (nearestI < 0)
+						{
+							float bestAmb = kAmbientTalkRadiusM * kAmbientTalkRadiusM;
+							for (const engine::client::UIRemoteEntity& re : m_uiModelBinding.GetModel().remoteEntities)
+							{
+								if (re.playerClientId != 0u || re.archetypeId == 0u) continue;
+								const engine::client::CreatureAppearance* app = m_creatureCatalog.Find(re.archetypeId);
+								if (app == nullptr || !app->ambient || (app->dialogueId.empty() && app->talkTarget.empty())) continue;
+								const float dxa = re.positionX - ppos.x, dza = re.positionZ - ppos.z;
+								const float d2a = dxa * dxa + dza * dza;
+								if (d2a <= bestAmb) { bestAmb = d2a; ambientNpc = &re; ambientApp = app; }
+							}
+						}
+						const uint32_t ambientId = ambientNpc ? static_cast<uint32_t>(ambientNpc->entityId) : 0u;
+						if (ambientId != m_ambientNpcInRange)
+						{
+							m_ambientNpcInRange = ambientId;
+							if (ambientNpc && !m_dialogueActive)
+								pushInteractChat("[Interaction]", "Pres de " + ambientApp->name + " - appuyez sur E.");
+						}
+						if (interactPressed && nearestI < 0 && ambientNpc && !m_dialogueActive)
+						{
+							if (!ambientApp->dialogueId.empty())
+							{
+								auto cached = m_ambientDialogueCache.find(ambientApp->dialogueId);
+								if (cached == m_ambientDialogueCache.end())
+								{
+									// LoadDialogueTree lit `<base>dialogue_id` : config éphémère.
+									engine::core::Config dcfg;
+									dcfg.SetValue("paths.content", engine::core::Config::Value{ m_cfg.GetString("paths.content", "game/data") });
+									dcfg.SetValue("npc.dialogue_id", engine::core::Config::Value{ ambientApp->dialogueId });
+									cached = m_ambientDialogueCache.emplace(ambientApp->dialogueId,
+										engine::client::LoadDialogueTree(dcfg, "npc.", { ambientApp->name + " : Bien le bonjour." })).first;
+								}
+								engine::client::DialogueNpcRef npc;
+								npc.label = ambientApp->name;
+								npc.role = ambientApp->role;
+								npc.entityIndex = -1; // PNJ distant : distance suivie via m_dialogueRemoteEntityId
+								m_dialogue.OpenDialogue(cached->second, npc);
+								m_dialogueActive = true;
+								m_dialogueRemoteEntityId = ambientId;
+								m_currentDialogueNpcTargetId = ambientApp->talkTarget;
+							}
+							else
+							{
+								pushInteractChat("[PNJ]", ambientApp->name + " : Approchez, voyez ce que j'ai !");
+							}
+							if (!ambientApp->talkTarget.empty() && m_gameplayNetInitialized)
+								(void)m_gameplayUdp.SendTalkRequest(m_gameplayUdp.ServerClientId(), ambientApp->talkTarget);
+						}
 						if (interactPressed && nearestI >= 0)
 						{
 							InteractableEntity& e = m_interactables[nearestI];
@@ -10301,6 +10370,20 @@ namespace engine
 								const float dz = np.z - pp.z;
 								dist = std::sqrt(dx * dx + dz * dz);
 							}
+							else if (m_dialogueRemoteEntityId != 0u)
+							{
+								// PNJ d'ambiance : distance à son entité répliquée (il s'est arrêté
+								// pour parler ; s'il sort d'AoI, la conversation se rompt).
+								const engine::math::Vec3 pp = m_characterController.GetPosition();
+								for (const engine::client::UIRemoteEntity& re : m_uiModelBinding.GetModel().remoteEntities)
+								{
+									if (static_cast<uint32_t>(re.entityId) != m_dialogueRemoteEntityId) continue;
+									const float dx = re.positionX - pp.x, dz = re.positionZ - pp.z;
+									// Rupture plus tolérante qu'un PNJ statique (1,5 m) : le PNJ bouge.
+									dist = std::max(0.0f, std::sqrt(dx * dx + dz * dz) - (kAmbientTalkRadiusM - 1.5f));
+									break;
+								}
+							}
 							m_dialogue.Tick(static_cast<float>(dt), dist);
 
 							// Échap ferme le dialogue (edge-triggered).
@@ -10316,6 +10399,7 @@ namespace engine
 								// dialogue fermé (évite qu'un futur accept/turn-in hors dialogue
 								// réutilise par erreur la dernière cible).
 								m_currentDialogueNpcTargetId.clear();
+								m_dialogueRemoteEntityId = 0u;
 								// Le panneau « Quêtes du PNJ » (giver-list, rempli au Talk) ne doit
 								// vivre que le temps de la conversation : on le vide à la fermeture,
 								// sinon il resterait affiché en permanence après avoir parlé une fois.
@@ -10424,6 +10508,8 @@ namespace engine
 							prop.occluderCenter, prop.occluderRadius });
 					}
 					const engine::math::Vec3 focus = m_orbitalCameraController.GetTargetPosition();
+					// Monde ouvert : arbres et pans de murs instanciés entre caméra et joueur.
+					CollectScatterOccluders(out.camera.position, focus, occluders);
 					m_cameraOcclusionFade.Update(out.camera.position, focus,
 						occluders, static_cast<float>(dt));
 				}
@@ -11446,6 +11532,21 @@ namespace engine
 								}
 							}
 						}
+						else if (const engine::client::CreatureAppearance* amb = m_creatureCatalog.Find(re.archetypeId);
+							amb != nullptr && amb->ambient)
+						{
+							// Monde vivant — PNJ d'ambiance : nom + rôle, sans PV ni niveau ;
+							// « [E] » quand il est assez près pour lui parler.
+							label = amb->name;
+							if (!amb->role.empty()) levelSuffix = " - " + amb->role;
+							if (!amb->dialogueId.empty() || !amb->talkTarget.empty())
+							{
+								const engine::math::Vec3 pp = m_characterController.GetPosition();
+								const float dxa = re.positionX - pp.x, dza = re.positionZ - pp.z;
+								if (dxa * dxa + dza * dza <= kAmbientTalkRadiusM * kAmbientTalkRadiusM)
+									label += " [E]";
+							}
+						}
 						else
 						{
 							const engine::client::CreatureAppearance* appearance =
@@ -11781,6 +11882,11 @@ namespace engine
 							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u
 								|| re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
 								continue;
+							// Monde vivant : les PNJ d'ambiance (villageois, gardes…) ne sont
+							// pas des ennemis — jamais ciblés au Tab (le serveur refuse l'attaque).
+							if (const engine::client::CreatureAppearance* tabApp = m_creatureCatalog.Find(re.archetypeId);
+								tabApp != nullptr && tabApp->ambient)
+								continue;
 							// Rejet des ennemis non visibles (hors frustum / dans le dos).
 							if (!isOnScreen(re.positionX, re.positionY + 1.0f, re.positionZ))
 								continue;
@@ -11860,6 +11966,14 @@ namespace engine
 					{
 						m_advancedCombatVisible = !m_advancedCombatVisible;
 					}
+
+					// --- M : carte du monde (hors hôtel des ventes, où M filtre les objets)
+					// + bannière « Vous entrez à … » au changement de ville / région.
+					if (keysAllowed && !uiModel.auction.isOpen && m_input.WasPressed(engine::platform::Key::M))
+					{
+						m_worldMapVisible = !m_worldMapVisible;
+					}
+					DrawWorldPlacesHud(menuOpen ? nullptr : ImGui::GetForegroundDrawList(), dw, dh, ImGui::GetIO().DeltaTime);
 
 					// Chantier 1 — la touche I est LIBÉRÉE : l'inventaire est désormais
 					// l'onglet Personnage de la fenêtre unifiée (ouverte par F1).
@@ -14768,8 +14882,15 @@ namespace engine
 					rotZ(pt.localEulerDeg.z * kDeg2Rad) *
 					scaleMat(pt.localScale);
 				const engine::math::Mat4 worldM = groupM * localM;
-				BuildPropFromMeshMatrix(pt.gltfRelativePath, worldM,
-					/*interactableIndex*/ -1, pt.solid, pt.collisionRadius);
+				// Monde ouvert : pièce rendue en INSTANCIÉ (mesh GPU partagé entre
+				// tous les bâtiments du même modèle) — l'ancien chemin cuisait un
+				// mesh par pièce, intenable avec des centaines de bâtiments.
+				const uint32_t meshId = m_scatterField.InternMesh(pt.gltfRelativePath);
+				if (!EnsureScatterMesh(meshId)) continue;
+				AddScatterInstance(meshId, worldM, /*cullClass*/ 0u,
+					static_cast<uint8_t>(engine::world::instances::kScatterFlagBuildingPiece
+						| engine::world::instances::kScatterFlagOccluder),
+					pt.solid, /*buildingPiece*/ true, pt.collisionRadius);
 				++partCount;
 			}
 		}
@@ -15767,23 +15888,12 @@ namespace engine
 					// Priorité au NOM DU MATÉRIAU (sinon un mur « Wall_Plaster_WoodGrid »
 					// donnerait du plâtre à sa partie bois) ; le chemin ne sert qu'à
 					// distinguer la brique générique (rouge / irrégulière).
-					auto matHas  = [&](const char* s) { return matName.find(s)  != std::string::npos; };
-					auto pathHas = [&](const char* s) { return meshPath.find(s) != std::string::npos; };
-					const char* baseTex = nullptr; const char* nrmTex = nullptr; const char* ormTex = nullptr;
-					if (matHas("Plaster"))            { baseTex = "T_Plaster_BaseColor.png";     nrmTex = "T_Plaster_Normal.png";     ormTex = "T_Plaster_ORM.png"; }
-					else if (matHas("Wood"))          { baseTex = "T_WoodTrim_BaseColor.png";    nrmTex = "T_WoodTrim_Normal.png";    ormTex = "T_WoodTrim_ORM.png"; }
-					else if (matHas("UnevenBrick"))   { baseTex = "T_UnevenBrick_BaseColor.png"; nrmTex = "T_UnevenBrick_Normal.png"; }
-					else if (matHas("RedBrick"))      { baseTex = "T_RedBrick_BaseColor.png";    nrmTex = "T_Brick_Normal.png"; }
-					else if (matHas("Rock"))          { baseTex = "T_RockTrim_BaseColor.png";    nrmTex = "T_RockTrim_Normal.png";    ormTex = "T_RockTrim_ORM.png"; }
-					else if (matHas("RoundTile"))     { baseTex = "T_RoundTiles_BaseColor.png";  nrmTex = "T_RoundTiles_Normal.png"; }
-					else if (matHas("Metal"))         { baseTex = "T_Trim_Metal_BaseColor.png";  nrmTex = "T_Trim_Metal_Normal.png";  ormTex = "T_Trim_Metal_ORM.png"; }
-					else if (matHas("Brick"))         {
-						// Matériau « MI_Brick » générique : on affine via le nom du mesh.
-						if      (pathHas("RedBrick"))    { baseTex = "T_RedBrick_BaseColor.png";    nrmTex = "T_Brick_Normal.png"; }
-						else if (pathHas("UnevenBrick")) { baseTex = "T_UnevenBrick_BaseColor.png"; nrmTex = "T_UnevenBrick_Normal.png"; }
-						else                             { baseTex = "T_Brick_BaseColor.png";       nrmTex = "T_Brick_Normal.png"; }
-					}
-					else if (pathHas("RoundTiles"))   { baseTex = "T_RoundTiles_BaseColor.png";  nrmTex = "T_RoundTiles_Normal.png"; }
+					// Règles partagées avec le rendu instancié du monde (PropMaterialRules.h).
+					engine::world::scatter::TrimTextureSet trim;
+					engine::world::scatter::ResolveTrimTextures(matName, meshPath, trim);
+					const char* baseTex = trim.baseColor;
+					const char* nrmTex = trim.normal;
+					const char* ormTex = trim.orm;
 
 					engine::render::TextureHandle bc;
 					if (baseTex) bc = m_assetRegistry.LoadTexture(meshDir + baseTex, /*useSrgb*/ true);
@@ -15802,14 +15912,7 @@ namespace engine
 						// plutôt que blanc. Et on LOGGE le matériau pour pouvoir le
 						// mapper précisément ensuite (diagnostic des pièces blanches).
 						uint8_t cr = 200, cg = 195, cb = 185;
-						if (matHas("Plaster"))                         { cr = 232; cg = 224; cb = 203; }
-						else if (matHas("RedBrick") || pathHas("RedBrick")) { cr = 165; cg =  86; cb =  72; }
-						else if (matHas("Brick") || pathHas("Brick"))  { cr = 170; cg = 120; cb =  96; }
-						else if (pathHas("WoodDark"))                  { cr = 102; cg =  72; cb =  48; }
-						else if (pathHas("WoodLight"))                 { cr = 170; cg = 130; cb =  88; }
-						else if (matHas("Wood"))                       { cr = 140; cg = 100; cb =  62; }
-						else if (matHas("Metal"))                      { cr = 120; cg = 122; cb = 128; }
-						else if (matHas("Glass") || matHas("Window"))  { cr = 205; cg = 222; cb = 232; } // verre pâle
+						engine::world::scatter::FallbackFlatColor(matName, meshPath, cr, cg, cb);
 						engine::render::Material mat{};
 						mat.baseColor = SolidColorTexture(cr, cg, cb);
 						matIdx = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat);
@@ -15833,79 +15936,92 @@ namespace engine
 		if (!prop.parts.empty())
 		{
 			if (solid)
-			{
-				float radius = collisionRadius > 0.0f ? collisionRadius : radiusAuto;
-				if (radius < 0.05f) radius = 0.5f;
-				// Pièces de bâtiment : une « door » devient un passage franchissable,
-				// un « escalier » une surface gravissable (cf. PropCylinder). Détection
-				// par le nom du mesh, insensible à la casse. Les murs restent pleins.
-				std::string meshLower = meshPath;
-				for (char& ch : meshLower)
-				{
-					if (ch >= 'A' && ch <= 'Z') ch = static_cast<char>(ch - 'A' + 'a');
-				}
-				// Basename du mesh (sans dossier ni extension) pour le catalogue.
-				std::string meshBase = meshPath;
-				{
-					const auto sl = meshBase.find_last_of("/\\");
-					if (sl != std::string::npos) meshBase = meshBase.substr(sl + 1);
-					const auto dot = meshBase.find_last_of('.');
-					if (dot != std::string::npos) meshBase = meshBase.substr(0, dot);
-				}
-
-				const auto* piece = m_buildingCollisionCatalog.Lookup(meshBase);
-				const bool isStair = (meshLower.find("escalier") != std::string::npos)
-					|| (meshLower.find("stair") != std::string::npos);
-				if (piece == nullptr)
-				{
-					// Fallback : comportement actuel (cylindre englobant), rétro-compatible.
-					// Pièce de bâtiment = MUR (barrière latérale pure, pas de dessus
-					// marchable), SAUF un escalier qui doit garder son dessus pour être
-					// gravi. Évite le « vol » : la sonde anti-encastrement ne peut plus
-					// remonter le perso au sommet du gros cylindre englobant de la pièce.
-					engine::gameplay::PropCylinder cyl{ cx, cz, radius, minY, maxY };
-					cyl.passable = meshLower.find("door") != std::string::npos;
-					cyl.stair = isStair;
-					cyl.wall = !cyl.stair;
-					m_worldCollider.AddCylinder(cyl);
-				}
-				else if (!piece->passable)
-				{
-					// Boîtes du catalogue : transformer chaque boîte LOCALE par la
-					// matrice monde de la pièce (worldM, column-major M[col*4+row]).
-					// Colonnes 3x3 = axes + échelle.
-					const float* M = worldM.m;
-					const engine::math::Vec3 colX{ M[0], M[1], M[2] };
-					const engine::math::Vec3 colY{ M[4], M[5], M[6] };
-					const engine::math::Vec3 colZ{ M[8], M[9], M[10] };
-					const float sX = std::sqrt(colX.x*colX.x + colX.y*colX.y + colX.z*colX.z);
-					const float sY = std::sqrt(colY.x*colY.x + colY.y*colY.y + colY.z*colY.z);
-					const float sZ = std::sqrt(colZ.x*colZ.x + colZ.y*colZ.y + colZ.z*colZ.z);
-					for (const auto& lb : piece->boxes)
-					{
-						// Centre local -> monde.
-						const float wx = M[0]*lb.cx + M[4]*lb.cy + M[8]*lb.cz  + M[12];
-						const float wy = M[1]*lb.cx + M[5]*lb.cy + M[9]*lb.cz  + M[13];
-						const float wz = M[2]*lb.cx + M[6]*lb.cy + M[10]*lb.cz + M[14];
-						engine::gameplay::PropBox box;
-						box.cx = wx; box.cz = wz;
-						box.halfX = lb.hx * sX; box.halfZ = lb.hz * sZ;
-						box.axisX = (sX > 1e-6f) ? engine::math::Vec3{ colX.x/sX, 0.0f, colX.z/sX } : engine::math::Vec3{ 1, 0, 0 };
-						box.axisZ = (sZ > 1e-6f) ? engine::math::Vec3{ colZ.x/sZ, 0.0f, colZ.z/sZ } : engine::math::Vec3{ 0, 0, 1 };
-						box.loY = wy - lb.hy * sY; box.hiY = wy + lb.hy * sY;
-						box.stair = isStair;
-						// Roadmap-5 (2026-07-19) — dessus marchable pour les
-						// sols (tag JSON "walkable") et les marches d'escalier ;
-						// les murs restent des barrières latérales pures.
-						box.walkableTop = piece->walkable || isStair;
-						box.wall = !box.walkableTop;
-						m_worldCollider.AddBox(box);
-					}
-				}
-				// piece->passable : on n'ajoute rien (battant franchissable).
-			}
+				RegisterBuildingPieceCollision(meshPath, worldM, cx, cz, radiusAuto, minY, maxY, collisionRadius);
 			m_props.push_back(std::move(prop));
 		}
+	}
+
+	// Enregistre la collision d'une pièce de bâtiment (mur, sol, escalier…)
+	// posée par la matrice monde `worldM` : boîtes orientées du catalogue
+	// building_pieces.json si la pièce y figure, sinon cylindre englobant de
+	// « mur » (barrière latérale pure). Partagé par le rendu historique
+	// (BuildPropFromMeshMatrix) et le rendu instancié du monde (LoadScatterWorld).
+	// \param cx,cz,radiusAuto  Empreinte XZ (centre + rayon auto) du mesh posé (m).
+	// \param minY,maxY         Bornes verticales monde du mesh posé (m).
+	// \param collisionRadius   Rayon imposé (m) ; 0 = radiusAuto.
+	// Effet de bord : ajoute des primitives dans m_worldCollider (index spatial invalidé).
+	void Engine::RegisterBuildingPieceCollision(const std::string& meshPath, const engine::math::Mat4& worldM,
+		float cx, float cz, float radiusAuto, float minY, float maxY, float collisionRadius)
+	{
+		float radius = collisionRadius > 0.0f ? collisionRadius : radiusAuto;
+		if (radius < 0.05f) radius = 0.5f;
+		// Pièces de bâtiment : une « door » devient un passage franchissable,
+		// un « escalier » une surface gravissable (cf. PropCylinder). Détection
+		// par le nom du mesh, insensible à la casse. Les murs restent pleins.
+		std::string meshLower = meshPath;
+		for (char& ch : meshLower)
+		{
+			if (ch >= 'A' && ch <= 'Z') ch = static_cast<char>(ch - 'A' + 'a');
+		}
+		// Basename du mesh (sans dossier ni extension) pour le catalogue.
+		std::string meshBase = meshPath;
+		{
+			const auto sl = meshBase.find_last_of("/\\");
+			if (sl != std::string::npos) meshBase = meshBase.substr(sl + 1);
+			const auto dot = meshBase.find_last_of('.');
+			if (dot != std::string::npos) meshBase = meshBase.substr(0, dot);
+		}
+
+		const auto* piece = m_buildingCollisionCatalog.Lookup(meshBase);
+		const bool isStair = (meshLower.find("escalier") != std::string::npos)
+			|| (meshLower.find("stair") != std::string::npos);
+		if (piece == nullptr)
+		{
+			// Fallback : comportement actuel (cylindre englobant), rétro-compatible.
+			// Pièce de bâtiment = MUR (barrière latérale pure, pas de dessus
+			// marchable), SAUF un escalier qui doit garder son dessus pour être
+			// gravi. Évite le « vol » : la sonde anti-encastrement ne peut plus
+			// remonter le perso au sommet du gros cylindre englobant de la pièce.
+			engine::gameplay::PropCylinder cyl{ cx, cz, radius, minY, maxY };
+			cyl.passable = meshLower.find("door") != std::string::npos;
+			cyl.stair = isStair;
+			cyl.wall = !cyl.stair;
+			m_worldCollider.AddCylinder(cyl);
+		}
+		else if (!piece->passable)
+		{
+			// Boîtes du catalogue : transformer chaque boîte LOCALE par la
+			// matrice monde de la pièce (worldM, column-major M[col*4+row]).
+			// Colonnes 3x3 = axes + échelle.
+			const float* M = worldM.m;
+			const engine::math::Vec3 colX{ M[0], M[1], M[2] };
+			const engine::math::Vec3 colY{ M[4], M[5], M[6] };
+			const engine::math::Vec3 colZ{ M[8], M[9], M[10] };
+			const float sX = std::sqrt(colX.x*colX.x + colX.y*colX.y + colX.z*colX.z);
+			const float sY = std::sqrt(colY.x*colY.x + colY.y*colY.y + colY.z*colY.z);
+			const float sZ = std::sqrt(colZ.x*colZ.x + colZ.y*colZ.y + colZ.z*colZ.z);
+			for (const auto& lb : piece->boxes)
+			{
+				// Centre local -> monde.
+				const float wx = M[0]*lb.cx + M[4]*lb.cy + M[8]*lb.cz  + M[12];
+				const float wy = M[1]*lb.cx + M[5]*lb.cy + M[9]*lb.cz  + M[13];
+				const float wz = M[2]*lb.cx + M[6]*lb.cy + M[10]*lb.cz + M[14];
+				engine::gameplay::PropBox box;
+				box.cx = wx; box.cz = wz;
+				box.halfX = lb.hx * sX; box.halfZ = lb.hz * sZ;
+				box.axisX = (sX > 1e-6f) ? engine::math::Vec3{ colX.x/sX, 0.0f, colX.z/sX } : engine::math::Vec3{ 1, 0, 0 };
+				box.axisZ = (sZ > 1e-6f) ? engine::math::Vec3{ colZ.x/sZ, 0.0f, colZ.z/sZ } : engine::math::Vec3{ 0, 0, 1 };
+				box.loY = wy - lb.hy * sY; box.hiY = wy + lb.hy * sY;
+				box.stair = isStair;
+				// Roadmap-5 (2026-07-19) — dessus marchable pour les
+				// sols (tag JSON "walkable") et les marches d'escalier ;
+				// les murs restent des barrières latérales pures.
+				box.walkableTop = piece->walkable || isStair;
+				box.wall = !box.walkableTop;
+				m_worldCollider.AddBox(box);
+			}
+		}
+		// piece->passable : on n'ajoute rien (battant franchissable).
 	}
 
 	bool Engine::EnsureImpostorAtlas(const std::string& meshPath)
@@ -16235,7 +16351,8 @@ namespace engine
 				meshRace = (appearance != nullptr && !appearance->meshKey.empty())
 					? appearance->meshKey
 					: std::string{"humains"};
-				gender = "male";
+				// Monde vivant : villageoises, sentinelles… (variante Female_ si chargée).
+				gender = (appearance != nullptr) ? appearance->gender : std::string{"male"};
 				meshScale = (appearance != nullptr) ? appearance->scale : 1.0f;
 			}
 			else
@@ -16937,7 +17054,11 @@ namespace engine
 					s.x += (re.positionX - s.x) * k;
 					s.y += (re.positionY - s.y) * k;
 					s.z += (re.positionZ - s.z) * k;
-					s.yaw += (re.yawRadians - s.yaw) * k;
+					// Interpolation par le plus COURT chemin angulaire : sans repli dans
+					// [-π, π], un PNJ dont le cap traverse ±π tournait d'un tour complet.
+					float dyaw = std::remainder(re.yawRadians - s.yaw, 6.28318530718f);
+					s.yaw += dyaw * k;
+					s.yaw = std::remainder(s.yaw, 6.28318530718f);
 				}
 			}
 			// Purge des entités sorties d'AoI (borne la map ; erase renvoie l'itérateur suivant).

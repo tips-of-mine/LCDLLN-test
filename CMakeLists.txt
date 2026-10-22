@@ -613,6 +613,10 @@ add_library(engine_core
   src/world_editor/panels/SurfaceTablePanel.cpp
   src/world_editor/panels/CollisionEditorPanel.cpp
   src/client/app/Engine.cpp
+  src/client/app/EngineWorld.cpp
+  src/client/world/scatter/ScatterField.cpp
+  src/client/world/places/WorldPlaces.cpp
+  src/client/render/WorldMapImGuiRenderer.cpp
   src/shared/platform/FileSystem.cpp
   src/shared/platform/FileWatcher.cpp
   src/client/render/vk/VkInstance.cpp
@@ -2264,6 +2268,10 @@ add_subdirectory(tools/impostor_builder)
 add_subdirectory(tools/zone_builder/lib)
 # M10.5: Zone builder (chunk packages: chunk.meta + geo/tex/instances/nav/probes)
 add_subdirectory(tools/zone_builder)
+# Chantier « Royaumes » : générateur offline du monde jouable (terrain, eau,
+# routes, villes, végétation, PNJ, points de départ, carte) depuis
+# game/data/world/<monde>/world_master.json. Dépend de zone_builder_lib.
+add_subdirectory(tools/world_gen)
 # M21.2: Migration checksum tool (SHA-256 of db/migrations/*.sql)
 add_subdirectory(tools/migration_checksum)
 # M15.4: Server app (headless, no Vulkan)

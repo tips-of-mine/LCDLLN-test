@@ -15,6 +15,8 @@
 #include "src/shardd/gameplay/social/PartySystem.h"
 #include "src/shardd/gameplay/quest/QuestRuntime.h"
 #include "src/shardd/gameplay/spawner/SpawnerRuntime.h"
+#include "src/shardd/gameplay/ambient/AmbientRoutine.h"
+#include "src/shared/world/WorldClock.h"
 #include "src/shardd/gameplay/creature/CreatureArchetypeLibrary.h"
 #include "src/shardd/gameplay/spell/SpellKitLibrary.h"
 #include "src/shardd/gameplay/anniversary/CakeBuffLibrary.h" // SP3 anniversaires (2026-07-18)
@@ -309,6 +311,15 @@ namespace engine::server
 		/// Combat SP4 — throttle du push ThreatUpdate (≤ 1/s et sur changement).
 		uint64_t lastThreatPushMs = 0;
 		uint64_t lastThreatHash = 0;
+		/// Monde vivant — PNJ d'ambiance (archétype behavior.kind = ambient) :
+		/// IA de routine (UpdateAmbientMob), jamais d'aggro.
+		bool ambient = false;
+		/// Les joueurs peuvent-ils lui infliger des dégâts ? (archétype)
+		bool attackable = true;
+		/// Monde vivant — état de la routine (cible, pause, retour au logis).
+		ambient::RoutineState routine;
+		/// Hors horaire et arrivé chez lui : à retirer sans délai de respawn.
+		bool scheduleRetired = false;
 	};
 
 	/// One spawn slot tracked by the authoritative spawner runtime.
@@ -536,6 +547,15 @@ namespace engine::server
 
 		/// Advance one mob through the authoritative AI state machine.
 		void UpdateMobAi(MobEntity& mob);
+		/// Monde vivant — IA d'un PNJ d'ambiance : routine du spawner (tournée,
+		/// ronde, poste, errance), pause face à un joueur proche (dialogue),
+		/// retour au logis hors horaire. Appelée à la cadence de l'IA des mobs.
+		void UpdateAmbientMob(MobEntity& mob);
+		/// Monde vivant — heure de jeu courante [0,24) calculée comme le master
+		/// (formule pure WorldClock, clés game.worldclock.*).
+		float CurrentWorldHour() const;
+		/// Définition de routine du spawner propriétaire du mob (nullptr si aucun).
+		const ambient::RoutineDefinition* FindMobRoutine(const MobEntity& mob) const;
 
 		/// Return true when at least one player is close enough to activate the spawner.
 		bool IsSpawnerActivatedByPlayers(const SpawnerRuntimeState& spawner) const;
@@ -1229,6 +1249,9 @@ namespace engine::server
 		/// Combat SP1 — catalogue d'archétypes de créatures (stats data-driven,
 		/// initialisé par InitSpawners avant le chargement des spawners).
 		CreatureArchetypeLibrary m_archetypeLibrary;
+		/// Monde vivant — paramètres de l'horloge monde (mêmes clés que le master :
+		/// game.worldclock.*), lus à l'init pour les horaires des PNJ d'ambiance.
+		engine::world::WorldClockParams m_worldClockParams{};
 		/// Combat SP3 — kits de sorts par profil (gameplay/spells/*.json), strict.
 		SpellKitLibrary m_spellKits;
 		/// SP-B — bibliothèque des compétences par-classe (gameplay/class_skills/*.json), stricte.

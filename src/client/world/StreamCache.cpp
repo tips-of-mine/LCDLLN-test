@@ -267,7 +267,19 @@ namespace engine::world
 	{
 		(void)zoneName;  // M100.13 : single global file, partitioning multi-zone = M100.34
 		const std::string contentRoot = config.GetString("paths.content", "game/data");
-		const std::string fullPath = contentRoot + "/instances/water.bin";
+		// Monde ouvert (chantier « Royaumes ») : eau namespacée par zone active
+		// (instances/zone_<zone>/water.bin, écrite par tools/world_gen), repli sur
+		// le fichier global historique — même politique que buildings.bin.
+		std::string fullPath = contentRoot + "/instances/water.bin";
+		{
+			const std::string zone = config.GetString("world.active_zone", "");
+			if (!zone.empty())
+			{
+				const std::string ns = contentRoot + "/instances/zone_" + zone + "/water.bin";
+				std::ifstream probe(ns, std::ios::binary);
+				if (probe.good()) fullPath = ns;
+			}
+		}
 
 		std::ifstream f(fullPath, std::ios::binary | std::ios::ate);
 		if (!f.good()) return nullptr;  // Silencieux si absent

@@ -1080,6 +1080,7 @@ namespace engine::render
 				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &batch.materialDescriptorSet, 0, nullptr);
 
 			pushConstants.materialIndex = batch.materialIndex;
+			pushConstants.fade = batch.fade;
 			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
 				kPushConstantSize, &pushConstants);
 

@@ -71,6 +71,25 @@ function Copy-RuntimeDlls {
     }
 }
 
+# Monde « royaumes » : génère dans game/data les cellules, les départs par race et
+# la carte (tools/world_gen, sorties non versionnées). À appeler AVANT Copy-GameData.
+# Échoue si l'exe est absent, s'il sort en erreur ou si les départs manquent
+# (le shard refuserait de démarrer et le client n'aurait aucune cellule).
+function Invoke-WorldGen {
+    param([string]$World = "royaumes")
+    $exe = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\build" -Filter "lcdlln_world_gen.exe" -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notlike "*\vcpkg\*" -and $_.FullName -notlike "*\Debug\*" -and $_.FullName -notlike "*\debug\*" } |
+        Select-Object -First 1
+    if (-not $exe) { throw "[world_gen] lcdlln_world_gen.exe introuvable" }
+    $content = Join-Path $env:GITHUB_WORKSPACE "game\data"
+    & $exe.FullName --content $content --world $World
+    if ($LASTEXITCODE -ne 0) { throw "[world_gen] échec (code $LASTEXITCODE)" }
+    $starts = Join-Path $content "world\$World\start_locations.json"
+    if (-not (Test-Path $starts)) { throw "[world_gen] $starts absent" }
+    if (-not (Select-String -Path $starts -Pattern "generated_cells" -Quiet)) { throw "[world_gen] generated_cells absent de $starts" }
+    Write-Host "[world_gen] monde '$World' généré dans $content"
+}
+
 # game/data (assets, shaders SPIR-V, icônes LFS) -> artifacts/game/data.
 function Copy-GameData {
     Initialize-Artifacts

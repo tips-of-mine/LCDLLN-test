@@ -177,6 +177,19 @@ jobs:
             exit 1
           fi
 
+      # Monde actif « royaumes » : cellules, départs par race (start_locations.json,
+      # exigé au boot du shard et du master) et carte générés dans game/data AVANT
+      # l'assemblage du bundle Docker (sorties non versionnées, cf. docs/world/ROYAUMES.md).
+      - name: Générer le monde « royaumes » (tools/world_gen)
+        run: |
+          set -euo pipefail
+          GEN=$(find "$GITHUB_WORKSPACE/build/linux-x64-release/pkg" -type f -name lcdlln_world_gen -print -quit)
+          if [ -z "$GEN" ]; then echo "[FAIL] lcdlln_world_gen introuvable"; exit 1; fi
+          "$GEN" --content "$GITHUB_WORKSPACE/game/data" --world royaumes
+          STARTS="$GITHUB_WORKSPACE/game/data/world/royaumes/start_locations.json"
+          test -s "$STARTS" || { echo "[FAIL] $STARTS absent"; exit 1; }
+          grep -q generated_cells "$STARTS" || { echo "[FAIL] generated_cells absent de $STARTS"; exit 1; }
+
       # Copie automatique sql/schema.sql + sql/migrations/ → deploy/docker/sql/ (Docker + MigrationRunner).
       # Réalisée dans pack-linux-docker-bundle.sh via scripts/sync-db-to-docker-deploy.sh (pas de copie manuelle en CI).
       - name: Assembler deploy/docker (sync sql + binaires + lib MySQL + game/data)

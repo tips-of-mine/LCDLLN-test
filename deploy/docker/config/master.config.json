@@ -21,7 +21,7 @@
   "terms": { "enforce": true },
   "world": {
     "_comment": "Monde actif : identique au shard. \"royaumes\" (monde en cellules) => un nouveau personnage apparaît dans la ville de départ de sa race (world/royaumes/start_locations.json). Voir docs/world/ROYAUMES.md.",
-    "active_zone": "feyhin",
+    "active_zone": "royaumes",
     "lunar": {
       "_comment": "Phase 5 Lunar (Wave 4) -- parametres du cycle authoritative cote master. Defaults : cycle_start = 1767225600000 ms (2026-01-01 UTC), duration = 1209600000 ms (14 jours reels).",
       "cycle_start_unix_ms": 1767225600000,

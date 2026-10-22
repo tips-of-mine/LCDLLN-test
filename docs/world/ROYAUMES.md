@@ -12,13 +12,14 @@
 |---|---|---|
 | 1 | Convention commune (`WorldCells`), générateur à l'échelle 10 km (2049², couche macro + cellules, lieux procéduraux), binaires générés par la CI | fait (PR #1017) |
 | 2 | Serveur : une carte / une grille, régions actives par cellule, zones `cell_*` chargées, mur invisible serveur, départs par race (master + shard), anciens personnages feyhin replacés | fait (PR #1018) |
-| 3 | Client : streaming des cellules (terrain 2049², décor, bâtiments, collisions), repère de rendu centré sur la cellule du joueur, eau, PNJ, carte M et POI en global, mur invisible | **cette étape** — dormante tant que `active_zone` = `feyhin` |
-| 4 | Bascule : `world.active_zone` → monde « royaumes », CI qui génère avant l'empaquetage | à faire |
+| 3 | Client : streaming des cellules (terrain 2049², décor, bâtiments, collisions), repère de rendu centré sur la cellule du joueur, eau, PNJ, carte M et POI en global, mur invisible | fait (PR #1019) |
+| 4 | Bascule : `world.active_zone` = `royaumes` (client `config.json`, master, shard), génération du monde par la CI avant l'empaquetage (client Windows, bundle Docker) | **cette étape** |
 
-Tant que l'étape 4 (bascule + génération en CI) n'est pas faite, **ne pas
-basculer** `world.active_zone` sur `royaumes`. Les sorties du générateur peuvent en
-revanche être déployées sans risque : en zone historique, le shard ignore
-les dossiers `zones/cell_*` (et inversement).
+Depuis l'étape 4, le monde actif est `royaumes` partout. Client, master et
+shard doivent être déployés **ensemble**, avec le `game/data` généré par la CI du
+même commit (le shard et le master refusent de démarrer sans
+`world/royaumes/start_locations.json`). Retour arrière : remettre `feyhin` dans
+les trois configs (les cellules générées sont alors ignorées).
 
 ## 1. Convention des cellules (`src/shared/world/WorldCells.h`)
 
@@ -50,7 +51,6 @@ Activé par `world.active_zone = "royaumes"` sur **le shard ET le master**
 | Mur invisible | Un Input dans une cellule non générée est refusé et le client recalé (`ForcePosition`, raison « téléport », ≤ 1 / 500 ms). |
 | Entrée en monde | Position hors cellule générée, ou fichier personnage d'une zone historique (repère local feyhin) → point de départ de la race (`characters.race_str`, sinon race par défaut) + `ForcePosition`. |
 | Création (master) | Ville de départ de la race lue dans `world/royaumes/start_locations.json` ; en zone historique, repli `character_creation.default_spawn.*`. |
-| Éditeurs | `--world-editor` / `--editor` ignorent le mode cellules (ils éditent un terrain unique). |
 | Boot | Monde en cellules sans `world/royaumes/start_locations.json` (avec `generated_cells`) = **refus de démarrer** : lancer le générateur avant. |
 
 Le canal « groupe / guilde » (encore un relais provisoire) diffuse à toute la carte.
@@ -70,6 +70,7 @@ Activé par le même `world.active_zone = "royaumes"` (client, shard, master).
 | Mur invisible | Le personnage ne peut pas entrer dans une cellule non générée (le shard refuse aussi). |
 | Carte M, bannière | `world/royaumes/places.json` (global) ; la position du joueur est convertie. Cellules générées : liste `cells` de places.json. |
 | POI de quêtes | `world/royaumes/quest_poi.json` (global), ramenés au repère de rendu. |
+| Éditeurs | `--world-editor` / `--editor` n'entrent jamais en mode cellules : avec `active_zone = royaumes`, ils ouvrent la zone historique `editor.zone` (défaut `feyhin`). Les cellules se régénèrent avec `tools/world_gen`. |
 | Boot | Avant l'EnterWorld, la cellule de `world.cells.boot_x` / `boot_z` (défaut : centre de la première cellule générée) est chargée — fond de l'écran de connexion. |
 
 Corrections du terrain faites à cette étape (profitent aussi aux zones historiques) :
@@ -86,7 +87,12 @@ le streaming et le rebase par captures d'écran.
 ## 4. Générer le monde
 
 La CI compile `lcdlln_world_gen` (paquet Windows « éditeur + carte » compris)
-et exécute `world_gen_tests`. En local (Windows) :
+et exécute `world_gen_tests`. Elle **génère aussi le monde avant l'empaquetage** :
+job « Client (jeu) » (`Invoke-WorldGen` de `.github/scripts/package-windows.ps1`,
+avant `Copy-GameData`) et build Linux (étape « Générer le monde », avant le bundle
+Docker du master et du shard). Elle échoue si `start_locations.json` ou ses
+`generated_cells` manquent. Les cellules générées sont celles de
+`world_master.json` (les 5 départs de race aujourd'hui). En local (Windows) :
 
 ```powershell
 .\lcdlln_world_gen.exe --content game/data --world royaumes
@@ -216,5 +222,8 @@ Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-c
   exploitée, le client charge la cellule entière (viendra avec l'asynchrone).
 - Deux cellules générées ne sont pas encore voisines : le changement de région
   en marchant ne se produit donc pas encore en jeu (testé côté logique).
-- Les anciens personnages de feyhin reprennent au hameau de Marn (leur position
-  locale n'a pas d'équivalent exact dans le repère global).
+- Les anciens personnages de feyhin reprennent à la ville de départ de leur race
+  (leur position locale n'a pas d'équivalent exact dans le repère global).
+- Paquet client : ~40 Mo de données par cellule générée (~200 Mo pour les 5).
+- Ajouter des cellules jouables : les ajouter à `generated_cells` de
+  `world_master.json` ; la CI les génère au prochain build.

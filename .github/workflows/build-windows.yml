@@ -65,11 +65,13 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: cmake --preset vs2022-x64
 
-      - name: Build (client uniquement — engine_app)
+      - name: Build (client — engine_app + lcdlln_world_gen)
         shell: pwsh
         env:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
-        run: cmake --build --preset vs2022-x64-release --target engine_app
+        run: |
+          cmake --build --preset vs2022-x64-release --target engine_app
+          cmake --build --preset vs2022-x64-release --target lcdlln_world_gen
 
       - name: Vérifie présence de l'exécutable jeu
         shell: pwsh
@@ -117,6 +119,8 @@ jobs:
           . "${{ github.workspace }}\.github\scripts\package-windows.ps1"
           Copy-ArtifactExes -Names @("lcdlln.exe")
           Copy-RuntimeDlls -IncludeGraphics
+          # Monde actif « royaumes » : cellules générées avant l'empaquetage de game/data.
+          Invoke-WorldGen -World "royaumes"
           Copy-GameData
           Copy-ClientConfig
 

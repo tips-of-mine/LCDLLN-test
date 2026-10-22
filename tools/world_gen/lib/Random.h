@@ -82,36 +82,77 @@ namespace tools::world_gen
 		return a + (b - a) * sz;
 	}
 
-	/// Mouvement brownien fractionnaire (somme d'octaves) dans ~[-1,1].
+	/// Bruit de GRADIENT 2D (Perlin) dans ~[-1,1] : contrairement au bruit de
+	/// valeur, ses passages par zéro ne s'alignent pas sur les axes du treillis
+	/// (pas de « terrasses » rectangulaires dans les crêtes).
+	inline double GradNoise2(double x, double z, uint64_t seed)
+	{
+		// 16 directions décalées de 0,2 rad (aucune parallèle aux axes).
+		static const double kGx[16] = { 0.98007, 0.82944, 0.55253, 0.19151, -0.19867, -0.55860, -0.83349, -0.98149, -0.98007, -0.82944, -0.55253, -0.19151, 0.19867, 0.55860, 0.83349, 0.98149 };
+		static const double kGz[16] = { 0.19867, 0.55860, 0.83349, 0.98149, 0.98007, 0.82944, 0.55253, 0.19151, -0.19867, -0.55860, -0.83349, -0.98149, -0.98007, -0.82944, -0.55253, -0.19151 };
+		const double fx = std::floor(x), fz = std::floor(z);
+		const int64_t ix = static_cast<int64_t>(fx), iz = static_cast<int64_t>(fz);
+		const double tx = x - fx, tz = z - fz;
+		auto smooth = [](double t) { return t * t * t * (t * (t * 6.0 - 15.0) + 10.0); };
+		auto dot = [seed](int64_t a, int64_t b, double dx, double dz) {
+			const unsigned k = static_cast<unsigned>(Hash(seed, static_cast<uint64_t>(a), static_cast<uint64_t>(b)) & 15u);
+			return kGx[k] * dx + kGz[k] * dz;
+		};
+		const double sx = smooth(tx), sz = smooth(tz);
+		const double v00 = dot(ix, iz, tx, tz), v10 = dot(ix + 1, iz, tx - 1.0, tz);
+		const double v01 = dot(ix, iz + 1, tx, tz - 1.0), v11 = dot(ix + 1, iz + 1, tx - 1.0, tz - 1.0);
+		const double a = v00 + (v10 - v00) * sx;
+		const double b = v01 + (v11 - v01) * sx;
+		return (a + (b - a) * sz) * 1.41421356;
+	}
+
+	namespace noise_detail
+	{
+		/// Rotation par octave (≈ 35,5°) : casse l'alignement des octaves entre elles.
+		inline void RotateOctave(double& x, double& z)
+		{
+			constexpr double c = 0.8141, s = 0.5807;
+			const double nx = c * x - s * z;
+			z = s * x + c * z;
+			x = nx;
+		}
+	}
+
+	/// Mouvement brownien fractionnaire (somme d'octaves de bruit de gradient,
+	/// tournées entre elles) dans ~[-1,1].
 	/// \param wavelength longueur d'onde de la 1re octave (m)
 	inline double Fbm(double x, double z, double wavelength, int octaves, uint64_t seed,
 		double persistence = 0.5, double lacunarity = 2.0)
 	{
-		double sum = 0.0, amp = 1.0, norm = 0.0, f = 1.0 / wavelength;
+		double sum = 0.0, amp = 1.0, norm = 0.0;
+		double px = x / wavelength, pz = z / wavelength;
 		for (int o = 0; o < octaves; ++o)
 		{
-			sum += amp * ValueNoise2(x * f, z * f, seed + static_cast<uint64_t>(o) * 7919ull);
+			sum += amp * GradNoise2(px, pz, seed + static_cast<uint64_t>(o) * 7919ull);
 			norm += amp;
 			amp *= persistence;
-			f *= lacunarity;
+			px *= lacunarity; pz *= lacunarity;
+			noise_detail::RotateOctave(px, pz);
 		}
 		return norm > 0.0 ? sum / norm : 0.0;
 	}
 
-	/// Bruit « ridged » (crêtes montagneuses) dans [0,1].
+	/// Bruit « ridged » (crêtes montagneuses) dans [0,1], sur bruit de gradient.
 	inline double Ridged(double x, double z, double wavelength, int octaves, uint64_t seed)
 	{
-		double sum = 0.0, amp = 1.0, norm = 0.0, f = 1.0 / wavelength, weight = 1.0;
+		double sum = 0.0, amp = 1.0, norm = 0.0, weight = 1.0;
+		double px = x / wavelength, pz = z / wavelength;
 		for (int o = 0; o < octaves; ++o)
 		{
-			double n = 1.0 - std::fabs(ValueNoise2(x * f, z * f, seed + static_cast<uint64_t>(o) * 104729ull));
+			double n = 1.0 - std::fabs(GradNoise2(px, pz, seed + static_cast<uint64_t>(o) * 104729ull));
 			n *= n;
 			n *= weight;
 			weight = std::fmin(1.0, std::fmax(0.0, n * 2.0));
 			sum += n * amp;
 			norm += amp;
 			amp *= 0.5;
-			f *= 2.0;
+			px *= 2.0; pz *= 2.0;
+			noise_detail::RotateOctave(px, pz);
 		}
 		return norm > 0.0 ? sum / norm : 0.0;
 	}

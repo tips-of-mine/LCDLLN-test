@@ -2483,12 +2483,13 @@ Une **minimap radar** schématique (sans texture, dessinée à l'`ImDrawList`) a
 
 ## Monde jouable « Royaumes » (2026-10)
 
-Carte continue 5,6 km × 5,6 km générée par `tools/world_gen` depuis `game/data/world/royaumes/world_master.json` (zone active `royaumes`). Doc complète : **`docs/world/ROYAUMES.md`**.
+Monde continu en **cellules de 10 km** (1 case du lore = 1 cellule) généré par `tools/world_gen` depuis `game/data/world/royaumes/world_master.json` ; sorties générées par la CI (non versionnées). Avancement par étapes et doc complète : **`docs/world/ROYAUMES.md`**.
 
 | Fichier | Rôle |
 |---|---|
-| `tools/world_gen/lib/{Terrain,Roads,Settlements,Vegetation,Population,Output}.cpp` | Étapes du générateur (déterministe, seed du master). |
-| `src/client/world/instances/ScatterInstances.h` | Format `scatter.bin` « LCSC » v1 (décor instancié). |
+| `src/shared/world/WorldCells.{h,cpp}` | **Convention des cellules de 10 km** : position ↔ cellule ↔ nom `cell_nXXX_eYYY` ↔ id de zone serveur (pur, `world_cells_tests`). |
+| `tools/world_gen/lib/{Terrain,Places,Roads,Settlements,Vegetation,Population,Output}.cpp` | Étapes du générateur : couche macro (continent) puis cellules 2049² (déterministe, seed du master). |
+| `src/client/world/instances/ScatterInstances.h` | Format `scatter.bin` « LCSC » v1/v2 (décor instancié ; v2 = table de chunks de 500 m pour le streaming). |
 | `src/client/world/scatter/ScatterField.{h,cpp}` | Grille 32 m + frustum + culling par classe des instances de décor. |
 | `src/client/app/EngineWorld.cpp` | Chargement / rendu instancié du décor et des bâtiments, collisions, carte & bannière. |
 | `src/client/world/places/WorldPlaces.{h,cpp}` | `places.json` : villes, POI, régions ; bannière « Vous entrez à … » (pur, `world_places_tests`). |

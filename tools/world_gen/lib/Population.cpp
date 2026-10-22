@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <fstream>
 #include <map>
 #include <sstream>
@@ -43,22 +44,26 @@ namespace tools::world_gen
 		constexpr uint32_t kTraveller = 205;
 		constexpr uint32_t kImperialPatrol = 206;
 
-		int VillagersFor(const std::string& kind)
+		int VillagersFor(const CityDef& c)
 		{
-			if (kind == "capitale") return 20;
-			if (kind == "grande_ville") return 14;
-			if (kind == "ville") return 10;
-			if (kind == "forteresse") return 7;
-			if (kind == "village") return 7;
-			if (kind == "camp") return 6;
-			return 4;
+			if (c.procedural == "ferme") return 2;
+			if (c.procedural == "bucherons" || c.procedural == "mine") return 4;
+			if (c.kind == "capitale") return 30;
+			if (c.kind == "grande_ville") return 22;
+			if (c.kind == "ville") return 16;
+			if (c.kind == "forteresse") return 10;
+			if (c.kind == "village") return 10;
+			if (c.kind == "camp") return 6;
+			return 5;
 		}
-		int GuardsFor(const std::string& kind)
+		int GuardsFor(const CityDef& c)
 		{
-			if (kind == "capitale") return 8;
-			if (kind == "grande_ville" || kind == "forteresse") return 5;
-			if (kind == "ville") return 3;
-			if (kind == "village" || kind == "camp") return 2;
+			if (c.procedural == "ferme" || c.procedural == "bucherons") return 0;
+			if (c.procedural == "mine") return 1;
+			if (c.kind == "capitale") return 10;
+			if (c.kind == "grande_ville" || c.kind == "forteresse") return 6;
+			if (c.kind == "ville") return 4;
+			if (c.kind == "village" || c.kind == "camp") return 2;
 			return 1;
 		}
 
@@ -99,8 +104,9 @@ namespace tools::world_gen
 		/// la plus proche (≈ niveau de zone). Renvoie 0 si le biome est vide.
 		uint32_t CreatureFor(char code, double distToStart, Rng& rng)
 		{
-			const bool isNear = distToStart < 450.0;
-			const bool mid = distToStart < 1100.0;
+			// Paliers de progression (échelle 10 km) : ≈ niveaux 1-3 / 4-7 / 8+.
+			const bool isNear = distToStart < 1500.0;
+			const bool mid = distToStart < 4500.0;
 			switch (code)
 			{
 			case 'T': case 'R': case 'L': case 't':
@@ -138,29 +144,62 @@ namespace tools::world_gen
 	bool ImportLegacyContent(World& w, std::string& err)
 	{
 		const std::string& root = w.contentRoot;
+		// Interactibles déclarés dans le master, ancrés sur une ville DE la cellule.
+		for (InteractableDef d : w.master.interactables)
+		{
+			if (d.cityId.empty()) continue;
+			const CityDef* c = nullptr;
+			for (const CityDef& cc : w.cities) if (cc.id == d.cityId) c = &cc;
+			if (!c) continue;
+			d.x += c->center.x; d.z += c->center.z;
+			d.cityId.clear();
+			w.interactables.push_back(std::move(d));
+		}
+
 		auto readText = [&](const std::string& rel, std::string& out) {
 			std::ifstream f(root + "/" + rel, std::ios::binary);
 			if (!f.good()) return false;
 			std::stringstream ss; ss << f.rdbuf(); out = ss.str();
 			return true;
 		};
-		// --- zone.json : réglages world.* + interactibles.
+		// Réglages client world.* (brouillard, DOF, impostors…) de la zone importée :
+		// recopiés dans le zone.json de CHAQUE cellule (pas seulement celle du hameau).
+		JsonValue importedZone;
+		bool hasImportedZone = false;
 		if (!w.master.importZoneConfig.empty())
 		{
 			std::string txt;
 			if (!readText(w.master.importZoneConfig, txt)) { err = "import zone_config introuvable : " + w.master.importZoneConfig; return false; }
-			JsonValue zroot; std::string perr;
-			if (!tools::zone_builder::ParseJsonDocument(txt, zroot, perr)) { err = "import zone_config JSON : " + perr; return false; }
+			std::string perr;
+			if (!tools::zone_builder::ParseJsonDocument(txt, importedZone, perr)) { err = "import zone_config JSON : " + perr; return false; }
+			hasImportedZone = true;
+			if (const JsonValue* world = FindObjectMember(importedZone, "world"); world && world->type == JsonType::Object)
+			{
+				w.importedWorldConfig = *world;
+				// Interactibles, spawn et eau-test sont regénérés par cellule.
+				for (const char* k : { "interactables", "_comment_interactables", "default_spawn", "test_water", "_comment_test_water" })
+					w.importedWorldConfig.objectValue.erase(k);
+			}
+		}
+
+		// Contenu historique (ex-zone feyhin) : seulement dans la cellule de la
+		// ville d'ancrage, translaté sur son centre (l'ancienne origine (0,0)).
+		const CityDef* anchor = nullptr;
+		for (const CityDef& c : w.cities) if (c.id == w.master.importAnchorCity) anchor = &c;
+		if (!anchor)
+		{
+			for (const InteractableDef& d : w.interactables) w.Occupy({ d.x, d.z }, std::max(1.2, d.radius));
+			w.report.interactables = w.interactables.size();
+			return true;
+		}
+		const Vec2 off = anchor->center;
+		// --- zone.json : interactibles historiques.
+		if (hasImportedZone)
+		{
+			const JsonValue& zroot = importedZone;
 			const JsonValue* world = FindObjectMember(zroot, "world");
 			if (world && world->type == JsonType::Object)
 			{
-				w.importedWorldConfig = *world;
-				// Les interactibles, le spawn et l'eau-test sont regénérés.
-				w.importedWorldConfig.objectValue.erase("interactables");
-				w.importedWorldConfig.objectValue.erase("_comment_interactables");
-				w.importedWorldConfig.objectValue.erase("default_spawn");
-				w.importedWorldConfig.objectValue.erase("test_water");
-				w.importedWorldConfig.objectValue.erase("_comment_test_water");
 				if (const JsonValue* it = FindObjectMember(*world, "interactables"); it && it->type == JsonType::Object)
 				{
 					const JsonValue* cnt = FindObjectMember(*it, "count");
@@ -172,7 +211,7 @@ namespace tools::world_gen
 						auto str = [&](const char* key) { const JsonValue* v = FindObjectMember(*e, key); return (v && v->type == JsonType::String) ? v->stringValue : std::string(); };
 						auto num = [&](const char* key, double d) { const JsonValue* v = FindObjectMember(*e, key); return (v && v->type == JsonType::Number) ? v->numberValue : d; };
 						InteractableDef d;
-						d.x = num("x", 0.0); d.z = num("z", 0.0); d.radius = num("radius", 1.5);
+						d.x = num("x", 0.0) + off.x; d.z = num("z", 0.0) + off.z; d.radius = num("radius", 1.5);
 						const JsonValue* npc = FindObjectMember(*e, "npc");
 						d.npc = npc && npc->type == JsonType::Bool && npc->boolValue;
 						d.label = str("label"); d.role = str("role"); d.message = str("message"); d.mesh = str("mesh");
@@ -206,11 +245,11 @@ namespace tools::world_gen
 				const JsonValue* e = FindObjectMember(*sc, std::to_string(k));
 				if (!e || e->type != JsonType::Object) continue; // indices vacants (auberge migrée)
 				auto num = [&](const char* key, double d) { const JsonValue* v = FindObjectMember(*e, key); return (v && v->type == JsonType::Number) ? v->numberValue : d; };
-				const JsonValue* m = FindObjectMember(*e, "mesh");
-				if (!m || m->type != JsonType::String) continue;
+				const JsonValue* mesh = FindObjectMember(*e, "mesh");
+				if (!mesh || mesh->type != JsonType::String) continue;
 				ScatterDef s;
-				s.mesh = m->stringValue;
-				s.position = { num("x", 0.0), num("z", 0.0) };
+				s.mesh = mesh->stringValue;
+				s.position = { num("x", 0.0) + off.x, num("z", 0.0) + off.z };
 				s.yawDeg = num("yaw_deg", 0.0);
 				s.scale = num("scale", 1.0);
 				s.collisionRadius = num("collision_radius", 0.0);
@@ -235,16 +274,17 @@ namespace tools::world_gen
 			{
 				BuildingPlacementDef b;
 				b.templateType = p.templateType; b.variantId = p.variantId; b.displayName = p.displayName;
-				b.position = { p.worldPosition.x, p.worldPosition.z };
+				b.position = { p.worldPosition.x + off.x, p.worldPosition.z + off.z };
 				b.y = p.worldPosition.y; b.yawDeg = p.worldYawDeg; b.footprintRadius = 7.0;
-				b.cityId = w.master.importAnchorCity;
+				b.cityId = anchor->id;
 				b.doorPoint = b.position;
 				b.isInn = p.templateType == "tavern";
 				w.Occupy(b.position, b.footprintRadius);
 				w.buildings.push_back(std::move(b));
 			}
 		}
-		// --- respawn_points.txt : zone id remplacé par la zone gameplay.
+		// --- respawn_points.txt : zone id de la cellule, positions translatées,
+		//     altitude recalée sur le terrain généré.
 		if (!w.master.importRespawn.empty())
 		{
 			std::ifstream f(root + "/" + w.master.importRespawn);
@@ -254,19 +294,43 @@ namespace tools::world_gen
 			{
 				if (line.empty() || line[0] == '#') continue;
 				std::istringstream ls(line);
-				std::string zid, rest;
-				ls >> zid;
+				std::string zid, type, rest;
+				double x = 0, y = 0, z = 0;
+				if (!(ls >> zid >> type >> x >> y >> z)) continue;
 				std::getline(ls, rest);
-				w.importedRespawnLines.push_back(std::to_string(w.master.gameplayZoneId) + rest);
+				const Vec2 p{ x + off.x, z + off.z };
+				char buf[160];
+				std::snprintf(buf, sizeof buf, "%u %s %.3f %.3f %.3f", w.zoneId, type.c_str(), p.x, w.HeightAt(p) + 1.0, p.z);
+				w.importedRespawnLines.push_back(buf + rest);
 			}
 		}
-		// --- interactibles déclarés dans le master (ancrés sur une ville).
-		for (InteractableDef d : w.master.interactables)
+		// --- spawners.json historique : créatures du hameau (quêtes de l'ancien Marn
+		//     et du capitaine Rendal), ids préfixés pour éviter tout doublon.
+		if (!w.master.importSpawners.empty())
 		{
-			if (!d.cityId.empty())
-				if (const CityDef* c = w.FindCity(d.cityId)) { d.x += c->center.x; d.z += c->center.z; }
-			d.cityId.clear();
-			w.interactables.push_back(std::move(d));
+			std::string txt;
+			if (!readText(w.master.importSpawners, txt)) { err = "import spawners introuvable : " + w.master.importSpawners; return false; }
+			JsonValue sroot; std::string perr;
+			if (!tools::zone_builder::ParseJsonDocument(txt, sroot, perr)) { err = "import spawners JSON : " + perr; return false; }
+			const JsonValue* arr = FindObjectMember(sroot, "spawners");
+			if (arr && arr->type == JsonType::Array)
+				for (const JsonValue& e : arr->arrayValue)
+				{
+					auto num = [&](const char* key, double d) { const JsonValue* v = FindObjectMember(e, key); return (v && v->type == JsonType::Number) ? v->numberValue : d; };
+					const JsonValue* id = FindObjectMember(e, "id");
+					const JsonValue* pos = FindObjectMember(e, "position");
+					if (!id || id->type != JsonType::String || !pos || pos->type != JsonType::Array || pos->arrayValue.size() < 3) continue;
+					SpawnerDef s;
+					s.id = "import_" + id->stringValue;
+					s.archetypeId = static_cast<uint32_t>(num("archetypeId", 0));
+					s.position = { pos->arrayValue[0].numberValue + off.x, pos->arrayValue[2].numberValue + off.z };
+					s.count = static_cast<uint32_t>(num("count", 1));
+					s.respawnSec = static_cast<uint32_t>(num("respawnSec", 60));
+					s.leashM = num("leashDistanceMeters", 24.0);
+					s.y = w.HeightAt(s.position) + 0.05;
+					w.spawners.push_back(std::move(s));
+					++w.report.creatures;
+				}
 		}
 		for (const InteractableDef& d : w.interactables) w.Occupy({ d.x, d.z }, std::max(1.2, d.radius));
 		w.report.interactables = w.interactables.size();
@@ -287,7 +351,7 @@ namespace tools::world_gen
 		};
 
 		// ---- PNJ d'ambiance par agglomération.
-		for (const CityDef& c : w.master.cities)
+		for (const CityDef& c : w.cities)
 		{
 			const SettlementLayout* L = layoutOf[c.id];
 			if (!L || L->nodes.size() < 3) continue;
@@ -316,7 +380,23 @@ namespace tools::world_gen
 				continue;
 			}
 
-			const int villagers = VillagersFor(c.kind);
+			// Repaire de bandits : groupes de pillards (combat), pas de vie civile.
+			if (c.procedural == "bandits")
+			{
+				for (int g = 0; g < 3; ++g)
+				{
+					SpawnerDef s;
+					s.id = "amb_" + c.id + "_bandits_" + std::to_string(g);
+					s.archetypeId = 103;
+					s.position = L->nodes[static_cast<size_t>(cr.Below(static_cast<uint32_t>(L->nodes.size())))].p;
+					s.count = 3; s.respawnSec = 180; s.leashM = 30.0;
+					addSpawner(s);
+					++w.report.creatures;
+				}
+				continue;
+			}
+
+			const int villagers = VillagersFor(c);
 			for (int k = 0; k < villagers; ++k)
 			{
 				const Vec2 door = doors[cr.Below(static_cast<uint32_t>(doors.size()))];
@@ -336,7 +416,7 @@ namespace tools::world_gen
 				++w.report.ambientNpcs;
 			}
 			// Gardes : ronde sur la place, sentinelles aux portes, veilleur de nuit.
-			const int guards = GuardsFor(c.kind);
+			const int guards = GuardsFor(c);
 			for (int k = 0; k < guards; ++k)
 			{
 				SpawnerDef s;
@@ -409,15 +489,16 @@ namespace tools::world_gen
 		int roadIdx = 0;
 		for (const Road& r : w.roads)
 		{
+			if (r.path) { ++roadIdx; continue; } // chemins locaux : pas de voyageurs
 			std::vector<Vec2> path;
-			for (size_t k = 0; k < r.points.size(); k += 5) path.push_back(r.points[k]);
+			for (size_t k = 0; k < r.points.size(); k += 25)
+				if (w.InPlayableBounds(r.points[k], 10.0)) path.push_back(r.points[k]);
 			if (path.size() < 4) { ++roadIdx; continue; }
-			path.push_back(r.points.back());
 			const int n = r.major ? 2 : 1;
 			for (int k = 0; k < n; ++k)
 			{
 				SpawnerDef s;
-				s.id = "amb_route_" + std::to_string(roadIdx) + "_" + std::to_string(k);
+				s.id = "amb_route_" + r.fromId + "_" + r.toId + "_" + std::to_string(roadIdx) + "_" + std::to_string(k);
 				s.archetypeId = (r.major && k == 1) ? kImperialPatrol : kTraveller;
 				std::vector<Vec2> p = path;
 				if (k == 1) std::reverse(p.begin(), p.end());
@@ -432,27 +513,28 @@ namespace tools::world_gen
 			++roadIdx;
 		}
 
-		// ---- Créatures par biome (grille jitterisée de 170 m).
-		std::vector<Vec2> startCenters;
-		for (const CityDef& c : w.master.cities) if (!c.startFor.empty()) startCenters.push_back(c.center);
-		const double cell = 170.0;
-		const int nC = static_cast<int>(w.terrainSizeM / cell);
-		for (int j = 0; j < nC; ++j)
-			for (int i = 0; i < nC; ++i)
+		// ---- Créatures par biome (treillis GLOBAL jitterisé de 380 m).
+		const double cell = 380.0;
+		const int gi0 = static_cast<int>(std::floor(w.terrainOriginX / cell)) - 1;
+		const int gj0 = static_cast<int>(std::floor(w.terrainOriginZ / cell)) - 1;
+		const int nC = static_cast<int>(w.terrainSizeM / cell) + 3;
+		for (int jj = 0; jj < nC; ++jj)
+			for (int ii = 0; ii < nC; ++ii)
 			{
-				const uint64_t h = Hash(seed, 5150, static_cast<uint64_t>(i), static_cast<uint64_t>(j));
-				const Vec2 p{ w.terrainOriginX + (i + 0.2 + 0.6 * ToUnit(h)) * cell,
-				              w.terrainOriginZ + (j + 0.2 + 0.6 * ToUnit(Mix64(h))) * cell };
-				if (!w.InPlayableBounds(p, 80.0) || w.IsWater(p) || w.SlopeDegAt(p) > 28.0) continue;
+				const int i = gi0 + ii, j = gj0 + jj;
+				const uint64_t h = Hash(seed, 5150, static_cast<uint64_t>(static_cast<int64_t>(i)), static_cast<uint64_t>(static_cast<int64_t>(j)));
+				const Vec2 p{ (i + 0.2 + 0.6 * ToUnit(h)) * cell, (j + 0.2 + 0.6 * ToUnit(Mix64(h))) * cell };
+				if (!w.OwnsPoint(p) || !w.InPlayableBounds(p, 40.0) || w.IsWater(p) || w.SlopeDegAt(p) > 28.0) continue;
 				bool nearCity = false;
-				for (const CityDef& c : w.master.cities)
-					if (std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + 70.0) nearCity = true;
+				for (const CityDef& c : w.cities)
+					if (std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + 120.0) nearCity = true;
 				if (nearCity) continue;
 				const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
-				if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < 18.0f) continue;
-				double dStart = 1e9;
-				for (const Vec2& s : startCenters) dStart = std::min(dStart, std::hypot(p.x - s.x, p.z - s.z));
+				if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < 25.0f) continue;
+				double dStart = 1e18;
+				for (const Vec2& sc : w.g->startCenters) dStart = std::min(dStart, std::hypot(p.x - sc.x, p.z - sc.z));
 				Rng lr(h);
+				if (lr.Chance(0.3)) continue; // respirations : pas un monstre à chaque case
 				const char code = w.biome.At(w.biome.IndexX(p.x), w.biome.IndexZ(p.z));
 				const uint32_t arch = CreatureFor(code, dStart, lr);
 				if (arch == 0) continue;
@@ -462,7 +544,7 @@ namespace tools::world_gen
 				s.position = p;
 				s.count = 2 + lr.Below(3);
 				s.respawnSec = 90 + lr.Below(90);
-				s.leashM = 26.0;
+				s.leashM = 28.0;
 				addSpawner(s);
 				++w.report.creatures;
 			}
@@ -471,7 +553,7 @@ namespace tools::world_gen
 		//      dont le hameau importé a déjà ses spawners historiques).
 		struct StartFauna { const char* race; uint32_t a, b; };
 		const StartFauna fauna[] = { { "elfes", 120, 121 }, { "orcs", 130, 131 }, { "nains", 140, 141 }, { "demons", 150, 151 } };
-		for (const CityDef& c : w.master.cities)
+		for (const CityDef& c : w.cities)
 			for (const std::string& race : c.startFor)
 				for (const StartFauna& f : fauna)
 				{
@@ -481,9 +563,9 @@ namespace tools::world_gen
 					for (int attempt = 0; attempt < 80 && made < 6; ++attempt)
 					{
 						const double a = qr.Range(0.0, 6.283185307179586);
-						const double d = c.radiusM + qr.Range(55.0, 150.0);
+						const double d = c.radiusM + qr.Range(120.0, 420.0);
 						const Vec2 p = c.center + Vec2{ std::cos(a), std::sin(a) } * d;
-						if (!w.InPlayableBounds(p, 60.0) || w.IsWater(p) || w.SlopeDegAt(p) > 26.0) continue;
+						if (!w.InPlayableBounds(p, 60.0) || w.IsWater(p) || w.SlopeDegAt(p) > 26.0 || w.IsOccupied(p, 3.0)) continue;
 						const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
 						if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < 10.0f) continue;
 						SpawnerDef s;
@@ -503,6 +585,7 @@ namespace tools::world_gen
 		{
 			const CityDef* c = w.FindCity(L.cityId);
 			if (!c || c->id == w.master.importAnchorCity) continue; // le hameau importé a les siens
+			if (!c->procedural.empty() && c->procedural != "hameau") continue; // fermes, camps, ruines : pas de respawn
 			RespawnDef g; g.type = "graveyard"; g.position = L.graveyard; g.y = w.HeightAt(L.graveyard) + 1.0; g.faction = "-";
 			w.respawns.push_back(g);
 			if (c->state != "ruine" && c->kind != "camp")
@@ -522,8 +605,9 @@ namespace tools::world_gen
 			{
 				StartLocationDef s;
 				s.race = race; s.cityId = c->id;
-				// Ville d'ancrage importée : on garde le point d'entrée historique (0,0).
-				s.position = (c->id == w.master.importAnchorCity) ? Vec2{ 0.0, 0.0 } : L.startSpot;
+				// Ville d'ancrage importée : on garde le point d'entrée historique
+				// (ancienne origine (0,0) de feyhin = centre de la ville).
+				s.position = (c->id == w.master.importAnchorCity) ? c->center : L.startSpot;
 				s.yawDeg = (c->id == w.master.importAnchorCity) ? 0.0 : L.startYawDeg;
 				s.y = w.HeightAt(s.position) + 1.0;
 				w.starts.push_back(s);

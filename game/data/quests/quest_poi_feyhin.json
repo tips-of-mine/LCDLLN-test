@@ -1,0 +1,13 @@
+{
+  "_comment": "Source des POI de quetes historiques du hameau de Marn (ex-zone feyhin), en coordonnees LOCALES (centre du hameau = (0,0)). Lu par tools/world_gen (imports.quest_poi) qui les translate dans world/royaumes/quest_poi.json. quest_poi.json (racine) reste celui de la zone feyhin tant que le client n'est pas passe aux cellules.",
+  "mob:100": [[12,-28],[-10,-34],[22,-40],[-18,-22]],
+  "item:2001": [[12,-28],[-10,-34],[22,-40],[-18,-22]],
+  "npc:elder_marn": [[4,0]],
+  "npc:guard_captain": [[8,6]],
+  "mob:101": [[-45,-12],[-52,-20]],
+  "mob:103": [[6,44],[-4,50]],
+  "mob:104": [[4,-55]],
+  "mob:106": [[2,56]],
+  "item:6005": [[-38,26],[-30,34]],
+  "item:6006": [[34,-6],[40,4]]
+}

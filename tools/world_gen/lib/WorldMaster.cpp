@@ -85,20 +85,26 @@ namespace tools::world_gen
 		const JsonValue* sc = FindObjectMember(root, "scale");
 		if (!sc || sc->type != JsonType::Object) { err = "master: section 'scale' manquante"; return false; }
 		WorldScale& s = out.scale;
-		s.cellSizeM = GetNum(*sc, "cell_size_m", 128.0);
+		s.cellSizeM = GetNum(*sc, "cell_size_m", 10000.0);
 		s.gridCols = static_cast<int>(GetNum(*sc, "grid_cols", 40.0));
 		s.westE = static_cast<int>(GetNum(*sc, "west_e", -19.0));
 		s.northN = static_cast<int>(GetNum(*sc, "north_n", 18.0));
-		s.padNorthRows = static_cast<int>(GetNum(*sc, "pad_north_rows", 0.0));
-		s.heightScaleM = GetNum(*sc, "height_scale_m", 400.0);
+		s.heightScaleM = GetNum(*sc, "height_scale_m", 1200.0);
 		s.seaLevelM = GetNum(*sc, "sea_level_m", 40.0);
-		if (!ParseCellId(GetStr(*sc, "origin_cell"), s.originN, s.originE))
+		s.heightmapRes = static_cast<int>(GetNum(*sc, "heightmap_resolution", 2049.0));
+		// La cellule du lore EST la cellule moteur de 10 km (WorldCells.h) : pas
+		// d'autre échelle possible sans casser client et serveur.
+		if (s.cellSizeM != engine::world::cells::kCellSizeMeters)
 		{
-			err = "master: scale.origin_cell invalide"; return false;
+			err = "master: scale.cell_size_m doit valoir 10000 (1 case du lore = 1 cellule de 10 km)"; return false;
 		}
-		if (s.cellSizeM < 32.0 || s.cellSizeM > 1024.0 || s.gridCols < 4 || s.gridCols > 128)
+		if (s.gridCols < 4 || s.gridCols > 128)
 		{
-			err = "master: echelle hors bornes (cell_size_m 32..1024, grid_cols 4..128)"; return false;
+			err = "master: grid_cols hors bornes (4..128)"; return false;
+		}
+		if (s.heightmapRes != 1025 && s.heightmapRes != 2049 && s.heightmapRes != 4097)
+		{
+			err = "master: heightmap_resolution doit valoir 1025, 2049 ou 4097"; return false;
 		}
 		if (s.heightScaleM <= s.seaLevelM + 20.0) { err = "master: height_scale_m trop faible"; return false; }
 
@@ -107,10 +113,6 @@ namespace tools::world_gen
 		if (!gr) { err = "master: section 'grid' manquante"; return false; }
 		out.gridRows = GetStrArray(*gr, "rows");
 		if (out.gridRows.empty()) { err = "master: grid.rows vide"; return false; }
-		if (static_cast<int>(out.gridRows.size()) + s.padNorthRows > s.gridCols)
-		{
-			err = "master: trop de rangees pour un terrain carre (rows + pad_north_rows > grid_cols)"; return false;
-		}
 		const JsonValue* lg = FindObjectMember(*gr, "legend");
 		std::set<char> known;
 		if (lg && lg->type == JsonType::Object)
@@ -217,9 +219,11 @@ namespace tools::world_gen
 			for (const JsonValue& l : el->arrayValue)
 			{
 				ExtraLakeDef d;
-				d.id = GetStr(l, "id"); d.x = GetNum(l, "x", 0.0); d.z = GetNum(l, "z", 0.0);
+				d.id = GetStr(l, "id"); d.cityId = GetStr(l, "city");
+				d.x = GetNum(l, "x", 0.0); d.z = GetNum(l, "z", 0.0);
 				d.radiusM = GetNum(l, "radius_m", 20.0);
-				if (d.id.empty() || d.radiusM < 4.0 || d.radiusM > 200.0) { err = "master: extra_lakes invalide '" + d.id + "'"; return false; }
+				if (d.id.empty() || d.radiusM < 4.0 || d.radiusM > 600.0) { err = "master: extra_lakes invalide '" + d.id + "'"; return false; }
+				if (!d.cityId.empty() && !ids.count(d.cityId)) { err = "master: extra_lakes ancre sur ville inconnue '" + d.cityId + "'"; return false; }
 				out.extraLakes.push_back(std::move(d));
 			}
 		}
@@ -231,6 +235,8 @@ namespace tools::world_gen
 			out.importScenery = GetStr(*im, "scenery");
 			out.importBuildings = GetStr(*im, "buildings");
 			out.importRespawn = GetStr(*im, "respawn_points");
+			out.importSpawners = GetStr(*im, "spawners");
+			out.importQuestPoi = GetStr(*im, "quest_poi");
 			out.importAnchorCity = GetStr(*im, "anchor_city");
 			if (!out.importAnchorCity.empty() && !ids.count(out.importAnchorCity))
 			{
@@ -241,8 +247,24 @@ namespace tools::world_gen
 			out.zoneOverrides = *zo;
 		else
 			out.zoneOverrides.type = JsonType::Object;
-		out.gameplayZoneId = static_cast<uint32_t>(GetNum(root, "gameplay_zone_id", 1.0));
-		out.zoneNumericId = static_cast<uint32_t>(GetNum(root, "zone_numeric_id", 1.0));
+		// --- cellules générées par défaut ---
+		out.generatedCells = GetStrArray(root, "generated_cells");
+		{
+			std::set<std::string> seen;
+			for (const std::string& c : out.generatedCells)
+			{
+				int n = 0, e = 0;
+				if (!ParseCellId(c, n, e)) { err = "master: generated_cells invalide '" + c + "'"; return false; }
+				if (!seen.insert(c).second) { err = "master: generated_cells duplique '" + c + "'"; return false; }
+			}
+		}
+		// Chaque ville de départ doit être dans une cellule générée (sinon un
+		// nouveau personnage apparaîtrait dans le vide).
+		for (const CityDef& c : out.cities)
+			if (!c.startFor.empty() && std::find(out.generatedCells.begin(), out.generatedCells.end(), c.cell) == out.generatedCells.end())
+			{
+				err = "master: la ville de depart '" + c.id + "' (" + c.cell + ") n'est pas dans generated_cells"; return false;
+			}
 		return true;
 	}
 }

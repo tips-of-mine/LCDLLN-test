@@ -558,6 +558,11 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/world/tests/StartLocationsTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp)
 
+  # Monde « Royaumes » : découpage en cellules de 10 km (module pur partagé).
+  lcdlln_add_simple_test(world_cells_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/world/tests/WorldCellsTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
+
   # Monde jouable (chantier « Royaumes ») : lieux du monde (carte M, bannière).
   lcdlln_add_simple_test(world_places_tests
     ${CMAKE_SOURCE_DIR}/src/client/world/places/tests/WorldPlacesTests.cpp)

@@ -1,207 +1,155 @@
-# Monde « Royaumes de la Lune Noire » — carte jouable complète
+# Monde « Royaumes de la Lune Noire » — monde continu en cellules de 10 km
 
-> Chantier « Royaumes » (2026-10). Remplace la zone de test `feyhin` par un
-> monde continu de **5,6 km × 5,6 km** : 35 agglomérations, 12 régions,
-> 10 lieux remarquables, routes, rivières, lacs, forêts et végétation,
-> 5 villes de départ par race et ~560 PNJ d'ambiance qui vivent selon l'heure.
+> Chantier « Royaumes » (2026-10). Le continent du lore (carte de 33 × 44
+> cases) devient un **monde continu de ~330 km × 440 km** découpé en
+> **cellules de 10 km × 10 km** (1 case du lore = 1 cellule = 1 zone moteur).
+> Seules les cellules listées dans `generated_cells` sont générées et jouables ;
+> on commence par les **5 cellules des villes de départ par race**.
 
-## 1. Vue d'ensemble
+## 0. Avancement (une PR par étape)
 
-```
-game/data/world/royaumes/world_master.json      ← SOURCE DE VÉRITÉ (éditée à la main)
-                │
-                ▼   tools/world_gen  (lcdlln_world_gen, déterministe : seed)
-┌───────────────────────────────────────────────────────────────────────────┐
-│ zones/royaumes/        terrain_height.r16h  terrain_splat.slap             │
-│                        terrain_grass.grms   zone.json  spawners.json       │
-│                        respawn_points.txt   runtime_manifest.json          │
-│ instances/zone_royaumes/ scatter.bin (LCSC)  buildings.bin  water.bin      │
-│ buildings/templates/maison.json   (13 modèles de maisons paramétriques)    │
-│ world/royaumes/        places.json  world_map.png                          │
-│ world/start_locations.json        quests/quest_poi.json (fusion)           │
-└───────────────────────────────────────────────────────────────────────────┘
-        │ client (Engine)                       │ serveur
-        ▼                                       ▼
-  terrain + décor instancié + bâtiments    shard : spawners (créatures + routines
-  + eau + carte M + bannière de lieu         PNJ), respawns, PNJ non attaquables
-  + dialogues PNJ d'ambiance (E)           master : point d'apparition par race
-```
+| Étape | Contenu | État |
+|---|---|---|
+| 1 | Convention commune (`WorldCells`), générateur à l'échelle 10 km (2049², couche macro + cellules, lieux procéduraux), binaires générés par la CI | **cette étape** — n'active rien en jeu |
+| 2 | Serveur : index de positions unique, simulation par cellule occupée, zones `cell_*` chargées, départs par race, ancien contenu feyhin migré | à faire |
+| 3 | Client : streaming des cellules voisines (terrain 2049², décor par chunks, bâtiments, eau), origine flottante, carte M du continent, mur invisible | à faire |
+| 4 | Bascule : `world.active_zone` → monde « royaumes », CI qui génère avant l'empaquetage | à faire |
 
-Tous les fichiers sous `zones/royaumes`, `instances/zone_royaumes`,
-`world/royaumes` et `world/start_locations.json` sont **GÉNÉRÉS** : ne pas les
-éditer, modifier `world_master.json` (ou le générateur) puis régénérer.
+Tant que les étapes 2 et 3 ne sont pas livrées, **ne pas déployer** les
+sorties du générateur (le serveur actuel refuserait des spawners en
+coordonnées globales). La zone active reste `feyhin`.
 
-## 2. Régénérer le monde
+## 1. Convention des cellules (`src/shared/world/WorldCells.h`)
 
-La CI compile `lcdlln_world_gen` et exécute `world_gen_tests` (Linux). En local
-(Windows, après un build) :
+| Élément | Règle |
+|---|---|
+| Taille | 10 000 m (= `engine::world::kZoneSize`) |
+| Repère | **global**, en mètres : X = est, Z = sud (nord = -Z), Y = altitude |
+| Origine | centre de `cell_n000_e000` (l'Oracle) |
+| Cellule (n, e) | x ∈ [e·10 000 − 5 000, e·10 000 + 5 000[, z ∈ [−n·10 000 − 5 000, −n·10 000 + 5 000[ |
+| Nom disque | `cell_n003_w009` (minuscules, 3 chiffres ; `s`/`w` pour les négatifs) |
+| Id du lore | `N003_W009` |
+| Id de zone serveur | `1 000 000 + (n+500)·1000 + (e+500)` (jamais en collision avec les zones historiques 0, 1, 2) |
+| Coordonnées locales | `ToLocal` : centre de la cellule = (0,0), plage [−5000, 5000[ (celle de la `CellGrid` serveur) |
+
+La cellule d'un point se **déduit de sa position** : client et serveur la
+calculent chacun de leur côté — pas de champ réseau, pas de colonne en base.
+
+## 2. Générer le monde
+
+La CI compile `lcdlln_world_gen` (paquet Windows « éditeur + carte » compris)
+et exécute `world_gen_tests`. En local (Windows) :
 
 ```powershell
-.\build\pkg\world_gen\lcdlln_world_gen.exe --content game/data --world royaumes
-# --dry-run : génère et affiche le rapport sans rien écrire
-# --output <dir> : écrit ailleurs que dans --content (comparaison)
+.\lcdlln_world_gen.exe --content game/data --world royaumes
+# --cells N003_W009,N011_E008 : seulement ces cellules (sinon generated_cells du master) ;
+#                               les sorties globales (places, carte, départs) ne sont alors PAS réécrites
+# --output <dir>              : écrire ailleurs que dans --content
+# --dry-run                   : générer en mémoire, sans rien écrire
 ```
 
-Le rapport liste instances de décor, bâtiments, km de routes, rivières/lacs,
-spawners, respawns, et les **avertissements** (route impossible, mesh absent…).
-La génération est **déterministe** : même master + même seed ⇒ fichiers
-identiques octet pour octet (`world_gen_tests` le vérifie).
+Durée : ~1 min pour les 5 cellules sur 2 cœurs (parallélisé, résultat
+identique quel que soit le nombre de cœurs). **Déterministe** : mêmes entrées
+⇒ fichiers identiques octet pour octet (testé).
 
-## 3. Le fichier maître (`world_master.json`)
+Les sorties ne sont **pas versionnées** (`.gitignore`) : ~40 Mo par cellule.
+Seuls `world/royaumes/world_master.json` (source) et
+`buildings/templates/maison.json` (bibliothèque) sont dans git.
 
-| Bloc | Rôle |
+### Sorties par cellule `<c>` = `cell_nXXX_eYYY`
+
+| Fichier | Contenu |
 |---|---|
-| `seed` | graine unique de tout le monde (bruit, placement, population) |
-| `scale` | `cell_size_m` 128 (1 case de la carte de lore = 128 m), grille 44 × 44, `origin_cell` N003_W009 = (0,0) monde, `height_scale_m` 400, `sea_level_m` 40 |
-| `grid.rows` | carte de lore (1 caractère = 1 case, légende dans `grid.legend` : mer, plaine, forêt, désert, montagne, volcan, marais…) |
-| `regions` | 12 régions (rectangles de cases) → noms de la carte et bannières |
-| `cities` | 35 agglomérations : `kind` (capitale, grande_ville, ville, village, hameau, forteresse, camp), `race`, `state` (intact/ruine), `faction`, `start_for` |
-| `pois` | 10 lieux remarquables (l'Oracle, monolithes, gouffres…) |
-| `imports` | contenu historique repris tel quel au Hameau de Marn (zone feyhin : config, décor, bâtiments, respawns) |
-| `extra_lakes` | lacs ajoutés à la main (Étang de Marn) |
-| `zone_overrides` | clés recopiées dans `zones/royaumes/zone.json` (brouillard, distances de culling) |
-| `interactables` | PNJ statiques (donneurs de quêtes) placés relativement au centre d'une ville |
+| `zones/<c>/terrain_height.r16h` | heightmap 2049² (≈ 4,9 m), 10 km, altitude max 1 200 m |
+| `zones/<c>/terrain_splat.slap` / `terrain_grass.grms` | sol 2048² (herbe/terre/roche/neige), masque d'herbe |
+| `zones/<c>/zone.json` | cadrage (`terrain.origin_x/z` = coin min GLOBAL), PNJ statiques, réglages client |
+| `zones/<c>/spawners.json` | PNJ d'ambiance (routines) + faune, `zoneId` = id de la cellule, positions globales |
+| `zones/<c>/respawn_points.txt` | cimetières / auberges |
+| `zones/<c>/runtime_manifest.json` | `zone_id` = nom, `zone_numeric_id` = id serveur |
+| `instances/zone_<c>/scatter.bin` | décor instancié **LCSC v2** (table de chunks 20 × 20 de 500 m) |
+| `instances/zone_<c>/buildings.bin` | bâtiments (LCBD) |
+| `instances/zone_<c>/water.bin` | mer (si la cellule en a), lacs, étangs, rivières |
 
-## 4. Pipeline du générateur (`tools/world_gen/lib`)
+### Sorties globales (`world/royaumes/`)
 
-1. **Terrain** (`Terrain.cpp`) — altitude par biome (bruit fbm + ridged,
-   domain-warp pour casser les bords carrés de la grille), falloff océanique
-   en bordure, villes **aplanies** (plateau lissé), splat 4 couches
-   (herbe / terre / roche / neige ; sable près de la mer), masque d'herbe.
-2. **Eau** — rivières par priority-flood + écoulement (les villes sont des
-   « dômes » contournés, jamais creusées), lacs (CCW) éloignés des villes.
-3. **Routes** (`Roads.cpp`) — A* sur grille 10 m, pente > 46° interdite,
-   réutilisation des routes existantes encouragée, lissage Chaikin, profil
-   en long ≤ 16 %. Graphe : chaque ville est reliée à ses voisines.
-4. **Agglomérations** (`Settlements.cpp`) — place centrale, rues radiales +
-   anneau, lots orientés (occupation par rectangles orientés), remplissage,
-   forge, marché, auberge, enceinte / palissade avec portes, champs,
-   cimetière, pavage. Maisons = 13 modèles paramétriques du kit modulaire
-   (grille 2 m, étages 3 m, porte en -Z local tournée vers la rue).
-5. **Végétation** (`Vegetation.cpp`) — grille jitterée par biome, classes de
-   culling (grand / moyen / petit), exclusion routes / eau / bâtiments.
-6. **Population** (`Population.cpp`) — PNJ d'ambiance par ville (villageois,
-   gardes, marchands, aubergistes), voyageurs et patrouilles impériales sur
-   les routes, faune par biome et par éloignement de la ville de départ la
-   plus proche (≈ niveau), faune des quêtes d'accueil, bandits dans les ruines,
-   respawns (cimetière + auberge par agglomération), points de départ.
-7. **Sorties** (`Output.cpp`) — écrit tous les fichiers + carte PNG 1024².
+`places.json` (villes du lore, lieux procéduraux, régions, cellules générées —
+coordonnées globales), `world_map.png` (carte du continent 2048², relief ombré,
+rivières, routes, cellules générées encadrées), `start_locations.json`,
+`quest_poi.json`.
 
-## 5. Points de départ par race
+## 3. Pipeline du générateur (`tools/world_gen/lib`)
 
-`world/start_locations.json` (généré) est lu par le **master**
-(`CharacterCreateHandler`, module `src/shared/world/StartLocations`) à la
-**création** d'un personnage. Ensuite, la dernière position sauvegardée prime.
+**Couche macro** (une fois, tout le continent) — garantit des cellules
+voisines raccord au mètre près :
 
-| Race | Ville de départ | Région | PNJ d'accueil (quêtes) |
-|---|---|---|---|
-| Humains | Hameau de Marn (0, 0) | Terres de l'Empereur | l'ancien Marn, capitaine Rendal (contenu historique) |
-| Elfes | Whispers Hill | Forêt elfique | Iaelith (gardienne), Sylvanor (éclaireur) |
-| Orcs | Leviathan (kraal) | Territoires orcques | Grokhaar (chef de guerre), Shazka (chamane) |
-| Nains | Ghrunke Dash | Royaume des nains de l'Est | Thrain (forgeron), Brunhild (capitaine des portes) |
-| Démons | Faille de Tsaroth | Terres désolées de Tsaroth | Maltheus (héraut), Ysviel (liseuse de braises) |
+1. `MacroHeight` / `MacroBiome` (`Terrain.cpp`) : fonctions **pures** de la
+   position globale. Profil par code du lore (base, collines, crêtes, dunes)
+   interpolé à position déformée (domain warp) ; à l'intérieur d'une case :
+   pays plats / vallonnés (≈ 7 km), chaînons de collines, vallons, plancher
+   souple au-dessus de la mer. Bruit de **gradient** (pas de terrasses).
+2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
+   emplacement plat et sec de la case) ; lacs du lore et lacs manuels.
+3. **Rivières** : descente sur la grille grossière remplie (priority-flood),
+   méandres, profil de surface non croissant.
+4. **Routes** (`Roads.cpp`) : Kruskal + 2 plus proches voisines, A* 250 m,
+   simplification RDP (plus d'escalier), méandres ±110 m, lissage ; profil en
+   long **global** (pente ≤ 16 %) → chaque cellule aplanit sa portion au même profil.
 
-Repli si la race est inconnue : `default_race` (humains), puis
-`character_creation.default_spawn.*`.
+**Par cellule** :
 
-**Chaîne d'accueil** (elfes / orcs / nains / démons, `quests/quest_definitions.json`) :
-`<race>_accueil` (parler au second PNJ) → `<race>_chasse` (6 bêtes autour de la
-ville, archétypes 120/130/140/150) → `<race>_epreuve` (2 bêtes d'élite,
-121/131/141/151). Textes : `quest_texts.fr.json` ; dialogues : `dialogues/*.json`.
+5. `Places.cpp` — **lieux procéduraux** selon le biome : hameaux, fermes,
+   camps de bûcherons, repaires de bandits, ruines, mines (> 700 m des bords),
+   puis étangs.
+6. Heightmap 2049², plateaux urbains, lits de rivière (berges jamais sous
+   l'eau), lacs.
+7. Routes découpées + **chemins locaux** reliant chaque lieu au réseau.
+8. `Settlements.cpp` : rues, lots, auberge, forge, marché, remparts/palissades,
+   champs, cimetière, accessoires de métier (bûcherons, mine, bandits).
+9. `Vegetation.cpp` : treillis **global** jitterisé (aucun motif répété),
+   couverture nuancée (bois dans les plaines, clairières dans les forêts).
+10. `Population.cpp` : PNJ d'ambiance, voyageurs/patrouilles sur les routes,
+    faune par biome et distance aux villes de départ, quêtes d'accueil.
+
+## 4. Points de départ par race
+
+| Race | Ville | Cellule |
+|---|---|---|
+| Humains | Hameau de Marn (ancien contenu feyhin, translaté) | `cell_n003_w009` |
+| Elfes | Whispers Hill | `cell_n011_e008` |
+| Orcs | Leviathan | `cell_n009_e011` |
+| Nains | Ghrunke Dash | `cell_s007_e016` |
+| Démons | Faille de Tsaroth | `cell_s009_e011` |
+
+Chaîne d'accueil (elfes / orcs / nains / démons) : `<race>_accueil` →
+`<race>_chasse` → `<race>_epreuve` (`quests/quest_definitions.json`).
+
+## 5. Contenu historique (ex-zone feyhin)
+
+Le hameau de Marn reprend l'ancienne zone de test : `imports` du master
+(zone.json, scenery, buildings, respawns, **spawners**, **POI de quêtes**
+`quests/quest_poi_feyhin.json`) en coordonnées **locales**, translatées sur
+le centre du hameau dans sa cellule. `quests/quest_poi.json` (racine) reste
+celui de feyhin tant que le client n'est pas passé aux cellules.
 
 ## 6. Monde vivant — PNJ d'ambiance
 
-Un PNJ d'ambiance est un mob du shard dont l'archétype porte
-`"behavior": { "kind": "ambient", … }` (plage 200-259 dans
-`creatures/archetypes.json`) et dont le spawner porte une **routine** :
+Routines `tour` / `patrol` / `post` / `wander`, horaires `day` / `night` /
+`always` (retour à la maison hors horaire), arrêt près d'un joueur, non
+attaquables. Module pur : `src/shardd/gameplay/ambient/AmbientRoutine`.
+Côté client : plaque « Nom - Rôle », E pour parler / commercer, jamais ciblé au Tab.
 
-```json
-"routine": { "kind": "tour", "schedule": "day", "path": [[x,z], …],
-             "pauseMinSec": 3, "pauseMaxSec": 14, "pauseChance": 0.4,
-             "wanderRadiusMeters": 0, "pingPong": false, "face": [x,z] }
-```
+## 7. Format `scatter.bin` LCSC v2
 
-| `kind` | Comportement |
-|---|---|
-| `tour` | boucle porte → rues → porte, pauses aléatoires (villageois) |
-| `patrol` | ronde en boucle (ou aller-retour `pingPong`) — gardes, patrouilles de route |
-| `post` | reste à son poste (petite errance), regarde `face` — marchands, aubergistes, sentinelles |
-| `wander` | errance libre dans `wanderRadiusMeters` |
+v1 + table de chunks en fin de fichier : `originX f32, originZ f32,
+chunkSizeM f32, cols u16, rows u16`, puis `cols × rows × (first u32, count u32)`.
+Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-compatible).
 
-`schedule` : `day` (6 h → 21 h), `night` (20 h → 6 h, relève au crépuscule),
-`always`. Hors horaire, le PNJ **rentre chez lui** (premier point du chemin)
-puis disparaît ; il réapparaît à l'ouverture. L'heure est celle de
-`engine::world::WorldClock` (clés `game.worldclock.*`, mêmes défauts que le master).
+## 8. Limites connues / suite
 
-Règles serveur (`ServerApp::UpdateAmbientMob`) : non attaquable
-(`behavior.attackable`, défaut false pour ambient), aucune aggro, vitesse
-`behavior.moveSpeed` (m/s), **s'arrête quand un joueur est à moins de 2,6 m**
-(il « écoute »). Module pur testé : `src/shardd/gameplay/ambient/AmbientRoutine`.
-
-Côté client : plaque « Nom - Rôle » sans barre de vie, jamais ciblé au Tab,
-« [E] » à portée de parole ; **E** ouvre le dialogue `behavior.dialogueId`
-(`dialogues/amb_*.json`) et/ou envoie `behavior.talkTarget` (ex. `vendor:1` ⇒
-boutique). La conversation se rompt si le PNJ s'éloigne (sortie d'AoI).
-
-## 7. Interface joueur
-
-- **Carte du monde — touche M** (`WorldMapImGuiRenderer`) : image générée,
-  villes colorées par peuple (liseré doré = ville de départ, épais = la vôtre),
-  ruines barrées, lieux remarquables (losanges), noms de régions, flèche du
-  joueur orientée. Molette = zoom (×1 à ×8) autour du curseur, glisser =
-  déplacer, « Centrer » / « Vue d'ensemble ». Survol = fiche du lieu (type,
-  peuple, région, description de lore).
-- **Bannière d'entrée** : « Whispers Hill — Village - Forêt elfique » au
-  passage d'une ville (hystérésis 6 m / 14 m) ou d'une région ; accueil à
-  l'arrivée en jeu. Module pur testé : `src/client/world/places/WorldPlaces`.
-
-## 8. Formats binaires
-
-**`scatter.bin` « LCSC » v1** (`src/client/world/instances/ScatterInstances.h`) :
-en-tête (magic, version, nombre de meshes, nombre d'instances), table de
-chaînes (chemins de mesh), puis instances de 32 octets :
-`meshIndex u16, flags u8 (1 solide, 2 pièce de bâtiment, 4 occulteur),
-cullClass u8, x f32, yOffset f32, z f32, yaw f32, scale f32,
-collisionRadius f32, tilt f32`. Y = hauteur du terrain + `yOffset`
-(résolu au chargement). Extension : additive et versionnée.
-
-Rendu : `ScatterField` (grille 32 m + frustum + distance par classe) →
-`GeometryPass::RecordInstanced` (lots triés par mesh / matériau / fondu,
-3 tampons d'instances host-visible en anneau). Les bâtiments (`buildings.bin`)
-passent par le même chemin instancié. Collisions : `CompositeWorldCollider`
-indexé sur grille uniforme 16 m.
-
-## 9. Réglages
-
-| Clé (`config.json` / `zone.json`) | Défaut | Effet |
-|---|---|---|
-| `world.active_zone` | `royaumes` | zone chargée (client ET shard) |
-| `world.scatter.cull_large_m` | 150 | distance d'affichage arbres / grands rochers |
-| `world.scatter.cull_medium_m` | 80 | buissons, rochers moyens, tonneaux |
-| `world.scatter.cull_small_m` | 42 | fleurs, fougères, petits props |
-| `world.props.cull_distance_m` | 140 | props historiques (scenery.json) |
-| `world.fog.start_m` / `end_m` | 60 / 185 | brouillard masquant la coupe de distance |
-| `game.worldclock.timescale_real_min_per_day` | 60 | durée d'une journée de jeu (min réelles) |
-| `client.remote_avatars.max_skinned_draws` | 32 | avatars animés dessinés par frame (plafond 48) |
-| `client.remote_avatars.render_distance_m` | 60 | distance d'affichage des personnages |
-
-Revenir à l'ancienne zone de test : `world.active_zone = "feyhin"` (client et
-`deploy/docker/config/shard.config.json`).
-
-## 10. Limites connues / suite
-
-- Le serveur n'a ni heightfield ni navmesh : les PNJ suivent les graphes de
-  rues générés ; le client recale Y visuellement sur le terrain.
-- **Horloge et commandes admin** : le shard calcule l'heure des routines depuis
-  `game.worldclock.*` (mêmes valeurs que le master). Les commandes runtime
-  `/settime`, `/pausetime`, `/settimescale` ne modifient que le master : les PNJ
-  d'ambiance gardent alors l'horaire « config » jusqu'au redémarrage du shard
-  (propagation master → shard non implémentée : demanderait un nouveau message).
-- **Avatars animés** : au plus `client.remote_avatars.max_skinned_draws` (32,
-  plafond 48) personnages distants dessinés par frame — uniquement ceux dans le
-  champ de la caméra et à moins de `render_distance_m` (60 m), les plus proches
-  d'abord ; les autres gardent leur plaque de nom.
-- Elfes et démons empruntent la silhouette humaine (pas de mesh dédié).
-- L'île d'Hishtarland n'est pas reliée par route (avertissement attendu du
-  générateur) — liaison maritime à concevoir.
-- Les quêtes au-delà de la chaîne d'accueil restent à écrire par région.
+- Horloge : `/settime`, `/pausetime`, `/settimescale` ne sont pas propagées
+  au shard (les PNJ gardent l'horaire « config »).
+- Avatars animés : au plus `client.remote_avatars.max_skinned_draws` (32,
+  plafond 48) personnages distants dessinés, dans le champ de la caméra.
+- Elfes et démons empruntent la silhouette humaine.
+- L'île d'Hishtarland n'a pas de route (avertissement attendu).
+- Les cellules non générées seront bordées d'un mur invisible (étape 3).

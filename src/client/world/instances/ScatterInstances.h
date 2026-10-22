@@ -2,7 +2,7 @@
 
 // Monde jouable (chantier « Royaumes ») — instances de décor dispersées en masse
 // (arbres, sous-bois, rochers, mobilier urbain, remparts…) :
-// struct + sérialisation `instances/zone_<id>/scatter.bin` (magic « LCSC » v1).
+// struct + sérialisation `instances/zone_<id>/scatter.bin` (magic « LCSC » v1/v2).
 //
 // Sérialisation HEADER-ONLY (inline), sur le patron de PropInstances.h /
 // Buildings.h : partagée par le client (lecture, rendu instancié) et par
@@ -22,6 +22,11 @@
 //     [meshIndex u16][flags u8][cullClass u8]
 //     [x f32][yOffset f32][z f32][yawDeg f32][scale f32][collisionRadius f32]
 //     [tiltDeg f32]
+//   v2 SEULEMENT — table de chunks (streaming par carreaux, cellules de 10 km) :
+//     [originX f32][originZ f32][chunkSizeM f32][cols u16][rows u16]
+//     cols × rows × [firstInstance u32][instanceCount u32]   (ligne par ligne, Z puis X)
+//   Les instances d'un chunk sont CONTIGUËS (fichier trié par chunk) : le client
+//   ne charge que les chunks proches du joueur. Un v1 se lit comme un chunk unique.
 //
 // Conventions :
 //   - x/z en mètres monde ; Y = sol (terrain) + yOffset, résolu AU CHARGEMENT
@@ -43,7 +48,7 @@
 namespace engine::world::instances
 {
 	constexpr uint32_t kScatterMagic   = 0x4353434Cu; // "LCSC" little-endian
-	constexpr uint32_t kScatterVersion = 1u;
+	constexpr uint32_t kScatterVersion = 2u;
 	/// Taille (octets) d'un enregistrement d'instance sérialisé (v1).
 	constexpr uint32_t kScatterRecordBytes = 32u;
 
@@ -78,11 +83,30 @@ namespace engine::world::instances
 		float    tiltDeg = 0.0f;
 	};
 
+	/// Plage d'instances d'un chunk (v2).
+	struct ScatterChunkRange
+	{
+		uint32_t first = 0;
+		uint32_t count = 0;
+	};
+
+	/// Découpage en chunks (v2). `cols == 0` : pas de table (fichier v1).
+	struct ScatterChunkGrid
+	{
+		float    originX = 0.0f;    ///< coin min X du chunk (0,0), mètres monde
+		float    originZ = 0.0f;    ///< coin min Z du chunk (0,0)
+		float    chunkSizeM = 500.0f;
+		uint16_t cols = 0;
+		uint16_t rows = 0;
+		std::vector<ScatterChunkRange> ranges; ///< cols × rows, index = row * cols + col
+	};
+
 	/// Contenu complet d'un scatter.bin.
 	struct ScatterFile
 	{
 		std::vector<std::string>     meshPaths;
 		std::vector<ScatterInstance> instances;
+		ScatterChunkGrid             chunks;   ///< v2 ; vide en v1
 	};
 
 	namespace scatter_detail
@@ -128,15 +152,19 @@ namespace engine::world::instances
 		}
 	}
 
-	/// Sérialise au format scatter.bin v1. Les chemins de plus de 65535 octets
-	/// sont tronqués (jamais le cas en pratique : chemins relatifs courts).
+	/// Sérialise au format scatter.bin : v2 si `file.chunks.cols > 0` (table de
+	/// chunks), sinon v1 (rétro-compatible octet pour octet). Les chemins de plus
+	/// de 65535 octets sont tronqués (jamais le cas : chemins relatifs courts).
 	inline std::vector<uint8_t> SaveScatterBin(const ScatterFile& file)
 	{
 		using namespace scatter_detail;
+		const bool v2 = file.chunks.cols > 0 && file.chunks.rows > 0
+			&& file.chunks.ranges.size() == static_cast<size_t>(file.chunks.cols) * file.chunks.rows;
 		std::vector<uint8_t> b;
-		b.reserve(16 + file.meshPaths.size() * 40 + file.instances.size() * kScatterRecordBytes);
+		b.reserve(16 + file.meshPaths.size() * 40 + file.instances.size() * kScatterRecordBytes
+			+ (v2 ? 16 + file.chunks.ranges.size() * 8 : 0));
 		PutU32(b, kScatterMagic);
-		PutU32(b, kScatterVersion);
+		PutU32(b, v2 ? 2u : 1u);
 		PutU32(b, static_cast<uint32_t>(file.meshPaths.size()));
 		PutU32(b, static_cast<uint32_t>(file.instances.size()));
 		for (const std::string& s : file.meshPaths)
@@ -158,6 +186,19 @@ namespace engine::world::instances
 			PutF32(b, in.collisionRadius);
 			PutF32(b, in.tiltDeg);
 		}
+		if (v2)
+		{
+			PutF32(b, file.chunks.originX);
+			PutF32(b, file.chunks.originZ);
+			PutF32(b, file.chunks.chunkSizeM);
+			PutU16(b, file.chunks.cols);
+			PutU16(b, file.chunks.rows);
+			for (const ScatterChunkRange& r : file.chunks.ranges)
+			{
+				PutU32(b, r.first);
+				PutU32(b, r.count);
+			}
+		}
 		return b;
 	}
 
@@ -168,6 +209,7 @@ namespace engine::world::instances
 		using namespace scatter_detail;
 		out.meshPaths.clear();
 		out.instances.clear();
+		out.chunks = ScatterChunkGrid{};
 		size_t p = 0;
 		uint32_t magic = 0, version = 0, meshCount = 0, instanceCount = 0;
 		if (!GetU32(bytes, p, magic) || magic != kScatterMagic)
@@ -221,6 +263,30 @@ namespace engine::world::instances
 			}
 			if (in.cullClass > static_cast<uint8_t>(ScatterCullClass::Small))
 				in.cullClass = static_cast<uint8_t>(ScatterCullClass::Small);
+		}
+		if (version >= 2u)
+		{
+			ScatterChunkGrid& g = out.chunks;
+			if (!GetF32(bytes, p, g.originX) || !GetF32(bytes, p, g.originZ) || !GetF32(bytes, p, g.chunkSizeM)
+				|| !GetU16(bytes, p, g.cols) || !GetU16(bytes, p, g.rows))
+			{
+				err = "scatter.bin: table de chunks tronquee"; out.instances.clear(); return false;
+			}
+			const uint64_t n = static_cast<uint64_t>(g.cols) * g.rows;
+			if (!(g.chunkSizeM > 0.0f) || n * 8u > bytes.size() - p)
+			{
+				err = "scatter.bin: table de chunks invalide"; out.instances.clear(); return false;
+			}
+			g.ranges.resize(static_cast<size_t>(n));
+			for (ScatterChunkRange& r : g.ranges)
+			{
+				(void)GetU32(bytes, p, r.first);
+				(void)GetU32(bytes, p, r.count);
+				if (static_cast<uint64_t>(r.first) + r.count > instanceCount)
+				{
+					err = "scatter.bin: plage de chunk hors instances"; out.instances.clear(); out.chunks = ScatterChunkGrid{}; return false;
+				}
+			}
 		}
 		return true;
 	}

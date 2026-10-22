@@ -33,6 +33,6 @@
   "paths": { "content": "game/data" },
   "world": {
     "_comment": "Zone hébergée par ce shard. Le shard résout game/data/zones/<active_zone>/respawn_points.txt (cimetières/auberges par-zone, ServerApp::InitRespawnPoints).",
-    "active_zone": "royaumes"
+    "active_zone": "feyhin"
   }
 }

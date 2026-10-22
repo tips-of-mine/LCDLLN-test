@@ -8,8 +8,10 @@
 // (terrain, eau, décor, bâtiments, PNJ, points de départ, carte).
 // Aucune dépendance Vulkan/GLFW (règle d'architecture : pas d'engine_core).
 //
-// Repère monde : X = est, Z = sud (le nord est en -Z, convention du client),
-// Y = altitude (m). L'origine (0,0) est le centre de la cellule `origin_cell`.
+// Repère monde GLOBAL : X = est, Z = sud (le nord est en -Z, convention du
+// client), Y = altitude (m). L'origine (0,0) est le centre de la cellule de
+// l'Oracle `cell_n000_e000` ; 1 case du lore = 1 cellule de 10 km
+// (src/shared/world/WorldCells.h).
 
 #include <cstdint>
 #include <string>
@@ -33,15 +35,13 @@ namespace tools::world_gen
 	/// Échelle et cadrage du monde (section `scale` du master).
 	struct WorldScale
 	{
-		double cellSizeM = 128.0;  ///< taille d'une cellule du lore en mètres
-		int    gridCols = 40;      ///< colonnes du lore (= cellules par côté du terrain)
-		int    westE = -19;        ///< indice E de la colonne la plus à l'ouest
-		int    northN = 18;        ///< indice N de la rangée la plus au nord
-		int    padNorthRows = 3;   ///< rangées de mer ajoutées au nord (terrain carré)
-		int    originN = 0;        ///< cellule centrée sur (0,0) : indice N
-		int    originE = 0;        ///< cellule centrée sur (0,0) : indice E
-		double heightScaleM = 400.0; ///< altitude max encodable (r16h normalisé)
-		double seaLevelM = 40.0;   ///< niveau de la mer (m)
+		double cellSizeM = 10000.0;  ///< taille d'une cellule du lore (m) — figée à 10 km
+		int    gridCols = 40;        ///< colonnes de grid.rows
+		int    westE = -19;          ///< indice E de la colonne la plus à l'ouest
+		int    northN = 18;          ///< indice N de la rangée la plus au nord
+		double heightScaleM = 1200.0;///< altitude max encodable (r16h normalisé)
+		double seaLevelM = 40.0;     ///< niveau de la mer (m)
+		int    heightmapRes = 2049;  ///< échantillons par côté d'une cellule (2^k + 1)
 	};
 
 	/// Ville / village / camp (section `cities`).
@@ -59,9 +59,12 @@ namespace tools::world_gen
 		std::string description;
 		// --- résolu par le générateur ---
 		int    n = 0, e = 0;     ///< indices de cellule
-		Vec2   center;           ///< centre monde
+		Vec2   center;           ///< centre monde (site choisi dans la cellule)
 		double radiusM = 20.0;   ///< rayon urbain (m)
 		double plateauY = 50.0;  ///< altitude du plateau aplani (m)
+		/// Lieu PROCÉDURAL (enrichissement de cellule) : vide pour une ville du
+		/// lore, sinon ferme|bucherons|bandits|ruine|mine|hameau.
+		std::string procedural;
 	};
 
 	/// Point d'intérêt (section `pois`).
@@ -98,10 +101,12 @@ namespace tools::world_gen
 		std::vector<std::string> dialogueLines; ///< repli legacy `dialogue.N`
 	};
 
-	/// Lac posé à la main (section `extra_lakes`), coordonnées monde absolues.
+	/// Lac posé à la main (section `extra_lakes`) : offset depuis le centre de
+	/// la ville `city` (ou coordonnées globales absolues si `city` est vide).
 	struct ExtraLakeDef
 	{
 		std::string id;
+		std::string cityId;
 		double x = 0.0, z = 0.0;
 		double radiusM = 20.0;
 	};
@@ -127,9 +132,11 @@ namespace tools::world_gen
 		std::string importScenery;        ///< scenery.json (world.scenery.N) → scatter
 		std::string importBuildings;      ///< buildings.bin (LCBD) recopié tel quel
 		std::string importRespawn;        ///< respawn_points.txt recopié (zone id corrigé)
-		std::string importAnchorCity;     ///< ville d'ancrage du contenu importé
-		uint32_t    gameplayZoneId = 1;   ///< zone gameplay serveur (spawners/respawn)
-		uint32_t    zoneNumericId = 1;    ///< id numérique du manifest (ZoneNameRegistry)
+		std::string importSpawners;       ///< spawners.json historique (positions locales)
+		std::string importQuestPoi;       ///< POI de quêtes historiques (positions locales)
+		std::string importAnchorCity;     ///< ville d'ancrage : tout l'import est translaté sur son centre
+		/// Cellules générées par défaut (identifiants du lore « N003_W009 »).
+		std::vector<std::string> generatedCells;
 	};
 
 	/// Bilan d'une génération (journalisé par la CLI, vérifié par les tests).
@@ -148,6 +155,8 @@ namespace tools::world_gen
 		uint64_t respawnPoints = 0;
 		uint64_t interactables = 0;
 		uint64_t houseTemplates = 0;
+		uint64_t cells = 0;
+		uint64_t proceduralPlaces = 0;
 		std::vector<std::string> warnings;
 		std::vector<std::string> writtenFiles;
 	};

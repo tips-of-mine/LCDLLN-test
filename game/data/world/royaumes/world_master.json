@@ -5,16 +5,23 @@
   "display_name": "Les Royaumes de la Lune Noire",
   "seed": 20261022,
   "scale": {
-    "_comment": "1 cellule du lore = cell_size_m metres. origin_cell = cellule centree sur (0,0) monde (hameau de depart humain). Le terrain (heightmap 1025x1025) couvre grid_cols x grid_cols cellules ; les rangees manquantes (pad_north_rows au nord, le reste au sud) sont de la mer, et un liseré de mer est force sur le pourtour.",
-    "cell_size_m": 128,
+    "_comment": "1 case du lore = 1 cellule moteur de 10 km x 10 km (src/shared/world/WorldCells.h, docs/world_cell_grid_convention.md). Repere GLOBAL : origine = centre de cell_n000_e000 (l'Oracle), X = est, Z = sud. grid.rows : rangees N(north_n) -> S, colonnes W(west_e) -> E. Chaque cellule generee porte une heightmap heightmap_resolution^2 (2049 = ~4,9 m).",
+    "cell_size_m": 10000,
     "grid_cols": 44,
     "west_e": -21,
     "north_n": 18,
-    "pad_north_rows": 5,
-    "origin_cell": "N003_W009",
-    "height_scale_m": 400.0,
-    "sea_level_m": 40.0
+    "height_scale_m": 1200.0,
+    "sea_level_m": 40.0,
+    "heightmap_resolution": 2049
   },
+  "_comment_generated_cells": "Cellules generees (et donc jouables) : les 5 villes de depart par race. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "generated_cells": [
+    "N003_W009",
+    "N011_E008",
+    "N009_E011",
+    "S007_E016",
+    "S009_E011"
+  ],
   "grid": {
     "_comment": "Une ligne par rangee de N018 (haut) a S014 (bas), 44 caracteres de W021 a E022 (2 colonnes de mer ajoutees de chaque cote du lore W019..E020). Legende dans 'legend'.",
     "legend": {
@@ -677,26 +684,27 @@
       "description": "Un cercle de pierres noires qui suinte la chaleur."
     }
   ],
-  "gameplay_zone_id": 1,
-  "zone_numeric_id": 1,
   "imports": {
-    "_comment": "Contenu historique du hameau de depart humain (ex-zone de test 'feyhin') repris tel quel, ancre a l'origine (0,0) de la ville anchor_city. Les spawners de zones/feyhin/spawners.json restent charges par le shard (SpawnerRuntime lit toutes les zones).",
+    "_comment": "Contenu historique du hameau de depart humain (ex-zone de test 'feyhin') : positions LOCALES (ancienne origine (0,0)), translatees sur le centre de la ville anchor_city dans sa cellule. Spawners et POI de quetes historiques compris.",
     "zone_config": "zones/feyhin/zone.json",
     "scenery": "zones/feyhin/scenery.json",
     "buildings": "instances/zone_feyhin/buildings.bin",
     "respawn_points": "zones/feyhin/respawn_points.txt",
-    "anchor_city": "hameau_marn"
+    "anchor_city": "hameau_marn",
+    "spawners": "zones/feyhin/spawners.json",
+    "quest_poi": "quests/quest_poi_feyhin.json"
   },
   "extra_lakes": [
     {
       "id": "etang_de_marn",
-      "x": 55,
-      "z": 0,
-      "radius_m": 26
+      "city": "hameau_marn",
+      "x": 95,
+      "z": 10,
+      "radius_m": 30
     }
   ],
   "zone_overrides": {
-    "_comment": "Fusionne PAR-DESSUS les reglages importes (zone_config). Distances adaptees a un monde ouvert de 5 km.",
+    "_comment": "Fusionne PAR-DESSUS les reglages importes (zone_config) dans chaque zone.json de cellule. Distances adaptees au monde ouvert.",
     "world": {
       "fog": {
         "start_m": 60.0,

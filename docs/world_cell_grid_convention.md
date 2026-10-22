@@ -11,7 +11,7 @@ spatial grid serveur, etc., qui ont leurs propres unités).
 
 | Paramètre | Valeur |
 |-----------|--------|
-| Nombre de lignes (Nord/Sud) | **33** (14 N → 18 S) |
+| Nombre de lignes (Nord/Sud) | **33** (18 N → 14 S) |
 | Nombre de colonnes (Est/Ouest) | **40** (19 W → 20 E) |
 | Total de cellules | **1320** (33 × 40) |
 | Taille d'une cellule | **10 km × 10 km** (= `engine::world::kZoneSize` en mètres) |
@@ -34,8 +34,28 @@ elle :
   l'ouest.
 
 L'origine `(N000, E000)` est volontairement **décentrée** dans la grille
-33×40 (Oracle a 14 lignes au nord et 18 au sud ; 19 colonnes à l'ouest et
+33×40 (Oracle a 18 lignes au nord et 14 au sud ; 19 colonnes à l'ouest et
 20 à l'est) pour refléter la géographie narrative de l'empire.
+
+> **Correctif 2026-10** : l'orientation suit la carte du lore
+> (`lune-noire-data-v19.json`, villes en `N011_E008`, `S009_E011`…) : 18 rangées
+> au **nord** de l'Oracle et 14 au **sud** (l'ancienne version de ce document
+> les inversait).
+
+### Repère monde et code
+
+La convention est implémentée par `src/shared/world/WorldCells.h` (module pur,
+partagé client / shard / master / `tools/world_gen`, testé par
+`world_cells_tests`) :
+
+- repère **global** en mètres, origine = **centre** de `cell_n000_e000`,
+  X = est, Z = sud (nord = −Z) ;
+- la cellule `(n, e)` couvre x ∈ [e·10 000 − 5 000, e·10 000 + 5 000[ et
+  z ∈ [−n·10 000 − 5 000, −n·10 000 + 5 000[ ;
+- identifiant numérique de zone serveur : `1 000 000 + (n+500)·1000 + (e+500)`.
+
+Le monde « Royaumes » généré à partir de cette grille est décrit dans
+`docs/world/ROYAUMES.md`.
 
 ---
 
@@ -59,10 +79,10 @@ cell_<lat><DDD>_<lon><DDD>
 | Cellule | Sens |
 |---------|------|
 | `cell_n000_e000` | Oracle (centre) |
-| `cell_n014_w019` | Coin nord-ouest |
-| `cell_n014_e020` | Coin nord-est |
-| `cell_s018_w019` | Coin sud-ouest |
-| `cell_s018_e020` | Coin sud-est |
+| `cell_n018_w019` | Coin nord-ouest |
+| `cell_n018_e020` | Coin nord-est |
+| `cell_s014_w019` | Coin sud-ouest |
+| `cell_s014_e020` | Coin sud-est |
 | `cell_n011_e002` | Exemple d'île à 2 cellules au NE d'Oracle |
 
 ### Conversion ↔ ancienne convention `R###C###`
@@ -163,6 +183,7 @@ Voir `docs/world_editor_zone_pipeline.md` pour le pipeline complet
 | Cellule | Statut | Notes |
 |---------|--------|-------|
 | `cell_n000_e000` | Stub (manifest vide) | Oracle, créée pour valider la convention. |
+| `cell_n003_w009`, `cell_n011_e008`, `cell_n009_e011`, `cell_s007_e016`, `cell_s009_e011` | **Générées** par `tools/world_gen` (non versionnées) | Cellules des 5 villes de départ, cf. `docs/world/ROYAUMES.md`. |
 | `demo_plains` | Zone démo legacy | Conservée pour les tests et la checklist ; pas renommée. |
 | `zone_0`, `zone_1`, `zone_2` | Zones de test legacy | Conservées pour les exemples de layout. |
 

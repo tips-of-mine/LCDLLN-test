@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD 20)
 add_library(world_gen_lib STATIC
   lib/WorldMaster.cpp
   lib/Terrain.cpp
+  lib/Places.cpp
   lib/Roads.cpp
   lib/Settlements.cpp
   lib/Vegetation.cpp
@@ -19,12 +20,16 @@ add_library(world_gen_lib STATIC
   lib/Output.cpp
   lib/PngWriter.cpp
   lib/WorldGen.cpp
+  # Convention des cellules de 10 km, partagée avec le client et les serveurs
+  # (compilée par chemin : pas d'engine_core dans les outils).
+  ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp
 )
 target_include_directories(world_gen_lib PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}
 )
-target_link_libraries(world_gen_lib PUBLIC zone_builder_lib)
+find_package(Threads REQUIRED)
+target_link_libraries(world_gen_lib PUBLIC zone_builder_lib Threads::Threads)
 
 add_executable(lcdlln_world_gen main.cpp)
 target_link_libraries(lcdlln_world_gen PRIVATE world_gen_lib)

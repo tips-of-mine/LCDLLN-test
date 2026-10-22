@@ -23,8 +23,6 @@
 
 namespace tools::world_gen
 {
-	std::vector<Vec2> ResamplePolyline(const std::vector<Vec2>& in, double stepM);
-
 	namespace
 	{
 		constexpr double kPi = 3.14159265358979323846;
@@ -60,6 +58,14 @@ namespace tools::world_gen
 		/// Palette d'habitations selon la taille, la race et l'état.
 		std::vector<TemplateRef> Palette(const CityDef& c)
 		{
+			if (c.procedural == "ferme")
+				return { House("longere_6x10", 2), House("chaumiere_4x4", 2), House("maison_4x6", 1) };
+			if (c.procedural == "bucherons")
+				return { House("chaumiere_4x4", 3), House("longere_6x10", 1) };
+			if (c.procedural == "mine")
+				return { House("chaumiere_4x4", 2), House("forge_6x6", 1) };
+			if (c.procedural == "bandits")
+				return { House("ruine_6x6", 2), House("chaumiere_4x4", 2) };
 			if (c.state == "ruine")
 				return { House("ruine_6x6", 3), House("ruine_6x10", 2), House("ruine_8x10", 2), House("chaumiere_4x4", 0.5) };
 			if (c.race == "nains")
@@ -96,8 +102,9 @@ namespace tools::world_gen
 			return Hand("tavern", "auberge_hameau", 2.0, 4.4, 1);
 		}
 
-		int MinSpokes(const std::string& kind)
+		int MinSpokes(const std::string& kind, const std::string& procedural)
 		{
+			if (procedural == "ferme" || procedural == "mine") return 1;
 			if (kind == "capitale") return 6;
 			if (kind == "grande_ville") return 5;
 			if (kind == "ville" || kind == "forteresse") return 4;
@@ -255,7 +262,7 @@ namespace tools::world_gen
 	void BuildSettlements(World& w)
 	{
 		w.urban.Init(w.height.width, w.height.height, w.height.originX, w.height.originZ, w.height.step, w.urban.data.empty() ? uint8_t(0) : uint8_t(0));
-		for (CityDef& c : w.master.cities)
+		for (CityDef& c : w.cities)
 		{
 			SettlementLayout L;
 			L.cityId = c.id;
@@ -283,7 +290,7 @@ namespace tools::world_gen
 			}
 			const size_t roadSpokes = angles.size();
 			// Complète jusqu'au minimum avec des rues aux angles les plus libres.
-			while (static_cast<int>(angles.size()) < MinSpokes(c.kind))
+			while (static_cast<int>(angles.size()) < MinSpokes(c.kind, c.procedural))
 			{
 				double bestA = rng.Range(0.0, 2.0 * kPi), bestGap = -1.0;
 				for (int k = 0; k < 24; ++k)
@@ -399,7 +406,8 @@ namespace tools::world_gen
 					if (a1 - a0 > bestGap) { bestGap = a1 - a0; bestMid = 0.5 * (a0 + a1); }
 				}
 				// Ville d'ancrage du contenu importé : l'auberge historique est déjà posée.
-				if (c.state != "ruine" && c.kind != "camp" && c.id != w.master.importAnchorCity)
+				const bool wantsInn = c.procedural.empty() || c.procedural == "hameau";
+				if (wantsInn && c.state != "ruine" && c.kind != "camp" && c.id != w.master.importAnchorCity)
 				{
 					const TemplateRef inn = InnFor(c);
 					int placed = -1;
@@ -473,8 +481,8 @@ namespace tools::world_gen
 				}
 			}
 
-			// Forge en périphérie (villages et plus, hors ruines).
-			if (c.state != "ruine" && c.kind != "hameau")
+			// Forge en périphérie (villages et plus, hors ruines) et à la mine.
+			if (c.state != "ruine" && ((c.kind != "hameau" && c.procedural.empty()) || c.procedural == "mine"))
 			{
 				const TemplateRef forge = House("forge_6x6", 1);
 				for (int attempt = 0; attempt < 24; ++attempt)
@@ -498,7 +506,7 @@ namespace tools::world_gen
 
 			// --- Marché : étals autour de la place (sauf ville d'ancrage : sa place
 			//     accueille déjà les PNJ et objets historiques importés).
-			if (c.state != "ruine" && c.id != w.master.importAnchorCity)
+			if (c.state != "ruine" && c.id != w.master.importAnchorCity && c.procedural.empty())
 			{
 				const int stalls = (c.kind == "capitale") ? 8 : (c.kind == "grande_ville" ? 6 : (c.kind == "hameau" ? 1 : 3));
 				for (int k = 0; k < stalls; ++k)
@@ -587,7 +595,7 @@ namespace tools::world_gen
 			// --- Champs clôturés hors les murs (hameaux, villages, fiefs).
 			if ((c.kind == "hameau" || c.kind == "village") && c.state != "ruine" && c.race != "demons")
 			{
-				const int fields = c.kind == "hameau" ? 2 : 3;
+				const int fields = c.procedural == "ferme" ? 4 : (c.kind == "hameau" ? 2 : 3);
 				int made = 0;
 				for (int attempt = 0; attempt < 30 && made < fields; ++attempt)
 				{
@@ -625,7 +633,9 @@ namespace tools::world_gen
 				}
 			}
 
-			// --- Cimetière / point de résurrection : hors les murs, près d'une route.
+			// --- Cimetière / point de résurrection : hors les murs, près d'une route
+			//     (villes du lore et hameaux ; pas pour les fermes, camps et ruines).
+			if (c.procedural.empty() || c.procedural == "hameau")
 			{
 				const double a = angles.empty() ? 0.0 : angles[0] + 0.5;
 				Vec2 gy = c.center + Dir(a) * (R + 12.0);
@@ -643,6 +653,27 @@ namespace tools::world_gen
 				}
 				AddProp(w, "CandleStick_Stand", gy, 0.0, 1.0, 0, 1);
 			}
+			else L.graveyard = c.center;
+
+			// --- Accessoires de métier des lieux procéduraux.
+			if (c.procedural == "bucherons" || c.procedural == "mine" || c.procedural == "bandits")
+			{
+				const char* bucheron[] = { "Anvil_Log", "Axe_Bronze", "Prop_Wagon", "Barrel", "Crate_Wooden" };
+				const char* mine[] = { "Pickaxe_Bronze", "Prop_Wagon", "Crate_Wooden", "Bucket_Metal", "Barrel" };
+				const char* bandit[] = { "Prop_Wagon", "Chest_Wood", "Cage_Small", "Barrel", "Crate_Wooden" };
+				const char** set = c.procedural == "mine" ? mine : (c.procedural == "bandits" ? bandit : bucheron);
+				for (int k = 0; k < 10; ++k)
+				{
+					const Vec2 p = c.center + Dir(rng.Range(0.0, 2.0 * kPi)) * rng.Range(R * 0.25, R * 0.8);
+					if (w.IsOccupied(p, 1.4) || w.IsWater(p)) continue;
+					const char* mesh = set[rng.Below(5)];
+					const bool big = std::string(mesh) == "Prop_Wagon";
+					AddProp(w, mesh, p, rng.Range(0, 360), 1.0, kSolid, 1, big ? 1.4 : 0.5);
+					w.Occupy(p, big ? 2.0 : 0.8);
+				}
+				// Feu de camp (chaudron sur la place).
+				AddProp(w, "Cauldron", c.center, 0.0, 1.2, kSolid, 0, 0.8);
+			}
 
 			// --- Point de départ (villes de départ) : sur la place, face à l'auberge.
 			{
@@ -655,7 +686,7 @@ namespace tools::world_gen
 
 			// --- Pavage : rues et place (villes moyennes+ et forteresses), dalles rondes
 			//     pour les villages ; les hameaux, camps et ruines restent en terre.
-			if (c.state == "intact" && c.kind != "hameau" && c.kind != "camp")
+			if (c.state == "intact" && c.kind != "hameau" && c.kind != "camp" && c.procedural.empty())
 			{
 				const bool cobble = (c.kind != "village");
 				const char* tile = cobble ? "RockPath_Square_Wide" : "RockPath_Round_Wide";
@@ -683,7 +714,7 @@ namespace tools::world_gen
 						}
 			}
 
-			if (lotCount == 0 && c.state != "ruine")
+			if (lotCount == 0 && c.state != "ruine" && c.procedural.empty())
 				w.Warn("aucun lot bati pour " + c.id + " (terrain contraint)");
 			w.layouts.push_back(std::move(L));
 		}

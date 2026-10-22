@@ -1,25 +1,29 @@
 // tools/world_gen — écriture de toutes les sorties runtime.
 //
-// Sorties (relatives au content root, toutes DÉRIVÉES du master) :
-//   zones/<w>/terrain_height.r16h      heightmap 1025² (HAMP)
-//   zones/<w>/terrain_splat.slap       splat 1024² RGBA (herbe/terre/roche/neige)
-//   zones/<w>/terrain_grass.grms       masque herbe 1024²
-//   zones/<w>/zone.json                réglages client (terrain, brouillard, PNJ statiques…)
-//   zones/<w>/spawners.json            spawners serveur (+ routines d'ambiance)
-//   zones/<w>/respawn_points.txt       cimetières / auberges
-//   zones/<w>/runtime_manifest.json    manifest (nom + id numérique de zone)
-//   instances/zone_<w>/scatter.bin     décor instancié (LCSC)
-//   instances/zone_<w>/buildings.bin   bâtiments (LCBD)
-//   instances/zone_<w>/water.bin       océan, lacs, rivières (WATR v3)
-//   buildings/templates/maison.json    maisons paramétriques (bibliothèque)
-//   world/<w>/places.json              villes, POI, régions (UI client)
-//   world/<w>/world_map.png            carte du monde (fenêtre Carte)
-//   world/start_locations.json         points de départ par race (master)
-//   quests/quest_poi.json              (fusion) positions des cibles de quêtes générées
+// Sorties PAR CELLULE <c> = cell_nXXX_eYYY (relatives au content root, toutes
+// DÉRIVÉES du master, NON versionnées : produites par lcdlln_world_gen,
+// puis par la CI avant l'empaquetage à partir de l'étape 4) :
+//   zones/<c>/terrain_height.r16h      heightmap 2049² (HAMP), 10 km de côté
+//   zones/<c>/terrain_splat.slap       splat 2048² RGBA (herbe/terre/roche/neige)
+//   zones/<c>/terrain_grass.grms       masque herbe 2048²
+//   zones/<c>/zone.json                réglages client de la cellule (terrain, PNJ statiques…)
+//   zones/<c>/spawners.json            spawners serveur (+ routines d'ambiance), zoneId = cellule
+//   zones/<c>/respawn_points.txt       cimetières / auberges
+//   zones/<c>/runtime_manifest.json    manifest (nom + id numérique de zone)
+//   instances/zone_<c>/scatter.bin     décor instancié (LCSC v2, chunks de 500 m)
+//   instances/zone_<c>/buildings.bin   bâtiments (LCBD)
+//   instances/zone_<c>/water.bin       mer, lacs, rivières (WATR v3)
+// Sorties GLOBALES :
+//   buildings/templates/maison.json    maisons paramétriques (bibliothèque, versionnée)
+//   world/<w>/places.json              villes, lieux, régions, cellules générées (UI client)
+//   world/<w>/world_map.png            carte du continent (fenêtre Carte)
+//   world/<w>/start_locations.json     points de départ par race (master)
+//   world/<w>/quest_poi.json           positions des cibles de quêtes (minimap)
 
 #include "WorldGenContext.h"
 #include "HouseCatalog.h"
 #include "PngWriter.h"
+#include "Parallel.h"
 #include "Random.h"
 
 #include "src/client/world/instances/Buildings.h"
@@ -137,6 +141,7 @@ namespace tools::world_gen
 		/// Fusion profonde (b écrase a, objets fusionnés récursivement).
 		void DeepMerge(JsonValue& a, const JsonValue& b)
 		{
+			if (b.type == JsonType::Null) return; // rien à fusionner (import absent)
 			if (a.type != JsonType::Object || b.type != JsonType::Object) { a = b; return; }
 			for (const auto& kv : b.objectValue)
 			{
@@ -148,20 +153,28 @@ namespace tools::world_gen
 			}
 		}
 
-		bool WriteFile(World& w, const std::string& rel, const std::string& text, std::string& err)
+		bool WriteFile(const std::string& outputRoot, GenReport& rep, const std::string& rel, const std::string& text, std::string& err)
 		{
-			const fs::path p = fs::path(w.outputRoot) / rel;
+			const fs::path p = fs::path(outputRoot) / rel;
 			std::error_code ec;
 			fs::create_directories(p.parent_path(), ec);
 			std::ofstream f(p, std::ios::binary | std::ios::trunc);
 			if (!f.good()) { err = "ecriture impossible : " + p.string(); return false; }
 			f.write(text.data(), static_cast<std::streamsize>(text.size()));
-			w.report.writtenFiles.push_back(rel);
+			rep.writtenFiles.push_back(rel);
 			return f.good();
+		}
+		bool WriteBytes(const std::string& outputRoot, GenReport& rep, const std::string& rel, const std::vector<uint8_t>& bytes, std::string& err)
+		{
+			return WriteFile(outputRoot, rep, rel, std::string(reinterpret_cast<const char*>(bytes.data()), bytes.size()), err);
+		}
+		bool WriteFile(World& w, const std::string& rel, const std::string& text, std::string& err)
+		{
+			return WriteFile(w.outputRoot, w.report, rel, text, err);
 		}
 		bool WriteBytes(World& w, const std::string& rel, const std::vector<uint8_t>& bytes, std::string& err)
 		{
-			return WriteFile(w, rel, std::string(reinterpret_cast<const char*>(bytes.data()), bytes.size()), err);
+			return WriteBytes(w.outputRoot, w.report, rel, bytes, err);
 		}
 		void PutU32(std::vector<uint8_t>& b, uint32_t v)
 		{
@@ -172,13 +185,10 @@ namespace tools::world_gen
 
 		struct SplatTexel { double grass, dirt, rock, snow, grassMask; };
 
-		SplatTexel ComputeSplat(const World& w, Vec2 p)
+		/// Base de splat (herbe, terre, roche, neige, masque d'herbe) d'un code de
+		/// couverture, sans les effets locaux (pente, eau, routes…).
+		SplatTexel BaseSplat(char code, double h, double sea)
 		{
-			const double h = w.HeightAt(p);
-			const double slope = w.SlopeDegAt(p);
-			const char code = w.biome.At(w.biome.IndexX(p.x), w.biome.IndexZ(p.z));
-			const double sea = w.master.scale.seaLevelM;
-			const double n = Fbm(p.x, p.z, 26.0, 3, w.master.seed + 501);
 			SplatTexel t{ 1.0, 0.0, 0.0, 0.0, 1.0 };
 			switch (code)
 			{
@@ -200,6 +210,27 @@ namespace tools::world_gen
 			case ' ': case '-': t = { 0.0, 0.9, 0.1, 0.0, 0.0 }; break;
 			default: break;
 			}
+			return t;
+		}
+
+		SplatTexel ComputeSplat(const World& w, Vec2 p)
+		{
+			const double h = w.HeightAt(p);
+			const double slope = w.SlopeDegAt(p);
+			const double sea = w.master.scale.seaLevelM;
+			const double n = Fbm(p.x, p.z, 26.0, 3, w.master.seed + 501);
+			// Fondu des frontières de biome sur ~120 m : moyenne de 5 échantillons.
+			SplatTexel t{ 0, 0, 0, 0, 0 };
+			const double off[5][2] = { { 0, 0 }, { 60, 0 }, { -60, 0 }, { 0, 60 }, { 0, -60 } };
+			for (const auto& o : off)
+			{
+				const double sx = p.x + o[0], sz = p.z + o[1];
+				// Fonction macro (et non la grille) : identique des deux côtés d'une
+				// frontière de cellule → splat raccord.
+				const char c = EffectiveCover(MacroBiome(w.master, sx, sz), sx, sz, w.master.seed);
+				const SplatTexel b = BaseSplat(c, h, sea);
+				t.grass += b.grass * 0.2; t.dirt += b.dirt * 0.2; t.rock += b.rock * 0.2; t.snow += b.snow * 0.2; t.grassMask += b.grassMask * 0.2;
+			}
 			// Variation de taches (terre affleurante dans l'herbe).
 			const double patch = Clamp(n * 0.9, -0.25, 0.25);
 			t.grass = std::max(0.0, t.grass - patch);
@@ -207,7 +238,7 @@ namespace tools::world_gen
 			// Rivage et fonds : sable/terre mouillée.
 			if (h < sea + 1.2) { const double k = SmoothStep(sea + 1.2, sea - 0.5, h); t.grass *= 1 - k; t.dirt += k; t.grassMask *= 1 - k; }
 			// Neige en altitude (moins sur les pentes raides).
-			const double snowK = SmoothStep(205.0, 255.0, h + n * 12.0) * (1.0 - SmoothStep(38.0, 55.0, slope));
+			const double snowK = SmoothStep(520.0, 600.0, h + n * 25.0) * (1.0 - SmoothStep(38.0, 55.0, slope));
 			t.snow = std::max(t.snow, snowK);
 			// Roche sur les pentes fortes.
 			const double rockK = SmoothStep(26.0, 40.0, slope + n * 4.0);
@@ -242,77 +273,93 @@ namespace tools::world_gen
 
 		// ------------------------------------------------- carte du monde
 
-		std::vector<uint8_t> RenderWorldMap(const World& w, int N)
+		/// Couleur de terrain d'un point (altitude + biome), sans ombrage.
+		void TerrainColor(char code, double h, double sea, double& r, double& g, double& b)
+		{
+			if (h < sea)
+			{
+				const double d = Clamp((sea - h) / 34.0, 0.0, 1.0);
+				r = Lerp(86, 22, d); g = Lerp(150, 52, d); b = Lerp(176, 98, d);
+				return;
+			}
+			switch (code)
+			{
+			case 'T': case 'R': case 'L': r = 58; g = 98; b = 52; break;
+			case 't': r = 88; g = 124; b = 66; break;
+			case '~': r = 214; g = 188; b = 128; break;
+			case ':': case 'l': r = 176; g = 158; b = 112; break;
+			case '%': case '&': r = 92; g = 104; b = 74; break;
+			case 'V': r = 92; g = 70; b = 62; break;
+			case '_': case ',':
+				if (h < sea + 5.0) { r = 214; g = 200; b = 150; } else { r = 132; g = 160; b = 92; }
+				break;
+			default: r = 132; g = 160; b = 92; break;
+			}
+			const double alt = Clamp((h - 90.0) / 450.0, 0.0, 1.0);
+			r = Lerp(r, 128, alt * 0.7); g = Lerp(g, 116, alt * 0.7); b = Lerp(b, 104, alt * 0.7);
+			const double snow = SmoothStep(520.0, 600.0, h);
+			r = Lerp(r, 238, snow); g = Lerp(g, 240, snow); b = Lerp(b, 245, snow);
+		}
+
+		/// Carte du CONTINENT (carrée, N² px) : relief macro ombré, rivières,
+		/// lacs, routes, villes, cellules générées. Rendu parallèle par rangée.
+		std::vector<uint8_t> RenderContinentMap(const GlobalWorld& g, int N, double originX, double originZ, double sizeM,
+			const std::vector<World*>& cells)
 		{
 			std::vector<uint8_t> rgb(static_cast<size_t>(N) * N * 3);
-			const double sea = w.master.scale.seaLevelM;
-			const double px = w.terrainSizeM / N;
-			for (int j = 0; j < N; ++j)
+			const double sea = g.master.scale.seaLevelM;
+			const double px = sizeM / N;
+			ParallelRows(N, [&](int j) {
 				for (int i = 0; i < N; ++i)
 				{
-					const Vec2 p{ w.terrainOriginX + (i + 0.5) * px, w.terrainOriginZ + (j + 0.5) * px };
-					const double h = w.HeightAt(p);
-					double r, g, b;
-					if (h < sea)
+					const Vec2 p{ originX + (i + 0.5) * px, originZ + (j + 0.5) * px };
+					// Hors de la grille du lore : haute mer (la carte est carrée).
+					const bool outside = p.x < g.minX || p.x > g.maxX || p.z < g.minZ || p.z > g.maxZ;
+					const double h = outside ? 6.0 : SampleBilinear(g.coarse, p.x, p.z);
+					double r, gg, b;
+					TerrainColor(MacroBiome(g.master, p.x, p.z), h, sea, r, gg, b);
+					if (h >= sea)
 					{
-						const double d = Clamp((sea - h) / 34.0, 0.0, 1.0);
-						r = Lerp(86, 22, d); g = Lerp(150, 52, d); b = Lerp(176, 98, d);
+						const double hx = SampleBilinear(g.coarse, p.x + px, p.z) - SampleBilinear(g.coarse, p.x - px, p.z);
+						const double hz = SampleBilinear(g.coarse, p.x, p.z + px) - SampleBilinear(g.coarse, p.x, p.z - px);
+						const double shade = Clamp(1.0 + (-hx - hz) / (2.0 * px) * 2.5, 0.55, 1.35);
+						r *= shade; gg *= shade; b *= shade;
 					}
-					else
-					{
-						const char code = w.biome.At(w.biome.IndexX(p.x), w.biome.IndexZ(p.z));
-						switch (code)
-						{
-						case 'T': case 'R': case 'L': r = 58; g = 98; b = 52; break;
-						case 't': r = 88; g = 124; b = 66; break;
-						case '~': r = 214; g = 188; b = 128; break;
-						case ':': case 'l': r = 176; g = 158; b = 112; break;
-						case '%': case '&': r = 92; g = 104; b = 74; break;
-						case 'V': r = 92; g = 70; b = 62; break;
-						case '_': case ',':
-							if (h < sea + 5.0) { r = 214; g = 200; b = 150; } else { r = 132; g = 160; b = 92; }
-							break;
-						default: r = 132; g = 160; b = 92; break;
-						}
-						// Relief : teinte d'altitude puis neige.
-						const double alt = Clamp((h - 70.0) / 160.0, 0.0, 1.0);
-						r = Lerp(r, 128, alt * 0.7); g = Lerp(g, 116, alt * 0.7); b = Lerp(b, 104, alt * 0.7);
-						const double snow = SmoothStep(205.0, 250.0, h);
-						r = Lerp(r, 238, snow); g = Lerp(g, 240, snow); b = Lerp(b, 245, snow);
-						// Ombrage (lumière nord-ouest).
-						const double hx = w.HeightAt({ p.x + px, p.z }) - w.HeightAt({ p.x - px, p.z });
-						const double hz = w.HeightAt({ p.x, p.z + px }) - w.HeightAt({ p.x, p.z - px });
-						const double shade = Clamp(1.0 + (-hx - hz) / (2.0 * px) * 0.9, 0.55, 1.35);
-						r *= shade; g *= shade; b *= shade;
-						// Rivières, routes, villes.
-						const int vi = w.riverDist.IndexX(p.x), vj = w.riverDist.IndexZ(p.z);
-						if (w.riverDist.InBounds(vi, vj) && w.riverDist.At(vi, vj) < 1.0f) { r = 70; g = 132; b = 170; }
-						const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
-						if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < 1.5f) { r = 150; g = 112; b = 72; }
-						const int ui = w.urban.IndexX(p.x), uj = w.urban.IndexZ(p.z);
-						if (w.urban.InBounds(ui, uj) && w.urban.At(ui, uj) == 1) { r = Lerp(r, 168, 0.5); g = Lerp(g, 140, 0.5); b = Lerp(b, 110, 0.5); }
-					}
-					for (const Lake& l : w.lakes)
-						if (std::hypot(p.x - l.center.x, p.z - l.center.z) < l.radiusM) { r = 70; g = 132; b = 170; }
 					uint8_t* o = &rgb[(static_cast<size_t>(j) * N + i) * 3];
 					o[0] = static_cast<uint8_t>(Clamp(r, 0, 255));
-					o[1] = static_cast<uint8_t>(Clamp(g, 0, 255));
+					o[1] = static_cast<uint8_t>(Clamp(gg, 0, 255));
 					o[2] = static_cast<uint8_t>(Clamp(b, 0, 255));
 				}
-			// Bâtiments : petits carrés sombres.
-			for (const BuildingPlacementDef& bp : w.buildings)
-			{
-				const int ci = static_cast<int>((bp.position.x - w.terrainOriginX) / px);
-				const int cj = static_cast<int>((bp.position.z - w.terrainOriginZ) / px);
-				for (int dj = -1; dj <= 1; ++dj)
-					for (int di = -1; di <= 1; ++di)
+			});
+			auto plot = [&](Vec2 p, int rad, uint8_t r, uint8_t gg, uint8_t b) {
+				const int ci = static_cast<int>((p.x - originX) / px), cj = static_cast<int>((p.z - originZ) / px);
+				for (int dj = -rad; dj <= rad; ++dj)
+					for (int di = -rad; di <= rad; ++di)
 					{
 						const int ii = ci + di, jj = cj + dj;
 						if (ii < 0 || jj < 0 || ii >= N || jj >= N) continue;
 						uint8_t* o = &rgb[(static_cast<size_t>(jj) * N + ii) * 3];
-						o[0] = 92; o[1] = 64; o[2] = 52;
+						o[0] = r; o[1] = gg; o[2] = b;
 					}
-			}
+			};
+			for (const Lake& l : g.lakes)
+				for (double a = 0.0; a < 6.2832; a += 0.3)
+					for (double rr = 0.0; rr < l.radiusM; rr += px * 0.5)
+						plot(l.center + Vec2{ std::cos(a), std::sin(a) } * rr, 0, 70, 132, 170);
+			for (const River& rv : g.rivers)
+				for (size_t k = 0; k < rv.points.size(); k += 10) plot(rv.points[k], 0, 70, 132, 170);
+			for (const Road& rd : g.roads)
+				for (size_t k = 0; k < rd.points.size(); k += 10) plot(rd.points[k], 0, 150, 112, 72);
+			// Cellules générées : liseré clair (repère de l'avancement du mapping).
+			for (const World* w : cells)
+				for (double t = 0.0; t <= w->terrainSizeM; t += px)
+				{
+					plot({ w->terrainOriginX + t, w->terrainOriginZ }, 0, 235, 225, 190);
+					plot({ w->terrainOriginX + t, w->terrainOriginZ + w->terrainSizeM }, 0, 235, 225, 190);
+					plot({ w->terrainOriginX, w->terrainOriginZ + t }, 0, 235, 225, 190);
+					plot({ w->terrainOriginX + w->terrainSizeM, w->terrainOriginZ + t }, 0, 235, 225, 190);
+				}
+			for (const CityDef& c : g.cities) plot(c.center, 2, 92, 64, 52);
 			return rgb;
 		}
 
@@ -405,7 +452,7 @@ namespace tools::world_gen
 		}
 	}
 
-	bool WriteHouseTemplates(World& w, std::string& err)
+	bool WriteHouseTemplates(const std::string& outputRoot, GenReport& report, std::string& err)
 	{
 		std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen (lcdlln_world_gen) depuis HouseCatalog.h — ne pas editer a la main : modifier le catalogue puis relancer le generateur. Maisons parametriques du kit modulaire (grille 2 m, etages 3 m, porte en facade z = -D/2).\",\n";
 		j += "  \"type\": \"maison\",\n  \"displayName\": \"Maisons parametriques\",\n  \"variants\": {\n";
@@ -421,16 +468,17 @@ namespace tools::world_gen
 			j += "      }\n    }" + std::string(v + 1 < cat.size() ? ",\n" : "\n");
 		}
 		j += "  }\n}\n";
-		w.report.houseTemplates = cat.size();
-		return WriteFile(w, "buildings/templates/maison.json", j, err);
+		report.houseTemplates = cat.size();
+		return WriteFile(outputRoot, report, "buildings/templates/maison.json", j, err);
 	}
 
-	bool WriteOutputs(World& w, std::string& err)
+	bool WriteCellOutputs(World& w, std::string& err)
 	{
-		const std::string& wid = w.master.worldId;
-		const std::string zoneDir = "zones/" + wid + "/";
-		const std::string instDir = "instances/zone_" + wid + "/";
+		const std::string wid = w.master.worldId;
+		const std::string zoneDir = "zones/" + w.cellName + "/";
+		const std::string instDir = "instances/zone_" + w.cellName + "/";
 		const WorldScale& s = w.master.scale;
+		const int N = w.height.width;
 
 		// ---- Validation : tous les meshes référencés doivent exister.
 		{
@@ -445,13 +493,13 @@ namespace tools::world_gen
 				}
 		}
 
-		// ---- Heightmap r16h.
+		// ---- Heightmap r16h (N², noeuds aux bords : raccord exact avec les voisines).
 		{
 			std::vector<uint8_t> b;
-			PutU32(b, 0x504D4148u); PutU32(b, 1025u); PutU32(b, 1025u);
-			b.reserve(b.size() + 1025u * 1025u * 2u);
-			for (int j = 0; j < 1025; ++j)
-				for (int i = 0; i < 1025; ++i)
+			PutU32(b, 0x504D4148u); PutU32(b, static_cast<uint32_t>(N)); PutU32(b, static_cast<uint32_t>(N));
+			b.reserve(b.size() + static_cast<size_t>(N) * N * 2u);
+			for (int j = 0; j < N; ++j)
+				for (int i = 0; i < N; ++i)
 				{
 					const double h = Clamp(w.height.At(i, j) / s.heightScaleM, 0.0, 1.0);
 					const uint16_t v = static_cast<uint16_t>(std::lround(h * 65535.0));
@@ -459,15 +507,13 @@ namespace tools::world_gen
 				}
 			if (!WriteBytes(w, zoneDir + "terrain_height.r16h", b, err)) return false;
 		}
-		// ---- Splat + masque herbe 1024² (centres de texels).
+		// ---- Splat + masque herbe (N-1)² (centres de texels), calcul parallèle.
 		{
-			const int N = 1024;
-			const double px = w.terrainSizeM / N;
-			std::vector<uint8_t> splat, grass;
-			PutU32(splat, 0x50414C53u); PutU32(splat, N); PutU32(splat, N);
-			PutU32(grass, 0x47524D53u); PutU32(grass, N); PutU32(grass, N);
-			for (int j = 0; j < N; ++j)
-				for (int i = 0; i < N; ++i)
+			const int T = N - 1;
+			const double px = w.terrainSizeM / T;
+			std::vector<uint8_t> splatPx(static_cast<size_t>(T) * T * 4), grassPx(static_cast<size_t>(T) * T);
+			ParallelRows(T, [&](int j) {
+				for (int i = 0; i < T; ++i)
 				{
 					const Vec2 p{ w.terrainOriginX + (i + 0.5) * px, w.terrainOriginZ + (j + 0.5) * px };
 					const SplatTexel t = ComputeSplat(w, p);
@@ -480,33 +526,60 @@ namespace tools::world_gen
 					int dom = 0;
 					for (int k = 1; k < 4; ++k) if (c[k] > c[dom]) dom = k;
 					c[dom] += rest;
-					for (int k = 0; k < 4; ++k) splat.push_back(static_cast<uint8_t>(c[k]));
-					grass.push_back(static_cast<uint8_t>(Clamp(t.grassMask * t.grass / sum, 0.0, 1.0) * 255.0));
+					const size_t q = static_cast<size_t>(j) * T + i;
+					for (int k = 0; k < 4; ++k) splatPx[q * 4 + k] = static_cast<uint8_t>(c[k]);
+					grassPx[q] = static_cast<uint8_t>(Clamp(t.grassMask * t.grass / sum, 0.0, 1.0) * 255.0);
 				}
+			});
+			std::vector<uint8_t> splat, grass;
+			PutU32(splat, 0x50414C53u); PutU32(splat, static_cast<uint32_t>(T)); PutU32(splat, static_cast<uint32_t>(T));
+			PutU32(grass, 0x47524D53u); PutU32(grass, static_cast<uint32_t>(T)); PutU32(grass, static_cast<uint32_t>(T));
+			splat.insert(splat.end(), splatPx.begin(), splatPx.end());
+			grass.insert(grass.end(), grassPx.begin(), grassPx.end());
 			if (!WriteBytes(w, zoneDir + "terrain_splat.slap", splat, err)) return false;
 			if (!WriteBytes(w, zoneDir + "terrain_grass.grms", grass, err)) return false;
 		}
-		// ---- Décor instancié (scatter.bin), trié par case de 64 m puis mesh.
+		// ---- Décor instancié (scatter.bin v2) : trié par chunk de 500 m puis case de
+		//      64 m puis mesh ; table de chunks pour le streaming client.
 		{
+			constexpr double kChunk = 500.0;
+			const int chunks = static_cast<int>(std::lround(w.terrainSizeM / kChunk));
 			engine::world::instances::ScatterFile sf;
 			std::map<std::string, uint16_t> idx;
 			for (const ScatterDef& d : w.scatter) idx[d.mesh] = 0;
 			uint16_t k = 0;
 			for (auto& kv : idx) { kv.second = k++; sf.meshPaths.push_back(kv.first); }
-			std::vector<const ScatterDef*> order;
-			for (const ScatterDef& d : w.scatter) order.push_back(&d);
+			auto chunkOf = [&](const ScatterDef* d) {
+				const int cx = std::clamp(static_cast<int>(std::floor((d->position.x - w.terrainOriginX) / kChunk)), 0, chunks - 1);
+				const int cz = std::clamp(static_cast<int>(std::floor((d->position.z - w.terrainOriginZ) / kChunk)), 0, chunks - 1);
+				return cz * chunks + cx;
+			};
 			auto cellKey = [&](const ScatterDef* d) {
 				const int cx = static_cast<int>(std::floor((d->position.x - w.terrainOriginX) / 64.0));
 				const int cz = static_cast<int>(std::floor((d->position.z - w.terrainOriginZ) / 64.0));
 				return std::make_pair(cz, cx);
 			};
+			std::vector<const ScatterDef*> order;
+			for (const ScatterDef& d : w.scatter) order.push_back(&d);
 			std::stable_sort(order.begin(), order.end(), [&](const ScatterDef* a, const ScatterDef* b) {
+				const int ca = chunkOf(a), cb = chunkOf(b);
+				if (ca != cb) return ca < cb;
 				const auto ka = cellKey(a), kb = cellKey(b);
 				if (ka != kb) return ka < kb;
 				return idx[a->mesh] < idx[b->mesh];
 			});
+			sf.chunks.originX = static_cast<float>(w.terrainOriginX);
+			sf.chunks.originZ = static_cast<float>(w.terrainOriginZ);
+			sf.chunks.chunkSizeM = static_cast<float>(kChunk);
+			sf.chunks.cols = static_cast<uint16_t>(chunks);
+			sf.chunks.rows = static_cast<uint16_t>(chunks);
+			sf.chunks.ranges.assign(static_cast<size_t>(chunks) * chunks, {});
 			for (const ScatterDef* d : order)
 			{
+				const int c = chunkOf(d);
+				auto& r = sf.chunks.ranges[static_cast<size_t>(c)];
+				if (r.count == 0) r.first = static_cast<uint32_t>(sf.instances.size());
+				++r.count;
 				engine::world::instances::ScatterInstance in;
 				in.meshIndex = idx[d->mesh];
 				in.flags = d->flags;
@@ -540,24 +613,30 @@ namespace tools::world_gen
 				p.worldScale = 1.0f;
 				pls.push_back(std::move(p));
 			}
+			w.report.buildings = pls.size();
 			if (!WriteBytes(w, instDir + "buildings.bin", engine::world::instances::SaveBuildingsBin(pls), err)) return false;
 		}
-		// ---- Eau (water.bin v3) : océan + lacs + rivières.
+		// ---- Eau (water.bin v3) : mer (si la cellule en a), lacs, rivières.
 		{
 			engine::world::water::WaterScene scene;
-			engine::world::water::LakeInstance ocean;
-			ocean.name = "ocean";
-			ocean.isOcean = true;
-			ocean.waterLevelY = static_cast<float>(s.seaLevelM);
-			ocean.turbidity = 0.35f;
-			ocean.bottomColor = { 0.06f, 0.18f, 0.27f };
-			const float x0 = static_cast<float>(w.terrainOriginX - 400.0), z0 = static_cast<float>(w.terrainOriginZ - 400.0);
-			const float x1 = static_cast<float>(w.terrainOriginX + w.terrainSizeM + 400.0), z1 = static_cast<float>(w.terrainOriginZ + w.terrainSizeM + 400.0);
-			const float y = ocean.waterLevelY;
-			ocean.polygon = { { x0, y, z0 }, { x1, y, z0 }, { x1, y, z1 }, { x0, y, z1 } };
-			scene.lakes.push_back(std::move(ocean));
+			if (w.hasSea)
+			{
+				engine::world::water::LakeInstance ocean;
+				ocean.name = "ocean";
+				ocean.isOcean = true;
+				ocean.waterLevelY = static_cast<float>(s.seaLevelM);
+				ocean.turbidity = 0.35f;
+				ocean.bottomColor = { 0.06f, 0.18f, 0.27f };
+				// Légère marge : pas de couture visible entre deux cellules maritimes.
+				const float x0 = static_cast<float>(w.terrainOriginX - 2.0), z0 = static_cast<float>(w.terrainOriginZ - 2.0);
+				const float x1 = static_cast<float>(w.terrainOriginX + w.terrainSizeM + 2.0), z1 = static_cast<float>(w.terrainOriginZ + w.terrainSizeM + 2.0);
+				const float y = ocean.waterLevelY;
+				ocean.polygon = { { x0, y, z0 }, { x1, y, z0 }, { x1, y, z1 }, { x0, y, z1 } };
+				scene.lakes.push_back(std::move(ocean));
+			}
 			for (const Lake& l : w.lakes)
 			{
+				if (!w.OwnsPoint(l.center)) continue;
 				engine::world::water::LakeInstance li;
 				li.name = l.name;
 				li.waterLevelY = static_cast<float>(l.waterY);
@@ -568,12 +647,18 @@ namespace tools::world_gen
 			{
 				engine::world::water::RiverInstance ri;
 				ri.name = r.name;
-				for (size_t k = 0; k < r.points.size(); k += 2)
+				// Noeuds pris sur l'index GLOBAL (pair) et limités à la cellule + 12 m :
+				// deux cellules voisines produisent des rubans qui se rejoignent
+				// exactement au lieu de se chevaucher décalés.
+				for (size_t k = (r.globalStart % 2 == 0) ? 0 : 1; k < r.points.size(); k += 2)
 				{
+					const Vec2 q = r.points[k];
+					if (q.x < w.terrainOriginX - 12.0 || q.z < w.terrainOriginZ - 12.0
+						|| q.x > w.terrainOriginX + w.terrainSizeM + 12.0 || q.z > w.terrainOriginZ + w.terrainSizeM + 12.0) continue;
 					engine::world::water::RiverNode node;
 					node.position = { static_cast<float>(r.points[k].x), static_cast<float>(r.waterY[k]), static_cast<float>(r.points[k].z) };
 					node.widthMeters = static_cast<float>(r.widthM[k] + 2.0);
-					node.depthMeters = 1.6f;
+					node.depthMeters = 2.2f;
 					ri.nodes.push_back(node);
 				}
 				if (ri.nodes.size() >= 2) scene.rivers.push_back(std::move(ri));
@@ -586,10 +671,10 @@ namespace tools::world_gen
 			if (!WriteBytes(w, instDir + "water.bin", bytes, err)) return false;
 		}
 
-		// ---- zone.json (réglages client de la zone).
+		// ---- zone.json (réglages client de la cellule).
 		{
 			JsonValue root = JObj();
-			root.objectValue["_comment"] = JStr("GENERE par tools/world_gen depuis world/" + wid + "/world_master.json — NE PAS EDITER A LA MAIN (relancer lcdlln_world_gen). Charge par Config::LoadActiveZone quand world.active_zone = \"" + wid + "\".");
+			root.objectValue["_comment"] = JStr("GENERE par tools/world_gen depuis world/" + wid + "/world_master.json — NE PAS EDITER A LA MAIN (relancer lcdlln_world_gen). Cellule " + w.cellName + " (10 km x 10 km, coordonnees GLOBALES, cf. docs/world/ROYAUMES.md).");
 			JsonValue& rt = Child(Child(root, "render"), "terrain");
 			rt.objectValue["heightmap"] = JStr(zoneDir + "terrain_height.r16h");
 			rt.objectValue["splatmap"] = JStr(zoneDir + "terrain_splat.slap");
@@ -597,11 +682,12 @@ namespace tools::world_gen
 			rt.objectValue["hole_mask"] = JStr("");
 			rt.objectValue["grass_mask_visual_strength"] = JNum(0.35);
 			JsonValue& tr = Child(root, "terrain");
-			tr.objectValue["_comment"] = JStr("Cadrage du terrain du monde : world_size (m) couvert par la heightmap 1025x1025, origine du coin nord-ouest, altitude max encodee.");
+			tr.objectValue["_comment"] = JStr("Cadrage de la cellule : world_size (m) couvert par la heightmap, origine = coin min (x, z) GLOBAL, altitude max encodee, resolution de la heightmap.");
 			tr.objectValue["world_size"] = JNum(w.terrainSizeM);
 			tr.objectValue["origin_x"] = JNum(w.terrainOriginX);
 			tr.objectValue["origin_z"] = JNum(w.terrainOriginZ);
 			tr.objectValue["height_scale"] = JNum(s.heightScaleM);
+			tr.objectValue["heightmap_resolution"] = JNum(static_cast<double>(N));
 			JsonValue& world = Child(root, "world");
 			DeepMerge(world, w.importedWorldConfig);
 			if (auto it = w.master.zoneOverrides.objectValue.find("world"); it != w.master.zoneOverrides.objectValue.end())
@@ -610,21 +696,26 @@ namespace tools::world_gen
 				if (kv.first != "world") DeepMerge(Child(root, kv.first), kv.second);
 			world.objectValue["places_path"] = JStr("world/" + wid + "/places.json");
 			world.objectValue["scatter_path"] = JStr(instDir + "scatter.bin");
+			JsonValue& cellInfo = Child(world, "cell");
+			cellInfo.objectValue["name"] = JStr(w.cellName);
+			cellInfo.objectValue["n"] = JNum(w.cell.n);
+			cellInfo.objectValue["e"] = JNum(w.cell.e);
+			cellInfo.objectValue["zone_id"] = JNum(static_cast<double>(w.zoneId));
 			Child(world, "test_water").objectValue["enabled"] = JBool(false);
 			Child(world, "scenery").objectValue["count"] = JNum(0);
-			// Spawn par défaut (avant tout personnage) = départ humain.
-			for (const StartLocationDef& st : w.starts)
-				if (st.race == "humains")
-				{
-					JsonValue sp = JObj();
-					sp.objectValue["x"] = JNum(st.position.x);
-					sp.objectValue["y"] = JNum(st.y);
-					sp.objectValue["z"] = JNum(st.position.z);
-					sp.objectValue["yaw_deg"] = JNum(st.yawDeg);
-					sp.objectValue["pitch_deg"] = JNum(-10.0);
-					world.objectValue["default_spawn"] = sp;
-					Child(Child(root, "client"), "world").objectValue["default_spawn"] = sp;
-				}
+			// Spawn par défaut : départ de la race dont la ville est dans la cellule.
+			if (!w.starts.empty())
+			{
+				const StartLocationDef& st = w.starts.front();
+				JsonValue sp = JObj();
+				sp.objectValue["x"] = JNum(st.position.x);
+				sp.objectValue["y"] = JNum(st.y);
+				sp.objectValue["z"] = JNum(st.position.z);
+				sp.objectValue["yaw_deg"] = JNum(st.yawDeg);
+				sp.objectValue["pitch_deg"] = JNum(-10.0);
+				world.objectValue["default_spawn"] = sp;
+				Child(Child(root, "client"), "world").objectValue["default_spawn"] = sp;
+			}
 			// Interactibles (PNJ statiques, coffres…).
 			JsonValue& its = Child(world, "interactables");
 			its.objectValue["count"] = JNum(static_cast<double>(w.interactables.size()));
@@ -658,14 +749,14 @@ namespace tools::world_gen
 			if (!WriteFile(w, zoneDir + "zone.json", text, err)) return false;
 		}
 
-		// ---- spawners.json.
+		// ---- spawners.json (zoneId = identifiant numérique de la cellule).
 		{
-			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — PNJ d'ambiance (routine : tour/patrol/post, schedule day/night/always) et faune du monde " + wid + ". Les spawners sans 'routine' gardent l'IA de creature historique (errance + riposte). Voir docs/world/ROYAUMES.md.\",\n";
-			j += "  \"zoneId\": " + std::to_string(w.master.gameplayZoneId) + ",\n  \"spawners\": [\n";
+			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — cellule " + w.cellName + " : PNJ d'ambiance (routine : tour/patrol/post, schedule day/night/always) et faune. Positions GLOBALES. Les spawners sans 'routine' gardent l'IA de creature historique (errance + riposte). Voir docs/world/ROYAUMES.md.\",\n";
+			j += "  \"zoneId\": " + std::to_string(w.zoneId) + ",\n  \"spawners\": [\n";
 			for (size_t k = 0; k < w.spawners.size(); ++k)
 			{
 				const SpawnerDef& d = w.spawners[k];
-				j += "    { \"id\": " + Q(d.id) + ", \"archetypeId\": " + std::to_string(d.archetypeId) +
+				j += "    { \"id\": " + Q(w.cellName + "_" + d.id) + ", \"archetypeId\": " + std::to_string(d.archetypeId) +
 					", \"position\": [" + Num(d.position.x) + ", " + Num(d.y) + ", " + Num(d.position.z) + "]" +
 					", \"count\": " + std::to_string(d.count) + ", \"respawnSec\": " + std::to_string(d.respawnSec) +
 					", \"leashDistanceMeters\": " + Num(d.leashM);
@@ -694,21 +785,21 @@ namespace tools::world_gen
 
 		// ---- respawn_points.txt.
 		{
-			std::string t = "# GENERE par tools/world_gen — points de reapparition du monde " + wid + ".\n"
+			std::string t = "# GENERE par tools/world_gen — points de reapparition de la cellule " + w.cellName + " (positions GLOBALES).\n"
 				"# Format : zone_id type x y z [faction] [neutral_radius_m] (cf. ServerApp::InitRespawnPoints).\n"
-				"# zone_id = zone gameplay serveur (" + std::to_string(w.master.gameplayZoneId) + ", celle des clients en jeu).\n";
+				"# zone_id = identifiant numerique de la cellule (" + std::to_string(w.zoneId) + ", WorldCells::CellZoneId).\n";
 			for (const std::string& l : w.importedRespawnLines) t += l + "\n";
 			for (const RespawnDef& r : w.respawns)
-				t += std::to_string(w.master.gameplayZoneId) + " " + r.type + " " + Num(r.position.x) + " " + Num(r.y) + " " + Num(r.position.z) +
+				t += std::to_string(w.zoneId) + " " + r.type + " " + Num(r.position.x) + " " + Num(r.y) + " " + Num(r.position.z) +
 					(r.type == "graveyard" ? " " + r.faction : std::string()) + "\n";
 			if (!WriteFile(w, zoneDir + "respawn_points.txt", t, err)) return false;
 		}
 
 		// ---- runtime_manifest.json.
 		{
-			std::string j = "{\n  \"lcdlln_runtime_manifest_version\": 3,\n  \"zone_id\": " + Q(wid) +
-				",\n  \"zone_numeric_id\": " + std::to_string(w.master.zoneNumericId) +
-				",\n  \"display_name\": " + Q(w.master.displayName) +
+			std::string j = "{\n  \"lcdlln_runtime_manifest_version\": 3,\n  \"zone_id\": " + Q(w.cellName) +
+				",\n  \"zone_numeric_id\": " + std::to_string(w.zoneId) +
+				",\n  \"display_name\": " + Q(w.master.displayName + " - " + engine::world::cells::LoreCellId(w.cell)) +
 				",\n  \"terrain_heightmap\": " + Q(zoneDir + "terrain_height.r16h") +
 				",\n  \"terrain_splatmap\": " + Q(zoneDir + "terrain_splat.slap") +
 				",\n  \"terrain_grass_mask\": " + Q(zoneDir + "terrain_grass.grms") +
@@ -717,100 +808,136 @@ namespace tools::world_gen
 				"  \"note\": \"GENERE par tools/world_gen depuis world/" + wid + "/world_master.json.\"\n}\n";
 			if (!WriteFile(w, zoneDir + "runtime_manifest.json", j, err)) return false;
 		}
+		return true;
+	}
 
-		// ---- places.json (UI client : carte, bannières de région, radar).
+	bool WriteGlobalOutputs(GlobalWorld& g, const std::vector<World*>& cells, std::string& err)
+	{
+		const std::string wid = g.master.worldId;
+		const std::string dir = "world/" + wid + "/";
+		// Carte carrée couvrant tout le continent.
+		const double sizeM = std::max(g.maxX - g.minX, g.maxZ - g.minZ);
+		const double originX = g.minX, originZ = g.minZ;
+
+		// ---- places.json (UI client : carte, bannières, radar) — coordonnées GLOBALES.
 		{
-			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — lieux du monde pour l'interface (carte du monde, bannieres d'entree, radar).\",\n";
-			j += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"display_name\": " + Q(w.master.displayName) + ",\n";
-			j += "  \"map_image\": " + Q("world/" + wid + "/world_map.png") + ",\n";
-			j += "  \"terrain\": { \"origin_x\": " + Num(w.terrainOriginX) + ", \"origin_z\": " + Num(w.terrainOriginZ) + ", \"size_m\": " + Num(w.terrainSizeM) + " },\n";
-			j += "  \"city_count\": " + std::to_string(w.master.cities.size()) + ",\n  \"cities\": [\n";
-			for (size_t k = 0; k < w.master.cities.size(); ++k)
+			std::vector<const CityDef*> all;
+			for (const CityDef& c : g.cities) all.push_back(&c);
+			for (const World* w : cells)
+				for (const CityDef& c : w->cities)
+					if (!c.procedural.empty()) all.push_back(&c);
+			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — lieux du monde pour l'interface (carte du monde, bannieres d'entree, radar). Coordonnees GLOBALES (cellules de 10 km, origine = centre de cell_n000_e000).\",\n";
+			j += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"display_name\": " + Q(g.master.displayName) + ",\n";
+			j += "  \"map_image\": " + Q(dir + "world_map.png") + ",\n";
+			j += "  \"terrain\": { \"origin_x\": " + Num(originX) + ", \"origin_z\": " + Num(originZ) + ", \"size_m\": " + Num(sizeM) + " },\n";
+			j += "  \"cell_size_m\": " + Num(engine::world::cells::kCellSizeMeters) + ",\n";
+			j += "  \"cell_count\": " + std::to_string(cells.size()) + ",\n  \"cells\": [\n";
+			for (size_t k = 0; k < cells.size(); ++k)
 			{
-				const CityDef& c = w.master.cities[k];
+				const World* w = cells[k];
+				j += "    { \"name\": " + Q(w->cellName) + ", \"lore\": " + Q(engine::world::cells::LoreCellId(w->cell)) +
+					", \"n\": " + std::to_string(w->cell.n) + ", \"e\": " + std::to_string(w->cell.e) +
+					", \"zone_id\": " + std::to_string(w->zoneId) + ", \"x_min\": " + Num(w->terrainOriginX) + ", \"z_min\": " + Num(w->terrainOriginZ) +
+					" }" + (k + 1 < cells.size() ? ",\n" : "\n");
+			}
+			j += "  ],\n  \"city_count\": " + std::to_string(all.size()) + ",\n  \"cities\": [\n";
+			for (size_t k = 0; k < all.size(); ++k)
+			{
+				const CityDef& c = *all[k];
 				std::string starts;
 				for (size_t q = 0; q < c.startFor.size(); ++q) starts += (q ? ", " : "") + Q(c.startFor[q]);
-				j += "    { \"id\": " + Q(c.id) + ", \"name\": " + Q(c.name) + ", \"kind\": " + Q(c.kind) + ", \"race\": " + Q(c.race) +
-					", \"state\": " + Q(c.state) + ", \"faction\": " + Q(c.faction) + ", \"x\": " + Num(c.center.x) + ", \"z\": " + Num(c.center.z) +
+				j += "    { \"id\": " + Q(c.id) + ", \"name\": " + Q(c.name) + ", \"kind\": " + Q(c.procedural.empty() ? c.kind : c.procedural) +
+					", \"race\": " + Q(c.race) + ", \"state\": " + Q(c.state) + ", \"faction\": " + Q(c.faction) +
+					", \"x\": " + Num(c.center.x) + ", \"z\": " + Num(c.center.z) +
 					", \"radius_m\": " + Num(c.radiusM) + ", \"start_for\": [" + starts + "], \"source\": " + Q(c.source) +
-					", \"description\": " + Q(c.description) + " }" + (k + 1 < w.master.cities.size() ? ",\n" : "\n");
+					", \"description\": " + Q(c.description) + " }" + (k + 1 < all.size() ? ",\n" : "\n");
 			}
-			j += "  ],\n  \"poi_count\": " + std::to_string(w.master.pois.size()) + ",\n  \"pois\": [\n";
-			for (size_t k = 0; k < w.master.pois.size(); ++k)
+			j += "  ],\n  \"poi_count\": " + std::to_string(g.pois.size()) + ",\n  \"pois\": [\n";
+			for (size_t k = 0; k < g.pois.size(); ++k)
 			{
-				const PoiDef& p = w.master.pois[k];
+				const PoiDef& p = g.pois[k];
 				j += "    { \"id\": " + Q(p.id) + ", \"name\": " + Q(p.name) + ", \"kind\": " + Q(p.kind) + ", \"x\": " + Num(p.center.x) +
-					", \"z\": " + Num(p.center.z) + ", \"description\": " + Q(p.description) + " }" + (k + 1 < w.master.pois.size() ? ",\n" : "\n");
+					", \"z\": " + Num(p.center.z) + ", \"description\": " + Q(p.description) + " }" + (k + 1 < g.pois.size() ? ",\n" : "\n");
 			}
-			j += "  ],\n  \"region_count\": " + std::to_string(w.master.regions.size()) + ",\n  \"regions\": [\n";
-			const double C = s.cellSizeM;
-			for (size_t k = 0; k < w.master.regions.size(); ++k)
+			j += "  ],\n  \"region_count\": " + std::to_string(g.master.regions.size()) + ",\n  \"regions\": [\n";
+			const double C = engine::world::cells::kCellSizeMeters;
+			for (size_t k = 0; k < g.master.regions.size(); ++k)
 			{
-				const RegionDef& r = w.master.regions[k];
-				const Vec2 a = w.CellCenter(r.nMax, r.eMin), b = w.CellCenter(r.nMin, r.eMax);
-				j += "    { \"id\": " + Q(r.id) + ", \"name\": " + Q(r.name) + ", \"x_min\": " + Num(a.x - C * 0.5) + ", \"x_max\": " + Num(b.x + C * 0.5) +
-					", \"z_min\": " + Num(a.z - C * 0.5) + ", \"z_max\": " + Num(b.z + C * 0.5) + " }" + (k + 1 < w.master.regions.size() ? ",\n" : "\n");
+				const RegionDef& r = g.master.regions[k];
+				// Rectangle de cases : x de e_min à e_max, z de -n_max à -n_min (nord = -Z).
+				j += "    { \"id\": " + Q(r.id) + ", \"name\": " + Q(r.name) + ", \"x_min\": " + Num((r.eMin - 0.5) * C) + ", \"x_max\": " + Num((r.eMax + 0.5) * C) +
+					", \"z_min\": " + Num(-(r.nMax + 0.5) * C) + ", \"z_max\": " + Num(-(r.nMin - 0.5) * C) + " }" + (k + 1 < g.master.regions.size() ? ",\n" : "\n");
 			}
 			j += "  ]\n}\n";
-			if (!WriteFile(w, "world/" + wid + "/places.json", j, err)) return false;
+			if (!WriteFile(g.outputRoot, g.report, dir + "places.json", j, err)) return false;
 		}
 
-		// ---- Carte du monde (PNG 1024²).
+		// ---- Carte du continent (PNG 2048²).
 		{
-			const int N = 1024;
-			const std::vector<uint8_t> rgb = RenderWorldMap(w, N);
-			if (!WriteBytes(w, "world/" + wid + "/world_map.png", EncodePngRgb(rgb, N, N), err)) return false;
+			const int N = 2048;
+			const std::vector<uint8_t> rgb = RenderContinentMap(g, N, originX, originZ, sizeM, cells);
+			if (!WriteBytes(g.outputRoot, g.report, dir + "world_map.png", EncodePngRgb(rgb, N, N), err)) return false;
 		}
 
 		// ---- Points de départ par race (lus par le master à la création).
 		{
-			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — point d'apparition d'un NOUVEAU personnage selon sa race (CharacterCreateHandler). Repli : character_creation.default_spawn.* puis (0,100,0).\",\n";
+			std::vector<const StartLocationDef*> starts;
+			for (const World* w : cells) for (const StartLocationDef& s : w->starts) starts.push_back(&s);
+			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — point d'apparition d'un NOUVEAU personnage selon sa race (positions GLOBALES). Repli : character_creation.default_spawn.* puis (0,100,0).\",\n";
 			j += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"default_race\": \"humains\",\n  \"races\": {\n";
-			for (size_t k = 0; k < w.starts.size(); ++k)
+			for (size_t k = 0; k < starts.size(); ++k)
 			{
-				const StartLocationDef& st = w.starts[k];
-				const CityDef* c = w.FindCity(st.cityId);
+				const StartLocationDef& st = *starts[k];
+				const CityDef* c = g.FindCity(st.cityId);
 				j += "    " + Q(st.race) + ": { \"city\": " + Q(st.cityId) + ", \"city_name\": " + Q(c ? c->name : st.cityId) +
+					", \"cell\": " + Q(engine::world::cells::CellDirName(engine::world::cells::CellFromPosition(st.position.x, st.position.z))) +
 					", \"x\": " + Num(st.position.x) + ", \"y\": " + Num(st.y) + ", \"z\": " + Num(st.position.z) +
-					", \"yaw_deg\": " + Num(st.yawDeg) + " }" + (k + 1 < w.starts.size() ? ",\n" : "\n");
+					", \"yaw_deg\": " + Num(st.yawDeg) + " }" + (k + 1 < starts.size() ? ",\n" : "\n");
 			}
 			j += "  }\n}\n";
-			if (!WriteFile(w, "world/start_locations.json", j, err)) return false;
+			if (!WriteFile(g.outputRoot, g.report, dir + "start_locations.json", j, err)) return false;
 		}
 
-		// ---- quest_poi.json : fusion des cibles générées (clés existantes préservées).
+		// ---- quest_poi.json (positions GLOBALES) : POI historiques translatés sur la
+		//      ville d'ancrage + cibles des quêtes générées (créatures, PNJ).
 		{
-			const std::string rel = "quests/quest_poi.json";
-			std::ifstream f(fs::path(w.contentRoot) / rel, std::ios::binary);
-			JsonValue root = JObj();
-			if (f.good())
+			std::map<std::string, std::vector<Vec2>> pois;
+			if (!g.master.importQuestPoi.empty())
 			{
+				std::ifstream f(fs::path(g.contentRoot) / g.master.importQuestPoi, std::ios::binary);
+				if (!f.good()) { err = "import quest_poi introuvable : " + g.master.importQuestPoi; return false; }
 				std::stringstream ss; ss << f.rdbuf();
-				std::string perr;
-				if (!tools::zone_builder::ParseJsonDocument(ss.str(), root, perr)) { err = "quest_poi.json invalide : " + perr; return false; }
-			}
-			std::map<std::string, std::vector<Vec2>> gen;
-			for (const SpawnerDef& d : w.spawners)
-				if (d.id.rfind("quete_", 0) == 0) gen["mob:" + std::to_string(d.archetypeId)].push_back(d.position);
-			for (const InteractableDef& d : w.interactables)
-				if (!d.npcTargetId.empty() && d.npcTargetId.rfind("npc:", 0) == 0 && !root.objectValue.count(d.npcTargetId))
-					gen[d.npcTargetId].push_back({ d.x, d.z });
-			for (const auto& kv : gen)
-			{
-				JsonValue arr; arr.type = JsonType::Array;
-				for (const Vec2& p : kv.second)
+				JsonValue root; std::string perr;
+				if (!tools::zone_builder::ParseJsonDocument(ss.str(), root, perr)) { err = "import quest_poi JSON : " + perr; return false; }
+				Vec2 off{};
+				if (const CityDef* a = g.FindCity(g.master.importAnchorCity)) off = a->center;
+				for (const auto& kv : root.objectValue)
 				{
-					JsonValue pt; pt.type = JsonType::Array;
-					pt.arrayValue.push_back(JNum(std::round(p.x)));
-					pt.arrayValue.push_back(JNum(std::round(p.z)));
-					arr.arrayValue.push_back(pt);
+					if (kv.second.type != JsonType::Array) continue;
+					for (const JsonValue& pt : kv.second.arrayValue)
+						if (pt.type == JsonType::Array && pt.arrayValue.size() >= 2)
+							pois[kv.first].push_back({ pt.arrayValue[0].numberValue + off.x, pt.arrayValue[1].numberValue + off.z });
 				}
-				root.objectValue[kv.first] = arr;
 			}
-			std::string text;
-			DumpJson(root, text, 0);
-			text += "\n";
-			if (!WriteFile(w, rel, text, err)) return false;
+			for (const World* w : cells)
+			{
+				for (const SpawnerDef& d : w->spawners)
+					if (d.id.rfind("quete_", 0) == 0) pois["mob:" + std::to_string(d.archetypeId)].push_back(d.position);
+				for (const InteractableDef& d : w->interactables)
+					if (!d.npcTargetId.empty() && d.npcTargetId.rfind("npc:", 0) == 0 && !pois.count(d.npcTargetId))
+						pois[d.npcTargetId].push_back({ d.x, d.z });
+			}
+			std::string j = "{\n";
+			size_t k = 0;
+			for (const auto& kv : pois)
+			{
+				j += "  " + Q(kv.first) + ": [";
+				for (size_t q = 0; q < kv.second.size(); ++q)
+					j += (q ? ", [" : "[") + Num(std::round(kv.second[q].x)) + ", " + Num(std::round(kv.second[q].z)) + "]";
+				j += "]" + std::string(++k < pois.size() ? ",\n" : "\n");
+			}
+			j += "}\n";
+			if (!WriteFile(g.outputRoot, g.report, dir + "quest_poi.json", j, err)) return false;
 		}
 		return true;
 	}

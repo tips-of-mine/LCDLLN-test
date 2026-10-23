@@ -16,6 +16,7 @@ namespace
 	} while (0)
 
 	using engine::world::IsGraveyardEligibleForRespawn;
+	using engine::world::IsGraveyardEligibleAsZoneDefault;
 
 	void Test_NeutralGraveyardAlwaysEligible()
 	{
@@ -53,6 +54,19 @@ namespace
 		REQUIRE(IsGraveyardEligibleForRespawn(0.0f, 0.0f, "alliance", "horde") == true);
 		REQUIRE(IsGraveyardEligibleForRespawn(0.1f, 0.0f, "alliance", "horde") == false);
 	}
+
+	void Test_ZoneDefaultEligibilityByOwnership()
+	{
+		// Cimetière neutre ("" ou "-") : défaut éligible pour tout le monde.
+		REQUIRE(IsGraveyardEligibleAsZoneDefault("", "alliance") == true);
+		REQUIRE(IsGraveyardEligibleAsZoneDefault("-", "horde") == true);
+		REQUIRE(IsGraveyardEligibleAsZoneDefault("", "") == true);
+		// Cimetière de faction : défaut éligible UNIQUEMENT pour sa faction (aucune
+		// notion de distance/rayon — anti-triche : indépendant de la position).
+		REQUIRE(IsGraveyardEligibleAsZoneDefault("alliance", "alliance") == true);
+		REQUIRE(IsGraveyardEligibleAsZoneDefault("alliance", "horde") == false);
+		REQUIRE(IsGraveyardEligibleAsZoneDefault("alliance", "") == false);
+	}
 }
 
 int main()
@@ -62,6 +76,7 @@ int main()
 	Test_BeyondRadiusFactionRestricted();
 	Test_PlayerWithoutFactionBeyondRadius();
 	Test_ZeroRadiusOnlyOwnerBeyondZero();
+	Test_ZoneDefaultEligibilityByOwnership();
 	if (g_failed == 0) { std::printf("[PASS] RespawnRulesTests\n"); return 0; }
 	std::printf("[FAIL] RespawnRulesTests: %d failure(s)\n", g_failed);
 	return 1;

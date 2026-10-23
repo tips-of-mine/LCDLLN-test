@@ -14,6 +14,16 @@
 
 namespace engine::render::terrain
 {
+    namespace
+    {
+        /// Cache de pipelines PARTAGÉ par tous les TerrainRenderer (monde « Royaumes » :
+        /// une instance par cellule chargée) : la 2e cellule et les suivantes ne
+        /// recompilent pas les shaders terrain. Compté par référence ; main thread.
+        VkPipelineCache g_terrainPipelineCache = VK_NULL_HANDLE;
+        VkDevice        g_terrainPipelineCacheDevice = VK_NULL_HANDLE;
+        uint32_t        g_terrainPipelineCacheRefs = 0;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────
     // Framebuffer key comparison / hash
     // ─────────────────────────────────────────────────────────────────────────────
@@ -655,7 +665,7 @@ namespace engine::render::terrain
             gpCI.subpass             = 0;
 
             const VkResult pipeRes =
-                vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &gpCI, nullptr, &m_pipeline);
+                vkCreateGraphicsPipelines(device, AcquirePipelineCache(device), 1, &gpCI, nullptr, &m_pipeline);
 
             vkDestroyShaderModule(device, vertMod, nullptr);
             vkDestroyShaderModule(device, fragMod, nullptr);
@@ -1393,6 +1403,42 @@ namespace engine::render::terrain
     // TerrainRenderer::Destroy
     // ─────────────────────────────────────────────────────────────────────────────
 
+    VkPipelineCache TerrainRenderer::AcquirePipelineCache(VkDevice device)
+    {
+        if (m_holdsPipelineCacheRef)
+            return g_terrainPipelineCache;
+        if (g_terrainPipelineCache != VK_NULL_HANDLE && g_terrainPipelineCacheDevice != device)
+            return VK_NULL_HANDLE; // autre device (ne devrait pas arriver) : pas de cache
+        if (g_terrainPipelineCache == VK_NULL_HANDLE)
+        {
+            VkPipelineCacheCreateInfo ci{};
+            ci.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+            if (vkCreatePipelineCache(device, &ci, nullptr, &g_terrainPipelineCache) != VK_SUCCESS)
+            {
+                g_terrainPipelineCache = VK_NULL_HANDLE;
+                return VK_NULL_HANDLE;
+            }
+            g_terrainPipelineCacheDevice = device;
+        }
+        ++g_terrainPipelineCacheRefs;
+        m_holdsPipelineCacheRef = true;
+        return g_terrainPipelineCache;
+    }
+
+    void TerrainRenderer::ReleasePipelineCache(VkDevice device)
+    {
+        if (!m_holdsPipelineCacheRef)
+            return;
+        m_holdsPipelineCacheRef = false;
+        if (g_terrainPipelineCacheRefs > 0u && --g_terrainPipelineCacheRefs == 0u
+            && g_terrainPipelineCache != VK_NULL_HANDLE)
+        {
+            vkDestroyPipelineCache(device, g_terrainPipelineCache, nullptr);
+            g_terrainPipelineCache = VK_NULL_HANDLE;
+            g_terrainPipelineCacheDevice = VK_NULL_HANDLE;
+        }
+    }
+
     void TerrainRenderer::Destroy(VkDevice device)
     {
         InvalidateFramebufferCache(device);
@@ -1439,6 +1485,7 @@ namespace engine::render::terrain
 
         m_patches.clear();
         m_heightmapData.heights.clear();
+        ReleasePipelineCache(device);
 
         LOG_INFO(Render, "[TerrainRenderer] Destroyed");
     }

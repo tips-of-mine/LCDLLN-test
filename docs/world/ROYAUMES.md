@@ -67,7 +67,7 @@ Activé par le même `world.active_zone = "royaumes"` (client, shard, master).
 | Hauteurs CPU | Heightmap 2049² de chaque cellule à moins de `world.cells.height_radius_m` (6 km) : collision, pose au sol des PNJ / entités / décor (`CellHeightFields`). |
 | Tuiles de rendu | À moins de `world.cells.render_radius_m` (2,5 km) du bord : terrain GPU (un `TerrainRenderer` par cellule, le premier efface le GBuffer), décor instancié et bâtiments en coordonnées LOCALES à la cellule, collisions de la cellule (`CellWorldCollider`). Déchargées au-delà de `world.cells.unload_radius_m` (3,5 km), destruction GPU différée (attente du GPU). Une cellule dont le zone.json, la heightmap ou le terrain manque n'est plus retentée de la session. Patchs de terrain dessinés jusqu'à `world.cells.terrain_draw_distance_m` (2,5 km). |
 | Joints | Normal map calculée avec l'échantillon de la cellule voisine au-delà de chaque bord (`HeightmapBorders`) ; pavage des textures du sol en coordonnées globales (`TerrainRenderer::SetTextureWorldOrigin`) : pas de couture d'éclairage, pas de saut au rebase. |
-| Chargement en tâche de fond | `CellAssetLoader` (un thread) lit et décode tout ce qui est disque et CPU : zone.json, heightmap, normal map (Sobel), splat, masque d'herbe, `scatter.bin`, `buildings.bin`, bibliothèque de bâtiments. Le main thread n'intègre qu'**une tuile par frame** (envois GPU, pose des instances, ~150 ms sous lavapipe, bien moins sur un vrai GPU) ; 2 demandes en vol au plus, la plus proche d'abord ; un résultat devenu inutile est jeté. Boot et téléportation restent synchrones (`EnterCellWorldAt`). |
+| Chargement en tâche de fond | `CellAssetLoader` (un thread) lit et décode tout ce qui est disque et CPU : zone.json, heightmap, normal map (Sobel), splat, masque d'herbe, `scatter.bin`, `buildings.bin`, bibliothèque de bâtiments. Le main thread n'intègre qu'**une tuile par frame** (terrain : envois GPU, ~100 ms sous lavapipe ; décor et bâtiments ensuite par tranches, `ContinueCellPlacement`) ; 2 demandes en vol au plus, la plus proche d'abord ; un résultat devenu inutile est jeté. Boot et téléportation restent synchrones (`EnterCellWorldAt`). |
 | Contenu léger | PNJ / coffres (`world.interactables` du zone.json) et marqueurs de respawn chargés une fois par cellule ; eau (`water.bin`) de toutes les cellules générées dès le boot (la passe d'eau est choisie au premier FrameGraph). |
 | Mur invisible | Le personnage ne peut pas entrer dans une cellule non générée (le shard refuse aussi). |
 | Carte M, bannière | `world/royaumes/places.json` (global) ; la position du joueur est convertie. Cellules générées : liste `cells` de places.json. |
@@ -214,9 +214,11 @@ Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-c
 - Elfes et démons empruntent la silhouette humaine.
 - L'île d'Hishtarland n'a pas de route (avertissement attendu).
 - Les cellules non générées sont bordées d'un mur invisible (serveur et client).
-- L'intégration d'une tuile au main thread (envois GPU, pose de ~110 000
-  instances, attente du GPU avant la création des matériaux) reste une courte
-  saccade ; chaque tuile a son pipeline terrain (pipeline partagé à faire).
+- Intégration d'une tuile au main thread : terrain (envois GPU, ~100 ms sous
+  lavapipe, bien moins sur un vrai GPU) en une frame, puis décor et bâtiments
+  posés par tranches (20 000 instances / 150 bâtiments par frame). Un modèle de
+  décor jamais vu attend le GPU une fois (création de ses matériaux). Cache de
+  pipelines partagé entre les terrains des cellules.
 - Mer : chaque cellule côtière porte une nappe « ocean » (10 km, niveau
   `sea_level_m`) dessinée comme les lacs ; la section globale `OceanSectionData`
   (vent, turbidité) n'est pas encore exploitée. Aucune des 45 cellules actuelles

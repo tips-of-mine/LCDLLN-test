@@ -248,6 +248,12 @@ namespace engine::render::terrain
         void SetFrustumCullEnabled(bool enable) { m_frustumCullEnabled = enable; }
 
     private:
+        /// Cache de pipelines partagé entre instances (prend une référence au 1er appel).
+        VkPipelineCache AcquirePipelineCache(VkDevice device);
+        /// Rend la référence prise par AcquirePipelineCache (détruit le cache à la dernière).
+        void ReleasePipelineCache(VkDevice device);
+        bool m_holdsPipelineCacheRef = false;
+
         // ── Push constants ────────────────────────────────────────────────────────
         // All stages, 20 bytes total.
         // offset  0: float patchOriginX

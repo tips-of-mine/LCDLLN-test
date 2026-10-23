@@ -186,6 +186,7 @@ namespace engine
 			RebaseRenderOrigin(here);
 		}
 		UpdateCellStreamingAround(gx, gz, synchronous);
+		ContinueCellPlacement(synchronous);
 		DestroyRetiredCellTiles(false);
 	}
 
@@ -225,7 +226,7 @@ namespace engine
 					IntegrateCellHeights(a);
 				if (renderUseful && m_cellHeights->Has(a.cell))
 				{
-					if (LoadCellTile(a))
+					if (LoadCellTile(a, /*placeAllNow*/ false))
 						changed = true;
 					renderBudget = false;
 				}
@@ -271,7 +272,7 @@ namespace engine
 				}
 				if (!m_cellHeights->Has(cell))
 					IntegrateCellHeights(a);
-				if (LoadCellTile(a))
+				if (LoadCellTile(a, /*placeAllNow*/ true))
 					changed = true;
 				continue;
 			}
@@ -383,7 +384,7 @@ namespace engine
 		}
 	}
 
-	bool Engine::LoadCellTile(cells::CellAssets& assets)
+	bool Engine::LoadCellTile(cells::CellAssets& assets, bool placeAllNow)
 	{
 		if (!m_vkDeviceContext.IsValid() || !m_pipeline || !assets.renderOk)
 			return false;
@@ -399,9 +400,6 @@ namespace engine
 		const cells::CellPoint minCorner = TerrainMinCorner(m_cellHeights.get(), cell);
 		tcfg.SetValue("terrain.origin_x", minCorner.x - m_renderFrame.OriginX());
 		tcfg.SetValue("terrain.origin_z", minCorner.z - m_renderFrame.OriginZ());
-		// Les matériaux du décor de la cellule réécrivent le set bindless partagé :
-		// la frame précédente ne doit plus être en vol (chargement déjà synchrone).
-		vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
 
 		CellRenderTile tile;
 		tile.cell = cell;
@@ -440,26 +438,67 @@ namespace engine
 		tile.scatter = std::make_unique<engine::world::scatter::ScatterField>();
 		tile.collider = std::make_unique<engine::gameplay::CompositeWorldCollider>(nullptr);
 		const cells::CellPoint center = cells::CellCenter(cell);
-		InstanceTarget target;
-		target.field = tile.scatter.get();
-		target.collider = tile.collider.get();
-		target.originX = center.x;
-		target.originZ = center.z;
-		target.ground = [this, center](float lx, float lz) {
-			float h = 0.0f;
-			(void)m_cellHeights->SampleGlobal(center.x + lx, center.z + lz, h);
-			return h;
-		};
-		const size_t instances = assets.hasScatter
-			? PlaceScatterFile(assets.scatter, target, "instances/zone_" + dir + "/scatter.bin") : 0u;
-		const int pieces = assets.buildings.empty() ? 0
-			: PlaceBuildings(assets.buildings, assets.buildingLibrary, target, "instances/zone_" + dir + "/buildings.bin");
-		LOG_INFO(Render, "[Cells] {} chargee en {} ms (main thread) : terrain={}, decor={} instance(s), batiments={} piece(s), collisions={} cyl / {} boites",
+		(void)center;
+		// Pose des instances différée : par tranches sur les frames suivantes
+		// (ContinueCellPlacement), ou tout de suite en chargement synchrone.
+		if (assets.hasScatter || !assets.buildings.empty())
+			tile.pending = std::make_unique<cells::CellAssets>(std::move(assets));
+		LOG_INFO(Render, "[Cells] {} : terrain charge en {} ms (main thread), terrain={}",
 			dir, std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t0).count(),
-			tile.terrain ? "oui" : "non", instances, pieces,
-			tile.collider->CylinderCount(), tile.collider->BoxCount());
+			tile.terrain ? "oui" : "non");
 		m_cellTiles.push_back(std::move(tile));
+		if (placeAllNow)
+			ContinueCellPlacement(/*unlimited*/ true);
 		return true;
+	}
+
+	void Engine::ContinueCellPlacement(bool unlimited)
+	{
+		// Budget par frame : ~10 ms de pose sous lavapipe (20 000 instances de décor,
+		// 150 bâtiments) ; une seule tuile avancée par frame.
+		constexpr size_t kScatterPerFrame = 20000;
+		constexpr size_t kBuildingsPerFrame = 150;
+		for (CellRenderTile& tile : m_cellTiles)
+		{
+			if (!tile.pending)
+				continue;
+			cells::CellAssets& a = *tile.pending;
+			const std::string dir = cells::CellDirName(tile.cell);
+			const cells::CellPoint center = cells::CellCenter(tile.cell);
+			InstanceTarget target;
+			target.field = tile.scatter.get();
+			target.collider = tile.collider.get();
+			target.originX = center.x;
+			target.originZ = center.z;
+			target.ground = [this, center](float lx, float lz) {
+				float h = 0.0f;
+				(void)m_cellHeights->SampleGlobal(center.x + lx, center.z + lz, h);
+				return h;
+			};
+			const size_t scatterTotal = a.hasScatter ? a.scatter.instances.size() : 0u;
+			if (tile.scatterNext < scatterTotal)
+			{
+				const size_t n = unlimited ? scatterTotal - tile.scatterNext : kScatterPerFrame;
+				(void)PlaceScatterFile(a.scatter, target, "instances/zone_" + dir + "/scatter.bin", tile.scatterNext, n);
+				tile.scatterNext = std::min(scatterTotal, tile.scatterNext + n);
+			}
+			else if (tile.buildingNext < a.buildings.size())
+			{
+				const size_t n = unlimited ? a.buildings.size() - tile.buildingNext : kBuildingsPerFrame;
+				(void)PlaceBuildings(a.buildings, a.buildingLibrary, target, "instances/zone_" + dir + "/buildings.bin",
+					tile.buildingNext, n);
+				tile.buildingNext = std::min(a.buildings.size(), tile.buildingNext + n);
+			}
+			if (tile.scatterNext >= scatterTotal && tile.buildingNext >= a.buildings.size())
+			{
+				LOG_INFO(Render, "[Cells] {} : decor={} instance(s), {} batiment(s) poses ; collisions={} cyl / {} boites",
+					dir, tile.scatter->Count(), a.buildings.size(),
+					tile.collider->CylinderCount(), tile.collider->BoxCount());
+				tile.pending.reset();
+			}
+			if (!unlimited)
+				break; // une tuile par frame
+		}
 	}
 
 	void Engine::RetireCellTile(size_t index)

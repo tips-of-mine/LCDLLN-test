@@ -41,6 +41,11 @@ namespace engine
 
 		const std::string& meshPath = m_scatterField.MeshPaths()[meshId];
 		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+		// Monde « Royaumes » : un mesh nouveau peut arriver en cours de partie ; ses
+		// matériaux réécrivent le set bindless partagé, que la frame précédente ne doit
+		// plus lire. Rare (une fois par modèle) : attente du GPU.
+		if (m_cellWorld && m_vkDeviceContext.IsValid())
+			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
 		auto cpu = engine::render::staticmesh::StaticMeshLoader::LoadCpuOnlyForTests(contentRoot + "/" + meshPath);
 		if (!cpu || cpu->vertices.empty() || cpu->submeshes.empty())
 		{
@@ -229,7 +234,7 @@ namespace engine
 	}
 
 	size_t Engine::PlaceScatterFile(const engine::world::instances::ScatterFile& file,
-		const InstanceTarget& target, const std::string& label)
+		const InstanceTarget& target, const std::string& label, size_t first, size_t count)
 	{
 		if (!m_pipeline || target.field == nullptr || target.collider == nullptr || !target.ground) return 0;
 		const std::string& rel = label;
@@ -242,8 +247,11 @@ namespace engine
 		using engine::world::instances::kScatterFlagBuildingPiece;
 		using engine::world::instances::kScatterFlagSolid;
 		size_t placed = 0, skipped = 0;
-		for (const auto& in : file.instances)
+		const size_t end = (first >= file.instances.size()) ? first
+			: first + std::min(count, file.instances.size() - first);
+		for (size_t k = first; k < end; ++k)
 		{
+			const auto& in = file.instances[k];
 			const uint32_t meshId = remap[in.meshIndex];
 			if (!EnsureScatterMesh(meshId)) { ++skipped; continue; }
 			const ScatterMeshGpu& mesh = m_scatterMeshes[meshId];

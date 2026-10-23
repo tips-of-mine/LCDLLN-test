@@ -14976,7 +14976,7 @@ namespace engine
 
 	int Engine::PlaceBuildings(const std::vector<engine::world::instances::BuildingPlacement>& placements,
 		const engine::world::instances::BuildingTemplateLibrary& library,
-		const InstanceTarget& target, const std::string& label)
+		const InstanceTarget& target, const std::string& label, size_t first, size_t count)
 	{
 		if (!m_pipeline || target.field == nullptr || target.collider == nullptr || !target.ground) return 0;
 		const std::string& path = label;
@@ -14994,8 +14994,11 @@ namespace engine
 		};
 
 		int partCount = 0, resolved = 0;
-		for (const auto& pl : placements)
+		const size_t end = (first >= placements.size()) ? first
+			: first + std::min(count, placements.size() - first);
+		for (size_t k = first; k < end; ++k)
 		{
+			const auto& pl = placements[k];
 			const engine::world::instances::BuildingVariant* variant =
 				library.Resolve(pl.templateType, pl.variantId);
 			if (!variant)
@@ -15039,8 +15042,8 @@ namespace engine
 				++partCount;
 			}
 		}
-		LOG_INFO(Render, "[Buildings] '{}' : {} placement(s), {} resolu(s), {} piece(s) rendue(s)",
-			path, static_cast<int>(placements.size()), resolved, partCount);
+		LOG_DEBUG(Render, "[Buildings] '{}' : {} placement(s) [{}..{}[, {} resolu(s), {} piece(s) rendue(s)",
+			path, static_cast<int>(placements.size()), first, end, resolved, partCount);
 		return partCount;
 	}
 

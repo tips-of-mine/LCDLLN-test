@@ -1247,16 +1247,20 @@ namespace engine
 		/// Charge un buildings.bin (chemin absolu/résolu) dans \p target.
 		/// \return nombre de pièces posées. Main thread.
 		int LoadBuildingsInto(const std::string& fullPath, const InstanceTarget& target);
-		/// Pose dans \p target les instances d'un scatter.bin DÉJÀ décodé (tâche de
-		/// fond) : meshes partagés, ancrage au sol, collisions. \p label = nom pour
-		/// les journaux. \return nombre d'instances posées. Main thread.
+		/// Pose dans \p target les instances [\p first, \p first + \p count[ d'un
+		/// scatter.bin DÉJÀ décodé (tâche de fond) : meshes partagés, ancrage au sol,
+		/// collisions. Par tranches, la pose s'étale sur plusieurs frames. \p label =
+		/// nom pour les journaux. \return nombre d'instances posées. Main thread.
 		size_t PlaceScatterFile(const engine::world::instances::ScatterFile& file,
-			const InstanceTarget& target, const std::string& label);
-		/// Pose dans \p target les pièces de bâtiments DÉJÀ décodés (placements +
-		/// bibliothèque de types). \return nombre de pièces posées. Main thread.
+			const InstanceTarget& target, const std::string& label,
+			size_t first = 0, size_t count = static_cast<size_t>(-1));
+		/// Pose dans \p target les pièces des bâtiments [\p first, \p first + \p count[
+		/// DÉJÀ décodés (placements + bibliothèque de types). \return nombre de pièces
+		/// posées. Main thread.
 		int PlaceBuildings(const std::vector<engine::world::instances::BuildingPlacement>& placements,
 			const engine::world::instances::BuildingTemplateLibrary& library,
-			const InstanceTarget& target, const std::string& label);
+			const InstanceTarget& target, const std::string& label,
+			size_t first = 0, size_t count = static_cast<size_t>(-1));
 		/// Ajoute au champ de \p target une instance posée par `model` (déjà au sol,
 		/// repère de la cible) et, si \p solid, sa collision (catalogue de pièces si
 		/// \p buildingPiece, sinon cylindre de tronc/rocher de rayon \p collisionRadius,
@@ -1330,6 +1334,11 @@ namespace engine
 			std::unique_ptr<engine::render::terrain::TerrainRenderer> terrain;
 			std::unique_ptr<engine::world::scatter::ScatterField> scatter;
 			std::unique_ptr<engine::gameplay::CompositeWorldCollider> collider;
+			/// Décor et bâtiments décodés restant à poser (nullptr = tout est posé),
+			/// avec l'avancement de la pose par tranches (cf. ContinueCellPlacement).
+			std::unique_ptr<engine::world::cells::CellAssets> pending;
+			size_t scatterNext = 0;
+			size_t buildingNext = 0;
 		};
 		/// Tuile retirée : détruite quelques frames plus tard (ressources GPU encore en vol).
 		struct RetiredCellTile
@@ -1375,9 +1384,14 @@ namespace engine
 		/// Heightmap CPU de la cellule chargée SYNCHRONEMENT (+ interactibles, marqueurs
 		/// au premier chargement). \return false si la cellule n'a pas de heightmap.
 		bool EnsureCellHeights(engine::world::cells::CellCoord cell);
-		/// Crée la tuile de rendu d'une cellule (terrain GPU, décor, bâtiments) à partir
-		/// des données préparées \p assets (consommées). Main thread : envois GPU.
-		bool LoadCellTile(engine::world::cells::CellAssets& assets);
+		/// Crée la tuile de rendu d'une cellule à partir des données préparées \p assets
+		/// (consommées) : terrain GPU tout de suite ; décor et bâtiments posés par
+		/// tranches aux frames suivantes, ou immédiatement si \p placeAllNow
+		/// (chargement synchrone). Main thread : envois GPU.
+		bool LoadCellTile(engine::world::cells::CellAssets& assets, bool placeAllNow);
+		/// Avance la pose différée du décor / des bâtiments : une tuile, une tranche
+		/// (\p unlimited = tout poser). Main thread, chaque frame.
+		void ContinueCellPlacement(bool unlimited);
 		/// Retire la tuile d'indice \p index (destruction différée).
 		void RetireCellTile(size_t index);
 		/// Détruit les tuiles retirées depuis assez longtemps (\p all = toutes, au shutdown).

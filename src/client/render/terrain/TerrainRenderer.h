@@ -35,6 +35,20 @@ namespace engine::render::terrain
         uint32_t indexZ = 0;   ///< Indice du patch (Z) dans la grille
     };
 
+    /// Données CPU d'un terrain préparées HORS du main thread (chargement en tâche
+    /// de fond des cellules du monde « Royaumes », cf. CellAssetLoader). Passées à
+    /// TerrainRenderer::Init, qui les CONSOMME (déplacement) au lieu de lire les
+    /// fichiers. Un champ vide = lecture / calcul habituel dans Init.
+    struct TerrainPreloadedData
+    {
+        HeightmapData        heightmap;          ///< heightmap (vide → lecture de heightmapRelPath)
+        std::vector<uint8_t> normalPixels;       ///< normal map RGBA8 (taille heightmap) déjà calculée
+        float                normalHeightScale = 0.0f; ///< échelle de hauteur (m) utilisée pour normalPixels
+        float                normalVertStep    = 0.0f; ///< pas (m) entre échantillons utilisé pour normalPixels
+        std::vector<uint8_t> splatFile;          ///< fichier SLAP complet (vide → lecture de splatmapRelPath)
+        HoleMaskData         grassMask;          ///< masque herbe GRMS (largeur 0 → lecture de grassMaskRelPath)
+    };
+
     /// Terrain renderer: heightmap-based ground mesh with distance LOD and geomorphing.
     ///
     /// Architecture:
@@ -93,6 +107,9 @@ namespace engine::render::terrain
         /// \param fmtA/B/C/Vel/Depth GBuffer attachment formats (must match GeometryPass).
         /// \param queue              Graphics queue used for one-time GPU uploads.
         /// \param terrainWorldSizeMetersOverride Si renseigné (>0), remplace la clé config `terrain.world_size` pour l’étendue monde (m).
+        /// \param preloaded          Données CPU préparées en tâche de fond (consommées) ; nullptr = tout lire ici.
+        ///                           La normal map préparée n'est utilisée que si son échelle et son pas
+        ///                           correspondent à ceux de ce terrain (sinon recalcul).
         bool Init(VkDevice device, VkPhysicalDevice physDev,
                   const engine::core::Config& config,
                   const std::string& heightmapRelPath,
@@ -104,7 +121,8 @@ namespace engine::render::terrain
                   VkFormat fmtVelocity, VkFormat fmtDepth,
                   VkQueue queue, uint32_t queueFamilyIndex,
                   ShaderLoaderFn loadSpirv,
-                  std::optional<float> terrainWorldSizeMetersOverride = std::nullopt);
+                  std::optional<float> terrainWorldSizeMetersOverride = std::nullopt,
+                  TerrainPreloadedData* preloaded = nullptr);
 
         /// Destroys all GPU resources. Safe to call when not initialised.
         void Destroy(VkDevice device);

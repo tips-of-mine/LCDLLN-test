@@ -1,9 +1,15 @@
 // cell_world_frame_tests — repère de rendu et sélection des cellules (client « Royaumes »).
 #include "src/client/world/cells/CellWorldFrame.h"
 #include "src/client/world/cells/CellHeightFields.h"
+#include "src/client/world/cells/CellAssetLoader.h"
 
+#include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
+#include <filesystem>
+#include <fstream>
+#include <thread>
 #include <vector>
 
 namespace
@@ -90,6 +96,63 @@ int main()
 		Check(!fields.SampleGlobal(1e30, 0.0, h), "valeur aberrante refusee");
 		fields.Remove({ 3, -8 });
 		Check(fields.Count() == 0, "retrait");
+	}
+
+	// Chargement des données d'une cellule (thread de travail) sur un contenu minimal.
+	{
+		namespace fs = std::filesystem;
+		const fs::path root = fs::temp_directory_path() / "lcdlln_cell_assets_test";
+		std::error_code ec;
+		fs::remove_all(root, ec);
+		fs::create_directories(root / "zones" / "cell_n003_w009");
+		{
+			std::ofstream z(root / "zones" / "cell_n003_w009" / "zone.json");
+			z << "{ \"terrain\": { \"world_size\": 10000, \"height_scale\": 1000, \"origin_x\": -95000, \"origin_z\": -35000 },"
+			     " \"render\": { \"terrain\": { \"heightmap\": \"zones/cell_n003_w009/h.r16h\" } } }";
+		}
+		{
+			std::ofstream h(root / "zones" / "cell_n003_w009" / "h.r16h", std::ios::binary);
+			const uint32_t hdr[3] = { 0x504D4148u, 5u, 5u };
+			h.write(reinterpret_cast<const char*>(hdr), sizeof(hdr));
+			for (int i = 0; i < 25; ++i)
+			{
+				const uint16_t v = static_cast<uint16_t>(i * 1000);
+				h.write(reinterpret_cast<const char*>(&v), sizeof(v));
+			}
+		}
+		CellAssetJob job;
+		job.cell = { 3, -9 };
+		job.wantRender = true;
+		job.baseConfig.SetValue("paths.content", root.string());
+		CellAssets a;
+		Check(LoadCellAssets(job, a) && a.heightsOk && a.renderOk, "cellule chargee");
+		Check(a.heights.data.width == 5u && Near(a.heights.minX, -95000.0) && Near(a.heights.heightScale, 1000.0), "heightmap CPU");
+		Check(a.terrain.heightmap.heights.size() == 25u && a.terrain.normalPixels.size() == 25u * 4u, "heightmap + normal map de rendu");
+		Check(std::fabs(a.terrain.normalVertStep - 2500.0f) < 1e-3f && std::fabs(a.terrain.normalHeightScale - 1000.0f) < 1e-3f,
+			"echelle de la normal map = celle du terrain");
+		Check(!a.hasScatter && a.buildings.empty(), "sans decor ni batiment");
+
+		CellAssetJob missing = job;
+		missing.cell = { 4, -9 };
+		CellAssets b;
+		Check(!LoadCellAssets(missing, b) && !b.heightsOk && !b.error.empty(), "cellule absente : echec explicite");
+
+		// Thread de travail : deux demandes (dont un doublon), deux résultats.
+		CellAssetLoader loader;
+		loader.Start();
+		loader.Request(job);
+		loader.Request(job);
+		loader.Request(missing);
+		Check(loader.IsPending({ 3, -9 }, true) && loader.IsPending({ 4, -9 }, false), "demandes en vol");
+		std::vector<CellAssets> done;
+		for (int i = 0; i < 500 && done.size() < 2; ++i)
+		{
+			loader.Poll(done);
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+		Check(done.size() == 2 && loader.InFlight() == 0u, "deux resultats, doublon ignore");
+		loader.Stop();
+		fs::remove_all(root, ec);
 	}
 
 	if (g_fail == 0) std::printf("cell_world_frame_tests: OK\n");

@@ -356,7 +356,8 @@ namespace engine::render::terrain
     bool TerrainSplatting::Init(VkDevice device, VkPhysicalDevice physDev,
                                 const engine::core::Config& config,
                                 const std::string& splatmapRelPath,
-                                VkQueue queue, uint32_t queueFamilyIndex)
+                                VkQueue queue, uint32_t queueFamilyIndex,
+                                const std::vector<uint8_t>* preloadedSplatFile)
     {
         LOG_INFO(Render, "[TerrainSplatting] Init begin (splatmap='{}')", splatmapRelPath);
 
@@ -403,10 +404,13 @@ namespace engine::render::terrain
         uint32_t kSplatH = kDefaultSplatH;
         std::vector<uint8_t> splatData;
 
-        if (!splatmapRelPath.empty())
+        const bool havePreloaded = preloadedSplatFile != nullptr && !preloadedSplatFile->empty();
+        if (!splatmapRelPath.empty() || havePreloaded)
         {
-            const std::vector<uint8_t> fileBytes =
-                engine::platform::FileSystem::ReadAllBytesContent(config, splatmapRelPath);
+            std::vector<uint8_t> readBytes;
+            if (!havePreloaded)
+                readBytes = engine::platform::FileSystem::ReadAllBytesContent(config, splatmapRelPath);
+            const std::vector<uint8_t>& fileBytes = havePreloaded ? *preloadedSplatFile : readBytes;
             if (fileBytes.size() >= 12u)
             {
                 uint32_t magic = 0;

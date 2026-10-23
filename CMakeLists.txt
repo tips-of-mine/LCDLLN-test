@@ -621,6 +621,7 @@ add_library(engine_core
   src/shared/world/WorldCells.cpp
   src/client/world/cells/CellWorldFrame.cpp
   src/client/world/cells/CellHeightFields.cpp
+  src/client/world/cells/CellAssetLoader.cpp
   src/client/render/WorldMapImGuiRenderer.cpp
   src/shared/platform/FileSystem.cpp
   src/shared/platform/FileWatcher.cpp

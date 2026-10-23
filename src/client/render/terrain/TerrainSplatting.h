@@ -88,11 +88,14 @@ namespace engine::render::terrain
         /// \param splatmapRelPath  Content-relative path to the splat map image (e.g.
         ///                         "terrain/splatmap.rgba8"). Empty = use default.
         /// \param queue            Graphics queue used for one-time GPU uploads.
+        /// \param preloadedSplatFile Fichier SLAP déjà lu (tâche de fond) ; nullptr ou vide =
+        ///                           lecture de \p splatmapRelPath.
         /// \return true on success.
         bool Init(VkDevice device, VkPhysicalDevice physDev,
                   const engine::core::Config& config,
                   const std::string& splatmapRelPath,
-                  VkQueue queue, uint32_t queueFamilyIndex);
+                  VkQueue queue, uint32_t queueFamilyIndex,
+                  const std::vector<uint8_t>* preloadedSplatFile = nullptr);
 
         /// Destroys all GPU resources. Safe to call when not initialised.
         void Destroy(VkDevice device);

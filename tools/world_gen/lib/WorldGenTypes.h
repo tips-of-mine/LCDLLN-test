@@ -137,6 +137,14 @@ namespace tools::world_gen
 		std::string importAnchorCity;     ///< ville d'ancrage : tout l'import est translaté sur son centre
 		/// Cellules générées par défaut (identifiants du lore « N003_W009 »).
 		std::vector<std::string> generatedCells;
+		/// Relier les villes de départ : les cellules traversées par les routes qui
+		/// les connectent (arbre couvrant de plus courts chemins sur le réseau routier)
+		/// sont ajoutées aux cellules générées — on peut aller à pied d'un royaume à
+		/// l'autre. Clé `connect_start_cities` (défaut false).
+		bool connectStartCities = false;
+		/// Marge (m) autour de la chaussée : la cellule voisine est ajoutée quand la
+		/// route passe à moins de cette distance de sa frontière. `corridor_margin_m`.
+		double corridorMarginM = 300.0;
 	};
 
 	/// Bilan d'une génération (journalisé par la CLI, vérifié par les tests).

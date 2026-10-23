@@ -4,7 +4,14 @@
 #include "WorldGenContext.h"
 
 #include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <functional>
+#include <limits>
+#include <map>
 #include <memory>
+#include <queue>
+#include <set>
 
 namespace tools::world_gen
 {
@@ -90,6 +97,122 @@ namespace tools::world_gen
 			});
 	}
 
+	/// Cellules traversées par les routes qui relient les villes de départ.
+	/// Arbre couvrant « au plus près » : en partant de la première ville de départ,
+	/// on ajoute à chaque tour la ville de départ non reliée la plus proche PAR LA
+	/// ROUTE (Dijkstra multi-sources depuis tout ce qui est déjà relié). Seules les
+	/// routes inter-villes comptent (pas les chemins locaux). Une ville de départ
+	/// injoignable (île) est signalée et laissée isolée. Les cellules ajoutées
+	/// suivent celles du master, dans l'ordre de parcours des routes. Déterministe.
+	void AddStartCorridors(GlobalWorld& g, std::vector<std::string>& ids)
+	{
+		namespace wc = engine::world::cells;
+		// Graphe : villes (id → index) et arêtes = routes inter-villes.
+		std::map<std::string, int> node;
+		auto nodeOf = [&](const std::string& id) {
+			auto it = node.find(id);
+			if (it != node.end()) return it->second;
+			const int k = static_cast<int>(node.size());
+			node.emplace(id, k);
+			return k;
+		};
+		struct Edge { int to; size_t road; double len; };
+		std::vector<std::vector<Edge>> adj;
+		for (size_t r = 0; r < g.roads.size(); ++r)
+		{
+			const Road& road = g.roads[r];
+			if (road.path || road.points.size() < 2) continue;
+			const int a = nodeOf(road.fromId), b = nodeOf(road.toId);
+			if (static_cast<int>(adj.size()) <= std::max(a, b)) adj.resize(static_cast<size_t>(std::max(a, b)) + 1u);
+			double len = 0.0;
+			for (size_t i = 1; i < road.points.size(); ++i)
+				len += std::hypot(road.points[i].x - road.points[i - 1].x, road.points[i].z - road.points[i - 1].z);
+			adj[static_cast<size_t>(a)].push_back({ b, r, len });
+			adj[static_cast<size_t>(b)].push_back({ a, r, len });
+		}
+		std::vector<int> starts;
+		for (const CityDef& c : g.cities)
+			if (!c.startFor.empty())
+				starts.push_back(nodeOf(c.id));
+		adj.resize(node.size());
+		if (starts.size() < 2) return;
+
+		std::vector<char> connected(node.size(), 0);
+		std::vector<size_t> chosenRoads;
+		connected[static_cast<size_t>(starts.front())] = 1;
+		std::set<int> remaining(starts.begin() + 1, starts.end());
+		while (!remaining.empty())
+		{
+			// Dijkstra depuis tous les nœuds déjà reliés.
+			const double inf = std::numeric_limits<double>::infinity();
+			std::vector<double> dist(node.size(), inf);
+			std::vector<std::pair<int, size_t>> prev(node.size(), { -1, 0 });
+			using QE = std::pair<double, int>;
+			std::priority_queue<QE, std::vector<QE>, std::greater<QE>> pq;
+			for (size_t i = 0; i < node.size(); ++i)
+				if (connected[i]) { dist[i] = 0.0; pq.push({ 0.0, static_cast<int>(i) }); }
+			while (!pq.empty())
+			{
+				const auto [d, u] = pq.top();
+				pq.pop();
+				if (d > dist[static_cast<size_t>(u)]) continue;
+				for (const Edge& ed : adj[static_cast<size_t>(u)])
+				{
+					const double nd = d + ed.len;
+					if (nd < dist[static_cast<size_t>(ed.to)])
+					{
+						dist[static_cast<size_t>(ed.to)] = nd;
+						prev[static_cast<size_t>(ed.to)] = { u, ed.road };
+						pq.push({ nd, ed.to });
+					}
+				}
+			}
+			int best = -1;
+			for (int s : remaining)
+				if (dist[static_cast<size_t>(s)] < inf && (best < 0 || dist[static_cast<size_t>(s)] < dist[static_cast<size_t>(best)]))
+					best = s;
+			if (best < 0)
+			{
+				for (int s : remaining)
+					for (const auto& [id, k] : node)
+						if (k == s) g.Warn("ville de depart sans route vers les autres : " + id + " (reste isolee)");
+				break;
+			}
+			for (int v = best; !connected[static_cast<size_t>(v)]; v = prev[static_cast<size_t>(v)].first)
+			{
+				chosenRoads.push_back(prev[static_cast<size_t>(v)].second);
+				connected[static_cast<size_t>(v)] = 1;
+			}
+			remaining.erase(best);
+		}
+
+		// Cellules de la chaussée (+ voisine quand la route longe une frontière).
+		std::set<std::string> have(ids.begin(), ids.end());
+		const double margin = g.master.corridorMarginM;
+		size_t added = 0;
+		auto addCell = [&](wc::CellCoord c) {
+			if (!wc::IsInLoreGrid(c)) return; // hors de la carte du lore : jamais générée
+			const std::string id = wc::LoreCellId(c);
+			if (have.insert(id).second) { ids.push_back(id); ++added; }
+		};
+		for (size_t r : chosenRoads)
+			for (const Vec2& p : g.roads[r].points)
+			{
+				const wc::CellCoord c = wc::CellFromPosition(p.x, p.z);
+				addCell(c);
+				if (margin <= 0.0) continue;
+				const wc::CellPoint mn = wc::CellMinCorner(c);
+				const double s = wc::kCellSizeMeters;
+				// X = est ; Z = sud (nord = −Z, cellule n + 1).
+				if (p.x - mn.x < margin)     addCell({ c.n, c.e - 1 });
+				if (mn.x + s - p.x < margin) addCell({ c.n, c.e + 1 });
+				if (p.z - mn.z < margin)     addCell({ c.n + 1, c.e });
+				if (mn.z + s - p.z < margin) addCell({ c.n - 1, c.e });
+			}
+		std::printf("[world_gen] liaison des villes de depart : %zu route(s), %zu cellule(s) ajoutee(s) (%zu au total)\n",
+			chosenRoads.size(), added, ids.size());
+	}
+
 	bool RunWorldGen(const GenOptions& opt, GenReport& outReport, std::string& err)
 	{
 		GlobalWorld g;
@@ -103,6 +226,9 @@ namespace tools::world_gen
 		BuildMacroRoads(g);     // routes inter-villes + profils en long
 
 		std::vector<std::string> ids = opt.cells.empty() ? g.master.generatedCells : opt.cells;
+		// Monde complet : cellules des routes reliant les villes de départ.
+		if (opt.cells.empty() && g.master.connectStartCities)
+			AddStartCorridors(g, ids);
 		// Doublons retirés (ordre conservé) : une cellule n'est générée qu'une fois.
 		{
 			std::vector<std::string> uniq;

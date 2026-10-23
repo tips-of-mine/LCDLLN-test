@@ -249,6 +249,8 @@ namespace tools::world_gen
 			out.zoneOverrides.type = JsonType::Object;
 		// --- cellules générées par défaut ---
 		out.generatedCells = GetStrArray(root, "generated_cells");
+		out.connectStartCities = GetBool(root, "connect_start_cities", false);
+		out.corridorMarginM = std::clamp(GetNum(root, "corridor_margin_m", 300.0), 0.0, 4000.0);
 		{
 			std::set<std::string> seen;
 			for (const std::string& c : out.generatedCells)

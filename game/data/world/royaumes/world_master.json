@@ -15,6 +15,9 @@
     "heightmap_resolution": 2049
   },
   "_comment_generated_cells": "Cellules generees (et donc jouables) : les 5 villes de depart par race (premiere de chaque ligne) et leurs 8 voisines (regions contigues, on marche de l'une a l'autre). Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les 5 villes de depart sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
+  "connect_start_cities": true,
+  "corridor_margin_m": 300,
   "generated_cells": [
     "N003_W009", "N004_W010", "N004_W009", "N004_W008", "N003_W010", "N003_W008", "N002_W010", "N002_W009", "N002_W008",
     "N011_E008", "N012_E007", "N012_E008", "N012_E009", "N011_E007", "N011_E009", "N010_E007", "N010_E008", "N010_E009",

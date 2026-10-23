@@ -139,6 +139,39 @@ namespace
 		return h;
 	}
 
+	// Liaison des villes de départ : A —(route 1)— B —(route 2)— C, et une route
+	// D—E isolée. Départs : A, C, E. A et C sont reliés par les routes 1 et 2 (les
+	// cellules qu'elles traversent sont ajoutées) ; E est signalée isolée.
+	void TestStartCorridors()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		g.master.corridorMarginM = 0.0;
+		auto city = [&](const char* id, bool start) {
+			CityDef c; c.id = id; if (start) c.startFor = { "humains" }; g.cities.push_back(c);
+		};
+		city("A", true); city("B", false); city("C", true); city("D", false); city("E", true);
+		auto road = [&](const char* a, const char* b, std::vector<Vec2> pts) {
+			Road r; r.fromId = a; r.toId = b; r.points = std::move(pts); g.roads.push_back(r);
+		};
+		// Cellule (0,0) = [−5000, 5000[ ; (0,1) à l'est ; (0,2) encore à l'est.
+		road("A", "B", { { 0.0, 0.0 }, { 6000.0, 0.0 } });      // (0,0) → (0,1)
+		road("B", "C", { { 6000.0, 0.0 }, { 16000.0, 0.0 } });  // (0,1) → (0,2)
+		road("D", "E", { { 0.0, 50000.0 }, { 100.0, 50000.0 } });
+		Road local; local.path = true; local.fromId = "A"; local.toId = "E";
+		local.points = { { 0.0, 0.0 }, { 0.0, 50000.0 } };
+		g.roads.push_back(local); // chemin local : ignoré
+		std::vector<std::string> ids = { "N000_E000" };
+		AddStartCorridors(g, ids);
+		std::set<std::string> s(ids.begin(), ids.end());
+		Check(s.count("N000_E001") && s.count("N000_E002"), "liaison : cellules des routes A-B-C ajoutees");
+		Check(!s.count("S005_E000"), "liaison : chemin local ignore, ville isolee non reliee");
+		Check(ids.front() == "N000_E000" && s.size() == ids.size(), "liaison : ordre du master conserve, sans doublon");
+		bool warned = false;
+		for (const std::string& w : g.report.warnings) warned = warned || w.find("isolee") != std::string::npos;
+		Check(warned, "liaison : ville de depart isolee signalee");
+	}
+
 	void TestGenerationAndInvariants()
 	{
 		namespace fs = std::filesystem;
@@ -282,6 +315,7 @@ int main()
 	TestScatterRoundTrip();
 	TestPng();
 	TestMaster();
+	TestStartCorridors();
 	TestGenerationAndInvariants();
 	if (g_failures)
 	{

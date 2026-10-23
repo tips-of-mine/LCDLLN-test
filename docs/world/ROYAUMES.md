@@ -217,7 +217,14 @@ Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-c
 - L'intégration d'une tuile au main thread (envois GPU, pose de ~110 000
   instances, attente du GPU avant la création des matériaux) reste une courte
   saccade ; chaque tuile a son pipeline terrain (pipeline partagé à faire).
-- Pas de mer : la section océan de `water.bin` est ignorée (comme en zone historique).
+- Mer : chaque cellule côtière porte une nappe « ocean » (10 km, niveau
+  `sea_level_m`) dessinée comme les lacs ; la section globale `OceanSectionData`
+  (vent, turbidité) n'est pas encore exploitée. Aucune des 45 cellules actuelles
+  n'est côtière (elles le deviendront en reliant les groupes).
+- Nage : poussée d'Archimède (`waterBuoyancyAccel`) — sans « plonger », le
+  nageur remonte et reste en surface ; la caméra reste au-dessus de l'eau en
+  nage de surface (`client.camera.water_clamp_margin`, `water_dive_depth_m`).
+  Pas encore d'effet « sous l'eau » quand on plonge.
 - Joints de cellules : relief et éclairage raccordés (la normal map lit la ligne
   voisine de la cellule d'à côté, pavage des sols en coordonnées globales) ; le
   mélange des sols (splat par cellule) peut encore marquer très légèrement la frontière.

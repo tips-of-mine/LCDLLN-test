@@ -10592,6 +10592,26 @@ namespace engine
 				if (out.camera.position.y < minCamY)
 					out.camera.position.y = minCamY;
 
+				// --- Nage en surface : la caméra reste AU-DESSUS de l'eau. ---
+				// Sans cela, en nageant, la caméra orbitale (cible = centre du nageur,
+				// sous la ligne d'eau) passait de quelques cm sous la surface : la nappe
+				// était vue par la tranche (une ligne) et la mer / l'étang « disparaissaient ».
+				// En plongée (cible à plus de `client.camera.water_dive_depth_m` sous la
+				// surface), la caméra peut suivre sous l'eau.
+				{
+					engine::gameplay::IWorldCollider::WaterQuery camWater;
+					if (m_terrainCollider.QueryWater(out.camera.position, camWater))
+					{
+						const engine::math::Vec3 target = m_orbitalCameraController.GetTargetPosition();
+						const float diveDepth = static_cast<float>(
+							m_cfg.GetDouble("client.camera.water_dive_depth_m", 1.5));
+						const float waterMargin = static_cast<float>(
+							m_cfg.GetDouble("client.camera.water_clamp_margin", 0.35));
+						if (target.y > camWater.surfaceY - diveDepth)
+							out.camera.position.y = camWater.surfaceY + waterMargin;
+					}
+				}
+
 				// --- Fondu d'occlusion : collecte des occulteurs (props + bâtiments). ---
 				// L'index `i` ci-dessous est l'identifiant d'occulteur ; il DOIT
 				// correspondre à l'index utilisé pour FadeFor dans RecordPropsGeometry

@@ -123,6 +123,14 @@ namespace engine::gameplay
 			float waterVerticalControlAccel = 20.0f; ///< m/s^2 toward vertical intent
 			float waterSurfaceBreachingAccel = 18.0f; ///< upward force near surface
 			float waterSurfaceBreachingDepth = 0.25f; ///< meters depth considered "near surface"
+			/// Poussée d'Archimède (m/s²) : sans « plonger » enfoncé, le nageur remonte
+			/// vers la surface depuis n'importe quelle profondeur (avant : il coulait au
+			/// fond des eaux profondes — mer, grands lacs). Doit dépasser
+			/// |gravity| × waterGravityMultiplier (6 m/s² avec gravity = −20) : 10 m/s²
+			/// donnent une remontée nette de ~4 m/s², vitesse limite ~1,6 m/s.
+			float waterBuoyancyAccel = 10.0f;
+			/// Amortissement vertical dans l'eau (1/s) : pas de rebond à la surface.
+			float waterVerticalDamping = 2.5f;
 
 			// Flying parameters (optional).
 			bool enableFlying = true;

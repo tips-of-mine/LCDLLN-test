@@ -60,6 +60,14 @@ if [[ -d "$ROOT/game/data" ]]; then
   rm -rf "$DOCKER_DIR/game/data"
   mkdir -p "$DOCKER_DIR/game/data"
   cp -r "$ROOT/game/data/." "$DOCKER_DIR/game/data/"
+  # Monde « royaumes » : le master et le shard ne lisent dans les cellules que les
+  # .json / .txt (zone, spawners, respawn…). Les données de RENDU générées
+  # (heightmap, splat, herbe, décor, bâtiments, eau : ~30 Mo par cellule) restent
+  # dans le seul paquet client.
+  if [[ -d "$DOCKER_DIR/game/data/zones" ]]; then
+    find "$DOCKER_DIR/game/data/zones" -path "*/cell_*/*" \( -name "*.r16h" -o -name "*.slap" -o -name "*.grms" \) -type f -delete
+  fi
+  rm -rf "$DOCKER_DIR/game/data/instances"/zone_cell_*
 else
   echo "Warning: game/data missing" >&2
 fi

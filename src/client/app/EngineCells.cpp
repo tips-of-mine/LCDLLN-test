@@ -119,6 +119,7 @@ namespace engine
 	{
 		if (!m_cellWorld)
 			return;
+		LOG_INFO(Core, "[Cells] Boot : hauteurs + thread de chargement");
 		m_cellHeights = std::make_unique<cells::CellHeightFields>(&m_renderFrame);
 		m_cellLoader.Start();
 		m_terrainCollider.BindHeightFields(nullptr, m_cellHeights.get());
@@ -130,6 +131,7 @@ namespace engine
 		m_cellCollider.SetBase(&m_worldCollider);
 		m_uiModelBinding.SetWorldOrigin(m_renderFrame.OriginX(), m_renderFrame.OriginZ());
 		m_questPoiTable.SetOrigin(m_renderFrame.OriginX(), m_renderFrame.OriginZ());
+		LOG_INFO(Core, "[Cells] Boot : collisions et origine OK, lecture de l'eau ({} cellule(s))", m_generatedCells.Cells().size());
 
 		// Eau : TOUTES les cellules générées dès le boot (peu de données) — la passe
 		// d'eau est choisie à la construction du FrameGraph, qui exige un mesh valide.
@@ -137,6 +139,7 @@ namespace engine
 		for (const cells::CellCoord& cell : m_generatedCells.Cells())
 		{
 			const std::string rel = "instances/zone_" + cells::CellDirName(cell) + "/water.bin";
+			LOG_DEBUG(Render, "[Cells] Boot : eau '{}'", rel);
 			const std::vector<uint8_t> bytes = ReadContentBytes(m_cfg, rel);
 			if (bytes.empty())
 				continue;
@@ -150,6 +153,7 @@ namespace engine
 			}
 			m_cellWaterGlobal[cells::CellZoneId(cell)] = std::move(scene);
 		}
+		LOG_INFO(Core, "[Cells] Boot : eau lue, scene de rendu");
 		RebuildCellWater();
 		m_terrainCollider.BindWater(m_clientWaterScene.get());
 		LOG_INFO(Render, "[Cells] Eau : {} cellule(s) avec eau", m_cellWaterGlobal.size());

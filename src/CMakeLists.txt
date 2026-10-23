@@ -1041,6 +1041,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(character_controller_jump_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CharacterControllerJumpTests.cpp)
 
+  # Nage en eau profonde : remontée vers la surface sans « plonger » (poussée
+  # d'Archimède), descente en plongée.
+  lcdlln_add_simple_test(character_controller_swim_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CharacterControllerSwimTests.cpp)
+
   # Collision props : CompositeWorldCollider (terrain + cylindres verticaux).
   # Verifie sweep capsule-vs-cylindre (traversee bloquee, a-cote ignore, hors
   # bornes Y ignore, delegation QueryWater au terrain).

@@ -253,6 +253,10 @@ namespace engine::gameplay
 				const float t = 1.0f - (wq.depth / m_cfg.waterSurfaceBreachingDepth);
 				vel.y += m_cfg.waterSurfaceBreachingAccel * t * dt;
 			}
+			// Flottaison : remontée vers la surface tant que le joueur ne plonge pas.
+			if (!input.swimDownPressed && wq.depth >= m_cfg.waterSurfaceBreachingDepth)
+				vel.y += m_cfg.waterBuoyancyAccel * dt;
+			vel.y *= std::max(0.0f, 1.0f - m_cfg.waterVerticalDamping * dt);
 		}
 
 		// Flying vertical control and stamina drain.

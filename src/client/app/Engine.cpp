@@ -1313,8 +1313,14 @@ namespace engine
 		// jamais en mode cellules.
 		const bool anyEditor = HasCliFlag(argc, argv, "--world-editor") || HasCliFlag(argc, argv, "--editor")
 			|| m_cfg.GetBool("editor.enabled", false);
+		// Monde actif en cellules : l'éditeur ouvre la zone historique `editor.zone`
+		// (défaut feyhin) — les cellules se régénèrent avec tools/world_gen.
 		if (anyEditor && engine::world::cells::IsCellWorld(m_cfg.GetString("world.active_zone", "")))
-			LOG_WARN(Core, "[Cells] Editeur : le monde en cellules n'est pas editable ici (zone historique attendue)");
+		{
+			const std::string editorZone = m_cfg.GetString("editor.zone", "feyhin");
+			LOG_WARN(Core, "[Cells] Editeur : monde en cellules non editable ici, zone '{}' ouverte (editor.zone)", editorZone);
+			m_cfg.SetValue("world.active_zone", editorZone);
+		}
 		if (!(!anyEditor && LoadCellWorldSettings())
 			&& !engine::core::Config::LoadActiveZone(m_cfg, m_cfg.GetString("paths.content", "game/data")))
 		{

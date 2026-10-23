@@ -33,7 +33,7 @@
   "paths": { "content": "game/data" },
   "world": {
     "_comment": "Monde hébergé par ce shard. Zone historique (feyhin) : game/data/zones/<active_zone>/. \"royaumes\" = monde continu en cellules de 10 km (zones/cell_*, world/royaumes/start_locations.json générés par tools/world_gen) — à basculer EN MÊME TEMPS sur le master. Voir docs/world/ROYAUMES.md.",
-    "active_zone": "feyhin",
+    "active_zone": "royaumes",
     "_comment_region": "Monde en cellules : une cellule de 10 km est simulée (spawners, mobs) si un joueur s'y trouve ou à moins de cette distance (m) de son bord. Doit dépasser le rayon d'intérêt (350 m). Défaut 1000.",
     "region_activation_margin_m": 1000
   }

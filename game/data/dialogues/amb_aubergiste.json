@@ -1,0 +1,78 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Entre, entre ! Une soupe chaude et un coin de paille pour la nuit ?"
+                },
+                "1": {
+                    "text": "(Elle remue une grande marmite qui sent bon le lard.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Des nouvelles du pays ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "On peut revenir ici ?",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Les marchands disent que la route de l'est est plus sure depuis que les patrouilles imperiales y passent."
+                },
+                "1": {
+                    "text": "Mais les montagnes, elles, ne sont sures pour personne."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "On peut revenir ici ?",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Bien sur. Si tu tombes au combat, c'est souvent ici qu'on te ramene, alors autant etre en bons termes !"
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Des nouvelles du pays ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

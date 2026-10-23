@@ -341,6 +341,7 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 | `cmake/README.md` | Doc des modules CMake (chargement, ajout d'un nouveau module). |
 | `tools/hlod_builder/` | Génère les niveaux de détail (HLOD) pour les zones 3D. |
 | `tools/zone_builder/` | Construit les packages de zones (chunks, GLTF → PAK). |
+| `tools/world_gen/` | **Générateur du monde « Royaumes »** (`lcdlln_world_gen`) : depuis `game/data/world/royaumes/world_master.json`, produit terrain, routes, eau, villes, végétation, PNJ et points de départ. Doc : `docs/world/ROYAUMES.md`. |
 | `tools/load_tester/` | Simule des connexions massives pour tester la charge serveur. |
 | `tools/migration_checksum/` | Vérifie l'intégrité des migrations SQL. |
 
@@ -2479,3 +2480,21 @@ Greffé dans `WorldEditorShell::Init` (après `BuildingEditorPanel`) ; rendu aut
 ## Quêtes — POI minimap (SP3)
 
 Une **minimap radar** schématique (sans texture, dessinée à l'`ImDrawList`) affiche les **POI des objectifs de quête actifs**. `QuestUiPresenter::RebuildMinimap` résout, pour chaque étape non terminée d'une quête `Active` (status wire système B = 2), les positions de sa cible via **`QuestPoiTable`** (`game/data/quests/quest_poi.json` : `targetId → positions monde`), projetées en coordonnées **radar centrées joueur** par la fonction pure `WorldToRadarUv` (rayon `client.quest.minimap.radius_m`, défaut 60 m ; POI hors-rayon clampé au bord du cadre). `QuestImGuiRenderer::RenderMinimap` (appelé après le tracker, gardé `#if defined(_WIN32)`) dessine le cadre + les POI teintés par type (kill=rouge, talk=jaune, enter=bleu) + le marqueur joueur au centre. Config `client.quest.minimap.{enabled, size_px, radius_m}`. 100 % client, aucun wire. Détails : `docs/superpowers/specs/2026-07-02-quest-sp3-minimap-poi-design.md`.
+
+## Monde jouable « Royaumes » (2026-10)
+
+Monde continu en **cellules de 10 km** (1 case du lore = 1 cellule) généré par `tools/world_gen` depuis `game/data/world/royaumes/world_master.json` ; sorties générées par la CI (non versionnées). Avancement par étapes et doc complète : **`docs/world/ROYAUMES.md`**.
+
+| Fichier | Rôle |
+|---|---|
+| `src/shared/world/WorldCells.{h,cpp}` | **Convention des cellules de 10 km** : position ↔ cellule ↔ nom `cell_nXXX_eYYY` ↔ id de zone serveur (pur, `world_cells_tests`). |
+| `tools/world_gen/lib/{Terrain,Places,Roads,Settlements,Vegetation,Population,Output}.cpp` | Étapes du générateur : couche macro (continent) puis cellules 2049² (déterministe, seed du master). |
+| `src/client/world/instances/ScatterInstances.h` | Format `scatter.bin` « LCSC » v1/v2 (décor instancié ; v2 = table de chunks de 500 m pour le streaming). |
+| `src/client/world/scatter/ScatterField.{h,cpp}` | Grille 32 m + frustum + culling par classe des instances de décor. |
+| `src/client/app/EngineWorld.cpp` | Chargement / rendu instancié du décor et des bâtiments, collisions, carte & bannière. |
+| `src/client/world/places/WorldPlaces.{h,cpp}` | `places.json` : villes, POI, régions ; bannière « Vous entrez à … » (pur, `world_places_tests`). |
+| `src/client/render/WorldMapImGuiRenderer.{h,cpp}` | Fenêtre Carte du monde (touche M) + bannière (ImGui, `_WIN32`). |
+| `src/client/gameplay/CompositeWorldCollider.{h,cpp}` | Index spatial 16 m des collisions (bâtiments, décor). |
+| `src/shardd/gameplay/ambient/AmbientRoutine.{h,cpp}` | Routines des PNJ d'ambiance : tour / patrol / post / wander, horaires jour/nuit (pur, `ambient_routine_tests`). |
+| `src/shared/server_bootstrap/ServerApp.cpp` (`UpdateAmbientMob`) | Application serveur des routines (non attaquables, arrêt près d'un joueur, retour à la maison hors horaire). |
+| `src/shared/world/StartLocations.{h,cpp}` | Points de départ par race (`world/start_locations.json`), lus par `CharacterCreateHandler` (master). |

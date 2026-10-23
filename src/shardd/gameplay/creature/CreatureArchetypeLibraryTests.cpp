@@ -76,6 +76,35 @@ namespace
 		return true;
 	}
 
+	/// Monde vivant — bloc behavior : PNJ d'ambiance non attaquable, vitesse propre ;
+	/// archétype sans behavior = créature attaquable ; kind inconnu rejeté.
+	bool TestBehavior()
+	{
+		const char* json = R"({ "archetypes": [
+    { "id": 200, "name": "Villageois", "level": 1,
+      "stats": { "hp": 50, "damage": 0, "accuracy": 0, "rangeMeters": 1.0, "critRate": 0, "critMult": 1.0, "attackPeriodMs": 2000 },
+      "xpReward": 0, "model": { "mesh": "humains" },
+      "behavior": { "kind": "ambient", "moveSpeed": 1.4 } },
+    { "id": 100, "name": "Sanglier", "level": 2,
+      "stats": { "hp": 60, "damage": 5, "accuracy": 80, "rangeMeters": 2.5, "critRate": 2, "critMult": 1.5, "attackPeriodMs": 2000 },
+      "xpReward": 10, "model": { "mesh": "orcs" } } ] })";
+		CreatureArchetypeLibrary library = MakeLibrary();
+		std::string error;
+		if (!library.LoadFromText(json, error)) { LOG_ERROR(Core, "[CreatureArchetypeLibraryTests] behavior rejected: {}", error); return false; }
+		const CreatureArchetype* v = library.Find(200);
+		const CreatureArchetype* b = library.Find(100);
+		if (!v || !b) return false;
+		if (!v->ambient || v->attackable || v->moveSpeedMetersPerSecond < 1.39f || v->moveSpeedMetersPerSecond > 1.41f) return false;
+		if (b->ambient || !b->attackable || b->moveSpeedMetersPerSecond != 0.0f) return false;
+		const char* bad = R"({ "archetypes": [ { "id": 201, "name": "X", "level": 1,
+      "stats": { "hp": 5, "damage": 0, "accuracy": 0, "rangeMeters": 1, "critRate": 0, "critMult": 1, "attackPeriodMs": 1000 },
+      "xpReward": 0, "model": { "mesh": "humains" }, "behavior": { "kind": "fantome" } } ] })";
+		CreatureArchetypeLibrary lib2 = MakeLibrary();
+		if (lib2.LoadFromText(bad, error)) return false;
+		LOG_INFO(Core, "[CreatureArchetypeLibraryTests] behavior OK");
+		return true;
+	}
+
 	bool TestMissingArchetypesArray()
 	{
 		CreatureArchetypeLibrary library = MakeLibrary();
@@ -175,7 +204,8 @@ int main(int argc, char** argv)
 		&& TestDuplicateIdRejected()
 		&& TestZeroHpRejected()
 		&& TestZeroAttackPeriodRejected()
-		&& TestMissingModelRejected();
+		&& TestMissingModelRejected()
+		&& TestBehavior();
 
 	if (ok) LOG_INFO(Core, "[CreatureArchetypeLibraryTests] ALL OK");
 	else LOG_ERROR(Core, "[CreatureArchetypeLibraryTests] FAIL");

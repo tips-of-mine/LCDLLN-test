@@ -1,0 +1,75 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Legionnaire de Tsaroth. Avance."
+                },
+                "1": {
+                    "text": "(Des cendres tombent doucement de son armure noircie.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Que garde la Legion ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "Un conseil ?",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "La cite contre ce qui rampe hors de la Faille. Diablotins, chiens des cendres, et pire."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Un conseil ?",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Parle a Ysviel avant de sortir. Elle sait lire les braises."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Que garde la Legion ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

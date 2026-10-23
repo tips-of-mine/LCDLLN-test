@@ -160,13 +160,14 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: cmake --preset vs2022-x64
 
-      - name: Build (éditeur + carte — world_editor_app, zone_builder)
+      - name: Build (éditeur + carte — world_editor_app, zone_builder, lcdlln_world_gen)
         shell: pwsh
         env:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: |
           cmake --build --preset vs2022-x64-release --target world_editor_app
           cmake --build --preset vs2022-x64-release --target zone_builder
+          cmake --build --preset vs2022-x64-release --target lcdlln_world_gen
 
       - name: Vérifie présence des exécutables (éditeur + carte)
         shell: pwsh
@@ -215,7 +216,7 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: |
           . "${{ github.workspace }}\.github\scripts\package-windows.ps1"
-          Copy-ArtifactExes -Names @("lcdlln_world_editor.exe", "zone_builder.exe")
+          Copy-ArtifactExes -Names @("lcdlln_world_editor.exe", "zone_builder.exe", "lcdlln_world_gen.exe")
           Copy-RuntimeDlls -IncludeGraphics
           Copy-GameData
           Copy-ClientConfig

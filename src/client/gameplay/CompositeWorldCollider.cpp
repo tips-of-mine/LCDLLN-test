@@ -1,5 +1,6 @@
 #include "src/client/gameplay/CompositeWorldCollider.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace engine::gameplay
@@ -13,6 +14,77 @@ namespace engine::gameplay
 		if (m_terrain) return m_terrain->QueryWater(worldCenter, out);
 		out = WaterQuery{};
 		return false;
+	}
+
+	namespace
+	{
+		/// Clé de case de la grille d'index (x, z entiers signés 32 bits).
+		int64_t CellKey(int32_t cx, int32_t cz)
+		{
+			return (static_cast<int64_t>(cx) << 32) ^ static_cast<int64_t>(static_cast<uint32_t>(cz));
+		}
+		int32_t CellOf(float v, float cell) { return static_cast<int32_t>(std::floor(v / cell)); }
+	}
+
+	void CompositeWorldCollider::RebuildIndex() const
+	{
+		m_cylCells.clear();
+		m_boxCells.clear();
+		auto insert = [](std::unordered_map<int64_t, std::vector<uint32_t>>& cells, uint32_t idx,
+			float minX, float minZ, float maxX, float maxZ) {
+			const int32_t x0 = CellOf(minX, kIndexCellM), x1 = CellOf(maxX, kIndexCellM);
+			const int32_t z0 = CellOf(minZ, kIndexCellM), z1 = CellOf(maxZ, kIndexCellM);
+			for (int32_t cz = z0; cz <= z1; ++cz)
+				for (int32_t cx = x0; cx <= x1; ++cx)
+					cells[CellKey(cx, cz)].push_back(idx);
+		};
+		for (uint32_t i = 0; i < static_cast<uint32_t>(m_cylinders.size()); ++i)
+		{
+			const PropCylinder& c = m_cylinders[i];
+			insert(m_cylCells, i, c.cx - c.radius, c.cz - c.radius, c.cx + c.radius, c.cz + c.radius);
+		}
+		for (uint32_t i = 0; i < static_cast<uint32_t>(m_boxes.size()); ++i)
+		{
+			const PropBox& b = m_boxes[i];
+			// Demi-étendue XZ du rectangle orienté.
+			const float ex = std::fabs(b.axisX.x) * b.halfX + std::fabs(b.axisZ.x) * b.halfZ;
+			const float ez = std::fabs(b.axisX.z) * b.halfX + std::fabs(b.axisZ.z) * b.halfZ;
+			insert(m_boxCells, i, b.cx - ex, b.cz - ez, b.cx + ex, b.cz + ez);
+		}
+		m_cylStamp.assign(m_cylinders.size(), 0u);
+		m_boxStamp.assign(m_boxes.size(), 0u);
+		m_stamp = 0;
+		m_indexDirty = false;
+	}
+
+	void CompositeWorldCollider::GatherCandidates(float minX, float minZ, float maxX, float maxZ,
+		std::vector<uint32_t>& outCyl, std::vector<uint32_t>& outBox) const
+	{
+		if (m_indexDirty) RebuildIndex();
+		outCyl.clear();
+		outBox.clear();
+		if (++m_stamp == 0u)
+		{
+			std::fill(m_cylStamp.begin(), m_cylStamp.end(), 0u);
+			std::fill(m_boxStamp.begin(), m_boxStamp.end(), 0u);
+			m_stamp = 1u;
+		}
+		const int32_t x0 = CellOf(minX, kIndexCellM), x1 = CellOf(maxX, kIndexCellM);
+		const int32_t z0 = CellOf(minZ, kIndexCellM), z1 = CellOf(maxZ, kIndexCellM);
+		for (int32_t cz = z0; cz <= z1; ++cz)
+			for (int32_t cx = x0; cx <= x1; ++cx)
+			{
+				const int64_t key = CellKey(cx, cz);
+				if (auto it = m_cylCells.find(key); it != m_cylCells.end())
+					for (uint32_t i : it->second)
+						if (m_cylStamp[i] != m_stamp) { m_cylStamp[i] = m_stamp; outCyl.push_back(i); }
+				if (auto it = m_boxCells.find(key); it != m_boxCells.end())
+					for (uint32_t i : it->second)
+						if (m_boxStamp[i] != m_stamp) { m_boxStamp[i] = m_stamp; outBox.push_back(i); }
+			}
+		// Ordre croissant = ordre historique du parcours exhaustif (départage des égalités).
+		std::sort(outCyl.begin(), outCyl.end());
+		std::sort(outBox.begin(), outBox.end());
 	}
 
 	bool CompositeWorldCollider::SweepCapsule(const Capsule& capsule,
@@ -46,8 +118,16 @@ namespace engine::gameplay
 		// flanc l'empêcherait d'avancer = perso coincé en haut).
 		constexpr float kStandSkin = 0.05f;
 
-		for (const auto& c : m_cylinders)
+		// Candidats de l'index spatial : AABB XZ du balayage élargi du rayon capsule.
 		{
+			const float r = capsule.radius + 0.05f;
+			GatherCandidates(std::min(sx, endCenter.x) - r, std::min(sz, endCenter.z) - r,
+				std::max(sx, endCenter.x) + r, std::max(sz, endCenter.z) + r, m_candCyl, m_candBox);
+		}
+
+		for (const uint32_t cylIndex : m_candCyl)
+		{
+			const PropCylinder& c = m_cylinders[cylIndex];
 			// Porte (mesh « door ») : passage franchissable → le cylindre n'oppose
 			// AUCUNE collision (ni capuchon ni flanc), le perso traverse l'embrasure.
 			if (c.passable) continue;
@@ -142,8 +222,9 @@ namespace engine::gameplay
 		// 3) Boîtes orientées de props (murs/jambages/linteaux de bâtiment).
 		//    Même découpage que les cylindres : recouvrement Y + empreinte XZ, mais
 		//    l'empreinte est un rectangle orienté au lieu d'un disque.
-		for (const auto& b : m_boxes)
+		for (const uint32_t boxIndex : m_candBox)
 		{
+			const PropBox& b = m_boxes[boxIndex];
 			if (b.passable) continue;
 
 			// --- 3a) Capuchon supérieur (Roadmap-5, 2026-07-19) : dessus

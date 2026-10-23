@@ -1,0 +1,79 @@
+{
+    "_comment": "Monde Royaumes — PNJ de quete d'une ville de depart (world_master.json interactables). Les boutons Accepter/Rendre sont injectes a l'execution (UIModel.giverList), pas dans ce JSON.",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Toi ! Nouveau sang du kraal ! Montre ce que valent tes poings !"
+                },
+                "1": {
+                    "text": "(Grokhaar frappe sa poitrine, faisant trembler ses colliers d'os.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Le clan ?",
+                    "next": "about"
+                },
+                "1": {
+                    "text": "Du travail ?",
+                    "next": "task"
+                },
+                "2": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "about",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Le clan est fort parce que chaque orc est fort. Toi aussi, bientot."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Du travail ?",
+                    "next": "task"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "task",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Va voir Shazka. Elle sait ce que veulent les esprits. Puis chasse les pillards du clan rival !"
+                },
+                "1": {
+                    "text": "(Pour t'engager ou rendre une tache, choisis 'Accepter' / 'Rendre' ci-dessous.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Revenir.",
+                    "next": "intro"
+                },
+                "1": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

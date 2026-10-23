@@ -9,7 +9,10 @@ on:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest
+    # Épinglé : ubuntu-latest bascule vers Ubuntu 26 depuis le 19/10/2026. Les
+    # images Docker (Dockerfile.master/shard) sont en ubuntu:24.04 : des binaires
+    # compilés sur une glibc plus récente n'y tourneraient pas.
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -40,8 +43,14 @@ jobs:
             pkg-config \
             zip
 
+      # vcpkg épinglé : depuis glfw3 3.5.1 (vcpkg e208d9a, 08/2026), glfw3 dépend
+      # sous Linux du port libx11 compilé depuis les sources (autotools absents du
+      # runner) -> échec à Configure. On fige le dernier état vert (2026-07-21) ;
+      # glfw3 utilise alors les en-têtes X11 système installés plus haut.
       - name: Clone vcpkg
-        run: git clone https://github.com/Microsoft/vcpkg.git "$GITHUB_WORKSPACE/vcpkg"
+        run: |
+          git clone https://github.com/Microsoft/vcpkg.git "$GITHUB_WORKSPACE/vcpkg"
+          git -C "$GITHUB_WORKSPACE/vcpkg" checkout --quiet 3ddaad9be959816602453ecb05533f8732464ef4
 
       - name: Bootstrap vcpkg
         run: bash "$GITHUB_WORKSPACE/vcpkg/bootstrap-vcpkg.sh" -disableMetrics

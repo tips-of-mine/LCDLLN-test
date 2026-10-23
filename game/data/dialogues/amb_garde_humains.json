@@ -1,0 +1,75 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Circulez, voyageur. Le guet veille."
+                },
+                "1": {
+                    "text": "(Il tapote la garde de son epee, l'air las.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Des ennuis recemment ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "Ou trouver un lit ?",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Des bandits au sud, des loups a l'ouest. La capitaine Rendal en parlera mieux que moi."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Ou trouver un lit ?",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "L'auberge, au coeur du hameau. La lanterne rouge, tu ne peux pas la manquer."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Des ennuis recemment ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

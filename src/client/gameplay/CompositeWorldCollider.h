@@ -3,6 +3,8 @@
 #include "src/client/gameplay/CharacterController.h"  // IWorldCollider
 #include "src/shared/math/Math.h"
 
+#include <cstdint>
+#include <unordered_map>
 #include <vector>
 
 namespace engine::gameplay
@@ -69,11 +71,11 @@ namespace engine::gameplay
 		explicit CompositeWorldCollider(const IWorldCollider* terrain = nullptr);
 
 		void SetTerrain(const IWorldCollider* terrain) { m_terrain = terrain; }
-		void ClearCylinders() { m_cylinders.clear(); }
-		void AddCylinder(const PropCylinder& c) { m_cylinders.push_back(c); }
+		void ClearCylinders() { m_cylinders.clear(); m_indexDirty = true; }
+		void AddCylinder(const PropCylinder& c) { m_cylinders.push_back(c); m_indexDirty = true; }
 		std::size_t CylinderCount() const { return m_cylinders.size(); }
-		void AddBox(const PropBox& b) { m_boxes.push_back(b); }
-		void ClearBoxes() { m_boxes.clear(); }
+		void AddBox(const PropBox& b) { m_boxes.push_back(b); m_indexDirty = true; }
+		void ClearBoxes() { m_boxes.clear(); m_indexDirty = true; }
 		std::size_t BoxCount() const { return m_boxes.size(); }
 
 		bool SweepCapsule(const Capsule& capsule,
@@ -84,8 +86,32 @@ namespace engine::gameplay
 		bool QueryWater(const engine::math::Vec3& worldCenter, WaterQuery& out) const override;
 
 	private:
+		/// Monde ouvert (chantier « Royaumes ») : des dizaines de milliers de troncs,
+		/// rochers et pans de murs. Un balayage linéaire de toutes les primitives à
+		/// chaque sweep devient prohibitif ; on indexe donc cylindres et boîtes dans
+		/// une grille uniforme XZ de kIndexCellM mètres (reconstruite paresseusement
+		/// après tout Add/Clear). Le sweep ne teste que les primitives des cases
+		/// couvertes par son AABB, dans l'ORDRE CROISSANT des indices — résultat
+		/// identique au parcours exhaustif historique.
+		static constexpr float kIndexCellM = 16.0f;
+		/// Reconstruit l'index spatial. Effet de bord : met à jour les caches mutables.
+		void RebuildIndex() const;
+		/// Collecte (triés, sans doublon) les indices de cylindres et de boîtes dont
+		/// l'empreinte XZ peut recouper le rectangle [minX,maxX]x[minZ,maxZ].
+		void GatherCandidates(float minX, float minZ, float maxX, float maxZ,
+			std::vector<uint32_t>& outCyl, std::vector<uint32_t>& outBox) const;
+
 		const IWorldCollider* m_terrain = nullptr;
 		std::vector<PropCylinder> m_cylinders;
 		std::vector<PropBox> m_boxes;
+
+		mutable bool m_indexDirty = true;
+		mutable std::unordered_map<int64_t, std::vector<uint32_t>> m_cylCells;
+		mutable std::unordered_map<int64_t, std::vector<uint32_t>> m_boxCells;
+		mutable std::vector<uint32_t> m_cylStamp;
+		mutable std::vector<uint32_t> m_boxStamp;
+		mutable uint32_t m_stamp = 0;
+		mutable std::vector<uint32_t> m_candCyl;
+		mutable std::vector<uint32_t> m_candBox;
 	};
 }

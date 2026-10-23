@@ -1,6 +1,7 @@
 #pragma once
 
 #include "src/shared/core/Config.h"
+#include "src/shardd/gameplay/ambient/AmbientRoutine.h"
 
 #include <cstdint>
 #include <string>
@@ -21,6 +22,9 @@ namespace engine::server
 		uint32_t count = 1;
 		uint32_t respawnSeconds = 1;
 		float leashDistanceMeters = 24.0f;
+		/// Monde vivant — routine d'ambiance optionnelle (`routine` du JSON) ;
+		/// kind None = IA de créature historique (errance + riposte).
+		ambient::RoutineDefinition routine;
 	};
 
 	/// Server-side spawner runtime: loads zone JSON definitions resolved from `paths.content`.

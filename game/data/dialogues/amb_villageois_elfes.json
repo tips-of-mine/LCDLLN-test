@@ -1,0 +1,75 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Paix sur toi, voyageur. La colline t'a laisse passer."
+                },
+                "1": {
+                    "text": "(Une brise fait frissonner les feuilles autour de vous.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Que murmurent les arbres ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "Qui dirige ici ?",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Que quelque chose pourrit au coeur de la foret. Les loups ont les yeux rouges, desormais."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Qui dirige ici ?",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Iaelith, la gardienne. Elle t'attend pres du grand arbre, au centre."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Que murmurent les arbres ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

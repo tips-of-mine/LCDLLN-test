@@ -42,6 +42,8 @@
 #include "src/client/gameplay/SpellKitCatalog.h"
 #include "src/client/gameplay/ClassSkillCatalog.h"
 #include "src/client/render/SkillIconCache.h"
+#include "src/client/render/WorldMapImGuiRenderer.h"
+#include "src/client/world/places/WorldPlaces.h"
 #include "src/client/skills/ClassSkillTreeUi.h"
 // Combat SP4 — FX visuels d'auras (halo aux pieds des entités).
 #include "src/client/combat/AuraFXSystem.h"
@@ -59,6 +61,7 @@
 #include "src/shared/platform/Window.h"
 #include "src/client/render/AssetRegistry.h"
 #include "src/client/render/CameraOcclusionFade.h"
+#include "src/client/world/scatter/ScatterField.h"
 #include "src/client/render/ImpostorAsset.h"
 #include "src/client/render/DecalSystem.h"
 #include "src/client/render/FrameGraph.h"
@@ -959,6 +962,32 @@ namespace engine
 		/// interactibles ayant un meshPath. Cf. LoadInteractableProps / RecordPropsGeometry.
 		std::vector<PropRenderable> m_props;
 
+		// ---- Monde ouvert (chantier « Royaumes ») : décor + bâtiments INSTANCIÉS ----
+		/// Toutes les instances statiques du monde (scatter.bin + pièces de
+		/// buildings.bin) : matrices posées au sol + grille de visibilité. Cf. EngineWorld.cpp.
+		engine::world::scatter::ScatterField m_scatterField;
+		/// Mesh GPU partagé par toutes les instances d'un même chemin (indexé par meshId
+		/// du champ) : parties par matériau + AABB locale (pour bornes et collisions).
+		struct ScatterMeshGpu
+		{
+			std::vector<PropPart> parts;
+			engine::math::Vec3 localMin{ 0.0f, 0.0f, 0.0f };
+			engine::math::Vec3 localMax{ 0.0f, 0.0f, 0.0f };
+			bool attempted = false; ///< chargement déjà tenté (succès ou échec mémorisé)
+			bool valid = false;
+		};
+		std::vector<ScatterMeshGpu> m_scatterMeshes;
+		/// Cache de matériaux du rendu instancié (nom de matériau glTF -> index bindless).
+		std::unordered_map<std::string, uint32_t> m_scatterMatCache;
+		/// Anneau de buffers d'instances (mat4) HOST_VISIBLE, un par frame en vol.
+		static constexpr uint32_t kScatterFrameSlots = 3u;
+		std::array<VkBuffer, kScatterFrameSlots> m_scatterInstBuf{};
+		std::array<VkDeviceMemory, kScatterFrameSlots> m_scatterInstMem{};
+		std::array<void*, kScatterFrameSlots> m_scatterInstMapped{};
+		std::array<uint32_t, kScatterFrameSlots> m_scatterInstCapacity{}; ///< capacité (instances) par slot
+		std::vector<uint32_t> m_scatterVisible;  ///< scratch : instances visibles de la frame
+		bool m_scatterOverflowLogged = false;
+
 		/// Aperçu éditeur — nombre de props « monde » (scenery + bâtiments posés)
 		/// présents dans m_props après le boot. SyncEditorBuildingPreview ne touche
 		/// QU'aux props de brouillon ajoutés au-delà de ce seuil, pour ne pas
@@ -1161,6 +1190,10 @@ namespace engine
 		void BuildPropFromMesh(const std::string& meshPath, float wx, float wz,
 			float yawDeg, float rotXDeg, float scale, int interactableIndex,
 			bool solid, float collisionRadius);
+		/// Collision d'une pièce de bâtiment posée par `worldM` (catalogue
+		/// building_pieces.json, sinon cylindre « mur »). Cf. Engine.cpp.
+		void RegisterBuildingPieceCollision(const std::string& meshPath, const engine::math::Mat4& worldM,
+			float cx, float cz, float radiusAuto, float minY, float maxY, float collisionRadius);
 
 		/// Variante de BuildPropFromMesh qui CUIT une matrice monde explicite
 		/// \p worldM dans les sommets, SANS ré-ancrage au sol (pas de lift
@@ -1176,6 +1209,72 @@ namespace engine
 		/// Dessine les props (m_props) dans la passe Geometry, après l'avatar : un
 		/// GeometryPass.Record par partie (matériau) avec loadOp=LOAD (superposition au
 		/// GBuffer terrain/avatar). No-op si pas de props ou pas de load pass.
+		// ---- Monde ouvert (EngineWorld.cpp) ----
+		/// Charge le décor instancié de la zone active (`world.scatter_path`, défaut
+		/// instances/zone_<zone>/scatter.bin) : pose au sol, bornes, collisions.
+		/// Doit être appelé main thread APRÈS l'init du terrain (GroundHeightAt) et
+		/// de m_worldCollider (LoadInteractableProps). Effet de bord : peuple
+		/// m_scatterField, m_scatterMeshes (meshes GPU partagés) et m_worldCollider.
+		void LoadScatterWorld();
+		/// Charge (une fois) le mesh GPU partagé d'un meshId du champ : parties par
+		/// matériau, AABB locale. \return false si le mesh est introuvable/vide.
+		/// Effet de bord : crée meshes GPU et matériaux (AssetRegistry, MaterialDescriptorCache).
+		bool EnsureScatterMesh(uint32_t meshId);
+		/// Ajoute au champ une instance posée par `model` (déjà au sol) et, si
+		/// \p solid, sa collision (catalogue de pièces si \p buildingPiece, sinon
+		/// cylindre de tronc/rocher de rayon \p collisionRadius, 0 = auto).
+		void AddScatterInstance(uint32_t meshId, const engine::math::Mat4& model, uint8_t cullClass,
+			uint8_t flags, bool solid, bool buildingPiece, float collisionRadius);
+		/// Enregistre les draws instanciés du décor visible (distance par classe +
+		/// frustum) dans le GBuffer (render pass LOAD de GeometryPass). Main thread,
+		/// pendant l'enregistrement de la passe Geometry (après RecordPropsGeometry).
+		void RecordScatterGeometry(VkCommandBuffer cmd, engine::render::Registry& reg,
+			const engine::RenderState& rs);
+		/// Ajoute à \p out les occulteurs du décor instancié proches du segment
+		/// caméra→joueur (ids = kScatterOccluderIdBase | index).
+		void CollectScatterOccluders(const engine::math::Vec3& camera, const engine::math::Vec3& focus,
+			std::vector<engine::render::OccluderSphere>& out) const;
+		/// Crée / agrandit le buffer d'instances du slot \p slot (jamais en vol : un
+		/// slot n'est réutilisé que kScatterFrameSlots frames plus tard).
+		/// \return false si échec Vulkan (le décor n'est alors pas dessiné cette frame).
+		bool EnsureScatterInstanceBuffer(uint32_t slot, uint32_t capacity);
+		/// Libère l'anneau de buffers d'instances (après vkDeviceWaitIdle).
+		void DestroyScatterResources();
+		/// Charge collision/building_pieces.json dans m_buildingCollisionCatalog
+		/// (boîtes fines des pièces de bâtiment). Idempotent (recharge). Doit
+		/// précéder LoadScatterWorld et LoadBuildings. Effet de bord : lecture disque.
+		void LoadBuildingCollisionCatalog();
+		/// Monde jouable — lieux du monde (places.json), chargés paresseusement au
+		/// premier HUD en jeu (\ref EnsureWorldPlaces).
+		engine::client::WorldPlaces m_worldPlaces;
+		bool m_worldPlacesAttempted = false;
+		/// Bannière « Vous entrez à … » (réarmée à chaque EnterWorld).
+		engine::client::PlaceBannerTracker m_placeBanner;
+		/// Fenêtre Carte du monde (touche M) : visibilité + zoom/pan.
+		bool m_worldMapVisible = false;
+		engine::render::WorldMapViewState m_worldMapView;
+		/// Race du personnage en jeu (payload EnterWorld) — met sa ville de départ en évidence.
+		std::string m_localRaceId;
+		/// Charge `world/<monde>/places.json` une seule fois (monde = zone active).
+		/// Effet de bord : lecture disque, log si absent. Main thread.
+		void EnsureWorldPlaces();
+		/// Met à jour la bannière de lieu puis dessine bannière + carte (si ouverte).
+		/// \param fg draw list foreground ImGui ; \param dw,dh framebuffer (px) ;
+		/// \param dtSec durée de frame (s). Main thread, entre NewFrame et Render.
+		void DrawWorldPlacesHud(ImDrawList* fg, float dw, float dh, float dtSec);
+
+		/// Monde vivant — rayon (m) pour parler à un PNJ d'ambiance avec E.
+		static constexpr float kAmbientTalkRadiusM = 2.6f;
+		/// Entité du PNJ d'ambiance à portée de parole (0 = aucun) : évite de
+		/// répéter l'invite dans le chat à chaque frame.
+		uint32_t m_ambientNpcInRange = 0u;
+		/// Entité du PNJ d'ambiance en conversation (0 = dialogue statique/aucun).
+		uint32_t m_dialogueRemoteEntityId = 0u;
+		/// Arbres de dialogue des PNJ d'ambiance déjà chargés (par dialogue id).
+		std::unordered_map<std::string, engine::client::DialogueTree> m_ambientDialogueCache;
+		/// Bit de tête des ids d'occulteurs du décor instancié (≠ indices de m_props).
+		static constexpr std::uint32_t kScatterOccluderIdBase = 0x80000000u;
+
 		void RecordPropsGeometry(VkCommandBuffer cmd, engine::render::Registry& reg,
 		                         const engine::RenderState& rs);
 		/// TD.2 — dessine les avatars des joueurs distants (m_uiModelBinding remoteEntities)

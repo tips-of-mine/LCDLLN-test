@@ -606,6 +606,48 @@ namespace engine::server
 				}
 			}
 
+			// Monde vivant — bloc `behavior` optionnel (absent = créature historique).
+			if (const JsonValue* behavior = FindObjectMember(entry, "behavior"); behavior != nullptr)
+			{
+				if (behavior->type != JsonType::Object)
+				{
+					outError = entryLabel + ": behavior must be an object";
+					m_archetypes.clear();
+					return false;
+				}
+				if (const JsonValue* kind = FindObjectMember(*behavior, "kind"); kind != nullptr)
+				{
+					if (kind->type != JsonType::String || (kind->stringValue != "ambient" && kind->stringValue != "creature"))
+					{
+						outError = entryLabel + ": behavior.kind must be \"ambient\" or \"creature\"";
+						m_archetypes.clear();
+						return false;
+					}
+					archetype.ambient = kind->stringValue == "ambient";
+				}
+				archetype.attackable = !archetype.ambient;
+				if (const JsonValue* att = FindObjectMember(*behavior, "attackable"); att != nullptr)
+				{
+					if (att->type != JsonType::Bool)
+					{
+						outError = entryLabel + ": behavior.attackable must be a boolean";
+						m_archetypes.clear();
+						return false;
+					}
+					archetype.attackable = att->boolValue;
+				}
+				if (const JsonValue* sp = FindObjectMember(*behavior, "moveSpeed"); sp != nullptr)
+				{
+					if (!TryGetFloat(*sp, archetype.moveSpeedMetersPerSecond) || archetype.moveSpeedMetersPerSecond < 0.0f
+						|| archetype.moveSpeedMetersPerSecond > 20.0f)
+					{
+						outError = entryLabel + ": behavior.moveSpeed must be within [0, 20]";
+						m_archetypes.clear();
+						return false;
+					}
+				}
+			}
+
 			const uint32_t archetypeId = archetype.archetypeId;
 			if (!m_archetypes.emplace(archetypeId, std::move(archetype)).second)
 			{
@@ -614,7 +656,7 @@ namespace engine::server
 				return false;
 			}
 
-			LOG_INFO(Net,
+			LOG_DEBUG(Net,
 				"[CreatureArchetypeLibrary] Loaded archetype (id={}, name={}, level={}, hp={}, damage={}, xp_reward={})",
 				archetypeId,
 				m_archetypes.at(archetypeId).name,

@@ -5,14 +5,8 @@
       "giver": "npc:elder_marn",
       "turnIn": "npc:elder_marn",
       "prereqs": [],
-      "steps": [
-        { "type": "kill", "target": "mob:100", "requiredCount": 10 }
-      ],
-      "rewards": {
-        "xp": 200,
-        "gold": 50,
-        "items": []
-      }
+      "steps": [{"type": "kill", "target": "mob:100", "requiredCount": 10}],
+      "rewards": {"xp": 200, "gold": 50, "items": []}
     },
     {
       "id": "hunt_collect_enter",
@@ -20,30 +14,18 @@
       "turnIn": "npc:elder_marn",
       "prereqs": [],
       "steps": [
-        { "type": "kill", "target": "mob:100", "requiredCount": 1 },
-        { "type": "collect", "target": "item:2001", "requiredCount": 1 }
+        {"type": "kill", "target": "mob:100", "requiredCount": 1},
+        {"type": "collect", "target": "item:2001", "requiredCount": 1}
       ],
-      "rewards": {
-        "xp": 100,
-        "gold": 25,
-        "items": [
-          { "itemId": 3001, "quantity": 1 }
-        ]
-      }
+      "rewards": {"xp": 100, "gold": 25, "items": [{"itemId": 3001, "quantity": 1}]}
     },
     {
       "id": "report_to_guard",
       "giver": "npc:guard_captain",
       "turnIn": "npc:guard_captain",
       "prereqs": ["hunt_collect_enter"],
-      "steps": [
-        { "type": "talk", "target": "npc:guard_captain", "requiredCount": 1 }
-      ],
-      "rewards": {
-        "xp": 25,
-        "gold": 5,
-        "items": []
-      }
+      "steps": [{"type": "talk", "target": "npc:guard_captain", "requiredCount": 1}],
+      "rewards": {"xp": 25, "gold": 5, "items": []}
     },
     {
       "_comment": "Contenu Feyhin lot 1 (2026-07-20) — 6 nouvelles quetes : deux chaines (Marn : soie -> alpha ; Rendal : loups puis bandits -> Varek) + une collecte libre (cerfs).",
@@ -51,90 +33,144 @@
       "giver": "npc:guard_captain",
       "turnIn": "npc:guard_captain",
       "prereqs": [],
-      "steps": [
-        { "type": "kill", "target": "mob:101", "requiredCount": 6 }
-      ],
-      "rewards": {
-        "xp": 150,
-        "gold": 40,
-        "items": []
-      }
+      "steps": [{"type": "kill", "target": "mob:101", "requiredCount": 6}],
+      "rewards": {"xp": 150, "gold": 40, "items": []}
     },
     {
       "id": "spider_silk",
       "giver": "npc:elder_marn",
       "turnIn": "npc:elder_marn",
       "prereqs": ["kill_10_boars"],
-      "steps": [
-        { "type": "collect", "target": "item:6005", "requiredCount": 5 }
-      ],
-      "rewards": {
-        "xp": 250,
-        "gold": 60,
-        "items": [
-          { "itemId": 2003, "quantity": 2 }
-        ]
-      }
+      "steps": [{"type": "collect", "target": "item:6005", "requiredCount": 5}],
+      "rewards": {"xp": 250, "gold": 60, "items": [{"itemId": 2003, "quantity": 2}]}
     },
     {
       "id": "alpha_trophy",
       "giver": "npc:elder_marn",
       "turnIn": "npc:elder_marn",
       "prereqs": ["spider_silk"],
-      "steps": [
-        { "type": "kill", "target": "mob:104", "requiredCount": 1 }
-      ],
-      "rewards": {
-        "xp": 400,
-        "gold": 120,
-        "items": [
-          { "itemId": 2003, "quantity": 3 }
-        ]
-      }
+      "steps": [{"type": "kill", "target": "mob:104", "requiredCount": 1}],
+      "rewards": {"xp": 400, "gold": 120, "items": [{"itemId": 2003, "quantity": 3}]}
     },
     {
       "id": "bandit_menace",
       "giver": "npc:guard_captain",
       "turnIn": "npc:guard_captain",
       "prereqs": ["report_to_guard"],
-      "steps": [
-        { "type": "kill", "target": "mob:103", "requiredCount": 5 }
-      ],
-      "rewards": {
-        "xp": 300,
-        "gold": 80,
-        "items": []
-      }
+      "steps": [{"type": "kill", "target": "mob:103", "requiredCount": 5}],
+      "rewards": {"xp": 300, "gold": 80, "items": []}
     },
     {
       "id": "bandit_leader",
       "giver": "npc:guard_captain",
       "turnIn": "npc:guard_captain",
       "prereqs": ["bandit_menace"],
-      "steps": [
-        { "type": "kill", "target": "mob:106", "requiredCount": 1 }
-      ],
-      "rewards": {
-        "xp": 500,
-        "gold": 200,
-        "items": [
-          { "itemId": 2003, "quantity": 3 }
-        ]
-      }
+      "steps": [{"type": "kill", "target": "mob:106", "requiredCount": 1}],
+      "rewards": {"xp": 500, "gold": 200, "items": [{"itemId": 2003, "quantity": 3}]}
     },
     {
       "id": "stag_offering",
       "giver": "npc:elder_marn",
       "turnIn": "npc:elder_marn",
       "prereqs": [],
-      "steps": [
-        { "type": "collect", "target": "item:6006", "requiredCount": 3 }
-      ],
-      "rewards": {
-        "xp": 180,
-        "gold": 50,
-        "items": []
-      }
+      "steps": [{"type": "collect", "target": "item:6006", "requiredCount": 3}],
+      "rewards": {"xp": 180, "gold": 50, "items": []}
+    },
+    {
+      "id": "elfes_accueil",
+      "giver": "npc:elfe_iaelith",
+      "turnIn": "npc:elfe_sylvanor",
+      "prereqs": [],
+      "steps": [{"type": "talk", "target": "npc:elfe_sylvanor", "requiredCount": 1}],
+      "rewards": {"xp": 60, "gold": 10, "items": []}
+    },
+    {
+      "id": "elfes_chasse",
+      "giver": "npc:elfe_sylvanor",
+      "turnIn": "npc:elfe_sylvanor",
+      "prereqs": ["elfes_accueil"],
+      "steps": [{"type": "kill", "target": "mob:120", "requiredCount": 6}],
+      "rewards": {"xp": 240, "gold": 55, "items": [{"itemId": 2003, "quantity": 1}]}
+    },
+    {
+      "id": "elfes_epreuve",
+      "giver": "npc:elfe_iaelith",
+      "turnIn": "npc:elfe_iaelith",
+      "prereqs": ["elfes_chasse"],
+      "steps": [{"type": "kill", "target": "mob:121", "requiredCount": 2}],
+      "rewards": {"xp": 380, "gold": 110, "items": [{"itemId": 2003, "quantity": 3}]}
+    },
+    {
+      "id": "orcs_accueil",
+      "giver": "npc:orc_grokhaar",
+      "turnIn": "npc:orc_shazka",
+      "prereqs": [],
+      "steps": [{"type": "talk", "target": "npc:orc_shazka", "requiredCount": 1}],
+      "rewards": {"xp": 60, "gold": 10, "items": []}
+    },
+    {
+      "id": "orcs_chasse",
+      "giver": "npc:orc_shazka",
+      "turnIn": "npc:orc_shazka",
+      "prereqs": ["orcs_accueil"],
+      "steps": [{"type": "kill", "target": "mob:130", "requiredCount": 6}],
+      "rewards": {"xp": 240, "gold": 55, "items": [{"itemId": 2003, "quantity": 1}]}
+    },
+    {
+      "id": "orcs_epreuve",
+      "giver": "npc:orc_grokhaar",
+      "turnIn": "npc:orc_grokhaar",
+      "prereqs": ["orcs_chasse"],
+      "steps": [{"type": "kill", "target": "mob:131", "requiredCount": 2}],
+      "rewards": {"xp": 380, "gold": 110, "items": [{"itemId": 2003, "quantity": 3}]}
+    },
+    {
+      "id": "nains_accueil",
+      "giver": "npc:nain_thrain",
+      "turnIn": "npc:nain_brunhild",
+      "prereqs": [],
+      "steps": [{"type": "talk", "target": "npc:nain_brunhild", "requiredCount": 1}],
+      "rewards": {"xp": 60, "gold": 10, "items": []}
+    },
+    {
+      "id": "nains_chasse",
+      "giver": "npc:nain_brunhild",
+      "turnIn": "npc:nain_brunhild",
+      "prereqs": ["nains_accueil"],
+      "steps": [{"type": "kill", "target": "mob:140", "requiredCount": 6}],
+      "rewards": {"xp": 240, "gold": 55, "items": [{"itemId": 2003, "quantity": 1}]}
+    },
+    {
+      "id": "nains_epreuve",
+      "giver": "npc:nain_thrain",
+      "turnIn": "npc:nain_thrain",
+      "prereqs": ["nains_chasse"],
+      "steps": [{"type": "kill", "target": "mob:141", "requiredCount": 2}],
+      "rewards": {"xp": 380, "gold": 110, "items": [{"itemId": 2003, "quantity": 3}]}
+    },
+    {
+      "id": "demons_accueil",
+      "giver": "npc:demon_maltheus",
+      "turnIn": "npc:demon_ysviel",
+      "prereqs": [],
+      "steps": [{"type": "talk", "target": "npc:demon_ysviel", "requiredCount": 1}],
+      "rewards": {"xp": 60, "gold": 10, "items": []}
+    },
+    {
+      "id": "demons_chasse",
+      "giver": "npc:demon_ysviel",
+      "turnIn": "npc:demon_ysviel",
+      "prereqs": ["demons_accueil"],
+      "steps": [{"type": "kill", "target": "mob:150", "requiredCount": 6}],
+      "rewards": {"xp": 240, "gold": 55, "items": [{"itemId": 2003, "quantity": 1}]}
+    },
+    {
+      "id": "demons_epreuve",
+      "giver": "npc:demon_maltheus",
+      "turnIn": "npc:demon_maltheus",
+      "prereqs": ["demons_chasse"],
+      "steps": [{"type": "kill", "target": "mob:151", "requiredCount": 2}],
+      "rewards": {"xp": 380, "gold": 110, "items": [{"itemId": 2003, "quantity": 3}]}
     }
   ]
 }

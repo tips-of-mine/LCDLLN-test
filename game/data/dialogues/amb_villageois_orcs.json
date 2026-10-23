@@ -1,0 +1,75 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Grrh. Toi nouveau. Toi fort ?"
+                },
+                "1": {
+                    "text": "(L'orc te jauge de haut en bas en faisant craquer ses poings.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Que fait le clan ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "La jungle ?",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Le clan chasse, le clan se bat, le clan mange. Grokhaar decide du reste."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "La jungle ?",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Pleine de raptors. Bonne viande. Mauvais caractere."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Que fait le clan ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

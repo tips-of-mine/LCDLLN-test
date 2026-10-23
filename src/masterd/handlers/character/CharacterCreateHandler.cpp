@@ -24,7 +24,21 @@ namespace engine::server
 	void CharacterCreateHandler::SetSessionManager(SessionManager* sessions) { m_sessions = sessions; }
 	void CharacterCreateHandler::SetConnectionSessionMap(ConnectionSessionMap* map) { m_connMap = map; }
 	void CharacterCreateHandler::SetConnectionPool(engine::server::db::ConnectionPool* pool) { m_pool = pool; }
-	void CharacterCreateHandler::SetConfig(const engine::core::Config* config) { m_config = config; }
+	void CharacterCreateHandler::SetConfig(const engine::core::Config* config)
+	{
+		m_config = config;
+		// Monde jouable — points de départ par race chargés ICI, au câblage du
+		// handler (avant tout trafic) : Handle() tourne sur les workers TCP du
+		// master, la table est ensuite en lecture seule (pas de verrou requis).
+		if (m_config != nullptr)
+		{
+			std::string startErr;
+			if (m_startLocations.LoadFromContent(*m_config, startErr))
+				LOG_INFO(Net, "[CharacterCreateHandler] Points de depart charges ({} race(s))", m_startLocations.Count());
+			else
+				LOG_WARN(Net, "[CharacterCreateHandler] Points de depart indisponibles ({}) — repli default_spawn", startErr);
+		}
+	}
 
 	bool CharacterCreateHandler::IsValidCharacterName(std::string_view name) const
 	{
@@ -233,11 +247,20 @@ namespace engine::server
 		// plus tard par le shard quand l'utilisateur se déconnecte / le serveur sauvegarde
 		// la position courante du personnage). Défauts cohérents avec le défaut client
 		// (config.json : client.world.default_spawn).
-		const double spawnX     = m_config ? m_config->GetDouble("character_creation.default_spawn.x", 0.0) : 0.0;
-		const double spawnY     = m_config ? m_config->GetDouble("character_creation.default_spawn.y", 100.0) : 100.0;
-		const double spawnZ     = m_config ? m_config->GetDouble("character_creation.default_spawn.z", 0.0) : 0.0;
-		const double spawnYaw   = m_config ? m_config->GetDouble("character_creation.default_spawn.yaw_deg", 0.0) : 0.0;
+		double spawnX     = m_config ? m_config->GetDouble("character_creation.default_spawn.x", 0.0) : 0.0;
+		double spawnY     = m_config ? m_config->GetDouble("character_creation.default_spawn.y", 100.0) : 100.0;
+		double spawnZ     = m_config ? m_config->GetDouble("character_creation.default_spawn.z", 0.0) : 0.0;
+		double spawnYaw   = m_config ? m_config->GetDouble("character_creation.default_spawn.yaw_deg", 0.0) : 0.0;
 		const double spawnPitch = m_config ? m_config->GetDouble("character_creation.default_spawn.pitch_deg", -10.0) : -10.0;
+		// Monde jouable (chantier « Royaumes ») — un nouveau personnage apparaît
+		// dans la ville de départ de SA race (world/start_locations.json, généré
+		// par tools/world_gen). Repli : clés character_creation.default_spawn.*.
+		if (const engine::world::StartLocation* start = m_startLocations.Resolve(parsed->raceId))
+		{
+			spawnX = start->x; spawnY = start->y; spawnZ = start->z; spawnYaw = start->yawDeg;
+			LOG_INFO(Net, "[CharacterCreateHandler] Depart race '{}' -> {} ({:.1f}, {:.1f}, {:.1f})",
+				parsed->raceId, start->cityName, spawnX, spawnY, spawnZ);
+		}
 
 		// Phase 3.8 — Persistance des identifiants chaîne race/classe choisis par
 		// l'utilisateur (parsed->raceId / parsed->classId, ex. "humains" / "warrior").

@@ -37,5 +37,7 @@ namespace engine::render
 		VkDescriptorSet materialDescriptorSet = VK_NULL_HANDLE;
 		/// Global material buffer index consumed by bindless material shaders.
 		uint32_t materialIndex = 0;
+		/// Fondu tramé (anti-occlusion caméra) appliqué à tout le lot : 1.0 = opaque.
+		float fade = 1.0f;
 	};
 }

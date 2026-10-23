@@ -28,3 +28,13 @@ tools/asset_pipeline/bin/*
 # Fichiers de travail conversion props (throwaway)
 _convert_log.txt
 tools/asset_pipeline/_validate_out/
+
+# Monde « Royaumes » (cellules de 10 km) : sorties GÉNÉRÉES par tools/world_gen
+# (lcdlln_world_gen ; la CI les produira avant l'empaquetage à l'étape 4) — jamais versionnées.
+# Seule la source (world/royaumes/world_master.json) et la bibliothèque de maisons
+# (buildings/templates/maison.json) sont dans git. Cf. docs/world/ROYAUMES.md.
+game/data/zones/cell_*/
+!game/data/zones/cell_n000_e000/
+game/data/instances/zone_cell_*/
+game/data/world/royaumes/*
+!game/data/world/royaumes/world_master.json

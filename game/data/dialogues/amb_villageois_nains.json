@@ -1,0 +1,75 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Par ma barbe ! Un visiteur a Ghrunke Dash."
+                },
+                "1": {
+                    "text": "(Il pose sa pioche et s'eponge le front.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Que creuse-t-on ici ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "Qui faut-il voir ?",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Fer, cuivre, et parfois pire. Les galeries du bas grouillent de rats gros comme des chiens."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Qui faut-il voir ?",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Thrain, a la forge. Et Brunhild si tu veux te rendre utile aux portes."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Que creuse-t-on ici ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

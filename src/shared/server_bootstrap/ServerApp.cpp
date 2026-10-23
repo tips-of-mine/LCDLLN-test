@@ -2158,6 +2158,12 @@ namespace engine::server
 	{
 		m_mobs.clear();
 		m_spawners.clear();
+		// Monde vivant — horloge monde du shard (mêmes clés et défauts que le
+		// master, cf. masterd/main_linux.cpp) : horaires jour/nuit des PNJ.
+		m_worldClockParams.epochRefUnixMs = static_cast<uint64_t>(
+			m_config.GetInt("game.worldclock.epoch_ms", 1767225600000ll));
+		m_worldClockParams.timeScaleRealMinPerDay = static_cast<float>(
+			m_config.GetDouble("game.worldclock.timescale_real_min_per_day", 60.0));
 		// Combat SP1 — le catalogue d'archétypes doit être chargé avant les
 		// spawners pour valider leurs références (politique stricte : catalogue
 		// absent/corrompu = le shard ne boote pas).
@@ -2531,6 +2537,12 @@ namespace engine::server
 
 	void ServerApp::UpdateMobAi(MobEntity& mob)
 	{
+		// Monde vivant — les PNJ d'ambiance suivent leur routine, sans aggro.
+		if (mob.ambient)
+		{
+			UpdateAmbientMob(mob);
+			return;
+		}
 		RefreshMobAggroTarget(mob);
 		if (mob.aggroTargetEntityId != 0)
 		{
@@ -2636,6 +2648,101 @@ namespace engine::server
 		}
 	}
 
+	float ServerApp::CurrentWorldHour() const
+	{
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now().time_since_epoch()).count());
+		return engine::world::TimeOfDayHours(engine::world::GameSeconds(nowMs, m_worldClockParams));
+	}
+
+	const ambient::RoutineDefinition* ServerApp::FindMobRoutine(const MobEntity& mob) const
+	{
+		if (mob.isDynamicEventMob || mob.owningSpawnerIndex >= m_spawners.size()) return nullptr;
+		const ambient::RoutineDefinition& def = m_spawners[mob.owningSpawnerIndex].definition.routine;
+		return def.kind == ambient::RoutineKind::None ? nullptr : &def;
+	}
+
+	void ServerApp::UpdateAmbientMob(MobEntity& mob)
+	{
+		// Un PNJ d'ambiance ne garde jamais de menace ni d'effets (non attaquable).
+		mob.threatTable.clear();
+		mob.aggroTargetEntityId = 0;
+		mob.auras.clear();
+		const ambient::RoutineDefinition* def = FindMobRoutine(mob);
+		auto roll = [](void* ctx) { return static_cast<ServerApp*>(ctx)->NextCombatRoll01(); };
+
+		// 1) Un joueur tout proche (dialogue, curiosité) : le PNJ s'arrête et le regarde.
+		constexpr float kTalkPauseRadiusMeters = 2.6f;
+		const ConnectedClient* nearest = nullptr;
+		float nearestD2 = kTalkPauseRadiusMeters * kTalkPauseRadiusMeters;
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (!client.hasReplicatedState || client.zoneId != mob.zoneId) continue;
+			const float d2 = DistanceSquaredXZ(client.positionMetersX, client.positionMetersZ, mob.positionMetersX, mob.positionMetersZ);
+			if (d2 < nearestD2) { nearestD2 = d2; nearest = &client; }
+		}
+		if (nearest != nullptr)
+		{
+			mob.velocityMetersPerSecondX = 0.0f;
+			mob.velocityMetersPerSecondZ = 0.0f;
+			mob.yawRadians = std::atan2(nearest->positionMetersX - mob.positionMetersX, nearest->positionMetersZ - mob.positionMetersZ);
+			// Reprend sa route un peu après le départ du joueur.
+			mob.routine.pauseUntilTick = std::max(mob.routine.pauseUntilTick, m_currentTick + static_cast<uint32_t>(m_tickHz));
+			return;
+		}
+		if (def == nullptr)
+		{
+			// Ambiance sans routine : simple présence, immobile.
+			mob.velocityMetersPerSecondX = 0.0f;
+			mob.velocityMetersPerSecondZ = 0.0f;
+			return;
+		}
+
+		// Rayons d'arrivée > séparation des mobs (1,2 m, UpdateMobSpatialState) :
+		// deux PNJ partageant une porte ou un point de rue ne peuvent pas occuper
+		// le même point — sans cette marge, le second « marcherait sur place ».
+		constexpr float kArriveRadiusMeters = 1.4f;
+		constexpr float kHomeRadiusMeters = 1.5f;
+
+		// 2) Hors horaire : retour au logis (sa porte), puis retrait.
+		if (mob.routine.goingHome)
+		{
+			const ambient::RoutinePoint home = ambient::HomePoint(*def, mob.homePositionMetersX, mob.homePositionMetersZ);
+			(void)MoveMobTowards(mob, home.x, home.z);
+			if (DistanceSquaredXZ(mob.positionMetersX, mob.positionMetersZ, home.x, home.z) < kHomeRadiusMeters * kHomeRadiusMeters)
+			{
+				mob.velocityMetersPerSecondX = 0.0f;
+				mob.velocityMetersPerSecondZ = 0.0f;
+				mob.scheduleRetired = true;
+			}
+			return;
+		}
+
+		// 3) Pause en cours (contemplation, marchandage, conversation…).
+		if (m_currentTick < mob.routine.pauseUntilTick)
+		{
+			mob.velocityMetersPerSecondX = 0.0f;
+			mob.velocityMetersPerSecondZ = 0.0f;
+			if (def->kind == ambient::RoutineKind::Post && def->hasFacePoint)
+				mob.yawRadians = std::atan2(def->facePoint.x - mob.positionMetersX, def->facePoint.z - mob.positionMetersZ);
+			return;
+		}
+
+		// 4) Marche vers la cible courante ; à l'arrivée : pause éventuelle puis cible suivante.
+		if (!mob.routine.hasTarget)
+			ambient::ChooseNextTarget(*def, mob.routine, mob.homePositionMetersX, mob.homePositionMetersZ, roll, this);
+		(void)MoveMobTowards(mob, mob.routine.target.x, mob.routine.target.z);
+		if (DistanceSquaredXZ(mob.positionMetersX, mob.positionMetersZ, mob.routine.target.x, mob.routine.target.z) < kArriveRadiusMeters * kArriveRadiusMeters)
+		{
+			mob.velocityMetersPerSecondX = 0.0f;
+			mob.velocityMetersPerSecondZ = 0.0f;
+			const float pauseSec = ambient::RollPauseSeconds(*def, roll, this);
+			if (pauseSec > 0.0f)
+				mob.routine.pauseUntilTick = m_currentTick + static_cast<uint32_t>(pauseSec * static_cast<float>(m_tickHz));
+			ambient::ChooseNextTarget(*def, mob.routine, mob.homePositionMetersX, mob.homePositionMetersZ, roll, this);
+		}
+	}
+
 	bool ServerApp::IsSpawnerActivatedByPlayers(const SpawnerRuntimeState& spawner) const
 	{
 		for (const ConnectedClient& client : m_clients)
@@ -2650,6 +2757,24 @@ namespace engine::server
 			if (dx <= kBaseInterestRadiusCells && dz <= kBaseInterestRadiusCells)
 			{
 				return true;
+			}
+			// Monde vivant — un PNJ en routine (voyageur, patrouille) peut s'être
+			// éloigné de son spawner : il reste actif tant qu'un joueur le voit.
+			if (spawner.definition.routine.kind != ambient::RoutineKind::None)
+			{
+				for (const SpawnerSlotState& slot : spawner.slots)
+				{
+					if (slot.mobEntityId == 0) continue;
+					const MobEntity* mob = FindMobByEntityId(slot.mobEntityId);
+					if (mob == nullptr) continue;
+					const CellGrid* grid = nullptr;
+					if (auto it = m_zoneGrids.find(mob->zoneId); it != m_zoneGrids.end()) grid = &it->second;
+					CellCoord mc{};
+					if (grid != nullptr && grid->TryWorldToCellCoord(mob->positionMetersX, mob->positionMetersZ, mc)
+						&& std::abs(static_cast<int>(client.currentCell.x) - static_cast<int>(mc.x)) <= kBaseInterestRadiusCells
+						&& std::abs(static_cast<int>(client.currentCell.z) - static_cast<int>(mc.z)) <= kBaseInterestRadiusCells)
+						return true;
+				}
 			}
 		}
 
@@ -2720,6 +2845,26 @@ namespace engine::server
 		mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
 		mob.owningSpawnerIndex = static_cast<uint32_t>(&spawner - m_spawners.data());
 		mob.owningSpawnerSlot = slotIndex;
+		// Monde vivant — comportement d'archétype (PNJ d'ambiance, vitesse propre)
+		// et point d'apparition de la routine (sa porte = 1er point du chemin).
+		if (const CreatureArchetype* arch = m_archetypeLibrary.Find(mob.archetypeId); arch != nullptr)
+		{
+			mob.ambient = arch->ambient;
+			mob.attackable = arch->attackable;
+			if (arch->moveSpeedMetersPerSecond > 0.0f)
+				mob.moveSpeedMetersPerSecond = arch->moveSpeedMetersPerSecond;
+		}
+		if (mob.ambient && spawner.definition.routine.kind != ambient::RoutineKind::None)
+		{
+			const ambient::RoutinePoint home = ambient::HomePoint(spawner.definition.routine,
+				spawner.definition.positionMetersX, spawner.definition.positionMetersZ);
+			mob.positionMetersX = home.x;
+			mob.positionMetersZ = home.z;
+			mob.homePositionMetersX = home.x;
+			mob.homePositionMetersZ = home.z;
+			// Petite désynchronisation : les PNJ d'un même quartier ne repartent pas en même temps.
+			mob.routine.pauseUntilTick = m_currentTick + static_cast<uint32_t>(NextCombatRoll01() * 3.0f * static_cast<float>(m_tickHz));
+		}
 
 		CellCoord mappedCell{};
 		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, mappedCell))
@@ -2734,7 +2879,7 @@ namespace engine::server
 		spawner.slots[slotIndex].mobEntityId = mob.entityId;
 		spawner.slots[slotIndex].nextRespawnTick = 0;
 		m_mobs.push_back(mob);
-		LOG_INFO(Net,
+		LOG_DEBUG(Net,
 			"[ServerApp] Spawner mob spawned (spawner_id={}, slot={}, entity_id={}, zone_id={}, archetype_id={})",
 			spawner.definition.spawnerId,
 			slotIndex,
@@ -2787,7 +2932,7 @@ namespace engine::server
 		slot.nextRespawnTick = scheduleRespawn
 			? (m_currentTick + std::max<uint32_t>(1u, spawner.definition.respawnSeconds * static_cast<uint32_t>(m_tickHz)))
 			: 0u;
-		LOG_INFO(Net,
+		LOG_DEBUG(Net,
 			"[ServerApp] Spawner mob despawned (spawner_id={}, slot={}, entity_id={}, reason={}, next_respawn_tick={})",
 			spawner.definition.spawnerId,
 			slotIndex,
@@ -2804,16 +2949,21 @@ namespace engine::server
 			return;
 		}
 
+		// Monde vivant — heure de jeu (horaires des PNJ d'ambiance), une fois par passe.
+		const float worldHour = CurrentWorldHour();
 		for (SpawnerRuntimeState& spawner : m_spawners)
 		{
 			const bool shouldBeActive = IsSpawnerActivatedByPlayers(spawner);
 			if (spawner.isActive != shouldBeActive)
 			{
 				spawner.isActive = shouldBeActive;
-				LOG_INFO(Net, "[ServerApp] Spawner activation updated (spawner_id={}, active={})",
+				LOG_DEBUG(Net, "[ServerApp] Spawner activation updated (spawner_id={}, active={})",
 					spawner.definition.spawnerId,
 					spawner.isActive ? "true" : "false");
 			}
+			const ambient::RoutineDefinition& routine = spawner.definition.routine;
+			const bool scheduled = routine.kind != ambient::RoutineKind::None && routine.schedule != ambient::RoutineSchedule::Always;
+			const bool scheduleOpen = !scheduled || ambient::IsScheduleOpen(routine.schedule, worldHour);
 
 			for (uint32_t slotIndex = 0; slotIndex < spawner.slots.size(); ++slotIndex)
 			{
@@ -2835,6 +2985,16 @@ namespace engine::server
 					(void)DespawnSpawnerMob(spawner, slotIndex, "death", true);
 					continue;
 				}
+
+				// Monde vivant — rentré chez lui hors horaire : retiré sans délai
+				// (il réapparaîtra à sa porte à la réouverture de son horaire).
+				if (mob->scheduleRetired)
+				{
+					(void)DespawnSpawnerMob(spawner, slotIndex, "schedule", false);
+					continue;
+				}
+				if (scheduled)
+					mob->routine.goingHome = !scheduleOpen;
 
 				if (!spawner.isActive)
 				{
@@ -2865,6 +3025,10 @@ namespace engine::server
 				if (slot.nextRespawnTick != 0 && m_currentTick < slot.nextRespawnTick)
 				{
 					continue;
+				}
+				if (!scheduleOpen)
+				{
+					continue; // hors horaire : le PNJ reste chez lui
 				}
 
 				(void)SpawnMobFromSpawner(spawner, slotIndex);
@@ -3384,6 +3548,16 @@ namespace engine::server
 			return;
 		}
 
+		// Monde vivant — les PNJ d'ambiance (villageois, gardes, marchands) ne
+		// sont pas des cibles de combat.
+		if (!target->attackable)
+		{
+			LOG_DEBUG(Net, "[ServerApp] AttackRequest ignored: non-attackable NPC (client_id={}, target_entity_id={})",
+				client->clientId,
+				target->entityId);
+			return;
+		}
+
 		if (m_currentTick < client->combat.nextAttackTick)
 		{
 			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: cooldown active (client_id={}, tick={}, next_attack_tick={})",
@@ -3447,6 +3621,10 @@ namespace engine::server
 
 	void ServerApp::ApplyPlayerDamageToMob(ConnectedClient& attacker, MobEntity& target, uint32_t rolledDamage, uint32_t eventFlags)
 	{
+		// Monde vivant — garde centrale (attaques, sorts, zones d'effet) : un PNJ
+		// d'ambiance n'encaisse jamais de dégâts.
+		if (!target.attackable)
+			return;
 		const uint32_t appliedDamage = std::min(rolledDamage, target.stats.currentHealth);
 		if (appliedDamage == 0)
 		{

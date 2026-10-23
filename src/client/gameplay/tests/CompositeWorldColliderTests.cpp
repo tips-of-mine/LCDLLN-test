@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <vector>
 
 using namespace engine::gameplay;
 using engine::math::Vec3;
@@ -303,6 +304,66 @@ int main()
 		IWorldCollider::SweepHit hit;
 		bool h = c.SweepCapsule(cap, Vec3{ 5, 3, 0 }, Vec3{ 5, 1.5f, 0 }, hit);
 		check(h && hit.stair, "marche: flag stair propage par le capuchon");
+	}
+
+	// 6) Index spatial (monde ouvert) : un collisionneur peuplé de centaines de
+	//    cylindres et de boîtes doit rendre EXACTEMENT le hit le plus proche que
+	//    donnerait chaque primitive testée isolément (référence brute force).
+	{
+		uint32_t seed = 12345u;
+		auto rnd = [&seed]() { seed = seed * 1664525u + 1013904223u; return (seed >> 8) * (1.0f / 16777216.0f); };
+		CompositeWorldCollider all(&terrain);
+		std::vector<PropCylinder> cyls;
+		std::vector<PropBox> boxes;
+		for (int i = 0; i < 400; ++i)
+		{
+			PropCylinder cy{ rnd() * 200.0f - 100.0f, rnd() * 200.0f - 100.0f, 0.3f + rnd() * 1.5f, 0.0f, 2.0f + rnd() * 6.0f };
+			cy.wall = (i % 3) == 0;
+			cyls.push_back(cy);
+			all.AddCylinder(cy);
+		}
+		for (int i = 0; i < 300; ++i)
+		{
+			PropBox bx;
+			bx.cx = rnd() * 200.0f - 100.0f; bx.cz = rnd() * 200.0f - 100.0f;
+			bx.halfX = 0.2f + rnd() * 3.0f; bx.halfZ = 0.1f + rnd() * 0.6f;
+			const float a = rnd() * 6.2831853f;
+			bx.axisX = Vec3{ std::cos(a), 0.0f, std::sin(a) };
+			bx.axisZ = Vec3{ -std::sin(a), 0.0f, std::cos(a) };
+			bx.loY = 0.0f; bx.hiY = 3.0f; bx.walkableTop = (i % 4) == 0; bx.wall = !bx.walkableTop;
+			boxes.push_back(bx);
+			all.AddBox(bx);
+		}
+		int mismatches = 0;
+		for (int k = 0; k < 600; ++k)
+		{
+			const Vec3 st{ rnd() * 200.0f - 100.0f, 0.5f + rnd() * 5.0f, rnd() * 200.0f - 100.0f };
+			const Vec3 en{ st.x + (rnd() - 0.5f) * 12.0f, st.y + (rnd() - 0.6f) * 3.0f, st.z + (rnd() - 0.5f) * 12.0f };
+			IWorldCollider::SweepHit hAll;
+			const bool gotAll = all.SweepCapsule(cap, st, en, hAll);
+			float bestF = 2.0f;
+			for (const auto& cy : cyls)
+			{
+				CompositeWorldCollider one(&terrain); one.AddCylinder(cy);
+				IWorldCollider::SweepHit h;
+				if (one.SweepCapsule(cap, st, en, h) && h.fraction < bestF) bestF = h.fraction;
+			}
+			for (const auto& bx : boxes)
+			{
+				CompositeWorldCollider one(&terrain); one.AddBox(bx);
+				IWorldCollider::SweepHit h;
+				if (one.SweepCapsule(cap, st, en, h) && h.fraction < bestF) bestF = h.fraction;
+			}
+			const bool gotRef = bestF <= 1.0f;
+			if (gotAll != gotRef || (gotAll && std::fabs(hAll.fraction - bestF) > 1e-5f)) ++mismatches;
+		}
+		check(mismatches == 0, "index spatial: resultats identiques a la reference brute force");
+		// Ajout apres requete : l'index doit etre reconstruit (pas de cache perime).
+		CompositeWorldCollider c(&terrain);
+		IWorldCollider::SweepHit h0;
+		check(!c.SweepCapsule(cap, Vec3{ 300, 1, 0 }, Vec3{ 310, 1, 0 }, h0), "index: vide -> pas de hit");
+		c.AddCylinder(PropCylinder{ 305.0f, 0.0f, 0.5f, 0.0f, 3.0f });
+		check(c.SweepCapsule(cap, Vec3{ 300, 1, 0 }, Vec3{ 310, 1, 0 }, h0), "index: reconstruit apres AddCylinder");
 	}
 
 	// 5) QueryWater délégué au terrain.

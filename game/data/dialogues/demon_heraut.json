@@ -1,0 +1,79 @@
+{
+    "_comment": "Monde Royaumes — PNJ de quete d'une ville de depart (world_master.json interactables). Les boutons Accepter/Rendre sont injectes a l'execution (UIModel.giverList), pas dans ce JSON.",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "La Faille t'a vu naitre. Sers-la."
+                },
+                "1": {
+                    "text": "(Maltheus deploie une banniere frangee de cendres.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Qu'est-ce que la Legion ?",
+                    "next": "about"
+                },
+                "1": {
+                    "text": "Je veux servir.",
+                    "next": "task"
+                },
+                "2": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "about",
+            "lines": {
+                "count": 1,
+                "0": {
+                    "text": "Le bouclier de Tsaroth. Ceux qui tiennent la Faille fermee pendant que les autres dorment."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Je veux servir.",
+                    "next": "task"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "task",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Commence par voir Ysviel : elle lira ton destin dans les braises. Puis tu chasseras les chiens des cendres."
+                },
+                "1": {
+                    "text": "(Pour t'engager ou rendre une tache, choisis 'Accepter' / 'Rendre' ci-dessous.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Revenir.",
+                    "next": "intro"
+                },
+                "1": {
+                    "text": "Au revoir.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

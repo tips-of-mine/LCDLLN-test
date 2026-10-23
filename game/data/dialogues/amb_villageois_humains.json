@@ -1,0 +1,81 @@
+{
+    "_comment": "Monde Royaumes (genere par scratch content script, edite a la main ensuite) — dialogue de PNJ d'ambiance (behavior.dialogueId d'un archetype 200-259). Meme format que villageois.json. Textes sans accents (convention des dialogues).",
+    "start": "intro",
+    "nodes": {
+        "count": 3,
+        "0": {
+            "id": "intro",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Le bonjour ! On ne voit pas souvent de nouvelles tetes au hameau."
+                },
+                "1": {
+                    "text": "(Il essuie ses mains terreuses sur son tablier.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Que fait-on ici ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "Ou mene la route ?",
+                    "next": "b"
+                },
+                "2": {
+                    "text": "Bonne journee.",
+                    "action": "end"
+                }
+            }
+        },
+        "1": {
+            "id": "a",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Les champs, les betes, la meule. Et on prie pour que les sangliers restent dans les bois."
+                },
+                "1": {
+                    "text": "L'ancien Marn, pres de la place, a toujours besoin de bras."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Ou mene la route ?",
+                    "next": "b"
+                },
+                "1": {
+                    "text": "Merci.",
+                    "action": "end"
+                }
+            }
+        },
+        "2": {
+            "id": "b",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Vers l'est, les royaumes du Centre et leurs villes de pierre. Au nord, les forets profondes."
+                },
+                "1": {
+                    "text": "Reste sur les chemins paves la nuit : les loups s'enhardissent."
+                }
+            },
+            "choices": {
+                "count": 2,
+                "0": {
+                    "text": "Que fait-on ici ?",
+                    "next": "a"
+                },
+                "1": {
+                    "text": "A bientot.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

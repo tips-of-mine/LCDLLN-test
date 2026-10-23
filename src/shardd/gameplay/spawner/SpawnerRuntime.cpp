@@ -3,6 +3,7 @@
 #include "src/shared/core/Log.h"
 #include "src/shared/platform/FileSystem.h"
 
+#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
@@ -401,6 +402,54 @@ namespace engine::server
 			outValue = static_cast<float>(value.numberValue);
 			return true;
 		}
+
+		/// Monde vivant — décode `routine` : { kind, schedule, path:[[x,z]…],
+		/// pauseMinSec, pauseMaxSec, pauseChance, wanderRadiusMeters, pingPong,
+		/// face:[x,z] }. \return false si kind/schedule inconnus ou chemin absent
+		/// pour tour/patrol.
+		bool ParseRoutine(const JsonValue& v, ambient::RoutineDefinition& out)
+		{
+			if (v.type != JsonType::Object) return false;
+			const JsonValue* kind = FindObjectMember(v, "kind");
+			if (kind == nullptr || kind->type != JsonType::String || !ambient::ParseRoutineKind(kind->stringValue, out.kind))
+				return false;
+			if (const JsonValue* sch = FindObjectMember(v, "schedule"); sch != nullptr)
+			{
+				if (sch->type != JsonType::String || !ambient::ParseRoutineSchedule(sch->stringValue, out.schedule)) return false;
+			}
+			auto num = [&](const char* key, float& dst) {
+				if (const JsonValue* n = FindObjectMember(v, key); n != nullptr) return TryGetFloat(*n, dst);
+				return true;
+			};
+			if (!num("pauseMinSec", out.pauseMinSec) || !num("pauseMaxSec", out.pauseMaxSec)
+				|| !num("pauseChance", out.pauseChance) || !num("wanderRadiusMeters", out.wanderRadiusMeters))
+				return false;
+			if (const JsonValue* pp = FindObjectMember(v, "pingPong"); pp != nullptr && pp->type == JsonType::Bool)
+				out.pingPong = pp->boolValue;
+			if (const JsonValue* path = FindObjectMember(v, "path"); path != nullptr)
+			{
+				if (path->type != JsonType::Array) return false;
+				for (const JsonValue& pt : path->arrayValue)
+				{
+					ambient::RoutinePoint p;
+					if (pt.type != JsonType::Array || pt.arrayValue.size() != 2
+						|| !TryGetFloat(pt.arrayValue[0], p.x) || !TryGetFloat(pt.arrayValue[1], p.z))
+						return false;
+					out.path.push_back(p);
+				}
+			}
+			if (const JsonValue* face = FindObjectMember(v, "face"); face != nullptr)
+			{
+				if (face->type != JsonType::Array || face->arrayValue.size() != 2
+					|| !TryGetFloat(face->arrayValue[0], out.facePoint.x) || !TryGetFloat(face->arrayValue[1], out.facePoint.z))
+					return false;
+				out.hasFacePoint = true;
+			}
+			if ((out.kind == ambient::RoutineKind::Tour || out.kind == ambient::RoutineKind::Patrol) && out.path.size() < 2)
+				return false;
+			out.pauseChance = std::clamp(out.pauseChance, 0.0f, 1.0f);
+			return true;
+		}
 	}
 
 	SpawnerRuntime::SpawnerRuntime(const engine::core::Config& config)
@@ -599,7 +648,20 @@ namespace engine::server
 					}
 				}
 
-				LOG_INFO(Net,
+				// Monde vivant — routine d'ambiance (optionnelle). Politique stricte :
+				// une routine présente mais mal formée fait échouer le chargement.
+				if (const JsonValue* routineValue = FindObjectMember(spawnerValue, "routine"); routineValue != nullptr)
+				{
+					if (!ParseRoutine(*routineValue, definition.routine))
+					{
+						LOG_ERROR(Net, "[SpawnerRuntime] Definition load FAILED: spawner '{}' routine invalide (kind/path/schedule)",
+							definition.spawnerId);
+						m_definitions.clear();
+						return false;
+					}
+				}
+
+				LOG_DEBUG(Net,
 					"[SpawnerRuntime] Loaded spawner definition (id={}, zone_id={}, archetype_id={}, count={}, respawn_sec={})",
 					definition.spawnerId,
 					definition.zoneId,

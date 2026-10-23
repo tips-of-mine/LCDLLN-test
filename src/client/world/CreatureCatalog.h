@@ -21,6 +21,18 @@ namespace engine::client
 		/// pour le rendu du mob en attendant des assets créatures dédiés.
 		std::string meshKey;
 		float scale = 1.0f;
+		/// Monde vivant — genre du mesh de race ("male" défaut, "female" si la
+		/// variante Female_ est chargée ; sinon repli male par GetRaceMesh).
+		std::string gender = "male";
+		/// PNJ d'ambiance (behavior.kind = ambient) : plaque neutre (sans PV ni
+		/// niveau), non ciblable en combat, parlable si dialogue/talkTarget.
+		bool ambient = false;
+		/// Sous-titre affiché sous le nom (ex. « Garde de la cité »).
+		std::string role;
+		/// Arbre de dialogue `game/data/dialogues/<id>.json` ouvert avec E.
+		std::string dialogueId;
+		/// Cible Talk envoyée au shard (ex. "vendor:1" : ouvre la boutique).
+		std::string talkTarget;
 	};
 
 	/// Combat SP1 — catalogue client des archétypes de créatures (lecture seule,

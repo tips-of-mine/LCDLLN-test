@@ -520,6 +520,26 @@ namespace engine::client
 				}
 			}
 
+			// Monde vivant — genre du mesh (variante Female_ si chargée) et
+			// comportement d'ambiance (PNJ parlant : dialogue / cible Talk).
+			if (const JsonValue* genderValue = FindObjectMember(*modelValue, "gender");
+				genderValue != nullptr && genderValue->type == JsonType::String)
+			{
+				appearance.gender = (genderValue->stringValue == "female") ? "female" : "male";
+			}
+			if (const JsonValue* behavior = FindObjectMember(entry, "behavior");
+				behavior != nullptr && behavior->type == JsonType::Object)
+			{
+				if (const JsonValue* kind = FindObjectMember(*behavior, "kind"); kind != nullptr && kind->type == JsonType::String)
+					appearance.ambient = kind->stringValue == "ambient";
+				if (const JsonValue* role = FindObjectMember(*behavior, "role"); role != nullptr && role->type == JsonType::String)
+					appearance.role = role->stringValue;
+				if (const JsonValue* dlg = FindObjectMember(*behavior, "dialogueId"); dlg != nullptr && dlg->type == JsonType::String)
+					appearance.dialogueId = dlg->stringValue;
+				if (const JsonValue* talk = FindObjectMember(*behavior, "talkTarget"); talk != nullptr && talk->type == JsonType::String)
+					appearance.talkTarget = talk->stringValue;
+			}
+
 			if (!m_appearances.emplace(archetypeId, std::move(appearance)).second)
 			{
 				outError = "duplicate archetype id " + std::to_string(archetypeId);

@@ -14951,6 +14951,15 @@ namespace engine
 		std::string libErr;
 		if (!library.LoadFromContent(contentRoot, libErr) && !libErr.empty())
 			LOG_WARN(Render, "[Buildings] bibliotheque partiellement chargee : {}", libErr);
+		return PlaceBuildings(placements, library, target, path);
+	}
+
+	int Engine::PlaceBuildings(const std::vector<engine::world::instances::BuildingPlacement>& placements,
+		const engine::world::instances::BuildingTemplateLibrary& library,
+		const InstanceTarget& target, const std::string& label)
+	{
+		if (!m_pipeline || target.field == nullptr || target.collider == nullptr || !target.ground) return 0;
+		const std::string& path = label;
 
 		constexpr float kDeg2Rad = 3.14159265f / 180.f;
 		// Helpers de composition (Math.h ne fournit ni Scale ni RotateZ).

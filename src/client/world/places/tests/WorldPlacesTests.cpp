@@ -80,8 +80,9 @@ int main()
 		Check(real.Cities().size() >= 30, "royaumes : villes");
 		for (const char* race : { "humains", "elfes", "orcs", "nains", "demons" })
 			Check(real.StartCityFor(race) != nullptr, race);
-		const PlaceCity* marn = real.CityAt(0, 0);
-		Check(marn && marn->id == "hameau_marn", "royaumes : hameau de Marn a l'origine");
+		// Repère global des cellules : Marn au centre de la cellule N003_W009.
+		const PlaceCity* marn = real.CityAt(-90000.0f, -30000.0f);
+		Check(marn && marn->id == "hameau_marn", "royaumes : hameau de Marn au centre de N003_W009");
 		Check(real.WorldToMapUv(0, 0, u, v), "royaumes : origine sur la carte");
 	}
 	else

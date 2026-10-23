@@ -73,7 +73,8 @@ namespace engine::render::terrain
                                VkFormat fmtVelocity, VkFormat fmtDepth,
                                VkQueue queue, uint32_t queueFamilyIndex,
                                ShaderLoaderFn loadSpirv,
-                               std::optional<float> terrainWorldSizeMetersOverride)
+                               std::optional<float> terrainWorldSizeMetersOverride,
+                               TerrainPreloadedData* preloaded)
     {
         m_grassMaskVisualStrength =
             static_cast<float>(config.GetDouble("render.terrain.grass_mask_visual_strength", 0.35));
@@ -114,7 +115,12 @@ namespace engine::render::terrain
             return false;
         }
 
-        // ── Load heightmap from file ──────────────────────────────────────────────
+        // ── Load heightmap from file (ou données préparées en tâche de fond) ──────
+        if (preloaded != nullptr && !preloaded->heightmap.heights.empty())
+        {
+            m_heightmapData = std::move(preloaded->heightmap);
+        }
+        else
         {
             const std::string contentPath = config.GetString("paths.content", "game/data");
             const std::string fullPath    = contentPath + "/" + heightmapRelPath;
@@ -154,9 +160,19 @@ namespace engine::render::terrain
         }
 
         // ── Generate & upload normal map ──────────────────────────────────────────
-        if (!HeightmapLoader::GenerateAndUploadNormalMap(device, physDev, m_heightmapData,
-                                                         m_heightScale, m_vertStepWorld,
-                                                         queue, queueFamilyIndex, m_normalMapGpu))
+        // Normal map préparée en tâche de fond : utilisée seulement si elle a été
+        // calculée avec la même échelle / le même pas que ce terrain.
+        const bool preNormalOk = preloaded != nullptr
+            && preloaded->normalPixels.size() == static_cast<size_t>(m_heightmapData.width) * m_heightmapData.height * 4u
+            && std::fabs(preloaded->normalHeightScale - m_heightScale) <= 1e-3f
+            && std::fabs(preloaded->normalVertStep - m_vertStepWorld) <= 1e-4f;
+        if (!(preNormalOk
+                ? HeightmapLoader::UploadNormalMap(device, physDev, preloaded->normalPixels,
+                                                   m_heightmapData.width, m_heightmapData.height,
+                                                   queue, queueFamilyIndex, m_normalMapGpu)
+                : HeightmapLoader::GenerateAndUploadNormalMap(device, physDev, m_heightmapData,
+                                                              m_heightScale, m_vertStepWorld,
+                                                              queue, queueFamilyIndex, m_normalMapGpu)))
         {
             LOG_ERROR(Render, "[TerrainRenderer] Failed to generate/upload normal map");
             Destroy(device);
@@ -172,7 +188,8 @@ namespace engine::render::terrain
         }
 
         // ── Initialise texture splatting (M34.2) ─────────────────────────────────
-        if (!m_splatting.Init(device, physDev, config, splatmapRelPath, queue, queueFamilyIndex))
+        if (!m_splatting.Init(device, physDev, config, splatmapRelPath, queue, queueFamilyIndex,
+                              preloaded != nullptr ? &preloaded->splatFile : nullptr))
         {
             LOG_WARN(Render,
                 "[TerrainRenderer] TerrainSplatting Init failed — terrain disabled");
@@ -196,7 +213,11 @@ namespace engine::render::terrain
                 grassMaskRelPath.empty() ? std::string() : (contentPath + "/" + grassMaskRelPath);
 
             bool loadedOk = false;
-            if (!fullGrassPath.empty() && TerrainGrassDetail::LoadFromFile(fullGrassPath, m_grassMaskData))
+            const bool preGrass = preloaded != nullptr && preloaded->grassMask.width > 0u;
+            if (preGrass)
+                m_grassMaskData = std::move(preloaded->grassMask);
+            if (preGrass
+                || (!fullGrassPath.empty() && TerrainGrassDetail::LoadFromFile(fullGrassPath, m_grassMaskData)))
             {
                 if (m_grassMaskData.width == sw && m_grassMaskData.height == sh)
                 {

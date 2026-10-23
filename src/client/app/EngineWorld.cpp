@@ -225,6 +225,14 @@ namespace engine
 			LOG_WARN(Render, "[Scatter] '{}' invalide : {}", rel, err);
 			return 0;
 		}
+		return PlaceScatterFile(file, target, rel);
+	}
+
+	size_t Engine::PlaceScatterFile(const engine::world::instances::ScatterFile& file,
+		const InstanceTarget& target, const std::string& label)
+	{
+		if (!m_pipeline || target.field == nullptr || target.collider == nullptr || !target.ground) return 0;
+		const std::string& rel = label;
 		// Les identifiants de mesh sont ceux de la table PARTAGÉE (m_scatterField) :
 		// les champs des cellules du monde « Royaumes » s'y réfèrent aussi.
 		std::vector<uint32_t> remap(file.meshPaths.size(), 0u);

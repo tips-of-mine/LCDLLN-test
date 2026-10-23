@@ -24,6 +24,7 @@
 #include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <sstream>
@@ -119,6 +120,7 @@ namespace engine
 		if (!m_cellWorld)
 			return;
 		m_cellHeights = std::make_unique<cells::CellHeightFields>(&m_renderFrame);
+		m_cellLoader.Start();
 		m_terrainCollider.BindHeightFields(nullptr, m_cellHeights.get());
 		// Base des collisions : terrain des cellules (m_terrainCollider) + props des
 		// interactibles, ajoutés au fil des cellules (AppendInteractableProps).
@@ -189,28 +191,55 @@ namespace engine
 
 	void Engine::UpdateCellStreamingAround(double globalX, double globalZ, bool synchronous)
 	{
-		// 1) Heightmaps CPU (collision, pose au sol, PNJ) : grand rayon, une par frame.
-		static thread_local std::vector<cells::CellCoord> wanted;
-		cells::SelectCellsInRange(globalX, globalZ, m_cellHeightRadiusM, m_generatedCells, wanted);
-		for (const cells::CellCoord& cell : wanted)
-		{
-			if (m_cellHeights->Has(cell) || m_failedCells.count(cells::CellZoneId(cell)) != 0)
-				continue;
-			(void)EnsureCellHeights(cell);
-			if (!synchronous)
-				break;
-		}
-		// Heightmaps trop lointaines : libérées (hystérésis de 4 km).
-		{
-			static thread_local std::vector<cells::CellCoord> resident;
-			m_cellHeights->ListCells(resident);
-			for (const cells::CellCoord& cell : resident)
-				if (cells::DistanceToCell(cell, globalX, globalZ) > m_cellHeightRadiusM + 4000.0)
-					m_cellHeights->Remove(cell);
-		}
-
-		// 2) Tuiles de rendu : retrait au-delà du rayon de déchargement.
+		const auto isFailed = [this](cells::CellCoord c) { return m_failedCells.count(cells::CellZoneId(c)) != 0; };
+		const auto hasTile = [this](cells::CellCoord c) {
+			return std::any_of(m_cellTiles.begin(), m_cellTiles.end(),
+				[&](const CellRenderTile& t) { return t.cell == c; });
+		};
 		bool changed = false;
+
+		// 0) Résultats du thread de travail : heightmaps intégrées toutes, au plus UNE
+		//    tuile de rendu par frame (envois GPU + pose des instances au main thread).
+		if (!synchronous)
+		{
+			m_cellLoader.Poll(m_cellReady);
+			bool renderBudget = true;
+			for (size_t i = 0; i < m_cellReady.size();)
+			{
+				cells::CellAssets& a = m_cellReady[i];
+				const double dist = cells::DistanceToCell(a.cell, globalX, globalZ);
+				if (!a.heightsOk)
+				{
+					LOG_WARN(Render, "[Cells] {} : {} (cellule ignoree)", cells::CellDirName(a.cell), a.error);
+					m_failedCells.insert(cells::CellZoneId(a.cell));
+					m_cellReady.erase(m_cellReady.begin() + static_cast<std::ptrdiff_t>(i));
+					continue;
+				}
+				const bool renderUseful = a.renderOk && !hasTile(a.cell) && dist <= m_cellUnloadRadiusM;
+				if (renderUseful && !renderBudget)
+				{
+					++i; // tuile prête : intégrée à une frame suivante
+					continue;
+				}
+				if (!m_cellHeights->Has(a.cell) && dist <= m_cellHeightRadiusM + 4000.0)
+					IntegrateCellHeights(a);
+				if (renderUseful && m_cellHeights->Has(a.cell))
+				{
+					if (LoadCellTile(a))
+						changed = true;
+					renderBudget = false;
+				}
+				m_cellReady.erase(m_cellReady.begin() + static_cast<std::ptrdiff_t>(i));
+			}
+		}
+		const auto requested = [this](cells::CellCoord c, bool render) {
+			if (m_cellLoader.IsPending(c, render))
+				return true;
+			return std::any_of(m_cellReady.begin(), m_cellReady.end(),
+				[&](const cells::CellAssets& a) { return a.cell == c && (a.wantRender || !render); });
+		};
+
+		// 1) Tuiles de rendu : retrait au-delà du rayon de déchargement.
 		for (size_t i = 0; i < m_cellTiles.size();)
 		{
 			if (cells::DistanceToCell(m_cellTiles[i].cell, globalX, globalZ) > m_cellUnloadRadiusM)
@@ -221,53 +250,91 @@ namespace engine
 			}
 			++i;
 		}
-		// 3) Chargement des tuiles proches (la plus proche d'abord, une par frame).
+
+		// 2) Tuiles proches (la plus proche d'abord) : demandées au thread de travail,
+		//    ou chargées tout de suite en mode synchrone (boot, téléportation).
+		static thread_local std::vector<cells::CellCoord> wanted;
 		cells::SelectCellsInRange(globalX, globalZ, m_cellRenderRadiusM, m_generatedCells, wanted);
 		for (const cells::CellCoord& cell : wanted)
 		{
-			const bool present = std::any_of(m_cellTiles.begin(), m_cellTiles.end(),
-				[&](const CellRenderTile& t) { return t.cell == cell; });
-			if (present || m_failedCells.count(cells::CellZoneId(cell)) != 0)
+			if (hasTile(cell) || isFailed(cell))
 				continue;
-			if (!m_cellHeights->Has(cell) && !EnsureCellHeights(cell))
+			if (synchronous)
+			{
+				cells::CellAssets a;
+				(void)cells::LoadCellAssets(MakeCellJob(cell, /*wantRender*/ true), a);
+				if (!a.heightsOk)
+				{
+					LOG_WARN(Render, "[Cells] {} : {} (cellule ignoree)", cells::CellDirName(cell), a.error);
+					m_failedCells.insert(cells::CellZoneId(cell));
+					continue;
+				}
+				if (!m_cellHeights->Has(cell))
+					IntegrateCellHeights(a);
+				if (LoadCellTile(a))
+					changed = true;
 				continue;
-			if (LoadCellTile(cell))
-				changed = true;
-			if (!synchronous)
-				break;
+			}
+			if (!requested(cell, true) && m_cellLoader.InFlight() < kCellJobsInFlight)
+				m_cellLoader.Request(MakeCellJob(cell, /*wantRender*/ true));
+		}
+
+		// 3) Heightmaps CPU (collision, pose au sol, PNJ) : grand rayon.
+		cells::SelectCellsInRange(globalX, globalZ, m_cellHeightRadiusM, m_generatedCells, wanted);
+		for (const cells::CellCoord& cell : wanted)
+		{
+			if (m_cellHeights->Has(cell) || isFailed(cell))
+				continue;
+			if (synchronous)
+			{
+				(void)EnsureCellHeights(cell);
+				continue;
+			}
+			if (!requested(cell, false) && m_cellLoader.InFlight() < kCellJobsInFlight)
+				m_cellLoader.Request(MakeCellJob(cell, /*wantRender*/ false));
+		}
+		// Heightmaps trop lointaines : libérées (hystérésis de 4 km).
+		{
+			static thread_local std::vector<cells::CellCoord> resident;
+			m_cellHeights->ListCells(resident);
+			for (const cells::CellCoord& cell : resident)
+				if (cells::DistanceToCell(cell, globalX, globalZ) > m_cellHeightRadiusM + 4000.0)
+					m_cellHeights->Remove(cell);
 		}
 		if (changed)
 			RefreshCellOffsets();
+	}
+
+	cells::CellAssetJob Engine::MakeCellJob(cells::CellCoord cell, bool wantRender) const
+	{
+		cells::CellAssetJob job;
+		job.cell = cell;
+		job.wantRender = wantRender;
+		job.baseConfig = m_cfg; // copie : le thread de travail ne lit jamais m_cfg
+		return job;
 	}
 
 	bool Engine::EnsureCellHeights(cells::CellCoord cell)
 	{
 		if (m_cellHeights->Has(cell))
 			return true;
+		cells::CellAssets a;
+		if (!cells::LoadCellAssets(MakeCellJob(cell, /*wantRender*/ false), a))
+		{
+			LOG_WARN(Render, "[Cells] {} : {} (cellule ignoree)", cells::CellDirName(cell), a.error);
+			m_failedCells.insert(cells::CellZoneId(cell));
+			return false;
+		}
+		IntegrateCellHeights(a);
+		return true;
+	}
+
+	void Engine::IntegrateCellHeights(cells::CellAssets& a)
+	{
+		const cells::CellCoord cell = a.cell;
 		const std::string dir = cells::CellDirName(cell);
-		const std::string content = m_cfg.GetString("paths.content", "game/data");
-		engine::core::Config zcfg;
-		if (!zcfg.LoadFromFile(content + "/zones/" + dir + "/zone.json"))
-		{
-			LOG_WARN(Render, "[Cells] {} : zone.json absent (cellule ignoree)", dir);
-			m_failedCells.insert(cells::CellZoneId(cell));
-			return false;
-		}
-		cells::CellHeightTile tile;
-		tile.cell = cell;
-		const std::string hm = zcfg.GetString("render.terrain.heightmap", "zones/" + dir + "/terrain_height.r16h");
-		if (!engine::render::terrain::HeightmapLoader::LoadFromFile(content + "/" + hm, tile.data))
-		{
-			LOG_WARN(Render, "[Cells] {} : heightmap '{}' illisible (cellule ignoree)", dir, hm);
-			m_failedCells.insert(cells::CellZoneId(cell));
-			return false;
-		}
-		const cells::CellPoint minCorner = cells::CellMinCorner(cell);
-		tile.minX = zcfg.GetDouble("terrain.origin_x", minCorner.x);
-		tile.minZ = zcfg.GetDouble("terrain.origin_z", minCorner.z);
-		tile.worldSize = zcfg.GetDouble("terrain.world_size", cells::kCellSizeMeters);
-		tile.heightScale = zcfg.GetDouble("terrain.height_scale", 1200.0);
-		m_cellHeights->Put(std::move(tile));
+		const engine::core::Config& zcfg = a.zoneOnly;
+		m_cellHeights->Put(std::move(a.heights));
 		LOG_INFO(Render, "[Cells] {} : heightmap CPU residente", dir);
 
 		const uint32_t id = cells::CellZoneId(cell);
@@ -314,24 +381,20 @@ namespace engine
 			LOG_INFO(Render, "[Cells] {} : {} interactible(s), {} marqueur(s) de respawn",
 				dir, m_interactables.size() - before, markers);
 		}
-		return true;
 	}
 
-	bool Engine::LoadCellTile(cells::CellCoord cell)
+	bool Engine::LoadCellTile(cells::CellAssets& assets)
 	{
-		if (!m_vkDeviceContext.IsValid() || !m_pipeline)
+		if (!m_vkDeviceContext.IsValid() || !m_pipeline || !assets.renderOk)
 			return false;
+		const cells::CellCoord cell = assets.cell;
 		const std::string dir = cells::CellDirName(cell);
-		const std::string content = m_cfg.GetString("paths.content", "game/data");
+		const auto t0 = std::chrono::steady_clock::now();
 
-		// Configuration du terrain : config moteur + zone.json de la cellule, origine
-		// remplacée par le coin min de la cellule dans le repère de RENDU.
-		engine::core::Config tcfg = m_cfg;
-		if (!tcfg.LoadFromFile(content + "/zones/" + dir + "/zone.json"))
-		{
-			m_failedCells.insert(cells::CellZoneId(cell));
-			return false;
-		}
+		// Configuration du terrain : config moteur + zone.json de la cellule (préparée
+		// par le thread de travail), origine remplacée par le coin min de la cellule
+		// dans le repère de RENDU.
+		engine::core::Config& tcfg = assets.config;
 		// Même origine que la heightmap CPU (collision) : GPU et CPU ne divergent jamais.
 		const cells::CellPoint minCorner = TerrainMinCorner(m_cellHeights.get(), cell);
 		tcfg.SetValue("terrain.origin_x", minCorner.x - m_renderFrame.OriginX());
@@ -360,7 +423,9 @@ namespace engine
 			VK_FORMAT_D32_SFLOAT,
 			m_vkDeviceContext.GetGraphicsQueue(),
 			m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
-			loadFnTerrain);
+			loadFnTerrain,
+			std::nullopt,
+			&assets.terrain);
 		if (!terrainOk)
 		{
 			LOG_WARN(Render, "[Cells] {} : terrain GPU indisponible", dir);
@@ -385,10 +450,13 @@ namespace engine
 			(void)m_cellHeights->SampleGlobal(center.x + lx, center.z + lz, h);
 			return h;
 		};
-		const size_t instances = LoadScatterInto("instances/zone_" + dir + "/scatter.bin", target);
-		const int pieces = LoadBuildingsInto(content + "/instances/zone_" + dir + "/buildings.bin", target);
-		LOG_INFO(Render, "[Cells] {} chargee : terrain={}, decor={} instance(s), batiments={} piece(s), collisions={} cyl / {} boites",
-			dir, tile.terrain ? "oui" : "non", instances, pieces,
+		const size_t instances = assets.hasScatter
+			? PlaceScatterFile(assets.scatter, target, "instances/zone_" + dir + "/scatter.bin") : 0u;
+		const int pieces = assets.buildings.empty() ? 0
+			: PlaceBuildings(assets.buildings, assets.buildingLibrary, target, "instances/zone_" + dir + "/buildings.bin");
+		LOG_INFO(Render, "[Cells] {} chargee en {} ms (main thread) : terrain={}, decor={} instance(s), batiments={} piece(s), collisions={} cyl / {} boites",
+			dir, std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t0).count(),
+			tile.terrain ? "oui" : "non", instances, pieces,
 			tile.collider->CylinderCount(), tile.collider->BoxCount());
 		m_cellTiles.push_back(std::move(tile));
 		return true;
@@ -625,6 +693,9 @@ namespace engine
 	{
 		if (!m_cellWorld)
 			return;
+		// Thread de travail arrêté d'abord (aucun résultat ne doit arriver après).
+		m_cellLoader.Stop();
+		m_cellReady.clear();
 		VkDevice device = m_vkDeviceContext.IsValid() ? m_vkDeviceContext.GetDevice() : VK_NULL_HANDLE;
 		for (CellRenderTile& tile : m_cellTiles)
 			if (tile.terrain && device != VK_NULL_HANDLE)

@@ -490,11 +490,8 @@ namespace engine::render::terrain
     // HeightmapLoader::GenerateAndUploadNormalMap
     // ─────────────────────────────────────────────────────────────────────────────
 
-    bool HeightmapLoader::GenerateAndUploadNormalMap(VkDevice device, VkPhysicalDevice physDev,
-                                                     const HeightmapData& data,
-                                                     float heightScale, float worldScale,
-                                                     VkQueue queue, uint32_t queueFamilyIndex,
-                                                     NormalMapGpu& outNormal)
+    bool HeightmapLoader::ComputeNormalMap(const HeightmapData& data, float heightScale, float worldScale,
+                                           std::vector<uint8_t>& outPixels)
     {
         LOG_INFO(Render, "[HeightmapLoader] GenerateNormalMap {}x{}", data.width, data.height);
 
@@ -509,7 +506,8 @@ namespace engine::render::terrain
         const float    invScale = heightScale / worldScale; // ratio of vertical to horizontal
 
         // Generate RGBA8 normal map using Sobel filter
-        std::vector<uint8_t> normalPixels(static_cast<size_t>(w) * h * 4);
+        outPixels.assign(static_cast<size_t>(w) * h * 4, 0u);
+        std::vector<uint8_t>& normalPixels = outPixels;
 
         auto sampleH = [&](int x, int z) -> float {
             x = (x < 0) ? 0 : ((x >= (int)w) ? (int)w - 1 : x);
@@ -551,7 +549,32 @@ namespace engine::render::terrain
                 normalPixels[idx + 3] = 255u;
             }
         }
+        return true;
+    }
 
+    bool HeightmapLoader::GenerateAndUploadNormalMap(VkDevice device, VkPhysicalDevice physDev,
+                                                     const HeightmapData& data,
+                                                     float heightScale, float worldScale,
+                                                     VkQueue queue, uint32_t queueFamilyIndex,
+                                                     NormalMapGpu& outNormal)
+    {
+        std::vector<uint8_t> normalPixels;
+        if (!ComputeNormalMap(data, heightScale, worldScale, normalPixels))
+            return false;
+        return UploadNormalMap(device, physDev, normalPixels, data.width, data.height,
+                               queue, queueFamilyIndex, outNormal);
+    }
+
+    bool HeightmapLoader::UploadNormalMap(VkDevice device, VkPhysicalDevice physDev,
+                                          const std::vector<uint8_t>& normalPixels, uint32_t w, uint32_t h,
+                                          VkQueue queue, uint32_t queueFamilyIndex,
+                                          NormalMapGpu& outNormal)
+    {
+        if (w == 0u || h == 0u || normalPixels.size() != static_cast<size_t>(w) * h * 4u)
+        {
+            LOG_ERROR(Render, "[HeightmapLoader] UploadNormalMap : taille invalide ({}x{}, {} octets)", w, h, normalPixels.size());
+            return false;
+        }
         const VkDeviceSize dataBytes = static_cast<VkDeviceSize>(w) * h * 4;
 
         // Staging buffer

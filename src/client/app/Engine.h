@@ -121,6 +121,7 @@
 #include "src/client/gameplay/CellWorldCollider.h"
 #include "src/client/world/cells/CellWorldFrame.h"
 #include "src/client/world/cells/CellHeightFields.h"
+#include "src/client/world/cells/CellAssetLoader.h"
 #include "src/client/world/BuildingCollisionCatalog.h"
 #if defined(_WIN32)
 #include "src/client/render/terrain/TerrainEditingTools.h"
@@ -1246,6 +1247,16 @@ namespace engine
 		/// Charge un buildings.bin (chemin absolu/résolu) dans \p target.
 		/// \return nombre de pièces posées. Main thread.
 		int LoadBuildingsInto(const std::string& fullPath, const InstanceTarget& target);
+		/// Pose dans \p target les instances d'un scatter.bin DÉJÀ décodé (tâche de
+		/// fond) : meshes partagés, ancrage au sol, collisions. \p label = nom pour
+		/// les journaux. \return nombre d'instances posées. Main thread.
+		size_t PlaceScatterFile(const engine::world::instances::ScatterFile& file,
+			const InstanceTarget& target, const std::string& label);
+		/// Pose dans \p target les pièces de bâtiments DÉJÀ décodés (placements +
+		/// bibliothèque de types). \return nombre de pièces posées. Main thread.
+		int PlaceBuildings(const std::vector<engine::world::instances::BuildingPlacement>& placements,
+			const engine::world::instances::BuildingTemplateLibrary& library,
+			const InstanceTarget& target, const std::string& label);
 		/// Ajoute au champ de \p target une instance posée par `model` (déjà au sol,
 		/// repère de la cible) et, si \p solid, sa collision (catalogue de pièces si
 		/// \p buildingPiece, sinon cylindre de tronc/rocher de rayon \p collisionRadius,
@@ -1343,9 +1354,17 @@ namespace engine
 		/// de cellule, chargement / déchargement des cellules selon les rayons, purge
 		/// des tuiles retirées. \param synchronous true = tout charger maintenant.
 		void UpdateCellStreaming(bool synchronous);
-		/// Streaming autour du point GLOBAL (gx, gz) : heightmaps CPU puis tuiles de rendu
-		/// (une de chaque par appel, sauf \p synchronous). Aucun rebase ici.
+		/// Streaming autour du point GLOBAL (gx, gz). Asynchrone : intègre les résultats
+		/// du thread de travail (au plus une tuile de rendu par appel), retire les tuiles
+		/// lointaines, demande les cellules manquantes (la plus proche d'abord, au plus
+		/// kCellJobsInFlight en vol). \p synchronous : tout charger maintenant au main
+		/// thread (boot, téléportation). Aucun rebase ici.
 		void UpdateCellStreamingAround(double globalX, double globalZ, bool synchronous);
+		/// Demande de chargement d'une cellule (copie de m_cfg prise ici, main thread).
+		engine::world::cells::CellAssetJob MakeCellJob(engine::world::cells::CellCoord cell, bool wantRender) const;
+		/// Rend résidente la heightmap CPU de \p assets (déplacée) et, au premier
+		/// chargement de la cellule, ses interactibles et marqueurs de respawn.
+		void IntegrateCellHeights(engine::world::cells::CellAssets& assets);
 		/// Vrai si au moins une cellule résidente a un terrain GPU valide.
 		bool HasCellTerrainToDraw() const;
 		/// Détruit les framebuffers en cache des terrains de cellules (redimensionnement).
@@ -1353,11 +1372,12 @@ namespace engine
 		/// Change l'origine du repère de rendu : décale le joueur, la caméra, les
 		/// entités, les interactibles, l'eau, les terrains. Main thread.
 		void RebaseRenderOrigin(engine::world::cells::CellCoord newOrigin);
-		/// Heightmap CPU de la cellule (+ interactibles, marqueurs de respawn au premier
-		/// chargement). \return false si la cellule n'a pas de heightmap.
+		/// Heightmap CPU de la cellule chargée SYNCHRONEMENT (+ interactibles, marqueurs
+		/// au premier chargement). \return false si la cellule n'a pas de heightmap.
 		bool EnsureCellHeights(engine::world::cells::CellCoord cell);
-		/// Crée la tuile de rendu d'une cellule (terrain GPU, décor, bâtiments).
-		bool LoadCellTile(engine::world::cells::CellCoord cell);
+		/// Crée la tuile de rendu d'une cellule (terrain GPU, décor, bâtiments) à partir
+		/// des données préparées \p assets (consommées). Main thread : envois GPU.
+		bool LoadCellTile(engine::world::cells::CellAssets& assets);
 		/// Retire la tuile d'indice \p index (destruction différée).
 		void RetireCellTile(size_t index);
 		/// Détruit les tuiles retirées depuis assez longtemps (\p all = toutes, au shutdown).
@@ -1397,6 +1417,13 @@ namespace engine
 		std::vector<RetiredCellTile> m_retiredCellTiles;
 		/// Cellules dont les interactibles / marqueurs ont déjà été chargés.
 		std::unordered_set<uint32_t> m_cellsWithStaticContent;
+		/// Thread de travail (lecture disque + décodage + normal map) et résultats
+		/// récupérés mais pas encore intégrés (budget d'une tuile par frame).
+		engine::world::cells::CellAssetLoader m_cellLoader;
+		std::vector<engine::world::cells::CellAssets> m_cellReady;
+		/// Demandes en vol au plus (file + en cours + prêtes) : borne la mémoire
+		/// (~60 Mo par tuile) et garde la priorité aux cellules les plus proches.
+		static constexpr size_t kCellJobsInFlight = 2;
 		/// Cellules dont le chargement a échoué (zone.json / heightmap / terrain absents
 		/// ou illisibles) : jamais retentées dans la session (pas de relecture par frame).
 		std::unordered_set<uint32_t> m_failedCells;

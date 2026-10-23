@@ -84,6 +84,22 @@ namespace engine::render::terrain
                                                VkQueue queue, uint32_t queueFamilyIndex,
                                                NormalMapGpu& outNormal);
 
+        /// Calcule (CPU seul, tout thread) la normal map RGBA8 (filtre de Sobel) de
+        /// \p data — même résultat que GenerateAndUploadNormalMap. Sert au
+        /// chargement en tâche de fond des cellules du monde « Royaumes ».
+        /// \param heightScale  hauteur monde (m) d'une valeur 65535.
+        /// \param worldScale   mètres entre deux échantillons.
+        /// \return false si la heightmap est trop petite (< 3×3).
+        static bool ComputeNormalMap(const HeightmapData& data, float heightScale, float worldScale,
+                                     std::vector<uint8_t>& outPixels);
+
+        /// Envoie au GPU une normal map RGBA8 déjà calculée (\p pixels, \p width ×
+        /// \p height). Image en SHADER_READ_ONLY_OPTIMAL. Main thread (file graphique).
+        static bool UploadNormalMap(VkDevice device, VkPhysicalDevice physDev,
+                                    const std::vector<uint8_t>& pixels, uint32_t width, uint32_t height,
+                                    VkQueue queue, uint32_t queueFamilyIndex,
+                                    NormalMapGpu& outNormal);
+
         /// Destroys GPU heightmap resources. Safe to call on null handles.
         static void DestroyHeightmap(VkDevice device, HeightmapGpu& gpu);
 

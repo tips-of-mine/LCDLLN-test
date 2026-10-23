@@ -89,6 +89,14 @@ namespace engine::client
 			if (r.zMax < r.zMin) std::swap(r.zMin, r.zMax);
 			m_regions.push_back(std::move(r));
 		}
+		// Cellules générées (monde « Royaumes ») : identifiants du lore (« N003_W009 »).
+		const int64_t cellCount = c.GetInt("cell_count", 4096);
+		for (int64_t i = 0; i < cellCount; ++i)
+		{
+			const std::string b = std::format("cells[{}].", i);
+			if (!c.Has(b + "lore")) break;
+			m_generatedCells.push_back(c.GetString(b + "lore", ""));
+		}
 		m_loaded = true;
 		return true;
 	}

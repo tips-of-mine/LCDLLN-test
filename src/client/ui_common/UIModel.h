@@ -547,6 +547,13 @@ namespace engine::client
 		/// Apply one server packet to the UI model.
 		bool ApplyPacket(std::span<const std::byte> packet);
 
+		/// Monde « Royaumes » en cellules : origine du repère de rendu (m GLOBAUX). Les
+		/// positions reçues du shard (snapshots, changement de zone) lui sont
+		/// retranchées ; les positions déjà stockées sont décalées d'autant.
+		/// ForcePosition reste GLOBALE (le moteur la convertit après un éventuel
+		/// changement d'origine). (0, 0) = monde historique, aucune conversion.
+		void SetWorldOrigin(double originX, double originZ);
+
 		/// Close vendor shop panel locally (M35.2); does not notify the server.
 		bool CloseShop();
 
@@ -744,6 +751,12 @@ namespace engine::client
 		std::thread::id m_ownerThread{};
 		std::vector<ObserverSlot> m_observers;
 		std::vector<engine::server::SnapshotEntity> m_snapshotScratch;
+		/// Origine du repère de rendu (m globaux), cf. SetWorldOrigin.
+		double m_worldOriginX = 0.0;
+		double m_worldOriginZ = 0.0;
+		/// Global → rendu (float), cf. SetWorldOrigin.
+		float ToRenderX(float globalX) const { return static_cast<float>(static_cast<double>(globalX) - m_worldOriginX); }
+		float ToRenderZ(float globalZ) const { return static_cast<float>(static_cast<double>(globalZ) - m_worldOriginZ); }
 		std::vector<engine::server::ItemStack> m_inventoryScratch;
 		engine::server::SnapshotMessage m_snapshotMessage{};
 		/// TG.1 — accumulateur pour les snapshots scindes en plusieurs chunks (chunkCount > 1).

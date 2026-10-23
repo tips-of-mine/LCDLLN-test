@@ -1,4 +1,5 @@
 #include "src/client/gameplay/CompositeWorldCollider.h"
+#include "src/client/gameplay/CellWorldCollider.h"
 
 #include <cmath>
 #include <cstdio>
@@ -372,6 +373,35 @@ int main()
 		IWorldCollider::WaterQuery wq;
 		bool inW = c.QueryWater(Vec3{ 0, 0, 0 }, wq);
 		check(inW && wq.inWater && std::fabs(wq.surfaceY - 42.0f) < 1e-3f, "querywater: delegation");
+	}
+
+	// 6) Translate (rebase de l'origine de rendu) : la primitive suit le décalage.
+	{
+		CompositeWorldCollider c(&terrain); c.AddCylinder(cyl);
+		IWorldCollider::SweepHit h0;
+		check(c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, h0), "translate: hit avant");
+		c.Translate(-10000.0f, 0.0f);
+		IWorldCollider::SweepHit h1;
+		check(!c.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, h1), "translate: plus de hit a l'ancienne place");
+		IWorldCollider::SweepHit h2;
+		check(c.SweepCapsule(cap, Vec3{ -10000, 1, 0 }, Vec3{ -9990, 1, 0 }, h2), "translate: hit a la nouvelle place");
+	}
+
+	// 7) CellWorldCollider : primitives LOCALES à une cellule décalée de +10 km en X.
+	{
+		CompositeWorldCollider cellLocal(nullptr);
+		cellLocal.AddCylinder(cyl); // (5, 0) local
+		CompositeWorldCollider base(&terrain);
+		CellWorldCollider world;
+		world.SetBase(&base);
+		world.SetCells({ CellWorldCollider::CellEntry{ &cellLocal, 10000.0f, 0.0f } });
+		IWorldCollider::SweepHit h;
+		check(world.SweepCapsule(cap, Vec3{ 10000, 1, 0 }, Vec3{ 10010, 1, 0 }, h) && h.hit, "cellule: hit a 10 km");
+		check(h.fraction > 0.3f && h.fraction < 0.55f, "cellule: meme fraction qu'en local");
+		IWorldCollider::SweepHit miss;
+		check(!world.SweepCapsule(cap, Vec3{ 0, 1, 0 }, Vec3{ 10, 1, 0 }, miss), "cellule: rien a l'origine");
+		IWorldCollider::WaterQuery wq;
+		check(world.QueryWater(Vec3{ 0, 0, 0 }, wq) && wq.inWater, "cellule: eau deleguee a la base");
 	}
 
 	if (g_fail == 0) std::printf("CompositeWorldColliderTests: OK\n");

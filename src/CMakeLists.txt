@@ -575,6 +575,12 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # Monde « Royaumes » (client) : repère de rendu, cellules résidentes, mur invisible.
+  lcdlln_add_simple_test(cell_world_frame_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/cells/tests/CellWorldFrameTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/world/cells/CellWorldFrame.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
+
   # Monde jouable (chantier « Royaumes ») : lieux du monde (carte M, bannière).
   lcdlln_add_simple_test(world_places_tests
     ${CMAKE_SOURCE_DIR}/src/client/world/places/tests/WorldPlacesTests.cpp)

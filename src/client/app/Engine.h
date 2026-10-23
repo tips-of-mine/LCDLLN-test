@@ -118,6 +118,9 @@
 #include "src/client/gameplay/CharacterController.h"
 #include "src/client/gameplay/TerrainCollider.h"
 #include "src/client/gameplay/CompositeWorldCollider.h"
+#include "src/client/gameplay/CellWorldCollider.h"
+#include "src/client/world/cells/CellWorldFrame.h"
+#include "src/client/world/cells/CellHeightFields.h"
 #include "src/client/world/BuildingCollisionCatalog.h"
 #if defined(_WIN32)
 #include "src/client/render/terrain/TerrainEditingTools.h"
@@ -180,10 +183,12 @@ namespace engine::editor::world
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace engine
@@ -1191,9 +1196,10 @@ namespace engine
 			float yawDeg, float rotXDeg, float scale, int interactableIndex,
 			bool solid, float collisionRadius);
 		/// Collision d'une pièce de bâtiment posée par `worldM` (catalogue
-		/// building_pieces.json, sinon cylindre « mur »). Cf. Engine.cpp.
+		/// building_pieces.json, sinon cylindre « mur ») dans \p target. Cf. Engine.cpp.
 		void RegisterBuildingPieceCollision(const std::string& meshPath, const engine::math::Mat4& worldM,
-			float cx, float cz, float radiusAuto, float minY, float maxY, float collisionRadius);
+			float cx, float cz, float radiusAuto, float minY, float maxY, float collisionRadius,
+			engine::gameplay::CompositeWorldCollider& target);
 
 		/// Variante de BuildPropFromMesh qui CUIT une matrice monde explicite
 		/// \p worldM dans les sommets, SANS ré-ancrage au sol (pas de lift
@@ -1220,18 +1226,59 @@ namespace engine
 		/// matériau, AABB locale. \return false si le mesh est introuvable/vide.
 		/// Effet de bord : crée meshes GPU et matériaux (AssetRegistry, MaterialDescriptorCache).
 		bool EnsureScatterMesh(uint32_t meshId);
-		/// Ajoute au champ une instance posée par `model` (déjà au sol) et, si
-		/// \p solid, sa collision (catalogue de pièces si \p buildingPiece, sinon
-		/// cylindre de tronc/rocher de rayon \p collisionRadius, 0 = auto).
+		/// Destination d'un chargement de décor instancié / bâtiments : champ de
+		/// rendu, collisionneur, origine GLOBALE retranchée aux positions du fichier
+		/// (0 en zone historique, centre de la cellule dans le monde « Royaumes »)
+		/// et hauteur du sol dans le repère de la cible.
+		struct InstanceTarget
+		{
+			engine::world::scatter::ScatterField* field = nullptr;
+			engine::gameplay::CompositeWorldCollider* collider = nullptr;
+			double originX = 0.0;
+			double originZ = 0.0;
+			std::function<float(float, float)> ground;
+		};
+		/// Cible historique : m_scatterField, m_worldCollider, sol de m_terrainCollider.
+		InstanceTarget LegacyInstanceTarget();
+		/// Charge un scatter.bin (chemin relatif au contenu) dans \p target.
+		/// \return nombre d'instances posées. Main thread (meshes GPU partagés).
+		size_t LoadScatterInto(const std::string& rel, const InstanceTarget& target);
+		/// Charge un buildings.bin (chemin absolu/résolu) dans \p target.
+		/// \return nombre de pièces posées. Main thread.
+		int LoadBuildingsInto(const std::string& fullPath, const InstanceTarget& target);
+		/// Ajoute au champ de \p target une instance posée par `model` (déjà au sol,
+		/// repère de la cible) et, si \p solid, sa collision (catalogue de pièces si
+		/// \p buildingPiece, sinon cylindre de tronc/rocher de rayon \p collisionRadius,
+		/// 0 = auto) dans le collisionneur de la cible.
 		void AddScatterInstance(uint32_t meshId, const engine::math::Mat4& model, uint8_t cullClass,
-			uint8_t flags, bool solid, bool buildingPiece, float collisionRadius);
+			uint8_t flags, bool solid, bool buildingPiece, float collisionRadius, const InstanceTarget& target);
 		/// Enregistre les draws instanciés du décor visible (distance par classe +
 		/// frustum) dans le GBuffer (render pass LOAD de GeometryPass). Main thread,
 		/// pendant l'enregistrement de la passe Geometry (après RecordPropsGeometry).
 		void RecordScatterGeometry(VkCommandBuffer cmd, engine::render::Registry& reg,
 			const engine::RenderState& rs);
+		/// Champ de décor instancié et son décalage (m) dans le repère de rendu : le
+		/// champ historique (0, 0) et, en monde « Royaumes », un champ par cellule.
+		struct ScatterLayer
+		{
+			const engine::world::scatter::ScatterField* field = nullptr;
+			float offsetX = 0.0f;
+			float offsetZ = 0.0f;
+			/// Identifiant stable du champ (clé des occulteurs) : 0 = champ historique,
+			/// 1 + ((n & 7) << 3 | (e & 7)) pour une cellule — unique entre cellules
+			/// voisines (< 8 cellules d'écart), indépendant de l'ordre de chargement.
+			std::uint32_t id = 0;
+		};
+		/// Liste les champs de décor à dessiner cette frame (non vides).
+		void GatherScatterLayers(std::vector<ScatterLayer>& out) const;
+		/// Identifiant d'occulteur stable d'une instance (champ \p layer, index \p item) :
+		/// kScatterOccluderIdBase | layer << 24 | item (128 champs × 16 M d'instances).
+		static std::uint32_t ScatterOccluderId(std::uint32_t layer, std::uint32_t item)
+		{
+			return kScatterOccluderIdBase | ((layer & 0x7Fu) << 24) | (item & 0xFFFFFFu);
+		}
 		/// Ajoute à \p out les occulteurs du décor instancié proches du segment
-		/// caméra→joueur (ids = kScatterOccluderIdBase | index).
+		/// caméra→joueur (ids = ScatterOccluderId).
 		void CollectScatterOccluders(const engine::math::Vec3& camera, const engine::math::Vec3& focus,
 			std::vector<engine::render::OccluderSphere>& out) const;
 		/// Crée / agrandit le buffer d'instances du slot \p slot (jamais en vol : un
@@ -1258,6 +1305,114 @@ namespace engine
 		/// Charge `world/<monde>/places.json` une seule fois (monde = zone active).
 		/// Effet de bord : lecture disque, log si absent. Main thread.
 		void EnsureWorldPlaces();
+
+		// ---- Monde « Royaumes » en cellules de 10 km (EngineCells.cpp) ----
+		// Actif si world.active_zone = "royaumes". Le moteur travaille dans un repère
+		// de RENDU centré sur la cellule du joueur (m_renderFrame) ; les positions
+		// réseau (shard, master) sont GLOBALES et converties aux frontières.
+
+		/// Cellule résidente côté rendu : terrain GPU + décor instancié + collisions,
+		/// stockés en coordonnées LOCALES à la cellule (centre = 0,0).
+		struct CellRenderTile
+		{
+			engine::world::cells::CellCoord cell{};
+			std::unique_ptr<engine::render::terrain::TerrainRenderer> terrain;
+			std::unique_ptr<engine::world::scatter::ScatterField> scatter;
+			std::unique_ptr<engine::gameplay::CompositeWorldCollider> collider;
+		};
+		/// Tuile retirée : détruite quelques frames plus tard (ressources GPU encore en vol).
+		struct RetiredCellTile
+		{
+			CellRenderTile tile;
+			uint64_t retiredAtFrame = 0;
+		};
+
+		/// Constructeur : si le monde actif est en cellules, lit la liste des cellules
+		/// générées (world/<monde>/places.json) et fusionne les réglages client
+		/// (brouillard, culling…) du zone.json d'une cellule, sans son contenu.
+		/// \return true si le monde en cellules est actif. Effet de bord : m_cfg modifié.
+		bool LoadCellWorldSettings();
+		/// Boot du rendu (après les passes, avant le FrameGraph) : sources de hauteur,
+		/// eau de toutes les cellules générées (la passe eau est choisie au premier
+		/// FrameGraph), origine initiale. Main thread.
+		void InitCellWorldBoot();
+		/// À l'entrée en monde / à une téléportation : place l'origine sur la cellule
+		/// de la position GLOBALE et charge synchronement ce qui l'entoure.
+		void EnterCellWorldAt(double globalX, double globalZ);
+		/// Chaque frame (après le déplacement du joueur) : rebase si le joueur a changé
+		/// de cellule, chargement / déchargement des cellules selon les rayons, purge
+		/// des tuiles retirées. \param synchronous true = tout charger maintenant.
+		void UpdateCellStreaming(bool synchronous);
+		/// Streaming autour du point GLOBAL (gx, gz) : heightmaps CPU puis tuiles de rendu
+		/// (une de chaque par appel, sauf \p synchronous). Aucun rebase ici.
+		void UpdateCellStreamingAround(double globalX, double globalZ, bool synchronous);
+		/// Vrai si au moins une cellule résidente a un terrain GPU valide.
+		bool HasCellTerrainToDraw() const;
+		/// Détruit les framebuffers en cache des terrains de cellules (redimensionnement).
+		void InvalidateCellTerrainFramebuffers();
+		/// Change l'origine du repère de rendu : décale le joueur, la caméra, les
+		/// entités, les interactibles, l'eau, les terrains. Main thread.
+		void RebaseRenderOrigin(engine::world::cells::CellCoord newOrigin);
+		/// Heightmap CPU de la cellule (+ interactibles, marqueurs de respawn au premier
+		/// chargement). \return false si la cellule n'a pas de heightmap.
+		bool EnsureCellHeights(engine::world::cells::CellCoord cell);
+		/// Crée la tuile de rendu d'une cellule (terrain GPU, décor, bâtiments).
+		bool LoadCellTile(engine::world::cells::CellCoord cell);
+		/// Retire la tuile d'indice \p index (destruction différée).
+		void RetireCellTile(size_t index);
+		/// Détruit les tuiles retirées depuis assez longtemps (\p all = toutes, au shutdown).
+		void DestroyRetiredCellTiles(bool all);
+		/// Ajoute à m_interactables les entrées `world.interactables.N.*` de \p cfg, positions
+		/// retranchées de (\p originX, \p originZ) (0,0 = zone historique ; origine de
+		/// rendu pour une cellule dont le zone.json est en coordonnées globales).
+		void AppendInteractables(const engine::core::Config& cfg, double originX, double originZ);
+		/// Construit les props (meshes + collisions) des interactibles d'indice
+		/// \p firstIndex et suivants, SANS toucher aux props existants ni au cache de
+		/// matériaux (monde « Royaumes » : ajout incrémental à l'arrivée d'une cellule).
+		/// Effet de bord : m_props, m_worldCollider, AssetRegistry. Main thread.
+		void AppendInteractableProps(size_t firstIndex);
+		/// Décale les props déjà construits (matrice modèle, centres) et les
+		/// primitives de m_worldCollider de (\p dx, \p dz) m — rebase de l'origine,
+		/// sans recharger de mesh ni recréer de matériau.
+		void TranslateStaticProps(float dx, float dz);
+		/// Reconstruit m_clientWaterScene (rendu) à partir de l'eau GLOBALE des cellules.
+		void RebuildCellWater();
+		/// Recalcule les décalages des terrains et des collisionneurs de cellules.
+		void RefreshCellOffsets();
+		/// Dessine les terrains des cellules résidentes (le premier efface le GBuffer).
+		/// \return true si au moins un terrain a été enregistré.
+		bool RecordCellTerrains(VkCommandBuffer cmd, engine::render::Registry& reg, const engine::RenderState& rs);
+		/// Hauteur du sol (m) en coordonnées de rendu : cellules en monde « Royaumes »,
+		/// terrain historique sinon.
+		float SampleGroundHeight(float x, float z) const;
+		/// Libère toutes les ressources du monde en cellules (shutdown, avant le device).
+		void ShutdownCellWorld();
+
+		bool m_cellWorld = false;
+		engine::world::cells::RenderFrame m_renderFrame;
+		engine::world::cells::GeneratedCellSet m_generatedCells;
+		std::unique_ptr<engine::world::cells::CellHeightFields> m_cellHeights;
+		engine::gameplay::CellWorldCollider m_cellCollider;
+		std::vector<CellRenderTile> m_cellTiles;
+		std::vector<RetiredCellTile> m_retiredCellTiles;
+		/// Cellules dont les interactibles / marqueurs ont déjà été chargés.
+		std::unordered_set<uint32_t> m_cellsWithStaticContent;
+		/// Cellules dont le chargement a échoué (zone.json / heightmap / terrain absents
+		/// ou illisibles) : jamais retentées dans la session (pas de relecture par frame).
+		std::unordered_set<uint32_t> m_failedCells;
+		/// Eau de chaque cellule chargée, en coordonnées GLOBALES (float, telles que lues).
+		std::unordered_map<uint32_t, engine::world::water::WaterScene> m_cellWaterGlobal;
+		/// Rayons (m, distance au bord de la cellule) : terrain/décor chargés, déchargés
+		/// (hystérésis), heightmaps CPU ; distance d'affichage des patchs de terrain.
+		float m_cellRenderRadiusM = 2500.0f;
+		float m_cellUnloadRadiusM = 3500.0f;
+		float m_cellHeightRadiusM = 6000.0f;
+		float m_cellTerrainDrawDistanceM = 2500.0f;
+		/// Compteur d'appels du streaming (journalisation périodique).
+		uint64_t m_cellFrameCounter = 0;
+		/// Point d'arrivée GLOBAL au boot (avant l'EnterWorld), cf. LoadCellWorldSettings.
+		double m_cellBootGlobalX = 0.0;
+		double m_cellBootGlobalZ = 0.0;
 		/// Met à jour la bannière de lieu puis dessine bannière + carte (si ouverte).
 		/// \param fg draw list foreground ImGui ; \param dw,dh framebuffer (px) ;
 		/// \param dtSec durée de frame (s). Main thread, entre NewFrame et Render.

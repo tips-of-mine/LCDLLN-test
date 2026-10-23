@@ -352,7 +352,28 @@ namespace engine::client
 
 	bool QuestPoiTable::Load(const engine::core::Config& cfg)
 	{
-		const std::string relativeContentPath = "quests/quest_poi.json";
+		return LoadFrom(cfg, "quests/quest_poi.json");
+	}
+
+	void QuestPoiTable::SetOrigin(double originX, double originZ)
+	{
+		m_originX = originX;
+		m_originZ = originZ;
+		m_positionsByTarget = m_filePositions;
+		if (originX == 0.0 && originZ == 0.0) return;
+		for (auto& [targetId, positions] : m_positionsByTarget)
+		{
+			(void)targetId;
+			for (QuestPoiPosition& p : positions)
+			{
+				p.x = static_cast<float>(static_cast<double>(p.x) - originX);
+				p.z = static_cast<float>(static_cast<double>(p.z) - originZ);
+			}
+		}
+	}
+
+	bool QuestPoiTable::LoadFrom(const engine::core::Config& cfg, const std::string& relativeContentPath)
+	{
 		const std::string jsonText = engine::platform::FileSystem::ReadAllTextContent(cfg, relativeContentPath);
 		if (jsonText.empty())
 		{
@@ -402,7 +423,8 @@ namespace engine::client
 			parsedPositions.emplace(targetId, std::move(positions));
 		}
 
-		m_positionsByTarget = std::move(parsedPositions);
+		m_filePositions = std::move(parsedPositions);
+		SetOrigin(m_originX, m_originZ);
 		return true;
 	}
 

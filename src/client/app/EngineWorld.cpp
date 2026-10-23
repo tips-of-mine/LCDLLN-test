@@ -145,7 +145,7 @@ namespace engine
 	}
 
 	void Engine::AddScatterInstance(uint32_t meshId, const engine::math::Mat4& model, uint8_t cullClass,
-		uint8_t flags, bool solid, bool buildingPiece, float collisionRadius)
+		uint8_t flags, bool solid, bool buildingPiece, float collisionRadius, const InstanceTarget& target)
 	{
 		if (meshId >= m_scatterMeshes.size() || !m_scatterMeshes[meshId].valid) return;
 		const ScatterMeshGpu& mesh = m_scatterMeshes[meshId];
@@ -156,7 +156,7 @@ namespace engine
 		item.flags = flags;
 		engine::math::Vec3 wMin{}, wMax{};
 		engine::world::scatter::TransformBounds(model, mesh.localMin, mesh.localMax, item.center, item.radius, wMin, wMax);
-		const uint32_t index = m_scatterField.Add(item);
+		const uint32_t index = target.field->Add(item);
 		(void)index;
 		if (!solid) return;
 		const float cx = model.m[12], cz = model.m[14];
@@ -166,7 +166,8 @@ namespace engine
 			// l'empreinte ; le catalogue de pièces prend le relais pour les murs).
 			const float ex = 0.5f * (wMax.x - wMin.x), ez = 0.5f * (wMax.z - wMin.z);
 			RegisterBuildingPieceCollision(m_scatterField.MeshPaths()[meshId], model,
-				0.5f * (wMin.x + wMax.x), 0.5f * (wMin.z + wMax.z), std::sqrt(ex * ex + ez * ez), wMin.y, wMax.y, collisionRadius);
+				0.5f * (wMin.x + wMax.x), 0.5f * (wMin.z + wMax.z), std::sqrt(ex * ex + ez * ez), wMin.y, wMax.y, collisionRadius,
+				*target.collider);
 			return;
 		}
 		// Décor (tronc, rocher, mobilier) : cylindre autour du pivot, dessus
@@ -183,7 +184,16 @@ namespace engine
 		engine::gameplay::PropCylinder cyl{ cx, cz, radius, wMin.y, wMax.y };
 		cyl.passable = lower.find("door") != std::string::npos;
 		cyl.stair = lower.find("stair") != std::string::npos || lower.find("escalier") != std::string::npos;
-		m_worldCollider.AddCylinder(cyl);
+		target.collider->AddCylinder(cyl);
+	}
+
+	Engine::InstanceTarget Engine::LegacyInstanceTarget()
+	{
+		InstanceTarget t;
+		t.field = &m_scatterField;
+		t.collider = &m_worldCollider;
+		t.ground = [this](float x, float z) { return m_terrainCollider.GroundHeightAt(x, z); };
+		return t;
 	}
 
 	void Engine::LoadScatterWorld()
@@ -193,19 +203,30 @@ namespace engine
 		std::string rel = m_cfg.GetString("world.scatter_path", "");
 		if (rel.empty() && !zone.empty()) rel = "instances/zone_" + zone + "/scatter.bin";
 		if (rel.empty()) return;
+		const size_t placed = LoadScatterInto(rel, LegacyInstanceTarget());
+		LOG_INFO(Render, "[Scatter] '{}' : {} instance(s) posee(s), {} mesh(es) partage(s) ; collisions {} cylindre(s) / {} boite(s)",
+			rel, placed, m_scatterField.MeshPaths().size(),
+			m_worldCollider.CylinderCount(), m_worldCollider.BoxCount());
+	}
+
+	size_t Engine::LoadScatterInto(const std::string& rel, const InstanceTarget& target)
+	{
+		if (!m_pipeline || target.field == nullptr || target.collider == nullptr || !target.ground) return 0;
 		const std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, rel);
 		if (bytes.empty())
 		{
 			LOG_DEBUG(Render, "[Scatter] aucun scatter.bin ('{}')", rel);
-			return;
+			return 0;
 		}
 		engine::world::instances::ScatterFile file;
 		std::string err;
 		if (!engine::world::instances::LoadScatterBin(bytes, file, err))
 		{
 			LOG_WARN(Render, "[Scatter] '{}' invalide : {}", rel, err);
-			return;
+			return 0;
 		}
+		// Les identifiants de mesh sont ceux de la table PARTAGÉE (m_scatterField) :
+		// les champs des cellules du monde « Royaumes » s'y réfèrent aussi.
 		std::vector<uint32_t> remap(file.meshPaths.size(), 0u);
 		for (size_t i = 0; i < file.meshPaths.size(); ++i)
 			remap[i] = m_scatterField.InternMesh(file.meshPaths[i]);
@@ -218,7 +239,10 @@ namespace engine
 			const uint32_t meshId = remap[in.meshIndex];
 			if (!EnsureScatterMesh(meshId)) { ++skipped; continue; }
 			const ScatterMeshGpu& mesh = m_scatterMeshes[meshId];
-			const float ground = m_terrainCollider.GroundHeightAt(in.x, in.z);
+			// Position dans le repère de la cible (globale − origine de la cible).
+			const float px = static_cast<float>(static_cast<double>(in.x) - target.originX);
+			const float pz = static_cast<float>(static_cast<double>(in.z) - target.originZ);
+			const float ground = target.ground(px, pz);
 			const bool piece = (in.flags & kScatterFlagBuildingPiece) != 0u;
 			float y = ground + in.yOffset;
 			if (!piece)
@@ -227,21 +251,21 @@ namespace engine
 				// mesh orienté repose sur le terrain, puis le décalage de la donnée
 				// (enfoncement léger des troncs/rochers) s'applique.
 				const engine::math::Mat4 probe = engine::world::scatter::ComposeInstanceMatrix(
-					{ in.x, 0.0f, in.z }, in.yawDeg, in.tiltDeg, in.scale);
+					{ px, 0.0f, pz }, in.yawDeg, in.tiltDeg, in.scale);
 				engine::math::Vec3 c{}, lo{}, hi{};
 				float r = 0.0f;
 				engine::world::scatter::TransformBounds(probe, mesh.localMin, mesh.localMax, c, r, lo, hi);
 				y = ground - lo.y + in.yOffset;
 			}
 			const engine::math::Mat4 model = engine::world::scatter::ComposeInstanceMatrix(
-				{ in.x, y, in.z }, in.yawDeg, in.tiltDeg, in.scale);
+				{ px, y, pz }, in.yawDeg, in.tiltDeg, in.scale);
 			AddScatterInstance(meshId, model, in.cullClass, in.flags,
-				(in.flags & kScatterFlagSolid) != 0u, piece, in.collisionRadius);
+				(in.flags & kScatterFlagSolid) != 0u, piece, in.collisionRadius, target);
 			++placed;
 		}
-		LOG_INFO(Render, "[Scatter] '{}' : {} instance(s) posee(s), {} ignoree(s), {} mesh(es) partage(s) ; collisions {} cylindre(s) / {} boite(s)",
-			rel, placed, skipped, m_scatterField.MeshPaths().size(),
-			m_worldCollider.CylinderCount(), m_worldCollider.BoxCount());
+		if (skipped > 0)
+			LOG_INFO(Render, "[Scatter] '{}' : {} instance(s) ignoree(s) (mesh absent)", rel, skipped);
+		return placed;
 	}
 
 	bool Engine::EnsureScatterInstanceBuffer(uint32_t slot, uint32_t capacity)
@@ -333,23 +357,53 @@ namespace engine
 		m_scatterMatCache.clear();
 	}
 
+	void Engine::GatherScatterLayers(std::vector<ScatterLayer>& out) const
+	{
+		out.clear();
+		if (m_scatterField.Count() > 0)
+			out.push_back({ &m_scatterField, 0.0f, 0.0f, 0u });
+		// Monde « Royaumes » : un champ par cellule résidente, en coordonnées locales
+		// à la cellule, décalé par son centre exprimé dans le repère de rendu.
+		for (const CellRenderTile& tile : m_cellTiles)
+		{
+			if (!tile.scatter || tile.scatter->Count() == 0)
+				continue;
+			const engine::world::cells::CellPoint c = m_renderFrame.CellCenterRender(tile.cell);
+			const std::uint32_t id = 1u + ((static_cast<std::uint32_t>(tile.cell.n) & 7u) << 3
+				| (static_cast<std::uint32_t>(tile.cell.e) & 7u));
+			out.push_back({ tile.scatter.get(), static_cast<float>(c.x), static_cast<float>(c.z), id });
+		}
+	}
+
 	void Engine::CollectScatterOccluders(const engine::math::Vec3& camera, const engine::math::Vec3& focus,
 		std::vector<engine::render::OccluderSphere>& out) const
 	{
 		// (pas de « near » : macro vide sous Windows via windef.h)
 		static thread_local std::vector<uint32_t> nearIdx;
-		m_scatterField.GatherNearSegment(camera, focus, 0.6f, nearIdx);
-		for (uint32_t idx : nearIdx)
+		static thread_local std::vector<ScatterLayer> layers;
+		GatherScatterLayers(layers);
+		for (uint32_t li = 0; li < static_cast<uint32_t>(layers.size()); ++li)
 		{
-			const auto& it = m_scatterField.Item(idx);
-			out.push_back({ kScatterOccluderIdBase | idx, it.center, it.radius });
+			const ScatterLayer& layer = layers[li];
+			const engine::math::Vec3 camL{ camera.x - layer.offsetX, camera.y, camera.z - layer.offsetZ };
+			const engine::math::Vec3 focusL{ focus.x - layer.offsetX, focus.y, focus.z - layer.offsetZ };
+			layer.field->GatherNearSegment(camL, focusL, 0.6f, nearIdx);
+			for (uint32_t idx : nearIdx)
+			{
+				const auto& it = layer.field->Item(idx);
+				const engine::math::Vec3 center{ it.center.x + layer.offsetX, it.center.y, it.center.z + layer.offsetZ };
+				out.push_back({ ScatterOccluderId(layer.id, idx), center, it.radius });
+			}
 		}
 	}
 
 	void Engine::RecordScatterGeometry(VkCommandBuffer cmd, engine::render::Registry& reg,
 		const engine::RenderState& rs)
 	{
-		if (m_scatterField.Count() == 0 || !m_pipeline) return;
+		if (!m_pipeline) return;
+		static thread_local std::vector<ScatterLayer> layers;
+		GatherScatterLayers(layers);
+		if (layers.empty()) return;
 		auto& geom = m_pipeline->GetGeometryPass();
 		if (!geom.HasLoadPass()) return;
 		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
@@ -359,30 +413,42 @@ namespace engine
 		dist.largeM = static_cast<float>(m_cfg.GetDouble("world.scatter.cull_large_m", 150.0));
 		dist.mediumM = static_cast<float>(m_cfg.GetDouble("world.scatter.cull_medium_m", 80.0));
 		dist.smallM = static_cast<float>(m_cfg.GetDouble("world.scatter.cull_small_m", 42.0));
-		const engine::world::scatter::Frustum frustum =
-			engine::world::scatter::Frustum::FromViewProj(rs.viewProjMatrix.m);
-		m_scatterField.Gather(rs.camera.position, frustum, dist, m_scatterVisible);
-		if (m_scatterVisible.empty()) return;
 
 		// Une entrée par (instance × partie) : clé de lot = (mesh GPU, matériau, fondu).
-		struct DrawRef { const engine::render::MeshAsset* mesh; uint32_t material; uint32_t fadeQ; uint32_t item; };
+		struct DrawRef { const engine::render::MeshAsset* mesh; uint32_t material; uint32_t fadeQ; uint32_t layer; uint32_t item; };
 		static thread_local std::vector<DrawRef> refs;
 		refs.clear();
-		for (uint32_t idx : m_scatterVisible)
+		size_t visibleTotal = 0, itemTotal = 0;
+		for (uint32_t li = 0; li < static_cast<uint32_t>(layers.size()); ++li)
 		{
-			const auto& it = m_scatterField.Item(idx);
-			if (it.meshId >= m_scatterMeshes.size()) continue;
-			uint32_t fadeQ = 16u; // 16 = opaque
-			if ((it.flags & engine::world::instances::kScatterFlagOccluder) != 0u)
+			const ScatterLayer& layer = layers[li];
+			itemTotal += layer.field->Count();
+			// Visibilité dans le repère du champ : caméra décalée, frustum de
+			// viewProj × Translate(décalage) (plans exprimés en coordonnées locales).
+			const engine::math::Vec3 eyeL{ rs.camera.position.x - layer.offsetX, rs.camera.position.y,
+				rs.camera.position.z - layer.offsetZ };
+			const engine::math::Mat4 vpLocal = rs.viewProjMatrix
+				* engine::math::Mat4::Translate(engine::math::Vec3{ layer.offsetX, 0.0f, layer.offsetZ });
+			const engine::world::scatter::Frustum frustum =
+				engine::world::scatter::Frustum::FromViewProj(vpLocal.m);
+			layer.field->Gather(eyeL, frustum, dist, m_scatterVisible);
+			visibleTotal += m_scatterVisible.size();
+			for (uint32_t idx : m_scatterVisible)
 			{
-				const float f = m_cameraOcclusionFade.FadeFor(kScatterOccluderIdBase | idx);
-				if (f < 0.999f) fadeQ = static_cast<uint32_t>(std::lround(std::clamp(f, 0.0f, 1.0f) * 15.0f));
-			}
-			for (const PropPart& part : m_scatterMeshes[it.meshId].parts)
-			{
-				engine::render::MeshAsset* mesh = part.mesh.Get();
-				if (mesh == nullptr) continue;
-				refs.push_back({ mesh, part.materialIndex, fadeQ, idx });
+				const auto& it = layer.field->Item(idx);
+				if (it.meshId >= m_scatterMeshes.size()) continue;
+				uint32_t fadeQ = 16u; // 16 = opaque
+				if ((it.flags & engine::world::instances::kScatterFlagOccluder) != 0u)
+				{
+					const float f = m_cameraOcclusionFade.FadeFor(ScatterOccluderId(layer.id, idx));
+					if (f < 0.999f) fadeQ = static_cast<uint32_t>(std::lround(std::clamp(f, 0.0f, 1.0f) * 15.0f));
+				}
+				for (const PropPart& part : m_scatterMeshes[it.meshId].parts)
+				{
+					engine::render::MeshAsset* mesh = part.mesh.Get();
+					if (mesh == nullptr) continue;
+					refs.push_back({ mesh, part.materialIndex, fadeQ, li, idx });
+				}
 			}
 		}
 		if (refs.empty()) return;
@@ -390,6 +456,7 @@ namespace engine
 			if (a.mesh != b.mesh) return a.mesh < b.mesh;
 			if (a.material != b.material) return a.material < b.material;
 			if (a.fadeQ != b.fadeQ) return a.fadeQ < b.fadeQ;
+			if (a.layer != b.layer) return a.layer < b.layer;
 			return a.item < b.item;
 		});
 
@@ -405,8 +472,14 @@ namespace engine
 			uint32_t j = i;
 			while (j < needed && refs[j].mesh == refs[i].mesh && refs[j].material == refs[i].material && refs[j].fadeQ == refs[i].fadeQ)
 			{
+				// Matrice du champ + décalage de la cellule (translation en m12/m14).
+				const ScatterLayer& layer = layers[refs[j].layer];
+				float model[16];
+				std::memcpy(model, layer.field->Item(refs[j].item).model.m, sizeof(model));
+				model[12] += layer.offsetX;
+				model[14] += layer.offsetZ;
 				std::memcpy(dst + static_cast<size_t>(j) * engine::render::kInstanceMatrixSizeBytes,
-					m_scatterField.Item(refs[j].item).model.m, engine::render::kInstanceMatrixSizeBytes);
+					model, engine::render::kInstanceMatrixSizeBytes);
 				++j;
 			}
 			engine::render::InstanceBatch b;
@@ -426,8 +499,8 @@ namespace engine
 			/*loadExistingGbuffer*/ true);
 
 		if ((m_currentFrame % 120) == 0)
-			LOG_DEBUG(Render, "[Scatter] visibles={} draws={} lots={} (total={})",
-				m_scatterVisible.size(), needed, batches.size(), m_scatterField.Count());
+			LOG_DEBUG(Render, "[Scatter] visibles={} draws={} lots={} (total={}, champs={})",
+				visibleTotal, needed, batches.size(), itemTotal, layers.size());
 	}
 }
 
@@ -459,7 +532,13 @@ namespace engine
 		EnsureWorldPlaces();
 		if (!m_worldPlaces.IsLoaded())
 			return;
-		const engine::math::Vec3 pos = m_characterController.GetPosition();
+		// Lieux du monde en coordonnées GLOBALES (places.json) : position du joueur convertie.
+		engine::math::Vec3 pos = m_characterController.GetPosition();
+		if (m_cellWorld)
+		{
+			pos.x = static_cast<float>(m_renderFrame.ToGlobalX(pos.x));
+			pos.z = static_cast<float>(m_renderFrame.ToGlobalZ(pos.z));
+		}
 		m_placeBanner.Update(m_worldPlaces, pos.x, pos.z, dtSec);
 		engine::render::DrawPlaceBanner(fg, dw, dh, m_placeBanner);
 		if (!m_worldMapVisible)

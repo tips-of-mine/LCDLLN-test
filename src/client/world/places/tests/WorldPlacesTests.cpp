@@ -27,11 +27,13 @@ int main()
 	  "poi_count": 1, "pois": [ { "id": "p", "name": "Oracle", "kind": "monolithe", "x": 10, "z": 10, "description": "" } ],
 	  "region_count": 2, "regions": [
 	    { "id": "big", "name": "Grande", "x_min": -100, "x_max": 300, "z_min": -200, "z_max": 200 },
-	    { "id": "small", "name": "Petite", "x_min": 100, "x_max": 200, "z_min": 0, "z_max": 100 } ] })";
+	    { "id": "small", "name": "Petite", "x_min": 100, "x_max": 200, "z_min": 0, "z_max": 100 } ],
+	  "cell_count": 2, "cells": [ { "name": "cell_n003_w009", "lore": "N003_W009" }, { "name": "cell_s009_e011", "lore": "S009_E011" } ] })";
 	WorldPlaces w;
 	std::string err;
 	Check(w.LoadFromText(json, err), "chargement valide");
 	Check(w.Cities().size() == 2 && w.Pois().size() == 1 && w.Regions().size() == 2, "comptes");
+	Check(w.GeneratedCells().size() == 2 && w.GeneratedCells()[1] == "S009_E011", "cellules generees");
 	Check(w.Cities()[0].startFor.size() == 1 && w.Cities()[0].startFor[0] == "humains", "start_for");
 	Check(w.StartCityFor("humains") == &w.Cities()[0], "ville de depart humains");
 	Check(w.StartCityFor("orcs") == nullptr, "pas de depart orcs");

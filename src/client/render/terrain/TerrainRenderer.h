@@ -31,6 +31,8 @@ namespace engine::render::terrain
         float centerZ  = 0.0f; ///< World Z of patch centre
         float minY     = 0.0f; ///< Min world Y over all patch vertices
         float maxY     = 0.0f; ///< Max world Y over all patch vertices
+        uint32_t indexX = 0;   ///< Indice du patch (X) dans la grille — recalcul de l'origine
+        uint32_t indexZ = 0;   ///< Indice du patch (Z) dans la grille
     };
 
     /// Terrain renderer: heightmap-based ground mesh with distance LOD and geomorphing.
@@ -49,7 +51,10 @@ namespace engine::render::terrain
         /// SPIR-V loader function (same signature as DeferredPipeline::ShaderLoaderFn).
         using ShaderLoaderFn = std::function<std::vector<uint32_t>(const char* spvPath)>;
 
-        /// Camera-to-patch-centre distance thresholds for LOD selection (metres).
+        /// Camera-to-patch-centre distance thresholds for LOD selection (metres),
+        /// pour un pas de heightmap de 1 m. Record() les multiplie par le pas réel
+        /// (≥ 1) : une cellule 2049² de 10 km (pas 4,88 m) garde le même nombre de
+        /// sommets par patch affiché à l'écran.
         /// LOD 0 used below kLodDistances[0], LOD N used below kLodDistances[N], etc.
         static constexpr float kLodDistances[kTerrainLodCount] = {
             50.f, 200.f, 500.f, 1000.f, 4000.f
@@ -159,6 +164,19 @@ namespace engine::render::terrain
         /// Returns the TerrainSplatting instance for editing and re-upload.
         TerrainSplatting& GetSplatting() { return m_splatting; }
 
+        /// Monde en cellules (origine de rendu flottante) : déplace le coin min du
+        /// terrain en coordonnées de RENDU (m) sans rien recharger — recalcule
+        /// l'origine des patches (CPU uniquement, ~16 k patches pour 2049²).
+        void SetTerrainOrigin(float originX, float originZ);
+
+        /// Monde en cellules : vrai (défaut) = ce terrain efface le GBuffer au début
+        /// de son render pass ; faux = il dessine PAR-DESSUS (terrains suivants de
+        /// la même frame). Pris en compte au prochain Record().
+        void SetClearAttachments(bool clear) { m_clearAttachments = clear; }
+
+        /// Distance d'affichage XZ (m) des patches ; 0 = illimitée (défaut historique).
+        void SetMaxDrawDistance(float meters) { m_maxDrawDistance = meters > 0.0f ? meters : 0.0f; }
+
         /// Returns the world X origin of the terrain (config: terrain.origin_x).
         float GetTerrainOriginX()   const { return m_terrainOriginX;   }
         /// Returns the world Z origin of the terrain (config: terrain.origin_z).
@@ -169,10 +187,9 @@ namespace engine::render::terrain
         float GetHeightScale()      const { return m_heightScale;      }
 
         /// Etendue monde reellement couverte par les patches rendus, en metres
-        /// (m_patchCountX * kPatchQuads * m_vertStepWorld). Peut etre inferieure
-        /// a `GetTerrainWorldSize()` quand la heightmap est plus petite que
-        /// 1025x1025 (kVertStepWorld est calcule sur 1024 pas, indep. de la
-        /// resolution de la heightmap chargee). Pertinent pour positionner la
+        /// (m_patchCountX * kPatchQuads * m_vertStepWorld). Legerement inferieure
+        /// a `GetTerrainWorldSize()` quand (largeur - 1) n'est pas un multiple de
+        /// kPatchQuads (le pas vaut world_size / (largeur - 1)). Pertinent pour positionner la
         /// camera editeur AU-DESSUS de la zone effectivement maillee, sans quoi
         /// les patches tombent hors du frustum et le terrain reste invisible.
         float GetActualRenderedExtentX() const;
@@ -269,6 +286,12 @@ namespace engine::render::terrain
 
         // ── Vulkan objects — terrain pipeline ─────────────────────────────────────
         VkRenderPass          m_renderPass    = VK_NULL_HANDLE;
+        /// Même render pass en LOAD (terrains enchaînés, cf. SetClearAttachments).
+        VkRenderPass          m_renderPassLoad = VK_NULL_HANDLE;
+        /// true = render pass CLEAR (premier terrain de la frame), false = LOAD (terrains suivants).
+        bool                  m_clearAttachments = true;
+        /// Distance max (m, XZ caméra → patch) au-delà de laquelle un patch n'est pas dessiné ; 0 = illimitée.
+        float                 m_maxDrawDistance  = 0.0f;
         VkDescriptorSetLayout m_descSetLayout = VK_NULL_HANDLE;
         VkDescriptorPool      m_descPool      = VK_NULL_HANDLE;
         VkDescriptorSet       m_descSet       = VK_NULL_HANDLE;

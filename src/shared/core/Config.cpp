@@ -723,6 +723,42 @@ namespace engine::core
 		return m_values.find(ToOwnedKey(key)) != m_values.end();
 	}
 
+	size_t Config::EraseUnderPrefix(std::string_view prefix)
+	{
+		const std::string p = ToOwnedKey(prefix);
+		size_t erased = 0;
+		for (auto it = m_values.begin(); it != m_values.end();)
+		{
+			const std::string& k = it->first;
+			const bool exact = k == p;
+			const bool child = k.size() > p.size() && k.compare(0, p.size(), p) == 0
+				&& (k[p.size()] == '.' || k[p.size()] == '[');
+			if (exact || child)
+			{
+				it = m_values.erase(it);
+				++erased;
+			}
+			else
+			{
+				++it;
+			}
+		}
+		return erased;
+	}
+
+	size_t Config::MergeFrom(const Config& other, std::string_view prefix)
+	{
+		const std::string p = ToOwnedKey(prefix);
+		size_t copied = 0;
+		for (const auto& [k, v] : other.m_values)
+		{
+			if (k.size() < p.size() || k.compare(0, p.size(), p) != 0) continue;
+			m_values[k] = v;
+			++copied;
+		}
+		return copied;
+	}
+
 	std::unordered_map<std::string, std::string> Config::GetStringMapUnderPrefix(std::string_view prefix) const
 	{
 		std::string p = ToOwnedKey(prefix);

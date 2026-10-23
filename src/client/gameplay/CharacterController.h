@@ -148,6 +148,12 @@ namespace engine::gameplay
 		/// IWorldCollider::QueryWater). Consomme par la state machine d'anim.
 		bool IsInWater() const { return m_mode == MovementMode::Water; }
 		engine::math::Vec3 GetPosition() const { return m_positionCenter; }
+		/// Monde « Royaumes » : déplace le personnage de (dx, dz) m SANS toucher à
+		/// son état (vitesse, sol, saut, esquive) — changement d'origine de rendu.
+		void Translate(float dx, float dz) { m_positionCenter.x += dx; m_positionCenter.z += dz; }
+		/// Mur invisible : replace le personnage en (x, z) en gardant Y et l'état
+		/// vertical ; la vitesse horizontale est annulée.
+		void BlockHorizontalAt(float x, float z) { m_positionCenter.x = x; m_positionCenter.z = z; m_velocity.x = 0.0f; m_velocity.z = 0.0f; }
 		engine::math::Vec3 GetVelocity() const { return m_velocity; }
 		IWorldCollider::Capsule GetCapsule() const { return m_capsule; }
 

@@ -710,6 +710,15 @@ namespace engine::client
 			LOG_WARN(Net, "[UIModelBinding] Snapshot FAILED: decode error");
 			return false;
 		}
+		// Monde en cellules : positions GLOBALES du shard → repère de rendu du client.
+		if (m_worldOriginX != 0.0 || m_worldOriginZ != 0.0)
+		{
+			for (engine::server::SnapshotEntity& entity : m_snapshotScratch)
+			{
+				entity.state.positionX = ToRenderX(entity.state.positionX);
+				entity.state.positionZ = ToRenderZ(entity.state.positionZ);
+			}
+		}
 
 		// TG.1 — chunking : si le serveur a scinde le snapshot en plusieurs chunks
 		// (chunkCount > 1), on accumule jusqu'a avoir tous les chunks du meme serverTick
@@ -1083,6 +1092,26 @@ namespace engine::client
 		return true;
 	}
 
+	void UIModelBinding::SetWorldOrigin(double originX, double originZ)
+	{
+		const float dx = static_cast<float>(m_worldOriginX - originX);
+		const float dz = static_cast<float>(m_worldOriginZ - originZ);
+		m_worldOriginX = originX;
+		m_worldOriginZ = originZ;
+		if (dx == 0.0f && dz == 0.0f) return;
+		// Les positions déjà stockées suivent le nouveau repère (sinon l'interpolation
+		// des entités distantes glisserait de 10 km jusqu'au prochain snapshot).
+		for (UIRemoteEntity& remote : m_model.remoteEntities)
+		{
+			remote.positionX += dx;
+			remote.positionZ += dz;
+		}
+		m_model.playerStats.positionX += dx;
+		m_model.playerStats.positionZ += dz;
+		m_model.targetStats.positionX += dx;
+		m_model.targetStats.positionZ += dz;
+	}
+
 	bool UIModelBinding::ApplyForcePosition(std::span<const std::byte> packet)
 	{
 		if (!engine::server::DecodeForcePosition(packet, m_forcePositionMessage))
@@ -1092,6 +1121,8 @@ namespace engine::client
 		}
 
 		m_model.forcedPosition.pending = true;
+		// Position GLOBALE conservée telle quelle (le client peut devoir changer
+		// d'origine de rendu avant de l'appliquer, cf. Engine::UpdateGameplayNet).
 		m_model.forcedPosition.x = m_forcePositionMessage.positionX;
 		m_model.forcedPosition.y = m_forcePositionMessage.positionY;
 		m_model.forcedPosition.z = m_forcePositionMessage.positionZ;
@@ -1274,9 +1305,9 @@ namespace engine::client
 		}
 
 		m_model.playerStats.zoneId = m_zoneChangeMessage.zoneId;
-		m_model.playerStats.positionX = m_zoneChangeMessage.spawnPositionX;
+		m_model.playerStats.positionX = ToRenderX(m_zoneChangeMessage.spawnPositionX);
 		m_model.playerStats.positionY = m_zoneChangeMessage.spawnPositionY;
-		m_model.playerStats.positionZ = m_zoneChangeMessage.spawnPositionZ;
+		m_model.playerStats.positionZ = ToRenderZ(m_zoneChangeMessage.spawnPositionZ);
 		m_model.targetStats.hasPosition = false;
 		NotifyObservers(UIModelChangeWorld);
 		LOG_INFO(Net, "[UIModelBinding] ZoneChange applied (zone_id={}, spawn=({:.2f}, {:.2f}, {:.2f}))",

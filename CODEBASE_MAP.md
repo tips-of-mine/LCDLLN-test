@@ -2498,6 +2498,10 @@ Monde continu en **cellules de 10 km** (1 case du lore = 1 cellule) généré pa
 | `src/shardd/gameplay/ambient/AmbientRoutine.{h,cpp}` | Routines des PNJ d'ambiance : tour / patrol / post / wander, horaires jour/nuit (pur, `ambient_routine_tests`). |
 | `src/shared/server_bootstrap/ServerApp.cpp` (`UpdateAmbientMob`) | Application serveur des routines (non attaquables, arrêt près d'un joueur, retour à la maison hors horaire). |
 | `src/shared/world/StartLocations.{h,cpp}` | Points de départ par race + cellules générées (`world/<monde>/start_locations.json`), lus par `CharacterCreateHandler` (master) et le shard (pur, `start_locations_tests`). |
+| `src/client/world/cells/CellWorldFrame.{h,cpp}` | Client : repère de RENDU centré sur la cellule du joueur (rebase), cellules générées, sélection par rayon, mur invisible (pur, `cell_world_frame_tests`). |
+| `src/client/world/cells/CellHeightFields.{h,cpp}` | Client : heightmaps CPU des cellules proches (collision, pose au sol), interrogées en coordonnées de rendu. |
+| `src/client/gameplay/CellWorldCollider.{h,cpp}` | Client : collisions de base + collisionneurs des cellules (coordonnées locales décalées). |
+| `src/client/app/EngineCells.cpp` | Client : streaming des cellules (terrains GPU, décor, bâtiments), contenu léger (PNJ, eau, marqueurs), rebase, conversions global↔rendu. |
 | `src/shardd/world/RegionActivity.{h,cpp}` | **Régions actives** : une cellule n'est simulée que si un joueur s'y trouve ou à moins de `world.region_activation_margin_m` de son bord (pur, `region_activity_tests`). |
 | `src/shardd/world/SpatialPartition.{h,cpp}` (`CellGrid`) | Grille d'intérêt 100 m **creuse** ; une seule grille pour tout le continent (`kCellWorldHalfExtentMeters`), une par zone historique. |
 | `src/shared/server_bootstrap/ServerApp.cpp` (`InitCellWorld`, `RefreshRegionActivity`, `UpdateClientRegion`, `NormalizeCellWorldLoginPosition`) | Monde en cellules côté shard : une carte, régions = cellules, mur invisible serveur, relocalisation au départ de la race. |

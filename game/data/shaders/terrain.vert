@@ -59,17 +59,28 @@ void main()
     float terrainOriginX = ubo.terrainOrigin.x;
     float terrainOriginZ = ubo.terrainOrigin.y;
 
-    // World XZ position of this vertex
-    float worldX = pc.patchOriginX + inPatchLocal.x * stepMult * vertStepWorld;
-    float worldZ = pc.patchOriginZ + inPatchLocal.y * stepMult * vertStepWorld;
+    // World XZ position of this vertex. inPatchLocal est l'indice FIN du sommet
+    // dans le patch (0..kPatchQuads) : les index buffers de LOD N ne retiennent que
+    // les sommets multiples de 2^N, le patch couvre donc toujours la même surface.
+    // (Multiplier aussi par stepMult étirait le patch 2^N fois : patches LOD ≥ 1
+    // superposés à leurs voisins, relief faux à quelques dizaines de mètres.)
+    float worldX = pc.patchOriginX + inPatchLocal.x * vertStepWorld;
+    float worldZ = pc.patchOriginZ + inPatchLocal.y * vertStepWorld;
 
     // Heightmap UV (clamp to [0,1])
     vec2 uv;
     uv.x = clamp((worldX - terrainOriginX) / terrainSize, 0.0, 1.0);
     uv.y = clamp((worldZ - terrainOriginZ) / terrainSize, 0.0, 1.0);
 
-    // Sample height at current vertex position
-    float h      = texture(uHeightmap, uv).r;
+    // La heightmap est échantillonnée AUX SOMMETS (N échantillons pour N-1
+    // intervalles) : le sommet k doit lire le CENTRE du texel k, soit
+    // uvTexel = (uv * (N-1) + 0.5) / N. Sans cette correction, la lecture était
+    // décalée d'un demi-texel (≈ 2,4 m pour une cellule 2049² de 10 km) : le
+    // terrain affiché ne coïncidait pas avec la hauteur CPU (collision, pose au
+    // sol) et deux cellules voisines ne se raccordaient pas exactement.
+    vec2 hmSize = vec2(textureSize(uHeightmap, 0));
+    vec2 uvTexel = (uv * (hmSize - 1.0) + 0.5) / hmSize;
+    float h      = texture(uHeightmap, uvTexel).r;
     float worldY = h * heightScale;
 
     // Geomorphing: smoothly snap to parent LOD grid when morphFactor > 0.
@@ -79,23 +90,21 @@ void main()
     {
         // Snap local position to nearest parent LOD grid vertex.
         // snappedLocalX/Z sont en indices FINS (mêmes unités que inPatchLocal),
-        // arrondis au sommet pair (= grille parent). La position monde doit donc
-        // utiliser EXACTEMENT la même conversion que worldX/worldZ ci-dessus
-        // (origin + localIndex * stepMult * vertStepWorld). L'ancien facteur
-        // « * 2.0 » échantillonnait la heightmap deux fois trop loin → la cible de
-        // morph n'était pas la vraie hauteur parent, d'où des sauts de hauteur
-        // (coutures/tirets sombres) dans la bande de transition de LOD.
-        float snappedLocalX = floor(inPatchLocal.x / 2.0 + 0.5) * 2.0;
-        float snappedLocalZ = floor(inPatchLocal.y / 2.0 + 0.5) * 2.0;
+        // arrondis à la grille PARENTE (multiples de 2 × 2^N). La position monde
+        // utilise EXACTEMENT la même conversion que worldX/worldZ ci-dessus
+        // (origin + localIndex * vertStepWorld).
+        float parentStep = 2.0 * stepMult;
+        float snappedLocalX = floor(inPatchLocal.x / parentStep + 0.5) * parentStep;
+        float snappedLocalZ = floor(inPatchLocal.y / parentStep + 0.5) * parentStep;
 
-        float snappedWorldX = pc.patchOriginX + snappedLocalX * stepMult * vertStepWorld;
-        float snappedWorldZ = pc.patchOriginZ + snappedLocalZ * stepMult * vertStepWorld;
+        float snappedWorldX = pc.patchOriginX + snappedLocalX * vertStepWorld;
+        float snappedWorldZ = pc.patchOriginZ + snappedLocalZ * vertStepWorld;
 
         vec2 snappedUV;
         snappedUV.x = clamp((snappedWorldX - terrainOriginX) / terrainSize, 0.0, 1.0);
         snappedUV.y = clamp((snappedWorldZ - terrainOriginZ) / terrainSize, 0.0, 1.0);
 
-        float snappedH = texture(uHeightmap, snappedUV).r;
+        float snappedH = texture(uHeightmap, (snappedUV * (hmSize - 1.0) + 0.5) / hmSize).r;
         float snappedY = snappedH * heightScale;
 
         // Blend current height towards snapped parent height

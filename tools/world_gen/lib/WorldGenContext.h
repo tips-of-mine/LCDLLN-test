@@ -362,6 +362,11 @@ namespace tools::world_gen
 	/// Modèles de maisons paramétriques (bibliothèque buildings/templates). Output.cpp
 	bool WriteHouseTemplates(const std::string& outputRoot, GenReport& report, std::string& err);
 
+	/// Ajoute à \p ids les cellules des routes reliant les villes de départ
+	/// (`connect_start_cities`, cf. WorldMaster). Nécessite g.cities (sites) et
+	/// g.roads (BuildMacroRoads). WorldGen.cpp
+	void AddStartCorridors(GlobalWorld& g, std::vector<std::string>& ids);
+
 	/// Décode un identifiant de cellule "N003_W009" → (n, e). WorldMaster.cpp
 	bool ParseCellId(const std::string& id, int& n, int& e);
 

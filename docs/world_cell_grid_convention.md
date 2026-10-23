@@ -52,7 +52,10 @@ partagé client / shard / master / `tools/world_gen`, testé par
   X = est, Z = sud (nord = −Z) ;
 - la cellule `(n, e)` couvre x ∈ [e·10 000 − 5 000, e·10 000 + 5 000[ et
   z ∈ [−n·10 000 − 5 000, −n·10 000 + 5 000[ ;
-- identifiant numérique de zone serveur : `1 000 000 + (n+500)·1000 + (e+500)`.
+- identifiant numérique de zone serveur : `1 000 000 + (n+500)·1000 + (e+500)` —
+  c'est la **région** du joueur ; toutes les cellules forment pourtant **une
+  seule carte** (`kCellWorldMapId` = 999 999, `SameMap`) : on voit et on agit
+  à travers les frontières, seule la simulation est découpée par cellule.
 
 Le monde « Royaumes » généré à partir de cette grille est décrit dans
 `docs/world/ROYAUMES.md`.

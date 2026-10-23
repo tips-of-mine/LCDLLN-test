@@ -884,7 +884,12 @@ namespace tools::world_gen
 			std::vector<const StartLocationDef*> starts;
 			for (const World* w : cells) for (const StartLocationDef& s : w->starts) starts.push_back(&s);
 			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — point d'apparition d'un NOUVEAU personnage selon sa race (positions GLOBALES). Repli : character_creation.default_spawn.* puis (0,100,0).\",\n";
-			j += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"default_race\": \"humains\",\n  \"races\": {\n";
+			// Cellules générées (jouables) : lues par le shard (mur invisible côté serveur,
+			// relocalisation d'une position hors monde). Identifiants du lore séparés par des virgules.
+			std::string cellList;
+			for (const World* w : cells) cellList += (cellList.empty() ? "" : ",") + engine::world::cells::LoreCellId(w->cell);
+			j += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"default_race\": \"humains\",\n";
+			j += "  \"generated_cells\": " + Q(cellList) + ",\n  \"races\": {\n";
 			for (size_t k = 0; k < starts.size(); ++k)
 			{
 				const StartLocationDef& st = *starts[k];

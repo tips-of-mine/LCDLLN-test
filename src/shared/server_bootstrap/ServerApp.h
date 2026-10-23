@@ -35,6 +35,9 @@
 #include "src/shardd/world/TickScheduler.h"
 #include "src/shardd/world/UdpTransport.h"
 #include "src/shardd/world/ZoneTransitions.h"
+#include "src/shardd/world/RegionActivity.h"
+#include "src/shared/world/StartLocations.h"
+#include "src/shared/world/WorldCells.h"
 
 #include <array>
 #include <atomic>
@@ -210,6 +213,10 @@ namespace engine::server
 		/// renvoie resolved=false et les PV par défaut (kDefaultPlayerHealth) sont conservés.
 		std::string factionId;
 		std::string classId;
+		/// Monde « Royaumes » — race du personnage (characters.race_str, chargée au Hello
+		/// via LoadSpawnFromDb). Choisit la ville de départ quand la position sauvegardée
+		/// est hors du monde généré. Vide en mode no-DB → race par défaut du monde.
+		std::string raceId;
 		uint32_t experiencePoints = 0;
 		/// Compte propriétaire (résolu au Hello via AdmittedCharacterRegistry). Clé de la
 		/// présence unifiée (ShardPresenceService) ; 0 si non résolu (registre absent).
@@ -334,6 +341,10 @@ namespace engine::server
 	{
 		SpawnerDefinition definition{};
 		CellCoord centerCell{};
+		/// Monde « Royaumes » — vrai si le spawner appartient à une cellule de 10 km ;
+		/// il n'est alors évalué que si sa région (\ref regionCell) est active.
+		bool inCellWorld = false;
+		engine::world::cells::CellCoord regionCell{};
 		bool isActive = false;
 		std::vector<SpawnerSlotState> slots;
 	};
@@ -459,9 +470,10 @@ namespace engine::server
 		/// introuvable ; dans ce cas les out-params ne sont pas modifiés.
 		/// R1-A — récupère aussi `faction` et `class` (out-params) pour alimenter le moteur de
 		/// stats (PV à l'enter-world). Vides si la colonne est NULL/absente.
+		/// Monde « Royaumes » — récupère aussi `race_str` (migration 0033, \p outRaceId).
 		bool LoadSpawnFromDb(uint64_t characterId, float& x, float& y, float& z, float& yawDeg,
 		std::string& outName, std::string& outGender, uint32_t& outLevel,
-		std::string& outFactionId, std::string& outClassId);
+		std::string& outFactionId, std::string& outClassId, std::string& outRaceId);
 
 		/// Roadmap-10 (2026-07-20) — écrit wallet (player_wallet, migration 0012) +
 		/// inventaire (character_inventory) + équipement (character_equipment,
@@ -1034,7 +1046,37 @@ namespace engine::server
 		const LootBagEntity* FindLootBagByEntityId(EntityId entityId) const;
 
 		/// Return the cell grid attached to the requested zone, creating it on first use.
+		/// Monde « Royaumes » : toutes les cellules partagent UNE grille (celle de la carte,
+		/// \ref engine::world::cells::kCellWorldMapId), couvrant tout le continent.
 		CellGrid* GetOrCreateZoneGrid(uint32_t zoneId);
+
+		/// Monde « Royaumes » — lit `world.active_zone` ; en monde en cellules, charge
+		/// `world/royaumes/start_locations.json` (départs par race + cellules générées)
+		/// et la marge d'activation des régions. \return false si le monde en cellules
+		/// est demandé mais que ses données générées sont absentes (boot refusé).
+		bool InitCellWorld();
+
+		/// Monde « Royaumes » — recalcule les régions actives à partir des joueurs
+		/// (une fois par seconde, avant UpdateSpawners). No-op hors monde en cellules.
+		void RefreshRegionActivity();
+
+		/// Monde « Royaumes » — met à jour la région (zoneId = cellule) du joueur d'après
+		/// sa position : présence, événement de quête « zone:<id> ». Aucun message réseau
+		/// (le monde est continu). No-op hors monde en cellules.
+		void UpdateClientRegion(ConnectedClient& client);
+
+		/// Monde « Royaumes » — vrai si le point global (x, z) est dans une cellule générée.
+		/// Toujours vrai hors monde en cellules.
+		bool IsInsideGeneratedWorld(float positionX, float positionZ) const;
+
+		/// Monde « Royaumes » — à l'entrée en monde : si la position chargée n'est pas
+		/// dans une cellule générée, ou si elle provient d'une zone historique (repère
+		/// local feyhin), le joueur est replacé au point de départ de sa race.
+		/// \param persistedZoneFromFile zone lue dans le fichier personnage (nullopt si absent).
+		/// Hors monde en cellules : un personnage sauvegardé dans une cellule (retour
+		/// arrière) revient en zone 1 au point character_creation.default_spawn.*.
+		/// \return true si la position a été changée (le client doit en être informé).
+		bool NormalizeCellWorldLoginPosition(ConnectedClient& client, std::optional<uint32_t> persistedZoneFromFile);
 
 		/// Initialize moderation audit log (M29.2).
 		void InitModerationAuditSubsystem();
@@ -1294,7 +1336,17 @@ namespace engine::server
 		std::vector<RespawnPointDefinition> m_respawnPoints;
 		std::vector<DynamicEventState> m_dynamicEvents;
 		std::vector<SpawnerRuntimeState> m_spawners;
+		/// Grilles d'intérêt par CARTE (zone historique, ou kCellWorldMapId pour le monde
+		/// en cellules) — clé = engine::world::cells::MapIdOfZone(zoneId).
 		std::unordered_map<uint32_t, CellGrid> m_zoneGrids;
+		/// Monde « Royaumes » — vrai si `world.active_zone` = "royaumes".
+		bool m_cellWorld = false;
+		/// Monde « Royaumes » — départs par race + cellules générées (start_locations.json).
+		engine::world::StartLocationTable m_worldStarts;
+		/// Monde « Royaumes » — régions (cellules) actives, recalculées chaque seconde.
+		RegionActivity m_regionActivity;
+		/// Monde « Royaumes » — tick du prochain recalcul des régions actives (1 Hz).
+		uint32_t m_nextRegionRefreshTick = 0;
 		std::vector<EntityId> m_relevantEntityScratch;
 		std::vector<SnapshotEntity> m_snapshotEntitiesScratch;
 		EntityId m_nextServerEntityId = 0x200000000ull;

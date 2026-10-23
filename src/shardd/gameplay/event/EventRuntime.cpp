@@ -2,6 +2,7 @@
 
 #include "src/shared/core/Log.h"
 #include "src/shared/platform/FileSystem.h"
+#include "src/shared/world/WorldCells.h"
 
 #include <cctype>
 #include <cmath>
@@ -495,6 +496,13 @@ namespace engine::server
 			{
 				continue;
 			}
+			// Monde « Royaumes » : seuls les dossiers du monde actif sont chargés
+			// (cellules cell_* en monde en cellules, zones historiques sinon).
+			if (!engine::world::cells::ZoneDirBelongsToWorld(zoneEntry.filename().string(),
+				m_config.GetString("world.active_zone", "")))
+			{
+				continue;
+			}
 
 			const std::string relativePath = "zones/" + zoneEntry.filename().string() + "/events.json";
 			const std::filesystem::path fullPath = engine::platform::FileSystem::ResolveContentPath(m_config, relativePath);
@@ -847,6 +855,13 @@ namespace engine::server
 
 		if (m_definitions.empty())
 		{
+			// Monde « Royaumes » : les cellules générées n'ont pas (encore)
+			// d'événements dynamiques — ce n'est pas une erreur de données.
+			if (engine::world::cells::IsCellWorld(m_config.GetString("world.active_zone", "")))
+			{
+				LOG_INFO(Net, "[EventRuntime] Definition load OK: aucun evenement dynamique dans le monde en cellules");
+				return true;
+			}
 			LOG_ERROR(Net, "[EventRuntime] Definition load FAILED: no events loaded");
 			return false;
 		}

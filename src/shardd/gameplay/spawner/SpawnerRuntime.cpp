@@ -2,6 +2,7 @@
 
 #include "src/shared/core/Log.h"
 #include "src/shared/platform/FileSystem.h"
+#include "src/shared/world/WorldCells.h"
 
 #include <algorithm>
 #include <cctype>
@@ -514,6 +515,13 @@ namespace engine::server
 			{
 				continue;
 			}
+			// Monde « Royaumes » : seuls les dossiers du monde actif sont chargés
+			// (cellules cell_* en monde en cellules, zones historiques sinon).
+			if (!engine::world::cells::ZoneDirBelongsToWorld(zoneEntry.filename().string(),
+				m_config.GetString("world.active_zone", "")))
+			{
+				continue;
+			}
 
 			const std::string relativePath = "zones/" + zoneEntry.filename().string() + "/spawners.json";
 			const std::filesystem::path fullPath = engine::platform::FileSystem::ResolveContentPath(m_config, relativePath);
@@ -549,6 +557,14 @@ namespace engine::server
 				LOG_ERROR(Net, "[SpawnerRuntime] Definition load FAILED: {} must define a valid root.zoneId", relativePath);
 				m_definitions.clear();
 				return false;
+			}
+			// Monde « Royaumes » : une cellule générée peut n'avoir aucun spawner
+			// (désert, mer) — liste vide acceptée pour les dossiers cell_* seulement.
+			if (spawnersValue != nullptr && spawnersValue->type == JsonType::Array && spawnersValue->arrayValue.empty()
+				&& engine::world::cells::ParseCellDirName(zoneEntry.filename().string()).has_value())
+			{
+				LOG_INFO(Net, "[SpawnerRuntime] Zone spawner file empty (cellule sans spawner) : {}", relativePath);
+				continue;
 			}
 			if (spawnersValue == nullptr || spawnersValue->type != JsonType::Array || spawnersValue->arrayValue.empty())
 			{

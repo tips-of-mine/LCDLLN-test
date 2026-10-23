@@ -30,6 +30,8 @@ layout(set = 0, binding = 2) uniform TerrainFrameUbo {
     vec4  terrainParams;
     vec4  terrainOrigin;
     vec4  layerTiling; // x=grass, y=dirt, z=rock, w=snow (metres per tile)
+    vec4  texOffsetX;  // décalage X du pavage par couche (m) : pavage en coordonnées globales
+    vec4  texOffsetZ;  // décalage Z du pavage par couche (m)
 } ubo;
 layout(set = 0, binding = 3) uniform sampler2D      uSplatMap;    // RGBA8: R=grass,G=dirt,B=rock,A=snow
 layout(set = 0, binding = 4) uniform sampler2DArray uAlbedoArray; // 4 layers RGBA8
@@ -115,10 +117,10 @@ void main()
 
     // ── Sample and blend albedo (triplanar per layer) ─────────────────────────
     vec3 albedo = vec3(0.0);
-    albedo += triplanarSample(uAlbedoArray, 0.0, vWorldPos, macroN, tilingGrass).rgb * w.r;
-    albedo += triplanarSample(uAlbedoArray, 1.0, vWorldPos, macroN, tilingDirt ).rgb * w.g;
-    albedo += triplanarSample(uAlbedoArray, 2.0, vWorldPos, macroN, tilingRock ).rgb * w.b;
-    albedo += triplanarSample(uAlbedoArray, 3.0, vWorldPos, macroN, tilingSnow ).rgb * w.a;
+    albedo += triplanarSample(uAlbedoArray, 0.0, vWorldPos + vec3(ubo.texOffsetX.x, 0.0, ubo.texOffsetZ.x), macroN, tilingGrass).rgb * w.r;
+    albedo += triplanarSample(uAlbedoArray, 1.0, vWorldPos + vec3(ubo.texOffsetX.y, 0.0, ubo.texOffsetZ.y), macroN, tilingDirt ).rgb * w.g;
+    albedo += triplanarSample(uAlbedoArray, 2.0, vWorldPos + vec3(ubo.texOffsetX.z, 0.0, ubo.texOffsetZ.z), macroN, tilingRock ).rgb * w.b;
+    albedo += triplanarSample(uAlbedoArray, 3.0, vWorldPos + vec3(ubo.texOffsetX.w, 0.0, ubo.texOffsetZ.w), macroN, tilingSnow ).rgb * w.a;
     float grassAmt = texture(uGrassMask, vUV).r * ubo.terrainParams.w;
     vec3 grassHue = vec3(0.88, 1.04, 0.82);
     albedo = mix(albedo, albedo * grassHue, clamp(grassAmt, 0.0, 1.0));
@@ -134,10 +136,10 @@ void main()
     // ── Sample and blend detail normals (triplanar per layer) ─────────────────
     // Detail normals are stored as RGB tangent-space normals (N * 0.5 + 0.5).
     vec3 detailN = vec3(0.0);
-    detailN += triplanarSample(uNormalArray, 0.0, vWorldPos, macroN, tilingGrass).rgb * w.r;
-    detailN += triplanarSample(uNormalArray, 1.0, vWorldPos, macroN, tilingDirt ).rgb * w.g;
-    detailN += triplanarSample(uNormalArray, 2.0, vWorldPos, macroN, tilingRock ).rgb * w.b;
-    detailN += triplanarSample(uNormalArray, 3.0, vWorldPos, macroN, tilingSnow ).rgb * w.a;
+    detailN += triplanarSample(uNormalArray, 0.0, vWorldPos + vec3(ubo.texOffsetX.x, 0.0, ubo.texOffsetZ.x), macroN, tilingGrass).rgb * w.r;
+    detailN += triplanarSample(uNormalArray, 1.0, vWorldPos + vec3(ubo.texOffsetX.y, 0.0, ubo.texOffsetZ.y), macroN, tilingDirt ).rgb * w.g;
+    detailN += triplanarSample(uNormalArray, 2.0, vWorldPos + vec3(ubo.texOffsetX.z, 0.0, ubo.texOffsetZ.z), macroN, tilingRock ).rgb * w.b;
+    detailN += triplanarSample(uNormalArray, 3.0, vWorldPos + vec3(ubo.texOffsetX.w, 0.0, ubo.texOffsetZ.w), macroN, tilingSnow ).rgb * w.a;
     // Decode blended detail normal and combine with macro normal
     vec3 detailNWorld = normalize(detailN * 2.0 - 1.0);
     vec3 blendedN     = normalize(macroN + detailNWorld);
@@ -145,10 +147,10 @@ void main()
 
     // ── Sample and blend ORM (triplanar per layer) ────────────────────────────
     vec4 orm = vec4(0.0);
-    orm += triplanarSample(uORMArray, 0.0, vWorldPos, macroN, tilingGrass) * w.r;
-    orm += triplanarSample(uORMArray, 1.0, vWorldPos, macroN, tilingDirt ) * w.g;
-    orm += triplanarSample(uORMArray, 2.0, vWorldPos, macroN, tilingRock ) * w.b;
-    orm += triplanarSample(uORMArray, 3.0, vWorldPos, macroN, tilingSnow ) * w.a;
+    orm += triplanarSample(uORMArray, 0.0, vWorldPos + vec3(ubo.texOffsetX.x, 0.0, ubo.texOffsetZ.x), macroN, tilingGrass) * w.r;
+    orm += triplanarSample(uORMArray, 1.0, vWorldPos + vec3(ubo.texOffsetX.y, 0.0, ubo.texOffsetZ.y), macroN, tilingDirt ) * w.g;
+    orm += triplanarSample(uORMArray, 2.0, vWorldPos + vec3(ubo.texOffsetX.z, 0.0, ubo.texOffsetZ.z), macroN, tilingRock ) * w.b;
+    orm += triplanarSample(uORMArray, 3.0, vWorldPos + vec3(ubo.texOffsetX.w, 0.0, ubo.texOffsetZ.w), macroN, tilingSnow ) * w.a;
     outORM = orm;
 
     // ── Velocity for TAA reprojection ─────────────────────────────────────────

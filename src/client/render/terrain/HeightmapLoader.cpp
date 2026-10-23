@@ -490,8 +490,64 @@ namespace engine::render::terrain
     // HeightmapLoader::GenerateAndUploadNormalMap
     // ─────────────────────────────────────────────────────────────────────────────
 
+    namespace
+    {
+        /// Ouvre un .r16h et lit son en-tête. \return false si invalide.
+        bool OpenR16h(const std::string& fullPath, std::ifstream& f, uint32_t& w, uint32_t& h)
+        {
+            f.open(fullPath, std::ios::binary);
+            if (!f.is_open())
+                return false;
+            uint32_t magic = 0;
+            f.read(reinterpret_cast<char*>(&magic), sizeof(magic));
+            f.read(reinterpret_cast<char*>(&w), sizeof(w));
+            f.read(reinterpret_cast<char*>(&h), sizeof(h));
+            return f && magic == kHeightmapMagic && w > 0u && h > 0u;
+        }
+        constexpr std::streamoff kR16hHeader = 12;
+    }
+
+    bool HeightmapLoader::ReadRow(const std::string& fullPath, uint32_t row,
+                                  std::vector<uint16_t>& out, uint32_t& outWidth, uint32_t& outHeight)
+    {
+        out.clear();
+        std::ifstream f;
+        if (!OpenR16h(fullPath, f, outWidth, outHeight) || row >= outHeight)
+            return false;
+        out.resize(outWidth);
+        f.seekg(kR16hHeader + static_cast<std::streamoff>(row) * outWidth * 2, std::ios::beg);
+        f.read(reinterpret_cast<char*>(out.data()), static_cast<std::streamsize>(outWidth) * 2);
+        if (!f) { out.clear(); return false; }
+        return true;
+    }
+
+    bool HeightmapLoader::ReadColumn(const std::string& fullPath, uint32_t col,
+                                     std::vector<uint16_t>& out, uint32_t& outWidth, uint32_t& outHeight)
+    {
+        out.clear();
+        std::ifstream f;
+        if (!OpenR16h(fullPath, f, outWidth, outHeight) || col >= outWidth)
+            return false;
+        // Lecture par blocs de lignes (évite un seek par échantillon).
+        out.resize(outHeight);
+        constexpr uint32_t kRowsPerChunk = 64u;
+        std::vector<uint16_t> chunk;
+        for (uint32_t r0 = 0; r0 < outHeight; r0 += kRowsPerChunk)
+        {
+            const uint32_t rows = std::min(kRowsPerChunk, outHeight - r0);
+            chunk.resize(static_cast<size_t>(rows) * outWidth);
+            f.seekg(kR16hHeader + static_cast<std::streamoff>(r0) * outWidth * 2, std::ios::beg);
+            f.read(reinterpret_cast<char*>(chunk.data()), static_cast<std::streamsize>(chunk.size()) * 2);
+            if (!f) { out.clear(); return false; }
+            for (uint32_t r = 0; r < rows; ++r)
+                out[r0 + r] = chunk[static_cast<size_t>(r) * outWidth + col];
+        }
+        return true;
+    }
+
     bool HeightmapLoader::ComputeNormalMap(const HeightmapData& data, float heightScale, float worldScale,
-                                           std::vector<uint8_t>& outPixels)
+                                           std::vector<uint8_t>& outPixels,
+                                           const HeightmapBorders* borders)
     {
         LOG_INFO(Render, "[HeightmapLoader] GenerateNormalMap {}x{}", data.width, data.height);
 
@@ -509,10 +565,20 @@ namespace engine::render::terrain
         outPixels.assign(static_cast<size_t>(w) * h * 4, 0u);
         std::vector<uint8_t>& normalPixels = outPixels;
 
+        // Bords : échantillon de la voisine s'il est fourni (raccord des normales entre
+        // cellules), sinon répétition du bord. Les coins se rabattent sur le bord.
+        const bool hasW = borders && borders->west.size()  == h;
+        const bool hasE = borders && borders->east.size()  == h;
+        const bool hasN = borders && borders->north.size() == w;
+        const bool hasS = borders && borders->south.size() == w;
         auto sampleH = [&](int x, int z) -> float {
-            x = (x < 0) ? 0 : ((x >= (int)w) ? (int)w - 1 : x);
-            z = (z < 0) ? 0 : ((z >= (int)h) ? (int)h - 1 : z);
-            return static_cast<float>(data.heights[static_cast<size_t>(z) * w + x]) / 65535.0f;
+            const int zc = (z < 0) ? 0 : ((z >= (int)h) ? (int)h - 1 : z);
+            const int xc = (x < 0) ? 0 : ((x >= (int)w) ? (int)w - 1 : x);
+            if (x < 0 && hasW)          return static_cast<float>(borders->west[zc])  / 65535.0f;
+            if (x >= (int)w && hasE)    return static_cast<float>(borders->east[zc])  / 65535.0f;
+            if (z < 0 && hasN)          return static_cast<float>(borders->north[xc]) / 65535.0f;
+            if (z >= (int)h && hasS)    return static_cast<float>(borders->south[xc]) / 65535.0f;
+            return static_cast<float>(data.heights[static_cast<size_t>(zc) * w + xc]) / 65535.0f;
         };
 
         for (uint32_t zi = 0; zi < h; ++zi)

@@ -31,6 +31,18 @@ namespace engine::render::terrain
     };
 
     /// GPU R16_UNORM heightmap texture (DEVICE_LOCAL, OPTIMAL tiling).
+    /// Échantillons situés JUSTE au-delà de chaque bord d'une heightmap (une ligne
+    /// ou colonne de la heightmap voisine, hors échantillon partagé). Vecteur vide =
+    /// pas de voisine (le bord est répété). west/east : une valeur par ligne (height) ;
+    /// north/south : une valeur par colonne (width). Nord = Z min (ligne 0).
+    struct HeightmapBorders
+    {
+        std::vector<uint16_t> west;
+        std::vector<uint16_t> east;
+        std::vector<uint16_t> north;
+        std::vector<uint16_t> south;
+    };
+
     struct HeightmapGpu
     {
         VkImage        image   = VK_NULL_HANDLE;
@@ -90,8 +102,21 @@ namespace engine::render::terrain
         /// \param heightScale  hauteur monde (m) d'une valeur 65535.
         /// \param worldScale   mètres entre deux échantillons.
         /// \return false si la heightmap est trop petite (< 3×3).
+        /// \param borders      échantillons des heightmaps VOISINES le long de chaque bord
+        ///                     (monde « Royaumes ») : le filtre lit au-delà du bord au lieu
+        ///                     de répéter la dernière ligne, d'où une normale identique des
+        ///                     deux côtés de la frontière. nullptr = bords répétés.
         static bool ComputeNormalMap(const HeightmapData& data, float heightScale, float worldScale,
-                                     std::vector<uint8_t>& outPixels);
+                                     std::vector<uint8_t>& outPixels,
+                                     const HeightmapBorders* borders = nullptr);
+
+        /// Lit la ligne \p row (0 = nord, Z min) d'un fichier .r16h sans charger le reste.
+        /// \return false si le fichier est absent / trop court ou la ligne hors bornes.
+        static bool ReadRow(const std::string& fullPath, uint32_t row,
+                            std::vector<uint16_t>& out, uint32_t& outWidth, uint32_t& outHeight);
+        /// Lit la colonne \p col (0 = ouest, X min) d'un fichier .r16h.
+        static bool ReadColumn(const std::string& fullPath, uint32_t col,
+                               std::vector<uint16_t>& out, uint32_t& outWidth, uint32_t& outHeight);
 
         /// Envoie au GPU une normal map RGBA8 déjà calculée (\p pixels, \p width ×
         /// \p height). Image en SHADER_READ_ONLY_OPTIMAL. Main thread (file graphique).

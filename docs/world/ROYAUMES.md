@@ -66,6 +66,7 @@ Activé par le même `world.active_zone = "royaumes"` (client, shard, master).
 | Réseau | Le shard et le master restent en GLOBAL. Conversion aux frontières : snapshots (`UIModelBinding::SetWorldOrigin`), Input, sauvegarde de position, EnterWorld, ForcePosition (qui recharge la zone d'arrivée si besoin). |
 | Hauteurs CPU | Heightmap 2049² de chaque cellule à moins de `world.cells.height_radius_m` (6 km) : collision, pose au sol des PNJ / entités / décor (`CellHeightFields`). |
 | Tuiles de rendu | À moins de `world.cells.render_radius_m` (2,5 km) du bord : terrain GPU (un `TerrainRenderer` par cellule, le premier efface le GBuffer), décor instancié et bâtiments en coordonnées LOCALES à la cellule, collisions de la cellule (`CellWorldCollider`). Déchargées au-delà de `world.cells.unload_radius_m` (3,5 km), destruction GPU différée (attente du GPU). Une cellule dont le zone.json, la heightmap ou le terrain manque n'est plus retentée de la session. Patchs de terrain dessinés jusqu'à `world.cells.terrain_draw_distance_m` (2,5 km). |
+| Joints | Normal map calculée avec l'échantillon de la cellule voisine au-delà de chaque bord (`HeightmapBorders`) ; pavage des textures du sol en coordonnées globales (`TerrainRenderer::SetTextureWorldOrigin`) : pas de couture d'éclairage, pas de saut au rebase. |
 | Chargement en tâche de fond | `CellAssetLoader` (un thread) lit et décode tout ce qui est disque et CPU : zone.json, heightmap, normal map (Sobel), splat, masque d'herbe, `scatter.bin`, `buildings.bin`, bibliothèque de bâtiments. Le main thread n'intègre qu'**une tuile par frame** (envois GPU, pose des instances, ~150 ms sous lavapipe, bien moins sur un vrai GPU) ; 2 demandes en vol au plus, la plus proche d'abord ; un résultat devenu inutile est jeté. Boot et téléportation restent synchrones (`EnterCellWorldAt`). |
 | Contenu léger | PNJ / coffres (`world.interactables` du zone.json) et marqueurs de respawn chargés une fois par cellule ; eau (`water.bin`) de toutes les cellules générées dès le boot (la passe d'eau est choisie au premier FrameGraph). |
 | Mur invisible | Le personnage ne peut pas entrer dans une cellule non générée (le shard refuse aussi). |
@@ -217,10 +218,9 @@ Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-c
   instances, attente du GPU avant la création des matériaux) reste une courte
   saccade ; chaque tuile a son pipeline terrain (pipeline partagé à faire).
 - Pas de mer : la section océan de `water.bin` est ignorée (comme en zone historique).
-- Joints de cellules : relief raccord, mais l'éclairage (normal map par cellule)
-  et le mélange des sols peuvent marquer légèrement la frontière.
-- Le pavage des textures du sol se décale au rebase (couche « neige », tuile de
-  12 m qui ne divise pas 10 km).
+- Joints de cellules : relief et éclairage raccordés (la normal map lit la ligne
+  voisine de la cellule d'à côté, pavage des sols en coordonnées globales) ; le
+  mélange des sols (splat par cellule) peut encore marquer très légèrement la frontière.
 - `scatter.bin` v2 (chunks de 500 m) : la table de chunks n'est pas encore
   exploitée, le client charge la cellule entière.
 - Les anciens personnages de feyhin reprennent à la ville de départ de leur race

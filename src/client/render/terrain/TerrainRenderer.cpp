@@ -1462,6 +1462,12 @@ namespace engine::render::terrain
     // Egale a world_size quand (largeur - 1) est multiple de kPatchQuads (1025,
     // 2049) ; un peu moins sinon (256x256 : 15*16 = 240 intervalles sur 255).
 
+    void TerrainRenderer::SetTextureWorldOrigin(double globalX, double globalZ)
+    {
+        m_texWorldOriginX = globalX;
+        m_texWorldOriginZ = globalZ;
+    }
+
     void TerrainRenderer::SetTerrainOrigin(float originX, float originZ)
     {
         m_terrainOriginX = originX;
@@ -1541,6 +1547,16 @@ namespace engine::render::terrain
             ubo.layerTiling[1]   = m_splatting.GetLayerTiling(1); // dirt
             ubo.layerTiling[2]   = m_splatting.GetLayerTiling(2); // rock
             ubo.layerTiling[3]   = m_splatting.GetLayerTiling(3); // snow
+            // Pavage en coordonnées globales : origine modulo tuile, calculé en double
+            // (positions jusqu'à ±200 km) puis passé en float (< taille de tuile).
+            for (int l = 0; l < 4; ++l)
+            {
+                const double t = std::max(0.1, static_cast<double>(ubo.layerTiling[l]));
+                double ox = std::fmod(m_texWorldOriginX, t); if (ox < 0.0) ox += t;
+                double oz = std::fmod(m_texWorldOriginZ, t); if (oz < 0.0) oz += t;
+                ubo.texOffsetX[l] = static_cast<float>(ox);
+                ubo.texOffsetZ[l] = static_cast<float>(oz);
+            }
 
             void* mapped = nullptr;
             if (vkMapMemory(device, m_uboMemory, 0, sizeof(FrameUbo), 0, &mapped) == VK_SUCCESS)

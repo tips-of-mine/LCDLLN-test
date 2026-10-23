@@ -514,6 +514,8 @@ namespace engine
 				tile.terrain->SetTerrainOrigin(
 					static_cast<float>(minCorner.x - m_renderFrame.OriginX()),
 					static_cast<float>(minCorner.z - m_renderFrame.OriginZ()));
+				// Pavage des sols en coordonnées globales (raccord entre cellules, pas de saut au rebase).
+				tile.terrain->SetTextureWorldOrigin(m_renderFrame.OriginX(), m_renderFrame.OriginZ());
 			}
 			entries.push_back({ tile.collider.get(), static_cast<float>(center.x), static_cast<float>(center.z) });
 		}

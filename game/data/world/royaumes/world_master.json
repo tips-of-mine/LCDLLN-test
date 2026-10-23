@@ -14,13 +14,13 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables) : les 5 villes de depart par race. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables) : les 5 villes de depart par race (premiere de chaque ligne) et leurs 8 voisines (regions contigues, on marche de l'une a l'autre). Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
   "generated_cells": [
-    "N003_W009",
-    "N011_E008",
-    "N009_E011",
-    "S007_E016",
-    "S009_E011"
+    "N003_W009", "N004_W010", "N004_W009", "N004_W008", "N003_W010", "N003_W008", "N002_W010", "N002_W009", "N002_W008",
+    "N011_E008", "N012_E007", "N012_E008", "N012_E009", "N011_E007", "N011_E009", "N010_E007", "N010_E008", "N010_E009",
+    "N009_E011", "N010_E010", "N010_E011", "N010_E012", "N009_E010", "N009_E012", "N008_E010", "N008_E011", "N008_E012",
+    "S007_E016", "S006_E015", "S006_E016", "S006_E017", "S007_E015", "S007_E017", "S008_E015", "S008_E016", "S008_E017",
+    "S009_E011", "S008_E010", "S008_E011", "S008_E012", "S009_E010", "S009_E012", "S010_E010", "S010_E011", "S010_E012"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N018 (haut) a S014 (bas), 44 caracteres de W021 a E022 (2 colonnes de mer ajoutees de chaque cote du lore W019..E020). Legende dans 'legend'.",

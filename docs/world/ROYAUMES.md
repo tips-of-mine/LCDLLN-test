@@ -93,7 +93,10 @@ job « Client (jeu) » (`Invoke-WorldGen` de `.github/scripts/package-windows.ps
 avant `Copy-GameData`) et build Linux (étape « Générer le monde », avant le bundle
 Docker du master et du shard). Elle échoue si `start_locations.json` ou ses
 `generated_cells` manquent. Les cellules générées sont celles de
-`world_master.json` (les 5 départs de race aujourd'hui). En local (Windows) :
+`world_master.json` : les 5 villes de départ et leurs 8 voisines, soit 45 cellules
+(5 groupes de 3×3 régions contiguës). Le bundle Docker ne garde des cellules que
+les `.json` / `.txt` lus par le master et le shard (~5 Mo pour les 45) ; les
+données de rendu restent dans le paquet client. En local (Windows) :
 
 ```powershell
 .\lcdlln_world_gen.exe --content game/data --world royaumes
@@ -103,7 +106,7 @@ Docker du master et du shard). Elle échoue si `start_locations.json` ou ses
 # --dry-run                   : générer en mémoire, sans rien écrire
 ```
 
-Durée : ~1 min pour les 5 cellules sur 2 cœurs (parallélisé, résultat
+Durée : ~9 min pour les 45 cellules sur 2 cœurs, ~1 min pour 5 (parallélisé, résultat
 identique quel que soit le nombre de cœurs). **Déterministe** : mêmes entrées
 ⇒ fichiers identiques octet pour octet (testé).
 
@@ -220,10 +223,10 @@ Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-c
   12 m qui ne divise pas 10 km).
 - `scatter.bin` v2 (chunks de 500 m) : la table de chunks n'est pas encore
   exploitée, le client charge la cellule entière.
-- Deux cellules générées ne sont pas encore voisines : le changement de région
-  en marchant ne se produit donc pas encore en jeu (testé côté logique).
 - Les anciens personnages de feyhin reprennent à la ville de départ de leur race
   (leur position locale n'a pas d'équivalent exact dans le repère global).
-- Paquet client : ~40 Mo de données par cellule générée (~200 Mo pour les 5).
+- Paquet client : ~40 Mo de données par cellule générée (~1,8 Go pour les 45).
+- Les 5 groupes de 3×3 régions ne sont pas reliés entre eux : entre deux groupes,
+  le mur invisible reste (ajouter les cellules intermédiaires pour les relier).
 - Ajouter des cellules jouables : les ajouter à `generated_cells` de
   `world_master.json` ; la CI les génère au prochain build.

@@ -62,7 +62,26 @@ namespace engine::world::cells
 		if (hd.width >= 3u && hd.height >= 3u && worldSize > 0.0f)
 		{
 			const float vertStep = worldSize / static_cast<float>(hd.width - 1u);
-			if (HeightmapLoader::ComputeNormalMap(hd, heightScale, vertStep, out.terrain.normalPixels))
+			// Raccord des normales : l'échantillon de la voisine juste au-delà de chaque
+			// bord (le premier/dernier échantillon est partagé, on prend le suivant).
+			// Voisine absente ou de taille différente = bord répété (comme avant).
+			engine::render::terrain::HeightmapBorders borders;
+			const auto neighbourPath = [&](int dn, int de) {
+				const CellCoord c{ job.cell.n + dn, job.cell.e + de };
+				const std::string d = CellDirName(c);
+				return content + "/zones/" + d + "/terrain_height.r16h";
+			};
+			uint32_t nw = 0, nh = 0;
+			if (!HeightmapLoader::ReadColumn(neighbourPath(0, -1), hd.width - 2u, borders.west, nw, nh)
+				|| nw != hd.width || nh != hd.height) borders.west.clear();
+			if (!HeightmapLoader::ReadColumn(neighbourPath(0, +1), 1u, borders.east, nw, nh)
+				|| nw != hd.width || nh != hd.height) borders.east.clear();
+			// Nord = Z min = ligne 0 ; la voisine nord (n + 1) est au-dessus : sa ligne h − 2.
+			if (!HeightmapLoader::ReadRow(neighbourPath(+1, 0), hd.height - 2u, borders.north, nw, nh)
+				|| nw != hd.width || nh != hd.height) borders.north.clear();
+			if (!HeightmapLoader::ReadRow(neighbourPath(-1, 0), 1u, borders.south, nw, nh)
+				|| nw != hd.width || nh != hd.height) borders.south.clear();
+			if (HeightmapLoader::ComputeNormalMap(hd, heightScale, vertStep, out.terrain.normalPixels, &borders))
 			{
 				out.terrain.normalHeightScale = heightScale;
 				out.terrain.normalVertStep = vertStep;

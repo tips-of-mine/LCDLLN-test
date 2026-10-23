@@ -31,6 +31,8 @@ layout(set = 0, binding = 2) uniform TerrainFrameUbo {
     vec4  terrainParams;  // x=terrainSize, y=heightScale, z=vertStepWorld, w=grassMaskVisualStrength (frag)
     vec4  terrainOrigin;  // x=originX, y=originZ, z=unused, w=unused
     vec4  layerTiling;    // x=grass, y=dirt, z=rock, w=snow tiling (metres per tile)
+    vec4  texOffsetX;  // décalage X du pavage par couche (m) : pavage en coordonnées globales
+    vec4  texOffsetZ;  // décalage Z du pavage par couche (m)
 } ubo;
 
 layout(push_constant) uniform PC {

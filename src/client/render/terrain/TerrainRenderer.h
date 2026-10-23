@@ -195,6 +195,12 @@ namespace engine::render::terrain
         /// Distance d'affichage XZ (m) des patches ; 0 = illimitée (défaut historique).
         void SetMaxDrawDistance(float meters) { m_maxDrawDistance = meters > 0.0f ? meters : 0.0f; }
 
+        /// Monde « Royaumes » : position GLOBALE (m) de l'origine du repère de rendu.
+        /// Le pavage des textures du sol est calculé en coordonnées globales (décalage
+        /// = origine modulo la taille de tuile de chaque couche) : il ne saute plus au
+        /// rebase et se raccorde entre cellules. (0, 0) = zone historique (défaut).
+        void SetTextureWorldOrigin(double globalX, double globalZ);
+
         /// Returns the world X origin of the terrain (config: terrain.origin_x).
         float GetTerrainOriginX()   const { return m_terrainOriginX;   }
         /// Returns the world Z origin of the terrain (config: terrain.origin_z).
@@ -275,7 +281,9 @@ namespace engine::render::terrain
             float terrainParams[4];  // offset 144  (x=size, y=heightScale, z=vertStepWorld, w=grassMaskStrength)
             float terrainOrigin[4];  // offset 160  (x=originX, y=originZ, z=0, w=0)
             float layerTiling[4];    // offset 176  (x=grass, y=dirt, z=rock, w=snow tiling)
-        };                           //         192
+            float texOffsetX[4];     // offset 192  (décalage X du pavage par couche, m, < tiling)
+            float texOffsetZ[4];     // offset 208  (décalage Z du pavage par couche, m, < tiling)
+        };                           //         224
 
         // ── Cliff per-frame UBO (cliff pipeline, set=0, binding=0) ───────────
         // Minimal UBO for cliff pipeline: only view-proj matrices.
@@ -310,6 +318,9 @@ namespace engine::render::terrain
         bool                  m_clearAttachments = true;
         /// Distance max (m, XZ caméra → patch) au-delà de laquelle un patch n'est pas dessiné ; 0 = illimitée.
         float                 m_maxDrawDistance  = 0.0f;
+        /// Origine GLOBALE du repère de rendu pour le pavage des textures (cf. SetTextureWorldOrigin).
+        double                m_texWorldOriginX  = 0.0;
+        double                m_texWorldOriginZ  = 0.0;
         VkDescriptorSetLayout m_descSetLayout = VK_NULL_HANDLE;
         VkDescriptorPool      m_descPool      = VK_NULL_HANDLE;
         VkDescriptorSet       m_descSet       = VK_NULL_HANDLE;

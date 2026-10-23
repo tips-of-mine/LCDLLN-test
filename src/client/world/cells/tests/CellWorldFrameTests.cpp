@@ -2,11 +2,14 @@
 #include "src/client/world/cells/CellWorldFrame.h"
 #include "src/client/world/cells/CellHeightFields.h"
 #include "src/client/world/cells/CellAssetLoader.h"
+#include "src/client/render/terrain/HeightmapLoader.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <thread>
@@ -120,6 +123,16 @@ int main()
 				h.write(reinterpret_cast<const char*>(&v), sizeof(v));
 			}
 		}
+		{
+			const std::string hm = (root / "zones" / "cell_n003_w009" / "h.r16h").string();
+			std::vector<uint16_t> col, row;
+			uint32_t w = 0, h = 0;
+			Check(engine::render::terrain::HeightmapLoader::ReadColumn(hm, 2u, col, w, h) && w == 5u && h == 5u
+				&& col.size() == 5u && col[3] == static_cast<uint16_t>((3 * 5 + 2) * 1000), "lecture d'une colonne .r16h");
+			Check(engine::render::terrain::HeightmapLoader::ReadRow(hm, 4u, row, w, h)
+				&& row.size() == 5u && row[1] == static_cast<uint16_t>((4 * 5 + 1) * 1000), "lecture d'une ligne .r16h");
+			Check(!engine::render::terrain::HeightmapLoader::ReadRow(hm, 5u, row, w, h), "ligne hors bornes refusee");
+		}
 		CellAssetJob job;
 		job.cell = { 3, -9 };
 		job.wantRender = true;
@@ -153,6 +166,48 @@ int main()
 		Check(done.size() == 2 && loader.InFlight() == 0u, "deux resultats, doublon ignore");
 		loader.Stop();
 		fs::remove_all(root, ec);
+	}
+
+	// Normal map raccordée : deux heightmaps voisines découpées dans une même surface
+	// (bosse non linéaire) donnent la même normale de part et d'autre de la frontière.
+	{
+		using engine::render::terrain::HeightmapData;
+		using engine::render::terrain::HeightmapBorders;
+		using engine::render::terrain::HeightmapLoader;
+		constexpr uint32_t n = 9;
+		auto surf = [](int gx, int gz) {
+			const double v = 20000.0 + 300.0 * gx * gx - 150.0 * gz * gx + 90.0 * gz * gz;
+			return static_cast<uint16_t>(std::min(65535.0, v));
+		};
+		HeightmapData a, b; // a = ouest (colonnes 0..8), b = est (colonnes 8..16 : colonne 8 partagée)
+		a.width = a.height = b.width = b.height = n;
+		a.heights.resize(n * n); b.heights.resize(n * n);
+		for (uint32_t z = 0; z < n; ++z)
+			for (uint32_t x = 0; x < n; ++x)
+			{
+				a.heights[z * n + x] = surf(static_cast<int>(x), static_cast<int>(z));
+				b.heights[z * n + x] = surf(static_cast<int>(x + n - 1), static_cast<int>(z));
+			}
+		HeightmapBorders ba, bb;
+		for (uint32_t z = 0; z < n; ++z)
+		{
+			ba.east.push_back(b.heights[z * n + 1]);       // au-delà du bord est de a
+			bb.west.push_back(a.heights[z * n + n - 2]);   // au-delà du bord ouest de b
+		}
+		std::vector<uint8_t> na, nb, naClamp;
+		Check(HeightmapLoader::ComputeNormalMap(a, 100.0f, 1.0f, na, &ba)
+			&& HeightmapLoader::ComputeNormalMap(b, 100.0f, 1.0f, nb, &bb)
+			&& HeightmapLoader::ComputeNormalMap(a, 100.0f, 1.0f, naClamp), "normal maps calculees");
+		bool same = true, clampDiffers = false;
+		for (uint32_t z = 1; z + 1 < n; ++z)
+			for (int c = 0; c < 3; ++c)
+			{
+				const int va = na[(z * n + n - 1) * 4 + c], vb = nb[(z * n + 0) * 4 + c];
+				if (std::abs(va - vb) > 1) same = false;
+				if (std::abs(static_cast<int>(naClamp[(z * n + n - 1) * 4 + c]) - vb) > 1) clampDiffers = true;
+			}
+		Check(same, "normales identiques des deux cotes de la frontiere");
+		Check(clampDiffers, "sans voisine : bord repete (normale differente)");
 	}
 
 	if (g_fail == 0) std::printf("cell_world_frame_tests: OK\n");

@@ -10,6 +10,9 @@ if(MSVC)
   # Release : symboles (PDB) sans perte d'optimisation, pour que le journal de
   # plantage (filtre SEH du client) nomme fonction + ligne.
   add_compile_options($<$<CONFIG:Release>:/Zi> $<$<CONFIG:Release>:/FS>)
+  # std::mutex sans constructeur constexpr (VS 2022 17.10+) : le binaire reste
+  # compatible avec un MSVCP140.dll plus ancien (sinon accès 0x0 au premier lock).
+  add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
   add_link_options($<$<CONFIG:Release>:/DEBUG:FULL> $<$<CONFIG:Release>:/OPT:REF> $<$<CONFIG:Release>:/OPT:ICF>)
 endif()
 

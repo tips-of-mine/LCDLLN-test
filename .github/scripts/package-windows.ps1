@@ -44,13 +44,27 @@ function Copy-RuntimeDlls {
     param([switch]$IncludeGraphics)
     Initialize-Artifacts
 
-    # MSVC redist (Release, x64).
+    # MSVC redist (Release, x64) : la version la PLUS RÉCENTE du dossier Redist,
+    # celle du compilateur. Un MSVCP140.dll plus ancien que les en-têtes de la STL
+    # plante dès le premier verrouillage d'un std::mutex (VS 2022 17.10+).
     $vcRedistBase = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC"
+    $vcRedistDirs = Get-ChildItem -Path $vcRedistBase -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '^\d+\.\d+\.\d+$' } |
+        Sort-Object { [version]$_.Name } -Descending
     foreach ($dll in @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll")) {
-        $found = Get-ChildItem -Recurse -Path $vcRedistBase -Filter $dll -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -like "*x64*" -and $_.FullName -notlike "*debug_nonredist*" -and $_.FullName -notlike "*onecore*" } |
-            Select-Object -First 1
-        if ($found) { Copy-Item $found.FullName -Destination $Artifacts -Force }
+        $found = $null
+        foreach ($dir in $vcRedistDirs) {
+            $found = Get-ChildItem -Recurse -Path $dir.FullName -Filter $dll -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -like "*x64*" -and $_.FullName -notlike "*debug_nonredist*" -and $_.FullName -notlike "*onecore*" } |
+                Select-Object -First 1
+            if ($found) { break }
+        }
+        if ($found) {
+            Copy-Item $found.FullName -Destination $Artifacts -Force
+            Write-Host "[package] redist : $($found.FullName) ($($found.VersionInfo.FileVersion))"
+        } else {
+            Write-Warning "[package] redist introuvable : $dll"
+        }
     }
 
     # ucrtbase (System32).

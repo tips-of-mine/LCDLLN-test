@@ -25,6 +25,10 @@ function Copy-ArtifactExes {
             Select-Object -First 1
         if (-not $exe) { throw "[package] Exécutable introuvable : $name" }
         Copy-Item $exe.FullName -Destination $Artifacts -Force
+        # Symboles (PDB) : le filtre SEH du client s'en sert pour nommer fonction
+        # et ligne dans le journal en cas de plantage.
+        $pdb = [System.IO.Path]::ChangeExtension($exe.FullName, ".pdb")
+        if (Test-Path $pdb) { Copy-Item $pdb -Destination $Artifacts -Force }
         # DLL runtime déployées par CMake à côté de l'exe.
         Get-ChildItem -Path $exe.DirectoryName -Filter *.dll -ErrorAction SilentlyContinue |
             Copy-Item -Destination $Artifacts -Force

@@ -7,6 +7,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Force /MD (DLL CRT) pour toutes les configurations MSVC
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+  # Release : symboles (PDB) sans perte d'optimisation, pour que le journal de
+  # plantage (filtre SEH du client) nomme fonction + ligne.
+  add_compile_options($<$<CONFIG:Release>:/Zi> $<$<CONFIG:Release>:/FS>)
+  add_link_options($<$<CONFIG:Release>:/DEBUG:FULL> $<$<CONFIG:Release>:/OPT:REF> $<$<CONFIG:Release>:/OPT:ICF>)
 endif()
 
 # Modules CMake reutilisables (parite cmangos-tbc/cmake/).

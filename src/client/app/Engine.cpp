@@ -894,7 +894,8 @@ namespace engine
 			if (persisted.Has("render.resolution_height"))
 				cfg.SetValue("render.resolution_height", persisted.GetInt("render.resolution_height", cfg.GetInt("render.resolution_height", 1080)));
 			if (persisted.Has("render.quality_preset"))
-				cfg.SetValue("render.quality_preset", persisted.GetInt("render.quality_preset", cfg.GetInt("render.quality_preset", 2)));
+				cfg.SetValue("render.quality_preset", persisted.GetInt("render.quality_preset",
+					cfg.GetInt("render.quality_preset", engine::client::kDefaultQualityPreset)));
 			if (persisted.Has("render.fov"))
 				cfg.SetValue("render.fov", persisted.GetDouble("render.fov", cfg.GetDouble("render.fov", 70.0)));
 			if (persisted.Has("client.locale"))
@@ -10732,6 +10733,11 @@ namespace engine
 		if (m_width > 0 && m_height > 0 && std::abs(out.camera.fovYDeg - readState.camera.fovYDeg) > 0.0001f)
 			m_taaHistoryInvalid = true;
 
+		// Monde en cellules : plan lointain = distance de vue du préréglage
+		// « Qualité graphique » (le terrain, les bâtiments et les cascades d'ombre
+		// s'arrêtent là ; le brouillard termine bien avant).
+		if (m_cellWorld)
+			out.camera.farZ = m_viewDistance.cameraFarM;
 		out.projMatrix = out.camera.ComputeProjectionMatrix();
 
 		// ViewProj non-jitterée (avant l'ajout du jitter TAA) : sert au raymarch des
@@ -16222,7 +16228,8 @@ namespace engine
 		// serait silencieusement desactive sur une config plus ancienne). <= 0 =>
 		// desactive. Les INTERACTIBLES (coffre, caisses, PNJ) sont toujours dessines.
 		const engine::math::Vec3 camPos = rs.camera.position;
-		const float cullDist = static_cast<float>(m_cfg.GetDouble("world.props.cull_distance_m", 80.0));
+		const float cullDist = static_cast<float>(m_cfg.GetDouble("world.props.cull_distance_m", 80.0))
+			* (m_cellWorld ? m_viewDistance.scatterScale : 1.0f);
 		const float cullDist2 = cullDist * cullDist;
 		const bool cullEnabled = cullDist > 0.0f;
 
@@ -17012,6 +17019,7 @@ namespace engine
 			m_cfg.SetValue("render.resolution_width", static_cast<int64_t>(videoCmd.resolutionWidth));
 			m_cfg.SetValue("render.resolution_height", static_cast<int64_t>(videoCmd.resolutionHeight));
 			m_cfg.SetValue("render.quality_preset", static_cast<int64_t>(videoCmd.qualityPreset));
+			ApplyViewDistancePreset();
 			m_cfg.SetValue("render.fov", static_cast<double>(videoCmd.fovDegrees));
 			m_vsync = videoCmd.vsync;
 			if (fullscreenChanged)

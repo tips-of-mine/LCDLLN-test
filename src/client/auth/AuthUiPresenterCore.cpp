@@ -15,6 +15,7 @@
 #endif
 
 #include "src/client/auth/AuthUi.h"
+#include "src/client/settings/ViewDistancePreset.h"
 
 // Sous-projet C MVP (Task 12) — Engine.h fournit la declaration complete
 // de \c engine::Engine pour le delegate \c GetRaceMeshForId. On l'inclut
@@ -1208,7 +1209,7 @@ namespace engine::client
 		m_videoVsync = cfg.GetBool("render.vsync", true);
 		m_videoResWidth = static_cast<int32_t>(std::max<int64_t>(640, cfg.GetInt("render.resolution_width", 1920)));
 		m_videoResHeight = static_cast<int32_t>(std::max<int64_t>(480, cfg.GetInt("render.resolution_height", 1080)));
-		m_videoQualityPreset = static_cast<int32_t>(std::clamp<int64_t>(cfg.GetInt("render.quality_preset", 2), 0, 3));
+		m_videoQualityPreset = static_cast<int32_t>(std::clamp<int64_t>(cfg.GetInt("render.quality_preset", engine::client::kDefaultQualityPreset), 0, 3));
 		m_videoFovDegrees = static_cast<float>(std::clamp(cfg.GetDouble("render.fov", 70.0), 60.0, 120.0));
 		m_videoFullscreenPending = m_videoFullscreen;
 		m_videoVsyncPending = m_videoVsync;

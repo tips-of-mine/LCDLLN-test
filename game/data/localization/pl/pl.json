@@ -474,7 +474,7 @@
   "options.imgui.section.display": "WYSWIETLANIE",
   "options.imgui.resolution": "ROZDZIELCZOSC",
   "options.imgui.quality": "JAKOSC GRAFIKI",
-  "options.imgui.quality_hint": "Ultra wymaga nowoczesnej karty graficznej.",
+  "options.imgui.quality_hint": "Ustawia zasieg widzenia (teren, otoczenie, budynki). Ultra wymaga nowoczesnej karty graficznej.",
   "options.imgui.quality.0": "Niska",
   "options.imgui.quality.1": "Srednia",
   "options.imgui.quality.2": "Wysoka",

@@ -474,7 +474,7 @@
   "options.imgui.section.display": "AFFICHAGE",
   "options.imgui.resolution": "RESOLUTION",
   "options.imgui.quality": "QUALITE GRAPHIQUE",
-  "options.imgui.quality_hint": "Ultra requiert une carte graphique recente.",
+  "options.imgui.quality_hint": "Regle la distance de vue (terrain, decor, batiments). Ultra requiert une carte graphique recente.",
   "options.imgui.quality.0": "Basse",
   "options.imgui.quality.1": "Moyenne",
   "options.imgui.quality.2": "Haute",

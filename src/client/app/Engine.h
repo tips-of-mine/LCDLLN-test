@@ -138,6 +138,7 @@
 #include "src/client/dialogue/DialogueTree.h"
 #include "src/client/dialogue/DialoguePresenter.h"
 #include "src/client/dialogue/QuestConversationJournal.h"
+#include "src/client/settings/ViewDistancePreset.h"
 
 struct GLFWwindow;
 
@@ -1356,6 +1357,12 @@ namespace engine
 		/// eau de toutes les cellules générées (la passe eau est choisie au premier
 		/// FrameGraph), origine initiale. Main thread.
 		void InitCellWorldBoot();
+		/// Applique la distance de vue du préréglage « Qualité graphique »
+		/// (render.quality_preset) : plan lointain de la caméra, rayon des tuiles de
+		/// rendu des cellules, distance des patches de terrain, culling du décor.
+		/// Les clés world.cells.* explicites de config.json restent prioritaires.
+		/// Main thread ; appelée au boot et à l'application des options vidéo.
+		void ApplyViewDistancePreset();
 		/// À l'entrée en monde / à une téléportation : place l'origine sur la cellule
 		/// de la position GLOBALE et charge synchronement ce qui l'entoure.
 		void EnterCellWorldAt(double globalX, double globalZ);
@@ -1449,6 +1456,8 @@ namespace engine
 		float m_cellUnloadRadiusM = 3500.0f;
 		float m_cellHeightRadiusM = 6000.0f;
 		float m_cellTerrainDrawDistanceM = 2500.0f;
+		/// Distances de vue du préréglage courant (cf. ApplyViewDistancePreset).
+		engine::client::ViewDistanceSettings m_viewDistance{};
 		/// Compteur d'appels du streaming (journalisation périodique).
 		uint64_t m_cellFrameCounter = 0;
 		/// Point d'arrivée GLOBAL au boot (avant l'EnterWorld), cf. LoadCellWorldSettings.

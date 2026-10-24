@@ -474,7 +474,7 @@
   "options.imgui.section.display": "SCHERMO",
   "options.imgui.resolution": "RISOLUZIONE",
   "options.imgui.quality": "QUALITA GRAFICA",
-  "options.imgui.quality_hint": "Ultra richiede una scheda grafica recente.",
+  "options.imgui.quality_hint": "Regola la distanza visiva (terreno, scenario, edifici). Ultra richiede una scheda grafica recente.",
   "options.imgui.quality.0": "Bassa",
   "options.imgui.quality.1": "Media",
   "options.imgui.quality.2": "Alta",

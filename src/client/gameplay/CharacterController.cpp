@@ -351,6 +351,26 @@ namespace engine::gameplay
 			}
 		}
 
+		// Contact latéral (mur, meuble) : la boucle ci-dessus remet `grounded` à
+		// false sur tout hit non marchable, même quand le perso est debout sur un
+		// plancher et glisse le long de l'obstacle → état « en l'air » qui clignote
+		// (animation de chute contre chaque mur). Sonde courte vers le bas à la
+		// position finale : si un sol marchable est sous les pieds, on reste au sol.
+		if (!grounded && !didJumpThisFrame && vel.y <= 0.0f && !inWater && !isFlying)
+		{
+			constexpr float kFinalGroundProbe = 0.05f;  // 5 cm
+			IWorldCollider::SweepHit fh{};
+			fh.hit = false;
+			fh.fraction = 1.0f;
+			fh.normal = engine::math::Vec3(0.0f, 1.0f, 0.0f);
+			if (world.SweepCapsule(m_capsule, pos, pos - engine::math::Vec3(0.0f, kFinalGroundProbe, 0.0f), fh)
+				&& fh.hit && fh.fraction < 1.0f && IsWalkable(fh.normal, maxSlopeCos))
+			{
+				grounded = true;
+				vel.y = 0.0f;
+			}
+		}
+
 		// If we landed during the collision resolution and we had a buffered jump pending,
 		// trigger it right away.
 		if (!inWater && !isFlying && !didJumpThisFrame && grounded && (m_timeSinceJumpPressedSec <= m_cfg.jumpBufferSec))

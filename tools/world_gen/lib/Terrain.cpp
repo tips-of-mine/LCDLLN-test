@@ -46,15 +46,17 @@ namespace tools::world_gen
 			case ',': return { 39.5, 3.0, 0.0, 0 };      // côte (le rivage passe dedans)
 			case '_': return { 43.0, 2.5, 0.0, 0 };      // plage
 			case 'o': return { 50.0, 10.0, 0.0, 0 };     // îlot
-			case '.': return { 62.0, 22.0, 0.0, 0 };     // plaine (collines douces)
-			case 'r': return { 56.0, 16.0, 0.0, 0 };     // plaine + rivière
-			case 'T': return { 78.0, 34.0, 0.0, 0 };     // forêt
-			case 't': return { 70.0, 28.0, 0.0, 0 };     // lisière
-			case 'R': return { 66.0, 24.0, 0.0, 0 };     // forêt + rivière
-			case 'L': return { 70.0, 26.0, 0.0, 0 };     // forêt + lac
-			case '~': return { 82.0, 28.0, 0.0, 1 };     // désert (dunes)
-			case ':': return { 78.0, 24.0, 0.0, 0 };     // terres arides
-			case 'l': return { 72.0, 20.0, 0.0, 0 };     // aride + lac
+			// Amplitudes des terres basses : le bruit de gradient a un écart-type
+			// d'environ 0,2 ; une amplitude A donne donc un relief de ±0,2 A environ.
+			case '.': return { 62.0, 46.0, 0.0, 0 };     // plaine (collines douces)
+			case 'r': return { 56.0, 32.0, 0.0, 0 };     // plaine + rivière
+			case 'T': return { 80.0, 70.0, 0.0, 0 };     // forêt
+			case 't': return { 72.0, 56.0, 0.0, 0 };     // lisière
+			case 'R': return { 66.0, 46.0, 0.0, 0 };     // forêt + rivière
+			case 'L': return { 70.0, 50.0, 0.0, 0 };     // forêt + lac
+			case '~': return { 84.0, 48.0, 0.0, 1 };     // désert (dunes)
+			case ':': return { 80.0, 50.0, 0.0, 0 };     // terres arides
+			case 'l': return { 72.0, 40.0, 0.0, 0 };     // aride + lac
 			case '^': return { 250.0, 80.0, 360.0, 0 };  // montagne
 			case 'M': return { 340.0, 100.0, 500.0, 0 }; // chaîne
 			case '*': return { 460.0, 120.0, 580.0, 0 }; // sommets enneigés
@@ -249,17 +251,21 @@ namespace tools::world_gen
 		const double region = Clamp(Fbm(x, z, 7000.0, 2, seed + 24) + 0.5, 0.0, 1.0);
 		const double ampMod = 0.45 + 1.1 * region;
 		h += Fbm(x, z, 2400.0, 6, seed + 21) * acc.amp * ampMod;  // collines (km)
-		h += Fbm(x, z, 320.0, 4, seed + 22) * acc.amp * 0.18;     // mamelons (centaines de m)
+		// Relief à l'échelle du marcheur (distance de vue ≤ 1,6 km) : c'est lui qui
+		// rend le terrain lisible ; les grandes ondulations seules paraissent plates.
+		h += Fbm(x, z, 1000.0, 4, seed + 27) * acc.amp * 1.2 * ampMod; // buttes
+		h += Fbm(x, z, 320.0, 4, seed + 22) * acc.amp * 0.8;      // mamelons (centaines de m)
+		h += Fbm(x, z, 110.0, 3, seed + 28) * 6.0;                // bosses (dizaines de m)
 		h += Fbm(x, z, 45.0, 2, seed + 23) * 0.8;                 // grain du sol
 		// Hors montagnes : chaînons de collines (crêtes douces) dans les pays
 		// vallonnés, et vallons (lignes creuses) qui structurent le paysage.
 		const double lowland = (1.0 - SmoothStep(80.0, 300.0, acc.ridge)) * SmoothStep(44.0, 58.0, acc.base);
 		if (lowland > 0.01)
 		{
-			const double hilly = SmoothStep(0.45, 0.85, region);
-			h += (Ridged(x, z, 1800.0, 4, seed + 25) - 0.3) * 48.0 * hilly * lowland;
+			const double hilly = SmoothStep(0.35, 0.80, region);
+			h += (Ridged(x, z, 1800.0, 4, seed + 25) - 0.3) * 110.0 * hilly * lowland;
 			const double vf = 1.0 - std::fabs(Fbm(x, z, 5200.0, 3, seed + 26));
-			h -= 14.0 * SmoothStep(0.86, 0.99, vf) * lowland;
+			h -= 24.0 * SmoothStep(0.86, 0.99, vf) * lowland;
 			// Plancher souple : l'intérieur des terres ne plonge pas sous la mer
 			// (les étendues d'eau intérieures sont des lacs explicites).
 			const double floorY = m.scale.seaLevelM + 6.0;
@@ -429,8 +435,12 @@ namespace tools::world_gen
 			const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ c.n, c.e });
 			Vec2 best{ ctr.x, ctr.z };
 			double bestScore = 1e18;
-			for (double dz = -3500.0; dz <= 3500.0; dz += 250.0)
-				for (double dx = -3500.0; dx <= 3500.0; dx += 250.0)
+			// Ville de départ : ancrée au centre de sa case (point d'arrivée au boot,
+			// repère des cellules), tant qu'il est au sec ; son plateau aplanit le
+			// relief. Le site n'est cherché ailleurs que si le centre est dans l'eau.
+			const double searchR = (!c.startFor.empty() && MacroHeight(m, ctr.x, ctr.z) >= sea + 6.0) ? 0.0 : 3500.0;
+			for (double dz = -searchR; dz <= searchR; dz += 250.0)
+				for (double dx = -searchR; dx <= searchR; dx += 250.0)
 				{
 					const Vec2 p{ ctr.x + dx, ctr.z + dz };
 					const double h0 = MacroHeight(m, p.x, p.z);

@@ -47,6 +47,18 @@ namespace engine::gameplay
 			const engine::math::Vec3& endCenter,
 			SweepHit& outHit) const = 0;
 
+		/// Balayage contre le SOL seul (terrain, sans props ni bâtiments). Sert à la
+		/// récupération anti-encastrement du contrôleur : un perso passé sous le
+		/// terrain y est remonté, mais un plancher d'étage AU-DESSUS de lui (maison
+		/// à deux niveaux) ne doit pas l'y téléporter. Défaut : SweepCapsule.
+		virtual bool SweepGround(const Capsule& capsule,
+			const engine::math::Vec3& startCenter,
+			const engine::math::Vec3& endCenter,
+			SweepHit& outHit) const
+		{
+			return SweepCapsule(capsule, startCenter, endCenter, outHit);
+		}
+
 		/// Optional water volume query for swimming/flying.
 		/// Default implementation returns `inWater=false`.
 		virtual bool QueryWater(const engine::math::Vec3& worldCenter, WaterQuery& out) const

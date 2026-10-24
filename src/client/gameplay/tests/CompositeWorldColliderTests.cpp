@@ -336,6 +336,19 @@ int main()
 		check(!h, "plancher a fleur: pas de blocage lateral");
 	}
 
+	// B13) Sol seul (récupération anti-encastrement) : un plancher d'étage
+	//      au-dessus du perso n'est pas renvoyé par SweepGround (sinon le
+	//      contrôleur le téléportait à l'étage), alors que SweepCapsule le voit.
+	{
+		PropBox upper = makeFloor(); upper.loY = 3.0f; upper.hiY = 3.02f;
+		CompositeWorldCollider c(&terrain); c.AddBox(upper);
+		IWorldCollider::SweepHit all, ground;
+		const bool ha = c.SweepCapsule(cap, Vec3{ 5, 50, 0 }, Vec3{ 5, 0.9f, 0 }, all);
+		const bool hg = c.SweepGround(cap, Vec3{ 5, 50, 0 }, Vec3{ 5, 0.9f, 0 }, ground);
+		check(ha && all.hit, "etage : vu par SweepCapsule");
+		check(!hg, "etage : ignore par SweepGround");
+	}
+
 	// 6) Index spatial (monde ouvert) : un collisionneur peuplé de centaines de
 	//    cylindres et de boîtes doit rendre EXACTEMENT le hit le plus proche que
 	//    donnerait chaque primitive testée isolément (référence brute force).

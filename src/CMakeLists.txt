@@ -242,6 +242,11 @@ elseif(UNIX)
     # SP2 anniversaires : liste de mes exploits (opcodes 206/207).
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/exploits/ExploitHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ExploitPayloads.cpp
+    # Carte à découvrir (opcodes 208-210, table character_map_discovery).
+    ${CMAKE_SOURCE_DIR}/src/masterd/mapdiscovery/MysqlMapDiscoveryStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/mapdiscovery/MapDiscoveryHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/MapDiscoveryPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/MapDiscovery.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/gmtickets/MysqlGmTicketStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/reputation/MysqlReputationStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/social/MysqlIgnoreStore.cpp
@@ -584,6 +589,11 @@ elseif(UNIX)
   # Monde jouable (chantier « Royaumes ») : lieux du monde (carte M, bannière).
   lcdlln_add_simple_test(world_places_tests
     ${CMAKE_SOURCE_DIR}/src/client/world/places/tests/WorldPlacesTests.cpp)
+
+  # Carte à découvrir (client) : révélation au fil du déplacement, pages du
+  # master, cellules modifiées à envoyer.
+  lcdlln_add_simple_test(map_discovery_client_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/discovery/tests/MapDiscoveryClientTests.cpp)
 
   # Monde vivant (chantier « Royaumes ») : routines des PNJ d'ambiance (pur).
   lcdlln_add_simple_test(ambient_routine_tests

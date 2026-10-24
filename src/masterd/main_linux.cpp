@@ -42,6 +42,8 @@
 #include "src/masterd/jobs/MasterJobScheduler.h" // Roadmap-4 (2026-07-19)
 #include "src/masterd/exploits/MysqlExploitStore.h"
 #include "src/masterd/handlers/exploits/ExploitHandler.h"
+#include "src/masterd/handlers/mapdiscovery/MapDiscoveryHandler.h"
+#include "src/masterd/mapdiscovery/MysqlMapDiscoveryStore.h"
 #include "src/masterd/handlers/dungeon/EnterDungeonHandler.h"
 #include "src/masterd/handlers/chat/ChatRelayHandler.h"
 #include "src/masterd/handlers/mail/MailHandler.h"
@@ -553,6 +555,16 @@ int main(int argc, char** argv)
 	exploitHandler.SetSessionManager(&sessionManager);
 	exploitHandler.SetConnectionSessionMap(&connSessionMap);
 	exploitHandler.SetStore(&exploitStore);
+
+	// Carte à découvrir (opcodes 208/209 lecture paginée, 210 fusion) : cases
+	// révélées par personnage, table character_map_discovery (migration 0076).
+	engine::server::MysqlMapDiscoveryStore mapDiscoveryStore(&dbPool);
+	engine::server::MapDiscoveryHandler mapDiscoveryHandler;
+	mapDiscoveryHandler.SetServer(&server);
+	mapDiscoveryHandler.SetSessionManager(&sessionManager);
+	mapDiscoveryHandler.SetConnectionSessionMap(&connSessionMap);
+	mapDiscoveryHandler.SetSessionCharacterMap(&sessionCharMap);
+	mapDiscoveryHandler.SetStore(&mapDiscoveryStore);
 	LOG_INFO(Net, "[ServerMain] AnniversaryService branché (exploits DB {})",
 		exploitStore.IsAvailable() ? "OK" : "INDISPONIBLE — no-op");
 
@@ -1295,7 +1307,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &exploitHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &interactiveHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &worldClockHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &exploitHandler, &mapDiscoveryHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &interactiveHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &worldClockHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -1350,6 +1362,9 @@ int main(int argc, char** argv)
 		// Exploits (spec 2026-07-18, SP2) — liste « mes exploits » (206).
 		else if (opcode == kOpcodeExploitListRequest)
 			exploitHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		// Carte à découvrir — lecture paginée (208) et fusion des cases (210).
+		else if (opcode == kOpcodeMapDiscoveryRequest || opcode == kOpcodeMapDiscoveryUpdate)
+			mapDiscoveryHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeLfgQueueRequest
 		      || opcode == kOpcodeLfgLeaveRequest
 		      || opcode == kOpcodeLfgStatusRequest

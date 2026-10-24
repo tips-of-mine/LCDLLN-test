@@ -315,6 +315,7 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 | `sql/migrations/0039_roadmap_racial_abilities.sql` | Roadmap publique v4 : capacités raciales design-validées (vol/téléport démon, monture dragon…) affichées « planifié ». |
 | `sql/migrations/0072_factions_v2.sql` | Refonte des factions (ids courts, backfill) pour le système de personnages. |
 | `sql/migrations/0073_roadmap_items_v5.sql` | Roadmap publique v5 : rattrapage des grands systèmes livrés (personnages, combat, compétences, quêtes, métiers, économie, social, fenêtre Personnage, météo, **équipement d'objets**). Repousse les items raciaux planifiés en fin de timeline. |
+| `sql/migrations/0076_character_map_discovery.sql` | Carte à découvrir : masque des cases explorées (125 m) par personnage et par cellule (`character_map_discovery`), opcodes 208–210 (`MapDiscoveryHandler`, `MysqlMapDiscoveryStore`). |
 | `game/data/persistence/db/migrations/0002_characters_equipment.sql` | Schéma de l'équipement porté par personnage (`character_equipment`). Le store runtime shard est un fichier KV texte (clés `equipment.<slot>.item_id`) ; ce `.sql` versionne le schéma cible. |
 | `src/masterd/migrations/MigrationRunner.h/.cpp` | Applique les migrations au démarrage du serveur (découverte auto par numéro de version). |
 | `src/shared/db/ConnectionPool.h/.cpp` | Pool de connexions MySQL réutilisables. |

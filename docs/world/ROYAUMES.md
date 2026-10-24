@@ -209,6 +209,19 @@ v1 + table de chunks en fin de fichier : `originX f32, originZ f32,
 chunkSizeM f32, cols u16, rows u16`, puis `cols × rows × (first u32, count u32)`.
 Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-compatible).
 
+## 9 bis. Carte à découvrir
+
+- La carte du monde (touche M) est voilée : seules les cases explorées sont
+  visibles, villes et lieux compris. Case = 125 m (80 × 80 par cellule) ; une
+  case est découverte quand le joueur passe à moins de 300 m de son centre
+  (`src/shared/world/MapDiscovery.h`).
+- Persistance PAR PERSONNAGE côté master : table `character_map_discovery`
+  (migration 0076), un masque de 800 octets par cellule visitée, fusion OU.
+- Protocole : 208 (page de masques, client → master), 209 (réponse paginée),
+  210 (cases nouvellement révélées, envoyées toutes les 10 s et à la sortie).
+  Le personnage est celui de la connexion (annoncé à l'EnterWorld).
+- Sans base (no-DB) ou sans master : découverte locale à la session seulement.
+
 ## 10. Limites connues / suite
 
 - Horloge : `/settime`, `/pausetime`, `/settimescale` ne sont pas propagées

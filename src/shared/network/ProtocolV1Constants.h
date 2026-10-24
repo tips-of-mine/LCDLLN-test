@@ -844,4 +844,15 @@ namespace engine::network
 	// =====================================================================
 	constexpr uint16_t kOpcodeExploitListRequest  = 206u; ///< Client to Master : liste de mes exploits (payload vide, account via session).
 	constexpr uint16_t kOpcodeExploitListResponse = 207u; ///< Master to Client : catalogue actif + statut debloque/verrouille (secrets non debloques omis).
+
+	// =====================================================================
+	// Carte a decouvrir (monde « Royaumes ») — brouillard de la carte du monde,
+	// persiste PAR PERSONNAGE (table character_map_discovery, migration 0076).
+	// Le personnage est celui de la connexion (SessionCharacterMap, apres
+	// EnterWorld) : aucun identifiant de personnage dans les payloads.
+	// Retro-additif ; deploiement lock-step master + client.
+	// =====================================================================
+	constexpr uint16_t kOpcodeMapDiscoveryRequest  = 208u; ///< Client to Master : page de cellules decouvertes (uint16 startIndex).
+	constexpr uint16_t kOpcodeMapDiscoveryResponse = 209u; ///< Master to Client : masques de la page + index suivant (0 = fin).
+	constexpr uint16_t kOpcodeMapDiscoveryUpdate   = 210u; ///< Client to Master : masques a fusionner (OU), sans reponse.
 }

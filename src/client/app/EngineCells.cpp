@@ -21,6 +21,8 @@
 #include "src/client/world/places/WorldPlaces.h"
 #include "src/client/world/water/WaterSurfaces.h"
 #include "src/shared/core/Log.h"
+#include "src/shared/network/MapDiscoveryPayloads.h"
+#include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
@@ -157,6 +159,57 @@ namespace engine
 		RebuildCellWater();
 		m_terrainCollider.BindWater(m_clientWaterScene.get());
 		LOG_INFO(Render, "[Cells] Eau : {} cellule(s) avec eau", m_cellWaterGlobal.size());
+	}
+
+	void Engine::StartMapDiscovery()
+	{
+		m_mapDiscovery.Reset();
+		m_mapDiscoveryActive = m_cellWorld;
+		m_mapDiscoveryNextSend = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+		if (!m_mapDiscoveryActive)
+			return;
+		// Carte du personnage : première page ; les suivantes sont demandées à la
+		// réception (cf. dispatch de kOpcodeMapDiscoveryResponse).
+		const bool sent = m_authUi.SendGenericRequestAsync(engine::network::kOpcodeMapDiscoveryRequest,
+			engine::network::BuildMapDiscoveryRequestPayload(0u));
+		LOG_INFO(Core, "[MapDiscovery] carte a decouvrir active (demande au master : {})", sent ? "envoyee" : "echec");
+	}
+
+	void Engine::UpdateMapDiscovery()
+	{
+		if (!m_cellWorld)
+			return;
+		// Build de test (Xvfb, marche automatique) : révélation sans entrée en jeu.
+		if (!m_mapDiscoveryActive && std::getenv("LCDLLN_DEBUG_AUTOWALK") == nullptr)
+			return;
+		const engine::math::Vec3 p = m_characterController.GetPosition();
+		const int added = m_mapDiscovery.RevealAround(m_renderFrame.ToGlobalX(p.x), m_renderFrame.ToGlobalZ(p.z));
+		if (added > 0)
+			LOG_DEBUG(Core, "[MapDiscovery] {} case(s) revelee(s) ({} cellule(s) connues)", added, m_mapDiscovery.CellCount());
+		const auto now = std::chrono::steady_clock::now();
+		if (now >= m_mapDiscoveryNextSend)
+		{
+			m_mapDiscoveryNextSend = now + std::chrono::seconds(10);
+			FlushMapDiscovery();
+		}
+	}
+
+	void Engine::FlushMapDiscovery()
+	{
+		if (!m_mapDiscoveryActive)
+			return;
+		while (m_mapDiscovery.HasDirty())
+		{
+			const auto batch = m_mapDiscovery.TakeDirty(engine::network::kMapDiscoveryCellsPerPacket);
+			const std::vector<uint8_t> payload = engine::network::BuildMapDiscoveryUpdatePayload(batch);
+			if (payload.empty() || !m_authUi.SendGenericRequestAsync(engine::network::kOpcodeMapDiscoveryUpdate, payload))
+			{
+				// Connexion indisponible : on réessaiera au prochain envoi.
+				m_mapDiscovery.MarkDirty(batch);
+				LOG_DEBUG(Core, "[MapDiscovery] envoi reporte ({} cellule(s))", batch.size());
+				return;
+			}
+		}
 	}
 
 	void Engine::EnterCellWorldAt(double globalX, double globalZ)

@@ -138,6 +138,7 @@
 #include "src/client/dialogue/DialogueTree.h"
 #include "src/client/dialogue/DialoguePresenter.h"
 #include "src/client/dialogue/QuestConversationJournal.h"
+#include "src/client/world/discovery/MapDiscoveryClient.h"
 
 struct GLFWwindow;
 
@@ -1314,6 +1315,13 @@ namespace engine
 		engine::client::PlaceBannerTracker m_placeBanner;
 		/// Fenêtre Carte du monde (touche M) : visibilité + zoom/pan.
 		bool m_worldMapVisible = false;
+		/// Carte à découvrir (brouillard de la carte du monde), par personnage :
+		/// cases révélées autour du joueur, persistées par le master (208–210).
+		engine::client::MapDiscoveryClient m_mapDiscovery;
+		/// Révélation active (entrée en jeu dans le monde en cellules).
+		bool m_mapDiscoveryActive = false;
+		/// Prochain envoi des cases nouvellement révélées au master.
+		std::chrono::steady_clock::time_point m_mapDiscoveryNextSend{};
 		engine::render::WorldMapViewState m_worldMapView;
 		/// Race du personnage en jeu (payload EnterWorld) — met sa ville de départ en évidence.
 		std::string m_localRaceId;
@@ -1356,6 +1364,14 @@ namespace engine
 		/// eau de toutes les cellules générées (la passe eau est choisie au premier
 		/// FrameGraph), origine initiale. Main thread.
 		void InitCellWorldBoot();
+		/// Carte à découvrir — entrée en jeu : oublie la carte précédente et demande
+		/// au master celle du personnage (opcode 208, page 0). Main thread.
+		void StartMapDiscovery();
+		/// Carte à découvrir — chaque frame en jeu : révèle les cases autour du
+		/// joueur et envoie périodiquement (10 s) les cellules modifiées (210).
+		void UpdateMapDiscovery();
+		/// Envoie au master toutes les cellules modifiées (paquets de 16 au plus).
+		void FlushMapDiscovery();
 		/// À l'entrée en monde / à une téléportation : place l'origine sur la cellule
 		/// de la position GLOBALE et charge synchronement ce qui l'entoure.
 		void EnterCellWorldAt(double globalX, double globalZ);

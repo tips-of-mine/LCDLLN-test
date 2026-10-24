@@ -568,6 +568,8 @@ namespace engine
 		in.playerRace = m_localRaceId.c_str();
 		in.viewportW = dw;
 		in.viewportH = dh;
+		// Monde en cellules : carte à découvrir (le reste est voilé).
+		in.discovery = m_cellWorld ? &m_mapDiscovery : nullptr;
 		engine::render::DrawWorldMapWindow(&m_worldMapVisible, in, m_worldMapView);
 	}
 }

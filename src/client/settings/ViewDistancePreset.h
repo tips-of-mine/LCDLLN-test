@@ -20,11 +20,11 @@ namespace engine::client
 	struct ViewDistanceSettings
 	{
 		/// Plan lointain de la caméra de jeu (m).
-		float cameraFarM = 700.0f;
+		float cameraFarM = 500.0f;
 		/// Distance de dessin des patches de terrain des cellules (m).
-		float terrainDrawM = 700.0f;
+		float terrainDrawM = 500.0f;
 		/// Rayon de chargement des tuiles de rendu des cellules (m, au BORD de la cellule).
-		float cellRenderRadiusM = 1000.0f;
+		float cellRenderRadiusM = 800.0f;
 		/// Facteur appliqué aux distances de culling du décor instancié et des props.
 		float scatterScale = 0.8f;
 	};
@@ -34,10 +34,10 @@ namespace engine::client
 	{
 		static constexpr ViewDistanceSettings kTable[4] = {
 			//  far      terrain  rendu    décor
-			{  400.0f,  400.0f,   600.0f, 0.6f },  // Basse
-			{  700.0f,  700.0f,  1000.0f, 0.8f },  // Moyenne
-			{ 1000.0f, 1000.0f,  1500.0f, 1.0f },  // Haute
-			{ 1600.0f, 1600.0f,  2500.0f, 1.25f }, // Ultra
+			{  300.0f,  300.0f,   500.0f, 0.6f },  // Basse
+			{  500.0f,  500.0f,   800.0f, 0.8f },  // Moyenne
+			{  800.0f,  800.0f,  1200.0f, 1.0f },  // Haute
+			{ 1300.0f, 1300.0f,  2000.0f, 1.25f }, // Ultra
 		};
 		return kTable[std::clamp<int64_t>(preset, 0, 3)];
 	}

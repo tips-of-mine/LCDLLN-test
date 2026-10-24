@@ -404,7 +404,10 @@ namespace engine::gameplay
 			recHit.hit = false;
 			recHit.fraction = 1.0f;
 			recHit.normal = engine::math::Vec3(0.0f, 1.0f, 0.0f);
-			if (world.SweepCapsule(m_capsule, probeFrom, pos, recHit) && recHit.hit)
+			// SOL seul : un plancher d'étage au-dessus du perso (maison à deux
+			// niveaux) n'est pas un sol dans lequel il serait encastré — sondé avec
+			// tous les props, il le téléportait à l'étage (« bloqué en l'air »).
+			if (world.SweepGround(m_capsule, probeFrom, pos, recHit) && recHit.hit)
 			{
 				// restY = sol + halfHeight (hauteur de repos du centre capsule).
 				const float restY = probeFrom.y + (pos.y - probeFrom.y) * recHit.fraction;

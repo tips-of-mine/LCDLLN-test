@@ -45,6 +45,12 @@ namespace engine::gameplay
 			const engine::math::Vec3& endCenter,
 			SweepHit& outHit) const override;
 
+		/// Sol seul : délégué à la base (les cellules ne portent que des props).
+		bool SweepGround(const Capsule& capsule,
+			const engine::math::Vec3& startCenter,
+			const engine::math::Vec3& endCenter,
+			SweepHit& outHit) const override;
+
 		/// Eau : déléguée à la base (scène d'eau en coordonnées de rendu).
 		bool QueryWater(const engine::math::Vec3& worldCenter, WaterQuery& out) const override;
 

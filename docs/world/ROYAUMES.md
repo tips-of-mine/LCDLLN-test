@@ -98,7 +98,7 @@ Docker du master et du shard). Elle échoue si `start_locations.json` ou ses
 plus — `connect_start_cities: true` — les cellules traversées par les routes qui
 relient les villes de départ (arbre couvrant de plus courts chemins sur le réseau
 routier, + la cellule voisine quand la route passe à moins de `corridor_margin_m`
-= 300 m de la frontière) : **116 cellules**, on va à pied d'un royaume à l'autre en
+= 300 m de la frontière) : **117 cellules**, on va à pied d'un royaume à l'autre en
 suivant la route. Le bundle Docker ne garde des cellules que les `.json` / `.txt`
 lus par le master et le shard (exclus dès la copie) ; les
 données de rendu restent dans le paquet client. En local (Windows) :
@@ -111,7 +111,7 @@ données de rendu restent dans le paquet client. En local (Windows) :
 # --dry-run                   : générer en mémoire, sans rien écrire
 ```
 
-Durée : ~23 min pour les 116 cellules sur 2 cœurs, ~1 min pour 5 (parallélisé, résultat
+Durée : ~23 min pour les 117 cellules sur 2 cœurs, ~1 min pour 5 (parallélisé, résultat
 identique quel que soit le nombre de cœurs). **Déterministe** : mêmes entrées
 ⇒ fichiers identiques octet pour octet (testé).
 

@@ -14,7 +14,7 @@
 
 #include <cstdint>
 
-namespace engine::client { class WorldPlaces; class PlaceBannerTracker; }
+namespace engine::client { class WorldPlaces; class PlaceBannerTracker; class MapDiscoveryClient; }
 struct ImDrawList;
 
 namespace engine::render
@@ -39,6 +39,10 @@ namespace engine::render
 		const char* playerRace = "";///< race du personnage (met en évidence sa ville de départ)
 		float viewportW = 1280.0f;  ///< taille du framebuffer (px) pour le placement initial
 		float viewportH = 720.0f;
+		/// Carte à découvrir : seules les cases découvertes sont montrées (le reste
+		/// est couvert d'un voile, villes et lieux y sont masqués). nullptr = carte
+		/// entière visible (zones historiques).
+		const engine::client::MapDiscoveryClient* discovery = nullptr;
 	};
 
 	/// Dessine la fenêtre « Carte du monde ». \param open mis à false si le

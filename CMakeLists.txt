@@ -624,8 +624,10 @@ add_library(engine_core
   src/client/app/EngineCells.cpp
   src/client/world/scatter/ScatterField.cpp
   src/client/world/places/WorldPlaces.cpp
+  src/client/world/discovery/MapDiscoveryClient.cpp   # carte à découvrir (client)
   # Monde « Royaumes » (client) : convention des cellules + repère de rendu.
   src/shared/world/WorldCells.cpp
+  src/shared/world/MapDiscovery.cpp       # carte à découvrir (cases de 125 m)
   src/client/world/cells/CellWorldFrame.cpp
   src/client/world/cells/CellHeightFields.cpp
   src/client/world/cells/CellAssetLoader.cpp
@@ -823,6 +825,7 @@ add_library(engine_core
   src/shared/network/GmTicketPayloads.cpp
   src/shared/network/ReputationPayloads.cpp
   src/shared/network/ExploitPayloads.cpp
+  src/shared/network/MapDiscoveryPayloads.cpp   # carte à découvrir (208-210)
   src/shared/network/ArenaPayloads.cpp
   src/shared/network/BattleGroundPayloads.cpp
   src/shared/network/OutdoorPvpPayloads.cpp
@@ -1267,6 +1270,11 @@ add_test(NAME reputation_payloads_tests COMMAND reputation_payloads_tests)
 add_executable(exploit_payloads_tests src/shared/network/ExploitPayloadsTests.cpp)
 target_link_libraries(exploit_payloads_tests PRIVATE engine_core)
 add_test(NAME exploit_payloads_tests COMMAND exploit_payloads_tests)
+
+# Carte à découvrir — masques de cases, encodage RLE, payloads 208-210.
+add_executable(map_discovery_tests src/shared/world/tests/MapDiscoveryTests.cpp)
+target_link_libraries(map_discovery_tests PRIVATE engine_core)
+add_test(NAME map_discovery_tests COMMAND map_discovery_tests)
 
 # SP3 anniversaires (2026-07-18) — jeton de gateau "item:<id>" (header-only).
 add_executable(cake_item_token_tests src/shared/anniversary/tests/CakeItemTokenTests.cpp)

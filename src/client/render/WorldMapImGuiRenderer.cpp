@@ -1,7 +1,10 @@
 // Monde jouable (chantier « Royaumes ») — carte du monde + bannière de lieu.
 #include "src/client/render/WorldMapImGuiRenderer.h"
 
+#include "src/client/world/discovery/MapDiscoveryClient.h"
 #include "src/client/world/places/WorldPlaces.h"
+#include "src/shared/world/MapDiscovery.h"
+#include "src/shared/world/WorldCells.h"
 
 #include <algorithm>
 #include <cmath>
@@ -45,6 +48,67 @@ namespace engine::render
 		{
 			dl->AddText(ImVec2(p.x + 1.0f, p.y + 1.0f), IM_COL32(0, 0, 0, 200), text);
 			dl->AddText(p, col, text);
+		}
+
+		/// Voile des zones non découvertes. \param worldToScreen projette un point
+		/// GLOBAL (x, z) à l'écran. Les cellules jamais visitées sont voilées en
+		/// entier (séries fusionnées par rangée) ; dans une cellule visitée, les
+		/// cases non découvertes sont voilées par séries horizontales.
+		template <typename WorldToScreen>
+		void DrawDiscoveryFog(ImDrawList* dl, const engine::client::MapDiscoveryClient& disc,
+			const engine::client::WorldPlaces& places, float u0, float v0, float u1, float v1, WorldToScreen&& worldToScreen)
+		{
+			namespace cells = engine::world::cells;
+			namespace dsc = engine::world::discovery;
+			const ImU32 fog = IM_COL32(26, 22, 18, 236);
+			float wx0 = 0, wz0 = 0, wx1 = 0, wz1 = 0;
+			places.MapUvToWorld(u0, v0, wx0, wz0);
+			places.MapUvToWorld(u1, v1, wx1, wz1);
+			const cells::CellCoord nw = cells::CellFromPosition(std::min(wx0, wx1), std::min(wz0, wz1));
+			const cells::CellCoord se = cells::CellFromPosition(std::max(wx0, wx1), std::max(wz0, wz1));
+			const double C = cells::kCellSizeMeters;
+			auto rect = [&](double xa, double za, double xb, double zb) {
+				const ImVec2 a = worldToScreen(static_cast<float>(xa), static_cast<float>(za));
+				const ImVec2 b = worldToScreen(static_cast<float>(xb), static_cast<float>(zb));
+				dl->AddRectFilled(ImVec2(std::min(a.x, b.x), std::min(a.y, b.y)), ImVec2(std::max(a.x, b.x), std::max(a.y, b.y)), fog);
+			};
+			// Nord = n le plus grand = z le plus petit.
+			for (int n = nw.n; n >= se.n; --n)
+			{
+				int runStart = 0;
+				bool inRun = false;
+				for (int e = nw.e; e <= se.e + 1; ++e)
+				{
+					const bool atEnd = e > se.e;
+					const cells::CellCoord c{ n, e };
+					const dsc::CellBitmap* bm = atEnd ? nullptr : disc.Find(c);
+					const bool hidden = !atEnd && bm == nullptr;
+					if (hidden && !inRun) { inRun = true; runStart = e; }
+					if ((!hidden || atEnd) && inRun)
+					{
+						const cells::CellPoint a = cells::CellMinCorner({ n, runStart });
+						const cells::CellPoint b = cells::CellMinCorner({ n, e - 1 });
+						rect(a.x, a.z, b.x + C, b.z + C);
+						inRun = false;
+					}
+					if (bm == nullptr)
+						continue;
+					// Cellule visitée : séries de cases non découvertes, rangée par rangée.
+					const cells::CellPoint mn = cells::CellMinCorner(c);
+					for (int tz = 0; tz < dsc::kTilesPerSide; ++tz)
+					{
+						int tx = 0;
+						while (tx < dsc::kTilesPerSide)
+						{
+							if (bm->Get(tx, tz)) { ++tx; continue; }
+							const int start = tx;
+							while (tx < dsc::kTilesPerSide && !bm->Get(tx, tz)) ++tx;
+							rect(mn.x + start * dsc::kTileM, mn.z + tz * dsc::kTileM,
+								mn.x + tx * dsc::kTileM, mn.z + (tz + 1) * dsc::kTileM);
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -122,6 +186,16 @@ namespace engine::render
 			ShadowText(dl, ImVec2(p0.x + 10.0f, p0.y + 10.0f), IM_COL32(220, 220, 220, 255), "Carte indisponible (world_map.png)");
 		}
 
+		// Carte à découvrir : voile sur ce qui n'a pas été exploré.
+		auto worldToScreen = [&](float x, float z) {
+			float u = 0, v = 0;
+			places.WorldToMapUv(x, z, u, v);
+			return toScreen(u, v);
+		};
+		if (in.discovery != nullptr)
+			DrawDiscoveryFog(dl, *in.discovery, places, u0, v0, u0 + 2.0f * half, v0 + 2.0f * half, worldToScreen);
+		auto discovered = [&](float x, float z) { return in.discovery == nullptr || in.discovery->IsDiscovered(x, z); };
+
 		// Régions : nom en filigrane au centre (vue d'ensemble seulement).
 		if (view.zoom <= 2.5f)
 			for (const engine::client::PlaceRegion& r : places.Regions())
@@ -139,6 +213,8 @@ namespace engine::render
 		float bestHover = 10.0f * 10.0f;
 		for (const engine::client::PlacePoi& p : places.Pois())
 		{
+			if (!discovered(p.x, p.z))
+				continue;
 			float u = 0, v = 0;
 			places.WorldToMapUv(p.x, p.z, u, v);
 			const ImVec2 s = toScreen(u, v);
@@ -156,6 +232,8 @@ namespace engine::render
 		const std::string myRace = in.playerRace ? in.playerRace : "";
 		for (const engine::client::PlaceCity& c : places.Cities())
 		{
+			if (!discovered(c.x, c.z))
+				continue;
 			float u = 0, v = 0;
 			places.WorldToMapUv(c.x, c.z, u, v);
 			const ImVec2 s = toScreen(u, v);

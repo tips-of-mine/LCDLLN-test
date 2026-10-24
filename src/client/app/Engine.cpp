@@ -26,6 +26,7 @@
 #include "src/shared/network/GmTicketPayloads.h"
 #include "src/shared/network/ReputationPayloads.h"
 #include "src/shared/network/ExploitPayloads.h" // SP2 anniversaires (2026-07-18)
+#include "src/shared/network/MapDiscoveryPayloads.h" // carte à découvrir (208-210)
 #include "src/shared/anniversary/CakeItemToken.h" // SP3 anniversaires (2026-07-18)
 #include "src/shared/network/ArenaPayloads.h"
 #include "src/shared/network/BattleGroundPayloads.h"
@@ -2876,6 +2877,24 @@ namespace engine
 					return;
 				}
 				m_reputationUi.OnUpdateNotification(*parsed);
+				return;
+			}
+			// Carte à découvrir — page de cases du personnage (209) ; la suivante
+			// est demandée tant que le master en annonce une.
+			case kOpcodeMapDiscoveryResponse:
+			{
+				auto parsed = ParseMapDiscoveryResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] MAP_DISCOVERY_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				if (parsed->error != 0u)
+					LOG_INFO(Net, "[MapDiscovery] carte du personnage indisponible (code={}) : decouverte locale seulement", parsed->error);
+				if (const auto next = m_mapDiscovery.OnServerPage(*parsed))
+					(void)m_authUi.SendGenericRequestAsync(kOpcodeMapDiscoveryRequest, BuildMapDiscoveryRequestPayload(*next));
+				else if (parsed->error == 0u)
+					LOG_INFO(Net, "[MapDiscovery] carte du personnage recue ({} cellule(s))", m_mapDiscovery.CellCount());
 				return;
 			}
 			// SP2 anniversaires (2026-07-18) — Dispatch de la réponse Exploits (207).
@@ -7854,6 +7873,8 @@ namespace engine
 			m_shutdownPositionSaved = true;
 		}
 
+		// Carte à découvrir : dernières cases révélées (fire-and-forget).
+		FlushMapDiscovery();
 		ShutdownGameplayNet();
 		m_authUi.Shutdown();
 		m_chatUi.Shutdown();
@@ -9137,6 +9158,10 @@ namespace engine
 					m_authUi.RememberPostEnterWorldCharacter(m_currentCharacterId, enterCmd.characterName);
 				}
 
+				// Carte à découvrir : demandée APRÈS l'annonce du personnage (même
+				// connexion TCP, traitée dans l'ordre par le master).
+				StartMapDiscovery();
+
 				// Phase 5 Lunar — fetch initial lunar state (master-authoritative).
 				// Le master repondra via opcode 193 (LunarStateResponse) qui est
 				// dispatche dans le push handler ci-dessus pour appeler
@@ -9772,6 +9797,8 @@ namespace engine
 						m_characterController.BlockHorizontalAt(ccPrevPos.x, ccPrevPos.z);
 					// Streaming des cellules autour du joueur (rebase éventuel inclus).
 					UpdateCellStreaming(/*synchronous*/ false);
+					// Carte à découvrir : cases révélées autour du joueur.
+					UpdateMapDiscovery();
 				}
 				const engine::math::Vec3 ccPos = m_characterController.GetPosition();
 				m_orbitalCameraController.SetTargetPosition(ccPos);

@@ -80,18 +80,19 @@ int main()
 		bool h = c.SweepCapsule(cap, Vec3{ 5, 20, 0 }, Vec3{ 5, 1, 0 }, hit);
 		check(h && hit.hit, "dessus: se pose sur le sommet (hit)");
 		check(hit.normal.y > 0.99f, "dessus: normale verticale (marchable)");
-		// Repos attendu : bas de la capsule sur topY=3 -> centre = 3 + halfH(0.9) + r(0.3) = 4.2.
+		// Repos attendu : pieds sur topY=3 -> centre = 3 + halfH(0.9) = 3.9 (même
+		// convention que le terrain et le rendu de l'avatar).
 		const float restY = 20.0f + hit.fraction * (1.0f - 20.0f);
-		check(std::fabs(restY - 4.2f) < 0.05f, "dessus: repos a topY + demi-capsule");
+		check(std::fabs(restY - 3.9f) < 0.05f, "dessus: repos a topY + demi-capsule");
 	}
 
-	// 4quater) Une fois POSÉ sur le dessus (pieds au niveau topY=3, centre y=4.2),
+	// 4quater) Une fois POSÉ sur le dessus (pieds au niveau topY=3, centre y=3.9),
 	// le déplacement horizontal n'est PLUS bloqué par le flanc (sinon le perso
 	// resterait coincé en haut du mesh).
 	{
 		CompositeWorldCollider c(&terrain); c.AddCylinder(cyl);
 		IWorldCollider::SweepHit hit;
-		bool h = c.SweepCapsule(cap, Vec3{ 0, 4.2f, 0 }, Vec3{ 10, 4.2f, 0 }, hit);
+		bool h = c.SweepCapsule(cap, Vec3{ 0, 3.9f, 0 }, Vec3{ 10, 3.9f, 0 }, hit);
 		check(!h, "sur le dessus: avance librement (pas de blocage de flanc)");
 	}
 
@@ -230,7 +231,7 @@ int main()
 	//     Jambages : largeur (en Z) 0.4 chacun, à z=±0.75 ; épaisseur (en X) 0.2.
 	//     Linteau : au-dessus de la porte (loY=2.3), couvre toute la largeur en Z.
 	//     L'embrasure = bande z ∈ [-0.35, 0.35], y < 2.3. La capsule (h=1.8, r=0.3)
-	//     a un sommet effectif à y=2.2 (centre 1 + halfH 0.9 + rayon 0.3) : elle passe
+	//     a un sommet effectif à y=1.9 (centre 1 + halfH 0.9) : elle passe
 	//     donc SOUS le linteau à 2.3 (porte assez haute), mais bute les jambages.
 	{
 		auto jamb = [](float zc) {
@@ -266,13 +267,13 @@ int main()
 		return b;
 	};
 
-	// B7) Descente au-dessus de la dalle : le bas de capsule (centre - 1.2)
-	//     traverse hiY=1.05 -> pose (normale verticale). Départ centre y=3
-	//     (bas 1.8), arrivée y=1.5 (bas 0.3) : tc = (1.8-1.05)/1.5 = 0.5.
+	// B7) Descente au-dessus de la dalle : les pieds (centre - 0.9) traversent
+	//     hiY=1.05 -> pose (normale verticale). Départ centre y=2.7 (pieds 1.8),
+	//     arrivée y=1.2 (pieds 0.3) : tc = (1.8-1.05)/1.5 = 0.5.
 	{
 		CompositeWorldCollider c(&terrain); c.AddBox(makeFloor());
 		IWorldCollider::SweepHit hit;
-		bool h = c.SweepCapsule(cap, Vec3{ 5, 3, 0 }, Vec3{ 5, 1.5f, 0 }, hit);
+		bool h = c.SweepCapsule(cap, Vec3{ 5, 2.7f, 0 }, Vec3{ 5, 1.2f, 0 }, hit);
 		check(h && hit.hit, "sol: descente -> pose sur le dessus");
 		check(hit.normal.y > 0.9f, "sol: normale verticale (walkable)");
 		check(hit.fraction > 0.45f && hit.fraction < 0.55f, "sol: fraction plausible");
@@ -285,7 +286,7 @@ int main()
 		wallBox.wall = true; wallBox.walkableTop = false;
 		CompositeWorldCollider c(&terrain); c.AddBox(wallBox);
 		IWorldCollider::SweepHit hit;
-		bool h = c.SweepCapsule(cap, Vec3{ 5, 3, 0 }, Vec3{ 5, 1.5f, 0 }, hit);
+		bool h = c.SweepCapsule(cap, Vec3{ 5, 2.7f, 0 }, Vec3{ 5, 1.2f, 0 }, hit);
 		check(!h, "mur: pas de capuchon superieur (pas de pose)");
 	}
 
@@ -293,7 +294,7 @@ int main()
 	{
 		CompositeWorldCollider c(&terrain); c.AddBox(makeFloor());
 		IWorldCollider::SweepHit hit;
-		bool h = c.SweepCapsule(cap, Vec3{ 8, 3, 0 }, Vec3{ 8, 1.5f, 0 }, hit);
+		bool h = c.SweepCapsule(cap, Vec3{ 8, 2.7f, 0 }, Vec3{ 8, 1.2f, 0 }, hit);
 		check(!h, "sol: hors empreinte -> pas de pose");
 	}
 
@@ -303,8 +304,36 @@ int main()
 		PropBox step = makeFloor(); step.stair = true;
 		CompositeWorldCollider c(&terrain); c.AddBox(step);
 		IWorldCollider::SweepHit hit;
-		bool h = c.SweepCapsule(cap, Vec3{ 5, 3, 0 }, Vec3{ 5, 1.5f, 0 }, hit);
+		bool h = c.SweepCapsule(cap, Vec3{ 5, 2.7f, 0 }, Vec3{ 5, 1.2f, 0 }, hit);
 		check(h && hit.stair, "marche: flag stair propage par le capuchon");
+	}
+
+	// B11) Capsule DÉJÀ dans un mur (pas, téléportation) : s'éloigner de la boîte
+	//      n'est PAS bloqué (sinon perso figé, seule la rotation répond), s'y
+	//      enfoncer l'est. Mur 2 m le long de Z, épaisseur 0.2, centré (5,0).
+	{
+		PropBox w; w.cx = 5.0f; w.cz = 0.0f; w.halfX = 0.1f; w.halfZ = 1.0f;
+		w.axisX = Vec3{ 1, 0, 0 }; w.axisZ = Vec3{ 0, 0, 1 }; w.loY = 0.0f; w.hiY = 3.0f;
+		CompositeWorldCollider c(&terrain); c.AddBox(w);
+		IWorldCollider::SweepHit away;
+		const bool ha = c.SweepCapsule(cap, Vec3{ 4.75f, 1.0f, 0 }, Vec3{ 3.75f, 1.0f, 0 }, away);
+		check(!ha, "dans le mur: s'eloigner n'est pas bloque");
+		IWorldCollider::SweepHit into;
+		const bool hi = c.SweepCapsule(cap, Vec3{ 4.75f, 1.0f, 0 }, Vec3{ 5.75f, 1.0f, 0 }, into);
+		check(hi && into.hit && into.fraction < 1e-4f, "dans le mur: s'enfoncer est bloque");
+		check(into.normal.x < -0.9f, "dans le mur: normale vers la sortie la plus proche");
+	}
+
+	// B12) Plancher de bâtiment à fleur de terrain (dessus 1 cm au-dessus du
+	//      sol y=0) : marcher dessus depuis le terrain ne le heurte PAS (pieds au
+	//      sol = centre − 0.9). Régression : l'ancienne convention (pieds à
+	//      centre − 1.2) en faisait une marche → pas, tête dans le linteau, blocage.
+	{
+		PropBox fl = makeFloor(); fl.loY = -0.01f; fl.hiY = 0.01f;
+		CompositeWorldCollider c(&terrain); c.AddBox(fl);
+		IWorldCollider::SweepHit hit;
+		const bool h = c.SweepCapsule(cap, Vec3{ 2.0f, 0.9f, 0 }, Vec3{ 5.0f, 0.9f, 0 }, hit);
+		check(!h, "plancher a fleur: pas de blocage lateral");
 	}
 
 	// 6) Index spatial (monde ouvert) : un collisionneur peuplé de centaines de

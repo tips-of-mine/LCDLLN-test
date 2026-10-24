@@ -115,6 +115,13 @@ namespace engine::gameplay
 		//    - capuchon supérieur (2a) : le personnage se pose SUR le mesh (sol,
 		//      plateforme…) comme sur le terrain, au lieu de flotter / d'être bloqué ;
 		//    - flanc (2b) : barrière horizontale (murs, troncs) tant qu'on est À CÔTÉ.
+		// Pieds = centre − demi-hauteur, tête = centre + demi-hauteur : MÊME convention
+		// que le terrain (TerrainCollider, repos du centre à sol + halfH) et que le
+		// rendu de l'avatar (pieds à centre − 0,9 m). L'ancienne convention
+		// (± halfH + rayon) plaçait les pieds 0,3 m SOUS le sol pour les props :
+		// une dalle de plancher à fleur de terrain devenait une marche, le pas
+		// montait le perso, sa tête accrochait le linteau de la porte et il restait
+		// coincé en l'air dans l'embrasure.
 		const float halfH = capsule.height * 0.5f;
 		const float sx = startCenter.x, sz = startCenter.z;
 		const float dx = endCenter.x - sx, dz = endCenter.z - sz;
@@ -152,8 +159,8 @@ namespace engine::gameplay
 			// donc 2a pour les murs : ils ne font que bloquer latéralement (2b).
 			if (!c.wall)
 			{
-				const float bottomStart = startCenter.y - halfH - capsule.radius;
-				const float bottomEnd   = endCenter.y   - halfH - capsule.radius;
+				const float bottomStart = startCenter.y - halfH;
+				const float bottomEnd   = endCenter.y   - halfH;
 				const float denom = bottomStart - bottomEnd;   // > 0 si la capsule descend
 				if (denom > 1e-6f)
 				{
@@ -179,8 +186,8 @@ namespace engine::gameplay
 			// Recouvrement vertical : pas de blocage latéral si la capsule passe
 			// entièrement sous la base, OU si ses pieds sont au niveau / au-dessus du
 			// sommet (= posée DESSUS — géré par le capuchon ci-dessus, pas à côté).
-			const float capLo = endCenter.y - halfH - capsule.radius;
-			const float capHi = endCenter.y + halfH + capsule.radius;
+			const float capLo = endCenter.y - halfH;
+			const float capHi = endCenter.y + halfH;
 			if (capHi < c.baseY || capLo > c.topY - kStandSkin) continue;
 
 			const float fx = sx - c.cx, fz = sz - c.cz;
@@ -243,8 +250,8 @@ namespace engine::gameplay
 			// contrôleur accrocherait leur sommet (« vol contre le mur »).
 			if (b.walkableTop)
 			{
-				const float bottomStart = startCenter.y - halfH - capsule.radius;
-				const float bottomEnd   = endCenter.y   - halfH - capsule.radius;
+				const float bottomStart = startCenter.y - halfH;
+				const float bottomEnd   = endCenter.y   - halfH;
 				const float denom = bottomStart - bottomEnd; // > 0 si la capsule descend
 				if (denom > 1e-6f)
 				{
@@ -280,12 +287,12 @@ namespace engine::gameplay
 			// (à la peau près) ne peut pas heurter le flanc — sinon on serait
 			// bloqué latéralement en marchant sur la dalle ou en atterrissant
 			// dessus avec un déplacement diagonal.
-			if (b.walkableTop && startCenter.y - halfH - capsule.radius >= b.hiY - kStandSkin)
+			if (b.walkableTop && startCenter.y - halfH >= b.hiY - kStandSkin)
 				continue;
 
 			// Recouvrement vertical (identique aux cylindres).
-			const float capLo = endCenter.y - halfH - capsule.radius;
-			const float capHi = endCenter.y + halfH + capsule.radius;
+			const float capLo = endCenter.y - halfH;
+			const float capHi = endCenter.y + halfH;
 			if (capHi < b.loY || capLo > b.hiY - kStandSkin) continue;
 
 			// Projection du départ et du déplacement XZ dans le repère du rectangle.
@@ -319,6 +326,21 @@ namespace engine::gameplay
 			slab(v0, dv, ez, 1);
 
 			if (separated || tEnter > tExit || tEnter > 1.0f) continue;
+			// Déjà en chevauchement au départ : comme pour les cylindres, on ne
+			// bloque que si le déplacement S'ENFONCE (vers l'intérieur par la face de
+			// sortie la plus proche). Sinon le perso peut ressortir ou glisser : sans
+			// cette règle, une capsule entrée dans une boîte (pas, téléportation,
+			// rebase) y restait figée — seule la rotation répondait.
+			const bool startInside = std::fabs(u0) < ex && std::fabs(v0) < ez;
+			if (startInside)
+			{
+				const float penU = ex - std::fabs(u0), penV = ez - std::fabs(v0);
+				const bool exitU = penU <= penV;
+				const float outward = exitU ? (u0 >= 0.0f ? du : -du) : (v0 >= 0.0f ? dv : -dv);
+				if (outward >= 0.0f) continue;
+				enterAxis = exitU ? 0 : 1;
+				enterSign = exitU ? (u0 >= 0.0f ? 1.0f : -1.0f) : (v0 >= 0.0f ? 1.0f : -1.0f);
+			}
 			float tHit = tEnter < 0.0f ? 0.0f : tEnter; // déjà à l'intérieur -> bloque à 0
 			if (tHit >= best.fraction) continue;
 

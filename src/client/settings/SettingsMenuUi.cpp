@@ -1,4 +1,5 @@
 #include "src/client/settings/SettingsMenuUi.h"
+#include "src/client/settings/ViewDistancePreset.h"
 
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
@@ -30,7 +31,7 @@ namespace engine::client
 		m_graphics.vsync            = config.GetBool  ("render.vsync",         true);
 		m_graphics.fullscreen        = config.GetBool  ("render.fullscreen",    true);
 		m_graphics.fov               = static_cast<float>(config.GetDouble("render.fov", 70.0));
-		m_graphics.qualityPreset     = static_cast<int>(config.GetInt("render.quality_preset", 2));
+		m_graphics.qualityPreset     = static_cast<int>(config.GetInt("render.quality_preset", engine::client::kDefaultQualityPreset));
 
 		m_audio.masterVolume = static_cast<float>(config.GetDouble("audio.master_volume", 1.0));
 		m_audio.musicVolume  = static_cast<float>(config.GetDouble("audio.music_volume",  0.8));

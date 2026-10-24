@@ -474,7 +474,7 @@
   "options.imgui.section.display": "ANZEIGE",
   "options.imgui.resolution": "AUFLOESUNG",
   "options.imgui.quality": "GRAFIKQUALITAET",
-  "options.imgui.quality_hint": "Ultra erfordert eine neuere Grafikkarte.",
+  "options.imgui.quality_hint": "Legt die Sichtweite fest (Gelande, Umgebung, Gebaude). Ultra erfordert eine neuere Grafikkarte.",
   "options.imgui.quality.0": "Niedrig",
   "options.imgui.quality.1": "Mittel",
   "options.imgui.quality.2": "Hoch",

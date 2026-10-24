@@ -429,6 +429,13 @@ namespace engine
 		dist.largeM = static_cast<float>(m_cfg.GetDouble("world.scatter.cull_large_m", 150.0));
 		dist.mediumM = static_cast<float>(m_cfg.GetDouble("world.scatter.cull_medium_m", 80.0));
 		dist.smallM = static_cast<float>(m_cfg.GetDouble("world.scatter.cull_small_m", 42.0));
+		// Monde en cellules : facteur du préréglage « Qualité graphique ».
+		if (m_cellWorld)
+		{
+			dist.largeM *= m_viewDistance.scatterScale;
+			dist.mediumM *= m_viewDistance.scatterScale;
+			dist.smallM *= m_viewDistance.scatterScale;
+		}
 
 		// Une entrée par (instance × partie) : clé de lot = (mesh GPU, matériau, fondu).
 		struct DrawRef { const engine::render::MeshAsset* mesh; uint32_t material; uint32_t fadeQ; uint32_t layer; uint32_t item; };

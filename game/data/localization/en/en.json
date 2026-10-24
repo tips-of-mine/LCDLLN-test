@@ -474,7 +474,7 @@
   "options.imgui.section.display": "DISPLAY",
   "options.imgui.resolution": "RESOLUTION",
   "options.imgui.quality": "GRAPHIC QUALITY",
-  "options.imgui.quality_hint": "Ultra requires a recent graphics card.",
+  "options.imgui.quality_hint": "Sets the view distance (terrain, scenery, buildings). Ultra requires a recent graphics card.",
   "options.imgui.quality.0": "Low",
   "options.imgui.quality.1": "Medium",
   "options.imgui.quality.2": "High",

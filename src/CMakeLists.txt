@@ -1052,6 +1052,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(composite_world_collider_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/CompositeWorldColliderTests.cpp)
 
+  # Préréglages de distance de vue (render.quality_preset) : défaut, ordre, bornes.
+  lcdlln_add_simple_test(view_distance_preset_tests
+    ${CMAKE_SOURCE_DIR}/src/client/settings/tests/ViewDistancePresetTests.cpp)
+
   # Catalogue de collision des bâtiments : parse JSON (via Config), passable,
   # multi-boîtes, mesh absent -> nullptr, JSON invalide -> echec.
   lcdlln_add_simple_test(building_collision_catalog_tests

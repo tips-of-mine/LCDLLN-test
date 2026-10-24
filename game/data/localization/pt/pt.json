@@ -474,7 +474,7 @@
   "options.imgui.section.display": "ECRA",
   "options.imgui.resolution": "RESOLUCAO",
   "options.imgui.quality": "QUALIDADE GRAFICA",
-  "options.imgui.quality_hint": "Ultra requer uma placa grafica recente.",
+  "options.imgui.quality_hint": "Ajusta a distancia de visao (terreno, cenario, edificios). Ultra requer uma placa grafica recente.",
   "options.imgui.quality.0": "Baixa",
   "options.imgui.quality.1": "Media",
   "options.imgui.quality.2": "Alta",

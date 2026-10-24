@@ -94,13 +94,9 @@ namespace engine
 		// Le monde en cellules n'a pas de bassin de test.
 		m_cfg.SetValue("world.test_water.enabled", false);
 
-		// Rayons de streaming (m, distance au BORD de la cellule).
-		m_cellRenderRadiusM = static_cast<float>(std::clamp(m_cfg.GetDouble("world.cells.render_radius_m", 2500.0), 200.0, 9000.0));
-		m_cellUnloadRadiusM = std::max(m_cellRenderRadiusM + 500.0f,
-			static_cast<float>(m_cfg.GetDouble("world.cells.unload_radius_m", 3500.0)));
-		m_cellHeightRadiusM = std::max(m_cellUnloadRadiusM,
-			static_cast<float>(m_cfg.GetDouble("world.cells.height_radius_m", 6000.0)));
-		m_cellTerrainDrawDistanceM = static_cast<float>(std::clamp(m_cfg.GetDouble("world.cells.terrain_draw_distance_m", 2500.0), 200.0, 20000.0));
+		// Rayons de streaming et distances de vue : préréglage « Qualité graphique »
+		// (réappliqué au boot du rendu, une fois user_settings.json lu).
+		ApplyViewDistancePreset();
 
 		// Point d'arrivée au boot (GLOBAL) : centre de la première cellule, ou
 		// world.cells.boot_x / boot_z (tests, fond de l'écran de connexion).
@@ -115,10 +111,40 @@ namespace engine
 		return true;
 	}
 
+	void Engine::ApplyViewDistancePreset()
+	{
+		const int64_t preset = std::clamp<int64_t>(
+			m_cfg.GetInt("render.quality_preset", engine::client::kDefaultQualityPreset), 0, 3);
+		m_viewDistance = engine::client::ResolveViewDistancePreset(preset);
+		if (!m_cellWorld)
+			return;
+		// Rayons de streaming (m, distance au BORD de la cellule). Une clé explicite
+		// de config.json (réglage de test) l'emporte sur le préréglage.
+		m_cellRenderRadiusM = m_cfg.Has("world.cells.render_radius_m")
+			? static_cast<float>(std::clamp(m_cfg.GetDouble("world.cells.render_radius_m", 2500.0), 200.0, 9000.0))
+			: m_viewDistance.cellRenderRadiusM;
+		m_cellUnloadRadiusM = std::max(m_cellRenderRadiusM + 500.0f, m_cfg.Has("world.cells.unload_radius_m")
+			? static_cast<float>(m_cfg.GetDouble("world.cells.unload_radius_m", 3500.0))
+			: m_cellRenderRadiusM + 1000.0f);
+		m_cellHeightRadiusM = std::max(m_cellUnloadRadiusM,
+			static_cast<float>(m_cfg.GetDouble("world.cells.height_radius_m", 6000.0)));
+		m_cellTerrainDrawDistanceM = m_cfg.Has("world.cells.terrain_draw_distance_m")
+			? static_cast<float>(std::clamp(m_cfg.GetDouble("world.cells.terrain_draw_distance_m", 2500.0), 200.0, 20000.0))
+			: m_viewDistance.terrainDrawM;
+		for (CellRenderTile& tile : m_cellTiles)
+			if (tile.terrain)
+				tile.terrain->SetMaxDrawDistance(m_cellTerrainDrawDistanceM);
+		LOG_INFO(Core, "[Cells] Distance de vue (preset {}) : camera {:.0f} m, terrain {:.0f} m, rendu/dechargement/hauteurs = {:.0f}/{:.0f}/{:.0f} m, decor x{:.2f}",
+			preset, m_viewDistance.cameraFarM, m_cellTerrainDrawDistanceM,
+			m_cellRenderRadiusM, m_cellUnloadRadiusM, m_cellHeightRadiusM, m_viewDistance.scatterScale);
+	}
+
 	void Engine::InitCellWorldBoot()
 	{
 		if (!m_cellWorld)
 			return;
+		// user_settings.json est lu après LoadCellWorldSettings : préréglage réappliqué.
+		ApplyViewDistancePreset();
 		LOG_INFO(Core, "[Cells] Boot : hauteurs + thread de chargement");
 		m_cellHeights = std::make_unique<cells::CellHeightFields>(&m_renderFrame);
 		m_cellLoader.Start();

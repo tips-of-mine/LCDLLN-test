@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.29",
+    "version": "1.0.30",
     "notes": [
+      "v1.0.30 : [CARTE] Feyhin Lokcthat sur une très grosse colline, Porte 2 des enfers dessous (nouveau lieu N008_E007) ; Oldbridge, Ironmere, Deepvale, Millway, Stonemark supprimées ; routes Nightfield–Blackmoor, Hillwatch–Rivercross, Rivercross–Ebonvale, Farwatch–Rivercross, Farwatch–Westmoor ; routes maritimes tracées sur l'eau navigable (waypoints) avec un ponton à chaque escale.",
       "v1.0.29 : [CARTE] Ashgrave, Grimholt, Ridgeholt supprimées ; Unnamed-66 renommée Brookend ; routes Orderfen–Hayfen, Nightward–Nightfield, Tbarak–Brookend et Saltfen–Tbarak (maritimes) créées, Camp de l'Oracle–Horkher remplacée par Camp de l'Oracle–Horker, L'hynn–Sauken et Harrowbrook–Tbarak supprimées ; S006_W004 → côte, S006_W007 → plage ; 16 cellules de plaine au contact d'une forêt passées en lisière ; règles de rendu (plaine, forêt, lisière, routes le long de l'eau) et ligne maritime du sud (2 bateaux, pause 30 s) ajoutées ; routes Duskmere–Blackmoor, Blackmoor–Ebonvale (villes isolées par les suppressions).",
       "v1.0.28 : [CARTE] Routes : Dustfen–Scalebrook, Millend–Frosthollow, Camp de l'Oracle–Arcanefield (au lieu de Camp de l'Oracle–Kendrhir Vale), Moork–Nightfield–Horkher (au lieu de Moork–Horkher), Feyhin Lokcthat–Mossy Rock–Horkher (au lieu de Feyhin Lokcthat–Horkher). Porte 3 des enfers (S005_W011) : grande vallée, portail dans les sous-sols d'un vieux temple au centre. Porte 5 des enfers (N008_W007) : château fortifié abandonné, à l'écart des routes ; route Sysigie–Northind supprimée (elle traversait la cellule de la Porte 5), trajet par Justfall et Dys.",
       "v1.0.27 : [CARTE] Longmere supprimée, Scalebrook rétablie (S003_W008), Hayfen décalée en N011_W004 ; routes : Sysigie–Verdansur (au lieu de Sysigie–Trueford), Altenberg–Dys–Northind (au lieu d'Altenberg–Northind), Sauken–Arcanefield–Kendrhir Vale (au lieu de Sauken–Kendrhir Vale), Harrowbrook–Tbarak (au lieu de Palais des Maîtres des Dragons–Harrowbrook), route maritime Saltfen–Hishtarland, Scalebrook reliée à Harrowbrook.",
@@ -4618,7 +4619,9 @@
       "housing_count": null,
       "population": null,
       "services": [],
-      "features": [],
+      "features": [
+        "Ponton d'embarquement de la ligne maritime du sud (S012_W006)"
+      ],
       "notes": [
         "[HS] Royaume du sud. Puissance indépendante suffisamment importante pour envoyer des espionnes dans l'Empire.",
         "[HS] Dispose d'une souveraine (non nommée). Possède des 'houris' comme agents d'élite.",
@@ -4911,7 +4914,9 @@
       "housing_count": null,
       "population": null,
       "services": [],
-      "features": [],
+      "features": [
+        "Ponton d'embarquement de la ligne maritime du sud (S007_W004)"
+      ],
       "notes": [
         "[BD-T1] Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey.",
         "[BD-T1] Traversée ou pillée par la horde lors de la Campagne des Marches.",
@@ -4981,7 +4986,8 @@
         "bord de lac",
         "pont vers Magistrya",
         "route vers Kendrhir",
-        "Présence d'un des portails pour les enfers 2/5"
+        "Présence d'un des portails pour les enfers 2/5",
+        "Porte 2 des enfers sous la colline"
       ],
       "notes": [
         "[BD-T2] Première cité visitée par Wismerhill et ses compagnons dans le Tome 2.",
@@ -5002,8 +5008,8 @@
       },
       "topographie": {
         "forme_generale": "",
-        "relief": "",
-        "implantation": "",
+        "relief": "Très grosse colline",
+        "implantation": "Sur une très grosse colline ; la Porte 2 des enfers se trouve sous la colline",
         "pentes": "",
         "gorge": ""
       },
@@ -5505,88 +5511,6 @@
       "anchor_tile": "S013_E020"
     },
     {
-      "id": "millway",
-      "name": "Millway",
-      "alias": "Millway",
-      "type": "town",
-      "importance": "regional",
-      "cell": "N013_E020",
-      "coord_x": 41,
-      "coord_y": 39,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: nord"
-      ],
-      "notes": [],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "anchor_tile": "N013_E020"
-    },
-    {
       "id": "highfall",
       "name": "Highfall",
       "alias": "Highfall",
@@ -5667,88 +5591,6 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "anchor_tile": "N018_E020"
-    },
-    {
-      "id": "stonemark",
-      "name": "Stonemark",
-      "alias": "Stonemark",
-      "type": "town",
-      "importance": "regional",
-      "cell": "N015_E020",
-      "coord_x": 66,
-      "coord_y": 33,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: nord"
-      ],
-      "notes": [],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "anchor_tile": "N015_E020"
     },
     {
       "id": "farwatch",
@@ -6352,88 +6194,6 @@
       "notes": []
     },
     {
-      "id": "town_0110",
-      "name": "Deepvale",
-      "alias": "Deepvale",
-      "type": "town",
-      "importance": "regional",
-      "cell": "N009_E020",
-      "anchor_tile": "N009_E020",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "town_0112",
       "name": "Westmoor",
       "alias": "Westmoor",
@@ -6690,88 +6450,6 @@
       "coord_x": null,
       "coord_y": null,
       "faction_control": "lune_noire",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: est"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "town_0116",
-      "name": "Ironmere",
-      "alias": "Ironmere",
-      "type": "town",
-      "importance": "regional",
-      "cell": "N007_E020",
-      "anchor_tile": "N007_E020",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
       "region_id": "",
       "housing_count": null,
       "population": null,
@@ -7107,88 +6785,6 @@
       "features": [
         "Terrain: plain",
         "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "town_0121",
-      "name": "Oldbridge",
-      "alias": "Oldbridge",
-      "type": "town",
-      "importance": "regional",
-      "cell": "N010_E018",
-      "anchor_tile": "N010_E018",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: nord"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -8172,7 +7768,8 @@
       "services": [],
       "features": [
         "Terrain: beach",
-        "Région: sud"
+        "Région: sud",
+        "Ponton d'embarquement de la ligne maritime du sud (S008_W003)"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -8746,7 +8343,8 @@
       "services": [],
       "features": [
         "Terrain: plain",
-        "Région: sud"
+        "Région: sud",
+        "Ponton d'embarquement de la ligne maritime du sud (S009_W009)"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -153498,7 +153096,7 @@
       "tome": "",
       "faction": "",
       "biome": "",
-      "visual_description": "",
+      "visual_description": "Sous la très grosse colline sur laquelle est bâtie Feyhin Lokcthat.",
       "atmosphere": "",
       "strategic_importance": "",
       "lore": "",
@@ -161906,7 +161504,10 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Très grosse colline portant la ville de Feyhin Lokcthat",
+        "Porte 2 des enfers sous la colline"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -178465,18 +178066,6 @@
       "notes": []
     },
     {
-      "id": "000027",
-      "type": "road",
-      "from_place": "N011_E020",
-      "from_ville_id": "farwatch",
-      "from_lieu_id": "",
-      "to_place": "N009_E020",
-      "to_ville_id": "town_0110",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000028",
       "type": "road",
       "from_place": "N018_E020",
@@ -178484,30 +178073,6 @@
       "from_lieu_id": "",
       "to_place": "N018_E018",
       "to_ville_id": "town_0113",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000029",
-      "type": "road",
-      "from_place": "N013_E020",
-      "from_ville_id": "millway",
-      "from_lieu_id": "",
-      "to_place": "N011_E020",
-      "to_ville_id": "farwatch",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000030",
-      "type": "road",
-      "from_place": "N013_E020",
-      "from_ville_id": "millway",
-      "from_lieu_id": "",
-      "to_place": "N015_E020",
-      "to_ville_id": "stonemark",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -178532,18 +178097,6 @@
       "from_lieu_id": "",
       "to_place": "S009_E020",
       "to_ville_id": "town_0125",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000037",
-      "type": "road",
-      "from_place": "N009_E020",
-      "from_ville_id": "town_0110",
-      "from_lieu_id": "",
-      "to_place": "N007_E020",
-      "to_ville_id": "town_0116",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -178592,42 +178145,6 @@
       "from_lieu_id": "",
       "to_place": "N018_E016",
       "to_ville_id": "town_0135",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000042",
-      "type": "road",
-      "from_place": "N005_E020",
-      "from_ville_id": "town_0115",
-      "from_lieu_id": "",
-      "to_place": "N007_E020",
-      "to_ville_id": "town_0116",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000043",
-      "type": "road",
-      "from_place": "N010_E018",
-      "from_ville_id": "town_0121",
-      "from_lieu_id": "",
-      "to_place": "N008_E018",
-      "to_ville_id": "town_0132",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000044",
-      "type": "road",
-      "from_place": "N010_E018",
-      "from_ville_id": "town_0121",
-      "from_lieu_id": "",
-      "to_place": "N010_E016",
-      "to_ville_id": "town_0133",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -179003,7 +178520,18 @@
       "to_lieu_id": "",
       "description": "",
       "notes": [],
-      "sea_line_id": "ligne_maritime_sud"
+      "sea_line_id": "ligne_maritime_sud",
+      "waypoints": [
+        "S011_W006",
+        "S012_W006",
+        "S013_W005",
+        "S012_W004",
+        "S011_W004",
+        "S010_W004",
+        "S009_W004",
+        "S008_W003",
+        "S008_W002"
+      ]
     },
     {
       "id": "000082",
@@ -179076,7 +178604,17 @@
       "to_lieu_id": "",
       "description": "",
       "notes": [],
-      "sea_line_id": "ligne_maritime_sud"
+      "sea_line_id": "ligne_maritime_sud",
+      "waypoints": [
+        "S008_W010",
+        "S009_W009",
+        "S010_W009",
+        "S011_W009",
+        "S012_W008",
+        "S013_W007",
+        "S012_W006",
+        "S011_W006"
+      ]
     },
     {
       "id": "000089",
@@ -179197,7 +178735,13 @@
       "to_lieu_id": "",
       "description": "",
       "notes": [],
-      "sea_line_id": "ligne_maritime_sud"
+      "sea_line_id": "ligne_maritime_sud",
+      "waypoints": [
+        "S005_W004",
+        "S007_W004",
+        "S008_W003",
+        "S008_W002"
+      ]
     },
     {
       "id": "000099",
@@ -179210,7 +178754,24 @@
       "to_lieu_id": "",
       "description": "",
       "notes": [],
-      "sea_line_id": "ligne_maritime_sud"
+      "sea_line_id": "ligne_maritime_sud",
+      "waypoints": [
+        "S008_W010",
+        "S009_W009",
+        "S010_W009",
+        "S011_W009",
+        "S012_W008",
+        "S013_W007",
+        "S014_W006",
+        "S013_W005",
+        "S012_W004",
+        "S011_W004",
+        "S010_W004",
+        "S009_W005",
+        "S008_W005",
+        "S007_W004",
+        "S005_W004"
+      ]
     },
     {
       "id": "000100",
@@ -179232,6 +178793,66 @@
       "from_lieu_id": "",
       "to_place": "N005_E020",
       "to_ville_id": "town_0115",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000102",
+      "type": "road",
+      "from_place": "N002_E015",
+      "from_ville_id": "hamlet_0201",
+      "from_lieu_id": "",
+      "to_place": "N004_E018",
+      "to_ville_id": "town_0131",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000103",
+      "type": "road",
+      "from_place": "N010_E016",
+      "from_ville_id": "town_0133",
+      "from_lieu_id": "",
+      "to_place": "N008_E018",
+      "to_ville_id": "town_0132",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000104",
+      "type": "road",
+      "from_place": "N008_E018",
+      "from_ville_id": "town_0132",
+      "from_lieu_id": "",
+      "to_place": "N005_E020",
+      "to_ville_id": "town_0115",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000105",
+      "type": "road",
+      "from_place": "N011_E020",
+      "from_ville_id": "farwatch",
+      "from_lieu_id": "",
+      "to_place": "N008_E018",
+      "to_ville_id": "town_0132",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000106",
+      "type": "road",
+      "from_place": "N011_E020",
+      "from_ville_id": "farwatch",
+      "from_lieu_id": "",
+      "to_place": "N014_E018",
+      "to_ville_id": "town_0112",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -182969,14 +182590,14 @@
       "id": "rule_ligne_maritime_sud",
       "name": "Ligne maritime Tbarak – Brookend – Hishtarland – Saltfen",
       "category": "transport",
-      "description": "Une même ligne en boucle Tbarak → Brookend → Hishtarland → Saltfen → Tbarak, desservie par 2 bateaux en positions opposées sur la boucle. Pause de 30 secondes dans chaque port avant de repartir.",
+      "description": "Une même ligne en boucle Tbarak → Brookend → Hishtarland → Saltfen → Tbarak, desservie par 2 bateaux en positions opposées sur la boucle. Les bateaux ne naviguent que sur l'eau assez profonde (mer peu profonde ou profonde), jamais sur la terre : le tracé suit les cellules d'eau (waypoints des routes). À chaque escale, un ponton permet au joueur de monter à bord ; pause de 30 secondes avant de repartir.",
       "applies_to": [
         "ville_tbarak",
         "town_0137",
         "hishtarland",
         "hamlet_0172"
       ],
-      "mechanique_jeu": "Une même ligne en boucle Tbarak → Brookend → Hishtarland → Saltfen → Tbarak, desservie par 2 bateaux en positions opposées sur la boucle. Pause de 30 secondes dans chaque port avant de repartir.",
+      "mechanique_jeu": "Une même ligne en boucle Tbarak → Brookend → Hishtarland → Saltfen → Tbarak, desservie par 2 bateaux en positions opposées sur la boucle. Les bateaux ne naviguent que sur l'eau assez profonde (mer peu profonde ou profonde), jamais sur la terre : le tracé suit les cellules d'eau (waypoints des routes). À chaque escale, un ponton permet au joueur de monter à bord ; pause de 30 secondes avant de repartir.",
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
@@ -185804,6 +185425,82 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": []
+    },
+    {
+      "id": "lieu_portail_enfer_2",
+      "name": "Porte 2 des enfers",
+      "alias": "",
+      "type": "",
+      "importance": "",
+      "cell": "N008_E007",
+      "region_id": "",
+      "zone_id": "porte_2_des_enfers",
+      "faction_control": "",
+      "features": [
+        "Sous la très grosse colline de Feyhin Lokcthat"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "Très grosse colline",
+        "relief": "",
+        "implantation": "Sous la colline, au-dessous de la ville de Feyhin Lokcthat",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": []
     }
   ],
   "route_types": [
@@ -186101,16 +185798,36 @@
       "id": "ligne_maritime_sud",
       "name": "Ligne maritime du sud",
       "stops": [
-        "ville_tbarak",
-        "town_0137",
-        "hishtarland",
-        "hamlet_0172"
+        {
+          "ville_id": "ville_tbarak",
+          "ponton_cell": "S007_W004",
+          "stop_seconds": 30
+        },
+        {
+          "ville_id": "town_0137",
+          "ponton_cell": "S008_W003",
+          "stop_seconds": 30
+        },
+        {
+          "ville_id": "hishtarland",
+          "ponton_cell": "S012_W006",
+          "stop_seconds": 30
+        },
+        {
+          "ville_id": "hamlet_0172",
+          "ponton_cell": "S009_W009",
+          "stop_seconds": 30
+        }
       ],
       "loop": true,
       "boats": 2,
       "boat_spacing": "opposite",
       "stop_seconds": 30,
-      "rule_id": "rule_ligne_maritime_sud"
+      "rule_id": "rule_ligne_maritime_sud",
+      "navigable_terrains": [
+        "deep_sea",
+        "shallow_sea"
+      ]
     }
   ]
 }

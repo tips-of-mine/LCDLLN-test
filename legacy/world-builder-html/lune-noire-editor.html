@@ -4898,14 +4898,28 @@ function drawCarte() {
   }
 
   // Routes (couche optionnelle)
+  // Une route peut porter un tracé (waypoints : liste d'ids de cellules, ex. route
+  // maritime suivant l'eau navigable) ; sinon ligne droite entre ses extrémités.
   if (fl.routes) (db.routes||[]).forEach(function(r){
-    var a=carteCellCenter(r.from_place), b=carteCellCenter(r.to_place);
-    if(!a||!b) return;
+    var ids=(r.waypoints&&r.waypoints.length>=2)?r.waypoints:[r.from_place,r.to_place];
+    var pts=ids.map(carteCellCenter).filter(Boolean);
+    if(pts.length<2) return;
     var d=routeTypeDef(r.type);
-    ctx.strokeStyle=d.color; ctx.lineWidth=Math.max(2,px*0.14); ctx.lineCap='round';
+    ctx.strokeStyle=d.color; ctx.lineWidth=Math.max(2,px*0.14); ctx.lineCap='round'; ctx.lineJoin='round';
     ctx.setLineDash(d.dash?[Math.max(4,px*0.3),Math.max(3,px*0.22)]:[]);
-    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+    for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y);
+    ctx.stroke();
     ctx.setLineDash([]);
+  });
+  // Pontons des lignes maritimes (db.sea_lines) : petit carré brun sur l'eau.
+  if (fl.routes) (db.sea_lines||[]).forEach(function(line){
+    (line.stops||[]).forEach(function(s){
+      var p=s&&s.ponton_cell?carteCellCenter(s.ponton_cell):null; if(!p) return;
+      var w=Math.max(3,px*0.2);
+      ctx.fillStyle='#8a6a3a'; ctx.strokeStyle='#f0e0b0'; ctx.lineWidth=1;
+      ctx.fillRect(p.x-w/2,p.y-w/2,w,w); ctx.strokeRect(p.x-w/2,p.y-w/2,w,w);
+    });
   });
 
   // Lieux remarquables (couche optionnelle) : marqueur cerclé d'or, coin bas-gauche.

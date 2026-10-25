@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.33",
+    "version": "1.0.34",
     "notes": [
+      "v1.0.34 : [CARTE] Ports d'Altenberg et de L'hynn (ponton dans la cellule de la ville, côté ouest) ; destinations maritimes à décider (îles ou continent à l'ouest).",
       "v1.0.33 : [CARTE] Ville portuaire Deepbrook sur l'île N011_E002 ; navette maritime aller-retour Ashwick – Deepbrook (1 bateau, pause 30 s, ponton dans chaque ville).",
       "v1.0.32 : [SCÉNARIO] Les Abysses de la baie (S008_W005) : 6 quêtes « Murmures de la baie » (Tbarak, Brookend, Hishtarland, Saltfen, Harrowbrook, Millford), raid en petite équipe sur l'île d'Hishtarland (recette de potion de respiration aquatique), entrée sous-marine cachée, 2 raids (Temple englouti à 3 groupes, Antre de la créature à 2 groupes), règle d'accès et fiche scenarios.",
       "v1.0.31 : [CARTE] Ligne maritime du sud : ponton dans la cellule de chaque ville ; vraie rotation, chaque étape de la boucle suit un chenal différent de la baie.",
@@ -3994,7 +3995,8 @@
       "population": null,
       "services": [],
       "features": [
-        "grand port"
+        "grand port",
+        "Port avec ponton d'embarquement, côté mer (ouest) ; destination maritime à décider"
       ],
       "notes": [
         "[BD-T3] Haazheel Thorn s'y rend pour prêter hommage à l'Empereur.",
@@ -4114,7 +4116,14 @@
       "footprint_tiles": [
         "N001_W011"
       ],
-      "anchor_tile": "N001_W010"
+      "anchor_tile": "N001_W010",
+      "port": {
+        "ponton_cell": "N001_W010",
+        "vers_cell": "N001_W011",
+        "destinations": [],
+        "stop_seconds": 30,
+        "statut": "Destination à décider : des îles ou un autre continent plus à l'ouest."
+      }
     },
     {
       "id": "ville_ghrunke_dash",
@@ -4301,7 +4310,8 @@
         "mur circulaire extérieur très large",
         "quartiers cloisonnés par murailles",
         "cathédrale + sanctuaires",
-        "symboles sacrés visibles du ciel"
+        "symboles sacrés visibles du ciel",
+        "Port avec ponton d'embarquement, côté mer (ouest) ; destination maritime à décider"
       ],
       "notes": [
         "[BD-T4] Pages 23-24 — siège officiel : 'Le siège de l'Ordre des Chevaliers de la Lumière'.",
@@ -4413,7 +4423,14 @@
       "footprint_tiles": [
         "N005_W013"
       ],
-      "anchor_tile": "N005_W012"
+      "anchor_tile": "N005_W012",
+      "port": {
+        "ponton_cell": "N005_W012",
+        "vers_cell": "N005_W013",
+        "destinations": [],
+        "stop_seconds": 30,
+        "statut": "Destination à décider : des îles ou un autre continent plus à l'ouest."
+      }
     },
     {
       "id": "ville_sysigie",
@@ -183083,6 +183100,24 @@
       "training_minimum": "",
       "source": "Hubert, revue de la carte du 25/10/2026",
       "notes": []
+    },
+    {
+      "id": "rule_ports_ouest",
+      "name": "Ports d'Altenberg et de L'hynn",
+      "category": "transport",
+      "description": "Altenberg et L'hynn ont chacune un port, ponton dans la cellule de la ville côté mer (ouest). Les liaisons maritimes partiront vers des îles ou vers un autre continent plus à l'ouest : destination pas encore arrêtée. Mêmes règles que les autres lignes : eau navigable uniquement, pause de 30 secondes au ponton.",
+      "applies_to": [
+        "ville_altenberg",
+        "ville_lhynn"
+      ],
+      "mechanique_jeu": "Altenberg et L'hynn ont chacune un port, ponton dans la cellule de la ville côté mer (ouest). Les liaisons maritimes partiront vers des îles ou vers un autre continent plus à l'ouest : destination pas encore arrêtée. Mêmes règles que les autres lignes : eau navigable uniquement, pause de 30 secondes au ponton.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, 25/10/2026",
+      "notes": [
+        "À compléter : destinations et lignes maritimes."
+      ]
     }
   ],
   "game_design": {

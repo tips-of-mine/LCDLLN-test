@@ -3415,6 +3415,12 @@ function openVilleForm(idx) {
     '<input type="text" id="featureInput" placeholder="Ajouter une caractéristique...">'+
     '<button class="btn btn-primary btn-sm" onclick="addFeature()">+</button></div>'+
     '<div class="notes-list-edit" id="featuresList"></div></div></div>'+
+    // Port (ville.port) : ponton dans la cellule de la ville, côté mer, destinations.
+    '<div class="form-group" style="background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;padding:0.6rem 0.75rem">'+
+    '<label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer" class="form-label"><input type="checkbox" id="v_port_on"'+(v.port?' checked':'')+' style="accent-color:var(--accent-gold)"> ⚓ Port (ponton dans la cellule de la ville)</label>'+
+    '<div style="display:grid;grid-template-columns:1fr 2fr;gap:0.75rem;margin-top:0.4rem">'+
+    '<div><label style="font-size:0.68rem;color:var(--text-dim)">Côté mer (cellule voisine)</label><input class="form-input" id="v_port_vers" value="'+esc((v.port&&v.port.vers_cell)||'')+'" placeholder="N005_W013" style="font-family:monospace"></div>'+
+    '<div><label style="font-size:0.68rem;color:var(--text-dim)">Statut / destinations</label><input class="form-input" id="v_port_statut" value="'+esc((v.port&&v.port.statut)||'')+'" placeholder="Destination à décider…"></div></div></div>'+
     richFieldsFormHTML('v', v)+
     '<div class="form-group"><label class="form-label" style="font-size:0.65rem;color:var(--text-dim)">ℹ Les relations avec les factions se définissent depuis la fiche de chaque faction.</label></div>'+
     '<div class="form-group"><label class="form-label">Notes</label>'+
@@ -3461,6 +3467,12 @@ function saveVille(idx) {
     services:Array.from(document.querySelectorAll('input[name="v_service"]:checked')).map(function(cb){return cb.value;}),
     features:window._currentFeatures.slice(), notes:window._currentNotes.slice()
   });
+  // Port : conservé (destinations, durée d'arrêt…) et recalé sur la cellule de la ville.
+  if(document.getElementById('v_port_on').checked){
+    var vers=document.getElementById('v_port_vers').value.trim().toUpperCase();
+    if(vers&&!parseCellCoord(vers)){toast('Côté mer : cellule invalide (format N000_E000)');return;}
+    obj.port=Object.assign({destinations:[],stop_seconds:30}, base.port||{}, {ponton_cell:cell, vers_cell:vers, statut:document.getElementById('v_port_statut').value.trim()});
+  } else delete obj.port;
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   var dupWV=checkDuplicateOnSave(obj.id,obj.name,db.villes,idx);if(dupWV.length){toast(dupWV[0]);return;}
   if(idx!==undefined) db.villes[idx]=obj; else db.villes.push(obj);
@@ -4925,6 +4937,17 @@ function drawCarte() {
       ctx.fillStyle='#8a6a3a'; ctx.strokeStyle='#f0e0b0'; ctx.lineWidth=1;
       ctx.fillRect(p.x-w/2,p.y-w/2,w,w); ctx.strokeRect(p.x-w/2,p.y-w/2,w,w);
     });
+  });
+  // Ports de ville (ville.port) sans ligne encore définie : ponton dessiné au bord
+  // de la cellule de la ville, du côté de port.vers_cell (la mer).
+  if (fl.routes) (db.villes||[]).forEach(function(v){
+    if(!v.port||!v.port.ponton_cell) return;
+    var p=carteCellCenter(v.port.ponton_cell); if(!p) return;
+    var q=v.port.vers_cell?carteCellCenter(v.port.vers_cell):null;
+    if(q){ var dx=q.x-p.x, dy=q.y-p.y, l=Math.sqrt(dx*dx+dy*dy)||1; p={x:p.x+dx/l*px*0.38, y:p.y+dy/l*px*0.38}; }
+    var w=Math.max(3,px*0.2);
+    ctx.fillStyle='#8a6a3a'; ctx.strokeStyle='#f0e0b0'; ctx.lineWidth=1;
+    ctx.fillRect(p.x-w/2,p.y-w/2,w,w); ctx.strokeRect(p.x-w/2,p.y-w/2,w,w);
   });
 
   // Lieux remarquables (couche optionnelle) : marqueur cerclé d'or, coin bas-gauche.

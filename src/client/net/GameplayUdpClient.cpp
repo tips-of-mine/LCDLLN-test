@@ -269,7 +269,9 @@ namespace engine::client
 		// Le décodeur shard rejette un texte > 256 octets : on coupe ici, sans
 		// casser un caractère UTF-8 multi-octets (on recule sur les octets de suite 10xxxxxx).
 		constexpr size_t kMaxChatBytes = 256u;
-		size_t length = std::min(text.size(), kMaxChatBytes);
+		// Pas de std::min ici : <winsock2.h> (inclus plus haut sous Windows) définit
+		// les macros min/max, qui cassent l'appel sous MSVC.
+		size_t length = text.size() < kMaxChatBytes ? text.size() : kMaxChatBytes;
 		while (length > 0u && length < text.size()
 			&& (static_cast<unsigned char>(text[length]) & 0xC0u) == 0x80u)
 		{

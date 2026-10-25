@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.41",
+    "version": "1.0.42",
     "notes": [
+      "v1.0.42 : [BESTIAIRE] 125 espèces animales ajoutées aux créatures (catégorie, famille, variantes) ; 20 familles de familiers (19 normales, 1 exotique : Ver) dans familiar_families.",
       "v1.0.41 : [RÈGLES] Niveau des zones défini par faction (départs différents) ; grottes, mines et tours de fortification occupées ou abandonnées dans les plaines, forêts et montagnes ; hameaux affichés seulement en vue rapprochée dans l'éditeur.",
       "v1.0.40 : [CARTE] Leviathan Jungle (ville et lieu) déplacée de N009_E011 en N012_E012 ; route Mossy Rock → Leviathan Jungle ajustée.",
       "v1.0.39 : [CARTE+SCÉNARIO] Volcan actif sur 12 cellules (cratère fumant en S008_E014, cheminées de lave) ; scénario « Le Cœur du volcan » : 4 quêtes (Der hem Shelsem, Moork, Shadowfen, Frosthollow), recette de potion de résistance à la chaleur, entrée par le cratère, raid à 4 groupes contre une créature de la lave.",
@@ -141785,7 +141786,8 @@
         "Charge dévastatrice",
         "Résistance aux blessures mineures"
       ],
-      "notes": []
+      "notes": [],
+      "familier_famille": "familier_sanglier"
     },
     {
       "id": "creature_lapin_t00",
@@ -142273,6 +142275,2767 @@
       "notes": [
         "Nom et niveau à définir."
       ]
+    },
+    {
+      "id": "animal_ours",
+      "name": "Ours",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Carnivores",
+      "variantes": [
+        "Ours brun",
+        "ours polaire",
+        "ours noir",
+        "ours géant"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_ours"
+    },
+    {
+      "id": "animal_loup",
+      "name": "Loup",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Canidés",
+      "variantes": [
+        "Loup gris",
+        "loup arctique",
+        "loup géant"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_loup"
+    },
+    {
+      "id": "animal_loup_redoutable",
+      "name": "Loup redoutable",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Canidés",
+      "variantes": [
+        "Loup redoutable",
+        "loup spectral"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_loup"
+    },
+    {
+      "id": "animal_renard",
+      "name": "Renard",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Canidés",
+      "variantes": [
+        "Renard roux",
+        "renard arctique",
+        "vulpin"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_renard"
+    },
+    {
+      "id": "animal_chien",
+      "name": "Chien",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Canidés",
+      "variantes": [
+        "Chien domestique",
+        "chien de chasse"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_coyote",
+      "name": "Coyote",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Canidés",
+      "variantes": [
+        "Coyote",
+        "coyote du désert"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_chat_domestique",
+      "name": "Chat domestique",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Félins",
+      "variantes": [
+        "Chat noir",
+        "chat blanc",
+        "chat tigré"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_felin"
+    },
+    {
+      "id": "animal_lion",
+      "name": "Lion",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Félins",
+      "variantes": [
+        "Lion",
+        "lion des montagnes"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_felin"
+    },
+    {
+      "id": "animal_tigre",
+      "name": "Tigre",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Félins",
+      "variantes": [
+        "Tigre",
+        "tigre blanc"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_felin"
+    },
+    {
+      "id": "animal_panthere",
+      "name": "Panthère",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Félins",
+      "variantes": [
+        "Panthère",
+        "panthère noire"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_felin"
+    },
+    {
+      "id": "animal_leopard",
+      "name": "Léopard",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Félins",
+      "variantes": [
+        "Léopard des neiges",
+        "léopard tacheté"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_felin"
+    },
+    {
+      "id": "animal_jaguar",
+      "name": "Jaguar",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Félins",
+      "variantes": [
+        "Jaguar",
+        "jaguar sombre"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_felin"
+    },
+    {
+      "id": "animal_lynx",
+      "name": "Lynx",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Félins",
+      "variantes": [
+        "Lynx",
+        "lynx des forêts"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_felin"
+    },
+    {
+      "id": "animal_furet",
+      "name": "Furet",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Mustélidés",
+      "variantes": [
+        "Furet"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_blaireau",
+      "name": "Blaireau",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Mustélidés",
+      "variantes": [
+        "Blaireau",
+        "blaireau sauvage"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_loutre",
+      "name": "Loutre",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Mustélidés",
+      "variantes": [
+        "Loutre",
+        "loutre aquatique"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_belette",
+      "name": "Belette",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Mustélidés",
+      "variantes": [
+        "Belette",
+        "belette des forêts"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_glouton",
+      "name": "Glouton",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Mustélidés",
+      "variantes": [
+        "Glouton",
+        "carcajou"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_hyene",
+      "name": "Hyène",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Autres carnivores",
+      "variantes": [
+        "Hyène tachetée",
+        "hyène du désert"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_hyene"
+    },
+    {
+      "id": "animal_moufette",
+      "name": "Moufette",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Autres carnivores",
+      "variantes": [
+        "Moufette"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_raton_laveur",
+      "name": "Raton laveur",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Autres carnivores",
+      "variantes": [
+        "Raton laveur"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_rat",
+      "name": "Rat",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Rongeurs",
+      "variantes": [
+        "Rat",
+        "rat géant",
+        "rat des profondeurs"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_rongeur"
+    },
+    {
+      "id": "animal_souris",
+      "name": "Souris",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Rongeurs",
+      "variantes": [
+        "Souris",
+        "souris des champs"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_rongeur"
+    },
+    {
+      "id": "animal_ecureuil",
+      "name": "Écureuil",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Rongeurs",
+      "variantes": [
+        "Écureuil",
+        "écureuil terrestre"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_rongeur"
+    },
+    {
+      "id": "animal_castor",
+      "name": "Castor",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Rongeurs",
+      "variantes": [
+        "Castor"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_rongeur"
+    },
+    {
+      "id": "animal_porc_epic",
+      "name": "Porc-épic",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Rongeurs",
+      "variantes": [
+        "Porc-épic"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_rongeur"
+    },
+    {
+      "id": "animal_marmotte",
+      "name": "Marmotte",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Rongeurs",
+      "variantes": [
+        "Marmotte"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_rongeur"
+    },
+    {
+      "id": "animal_lapin",
+      "name": "Lapin",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Autres mammifères",
+      "variantes": [
+        "Lapin",
+        "lièvre"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_herisson",
+      "name": "Hérisson",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Autres mammifères",
+      "variantes": [
+        "Hérisson"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_vache",
+      "name": "Vache",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Bovins",
+      "variantes": [
+        "Vache domestique",
+        "vache sauvage"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_taureau",
+      "name": "Taureau",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Bovins",
+      "variantes": [
+        "Taureau",
+        "bovidé massif"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_boeuf",
+      "name": "Bœuf",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Bovins",
+      "variantes": [
+        "Bœuf",
+        "bœuf de trait"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_boeuf"
+    },
+    {
+      "id": "animal_chevre",
+      "name": "Chèvre",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Bovins",
+      "variantes": [
+        "Chèvre",
+        "chèvre des montagnes"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_belier",
+      "name": "Bélier",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Bovins",
+      "variantes": [
+        "Bélier",
+        "bélier des montagnes"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_mouton",
+      "name": "Mouton",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Bovins",
+      "variantes": [
+        "Mouton",
+        "mouton domestique"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_cerf",
+      "name": "Cerf",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Cervidés",
+      "variantes": [
+        "Cerf",
+        "cerf des forêts"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_cerf"
+    },
+    {
+      "id": "animal_biche",
+      "name": "Biche",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Cervidés",
+      "variantes": [
+        "Biche"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_elan",
+      "name": "Élan",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Cervidés",
+      "variantes": [
+        "Élan",
+        "grand élan"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_cerf_runique",
+      "name": "Cerf runique",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Cervidés",
+      "variantes": [
+        "Cerf runique",
+        "variantes enchantées"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_cheval",
+      "name": "Cheval",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Équidés",
+      "variantes": [
+        "Cheval de selle",
+        "cheval sauvage"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_poney",
+      "name": "Poney",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Équidés",
+      "variantes": [
+        "Poney",
+        "poney domestique"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_ane",
+      "name": "Âne",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Équidés",
+      "variantes": [
+        "Âne"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_mulet",
+      "name": "Mulet",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Équidés",
+      "variantes": [
+        "Mulet"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_zebre",
+      "name": "Zèbre",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Équidés",
+      "variantes": [
+        "Zèbre",
+        "zhevra"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_alpaga",
+      "name": "Alpaga",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Camélidés",
+      "variantes": [
+        "Alpaga"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_elephant",
+      "name": "Éléphant",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Proboscidiens",
+      "variantes": [
+        "Béhémoth",
+        "éléphant massif"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_girafe",
+      "name": "Girafe",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Autres herbivores",
+      "variantes": [
+        "Girafe"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_rhinoceros",
+      "name": "Rhinocéros",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "1. Mammifères",
+      "famille": "Autres herbivores",
+      "variantes": [
+        "Rhinocéros",
+        "rhinocéros cuirassé"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_albatros",
+      "name": "Albatros",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Oiseaux marins",
+      "variantes": [
+        "Albatros",
+        "grand albatros"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_mouette",
+      "name": "Mouette",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Oiseaux marins",
+      "variantes": [
+        "Mouette",
+        "goéland"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_becasseau",
+      "name": "Bécasseau",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Oiseaux marins",
+      "variantes": [
+        "Bécasseau",
+        "oiseau de rivage"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_poule",
+      "name": "Poule",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Gallinacés",
+      "variantes": [
+        "Poule domestique",
+        "poulet"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_coq",
+      "name": "Coq",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Gallinacés",
+      "variantes": [
+        "Coq",
+        "coq magique"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_dinde",
+      "name": "Dinde",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Gallinacés",
+      "variantes": [
+        "Dinde sauvage"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_paon",
+      "name": "Paon",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Gallinacés",
+      "variantes": [
+        "Paon",
+        "paon coloré"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_aigle",
+      "name": "Aigle",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Rapaces",
+      "variantes": [
+        "Aigle",
+        "aigle royal"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_faucon",
+      "name": "Faucon",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Rapaces",
+      "variantes": [
+        "Faucon",
+        "faucon de chasse"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_buse",
+      "name": "Buse",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Rapaces",
+      "variantes": [
+        "Buse",
+        "rapace des montagnes"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_epervier",
+      "name": "Épervier",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Rapaces",
+      "variantes": [
+        "Épervier"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_hibou",
+      "name": "Hibou",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Rapaces",
+      "variantes": [
+        "Hibou",
+        "hibou nocturne"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_chouette",
+      "name": "Chouette",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Rapaces",
+      "variantes": [
+        "Chouette",
+        "chouette lunaire"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_vautour",
+      "name": "Vautour",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Rapaces",
+      "variantes": [
+        "Vautour",
+        "condor"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_corbeau",
+      "name": "Corbeau",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Rapaces",
+      "variantes": [
+        "Corbeau",
+        "corbeau noir"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_corneille",
+      "name": "Corneille",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Rapaces",
+      "variantes": [
+        "Corneille",
+        "corneille des tempêtes"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_perroquet",
+      "name": "Perroquet",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Oiseaux exotiques",
+      "variantes": [
+        "Perroquet",
+        "perroquet tropical"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_grue",
+      "name": "Grue",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "2. Oiseaux",
+      "famille": "Oiseaux exotiques",
+      "variantes": [
+        "Grue",
+        "grue exotique"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_crocodile",
+      "name": "Crocodile",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "3. Reptiles et dinosaures",
+      "famille": "Crocodiliens",
+      "variantes": [
+        "Crocodile",
+        "crocodile géant"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_tortue_terrestre",
+      "name": "Tortue terrestre",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "3. Reptiles et dinosaures",
+      "famille": "Tortues",
+      "variantes": [
+        "Tortue",
+        "tortue géante"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_tortue"
+    },
+    {
+      "id": "animal_tortue_marine",
+      "name": "Tortue marine",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "3. Reptiles et dinosaures",
+      "famille": "Tortues",
+      "variantes": [
+        "Tortue de mer",
+        "tortue géante"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_tortue"
+    },
+    {
+      "id": "animal_serpent",
+      "name": "Serpent",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "3. Reptiles et dinosaures",
+      "famille": "Serpents",
+      "variantes": [
+        "Serpent",
+        "serpent venimeux"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_serpent"
+    },
+    {
+      "id": "animal_cobra",
+      "name": "Cobra",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "3. Reptiles et dinosaures",
+      "famille": "Serpents",
+      "variantes": [
+        "Cobra",
+        "cobra du désert"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_serpent"
+    },
+    {
+      "id": "animal_serpent_marin",
+      "name": "Serpent marin",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "3. Reptiles et dinosaures",
+      "famille": "Serpents",
+      "variantes": [
+        "Serpent marin",
+        "serpent des profondeurs"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_serpent"
+    },
+    {
+      "id": "animal_basilic",
+      "name": "Basilic",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "3. Reptiles et dinosaures",
+      "famille": "Lézards",
+      "variantes": [
+        "Basilic",
+        "basilic cuirassé"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_lezard"
+    },
+    {
+      "id": "animal_salamandre",
+      "name": "Salamandre",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "3. Reptiles et dinosaures",
+      "famille": "Lézards",
+      "variantes": [
+        "Salamandre",
+        "salamandre de feu"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_lezard"
+    },
+    {
+      "id": "animal_grenouille",
+      "name": "Grenouille",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "4. Amphibiens et animaux des zones humides",
+      "famille": "Amphibiens",
+      "variantes": [
+        "Grenouille",
+        "grenouille tropicale"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_crapaud",
+      "name": "Crapaud",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "4. Amphibiens et animaux des zones humides",
+      "famille": "Amphibiens",
+      "variantes": [
+        "Crapaud",
+        "crapaud géant"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_crawg",
+      "name": "Crawg",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "4. Amphibiens et animaux des zones humides",
+      "famille": "Amphibiens",
+      "variantes": [
+        "Crawg",
+        "crawg des marais"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_salamandre_aquatique",
+      "name": "Salamandre aquatique",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "4. Amphibiens et animaux des zones humides",
+      "famille": "Amphibiens",
+      "variantes": [
+        "Salamandre",
+        "variante des zones humides"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_gorm",
+      "name": "Gorm",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "4. Amphibiens et animaux des zones humides",
+      "famille": "Amphibiens",
+      "variantes": [
+        "Gorm",
+        "gorm géant"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_hopper",
+      "name": "Hopper",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "4. Amphibiens et animaux des zones humides",
+      "famille": "Amphibiens",
+      "variantes": [
+        "Hopper",
+        "créature bondissante"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_bete_des_marais",
+      "name": "Bête des marais",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "4. Amphibiens et animaux des zones humides",
+      "famille": "Amphibiens",
+      "variantes": [
+        "Créature amphibie",
+        "variantes de marécage"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_araignee",
+      "name": "Araignée",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Arachnides",
+      "variantes": [
+        "Araignée",
+        "araignée géante"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_araignee"
+    },
+    {
+      "id": "animal_tarentule",
+      "name": "Tarentule",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Arachnides",
+      "variantes": [
+        "Tarentule"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_araignee"
+    },
+    {
+      "id": "animal_tique",
+      "name": "Tique",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Arachnides",
+      "variantes": [
+        "Tique sanguinaire",
+        "tique géante"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_scorpion",
+      "name": "Scorpion",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Scorpides",
+      "variantes": [
+        "Scorpion",
+        "scorpion géant"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_crabe",
+      "name": "Crabe",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Crustacés",
+      "variantes": [
+        "Crabe",
+        "crabe géant"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_crabe"
+    },
+    {
+      "id": "animal_ecrevisse",
+      "name": "Écrevisse",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Crustacés",
+      "variantes": [
+        "Écrevisse",
+        "écrevisse géante"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_abeille",
+      "name": "Abeille",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Insectes",
+      "variantes": [
+        "Abeille",
+        "abeille géante"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_guepe",
+      "name": "Guêpe",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Insectes",
+      "variantes": [
+        "Guêpe",
+        "guêpe géante"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_guepe"
+    },
+    {
+      "id": "animal_scarabee",
+      "name": "Scarabée",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Insectes",
+      "variantes": [
+        "Scarabée",
+        "scarabée charognard"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_scarabee"
+    },
+    {
+      "id": "animal_fourmi",
+      "name": "Fourmi",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Insectes",
+      "variantes": [
+        "Fourmi",
+        "ouvrière"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_cafard",
+      "name": "Cafard",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Insectes",
+      "variantes": [
+        "Cafard",
+        "cafard des profondeurs"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_mouche",
+      "name": "Mouche",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Insectes",
+      "variantes": [
+        "Mouche",
+        "mouche charognarde"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_luciole",
+      "name": "Luciole",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Insectes",
+      "variantes": [
+        "Luciole",
+        "luciole lumineuse"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_grillon",
+      "name": "Grillon",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Insectes",
+      "variantes": [
+        "Grillon"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_chenille",
+      "name": "Chenille",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Insectes",
+      "variantes": [
+        "Chenille",
+        "larve d'insecte"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_papillon",
+      "name": "Papillon",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "5. Insectes, arachnides et autres arthropodes",
+      "famille": "Insectes",
+      "variantes": [
+        "Papillon",
+        "papillon exotique"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_carpe",
+      "name": "Carpe",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Poissons",
+      "variantes": [
+        "Carpe",
+        "carpe dorée"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_poisson_rouge",
+      "name": "Poisson rouge",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Poissons",
+      "variantes": [
+        "Poisson rouge"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_poisson_globe",
+      "name": "Poisson-globe",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Poissons",
+      "variantes": [
+        "Poisson-globe"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_merou",
+      "name": "Mérou",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Poissons",
+      "variantes": [
+        "Mérou"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_anguille",
+      "name": "Anguille",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Poissons",
+      "variantes": [
+        "Anguille",
+        "anguille des profondeurs"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_requin_blanc",
+      "name": "Requin blanc",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Requins",
+      "variantes": [
+        "Grand requin blanc"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_requin_marteau",
+      "name": "Requin-marteau",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Requins",
+      "variantes": [
+        "Requin-marteau"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_requin_scie",
+      "name": "Requin-scie",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Requins",
+      "variantes": [
+        "Requin-scie"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_requin_baleine",
+      "name": "Requin-baleine",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Requins",
+      "variantes": [
+        "Requin-baleine"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_raie",
+      "name": "Raie",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Raies",
+      "variantes": [
+        "Raie marine"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_raie"
+    },
+    {
+      "id": "animal_raie_des_profondeurs",
+      "name": "Raie des profondeurs",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Raies",
+      "variantes": [
+        "Raie abyssale"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_raie"
+    },
+    {
+      "id": "animal_raie_manta",
+      "name": "Raie manta",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Raies",
+      "variantes": [
+        "Raie manta",
+        "raie géante"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_raie"
+    },
+    {
+      "id": "animal_dauphin",
+      "name": "Dauphin",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Mammifères marins",
+      "variantes": [
+        "Dauphin"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_orque",
+      "name": "Orque",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Mammifères marins",
+      "variantes": [
+        "Orque"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_baleine",
+      "name": "Baleine",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Mammifères marins",
+      "variantes": [
+        "Baleine",
+        "grande baleine"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_phoque",
+      "name": "Phoque",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Mammifères marins",
+      "variantes": [
+        "Phoque",
+        "phoque des glaces"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_lion_de_mer",
+      "name": "Lion de mer",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Mammifères marins",
+      "variantes": [
+        "Lion de mer"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_poulpe",
+      "name": "Poulpe",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Mollusques",
+      "variantes": [
+        "Poulpe",
+        "poulpe géant"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_calmar",
+      "name": "Calmar",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Mollusques",
+      "variantes": [
+        "Calmar",
+        "calmar géant"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_pieuvre",
+      "name": "Pieuvre",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Mollusques",
+      "variantes": [
+        "Pieuvre",
+        "pieuvre des profondeurs"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_palourde",
+      "name": "Palourde",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Mollusques",
+      "variantes": [
+        "Palourde",
+        "coquillage"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_escargot",
+      "name": "Escargot",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Mollusques",
+      "variantes": [
+        "Escargot",
+        "escargot marin"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_limace_de_mer",
+      "name": "Limace de mer",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Mollusques",
+      "variantes": [
+        "Limace marine"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_meduse",
+      "name": "Méduse",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Mollusques",
+      "variantes": [
+        "Méduse",
+        "méduse géante"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_etoile_de_mer",
+      "name": "Étoile de mer",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Échinodermes",
+      "variantes": [
+        "Étoile de mer"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_concombre_de_mer",
+      "name": "Concombre de mer",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Échinodermes",
+      "variantes": [
+        "Concombre de mer"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_hippocampe",
+      "name": "Hippocampe",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "6. Poissons, mammifères marins et invertébrés aquatiques",
+      "famille": "Animaux marins fantastiques",
+      "variantes": [
+        "Hippocampe",
+        "hippocampe géant"
+      ],
+      "bestiaire": true
+    },
+    {
+      "id": "animal_ver_de_terre",
+      "name": "Ver de terre",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [],
+      "categorie": "7. Vers, créatures fouisseuses et organismes rampants",
+      "famille": "Vers",
+      "variantes": [
+        "Ver",
+        "ver géant"
+      ],
+      "bestiaire": true,
+      "familier_famille": "familier_ver"
     }
   ],
   "regions": [
@@ -187277,5 +190040,206 @@
       "ponts_routes": "pierre_taillee",
       "ponts_secondaires": "bois"
     }
-  }
+  },
+  "familiar_families": [
+    {
+      "id": "familier_basilic",
+      "name": "Basilic",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_basilic"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_chauve_souris",
+      "name": "Chauve-souris",
+      "categorie": "normale",
+      "creature_ids": [],
+      "notes": [
+        "Aucune espèce de cette famille dans le bestiaire pour l'instant."
+      ]
+    },
+    {
+      "id": "familier_ours",
+      "name": "Ours",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_ours"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_scarabee",
+      "name": "Scarabée",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_scarabee"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_sanglier",
+      "name": "Sanglier",
+      "categorie": "normale",
+      "creature_ids": [
+        "creature_sanglier_t00"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_felin",
+      "name": "Félin",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_chat_domestique",
+        "animal_lion",
+        "animal_tigre",
+        "animal_panthere",
+        "animal_leopard",
+        "animal_jaguar",
+        "animal_lynx"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_crabe",
+      "name": "Crabe",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_crabe"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_renard",
+      "name": "Renard",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_renard"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_hyene",
+      "name": "Hyène",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_hyene"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_lezard",
+      "name": "Lézard",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_basilic",
+        "animal_salamandre"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_boeuf",
+      "name": "Bœuf",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_boeuf"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_raie",
+      "name": "Raie",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_raie",
+        "animal_raie_des_profondeurs",
+        "animal_raie_manta"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_rongeur",
+      "name": "Rongeur",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_rat",
+        "animal_souris",
+        "animal_ecureuil",
+        "animal_castor",
+        "animal_porc_epic",
+        "animal_marmotte"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_serpent",
+      "name": "Serpent",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_serpent",
+        "animal_cobra",
+        "animal_serpent_marin"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_araignee",
+      "name": "Araignée",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_araignee",
+        "animal_tarentule"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_cerf",
+      "name": "Cerf",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_cerf"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_tortue",
+      "name": "Tortue",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_tortue_terrestre",
+        "animal_tortue_marine"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_guepe",
+      "name": "Guêpe",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_guepe"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_loup",
+      "name": "Loup",
+      "categorie": "normale",
+      "creature_ids": [
+        "animal_loup",
+        "animal_loup_redoutable"
+      ],
+      "notes": []
+    },
+    {
+      "id": "familier_ver",
+      "name": "Ver",
+      "categorie": "exotique",
+      "creature_ids": [
+        "animal_ver_de_terre"
+      ],
+      "notes": []
+    }
+  ]
 }

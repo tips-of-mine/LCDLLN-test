@@ -1798,7 +1798,8 @@ function buildExportSchema() {
     timeline: (db.timeline||[]).map(function(ev){return{id:ev.id||'',name:ev.name||'',era:ev.era||'',year:ev.year||'',month:ev.month||'',type:ev.type||'event',description:ev.description||'',factions:ev.factions||[],ref_type:ev.ref_type||'',ref_id:ev.ref_id||'',notes:ev.notes||[]};}),
     skill_trees:(db.skill_trees||[]).map(function(t){return{class_id:t.class_id||'',branches:t.branches||[],skills:t.skills||[]};}),
     persons:(db.persons||[]).map(function(p){return{id:p.id||'',name:p.name||'',importance:p.importance||'secondary',alive:p.alive!==false,tomes:p.tomes&&p.tomes.length?p.tomes:(p.tome?[p.tome]:[]),faction_id:p.faction_id||'',race_id:p.race_id||'',class_id:p.class_id||'',role:p.role||'',visual:p.visual||'',personality:p.personality||'',description:p.description||'',arc:p.arc||'',abilities:p.abilities||[],special_items:p.special_items||[],special_rule:p.special_rule||'',quote:p.quote||'',source:p.source||'',ville_ids:p.ville_ids||[],zone_ids:p.zone_ids||[],dialogue_ids:p.dialogue_ids||[],notes:p.notes||[]};}),
-    creatures: (db.creatures||[]).map(function(cr){return{id:cr.id||'',name:cr.name||'',type:cr.type||'',difficulty:cr.difficulty||'',level_min:cr.level_min||1,level_max:cr.level_max||1,description:cr.description||'',region_id:cr.region_id||'',ville_id:cr.ville_id||'',faction_id:cr.faction_id||'',drops:cr.drops||[],abilities_traits:cr.abilities_traits||[],notes:cr.notes||[]};}),
+    // Object.assign conserve les champs du bestiaire (categorie, famille, variantes, familier_famille…).
+    creatures: (db.creatures||[]).map(function(cr){return Object.assign({}, cr, {id:cr.id||'',name:cr.name||'',type:cr.type||'',difficulty:cr.difficulty||'',level_min:cr.level_min||1,level_max:cr.level_max||1,description:cr.description||'',region_id:cr.region_id||'',ville_id:cr.ville_id||'',faction_id:cr.faction_id||'',drops:cr.drops||[],abilities_traits:cr.abilities_traits||[],notes:cr.notes||[]});}),
     regions: (db.regions||[]).map(function(rg){return{id:rg.id||'',name:rg.name||'',description:rg.description||'',notes:rg.notes||[]};}),
     loots: (db.loots||[]).map(function(l){return{id:l.id||'',name:l.name||'',type:l.type||'',rarity:l.rarity||'',description:l.description||'',min_level:l.min_level||0,eligible_races:l.eligible_races||[],eligible_classes:l.eligible_classes||[],source_monsters:l.source_monsters||[],source_villes:l.source_villes||[],source_quests:l.source_quests||[],source_raids:l.source_raids||[],notes:l.notes||[]};}),
     dialogues: (db.dialogues||[]).map(function(d){return{id:d.id||'',name:d.name||'',npc_name:d.npc_name||'',faction_id:d.faction_id||'',race_id:d.race_id||'',location_ville_id:d.location_ville_id||'',lines:d.lines||[],notes:d.notes||[]};}),
@@ -1832,7 +1833,7 @@ function sanitizeDb() {
     'for_factions','for_races','for_classes','required_classes','unlock_conditions',
     'variants','level_titles','invocable_by','lines','world_map_notes','prophecies',
     'incantations_known','schools','points_of_interest','connects_to','creature_ids',
-    'visual_elements','region_ids','footprint_tiles','elements_principaux','couleurs_dominantes',
+    'visual_elements','region_ids','footprint_tiles','variantes','elements_principaux','couleurs_dominantes',
     'remarques_visuelles'];
   function fix(obj) {
     if (Array.isArray(obj)) { obj.forEach(fix); return; }
@@ -5825,6 +5826,11 @@ function renderCreatures(el) {
   var h = '<div class="panel-header"><div class="panel-title">🐉 Créatures</div>';
   h += '<div style="display:flex;gap:0.75rem;align-items:center">';
   h += '<div class="search-bar"><input type="text" placeholder="Rechercher..." id="searchCreature" oninput="renderCreatures(document.getElementById(\'sectionContent\'))"></div>';
+  var cats={}; (db.creatures||[]).forEach(function(cr){ var c=cr.categorie||''; cats[c]=(cats[c]||0)+1; });
+  var qc=window._creatureCatFilter||'*';
+  h += '<select class="form-select" id="filterCreatureCat" style="max-width:260px;font-size:0.78rem" onchange="window._creatureCatFilter=this.value;renderCreatures(document.getElementById(\'sectionContent\'))">'+
+    '<option value="*">Toutes les catégories ('+(db.creatures||[]).length+')</option>'+
+    Object.keys(cats).sort().map(function(c){ return '<option value="'+esc(c)+'"'+(qc===c?' selected':'')+'>'+esc(c||'Créatures du lore')+' ('+cats[c]+')</option>'; }).join('')+'</select>';
   h += mergeBtnHTML('creatures');
   h += viewToggleBtn('creatures') + '<button class="btn btn-gold btn-sm" onclick="openCreatureForm()">+ Ajouter</button></div></div>';
   h += '<div style="padding:0.4rem 0 0.75rem">'+sortBar("creatures",["factions"])+'</div>';
@@ -5833,7 +5839,11 @@ function renderCreatures(el) {
   el.innerHTML = h;
   var _sf = document.getElementById('searchCreature'); if(_sf&&q){ _sf.value=q; _sf.focus(); _sf.setSelectionRange(q.length,q.length); }
   //--- search restored ---
-  var list = (db.creatures||[]).filter(function(cr){ return !q||cr.name.toLowerCase().includes(q)||cr.id.toLowerCase().includes(q); });
+  var list = (db.creatures||[]).filter(function(cr){
+    if (qc!=='*' && (cr.categorie||'')!==qc) return false;
+    return !q||cr.name.toLowerCase().includes(q)||cr.id.toLowerCase().includes(q)||(cr.famille||'').toLowerCase().includes(q)||
+      (cr.variantes||[]).some(function(v){ return v.toLowerCase().includes(q); });
+  });
   var grid = el.querySelector('#creaturesGrid');
   if(!list.length){ grid.innerHTML='<div class="empty-state">Aucune créature trouvée</div>'; return; }
     if (getViewMode('creatures')==='list') { grid.innerHTML=renderListView('creatures',list); return; }
@@ -5848,6 +5858,13 @@ function renderCreatures(el) {
     var row1 = badge(ct.icon+' '+ct.label,ct.color)+badge(cd.label,cd.color);
     if(cr.level_min||cr.level_max) row1+=badge('Niv. '+(cr.level_min||1)+(cr.level_max&&cr.level_max!==cr.level_min?'–'+cr.level_max:''),'#708090');
     card += cardRow('Type',row1,true);
+    if(cr.famille||cr.familier_famille){
+      var fb=''; if(cr.famille) fb+=badge('🧬 '+cr.famille,'#7ab0c0');
+      var ff=cr.familier_famille&&(db.familiar_families||[]).find(function(x){return x.id===cr.familier_famille;});
+      if(ff) fb+=badge('🐾 Familier : '+ff.name+(ff.categorie==='exotique'?' (exotique)':''), ff.categorie==='exotique'?'#c080e0':'#80c080');
+      card += cardRow('Famille',fb,false);
+    }
+    if(cr.variantes&&cr.variantes.length) card+='<div style="font-size:0.74rem;color:var(--text-dim);margin-top:0.25rem">Variantes : '+esc(cr.variantes.join(', '))+'</div>';
     if(cr.description) card+='<div style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.35rem;font-style:italic">'+esc(cr.description.substring(0,120))+(cr.description.length>120?'…':'')+'</div>';
     var meta='';
     if(cr.faction_id){var f=(db.factions||[]).find(function(x){return x.id===cr.faction_id;});if(f)meta+=badge('⚜️ '+f.name,factionColor(cr.faction_id));}
@@ -5892,6 +5909,12 @@ function openCreatureForm(idx){
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
     '<div class="form-group"><label class="form-label">Niveau min.</label><input class="form-input" id="cr_lmin" type="number" min="1" value="'+(cr.level_min||1)+'"></div>'+
     '<div class="form-group"><label class="form-label">Niveau max.</label><input class="form-input" id="cr_lmax" type="number" min="1" value="'+(cr.level_max||1)+'"></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem">'+
+    '<div class="form-group"><label class="form-label">Catégorie (bestiaire)</label><input class="form-input" id="cr_cat" value="'+esc(cr.categorie||'')+'" placeholder="1. Mammifères"></div>'+
+    '<div class="form-group"><label class="form-label">Famille</label><input class="form-input" id="cr_fam" value="'+esc(cr.famille||'')+'" placeholder="Canidés"></div>'+
+    '<div class="form-group"><label class="form-label">Famille de familier</label><select class="form-select" id="cr_familier"><option value="">— Aucune —</option>'+
+      (db.familiar_families||[]).map(function(f){ return '<option value="'+esc(f.id)+'"'+(cr.familier_famille===f.id?' selected':'')+'>'+esc(f.name)+(f.categorie==='exotique'?' (exotique)':'')+'</option>'; }).join('')+'</select></div></div>'+
+    '<div class="form-group"><label class="form-label">Variantes et créatures apparentées — une par ligne</label><textarea class="form-textarea" id="cr_variantes" style="height:56px">'+esc((cr.variantes||[]).join('\n'))+'</textarea></div>'+
     '<div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="cr_desc" style="height:60px" placeholder="Description…">'+esc(cr.description||'')+'</textarea></div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem">'+
     '<div class="form-group"><label class="form-label">Faction</label><select class="form-select" id="cr_faction">'+facOpts+'</select></div>'+
@@ -5949,7 +5972,12 @@ function renderCreatureTraitsList(){
   }).join('');
 }
 function saveCreature(idx){
-  var obj={id:document.getElementById('cr_id').value.trim(),name:document.getElementById('cr_name').value.trim(),
+  // Conserve les champs non édités ici (bestiaire, futurs champs) puis superpose le formulaire.
+  var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.creatures[idx])):{};
+  var obj=Object.assign(base,{categorie:document.getElementById('cr_cat').value.trim(),famille:document.getElementById('cr_fam').value.trim(),
+    variantes:document.getElementById('cr_variantes').value.split('\n').map(function(x){return x.trim();}).filter(Boolean),
+    familier_famille:document.getElementById('cr_familier').value,
+    id:document.getElementById('cr_id').value.trim(),name:document.getElementById('cr_name').value.trim(),
     type:document.getElementById('cr_type').value,difficulty:document.getElementById('cr_diff').value,
     description:document.getElementById('cr_desc').value.trim(),
     level_min:parseInt(document.getElementById('cr_lmin').value||1,10),
@@ -5959,8 +5987,16 @@ function saveCreature(idx){
     ville_id:document.getElementById('cr_ville').value,
     drops:window._creatureDrops.slice(),
     abilities_traits:window._creatureTraits.slice(),
-    notes:window._currentNotes.slice()};
+    notes:window._currentNotes.slice()});
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
+  // Famille de familier : tenir à jour la liste creature_ids de chaque famille
+  // (ancien et nouvel identifiant retirés, puis ajout dans la famille choisie).
+  var oldId=(idx!==undefined)?db.creatures[idx].id:null;
+  (db.familiar_families||[]).forEach(function(f){
+    f.creature_ids=(f.creature_ids||[]).filter(function(x){ return x!==obj.id && x!==oldId; });
+    if(f.id===obj.familier_famille) f.creature_ids.push(obj.id);
+  });
+  if(!obj.familier_famille) delete obj.familier_famille;
   if(idx!==undefined)db.creatures[idx]=obj;else db.creatures.push(obj);
   closeModal();showSection('creatures');toast(idx!==undefined?'Créature modifiée':'Créature ajoutée');
 }

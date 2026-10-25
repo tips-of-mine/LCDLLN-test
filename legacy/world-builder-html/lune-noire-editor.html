@@ -4912,10 +4912,15 @@ function drawCarte() {
     ctx.stroke();
     ctx.setLineDash([]);
   });
-  // Pontons des lignes maritimes (db.sea_lines) : petit carré brun sur l'eau.
+  // Pontons des lignes maritimes (db.sea_lines) : le ponton est dans la cellule de
+  // la ville ; on le dessine (petit carré brun) au bord de la cellule, côté départ
+  // du tracé du bateau, pour qu'il ne soit pas masqué par le marqueur de la ville.
   if (fl.routes) (db.sea_lines||[]).forEach(function(line){
     (line.stops||[]).forEach(function(s){
       var p=s&&s.ponton_cell?carteCellCenter(s.ponton_cell):null; if(!p) return;
+      var r=(db.routes||[]).find(function(x){ return x.sea_line_id===line.id && x.waypoints && x.waypoints[0]===s.ponton_cell; });
+      var q=r&&r.waypoints.length>1?carteCellCenter(r.waypoints[1]):null;
+      if(q){ var dx=q.x-p.x, dy=q.y-p.y, l=Math.sqrt(dx*dx+dy*dy)||1; p={x:p.x+dx/l*px*0.38, y:p.y+dy/l*px*0.38}; }
       var w=Math.max(3,px*0.2);
       ctx.fillStyle='#8a6a3a'; ctx.strokeStyle='#f0e0b0'; ctx.lineWidth=1;
       ctx.fillRect(p.x-w/2,p.y-w/2,w,w); ctx.strokeRect(p.x-w/2,p.y-w/2,w,w);

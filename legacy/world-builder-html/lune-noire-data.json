@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.30",
+    "version": "1.0.31",
     "notes": [
+      "v1.0.31 : [CARTE] Ligne maritime du sud : ponton dans la cellule de chaque ville ; vraie rotation, chaque étape de la boucle suit un chenal différent de la baie.",
       "v1.0.30 : [CARTE] Feyhin Lokcthat sur une très grosse colline, Porte 2 des enfers dessous (nouveau lieu N008_E007) ; Oldbridge, Ironmere, Deepvale, Millway, Stonemark supprimées ; routes Nightfield–Blackmoor, Hillwatch–Rivercross, Rivercross–Ebonvale, Farwatch–Rivercross, Farwatch–Westmoor ; routes maritimes tracées sur l'eau navigable (waypoints) avec un ponton à chaque escale.",
       "v1.0.29 : [CARTE] Ashgrave, Grimholt, Ridgeholt supprimées ; Unnamed-66 renommée Brookend ; routes Orderfen–Hayfen, Nightward–Nightfield, Tbarak–Brookend et Saltfen–Tbarak (maritimes) créées, Camp de l'Oracle–Horkher remplacée par Camp de l'Oracle–Horker, L'hynn–Sauken et Harrowbrook–Tbarak supprimées ; S006_W004 → côte, S006_W007 → plage ; 16 cellules de plaine au contact d'une forêt passées en lisière ; règles de rendu (plaine, forêt, lisière, routes le long de l'eau) et ligne maritime du sud (2 bateaux, pause 30 s) ajoutées ; routes Duskmere–Blackmoor, Blackmoor–Ebonvale (villes isolées par les suppressions).",
       "v1.0.28 : [CARTE] Routes : Dustfen–Scalebrook, Millend–Frosthollow, Camp de l'Oracle–Arcanefield (au lieu de Camp de l'Oracle–Kendrhir Vale), Moork–Nightfield–Horkher (au lieu de Moork–Horkher), Feyhin Lokcthat–Mossy Rock–Horkher (au lieu de Feyhin Lokcthat–Horkher). Porte 3 des enfers (S005_W011) : grande vallée, portail dans les sous-sols d'un vieux temple au centre. Porte 5 des enfers (N008_W007) : château fortifié abandonné, à l'écart des routes ; route Sysigie–Northind supprimée (elle traversait la cellule de la Porte 5), trajet par Justfall et Dys.",
@@ -4620,7 +4621,7 @@
       "population": null,
       "services": [],
       "features": [
-        "Ponton d'embarquement de la ligne maritime du sud (S012_W006)"
+        "Ponton d'embarquement de la ligne maritime du sud, au bord de la ville"
       ],
       "notes": [
         "[HS] Royaume du sud. Puissance indépendante suffisamment importante pour envoyer des espionnes dans l'Empire.",
@@ -4915,7 +4916,7 @@
       "population": null,
       "services": [],
       "features": [
-        "Ponton d'embarquement de la ligne maritime du sud (S007_W004)"
+        "Ponton d'embarquement de la ligne maritime du sud, au bord de la ville"
       ],
       "notes": [
         "[BD-T1] Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey.",
@@ -7769,7 +7770,7 @@
       "features": [
         "Terrain: beach",
         "Région: sud",
-        "Ponton d'embarquement de la ligne maritime du sud (S008_W003)"
+        "Ponton d'embarquement de la ligne maritime du sud, au bord de la ville"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -8344,7 +8345,7 @@
       "features": [
         "Terrain: plain",
         "Région: sud",
-        "Ponton d'embarquement de la ligne maritime du sud (S009_W009)"
+        "Ponton d'embarquement de la ligne maritime du sud, au bord de la ville"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -178510,30 +178511,6 @@
       "notes": []
     },
     {
-      "id": "000081",
-      "type": "sea_route",
-      "from_place": "S011_W006",
-      "from_ville_id": "hishtarland",
-      "from_lieu_id": "",
-      "to_place": "S008_W002",
-      "to_ville_id": "town_0137",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": [],
-      "sea_line_id": "ligne_maritime_sud",
-      "waypoints": [
-        "S011_W006",
-        "S012_W006",
-        "S013_W005",
-        "S012_W004",
-        "S011_W004",
-        "S010_W004",
-        "S009_W004",
-        "S008_W003",
-        "S008_W002"
-      ]
-    },
-    {
       "id": "000082",
       "type": "road",
       "from_place": "S003_W004",
@@ -178592,29 +178569,6 @@
       "to_lieu_id": "",
       "description": "",
       "notes": []
-    },
-    {
-      "id": "000088",
-      "type": "sea_route",
-      "from_place": "S008_W010",
-      "from_ville_id": "hamlet_0172",
-      "from_lieu_id": "",
-      "to_place": "S011_W006",
-      "to_ville_id": "hishtarland",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": [],
-      "sea_line_id": "ligne_maritime_sud",
-      "waypoints": [
-        "S008_W010",
-        "S009_W009",
-        "S010_W009",
-        "S011_W009",
-        "S012_W008",
-        "S013_W007",
-        "S012_W006",
-        "S011_W006"
-      ]
     },
     {
       "id": "000089",
@@ -178725,55 +178679,6 @@
       "notes": []
     },
     {
-      "id": "000098",
-      "type": "sea_route",
-      "from_place": "S005_W004",
-      "from_ville_id": "ville_tbarak",
-      "from_lieu_id": "",
-      "to_place": "S008_W002",
-      "to_ville_id": "town_0137",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": [],
-      "sea_line_id": "ligne_maritime_sud",
-      "waypoints": [
-        "S005_W004",
-        "S007_W004",
-        "S008_W003",
-        "S008_W002"
-      ]
-    },
-    {
-      "id": "000099",
-      "type": "sea_route",
-      "from_place": "S008_W010",
-      "from_ville_id": "hamlet_0172",
-      "from_lieu_id": "",
-      "to_place": "S005_W004",
-      "to_ville_id": "ville_tbarak",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": [],
-      "sea_line_id": "ligne_maritime_sud",
-      "waypoints": [
-        "S008_W010",
-        "S009_W009",
-        "S010_W009",
-        "S011_W009",
-        "S012_W008",
-        "S013_W007",
-        "S014_W006",
-        "S013_W005",
-        "S012_W004",
-        "S011_W004",
-        "S010_W004",
-        "S009_W005",
-        "S008_W005",
-        "S007_W004",
-        "S005_W004"
-      ]
-    },
-    {
       "id": "000100",
       "type": "road",
       "from_place": "N001_E020",
@@ -178856,6 +178761,98 @@
       "to_lieu_id": "",
       "description": "",
       "notes": []
+    },
+    {
+      "id": "000107",
+      "type": "sea_route",
+      "from_place": "S005_W004",
+      "from_ville_id": "ville_tbarak",
+      "from_lieu_id": "",
+      "to_place": "S008_W002",
+      "to_ville_id": "town_0137",
+      "to_lieu_id": "",
+      "description": "Étape 1 de la ligne maritime du sud",
+      "notes": [],
+      "sea_line_id": "ligne_maritime_sud",
+      "waypoints": [
+        "S005_W004",
+        "S006_W004",
+        "S007_W004",
+        "S008_W003",
+        "S008_W002"
+      ]
+    },
+    {
+      "id": "000108",
+      "type": "sea_route",
+      "from_place": "S008_W002",
+      "from_ville_id": "town_0137",
+      "from_lieu_id": "",
+      "to_place": "S011_W006",
+      "to_ville_id": "hishtarland",
+      "to_lieu_id": "",
+      "description": "Étape 2 de la ligne maritime du sud",
+      "notes": [],
+      "sea_line_id": "ligne_maritime_sud",
+      "waypoints": [
+        "S008_W002",
+        "S008_W003",
+        "S009_W003",
+        "S010_W003",
+        "S011_W004",
+        "S012_W004",
+        "S012_W005",
+        "S012_W006",
+        "S011_W006"
+      ]
+    },
+    {
+      "id": "000109",
+      "type": "sea_route",
+      "from_place": "S011_W006",
+      "from_ville_id": "hishtarland",
+      "from_lieu_id": "",
+      "to_place": "S008_W010",
+      "to_ville_id": "hamlet_0172",
+      "to_lieu_id": "",
+      "description": "Étape 3 de la ligne maritime du sud",
+      "notes": [],
+      "sea_line_id": "ligne_maritime_sud",
+      "waypoints": [
+        "S011_W006",
+        "S012_W006",
+        "S012_W007",
+        "S012_W008",
+        "S011_W008",
+        "S010_W008",
+        "S009_W009",
+        "S008_W010"
+      ]
+    },
+    {
+      "id": "000110",
+      "type": "sea_route",
+      "from_place": "S008_W010",
+      "from_ville_id": "hamlet_0172",
+      "from_lieu_id": "",
+      "to_place": "S005_W004",
+      "to_ville_id": "ville_tbarak",
+      "to_lieu_id": "",
+      "description": "Étape 4 de la ligne maritime du sud",
+      "notes": [],
+      "sea_line_id": "ligne_maritime_sud",
+      "waypoints": [
+        "S008_W010",
+        "S008_W009",
+        "S008_W008",
+        "S008_W007",
+        "S008_W006",
+        "S008_W005",
+        "S008_W004",
+        "S007_W003",
+        "S006_W004",
+        "S005_W004"
+      ]
     }
   ],
   "competences": [
@@ -182590,14 +182587,14 @@
       "id": "rule_ligne_maritime_sud",
       "name": "Ligne maritime Tbarak – Brookend – Hishtarland – Saltfen",
       "category": "transport",
-      "description": "Une même ligne en boucle Tbarak → Brookend → Hishtarland → Saltfen → Tbarak, desservie par 2 bateaux en positions opposées sur la boucle. Les bateaux ne naviguent que sur l'eau assez profonde (mer peu profonde ou profonde), jamais sur la terre : le tracé suit les cellules d'eau (waypoints des routes). À chaque escale, un ponton permet au joueur de monter à bord ; pause de 30 secondes avant de repartir.",
+      "description": "Ligne en boucle Tbarak → Brookend → Hishtarland → Saltfen → Tbarak, desservie par 2 bateaux en positions opposées. Vraie rotation : chaque étape suit son propre chenal dans la baie (le retour Saltfen → Tbarak ne reprend pas le chemin de l'aller). Les bateaux ne naviguent que sur l'eau assez profonde, jamais sur la terre. Le ponton de chaque escale est dans la cellule de la ville, juste à côté d'elle ; pause de 30 secondes avant de repartir.",
       "applies_to": [
         "ville_tbarak",
         "town_0137",
         "hishtarland",
         "hamlet_0172"
       ],
-      "mechanique_jeu": "Une même ligne en boucle Tbarak → Brookend → Hishtarland → Saltfen → Tbarak, desservie par 2 bateaux en positions opposées sur la boucle. Les bateaux ne naviguent que sur l'eau assez profonde (mer peu profonde ou profonde), jamais sur la terre : le tracé suit les cellules d'eau (waypoints des routes). À chaque escale, un ponton permet au joueur de monter à bord ; pause de 30 secondes avant de repartir.",
+      "mechanique_jeu": "Ligne en boucle Tbarak → Brookend → Hishtarland → Saltfen → Tbarak, desservie par 2 bateaux en positions opposées. Vraie rotation : chaque étape suit son propre chenal dans la baie (le retour Saltfen → Tbarak ne reprend pas le chemin de l'aller). Les bateaux ne naviguent que sur l'eau assez profonde, jamais sur la terre. Le ponton de chaque escale est dans la cellule de la ville, juste à côté d'elle ; pause de 30 secondes avant de repartir.",
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
@@ -185800,22 +185797,22 @@
       "stops": [
         {
           "ville_id": "ville_tbarak",
-          "ponton_cell": "S007_W004",
+          "ponton_cell": "S005_W004",
           "stop_seconds": 30
         },
         {
           "ville_id": "town_0137",
-          "ponton_cell": "S008_W003",
+          "ponton_cell": "S008_W002",
           "stop_seconds": 30
         },
         {
           "ville_id": "hishtarland",
-          "ponton_cell": "S012_W006",
+          "ponton_cell": "S011_W006",
           "stop_seconds": 30
         },
         {
           "ville_id": "hamlet_0172",
-          "ponton_cell": "S009_W009",
+          "ponton_cell": "S008_W010",
           "stop_seconds": 30
         }
       ],
@@ -185825,9 +185822,11 @@
       "stop_seconds": 30,
       "rule_id": "rule_ligne_maritime_sud",
       "navigable_terrains": [
+        "coast",
         "deep_sea",
         "shallow_sea"
-      ]
+      ],
+      "order": "loop"
     }
   ]
 }

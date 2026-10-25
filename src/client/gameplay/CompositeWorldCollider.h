@@ -87,6 +87,13 @@ namespace engine::gameplay
 			const engine::math::Vec3& endCenter,
 			SweepHit& outHit) const override;
 
+		/// Sol seul : délégué au terrain (aucun hit sans terrain). Les props et les
+		/// boîtes de bâtiment sont ignorés (cf. IWorldCollider::SweepGround).
+		bool SweepGround(const Capsule& capsule,
+			const engine::math::Vec3& startCenter,
+			const engine::math::Vec3& endCenter,
+			SweepHit& outHit) const override;
+
 		bool QueryWater(const engine::math::Vec3& worldCenter, WaterQuery& out) const override;
 
 	private:

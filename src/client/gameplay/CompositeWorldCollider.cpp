@@ -23,6 +23,15 @@ namespace engine::gameplay
 		return false;
 	}
 
+	bool CompositeWorldCollider::SweepGround(const Capsule& capsule,
+		const engine::math::Vec3& startCenter, const engine::math::Vec3& endCenter, SweepHit& outHit) const
+	{
+		if (m_terrain)
+			return m_terrain->SweepGround(capsule, startCenter, endCenter, outHit);
+		outHit = SweepHit{};
+		return false;
+	}
+
 	namespace
 	{
 		/// Clé de case de la grille d'index (x, z entiers signés 32 bits).

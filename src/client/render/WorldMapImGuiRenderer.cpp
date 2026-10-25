@@ -60,7 +60,8 @@ namespace engine::render
 		{
 			namespace cells = engine::world::cells;
 			namespace dsc = engine::world::discovery;
-			const ImU32 fog = IM_COL32(26, 22, 18, 236);
+			// Opaque : rien de la carte ne doit transparaître hors des zones explorées.
+			const ImU32 fog = IM_COL32(26, 22, 18, 255);
 			float wx0 = 0, wz0 = 0, wx1 = 0, wz1 = 0;
 			places.MapUvToWorld(u0, v0, wx0, wz0);
 			places.MapUvToWorld(u1, v1, wx1, wz1);
@@ -200,6 +201,9 @@ namespace engine::render
 		if (view.zoom <= 2.5f)
 			for (const engine::client::PlaceRegion& r : places.Regions())
 			{
+				// Nom de région : seulement si son centre a été découvert.
+				if (!discovered((r.xMin + r.xMax) * 0.5f, (r.zMin + r.zMax) * 0.5f))
+					continue;
 				float ru = 0, rv = 0;
 				places.WorldToMapUv((r.xMin + r.xMax) * 0.5f, (r.zMin + r.zMax) * 0.5f, ru, rv);
 				const ImVec2 c = toScreen(ru, rv);

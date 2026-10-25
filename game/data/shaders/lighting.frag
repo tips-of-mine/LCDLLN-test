@@ -241,6 +241,10 @@ float AerialRaySphereFar(vec3 o, vec3 d, float r)
 // sol n'a pas de sens atmosphérique — la teinte de convergence du terrain
 // lointain est celle du ciel derrière lui). Sortie en radiance HDR, même
 // échelle que le ciel écrit par SkyPass (kSunIntensity identique).
+// Part de désaturation de la teinte de perspective aérienne (0 = horizon
+// analytique pur, 1 = brume grise de même luminance).
+const float kAerialHazeDesat = 0.7;
+
 vec3 AerialAnalyticHorizon(vec3 viewDir, vec3 sunDir)
 {
     vec3 o = vec3(0.0, kAerialPlanetR + 200.0, 0.0);
@@ -585,6 +589,13 @@ void main()
         if (pc.aerialSkyModel >= 0.5)
         {
             tintBase = AerialAnalyticHorizon(rayDir, normalize(pc.lightDir.xyz));
+            // Brume neutre : l'horizon analytique rasant est très saturé (jaune
+            // le matin) alors que le fond réellement visible est surtout la
+            // couche nuageuse, claire. Sans désaturation, le relief lointain
+            // ressortait en silhouettes jaunes sur le ciel. On garde la teinte
+            // de l'heure (luminance) mais à dominante blanc bleuté.
+            float hazeLum = dot(tintBase, vec3(0.2126, 0.7152, 0.0722));
+            tintBase = mix(tintBase, hazeLum * vec3(0.92, 0.97, 1.06), kAerialHazeDesat);
             sunAmt *= 0.3;
         }
         else

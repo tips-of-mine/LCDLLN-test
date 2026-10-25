@@ -52,6 +52,14 @@ namespace engine::gameplay
 		return best.hit;
 	}
 
+	bool CellWorldCollider::SweepGround(const Capsule& capsule, const engine::math::Vec3& startCenter,
+		const engine::math::Vec3& endCenter, SweepHit& outHit) const
+	{
+		if (m_base != nullptr) return m_base->SweepGround(capsule, startCenter, endCenter, outHit);
+		outHit = SweepHit{};
+		return false;
+	}
+
 	bool CellWorldCollider::QueryWater(const engine::math::Vec3& worldCenter, WaterQuery& out) const
 	{
 		if (m_base != nullptr) return m_base->QueryWater(worldCenter, out);

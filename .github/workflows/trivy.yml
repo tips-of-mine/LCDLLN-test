@@ -16,10 +16,12 @@
 # Indépendant du build (build-windows/build-linux) : tourne sur Linux, ~1-2 min.
 name: Trivy Security Scan
 on:
+  # develop : branche d'intégration (flux develop → main) ; les PR y sont
+  # compilées et testées avant promotion vers main.
   push:
-    branches: [main, master]
+    branches: [main, master, develop]
   pull_request:
-    branches: [main, master]
+    branches: [main, master, develop]
   schedule:
     # Lundi 06:00 UTC — re-scan hebdomadaire contre les CVE nouvellement publiées
     # (une dépendance saine aujourd'hui peut devenir vulnérable demain).

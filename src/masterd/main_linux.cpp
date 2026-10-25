@@ -51,28 +51,17 @@
 #include "src/masterd/mail/MailManager.h"
 #include "src/masterd/mail/MysqlMailStore.h"
 #include "src/masterd/handlers/reputation/ReputationHandler.h"
-#include "src/masterd/handlers/arena/ArenaHandler.h"
-#include "src/masterd/handlers/battleground/BattleGroundHandler.h"
-#include "src/masterd/handlers/outdoorpvp/OutdoorPvpHandler.h"
-#include "src/masterd/handlers/weather/WeatherHandler.h"
-#include "src/masterd/handlers/events/GameEventHandler.h"
-#include "src/masterd/handlers/interactive/InteractiveHandler.h"
-#include "src/masterd/handlers/guild/GuildHandler.h"
-#include "src/masterd/handlers/auction/AuctionHandler.h"
-#include "src/masterd/handlers/loot/LootHandler.h"
 #include "src/masterd/handlers/lunar/LunarHandler.h"
 #include "src/masterd/handlers/worldclock/WorldClockHandler.h"
 #include "src/masterd/handlers/admin/AdminCommandHandler.h"
+#include "src/masterd/handlers/retired/RetiredGameplayHandler.h"
 #include "src/masterd/admin/SlashCommandRegistry.h"
 #include "src/shared/network/ChatPayloads.h" // Console /help /time /uptime (2026-07-18)
 #include "src/shared/net/ChatSystem.h"
 #include "src/masterd/account/AccountRoleService.h"
-#include "src/masterd/handlers/lfg/LfgHandler.h"
-#include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
 #include "src/masterd/cinematics/InMemoryCinematicStore.h"
 #include "src/masterd/cinematics/MysqlCinematicStore.h"
-#include "src/masterd/handlers/skills/SkillHandler.h"
 #include "src/masterd/reputation/MysqlReputationStore.h"
 #include "src/masterd/reputation/ReputationManager.h"
 #include "src/masterd/handlers/social/IgnoreListHandler.h"
@@ -81,21 +70,11 @@
 #include "src/masterd/handlers/gmtickets/GmTicketHandler.h"
 #include "src/masterd/gmtickets/GmTicketSystem.h"
 #include "src/masterd/gmtickets/MysqlGmTicketStore.h"
-#include "src/masterd/handlers/trade/TradeHandler.h"
-#include "src/masterd/trade/TradeSessionRegistry.h"
 #include "src/masterd/session/SessionCharacterMap.h"
 
 // Wave 5 Persistence phase 1 : stores DB pour Auction / Arena / GameEvents /
 // Skills / OutdoorPvp.
-#include "src/masterd/auction/MysqlAuctionStore.h"
-#include "src/masterd/events/MysqlGameEventStore.h"
-#include "src/masterd/arena/MysqlArenaStore.h"
-#include "src/masterd/skills/MysqlSkillStore.h"
-#include "src/masterd/outdoorpvp/MysqlOutdoorPvpStore.h"
 // Wave 5 Persistence phase 2 : stores DB pour Guild / BattleGround / Loot.
-#include "src/masterd/guild/MysqlGuildStore.h"
-#include "src/masterd/battleground/MysqlBattleGroundStore.h"
-#include "src/masterd/loot/MysqlLootStore.h"
 
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
@@ -646,20 +625,6 @@ int main(int argc, char** argv)
 		LOG_WARN(Net, "[ServerMain] GmTicketHandler running in no-DB mode (no persistence)");
 	}
 
-	// CMANGOS.27 (Phase 4.27 step 3+4) -- Trade wire server. Le registry est
-	// transient (pas persiste cote DB) : au reboot, toutes les trades en cours
-	// sont implicitement perdues, ce qui est acceptable pour le V1 (les
-	// clients re-affichent une UI vide au prochain login). Les opcodes 83/86/
-	// 88/91/93 sont dispatches au handler ; les responses 84/87/89/92 et les
-	// push notifications 85/90/94 sont emis par le handler aux participants.
-	engine::server::trade::TradeSessionRegistry tradeRegistry;
-	engine::server::TradeHandler tradeHandler;
-	tradeHandler.SetRegistry(&tradeRegistry);
-	tradeHandler.SetServer(&server);
-	tradeHandler.SetSessionManager(&sessionManager);
-	tradeHandler.SetConnectionSessionMap(&connSessionMap);
-	LOG_INFO(Net, "[ServerMain] TradeHandler configured (CMANGOS.27 step 3+4, transient registry)");
-
 	// CMANGOS.24 (Phase 3.24 step 3+4) — Reputation wire server.
 	// Le manager in-memory est l'autorite runtime des reputations + spillover.
 	// Le store MySQL sert de persistance (et de source de verite pour la
@@ -682,22 +647,6 @@ int main(int argc, char** argv)
 	{
 		LOG_WARN(Net, "[ServerMain] ReputationHandler running in no-DB mode (List will return empty)");
 	}
-
-	// CMANGOS.33 (Phase 5.33 step 3+4) — LookForGroup wire server.
-	// La queue est transient (pas de persistance DB) : au reboot, toutes
-	// les inscriptions LFG sont perdues, ce qui est acceptable pour le V1
-	// (les clients re-affichent une UI vide au prochain login). Les opcodes
-	// 100/102/104/107 sont dispatches au handler ; les responses 101/103/105
-	// et la push notification 106 sont emis par le handler aux participants.
-	// Note V1 : TickMatchmaking n'est pas appele en boucle automatique ; un
-	// timer 5s sera cable dans une sub-PR future.
-	engine::server::lfg::LfgQueue lfgQueue;
-	engine::server::LfgHandler lfgHandler;
-	lfgHandler.SetQueue(&lfgQueue);
-	lfgHandler.SetServer(&server);
-	lfgHandler.SetSessionManager(&sessionManager);
-	lfgHandler.SetConnectionSessionMap(&connSessionMap);
-	LOG_INFO(Net, "[ServerMain] LfgHandler configured (CMANGOS.33 step 3+4, transient queue)");
 
 	// CMANGOS.30 (Phase 5.30 step 3+4) — CinematicHandler. Le master pousse une
 	// cinematic au client (intro, fin de quete, etc.) via PushCinematic. Les
@@ -729,248 +678,6 @@ int main(int argc, char** argv)
 		LOG_WARN(Net, "[CinematicStore] in-memory fallback - cinematic 'seen' state will not persist this session");
 	}
 	cinematicHandler.SetCinematicStore(cinematicStore);
-
-	// CMANGOS.39 (Phase 4.39 step 3+4) — Skills wire server.
-	// Le master tient en memoire la skill book par account (V1, starter set
-	// hardcode : Cooking, Herbalism, Mining, FirstAid, Lockpicking). Les
-	// opcodes 113/115/117 sont dispatches au handler ; les responses
-	// 114/116/118 et la push notification 119 sont emis par le handler aux
-	// clients. Pas de persistance DB en V1 (sub-PR future avec migration
-	// MysqlSkillStore). PushSkillUpgrade est expose pour usage futur par
-	// le CraftingSystem ou autres handlers.
-	engine::server::SkillHandler skillHandler;
-	skillHandler.SetServer(&server);
-	skillHandler.SetSessionManager(&sessionManager);
-	skillHandler.SetConnectionSessionMap(&connSessionMap);
-	// Wave 5 Phase 4.39b : store DB pour la skill book (per-character V1 = per-account).
-	engine::server::skills::MysqlSkillStore skillStore(&dbPool);
-	if (dbPool.IsInitialized())
-	{
-		skillHandler.SetSkillStore(&skillStore);
-		LOG_INFO(Net, "[ServerMain] SkillHandler configured with DB store (Wave 5 Phase 4.39b)");
-	}
-	else
-	{
-		LOG_WARN(Net, "[ServerMain] SkillHandler running in no-DB mode (no persistence)");
-	}
-	LOG_INFO(Net, "[ServerMain] SkillHandler configured (CMANGOS.39 step 3+4, in-memory store)");
-
-	// CMANGOS.21 (Phase 5.21 step 3+4) — Arena wire server.
-	// Le master tient en memoire un ArenaTeamRegistry (V1, seed hardcode
-	// par account au premier acces : 3 teams 2v2/3v3/5v5 a rating 1500)
-	// + une queue par account + un map de proposals actifs. Les opcodes
-	// 120/122/124/127 sont dispatches au handler ; les responses
-	// 121/123/125/128 et les push notifications 126 (MatchProposal) +
-	// 129 (MatchResult) sont emises par le handler.
-	// V1 limitations : match contre AI Team Alpha fictif, result win/loss
-	// random 50%, pas de SyncArena RPC entre master et shardd. Pas de
-	// persistance DB (sub-PR future avec MysqlArenaStore).
-	engine::server::ArenaHandler arenaHandler;
-	arenaHandler.SetServer(&server);
-	arenaHandler.SetSessionManager(&sessionManager);
-	arenaHandler.SetConnectionSessionMap(&connSessionMap);
-	// Wave 5 Phase 5.21b : store DB pour les teams arene (rating ELO + stats).
-	engine::server::arena::MysqlArenaStore arenaStore(&dbPool);
-	if (dbPool.IsInitialized())
-	{
-		arenaHandler.SetArenaStore(&arenaStore);
-		LOG_INFO(Net, "[ServerMain] ArenaHandler configured with DB store (Wave 5 Phase 5.21b)");
-	}
-	else
-	{
-		LOG_WARN(Net, "[ServerMain] ArenaHandler running in no-DB mode (no persistence)");
-	}
-	LOG_INFO(Net, "[ServerMain] ArenaHandler configured (CMANGOS.21 step 3+4, in-memory registry)");
-
-	// CMANGOS.10 (Phase 5 step 3+4) — BattleGround wire server.
-	// Le master tient en memoire un store de queue + matches actifs
-	// (V1 : 3 BG hardcodes Gorge de Feyhin/Bassin des Ombres/Vallee Gelee, queue par account,
-	// match V1 vs AI bot fictif a la queue). Les opcodes 130/132/134/139
-	// sont dispatches au handler ; les responses 131/133/135 et les push
-	// notifications 136 (MatchStart) / 137 (ScoreUpdate) / 138 (MatchEnd)
-	// sont emises par le handler.
-	// V1 limitations : match vs AI bot, score evolution simulee
-	// instantanee, winnerFaction tirage 50/50, pas de SyncBg RPC entre
-	// master et shardd. Pas de persistance DB.
-	engine::server::BattleGroundHandler bgHandler;
-	bgHandler.SetServer(&server);
-	bgHandler.SetSessionManager(&sessionManager);
-	bgHandler.SetConnectionSessionMap(&connSessionMap);
-	// Wave 5 Phase 5.10b : store DB pour archiver l'historique des matchs (write-only V1).
-	engine::server::bg_db::MysqlBattleGroundStore bgHistoryStore(&dbPool);
-	if (dbPool.IsInitialized())
-	{
-		bgHandler.SetMatchHistoryStore(&bgHistoryStore);
-		LOG_INFO(Net, "[ServerMain] BattleGroundHandler with DB history store (Wave 5 Phase 5.10b)");
-	}
-	else
-	{
-		LOG_WARN(Net, "[ServerMain] BattleGroundHandler running in no-DB mode (matches not archived)");
-	}
-	LOG_INFO(Net, "[ServerMain] BattleGroundHandler configured (CMANGOS.10 step 3+4, in-memory)");
-
-	// CMANGOS.36 (Phase 5.36 step 3+4) — OutdoorPvp wire server.
-	// Le master tient en memoire un OutdoorPvPManager seede au boot avec
-	// 2 zones contestees (Peninsule Ardente 3 obj, Terres Maudites de l'Est
-	// 4 obj). Les opcodes 140/142/144/146 sont dispatches au handler ;
-	// les responses 141/143/145/147 et les push notifications 148
-	// (CaptureProgress) / 149 (CaptureCompleted) sont emises par le
-	// handler. V1 limitations : capture simulee instantanement, pas de
-	// SyncOutdoorPvp RPC entre master et shardd. Pas de persistance DB.
-	engine::server::OutdoorPvpHandler outdoorPvpHandler;
-	// Wave 5 Phase 5.36b : store DB pour objectives + scores des zones.
-	engine::server::outdoorpvp_db::MysqlOutdoorPvpStore outdoorPvpStore(&dbPool);
-	outdoorPvpHandler.SetServer(&server);
-	outdoorPvpHandler.SetSessionManager(&sessionManager);
-	outdoorPvpHandler.SetConnectionSessionMap(&connSessionMap);
-	if (dbPool.IsInitialized())
-	{
-		outdoorPvpHandler.SetOutdoorPvpStore(&outdoorPvpStore);
-		LOG_INFO(Net, "[ServerMain] OutdoorPvpHandler with DB store (Wave 5 Phase 5.36b)");
-	}
-	else
-	{
-		LOG_WARN(Net, "[ServerMain] OutdoorPvpHandler running in no-DB mode (no persistence)");
-	}
-	outdoorPvpHandler.SeedV1Zones();
-	LOG_INFO(Net, "[ServerMain] OutdoorPvpHandler configured (CMANGOS.36 step 3+4, in-memory, 2 zones seed)");
-
-	// CMANGOS.42 (Phase 4.42 step 3+4) — Weather wire server.
-	// Le master tient en memoire un WeatherManager seede au boot avec 3 zones
-	// meteo (Stormwind Plains tempere, Frozen Tundra polaire, Tanaris Desert
-	// aride). Les opcodes 150/152/154 sont dispatches au handler ; les
-	// responses 151/153/155 et la push notification 156 (WeatherUpdate)
-	// sont emises par le handler. V1 limitations : tick simule a chaque
-	// SubscribeRequest (force reroll), pas de SyncWeather RPC entre master
-	// et shardd. Pas de persistance DB.
-	engine::server::WeatherHandler weatherHandler;
-	weatherHandler.SetServer(&server);
-	weatherHandler.SetSessionManager(&sessionManager);
-	weatherHandler.SetConnectionSessionMap(&connSessionMap);
-	weatherHandler.SeedV1Zones();
-	LOG_INFO(Net, "[ServerMain] WeatherHandler configured (CMANGOS.42 step 3+4, in-memory, 3 zones seed)");
-
-	// CMANGOS.31 (Phase 5.31 step 3+4) — GameEventHandler : list/subscribe
-	// global + push StateChange. V1 : 4 events seedees au boot (Halloween,
-	// Winter Veil, Lunar Festival, Midsummer Fire). Les opcodes 157/159/161
-	// sont dispatches au handler ; les responses 158/160/162 et la push
-	// notification 163 (StateChange) sont emises par le handler. V1
-	// limitations : subscribe = snapshot one-shot (pas de broadcast
-	// cross-subscribers, pas de tick periodique). Pas de SyncGameEvents RPC
-	// entre master et shardd.
-	engine::server::GameEventHandler gameEventHandler;
-	// Wave 5 Phase 5.31b : store DB pour la definition des events saisonniers.
-	engine::server::events::MysqlGameEventStore gameEventStore(&dbPool);
-	gameEventHandler.SetServer(&server);
-	gameEventHandler.SetSessionManager(&sessionManager);
-	gameEventHandler.SetConnectionSessionMap(&connSessionMap);
-	if (dbPool.IsInitialized())
-	{
-		gameEventHandler.SetGameEventStore(&gameEventStore);
-		LOG_INFO(Net, "[ServerMain] GameEventHandler with DB store (Wave 5 Phase 5.31b)");
-	}
-	else
-	{
-		LOG_WARN(Net, "[ServerMain] GameEventHandler running in no-DB mode (hardcoded seed only)");
-	}
-	gameEventHandler.SeedV1Events();
-	LOG_INFO(Net, "[ServerMain] GameEventHandler configured (CMANGOS.31 step 3+4, in-memory, 4 events seed)");
-
-	// M100.32 — InteractiveHandler : relai sans validation gameplay des objets
-	// interactifs (portes/fenêtres/trappes/coffres). Opcode 200 (StateChange)
-	// dispatché au handler ; 201 (broadcast) et 202 (sync) sont des pushes émis
-	// par le handler. État RAM par zone (perdu au reboot, re-seedé depuis
-	// interactives.bin). V1 : pas de seed depuis fichier au boot (le seed se fera
-	// au chargement de la zone via SeedInteractive ; voir StreamCache 2e passe).
-	engine::server::InteractiveHandler interactiveHandler;
-	interactiveHandler.SetServer(&server);
-	interactiveHandler.SetSessionManager(&sessionManager);
-	interactiveHandler.SetConnectionSessionMap(&connSessionMap);
-	LOG_INFO(Net, "[ServerMain] InteractiveHandler configured (M100.32, relai sans validation gameplay)");
-
-	// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — GuildHandler : list /
-	// members / permissions / bank + push MotdUpdate. V1 : 2 guildes
-	// seedees au boot ("Les Gardiens", "L'Ombre") avec membres + bank
-	// + WoW perms defaults par rang. Les opcodes 164/166/168/170 sont
-	// dispatches au handler ; les responses 165/167/169/171 et la push
-	// notification 172 (MotdUpdate) sont emises par le handler. V1
-	// limitations : pas de filtrage par account membership, bank tab 0
-	// only, lecture seule (pas de modification client). Pas de SyncGuilds
-	// RPC entre master et shardd.
-	engine::server::GuildHandler guildHandler;
-	// Wave 5 Phase 5.21b : store DB pour la persistence des guildes
-	// (definition + membres + bank tab 0). Branche AVANT SeedV1Guilds
-	// pour qu'il puisse LoadAll plutot que le seed hardcode.
-	engine::server::guilds_db::MysqlGuildStore guildStore(&dbPool);
-	guildHandler.SetServer(&server);
-	guildHandler.SetSessionManager(&sessionManager);
-	guildHandler.SetConnectionSessionMap(&connSessionMap);
-	if (dbPool.IsInitialized())
-	{
-		guildHandler.SetGuildStore(&guildStore);
-		LOG_INFO(Net, "[ServerMain] GuildHandler with DB store (Wave 5 Phase 5.21b)");
-	}
-	else
-	{
-		LOG_WARN(Net, "[ServerMain] GuildHandler running in no-DB mode (hardcoded seed only)");
-	}
-	guildHandler.SeedV1Guilds();
-	LOG_INFO(Net, "[ServerMain] GuildHandler configured (CMANGOS.21 step 3+4 Guilds, in-memory, 2 guilds seed)");
-
-	// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — AuctionHandler : list /
-	// post / bid / cancel + push AuctionExpired. V1 : 8 listings hardcodes
-	// au boot avec differents owners (Garond, Mirelle, Tobrek, Sylvane) et
-	// expirations echelonnees (1h-48h). Les opcodes 173/175/177/179 sont
-	// dispatches au handler ; les responses 174/176/178/180 et la push
-	// notification 181 (AuctionExpired) sont emises par le handler. V1
-	// limitations : item name table 10 entries hardcode, owner name =
-	// "Account#<id>", pas de paiement reel (economie cosmetique), pas de
-	// SyncAuction RPC entre master et shardd.
-	engine::server::AuctionHandler auctionHandler;
-	// Wave 5 Phase 5.09b : store DB pour les listings auctions.
-	engine::server::auctions::MysqlAuctionStore auctionStore(&dbPool);
-	auctionHandler.SetServer(&server);
-	auctionHandler.SetSessionManager(&sessionManager);
-	auctionHandler.SetConnectionSessionMap(&connSessionMap);
-	if (dbPool.IsInitialized())
-	{
-		auctionHandler.SetAuctionStore(&auctionStore);
-		LOG_INFO(Net, "[ServerMain] AuctionHandler with DB store (Wave 5 Phase 5.09b)");
-	}
-	else
-	{
-		LOG_WARN(Net, "[ServerMain] AuctionHandler running in no-DB mode (no persistence)");
-	}
-	auctionHandler.SeedV1Auctions();
-	LOG_INFO(Net, "[ServerMain] AuctionHandler configured (CMANGOS.09 step 3+4 AuctionHouse, in-memory, 8 listings seed)");
-
-	// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — LootHandler : Choice
-	// (Need/Greed/Pass) + SimulateRoll DEBUG + push RollNotification + push
-	// RollResultNotification. V1 simulation simple : un seul eligible par roll
-	// (le creator), items hardcodes (5 entries), random roll 0..100, regle
-	// Need > Greed > Pass + plus haut roll dans la meme categorie. Les
-	// opcodes 183/186 sont dispatches au handler ; les responses 184/187 et
-	// les push notifications 182/185 sont emises par le handler. V1
-	// limitations : pas de groupe (CMANGOS.15), items hardcodes, pas de
-	// timeout tick periodique (scan a chaque HandleChoice), pas de SyncLoot
-	// RPC entre master et shardd.
-	engine::server::LootHandler lootHandler;
-	// Wave 5 Phase 3.17b : store DB pour les loot tables (read-only V1).
-	engine::server::loot_db::MysqlLootStore lootStore(&dbPool);
-	lootHandler.SetServer(&server);
-	lootHandler.SetSessionManager(&sessionManager);
-	lootHandler.SetConnectionSessionMap(&connSessionMap);
-	if (dbPool.IsInitialized())
-	{
-		lootHandler.SetLootStore(&lootStore);
-		lootHandler.LoadLootTablesFromDb();
-		LOG_INFO(Net, "[ServerMain] LootHandler with DB store (Wave 5 Phase 3.17b)");
-	}
-	else
-	{
-		LOG_WARN(Net, "[ServerMain] LootHandler running in no-DB mode (hardcoded 5 items only)");
-	}
-	LOG_INFO(Net, "[ServerMain] LootHandler configured (CMANGOS.17 step 3+4 Loot, in-memory, simulation V1)");
 
 	// Phase 5 step 3+4 Lunar — LunarHandler : etat lunaire authoritative
 	// (16 phases, cycle 14 jours reels, deterministe depuis epoch). Tick
@@ -1250,15 +957,6 @@ int main(int argc, char** argv)
 	adminCommandHandler.SetWorldClockHandler(&worldClockHandler);
 	LOG_INFO(Net, "[ServerMain] AdminCommandHandler configured (RBAC + audit log + Wave 2 moderation + Wave 16 packetlog + worldclock wiring)");
 
-	// Phase 5 Lunar — Branche le GameEventHandler sur le LunarHandler pour
-	// pouvoir filtrer les events par phase lunaire (event "Nuit de la
-	// Lune Noire" gate sur phases 0/14/15). Doit imperativement etre fait
-	// apres lunarHandler.Tick(bootNowMs) pour garantir que CurrentPhase()
-	// renvoie une valeur valide (et non 0xFF) si HandleList arrive juste
-	// apres le wiring.
-	gameEventHandler.SetLunarHandler(&lunarHandler);
-	LOG_INFO(Net, "[ServerMain] GameEventHandler branched to LunarHandler (lunar phase filter active)");
-
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -1306,8 +1004,15 @@ int main(int argc, char** argv)
 	}
 	PrintStartupBanner();
 
+	// ETAPE1.1 — masterd est un relais pur : les opcodes des anciennes fonctions de
+	// gameplay simulées ici (échange, enchères, guildes V1, arène, champs de bataille,
+	// JcJ extérieur, météo, événements, loot, compétences, recherche de groupe,
+	// objets interactifs) reçoivent une erreur explicite. Leur logique vit dans shardd.
+	engine::server::RetiredGameplayHandler retiredGameplayHandler;
+	retiredGameplayHandler.SetServer(&server);
+
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &exploitHandler, &mapDiscoveryHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &interactiveHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &worldClockHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &ignoreListHandler, &gmTicketHandler, &reputationHandler, &exploitHandler, &mapDiscoveryHandler, &cinematicHandler, &lunarHandler, &worldClockHandler, &adminCommandHandler, &retiredGameplayHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -1351,12 +1056,6 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeGmTicketListMineRequest
 		      || opcode == kOpcodeGmTicketCancelRequest)
 			gmTicketHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpcodeTradeBeginRequest
-		      || opcode == kOpcodeTradeSetOfferRequest
-		      || opcode == kOpcodeTradeLockRequest
-		      || opcode == kOpcodeTradeCommitRequest
-		      || opcode == kOpcodeTradeCancelRequest)
-			tradeHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeReputationListRequest)
 			reputationHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		// Exploits (spec 2026-07-18, SP2) — liste « mes exploits » (206).
@@ -1365,62 +1064,19 @@ int main(int argc, char** argv)
 		// Carte à découvrir — lecture paginée (208) et fusion des cases (210).
 		else if (opcode == kOpcodeMapDiscoveryRequest || opcode == kOpcodeMapDiscoveryUpdate)
 			mapDiscoveryHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpcodeLfgQueueRequest
-		      || opcode == kOpcodeLfgLeaveRequest
-		      || opcode == kOpcodeLfgStatusRequest
-		      || opcode == kOpcodeLfgMatchAcceptRequest)
-			lfgHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeCinematicAckRequest
 		      || opcode == kOpcodeCinematicSkipRequest)
 			cinematicHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpcodeSkillsListRequest
-		      || opcode == kOpcodeSkillLearnRequest
-		      || opcode == kOpcodeSkillUseRequest)
-			skillHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpcodeArenaTeamListRequest
-		      || opcode == kOpcodeArenaQueueRequest
-		      || opcode == kOpcodeArenaLeaveQueueRequest
-		      || opcode == kOpcodeArenaMatchAcceptRequest)
-			arenaHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpcodeBgListRequest
-		      || opcode == kOpcodeBgQueueRequest
-		      || opcode == kOpcodeBgLeaveQueueRequest
-		      || opcode == kOpcodeBgLeaveMatchRequest)
-			bgHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpcodeOutdoorPvpZoneListRequest
-		      || opcode == kOpcodeOutdoorPvpSubscribeRequest
-		      || opcode == kOpcodeOutdoorPvpUnsubscribeRequest
-		      || opcode == kOpcodeOutdoorPvpCaptureStartRequest)
-			outdoorPvpHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpcodeWeatherListRequest
-		      || opcode == kOpcodeWeatherSubscribeRequest
-		      || opcode == kOpcodeWeatherUnsubscribeRequest)
-			weatherHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpcodeGameEventListRequest
-		      || opcode == kOpcodeGameEventSubscribeRequest
-		      || opcode == kOpcodeGameEventUnsubscribeRequest)
-			gameEventHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpcodeGuildListRequest
-		      || opcode == kOpcodeGuildMembersRequest
-		      || opcode == kOpcodeGuildPermissionsRequest
-		      || opcode == kOpcodeGuildBankRequest)
-			guildHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpcodeAuctionListRequest
-		      || opcode == kOpcodeAuctionPostRequest
-		      || opcode == kOpcodeAuctionBidRequest
-		      || opcode == kOpcodeAuctionCancelRequest)
-			auctionHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpcodeLootRollChoiceRequest
-		      || opcode == kOpcodeLootSimulateRollRequest)
-			lootHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeLunarStateRequest)
 			lunarHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeWorldClockStateRequest)
 			worldClockHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == kOpInteractiveStateChange)
-			interactiveHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeAdminCommandRequest)
 			adminCommandHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		// ETAPE1.1 — fonctions de gameplay retirées du master (relais pur) :
+		// réponse ERROR explicite au lieu d'un silence (le client n'attend pas un timeout).
+		else if (engine::server::IsRetiredGameplayOpcode(opcode))
+			retiredGameplayHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

@@ -1646,6 +1646,20 @@ namespace engine
 			return m_authUi.SendGenericRequestAsync(opcode, payload);
 		});
 
+		// ETAPE1.1 — masterd est un relais pur : il ne simule plus l'échange, la
+		// recherche de groupe, les compétences, l'arène, les champs de bataille, le
+		// JcJ extérieur, la météo, les événements, les guildes V1, l'hôtel des ventes
+		// V1 ni les jets de loot (ces handlers V1 renvoyaient des données factices).
+		// Les presenters correspondants restent initialisés, mais leurs requêtes ne
+		// partent plus vers le master : l'envoi échoue proprement (message d'erreur
+		// du presenter) en attendant leur branchement sur le shard (UDP).
+		const auto retiredMasterFeature = [](const char* feature) {
+			return [feature](uint16_t opcode, const std::vector<uint8_t>& /*payload*/) -> bool {
+				LOG_INFO(Net, "[ETAPE1.1] '{}' : fonction retiree du master (opcode {} non envoye)", feature, opcode);
+				return false;
+			};
+		};
+
 		// CMANGOS.33 (Phase 5.33 step 3+4) — Init du presenter LFG + cable du
 		// send callback pour les requetes 100/102/104/107. Reception dispatchee
 		// dans le push handler ci-dessous (responses 101/103/105 + push 106).
@@ -1655,9 +1669,7 @@ namespace engine
 		}
 		else
 		{
-			m_lfgUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-				return m_authUi.SendGenericRequestAsync(opcode, payload);
-			});
+			m_lfgUi.SetSendCallback(retiredMasterFeature("lfg"));
 		}
 
 		// CMANGOS.30 (Phase 5.30 step 3+4) — Init du presenter cinematique.
@@ -1686,9 +1698,7 @@ namespace engine
 		}
 		else
 		{
-			m_skillBookUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-				return m_authUi.SendGenericRequestAsync(opcode, payload);
-			});
+			m_skillBookUi.SetSendCallback(retiredMasterFeature("skills"));
 		}
 
 		// Grimoire (Task 13) — Init du presenter Grimoire + câblage du send callback
@@ -1738,9 +1748,7 @@ namespace engine
 		}
 		else
 		{
-			m_arenaUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-				return m_authUi.SendGenericRequestAsync(opcode, payload);
-			});
+			m_arenaUi.SetSendCallback(retiredMasterFeature("arena"));
 		}
 
 		// CMANGOS.10 (Phase 5 step 3+4) — Init du presenter BattleGround + cable
@@ -1753,9 +1761,7 @@ namespace engine
 		}
 		else
 		{
-			m_battleGroundUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-				return m_authUi.SendGenericRequestAsync(opcode, payload);
-			});
+			m_battleGroundUi.SetSendCallback(retiredMasterFeature("battleground"));
 		}
 
 		// CMANGOS.36 (Phase 5.36 step 3+4) — Init du presenter OutdoorPvp + cable
@@ -1768,9 +1774,7 @@ namespace engine
 		}
 		else
 		{
-			m_outdoorPvpUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-				return m_authUi.SendGenericRequestAsync(opcode, payload);
-			});
+			m_outdoorPvpUi.SetSendCallback(retiredMasterFeature("outdoor_pvp"));
 		}
 
 		// CMANGOS.42 (Phase 4.42 step 3+4) — Init du presenter Weather + cable
@@ -1783,9 +1787,7 @@ namespace engine
 		}
 		else
 		{
-			m_weatherUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-				return m_authUi.SendGenericRequestAsync(opcode, payload);
-			});
+			m_weatherUi.SetSendCallback(retiredMasterFeature("weather"));
 		}
 
 		// CMANGOS.31 (Phase 5.31 step 3+4) — Init du presenter GameEvents +
@@ -1798,9 +1800,7 @@ namespace engine
 		}
 		else
 		{
-			m_gameEventUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-				return m_authUi.SendGenericRequestAsync(opcode, payload);
-			});
+			m_gameEventUi.SetSendCallback(retiredMasterFeature("game_events"));
 		}
 
 		// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Init du presenter Guildes +
@@ -1813,9 +1813,7 @@ namespace engine
 		}
 		else
 		{
-			m_guildUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-				return m_authUi.SendGenericRequestAsync(opcode, payload);
-			});
+			m_guildUi.SetSendCallback(retiredMasterFeature("guild"));
 		}
 
 		// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Init du presenter
@@ -1828,9 +1826,7 @@ namespace engine
 		}
 		else
 		{
-			m_auctionHouseUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-				return m_authUi.SendGenericRequestAsync(opcode, payload);
-			});
+			m_auctionHouseUi.SetSendCallback(retiredMasterFeature("auction"));
 		}
 
 		// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Init du presenter Loot Roll
@@ -1843,9 +1839,7 @@ namespace engine
 		}
 		else
 		{
-			m_lootRollUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-				return m_authUi.SendGenericRequestAsync(opcode, payload);
-			});
+			m_lootRollUi.SetSendCallback(retiredMasterFeature("loot"));
 		}
 
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
@@ -1858,9 +1852,7 @@ namespace engine
 		}
 		else
 		{
-			m_tradeWindowUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-				return m_authUi.SendGenericRequestAsync(opcode, payload);
-			});
+			m_tradeWindowUi.SetSendCallback(retiredMasterFeature("trade"));
 		}
 
 		// Chat MVP — câblage bidirectionnel ChatUi <-> AuthUi (master TCP).

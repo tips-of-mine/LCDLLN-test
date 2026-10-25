@@ -187,43 +187,21 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/mail/MailHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/social/IgnoreListHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/gmtickets/GmTicketHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/trade/TradeHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/reputation/ReputationHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/lfg/LfgHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/cinematics/CinematicHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/skills/SkillHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/arena/ArenaHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/battleground/BattleGroundHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/outdoorpvp/OutdoorPvpHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/weather/WeatherHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/events/GameEventHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/interactive/InteractiveHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/guild/GuildHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/auction/AuctionHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/loot/LootHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/lunar/LunarHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/worldclock/WorldClockHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/admin/AdminCommandHandler.cpp
+    # ETAPE1.1 : réponse ERROR aux opcodes des fonctions de gameplay retirées du master.
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/retired/RetiredGameplayHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/retired/RetiredGameplayOpcodes.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/admin/SlashCommandRegistry.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/trade/TradeSessionRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/IgnoreListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/DungeonPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/MailPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/GmTicketPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/TradePayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ReputationPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/LfgPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/CinematicPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/SkillPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/ArenaPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/BattleGroundPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/OutdoorPvpPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/WeatherPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/GameEventPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/InteractivePayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/GuildPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/AuctionPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/network/LootPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/LunarPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/WorldClockPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/AdminCommandPayloads.cpp
@@ -250,16 +228,6 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/gmtickets/MysqlGmTicketStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/reputation/MysqlReputationStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/social/MysqlIgnoreStore.cpp
-    # Wave 5 Persistence phase 1 : Auction / Arena / GameEvents / Skills / OutdoorPvp.
-    ${CMAKE_SOURCE_DIR}/src/masterd/auction/MysqlAuctionStore.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/arena/MysqlArenaStore.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/events/MysqlGameEventStore.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/skills/MysqlSkillStore.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/outdoorpvp/MysqlOutdoorPvpStore.cpp
-    # Wave 5 Persistence phase 2 : Guild / BattleGround / Loot stores.
-    ${CMAKE_SOURCE_DIR}/src/masterd/guild/MysqlGuildStore.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/battleground/MysqlBattleGroundStore.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/loot/MysqlLootStore.cpp
     # Wave 11 Persistence : Cinematic seen store (table cinematic_seen, 0058).
     ${CMAKE_SOURCE_DIR}/src/masterd/cinematics/InMemoryCinematicStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/cinematics/MysqlCinematicStore.cpp
@@ -1293,6 +1261,15 @@ elseif(UNIX)
   target_link_libraries(server_list_policy_tests PRIVATE engine_core)
   target_compile_options(server_list_policy_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME server_list_policy_tests COMMAND server_list_policy_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # ETAPE1.1 : liste des opcodes de gameplay retirés du master (relais pur).
+  add_executable(retired_gameplay_handler_tests
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/retired/RetiredGameplayHandlerTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/retired/RetiredGameplayOpcodes.cpp
+  )
+  target_include_directories(retired_gameplay_handler_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_compile_options(retired_gameplay_handler_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME retired_gameplay_handler_tests COMMAND retired_gameplay_handler_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # Sécurité (audit F9) : la cible account_validation_tests est déjà déclarée dans le
   # CMakeLists.txt racine (liée à engine_core) — ne pas la redéclarer ici (CMP0002 : doublon).

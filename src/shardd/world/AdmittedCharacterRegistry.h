@@ -87,6 +87,17 @@ namespace engine::server
 		/// pour remplir `ConnectedClient.guildId`.
 		uint64_t AdmittedGuildId(uint64_t characterId, uint64_t nowMs) const;
 
+		/// ETAPE1.2 — mémorise la génération du verrou de propriété attribuée par le
+		/// master à cette admission (characters.owner_generation). `generation == 0`
+		/// (master legacy, ticket TCP) est ignoré : une admission sans verrou ne doit pas
+		/// effacer celle poussée par un EnterWorld. No-op si le personnage n'est pas admis.
+		void SetOwnerGeneration(uint64_t characterId, uint64_t generation);
+
+		/// ETAPE1.2 — génération du verrou de propriété du personnage admis et non expiré,
+		/// 0 sinon (aucun verrou connu). Lue au Hello pour remplir
+		/// `ConnectedClient.ownerGeneration`.
+		uint64_t AdmittedOwnerGeneration(uint64_t characterId, uint64_t nowMs) const;
+
 		/// Nombre d'entrées (admises ou non, sans purge). Utile aux tests / diagnostics.
 		size_t Count() const;
 
@@ -102,6 +113,7 @@ namespace engine::server
 			std::string characterName; ///< TD.5 — peut être vide (admission sans nom).
 			std::string gender;        ///< TD.6 — peut être vide (admission sans genre).
 			uint64_t guildId = 0;      ///< Roadmap-7 — 0 = sans guilde / master legacy.
+			uint64_t ownerGeneration = 0; ///< ETAPE1.2 — 0 = aucun verrou de propriété connu.
 		};
 
 		mutable std::mutex m_mutex;

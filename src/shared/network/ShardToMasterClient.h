@@ -77,9 +77,13 @@ namespace engine::network
 		/// Roadmap-7 — `guild_id` : guilde du compte (guild_members_v2 côté master), 0 si
 		/// sans guilde ou master antérieur à l'extension. Consommé par le shard pour le
 		/// partage de buffs à la guilde (gâteau, dette #991).
+		/// ETAPE1.2 — `owner_generation` : génération du verrou de propriété attribuée par
+		/// le master (0 = master legacy, pas de verrou). Le shard la mémorise dans
+		/// `AdmittedCharacterRegistry` puis la présente à chaque sauvegarde du personnage.
 		/// `nullptr` (défaut) = drop silencieux.
 		using AdmitCharacterCallback = std::function<void(uint64_t account_id, uint64_t character_id,
-			std::string_view character_name, std::string_view gender, uint64_t guild_id)>;
+			std::string_view character_name, std::string_view gender, uint64_t guild_id,
+			uint64_t owner_generation)>;
 		void SetAdmitCharacterCallback(AdmitCharacterCallback cb) { m_admit_callback = std::move(cb); }
 
 		enum class State

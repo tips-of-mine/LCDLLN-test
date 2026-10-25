@@ -168,11 +168,19 @@ namespace engine::network
 			if (!r.ReadU64(out.guild_id))
 				return std::nullopt;
 		}
+		// ETAPE1.2 — owner_generation optionnel EN QUEUE (après guild_id) : un master
+		// ancien ne l'émet pas → 0 (verrou de propriété inconnu, mode legacy).
+		if (r.Remaining() > 0u)
+		{
+			if (!r.ReadU64(out.owner_generation))
+				return std::nullopt;
+		}
 		return out;
 	}
 
 	std::vector<uint8_t> BuildAdmitCharacterPacket(uint64_t account_id, uint64_t character_id,
-		std::string_view character_name, std::string_view gender, uint64_t guild_id)
+		std::string_view character_name, std::string_view gender, uint64_t guild_id,
+		uint64_t owner_generation)
 	{
 		PacketBuilder builder;
 		ByteWriter w = builder.PayloadWriter();
@@ -184,6 +192,9 @@ namespace engine::network
 			return {};
 		// Roadmap-7 — guilde du compte, champ additif en queue (cf. Parse).
 		if (!w.WriteU64(guild_id))
+			return {};
+		// ETAPE1.2 — génération du verrou de propriété, champ additif en queue.
+		if (!w.WriteU64(owner_generation))
 			return {};
 		const size_t payloadBytes = w.Offset();
 		// Push master→shard, pas de request_id ni session.

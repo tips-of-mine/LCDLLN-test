@@ -181,6 +181,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterDeleteHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterSavePositionHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterEnterWorldHandler.cpp
+    # ETAPE1.2 : verrou de propriété des personnages (attribution / libération).
+    ${CMAKE_SOURCE_DIR}/src/masterd/characters/CharacterOwnershipStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/dungeon/EnterDungeonHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/session/SessionCharacterMap.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/chat/ChatRelayHandler.cpp
@@ -604,6 +606,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(admitted_character_registry_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistryTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp)
+
+  # ETAPE1.2 : règle « un seul propriétaire par personnage » (verrou master → shard).
+  lcdlln_add_simple_test(character_ownership_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/db/CharacterOwnershipTests.cpp)
 
   # CMANGOS.18 (Phase 3.18a) : MailManager core (workflow Send/Take/COD/expire).
   lcdlln_add_simple_test(mail_manager_tests

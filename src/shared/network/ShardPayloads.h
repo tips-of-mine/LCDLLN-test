@@ -106,6 +106,12 @@ namespace engine::network
 		/// Permet au shard (y compris no-DB) de connaître l'appartenance de
 		/// guilde des joueurs connectés (ex. partage du buff gâteau, dette #991).
 		uint64_t guild_id = 0;
+		/// ETAPE1.2 — génération du verrou de propriété attribué par le master à
+		/// l'admission (characters.owner_generation, migration 0077). Le shard la
+		/// présente à chaque sauvegarde : une écriture n'est acceptée que si la
+		/// génération en base est toujours la sienne (« un seul propriétaire »).
+		/// 0 = master antérieur à l'extension (champ optionnel en queue, cf. Parse).
+		uint64_t owner_generation = 0;
 	};
 
 	/// Parses MASTER_TO_SHARD_ADMIT_CHARACTER payload. Returns nullopt if truncated.
@@ -117,6 +123,9 @@ namespace engine::network
 	/// \param gender genre du personnage ("male"/"female", cf. migration 0067).
 	/// \param guild_id Roadmap-7 — guilde du compte (0 = sans guilde). Champ ADDITIF en
 	///        queue de payload : un shard ancien l'ignore, un master ancien ne l'émet pas.
+	/// \param owner_generation ETAPE1.2 — génération du verrou de propriété attribuée
+	///        à cette admission (0 = pas de verrou). Champ ADDITIF après guild_id.
 	std::vector<uint8_t> BuildAdmitCharacterPacket(uint64_t account_id, uint64_t character_id,
-		std::string_view character_name, std::string_view gender, uint64_t guild_id = 0);
+		std::string_view character_name, std::string_view gender, uint64_t guild_id = 0,
+		uint64_t owner_generation = 0);
 }

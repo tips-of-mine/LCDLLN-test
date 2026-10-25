@@ -181,11 +181,17 @@ RenderModel
 | `src/masterd/handlers/shard/ServerListHandler.h/.cpp` | Retourne la liste des shards disponibles. |
 | `src/masterd/handlers/terms/TermsHandler.h/.cpp` | Acceptation des CGU. |
 | `src/masterd/handlers/retired/RetiredGameplayHandler.h/.cpp` | Répond ERROR aux opcodes des fonctions de gameplay retirées du master (ETAPE1.1). |
+| `src/masterd/characters/CharacterOwnershipStore.h/.cpp` | Verrou de propriété des personnages : attribution à l'entrée en jeu, libération si shard mort (ETAPE1.2). |
 
 > **Règle (ETAPE1.1)** : `masterd` est un relais pur, sans simulation de gameplay.
 > Échange, enchères V1, guildes V1, loot, compétences, arène, champs de bataille,
 > JcJ extérieur, météo, événements, LFG et objets interactifs ont été retirés du
 > master. Détail et suite : `docs/architecture/etape1_master_shard.md`.
+>
+> **Règle (ETAPE1.2)** : un seul propriétaire par personnage. Le master attribue
+> `characters.owner_shard_id` / `owner_generation` (migration 0077) à l'entrée en
+> jeu ; seul le shard propriétaire écrit l'état du personnage, position comprise
+> (`ServerApp::SaveCharacterToDb`, contrôle `db::CheckCharacterOwnership`).
 
 ### Comptes et validation
 | Fichier | Rôle |

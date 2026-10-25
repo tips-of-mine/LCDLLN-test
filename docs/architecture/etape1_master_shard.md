@@ -6,8 +6,8 @@ sa propre PR :
 
 | Chantier | Sujet | Statut |
 |---|---|---|
-| 1.1 | `masterd` relais pur : plus aucune simulation de gameplay dans le master | cette PR |
-| 1.2 | Un seul propriétaire par personnage (verrou attribué par le master) | PR suivante |
+| 1.1 | `masterd` relais pur : plus aucune simulation de gameplay dans le master | livré |
+| 1.2 | Un seul propriétaire par personnage (verrou attribué par le master) | cette PR |
 | 5.1 | Chat de proximité (Dire, Crier) au shard, canaux globaux au master | PR suivante |
 
 Règle d'architecture visée : **`masterd` est un relais pur, sans simulation de
@@ -82,3 +82,70 @@ nouveau client ne les envoie plus. Aucun changement de protocole UDP, aucune mig
 
 Les workflows `build-linux`, `build-windows` et `trivy` tournent maintenant aussi sur
 `develop` (push et PR), pour valider chaque PR avant la promotion vers `main`.
+
+## 1.2 — Un seul propriétaire par personnage
+
+Avant : deux processus écrivaient le même personnage. Le master écrivait la
+position de réapparition envoyée par le client (`CharacterSavePositionHandler`),
+le shard écrivait bourse, inventaire et équipement (`ServerApp::SaveCharacterToDb`).
+Rien n'empêchait un ancien shard, ou une ancienne session, d'écraser un état plus
+récent.
+
+### Le verrou
+
+Migration `0077_character_owner_lock.sql` (copiée dans `deploy/docker/sql/migrations/`) :
+
+| Colonne | Rôle |
+|---|---|
+| `owner_shard_id` | Shard propriétaire du personnage (NULL = libre) |
+| `owner_generation` | Compteur incrémenté à chaque attribution |
+| `owner_acquired_at` | Date UTC de l'attribution |
+
+### Qui fait quoi
+
+```
+Client ── EnterWorld (47) ──▶ master
+                              │ AcquireCharacterOwnership :
+                              │   owner_shard_id = server_id, owner_generation + 1
+                              ▼
+                       push AdmitCharacter (199) + owner_generation ──▶ shard
+                                                                         │ AdmittedCharacterRegistry
+                                                                         │   ::SetOwnerGeneration
+                                                                         ▼
+                                                   Hello UDP → ConnectedClient.ownerGeneration
+                                                                         │
+                                         sauvegarde (autosave, événements, déconnexion)
+                                                                         ▼
+                      SaveCharacterToDb : SELECT … FOR UPDATE, CheckCharacterOwnership
+                        ├─ propriétaire → position, niveau, bourse, inventaire, équipement, puis .ini
+                        └─ plus propriétaire → ROLLBACK, rien n'est écrit (ni base, ni .ini)
+```
+
+- **Master** (`src/masterd/characters/CharacterOwnershipStore.{h,cpp}`) : attribue le
+  verrou à l'entrée en jeu, le libère pour tous les personnages d'un shard déclaré
+  mort (callback `SetShardDownCallback`), et n'écrit plus la position d'un personnage
+  détenu par un shard (`CharacterSavePositionHandler` acquitte sans écrire).
+- **Shard** : vérifie la propriété dans la même transaction que l'écriture (ligne
+  `characters` verrouillée par `FOR UPDATE`), écrit désormais lui-même `spawn_*` et
+  `level`. Identifiant du shard : clé de config `shard.id` (défaut 1, déjà utilisée
+  par le validateur de tickets).
+- **Règle pure** : `src/shared/db/CharacterOwnership.h`
+  (`CheckCharacterOwnership`), testée par `character_ownership_tests`.
+
+### Compatibilité
+
+Tous les champs sont additifs : un master ancien n'envoie pas de génération (0), un
+shard ancien l'ignore. Une base sans la migration renvoie une erreur à l'attribution,
+le personnage est alors admis sans verrou (comportement historique). Le verrou ne
+s'active donc qu'une fois master et shard déployés avec la migration appliquée.
+
+### Limites connues (étapes suivantes)
+
+- Le fichier `.ini` du shard reste écrit en plus de la base (chantier 3.1).
+- `DepositMailboxDelivery` écrit le `.ini` d'un personnage hors ligne (enchères).
+- La carte découverte (`character_map_discovery`) est encore écrite par le master
+  à la demande du client.
+
+### Déploiement
+
+Migration 0077 + master + shard. Le client n'est pas modifié.

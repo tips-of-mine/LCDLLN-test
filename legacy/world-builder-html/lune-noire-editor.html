@@ -1222,6 +1222,10 @@
         <span class="count-badge" id="cnt-villes">0</span>
         <span class="sidebar-health health-empty" id="health-villes"></span>
       </div>
+      <div class="sidebar-item" onclick="showSection('lieux')" id="nav-lieux">
+        <span class="nav-icon">✴️</span> Lieux remarquables
+        <span class="count-badge" id="cnt-lieux">0</span>
+      </div>
       <div class="sidebar-item" onclick="showSection('creatures')" id="nav-creatures">
         <span class="nav-icon">🐉</span> Créatures
         <span class="count-badge" id="cnt-creatures">0</span>
@@ -1391,7 +1395,7 @@ var db = {
     {id:"t21",label:"Tome 21",color:"#c65729"},
     {id:"t22",label:"Tome 22",color:"#c85028"},
   ],
-  villes: [], exploits: [], quests: [], mounts: [], raids: [],
+  villes: [], lieux: [], place_types: [], exploits: [], quests: [], mounts: [], raids: [],
   map: null,
   cross_rules: { mounts_and_mobility: [], war_and_access: [], magic_interactions: [] },
   timeline: [], skill_trees: []
@@ -1828,7 +1832,8 @@ function sanitizeDb() {
     'for_factions','for_races','for_classes','required_classes','unlock_conditions',
     'variants','level_titles','invocable_by','lines','world_map_notes','prophecies',
     'incantations_known','schools','points_of_interest','connects_to','creature_ids',
-    'visual_elements','region_ids'];
+    'visual_elements','region_ids','footprint_tiles','elements_principaux','couleurs_dominantes',
+    'remarques_visuelles'];
   function fix(obj) {
     if (Array.isArray(obj)) { obj.forEach(fix); return; }
     if (obj && typeof obj === 'object') {
@@ -1868,6 +1873,8 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
       if (!db.races)       db.races = [];
       if (!db.companions)  db.companions = [];
       if (!db.villes)      db.villes = [];
+      if (!db.lieux)       db.lieux = [];
+      if (!db.place_types) db.place_types = [];
       if (!db.exploits)    db.exploits = [];
       if (!db.quests)      db.quests = [];
       if (!db.mounts)      db.mounts = [];
@@ -1940,6 +1947,7 @@ function exportJSON() {
     (db.races||[]).length + ' races',
     (db.classes||[]).length + ' classes',
     (db.villes||[]).length + ' villes',
+    (db.lieux||[]).length + ' lieux',
     (db.exploits||[]).length + ' exploits',
     (db.quests||[]).length + ' quêtes'
   ].filter(function(s){ return s[0] !== '0'; });
@@ -1965,6 +1973,7 @@ function showSection(section) {
     dashboard:  renderDashboard,  factions: renderFactions,
     classes:    renderClasses,    races:    renderRaces,
     companions: renderCompanions, villes:   renderVilles,
+    lieux:      renderLieux,
     exploits:   renderExploits,   quests:   renderQuests,
     mounts:     renderMounts,      raids:    renderRaids,
     crossrules: renderCrossRules, meta:     renderMeta,
@@ -1987,7 +1996,7 @@ function showSection(section) {
 }
 
 function updateCounts() {
-  ['factions','classes','races','companions','villes','exploits','quests','mounts','raids','regions','loots','dialogues','creatures','timeline','persons','zones','skill_trees','competences','regles_transverses','weapons','server_commands'].forEach(function(k) {
+  ['factions','classes','races','companions','villes','lieux','exploits','quests','mounts','raids','regions','loots','dialogues','creatures','timeline','persons','zones','skill_trees','competences','regles_transverses','weapons','server_commands'].forEach(function(k) {
     var el = document.getElementById('cnt-' + k);
     if (el) el.textContent = (db[k]||[]).length;
   });
@@ -2021,6 +2030,7 @@ function renderDashboard(el) {
     {key:'skill_trees',icon:'🌳',label:'Arbres'},    {key:'timeline',icon:'📅',label:'Événements'},
     {key:'persons',icon:'👤',label:'PNJ'},
     {key:'zones',icon:'📍',label:'Zones'},
+    {key:'lieux',icon:'✴️',label:'Lieux'},
     {key:'competences',icon:'✨',label:'Compétences'},
     {key:'regles_transverses',icon:'📋',label:'Règles'}
   ];
@@ -2939,10 +2949,299 @@ function buildVilleServices(curSvc, hc) {
   return h+'</div>';
 }
 
+// ─────────────────────────────────────────────
+// Types de lieux (référentiel db.place_types)
+// ─────────────────────────────────────────────
+// Repris du catalogue PLACE_TYPES du visualiseur de carte v23 lors de la fusion
+// v1.0.25 : libellé, couleur, forme du marqueur sur la carte, palier
+// (major / town / hamlet / poi) et catégorie (« ville » → collection villes,
+// « lieu » → collection lieux). Éditable via le bouton « 🏷 Types de lieux ».
+var PLACE_TIERS = {major:'Cité majeure', town:'Ville / bourg', hamlet:'Hameau / village', poi:'Lieu remarquable'};
+var PLACE_TIER_RANK = {major:0, town:1, hamlet:2, poi:3};
+var PLACE_SHAPES = {circle:'● Cercle', square:'■ Carré', star:'★ Étoile', triangle:'▲ Triangle', diamond:'◆ Losange'};
+var PLACE_CATEGORIES = {ville:'Ville', lieu:'Lieu remarquable'};
+// Fourchettes de logements (formulaire ville) par type ; à défaut, par palier.
+var VILLE_HOUSING_LIMITS = {hameau:{min:5,max:30},village:{min:31,max:80},major_city:{min:81,max:500},capital_city:{min:200,max:9999},fortress_city:{min:50,max:500},neutral_city:{min:40,max:500},arcane_tower_city:{min:10,max:100},training_city:{min:20,max:200},gladiator_city:{min:30,max:300},passage_poi:{min:0,max:20},other:{min:0,max:9999}};
+var TIER_HOUSING_LIMITS = {hamlet:{min:5,max:30}, town:{min:31,max:200}, major:{min:81,max:9999}, poi:{min:0,max:20}};
+
+/// Définition d'un type de lieu (db.place_types) ; type inconnu → définition
+/// neutre dérivée de son identifiant (palier « town », catégorie « ville »).
+function placeTypeDef(t) {
+  var d = (db.place_types||[]).find(function(x){ return x.id === (t||''); });
+  if (d) return d;
+  return {id:t||'', label:t?String(t).replace(/_/g,' '):'—', color:'#e8a44a', shape:'circle', tier:'town', categorie:'ville'};
+}
+function placeTypeLabel(t) { return t ? placeTypeDef(t).label : ''; }
+/// Fourchette de logements conseillée pour un type de ville (ou null).
+function villeHousingLimits(t) {
+  if (!t) return null;
+  return VILLE_HOUSING_LIMITS[t] || TIER_HOUSING_LIMITS[placeTypeDef(t).tier] || null;
+}
+function housingHintText(t) {
+  var d = villeHousingLimits(t); if (!d) return '';
+  return (d.max<9999 ? d.min+' à '+d.max : d.min+'+')+' logements pour '+placeTypeLabel(t);
+}
+/// Options <select> des types d'une catégorie ('ville' | 'lieu'), groupées par
+/// palier. Le type courant reste proposé même s'il est d'une autre catégorie.
+function placeTypeOptionsHTML(cur, categorie, emptyLabel) {
+  var h = '<option value="">'+esc(emptyLabel||'— Type —')+'</option>';
+  var types = (db.place_types||[]).filter(function(t){ return t.id && ((t.categorie||'ville')===categorie || t.id===cur); });
+  Object.keys(PLACE_TIERS).forEach(function(tier){
+    var grp = types.filter(function(t){ return (t.tier||'town')===tier; });
+    if (!grp.length) return;
+    h += '<optgroup label="'+esc(PLACE_TIERS[tier])+'">';
+    grp.forEach(function(t){ h += '<option value="'+esc(t.id)+'"'+(cur===t.id?' selected':'')+' style="color:'+esc(t.color||'#e8a44a')+'">'+esc(t.label||t.id)+'</option>'; });
+    h += '</optgroup>';
+  });
+  if (cur && !types.some(function(t){ return t.id===cur; })) h += '<option value="'+esc(cur)+'" selected>'+esc(cur)+' (non référencé)</option>';
+  return h;
+}
+/// Options du filtre par type d'une liste (types réellement utilisés + compte).
+function placeTypeFilterHTML(list, cur) {
+  var counts = {}; list.forEach(function(x){ var t=x.type||''; counts[t]=(counts[t]||0)+1; });
+  var h = '<option value="*">Tous les types ('+list.length+')</option>';
+  Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; }).forEach(function(t){
+    h += '<option value="'+esc(t)+'"'+(cur===t?' selected':'')+'>'+esc(t?placeTypeLabel(t):'Sans type')+' ('+counts[t]+')</option>';
+  });
+  return h;
+}
+
+// Éditeur du référentiel des types de lieux (copie de travail window._ptWork).
+function openPlaceTypesEditor() {
+  window._ptWork = JSON.parse(JSON.stringify(db.place_types||[]));
+  document.getElementById('modalTitle').textContent = 'Types de lieux';
+  document.getElementById('modalBody').innerHTML =
+    '<div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.6rem">Catégorie « Ville » : proposé dans les villes · « Lieu remarquable » : proposé dans les lieux. La couleur et la forme servent au marqueur de la carte ; le palier règle sa taille. Un type utilisé ne peut pas être supprimé.</div>'+
+    '<div id="ptList" style="max-height:52vh;overflow:auto"></div>'+
+    '<div style="display:flex;gap:0.5rem;margin-top:0.75rem">'+
+    '<input class="form-input" id="pt_new_id" placeholder="identifiant (ex : mining_town)" style="font-family:monospace;flex:1">'+
+    '<input class="form-input" id="pt_new_label" placeholder="Libellé" style="flex:1">'+
+    '<button class="btn btn-primary btn-sm" onclick="addPlaceType()">+ Ajouter</button></div>';
+  renderPlaceTypesList();
+  document.getElementById('modalFooter').innerHTML =
+    '<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>'+
+    '<button class="btn btn-gold" onclick="savePlaceTypes()">💾 Enregistrer</button>';
+  openModal();
+}
+function renderPlaceTypesList() {
+  var el = document.getElementById('ptList'); if (!el) return;
+  var arr = window._ptWork||[];
+  if (!arr.length) { el.innerHTML = '<div class="empty-state">Aucun type de lieu</div>'; return; }
+  function sel(i, key, dict, cur) {
+    return '<select class="form-select" style="font-size:0.75rem;padding:0.2rem" onchange="window._ptWork['+i+'].'+key+'=this.value">'+
+      Object.keys(dict).map(function(k){ return '<option value="'+k+'"'+(cur===k?' selected':'')+'>'+esc(dict[k])+'</option>'; }).join('')+'</select>';
+  }
+  el.innerHTML = arr.map(function(t, i){
+    var used = (db.villes||[]).concat(db.lieux||[]).filter(function(x){ return (x.type||'')===t.id; }).length;
+    return '<div style="display:grid;grid-template-columns:150px 1fr 40px 105px 125px 115px 46px 26px;gap:0.3rem;align-items:center;margin-bottom:0.25rem">'+
+      '<span style="font-family:monospace;font-size:0.72rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis" title="'+esc(t.id)+'">'+esc(t.id||'(vide)')+'</span>'+
+      '<input class="form-input" style="font-size:0.78rem;padding:0.2rem 0.4rem" value="'+esc(t.label||'')+'" oninput="window._ptWork['+i+'].label=this.value">'+
+      '<input type="color" value="'+esc(t.color||'#c9a96e')+'" style="width:36px;height:26px;border:none;background:none;cursor:pointer" onchange="window._ptWork['+i+'].color=this.value">'+
+      sel(i,'shape',PLACE_SHAPES,t.shape||'circle')+sel(i,'tier',PLACE_TIERS,t.tier||'town')+sel(i,'categorie',PLACE_CATEGORIES,t.categorie||'ville')+
+      '<span style="font-size:0.68rem;color:var(--text-dim);text-align:right" title="Utilisations">'+used+'×</span>'+
+      (used ? '<span></span>' : '<button class="note-del-btn" title="Supprimer" onclick="window._ptWork.splice('+i+',1);renderPlaceTypesList()">✕</button>')+
+      '</div>';
+  }).join('');
+}
+function addPlaceType() {
+  var id = document.getElementById('pt_new_id').value.trim().toLowerCase().replace(/[^a-z0-9_]+/g,'_');
+  var label = document.getElementById('pt_new_label').value.trim();
+  if (!id) { toast('Identifiant requis'); return; }
+  if (window._ptWork.some(function(t){ return t.id===id; })) { toast('Type « '+id+' » déjà présent'); return; }
+  window._ptWork.push({id:id, label:label||id, color:'#c9a96e', shape:'circle', tier:'town', categorie:'ville'});
+  document.getElementById('pt_new_id').value=''; document.getElementById('pt_new_label').value='';
+  renderPlaceTypesList();
+}
+function savePlaceTypes() {
+  db.place_types = window._ptWork.slice();
+  closeModal(); showSection(currentSection||'villes'); toast('Types de lieux enregistrés');
+}
+
+// ─────────────────────────────────────────────
+// Fiche descriptive (champs repris de carte_export.json)
+// ─────────────────────────────────────────────
+// Partagée par les villes et les lieux remarquables : groupes (objets de textes),
+// listes (une entrée par ligne) et textes libres.
+var PLACE_RICH_SCHEMA = [
+  {key:'dimensions_estimees', label:'Dimensions estimées', fields:[['hauteur','Hauteur'],['largeur','Largeur'],['diametre','Diamètre'],['zone_visible','Zone visible']]},
+  {key:'topographie', label:'Topographie', fields:[['forme_generale','Forme générale'],['relief','Relief'],['implantation','Implantation'],['pentes','Pentes'],['gorge','Gorge']]},
+  {key:'architecture', label:'Architecture', fields:[['presence','Présence'],['style','Style'],['etat','État']]},
+  {key:'hydrographie', label:'Hydrographie', fields:[['type','Type'],['eau','Eau'],['couleur','Couleur'],['elements','Éléments']]},
+  {key:'vegetation', label:'Végétation', fields:[['densite','Densité'],['type','Type'],['repartition','Répartition'],['couleur','Couleur'],['champs','Champs'],['arbres','Arbres'],['herbe','Herbe']]},
+  {key:'ambiance', label:'Ambiance', fields:[['atmosphere','Atmosphère'],['sentiment','Sentiment'],['niveau_menace','Niveau de menace']]},
+  {key:'ciel_climat', label:'Ciel & climat', fields:[['ciel','Ciel'],['nuages','Nuages'],['luminosite','Luminosité'],['meteo','Météo']]},
+  {key:'style_artistique', label:'Style artistique', fields:[['medium','Médium'],['traits','Traits'],['texture','Texture'],['inspiration','Inspiration']]},
+  {key:'acces', label:'Accès', fields:[['route_principale','Route principale'],['distance_visuelle','Distance visuelle'],['dominance_paysage','Dominance du paysage']]},
+  {key:'niveau_occupation', label:"Niveau d'occupation", kind:'text'},
+  {key:'elements_principaux', label:'Éléments principaux', kind:'list'},
+  {key:'couleurs_dominantes', label:'Couleurs dominantes', kind:'list'},
+  {key:'remarques_visuelles', label:'Remarques visuelles', kind:'list'},
+  {key:'footprint_tiles', label:'Emprise (cellules N/S###_E/W###)', kind:'list', mono:true},
+  {key:'prompt_image_ultra_detaille', label:'Prompt image ultra détaillé', kind:'textarea'}
+];
+/// Vrai si l'objet porte au moins un champ de fiche descriptive renseigné.
+function hasRichFields(o) {
+  return PLACE_RICH_SCHEMA.some(function(s){
+    var v = o[s.key]; if (v===null||v===undefined||v==='') return false;
+    if (Array.isArray(v)) return v.length>0;
+    if (typeof v==='object') return Object.keys(v).some(function(k){ return v[k]!==''&&v[k]!==null&&v[k]!==undefined; });
+    return true;
+  });
+}
+/// HTML de la fiche descriptive de \p o ; les champs portent l'id \p prefix_rf_<clé>.
+function richFieldsFormHTML(prefix, o) {
+  var lbl = 'font-size:0.68rem;color:var(--text-dim)';
+  var h = '<div class="form-group"><details'+(hasRichFields(o)?' open':'')+' style="background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;padding:0.5rem 0.75rem">'+
+    '<summary style="font-family:Cinzel,serif;font-size:0.65rem;text-transform:uppercase;color:var(--text-dim);cursor:pointer">📐 Fiche descriptive (carte)</summary>';
+  PLACE_RICH_SCHEMA.forEach(function(s){
+    var v = o[s.key];
+    var id = prefix+'_rf_'+s.key;
+    if (s.fields) {
+      if (typeof v==='string') v = {atmosphere:v}; // ancien format « ambiance » texte
+      v = (v && typeof v==='object') ? v : {};
+      h += '<div style="margin-top:0.6rem"><div style="font-family:Cinzel,serif;font-size:0.58rem;text-transform:uppercase;color:var(--accent-gold);margin-bottom:0.25rem">'+esc(s.label)+'</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.35rem 0.75rem">';
+      s.fields.forEach(function(f){
+        h += '<div><label style="'+lbl+'">'+esc(f[1])+'</label><input class="form-input" id="'+id+'__'+f[0]+'" value="'+esc(v[f[0]]!=null?v[f[0]]:'')+'"></div>';
+      });
+      h += '</div></div>';
+    } else if (s.kind==='list') {
+      h += '<div style="margin-top:0.6rem"><label style="'+lbl+'">'+esc(s.label)+' — une entrée par ligne</label>'+
+        '<textarea class="form-textarea" id="'+id+'" rows="3"'+(s.mono?' style="font-family:monospace"':'')+'>'+esc(toArr(v).join('\n'))+'</textarea></div>';
+    } else if (s.kind==='textarea') {
+      h += '<div style="margin-top:0.6rem"><label style="'+lbl+'">'+esc(s.label)+'</label><textarea class="form-textarea" id="'+id+'" rows="5">'+esc(v||'')+'</textarea></div>';
+    } else {
+      h += '<div style="margin-top:0.6rem"><label style="'+lbl+'">'+esc(s.label)+'</label><input class="form-input" id="'+id+'" value="'+esc(v||'')+'"></div>';
+    }
+  });
+  return h + '</details></div>';
+}
+/// Relit la fiche descriptive du formulaire ; les sous-clés inconnues de \p base
+/// (objet d'origine) sont conservées.
+function collectRichFields(prefix, base) {
+  var out = {};
+  PLACE_RICH_SCHEMA.forEach(function(s){
+    var id = prefix+'_rf_'+s.key;
+    if (s.fields) {
+      var orig = base && base[s.key] && typeof base[s.key]==='object' ? base[s.key] : {};
+      var obj = Object.assign({}, orig);
+      s.fields.forEach(function(f){ var el=document.getElementById(id+'__'+f[0]); if(el) obj[f[0]]=el.value.trim(); });
+      out[s.key] = obj;
+    } else {
+      var el = document.getElementById(id); if (!el) return;
+      if (s.kind==='list') {
+        out[s.key] = el.value.split('\n').map(function(x){ return x.trim(); }).filter(Boolean);
+        if (s.mono) out[s.key] = out[s.key].map(function(x){ return x.toUpperCase(); });
+      } else out[s.key] = el.value.trim();
+    }
+  });
+  return out;
+}
+
+// ─────────────────────────────────────────────
+// Lieux remarquables (db.lieux)
+// ─────────────────────────────────────────────
+// Lieux spéciaux repris de carte_export.json (failles, portails, canyons…) :
+// ni villes ni zones de jeu, ils peuvent pointer vers une zone (zone_id).
+function renderLieux(el) {
+  var h = '<div class="panel-header"><div class="panel-title">✴️ Lieux remarquables</div>';
+  h += '<div style="display:flex;gap:0.75rem;align-items:center">';
+  h += '<div class="search-bar"><input type="text" placeholder="Rechercher..." id="searchLieu" oninput="renderLieux(document.getElementById(\'sectionContent\'))"></div>';
+  h += '<button class="btn btn-ghost btn-sm" onclick="openPlaceTypesEditor()">🏷 Types de lieux</button>';
+  h += '<button class="btn btn-gold btn-sm" onclick="openLieuForm()">+ Ajouter</button></div></div>';
+  h += '<div class="cards-grid" id="lieuxGrid"></div>';
+  var q = document.getElementById('searchLieu') ? document.getElementById('searchLieu').value.toLowerCase() : '';
+  el.innerHTML = h;
+  var _sf = document.getElementById('searchLieu'); if(_sf&&q){ _sf.value=q; _sf.focus(); _sf.setSelectionRange(q.length,q.length); }
+  var grid = el.querySelector('#lieuxGrid');
+  var list = (db.lieux||[]).filter(function(l){ return !q||(l.name||'').toLowerCase().includes(q)||(l.id||'').toLowerCase().includes(q)||(l.cell||'').toLowerCase().includes(q); });
+  if(!list.length){ grid.innerHTML='<div class="empty-state">Aucun lieu remarquable</div>'; return; }
+  grid.innerHTML = list.map(function(l){
+    var gi=db.lieux.indexOf(l), td=placeTypeDef(l.type);
+    var card='<div class="card" style="--card-accent:'+esc(td.color||'#c9a96e')+'">';
+    card+='<div class="card-header"><div><div class="card-title">✴️ '+esc(l.name)+'</div><div class="card-id">'+esc(l.id)+'</div></div>';
+    card+='<div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openLieuForm('+gi+')">✎</button><button class="btn btn-danger" onclick="deleteLieu('+gi+')">✕</button></div></div>';
+    if(l.alias) card+='<div style="font-size:0.78rem;color:var(--accent-gold);font-style:italic;margin-top:0.1rem">'+esc(l.alias)+'</div>';
+    var row='';
+    if(l.type) row+=badge(td.label, td.color||'#c9a96e');
+    if(l.importance) row+='<span style="font-size:0.72rem;color:var(--text-dim);padding:0.1rem 0">'+esc(l.importance)+'</span>';
+    if(row) card+='<div style="display:flex;gap:0.3rem;margin-top:0.3rem;flex-wrap:wrap">'+row+'</div>';
+    if(l.region_id){var rg=(db.regions||[]).find(function(x){return x.id===l.region_id;});card+='<div style="font-size:0.72rem;color:'+(rg&&rg.color||'#708090')+';margin-top:0.2rem">🗺️ '+esc(rg?rg.name:l.region_id)+'</div>';}
+    if(l.zone_id){var zn=(db.zones||[]).find(function(x){return x.id===l.zone_id;});card+='<div style="font-size:0.72rem;margin-top:0.2rem;cursor:pointer;color:'+(zn?'#7ec98e':'#c05060')+'" onclick="showSection(\'zones\')" title="Zone liée">📍 '+esc(zn?zn.name:l.zone_id+' (zone introuvable)')+'</div>';}
+    if(l.cell) card+='<div style="margin-top:0.35rem"><span style="font-family:monospace;font-size:0.78rem;background:var(--bg-deep);border:1px solid #c9a96e50;border-radius:2px;padding:0.1rem 0.45rem;color:#c9a96e">📍 '+esc(l.cell)+'</span></div>';
+    if(l.features&&l.features.length){card+='<div style="margin-top:0.4rem;display:flex;flex-wrap:wrap;gap:0.2rem">';l.features.slice(0,4).forEach(function(f){card+='<span style="font-size:0.7rem;background:var(--bg-deep);border:1px solid #c9a96e30;border-radius:2px;padding:0.05rem 0.35rem;color:var(--text-dim)">'+esc(f)+'</span>';});if(l.features.length>4)card+='<span style="font-size:0.7rem;color:var(--text-dim)">+'+(l.features.length-4)+'</span>';card+='</div>';}
+    card+=notesBadgesHTML(l.notes);
+    return card+'</div>';
+  }).join('');
+}
+function openLieuForm(idx) {
+  var isEdit=idx!==undefined;
+  var l=isEdit?JSON.parse(JSON.stringify(db.lieux[idx])):{id:'',name:'',alias:'',type:'',importance:'',cell:'',region_id:'',zone_id:'',faction_control:'',features:[],notes:[]};
+  window._currentNotes=toArr(l.notes).slice();
+  window._currentFeatures=toArr(l.features).slice();
+  var rgOpts='<option value="">Sans région</option>';(db.regions||[]).forEach(function(rg){rgOpts+='<option value="'+esc(rg.id)+'"'+(l.region_id===rg.id?' selected':'')+'>'+esc(rg.name)+'</option>';});
+  var znOpts='<option value="">— Aucune zone —</option>';(db.zones||[]).forEach(function(z){znOpts+='<option value="'+esc(z.id)+'"'+(l.zone_id===z.id?' selected':'')+'>'+esc(z.name)+'</option>';});
+  if(l.zone_id&&!(db.zones||[]).some(function(z){return z.id===l.zone_id;})) znOpts+='<option value="'+esc(l.zone_id)+'" selected>'+esc(l.zone_id)+' (introuvable)</option>';
+  var facOpts='<option value="">— Aucune faction —</option>';(db.factions||[]).forEach(function(f){facOpts+='<option value="'+esc(f.id)+'"'+(l.faction_control===f.id?' selected':'')+'>'+esc(f.name)+'</option>';});
+  document.getElementById('modalTitle').textContent=isEdit?'Modifier le lieu':'Nouveau lieu remarquable';
+  document.getElementById('modalBody').innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
+    '<div class="form-group"><label class="form-label">Identifiant (ID)*</label><input class="form-input" id="l_id" value="'+esc(l.id)+'" placeholder="lieu_example"></div>'+
+    '<div class="form-group"><label class="form-label">Nom*</label><input class="form-input" id="l_name" value="'+esc(l.name)+'" oninput="autoGenId(this,\'l_id\')"></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
+    '<div class="form-group"><label class="form-label">Alias / Surnom</label><input class="form-input" id="l_alias" value="'+esc(l.alias||'')+'"></div>'+
+    '<div class="form-group"><label class="form-label">Type de lieu</label><select class="form-select" id="l_type">'+placeTypeOptionsHTML(l.type||'','lieu','— Type de lieu —')+'</select></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
+    '<div class="form-group"><label class="form-label">Région</label><select class="form-select" id="l_region">'+rgOpts+'</select></div>'+
+    '<div class="form-group"><label class="form-label">Zone de jeu liée</label><select class="form-select" id="l_zone">'+znOpts+'</select></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
+    '<div class="form-group"><label class="form-label">Cellule (N/S###_E/W###)</label><input class="form-input" id="l_cell" value="'+esc(l.cell||'')+'" placeholder="N000_E000" style="font-family:monospace"></div>'+
+    '<div class="form-group"><label class="form-label">Faction de référence</label><select class="form-select" id="l_faction">'+facOpts+'</select></div></div>'+
+    '<div class="form-group"><label class="form-label">Importance</label><input class="form-input" id="l_importance" value="'+esc(l.importance||'')+'"></div>'+
+    '<div class="form-group"><label class="form-label">Caractéristiques (features)</label>'+
+    '<div class="notes-editor"><div class="note-input-row"><input type="text" id="featureInput" placeholder="Ajouter une caractéristique...">'+
+    '<button class="btn btn-primary btn-sm" onclick="addFeature()">+</button></div><div class="notes-list-edit" id="featuresList"></div></div></div>'+
+    richFieldsFormHTML('l', l)+
+    '<div class="form-group"><label class="form-label">Notes</label>'+
+    '<div class="notes-editor"><div class="note-input-row"><input type="text" id="noteInput" placeholder="Ajouter une note…">'+
+    '<button class="btn btn-primary btn-sm" onclick="addCurrentNote()">+ Ajouter</button></div><div class="notes-list-edit" id="notesList"></div></div></div>';
+  renderNotesList(); renderFeaturesList();
+  document.getElementById('modalFooter').innerHTML=
+    '<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>'+
+    '<button class="btn btn-gold" onclick="saveLieu('+(isEdit?idx:'undefined')+')">&#128190; Enregistrer</button>';
+  document.getElementById('noteInput').addEventListener('keydown',function(e){if(e.key==='Enter'){addCurrentNote();e.preventDefault();}});
+  document.getElementById('featureInput').addEventListener('keydown',function(e){if(e.key==='Enter'){addFeature();e.preventDefault();}});
+  openModal();
+}
+function saveLieu(idx) {
+  if(!db.lieux) db.lieux=[];
+  var cell=document.getElementById('l_cell').value.trim().toUpperCase();
+  if(cell&&!parseCellCoord(cell)){toast('Cellule invalide (format N000_E000)');return;}
+  var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.lieux[idx])):{};
+  var obj=Object.assign(base, collectRichFields('l', base), {
+    id:document.getElementById('l_id').value.trim(), name:document.getElementById('l_name').value.trim(),
+    alias:document.getElementById('l_alias').value.trim(), type:document.getElementById('l_type').value,
+    importance:document.getElementById('l_importance').value.trim(), cell:cell,
+    region_id:document.getElementById('l_region').value, zone_id:document.getElementById('l_zone').value,
+    faction_control:document.getElementById('l_faction').value,
+    features:window._currentFeatures.slice(), notes:window._currentNotes.slice()
+  });
+  if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
+  var dup=checkDuplicateOnSave(obj.id,obj.name,db.lieux,idx);if(dup.length){toast(dup[0]);return;}
+  if(idx!==undefined) db.lieux[idx]=obj; else db.lieux.push(obj);
+  closeModal(); showSection('lieux'); toast(idx!==undefined?'Lieu modifié':'Lieu ajouté');
+}
+function deleteLieu(idx) {
+  confirmDelete('Supprimer « '+db.lieux[idx].name+' » ?', function(){ db.lieux.splice(idx,1); showSection('lieux'); toast('Lieu supprimé'); });
+}
+
 function renderVilles(el) {
   var h = '<div class="panel-header"><div class="panel-title">🏙️ Villes</div>';
   h += '<div style="display:flex;gap:0.75rem;align-items:center">';
   h += '<div class="search-bar"><input type="text" placeholder="Rechercher..." id="searchVille" oninput="renderVilles(document.getElementById(\'sectionContent\'))"></div>';
+  var qt = window._villeTypeFilter||'*';
+  h += '<select class="form-select" id="filterVilleType" style="max-width:220px;font-size:0.78rem" onchange="window._villeTypeFilter=this.value;renderVilles(document.getElementById(\'sectionContent\'))">'+placeTypeFilterHTML(db.villes||[], qt)+'</select>';
+  h += '<button class="btn btn-ghost btn-sm" onclick="openPlaceTypesEditor()">🏷 Types de lieux</button>';
   h += '<button class="btn btn-ghost btn-sm" onclick="openVilleImport()">⬆ Importer JSON</button>';
   h += mergeBtnHTML('villes');
   h += viewToggleBtn('villes') + '<button class="btn btn-gold btn-sm" onclick="openVilleForm()">+ Ajouter</button></div></div>';
@@ -2953,7 +3252,7 @@ function renderVilles(el) {
   var _sf = document.getElementById('searchVille'); if(_sf&&q){ _sf.value=q; _sf.focus(); _sf.setSelectionRange(q.length,q.length); }
   //--- search restored ---
   var grid = el.querySelector('#villesGrid');
-  var list = (db.villes||[]).filter(function(v){ return !q||v.name.toLowerCase().includes(q)||v.id.toLowerCase().includes(q)||(v.cell||'').toLowerCase().includes(q); });
+  var list = (db.villes||[]).filter(function(v){ return (qt==='*'||(v.type||'')===qt) && (!q||v.name.toLowerCase().includes(q)||v.id.toLowerCase().includes(q)||(v.cell||'').toLowerCase().includes(q)); });
   if(!list.length){ grid.innerHTML='<div class="empty-state">Aucune ville trouvée</div>'; return; }
       if (getViewMode('villes')==='list') { grid.innerHTML=renderListView('villes',list); return; }
     grid.innerHTML = groupedGrid(list,'villes',function(v) {
@@ -2963,10 +3262,8 @@ function renderVilles(el) {
     card+='<div class="card-actions"><button class="btn btn-ghost btn-sm" style="font-size:0.65rem" onclick="showRelations(\'villes\',\''+esc(v.id)+'\')" title="Relations">🔗</button><button class="btn btn-ghost btn-sm" onclick="openVilleForm(' + gi + ')">✎</button>';
     card+='<button class="btn btn-danger" onclick="deleteVille(' + gi + ')">✕</button></div></div>';
     if(v.alias) card+='<div style="font-size:0.78rem;color:var(--accent-gold);font-style:italic;margin-top:0.1rem">'+esc(v.alias)+'</div>';
-    var VLABELS3={hameau:'Hameau',village:'Village',major_city:'Grande Ville',capital_city:'Capitale',fortress_city:'Forteresse',neutral_city:'Cité Neutre',arcane_tower_city:'Tour Arcane',training_city:'Cité Entr.',gladiator_city:'Cité Glad.',passage_poi:'Passage',other:'Autre'};
-    var VCOLORS3={hameau:'#8a8050',village:'#a08040',major_city:'#c9a84c',capital_city:'#e8b84a',fortress_city:'#c05060',neutral_city:'#708090',arcane_tower_city:'#9060c0',training_city:'#6090d0',gladiator_city:'#c04040',passage_poi:'#508060',other:'#708090'};
     var vtypeRow='';
-    if(v.type) vtypeRow+=badge(VLABELS3[v.type]||v.type.replace(/_/g,' '), VCOLORS3[v.type]||'#e8a44a');
+    if(v.type) vtypeRow+=badge(placeTypeLabel(v.type), placeTypeDef(v.type).color||'#e8a44a');
     if(v.housing_count!=null) vtypeRow+=badge('🏠 '+v.housing_count+' log.','#708090');
     if(v.population!=null) vtypeRow+=badge('👥 '+v.population+' hab.','#507090');
     if(v.importance) vtypeRow+='<span style="font-size:0.72rem;color:var(--text-dim);padding:0.1rem 0">'+esc(v.importance)+'</span>';
@@ -3039,9 +3336,7 @@ function openVilleForm(idx) {
   window._currentNotes=toArr(v.notes).slice();
   window._currentFeatures=(v.features||[]).slice();
 
-  var VLIMITS={hameau:{min:5,max:30},village:{min:31,max:80},major_city:{min:81,max:500},capital_city:{min:200,max:9999},fortress_city:{min:50,max:500},neutral_city:{min:40,max:500},arcane_tower_city:{min:10,max:100},training_city:{min:20,max:200},gladiator_city:{min:30,max:300},passage_poi:{min:0,max:20},other:{min:0,max:9999}};
-  var VCOLORS={hameau:'#8a8050',village:'#a08040',major_city:'#c9a84c',capital_city:'#e8b84a',fortress_city:'#c05060',neutral_city:'#708090',arcane_tower_city:'#9060c0',training_city:'#6090d0',gladiator_city:'#c04040',passage_poi:'#508060',other:'#708090'};
-  var VLABELS={hameau:'Hameau',village:'Village',major_city:'Grande Ville',capital_city:'Capitale',fortress_city:'Ville Forteresse',neutral_city:'Cité Neutre',arcane_tower_city:'Tour Arcane',training_city:"Cité d'Entraînement",gladiator_city:'Cité Gladiateurs',passage_poi:'Lieu de Passage',other:'Autre'};
+  var hHint=housingHintText(v.type);
   var SERVICES=[
     {id:'auberge',         label:'🛏️ Auberge',                    min:5},
     {id:'potions',         label:'🧪 Commerce — Potions & Plantes', min:10},
@@ -3061,7 +3356,7 @@ function openVilleForm(idx) {
     {id:'ecole_magie',     label:'🔮 École de Magie',              min:65}
   ];
 
-  var typeOpts='<option value="">— Type de localité —</option>'+Object.keys(VLABELS).map(function(k){return '<option value="'+k+'"'+(v.type===k?' selected':'')+' style="color:'+(VCOLORS[k]||'#e8a44a')+'">'+VLABELS[k]+'</option>';}).join('');
+  var typeOpts=placeTypeOptionsHTML(v.type||'','ville','— Type de localité —');
   var rgOpts='<option value="">Sans région</option>';(db.regions||[]).forEach(function(rg){rgOpts+='<option value="'+esc(rg.id)+'"'+(v.region_id===rg.id?' selected':'')+' style="color:'+(rg.color||'#708090')+'">'+esc(rg.name)+'</option>';});
   var vFacOpts='<option value="">— Aucune faction —</option>';(db.factions||[]).forEach(function(f){vFacOpts+='<option value="'+esc(f.id)+'"'+(v.faction_control===f.id?' selected':'')+'>'+esc(f.name)+'</option>';});
 
@@ -3093,15 +3388,13 @@ function openVilleForm(idx) {
     '<select class="form-select" id="v_region">'+rgOpts+'</select></div></div>'+
     '<div style="display:grid;grid-template-columns:2fr 1fr;gap:0.75rem">'+
     '<div class="form-group"><label class="form-label">Type de localité</label>'+
-    '<select class="form-select" id="v_type" onchange="(function(){var t=document.getElementById(\'v_type\').value;var lim={hameau:{min:5,max:30},village:{min:31,max:80},major_city:{min:81,max:500},capital_city:{min:200,max:9999},fortress_city:{min:50,max:500},neutral_city:{min:40,max:500},arcane_tower_city:{min:10,max:100},training_city:{min:20,max:200},gladiator_city:{min:30,max:300},passage_poi:{min:0,max:20},other:{min:0,max:9999}};var VLABELS2={hameau:\'Hameau\',village:\'Village\',major_city:\'Grande Ville\',capital_city:\'Capitale\',fortress_city:\'Forteresse\',neutral_city:\'Cité Neutre\',arcane_tower_city:\'Tour Arcane\',training_city:\'Cité Entr.\',gladiator_city:\'Cité Glad.\',passage_poi:\'Passage\',other:\'Autre\'};var d=lim[t];var hint=document.getElementById(\'v_housing_hint\');if(hint&&d)hint.textContent=(d.max<9999?d.min+\' à \'+d.max:d.min+\'+ \')+\'logements\';document.getElementById(\'v_services_wrap\').innerHTML=buildVilleServices(Array.from(document.querySelectorAll(\'input[name=v_service]:checked\')).map(function(c){return c.value;}),parseInt(document.getElementById(\'v_housing\').value)||0);})()">'+typeOpts+'</select></div>'+
+    '<select class="form-select" id="v_type" onchange="onVilleTypeChange()">'+typeOpts+'</select></div>'+
     '<div class="form-group"><label class="form-label">Faction de référence</label>'+
     '<select class="form-select" id="v_faction_control">'+vFacOpts+'</select></div></div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
-    '<div class="form-group"><label class="form-label">Nb. logements'+
-    (v.type&&VLIMITS[v.type]?' <span style="font-size:0.68rem;color:var(--text-dim)">('+VLIMITS[v.type].min+(VLIMITS[v.type].max<9999?' à '+VLIMITS[v.type].max:'+')+' pour '+(VLABELS[v.type]||v.type)+')</span>':'')+
-    '</label>'+
+    '<div class="form-group"><label class="form-label">Nb. logements</label>'+
     '<input class="form-input" id="v_housing" type="number" min="0" value="'+(v.housing_count!=null?v.housing_count:'')+'" placeholder="Ex : 45" oninput="(function(){var hc=parseInt(this.value)||0;document.getElementById(\'v_services_wrap\').innerHTML=buildVilleServices(Array.from(document.querySelectorAll(\'input[name=v_service]:checked\')).map(function(c){return c.value;}),hc);}).call(this)">'+
-    '<div id="v_housing_hint" style="font-size:0.7rem;color:var(--text-dim);margin-top:0.15rem">'+(v.type&&VLIMITS[v.type]?VLIMITS[v.type].min+(VLIMITS[v.type].max<9999?' à '+VLIMITS[v.type].max:'+')+' logements pour '+(VLABELS[v.type]||v.type):'')+'</div></div>'+
+    '<div id="v_housing_hint" style="font-size:0.7rem;color:var(--text-dim);margin-top:0.15rem">'+esc(hHint)+'</div></div>'+
     '<div class="form-group"><label class="form-label">Population (habitants)</label>'+
     '<input class="form-input" id="v_population" type="number" min="0" value="'+(v.population!=null?v.population:'')+'" placeholder="Ex : 320"></div></div>'+
     '<div class="form-group"><label class="form-label">Services disponibles <span style="font-size:0.68rem;color:var(--text-dim)">(selon le nombre de logements)</span></label>'+
@@ -3109,8 +3402,8 @@ function openVilleForm(idx) {
     buildSvcHTML(v.services||[], v.housing_count||0)+
     '</div></div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem">'+
-    '<div class="form-group"><label class="form-label">Cellule (RXXXCXXX)</label>'+
-    '<input class="form-input" id="v_cell" value="'+esc(v.cell||v.anchor_tile||'')+'" placeholder="R012C045" style="font-family:monospace"></div>'+
+    '<div class="form-group"><label class="form-label">Cellule (N/S###_E/W###)</label>'+
+    '<input class="form-input" id="v_cell" value="'+esc(v.cell||v.anchor_tile||'')+'" placeholder="N000_E000" style="font-family:monospace"></div>'+
     '<div class="form-group"><label class="form-label">Coordonnée X</label>'+
     '<input class="form-input" id="v_cx" type="number" value="'+(v.coord_x!=null?v.coord_x:'')+'" placeholder="0"></div>'+
     '<div class="form-group"><label class="form-label">Coordonnée Y</label>'+
@@ -3122,7 +3415,7 @@ function openVilleForm(idx) {
     '<input type="text" id="featureInput" placeholder="Ajouter une caractéristique...">'+
     '<button class="btn btn-primary btn-sm" onclick="addFeature()">+</button></div>'+
     '<div class="notes-list-edit" id="featuresList"></div></div></div>'+
-    (v.prompt_image_ultra_detaille?'<div class="form-group"><details style="background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;padding:0.5rem 0.75rem"><summary style="font-family:Cinzel,serif;font-size:0.65rem;text-transform:uppercase;color:var(--text-dim);cursor:pointer">Prompt image (importé)</summary><p style="font-size:0.78rem;color:var(--text-secondary);margin-top:0.5rem;line-height:1.5">'+esc(v.prompt_image_ultra_detaille)+'</p></details></div>':'')+
+    richFieldsFormHTML('v', v)+
     '<div class="form-group"><label class="form-label" style="font-size:0.65rem;color:var(--text-dim)">ℹ Les relations avec les factions se définissent depuis la fiche de chaque faction.</label></div>'+
     '<div class="form-group"><label class="form-label">Notes</label>'+
     '<div class="notes-editor"><div class="note-input-row"><input type="text" id="noteInput" placeholder="Ajouter une note…">'+
@@ -3136,6 +3429,13 @@ function openVilleForm(idx) {
   var fi=document.getElementById('featureInput'); if(fi) fi.addEventListener('keydown',function(e){if(e.key==='Enter'){addFeature();e.preventDefault();}});
   openModal();
 }
+// Changement de type dans le formulaire ville : met à jour l'indication de
+// logements et la disponibilité des services.
+function onVilleTypeChange(){
+  var t=document.getElementById('v_type').value;
+  var hint=document.getElementById('v_housing_hint'); if(hint) hint.textContent=housingHintText(t);
+  document.getElementById('v_services_wrap').innerHTML=buildVilleServices(Array.from(document.querySelectorAll('input[name=v_service]:checked')).map(function(c){return c.value;}),parseInt(document.getElementById('v_housing').value)||0);
+}
 function addFeature(){var inp=document.getElementById('featureInput'),val=inp.value.trim();if(!val)return;window._currentFeatures.push(val);renderFeaturesList();inp.value='';inp.focus();}
 function renderFeaturesList(){
   var el=document.getElementById('featuresList');if(!el)return;
@@ -3146,8 +3446,9 @@ function renderFeaturesList(){
 function saveVille(idx) {
   var cx=document.getElementById('v_cx').value, cy=document.getElementById('v_cy').value;
   var cell=document.getElementById('v_cell').value.trim().toUpperCase();
+  if(cell&&!parseCellCoord(cell)){toast('Cellule invalide (format N000_E000)');return;}
   var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.villes[idx])):{};
-  var obj=Object.assign(base,{
+  var obj=Object.assign(base, collectRichFields('v', base), {
     id:document.getElementById('v_id').value.trim(), name:document.getElementById('v_name').value.trim(),
     alias:document.getElementById('v_alias').value.trim(), type:document.getElementById('v_type').value,
     cell:cell, anchor_tile:cell,
@@ -4404,10 +4705,11 @@ var MAX_CARTE_ZOOM = 12;      // zoom maximum demandé : ×12
 // à estimer la surface d'une région : nb_cellules × CARTE_CELL_SIDE_KM².
 var CARTE_CELL_SIDE_KM = 10;
 window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null,
-  filters:{ villes:true, routes:true, poi:true, regions:false, water:true, islands:true } };
-if (!window._carteState.filters) window._carteState.filters = { villes:true, routes:true, poi:true, regions:false, water:true, islands:true };
+  filters:{ villes:true, lieux:true, routes:true, poi:true, regions:false, water:true, islands:true } };
+if (!window._carteState.filters) window._carteState.filters = { villes:true, lieux:true, routes:true, poi:true, regions:false, water:true, islands:true };
 if (window._carteState.filters.islands === undefined) window._carteState.filters.islands = true;
-var _carteGeo = null;         // { byKey, minLat, maxLat, minLon, maxLon, cols, rows, villeByCell }
+if (window._carteState.filters.lieux === undefined) window._carteState.filters.lieux = true;
+var _carteGeo = null;         // { byKey, minLat, maxLat, minLon, maxLon, cols, rows, villeByCell, lieuByCell }
 
 // Recalcule la géométrie de la grille à partir de db.cells / db.villes.
 function carteComputeGeo() {
@@ -4419,11 +4721,31 @@ function carteComputeGeo() {
     if(p.lat<minLat)minLat=p.lat; if(p.lat>maxLat)maxLat=p.lat;
     if(p.lon<minLon)minLon=p.lon; if(p.lon>maxLon)maxLon=p.lon;
   });
-  var villeByCell = {};
+  // Villes par cellule, la plus importante (palier du type) en tête.
+  var villeByCell = {}, lieuByCell = {};
   (db.villes||[]).forEach(function(v){ if(v.cell) (villeByCell[v.cell]=villeByCell[v.cell]||[]).push(v); });
+  Object.keys(villeByCell).forEach(function(k){ villeByCell[k].sort(function(a,b){ return placeTierRank(a.type)-placeTierRank(b.type); }); });
+  (db.lieux||[]).forEach(function(l){ if(l.cell) (lieuByCell[l.cell]=lieuByCell[l.cell]||[]).push(l); });
   _carteGeo = { byKey:byKey, minLat:minLat, maxLat:maxLat, minLon:minLon, maxLon:maxLon,
-    cols:(maxLon-minLon+1), rows:(maxLat-minLat+1), villeByCell:villeByCell };
+    cols:(maxLon-minLon+1), rows:(maxLat-minLat+1), villeByCell:villeByCell, lieuByCell:lieuByCell };
   return _carteGeo;
+}
+
+// Rang du palier d'un type de lieu (0 = cité majeure … 3 = lieu remarquable).
+function placeTierRank(t) { var r = PLACE_TIER_RANK[placeTypeDef(t).tier]; return r===undefined ? 1 : r; }
+
+// Dessine un marqueur de lieu (forme du référentiel place_types) centré en (x, y), rayon r.
+function drawCartePlaceShape(ctx, shape, x, y, r) {
+  ctx.beginPath();
+  if (shape==='square') { ctx.rect(x-r*0.85, y-r*0.85, r*1.7, r*1.7); }
+  else if (shape==='triangle') { ctx.moveTo(x, y-r); ctx.lineTo(x+r*0.95, y+r*0.75); ctx.lineTo(x-r*0.95, y+r*0.75); ctx.closePath(); }
+  else if (shape==='diamond') { ctx.moveTo(x, y-r); ctx.lineTo(x+r, y); ctx.lineTo(x, y+r); ctx.lineTo(x-r, y); ctx.closePath(); }
+  else if (shape==='star') {
+    for (var i=0;i<10;i++){ var a=-Math.PI/2+i*Math.PI/5, rr=(i%2?r*0.45:r*1.1); var px2=x+Math.cos(a)*rr, py2=y+Math.sin(a)*rr; if(i) ctx.lineTo(px2,py2); else ctx.moveTo(px2,py2); }
+    ctx.closePath();
+  }
+  else { ctx.arc(x, y, r, 0, Math.PI*2); }
+  ctx.fill(); ctx.stroke();
 }
 
 // Centre pixel d'une cellule (par son id) dans le canvas courant.
@@ -4472,12 +4794,22 @@ function renderCarte(el) {
   Object.keys(ROUTE_TYPES).forEach(function(rt){ var d=ROUTE_TYPES[rt]; h += '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.7rem;color:var(--text-secondary)"><span style="width:18px;height:0;border-top:3px '+(d.dash?'dashed':'solid')+' '+d.color+'"></span>'+d.icon+' '+esc(d.label)+'</span>'; });
   h += '</div>';
 
+  // Légende des types de lieux présents (villes + lieux remarquables).
+  var ptCounts={}; (db.villes||[]).concat(db.lieux||[]).forEach(function(x){ if(x.cell){ var t=x.type||''; ptCounts[t]=(ptCounts[t]||0)+1; } });
+  var ptPresent=Object.keys(ptCounts).sort(function(a,b){ return placeTierRank(a)-placeTierRank(b) || ptCounts[b]-ptCounts[a]; });
+  if (ptPresent.length) {
+    var SHAPE_GLYPH={circle:'●',square:'■',star:'★',triangle:'▲',diamond:'◆'};
+    h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem 0.8rem;margin-bottom:0.75rem;align-items:center">';
+    ptPresent.forEach(function(t){ var d=placeTypeDef(t); h += '<span style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.7rem;color:var(--text-secondary)"><span style="color:'+esc(d.color||'#ffd700')+'">'+(SHAPE_GLYPH[d.shape]||'●')+'</span>'+esc(t?d.label:'Sans type')+' ('+ptCounts[t]+')</span>'; });
+    h += '</div>';
+  }
+
   // Filtres d'affichage (couches)
   var fl = st.filters;
   function flChk(key,label){ return '<label style="display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.74rem;color:var(--text-secondary)"><input type="checkbox"'+(fl[key]?' checked':'')+' style="accent-color:var(--accent-gold)" onchange="carteToggleFilter(\''+key+'\',this.checked)"> '+label+'</label>'; }
   h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem 1rem;margin-bottom:0.75rem;padding:0.4rem 0.6rem;background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;align-items:center">';
   h += '<span style="font-family:Cinzel,serif;font-size:0.58rem;text-transform:uppercase;color:var(--text-dim)">Filtres</span>';
-  h += flChk('villes','🏙️ Villes') + flChk('routes','🛣️ Routes') + flChk('poi','📍 Points importants') + flChk('water','💧 Lacs & rivières') + flChk('islands','🏝️ Îles') + flChk('regions','🗺️ Régions (teinte)');
+  h += flChk('villes','🏙️ Villes') + flChk('lieux','✴️ Lieux remarquables') + flChk('routes','🛣️ Routes') + flChk('poi','📍 Points importants') + flChk('water','💧 Lacs & rivières') + flChk('islands','🏝️ Îles') + flChk('regions','🗺️ Régions (teinte)');
   h += '</div>';
 
   // Légende des régions (visible quand la couche Régions est active)
@@ -4576,14 +4908,30 @@ function drawCarte() {
     ctx.setLineDash([]);
   });
 
-  // Villes (couche optionnelle)
+  // Lieux remarquables (couche optionnelle) : marqueur cerclé d'or, coin bas-gauche.
+  if (fl.lieux) Object.keys(_carteGeo.lieuByCell).forEach(function(cellId){
+    var ctr=carteCellCenter(cellId); if(!ctr) return;
+    var l=_carteGeo.lieuByCell[cellId][0], d=placeTypeDef(l.type);
+    var r=Math.max(3,px*0.2), lx=ctr.x-px*0.18, ly=ctr.y+px*0.18;
+    ctx.fillStyle=d.color||'#c9a96e'; ctx.strokeStyle='#ffd700'; ctx.lineWidth=Math.max(1,px*0.06);
+    drawCartePlaceShape(ctx, d.shape||'diamond', lx, ly, r);
+    if (px>=26) {
+      ctx.font='italic '+Math.floor(px*0.22)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillStyle='#f0d890'; ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=3;
+      ctx.strokeText(l.name||'', lx, ly+r+1); ctx.fillText(l.name||'', lx, ly+r+1);
+    }
+  });
+
+  // Villes (couche optionnelle) : couleur/forme du type, taille selon le palier.
+  var TIER_RADIUS={major:0.3, town:0.22, hamlet:0.14, poi:0.18};
   if (fl.villes) Object.keys(_carteGeo.villeByCell).forEach(function(cellId){
     var ctr=carteCellCenter(cellId); if(!ctr) return;
-    var r=Math.max(3,px*0.22);
-    ctx.fillStyle='#ffd700'; ctx.strokeStyle='#1a1a22'; ctx.lineWidth=Math.max(1,px*0.05);
-    ctx.beginPath(); ctx.arc(ctr.x,ctr.y,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    if (px>=26) {
-      var nm=_carteGeo.villeByCell[cellId][0].name||'';
+    var v0=_carteGeo.villeByCell[cellId][0], d=placeTypeDef(v0.type), tier=d.tier||'town';
+    var r=Math.max(tier==='hamlet'?2:3, px*(TIER_RADIUS[tier]||0.22));
+    ctx.fillStyle=d.color||'#ffd700'; ctx.strokeStyle='#1a1a22'; ctx.lineWidth=Math.max(1,px*0.05);
+    drawCartePlaceShape(ctx, d.shape||'circle', ctr.x, ctr.y, r);
+    if (px>=(tier==='major'?16:tier==='town'?26:36)) {
+      var nm=v0.name||'';
       ctx.font='bold '+Math.floor(px*0.26)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='top';
       ctx.fillStyle='#fff'; ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=3;
       ctx.strokeText(nm, ctr.x, ctr.y+r+1); ctx.fillText(nm, ctr.x, ctr.y+r+1);
@@ -4649,9 +4997,11 @@ function carteEventToCell(e) {
 function carteOnHover(e) {
   var c=carteEventToCell(e); var s=document.getElementById('carteStatus'); if(!s) return;
   if(!c){ s.innerHTML='&nbsp;'; return; }
-  var vs=(_carteGeo.villeByCell[c.id]||[]).map(function(v){return v.name;});
+  var vs=(_carteGeo.villeByCell[c.id]||[]).map(function(v){return v.name+(v.type?' ('+placeTypeLabel(v.type)+')':'');});
+  var ls=(_carteGeo.lieuByCell[c.id]||[]).map(function(l){return l.name;});
   s.textContent = c.id+' — '+terrainLabel(c.terrain_type)+(c.region_id?' ['+c.region_id+']':'')
     +(vs.length?' • 🏙️ '+vs.join(', '):'')
+    +(ls.length?' • ✴️ '+ls.join(', '):'')
     +((c.points_of_interest&&c.points_of_interest.length)?' • '+c.points_of_interest.length+' POI':'');
 }
 function carteOnClick(e) {
@@ -4774,11 +5124,13 @@ function openRouteForm(fromId, toId) {
   var geo=_carteGeo||carteComputeGeo();
   function villeNameOn(id){ var vs=geo.villeByCell[id]; return vs&&vs.length?vs[0].name:''; }
   function villeIdOn(id){ var vs=geo.villeByCell[id]; return vs&&vs.length?vs[0].id:''; }
+  function lieuOn(id){ var ls=(geo.lieuByCell||{})[id]; return ls&&ls.length?ls[0]:null; }
+  function placeNameOn(id){ var n=villeNameOn(id); if(n) return n; var l=lieuOn(id); return l?l.name:''; }
   var typeOpts=Object.keys(ROUTE_TYPES).map(function(k){return '<option value="'+k+'">'+ROUTE_TYPES[k].icon+' '+esc(ROUTE_TYPES[k].label)+'</option>';}).join('');
   document.getElementById('modalTitle').textContent='Nouvelle route';
   document.getElementById('modalBody').innerHTML=
     '<div class="form-group"><label class="form-label">Tracé</label>'+
-    '<div style="font-size:0.85rem;color:var(--text-secondary)">De <b>'+esc(fromId)+'</b>'+(villeNameOn(fromId)?' ('+esc(villeNameOn(fromId))+')':'')+' → vers <b>'+esc(toId)+'</b>'+(villeNameOn(toId)?' ('+esc(villeNameOn(toId))+')':'')+'</div></div>'+
+    '<div style="font-size:0.85rem;color:var(--text-secondary)">De <b>'+esc(fromId)+'</b>'+(placeNameOn(fromId)?' ('+esc(placeNameOn(fromId))+')':'')+' → vers <b>'+esc(toId)+'</b>'+(placeNameOn(toId)?' ('+esc(placeNameOn(toId))+')':'')+'</div></div>'+
     '<div class="form-group"><label class="form-label">Type de route</label><select class="form-select" id="route_type">'+typeOpts+'</select></div>'+
     '<div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="route_desc" placeholder="Description optionnelle…"></textarea></div>';
   document.getElementById('modalFooter').innerHTML=
@@ -4786,6 +5138,8 @@ function openRouteForm(fromId, toId) {
     '<button class="btn btn-gold" onclick="saveRoute(\''+fromId+'\',\''+toId+'\')">💾 Créer la route</button>';
   openModal();
   window._routeVilleFrom=villeIdOn(fromId); window._routeVilleTo=villeIdOn(toId);
+  var lf=lieuOn(fromId), lt=lieuOn(toId);
+  window._routeLieuFrom=lf?lf.id:''; window._routeLieuTo=lt?lt.id:'';
 }
 function saveRoute(fromId, toId) {
   if(!db.routes) db.routes=[];
@@ -4794,8 +5148,8 @@ function saveRoute(fromId, toId) {
   var newId=String(maxN+1).padStart(6,'0');
   db.routes.push({
     id:newId, type:document.getElementById('route_type').value,
-    from_place:fromId, from_ville_id:window._routeVilleFrom||'',
-    to_place:toId, to_ville_id:window._routeVilleTo||'',
+    from_place:fromId, from_ville_id:window._routeVilleFrom||'', from_lieu_id:window._routeLieuFrom||'',
+    to_place:toId, to_ville_id:window._routeVilleTo||'', to_lieu_id:window._routeLieuTo||'',
     description:document.getElementById('route_desc').value.trim(), notes:[]
   });
   closeModal(); showSection('carte'); toast('Route créée ('+fromId+' → '+toId+')');
@@ -4803,8 +5157,14 @@ function saveRoute(fromId, toId) {
 function carteRoutesListHTML() {
   var routes=db.routes||[];
   if(!routes.length) return '<div style="font-size:0.8rem;color:var(--text-dim)">Aucune route. Passez en mode « Créer une route » et cliquez deux cellules.</div>';
+  // Nom de l'extrémité : ville, sinon lieu remarquable, sinon rien.
+  function endName(vid, lid){
+    var v=vid&&(db.villes||[]).find(function(x){return x.id===vid;}); if(v) return v.name;
+    var l=lid&&(db.lieux||[]).find(function(x){return x.id===lid;}); return l?l.name:'';
+  }
   return routes.map(function(r){ var gi=db.routes.indexOf(r); var d=routeTypeDef(r.type);
-    return '<div class="note-edit-item"><span><span style="color:'+d.color+'">'+d.icon+' '+esc(d.label)+'</span> <span style="font-family:monospace;font-size:0.75rem;color:var(--text-secondary)">'+esc(r.from_place)+' → '+esc(r.to_place)+'</span></span>'+
+    var a=endName(r.from_ville_id,r.from_lieu_id), b=endName(r.to_ville_id,r.to_lieu_id);
+    return '<div class="note-edit-item"><span><span style="color:'+d.color+'">'+d.icon+' '+esc(d.label)+'</span> '+(a||b?'<span style="font-size:0.8rem;color:var(--text-primary)">'+esc(a||'?')+' → '+esc(b||'?')+'</span> ':'')+'<span style="font-family:monospace;font-size:0.75rem;color:var(--text-secondary)">'+esc(r.from_place)+' → '+esc(r.to_place)+'</span></span>'+
       '<button class="note-del-btn" onclick="deleteRoute('+gi+')">✕</button></div>';
   }).join('');
 }
@@ -5528,6 +5888,7 @@ var SECTION_META = {
   races:     {icon:'🧬',  label:'Races',      section:'races'},
   companions:{icon:'🔮',  label:'Compagnons', section:'companions'},
   villes:    {icon:'🏙️', label:'Villes',     section:'villes'},
+  lieux:     {icon:'✴️',  label:'Lieux',      section:'lieux'},
   exploits:  {icon:'⭐',  label:'Exploits',   section:'exploits'},
   quests:    {icon:'📜',  label:'Quêtes',     section:'quests'},
   mounts:    {icon:'🐴',  label:'Montures',   section:'mounts'},
@@ -5630,6 +5991,22 @@ function getAllIssues() {
       warnings.push({msg:'Ville "'+v.name+'" référence une faction inconnue : "'+v.faction_control+'"', section:'villes'});
     if (v.region_id && !rgids.includes(v.region_id))
       warnings.push({msg:'Ville "'+v.name+'" référence une région inconnue : "'+v.region_id+'"', section:'villes'});
+  });
+
+  // ── Lieux remarquables & types de lieux ──
+  var ptids = (db.place_types||[]).map(function(t){return t.id;});
+  var zids = (db.zones||[]).map(function(z){return z.id;});
+  (db.villes||[]).forEach(function(v) {
+    if (v.type && ptids.length && !ptids.includes(v.type))
+      warnings.push({msg:'Ville "'+v.name+'" : type de lieu non référencé "'+v.type+'"', section:'villes'});
+  });
+  (db.lieux||[]).forEach(function(l) {
+    if (l.type && ptids.length && !ptids.includes(l.type))
+      warnings.push({msg:'Lieu "'+l.name+'" : type de lieu non référencé "'+l.type+'"', section:'lieux'});
+    if (l.zone_id && !zids.includes(l.zone_id))
+      warnings.push({msg:'Lieu "'+l.name+'" référence une zone inconnue : "'+l.zone_id+'"', section:'lieux'});
+    if (l.region_id && !rgids.includes(l.region_id))
+      warnings.push({msg:'Lieu "'+l.name+'" référence une région inconnue : "'+l.region_id+'"', section:'lieux'});
   });
 
   (db.exploits||[]).forEach(function(ex) {

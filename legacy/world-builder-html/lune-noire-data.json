@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.31",
+    "version": "1.0.32",
     "notes": [
+      "v1.0.32 : [SCÉNARIO] Les Abysses de la baie (S008_W005) : 6 quêtes « Murmures de la baie » (Tbarak, Brookend, Hishtarland, Saltfen, Harrowbrook, Millford), raid en petite équipe sur l'île d'Hishtarland (recette de potion de respiration aquatique), entrée sous-marine cachée, 2 raids (Temple englouti à 3 groupes, Antre de la créature à 2 groupes), règle d'accès et fiche scenarios.",
       "v1.0.31 : [CARTE] Ligne maritime du sud : ponton dans la cellule de chaque ville ; vraie rotation, chaque étape de la boucle suit un chenal différent de la baie.",
       "v1.0.30 : [CARTE] Feyhin Lokcthat sur une très grosse colline, Porte 2 des enfers dessous (nouveau lieu N008_E007) ; Oldbridge, Ironmere, Deepvale, Millway, Stonemark supprimées ; routes Nightfield–Blackmoor, Hillwatch–Rivercross, Rivercross–Ebonvale, Farwatch–Rivercross, Farwatch–Westmoor ; routes maritimes tracées sur l'eau navigable (waypoints) avec un ponton à chaque escale.",
       "v1.0.29 : [CARTE] Ashgrave, Grimholt, Ridgeholt supprimées ; Unnamed-66 renommée Brookend ; routes Orderfen–Hayfen, Nightward–Nightfield, Tbarak–Brookend et Saltfen–Tbarak (maritimes) créées, Camp de l'Oracle–Horkher remplacée par Camp de l'Oracle–Horker, L'hynn–Sauken et Harrowbrook–Tbarak supprimées ; S006_W004 → côte, S006_W007 → plage ; 16 cellules de plaine au contact d'une forêt passées en lisière ; règles de rendu (plaine, forêt, lisière, routes le long de l'eau) et ligne maritime du sud (2 bateaux, pause 30 s) ajoutées ; routes Duskmere–Blackmoor, Blackmoor–Ebonvale (villes isolées par les suppressions).",
@@ -19489,6 +19490,228 @@
         "basis": "derived_from_game_design.xp_progression + categorie/difficulte/type",
         "note": "Estimation [GD] basee sur categorie+difficulte+type."
       }
+    },
+    {
+      "id": "quest_abysses_1_tbarak",
+      "name": "Murmures de la baie — Tbarak",
+      "description": "Les pêcheurs de Tbarak parlent de filets arrachés par quelque chose venu du fond.",
+      "category": "exploration",
+      "tags": [
+        "abysses_baie_sud",
+        "rumeur",
+        "baie_sud"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Chaîne « Les Abysses de la baie »",
+      "quest_kind": "group",
+      "steps": [
+        "Écouter les rumeurs des PNJ de Tbarak.",
+        "Enquêter sur le phénomène autour de Tbarak.",
+        "Rapporter l'indice trouvé (fragment du secret de la baie)."
+      ],
+      "source_lore": [],
+      "rewards": {},
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [],
+      "region_id": "royaume_drach",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "has_counter_quest": false,
+      "notes": [
+        "Ville : Tbarak (ville_tbarak).",
+        "Les PNJ de la baie parlent de plus en plus des profondeurs à mesure que les quêtes de la chaîne sont terminées."
+      ]
+    },
+    {
+      "id": "quest_abysses_2_brookend",
+      "name": "Murmures de la baie — Brookend",
+      "description": "Au port de Brookend, des marins jurent avoir vu une lueur sous la coque en traversant la baie.",
+      "category": "exploration",
+      "tags": [
+        "abysses_baie_sud",
+        "rumeur",
+        "baie_sud"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Chaîne « Les Abysses de la baie »",
+      "quest_kind": "group",
+      "steps": [
+        "Écouter les rumeurs des PNJ de Brookend.",
+        "Enquêter sur le phénomène autour de Brookend.",
+        "Rapporter l'indice trouvé (fragment du secret de la baie)."
+      ],
+      "source_lore": [],
+      "rewards": {},
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [],
+      "region_id": "royaume_drach",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "has_counter_quest": false,
+      "notes": [
+        "Ville : Brookend (town_0137).",
+        "Les PNJ de la baie parlent de plus en plus des profondeurs à mesure que les quêtes de la chaîne sont terminées."
+      ]
+    },
+    {
+      "id": "quest_abysses_3_hishtarland",
+      "name": "Murmures de la baie — Hishtarland",
+      "description": "Les insulaires d'Hishtarland gardent une vieille légende sur un temple englouti.",
+      "category": "exploration",
+      "tags": [
+        "abysses_baie_sud",
+        "rumeur",
+        "baie_sud"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Chaîne « Les Abysses de la baie »",
+      "quest_kind": "group",
+      "steps": [
+        "Écouter les rumeurs des PNJ de Hishtarland.",
+        "Enquêter sur le phénomène autour de Hishtarland.",
+        "Rapporter l'indice trouvé (fragment du secret de la baie)."
+      ],
+      "source_lore": [],
+      "rewards": {},
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [],
+      "region_id": "",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "has_counter_quest": false,
+      "notes": [
+        "Ville : Hishtarland (hishtarland).",
+        "Les PNJ de la baie parlent de plus en plus des profondeurs à mesure que les quêtes de la chaîne sont terminées."
+      ]
+    },
+    {
+      "id": "quest_abysses_4_saltfen",
+      "name": "Murmures de la baie — Saltfen",
+      "description": "À Saltfen, l'eau des marais devient salée et glacée certaines nuits ; les anciens se taisent.",
+      "category": "exploration",
+      "tags": [
+        "abysses_baie_sud",
+        "rumeur",
+        "baie_sud"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Chaîne « Les Abysses de la baie »",
+      "quest_kind": "group",
+      "steps": [
+        "Écouter les rumeurs des PNJ de Saltfen.",
+        "Enquêter sur le phénomène autour de Saltfen.",
+        "Rapporter l'indice trouvé (fragment du secret de la baie)."
+      ],
+      "source_lore": [],
+      "rewards": {},
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [],
+      "region_id": "",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "has_counter_quest": false,
+      "notes": [
+        "Ville : Saltfen (hamlet_0172).",
+        "Les PNJ de la baie parlent de plus en plus des profondeurs à mesure que les quêtes de la chaîne sont terminées."
+      ]
+    },
+    {
+      "id": "quest_abysses_5_harrowbrook",
+      "name": "Murmures de la baie — Harrowbrook",
+      "description": "Un érudit de Harrowbrook cherche des fragments de cartes marines anciennes.",
+      "category": "exploration",
+      "tags": [
+        "abysses_baie_sud",
+        "rumeur",
+        "baie_sud"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Chaîne « Les Abysses de la baie »",
+      "quest_kind": "group",
+      "steps": [
+        "Écouter les rumeurs des PNJ de Harrowbrook.",
+        "Enquêter sur le phénomène autour de Harrowbrook.",
+        "Rapporter l'indice trouvé (fragment du secret de la baie)."
+      ],
+      "source_lore": [],
+      "rewards": {},
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [],
+      "region_id": "",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "has_counter_quest": false,
+      "notes": [
+        "Ville : Harrowbrook (hamlet_0174).",
+        "Les PNJ de la baie parlent de plus en plus des profondeurs à mesure que les quêtes de la chaîne sont terminées."
+      ]
+    },
+    {
+      "id": "quest_abysses_6_millford",
+      "name": "Murmures de la baie — Millford",
+      "description": "À Millford, on retrouve sur la grève des objets sculptés qui ne viennent d'aucune ville connue.",
+      "category": "exploration",
+      "tags": [
+        "abysses_baie_sud",
+        "rumeur",
+        "baie_sud"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Chaîne « Les Abysses de la baie »",
+      "quest_kind": "group",
+      "steps": [
+        "Écouter les rumeurs des PNJ de Millford.",
+        "Enquêter sur le phénomène autour de Millford.",
+        "Rapporter l'indice trouvé (fragment du secret de la baie)."
+      ],
+      "source_lore": [],
+      "rewards": {},
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [],
+      "region_id": "royaume_drach",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "has_counter_quest": false,
+      "notes": [
+        "Ville : Millford (hamlet_0218).",
+        "Les PNJ de la baie parlent de plus en plus des profondeurs à mesure que les quêtes de la chaîne sont terminées."
+      ]
     }
   ],
   "mounts": [
@@ -20604,6 +20827,71 @@
         "[GD]",
         "[GD] CONTRE-RAID de raid_grande_bataille_kendrhi_t1 — xp_weight contre_raid. Premier contre-raid de la base."
       ]
+    },
+    {
+      "id": "raid_ile_hishtarland",
+      "name": "Le Secret de l'île d'Hishtarland",
+      "description": "Premier raid de la baie, en petite équipe, sur l'île d'Hishtarland. Débloqué quand toutes les quêtes « Murmures de la baie » sont terminées. Il fait tomber la recette de la potion de respiration aquatique.",
+      "min_teams": 1,
+      "min_players_per_team": 3,
+      "min_players_total": 3,
+      "difficulty": 3,
+      "location_ville_id": "hishtarland",
+      "rewards": {
+        "title": "",
+        "reward": "Recette : potion de respiration aquatique",
+        "power": ""
+      },
+      "notes": [
+        "Prérequis : toutes les quêtes de la chaîne « Les Abysses de la baie » (quest_abysses_1_tbarak, quest_abysses_2_brookend, quest_abysses_3_hishtarland, quest_abysses_4_saltfen, quest_abysses_5_harrowbrook, quest_abysses_6_millford)."
+      ],
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": []
+    },
+    {
+      "id": "raid_abysses_temple_englouti",
+      "name": "Les Abysses — Le Temple englouti",
+      "description": "Raid à 3 groupes au fond de la baie (S008_W005) : un ancien temple englouti. Premier des deux chemins ouverts depuis l'entrée cachée.",
+      "min_teams": 3,
+      "min_players_per_team": 5,
+      "min_players_total": 15,
+      "difficulty": 5,
+      "location_ville_id": "",
+      "rewards": {
+        "title": "",
+        "reward": "",
+        "power": ""
+      },
+      "notes": [
+        "Cellule S008_W005 (sous la mer).",
+        "Accès : voir règle rule_abysses_baie_acces."
+      ],
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": []
+    },
+    {
+      "id": "raid_abysses_antre",
+      "name": "Les Abysses — L'Antre de la créature",
+      "description": "Raid à 2 groupes au fond de la baie (S008_W005) : l'antre d'une créature des profondeurs. Second chemin ouvert depuis l'entrée cachée.",
+      "min_teams": 2,
+      "min_players_per_team": 5,
+      "min_players_total": 10,
+      "difficulty": 5,
+      "location_ville_id": "",
+      "rewards": {
+        "title": "",
+        "reward": "",
+        "power": ""
+      },
+      "notes": [
+        "Cellule S008_W005 (sous la mer).",
+        "Accès : voir règle rule_abysses_baie_acces."
+      ],
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": []
     }
   ],
   "timeline": [
@@ -145355,6 +145643,38 @@
       "source_quests": [],
       "source_raids": [],
       "notes": []
+    },
+    {
+      "id": "loot_recette_potion_respiration",
+      "name": "Recette : potion de respiration aquatique",
+      "type": "potion_craft",
+      "rarity": "rare",
+      "description": "Recette permettant de fabriquer la potion qui permet de respirer sous l'eau. Tombe du raid « Le Secret de l'île d'Hishtarland ».",
+      "source_raids": [
+        "raid_ile_hishtarland"
+      ],
+      "min_level": 0,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [],
+      "source_villes": [],
+      "source_quests": [],
+      "notes": []
+    },
+    {
+      "id": "loot_potion_respiration",
+      "name": "Potion de respiration aquatique",
+      "type": "potion_craft",
+      "rarity": "rare",
+      "description": "Permet de respirer sous l'eau et de nager jusqu'au fond de la baie. Indispensable pour atteindre l'entrée des Abysses.",
+      "source_raids": [],
+      "min_level": 0,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [],
+      "source_villes": [],
+      "source_quests": [],
+      "notes": []
     }
   ],
   "dialogues": [
@@ -153103,6 +153423,23 @@
       "lore": "",
       "source": "",
       "notes": []
+    },
+    {
+      "id": "zone_abysses_baie",
+      "name": "Les Abysses de la baie",
+      "type": "raid_zone_mythique",
+      "tome": "",
+      "faction": "",
+      "biome": "Fond marin",
+      "visual_description": "Au fond de la baie, sous la cellule S008_W005 : un donjon caché dans les profondeurs, qui ouvre deux chemins (temple englouti, antre d'une créature).",
+      "atmosphere": "",
+      "strategic_importance": "",
+      "lore": "",
+      "source": "Hubert, 25/10/2026",
+      "notes": [
+        "Entrée cachée : jamais indiquée sur la carte du joueur, elle doit être trouvée.",
+        "Raids : raid_abysses_temple_englouti, raid_abysses_antre."
+      ]
     }
   ],
   "lore": {
@@ -182600,6 +182937,31 @@
       "training_minimum": "",
       "source": "Hubert, revue de la carte du 25/10/2026",
       "notes": []
+    },
+    {
+      "id": "rule_abysses_baie_acces",
+      "name": "Les Abysses de la baie — conditions d'accès",
+      "category": "exploration",
+      "description": "Accès aux Abysses de la baie (S008_W005) : 1) terminer toutes les quêtes « Murmures de la baie » autour de Tbarak, Brookend, Hishtarland, Saltfen, Harrowbrook et Millford — les PNJ en parlent de plus en plus à mesure que la chaîne avance ; 2) réussir le raid en petite équipe « Le Secret de l'île d'Hishtarland », qui fait tomber la recette de la potion de respiration aquatique ; 3) avoir le niveau minimum (à définir) ; 4) boire la potion, plonger depuis le bateau de la ligne maritime du sud quand il passe au-dessus de S008_W005, et nager vers le fond. L'entrée n'est jamais indiquée : les joueurs doivent la trouver. Elle ouvre deux chemins vers deux raids : le Temple englouti (3 groupes) et l'Antre de la créature (2 groupes).",
+      "applies_to": [
+        "zone_abysses_baie",
+        "lieu_abysses_baie",
+        "raid_ile_hishtarland",
+        "raid_abysses_temple_englouti",
+        "raid_abysses_antre",
+        "quest_abysses_1_tbarak",
+        "quest_abysses_2_brookend",
+        "quest_abysses_3_hishtarland",
+        "quest_abysses_4_saltfen",
+        "quest_abysses_5_harrowbrook",
+        "quest_abysses_6_millford"
+      ],
+      "mechanique_jeu": "Accès aux Abysses de la baie (S008_W005) : 1) terminer toutes les quêtes « Murmures de la baie » autour de Tbarak, Brookend, Hishtarland, Saltfen, Harrowbrook et Millford — les PNJ en parlent de plus en plus à mesure que la chaîne avance ; 2) réussir le raid en petite équipe « Le Secret de l'île d'Hishtarland », qui fait tomber la recette de la potion de respiration aquatique ; 3) avoir le niveau minimum (à définir) ; 4) boire la potion, plonger depuis le bateau de la ligne maritime du sud quand il passe au-dessus de S008_W005, et nager vers le fond. L'entrée n'est jamais indiquée : les joueurs doivent la trouver. Elle ouvre deux chemins vers deux raids : le Temple englouti (3 groupes) et l'Antre de la créature (2 groupes).",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, 25/10/2026",
+      "notes": []
     }
   ],
   "game_design": {
@@ -185498,6 +185860,86 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": []
+    },
+    {
+      "id": "lieu_abysses_baie",
+      "name": "Entrée des Abysses (cachée)",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "S008_W005",
+      "region_id": "",
+      "zone_id": "zone_abysses_baie",
+      "faction_control": "",
+      "features": [
+        "Entrée sous-marine cachée, jamais affichée au joueur",
+        "Deux chemins : temple englouti / antre d'une créature"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "Accès : voir règle rule_abysses_baie_acces."
+      ],
+      "entree_cachee": true
     }
   ],
   "route_types": [
@@ -185827,6 +186269,34 @@
         "shallow_sea"
       ],
       "order": "loop"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "scenario_abysses_baie",
+      "name": "Les Abysses de la baie",
+      "cell": "S008_W005",
+      "quests": [
+        "quest_abysses_1_tbarak",
+        "quest_abysses_2_brookend",
+        "quest_abysses_3_hishtarland",
+        "quest_abysses_4_saltfen",
+        "quest_abysses_5_harrowbrook",
+        "quest_abysses_6_millford"
+      ],
+      "rumeur_pnj": "croissante avec le nombre de quêtes terminées",
+      "prerequis_raid": "raid_ile_hishtarland",
+      "recette": "loot_recette_potion_respiration",
+      "potion": "loot_potion_respiration",
+      "niveau_minimum": null,
+      "plongee_depuis": "ligne_maritime_sud",
+      "entree": "lieu_abysses_baie",
+      "entree_cachee": true,
+      "raids": [
+        "raid_abysses_temple_englouti",
+        "raid_abysses_antre"
+      ],
+      "regle": "rule_abysses_baie_acces"
     }
   ]
 }

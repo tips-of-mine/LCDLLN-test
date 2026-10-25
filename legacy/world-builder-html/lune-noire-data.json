@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.28",
+    "version": "1.0.29",
     "notes": [
+      "v1.0.29 : [CARTE] Ashgrave, Grimholt, Ridgeholt supprimées ; Unnamed-66 renommée Brookend ; routes Orderfen–Hayfen, Nightward–Nightfield, Tbarak–Brookend et Saltfen–Tbarak (maritimes) créées, Camp de l'Oracle–Horkher remplacée par Camp de l'Oracle–Horker, L'hynn–Sauken et Harrowbrook–Tbarak supprimées ; S006_W004 → côte, S006_W007 → plage ; 16 cellules de plaine au contact d'une forêt passées en lisière ; règles de rendu (plaine, forêt, lisière, routes le long de l'eau) et ligne maritime du sud (2 bateaux, pause 30 s) ajoutées ; routes Duskmere–Blackmoor, Blackmoor–Ebonvale (villes isolées par les suppressions).",
       "v1.0.28 : [CARTE] Routes : Dustfen–Scalebrook, Millend–Frosthollow, Camp de l'Oracle–Arcanefield (au lieu de Camp de l'Oracle–Kendrhir Vale), Moork–Nightfield–Horkher (au lieu de Moork–Horkher), Feyhin Lokcthat–Mossy Rock–Horkher (au lieu de Feyhin Lokcthat–Horkher). Porte 3 des enfers (S005_W011) : grande vallée, portail dans les sous-sols d'un vieux temple au centre. Porte 5 des enfers (N008_W007) : château fortifié abandonné, à l'écart des routes ; route Sysigie–Northind supprimée (elle traversait la cellule de la Porte 5), trajet par Justfall et Dys.",
       "v1.0.27 : [CARTE] Longmere supprimée, Scalebrook rétablie (S003_W008), Hayfen décalée en N011_W004 ; routes : Sysigie–Verdansur (au lieu de Sysigie–Trueford), Altenberg–Dys–Northind (au lieu d'Altenberg–Northind), Sauken–Arcanefield–Kendrhir Vale (au lieu de Sauken–Kendrhir Vale), Harrowbrook–Tbarak (au lieu de Palais des Maîtres des Dragons–Harrowbrook), route maritime Saltfen–Hishtarland, Scalebrook reliée à Harrowbrook.",
       "v1.0.26 : [CARTE] Revue des villes : 66 supprimées, 4 renommées (Unnamed-147→Millford, Unnamed-146→Claybury, Unnamed-144→Longmere, Unnamed-68→Stonehaven, décalée d'une cellule à l'est), route Sysigie–Altenberg passant par Justfall, réseau routier minimal connecté (58 routes ajoutées), route maritime Hishtarland–Unnamed-66, Tbarak placée en S005_W004 (Royaume Drach).",
@@ -5914,88 +5915,6 @@
       "anchor_tile": "S011_E018"
     },
     {
-      "id": "ridgeholt",
-      "name": "Ridgeholt",
-      "alias": "Ridgeholt",
-      "type": "town",
-      "importance": "regional",
-      "cell": "N012_E018",
-      "coord_x": 31,
-      "coord_y": 38,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: nord"
-      ],
-      "notes": [],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "anchor_tile": "N012_E018"
-    },
-    {
       "id": "clearwater",
       "name": "Clearwater",
       "alias": "Clearwater",
@@ -6368,88 +6287,6 @@
       "features": [
         "Terrain: plain",
         "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "town_0109",
-      "name": "Grimholt",
-      "alias": "Grimholt",
-      "type": "town",
-      "importance": "regional",
-      "cell": "N003_E020",
-      "anchor_tile": "N003_E020",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "lune_noire",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: est"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -7745,88 +7582,6 @@
       "notes": []
     },
     {
-      "id": "town_0128",
-      "name": "Ashgrave",
-      "alias": "Ashgrave",
-      "type": "town",
-      "importance": "regional",
-      "cell": "N002_E018",
-      "anchor_tile": "N002_E018",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "lune_noire",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: est"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "town_0129",
       "name": "Justfall",
       "alias": "Justfall",
@@ -8402,7 +8157,7 @@
     },
     {
       "id": "town_0137",
-      "name": "Unnamed-66",
+      "name": "Brookend",
       "alias": "Unnamed-66",
       "type": "port_town",
       "importance": "regional",
@@ -154184,17 +153939,20 @@
     {
       "id": "coast",
       "description": "Côte",
-      "group": "transition"
+      "group": "transition",
+      "rendu": "Une route qui traverse une cellule de côte longe la côte : le joueur ne marche pas dans l'eau."
     },
     {
       "id": "beach",
       "description": "Plage",
-      "group": "transition"
+      "group": "transition",
+      "rendu": "Une route qui traverse une cellule de plage longe le sable."
     },
     {
       "id": "plain",
       "description": "Plaine",
-      "group": "land"
+      "group": "land",
+      "rendu": "Terrain pas forcément plat : collines, petits monts, champs cultivés, petits bosquets, hautes herbes, pour occuper le terrain et le visuel du joueur."
     },
     {
       "id": "plain_with_river",
@@ -154209,12 +153967,14 @@
     {
       "id": "forest",
       "description": "Forêt",
-      "group": "land"
+      "group": "land",
+      "rendu": "Terrain fortement occupé par une végétation dense, surtout pleine d'arbres. Visibilité réduite à l'intérieur : on ne voit pas loin."
     },
     {
       "id": "forest_edge",
       "description": "Lisière",
-      "group": "land"
+      "group": "land",
+      "rendu": "Transition entre plaine et forêt : de moins en moins d'arbres en sortant de la forêt. La distance de vue se réduit en entrant dans la forêt et se rétablit en en sortant."
     },
     {
       "id": "forest_with_river",
@@ -159624,7 +159384,7 @@
       "id": "N011_W008",
       "name": "cell_N011_W008",
       "region_id": "syzygie",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -160349,7 +160109,7 @@
       "id": "N010_W009",
       "name": "cell_N010_W009",
       "region_id": "syzygie",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -161088,7 +160848,7 @@
       "id": "N009_W009",
       "name": "cell_N009_W009",
       "region_id": "region_premiere_province_empire",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -161240,7 +161000,7 @@
       "id": "N009_W001",
       "name": "cell_N009_W001",
       "region_id": "terres_des_gigantomorphes",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -161832,7 +161592,7 @@
       "id": "N008_W009",
       "name": "cell_N008_W009",
       "region_id": "region_premiere_province_empire",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -162007,7 +161767,7 @@
       "id": "N008_E000",
       "name": "cell_N008_E000",
       "region_id": "foret_elfique",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -162557,7 +162317,7 @@
       "id": "N007_W010",
       "name": "cell_N007_W010",
       "region_id": "region_premiere_province_empire",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -162766,7 +162526,7 @@
       "id": "N007_E001",
       "name": "cell_N007_E001",
       "region_id": "",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -163305,7 +163065,7 @@
       "id": "N006_W010",
       "name": "cell_N006_W010",
       "region_id": "region_premiere_province_empire",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -163495,7 +163255,7 @@
       "id": "N006_E000",
       "name": "cell_N006_E000",
       "region_id": "foret_elfique",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -164065,7 +163825,7 @@
       "id": "N005_W009",
       "name": "cell_N005_W009",
       "region_id": "region_premiere_province_empire",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -164198,7 +163958,7 @@
       "id": "N005_W002",
       "name": "cell_N005_W002",
       "region_id": "",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -164216,7 +163976,7 @@
       "id": "N005_W001",
       "name": "cell_N005_W001",
       "region_id": "",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -164819,7 +164579,7 @@
       "id": "N004_W008",
       "name": "cell_N004_W008",
       "region_id": "region_premiere_province_empire",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -165568,7 +165328,7 @@
       "id": "N003_W007",
       "name": "cell_N003_W007",
       "region_id": "region_premiere_province_empire",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -165587,7 +165347,7 @@
       "id": "N003_W006",
       "name": "cell_N003_W006",
       "region_id": "region_premiere_province_empire",
-      "terrain_type": "plain",
+      "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -172175,7 +171935,7 @@
       "id": "S006_W007",
       "name": "cell_S006_W007",
       "region_id": "",
-      "terrain_type": "coast",
+      "terrain_type": "beach",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -172231,7 +171991,7 @@
       "id": "S006_W004",
       "name": "cell_S006_W004",
       "region_id": "royaume_drach",
-      "terrain_type": "beach",
+      "terrain_type": "coast",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -178513,16 +178273,6 @@
   ],
   "routes": [
     {
-      "id": "000001",
-      "type": "road",
-      "from_place": "N001_W010",
-      "from_ville_id": "ville_lhynn",
-      "to_place": "N003_W003",
-      "to_ville_id": "sauken_glude_of_magistrya",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000003",
       "type": "road",
       "from_place": "N007_E001",
@@ -178602,18 +178352,6 @@
       "from_lieu_id": "lieu_garundel_estate",
       "to_place": "S002_E015",
       "to_ville_id": "ville_moork",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000016",
-      "type": "road",
-      "from_place": "N000_E000",
-      "from_ville_id": "ville_oracle_camp",
-      "from_lieu_id": "",
-      "to_place": "N006_E014",
-      "to_ville_id": "city_horkher",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -178775,30 +178513,6 @@
       "notes": []
     },
     {
-      "id": "000031",
-      "type": "road",
-      "from_place": "N012_E018",
-      "from_ville_id": "ridgeholt",
-      "from_lieu_id": "",
-      "to_place": "N014_E018",
-      "to_ville_id": "town_0112",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000032",
-      "type": "road",
-      "from_place": "N012_E018",
-      "from_ville_id": "ridgeholt",
-      "from_lieu_id": "",
-      "to_place": "N010_E018",
-      "to_ville_id": "town_0121",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000033",
       "type": "road",
       "from_place": "S011_E018",
@@ -178818,30 +178532,6 @@
       "from_lieu_id": "",
       "to_place": "S009_E020",
       "to_ville_id": "town_0125",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000035",
-      "type": "road",
-      "from_place": "N003_E020",
-      "from_ville_id": "town_0109",
-      "from_lieu_id": "",
-      "to_place": "N005_E020",
-      "to_ville_id": "town_0115",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000036",
-      "type": "road",
-      "from_place": "N003_E020",
-      "from_ville_id": "town_0109",
-      "from_lieu_id": "",
-      "to_place": "N001_E020",
-      "to_ville_id": "town_0126",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -178955,30 +178645,6 @@
       "notes": []
     },
     {
-      "id": "000046",
-      "type": "road",
-      "from_place": "N002_E018",
-      "from_ville_id": "town_0128",
-      "from_lieu_id": "",
-      "to_place": "N004_E018",
-      "to_ville_id": "town_0131",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000047",
-      "type": "road",
-      "from_place": "N011_E020",
-      "from_ville_id": "farwatch",
-      "from_lieu_id": "",
-      "to_place": "N012_E018",
-      "to_ville_id": "ridgeholt",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000048",
       "type": "road",
       "from_place": "S008_W013",
@@ -179010,18 +178676,6 @@
       "from_lieu_id": "",
       "to_place": "N003_E011",
       "to_ville_id": "town_0136",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000051",
-      "type": "road",
-      "from_place": "N003_E020",
-      "from_ville_id": "town_0109",
-      "from_lieu_id": "",
-      "to_place": "N002_E018",
-      "to_ville_id": "town_0128",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -179130,18 +178784,6 @@
       "from_lieu_id": "",
       "to_place": "S002_E011",
       "to_ville_id": "hamlet_0196",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000061",
-      "type": "road",
-      "from_place": "N002_E018",
-      "from_ville_id": "town_0128",
-      "from_lieu_id": "",
-      "to_place": "N002_E015",
-      "to_ville_id": "hamlet_0201",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -179360,7 +179002,8 @@
       "to_ville_id": "town_0137",
       "to_lieu_id": "",
       "description": "",
-      "notes": []
+      "notes": [],
+      "sea_line_id": "ligne_maritime_sud"
     },
     {
       "id": "000082",
@@ -179423,18 +179066,6 @@
       "notes": []
     },
     {
-      "id": "000087",
-      "type": "road",
-      "from_place": "S006_W008",
-      "from_ville_id": "hamlet_0174",
-      "from_lieu_id": "",
-      "to_place": "S005_W004",
-      "to_ville_id": "ville_tbarak",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000088",
       "type": "sea_route",
       "from_place": "S008_W010",
@@ -179444,7 +179075,8 @@
       "to_ville_id": "hishtarland",
       "to_lieu_id": "",
       "description": "",
-      "notes": []
+      "notes": [],
+      "sea_line_id": "ligne_maritime_sud"
     },
     {
       "id": "000089",
@@ -179514,6 +179146,92 @@
       "from_lieu_id": "",
       "to_place": "N006_E011",
       "to_ville_id": "hamlet_0206",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000095",
+      "type": "road",
+      "from_place": "N011_W008",
+      "from_ville_id": "hamlet_0189",
+      "from_lieu_id": "",
+      "to_place": "N011_W004",
+      "to_ville_id": "hamlet_0153",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000096",
+      "type": "road",
+      "from_place": "N000_E000",
+      "from_ville_id": "ville_oracle_camp",
+      "from_lieu_id": "",
+      "to_place": "N004_E009",
+      "to_ville_id": "horker",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000097",
+      "type": "road",
+      "from_place": "N001_E011",
+      "from_ville_id": "town_0127",
+      "from_lieu_id": "",
+      "to_place": "N002_E015",
+      "to_ville_id": "hamlet_0201",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000098",
+      "type": "sea_route",
+      "from_place": "S005_W004",
+      "from_ville_id": "ville_tbarak",
+      "from_lieu_id": "",
+      "to_place": "S008_W002",
+      "to_ville_id": "town_0137",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [],
+      "sea_line_id": "ligne_maritime_sud"
+    },
+    {
+      "id": "000099",
+      "type": "sea_route",
+      "from_place": "S008_W010",
+      "from_ville_id": "hamlet_0172",
+      "from_lieu_id": "",
+      "to_place": "S005_W004",
+      "to_ville_id": "ville_tbarak",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [],
+      "sea_line_id": "ligne_maritime_sud"
+    },
+    {
+      "id": "000100",
+      "type": "road",
+      "from_place": "N001_E020",
+      "from_ville_id": "town_0126",
+      "from_lieu_id": "",
+      "to_place": "N004_E018",
+      "to_ville_id": "town_0131",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000101",
+      "type": "road",
+      "from_place": "N004_E018",
+      "from_ville_id": "town_0131",
+      "from_lieu_id": "",
+      "to_place": "N005_E020",
+      "to_ville_id": "town_0115",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -183180,6 +182898,90 @@
       "training_minimum": "",
       "source": "[HS] Page 26",
       "notes": []
+    },
+    {
+      "id": "rule_rendu_routes_eau",
+      "name": "Routes le long de l'eau",
+      "category": "rendu_monde",
+      "description": "Une route qui coupe une cellule de côte longe la côte, et une route qui coupe une rivière la longe : le joueur ne marche jamais dans l'eau. Une route qui coupe une cellule de plage longe le sable.",
+      "applies_to": [
+        "coast",
+        "beach",
+        "plain_with_river",
+        "forest_with_river",
+        "swamp_with_river"
+      ],
+      "mechanique_jeu": "Une route qui coupe une cellule de côte longe la côte, et une route qui coupe une rivière la longe : le joueur ne marche jamais dans l'eau. Une route qui coupe une cellule de plage longe le sable.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, revue de la carte du 25/10/2026",
+      "notes": []
+    },
+    {
+      "id": "rule_rendu_plaine",
+      "name": "Relief et occupation de la plaine",
+      "category": "rendu_monde",
+      "description": "Terrain pas forcément plat : collines, petits monts, champs cultivés, petits bosquets, hautes herbes, pour occuper le terrain et le visuel du joueur.",
+      "applies_to": [
+        "plain"
+      ],
+      "mechanique_jeu": "Terrain pas forcément plat : collines, petits monts, champs cultivés, petits bosquets, hautes herbes, pour occuper le terrain et le visuel du joueur.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, revue de la carte du 25/10/2026",
+      "notes": []
+    },
+    {
+      "id": "rule_rendu_foret",
+      "name": "Forêt dense et visibilité",
+      "category": "rendu_monde",
+      "description": "Terrain fortement occupé par une végétation dense, surtout pleine d'arbres. Visibilité réduite à l'intérieur : on ne voit pas loin.",
+      "applies_to": [
+        "forest",
+        "forest_with_river",
+        "forest_with_lake"
+      ],
+      "mechanique_jeu": "Terrain fortement occupé par une végétation dense, surtout pleine d'arbres. Visibilité réduite à l'intérieur : on ne voit pas loin.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, revue de la carte du 25/10/2026",
+      "notes": []
+    },
+    {
+      "id": "rule_rendu_lisiere",
+      "name": "Lisière entre plaine et forêt",
+      "category": "rendu_monde",
+      "description": "Les cellules entre plaine et forêt sont des lisières. Transition entre plaine et forêt : de moins en moins d'arbres en sortant de la forêt. La distance de vue se réduit en entrant dans la forêt et se rétablit en en sortant.",
+      "applies_to": [
+        "forest_edge"
+      ],
+      "mechanique_jeu": "Les cellules entre plaine et forêt sont des lisières. Transition entre plaine et forêt : de moins en moins d'arbres en sortant de la forêt. La distance de vue se réduit en entrant dans la forêt et se rétablit en en sortant.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, revue de la carte du 25/10/2026",
+      "notes": []
+    },
+    {
+      "id": "rule_ligne_maritime_sud",
+      "name": "Ligne maritime Tbarak – Brookend – Hishtarland – Saltfen",
+      "category": "transport",
+      "description": "Une même ligne en boucle Tbarak → Brookend → Hishtarland → Saltfen → Tbarak, desservie par 2 bateaux en positions opposées sur la boucle. Pause de 30 secondes dans chaque port avant de repartir.",
+      "applies_to": [
+        "ville_tbarak",
+        "town_0137",
+        "hishtarland",
+        "hamlet_0172"
+      ],
+      "mechanique_jeu": "Une même ligne en boucle Tbarak → Brookend → Hishtarland → Saltfen → Tbarak, desservie par 2 bateaux en positions opposées sur la boucle. Pause de 30 secondes dans chaque port avant de repartir.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, revue de la carte du 25/10/2026",
+      "notes": []
     }
   ],
   "game_design": {
@@ -186292,6 +186094,23 @@
       "shape": "diamond",
       "tier": "poi",
       "categorie": "lieu"
+    }
+  ],
+  "sea_lines": [
+    {
+      "id": "ligne_maritime_sud",
+      "name": "Ligne maritime du sud",
+      "stops": [
+        "ville_tbarak",
+        "town_0137",
+        "hishtarland",
+        "hamlet_0172"
+      ],
+      "loop": true,
+      "boats": 2,
+      "boat_spacing": "opposite",
+      "stop_seconds": 30,
+      "rule_id": "rule_ligne_maritime_sud"
     }
   ]
 }

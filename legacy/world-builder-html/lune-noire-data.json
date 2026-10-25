@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.26",
+    "version": "1.0.27",
     "notes": [
+      "v1.0.27 : [CARTE] Longmere supprimée, Scalebrook rétablie (S003_W008), Hayfen décalée en N011_W004 ; routes : Sysigie–Verdansur (au lieu de Sysigie–Trueford), Altenberg–Dys–Northind (au lieu d'Altenberg–Northind), Sauken–Arcanefield–Kendrhir Vale (au lieu de Sauken–Kendrhir Vale), Harrowbrook–Tbarak (au lieu de Palais des Maîtres des Dragons–Harrowbrook), route maritime Saltfen–Hishtarland, Scalebrook reliée à Harrowbrook.",
       "v1.0.26 : [CARTE] Revue des villes : 66 supprimées, 4 renommées (Unnamed-147→Millford, Unnamed-146→Claybury, Unnamed-144→Longmere, Unnamed-68→Stonehaven, décalée d'une cellule à l'est), route Sysigie–Altenberg passant par Justfall, réseau routier minimal connecté (58 routes ajoutées), route maritime Hishtarland–Unnamed-66, Tbarak placée en S005_W004 (Royaume Drach).",
       "v1.0.25 : [CARTE] Fusion de carte_export.json (éditeur de carte v23) : 17 ville(s) enrichie(s), 115 ajoutée(s) (hameaux, bourgs, villes, avec leur fiche descriptive), 17 lieu(x) remarquable(s) dans la nouvelle collection « lieux », 19 route(s), référentiels place_types (32 types de lieux), terrain_types et route_types. En cas de conflit, la v1.0.24 prime.",
       "v1.0.24 : [GD] 12 classes converties en structure HYBRIDE ALTERNÉE (Mage, Chaman, Prêtre de la Lune Noire, Menthats, Inquisiteur, Paladin, Prêtre de la Grâce, Prêtre du Jugement, Démoniste, Tourmenteur, Sorcier de sang, Archimage). 3 branches fixes (single/aoe/def) dont le TYPE alterne : niveaux impairs = soin unitaire + attaque zone ; niveaux pairs = attaque unitaire + soin zone ; défense à tous les niveaux. Soins thématisés par classe (drain/sang pour les sombres, lumière pour les sacrés, esprits pour le chaman, arcane pour les mages). Icônes à régénérer pour ces classes.",
@@ -8732,8 +8733,8 @@
       "alias": "Hayfen",
       "type": "fishing_hamlet",
       "importance": "local",
-      "cell": "N012_W004",
-      "anchor_tile": "N012_W004",
+      "cell": "N011_W004",
+      "anchor_tile": "N011_W004",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
@@ -9875,88 +9876,6 @@
       "notes": []
     },
     {
-      "id": "hamlet_0215",
-      "name": "Longmere",
-      "alias": "Unnamed-144",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "N012_W008",
-      "anchor_tile": "N012_W008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "chevaliers_de_la_justice",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "hamlet_0217",
       "name": "Claybury",
       "alias": "Unnamed-146",
@@ -10056,6 +9975,88 @@
       "features": [
         "Terrain: plain",
         "Région: sud"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": []
+    },
+    {
+      "id": "hamlet_0157",
+      "name": "Scalebrook",
+      "alias": "Scalebrook",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "S003_W008",
+      "anchor_tile": "S003_W008",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "ordre_des_dragons",
+      "region_id": "",
+      "housing_count": null,
+      "population": null,
+      "services": [],
+      "features": [
+        "Terrain: plain",
+        "Région: ouest"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -178576,18 +178577,6 @@
       "notes": []
     },
     {
-      "id": "000008",
-      "type": "road",
-      "from_place": "N005_W012",
-      "from_ville_id": "ville_altenberg",
-      "from_lieu_id": "",
-      "to_place": "N007_W005",
-      "to_ville_id": "ville_northind",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000009",
       "type": "road",
       "from_place": "N001_W010",
@@ -178655,18 +178644,6 @@
       "from_lieu_id": "",
       "to_place": "S002_E015",
       "to_ville_id": "ville_moork",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000015",
-      "type": "road",
-      "from_place": "N003_W003",
-      "from_ville_id": "sauken_glude_of_magistrya",
-      "from_lieu_id": "",
-      "to_place": "N007_E001",
-      "to_ville_id": "kendrhir_vale",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -178751,18 +178728,6 @@
       "from_lieu_id": "",
       "to_place": "N005_W012",
       "to_ville_id": "ville_altenberg",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000023",
-      "type": "road",
-      "from_place": "N011_W008",
-      "from_ville_id": "hamlet_0189",
-      "from_lieu_id": "",
-      "to_place": "N012_W008",
-      "to_ville_id": "hamlet_0215",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -179260,18 +179225,6 @@
       "notes": []
     },
     {
-      "id": "000065",
-      "type": "road",
-      "from_place": "N009_W011",
-      "from_ville_id": "ville_sysigie",
-      "from_lieu_id": "",
-      "to_place": "N011_W014",
-      "to_ville_id": "hamlet_0148",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000066",
       "type": "road",
       "from_place": "N009_W011",
@@ -179380,18 +179333,6 @@
       "notes": []
     },
     {
-      "id": "000075",
-      "type": "road",
-      "from_place": "S003_W004",
-      "from_ville_id": "city_dragon_palace",
-      "from_lieu_id": "",
-      "to_place": "S006_W008",
-      "to_ville_id": "hamlet_0174",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000076",
       "type": "road",
       "from_place": "N010_E005",
@@ -179409,7 +179350,7 @@
       "from_place": "N007_W005",
       "from_ville_id": "ville_northind",
       "from_lieu_id": "",
-      "to_place": "N012_W004",
+      "to_place": "N011_W004",
       "to_ville_id": "hamlet_0153",
       "to_lieu_id": "",
       "description": "",
@@ -179471,6 +179412,90 @@
       "from_lieu_id": "",
       "to_place": "S005_W004",
       "to_ville_id": "ville_tbarak",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000083",
+      "type": "road",
+      "from_place": "N009_W011",
+      "from_ville_id": "ville_sysigie",
+      "from_lieu_id": "",
+      "to_place": "N010_W015",
+      "to_ville_id": "town_0119",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000084",
+      "type": "road",
+      "from_place": "N005_W012",
+      "from_ville_id": "ville_altenberg",
+      "from_lieu_id": "",
+      "to_place": "N005_W009",
+      "to_ville_id": "dys",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000085",
+      "type": "road",
+      "from_place": "N005_W009",
+      "from_ville_id": "dys",
+      "from_lieu_id": "",
+      "to_place": "N007_W005",
+      "to_ville_id": "ville_northind",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000086",
+      "type": "road",
+      "from_place": "N003_W003",
+      "from_ville_id": "sauken_glude_of_magistrya",
+      "from_lieu_id": "",
+      "to_place": "N004_E001",
+      "to_ville_id": "hamlet_0205",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000087",
+      "type": "road",
+      "from_place": "S006_W008",
+      "from_ville_id": "hamlet_0174",
+      "from_lieu_id": "",
+      "to_place": "S005_W004",
+      "to_ville_id": "ville_tbarak",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000088",
+      "type": "sea_route",
+      "from_place": "S008_W010",
+      "from_ville_id": "hamlet_0172",
+      "from_lieu_id": "",
+      "to_place": "S011_W006",
+      "to_ville_id": "hishtarland",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000089",
+      "type": "road",
+      "from_place": "S006_W008",
+      "from_ville_id": "hamlet_0174",
+      "from_lieu_id": "",
+      "to_place": "S003_W008",
+      "to_ville_id": "hamlet_0157",
       "to_lieu_id": "",
       "description": "",
       "notes": []

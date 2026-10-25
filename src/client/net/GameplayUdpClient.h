@@ -50,6 +50,12 @@ namespace engine::client
 
 		/// Send TalkRequest (e.g. `vendor:1` to open shop).
 		bool SendTalkRequest(uint32_t clientId, std::string_view targetId);
+		/// ETAPE5.1 — envoie une ligne de chat de proximité (Dire, Crier) au shard
+		/// (MessageKind::ChatSend). Le shard la redistribue aux joueurs à portée
+		/// (Dire 25 m, Crier 200 m) via MessageKind::ChatRelay.
+		/// \param channel valeur wire de engine::net::ChatChannel (Say ou Yell).
+		/// \param text texte déjà débarrassé de son préfixe /s ou /y (tronqué à 256 octets, sans couper un caractère UTF-8).
+		bool SendChatSend(uint32_t clientId, uint8_t channel, std::string_view text);
 
 		/// SP2 — le joueur accepte une quête proposée par le PNJ \p giverTargetId
 		/// (le serveur revalide l'éligibilité/le catalogue avant journalisation).

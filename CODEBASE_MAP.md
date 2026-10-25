@@ -192,6 +192,9 @@ RenderModel
 > `characters.owner_shard_id` / `owner_generation` (migration 0077) à l'entrée en
 > jeu ; seul le shard propriétaire écrit l'état du personnage, position comprise
 > (`ServerApp::SaveCharacterToDb`, contrôle `db::CheckCharacterOwnership`).
+>
+> **Règle (ETAPE5.1)** : Dire et Crier passent par le shard (UDP, filtre de
+> distance) ; les autres canaux par le master. Voir `src/masterd/chat/ChatChannelRouting.h`.
 
 ### Comptes et validation
 | Fichier | Rôle |

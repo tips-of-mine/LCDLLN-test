@@ -1,4 +1,5 @@
 #include "src/masterd/handlers/chat/ChatRelayHandler.h"
+#include "src/masterd/chat/ChatChannelRouting.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/net/ChatSystem.h"
@@ -70,6 +71,41 @@ namespace engine::server
 			if (!pkt.empty())
 				m_server->Send(connId, pkt);
 			return;
+		}
+
+		// ETAPE5.1 — Dire et Crier sont du chat de proximité, relayé par le shard
+		// (le master ne connaît pas les positions et les diffusait à tout le monde).
+		// Le canal Server est réservé aux annonces du serveur. Les deux sont refusés
+		// avec une erreur explicite : un client à jour ne les envoie plus ici.
+		// Exception : une commande (« /help », « /time »…) tapée sans préfixe de canal
+		// arrive sur Dire ; elle est traitée par le ChatCommandRouter plus bas et n'est
+		// jamais diffusée, on la laisse donc passer.
+		const bool isSlashCommand = !parsed->text.empty() && parsed->text.front() == '/';
+		switch (chat::RouteClientChatChannel(parsed->channel))
+		{
+		case chat::ChatChannelRoute::Shard:
+		{
+			if (isSlashCommand)
+				break;
+			LOG_INFO(Net, "[ChatRelayHandler] canal de proximite {} refuse : relaye par le shard (conn_id={})",
+				parsed->channel, connId);
+			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "proximity chat is relayed by the shard",
+				requestId, sessionIdHeader);
+			if (!pkt.empty())
+				m_server->Send(connId, pkt);
+			return;
+		}
+		case chat::ChatChannelRoute::Forbidden:
+		{
+			LOG_WARN(Net, "[ChatRelayHandler] canal Server refuse depuis un client (conn_id={})", connId);
+			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "server channel is reserved",
+				requestId, sessionIdHeader);
+			if (!pkt.empty())
+				m_server->Send(connId, pkt);
+			return;
+		}
+		case chat::ChatChannelRoute::Master:
+			break;
 		}
 
 		if (parsed->text.empty())

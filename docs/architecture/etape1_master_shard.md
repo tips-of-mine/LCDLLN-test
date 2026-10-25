@@ -7,8 +7,8 @@ sa propre PR :
 | Chantier | Sujet | Statut |
 |---|---|---|
 | 1.1 | `masterd` relais pur : plus aucune simulation de gameplay dans le master | livré |
-| 1.2 | Un seul propriétaire par personnage (verrou attribué par le master) | cette PR |
-| 5.1 | Chat de proximité (Dire, Crier) au shard, canaux globaux au master | PR suivante |
+| 1.2 | Un seul propriétaire par personnage (verrou attribué par le master) | livré |
+| 5.1 | Chat de proximité (Dire, Crier) au shard, canaux globaux au master | cette PR |
 
 Règle d'architecture visée : **`masterd` est un relais pur, sans simulation de
 gameplay ; toute la simulation vit dans `shardd`.**
@@ -149,3 +149,50 @@ s'active donc qu'une fois master et shard déployés avec la migration appliqué
 ### Déploiement
 
 Migration 0077 + master + shard. Le client n'est pas modifié.
+
+## 5.1 — Chat de proximité au shard
+
+Avant : toutes les lignes de chat partaient au master, qui diffusait Dire et Crier
+à **toutes** les sessions connectées, sans notion de distance. Le shard savait déjà
+filtrer par distance, mais le client ne lui envoyait jamais de chat et n'affichait
+pas les lignes qu'il recevait de lui.
+
+### Répartition des canaux
+
+| Canal | Relayé par | Pourquoi |
+|---|---|---|
+| Dire (25 m), Crier (200 m) | shard (UDP `ChatSend` / `ChatRelay`) | seul à connaître les positions |
+| Chuchotement, groupe, guilde, zone, global, raid, amis | master (TCP 45 / 46) | connaît toutes les sessions et les comptes |
+| Server | aucun client | réservé aux annonces du serveur |
+
+Règle pure : `src/masterd/chat/ChatChannelRouting.h` (`RouteClientChatChannel`),
+testée par `chat_channel_routing_tests`.
+
+### Modifications
+
+- **Client** (`Engine.cpp`) : Dire et Crier partent au shard par
+  `GameplayUdpClient::SendChatSend` (texte coupé à 256 octets sans casser un caractère
+  UTF-8). Hors du monde (pas de session UDP), la ligne part sur le canal Global du
+  master. Les lignes `ChatRelay` reçues du shard sont affichées dans le panneau de
+  chat (`PumpGameplayPackets` → `ChatUiPresenter::PushNetworkLine`), en plus des bulles.
+- **Shard** (`ServerApp::HandleChatSend`) : l'expéditeur affiché est le nom du
+  personnage (repli `P<id>` sans nom) ; le texte passe par le même `chat::Sanitize`
+  que le master (troncature UTF-8, caractères invisibles, liens non autorisés).
+- **Master** (`ChatRelayHandler`) : refuse Dire et Crier (`BAD_REQUEST`, « proximity
+  chat is relayed by the shard ») et le canal Server envoyé par un client. Une
+  commande (« /help », « /time »…) tapée sur Dire reste acceptée : elle est traitée
+  par le `ChatCommandRouter` et jamais diffusée.
+
+Le protocole UDP ne change pas (`ChatSend` = 15 et `ChatRelay` = 16 existaient déjà),
+`kProtocolVersion` reste à 15.
+
+### Déploiement
+
+Master, shard et client ensemble : un client ancien qui envoie Dire au nouveau
+master reçoit une erreur, et un nouveau client a besoin d'un shard qui nettoie et
+nomme correctement les lignes.
+
+### Hors périmètre
+
+- Pas de canal « emote » textuel (`/e`, `/me`) : les gestes restent locaux.
+- La liste d'ignorés du shard compare des noms affichés, celle du master des comptes.

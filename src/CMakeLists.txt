@@ -41,6 +41,8 @@ if(WIN32)
   add_executable(server_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_win.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
+    # ETAPE5.1 : le shard nettoie le chat de proximité avec le même sanitizer que le master.
+    ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     # SP3 anniversaires (2026-07-18) : buffs de gateau (utilise par ServerApp).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/anniversary/CakeBuffLibrary.cpp
     # Roadmap-3 (2026-07-19) : effets des consommables de ceinture.
@@ -414,6 +416,10 @@ elseif(UNIX)
   target_link_libraries(locale_strings_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
   target_compile_options(locale_strings_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME locale_strings_tests COMMAND locale_strings_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # ETAPE5.1 : répartition des canaux de chat (proximité au shard, le reste au master).
+  lcdlln_add_simple_test(chat_channel_routing_tests
+    ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatChannelRoutingTests.cpp)
 
   # CMANGOS.01 (Phase 2.01a) : ChatSanitizer pure unit tests (no DB)
   add_executable(chat_sanitizer_tests
@@ -1341,6 +1347,8 @@ elseif(UNIX)
     # (membre m_moderationAuditLog) → on l'ajoute ici.
     ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
+    # ETAPE5.1 : le shard nettoie le chat de proximité avec le même sanitizer que le master.
+    ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     # SP3 anniversaires (2026-07-18) : buffs de gateau (utilise par ServerApp).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/anniversary/CakeBuffLibrary.cpp
     # Roadmap-3 (2026-07-19) : effets des consommables de ceinture.

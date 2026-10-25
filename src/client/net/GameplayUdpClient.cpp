@@ -261,6 +261,35 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendChatSend(uint32_t clientId, uint8_t channel, std::string_view text)
+	{
+		engine::server::ChatSendRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.channel = channel;
+		// Le décodeur shard rejette un texte > 256 octets : on coupe ici, sans
+		// casser un caractère UTF-8 multi-octets (on recule sur les octets de suite 10xxxxxx).
+		constexpr size_t kMaxChatBytes = 256u;
+		size_t length = std::min(text.size(), kMaxChatBytes);
+		while (length > 0u && length < text.size()
+			&& (static_cast<unsigned char>(text[length]) & 0xC0u) == 0x80u)
+		{
+			--length;
+		}
+		msg.text = std::string(text.substr(0, length));
+		const std::vector<std::byte> packet = engine::server::EncodeChatSend(msg);
+		if (packet.empty())
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] ChatSend encode FAILED (client_id={}, channel={})", clientId, channel);
+			return false;
+		}
+		const bool ok = SendBytes(packet);
+		if (!ok)
+		{
+			LOG_WARN(Net, "[GameplayUdpClient] ChatSend FAILED (client_id={}, channel={})", clientId, channel);
+		}
+		return ok;
+	}
+
 	bool GameplayUdpClient::SendQuestAcceptRequest(uint32_t clientId, const std::string& questId, const std::string& giverTargetId)
 	{
 		engine::server::QuestAcceptRequestMessage msg{};

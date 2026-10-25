@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.37",
+    "version": "1.0.38",
     "notes": [
+      "v1.0.38 : [RENDU] Règles des rivières (méandres, petits rapides) et des ponts (pierre taillée là où une route traverse une rivière — 1 ponts repérés dans hydrography.bridges ; petits ponts en bois ailleurs).",
       "v1.0.37 : [CARTE] Rivière de la cascade (N003_W005) : N004_W005 → N005_W005 → N006_W005 → Northind (sur le côté, ponts) → N007_W004 → N008_W004, puis bras ouest N009_W004 → N010_W004 → Hayfen → mer (N012_W004) et bras est N009_W003 → mer (N010_W002) ; rivière de la source de N008_W002 → N009_W002 → mer (N010_W002).",
       "v1.0.36 : [CARTE] Île de Deepbrook décalée d'une cellule vers le haut (N012_E002–E003, Deepbrook en N012_E002, navette retracée) ; rivière de Verdansur : source dans la ville, bras sud (N009_W015 → mer) et bras nord (N010_W014 → N011_W014 → mer).",
       "v1.0.35 : [CARTE] Hydrographie du nord (nouvelle clé hydrography) : grand lac de l'ouest (N007_E005–E006), grand lac de l'est (N007_E007–E008), lac du sud (N005_E008) ; rivières des deux lacs (via N008_E007), du lac du sud (via N006_E007) et d'Ashwick (N008_E006 → N009_E005 → N010_E005 → mer), qui traverse Ashwick hors du centre avec 2 ponts.",
@@ -183193,6 +183194,36 @@
       "notes": [
         "À compléter : destinations et lignes maritimes."
       ]
+    },
+    {
+      "id": "rule_rendu_rivieres",
+      "name": "Rendu des rivières",
+      "category": "rendu_monde",
+      "description": "Dans le jeu, les rivières ne sont jamais droites : elles serpentent (méandres, zigzags) entre les cellules de leur tracé, qui ne donne que l'ordre des cellules traversées. Elles comportent par endroits de petits rapides.",
+      "applies_to": [
+        "hydrography"
+      ],
+      "mechanique_jeu": "Dans le jeu, les rivières ne sont jamais droites : elles serpentent (méandres, zigzags) entre les cellules de leur tracé, qui ne donne que l'ordre des cellules traversées. Elles comportent par endroits de petits rapides.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, revue de la carte du 25/10/2026",
+      "notes": []
+    },
+    {
+      "id": "rule_rendu_ponts",
+      "name": "Ponts sur les rivières",
+      "category": "rendu_monde",
+      "description": "Là où une route traverse une rivière, un pont en pierre taillée permet de passer (liste hydrography.bridges). Ailleurs, quelques petits ponts en bois permettent de traverser à certains endroits où il n'y a pas de pont de route.",
+      "applies_to": [
+        "hydrography"
+      ],
+      "mechanique_jeu": "Là où une route traverse une rivière, un pont en pierre taillée permet de passer (liste hydrography.bridges). Ailleurs, quelques petits ponts en bois permettent de traverser à certains endroits où il n'y a pas de pont de route.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, revue de la carte du 25/10/2026",
+      "notes": []
     }
   ],
   "game_design": {
@@ -186757,6 +186788,24 @@
           "Se jette dans la mer en N010_W002."
         ]
       }
-    ]
+    ],
+    "bridges": [
+      {
+        "id": "pont_000003_riv_ashwick_0",
+        "type": "pierre_taillee",
+        "route_id": "000003",
+        "river_id": "riv_ashwick",
+        "cell": "N008_E006",
+        "notes": [
+          "Route Kendrhir Vale – Feyhin Lokcthat"
+        ]
+      }
+    ],
+    "regles": {
+      "meandres": true,
+      "rapides": true,
+      "ponts_routes": "pierre_taillee",
+      "ponts_secondaires": "bois"
+    }
   }
 }

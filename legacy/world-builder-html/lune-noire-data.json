@@ -3,7 +3,7 @@
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
     "version": "1.0.40",
     "notes": [
-      "v1.0.40 : [CARTE] Leviathan Jungle (ville et lieu) déplacée de N009_E011 en N012_E012.",
+      "v1.0.40 : [CARTE] Leviathan Jungle (ville et lieu) déplacée de N009_E011 en N012_E012 ; route Mossy Rock → Leviathan Jungle ajustée.",
       "v1.0.39 : [CARTE+SCÉNARIO] Volcan actif sur 12 cellules (cratère fumant en S008_E014, cheminées de lave) ; scénario « Le Cœur du volcan » : 4 quêtes (Der hem Shelsem, Moork, Shadowfen, Frosthollow), recette de potion de résistance à la chaleur, entrée par le cratère, raid à 4 groupes contre une créature de la lave.",
       "v1.0.38 : [RENDU] Règles des rivières (méandres, petits rapides) et des ponts (pierre taillée là où une route traverse une rivière — 1 ponts repérés dans hydrography.bridges ; petits ponts en bois ailleurs).",
       "v1.0.37 : [CARTE] Rivière de la cascade (N003_W005) : N004_W005 → N005_W005 → N006_W005 → Northind (sur le côté, ponts) → N007_W004 → N008_W004, puis bras ouest N009_W004 → N010_W004 → Hayfen → mer (N012_W004) et bras est N009_W003 → mer (N010_W002) ; rivière de la source de N008_W002 → N009_W002 → mer (N010_W002).",
@@ -179060,12 +179060,12 @@
     {
       "id": "000059",
       "type": "road",
-      "from_place": "N012_E012",
-      "from_ville_id": "leviathan_jungle",
+      "from_place": "N006_E011",
+      "from_ville_id": "hamlet_0206",
       "from_lieu_id": "",
-      "to_place": "N006_E011",
-      "to_ville_id": "hamlet_0206",
-      "to_lieu_id": "",
+      "to_place": "N012_E012",
+      "to_ville_id": "leviathan_jungle",
+      "to_lieu_id": "lieu_leviathan_jungle",
       "description": "",
       "notes": []
     },

@@ -4716,6 +4716,9 @@ var MAX_CARTE_ZOOM = 12;      // zoom maximum demandé : ×12
 // Côté physique d'une cellule (km), repris de map-viewer-v23 (cellSizeKm). Sert
 // à estimer la surface d'une région : nb_cellules × CARTE_CELL_SIDE_KM².
 var CARTE_CELL_SIDE_KM = 10;
+// Zoom minimal d'affichage des villes par palier de type de lieu (cités et villes
+// toujours visibles ; hameaux et villages seulement en vue rapprochée).
+var CARTE_TIER_MIN_ZOOM = { major:1, town:1, hamlet:5, poi:1 };
 window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null,
   filters:{ villes:true, lieux:true, routes:true, poi:true, regions:false, water:true, islands:true } };
 if (!window._carteState.filters) window._carteState.filters = { villes:true, lieux:true, routes:true, poi:true, regions:false, water:true, islands:true };
@@ -4862,7 +4865,8 @@ function carteHintText() {
       ? '🛣️ Route : départ « '+st.routeFrom+' » choisi — cliquez la cellule d\'arrivée.'
       : '🛣️ Mode route : cliquez la cellule de départ, puis la cellule d\'arrivée.';
   }
-  return '✎ Mode sélection : cliquez une cellule pour éditer son terrain, sa ville et ses points importants.';
+  return '✎ Mode sélection : cliquez une cellule pour éditer son terrain, sa ville et ses points importants.'
+    + (st.zoom < CARTE_TIER_MIN_ZOOM.hamlet ? ' — Hameaux masqués : zoomez à ×'+CARTE_TIER_MIN_ZOOM.hamlet+' ou plus pour les afficher.' : '');
 }
 
 // Dessine la grille, les routes, les villes et les POI sur le canvas.
@@ -4972,10 +4976,13 @@ function drawCarte() {
   });
 
   // Villes (couche optionnelle) : couleur/forme du type, taille selon le palier.
+  // Les hameaux n'apparaissent qu'à partir d'un certain zoom (CARTE_TIER_MIN_ZOOM) :
+  // les villes du lore sont grandes, les hameaux ne servent qu'en vue rapprochée.
   var TIER_RADIUS={major:0.3, town:0.22, hamlet:0.14, poi:0.18};
   if (fl.villes) Object.keys(_carteGeo.villeByCell).forEach(function(cellId){
     var ctr=carteCellCenter(cellId); if(!ctr) return;
     var v0=_carteGeo.villeByCell[cellId][0], d=placeTypeDef(v0.type), tier=d.tier||'town';
+    if (st.zoom < (CARTE_TIER_MIN_ZOOM[tier]||1)) return;
     var r=Math.max(tier==='hamlet'?2:3, px*(TIER_RADIUS[tier]||0.22));
     ctx.fillStyle=d.color||'#ffd700'; ctx.strokeStyle='#1a1a22'; ctx.lineWidth=Math.max(1,px*0.05);
     drawCartePlaceShape(ctx, d.shape||'circle', ctr.x, ctr.y, r);
@@ -5125,6 +5132,7 @@ function carteToggleFilter(key, on) {
 function carteZoomBy(delta) {
   var st=window._carteState; st.zoom=Math.max(1,Math.min(MAX_CARTE_ZOOM, st.zoom+delta));
   var lbl=document.getElementById('carteZoomLabel'); if(lbl) lbl.textContent='×'+st.zoom;
+  var hint=document.getElementById('carteHint'); if(hint) hint.innerHTML=carteHintText();
   drawCarte();
 }
 function carteFit() {

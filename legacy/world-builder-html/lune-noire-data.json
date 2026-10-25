@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.40",
+    "version": "1.0.41",
     "notes": [
+      "v1.0.41 : [RÈGLES] Niveau des zones défini par faction (départs différents) ; grottes, mines et tours de fortification occupées ou abandonnées dans les plaines, forêts et montagnes ; hameaux affichés seulement en vue rapprochée dans l'éditeur.",
       "v1.0.40 : [CARTE] Leviathan Jungle (ville et lieu) déplacée de N009_E011 en N012_E012 ; route Mossy Rock → Leviathan Jungle ajustée.",
       "v1.0.39 : [CARTE+SCÉNARIO] Volcan actif sur 12 cellules (cratère fumant en S008_E014, cheminées de lave) ; scénario « Le Cœur du volcan » : 4 quêtes (Der hem Shelsem, Moork, Shadowfen, Frosthollow), recette de potion de résistance à la chaleur, entrée par le cratère, raid à 4 groupes contre une créature de la lave.",
       "v1.0.38 : [RENDU] Règles des rivières (méandres, petits rapides) et des ponts (pierre taillée là où une route traverse une rivière — 1 ponts repérés dans hydrography.bridges ; petits ponts en bois ailleurs).",
@@ -183505,6 +183506,58 @@
       "incantations_connues": [],
       "training_minimum": "",
       "source": "Hubert, 25/10/2026",
+      "notes": []
+    },
+    {
+      "id": "rule_niveaux_par_faction",
+      "name": "Niveaux des zones selon la faction",
+      "category": "exploration",
+      "description": "Toutes les factions ne commencent pas au même endroit. Le niveau d'une zone n'est pas global : il est défini pour chaque faction, en fonction de son point de départ et de sa progression.",
+      "applies_to": [
+        "factions",
+        "zones",
+        "regions"
+      ],
+      "mechanique_jeu": "Toutes les factions ne commencent pas au même endroit. Le niveau d'une zone n'est pas global : il est défini pour chaque faction, en fonction de son point de départ et de sa progression.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, revue de la carte du 25/10/2026",
+      "notes": []
+    },
+    {
+      "id": "rule_rendu_points_interet",
+      "name": "Points d'intérêt des plaines, forêts et montagnes",
+      "category": "rendu_monde",
+      "description": "Les plaines, les forêts et les montagnes accueillent des grottes, des mines et des tours de fortification, occupées ou abandonnées, pour occuper le terrain et donner des lieux à explorer.",
+      "applies_to": [
+        "plain",
+        "forest",
+        "forest_edge",
+        "mountain",
+        "mountain_range",
+        "snow_mountain"
+      ],
+      "mechanique_jeu": "Les plaines, les forêts et les montagnes accueillent des grottes, des mines et des tours de fortification, occupées ou abandonnées, pour occuper le terrain et donner des lieux à explorer.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, revue de la carte du 25/10/2026",
+      "notes": []
+    },
+    {
+      "id": "rule_affichage_hameaux",
+      "name": "Affichage des hameaux sur la carte",
+      "category": "rendu_monde",
+      "description": "Les villes du lore sont en général très grandes et très peuplées ; les petits hameaux existent mais ne sont affichés sur la carte qu'en vue rapprochée (zoom).",
+      "applies_to": [
+        "villes"
+      ],
+      "mechanique_jeu": "Les villes du lore sont en général très grandes et très peuplées ; les petits hameaux existent mais ne sont affichés sur la carte qu'en vue rapprochée (zoom).",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, revue de la carte du 25/10/2026",
       "notes": []
     }
   ],

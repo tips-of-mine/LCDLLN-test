@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.34",
+    "version": "1.0.35",
     "notes": [
+      "v1.0.35 : [CARTE] Hydrographie du nord (nouvelle clé hydrography) : grand lac de l'ouest (N007_E005–E006), grand lac de l'est (N007_E007–E008), lac du sud (N005_E008) ; rivières des deux lacs (via N008_E007), du lac du sud (via N006_E007) et d'Ashwick (N008_E006 → N009_E005 → N010_E005 → mer), qui traverse Ashwick hors du centre avec 2 ponts.",
       "v1.0.34 : [CARTE] Ports d'Altenberg et de L'hynn (ponton dans la cellule de la ville, côté ouest) ; destinations maritimes à décider (îles ou continent à l'ouest).",
       "v1.0.33 : [CARTE] Ville portuaire Deepbrook sur l'île N011_E002 ; navette maritime aller-retour Ashwick – Deepbrook (1 bateau, pause 30 s, ponton dans chaque ville).",
       "v1.0.32 : [SCÉNARIO] Les Abysses de la baie (S008_W005) : 6 quêtes « Murmures de la baie » (Tbarak, Brookend, Hishtarland, Saltfen, Harrowbrook, Millford), raid en petite équipe sur l'île d'Hishtarland (recette de potion de respiration aquatique), entrée sous-marine cachée, 2 raids (Temple englouti à 3 groupes, Antre de la créature à 2 groupes), règle d'accès et fiche scenarios.",
@@ -6887,7 +6888,9 @@
       "features": [
         "Terrain: plain_with_river",
         "Région: nord",
-        "Ponton d'embarquement de la navette Ashwick – Deepbrook, au bord de la ville"
+        "Ponton d'embarquement de la navette Ashwick – Deepbrook, au bord de la ville",
+        "Traversée par la rivière d'Ashwick (pas en son milieu)",
+        "2 ponts pour passer d'une rive à l'autre"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -160411,11 +160414,14 @@
       "terrain_type": "plain_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N011_E005",
+      "connects_to": [
+        "N009_E005",
+        "N011_E005"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
@@ -161154,11 +161160,14 @@
       "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N010_E005",
+      "connects_to": [
+        "N008_E006",
+        "N010_E005"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
@@ -161916,11 +161925,14 @@
       "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N009_E005",
+      "connects_to": [
+        "N007_E005",
+        "N009_E005"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
@@ -161934,14 +161946,17 @@
       "id": "N008_E007",
       "name": "cell_N008_E007",
       "region_id": "",
-      "terrain_type": "forest",
+      "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N007_E007",
+      "connects_to": [
+        "N007_E006",
+        "N007_E007"
+      ],
       "creature_ids": [],
       "visual_elements": [
         "Très grosse colline portant la ville de Feyhin Lokcthat",
@@ -162639,8 +162654,8 @@
       "name": "cell_N007_E005",
       "region_id": "",
       "terrain_type": "forest_with_lake",
-      "has_lake": false,
-      "lake_count": 0,
+      "has_lake": true,
+      "lake_count": 1,
       "has_river": false,
       "river_count": 0,
       "has_mountain_range": false,
@@ -162659,8 +162674,8 @@
       "name": "cell_N007_E006",
       "region_id": "",
       "terrain_type": "forest_with_lake",
-      "has_lake": false,
-      "lake_count": 0,
+      "has_lake": true,
+      "lake_count": 1,
       "has_river": false,
       "river_count": 0,
       "has_mountain_range": false,
@@ -162681,8 +162696,8 @@
       "name": "cell_N007_E007",
       "region_id": "",
       "terrain_type": "forest_with_lake",
-      "has_lake": false,
-      "lake_count": 0,
+      "has_lake": true,
+      "lake_count": 1,
       "has_river": false,
       "river_count": 0,
       "has_mountain_range": false,
@@ -162703,8 +162718,8 @@
       "name": "cell_N007_E008",
       "region_id": "via_magna",
       "terrain_type": "forest_with_lake",
-      "has_lake": false,
-      "lake_count": 0,
+      "has_lake": true,
+      "lake_count": 1,
       "has_river": false,
       "river_count": 0,
       "has_mountain_range": false,
@@ -163425,11 +163440,14 @@
       "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N007_E007",
+      "connects_to": [
+        "N005_E008",
+        "N007_E007"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
@@ -164179,8 +164197,8 @@
       "name": "cell_N005_E008",
       "region_id": "",
       "terrain_type": "forest_with_lake",
-      "has_lake": false,
-      "lake_count": 0,
+      "has_lake": true,
+      "lake_count": 1,
       "has_river": false,
       "river_count": 0,
       "has_mountain_range": false,
@@ -186480,5 +186498,97 @@
       ],
       "regle": "rule_abysses_baie_acces"
     }
-  ]
+  ],
+  "hydrography": {
+    "lakes": [
+      {
+        "id": "lac_grand_ouest",
+        "name": "Grand lac de l'ouest",
+        "cells": [
+          "N007_E005",
+          "N007_E006"
+        ],
+        "size": "très grand",
+        "notes": [
+          "Un seul et même lac sur les deux cellules."
+        ]
+      },
+      {
+        "id": "lac_grand_est",
+        "name": "Grand lac de l'est",
+        "cells": [
+          "N007_E007",
+          "N007_E008"
+        ],
+        "size": "très grand",
+        "notes": [
+          "Un seul et même lac sur les deux cellules."
+        ]
+      },
+      {
+        "id": "lac_sud",
+        "name": "Lac du sud",
+        "cells": [
+          "N005_E008"
+        ],
+        "size": "",
+        "notes": []
+      }
+    ],
+    "rivers": [
+      {
+        "id": "riv_liaison_lacs",
+        "name": "Rivière des deux lacs",
+        "from": "lac_grand_ouest",
+        "to": "lac_grand_est",
+        "cells": [
+          "N007_E006",
+          "N008_E007",
+          "N007_E007"
+        ],
+        "notes": [
+          "Relie le grand lac de l'ouest au grand lac de l'est, en passant par N008_E007 (colline de Feyhin Lokcthat)."
+        ]
+      },
+      {
+        "id": "riv_lac_sud",
+        "name": "Rivière du lac du sud",
+        "from": "lac_sud",
+        "to": "lac_grand_est",
+        "cells": [
+          "N005_E008",
+          "N006_E007",
+          "N007_E007"
+        ],
+        "notes": []
+      },
+      {
+        "id": "riv_ashwick",
+        "name": "Rivière d'Ashwick",
+        "from": "lac_grand_ouest",
+        "to": "mer",
+        "cells": [
+          "N007_E005",
+          "N008_E006",
+          "N009_E005",
+          "N010_E005",
+          "N011_E005"
+        ],
+        "traverse_villes": [
+          {
+            "ville_id": "town_0123",
+            "cell": "N010_E005",
+            "au_centre": false,
+            "ponts": 2,
+            "notes": [
+              "La rivière traverse Ashwick sans passer par son milieu ; 2 ponts relient les deux rives."
+            ]
+          }
+        ],
+        "notes": [
+          "Se termine dans la mer (N011_E005)."
+        ]
+      }
+    ]
+  }
 }

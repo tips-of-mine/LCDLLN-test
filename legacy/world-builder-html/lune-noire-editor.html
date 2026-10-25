@@ -4875,6 +4875,10 @@ function drawCarte() {
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,W,H);
   var fl = st.filters || {};
+  var hydro = db.hydrography || {lakes:[], rivers:[]};
+  var hydroCells = {};
+  (hydro.lakes||[]).forEach(function(l){ (l.cells||[]).forEach(function(k){ hydroCells[k]=true; }); });
+  (hydro.rivers||[]).forEach(function(r){ (r.cells||[]).forEach(function(k){ hydroCells[k]=true; }); });
 
   // Cellules
   for (var lat=_carteGeo.maxLat; lat>=_carteGeo.minLat; lat--) {
@@ -4897,8 +4901,9 @@ function drawCarte() {
       }
       // grille fine
       if (px>=8) { ctx.strokeStyle='rgba(0,0,0,0.22)'; ctx.lineWidth=1; ctx.strokeRect(x+0.5,y+0.5,px-1,px-1); }
-      // Lacs & rivières (couche optionnelle) : tracé réel.
-      if (fl.water) drawCarteWater(ctx, c, x, y, px);
+      // Lacs & rivières (couche optionnelle) : tracé réel. Les cellules décrites par
+      // db.hydrography sont dessinées plus bas (lacs multi-cellules, rivières reliées).
+      if (fl.water && !hydroCells[c.id]) drawCarteWater(ctx, c, x, y, px);
       // Montagne : repère léger.
       if (px>=18 && c.has_mountain_range) {
         ctx.font = Math.floor(px*0.4)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -4910,6 +4915,8 @@ function drawCarte() {
   }
 
   // Routes (couche optionnelle)
+  if (fl.water && px >= 6) drawCarteHydrography(ctx, hydro, px);
+
   // Une route peut porter un tracé (waypoints : liste d'ids de cellules, ex. route
   // maritime suivant l'eau navigable) ; sinon ligne droite entre ses extrémités.
   if (fl.routes) (db.routes||[]).forEach(function(r){
@@ -4985,6 +4992,58 @@ function drawCarte() {
     var f=carteCellCenter(st.routeFrom);
     if(f){ ctx.strokeStyle='#c9a84c'; ctx.lineWidth=3; ctx.strokeRect(f.x-px/2+1.5,f.y-px/2+1.5,px-3,px-3); }
   }
+}
+
+// Dessine l'hydrographie décrite par db.hydrography : un lac couvrant plusieurs
+// cellules est une seule ellipse ; une rivière est une courbe reliant ses cellules
+// dans l'ordre (de la source vers l'embouchure), qui part et arrive au bord des
+// lacs. Une ville traversée hors de son centre décale le lit de la rivière, et ses
+// ponts (traverse_villes[].ponts) sont dessinés en travers du lit.
+function drawCarteHydrography(ctx, hydro, px) {
+  var lakeGeo = {};
+  (hydro.lakes||[]).forEach(function(l){
+    var pts=(l.cells||[]).map(carteCellCenter).filter(Boolean); if(!pts.length) return;
+    var xs=pts.map(function(p){return p.x;}), ys=pts.map(function(p){return p.y;});
+    var cx=(Math.min.apply(null,xs)+Math.max.apply(null,xs))/2, cy=(Math.min.apply(null,ys)+Math.max.apply(null,ys))/2;
+    var big=(l.size==='très grand'), rx=(Math.max.apply(null,xs)-Math.min.apply(null,xs))/2+px*(big?0.46:0.32), ry=(Math.max.apply(null,ys)-Math.min.apply(null,ys))/2+px*(big?0.4:0.28);
+    lakeGeo[l.id]={x:cx,y:cy,rx:rx,ry:ry};
+    ctx.fillStyle='rgba(58,134,180,0.88)'; ctx.strokeStyle='rgba(20,70,120,0.75)'; ctx.lineWidth=Math.max(0.5,px*0.03);
+    ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  });
+  // Point d'une rivière sur le bord d'un lac, du côté du point voisin.
+  function onLakeEdge(g, toward) {
+    var dx=toward.x-g.x, dy=toward.y-g.y, a=Math.atan2(dy/g.ry, dx/g.rx);
+    return {x:g.x+Math.cos(a)*g.rx, y:g.y+Math.sin(a)*g.ry};
+  }
+  (hydro.rivers||[]).forEach(function(r){
+    var pts=(r.cells||[]).map(carteCellCenter); if(pts.some(function(p){return !p;})||pts.length<2) return;
+    (r.traverse_villes||[]).forEach(function(tv){
+      var i=r.cells.indexOf(tv.cell); if(i<0||tv.au_centre) return;
+      var a=pts[Math.max(0,i-1)], b=pts[Math.min(pts.length-1,i+1)];
+      var dx=b.x-a.x, dy=b.y-a.y, l=Math.sqrt(dx*dx+dy*dy)||1;
+      pts[i]={x:pts[i].x-dy/l*px*0.28, y:pts[i].y+dx/l*px*0.28}; // décalage latéral : hors du centre de la ville
+    });
+    if(lakeGeo[r.from]) pts[0]=onLakeEdge(lakeGeo[r.from], pts[1]);
+    if(lakeGeo[r.to]) pts[pts.length-1]=onLakeEdge(lakeGeo[r.to], pts[pts.length-2]);
+    ctx.strokeStyle='rgba(40,120,200,0.9)'; ctx.lineWidth=Math.max(1.2,px*0.12); ctx.lineCap='round'; ctx.lineJoin='round';
+    // Courbe de Catmull-Rom : passe exactement par chaque point (ponts bien placés).
+    ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+    for(var i=0;i<pts.length-1;i++){
+      var p0=pts[Math.max(0,i-1)], p1=pts[i], p2=pts[i+1], p3=pts[Math.min(pts.length-1,i+2)];
+      ctx.bezierCurveTo(p1.x+(p2.x-p0.x)/6, p1.y+(p2.y-p0.y)/6, p2.x-(p3.x-p1.x)/6, p2.y-(p3.y-p1.y)/6, p2.x, p2.y);
+    }
+    ctx.stroke();
+    (r.traverse_villes||[]).forEach(function(tv){
+      var i=r.cells.indexOf(tv.cell); if(i<0||!tv.ponts) return;
+      var a=pts[Math.max(0,i-1)], b=pts[Math.min(pts.length-1,i+1)], c=pts[i];
+      var dx=b.x-a.x, dy=b.y-a.y, l=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/l, uy=dy/l, h=px*0.14;
+      for(var k=0;k<tv.ponts;k++){
+        var t=(k-(tv.ponts-1)/2)*px*0.3, bx=c.x+ux*t, by=c.y+uy*t;
+        ctx.strokeStyle='#8a6a3a'; ctx.lineWidth=Math.max(2,px*0.07);
+        ctx.beginPath(); ctx.moveTo(bx-uy*h,by+ux*h); ctx.lineTo(bx+uy*h,by-ux*h); ctx.stroke();
+      }
+    });
+  });
 }
 
 // Dessine les pastilles POI d'une cellule (jusqu'à 3 visibles).

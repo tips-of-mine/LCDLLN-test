@@ -2935,7 +2935,8 @@ function buildVilleServices(curSvc, hc) {
     {id:'prison',      label:'⛓️ Prison / Geôles',             min:30},
     {id:'port',        label:'⚓ Port / Quai',                  min:20},
     {id:'arene',       label:'🗡️ Arène de Combat',             min:45},
-    {id:'ecole_magie', label:'🔮 École de Magie',              min:65}
+    {id:'ecole_magie', label:'🔮 École de Magie',              min:65},
+    {id:'cimetiere',   label:'🪦 Cimetière',                    min:5}
   ];
   var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.25rem 0.75rem">';
   SERVICES.forEach(function(s){
@@ -3270,7 +3271,7 @@ function renderVilles(el) {
     if(v.importance) vtypeRow+='<span style="font-size:0.72rem;color:var(--text-dim);padding:0.1rem 0">'+esc(v.importance)+'</span>';
     if(vtypeRow) card+='<div style="display:flex;gap:0.3rem;margin-top:0.3rem;flex-wrap:wrap">'+vtypeRow+'</div>';
     if(v.region_id){var vrg=(db.regions||[]).find(function(x){return x.id===v.region_id;});if(vrg)card+='<div style="font-size:0.72rem;color:'+(vrg.color||'#708090')+';margin-top:0.2rem">🗺️ '+esc(vrg.name)+'</div>';}
-    var SVCL={auberge:'🛏️',potions:'🧪',armes:'⚔️',armures:'🛡️',forgeron:'🔨',marche:'🛒',ecurie:'🐴',temple:'⛪',banque:'🏦',guilde:'⚜️',infirmerie:'💊',bibliotheque:'📚',prison:'⛓️',port:'⚓',arene:'🗡️',ecole_magie:'🔮'};
+    var SVCL={auberge:'🛏️',potions:'🧪',armes:'⚔️',armures:'🛡️',forgeron:'🔨',marche:'🛒',ecurie:'🐴',temple:'⛪',banque:'🏦',guilde:'⚜️',infirmerie:'💊',bibliotheque:'📚',prison:'⛓️',port:'⚓',arene:'🗡️',ecole_magie:'🔮',cimetiere:'🪦'};
     if(v.services&&v.services.length){card+='<div style="margin-top:0.35rem;display:flex;flex-wrap:wrap;gap:0.2rem">';v.services.slice(0,6).forEach(function(sid){card+='<span style="font-size:0.72rem;background:var(--bg-deep);border:1px solid var(--border);border-radius:2px;padding:0.05rem 0.3rem;color:var(--text-secondary)">'+(SVCL[sid]||'•')+'</span>';});if(v.services.length>6)card+='<span style="font-size:0.72rem;color:var(--text-dim)">+' +(v.services.length-6)+'</span>';card+='</div>';}
     if(v.cell||v.coord_x!==null) {
       card+='<div style="display:flex;gap:0.75rem;margin-top:0.35rem;flex-wrap:wrap">';

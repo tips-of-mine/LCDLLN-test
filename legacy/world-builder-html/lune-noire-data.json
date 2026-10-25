@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.36",
+    "version": "1.0.37",
     "notes": [
+      "v1.0.37 : [CARTE] Rivière de la cascade (N003_W005) : N004_W005 → N005_W005 → N006_W005 → Northind (sur le côté, ponts) → N007_W004 → N008_W004, puis bras ouest N009_W004 → N010_W004 → Hayfen → mer (N012_W004) et bras est N009_W003 → mer (N010_W002) ; rivière de la source de N008_W002 → N009_W002 → mer (N010_W002).",
       "v1.0.36 : [CARTE] Île de Deepbrook décalée d'une cellule vers le haut (N012_E002–E003, Deepbrook en N012_E002, navette retracée) ; rivière de Verdansur : source dans la ville, bras sud (N009_W015 → mer) et bras nord (N010_W014 → N011_W014 → mer).",
       "v1.0.35 : [CARTE] Hydrographie du nord (nouvelle clé hydrography) : grand lac de l'ouest (N007_E005–E006), grand lac de l'est (N007_E007–E008), lac du sud (N005_E008) ; rivières des deux lacs (via N008_E007), du lac du sud (via N006_E007) et d'Ashwick (N008_E006 → N009_E005 → N010_E005 → mer), qui traverse Ashwick hors du centre avec 2 ponts.",
       "v1.0.34 : [CARTE] Ports d'Altenberg et de L'hynn (ponton dans la cellule de la ville, côté ouest) ; destinations maritimes à décider (îles ou continent à l'ouest).",
@@ -5277,7 +5278,8 @@
       "population": null,
       "services": [],
       "features": [
-        "forteresse humaine"
+        "forteresse humaine",
+        "Traversée sur le côté par la rivière de la cascade, avec des ponts"
       ],
       "notes": [
         "[BD-T8] 'Voilà, Fratus, tout est fini, nous sommes prêts à les recevoir.' — lieutenant à Fratus.",
@@ -8123,7 +8125,8 @@
       "services": [],
       "features": [
         "Terrain: coast",
-        "Région: nord"
+        "Région: nord",
+        "Traversée par la rivière de la cascade, qui rejoint la mer juste après"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -159507,11 +159510,14 @@
       "terrain_type": "swamp",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N012_W004",
+      "connects_to": [
+        "N010_W004",
+        "N012_W004"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -160257,11 +160263,14 @@
       "terrain_type": "swamp_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N011_W004",
+      "connects_to": [
+        "N009_W004",
+        "N011_W004"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -161003,11 +161012,14 @@
       "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N010_W004",
+      "connects_to": [
+        "N008_W004",
+        "N010_W004"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -161022,11 +161034,14 @@
       "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N010_W002",
+      "connects_to": [
+        "N008_W004",
+        "N010_W002"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -161041,11 +161056,14 @@
       "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N010_W002",
+      "connects_to": [
+        "N008_W002",
+        "N010_W002"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -161754,11 +161772,15 @@
       "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 2,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N009_W003, vers N009_W004",
+      "connects_to": [
+        "N007_W004",
+        "N009_W003",
+        "N009_W004"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -161792,11 +161814,13 @@
       "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N009_W002",
+      "connects_to": [
+        "N009_W002"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -162484,11 +162508,14 @@
       "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N007_W004",
+      "connects_to": [
+        "N006_W005",
+        "N007_W004"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -162503,11 +162530,14 @@
       "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N008_W004",
+      "connects_to": [
+        "N007_W005",
+        "N008_W004"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -163232,11 +163262,14 @@
       "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N007_W005",
+      "connects_to": [
+        "N005_W005",
+        "N007_W005"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -163976,11 +164009,14 @@
       "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N006_W005",
+      "connects_to": [
+        "N004_W005",
+        "N006_W005"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -164711,11 +164747,14 @@
       "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N005_W005",
+      "connects_to": [
+        "N003_W005",
+        "N005_W005"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -165441,13 +165480,17 @@
       "terrain_type": "mountain_range",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N004_W005",
+      "connects_to": [
+        "N004_W005"
+      ],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Cascade, source de la rivière qui descend vers Northind"
+      ],
       "notes": [
         "Continuité de la cellule R170C140"
       ],
@@ -186641,6 +186684,77 @@
         "notes": [
           "Passe par la cellule de Trueford (N011_W014).",
           "Se jette dans la mer (N012_W014)."
+        ]
+      },
+      {
+        "id": "riv_cascade_northind",
+        "name": "Rivière de la cascade",
+        "from": "cascade_n003_w005",
+        "to": "mer",
+        "source": {
+          "type": "cascade",
+          "cell": "N003_W005",
+          "notes": "Naît d'une cascade dans la cellule N003_W005."
+        },
+        "cells": [
+          "N003_W005",
+          "N004_W005",
+          "N005_W005",
+          "N006_W005",
+          "N007_W005",
+          "N007_W004",
+          "N008_W004",
+          "N009_W004",
+          "N010_W004",
+          "N011_W004",
+          "N012_W004"
+        ],
+        "traverse_villes": [
+          {
+            "ville_id": "ville_northind",
+            "cell": "N007_W005",
+            "au_centre": false,
+            "ponts": 2,
+            "notes": [
+              "La rivière traverse Northind sur le côté ; ponts pour passer d'une rive à l'autre (nombre à confirmer)."
+            ]
+          }
+        ],
+        "notes": [
+          "Se divise en N008_W004 : un bras continue par N009_W004, N010_W004 (marais) et Hayfen (N011_W004) jusqu'à la mer (N012_W004) ; l'autre bras part vers N009_W003 (riv_cascade_bras_est).",
+          "Passe par la cellule de Hayfen (N011_W004)."
+        ]
+      },
+      {
+        "id": "riv_cascade_bras_est",
+        "name": "Rivière de la cascade (bras est)",
+        "from": "riv_cascade_northind",
+        "to": "mer",
+        "cells": [
+          "N008_W004",
+          "N009_W003",
+          "N010_W002"
+        ],
+        "notes": [
+          "Se sépare du cours principal en N008_W004 ; se jette dans la mer en N010_W002."
+        ]
+      },
+      {
+        "id": "riv_source_n008_w002",
+        "name": "Rivière de la source de N008_W002",
+        "from": "source_n008_w002",
+        "to": "mer",
+        "source": {
+          "type": "source",
+          "cell": "N008_W002"
+        },
+        "cells": [
+          "N008_W002",
+          "N009_W002",
+          "N010_W002"
+        ],
+        "notes": [
+          "Se jette dans la mer en N010_W002."
         ]
       }
     ]

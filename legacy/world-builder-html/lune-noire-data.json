@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.25",
+    "version": "1.0.26",
     "notes": [
+      "v1.0.26 : [CARTE] Revue des villes : 66 supprimées, 4 renommées (Unnamed-147→Millford, Unnamed-146→Claybury, Unnamed-144→Longmere, Unnamed-68→Stonehaven, décalée d'une cellule à l'est), route Sysigie–Altenberg passant par Justfall, réseau routier minimal connecté (58 routes ajoutées), route maritime Hishtarland–Unnamed-66, Tbarak placée en S005_W004 (Royaume Drach).",
       "v1.0.25 : [CARTE] Fusion de carte_export.json (éditeur de carte v23) : 17 ville(s) enrichie(s), 115 ajoutée(s) (hameaux, bourgs, villes, avec leur fiche descriptive), 17 lieu(x) remarquable(s) dans la nouvelle collection « lieux », 19 route(s), référentiels place_types (32 types de lieux), terrain_types et route_types. En cas de conflit, la v1.0.24 prime.",
       "v1.0.24 : [GD] 12 classes converties en structure HYBRIDE ALTERNÉE (Mage, Chaman, Prêtre de la Lune Noire, Menthats, Inquisiteur, Paladin, Prêtre de la Grâce, Prêtre du Jugement, Démoniste, Tourmenteur, Sorcier de sang, Archimage). 3 branches fixes (single/aoe/def) dont le TYPE alterne : niveaux impairs = soin unitaire + attaque zone ; niveaux pairs = attaque unitaire + soin zone ; défense à tous les niveaux. Soins thématisés par classe (drain/sang pour les sombres, lumière pour les sacrés, esprits pour le chaman, arcane pour les mages). Icônes à régénérer pour ces classes.",
       "v1.0.23 : [GD] Scission du Prêtre en 2 classes distinctes. class_priest_grace (healer) = ancien arbre Prêtre, conservé et renommé (Soin/Zone offensive/Défensive). class_priest_judgment (lanceur) = NOUVEL arbre offensif sacré (Verbe de Jugement unitaire / Colère Céleste zone / Égide de Ferveur défensive), 180 compétences + 180 icônes propres. Entrée classe Prêtre remplacée par les deux, variants retirés. 23 classes, 4140 compétences au total.",
@@ -4899,11 +4900,11 @@
       "alias": "",
       "type": "",
       "importance": "",
-      "cell": "",
+      "cell": "S005_W004",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
-      "region_id": "",
+      "region_id": "royaume_drach",
       "housing_count": null,
       "population": null,
       "services": [],
@@ -4912,7 +4913,8 @@
         "[BD-T1] Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey.",
         "[BD-T1] Traversée ou pillée par la horde lors de la Campagne des Marches.",
         "[LORE_ETENDU] Probable cité-étape commerciale, probablement avec une garnison impériale légère."
-      ]
+      ],
+      "anchor_tile": "S005_W004"
     },
     {
       "id": "ville_klindor",
@@ -6593,88 +6595,6 @@
       "notes": []
     },
     {
-      "id": "town_0111",
-      "name": "Longmere",
-      "alias": "Longmere",
-      "type": "town",
-      "importance": "regional",
-      "cell": "S007_E003",
-      "anchor_tile": "S007_E003",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: centre"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "town_0112",
       "name": "Westmoor",
       "alias": "Westmoor",
@@ -7495,88 +7415,6 @@
       "notes": []
     },
     {
-      "id": "town_0122",
-      "name": "Harrowdale",
-      "alias": "Harrowdale",
-      "type": "town",
-      "importance": "regional",
-      "cell": "S011_E005",
-      "anchor_tile": "S011_E005",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "town_0123",
       "name": "Ashwick",
       "alias": "Ashwick",
@@ -7594,88 +7432,6 @@
       "features": [
         "Terrain: plain_with_river",
         "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "town_0124",
-      "name": "Stonehaven",
-      "alias": "Stonehaven",
-      "type": "town",
-      "importance": "regional",
-      "cell": "S007_E005",
-      "anchor_tile": "S007_E005",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: centre"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -8086,88 +7842,6 @@
       "features": [
         "Terrain: plain_with_river",
         "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "town_0130",
-      "name": "Moorgate",
-      "alias": "Moorgate",
-      "type": "town",
-      "importance": "regional",
-      "cell": "S009_E002",
-      "anchor_tile": "S009_E002",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: sud"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -8807,597 +8481,23 @@
       "notes": []
     },
     {
-      "id": "town_0138",
-      "name": "Equiton",
-      "alias": "Equiton",
-      "type": "port_town",
-      "importance": "regional",
-      "cell": "N011_W017",
-      "anchor_tile": "N011_W017",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "chevaliers_de_la_justice",
-      "region_id": "syzygie",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "town_0139",
-      "name": "Unnamed-68",
+      "name": "Stonehaven",
       "alias": "Unnamed-68",
       "type": "port_town",
       "importance": "regional",
-      "cell": "N014_E007",
-      "anchor_tile": "N014_E007",
+      "cell": "N014_E008",
+      "anchor_tile": "N014_E008",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
-      "region_id": "",
+      "region_id": "terres_des_gigantomorphes",
       "housing_count": null,
       "population": null,
       "services": [],
       "features": [
         "Terrain: coast",
         "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0140",
-      "name": "Millford",
-      "alias": "Millford",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S006_W015",
-      "anchor_tile": "S006_W015",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0141",
-      "name": "Draketon",
-      "alias": "Draketon",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S002_W008",
-      "anchor_tile": "S002_W008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "ordre_des_dragons",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0142",
-      "name": "Haywick",
-      "alias": "Haywick",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N000_W007",
-      "anchor_tile": "N000_W007",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "terres_de_lempereur",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0143",
-      "name": "Dunfold",
-      "alias": "Dunfold",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N002_W007",
-      "anchor_tile": "N002_W007",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "terres_de_lempereur",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0144",
-      "name": "Ashcroft",
-      "alias": "Ashcroft",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N004_W008",
-      "anchor_tile": "N004_W008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "region_premiere_province_empire",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0145",
-      "name": "Claybury",
-      "alias": "Claybury",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S005_W015",
-      "anchor_tile": "S005_W015",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -9545,88 +8645,6 @@
       "notes": []
     },
     {
-      "id": "hamlet_0147",
-      "name": "Runecroft",
-      "alias": "Runecroft",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N003_W007",
-      "anchor_tile": "N003_W007",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "ordre_arcanique",
-      "region_id": "region_premiere_province_empire",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "hamlet_0148",
       "name": "Trueford",
       "alias": "Trueford",
@@ -9644,334 +8662,6 @@
       "features": [
         "Terrain: plain_with_river",
         "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0149",
-      "name": "Fernhill",
-      "alias": "Fernhill",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "S006_W016",
-      "anchor_tile": "S006_W016",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0150",
-      "name": "Brookend",
-      "alias": "Brookend",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "S004_W016",
-      "anchor_tile": "S004_W016",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0151",
-      "name": "Coldhollow",
-      "alias": "Coldhollow",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "S009_W008",
-      "anchor_tile": "S009_W008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0152",
-      "name": "Stonebridge",
-      "alias": "Stonebridge",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "S005_W016",
-      "anchor_tile": "S005_W016",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: ouest"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -10201,908 +8891,6 @@
       "notes": []
     },
     {
-      "id": "hamlet_0155",
-      "name": "Dustfield",
-      "alias": "Dustfield",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S007_W014",
-      "anchor_tile": "S007_W014",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0156",
-      "name": "Gravel Pit",
-      "alias": "Gravel Pit",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S003_E002",
-      "anchor_tile": "S003_E002",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: centre"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0157",
-      "name": "Scalebrook",
-      "alias": "Scalebrook",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S003_W008",
-      "anchor_tile": "S003_W008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "ordre_des_dragons",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0158",
-      "name": "Oakfen",
-      "alias": "Oakfen",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S002_W009",
-      "anchor_tile": "S002_W009",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0159",
-      "name": "Cinderhollow",
-      "alias": "Cinderhollow",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S001_W007",
-      "anchor_tile": "S001_W007",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "ordre_des_dragons",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0160",
-      "name": "Stonehollow",
-      "alias": "Stonehollow",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S001_W008",
-      "anchor_tile": "S001_W008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0161",
-      "name": "Clearfen",
-      "alias": "Clearfen",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N003_E002",
-      "anchor_tile": "N003_E002",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: centre"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0162",
-      "name": "Deepbrook",
-      "alias": "Deepbrook",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N003_W008",
-      "anchor_tile": "N003_W008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "region_premiere_province_empire",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0163",
-      "name": "Longford",
-      "alias": "Longford",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N004_E003",
-      "anchor_tile": "N004_E003",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: centre"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0164",
-      "name": "Westhollow",
-      "alias": "Westhollow",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N004_W009",
-      "anchor_tile": "N004_W009",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "region_premiere_province_empire",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0165",
-      "name": "Righthollow",
-      "alias": "Righthollow",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N011_W009",
-      "anchor_tile": "N011_W009",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "chevaliers_de_la_justice",
-      "region_id": "syzygie",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "hamlet_0166",
       "name": "Northfen",
       "alias": "Northfen",
@@ -11185,416 +8973,6 @@
       "notes": []
     },
     {
-      "id": "hamlet_0167",
-      "name": "Lawfield",
-      "alias": "Lawfield",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N009_W015",
-      "anchor_tile": "N009_W015",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "chevaliers_de_la_justice",
-      "region_id": "syzygie",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain_with_river",
-        "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0168",
-      "name": "Fairbrook",
-      "alias": "Fairbrook",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N010_W014",
-      "anchor_tile": "N010_W014",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "chevaliers_de_la_justice",
-      "region_id": "syzygie",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain_with_river",
-        "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0169",
-      "name": "Southhollow",
-      "alias": "Southhollow",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "S009_W013",
-      "anchor_tile": "S009_W013",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0170",
-      "name": "Ironbrook",
-      "alias": "Ironbrook",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "S007_W015",
-      "anchor_tile": "S007_W015",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0171",
-      "name": "Greyfield",
-      "alias": "Greyfield",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "N012_W005",
-      "anchor_tile": "N012_W005",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "terres_des_gigantomorphes",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "hamlet_0172",
       "name": "Saltfen",
       "alias": "Saltfen",
@@ -11602,88 +8980,6 @@
       "importance": "local",
       "cell": "S008_W010",
       "anchor_tile": "S008_W010",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0173",
-      "name": "Oldfen",
-      "alias": "Oldfen",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S008_W012",
-      "anchor_tile": "S008_W012",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "empire_humain",
@@ -11923,1072 +9219,6 @@
       "notes": []
     },
     {
-      "id": "hamlet_0176",
-      "name": "Stonefen",
-      "alias": "Stonefen",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S004_E004",
-      "anchor_tile": "S004_E004",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: centre"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0177",
-      "name": "Emberfield",
-      "alias": "Emberfield",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S004_W008",
-      "anchor_tile": "S004_W008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "ordre_des_dragons",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0178",
-      "name": "Wyvernfen",
-      "alias": "Wyvernfen",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S002_W007",
-      "anchor_tile": "S002_W007",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "ordre_des_dragons",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0179",
-      "name": "Moorbrook",
-      "alias": "Moorbrook",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S002_W010",
-      "anchor_tile": "S002_W010",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0180",
-      "name": "Riverfold",
-      "alias": "Riverfold",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N000_W006",
-      "anchor_tile": "N000_W006",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "ordre_des_dragons",
-      "region_id": "terres_de_lempereur",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0181",
-      "name": "Darkhollow",
-      "alias": "Darkhollow",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N002_E014",
-      "anchor_tile": "N002_E014",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "lune_noire",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: est"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0182",
-      "name": "Hillhollow",
-      "alias": "Hillhollow",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N002_W008",
-      "anchor_tile": "N002_W008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "terres_de_lempereur",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0183",
-      "name": "Shadowbrook",
-      "alias": "Shadowbrook",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N003_E015",
-      "anchor_tile": "N003_E015",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "lune_noire",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: est"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0184",
-      "name": "Deepfen",
-      "alias": "Deepfen",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N003_E003",
-      "anchor_tile": "N003_E003",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: centre"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0185",
-      "name": "Farbrook",
-      "alias": "Farbrook",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N003_E001",
-      "anchor_tile": "N003_E001",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: centre"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0186",
-      "name": "Lowhollow",
-      "alias": "Lowhollow",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N004_E002",
-      "anchor_tile": "N004_E002",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: centre"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0187",
-      "name": "Mysthollow",
-      "alias": "Mysthollow",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N004_E000",
-      "anchor_tile": "N004_E000",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "ordre_arcanique",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: centre"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0188",
-      "name": "Greenfen",
-      "alias": "Greenfen",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N004_W010",
-      "anchor_tile": "N004_W010",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "region_premiere_province_empire",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "hamlet_0189",
       "name": "Orderfen",
       "alias": "Orderfen",
@@ -13071,252 +9301,6 @@
       "notes": []
     },
     {
-      "id": "hamlet_0190",
-      "name": "Mudford",
-      "alias": "Mudford",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N017_E009",
-      "anchor_tile": "N017_E009",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "terres_des_gigantomorphes",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0191",
-      "name": "Pebblecross",
-      "alias": "Pebblecross",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S014_E003",
-      "anchor_tile": "S014_E003",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0192",
-      "name": "Briarbend",
-      "alias": "Briarbend",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S008_W011",
-      "anchor_tile": "S008_W011",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "hamlet_0193",
       "name": "Frosthollow",
       "alias": "Frosthollow",
@@ -13334,170 +9318,6 @@
       "features": [
         "Terrain: plain",
         "Région: centre"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0194",
-      "name": "Bogend",
-      "alias": "Bogend",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S005_W008",
-      "anchor_tile": "S005_W008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "ordre_des_dragons",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0195",
-      "name": "Thistle Creek",
-      "alias": "Thistle Creek",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S005_W014",
-      "anchor_tile": "S005_W014",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -13727,252 +9547,6 @@
       "notes": []
     },
     {
-      "id": "hamlet_0198",
-      "name": "Voidfield",
-      "alias": "Voidfield",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N001_E015",
-      "anchor_tile": "N001_E015",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "lune_noire",
-      "region_id": "baronnie_de_moorks",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: est"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0199",
-      "name": "Duskwell",
-      "alias": "Duskwell",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N001_E014",
-      "anchor_tile": "N001_E014",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "lune_noire",
-      "region_id": "baronnie_de_moorks",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: est"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0200",
-      "name": "Gravel Cross",
-      "alias": "Gravel Cross",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N001_W008",
-      "anchor_tile": "N001_W008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "terres_de_lempereur",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "hamlet_0201",
       "name": "Nightfield",
       "alias": "Nightfield",
@@ -13990,252 +9564,6 @@
       "features": [
         "Terrain: plain",
         "Région: est"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0202",
-      "name": "Ebonhollow",
-      "alias": "Ebonhollow",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N003_E014",
-      "anchor_tile": "N003_E014",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "lune_noire",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: est"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0203",
-      "name": "Spellbrook",
-      "alias": "Spellbrook",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N003_E000",
-      "anchor_tile": "N003_E000",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "ordre_arcanique",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: centre"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0204",
-      "name": "Hexfen",
-      "alias": "Hexfen",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "N003_W006",
-      "anchor_tile": "N003_W006",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "ordre_arcanique",
-      "region_id": "region_premiere_province_empire",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -14465,580 +9793,6 @@
       "notes": []
     },
     {
-      "id": "hamlet_0207",
-      "name": "Coldbrook",
-      "alias": "Coldbrook",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "S008_W008",
-      "anchor_tile": "S008_W008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0208",
-      "name": "Unnamed-137",
-      "alias": "Unnamed-137",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "S008_W014",
-      "anchor_tile": "S008_W014",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0209",
-      "name": "Unnamed-138",
-      "alias": "Unnamed-138",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "N010_W002",
-      "anchor_tile": "N010_W002",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "terres_des_gigantomorphes",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0210",
-      "name": "Justhollow",
-      "alias": "Justhollow",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "N012_W009",
-      "anchor_tile": "N012_W009",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "chevaliers_de_la_justice",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0211",
-      "name": "Unnamed-140",
-      "alias": "Unnamed-140",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "S009_W010",
-      "anchor_tile": "S009_W010",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0212",
-      "name": "Unnamed-141",
-      "alias": "Unnamed-141",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "S009_W012",
-      "anchor_tile": "S009_W012",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0213",
-      "name": "Unnamed-142",
-      "alias": "Unnamed-142",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "S006_W007",
-      "anchor_tile": "S006_W007",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "ordre_des_dragons",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: ouest"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "hamlet_0214",
       "name": "Unnamed-143",
       "alias": "Unnamed-143",
@@ -15122,7 +9876,7 @@
     },
     {
       "id": "hamlet_0215",
-      "name": "Unnamed-144",
+      "name": "Longmere",
       "alias": "Unnamed-144",
       "type": "fishing_hamlet",
       "importance": "local",
@@ -15203,90 +9957,8 @@
       "notes": []
     },
     {
-      "id": "hamlet_0216",
-      "name": "Unnamed-145",
-      "alias": "Unnamed-145",
-      "type": "fishing_hamlet",
-      "importance": "local",
-      "cell": "N018_E008",
-      "anchor_tile": "N018_E008",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "terres_des_gigantomorphes",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: coast",
-        "Région: nord"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
       "id": "hamlet_0217",
-      "name": "Unnamed-146",
+      "name": "Claybury",
       "alias": "Unnamed-146",
       "type": "farm_hamlet",
       "importance": "local",
@@ -15368,7 +10040,7 @@
     },
     {
       "id": "hamlet_0218",
-      "name": "Unnamed-147",
+      "name": "Millford",
       "alias": "Unnamed-147",
       "type": "farm_hamlet",
       "importance": "local",
@@ -15384,88 +10056,6 @@
       "features": [
         "Terrain: plain",
         "Région: sud"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
-    },
-    {
-      "id": "hamlet_0219",
-      "name": "Unnamed-148",
-      "alias": "Unnamed-148",
-      "type": "farm_hamlet",
-      "importance": "local",
-      "cell": "S007_W009",
-      "anchor_tile": "S007_W009",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "empire_humain",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [
-        "Terrain: plain",
-        "Région: ouest"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -183962,18 +178552,6 @@
       "notes": []
     },
     {
-      "id": "000005",
-      "type": "road",
-      "from_place": "N009_W011",
-      "from_ville_id": "ville_sysigie",
-      "from_lieu_id": "",
-      "to_place": "N005_W012",
-      "to_ville_id": "ville_altenberg",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000006",
       "type": "road",
       "from_place": "N005_W012",
@@ -184149,6 +178727,750 @@
       "from_lieu_id": "",
       "to_place": "N007_E001",
       "to_ville_id": "kendrhir_vale",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000021",
+      "type": "road",
+      "from_place": "N009_W011",
+      "from_ville_id": "ville_sysigie",
+      "from_lieu_id": "",
+      "to_place": "N007_W011",
+      "to_ville_id": "town_0129",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000022",
+      "type": "road",
+      "from_place": "N007_W011",
+      "from_ville_id": "town_0129",
+      "from_lieu_id": "",
+      "to_place": "N005_W012",
+      "to_ville_id": "ville_altenberg",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000023",
+      "type": "road",
+      "from_place": "N011_W008",
+      "from_ville_id": "hamlet_0189",
+      "from_lieu_id": "",
+      "to_place": "N012_W008",
+      "to_ville_id": "hamlet_0215",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000024",
+      "type": "road",
+      "from_place": "N010_W015",
+      "from_ville_id": "town_0119",
+      "from_lieu_id": "",
+      "to_place": "N011_W014",
+      "to_ville_id": "hamlet_0148",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000025",
+      "type": "road",
+      "from_place": "S014_E015",
+      "from_ville_id": "clearwater",
+      "from_lieu_id": "",
+      "to_place": "S014_E013",
+      "to_ville_id": "town_0118",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000026",
+      "type": "road",
+      "from_place": "S013_E020",
+      "from_ville_id": "crossroads",
+      "from_lieu_id": "",
+      "to_place": "S011_E020",
+      "to_ville_id": "town_0108",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000027",
+      "type": "road",
+      "from_place": "N011_E020",
+      "from_ville_id": "farwatch",
+      "from_lieu_id": "",
+      "to_place": "N009_E020",
+      "to_ville_id": "town_0110",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000028",
+      "type": "road",
+      "from_place": "N018_E020",
+      "from_ville_id": "highfall",
+      "from_lieu_id": "",
+      "to_place": "N018_E018",
+      "to_ville_id": "town_0113",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000029",
+      "type": "road",
+      "from_place": "N013_E020",
+      "from_ville_id": "millway",
+      "from_lieu_id": "",
+      "to_place": "N011_E020",
+      "to_ville_id": "farwatch",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000030",
+      "type": "road",
+      "from_place": "N013_E020",
+      "from_ville_id": "millway",
+      "from_lieu_id": "",
+      "to_place": "N015_E020",
+      "to_ville_id": "stonemark",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000031",
+      "type": "road",
+      "from_place": "N012_E018",
+      "from_ville_id": "ridgeholt",
+      "from_lieu_id": "",
+      "to_place": "N014_E018",
+      "to_ville_id": "town_0112",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000032",
+      "type": "road",
+      "from_place": "N012_E018",
+      "from_ville_id": "ridgeholt",
+      "from_lieu_id": "",
+      "to_place": "N010_E018",
+      "to_ville_id": "town_0121",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000033",
+      "type": "road",
+      "from_place": "S011_E018",
+      "from_ville_id": "shadowfen",
+      "from_lieu_id": "",
+      "to_place": "S011_E020",
+      "to_ville_id": "town_0108",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000034",
+      "type": "road",
+      "from_place": "S011_E020",
+      "from_ville_id": "town_0108",
+      "from_lieu_id": "",
+      "to_place": "S009_E020",
+      "to_ville_id": "town_0125",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000035",
+      "type": "road",
+      "from_place": "N003_E020",
+      "from_ville_id": "town_0109",
+      "from_lieu_id": "",
+      "to_place": "N005_E020",
+      "to_ville_id": "town_0115",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000036",
+      "type": "road",
+      "from_place": "N003_E020",
+      "from_ville_id": "town_0109",
+      "from_lieu_id": "",
+      "to_place": "N001_E020",
+      "to_ville_id": "town_0126",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000037",
+      "type": "road",
+      "from_place": "N009_E020",
+      "from_ville_id": "town_0110",
+      "from_lieu_id": "",
+      "to_place": "N007_E020",
+      "to_ville_id": "town_0116",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000038",
+      "type": "road",
+      "from_place": "N014_E018",
+      "from_ville_id": "town_0112",
+      "from_lieu_id": "",
+      "to_place": "N016_E018",
+      "to_ville_id": "town_0117",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000039",
+      "type": "road",
+      "from_place": "N014_E018",
+      "from_ville_id": "town_0112",
+      "from_lieu_id": "",
+      "to_place": "N014_E016",
+      "to_ville_id": "town_0134",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000040",
+      "type": "road",
+      "from_place": "N018_E018",
+      "from_ville_id": "town_0113",
+      "from_lieu_id": "",
+      "to_place": "N016_E018",
+      "to_ville_id": "town_0117",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000041",
+      "type": "road",
+      "from_place": "N018_E018",
+      "from_ville_id": "town_0113",
+      "from_lieu_id": "",
+      "to_place": "N018_E016",
+      "to_ville_id": "town_0135",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000042",
+      "type": "road",
+      "from_place": "N005_E020",
+      "from_ville_id": "town_0115",
+      "from_lieu_id": "",
+      "to_place": "N007_E020",
+      "to_ville_id": "town_0116",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000043",
+      "type": "road",
+      "from_place": "N010_E018",
+      "from_ville_id": "town_0121",
+      "from_lieu_id": "",
+      "to_place": "N008_E018",
+      "to_ville_id": "town_0132",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000044",
+      "type": "road",
+      "from_place": "N010_E018",
+      "from_ville_id": "town_0121",
+      "from_lieu_id": "",
+      "to_place": "N010_E016",
+      "to_ville_id": "town_0133",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000045",
+      "type": "road",
+      "from_place": "N001_E011",
+      "from_ville_id": "town_0127",
+      "from_lieu_id": "",
+      "to_place": "N003_E011",
+      "to_ville_id": "town_0136",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000046",
+      "type": "road",
+      "from_place": "N002_E018",
+      "from_ville_id": "town_0128",
+      "from_lieu_id": "",
+      "to_place": "N004_E018",
+      "to_ville_id": "town_0131",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000047",
+      "type": "road",
+      "from_place": "N011_E020",
+      "from_ville_id": "farwatch",
+      "from_lieu_id": "",
+      "to_place": "N012_E018",
+      "to_ville_id": "ridgeholt",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000048",
+      "type": "road",
+      "from_place": "S008_W013",
+      "from_ville_id": "hamlet_0154",
+      "from_lieu_id": "",
+      "to_place": "S006_W014",
+      "to_ville_id": "hamlet_0175",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000049",
+      "type": "road",
+      "from_place": "S006_W014",
+      "from_ville_id": "hamlet_0175",
+      "from_lieu_id": "",
+      "to_place": "S004_W015",
+      "to_ville_id": "hamlet_0214",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000050",
+      "type": "road",
+      "from_place": "N004_E009",
+      "from_ville_id": "horker",
+      "from_lieu_id": "",
+      "to_place": "N003_E011",
+      "to_ville_id": "town_0136",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000051",
+      "type": "road",
+      "from_place": "N003_E020",
+      "from_ville_id": "town_0109",
+      "from_lieu_id": "",
+      "to_place": "N002_E018",
+      "to_ville_id": "town_0128",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000052",
+      "type": "road",
+      "from_place": "N005_W009",
+      "from_ville_id": "dys",
+      "from_lieu_id": "",
+      "to_place": "N007_W011",
+      "to_ville_id": "town_0129",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000053",
+      "type": "road",
+      "from_place": "S008_W010",
+      "from_ville_id": "hamlet_0172",
+      "from_lieu_id": "",
+      "to_place": "S006_W008",
+      "to_ville_id": "hamlet_0174",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000054",
+      "type": "road",
+      "from_place": "N004_E009",
+      "from_ville_id": "horker",
+      "from_lieu_id": "",
+      "to_place": "N006_E011",
+      "to_ville_id": "hamlet_0206",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000055",
+      "type": "road",
+      "from_place": "N008_E007",
+      "from_ville_id": "ville_feyhin_lokcthat",
+      "from_lieu_id": "",
+      "to_place": "N010_E005",
+      "to_ville_id": "town_0123",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000056",
+      "type": "road",
+      "from_place": "N006_E014",
+      "from_ville_id": "city_horkher",
+      "from_lieu_id": "",
+      "to_place": "N006_E011",
+      "to_ville_id": "hamlet_0206",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000057",
+      "type": "road",
+      "from_place": "S008_W013",
+      "from_ville_id": "hamlet_0154",
+      "from_lieu_id": "",
+      "to_place": "S008_W010",
+      "to_ville_id": "hamlet_0172",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000058",
+      "type": "road",
+      "from_place": "N007_E001",
+      "from_ville_id": "kendrhir_vale",
+      "from_lieu_id": "",
+      "to_place": "N004_E001",
+      "to_ville_id": "hamlet_0205",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000059",
+      "type": "road",
+      "from_place": "N009_E011",
+      "from_ville_id": "leviathan_jungle",
+      "from_lieu_id": "",
+      "to_place": "N006_E011",
+      "to_ville_id": "hamlet_0206",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000060",
+      "type": "road",
+      "from_place": "N001_E011",
+      "from_ville_id": "town_0127",
+      "from_lieu_id": "",
+      "to_place": "S002_E011",
+      "to_ville_id": "hamlet_0196",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000061",
+      "type": "road",
+      "from_place": "N002_E018",
+      "from_ville_id": "town_0128",
+      "from_lieu_id": "",
+      "to_place": "N002_E015",
+      "to_ville_id": "hamlet_0201",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000062",
+      "type": "road",
+      "from_place": "S008_W002",
+      "from_ville_id": "town_0137",
+      "from_lieu_id": "",
+      "to_place": "S011_W002",
+      "to_ville_id": "hamlet_0218",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000063",
+      "type": "road",
+      "from_place": "S014_E006",
+      "from_ville_id": "town_0114",
+      "from_lieu_id": "",
+      "to_place": "S013_E003",
+      "to_ville_id": "hamlet_0217",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000064",
+      "type": "road",
+      "from_place": "N001_W010",
+      "from_ville_id": "ville_lhynn",
+      "from_lieu_id": "",
+      "to_place": "S002_W011",
+      "to_ville_id": "hamlet_0197",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000065",
+      "type": "road",
+      "from_place": "N009_W011",
+      "from_ville_id": "ville_sysigie",
+      "from_lieu_id": "",
+      "to_place": "N011_W014",
+      "to_ville_id": "hamlet_0148",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000066",
+      "type": "road",
+      "from_place": "N009_W011",
+      "from_ville_id": "ville_sysigie",
+      "from_lieu_id": "",
+      "to_place": "N011_W008",
+      "to_ville_id": "hamlet_0189",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000067",
+      "type": "road",
+      "from_place": "S002_E015",
+      "from_ville_id": "ville_moork",
+      "from_lieu_id": "",
+      "to_place": "N002_E015",
+      "to_ville_id": "hamlet_0201",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000068",
+      "type": "road",
+      "from_place": "S009_E004",
+      "from_ville_id": "town_0120",
+      "from_lieu_id": "",
+      "to_place": "S013_E003",
+      "to_ville_id": "hamlet_0217",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000069",
+      "type": "road",
+      "from_place": "N014_E008",
+      "from_ville_id": "town_0139",
+      "from_lieu_id": "",
+      "to_place": "N018_E009",
+      "to_ville_id": "hamlet_0166",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000070",
+      "type": "road",
+      "from_place": "S005_E008",
+      "from_ville_id": "hamlet_0193",
+      "from_lieu_id": "",
+      "to_place": "S002_E011",
+      "to_ville_id": "hamlet_0196",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000071",
+      "type": "road",
+      "from_place": "S011_E018",
+      "from_ville_id": "shadowfen",
+      "from_lieu_id": "",
+      "to_place": "S014_E015",
+      "to_ville_id": "clearwater",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000072",
+      "type": "road",
+      "from_place": "N000_E000",
+      "from_ville_id": "ville_oracle_camp",
+      "from_lieu_id": "",
+      "to_place": "S003_E003",
+      "to_ville_id": "hamlet_0146",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000073",
+      "type": "road",
+      "from_place": "S002_W011",
+      "from_ville_id": "hamlet_0197",
+      "from_lieu_id": "",
+      "to_place": "S004_W015",
+      "to_ville_id": "hamlet_0214",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000074",
+      "type": "road",
+      "from_place": "S009_E010",
+      "from_ville_id": "ville_der_hem_shelsem",
+      "from_lieu_id": "",
+      "to_place": "S005_E008",
+      "to_ville_id": "hamlet_0193",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000075",
+      "type": "road",
+      "from_place": "S003_W004",
+      "from_ville_id": "city_dragon_palace",
+      "from_lieu_id": "",
+      "to_place": "S006_W008",
+      "to_ville_id": "hamlet_0174",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000076",
+      "type": "road",
+      "from_place": "N010_E005",
+      "from_ville_id": "town_0123",
+      "from_lieu_id": "",
+      "to_place": "N014_E008",
+      "to_ville_id": "town_0139",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000077",
+      "type": "road",
+      "from_place": "N007_W005",
+      "from_ville_id": "ville_northind",
+      "from_lieu_id": "",
+      "to_place": "N012_W004",
+      "to_ville_id": "hamlet_0153",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000078",
+      "type": "road",
+      "from_place": "S013_E003",
+      "from_ville_id": "hamlet_0217",
+      "from_lieu_id": "",
+      "to_place": "S011_W002",
+      "to_ville_id": "hamlet_0218",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000079",
+      "type": "road",
+      "from_place": "S009_E004",
+      "from_ville_id": "town_0120",
+      "from_lieu_id": "",
+      "to_place": "S005_E008",
+      "to_ville_id": "hamlet_0193",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000080",
+      "type": "road",
+      "from_place": "S009_E010",
+      "from_ville_id": "ville_der_hem_shelsem",
+      "from_lieu_id": "",
+      "to_place": "S014_E013",
+      "to_ville_id": "town_0118",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000081",
+      "type": "sea_route",
+      "from_place": "S011_W006",
+      "from_ville_id": "hishtarland",
+      "from_lieu_id": "",
+      "to_place": "S008_W002",
+      "to_ville_id": "town_0137",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000082",
+      "type": "road",
+      "from_place": "S003_W004",
+      "from_ville_id": "city_dragon_palace",
+      "from_lieu_id": "",
+      "to_place": "S005_W004",
+      "to_ville_id": "ville_tbarak",
       "to_lieu_id": "",
       "description": "",
       "notes": []

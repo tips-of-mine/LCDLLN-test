@@ -21,10 +21,12 @@
 # que l'ancien build monolithique.
 name: Build Windows
 on:
+  # develop : branche d'intégration (flux develop → main) ; les PR y sont
+  # compilées et testées avant promotion vers main.
   push:
-    branches: [main, master]
+    branches: [main, master, develop]
   pull_request:
-    branches: [main, master]
+    branches: [main, master, develop]
 
 env:
   VCPKG_DEFAULT_TRIPLET: x64-windows-release

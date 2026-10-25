@@ -180,6 +180,12 @@ RenderModel
 | `src/masterd/handlers/shard/ShardTicketHandler.h/.cpp` | Génération de ticket de connexion shard. |
 | `src/masterd/handlers/shard/ServerListHandler.h/.cpp` | Retourne la liste des shards disponibles. |
 | `src/masterd/handlers/terms/TermsHandler.h/.cpp` | Acceptation des CGU. |
+| `src/masterd/handlers/retired/RetiredGameplayHandler.h/.cpp` | Répond ERROR aux opcodes des fonctions de gameplay retirées du master (ETAPE1.1). |
+
+> **Règle (ETAPE1.1)** : `masterd` est un relais pur, sans simulation de gameplay.
+> Échange, enchères V1, guildes V1, loot, compétences, arène, champs de bataille,
+> JcJ extérieur, météo, événements, LFG et objets interactifs ont été retirés du
+> master. Détail et suite : `docs/architecture/etape1_master_shard.md`.
 
 ### Comptes et validation
 | Fichier | Rôle |

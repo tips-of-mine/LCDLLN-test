@@ -158,9 +158,9 @@ namespace engine::server
 		// Roadmap-7 (2026-07-19) — guilde du compte pour le push d'admission au
 		// shard (partage du buff gâteau à la guilde, dette #991). SELECT direct
 		// sur guild_members_v2 (un compte = au plus une guilde, clé composite) :
-		// évite de coupler ce handler au GuildHandler (construit APRÈS lui dans
-		// main_linux.cpp — piège d'ordre de déclaration). Tolérant : guilde
-		// indéterminée → 0 (sans guilde), le shard n'étend pas le partage.
+		// lecture de persistance seule (le GuildHandler V1 a été retiré du master,
+		// ETAPE1.1). Tolérant : guilde indéterminée → 0 (sans guilde), le shard
+		// n'étend pas le partage.
 		uint64_t guildId = 0;
 		if (stmtCache)
 		{

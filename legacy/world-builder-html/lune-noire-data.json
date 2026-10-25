@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.38",
+    "version": "1.0.39",
     "notes": [
+      "v1.0.39 : [CARTE+SCÉNARIO] Volcan actif sur 12 cellules (cratère fumant en S008_E014, cheminées de lave) ; scénario « Le Cœur du volcan » : 4 quêtes (Der hem Shelsem, Moork, Shadowfen, Frosthollow), recette de potion de résistance à la chaleur, entrée par le cratère, raid à 4 groupes contre une créature de la lave.",
       "v1.0.38 : [RENDU] Règles des rivières (méandres, petits rapides) et des ponts (pierre taillée là où une route traverse une rivière — 1 ponts repérés dans hydrography.bridges ; petits ponts en bois ailleurs).",
       "v1.0.37 : [CARTE] Rivière de la cascade (N003_W005) : N004_W005 → N005_W005 → N006_W005 → Northind (sur le côté, ponts) → N007_W004 → N008_W004, puis bras ouest N009_W004 → N010_W004 → Hayfen → mer (N012_W004) et bras est N009_W003 → mer (N010_W002) ; rivière de la source de N008_W002 → N009_W002 → mer (N010_W002).",
       "v1.0.36 : [CARTE] Île de Deepbrook décalée d'une cellule vers le haut (N012_E002–E003, Deepbrook en N012_E002, navette retracée) ; rivière de Verdansur : source dans la ville, bras sud (N009_W015 → mer) et bras nord (N010_W014 → N011_W014 → mer).",
@@ -19822,6 +19823,150 @@
         "Ville : Millford (hamlet_0218).",
         "Les PNJ de la baie parlent de plus en plus des profondeurs à mesure que les quêtes de la chaîne sont terminées."
       ]
+    },
+    {
+      "id": "quest_volcan_1_ville_der_hem_shelsem",
+      "name": "Le Souffle du volcan — Der hem Shelsem",
+      "description": "Les habitants de Der hem Shelsem sentent le sol trembler de plus en plus souvent.",
+      "category": "exploration",
+      "tags": [
+        "volcan_sud_est",
+        "volcan"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Chaîne « Le Cœur du volcan »",
+      "quest_kind": "group",
+      "steps": [
+        "Écouter les PNJ de Der hem Shelsem parler du volcan.",
+        "Enquêter autour de Der hem Shelsem.",
+        "Rapporter l'indice ou l'ingrédient trouvé."
+      ],
+      "source_lore": [],
+      "rewards": {},
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [],
+      "region_id": "",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "has_counter_quest": false,
+      "notes": [
+        "Ville : Der hem Shelsem (ville_der_hem_shelsem).",
+        "Les PNJ parlent de plus en plus du volcan à mesure que la chaîne avance."
+      ]
+    },
+    {
+      "id": "quest_volcan_2_ville_moork",
+      "name": "Le Souffle du volcan — Moork",
+      "description": "À Moork, des marchands parlent de coulées de lave qui changent de chemin chaque nuit.",
+      "category": "exploration",
+      "tags": [
+        "volcan_sud_est",
+        "volcan"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Chaîne « Le Cœur du volcan »",
+      "quest_kind": "group",
+      "steps": [
+        "Écouter les PNJ de Moork parler du volcan.",
+        "Enquêter autour de Moork.",
+        "Rapporter l'indice ou l'ingrédient trouvé."
+      ],
+      "source_lore": [],
+      "rewards": {},
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [],
+      "region_id": "baronnie_de_moorks",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "has_counter_quest": false,
+      "notes": [
+        "Ville : Moork (ville_moork).",
+        "Les PNJ parlent de plus en plus du volcan à mesure que la chaîne avance."
+      ]
+    },
+    {
+      "id": "quest_volcan_3_shadowfen",
+      "name": "Le Souffle du volcan — Shadowfen",
+      "description": "À Shadowfen, un ermite affirme qu'une créature nage dans la lave au fond du cratère.",
+      "category": "exploration",
+      "tags": [
+        "volcan_sud_est",
+        "volcan"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Chaîne « Le Cœur du volcan »",
+      "quest_kind": "group",
+      "steps": [
+        "Écouter les PNJ de Shadowfen parler du volcan.",
+        "Enquêter autour de Shadowfen.",
+        "Rapporter l'indice ou l'ingrédient trouvé."
+      ],
+      "source_lore": [],
+      "rewards": {},
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [],
+      "region_id": "",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "has_counter_quest": false,
+      "notes": [
+        "Ville : Shadowfen (shadowfen).",
+        "Les PNJ parlent de plus en plus du volcan à mesure que la chaîne avance."
+      ]
+    },
+    {
+      "id": "quest_volcan_4_hamlet_0193",
+      "name": "Le Souffle du volcan — Frosthollow",
+      "description": "À Frosthollow, un alchimiste cherche des ingrédients pour une potion contre la chaleur.",
+      "category": "exploration",
+      "tags": [
+        "volcan_sud_est",
+        "volcan"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Chaîne « Le Cœur du volcan »",
+      "quest_kind": "group",
+      "steps": [
+        "Écouter les PNJ de Frosthollow parler du volcan.",
+        "Enquêter autour de Frosthollow.",
+        "Rapporter l'indice ou l'ingrédient trouvé."
+      ],
+      "source_lore": [],
+      "rewards": {},
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [],
+      "region_id": "",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "has_counter_quest": false,
+      "notes": [
+        "Ville : Frosthollow (hamlet_0193).",
+        "Les PNJ parlent de plus en plus du volcan à mesure que la chaîne avance."
+      ]
     }
   ],
   "mounts": [
@@ -21002,6 +21147,28 @@
       "required_classes": [],
       "for_factions": [],
       "for_races": []
+    },
+    {
+      "id": "raid_coeur_du_volcan",
+      "name": "Le Cœur du volcan",
+      "description": "Raid à 4 groupes au cœur du volcan actif, dans un univers volcanique (galeries de lave, cheminées, chaleur écrasante). Boss : une créature qui vit dans la lave.",
+      "min_teams": 4,
+      "min_players_per_team": 5,
+      "min_players_total": 20,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "difficulty": 5,
+      "location_ville_id": "",
+      "rewards": {
+        "title": "",
+        "reward": "",
+        "power": ""
+      },
+      "notes": [
+        "Entrée par le cratère (S008_E014).",
+        "Accès : voir règle rule_volcan_acces."
+      ]
     }
   ],
   "timeline": [
@@ -142086,6 +142253,23 @@
         "[HS] 'Résister à l'arrestation est dangereux : les gardes ne sont visiblement pas là pour s'amuser, et les molosses peuvent déchiqueter un individu en quelques secondes.'",
         "[HS] Illustration page 12 : une patrouille de Chiens de Loi avec molosses."
       ]
+    },
+    {
+      "id": "creature_lave_volcan",
+      "name": "Créature de la lave",
+      "type": "boss",
+      "difficulty": "raid",
+      "level_min": 1,
+      "level_max": 1,
+      "description": "Créature qui vit dans la lave au cœur du volcan ; boss du raid « Le Cœur du volcan ».",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [],
+      "notes": [
+        "Nom et niveau à définir."
+      ]
     }
   ],
   "regions": [
@@ -145784,6 +145968,41 @@
       "source_monsters": [],
       "source_villes": [],
       "source_quests": [],
+      "notes": []
+    },
+    {
+      "id": "loot_recette_potion_resistance_chaleur",
+      "name": "Recette : potion de résistance à la chaleur",
+      "type": "potion_craft",
+      "rarity": "rare",
+      "description": "Recette de la potion qui protège de la chaleur du volcan. Obtenue en terminant la chaîne « Le Souffle du volcan ».",
+      "source_quests": [
+        "quest_volcan_1_ville_der_hem_shelsem",
+        "quest_volcan_2_ville_moork",
+        "quest_volcan_3_shadowfen",
+        "quest_volcan_4_hamlet_0193"
+      ],
+      "min_level": 0,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [],
+      "source_villes": [],
+      "source_raids": [],
+      "notes": []
+    },
+    {
+      "id": "loot_potion_resistance_chaleur",
+      "name": "Potion de résistance à la chaleur",
+      "type": "potion_craft",
+      "rarity": "rare",
+      "description": "Protège de la chaleur et des émanations du volcan. Indispensable pour descendre par le cratère.",
+      "source_quests": [],
+      "min_level": 0,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [],
+      "source_villes": [],
+      "source_raids": [],
       "notes": []
     }
   ],
@@ -153549,6 +153768,22 @@
       "notes": [
         "Entrée cachée : jamais indiquée sur la carte du joueur, elle doit être trouvée.",
         "Raids : raid_abysses_temple_englouti, raid_abysses_antre."
+      ]
+    },
+    {
+      "id": "zone_volcan_sud_est",
+      "name": "Le Volcan",
+      "type": "zone_combat_raid",
+      "tome": "",
+      "faction": "",
+      "biome": "Volcanique",
+      "visual_description": "Volcan actif sur 12 cellules (S006–S009, E012–E015) : au sommet (S008_E014) un cratère d'où s'échappe un peu de fumée ; sur les flancs, des cheminées volcaniques d'où s'échappe de la lave.",
+      "atmosphere": "",
+      "strategic_importance": "",
+      "lore": "",
+      "source": "Hubert, 25/10/2026",
+      "notes": [
+        "Raid : raid_coeur_du_volcan."
       ]
     }
   ],
@@ -172431,7 +172666,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -172449,7 +172686,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -173139,7 +173378,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -173157,7 +173398,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -173175,7 +173418,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -173193,7 +173438,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -173865,7 +174112,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -173883,7 +174132,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -173901,7 +174152,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Sommet du volcan actif : cratère d'où s'échappe un peu de fumée"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -173919,7 +174172,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -174609,7 +174864,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -174627,7 +174884,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
+      ],
       "notes": [],
       "coord_x": null,
       "coord_y": null
@@ -183224,6 +183483,27 @@
       "training_minimum": "",
       "source": "Hubert, revue de la carte du 25/10/2026",
       "notes": []
+    },
+    {
+      "id": "rule_volcan_acces",
+      "name": "Le Cœur du volcan — conditions d'accès",
+      "category": "exploration",
+      "description": "Accès au raid « Le Cœur du volcan » : 1) terminer la chaîne « Le Souffle du volcan » (Der hem Shelsem, Moork, Shadowfen, Frosthollow), qui donne la recette de la potion de résistance à la chaleur ; 2) avoir le niveau minimum (à définir) ; 3) boire la potion et entrer par le cratère, au sommet du volcan (S008_E014). Raid à 4 groupes ; boss : une créature qui vit dans la lave.",
+      "applies_to": [
+        "zone_volcan_sud_est",
+        "lieu_volcan_cratere",
+        "raid_coeur_du_volcan",
+        "quest_volcan_1_ville_der_hem_shelsem",
+        "quest_volcan_2_ville_moork",
+        "quest_volcan_3_shadowfen",
+        "quest_volcan_4_hamlet_0193"
+      ],
+      "mechanique_jeu": "Accès au raid « Le Cœur du volcan » : 1) terminer la chaîne « Le Souffle du volcan » (Der hem Shelsem, Moork, Shadowfen, Frosthollow), qui donne la recette de la potion de résistance à la chaleur ; 2) avoir le niveau minimum (à définir) ; 3) boire la potion et entrer par le cratère, au sommet du volcan (S008_E014). Raid à 4 groupes ; boss : une créature qui vit dans la lave.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Hubert, 25/10/2026",
+      "notes": []
     }
   ],
   "game_design": {
@@ -186202,6 +186482,98 @@
         "Accès : voir règle rule_abysses_baie_acces."
       ],
       "entree_cachee": true
+    },
+    {
+      "id": "lieu_volcan_cratere",
+      "name": "Cratère du volcan",
+      "alias": "",
+      "type": "volcano_poi",
+      "importance": "",
+      "cell": "S008_E014",
+      "region_id": "",
+      "zone_id": "zone_volcan_sud_est",
+      "faction_control": "",
+      "features": [
+        "Cratère fumant au sommet du volcan actif",
+        "Entrée du raid « Le Cœur du volcan »"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "Volcan actif",
+        "relief": "Cratère au sommet, cheminées de lave sur les flancs",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S006_E013",
+        "S006_E014",
+        "S007_E012",
+        "S007_E013",
+        "S007_E014",
+        "S007_E015",
+        "S008_E012",
+        "S008_E013",
+        "S008_E014",
+        "S008_E015",
+        "S009_E013",
+        "S009_E014"
+      ],
+      "notes": [
+        "Accès : voir règle rule_volcan_acces."
+      ]
     }
   ],
   "route_types": [
@@ -186492,6 +186864,14 @@
       "shape": "diamond",
       "tier": "poi",
       "categorie": "lieu"
+    },
+    {
+      "id": "volcano_poi",
+      "label": "Volcan",
+      "color": "#d04020",
+      "shape": "triangle",
+      "tier": "poi",
+      "categorie": "lieu"
     }
   ],
   "sea_lines": [
@@ -186585,6 +186965,41 @@
         "raid_abysses_antre"
       ],
       "regle": "rule_abysses_baie_acces"
+    },
+    {
+      "id": "scenario_coeur_volcan",
+      "name": "Le Cœur du volcan",
+      "cells": [
+        "S006_E013",
+        "S006_E014",
+        "S007_E012",
+        "S007_E013",
+        "S007_E014",
+        "S007_E015",
+        "S008_E012",
+        "S008_E013",
+        "S008_E014",
+        "S008_E015",
+        "S009_E013",
+        "S009_E014"
+      ],
+      "cratere": "S008_E014",
+      "quests": [
+        "quest_volcan_1_ville_der_hem_shelsem",
+        "quest_volcan_2_ville_moork",
+        "quest_volcan_3_shadowfen",
+        "quest_volcan_4_hamlet_0193"
+      ],
+      "rumeur_pnj": "croissante avec le nombre de quêtes terminées",
+      "recette": "loot_recette_potion_resistance_chaleur",
+      "potion": "loot_potion_resistance_chaleur",
+      "niveau_minimum": null,
+      "entree": "lieu_volcan_cratere",
+      "raids": [
+        "raid_coeur_du_volcan"
+      ],
+      "boss": "creature_lave_volcan",
+      "regle": "rule_volcan_acces"
     }
   ],
   "hydrography": {

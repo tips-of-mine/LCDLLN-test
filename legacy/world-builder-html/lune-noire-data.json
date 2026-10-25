@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.35",
+    "version": "1.0.36",
     "notes": [
+      "v1.0.36 : [CARTE] Île de Deepbrook décalée d'une cellule vers le haut (N012_E002–E003, Deepbrook en N012_E002, navette retracée) ; rivière de Verdansur : source dans la ville, bras sud (N009_W015 → mer) et bras nord (N010_W014 → N011_W014 → mer).",
       "v1.0.35 : [CARTE] Hydrographie du nord (nouvelle clé hydrography) : grand lac de l'ouest (N007_E005–E006), grand lac de l'est (N007_E007–E008), lac du sud (N005_E008) ; rivières des deux lacs (via N008_E007), du lac du sud (via N006_E007) et d'Ashwick (N008_E006 → N009_E005 → N010_E005 → mer), qui traverse Ashwick hors du centre avec 2 ponts.",
       "v1.0.34 : [CARTE] Ports d'Altenberg et de L'hynn (ponton dans la cellule de la ville, côté ouest) ; destinations maritimes à décider (îles ou continent à l'ouest).",
       "v1.0.33 : [CARTE] Ville portuaire Deepbrook sur l'île N011_E002 ; navette maritime aller-retour Ashwick – Deepbrook (1 bateau, pause 30 s, ponton dans chaque ville).",
@@ -6723,7 +6724,8 @@
       "services": [],
       "features": [
         "Terrain: plain_with_river",
-        "Région: nord"
+        "Région: nord",
+        "Source de la rivière de Verdansur, qui se partage en deux bras vers la mer"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -9505,12 +9507,12 @@
       "alias": "",
       "type": "port_town",
       "importance": "",
-      "cell": "N011_E002",
-      "anchor_tile": "N011_E002",
+      "cell": "N012_E002",
+      "anchor_tile": "N012_E002",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "",
       "housing_count": null,
       "population": null,
       "services": [],
@@ -158874,7 +158876,7 @@
       "id": "N012_E002",
       "name": "cell_N012_E002",
       "region_id": "",
-      "terrain_type": "shallow_sea",
+      "terrain_type": "island",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -158892,7 +158894,7 @@
       "id": "N012_E003",
       "name": "cell_N012_E003",
       "region_id": "",
-      "terrain_type": "shallow_sea",
+      "terrain_type": "island",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -159319,11 +159321,14 @@
       "terrain_type": "plain_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N012_W014",
+      "connects_to": [
+        "N010_W014",
+        "N012_W014"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -159608,7 +159613,7 @@
       "id": "N011_E002",
       "name": "cell_N011_E002",
       "region_id": "terres_des_gigantomorphes",
-      "terrain_type": "island",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -159630,7 +159635,7 @@
       "id": "N011_E003",
       "name": "cell_N011_E003",
       "region_id": "terres_des_gigantomorphes",
-      "terrain_type": "island",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -160042,11 +160047,14 @@
       "terrain_type": "plain_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 2,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N009_W015, vers N010_W014",
+      "connects_to": [
+        "N009_W015",
+        "N010_W014"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
@@ -160062,11 +160070,14 @@
       "terrain_type": "plain_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N011_W014",
+      "connects_to": [
+        "N010_W015",
+        "N011_W014"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -160786,11 +160797,14 @@
       "terrain_type": "plain_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
-      "connects_to": [],
+      "river_direction": "vers N008_W015",
+      "connects_to": [
+        "N008_W015",
+        "N010_W015"
+      ],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [],
@@ -179316,7 +179330,7 @@
       "from_place": "N010_E005",
       "from_ville_id": "town_0123",
       "from_lieu_id": "",
-      "to_place": "N011_E002",
+      "to_place": "N012_E002",
       "to_ville_id": "town_ile_ashwick",
       "to_lieu_id": "",
       "description": "Navette Ashwick – Deepbrook",
@@ -179325,10 +179339,10 @@
       "waypoints": [
         "N010_E005",
         "N011_E005",
-        "N012_E004",
-        "N012_E003",
-        "N012_E002",
-        "N011_E002"
+        "N011_E004",
+        "N011_E003",
+        "N011_E002",
+        "N012_E002"
       ]
     }
   ],
@@ -183107,12 +183121,12 @@
       "id": "rule_navette_ashwick_ile",
       "name": "Navette Ashwick – Deepbrook",
       "category": "transport",
-      "description": "Navette aller-retour Ashwick ↔ Deepbrook (île N011_E002–N011_E003), 1 bateau. Le bateau ne navigue que sur l'eau assez profonde, jamais sur la terre ; ponton dans la cellule de chaque ville ; pause de 30 secondes avant de repartir.",
+      "description": "Navette aller-retour Ashwick ↔ Deepbrook (île N012_E002–N012_E003), 1 bateau. Le bateau ne navigue que sur l'eau assez profonde, jamais sur la terre ; ponton dans la cellule de chaque ville ; pause de 30 secondes avant de repartir.",
       "applies_to": [
         "town_0123",
         "town_ile_ashwick"
       ],
-      "mechanique_jeu": "Navette aller-retour Ashwick ↔ Deepbrook (île N011_E002–N011_E003), 1 bateau. Le bateau ne navigue que sur l'eau assez profonde, jamais sur la terre ; ponton dans la cellule de chaque ville ; pause de 30 secondes avant de repartir.",
+      "mechanique_jeu": "Navette aller-retour Ashwick ↔ Deepbrook (île N012_E002–N012_E003), 1 bateau. Le bateau ne navigue que sur l'eau assez profonde, jamais sur la terre ; ponton dans la cellule de chaque ville ; pause de 30 secondes avant de repartir.",
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
@@ -186455,7 +186469,7 @@
         },
         {
           "ville_id": "town_ile_ashwick",
-          "ponton_cell": "N011_E002",
+          "ponton_cell": "N012_E002",
           "stop_seconds": 30
         }
       ],
@@ -186587,6 +186601,46 @@
         ],
         "notes": [
           "Se termine dans la mer (N011_E005)."
+        ]
+      },
+      {
+        "id": "riv_verdansur_sud",
+        "name": "Rivière de Verdansur (bras sud)",
+        "from": "source_verdansur",
+        "to": "mer",
+        "source": {
+          "ville_id": "town_0119",
+          "cell": "N010_W015",
+          "notes": "La source d'eau d'origine est dans la ville de Verdansur."
+        },
+        "cells": [
+          "N010_W015",
+          "N009_W015",
+          "N008_W015"
+        ],
+        "notes": [
+          "Se jette dans la mer (N008_W015)."
+        ]
+      },
+      {
+        "id": "riv_verdansur_nord",
+        "name": "Rivière de Verdansur (bras nord)",
+        "from": "source_verdansur",
+        "to": "mer",
+        "source": {
+          "ville_id": "town_0119",
+          "cell": "N010_W015",
+          "notes": "La source d'eau d'origine est dans la ville de Verdansur."
+        },
+        "cells": [
+          "N010_W015",
+          "N010_W014",
+          "N011_W014",
+          "N012_W014"
+        ],
+        "notes": [
+          "Passe par la cellule de Trueford (N011_W014).",
+          "Se jette dans la mer (N012_W014)."
         ]
       }
     ]

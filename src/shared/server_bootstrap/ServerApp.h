@@ -227,6 +227,10 @@ namespace engine::server
 		/// Consommé par TickCakeBuffs pour partager le buff gâteau aux co-membres de
 		/// guilde connectés à portée (dette #991).
 		uint64_t guildId = 0;
+		/// ETAPE1.2 — génération du verrou de propriété attribuée par le master à
+		/// l'entrée en jeu (AdmittedCharacterRegistry::AdmittedOwnerGeneration, résolue au
+		/// Hello). Présentée à chaque sauvegarde : 0 = master legacy (pas de verrou).
+		uint64_t ownerGeneration = 0;
 		/// Niveau du personnage (table characters.level, chargé au Hello via LoadSpawnFromDb).
 		/// Reporté au master dans le heartbeat enrichi (présence web-portal).
 		uint32_t level = 1;
@@ -482,7 +486,24 @@ namespace engine::server
 		/// PLUS du fichier .ini (le fichier reste le filet de secours). No-op
 		/// silencieux si le pool DB est absent (dev sans MySQL / Windows).
 		/// Corps réel sous SHARD_POSITION_DB (même garde que LoadSpawnFromDb).
-		void SaveCharacterToDb(const PersistedCharacterState& state);
+		/// ETAPE1.2 — résultat d'une écriture de personnage en base.
+		enum class CharacterDbSaveResult : uint8_t
+		{
+			Saved,           ///< Transaction validée.
+			SkippedNoDb,     ///< Pas de pool DB (dev sans MySQL / Windows) : rien d'écrit.
+			RefusedNotOwner, ///< Ce shard n'est plus le propriétaire du personnage : rien d'écrit.
+			Failed,          ///< Erreur SQL : transaction annulée.
+		};
+
+		/// ETAPE1.2 — avant toute écriture, verrouille la ligne `characters` (SELECT … FOR
+		/// UPDATE) et vérifie que ce shard en est toujours le propriétaire
+		/// (`owner_shard_id` + `owner_generation`, cf. db::CheckCharacterOwnership). Le shard
+		/// propriétaire écrit aussi la position de réapparition (`spawn_*`) et le niveau :
+		/// le master ne les écrit plus pour un personnage en jeu.
+		/// \param yawRadians orientation du personnage (radians), stockée en degrés.
+		/// \param ownerGeneration génération reçue du master à l'admission (0 = aucune).
+		CharacterDbSaveResult SaveCharacterToDb(const PersistedCharacterState& state, float yawRadians,
+			uint64_t ownerGeneration);
 
 		/// Roadmap-10 — recharge wallet + inventaire + équipement depuis la DB dans
 		/// \p state (les autres champs ne sont pas touchés). Sentinelle d'existence :
@@ -1421,6 +1442,9 @@ namespace engine::server
 		/// TA.4 : pool MySQL pour le pont position (optionnel, possédé par l'appelant). Voir
 		/// SetCharacterDbPool / LoadSpawnFromDb.
 		db::ConnectionPool* m_characterDbPool = nullptr;
+		/// ETAPE1.2 — identifiant de ce shard (config `shard.id`, défaut 1, même clé que le
+		/// validateur de tickets) : comparé à `characters.owner_shard_id` avant d'écrire.
+		uint32_t m_shardId = 1;
 
 		/// Per-player chat send rate limiting (M29.1).
 		engine::net::ChatRateLimiter m_chatRateLimiter;

@@ -1,4 +1,5 @@
 #include "src/masterd/handlers/character/CharacterEnterWorldHandler.h"
+#include "src/masterd/characters/CharacterOwnershipStore.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/network/CharacterPayloads.h"
@@ -181,6 +182,18 @@ namespace engine::server
 		LOG_INFO(Net, "[CharacterEnterWorldHandler] registered (account_id={}, character_id={}, name='{}')",
 			*accountId, parsed->characterId, parsed->characterName);
 
+		// ETAPE1.2 — verrou de propriété : le personnage est attribué au shard qui va
+		// l'héberger (owner_shard_id = server_id, owner_generation + 1). Seul ce shard
+		// pourra ensuite écrire son état ; une admission plus récente rend caduques les
+		// écritures d'un ancien propriétaire. Échec (base antérieure à 0077) → génération 0,
+		// le shard retombe sur le comportement historique (sans verrou).
+		uint64_t ownerGeneration = 0;
+		if (dbServerId != 0u)
+		{
+			if (auto generation = AcquireCharacterOwnership(mysql, stmtCache, parsed->characterId, *accountId, dbServerId))
+				ownerGeneration = *generation;
+		}
+
 		// TA.3 — push d'admission au shard. Sans ça, le client envoie son Hello UDP avec
 		// `clientNonce=character_id`, mais le shard l'a admis au handshake TCP avec
 		// `character_id=0` (le ticket avait été demandé AVANT le choix de perso), donc rejet.
@@ -199,12 +212,13 @@ namespace engine::server
 				// Roadmap-7 — on embarque aussi la guilde du compte (guild_members_v2,
 				// 0 = sans guilde) pour que le shard connaisse l'appartenance des
 				// joueurs connectés (partage du buff gâteau à la guilde).
+				// ETAPE1.2 — et la génération du verrou de propriété (0 = sans verrou).
 				auto admitPkt = engine::network::BuildAdmitCharacterPacket(*accountId, parsed->characterId,
-					parsed->characterName, dbGender, guildId);
+					parsed->characterName, dbGender, guildId, ownerGeneration);
 				if (!admitPkt.empty() && m_server->Send(*shardConnId, admitPkt))
 				{
-					LOG_INFO(Net, "[CharacterEnterWorldHandler] admit push sent (shard_id={}, shardConnId={}, account_id={}, character_id={}, guild_id={})",
-						dbServerId, *shardConnId, *accountId, parsed->characterId, guildId);
+					LOG_INFO(Net, "[CharacterEnterWorldHandler] admit push sent (shard_id={}, shardConnId={}, account_id={}, character_id={}, guild_id={}, owner_generation={})",
+						dbServerId, *shardConnId, *accountId, parsed->characterId, guildId, ownerGeneration);
 				}
 				else
 				{

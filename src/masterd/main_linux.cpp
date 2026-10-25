@@ -37,6 +37,7 @@
 #include "src/masterd/handlers/character/CharacterDeleteHandler.h"
 #include "src/masterd/handlers/character/CharacterSavePositionHandler.h"
 #include "src/masterd/handlers/character/CharacterEnterWorldHandler.h"
+#include "src/masterd/characters/CharacterOwnershipStore.h"
 #include "src/masterd/anniversary/AnniversaryService.h"
 #include "src/masterd/anniversary/BirthdayEmailJob.h"
 #include "src/masterd/jobs/MasterJobScheduler.h" // Roadmap-4 (2026-07-19)
@@ -1472,10 +1473,13 @@ int main(int argc, char** argv)
 
 	LOG_INFO(Server, "[MAIN_SRV] SetPacketHandler OK");
 	int shardHeartbeatTimeoutSec = static_cast<int>(config.GetInt("shard.heartbeat_timeout_sec", 90));
-	shardRegistry.SetShardDownCallback([&playerPresenceCache](uint32_t shard_id) {
+	shardRegistry.SetShardDownCallback([&playerPresenceCache, &dbPool](uint32_t shard_id) {
 		LOG_INFO(Net, "[ServerMain] Shard down event: shard_id={}", shard_id);
 		// Présence enrichie : un shard tombé ne rapporte plus ses joueurs -> purge.
 		playerPresenceCache.Clear(shard_id);
+		// ETAPE1.2 — libère les verrous de propriété de ce shard : s'il revient, ses
+		// sauvegardes sont refusées (il n'est plus propriétaire de ses anciens personnages).
+		engine::server::ReleaseShardOwnership(dbPool, shard_id);
 	});
 	double degradedLoadThreshold = config.GetDouble("shard.degraded_load_threshold", 0.90);
 	shardRegistry.SetDegradedLoadThreshold(degradedLoadThreshold);

@@ -8,6 +8,7 @@
 #include "src/shared/platform/FileSystem.h"
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
 #include "src/shardd/world/AdmittedCharacterRegistry.h"
+#include "src/shared/db/CharacterOwnership.h" // ETAPE1.2 — un seul propriétaire par personnage
 #include "src/shared/network/ServerProtocol.h"
 
 // R1-A — JSON embarqués (générés au build) pour le moteur de stats des personnages.
@@ -417,6 +418,8 @@ namespace engine::server
 		}
 
 		m_listenPort = ClampToU16(m_config.GetInt("server.listen_port", 27015), 1, 65535);
+		// ETAPE1.2 — identifiant du shard pour le contrôle de propriété des personnages.
+		m_shardId = static_cast<uint32_t>(std::max<int64_t>(0, m_config.GetInt("shard.id", 1)));
 		m_tickHz = ResolveTickHz();
 		m_snapshotHz = ResolveSnapshotHz(m_tickHz);
 		// TG.3 — opt-in split-receive : lecture config au boot. Le flag est lu UNE seule fois
@@ -1312,19 +1315,20 @@ namespace engine::server
 #endif
 	}
 
-	void ServerApp::SaveCharacterToDb(const PersistedCharacterState& state)
+	ServerApp::CharacterDbSaveResult ServerApp::SaveCharacterToDb(const PersistedCharacterState& state,
+		float yawRadians, uint64_t ownerGeneration)
 	{
 #if defined(SHARD_POSITION_DB)
 		if (m_characterDbPool == nullptr || state.characterKey == 0u)
 		{
-			return;
+			return CharacterDbSaveResult::SkippedNoDb;
 		}
 		auto guard = m_characterDbPool->Acquire();
 		MYSQL* mysql = guard.get();
 		auto* cache = guard.cache();
 		if (mysql == nullptr || cache == nullptr)
 		{
-			return;
+			return CharacterDbSaveResult::SkippedNoDb;
 		}
 		// Transaction : wallet + inventaire + équipement partent ENSEMBLE — un
 		// lecteur concurrent (autre shard, outil web) ne voit jamais un état mixte,
@@ -1334,9 +1338,53 @@ namespace engine::server
 		{
 			LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: START TRANSACTION failed (character_key={})",
 				state.characterKey);
-			return;
+			return CharacterDbSaveResult::Failed;
 		}
 		bool ok = true;
+		// 0. ETAPE1.2 — contrôle de propriété : la ligne `characters` est verrouillée
+		// (FOR UPDATE) pendant toute la transaction, donc le master ne peut pas
+		// réattribuer le personnage entre ce contrôle et le COMMIT. owner_shard_id NULL
+		// (verrou libéré, shard déclaré mort) est lu 0. Personnage absent → refus.
+		{
+			auto* own = cache->Acquire(mysql,
+				"SELECT IFNULL(owner_shard_id, 0), owner_generation FROM characters "
+				"WHERE id = ? AND deleted_at IS NULL FOR UPDATE");
+			if (own == nullptr || !own->Bind(0, state.characterKey) || !own->Execute())
+			{
+				mysql_query(mysql, "ROLLBACK");
+				LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: ownership query failed (character_key={})",
+					state.characterKey);
+				return CharacterDbSaveResult::Failed;
+			}
+			if (!own->FetchRow())
+			{
+				mysql_query(mysql, "ROLLBACK");
+				return CharacterDbSaveResult::RefusedNotOwner;
+			}
+			const auto check = db::CheckCharacterOwnership(static_cast<uint32_t>(own->GetUInt64(0)),
+				own->GetUInt64(1), m_shardId, ownerGeneration);
+			if (!db::IsWriteAllowed(check))
+			{
+				mysql_query(mysql, "ROLLBACK");
+				return CharacterDbSaveResult::RefusedNotOwner;
+			}
+		}
+		// 0 bis. ETAPE1.2 — position de réapparition + niveau : écrits par le shard
+		// propriétaire (le master ne les écrit plus pour un personnage en jeu). Colonnes
+		// lues au Hello par LoadSpawnFromDb.
+		{
+			auto* pos = cache->Acquire(mysql,
+				"UPDATE characters SET spawn_x = ?, spawn_y = ?, spawn_z = ?, spawn_yaw_deg = ?, "
+				"level = GREATEST(level, ?) WHERE id = ?");
+			ok = pos != nullptr
+				&& pos->Bind(0, static_cast<double>(state.positionMetersX))
+				&& pos->Bind(1, static_cast<double>(state.positionMetersY))
+				&& pos->Bind(2, static_cast<double>(state.positionMetersZ))
+				&& pos->Bind(3, static_cast<double>(yawRadians * 57.2957795f))
+				&& pos->Bind(4, state.level)
+				&& pos->Bind(5, state.characterKey)
+				&& pos->Execute();
+		}
 		// 1. Wallet : upsert des 4 devises (ids alignés sur PlayerWalletService :
 		// 1=gold, 2=honor, 3=badges, 4=premium). Les 4 lignes sont TOUJOURS écrites
 		// (même à 0) : elles servent de sentinelle d'existence à LoadCharacterFromDb.
@@ -1347,6 +1395,10 @@ namespace engine::server
 			{ 3u, state.badges }, { 4u, state.premiumCurrency } };
 		for (const auto& currency : currencies)
 		{
+			if (!ok)
+			{
+				break;
+			}
 			auto* stmt = cache->Acquire(mysql,
 				"INSERT INTO player_wallet (player_id, currency_id, amount) VALUES (?, ?, ?) "
 				"ON DUPLICATE KEY UPDATE amount = VALUES(amount)");
@@ -1406,16 +1458,19 @@ namespace engine::server
 			{
 				LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: COMMIT failed (character_key={})",
 					state.characterKey);
+				return CharacterDbSaveResult::Failed;
 			}
+			return CharacterDbSaveResult::Saved;
 		}
-		else
-		{
-			mysql_query(mysql, "ROLLBACK");
-			LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: rollback (character_key={})",
-				state.characterKey);
-		}
+		mysql_query(mysql, "ROLLBACK");
+		LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: rollback (character_key={})",
+			state.characterKey);
+		return CharacterDbSaveResult::Failed;
 #else
 		(void)state;
+		(void)yawRadians;
+		(void)ownerGeneration;
+		return CharacterDbSaveResult::SkippedNoDb;
 #endif
 	}
 
@@ -1743,6 +1798,9 @@ namespace engine::server
 				// Roadmap-7 — guilde du compte (poussée par le master dans le push
 				// d'admission ; 0 = sans guilde). Sert au partage du buff gâteau.
 				acceptedClient.guildId = m_admittedRegistry->AdmittedGuildId(
+					acceptedClient.persistenceCharacterKey, nowMs);
+				// ETAPE1.2 — génération du verrou de propriété (0 = master legacy).
+				acceptedClient.ownerGeneration = m_admittedRegistry->AdmittedOwnerGeneration(
 					acceptedClient.persistenceCharacterKey, nowMs);
 				if (acceptedClient.characterName.empty())
 				{
@@ -2558,7 +2616,15 @@ namespace engine::server
 		// équipement partent aussi en DB (player_wallet / character_inventory /
 		// character_equipment), AVANT le fichier pour que la DB soit à jour même
 		// si l'écriture disque échoue. No-op si pas de pool DB (dev sans MySQL).
-		SaveCharacterToDb(state);
+		// ETAPE1.2 — un shard qui n'est plus propriétaire du personnage n'écrit rien
+		// (ni base, ni fichier) : le propriétaire courant fait foi.
+		if (SaveCharacterToDb(state, client.yawRadians, client.ownerGeneration)
+			== CharacterDbSaveResult::RefusedNotOwner)
+		{
+			LOG_WARN(Net, "[ServerApp] Character save REFUSED: shard is not the owner (client_id={}, character_key={}, shard_id={}, owner_generation={}, reason={})",
+				client.clientId, client.persistenceCharacterKey, m_shardId, client.ownerGeneration, reason);
+			return;
+		}
 		if (!m_characterPersistence.SaveCharacter(state))
 		{
 			LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",

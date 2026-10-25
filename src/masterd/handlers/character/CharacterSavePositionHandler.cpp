@@ -1,4 +1,5 @@
 #include "src/masterd/handlers/character/CharacterSavePositionHandler.h"
+#include "src/masterd/characters/CharacterOwnershipStore.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/network/CharacterPayloads.h"
@@ -75,6 +76,19 @@ namespace engine::server
 			auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "database unavailable", requestId, sessionIdHeader);
 			if (!pkt.empty())
 				m_server->Send(connId, pkt);
+			return;
+		}
+
+		// ETAPE1.2 — un personnage en jeu appartient à son shard : c'est lui qui écrit
+		// sa position (ServerApp::SaveCharacterToDb). Le master l'ignore et acquitte
+		// quand même (le client n'a rien à corriger), sans écrire en base.
+		if (IsCharacterOwnedByShard(mysql, stmtCache, parsed->characterId, *accountId))
+		{
+			LOG_DEBUG(Auth, "[CharacterSavePositionHandler] ignoré : personnage détenu par un shard (account_id={}, character_id={})",
+				*accountId, parsed->characterId);
+			auto ack = BuildCharacterSavePositionResponsePacket(1u, requestId, sessionIdHeader);
+			if (!ack.empty())
+				m_server->Send(connId, ack);
 			return;
 		}
 

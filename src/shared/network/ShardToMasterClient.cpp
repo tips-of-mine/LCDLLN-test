@@ -238,10 +238,11 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 					parsed->account_id, parsed->character_id);
 				return;
 			}
-			LOG_INFO(Core, "[ShardToMasterClient] AdmitCharacter received (account_id={}, character_id={}, name='{}', gender='{}', guild_id={})",
-				parsed->account_id, parsed->character_id, parsed->character_name, parsed->gender, parsed->guild_id);
+			LOG_INFO(Core, "[ShardToMasterClient] AdmitCharacter received (account_id={}, character_id={}, name='{}', gender='{}', guild_id={}, owner_generation={})",
+				parsed->account_id, parsed->character_id, parsed->character_name, parsed->gender, parsed->guild_id,
+				parsed->owner_generation);
 			m_admit_callback(parsed->account_id, parsed->character_id, parsed->character_name, parsed->gender,
-				parsed->guild_id);
+				parsed->guild_id, parsed->owner_generation);
 		}
 	}
 

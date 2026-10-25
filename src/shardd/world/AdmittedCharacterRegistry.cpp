@@ -32,6 +32,35 @@ namespace engine::server
 		}
 	}
 
+	void AdmittedCharacterRegistry::SetOwnerGeneration(uint64_t characterId, uint64_t generation)
+	{
+		if (characterId == 0u || generation == 0u)
+		{
+			return;
+		}
+		std::lock_guard<std::mutex> lock(m_mutex);
+		const auto it = m_admitted.find(characterId);
+		if (it != m_admitted.end())
+		{
+			it->second.ownerGeneration = generation;
+		}
+	}
+
+	uint64_t AdmittedCharacterRegistry::AdmittedOwnerGeneration(uint64_t characterId, uint64_t nowMs) const
+	{
+		if (characterId == 0u)
+		{
+			return 0u;
+		}
+		std::lock_guard<std::mutex> lock(m_mutex);
+		const auto it = m_admitted.find(characterId);
+		if (it == m_admitted.end() || (nowMs - it->second.admittedAtMs) > m_ttlMs)
+		{
+			return 0u;
+		}
+		return it->second.ownerGeneration;
+	}
+
 	void AdmittedCharacterRegistry::Revoke(uint64_t characterId)
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);

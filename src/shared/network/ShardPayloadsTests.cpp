@@ -105,15 +105,16 @@ static void TestAdmitCharacterRoundTripWithGuild()
 	}
 }
 
-// Roadmap-7 — compat master ANCIEN (sans guild_id) : payload amputé de ses 8
-// derniers octets (le u64 guild_id de queue) → parse OK, guild_id = 0.
+// Roadmap-7 — compat master ANCIEN (sans guild_id) : payload amputé de ses 16
+// derniers octets (u64 guild_id + u64 owner_generation de queue, ETAPE1.2)
+// → parse OK, guild_id = 0.
 static void TestAdmitCharacterLegacyWithoutGuild()
 {
 	auto pkt = engine::network::BuildAdmitCharacterPacket(42ull, 1337ull, "Aria", "male", 9ull);
 	engine::network::PacketView view;
 	Assert(engine::network::PacketView::Parse(pkt.data(), pkt.size(), view)
 		== engine::network::PacketParseResult::Ok, "admit legacy: paquet parsable");
-	std::vector<uint8_t> legacyPayload(view.Payload(), view.Payload() + view.PayloadSize() - 8u);
+	std::vector<uint8_t> legacyPayload(view.Payload(), view.Payload() + view.PayloadSize() - 16u);
 	auto parsed = engine::network::ParseAdmitCharacterPayload(legacyPayload.data(), legacyPayload.size());
 	Assert(parsed.has_value(), "admit legacy: parse OK sans guild_id");
 	if (parsed)
@@ -133,6 +134,24 @@ static void TestAdmitCharacterLegacyWithoutGuild()
 	}
 }
 
+// ETAPE1.2 — génération du verrou de propriété : round-trip, et compat master
+// sans le champ (payload amputé des 8 derniers octets) → owner_generation = 0,
+// guild_id intact.
+static void TestAdmitCharacterOwnerGeneration()
+{
+	auto pkt = engine::network::BuildAdmitCharacterPacket(42ull, 1337ull, "Aria", "female", 7ull, 12ull);
+	engine::network::PacketView view;
+	Assert(engine::network::PacketView::Parse(pkt.data(), pkt.size(), view)
+		== engine::network::PacketParseResult::Ok, "admit owner: paquet parsable");
+	auto parsed = engine::network::ParseAdmitCharacterPayload(view.Payload(), view.PayloadSize());
+	Assert(parsed.has_value() && parsed->owner_generation == 12ull && parsed->guild_id == 7ull,
+		"admit owner: owner_generation round-trip");
+	std::vector<uint8_t> withoutGeneration(view.Payload(), view.Payload() + view.PayloadSize() - 8u);
+	auto legacy = engine::network::ParseAdmitCharacterPayload(withoutGeneration.data(), withoutGeneration.size());
+	Assert(legacy.has_value() && legacy->owner_generation == 0ull && legacy->guild_id == 7ull,
+		"admit owner: master sans generation -> 0, guild_id intact");
+}
+
 int main()
 {
 	TestHeartbeatLegacyNoPlayers();
@@ -140,6 +159,7 @@ int main()
 	TestHeartbeatTruncatedRejected();
 	TestAdmitCharacterRoundTripWithGuild();
 	TestAdmitCharacterLegacyWithoutGuild();
+	TestAdmitCharacterOwnerGeneration();
 	std::cerr << (s_failCount == 0 ? "[OK] all shard_payloads tests passed\n" : "[FAIL] some tests failed\n");
 	return s_failCount == 0 ? 0 : 1;
 }

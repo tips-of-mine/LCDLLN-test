@@ -161,6 +161,27 @@ namespace
 		assert(reg.AdmittedGuildId(60u, 1000u) == 3u);
 		std::puts("[OK] TestReAdmitWithoutGuildPreservesGuild");
 	}
+
+	/// ETAPE1.2 — génération du verrou de propriété : mémorisée après Admit, ignorée
+	/// si 0 (ticket TCP / master legacy), remplacée par une admission plus récente,
+	/// sans effet pour un personnage non admis, 0 après expiration du TTL.
+	void TestOwnerGeneration()
+	{
+		AdmittedCharacterRegistry reg;
+		reg.SetTtlMs(1000u);
+		reg.SetOwnerGeneration(70u, 5u); // non admis : no-op
+		assert(reg.AdmittedOwnerGeneration(70u, 0u) == 0u);
+		reg.Admit(70u, 9u, std::string_view{"nom"}, std::string_view{"male"}, 0u, 0u);
+		assert(reg.AdmittedOwnerGeneration(70u, 0u) == 0u);
+		reg.SetOwnerGeneration(70u, 5u);
+		assert(reg.AdmittedOwnerGeneration(70u, 10u) == 5u);
+		reg.SetOwnerGeneration(70u, 0u); // admission sans verrou : préserve 5
+		assert(reg.AdmittedOwnerGeneration(70u, 10u) == 5u);
+		reg.SetOwnerGeneration(70u, 6u); // nouvel EnterWorld : nouvelle génération
+		assert(reg.AdmittedOwnerGeneration(70u, 10u) == 6u);
+		assert(reg.AdmittedOwnerGeneration(70u, 5000u) == 0u); // TTL dépassé
+		std::puts("[OK] TestOwnerGeneration");
+	}
 }
 
 int main()
@@ -176,6 +197,7 @@ int main()
 	TestReAdmitWithoutGenderPreservesGender();
 	TestAdmitWithGuild();
 	TestReAdmitWithoutGuildPreservesGuild();
+	TestOwnerGeneration();
 	std::puts("All AdmittedCharacterRegistry tests passed");
 	return 0;
 }

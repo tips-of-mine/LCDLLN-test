@@ -31,6 +31,10 @@ namespace engine::server
 	/// A future Phase will move authoritative position to the shard (via UDP
 	/// gameplay state) and have the shard push to master through an internal
 	/// opcode — see Phase 3.6.6 (planned).
+	///
+	/// ETAPE1.2 — while a character is owned by a shard (`characters.owner_shard_id`
+	/// set at EnterWorld), the shard is the only writer of its position: this handler
+	/// acknowledges the request without writing (see CharacterOwnershipStore).
 	class CharacterSavePositionHandler
 	{
 	public:

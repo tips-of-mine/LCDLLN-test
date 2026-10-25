@@ -1,0 +1,46 @@
+# Validation des services des villes et de leurs PNJ dans le fichier de lore
+# (legacy/world-builder-html/lune-noire-data*.json).
+#
+# - validate_city_services.py : conformité à la grille par taille
+#   (game_design.cities_services.grille), unicité des PNJ, aucun nom des BD,
+#   les deux copies du fichier identiques ;
+# - generate_city_services.py --check : le fichier est bien à jour par rapport
+#   au générateur (à relancer après toute modification de la grille).
+#
+# Ne lance que du Python standard, ~10 s. Indépendant des builds.
+name: Lore — services des villes
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - 'legacy/world-builder-html/lune-noire-data*.json'
+      - 'tools/lore/**'
+      - '.github/workflows/lore-city-services.yml'
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'legacy/world-builder-html/lune-noire-data*.json'
+      - 'tools/lore/**'
+      - '.github/workflows/lore-city-services.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  city-services:
+    name: Services et PNJ des villes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Conformité à la grille
+        run: python tools/lore/validate_city_services.py
+
+      - name: Fichier à jour par rapport au générateur
+        run: python tools/lore/generate_city_services.py --check

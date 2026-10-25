@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.27",
+    "version": "1.0.28",
     "notes": [
+      "v1.0.28 : [CARTE] Routes : Dustfen–Scalebrook, Millend–Frosthollow, Camp de l'Oracle–Arcanefield (au lieu de Camp de l'Oracle–Kendrhir Vale), Moork–Nightfield–Horkher (au lieu de Moork–Horkher), Feyhin Lokcthat–Mossy Rock–Horkher (au lieu de Feyhin Lokcthat–Horkher). Porte 3 des enfers (S005_W011) : grande vallée, portail dans les sous-sols d'un vieux temple au centre. Porte 5 des enfers (N008_W007) : château fortifié abandonné, à l'écart des routes ; route Sysigie–Northind supprimée (elle traversait la cellule de la Porte 5), trajet par Justfall et Dys.",
       "v1.0.27 : [CARTE] Longmere supprimée, Scalebrook rétablie (S003_W008), Hayfen décalée en N011_W004 ; routes : Sysigie–Verdansur (au lieu de Sysigie–Trueford), Altenberg–Dys–Northind (au lieu d'Altenberg–Northind), Sauken–Arcanefield–Kendrhir Vale (au lieu de Sauken–Kendrhir Vale), Harrowbrook–Tbarak (au lieu de Palais des Maîtres des Dragons–Harrowbrook), route maritime Saltfen–Hishtarland, Scalebrook reliée à Harrowbrook.",
       "v1.0.26 : [CARTE] Revue des villes : 66 supprimées, 4 renommées (Unnamed-147→Millford, Unnamed-146→Claybury, Unnamed-144→Longmere, Unnamed-68→Stonehaven, décalée d'une cellule à l'est), route Sysigie–Altenberg passant par Justfall, réseau routier minimal connecté (58 routes ajoutées), route maritime Hishtarland–Unnamed-66, Tbarak placée en S005_W004 (Royaume Drach).",
       "v1.0.25 : [CARTE] Fusion de carte_export.json (éditeur de carte v23) : 17 ville(s) enrichie(s), 115 ajoutée(s) (hameaux, bourgs, villes, avec leur fiche descriptive), 17 lieu(x) remarquable(s) dans la nouvelle collection « lieux », 19 route(s), référentiels place_types (32 types de lieux), terrain_types et route_types. En cas de conflit, la v1.0.24 prime.",
@@ -153644,7 +153645,7 @@
       "tome": "",
       "faction": "demons",
       "biome": "",
-      "visual_description": "",
+      "visual_description": "Château fortifié abandonné, à l'écart des routes, abritant le portail des enfers.",
       "atmosphere": "",
       "strategic_importance": "",
       "lore": "",
@@ -153672,7 +153673,7 @@
       "tome": "",
       "faction": "demons",
       "biome": "",
-      "visual_description": "",
+      "visual_description": "Grande vallée ; au centre, un vieux temple dont les sous-sols abritent le portail des enfers.",
       "atmosphere": "",
       "strategic_importance": "",
       "lore": "",
@@ -161878,7 +161879,9 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Château fortifié abandonné (abrite le portail des enfers), à l'écart des routes"
+      ],
       "notes": [
         "Présence d'une des cinq portails pour les enfers 5 sur 5, il forme la positionnement d'un pentagramme"
       ],
@@ -171364,7 +171367,10 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
-      "visual_elements": [],
+      "visual_elements": [
+        "Grande vallée",
+        "Vieux temple au centre de la vallée (portail des enfers dans ses sous-sols)"
+      ],
       "notes": [
         "Présence d'une des cinq portails pour les enfers 3/5, il forme la positionnement d'un pentagramme"
       ],
@@ -178517,18 +178523,6 @@
       "notes": []
     },
     {
-      "id": "000002",
-      "type": "road",
-      "from_place": "N000_E000",
-      "from_ville_id": "ville_oracle_camp",
-      "from_lieu_id": "",
-      "to_place": "N007_E001",
-      "to_ville_id": "kendrhir_vale",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000003",
       "type": "road",
       "from_place": "N007_E001",
@@ -178541,18 +178535,6 @@
       "notes": []
     },
     {
-      "id": "000004",
-      "type": "road",
-      "from_place": "N008_E007",
-      "from_ville_id": "ville_feyhin_lokcthat",
-      "from_lieu_id": "",
-      "to_place": "N006_E014",
-      "to_ville_id": "city_horkher",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000006",
       "type": "road",
       "from_place": "N005_W012",
@@ -178560,18 +178542,6 @@
       "from_lieu_id": "",
       "to_place": "N001_W010",
       "to_ville_id": "ville_lhynn",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000007",
-      "type": "road",
-      "from_place": "N009_W011",
-      "from_ville_id": "ville_sysigie",
-      "from_lieu_id": "",
-      "to_place": "N007_W005",
-      "to_ville_id": "ville_northind",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -178630,18 +178600,6 @@
       "from_place": "S002_E007",
       "from_ville_id": "",
       "from_lieu_id": "lieu_garundel_estate",
-      "to_place": "S002_E015",
-      "to_ville_id": "ville_moork",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000014",
-      "type": "road",
-      "from_place": "N006_E014",
-      "from_ville_id": "city_horkher",
-      "from_lieu_id": "",
       "to_place": "S002_E015",
       "to_ville_id": "ville_moork",
       "to_lieu_id": "",
@@ -179496,6 +179454,66 @@
       "from_lieu_id": "",
       "to_place": "S003_W008",
       "to_ville_id": "hamlet_0157",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000090",
+      "type": "road",
+      "from_place": "S002_W011",
+      "from_ville_id": "hamlet_0197",
+      "from_lieu_id": "",
+      "to_place": "S003_W008",
+      "to_ville_id": "hamlet_0157",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000091",
+      "type": "road",
+      "from_place": "N000_E000",
+      "from_ville_id": "ville_oracle_camp",
+      "from_lieu_id": "",
+      "to_place": "N004_E001",
+      "to_ville_id": "hamlet_0205",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000092",
+      "type": "road",
+      "from_place": "S003_E003",
+      "from_ville_id": "hamlet_0146",
+      "from_lieu_id": "",
+      "to_place": "S005_E008",
+      "to_ville_id": "hamlet_0193",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000093",
+      "type": "road",
+      "from_place": "N002_E015",
+      "from_ville_id": "hamlet_0201",
+      "from_lieu_id": "",
+      "to_place": "N006_E014",
+      "to_ville_id": "city_horkher",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": []
+    },
+    {
+      "id": "000094",
+      "type": "road",
+      "from_place": "N008_E007",
+      "from_ville_id": "ville_feyhin_lokcthat",
+      "from_lieu_id": "",
+      "to_place": "N006_E011",
+      "to_ville_id": "hamlet_0206",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -185288,7 +185306,9 @@
       "region_id": "foret_elfique",
       "zone_id": "porte_5_des_enfers",
       "faction_control": "",
-      "features": [],
+      "features": [
+        "Portail des enfers à l'intérieur d'un château fortifié abandonné"
+      ],
       "dimensions_estimees": {
         "hauteur": "",
         "largeur": "",
@@ -185304,9 +185324,9 @@
       },
       "elements_principaux": [],
       "architecture": {
-        "presence": "",
+        "presence": "Château fortifié",
         "style": "",
-        "etat": ""
+        "etat": "Abandonné"
       },
       "hydrographie": {
         "type": "",
@@ -185343,7 +185363,7 @@
       },
       "niveau_occupation": "",
       "acces": {
-        "route_principale": "",
+        "route_principale": "Aucune — à l'écart des routes, jamais au bord d'une route",
         "distance_visuelle": "",
         "dominance_paysage": ""
       },
@@ -185440,7 +185460,9 @@
       "region_id": "",
       "zone_id": "porte_3_des_enfers",
       "faction_control": "",
-      "features": [],
+      "features": [
+        "Portail des enfers dans les sous-sols d'un vieux temple"
+      ],
       "dimensions_estimees": {
         "hauteur": "",
         "largeur": "",
@@ -185448,17 +185470,17 @@
         "zone_visible": ""
       },
       "topographie": {
-        "forme_generale": "",
+        "forme_generale": "Grande vallée",
         "relief": "",
-        "implantation": "",
+        "implantation": "Au centre de la vallée",
         "pentes": "",
         "gorge": ""
       },
       "elements_principaux": [],
       "architecture": {
-        "presence": "",
+        "presence": "Vieux temple",
         "style": "",
-        "etat": ""
+        "etat": "Ancien"
       },
       "hydrographie": {
         "type": "",

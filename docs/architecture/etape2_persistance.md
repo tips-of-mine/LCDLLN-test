@@ -7,8 +7,8 @@ et retire le travail SQL du tick de jeu.
 | Ticket | Sujet | Statut |
 |---|---|---|
 | 2.1 (chantier 3.1) | Base = seule source de vérité (fin des `.ini`, fin de l'écriture de position par le master) | livré |
-| 2.2 (chantier 3.2) | SQL hors du tick (file de sauvegarde par personnage) | cette PR |
-| 2.3 (chantier 3.3) | Sauvegardes automatiques étalées | PR suivante |
+| 2.2 (chantier 3.2) | SQL hors du tick (file de sauvegarde par personnage) | livré |
+| 2.3 (chantier 3.3) | Sauvegardes automatiques étalées | cette PR |
 | 2.4 (chantier 3.4) | Échanges et transferts : les deux personnages dans une transaction | PR suivante |
 
 ## 2.1 — La base, seule source de vérité
@@ -163,3 +163,26 @@ Sans base (développement, shard Windows), pas de file : le fichier `.ini` est
 ### Déploiement
 
 Shard uniquement. Pas de migration, pas de changement réseau.
+
+## 2.3 — Sauvegardes automatiques étalées
+
+Avant : `MaybeAutosaveCharacters` sauvait **tous** les joueurs au même tick,
+toutes les 30 s (`server.character_autosave_seconds`). Avec beaucoup de joueurs,
+un pic d'écritures toutes les 30 s.
+
+Maintenant, à chaque tick, seuls les personnages dont c'est le tour sont sauvés :
+`id % période == tick % période` (période = 30 s × fréquence du tick). Chaque
+personnage est toujours sauvé une fois par période, mais la charge est répartie :
+avec 6 000 joueurs à 20 Hz, 10 sauvegardes par tick au lieu de 6 000 d'un coup.
+
+Règle pure : `src/shardd/gameplay/character/AutosaveSchedule.h`
+(`IsCharacterAutosaveDue`), testée par `autosave_schedule_tests`.
+
+Les sauvegardes déclenchées par un événement (ramassage, quête, déconnexion…)
+ne changent pas. Un bilan est journalisé une fois par période (nombre de joueurs,
+travaux en attente dans la file 2.2).
+
+### Déploiement
+
+Shard uniquement. Pas de migration, pas de changement réseau, même clé de
+configuration.

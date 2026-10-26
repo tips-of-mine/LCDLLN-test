@@ -201,6 +201,11 @@ RenderModel
 > importer un ancien personnage) ; le master n'écrit plus la position. Tables :
 > `character_progress`, `character_mailbox` (migration 0078). Détail :
 > `docs/architecture/etape2_persistance.md`.
+>
+> **Règle (ETAPE2.2)** : le tick ne fait pas de SQL d'écriture pour les
+> personnages. `SaveConnectedClient` dépose un instantané dans `CharacterSaveQueue`
+> (un thread par personnage, sauvegardes en attente fusionnées) ; `Flush(id)` avant
+> toute relecture du même personnage.
 
 ### Comptes et validation
 | Fichier | Rôle |

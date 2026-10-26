@@ -6,8 +6,8 @@ et retire le travail SQL du tick de jeu.
 
 | Ticket | Sujet | Statut |
 |---|---|---|
-| 2.1 (chantier 3.1) | Base = seule source de vérité (fin des `.ini`, fin de l'écriture de position par le master) | cette PR |
-| 2.2 (chantier 3.2) | SQL hors du tick (file de sauvegarde par personnage) | PR suivante |
+| 2.1 (chantier 3.1) | Base = seule source de vérité (fin des `.ini`, fin de l'écriture de position par le master) | livré |
+| 2.2 (chantier 3.2) | SQL hors du tick (file de sauvegarde par personnage) | cette PR |
 | 2.3 (chantier 3.3) | Sauvegardes automatiques étalées | PR suivante |
 | 2.4 (chantier 3.4) | Échanges et transferts : les deux personnages dans une transaction | PR suivante |
 
@@ -104,3 +104,62 @@ La position est écrite par le shard propriétaire.
 Migration 0078 + shard + master. Client inchangé. **Ordre** : master d'abord (il
 applique la migration au démarrage), puis le shard — un shard démarré sans la
 migration refuse les connexions (table `character_progress` absente).
+
+## 2.2 — SQL hors du tick
+
+Avant : chaque sauvegarde (ramassage, équipement, quête, autosave…) exécutait sa
+transaction SQL dans le tick de jeu. Une base lente ralentissait tout le shard.
+
+### La file de sauvegarde
+
+`src/shardd/gameplay/character/CharacterSaveQueue.{h,cpp}`, testée par
+`character_save_queue_tests` (aussi passée sous ThreadSanitizer).
+
+- `SaveConnectedClient` copie l'état du personnage (instantané) et le dépose dans
+  la file ; le tick repart aussitôt. L'écriture (`PersistCharacterState` →
+  `SaveCharacterToDb`) se fait sur un thread de la file.
+- **Ordre** : un personnage est toujours traité par le même thread
+  (`id % nombre de threads`). Ses écritures restent dans l'ordre.
+- **Fusion** : une sauvegarde pas encore commencée est remplacée par la suivante
+  du même personnage. Dix sauvegardes rapprochées (ramassage d'objets en série)
+  deviennent une seule écriture.
+- **File pleine** : la sauvegarde est écrite tout de suite, dans le tick (log
+  `WARN`), après avoir laissé finir l'écriture éventuellement en cours du même
+  personnage (sinon un instantané plus ancien passerait après). Rien n'est perdu ;
+  le tick ralentit au lieu de jeter des données.
+- **Relecture** : au Hello, le shard attend que les écritures en cours du
+  personnage soient terminées (`Flush`, 2 s au plus) avant de le relire. Au-delà,
+  le Hello est refusé (le client réessaie) plutôt que de charger un état ancien.
+- **Déconnexion** : la sauvegarde de départ est attendue (2 s au plus) : si le
+  joueur rejoint aussitôt un autre shard, le master déplace le verrou de
+  propriété (1.2) et une écriture tardive serait refusée.
+- **Interblocages** : chaque transaction tourne en `READ COMMITTED` (pas de
+  verrous d'intervalle entre personnages voisins) et est rejouée jusqu'à 3 fois
+  si elle échoue alors que la connexion a été obtenue.
+- **Arrêt** : `Shutdown` sauve tous les joueurs, puis `Stop()` écrit tout ce qui
+  reste avant de rendre la main. `main_linux` appelle maintenant
+  `gameplayApp.Shutdown()` **avant** de fermer le pool : avant, les sauvegardes de
+  fin partaient après la fermeture de la base et échouaient.
+
+### Réglages (optionnels)
+
+| Clé | Défaut | Rôle |
+|---|---|---|
+| `shard.save_workers` | 2 | Threads d'écriture (borné aux connexions réellement ouvertes moins une, laissée au tick ; moins de 2 connexions = pas de file) |
+| `shard.save_queue_max` | 4096 | Travaux en attente avant écriture immédiate |
+
+Sans base (développement, shard Windows), pas de file : le fichier `.ini` est
+écrit dans le tick, comme avant.
+
+### Limites
+
+- Les lectures du Hello (`LoadCharacterFromDb`, `LoadSpawnFromDb`) restent dans le
+  tick : il faut l'état pour faire apparaître le personnage.
+- Le dépôt de courrier (`DepositMailboxDelivery`, rare) reste immédiat.
+- Sur un crash du processus, ce qui est encore dans la file est perdu (au plus
+  quelques secondes d'activité). Les échanges et transferts (2.4) sont écrits
+  immédiatement, dans une transaction, pour ne jamais dupliquer d'objets.
+
+### Déploiement
+
+Shard uniquement. Pas de migration, pas de changement réseau.

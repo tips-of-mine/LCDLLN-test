@@ -8,8 +8,8 @@ et retire le travail SQL du tick de jeu.
 |---|---|---|
 | 2.1 (chantier 3.1) | Base = seule source de vérité (fin des `.ini`, fin de l'écriture de position par le master) | livré |
 | 2.2 (chantier 3.2) | SQL hors du tick (file de sauvegarde par personnage) | livré |
-| 2.3 (chantier 3.3) | Sauvegardes automatiques étalées | cette PR |
-| 2.4 (chantier 3.4) | Échanges et transferts : les deux personnages dans une transaction | PR suivante |
+| 2.3 (chantier 3.3) | Sauvegardes automatiques étalées | livré |
+| 2.4 (chantier 3.4) | Échanges et transferts : les deux personnages dans une transaction | cette PR |
 
 ## 2.1 — La base, seule source de vérité
 
@@ -186,3 +186,58 @@ travaux en attente dans la file 2.2).
 
 Shard uniquement. Pas de migration, pas de changement réseau, même clé de
 configuration.
+
+## 2.4 — Transactions à deux personnages
+
+Avant : un échange entre joueurs modifiait les deux personnages en mémoire, sans
+sauvegarde ; l'autosave les écrivait ensuite **séparément**. Un arrêt du shard
+entre les deux écritures pouvait dupliquer un objet (écrit chez l'acheteur, encore
+chez le vendeur) ou le perdre. Le transfert de monnaie faisait deux sauvegardes
+indépendantes.
+
+### Fonctionnement
+
+`ServerApp::SaveCharacterPair` (appelé à la fin d'un échange validé et d'un
+transfert de monnaie) :
+
+1. laisse finir les sauvegardes en file des deux personnages (2.2), plus
+   anciennes que l'opération ;
+2. construit un identifiant unique `<type>-s<shard>-<ms UTC>-<compteur>`
+   (`CharacterOperationId.h`, testé par `character_operation_id_tests`) ;
+3. `SaveCharacterPairToDb` ouvre **une** transaction :
+   - insère l'opération dans `character_operations` (`INSERT IGNORE`) ; si
+     l'identifiant existe déjà, l'opération a déjà été écrite → annulation, rien
+     n'est appliqué deux fois ;
+   - écrit les deux personnages complets (`WriteCharacterStateInTx`, avec le
+     contrôle de propriété de 1.2), dans l'ordre croissant des identifiants pour
+     éviter les interblocages ;
+   - `COMMIT`, ou `ROLLBACK` au moindre échec (y compris si l'un des deux
+     personnages n'appartient plus à ce shard).
+
+L'opération est donc écrite entièrement ou pas du tout, et jamais deux fois.
+`character_operations` sert aussi de journal (qui a échangé avec qui, quand).
+
+Migration `0079_character_operations.sql` (copiée dans `deploy/docker/sql/migrations/`).
+
+Sans base, les deux fichiers `.ini` sont écrits l'un après l'autre, comme avant.
+
+### Code commun
+
+`SaveCharacterToDb` (une sauvegarde) et `SaveCharacterPairToDb` (deux) utilisent
+le même corps, `WriteCharacterStateInTx`, qui écrit un personnage dans une
+transaction ouverte par l'appelant. `BuildPersistedCharacterState` fabrique
+l'instantané d'un joueur pour les deux chemins.
+
+### Limites
+
+- Les ventes aux enchères ne passent pas par ce mécanisme : l'hôtel des ventes
+  du shard est encore stocké en fichier, il ne peut pas entrer dans une
+  transaction SQL. L'objet et l'or y sont tenus en séquestre par l'hôtel, pas
+  par un joueur, ce qui limite le risque de duplication.
+- Échec d'écriture (base injoignable) : rien n'est écrit, l'incident est
+  journalisé en `ERROR` ; les sauvegardes suivantes réécrivent l'état complet de
+  chaque joueur séparément.
+
+### Déploiement
+
+Migration 0079 + shard. Pas de changement réseau, client inchangé.

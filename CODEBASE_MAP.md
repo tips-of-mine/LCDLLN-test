@@ -206,6 +206,10 @@ RenderModel
 > personnages. `SaveConnectedClient` dépose un instantané dans `CharacterSaveQueue`
 > (un thread par personnage, sauvegardes en attente fusionnées) ; `Flush(id)` avant
 > toute relecture du même personnage.
+>
+> **Règle (ETAPE2.4)** : une opération qui modifie deux personnages (échange,
+> transfert) passe par `ServerApp::SaveCharacterPair` : une transaction, un
+> identifiant unique dans `character_operations` (migration 0079).
 
 ### Comptes et validation
 | Fichier | Rôle |

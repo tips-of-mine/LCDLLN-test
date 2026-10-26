@@ -682,6 +682,9 @@ elseif(UNIX)
   # ETAPE2.3 : sauvegardes automatiques étalées (header-only).
   lcdlln_add_simple_test(autosave_schedule_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/AutosaveScheduleTests.cpp)
+  # ETAPE2.4 : identifiant d'opération à deux personnages (header-only).
+  lcdlln_add_simple_test(character_operation_id_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterOperationIdTests.cpp)
   # CMANGOS.33 (Phase 5.33a) : LfgQueue header-only.
   lcdlln_add_simple_test(lfg_queue_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/lfg/LfgQueueTests.cpp)

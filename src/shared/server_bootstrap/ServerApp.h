@@ -242,6 +242,9 @@ namespace engine::server
 		/// ETAPE2.5 — carte à découvrir : cases révélées pendant la session autour de
 		/// la position autoritaire (monde en cellules). Écrites à chaque sauvegarde.
 		MapDiscoveryTracker mapDiscovery;
+		/// ETAPE2.6 — instantané restauré à la connexion (0 = aucun) ; recopié dans
+		/// chaque sauvegarde (marque la demande appliquée, sans effet ensuite).
+		uint64_t restoreSnapshotId = 0;
 		/// Niveau du personnage (table characters.level, chargé au Hello via LoadSpawnFromDb).
 		/// Reporté au master dans le heartbeat enrichi (présence web-portal).
 		uint32_t level = 1;
@@ -606,6 +609,12 @@ namespace engine::server
 		/// ETAPE2.2 — avec une base, dépose un instantané dans m_characterSaveQueue
 		/// (écriture hors du tick) ; sans file ou file pleine, écrit immédiatement.
 		void SaveConnectedClient(const ConnectedClient& client, std::string_view reason);
+
+		/// ETAPE2.6 — enregistre un instantané complet et daté du personnage
+		/// (character_snapshots, 20 gardés par personnage), après sa sauvegarde de
+		/// départ (même thread de la file : l'ordre est garanti). Sans base : rien.
+		/// \param reason motif (« logout », « shutdown »…), tronqué à 32 caractères.
+		void RecordCharacterSnapshot(const ConnectedClient& client, std::string_view reason);
 
 		/// ETAPE2.4 — instantané de l'état persistant d'un joueur connecté.
 		PersistedCharacterState BuildPersistedCharacterState(const ConnectedClient& client) const;

@@ -214,6 +214,10 @@ RenderModel
 > **Règle (ETAPE2.5)** : la carte découverte est calculée et écrite par le shard
 > (position autoritaire, `MapDiscoveryTracker`) ; le master ne fait que la lire
 > (opcodes 208/209), l'opcode 210 du client est ignoré.
+>
+> **Règle (ETAPE2.6)** : instantané complet à chaque déconnexion
+> (`character_snapshots`, 20 gardés) ; `/snapshots` et `/restore` (MJ, master)
+> posent une demande appliquée par le shard à la connexion suivante (migration 0080).
 
 ### Comptes et validation
 | Fichier | Rôle |

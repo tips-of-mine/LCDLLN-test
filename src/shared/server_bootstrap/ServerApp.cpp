@@ -741,6 +741,7 @@ namespace engine::server
 		for (const ConnectedClient& client : m_clients)
 		{
 			SaveConnectedClient(client, "shutdown");
+			RecordCharacterSnapshot(client, "shutdown"); // ETAPE2.6
 			if (client.hasCell)
 			{
 				const auto zoneIt = m_zoneGrids.find(engine::world::cells::MapIdOfZone(client.zoneId));
@@ -1392,16 +1393,22 @@ namespace engine::server
 		// propriétaire (le master ne les écrit plus pour un personnage en jeu). Colonnes
 		// lues au Hello par LoadSpawnFromDb.
 		{
-			auto* pos = cache->Acquire(mysql,
-				"UPDATE characters SET spawn_x = ?, spawn_y = ?, spawn_z = ?, spawn_yaw_deg = ?, "
-				"level = GREATEST(level, ?) WHERE id = ?");
+			// ETAPE2.6 — sauvegarde d'un état restauré : le niveau de l'instantané est
+			// écrit tel quel (il peut redescendre) ; sinon il ne fait que monter.
+			auto* pos = cache->Acquire(mysql, state.restoreSnapshotId != 0u
+				? "UPDATE characters SET spawn_x = ?, spawn_y = ?, spawn_z = ?, spawn_yaw_deg = ?, "
+				  "level = IF(? > 0, ?, level) WHERE id = ?"
+				: "UPDATE characters SET spawn_x = ?, spawn_y = ?, spawn_z = ?, spawn_yaw_deg = ?, "
+				  "level = GREATEST(level, ?) WHERE id = ?");
+			const size_t keyIndex = state.restoreSnapshotId != 0u ? 6u : 5u;
 			ok = pos != nullptr
 				&& pos->Bind(0, static_cast<double>(state.positionMetersX))
 				&& pos->Bind(1, static_cast<double>(state.positionMetersY))
 				&& pos->Bind(2, static_cast<double>(state.positionMetersZ))
 				&& pos->Bind(3, static_cast<double>(yawRadians * 57.2957795f))
 				&& pos->Bind(4, state.level)
-				&& pos->Bind(5, state.characterKey)
+				&& (state.restoreSnapshotId == 0u || pos->Bind(5, state.level))
+				&& pos->Bind(keyIndex, state.characterKey)
 				&& pos->Execute();
 		}
 		// 0 ter. ETAPE2.1 — progression (zone, XP, PV, quêtes, barres, métiers…) :
@@ -1438,6 +1445,16 @@ namespace engine::server
 				&& claim->Bind(0, state.characterKey)
 				&& claim->Bind(1, state.mailboxClaimedIds[i])
 				&& claim->Execute();
+		}
+		// 0 sexies. ETAPE2.6 — instantané restauré à la connexion : la demande est
+		// marquée appliquée avec l'écriture de l'état restauré (sans effet ensuite).
+		if (ok && state.restoreSnapshotId != 0u)
+		{
+			auto* applied = cache->Acquire(mysql,
+				"UPDATE character_restore_requests SET applied_at = UTC_TIMESTAMP() "
+				"WHERE character_id = ? AND snapshot_id = ? AND applied_at IS NULL");
+			ok = applied != nullptr && applied->Bind(0, state.characterKey)
+				&& applied->Bind(1, state.restoreSnapshotId) && applied->Execute();
 		}
 		// 0 quinquies. ETAPE2.5 — carte découverte : fusion OU des cases révélées
 		// pendant la session avec le masque en base (une case découverte ne redevient
@@ -1644,6 +1661,43 @@ namespace engine::server
 			return CharacterDbLoadResult::Error;
 		}
 		state.characterKey = characterKey;
+		// ETAPE2.6 — restauration demandée par un MJ (/restore côté master) : l'état
+		// complet vient de l'instantané, à la place de l'état courant. Le courrier en
+		// attente (plus bas) reste dû. La sauvegarde suivante marque la demande appliquée.
+		{
+			auto* rst = cache->Acquire(mysql,
+				"SELECT r.snapshot_id, s.payload FROM character_restore_requests r "
+				"JOIN character_snapshots s ON s.id = r.snapshot_id AND s.character_id = r.character_id "
+				"WHERE r.character_id = ? AND r.applied_at IS NULL");
+			if (rst == nullptr || !rst->Bind(0, characterKey) || !rst->Execute())
+			{
+				LOG_ERROR(Net, "[ServerApp] LoadCharacterFromDb: character_restore_requests illisible (migration 0080 appliquée ?) (character_key={})",
+					characterKey);
+				return CharacterDbLoadResult::Error;
+			}
+			if (rst->FetchRow())
+			{
+				const uint64_t snapshotId = rst->GetUInt64(0);
+				engine::core::Config snapshot;
+				snapshot.LoadFromIniString(rst->GetString(1));
+				while (rst->FetchRow()) {}
+				// Instantané illisible (vide, tronqué) : ne rien charger plutôt que de
+				// repartir de valeurs par défaut que la sauvegarde suivante écrirait.
+				if (!snapshot.Has("character.zone_id") || !snapshot.Has("inventory.count") || !snapshot.Has("quests.count"))
+				{
+					LOG_ERROR(Net, "[ServerApp] LoadCharacterFromDb: snapshot unreadable, restore refused (character_key={}, snapshot_id={})",
+						characterKey, snapshotId);
+					return CharacterDbLoadResult::Error;
+				}
+				ReadCharacterStateFromConfig(snapshot, characterKey, state);
+				state.mailboxGold = 0;
+				state.mailboxItems.clear();
+				state.restoreSnapshotId = snapshotId;
+				LOG_WARN(Net, "[ServerApp] Character restored from snapshot (character_key={}, snapshot_id={})",
+					characterKey, snapshotId);
+			}
+		}
+		const bool restoring = state.restoreSnapshotId != 0u;
 		// ETAPE2.1 — progression : la présence de la ligne signifie que le personnage
 		// est entièrement en base (le .ini n'est alors plus lu).
 		bool progressFound = false;
@@ -1657,7 +1711,7 @@ namespace engine::server
 					characterKey);
 				return CharacterDbLoadResult::Error;
 			}
-			if (prog->FetchRow())
+			if (!restoring && prog->FetchRow())
 			{
 				progressFound = true;
 				state.zoneId = static_cast<uint32_t>(prog->GetUInt64(0));
@@ -1682,6 +1736,10 @@ namespace engine::server
 		{
 			while (wallet->FetchRow())
 			{
+				if (restoring)
+				{
+					continue; // ETAPE2.6 — la bourse vient de l'instantané
+				}
 				walletFound = true;
 				const uint32_t currencyId = static_cast<uint32_t>(wallet->GetUInt64(0));
 				const uint32_t amount = static_cast<uint32_t>(wallet->GetUInt64(1));
@@ -1766,7 +1824,7 @@ namespace engine::server
 				}
 			}
 		}
-		if (progressFound)
+		if (progressFound || restoring)
 		{
 			return CharacterDbLoadResult::Full;
 		}
@@ -1961,6 +2019,7 @@ namespace engine::server
 			persistedState.inventory.size(),
 			persistedState.mailboxClaimedIds.size());
 		acceptedClient.mailboxClaimedIds = persistedState.mailboxClaimedIds;
+		acceptedClient.restoreSnapshotId = persistedState.restoreSnapshotId; // ETAPE2.6
 		bool mailboxMergedAtLogin = false;
 		if (fileLoaded || dbLoaded)
 		{
@@ -2038,16 +2097,25 @@ namespace engine::server
 			std::string dbRaceId;
 			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg, dbName, dbGender, dbLevel, dbFactionId, dbClassId, dbRaceId))
 			{
-				acceptedClient.positionMetersX = dbX;
-				acceptedClient.positionMetersY = dbY;
-				acceptedClient.positionMetersZ = dbZ;
-				acceptedClient.yawRadians = dbYawDeg * 0.01745329252f; // deg -> rad
+				// ETAPE2.6 — personnage restauré : la position est celle de l'instantané.
+				if (acceptedClient.restoreSnapshotId == 0u)
+				{
+					acceptedClient.positionMetersX = dbX;
+					acceptedClient.positionMetersY = dbY;
+					acceptedClient.positionMetersZ = dbZ;
+					acceptedClient.yawRadians = dbYawDeg * 0.01745329252f; // deg -> rad
+				}
 				// TD.5 — nom du personnage destiné aux plaques de nom des avatars distants.
 				acceptedClient.characterName = std::move(dbName);
 				// TD.6 — genre du personnage destiné au rendu des avatars distants.
 				acceptedClient.gender = std::move(dbGender);
 				// Présence enrichie — niveau (table characters) reporté au master via heartbeat.
 				acceptedClient.level = dbLevel;
+				// ETAPE2.6 — restauration : le niveau est celui de l'instantané.
+				if (acceptedClient.restoreSnapshotId != 0u && persistedState.level > 0u)
+				{
+					acceptedClient.level = persistedState.level;
+				}
 				// R1-A — faction/classe pour le moteur de stats (PV à l'enter-world).
 				acceptedClient.factionId = std::move(dbFactionId);
 				acceptedClient.classId = std::move(dbClassId);
@@ -2226,10 +2294,16 @@ namespace engine::server
 		// ETAPE2.1 — courrier fusionné : sauvé maintenant que la génération du verrou
 		// (1.2) et la position réelle sont posées (avant, la sauvegarde était refusée,
 		// ou écrivait la position par défaut). Supprime les lignes de courrier lues.
-		if (mailboxMergedAtLogin)
+		if (mailboxMergedAtLogin || acceptedClient.restoreSnapshotId != 0u)
 		{
-			SaveConnectedClient(acceptedClient, "mailbox_merge_login");
-			LOG_INFO(Net, "[ServerApp] Mailbox merged at login (client_id={})", acceptedClient.clientId);
+			SaveConnectedClient(acceptedClient,
+				acceptedClient.restoreSnapshotId != 0u ? "snapshot_restore" : "mailbox_merge_login");
+			LOG_INFO(Net, "[ServerApp] Mailbox merged / snapshot restored at login (client_id={}, snapshot_id={})",
+				acceptedClient.clientId, acceptedClient.restoreSnapshotId);
+			// ETAPE2.6 — l'instantané (déjà copié dans la sauvegarde ci-dessus) ne doit
+			// plus marquer de demande : une nouvelle demande posée pendant la session
+			// s'appliquera à la prochaine connexion, pas à la prochaine sauvegarde.
+			acceptedClient.restoreSnapshotId = 0;
 		}
 
 		UpdateClientInterest(acceptedClient);
@@ -2839,6 +2913,73 @@ namespace engine::server
 		return true;
 	}
 
+	void ServerApp::RecordCharacterSnapshot(const ConnectedClient& client, std::string_view reason)
+	{
+#if defined(SHARD_POSITION_DB)
+		if (m_characterDbPool == nullptr || client.persistenceCharacterKey == 0u)
+		{
+			return;
+		}
+		const uint64_t characterKey = client.persistenceCharacterKey;
+		auto payload = std::make_shared<std::string>(SerializeCharacterState(BuildPersistedCharacterState(client)));
+		const std::string reasonText(reason.substr(0, 32));
+		const uint64_t generation = client.ownerGeneration;
+		auto job = [this, characterKey, payload, reasonText, generation]() {
+			auto guard = m_characterDbPool->Acquire();
+			MYSQL* mysql = guard.get();
+			auto* cache = guard.cache();
+			if (mysql == nullptr || cache == nullptr)
+			{
+				LOG_WARN(Net, "[ServerApp] Character snapshot skipped: DB unavailable (character_key={})", characterKey);
+				return;
+			}
+			// Seul le propriétaire enregistre un instantané : celui d'un shard qui ne
+			// l'est plus (sauvegarde de départ refusée) pourrait restaurer un état non sauvé.
+			auto* own = cache->Acquire(mysql,
+				"SELECT IFNULL(owner_shard_id, 0), owner_generation FROM characters WHERE id = ? AND deleted_at IS NULL");
+			if (own == nullptr || !own->Bind(0, characterKey) || !own->Execute() || !own->FetchRow()
+				|| !db::IsWriteAllowed(db::CheckCharacterOwnership(static_cast<uint32_t>(own->GetUInt64(0)),
+					own->GetUInt64(1), m_shardId, generation)))
+			{
+				LOG_WARN(Net, "[ServerApp] Character snapshot skipped: shard is not the owner (character_key={})", characterKey);
+				return;
+			}
+			while (own->FetchRow()) {}
+			auto* ins = cache->Acquire(mysql,
+				"INSERT INTO character_snapshots (character_id, reason, shard_id, payload) VALUES (?, ?, ?, ?)");
+			if (ins == nullptr || !ins->Bind(0, characterKey) || !ins->Bind(1, std::string_view(reasonText))
+				|| !ins->Bind(2, m_shardId) || !ins->Bind(3, std::string_view(*payload)) || !ins->Execute())
+			{
+				LOG_WARN(Net, "[ServerApp] Character snapshot insert FAILED (character_key={})", characterKey);
+				return;
+			}
+			// Garde les 20 plus récents de ce personnage.
+			// (sauf ceux visés par une demande de restauration en attente).
+			auto* prune = cache->Acquire(mysql,
+				"DELETE s FROM character_snapshots s "
+				"LEFT JOIN (SELECT id FROM character_snapshots WHERE character_id = ? ORDER BY id DESC LIMIT 20) k "
+				"ON k.id = s.id "
+				"LEFT JOIN character_restore_requests r ON r.snapshot_id = s.id AND r.applied_at IS NULL "
+				"WHERE s.character_id = ? AND k.id IS NULL AND r.snapshot_id IS NULL");
+			if (prune == nullptr || !prune->Bind(0, characterKey) || !prune->Bind(1, characterKey) || !prune->Execute())
+			{
+				LOG_WARN(Net, "[ServerApp] Character snapshot prune FAILED (character_key={})", characterKey);
+			}
+			LOG_INFO(Net, "[ServerApp] Character snapshot recorded (character_key={}, reason={})", characterKey, reasonText);
+		};
+		// Même thread que les sauvegardes de ce personnage : l'instantané part après
+		// la sauvegarde de départ. Sans file (ou file pleine) : tout de suite.
+		if (m_characterSaveQueue == nullptr || !m_characterSaveQueue->IsRunning()
+			|| m_characterSaveQueue->EnqueueOrdered(characterKey, job) == CharacterSaveQueue::EnqueueResult::Rejected)
+		{
+			job();
+		}
+#else
+		(void)client;
+		(void)reason;
+#endif
+	}
+
 	void ServerApp::UpdateMapDiscovery()
 	{
 		// Positions globales seulement dans le monde en cellules (en zone historique,
@@ -2930,6 +3071,7 @@ namespace engine::server
 		state.knownSkillIds = client.knownSkillIds;
 		/// ETAPE2.5 — carte découverte pendant la session (fusion OU en base).
 		state.mapDiscoveryCells = client.mapDiscovery.SessionCells();
+		state.restoreSnapshotId = client.restoreSnapshotId; // ETAPE2.6
 		return state;
 	}
 
@@ -9083,6 +9225,7 @@ namespace engine::server
 		}
 
 		SaveConnectedClient(*clientIt, persistenceReason);
+		RecordCharacterSnapshot(*clientIt, persistenceReason); // ETAPE2.6
 		// ETAPE2.2 — la sauvegarde de déconnexion est écrite tout de suite (attente de
 		// la file, 2 s au plus) : si le joueur rejoint un autre shard, le master
 		// déplace le verrou de propriété et une écriture tardive serait refusée.

@@ -190,6 +190,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterEnterWorldHandler.cpp
     # ETAPE1.2 : verrou de propriété des personnages (attribution / libération).
     ${CMAKE_SOURCE_DIR}/src/masterd/characters/CharacterOwnershipStore.cpp
+    # ETAPE2.6 : instantanés restaurables (lecture + demande de restauration, MJ).
+    ${CMAKE_SOURCE_DIR}/src/masterd/characters/CharacterSnapshotStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/dungeon/EnterDungeonHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/session/SessionCharacterMap.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/chat/ChatRelayHandler.cpp

@@ -59,6 +59,10 @@ namespace engine::server
 		/// CellZoneId + masque). Fusionnées (OU) dans character_map_discovery par la
 		/// sauvegarde en base. Jamais écrites dans le fichier .ini.
 		std::vector<std::pair<uint32_t, engine::world::discovery::CellBitmap>> mapDiscoveryCells;
+		/// ETAPE2.6 — instantané restauré au chargement (character_snapshots.id, 0 =
+		/// aucun). La sauvegarde suivante marque la demande de restauration appliquée,
+		/// dans sa transaction. Jamais écrit dans le fichier .ini.
+		uint64_t restoreSnapshotId = 0;
 		/// M36.2 — known professions and skill levels (persisted per character).
 		std::vector<ProfessionEntry> professions;
 		/// Grimoire — 10 slots de barre d'action (slot i → spellId, "" = vide).

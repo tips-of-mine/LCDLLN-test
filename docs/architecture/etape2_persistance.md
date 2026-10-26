@@ -10,8 +10,8 @@ et retire le travail SQL du tick de jeu.
 | 2.2 (chantier 3.2) | SQL hors du tick (file de sauvegarde par personnage) | livré |
 | 2.3 (chantier 3.3) | Sauvegardes automatiques étalées | livré |
 | 2.4 (chantier 3.4) | Échanges et transferts : les deux personnages dans une transaction | livré |
-| 2.5 | Carte découverte écrite par le shard | cette PR |
-| 2.6 (chantier 3.6) | Instantanés restaurables | PR suivante |
+| 2.5 | Carte découverte écrite par le shard | livré |
+| 2.6 (chantier 3.6) | Instantanés restaurables | cette PR |
 | 2.7 | Lectures du Hello hors du tick | PR suivante |
 | 2.8 | Enchères en base, dans des transactions | PR suivante |
 
@@ -100,7 +100,7 @@ La position est écrite par le shard propriétaire.
 - La carte découverte : voir 2.5.
 - Les anciens fichiers `.ini` restent sur le disque (jamais supprimés
   automatiquement) ; ils peuvent être archivés une fois tous les personnages migrés.
-- Instantanés restaurables (chantier 3.6) : pas encore.
+- Instantanés restaurables : voir 2.6.
 
 ### Déploiement
 
@@ -279,3 +279,56 @@ Test : `map_discovery_tracker_tests`.
 ### Déploiement
 
 Shard + master. Pas de migration, pas de changement réseau, client inchangé.
+
+## 2.6 — Instantanés restaurables
+
+Pour le support joueur : à chaque déconnexion, une copie complète et datée du
+personnage ; un MJ peut la consulter et la restaurer.
+
+Migration `0080_character_snapshots.sql` (copiée dans `deploy/docker/sql/migrations/`).
+
+### Enregistrement (shard)
+
+`ServerApp::RecordCharacterSnapshot`, appelé après la sauvegarde de déconnexion
+(et à l'arrêt du shard) : l'état complet est écrit dans `character_snapshots`
+au format clé=valeur (`SerializeCharacterState` : position, bourse, sac,
+équipement, quêtes, métiers, barres…). Le travail part sur le même thread que les
+sauvegardes du personnage (2.2), donc toujours après la sauvegarde de départ. Les
+**20** instantanés les plus récents sont gardés par personnage.
+
+### Consultation et restauration (master, MJ)
+
+| Commande | Rôle | Effet |
+|---|---|---|
+| `/snapshots <personnage>` | maître de jeu | Les 10 derniers instantanés : numéro, date UTC, motif, shard |
+| `/restore <personnage> <numéro>` | maître de jeu | Pose une demande dans `character_restore_requests` |
+
+Le master **n'écrit pas** l'état du personnage (un seul écrivain, 1.2/2.1). La
+demande est appliquée par le shard propriétaire à la **prochaine connexion** du
+personnage :
+
+1. au chargement, une demande en attente remplace l'état courant par celui de
+   l'instantané (position comprise) ; le courrier en attente reste dû ;
+2. une sauvegarde immédiate écrit l'état restauré et marque la demande appliquée
+   (`applied_at`), dans la même transaction. Une demande posée pendant la session
+   suivante attend la connexion d'après.
+
+Pour un personnage en jeu : le déconnecter (`/kick`), la restauration s'applique
+à sa reconnexion. Une nouvelle demande remplace celle en attente.
+
+### Limites
+
+- Le niveau est restauré (la sauvegarde d'un état restauré écrit le niveau tel
+  quel ; les autres sauvegardes ne le font que monter). L'orientation du
+  personnage n'est pas dans l'instantané.
+- Un instantané illisible fait refuser la connexion (journalisé) plutôt que de
+  repartir de valeurs par défaut.
+- Seul le shard propriétaire enregistre un instantané (contrôle 1.2) ; les
+  instantanés visés par une demande en attente ne sont jamais purgés.
+- La carte découverte n'est pas dans l'instantané (elle ne fait que grandir).
+- Commandes ajoutées à `game/data/config/slash_commands.json`.
+
+### Déploiement
+
+Migration 0080 + master + shard. Client inchangé (les commandes passent par le
+chat existant).

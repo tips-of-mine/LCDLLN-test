@@ -2004,17 +2004,47 @@ namespace engine::server
 				continue; // annulée entre-temps
 			}
 			const PendingCharacterLoad pending = pendingIt->second;
-			m_pendingCharacterLoads.erase(pendingIt);
-			// L'état a pu changer pendant la lecture : bannissement, ou joueur déjà
-			// accepté sur cet endpoint.
-			if (m_bannedCharacterKeys.find(characterKey) != m_bannedCharacterKeys.end()
-				|| FindClient(pending.endpoint) != nullptr
-				|| FindConnectedClientByCharacterKey(characterKey) != nullptr)
+			// L'état a pu changer pendant la lecture : bannissement, admission retirée
+			// ou déplacée par le master (les sauvegardes seraient toutes refusées), ou
+			// joueur déjà accepté sur cet endpoint.
+			bool admitted = true;
+			if (m_admittedRegistry != nullptr)
 			{
-				LOG_WARN(Net, "[ServerApp] Hello dropped after load (character_key={}, endpoint={})",
-					characterKey, UdpTransport::EndpointToString(pending.endpoint));
+				const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::steady_clock::now().time_since_epoch()).count());
+				admitted = m_admittedRegistry->IsAdmitted(characterKey, nowMs);
+			}
+			if (!admitted
+				|| m_bannedCharacterKeys.find(characterKey) != m_bannedCharacterKeys.end()
+				|| FindClient(pending.endpoint) != nullptr)
+			{
+				m_pendingCharacterLoads.erase(pendingIt);
+				LOG_WARN(Net, "[ServerApp] Hello dropped after load (character_key={}, endpoint={}, admitted={})",
+					characterKey, UdpTransport::EndpointToString(pending.endpoint), admitted);
 				continue;
 			}
+			// Même personnage encore connecté depuis une autre adresse (reconnexion
+			// après changement de port) : l'ancienne session est fermée (sauvegarde de
+			// départ), puis l'état est relu APRÈS cette sauvegarde.
+			if (ConnectedClient* previous = FindConnectedClientByCharacterKey(characterKey))
+			{
+				LOG_INFO(Net, "[ServerApp] Hello: closing previous session before reload (character_key={}, old_client_id={})",
+					characterKey, previous->clientId);
+				DisconnectConnectedClient(previous->clientId, "reconnect");
+				const auto job = [this, characterKey]() {
+					auto reloaded = std::make_shared<LoadedCharacterData>(LoadCharacterForHello(characterKey));
+					std::lock_guard<std::mutex> lock(m_completedCharacterLoadsMutex);
+					m_completedCharacterLoads.emplace_back(characterKey, std::move(reloaded));
+				};
+				if (m_characterSaveQueue != nullptr
+					&& m_characterSaveQueue->EnqueueOrdered(characterKey, job) != CharacterSaveQueue::EnqueueResult::Rejected)
+				{
+					continue; // l'entrée en attente reste : la relecture la reprendra
+				}
+				m_pendingCharacterLoads.erase(pendingIt);
+				continue; // file indisponible : le client renverra un Hello
+			}
+			m_pendingCharacterLoads.erase(pendingIt);
 			FinishHello(pending.endpoint, pending.helloNonce, *data);
 		}
 	}

@@ -351,8 +351,11 @@ Maintenant, le Hello est coupé en deux :
    `characters`, résultat posé dans une liste protégée.
 3. **Dans le tick, au tick suivant** (`DrainCompletedCharacterLoads` →
    `FinishHello`) : création du joueur comme avant. Hello abandonné si le
-   personnage a été banni ou s'est connecté entre-temps ; refusé si la lecture a
-   échoué (2.1).
+   personnage a été banni ou si le master lui a retiré son admission
+   entre-temps ; refusé si la lecture a échoué (2.1). Si le même personnage est
+   encore connecté depuis une autre adresse (reconnexion après changement de
+   port), l'ancienne session est fermée (sauvegarde de départ) et l'état relu
+   après cette sauvegarde.
 
 Sans file (pas de base, shard Windows, moins de 2 connexions) ou si la file est
 pleine, la lecture reste immédiate dans le tick, comme avant.

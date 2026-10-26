@@ -9,8 +9,8 @@ mouvement.
 |---|---|---|
 | 3.1 (chantier 4.3) | Chiffrement et authentification des datagrammes UDP | livré |
 | 3.2 (chantier 4.2, + 4.5 / 4.6) | Snapshots en delta sur base acquittée, quantification, plafond d'entités | livré |
-| 3.3 (chantier 4.1) | Mouvement tranché par le shard, prédiction et recalage client | cette PR |
-| 3.4 (chantier 4.4) | Canal fiable minimal pour les messages importants | à venir |
+| 3.3 (chantier 4.1) | Mouvement tranché par le shard, prédiction et recalage client | livré |
+| 3.4 (chantier 4.4) | Canal fiable minimal pour les messages importants | cette PR |
 
 ## 3.1 — Chiffrer et authentifier l'UDP
 
@@ -338,3 +338,103 @@ rafale, recalage par décalage, correction de suite, historique borné), `server
 
 Lock-step **master + shard + client** (`kProtocolVersion` 18). Pas de migration, pas de
 nouvelle clé de configuration.
+
+## 3.4 — Canal fiable minimal (chantier 4.4)
+
+### Avant
+
+Tout passait en UDP non fiable. Un `InventoryDelta`, un `TradeComplete`, un message de
+chat ou une demande d'équipement perdu n'arrivait jamais : le client restait faux
+jusqu'au changement suivant, ou le clic du joueur restait sans effet.
+
+### Principe
+
+`src/shared/network/ReliableChannel` (sans dépendance au réseau, un canal par session,
+dans chaque sens) :
+
+- **Liste fermée de types fiables** (`IsReliableKind`, partagée client / shard) :
+  - client → shard : demandes qui changent l'état (butin, échange, enchère, boutique,
+    quêtes, équipement, groupe, guilde, amis, métiers, réapparition, barres, chat) ;
+  - shard → client : résultats et états envoyés seulement au changement (inventaire,
+    portefeuille, quêtes, équipement, échange, groupe, guilde, amis, métiers, chat,
+    statistiques, changement de zone, butin).
+  - Restent **non fiables** : Hello / Welcome / Goodbye (gérés à part), Input,
+    snapshots, `ForcePosition` et `MoveCorrection` (l'époque de mouvement de 3.3 et le
+    renvoi toutes les 500 ms les rendent auto-réparables ; un ForcePosition fiable
+    livré en retard ramènerait le joueur en arrière sans qu'il puisse le détecter), attaques et sorts (une attaque en retard vaut pire qu'une perdue),
+    événements de combat, barres de cast, auras, menace, ressources (flux fréquents,
+    remplacés par le suivant).
+- **Émission** : `SendDatagram` (shard) et `SendBytes` (client) emballent ces types dans
+  `Reliable` (kind 102 : `seq u32` + paquet du protocole tel quel), numérotés, gardés
+  jusqu'à l'accusé, renvoyés après un délai qui suit le temps d'aller-retour mesuré
+  (250 ms au départ, doublé à chaque renvoi, 2 s au plus, 32 renvois par appel au plus).
+- **Réception** : messages livrés **dans l'ordre et sans doublon**, puis traités comme
+  des paquets reçus (seuls les types fiables sont admis dans l'enveloppe : pas d'Input
+  ni de Hello qui contourneraient leurs règles). 256 messages au plus en avance d'un trou.
+- **Accusés groupés** : `ReliableAck` (kind 103 : « tout jusqu'à `base` » + masque 64
+  bits des suivants), au plus un toutes les 40 ms, envoyé aussi pour un doublon (le
+  premier accusé s'est perdu).
+- **Échec** : un message sans accusé depuis **30 s** (même délai que l'éviction des
+  clients inactifs : un long chargement de zone ne coupe pas plus tôt), ou plus de 512
+  en attente, met le canal en échec : le shard coupe le client
+  (`reliable_channel_failed`, sauvegarde comprise) ; le client prévient le joueur dans
+  le chat (« Liaison avec le serveur de jeu perdue… »).
+- **Pas de fragmentation applicative** : un message fiable tient dans un datagramme
+  (2000 octets au plus shard → client, tampon de réception du client ; 1431 octets au
+  plus client → shard, tampon du shard). Au-delà de 1472 octets, c'est la
+  fragmentation IP, comme avant ce canal pour les gros états (annuaire de guilde…). Un
+  message plus gros est **refusé**, jamais envoyé hors canal (il doublerait les messages
+  en attente de renvoi et casserait l'ordre). Le réassemblage applicatif, que le
+  rapport City of Heroes signale comme exploitable, n'existe pas.
+
+```
+Client                                       Shard
+ TradeConfirm  → Reliable(seq 7) ──X perdu
+ ChatSend      → Reliable(seq 8) ──────────▶ gardé (7 manque)
+                ◀──────────── ReliableAck(base 6, masque bit1 = 8)
+ 250 ms : renvoi Reliable(seq 7) ──────────▶ livrés : 7 puis 8
+                ◀──────────── ReliableAck(base 8)
+```
+
+### Sessions
+
+- Shard : le canal vit dans `ConnectedClient` (neuf à chaque nouveau client ; un Hello
+  répété garde le canal). Renvois et accusés partent à chaque tick
+  (`PumpReliableChannels`, après les snapshots).
+- Client : le canal vit dans `GameplayUdpClient`, remis à zéro à chaque socket et
+  quand un Welcome annonce un `client_id` **différent** d'un précédent (le premier
+  Welcome ne remet rien à zéro : des messages fiables du shard ont pu arriver avant un
+  Welcome perdu puis renvoyé). `PollIncoming` (chaque image) ouvre les
+  enveloppes et envoie renvois et accusés.
+
+### Fichiers
+
+| Fichier | Rôle |
+|---|---|
+| `src/shared/network/ReliableChannel.h/.cpp` | Canal fiable : numérotation, renvois, accusés groupés, ordre, échec ; liste des types fiables |
+| `src/shared/network/ServerProtocol.h` | Kinds `Reliable` (102) et `ReliableAck` (103), `kProtocolVersion` 19 |
+| `src/shared/server_bootstrap/ServerApp` | `SendDatagram` (emballage), `SendDatagramRaw`, `HandleReliableEnvelope`, `PumpReliableChannels` |
+| `src/client/net/GameplayUdpClient` | `SendBytes` (emballage), `SendUnreliable`, ouverture des enveloppes dans `PollIncoming` |
+
+### Tests
+
+`reliable_channel_tests` : liste des types, livraison sans perte, perte et renvoi dans
+l'ordre, délai doublé puis abandon à 30 s (pas à 15 s), fenêtre pleine, désordre hors fenêtre,
+paquets mal formés (enveloppe dans l'enveloppe, accusé d'un message jamais envoyé,
+message trop gros), simulation de 2 000 messages avec 30 % de pertes et désordre dans
+les deux sens.
+
+### Déploiement
+
+Lock-step **shard + client** (`kProtocolVersion` 19, kinds 102 / 103). Pas de migration,
+pas de nouvelle clé de configuration.
+
+### Limites connues
+
+- Pas de reconnexion automatique après un échec du canal : le joueur est prévenu et
+  se reconnecte.
+- L'enveloppe ne porte pas d'identifiant de session : la remise à zéro repose sur la
+  socket (client) et sur le `ConnectedClient` (shard). En mode `optional` (clair, outils
+  de développement), un accusé falsifié depuis une autre adresse pourrait faire croire à
+  une livraison ; en mode `required` (défaut du shard Linux) chaque datagramme est
+  authentifié (3.1).

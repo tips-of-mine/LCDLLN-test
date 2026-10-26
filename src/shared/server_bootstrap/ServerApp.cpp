@@ -999,6 +999,16 @@ namespace engine::server
 	{
 		const std::span<const std::byte> packetBytes(datagram.bytes.data(), datagram.size);
 
+		// ETAPE3.4 — enveloppes du canal fiable (messages numérotés, accusés).
+		if (engine::server::MessageKind envelopeKind{};
+			engine::server::PeekMessageKind(packetBytes, envelopeKind)
+			&& (envelopeKind == engine::server::MessageKind::Reliable
+				|| envelopeKind == engine::server::MessageKind::ReliableAck))
+		{
+			HandleReliableEnvelope(datagram, envelopeKind);
+			return;
+		}
+
 		HelloMessage hello{};
 		if (DecodeHello(packetBytes, hello))
 		{
@@ -2833,6 +2843,100 @@ namespace engine::server
 
 	bool ServerApp::SendDatagram(const Endpoint& endpoint, std::span<const std::byte> packet)
 	{
+		// ETAPE3.4 (chantier 4.4) — types qui ne doivent pas se perdre : canal fiable du
+		// client (numéro, renvoi jusqu'à l'accusé, livraison dans l'ordre).
+		engine::server::MessageKind kind{};
+		if (engine::server::PeekMessageKind(packet, kind) && engine::network::reliable::IsReliableKind(kind))
+		{
+			if (ConnectedClient* client = FindClient(endpoint))
+			{
+				if (packet.size() > engine::network::reliable::ReliableChannel::kMaxMessageSize)
+				{
+					// Jamais hors canal : il doublerait les messages en attente de renvoi.
+					LOG_ERROR(Net, "[ServerApp] Message fiable trop gros, abandonné (kind={}, size={}, max={}, client_id={})",
+						static_cast<uint32_t>(kind), packet.size(),
+						engine::network::reliable::ReliableChannel::kMaxMessageSize, client->clientId);
+					return false;
+				}
+				std::vector<std::byte> envelope;
+				if (!client->reliable.Queue(packet, NowMonotonicMs(), envelope))
+				{
+					LOG_WARN(Net, "[ServerApp] Canal fiable en échec, message abandonné (kind={}, client_id={})",
+						static_cast<uint32_t>(kind), client->clientId);
+					return false; // PumpReliableChannels coupe le client
+				}
+				(void)SendDatagramRaw(endpoint, envelope); // perdu : renvoyé par le canal
+				return true;
+			}
+		}
+		return SendDatagramRaw(endpoint, packet);
+	}
+
+	void ServerApp::HandleReliableEnvelope(const Datagram& datagram, engine::server::MessageKind kind)
+	{
+		ConnectedClient* client = FindClient(datagram.endpoint);
+		if (client == nullptr)
+			return; // pas de session : rien à accuser ni à livrer
+		const std::span<const std::byte> bytes(datagram.bytes.data(), datagram.size);
+		const uint64_t nowMs = NowMonotonicMs();
+		if (kind == engine::server::MessageKind::ReliableAck)
+		{
+			if (!client->reliable.OnAck(bytes, nowMs))
+				++m_udpRejectedDatagrams;
+			return;
+		}
+		std::vector<std::vector<std::byte>> delivered;
+		if (!client->reliable.OnReliable(bytes, nowMs, delivered))
+		{
+			++m_udpRejectedDatagrams;
+			return;
+		}
+		// Livrés dans l'ordre, chacun traité comme un paquet reçu de ce point de
+		// terminaison. Seuls les types fiables sont admis dans l'enveloppe (pas d'Input
+		// ni de Hello qui contourneraient leurs propres règles). `client` n'est plus lu :
+		// un message peut couper la session.
+		const Endpoint endpoint = datagram.endpoint;
+		for (const std::vector<std::byte>& inner : delivered)
+		{
+			engine::server::MessageKind innerKind{};
+			if (inner.size() > sizeof(Datagram::bytes) || !engine::server::PeekMessageKind(inner, innerKind)
+				|| !engine::network::reliable::IsReliableKind(innerKind))
+			{
+				++m_udpRejectedDatagrams;
+				continue;
+			}
+			Datagram one{};
+			one.endpoint = endpoint;
+			std::copy(inner.begin(), inner.end(), one.bytes.begin());
+			one.size = inner.size();
+			DispatchGamePacket(one);
+		}
+	}
+
+	void ServerApp::PumpReliableChannels()
+	{
+		const uint64_t nowMs = NowMonotonicMs();
+		std::vector<uint32_t> failed;
+		std::vector<std::vector<std::byte>> out;
+		for (ConnectedClient& client : m_clients)
+		{
+			out.clear();
+			client.reliable.Update(nowMs, out);
+			for (const std::vector<std::byte>& datagram : out)
+				(void)SendDatagramRaw(client.endpoint, datagram);
+			if (client.reliable.Failed())
+				failed.push_back(client.clientId);
+		}
+		for (const uint32_t clientId : failed)
+		{
+			LOG_WARN(Net, "[ServerApp] Canal fiable en échec (aucun accusé depuis {} ms ou file pleine) : client coupé (client_id={})",
+				engine::network::reliable::ReliableChannel::kGiveUpMs, clientId);
+			DisconnectConnectedClient(clientId, "reliable_channel_failed");
+		}
+	}
+
+	bool ServerApp::SendDatagramRaw(const Endpoint& endpoint, std::span<const std::byte> packet)
+	{
 		std::vector<std::byte> sealed;
 		switch (m_udpSessions.Seal(PackEndpointKey(endpoint), packet, sealed))
 		{
@@ -3049,6 +3153,8 @@ namespace engine::server
 		MaybeAutosaveCharacters();
 		RefreshReplication();
 		MaybeSendSnapshots();
+		// ETAPE3.4 — renvois et accusés du canal fiable (après tout ce que le tick a émis).
+		PumpReliableChannels();
 		if ((m_currentTick % m_tickHz) == 0)
 		{
 			LOG_INFO(Core, "[ServerApp] Tick stats (tick={}, clients={}, rx_packets={}, tx_packets={})",

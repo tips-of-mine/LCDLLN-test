@@ -857,6 +857,8 @@ target_sources(engine_core PRIVATE src/shared/network/UdpSecureChannel.cpp)
 target_sources(engine_core PRIVATE src/shared/network/SnapshotDelta.cpp)
 # ETAPE3.3 : règles de mouvement partagées (shard) + recalage du client.
 target_sources(engine_core PRIVATE src/shared/movement/MovementRules.cpp src/client/gameplay/MoveReconciler.cpp)
+# ETAPE3.4 : canal fiable minimal sur l'UDP de jeu (client + shard).
+target_sources(engine_core PRIVATE src/shared/network/ReliableChannel.cpp)
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/external/stb

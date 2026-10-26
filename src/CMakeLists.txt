@@ -57,6 +57,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shared/network/SnapshotDelta.cpp
     # ETAPE3.3 : règles de mouvement partagées.
     ${CMAKE_SOURCE_DIR}/src/shared/movement/MovementRules.cpp
+    # ETAPE3.4 : canal fiable minimal sur l'UDP de jeu.
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ReliableChannel.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildSystem.cpp
@@ -712,6 +714,9 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/movement/MovementRulesTests.cpp)
   lcdlln_add_simple_test(move_reconciler_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/MoveReconcilerTests.cpp)
+  # ETAPE3.4 : canal fiable (ordre, doublons, renvois, accusés groupés, échec).
+  lcdlln_add_simple_test(reliable_channel_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ReliableChannelTests.cpp)
   # ETAPE3.2 : snapshots en delta sur base acquittée (SnapshotDelta.cpp vient d'engine_core).
   lcdlln_add_simple_test(snapshot_delta_tests
     ${CMAKE_SOURCE_DIR}/src/shared/network/SnapshotDeltaTests.cpp)

@@ -1,5 +1,4 @@
 #include "src/masterd/handlers/character/CharacterSavePositionHandler.h"
-#include "src/masterd/characters/CharacterOwnershipStore.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/network/CharacterPayloads.h"
@@ -68,77 +67,17 @@ namespace engine::server
 			return;
 		}
 
-		auto guard = m_pool->Acquire();
-		MYSQL* mysql = guard.get();
-		auto* stmtCache = guard.cache();
-		if (!mysql || !stmtCache)
-		{
-			auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "database unavailable", requestId, sessionIdHeader);
-			if (!pkt.empty())
-				m_server->Send(connId, pkt);
-			return;
-		}
-
-		// ETAPE1.2 — un personnage en jeu appartient à son shard : c'est lui qui écrit
-		// sa position (ServerApp::SaveCharacterToDb). Le master l'ignore et acquitte
-		// quand même (le client n'a rien à corriger), sans écrire en base.
-		if (IsCharacterOwnedByShard(mysql, stmtCache, parsed->characterId, *accountId))
-		{
-			LOG_DEBUG(Auth, "[CharacterSavePositionHandler] ignoré : personnage détenu par un shard (account_id={}, character_id={})",
-				*accountId, parsed->characterId);
-			auto ack = BuildCharacterSavePositionResponsePacket(1u, requestId, sessionIdHeader);
-			if (!ack.empty())
-				m_server->Send(connId, ack);
-			return;
-		}
-
-		// UPDATE gating par account_id : impossible de saver pour le perso d'un autre compte.
-		// Aussi gate sur deleted_at IS NULL — on ne sauve pas la position d'un perso supprimé.
-		// N1-C : prepared statement (5 floats spawn + 2 ids). Bind double car
-		// l'API SqlPreparedStatement n'a pas de surcharge float (les float sont
-		// stockés en DOUBLE en interne MySQL si la colonne est FLOAT, la conversion
-		// est correcte).
-		auto* stmt = stmtCache->Acquire(mysql,
-			"UPDATE characters SET spawn_x = ?, spawn_y = ?, spawn_z = ?, "
-			"spawn_yaw_deg = ?, spawn_pitch_deg = ? "
-			"WHERE id = ? AND account_id = ? AND deleted_at IS NULL");
-		if (!stmt
-			|| !stmt->Bind(0, static_cast<double>(parsed->x))
-			|| !stmt->Bind(1, static_cast<double>(parsed->y))
-			|| !stmt->Bind(2, static_cast<double>(parsed->z))
-			|| !stmt->Bind(3, static_cast<double>(parsed->yawDeg))
-			|| !stmt->Bind(4, static_cast<double>(parsed->pitchDeg))
-			|| !stmt->Bind(5, parsed->characterId)
-			|| !stmt->Bind(6, *accountId)
-			|| !stmt->Execute())
-		{
-			LOG_ERROR(Auth, "[CharacterSavePositionHandler] UPDATE failed (account_id={}, character_id={})",
-				*accountId, parsed->characterId);
-			auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "save position failed", requestId, sessionIdHeader);
-			if (!pkt.empty())
-				m_server->Send(connId, pkt);
-			return;
-		}
-
-		const uint64_t affected = stmt->AffectedRows();
-		if (affected == 0u)
-		{
-			LOG_WARN(Auth, "[CharacterSavePositionHandler] no row updated (account_id={}, character_id={}) — not owned, missing or deleted",
-				*accountId, parsed->characterId);
-			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "character not found or not owned", requestId, sessionIdHeader);
-			if (!pkt.empty())
-				m_server->Send(connId, pkt);
-			return;
-		}
-
+		// ETAPE2.1 — la base n'a qu'un écrivain par personnage : le shard propriétaire
+		// (ServerApp::SaveCharacterToDb écrit spawn_*, niveau et tout l'état). Le master
+		// n'écrit plus la position envoyée par le client ; il acquitte la requête pour
+		// que les clients existants ne restent pas en attente d'une réponse.
+		LOG_DEBUG(Auth, "[CharacterSavePositionHandler] ignoré : la position est écrite par le shard (account_id={}, character_id={})",
+			*accountId, parsed->characterId);
 		auto pkt = BuildCharacterSavePositionResponsePacket(1u, requestId, sessionIdHeader);
 		if (pkt.empty() || !m_server->Send(connId, pkt))
 		{
 			LOG_ERROR(Auth, "[CharacterSavePositionHandler] Send response failed (connId={}, account_id={}, character_id={})",
 				connId, *accountId, parsed->characterId);
-			return;
 		}
-		LOG_INFO(Auth, "[CharacterSavePositionHandler] Position saved (account_id={}, character_id={}, pos=({:.2f}, {:.2f}, {:.2f}))",
-			*accountId, parsed->characterId, parsed->x, parsed->y, parsed->z);
 	}
 }

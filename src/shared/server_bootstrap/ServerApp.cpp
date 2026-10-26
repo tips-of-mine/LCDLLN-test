@@ -1329,12 +1329,13 @@ namespace engine::server
 		auto* cache = guard.cache();
 		if (mysql == nullptr || cache == nullptr)
 		{
-			return CharacterDbSaveResult::SkippedNoDb;
+			// ETAPE2.1 — base configurée mais injoignable : échec (pas de repli
+			// fichier, il ne serait jamais relu une fois le personnage en base).
+			return CharacterDbSaveResult::Failed;
 		}
-		// Transaction : wallet + inventaire + équipement partent ENSEMBLE — un
-		// lecteur concurrent (autre shard, outil web) ne voit jamais un état mixte,
-		// et un échec au milieu laisse la DB sur le save précédent (le .ini, écrit
-		// par SaveConnectedClient juste avant, reste le filet de secours).
+		// Transaction : tout l'état part ENSEMBLE — un lecteur concurrent (autre
+		// shard, outil web) ne voit jamais un état mixte, et un échec au milieu
+		// laisse la base sur la sauvegarde précédente.
 		if (mysql_query(mysql, "START TRANSACTION") != 0)
 		{
 			LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: START TRANSACTION failed (character_key={})",
@@ -1385,6 +1386,41 @@ namespace engine::server
 				&& pos->Bind(4, state.level)
 				&& pos->Bind(5, state.characterKey)
 				&& pos->Execute();
+		}
+		// 0 ter. ETAPE2.1 — progression (zone, XP, PV, quêtes, barres, métiers…) :
+		// une ligne character_progress par personnage. Sa présence indique au
+		// chargement que le personnage est entièrement en base (plus de .ini).
+		if (ok)
+		{
+			const std::string payload = SerializeCharacterProgressPayload(state);
+			auto* prog = cache->Acquire(mysql,
+				"INSERT INTO character_progress (character_id, format_version, zone_id, experience_points, "
+				"current_health, max_health, chat_moderator_role, progress_payload) VALUES (?, 1, ?, ?, ?, ?, ?, ?) "
+				"ON DUPLICATE KEY UPDATE format_version = VALUES(format_version), zone_id = VALUES(zone_id), "
+				"experience_points = VALUES(experience_points), current_health = VALUES(current_health), "
+				"max_health = VALUES(max_health), chat_moderator_role = VALUES(chat_moderator_role), "
+				"progress_payload = VALUES(progress_payload)");
+			ok = prog != nullptr
+				&& prog->Bind(0, state.characterKey)
+				&& prog->Bind(1, state.zoneId)
+				&& prog->Bind(2, state.experiencePoints)
+				&& prog->Bind(3, state.stats.currentHealth)
+				&& prog->Bind(4, state.stats.maxHealth)
+				&& prog->Bind(5, static_cast<uint32_t>(state.chatModeratorRole ? 1u : 0u))
+				&& prog->Bind(6, std::string_view(payload))
+				&& prog->Execute();
+		}
+		// 0 quater. ETAPE2.1 — courrier fusionné à la connexion : les lignes lues
+		// (mailboxClaimedIds) disparaissent avec l'écriture de la bourse et du sac
+		// qui les contiennent désormais. Les lignes arrivées depuis restent.
+		for (size_t i = 0; ok && i < state.mailboxClaimedIds.size(); ++i)
+		{
+			auto* claim = cache->Acquire(mysql,
+				"DELETE FROM character_mailbox WHERE character_id = ? AND id = ?");
+			ok = claim != nullptr
+				&& claim->Bind(0, state.characterKey)
+				&& claim->Bind(1, state.mailboxClaimedIds[i])
+				&& claim->Execute();
 		}
 		// 1. Wallet : upsert des 4 devises (ids alignés sur PlayerWalletService :
 		// 1=gold, 2=honor, 3=badges, 4=premium). Les 4 lignes sont TOUJOURS écrites
@@ -1475,82 +1511,152 @@ namespace engine::server
 #endif
 	}
 
-	bool ServerApp::LoadCharacterFromDb(uint64_t characterKey, PersistedCharacterState& state)
+	ServerApp::CharacterDbLoadResult ServerApp::LoadCharacterFromDb(uint64_t characterKey, PersistedCharacterState& state)
 	{
 #if defined(SHARD_POSITION_DB)
 		if (m_characterDbPool == nullptr || characterKey == 0u)
 		{
-			return false;
+			return CharacterDbLoadResult::NotFound;
 		}
 		auto guard = m_characterDbPool->Acquire();
 		MYSQL* mysql = guard.get();
 		auto* cache = guard.cache();
 		if (mysql == nullptr || cache == nullptr)
 		{
-			return false;
+			LOG_ERROR(Net, "[ServerApp] LoadCharacterFromDb: base injoignable (character_key={})", characterKey);
+			return CharacterDbLoadResult::Error;
 		}
-		// Sentinelle : le wallet est écrit à CHAQUE save DB (4 lignes, même à 0) —
-		// aucune ligne wallet = personnage jamais sauvé en DB (premier passage
-		// depuis un .ini legacy) → on garde l'état fichier tel quel.
+		state.characterKey = characterKey;
+		// ETAPE2.1 — progression : la présence de la ligne signifie que le personnage
+		// est entièrement en base (le .ini n'est alors plus lu).
+		bool progressFound = false;
+		{
+			auto* prog = cache->Acquire(mysql,
+				"SELECT zone_id, experience_points, current_health, max_health, chat_moderator_role, "
+				"progress_payload FROM character_progress WHERE character_id = ?");
+			if (prog == nullptr || !prog->Bind(0, characterKey) || !prog->Execute())
+			{
+				LOG_ERROR(Net, "[ServerApp] LoadCharacterFromDb: character_progress illisible (migration 0078 appliquée ?) (character_key={})",
+					characterKey);
+				return CharacterDbLoadResult::Error;
+			}
+			if (prog->FetchRow())
+			{
+				progressFound = true;
+				state.zoneId = static_cast<uint32_t>(prog->GetUInt64(0));
+				state.experiencePoints = static_cast<uint32_t>(prog->GetUInt64(1));
+				state.stats.currentHealth = static_cast<uint32_t>(prog->GetUInt64(2));
+				state.stats.maxHealth = static_cast<uint32_t>(prog->GetUInt64(3));
+				state.chatModeratorRole = prog->GetUInt64(4) != 0u;
+				ApplyCharacterProgressPayload(prog->GetString(5), state);
+			}
+		}
+		// Bourse : écrite à CHAQUE save DB (4 lignes, même à 0). Sans ligne de
+		// progression, une bourse présente = personnage sauvé avant ETAPE2.1
+		// (bourse, sac, équipement en base, le reste encore dans le .ini).
+		bool walletFound = false;
 		auto* wallet = cache->Acquire(mysql,
 			"SELECT currency_id, amount FROM player_wallet WHERE player_id = ?");
 		if (wallet == nullptr || !wallet->Bind(0, characterKey) || !wallet->Execute())
 		{
-			return false;
+			LOG_ERROR(Net, "[ServerApp] LoadCharacterFromDb: player_wallet illisible (character_key={})", characterKey);
+			return CharacterDbLoadResult::Error;
 		}
-		bool found = false;
-		while (wallet->FetchRow())
 		{
-			found = true;
-			const uint32_t currencyId = static_cast<uint32_t>(wallet->GetUInt64(0));
-			const uint32_t amount = static_cast<uint32_t>(wallet->GetUInt64(1));
-			switch (currencyId)
+			while (wallet->FetchRow())
 			{
-				case 1u: state.gold = amount; break;
-				case 2u: state.honor = amount; break;
-				case 3u: state.badges = amount; break;
-				case 4u: state.premiumCurrency = amount; break;
-				default: break; // devise inconnue (future) : ignorée.
-			}
-		}
-		if (!found)
-		{
-			return false;
-		}
-		// Inventaire (ordre stable par slot_index — reconstruit le vector du sac).
-		auto* inv = cache->Acquire(mysql,
-			"SELECT item_id, quantity FROM character_inventory WHERE character_id = ? "
-			"ORDER BY slot_index");
-		if (inv != nullptr && inv->Bind(0, characterKey) && inv->Execute())
-		{
-			state.inventory.clear();
-			while (inv->FetchRow())
-			{
-				ItemStack stack{};
-				stack.itemId = static_cast<uint32_t>(inv->GetUInt64(0));
-				stack.quantity = static_cast<uint32_t>(inv->GetUInt64(1));
-				state.inventory.push_back(stack);
-			}
-		}
-		// Équipement porté (slots hors bornes ignorés — schéma futur plus large).
-		auto* equip = cache->Acquire(mysql,
-			"SELECT slot_id, item_id FROM character_equipment WHERE character_id = ?");
-		if (equip != nullptr && equip->Bind(0, characterKey) && equip->Execute())
-		{
-			state.equipment.fill(0u);
-			while (equip->FetchRow())
-			{
-				const size_t slot = static_cast<size_t>(equip->GetUInt64(0));
-				if (slot >= 1u && slot < state.equipment.size())
+				walletFound = true;
+				const uint32_t currencyId = static_cast<uint32_t>(wallet->GetUInt64(0));
+				const uint32_t amount = static_cast<uint32_t>(wallet->GetUInt64(1));
+				switch (currencyId)
 				{
-					state.equipment[slot] = static_cast<uint32_t>(equip->GetUInt64(1));
+					case 1u: state.gold = amount; break;
+					case 2u: state.honor = amount; break;
+					case 3u: state.badges = amount; break;
+					case 4u: state.premiumCurrency = amount; break;
+					default: break; // devise inconnue (future) : ignorée.
 				}
 			}
 		}
-		return true;
+		if (walletFound)
+		{
+			// Inventaire (ordre stable par slot_index — reconstruit le vector du sac).
+			auto* inv = cache->Acquire(mysql,
+				"SELECT item_id, quantity FROM character_inventory WHERE character_id = ? "
+				"ORDER BY slot_index");
+			if (inv == nullptr || !inv->Bind(0, characterKey) || !inv->Execute())
+			{
+				LOG_ERROR(Net, "[ServerApp] LoadCharacterFromDb: character_inventory illisible (character_key={})", characterKey);
+				return CharacterDbLoadResult::Error;
+			}
+			{
+				state.inventory.clear();
+				while (inv->FetchRow())
+				{
+					ItemStack stack{};
+					stack.itemId = static_cast<uint32_t>(inv->GetUInt64(0));
+					stack.quantity = static_cast<uint32_t>(inv->GetUInt64(1));
+					state.inventory.push_back(stack);
+				}
+			}
+			// Équipement porté (slots hors bornes ignorés — schéma futur plus large).
+			auto* equip = cache->Acquire(mysql,
+				"SELECT slot_id, item_id FROM character_equipment WHERE character_id = ?");
+			if (equip == nullptr || !equip->Bind(0, characterKey) || !equip->Execute())
+			{
+				LOG_ERROR(Net, "[ServerApp] LoadCharacterFromDb: character_equipment illisible (character_key={})", characterKey);
+				return CharacterDbLoadResult::Error;
+			}
+			{
+				state.equipment.fill(0u);
+				while (equip->FetchRow())
+				{
+					const size_t slot = static_cast<size_t>(equip->GetUInt64(0));
+					if (slot >= 1u && slot < state.equipment.size())
+					{
+						state.equipment[slot] = static_cast<uint32_t>(equip->GetUInt64(1));
+					}
+				}
+			}
+		}
+		// ETAPE2.1 — courrier en attente : ajouté au courrier déjà présent dans
+		// \p state (cas d'un import .ini), fusionné ensuite par
+		// MergePersistedMailboxIntoState. Les lignes lues sont supprimées par la
+		// sauvegarde suivante (mailboxClaimedIds).
+		{
+			auto* mail = cache->Acquire(mysql,
+				"SELECT id, gold, item_id, quantity FROM character_mailbox WHERE character_id = ? "
+				"ORDER BY id LIMIT 256");
+			if (mail == nullptr || !mail->Bind(0, characterKey) || !mail->Execute())
+			{
+				LOG_ERROR(Net, "[ServerApp] LoadCharacterFromDb: character_mailbox illisible (character_key={})", characterKey);
+				return CharacterDbLoadResult::Error;
+			}
+			{
+				while (mail->FetchRow())
+				{
+					state.mailboxClaimedIds.push_back(mail->GetUInt64(0));
+					const uint64_t gold = static_cast<uint64_t>(state.mailboxGold) + mail->GetUInt64(1);
+					state.mailboxGold = static_cast<uint32_t>(
+						std::min<uint64_t>(gold, std::numeric_limits<uint32_t>::max()));
+					ItemStack item{};
+					item.itemId = static_cast<uint32_t>(mail->GetUInt64(2));
+					item.quantity = static_cast<uint32_t>(mail->GetUInt64(3));
+					if (item.itemId != 0u && item.quantity != 0u)
+					{
+						state.mailboxItems.push_back(item);
+					}
+				}
+			}
+		}
+		if (progressFound)
+		{
+			return CharacterDbLoadResult::Full;
+		}
+		return walletFound ? CharacterDbLoadResult::WalletOnly : CharacterDbLoadResult::NotFound;
 #else
 		(void)characterKey; (void)state;
-		return false;
+		return CharacterDbLoadResult::NotFound;
 #endif
 	}
 
@@ -1646,6 +1752,21 @@ namespace engine::server
 			return;
 		}
 
+		// ETAPE2.1 — l'état en base est lu AVANT de créer le joueur. Base configurée
+		// mais illisible (connexion perdue, migration 0078 absente) → Hello refusé,
+		// le client réessaiera : repartir du .ini (plus écrit depuis ETAPE2.1) ou des
+		// valeurs par défaut ferait écraser la vraie progression par la sauvegarde
+		// suivante. Même clé que client.persistenceCharacterKey ci-dessous.
+		const uint64_t helloCharacterKey = helloNonce != 0u ? helloNonce : static_cast<uint64_t>(m_nextClientId);
+		PersistedCharacterState dbState{};
+		const CharacterDbLoadResult dbLoad = LoadCharacterFromDb(helloCharacterKey, dbState);
+		if (dbLoad == CharacterDbLoadResult::Error)
+		{
+			LOG_ERROR(Net, "[ServerApp] Hello refused: character state unreadable in DB (character_key={}, endpoint={})",
+				helloCharacterKey, UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
 		ConnectedClient client{};
 		client.endpoint = endpoint;
 		client.clientId = m_nextClientId++;
@@ -1669,25 +1790,50 @@ namespace engine::server
 		m_clientIndexByPackedEndpoint[PackEndpointKey(acceptedClient.endpoint)] = acceptedIndex;
 		m_clientIndexByClientId[acceptedClient.clientId] = acceptedIndex;
 		m_clientIndexByEntityId[acceptedClient.entityId] = acceptedIndex;
+		// ETAPE2.1 — la base est la seule source de vérité. Ordre de lecture :
+		//   1. base (progression, bourse, sac, équipement, courrier) ;
+		//   2. fichier .ini seulement si la base n'a pas de ligne de progression
+		//      (personnage créé avant ETAPE2.1, ou shard sans base) : import une fois,
+		//      la sauvegarde suivante écrit tout en base et le .ini n'est plus relu ;
+		//   3. si la base n'avait que bourse/sac/équipement (Roadmap-10), ces trois
+		//      domaines restent ceux de la base, par-dessus le fichier.
 		PersistedCharacterState persistedState{};
-		const bool fileLoaded =
-			m_characterPersistence.LoadCharacter(acceptedClient.persistenceCharacterKey, persistedState);
-		// Roadmap-10 (2026-07-20) — la DB (si peuplée pour ce personnage) fait foi
-		// sur wallet + inventaire + équipement : écrite à chaque save, elle survit
-		// à la perte du répertoire persistence/ du shard (le .ini reste le filet
-		// pour tout le reste : quêtes, ceinture, métiers, grimoire...). Appelée
-		// AVANT le merge mailbox pour que le courrier s'ajoute PAR-DESSUS l'état DB.
-		const bool dbLoaded =
-			LoadCharacterFromDb(acceptedClient.persistenceCharacterKey, persistedState);
-		if (dbLoaded)
+		bool fileLoaded = false;
+		if (dbLoad == CharacterDbLoadResult::Full)
 		{
-			LOG_INFO(Net,
-				"[ServerApp] Character DB state applied (character_key={}, gold={}, inventory_items={}, file_present={})",
-				acceptedClient.persistenceCharacterKey,
-				persistedState.gold,
-				persistedState.inventory.size(),
-				fileLoaded ? "true" : "false");
+			persistedState = std::move(dbState);
 		}
+		else
+		{
+			fileLoaded = m_characterPersistence.LoadCharacter(acceptedClient.persistenceCharacterKey, persistedState);
+			if (dbLoad == CharacterDbLoadResult::WalletOnly)
+			{
+				persistedState.gold = dbState.gold;
+				persistedState.honor = dbState.honor;
+				persistedState.badges = dbState.badges;
+				persistedState.premiumCurrency = dbState.premiumCurrency;
+				persistedState.inventory = std::move(dbState.inventory);
+				persistedState.equipment = dbState.equipment;
+			}
+			// Courrier en base (déposé par un shard) ajouté au courrier du fichier.
+			const uint64_t mailGold = static_cast<uint64_t>(persistedState.mailboxGold) + dbState.mailboxGold;
+			persistedState.mailboxGold = static_cast<uint32_t>(
+				std::min<uint64_t>(mailGold, std::numeric_limits<uint32_t>::max()));
+			persistedState.mailboxItems.insert(persistedState.mailboxItems.end(),
+				dbState.mailboxItems.begin(), dbState.mailboxItems.end());
+			persistedState.mailboxClaimedIds = dbState.mailboxClaimedIds;
+		}
+		const bool dbLoaded = dbLoad != CharacterDbLoadResult::NotFound || !persistedState.mailboxClaimedIds.empty();
+		LOG_INFO(Net,
+			"[ServerApp] Character state source (character_key={}, db={}, file={}, gold={}, inventory_items={}, mailbox_rows={})",
+			acceptedClient.persistenceCharacterKey,
+			dbLoad == CharacterDbLoadResult::Full ? "full" : (dbLoad == CharacterDbLoadResult::WalletOnly ? "wallet_only" : "none"),
+			fileLoaded ? "imported" : "none",
+			persistedState.gold,
+			persistedState.inventory.size(),
+			persistedState.mailboxClaimedIds.size());
+		acceptedClient.mailboxClaimedIds = persistedState.mailboxClaimedIds;
+		bool mailboxMergedAtLogin = false;
 		if (fileLoaded || dbLoaded)
 		{
 			const bool hadMailbox =
@@ -1729,11 +1875,9 @@ namespace engine::server
 				acceptedClient.questStates.size(),
 				acceptedClient.chatIgnoredDisplayNames.size(),
 				acceptedClient.chatModeratorRole ? "true" : "false");
-			if (hadMailbox)
-			{
-				SaveConnectedClient(acceptedClient, "mailbox_merge_login");
-				LOG_INFO(Net, "[ServerApp] Mailbox merged at login (client_id={})", acceptedClient.clientId);
-			}
+			// Sauvegarde du courrier fusionné : plus bas, une fois la génération du
+			// verrou de propriété et la position de la base connues (ETAPE2.1).
+			mailboxMergedAtLogin = hadMailbox;
 		}
 		else
 		{
@@ -1939,8 +2083,10 @@ namespace engine::server
 		// Monde « Royaumes » — position hors des cellules générées (ou héritée du
 		// repère local de feyhin) : replacée au point de départ de la race. Le
 		// client en est informé par un ForcePosition juste après le Welcome.
+		// ETAPE2.1 — la zone vient du fichier importé ou de character_progress.
 		const bool relocatedAtLogin = NormalizeCellWorldLoginPosition(acceptedClient,
-			fileLoaded ? std::optional<uint32_t>(persistedState.zoneId) : std::nullopt);
+			(fileLoaded || dbLoad == CharacterDbLoadResult::Full)
+				? std::optional<uint32_t>(persistedState.zoneId) : std::nullopt);
 
 		// Combat SP2 — mémorise la position d'entrée en monde comme point de
 		// réapparition (la position finale est résolue à ce stade : persistance
@@ -1948,6 +2094,15 @@ namespace engine::server
 		acceptedClient.spawnPositionMetersX = acceptedClient.positionMetersX;
 		acceptedClient.spawnPositionMetersY = acceptedClient.positionMetersY;
 		acceptedClient.spawnPositionMetersZ = acceptedClient.positionMetersZ;
+
+		// ETAPE2.1 — courrier fusionné : sauvé maintenant que la génération du verrou
+		// (1.2) et la position réelle sont posées (avant, la sauvegarde était refusée,
+		// ou écrivait la position par défaut). Supprime les lignes de courrier lues.
+		if (mailboxMergedAtLogin)
+		{
+			SaveConnectedClient(acceptedClient, "mailbox_merge_login");
+			LOG_INFO(Net, "[ServerApp] Mailbox merged at login (client_id={})", acceptedClient.clientId);
+		}
 
 		UpdateClientInterest(acceptedClient);
 		LOG_INFO(Net, "[ServerApp] Client accepted (client_id={}, entity_id={}, zone_id={}, hp={}, endpoint={}, total_clients={})",
@@ -2603,6 +2758,7 @@ namespace engine::server
 		state.chatModeratorRole = client.chatModeratorRole;
 		state.mailboxGold = 0;
 		state.mailboxItems.clear();
+		state.mailboxClaimedIds = client.mailboxClaimedIds; // ETAPE2.1
 		/// M36.2 — persist profession skill progress.
 		state.professions = client.professions;
 		/// Grimoire — persist action bar layout.
@@ -2613,26 +2769,32 @@ namespace engine::server
 		state.cakeExpiresAtMsUtcByItemId = client.cakeExpiresAtMsUtcByItemId;
 		/// SP-B — persist known class skills.
 		state.knownSkillIds = client.knownSkillIds;
-		// Roadmap-10 (2026-07-20) — write-through MySQL : wallet + inventaire +
-		// équipement partent aussi en DB (player_wallet / character_inventory /
-		// character_equipment), AVANT le fichier pour que la DB soit à jour même
-		// si l'écriture disque échoue. No-op si pas de pool DB (dev sans MySQL).
-		// ETAPE1.2 — un shard qui n'est plus propriétaire du personnage n'écrit rien
-		// (ni base, ni fichier) : le propriétaire courant fait foi.
-		if (SaveCharacterToDb(state, client.yawRadians, client.ownerGeneration)
-			== CharacterDbSaveResult::RefusedNotOwner)
+		// ETAPE2.1 — avec une base, elle seule reçoit l'état (plus de fichier .ini).
+		// ETAPE1.2 — un shard qui n'est plus propriétaire du personnage n'écrit rien.
+		// Sans base (dev sans MySQL, shard Windows), le fichier .ini reste le stockage.
+		const CharacterDbSaveResult dbResult = SaveCharacterToDb(state, client.yawRadians, client.ownerGeneration);
+		switch (dbResult)
 		{
+		case CharacterDbSaveResult::Saved:
+			break;
+		case CharacterDbSaveResult::RefusedNotOwner:
 			LOG_WARN(Net, "[ServerApp] Character save REFUSED: shard is not the owner (client_id={}, character_key={}, shard_id={}, owner_generation={}, reason={})",
 				client.clientId, client.persistenceCharacterKey, m_shardId, client.ownerGeneration, reason);
 			return;
-		}
-		if (!m_characterPersistence.SaveCharacter(state))
-		{
-			LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",
-				client.clientId,
-				client.persistenceCharacterKey,
-				reason);
+		case CharacterDbSaveResult::Failed:
+			LOG_ERROR(Net, "[ServerApp] Character DB save FAILED (client_id={}, character_key={}, reason={})",
+				client.clientId, client.persistenceCharacterKey, reason);
 			return;
+		case CharacterDbSaveResult::SkippedNoDb:
+			if (!m_characterPersistence.SaveCharacter(state))
+			{
+				LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",
+					client.clientId,
+					client.persistenceCharacterKey,
+					reason);
+				return;
+			}
+			break;
 		}
 
 		LOG_INFO(Net, "[ServerApp] Character save OK (client_id={}, character_key={}, reason={})",
@@ -10111,6 +10273,41 @@ namespace engine::server
 
 	bool ServerApp::DepositMailboxDelivery(uint64_t characterKey, uint32_t goldDelta, const ItemStack* itemOptional)
 	{
+#if defined(SHARD_POSITION_DB)
+		// ETAPE2.1 — avec une base : une ligne character_mailbox, sans lire ni
+		// réécrire l'état du destinataire (qui peut être en jeu sur un autre shard).
+		// Son shard propriétaire la fusionne à la prochaine connexion.
+		if (m_characterDbPool != nullptr)
+		{
+			const bool hasItem = itemOptional != nullptr && itemOptional->itemId != 0u && itemOptional->quantity != 0u;
+			if (characterKey == 0u || (goldDelta == 0u && !hasItem))
+			{
+				return true; // rien à déposer
+			}
+			auto guard = m_characterDbPool->Acquire();
+			MYSQL* mysql = guard.get();
+			auto* cache = guard.cache();
+			auto* ins = (mysql != nullptr && cache != nullptr)
+				? cache->Acquire(mysql,
+					"INSERT INTO character_mailbox (character_id, gold, item_id, quantity, source) VALUES (?, ?, ?, ?, 'shard')")
+				: nullptr;
+			const bool ok = ins != nullptr
+				&& ins->Bind(0, characterKey)
+				&& ins->Bind(1, goldDelta)
+				&& ins->Bind(2, hasItem ? itemOptional->itemId : 0u)
+				&& ins->Bind(3, hasItem ? itemOptional->quantity : 0u)
+				&& ins->Execute();
+			if (!ok)
+			{
+				LOG_ERROR(Net, "[ServerApp] DepositMailbox DB insert FAILED (character_key={}, gold_delta={}, item={})",
+					characterKey, goldDelta, hasItem);
+				return false;
+			}
+			LOG_INFO(Net, "[ServerApp] DepositMailbox OK (db, character_key={}, gold_delta={}, item={})",
+				characterKey, goldDelta, hasItem);
+			return true;
+		}
+#endif
 		PersistedCharacterState state{};
 		if (!m_characterPersistence.LoadCharacter(characterKey, state))
 		{

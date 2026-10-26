@@ -74,6 +74,24 @@ int main(int argc, char** argv)
 		}
 	}
 
+	// TA.4 / Lot C (vague 5) : pool MySQL du shard (même base que le master, clés
+	// db.*). On mémorise l'état d'init pour le réutiliser plus bas (managers
+	// globaux, pont position).
+	// ETAPE2.1 — la base est la seule source de vérité des personnages : si une base
+	// est configurée (db.host) mais injoignable au démarrage, le shard refuse de
+	// démarrer. Sinon il servirait des fichiers .ini périmés, et ce qui serait joué
+	// pendant la panne serait perdu au retour de la base. Sans db.host : mode
+	// fichier (développement), comme avant.
+	engine::server::db::ConnectionPool characterDbPool;
+	const bool characterDbReady = characterDbPool.Init(config);
+	if (!characterDbReady && !config.GetString("db.host", "").empty())
+	{
+		LOG_ERROR(Net, "[Boot] db.host configuré mais base injoignable : refus de démarrer "
+			"(l'état des personnages est en base, voir docs/architecture/etape2_persistance.md).");
+		engine::core::Log::Shutdown();
+		return 1;
+	}
+
 	LOG_INFO(Net, "[ShardMain] Shard server starting...");
 
 	engine::server::NetServer server;
@@ -236,11 +254,8 @@ int main(int argc, char** argv)
 	// TA.4 : pont position — pool MySQL (meme base que le master, cles db.* du config).
 	// Injecte dans ServerApp pour lire characters.spawn_x/y/z au HandleHello. DB non
 	// configuree => Init false => spawn depuis le fichier (pont inactif, non bloquant).
-	engine::server::db::ConnectionPool characterDbPool;
-	// Lot C (vague 5) : on memorise l'etat d'init du pool pour le reutiliser plus
-	// bas (chargement defensif des managers globals — ils n'accedent a la DB que si
-	// elle est reellement configuree).
-	const bool characterDbReady = characterDbPool.Init(config);
+	// ETAPE2.1 — le pool est ouvert plus haut, avant le réseau (refus de démarrer
+	// si une base est configurée mais injoignable).
 	if (characterDbReady)
 	{
 		gameplayApp.SetCharacterDbPool(&characterDbPool);

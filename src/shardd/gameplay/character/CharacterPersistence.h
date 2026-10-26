@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <map>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace engine::server
@@ -46,6 +47,12 @@ namespace engine::server
 		uint32_t mailboxGold = 0;
 		/// M35.4 — items attached to mailbox (e.g. won auctions while offline).
 		std::vector<ItemStack> mailboxItems;
+		/// ETAPE2.1 — identifiants `character_mailbox.id` lus au chargement. La
+		/// sauvegarde suivante supprime exactement ces lignes dans la même transaction
+		/// que l'écriture du sac et de la bourse : le courrier n'est jamais compté deux
+		/// fois ni perdu (une ligne non encore validée au chargement n'est pas touchée).
+		/// Jamais écrit dans le fichier .ini.
+		std::vector<uint64_t> mailboxClaimedIds;
 		/// M36.2 — known professions and skill levels (persisted per character).
 		std::vector<ProfessionEntry> professions;
 		/// Grimoire — 10 slots de barre d'action (slot i → spellId, "" = vide).
@@ -62,6 +69,26 @@ namespace engine::server
 		/// l'entrée en inventaire, consommées par la purge de minuit du shard.
 		std::map<uint32_t, uint64_t> cakeExpiresAtMsUtcByItemId;
 	};
+
+	/// ETAPE2.1 — texte INI complet d'un personnage (format du fichier
+	/// `persistence/characters/character_<id>.ini`, utilisé sans base de données).
+	std::string SerializeCharacterState(const PersistedCharacterState& state);
+
+	/// ETAPE2.1 — remplit \p outState depuis des clés INI déjà chargées (fichier
+	/// ou charge utile en base). Les clés absentes prennent leur valeur par défaut.
+	void ReadCharacterStateFromConfig(const engine::core::Config& persisted, uint64_t characterKey,
+		PersistedCharacterState& outState);
+
+	/// ETAPE2.1 — charge utile « progression » stockée en base
+	/// (`character_progress.progress_payload`) : quêtes, joueurs ignorés, barre
+	/// d'action, ceinture, gâteaux, compétences de classe, métiers. Même format
+	/// clé=valeur que le fichier .ini, sans les données qui ont leurs propres
+	/// colonnes ou tables (position, bourse, sac, équipement, courrier).
+	std::string SerializeCharacterProgressPayload(const PersistedCharacterState& state);
+
+	/// ETAPE2.1 — applique une charge utile progression sur \p state : seuls les
+	/// champs listés ci-dessus sont remplacés, le reste de \p state est intact.
+	void ApplyCharacterProgressPayload(std::string_view payload, PersistedCharacterState& state);
 
 	/// Minimal file-backed character persistence store used by the server runtime.
 	class CharacterPersistenceStore final

@@ -231,6 +231,10 @@ namespace engine::server
 		/// l'entrée en jeu (AdmittedCharacterRegistry::AdmittedOwnerGeneration, résolue au
 		/// Hello). Présentée à chaque sauvegarde : 0 = master legacy (pas de verrou).
 		uint64_t ownerGeneration = 0;
+		/// ETAPE2.1 — `character_mailbox.id` fusionnés à la connexion. Chaque
+		/// sauvegarde supprime exactement ces lignes (idempotent) : le courrier
+		/// fusionné ne revient jamais.
+		std::vector<uint64_t> mailboxClaimedIds;
 		/// Niveau du personnage (table characters.level, chargé au Hello via LoadSpawnFromDb).
 		/// Reporté au master dans le heartbeat enrichi (présence web-portal).
 		uint32_t level = 1;
@@ -479,12 +483,11 @@ namespace engine::server
 		std::string& outName, std::string& outGender, uint32_t& outLevel,
 		std::string& outFactionId, std::string& outClassId, std::string& outRaceId);
 
-		/// Roadmap-10 (2026-07-20) — écrit wallet (player_wallet, migration 0012) +
-		/// inventaire (character_inventory) + équipement (character_equipment,
-		/// migration 0075) en DB, dans UNE transaction (remplacement intégral des
-		/// lignes du personnage). Write-through : appelée par SaveConnectedClient en
-		/// PLUS du fichier .ini (le fichier reste le filet de secours). No-op
-		/// silencieux si le pool DB est absent (dev sans MySQL / Windows).
+		/// ETAPE2.1 — écrit l'état complet du personnage en base dans UNE transaction :
+		/// position et niveau (characters), progression (character_progress), bourse
+		/// (player_wallet), sac (character_inventory), équipement (character_equipment),
+		/// et supprime le courrier déjà fusionné (character_mailbox). La base est la
+		/// seule source de vérité : plus d'écriture .ini quand un pool DB est présent.
 		/// Corps réel sous SHARD_POSITION_DB (même garde que LoadSpawnFromDb).
 		/// ETAPE1.2 — résultat d'une écriture de personnage en base.
 		enum class CharacterDbSaveResult : uint8_t
@@ -505,13 +508,20 @@ namespace engine::server
 		CharacterDbSaveResult SaveCharacterToDb(const PersistedCharacterState& state, float yawRadians,
 			uint64_t ownerGeneration);
 
-		/// Roadmap-10 — recharge wallet + inventaire + équipement depuis la DB dans
-		/// \p state (les autres champs ne sont pas touchés). Sentinelle d'existence :
-		/// player_wallet (les 4 devises sont écrites à CHAQUE save DB) — un personnage
-		/// sans ligne wallet n'a jamais été sauvé en DB (état .ini conservé).
-		/// \return true si le personnage est présent en DB et \p state mis à jour —
-		/// la DB fait alors foi sur ces trois domaines (survit à la perte du .ini).
-		bool LoadCharacterFromDb(uint64_t characterKey, PersistedCharacterState& state);
+		/// ETAPE2.1 — ce que la base connaît d'un personnage.
+		enum class CharacterDbLoadResult : uint8_t
+		{
+			NotFound,   ///< Rien en base (ou pas de pool) : fichier .ini ou valeurs par défaut.
+			WalletOnly, ///< Sauvé avant ETAPE2.1 : bourse, sac, équipement en base, le reste dans le .ini.
+			Full,       ///< Ligne character_progress présente : la base contient tout, le .ini est ignoré.
+			Error,      ///< Base configurée mais illisible : ne rien charger (Hello refusé).
+		};
+
+		/// ETAPE2.1 — recharge l'état du personnage depuis la base dans \p state :
+		/// progression (si présente), bourse + sac + équipement (si la bourse existe),
+		/// et ajoute le courrier en attente (mailboxGold / mailboxItems /
+		/// mailboxClaimedIds). Les champs absents de la base ne sont pas touchés.
+		CharacterDbLoadResult LoadCharacterFromDb(uint64_t characterKey, PersistedCharacterState& state);
 
 		/// Accept a new client or refresh an existing handshake.
 		/// Phase 3.7.5 — \p helloNonce élargi à uint64 (character_id complet).
@@ -944,7 +954,9 @@ namespace engine::server
 		// Phase 3.7.5 — characterKey élargi à uint64 (alignement avec persistenceCharacterKey).
 		void RefundGoldToCharacter(uint64_t characterKey, uint32_t amountGold, std::string_view reason);
 
-		/// Append gold and/or one item stack to a character persistence file (offline delivery).
+		/// Dépose de l'or et/ou une pile d'objets dans le courrier d'un personnage hors
+		/// ligne. ETAPE2.1 : avec une base, ajoute une ligne `character_mailbox` (fusionnée
+		/// à la connexion) ; sans base, met à jour le fichier .ini du personnage.
 		bool DepositMailboxDelivery(uint64_t characterKey, uint32_t goldDelta, const ItemStack* itemOptional);
 
 		ConnectedClient* FindConnectedClientByCharacterKey(uint64_t characterKey);

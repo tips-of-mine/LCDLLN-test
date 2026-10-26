@@ -436,7 +436,8 @@ namespace engine::server
 		// on clamp a un plafond confortable pour éviter qu'une faute de config (-1, valeur
 		// énorme) ne casse silencieusement la replication ou ne sature la mémoire au boot.
 		{
-			const int64_t cfgViewCap = m_config.GetInt("server.replication.view_cap_entities", 0);
+			// ETAPE3.2 (chantier 4.5) — défaut 100 entités par client (0 = pas de plafond).
+			const int64_t cfgViewCap = m_config.GetInt("server.replication.view_cap_entities", 100);
 			constexpr int64_t kMaxReasonableViewCap = 4096;
 			const int64_t clampedViewCap = std::clamp<int64_t>(cfgViewCap, 0, kMaxReasonableViewCap);
 			m_viewCapEntities = static_cast<uint32_t>(clampedViewCap);
@@ -1004,6 +1005,13 @@ namespace engine::server
 		InputMessage input{};
 		if (DecodeInput(packetBytes, input))
 		{
+			// ETAPE3.2 — acquittement du dernier snapshot reconstruit par le client (pris
+			// en compte même si la position est ensuite refusée par l'anti-triche).
+			if (ConnectedClient* acking = FindClient(datagram.endpoint);
+				acking != nullptr && acking->clientId == input.clientId)
+			{
+				acking->snapshotSender.OnAck(input.ackSnapshotSeq);
+			}
 			HandleInput(datagram.endpoint, input.clientId, input.inputSequence, input.positionMetersX, input.positionMetersY, input.positionMetersZ, input.yawRadians, input.animationState);
 			return;
 		}
@@ -4641,7 +4649,7 @@ namespace engine::server
 		}
 
 		m_snapshotAccumulator -= m_tickHz;
-		for (const ConnectedClient& client : m_clients)
+		for (ConnectedClient& client : m_clients)
 		{
 			(void)SendSnapshot(client);
 		}
@@ -4771,6 +4779,9 @@ namespace engine::server
 				client->entityId);
 			return;
 		}
+
+		// ETAPE3.2 (chantier 4.5) — cible gardée dans les snapshots malgré le plafond.
+		client->lastTargetEntityId = targetEntityId;
 
 		MobEntity* target = FindMobByEntityId(targetEntityId);
 		if (target == nullptr)
@@ -6491,6 +6502,9 @@ namespace engine::server
 			}
 		}
 		// SelfOnly / AreaAroundSelf : pas de cible (résolus autour du casteur).
+		// ETAPE3.2 (chantier 4.5) — cible gardée dans les snapshots malgré le plafond.
+		if (resolvedTarget != 0u)
+			client->lastTargetEntityId = resolvedTarget;
 
 		if (spell->castTimeMs == 0)
 		{
@@ -8548,22 +8562,8 @@ namespace engine::server
 		}
 
 		BuildRelevantEntityIds(client, m_relevantEntityScratch);
-		for (EntityId entityId : m_relevantEntityScratch)
-		{
-			if (!ContainsEntityId(client.replicatedEntityIds, entityId))
-			{
-				(void)SendSpawn(client, entityId);
-			}
-		}
-
-		for (EntityId entityId : client.replicatedEntityIds)
-		{
-			if (!ContainsEntityId(m_relevantEntityScratch, entityId))
-			{
-				(void)SendDespawn(client, entityId);
-			}
-		}
-
+		// ETAPE3.2 — plus de Spawn / Despawn séparés : le snapshot en delta porte les
+		// apparitions (entité absente de la base, état complet) et les retraits.
 		client.replicatedEntityIds = m_relevantEntityScratch;
 	}
 
@@ -8621,13 +8621,40 @@ namespace engine::server
 		}
 
 		// TG.4 — cap top-N par distance (squared, monotone donc équivalent à la distance euclidienne).
-		// Si configuré et dépassé, on partial_sort sur les N premiers puis on tronque.
-		// Sinon (par défaut, ou liste déjà sous la limite), on remonte tout dans l'ordre découvert.
+		// Si configuré et dépassé, on partial_sort sur les N premiers puis on tronque : le
+		// rayon de vue se réduit de lui-même là où il y a foule.
+		// ETAPE3.2 (chantier 4.5) — les membres du groupe et la cible courante passent
+		// avant tout le monde : jamais coupés par le plafond.
 		if (m_viewCapEntities != 0u && candidates.size() > static_cast<size_t>(m_viewCapEntities))
 		{
+			std::vector<EntityId> priority;
+			if (client.lastTargetEntityId != 0u)
+				priority.push_back(client.lastTargetEntityId);
+			if (client.castTargetEntityId != 0u)
+				priority.push_back(client.castTargetEntityId);
+			if (m_partySystem.IsInitialized())
+			{
+				if (const Party* party = m_partySystem.FindPartyByMember(client.clientId))
+				{
+					for (const PartyMember& member : party->members)
+					{
+						if (member.entityId != 0u)
+							priority.push_back(member.entityId);
+					}
+				}
+			}
+			auto isPriority = [&priority](EntityId id) {
+				return std::find(priority.begin(), priority.end(), id) != priority.end();
+			};
 			const size_t cap = static_cast<size_t>(m_viewCapEntities);
 			std::partial_sort(candidates.begin(), candidates.begin() + cap, candidates.end(),
-				[](const Candidate& a, const Candidate& b) { return a.distSq < b.distSq; });
+				[&isPriority](const Candidate& a, const Candidate& b) {
+					const bool pa = isPriority(a.entityId);
+					const bool pb = isPriority(b.entityId);
+					if (pa != pb)
+						return pa;
+					return a.distSq < b.distSq;
+				});
 			candidates.resize(cap);
 		}
 
@@ -8684,36 +8711,6 @@ namespace engine::server
 		state.maxHealth = 0;
 		state.stateFlags = lootBag.stateFlags;
 		return state;
-	}
-
-	bool ServerApp::TryBuildSpawnEntity(EntityId entityId, SpawnEntity& outEntity) const
-	{
-		if (const ConnectedClient* client = FindClientByEntityId(entityId))
-		{
-			outEntity.entityId = client->entityId;
-			outEntity.archetypeId = client->archetypeId;
-			outEntity.state = BuildEntityState(*client);
-			return true;
-		}
-
-		if (const MobEntity* mob = FindMobByEntityId(entityId))
-		{
-			outEntity.entityId = mob->entityId;
-			outEntity.archetypeId = mob->archetypeId;
-			outEntity.state = BuildEntityState(*mob);
-			return true;
-		}
-
-		if (const LootBagEntity* lootBag = FindLootBagByEntityId(entityId))
-		{
-			outEntity.entityId = lootBag->entityId;
-			outEntity.archetypeId = lootBag->archetypeId;
-			outEntity.state = BuildEntityState(*lootBag);
-			return true;
-		}
-
-		LOG_WARN(Net, "[ServerApp] Spawn build ignored: unknown entity_id={}", entityId);
-		return false;
 	}
 
 	bool ServerApp::TryBuildSnapshotEntity(EntityId entityId, SnapshotEntity& outEntity) const
@@ -8824,50 +8821,6 @@ namespace engine::server
 			message.targetEntityId,
 			message.damage,
 			recipientCount);
-	}
-
-	bool ServerApp::SendSpawn(const ConnectedClient& receiver, EntityId subjectEntityId)
-	{
-		SpawnEntity entity{};
-		if (!TryBuildSpawnEntity(subjectEntityId, entity))
-		{
-			LOG_WARN(Net, "[ServerApp] Spawn send skipped: unresolved entity_id={}", subjectEntityId);
-			return false;
-		}
-
-		const std::vector<std::byte> packet = EncodeSpawn(entity);
-		if (!SendDatagram(receiver.endpoint, packet))
-		{
-			LOG_WARN(Net, "[ServerApp] Spawn send failed (receiver_client_id={}, entity_id={})",
-				receiver.clientId,
-				entity.entityId);
-			return false;
-		}
-
-		LOG_INFO(Net, "[ServerApp] Spawn sent (receiver_client_id={}, entity_id={}, archetype_id={})",
-			receiver.clientId,
-			entity.entityId,
-			entity.archetypeId);
-		return true;
-	}
-
-	bool ServerApp::SendDespawn(const ConnectedClient& receiver, EntityId entityId)
-	{
-		DespawnEntity entity{};
-		entity.entityId = entityId;
-		const std::vector<std::byte> packet = EncodeDespawn(entity);
-		if (!SendDatagram(receiver.endpoint, packet))
-		{
-			LOG_WARN(Net, "[ServerApp] Despawn send failed (receiver_client_id={}, entity_id={})",
-				receiver.clientId,
-				entityId);
-			return false;
-		}
-
-		LOG_INFO(Net, "[ServerApp] Despawn sent (receiver_client_id={}, entity_id={})",
-			receiver.clientId,
-			entityId);
-		return true;
 	}
 
 	bool ServerApp::SendZoneChange(const ConnectedClient& receiver, const ZoneChangeMessage& message)
@@ -9047,9 +9000,13 @@ namespace engine::server
 		return true;
 	}
 
-	bool ServerApp::SendSnapshot(const ConnectedClient& client)
+	bool ServerApp::SendSnapshot(ConnectedClient& client)
 	{
-		m_snapshotEntitiesScratch.clear();
+		// ETAPE3.2 — état quantifié de chaque entité répliquée ; SnapshotSender choisit la
+		// base (dernier snapshot acquitté par le client), n'écrit que ce qui a changé,
+		// numérote et découpe en morceaux (~1100 o de charge utile).
+		std::vector<engine::network::snapshot::WireEntity> current;
+		current.reserve(client.replicatedEntityIds.size());
 		for (EntityId entityId : client.replicatedEntityIds)
 		{
 			SnapshotEntity snapshotEntity{};
@@ -9057,60 +9014,39 @@ namespace engine::server
 			{
 				continue;
 			}
-
-			m_snapshotEntitiesScratch.push_back(snapshotEntity);
+			engine::network::snapshot::WireEntity wire = engine::network::snapshot::Quantize(snapshotEntity);
+			// Chantier 4.5 — PNJ d'ambiance mis à jour un snapshot sur deux.
+			if (const MobEntity* mob = FindMobByEntityId(entityId); mob != nullptr && mob->ambient)
+				wire.halfRate = true;
+			current.push_back(std::move(wire));
 		}
 
-		// TG.1 — chunking : decoupe le snapshot pour rester sous ~1200 octets MTU UDP.
-		// Le header est borne par BeginPacket (16 o) + meta SnapshotMessage (24 o, TG.1)
-		// = 40 o constants. Une entite = 61 o minimum (SP1, wire v9, chaines vides).
-		// Budget restant pour les entites : 1200 - 40 = 1160 o ⇒ max 19 entites/chunk
-		// (1160 / 61). On vise 18 pour garder la marge (noms/genres non vides).
-		constexpr size_t kMaxEntitiesPerChunk = 18u;
-		const size_t totalEntities = m_snapshotEntitiesScratch.size();
-		const size_t chunkCountSize = (totalEntities == 0u)
-			? 1u
-			: (totalEntities + kMaxEntitiesPerChunk - 1u) / kMaxEntitiesPerChunk;
-		// Borne defensive : on ne dépasse pas la capacite wire de chunkCount (uint16).
-		const uint16_t chunkCount = static_cast<uint16_t>(std::min<size_t>(chunkCountSize, 0xFFFFu));
-
-		const uint32_t receivedPackets = static_cast<uint32_t>(std::min<uint64_t>(m_transport.ReceivedPacketCount(), 0xFFFFFFFFu));
-		const uint32_t sentPackets = static_cast<uint32_t>(std::min<uint64_t>(m_transport.SentPacketCount(), 0xFFFFFFFFu));
-		const uint16_t connectedClients = static_cast<uint16_t>(std::min<size_t>(m_clients.size(), 0xFFFFu));
+		engine::network::snapshot::ChunkHeader header{};
+		header.clientId = client.clientId;
+		header.serverTick = m_currentTick;
+		header.connectedClients = static_cast<uint16_t>((std::min)(m_clients.size(), static_cast<size_t>(0xFFFFu)));
+		header.receivedPackets = static_cast<uint32_t>((std::min)(m_transport.ReceivedPacketCount(), static_cast<uint64_t>(0xFFFFFFFFu)));
+		header.sentPackets = static_cast<uint32_t>((std::min)(m_transport.SentPacketCount(), static_cast<uint64_t>(0xFFFFFFFFu)));
+		const size_t entityCount = current.size();
+		const std::vector<std::vector<std::byte>> packets = client.snapshotSender.BuildPackets(header, std::move(current));
+		if (packets.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] Snapshot non envoyé : trop gros (client_id={}, entities={})",
+				client.clientId, entityCount);
+			return false;
+		}
 
 		bool allSent = true;
-		for (uint16_t chunkIdx = 0; chunkIdx < chunkCount; ++chunkIdx)
+		for (const std::vector<std::byte>& packet : packets)
 		{
-			const size_t chunkStart = static_cast<size_t>(chunkIdx) * kMaxEntitiesPerChunk;
-			const size_t chunkEnd = std::min(chunkStart + kMaxEntitiesPerChunk, totalEntities);
-			const std::span<const SnapshotEntity> chunkEntities(
-				m_snapshotEntitiesScratch.data() + chunkStart,
-				chunkEnd - chunkStart);
-
-			SnapshotMessage snapshot{};
-			snapshot.clientId = client.clientId;
-			snapshot.serverTick = m_currentTick;
-			snapshot.connectedClients = connectedClients;
-			// `entityCount` ne reference que CE chunk (cf. SnapshotMessage doc TG.1).
-			snapshot.entityCount = static_cast<uint16_t>(chunkEntities.size());
-			snapshot.receivedPackets = receivedPackets;
-			snapshot.sentPackets = sentPackets;
-			snapshot.chunkIndex = chunkIdx;
-			snapshot.chunkCount = chunkCount;
-			const std::vector<std::byte> packet = EncodeSnapshot(snapshot, chunkEntities);
 			if (!SendDatagram(client.endpoint, packet))
 			{
-				LOG_WARN(Net, "[ServerApp] Snapshot send failed (client_id={}, tick={}, chunk={}/{})",
-					client.clientId, m_currentTick, chunkIdx + 1u, chunkCount);
 				allSent = false;
 			}
 		}
-
-		LOG_DEBUG(Net, "[ServerApp] Snapshot sent (client_id={}, tick={}, entity_count={}, chunks={})",
-			client.clientId,
-			m_currentTick,
-			totalEntities,
-			chunkCount);
+		LOG_DEBUG(Net, "[ServerApp] Snapshot sent (client_id={}, tick={}, seq={}, base={}, entities={}, chunks={})",
+			client.clientId, m_currentTick, client.snapshotSender.LastSentSeq(), client.snapshotSender.LastBaselineSeq(),
+			entityCount, packets.size());
 		return allSent;
 	}
 

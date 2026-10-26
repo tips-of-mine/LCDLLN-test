@@ -233,6 +233,12 @@ RenderModel
 > (queue de l'EnterWorld 47 et de l'admission 199), jamais en clair ni dans les logs.
 > Shard Linux : chiffrement obligatoire (`gameplay_udp.encryption`). Détail :
 > `docs/architecture/etape3_reseau.md`.
+>
+> **Règle (ETAPE3.2)** : un snapshot est un delta sur le dernier snapshot acquitté
+> par le client (`SnapshotSender` / `SnapshotReceiver`, `SnapshotDelta.h`), en valeurs
+> quantifiées ; jamais de renvoi fiable. Plus de Spawn / Despawn. Plafond
+> `server.replication.view_cap_entities` (100) avec groupe et cible toujours inclus ;
+> PNJ d'ambiance à mi-fréquence.
 
 ### Comptes et validation
 | Fichier | Rôle |

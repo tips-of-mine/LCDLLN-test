@@ -17305,9 +17305,10 @@ namespace engine
 				const float wireZ = m_cellWorld ? static_cast<float>(m_renderFrame.ToGlobalZ(avatarPos.z)) : avatarPos.z;
 				// TD.8 — propage l'état d'animation local pour que les autres joueurs voient
 				// emotes/roulades/run/sprint/etc. (pas seulement Idle/Walk dérivé de la vélocité).
+				// ETAPE3.2 — chaque Input acquitte le dernier snapshot reconstruit.
 				(void)m_gameplayUdp.SendInput(clientId, ++m_gameplayInputSeq,
 					wireX, avatarPos.y, wireZ, m_avatarYaw,
-					ToWireAnimState(m_avatarLocoState));
+					ToWireAnimState(m_avatarLocoState), m_uiModelBinding.LatestSnapshotSeq());
 			}
 		}
 

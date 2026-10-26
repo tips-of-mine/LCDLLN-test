@@ -7,8 +7,8 @@ mouvement.
 
 | Ticket | Sujet | Statut |
 |---|---|---|
-| 3.1 (chantier 4.3) | Chiffrement et authentification des datagrammes UDP | cette PR |
-| 3.2 (chantier 4.2, + 4.5 / 4.6) | Snapshots en delta sur base acquittée, quantification, plafond d'entités | PR suivante |
+| 3.1 (chantier 4.3) | Chiffrement et authentification des datagrammes UDP | livré |
+| 3.2 (chantier 4.2, + 4.5 / 4.6) | Snapshots en delta sur base acquittée, quantification, plafond d'entités | cette PR |
 | 3.3 (chantier 4.1) | Mouvement autoritaire serveur, prédiction et recalage client | à venir |
 | 3.4 (chantier 4.4) | Canal fiable minimal pour les messages importants | à venir |
 
@@ -132,3 +132,98 @@ l'admission, sels par clé, plafond), `packet_log_tests` (aucun aperçu pour 47 
 Lock-step **master + shard + client**. Un client antérieur (en clair) ne se connecte
 plus à un shard neuf ; un master antérieur ne relaie pas la clé (le shard refuse alors
 le Hello chiffré : « aucune clé de session »).
+
+## 3.2 — Snapshots en delta sur base acquittée (chantiers 4.2, 4.5, 4.6)
+
+### Avant
+
+Dix fois par seconde, chaque client recevait l'état **complet** de toutes les entités
+de son ensemble d'intérêt : 61 octets au moins par entité (flottants 32 bits, nom et
+genre des joueurs à chaque fois), découpés par paquets de 18 entités. Un morceau perdu
+faisait perdre tout le snapshot. Des messages Spawn / Despawn partaient en plus, ignorés
+par le client.
+
+### Principe
+
+```
+Shard                                             Client
+ n°7 complet (base 0) ─────────────────────────▶ reconstruit n°7
+                      ◀───────────── Input(ack = 7)
+ n°8 delta / base 7 ───────────────X (perdu)
+ n°9 delta / base 7 ───────────────────────────▶ reconstruit n°9 (a la base 7)
+                      ◀───────────── Input(ack = 9)
+ n°10 delta / base 9 ──────────────────────────▶ …
+```
+
+- Chaque snapshot porte son numéro et celui de sa **base** (0 = complet). Le client
+  acquitte le dernier snapshot reconstruit en entier dans chaque Input
+  (`ackSnapshotSeq`, 20 Hz). Le shard écrit le suivant par rapport à ce snapshot
+  acquitté (`SnapshotSender`, 16 derniers gardés ; plus ancien = snapshot complet).
+- **Rien n'est renvoyé** : un snapshot perdu est remplacé par le suivant, écrit sur une
+  base que le client possède (il l'a acquittée). C'est l'inverse de City of Heroes, qui
+  envoyait chaque snapshot en mode fiable.
+- Une entité **inchangée** n'est pas envoyée ; une entité modifiée n'envoie que les
+  champs qui ont changé (masque d'un octet) ; une entité sortie de l'intérêt est listée
+  dans les **retraits** ; une entité nouvelle arrive complète. Spawn / Despawn ne sont
+  plus émis.
+- Le client (`SnapshotReceiver`) rassemble les morceaux (désordre et doublons tolérés),
+  applique le delta à la base, garde les 32 derniers snapshots reconstruits. Un morceau
+  manquant : le snapshot est abandonné et remplacé par le suivant. Base inconnue : le
+  snapshot est ignoré, jamais appliqué à moitié.
+
+### Quantification (4.6)
+
+| Champ | Fil | Précision |
+|---|---|---|
+| Position | entier en centimètres ; delta zigzag varint par rapport à la base (1 à 2 octets par axe pour un déplacement courant), absolu à l'apparition | 1 cm |
+| Orientation | 16 bits | 0,0055° |
+| Vitesse | cm/s, zigzag varint | 1 cm/s |
+| PV, PV max, drapeaux | varint | exact |
+| Identité (client, archétype, nom ≤ 64 o, genre ≤ 8 o) | seulement à l'apparition ou au changement | exact |
+
+Le delta est calculé sur les valeurs **quantifiées**, identiques des deux côtés : la base
+du shard et celle du client ne dérivent jamais. Une entité qui bouge de 50 cm coûte
+6 octets au plus ; un snapshot sans changement, 42 octets (en-tête).
+
+### Plafond et fréquence (4.5)
+
+- **Plafond d'entités par client** : `server.replication.view_cap_entities`, désormais
+  **100** par défaut (0 = pas de plafond). Au-delà, les plus proches sont gardées : le
+  rayon de vue se réduit de lui-même dans la foule.
+- **Toujours inclus** malgré le plafond : les membres du groupe, la dernière cible visée
+  (attaque ou sort), la cible du sort en cours.
+- **PNJ d'ambiance** (`MobEntity::ambient`) : mis à jour un snapshot sur deux (5 Hz). Les
+  snapshots impairs reprennent leur état de la base, donc rien n'est envoyé pour eux.
+
+### Format d'un morceau (kind 4, petit-boutiste)
+
+En-tête 34 octets : `clientId u32 · serverTick u32 · snapshotSeq u32 · baselineSeq u32 ·
+connectedClients u16 · chunkIndex u16 · chunkCount u16 · receivedPackets u32 ·
+sentPackets u32 · removedCount u16 · entryCount u16`, puis les identifiants retirés
+(varint), puis les entrées `entityId varint · masque u8 · champs du masque`. Budget
+~1100 octets de charge utile par morceau (1200 o de datagramme moins l'enveloppe
+chiffrée et l'en-tête du protocole). `kProtocolVersion` passe de 16 à 17 ; l'Input passe
+de 25 à 29 octets.
+
+### Fichiers
+
+| Fichier | Rôle |
+|---|---|
+| `src/shared/network/SnapshotDelta.h/.cpp` | Quantification, codec delta, `SnapshotSender` (shard), `SnapshotReceiver` (client) |
+| `src/shared/server_bootstrap/ServerApp` | `SendSnapshot` (état quantifié, PNJ d'ambiance à mi-fréquence), acquittement dans l'Input, plafond avec priorités, fin de Spawn / Despawn |
+| `src/client/ui_common/UIModel` | `ApplySnapshot` via `SnapshotReceiver`, `LatestSnapshotSeq` |
+| `src/client/net/GameplayUdpClient`, `src/client/app/Engine.cpp` | `ackSnapshotSeq` dans chaque Input |
+
+### Tests
+
+`snapshot_delta_tests` : quantification sans dérive, complet puis delta, perte du
+snapshot intermédiaire, morceaux dans le désordre et en double, morceau manquant puis
+snapshot suivant, base inconnue, acquittements invalides, PNJ à mi-fréquence, paquets
+mal formés, et une simulation de 600 pas (apparitions, retraits, déplacements, 30 % de
+perte, acquittements retardés) où chaque snapshot reconstruit doit être exact.
+
+### Déploiement
+
+Lock-step **master + shard + client** (`kProtocolVersion` 17). Pas de migration. Nouvelle
+valeur par défaut `server.replication.view_cap_entities = 100` (à mettre à 0 dans la
+config du shard pour garder l'ancien comportement sans plafond).

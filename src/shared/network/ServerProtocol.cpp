@@ -130,28 +130,6 @@ namespace engine::server
 			WriteU32(outBytes, state.stateFlags);
 		}
 
-		/// Read one entity state payload from the packet buffer.
-		bool ReadEntityState(std::span<const std::byte> bytes, size_t& offset, EntityState& outState)
-		{
-			if ((offset + 40) > bytes.size())
-			{
-				return false;
-			}
-
-			outState.positionX = ReadF32(bytes, offset + 0);
-			outState.positionY = ReadF32(bytes, offset + 4);
-			outState.positionZ = ReadF32(bytes, offset + 8);
-			outState.yawRadians = ReadF32(bytes, offset + 12);
-			outState.velocityX = ReadF32(bytes, offset + 16);
-			outState.velocityY = ReadF32(bytes, offset + 20);
-			outState.velocityZ = ReadF32(bytes, offset + 24);
-			outState.currentHealth = ReadU32(bytes, offset + 28);
-			outState.maxHealth = ReadU32(bytes, offset + 32);
-			outState.stateFlags = ReadU32(bytes, offset + 36);
-			offset += 40;
-			return true;
-		}
-
 		/// Validate the common header and return the remaining payload span.
 		bool DecodeHeader(std::span<const std::byte> packet, MessageKind expectedKind, std::span<const std::byte>& outPayload)
 		{
@@ -184,6 +162,17 @@ namespace engine::server
 		}
 	}
 
+	std::vector<std::byte> BeginProtocolMessage(MessageKind kind, size_t payloadSizeHint)
+	{
+		return BeginPacket(kind, payloadSizeHint);
+	}
+
+	bool DecodeProtocolPayload(std::span<const std::byte> packet, MessageKind expectedKind,
+		std::span<const std::byte>& outPayload)
+	{
+		return DecodeHeader(packet, expectedKind, outPayload);
+	}
+
 	bool DecodeHello(std::span<const std::byte> packet, HelloMessage& outMessage)
 	{
 		// Phase 3.7.5 — payload = 12 octets (uint16 tick, uint16 snap, uint64 nonce).
@@ -212,8 +201,8 @@ namespace engine::server
 	bool DecodeInput(std::span<const std::byte> packet, InputMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
-		// TD.8 — payload 25 octets : 24 (TC.1) + 1 (animationState).
-		if (!DecodeHeader(packet, MessageKind::Input, payload) || payload.size() != 25)
+		// TD.8 — 25 octets : 24 (TC.1) + 1 (animationState). ETAPE3.2 — + 4 (ackSnapshotSeq).
+		if (!DecodeHeader(packet, MessageKind::Input, payload) || payload.size() != 29)
 		{
 			return false;
 		}
@@ -225,6 +214,7 @@ namespace engine::server
 		outMessage.positionMetersZ = std::bit_cast<float>(ReadU32(payload, 16));
 		outMessage.yawRadians = std::bit_cast<float>(ReadU32(payload, 20));
 		outMessage.animationState = ReadU8(payload, 24);
+		outMessage.ackSnapshotSeq = ReadU32(payload, 25);
 		return true;
 	}
 
@@ -232,7 +222,7 @@ namespace engine::server
 	{
 		// TC.1/TD.8 — payload 25 octets : clientId, inputSequence, posX, posY, posZ, yaw,
 		// animationState (1 octet).
-		std::vector<std::byte> packet = BeginPacket(MessageKind::Input, 25);
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Input, 29);
 		WriteU32(packet, message.clientId);
 		WriteU32(packet, message.inputSequence);
 		WriteU32(packet, std::bit_cast<uint32_t>(message.positionMetersX));
@@ -240,6 +230,7 @@ namespace engine::server
 		WriteU32(packet, std::bit_cast<uint32_t>(message.positionMetersZ));
 		WriteU32(packet, std::bit_cast<uint32_t>(message.yawRadians));
 		WriteU8(packet, message.animationState);
+		WriteU32(packet, message.ackSnapshotSeq); // ETAPE3.2
 		return packet;
 	}
 
@@ -292,94 +283,6 @@ namespace engine::server
 		outMessage.clientId = ReadU32(payload, 0);
 		outMessage.tickHz = ReadU16(payload, 4);
 		outMessage.snapshotHz = ReadU16(payload, 6);
-		return true;
-	}
-
-	bool DecodeSnapshot(std::span<const std::byte> packet, SnapshotMessage& outMessage, std::vector<SnapshotEntity>& outEntities)
-	{
-		std::span<const std::byte> payload;
-		// TG.1 — header passe de 20 → 24 octets (ajout chunkIndex + chunkCount).
-		if (!DecodeHeader(packet, MessageKind::Snapshot, payload) || payload.size() < 24)
-		{
-			return false;
-		}
-
-		outMessage.clientId = ReadU32(payload, 0);
-		outMessage.serverTick = ReadU32(payload, 4);
-		outMessage.connectedClients = ReadU16(payload, 8);
-		outMessage.entityCount = ReadU16(payload, 10);
-		outMessage.receivedPackets = ReadU32(payload, 12);
-		outMessage.sentPackets = ReadU32(payload, 16);
-		// TG.1 — chunkIndex / chunkCount. Le client utilise ces 2 valeurs pour reassembler
-		// un snapshot scinde sur plusieurs datagrammes (meme serverTick).
-		outMessage.chunkIndex = ReadU16(payload, 20);
-		outMessage.chunkCount = ReadU16(payload, 22);
-
-		const size_t entityCount = static_cast<size_t>(outMessage.entityCount);
-		// TD.6/TD.8/SP1 — taille variable par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId)
-		// + 2 (nameLen) + N (name) + 2 (genderLen) + M (gender) + 1 (animationState) + 4 (archetypeId)
-		// octets. On vérifie un minimum (61 par entité, nom et genre vides), puis on parse
-		// sequentiellement et on rejette si on dépasse la fin du payload en cours de route.
-		// TG.1 — header a 24 octets.
-		const size_t minimumPayloadSize = 24 + (entityCount * 61);
-		if (payload.size() < minimumPayloadSize)
-		{
-			return false;
-		}
-
-		outEntities.clear();
-		outEntities.resize(entityCount);
-		size_t offset = 24;
-		for (size_t index = 0; index < entityCount; ++index)
-		{
-			SnapshotEntity& entity = outEntities[index];
-			entity.entityId = ReadU64(payload, offset);
-			offset += 8;
-			if (!ReadEntityState(payload, offset, entity.state))
-			{
-				outEntities.clear();
-				return false;
-			}
-			// TD.4 : id client decode apres EntityState. ReadEntityState a deja avance offset de 40.
-			entity.playerClientId = ReadU32(payload, offset);
-			offset += 4;
-			// TD.5 : nom du personnage (chaîne préfixée u16). Borne dure : 64 octets (cf.
-			// kMaxChatLocalSenderNameBytes), au-delà on rejette le paquet pour défense en profondeur.
-			if (!ReadSizedString(payload, offset, entity.characterName)
-				|| entity.characterName.size() > 64u)
-			{
-				outEntities.clear();
-				return false;
-			}
-			// TD.6 : genre du personnage (chaîne préfixée u16). Borne dure : 8 octets (cf.
-			// VARCHAR(8) en DB, cf. migration 0067). Vide pour les mobs/lootbags.
-			if (!ReadSizedString(payload, offset, entity.gender)
-				|| entity.gender.size() > 8u)
-			{
-				outEntities.clear();
-				return false;
-			}
-			// TD.8 : état d'animation (1 octet) après le genre. ReadSizedString a avancé offset ;
-			// le minimum (61/entité, chaînes vides) garantit qu'il reste au moins 5 octets, mais
-			// avec des chaînes non vides on peut dépasser : on vérifie explicitement la borne.
-			if (offset + 1u > payload.size())
-			{
-				outEntities.clear();
-				return false;
-			}
-			entity.animationState = static_cast<AvatarAnimState>(ReadU8(payload, offset));
-			offset += 1u;
-			// Combat SP1 (wire v9) : archétype de créature (u32) après animationState.
-			// 0 = joueur / loot bag ; ≠ 0 = mob (résolu par le CreatureCatalog client).
-			if (offset + 4u > payload.size())
-			{
-				outEntities.clear();
-				return false;
-			}
-			entity.archetypeId = ReadU32(payload, offset);
-			offset += 4u;
-		}
-
 		return true;
 	}
 
@@ -575,44 +478,6 @@ namespace engine::server
 			return false;
 		}
 		return true;
-	}
-
-	std::vector<std::byte> EncodeSnapshot(const SnapshotMessage& message, std::span<const SnapshotEntity> entities)
-	{
-		// TD.6/TD.8/SP1 — taille par entite : 8 (entityId) + 40 (EntityState) + 4 (playerClientId)
-		// + 2 (nameLen) + N (name bytes) + 2 (genderLen) + M (gender bytes) + 1 (animationState)
-		// + 4 (archetypeId) octets. Wire-bump v8→v9 : ajout de l'archétype (u32) après l'état
-		// d'animation. Pour le sizing : estimation à 8 + 40 + 4 + 2 + 2 + 1 + 4 = 61 par entité
-		// (nom et genre vides). BeginPacket.reserve est juste un hint, pas une borne stricte
-		// (le vector grandit à l'append).
-		// TG.1 — header passe de 20 → 24 octets (ajout chunkIndex + chunkCount uint16 × 2).
-		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 24 + (entities.size() * 61));
-		WriteU32(packet, message.clientId);
-		WriteU32(packet, message.serverTick);
-		WriteU16(packet, message.connectedClients);
-		WriteU16(packet, message.entityCount);
-		WriteU32(packet, message.receivedPackets);
-		WriteU32(packet, message.sentPackets);
-		// TG.1 — chunking : chunkCount = 1 (defaut) = mono-paquet ; > 1 = chunk d'un snapshot
-		// scinde pour rester sous le budget MTU UDP. Le client reassemble par serverTick.
-		WriteU16(packet, message.chunkIndex);
-		WriteU16(packet, message.chunkCount);
-		for (const SnapshotEntity& entity : entities)
-		{
-			WriteU64(packet, entity.entityId);
-			WriteEntityState(packet, entity.state);
-			// TD.4 : id client (≠ entityId) pour qu'un client distant puisse afficher la plaque.
-			WriteU32(packet, entity.playerClientId);
-			// TD.5 : nom du personnage (préfixé u16). Vide pour les mobs / lootbags.
-			WriteSizedString(packet, entity.characterName);
-			// TD.6 : genre du personnage (préfixé u16). Vide pour les mobs / lootbags.
-			WriteSizedString(packet, entity.gender);
-			// TD.8 : état d'animation (1 octet). Idle (0) pour les mobs / lootbags.
-			WriteU8(packet, static_cast<uint8_t>(entity.animationState));
-			// Combat SP1 (wire v9) : archétype de créature (0 = joueur / loot bag).
-			WriteU32(packet, entity.archetypeId);
-		}
-		return packet;
 	}
 
 	std::vector<std::byte> EncodeSpawn(const SpawnEntity& entity)

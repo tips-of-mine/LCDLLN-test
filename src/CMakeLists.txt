@@ -53,6 +53,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerProtocol.cpp
     # ETAPE3.1 : enveloppe chiffrée des datagrammes UDP de jeu.
     ${CMAKE_SOURCE_DIR}/src/shared/network/UdpSecureChannel.cpp
+    # ETAPE3.2 : snapshots en delta sur base acquittée.
+    ${CMAKE_SOURCE_DIR}/src/shared/network/SnapshotDelta.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildSystem.cpp
@@ -702,6 +704,9 @@ elseif(UNIX)
   lcdlln_add_simple_test(udp_secure_channel_tests
     ${CMAKE_SOURCE_DIR}/src/shared/network/UdpSecureChannelTests.cpp)
   target_link_libraries(udp_secure_channel_tests PRIVATE OpenSSL::SSL)
+  # ETAPE3.2 : snapshots en delta sur base acquittée (SnapshotDelta.cpp vient d'engine_core).
+  lcdlln_add_simple_test(snapshot_delta_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/network/SnapshotDeltaTests.cpp)
   # ETAPE3.1 : sessions UDP chiffrées du shard (rejeu, doublon, sel, purge).
   lcdlln_add_simple_test(udp_session_table_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpSessionTableTests.cpp

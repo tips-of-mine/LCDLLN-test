@@ -71,6 +71,12 @@ namespace engine::core
 		/// Effet : fusionne les valeurs (priorité sur les défauts), comme LoadFromFile.
 		bool LoadFromString(std::string_view jsonText);
 
+		/// ETAPE2.1 — parse un texte au format INI (`clé=valeur`, sections `[x]`)
+		/// depuis la mémoire, même règles que \ref LoadFromFile pour un `.ini`.
+		/// Sert à relire l'état d'un personnage stocké en base (charge utile texte).
+		/// Effet : fusionne les valeurs (priorité sur les défauts). Retourne true.
+		bool LoadFromIniString(std::string_view iniText);
+
 		/// Écrit toutes les valeurs scalaires courantes dans un fichier JSON
 		/// **plat** (clés pointées au niveau racine, valeurs scalaires). Conçu
 		/// pour round-tripper avec \ref LoadFromFile (qui aplatit les objets en

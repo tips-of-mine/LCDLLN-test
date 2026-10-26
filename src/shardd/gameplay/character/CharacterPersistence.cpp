@@ -35,78 +35,150 @@ namespace engine::server
 		return QuestStatus::Locked;
 	}
 
-	CharacterPersistenceStore::CharacterPersistenceStore(const engine::core::Config& config)
-		: m_config(config)
-		, m_schemaRelativePath(m_config.GetString(
-			"server.persistence_schema_path",
-			"persistence/db/migrations/0001_characters_inventory.sql"))
+	// ---------------------------------------------------------------------
+	// ETAPE2.1 — lecture / écriture du texte d'état d'un personnage, partagées
+	// entre le fichier .ini (mode sans base) et la charge utile « progression »
+	// stockée en base (character_progress.progress_payload).
+	// ---------------------------------------------------------------------
+
+	/// Clés « character.* », sac et équipement (fichier .ini uniquement : en base,
+	/// ces données ont leurs propres colonnes et tables).
+	static void AppendCoreSection(std::ostringstream& output, const PersistedCharacterState& state)
 	{
-		LOG_INFO(Net, "[CharacterPersistence] Constructed");
+		output << "character.zone_id=" << state.zoneId << "\n";
+		output << "character.position_x=" << state.positionMetersX << "\n";
+		output << "character.position_y=" << state.positionMetersY << "\n";
+		output << "character.position_z=" << state.positionMetersZ << "\n";
+		output << "character.experience_points=" << state.experiencePoints << "\n";
+		output << "character.level=" << state.level << "\n";
+		output << "character.gold=" << state.gold << "\n";
+		output << "character.honor=" << state.honor << "\n";
+		output << "character.badges=" << state.badges << "\n";
+		output << "character.premium_currency=" << state.premiumCurrency << "\n";
+		output << "character.current_health=" << state.stats.currentHealth << "\n";
+		output << "character.max_health=" << state.stats.maxHealth << "\n";
+		output << "character.chat_moderator_role=" << (state.chatModeratorRole ? 1 : 0) << "\n";
+		output << "inventory.count=" << state.inventory.size() << "\n";
+		for (size_t index = 0; index < state.inventory.size(); ++index)
+		{
+			output << "inventory." << index << ".item_id=" << state.inventory[index].itemId << "\n";
+			output << "inventory." << index << ".quantity=" << state.inventory[index].quantity << "\n";
+		}
+		// Chantier 2 SP-A — équipement porté (n'écrit que les slots occupés).
+		for (std::size_t slot = 1; slot < state.equipment.size(); ++slot)
+		{
+			if (state.equipment[slot] != 0u)
+			{
+				output << "equipment." << slot << ".item_id=" << state.equipment[slot] << "\n";
+			}
+		}
 	}
 
-	CharacterPersistenceStore::~CharacterPersistenceStore()
+	/// Quêtes, ignorés, barre d'action, ceinture, gâteaux, compétences, métiers :
+	/// la partie « progression » commune au fichier et à la base.
+	static void AppendProgressSection(std::ostringstream& output, const PersistedCharacterState& state)
 	{
-		Shutdown();
+		// SP1 — format_version=1 : quests.*.status écrit l'enum QuestStatus direct (0..4).
+		// EXT-2 — format_version=2 : ajoute quests.<i>.completed_at (ms UTC de la dernière
+		// complétion) ; bump additif, les saves v1 (sans la clé) chargent completed_at=0.
+		output << "quests.format_version=2\n";
+		output << "quests.count=" << state.questStates.size() << "\n";
+		for (size_t questIndex = 0; questIndex < state.questStates.size(); ++questIndex)
+		{
+			output << "quests." << questIndex << ".id=" << state.questStates[questIndex].questId << "\n";
+			output << "quests." << questIndex << ".status=" << static_cast<uint32_t>(state.questStates[questIndex].status) << "\n";
+			output << "quests." << questIndex << ".completed_at=" << state.questStates[questIndex].completedAtEpochMs << "\n";
+			output << "quests." << questIndex << ".step_count=" << state.questStates[questIndex].stepProgressCounts.size() << "\n";
+			for (size_t stepIndex = 0; stepIndex < state.questStates[questIndex].stepProgressCounts.size(); ++stepIndex)
+			{
+				output << "quests." << questIndex << ".step." << stepIndex << ".progress="
+					<< state.questStates[questIndex].stepProgressCounts[stepIndex] << "\n";
+			}
+		}
+
+		const size_t ignoreCountToSave = std::min<size_t>(state.chatIgnoredDisplayNames.size(), 32u);
+		output << "chat.ignore.count=" << ignoreCountToSave << "\n";
+		for (size_t ignoreIndex = 0; ignoreIndex < ignoreCountToSave; ++ignoreIndex)
+		{
+			output << "chat.ignore." << ignoreIndex << ".name=" << state.chatIgnoredDisplayNames[ignoreIndex] << "\n";
+		}
+
+		// Grimoire — 10 slots de barre d'action (clés fixes, "" = slot vide ;
+		// l'alignement positionnel est conservé, contrairement à chat.ignore).
+		for (size_t slotIndex = 0; slotIndex < state.actionBarLayout.size(); ++slotIndex)
+		{
+			output << "actionbar.slot." << slotIndex << "=" << state.actionBarLayout[slotIndex] << "\n";
+		}
+
+		// Roadmap-3 (2026-07-19) / Ceinture v2 — ceinture à taille dynamique :
+		// belt.count puis belt.slot.N (les vieux lecteurs ignorent belt.count
+		// et relisent les 4 premières clés — dégradation propre).
+		output << "belt.count=" << state.beltLayout.size() << "\n";
+		for (size_t slotIndex = 0; slotIndex < state.beltLayout.size(); ++slotIndex)
+		{
+			output << "belt.slot." << slotIndex << "=" << state.beltLayout[slotIndex] << "\n";
+		}
+
+		// Anniversaires SP3 (2026-07-18) — expirations UTC (epoch ms) des
+		// gâteaux possédés (clés par itemId, cf. CakeItemToken).
+		for (const auto& [cakeItemId, expiresAtMs] : state.cakeExpiresAtMsUtcByItemId)
+		{
+			output << "cake_expiry." << cakeItemId << "=" << expiresAtMs << "\n";
+		}
+
+	// SP-B — compétences par-classe déjà choisies (un skill par tier/niveau débloqué).
+	const size_t skillsToSave = std::min<size_t>(state.knownSkillIds.size(), 60u);
+	output << "knownskill.count=" << skillsToSave << "\n";
+	for (size_t si = 0; si < skillsToSave; ++si)
+	{
+		output << "knownskill." << si << "=" << state.knownSkillIds[si] << "\n";
 	}
 
-	bool CharacterPersistenceStore::Init()
+	// M36.2 — Professions
+	const size_t profToSave = std::min<size_t>(state.professions.size(), 16u);
+	output << "professions.count=" << profToSave << "\n";
+	for (size_t pi = 0; pi < profToSave; ++pi)
 	{
-		if (m_initialized)
-		{
-			LOG_WARN(Net, "[CharacterPersistence] Init ignored: already initialized");
-			return true;
-		}
-
-		const auto schemaPath = engine::platform::FileSystem::ResolveContentPath(m_config, m_schemaRelativePath);
-		if (!engine::platform::FileSystem::Exists(schemaPath))
-		{
-			LOG_ERROR(Net, "[CharacterPersistence] Init FAILED: schema file missing ({})", m_schemaRelativePath);
-			return false;
-		}
-
-		m_initialized = true;
-		LOG_INFO(Net, "[CharacterPersistence] Init OK (schema_path={})", m_schemaRelativePath);
-		return true;
+		output << "professions." << pi << ".key=" << state.professions[pi].professionKey << "\n";
+		output << "professions." << pi << ".skill=" << state.professions[pi].skillLevel << "\n";
+		output << "professions." << pi << ".primary=" << (state.professions[pi].isPrimary ? 1 : 0) << "\n";
 	}
 
-	void CharacterPersistenceStore::Shutdown()
-	{
-		if (!m_initialized)
-		{
-			return;
-		}
-
-		m_initialized = false;
-		LOG_INFO(Net, "[CharacterPersistence] Destroyed");
 	}
 
-	bool CharacterPersistenceStore::LoadCharacter(uint64_t characterKey, PersistedCharacterState& outState) const
+	/// Courrier en attente (fichier .ini uniquement : en base, table character_mailbox).
+	static void AppendMailboxSection(std::ostringstream& output, const PersistedCharacterState& state)
 	{
-		if (!m_initialized)
-		{
-			LOG_WARN(Net, "[CharacterPersistence] Load ignored: store not initialized");
-			return false;
-		}
+	output << "mailbox.gold=" << state.mailboxGold << "\n";
+	const size_t mailboxToSave = std::min<size_t>(state.mailboxItems.size(), 64u);
+	output << "mailbox.item_count=" << mailboxToSave << "\n";
+	for (size_t mi = 0; mi < mailboxToSave; ++mi)
+	{
+		output << "mailbox.item." << mi << ".id=" << state.mailboxItems[mi].itemId << "\n";
+		output << "mailbox.item." << mi << ".qty=" << state.mailboxItems[mi].quantity << "\n";
+	}
 
-		const std::string relativePath = BuildCharacterStateRelativePath(characterKey);
-		const auto fullPath = engine::platform::FileSystem::ResolveContentPath(m_config, relativePath);
-		if (!engine::platform::FileSystem::Exists(fullPath))
-		{
-			LOG_WARN(Net, "[CharacterPersistence] Load skipped: character file missing (character_key={}, path={})",
-				characterKey,
-				relativePath);
-			return false;
-		}
+	}
 
-		engine::core::Config persisted;
-		if (!persisted.LoadFromFile(fullPath.string()))
-		{
-			LOG_ERROR(Net, "[CharacterPersistence] Load FAILED: invalid persistence file (character_key={}, path={})",
-				characterKey,
-				relativePath);
-			return false;
-		}
+	std::string SerializeCharacterState(const PersistedCharacterState& state)
+	{
+		std::ostringstream output;
+		AppendCoreSection(output, state);
+		AppendProgressSection(output, state);
+		AppendMailboxSection(output, state);
+		return output.str();
+	}
 
+	std::string SerializeCharacterProgressPayload(const PersistedCharacterState& state)
+	{
+		std::ostringstream output;
+		AppendProgressSection(output, state);
+		return output.str();
+	}
+
+	void ReadCharacterStateFromConfig(const engine::core::Config& persisted, uint64_t characterKey,
+		PersistedCharacterState& outState)
+	{
 		outState.characterKey = characterKey;
 		outState.zoneId = static_cast<uint32_t>(persisted.GetInt("character.zone_id", 1));
 		outState.positionMetersX = static_cast<float>(persisted.GetDouble("character.position_x", 0.0));
@@ -282,6 +354,97 @@ namespace engine::server
 		outState.professions.push_back(std::move(entry));
 	}
 
+	}
+
+	void ApplyCharacterProgressPayload(std::string_view payload, PersistedCharacterState& state)
+	{
+		engine::core::Config persisted;
+		persisted.LoadFromIniString(payload);
+		PersistedCharacterState parsed{};
+		ReadCharacterStateFromConfig(persisted, state.characterKey, parsed);
+		state.questStates = std::move(parsed.questStates);
+		state.chatIgnoredDisplayNames = std::move(parsed.chatIgnoredDisplayNames);
+		state.actionBarLayout = std::move(parsed.actionBarLayout);
+		state.beltLayout = std::move(parsed.beltLayout);
+		state.cakeExpiresAtMsUtcByItemId = std::move(parsed.cakeExpiresAtMsUtcByItemId);
+		state.knownSkillIds = std::move(parsed.knownSkillIds);
+		state.professions = std::move(parsed.professions);
+	}
+
+	CharacterPersistenceStore::CharacterPersistenceStore(const engine::core::Config& config)
+		: m_config(config)
+		, m_schemaRelativePath(m_config.GetString(
+			"server.persistence_schema_path",
+			"persistence/db/migrations/0001_characters_inventory.sql"))
+	{
+		LOG_INFO(Net, "[CharacterPersistence] Constructed");
+	}
+
+	CharacterPersistenceStore::~CharacterPersistenceStore()
+	{
+		Shutdown();
+	}
+
+	bool CharacterPersistenceStore::Init()
+	{
+		if (m_initialized)
+		{
+			LOG_WARN(Net, "[CharacterPersistence] Init ignored: already initialized");
+			return true;
+		}
+
+		const auto schemaPath = engine::platform::FileSystem::ResolveContentPath(m_config, m_schemaRelativePath);
+		if (!engine::platform::FileSystem::Exists(schemaPath))
+		{
+			LOG_ERROR(Net, "[CharacterPersistence] Init FAILED: schema file missing ({})", m_schemaRelativePath);
+			return false;
+		}
+
+		m_initialized = true;
+		LOG_INFO(Net, "[CharacterPersistence] Init OK (schema_path={})", m_schemaRelativePath);
+		return true;
+	}
+
+	void CharacterPersistenceStore::Shutdown()
+	{
+		if (!m_initialized)
+		{
+			return;
+		}
+
+		m_initialized = false;
+		LOG_INFO(Net, "[CharacterPersistence] Destroyed");
+	}
+
+	bool CharacterPersistenceStore::LoadCharacter(uint64_t characterKey, PersistedCharacterState& outState) const
+	{
+		if (!m_initialized)
+		{
+			LOG_WARN(Net, "[CharacterPersistence] Load ignored: store not initialized");
+			return false;
+		}
+
+		const std::string relativePath = BuildCharacterStateRelativePath(characterKey);
+		const auto fullPath = engine::platform::FileSystem::ResolveContentPath(m_config, relativePath);
+		if (!engine::platform::FileSystem::Exists(fullPath))
+		{
+			LOG_WARN(Net, "[CharacterPersistence] Load skipped: character file missing (character_key={}, path={})",
+				characterKey,
+				relativePath);
+			return false;
+		}
+
+		engine::core::Config persisted;
+		if (!persisted.LoadFromFile(fullPath.string()))
+		{
+			LOG_ERROR(Net, "[CharacterPersistence] Load FAILED: invalid persistence file (character_key={}, path={})",
+				characterKey,
+				relativePath);
+			return false;
+		}
+
+		ReadCharacterStateFromConfig(persisted, characterKey, outState);
+
 	LOG_INFO(Net,
 		"[CharacterPersistence] Load OK (character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={}, mailbox_gold={}, mailbox_items={}, professions={})",
 		characterKey,
@@ -305,110 +468,11 @@ namespace engine::server
 		}
 
 		const std::string relativePath = BuildCharacterStateRelativePath(state.characterKey);
-		std::ostringstream output;
-		output << "character.zone_id=" << state.zoneId << "\n";
-		output << "character.position_x=" << state.positionMetersX << "\n";
-		output << "character.position_y=" << state.positionMetersY << "\n";
-		output << "character.position_z=" << state.positionMetersZ << "\n";
-		output << "character.experience_points=" << state.experiencePoints << "\n";
-		output << "character.level=" << state.level << "\n";
-		output << "character.gold=" << state.gold << "\n";
-		output << "character.honor=" << state.honor << "\n";
-		output << "character.badges=" << state.badges << "\n";
-		output << "character.premium_currency=" << state.premiumCurrency << "\n";
-		output << "character.current_health=" << state.stats.currentHealth << "\n";
-		output << "character.max_health=" << state.stats.maxHealth << "\n";
-		output << "character.chat_moderator_role=" << (state.chatModeratorRole ? 1 : 0) << "\n";
-		output << "inventory.count=" << state.inventory.size() << "\n";
-		for (size_t index = 0; index < state.inventory.size(); ++index)
-		{
-			output << "inventory." << index << ".item_id=" << state.inventory[index].itemId << "\n";
-			output << "inventory." << index << ".quantity=" << state.inventory[index].quantity << "\n";
-		}
-		// Chantier 2 SP-A — équipement porté (n'écrit que les slots occupés).
-		for (std::size_t slot = 1; slot < state.equipment.size(); ++slot)
-		{
-			if (state.equipment[slot] != 0u)
-			{
-				output << "equipment." << slot << ".item_id=" << state.equipment[slot] << "\n";
-			}
-		}
-		// SP1 — format_version=1 : quests.*.status écrit l'enum QuestStatus direct (0..4).
-		// EXT-2 — format_version=2 : ajoute quests.<i>.completed_at (ms UTC de la dernière
-		// complétion) ; bump additif, les saves v1 (sans la clé) chargent completed_at=0.
-		output << "quests.format_version=2\n";
-		output << "quests.count=" << state.questStates.size() << "\n";
-		for (size_t questIndex = 0; questIndex < state.questStates.size(); ++questIndex)
-		{
-			output << "quests." << questIndex << ".id=" << state.questStates[questIndex].questId << "\n";
-			output << "quests." << questIndex << ".status=" << static_cast<uint32_t>(state.questStates[questIndex].status) << "\n";
-			output << "quests." << questIndex << ".completed_at=" << state.questStates[questIndex].completedAtEpochMs << "\n";
-			output << "quests." << questIndex << ".step_count=" << state.questStates[questIndex].stepProgressCounts.size() << "\n";
-			for (size_t stepIndex = 0; stepIndex < state.questStates[questIndex].stepProgressCounts.size(); ++stepIndex)
-			{
-				output << "quests." << questIndex << ".step." << stepIndex << ".progress="
-					<< state.questStates[questIndex].stepProgressCounts[stepIndex] << "\n";
-			}
-		}
-
+		const std::string text = SerializeCharacterState(state);
 		const size_t ignoreCountToSave = std::min<size_t>(state.chatIgnoredDisplayNames.size(), 32u);
-		output << "chat.ignore.count=" << ignoreCountToSave << "\n";
-		for (size_t ignoreIndex = 0; ignoreIndex < ignoreCountToSave; ++ignoreIndex)
-		{
-			output << "chat.ignore." << ignoreIndex << ".name=" << state.chatIgnoredDisplayNames[ignoreIndex] << "\n";
-		}
+		const size_t mailboxToSave = std::min<size_t>(state.mailboxItems.size(), 64u);
 
-		// Grimoire — 10 slots de barre d'action (clés fixes, "" = slot vide ;
-		// l'alignement positionnel est conservé, contrairement à chat.ignore).
-		for (size_t slotIndex = 0; slotIndex < state.actionBarLayout.size(); ++slotIndex)
-		{
-			output << "actionbar.slot." << slotIndex << "=" << state.actionBarLayout[slotIndex] << "\n";
-		}
-
-		// Roadmap-3 (2026-07-19) / Ceinture v2 — ceinture à taille dynamique :
-		// belt.count puis belt.slot.N (les vieux lecteurs ignorent belt.count
-		// et relisent les 4 premières clés — dégradation propre).
-		output << "belt.count=" << state.beltLayout.size() << "\n";
-		for (size_t slotIndex = 0; slotIndex < state.beltLayout.size(); ++slotIndex)
-		{
-			output << "belt.slot." << slotIndex << "=" << state.beltLayout[slotIndex] << "\n";
-		}
-
-		// Anniversaires SP3 (2026-07-18) — expirations UTC (epoch ms) des
-		// gâteaux possédés (clés par itemId, cf. CakeItemToken).
-		for (const auto& [cakeItemId, expiresAtMs] : state.cakeExpiresAtMsUtcByItemId)
-		{
-			output << "cake_expiry." << cakeItemId << "=" << expiresAtMs << "\n";
-		}
-
-	// SP-B — compétences par-classe déjà choisies (un skill par tier/niveau débloqué).
-	const size_t skillsToSave = std::min<size_t>(state.knownSkillIds.size(), 60u);
-	output << "knownskill.count=" << skillsToSave << "\n";
-	for (size_t si = 0; si < skillsToSave; ++si)
-	{
-		output << "knownskill." << si << "=" << state.knownSkillIds[si] << "\n";
-	}
-
-	output << "mailbox.gold=" << state.mailboxGold << "\n";
-	const size_t mailboxToSave = std::min<size_t>(state.mailboxItems.size(), 64u);
-	output << "mailbox.item_count=" << mailboxToSave << "\n";
-	for (size_t mi = 0; mi < mailboxToSave; ++mi)
-	{
-		output << "mailbox.item." << mi << ".id=" << state.mailboxItems[mi].itemId << "\n";
-		output << "mailbox.item." << mi << ".qty=" << state.mailboxItems[mi].quantity << "\n";
-	}
-
-	// M36.2 — Professions
-	const size_t profToSave = std::min<size_t>(state.professions.size(), 16u);
-	output << "professions.count=" << profToSave << "\n";
-	for (size_t pi = 0; pi < profToSave; ++pi)
-	{
-		output << "professions." << pi << ".key=" << state.professions[pi].professionKey << "\n";
-		output << "professions." << pi << ".skill=" << state.professions[pi].skillLevel << "\n";
-		output << "professions." << pi << ".primary=" << (state.professions[pi].isPrimary ? 1 : 0) << "\n";
-	}
-
-	if (!engine::platform::FileSystem::WriteAllTextContent(m_config, relativePath, output.str()))
+	if (!engine::platform::FileSystem::WriteAllTextContent(m_config, relativePath, text))
 		{
 			LOG_ERROR(Net, "[CharacterPersistence] Save FAILED (character_key={}, path={})",
 				state.characterKey,

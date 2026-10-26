@@ -32,9 +32,9 @@ namespace engine::server
 	/// gameplay state) and have the shard push to master through an internal
 	/// opcode — see Phase 3.6.6 (planned).
 	///
-	/// ETAPE1.2 — while a character is owned by a shard (`characters.owner_shard_id`
-	/// set at EnterWorld), the shard is the only writer of its position: this handler
-	/// acknowledges the request without writing (see CharacterOwnershipStore).
+	/// ETAPE2.1 — the owning shard is the only writer of a character's state,
+	/// position included (ServerApp::SaveCharacterToDb). This handler still
+	/// validates the session and acknowledges the request, but never writes.
 	class CharacterSavePositionHandler
 	{
 	public:

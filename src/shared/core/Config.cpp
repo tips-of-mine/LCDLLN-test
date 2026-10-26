@@ -567,6 +567,12 @@ namespace engine::core
 		return LoadFromString(ss.str());
 	}
 
+	bool Config::LoadFromIniString(std::string_view iniText)
+	{
+		std::istringstream in{ std::string(iniText) };
+		return LoadIni(*this, in);
+	}
+
 	bool Config::LoadFromString(std::string_view jsonText)
 	{
 		JsonValue root;

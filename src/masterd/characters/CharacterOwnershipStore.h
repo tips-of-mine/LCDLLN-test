@@ -38,10 +38,4 @@ namespace engine::server
 	/// ses sauvegardes sont refusées (il n'est plus propriétaire).
 	/// \return nombre de personnages libérés, ou std::nullopt si la base est indisponible.
 	std::optional<uint64_t> ReleaseShardOwnership(db::ConnectionPool& pool, uint32_t shardId);
-
-	/// Vrai si le personnage est actuellement verrouillé par un shard (owner_shard_id non
-	/// NULL). Sert à CharacterSavePositionHandler : le master n'écrit plus la position
-	/// d'un personnage en jeu. Faux si la requête échoue (comportement historique).
-	bool IsCharacterOwnedByShard(MYSQL* mysql, db::SqlPreparedStatementCache* cache,
-		uint64_t characterId, uint64_t accountId);
 }

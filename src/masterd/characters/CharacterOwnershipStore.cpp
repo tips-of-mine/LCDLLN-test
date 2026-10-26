@@ -51,17 +51,4 @@ namespace engine::server
 		LOG_INFO(Net, "[CharacterOwnership] shard_id={} déclaré mort : {} personnage(s) libéré(s)", shardId, released);
 		return released;
 	}
-
-	bool IsCharacterOwnedByShard(MYSQL* mysql, db::SqlPreparedStatementCache* cache,
-		uint64_t characterId, uint64_t accountId)
-	{
-		if (mysql == nullptr || cache == nullptr)
-			return false;
-		auto* sel = cache->Acquire(mysql,
-			"SELECT owner_shard_id IS NOT NULL FROM characters WHERE id = ? AND account_id = ? AND deleted_at IS NULL");
-		if (sel == nullptr || !sel->Bind(0, characterId) || !sel->Bind(1, accountId) || !sel->Execute()
-			|| !sel->FetchRow())
-			return false;
-		return sel->GetUInt64(0) != 0u;
-	}
 }

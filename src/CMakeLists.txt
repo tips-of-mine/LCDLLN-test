@@ -669,6 +669,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(character_persistence_quest_compat_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistenceQuestCompatTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp)
+  # ETAPE2.1 : charge utile « progression » en base + texte .ini (aller-retour).
+  lcdlln_add_simple_test(character_progress_payload_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterProgressPayloadTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp)
   # CMANGOS.33 (Phase 5.33a) : LfgQueue header-only.
   lcdlln_add_simple_test(lfg_queue_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/lfg/LfgQueueTests.cpp)

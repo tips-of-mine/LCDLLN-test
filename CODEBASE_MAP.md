@@ -195,6 +195,12 @@ RenderModel
 >
 > **Règle (ETAPE5.1)** : Dire et Crier passent par le shard (UDP, filtre de
 > distance) ; les autres canaux par le master. Voir `src/masterd/chat/ChatChannelRouting.h`.
+>
+> **Règle (ETAPE2.1)** : la base est la seule source de vérité d'un personnage.
+> Avec une base, le shard n'écrit plus de fichier `.ini` (relu une seule fois pour
+> importer un ancien personnage) ; le master n'écrit plus la position. Tables :
+> `character_progress`, `character_mailbox` (migration 0078). Détail :
+> `docs/architecture/etape2_persistance.md`.
 
 ### Comptes et validation
 | Fichier | Rôle |

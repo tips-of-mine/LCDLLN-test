@@ -310,16 +310,21 @@ personnage :
 1. au chargement, une demande en attente remplace l'état courant par celui de
    l'instantané (position comprise) ; le courrier en attente reste dû ;
 2. une sauvegarde immédiate écrit l'état restauré et marque la demande appliquée
-   (`applied_at`), dans la même transaction.
+   (`applied_at`), dans la même transaction. Une demande posée pendant la session
+   suivante attend la connexion d'après.
 
 Pour un personnage en jeu : le déconnecter (`/kick`), la restauration s'applique
 à sa reconnexion. Une nouvelle demande remplace celle en attente.
 
 ### Limites
 
-- Le niveau ne redescend pas : `characters.level` n'est écrit qu'à la hausse
-  (`GREATEST`). Une restauration vers un instantané de niveau inférieur garde le
-  niveau actuel (XP et le reste sont restaurés).
+- Le niveau est restauré (la sauvegarde d'un état restauré écrit le niveau tel
+  quel ; les autres sauvegardes ne le font que monter). L'orientation du
+  personnage n'est pas dans l'instantané.
+- Un instantané illisible fait refuser la connexion (journalisé) plutôt que de
+  repartir de valeurs par défaut.
+- Seul le shard propriétaire enregistre un instantané (contrôle 1.2) ; les
+  instantanés visés par une demande en attente ne sont jamais purgés.
 - La carte découverte n'est pas dans l'instantané (elle ne fait que grandir).
 - Commandes ajoutées à `game/data/config/slash_commands.json`.
 

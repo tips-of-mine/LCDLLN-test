@@ -526,7 +526,7 @@
       "serverLogged": true,
       "status": "server_routed",
       "implementation_file": "src/masterd/main_linux.cpp",
-      "notes": "ETAPE2.6 : pose une demande dans character_restore_requests ; le master n'écrit pas l'état du personnage. Le niveau ne redescend pas (characters.level = GREATEST)."
+      "notes": "ETAPE2.6 : pose une demande dans character_restore_requests ; le master n'écrit pas l'état du personnage. Le niveau de l'instantané est restauré."
     }
   ]
 }

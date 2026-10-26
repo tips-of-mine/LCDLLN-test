@@ -19,6 +19,7 @@
 // onThreadStart/onThreadEnd servent à mysql_thread_init/mysql_thread_end.
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -79,9 +80,10 @@ namespace engine::server
 		EnqueueResult EnqueueOrdered(uint64_t characterId, Job job);
 
 		/// Attend que tous les travaux de \p characterId déposés avant l'appel soient
-		/// terminés. Retour immédiat si la file est arrêtée ou si rien n'est en attente.
-		/// Ne pas appeler depuis un thread de la file.
-		void Flush(uint64_t characterId);
+		/// terminés, au plus \p timeout. Retour immédiat si la file est arrêtée ou si
+		/// rien n'est en attente. Ne pas appeler depuis un thread de la file.
+		/// \return false si le délai est dépassé (travaux encore en cours).
+		bool Flush(uint64_t characterId, std::chrono::milliseconds timeout = std::chrono::milliseconds(2000));
 		/// Attend que la file soit vide.
 		void FlushAll();
 

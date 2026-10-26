@@ -161,15 +161,15 @@ namespace engine::server
 		}
 	}
 
-	void CharacterSaveQueue::Flush(uint64_t characterId)
+	bool CharacterSaveQueue::Flush(uint64_t characterId, std::chrono::milliseconds timeout)
 	{
 		if (!m_running.load())
 		{
-			return;
+			return true;
 		}
 		Worker& worker = *m_workers[WorkerIndexFor(characterId, m_workers.size())];
 		std::unique_lock<std::mutex> lock(worker.mutex);
-		worker.done.wait(lock, [&worker, characterId] {
+		return worker.done.wait_for(lock, timeout, [&worker, characterId] {
 			if (worker.busy && worker.busyCharacterId == characterId)
 			{
 				return false;

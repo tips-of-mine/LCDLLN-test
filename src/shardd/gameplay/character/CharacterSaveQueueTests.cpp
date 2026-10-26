@@ -131,6 +131,20 @@ int main()
 		Check(starts.load() == 2 && ends.load() == 2, "crochets start/end par thread");
 	}
 
+	// 7. Flush borné dans le temps : faux tant que le travail est bloqué, vrai ensuite.
+	{
+		std::mutex gate;
+		gate.lock();
+		CharacterSaveQueue queue(2, 16);
+		queue.Start();
+		queue.EnqueueOrdered(4, [&] { std::lock_guard<std::mutex> g(gate); });
+		Check(!queue.Flush(4, std::chrono::milliseconds(50)), "Flush expire si le travail est bloqué");
+		Check(queue.Flush(5, std::chrono::milliseconds(50)), "Flush immédiat pour un autre personnage sans travail");
+		gate.unlock();
+		Check(queue.Flush(4, std::chrono::milliseconds(2000)), "Flush réussit une fois le travail fini");
+		queue.Stop();
+	}
+
 	if (s_failCount == 0)
 		std::puts("[OK] character_save_queue_tests");
 	return s_failCount == 0 ? 0 : 1;

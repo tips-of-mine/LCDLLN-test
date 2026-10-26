@@ -49,6 +49,10 @@ namespace engine::server::db
 		/// Returns true if the pool is initialized and has at least one connection.
 		bool IsInitialized() const;
 
+		/// ETAPE2.2 — nombre de connexions réellement ouvertes (créneaux dont la
+		/// connexion a réussi à l'Init). Sert à dimensionner les threads d'écriture.
+		size_t ConnectedCount() const;
+
 		/// RAII handle: holds a connection from the pool; returns it on destruction.
 		class Guard
 		{

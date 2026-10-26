@@ -124,10 +124,18 @@ transaction SQL dans le tick de jeu. Une base lente ralentissait tout le shard.
   du même personnage. Dix sauvegardes rapprochées (ramassage d'objets en série)
   deviennent une seule écriture.
 - **File pleine** : la sauvegarde est écrite tout de suite, dans le tick (log
-  `WARN`). Rien n'est perdu ; le tick ralentit au lieu de jeter des données.
+  `WARN`), après avoir laissé finir l'écriture éventuellement en cours du même
+  personnage (sinon un instantané plus ancien passerait après). Rien n'est perdu ;
+  le tick ralentit au lieu de jeter des données.
 - **Relecture** : au Hello, le shard attend que les écritures en cours du
-  personnage soient terminées (`Flush`) avant de le relire. Une reconnexion
-  rapide voit donc la sauvegarde de déconnexion.
+  personnage soient terminées (`Flush`, 2 s au plus) avant de le relire. Au-delà,
+  le Hello est refusé (le client réessaie) plutôt que de charger un état ancien.
+- **Déconnexion** : la sauvegarde de départ est attendue (2 s au plus) : si le
+  joueur rejoint aussitôt un autre shard, le master déplace le verrou de
+  propriété (1.2) et une écriture tardive serait refusée.
+- **Interblocages** : chaque transaction tourne en `READ COMMITTED` (pas de
+  verrous d'intervalle entre personnages voisins) et est rejouée jusqu'à 3 fois
+  si elle échoue alors que la connexion a été obtenue.
 - **Arrêt** : `Shutdown` sauve tous les joueurs, puis `Stop()` écrit tout ce qui
   reste avant de rendre la main. `main_linux` appelle maintenant
   `gameplayApp.Shutdown()` **avant** de fermer le pool : avant, les sauvegardes de
@@ -137,7 +145,7 @@ transaction SQL dans le tick de jeu. Une base lente ralentissait tout le shard.
 
 | Clé | Défaut | Rôle |
 |---|---|---|
-| `shard.save_workers` | 2 | Threads d'écriture (borné à `db.pool_size - 1`, pour laisser une connexion au tick) |
+| `shard.save_workers` | 2 | Threads d'écriture (borné aux connexions réellement ouvertes moins une, laissée au tick ; moins de 2 connexions = pas de file) |
 | `shard.save_queue_max` | 4096 | Travaux en attente avant écriture immédiate |
 
 Sans base (développement, shard Windows), pas de file : le fichier `.ini` est

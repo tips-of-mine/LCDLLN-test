@@ -496,11 +496,18 @@ namespace engine::server
 		// garde une connexion du pool pendant une écriture : laisser au moins une
 		// connexion au tick (chargements au Hello). Clés optionnelles :
 		//   shard.save_workers (défaut 2), shard.save_queue_max (défaut 4096).
-		if (m_characterDbPool != nullptr && m_characterDbPool->IsInitialized())
+		// Dimensionné sur les connexions réellement ouvertes (pas sur db.pool_size) :
+		// avec moins de 2 connexions, pas de file (écritures dans le tick, comme avant).
+		const size_t liveConnections = (m_characterDbPool != nullptr && m_characterDbPool->IsInitialized())
+			? m_characterDbPool->ConnectedCount() : 0u;
+		if (liveConnections == 1u)
 		{
-			const int64_t poolSize = std::max<int64_t>(2, m_config.GetInt("db.pool_size", 4));
+			LOG_WARN(Core, "[ServerApp] Character save queue disabled: only 1 DB connection open (db.pool_size)");
+		}
+		if (liveConnections >= 2u)
+		{
 			const size_t workers = static_cast<size_t>(std::clamp<int64_t>(
-				m_config.GetInt("shard.save_workers", 2), 1, poolSize - 1));
+				m_config.GetInt("shard.save_workers", 2), 1, static_cast<int64_t>(liveConnections) - 1));
 			const size_t maxPending = static_cast<size_t>(std::clamp<int64_t>(
 				m_config.GetInt("shard.save_queue_max", 4096), 64, 1000000));
 			m_characterSaveQueue = std::make_unique<CharacterSaveQueue>(workers, maxPending,
@@ -1348,6 +1355,33 @@ namespace engine::server
 	ServerApp::CharacterDbSaveResult ServerApp::SaveCharacterToDb(const PersistedCharacterState& state,
 		float yawRadians, uint64_t ownerGeneration)
 	{
+		// ETAPE2.2 — plusieurs threads écrivent désormais en même temps : un
+		// interblocage InnoDB (1213) ou un délai de verrou (1205) fait échouer la
+		// transaction sans rien écrire. On la rejoue (3 essais) tant que la connexion
+		// a été obtenue ; base injoignable = échec immédiat (pas d'attente répétée).
+		CharacterDbSaveResult result = CharacterDbSaveResult::Failed;
+		for (int attempt = 1; attempt <= 3; ++attempt)
+		{
+			bool connected = false;
+			result = SaveCharacterToDbOnce(state, yawRadians, ownerGeneration, connected);
+			if (result != CharacterDbSaveResult::Failed || !connected)
+			{
+				return result;
+			}
+			if (attempt < 3)
+			{
+				LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: transaction failed, retry {} (character_key={})",
+					attempt, state.characterKey);
+				std::this_thread::sleep_for(std::chrono::milliseconds(20 * attempt));
+			}
+		}
+		return result;
+	}
+
+	ServerApp::CharacterDbSaveResult ServerApp::SaveCharacterToDbOnce(const PersistedCharacterState& state,
+		float yawRadians, uint64_t ownerGeneration, bool& outConnected)
+	{
+		outConnected = false;
 #if defined(SHARD_POSITION_DB)
 		if (m_characterDbPool == nullptr || state.characterKey == 0u)
 		{
@@ -1362,6 +1396,12 @@ namespace engine::server
 			// fichier, il ne serait jamais relu une fois le personnage en base).
 			return CharacterDbSaveResult::Failed;
 		}
+		outConnected = true;
+		// ETAPE2.2 — READ COMMITTED pour cette transaction : pas de verrous
+		// d'intervalle (gap locks) entre personnages voisins lors des DELETE +
+		// INSERT du sac et de l'équipement, donc beaucoup moins d'interblocages
+		// entre threads d'écriture. Le contrôle de propriété garde son FOR UPDATE.
+		(void)mysql_query(mysql, "SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
 		// Transaction : tout l'état part ENSEMBLE — un lecteur concurrent (autre
 		// shard, outil web) ne voit jamais un état mixte, et un échec au milieu
 		// laisse la base sur la sauvegarde précédente.
@@ -1524,6 +1564,7 @@ namespace engine::server
 			{
 				LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: COMMIT failed (character_key={})",
 					state.characterKey);
+				mysql_query(mysql, "ROLLBACK");
 				return CharacterDbSaveResult::Failed;
 			}
 			return CharacterDbSaveResult::Saved;
@@ -1787,6 +1828,17 @@ namespace engine::server
 		// valeurs par défaut ferait écraser la vraie progression par la sauvegarde
 		// suivante. Même clé que client.persistenceCharacterKey ci-dessous.
 		const uint64_t helloCharacterKey = helloNonce != 0u ? helloNonce : static_cast<uint64_t>(m_nextClientId);
+		// ETAPE2.2 — relecture juste après écriture : une reconnexion rapide doit voir
+		// la sauvegarde de déconnexion, peut-être encore dans la file. On attend
+		// qu'elle soit écrite (2 s au plus) ; au-delà, Hello refusé (le client
+		// réessaie) plutôt que de charger un état plus ancien.
+		if (m_characterSaveQueue != nullptr
+			&& !m_characterSaveQueue->Flush(helloCharacterKey, std::chrono::milliseconds(2000)))
+		{
+			LOG_WARN(Net, "[ServerApp] Hello refused: pending save still running (character_key={}, queue_pending={})",
+				helloCharacterKey, m_characterSaveQueue->PendingCount());
+			return;
+		}
 		PersistedCharacterState dbState{};
 		const CharacterDbLoadResult dbLoad = LoadCharacterFromDb(helloCharacterKey, dbState);
 		if (dbLoad == CharacterDbLoadResult::Error)
@@ -1826,12 +1878,6 @@ namespace engine::server
 		//      la sauvegarde suivante écrit tout en base et le .ini n'est plus relu ;
 		//   3. si la base n'avait que bourse/sac/équipement (Roadmap-10), ces trois
 		//      domaines restent ceux de la base, par-dessus le fichier.
-		// ETAPE2.2 — relecture juste après écriture : une reconnexion rapide doit voir
-		// la sauvegarde de déconnexion, encore dans la file. On attend qu'elle soit écrite.
-		if (m_characterSaveQueue != nullptr)
-		{
-			m_characterSaveQueue->Flush(acceptedClient.persistenceCharacterKey);
-		}
 		PersistedCharacterState persistedState{};
 		bool fileLoaded = false;
 		if (dbLoad == CharacterDbLoadResult::Full)
@@ -2825,6 +2871,9 @@ namespace engine::server
 			}
 			LOG_WARN(Net, "[ServerApp] Character save queue full (pending={}) : écriture immédiate (client_id={}, reason={})",
 				m_characterSaveQueue->PendingCount(), client.clientId, reason);
+			// Un thread peut être en train d'écrire un instantané PLUS ANCIEN du même
+			// personnage : on le laisse finir, sinon il passerait après celui-ci.
+			(void)m_characterSaveQueue->Flush(client.persistenceCharacterKey);
 			PersistCharacterState(*snapshot, yaw, generation, clientId, reason);
 			return;
 		}
@@ -8770,6 +8819,15 @@ namespace engine::server
 		}
 
 		SaveConnectedClient(*clientIt, persistenceReason);
+		// ETAPE2.2 — la sauvegarde de déconnexion est écrite tout de suite (attente de
+		// la file, 2 s au plus) : si le joueur rejoint un autre shard, le master
+		// déplace le verrou de propriété et une écriture tardive serait refusée.
+		if (m_characterSaveQueue != nullptr
+			&& !m_characterSaveQueue->Flush(clientIt->persistenceCharacterKey, std::chrono::milliseconds(2000)))
+		{
+			LOG_WARN(Net, "[ServerApp] Disconnect save still pending after 2 s (client_id={}, character_key={})",
+				clientIt->clientId, clientIt->persistenceCharacterKey);
+		}
 		if (clientIt->hasCell)
 		{
 			const auto zoneIt = m_zoneGrids.find(engine::world::cells::MapIdOfZone(clientIt->zoneId));

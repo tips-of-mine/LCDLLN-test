@@ -509,6 +509,11 @@ namespace engine::server
 		CharacterDbSaveResult SaveCharacterToDb(const PersistedCharacterState& state, float yawRadians,
 			uint64_t ownerGeneration);
 
+		/// ETAPE2.2 — une tentative de SaveCharacterToDb (qui rejoue jusqu'à 3 fois en cas
+		/// d'interblocage). \param outConnected vrai si une connexion a été obtenue.
+		CharacterDbSaveResult SaveCharacterToDbOnce(const PersistedCharacterState& state, float yawRadians,
+			uint64_t ownerGeneration, bool& outConnected);
+
 		/// ETAPE2.1 — ce que la base connaît d'un personnage.
 		enum class CharacterDbLoadResult : uint8_t
 		{

@@ -158,6 +158,18 @@ namespace engine::server::db
 		return m_initialized && !m_connections.empty();
 	}
 
+	size_t ConnectionPool::ConnectedCount() const
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		size_t count = 0;
+		for (const auto& slot : m_connections)
+		{
+			if (slot.mysql != nullptr)
+				++count;
+		}
+		return count;
+	}
+
 	ConnectionPool::Guard ConnectionPool::Acquire()
 	{
 		auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(kAcquireTimeoutMs);

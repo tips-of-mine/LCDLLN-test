@@ -639,12 +639,20 @@ namespace engine::server
 			LOG_WARN(Core, "[ServerApp] CraftingSystem init skipped or partial — crafting unavailable");
 		}
 
+#if defined(SHARD_POSITION_DB)
+		// ETAPE2.8 — avec une base, les annonces sont dans auction_listings.
+		if (m_characterDbPool != nullptr)
+		{
+			m_auctionHouse.SetFilePersistence(false);
+		}
+#endif
 		if (!m_auctionHouse.Init())
 		{
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: auction house startup failed");
 			Shutdown();
 			return false;
 		}
+		LoadAuctionListingsFromDb(); // ETAPE2.8 (sans effet sans base)
 
 		m_initialized = true;
 		LOG_INFO(Core, "[ServerApp] Init OK (port={}, tick_hz={}, snapshot_hz={})",
@@ -10687,6 +10695,11 @@ namespace engine::server
 			SendChatSystemNotice(*client, "Invalid auction parameters.");
 			return;
 		}
+		if (AuctionInDb())
+		{
+			HandleAuctionListItemDb(*client, message); // ETAPE2.8 — une transaction
+			return;
+		}
 		std::string invErr;
 		if (!RemoveStackFromInventory(*client, message.itemId, message.quantity, invErr))
 		{
@@ -10755,6 +10768,11 @@ namespace engine::server
 		if (row->currentBid > 0u && message.bidAmount <= row->currentBid)
 		{
 			SendChatSystemNotice(*client, "Bid too low.");
+			return;
+		}
+		if (AuctionInDb())
+		{
+			HandleAuctionBidDb(*client, *row, message.bidAmount); // ETAPE2.8 — une transaction
 			return;
 		}
 		const uint64_t prevCk = row->highBidderCharacterKey;
@@ -10827,6 +10845,11 @@ namespace engine::server
 			SendChatSystemNotice(*client, "You cannot buy out your own auction.");
 			return;
 		}
+		if (AuctionInDb())
+		{
+			HandleAuctionBuyoutDb(*client, *row); // ETAPE2.8 — une transaction
+			return;
+		}
 		const uint64_t buyerCk = client->persistenceCharacterKey;
 		uint64_t charge = row->buyoutPrice;
 		if (row->highBidderCharacterKey == buyerCk && row->currentBid > 0u)
@@ -10878,8 +10901,728 @@ namespace engine::server
 			buyoutPaid);
 	}
 
+	// =========================================================================
+	// ETAPE2.8 — hôtel des ventes en base : chaque opération (mise en vente,
+	// enchère, achat immédiat, fin d'enchère) écrit l'annonce, les joueurs en ligne
+	// concernés et le courrier des absents dans UNE transaction, identifiée par un
+	// identifiant d'opération unique (auction_operations) : rejouée après une
+	// réponse de COMMIT perdue, elle n'est jamais appliquée deux fois.
+	// =========================================================================
+
+	bool ServerApp::AuctionInDb() const
+	{
+#if defined(SHARD_POSITION_DB)
+		return m_characterDbPool != nullptr && !m_auctionHouse.FilePersistence();
+#else
+		return false;
+#endif
+	}
+
+	void ServerApp::LoadAuctionListingsFromDb()
+	{
+#if defined(SHARD_POSITION_DB)
+		if (!AuctionInDb())
+		{
+			return;
+		}
+		ImportAuctionListingsFile();
+		auto guard = m_characterDbPool->Acquire();
+		MYSQL* mysql = guard.get();
+		auto* cache = guard.cache();
+		auto* sel = (mysql != nullptr && cache != nullptr) ? cache->Acquire(mysql,
+			"SELECT listing_id, seller_character_id, item_id, quantity, start_bid, buyout_price, current_bid, "
+			"high_bidder_character_id, GREATEST(0, TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), expires_at)) "
+			"FROM auction_listings WHERE shard_id = ? ORDER BY listing_id") : nullptr;
+		if (sel == nullptr || !sel->Bind(0, m_shardId) || !sel->Execute())
+		{
+			LOG_ERROR(Net, "[ServerApp] Auction listings load FAILED (migration 0081 appliquée ?) : hôtel des ventes vide");
+			return;
+		}
+		std::vector<AuctionListingRecord> rows;
+		while (sel->FetchRow())
+		{
+			AuctionListingRecord r{};
+			r.listingId = static_cast<uint32_t>(sel->GetUInt64(0));
+			r.sellerCharacterKey = sel->GetUInt64(1);
+			r.itemId = static_cast<uint32_t>(sel->GetUInt64(2));
+			r.quantity = static_cast<uint32_t>(sel->GetUInt64(3));
+			r.startBid = static_cast<uint32_t>(sel->GetUInt64(4));
+			r.buyoutPrice = static_cast<uint32_t>(sel->GetUInt64(5));
+			r.currentBid = static_cast<uint32_t>(sel->GetUInt64(6));
+			r.highBidderCharacterKey = sel->GetUInt64(7);
+			const uint64_t remainingSec = sel->GetUInt64(8);
+			// Échéance en ticks du processus courant (au moins un tick : une annonce
+			// échue pendant l'arrêt est réglée au premier tick).
+			r.expiresAtTick = m_currentTick + 1u + static_cast<uint32_t>(std::min<uint64_t>(
+				remainingSec * static_cast<uint64_t>(m_tickHz), std::numeric_limits<uint32_t>::max() / 2u));
+			rows.push_back(r);
+		}
+		m_auctionHouse.ReplaceListings(std::move(rows));
+#endif
+	}
+
+	void ServerApp::ImportAuctionListingsFile()
+	{
+#if defined(SHARD_POSITION_DB)
+		// Import UNIQUE des annonces de l'ancien fichier (objets et enchères en
+		// séquestre) : toutes les annonces + un marqueur « import-file-s<shard> » dans
+		// UNE transaction. Marqueur déjà présent = déjà importé (même si le fichier
+		// n'a pas pu être renommé) : rien n'est réimporté.
+		const std::vector<AuctionListingRecord> fileRows = m_auctionHouse.ReadListingsFile();
+		if (fileRows.empty())
+		{
+			return;
+		}
+		const std::string marker = "import-file-s" + std::to_string(m_shardId);
+		auto guard = m_characterDbPool->Acquire();
+		MYSQL* mysql = guard.get();
+		auto* cache = guard.cache();
+		if (mysql == nullptr || cache == nullptr || mysql_query(mysql, "START TRANSACTION") != 0)
+		{
+			LOG_ERROR(Net, "[ServerApp] Auction file import skipped: DB unavailable");
+			return;
+		}
+		bool ok = true;
+		bool alreadyImported = false;
+		auto* mark = cache->Acquire(mysql,
+			"INSERT IGNORE INTO auction_operations (operation_id, listing_id, kind) VALUES (?, 0, 'import')");
+		ok = mark != nullptr && mark->Bind(0, std::string_view(marker)) && mark->Execute();
+		if (ok && mark->AffectedRows() == 0u)
+		{
+			alreadyImported = true;
+		}
+		for (size_t i = 0; ok && !alreadyImported && i < fileRows.size(); ++i)
+		{
+			const AuctionListingRecord& r = fileRows[i];
+			auto* ins = cache->Acquire(mysql,
+				"INSERT INTO auction_listings (shard_id, seller_character_id, item_id, quantity, start_bid, buyout_price, "
+				"current_bid, high_bidder_character_id, expires_at) "
+				"VALUES (?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP() + INTERVAL 1 DAY)");
+			ok = ins != nullptr && ins->Bind(0, m_shardId) && ins->Bind(1, r.sellerCharacterKey) && ins->Bind(2, r.itemId)
+				&& ins->Bind(3, r.quantity) && ins->Bind(4, r.startBid) && ins->Bind(5, r.buyoutPrice)
+				&& ins->Bind(6, r.currentBid) && ins->Bind(7, r.highBidderCharacterKey) && ins->Execute();
+		}
+		if (!ok || mysql_query(mysql, "COMMIT") != 0)
+		{
+			mysql_query(mysql, "ROLLBACK");
+			LOG_ERROR(Net, "[ServerApp] Auction file import FAILED (rolled back, retried at next start)");
+			return;
+		}
+		LOG_WARN(Net, "[ServerApp] Auction file {} ({} listing(s))",
+			alreadyImported ? "already imported, ignored" : "imported", fileRows.size());
+		if (!m_auctionHouse.RetireListingsFile())
+		{
+			LOG_WARN(Net, "[ServerApp] Auction file could not be renamed: kept, never imported again (marker {})", marker);
+		}
+#endif
+	}
+
+	ServerApp::CharacterDbSaveResult ServerApp::ExecuteAuctionTx(AuctionTxBuilder& tx, uint32_t* outListingId)
+	{
+#if defined(SHARD_POSITION_DB)
+		if (m_characterDbPool == nullptr)
+		{
+			return CharacterDbSaveResult::SkippedNoDb;
+		}
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now().time_since_epoch()).count());
+		const char* kind = tx.plan.op == AuctionListingOp::Insert ? "list"
+			: (tx.plan.op == AuctionListingOp::UpdateBid ? "bid" : "settle");
+		const std::string operationId = MakeCharacterOperationId(
+			std::string("auction_") + kind, m_shardId, nowMs, ++m_characterOperationCounter);
+		CharacterDbSaveResult result = CharacterDbSaveResult::Failed;
+		int attempt = 0;
+		int replans = 0;
+		while (attempt < 3)
+		{
+			++attempt;
+			// Les sauvegardes en file des joueurs concernés sont plus anciennes : elles
+			// passent avant (sinon un état ancien écraserait celui de l'opération).
+			std::vector<ConnectedClient*> characters = tx.Characters();
+			std::sort(characters.begin(), characters.end(), [](const ConnectedClient* a, const ConnectedClient* b) {
+				return a->persistenceCharacterKey < b->persistenceCharacterKey; // ordre des verrous
+			});
+			std::vector<PersistedCharacterState> states;
+			std::vector<std::pair<float, uint64_t>> extras; // yaw, génération du verrou
+			bool flushed = true;
+			for (const ConnectedClient* client : characters)
+			{
+				if (m_characterSaveQueue != nullptr && !m_characterSaveQueue->Flush(client->persistenceCharacterKey))
+				{
+					flushed = false;
+					break;
+				}
+				states.push_back(BuildPersistedCharacterState(*client));
+				extras.emplace_back(client->yawRadians, client->ownerGeneration);
+			}
+			if (!flushed)
+			{
+				LOG_ERROR(Net, "[ServerApp] Auction tx: pending saves not finished (operation={})", operationId);
+				return CharacterDbSaveResult::Failed;
+			}
+			bool connected = false;
+			bool commitUncertain = false;
+			uint64_t refusedCharacterKey = 0;
+			result = ExecuteAuctionTxOnce(tx.plan, states, extras, operationId, outListingId,
+				connected, commitUncertain, refusedCharacterKey);
+			if (commitUncertain)
+			{
+				tx.commitUncertain = true; // réponse perdue : vérifié par l'essai suivant
+			}
+			// Un joueur crédité dont ce shard n'est plus propriétaire (il a changé de
+			// shard) : son gain part au courrier et on recommence (sans compter l'essai).
+			if (result == CharacterDbSaveResult::RefusedNotOwner && refusedCharacterKey != 0u && replans < 4
+				&& tx.ReplanAsMail(refusedCharacterKey))
+			{
+				LOG_WARN(Net, "[ServerApp] Auction tx: character_key={} no longer owned here, credited by mail (operation={})",
+					refusedCharacterKey, operationId);
+				++replans;
+				--attempt;
+				continue;
+			}
+			if (result != CharacterDbSaveResult::Failed || !connected)
+			{
+				break;
+			}
+			if (attempt < 3)
+			{
+				LOG_WARN(Net, "[ServerApp] Auction tx retry {} (operation={})", attempt, operationId);
+				std::this_thread::sleep_for(std::chrono::milliseconds(20 * attempt));
+			}
+		}
+		if (result == CharacterDbSaveResult::Failed && tx.commitUncertain)
+		{
+			// Un COMMIT dont la réponse s'est perdue a peut-être été validé, et aucune
+			// relecture n'a pu le confirmer : on garde l'état en mémoire tel quel
+			// (pas d'annulation) pour ne jamais rendre deux fois ce qui a été payé.
+			LOG_ERROR(Net, "[ServerApp] Auction tx outcome UNKNOWN (operation={}) : memory kept as applied, check auction_operations",
+				operationId);
+			return CharacterDbSaveResult::Saved;
+		}
+		return result;
+#else
+		(void)tx;
+		(void)outListingId;
+		return CharacterDbSaveResult::SkippedNoDb;
+#endif
+	}
+
+	ServerApp::CharacterDbSaveResult ServerApp::ExecuteAuctionTxOnce(const AuctionTxPlan& plan,
+		const std::vector<PersistedCharacterState>& states, const std::vector<std::pair<float, uint64_t>>& extras,
+		const std::string& operationId, uint32_t* outListingId, bool& outConnected, bool& outCommitUncertain,
+		uint64_t& outRefusedCharacterKey)
+	{
+		outConnected = false;
+		outCommitUncertain = false;
+		outRefusedCharacterKey = 0;
+#if defined(SHARD_POSITION_DB)
+		auto guard = m_characterDbPool->Acquire();
+		MYSQL* mysql = guard.get();
+		auto* cache = guard.cache();
+		if (mysql == nullptr || cache == nullptr)
+		{
+			return CharacterDbSaveResult::Failed;
+		}
+		outConnected = true;
+		(void)mysql_query(mysql, "SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
+		if (mysql_query(mysql, "START TRANSACTION") != 0)
+		{
+			return CharacterDbSaveResult::Failed;
+		}
+		const auto rollback = [mysql](CharacterDbSaveResult r) {
+			mysql_query(mysql, "ROLLBACK");
+			return r;
+		};
+		// 0. Opération déjà validée par un essai précédent (réponse du COMMIT perdue) ?
+		{
+			auto* done = cache->Acquire(mysql, "SELECT listing_id FROM auction_operations WHERE operation_id = ?");
+			if (done == nullptr || !done->Bind(0, std::string_view(operationId)) || !done->Execute())
+			{
+				return rollback(CharacterDbSaveResult::Failed);
+			}
+			if (done->FetchRow())
+			{
+				if (outListingId != nullptr)
+				{
+					*outListingId = static_cast<uint32_t>(done->GetUInt64(0));
+				}
+				while (done->FetchRow()) {}
+				mysql_query(mysql, "ROLLBACK");
+				return CharacterDbSaveResult::Saved;
+			}
+		}
+		// 1. L'annonce : une annonce supprimée ou absente = déjà réglée (AlreadyApplied).
+		const AuctionListingRecord& l = plan.listing;
+		uint32_t listingId = l.listingId;
+		switch (plan.op)
+		{
+		case AuctionListingOp::Insert:
+		{
+			auto* ins = cache->Acquire(mysql,
+				"INSERT INTO auction_listings (shard_id, seller_character_id, item_id, quantity, start_bid, buyout_price, "
+				"current_bid, high_bidder_character_id, expires_at) "
+				"VALUES (?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP() + INTERVAL ? SECOND)");
+			if (ins == nullptr || !ins->Bind(0, m_shardId) || !ins->Bind(1, l.sellerCharacterKey) || !ins->Bind(2, l.itemId)
+				|| !ins->Bind(3, l.quantity) || !ins->Bind(4, l.startBid) || !ins->Bind(5, l.buyoutPrice)
+				|| !ins->Bind(6, l.currentBid) || !ins->Bind(7, l.highBidderCharacterKey)
+				|| !ins->Bind(8, plan.durationSeconds) || !ins->Execute())
+			{
+				return rollback(CharacterDbSaveResult::Failed);
+			}
+			auto* id = cache->Acquire(mysql, "SELECT LAST_INSERT_ID()");
+			if (id == nullptr || !id->Execute() || !id->FetchRow())
+			{
+				return rollback(CharacterDbSaveResult::Failed);
+			}
+			listingId = static_cast<uint32_t>(id->GetUInt64(0));
+			while (id->FetchRow()) {}
+			break;
+		}
+		case AuctionListingOp::UpdateBid:
+		{
+			auto* upd = cache->Acquire(mysql,
+				"UPDATE auction_listings SET current_bid = ?, high_bidder_character_id = ? WHERE listing_id = ? AND shard_id = ?");
+			if (upd == nullptr || !upd->Bind(0, l.currentBid) || !upd->Bind(1, l.highBidderCharacterKey)
+				|| !upd->Bind(2, l.listingId) || !upd->Bind(3, m_shardId) || !upd->Execute())
+			{
+				return rollback(CharacterDbSaveResult::Failed);
+			}
+			if (upd->AffectedRows() == 0u) // lignes correspondantes (CLIENT_FOUND_ROWS) : 0 = annonce absente
+			{
+				return rollback(CharacterDbSaveResult::AlreadyApplied);
+			}
+			break;
+		}
+		case AuctionListingOp::Delete:
+		{
+			auto* del = cache->Acquire(mysql, "DELETE FROM auction_listings WHERE listing_id = ? AND shard_id = ?");
+			if (del == nullptr || !del->Bind(0, l.listingId) || !del->Bind(1, m_shardId) || !del->Execute())
+			{
+				return rollback(CharacterDbSaveResult::Failed);
+			}
+			if (del->AffectedRows() == 0u)
+			{
+				return rollback(CharacterDbSaveResult::AlreadyApplied);
+			}
+			break;
+		}
+		}
+		// 2. Les joueurs en ligne concernés (état complet, contrôle de propriété 1.2).
+		for (size_t i = 0; i < states.size(); ++i)
+		{
+			const CharacterDbSaveResult written =
+				WriteCharacterStateInTx(mysql, cache, states[i], extras[i].first, extras[i].second);
+			if (written != CharacterDbSaveResult::Saved)
+			{
+				if (written == CharacterDbSaveResult::RefusedNotOwner)
+				{
+					outRefusedCharacterKey = states[i].characterKey;
+				}
+				return rollback(written);
+			}
+		}
+		// 3. Le courrier des joueurs absents.
+		for (const AuctionMailRow& mail : plan.mail)
+		{
+			auto* ins = cache->Acquire(mysql,
+				"INSERT INTO character_mailbox (character_id, gold, item_id, quantity, source) VALUES (?, ?, ?, ?, 'auction')");
+			if (ins == nullptr || !ins->Bind(0, mail.characterId) || !ins->Bind(1, mail.gold)
+				|| !ins->Bind(2, mail.item.itemId) || !ins->Bind(3, mail.item.quantity) || !ins->Execute())
+			{
+				return rollback(CharacterDbSaveResult::Failed);
+			}
+		}
+		// 4. L'opération elle-même : sa présence protège contre un second passage.
+		{
+			const char* kind = plan.op == AuctionListingOp::Insert ? "list"
+				: (plan.op == AuctionListingOp::UpdateBid ? "bid" : "settle");
+			auto* op = cache->Acquire(mysql,
+				"INSERT INTO auction_operations (operation_id, listing_id, kind) VALUES (?, ?, ?)");
+			if (op == nullptr || !op->Bind(0, std::string_view(operationId)) || !op->Bind(1, listingId)
+				|| !op->Bind(2, std::string_view(kind)) || !op->Execute())
+			{
+				return rollback(CharacterDbSaveResult::Failed);
+			}
+		}
+		if (mysql_query(mysql, "COMMIT") != 0)
+		{
+			outCommitUncertain = true;
+			return rollback(CharacterDbSaveResult::Failed);
+		}
+		if (outListingId != nullptr)
+		{
+			*outListingId = listingId;
+		}
+		return CharacterDbSaveResult::Saved;
+#else
+		(void)plan; (void)states; (void)extras; (void)operationId; (void)outListingId;
+		(void)outCommitUncertain; (void)outRefusedCharacterKey;
+		return CharacterDbSaveResult::SkippedNoDb;
+#endif
+	}
+
+	ServerApp::AuctionTxBuilder::Saved* ServerApp::AuctionTxBuilder::Find(ConnectedClient& client)
+	{
+		for (Saved& s : saved)
+		{
+			if (s.client == &client)
+			{
+				return &s;
+			}
+		}
+		return nullptr;
+	}
+
+	ServerApp::AuctionTxBuilder::Saved& ServerApp::AuctionTxBuilder::Remember(ConnectedClient& client, bool isPayer)
+	{
+		if (Saved* existing = Find(client))
+		{
+			existing->isPayer = existing->isPayer || isPayer;
+			return *existing;
+		}
+		saved.push_back(Saved{ &client, client.gold, client.inventory, client.cakeExpiresAtMsUtcByItemId, isPayer, 0u, {}, false });
+		return saved.back();
+	}
+
+	std::vector<ConnectedClient*> ServerApp::AuctionTxBuilder::Characters() const
+	{
+		std::vector<ConnectedClient*> out;
+		for (const Saved& s : saved)
+		{
+			if (!s.mailed)
+			{
+				out.push_back(s.client);
+			}
+		}
+		return out;
+	}
+
+	bool ServerApp::AuctionTxBuilder::ReplanAsMail(uint64_t characterKey)
+	{
+		for (Saved& s : saved)
+		{
+			if (s.mailed || s.client->persistenceCharacterKey != characterKey)
+			{
+				continue;
+			}
+			if (s.isPayer)
+			{
+				return false; // le payeur doit être écrit : l'opération échoue
+			}
+			// Remet son état en mémoire et envoie ses gains au courrier.
+			s.client->gold = s.gold;
+			s.client->inventory = s.inventory;
+			s.client->cakeExpiresAtMsUtcByItemId = s.cakes;
+			if (s.creditGold != 0u)
+			{
+				plan.mail.push_back(AuctionMailRow{ characterKey, s.creditGold, ItemStack{} });
+			}
+			for (const ItemStack& item : s.creditItems)
+			{
+				plan.mail.push_back(AuctionMailRow{ characterKey, 0u, item });
+			}
+			s.mailed = true;
+			return true;
+		}
+		return false;
+	}
+
+	void ServerApp::AuctionTxBuilder::Revert()
+	{
+		for (Saved& s : saved)
+		{
+			if (s.mailed)
+			{
+				continue; // déjà remis en l'état par ReplanAsMail
+			}
+			s.client->gold = s.gold;
+			s.client->inventory = s.inventory;
+			s.client->cakeExpiresAtMsUtcByItemId = s.cakes;
+		}
+		saved.clear();
+	}
+
+	void ServerApp::PlanAuctionCredit(AuctionTxBuilder& tx, uint64_t characterKey, uint32_t gold, const ItemStack* item)
+	{
+		const bool hasItem = item != nullptr && item->itemId != 0u && item->quantity != 0u;
+		if (characterKey == 0u || (gold == 0u && !hasItem))
+		{
+			return;
+		}
+		ConnectedClient* online = FindConnectedClientByCharacterKey(characterKey);
+		if (online == nullptr)
+		{
+			tx.plan.mail.push_back(AuctionMailRow{ characterKey, gold, hasItem ? *item : ItemStack{} });
+			return;
+		}
+		AuctionTxBuilder::Saved& saved = tx.Remember(*online, false);
+		if (gold != 0u)
+		{
+			std::string werr;
+			if (m_playerWallet.AddCurrency(*online, kCurrencyGold, gold, werr))
+			{
+				saved.creditGold += gold;
+			}
+			else
+			{
+				tx.plan.mail.push_back(AuctionMailRow{ characterKey, gold, ItemStack{} }); // bourse pleine
+			}
+		}
+		if (hasItem)
+		{
+			AddItemToInventory(*online, *item);
+			saved.creditItems.push_back(*item);
+		}
+	}
+
+	void ServerApp::NotifyAuctionParticipants(const AuctionTxBuilder& tx)
+	{
+		for (const auto& s : tx.saved)
+		{
+			if (s.mailed)
+			{
+				continue;
+			}
+			(void)SendWalletUpdate(*s.client);
+			(void)SendInventoryDelta(*s.client,
+				std::span<const ItemStack>(s.client->inventory.data(), s.client->inventory.size()));
+		}
+	}
+
+	ServerApp::CharacterDbSaveResult ServerApp::SettleAuctionInDb(const AuctionSettlement& s, uint32_t refundGold,
+		uint64_t refundCharacterKey, ConnectedClient* payer, uint64_t payerCharge)
+	{
+		AuctionTxBuilder tx{};
+		tx.plan.op = AuctionListingOp::Delete;
+		tx.plan.listing.listingId = s.listingId;
+		tx.plan.listing.sellerCharacterKey = s.sellerCharacterKey;
+		if (payer != nullptr)
+		{
+			tx.Remember(*payer, true);
+			std::string werr;
+			if (payerCharge > 0u && !m_playerWallet.SubtractCurrency(*payer, kCurrencyGold, payerCharge, werr))
+			{
+				tx.Revert();
+				SendChatSystemNotice(*payer, "Not enough gold.");
+				return CharacterDbSaveResult::Failed;
+			}
+		}
+		if (refundCharacterKey != 0u && refundGold != 0u)
+		{
+			PlanAuctionCredit(tx, refundCharacterKey, refundGold, nullptr);
+		}
+		if (s.expiredWithoutBids)
+		{
+			PlanAuctionCredit(tx, s.sellerCharacterKey, 0u, &s.item);
+		}
+		else
+		{
+			PlanAuctionCredit(tx, s.buyerCharacterKey, 0u, &s.item);
+			PlanAuctionCredit(tx, s.sellerCharacterKey, s.sellerProceeds, nullptr);
+		}
+		const CharacterDbSaveResult result = ExecuteAuctionTx(tx, nullptr);
+		if (result != CharacterDbSaveResult::Saved)
+		{
+			tx.Revert();
+			LOG_ERROR(Net, "[ServerApp] Auction settlement not applied (listing_id={}, result={})",
+				s.listingId, static_cast<int>(result));
+			return result;
+		}
+		NotifyAuctionParticipants(tx);
+		{
+			std::ostringstream hist;
+			hist << "listing=" << s.listingId << " final=" << s.finalPrice << " seller_ck=" << s.sellerCharacterKey
+				<< " buyer_ck=" << s.buyerCharacterKey << " no_bids=" << (s.expiredWithoutBids ? 1 : 0);
+			(void)m_auctionHouse.AppendHistoryLine(hist.str());
+		}
+		if (ConnectedClient* seller = FindConnectedClientByCharacterKey(s.sellerCharacterKey))
+		{
+			SendChatSystemNotice(*seller, s.expiredWithoutBids ? "Auction expired. Item returned." : "Your auction sold.");
+		}
+		if (!s.expiredWithoutBids)
+		{
+			if (ConnectedClient* buyer = FindConnectedClientByCharacterKey(s.buyerCharacterKey))
+			{
+				SendChatSystemNotice(*buyer, "You won an auction: item received.");
+			}
+		}
+		LOG_INFO(Net, "[ServerApp] Auction settled in DB (listing_id={}, no_bids={}, mail_rows={})",
+			s.listingId, s.expiredWithoutBids, tx.plan.mail.size());
+		return CharacterDbSaveResult::Saved;
+	}
+
+	void ServerApp::HandleAuctionListItemDb(ConnectedClient& client, const AuctionListItemRequestMessage& message)
+	{
+		AuctionTxBuilder tx{};
+		tx.Remember(client, true);
+		std::string invErr;
+		if (!RemoveStackFromInventory(client, message.itemId, message.quantity, invErr))
+		{
+			tx.Revert();
+			LOG_WARN(Net, "[ServerApp] AuctionListItem blocked: {}", invErr);
+			SendChatSystemNotice(client, "You do not have that item.");
+			return;
+		}
+		tx.plan.op = AuctionListingOp::Insert;
+		tx.plan.listing.sellerClientId = client.clientId;
+		tx.plan.listing.sellerCharacterKey = client.persistenceCharacterKey;
+		tx.plan.listing.itemId = message.itemId;
+		tx.plan.listing.quantity = message.quantity;
+		tx.plan.listing.startBid = message.startBid;
+		tx.plan.listing.buyoutPrice = message.buyoutPrice;
+		tx.plan.durationSeconds = static_cast<uint32_t>(message.durationHours) * 3600u;
+		uint32_t listingId = 0;
+		const CharacterDbSaveResult result = ExecuteAuctionTx(tx, &listingId);
+		if (result != CharacterDbSaveResult::Saved || listingId == 0u)
+		{
+			if (!(result == CharacterDbSaveResult::Saved && tx.commitUncertain))
+			{
+				tx.Revert(); // l'objet revient dans le sac
+			}
+			SendChatSystemNotice(client, "Auction house unavailable, try again later.");
+			LOG_ERROR(Net, "[ServerApp] AuctionListItem FAILED in DB (client_id={}, item_id={})", client.clientId, message.itemId);
+			return;
+		}
+		AuctionListingRecord row = tx.plan.listing;
+		row.listingId = listingId;
+		row.expiresAtTick = m_currentTick + message.durationHours * 3600u * static_cast<uint32_t>(m_tickHz);
+		m_auctionHouse.InsertListingWithId(row);
+		(void)SendInventoryDelta(client, std::span<const ItemStack>(client.inventory.data(), client.inventory.size()));
+		SendChatSystemNotice(client, "Item listed on auction house.");
+		LOG_INFO(Net, "[ServerApp] AuctionListItem OK (db, client_id={}, listing_id={}, item_id={}, qty={})",
+			client.clientId, listingId, message.itemId, message.quantity);
+	}
+
+	void ServerApp::HandleAuctionBidDb(ConnectedClient& client, AuctionListingRecord& row, uint32_t bidAmount)
+	{
+		const uint64_t prevCk = row.highBidderCharacterKey;
+		const uint32_t prevBid = row.currentBid;
+		const uint64_t bidderCk = client.persistenceCharacterKey;
+		uint64_t charge = bidAmount;
+		if (prevCk == bidderCk && prevBid > 0u)
+		{
+			charge = static_cast<uint64_t>(bidAmount) - static_cast<uint64_t>(prevBid);
+		}
+		AuctionTxBuilder tx{};
+		tx.Remember(client, true);
+		std::string werr;
+		if (charge > 0u && !m_playerWallet.SubtractCurrency(client, kCurrencyGold, charge, werr))
+		{
+			tx.Revert();
+			LOG_WARN(Net, "[ServerApp] AuctionBid blocked: wallet ({})", werr);
+			SendChatSystemNotice(client, "Not enough gold.");
+			return;
+		}
+		// Remboursement du précédent enchérisseur dans la même transaction.
+		if (prevCk != 0u && prevCk != bidderCk)
+		{
+			PlanAuctionCredit(tx, prevCk, prevBid, nullptr);
+		}
+		tx.plan.op = AuctionListingOp::UpdateBid;
+		tx.plan.listing = row;
+		tx.plan.listing.currentBid = bidAmount;
+		tx.plan.listing.highBidderCharacterKey = bidderCk;
+		const CharacterDbSaveResult result = ExecuteAuctionTx(tx, nullptr);
+		if (result != CharacterDbSaveResult::Saved)
+		{
+			tx.Revert();
+			if (result == CharacterDbSaveResult::AlreadyApplied)
+			{
+				m_auctionHouse.EraseListing(row.listingId); // annonce disparue de la base
+				SendChatSystemNotice(client, "That listing is gone.");
+				return;
+			}
+			SendChatSystemNotice(client, "Auction house unavailable, try again later.");
+			LOG_ERROR(Net, "[ServerApp] AuctionBid FAILED in DB (client_id={}, listing_id={})", client.clientId, row.listingId);
+			return;
+		}
+		row.currentBid = bidAmount;
+		row.highBidderCharacterKey = bidderCk;
+		row.highBidderClientId = client.clientId;
+		NotifyAuctionParticipants(tx);
+		if (prevCk != 0u && prevCk != bidderCk)
+		{
+			if (ConnectedClient* prev = FindConnectedClientByCharacterKey(prevCk))
+			{
+				SendChatSystemNotice(*prev, "You were outbid.");
+			}
+		}
+		SendChatSystemNotice(client, "Bid accepted.");
+		LOG_INFO(Net, "[ServerApp] AuctionBid OK (db, client_id={}, listing_id={}, bid={})", client.clientId, row.listingId, bidAmount);
+	}
+
+	void ServerApp::HandleAuctionBuyoutDb(ConnectedClient& client, const AuctionListingRecord& row)
+	{
+		const uint64_t buyerCk = client.persistenceCharacterKey;
+		uint64_t charge = row.buyoutPrice;
+		if (row.highBidderCharacterKey == buyerCk && row.currentBid > 0u)
+		{
+			charge = static_cast<uint64_t>(row.buyoutPrice) - static_cast<uint64_t>(row.currentBid);
+		}
+		AuctionSettlement settlement{};
+		settlement.listingId = row.listingId;
+		settlement.item = ItemStack{ row.itemId, row.quantity };
+		settlement.sellerCharacterKey = row.sellerCharacterKey;
+		settlement.buyerCharacterKey = buyerCk;
+		settlement.buyerClientId = client.clientId;
+		settlement.finalPrice = row.buyoutPrice;
+		settlement.sellerProceeds = (row.buyoutPrice * static_cast<uint32_t>(100u - kAuctionHouseFeePercent)) / 100u;
+		const uint64_t hiCk = row.highBidderCharacterKey;
+		const uint32_t hiBid = row.currentBid;
+		const bool refundOther = hiCk != 0u && hiCk != buyerCk;
+		const uint32_t listingId = row.listingId;
+		const CharacterDbSaveResult result =
+			SettleAuctionInDb(settlement, refundOther ? hiBid : 0u, refundOther ? hiCk : 0u, &client, charge);
+		if (result == CharacterDbSaveResult::AlreadyApplied)
+		{
+			m_auctionHouse.EraseListing(listingId); // déjà réglée en base
+			SendChatSystemNotice(client, "That listing is gone.");
+			return;
+		}
+		if (result != CharacterDbSaveResult::Saved)
+		{
+			SendChatSystemNotice(client, "Auction house unavailable, try again later.");
+			return;
+		}
+		m_auctionHouse.EraseListing(listingId);
+		if (refundOther)
+		{
+			if (ConnectedClient* prev = FindConnectedClientByCharacterKey(hiCk))
+			{
+				SendChatSystemNotice(*prev, "Auction ended (buyout). Your bid was refunded.");
+			}
+		}
+		SendChatSystemNotice(client, "Buyout successful.");
+		LOG_INFO(Net, "[ServerApp] AuctionBuyout OK (db, client_id={}, listing_id={}, price={})",
+			client.clientId, listingId, settlement.finalPrice);
+	}
+
+	void ServerApp::ProcessAuctionHouseTickDb()
+	{
+		for (const AuctionListingRecord& row : m_auctionHouse.ExpiredListings(m_currentTick))
+		{
+			const CharacterDbSaveResult result = SettleAuctionInDb(AuctionHouseService::SettlementFor(row), 0u, 0u, nullptr, 0u);
+			if (result == CharacterDbSaveResult::Saved || result == CharacterDbSaveResult::AlreadyApplied)
+			{
+				// AlreadyApplied : annonce déjà absente de la base, rien à régler.
+				m_auctionHouse.EraseListing(row.listingId);
+				continue;
+			}
+			// Base indisponible : nouvel essai dans une minute.
+			if (AuctionListingRecord* live = m_auctionHouse.FindListing(row.listingId))
+			{
+				live->expiresAtTick = m_currentTick + 60u * static_cast<uint32_t>(m_tickHz);
+			}
+		}
+	}
+
 	void ServerApp::ProcessAuctionHouseTick()
 	{
+		if (AuctionInDb())
+		{
+			ProcessAuctionHouseTickDb(); // ETAPE2.8
+			return;
+		}
 		std::vector<AuctionSettlement> settlements;
 		m_auctionHouse.CollectExpired(m_currentTick, settlements);
 		for (const AuctionSettlement& s : settlements)

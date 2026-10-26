@@ -1053,6 +1053,100 @@ namespace engine::server
 
 		void ApplyAuctionSettlement(const AuctionSettlement& settlement);
 
+		// --- ETAPE2.8 — hôtel des ventes en base, une transaction par opération ---
+
+		/// Opération sur l'annonce, faite en premier dans la transaction.
+		enum class AuctionListingOp : uint8_t
+		{
+			Insert,    ///< mise en vente (identifiant attribué par la base)
+			UpdateBid, ///< nouvelle enchère (annonce absente = AlreadyApplied)
+			Delete,    ///< règlement : achat immédiat ou fin (annonce absente = déjà réglée)
+		};
+
+		/// Courrier d'un joueur absent (or et/ou objet), dans la même transaction.
+		struct AuctionMailRow
+		{
+			uint64_t characterId = 0;
+			uint32_t gold = 0;
+			ItemStack item{};
+		};
+
+		/// Tout ce qu'une opération écrit, ensemble.
+		struct AuctionTxPlan
+		{
+			AuctionListingOp op = AuctionListingOp::Insert;
+			AuctionListingRecord listing{};
+			uint32_t durationSeconds = 0; ///< Insert : durée de l'annonce
+			std::vector<const ConnectedClient*> characters; ///< joueurs en ligne écrits en entier
+			std::vector<AuctionMailRow> mail;
+		};
+
+		/// Plan + mémoire des joueurs touchés (bourse, sac, gâteaux) pour annuler en
+		/// mémoire si la transaction échoue, et gains de chacun (pour basculer au
+		/// courrier un joueur que ce shard ne possède plus).
+		struct AuctionTxBuilder
+		{
+			struct Saved
+			{
+				ConnectedClient* client = nullptr;
+				uint32_t gold = 0;
+				std::vector<ItemStack> inventory;
+				std::map<uint32_t, uint64_t> cakes;
+				bool isPayer = false;      ///< débité ou objet retiré : doit être écrit
+				uint32_t creditGold = 0;   ///< or ajouté en mémoire
+				std::vector<ItemStack> creditItems; ///< objets ajoutés en mémoire
+				bool mailed = false;       ///< basculé au courrier (plus écrit en entier)
+			};
+			AuctionTxPlan plan{};
+			std::vector<Saved> saved;
+			bool commitUncertain = false; ///< réponse d'un COMMIT perdue pendant les essais
+			Saved* Find(ConnectedClient& client);
+			/// Mémorise l'état du joueur (une fois) ; il sera écrit en entier.
+			Saved& Remember(ConnectedClient& client, bool isPayer);
+			/// Joueurs à écrire (hors basculés au courrier).
+			std::vector<ConnectedClient*> Characters() const;
+			/// Remet le joueur en l'état et envoie ses gains au courrier ; false si
+			/// c'est un payeur (l'opération doit alors échouer) ou s'il est inconnu.
+			bool ReplanAsMail(uint64_t characterKey);
+			/// Remet bourse, sac et gâteaux des joueurs mémorisés.
+			void Revert();
+		};
+
+		/// Vrai si l'hôtel des ventes vit en base (shard Linux avec base).
+		bool AuctionInDb() const;
+		/// Charge les annonces du shard depuis la base (et importe une fois l'ancien fichier).
+		void LoadAuctionListingsFromDb();
+		/// Exécute un plan en UNE transaction, identifiée par un identifiant d'opération
+		/// (3 essais avec le même identifiant ; déjà présent = déjà appliquée). Les
+		/// sauvegardes en file des joueurs concernés passent avant. Un joueur crédité
+		/// que ce shard ne possède plus est crédité par courrier. Issue inconnue après
+		/// une réponse de COMMIT perdue : Saved (la mémoire est gardée, jamais rendue
+		/// deux fois). \param outListingId id attribué (Insert).
+		CharacterDbSaveResult ExecuteAuctionTx(AuctionTxBuilder& tx, uint32_t* outListingId);
+		CharacterDbSaveResult ExecuteAuctionTxOnce(const AuctionTxPlan& plan,
+			const std::vector<PersistedCharacterState>& states, const std::vector<std::pair<float, uint64_t>>& extras,
+			const std::string& operationId, uint32_t* outListingId, bool& outConnected, bool& outCommitUncertain,
+			uint64_t& outRefusedCharacterKey);
+		/// Import unique de l'ancien fichier d'annonces (une transaction + marqueur).
+		void ImportAuctionListingsFile();
+		/// Crédite un joueur : en mémoire s'il est en ligne sur ce shard (bourse pleine
+		/// = courrier), sinon ligne de courrier dans la transaction.
+		void PlanAuctionCredit(AuctionTxBuilder& tx, uint64_t characterKey, uint32_t gold, const ItemStack* item);
+		/// Envoie bourse et sac à jour aux joueurs en ligne touchés.
+		void NotifyAuctionParticipants(const AuctionTxBuilder& tx);
+		/// Règle une annonce (achat immédiat ou fin) en une transaction : objet à
+		/// l'acheteur (ou retour au vendeur), or au vendeur, remboursement éventuel,
+		/// suppression de l'annonce. \param payer acheteur débité de \p payerCharge (achat immédiat).
+		/// \return Saved, AlreadyApplied (annonce déjà réglée en base) ou un échec ;
+		/// hors Saved, la mémoire est remise en l'état.
+		CharacterDbSaveResult SettleAuctionInDb(const AuctionSettlement& settlement, uint32_t refundGold,
+			uint64_t refundCharacterKey, ConnectedClient* payer, uint64_t payerCharge);
+		void HandleAuctionListItemDb(ConnectedClient& client, const AuctionListItemRequestMessage& message);
+		void HandleAuctionBidDb(ConnectedClient& client, AuctionListingRecord& row, uint32_t bidAmount);
+		void HandleAuctionBuyoutDb(ConnectedClient& client, const AuctionListingRecord& row);
+		/// Règle les annonces échues ; une annonce dont la transaction échoue est retentée dans une minute.
+		void ProcessAuctionHouseTickDb();
+
 		/// Refund gold to an online player or queue to persisted mailbox when offline.
 		// Phase 3.7.5 — characterKey élargi à uint64 (alignement avec persistenceCharacterKey).
 		void RefundGoldToCharacter(uint64_t characterKey, uint32_t amountGold, std::string_view reason);

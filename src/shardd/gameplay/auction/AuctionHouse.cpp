@@ -4,6 +4,7 @@
 #include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <limits>
 #include <sstream>
@@ -76,6 +77,10 @@ namespace engine::server
 
 	bool AuctionHouseService::LoadFromContent()
 	{
+		if (!m_filePersistence)
+		{
+			return false; // ETAPE2.8 — annonces en base
+		}
 		const std::string text = engine::platform::FileSystem::ReadAllTextContent(m_config, m_relativeListingsPath);
 		if (text.empty())
 		{
@@ -126,6 +131,10 @@ namespace engine::server
 
 	bool AuctionHouseService::SaveToContent() const
 	{
+		if (!m_filePersistence)
+		{
+			return true; // ETAPE2.8 — annonces en base, écrites par ServerApp
+		}
 		std::ostringstream os;
 		os << "auction.next_listing_id=" << m_nextListingId << "\n";
 		uint32_t saved = 0;
@@ -378,5 +387,95 @@ namespace engine::server
 		}
 		LOG_INFO(Net, "[AuctionHouse] PersistListings OK");
 		return true;
+	}
+
+	void AuctionHouseService::ReplaceListings(std::vector<AuctionListingRecord> rows)
+	{
+		m_listings = std::move(rows);
+		m_nextListingId = 1;
+		for (const AuctionListingRecord& r : m_listings)
+		{
+			m_nextListingId = std::max(m_nextListingId, r.listingId + 1u);
+		}
+		LOG_INFO(Net, "[AuctionHouse] Listings replaced (rows={})", m_listings.size());
+	}
+
+	void AuctionHouseService::InsertListingWithId(const AuctionListingRecord& row)
+	{
+		m_listings.push_back(row);
+		m_nextListingId = std::max(m_nextListingId, row.listingId + 1u);
+		LOG_INFO(Net, "[AuctionHouse] Listing created (id={}, item={}, qty={})", row.listingId, row.itemId, row.quantity);
+	}
+
+	std::vector<AuctionListingRecord> AuctionHouseService::ReadListingsFile() const
+	{
+		AuctionHouseService reader(m_config);
+		reader.m_filePersistence = true;
+		if (!reader.LoadFromContent())
+		{
+			return {};
+		}
+		std::vector<AuctionListingRecord> rows;
+		for (const AuctionListingRecord& r : reader.m_listings)
+		{
+			if (!r.closed)
+			{
+				rows.push_back(r);
+			}
+		}
+		return rows;
+	}
+
+	bool AuctionHouseService::RetireListingsFile() const
+	{
+		const auto path = engine::platform::FileSystem::ResolveContentPath(m_config, m_relativeListingsPath);
+		std::error_code ec;
+		if (!std::filesystem::exists(path, ec))
+		{
+			return true;
+		}
+		auto target = path;
+		target += ".imported";
+		std::filesystem::rename(path, target, ec);
+		if (ec)
+		{
+			LOG_ERROR(Net, "[AuctionHouse] Retire listings file FAILED ({}): {}", path.string(), ec.message());
+			return false;
+		}
+		LOG_INFO(Net, "[AuctionHouse] Listings file retired ({}.imported)", path.string());
+		return true;
+	}
+
+	std::vector<AuctionListingRecord> AuctionHouseService::ExpiredListings(uint32_t currentTick) const
+	{
+		std::vector<AuctionListingRecord> rows;
+		for (const AuctionListingRecord& r : m_listings)
+		{
+			if (!r.closed && r.expiresAtTick != 0u && currentTick >= r.expiresAtTick)
+			{
+				rows.push_back(r);
+			}
+		}
+		return rows;
+	}
+
+	AuctionSettlement AuctionHouseService::SettlementFor(const AuctionListingRecord& r)
+	{
+		AuctionSettlement s{};
+		s.listingId = r.listingId;
+		s.item = ItemStack{ r.itemId, r.quantity };
+		s.sellerCharacterKey = r.sellerCharacterKey;
+		if (r.currentBid == 0u || r.highBidderCharacterKey == 0u)
+		{
+			s.expiredWithoutBids = true;
+		}
+		else
+		{
+			s.finalPrice = r.currentBid;
+			s.sellerProceeds = (r.currentBid * (100u - kAuctionHouseFeePercent)) / 100u;
+			s.buyerCharacterKey = r.highBidderCharacterKey;
+			s.buyerClientId = r.highBidderClientId;
+		}
+		return s;
 	}
 }

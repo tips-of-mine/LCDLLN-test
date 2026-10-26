@@ -57,6 +57,8 @@
 #include <unordered_set>
 #include <vector>
 
+struct MYSQL; // ETAPE2.4 — WriteCharacterStateInTx (connexion fournie par l'appelant)
+
 namespace engine::server
 {
 	/// Minimal mob AI states required by the authoritative aggro ticket.
@@ -391,7 +393,7 @@ namespace engine::server
 	};
 
 	class AdmittedCharacterRegistry;
-	namespace db { class ConnectionPool; }
+	namespace db { class ConnectionPool; class SqlPreparedStatementCache; }
 
 	/// Headless authoritative server skeleton with fixed ticks, replication and minimal combat.
 	class ServerApp final
@@ -497,6 +499,7 @@ namespace engine::server
 			SkippedNoDb,     ///< Pas de pool DB (dev sans MySQL / Windows) : rien d'écrit.
 			RefusedNotOwner, ///< Ce shard n'est plus le propriétaire du personnage : rien d'écrit.
 			Failed,          ///< Erreur SQL : transaction annulée.
+			AlreadyApplied,  ///< ETAPE2.4 — opération à deux personnages déjà écrite : rien de refait.
 		};
 
 		/// ETAPE1.2 — avant toute écriture, verrouille la ligne `characters` (SELECT … FOR
@@ -513,6 +516,28 @@ namespace engine::server
 		/// d'interblocage). \param outConnected vrai si une connexion a été obtenue.
 		CharacterDbSaveResult SaveCharacterToDbOnce(const PersistedCharacterState& state, float yawRadians,
 			uint64_t ownerGeneration, bool& outConnected);
+
+		/// ETAPE2.4 — écrit l'état d'UN personnage dans une transaction déjà ouverte par
+		/// l'appelant (contrôle de propriété compris). Ne valide ni n'annule : l'appelant
+		/// fait COMMIT si Saved, ROLLBACK sinon. Corps sous SHARD_POSITION_DB.
+		CharacterDbSaveResult WriteCharacterStateInTx(MYSQL* mysql, db::SqlPreparedStatementCache* cache,
+			const PersistedCharacterState& state, float yawRadians, uint64_t ownerGeneration) const;
+
+		/// ETAPE2.4 — opération à deux personnages (échange, transfert) : enregistre
+		/// \p operationId dans `character_operations` puis écrit les deux états, le tout
+		/// dans UNE transaction. Identifiant déjà présent → AlreadyApplied, rien n'est
+		/// réécrit. Les lignes sont verrouillées par identifiant croissant.
+		CharacterDbSaveResult SaveCharacterPairToDb(
+			const PersistedCharacterState& first, float firstYawRadians, uint64_t firstOwnerGeneration,
+			const PersistedCharacterState& second, float secondYawRadians, uint64_t secondOwnerGeneration,
+			std::string_view kind, std::string_view operationId);
+
+		/// ETAPE2.4 — une tentative de SaveCharacterPairToDb (qui rejoue jusqu'à 3 fois,
+		/// avec le MÊME identifiant d'opération). \param outConnected connexion obtenue.
+		CharacterDbSaveResult SaveCharacterPairToDbOnce(
+			const PersistedCharacterState& first, float firstYawRadians, uint64_t firstOwnerGeneration,
+			const PersistedCharacterState& second, float secondYawRadians, uint64_t secondOwnerGeneration,
+			std::string_view kind, std::string_view operationId, bool& outConnected);
 
 		/// ETAPE2.1 — ce que la base connaît d'un personnage.
 		enum class CharacterDbLoadResult : uint8_t
@@ -573,6 +598,15 @@ namespace engine::server
 		/// ETAPE2.2 — avec une base, dépose un instantané dans m_characterSaveQueue
 		/// (écriture hors du tick) ; sans file ou file pleine, écrit immédiatement.
 		void SaveConnectedClient(const ConnectedClient& client, std::string_view reason);
+
+		/// ETAPE2.4 — instantané de l'état persistant d'un joueur connecté.
+		PersistedCharacterState BuildPersistedCharacterState(const ConnectedClient& client) const;
+
+		/// ETAPE2.4 — sauve deux joueurs modifiés par la même opération (échange,
+		/// transfert) dans une transaction, immédiatement (hors file, après avoir
+		/// laissé finir leurs sauvegardes en attente). Sans base : deux fichiers .ini.
+		/// \param kind type d'opération (« trade », « wallet_transfer »).
+		void SaveCharacterPair(const ConnectedClient& first, const ConnectedClient& second, std::string_view kind);
 
 		/// ETAPE2.2 — écrit un instantané (base, ou fichier .ini sans base) et journalise.
 		/// Thread-safe avec une base : appelée depuis le tick ou un thread de la file.
@@ -1472,6 +1506,8 @@ namespace engine::server
 		/// ETAPE2.2 — sauvegardes hors du tick (créée à Init quand un pool DB est
 		/// présent ; nullptr sinon). Arrêtée (et vidée) dans Shutdown, avant le pool.
 		std::unique_ptr<CharacterSaveQueue> m_characterSaveQueue;
+		/// ETAPE2.4 — compteur des opérations à deux personnages (identifiant unique).
+		uint64_t m_characterOperationCounter = 0;
 		/// ETAPE1.2 — identifiant de ce shard (config `shard.id`, défaut 1, même clé que le
 		/// validateur de tickets) : comparé à `characters.owner_shard_id` avant d'écrire.
 		uint32_t m_shardId = 1;

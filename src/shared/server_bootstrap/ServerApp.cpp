@@ -11,6 +11,7 @@
 #include "src/shared/db/CharacterOwnership.h" // ETAPE1.2 — un seul propriétaire par personnage
 #include "src/masterd/chat/ChatSanitizer.h" // ETAPE5.1 — nettoyage du chat de proximité
 #include "src/shardd/gameplay/character/AutosaveSchedule.h" // ETAPE2.3 — sauvegardes étalées
+#include "src/shardd/gameplay/character/CharacterOperationId.h" // ETAPE2.4 — opérations à deux personnages
 #include "src/shared/network/ServerProtocol.h"
 
 // R1-A — JSON embarqués (générés au build) pour le moteur de stats des personnages.
@@ -1353,65 +1354,14 @@ namespace engine::server
 #endif
 	}
 
-	ServerApp::CharacterDbSaveResult ServerApp::SaveCharacterToDb(const PersistedCharacterState& state,
-		float yawRadians, uint64_t ownerGeneration)
-	{
-		// ETAPE2.2 — plusieurs threads écrivent désormais en même temps : un
-		// interblocage InnoDB (1213) ou un délai de verrou (1205) fait échouer la
-		// transaction sans rien écrire. On la rejoue (3 essais) tant que la connexion
-		// a été obtenue ; base injoignable = échec immédiat (pas d'attente répétée).
-		CharacterDbSaveResult result = CharacterDbSaveResult::Failed;
-		for (int attempt = 1; attempt <= 3; ++attempt)
-		{
-			bool connected = false;
-			result = SaveCharacterToDbOnce(state, yawRadians, ownerGeneration, connected);
-			if (result != CharacterDbSaveResult::Failed || !connected)
-			{
-				return result;
-			}
-			if (attempt < 3)
-			{
-				LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: transaction failed, retry {} (character_key={})",
-					attempt, state.characterKey);
-				std::this_thread::sleep_for(std::chrono::milliseconds(20 * attempt));
-			}
-		}
-		return result;
-	}
-
-	ServerApp::CharacterDbSaveResult ServerApp::SaveCharacterToDbOnce(const PersistedCharacterState& state,
-		float yawRadians, uint64_t ownerGeneration, bool& outConnected)
-	{
-		outConnected = false;
 #if defined(SHARD_POSITION_DB)
-		if (m_characterDbPool == nullptr || state.characterKey == 0u)
-		{
-			return CharacterDbSaveResult::SkippedNoDb;
-		}
-		auto guard = m_characterDbPool->Acquire();
-		MYSQL* mysql = guard.get();
-		auto* cache = guard.cache();
-		if (mysql == nullptr || cache == nullptr)
-		{
-			// ETAPE2.1 — base configurée mais injoignable : échec (pas de repli
-			// fichier, il ne serait jamais relu une fois le personnage en base).
-			return CharacterDbSaveResult::Failed;
-		}
-		outConnected = true;
-		// ETAPE2.2 — READ COMMITTED pour cette transaction : pas de verrous
-		// d'intervalle (gap locks) entre personnages voisins lors des DELETE +
-		// INSERT du sac et de l'équipement, donc beaucoup moins d'interblocages
-		// entre threads d'écriture. Le contrôle de propriété garde son FOR UPDATE.
-		(void)mysql_query(mysql, "SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
-		// Transaction : tout l'état part ENSEMBLE — un lecteur concurrent (autre
-		// shard, outil web) ne voit jamais un état mixte, et un échec au milieu
-		// laisse la base sur la sauvegarde précédente.
-		if (mysql_query(mysql, "START TRANSACTION") != 0)
-		{
-			LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: START TRANSACTION failed (character_key={})",
-				state.characterKey);
-			return CharacterDbSaveResult::Failed;
-		}
+	ServerApp::CharacterDbSaveResult ServerApp::WriteCharacterStateInTx(MYSQL* mysql,
+		db::SqlPreparedStatementCache* cache, const PersistedCharacterState& state,
+		float yawRadians, uint64_t ownerGeneration) const
+	{
+		// ETAPE2.4 — corps commun aux sauvegardes simples et aux transactions à deux
+		// personnages : l'appelant ouvre la transaction, appelle cette fonction pour
+		// chaque personnage, puis valide (Saved) ou annule (tout autre résultat).
 		bool ok = true;
 		// 0. ETAPE1.2 — contrôle de propriété : la ligne `characters` est verrouillée
 		// (FOR UPDATE) pendant toute la transaction, donc le master ne peut pas
@@ -1423,21 +1373,18 @@ namespace engine::server
 				"WHERE id = ? AND deleted_at IS NULL FOR UPDATE");
 			if (own == nullptr || !own->Bind(0, state.characterKey) || !own->Execute())
 			{
-				mysql_query(mysql, "ROLLBACK");
-				LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: ownership query failed (character_key={})",
+				LOG_WARN(Net, "[ServerApp] WriteCharacterStateInTx: ownership query failed (character_key={})",
 					state.characterKey);
 				return CharacterDbSaveResult::Failed;
 			}
 			if (!own->FetchRow())
 			{
-				mysql_query(mysql, "ROLLBACK");
 				return CharacterDbSaveResult::RefusedNotOwner;
 			}
 			const auto check = db::CheckCharacterOwnership(static_cast<uint32_t>(own->GetUInt64(0)),
 				own->GetUInt64(1), m_shardId, ownerGeneration);
 			if (!db::IsWriteAllowed(check))
 			{
-				mysql_query(mysql, "ROLLBACK");
 				return CharacterDbSaveResult::RefusedNotOwner;
 			}
 		}
@@ -1559,7 +1506,71 @@ namespace engine::server
 					&& ins->Execute();
 			}
 		}
-		if (ok)
+		return ok ? CharacterDbSaveResult::Saved : CharacterDbSaveResult::Failed;
+	}
+#endif
+
+	ServerApp::CharacterDbSaveResult ServerApp::SaveCharacterToDb(const PersistedCharacterState& state,
+		float yawRadians, uint64_t ownerGeneration)
+	{
+		// ETAPE2.2 — plusieurs threads écrivent désormais en même temps : un
+		// interblocage InnoDB (1213) ou un délai de verrou (1205) fait échouer la
+		// transaction sans rien écrire. On la rejoue (3 essais) tant que la connexion
+		// a été obtenue ; base injoignable = échec immédiat (pas d'attente répétée).
+		CharacterDbSaveResult result = CharacterDbSaveResult::Failed;
+		for (int attempt = 1; attempt <= 3; ++attempt)
+		{
+			bool connected = false;
+			result = SaveCharacterToDbOnce(state, yawRadians, ownerGeneration, connected);
+			if (result != CharacterDbSaveResult::Failed || !connected)
+			{
+				return result;
+			}
+			if (attempt < 3)
+			{
+				LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: transaction failed, retry {} (character_key={})",
+					attempt, state.characterKey);
+				std::this_thread::sleep_for(std::chrono::milliseconds(20 * attempt));
+			}
+		}
+		return result;
+	}
+
+	ServerApp::CharacterDbSaveResult ServerApp::SaveCharacterToDbOnce(const PersistedCharacterState& state,
+		float yawRadians, uint64_t ownerGeneration, bool& outConnected)
+	{
+		outConnected = false;
+#if defined(SHARD_POSITION_DB)
+		if (m_characterDbPool == nullptr || state.characterKey == 0u)
+		{
+			return CharacterDbSaveResult::SkippedNoDb;
+		}
+		auto guard = m_characterDbPool->Acquire();
+		MYSQL* mysql = guard.get();
+		auto* cache = guard.cache();
+		if (mysql == nullptr || cache == nullptr)
+		{
+			// ETAPE2.1 — base configurée mais injoignable : échec (pas de repli
+			// fichier, il ne serait jamais relu une fois le personnage en base).
+			return CharacterDbSaveResult::Failed;
+		}
+		outConnected = true;
+		// ETAPE2.2 — READ COMMITTED pour cette transaction : pas de verrous
+		// d'intervalle (gap locks) entre personnages voisins lors des DELETE +
+		// INSERT du sac et de l'équipement, donc beaucoup moins d'interblocages
+		// entre threads d'écriture. Le contrôle de propriété garde son FOR UPDATE.
+		(void)mysql_query(mysql, "SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
+		// Transaction : tout l'état part ENSEMBLE — un lecteur concurrent (autre
+		// shard, outil web) ne voit jamais un état mixte, et un échec au milieu
+		// laisse la base sur la sauvegarde précédente.
+		if (mysql_query(mysql, "START TRANSACTION") != 0)
+		{
+			LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: START TRANSACTION failed (character_key={})",
+				state.characterKey);
+			return CharacterDbSaveResult::Failed;
+		}
+		const CharacterDbSaveResult result = WriteCharacterStateInTx(mysql, cache, state, yawRadians, ownerGeneration);
+		if (result == CharacterDbSaveResult::Saved)
 		{
 			if (mysql_query(mysql, "COMMIT") != 0)
 			{
@@ -1571,9 +1582,11 @@ namespace engine::server
 			return CharacterDbSaveResult::Saved;
 		}
 		mysql_query(mysql, "ROLLBACK");
-		LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: rollback (character_key={})",
-			state.characterKey);
-		return CharacterDbSaveResult::Failed;
+		if (result == CharacterDbSaveResult::Failed)
+		{
+			LOG_WARN(Net, "[ServerApp] SaveCharacterToDb: rollback (character_key={})", state.characterKey);
+		}
+		return result;
 #else
 		(void)state;
 		(void)yawRadians;
@@ -2827,16 +2840,9 @@ namespace engine::server
 		}
 	}
 
-	void ServerApp::SaveConnectedClient(const ConnectedClient& client, std::string_view reason)
+	PersistedCharacterState ServerApp::BuildPersistedCharacterState(const ConnectedClient& client) const
 	{
-		if (client.persistenceCharacterKey == 0)
-		{
-			LOG_WARN(Net, "[ServerApp] Character save skipped: missing persistence key (client_id={}, reason={})",
-				client.clientId,
-				reason);
-			return;
-		}
-
+		// ETAPE2.4 — instantané commun aux sauvegardes simples et à deux personnages.
 		PersistedCharacterState state{};
 		state.characterKey = client.persistenceCharacterKey;
 		state.zoneId = client.zoneId;
@@ -2868,6 +2874,20 @@ namespace engine::server
 		state.cakeExpiresAtMsUtcByItemId = client.cakeExpiresAtMsUtcByItemId;
 		/// SP-B — persist known class skills.
 		state.knownSkillIds = client.knownSkillIds;
+		return state;
+	}
+
+	void ServerApp::SaveConnectedClient(const ConnectedClient& client, std::string_view reason)
+	{
+		if (client.persistenceCharacterKey == 0)
+		{
+			LOG_WARN(Net, "[ServerApp] Character save skipped: missing persistence key (client_id={}, reason={})",
+				client.clientId,
+				reason);
+			return;
+		}
+
+		PersistedCharacterState state = BuildPersistedCharacterState(client);
 		// ETAPE2.2 — avec la file de sauvegarde, le tick dépose l'instantané et
 		// repart : l'écriture SQL se fait sur un thread de la file (même thread pour
 		// un personnage donné, l'ordre est gardé ; une sauvegarde en attente est
@@ -2898,6 +2918,175 @@ namespace engine::server
 		PersistCharacterState(state, client.yawRadians, client.ownerGeneration, client.clientId, reason);
 	}
 
+	ServerApp::CharacterDbSaveResult ServerApp::SaveCharacterPairToDb(
+		const PersistedCharacterState& first, float firstYawRadians, uint64_t firstOwnerGeneration,
+		const PersistedCharacterState& second, float secondYawRadians, uint64_t secondOwnerGeneration,
+		std::string_view kind, std::string_view operationId)
+	{
+		// Rejouée jusqu'à 3 fois avec le MÊME identifiant : si un essai a en fait été
+		// validé (réponse du COMMIT perdue), le suivant reçoit AlreadyApplied et ne
+		// réapplique rien.
+		CharacterDbSaveResult result = CharacterDbSaveResult::Failed;
+		for (int attempt = 1; attempt <= 3; ++attempt)
+		{
+			bool connected = false;
+			result = SaveCharacterPairToDbOnce(first, firstYawRadians, firstOwnerGeneration,
+				second, secondYawRadians, secondOwnerGeneration, kind, operationId, connected);
+			if (result != CharacterDbSaveResult::Failed || !connected)
+			{
+				return result;
+			}
+			if (attempt < 3)
+			{
+				LOG_WARN(Net, "[ServerApp] SaveCharacterPairToDb: retry {} (operation={})", attempt, operationId);
+				std::this_thread::sleep_for(std::chrono::milliseconds(20 * attempt));
+			}
+		}
+		return result;
+	}
+
+	ServerApp::CharacterDbSaveResult ServerApp::SaveCharacterPairToDbOnce(
+		const PersistedCharacterState& first, float firstYawRadians, uint64_t firstOwnerGeneration,
+		const PersistedCharacterState& second, float secondYawRadians, uint64_t secondOwnerGeneration,
+		std::string_view kind, std::string_view operationId, bool& outConnected)
+	{
+		outConnected = false;
+#if defined(SHARD_POSITION_DB)
+		if (m_characterDbPool == nullptr || first.characterKey == 0u || second.characterKey == 0u)
+		{
+			return CharacterDbSaveResult::SkippedNoDb;
+		}
+		auto guard = m_characterDbPool->Acquire();
+		MYSQL* mysql = guard.get();
+		auto* cache = guard.cache();
+		if (mysql == nullptr || cache == nullptr)
+		{
+			return CharacterDbSaveResult::Failed;
+		}
+		outConnected = true;
+		(void)mysql_query(mysql, "SET TRANSACTION ISOLATION LEVEL READ COMMITTED"); // cf. SaveCharacterToDbOnce
+		if (mysql_query(mysql, "START TRANSACTION") != 0)
+		{
+			LOG_WARN(Net, "[ServerApp] SaveCharacterPairToDb: START TRANSACTION failed (operation={})", operationId);
+			return CharacterDbSaveResult::Failed;
+		}
+		// 1. L'opération d'abord : INSERT IGNORE + 0 ligne insérée = identifiant déjà
+		// présent, l'opération a déjà été écrite → on n'applique rien une deuxième fois.
+		auto* op = cache->Acquire(mysql,
+			"INSERT IGNORE INTO character_operations (operation_id, kind, character_a, character_b, shard_id) "
+			"VALUES (?, ?, ?, ?, ?)");
+		if (op == nullptr
+			|| !op->Bind(0, operationId)
+			|| !op->Bind(1, kind)
+			|| !op->Bind(2, first.characterKey)
+			|| !op->Bind(3, second.characterKey)
+			|| !op->Bind(4, m_shardId)
+			|| !op->Execute())
+		{
+			mysql_query(mysql, "ROLLBACK");
+			LOG_WARN(Net, "[ServerApp] SaveCharacterPairToDb: operation insert failed (operation={})", operationId);
+			return CharacterDbSaveResult::Failed;
+		}
+		if (op->AffectedRows() == 0u)
+		{
+			mysql_query(mysql, "ROLLBACK");
+			LOG_WARN(Net, "[ServerApp] SaveCharacterPairToDb: operation already applied (operation={})", operationId);
+			return CharacterDbSaveResult::AlreadyApplied;
+		}
+		// 2. Les deux personnages, toujours dans l'ordre croissant des identifiants :
+		// deux transactions concurrentes verrouillent leurs lignes dans le même ordre
+		// (pas d'interblocage). Chacun passe le contrôle de propriété de 1.2.
+		const bool firstIsLower = first.characterKey <= second.characterKey;
+		const PersistedCharacterState& lowState = firstIsLower ? first : second;
+		const PersistedCharacterState& highState = firstIsLower ? second : first;
+		const float lowYaw = firstIsLower ? firstYawRadians : secondYawRadians;
+		const float highYaw = firstIsLower ? secondYawRadians : firstYawRadians;
+		const uint64_t lowGen = firstIsLower ? firstOwnerGeneration : secondOwnerGeneration;
+		const uint64_t highGen = firstIsLower ? secondOwnerGeneration : firstOwnerGeneration;
+		CharacterDbSaveResult result = WriteCharacterStateInTx(mysql, cache, lowState, lowYaw, lowGen);
+		if (result == CharacterDbSaveResult::Saved)
+		{
+			result = WriteCharacterStateInTx(mysql, cache, highState, highYaw, highGen);
+		}
+		if (result != CharacterDbSaveResult::Saved)
+		{
+			mysql_query(mysql, "ROLLBACK");
+			LOG_WARN(Net, "[ServerApp] SaveCharacterPairToDb: rollback (operation={}, character_a={}, character_b={}, refused_not_owner={})",
+				operationId, first.characterKey, second.characterKey,
+				result == CharacterDbSaveResult::RefusedNotOwner ? "true" : "false");
+			return result;
+		}
+		if (mysql_query(mysql, "COMMIT") != 0)
+		{
+			mysql_query(mysql, "ROLLBACK");
+			LOG_WARN(Net, "[ServerApp] SaveCharacterPairToDb: COMMIT failed (operation={})", operationId);
+			return CharacterDbSaveResult::Failed;
+		}
+		return CharacterDbSaveResult::Saved;
+#else
+		(void)first; (void)firstYawRadians; (void)firstOwnerGeneration;
+		(void)second; (void)secondYawRadians; (void)secondOwnerGeneration;
+		(void)kind; (void)operationId;
+		return CharacterDbSaveResult::SkippedNoDb;
+#endif
+	}
+
+	void ServerApp::SaveCharacterPair(const ConnectedClient& first, const ConnectedClient& second, std::string_view kind)
+	{
+		if (first.persistenceCharacterKey == 0u || second.persistenceCharacterKey == 0u
+			|| first.persistenceCharacterKey == second.persistenceCharacterKey)
+		{
+			SaveConnectedClient(first, kind);
+			SaveConnectedClient(second, kind);
+			return;
+		}
+		// Les sauvegardes déjà en file pour ces deux personnages sont plus anciennes :
+		// on les laisse finir pour qu'elles ne passent pas APRÈS l'opération.
+		// Si elles ne finissent pas à temps (base très lente), pas de transaction :
+		// une sauvegarde en file de chacun, dans l'ordre (moins sûr, mais jamais un
+		// état ancien écrit après l'opération).
+		if (m_characterSaveQueue != nullptr
+			&& (!m_characterSaveQueue->Flush(first.persistenceCharacterKey)
+				|| !m_characterSaveQueue->Flush(second.persistenceCharacterKey)))
+		{
+			LOG_ERROR(Net, "[ServerApp] Character pair save: pending saves not finished, queued separately (character_a={}, character_b={}, kind={})",
+				first.persistenceCharacterKey, second.persistenceCharacterKey, kind);
+			SaveConnectedClient(first, kind);
+			SaveConnectedClient(second, kind);
+			return;
+		}
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now().time_since_epoch()).count());
+		const std::string operationId = MakeCharacterOperationId(kind, m_shardId, nowMs, ++m_characterOperationCounter);
+		PersistedCharacterState firstState = BuildPersistedCharacterState(first);
+		PersistedCharacterState secondState = BuildPersistedCharacterState(second);
+		const CharacterDbSaveResult result = SaveCharacterPairToDb(
+			firstState, first.yawRadians, first.ownerGeneration,
+			secondState, second.yawRadians, second.ownerGeneration,
+			kind, operationId);
+		switch (result)
+		{
+		case CharacterDbSaveResult::Saved:
+			LOG_INFO(Net, "[ServerApp] Character pair saved (operation={}, character_a={}, character_b={})",
+				operationId, first.persistenceCharacterKey, second.persistenceCharacterKey);
+			return;
+		case CharacterDbSaveResult::AlreadyApplied:
+			return;
+		case CharacterDbSaveResult::SkippedNoDb:
+			// Sans base : deux fichiers .ini, comme avant (pas de transaction possible).
+			SaveConnectedClient(first, kind);
+			SaveConnectedClient(second, kind);
+			return;
+		case CharacterDbSaveResult::RefusedNotOwner:
+		case CharacterDbSaveResult::Failed:
+			// Rien n'a été écrit (ROLLBACK). Les sauvegardes suivantes réécriront
+			// l'état complet de chacun ; on signale l'incident pour enquête.
+			LOG_ERROR(Net, "[ServerApp] Character pair save FAILED (operation={}, character_a={}, character_b={}, kind={})",
+				operationId, first.persistenceCharacterKey, second.persistenceCharacterKey, kind);
+			return;
+		}
+	}
+
 	void ServerApp::PersistCharacterState(const PersistedCharacterState& state, float yawRadians,
 		uint64_t ownerGeneration, uint32_t clientId, std::string_view reason)
 	{
@@ -2911,6 +3100,7 @@ namespace engine::server
 		switch (dbResult)
 		{
 		case CharacterDbSaveResult::Saved:
+		case CharacterDbSaveResult::AlreadyApplied: // propre aux opérations à deux personnages
 			break;
 		case CharacterDbSaveResult::RefusedNotOwner:
 			LOG_WARN(Net, "[ServerApp] Character save REFUSED: shard is not the owner (client_id={}, character_key={}, shard_id={}, owner_generation={}, reason={})",
@@ -7585,8 +7775,8 @@ namespace engine::server
 		}
 		(void)SendWalletUpdate(*from);
 		(void)SendWalletUpdate(*to);
-		SaveConnectedClient(*from, "wallet_transfer_from");
-		SaveConnectedClient(*to, "wallet_transfer_to");
+		// ETAPE2.4 — débit et crédit dans la même transaction.
+		SaveCharacterPair(*from, *to, "wallet_transfer");
 		return true;
 	}
 
@@ -10823,6 +11013,10 @@ namespace engine::server
 			/// Check whether session was closed (both confirmed & swap applied).
 			if (m_tradeSystem.FindSession(caller->clientId) == nullptr)
 			{
+				// ETAPE2.4 — les deux personnages échangés sont écrits ensemble, dans une
+				// transaction (avant : aucune sauvegarde, on attendait l'autosave ; un
+				// arrêt entre les deux sauvegardes pouvait dupliquer ou perdre des objets).
+				SaveCharacterPair(*caller, *partner, "trade");
 				LogTradeAudit(caller->clientId, partnerClientId, itemsA, itemsB, goldA, goldB);
 				/// Send WalletUpdate to both so gold counters refresh.
 				SendWalletUpdate(*caller);

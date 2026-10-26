@@ -2849,7 +2849,9 @@ namespace engine::server
 		}
 		for (ConnectedClient& client : m_clients)
 		{
-			if (!std::isfinite(client.positionMetersX) || !std::isfinite(client.positionMetersZ))
+			// Zone non cellulaire (instance, zone historique) : position locale, pas de carte.
+			if (!engine::world::cells::IsCellZoneId(client.zoneId)
+				|| !std::isfinite(client.positionMetersX) || !std::isfinite(client.positionMetersZ))
 			{
 				continue;
 			}

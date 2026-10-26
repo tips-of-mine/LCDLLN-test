@@ -491,6 +491,25 @@ namespace engine::server
 			return false;
 		}
 
+#if defined(SHARD_POSITION_DB)
+		// ETAPE2.2 — sauvegardes hors du tick, seulement avec une base. Chaque thread
+		// garde une connexion du pool pendant une écriture : laisser au moins une
+		// connexion au tick (chargements au Hello). Clés optionnelles :
+		//   shard.save_workers (défaut 2), shard.save_queue_max (défaut 4096).
+		if (m_characterDbPool != nullptr && m_characterDbPool->IsInitialized())
+		{
+			const int64_t poolSize = std::max<int64_t>(2, m_config.GetInt("db.pool_size", 4));
+			const size_t workers = static_cast<size_t>(std::clamp<int64_t>(
+				m_config.GetInt("shard.save_workers", 2), 1, poolSize - 1));
+			const size_t maxPending = static_cast<size_t>(std::clamp<int64_t>(
+				m_config.GetInt("shard.save_queue_max", 4096), 64, 1000000));
+			m_characterSaveQueue = std::make_unique<CharacterSaveQueue>(workers, maxPending,
+				[] { mysql_thread_init(); }, [] { mysql_thread_end(); });
+			m_characterSaveQueue->Start();
+			LOG_INFO(Core, "[ServerApp] Character save queue started (workers={}, max_pending={})", workers, maxPending);
+		}
+#endif
+
 		if (!m_currencyConfig.Load(m_config))
 		{
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: currency config load failed");
@@ -721,6 +740,16 @@ namespace engine::server
 					(void)zoneIt->second.RemoveEntity(client.entityId);
 				}
 			}
+		}
+		// ETAPE2.2 — écrit tout ce qui reste dans la file de sauvegarde (y compris
+		// les sauvegardes « shutdown » ci-dessus) avant de continuer l'arrêt.
+		if (m_characterSaveQueue != nullptr)
+		{
+			const auto stats = m_characterSaveQueue->GetStats();
+			m_characterSaveQueue->Stop();
+			LOG_INFO(Net, "[ServerApp] Character save queue stopped (queued={}, coalesced={}, rejected={}, executed={})",
+				stats.queued, stats.coalesced, stats.rejected, m_characterSaveQueue->GetStats().executed);
+			m_characterSaveQueue.reset();
 		}
 		m_clients.clear();
 		// TG.2 — Shutdown : vider aussi les 3 index O(1) sur m_clients.
@@ -1797,6 +1826,12 @@ namespace engine::server
 		//      la sauvegarde suivante écrit tout en base et le .ini n'est plus relu ;
 		//   3. si la base n'avait que bourse/sac/équipement (Roadmap-10), ces trois
 		//      domaines restent ceux de la base, par-dessus le fichier.
+		// ETAPE2.2 — relecture juste après écriture : une reconnexion rapide doit voir
+		// la sauvegarde de déconnexion, encore dans la file. On attend qu'elle soit écrite.
+		if (m_characterSaveQueue != nullptr)
+		{
+			m_characterSaveQueue->Flush(acceptedClient.persistenceCharacterKey);
+		}
 		PersistedCharacterState persistedState{};
 		bool fileLoaded = false;
 		if (dbLoad == CharacterDbLoadResult::Full)
@@ -2769,38 +2804,67 @@ namespace engine::server
 		state.cakeExpiresAtMsUtcByItemId = client.cakeExpiresAtMsUtcByItemId;
 		/// SP-B — persist known class skills.
 		state.knownSkillIds = client.knownSkillIds;
+		// ETAPE2.2 — avec la file de sauvegarde, le tick dépose l'instantané et
+		// repart : l'écriture SQL se fait sur un thread de la file (même thread pour
+		// un personnage donné, l'ordre est gardé ; une sauvegarde en attente est
+		// remplacée par la plus récente). File pleine : écriture immédiate ici.
+		if (m_characterSaveQueue != nullptr && m_characterSaveQueue->IsRunning())
+		{
+			auto snapshot = std::make_shared<PersistedCharacterState>(std::move(state));
+			const float yaw = client.yawRadians;
+			const uint64_t generation = client.ownerGeneration;
+			const uint32_t clientId = client.clientId;
+			std::string reasonCopy(reason);
+			const auto result = m_characterSaveQueue->EnqueueSave(client.persistenceCharacterKey,
+				[this, snapshot, yaw, generation, clientId, reasonCopy]() {
+					PersistCharacterState(*snapshot, yaw, generation, clientId, reasonCopy);
+				});
+			if (result != CharacterSaveQueue::EnqueueResult::Rejected)
+			{
+				return;
+			}
+			LOG_WARN(Net, "[ServerApp] Character save queue full (pending={}) : écriture immédiate (client_id={}, reason={})",
+				m_characterSaveQueue->PendingCount(), client.clientId, reason);
+			PersistCharacterState(*snapshot, yaw, generation, clientId, reason);
+			return;
+		}
+		PersistCharacterState(state, client.yawRadians, client.ownerGeneration, client.clientId, reason);
+	}
+
+	void ServerApp::PersistCharacterState(const PersistedCharacterState& state, float yawRadians,
+		uint64_t ownerGeneration, uint32_t clientId, std::string_view reason)
+	{
 		// ETAPE2.1 — avec une base, elle seule reçoit l'état (plus de fichier .ini).
 		// ETAPE1.2 — un shard qui n'est plus propriétaire du personnage n'écrit rien.
 		// Sans base (dev sans MySQL, shard Windows), le fichier .ini reste le stockage.
-		const CharacterDbSaveResult dbResult = SaveCharacterToDb(state, client.yawRadians, client.ownerGeneration);
+		// ETAPE2.2 — appelée depuis le tick ou depuis un thread de la file : n'utilise
+		// que le pool (thread-safe), m_shardId et le stockage fichier (sans base, donc
+		// jamais depuis la file).
+		const CharacterDbSaveResult dbResult = SaveCharacterToDb(state, yawRadians, ownerGeneration);
 		switch (dbResult)
 		{
 		case CharacterDbSaveResult::Saved:
 			break;
 		case CharacterDbSaveResult::RefusedNotOwner:
 			LOG_WARN(Net, "[ServerApp] Character save REFUSED: shard is not the owner (client_id={}, character_key={}, shard_id={}, owner_generation={}, reason={})",
-				client.clientId, client.persistenceCharacterKey, m_shardId, client.ownerGeneration, reason);
+				clientId, state.characterKey, m_shardId, ownerGeneration, reason);
 			return;
 		case CharacterDbSaveResult::Failed:
 			LOG_ERROR(Net, "[ServerApp] Character DB save FAILED (client_id={}, character_key={}, reason={})",
-				client.clientId, client.persistenceCharacterKey, reason);
+				clientId, state.characterKey, reason);
 			return;
 		case CharacterDbSaveResult::SkippedNoDb:
 			if (!m_characterPersistence.SaveCharacter(state))
 			{
 				LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",
-					client.clientId,
-					client.persistenceCharacterKey,
-					reason);
+					clientId, state.characterKey, reason);
 				return;
 			}
 			break;
 		}
 
 		LOG_INFO(Net, "[ServerApp] Character save OK (client_id={}, character_key={}, reason={})",
-			client.clientId,
-			client.persistenceCharacterKey,
-			reason);
+			clientId, state.characterKey, reason);
 	}
 
 	uint32_t ServerApp::ResolveMobAiIntervalTicks() const

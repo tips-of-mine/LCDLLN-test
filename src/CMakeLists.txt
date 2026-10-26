@@ -59,6 +59,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shared/net/ChatSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/net/ChatEmotes.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp
+    # ETAPE2.2 : file de sauvegarde des personnages hors du tick.
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterSaveQueue.cpp
     # Character system PR1 — moteur de stats (serveur-only, anti-triche).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
@@ -673,6 +675,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(character_progress_payload_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterProgressPayloadTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp)
+  # ETAPE2.2 : file de sauvegarde des personnages hors du tick.
+  lcdlln_add_simple_test(character_save_queue_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterSaveQueueTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterSaveQueue.cpp)
   # CMANGOS.33 (Phase 5.33a) : LfgQueue header-only.
   lcdlln_add_simple_test(lfg_queue_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/lfg/LfgQueueTests.cpp)
@@ -1376,6 +1382,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildTabard.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildBank.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp
+    # ETAPE2.2 : file de sauvegarde des personnages hors du tick.
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterSaveQueue.cpp
     # Character system PR1 — moteur de stats (serveur-only, anti-triche).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp

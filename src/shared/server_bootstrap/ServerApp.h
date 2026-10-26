@@ -2,6 +2,7 @@
 
 #include "src/shardd/gameplay/auction/AuctionHouse.h"
 #include "src/shardd/gameplay/character/CharacterPersistence.h"
+#include "src/shardd/gameplay/character/CharacterSaveQueue.h"
 #include "src/shardd/gameplay/character/CharacterStatsTables.h"
 #include "src/shardd/gameplay/character/SpawnStatsResolver.h"
 #include "src/shardd/gameplay/crafting/CraftingSystem.h"
@@ -563,7 +564,15 @@ namespace engine::server
 		void MaybeAutosaveCharacters();
 
 		/// Persist one connected character to the current runtime store.
+		/// ETAPE2.2 — avec une base, dépose un instantané dans m_characterSaveQueue
+		/// (écriture hors du tick) ; sans file ou file pleine, écrit immédiatement.
 		void SaveConnectedClient(const ConnectedClient& client, std::string_view reason);
+
+		/// ETAPE2.2 — écrit un instantané (base, ou fichier .ini sans base) et journalise.
+		/// Thread-safe avec une base : appelée depuis le tick ou un thread de la file.
+		/// \param yawRadians orientation (radians) ; \param ownerGeneration verrou 1.2.
+		void PersistCharacterState(const PersistedCharacterState& state, float yawRadians,
+			uint64_t ownerGeneration, uint32_t clientId, std::string_view reason);
 
 		/// Load the authoritative loot table data required by the ticket.
 		bool InitLootTables();
@@ -1454,6 +1463,9 @@ namespace engine::server
 		/// TA.4 : pool MySQL pour le pont position (optionnel, possédé par l'appelant). Voir
 		/// SetCharacterDbPool / LoadSpawnFromDb.
 		db::ConnectionPool* m_characterDbPool = nullptr;
+		/// ETAPE2.2 — sauvegardes hors du tick (créée à Init quand un pool DB est
+		/// présent ; nullptr sinon). Arrêtée (et vidée) dans Shutdown, avant le pool.
+		std::unique_ptr<CharacterSaveQueue> m_characterSaveQueue;
 		/// ETAPE1.2 — identifiant de ce shard (config `shard.id`, défaut 1, même clé que le
 		/// validateur de tickets) : comparé à `characters.owner_shard_id` avant d'écrire.
 		uint32_t m_shardId = 1;

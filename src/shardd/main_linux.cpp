@@ -535,6 +535,10 @@ int main(int argc, char** argv)
 		gameplayApp.RequestStop();
 		gameplayThread.join();
 	}
+	// ETAPE2.2 — sauvegardes de fin (« shutdown ») et vidage de la file de
+	// sauvegarde AVANT de fermer le pool : sinon le destructeur de gameplayApp
+	// sauverait après la fermeture de la base et ces écritures seraient perdues.
+	gameplayApp.Shutdown();
 	characterDbPool.Shutdown(); LOG_INFO(Net, "[ShardMain] Shutdown");
 	healthEndpoint.Shutdown();
 	engine::core::Log::Shutdown();

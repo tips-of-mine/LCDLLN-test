@@ -76,27 +76,11 @@ namespace engine::server
 			return;
 		}
 
-		const auto upd = ParseMapDiscoveryUpdatePayload(payload, payloadSize);
-		if (!upd)
-		{
-			LOG_WARN(Net, "[MapDiscovery] mise a jour illisible (conn={}, {} octets)", connId, payloadSize);
-			return;
-		}
-		std::vector<MysqlMapDiscoveryStore::StoredCell> cells;
-		cells.reserve(upd->cells.size());
-		for (const MapDiscoveryCell& c : upd->cells)
-		{
-			// Seules les cellules de la grille du lore sont acceptées.
-			const auto coord = engine::world::cells::CellFromZoneId(c.cellZoneId);
-			if (!coord || !engine::world::cells::IsInLoreGrid(*coord) || c.bitmap.Empty())
-				continue;
-			cells.push_back(MysqlMapDiscoveryStore::StoredCell{ c.cellZoneId, c.bitmap });
-		}
-		const int changed = m_store->Merge(character->characterId, cells);
-		if (changed < 0)
-			LOG_WARN(Net, "[MapDiscovery] fusion en echec (character_id={})", character->characterId);
-		else
-			LOG_DEBUG(Net, "[MapDiscovery] fusion (character_id={}, {} cellule(s) recue(s), {} modifiee(s))",
-				character->characterId, cells.size(), changed);
+		// ETAPE2.5 — un seul écrivain par personnage : le shard propriétaire révèle la
+		// carte autour de la position autoritaire et l'écrit dans sa transaction de
+		// sauvegarde. Les mises à jour envoyées par le client (210) sont ignorées
+		// (les clients actuels continuent d'en envoyer, sans effet).
+		LOG_DEBUG(Net, "[MapDiscovery] mise a jour client ignoree : carte ecrite par le shard (character_id={}, {} octets)",
+			character->characterId, payloadSize);
 	}
 }

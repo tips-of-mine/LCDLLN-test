@@ -1,7 +1,8 @@
 #pragma once
 // MapDiscoveryHandler — handler master de la carte à découvrir :
 //   - kOpcodeMapDiscoveryRequest (208) → page de masques, réponse 209 ;
-//   - kOpcodeMapDiscoveryUpdate (210) → fusion OU en base, sans réponse.
+//   - kOpcodeMapDiscoveryUpdate (210) → ignoré depuis ETAPE2.5 : la carte est
+//     écrite par le shard propriétaire (position autoritaire).
 // Le personnage est celui que la connexion a déclaré à l'EnterWorld
 // (SessionCharacterMap) : un client ne peut lire ni écrire que la carte du
 // personnage qu'il joue.

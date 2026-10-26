@@ -3,6 +3,7 @@
 #include "src/shardd/gameplay/auction/AuctionHouse.h"
 #include "src/shardd/gameplay/character/CharacterPersistence.h"
 #include "src/shardd/gameplay/character/CharacterSaveQueue.h"
+#include "src/shardd/world/MapDiscoveryTracker.h"
 #include "src/shardd/gameplay/character/CharacterStatsTables.h"
 #include "src/shardd/gameplay/character/SpawnStatsResolver.h"
 #include "src/shardd/gameplay/crafting/CraftingSystem.h"
@@ -238,6 +239,9 @@ namespace engine::server
 		/// sauvegarde supprime exactement ces lignes (idempotent) : le courrier
 		/// fusionné ne revient jamais.
 		std::vector<uint64_t> mailboxClaimedIds;
+		/// ETAPE2.5 — carte à découvrir : cases révélées pendant la session autour de
+		/// la position autoritaire (monde en cellules). Écrites à chaque sauvegarde.
+		MapDiscoveryTracker mapDiscovery;
 		/// Niveau du personnage (table characters.level, chargé au Hello via LoadSpawnFromDb).
 		/// Reporté au master dans le heartbeat enrichi (présence web-portal).
 		uint32_t level = 1;
@@ -593,6 +597,10 @@ namespace engine::server
 		/// ETAPE2.3 — sauve, à chaque tick, les personnages dont c'est le tour (IsCharacterAutosaveDue) :
 		/// une fois par période chacun, charge répartie sur la période.
 		void MaybeAutosaveCharacters();
+
+		/// ETAPE2.5 — révèle la carte autour de chaque joueur (monde en cellules
+		/// uniquement ; recalcul seulement quand le joueur change de case de 125 m).
+		void UpdateMapDiscovery();
 
 		/// Persist one connected character to the current runtime store.
 		/// ETAPE2.2 — avec une base, dépose un instantané dans m_characterSaveQueue

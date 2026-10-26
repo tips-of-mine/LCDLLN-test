@@ -9,6 +9,7 @@
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
 #include "src/shardd/world/AdmittedCharacterRegistry.h"
 #include "src/shared/db/CharacterOwnership.h" // ETAPE1.2 — un seul propriétaire par personnage
+#include "src/masterd/chat/ChatSanitizer.h" // ETAPE5.1 — nettoyage du chat de proximité
 #include "src/shared/network/ServerProtocol.h"
 
 // R1-A — JSON embarqués (générés au build) pour le moteur de stats des personnages.
@@ -4492,13 +4493,35 @@ namespace engine::server
 		relay.channel = request.channel;
 		relay.senderEntityId = sender->entityId;
 		relay.timestampUnixMs = NowUnixEpochMsUtc();
-		relay.senderDisplay = "P" + std::to_string(sender->clientId);
+		// ETAPE5.1 — nom du personnage (comme le master), repli "P<id>" en mode no-DB
+		// sans nom d'admission. Coupé à 48 octets sans casser un caractère UTF-8.
+		relay.senderDisplay = !sender->characterName.empty()
+			? sender->characterName
+			: "P" + std::to_string(sender->clientId);
 		if (relay.senderDisplay.size() > 48)
 		{
-			relay.senderDisplay.resize(48);
+			size_t cut = 48;
+			while (cut > 0 && (static_cast<unsigned char>(relay.senderDisplay[cut]) & 0xC0u) == 0x80u)
+			{
+				--cut;
+			}
+			relay.senderDisplay.resize(cut);
 		}
 
-		relay.text = request.text;
+		// ETAPE5.1 — même nettoyage que le master (troncature UTF-8, caractères
+		// invisibles, liens non autorisés) : le chat de proximité passe désormais
+		// par le shard. Un message rejeté est abandonné en silence (comme au master).
+		engine::server::chat::ChatSanitizerConfig sanitizerCfg{};
+		sanitizerCfg.maxMessageBytes = 255;
+		const engine::server::chat::ChatSanitizeResult sanitized =
+			engine::server::chat::Sanitize(request.text, sanitizerCfg);
+		if (!sanitized.accepted)
+		{
+			LOG_INFO(Net, "[ServerApp] ChatSend rejected by sanitizer (client_id={}, reason={})",
+				sender->clientId, sanitized.rejectReason);
+			return;
+		}
+		relay.text = sanitized.text;
 
 		std::vector<ConnectedClient*> recipients;
 		const auto addUnique = [&recipients](ConnectedClient* clientPtr)

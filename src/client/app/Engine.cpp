@@ -2700,6 +2700,26 @@ namespace engine
 				LOG_INFO(Core, "[Engine] /unignore {}", targetAccountId);
 				return true;
 			}
+			// ETAPE5.1 — Dire et Crier sont du chat de PROXIMITÉ : ils partent au shard
+			// en UDP (MessageKind::ChatSend), qui les redistribue aux joueurs à portée
+			// (25 m / 200 m). Les autres canaux (chuchotement, guilde, amis, global…)
+			// restent routés par le master. Hors du monde (écran de sélection, pas de
+			// session UDP), il n'y a pas de proximité : la ligne part sur le canal
+			// Global du master, comme le salon d'attente. Une commande (« /help »…)
+			// tapée sans préfixe arrive ici sur Dire : elle reste adressée au master
+			// (ChatCommandRouter), qui ne la diffuse jamais.
+			const uint8_t sayWire = engine::net::ToWire(engine::net::ChatChannel::Say);
+			const uint8_t yellWire = engine::net::ToWire(engine::net::ChatChannel::Yell);
+			const bool isSlashCommand = !text.empty() && text.front() == '/';
+			if ((channel == sayWire || channel == yellWire) && !isSlashCommand)
+			{
+				const uint32_t udpClientId = m_gameplayUdp.ServerClientId();
+				if (m_gameplayNetInitialized && m_gameplayUdp.IsActive() && udpClientId != 0u)
+				{
+					return m_gameplayUdp.SendChatSend(udpClientId, channel, text);
+				}
+				return m_authUi.SendChatAsync(engine::net::ToWire(engine::net::ChatChannel::Global), targetToken, text);
+			}
 			return m_authUi.SendChatAsync(channel, targetToken, text);
 		});
 		m_authUi.SetMasterPushHandler([this](uint16_t opcode, const uint8_t* payload, size_t payloadSize) {
@@ -17132,6 +17152,25 @@ namespace engine
 			if (engine::server::PeekMessageKind(packet, kind) && kind == engine::server::MessageKind::Welcome)
 			{
 				continue;
+			}
+			// ETAPE5.1 — chat de proximité (Dire, Crier) relayé par le shard : affiché
+			// dans le panneau de chat comme les lignes du master. ApplyPacket continue
+			// d'alimenter les bulles au-dessus des personnages.
+			if (kind == engine::server::MessageKind::ChatRelay)
+			{
+				engine::server::ChatRelayMessage relay{};
+				if (engine::server::DecodeChatRelay(packet, relay))
+				{
+					engine::net::ChatMessage line{};
+					line.timestampUnixMs = relay.timestampUnixMs;
+					if (!engine::net::TryDecodeChannelWire(relay.channel, line.channel))
+					{
+						line.channel = engine::net::ChatChannel::Say;
+					}
+					line.sender = relay.senderDisplay;
+					line.text = relay.text;
+					m_chatUi.PushNetworkLine(line);
+				}
 			}
 			(void)m_uiModelBinding.ApplyPacket(packet);
 		}

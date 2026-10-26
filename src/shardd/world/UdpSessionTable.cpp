@@ -9,27 +9,26 @@ namespace engine::server
 {
 	UdpSessionTable::HandshakeResult UdpSessionTable::OpenHandshake(uint64_t endpointKey,
 		const engine::network::UdpSessionKey& sessionKey, std::span<const std::byte> datagram, uint64_t nowMs,
-		std::vector<std::byte>& outPlainHello)
+		const SaltConsumer& consumeSalt, std::vector<std::byte>& outPlainHello)
 	{
 		engine::network::UdpHandshakeHeader header{};
 		if (!engine::network::PeekUdpHandshake(datagram, header))
 			return HandshakeResult::AuthFailed;
 
 		std::lock_guard<std::mutex> lock(m_mutex);
-		UsedSalts& used = m_usedSalts[header.characterId];
-		if (used.key != sessionKey)
+		const auto existing = m_sessions.find(endpointKey);
+		if (existing != m_sessions.end())
 		{
-			// Nouvelle clé (nouvel EnterWorld) : les sels de l'ancienne ne comptent plus.
-			used.key = sessionKey;
-			used.salts.clear();
-		}
-		used.lastSeenMs = nowMs;
-		if (std::find(used.salts.begin(), used.salts.end(), header.salt) != used.salts.end())
-		{
-			const auto it = m_sessions.find(endpointKey);
-			const bool sameSession = it != m_sessions.end() && it->second.characterId == header.characterId
-				&& it->second.crypto.Salt() == header.salt;
-			return sameSession ? HandshakeResult::Duplicate : HandshakeResult::Replayed;
+			if (existing->second.characterId != header.characterId)
+			{
+				// Un point de terminaison lié à un personnage n'est jamais repris par un
+				// autre : sinon un joueur qui usurpe l'adresse source d'un autre (avec sa
+				// propre clé, valide) détournerait sa session. La session se libère à la
+				// déconnexion ou après inactivité.
+				return HandshakeResult::EndpointBusy;
+			}
+			if (existing->second.crypto.Salt() == header.salt)
+				return HandshakeResult::Duplicate;
 		}
 
 		Session session{};
@@ -41,9 +40,11 @@ namespace engine::server
 			// Sel NON consommé : un faux Hello ne doit pas bloquer le vrai.
 			return HandshakeResult::AuthFailed;
 		}
-		used.salts.push_back(header.salt);
-		if (used.salts.size() > kMaxSaltsPerCharacter)
-			used.salts.erase(used.salts.begin());
+		if (!consumeSalt || !consumeSalt(header.salt))
+		{
+			outPlainHello.clear();
+			return HandshakeResult::Replayed;
+		}
 		m_sessions[endpointKey] = std::move(session);
 		return HandshakeResult::Opened;
 	}
@@ -88,22 +89,14 @@ namespace engine::server
 		m_sessions.erase(endpointKey);
 	}
 
-	void UdpSessionTable::Prune(uint64_t nowMs, uint64_t idleMs, uint64_t saltRetentionMs,
-		const std::function<bool(uint64_t endpointKey)>& hasClient)
+	void UdpSessionTable::Prune(uint64_t nowMs, uint64_t idleMs, const std::function<bool(uint64_t endpointKey)>& inUse)
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 		for (auto it = m_sessions.begin(); it != m_sessions.end();)
 		{
-			const bool used = hasClient && hasClient(it->first);
+			const bool used = inUse && inUse(it->first);
 			if (!used && nowMs - it->second.lastActivityMs >= idleMs)
 				it = m_sessions.erase(it);
-			else
-				++it;
-		}
-		for (auto it = m_usedSalts.begin(); it != m_usedSalts.end();)
-		{
-			if (nowMs - it->second.lastSeenMs >= saltRetentionMs)
-				it = m_usedSalts.erase(it);
 			else
 				++it;
 		}
@@ -113,7 +106,6 @@ namespace engine::server
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 		m_sessions.clear();
-		m_usedSalts.clear();
 	}
 
 	size_t UdpSessionTable::SessionCount() const

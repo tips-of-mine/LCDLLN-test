@@ -9310,6 +9310,18 @@ namespace engine
 			// Phase 5 reconnect — Si une déconnexion master a été détectée par PumpPostAuthEvents,
 			// AuthUi est passé en mode reconnect. TickReconnect lance la tentative auto au bon moment.
 			m_authUi.TickReconnect(m_cfg);
+			// ETAPE3.1 — la reconnexion a envoyé une clé de session UDP neuve au master : elle
+			// servira aux prochaines sockets UDP (la session en cours garde sa clé de travail).
+			{
+				std::array<uint8_t, 32> refreshedKey{};
+				if (m_authUi.ConsumeRefreshedUdpKey(refreshedKey))
+				{
+					m_gameplayUdp.SetSessionKey(m_currentCharacterId, refreshedKey);
+					volatile uint8_t* wipe = refreshedKey.data();
+					for (size_t i = 0; i < refreshedKey.size(); ++i)
+						wipe[i] = 0u;
+				}
+			}
 
 			// Phase 3.6.6 — Tick périodique de sauvegarde de position. Démarré à la consommation
 			// de EnterWorldCommand (m_currentCharacterId != 0). Intervalle borné à >= 5 s côté
@@ -16783,6 +16795,9 @@ namespace engine
 		{
 			ShutdownGameplayNet();
 		}
+		// ETAPE3.1 — la clé de session UDP de cet EnterWorld ne doit plus servir.
+		m_gameplayUdp.ClearSessionKey();
+		m_authUi.ClearPostEnterWorldUdpKey();
 		// 2) Reset auth UI : flowComplete repasse a false, phase Login. Le presenter
 		//    relancera MasterShardClientFlow au prochain clic Se connecter.
 		m_authUi.RequestReturnToLogin();
@@ -17161,6 +17176,11 @@ namespace engine
 		{
 			return;
 		}
+
+		// ETAPE3.1 — Hello répété (1 s) tant que le shard n'a pas répondu par un Welcome :
+		// le Hello part souvent avant que le master ait poussé l'admission et la clé.
+		m_gameplayUdp.MaybeResendHello(static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count()));
 
 		std::vector<std::vector<std::byte>> packets = m_gameplayUdp.PollIncoming();
 		for (std::vector<std::byte>& packet : packets)

@@ -176,10 +176,11 @@ namespace engine::network
 				return std::nullopt;
 		}
 		// ETAPE3.1 — clé de session UDP optionnelle EN QUEUE (après owner_generation),
-		// 32 octets exactement : une queue d'une autre taille est refusée.
+		// 32 octets ; une clé tronquée est refusée.
 		if (r.Remaining() > 0u)
 		{
-			if (r.Remaining() != out.udp_session_key.size()
+			// Clé tronquée : refus. Octets au-delà de la clé : ignorés (champs futurs).
+			if (r.Remaining() < out.udp_session_key.size()
 				|| !r.ReadBytes(out.udp_session_key.data(), out.udp_session_key.size()))
 				return std::nullopt;
 			out.has_udp_session_key = true;

@@ -171,6 +171,9 @@ namespace engine::client
 		// ETAPE3.1 — la session (clé de travail + compteurs) meurt avec la socket ; la clé
 		// de session reste pour le prochain Init du même EnterWorld.
 		m_secure = engine::network::UdpSecureSession{};
+		m_lastHelloDatagram.clear();
+		m_helloAttempts = 0;
+		m_lastHelloSentMs = 0;
 	}
 
 	void GameplayUdpClient::SetSessionKey(uint64_t characterId, const engine::network::UdpSessionKey& key)
@@ -265,24 +268,33 @@ namespace engine::client
 		hm.requestedSnapshotHz = requestedSnapshotHz;
 		hm.clientNonce = clientNonce;
 		const std::vector<std::byte> packet = engine::server::EncodeHello(hm);
-		bool ok = false;
+		std::vector<std::byte> datagram;
 		if (m_secure.IsReady())
 		{
 			// ETAPE3.1 — le Hello part dans une poignée de main chiffrée qui annonce le
-			// personnage en clair (le shard y retrouve la clé) et l'authentifie.
+			// personnage en clair (le shard y retrouve la clé) et l'authentifie. Scellée
+			// une seule fois par socket (compteur 0) : les répétitions renvoient ces
+			// mêmes octets (cf. MaybeResendHello).
 			if (clientNonce != m_sessionCharacterId)
 			{
 				LOG_ERROR(Net, "[GameplayUdpClient] Hello refusé : nonce={} différent du personnage de la clé ({})",
 					clientNonce, m_sessionCharacterId);
 				return false;
 			}
-			std::vector<std::byte> sealed;
-			ok = m_secure.SealHandshake(clientNonce, packet, sealed) && SendRaw(sealed);
+			if (!m_secure.SealHandshake(clientNonce, packet, datagram))
+			{
+				LOG_ERROR(Net, "[GameplayUdpClient] Hello refusé : poignée de main déjà scellée ou erreur OpenSSL");
+				return false;
+			}
 		}
 		else
 		{
-			ok = SendRaw(packet);
+			datagram = packet;
 		}
+		m_lastHelloDatagram = datagram;
+		m_helloAttempts = 1;
+		m_lastHelloSentMs = 0;
+		const bool ok = SendRaw(datagram);
 		if (ok)
 		{
 			LOG_INFO(Net, "[GameplayUdpClient] Hello sent (nonce={}, chiffré={})", clientNonce,
@@ -293,6 +305,25 @@ namespace engine::client
 			LOG_WARN(Net, "[GameplayUdpClient] Hello send FAILED (nonce={})", clientNonce);
 		}
 		return ok;
+	}
+
+	void GameplayUdpClient::MaybeResendHello(uint64_t nowMs)
+	{
+		if (!m_active || m_serverClientId != 0u || m_lastHelloDatagram.empty() || m_helloAttempts >= kHelloMaxAttempts)
+			return;
+		if (m_lastHelloSentMs == 0u)
+		{
+			m_lastHelloSentMs = nowMs; // premier appel après SendHello : point de départ
+			return;
+		}
+		if (nowMs - m_lastHelloSentMs < kHelloResendIntervalMs)
+			return;
+		m_lastHelloSentMs = nowMs;
+		++m_helloAttempts;
+		const bool ok = SendRaw(m_lastHelloDatagram);
+		LOG_INFO(Net, "[GameplayUdpClient] Hello renvoyé (essai {}/{}, ok={})", m_helloAttempts, kHelloMaxAttempts, ok ? 1 : 0);
+		if (m_helloAttempts >= kHelloMaxAttempts)
+			LOG_WARN(Net, "[GameplayUdpClient] Aucun Welcome après {} Hello : le shard ne répond pas", kHelloMaxAttempts);
 	}
 
 	bool GameplayUdpClient::SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw, uint8_t animationState)

@@ -59,6 +59,10 @@ int main()
 	std::vector<std::byte> plain;
 	Check(server.OpenHandshake(hello, plain) && Text(plain) == "HELLO-PAYLOAD", "Hello ouvert par le shard");
 	Check(!server.OpenHandshake(hello, plain), "poignée de main rejouée : refus");
+	{
+		std::vector<std::byte> again;
+		Check(!client.SealHandshake(42u, Bytes("AUTRE"), again), "compteur 0 jamais réutilisé (second scellement refusé)");
+	}
 
 	// 2. character_id falsifié dans l'en-tête : l'authentification échoue.
 	{

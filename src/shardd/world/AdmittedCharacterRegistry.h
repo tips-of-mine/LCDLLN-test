@@ -8,6 +8,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 namespace engine::server
 {
@@ -116,6 +117,28 @@ namespace engine::server
 		/// expiré. Lue par le shard à l'ouverture de la poignée de main chiffrée.
 		std::optional<std::array<uint8_t, 32>> AdmittedUdpSessionKey(uint64_t characterId, uint64_t nowMs) const;
 
+		/// ETAPE3.1 — résultat de ConsumeUdpSalt.
+		enum class SaltUse : uint8_t
+		{
+			Fresh,     ///< Sel jamais vu avec cette clé : désormais marqué utilisé.
+			Used,      ///< Sel déjà utilisé avec cette clé : poignée de main rejouée.
+			Exhausted, ///< Trop de sels pour cette clé (kMaxUdpSaltsPerKey) : refus.
+			NoKey,     ///< Personnage non admis, admission expirée, ou autre clé.
+		};
+
+		/// ETAPE3.1 — marque \p salt comme utilisé avec la clé de session courante du
+		/// personnage. Les sels vivent avec la clé (même entrée, même verrou) : tant que la
+		/// clé peut ouvrir une poignée de main, ses sels déjà utilisés restent refusés.
+		/// Un rejeu recréerait sinon la même clé de travail et les mêmes compteurs côté
+		/// shard, donc les mêmes nonces.
+		/// \param key clé qui a ouvert la poignée de main (doit être la clé courante).
+		SaltUse ConsumeUdpSalt(uint64_t characterId, const std::array<uint8_t, 32>& key,
+			const std::array<uint8_t, 16>& salt, uint64_t nowMs);
+
+		/// ETAPE3.1 — nombre maximal de sels par clé (une clé = un EnterWorld ; chaque
+		/// ouverture de socket UDP consomme un sel). Au-delà, refus (fermé par défaut).
+		static constexpr size_t kMaxUdpSaltsPerKey = 256u;
+
 		/// Nombre d'entrées (admises ou non, sans purge). Utile aux tests / diagnostics.
 		size_t Count() const;
 
@@ -134,6 +157,8 @@ namespace engine::server
 			uint64_t ownerGeneration = 0; ///< ETAPE1.2 — 0 = aucun verrou de propriété connu.
 			bool hasUdpSessionKey = false;           ///< ETAPE3.1 — vrai si une clé a été fournie.
 			std::array<uint8_t, 32> udpSessionKey{}; ///< ETAPE3.1 — clé de session UDP du client.
+			/// ETAPE3.1 — sels déjà utilisés avec udpSessionKey (vidés quand la clé change).
+			std::vector<std::array<uint8_t, 16>> usedUdpSalts;
 		};
 
 		mutable std::mutex m_mutex;

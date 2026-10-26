@@ -477,11 +477,12 @@ namespace engine::network
 		if (!r.ReadString(out.characterName))
 			return std::nullopt;
 		// ETAPE3.1 — clé de session UDP optionnelle en queue (32 octets exactement).
-		// Une queue d'une autre taille est refusée : mieux vaut un EnterWorld en échec
-		// qu'une clé tronquée qui donnerait une session impossible à ouvrir.
+		// Une clé tronquée est refusée : mieux vaut un EnterWorld en échec qu'une clé
+		// incomplète qui donnerait une session impossible à ouvrir.
 		if (r.Remaining() > 0u)
 		{
-			if (r.Remaining() != out.udpSessionKey.size()
+			// Clé tronquée : refus. Octets au-delà de la clé : ignorés (champs futurs).
+			if (r.Remaining() < out.udpSessionKey.size()
 				|| !r.ReadBytes(out.udpSessionKey.data(), out.udpSessionKey.size()))
 				return std::nullopt;
 			out.hasUdpSessionKey = true;

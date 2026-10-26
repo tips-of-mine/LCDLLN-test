@@ -50,9 +50,19 @@ Client                         Master (TLS)                      Shard (TLS vers
   ne s'ouvre pas.
 - **Anti-rejeu** : chaque extrémité refuse un compteur déjà vu ou trop ancien (fenêtre
   de 64 paquets, `UdpReplayWindow`). Le désordre léger d'UDP est toléré.
-- **Rejeu du Hello** : le shard mémorise les sels déjà utilisés avec chaque clé
-  (`UdpSessionTable`, 64 par personnage). Un Hello capturé puis renvoyé depuis une autre
-  adresse est refusé ; le même Hello reçu deux fois de la même adresse est ignoré.
+- **Rejeu du Hello** : le shard mémorise les sels déjà utilisés avec chaque clé, dans
+  l'entrée du registre d'admission qui porte la clé (`ConsumeUdpSalt`, 256 par clé au
+  plus) : tant que la clé peut ouvrir une poignée de main, ses sels restent refusés. Un
+  Hello capturé puis renvoyé est refusé ; le même Hello reçu de nouveau depuis la même
+  adresse (répétition du client) renvoie seulement le Welcome.
+- **Une clé n'est admise qu'une fois** : la reconnexion automatique au master renvoie
+  l'EnterWorld avec une clé NEUVE (`ConsumeRefreshedUdpKey`) ; la session UDP en cours
+  garde sa clé de travail, les sockets suivantes prennent la nouvelle clé. Un vieux Hello
+  ne peut donc jamais être rouvert après l'expiration de ses sels.
+- **Adresse liée à un personnage** : une adresse qui a une session pour un personnage
+  n'est jamais reprise par un autre (`EndpointBusy`, et contrôle dans `HandleHello`). Un
+  joueur qui usurpe l'adresse source d'un autre, avec sa propre clé valide, ne détourne
+  pas sa session. L'adresse se libère à la déconnexion ou après 30 s d'inactivité.
 - **Pas de repli vers le clair** : un personnage dont le shard connaît la clé ne peut
   ouvrir sa session qu'avec une poignée de main chiffrée (`HandleHello`,
   `authenticatedBySession`). Un datagramme en clair venant d'une adresse qui a une
@@ -74,11 +84,19 @@ chiffrement est une enveloppe, les paquets ne changent pas.
 ### Arrivée du Hello avant l'admission
 
 Le Hello UDP arrive souvent au shard avant le push d'admission du master (cas déjà
-géré en TA.3). La poignée de main chiffrée est gardée telle quelle (`PendingHello::sealedHello`)
-et rouverte quand l'admission, et donc la clé, arrive. Rien n'étant encore authentifié,
-la file est bornée : au plus 4 poignées de main en attente par personnage (sels
-distincts) et 1024 entrées au total. Un Hello en clair ne modifie jamais une poignée de
-main chiffrée en attente.
+géré en TA.3). Deux mécanismes se complètent :
+
+- **Le client répète son Hello** (mêmes octets, même sel) toutes les secondes tant qu'il
+  n'a pas de Welcome, 15 fois au plus (`GameplayUdpClient::MaybeResendHello`). C'est le
+  mécanisme principal : un Hello reçu après l'admission passe directement, et un Hello
+  refusé parce que la nouvelle clé n'était pas encore arrivée (nouvel EnterWorld moins de
+  5 minutes après le précédent) passe à la répétition suivante.
+- **Le shard garde la poignée de main** reçue avant l'admission (`PendingHello::sealedHello`)
+  et la rouvre quand l'admission, et donc la clé, arrive. Rien n'étant encore
+  authentifié, cette file est bornée sans jamais évincer une entrée : 4 poignées de main
+  par personnage, 8 par adresse IP, 1024 au total. Pleine, elle refuse les nouvelles
+  entrées ; la répétition du client prend le relais. Un Hello en clair ne modifie jamais
+  une poignée de main chiffrée en attente.
 
 ### Configuration
 
@@ -93,20 +111,21 @@ Rien à renseigner pour le fonctionnement normal.
 | Fichier | Rôle |
 |---|---|
 | `src/shared/network/UdpSecureChannel.h/.cpp` | Enveloppe : dérivation HKDF, scellement/ouverture ChaCha20-Poly1305, fenêtre anti-rejeu |
-| `src/shardd/world/UdpSessionTable.h/.cpp` | Sessions du shard par adresse, sels déjà utilisés, purge |
-| `src/shardd/world/AdmittedCharacterRegistry` | Garde la clé de session reçue avec l'admission |
+| `src/shardd/world/UdpSessionTable.h/.cpp` | Sessions du shard par adresse (une adresse = un personnage), purge |
+| `src/shardd/world/AdmittedCharacterRegistry` | Garde la clé de session reçue avec l'admission et ses sels déjà utilisés |
 | `src/shared/network/CharacterPayloads` / `ShardPayloads` | Clé en queue de l'EnterWorld (47) et de l'admission (199) |
-| `src/client/net/GameplayUdpClient` | Sel par socket, scelle tout ce qui part, refuse ce qui ne s'ouvre pas |
-| `src/client/app/Engine.cpp` | Tire la clé à chaque EnterWorld, la remet à la reconnexion master |
+| `src/client/net/GameplayUdpClient` | Sel par socket, scelle tout ce qui part, refuse ce qui ne s'ouvre pas, répète le Hello |
+| `src/client/app/Engine.cpp`, `src/client/auth/AuthUi` | Tire la clé à chaque EnterWorld, une clé neuve à la reconnexion master, l'efface à la déconnexion |
 | `src/shared/server_bootstrap/ServerApp` | `ProcessPacket` (ouverture), `SendDatagram` (scellement, remplace `m_transport.Send`), `ProcessSecureHandshake` |
 
 ### Tests
 
 `udp_secure_channel_tests` (aller-retour, falsification, réflexion, rejeu, fenêtre,
-sel ou clé différents), `udp_session_table_tests` (doublon, rejeu depuis une autre
-adresse, faux Hello qui ne consomme pas le sel, nouvelle clé, nouvelle socket, purge),
-`shard_payloads_tests` (clé en queue, absence, clé tronquée refusée),
-`admitted_character_registry_tests`, `packet_log_tests` (aucun aperçu pour 47 et 199).
+sel ou clé différents, compteur 0 jamais réutilisé), `udp_session_table_tests` (doublon,
+rejeu depuis une autre adresse, faux Hello qui ne consomme pas le sel, adresse d'un autre
+personnage refusée, nouvelle socket, purge), `shard_payloads_tests` (clé en queue,
+absence, clé tronquée refusée), `admitted_character_registry_tests` (clé avec
+l'admission, sels par clé, plafond), `packet_log_tests` (aucun aperçu pour 47 et 199).
 
 ### Déploiement
 

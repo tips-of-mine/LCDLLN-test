@@ -2,14 +2,16 @@
 // ETAPE3.1 (chantier 4.3) — sessions UDP chiffrées du shard, une par point de
 // terminaison client.
 //
-// Rôle : tout l'état cryptographique côté shard, hors de ServerApp (testable seul,
-// cf. udp_session_table_tests) :
+// Rôle : tout l'état cryptographique des sessions côté shard, hors de ServerApp
+// (testable seul, cf. udp_session_table_tests) :
 //   - ouvre la poignée de main chiffrée d'un client (Hello) avec la clé de session de
 //     son personnage et installe la session pour son point de terminaison ;
-//   - refuse un sel déjà utilisé avec la même clé : un Hello rejoué recréerait la même
-//     clé de travail et les mêmes compteurs côté shard, donc les mêmes nonces ;
+//   - refuse qu'un point de terminaison déjà lié à un personnage soit repris par un
+//     autre (adresse source usurpée par un joueur qui a sa propre clé) ;
+//   - délègue l'anti-rejeu du sel à l'appelant (AdmittedCharacterRegistry, où les sels
+//     vivent avec la clé) ;
 //   - ouvre les datagrammes de données reçus et scelle ceux envoyés ;
-//   - oublie les sessions sans client et les sels trop vieux.
+//   - oublie les sessions sans client.
 //
 // Thread-safe : un mutex interne. Le shard ouvre depuis le thread de jeu et scelle
 // depuis n'importe quel thread qui envoie.
@@ -32,22 +34,28 @@ namespace engine::server
 		/// Résultat de l'ouverture d'une poignée de main.
 		enum class HandshakeResult : uint8_t
 		{
-			Opened,     ///< Session installée pour ce point de terminaison, Hello déchiffré.
-			Duplicate,  ///< Même Hello déjà reçu de ce point de terminaison : session en place, rien à refaire.
-			Replayed,   ///< Sel déjà utilisé avec cette clé depuis un autre point de terminaison : refus.
-			AuthFailed, ///< En-tête mal formé, étiquette fausse ou erreur OpenSSL : refus.
+			Opened,       ///< Session installée pour ce point de terminaison, Hello déchiffré.
+			Duplicate,    ///< Même Hello déjà reçu de ce point de terminaison : session en place.
+			Replayed,     ///< Sel déjà utilisé avec cette clé (consumeSalt a refusé) : refus.
+			EndpointBusy, ///< Le point de terminaison a une session pour un AUTRE personnage : refus.
+			AuthFailed,   ///< En-tête mal formé, étiquette fausse ou erreur OpenSSL : refus.
 		};
 
-		/// Nombre maximal de sels mémorisés par personnage (au-delà, le plus ancien sort).
-		static constexpr size_t kMaxSaltsPerCharacter = 64u;
+		/// Consomme un sel (vrai = jamais vu avec cette clé, désormais marqué). Appelé
+		/// seulement après une authentification réussie, sous le verrou de la table.
+		using SaltConsumer = std::function<bool(const engine::network::UdpSessionSalt& salt)>;
 
 		/// Ouvre la poignée de main \p datagram reçue de \p endpointKey avec la clé de
 		/// session \p sessionKey du personnage annoncé (en-tête). En cas de succès, la
-		/// session remplace celle que ce point de terminaison avait peut-être déjà.
-		/// \param nowMs horloge monotone (ms), pour l'âge des sessions et des sels.
+		/// session remplace celle que ce point de terminaison avait peut-être pour le
+		/// MÊME personnage (nouvelle socket du même joueur).
+		/// \param nowMs horloge monotone (ms), pour l'âge des sessions.
+		/// \param consumeSalt anti-rejeu du sel (cf. SaltConsumer). Un faux Hello (échec
+		///        d'authentification) ne consomme rien.
 		/// \param outPlainHello paquet Hello déchiffré (rempli si Opened).
 		HandshakeResult OpenHandshake(uint64_t endpointKey, const engine::network::UdpSessionKey& sessionKey,
-			std::span<const std::byte> datagram, uint64_t nowMs, std::vector<std::byte>& outPlainHello);
+			std::span<const std::byte> datagram, uint64_t nowMs, const SaltConsumer& consumeSalt,
+			std::vector<std::byte>& outPlainHello);
 
 		/// Ouvre un datagramme de données de \p endpointKey. \return false si le point de
 		/// terminaison n'a pas de session ou si le datagramme est falsifié, rejoué ou
@@ -76,10 +84,8 @@ namespace engine::server
 		void Drop(uint64_t endpointKey);
 
 		/// Supprime les sessions dont aucun client n'utilise le point de terminaison
-		/// (\p hasClient faux) et inactives depuis \p idleMs, et les sels non revus
-		/// depuis \p saltRetentionMs.
-		void Prune(uint64_t nowMs, uint64_t idleMs, uint64_t saltRetentionMs,
-			const std::function<bool(uint64_t endpointKey)>& hasClient);
+		/// (\p inUse faux) et inactives depuis \p idleMs.
+		void Prune(uint64_t nowMs, uint64_t idleMs, const std::function<bool(uint64_t endpointKey)>& inUse);
 
 		/// Vide tout (démarrage du shard).
 		void Clear();
@@ -94,15 +100,7 @@ namespace engine::server
 			uint64_t characterId = 0;
 			uint64_t lastActivityMs = 0;
 		};
-		struct UsedSalts
-		{
-			engine::network::UdpSessionKey key{};
-			std::vector<engine::network::UdpSessionSalt> salts;
-			uint64_t lastSeenMs = 0;
-		};
-
 		mutable std::mutex m_mutex;
-		std::unordered_map<uint64_t, Session> m_sessions;     ///< par point de terminaison.
-		std::unordered_map<uint64_t, UsedSalts> m_usedSalts;  ///< par personnage.
+		std::unordered_map<uint64_t, Session> m_sessions; ///< par point de terminaison.
 	};
 }

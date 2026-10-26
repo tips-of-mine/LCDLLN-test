@@ -1703,6 +1703,8 @@ namespace engine::server
 		static constexpr size_t kMaxPendingHellos = 1024u;
 		/// ETAPE3.1 — poignées de main chiffrées en attente par personnage (sels distincts).
 		static constexpr size_t kMaxSealedPendingPerCharacter = 4u;
+		/// ETAPE3.1 — Hello en attente par adresse IP source.
+		static constexpr size_t kMaxPendingHellosPerAddress = 8u;
 
 		/// TA.3 — délai d'inactivité au-delà duquel un client UDP est considéré déconnecté.
 		/// Choisi a 30 s : largement plus que la cadence Input (50 ms a 20 Hz) tout en restant

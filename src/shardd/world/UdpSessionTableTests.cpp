@@ -36,6 +36,23 @@ namespace
 		return std::string(reinterpret_cast<const char*>(bytes.data()), bytes.size());
 	}
 
+	/// Anti-rejeu minimal (le shard délègue à AdmittedCharacterRegistry::ConsumeUdpSalt).
+	struct SaltStore
+	{
+		std::vector<UdpSessionSalt> used;
+
+		UdpSessionTable::SaltConsumer Consumer()
+		{
+			return [this](const UdpSessionSalt& salt) {
+				for (const auto& s : used)
+					if (s == salt)
+						return false;
+				used.push_back(salt);
+				return true;
+			};
+		}
+	};
+
 	/// Client prêt : session initialisée avec un sel neuf + poignée de main scellée.
 	struct TestClient
 	{
@@ -59,11 +76,12 @@ int main()
 	constexpr uint64_t kEndpointA = 0x0A000001'1F40ull;
 	constexpr uint64_t kEndpointB = 0x0A000002'1F40ull;
 	std::vector<std::byte> plain;
+	SaltStore salts;
 
 	// 1. Poignée de main ouverte, session installée, données dans les deux sens.
 	UdpSessionTable table;
 	TestClient client(key, 42u);
-	Check(table.OpenHandshake(kEndpointA, key, client.hello, 1000u, plain) == UdpSessionTable::HandshakeResult::Opened,
+	Check(table.OpenHandshake(kEndpointA, key, client.hello, 1000u, salts.Consumer(), plain) == UdpSessionTable::HandshakeResult::Opened,
 		"poignée de main ouverte");
 	Check(Text(plain) == "HELLO", "Hello déchiffré");
 	Check(table.HasSession(kEndpointA) && table.SessionCharacterId(kEndpointA) == 42u, "session installée");
@@ -80,14 +98,14 @@ int main()
 	Check(table.Seal(kEndpointB, Bytes("SNAP"), s2c) == UdpSessionTable::SealResult::NoSession, "pas de session : NoSession");
 
 	// 2. Même Hello reçu deux fois du même point de terminaison : doublon, session gardée.
-	Check(table.OpenHandshake(kEndpointA, key, client.hello, 1003u, plain) == UdpSessionTable::HandshakeResult::Duplicate,
+	Check(table.OpenHandshake(kEndpointA, key, client.hello, 1003u, salts.Consumer(), plain) == UdpSessionTable::HandshakeResult::Duplicate,
 		"doublon du même point de terminaison");
 	std::vector<std::byte> c2sAfter;
 	(void)client.session.Seal(Bytes("INPUT2"), c2sAfter);
 	Check(table.OpenData(kEndpointA, c2sAfter, 1004u, plain), "la session d'origine continue après le doublon");
 
 	// 3. Même Hello rejoué depuis un autre point de terminaison : refus.
-	Check(table.OpenHandshake(kEndpointB, key, client.hello, 1005u, plain) == UdpSessionTable::HandshakeResult::Replayed,
+	Check(table.OpenHandshake(kEndpointB, key, client.hello, 1005u, salts.Consumer(), plain) == UdpSessionTable::HandshakeResult::Replayed,
 		"rejeu depuis un autre point de terminaison");
 	Check(!table.HasSession(kEndpointB), "pas de session pour l'attaquant");
 
@@ -102,34 +120,40 @@ int main()
 		(void)forgerSession.Init(otherKey, legit.session.Salt(), UdpSecureRole::Client);
 		std::vector<std::byte> forged;
 		(void)forgerSession.SealHandshake(7u, Bytes("HELLO"), forged);
-		Check(t2.OpenHandshake(kEndpointB, key, forged, 1u, plain) == UdpSessionTable::HandshakeResult::AuthFailed,
+		Check(t2.OpenHandshake(kEndpointB, key, forged, 1u, salts.Consumer(), plain) == UdpSessionTable::HandshakeResult::AuthFailed,
 			"faux Hello : authentification refusée");
-		Check(t2.OpenHandshake(kEndpointA, key, legit.hello, 2u, plain) == UdpSessionTable::HandshakeResult::Opened,
+		Check(t2.OpenHandshake(kEndpointA, key, legit.hello, 2u, salts.Consumer(), plain) == UdpSessionTable::HandshakeResult::Opened,
 			"le vrai Hello passe après un faux");
 	}
 
-	// 5. Nouvelle clé (nouvel EnterWorld) : les sels de l'ancienne sont oubliés.
+	// 5. Point de terminaison lié à un personnage : un autre personnage (adresse usurpée,
+	//    avec SA propre clé valide) ne peut pas le reprendre.
 	{
 		UdpSessionTable t3;
-		TestClient first(key, 9u);
-		Check(t3.OpenHandshake(kEndpointA, key, first.hello, 1u, plain) == UdpSessionTable::HandshakeResult::Opened,
-			"ancienne clé ouverte");
-		UdpSessionKey newKey{};
-		(void)GenerateUdpSessionKey(newKey);
-		TestClient second(newKey, 9u);
-		Check(t3.OpenHandshake(kEndpointB, newKey, second.hello, 2u, plain) == UdpSessionTable::HandshakeResult::Opened,
-			"nouvelle clé ouverte sur un autre point de terminaison");
-		Check(t3.SessionCount() == 2u, "deux sessions (l'ancienne attend sa purge)");
+		SaltStore st;
+		TestClient victim(key, 9u);
+		Check(t3.OpenHandshake(kEndpointA, key, victim.hello, 1u, st.Consumer(), plain) == UdpSessionTable::HandshakeResult::Opened,
+			"session de la victime ouverte");
+		UdpSessionKey attackerKey{};
+		(void)GenerateUdpSessionKey(attackerKey);
+		TestClient attacker(attackerKey, 666u);
+		Check(t3.OpenHandshake(kEndpointA, attackerKey, attacker.hello, 2u, st.Consumer(), plain)
+			== UdpSessionTable::HandshakeResult::EndpointBusy, "reprise par un autre personnage refusée");
+		Check(t3.SessionCharacterId(kEndpointA) == 9u, "la session reste à la victime");
+		t3.Drop(kEndpointA); // déconnexion de la victime
+		Check(t3.OpenHandshake(kEndpointA, attackerKey, attacker.hello, 3u, st.Consumer(), plain)
+			== UdpSessionTable::HandshakeResult::Opened, "adresse libérée : utilisable");
 	}
 
 	// 6. Nouvelle socket du même client (nouveau sel) sur le même point de terminaison :
 	//    la session est remplacée.
 	{
 		UdpSessionTable t4;
+		SaltStore st;
 		TestClient sock1(key, 11u);
 		TestClient sock2(key, 11u);
-		(void)t4.OpenHandshake(kEndpointA, key, sock1.hello, 1u, plain);
-		Check(t4.OpenHandshake(kEndpointA, key, sock2.hello, 2u, plain) == UdpSessionTable::HandshakeResult::Opened,
+		(void)t4.OpenHandshake(kEndpointA, key, sock1.hello, 1u, st.Consumer(), plain);
+		Check(t4.OpenHandshake(kEndpointA, key, sock2.hello, 2u, st.Consumer(), plain) == UdpSessionTable::HandshakeResult::Opened,
 			"nouveau sel : nouvelle session");
 		std::vector<std::byte> p;
 		(void)sock2.session.Seal(Bytes("NEW"), p);
@@ -140,21 +164,21 @@ int main()
 	// 7. Purge : session sans client et inactive supprimée ; session utilisée gardée.
 	{
 		UdpSessionTable t5;
+		SaltStore st;
 		TestClient a(key, 21u);
 		TestClient b(key, 22u);
-		(void)t5.OpenHandshake(kEndpointA, key, a.hello, 0u, plain);
-		(void)t5.OpenHandshake(kEndpointB, key, b.hello, 0u, plain);
-		t5.Prune(10'000u, 30'000u, 600'000u, [](uint64_t) { return false; });
+		(void)t5.OpenHandshake(kEndpointA, key, a.hello, 0u, st.Consumer(), plain);
+		(void)t5.OpenHandshake(kEndpointB, key, b.hello, 0u, st.Consumer(), plain);
+		t5.Prune(10'000u, 30'000u, [](uint64_t) { return false; });
 		Check(t5.SessionCount() == 2u, "pas encore inactives");
-		t5.Prune(40'000u, 30'000u, 600'000u, [](uint64_t endpointKey) { return endpointKey == kEndpointA; });
+		t5.Prune(40'000u, 30'000u, [](uint64_t endpointKey) { return endpointKey == kEndpointA; });
 		Check(t5.HasSession(kEndpointA) && !t5.HasSession(kEndpointB), "seule la session sans client est purgée");
 		t5.Drop(kEndpointA);
 		Check(t5.SessionCount() == 0u, "Drop");
-		// Sels purgés après rétention : le même Hello redevient « neuf » (la clé, elle,
-		// a expiré côté registre d'admission bien avant).
-		t5.Prune(700'000u, 30'000u, 600'000u, {});
-		Check(t5.OpenHandshake(kEndpointB, key, b.hello, 700'001u, plain) == UdpSessionTable::HandshakeResult::Opened,
-			"sel oublié après la rétention");
+		// Le sel reste consommé (il vit avec la clé dans le registre) : rejouer le Hello
+		// après la purge est toujours refusé.
+		Check(t5.OpenHandshake(kEndpointB, key, b.hello, 50'000u, st.Consumer(), plain)
+			== UdpSessionTable::HandshakeResult::Replayed, "Hello rejoué après purge : refus");
 	}
 
 	if (s_failCount == 0)

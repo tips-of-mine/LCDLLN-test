@@ -530,11 +530,23 @@ namespace engine::client
 		/// EnterWorldCommand (dans Engine.cpp), pour mémoriser le personnage actif. Cette
 		/// info est nécessaire pour ré-envoyer un CHARACTER_ENTER_WORLD_REQUEST à la
 		/// reconnexion master sans repasser par tout le flow Login/CharacterSelect.
-		/// ETAPE3.1 — \p udpSessionKey : clé de session UDP de cet EnterWorld, renvoyée
-		/// telle quelle à la reconnexion (la session UDP en cours continue avec la même
-		/// clé). nullptr = aucune clé (session en clair).
+		/// ETAPE3.1 — \p udpSessionKey : clé de session UDP de cet EnterWorld. À la
+		/// reconnexion master, une clé NEUVE est envoyée à sa place (cf.
+		/// ConsumeRefreshedUdpKey). nullptr = aucune clé (session en clair).
 		void RememberPostEnterWorldCharacter(uint64_t characterId, std::string characterName,
 			const std::array<uint8_t, 32>* udpSessionKey = nullptr);
+
+		/// ETAPE3.1 — oublie la clé de session UDP de l'EnterWorld en cours (retour à
+		/// l'écran de connexion). Effacement sûr.
+		void ClearPostEnterWorldUdpKey();
+
+		/// ETAPE3.1 — après une reconnexion master réussie, la requête EnterWorld renvoyée
+		/// porte une clé de session UDP NEUVE (une clé n'est jamais admise deux fois par le
+		/// shard : un Hello capturé ne peut pas être rejoué avec elle). Rend cette clé une
+		/// seule fois ; l'engine la remet à GameplayUdpClient (prochaines sockets). La
+		/// session UDP en cours garde sa clé de travail.
+		/// \return true si une clé neuve attendait (\p outKey rempli).
+		bool ConsumeRefreshedUdpKey(std::array<uint8_t, 32>& outKey);
 
 		/// Phase 5 reconnect — Tente une reconnexion master si requise et le délai dépassé.
 		/// À appeler chaque frame post-auth depuis l'engine. No-op si pas en mode reconnect.
@@ -1253,6 +1265,12 @@ namespace engine::client
 		/// le résultat (succès ou abandon).
 		std::atomic<bool> m_reconnectAsyncDone{ false };
 		bool m_reconnectAsyncSuccess = false;
+		/// ETAPE3.1 — clé neuve envoyée par la tentative de reconnexion en cours (tirée sur
+		/// le thread principal avant le worker), et clé neuve à rendre à l'engine.
+		std::array<uint8_t, 32> m_reconnectUdpKey{};
+		bool m_reconnectHasUdpKey = false;
+		std::atomic<bool> m_reconnectEnterWorldSent{false};
+		bool m_hasRefreshedUdpKey = false;
 
 		// ---------------------------------------------------------------------
 		// Sous-projet C MVP (Task 12) — wiring vers Engine + presenter local.

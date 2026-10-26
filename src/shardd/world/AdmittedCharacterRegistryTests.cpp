@@ -211,6 +211,47 @@ namespace
 		assert(!reg.AdmittedUdpSessionKey(0u, 1500u).has_value());
 		std::puts("[OK] TestUdpSessionKey");
 	}
+
+	/// ETAPE3.1 — sels : un sel ne sert qu'une fois par clé ; nouvelle clé = sels oubliés ;
+	/// mauvaise clé, admission expirée ou plafond atteint = refus.
+	void TestUdpSalts()
+	{
+		AdmittedCharacterRegistry reg;
+		reg.SetTtlMs(1000u);
+		std::array<uint8_t, 32> keyA{};
+		keyA[0] = 1u;
+		std::array<uint8_t, 32> keyB{};
+		keyB[0] = 2u;
+		std::array<uint8_t, 16> salt1{};
+		salt1[0] = 1u;
+		std::array<uint8_t, 16> salt2{};
+		salt2[0] = 2u;
+		using SaltUse = AdmittedCharacterRegistry::SaltUse;
+		assert(reg.ConsumeUdpSalt(42u, keyA, salt1, 1000u) == SaltUse::NoKey); // non admis
+		reg.Admit(42u, 1u, "", "", 0u, 1000u, &keyA);
+		assert(reg.ConsumeUdpSalt(42u, keyA, salt1, 1000u) == SaltUse::Fresh);
+		assert(reg.ConsumeUdpSalt(42u, keyA, salt1, 1000u) == SaltUse::Used);
+		assert(reg.ConsumeUdpSalt(42u, keyA, salt2, 1000u) == SaltUse::Fresh);
+		assert(reg.ConsumeUdpSalt(42u, keyB, salt1, 1000u) == SaltUse::NoKey); // pas la clé courante
+		reg.Admit(42u, 1u, "", "", 0u, 1500u); // admission sans clé : sels conservés
+		assert(reg.ConsumeUdpSalt(42u, keyA, salt1, 1500u) == SaltUse::Used);
+		reg.Admit(42u, 1u, "", "", 0u, 1500u, &keyA); // même clé renvoyée : sels conservés
+		assert(reg.ConsumeUdpSalt(42u, keyA, salt1, 1500u) == SaltUse::Used);
+		reg.Admit(42u, 1u, "", "", 0u, 1500u, &keyB); // nouvelle clé : sels oubliés
+		assert(reg.ConsumeUdpSalt(42u, keyB, salt1, 1500u) == SaltUse::Fresh);
+		assert(reg.ConsumeUdpSalt(42u, keyB, salt2, 3000u) == SaltUse::NoKey); // expiré
+		reg.Admit(43u, 1u, "", "", 0u, 1000u, &keyA);
+		std::array<uint8_t, 16> s{};
+		for (size_t i = 0; i < AdmittedCharacterRegistry::kMaxUdpSaltsPerKey; ++i)
+		{
+			s[0] = static_cast<uint8_t>(i & 0xFFu);
+			s[1] = static_cast<uint8_t>(i >> 8);
+			assert(reg.ConsumeUdpSalt(43u, keyA, s, 1000u) == SaltUse::Fresh);
+		}
+		s[2] = 9u;
+		assert(reg.ConsumeUdpSalt(43u, keyA, s, 1000u) == SaltUse::Exhausted);
+		std::puts("[OK] TestUdpSalts");
+	}
 }
 
 int main()
@@ -228,6 +269,7 @@ int main()
 	TestReAdmitWithoutGuildPreservesGuild();
 	TestOwnerGeneration();
 	TestUdpSessionKey();
+	TestUdpSalts();
 	std::puts("All AdmittedCharacterRegistry tests passed");
 	return 0;
 }

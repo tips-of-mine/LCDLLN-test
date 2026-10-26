@@ -148,9 +148,11 @@ namespace engine::network
 		const UdpSessionSalt& Salt() const { return m_salt; }
 
 		/// Client seulement : scelle le Hello dans une poignée de main (compteur 0).
+		/// Une seule fois par session : le compteur 0 ne doit jamais chiffrer deux
+		/// contenus (les répétitions renvoient les mêmes octets).
 		/// \param characterId personnage annoncé en clair et authentifié.
-		/// \return false si la session n'est pas prête, si le rôle n'est pas Client, ou
-		///         en cas d'erreur OpenSSL.
+		/// \return false si la session n'est pas prête, si le rôle n'est pas Client, si
+		///         la poignée de main a déjà été scellée, ou en cas d'erreur OpenSSL.
 		bool SealHandshake(uint64_t characterId, std::span<const std::byte> plain, std::vector<std::byte>& outDatagram);
 
 		/// Shard seulement : ouvre une poignée de main (compteur 0, sens C2S). Le sel
@@ -185,6 +187,7 @@ namespace engine::network
 		UdpSecureRole m_role = UdpSecureRole::Client;
 		bool m_ready = false;
 		bool m_handshakeOpened = false;
+		bool m_handshakeSealed = false; ///< client : compteur 0 déjà utilisé.
 		uint64_t m_sendCounter = 1;  ///< prochain compteur émis (0 réservé à la poignée de main).
 		UdpReplayWindow m_receiveWindow;
 		uint64_t m_rejected = 0;

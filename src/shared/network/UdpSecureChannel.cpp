@@ -166,6 +166,7 @@ namespace engine::network
 			m_role = other.m_role;
 			m_ready = other.m_ready;
 			m_handshakeOpened = other.m_handshakeOpened;
+			m_handshakeSealed = other.m_handshakeSealed;
 			m_sendCounter = other.m_sendCounter;
 			m_receiveWindow = other.m_receiveWindow;
 			m_rejected = other.m_rejected;
@@ -187,6 +188,7 @@ namespace engine::network
 		OPENSSL_cleanse(m_workKey.data(), m_workKey.size());
 		m_ready = false;
 		m_handshakeOpened = false;
+		m_handshakeSealed = false;
 		m_sendCounter = 1u;
 		m_receiveWindow = UdpReplayWindow{};
 		m_rejected = 0u;
@@ -297,13 +299,14 @@ namespace engine::network
 	bool UdpSecureSession::SealHandshake(uint64_t characterId, std::span<const std::byte> plain,
 		std::vector<std::byte>& outDatagram)
 	{
-		if (!m_ready || m_role != UdpSecureRole::Client || characterId == 0u)
+		if (!m_ready || m_role != UdpSecureRole::Client || characterId == 0u || m_handshakeSealed)
 			return false;
 		std::array<uint8_t, kUdpHandshakeHeaderSize> header{};
 		PutU32(header.data(), kUdpSecureMagic);
 		header[4] = kUdpSecureTypeHandshake;
 		PutU64(header.data() + 5, characterId);
 		std::memcpy(header.data() + 13, m_salt.data(), m_salt.size());
+		m_handshakeSealed = true; // même en cas d'échec : le compteur 0 n'est jamais retenté
 		return SealWith(kDirectionClientToServer, 0u, header, plain, outDatagram);
 	}
 

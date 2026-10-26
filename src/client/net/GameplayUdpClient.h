@@ -47,6 +47,18 @@ namespace engine::client
 		/// ETAPE3.1 — vrai si la session UDP courante est chiffrée.
 		bool IsEncrypted() const { return m_secure.IsReady(); }
 
+		/// ETAPE3.1 — renvoie le DERNIER Hello (mêmes octets, même sel : le shard reconnaît
+		/// un doublon) toutes les kHelloResendIntervalMs tant qu'aucun Welcome n'est reçu,
+		/// au plus kHelloMaxAttempts envois au total. Le Hello part souvent avant que le
+		/// master ait poussé l'admission et la clé au shard. À appeler à chaque frame.
+		/// \param nowMs horloge monotone en millisecondes.
+		void MaybeResendHello(uint64_t nowMs);
+
+		/// ETAPE3.1 — intervalle entre deux envois du Hello (ms).
+		static constexpr uint64_t kHelloResendIntervalMs = 1000u;
+		/// ETAPE3.1 — nombre maximal d'envois du même Hello.
+		static constexpr uint32_t kHelloMaxAttempts = 15u;
+
 		/// Send one Hello datagram (character / persistence nonce).
 		/// Phase 3.7.5 — clientNonce élargi à uint64 pour transporter un character_id complet.
 		bool SendHello(uint16_t requestedTickHz, uint16_t requestedSnapshotHz, uint64_t clientNonce);
@@ -180,5 +192,8 @@ namespace engine::client
 		engine::network::UdpSessionKey m_sessionKey{}; ///< clé de session de l'EnterWorld.
 		engine::network::UdpSecureSession m_secure;    ///< session de la socket courante.
 		uint64_t m_rejectedIncoming = 0;               ///< datagrammes reçus refusés.
+		std::vector<std::byte> m_lastHelloDatagram;    ///< dernier Hello envoyé (tel quel).
+		uint32_t m_helloAttempts = 0;                  ///< envois du Hello courant.
+		uint64_t m_lastHelloSentMs = 0;                ///< 0 = horodatage pris au premier MaybeResendHello.
 	};
 }
